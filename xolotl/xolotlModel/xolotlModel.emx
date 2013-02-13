@@ -151,19 +151,6 @@
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_3HT0QHVNEeKM6_T6gw_pCg" visible="false" type="StructureCompartment"/>
                 <layoutConstraint xmi:type="notation:Bounds" xmi:id="_3HQJ4XVNEeKM6_T6gw_pCg" x="16430" y="13640"/>
               </children>
-              <children xmi:type="umlnotation:UMLShape" xmi:id="_kyYKsHVVEeKM6_T6gw_pCg" element="_kyUgUHVVEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-                <children xmi:type="notation:DecorationNode" xmi:id="_kyYxwHVVEeKM6_T6gw_pCg" type="ImageCompartment">
-                  <layoutConstraint xmi:type="notation:Size" xmi:id="_kyYxwXVVEeKM6_T6gw_pCg" width="1320" height="1320"/>
-                </children>
-                <children xmi:type="notation:BasicDecorationNode" xmi:id="_kyZY0HVVEeKM6_T6gw_pCg" type="Stereotype"/>
-                <children xmi:type="notation:BasicDecorationNode" xmi:id="_kyZY0XVVEeKM6_T6gw_pCg" type="Name"/>
-                <children xmi:type="notation:BasicDecorationNode" xmi:id="_kyZ_4HVVEeKM6_T6gw_pCg" type="Parent"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_kyZ_4XVVEeKM6_T6gw_pCg" type="AttributeCompartment"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_kyam8HVVEeKM6_T6gw_pCg" type="OperationCompartment"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_kyam8XVVEeKM6_T6gw_pCg" visible="false" type="SignalCompartment"/>
-                <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_kybOAHVVEeKM6_T6gw_pCg" visible="false" type="StructureCompartment"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_kyYKsXVVEeKM6_T6gw_pCg" x="13459" y="3130"/>
-              </children>
               <children xmi:type="umlnotation:UMLShape" xmi:id="_wECYAHYMEeK4zMANKvvP2g" element="_g1XOYHYMEeK4zMANKvvP2g" fontName="Sans Serif" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
                 <children xmi:type="notation:DecorationNode" xmi:id="_wEJFsHYMEeK4zMANKvvP2g" type="ImageCompartment">
                   <layoutConstraint xmi:type="notation:Size" xmi:id="_wEJFsXYMEeK4zMANKvvP2g" width="1320" height="1320"/>
@@ -189,6 +176,19 @@
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_KZ1VIHYPEeK4zMANKvvP2g" visible="false" type="SignalCompartment"/>
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_KZ18MHYPEeK4zMANKvvP2g" visible="false" type="StructureCompartment"/>
                 <layoutConstraint xmi:type="notation:Bounds" xmi:id="_KZwcoXYPEeK4zMANKvvP2g" x="4396" y="14130"/>
+              </children>
+              <children xmi:type="umlnotation:UMLShape" xmi:id="_sdaEAHYWEeK4zMANKvvP2g" element="_j8p9cHVyEeK-BchXMSC_6w" fontName="Sans Serif" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
+                <children xmi:type="notation:DecorationNode" xmi:id="_sdb5MHYWEeK4zMANKvvP2g" type="ImageCompartment">
+                  <layoutConstraint xmi:type="notation:Size" xmi:id="_sdb5MXYWEeK4zMANKvvP2g" width="1320" height="1320"/>
+                </children>
+                <children xmi:type="notation:BasicDecorationNode" xmi:id="_sdcgQHYWEeK4zMANKvvP2g" type="Stereotype"/>
+                <children xmi:type="notation:BasicDecorationNode" xmi:id="_sddHUHYWEeK4zMANKvvP2g" type="Name"/>
+                <children xmi:type="notation:BasicDecorationNode" xmi:id="_sddHUXYWEeK4zMANKvvP2g" type="Parent"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_sdduYHYWEeK4zMANKvvP2g" type="AttributeCompartment" collapsed="true"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_sdeVcHYWEeK4zMANKvvP2g" type="OperationCompartment" collapsed="true"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_sde8gHYWEeK4zMANKvvP2g" visible="false" type="SignalCompartment"/>
+                <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_sdfjkHYWEeK4zMANKvvP2g" visible="false" type="StructureCompartment"/>
+                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_sdaEAXYWEeK4zMANKvvP2g" x="13502" y="2512"/>
               </children>
               <element xsi:nil="true"/>
               <edges xmi:type="umlnotation:UMLConnector" xmi:id="_7t3vsHVNEeKM6_T6gw_pCg" element="_7tqUUHVNEeKM6_T6gw_pCg" source="_z5emUHVNEeKM6_T6gw_pCg" target="_0Ob_IHVMEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -231,14 +231,6 @@
                 </children>
                 <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_-RaDcXVNEeKM6_T6gw_pCg" points="[0, -773, 3916, 3998]$[0, -1904, 3916, 2867]$[-3406, -1904, 510, 2867]$[-3406, -3257, 510, 1514]"/>
               </edges>
-              <edges xmi:type="umlnotation:UMLConnector" xmi:id="_ls6gUHVVEeKM6_T6gw_pCg" element="_ls3dAHVVEeKM6_T6gw_pCg" source="_0Ob_IHVMEeKM6_T6gw_pCg" target="_kyYKsHVVEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
-                <children xmi:type="notation:DecorationNode" xmi:id="_ls7HYHVVEeKM6_T6gw_pCg" type="NameLabel">
-                  <children xmi:type="notation:BasicDecorationNode" xmi:id="_ls7HYnVVEeKM6_T6gw_pCg" type="Stereotype"/>
-                  <children xmi:type="notation:BasicDecorationNode" xmi:id="_ls7HY3VVEeKM6_T6gw_pCg" type="Name"/>
-                  <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ls7HYXVVEeKM6_T6gw_pCg" y="-198"/>
-                </children>
-                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_ls6gUXVVEeKM6_T6gw_pCg" points="[-8, -26, -11, 124]$[-14, -124, -17, 26]"/>
-              </edges>
               <edges xmi:type="umlnotation:UMLConnector" xmi:id="_wEPMUHYMEeK4zMANKvvP2g" element="_g1XOYnYMEeK4zMANKvvP2g" source="_wECYAHYMEeK4zMANKvvP2g" target="_DsLfgHVNEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
                 <children xmi:type="notation:DecorationNode" xmi:id="_wEQacHYMEeK4zMANKvvP2g" type="NameLabel">
                   <children xmi:type="notation:BasicDecorationNode" xmi:id="_wEQacnYMEeK4zMANKvvP2g" type="Stereotype"/>
@@ -257,6 +249,14 @@
                 <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_KZ3KUXYPEeK4zMANKvvP2g" points="[0, -1, -14, 43]$[13, -42, -1, 2]"/>
                 <targetAnchor xmi:type="notation:IdentityAnchor" xmi:id="_L7swgHYPEeK4zMANKvvP2g" id="(0.46055739253660843,0.9680785758133824)"/>
               </edges>
+              <edges xmi:type="umlnotation:UMLConnector" xmi:id="_vE_KQHYWEeK4zMANKvvP2g" element="_vE640HYWEeK4zMANKvvP2g" source="_0Ob_IHVMEeKM6_T6gw_pCg" target="_sdaEAHYWEeK4zMANKvvP2g" fontName="Sans Serif" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
+                <children xmi:type="notation:DecorationNode" xmi:id="_vE_xUHYWEeK4zMANKvvP2g" type="NameLabel">
+                  <children xmi:type="notation:BasicDecorationNode" xmi:id="_vFAYYHYWEeK4zMANKvvP2g" type="Stereotype"/>
+                  <children xmi:type="notation:BasicDecorationNode" xmi:id="_vFA_cHYWEeK4zMANKvvP2g" type="Name"/>
+                  <layoutConstraint xmi:type="notation:Bounds" xmi:id="_vE_xUXYWEeK4zMANKvvP2g" y="-147"/>
+                </children>
+                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_vE_KQXYWEeK4zMANKvvP2g" points="[-9, -72, -1, 107]$[-9, -151, -1, 28]"/>
+              </edges>
             </contents>
           </eAnnotations>
           <ownedComment xmi:id="_FWny0HVzEeK_Qv8Ya7YSJw" annotatedElement="_KrmaoHVLEeKM6_T6gw_pCg">
@@ -266,7 +266,7 @@
             <ownedComment xmi:id="_CYg4MHVNEeKM6_T6gw_pCg" annotatedElement="_0OEywHVMEeKM6_T6gw_pCg">
               <body>&lt;p>The PSICluster class is a Reactant that is specialized to work for simulations of plasma-surface interactions. It provides special routines for calculating the total flux due to production and dissociation and obtaining the cluster size.&lt;/p></body>
             </ownedComment>
-            <generalization xmi:id="_ls3dAHVVEeKM6_T6gw_pCg" general="_kyUgUHVVEeKM6_T6gw_pCg"/>
+            <generalization xmi:id="_vE640HYWEeK4zMANKvvP2g" general="_j8p9cHVyEeK-BchXMSC_6w"/>
             <ownedOperation xmi:id="_LmjVQHVyEeK-BchXMSC_6w" name="getDissociationFlux">
               <ownedParameter xmi:id="_MyY2QHVyEeK-BchXMSC_6w" name="Parameter1" direction="return">
                 <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
@@ -461,7 +461,6 @@
               </ownedParameter>
             </ownedOperation>
           </packagedElement>
-          <packagedElement xmi:type="uml:Class" xmi:id="_kyUgUHVVEeKM6_T6gw_pCg" name="Reactant"/>
           <packagedElement xmi:type="uml:Class" xmi:id="_csHhEHYMEeK4zMANKvvP2g" name="TCluster">
             <ownedComment xmi:id="_csHhEXYMEeK4zMANKvvP2g" annotatedElement="_csHhEHYMEeK4zMANKvvP2g">
               <body>&lt;p>This class represents a cluster composed entirely of tritium.&lt;/p></body>
@@ -534,6 +533,9 @@
         </packagedElement>
         <packagedElement xmi:type="uml:Class" xmi:id="_j8p9cHVyEeK-BchXMSC_6w" name="Reactant">
           <ownedAttribute xmi:id="_s4GOcHVyEeK-BchXMSC_6w" name="concentration" visibility="private">
+            <ownedComment xmi:id="_UjGKgHYXEeK4zMANKvvP2g" annotatedElement="_s4GOcHVyEeK-BchXMSC_6w">
+              <body>&lt;p>The total concentration of this reactant.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
             <defaultValue xmi:type="uml:OpaqueExpression" xmi:id="_QR50oHVzEeK_Qv8Ya7YSJw">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
@@ -542,62 +544,119 @@
             </defaultValue>
           </ownedAttribute>
           <ownedAttribute xmi:id="_SClIEHVzEeK_Qv8Ya7YSJw" name="name" visibility="private">
+            <ownedComment xmi:id="_VqOKoHYXEeK4zMANKvvP2g" annotatedElement="_SClIEHVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>The name of this reactant.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
             <defaultValue xmi:type="uml:LiteralString" xmi:id="_Td1lIHVzEeK_Qv8Ya7YSJw" value="">
               <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
             </defaultValue>
           </ownedAttribute>
           <ownedAttribute xmi:id="_Tp32AHVzEeK_Qv8Ya7YSJw" name="id" visibility="private">
+            <ownedComment xmi:id="_uGco8HYXEeK4zMANKvvP2g" annotatedElement="_Tp32AHVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>An integer identification number for this reactant. &lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
             <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_UvZToHVzEeK_Qv8Ya7YSJw">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
             </defaultValue>
           </ownedAttribute>
-          <ownedOperation xmi:id="_WgbzcHVzEeK_Qv8Ya7YSJw" name="Reactant"/>
+          <ownedOperation xmi:id="_WgbzcHVzEeK_Qv8Ya7YSJw" name="Reactant">
+            <ownedComment xmi:id="_vJBgQHYXEeK4zMANKvvP2g" annotatedElement="_WgbzcHVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>The constructor.&lt;/p></body>
+            </ownedComment>
+          </ownedOperation>
           <ownedOperation xmi:id="_W5_i8HVzEeK_Qv8Ya7YSJw" name="Reactant">
+            <ownedComment xmi:id="_0mgcoHYXEeK4zMANKvvP2g" annotatedElement="_W5_i8HVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>An alternative constructor that can be used to create a reactant with an initial concentration.&lt;/p></body>
+            </ownedComment>
             <ownedParameter xmi:id="_X_fLYHVzEeK_Qv8Ya7YSJw" name="conc">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
             </ownedParameter>
           </ownedOperation>
           <ownedOperation xmi:id="_YMiv8HVzEeK_Qv8Ya7YSJw" name="getConcentration">
+            <ownedComment xmi:id="_2miasHYXEeK4zMANKvvP2g" annotatedElement="_YMiv8HVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>This operation returns the current concentration.&lt;/p></body>
+            </ownedComment>
             <ownedParameter xmi:id="_ZRCS0HVzEeK_Qv8Ya7YSJw" name="Parameter1" direction="return">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
             </ownedParameter>
           </ownedOperation>
           <ownedOperation xmi:id="_ZcvMgHVzEeK_Qv8Ya7YSJw" name="increaseConcentration">
-            <ownedParameter xmi:id="_bKERAHVzEeK_Qv8Ya7YSJw" name="flux">
+            <ownedComment xmi:id="_5hVX4HYXEeK4zMANKvvP2g" annotatedElement="_ZcvMgHVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>This operation increases the concentration of the reactant by the specified amount.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_bKERAHVzEeK_Qv8Ya7YSJw" name="deltaConc">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
             </ownedParameter>
           </ownedOperation>
           <ownedOperation xmi:id="_bYBNcHVzEeK_Qv8Ya7YSJw" name="decreaseConcentration">
-            <ownedParameter xmi:id="_c6Mx4HVzEeK_Qv8Ya7YSJw" name="flux">
+            <ownedComment xmi:id="_7XC8UHYXEeK4zMANKvvP2g" annotatedElement="_bYBNcHVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>This operation decreases the concentration of the reactant by the specified amount.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_c6Mx4HVzEeK_Qv8Ya7YSJw" name="deltaConc">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
             </ownedParameter>
           </ownedOperation>
           <ownedOperation xmi:id="_ibTC8HVzEeK_Qv8Ya7YSJw" name="setConcentration">
+            <ownedComment xmi:id="_9yLiAHYXEeK4zMANKvvP2g" annotatedElement="_ibTC8HVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>This operation sets the concentration of the reactant to the specified amount.&lt;/p></body>
+            </ownedComment>
             <ownedParameter xmi:id="_kTeFgHVzEeK_Qv8Ya7YSJw" name="conc">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
             </ownedParameter>
           </ownedOperation>
-          <ownedOperation xmi:id="_khG44HVzEeK_Qv8Ya7YSJw" name="zero"/>
+          <ownedOperation xmi:id="_khG44HVzEeK_Qv8Ya7YSJw" name="zero">
+            <ownedComment xmi:id="_djVmgHYYEeK4zMANKvvP2g" annotatedElement="_khG44HVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>This operation sets the concentration of the reactant to zero.&lt;/p></body>
+            </ownedComment>
+          </ownedOperation>
           <ownedOperation xmi:id="_f4VW8HVzEeK_Qv8Ya7YSJw" name="getTotalFlux">
+            <ownedComment xmi:id="_j1xN4HYYEeK4zMANKvvP2g" annotatedElement="_f4VW8HVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>This operation returns the total flux of this reactant in the current network.&lt;/p></body>
+            </ownedComment>
             <ownedParameter xmi:id="_hu-vgHVzEeK_Qv8Ya7YSJw" name="Parameter1" direction="return">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
             </ownedParameter>
           </ownedOperation>
           <ownedOperation xmi:id="_t8JP8HVzEeK_Qv8Ya7YSJw" name="setReactionNetwork">
+            <ownedComment xmi:id="_oNxI4HYYEeK4zMANKvvP2g" annotatedElement="_t8JP8HVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>This operation sets the collection of other reactants that make up the reaction network in which this reactant exists. &lt;/p></body>
+            </ownedComment>
             <ownedParameter xmi:id="_v9bLMHVzEeK_Qv8Ya7YSJw" name="network" type="_j8p9cHVyEeK-BchXMSC_6w">
               <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_v9dAYHVzEeK_Qv8Ya7YSJw" value="*"/>
               <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_v9cZUHVzEeK_Qv8Ya7YSJw"/>
             </ownedParameter>
           </ownedOperation>
           <ownedOperation xmi:id="_nKpG8HVzEeK_Qv8Ya7YSJw" name="toString">
+            <ownedComment xmi:id="_qA-y8HYYEeK4zMANKvvP2g" annotatedElement="_nKpG8HVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>This operation writes the contents of the reactant to a string.&lt;/p></body>
+            </ownedComment>
             <ownedParameter xmi:id="_q5iakHVzEeK_Qv8Ya7YSJw" name="output" direction="return">
               <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
             </ownedParameter>
           </ownedOperation>
           <ownedOperation xmi:id="_o1wk8HVzEeK_Qv8Ya7YSJw" name="fromString">
+            <ownedComment xmi:id="_tNUzIHYYEeK4zMANKvvP2g" annotatedElement="_o1wk8HVzEeK_Qv8Ya7YSJw">
+              <body>&lt;p>This operation reads the contents of the reactant from a string.&lt;/p></body>
+            </ownedComment>
             <ownedParameter xmi:id="_qJHDMHVzEeK_Qv8Ya7YSJw" name="input">
+              <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_2XXywHYWEeK4zMANKvvP2g" name="toXML">
+            <ownedComment xmi:id="_votQcHYYEeK4zMANKvvP2g" annotatedElement="_2XXywHYWEeK4zMANKvvP2g">
+              <body>&lt;p>This operation writes the contents of the reactant to a string in XML.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_2XXywXYWEeK4zMANKvvP2g" name="output" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_2XYZ0HYWEeK4zMANKvvP2g" name="fromXML">
+            <ownedComment xmi:id="_z6DJ0HYYEeK4zMANKvvP2g" annotatedElement="_2XYZ0HYWEeK4zMANKvvP2g">
+              <body>&lt;p>This operation reads the contents of the reactant from a string in XML.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_2XYZ0XYWEeK4zMANKvvP2g" name="input">
               <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
             </ownedParameter>
           </ownedOperation>
@@ -692,4 +751,20 @@
   <Default:Documentation xmi:id="_g1YcgXYMEeK4zMANKvvP2g" base_Comment="_g1XOZHYMEeK4zMANKvvP2g"/>
   <Default:Documentation xmi:id="_g1ZDk3YMEeK4zMANKvvP2g" base_Comment="_g1XOb3YMEeK4zMANKvvP2g"/>
   <Default:Documentation xmi:id="_g1ZDlHYMEeK4zMANKvvP2g" base_Comment="_g1XOcXYMEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_UjLDAHYXEeK4zMANKvvP2g" base_Comment="_UjGKgHYXEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_VqP_0HYXEeK4zMANKvvP2g" base_Comment="_VqOKoHYXEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_uGeeIHYXEeK4zMANKvvP2g" base_Comment="_uGco8HYXEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_vJD8gHYXEeK4zMANKvvP2g" base_Comment="_vJBgQHYXEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_0miR0HYXEeK4zMANKvvP2g" base_Comment="_0mgcoHYXEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_2mkP4HYXEeK4zMANKvvP2g" base_Comment="_2miasHYXEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_5hXNEHYXEeK4zMANKvvP2g" base_Comment="_5hVX4HYXEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_7XExgHYXEeK4zMANKvvP2g" base_Comment="_7XC8UHYXEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_9yNXMHYXEeK4zMANKvvP2g" base_Comment="_9yLiAHYXEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_djXbsHYYEeK4zMANKvvP2g" base_Comment="_djVmgHYYEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_j1zDEHYYEeK4zMANKvvP2g" base_Comment="_j1xN4HYYEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_oNy-EHYYEeK4zMANKvvP2g" base_Comment="_oNxI4HYYEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_qBAoIHYYEeK4zMANKvvP2g" base_Comment="_qA-y8HYYEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_tNWoUHYYEeK4zMANKvvP2g" base_Comment="_tNUzIHYYEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_vovFoHYYEeK4zMANKvvP2g" base_Comment="_votQcHYYEeK4zMANKvvP2g"/>
+  <Default:Documentation xmi:id="_z6E_AHYYEeK4zMANKvvP2g" base_Comment="_z6DJ0HYYEeK4zMANKvvP2g"/>
 </xmi:XMI>
