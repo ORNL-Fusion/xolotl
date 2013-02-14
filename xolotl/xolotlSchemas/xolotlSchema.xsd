@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.sourceforge.net/projects/xolotl-psi/xolotlSchema" elementFormDefault="qualified" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:xolotl-psi="http://www.sourceforge.net/projects/xolotl-psi/xolotlSchema">
+
+    <annotation>
+    	<documentation>This is the XML schema for the Xolotl Plasma Surface Interactions simulator.</documentation></annotation>
+    <element name="maxClusterSize" type="int">
+    	<annotation>
+    		<documentation>The maximum size of any cluster of any type.</documentation>
+    	</annotation></element>
+
+
+    <element name="maxVClusterSize" type="int">
+    	<annotation>
+    		<documentation>The maximum size of a cluster of atomic vacancies.</documentation>
+    	</annotation></element>
+
+    <element name="maxIntClusterSize" type="int">
+    	<annotation>
+    		<documentation>The maximum size of a cluster of interstitial defects.</documentation>
+    	</annotation></element>
+
+    <element name="maxHClusterSize" type="int">
+    	<annotation>
+    		<documentation>The maximum size of a cluster of hydrogen atoms.</documentation>
+    	</annotation></element>
+
+    <element name="maxHeClusterSize" type="int">
+    	<annotation>
+    		<documentation>The maximum size of a cluster of helium atoms.</documentation></annotation></element>
+
+    <element name="defaultDiffusionFactor" type="double">
+    	<annotation>
+    		<documentation>The default diffusion factor, D_0, that should be used if none is specified to calculate the diffusion coefficients of the clusters.</documentation>
+    	</annotation></element>
+
+    <element name="defaultConcentration" type="double">
+    	<annotation>
+    		<documentation>The default concentration to be used if none is specified.</documentation>
+    	</annotation></element>
+
+    <element name="latticeParameter" type="double">
+    	<annotation>
+    		<documentation>The lattice parameter used to calculate interaction radii.</documentation>
+    	</annotation></element>
+
+    <element name="temperature" type="string">
+    	<annotation>
+    		<documentation>The temperature at which the simulation should be performed in degrees Kelvin.</documentation>
+    	</annotation></element>
+
+
+    <complexType name="Reactant">
+    	<annotation>
+    		<documentation>
+    			A Reactant is a general reacting body in a reaction
+    			network. It represents any body whose population can
+    			change with time due to reactions of any type.
+    		</documentation>
+    	</annotation>
+        <attribute name="concentration" type="double" default="0.0">
+        	<annotation>
+        		<documentation>The total concentration of this Reactant.</documentation></annotation></attribute>
+        <attribute name="name" type="string">
+        	<annotation>
+        		<documentation>The name of this reactant.</documentation></annotation></attribute>
+    </complexType>
+
+    <complexType name="PSICluster">
+    	<annotation>
+    		<documentation>
+    			The PSICluster type is a Reactant that is specialized to
+    			work for simulations of plasma-surface interactions. It
+    			provides special routines for calculating the total flux
+    			due to production and dissociation and obtaining the
+    			cluster size.
+    		</documentation>
+    	</annotation>
+    	<complexContent>
+    		<extension base="xolotl-psi:Reactant">
+    			<attribute name="diffusionFactor" type="double"
+    				default="0.0">
+    				<annotation>
+    					<documentation>
+    						The diffusion factor, D_0, that is used to
+    						calculate the diffusion coefficient for this
+    						cluster.
+    					</documentation>
+    				</annotation>
+    			</attribute>
+    			<attribute name="migrationEnergy" type="double">
+    				<annotation>
+    					<documentation>
+    						The migration energy for this cluster.
+    					</documentation>
+    				</annotation>
+    			</attribute>
+    			<attribute name="bindingEnergy" type="double">
+    				<annotation>
+    					<documentation>The binding energy for this cluster.</documentation></annotation></attribute>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="HCluster">
+    	<annotation>
+    		<documentation>
+    			This type represents a cluster composed entirely of
+    			hydrogen.
+    		</documentation>
+    	</annotation>
+    	<complexContent>
+    		<extension base="xolotl-psi:PSICluster">
+    			<attribute name="numHydrogen" type="int">
+    				<annotation>
+    					<documentation>The number of hydrogen atoms in this cluster.</documentation></annotation></attribute>
+    		</extension>
+    	</complexContent>
+    </complexType>
+    
+    <complexType name="HeCluster">
+    	<annotation>
+    		<documentation>
+    			This type represents a cluster composed entirely of
+    			helium.
+    		</documentation>
+    	</annotation>
+    	<complexContent>
+    		<extension base="xolotl-psi:PSICluster">
+    			<attribute name="numHelium" type="int">
+    				<annotation>
+    					<documentation>The number of helium atoms in this cluster.</documentation>
+    				</annotation></attribute>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="VCluster">
+    	<annotation>
+    		<documentation>
+    			This type represents a cluster composed entirely of
+    			atomic vacancies.
+    		</documentation>
+    	</annotation>
+    	<complexContent>
+    		<extension base="xolotl-psi:PSICluster">
+    			<attribute name="numVacancies" type="string">
+    				<annotation>
+    					<documentation>The number of atomic vacancies in this cluster.</documentation>
+    				</annotation></attribute>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="InterstitialCluster">
+    	<annotation>
+    		<documentation>
+    			This type represents a cluster composed entirely of
+    			interstitial defects.
+    		</documentation>
+    	</annotation>
+    	<complexContent>
+    		<extension base="xolotl-psi:PSICluster">
+    			<attribute name="numInterstitials" type="int">
+    				<annotation>
+    					<documentation>The number of interstitial defects in this cluster.</documentation>
+    				</annotation></attribute>
+    		</extension>
+    	</complexContent>
+    </complexType>
+    
+    <complexType name="MixedSpeciesCluster">
+    	<annotation>
+    		<documentation>
+    			This type represents a cluster composed of multiple
+    			atomic species, vacancies and interstitials.
+    		</documentation>
+    	</annotation>
+    	<complexContent>
+    		<extension base="xolotl-psi:PSICluster">
+    		</extension>
+    	</complexContent>
+    </complexType>
+</schema>
