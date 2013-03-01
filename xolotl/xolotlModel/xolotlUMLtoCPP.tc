@@ -30,8 +30,8 @@
 <Property id="uml2cpp.DoConstructor" value="@46,=@com.ibm.xtools.transform.core.metatype.booleanfalse"/>
 <Property id="uml2cpp.DoCopyConstructor" value="@46,=@com.ibm.xtools.transform.core.metatype.booleantrue"/>
 <Property id="uml2cpp.DoDestructor" value="@46,=@com.ibm.xtools.transform.core.metatype.booleantrue"/>
-<Property id="uml2cpp.DoGetterSetter" value="@46,=@com.ibm.xtools.transform.core.metatype.booleantrue"/>
-<Property id="uml2cpp.DoGetterSetterByRef" value="@46,=@com.ibm.xtools.transform.core.metatype.booleantrue"/>
+<Property id="uml2cpp.DoGetterSetter" value="@46,=@com.ibm.xtools.transform.core.metatype.booleanfalse"/>
+<Property id="uml2cpp.DoGetterSetterByRef" value="@46,=@com.ibm.xtools.transform.core.metatype.booleanfalse"/>
 <Property id="uml2cpp.DoGetterSetterInline" value="@46,=@com.ibm.xtools.transform.core.metatype.booleanfalse"/>
 <Property id="uml2cpp.DoVirtualDestructor" value="@46,=@com.ibm.xtools.transform.core.metatype.booleanfalse"/>
 <Property id="uml2cpp.EnableSeparateFolderOption" value="@46,=@com.ibm.xtools.transform.core.metatype.booleanfalse"/>
@@ -45,6 +45,6 @@
 <Property id="uml2cpp.IntRelFolderPathId" value="@45,=@com.ibm.xtools.transform.core.metatype.string"/>
 <Property id="uml2cpp.IntStaticPathId" value="@45,=@com.ibm.xtools.transform.core.metatype.string"/>
 <Property id="uml2cpp.JETTransformId" value="@45,=@com.ibm.xtools.transform.core.metatype.stringcom.ibm.xtools.transform.uml2.cpp.jet2"/>
-<Property id="uml2cpp.PropertyTabID" value="@45,=@com.ibm.xtools.transform.core.metatype.string;GetterSetter=true;InlineGetterSetter=false;ByRefGetterSetter=true;Constructor=false;CopyConstructor=true;Assignment=false;Destructor=true;VirtualDestructor=false;Files=ask;DELETE_OBSOLETEfalse;SeparateFolderOption=false;IncludeFolderOption=;SourceFolderOption=;Int_Inclusion_Methodsuppress;Ext_Inclusion_Methodrelative;intspecificPath;intrelativeFolderPath;extspecificPath;extrelativeFolderPath;LOWER_CASEtrue;DEFAULT_RETURN_TYPEvoidType;JETTransformId="/>
+<Property id="uml2cpp.PropertyTabID" value="@45,=@com.ibm.xtools.transform.core.metatype.string;GetterSetter=false;InlineGetterSetter=false;ByRefGetterSetter=false;Constructor=false;CopyConstructor=true;Assignment=false;Destructor=true;VirtualDestructor=false;Files=ask;DELETE_OBSOLETEfalse;SeparateFolderOption=false;IncludeFolderOption=;SourceFolderOption=;Int_Inclusion_Methodsuppress;Ext_Inclusion_Methodrelative;intspecificPath;intrelativeFolderPath;extspecificPath;extrelativeFolderPath;LOWER_CASEtrue;DEFAULT_RETURN_TYPEvoidType;JETTransformId="/>
 <Property id="uml2cpp.SourceFolderName" value="@45,=@com.ibm.xtools.transform.core.metatype.string"/>
 </TransformationConfiguration>
