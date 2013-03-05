@@ -3,6 +3,9 @@ PROJECT ( xolotl C CXX )
 #Set the minimum required version of cmake for this project.
 cmake_minimum_required(VERSION 2.8)
 
+#Xolotl requires C++11 to use shared pointers
+list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+
 # Add an executabe
 ADD_EXECUTABLE ( xolotl main.cpp)
 

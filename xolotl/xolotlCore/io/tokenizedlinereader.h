@@ -3,7 +3,7 @@
 //Begin section for file tokenizedlinereader.h
 //End section for file tokenizedlinereader.h
 
-using namespace std;
+namespace xolotlCore {
 
 /**
  * This is a simple class for parsing lines from an input stream and
@@ -21,34 +21,29 @@ using namespace std;
  */
 template<class dataType>
 class TokenizedLineReader {
-	//Begin section for TokenizedLineReader
-	//TODO: Add attributes that you want preserved
-	//End section for TokenizedLineReader
 
 private:
 
 	//!The delimiter or "token" that separates elements in the line.
-	const string dataToken;
+	const std::string dataToken;
 
 	//!The character that represents a line that is a comment and should not be parsed.
-	const string commentToken;
+	const std::string commentToken;
 
 	//!The inputstream from which data should be read.
-	istream inputstream;
+	std::shared_ptr<std::istream> inputstream;
 
 public:
 
 	//!The constructor
 	TokenizedLineReader() :
-		dataToken(" "), commentToken("#") {
-		inputstream = NULL;
-	}
+		dataToken(" "), commentToken("#") {}
 
 	/**
 	 * This operation sets the string (token) that represents the delimiter separating the different data elements in the line.
 	 *
 	 */
-	void setToken(const string token) {
+	void setToken(const std::string token) {
 		//TODO Auto-generated method stub
 		return;
 	}
@@ -57,7 +52,7 @@ public:
 	 * This operation sets the character (token) that represents the comment character.
 	 *
 	 */
-	void setCommentToken(const string cToken) {
+	void setCommentToken(const std::string cToken) {
 		//TODO Auto-generated method stub
 		return;
 	}
@@ -65,7 +60,7 @@ public:
 	/**
 	 * This operation sets the input stream that should be parsed.
 	 */
-	void setInputStream(istream stream) {
+	void setInputStream(std::shared_ptr<std::istream> stream) {
 		inputstream = stream;
 		return;
 	}
@@ -75,11 +70,12 @@ public:
 	 * of its elements by splitting on the token or null if there are no more
 	 * lines in the stream.
 	 */
-	vector<dataType> loadLine() {
+	std::vector<dataType> loadLine() {
 		//TODO Auto-generated method stub
 	}
 
 }; //end class TokenizedLineReader
 
+} // end namespace xolotCore.io
 
 #endif
