@@ -1396,25 +1396,25 @@
         </ownedComment>
         <packagedElement xmi:type="uml:Class" xmi:id="_18z_IIHGEeKL9vRIYeUWfg" name="TokenizedLineReader">
           <ownedComment xmi:id="_QPbXUIHHEeKL9vRIYeUWfg" annotatedElement="_18z_IIHGEeKL9vRIYeUWfg">
-            <body>&lt;p>This is a simple class for parsing lines from an input stream and splitting that line based on a token. A line in this case is defined as any sequence of characters that terminates with an end-of-line character such as \r, \n or \r\n. The default token is a single space and the token can be changed by calling the setToken() operation. Lines that are meant to be comments will be skipped and this includes lines that start with a &quot;#&quot; by default. The comment token can be changed by calling setCommentToken(). &quot;In-line comments&quot; where the comment starts at some later point in the line are not allowed and will be parsed as data.&lt;/p>&lt;p>This class is templated so that conversion to primitive types can be handled automatically for the client class. This class is only meant to be templated with primitive types and it will fail for classes or interfaces.&lt;/p></body>
+            <body>&lt;p>This is a simple class for parsing lines from an input stream and splitting that line based on a Delimiter. A line in this case is defined as any sequence of characters that terminates with an end-of-line character such as \r, \n or \r\n. The default Delimiter is a single space and the Delimiter can be changed by calling the setDelimiter() operation. Lines that are meant to be comments will be skipped and this includes lines that start with a &quot;#&quot; by default. The comment Delimiter can be changed by calling setCommentDelimiter(). &quot;In-line comments&quot; where the comment starts at some later point in the line are not allowed and will be parsed as data.&lt;/p>&lt;p>This class is templated so that conversion to primitive types can be handled automatically for the client class. This class is only meant to be templated with primitive types and it will fail for classes or interfaces.&lt;/p></body>
           </ownedComment>
           <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_pglyMIHKEeKL9vRIYeUWfg" parameter="_3yhmwIHKEeKL9vRIYeUWfg">
             <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_3yhmwIHKEeKL9vRIYeUWfg" parameteredElement="_3yi04IHKEeKL9vRIYeUWfg">
               <ownedComment xmi:id="_7XiloIHKEeKL9vRIYeUWfg" annotatedElement="_3yhmwIHKEeKL9vRIYeUWfg">
-                <body>&lt;p>The generic type that will be parsed and returned by the TokenizedLineReader.&lt;/p></body>
+                <body>&lt;p>The generic type that will be parsed and returned by the DelimiterizedLineReader.&lt;/p></body>
               </ownedComment>
               <ownedParameteredElement xmi:type="uml:Class" xmi:id="_3yi04IHKEeKL9vRIYeUWfg" name="dataType" templateParameter="_3yhmwIHKEeKL9vRIYeUWfg"/>
             </ownedParameter>
           </ownedTemplateSignature>
-          <ownedAttribute xmi:id="_XyKcEIHfEeKL9vRIYeUWfg" name="dataToken" visibility="private" isReadOnly="true">
+          <ownedAttribute xmi:id="_XyKcEIHfEeKL9vRIYeUWfg" name="dataDelimiter" visibility="private" isReadOnly="true">
             <ownedComment xmi:id="_XzyzwIHfEeKL9vRIYeUWfg" annotatedElement="_XyKcEIHfEeKL9vRIYeUWfg">
-              <body>!The delimiter or &quot;token&quot; that separates elements in the line.
+              <body>!The delimiter or &quot;Delimiter&quot; that separates elements in the line.
 </body>
             </ownedComment>
             <type xmi:type="uml:Class" href="mmi:///#cdt.typedef%5En=std'string%5Ep=&amp;includedir&amp;/c++/4.4.4/bits/stringfwd.h$uml.Class"/>
             <defaultValue xmi:type="uml:LiteralString" xmi:id="_X0LOQYHfEeKL9vRIYeUWfg" value=" "/>
           </ownedAttribute>
-          <ownedAttribute xmi:id="_X0IK8IHfEeKL9vRIYeUWfg" name="commentToken" visibility="private" isReadOnly="true">
+          <ownedAttribute xmi:id="_X0IK8IHfEeKL9vRIYeUWfg" name="commentDelimiter" visibility="private" isReadOnly="true">
             <ownedComment xmi:id="_X0IyAIHfEeKL9vRIYeUWfg" annotatedElement="_X0IK8IHfEeKL9vRIYeUWfg">
               <body>&lt;p>!The character that represents a line that is a comment and should not be parsed.&lt;/p></body>
             </ownedComment>
@@ -1426,35 +1426,31 @@
               <body>&lt;p>The inputstream from which data should be read.&lt;/p></body>
             </ownedComment>
           </ownedAttribute>
-          <ownedOperation xmi:id="_Y87Q8IHdEeKL9vRIYeUWfg" name="TokenizedLineReader" visibility="public">
-            <ownedParameter xmi:id="_Y89GIIHdEeKL9vRIYeUWfg" name="arg" type="_Y8kEkYHdEeKL9vRIYeUWfg" direction="inout"/>
-          </ownedOperation>
-          <ownedOperation xmi:id="_Y89tMIHdEeKL9vRIYeUWfg" name="~TokenizedLineReader" visibility="public"/>
           <ownedOperation xmi:id="_dCh-8YHeEeKL9vRIYeUWfg" name="TokenizedLineReader" visibility="public"/>
-          <ownedOperation xmi:id="_xii90IHHEeKL9vRIYeUWfg" name="setToken">
+          <ownedOperation xmi:id="_xii90IHHEeKL9vRIYeUWfg" name="setDelimiter">
             <ownedComment xmi:id="_vxMfgIHIEeKL9vRIYeUWfg" annotatedElement="_xii90IHHEeKL9vRIYeUWfg">
-              <body>&lt;p>This operation sets the string (token) that represents the delimiter separating the different data elements in the line.&lt;/p></body>
+              <body>&lt;p>This operation sets the string (Delimiter) that represents the delimiter separating the different data elements in the line.&lt;/p></body>
             </ownedComment>
             <ownedParameter xmi:id="_Y9Nk0YHdEeKL9vRIYeUWfg" name="ReturnParameter" direction="return">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
             </ownedParameter>
-            <ownedParameter xmi:id="_y1gagIHHEeKL9vRIYeUWfg" name="token">
+            <ownedParameter xmi:id="_y1gagIHHEeKL9vRIYeUWfg" name="Delimiter">
               <ownedComment xmi:id="_zRf9gIHIEeKL9vRIYeUWfg" annotatedElement="_y1gagIHHEeKL9vRIYeUWfg">
-                <body>&lt;p>The delimiter (token) that separates the data elements in the line.&lt;/p></body>
+                <body>&lt;p>The delimiter (Delimiter) that separates the data elements in the line.&lt;/p></body>
               </ownedComment>
               <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
             </ownedParameter>
           </ownedOperation>
-          <ownedOperation xmi:id="_8Wsc4IHHEeKL9vRIYeUWfg" name="setCommentToken">
+          <ownedOperation xmi:id="_8Wsc4IHHEeKL9vRIYeUWfg" name="setCommentDelimiter">
             <ownedComment xmi:id="_p3m18IHIEeKL9vRIYeUWfg" annotatedElement="_8Wsc4IHHEeKL9vRIYeUWfg">
-              <body>&lt;p>This operation sets the character (token) that represents the comment character. &lt;/p></body>
+              <body>&lt;p>This operation sets the character (Delimiter) that represents the comment character. &lt;/p></body>
             </ownedComment>
             <ownedParameter xmi:id="_Y9USgYHdEeKL9vRIYeUWfg" name="ReturnParameter" direction="return">
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
             </ownedParameter>
-            <ownedParameter xmi:id="_92T1gIHHEeKL9vRIYeUWfg" name="cToken">
+            <ownedParameter xmi:id="_92T1gIHHEeKL9vRIYeUWfg" name="cDelimiter">
               <ownedComment xmi:id="_mMxi8IHIEeKL9vRIYeUWfg" annotatedElement="_92T1gIHHEeKL9vRIYeUWfg">
-                <body>&lt;p>The token&lt;/p></body>
+                <body>&lt;p>The Delimiter&lt;/p></body>
               </ownedComment>
               <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
             </ownedParameter>
@@ -1475,11 +1471,11 @@
           </ownedOperation>
           <ownedOperation xmi:id="_-DadYIHHEeKL9vRIYeUWfg" name="loadLine">
             <ownedComment xmi:id="_iNaKYIHIEeKL9vRIYeUWfg" annotatedElement="_-DadYIHHEeKL9vRIYeUWfg">
-              <body>&lt;p>This operation loads the next line from the stream and returns an array of its elements by splitting on the token or null if there are no more lines in the stream.&lt;/p></body>
+              <body>&lt;p>This operation loads the next line from the stream and returns an array of its elements by splitting on the Delimiter or null if there are no more lines in the stream.&lt;/p></body>
             </ownedComment>
             <ownedParameter xmi:id="__xXM8IHHEeKL9vRIYeUWfg" name="contents" type="_3yi04IHKEeKL9vRIYeUWfg" direction="return">
               <ownedComment xmi:id="_PiDegIHIEeKL9vRIYeUWfg" annotatedElement="__xXM8IHHEeKL9vRIYeUWfg">
-                <body>&lt;p>The contents of the line read from the stream split on the token and returned as a collection. Leading and trailing whitespace has been trimmed.&lt;/p></body>
+                <body>&lt;p>The contents of the line read from the stream split on the Delimiter and returned as a collection. Leading and trailing whitespace has been trimmed.&lt;/p></body>
               </ownedComment>
               <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__xYbEYHHEeKL9vRIYeUWfg" value="*"/>
               <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__xYbEIHHEeKL9vRIYeUWfg"/>
@@ -2021,7 +2017,6 @@
   <CPPTransformation:cpp_type xmi:id="_hQfCkIHdEeKL9vRIYeUWfg" qualifier="&amp;" base_Parameter="_Y_KsooHdEeKL9vRIYeUWfg"/>
   <Default:Documentation xmi:id="_hQg3wIHdEeKL9vRIYeUWfg" base_Comment="_ZCGr4YHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_type xmi:id="_hQis8IHdEeKL9vRIYeUWfg" qualifier="&amp;" base_Parameter="_ZA9cYoHdEeKL9vRIYeUWfg"/>
-  <CPPTransformation:cpp_destructor xmi:id="_hQkiIIHdEeKL9vRIYeUWfg" base_Operation="_Y89tMIHdEeKL9vRIYeUWfg"/>
   <Default:Documentation xmi:id="_hQnlcIHdEeKL9vRIYeUWfg" base_Comment="_Y9yzoYHdEeKL9vRIYeUWfg"/>
   <Default:Documentation xmi:id="_hQpaoIHdEeKL9vRIYeUWfg" base_Comment="_Y96IYYHdEeKL9vRIYeUWfg"/>
   <Default:Documentation xmi:id="_hQrP0IHdEeKL9vRIYeUWfg" base_Comment="_Y-9RQYHdEeKL9vRIYeUWfg"/>
