@@ -74,12 +74,26 @@ public:
 		// Local Declarations
 		std::vector<dataType> lineVector;
 		std::string line;
+		dataType dataLine;
 
 		// Check the inputstream before reading from it
 		if (!inputstream->eof() && inputstream->good()) {
 			// Get the line
 			std::getline(*(inputstream.get()), line);
-			// Split it
+			// Split it if it is not empty and does not start with the comment character
+			std::cout << line << std::endl;
+			if (!line.empty() && line.begin() == commentDelimiter) {
+				// Create a stream from which to read the string
+				std::istringstream dataStream(line);
+				// Only split the line if it contains the delimiter
+				if (line.find(dataDelimiter) != std::string::npos) {
+					dataStream >> dataLine;
+					lineVector.push_back(dataLine);
+				} else
+					// Otherwise just put the whole line in the array
+					dataStream >> dataLine;
+					lineVector.push_back(dataLine);
+			}
 		}
 
 		return lineVector;
