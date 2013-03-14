@@ -66,15 +66,18 @@ public:
 
 	/**
 	 * This operation loads the next line from the stream and returns an array
-	 * of its elements by splitting on the delimiter or null if there are no more
-	 * lines in the stream.
+	 * of its elements by splitting on the delimiter or a vector of size zero
+	 * if there are no more lines in the stream.
 	 */
 	std::vector<dataType> loadLine() {
 
 		// Local Declarations
-		std::vector<dataType> lineVector;
-		std::string line;
-		dataType dataLine;
+		size_t lastDelimiterPos = 0, nextDelimiterPos = 0, finalDelimiterPos =
+				std::string::npos;
+		std::vector<dataType> dataVector;
+		std::string line, subLine;
+		std::istringstream dataStream;
+		dataType data;
 
 		// Check the inputstream before reading from it
 		if (!inputstream->eof() && inputstream->good()) {
@@ -82,21 +85,42 @@ public:
 			std::getline(*(inputstream.get()), line);
 			// Split it if it is not empty and does not start with the comment character
 			std::cout << line << std::endl;
-			if (!line.empty() && line.begin() == commentDelimiter) {
-				// Create a stream from which to read the string
-				std::istringstream dataStream(line);
+			if (!line.empty()) {
+				// If this line is a comment, skip it by calling this operation again
+				// FIXME! - Update to compiler to support C++11 and use std::string.front()!
+				if (line.find(commentDelimiter) == 0)
+					return loadLine();
 				// Only split the line if it contains the delimiter
-				if (line.find(dataDelimiter) != std::string::npos) {
-					dataStream >> dataLine;
-					lineVector.push_back(dataLine);
-				} else
+				nextDelimiterPos = line.find(dataDelimiter);
+				if (nextDelimiterPos != finalDelimiterPos) {
+					while (lastDelimiterPos != finalDelimiterPos) {
+						std::cout << "last and next delimiter positions "
+								<< lastDelimiterPos + 1 << " "
+								<< nextDelimiterPos << std::endl;
+						subLine = line.substr(lastDelimiterPos + 1,
+								nextDelimiterPos - lastDelimiterPos + 1);
+						// SUBLINE is not updating correctly
+						dataStream.clear();
+						dataStream.str(subLine);
+						// AND dataLine is wrong
+						dataStream >> data;
+						std::cout << "subLine = " << subLine << " with data "
+								<< data << std::endl;
+						dataVector.push_back(data);
+						lastDelimiterPos = nextDelimiterPos;
+						nextDelimiterPos = line.find(dataDelimiter,
+								lastDelimiterPos + 1);
+					}
+				} else {
 					// Otherwise just put the whole line in the array
-					dataStream >> dataLine;
-					lineVector.push_back(dataLine);
+					dataStream >> data;
+					dataVector.push_back(data);
+				}
 			}
-		}
+		} else
+			return dataVector;
 
-		return lineVector;
+		return dataVector;
 	}
 
 }; //end class TokenizedLineReader

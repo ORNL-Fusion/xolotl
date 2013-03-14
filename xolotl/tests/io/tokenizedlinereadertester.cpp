@@ -7,13 +7,13 @@
 using namespace std;
 using namespace xolotlCore;
 
-BOOST_AUTO_TEST_SUITE(TokenizedLineReader_testSuite)
+BOOST_AUTO_TEST_SUITE( TokenizedLineReader_testSuite)
 
 /**This operation checks default parsing setup of the TokenizedLineReader.*/
 BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 
 	// Local Declarations
-	string doubleString = "0.0 1.0 5.0\r\n0.11 0.55 22.86 99.283\r\n0.000382 883.33 74.832\r\n";
+	string doubleString = "0.0 1.0 5.0\r\n0.11 0.55 22.86 99.283\r\n# Comment\r\n0.000382 883.33 74.832\r\n";
 	TokenizedLineReader<double> doubleReader;
 	TokenizedLineReader<int> intReader;
 	TokenizedLineReader<bool> boolReader;
@@ -22,7 +22,8 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	//----- Check doubles -----//
 
 	// Create the input stream
-	shared_ptr<stringstream> testStream(new stringstream(stringstream::in | stringstream::out));
+	shared_ptr<stringstream> testStream(
+			new stringstream(stringstream::in | stringstream::out));
 	*(testStream.get()) << doubleString;
 	// Load the double reader
 	doubleReader.setInputStream(testStream);
@@ -41,13 +42,17 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	BOOST_REQUIRE_CLOSE_FRACTION(0.55,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(22.86,dLine.at(2),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(99.283,dLine.at(3),0.0001);
-	// Get the third line and check it
+	// The third line should skipped because it is a comment so, get the fourth
+	// line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
+	for(int i = 0; i < dLine.size(); i++) {
+		std::cout << dLine.at(i) << std::endl;
+	}
 	BOOST_REQUIRE_EQUAL(3,dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.000382,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(883.33,dLine.at(1),0.001);
-	BOOST_REQUIRE_CLOSE_FRACTION(74.382,dLine.at(2),0.0001);
+	BOOST_REQUIRE_CLOSE_FRACTION(74.832,dLine.at(2),0.0001);
 
 	return;
 }
