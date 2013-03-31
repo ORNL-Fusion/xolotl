@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.1" xmlns:xmi="http://schema.omg.org/spec/XMI/2.1" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:l2="http://www.eclipse.org/uml2/4.0.0/UML/Profile/L2" xmlns:uml="http://www.eclipse.org/uml2/4.0.0/UML">
+  <uml:Model xmi:id="_9Rrl2JiBEeK8V76VVnzvqA" clientDependency="_9Rrl4ZiBEeK8V76VVnzvqA _9Rrl4piBEeK8V76VVnzvqA" name="UALCore">
+    <packagedElement xmi:type="uml:Class" xmi:id="_9Rrl2ZiBEeK8V76VVnzvqA" name="Class" isLeaf="true" isAbstract="true">
+      <ownedOperation xmi:id="_9Rrl2piBEeK8V76VVnzvqA" name="getCanonicalName">
+        <ownedParameter xmi:id="_9Rrl25iBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rrl3JiBEeK8V76VVnzvqA" name="getSimpleName">
+        <ownedParameter xmi:id="_9Rrl3ZiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9Rrl3piBEeK8V76VVnzvqA" name="ReflectiveObject" isAbstract="true">
+      <ownedOperation xmi:id="_9Rrl35iBEeK8V76VVnzvqA" name="getClass">
+        <ownedParameter xmi:id="_9Rrl4JiBEeK8V76VVnzvqA" name="Parameter1" type="_9Rrl2ZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rrl4ZiBEeK8V76VVnzvqA" client="_9Rrl2JiBEeK8V76VVnzvqA">
+      <supplier xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rrl4piBEeK8V76VVnzvqA" client="_9Rrl2JiBEeK8V76VVnzvqA">
+      <supplier xmi:type="uml:Model" href="UALImpl.uml#_9Rq_WJiBEeK8V76VVnzvqA"/>
+    </packagedElement>
+    <profileApplication xmi:id="_9Rrl45iBEeK8V76VVnzvqA">
+      <eAnnotations xmi:id="_9Rrl5JiBEeK8V76VVnzvqA" source="http://www.eclipse.org/uml2/2.0.0/UML">
+        <references xmi:type="ecore:EPackage" href="pathmap://UML_PROFILES/Standard.profile.uml#_yzU58YinEdqtvbnfB2L_5w"/>
+      </eAnnotations>
+      <appliedProfile href="pathmap://UML_PROFILES/Standard.profile.uml#_0"/>
+    </profileApplication>
+  </uml:Model>
+  <l2:ModelLibrary xmi:id="_9Rrl5ZiBEeK8V76VVnzvqA" base_Package="_9Rrl2JiBEeK8V76VVnzvqA"/>
+</xmi:XMI>

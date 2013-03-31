@@ -1,0 +1,1453 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Model xmi:version="2.1" xmlns:xmi="http://schema.omg.org/spec/XMI/2.1" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:uml="http://www.eclipse.org/uml2/4.0.0/UML" xmi:id="_9RnU4JiBEeK8V76VVnzvqA" name="xolotl">
+  <ownedComment xmi:id="_9RnU4ZiBEeK8V76VVnzvqA" annotatedElement="_9RnU4JiBEeK8V76VVnzvqA">
+    <body>&lt;p>This is a model of the Xolotl Plasma-Surface Interactions Simulator and its tests.&lt;/p></body>
+  </ownedComment>
+  <packageImport xmi:id="_9RnU4piBEeK8V76VVnzvqA">
+    <importedPackage xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
+  </packageImport>
+  <packageImport xmi:id="_9RnU45iBEeK8V76VVnzvqA">
+    <importedPackage xmi:type="uml:Model" href="CPPPrimitiveTypes.uml#_9RmGMJiBEeK8V76VVnzvqA"/>
+  </packageImport>
+  <packageImport xmi:id="_9RnU5JiBEeK8V76VVnzvqA">
+    <importedPackage xmi:type="uml:Model" href="UALPrimitiveDatatypes.uml#_9Rq_opiBEeK8V76VVnzvqA"/>
+  </packageImport>
+  <packageImport xmi:id="_9RnU5ZiBEeK8V76VVnzvqA">
+    <importedPackage xmi:type="uml:Model" href="UALCore.uml#_9Rrl2JiBEeK8V76VVnzvqA"/>
+  </packageImport>
+  <packageImport xmi:id="_9RnU5piBEeK8V76VVnzvqA">
+    <importedPackage xmi:type="uml:Model" href="UALExceptions.uml#_9RpJhZiBEeK8V76VVnzvqA"/>
+  </packageImport>
+  <packageImport xmi:id="_9RnU55iBEeK8V76VVnzvqA">
+    <importedPackage xmi:type="uml:Model" href="UALContainers.uml#_9RpxVJiBEeK8V76VVnzvqA"/>
+  </packageImport>
+  <packagedElement xmi:type="uml:Package" xmi:id="_9RnU6JiBEeK8V76VVnzvqA" name="xolotlCore">
+    <packagedElement xmi:type="uml:Package" xmi:id="_9RnU6ZiBEeK8V76VVnzvqA" name="reactants">
+      <ownedComment xmi:id="_9RnU6piBEeK8V76VVnzvqA" annotatedElement="_9RnU6ZiBEeK8V76VVnzvqA">
+        <body>&lt;p>This package describes Reactants that can react with each other in reaction network. It includes clusters for plasma-surface interactions.&lt;/p></body>
+      </ownedComment>
+      <packagedElement xmi:type="uml:Package" xmi:id="_9RnU65iBEeK8V76VVnzvqA" name="psiclusters">
+        <ownedComment xmi:id="_9RnU7JiBEeK8V76VVnzvqA" annotatedElement="_9RnU65iBEeK8V76VVnzvqA">
+          <body>&lt;p>This package contains Reactants that are specialized for plasma-surface interactions.&lt;/p></body>
+        </ownedComment>
+        <ownedComment xmi:id="_Z1XKMJiZEeKPd7Ozzftn0w">
+          <body>PSIClusters Class Diagram</body>
+        </ownedComment>
+        <packagedElement xmi:type="uml:Class" xmi:id="_9RnU7ZiBEeK8V76VVnzvqA" name="PSICluster">
+          <ownedComment xmi:id="_9RnU7piBEeK8V76VVnzvqA" annotatedElement="_9RnU7ZiBEeK8V76VVnzvqA">
+            <body>&lt;p>The PSICluster class is a Reactant that is specialized to work for simulations of plasma-surface interactions. It provides special routines for calculating the total flux due to production and dissociation and obtaining the cluster size.&lt;/p></body>
+          </ownedComment>
+          <generalization xmi:id="_9RnU75iBEeK8V76VVnzvqA" general="_9RoihZiBEeK8V76VVnzvqA"/>
+          <ownedAttribute xmi:id="_9RnU8JiBEeK8V76VVnzvqA" name="diffusionFactor" visibility="private">
+            <ownedComment xmi:id="_9RnU8ZiBEeK8V76VVnzvqA" annotatedElement="_9RnU8JiBEeK8V76VVnzvqA">
+              <body>&lt;p>The diffusion factor, D_0, that is used to calculate the diffusion coefficient for this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_9RnU8piBEeK8V76VVnzvqA" name="migrationEnergy" visibility="private">
+            <ownedComment xmi:id="_9RnU85iBEeK8V76VVnzvqA" annotatedElement="_9RnU8piBEeK8V76VVnzvqA">
+              <body>&lt;p>The migration energy for this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_9RnU9JiBEeK8V76VVnzvqA" name="bindingEnergy" visibility="private">
+            <ownedComment xmi:id="_9RnU9ZiBEeK8V76VVnzvqA" annotatedElement="_9RnU9JiBEeK8V76VVnzvqA">
+              <body>&lt;p>The binding energy for this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedOperation xmi:id="_9RnU9piBEeK8V76VVnzvqA" name="PSICluster" visibility="public">
+            <ownedParameter xmi:id="_9RnU95iBEeK8V76VVnzvqA" name="arg" type="_9RnU7ZiBEeK8V76VVnzvqA" direction="inout"/>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnU-JiBEeK8V76VVnzvqA" name="~PSICluster" visibility="public"/>
+          <ownedOperation xmi:id="_9RnU-ZiBEeK8V76VVnzvqA" name="PSICluster" visibility="public"/>
+          <ownedOperation xmi:id="_9RnU-piBEeK8V76VVnzvqA" name="~PSICluster" visibility="public"/>
+          <ownedOperation xmi:id="_9RnU-5iBEeK8V76VVnzvqA" name="get_diffusionFactor" visibility="public">
+            <ownedComment xmi:id="_9RnU_JiBEeK8V76VVnzvqA" annotatedElement="_9RnU-5iBEeK8V76VVnzvqA">
+              <body>get diffusionFactor
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnU_ZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnU_piBEeK8V76VVnzvqA" name="set_diffusionFactor" visibility="public">
+            <ownedComment xmi:id="_9RnU_5iBEeK8V76VVnzvqA" annotatedElement="_9RnU_piBEeK8V76VVnzvqA">
+              <body>set diffusionFactor
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVAJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9RnVAZiBEeK8V76VVnzvqA" name="diffusionFactor" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVApiBEeK8V76VVnzvqA" name="get_migrationEnergy" visibility="public">
+            <ownedComment xmi:id="_9RnVA5iBEeK8V76VVnzvqA" annotatedElement="_9RnVApiBEeK8V76VVnzvqA">
+              <body>get migrationEnergy
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVBJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVBZiBEeK8V76VVnzvqA" name="set_migrationEnergy" visibility="public">
+            <ownedComment xmi:id="_9RnVBpiBEeK8V76VVnzvqA" annotatedElement="_9RnVBZiBEeK8V76VVnzvqA">
+              <body>set migrationEnergy
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVB5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9RnVCJiBEeK8V76VVnzvqA" name="migrationEnergy" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVCZiBEeK8V76VVnzvqA" name="get_bindingEnergy" visibility="public">
+            <ownedComment xmi:id="_9RnVCpiBEeK8V76VVnzvqA" annotatedElement="_9RnVCZiBEeK8V76VVnzvqA">
+              <body>get bindingEnergy
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVC5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVDJiBEeK8V76VVnzvqA" name="set_bindingEnergy" visibility="public">
+            <ownedComment xmi:id="_9RnVDZiBEeK8V76VVnzvqA" annotatedElement="_9RnVDJiBEeK8V76VVnzvqA">
+              <body>set bindingEnergy
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVDpiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9RnVD5iBEeK8V76VVnzvqA" name="bindingEnergy" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVEJiBEeK8V76VVnzvqA" name="getDissociationFlux" isAbstract="true">
+            <ownedComment xmi:id="_9RnVEZiBEeK8V76VVnzvqA" annotatedElement="_9RnVEJiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation returns the total change in this cluster due to dissociation.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVEpiBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVE5iBEeK8V76VVnzvqA" name="getProductionFlux" isAbstract="true">
+            <ownedComment xmi:id="_9RnVFJiBEeK8V76VVnzvqA" annotatedElement="_9RnVE5iBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation returns the total change in this cluster due to production.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVFZiBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVFpiBEeK8V76VVnzvqA" name="getSize" isAbstract="true">
+            <ownedComment xmi:id="_9RnVF5iBEeK8V76VVnzvqA" annotatedElement="_9RnVFpiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation returns the total size of the cluster.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVGJiBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVGZiBEeK8V76VVnzvqA" name="getGenByCapt" isAbstract="true">
+            <ownedComment xmi:id="_9RnVGpiBEeK8V76VVnzvqA" annotatedElement="_9RnVGZiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation returns the total generation rate of this cluster due to captures.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVG5iBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVHJiBEeK8V76VVnzvqA" name="getGenByAnn" isAbstract="true">
+            <ownedComment xmi:id="_9RnVHZiBEeK8V76VVnzvqA" annotatedElement="_9RnVHJiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation returns the total generation rate of this cluster due to annihilation.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVHpiBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVH5iBEeK8V76VVnzvqA" name="getDiffusionFactor">
+            <ownedComment xmi:id="_9RnVIJiBEeK8V76VVnzvqA" annotatedElement="_9RnVH5iBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation retrieves the diffusion factor, D_0, that is used to calculate the diffusion coefficient for this cluster.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVIZiBEeK8V76VVnzvqA" name="factor" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVIpiBEeK8V76VVnzvqA" name="getMigrationEnergy">
+            <ownedComment xmi:id="_9RnVI5iBEeK8V76VVnzvqA" annotatedElement="_9RnVIpiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation retrieves the migration energy for this cluster.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVJJiBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVJZiBEeK8V76VVnzvqA" name="getBindingEnergy">
+            <ownedComment xmi:id="_9RnVJpiBEeK8V76VVnzvqA" annotatedElement="_9RnVJZiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation retrieves the binding energy for this cluster.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVJ5iBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVKJiBEeK8V76VVnzvqA" name="getDiffusionCoefficient" isAbstract="true">
+            <ownedComment xmi:id="_9RnVKZiBEeK8V76VVnzvqA" annotatedElement="_9RnVKJiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation returns the diffusion coefficient for this cluster and is based on the diffusion factor.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVKpiBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVK5iBEeK8V76VVnzvqA" name="setDiffusionFactor">
+            <ownedComment xmi:id="_9RnVLJiBEeK8V76VVnzvqA" annotatedElement="_9RnVK5iBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation sets the diffusion factor, D_0, that is used to calculate the diffusion coefficient for this cluster.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVLZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9RnVLpiBEeK8V76VVnzvqA" name="factor">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RnVL5iBEeK8V76VVnzvqA" name="setMigrationEnergy">
+            <ownedComment xmi:id="_9RnVMJiBEeK8V76VVnzvqA" annotatedElement="_9RnVL5iBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation sets the migration energy for this cluster.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RnVMZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9RnVMpiBEeK8V76VVnzvqA" name="em">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7YJiBEeK8V76VVnzvqA" name="setBindingEnergy">
+            <ownedComment xmi:id="_9Rn7YZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7YJiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation sets the binding energy for this cluster.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7YpiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn7Y5iBEeK8V76VVnzvqA" name="eb">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Class" xmi:id="_9Rn7ZJiBEeK8V76VVnzvqA" name="HCluster">
+          <ownedComment xmi:id="_9Rn7ZZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7ZJiBEeK8V76VVnzvqA">
+            <body>&lt;p>This class represents a cluster composed entirely of hydrogen.&lt;/p></body>
+          </ownedComment>
+          <generalization xmi:id="_9Rn7ZpiBEeK8V76VVnzvqA" general="_9RnU7ZiBEeK8V76VVnzvqA"/>
+          <ownedAttribute xmi:id="_9Rn7Z5iBEeK8V76VVnzvqA" name="numH" visibility="private">
+            <ownedComment xmi:id="_9Rn7aJiBEeK8V76VVnzvqA" annotatedElement="_9Rn7Z5iBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of hydrogen atoms in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedOperation xmi:id="_9Rn7fpiBEeK8V76VVnzvqA" name="HCluster" visibility="public">
+            <ownedParameter xmi:id="_9Rn7f5iBEeK8V76VVnzvqA" name="arg" type="_9Rn7aZiBEeK8V76VVnzvqA" direction="inout"/>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7gJiBEeK8V76VVnzvqA" name="~HCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7gZiBEeK8V76VVnzvqA" name="HCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7gpiBEeK8V76VVnzvqA" name="~HCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7g5iBEeK8V76VVnzvqA" name="get_numH" visibility="public">
+            <ownedComment xmi:id="_9Rn7hJiBEeK8V76VVnzvqA" annotatedElement="_9Rn7g5iBEeK8V76VVnzvqA">
+              <body>get numH
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7hZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7hpiBEeK8V76VVnzvqA" name="set_numH" visibility="public">
+            <ownedComment xmi:id="_9Rn7h5iBEeK8V76VVnzvqA" annotatedElement="_9Rn7hpiBEeK8V76VVnzvqA">
+              <body>set numH
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7iJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn7iZiBEeK8V76VVnzvqA" name="numH" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7ipiBEeK8V76VVnzvqA" name="HCluster">
+            <ownedComment xmi:id="_9Rn7i5iBEeK8V76VVnzvqA" annotatedElement="_9Rn7ipiBEeK8V76VVnzvqA">
+              <body>&lt;p>The constructor. All HClusters must be initialized with a size.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7jJiBEeK8V76VVnzvqA" name="nH">
+              <ownedComment xmi:id="_9Rn7jZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7jJiBEeK8V76VVnzvqA">
+                <body>&lt;p>The total number of hydrogen atoms in this cluster.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <nestedClassifier xmi:type="uml:Class" xmi:id="_9Rn7aZiBEeK8V76VVnzvqA" name="HCluster">
+            <ownedComment xmi:id="_9Rn7apiBEeK8V76VVnzvqA" annotatedElement="_9Rn7aZiBEeK8V76VVnzvqA">
+              <body>&lt;p>This class represents a cluster composed entirely of hydrogen.&lt;/p></body>
+            </ownedComment>
+            <generalization xmi:id="_9Rn7a5iBEeK8V76VVnzvqA" general="_9RnU7ZiBEeK8V76VVnzvqA"/>
+            <ownedAttribute xmi:id="_9Rn7bJiBEeK8V76VVnzvqA" name="numH" visibility="private">
+              <ownedComment xmi:id="_9Rn7bZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7bJiBEeK8V76VVnzvqA">
+                <body>&lt;p>The number of hydrogen atoms in this cluster.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedAttribute>
+            <ownedOperation xmi:id="_9Rn7bpiBEeK8V76VVnzvqA" name="HCluster" visibility="public">
+              <ownedParameter xmi:id="_9Rn7b5iBEeK8V76VVnzvqA" name="arg" type="_9RojP5iBEeK8V76VVnzvqA" direction="inout"/>
+            </ownedOperation>
+            <ownedOperation xmi:id="_9Rn7cJiBEeK8V76VVnzvqA" name="~HCluster" visibility="public"/>
+            <ownedOperation xmi:id="_9Rn7cZiBEeK8V76VVnzvqA" name="HCluster" visibility="public"/>
+            <ownedOperation xmi:id="_9Rn7cpiBEeK8V76VVnzvqA" name="~HCluster" visibility="public"/>
+            <ownedOperation xmi:id="_9Rn7c5iBEeK8V76VVnzvqA" name="get_numH" visibility="public">
+              <ownedComment xmi:id="_9Rn7dJiBEeK8V76VVnzvqA" annotatedElement="_9Rn7c5iBEeK8V76VVnzvqA">
+                <body>get numH
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_9Rn7dZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_9Rn7dpiBEeK8V76VVnzvqA" name="set_numH" visibility="public">
+              <ownedComment xmi:id="_9Rn7d5iBEeK8V76VVnzvqA" annotatedElement="_9Rn7dpiBEeK8V76VVnzvqA">
+                <body>set numH
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_9Rn7eJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_9Rn7eZiBEeK8V76VVnzvqA" name="numH" direction="inout">
+                <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_9Rn7epiBEeK8V76VVnzvqA" name="HCluster">
+              <ownedComment xmi:id="_9Rn7e5iBEeK8V76VVnzvqA" annotatedElement="_9Rn7epiBEeK8V76VVnzvqA">
+                <body>&lt;p>The constructor. All HClusters must be initialized with a size.&lt;/p></body>
+              </ownedComment>
+              <ownedParameter xmi:id="_9Rn7fJiBEeK8V76VVnzvqA" name="nH">
+                <ownedComment xmi:id="_9Rn7fZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7fJiBEeK8V76VVnzvqA">
+                  <body>&lt;p>The total number of hydrogen atoms in this cluster.&lt;/p></body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+              </ownedParameter>
+            </ownedOperation>
+          </nestedClassifier>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Class" xmi:id="_9Rn7jpiBEeK8V76VVnzvqA" name="HeCluster">
+          <ownedComment xmi:id="_9Rn7j5iBEeK8V76VVnzvqA" annotatedElement="_9Rn7jpiBEeK8V76VVnzvqA">
+            <body>&lt;p>This class represents a cluster composed entirely of helium.&lt;/p></body>
+          </ownedComment>
+          <generalization xmi:id="_9Rn7kJiBEeK8V76VVnzvqA" general="_9RnU7ZiBEeK8V76VVnzvqA"/>
+          <ownedAttribute xmi:id="_9Rn7kZiBEeK8V76VVnzvqA" name="numHe" visibility="private">
+            <ownedComment xmi:id="_9Rn7kpiBEeK8V76VVnzvqA" annotatedElement="_9Rn7kZiBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of helium atoms in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedOperation xmi:id="_9Rn7k5iBEeK8V76VVnzvqA" name="HeCluster" visibility="public">
+            <ownedParameter xmi:id="_9Rn7lJiBEeK8V76VVnzvqA" name="arg" type="_9Rn7jpiBEeK8V76VVnzvqA" direction="inout"/>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7lZiBEeK8V76VVnzvqA" name="~HeCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7lpiBEeK8V76VVnzvqA" name="HeCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7l5iBEeK8V76VVnzvqA" name="~HeCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7mJiBEeK8V76VVnzvqA" name="get_numHe" visibility="public">
+            <ownedComment xmi:id="_9Rn7mZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7mJiBEeK8V76VVnzvqA">
+              <body>get numHe
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7mpiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7m5iBEeK8V76VVnzvqA" name="set_numHe" visibility="public">
+            <ownedComment xmi:id="_9Rn7nJiBEeK8V76VVnzvqA" annotatedElement="_9Rn7m5iBEeK8V76VVnzvqA">
+              <body>set numHe
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7nZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn7npiBEeK8V76VVnzvqA" name="numHe" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7n5iBEeK8V76VVnzvqA" name="HeCluster">
+            <ownedComment xmi:id="_9Rn7oJiBEeK8V76VVnzvqA" annotatedElement="_9Rn7n5iBEeK8V76VVnzvqA">
+              <body>&lt;p>The constructor. All HeClusters must be initialized with a size.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7oZiBEeK8V76VVnzvqA" name="nHe">
+              <ownedComment xmi:id="_9Rn7opiBEeK8V76VVnzvqA" annotatedElement="_9Rn7oZiBEeK8V76VVnzvqA">
+                <body>&lt;p>The total number of helium atoms in this cluster.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Class" xmi:id="_9Rn7o5iBEeK8V76VVnzvqA" name="VCluster">
+          <ownedComment xmi:id="_9Rn7pJiBEeK8V76VVnzvqA" annotatedElement="_9Rn7o5iBEeK8V76VVnzvqA">
+            <body>&lt;p>This class represents a cluster composed entirely of atomic vacancies.&lt;/p></body>
+          </ownedComment>
+          <generalization xmi:id="_9Rn7pZiBEeK8V76VVnzvqA" general="_9RnU7ZiBEeK8V76VVnzvqA"/>
+          <ownedAttribute xmi:id="_9Rn7ppiBEeK8V76VVnzvqA" name="numVac" visibility="private">
+            <ownedComment xmi:id="_9Rn7p5iBEeK8V76VVnzvqA" annotatedElement="_9Rn7ppiBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of atomic vacancies in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedOperation xmi:id="_9Rn7qJiBEeK8V76VVnzvqA" name="VCluster" visibility="public">
+            <ownedParameter xmi:id="_9Rn7qZiBEeK8V76VVnzvqA" name="arg" type="_9Rn7o5iBEeK8V76VVnzvqA" direction="inout"/>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7qpiBEeK8V76VVnzvqA" name="~VCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7q5iBEeK8V76VVnzvqA" name="VCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7rJiBEeK8V76VVnzvqA" name="~VCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7rZiBEeK8V76VVnzvqA" name="get_numVac" visibility="public">
+            <ownedComment xmi:id="_9Rn7rpiBEeK8V76VVnzvqA" annotatedElement="_9Rn7rZiBEeK8V76VVnzvqA">
+              <body>get numVac
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7r5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7sJiBEeK8V76VVnzvqA" name="set_numVac" visibility="public">
+            <ownedComment xmi:id="_9Rn7sZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7sJiBEeK8V76VVnzvqA">
+              <body>set numVac
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7spiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn7s5iBEeK8V76VVnzvqA" name="numVac" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7tJiBEeK8V76VVnzvqA" name="VCluster">
+            <ownedComment xmi:id="_9Rn7tZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7tJiBEeK8V76VVnzvqA">
+              <body>&lt;p>The constructor. All VClusters must be initialized with a size.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7tpiBEeK8V76VVnzvqA" name="nV">
+              <ownedComment xmi:id="_9Rn7t5iBEeK8V76VVnzvqA" annotatedElement="_9Rn7tpiBEeK8V76VVnzvqA">
+                <body>&lt;p>The total number of atomic vacancies in this cluster.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Class" xmi:id="_9Rn7uJiBEeK8V76VVnzvqA" name="InterstitialCluster">
+          <ownedComment xmi:id="_9Rn7uZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7uJiBEeK8V76VVnzvqA">
+            <body>&lt;p>This class represents a cluster composed entirely of interstitial defects.&lt;/p></body>
+          </ownedComment>
+          <generalization xmi:id="_9Rn7upiBEeK8V76VVnzvqA" general="_9RnU7ZiBEeK8V76VVnzvqA"/>
+          <ownedAttribute xmi:id="_9Rn7u5iBEeK8V76VVnzvqA" name="numInt" visibility="private">
+            <ownedComment xmi:id="_9Rn7vJiBEeK8V76VVnzvqA" annotatedElement="_9Rn7u5iBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of interstitial defects in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedOperation xmi:id="_9Rn7vZiBEeK8V76VVnzvqA" name="InterstitialCluster" visibility="public">
+            <ownedParameter xmi:id="_9Rn7vpiBEeK8V76VVnzvqA" name="arg" type="_9Rn7uJiBEeK8V76VVnzvqA" direction="inout"/>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7v5iBEeK8V76VVnzvqA" name="~InterstitialCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7wJiBEeK8V76VVnzvqA" name="InterstitialCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7wZiBEeK8V76VVnzvqA" name="~InterstitialCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn7wpiBEeK8V76VVnzvqA" name="get_numInt" visibility="public">
+            <ownedComment xmi:id="_9Rn7w5iBEeK8V76VVnzvqA" annotatedElement="_9Rn7wpiBEeK8V76VVnzvqA">
+              <body>get numInt
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7xJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7xZiBEeK8V76VVnzvqA" name="set_numInt" visibility="public">
+            <ownedComment xmi:id="_9Rn7xpiBEeK8V76VVnzvqA" annotatedElement="_9Rn7xZiBEeK8V76VVnzvqA">
+              <body>set numInt
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7x5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn7yJiBEeK8V76VVnzvqA" name="numInt" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7yZiBEeK8V76VVnzvqA" name="InterstitialCluster">
+            <ownedComment xmi:id="_9Rn7ypiBEeK8V76VVnzvqA" annotatedElement="_9Rn7yZiBEeK8V76VVnzvqA">
+              <body>&lt;p>The constructor. All InterstitialClusters must be initialized with a size.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7y5iBEeK8V76VVnzvqA" name="nI">
+              <ownedComment xmi:id="_9Rn7zJiBEeK8V76VVnzvqA" annotatedElement="_9Rn7y5iBEeK8V76VVnzvqA">
+                <body>&lt;p>The total number of interstitial defects in this cluster.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Class" xmi:id="_9Rn7zZiBEeK8V76VVnzvqA" name="MixedSpeciesCluster">
+          <ownedComment xmi:id="_9Rn7zpiBEeK8V76VVnzvqA" annotatedElement="_9Rn7zZiBEeK8V76VVnzvqA">
+            <body>&lt;p>This class represents a cluster composed of multiple atomic species, vacancies and interstitials.&lt;/p></body>
+          </ownedComment>
+          <generalization xmi:id="_9Rn7z5iBEeK8V76VVnzvqA" general="_9RnU7ZiBEeK8V76VVnzvqA"/>
+          <ownedAttribute xmi:id="_9Rn70JiBEeK8V76VVnzvqA" name="size" visibility="private">
+            <ownedComment xmi:id="_9Rn70ZiBEeK8V76VVnzvqA" annotatedElement="_9Rn70JiBEeK8V76VVnzvqA">
+              <body>&lt;p>The total number of atoms, vacancies and interstitials making up this cluster across all species.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_9Rn70piBEeK8V76VVnzvqA" name="numH" visibility="private">
+            <ownedComment xmi:id="_9Rn705iBEeK8V76VVnzvqA" annotatedElement="_9Rn70piBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of hydrogen atoms in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_9Rn71JiBEeK8V76VVnzvqA" name="numInt" visibility="private">
+            <ownedComment xmi:id="_9Rn71ZiBEeK8V76VVnzvqA" annotatedElement="_9Rn71JiBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of interstitial defects in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_9Rn71piBEeK8V76VVnzvqA" name="numD" visibility="private">
+            <ownedComment xmi:id="_9Rn715iBEeK8V76VVnzvqA" annotatedElement="_9Rn71piBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of deuterium atoms in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_9Rn72JiBEeK8V76VVnzvqA" name="numHe" visibility="private">
+            <ownedComment xmi:id="_9Rn72ZiBEeK8V76VVnzvqA" annotatedElement="_9Rn72JiBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of helium atoms in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_9Rn72piBEeK8V76VVnzvqA" name="numT" visibility="private">
+            <ownedComment xmi:id="_9Rn725iBEeK8V76VVnzvqA" annotatedElement="_9Rn72piBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of tritium atoms in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_9Rn73JiBEeK8V76VVnzvqA" name="numVac" visibility="private">
+            <ownedComment xmi:id="_9Rn73ZiBEeK8V76VVnzvqA" annotatedElement="_9Rn73JiBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of atomic vacancies in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedOperation xmi:id="_9Rn73piBEeK8V76VVnzvqA" name="MixedSpeciesCluster" visibility="public">
+            <ownedParameter xmi:id="_9Rn735iBEeK8V76VVnzvqA" name="arg" type="_9Rn7zZiBEeK8V76VVnzvqA" direction="inout"/>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn74JiBEeK8V76VVnzvqA" name="~MixedSpeciesCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn74ZiBEeK8V76VVnzvqA" name="MixedSpeciesCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn74piBEeK8V76VVnzvqA" name="~MixedSpeciesCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn745iBEeK8V76VVnzvqA" name="get_size" visibility="public">
+            <ownedComment xmi:id="_9Rn75JiBEeK8V76VVnzvqA" annotatedElement="_9Rn745iBEeK8V76VVnzvqA">
+              <body>get size
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn75ZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn75piBEeK8V76VVnzvqA" name="set_size" visibility="public">
+            <ownedComment xmi:id="_9Rn755iBEeK8V76VVnzvqA" annotatedElement="_9Rn75piBEeK8V76VVnzvqA">
+              <body>set size
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn76JiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn76ZiBEeK8V76VVnzvqA" name="size" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn76piBEeK8V76VVnzvqA" name="get_numH" visibility="public">
+            <ownedComment xmi:id="_9Rn765iBEeK8V76VVnzvqA" annotatedElement="_9Rn76piBEeK8V76VVnzvqA">
+              <body>get numH
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn77JiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn77ZiBEeK8V76VVnzvqA" name="set_numH" visibility="public">
+            <ownedComment xmi:id="_9Rn77piBEeK8V76VVnzvqA" annotatedElement="_9Rn77ZiBEeK8V76VVnzvqA">
+              <body>set numH
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn775iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn78JiBEeK8V76VVnzvqA" name="numH" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn78ZiBEeK8V76VVnzvqA" name="get_numInt" visibility="public">
+            <ownedComment xmi:id="_9Rn78piBEeK8V76VVnzvqA" annotatedElement="_9Rn78ZiBEeK8V76VVnzvqA">
+              <body>get numInt
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn785iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn79JiBEeK8V76VVnzvqA" name="set_numInt" visibility="public">
+            <ownedComment xmi:id="_9Rn79ZiBEeK8V76VVnzvqA" annotatedElement="_9Rn79JiBEeK8V76VVnzvqA">
+              <body>set numInt
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn79piBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn795iBEeK8V76VVnzvqA" name="numInt" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7-JiBEeK8V76VVnzvqA" name="get_numD" visibility="public">
+            <ownedComment xmi:id="_9Rn7-ZiBEeK8V76VVnzvqA" annotatedElement="_9Rn7-JiBEeK8V76VVnzvqA">
+              <body>get numD
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7-piBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7-5iBEeK8V76VVnzvqA" name="set_numD" visibility="public">
+            <ownedComment xmi:id="_9Rn7_JiBEeK8V76VVnzvqA" annotatedElement="_9Rn7-5iBEeK8V76VVnzvqA">
+              <body>set numD
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn7_ZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn7_piBEeK8V76VVnzvqA" name="numD" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn7_5iBEeK8V76VVnzvqA" name="get_numHe" visibility="public">
+            <ownedComment xmi:id="_9Rn8AJiBEeK8V76VVnzvqA" annotatedElement="_9Rn7_5iBEeK8V76VVnzvqA">
+              <body>get numHe
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8AZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8ApiBEeK8V76VVnzvqA" name="set_numHe" visibility="public">
+            <ownedComment xmi:id="_9Rn8A5iBEeK8V76VVnzvqA" annotatedElement="_9Rn8ApiBEeK8V76VVnzvqA">
+              <body>set numHe
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8BJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn8BZiBEeK8V76VVnzvqA" name="numHe" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8BpiBEeK8V76VVnzvqA" name="get_numT" visibility="public">
+            <ownedComment xmi:id="_9Rn8B5iBEeK8V76VVnzvqA" annotatedElement="_9Rn8BpiBEeK8V76VVnzvqA">
+              <body>get numT
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8CJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8CZiBEeK8V76VVnzvqA" name="set_numT" visibility="public">
+            <ownedComment xmi:id="_9Rn8CpiBEeK8V76VVnzvqA" annotatedElement="_9Rn8CZiBEeK8V76VVnzvqA">
+              <body>set numT
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8C5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn8DJiBEeK8V76VVnzvqA" name="numT" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8DZiBEeK8V76VVnzvqA" name="get_numVac" visibility="public">
+            <ownedComment xmi:id="_9Rn8DpiBEeK8V76VVnzvqA" annotatedElement="_9Rn8DZiBEeK8V76VVnzvqA">
+              <body>get numVac
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8D5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8EJiBEeK8V76VVnzvqA" name="set_numVac" visibility="public">
+            <ownedComment xmi:id="_9Rn8EZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8EJiBEeK8V76VVnzvqA">
+              <body>set numVac
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8EpiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn8E5iBEeK8V76VVnzvqA" name="numVac" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8FJiBEeK8V76VVnzvqA" name="MixedSpeciesCluster">
+            <ownedComment xmi:id="_9Rn8FZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8FJiBEeK8V76VVnzvqA">
+              <body>&lt;p>The constructor. All MixedSpeciesClusters must be initialized with two arrays that describe the species of which it is composed. The arrays contain the names of the species and the respective concentration of each species. The species must be one of {H,He,I,V,D,T}.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8FpiBEeK8V76VVnzvqA" name="numPerSpecies">
+              <ownedComment xmi:id="_9Rn8F5iBEeK8V76VVnzvqA" annotatedElement="_9Rn8FpiBEeK8V76VVnzvqA">
+                <body>&lt;p>An integer array of the total number of atoms, vacancies or interstitials for a given species in this MixedSpeciesCluster. Each element of this array corresponds to the species named by the element at the same index of the speciesNames array.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn8GJiBEeK8V76VVnzvqA" name="speciesNames">
+              <ownedComment xmi:id="_9Rn8GZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8GJiBEeK8V76VVnzvqA">
+                <body>&lt;p>A string array of the names of the species in this MixedSpeciesCluster. Each element of this array names a single species. The total size of this species within the mixed species is given by the element at the same index in the numPerSpecies array.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+              <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_9Rn8G5iBEeK8V76VVnzvqA" value="1"/>
+              <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_9Rn8GpiBEeK8V76VVnzvqA" value="*"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8HJiBEeK8V76VVnzvqA" name="getGenByEm">
+            <ownedComment xmi:id="_9Rn8HZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8HJiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation returns the total generation rate due to emission for this cluster.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8HpiBEeK8V76VVnzvqA" name="rate" direction="return">
+              <ownedComment xmi:id="_9Rn8H5iBEeK8V76VVnzvqA" annotatedElement="_9Rn8HpiBEeK8V76VVnzvqA">
+                <body>&lt;p>The total rate&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8IJiBEeK8V76VVnzvqA" name="getAnnByEm">
+            <ownedComment xmi:id="_9Rn8IZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8IJiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation returns the total generation rate due to annihilation for this cluster.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8IpiBEeK8V76VVnzvqA" name="rate" direction="return">
+              <ownedComment xmi:id="_9Rn8I5iBEeK8V76VVnzvqA" annotatedElement="_9Rn8IpiBEeK8V76VVnzvqA">
+                <body>&lt;p>The total rate&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8JJiBEeK8V76VVnzvqA" name="getSpeciesSize">
+            <ownedComment xmi:id="_9Rn8JZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8JJiBEeK8V76VVnzvqA">
+              <body>&lt;p>This operation returns the number of a given &quot;species&quot; within this cluster by passing one of {H,He,I,V,D,T} as an input argument.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8JpiBEeK8V76VVnzvqA" name="size" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn8J5iBEeK8V76VVnzvqA" name="speciesName">
+              <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            </ownedParameter>
+          </ownedOperation>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Class" xmi:id="_9Rn8KJiBEeK8V76VVnzvqA" name="TCluster">
+          <ownedComment xmi:id="_9Rn8KZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8KJiBEeK8V76VVnzvqA">
+            <body>&lt;p>This class represents a cluster composed entirely of tritium.&lt;/p></body>
+          </ownedComment>
+          <generalization xmi:id="_9Rn8KpiBEeK8V76VVnzvqA" general="_9Rn7ZJiBEeK8V76VVnzvqA"/>
+          <ownedAttribute xmi:id="_9Rn8K5iBEeK8V76VVnzvqA" name="numT" visibility="private">
+            <ownedComment xmi:id="_9Rn8LJiBEeK8V76VVnzvqA" annotatedElement="_9Rn8K5iBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of tritium atoms in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedOperation xmi:id="_9Rn8QpiBEeK8V76VVnzvqA" name="TCluster" visibility="public">
+            <ownedParameter xmi:id="_9Rn8Q5iBEeK8V76VVnzvqA" name="arg" type="_9Rn8KJiBEeK8V76VVnzvqA" direction="inout"/>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8RJiBEeK8V76VVnzvqA" name="~TCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn8RZiBEeK8V76VVnzvqA" name="TCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn8RpiBEeK8V76VVnzvqA" name="~TCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9Rn8R5iBEeK8V76VVnzvqA" name="get_numT" visibility="public">
+            <ownedComment xmi:id="_9Rn8SJiBEeK8V76VVnzvqA" annotatedElement="_9Rn8R5iBEeK8V76VVnzvqA">
+              <body>get numT
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8SZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8SpiBEeK8V76VVnzvqA" name="set_numT" visibility="public">
+            <ownedComment xmi:id="_9Rn8S5iBEeK8V76VVnzvqA" annotatedElement="_9Rn8SpiBEeK8V76VVnzvqA">
+              <body>set numT
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8TJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9Rn8TZiBEeK8V76VVnzvqA" name="numT" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Rn8TpiBEeK8V76VVnzvqA" name="TCluster">
+            <ownedComment xmi:id="_9Rn8T5iBEeK8V76VVnzvqA" annotatedElement="_9Rn8TpiBEeK8V76VVnzvqA">
+              <body>&lt;p>The constructor. All TClusters must be initialized with a size.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Rn8UJiBEeK8V76VVnzvqA" name="nH">
+              <ownedComment xmi:id="_9Rn8UZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8UJiBEeK8V76VVnzvqA">
+                <body>&lt;p>The total number of hydrogen atoms in this cluster.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <nestedClassifier xmi:type="uml:Class" xmi:id="_9Rn8LZiBEeK8V76VVnzvqA" name="HCluster">
+            <ownedComment xmi:id="_9Rn8LpiBEeK8V76VVnzvqA" annotatedElement="_9Rn8LZiBEeK8V76VVnzvqA">
+              <body>&lt;p>This class represents a cluster composed entirely of hydrogen.&lt;/p></body>
+            </ownedComment>
+            <generalization xmi:id="_9Rn8L5iBEeK8V76VVnzvqA" general="_9RnU7ZiBEeK8V76VVnzvqA"/>
+            <ownedAttribute xmi:id="_9Rn8MJiBEeK8V76VVnzvqA" name="numH" visibility="private">
+              <ownedComment xmi:id="_9Rn8MZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8MJiBEeK8V76VVnzvqA">
+                <body>&lt;p>The number of hydrogen atoms in this cluster.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedAttribute>
+            <ownedOperation xmi:id="_9Rn8MpiBEeK8V76VVnzvqA" name="HCluster" visibility="public">
+              <ownedParameter xmi:id="_9Rn8M5iBEeK8V76VVnzvqA" name="arg" type="_9Rn8LZiBEeK8V76VVnzvqA" direction="inout"/>
+            </ownedOperation>
+            <ownedOperation xmi:id="_9Rn8NJiBEeK8V76VVnzvqA" name="~HCluster" visibility="public"/>
+            <ownedOperation xmi:id="_9Rn8NZiBEeK8V76VVnzvqA" name="HCluster" visibility="public"/>
+            <ownedOperation xmi:id="_9Rn8NpiBEeK8V76VVnzvqA" name="~HCluster" visibility="public"/>
+            <ownedOperation xmi:id="_9Rn8N5iBEeK8V76VVnzvqA" name="get_numH" visibility="public">
+              <ownedComment xmi:id="_9Rn8OJiBEeK8V76VVnzvqA" annotatedElement="_9Rn8N5iBEeK8V76VVnzvqA">
+                <body>get numH
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_9Rn8OZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_9Rn8OpiBEeK8V76VVnzvqA" name="set_numH" visibility="public">
+              <ownedComment xmi:id="_9Rn8O5iBEeK8V76VVnzvqA" annotatedElement="_9Rn8OpiBEeK8V76VVnzvqA">
+                <body>set numH
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_9Rn8PJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_9Rn8PZiBEeK8V76VVnzvqA" name="numH" direction="inout">
+                <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_9Rn8PpiBEeK8V76VVnzvqA" name="HCluster">
+              <ownedComment xmi:id="_9Rn8P5iBEeK8V76VVnzvqA" annotatedElement="_9Rn8PpiBEeK8V76VVnzvqA">
+                <body>&lt;p>The constructor. All HClusters must be initialized with a size.&lt;/p></body>
+              </ownedComment>
+              <ownedParameter xmi:id="_9Rn8QJiBEeK8V76VVnzvqA" name="nH">
+                <ownedComment xmi:id="_9Rn8QZiBEeK8V76VVnzvqA" annotatedElement="_9Rn8QJiBEeK8V76VVnzvqA">
+                  <body>&lt;p>The total number of hydrogen atoms in this cluster.&lt;/p></body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+              </ownedParameter>
+            </ownedOperation>
+          </nestedClassifier>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Class" xmi:id="_9RoicJiBEeK8V76VVnzvqA" name="DCluster">
+          <ownedComment xmi:id="_9RoicZiBEeK8V76VVnzvqA" annotatedElement="_9RoicJiBEeK8V76VVnzvqA">
+            <body>&lt;p>This class represents a cluster composed entirely of deuterium.&lt;/p></body>
+          </ownedComment>
+          <generalization xmi:id="_9RoicpiBEeK8V76VVnzvqA" general="_9Rn7ZJiBEeK8V76VVnzvqA"/>
+          <ownedAttribute xmi:id="_9Roic5iBEeK8V76VVnzvqA" name="numD" visibility="private">
+            <ownedComment xmi:id="_9RoidJiBEeK8V76VVnzvqA" annotatedElement="_9Roic5iBEeK8V76VVnzvqA">
+              <body>&lt;p>The number of deuterium atoms in this cluster.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedAttribute>
+          <ownedOperation xmi:id="_9RoidZiBEeK8V76VVnzvqA" name="DCluster" visibility="public">
+            <ownedParameter xmi:id="_9RoidpiBEeK8V76VVnzvqA" name="arg" type="_9RoicJiBEeK8V76VVnzvqA" direction="inout"/>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9Roid5iBEeK8V76VVnzvqA" name="~DCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9RoieJiBEeK8V76VVnzvqA" name="DCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9RoieZiBEeK8V76VVnzvqA" name="~DCluster" visibility="public"/>
+          <ownedOperation xmi:id="_9RoiepiBEeK8V76VVnzvqA" name="get_numD" visibility="public">
+            <ownedComment xmi:id="_9Roie5iBEeK8V76VVnzvqA" annotatedElement="_9RoiepiBEeK8V76VVnzvqA">
+              <body>get numD
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9RoifJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RoifZiBEeK8V76VVnzvqA" name="set_numD" visibility="public">
+            <ownedComment xmi:id="_9RoifpiBEeK8V76VVnzvqA" annotatedElement="_9RoifZiBEeK8V76VVnzvqA">
+              <body>set numD
+</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Roif5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+            <ownedParameter xmi:id="_9RoigJiBEeK8V76VVnzvqA" name="numD" direction="inout">
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_9RoigZiBEeK8V76VVnzvqA" name="DCluster">
+            <ownedComment xmi:id="_9RoigpiBEeK8V76VVnzvqA" annotatedElement="_9RoigZiBEeK8V76VVnzvqA">
+              <body>&lt;p>The constructor. All DClusters must be initialized with a size.&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_9Roig5iBEeK8V76VVnzvqA" name="nH">
+              <ownedComment xmi:id="_9RoihJiBEeK8V76VVnzvqA" annotatedElement="_9Roig5iBEeK8V76VVnzvqA">
+                <body>&lt;p>The total number of hydrogen atoms in this cluster.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+            </ownedParameter>
+          </ownedOperation>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Class" xmi:id="_88VisJiTEeKPd7Ozzftn0w" clientDependency="_FDL7wJiZEeKPd7Ozzftn0w _IXXCQJiZEeKPd7Ozzftn0w _K3AUgJiZEeKPd7Ozzftn0w _O_P8QJiZEeKPd7Ozzftn0w _Rl_8EJiZEeKPd7Ozzftn0w" name="PSIClusterNetworkLoader">
+          <ownedComment xmi:id="_9FKaYJlKEeKRCZsM0VJZXg">
+            <body>This class will load a reaction network composed of PSIClusters from an inputstream.
+
+The data in the stream should contain the information for a single cluster on each line with the following quantities specified and separated by a single space each:
+The number of He in the cluster
+The number of I in the cluster
+The number of V in the cluster
+The He binding energy
+The I binding energy
+The V binding energy
+The trap mutation binding energy
+
+Lines of comments starting with a &quot;#&quot; will be ignored as will lines that do not clearly provide the information above.
+
+The network will be returned as a std::vector of PSIClusters ordered with single-species He, I and V clusters first and all mixed clusters coming last. Instances of the
+appropriate cluster type are instantiated during the loading process, but returned as instances of the base class.
+
+A map of properties will be produced that contains information about the network with the following keys:
+maxHeClusterSize - The number of He atoms in the largest single-species He cluster.
+maxInterstitialClusterSize - The number of interstitials in the largest single-species I cluster.
+maxIVClusterSize - The number of atomic vacancies in the largest single-species V cluster.
+numHeClusters - The number of single-species He clusters of all sizes in the network.
+numInterstitialClusters - The number of single-species I clusters of all sizes in the network.
+numVClusters - The number of single-species V clusters of all sizes in the network.
+</body>
+          </ownedComment>
+          <ownedAttribute xmi:id="_V5e3UJlFEeKRCZsM0VJZXg" name="datastream" type="_9RojPpiBEeK8V76VVnzvqA">
+            <ownedComment xmi:id="_59Q_4JlLEeKRCZsM0VJZXg">
+              <body>This is a reference to the input stream from which the cluster data is read.</body>
+            </ownedComment>
+          </ownedAttribute>
+          <ownedOperation xmi:id="_uqJAsJiZEeKPd7Ozzftn0w" name="PSIClusterNetworkLoader">
+            <ownedComment xmi:id="_DXGdEJlMEeKRCZsM0VJZXg">
+              <body>The default constructor. The setInputstream() operation must be called if this constructor is used.</body>
+            </ownedComment>
+          </ownedOperation>
+          <ownedOperation xmi:id="_ym1fwJiZEeKPd7Ozzftn0w" name="PSIClusterNetworkLoader">
+            <ownedComment xmi:id="_KeA1YJlMEeKRCZsM0VJZXg">
+              <body>An alternative constructor provided for convenience.</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_12OM4JiZEeKPd7Ozzftn0w" name="inputstream" type="_9RojPpiBEeK8V76VVnzvqA">
+              <ownedComment xmi:id="_QRLt4JlMEeKRCZsM0VJZXg">
+                <body>The inputstream from which the cluster data should be loaded.</body>
+              </ownedComment>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_UOo80JiaEeKPd7Ozzftn0w" name="setInputstream">
+            <ownedComment xmi:id="_JqKhIJlNEeKRCZsM0VJZXg">
+              <body>This operation specifies the inputstream from which cluster data should be loaded.</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_awSE4JiaEeKPd7Ozzftn0w" name="inputstream" type="_9RojPpiBEeK8V76VVnzvqA">
+              <ownedComment xmi:id="_IG6lsJlNEeKRCZsM0VJZXg">
+                <body>The inputstream from which the cluster data should be loaded.</body>
+              </ownedComment>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_ogJHIJiaEeKPd7Ozzftn0w" name="load">
+            <ownedComment xmi:id="_SMaPAJlNEeKRCZsM0VJZXg">
+              <body>This operation will load the reaction network from the inputstream in the format specified previously. The network will be empty if it can not be loaded.</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_sG81wJiaEeKPd7Ozzftn0w" name="network" type="_9RnU7ZiBEeK8V76VVnzvqA" direction="return">
+              <ownedComment xmi:id="_SfkbkJlNEeKRCZsM0VJZXg">
+                <body>The reaction network.</body>
+              </ownedComment>
+              <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_uehKEJiaEeKPd7Ozzftn0w"/>
+              <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_uelbgJiaEeKPd7Ozzftn0w" value="*"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="__BjekJiaEeKPd7Ozzftn0w" name="getProperties">
+            <ownedComment xmi:id="_02CVcJlNEeKRCZsM0VJZXg">
+              <body>This operation returns the properties map that was created for the network. If it is called before the network is loaded or the network can not be loaded, it will be empty.</body>
+            </ownedComment>
+            <ownedParameter xmi:id="_CL2QUJibEeKPd7Ozzftn0w" name="props">
+              <ownedComment xmi:id="_1G1KgJlNEeKRCZsM0VJZXg">
+                <body>The map.</body>
+              </ownedComment>
+              <type xmi:type="uml:Interface" href="UALContainers.uml#_9RqX2JiBEeK8V76VVnzvqA"/>
+              <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_D2emIJibEeKPd7Ozzftn0w" value="1"/>
+              <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_D2fNMJibEeKPd7Ozzftn0w" value="1"/>
+            </ownedParameter>
+          </ownedOperation>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Dependency" xmi:id="_-VoUEJiXEeKPd7Ozzftn0w"/>
+        <packagedElement xmi:type="uml:Dependency" xmi:id="_CbKmEJiYEeKPd7Ozzftn0w"/>
+        <packagedElement xmi:type="uml:Association" xmi:id="_S8gRcJiYEeKPd7Ozzftn0w"/>
+        <packagedElement xmi:type="uml:Dependency" xmi:id="_FDL7wJiZEeKPd7Ozzftn0w" name="" client="_88VisJiTEeKPd7Ozzftn0w" supplier="_9Rn7jpiBEeK8V76VVnzvqA"/>
+        <packagedElement xmi:type="uml:Dependency" xmi:id="_IXXCQJiZEeKPd7Ozzftn0w" name="" client="_88VisJiTEeKPd7Ozzftn0w" supplier="_9Rn7o5iBEeK8V76VVnzvqA"/>
+        <packagedElement xmi:type="uml:Dependency" xmi:id="_K3AUgJiZEeKPd7Ozzftn0w" name="" client="_88VisJiTEeKPd7Ozzftn0w" supplier="_9Rn7uJiBEeK8V76VVnzvqA"/>
+        <packagedElement xmi:type="uml:Dependency" xmi:id="_O_P8QJiZEeKPd7Ozzftn0w" name="" client="_88VisJiTEeKPd7Ozzftn0w" supplier="_9Rn7zZiBEeK8V76VVnzvqA"/>
+        <packagedElement xmi:type="uml:Dependency" xmi:id="_Rl_8EJiZEeKPd7Ozzftn0w" name="" client="_88VisJiTEeKPd7Ozzftn0w" supplier="_9Rn7ZJiBEeK8V76VVnzvqA"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Class" xmi:id="_9RoihZiBEeK8V76VVnzvqA" name="Reactant">
+        <ownedComment xmi:id="_9RoihpiBEeK8V76VVnzvqA" annotatedElement="_9RoihZiBEeK8V76VVnzvqA">
+          <body>&lt;p>A Reactant is a general reacting body in a reaction network. It represents any body whose population can change with time due to reactions of any type.&lt;/p></body>
+        </ownedComment>
+        <ownedAttribute xmi:id="_9Roih5iBEeK8V76VVnzvqA" name="concentration" visibility="private">
+          <ownedComment xmi:id="_9RoiiJiBEeK8V76VVnzvqA" annotatedElement="_9Roih5iBEeK8V76VVnzvqA">
+            <body>&lt;p>The total concentration of this Reactant.&lt;/p></body>
+          </ownedComment>
+          <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          <defaultValue xmi:type="uml:OpaqueExpression" xmi:id="_9RoiiZiBEeK8V76VVnzvqA">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+            <language></language>
+            <body>0.0</body>
+          </defaultValue>
+        </ownedAttribute>
+        <ownedAttribute xmi:id="_9RoiipiBEeK8V76VVnzvqA" name="name" visibility="private" isReadOnly="true">
+          <ownedComment xmi:id="_9Roii5iBEeK8V76VVnzvqA" annotatedElement="_9RoiipiBEeK8V76VVnzvqA">
+            <body>&lt;p>The name of this Reactant.&lt;/p>
+</body>
+          </ownedComment>
+          <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNJiBEeK8V76VVnzvqA"/>
+          <defaultValue xmi:type="uml:LiteralString" xmi:id="_9RoijJiBEeK8V76VVnzvqA" value=""/>
+        </ownedAttribute>
+        <ownedAttribute xmi:id="_9RoijZiBEeK8V76VVnzvqA" name="name_0" visibility="private" isReadOnly="true">
+          <ownedComment xmi:id="_9RoijpiBEeK8V76VVnzvqA" annotatedElement="_9RoijZiBEeK8V76VVnzvqA">
+            <body>&lt;p>The name of this Reactant.&lt;/p>
+</body>
+          </ownedComment>
+          <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNJiBEeK8V76VVnzvqA"/>
+          <defaultValue xmi:type="uml:LiteralString" xmi:id="_9Roij5iBEeK8V76VVnzvqA" value=""/>
+        </ownedAttribute>
+        <ownedAttribute xmi:id="_9RoikJiBEeK8V76VVnzvqA" name="name" visibility="private">
+          <ownedComment xmi:id="_9RoikZiBEeK8V76VVnzvqA" annotatedElement="_9RoikJiBEeK8V76VVnzvqA">
+            <body>&lt;p>The name of this Reactant.&lt;/p></body>
+          </ownedComment>
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          <defaultValue xmi:type="uml:LiteralString" xmi:id="_9RoikpiBEeK8V76VVnzvqA" value="">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          </defaultValue>
+        </ownedAttribute>
+        <ownedAttribute xmi:id="_9Roik5iBEeK8V76VVnzvqA" name="id" visibility="private">
+          <ownedComment xmi:id="_9RoilJiBEeK8V76VVnzvqA" annotatedElement="_9Roik5iBEeK8V76VVnzvqA">
+            <body>&lt;p>An integer identification number for this reactant. &lt;/p></body>
+          </ownedComment>
+          <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_9RoilZiBEeK8V76VVnzvqA">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </defaultValue>
+        </ownedAttribute>
+        <ownedOperation xmi:id="_9RoilpiBEeK8V76VVnzvqA" name="Reactant" visibility="public">
+          <ownedParameter xmi:id="_9Roil5iBEeK8V76VVnzvqA" name="arg" type="_9RoihZiBEeK8V76VVnzvqA" direction="inout"/>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoimJiBEeK8V76VVnzvqA" name="~Reactant" visibility="public"/>
+        <ownedOperation xmi:id="_9RoimZiBEeK8V76VVnzvqA" name="~Reactant" visibility="public"/>
+        <ownedOperation xmi:id="_9RoimpiBEeK8V76VVnzvqA" name="get_concentration" visibility="public">
+          <ownedComment xmi:id="_9Roim5iBEeK8V76VVnzvqA" annotatedElement="_9RoimpiBEeK8V76VVnzvqA">
+            <body>get concentration
+</body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9RoinJiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoinZiBEeK8V76VVnzvqA" name="set_concentration" visibility="public">
+          <ownedComment xmi:id="_9RoinpiBEeK8V76VVnzvqA" annotatedElement="_9RoinZiBEeK8V76VVnzvqA">
+            <body>set concentration
+</body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roin5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9RoioJiBEeK8V76VVnzvqA" name="concentration" direction="inout">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoioZiBEeK8V76VVnzvqA" name="get_name" visibility="public">
+          <ownedComment xmi:id="_9RoiopiBEeK8V76VVnzvqA" annotatedElement="_9RoioZiBEeK8V76VVnzvqA">
+            <body>get name
+</body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roio5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNJiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoipJiBEeK8V76VVnzvqA" name="get_id" visibility="public">
+          <ownedComment xmi:id="_9RoipZiBEeK8V76VVnzvqA" annotatedElement="_9RoipJiBEeK8V76VVnzvqA">
+            <body>get id
+</body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9RoippiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roip5iBEeK8V76VVnzvqA" name="set_id" visibility="public">
+          <ownedComment xmi:id="_9RoiqJiBEeK8V76VVnzvqA" annotatedElement="_9Roip5iBEeK8V76VVnzvqA">
+            <body>set id
+</body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9RoiqZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9RoiqpiBEeK8V76VVnzvqA" name="id" direction="inout">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roiq5iBEeK8V76VVnzvqA" name="Reactant" visibility="public">
+          <ownedComment xmi:id="_9RoirJiBEeK8V76VVnzvqA" annotatedElement="_9Roiq5iBEeK8V76VVnzvqA">
+            <body>&lt;p>The constructor.&lt;/p>
+</body>
+          </ownedComment>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoirZiBEeK8V76VVnzvqA" name="Reactant">
+          <ownedComment xmi:id="_9RoirpiBEeK8V76VVnzvqA" annotatedElement="_9RoirZiBEeK8V76VVnzvqA">
+            <body>&lt;p>The constructor.&lt;/p></body>
+          </ownedComment>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roir5iBEeK8V76VVnzvqA" name="Reactant">
+          <ownedComment xmi:id="_9RoisJiBEeK8V76VVnzvqA" annotatedElement="_9Roir5iBEeK8V76VVnzvqA">
+            <body>&lt;p>An alternative constructor that can be used to create a reactant with an initial concentration.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9RoisZiBEeK8V76VVnzvqA" name="conc">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoispiBEeK8V76VVnzvqA" name="getConcentration">
+          <ownedComment xmi:id="_9Rois5iBEeK8V76VVnzvqA" annotatedElement="_9RoispiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation returns the current concentration.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9RoitJiBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoitZiBEeK8V76VVnzvqA" name="increaseConcentration">
+          <ownedComment xmi:id="_9RoitpiBEeK8V76VVnzvqA" annotatedElement="_9RoitZiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation increases the concentration of the reactant by the specified amount.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roit5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9RoiuJiBEeK8V76VVnzvqA" name="deltaConc">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoiuZiBEeK8V76VVnzvqA" name="decreaseConcentration">
+          <ownedComment xmi:id="_9RoiupiBEeK8V76VVnzvqA" annotatedElement="_9RoiuZiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation decreases the concentration of the reactant by the specified amount.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roiu5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9RoivJiBEeK8V76VVnzvqA" name="deltaConc">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoivZiBEeK8V76VVnzvqA" name="setConcentration">
+          <ownedComment xmi:id="_9RoivpiBEeK8V76VVnzvqA" annotatedElement="_9RoivZiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation sets the concentration of the reactant to the specified amount.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roiv5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9RoiwJiBEeK8V76VVnzvqA" name="conc">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoiwZiBEeK8V76VVnzvqA" name="zero">
+          <ownedComment xmi:id="_9RoiwpiBEeK8V76VVnzvqA" annotatedElement="_9RoiwZiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation sets the concentration of the reactant to zero.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roiw5iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoixJiBEeK8V76VVnzvqA" name="getTotalFlux">
+          <ownedComment xmi:id="_9RoixZiBEeK8V76VVnzvqA" annotatedElement="_9RoixJiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation returns the total flux of this reactant in the current network.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9RoixpiBEeK8V76VVnzvqA" name="Parameter1" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGPpiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roix5iBEeK8V76VVnzvqA" name="setReactionNetwork">
+          <ownedComment xmi:id="_9RoiyJiBEeK8V76VVnzvqA" annotatedElement="_9Roix5iBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation sets the collection of other reactants that make up the reaction network in which this reactant exists. &lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9RoiyZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9RoiypiBEeK8V76VVnzvqA" name="network" type="_9RoihZiBEeK8V76VVnzvqA">
+            <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_9RoizJiBEeK8V76VVnzvqA"/>
+            <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_9Roiy5iBEeK8V76VVnzvqA" value="*"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RoizZiBEeK8V76VVnzvqA" name="toString">
+          <ownedComment xmi:id="_9RoizpiBEeK8V76VVnzvqA" annotatedElement="_9RoizZiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation writes the contents of the reactant to a string.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roiz5iBEeK8V76VVnzvqA" name="output" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roi0JiBEeK8V76VVnzvqA" name="fromString">
+          <ownedComment xmi:id="_9Roi0ZiBEeK8V76VVnzvqA" annotatedElement="_9Roi0JiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation reads the contents of the reactant from a string.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roi0piBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9Roi05iBEeK8V76VVnzvqA" name="input">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roi1JiBEeK8V76VVnzvqA" name="toXML">
+          <ownedComment xmi:id="_9Roi1ZiBEeK8V76VVnzvqA" annotatedElement="_9Roi1JiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation writes the contents of the reactant to a string in XML.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roi1piBEeK8V76VVnzvqA" name="output" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roi15iBEeK8V76VVnzvqA" name="fromXML">
+          <ownedComment xmi:id="_9Roi2JiBEeK8V76VVnzvqA" annotatedElement="_9Roi15iBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation reads the contents of the reactant from a string in XML.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roi2ZiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9Roi2piBEeK8V76VVnzvqA" name="input">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          </ownedParameter>
+        </ownedOperation>
+      </packagedElement>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="_9Roi25iBEeK8V76VVnzvqA" name="io">
+      <ownedComment xmi:id="_9Roi3JiBEeK8V76VVnzvqA" annotatedElement="_9Roi25iBEeK8V76VVnzvqA">
+        <body>&lt;p>This package contains classes related to input and output processing in Xolotl.&lt;/p></body>
+      </ownedComment>
+      <packagedElement xmi:type="uml:Class" xmi:id="_9Roi3ZiBEeK8V76VVnzvqA" name="TokenizedLineReader">
+        <ownedComment xmi:id="_9Roi3piBEeK8V76VVnzvqA" annotatedElement="_9Roi3ZiBEeK8V76VVnzvqA">
+          <body>&lt;p>This is a simple class for parsing lines from an input stream and splitting that line based on a Delimiter. A line in this case is defined as any sequence of characters that terminates with an end-of-line character such as \r, \n or \r\n. The default Delimiter is a single space and the Delimiter can be changed by calling the setDelimiter() operation. Lines that are meant to be comments will be skipped and this includes lines that start with a &quot;#&quot; by default. The comment Delimiter can be changed by calling setCommentDelimiter(). &quot;In-line comments&quot; where the comment starts at some later point in the line are not allowed and will be parsed as data.&lt;/p>&lt;p>This class is templated so that conversion to primitive types can be handled automatically for the client class. This class is only meant to be templated with primitive types and it will fail for classes or interfaces.&lt;/p></body>
+        </ownedComment>
+        <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9Roi35iBEeK8V76VVnzvqA" parameter="_9Roi4JiBEeK8V76VVnzvqA">
+          <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9Roi4JiBEeK8V76VVnzvqA" parameteredElement="_9Roi4piBEeK8V76VVnzvqA">
+            <ownedComment xmi:id="_9Roi4ZiBEeK8V76VVnzvqA" annotatedElement="_9Roi4JiBEeK8V76VVnzvqA">
+              <body>&lt;p>The generic type that will be parsed and returned by the DelimiterizedLineReader.&lt;/p></body>
+            </ownedComment>
+            <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9Roi4piBEeK8V76VVnzvqA" name="dataType" templateParameter="_9Roi4JiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedTemplateSignature>
+        <ownedAttribute xmi:id="_9Roi45iBEeK8V76VVnzvqA" name="dataDelimiter" visibility="private" isReadOnly="true">
+          <ownedComment xmi:id="_9Roi5JiBEeK8V76VVnzvqA" annotatedElement="_9Roi45iBEeK8V76VVnzvqA">
+            <body>!The delimiter or &quot;Delimiter&quot; that separates elements in the line.
+</body>
+          </ownedComment>
+          <type xmi:type="uml:Class" href="mmi:///#cdt.typedef^n=std'string^p=;includedir;/c++/4.4.4/bits/stringfwd.h$uml.Class"/>
+          <defaultValue xmi:type="uml:LiteralString" xmi:id="_9Roi5ZiBEeK8V76VVnzvqA" value=" "/>
+        </ownedAttribute>
+        <ownedAttribute xmi:id="_9Roi5piBEeK8V76VVnzvqA" name="commentDelimiter" visibility="private" isReadOnly="true">
+          <ownedComment xmi:id="_9Roi55iBEeK8V76VVnzvqA" annotatedElement="_9Roi5piBEeK8V76VVnzvqA">
+            <body>&lt;p>!The character that represents a line that is a comment and should not be parsed.&lt;/p></body>
+          </ownedComment>
+          <type xmi:type="uml:Class" href="mmi:///#cdt.typedef^n=std'string^p=;includedir;/c++/4.4.4/bits/stringfwd.h$uml.Class"/>
+          <defaultValue xmi:type="uml:LiteralString" xmi:id="_9Roi6JiBEeK8V76VVnzvqA" value="#"/>
+        </ownedAttribute>
+        <ownedAttribute xmi:id="_9Roi6ZiBEeK8V76VVnzvqA" name="inputstream" visibility="private">
+          <ownedComment xmi:id="_9Roi6piBEeK8V76VVnzvqA" annotatedElement="_9Roi6ZiBEeK8V76VVnzvqA">
+            <body>&lt;p>The inputstream from which data should be read.&lt;/p></body>
+          </ownedComment>
+        </ownedAttribute>
+        <ownedOperation xmi:id="_9Roi65iBEeK8V76VVnzvqA" name="TokenizedLineReader" visibility="public"/>
+        <ownedOperation xmi:id="_9Roi7JiBEeK8V76VVnzvqA" name="setDelimiter">
+          <ownedComment xmi:id="_9Roi7ZiBEeK8V76VVnzvqA" annotatedElement="_9Roi7JiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation sets the string (Delimiter) that represents the delimiter separating the different data elements in the line.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roi7piBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9Roi75iBEeK8V76VVnzvqA" name="Delimiter">
+            <ownedComment xmi:id="_9Roi8JiBEeK8V76VVnzvqA" annotatedElement="_9Roi75iBEeK8V76VVnzvqA">
+              <body>&lt;p>The delimiter (Delimiter) that separates the data elements in the line.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roi8ZiBEeK8V76VVnzvqA" name="setCommentDelimiter">
+          <ownedComment xmi:id="_9Roi8piBEeK8V76VVnzvqA" annotatedElement="_9Roi8ZiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation sets the character (Delimiter) that represents the comment character. &lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roi85iBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9Roi9JiBEeK8V76VVnzvqA" name="cDelimiter">
+            <ownedComment xmi:id="_9Roi9ZiBEeK8V76VVnzvqA" annotatedElement="_9Roi9JiBEeK8V76VVnzvqA">
+              <body>&lt;p>The Delimiter&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roi9piBEeK8V76VVnzvqA" name="setInputStream">
+          <ownedComment xmi:id="_9Roi95iBEeK8V76VVnzvqA" annotatedElement="_9Roi9piBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation sets the input stream that should be parsed.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roi-JiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_9Roi-ZiBEeK8V76VVnzvqA" name="stream">
+            <ownedComment xmi:id="_9Roi-piBEeK8V76VVnzvqA" annotatedElement="_9Roi-ZiBEeK8V76VVnzvqA">
+              <body>&lt;p>The input stream to be parsed&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:Class" href="mmi:///#cdt.typedef^n=std'istream^p=;includedir;/c++/4.4.4/iosfwd$uml.Class"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9Roi-5iBEeK8V76VVnzvqA" name="loadLine">
+          <ownedComment xmi:id="_9Roi_JiBEeK8V76VVnzvqA" annotatedElement="_9Roi-5iBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation loads the next line from the stream and returns an array of its elements by splitting on the Delimiter or null if there are no more lines in the stream.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_9Roi_ZiBEeK8V76VVnzvqA" name="contents" type="_9Roi4piBEeK8V76VVnzvqA" direction="return">
+            <ownedComment xmi:id="_9Roi_piBEeK8V76VVnzvqA" annotatedElement="_9Roi_ZiBEeK8V76VVnzvqA">
+              <body>&lt;p>The contents of the line read from the stream split on the Delimiter and returned as a collection. Leading and trailing whitespace has been trimmed.&lt;/p></body>
+            </ownedComment>
+            <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_9RojAJiBEeK8V76VVnzvqA"/>
+            <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_9Roi_5iBEeK8V76VVnzvqA" value="*"/>
+            <defaultValue xmi:type="uml:OpaqueExpression" xmi:id="_9RojAZiBEeK8V76VVnzvqA" name="">
+              <language></language>
+              <body></body>
+            </defaultValue>
+          </ownedParameter>
+        </ownedOperation>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Collaboration" xmi:id="_9RojApiBEeK8V76VVnzvqA" name="TokenizedLineReader Collaborations">
+        <ownedComment xmi:id="_9RojA5iBEeK8V76VVnzvqA" annotatedElement="_9RojApiBEeK8V76VVnzvqA">
+          <body>&lt;p>Sequence and activity diagrams for the TokenizedLineReader&lt;/p></body>
+        </ownedComment>
+        <ownedAttribute xmi:id="_9RojLpiBEeK8V76VVnzvqA" name="tokenizedLineReader" type="_9Roi3ZiBEeK8V76VVnzvqA"/>
+        <ownedAttribute xmi:id="_9RojL5iBEeK8V76VVnzvqA" name="client" type="_9RojNpiBEeK8V76VVnzvqA"/>
+        <ownedBehavior xmi:type="uml:Interaction" xmi:id="_9RojBJiBEeK8V76VVnzvqA" name="TokenizedLineReader Interaction">
+          <ownedComment xmi:id="_9RojBZiBEeK8V76VVnzvqA" annotatedElement="_9RojBJiBEeK8V76VVnzvqA">
+            <body>&lt;p>A sequence diagram showing how to use the TokenizedLineReader.&lt;/p></body>
+          </ownedComment>
+          <ownedComment xmi:id="_9RojBpiBEeK8V76VVnzvqA" annotatedElement="_9RojC5iBEeK8V76VVnzvqA">
+            <body>&lt;p>Read until loadLine returns NULL&lt;/p></body>
+          </ownedComment>
+          <ownedConnector xmi:id="_9RojB5iBEeK8V76VVnzvqA">
+            <end xmi:id="_9RojCJiBEeK8V76VVnzvqA" role="_9RojLpiBEeK8V76VVnzvqA"/>
+            <end xmi:id="_9RojCZiBEeK8V76VVnzvqA" role="_9RojL5iBEeK8V76VVnzvqA"/>
+          </ownedConnector>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojDJiBEeK8V76VVnzvqA" covered="_9RojCpiBEeK8V76VVnzvqA" message="_9RojJpiBEeK8V76VVnzvqA" event="_9RojMZiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojDZiBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" message="_9RojJpiBEeK8V76VVnzvqA" event="_9RojMJiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:BehaviorExecutionSpecification" xmi:id="_9RojDpiBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" finish="_9RojD5iBEeK8V76VVnzvqA" start="_9RojDZiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojD5iBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" message="_9RojJ5iBEeK8V76VVnzvqA" event="_9RojMZiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojEJiBEeK8V76VVnzvqA" covered="_9RojCpiBEeK8V76VVnzvqA" message="_9RojJ5iBEeK8V76VVnzvqA" event="_9RojMJiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojEZiBEeK8V76VVnzvqA" covered="_9RojCpiBEeK8V76VVnzvqA" message="_9RojKJiBEeK8V76VVnzvqA" event="_9RojM5iBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojEpiBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" message="_9RojKJiBEeK8V76VVnzvqA" event="_9RojMpiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:BehaviorExecutionSpecification" xmi:id="_9RojE5iBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" finish="_9RojFJiBEeK8V76VVnzvqA" start="_9RojEpiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojFJiBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" message="_9RojKZiBEeK8V76VVnzvqA" event="_9RojM5iBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojFZiBEeK8V76VVnzvqA" covered="_9RojCpiBEeK8V76VVnzvqA" message="_9RojKZiBEeK8V76VVnzvqA" event="_9RojMpiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojFpiBEeK8V76VVnzvqA" covered="_9RojCpiBEeK8V76VVnzvqA" message="_9RojKpiBEeK8V76VVnzvqA" event="_9RojNZiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojF5iBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" message="_9RojKpiBEeK8V76VVnzvqA" event="_9RojNJiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:BehaviorExecutionSpecification" xmi:id="_9RojGJiBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" finish="_9RojGZiBEeK8V76VVnzvqA" start="_9RojF5iBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojGZiBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" message="_9RojK5iBEeK8V76VVnzvqA" event="_9RojNZiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojGpiBEeK8V76VVnzvqA" covered="_9RojCpiBEeK8V76VVnzvqA" message="_9RojK5iBEeK8V76VVnzvqA" event="_9RojNJiBEeK8V76VVnzvqA"/>
+          <fragment xmi:type="uml:CombinedFragment" xmi:id="_9RojG5iBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA _9RojCpiBEeK8V76VVnzvqA" interactionOperator="loop">
+            <operand xmi:id="_9RojHJiBEeK8V76VVnzvqA">
+              <guard xmi:id="_9RojHZiBEeK8V76VVnzvqA">
+                <specification xmi:type="uml:OpaqueExpression" xmi:id="_9RojHpiBEeK8V76VVnzvqA">
+                  <language></language>
+                  <body></body>
+                </specification>
+                <maxint xmi:type="uml:LiteralString" xmi:id="_9RojIJiBEeK8V76VVnzvqA" value="numLines"/>
+                <minint xmi:type="uml:LiteralInteger" xmi:id="_9RojH5iBEeK8V76VVnzvqA"/>
+              </guard>
+              <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojIZiBEeK8V76VVnzvqA" covered="_9RojCpiBEeK8V76VVnzvqA" message="_9RojLJiBEeK8V76VVnzvqA" event="_9RojOJiBEeK8V76VVnzvqA"/>
+              <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojIpiBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" message="_9RojLJiBEeK8V76VVnzvqA" event="_9RojOZiBEeK8V76VVnzvqA"/>
+              <fragment xmi:type="uml:BehaviorExecutionSpecification" xmi:id="_9RojI5iBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" finish="_9RojJJiBEeK8V76VVnzvqA" start="_9RojIpiBEeK8V76VVnzvqA"/>
+              <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojJJiBEeK8V76VVnzvqA" covered="_9RojC5iBEeK8V76VVnzvqA" message="_9RojLZiBEeK8V76VVnzvqA" event="_9RojOJiBEeK8V76VVnzvqA"/>
+              <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="_9RojJZiBEeK8V76VVnzvqA" covered="_9RojCpiBEeK8V76VVnzvqA" message="_9RojLZiBEeK8V76VVnzvqA" event="_9RojOZiBEeK8V76VVnzvqA"/>
+            </operand>
+          </fragment>
+          <lifeline xmi:id="_9RojCpiBEeK8V76VVnzvqA" name="client" represents="_9RojL5iBEeK8V76VVnzvqA" coveredBy="_9RojDJiBEeK8V76VVnzvqA _9RojEJiBEeK8V76VVnzvqA _9RojEZiBEeK8V76VVnzvqA _9RojFZiBEeK8V76VVnzvqA _9RojFpiBEeK8V76VVnzvqA _9RojGpiBEeK8V76VVnzvqA _9RojG5iBEeK8V76VVnzvqA _9RojIZiBEeK8V76VVnzvqA _9RojJZiBEeK8V76VVnzvqA"/>
+          <lifeline xmi:id="_9RojC5iBEeK8V76VVnzvqA" name="tokenizedLineReader" represents="_9RojLpiBEeK8V76VVnzvqA" coveredBy="_9RojG5iBEeK8V76VVnzvqA _9RojDZiBEeK8V76VVnzvqA _9RojDpiBEeK8V76VVnzvqA _9RojD5iBEeK8V76VVnzvqA _9RojEpiBEeK8V76VVnzvqA _9RojE5iBEeK8V76VVnzvqA _9RojFJiBEeK8V76VVnzvqA _9RojF5iBEeK8V76VVnzvqA _9RojGJiBEeK8V76VVnzvqA _9RojGZiBEeK8V76VVnzvqA _9RojIpiBEeK8V76VVnzvqA _9RojI5iBEeK8V76VVnzvqA _9RojJJiBEeK8V76VVnzvqA"/>
+          <message xmi:id="_9RojJpiBEeK8V76VVnzvqA" name="setToken" connector="_9RojB5iBEeK8V76VVnzvqA" receiveEvent="_9RojDZiBEeK8V76VVnzvqA" sendEvent="_9RojDJiBEeK8V76VVnzvqA"/>
+          <message xmi:id="_9RojJ5iBEeK8V76VVnzvqA" name="setToken" connector="_9RojB5iBEeK8V76VVnzvqA" messageSort="reply" receiveEvent="_9RojEJiBEeK8V76VVnzvqA" sendEvent="_9RojD5iBEeK8V76VVnzvqA"/>
+          <message xmi:id="_9RojKJiBEeK8V76VVnzvqA" name="setCommentToken" connector="_9RojB5iBEeK8V76VVnzvqA" receiveEvent="_9RojEpiBEeK8V76VVnzvqA" sendEvent="_9RojEZiBEeK8V76VVnzvqA"/>
+          <message xmi:id="_9RojKZiBEeK8V76VVnzvqA" name="setCommentToken" connector="_9RojB5iBEeK8V76VVnzvqA" messageSort="reply" receiveEvent="_9RojFZiBEeK8V76VVnzvqA" sendEvent="_9RojFJiBEeK8V76VVnzvqA"/>
+          <message xmi:id="_9RojKpiBEeK8V76VVnzvqA" name="setInputStream" connector="_9RojB5iBEeK8V76VVnzvqA" receiveEvent="_9RojF5iBEeK8V76VVnzvqA" sendEvent="_9RojFpiBEeK8V76VVnzvqA"/>
+          <message xmi:id="_9RojK5iBEeK8V76VVnzvqA" name="setInputStream" connector="_9RojB5iBEeK8V76VVnzvqA" messageSort="reply" receiveEvent="_9RojGpiBEeK8V76VVnzvqA" sendEvent="_9RojGZiBEeK8V76VVnzvqA"/>
+          <message xmi:id="_9RojLJiBEeK8V76VVnzvqA" name="loadLine" connector="_9RojB5iBEeK8V76VVnzvqA" receiveEvent="_9RojIpiBEeK8V76VVnzvqA" sendEvent="_9RojIZiBEeK8V76VVnzvqA"/>
+          <message xmi:id="_9RojLZiBEeK8V76VVnzvqA" name="loadLine" connector="_9RojB5iBEeK8V76VVnzvqA" messageSort="reply" receiveEvent="_9RojJZiBEeK8V76VVnzvqA" sendEvent="_9RojJJiBEeK8V76VVnzvqA"/>
+        </ownedBehavior>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Actor" xmi:id="_9RojNpiBEeK8V76VVnzvqA" name="client">
+        <ownedComment xmi:id="_9RojN5iBEeK8V76VVnzvqA" annotatedElement="_9RojNpiBEeK8V76VVnzvqA">
+          <body>&lt;p>The actor who requires I/O services.&lt;/p></body>
+        </ownedComment>
+      </packagedElement>
+      <packagedElement xmi:type="uml:ReceiveOperationEvent" xmi:id="_9RojMJiBEeK8V76VVnzvqA" name="ReceiveOperationEvent1" operation="_9Roi7JiBEeK8V76VVnzvqA"/>
+      <packagedElement xmi:type="uml:SendOperationEvent" xmi:id="_9RojMZiBEeK8V76VVnzvqA" name="SendOperationEvent1" operation="_9Roi7JiBEeK8V76VVnzvqA"/>
+      <packagedElement xmi:type="uml:ReceiveOperationEvent" xmi:id="_9RojMpiBEeK8V76VVnzvqA" name="ReceiveOperationEvent2" operation="_9Roi8ZiBEeK8V76VVnzvqA"/>
+      <packagedElement xmi:type="uml:SendOperationEvent" xmi:id="_9RojM5iBEeK8V76VVnzvqA" name="SendOperationEvent2" operation="_9Roi8ZiBEeK8V76VVnzvqA"/>
+      <packagedElement xmi:type="uml:ReceiveOperationEvent" xmi:id="_9RojNJiBEeK8V76VVnzvqA" name="ReceiveOperationEvent3" operation="_9Roi9piBEeK8V76VVnzvqA"/>
+      <packagedElement xmi:type="uml:SendOperationEvent" xmi:id="_9RojNZiBEeK8V76VVnzvqA" name="SendOperationEvent3" operation="_9Roi9piBEeK8V76VVnzvqA"/>
+      <packagedElement xmi:type="uml:SendOperationEvent" xmi:id="_9RojOJiBEeK8V76VVnzvqA" name="SendOperationEvent4" operation="_9Roi-5iBEeK8V76VVnzvqA"/>
+      <packagedElement xmi:type="uml:ReceiveOperationEvent" xmi:id="_9RojOZiBEeK8V76VVnzvqA" name="ReceiveOperationEvent4" operation="_9Roi-5iBEeK8V76VVnzvqA"/>
+    </packagedElement>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Package" xmi:id="_9RojOpiBEeK8V76VVnzvqA" name="TemplateInstantiations">
+    <packagedElement xmi:type="uml:Class" xmi:id="_9RojO5iBEeK8V76VVnzvqA" name="TokenizedLineReader_dataType">
+      <templateBinding xmi:id="_9RojPJiBEeK8V76VVnzvqA" signature="_9Roi35iBEeK8V76VVnzvqA">
+        <parameterSubstitution xmi:id="_9RojPZiBEeK8V76VVnzvqA" actual="_9Roi4piBEeK8V76VVnzvqA" formal="_9Roi4JiBEeK8V76VVnzvqA"/>
+      </templateBinding>
+    </packagedElement>
+  </packagedElement>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_9RojPpiBEeK8V76VVnzvqA" name="InputStream"/>
+  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_9RojP5iBEeK8V76VVnzvqA" name="HCluster::HCluster"/>
+  <packagedElement xmi:type="uml:Class" xmi:id="_9RojQJiBEeK8V76VVnzvqA" name="main">
+    <ownedOperation xmi:id="_9RojQZiBEeK8V76VVnzvqA" name="main" visibility="public">
+      <ownedParameter xmi:id="_9RojQpiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
+        <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+      </ownedParameter>
+      <ownedParameter xmi:id="_9RojQ5iBEeK8V76VVnzvqA" name="argc">
+        <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
+      </ownedParameter>
+      <ownedParameter xmi:id="_9RojRJiBEeK8V76VVnzvqA" name="argv">
+        <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNJiBEeK8V76VVnzvqA"/>
+      </ownedParameter>
+    </ownedOperation>
+  </packagedElement>
+  <packagedElement xmi:type="uml:Package" xmi:id="_9RojRZiBEeK8V76VVnzvqA" name="tests">
+    <ownedComment xmi:id="_9RojRpiBEeK8V76VVnzvqA" annotatedElement="_9RojRZiBEeK8V76VVnzvqA">
+      <body>&lt;p>This package contains the tests for Xolotl.&lt;/p></body>
+    </ownedComment>
+    <packagedElement xmi:type="uml:Package" xmi:id="_9RojR5iBEeK8V76VVnzvqA" name="io">
+      <ownedComment xmi:id="_9RojSJiBEeK8V76VVnzvqA" annotatedElement="_9RojR5iBEeK8V76VVnzvqA">
+        <body>&lt;p>This package contains the tests for Xolotl's I/O classes.&lt;/p></body>
+      </ownedComment>
+      <packagedElement xmi:type="uml:Class" xmi:id="_9RojSZiBEeK8V76VVnzvqA" clientDependency="_9RojUZiBEeK8V76VVnzvqA" name="TokenizedLineReaderTester">
+        <ownedComment xmi:id="_9RojSpiBEeK8V76VVnzvqA" annotatedElement="_9RojSZiBEeK8V76VVnzvqA">
+          <body>&lt;p>This class is responsible for testing the TokenizedLineReader.&lt;/p></body>
+        </ownedComment>
+        <ownedOperation xmi:id="_9RojS5iBEeK8V76VVnzvqA" name="checkDefaultParsing">
+          <ownedComment xmi:id="_9RojTJiBEeK8V76VVnzvqA" annotatedElement="_9RojS5iBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation checks default parsing setup of the TokenizedLineReader.&lt;/p></body>
+          </ownedComment>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RojTZiBEeK8V76VVnzvqA" name="checkCSVParsing">
+          <ownedComment xmi:id="_9RojTpiBEeK8V76VVnzvqA" annotatedElement="_9RojTZiBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation checks the TokenizedLineReader when the token is changed to a comma.&lt;/p></body>
+          </ownedComment>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RojT5iBEeK8V76VVnzvqA" name="checkCommentTokens">
+          <ownedComment xmi:id="_9RojUJiBEeK8V76VVnzvqA" annotatedElement="_9RojT5iBEeK8V76VVnzvqA">
+            <body>&lt;p>This operation checks the TokenizedLineReader when the comment token is changed.&lt;/p></body>
+          </ownedComment>
+        </ownedOperation>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Dependency" xmi:id="_9RojUZiBEeK8V76VVnzvqA" client="_9RojSZiBEeK8V76VVnzvqA" supplier="_9Roi3ZiBEeK8V76VVnzvqA"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="_SQ3YkJlKEeKRCZsM0VJZXg" name="PSIClusterNetworkLoaderTester">
+        <ownedComment xmi:id="_YN2UYJlKEeKRCZsM0VJZXg">
+          <body>This class is responsible for testing the PSIClusterNetworkLoader. It creates a string stream that contains each of the available PSICluster types and checks that the loader returns a list with each type in it.</body>
+        </ownedComment>
+        <ownedOperation xmi:id="_k4c-wJlKEeKRCZsM0VJZXg" name="checkLoading">
+          <ownedComment xmi:id="_pm5q4JlKEeKRCZsM0VJZXg">
+            <body>This operation checks the loader.</body>
+          </ownedComment>
+        </ownedOperation>
+      </packagedElement>
+    </packagedElement>
+  </packagedElement>
+  <profileApplication xmi:id="_9RojUpiBEeK8V76VVnzvqA">
+    <eAnnotations xmi:id="_9RojU5iBEeK8V76VVnzvqA" source="http://www.eclipse.org/uml2/2.0.0/UML">
+      <references xmi:type="ecore:EPackage" href="pathmap://UML_PROFILES/Standard.profile.uml#_yzU58YinEdqtvbnfB2L_5w"/>
+    </eAnnotations>
+    <appliedProfile href="pathmap://UML_PROFILES/Standard.profile.uml#_0"/>
+  </profileApplication>
+</uml:Model>

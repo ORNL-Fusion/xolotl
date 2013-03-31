@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.1" xmlns:xmi="http://schema.omg.org/spec/XMI/2.1" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:l2="http://www.eclipse.org/uml2/4.0.0/UML/Profile/L2" xmlns:uml="http://www.eclipse.org/uml2/4.0.0/UML">
+  <uml:Model xmi:id="_9Rq_WJiBEeK8V76VVnzvqA" clientDependency="_9Rq_kpiBEeK8V76VVnzvqA" name="UALImpl">
+    <packagedElement xmi:type="uml:Class" xmi:id="_9Rq_WZiBEeK8V76VVnzvqA" name="Object" isLeaf="true" isAbstract="true">
+      <ownedOperation xmi:id="_9Rq_WpiBEeK8V76VVnzvqA" name="Object" visibility="protected"/>
+      <ownedOperation xmi:id="_9Rq_W5iBEeK8V76VVnzvqA" name="destroy"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9Rq_XJiBEeK8V76VVnzvqA" name="StringImpl" isLeaf="true" isAbstract="true">
+      <ownedOperation xmi:id="_9Rq_XZiBEeK8V76VVnzvqA" name="charAt">
+        <ownedParameter xmi:id="_9Rq_XpiBEeK8V76VVnzvqA" name="index">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_X5iBEeK8V76VVnzvqA" name="value" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9RrlwJiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_YJiBEeK8V76VVnzvqA" name="compareTo">
+        <ownedParameter xmi:id="_9Rq_YZiBEeK8V76VVnzvqA" name="other">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_YpiBEeK8V76VVnzvqA" name="value" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_Y5iBEeK8V76VVnzvqA" name="compareToIgnoreCase">
+        <ownedParameter xmi:id="_9Rq_ZJiBEeK8V76VVnzvqA" name="other">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_ZZiBEeK8V76VVnzvqA" name="value" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_ZpiBEeK8V76VVnzvqA" name="concat">
+        <ownedParameter xmi:id="_9Rq_Z5iBEeK8V76VVnzvqA" name="other">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_aJiBEeK8V76VVnzvqA" name="result" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_aZiBEeK8V76VVnzvqA" name="indexOf">
+        <ownedParameter xmi:id="_9Rq_apiBEeK8V76VVnzvqA" name="ch">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_a5iBEeK8V76VVnzvqA" name="index" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_bJiBEeK8V76VVnzvqA" name="indexOf">
+        <ownedParameter xmi:id="_9Rq_bZiBEeK8V76VVnzvqA" name="ch">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_bpiBEeK8V76VVnzvqA" name="fromIndex">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_b5iBEeK8V76VVnzvqA" name="index" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_cJiBEeK8V76VVnzvqA" name="indexOf">
+        <ownedParameter xmi:id="_9Rq_cZiBEeK8V76VVnzvqA" name="str">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_cpiBEeK8V76VVnzvqA" name="index" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_c5iBEeK8V76VVnzvqA" name="indexOf">
+        <ownedParameter xmi:id="_9Rq_dJiBEeK8V76VVnzvqA" name="str">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_dZiBEeK8V76VVnzvqA" name="fromIndex">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_dpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_d5iBEeK8V76VVnzvqA" name="lastIndexOf">
+        <ownedParameter xmi:id="_9Rq_eJiBEeK8V76VVnzvqA" name="ch">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_eZiBEeK8V76VVnzvqA" name="lastIndex" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_epiBEeK8V76VVnzvqA" name="lastIndexOf">
+        <ownedParameter xmi:id="_9Rq_e5iBEeK8V76VVnzvqA" name="ch">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_fJiBEeK8V76VVnzvqA" name="fromIndex">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_fZiBEeK8V76VVnzvqA" name="lastIndex" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_fpiBEeK8V76VVnzvqA" name="lastIndexOf">
+        <ownedParameter xmi:id="_9Rq_f5iBEeK8V76VVnzvqA" name="str">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_gJiBEeK8V76VVnzvqA" name="lastIndex" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_gZiBEeK8V76VVnzvqA" name="lastIndexOf">
+        <ownedParameter xmi:id="_9Rq_gpiBEeK8V76VVnzvqA" name="str">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_g5iBEeK8V76VVnzvqA" name="fromIndex">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rq_hJiBEeK8V76VVnzvqA" name="lastIndex" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_hZiBEeK8V76VVnzvqA" name="length">
+        <ownedParameter xmi:id="_9Rq_hpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_h5iBEeK8V76VVnzvqA" name="String">
+        <ownedParameter xmi:id="_9Rq_iJiBEeK8V76VVnzvqA" name="s">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_iZiBEeK8V76VVnzvqA" name="String"/>
+      <ownedOperation xmi:id="_9Rq_ipiBEeK8V76VVnzvqA" name="String">
+        <ownedParameter xmi:id="_9Rq_i5iBEeK8V76VVnzvqA" name="str">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9RrlwJiBEeK8V76VVnzvqA"/>
+          <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_9Rq_jZiBEeK8V76VVnzvqA"/>
+          <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_9Rq_jJiBEeK8V76VVnzvqA" value="*"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_jpiBEeK8V76VVnzvqA" name="toCharArray">
+        <ownedParameter xmi:id="_9Rq_j5iBEeK8V76VVnzvqA" name="chArray" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9RrlwJiBEeK8V76VVnzvqA"/>
+          <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_9Rq_kZiBEeK8V76VVnzvqA"/>
+          <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_9Rq_kJiBEeK8V76VVnzvqA" value="*"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rq_kpiBEeK8V76VVnzvqA" client="_9Rq_WJiBEeK8V76VVnzvqA">
+      <supplier xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
+    </packagedElement>
+    <profileApplication xmi:id="_9Rq_k5iBEeK8V76VVnzvqA">
+      <eAnnotations xmi:id="_9Rq_lJiBEeK8V76VVnzvqA" source="http://www.eclipse.org/uml2/2.0.0/UML">
+        <references xmi:type="ecore:EPackage" href="pathmap://UML_PROFILES/Standard.profile.uml#_yzU58YinEdqtvbnfB2L_5w"/>
+      </eAnnotations>
+      <appliedProfile href="pathmap://UML_PROFILES/Standard.profile.uml#_0"/>
+    </profileApplication>
+  </uml:Model>
+  <l2:ModelLibrary xmi:id="_9Rq_lZiBEeK8V76VVnzvqA" base_Package="_9Rq_WJiBEeK8V76VVnzvqA"/>
+</xmi:XMI>

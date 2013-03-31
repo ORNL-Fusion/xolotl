@@ -1,0 +1,730 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="2.1" xmlns:xmi="http://schema.omg.org/spec/XMI/2.1" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:l2="http://www.eclipse.org/uml2/4.0.0/UML/Profile/L2" xmlns:uml="http://www.eclipse.org/uml2/4.0.0/UML">
+  <uml:Model xmi:id="_9RpxVJiBEeK8V76VVnzvqA" clientDependency="_9Rq_BpiBEeK8V76VVnzvqA _9Rq_B5iBEeK8V76VVnzvqA" name="UALContainers">
+    <packagedElement xmi:type="uml:Interface" xmi:id="_9RpxVZiBEeK8V76VVnzvqA" name="Iterator">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RpxVpiBEeK8V76VVnzvqA" parameter="_9RpxV5iBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RpxV5iBEeK8V76VVnzvqA" parameteredElement="_9RpxWJiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RpxWJiBEeK8V76VVnzvqA" name="E" templateParameter="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <ownedOperation xmi:id="_9RpxWZiBEeK8V76VVnzvqA" name="hasNext">
+        <ownedParameter xmi:id="_9RpxWpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxW5iBEeK8V76VVnzvqA" name="next">
+        <ownedParameter xmi:id="_9RpxXJiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RpxWJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxXZiBEeK8V76VVnzvqA" name="remove"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9RpxXpiBEeK8V76VVnzvqA" name="Stack">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RpxX5iBEeK8V76VVnzvqA" parameter="_9RpxYJiBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RpxYJiBEeK8V76VVnzvqA" parameteredElement="_9RpxYZiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RpxYZiBEeK8V76VVnzvqA" name="E" templateParameter="_9RpxYJiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <ownedOperation xmi:id="_9RpxaJiBEeK8V76VVnzvqA" name="empty">
+        <ownedParameter xmi:id="_9RpxaZiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxapiBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9Rpxa5iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RpxYpiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxbJiBEeK8V76VVnzvqA" name="peek">
+        <ownedParameter xmi:id="_9RpxbZiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RpxYZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxbpiBEeK8V76VVnzvqA" name="pop">
+        <ownedParameter xmi:id="_9Rpxb5iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RpxYZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxcJiBEeK8V76VVnzvqA" name="push">
+        <ownedParameter xmi:id="_9RpxcZiBEeK8V76VVnzvqA" name="item" type="_9RpxYZiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RpxcpiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RpxYZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rpxc5iBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9RpxdJiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxdZiBEeK8V76VVnzvqA" name="Stack"/>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RpxYpiBEeK8V76VVnzvqA" name="IteratorforStack">
+        <templateBinding xmi:id="_9RpxY5iBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RpxZJiBEeK8V76VVnzvqA" actual="_9RpxYZiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RpxZZiBEeK8V76VVnzvqA" name="IterableEStack">
+        <templateBinding xmi:id="_9RpxZpiBEeK8V76VVnzvqA" signature="_9Rq_CZiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RpxZ5iBEeK8V76VVnzvqA" actual="_9RpxYZiBEeK8V76VVnzvqA" formal="_9Rq_CpiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9RpxdpiBEeK8V76VVnzvqA" clientDependency="_9RpxepiBEeK8V76VVnzvqA _9Rq_FpiBEeK8V76VVnzvqA" name="Vector">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9Rpxd5iBEeK8V76VVnzvqA" parameter="_9RpxeJiBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RpxeJiBEeK8V76VVnzvqA" parameteredElement="_9RpxeZiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RpxeZiBEeK8V76VVnzvqA" name="E" templateParameter="_9RpxeJiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <interfaceRealization xmi:id="_9RpxepiBEeK8V76VVnzvqA" client="_9RpxdpiBEeK8V76VVnzvqA" supplier="_9Rpxe5iBEeK8V76VVnzvqA" contract="_9Rpxe5iBEeK8V76VVnzvqA"/>
+      <ownedOperation xmi:id="_9RpxgZiBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9RpxgpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rpxg5iBEeK8V76VVnzvqA" name="capacity">
+        <ownedParameter xmi:id="_9RpxhJiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxhZiBEeK8V76VVnzvqA" name="elementAt">
+        <ownedParameter xmi:id="_9RpxhpiBEeK8V76VVnzvqA" name="index">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9Rpxh5iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RpxeZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxiJiBEeK8V76VVnzvqA" name="ensureCapacity">
+        <ownedParameter xmi:id="_9RpxiZiBEeK8V76VVnzvqA" name="newCapacity">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RpxipiBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9RqXoJiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RpxfpiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXoZiBEeK8V76VVnzvqA" name="setElementAt">
+        <ownedParameter xmi:id="_9RqXopiBEeK8V76VVnzvqA" name="index">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9RqXo5iBEeK8V76VVnzvqA" name="element" type="_9RpxeZiBEeK8V76VVnzvqA"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXpJiBEeK8V76VVnzvqA" name="setSize">
+        <ownedParameter xmi:id="_9RqXpZiBEeK8V76VVnzvqA" name="newSize">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXppiBEeK8V76VVnzvqA" name="Vector">
+        <ownedParameter xmi:id="_9RqXp5iBEeK8V76VVnzvqA" name="capacity">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXqJiBEeK8V76VVnzvqA" name="Vector"/>
+      <ownedOperation xmi:id="_9RqXqZiBEeK8V76VVnzvqA" name="Vector">
+        <ownedParameter xmi:id="_9RqXqpiBEeK8V76VVnzvqA" name="capacity">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9RqXq5iBEeK8V76VVnzvqA" name="incrementCapacity">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9Rpxe5iBEeK8V76VVnzvqA" name="IterableEVector">
+        <templateBinding xmi:id="_9RpxfJiBEeK8V76VVnzvqA" signature="_9Rq_CZiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RpxfZiBEeK8V76VVnzvqA" actual="_9RpxeZiBEeK8V76VVnzvqA" formal="_9Rq_CpiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RpxfpiBEeK8V76VVnzvqA" name="IteratorforVector">
+        <templateBinding xmi:id="_9Rpxf5iBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RpxgJiBEeK8V76VVnzvqA" actual="_9RpxeZiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9RqXrJiBEeK8V76VVnzvqA" name="BitSet">
+      <ownedOperation xmi:id="_9RqXrZiBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9RqXrpiBEeK8V76VVnzvqA" name="flip">
+        <ownedParameter xmi:id="_9RqXr5iBEeK8V76VVnzvqA" name="bitIndex">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXsJiBEeK8V76VVnzvqA" name="get">
+        <ownedParameter xmi:id="_9RqXsZiBEeK8V76VVnzvqA" name="bitIndex">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9RqXspiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXs5iBEeK8V76VVnzvqA" name="set">
+        <ownedParameter xmi:id="_9RqXtJiBEeK8V76VVnzvqA" name="bitIndex">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9RqXtZiBEeK8V76VVnzvqA" name="value">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXtpiBEeK8V76VVnzvqA" name="BitSet"/>
+      <ownedOperation xmi:id="_9RqXt5iBEeK8V76VVnzvqA" name="BitSet">
+        <ownedParameter xmi:id="_9RqXuJiBEeK8V76VVnzvqA" name="nbits">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXuZiBEeK8V76VVnzvqA" name="BitSet">
+        <ownedParameter xmi:id="_9RqXupiBEeK8V76VVnzvqA" name="needClear">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9RqXu5iBEeK8V76VVnzvqA" name="actualArrayLength">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9RqXvJiBEeK8V76VVnzvqA" name="bits">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9RrlxJiBEeK8V76VVnzvqA"/>
+          <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_9RqXvpiBEeK8V76VVnzvqA"/>
+          <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_9RqXvZiBEeK8V76VVnzvqA" value="*"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Interface" xmi:id="_9RqXv5iBEeK8V76VVnzvqA" clientDependency="_9Rq_EpiBEeK8V76VVnzvqA _9Rq_E5iBEeK8V76VVnzvqA" name="List">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RqXwJiBEeK8V76VVnzvqA" parameter="_9RqXwZiBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqXwZiBEeK8V76VVnzvqA" parameteredElement="_9RqXwpiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqXwpiBEeK8V76VVnzvqA" name="E" templateParameter="_9RqXwZiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <generalization xmi:id="_9RqXw5iBEeK8V76VVnzvqA" general="_9RqXz5iBEeK8V76VVnzvqA"/>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqXz5iBEeK8V76VVnzvqA" name="IterableEList">
+        <templateBinding xmi:id="_9RqX0JiBEeK8V76VVnzvqA" signature="_9Rq_CZiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqX0ZiBEeK8V76VVnzvqA" actual="_9RqXwpiBEeK8V76VVnzvqA" formal="_9Rq_CpiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqX0piBEeK8V76VVnzvqA" name="ListIteratorforList">
+        <templateBinding xmi:id="_9RqX05iBEeK8V76VVnzvqA" signature="_9Rq-tJiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqX1JiBEeK8V76VVnzvqA" actual="_9RqXwpiBEeK8V76VVnzvqA" formal="_9Rq-tZiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqX1ZiBEeK8V76VVnzvqA" name="IteratorforList">
+        <templateBinding xmi:id="_9RqX1piBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqX15iBEeK8V76VVnzvqA" actual="_9RqXwpiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <ownedOperation xmi:id="_9RqXxJiBEeK8V76VVnzvqA" name="add">
+        <ownedParameter xmi:id="_9RqXxZiBEeK8V76VVnzvqA" name="o" type="_9RqXwpiBEeK8V76VVnzvqA"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXxpiBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9RqXx5iBEeK8V76VVnzvqA" name="isEmpty">
+        <ownedParameter xmi:id="_9RqXyJiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXyZiBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9RqXypiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqX1ZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXy5iBEeK8V76VVnzvqA" name="listIterator">
+        <ownedParameter xmi:id="_9RqXzJiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqX0piBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqXzZiBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9RqXzpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Interface" xmi:id="_9RqX2JiBEeK8V76VVnzvqA" name="Map">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RqX2ZiBEeK8V76VVnzvqA" name="" parameter="_9RqX2piBEeK8V76VVnzvqA _9RqX3JiBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqX2piBEeK8V76VVnzvqA" parameteredElement="_9RqX25iBEeK8V76VVnzvqA">
+          <default xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqX25iBEeK8V76VVnzvqA" name="K" templateParameter="_9RqX2piBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqX3JiBEeK8V76VVnzvqA" parameteredElement="_9RqX3ZiBEeK8V76VVnzvqA">
+          <default xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqX3ZiBEeK8V76VVnzvqA" name="V" templateParameter="_9RqX3JiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqX7ZiBEeK8V76VVnzvqA" name="SetforMap">
+        <templateBinding xmi:id="_9RqX7piBEeK8V76VVnzvqA" signature="_9RqYI5iBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqX75iBEeK8V76VVnzvqA" actual="_9RqX8JiBEeK8V76VVnzvqA" formal="_9RqYJJiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Class" xmi:id="_9RqX8JiBEeK8V76VVnzvqA" name="EntryforMap">
+        <templateBinding xmi:id="_9RqX8ZiBEeK8V76VVnzvqA" signature="_9RqX9ZiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqX8piBEeK8V76VVnzvqA" actual="_9RqX25iBEeK8V76VVnzvqA" formal="_9RqX9piBEeK8V76VVnzvqA"/>
+          <parameterSubstitution xmi:id="_9RqX85iBEeK8V76VVnzvqA" actual="_9RqX3ZiBEeK8V76VVnzvqA" formal="_9RqX-JiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqX9JiBEeK8V76VVnzvqA" name="Entry">
+        <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RqX9ZiBEeK8V76VVnzvqA" parameter="_9RqX9piBEeK8V76VVnzvqA _9RqX-JiBEeK8V76VVnzvqA">
+          <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqX9piBEeK8V76VVnzvqA" parameteredElement="_9RqX95iBEeK8V76VVnzvqA">
+            <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqX95iBEeK8V76VVnzvqA" name="K" templateParameter="_9RqX9piBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+          <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqX-JiBEeK8V76VVnzvqA" parameteredElement="_9RqX-ZiBEeK8V76VVnzvqA">
+            <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqX-ZiBEeK8V76VVnzvqA" name="V" templateParameter="_9RqX-JiBEeK8V76VVnzvqA"/>
+          </ownedParameter>
+        </ownedTemplateSignature>
+        <ownedOperation xmi:id="_9RqX-piBEeK8V76VVnzvqA" name="getKey">
+          <ownedParameter xmi:id="_9RqX-5iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqX95iBEeK8V76VVnzvqA" direction="return"/>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RqX_JiBEeK8V76VVnzvqA" name="getValue">
+          <ownedParameter xmi:id="_9RqX_ZiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqX-ZiBEeK8V76VVnzvqA" direction="return"/>
+        </ownedOperation>
+        <ownedOperation xmi:id="_9RqX_piBEeK8V76VVnzvqA" name="setValue">
+          <ownedParameter xmi:id="_9RqX_5iBEeK8V76VVnzvqA" name="v" type="_9RqX-ZiBEeK8V76VVnzvqA"/>
+          <ownedParameter xmi:id="_9RqYAJiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqX-ZiBEeK8V76VVnzvqA" direction="return"/>
+        </ownedOperation>
+      </nestedClassifier>
+      <ownedOperation xmi:id="_9RqX3piBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9RqX35iBEeK8V76VVnzvqA" name="entrySet">
+        <ownedParameter xmi:id="_9RqX4JiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqX7ZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqX4ZiBEeK8V76VVnzvqA" name="get">
+        <ownedParameter xmi:id="_9RqX4piBEeK8V76VVnzvqA" name="key" type="_9RqX25iBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqX45iBEeK8V76VVnzvqA" name="value" type="_9RqX3ZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqX5JiBEeK8V76VVnzvqA" name="put">
+        <ownedParameter xmi:id="_9RqX5ZiBEeK8V76VVnzvqA" name="key" type="_9RqX25iBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqX5piBEeK8V76VVnzvqA" name="value" type="_9RqX3ZiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqX55iBEeK8V76VVnzvqA" name="oldValue" type="_9RqX3ZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqX6JiBEeK8V76VVnzvqA" name="remove">
+        <ownedParameter xmi:id="_9RqX6ZiBEeK8V76VVnzvqA" name="key" type="_9RqX25iBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqX6piBEeK8V76VVnzvqA" name="value" type="_9RqX3ZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqX65iBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9RqX7JiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Interface" xmi:id="_9RqYAZiBEeK8V76VVnzvqA" clientDependency="_9Rq_FJiBEeK8V76VVnzvqA" name="Queue">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RqYApiBEeK8V76VVnzvqA" parameter="_9RqYA5iBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqYA5iBEeK8V76VVnzvqA" parameteredElement="_9RqYBJiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqYBJiBEeK8V76VVnzvqA" name="E" templateParameter="_9RqYA5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <generalization xmi:id="_9RqYBZiBEeK8V76VVnzvqA" general="_9RqYHJiBEeK8V76VVnzvqA"/>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYHJiBEeK8V76VVnzvqA" name="IterableEQueue">
+        <templateBinding xmi:id="_9RqYHZiBEeK8V76VVnzvqA" signature="_9Rq_CZiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYHpiBEeK8V76VVnzvqA" actual="_9RqYBJiBEeK8V76VVnzvqA" formal="_9Rq_CpiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYH5iBEeK8V76VVnzvqA" name="IteratorforQueue">
+        <templateBinding xmi:id="_9RqYIJiBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYIZiBEeK8V76VVnzvqA" actual="_9RqYBJiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <ownedOperation xmi:id="_9RqYBpiBEeK8V76VVnzvqA" name="add">
+        <ownedParameter xmi:id="_9RqYB5iBEeK8V76VVnzvqA" name="o" type="_9RqYBJiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYCJiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYCZiBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9RqYCpiBEeK8V76VVnzvqA" name="contains">
+        <ownedParameter xmi:id="_9RqYC5iBEeK8V76VVnzvqA" name="o" type="_9RqYBJiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYDJiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYDZiBEeK8V76VVnzvqA" name="isEmpty">
+        <ownedParameter xmi:id="_9RqYDpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYD5iBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9RqYEJiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYH5iBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYEZiBEeK8V76VVnzvqA" name="offer">
+        <ownedParameter xmi:id="_9RqYEpiBEeK8V76VVnzvqA" name="o" type="_9RqYBJiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYE5iBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYFJiBEeK8V76VVnzvqA" name="peek">
+        <ownedParameter xmi:id="_9RqYFZiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYBJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYFpiBEeK8V76VVnzvqA" name="poll">
+        <ownedParameter xmi:id="_9RqYF5iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYBJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYGJiBEeK8V76VVnzvqA" name="remove">
+        <ownedParameter xmi:id="_9RqYGZiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYBJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYGpiBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9RqYG5iBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Interface" xmi:id="_9RqYIpiBEeK8V76VVnzvqA" clientDependency="_9Rq_FZiBEeK8V76VVnzvqA" name="Set">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RqYI5iBEeK8V76VVnzvqA" parameter="_9RqYJJiBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqYJJiBEeK8V76VVnzvqA" parameteredElement="_9RqYJZiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqYJZiBEeK8V76VVnzvqA" name="E" templateParameter="_9RqYJJiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <generalization xmi:id="_9RqYJpiBEeK8V76VVnzvqA" general="_9RqYN5iBEeK8V76VVnzvqA"/>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYN5iBEeK8V76VVnzvqA" name="IterableESet">
+        <templateBinding xmi:id="_9RqYOJiBEeK8V76VVnzvqA" signature="_9Rq_CZiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYOZiBEeK8V76VVnzvqA" actual="_9RqYJZiBEeK8V76VVnzvqA" formal="_9Rq_CpiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYOpiBEeK8V76VVnzvqA" name="IteratorforSet">
+        <templateBinding xmi:id="_9RqYO5iBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYPJiBEeK8V76VVnzvqA" actual="_9RqYJZiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <ownedOperation xmi:id="_9RqYJ5iBEeK8V76VVnzvqA" name="add">
+        <ownedParameter xmi:id="_9RqYKJiBEeK8V76VVnzvqA" name="item" type="_9RqYJZiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYKZiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYKpiBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9RqYK5iBEeK8V76VVnzvqA" name="contains">
+        <ownedParameter xmi:id="_9RqYLJiBEeK8V76VVnzvqA" name="item" type="_9RqYJZiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYLZiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYLpiBEeK8V76VVnzvqA" name="isEmpty">
+        <ownedParameter xmi:id="_9RqYL5iBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYMJiBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9RqYMZiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYOpiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYMpiBEeK8V76VVnzvqA" name="remove">
+        <ownedParameter xmi:id="_9RqYM5iBEeK8V76VVnzvqA" name="item" type="_9RqYJZiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYNJiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYNZiBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9RqYNpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9RqYPZiBEeK8V76VVnzvqA" clientDependency="_9RqYQZiBEeK8V76VVnzvqA" name="LinkedList">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RqYPpiBEeK8V76VVnzvqA" parameter="_9RqYP5iBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqYP5iBEeK8V76VVnzvqA" parameteredElement="_9RqYQJiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqYQJiBEeK8V76VVnzvqA" name="E" templateParameter="_9RqYP5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <interfaceRealization xmi:id="_9RqYQZiBEeK8V76VVnzvqA" name="implements" client="_9RqYPZiBEeK8V76VVnzvqA" supplier="_9RqYRZiBEeK8V76VVnzvqA" contract="_9RqYRZiBEeK8V76VVnzvqA"/>
+      <ownedOperation xmi:id="_9RqYS5iBEeK8V76VVnzvqA" name="LinkedList"/>
+      <ownedOperation xmi:id="_9RqYTJiBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9RqYTZiBEeK8V76VVnzvqA" name="isEmpty">
+        <ownedParameter xmi:id="_9RqYTpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYT5iBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9RqYUJiBEeK8V76VVnzvqA" name="Parameter1" type="_9RqYSJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYUZiBEeK8V76VVnzvqA" name="listIterator">
+        <ownedParameter xmi:id="_9RqYUpiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYQpiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYU5iBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9RqYVJiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYVZiBEeK8V76VVnzvqA" name="add">
+        <ownedParameter xmi:id="_9RqYVpiBEeK8V76VVnzvqA" name="o" type="_9RqXwpiBEeK8V76VVnzvqA"/>
+      </ownedOperation>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYQpiBEeK8V76VVnzvqA" name="ListIteratorforLinkedList">
+        <templateBinding xmi:id="_9RqYQ5iBEeK8V76VVnzvqA" signature="_9Rq-tJiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYRJiBEeK8V76VVnzvqA" actual="_9RqYQJiBEeK8V76VVnzvqA" formal="_9Rq-tZiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYRZiBEeK8V76VVnzvqA" name="ListforLinkedList">
+        <templateBinding xmi:id="_9RqYRpiBEeK8V76VVnzvqA" signature="_9RqXwJiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYR5iBEeK8V76VVnzvqA" actual="_9RqYQJiBEeK8V76VVnzvqA" formal="_9RqXwZiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYSJiBEeK8V76VVnzvqA" name="IteratorforLinkedList">
+        <templateBinding xmi:id="_9RqYSZiBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYSpiBEeK8V76VVnzvqA" actual="_9RqYQJiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9RqYV5iBEeK8V76VVnzvqA" clientDependency="_9RqYW5iBEeK8V76VVnzvqA" name="TreeSet">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RqYWJiBEeK8V76VVnzvqA" parameter="_9RqYWZiBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqYWZiBEeK8V76VVnzvqA" parameteredElement="_9RqYWpiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqYWpiBEeK8V76VVnzvqA" name="E" templateParameter="_9RqYWZiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <interfaceRealization xmi:id="_9RqYW5iBEeK8V76VVnzvqA" name="implements" client="_9RqYV5iBEeK8V76VVnzvqA" supplier="_9RqYXJiBEeK8V76VVnzvqA" contract="_9RqYXJiBEeK8V76VVnzvqA"/>
+      <ownedOperation xmi:id="_9RqYYpiBEeK8V76VVnzvqA" name="TreeSet"/>
+      <ownedOperation xmi:id="_9RqYY5iBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9RqYZJiBEeK8V76VVnzvqA" name="add">
+        <ownedParameter xmi:id="_9RqYZZiBEeK8V76VVnzvqA" name="item" type="_9RqYJZiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYZpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYZ5iBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9RqYaJiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYX5iBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYaZiBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9RqYapiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYa5iBEeK8V76VVnzvqA" name="isEmpty">
+        <ownedParameter xmi:id="_9RqYbJiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYbZiBEeK8V76VVnzvqA" name="contains">
+        <ownedParameter xmi:id="_9RqYbpiBEeK8V76VVnzvqA" name="item" type="_9RqYWpiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYb5iBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYcJiBEeK8V76VVnzvqA" name="remove">
+        <ownedParameter xmi:id="_9RqYcZiBEeK8V76VVnzvqA" name="item" type="_9RqYJZiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYcpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYXJiBEeK8V76VVnzvqA" name="SetforTreeSet">
+        <templateBinding xmi:id="_9RqYXZiBEeK8V76VVnzvqA" signature="_9RqYI5iBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYXpiBEeK8V76VVnzvqA" actual="_9RqYWpiBEeK8V76VVnzvqA" formal="_9RqYJJiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYX5iBEeK8V76VVnzvqA" name="IteratorforTreeSet">
+        <templateBinding xmi:id="_9RqYYJiBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYYZiBEeK8V76VVnzvqA" actual="_9RqYWpiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9RqYc5iBEeK8V76VVnzvqA" clientDependency="_9RqYeZiBEeK8V76VVnzvqA" name="HashMap">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9RqYdJiBEeK8V76VVnzvqA" parameter="_9RqYdZiBEeK8V76VVnzvqA _9RqYd5iBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqYdZiBEeK8V76VVnzvqA" parameteredElement="_9RqYdpiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqYdpiBEeK8V76VVnzvqA" name="K" templateParameter="_9RqYdZiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9RqYd5iBEeK8V76VVnzvqA" parameteredElement="_9RqYeJiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9RqYeJiBEeK8V76VVnzvqA" name="V" templateParameter="_9RqYd5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <interfaceRealization xmi:id="_9RqYeZiBEeK8V76VVnzvqA" name="implements" client="_9RqYc5iBEeK8V76VVnzvqA" supplier="_9RqYfZiBEeK8V76VVnzvqA" contract="_9RqYfZiBEeK8V76VVnzvqA"/>
+      <ownedOperation xmi:id="_9RqYhZiBEeK8V76VVnzvqA" name="HashMap"/>
+      <ownedOperation xmi:id="_9RqYhpiBEeK8V76VVnzvqA" name="HashMap">
+        <ownedParameter xmi:id="_9RqYh5iBEeK8V76VVnzvqA" name="capacity">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYiJiBEeK8V76VVnzvqA" name="HashMap">
+        <ownedParameter xmi:id="_9RqYiZiBEeK8V76VVnzvqA" name="capacity">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+        <ownedParameter xmi:id="_9RqYipiBEeK8V76VVnzvqA" name="loadFactor">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9RrlwpiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYi5iBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9RqYjJiBEeK8V76VVnzvqA" name="get">
+        <ownedParameter xmi:id="_9RqYjZiBEeK8V76VVnzvqA" name="key" type="_9RqX25iBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYjpiBEeK8V76VVnzvqA" name="value" type="_9RqX3ZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYj5iBEeK8V76VVnzvqA" name="put">
+        <ownedParameter xmi:id="_9RqYkJiBEeK8V76VVnzvqA" name="key" type="_9RqX25iBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYkZiBEeK8V76VVnzvqA" name="value" type="_9RqX3ZiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYkpiBEeK8V76VVnzvqA" name="oldValue" type="_9RqX3ZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYk5iBEeK8V76VVnzvqA" name="remove">
+        <ownedParameter xmi:id="_9RqYlJiBEeK8V76VVnzvqA" name="key" type="_9RqX25iBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9RqYlZiBEeK8V76VVnzvqA" name="value" type="_9RqX3ZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9RqYlpiBEeK8V76VVnzvqA" name="entrySet">
+        <ownedParameter xmi:id="_9Rq-sJiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYepiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-sZiBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9Rq-spiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYepiBEeK8V76VVnzvqA" name="SetforHashMap">
+        <templateBinding xmi:id="_9RqYe5iBEeK8V76VVnzvqA" signature="_9RqYI5iBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYfJiBEeK8V76VVnzvqA" actual="_9RqYgZiBEeK8V76VVnzvqA" formal="_9RqYJJiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9RqYfZiBEeK8V76VVnzvqA" name="MapforHashMap">
+        <templateBinding xmi:id="_9RqYfpiBEeK8V76VVnzvqA" signature="_9RqX2ZiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYf5iBEeK8V76VVnzvqA" actual="_9RqYdpiBEeK8V76VVnzvqA" formal="_9RqX2piBEeK8V76VVnzvqA"/>
+          <parameterSubstitution xmi:id="_9RqYgJiBEeK8V76VVnzvqA" actual="_9RqYeJiBEeK8V76VVnzvqA" formal="_9RqX3JiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Class" xmi:id="_9RqYgZiBEeK8V76VVnzvqA" name="EntryforHashMap">
+        <templateBinding xmi:id="_9RqYgpiBEeK8V76VVnzvqA" signature="_9RqX9ZiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9RqYg5iBEeK8V76VVnzvqA" actual="_9RqYdpiBEeK8V76VVnzvqA" formal="_9RqX9piBEeK8V76VVnzvqA"/>
+          <parameterSubstitution xmi:id="_9RqYhJiBEeK8V76VVnzvqA" actual="_9RqYeJiBEeK8V76VVnzvqA" formal="_9RqX-JiBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Interface" xmi:id="_9Rq-s5iBEeK8V76VVnzvqA" name="ListIterator">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9Rq-tJiBEeK8V76VVnzvqA" parameter="_9Rq-tZiBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9Rq-tZiBEeK8V76VVnzvqA" parameteredElement="_9Rq-tpiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9Rq-tpiBEeK8V76VVnzvqA" name="E" templateParameter="_9Rq-tZiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <generalization xmi:id="_9Rq-t5iBEeK8V76VVnzvqA" general="_9Rq-vpiBEeK8V76VVnzvqA"/>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9Rq-vpiBEeK8V76VVnzvqA" name="IteratorforListIterator">
+        <templateBinding xmi:id="_9Rq-v5iBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9Rq-wJiBEeK8V76VVnzvqA" actual="_9Rq-tpiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <ownedOperation xmi:id="_9Rq-uJiBEeK8V76VVnzvqA" name="hasPrevious">
+        <ownedParameter xmi:id="_9Rq-uZiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-upiBEeK8V76VVnzvqA" name="previous">
+        <ownedParameter xmi:id="_9Rq-u5iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9Rq-tpiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-vJiBEeK8V76VVnzvqA" name="set">
+        <ownedParameter xmi:id="_9Rq-vZiBEeK8V76VVnzvqA" name="o" type="_9Rq-tpiBEeK8V76VVnzvqA"/>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9Rq-wZiBEeK8V76VVnzvqA" clientDependency="_9Rq-xZiBEeK8V76VVnzvqA" name="FIFOQueue">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9Rq-wpiBEeK8V76VVnzvqA" parameter="_9Rq-w5iBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9Rq-w5iBEeK8V76VVnzvqA" parameteredElement="_9Rq-xJiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9Rq-xJiBEeK8V76VVnzvqA" name="E" templateParameter="_9Rq-w5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <interfaceRealization xmi:id="_9Rq-xZiBEeK8V76VVnzvqA" name="implements" client="_9Rq-wZiBEeK8V76VVnzvqA" supplier="_9Rq-xpiBEeK8V76VVnzvqA" contract="_9Rq-xpiBEeK8V76VVnzvqA"/>
+      <ownedOperation xmi:id="_9Rq-zJiBEeK8V76VVnzvqA" name="offer">
+        <ownedParameter xmi:id="_9Rq-zZiBEeK8V76VVnzvqA" name="o" type="_9RqYBJiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9Rq-zpiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-z5iBEeK8V76VVnzvqA" name="remove">
+        <ownedParameter xmi:id="_9Rq-0JiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYBJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-0ZiBEeK8V76VVnzvqA" name="add">
+        <ownedParameter xmi:id="_9Rq-0piBEeK8V76VVnzvqA" name="o" type="_9RqYBJiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9Rq-05iBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-1JiBEeK8V76VVnzvqA" name="contains">
+        <ownedParameter xmi:id="_9Rq-1ZiBEeK8V76VVnzvqA" name="o" type="_9RqYBJiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9Rq-1piBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-15iBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9Rq-2JiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-2ZiBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9Rq-2piBEeK8V76VVnzvqA" name="poll">
+        <ownedParameter xmi:id="_9Rq-25iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYBJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-3JiBEeK8V76VVnzvqA" name="isEmpty">
+        <ownedParameter xmi:id="_9Rq-3ZiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-3piBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9Rq-35iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9Rq-yZiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-4JiBEeK8V76VVnzvqA" name="peek">
+        <ownedParameter xmi:id="_9Rq-4ZiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYBJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9Rq-xpiBEeK8V76VVnzvqA" name="QueueforFIFOQueue">
+        <templateBinding xmi:id="_9Rq-x5iBEeK8V76VVnzvqA" signature="_9RqYApiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9Rq-yJiBEeK8V76VVnzvqA" actual="_9Rq-xJiBEeK8V76VVnzvqA" formal="_9RqYA5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9Rq-yZiBEeK8V76VVnzvqA" name="IteratorforFIFOQueue">
+        <templateBinding xmi:id="_9Rq-ypiBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9Rq-y5iBEeK8V76VVnzvqA" actual="_9Rq-xJiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9Rq-4piBEeK8V76VVnzvqA" clientDependency="_9Rq-5piBEeK8V76VVnzvqA" name="PriorityQueue">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9Rq-45iBEeK8V76VVnzvqA" parameter="_9Rq-5JiBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9Rq-5JiBEeK8V76VVnzvqA" parameteredElement="_9Rq-5ZiBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9Rq-5ZiBEeK8V76VVnzvqA" name="E" templateParameter="_9Rq-5JiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <interfaceRealization xmi:id="_9Rq-5piBEeK8V76VVnzvqA" name="implements" client="_9Rq-4piBEeK8V76VVnzvqA" supplier="_9Rq-55iBEeK8V76VVnzvqA" contract="_9Rq-55iBEeK8V76VVnzvqA"/>
+      <ownedOperation xmi:id="_9Rq-7ZiBEeK8V76VVnzvqA" name="PriorityQueue"/>
+      <ownedOperation xmi:id="_9Rq-7piBEeK8V76VVnzvqA" name="PriorityQueue">
+        <ownedParameter xmi:id="_9Rq-75iBEeK8V76VVnzvqA" name="initialCapacity">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-8JiBEeK8V76VVnzvqA" name="offer">
+        <ownedParameter xmi:id="_9Rq-8ZiBEeK8V76VVnzvqA" name="o" type="_9RqYBJiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9Rq-8piBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-85iBEeK8V76VVnzvqA" name="remove">
+        <ownedParameter xmi:id="_9Rq-9JiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYBJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-9ZiBEeK8V76VVnzvqA" name="add">
+        <ownedParameter xmi:id="_9Rq-9piBEeK8V76VVnzvqA" name="o" type="_9RqYBJiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9Rq-95iBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq--JiBEeK8V76VVnzvqA" name="contains">
+        <ownedParameter xmi:id="_9Rq--ZiBEeK8V76VVnzvqA" name="o" type="_9RqYBJiBEeK8V76VVnzvqA"/>
+        <ownedParameter xmi:id="_9Rq--piBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq--5iBEeK8V76VVnzvqA" name="size">
+        <ownedParameter xmi:id="_9Rq-_JiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rrlw5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq-_ZiBEeK8V76VVnzvqA" name="clear"/>
+      <ownedOperation xmi:id="_9Rq-_piBEeK8V76VVnzvqA" name="poll">
+        <ownedParameter xmi:id="_9Rq-_5iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYBJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_AJiBEeK8V76VVnzvqA" name="isEmpty">
+        <ownedParameter xmi:id="_9Rq_AZiBEeK8V76VVnzvqA" name="OwnedParameter" direction="return">
+          <type xmi:type="uml:PrimitiveType" href="UALPrimitiveDatatypes.uml#_9Rq_o5iBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_ApiBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9Rq_A5iBEeK8V76VVnzvqA" name="OwnedParameter" type="_9Rq-6piBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <ownedOperation xmi:id="_9Rq_BJiBEeK8V76VVnzvqA" name="peek">
+        <ownedParameter xmi:id="_9Rq_BZiBEeK8V76VVnzvqA" name="OwnedParameter" type="_9RqYBJiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9Rq-55iBEeK8V76VVnzvqA" name="QueueforPriorityQueue">
+        <templateBinding xmi:id="_9Rq-6JiBEeK8V76VVnzvqA" signature="_9RqYApiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9Rq-6ZiBEeK8V76VVnzvqA" actual="_9Rq-5ZiBEeK8V76VVnzvqA" formal="_9RqYA5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <nestedClassifier xmi:type="uml:Interface" xmi:id="_9Rq-6piBEeK8V76VVnzvqA" name="IteratorforPriorityQueue">
+        <templateBinding xmi:id="_9Rq-65iBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9Rq-7JiBEeK8V76VVnzvqA" actual="_9Rq-5ZiBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rq_BpiBEeK8V76VVnzvqA" client="_9RpxVJiBEeK8V76VVnzvqA">
+      <supplier xmi:type="uml:Model" href="UALCore.uml#_9Rrl2JiBEeK8V76VVnzvqA"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rq_B5iBEeK8V76VVnzvqA" client="_9RpxVJiBEeK8V76VVnzvqA">
+      <supplier xmi:type="uml:Model" href="UALPrimitiveDatatypes.uml#_9Rq_opiBEeK8V76VVnzvqA"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Interface" xmi:id="_9Rq_CJiBEeK8V76VVnzvqA" clientDependency="_9Rq_EZiBEeK8V76VVnzvqA" name="Iterable">
+      <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_9Rq_CZiBEeK8V76VVnzvqA" parameter="_9Rq_CpiBEeK8V76VVnzvqA">
+        <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_9Rq_CpiBEeK8V76VVnzvqA" parameteredElement="_9Rq_C5iBEeK8V76VVnzvqA">
+          <ownedParameteredElement xmi:type="uml:Class" xmi:id="_9Rq_C5iBEeK8V76VVnzvqA" name="T" templateParameter="_9Rq_CpiBEeK8V76VVnzvqA"/>
+        </ownedParameter>
+      </ownedTemplateSignature>
+      <nestedClassifier xmi:type="uml:Class" xmi:id="_9Rq_DpiBEeK8V76VVnzvqA" name="IteratorT">
+        <templateBinding xmi:id="_9Rq_D5iBEeK8V76VVnzvqA" signature="_9RpxVpiBEeK8V76VVnzvqA">
+          <parameterSubstitution xmi:id="_9Rq_EJiBEeK8V76VVnzvqA" actual="_9Rq_C5iBEeK8V76VVnzvqA" formal="_9RpxV5iBEeK8V76VVnzvqA"/>
+        </templateBinding>
+      </nestedClassifier>
+      <ownedOperation xmi:id="_9Rq_DJiBEeK8V76VVnzvqA" name="iterator">
+        <ownedParameter xmi:id="_9Rq_DZiBEeK8V76VVnzvqA" name="Parameter1" type="_9Rq_DpiBEeK8V76VVnzvqA" direction="return"/>
+      </ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rq_EZiBEeK8V76VVnzvqA" client="_9Rq_CJiBEeK8V76VVnzvqA" supplier="_9RpxVZiBEeK8V76VVnzvqA"/>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rq_EpiBEeK8V76VVnzvqA" client="_9RqXv5iBEeK8V76VVnzvqA" supplier="_9RpxVZiBEeK8V76VVnzvqA"/>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rq_E5iBEeK8V76VVnzvqA" client="_9RqXv5iBEeK8V76VVnzvqA" supplier="_9Rq-s5iBEeK8V76VVnzvqA"/>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rq_FJiBEeK8V76VVnzvqA" client="_9RqYAZiBEeK8V76VVnzvqA" supplier="_9RpxVZiBEeK8V76VVnzvqA"/>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rq_FZiBEeK8V76VVnzvqA" client="_9RqYIpiBEeK8V76VVnzvqA" supplier="_9RpxVZiBEeK8V76VVnzvqA"/>
+    <packagedElement xmi:type="uml:Dependency" xmi:id="_9Rq_FpiBEeK8V76VVnzvqA" client="_9RpxdpiBEeK8V76VVnzvqA" supplier="_9RpxVZiBEeK8V76VVnzvqA"/>
+    <profileApplication xmi:id="_9Rq_F5iBEeK8V76VVnzvqA">
+      <eAnnotations xmi:id="_9Rq_GJiBEeK8V76VVnzvqA" source="http://www.eclipse.org/uml2/2.0.0/UML">
+        <references xmi:type="ecore:EPackage" href="pathmap://UML_PROFILES/Standard.profile.uml#_yzU58YinEdqtvbnfB2L_5w"/>
+      </eAnnotations>
+      <appliedProfile href="pathmap://UML_PROFILES/Standard.profile.uml#_0"/>
+    </profileApplication>
+  </uml:Model>
+  <l2:ModelLibrary xmi:id="_9Rq_GZiBEeK8V76VVnzvqA" base_Package="_9RpxVJiBEeK8V76VVnzvqA"/>
+</xmi:XMI>
