@@ -3,9 +3,6 @@
   <ownedComment xmi:id="_9RnU4ZiBEeK8V76VVnzvqA" annotatedElement="_9RnU4JiBEeK8V76VVnzvqA">
     <body>&lt;p>This is a model of the Xolotl Plasma-Surface Interactions Simulator and its tests.&lt;/p></body>
   </ownedComment>
-  <packageImport xmi:id="_9RnU4piBEeK8V76VVnzvqA">
-    <importedPackage xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
-  </packageImport>
   <packageImport xmi:id="_9RnU45iBEeK8V76VVnzvqA">
     <importedPackage xmi:type="uml:Model" href="CPPPrimitiveTypes.uml#_9RmGMJiBEeK8V76VVnzvqA"/>
   </packageImport>
@@ -20,6 +17,9 @@
   </packageImport>
   <packageImport xmi:id="_9RnU55iBEeK8V76VVnzvqA">
     <importedPackage xmi:type="uml:Model" href="UALContainers.uml#_9RpxVJiBEeK8V76VVnzvqA"/>
+  </packageImport>
+  <packageImport xmi:id="_ag1_wJoQEeKh_O_Tv8pFiQ">
+    <importedPackage xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/EcorePrimitiveTypes.library.uml#_0"/>
   </packageImport>
   <packagedElement xmi:type="uml:Package" xmi:id="_9RnU6JiBEeK8V76VVnzvqA" name="xolotlCore">
     <packagedElement xmi:type="uml:Package" xmi:id="_9RnU6ZiBEeK8V76VVnzvqA" name="reactants">
@@ -292,7 +292,7 @@
               <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGN5iBEeK8V76VVnzvqA"/>
             </ownedAttribute>
             <ownedOperation xmi:id="_9Rn7bpiBEeK8V76VVnzvqA" name="HCluster" visibility="public">
-              <ownedParameter xmi:id="_9Rn7b5iBEeK8V76VVnzvqA" name="arg" type="_9RojP5iBEeK8V76VVnzvqA" direction="inout"/>
+              <ownedParameter xmi:id="_9Rn7b5iBEeK8V76VVnzvqA" name="arg" direction="inout"/>
             </ownedOperation>
             <ownedOperation xmi:id="_9Rn7cJiBEeK8V76VVnzvqA" name="~HCluster" visibility="public"/>
             <ownedOperation xmi:id="_9Rn7cZiBEeK8V76VVnzvqA" name="HCluster" visibility="public"/>
@@ -967,9 +967,6 @@ numVClusters - The number of single-species V clusters of all sizes in the netwo
             </ownedParameter>
           </ownedOperation>
         </packagedElement>
-        <packagedElement xmi:type="uml:Dependency" xmi:id="_-VoUEJiXEeKPd7Ozzftn0w"/>
-        <packagedElement xmi:type="uml:Dependency" xmi:id="_CbKmEJiYEeKPd7Ozzftn0w"/>
-        <packagedElement xmi:type="uml:Association" xmi:id="_S8gRcJiYEeKPd7Ozzftn0w"/>
         <packagedElement xmi:type="uml:Dependency" xmi:id="_FDL7wJiZEeKPd7Ozzftn0w" name="" client="_88VisJiTEeKPd7Ozzftn0w" supplier="_9Rn7jpiBEeK8V76VVnzvqA"/>
         <packagedElement xmi:type="uml:Dependency" xmi:id="_IXXCQJiZEeKPd7Ozzftn0w" name="" client="_88VisJiTEeKPd7Ozzftn0w" supplier="_9Rn7o5iBEeK8V76VVnzvqA"/>
         <packagedElement xmi:type="uml:Dependency" xmi:id="_K3AUgJiZEeKPd7Ozzftn0w" name="" client="_88VisJiTEeKPd7Ozzftn0w" supplier="_9Rn7uJiBEeK8V76VVnzvqA"/>
@@ -1230,14 +1227,14 @@ numVClusters - The number of single-species V clusters of all sizes in the netwo
             <body>!The delimiter or &quot;Delimiter&quot; that separates elements in the line.
 </body>
           </ownedComment>
-          <type xmi:type="uml:Class" href="mmi:///#cdt.typedef^n=std'string^p=;includedir;/c++/4.4.4/bits/stringfwd.h$uml.Class"/>
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
           <defaultValue xmi:type="uml:LiteralString" xmi:id="_9Roi5ZiBEeK8V76VVnzvqA" value=" "/>
         </ownedAttribute>
         <ownedAttribute xmi:id="_9Roi5piBEeK8V76VVnzvqA" name="commentDelimiter" visibility="private" isReadOnly="true">
           <ownedComment xmi:id="_9Roi55iBEeK8V76VVnzvqA" annotatedElement="_9Roi5piBEeK8V76VVnzvqA">
             <body>&lt;p>!The character that represents a line that is a comment and should not be parsed.&lt;/p></body>
           </ownedComment>
-          <type xmi:type="uml:Class" href="mmi:///#cdt.typedef^n=std'string^p=;includedir;/c++/4.4.4/bits/stringfwd.h$uml.Class"/>
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
           <defaultValue xmi:type="uml:LiteralString" xmi:id="_9Roi6JiBEeK8V76VVnzvqA" value="#"/>
         </ownedAttribute>
         <ownedAttribute xmi:id="_9Roi6ZiBEeK8V76VVnzvqA" name="inputstream" visibility="private">
@@ -1281,11 +1278,10 @@ numVClusters - The number of single-species V clusters of all sizes in the netwo
           <ownedParameter xmi:id="_9Roi-JiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
             <type xmi:type="uml:PrimitiveType" href="CPPPrimitiveTypes.uml#_9RmGNZiBEeK8V76VVnzvqA"/>
           </ownedParameter>
-          <ownedParameter xmi:id="_9Roi-ZiBEeK8V76VVnzvqA" name="stream">
+          <ownedParameter xmi:id="_9Roi-ZiBEeK8V76VVnzvqA" name="stream" type="_9RojPpiBEeK8V76VVnzvqA">
             <ownedComment xmi:id="_9Roi-piBEeK8V76VVnzvqA" annotatedElement="_9Roi-ZiBEeK8V76VVnzvqA">
               <body>&lt;p>The input stream to be parsed&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:Class" href="mmi:///#cdt.typedef^n=std'istream^p=;includedir;/c++/4.4.4/iosfwd$uml.Class"/>
           </ownedParameter>
         </ownedOperation>
         <ownedOperation xmi:id="_9Roi-5iBEeK8V76VVnzvqA" name="loadLine">
@@ -1389,7 +1385,6 @@ numVClusters - The number of single-species V clusters of all sizes in the netwo
     </packagedElement>
   </packagedElement>
   <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_9RojPpiBEeK8V76VVnzvqA" name="InputStream"/>
-  <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_9RojP5iBEeK8V76VVnzvqA" name="HCluster::HCluster"/>
   <packagedElement xmi:type="uml:Class" xmi:id="_9RojQJiBEeK8V76VVnzvqA" name="main">
     <ownedOperation xmi:id="_9RojQZiBEeK8V76VVnzvqA" name="main" visibility="public">
       <ownedParameter xmi:id="_9RojQpiBEeK8V76VVnzvqA" name="ReturnParameter" direction="return">
@@ -1446,8 +1441,8 @@ numVClusters - The number of single-species V clusters of all sizes in the netwo
   </packagedElement>
   <profileApplication xmi:id="_9RojUpiBEeK8V76VVnzvqA">
     <eAnnotations xmi:id="_9RojU5iBEeK8V76VVnzvqA" source="http://www.eclipse.org/uml2/2.0.0/UML">
-      <references xmi:type="ecore:EPackage" href="pathmap://UML_PROFILES/Standard.profile.uml#_yzU58YinEdqtvbnfB2L_5w"/>
+      <references xmi:type="ecore:EPackage" href="http://www.eclipse.org/uml2/4.0.0/UML/Profile/L2#/"/>
     </eAnnotations>
-    <appliedProfile href="pathmap://UML_PROFILES/Standard.profile.uml#_0"/>
+    <appliedProfile href="pathmap://UML_PROFILES/StandardL2.profile.uml#_0"/>
   </profileApplication>
 </uml:Model>
