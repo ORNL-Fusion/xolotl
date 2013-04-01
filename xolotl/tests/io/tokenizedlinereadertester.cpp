@@ -15,7 +15,7 @@ const string doubleCSVDoubleSlashCommentString =
 const string intString = "1 3 5 7 9\n# Comment\n 0 2 4 6 \n";
 const string intCSVString = "1,3,5,7,9\n# Comment\n0,2,4,6\n";
 
-BOOST_AUTO_TEST_SUITE( TokenizedLineReader_testSuite)
+BOOST_AUTO_TEST_SUITE(TokenizedLineReader_testSuite)
 
 /**This operation checks default parsing setup of the TokenizedLineReader.*/
 BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
