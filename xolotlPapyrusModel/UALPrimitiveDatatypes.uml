@@ -13,7 +13,7 @@
       <eAnnotations xmi:id="_9RrlyJiBEeK8V76VVnzvqA" source="http://www.eclipse.org/uml2/2.0.0/UML">
         <references xmi:type="ecore:EPackage" href="pathmap://UML_PROFILES/Standard.profile.uml#_yzU58YinEdqtvbnfB2L_5w"/>
       </eAnnotations>
-      <appliedProfile href="pathmap://UML_PROFILES/Standard.profile.uml#_0"/>
+      <appliedProfile href="pathmap://UML_PROFILES/StandardL2.profile.uml#_0"/>
     </profileApplication>
   </uml:Model>
   <l2:ModelLibrary xmi:id="_9RrlyZiBEeK8V76VVnzvqA" base_Package="_9Rq_opiBEeK8V76VVnzvqA"/>

@@ -6,35 +6,27 @@
 	</projects>
 	<buildSpec>
 		<buildCommand>
-			<name>org.eclipse.pde.ManifestBuilder</name>
+			<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>
+			<triggers>full,incremental,</triggers>
 			<arguments>
+				<dictionary>
+					<key>LaunchConfigHandle</key>
+					<value>&lt;project&gt;/.externalToolBuilders/org.eclipse.pde.ManifestBuilder.launch</value>
+				</dictionary>
 			</arguments>
 		</buildCommand>
 		<buildCommand>
-			<name>org.eclipse.pde.SchemaBuilder</name>
-			<arguments>
-			</arguments>
-		</buildCommand>
-		<buildCommand>
-			<name>org.eclipse.acceleo.ide.ui.acceleoBuilder</name>
+			<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>
+			<triggers>full,incremental,</triggers>
 			<arguments>
 				<dictionary>
-					<key>compilation.kind</key>
-					<value>compilation.absolute.path</value>
-				</dictionary>
-				<dictionary>
-					<key>compliance</key>
-					<value>pragmatic</value>
-				</dictionary>
-				<dictionary>
-					<key>resource.kind</key>
-					<value>xmi</value>
+					<key>LaunchConfigHandle</key>
+					<value>&lt;project&gt;/.externalToolBuilders/org.eclipse.pde.SchemaBuilder.launch</value>
 				</dictionary>
 			</arguments>
 		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.pde.PluginNature</nature>
-		<nature>org.eclipse.acceleo.ide.ui.acceleoNature</nature>
 	</natures>
 </projectDescription>
