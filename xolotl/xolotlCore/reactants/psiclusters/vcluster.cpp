@@ -16,16 +16,6 @@ VCluster::~VCluster()
     //TODO Auto-generated method stub
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-VCluster::VCluster(VCluster & arg) 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-VCluster::~VCluster() 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 VCluster::VCluster() 
 {
     //TODO Auto-generated method stub
@@ -34,18 +24,6 @@ VCluster::VCluster()
 VCluster::~VCluster() 
 {
     //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-int & VCluster::get_numVac() 
-{
-    //TODO Auto-generated method stub
-    return numVac;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-void VCluster::set_numVac(int & numVac) 
-{
-    //TODO Auto-generated method stub
-    this->numVac = numVac;
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 VCluster::VCluster(int nV) 

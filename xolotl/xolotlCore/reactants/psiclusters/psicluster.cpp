@@ -18,16 +18,6 @@ PSICluster::~PSICluster()
     //TODO Auto-generated method stub
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-PSICluster::PSICluster(PSICluster & arg) 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-PSICluster::~PSICluster() 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 PSICluster::PSICluster() 
 {
     //TODO Auto-generated method stub
@@ -36,42 +26,6 @@ PSICluster::PSICluster()
 PSICluster::~PSICluster() 
 {
     //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-double & PSICluster::get_diffusionFactor() 
-{
-    //TODO Auto-generated method stub
-    return diffusionFactor;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-void PSICluster::set_diffusionFactor(double & diffusionFactor) 
-{
-    //TODO Auto-generated method stub
-    this->diffusionFactor = diffusionFactor;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-double & PSICluster::get_migrationEnergy() 
-{
-    //TODO Auto-generated method stub
-    return migrationEnergy;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-void PSICluster::set_migrationEnergy(double & migrationEnergy) 
-{
-    //TODO Auto-generated method stub
-    this->migrationEnergy = migrationEnergy;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-double & PSICluster::get_bindingEnergy() 
-{
-    //TODO Auto-generated method stub
-    return bindingEnergy;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-void PSICluster::set_bindingEnergy(double & bindingEnergy) 
-{
-    //TODO Auto-generated method stub
-    this->bindingEnergy = bindingEnergy;
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 double PSICluster::getDiffusionFactor() 

@@ -16,11 +16,6 @@ HeCluster::~HeCluster()
     //TODO Auto-generated method stub
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-HeCluster::HeCluster(HeCluster & arg) 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 HeCluster::~HeCluster() 
 {
     //TODO Auto-generated method stub
@@ -29,23 +24,6 @@ HeCluster::~HeCluster()
 HeCluster::HeCluster() 
 {
     //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-HeCluster::~HeCluster() 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-int & HeCluster::get_numHe() 
-{
-    //TODO Auto-generated method stub
-    return numHe;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-void HeCluster::set_numHe(int & numHe) 
-{
-    //TODO Auto-generated method stub
-    this->numHe = numHe;
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 HeCluster::HeCluster(int nHe) 

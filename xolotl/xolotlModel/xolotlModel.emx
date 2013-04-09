@@ -673,22 +673,6 @@
               <body>0.0</body>
             </defaultValue>
           </ownedAttribute>
-          <ownedAttribute xmi:id="_ZCEPoYHdEeKL9vRIYeUWfg" name="name" visibility="private" isReadOnly="true">
-            <ownedComment xmi:id="_ZCGr4YHdEeKL9vRIYeUWfg" annotatedElement="_ZCEPoYHdEeKL9vRIYeUWfg">
-              <body>&lt;p>The name of this Reactant.&lt;/p>
-</body>
-            </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtabXEdqm1P7n_cTT_g?C++%20Types/char?"/>
-            <defaultValue xmi:type="uml:LiteralString" xmi:id="_ZCLkYIHdEeKL9vRIYeUWfg" value=""/>
-          </ownedAttribute>
-          <ownedAttribute xmi:id="_dHORsIHeEeKL9vRIYeUWfg" name="name_0" visibility="private" isReadOnly="true">
-            <ownedComment xmi:id="_dHQG4YHeEeKL9vRIYeUWfg" annotatedElement="_dHORsIHeEeKL9vRIYeUWfg">
-              <body>&lt;p>The name of this Reactant.&lt;/p>
-</body>
-            </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtabXEdqm1P7n_cTT_g?C++%20Types/char?"/>
-            <defaultValue xmi:type="uml:LiteralString" xmi:id="_dHUYUYHeEeKL9vRIYeUWfg" value=""/>
-          </ownedAttribute>
           <ownedAttribute xmi:id="_SClIEHVzEeK_Qv8Ya7YSJw" name="name" visibility="private">
             <ownedComment xmi:id="_VqOKoHYXEeK4zMANKvvP2g" annotatedElement="_SClIEHVzEeK_Qv8Ya7YSJw">
               <body>&lt;p>The name of this Reactant.&lt;/p></body>
@@ -707,10 +691,6 @@
               <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
             </defaultValue>
           </ownedAttribute>
-          <ownedOperation xmi:id="_ZCK9UYHdEeKL9vRIYeUWfg" name="Reactant" visibility="public">
-            <ownedParameter xmi:id="_ZCLkYYHdEeKL9vRIYeUWfg" name="arg" type="_j8p9cHVyEeK-BchXMSC_6w" direction="inout"/>
-          </ownedOperation>
-          <ownedOperation xmi:id="_ZCLkYoHdEeKL9vRIYeUWfg" name="~Reactant" visibility="public"/>
           <ownedOperation xmi:id="_dHpvgYHeEeKL9vRIYeUWfg" name="Reactant" visibility="public">
             <ownedComment xmi:id="_dHqWkoHeEeKL9vRIYeUWfg" annotatedElement="_dHpvgYHeEeKL9vRIYeUWfg">
               <body>&lt;p>The constructor.&lt;/p>
@@ -1412,21 +1392,16 @@
   <Default:Documentation xmi:id="_7Xka0IHKEeKL9vRIYeUWfg" base_Comment="_7XiloIHKEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_destructor xmi:id="_hOQN8IHdEeKL9vRIYeUWfg" base_Operation="_ZBXFAIHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_destructor xmi:id="_hOYw0IHdEeKL9vRIYeUWfg" base_Operation="_Y_jHIoHdEeKL9vRIYeUWfg"/>
-  <CPPTransformation:cpp_type xmi:id="_hOqdoIHdEeKL9vRIYeUWfg" qualifier="*" base_Property="_ZCEPoYHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_type xmi:id="_hOsS0IHdEeKL9vRIYeUWfg" qualifier="*" base_Parameter="__xXM8IHHEeKL9vRIYeUWfg"/>
-  <CPPTransformation:cpp_destructor xmi:id="_hPpVEIHdEeKL9vRIYeUWfg" base_Operation="_ZCLkYoHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_globals xmi:id="_hPuNkIHdEeKL9vRIYeUWfg" base_Class="_ZDRwkIHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_type xmi:id="_hQKScIHdEeKL9vRIYeUWfg" qualifier="**" base_Parameter="_ZDUz4YHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_type xmi:id="_hQYU4IHdEeKL9vRIYeUWfg" qualifier="*" base_Parameter="_v9bLMHVzEeK_Qv8Ya7YSJw"/>
   <CPPTransformation:cpp_destructor xmi:id="_hQd0cIHdEeKL9vRIYeUWfg" base_Operation="_Y_I3cIHdEeKL9vRIYeUWfg"/>
-  <Default:Documentation xmi:id="_hQg3wIHdEeKL9vRIYeUWfg" base_Comment="_ZCGr4YHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_destructor xmi:id="_hQx9gIHdEeKL9vRIYeUWfg" base_Operation="_Y-pIMIHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_destructor xmi:id="_hGVyoIHeEeKL9vRIYeUWfg" base_Operation="_dG8k4IHeEeKL9vRIYeUWfg"/>
-  <CPPTransformation:cpp_type xmi:id="_hGXn0IHeEeKL9vRIYeUWfg" qualifier="*" base_Property="_dHORsIHeEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_typedef xmi:id="_hGY18IHeEeKL9vRIYeUWfg" base_Class="_Y8kEkYHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_destructor xmi:id="_hGcgUIHeEeKL9vRIYeUWfg" base_Operation="_dE9A0oHeEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_destructor xmi:id="_hGjOAIHeEeKL9vRIYeUWfg" base_Operation="_dC7AgoHeEeKL9vRIYeUWfg"/>
-  <Default:Documentation xmi:id="_hGmRUIHeEeKL9vRIYeUWfg" base_Comment="_dHQG4YHeEeKL9vRIYeUWfg"/>
   <Default:Documentation xmi:id="_hGoGgIHeEeKL9vRIYeUWfg" base_Comment="_dHqWkoHeEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_destructor xmi:id="_hGp7sIHeEeKL9vRIYeUWfg" base_Operation="_dFaT0oHeEeKL9vRIYeUWfg"/>
   <Default:Documentation xmi:id="_Yi5VcIHfEeKL9vRIYeUWfg" base_Comment="_XzyzwIHfEeKL9vRIYeUWfg"/>

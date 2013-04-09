@@ -13,6 +13,7 @@
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 class HeCluster : PSICluster
 {
+
     //Begin section for HeCluster
     //TODO: Add attributes that you want preserved
     //End section for HeCluster
@@ -40,34 +41,12 @@ class HeCluster : PSICluster
 
 
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        HeCluster(HeCluster & arg); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         ~HeCluster(); 
 
 
 
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         HeCluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~HeCluster(); 
-
-
-
-        //get numHe
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_numHe(); 
-
-
-
-        //set numHe
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_numHe(int & numHe); 
 
 
 

@@ -13,6 +13,7 @@
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 class DCluster : HCluster
 {
+
     //Begin section for DCluster
     //TODO: Add attributes that you want preserved
     //End section for DCluster
@@ -40,34 +41,12 @@ class DCluster : HCluster
 
 
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        DCluster(DCluster & arg); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         ~DCluster(); 
 
 
 
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         DCluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~DCluster(); 
-
-
-
-        //get numD
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_numD(); 
-
-
-
-        //set numD
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_numD(int & numD); 
 
 
 

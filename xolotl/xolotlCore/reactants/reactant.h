@@ -11,6 +11,7 @@
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 class Reactant
 {
+
     //Begin section for Reactant
     //TODO: Add attributes that you want preserved
     //End section for Reactant
@@ -30,18 +31,6 @@ class Reactant
 
 
 
-        //<p>The name of this Reactant.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        const char * name_0;
-
-
-
-        //<p>The name of this Reactant.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        const char * name_1;
-
-
-
         //<p>An integer identification number for this reactant. </p>
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         int id;
@@ -58,57 +47,6 @@ class Reactant
 
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         ~Reactant(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        Reactant(Reactant & arg); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~Reactant(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~Reactant(); 
-
-
-
-        //get concentration
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        double & get_concentration(); 
-
-
-
-        //set concentration
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_concentration(double & concentration); 
-
-
-
-        //get name
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        const char * & get_name(); 
-
-
-
-        //get id
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_id(); 
-
-
-
-        //set id
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_id(int & id); 
-
-
-
-        //<p>The constructor.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        Reactant(); 
 
 
 

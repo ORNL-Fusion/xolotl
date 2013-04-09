@@ -13,6 +13,7 @@
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 class PSICluster : Reactant
 {
+
     //Begin section for PSICluster
     //TODO: Add attributes that you want preserved
     //End section for PSICluster
@@ -52,58 +53,12 @@ class PSICluster : Reactant
 
 
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        PSICluster(PSICluster & arg); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~PSICluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         PSICluster(); 
 
 
 
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         ~PSICluster(); 
-
-
-
-        //get diffusionFactor
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        double & get_diffusionFactor(); 
-
-
-
-        //set diffusionFactor
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_diffusionFactor(double & diffusionFactor); 
-
-
-
-        //get migrationEnergy
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        double & get_migrationEnergy(); 
-
-
-
-        //set migrationEnergy
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_migrationEnergy(double & migrationEnergy); 
-
-
-
-        //get bindingEnergy
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        double & get_bindingEnergy(); 
-
-
-
-        //set bindingEnergy
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_bindingEnergy(double & bindingEnergy); 
 
 
 

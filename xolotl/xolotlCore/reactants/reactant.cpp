@@ -6,7 +6,7 @@
 
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 Reactant::Reactant(Reactant & arg) : 
-name(""),name_0(""),name_1("")
+name("")
 {
     //TODO Auto-generated method stub
     this->concentration = arg.concentration;
@@ -18,66 +18,14 @@ Reactant::~Reactant()
     //TODO Auto-generated method stub
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-Reactant::Reactant(Reactant & arg) : 
-concentration(0.0),name(""),name_0(""),name_1(""),id(0)
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-Reactant::~Reactant() 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-Reactant::~Reactant() 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-double & Reactant::get_concentration() 
-{
-    //TODO Auto-generated method stub
-    return concentration;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-void Reactant::set_concentration(double & concentration) 
-{
-    //TODO Auto-generated method stub
-    this->concentration = concentration;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-const char * & Reactant::get_name() 
-{
-    //TODO Auto-generated method stub
-    return name;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-int & Reactant::get_id() 
-{
-    //TODO Auto-generated method stub
-    return id;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-void Reactant::set_id(int & id) 
-{
-    //TODO Auto-generated method stub
-    this->id = id;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 Reactant::Reactant() : 
-concentration(0.0),name(""),name_0(""),name_1(""),id(0)
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-Reactant::Reactant() : 
-concentration(0.0),name(""),name_0(""),name_1(""),id(0)
+concentration(0.0),name(""),id(0)
 {
     //TODO Auto-generated method stub
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 Reactant::Reactant(double conc) : 
-concentration(0.0),name(""),name_0(""),name_1(""),id(0)
+concentration(0.0),name(""),id(0)
 {
     //TODO Auto-generated method stub
 }

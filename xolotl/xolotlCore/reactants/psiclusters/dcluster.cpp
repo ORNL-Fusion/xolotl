@@ -16,11 +16,6 @@ DCluster::~DCluster()
     //TODO Auto-generated method stub
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-DCluster::DCluster(DCluster & arg) 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 DCluster::~DCluster() 
 {
     //TODO Auto-generated method stub
@@ -29,23 +24,6 @@ DCluster::~DCluster()
 DCluster::DCluster() 
 {
     //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-DCluster::~DCluster() 
-{
-    //TODO Auto-generated method stub
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-int & DCluster::get_numD() 
-{
-    //TODO Auto-generated method stub
-    return numD;
-}
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-void DCluster::set_numD(int & numD) 
-{
-    //TODO Auto-generated method stub
-    this->numD = numD;
 }
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 DCluster::DCluster(int nH) 

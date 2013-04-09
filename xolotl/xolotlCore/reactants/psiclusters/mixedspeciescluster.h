@@ -13,6 +13,7 @@
 //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
 class MixedSpeciesCluster : PSICluster
 {
+
     //Begin section for MixedSpeciesCluster
     //TODO: Add attributes that you want preserved
     //End section for MixedSpeciesCluster
@@ -76,106 +77,12 @@ class MixedSpeciesCluster : PSICluster
 
 
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        MixedSpeciesCluster(MixedSpeciesCluster & arg); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~MixedSpeciesCluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         MixedSpeciesCluster(); 
 
 
 
         //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
         ~MixedSpeciesCluster(); 
-
-
-
-        //get size
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_size(); 
-
-
-
-        //set size
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_size(int & size); 
-
-
-
-        //get numH
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_numH(); 
-
-
-
-        //set numH
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_numH(int & numH); 
-
-
-
-        //get numInt
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_numInt(); 
-
-
-
-        //set numInt
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_numInt(int & numInt); 
-
-
-
-        //get numD
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_numD(); 
-
-
-
-        //set numD
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_numD(int & numD); 
-
-
-
-        //get numHe
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_numHe(); 
-
-
-
-        //set numHe
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_numHe(int & numHe); 
-
-
-
-        //get numT
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_numT(); 
-
-
-
-        //set numT
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_numT(int & numT); 
-
-
-
-        //get numVac
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int & get_numVac(); 
-
-
-
-        //set numVac
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void set_numVac(int & numVac); 
 
 
 
