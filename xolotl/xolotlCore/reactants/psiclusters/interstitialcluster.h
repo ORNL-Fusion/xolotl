@@ -1,63 +1,32 @@
 #ifndef INTERSTITIALCLUSTER_H
 #define INTERSTITIALCLUSTER_H
-//Begin section for file interstitialcluster.h
-//TODO: Add definitions that you want preserved
-//End section for file interstitialcluster.h
+
+// Includes
 #include "psicluster.h"
 
+namespace xolotlCore {
 
+//! This class represents a cluster composed entirely of interstitial defects.
+class InterstitialCluster : PSICluster {
 
+private:
 
+	//! The number of interstitial defects in this cluster.
+	int numInt;
 
-//<p>This class represents a cluster composed entirely of interstitial defects.</p>
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-class InterstitialCluster : PSICluster
-{
+public:
 
-    //Begin section for InterstitialCluster
-    //TODO: Add attributes that you want preserved
-    //End section for InterstitialCluster
+	/**
+	 * The constructor. All InterstitialClusters must be initialized with
+	 * a size.
+	 */
+	InterstitialCluster(int nI);
 
-    private:
+	//! Destructor
+	~InterstitialCluster();
 
+};
+//end class InterstitialCluster
 
-        //<p>The number of interstitial defects in this cluster.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int numInt;
-
-
-
-
-    public:
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        InterstitialCluster(InterstitialCluster & arg); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~InterstitialCluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        InterstitialCluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~InterstitialCluster(); 
-
-
-
-        //<p>The constructor. All InterstitialClusters must be initialized with a size.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        InterstitialCluster(int nI); 
-
-
-
-};  //end class InterstitialCluster
-
-
-
+} /* end namespace xolotlCore */
 #endif

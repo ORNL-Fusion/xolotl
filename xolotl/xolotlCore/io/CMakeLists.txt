@@ -4,7 +4,7 @@ SET(PACKAGE_NAME "xolotl.io")
 SET(PACKAGE_DESCRIPTION "Xolotl I/O")
 
 #Collect all header filenames in this project 
-#and set it to HEADERS
+#and glob them in HEADERS
 file(GLOB HEADERS *.h)
 
 #Install the xolotl header files

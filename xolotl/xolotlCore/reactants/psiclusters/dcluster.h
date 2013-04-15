@@ -1,63 +1,29 @@
 #ifndef DCLUSTER_H
 #define DCLUSTER_H
-//Begin section for file dcluster.h
-//TODO: Add definitions that you want preserved
-//End section for file dcluster.h
+
+// Includes
 #include "hcluster.h"
 
+namespace xolotlCore {
 
+//! This class represents a cluster composed entirely of deuterium.
+class DCluster : HCluster {
 
+private:
 
+	//! The number of deuterium atoms in this cluster.
+	int numD;
 
-//<p>This class represents a cluster composed entirely of deuterium.</p>
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-class DCluster : HCluster
-{
+public:
 
-    //Begin section for DCluster
-    //TODO: Add attributes that you want preserved
-    //End section for DCluster
+	//! The constructor. All DClusters must be initialized with a size.
+	DCluster(int nD);
 
-    private:
+	//! Destructor
+	~DCluster();
 
+};
+//end class DCluster
 
-        //<p>The number of deuterium atoms in this cluster.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int numD;
-
-
-
-
-    public:
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        DCluster(DCluster & arg); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~DCluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~DCluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        DCluster(); 
-
-
-
-        //<p>The constructor. All DClusters must be initialized with a size.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        DCluster(int nH); 
-
-
-
-};  //end class DCluster
-
-
-
+} /* end namespace xolotlCore */
 #endif

@@ -1,63 +1,36 @@
 #ifndef HECLUSTER_H
 #define HECLUSTER_H
-//Begin section for file hecluster.h
-//TODO: Add definitions that you want preserved
-//End section for file hecluster.h
+
+// Includes
 #include "psicluster.h"
 
+namespace xolotlCore {
 
+/**
+ * This class represents a cluster composed entirely of helium.
+ */
+class HeCluster: PSICluster {
 
+private:
 
+	//! The number of helium atoms in this cluster.
+	int numHe;
 
-//<p>This class represents a cluster composed entirely of helium.</p>
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-class HeCluster : PSICluster
-{
+public:
 
-    //Begin section for HeCluster
-    //TODO: Add attributes that you want preserved
-    //End section for HeCluster
+	/**
+	 * The constructor. All HeClusters must be initialized with a size.
+	 * @param nHe the number of helium atoms in the cluster
+	 */
+	HeCluster(int nHe);
 
-    private:
+	/**
+	 * Destructor
+	 */
+	~HeCluster();
 
+};
+//end class HeCluster
 
-        //<p>The number of helium atoms in this cluster.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        int numHe;
-
-
-
-
-    public:
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        HeCluster(HeCluster & arg); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~HeCluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        ~HeCluster(); 
-
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        HeCluster(); 
-
-
-
-        //<p>The constructor. All HeClusters must be initialized with a size.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        HeCluster(int nHe); 
-
-
-
-};  //end class HeCluster
-
-
-
+} /* namespace xolotlCore */
 #endif

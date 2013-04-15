@@ -1,135 +1,75 @@
 #ifndef REACTANT_H
 #define REACTANT_H
-//Begin section for file reactant.h
-//TODO: Add definitions that you want preserved
-//End section for file reactant.h
 
+// Includes
+#include <string>
+#include <vector>
 
+namespace xolotlCore {
 
-
-//<p>A Reactant is a general reacting body in a reaction network. It represents any body whose population can change with time due to reactions of any type.</p>
-//@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+/**
+ * A Reactant is a reacting body in a reaction network. It represents any body
+ * whose population can change with time due to reactions of any type.
+ */
 class Reactant
 {
 
-    //Begin section for Reactant
-    //TODO: Add attributes that you want preserved
-    //End section for Reactant
-
     private:
 
-
-        //<p>The total concentration of this Reactant.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // The total concentration of this Reactant.
         double concentration;
 
+        // The name of this Reactant. 
+        const std::string name;
 
-
-        //<p>The name of this Reactant.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        const char * name;
-
-
-
-        //<p>An integer identification number for this reactant. </p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // An integer identification number for this reactant.  
         int id;
-
-
-
 
     public:
 
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        Reactant(Reactant & arg); 
+        // The constructor.
+        Reactant();
 
-
-
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // Destructor
         ~Reactant(); 
 
-
-
-        //<p>The constructor.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        Reactant(); 
-
-
-
-        //<p>An alternative constructor that can be used to create a reactant with an initial concentration.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // An alternative constructor that can be used to create a reactant with an initial concentration. 
         Reactant(double conc); 
 
-
-
-        //<p>This operation returns the current concentration.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // This operation returns the current concentration. 
         double getConcentration(); 
 
-
-
-        //<p>This operation increases the concentration of the reactant by the specified amount.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // This operation increases the concentration of the reactant by the specified amount. 
         void increaseConcentration(double deltaConc); 
 
-
-
-        //<p>This operation decreases the concentration of the reactant by the specified amount.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // This operation decreases the concentration of the reactant by the specified amount. 
         void decreaseConcentration(double deltaConc); 
 
-
-
-        //<p>This operation sets the concentration of the reactant to the specified amount.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // This operation sets the concentration of the reactant to the specified amount. 
         void setConcentration(double conc); 
 
-
-
-        //<p>This operation sets the concentration of the reactant to zero.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // This operation sets the concentration of the reactant to zero. 
         void zero(); 
 
-
-
-        //<p>This operation returns the total flux of this reactant in the current network.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
+        // This operation returns the total flux of this reactant in the current network. 
         double getTotalFlux(); 
 
+        // This operation sets the collection of other reactants that make up the reaction network in which this reactant exists.  
+        void setReactionNetwork(std::vector<Reactant> network);
 
+        // This operation writes the contents of the reactant to a string. 
+        const std::string toString();
 
-        //<p>This operation sets the collection of other reactants that make up the reaction network in which this reactant exists. </p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void setReactionNetwork(Reactant * * network); 
+        // This operation reads the contents of the reactant from a string. 
+        void fromString(const std::string input);
 
+        // This operation writes the contents of the reactant to a string in XML. 
+        const std::string toXML();
 
-
-        //<p>This operation writes the contents of the reactant to a string.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        const char * toString(); 
-
-
-
-        //<p>This operation reads the contents of the reactant from a string.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void fromString(const char * input); 
-
-
-
-        //<p>This operation writes the contents of the reactant to a string in XML.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        const char * toXML(); 
-
-
-
-        //<p>This operation reads the contents of the reactant from a string in XML.</p>
-        //@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-        void fromXML(const char * input); 
-
-
+        // This operation reads the contents of the reactant from a string in XML. 
+        void fromXML(const std::string input);
 
 };  //end class Reactant
 
-
-
+} /* namespace xolotlCore */
 #endif

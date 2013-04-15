@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include <PSIClusterNetworkLoader.h>
+#include <psiclusternetworkloader.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -19,16 +19,30 @@ using namespace xolotlCore;
  * creates a string stream that contains each of the available PSICluster types
  * and checks that the loader returns a list with each type in it.
  */
-BOOST_AUTO_TEST_SUITE(PSIClusterNetworkLoader_testSuite)
+BOOST_AUTO_TEST_SUITE (PSIClusterNetworkLoader_testSuite)
 
 /** This operation checks the loader. */
 BOOST_AUTO_TEST_CASE(checkLoading) {
 
 	BOOST_FAIL("Not yet implemented.");
 
-	// Create the network that will be tested
+	// Local Declarations
+	shared_ptr<stringstream> networkStream(
+			new stringstream(stringstream::in | stringstream::out));
+	string singleHeString = "1 0 0 0.0 Infinity Infinity 8.2699999999999996\n";
+	string singleVString =
+			"0 50 0 Infinity 2.4900000000000002 Infinity Infinity\n";
+	string singleIString = "0 0 1 Infinity Infinity Infinity Infinity\n";
+	string mixedString =
+			"1 50 0 6.1600000000000001 2.4900000000000002 Infinity Infinity\n";
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader();
 
-	// Setup the loader
+	// Load the network stream. This simulates a file with single He, single
+	// V, single I and one mixed-species cluster.
+	*networkStream << singleHeString << singleVString << singleIString << mixedString;
+
+	// Setup the Loader
+	loader.setInputstream(networkStream);
 
 	// Load the network
 
