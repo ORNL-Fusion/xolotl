@@ -1,10 +1,9 @@
-
 // Includes
 #include "hecluster.h"
 
 using namespace xolotlCore;
 
-HeCluster::HeCluster(int nHe)
+HeCluster::HeCluster(int nHe) : PSICluster()
 {
     //TODO Auto-generated method stub
 }

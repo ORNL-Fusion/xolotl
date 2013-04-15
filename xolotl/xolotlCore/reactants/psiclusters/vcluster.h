@@ -2,28 +2,35 @@
 #define VCLUSTER_H
 #include "psicluster.h"
 
-// This class represents a cluster composed entirely of atomic vacancies. 
+// Includes
+#include "psicluster.h"
+
+namespace xolotlCore {
+
+/**
+ * This class represents a cluster composed entirely of atomic vacancies.
+ */
 class VCluster : PSICluster
 {
 
     private:
 
-        // The number of atomic vacancies in this cluster. 
+        //! The number of atomic vacancies in this cluster.
         int numVac;
 
     public:
 
-        VCluster(VCluster & arg); 
+        /**
+         * The constructor. All VClusters must be initialized with a size.
+         * @param nV the number of atomic vacancies in the cluster
+         */
+        VCluster(int nV);
 
+        //! Destructor
         ~VCluster(); 
-
-        VCluster(); 
-
-        ~VCluster(); 
-
-        // The constructor. All VClusters must be initialized with a size. 
-        VCluster(int nV); 
 
 };  //end class VCluster
+
+} /* end namespace xolotlCore */
 
 #endif

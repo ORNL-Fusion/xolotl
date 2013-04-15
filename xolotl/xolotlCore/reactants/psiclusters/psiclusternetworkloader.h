@@ -10,6 +10,7 @@
 
 //Includes
 #include <map>
+#include <memory>
 #include "psicluster.h"
 
 namespace xolotlCore {

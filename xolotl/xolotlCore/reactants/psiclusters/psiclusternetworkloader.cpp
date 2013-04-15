@@ -47,7 +47,9 @@ void PSIClusterNetworkLoader::setInputstream(std::shared_ptr<std::istream> strea
  */
 std::vector<PSICluster> PSIClusterNetworkLoader::load() {
 
-	return NULL;
+	std::vector<PSICluster> vector;
+
+	return vector;
 }
 
 /**
@@ -58,7 +60,9 @@ std::vector<PSICluster> PSIClusterNetworkLoader::load() {
  */
 std::map<std::string, std::string> PSIClusterNetworkLoader::getProperties() {
 
-	return NULL;
+	std::map<std::string, std::string> map;
+
+	return map;
 }
 
 } /* namespace xolotlCore */

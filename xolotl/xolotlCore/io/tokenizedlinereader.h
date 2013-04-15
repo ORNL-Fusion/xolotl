@@ -1,6 +1,9 @@
 #ifndef TOKENIZEDLINEREADER_H
 #define TOKENIZEDLINEREADER_H
 
+// Includes
+#include <memory>
+
 namespace xolotlCore {
 
 /**
