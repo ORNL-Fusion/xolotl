@@ -10,6 +10,7 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <psiclusternetworkloader.h>
+#include <memory>
 
 using namespace std;
 using namespace xolotlCore;
@@ -23,8 +24,6 @@ BOOST_AUTO_TEST_SUITE (PSIClusterNetworkLoader_testSuite)
 
 /** This operation checks the loader. */
 BOOST_AUTO_TEST_CASE(checkLoading) {
-
-	BOOST_FAIL("Not yet implemented.");
 
 	// Local Declarations
 	shared_ptr<stringstream> networkStream(
@@ -41,6 +40,14 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// V, single I and one mixed-species cluster.
 	*networkStream << singleHeString << singleVString << singleIString << mixedString;
 
+	// Diagnostic information
+	BOOST_TEST_MESSAGE("CLUSTER DATA");
+	BOOST_TEST_MESSAGE("He: " << singleHeString);
+	BOOST_TEST_MESSAGE("V: " << singleVString);
+	BOOST_TEST_MESSAGE("I: " << singleIString);
+	BOOST_TEST_MESSAGE("Mixed: " << mixedString);
+	BOOST_TEST_MESSAGE("Full Network data: \n" << (*networkStream).str());
+
 	// Setup the Loader
 	loader.setInputstream(networkStream);
 
@@ -49,6 +56,8 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Check the network
 
 	// Get & check the properties map
+
+	BOOST_FAIL("Not yet implemented.");
 
 }
 
