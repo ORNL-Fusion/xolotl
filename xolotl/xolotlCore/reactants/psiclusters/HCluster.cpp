@@ -1,12 +1,13 @@
-#include "tcluster.h"
+// Includes
+#include "HCluster.h"
 
 using namespace xolotlCore;
 
-TCluster::TCluster(int nT) : HCluster(nT)
+HCluster::HCluster(int nH)
 {
     //TODO Auto-generated method stub
 }
-TCluster::~TCluster() 
+HCluster::~HCluster()
 {
     //TODO Auto-generated method stub
 }

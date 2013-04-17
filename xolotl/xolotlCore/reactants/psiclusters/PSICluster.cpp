@@ -1,4 +1,4 @@
-#include "psicluster.h"
+#include "PSICluster.h"
 
 using namespace xolotlCore;
 

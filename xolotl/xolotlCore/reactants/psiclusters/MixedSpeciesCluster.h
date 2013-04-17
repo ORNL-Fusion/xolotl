@@ -2,7 +2,7 @@
 #define MIXEDSPECIESCLUSTER_H
 
 // Includes
-#include "psicluster.h"
+#include "PSICluster.h"
 #include <string>
 #include <map>
 

@@ -1,5 +1,5 @@
 // Includes
-#include "mixedspeciescluster.h"
+#include "MixedSpeciesCluster.h"
 
 using namespace xolotlCore;
 

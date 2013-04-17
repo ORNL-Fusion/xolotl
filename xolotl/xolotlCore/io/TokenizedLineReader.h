@@ -3,6 +3,8 @@
 
 // Includes
 #include <memory>
+#include <iostream>
+#include <sstream>
 
 namespace xolotlCore {
 

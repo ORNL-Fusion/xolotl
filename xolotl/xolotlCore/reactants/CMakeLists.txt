@@ -14,6 +14,7 @@ file(GLOB HEADERS *.h psiclusters/*.h)
 file(GLOB SRC *.cpp psiclusters/*.cpp)
 
 #Include this directory so that the psiclusters can be built
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 

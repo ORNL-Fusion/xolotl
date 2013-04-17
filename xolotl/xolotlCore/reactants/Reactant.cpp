@@ -1,6 +1,6 @@
 
 // Includes
-#include "reactant.h"
+#include "Reactant.h"
 
 // Namespaces
 using namespace xolotlCore;

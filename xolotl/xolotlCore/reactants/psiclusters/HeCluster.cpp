@@ -1,5 +1,5 @@
 // Includes
-#include "hecluster.h"
+#include "HeCluster.h"
 
 using namespace xolotlCore;
 

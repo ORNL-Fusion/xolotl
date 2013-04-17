@@ -2,7 +2,7 @@
 #define DCLUSTER_H
 
 // Includes
-#include "hcluster.h"
+#include "HCluster.h"
 
 namespace xolotlCore {
 

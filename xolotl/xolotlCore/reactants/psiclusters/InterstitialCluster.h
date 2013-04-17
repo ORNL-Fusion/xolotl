@@ -2,7 +2,7 @@
 #define INTERSTITIALCLUSTER_H
 
 // Includes
-#include "psicluster.h"
+#include "PSICluster.h"
 
 namespace xolotlCore {
 

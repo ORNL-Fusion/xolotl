@@ -1,12 +1,13 @@
-#include "dcluster.h"
+// Includes
+#include "VCluster.h"
 
 using namespace xolotlCore;
 
-DCluster::DCluster(int nH) : HCluster(nH)
+VCluster::VCluster(int nV) : PSICluster()
 {
     //TODO Auto-generated method stub
 }
-DCluster::~DCluster() 
+VCluster::~VCluster() 
 {
     //TODO Auto-generated method stub
 }

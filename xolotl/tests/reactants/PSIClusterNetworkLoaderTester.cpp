@@ -9,7 +9,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include <psiclusternetworkloader.h>
+#include <PSIClusterNetworkLoader.h>
 #include <memory>
 
 using namespace std;
@@ -35,6 +35,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	string mixedString =
 			"1 50 0 6.1600000000000001 2.4900000000000002 Infinity Infinity\n";
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader();
+	shared_ptr<ReactionNetwork> network;
 
 	// Load the network stream. This simulates a file with single He, single
 	// V, single I and one mixed-species cluster.
@@ -53,9 +54,21 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 
 	// Load the network
 
-	// Check the network
+	// FIXME - Does this work? shared_ptr != ptr !!!
 
-	// Get & check the properties map
+	network = loader.load();
+
+	// Check the network. It should not be empty
+	BOOST_REQUIRE(!(network->properties->empty()));
+	BOOST_REQUIRE(!(network->reactants->empty()));
+	// It should have four reactants
+	BOOST_REQUIRE_EQUAL(4,network->reactants->size());
+	// It should have six properties
+	BOOST_REQUIRE_EQUAL(6,network->properties->size());
+
+	// Check the reactants
+
+	// Check the properties
 
 	BOOST_FAIL("Not yet implemented.");
 

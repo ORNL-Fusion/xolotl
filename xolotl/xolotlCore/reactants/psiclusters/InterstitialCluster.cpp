@@ -1,4 +1,4 @@
-#include "interstitialcluster.h"
+#include "InterstitialCluster.h"
 
 using namespace xolotlCore;
 

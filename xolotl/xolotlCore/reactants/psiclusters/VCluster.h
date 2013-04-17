@@ -1,9 +1,8 @@
 #ifndef VCLUSTER_H
 #define VCLUSTER_H
-#include "psicluster.h"
 
 // Includes
-#include "psicluster.h"
+#include "PSICluster.h"
 
 namespace xolotlCore {
 

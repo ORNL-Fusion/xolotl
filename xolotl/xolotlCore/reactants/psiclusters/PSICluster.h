@@ -2,7 +2,7 @@
 #define PSICLUSTER_H
 
 // Includes
-#include "reactant.h"
+#include "Reactant.h"
 
 namespace xolotlCore {
 

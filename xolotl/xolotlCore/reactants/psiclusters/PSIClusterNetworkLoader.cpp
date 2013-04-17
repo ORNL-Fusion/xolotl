@@ -5,9 +5,10 @@
  *      Author: jaybilly
  */
 
-#include "psiclusternetworkloader.h"
+#include "PSIClusterNetworkLoader.h"
+#include <TokenizedLineReader.h>
 
-namespace xolotlCore {
+using namespace xolotlCore;
 
 /**
  * The default constructor. The setInputstream() operation must be called
@@ -37,32 +38,35 @@ PSIClusterNetworkLoader::~PSIClusterNetworkLoader() {
  * loaded.
  */
 void PSIClusterNetworkLoader::setInputstream(std::shared_ptr<std::istream> stream) {
+
+	// Keep the stream, but only if it is not NULL
+	if (stream)
+		networkStream = stream;
+
+	return;
 }
 
 /**
  * This operation will load the reaction network from the inputstream in
  * the format specified previously. The network will be empty if it can not
  * be loaded.
- * @return The reaction network //Should it be vector<vector>?
+ * @param network The reaction network
  */
-std::vector<PSICluster> PSIClusterNetworkLoader::load() {
+std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 
-	std::vector<PSICluster> vector;
+	// Local Declarations
+	TokenizedLineReader<std::string> reader;
+	std::vector<std::string> loadedLine;
 
-	return vector;
+	// Load the network if the stream is available
+	if (networkStream != NULL) {
+		// Load the stream
+		reader.setInputStream(networkStream);
+		// Loop over each line of the file, which should each be PSIClusters
+		do {
+
+		} while(true/*FIXME - Conditional*/);
+	}
+
 }
 
-/**
- * This operation returns the properties map that was created for the
- * network. If it is called before the network is loaded or the network can
- * not be loaded, it will be empty.
- * @return The property map
- */
-std::map<std::string, std::string> PSIClusterNetworkLoader::getProperties() {
-
-	std::map<std::string, std::string> map;
-
-	return map;
-}
-
-} /* namespace xolotlCore */
