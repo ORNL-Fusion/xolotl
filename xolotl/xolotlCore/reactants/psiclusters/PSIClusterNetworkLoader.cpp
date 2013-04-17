@@ -65,7 +65,7 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		// Loop over each line of the file, which should each be PSIClusters
 		do {
 
-		} while(true/*FIXME - Conditional*/);
+		} while(false/*FIXME - Conditional*/);
 	}
 
 }
