@@ -9,13 +9,10 @@ namespace xolotlCore {
 /**
  * This class represents a cluster composed entirely of atomic vacancies.
  */
-class VCluster : PSICluster
+class VCluster : public PSICluster
 {
 
     private:
-
-        //! The number of atomic vacancies in this cluster.
-        int numVac;
 
     public:
 

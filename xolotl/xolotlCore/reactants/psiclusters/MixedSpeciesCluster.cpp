@@ -3,9 +3,17 @@
 
 using namespace xolotlCore;
 
-MixedSpeciesCluster::MixedSpeciesCluster(std::map<std::string,int> speciesMap)
+MixedSpeciesCluster::MixedSpeciesCluster(std::map<std::string,int> speciesMap) : PSICluster(1)
 {
-    //TODO Auto-generated method stub
+	numD = 0;
+	numH = 0;
+	numHe = 0;
+	numInt = 0;
+	numT = 0;
+	numVac = 0;
+    size = 5;
+	// Set the reactant name appropriately
+	name = "Mixed Species";
 }
 MixedSpeciesCluster::~MixedSpeciesCluster()
 {

@@ -12,15 +12,9 @@ namespace xolotlCore {
  *  This class represents a cluster composed of multiple atomic species,
  *  vacancies and interstitials.
  */
-class MixedSpeciesCluster : PSICluster {
+class MixedSpeciesCluster : public PSICluster {
 
 private:
-
-	/**
-	 *  The total number of atoms, vacancies and interstitials making up
-	 *  this cluster across all species.
-	 */
-	int size;
 
 	//! The number of hydrogen atoms in this cluster.
 	int numH;

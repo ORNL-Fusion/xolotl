@@ -7,13 +7,10 @@
 namespace xolotlCore {
 
 //! This class represents a cluster composed entirely of hydrogen.
-class HCluster : PSICluster
+class HCluster : public PSICluster
 {
 
     private:
-
-        //! The number of hydrogen atoms in this cluster.
-        int numH;
 
     public:
 

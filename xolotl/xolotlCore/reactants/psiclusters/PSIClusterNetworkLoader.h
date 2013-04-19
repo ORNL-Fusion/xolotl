@@ -12,7 +12,7 @@
 #include <map>
 #include <memory>
 #include "PSICluster.h"
-#include <ReactionNetwork.h>
+#include <Reactant.h>
 
 namespace xolotlCore {
 
@@ -72,19 +72,19 @@ public:
 	 * The default constructor. The setInputstream() operation must be called
 	 * if this constructor is used.
 	 */
-	PSIClusterNetworkLoader();
+	PSIClusterNetworkLoader() {}
 
 	/**
 	 * An alternative constructor provided for convenience.
 	 * @param inputstream The inputstream from which the cluster data should be
 	 * loaded.
 	 */
-	PSIClusterNetworkLoader(std::shared_ptr<std::istream> stream);
+	PSIClusterNetworkLoader(const std::shared_ptr<std::istream> stream);
 
 	/**
 	 * Destructor
 	 */
-	virtual ~PSIClusterNetworkLoader();
+	virtual ~PSIClusterNetworkLoader() {}
 
 	/**
 	 * This operation specifies the inputstream from which cluster data should
@@ -92,7 +92,7 @@ public:
 	 * @param inputstream The inputstream from which the cluster data should be
 	 * loaded.
 	 */
-	void setInputstream(std::shared_ptr<std::istream> stream);
+	void setInputstream(const std::shared_ptr<std::istream> stream);
 
 	/**
 	 * This operation will load the reaction network from the inputstream in

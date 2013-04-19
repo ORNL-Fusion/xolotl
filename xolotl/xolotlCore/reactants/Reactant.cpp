@@ -49,7 +49,7 @@ double Reactant::getTotalFlux()
     //TODO Auto-generated method stub
     return 0;
 }
-void Reactant::setReactionNetwork(std::vector<Reactant> network)
+void Reactant::setReactionNetwork(std::shared_ptr<ReactionNetwork> network)
 {
     //TODO Auto-generated method stub
     return;
@@ -57,20 +57,6 @@ void Reactant::setReactionNetwork(std::vector<Reactant> network)
 const std::string Reactant::toString()
 {
     //TODO Auto-generated method stub
-    return 0;
+    return "fluffy";
 }
-void Reactant::fromString(const std::string input)
-{
-    //TODO Auto-generated method stub
-    return;
-}
-const std::string Reactant::toXML()
-{
-    //TODO Auto-generated method stub
-    return 0;
-}
-void Reactant::fromXML(const std::string input)
-{
-    //TODO Auto-generated method stub
-    return;
-}
+

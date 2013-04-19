@@ -3,11 +3,8 @@
 
 using namespace xolotlCore;
 
-HCluster::HCluster(int nH)
-{
-    //TODO Auto-generated method stub
+HCluster::HCluster(int nH) : PSICluster(nH) {
+	// Set the reactant name appropriately
+	name = "Hydrogen";
 }
-HCluster::~HCluster()
-{
-    //TODO Auto-generated method stub
-}
+HCluster::~HCluster() {}

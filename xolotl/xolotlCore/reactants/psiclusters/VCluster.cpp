@@ -3,11 +3,10 @@
 
 using namespace xolotlCore;
 
-VCluster::VCluster(int nV) : PSICluster()
-{
-    //TODO Auto-generated method stub
+VCluster::VCluster(int nV) :
+		PSICluster(nV) {
+	// Set the reactant name appropriately
+	name = "Vacancy";
 }
-VCluster::~VCluster() 
-{
-    //TODO Auto-generated method stub
+VCluster::~VCluster() {
 }

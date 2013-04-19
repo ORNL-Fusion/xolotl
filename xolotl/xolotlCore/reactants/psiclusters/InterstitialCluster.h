@@ -7,12 +7,9 @@
 namespace xolotlCore {
 
 //! This class represents a cluster composed entirely of interstitial defects.
-class InterstitialCluster : PSICluster {
+class InterstitialCluster : public PSICluster {
 
 private:
-
-	//! The number of interstitial defects in this cluster.
-	int numInt;
 
 public:
 

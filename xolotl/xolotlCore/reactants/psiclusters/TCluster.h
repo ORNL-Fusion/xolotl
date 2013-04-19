@@ -7,12 +7,9 @@
 namespace xolotlCore {
 
 //! This class represents a cluster composed entirely of tritium.
-class TCluster : HCluster {
+class TCluster : public HCluster {
 
 private:
-
-	//! The number of tritium atoms in this cluster.
-	int numT;
 
 public:
 

@@ -3,11 +3,10 @@
 
 using namespace xolotlCore;
 
-HeCluster::HeCluster(int nHe) : PSICluster()
-{
-    //TODO Auto-generated method stub
+HeCluster::HeCluster(int nHe) :
+		PSICluster(nHe) {
+	// Set the reactant name appropriately
+	name = "Helium";
 }
-HeCluster::~HeCluster() 
-{
-    //TODO Auto-generated method stub
+HeCluster::~HeCluster() {
 }

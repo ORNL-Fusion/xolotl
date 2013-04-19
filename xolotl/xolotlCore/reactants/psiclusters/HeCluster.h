@@ -9,12 +9,9 @@ namespace xolotlCore {
 /**
  * This class represents a cluster composed entirely of helium.
  */
-class HeCluster: PSICluster {
+class HeCluster: public PSICluster {
 
 private:
-
-	//! The number of helium atoms in this cluster.
-	int numHe;
 
 public:
 

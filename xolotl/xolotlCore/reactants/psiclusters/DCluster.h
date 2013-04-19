@@ -7,12 +7,9 @@
 namespace xolotlCore {
 
 //! This class represents a cluster composed entirely of deuterium.
-class DCluster : HCluster {
+class DCluster : public HCluster {
 
 private:
-
-	//! The number of deuterium atoms in this cluster.
-	int numD;
 
 public:
 

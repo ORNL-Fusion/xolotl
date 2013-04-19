@@ -2,11 +2,10 @@
 
 using namespace xolotlCore;
 
-DCluster::DCluster(int nH) : HCluster(nH)
-{
-    //TODO Auto-generated method stub
+DCluster::DCluster(int nH) :
+		HCluster(nH) {
+	// Set the reactant name appropriately
+	name = "Deuterium";
 }
-DCluster::~DCluster() 
-{
-    //TODO Auto-generated method stub
+DCluster::~DCluster() {
 }

@@ -69,7 +69,7 @@ public:
 	/**
 	 * This operation sets the input stream that should be parsed.
 	 */
-	void setInputStream(std::shared_ptr<std::istream> stream) {
+	void setInputStream(const std::shared_ptr<std::istream> stream) {
 		inputstream = stream;
 		return;
 	}
