@@ -13,6 +13,7 @@
 #include <memory>
 #include "PSICluster.h"
 #include <Reactant.h>
+#include <string>
 
 namespace xolotlCore {
 

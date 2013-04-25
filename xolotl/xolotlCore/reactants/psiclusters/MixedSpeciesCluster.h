@@ -34,6 +34,12 @@ private:
 	//! The number of atomic vacancies in this cluster.
 	int numVac;
 
+	/**
+	 * The default constructor is private because PSIClusters must always be
+	 * initialized with a size.
+	 */
+	MixedSpeciesCluster():PSICluster(1) {}
+
 public:
 
 	/**

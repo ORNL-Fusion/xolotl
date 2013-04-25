@@ -34,7 +34,6 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	string mixedString =
 			"1 50 0 6.1600000000000001 2.4900000000000002 Infinity Infinity\n";
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader();
-	shared_ptr<ReactionNetwork> network;
 
 	// Load the network stream. This simulates a file with single He, single
 	// V, single I and one mixed-species cluster.
@@ -60,12 +59,13 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	loader.setInputstream(networkStream);
 
 	// Load the network
-	// FIXME - Does this work? shared_ptr != ptr !!!
-	network = loader.load();
+	shared_ptr<ReactionNetwork> network = loader.load();
 
 	// Check the network. It should not be empty
 	std::map<std::string, std::string> props = *(network->properties);
 	std::vector<Reactant> reactants = *(network->reactants);
+	BOOST_TEST_MESSAGE("Network Size = " << reactants.size());
+	BOOST_TEST_MESSAGE("Number of properties = " << props.size());
 	BOOST_REQUIRE(!props.empty());
 	BOOST_REQUIRE(!reactants.empty());
 	// It should have four reactants
@@ -73,9 +73,21 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// It should have six properties
 	BOOST_REQUIRE_EQUAL(6, props.size());
 
-	// Check the reactants
-
 	// Check the properties
+	BOOST_TEST_MESSAGE("Maximum He Cluster Size = " << props["maxHeClusterSize"]);
+	BOOST_REQUIRE(strtol(props["maxHeClusterSize"].c_str(),NULL,10) == 1);
+	BOOST_TEST_MESSAGE("Maximum V Cluster Size = " << props["maxVClusterSize"]);
+	BOOST_REQUIRE(strtol(props["maxVClusterSize"].c_str(),NULL,10) == 1);
+	BOOST_TEST_MESSAGE("Maximum Interstitial Cluster Size = " << props["maxIClusterSize"]);
+	BOOST_REQUIRE(strtol(props["maxIClusterSize"].c_str(),NULL,10) == 1);
+	BOOST_TEST_MESSAGE("Number of He clusters = " << props["numHeClusters"]);
+	BOOST_REQUIRE(strtol(props["numHeClusters"].c_str(),NULL,10) == 1);
+	BOOST_TEST_MESSAGE("Number of V clusters = " << props["numVClusters"]);
+	BOOST_REQUIRE(strtol(props["numVClusters"].c_str(),NULL,10) == 1);
+	BOOST_TEST_MESSAGE("Number of I clusters = " << props["numIClusters"]);
+	BOOST_REQUIRE(strtol(props["numIClusters"].c_str(),NULL,10) == 1);
+
+	// Check the reactants
 
 	BOOST_FAIL("Not yet implemented.");
 

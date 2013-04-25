@@ -38,6 +38,14 @@ protected:
 	 */
 	double bindingEnergies[4];
 
+private:
+
+	/**
+	 * The default constructor is private because PSIClusters must always be
+	 * initialized with a size.
+	 */
+	PSICluster() {}
+
 public:
 
 	//! Constructor

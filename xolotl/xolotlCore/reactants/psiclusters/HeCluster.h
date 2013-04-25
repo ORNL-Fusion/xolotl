@@ -13,6 +13,12 @@ class HeCluster: public PSICluster {
 
 private:
 
+	/**
+	 * The default constructor is private because PSIClusters must always be
+	 * initialized with a size.
+	 */
+	HeCluster():PSICluster(1) {}
+
 public:
 
 	/**

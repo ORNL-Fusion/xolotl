@@ -6,10 +6,10 @@
 #include <vector>
 #include <memory>
 #include <map>
-//#include "ReactionNetwork.h"
 
 namespace xolotlCore {
 
+// Forward declaration of ReactionNetwork that will be resolved later.
 class ReactionNetwork;
 
 /**
