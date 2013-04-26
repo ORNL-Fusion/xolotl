@@ -118,12 +118,12 @@ public:
 	 * The set of reactants. The exact order of the reactants in the set is
 	 * specified by the class that loaded them.
 	 */
-	std::shared_ptr<std::vector<Reactant>> reactants;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> reactants;
 
 	//! The constructor. It initializes the properties map and reactants vector.
 	ReactionNetwork() :
 			properties(new std::map<std::string, std::string>()), reactants(
-					new std::vector<Reactant>()) {
+					new std::vector<std::shared_ptr<Reactant>>()) {
 	}
 
 	//! The destructor

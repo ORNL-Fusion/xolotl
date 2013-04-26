@@ -36,7 +36,7 @@ static inline double convertStrToDouble(const std::string inString) {
  * @param numI - The number of interstitial defects
  * @return The new cluster
  */
-static PSICluster createCluster(int numHe, int numV, int numI,
+static std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI,
 		std::shared_ptr<std::map<std::string, std::string>> props) {
 
 	// Local Declarations
@@ -44,7 +44,7 @@ static PSICluster createCluster(int numHe, int numV, int numI,
 	int numClusters = 0;
 	long clusterSize = 0, maxClusterSize = 0;
 	std::string numClustersTag, maxClustersTag;
-	PSICluster cluster(1);
+	std::shared_ptr<PSICluster> cluster;
 
 	// Determine whether or not this is a mixed cluster
 	bool mixed = (((numHe > 0) + (numV > 0) + (numI > 0)) > 1);
@@ -52,26 +52,33 @@ static PSICluster createCluster(int numHe, int numV, int numI,
 	/* Most of the clusters will be mixed - there are only about 30
 	 * single-species clusters.
 	 */
-	if (mixed)
-		cluster = MixedSpeciesCluster(speciesMap);
-	else {
-		std::cout << numHe << " " << numV << " " << numI << std::endl;
-
+	if (mixed) {
+		// Load the species map so that the mixed cluster can be properly created.
+		speciesMap["He"] = numHe;
+		speciesMap["V"] = numV;
+		speciesMap["I"] = numI;
+		cluster = std::make_shared<MixedSpeciesCluster>(speciesMap);
+		numClustersTag = "numMixedClusters";
+		// Update the number of clusters
+		numClusters = strtol((*props)[numClustersTag].c_str(), NULL, 10) + 1;
+		(*props)[numClustersTag] = std::to_string(
+				static_cast<long long>(numClusters));
+	} else {
 		/* Switch over the three types, create the cluster and set the properties.
 		 * Start with He as they are probably listed first.
 		 */
 		if (numHe > 0) {
-			cluster = HeCluster(numHe);
+			cluster = std::make_shared<HeCluster>(numHe);
 			clusterSize = numHe;
 			numClustersTag = "numHeClusters";
 			maxClustersTag = "maxHeClusterSize";
 		} else if (numV > 0) { // Vacancies
-			cluster = VCluster(numV);
+			cluster = std::make_shared<VCluster>(numV);
 			clusterSize = numV;
 			numClustersTag = "numVClusters";
 			maxClustersTag = "maxVClusterSize";
 		} else { // Default to interstitial defects.
-			cluster = InterstitialCluster(numI);
+			cluster = std::make_shared<InterstitialCluster>(numI);
 			clusterSize = numI;
 			numClustersTag = "numIClusters";
 			maxClustersTag = "maxIClusterSize";
@@ -82,9 +89,9 @@ static PSICluster createCluster(int numHe, int numV, int numI,
 				static_cast<long long>(numClusters));
 		// Update the max size if required - compute the max from the old and current values
 		maxClusterSize = strtol((*props)[maxClustersTag].c_str(), NULL, 10);
-		maxClusterSize = std::max(clusterSize,maxClusterSize);
-		(*props)[maxClustersTag] = std::to_string(static_cast<long long>(clusterSize));
-		std::cout << numClusters << " " << maxClusterSize << std::endl;
+		maxClusterSize = std::max(clusterSize, maxClusterSize);
+		(*props)[maxClustersTag] = std::to_string(
+				static_cast<long long>(clusterSize));
 	}
 
 	return cluster;
@@ -133,6 +140,7 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 	double heBindingE = 0.0, vBindingE = 0.0, iBindingE = 0.0,
 			trapMutationBindingE = 0.0;
 	bool mixed = false;
+	std::vector<double> bindingEnergies;
 
 	// Load the network if the stream is available
 	if (networkStream != NULL) {
@@ -148,18 +156,27 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		(*props)["numHeClusters"] = "0";
 		(*props)["numVClusters"] = "0";
 		(*props)["numIClusters"] = "0";
+		(*props)["numMixedClusters"] = "0";
 		while (loadedLine.size() > 0) {
 			// Load the sizes
-			numHe = strtol(loadedLine.at(0).c_str(), NULL, 10);
-			numV = strtol(loadedLine.at(1).c_str(), NULL, 10);
-			numI = strtol(loadedLine.at(2).c_str(), NULL, 10);
-			// Load the binding energies
-			heBindingE = convertStrToDouble(loadedLine.at(3));
-			vBindingE = convertStrToDouble(loadedLine.at(4));
-			iBindingE = convertStrToDouble(loadedLine.at(5));
-			trapMutationBindingE = convertStrToDouble(loadedLine.at(6));
+			numHe = strtol(loadedLine[0].c_str(), NULL, 10);
+			numV = strtol(loadedLine[1].c_str(), NULL, 10);
+			numI = strtol(loadedLine[2].c_str(), NULL, 10);
 			// Create the cluster
-			PSICluster nextCluster = createCluster(numHe, numV, numI, props);
+			std::shared_ptr<PSICluster> nextCluster = createCluster(numHe, numV, numI, props);
+			// Load the binding energies
+			heBindingE = convertStrToDouble(loadedLine[3]);
+			vBindingE = convertStrToDouble(loadedLine[4]);
+			iBindingE = convertStrToDouble(loadedLine[5]);
+			trapMutationBindingE = convertStrToDouble(loadedLine[6]);
+			std::cout << heBindingE << " " << vBindingE << " " << iBindingE << " " << trapMutationBindingE << std::endl;
+			// Create the array
+			bindingEnergies.clear();
+			bindingEnergies.push_back(heBindingE);
+			bindingEnergies.push_back(vBindingE);
+			bindingEnergies.push_back(iBindingE);
+			bindingEnergies.push_back(trapMutationBindingE);
+			nextCluster->setBindingEnergies(bindingEnergies);
 			network->reactants->push_back(nextCluster);
 			// Load the next line
 			loadedLine = reader.loadLine();

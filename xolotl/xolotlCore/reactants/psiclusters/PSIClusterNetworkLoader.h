@@ -49,14 +49,16 @@ namespace xolotlCore {
  *  He cluster.
  * > maxVClusterSize - The number of atomic vacancies in the largest
  * single-species V cluster.
- * > maxInterstitialClusterSize - The number of interstitials in the largest
+ * > maxIClusterSize - The number of interstitials in the largest
  * single-species I cluster.
  * > numHeClusters - The number of single-species He clusters of all sizes in
  * the network.
  * > numVClusters - The number of single-species V clusters of all sizes in the
  * network.
- * > numInterstitialClusters - The number of single-species I clusters of all
- * sizes in the network.
+ * > numIClusters - The number of single-species I clusters of all sizes in the
+ * network.
+ * > numMixedClusters - The number of mixed-species clusters of all sizes in the
+ * network.
  */
 class PSIClusterNetworkLoader {
 

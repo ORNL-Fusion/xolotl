@@ -36,7 +36,7 @@ protected:
 	 * types. There is one binding energy for each of the other species ordered
 	 * by He, V, I and mixed species at indices 0, 1, 2 and 3 respectively.
 	 */
-	double bindingEnergies[4];
+	std::vector<double> bindingEnergies;
 
 private:
 
@@ -95,14 +95,14 @@ public:
 	 * @return An array of the binding energies of this cluster with clusters
 	 * of other types as described above.
 	 */
-	std::vector<double> getBindingEnergy();
+	std::vector<double> getBindingEnergies();
 
 	/**
 	 * This operation sets the binding energies for this cluster. It expects
 	 * the energy vector to be ordered as described above.
 	 * @param energies The vector of energies.
 	 */
-	void setBindingEnergy(std::vector<double> energies);
+	void setBindingEnergies(std::vector<double> energies);
 
 	/**
 	 * This operation retrieves the diffusion factor, D_0, that is used to

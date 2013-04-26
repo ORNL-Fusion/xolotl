@@ -7,6 +7,7 @@ PSICluster::PSICluster(int clusterSize) : Reactant() {
 	// Set the size
 	size = (clusterSize > 0) ? clusterSize : 1;
 	// Zero out the binding energies
+	bindingEnergies.resize(4);
 	bindingEnergies[0] = 0.0;
 	bindingEnergies[1] = 0.0;
 	bindingEnergies[2] = 0.0;
@@ -56,19 +57,16 @@ void PSICluster::setDiffusionFactor(double factor) {
 	return;
 }
 
-std::vector<double> PSICluster::getBindingEnergy() {
+std::vector<double> PSICluster::getBindingEnergies() {
 	// Local Declarations
 	std::vector<double> energyVector;
 
-	energyVector.push_back(bindingEnergies[0]);
-	energyVector.push_back(bindingEnergies[1]);
-	energyVector.push_back(bindingEnergies[2]);
-	energyVector.push_back(bindingEnergies[3]);
+	energyVector = bindingEnergies;
 
 	return energyVector;
 }
 
-void PSICluster::setBindingEnergy(std::vector<double> energies) {
-	//TODO Auto-generated method stub
+void PSICluster::setBindingEnergies(std::vector<double> energies) {
+	bindingEnergies = energies;
 	return;
 }

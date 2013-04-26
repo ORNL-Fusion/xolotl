@@ -20,7 +20,7 @@ private:
 	int numH;
 
 	//! The number of interstitial defects in this cluster.
-	int numInt;
+	int numI;
 
 	//! The number of deuterium atoms in this cluster.
 	int numD;
@@ -32,7 +32,7 @@ private:
 	int numT;
 
 	//! The number of atomic vacancies in this cluster.
-	int numVac;
+	int numV;
 
 	/**
 	 * The default constructor is private because PSIClusters must always be
@@ -49,7 +49,7 @@ public:
 	 * species as its values. The names of the species must be one of
 	 * {H,He,I,V,D,T}.
 	 */
-	MixedSpeciesCluster(std::map<std::string,int> speciesMap);
+	MixedSpeciesCluster(const std::map<std::string,int> speciesMap);
 
 	//! Destructor
 	~MixedSpeciesCluster();

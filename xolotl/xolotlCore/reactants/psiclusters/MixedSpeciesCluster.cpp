@@ -7,11 +7,11 @@ MixedSpeciesCluster::MixedSpeciesCluster(std::map<std::string,int> speciesMap) :
 {
 	numD = 0;
 	numH = 0;
-	numHe = 0;
-	numInt = 0;
+	numHe = speciesMap["He"];
+	numI = speciesMap["I"];
 	numT = 0;
-	numVac = 0;
-    size = 5;
+	numV = speciesMap["V"];
+    size = numHe + numI + numV;
 	// Set the reactant name appropriately
 	name = "Mixed Species";
 }
