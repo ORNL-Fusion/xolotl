@@ -29,12 +29,12 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Local Declarations
 	shared_ptr<stringstream> networkStream(
 			new stringstream(stringstream::in | stringstream::out));
-	string singleHeString = "1 0 0 0.0 Infinity Infinity 8.269996\n";
+	string singleHeString = "1 0 0 0.0 Infinity Infinity 8.269996 0.999 1.34\n";
 	string singleVString =
-			"0 50 0 Infinity 2.49000002 Infinity Infinity\n";
-	string singleIString = "0 0 1 Infinity Infinity Infinity Infinity\n";
+			"0 50 0 Infinity 2.49000002 Infinity Infinity 0.888 2.345\n";
+	string singleIString = "0 0 1 Infinity Infinity Infinity Infinity 0.7777 3.456\n";
 	string mixedString =
-			"1 50 0 6.160001 2.4900002 Infinity Infinity\n";
+			"1 50 0 6.160001 2.4900002 Infinity Infinity 6.789 4.5678\n";
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader();
 
 	// Load the network stream. This simulates a file with single He, single
@@ -90,8 +90,15 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(strtol(props["numIClusters"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Number of mixed clusters = " << props["numMixedClusters"]);
 	BOOST_REQUIRE(strtol(props["numMixedClusters"].c_str(),NULL,10) == 1);
-
-//	string mixedString =  6.160001 2.4900002 Infinity Infinity\n";
+//
+//	shared_ptr<stringstream> networkStream(
+//			new stringstream(stringstream::in | stringstream::out));
+//	string singleHeString = "1 0 0 0.0 Infinity Infinity 8.269996 0.999 1.34\n";
+//	string singleVString =
+//			"0 50 0 Infinity 2.49000002 Infinity Infinity 0.888 2.345\n";
+//	string singleIString = "0 0 1 Infinity Infinity Infinity Infinity 0.7777 3.456\n";
+//	string mixedString =
+//			"1 50 0 6.160001 2.4900002 Infinity Infinity 6.789 4.5678\n";
 
 	// Check the reactants - He first
 	std::shared_ptr<PSICluster> heCluster = static_pointer_cast<PSICluster>(reactants.at(0));
@@ -101,6 +108,8 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(bindingEnergies.at(1) == std::numeric_limits<double>::infinity());
 	BOOST_REQUIRE(bindingEnergies.at(2) == std::numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(bindingEnergies.at(3), 8.2699999, 0.0001);
+	BOOST_REQUIRE_CLOSE(heCluster->getMigrationEnergy(),0.999,0.001);
+	BOOST_REQUIRE_CLOSE(heCluster->getDiffusionFactor(),1.34,0.01);
 	// V
 	std::shared_ptr<PSICluster> vCluster = static_pointer_cast<PSICluster>(reactants.at(1));
 	BOOST_REQUIRE(vCluster->getSize() == 50);
@@ -110,6 +119,8 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE_CLOSE(bindingEnergies[1], 2.4900, 0.0001);
 	BOOST_REQUIRE(bindingEnergies[2] == std::numeric_limits<double>::infinity());
 	BOOST_REQUIRE(bindingEnergies[3] == std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE_CLOSE(vCluster->getMigrationEnergy(),0.888,0.001);
+	BOOST_REQUIRE_CLOSE(vCluster->getDiffusionFactor(),2.345,0.001);
 	// I
 	std::shared_ptr<PSICluster> iCluster = static_pointer_cast<PSICluster>(reactants.at(2));
 	BOOST_REQUIRE(iCluster->getSize() == 1);
@@ -119,6 +130,8 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(bindingEnergies[1] == std::numeric_limits<double>::infinity());
 	BOOST_REQUIRE(bindingEnergies[2] == std::numeric_limits<double>::infinity());
 	BOOST_REQUIRE(bindingEnergies[3] == std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE_CLOSE(iCluster->getMigrationEnergy(),0.7777,0.0001);
+	BOOST_REQUIRE_CLOSE(iCluster->getDiffusionFactor(),3.456,0.001);
 	// Mixed
 	std::shared_ptr<PSICluster> mixedCluster = static_pointer_cast<PSICluster>(reactants.at(3));
 	BOOST_REQUIRE(mixedCluster->getSize() == 51);
@@ -128,6 +141,8 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE_CLOSE(bindingEnergies[1], 2.4900, 0.0001);
 	BOOST_REQUIRE(bindingEnergies[2] == std::numeric_limits<double>::infinity());
 	BOOST_REQUIRE(bindingEnergies[3] == std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE_CLOSE(mixedCluster->getMigrationEnergy(),6.789,0.001);
+	BOOST_REQUIRE_CLOSE(mixedCluster->getDiffusionFactor(),4.5678,0.0001);
 
 	return;
 }

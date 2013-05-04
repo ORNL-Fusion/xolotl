@@ -70,3 +70,15 @@ void PSICluster::setBindingEnergies(std::vector<double> energies) {
 	bindingEnergies = energies;
 	return;
 }
+
+double PSICluster::getMigrationEnergy() {
+	//TODO Auto-generated method stub
+	return migrationEnergy;
+}
+
+void PSICluster::setMigrationEnergy(double energy) {
+
+	migrationEnergy = energy;
+
+	return;
+}

@@ -38,6 +38,11 @@ protected:
 	 */
 	std::vector<double> bindingEnergies;
 
+	/**
+	 * The migration energy for this cluster.
+	 */
+	double migrationEnergy = 0.0;
+
 private:
 
 	/**
@@ -124,6 +129,18 @@ public:
 	 * @return The diffusion coefficient.
 	 */
 	virtual double getDiffusionCoefficient();
+
+	/**
+	 * This operation sets the migration energy for this cluster.
+	 * @param energy The migration energy
+	 */
+	void setMigrationEnergy(double energy);
+
+	/**
+	 * This operation retrieves the migration energy for this cluster
+	 * @return the migration energy
+	 */
+	double getMigrationEnergy();
 
 };
 //end class PSICluster

@@ -57,7 +57,7 @@ static std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI,
 		speciesMap["He"] = numHe;
 		speciesMap["V"] = numV;
 		speciesMap["I"] = numI;
-		cluster = std::make_shared<MixedSpeciesCluster>(speciesMap);
+		cluster = std::make_shared < MixedSpeciesCluster > (speciesMap);
 		numClustersTag = "numMixedClusters";
 		// Update the number of clusters
 		numClusters = strtol((*props)[numClustersTag].c_str(), NULL, 10) + 1;
@@ -68,17 +68,17 @@ static std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI,
 		 * Start with He as they are probably listed first.
 		 */
 		if (numHe > 0) {
-			cluster = std::make_shared<HeCluster>(numHe);
+			cluster = std::make_shared < HeCluster > (numHe);
 			clusterSize = numHe;
 			numClustersTag = "numHeClusters";
 			maxClustersTag = "maxHeClusterSize";
 		} else if (numV > 0) { // Vacancies
-			cluster = std::make_shared<VCluster>(numV);
+			cluster = std::make_shared < VCluster > (numV);
 			clusterSize = numV;
 			numClustersTag = "numVClusters";
 			maxClustersTag = "maxVClusterSize";
 		} else { // Default to interstitial defects.
-			cluster = std::make_shared<InterstitialCluster>(numI);
+			cluster = std::make_shared < InterstitialCluster > (numI);
 			clusterSize = numI;
 			numClustersTag = "numIClusters";
 			maxClustersTag = "maxIClusterSize";
@@ -138,7 +138,8 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 	std::shared_ptr<std::map<std::string, std::string>> props;
 	int numHe = 0, numV = 0, numI = 0;
 	double heBindingE = 0.0, vBindingE = 0.0, iBindingE = 0.0,
-			trapMutationBindingE = 0.0;
+			trapMutationBindingE = 0.0, migrationEnergy = 0.0;
+	double diffusionFactor = 0.0;
 	bool mixed = false;
 	std::vector<double> bindingEnergies;
 
@@ -163,20 +164,26 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 			numV = strtol(loadedLine[1].c_str(), NULL, 10);
 			numI = strtol(loadedLine[2].c_str(), NULL, 10);
 			// Create the cluster
-			std::shared_ptr<PSICluster> nextCluster = createCluster(numHe, numV, numI, props);
+			std::shared_ptr<PSICluster> nextCluster = createCluster(numHe, numV,
+					numI, props);
 			// Load the binding energies
 			heBindingE = convertStrToDouble(loadedLine[3]);
 			vBindingE = convertStrToDouble(loadedLine[4]);
 			iBindingE = convertStrToDouble(loadedLine[5]);
 			trapMutationBindingE = convertStrToDouble(loadedLine[6]);
-			std::cout << heBindingE << " " << vBindingE << " " << iBindingE << " " << trapMutationBindingE << std::endl;
-			// Create the array
+			migrationEnergy = convertStrToDouble(loadedLine[7]);
+			diffusionFactor = convertStrToDouble(loadedLine[8]);
+			// Create the binding energies array and set it
 			bindingEnergies.clear();
 			bindingEnergies.push_back(heBindingE);
 			bindingEnergies.push_back(vBindingE);
 			bindingEnergies.push_back(iBindingE);
 			bindingEnergies.push_back(trapMutationBindingE);
 			nextCluster->setBindingEnergies(bindingEnergies);
+			// Set the diffusion factor and migration energy
+			nextCluster->setMigrationEnergy(migrationEnergy);
+			nextCluster->setDiffusionFactor(diffusionFactor);
+			// Load the cluster into the network
 			network->reactants->push_back(nextCluster);
 			// Load the next line
 			loadedLine = reader.loadLine();
