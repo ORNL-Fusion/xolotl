@@ -38,9 +38,10 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader();
 
 	// Load the network stream. This simulates a file with single He, single
-	// V, single I and one mixed-species cluster.
-	*networkStream << singleHeString << singleVString << singleIString
-			<< mixedString;
+	// V, single I and one mixed-species cluster. They are mixed up here to test
+	// the ability of the loader to order them.
+	*networkStream << singleVString << mixedString << singleHeString
+			<< singleIString;
 
 	// Diagnostic information
 	// @formatter:off

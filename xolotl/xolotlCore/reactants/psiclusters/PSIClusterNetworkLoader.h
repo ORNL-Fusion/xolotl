@@ -39,9 +39,10 @@ namespace xolotlCore {
  * not clearly provide the information above.
  *
  * The network will be returned as a ReactionNetwork of PSIClusters ordered with
- * single-species He, I and V clusters first and all mixed clusters coming
- * last. Instances of the appropriate cluster type are instantiated during the
- * loading process, but returned as instances of the base class.
+ * single-species He, V and I clusters first and all mixed clusters coming
+ * last. Each species is ordered from the smallest cluster size, (1), to the
+ * maximum size for that cluster. Instances of the appropriate cluster type are
+ * instantiated during the loading process, but returned as PSIClusters.
  *
  * The ReactionNetwork's map of properties will contains the following
  * information about the network with the following keys:
@@ -68,6 +69,38 @@ private:
 	 * The istream from which the network of clusters will be read.
 	 */
 	std::shared_ptr<std::istream> networkStream;
+
+	/**
+	 * The internal list of He clusters
+	 */
+	std::vector<std::shared_ptr<PSICluster>> heClusters;
+
+	/**
+	 * The internal list of vacancy clusters
+	 */
+	std::vector<std::shared_ptr<PSICluster>> vClusters;
+
+	/**
+	 * The internal list of interstitial clusters
+	 */
+	std::vector<std::shared_ptr<PSICluster>> iClusters;
+
+	/**
+	 * The internal list of mixed clusters
+	 */
+	std::vector<std::shared_ptr<PSICluster>> mixedClusters;
+
+	/**
+	 * This operation creates a singles-species cluster of helium, vacancies or
+	 * interstitials. It adds the cluster to the appropriate internal list of
+	 * clusters for that type.
+	 * @param numHe - The number of helium atoms
+	 * @param numV - The number of atomic vacancies
+	 * @param numI - The number of interstitial defects
+	 * @return The new cluster
+	 */
+	std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI,
+			std::shared_ptr<std::map<std::string, std::string>> props);
 
 public:
 

@@ -30,13 +30,16 @@ static inline double convertStrToDouble(const std::string inString) {
 }
 
 /**
- * This operation creates a singles-species cluster of helium, vacancies or interstitials.
+ * This operation creates a singles-species cluster of helium, vacancies or
+ * interstitials. It adds the cluster to the appropriate internal list of
+ * clusters for that type.
  * @param numHe - The number of helium atoms
  * @param numV - The number of atomic vacancies
  * @param numI - The number of interstitial defects
  * @return The new cluster
  */
-static std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI,
+std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
+		int numV, int numI,
 		std::shared_ptr<std::map<std::string, std::string>> props) {
 
 	// Local Declarations
@@ -63,6 +66,7 @@ static std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI,
 		numClusters = strtol((*props)[numClustersTag].c_str(), NULL, 10) + 1;
 		(*props)[numClustersTag] = std::to_string(
 				static_cast<long long>(numClusters));
+		mixedClusters.push_back(cluster);
 	} else {
 		/* Switch over the three types, create the cluster and set the properties.
 		 * Start with He as they are probably listed first.
@@ -72,16 +76,19 @@ static std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI,
 			clusterSize = numHe;
 			numClustersTag = "numHeClusters";
 			maxClustersTag = "maxHeClusterSize";
+			heClusters.push_back(cluster);
 		} else if (numV > 0) { // Vacancies
 			cluster = std::make_shared < VCluster > (numV);
 			clusterSize = numV;
 			numClustersTag = "numVClusters";
 			maxClustersTag = "maxVClusterSize";
+			vClusters.push_back(cluster);
 		} else { // Default to interstitial defects.
 			cluster = std::make_shared < InterstitialCluster > (numI);
 			clusterSize = numI;
 			numClustersTag = "numIClusters";
 			maxClustersTag = "maxIClusterSize";
+			iClusters.push_back(cluster);
 		}
 		// Update the number of clusters
 		numClusters = strtol((*props)[numClustersTag].c_str(), NULL, 10) + 1;
@@ -183,11 +190,21 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 			// Set the diffusion factor and migration energy
 			nextCluster->setMigrationEnergy(migrationEnergy);
 			nextCluster->setDiffusionFactor(diffusionFactor);
-			// Load the cluster into the network
-			network->reactants->push_back(nextCluster);
 			// Load the next line
 			loadedLine = reader.loadLine();
 		}
+		// Load the clusters into the network, starting with He
+		for (int i = 0; i < heClusters.size(); i++)
+			network->reactants->push_back(heClusters[i]);
+		// Load the vacancies into the network
+		for (int i = 0; i < vClusters.size(); i++)
+			network->reactants->push_back(vClusters[i]);
+		// Load the interstitials into the network
+		for (int i = 0; i < iClusters.size(); i++)
+			network->reactants->push_back(iClusters[i]);
+		// Load the mixed species clusters into the network
+		for (int i = 0; i < mixedClusters.size(); i++)
+			network->reactants->push_back(mixedClusters[i]);
 	}
 
 	return network;
