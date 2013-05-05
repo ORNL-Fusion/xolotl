@@ -9,7 +9,7 @@ using namespace xolotlCore;
 
 // Test data
 const string doubleString =
-		"0.0 1.0 5.0\n0.11 0.55 22.86 99.283\n# Comment\n0.000382 883.33 74.832\n";
+		"0.0 1.0 5.0\n0.11 0.55 22.86 99.283\n# Comment\n 0.000382 883.33 74.832\n";
 const string doubleCSVDoubleSlashCommentString =
 		"0.0,1.0,5.0\n0.11,0.55,22.86,99.283\n// Comment\n0.000382,883.33,74.832\n";
 const string intString = "1 3 5 7 9\n# Comment\n 0 2 4 6 \n";

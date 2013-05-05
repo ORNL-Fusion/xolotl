@@ -6,9 +6,6 @@ cmake_minimum_required(VERSION 2.8)
 # Xolotl requires C++11 to use shared pointers
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
-# Add an executabe
-ADD_EXECUTABLE ( xolotl main.cpp)
-
 # Find Boost
 FIND_PACKAGE(Boost REQUIRED)
 IF (Boost_FOUND)
@@ -33,3 +30,12 @@ set(DOXYFILE_LATEX "ON")
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
 include(UseDoxygen OPTIONAL)
 
+# Include directories for the main program
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
+
+# Add an executable for the main program
+ADD_EXECUTABLE ( xolotl main.cpp)
+
+# Link the reactants library
+target_link_libraries(xolotl xolotlReactants)

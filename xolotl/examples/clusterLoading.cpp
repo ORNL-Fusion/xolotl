@@ -1,5 +1,5 @@
 /**
- * Main.c, currently only able to load clusters
+ * An example of loading clusters
  */
 #include<cstdlib>
 #include<iostream>
@@ -9,17 +9,10 @@
 
 using namespace std;
 
-//! This operation prints the start message
-void printStartMessage() {
-	cout << "Starting Xolotl Plasma-Surface Interactions Simulator" << endl;
-	// TODO! Print copyright message
-	// TODO! Print date and time
-}
-
-//! This operation prints proper usage instructions for Xolotl
+//! This operation prints proper usage instructions for this example 
 void printUsage() {
 	cout << "Usage:" << endl;
-	cout << "\txolotl <network file name>" << endl;
+	cout << "\tclusterLoading <network file name>" << endl;
 }
 
 //! Main program
