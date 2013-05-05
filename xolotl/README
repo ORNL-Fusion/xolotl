@@ -1,0 +1,102 @@
+README.txt for Xolotl Plasma Surface Interactions Simulator, copied directly from
+https://sourceforge.net/p/xolotl-psi/wiki/Build%20Configuration/
+
+This page provides instructions on how to build Xolotl and its dependencies. CMake is required to build Xolotl, although instructions for it are not included below. We recommend that you download CMake using the package manager on your system. On Red Hat-based systems, this is as simple as running "yum install cmake" as root.
+
+All of the commands are executed in bash unless stated otherwise. You should replace any reference to /home/user to the appropriate prefix for your system. All of the packages are also installed to /opt by preference, but you may adjust that prefix as you see fit too.
+
+Building Xolotl
+=====
+
+Assuming you have all of the dependencies for Xolotl built, Xolotl itself is quite easy to build. If you do not have all of the dependencies built, they are discussed in turn after this section.
+
+Create a directory in which you want to build Xolotl and change into it. It can be any directory except for the source directory. Most people create a directory called "build" in the source directory and build from there. From inside the build directory run the following commands:
+
+cmake ..
+make
+
+You can also run make in parallel (make -jN, where N is the number of processes) to build Xolotl faster. This is recommended if you have a big machine.
+
+Building Xolotl's Dependencies
+=====
+
+The following codes must be built and configured as described below in order for Xolotl to compile.
+
+MPICH 3.0
+-----
+
+[MPICH 3.0](http://www.mpich.org/) is required for Xolotl and its dependencies.
+
+>./configure --prefix=/opt/mpich-3.0rc1_gcc-4.4.6 --enable-shared=yes 2>&1 | tee c.txt
+make 2>&1 | tee m.txt
+make install 2>&1 | tee mi.txt
+
+Your path needs to be updated to point to the new MPICH3.0 install, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
+
+>PATH=/opt/mpich-3.0rc1_gcc-4.4.6/bin:$PATH
+export PATH
+
+Your library path also needs to be updated in the same file:
+
+>LD_LIBRARY_PATH=/opt/mpich-3.0rc1_gcc-4.4.6/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+
+PETSc
+-----
+
+[PETSc](http://www.mcs.anl.gov/petsc/) is used to solve the reaction-diffusion equation in Xolotl. We build PETSc with debugging enabled and let it download Hypre, BLAS and LAPACK. If you plan to run in production, you should remove the "--with-debugging=1" flag at the end of the configuration script below.
+
+>./config/configure.py --prefix=/opt/petsc-3.3-p4-hypre-2.8_mpich-3.0rc1 --with-cc=mpicc     --with-cxx=mpicxx --with-fc=mpif77 --with-debugging=no --download-f-blas-lapack=1 --FOPTFLAGS="$F90FLAGS" --with-shared-libraries=1 --download-hypre=yes --with-debugging=1
+make PETSC_DIR=/home/user/petsc-3.3-p4 PETSC_ARCH=arch-linux2-c-debug all
+make PETSC_DIR=/home/bkj/Programs/petsc-3.3-p4 PETSC_ARCH=arch-linux2-c-debug install
+make PETSC_DIR=/opt/petsc-3.3-p4_mpich-3.0rc1_debug test
+
+Your path needs to be updated to point to the new PETSC_DIR install, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
+
+>PETSC_DIR=/opt/petsc-3.3-p4_mpich-3.0rc1_debug
+export PETSC_DIR
+
+HDF5
+-----
+
+[HDF5](http://www.hdfgroup.org/HDF5/) is required for I/O in Xolotl and its dependencies. Fortran is not required, but we enable here anyway in case it is needed later.
+
+>./configure --prefix=/opt/hdf5-1.8.10_mpich-3.0rc1_gcc-4.4.6 --enable-parallel --enable-fortran=yes --enable-fortran2003=yes
+make
+make check
+make install
+make check-install
+
+Your path needs to be updated to point to the new HDF5 install, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
+
+>PATH=/opt/hdf5-1.8.10_mpich-3.0rc1_gcc-4.4.6/bin:$PATH
+export PATH
+
+Your library path also needs to be updated in the same file:
+
+>LD_LIBRARY_PATH=/opt/hdf5-1.8.10_mpich-3.0rc1_gcc-4.4.6/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+
+NetCDF
+-----
+
+The mesh database used by Xolotl requires NetCDF Classic, which is [the C-only version of NetCDF](http://www.unidata.ucar.edu/downloads/netcdf/netcdf-4_2_1_1/index.jsp) configured with the --disable-netcdf-4 flag. It can be built with the following configuration.
+
+>./configure --prefix=/opt/netcdf-4.2.1.1-classic_gcc-4.4.6 --disable-netcdf-4
+make check install
+
+Your library path also needs to be updated in the same files:
+
+>LD_LIBRARY_PATH=/opt/netcdf-4.1.1.1-classic_gcc-4.4.6/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+
+MOAB
+-----
+
+[MOAB](http://trac.mcs.anl.gov/projects/ITAPS/wiki/MOAB), short for Mesh-Oriented Database, is used for managing mesh in Xolotl. If it not setup to be configured by default and the Autoconf configuration script needs to be built with "autoreconf" before compiling.
+
+>autorefconf -fi
+./configure --prefix=/opt/moab-20121127_mpich-3.0rc1_gcc-4.4.6 --with-mpi=/opt/mpich-3.0rc1_gcc-4.4.6/ --with-hdf5=/opt/hdf5-1.8.10_mpich-3.0rc1_gcc-4.4.6/ --with-netcdf=/opt/netcdf-4.1.1.1-classic_gcc-4.4.6/
+make
+make check
+make install
