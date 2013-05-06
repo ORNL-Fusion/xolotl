@@ -41,7 +41,7 @@ protected:
 	/**
 	 * The migration energy for this cluster.
 	 */
-	double migrationEnergy = 0.0;
+	double migrationEnergy;
 
 private:
 

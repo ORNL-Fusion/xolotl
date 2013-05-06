@@ -12,8 +12,9 @@ PSICluster::PSICluster(int clusterSize) : Reactant() {
 	bindingEnergies[1] = 0.0;
 	bindingEnergies[2] = 0.0;
 	bindingEnergies[3] = 0.0;
-	// Zero out the diffusion factor
+	// Zero out the diffusion factor and migration energy
 	diffusionFactor = 0.0;
+	migrationEnergy = 0.0;
 	// Set the reactant name appropriately
 	name = "PSICluster";
 
