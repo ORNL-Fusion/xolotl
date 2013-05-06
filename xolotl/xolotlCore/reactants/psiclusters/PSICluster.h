@@ -54,7 +54,7 @@ private:
 public:
 
 	//! Constructor
-	PSICluster(int clusterSize);
+	PSICluster(const int clusterSize);
 
 	//! Destructor
 	virtual ~PSICluster();
@@ -107,7 +107,7 @@ public:
 	 * the energy vector to be ordered as described above.
 	 * @param energies The vector of energies.
 	 */
-	void setBindingEnergies(std::vector<double> energies);
+	void setBindingEnergies(const std::vector<double> energies);
 
 	/**
 	 * This operation retrieves the diffusion factor, D_0, that is used to
@@ -121,20 +121,20 @@ public:
 	 * the diffusion coefficient for this cluster.
 	 * @param factor The diffusion factor.
 	 */
-	void setDiffusionFactor(double factor);
+	void setDiffusionFactor(const double factor);
 
 	/**
 	 * This operation returns the diffusion coefficient for this cluster and is
 	 * calculated from the diffusion factor.
 	 * @return The diffusion coefficient.
 	 */
-	virtual double getDiffusionCoefficient();
+	virtual double getDiffusionCoefficient(const double temperature);
 
 	/**
 	 * This operation sets the migration energy for this cluster.
 	 * @param energy The migration energy
 	 */
-	void setMigrationEnergy(double energy);
+	void setMigrationEnergy(const double energy);
 
 	/**
 	 * This operation retrieves the migration energy for this cluster
@@ -145,5 +145,5 @@ public:
 };
 //end class PSICluster
 
-} /* namespace xolotlCore */
+} /* end namespace xolotlCore */
 #endif

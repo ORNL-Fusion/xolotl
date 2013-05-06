@@ -1,8 +1,10 @@
 #include "PSICluster.h"
+#include <Constants.h>
+#include <math.h>
 
 using namespace xolotlCore;
 
-PSICluster::PSICluster(int clusterSize) : Reactant() {
+PSICluster::PSICluster(const int clusterSize) : Reactant() {
 
 	// Set the size
 	size = (clusterSize > 0) ? clusterSize : 1;
@@ -42,20 +44,23 @@ double PSICluster::getGenByAnn() {
 	return 0.0;
 }
 
-double PSICluster::getDiffusionCoefficient() {
-	return 0.0;
-}
-
 double PSICluster::getDiffusionFactor() {
 	//TODO Auto-generated method stub
 	return diffusionFactor;
 }
 
-void PSICluster::setDiffusionFactor(double factor) {
+void PSICluster::setDiffusionFactor(const double factor) {
 
 	diffusionFactor = factor;
 
 	return;
+}
+
+double PSICluster::getDiffusionCoefficient(const double temperature) {
+	// Use the Arrhenius equation to compute the diffusion coefficient
+	double k_b = xolotlCore::Constants::kBoltzmann;
+	double kernel = -migrationEnergy/(k_b*temperature);
+	return diffusionFactor*exp(kernel);
 }
 
 std::vector<double> PSICluster::getBindingEnergies() {
@@ -67,7 +72,7 @@ std::vector<double> PSICluster::getBindingEnergies() {
 	return energyVector;
 }
 
-void PSICluster::setBindingEnergies(std::vector<double> energies) {
+void PSICluster::setBindingEnergies(const std::vector<double> energies) {
 	bindingEnergies = energies;
 	return;
 }
@@ -77,7 +82,7 @@ double PSICluster::getMigrationEnergy() {
 	return migrationEnergy;
 }
 
-void PSICluster::setMigrationEnergy(double energy) {
+void PSICluster::setMigrationEnergy(const double energy) {
 
 	migrationEnergy = energy;
 
