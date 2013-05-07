@@ -1270,6 +1270,47 @@
         <packagedElement xmi:type="uml:Dependency" xmi:id="_Sf5dwIHKEeKL9vRIYeUWfg" supplier="_18z_IIHGEeKL9vRIYeUWfg" client="_8hK8oIHJEeKL9vRIYeUWfg"/>
       </packagedElement>
     </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="_aIxXoLdUEeKdoYp0Rmlq6Q" name="xolotlSolver">
+      <eAnnotations xmi:id="_aOXCQLdUEeKdoYp0Rmlq6Q" source="uml2.diagrams" references="_aOXCQbdUEeKdoYp0Rmlq6Q">
+        <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_aOXCQbdUEeKdoYp0Rmlq6Q" type="Freeform" name="Main">
+          <element xsi:nil="true"/>
+        </contents>
+        <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_0_URYLdWEeKdoYp0Rmlq6Q" type="Class" name="Solver Class Diagram">
+          <children xmi:type="notation:Shape" xmi:id="_0_URYbdWEeKdoYp0Rmlq6Q" type="Text" fontName="Sans Serif" fontHeight="18" description="Solver Class Diagram" transparency="0" lineColor="0" lineWidth="2">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_0_URYrdWEeKdoYp0Rmlq6Q" type="DiagramName">
+              <element xsi:nil="true"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_0_URY7dWEeKdoYp0Rmlq6Q" type="Description">
+              <element xsi:nil="true"/>
+            </children>
+            <element xsi:nil="true"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_0_URZLdWEeKdoYp0Rmlq6Q" x="4366" y="1227" width="16895" height="941"/>
+          </children>
+          <children xmi:type="umlnotation:UMLShape" xmi:id="_EBxj8LdXEeKdoYp0Rmlq6Q" element="_EA0hsLdXEeKdoYp0Rmlq6Q" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
+            <children xmi:type="notation:DecorationNode" xmi:id="_EB0nQLdXEeKdoYp0Rmlq6Q" type="ImageCompartment">
+              <layoutConstraint xmi:type="notation:Size" xmi:id="_EB0nQbdXEeKdoYp0Rmlq6Q" width="1320" height="1320"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_EB1OULdXEeKdoYp0Rmlq6Q" type="Stereotype"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_EB1OUbdXEeKdoYp0Rmlq6Q" type="Name"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_EB2ccLdXEeKdoYp0Rmlq6Q" type="Parent"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_EB3DgLdXEeKdoYp0Rmlq6Q" type="AttributeCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_EB3DgbdXEeKdoYp0Rmlq6Q" type="OperationCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_EB4RoLdXEeKdoYp0Rmlq6Q" visible="false" type="SignalCompartment"/>
+            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_EB44sLdXEeKdoYp0Rmlq6Q" visible="false" type="StructureCompartment"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_EBxj8bdXEeKdoYp0Rmlq6Q" x="13095" y="3668"/>
+          </children>
+          <element xsi:nil="true"/>
+        </contents>
+      </eAnnotations>
+      <ownedComment xmi:id="_ztMiMLdWEeKdoYp0Rmlq6Q" annotatedElement="_aIxXoLdUEeKdoYp0Rmlq6Q">
+        <body>&lt;p>This package contains the classes used by Xolotl for solving the Advection-Diffusion-Reaction equations.&lt;/p></body>
+      </ownedComment>
+      <packagedElement xmi:type="uml:Class" xmi:id="_EA0hsLdXEeKdoYp0Rmlq6Q" name="Solver">
+        <ownedComment xmi:id="_MrdWkLdXEeKdoYp0Rmlq6Q" annotatedElement="_EA0hsLdXEeKdoYp0Rmlq6Q">
+          <body>&lt;p>Instances of this class are responsible for solving the set of advection-diffusion-reaction equations that govern the evolution of clusters in plasma surface interactions.&lt;/p></body>
+        </ownedComment>
+      </packagedElement>
+    </packagedElement>
     <profileApplication xmi:id="_biIvZXVKEeKM6_T6gw_pCg">
       <eAnnotations xmi:id="_biIvZnVKEeKM6_T6gw_pCg" source="http://www.eclipse.org/uml2/2.0.0/UML">
         <references xmi:type="ecore:EPackage" href="pathmap://UML_PROFILES/Standard.profile.uml#_yzU58YinEdqtvbnfB2L_5w"/>
@@ -1408,4 +1449,6 @@
   <Default:Documentation xmi:id="_Yi7KoIHfEeKL9vRIYeUWfg" base_Comment="_X0IyAIHfEeKL9vRIYeUWfg"/>
   <Default:Documentation xmi:id="_Q2PWUIHgEeKL9vRIYeUWfg" base_Comment="_Q2NhIIHgEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_type xmi:id="_RgAFAIHgEeKL9vRIYeUWfg" base_Property="_P43vIIHgEeKL9vRIYeUWfg"/>
+  <Default:Documentation xmi:id="_ztSBwLdWEeKdoYp0Rmlq6Q" base_Comment="_ztMiMLdWEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_MrgZ4LdXEeKdoYp0Rmlq6Q" base_Comment="_MrdWkLdXEeKdoYp0Rmlq6Q"/>
 </xmi:XMI>
