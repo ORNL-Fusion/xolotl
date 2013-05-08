@@ -27,7 +27,8 @@ int main(int argc, char **argv) {
 
 	// Local Declarations
 	std::shared_ptr<ifstream> inputFileStream(new ifstream());
-	xolotlCore::PSIClusterNetworkLoader clusterLoader = xolotlCore::PSIClusterNetworkLoader();
+	xolotlCore::PSIClusterNetworkLoader clusterLoader =
+			xolotlCore::PSIClusterNetworkLoader();
 
 	// Print the start message
 	printStartMessage();
@@ -42,26 +43,30 @@ int main(int argc, char **argv) {
 	// Load the file from the input argument
 	inputFileStream->open(argv[1]);
 
-	// Load the clusters
-	clusterLoader.setInputstream(inputFileStream);
-	shared_ptr<xolotlCore::ReactionNetwork> network = clusterLoader.load();
-
-	// Print some otherwise useless information to show it worked.
-	std::map<std::string, std::string> props = *(network->properties);
-	cout << "Loaded input file, " << argv[1] << endl;
-	cout << "Found:" << endl;
-	cout << "\t" << props["numHeClusters"]
-	        << " helium clusters with max cluster size "
-			<< props["maxHeClusterSize"] << endl;
-	cout << "\t" << props["numVClusters"]
-	        << " vacancy clusters with max cluster size "
-			<< props["maxVClusterSize"] << endl;
-	cout << "\t" << props["numIClusters"]
-	        << " interstitial clusters with max cluster size "
-			<< props["maxIClusterSize"] << endl;
-	cout << "\t" << props["numMixedClusters"]
-	        << " mixed-species clusters with max cluster size " << endl;
-
+	try {
+		// Load the clusters
+		clusterLoader.setInputstream(inputFileStream);
+		shared_ptr<xolotlCore::ReactionNetwork> network = clusterLoader.load();
+		// Print some otherwise useless information to show it worked.
+		std::map<std::string, std::string> props = *(network->properties);
+		cout << "Loaded input file, " << argv[1] << endl;
+		cout << "Found:" << endl;
+		cout << "\t" << props["numHeClusters"]
+				<< " helium clusters with max cluster size "
+				<< props["maxHeClusterSize"] << endl;
+		cout << "\t" << props["numVClusters"]
+				<< " vacancy clusters with max cluster size "
+				<< props["maxVClusterSize"] << endl;
+		cout << "\t" << props["numIClusters"]
+				<< " interstitial clusters with max cluster size "
+				<< props["maxIClusterSize"] << endl;
+		cout << "\t" << props["numMixedClusters"]
+				<< " mixed-species clusters with max cluster size " << endl;
+	} catch (std::string error) {
+		std::cout << error << std::endl;
+		std::cout << "Aborting." << std::endl;
+		return EXIT_FAILURE;
+	}
 
 	return EXIT_SUCCESS;
 }

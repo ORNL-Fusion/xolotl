@@ -134,6 +134,8 @@ void PSIClusterNetworkLoader::setInputstream(
  * the format specified previously. The network will be empty if it can not
  * be loaded.
  * @param network The reaction network
+ *
+ * This operation throws a std::string as an exception if there is a problem.
  */
 std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 
@@ -142,6 +144,8 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 	std::vector<std::string> loadedLine;
 	std::shared_ptr<ReactionNetwork> network(new ReactionNetwork());
 	std::istringstream dataStream;
+	std::string error(
+			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
 	std::shared_ptr<std::map<std::string, std::string>> props;
 	int numHe = 0, numV = 0, numI = 0;
 	double heBindingE = 0.0, vBindingE = 0.0, iBindingE = 0.0,
@@ -166,6 +170,10 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		(*props)["numIClusters"] = "0";
 		(*props)["numMixedClusters"] = "0";
 		while (loadedLine.size() > 0) {
+			// Check the size of the loaded line
+			if (loadedLine.size() < 9)
+				// And notify the calling function if the size is insufficient
+				throw error;
 			// Load the sizes
 			numHe = strtol(loadedLine[0].c_str(), NULL, 10);
 			numV = strtol(loadedLine[1].c_str(), NULL, 10);

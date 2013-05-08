@@ -35,6 +35,9 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	string singleIString = "0 0 1 Infinity Infinity Infinity Infinity 0.7777 3.456\n";
 	string mixedString =
 			"1 50 0 6.160001 2.4900002 Infinity Infinity 6.789 4.5678\n";
+	// This string is bad because it is one value short
+	string badString = "1 2 3 4 5 6 7 8\n";
+	bool caughtFlag = false;
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader();
 
 	// Load the network stream. This simulates a file with single He, single
@@ -144,6 +147,18 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(bindingEnergies[3] == std::numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(mixedCluster->getMigrationEnergy(),6.789,0.001);
 	BOOST_REQUIRE_CLOSE(mixedCluster->getDiffusionFactor(),4.5678,0.0001);
+
+	// Reload the network stream with the bad string
+	(*networkStream).clear();
+	*networkStream << badString;
+	// Make sure the exception is caught when loading the bad string
+	try {
+		loader.load();
+	} catch (std::string error) {
+		// Do nothing but flip the flag
+		caughtFlag = true;
+	}
+	BOOST_REQUIRE(caughtFlag);
 
 	return;
 }
