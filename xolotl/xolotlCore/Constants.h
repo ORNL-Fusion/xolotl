@@ -15,7 +15,7 @@ class Constants {
 
 public:
 
-	static constexpr double kBoltzmann = 8.6173324E-5;
+	static const double kBoltzmann = 8.6173324E-5;
 
 };
 
