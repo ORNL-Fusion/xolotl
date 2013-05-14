@@ -2,7 +2,7 @@
 #define PETSCSOLVER_H
 
 // Includes
-#include "isolver.h"
+#include "ISolver.h"
 
 namespace xolotlSolver {
 
@@ -11,7 +11,7 @@ namespace xolotlSolver {
  * advection-diffusion-reaction problem with the PETSc solvers from Argonne
  * National Laboratory.
  */
-class PETScSolver: ISolver {
+class PETScSolver : ISolver {
 
 public:
 

@@ -3,6 +3,9 @@ PROJECT ( xolotl C CXX )
 # Set the minimum required version of cmake for this project.
 cmake_minimum_required(VERSION 2.8)
 
+# Include the modules to find PETSC, ITAPS, etc. from Jed Brown
+list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
+
 # Xolotl requires C++11 to use shared pointers
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
@@ -13,11 +16,15 @@ IF (Boost_FOUND)
     ADD_DEFINITIONS( "-DHAS_BOOST" )
 ENDIF()
 
+# Find PETSc
+FIND_PACKAGE(PETSc REQUIRED)
+
 # Enable testing.
 enable_testing()
 
 # Add the I/O, data structures and reactor directories
 add_subdirectory(xolotlCore)
+add_subdirectory(xolotlSolver)
 add_subdirectory(tests)
 
 # Create the documentation directory and set up the doc target.
@@ -34,8 +41,11 @@ include(UseDoxygen OPTIONAL)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 
+# Setup the library list
+set(XOLOTL_LIBS ${PETSC_LIBRARIES} xolotlReactants)
+
 # Add an executable for the main program
 ADD_EXECUTABLE ( xolotl main.cpp)
 
 # Link the reactants library
-target_link_libraries(xolotl xolotlReactants)
+target_link_libraries(xolotl ${XOLOTL_LIBS})

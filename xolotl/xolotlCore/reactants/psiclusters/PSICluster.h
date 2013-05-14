@@ -15,7 +15,7 @@ namespace xolotlCore {
  * PSIClusters must always be initialized with a size. If the constructor is
  * passed a size of zero or less, the actual size will be set to 1.
  */
-class PSICluster: public Reactant {
+class PSICluster : public Reactant {
 
 protected:
 
