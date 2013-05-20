@@ -6,6 +6,83 @@
   <uml:Model xmi:id="_biIvYHVKEeKM6_T6gw_pCg" name="xolotl">
     <eAnnotations xmi:id="_biIvYXVKEeKM6_T6gw_pCg" source="uml2.diagrams" references="_biIvYnVKEeKM6_T6gw_pCg">
       <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_biIvYnVKEeKM6_T6gw_pCg" type="Freeform" name="Main"/>
+      <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_kD3MUMFbEeKdoYp0Rmlq6Q" type="Class" name="Xolotl Package Structure">
+        <children xmi:type="notation:Shape" xmi:id="_LheJsMFdEeKdoYp0Rmlq6Q" type="Text" fontName="Sans" fontHeight="24" description="Xolotl Package Structure" transparency="0" lineColor="0" lineWidth="2">
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_Lhf-4MFdEeKdoYp0Rmlq6Q" type="DiagramName">
+            <element xsi:nil="true"/>
+          </children>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_Lhf-4cFdEeKdoYp0Rmlq6Q" type="Description">
+            <element xsi:nil="true"/>
+          </children>
+          <element xsi:nil="true"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_LheJscFdEeKdoYp0Rmlq6Q" x="4318" y="903" width="17977" height="1862"/>
+        </children>
+        <children xmi:type="umlnotation:UMLShape" xmi:id="_pCHkIMFdEeKNUrlkrq0IuQ" element="_nrz28HVKEeKM6_T6gw_pCg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
+          <children xmi:type="notation:DecorationNode" xmi:id="_pCia4MFdEeKNUrlkrq0IuQ" type="ImageCompartment">
+            <layoutConstraint xmi:type="notation:Size" xmi:id="_pCia4cFdEeKNUrlkrq0IuQ" width="1320" height="1320"/>
+          </children>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_pCjB8MFdEeKNUrlkrq0IuQ" type="Stereotype"/>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_pCjpAMFdEeKNUrlkrq0IuQ" type="Name"/>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_pCjpAcFdEeKNUrlkrq0IuQ" type="Parent"/>
+          <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_pCkQEMFdEeKNUrlkrq0IuQ" type="PackageContents" collapsed="true" canonical="false"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_pCHkIcFdEeKNUrlkrq0IuQ" x="9610" y="7750"/>
+        </children>
+        <children xmi:type="umlnotation:UMLShape" xmi:id="_pDHpsMFdEeKNUrlkrq0IuQ" element="_mnX-cHVKEeKM6_T6gw_pCg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
+          <children xmi:type="notation:DecorationNode" xmi:id="_pDI30MFdEeKNUrlkrq0IuQ" type="ImageCompartment">
+            <layoutConstraint xmi:type="notation:Size" xmi:id="_pDI30cFdEeKNUrlkrq0IuQ" width="1320" height="1320"/>
+          </children>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_pDJe4MFdEeKNUrlkrq0IuQ" type="Stereotype"/>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_pDJe4cFdEeKNUrlkrq0IuQ" type="Name"/>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_pDKF8MFdEeKNUrlkrq0IuQ" type="Parent"/>
+          <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_pDKF8cFdEeKNUrlkrq0IuQ" type="PackageContents" collapsed="true" canonical="false"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_pDHpscFdEeKNUrlkrq0IuQ" x="6510" y="4030"/>
+        </children>
+        <children xmi:type="umlnotation:UMLShape" xmi:id="_pDKtAMFdEeKNUrlkrq0IuQ" element="_aIxXoLdUEeKdoYp0Rmlq6Q" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
+          <children xmi:type="notation:DecorationNode" xmi:id="_pDL7IMFdEeKNUrlkrq0IuQ" type="ImageCompartment">
+            <layoutConstraint xmi:type="notation:Size" xmi:id="_pDL7IcFdEeKNUrlkrq0IuQ" width="1320" height="1320"/>
+          </children>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_pDOXYMFdEeKNUrlkrq0IuQ" type="Stereotype"/>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_pDO-cMFdEeKNUrlkrq0IuQ" type="Name"/>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_pDO-ccFdEeKNUrlkrq0IuQ" type="Parent"/>
+          <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_pDPlgMFdEeKNUrlkrq0IuQ" type="PackageContents" collapsed="true" canonical="false"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_pDKtAcFdEeKNUrlkrq0IuQ" x="11780" y="4030"/>
+        </children>
+        <children xmi:type="notation:Shape" xmi:id="_38gf0MFdEeKNUrlkrq0IuQ" type="Text" fontName="Sans" fontHeight="24" description="&quot;Solver&quot; package is highest level package. Future packages include post-processing &amp; viz" transparency="0" lineColor="0" lineWidth="2">
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_38ht8MFdEeKNUrlkrq0IuQ" type="DiagramName">
+            <element xsi:nil="true"/>
+          </children>
+          <children xmi:type="notation:BasicDecorationNode" xmi:id="_38iVAMFdEeKNUrlkrq0IuQ" type="Description">
+            <element xsi:nil="true"/>
+          </children>
+          <element xsi:nil="true"/>
+          <layoutConstraint xmi:type="notation:Bounds" xmi:id="_38gf0cFdEeKNUrlkrq0IuQ" x="16740" y="4030" width="8664" height="7761"/>
+        </children>
+        <element xsi:nil="true"/>
+        <edges xmi:type="umlnotation:UMLConnector" xmi:id="_x0nUgMFdEeKNUrlkrq0IuQ" element="_xyQkEMFdEeKNUrlkrq0IuQ" source="_pDKtAMFdEeKNUrlkrq0IuQ" target="_pDHpsMFdEeKNUrlkrq0IuQ" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
+          <children xmi:type="notation:DecorationNode" xmi:id="_x0pwwMFdEeKNUrlkrq0IuQ" type="NameLabel">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_x0pwwsFdEeKNUrlkrq0IuQ" type="Stereotype"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_x0qX0MFdEeKNUrlkrq0IuQ" type="Name"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_x0pwwcFdEeKNUrlkrq0IuQ" y="-198"/>
+          </children>
+          <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_x0nUgcFdEeKNUrlkrq0IuQ" points="[-59, 0, 134, 0]$[-189, -18, 4, -18]"/>
+        </edges>
+        <edges xmi:type="umlnotation:UMLConnector" xmi:id="_y8uzIMFdEeKNUrlkrq0IuQ" element="_y8rIwMFdEeKNUrlkrq0IuQ" source="_pCHkIMFdEeKNUrlkrq0IuQ" target="_pDHpsMFdEeKNUrlkrq0IuQ" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
+          <children xmi:type="notation:DecorationNode" xmi:id="_y8vaMMFdEeKNUrlkrq0IuQ" type="NameLabel">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_y8woUMFdEeKNUrlkrq0IuQ" type="Stereotype"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_y8woUcFdEeKNUrlkrq0IuQ" type="Name"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_y8vaMcFdEeKNUrlkrq0IuQ" y="-198"/>
+          </children>
+          <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_y8uzIcFdEeKNUrlkrq0IuQ" points="[-20, -29, 72, 102]$[-86, -149, 6, -18]"/>
+        </edges>
+        <edges xmi:type="umlnotation:UMLConnector" xmi:id="_18ZpQMFdEeKNUrlkrq0IuQ" element="_18UwwMFdEeKNUrlkrq0IuQ" source="_pCHkIMFdEeKNUrlkrq0IuQ" target="_pDKtAMFdEeKNUrlkrq0IuQ" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
+          <children xmi:type="notation:DecorationNode" xmi:id="_18aQUMFdEeKNUrlkrq0IuQ" type="NameLabel">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_18aQUsFdEeKNUrlkrq0IuQ" type="Stereotype"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_18a3YMFdEeKNUrlkrq0IuQ" type="Name"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_18aQUcFdEeKNUrlkrq0IuQ" y="-198"/>
+          </children>
+          <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_18ZpQcFdEeKNUrlkrq0IuQ" points="[9, -17, -92, 114]$[42, -133, -59, -2]"/>
+        </edges>
+      </contents>
     </eAnnotations>
     <ownedComment xmi:id="_jLP10HVKEeKM6_T6gw_pCg" annotatedElement="_biIvYHVKEeKM6_T6gw_pCg">
       <body>&lt;p>This is a model of the Xolotl Plasma-Surface Interactions Simulator and its tests.&lt;/p></body>
@@ -92,7 +169,7 @@
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_0OfpgHVMEeKM6_T6gw_pCg" type="Stereotype"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_0OfpgXVMEeKM6_T6gw_pCg" type="Name"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_0OfpgnVMEeKM6_T6gw_pCg" type="Parent"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_0OhesHVMEeKM6_T6gw_pCg" type="AttributeCompartment"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_0OhesHVMEeKM6_T6gw_pCg" type="AttributeCompartment" collapsed="true"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_0OiFwHVMEeKM6_T6gw_pCg" type="OperationCompartment"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_0Ois0HVMEeKM6_T6gw_pCg" visible="false" type="SignalCompartment"/>
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_0O4rEHVMEeKM6_T6gw_pCg" visible="false" type="StructureCompartment"/>
@@ -105,11 +182,11 @@
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_DsN7wHVNEeKM6_T6gw_pCg" type="Stereotype"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_DsN7wXVNEeKM6_T6gw_pCg" type="Name"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_DsN7wnVNEeKM6_T6gw_pCg" type="Parent"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_DsOi0HVNEeKM6_T6gw_pCg" type="AttributeCompartment"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_DsOi0XVNEeKM6_T6gw_pCg" type="OperationCompartment"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_DsOi0HVNEeKM6_T6gw_pCg" type="AttributeCompartment" collapsed="true"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_DsOi0XVNEeKM6_T6gw_pCg" type="OperationCompartment" collapsed="true"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_DsPJ4HVNEeKM6_T6gw_pCg" visible="false" type="SignalCompartment"/>
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_DsPJ4XVNEeKM6_T6gw_pCg" visible="false" type="StructureCompartment"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_DsLfgXVNEeKM6_T6gw_pCg" x="930" y="16120"/>
+                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_DsLfgXVNEeKM6_T6gw_pCg" x="930" y="15500"/>
               </children>
               <children xmi:type="umlnotation:UMLShape" xmi:id="_yq9kwHVNEeKM6_T6gw_pCg" element="_yq7IgHVNEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
                 <children xmi:type="notation:DecorationNode" xmi:id="_yq-L0HVNEeKM6_T6gw_pCg" type="ImageCompartment">
@@ -118,11 +195,11 @@
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_yq-L0nVNEeKM6_T6gw_pCg" type="Stereotype"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_yq-y4HVNEeKM6_T6gw_pCg" type="Name"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_yq-y4XVNEeKM6_T6gw_pCg" type="Parent"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_yq-y4nVNEeKM6_T6gw_pCg" type="AttributeCompartment"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_yq_Z8HVNEeKM6_T6gw_pCg" type="OperationCompartment"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_yq-y4nVNEeKM6_T6gw_pCg" type="AttributeCompartment" collapsed="true"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_yq_Z8HVNEeKM6_T6gw_pCg" type="OperationCompartment" collapsed="true"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_yq_Z8XVNEeKM6_T6gw_pCg" visible="false" type="SignalCompartment"/>
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_yrABAHVNEeKM6_T6gw_pCg" visible="false" type="StructureCompartment"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_yq9kwXVNEeKM6_T6gw_pCg" x="8060" y="16120"/>
+                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_yq9kwXVNEeKM6_T6gw_pCg" x="8060" y="15500"/>
               </children>
               <children xmi:type="umlnotation:UMLShape" xmi:id="_z5emUHVNEeKM6_T6gw_pCg" element="_z5bjAHVNEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
                 <children xmi:type="notation:DecorationNode" xmi:id="_z5f0cHVNEeKM6_T6gw_pCg" type="ImageCompartment">
@@ -131,11 +208,11 @@
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_z5gbgHVNEeKM6_T6gw_pCg" type="Stereotype"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_z5gbgXVNEeKM6_T6gw_pCg" type="Name"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_z5hCkHVNEeKM6_T6gw_pCg" type="Parent"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_z5hpoHVNEeKM6_T6gw_pCg" type="AttributeCompartment"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_z5hpoXVNEeKM6_T6gw_pCg" type="OperationCompartment"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_z5hpoHVNEeKM6_T6gw_pCg" type="AttributeCompartment" collapsed="true"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_z5hpoXVNEeKM6_T6gw_pCg" type="OperationCompartment" collapsed="true"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_z5iQsHVNEeKM6_T6gw_pCg" visible="false" type="SignalCompartment"/>
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_z5iQsXVNEeKM6_T6gw_pCg" visible="false" type="StructureCompartment"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_z5emUXVNEeKM6_T6gw_pCg" x="15190" y="16120"/>
+                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_z5emUXVNEeKM6_T6gw_pCg" x="15190" y="15500"/>
               </children>
               <children xmi:type="umlnotation:UMLShape" xmi:id="_12qrwHVNEeKM6_T6gw_pCg" element="_12oPgHVNEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
                 <children xmi:type="notation:DecorationNode" xmi:id="_12rS0HVNEeKM6_T6gw_pCg" type="ImageCompartment">
@@ -144,11 +221,11 @@
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_12sg8HVNEeKM6_T6gw_pCg" type="Stereotype"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_12sg8XVNEeKM6_T6gw_pCg" type="Name"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_12tvEHVNEeKM6_T6gw_pCg" type="Parent"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_12tvEXVNEeKM6_T6gw_pCg" type="AttributeCompartment"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_12tvEnVNEeKM6_T6gw_pCg" type="OperationCompartment"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_12tvEXVNEeKM6_T6gw_pCg" type="AttributeCompartment" collapsed="true"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_12tvEnVNEeKM6_T6gw_pCg" type="OperationCompartment" collapsed="true"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_12uWIHVNEeKM6_T6gw_pCg" visible="false" type="SignalCompartment"/>
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_12uWIXVNEeKM6_T6gw_pCg" visible="false" type="StructureCompartment"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_12qrwXVNEeKM6_T6gw_pCg" x="22010" y="16120"/>
+                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_12qrwXVNEeKM6_T6gw_pCg" x="22010" y="15500"/>
               </children>
               <children xmi:type="umlnotation:UMLShape" xmi:id="_3HQJ4HVNEeKM6_T6gw_pCg" element="_3HMfgHVNEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
                 <children xmi:type="notation:DecorationNode" xmi:id="_3HQw8HVNEeKM6_T6gw_pCg" type="ImageCompartment">
@@ -157,11 +234,11 @@
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_3HRYAHVNEeKM6_T6gw_pCg" type="Stereotype"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_3HR_EHVNEeKM6_T6gw_pCg" type="Name"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_3HR_EXVNEeKM6_T6gw_pCg" type="Parent"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_3HSmIHVNEeKM6_T6gw_pCg" type="AttributeCompartment"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_3HSmIHVNEeKM6_T6gw_pCg" type="AttributeCompartment" collapsed="true"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_3HSmIXVNEeKM6_T6gw_pCg" type="OperationCompartment"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_3HTNMHVNEeKM6_T6gw_pCg" visible="false" type="SignalCompartment"/>
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_3HT0QHVNEeKM6_T6gw_pCg" visible="false" type="StructureCompartment"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_3HQJ4XVNEeKM6_T6gw_pCg" x="23250" y="20460"/>
+                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_3HQJ4XVNEeKM6_T6gw_pCg" x="23250" y="18290"/>
               </children>
               <children xmi:type="umlnotation:UMLShape" xmi:id="_wECYAHYMEeK4zMANKvvP2g" element="_g1XOYHYMEeK4zMANKvvP2g" fontName="Sans Serif" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
                 <children xmi:type="notation:DecorationNode" xmi:id="_wEJFsHYMEeK4zMANKvvP2g" type="ImageCompartment">
@@ -170,11 +247,11 @@
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_wEJswHYMEeK4zMANKvvP2g" type="Stereotype"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_wEJswXYMEeK4zMANKvvP2g" type="Name"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_wEKT0HYMEeK4zMANKvvP2g" type="Parent"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_wEK64HYMEeK4zMANKvvP2g" type="AttributeCompartment"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_wEK64XYMEeK4zMANKvvP2g" type="OperationCompartment"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_wEK64HYMEeK4zMANKvvP2g" type="AttributeCompartment" collapsed="true"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_wEK64XYMEeK4zMANKvvP2g" type="OperationCompartment" collapsed="true"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_wELh8HYMEeK4zMANKvvP2g" visible="false" type="SignalCompartment"/>
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_wEMJAHYMEeK4zMANKvvP2g" visible="false" type="StructureCompartment"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wECYAXYMEeK4zMANKvvP2g" x="-620" y="23250"/>
+                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wECYAXYMEeK4zMANKvvP2g" x="-620" y="18290"/>
               </children>
               <children xmi:type="umlnotation:UMLShape" xmi:id="_KZwcoHYPEeK4zMANKvvP2g" element="_csHhEHYMEeK4zMANKvvP2g" fontName="Sans Serif" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
                 <children xmi:type="notation:DecorationNode" xmi:id="_KZyR0HYPEeK4zMANKvvP2g" type="ImageCompartment">
@@ -183,11 +260,11 @@
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_KZy44HYPEeK4zMANKvvP2g" type="Stereotype"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_KZzf8HYPEeK4zMANKvvP2g" type="Name"/>
                 <children xmi:type="notation:BasicDecorationNode" xmi:id="_KZzf8XYPEeK4zMANKvvP2g" type="Parent"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_KZ0HAHYPEeK4zMANKvvP2g" type="AttributeCompartment"/>
-                <children xmi:type="notation:SemanticListCompartment" xmi:id="_KZ0uEHYPEeK4zMANKvvP2g" type="OperationCompartment"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_KZ0HAHYPEeK4zMANKvvP2g" type="AttributeCompartment" collapsed="true"/>
+                <children xmi:type="notation:SemanticListCompartment" xmi:id="_KZ0uEHYPEeK4zMANKvvP2g" type="OperationCompartment" collapsed="true"/>
                 <children xmi:type="notation:SemanticListCompartment" xmi:id="_KZ1VIHYPEeK4zMANKvvP2g" visible="false" type="SignalCompartment"/>
                 <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_KZ18MHYPEeK4zMANKvvP2g" visible="false" type="StructureCompartment"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_KZwcoXYPEeK4zMANKvvP2g" x="6200" y="23250"/>
+                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_KZwcoXYPEeK4zMANKvvP2g" x="6200" y="18290"/>
               </children>
               <children xmi:type="umlnotation:UMLShape" xmi:id="_sdaEAHYWEeK4zMANKvvP2g" element="_j8p9cHVyEeK-BchXMSC_6w" fontName="Sans Serif" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
                 <children xmi:type="notation:DecorationNode" xmi:id="_sdb5MHYWEeK4zMANKvvP2g" type="ImageCompartment">
@@ -209,7 +286,7 @@
                   <children xmi:type="notation:BasicDecorationNode" xmi:id="_7t6L8XVNEeKM6_T6gw_pCg" type="Name"/>
                   <layoutConstraint xmi:type="notation:Bounds" xmi:id="_7t5k4XVNEeKM6_T6gw_pCg" y="-198"/>
                 </children>
-                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_7t3vsXVNEeKM6_T6gw_pCg" points="[-310, -1325, 1960, 6525]$[-310, -2572, 1960, 5278]$[-1760, -2572, 510, 5278]$[-1760, -3593, 510, 4257]"/>
+                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_7t3vsXVNEeKM6_T6gw_pCg" points="[-310, -731, 253, 6428]$[-310, -1568, 253, 5591]$[-53, -1568, 510, 5591]$[-53, -3424, 510, 3735]"/>
               </edges>
               <edges xmi:type="umlnotation:UMLConnector" xmi:id="_8SrF4HVNEeKM6_T6gw_pCg" element="_8SpQsHVNEeKM6_T6gw_pCg" source="_DsLfgHVNEeKM6_T6gw_pCg" target="_0Ob_IHVMEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
                 <children xmi:type="notation:DecorationNode" xmi:id="_8Srs8HVNEeKM6_T6gw_pCg" type="NameLabel">
@@ -217,7 +294,7 @@
                   <children xmi:type="notation:BasicDecorationNode" xmi:id="_8SsUAHVNEeKM6_T6gw_pCg" type="Name"/>
                   <layoutConstraint xmi:type="notation:Bounds" xmi:id="_8Srs8XVNEeKM6_T6gw_pCg" y="-198"/>
                 </children>
-                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_8SrF4XVNEeKM6_T6gw_pCg" points="[-310, -1325, -12286, 6525]$[-310, -2572, -12286, 5278]$[12486, -2572, 510, 5278]$[12486, -3593, 510, 4257]"/>
+                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_8SrF4XVNEeKM6_T6gw_pCg" points="[-280, -731, -13963, 6428]$[-280, -1568, -13963, 5591]$[14193, -1568, 510, 5591]$[14193, -3424, 510, 3735]"/>
               </edges>
               <edges xmi:type="umlnotation:UMLConnector" xmi:id="_84_fAHVNEeKM6_T6gw_pCg" element="_849CwHVNEeKM6_T6gw_pCg" source="_3HQJ4HVNEeKM6_T6gw_pCg" target="_0Ob_IHVMEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
                 <children xmi:type="notation:DecorationNode" xmi:id="_85AGEHVNEeKM6_T6gw_pCg" type="NameLabel">
@@ -225,7 +302,7 @@
                   <children xmi:type="notation:BasicDecorationNode" xmi:id="_85AGE3VNEeKM6_T6gw_pCg" type="Name"/>
                   <layoutConstraint xmi:type="notation:Bounds" xmi:id="_85AGEXVNEeKM6_T6gw_pCg" y="-198"/>
                 </children>
-                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_84_fAXVNEeKM6_T6gw_pCg" points="[557, -3355, 14570, 10865]$[557, -8942, 14570, 5278]$[-13503, -8942, 510, 5278]$[-13503, -9963, 510, 4257]"/>
+                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_84_fAXVNEeKM6_T6gw_pCg" points="[557, -1930, 14570, 9218]$[557, -5557, 14570, 5591]$[-13503, -5557, 510, 5591]$[-13503, -7413, 510, 3735]"/>
               </edges>
               <edges xmi:type="umlnotation:UMLConnector" xmi:id="_9dxAAHVNEeKM6_T6gw_pCg" element="_9dujwHVNEeKM6_T6gw_pCg" source="_yq9kwHVNEeKM6_T6gw_pCg" target="_0Ob_IHVMEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
                 <children xmi:type="notation:DecorationNode" xmi:id="_9dxnEHVNEeKM6_T6gw_pCg" type="NameLabel">
@@ -233,7 +310,7 @@
                   <children xmi:type="notation:BasicDecorationNode" xmi:id="_9dyOIXVNEeKM6_T6gw_pCg" type="Name"/>
                   <layoutConstraint xmi:type="notation:Bounds" xmi:id="_9dxnEXVNEeKM6_T6gw_pCg" y="-198"/>
                 </children>
-                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_9dxAAXVNEeKM6_T6gw_pCg" points="[-310, -1325, -5043, 6525]$[-310, -2572, -5043, 5278]$[5243, -2572, 510, 5278]$[5243, -3593, 510, 4257]"/>
+                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_9dxAAXVNEeKM6_T6gw_pCg" points="[1383, -731, -5043, 6428]$[1383, -1568, -5043, 5591]$[6936, -1568, 510, 5591]$[6936, -3424, 510, 3735]"/>
               </edges>
               <edges xmi:type="umlnotation:UMLConnector" xmi:id="_-RaDcHVNEeKM6_T6gw_pCg" element="_-RYOQHVNEeKM6_T6gw_pCg" source="_12qrwHVNEeKM6_T6gw_pCg" target="_0Ob_IHVMEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
                 <children xmi:type="notation:DecorationNode" xmi:id="_-RaqgHVNEeKM6_T6gw_pCg" type="NameLabel">
@@ -241,7 +318,7 @@
                   <children xmi:type="notation:BasicDecorationNode" xmi:id="_-Raqg3VNEeKM6_T6gw_pCg" type="Name"/>
                   <layoutConstraint xmi:type="notation:Bounds" xmi:id="_-RaqgXVNEeKM6_T6gw_pCg" y="-198"/>
                 </children>
-                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_-RaDcXVNEeKM6_T6gw_pCg" points="[0, -1325, 9542, 6525]$[0, -2572, 9542, 5278]$[-9032, -2572, 510, 5278]$[-9032, -3593, 510, 4257]"/>
+                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_-RaDcXVNEeKM6_T6gw_pCg" points="[1481, -731, 9852, 6428]$[1481, -1568, 9852, 5591]$[-7861, -1568, 510, 5591]$[-7861, -3424, 510, 3735]"/>
               </edges>
               <edges xmi:type="umlnotation:UMLConnector" xmi:id="_wEPMUHYMEeK4zMANKvvP2g" element="_g1XOYnYMEeK4zMANKvvP2g" source="_wECYAHYMEeK4zMANKvvP2g" target="_DsLfgHVNEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
                 <children xmi:type="notation:DecorationNode" xmi:id="_wEQacHYMEeK4zMANKvvP2g" type="NameLabel">
@@ -249,7 +326,7 @@
                   <children xmi:type="notation:BasicDecorationNode" xmi:id="_wEQac3YMEeK4zMANKvvP2g" type="Name"/>
                   <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wEQacXYMEeK4zMANKvvP2g" y="-147"/>
                 </children>
-                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_wEPMUXYMEeK4zMANKvvP2g" points="[0, -874, -1397, 1407]$[0, -1499, -1397, 782]$[2457, -1499, 1060, 782]$[2457, -2225, 1060, 56]"/>
+                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_wEPMUXYMEeK4zMANKvvP2g" points="[0, -731, -1432, 1374]$[0, -1354, -1432, 751]$[2512, -1354, 1080, 751]$[2512, -2058, 1080, 47]"/>
                 <targetAnchor xmi:type="notation:IdentityAnchor" xmi:id="_zGA7QHYMEeK4zMANKvvP2g" id="(0.46055739253660843,0.9680785758133824)"/>
               </edges>
               <edges xmi:type="umlnotation:UMLConnector" xmi:id="_KZ3KUHYPEeK4zMANKvvP2g" element="_csHhEnYMEeK4zMANKvvP2g" source="_KZwcoHYPEeK4zMANKvvP2g" target="_DsLfgHVNEeKM6_T6gw_pCg" fontName="Sans Serif" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -258,7 +335,7 @@
                   <children xmi:type="notation:BasicDecorationNode" xmi:id="_KZ3xYXYPEeK4zMANKvvP2g" type="Name"/>
                   <layoutConstraint xmi:type="notation:Bounds" xmi:id="_KZ3KU3YPEeK4zMANKvvP2g" y="-147"/>
                 </children>
-                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_KZ3KUXYPEeK4zMANKvvP2g" points="[-268, -874, 2421, 1587]$[-268, -1679, 2421, 782]$[-1629, -1679, 1060, 782]$[-1629, -2405, 1060, 56]"/>
+                <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_KZ3KUXYPEeK4zMANKvvP2g" points="[80, -731, 5468, 1374]$[80, -1354, 5468, 751]$[-4308, -1354, 1080, 751]$[-4308, -2058, 1080, 47]"/>
                 <targetAnchor xmi:type="notation:IdentityAnchor" xmi:id="_L7swgHYPEeK4zMANKvvP2g" id="(0.46055739253660843,0.9680785758133824)"/>
               </edges>
               <edges xmi:type="umlnotation:UMLConnector" xmi:id="_vE_KQHYWEeK4zMANKvvP2g" element="_vE640HYWEeK4zMANKvvP2g" source="_0Ob_IHVMEeKM6_T6gw_pCg" target="_sdaEAHYWEeK4zMANKvvP2g" fontName="Sans Serif" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -274,6 +351,674 @@
           <ownedComment xmi:id="_FWny0HVzEeK_Qv8Ya7YSJw" annotatedElement="_KrmaoHVLEeKM6_T6gw_pCg">
             <body>&lt;p>This package contains Reactants that are specialized for plasma-surface interactions.&lt;/p></body>
           </ownedComment>
+          <packagedElement xmi:type="uml:Package" xmi:id="_uai3YrgHEeKdoYp0Rmlq6Q" name="xolotlCore">
+            <packagedElement xmi:type="uml:Class" xmi:id="_ualTobgHEeKdoYp0Rmlq6Q" name="PSICluster">
+              <ownedComment xmi:id="_ual6sLgHEeKdoYp0Rmlq6Q" annotatedElement="_ualTobgHEeKdoYp0Rmlq6Q">
+                <body>*
+* The PSICluster class is a Reactant that is specialized to work for
+* simulations of plasma-surface interactions. It provides special routines
+* for calculating the total flux due to production and dissociation and
+* obtaining the cluster size.
+*
+* PSIClusters must always be initialized with a size. If the constructor is
+* passed a size of zero or less, the actual size will be set to 1.
+</body>
+              </ownedComment>
+              <generalization xmi:id="_ueva4LgHEeKdoYp0Rmlq6Q" general="_ubFp8LgHEeKdoYp0Rmlq6Q"/>
+              <ownedAttribute xmi:id="_udgr0LgHEeKdoYp0Rmlq6Q" name="size" visibility="protected">
+                <ownedComment xmi:id="_udgr0bgHEeKdoYp0Rmlq6Q" annotatedElement="_udgr0LgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The total size of this cluster including the contributions from all
+* species.
+</body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_udjIEbgHEeKdoYp0Rmlq6Q" name="diffusionFactor" visibility="protected">
+                <ownedComment xmi:id="_udjvILgHEeKdoYp0Rmlq6Q" annotatedElement="_udjIEbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The diffusion factor, D_0, that is used to calculate the diffusion
+* coefficient for this cluster. The default value is 0 (does not diffuse).
+</body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_udmLYLgHEeKdoYp0Rmlq6Q" name="bindingEnergies" visibility="protected">
+                <ownedComment xmi:id="_udmLYbgHEeKdoYp0Rmlq6Q" annotatedElement="_udmLYLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The binding energies for this cluster with clusters of other species
+* types. There is one binding energy for each of the other species ordered
+* by He, V, I and mixed species at indices 0, 1, 2 and 3 respectively.
+</body>
+                </ownedComment>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_udonoLgHEeKdoYp0Rmlq6Q" name="migrationEnergy" visibility="protected">
+                <ownedComment xmi:id="_udonobgHEeKdoYp0Rmlq6Q" annotatedElement="_udonoLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The migration energy for this cluster.
+</body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+              </ownedAttribute>
+              <ownedOperation xmi:id="_udrD4bgHEeKdoYp0Rmlq6Q" name="PSICluster" visibility="private">
+                <ownedComment xmi:id="_udtgILgHEeKdoYp0Rmlq6Q" annotatedElement="_udrD4bgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The default constructor is private because PSIClusters must always be
+* initialized with a size.
+</body>
+                </ownedComment>
+              </ownedOperation>
+              <ownedOperation xmi:id="_udv8YLgHEeKdoYp0Rmlq6Q" name="PSICluster" visibility="public">
+                <ownedComment xmi:id="_udv8YbgHEeKdoYp0Rmlq6Q" annotatedElement="_udv8YLgHEeKdoYp0Rmlq6Q">
+                  <body>! Constructor
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_udyYobgHEeKdoYp0Rmlq6Q" name="clusterSize">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ud004bgHEeKdoYp0Rmlq6Q" name="~PSICluster" visibility="public">
+                <ownedComment xmi:id="_ud3RIbgHEeKdoYp0Rmlq6Q" annotatedElement="_ud004bgHEeKdoYp0Rmlq6Q">
+                  <body>! Destructor
+</body>
+                </ownedComment>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ud5tYLgHEeKdoYp0Rmlq6Q" name="getDissociationFlux" visibility="public">
+                <ownedComment xmi:id="_ud8JoLgHEeKdoYp0Rmlq6Q" annotatedElement="_ud5tYLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation returns the total change in this cluster due to
+* dissociation.
+* @return The flux due to dissociation.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ud7ikbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ud-l4LgHEeKdoYp0Rmlq6Q" name="getProductionFlux" visibility="public">
+                <ownedComment xmi:id="_ueBCIrgHEeKdoYp0Rmlq6Q" annotatedElement="_ud-l4LgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation returns the total change in this cluster due to
+* production.
+* @return The flux due to this cluster being produced.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ueBCIbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ueDeYLgHEeKdoYp0Rmlq6Q" name="getSize" visibility="public">
+                <ownedComment xmi:id="_ueF6obgHEeKdoYp0Rmlq6Q" annotatedElement="_ueDeYLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation returns the total size of the cluster.
+* @return The total size of this cluster including the contributions
+* from all species types.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ueF6oLgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ueIW4LgHEeKdoYp0Rmlq6Q" name="getGenByCapt" visibility="public">
+                <ownedComment xmi:id="_ueKzILgHEeKdoYp0Rmlq6Q" annotatedElement="_ueIW4LgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation returns the total generation rate of this cluster due
+* to captures.
+* @return The total amount of this cluster generated due to captures.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ueKMEbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ueMoUbgHEeKdoYp0Rmlq6Q" name="getGenByAnn" visibility="public">
+                <ownedComment xmi:id="_uePEkrgHEeKdoYp0Rmlq6Q" annotatedElement="_ueMoUbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation returns the total generation rate of this cluster due
+* to annihilation.
+* @return The total amount of this cluster generated due to the
+* annihilation of other clusters.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_uePEkbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ueRg0LgHEeKdoYp0Rmlq6Q" name="getBindingEnergies" visibility="public">
+                <ownedComment xmi:id="_ueRg0rgHEeKdoYp0Rmlq6Q" annotatedElement="_ueRg0LgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation retrieves the binding energy for this cluster.
+* @return An array of the binding energies of this cluster with clusters
+* of other types as described above.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ueRg0bgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return"/>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ueT9EbgHEeKdoYp0Rmlq6Q" name="setBindingEnergies" visibility="public">
+                <ownedComment xmi:id="_ueUkILgHEeKdoYp0Rmlq6Q" annotatedElement="_ueT9EbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation sets the binding energies for this cluster. It expects
+* the energy vector to be ordered as described above.
+* @param energies The vector of energies.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ueT9ErgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+                </ownedParameter>
+                <ownedParameter xmi:id="_ueWZUbgHEeKdoYp0Rmlq6Q" name="energies"/>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ueY1kbgHEeKdoYp0Rmlq6Q" name="getDiffusionFactor" visibility="public">
+                <ownedComment xmi:id="_ueZcoLgHEeKdoYp0Rmlq6Q" annotatedElement="_ueY1kbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation retrieves the diffusion factor, D_0, that is used to
+* calculate the diffusion coefficient for this cluster.
+* @return The diffusion factor of this cluster
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ueY1krgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ueb44LgHEeKdoYp0Rmlq6Q" name="setDiffusionFactor" visibility="public">
+                <ownedComment xmi:id="_ueb44rgHEeKdoYp0Rmlq6Q" annotatedElement="_ueb44LgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation sets the diffusion factor, D_0, that is used to calculate
+* the diffusion coefficient for this cluster.
+* @param factor The diffusion factor.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ueb44bgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+                </ownedParameter>
+                <ownedParameter xmi:id="_ueeVILgHEeKdoYp0Rmlq6Q" name="factor">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uegxYLgHEeKdoYp0Rmlq6Q" name="getDiffusionCoefficient" visibility="public">
+                <ownedComment xmi:id="_ueimkrgHEeKdoYp0Rmlq6Q" annotatedElement="_uegxYLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation returns the diffusion coefficient for this cluster and is
+* calculated from the diffusion factor.
+* @return The diffusion coefficient.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ueimkbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+                <ownedParameter xmi:id="_uelC0bgHEeKdoYp0Rmlq6Q" name="temperature">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uenfEbgHEeKdoYp0Rmlq6Q" name="setMigrationEnergy" visibility="public">
+                <ownedComment xmi:id="_ueoGILgHEeKdoYp0Rmlq6Q" annotatedElement="_uenfEbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation sets the migration energy for this cluster.
+* @param energy The migration energy
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_uenfErgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+                </ownedParameter>
+                <ownedParameter xmi:id="_uep7UbgHEeKdoYp0Rmlq6Q" name="energy">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uesXkbgHEeKdoYp0Rmlq6Q" name="getMigrationEnergy" visibility="public">
+                <ownedComment xmi:id="_ues-oLgHEeKdoYp0Rmlq6Q" annotatedElement="_uesXkbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation retrieves the migration energy for this cluster
+* @return the migration energy
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_uesXkrgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+            </packagedElement>
+            <packagedElement xmi:type="uml:Class" xmi:id="_uao-ALgHEeKdoYp0Rmlq6Q" name="HCluster">
+              <ownedComment xmi:id="_uao-AbgHEeKdoYp0Rmlq6Q" annotatedElement="_uao-ALgHEeKdoYp0Rmlq6Q">
+                <body>! This class represents a cluster composed entirely of hydrogen.
+</body>
+              </ownedComment>
+              <generalization xmi:id="_ue6aAbgHEeKdoYp0Rmlq6Q" general="_ualTobgHEeKdoYp0Rmlq6Q"/>
+              <ownedOperation xmi:id="_uezFQLgHEeKdoYp0Rmlq6Q" name="HCluster" visibility="public">
+                <ownedComment xmi:id="_uezFQbgHEeKdoYp0Rmlq6Q" annotatedElement="_uezFQLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The constructor. All HClusters must be initialized with a size.
+* @param nH the number of hydrogen atoms in the cluster
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ue1hgbgHEeKdoYp0Rmlq6Q" name="nH">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ue2IkLgHEeKdoYp0Rmlq6Q" name="~HCluster" visibility="public">
+                <ownedComment xmi:id="_ue39wbgHEeKdoYp0Rmlq6Q" annotatedElement="_ue2IkLgHEeKdoYp0Rmlq6Q">
+                  <body>! The destructor
+</body>
+                </ownedComment>
+              </ownedOperation>
+            </packagedElement>
+            <packagedElement xmi:type="uml:Class" xmi:id="_uasoYLgHEeKdoYp0Rmlq6Q" name="DCluster">
+              <ownedComment xmi:id="_uasoYbgHEeKdoYp0Rmlq6Q" annotatedElement="_uasoYLgHEeKdoYp0Rmlq6Q">
+                <body>! This class represents a cluster composed entirely of deuterium.
+</body>
+              </ownedComment>
+              <generalization xmi:id="_ufEyEbgHEeKdoYp0Rmlq6Q" general="_uao-ALgHEeKdoYp0Rmlq6Q"/>
+              <ownedOperation xmi:id="_ue9dULgHEeKdoYp0Rmlq6Q" name="DCluster" visibility="public">
+                <ownedComment xmi:id="_ue9dUbgHEeKdoYp0Rmlq6Q" annotatedElement="_ue9dULgHEeKdoYp0Rmlq6Q">
+                  <body>! The constructor. All DClusters must be initialized with a size.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ue_5kbgHEeKdoYp0Rmlq6Q" name="nD">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ufAgoLgHEeKdoYp0Rmlq6Q" name="~DCluster" visibility="public">
+                <ownedComment xmi:id="_ufCV0bgHEeKdoYp0Rmlq6Q" annotatedElement="_ufAgoLgHEeKdoYp0Rmlq6Q">
+                  <body>! Destructor
+</body>
+                </ownedComment>
+              </ownedOperation>
+            </packagedElement>
+            <packagedElement xmi:type="uml:Class" xmi:id="_uavrsLgHEeKdoYp0Rmlq6Q" name="HeCluster">
+              <ownedComment xmi:id="_uavrsbgHEeKdoYp0Rmlq6Q" annotatedElement="_uavrsLgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This class represents a cluster composed entirely of helium.
+</body>
+              </ownedComment>
+              <generalization xmi:id="_ufTbkbgHEeKdoYp0Rmlq6Q" general="_ualTobgHEeKdoYp0Rmlq6Q"/>
+              <ownedOperation xmi:id="_ufH1YLgHEeKdoYp0Rmlq6Q" name="HeCluster" visibility="private">
+                <ownedComment xmi:id="_ufKRoLgHEeKdoYp0Rmlq6Q" annotatedElement="_ufH1YLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The default constructor is private because PSIClusters must always be
+* initialized with a size.
+</body>
+                </ownedComment>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ufMG0bgHEeKdoYp0Rmlq6Q" name="HeCluster" visibility="public">
+                <ownedComment xmi:id="_ufMt4LgHEeKdoYp0Rmlq6Q" annotatedElement="_ufMG0bgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The constructor. All HeClusters must be initialized with a size.
+* @param nHe the number of helium atoms in the cluster
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ufOjEbgHEeKdoYp0Rmlq6Q" name="nHe">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ufPKILgHEeKdoYp0Rmlq6Q" name="~HeCluster" visibility="public">
+                <ownedComment xmi:id="_ufQ_UbgHEeKdoYp0Rmlq6Q" annotatedElement="_ufPKILgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* Destructor
+</body>
+                </ownedComment>
+              </ownedOperation>
+            </packagedElement>
+            <packagedElement xmi:type="uml:Class" xmi:id="_uayvALgHEeKdoYp0Rmlq6Q" name="InterstitialCluster">
+              <ownedComment xmi:id="_uazWELgHEeKdoYp0Rmlq6Q" annotatedElement="_uayvALgHEeKdoYp0Rmlq6Q">
+                <body>! This class represents a cluster composed entirely of interstitial defects.
+</body>
+              </ownedComment>
+              <generalization xmi:id="_ufdzobgHEeKdoYp0Rmlq6Q" general="_ualTobgHEeKdoYp0Rmlq6Q"/>
+              <ownedOperation xmi:id="_ufWe4LgHEeKdoYp0Rmlq6Q" name="InterstitialCluster" visibility="public">
+                <ownedComment xmi:id="_ufXF8LgHEeKdoYp0Rmlq6Q" annotatedElement="_ufWe4LgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The constructor. All InterstitialClusters must be initialized with
+* a size.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ufZiMLgHEeKdoYp0Rmlq6Q" name="nI">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ufZiMbgHEeKdoYp0Rmlq6Q" name="~InterstitialCluster" visibility="public">
+                <ownedComment xmi:id="_ufb-cLgHEeKdoYp0Rmlq6Q" annotatedElement="_ufZiMbgHEeKdoYp0Rmlq6Q">
+                  <body>! Destructor
+</body>
+                </ownedComment>
+              </ownedOperation>
+            </packagedElement>
+            <packagedElement xmi:type="uml:Class" xmi:id="_ua2ZYLgHEeKdoYp0Rmlq6Q" name="MixedSpeciesCluster">
+              <ownedComment xmi:id="_ua2ZYbgHEeKdoYp0Rmlq6Q" annotatedElement="_ua2ZYLgHEeKdoYp0Rmlq6Q">
+                <body>*
+*  This class represents a cluster composed of multiple atomic species,
+*  vacancies and interstitials.
+</body>
+              </ownedComment>
+              <generalization xmi:id="_ugH68bgHEeKdoYp0Rmlq6Q" general="_ualTobgHEeKdoYp0Rmlq6Q"/>
+              <ownedAttribute xmi:id="_ufg28LgHEeKdoYp0Rmlq6Q" name="numH" visibility="private">
+                <ownedComment xmi:id="_ufheALgHEeKdoYp0Rmlq6Q" annotatedElement="_ufg28LgHEeKdoYp0Rmlq6Q">
+                  <body>! The number of hydrogen atoms in this cluster.
+</body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_ufj6QLgHEeKdoYp0Rmlq6Q" name="numI" visibility="private">
+                <ownedComment xmi:id="_ufj6QbgHEeKdoYp0Rmlq6Q" annotatedElement="_ufj6QLgHEeKdoYp0Rmlq6Q">
+                  <body>! The number of interstitial defects in this cluster.
+</body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_ufmWgLgHEeKdoYp0Rmlq6Q" name="numD" visibility="private">
+                <ownedComment xmi:id="_ufmWgbgHEeKdoYp0Rmlq6Q" annotatedElement="_ufmWgLgHEeKdoYp0Rmlq6Q">
+                  <body>! The number of deuterium atoms in this cluster.
+</body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_ufoywLgHEeKdoYp0Rmlq6Q" name="numHe" visibility="private">
+                <ownedComment xmi:id="_ufoywbgHEeKdoYp0Rmlq6Q" annotatedElement="_ufoywLgHEeKdoYp0Rmlq6Q">
+                  <body>! The number of helium atoms in this cluster.
+</body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_ufrPALgHEeKdoYp0Rmlq6Q" name="numT" visibility="private">
+                <ownedComment xmi:id="_ufrPAbgHEeKdoYp0Rmlq6Q" annotatedElement="_ufrPALgHEeKdoYp0Rmlq6Q">
+                  <body>! The number of tritium atoms in this cluster.
+</body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_uftrQLgHEeKdoYp0Rmlq6Q" name="numV" visibility="private">
+                <ownedComment xmi:id="_uftrQbgHEeKdoYp0Rmlq6Q" annotatedElement="_uftrQLgHEeKdoYp0Rmlq6Q">
+                  <body>! The number of atomic vacancies in this cluster.
+</body>
+                </ownedComment>
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+              </ownedAttribute>
+              <ownedOperation xmi:id="_ufwHgbgHEeKdoYp0Rmlq6Q" name="MixedSpeciesCluster" visibility="private">
+                <ownedComment xmi:id="_ufyjwLgHEeKdoYp0Rmlq6Q" annotatedElement="_ufwHgbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The default constructor is private because PSIClusters must always be
+* initialized with a size.
+</body>
+                </ownedComment>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uf0Y8bgHEeKdoYp0Rmlq6Q" name="MixedSpeciesCluster" visibility="public">
+                <ownedComment xmi:id="_uf0Y8rgHEeKdoYp0Rmlq6Q" annotatedElement="_uf0Y8bgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The constructor. All MixedSpeciesClusters must be initialized with a map
+* that describes the species of which the cluster is composed. The map
+* should contain as its keys the names of the species and the sizes of the
+* species as its values. The names of the species must be one of
+* {H,He,I,V,D,T}.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_uf21MbgHEeKdoYp0Rmlq6Q" name="speciesMap"/>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uf5RcbgHEeKdoYp0Rmlq6Q" name="~MixedSpeciesCluster" visibility="public">
+                <ownedComment xmi:id="_uf7tsbgHEeKdoYp0Rmlq6Q" annotatedElement="_uf5RcbgHEeKdoYp0Rmlq6Q">
+                  <body>! Destructor
+</body>
+                </ownedComment>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uf9i4bgHEeKdoYp0Rmlq6Q" name="getGenByEm" visibility="public">
+                <ownedComment xmi:id="_uf-J8bgHEeKdoYp0Rmlq6Q" annotatedElement="_uf9i4bgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation returns the total generation rate due to emission for
+* this cluster.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_uf-J8LgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ugAmMLgHEeKdoYp0Rmlq6Q" name="getAnnByEm" visibility="public">
+                <ownedComment xmi:id="_ugAmMrgHEeKdoYp0Rmlq6Q" annotatedElement="_ugAmMLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation returns the total annihilation rate due to emission for
+* this cluster.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ugAmMbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ugDCcbgHEeKdoYp0Rmlq6Q" name="getSpeciesSize" visibility="public">
+                <ownedComment xmi:id="_ugDCc7gHEeKdoYp0Rmlq6Q" annotatedElement="_ugDCcbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation returns the number of a given &quot;species&quot; within this
+* cluster by passing one of {H,He,I,V,D,T} as an input argument.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ugDCcrgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+                <ownedParameter xmi:id="_ugFesbgHEeKdoYp0Rmlq6Q" name="speciesName"/>
+              </ownedOperation>
+            </packagedElement>
+            <packagedElement xmi:type="uml:Class" xmi:id="_ua5csLgHEeKdoYp0Rmlq6Q" name="PSIClusterNetworkLoader">
+              <ownedComment xmi:id="_ua5csbgHEeKdoYp0Rmlq6Q" annotatedElement="_ua5csLgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This class will load a reaction network composed of PSIClusters from an
+* inputstream.
+*
+* The data in the stream should contain the information for a single cluster on
+* each line with the following quantities specified and separated by a single
+* space each:
+* > The number of He in the cluster
+* > The number of V in the cluster
+* > The number of I in the cluster
+* > The He binding energy
+* > The V binding energy
+* > The I binding energy
+* > The trap mutation binding energy
+*
+* Where appropriate, any binding energy may be specified as &quot;Infinity&quot; to
+* signify that the cluster does not undergo that type of dissociation.
+*
+* Lines of comments starting with a &quot;#&quot; will be ignored as will lines that do
+* not clearly provide the information above.
+*
+* The network will be returned as a ReactionNetwork of PSIClusters ordered with
+* single-species He, V and I clusters first and all mixed clusters coming
+* last. Each species is ordered from the smallest cluster size, (1), to the
+* maximum size for that cluster. Instances of the appropriate cluster type are
+* instantiated during the loading process, but returned as PSIClusters.
+*
+* The ReactionNetwork's map of properties will contains the following
+* information about the network with the following keys:
+* > maxHeClusterSize - The number of He atoms in the largest single-species
+*  He cluster.
+* > maxVClusterSize - The number of atomic vacancies in the largest
+* single-species V cluster.
+* > maxIClusterSize - The number of interstitials in the largest
+* single-species I cluster.
+* > numHeClusters - The number of single-species He clusters of all sizes in
+* the network.
+* > numVClusters - The number of single-species V clusters of all sizes in the
+* network.
+* > numIClusters - The number of single-species I clusters of all sizes in the
+* network.
+* > numMixedClusters - The number of mixed-species clusters of all sizes in the
+* network.
+</body>
+              </ownedComment>
+              <ownedAttribute xmi:id="_ugK-QLgHEeKdoYp0Rmlq6Q" name="networkStream" visibility="private">
+                <ownedComment xmi:id="_ugLlULgHEeKdoYp0Rmlq6Q" annotatedElement="_ugK-QLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The istream from which the network of clusters will be read.
+</body>
+                </ownedComment>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_ugNagbgHEeKdoYp0Rmlq6Q" name="heClusters" visibility="private">
+                <ownedComment xmi:id="_ugOBkbgHEeKdoYp0Rmlq6Q" annotatedElement="_ugNagbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The internal list of He clusters
+</body>
+                </ownedComment>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_ugQd0LgHEeKdoYp0Rmlq6Q" name="vClusters" visibility="private">
+                <ownedComment xmi:id="_ugQd0bgHEeKdoYp0Rmlq6Q" annotatedElement="_ugQd0LgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The internal list of vacancy clusters
+</body>
+                </ownedComment>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_ugS6ELgHEeKdoYp0Rmlq6Q" name="iClusters" visibility="private">
+                <ownedComment xmi:id="_ugS6EbgHEeKdoYp0Rmlq6Q" annotatedElement="_ugS6ELgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The internal list of interstitial clusters
+</body>
+                </ownedComment>
+              </ownedAttribute>
+              <ownedAttribute xmi:id="_ugVWUbgHEeKdoYp0Rmlq6Q" name="mixedClusters" visibility="private">
+                <ownedComment xmi:id="_ugVWUrgHEeKdoYp0Rmlq6Q" annotatedElement="_ugVWUbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The internal list of mixed clusters
+</body>
+                </ownedComment>
+              </ownedAttribute>
+              <ownedOperation xmi:id="_ugXykbgHEeKdoYp0Rmlq6Q" name="createCluster" visibility="private">
+                <ownedComment xmi:id="_ugYZoLgHEeKdoYp0Rmlq6Q" annotatedElement="_ugXykbgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation creates a singles-species cluster of helium, vacancies or
+* interstitials. It adds the cluster to the appropriate internal list of
+* clusters for that type.
+* @param numHe - The number of helium atoms
+* @param numV - The number of atomic vacancies
+* @param numI - The number of interstitial defects
+* @return The new cluster
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ugXykrgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return"/>
+                <ownedParameter xmi:id="_ugaO0bgHEeKdoYp0Rmlq6Q" name="numHe">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+                <ownedParameter xmi:id="_uga14LgHEeKdoYp0Rmlq6Q" name="numV">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+                <ownedParameter xmi:id="_uga14bgHEeKdoYp0Rmlq6Q" name="numI">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+                <ownedParameter xmi:id="_ugbc8LgHEeKdoYp0Rmlq6Q" name="props"/>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ugcEALgHEeKdoYp0Rmlq6Q" name="PSIClusterNetworkLoader" visibility="public">
+                <ownedComment xmi:id="_ugd5MbgHEeKdoYp0Rmlq6Q" annotatedElement="_ugcEALgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The default constructor. The setInputstream() operation must be called
+* if this constructor is used.
+</body>
+                </ownedComment>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uggVcLgHEeKdoYp0Rmlq6Q" name="PSIClusterNetworkLoader" visibility="public">
+                <ownedComment xmi:id="_uggVcbgHEeKdoYp0Rmlq6Q" annotatedElement="_uggVcLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* An alternative constructor provided for convenience.
+* @param inputstream The inputstream from which the cluster data should be
+* loaded.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ugixsLgHEeKdoYp0Rmlq6Q" name="stream"/>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uglN8LgHEeKdoYp0Rmlq6Q" name="~PSIClusterNetworkLoader" visibility="public">
+                <ownedComment xmi:id="_ugnDIbgHEeKdoYp0Rmlq6Q" annotatedElement="_uglN8LgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* Destructor
+</body>
+                </ownedComment>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ugpfYLgHEeKdoYp0Rmlq6Q" name="setInputstream" visibility="public">
+                <ownedComment xmi:id="_ugpfYrgHEeKdoYp0Rmlq6Q" annotatedElement="_ugpfYLgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation specifies the inputstream from which cluster data should
+* be loaded.
+* @param inputstream The inputstream from which the cluster data should be
+* loaded.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ugpfYbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+                </ownedParameter>
+                <ownedParameter xmi:id="_ugr7obgHEeKdoYp0Rmlq6Q" name="stream"/>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uguX4LgHEeKdoYp0Rmlq6Q" name="load" visibility="public">
+                <ownedComment xmi:id="_ugu-8LgHEeKdoYp0Rmlq6Q" annotatedElement="_uguX4LgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* This operation will load the reaction network from the inputstream in
+* the format specified previously. The network will be empty if it can not
+* be loaded.
+* @param network The reaction network
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_uguX4bgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return"/>
+              </ownedOperation>
+            </packagedElement>
+            <packagedElement xmi:type="uml:Class" xmi:id="_ua8gALgHEeKdoYp0Rmlq6Q" name="VCluster">
+              <ownedComment xmi:id="_ua9HELgHEeKdoYp0Rmlq6Q" annotatedElement="_ua8gALgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This class represents a cluster composed entirely of atomic vacancies.
+</body>
+              </ownedComment>
+              <generalization xmi:id="_uhDvEbgHEeKdoYp0Rmlq6Q" general="_ualTobgHEeKdoYp0Rmlq6Q"/>
+              <ownedOperation xmi:id="_ug8aULgHEeKdoYp0Rmlq6Q" name="VCluster" visibility="public">
+                <ownedComment xmi:id="_ug9BYLgHEeKdoYp0Rmlq6Q" annotatedElement="_ug8aULgHEeKdoYp0Rmlq6Q">
+                  <body>*
+* The constructor. All VClusters must be initialized with a size.
+* @param nV the number of atomic vacancies in the cluster
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_ug_doLgHEeKdoYp0Rmlq6Q" name="nV">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_ug_dobgHEeKdoYp0Rmlq6Q" name="~VCluster" visibility="public">
+                <ownedComment xmi:id="_uhB54bgHEeKdoYp0Rmlq6Q" annotatedElement="_ug_dobgHEeKdoYp0Rmlq6Q">
+                  <body>! Destructor
+</body>
+                </ownedComment>
+              </ownedOperation>
+            </packagedElement>
+            <packagedElement xmi:type="uml:Class" xmi:id="_ubAKYLgHEeKdoYp0Rmlq6Q" name="TCluster">
+              <ownedComment xmi:id="_ubAKYbgHEeKdoYp0Rmlq6Q" annotatedElement="_ubAKYLgHEeKdoYp0Rmlq6Q">
+                <body>! This class represents a cluster composed entirely of tritium.
+</body>
+              </ownedComment>
+              <generalization xmi:id="_uhOHIbgHEeKdoYp0Rmlq6Q" general="_uao-ALgHEeKdoYp0Rmlq6Q"/>
+              <ownedOperation xmi:id="_uhGyYLgHEeKdoYp0Rmlq6Q" name="TCluster" visibility="public">
+                <ownedComment xmi:id="_uhHZcLgHEeKdoYp0Rmlq6Q" annotatedElement="_uhGyYLgHEeKdoYp0Rmlq6Q">
+                  <body>! The constructor. All TClusters must be initialized with a size.
+</body>
+                </ownedComment>
+                <ownedParameter xmi:id="_uhJOobgHEeKdoYp0Rmlq6Q" name="nT">
+                  <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+                </ownedParameter>
+              </ownedOperation>
+              <ownedOperation xmi:id="_uhJ1sLgHEeKdoYp0Rmlq6Q" name="~TCluster" visibility="public">
+                <ownedComment xmi:id="_uhLq4bgHEeKdoYp0Rmlq6Q" annotatedElement="_uhJ1sLgHEeKdoYp0Rmlq6Q">
+                  <body>! Destructor
+</body>
+                </ownedComment>
+              </ownedOperation>
+            </packagedElement>
+          </packagedElement>
+          <packagedElement xmi:type="uml:Class" xmi:id="_ugxbMLgHEeKdoYp0Rmlq6Q" name="PSIClusterNetworkLoader">
+            <ownedOperation xmi:id="_ugzQYbgHEeKdoYp0Rmlq6Q" name="convertStrToDouble" visibility="public" isStatic="true">
+              <ownedComment xmi:id="_ug1soLgHEeKdoYp0Rmlq6Q" annotatedElement="_ugzQYbgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation converts a string to a double, taking in to account the fact
+* that the input file may contain keys such as &quot;infinite.&quot;
+* @param inString the string to be converted
+* @return the string as a double
+</body>
+              </ownedComment>
+              <ownedComment xmi:id="_ug3h0bgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation converts a string to a double, taking in to account the fact
+* that the input file may contain keys such as &quot;infinite.&quot;
+* @param inString the string to be converted
+* @return the string as a double
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_ug1FkbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_ug5-ELgHEeKdoYp0Rmlq6Q" name="inString"/>
+            </ownedOperation>
+          </packagedElement>
           <packagedElement xmi:type="uml:Class" xmi:id="_0OEywHVMEeKM6_T6gw_pCg" name="PSICluster">
             <ownedComment xmi:id="_CYg4MHVNEeKM6_T6gw_pCg" annotatedElement="_0OEywHVMEeKM6_T6gw_pCg">
               <body>&lt;p>The PSICluster class is a Reactant that is specialized to work for simulations of plasma-surface interactions. It provides special routines for calculating the total flux due to production and dissociation and obtaining the cluster size.&lt;/p></body>
@@ -658,6 +1403,198 @@
             </ownedOperation>
           </packagedElement>
         </packagedElement>
+        <packagedElement xmi:type="uml:Package" xmi:id="_ubDNsLgHEeKdoYp0Rmlq6Q" name="xolotlCore">
+          <packagedElement xmi:type="uml:Class" xmi:id="_ubFp8LgHEeKdoYp0Rmlq6Q" name="Reactant">
+            <ownedComment xmi:id="_ubFp8bgHEeKdoYp0Rmlq6Q" annotatedElement="_ubFp8LgHEeKdoYp0Rmlq6Q">
+              <body>*
+* A Reactant is a reacting body in a reaction network. It represents any body
+* whose population can change with time due to reactions of any type.
+</body>
+            </ownedComment>
+            <ownedAttribute xmi:id="_uhRKcLgHEeKdoYp0Rmlq6Q" name="concentration" visibility="protected">
+              <ownedComment xmi:id="_uhRxgLgHEeKdoYp0Rmlq6Q" annotatedElement="_uhRKcLgHEeKdoYp0Rmlq6Q">
+                <body>! The total concentration of this Reactant.
+</body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+            </ownedAttribute>
+            <ownedAttribute xmi:id="_uhTmsbgHEeKdoYp0Rmlq6Q" name="name" visibility="protected">
+              <ownedComment xmi:id="_uhUNwLgHEeKdoYp0Rmlq6Q" annotatedElement="_uhTmsbgHEeKdoYp0Rmlq6Q">
+                <body>! The name of this Reactant.
+</body>
+              </ownedComment>
+            </ownedAttribute>
+            <ownedAttribute xmi:id="_uhWC8bgHEeKdoYp0Rmlq6Q" name="id" visibility="protected">
+              <ownedComment xmi:id="_uhWqALgHEeKdoYp0Rmlq6Q" annotatedElement="_uhWC8bgHEeKdoYp0Rmlq6Q">
+                <body>! An integer identification number for this reactant.
+</body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+            </ownedAttribute>
+            <ownedOperation xmi:id="_uhYfMbgHEeKdoYp0Rmlq6Q" name="Reactant" visibility="public">
+              <ownedComment xmi:id="_uhZGQLgHEeKdoYp0Rmlq6Q" annotatedElement="_uhYfMbgHEeKdoYp0Rmlq6Q">
+                <body>! The constructor.
+</body>
+              </ownedComment>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uha7cbgHEeKdoYp0Rmlq6Q" name="~Reactant" visibility="public">
+              <ownedComment xmi:id="_uhdXsbgHEeKdoYp0Rmlq6Q" annotatedElement="_uha7cbgHEeKdoYp0Rmlq6Q">
+                <body>! Destructor
+</body>
+              </ownedComment>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uhfz8LgHEeKdoYp0Rmlq6Q" name="Reactant" visibility="public">
+              <ownedComment xmi:id="_uhfz8bgHEeKdoYp0Rmlq6Q" annotatedElement="_uhfz8LgHEeKdoYp0Rmlq6Q">
+                <body>*
+* An alternative constructor that can be used to create a reactant
+* with an initial concentration.
+* @param conc The initial concentration
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uhiQMLgHEeKdoYp0Rmlq6Q" name="conc">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uhiQMbgHEeKdoYp0Rmlq6Q" name="getConcentration" visibility="public">
+              <ownedComment xmi:id="_uhi3QLgHEeKdoYp0Rmlq6Q" annotatedElement="_uhiQMbgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation returns the current concentration.
+* @return The concentration of this reactant
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uhiQMrgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uhkscbgHEeKdoYp0Rmlq6Q" name="increaseConcentration" visibility="public">
+              <ownedComment xmi:id="_uhlTgLgHEeKdoYp0Rmlq6Q" annotatedElement="_uhkscbgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation increases the concentration of the reactant by the
+* specified amount.
+* @param deltaConc the change in concentration
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uhkscrgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_uhnIsbgHEeKdoYp0Rmlq6Q" name="deltaConc">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uhnvwLgHEeKdoYp0Rmlq6Q" name="decreaseConcentration" visibility="public">
+              <ownedComment xmi:id="_uhnvwrgHEeKdoYp0Rmlq6Q" annotatedElement="_uhnvwLgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation decreases the concentration of the reactant by the
+* specified amount.
+* @param deltaConc the change in concentration
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uhnvwbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_uhqMAbgHEeKdoYp0Rmlq6Q" name="deltaConc">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uhqzELgHEeKdoYp0Rmlq6Q" name="setConcentration" visibility="public">
+              <ownedComment xmi:id="_uhqzErgHEeKdoYp0Rmlq6Q" annotatedElement="_uhqzELgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation sets the concentration of the reactant to the
+* specified amount.
+* @param conc The new concentation
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uhqzEbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_uhtPULgHEeKdoYp0Rmlq6Q" name="conc">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uhtPUbgHEeKdoYp0Rmlq6Q" name="zero" visibility="public">
+              <ownedComment xmi:id="_uht2YLgHEeKdoYp0Rmlq6Q" annotatedElement="_uhtPUbgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation sets the concentration of the reactant to zero.
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uhtPUrgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uhvrkbgHEeKdoYp0Rmlq6Q" name="getTotalFlux" visibility="public">
+              <ownedComment xmi:id="_uhyH0rgHEeKdoYp0Rmlq6Q" annotatedElement="_uhvrkbgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation returns the total flux of this reactant in the
+* current network.
+* @return The total change in flux for this reactant due to all
+* reactions
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uhyH0bgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+              </ownedParameter>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uh0kELgHEeKdoYp0Rmlq6Q" name="setReactionNetwork" visibility="public">
+              <ownedComment xmi:id="_uh0kErgHEeKdoYp0Rmlq6Q" annotatedElement="_uh0kELgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation sets the collection of other reactants that make up
+* the reaction network in which this reactant exists.
+* @param network The reaction network of which this reactant is a part
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uh0kEbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_uh3AULgHEeKdoYp0Rmlq6Q" name="network"/>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uh3AUbgHEeKdoYp0Rmlq6Q" name="toString" visibility="public">
+              <ownedComment xmi:id="_uh7RwbgHEeKdoYp0Rmlq6Q" annotatedElement="_uh3AUbgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation writes the contents of the reactant to a string. This
+* operation should be overridden by subclasses.
+* @return A serialized version of this reactant as a string.
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uh5ckbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return"/>
+            </ownedOperation>
+          </packagedElement>
+          <packagedElement xmi:type="uml:Class" xmi:id="_ubIGMbgHEeKdoYp0Rmlq6Q" name="ReactionNetwork">
+            <ownedComment xmi:id="_ubIGMrgHEeKdoYp0Rmlq6Q" annotatedElement="_ubIGMbgHEeKdoYp0Rmlq6Q">
+              <body>*
+*  This is a simple convenience class that contains a set of Reactants and the
+*  properties that describe that set.
+</body>
+            </ownedComment>
+            <ownedAttribute xmi:id="_uh9uALgHEeKdoYp0Rmlq6Q" name="properties" visibility="public">
+              <ownedComment xmi:id="_uh9uAbgHEeKdoYp0Rmlq6Q" annotatedElement="_uh9uALgHEeKdoYp0Rmlq6Q">
+                <body>*
+* The properties of this network. The exact configuration of the map is
+* specified by the class that loaded the network.
+</body>
+              </ownedComment>
+            </ownedAttribute>
+            <ownedAttribute xmi:id="_uiAKQbgHEeKdoYp0Rmlq6Q" name="reactants" visibility="public">
+              <ownedComment xmi:id="_uiAKQ7gHEeKdoYp0Rmlq6Q" annotatedElement="_uiAKQbgHEeKdoYp0Rmlq6Q">
+                <body>*
+* The set of reactants. The exact order of the reactants in the set is
+* specified by the class that loaded them.
+</body>
+              </ownedComment>
+            </ownedAttribute>
+            <ownedOperation xmi:id="_uiCmgbgHEeKdoYp0Rmlq6Q" name="ReactionNetwork" visibility="public">
+              <ownedComment xmi:id="_uiFCwbgHEeKdoYp0Rmlq6Q" annotatedElement="_uiCmgbgHEeKdoYp0Rmlq6Q">
+                <body>! The constructor. It initializes the properties map and reactants vector.
+</body>
+              </ownedComment>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uiG38bgHEeKdoYp0Rmlq6Q" name="~ReactionNetwork" visibility="public">
+              <ownedComment xmi:id="_uiJUMbgHEeKdoYp0Rmlq6Q" annotatedElement="_uiG38bgHEeKdoYp0Rmlq6Q">
+                <body>! The destructor
+</body>
+              </ownedComment>
+            </ownedOperation>
+          </packagedElement>
+        </packagedElement>
         <packagedElement xmi:type="uml:Class" xmi:id="_j8p9cHVyEeK-BchXMSC_6w" name="Reactant">
           <ownedComment xmi:id="_3F7VEHbKEeKQvNYKWE13lg" annotatedElement="_j8p9cHVyEeK-BchXMSC_6w">
             <body>&lt;p>A Reactant is a general reacting body in a reaction network. It represents any body whose population can change with time due to reactions of any type.&lt;/p></body>
@@ -849,6 +1786,101 @@
         <ownedComment xmi:id="_AncRcHV0EeK_Qv8Ya7YSJw" annotatedElement="_7n7qgHVzEeK_Qv8Ya7YSJw">
           <body>&lt;p>This package contains classes related to input and output processing in Xolotl.&lt;/p></body>
         </ownedComment>
+        <packagedElement xmi:type="uml:Package" xmi:id="_uabiobgHEeKdoYp0Rmlq6Q" name="xolotlCore">
+          <packagedElement xmi:type="uml:Class" xmi:id="_uael8LgHEeKdoYp0Rmlq6Q" name="TokenizedLineReader">
+            <ownedComment xmi:id="_uael8bgHEeKdoYp0Rmlq6Q" annotatedElement="_uael8LgHEeKdoYp0Rmlq6Q">
+              <body>*
+* This is a simple class for parsing lines from an input stream and
+* splitting that line to retrieve delimiters. A line in this case is defined as any
+* sequence of characters that terminates with an end-of-line character such
+* as \r, \n or \r\n. The default delimiter is a single space and the delimiter can be
+* changed by calling the setDelimiter() operation. Delimiters found at the beginning
+* and end of the lines are removed. Lines that are meant to be
+* comments will be skipped and this includes lines that start with a &quot;#&quot; by
+* default. The comment delimiter can be changed by calling setCommentDelimiter().
+* &quot;In-line comments&quot; where the comment starts at some later point in the line
+* are not allowed and will be parsed as data. This class is templated so
+* that conversion to primitive types can be handled automatically for the
+* client class. This class is only meant to be templated with primitive types
+* and it will fail for classes or interfaces.
+</body>
+            </ownedComment>
+            <ownedTemplateSignature xmi:type="uml:RedefinableTemplateSignature" xmi:id="_ubTsYLgHEeKdoYp0Rmlq6Q" parameter="_ubUTcLgHEeKdoYp0Rmlq6Q">
+              <ownedParameter xmi:type="uml:ClassifierTemplateParameter" xmi:id="_ubUTcLgHEeKdoYp0Rmlq6Q" parameteredElement="_ubU6gLgHEeKdoYp0Rmlq6Q">
+                <ownedParameteredElement xmi:type="uml:Class" xmi:id="_ubU6gLgHEeKdoYp0Rmlq6Q" name="dataType" templateParameter="_ubUTcLgHEeKdoYp0Rmlq6Q"/>
+              </ownedParameter>
+            </ownedTemplateSignature>
+            <ownedAttribute xmi:id="_uc4ZsLgHEeKdoYp0Rmlq6Q" name="dataDelimiter" visibility="private">
+              <ownedComment xmi:id="_uc4ZsrgHEeKdoYp0Rmlq6Q" annotatedElement="_uc4ZsLgHEeKdoYp0Rmlq6Q">
+                <body>!The delimiter or &quot;delimiter&quot; that separates elements in the line.
+</body>
+              </ownedComment>
+            </ownedAttribute>
+            <ownedAttribute xmi:id="_udFOALgHEeKdoYp0Rmlq6Q" name="commentDelimiter" visibility="private">
+              <ownedComment xmi:id="_udFOAbgHEeKdoYp0Rmlq6Q" annotatedElement="_udFOALgHEeKdoYp0Rmlq6Q">
+                <body>!The character that represents a line that is a comment and should not be parsed.
+</body>
+              </ownedComment>
+            </ownedAttribute>
+            <ownedAttribute xmi:id="_udHqQbgHEeKdoYp0Rmlq6Q" name="inputstream" visibility="private">
+              <ownedComment xmi:id="_udIRUbgHEeKdoYp0Rmlq6Q" annotatedElement="_udHqQbgHEeKdoYp0Rmlq6Q">
+                <body>!The inputstream from which data should be read.
+</body>
+              </ownedComment>
+            </ownedAttribute>
+            <ownedOperation xmi:id="_udKtkLgHEeKdoYp0Rmlq6Q" name="TokenizedLineReader" visibility="public">
+              <ownedComment xmi:id="_udKtkbgHEeKdoYp0Rmlq6Q" annotatedElement="_udKtkLgHEeKdoYp0Rmlq6Q">
+                <body>!The constructor
+</body>
+              </ownedComment>
+            </ownedOperation>
+            <ownedOperation xmi:id="_udNJ0bgHEeKdoYp0Rmlq6Q" name="setDelimiter" visibility="public">
+              <ownedComment xmi:id="_udNw4bgHEeKdoYp0Rmlq6Q" annotatedElement="_udNJ0bgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation sets the string (delimiter) that represents the delimiter separating the different data elements in the line.
+*
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_udNw4LgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_udQNILgHEeKdoYp0Rmlq6Q" name="delimiter"/>
+            </ownedOperation>
+            <ownedOperation xmi:id="_udSpYLgHEeKdoYp0Rmlq6Q" name="setCommentDelimiter" visibility="public">
+              <ownedComment xmi:id="_udSpYrgHEeKdoYp0Rmlq6Q" annotatedElement="_udSpYLgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation sets the character (delimiter) that represents the comment character.
+*
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_udSpYbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_udVFobgHEeKdoYp0Rmlq6Q" name="cdelimiter"/>
+            </ownedOperation>
+            <ownedOperation xmi:id="_udXh4bgHEeKdoYp0Rmlq6Q" name="setInputStream" visibility="public">
+              <ownedComment xmi:id="_udYI8bgHEeKdoYp0Rmlq6Q" annotatedElement="_udXh4bgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation sets the input stream that should be parsed.
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_udYI8LgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+                <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+              </ownedParameter>
+              <ownedParameter xmi:id="_udalMLgHEeKdoYp0Rmlq6Q" name="stream"/>
+            </ownedOperation>
+            <ownedOperation xmi:id="_uddBcLgHEeKdoYp0Rmlq6Q" name="loadLine" visibility="public">
+              <ownedComment xmi:id="_uddBc7gHEeKdoYp0Rmlq6Q" annotatedElement="_uddBcLgHEeKdoYp0Rmlq6Q">
+                <body>*
+* This operation loads the next line from the stream and returns an array
+* of its elements by splitting on the delimiter or a vector of size zero
+* if there are no more lines in the stream.
+</body>
+              </ownedComment>
+              <ownedParameter xmi:id="_uddBcbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return"/>
+            </ownedOperation>
+          </packagedElement>
+        </packagedElement>
         <packagedElement xmi:type="uml:Class" xmi:id="_18z_IIHGEeKL9vRIYeUWfg" name="TokenizedLineReader">
           <ownedComment xmi:id="_QPbXUIHHEeKL9vRIYeUWfg" annotatedElement="_18z_IIHGEeKL9vRIYeUWfg">
             <body>&lt;p>This is a simple class for parsing lines from an input stream and splitting that line based on a Delimiter. A line in this case is defined as any sequence of characters that terminates with an end-of-line character such as \r, \n or \r\n. The default Delimiter is a single space and the Delimiter can be changed by calling the setDelimiter() operation. Lines that are meant to be comments will be skipped and this includes lines that start with a &quot;#&quot; by default. The comment Delimiter can be changed by calling setCommentDelimiter(). &quot;In-line comments&quot; where the comment starts at some later point in the line are not allowed and will be parsed as data.&lt;/p>&lt;p>This class is templated so that conversion to primitive types can be handled automatically for the client class. This class is only meant to be templated with primitive types and it will fail for classes or interfaces.&lt;/p></body>
@@ -1159,6 +2191,50 @@
         <packagedElement xmi:type="uml:SendOperationEvent" xmi:id="_nZq-cIHJEeKL9vRIYeUWfg" name="SendOperationEvent4" operation="_-DadYIHHEeKL9vRIYeUWfg"/>
         <packagedElement xmi:type="uml:ReceiveOperationEvent" xmi:id="_nZrlgIHJEeKL9vRIYeUWfg" name="ReceiveOperationEvent4" operation="_-DadYIHHEeKL9vRIYeUWfg"/>
       </packagedElement>
+      <packagedElement xmi:type="uml:Package" xmi:id="_ubLJgLgHEeKdoYp0Rmlq6Q" name="xolotlCore">
+        <packagedElement xmi:type="uml:Class" xmi:id="_ubNlwbgHEeKdoYp0Rmlq6Q" name="Constants">
+          <ownedComment xmi:id="_ubNlwrgHEeKdoYp0Rmlq6Q" annotatedElement="_ubNlwbgHEeKdoYp0Rmlq6Q">
+            <body>! Definitions of fundamental constants used in Xolotl
+</body>
+          </ownedComment>
+        </packagedElement>
+      </packagedElement>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="_ubcPQLgHEeKdoYp0Rmlq6Q" name="examples">
+      <packagedElement xmi:type="uml:Class" xmi:id="_ubc2ULgHEeKdoYp0Rmlq6Q" name="clusterLoading">
+        <ownedOperation xmi:id="_ubfSkLgHEeKdoYp0Rmlq6Q" name="printUsage" visibility="public">
+          <ownedComment xmi:id="_ubf5oLgHEeKdoYp0Rmlq6Q" annotatedElement="_ubfSkLgHEeKdoYp0Rmlq6Q">
+            <body>! This operation prints proper usage instructions for this example
+</body>
+          </ownedComment>
+          <ownedComment xmi:id="_ubhu0bgHEeKdoYp0Rmlq6Q">
+            <body>! This operation prints proper usage instructions for this example
+</body>
+          </ownedComment>
+          <ownedParameter xmi:id="_ubfSkbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtKbXEdqm1P7n_cTT_g?C++%20Types/void?"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_ubkyILgHEeKdoYp0Rmlq6Q" name="main" visibility="public">
+          <ownedComment xmi:id="_ubkyIrgHEeKdoYp0Rmlq6Q" annotatedElement="_ubkyILgHEeKdoYp0Rmlq6Q">
+            <body>! Main program
+</body>
+          </ownedComment>
+          <ownedComment xmi:id="_ubnOYbgHEeKdoYp0Rmlq6Q">
+            <body>! Main program
+</body>
+          </ownedComment>
+          <ownedParameter xmi:id="_ubkyIbgHEeKdoYp0Rmlq6Q" name="ReturnParameter" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_ubpqobgHEeKdoYp0Rmlq6Q" name="argc">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_ubqRsLgHEeKdoYp0Rmlq6Q" name="argv">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtabXEdqm1P7n_cTT_g?C++%20Types/char?"/>
+          </ownedParameter>
+        </ownedOperation>
+      </packagedElement>
     </packagedElement>
     <packagedElement xmi:type="uml:Package" xmi:id="_Y8kEkIHdEeKL9vRIYeUWfg" name="TemplateInstantiations">
       <packagedElement xmi:type="uml:Class" xmi:id="_Y8kEkYHdEeKL9vRIYeUWfg" name="TokenizedLineReader_dataType">
@@ -1167,22 +2243,7 @@
         </templateBinding>
       </packagedElement>
     </packagedElement>
-    <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_Y9f4sIHdEeKL9vRIYeUWfg" name="InputStream"/>
-    <packagedElement xmi:type="uml:PrimitiveType" xmi:id="_Y-4YwYHdEeKL9vRIYeUWfg" name="HCluster::HCluster"/>
-    <packagedElement xmi:type="uml:Class" xmi:id="_ZDRwkIHdEeKL9vRIYeUWfg" name="main">
-      <ownedOperation xmi:id="_ZDUM0IHdEeKL9vRIYeUWfg" name="main" visibility="public">
-        <ownedParameter xmi:id="_ZDUM0YHdEeKL9vRIYeUWfg" name="ReturnParameter" direction="return">
-          <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
-        </ownedParameter>
-        <ownedParameter xmi:id="_ZDUz4IHdEeKL9vRIYeUWfg" name="argc">
-          <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
-        </ownedParameter>
-        <ownedParameter xmi:id="_ZDUz4YHdEeKL9vRIYeUWfg" name="argv">
-          <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPtabXEdqm1P7n_cTT_g?C++%20Types/char?"/>
-        </ownedParameter>
-      </ownedOperation>
-    </packagedElement>
-    <packagedElement xmi:type="uml:Package" xmi:id="_nrz28HVKEeKM6_T6gw_pCg" name="tests">
+    <packagedElement xmi:type="uml:Package" xmi:id="_nrz28HVKEeKM6_T6gw_pCg" name="tests" clientDependency="_y8rIwMFdEeKNUrlkrq0IuQ _18UwwMFdEeKNUrlkrq0IuQ">
       <eAnnotations xmi:id="_nr1FEHVKEeKM6_T6gw_pCg" source="uml2.diagrams" references="_nr1FEXVKEeKM6_T6gw_pCg">
         <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_nr1FEXVKEeKM6_T6gw_pCg" type="Freeform" name="Main">
           <element xsi:nil="true"/>
@@ -1251,6 +2312,54 @@
           <ownedComment xmi:id="_Jrfo4IHKEeKL9vRIYeUWfg" annotatedElement="_8hK8oIHJEeKL9vRIYeUWfg">
             <body>&lt;p>This class is responsible for testing the TokenizedLineReader.&lt;/p></body>
           </ownedComment>
+          <ownedAttribute xmi:id="_ubvxQbgHEeKdoYp0Rmlq6Q" name="doubleString" visibility="private" isReadOnly="true">
+            <ownedComment xmi:id="_ubwYUrgHEeKdoYp0Rmlq6Q" annotatedElement="_ubvxQbgHEeKdoYp0Rmlq6Q">
+              <body>Test data
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_uby0kbgHEeKdoYp0Rmlq6Q">
+              <body>Test data
+</body>
+            </ownedComment>
+            <defaultValue xmi:type="uml:LiteralString" xmi:id="_ubwYUbgHEeKdoYp0Rmlq6Q" value="0.0 1.0 5.0\n0.11 0.55 22.86 99.283\n# Comment\n 0.000382 883.33 74.832\n"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ub1Q0LgHEeKdoYp0Rmlq6Q" name="doubleCSVDoubleSlashCommentString" visibility="private" isReadOnly="true">
+            <defaultValue xmi:type="uml:LiteralString" xmi:id="_ub1Q0bgHEeKdoYp0Rmlq6Q" value="0.0,1.0,5.0\n0.11,0.55,22.86,99.283\n// Comment\n0.000382,883.33,74.832\n"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ub134LgHEeKdoYp0Rmlq6Q" name="intString" visibility="private" isReadOnly="true">
+            <defaultValue xmi:type="uml:LiteralString" xmi:id="_ub134bgHEeKdoYp0Rmlq6Q" value="1 3 5 7 9\n# Comment\n 0 2 4 6 \n"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ub134rgHEeKdoYp0Rmlq6Q" name="intCSVString" visibility="private" isReadOnly="true">
+            <defaultValue xmi:type="uml:LiteralString" xmi:id="_ub2e8LgHEeKdoYp0Rmlq6Q" value="1,3,5,7,9\n# Comment\n0,2,4,6\n"/>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ub2e8bgHEeKdoYp0Rmlq6Q" name="TokenizedLineReader_testSuite" visibility="private"/>
+          <ownedAttribute xmi:id="_ub47MbgHEeKdoYp0Rmlq6Q" name="intReader" visibility="private"/>
+          <ownedAttribute xmi:id="_ub5iQbgHEeKdoYp0Rmlq6Q" name="dLine" visibility="private"/>
+          <ownedAttribute xmi:id="_ub6JULgHEeKdoYp0Rmlq6Q" name="iLine" visibility="private"/>
+          <ownedAttribute xmi:id="_ub6wYLgHEeKdoYp0Rmlq6Q" name="doubleTestStream" visibility="private">
+            <ownedComment xmi:id="_ub6wYrgHEeKdoYp0Rmlq6Q" annotatedElement="_ub6wYLgHEeKdoYp0Rmlq6Q">
+              <body>----- Check doubles -----//
+Create the input stream
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_ub9MobgHEeKdoYp0Rmlq6Q">
+              <body>----- Check doubles -----//
+Create the input stream
+</body>
+            </ownedComment>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ub_o4LgHEeKdoYp0Rmlq6Q" name="intTestStream" visibility="private">
+            <ownedComment xmi:id="_ub_o4bgHEeKdoYp0Rmlq6Q" annotatedElement="_ub_o4LgHEeKdoYp0Rmlq6Q">
+              <body>----- Check integers -----//
+Create the input stream
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_ucCFIbgHEeKdoYp0Rmlq6Q">
+              <body>----- Check integers -----//
+Create the input stream
+</body>
+            </ownedComment>
+          </ownedAttribute>
           <ownedOperation xmi:id="_9_i_IIHJEeKL9vRIYeUWfg" name="checkDefaultParsing">
             <ownedComment xmi:id="_MywUwIHKEeKL9vRIYeUWfg" annotatedElement="_9_i_IIHJEeKL9vRIYeUWfg">
               <body>&lt;p>This operation checks default parsing setup of the TokenizedLineReader.&lt;/p></body>
@@ -1269,14 +2378,140 @@
         </packagedElement>
         <packagedElement xmi:type="uml:Dependency" xmi:id="_Sf5dwIHKEeKL9vRIYeUWfg" supplier="_18z_IIHGEeKL9vRIYeUWfg" client="_8hK8oIHJEeKL9vRIYeUWfg"/>
       </packagedElement>
+      <packagedElement xmi:type="uml:Package" xmi:id="_ucEhYLgHEeKdoYp0Rmlq6Q" name="reactants">
+        <packagedElement xmi:type="uml:Class" xmi:id="_ucFIcLgHEeKdoYp0Rmlq6Q" name="PSIClusterNetworkLoaderTester">
+          <ownedAttribute xmi:id="_ucG9obgHEeKdoYp0Rmlq6Q" name="PSIClusterNetworkLoader_testSuite" visibility="private">
+            <ownedComment xmi:id="_ucJZ4bgHEeKdoYp0Rmlq6Q" annotatedElement="_ucG9obgHEeKdoYp0Rmlq6Q">
+              <body>*
+* This suite is responsible for testing the PSIClusterNetworkLoader. It
+* creates a string stream that contains each of the available PSICluster types
+* and checks that the loader returns a list with each type in it.
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_ucLPEbgHEeKdoYp0Rmlq6Q">
+              <body>*
+* This suite is responsible for testing the PSIClusterNetworkLoader. It
+* creates a string stream that contains each of the available PSICluster types
+* and checks that the loader returns a list with each type in it.
+</body>
+            </ownedComment>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ucNrUbgHEeKdoYp0Rmlq6Q" name="singleHeString" visibility="private"/>
+          <ownedAttribute xmi:id="_ucOSYLgHEeKdoYp0Rmlq6Q" name="singleVString" visibility="private"/>
+          <ownedAttribute xmi:id="_ucO5cLgHEeKdoYp0Rmlq6Q" name="singleIString" visibility="private"/>
+          <ownedAttribute xmi:id="_ucO5cbgHEeKdoYp0Rmlq6Q" name="mixedString" visibility="private"/>
+          <ownedAttribute xmi:id="_ucPggLgHEeKdoYp0Rmlq6Q" name="loader" visibility="private" type="_ua5csLgHEeKdoYp0Rmlq6Q"/>
+          <ownedAttribute xmi:id="_ucQHkLgHEeKdoYp0Rmlq6Q" name="network" visibility="private">
+            <ownedComment xmi:id="_ucQHkrgHEeKdoYp0Rmlq6Q" annotatedElement="_ucQHkLgHEeKdoYp0Rmlq6Q">
+              <body>Load the network
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_ucSj0bgHEeKdoYp0Rmlq6Q">
+              <body>Load the network
+</body>
+            </ownedComment>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ucVAELgHEeKdoYp0Rmlq6Q" name="props" visibility="private">
+            <ownedComment xmi:id="_ucVAErgHEeKdoYp0Rmlq6Q" annotatedElement="_ucVAELgHEeKdoYp0Rmlq6Q">
+              <body>Check the network. It should not be empty
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_ucXcUbgHEeKdoYp0Rmlq6Q">
+              <body>Check the network. It should not be empty
+</body>
+            </ownedComment>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ucZ4kLgHEeKdoYp0Rmlq6Q" name="reactants" visibility="private"/>
+          <ownedAttribute xmi:id="_ucZ4krgHEeKdoYp0Rmlq6Q" name="heCluster" visibility="private">
+            <ownedComment xmi:id="_ucafobgHEeKdoYp0Rmlq6Q" annotatedElement="_ucZ4krgHEeKdoYp0Rmlq6Q">
+              <body>
+shared_ptr&lt;stringstream> networkStream(
+new stringstream(stringstream::in | stringstream::out));
+string singleHeString = &quot;1 0 0 0.0 Infinity Infinity 8.269996 0.999 1.34\n&quot;;
+string singleVString =
+&quot;0 50 0 Infinity 2.49000002 Infinity Infinity 0.888 2.345\n&quot;;
+string singleIString = &quot;0 0 1 Infinity Infinity Infinity Infinity 0.7777 3.456\n&quot;;
+string mixedString =
+&quot;1 50 0 6.160001 2.4900002 Infinity Infinity 6.789 4.5678\n&quot;;
+Check the reactants - He first
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_uccU0bgHEeKdoYp0Rmlq6Q">
+              <body>
+shared_ptr&lt;stringstream> networkStream(
+new stringstream(stringstream::in | stringstream::out));
+string singleHeString = &quot;1 0 0 0.0 Infinity Infinity 8.269996 0.999 1.34\n&quot;;
+string singleVString =
+&quot;0 50 0 Infinity 2.49000002 Infinity Infinity 0.888 2.345\n&quot;;
+string singleIString = &quot;0 0 1 Infinity Infinity Infinity Infinity 0.7777 3.456\n&quot;;
+string mixedString =
+&quot;1 50 0 6.160001 2.4900002 Infinity Infinity 6.789 4.5678\n&quot;;
+Check the reactants - He first
+</body>
+            </ownedComment>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ucexEbgHEeKdoYp0Rmlq6Q" name="bindingEnergies" visibility="private"/>
+          <ownedAttribute xmi:id="_ucfYIbgHEeKdoYp0Rmlq6Q" name="vCluster" visibility="private">
+            <ownedComment xmi:id="_ucfYIrgHEeKdoYp0Rmlq6Q" annotatedElement="_ucfYIbgHEeKdoYp0Rmlq6Q">
+              <body>V
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_uch0YbgHEeKdoYp0Rmlq6Q">
+              <body>V
+</body>
+            </ownedComment>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_uckQobgHEeKdoYp0Rmlq6Q" name="iCluster" visibility="private">
+            <ownedComment xmi:id="_uckQorgHEeKdoYp0Rmlq6Q" annotatedElement="_uckQobgHEeKdoYp0Rmlq6Q">
+              <body>I
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_ucms4bgHEeKdoYp0Rmlq6Q">
+              <body>I
+</body>
+            </ownedComment>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_ucpJILgHEeKdoYp0Rmlq6Q" name="mixedCluster" visibility="private">
+            <ownedComment xmi:id="_ucpJIbgHEeKdoYp0Rmlq6Q" annotatedElement="_ucpJILgHEeKdoYp0Rmlq6Q">
+              <body>Mixed
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_ucrlYbgHEeKdoYp0Rmlq6Q">
+              <body>Mixed
+</body>
+            </ownedComment>
+          </ownedAttribute>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Class" xmi:id="_ucuBoLgHEeKdoYp0Rmlq6Q" name="PSIClusterTester">
+          <ownedAttribute xmi:id="_ucwd4bgHEeKdoYp0Rmlq6Q" name="PSIClusterNetworkLoader_testSuite" visibility="private">
+            <ownedComment xmi:id="_ucyTEbgHEeKdoYp0Rmlq6Q" annotatedElement="_ucwd4bgHEeKdoYp0Rmlq6Q">
+              <body>*
+* This suite is responsible for testing the PSIClusterNetworkLoader. It
+* creates a string stream that contains each of the available PSICluster types
+* and checks that the loader returns a list with each type in it.
+</body>
+            </ownedComment>
+            <ownedComment xmi:id="_uc0IQbgHEeKdoYp0Rmlq6Q">
+              <body>*
+* This suite is responsible for testing the PSIClusterNetworkLoader. It
+* creates a string stream that contains each of the available PSICluster types
+* and checks that the loader returns a list with each type in it.
+</body>
+            </ownedComment>
+          </ownedAttribute>
+          <ownedAttribute xmi:id="_uc2kgbgHEeKdoYp0Rmlq6Q" name="cluster" visibility="private" type="_ualTobgHEeKdoYp0Rmlq6Q"/>
+        </packagedElement>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Dependency" xmi:id="_y8rIwMFdEeKNUrlkrq0IuQ" supplier="_mnX-cHVKEeKM6_T6gw_pCg" client="_nrz28HVKEeKM6_T6gw_pCg"/>
+      <packagedElement xmi:type="uml:Dependency" xmi:id="_18UwwMFdEeKNUrlkrq0IuQ" supplier="_aIxXoLdUEeKdoYp0Rmlq6Q" client="_nrz28HVKEeKM6_T6gw_pCg"/>
     </packagedElement>
-    <packagedElement xmi:type="uml:Package" xmi:id="_aIxXoLdUEeKdoYp0Rmlq6Q" name="xolotlSolver">
+    <packagedElement xmi:type="uml:Package" xmi:id="_aIxXoLdUEeKdoYp0Rmlq6Q" name="xolotlSolver" clientDependency="_xyQkEMFdEeKNUrlkrq0IuQ">
       <eAnnotations xmi:id="_aOXCQLdUEeKdoYp0Rmlq6Q" source="uml2.diagrams" references="_aOXCQbdUEeKdoYp0Rmlq6Q">
         <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_aOXCQbdUEeKdoYp0Rmlq6Q" type="Freeform" name="Main">
           <element xsi:nil="true"/>
         </contents>
         <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_0_URYLdWEeKdoYp0Rmlq6Q" type="Class" name="Solver Class Diagram">
-          <children xmi:type="notation:Shape" xmi:id="_0_URYbdWEeKdoYp0Rmlq6Q" type="Text" fontName="Sans Serif" fontHeight="18" description="Solver Class Diagram" transparency="0" lineColor="0" lineWidth="2">
+          <children xmi:type="notation:Shape" xmi:id="_0_URYbdWEeKdoYp0Rmlq6Q" type="Text" fontName="Sans" fontHeight="24" description="Solver Class Diagram" transparency="0" lineColor="0" lineWidth="2">
             <children xmi:type="notation:BasicDecorationNode" xmi:id="_0_URYrdWEeKdoYp0Rmlq6Q" type="DiagramName">
               <element xsi:nil="true"/>
             </children>
@@ -1286,30 +2521,133 @@
             <element xsi:nil="true"/>
             <layoutConstraint xmi:type="notation:Bounds" xmi:id="_0_URZLdWEeKdoYp0Rmlq6Q" x="4366" y="1227" width="16895" height="941"/>
           </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_EBxj8LdXEeKdoYp0Rmlq6Q" element="_EA0hsLdXEeKdoYp0Rmlq6Q" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_EB0nQLdXEeKdoYp0Rmlq6Q" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_EB0nQbdXEeKdoYp0Rmlq6Q" width="1320" height="1320"/>
+          <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_VMwZQLgHEeKdoYp0Rmlq6Q" element="_VMf6kLgHEeKdoYp0Rmlq6Q" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
+            <children xmi:type="notation:DecorationNode" xmi:id="_VMxnYLgHEeKdoYp0Rmlq6Q" type="ImageCompartment">
+              <layoutConstraint xmi:type="notation:Size" xmi:id="_VMxnYbgHEeKdoYp0Rmlq6Q" width="530" height="530"/>
             </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_EB1OULdXEeKdoYp0Rmlq6Q" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_EB1OUbdXEeKdoYp0Rmlq6Q" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_EB2ccLdXEeKdoYp0Rmlq6Q" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_EB3DgLdXEeKdoYp0Rmlq6Q" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_EB3DgbdXEeKdoYp0Rmlq6Q" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_EB4RoLdXEeKdoYp0Rmlq6Q" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_EB44sLdXEeKdoYp0Rmlq6Q" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_EBxj8bdXEeKdoYp0Rmlq6Q" x="13095" y="3668"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_VMyOcLgHEeKdoYp0Rmlq6Q" type="Stereotype"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_VMyOcbgHEeKdoYp0Rmlq6Q" type="Kind"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_VMzckLgHEeKdoYp0Rmlq6Q" type="Name"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_VM0DoLgHEeKdoYp0Rmlq6Q" type="Parent"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_VM0DobgHEeKdoYp0Rmlq6Q" type="AttributeCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_VM0qsLgHEeKdoYp0Rmlq6Q" type="OperationCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_VM0qsbgHEeKdoYp0Rmlq6Q" visible="false" type="SignalCompartment"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_VMwZQbgHEeKdoYp0Rmlq6Q" x="2790" y="3410"/>
+          </children>
+          <children xmi:type="umlnotation:UMLShape" xmi:id="_T7NxgLgKEeKdoYp0Rmlq6Q" element="_T7KuMLgKEeKdoYp0Rmlq6Q" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
+            <children xmi:type="notation:DecorationNode" xmi:id="_T7OYkLgKEeKdoYp0Rmlq6Q" type="ImageCompartment">
+              <layoutConstraint xmi:type="notation:Size" xmi:id="_T7OYkbgKEeKdoYp0Rmlq6Q" width="1320" height="1320"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_T7O_oLgKEeKdoYp0Rmlq6Q" type="Stereotype"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_T7O_obgKEeKdoYp0Rmlq6Q" type="Name"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_T7O_orgKEeKdoYp0Rmlq6Q" type="Parent"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_T7PmsLgKEeKdoYp0Rmlq6Q" type="AttributeCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_T7PmsbgKEeKdoYp0Rmlq6Q" type="OperationCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_T7PmsrgKEeKdoYp0Rmlq6Q" visible="false" type="SignalCompartment"/>
+            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_T7QNwLgKEeKdoYp0Rmlq6Q" visible="false" type="StructureCompartment"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_T7NxgbgKEeKdoYp0Rmlq6Q" x="6981" y="11374"/>
+          </children>
+          <children xmi:type="notation:Shape" xmi:id="_NI_MAMFbEeKdoYp0Rmlq6Q" type="Note" fontName="Sans" fontHeight="24" description="&lt;p>&lt;span style=&quot;font-size:18pt;&quot;>Note explicit dependency on PSIClusters!&lt;/span>&lt;/p>" transparency="0" lineColor="14263149" lineWidth="1">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_NJBBMMFbEeKdoYp0Rmlq6Q" type="DiagramName">
+              <element xsi:nil="true"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_NJBBMcFbEeKdoYp0Rmlq6Q" type="Description">
+              <element xsi:nil="true"/>
+            </children>
+            <styles xmi:type="notation:TextStyle" xmi:id="_NI_MAcFbEeKdoYp0Rmlq6Q"/>
+            <styles xmi:type="notation:LineTypeStyle" xmi:id="_NI_MAsFbEeKdoYp0Rmlq6Q"/>
+            <element xsi:nil="true"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_NI_MA8FbEeKdoYp0Rmlq6Q" x="19220" y="4340" width="7364" height="3385"/>
           </children>
           <element xsi:nil="true"/>
+          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_VgnCALgKEeKdoYp0Rmlq6Q" element="_VgUHELgKEeKdoYp0Rmlq6Q" source="_T7NxgLgKEeKdoYp0Rmlq6Q" target="_VMwZQLgHEeKdoYp0Rmlq6Q" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
+            <children xmi:type="notation:DecorationNode" xmi:id="_Vgo3MLgKEeKdoYp0Rmlq6Q" type="NameLabel">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_VgpeQLgKEeKdoYp0Rmlq6Q" type="Stereotype"/>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_VgpeQbgKEeKdoYp0Rmlq6Q" type="Name"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_Vgo3MbgKEeKdoYp0Rmlq6Q" y="-198"/>
+            </children>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_VgnCAbgKEeKdoYp0Rmlq6Q" points="[-4, -25, -5, 199]$[-4, -140, -5, 84]"/>
+          </edges>
+          <edges xmi:type="notation:Connector" xmi:id="_NPsQ8MFbEeKdoYp0Rmlq6Q" type="NoteAttachment" source="_VMwZQLgHEeKdoYp0Rmlq6Q" target="_NI_MAMFbEeKdoYp0Rmlq6Q" lineColor="0" lineWidth="2">
+            <styles xmi:type="notation:ArrowStyle" xmi:id="_NPsQ8cFbEeKdoYp0Rmlq6Q"/>
+            <styles xmi:type="notation:LineTypeStyle" xmi:id="_NPsQ8sFbEeKdoYp0Rmlq6Q"/>
+            <element xsi:nil="true"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_NPsQ88FbEeKdoYp0Rmlq6Q" points="[-129, -84, 185, 120]$[-314, -204, 0, 0]"/>
+          </edges>
         </contents>
       </eAnnotations>
       <ownedComment xmi:id="_ztMiMLdWEeKdoYp0Rmlq6Q" annotatedElement="_aIxXoLdUEeKdoYp0Rmlq6Q">
         <body>&lt;p>This package contains the classes used by Xolotl for solving the Advection-Diffusion-Reaction equations.&lt;/p></body>
       </ownedComment>
-      <packagedElement xmi:type="uml:Class" xmi:id="_EA0hsLdXEeKdoYp0Rmlq6Q" name="Solver">
-        <ownedComment xmi:id="_MrdWkLdXEeKdoYp0Rmlq6Q" annotatedElement="_EA0hsLdXEeKdoYp0Rmlq6Q">
-          <body>&lt;p>Instances of this class are responsible for solving the set of advection-diffusion-reaction equations that govern the evolution of clusters in plasma surface interactions.&lt;/p></body>
+      <packagedElement xmi:type="uml:Interface" xmi:id="_VMf6kLgHEeKdoYp0Rmlq6Q" name="ISolver">
+        <ownedComment xmi:id="_aHvskLgHEeKdoYp0Rmlq6Q" annotatedElement="_VMf6kLgHEeKdoYp0Rmlq6Q">
+          <body>&lt;p>Realizations of this interface are responsible for solving the set of advection-diffusion-reaction equations that govern the evolution of clusters in plasma surface interactions.&lt;/p></body>
         </ownedComment>
+        <ownedOperation xmi:id="_eTfrYLfzEeKdoYp0Rmlq6Q" name="setCommandLineOptions">
+          <ownedComment xmi:id="_0q0SsLfzEeKdoYp0Rmlq6Q" annotatedElement="_eTfrYLfzEeKdoYp0Rmlq6Q">
+            <body>&lt;p>This operation transfers the input arguments passed to the program on startup to the solver. These options are static options specified at the start of the program whereas the options passed to setOptions() may change.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_faKYgLfzEeKdoYp0Rmlq6Q" name="argc">
+            <ownedComment xmi:id="_rftOALfzEeKdoYp0Rmlq6Q" annotatedElement="_faKYgLfzEeKdoYp0Rmlq6Q">
+              <body>&lt;p>The number of command line arguments.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="_la9dULfzEeKdoYp0Rmlq6Q" name="argv">
+            <ownedComment xmi:id="_sxEvQLfzEeKdoYp0Rmlq6Q" annotatedElement="_la9dULfzEeKdoYp0Rmlq6Q">
+              <body>&lt;p>The list of command line arguments.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_pY7uwLfzEeKdoYp0Rmlq6Q" value="*"/>
+            <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_pY7HsLfzEeKdoYp0Rmlq6Q"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_ikJRILgHEeKdoYp0Rmlq6Q" name="setNetworkLoader">
+          <ownedComment xmi:id="_nlVoMLgJEeKdoYp0Rmlq6Q" annotatedElement="_ikJRILgHEeKdoYp0Rmlq6Q">
+            <body>&lt;p>This operation sets the PSIClusterNetworkLoader that should be used by the ISolver to load the ReactionNetwork.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_jzWPMLgHEeKdoYp0Rmlq6Q" name="networkLoader" type="_ua5csLgHEeKdoYp0Rmlq6Q">
+            <ownedComment xmi:id="_zeTaQLgJEeKdoYp0Rmlq6Q" annotatedElement="_jzWPMLgHEeKdoYp0Rmlq6Q">
+              <body>&lt;p>The PSINetworkLoader that is configured to load a ReactionNetwork of PSIClusters from disk.&lt;/p></body>
+            </ownedComment>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_6LTckLfvEeKdoYp0Rmlq6Q" name="setOptions">
+          <ownedComment xmi:id="_FoZVgLfxEeKdoYp0Rmlq6Q" annotatedElement="_6LTckLfvEeKdoYp0Rmlq6Q">
+            <body>&lt;p>This operation sets the run-time options of the solver. The map is a set of key-value std::string pairs that are interpreted by the solver. These options may change during execution, but it is up to Solvers to monitor the map for changes and they may do so at their discretion.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_7slpILfvEeKdoYp0Rmlq6Q" name="options">
+            <type xmi:type="uml:Interface" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_9I9vIFObEd2M5enXlfCuwQ?UALContainers/Map?"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_bCEkoLf4EeKdoYp0Rmlq6Q" name="setupMesh">
+          <ownedComment xmi:id="_gfIDMLf4EeKdoYp0Rmlq6Q" annotatedElement="_bCEkoLf4EeKdoYp0Rmlq6Q">
+            <body>&lt;p>This operation sets up the mesh that will be used by the solver and initializes the data on that mesh. This operation will throw an exception of type std::string if the mesh can not be setup.&lt;/p></body>
+          </ownedComment>
+        </ownedOperation>
+        <ownedOperation xmi:id="_GYAGILf0EeKdoYp0Rmlq6Q" name="initialize">
+          <ownedComment xmi:id="_qe1KYLf0EeKdoYp0Rmlq6Q" annotatedElement="_GYAGILf0EeKdoYp0Rmlq6Q">
+            <body>&lt;p>This operation performs all necessary initialization for the solver possibly including but not limited to setting up MPI and loading initial conditions. If the solver can not be initialized, this operation will throw an exception of type std::string.&lt;/p></body>
+          </ownedComment>
+        </ownedOperation>
+        <ownedOperation xmi:id="_q2Fz0Lf0EeKdoYp0Rmlq6Q" name="solve">
+          <ownedComment xmi:id="_63-jELf0EeKdoYp0Rmlq6Q" annotatedElement="_q2Fz0Lf0EeKdoYp0Rmlq6Q">
+            <body>&lt;p>This operation directs the Solver to perform the solve. If the solve fails, it will throw an exception of type std::string.&lt;/p></body>
+          </ownedComment>
+        </ownedOperation>
+        <ownedOperation xmi:id="_7WxX4Lf0EeKdoYp0Rmlq6Q" name="finalize">
+          <ownedComment xmi:id="_DXnB0Lf1EeKdoYp0Rmlq6Q" annotatedElement="_7WxX4Lf0EeKdoYp0Rmlq6Q">
+            <body>&lt;p>This operation performs all necessary finalization for the solver including but not limited to cleaning up memory, finalizing MPI and printing diagnostic information. If the solver can not be finalized, this operation will throw an exception of type std::string.&lt;/p></body>
+          </ownedComment>
+        </ownedOperation>
       </packagedElement>
+      <packagedElement xmi:type="uml:Class" xmi:id="_T7KuMLgKEeKdoYp0Rmlq6Q" name="PETScSolver" clientDependency="_VgUHELgKEeKdoYp0Rmlq6Q">
+        <ownedComment xmi:id="_HRYGsLgLEeKdoYp0Rmlq6Q" annotatedElement="_T7KuMLgKEeKdoYp0Rmlq6Q">
+          <body>&lt;p>This class realizes the ISolver interface to solve the advection-diffusion-reaction problem with the PETSc solvers from Argonne National Laboratory.&lt;/p></body>
+        </ownedComment>
+        <interfaceRealization xmi:id="_VgUHELgKEeKdoYp0Rmlq6Q" supplier="_VMf6kLgHEeKdoYp0Rmlq6Q" client="_T7KuMLgKEeKdoYp0Rmlq6Q" contract="_VMf6kLgHEeKdoYp0Rmlq6Q"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Dependency" xmi:id="_xyQkEMFdEeKNUrlkrq0IuQ" supplier="_mnX-cHVKEeKM6_T6gw_pCg" client="_aIxXoLdUEeKdoYp0Rmlq6Q"/>
     </packagedElement>
     <profileApplication xmi:id="_biIvZXVKEeKM6_T6gw_pCg">
       <eAnnotations xmi:id="_biIvZnVKEeKM6_T6gw_pCg" source="http://www.eclipse.org/uml2/2.0.0/UML">
@@ -1434,8 +2772,6 @@
   <CPPTransformation:cpp_destructor xmi:id="_hOQN8IHdEeKL9vRIYeUWfg" base_Operation="_ZBXFAIHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_destructor xmi:id="_hOYw0IHdEeKL9vRIYeUWfg" base_Operation="_Y_jHIoHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_type xmi:id="_hOsS0IHdEeKL9vRIYeUWfg" qualifier="*" base_Parameter="__xXM8IHHEeKL9vRIYeUWfg"/>
-  <CPPTransformation:cpp_globals xmi:id="_hPuNkIHdEeKL9vRIYeUWfg" base_Class="_ZDRwkIHdEeKL9vRIYeUWfg"/>
-  <CPPTransformation:cpp_type xmi:id="_hQKScIHdEeKL9vRIYeUWfg" qualifier="**" base_Parameter="_ZDUz4YHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_type xmi:id="_hQYU4IHdEeKL9vRIYeUWfg" qualifier="*" base_Parameter="_v9bLMHVzEeK_Qv8Ya7YSJw"/>
   <CPPTransformation:cpp_destructor xmi:id="_hQd0cIHdEeKL9vRIYeUWfg" base_Operation="_Y_I3cIHdEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_destructor xmi:id="_hQx9gIHdEeKL9vRIYeUWfg" base_Operation="_Y-pIMIHdEeKL9vRIYeUWfg"/>
@@ -1450,5 +2786,198 @@
   <Default:Documentation xmi:id="_Q2PWUIHgEeKL9vRIYeUWfg" base_Comment="_Q2NhIIHgEeKL9vRIYeUWfg"/>
   <CPPTransformation:cpp_type xmi:id="_RgAFAIHgEeKL9vRIYeUWfg" base_Property="_P43vIIHgEeKL9vRIYeUWfg"/>
   <Default:Documentation xmi:id="_ztSBwLdWEeKdoYp0Rmlq6Q" base_Comment="_ztMiMLdWEeKdoYp0Rmlq6Q"/>
-  <Default:Documentation xmi:id="_MrgZ4LdXEeKdoYp0Rmlq6Q" base_Comment="_MrdWkLdXEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_FobxwLfxEeKdoYp0Rmlq6Q" base_Comment="_FoZVgLfxEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_rfvqQLfzEeKdoYp0Rmlq6Q" base_Comment="_rftOALfzEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_sxIZoLfzEeKdoYp0Rmlq6Q" base_Comment="_sxEvQLfzEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_0q2u8LfzEeKdoYp0Rmlq6Q" base_Comment="_0q0SsLfzEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_qe3moLf0EeKdoYp0Rmlq6Q" base_Comment="_qe1KYLf0EeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_64A_ULf0EeKdoYp0Rmlq6Q" base_Comment="_63-jELf0EeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_DXqFILf1EeKdoYp0Rmlq6Q" base_Comment="_DXnB0Lf1EeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_gfKfcLf4EeKdoYp0Rmlq6Q" base_Comment="_gfIDMLf4EeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_aHyI0LgHEeKdoYp0Rmlq6Q" base_Comment="_aHvskLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAatcLgHEeKdoYp0Rmlq6Q" base_Comment="_udonobgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAcioLgHEeKdoYp0Rmlq6Q" base_Comment="_uavrsbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAe-4LgHEeKdoYp0Rmlq6Q" base_Comment="_uggVcbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAg0ELgHEeKdoYp0Rmlq6Q" base_Comment="_ua2ZYbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAipQLgHEeKdoYp0Rmlq6Q" base_Comment="_uf0Y8rgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAkecLgHEeKdoYp0Rmlq6Q" base_Comment="_ud8JoLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAmToLgHEeKdoYp0Rmlq6Q" base_Comment="_ubFp8bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAoI0LgHEeKdoYp0Rmlq6Q" base_Comment="_ufb-cLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_operation xmi:id="_xAp-ALgHEeKdoYp0Rmlq6Q" isVirtual="true" base_Operation="_uegxYLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xArzMLgHEeKdoYp0Rmlq6Q" base_Comment="_ug9BYLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAtoYLgHEeKdoYp0Rmlq6Q" base_Comment="_uael8bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAvdkLgHEeKdoYp0Rmlq6Q" base_Comment="_ugnDIbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xAxSwLgHEeKdoYp0Rmlq6Q" base_Comment="_uhlTgLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xAzH8LgHEeKdoYp0Rmlq6Q" base_Comment="_ubnOYbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xA09ILgHEeKdoYp0Rmlq6Q" base_Comment="_ueZcoLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xA2yULgHEeKdoYp0Rmlq6Q" base_Comment="_uf7tsbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xA4ngLgHEeKdoYp0Rmlq6Q" base_Comment="_udNw4bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xA6csLgHEeKdoYp0Rmlq6Q" base_Comment="_ucyTEbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xA8R4LgHEeKdoYp0Rmlq6Q" base_Comment="_ufheALgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xA-uILgHEeKdoYp0Rmlq6Q" base_Comment="_ufj6QbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xBAjULgHEeKdoYp0Rmlq6Q" base_Comment="_uc0IQbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBCYgLgHEeKdoYp0Rmlq6Q" base_Comment="_uc4ZsrgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xBENsLgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_ug5-ELgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xBGC4LgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_ueWZUbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBIfILgHEeKdoYp0Rmlq6Q" base_Comment="_uao-AbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_operation xmi:id="_xBKUULgHEeKdoYp0Rmlq6Q" isVirtual="true" base_Operation="_ueDeYLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBMwkLgHEeKdoYp0Rmlq6Q" base_Comment="_ueKzILgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xBOlwLgHEeKdoYp0Rmlq6Q" isVirtual="true" base_Operation="_ud004bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBQa8LgHEeKdoYp0Rmlq6Q" base_Comment="_udtgILgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBSQILgHEeKdoYp0Rmlq6Q" base_Comment="_udFOAbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBUFULgHEeKdoYp0Rmlq6Q" base_Comment="_uhfz8bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBV6gLgHEeKdoYp0Rmlq6Q" base_Comment="_ufMt4LgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBXvsLgHEeKdoYp0Rmlq6Q" base_Comment="_udIRUbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xBZk4LgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_udalMLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBbaELgHEeKdoYp0Rmlq6Q" base_Comment="_uiJUMbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBdPQLgHEeKdoYp0Rmlq6Q" base_Comment="_ugu-8LgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_namespace xmi:id="_xBfEcLgHEeKdoYp0Rmlq6Q" NamespaceName="xolotlCore" base_Package="_uai3YrgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBg5oLgHEeKdoYp0Rmlq6Q" base_Comment="_ug1soLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_generalization xmi:id="_xBiu0LgHEeKdoYp0Rmlq6Q" base_Generalization="_ufTbkbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_operation xmi:id="_xBkkALgHEeKdoYp0Rmlq6Q" isVirtual="true" base_Operation="_uh3AUbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xBmZMLgHEeKdoYp0Rmlq6Q" qualifier="**" base_Parameter="_ubqRsLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBoOYLgHEeKdoYp0Rmlq6Q" base_Comment="_uhyH0rgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xBqDkLgHEeKdoYp0Rmlq6Q" base_Operation="_uha7cbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xBr4wLgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_ugr7obgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xBtt8LgHEeKdoYp0Rmlq6Q" base_Comment="_ucLPEbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xBvjILgHEeKdoYp0Rmlq6Q" base_Comment="_ucJZ4bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_operation xmi:id="_xBxYULgHEeKdoYp0Rmlq6Q" isVirtual="true" base_Operation="_ud5tYLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xBzNgLgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_ueeVILgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xB1pwLgHEeKdoYp0Rmlq6Q" base_Comment="_ugAmMrgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_namespace xmi:id="_xB3e8LgHEeKdoYp0Rmlq6Q" NamespaceName="xolotlCore" base_Package="_ubLJgLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xB5UILgHEeKdoYp0Rmlq6Q" base_Comment="_ufmWgbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xB7JULgHEeKdoYp0Rmlq6Q" base_Comment="_ugYZoLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xB8-gLgHEeKdoYp0Rmlq6Q" base_Comment="_ufoywbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xB-zsLgHEeKdoYp0Rmlq6Q" base_Comment="_ufrPAbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xCAo4LgHEeKdoYp0Rmlq6Q" base_Comment="_uftrQbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xCCeELgHEeKdoYp0Rmlq6Q" base_Comment="_ue9dUbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xCETQLgHEeKdoYp0Rmlq6Q" base_Comment="_ufQ_UbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xCGIcLgHEeKdoYp0Rmlq6Q" base_Comment="_ueoGILgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xCH9oLgHEeKdoYp0Rmlq6Q" base_Comment="_uhHZcLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xCJy0LgHEeKdoYp0Rmlq6Q" base_Comment="_uePEkrgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xCLoALgHEeKdoYp0Rmlq6Q" base_Comment="_ubIGMrgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xCNdMLgHEeKdoYp0Rmlq6Q" base_Comment="_ucQHkrgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_generalization xmi:id="_xCo7ALgHEeKdoYp0Rmlq6Q" base_Generalization="_ufEyEbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_globals xmi:id="_xCqwMLgHEeKdoYp0Rmlq6Q" base_Class="_ugxbMLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_generalization xmi:id="_xCtMcLgHEeKdoYp0Rmlq6Q" base_Generalization="_uhOHIbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xCvBoLgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_uelC0bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xCw20LgHEeKdoYp0Rmlq6Q" base_Operation="_ufZiMbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xCysALgHEeKdoYp0Rmlq6Q" base_Comment="_uht2YLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xC0hMLgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_udyYobgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xC2WYLgHEeKdoYp0Rmlq6Q" isVirtual="true" isInline="true" base_Operation="_uglN8LgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xC4LkLgHEeKdoYp0Rmlq6Q" base_Comment="_ufCV0bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xC6AwLgHEeKdoYp0Rmlq6Q" base_Comment="_uiFCwbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xC718LgHEeKdoYp0Rmlq6Q" base_Operation="_uf5RcbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_globals xmi:id="_xC-SMLgHEeKdoYp0Rmlq6Q" base_Class="_ubc2ULgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDAHYLgHEeKdoYp0Rmlq6Q" base_Comment="_ugd5MbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDB8kLgHEeKdoYp0Rmlq6Q" base_Comment="_uhLq4bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDDxwLgHEeKdoYp0Rmlq6Q" base_Comment="_ufyjwLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_operation xmi:id="_xDFm8LgHEeKdoYp0Rmlq6Q" isVirtual="true" base_Operation="_ueIW4LgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_constructor xmi:id="_xDHcILgHEeKdoYp0Rmlq6Q" isInline="true" base_Operation="_udrD4bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDJRULgHEeKdoYp0Rmlq6Q" base_Comment="_uazWELgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDLGgLgHEeKdoYp0Rmlq6Q" base_Comment="_ua5csbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDM7sLgHEeKdoYp0Rmlq6Q" base_Comment="_ubNlwrgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xDQmELgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_ugFesbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDSbQLgHEeKdoYp0Rmlq6Q" base_Comment="_uhRxgLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xDUQcLgHEeKdoYp0Rmlq6Q" base_Operation="_ug_dobgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDWFoLgHEeKdoYp0Rmlq6Q" base_Comment="_uhUNwLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDX60LgHEeKdoYp0Rmlq6Q" base_Comment="_uhnvwrgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDZwALgHEeKdoYp0Rmlq6Q" base_Comment="_uhWqALgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDdaYLgHEeKdoYp0Rmlq6Q" base_Comment="_ueUkILgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDfPkLgHEeKdoYp0Rmlq6Q" base_Comment="_uezFQbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDhr0LgHEeKdoYp0Rmlq6Q" base_Comment="_udSpYrgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDjhALgHEeKdoYp0Rmlq6Q" base_Comment="_uiAKQ7gHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDlWMLgHEeKdoYp0Rmlq6Q" base_Comment="_uh7RwbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDnLYLgHEeKdoYp0Rmlq6Q" base_Comment="_uh9uAbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDq1wLgHEeKdoYp0Rmlq6Q" base_Comment="_uasoYbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDsq8LgHEeKdoYp0Rmlq6Q" base_Comment="_ubf5oLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_generalization xmi:id="_xDugILgHEeKdoYp0Rmlq6Q" base_Generalization="_ue6aAbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xDwVULgHEeKdoYp0Rmlq6Q" base_Comment="_ufKRoLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_operation xmi:id="_xDyKgLgHEeKdoYp0Rmlq6Q" isVirtual="true" base_Operation="_ueMoUbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_generalization xmi:id="_xDz_sLgHEeKdoYp0Rmlq6Q" base_Generalization="_uhDvEbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xD104LgHEeKdoYp0Rmlq6Q" qualifier="(TokenizedLineReader_testSuite)" base_Property="_ub2e8bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xD5fQLgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_ugixsLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xD7UcLgHEeKdoYp0Rmlq6Q" base_Comment="_uhi3QLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xD9JoLgHEeKdoYp0Rmlq6Q" base_Operation="_ufPKILgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xD--0LgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_uf21MbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEA0ALgHEeKdoYp0Rmlq6Q" base_Comment="_udKtkbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xECpMLgHEeKdoYp0Rmlq6Q" base_Comment="_ue39wbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_globals xmi:id="_xEEeYLgHEeKdoYp0Rmlq6Q" base_Class="_8hK8oIHJEeKL9vRIYeUWfg"/>
+  <Default:Documentation xmi:id="_xEG6oLgHEeKdoYp0Rmlq6Q" base_Comment="_ugOBkbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEIv0LgHEeKdoYp0Rmlq6Q" base_Comment="_ugQd0bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_operation xmi:id="_xEKlALgHEeKdoYp0Rmlq6Q" isInline="true" base_Operation="_ugzQYbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEMaMLgHEeKdoYp0Rmlq6Q" base_Comment="_ubAKYbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEOPYLgHEeKdoYp0Rmlq6Q" base_Comment="_ubwYUrgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEQEkLgHEeKdoYp0Rmlq6Q" base_Comment="_uhB54bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xETu8LgHEeKdoYp0Rmlq6Q" base_Comment="_ug3h0bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEVkILgHEeKdoYp0Rmlq6Q" base_Comment="_ugS6EbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEXZULgHEeKdoYp0Rmlq6Q" base_Comment="_ugpfYrgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEZOgLgHEeKdoYp0Rmlq6Q" base_Comment="_ueb44rgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xEbDsLgHEeKdoYp0Rmlq6Q" base_Comment="_uby0kbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEc44LgHEeKdoYp0Rmlq6Q" base_Comment="_uf-J8bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_operation xmi:id="_xEeuELgHEeKdoYp0Rmlq6Q" isVirtual="true" base_Operation="_uhvrkbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEgjQLgHEeKdoYp0Rmlq6Q" base_Comment="_ugVWUrgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xEiYcLgHEeKdoYp0Rmlq6Q" base_Comment="_ucSj0bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEkNoLgHEeKdoYp0Rmlq6Q" base_Comment="_ucVAErgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xEmC0LgHEeKdoYp0Rmlq6Q" base_Comment="_ucXcUbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xEn4ALgHEeKdoYp0Rmlq6Q" isVirtual="true" isInline="true" base_Operation="_uiG38bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEptMLgHEeKdoYp0Rmlq6Q" base_Comment="_ual6sLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEriYLgHEeKdoYp0Rmlq6Q" base_Comment="_ucafobgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_namespace xmi:id="_xEtXkLgHEeKdoYp0Rmlq6Q" NamespaceName="xolotlCore" base_Package="_uabiobgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_namespace xmi:id="_xEvMwLgHEeKdoYp0Rmlq6Q" NamespaceName="xolotlCore" base_Package="_ubDNsLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xExB8LgHEeKdoYp0Rmlq6Q" base_Comment="_uccU0bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xEy3ILgHEeKdoYp0Rmlq6Q" base_Comment="_ueBCIrgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_constructor xmi:id="_xE2hgLgHEeKdoYp0Rmlq6Q" isInline="true" base_Operation="_ugcEALgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xE4WsLgHEeKdoYp0Rmlq6Q" base_Comment="_ucfYIrgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_constructor xmi:id="_xE6y8LgHEeKdoYp0Rmlq6Q" isInline="true" base_Operation="_ufwHgbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xE8oILgHEeKdoYp0Rmlq6Q" base_Comment="_uch0YbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xE-dULgHEeKdoYp0Rmlq6Q" base_Operation="_ufAgoLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xFASgLgHEeKdoYp0Rmlq6Q" qualifier="(PSIClusterNetworkLoader_testSuite)" base_Property="_ucwd4bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFCHsLgHEeKdoYp0Rmlq6Q" base_Comment="_uckQorgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xFD84LgHEeKdoYp0Rmlq6Q" base_Comment="_ubhu0bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFFyELgHEeKdoYp0Rmlq6Q" base_Comment="_uhdXsbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFHnQLgHEeKdoYp0Rmlq6Q" base_Comment="_ucpJIbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xFJccLgHEeKdoYp0Rmlq6Q" base_Comment="_ucrlYbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xFLRoLgHEeKdoYp0Rmlq6Q" base_Comment="_ucms4bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xFNG0LgHEeKdoYp0Rmlq6Q" base_Operation="_uhJ1sLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFO8ALgHEeKdoYp0Rmlq6Q" base_Comment="_udYI8bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_generalization xmi:id="_xFQxMLgHEeKdoYp0Rmlq6Q" base_Generalization="_ugH68bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xFSmYLgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_udQNILgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFUbkLgHEeKdoYp0Rmlq6Q" base_Comment="_ueimkrgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFWQwLgHEeKdoYp0Rmlq6Q" base_Comment="_udv8YbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xFYF8LgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_uh5ckbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_globals xmi:id="_xFZ7ILgHEeKdoYp0Rmlq6Q" base_Class="_ucuBoLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_generalization xmi:id="_xFbwULgHEeKdoYp0Rmlq6Q" base_Generalization="_ueva4LgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFdlgLgHEeKdoYp0Rmlq6Q" base_Comment="_ud3RIbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFfasLgHEeKdoYp0Rmlq6Q" base_Comment="_ues-oLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_constructor xmi:id="_xFhP4LgHEeKdoYp0Rmlq6Q" isInline="true" base_Operation="_uiCmgbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFjFELgHEeKdoYp0Rmlq6Q" base_Comment="_ugDCc7gHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_constructor xmi:id="_xFk6QLgHEeKdoYp0Rmlq6Q" isInline="true" base_Operation="_ufH1YLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFmvcLgHEeKdoYp0Rmlq6Q" base_Comment="_ugLlULgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFokoLgHEeKdoYp0Rmlq6Q" base_Comment="_ua9HELgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFrA4LgHEeKdoYp0Rmlq6Q" base_Comment="_ubkyIrgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xFs2ELgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_uep7UbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFurQLgHEeKdoYp0Rmlq6Q" base_Comment="_ueRg0rgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xFwgcLgHEeKdoYp0Rmlq6Q" qualifier="(PSIClusterNetworkLoader_testSuite)" base_Property="_ucG9obgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xFyVoLgHEeKdoYp0Rmlq6Q" base_Comment="_uh0kErgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xF0K0LgHEeKdoYp0Rmlq6Q" base_Comment="_ufXF8LgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xF2AALgHEeKdoYp0Rmlq6Q" base_Comment="_uhqzErgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xF31MLgHEeKdoYp0Rmlq6Q" base_Comment="_ub_o4bgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xF5qYLgHEeKdoYp0Rmlq6Q" base_Comment="_ucCFIbgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_body_comment xmi:id="_xF7fkLgHEeKdoYp0Rmlq6Q" base_Comment="_ub9MobgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xF9UwLgHEeKdoYp0Rmlq6Q" base_Comment="_ub6wYrgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xF_J8LgHEeKdoYp0Rmlq6Q" base_Comment="_uhZGQLgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_destructor xmi:id="_xGA_ILgHEeKdoYp0Rmlq6Q" base_Operation="_ue2IkLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xGC0ULgHEeKdoYp0Rmlq6Q" base_Comment="_uddBc7gHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_generalization xmi:id="_xGEpgLgHEeKdoYp0Rmlq6Q" base_Generalization="_ufdzobgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_operation xmi:id="_xGGesLgHEeKdoYp0Rmlq6Q" isVirtual="true" base_Operation="_ud-l4LgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_type xmi:id="_xGIT4LgHEeKdoYp0Rmlq6Q" qualifier="const" base_Parameter="_udVFobgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xGKJELgHEeKdoYp0Rmlq6Q" base_Comment="_udgr0bgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xGL-QLgHEeKdoYp0Rmlq6Q" base_Comment="_ueF6obgHEeKdoYp0Rmlq6Q"/>
+  <CPPTransformation:cpp_globals xmi:id="_xGNzcLgHEeKdoYp0Rmlq6Q" base_Class="_ucFIcLgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xGPooLgHEeKdoYp0Rmlq6Q" base_Comment="_udmLYbgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_xGRd0LgHEeKdoYp0Rmlq6Q" base_Comment="_udjvILgHEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_nlYEcLgJEeKdoYp0Rmlq6Q" base_Comment="_nlVoMLgJEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_zeVPcLgJEeKdoYp0Rmlq6Q" base_Comment="_zeTaQLgJEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_HRai8LgLEeKdoYp0Rmlq6Q" base_Comment="_HRYGsLgLEeKdoYp0Rmlq6Q"/>
 </xmi:XMI>
