@@ -13,6 +13,14 @@ namespace xolotlSolver {
  */
 class PETScSolver : ISolver {
 
+private:
+
+	//! The number command line arguments
+	int numCLIArgs;
+
+	//! The command line arguments
+	char ** CLIArgs;
+
 public:
 
 	//! The Constructor
@@ -29,7 +37,7 @@ public:
 	 * @param argc The number of command line arguments
 	 * @param argv The array of command line arguments
 	 */
-	void setCommandLineOptions(int argc, const char * argv);
+	void setCommandLineOptions(const int argc, char ** argv);
 
 	/**
 	 * This operation sets the PSIClusterNetworkLoader that should be used by

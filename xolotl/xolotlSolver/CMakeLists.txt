@@ -13,9 +13,10 @@ file(GLOB HEADERS *.h)
 #and glob them in SRC
 file(GLOB SRC *.cpp)
 
-#Include headers so that the psiclusters can be built
+#Include headers so that the solvers can be built
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
+include_directories(${PETSC_INCLUDES})
 
 #Add the library
 add_library(${LIBRARY_NAME} SHARED ${SRC})

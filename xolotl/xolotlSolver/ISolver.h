@@ -23,10 +23,14 @@ public:
 	 * startup to the solver. These options are static options specified at
 	 * the start of the program whereas the options passed to setOptions() may
 	 * change.
+	 *
+	 * Const correctness is violated here because char ** is not const correct
+	 * in main().
+	 *
 	 * @param argc The number of command line arguments
 	 * @param argv The array of command line arguments
 	 */
-	virtual void setCommandLineOptions(int argc, const char * argv) = 0;
+	virtual void setCommandLineOptions(const int argc, char ** argv) = 0;
 
 	/**
 	 * This operation sets the PSIClusterNetworkLoader that should be used by

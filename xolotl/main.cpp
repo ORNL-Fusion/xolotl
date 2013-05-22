@@ -6,6 +6,7 @@
 #include<fstream>
 #include<Reactant.h>
 #include<PSIClusterNetworkLoader.h>
+#include<PETScSolver.h>
 
 using namespace std;
 
@@ -29,6 +30,7 @@ int main(int argc, char **argv) {
 	std::shared_ptr<ifstream> inputFileStream(new ifstream());
 	xolotlCore::PSIClusterNetworkLoader clusterLoader =
 			xolotlCore::PSIClusterNetworkLoader();
+	xolotlSolver::PETScSolver solver;
 
 	// Print the start message
 	printStartMessage();
@@ -67,6 +69,9 @@ int main(int argc, char **argv) {
 		std::cout << "Aborting." << std::endl;
 		return EXIT_FAILURE;
 	}
+	// Setup and run the solver
+	solver.setCommandLineOptions(argc,argv);
+	solver.solve();
 
 	return EXIT_SUCCESS;
 }

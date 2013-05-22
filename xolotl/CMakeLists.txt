@@ -40,9 +40,10 @@ include(UseDoxygen OPTIONAL)
 # Include directories for the main program
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
 
 # Setup the library list
-set(XOLOTL_LIBS ${PETSC_LIBRARIES} xolotlReactants)
+set(XOLOTL_LIBS ${PETSC_LIBRARIES} xolotlReactants xolotlSolver)
 
 # Add an executable for the main program
 ADD_EXECUTABLE ( xolotl main.cpp)
