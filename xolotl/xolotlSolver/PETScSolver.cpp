@@ -715,6 +715,7 @@ PetscErrorCode GetDfill(PetscInt *dfill, void *ptr)
       }
     }
   }
+  return 0;
 }
 /* ------------------------------------------------------------------- */
 
