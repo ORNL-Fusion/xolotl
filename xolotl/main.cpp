@@ -6,7 +6,7 @@
 #include<fstream>
 #include<Reactant.h>
 #include<PSIClusterNetworkLoader.h>
-#include<PETScSolver.h>
+#include<PetscSolver.h>
 
 using namespace std;
 
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 	std::shared_ptr<ifstream> inputFileStream(new ifstream());
 	xolotlCore::PSIClusterNetworkLoader clusterLoader =
 			xolotlCore::PSIClusterNetworkLoader();
-	xolotlSolver::PETScSolver solver;
+	xolotlSolver::PetscSolver solver;
 
 	// Print the start message
 	printStartMessage();
@@ -64,14 +64,18 @@ int main(int argc, char **argv) {
 				<< props["maxIClusterSize"] << endl;
 		cout << "\t" << props["numMixedClusters"]
 				<< " mixed-species clusters with max cluster size " << endl;
+
+		// Setup and run the solver
+		solver.setCommandLineOptions(argc,argv);
+		solver.initialize();
+		solver.solve();
+		solver.finalize();
+
 	} catch (std::string error) {
 		std::cout << error << std::endl;
 		std::cout << "Aborting." << std::endl;
 		return EXIT_FAILURE;
 	}
-	// Setup and run the solver
-	solver.setCommandLineOptions(argc,argv);
-	solver.solve();
 
 	return EXIT_SUCCESS;
 }

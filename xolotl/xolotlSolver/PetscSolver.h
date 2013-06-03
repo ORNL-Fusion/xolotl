@@ -3,15 +3,18 @@
 
 // Includes
 #include "ISolver.h"
+#include <petscsys.h>
+#include <petscdmda.h>
+#include <petscts.h>
 
 namespace xolotlSolver {
 
 /**
  * This class realizes the ISolver interface to solve the
- * advection-diffusion-reaction problem with the PETSc solvers from Argonne
+ * advection-diffusion-reaction problem with the Petsc solvers from Argonne
  * National Laboratory.
  */
-class PETScSolver : ISolver {
+class PetscSolver : ISolver {
 
 private:
 
@@ -24,10 +27,10 @@ private:
 public:
 
 	//! The Constructor
-	PETScSolver();
+	PetscSolver();
 
 	//! The Destructor
-	~PETScSolver();
+	~PetscSolver();
 
 	/**
 	 * This operation transfers the input arguments passed to the program on
@@ -87,7 +90,7 @@ public:
 	 */
 	void finalize();
 
-}; //end class PETScSolver
+}; //end class PetscSolver
 
 } /* end namespace xolotlSolver */
 #endif

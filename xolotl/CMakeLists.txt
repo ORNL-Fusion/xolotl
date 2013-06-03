@@ -41,6 +41,7 @@ include(UseDoxygen OPTIONAL)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
+include_directories(${PETSC_INCLUDES})
 
 # Setup the library list
 set(XOLOTL_LIBS ${PETSC_LIBRARIES} xolotlReactants xolotlSolver)
