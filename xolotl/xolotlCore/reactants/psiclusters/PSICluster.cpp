@@ -58,7 +58,7 @@ void PSICluster::setDiffusionFactor(const double factor) {
 
 double PSICluster::getDiffusionCoefficient(const double temperature) {
 	// Use the Arrhenius equation to compute the diffusion coefficient
-	double k_b = xolotlCore::Constants::kBoltzmann;
+	double k_b = xolotlCore::kBoltzmann;
 	double kernel = -migrationEnergy/(k_b*temperature);
 	return diffusionFactor*exp(kernel);
 }

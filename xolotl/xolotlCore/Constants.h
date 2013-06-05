@@ -11,13 +11,9 @@
 namespace xolotlCore {
 
 //! Definitions of fundamental constants used in Xolotl
-class Constants {
 
-public:
-
-	static const double kBoltzmann = 8.6173324E-5;
-
-};
+//! The Boltzmann constant in units of eV K^-1.
+static const double kBoltzmann = 8.6173324E-5;
 
 } /* end namespace xolotlCore */
 #endif /* CONSTANTS_H_ */
