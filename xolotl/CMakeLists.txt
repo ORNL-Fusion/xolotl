@@ -44,7 +44,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
 include_directories(${PETSC_INCLUDES})
 
 # Setup the library list
-set(XOLOTL_LIBS ${PETSC_LIBRARIES} xolotlReactants xolotlSolver)
+set(XOLOTL_LIBS xolotlReactants xolotlSolver ${PETSC_LIBRARIES})
 
 # Add an executable for the main program
 ADD_EXECUTABLE ( xolotl main.cpp)
