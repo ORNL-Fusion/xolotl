@@ -13,8 +13,18 @@ namespace xolotlCore {
 class ReactionNetwork;
 
 /**
- * A Reactant is a reacting body in a reaction network. It represents any body
- * whose population can change with time due to reactions of any type.
+ * A Reactant is a general reacting body in a reaction network. It represents
+ * any body whose population can change with time due to reactions of any type.
+ *
+ * Reactants inherently know the other Reactants with which they interact. They
+ * declare their interactions with other Reactants in the network after it is
+ * set (setReactionNetwork) via the getConnectivity() operation. "Connectivity"
+ * indicates whether two Reactants interact, via any mechanism, in an abstract
+ * sense (as if they were nodes connected by an edge on a network graph).
+ *
+ * This is an abstract base class that only provides direct support for
+ * manipulate the concentration, etc. It should be subclassed to add
+ * functionality for calculate fluxes and computing connectivity.
  */
 class Reactant
 {
@@ -91,6 +101,20 @@ class Reactant
          * @param network The reaction network of which this reactant is a part
          */
         void setReactionNetwork(std::shared_ptr<ReactionNetwork> network);
+
+        /**
+         * This operation returns a list that represents the connectivity
+         * between this Reactant and other Reactants in the network.
+         * "Connectivity" indicates whether two Reactants interact, via any
+         * mechanism, in an abstract sense (as if they were nodes connected by
+         * an edge on a network graph).
+         * @return An array of ones and zeros that indicate whether or not this
+         * Reactant interacts via any mechanism with another Reactant. A "1" at
+         * the i-th entry in this array indicates that the Reactant interacts
+         * with the i-th Reactant in the ReactionNetwork and a "0" indicates
+         * that it does not.
+         */
+        virtual std::vector<int> getConnectivity();
 
         /**
          * This operation writes the contents of the reactant to a string. This

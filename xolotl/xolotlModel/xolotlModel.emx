@@ -1597,7 +1597,7 @@
         </packagedElement>
         <packagedElement xmi:type="uml:Class" xmi:id="_j8p9cHVyEeK-BchXMSC_6w" name="Reactant">
           <ownedComment xmi:id="_3F7VEHbKEeKQvNYKWE13lg" annotatedElement="_j8p9cHVyEeK-BchXMSC_6w">
-            <body>&lt;p>A Reactant is a general reacting body in a reaction network. It represents any body whose population can change with time due to reactions of any type.&lt;/p></body>
+            <body>&lt;p>A Reactant is a general reacting body in a reaction network. It represents any body whose population can change with time due to reactions of any type.&lt;/p>&lt;p>Reactants inherently know the other Reactants with which they interact. They declare their interactions with other Reactants in the network after it is set (setReactionNetwork) via the getConnectivity() operation. &quot;Connectivity&quot; indicates whether two Reactants interact, via any mechanism, in an abstract sense (as if they were nodes connected by an edge on a network graph).&lt;/p>&lt;p>This is an abstract base class that only provides direct support for manipulate the concentration, etc. It should be subclassed to add functionality for calculate fluxes and computing connectivity.&lt;/p></body>
           </ownedComment>
           <ownedAttribute xmi:id="_s4GOcHVyEeK-BchXMSC_6w" name="concentration" visibility="private">
             <ownedComment xmi:id="_UjGKgHYXEeK4zMANKvvP2g" annotatedElement="_s4GOcHVyEeK-BchXMSC_6w">
@@ -1747,6 +1747,19 @@
             </ownedParameter>
             <ownedParameter xmi:id="_2XYZ0XYWEeK4zMANKvvP2g" name="input">
               <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            </ownedParameter>
+          </ownedOperation>
+          <ownedOperation xmi:id="_w3Tw0NwOEeKgHfeBs7eqmA" name="getConnectivity">
+            <ownedComment xmi:id="_0hBNANwPEeKgHfeBs7eqmA" annotatedElement="_w3Tw0NwOEeKgHfeBs7eqmA">
+              <body>&lt;p>This operation returns a list that represents the connectivity between this Reactant and other Reactants in the network. &quot;Connectivity&quot; indicates whether two Reactants interact, via any mechanism, in an abstract sense (as if they were nodes connected by an edge on a network graph).&lt;/p></body>
+            </ownedComment>
+            <ownedParameter xmi:id="_1cw5ANwOEeKgHfeBs7eqmA" name="connectivityArray" direction="return">
+              <ownedComment xmi:id="_MeM-4NwQEeKgHfeBs7eqmA" annotatedElement="_1cw5ANwOEeKgHfeBs7eqmA">
+                <body>&lt;p>An array of ones and zeros that indicate whether or not this Reactant interacts via any mechanism with another Reactant. A &quot;1&quot; at the i-th entry in this array indicates that the Reactant interacts with the i-th Reactant in the ReactionNetwork and a &quot;0&quot; indicates that it does not.&lt;/p></body>
+              </ownedComment>
+              <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+              <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_1c1KcNwOEeKgHfeBs7eqmA" value="*"/>
+              <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_1c0jYNwOEeKgHfeBs7eqmA"/>
             </ownedParameter>
           </ownedOperation>
         </packagedElement>
@@ -2980,4 +2993,6 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_nlYEcLgJEeKdoYp0Rmlq6Q" base_Comment="_nlVoMLgJEeKdoYp0Rmlq6Q"/>
   <Default:Documentation xmi:id="_zeVPcLgJEeKdoYp0Rmlq6Q" base_Comment="_zeTaQLgJEeKdoYp0Rmlq6Q"/>
   <Default:Documentation xmi:id="_HRai8LgLEeKdoYp0Rmlq6Q" base_Comment="_HRYGsLgLEeKdoYp0Rmlq6Q"/>
+  <Default:Documentation xmi:id="_0hGFgNwPEeKgHfeBs7eqmA" base_Comment="_0hBNANwPEeKgHfeBs7eqmA"/>
+  <Default:Documentation xmi:id="_MeQCMNwQEeKgHfeBs7eqmA" base_Comment="_MeM-4NwQEeKgHfeBs7eqmA"/>
 </xmi:XMI>

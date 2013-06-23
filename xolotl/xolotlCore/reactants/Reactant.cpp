@@ -54,6 +54,12 @@ void Reactant::setReactionNetwork(std::shared_ptr<ReactionNetwork> network)
     //TODO Auto-generated method stub
     return;
 }
+
+std::vector<int> Reactant::getConnectivity() {
+	std::vector<int> dummy;
+	return dummy;
+}
+
 const std::string Reactant::toString()
 {
     //TODO Auto-generated method stub
