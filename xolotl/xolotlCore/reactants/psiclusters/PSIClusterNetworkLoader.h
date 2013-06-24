@@ -129,6 +129,8 @@ public:
 	 * loaded.
 	 */
 	void setInputstream(const std::shared_ptr<std::istream> stream);
+	
+	std::shared_ptr<std::istream> getInputstream();
 
 	/**
 	 * This operation will load the reaction network from the inputstream in
@@ -137,7 +139,6 @@ public:
 	 * @param network The reaction network
 	 */
 	std::shared_ptr<ReactionNetwork> load();
-
 };
 
 } /* namespace xolotlCore */

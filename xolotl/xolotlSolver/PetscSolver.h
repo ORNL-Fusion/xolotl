@@ -14,15 +14,7 @@ namespace xolotlSolver {
  * advection-diffusion-reaction problem with the Petsc solvers from Argonne
  * National Laboratory.
  */
-class PetscSolver : ISolver {
-
-private:
-
-	//! The number command line arguments
-	int numCLIArgs;
-
-	//! The command line arguments
-	char ** CLIArgs;
+class PetscSolver : public ISolver {
 
 public:
 
@@ -48,7 +40,15 @@ public:
 	 * @param networkLoader The PSIClusterNetworkLoader that will load the
 	 * network.
 	 */
-	void setNetworkLoader(PSIClusterNetworkLoader networkLoader);
+	void setNetworkLoader(const PSIClusterNetworkLoader &networkLoader);
+	
+	/**
+	 * Sends the input buffer from the master task to all the slaves
+	 *
+	 * This method will block until it is called by all processes.
+	 * Assumes that the root process has a valid network stream.
+	 */
+	void broadcastBuffer(int root, MPI_Comm comm);
 
 	/**
 	 * This operation sets the run-time options of the solver. The map is a set
@@ -89,7 +89,16 @@ public:
 	 * this operation will throw an exception of type std::string.
 	 */
 	void finalize();
+	
+private:
+	//! The number command line arguments
+	int numCLIArgs;
 
+	//! The command line arguments
+	char ** CLIArgs;
+	
+	PSIClusterNetworkLoader networkLoader;
+	
 }; //end class PetscSolver
 
 } /* end namespace xolotlSolver */

@@ -38,7 +38,7 @@ public:
 	 * @param networkLoader The PSIClusterNetworkLoader that will load the
 	 * network.
 	 */
-	virtual void setNetworkLoader(PSIClusterNetworkLoader networkLoader) = 0;
+	virtual void setNetworkLoader(const PSIClusterNetworkLoader &networkLoader) = 0;
 
 	/**
 	 * This operation sets the run-time options of the solver. The map is a set

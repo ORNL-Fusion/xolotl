@@ -1,5 +1,7 @@
 // Includes
 #include "PetscSolver.h"
+#include <sstream>
+#include <iostream>
 
 /*
  C_t =  -D*C_xx + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.
@@ -910,8 +912,67 @@ void PetscSolver::setCommandLineOptions(const int argc, char ** argv) {
  * @param networkLoader The PSIClusterNetworkLoader that will load the
  * network.
  */
-void PetscSolver::setNetworkLoader(PSIClusterNetworkLoader networkLoader) {
+void PetscSolver::setNetworkLoader(const PSIClusterNetworkLoader &networkLoader) {
+	// Copy the value of the network loader
+	this->networkLoader = networkLoader;
+	
+	std::shared_ptr<std::istream> stream = this->networkLoader.getInputstream();
 }
+
+
+void PetscSolver::broadcastBuffer(int root, MPI_Comm comm) {
+	
+	int rank;
+	int tasks;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &tasks);
+	
+	std::shared_ptr<std::stringstream> bufferSS(new std::stringstream);
+	int bufferSize;
+	char *buffer;
+	
+	// Master task
+	if (rank == root) {
+		// Load the data from the input stream into memory
+		
+		// This method is clean and bug-free, but it copies memory
+		// three times. However, this is not a problem for files under
+		// a few MiB, and reading from disk takes longer anyway.
+		
+		std::shared_ptr<std::istream> networkStream =
+			networkLoader.getInputstream();
+		(*bufferSS) << networkStream->rdbuf();
+		std::string bufferString = bufferSS->str();
+		
+		bufferSize = bufferString.size();
+		buffer = new char[bufferSize];
+		bufferString.copy(buffer, bufferSize);
+	}
+
+	MPI_Bcast(&bufferSize, 1, MPI_INT, root, MPI_COMM_WORLD);
+	
+	if (rank != root) {
+		buffer = (char *) malloc(bufferSize);
+	}
+	
+	MPI_Bcast(buffer, bufferSize, MPI_CHAR, root, MPI_COMM_WORLD);
+	
+	// Slave tasks
+	if (rank != root) {
+		std::string bufferString(buffer, bufferSize);
+		bufferSS->str(bufferString);
+	}
+	
+	// Reset the input stream of the network loader
+	
+	// This will replace the input stream on all processes, even the master,
+	// so the previous file buffer is only read once when the ReactionNetwork
+	// is loaded.
+	
+	bufferSS->seekg(0);
+	networkLoader.setInputstream(bufferSS);
+}
+
 
 /**
  * This operation sets the run-time options of the solver. The map is a set
@@ -933,6 +994,10 @@ void PetscSolver::setOptions(std::map<std::string, std::string> options) {
 void PetscSolver::setupMesh() {
 }
 
+
+#undef __FUNCT__
+#define __FUNCT__ "initialize"
+
 /**
  * This operation performs all necessary initialization for the solver
  * possibly including but not limited to setting up MPI and loading initial
@@ -945,7 +1010,10 @@ void PetscSolver::initialize() {
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
-
+	
+	// Update the 
+	broadcastBuffer(0, MPI_COMM_WORLD);
+	
 	PetscFunctionBeginUser;
 	ctx.noreactions = PETSC_FALSE;
 	ctx.nodissociations = PETSC_FALSE;
@@ -1038,7 +1106,6 @@ void PetscSolver::initialize() {
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	ierr = InitialConditions(da, C);
 	checkPetscError(ierr);
-
 }
 
 /**
@@ -1047,19 +1114,19 @@ void PetscSolver::initialize() {
  */
 void PetscSolver::solve() {
 
-	std::string error(
-			"PetscSolver Exception: Unable to solve! Data not configured properly.");
-
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	if (ts != NULL && C != NULL) {
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr);
-	} else
-		throw error;
+	}
+	else {
+		throw std::string("PetscSolver Exception: Unable to solve! Data not configured properly.");
+	}
 
 }
+
 
 /**
  * This operation performs all necessary finalization for the solver
@@ -1068,9 +1135,6 @@ void PetscSolver::solve() {
  * this operation will throw an exception of type std::string.
  */
 void PetscSolver::finalize() {
-
-	std::string error(
-			"PetscSolver Exception: Unable to finalize solve!");
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Free work space.
@@ -1082,8 +1146,9 @@ void PetscSolver::finalize() {
 	ierr = DMDestroy(&da);
 	checkPetscError(ierr);
 	ierr = PetscFinalize();
-	if (petscReturn() != 0)
-		throw error;
+	if (petscReturn() != 0) {
+		throw std::string("PetscSolver Exception: Unable to finalize solve!");
+	}
 
 }
 

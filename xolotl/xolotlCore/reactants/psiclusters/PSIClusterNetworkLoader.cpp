@@ -111,6 +111,7 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
  */
 PSIClusterNetworkLoader::PSIClusterNetworkLoader(
 		const std::shared_ptr<std::istream> stream) {
+	setInputstream(stream);
 }
 
 /**
@@ -122,12 +123,15 @@ PSIClusterNetworkLoader::PSIClusterNetworkLoader(
 void PSIClusterNetworkLoader::setInputstream(
 		const std::shared_ptr<std::istream> stream) {
 
-	// Keep the stream, but only if it is not NULL
-	if (stream)
-		networkStream = stream;
-
-	return;
+	networkStream = stream;
 }
+
+
+std::shared_ptr<std::istream> PSIClusterNetworkLoader::getInputstream()
+{
+	return networkStream;
+}
+
 
 /**
  * This operation will load the reaction network from the inputstream in
@@ -165,7 +169,7 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		(*props)["maxHeClusterSize"] = "0";
 		(*props)["maxVClusterSize"] = "0";
 		(*props)["maxIClusterSize"] = "0";
-		(*props)["numHeClusters"] = "0";
+		(*props)["numHeClusters"] = "0"; 
 		(*props)["numVClusters"] = "0";
 		(*props)["numIClusters"] = "0";
 		(*props)["numMixedClusters"] = "0";

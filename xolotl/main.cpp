@@ -1,12 +1,12 @@
 /**
  * Main.c, currently only able to load clusters
  */
-#include<cstdlib>
-#include<iostream>
-#include<fstream>
-#include<Reactant.h>
-#include<PSIClusterNetworkLoader.h>
-#include<PetscSolver.h>
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+#include <Reactant.h>
+#include <PSIClusterNetworkLoader.h>
+#include <PetscSolver.h>
 
 using namespace std;
 
@@ -25,14 +25,7 @@ void printUsage() {
 
 //! Main program
 int main(int argc, char **argv) {
-
-	// Local Declarations
-	std::shared_ptr<ifstream> inputFileStream(new ifstream());
-	xolotlCore::PSIClusterNetworkLoader clusterLoader =
-			xolotlCore::PSIClusterNetworkLoader();
-	xolotlSolver::PetscSolver solver;
-
-	// Print the start message
+	
 	printStartMessage();
 
 	// Check the arguments
@@ -42,33 +35,37 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
+	std::shared_ptr<ifstream> inputFileStream(new ifstream());
+	xolotlSolver::PetscSolver solver;
+
 	// Load the file from the input argument
 	inputFileStream->open(argv[1]);
-
+	xolotlCore::PSIClusterNetworkLoader clusterLoader(inputFileStream);
+	
 	try {
-		// Load the clusters
-		clusterLoader.setInputstream(inputFileStream);
-		shared_ptr<xolotlCore::ReactionNetwork> network = clusterLoader.load();
-		// Print some otherwise useless information to show it worked.
-		std::map<std::string, std::string> props = *(network->properties);
-		cout << "Loaded input file, " << argv[1] << endl;
-		cout << "Found:" << endl;
-		cout << "\t" << props["numHeClusters"]
-				<< " helium clusters with max cluster size "
-				<< props["maxHeClusterSize"] << endl;
-		cout << "\t" << props["numVClusters"]
-				<< " vacancy clusters with max cluster size "
-				<< props["maxVClusterSize"] << endl;
-		cout << "\t" << props["numIClusters"]
-				<< " interstitial clusters with max cluster size "
-				<< props["maxIClusterSize"] << endl;
-		cout << "\t" << props["numMixedClusters"]
-				<< " mixed-species clusters with max cluster size " << endl;
+		// Disabling this for now since the reaction network is not loaded yet
+		
+		// // Print some otherwise useless information to show it worked.
+		// std::map<std::string, std::string> props = *(network->properties);
+		// cout << "Loaded input file, " << argv[1] << endl;
+		// cout << "Found:" << endl;
+		// cout << "\t" << props["numHeClusters"]
+		// 		<< " helium clusters with max cluster size "
+		// 		<< props["maxHeClusterSize"] << endl;
+		// cout << "\t" << props["numVClusters"]
+		// 		<< " vacancy clusters with max cluster size "
+		// 		<< props["maxVClusterSize"] << endl;
+		// cout << "\t" << props["numIClusters"]
+		// 		<< " interstitial clusters with max cluster size "
+		// 		<< props["maxIClusterSize"] << endl;
+		// cout << "\t" << props["numMixedClusters"]
+		// 		<< " mixed-species clusters with max cluster size " << endl;
 
 		// Setup and run the solver
-		solver.setCommandLineOptions(argc,argv);
+		solver.setCommandLineOptions(argc, argv);
+		solver.setNetworkLoader(clusterLoader);
 		solver.initialize();
-		solver.solve();
+		// solver.solve();
 		solver.finalize();
 
 	} catch (std::string error) {
