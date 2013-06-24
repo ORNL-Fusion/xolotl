@@ -94,15 +94,6 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(strtol(props["numIClusters"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Number of mixed clusters = " << props["numMixedClusters"]);
 	BOOST_REQUIRE(strtol(props["numMixedClusters"].c_str(),NULL,10) == 1);
-//
-//	shared_ptr<stringstream> networkStream(
-//			new stringstream(stringstream::in | stringstream::out));
-//	string singleHeString = "1 0 0 0.0 Infinity Infinity 8.269996 0.999 1.34\n";
-//	string singleVString =
-//			"0 50 0 Infinity 2.49000002 Infinity Infinity 0.888 2.345\n";
-//	string singleIString = "0 0 1 Infinity Infinity Infinity Infinity 0.7777 3.456\n";
-//	string mixedString =
-//			"1 50 0 6.160001 2.4900002 Infinity Infinity 6.789 4.5678\n";
 
 	// Check the reactants - He first
 	std::shared_ptr<PSICluster> heCluster = static_pointer_cast<PSICluster>(reactants.at(0));

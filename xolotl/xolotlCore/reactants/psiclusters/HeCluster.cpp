@@ -10,3 +10,8 @@ HeCluster::HeCluster(int nHe) :
 }
 HeCluster::~HeCluster() {
 }
+
+std::vector<int> HeCluster::getConnectivity() {
+	std::vector<int> connectivityArray;
+	return connectivityArray;
+}
