@@ -899,12 +899,12 @@ PetscSolver::~PetscSolver() {
  * @param argc The number of command line arguments
  * @param argv The array of command line arguments
  */
-void PetscSolver::setCommandLineOptions(const int argc, char ** argv) {
-
+void PetscSolver::setCommandLineOptions(int argc, char **argv) {
+	
 	numCLIArgs = argc;
 	CLIArgs = argv;
-
 }
+
 
 /**
  * This operation sets the PSIClusterNetworkLoader that should be used by
@@ -912,65 +912,14 @@ void PetscSolver::setCommandLineOptions(const int argc, char ** argv) {
  * @param networkLoader The PSIClusterNetworkLoader that will load the
  * network.
  */
-void PetscSolver::setNetworkLoader(const PSIClusterNetworkLoader &networkLoader) {
+void PetscSolver::setNetworkLoader(std::shared_ptr<PSIClusterNetworkLoader> networkLoader) {
 	// Copy the value of the network loader
-	this->networkLoader = networkLoader;
+	//this->networkLoader = networkLoader;
 	
-	std::shared_ptr<std::istream> stream = this->networkLoader.getInputstream();
-}
-
-
-void PetscSolver::broadcastBuffer(int root, MPI_Comm comm) {
+	std::shared_ptr<ReactionNetwork> network = networkLoader->load();
 	
-	int rank;
-	int tasks;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &tasks);
-	
-	std::shared_ptr<std::stringstream> bufferSS(new std::stringstream);
-	int bufferSize;
-	char *buffer;
-	
-	// Master task
-	if (rank == root) {
-		// Load the data from the input stream into memory
-		
-		// This method is clean and bug-free, but it copies memory
-		// three times. However, this is not a problem for files under
-		// a few MiB, and reading from disk takes longer anyway.
-		
-		std::shared_ptr<std::istream> networkStream =
-			networkLoader.getInputstream();
-		(*bufferSS) << networkStream->rdbuf();
-		std::string bufferString = bufferSS->str();
-		
-		bufferSize = bufferString.size();
-		buffer = new char[bufferSize];
-		bufferString.copy(buffer, bufferSize);
-	}
-
-	MPI_Bcast(&bufferSize, 1, MPI_INT, root, MPI_COMM_WORLD);
-	
-	if (rank != root) {
-		buffer = (char *) malloc(bufferSize);
-	}
-	
-	MPI_Bcast(buffer, bufferSize, MPI_CHAR, root, MPI_COMM_WORLD);
-	
-	// Slave tasks
-	if (rank != root) {
-		std::string bufferString(buffer, bufferSize);
-		bufferSS->str(bufferString);
-	}
-	
-	// Reset the input stream of the network loader
-	
-	// This will replace the input stream on all processes, even the master,
-	// so the previous file buffer is only read once when the ReactionNetwork
-	// is loaded.
-	
-	bufferSS->seekg(0);
-	networkLoader.setInputstream(bufferSS);
+	std::map<std::string, std::string> props = *(network->properties);
+	std::cout << props["maxHeClusterSize"] << std::endl;
 }
 
 
@@ -1009,10 +958,9 @@ void PetscSolver::initialize() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
 	
-	// Update the 
-	broadcastBuffer(0, MPI_COMM_WORLD);
+	// Why is the argv parameter not const?
+	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
 	
 	PetscFunctionBeginUser;
 	ctx.noreactions = PETSC_FALSE;

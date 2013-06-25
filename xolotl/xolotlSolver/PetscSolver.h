@@ -32,23 +32,15 @@ public:
 	 * @param argc The number of command line arguments
 	 * @param argv The array of command line arguments
 	 */
-	void setCommandLineOptions(const int argc, char ** argv);
-
+	void setCommandLineOptions(int argc, char **argv);
+	
 	/**
 	 * This operation sets the PSIClusterNetworkLoader that should be used by
 	 * the ISolver to load the ReactionNetwork.
 	 * @param networkLoader The PSIClusterNetworkLoader that will load the
 	 * network.
 	 */
-	void setNetworkLoader(const PSIClusterNetworkLoader &networkLoader);
-	
-	/**
-	 * Sends the input buffer from the master task to all the slaves
-	 *
-	 * This method will block until it is called by all processes.
-	 * Assumes that the root process has a valid network stream.
-	 */
-	void broadcastBuffer(int root, MPI_Comm comm);
+	void setNetworkLoader(std::shared_ptr<PSIClusterNetworkLoader> networkLoader);
 
 	/**
 	 * This operation sets the run-time options of the solver. The map is a set
@@ -95,7 +87,7 @@ private:
 	int numCLIArgs;
 
 	//! The command line arguments
-	char ** CLIArgs;
+	char **CLIArgs;
 	
 	PSIClusterNetworkLoader networkLoader;
 	

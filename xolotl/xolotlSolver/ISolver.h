@@ -30,7 +30,7 @@ public:
 	 * @param argc The number of command line arguments
 	 * @param argv The array of command line arguments
 	 */
-	virtual void setCommandLineOptions(const int argc, char ** argv) = 0;
+	virtual void setCommandLineOptions(int argc, char **argv) = 0;
 
 	/**
 	 * This operation sets the PSIClusterNetworkLoader that should be used by
@@ -38,7 +38,7 @@ public:
 	 * @param networkLoader The PSIClusterNetworkLoader that will load the
 	 * network.
 	 */
-	virtual void setNetworkLoader(const PSIClusterNetworkLoader &networkLoader) = 0;
+	virtual void setNetworkLoader(std::shared_ptr<PSIClusterNetworkLoader> networkLoader) = 0;
 
 	/**
 	 * This operation sets the run-time options of the solver. The map is a set

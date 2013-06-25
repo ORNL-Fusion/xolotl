@@ -7,8 +7,12 @@
 #include <Reactant.h>
 #include <PSIClusterNetworkLoader.h>
 #include <PetscSolver.h>
+#include <mpi.h>
+#include "xolotlCore/io/MPIUtils.h"
 
 using namespace std;
+using std::shared_ptr;
+
 
 //! This operation prints the start message
 void printStartMessage() {
@@ -25,54 +29,54 @@ void printUsage() {
 
 //! Main program
 int main(int argc, char **argv) {
-	
-	printStartMessage();
 
+	// Local Declarations
+	std::shared_ptr<PSIClusterNetworkLoader> networkLoader(new PSIClusterNetworkLoader());
+
+	printStartMessage();
+	
 	// Check the arguments
 	if (argc < 2) {
 		cout << "Insufficient input provided! Aborting!" << std::endl;
 		printUsage();
 		return EXIT_FAILURE;
 	}
-
-	std::shared_ptr<ifstream> inputFileStream(new ifstream());
-	xolotlSolver::PetscSolver solver;
-
-	// Load the file from the input argument
-	inputFileStream->open(argv[1]);
-	xolotlCore::PSIClusterNetworkLoader clusterLoader(inputFileStream);
+	
+	// Extract the argument values
+	const char *networkFilename = argv[1];
 	
 	try {
-		// Disabling this for now since the reaction network is not loaded yet
-		
-		// // Print some otherwise useless information to show it worked.
-		// std::map<std::string, std::string> props = *(network->properties);
-		// cout << "Loaded input file, " << argv[1] << endl;
-		// cout << "Found:" << endl;
-		// cout << "\t" << props["numHeClusters"]
-		// 		<< " helium clusters with max cluster size "
-		// 		<< props["maxHeClusterSize"] << endl;
-		// cout << "\t" << props["numVClusters"]
-		// 		<< " vacancy clusters with max cluster size "
-		// 		<< props["maxVClusterSize"] << endl;
-		// cout << "\t" << props["numIClusters"]
-		// 		<< " interstitial clusters with max cluster size "
-		// 		<< props["maxIClusterSize"] << endl;
-		// cout << "\t" << props["numMixedClusters"]
-		// 		<< " mixed-species clusters with max cluster size " << endl;
-
 		// Setup and run the solver
+		xolotlSolver::PetscSolver solver;
 		solver.setCommandLineOptions(argc, argv);
-		solver.setNetworkLoader(clusterLoader);
 		solver.initialize();
-		// solver.solve();
+		
+		// Load the input file from the master task
+		shared_ptr<std::istream> networkStream;
+		
+		int rank;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		
+		if (rank == 0) {
+			networkStream.reset(new std::ifstream(networkFilename));
+		}
+		
+		// Broadcast the stream to all worker tasks
+		networkStream = xolotlCore::MPIUtils::broadcastStream(
+			networkStream, 0, MPI_COMM_WORLD);
+		
+		networkLoader->setInputstream(networkStream);
+		solver.setNetworkLoader(networkLoader);
+		
+		// Launch the PetscSolver
+		/* solver.solve(); */
 		solver.finalize();
-
-	} catch (std::string error) {
+	}
+	catch (std::string error) {
 		std::cout << error << std::endl;
 		std::cout << "Aborting." << std::endl;
 		return EXIT_FAILURE;
 	}
-
+	
 	return EXIT_SUCCESS;
 }
