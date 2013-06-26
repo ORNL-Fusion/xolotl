@@ -9,8 +9,13 @@ SET(LIBRARY_NAME "xolotlIO")
 #and glob them in HEADERS
 file(GLOB HEADERS *.h)
 
+#Grab all of the source files
 file(GLOB SRC *.cpp)
 
+#Include the MPI directories
+include_directories(${MPI_C_INCLUDE_PATH})
+
+#Add a library to hold the IO code (mostly MPI)
 add_library(${LIBRARY_NAME} SHARED ${SRC})
 
 #Install the xolotl header files

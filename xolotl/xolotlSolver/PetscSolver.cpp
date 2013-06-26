@@ -663,11 +663,16 @@ PetscErrorCode GetDfill(PetscInt *dfill, void *ptr) {
 				reactants[0] = he, reactants[1] = He - he, reactants[2] = He;
 				for (j = 0; j < 3; j++) {
 					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
-							+ col2 - 1] = 1;
+					int index1 = (row - 1) * dof + col1 - 1, index2 = (row - 1) * dof
+							+ col2 - 1;
+					dfill[index1] = 1, dfill[index2] = 1;
+					//std::cout << He << " " << he << " " << row << " " << col1 << " " << col2 << " " << index1 << " " << index2 << std::endl;
 				}
 			}
 		}
+		for (int i = 0; i < dof*dof; i++)
+			std::cout << i << " " << dfill[i] << std::endl;
+
 		/*   V[V]  +  V[v] ->  V[V+v]  */
 		for (V = 2; V < N + 1; V++) {
 			for (v = 1; v < (V / 2) + 1; v++) {

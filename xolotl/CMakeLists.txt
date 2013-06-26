@@ -19,6 +19,9 @@ ENDIF()
 # Find PETSc
 FIND_PACKAGE(PETSc REQUIRED)
 
+# Find MPI
+FIND_PACKAGE(MPI REQUIRED)
+
 # Enable testing.
 enable_testing()
 
@@ -44,7 +47,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
 include_directories(${PETSC_INCLUDES})
 
 # Setup the library list
-set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO ${PETSC_LIBRARIES})
+set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO ${PETSC_LIBRARIES} ${MPI_C_LIBRARIES})
 
 # Add an executable for the main program
 ADD_EXECUTABLE ( xolotl main.cpp)

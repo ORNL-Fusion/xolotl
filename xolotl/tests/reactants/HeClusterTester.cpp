@@ -22,7 +22,8 @@ using namespace xolotlCore;
  * @param cluster The cluster to dump
  */
 void writeCluster(shared_ptr<Reactant> cluster) {
-	shared_ptr<PSICluster> psiCluster = static_pointer_cast<PSICluster>(cluster);
+	shared_ptr<PSICluster> psiCluster = static_pointer_cast < PSICluster
+			> (cluster);
 	BOOST_TEST_MESSAGE(psiCluster->getSize());
 	return;
 }
@@ -37,7 +38,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Local Declarations
 	vector<int> connectivityArray;
-	shared_ptr<ReactionNetwork> network = shared_ptr<ReactionNetwork>(new ReactionNetwork());
+	shared_ptr<ReactionNetwork> network = shared_ptr < ReactionNetwork
+			> (new ReactionNetwork());
 	vector<shared_ptr<Reactant>> reactants = *(network->reactants);
 	std::map<std::string, std::string> props = *(network->properties);
 
@@ -70,9 +72,15 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	BOOST_TEST_MESSAGE("Number of I clusters = " << props["numIClusters"]);
 	BOOST_TEST_MESSAGE("Number of mixed clusters = " << props["numMixedClusters"]);
 
-	// Get the connectivity of the last reactant and check it
-	connectivityArray = reactants.at(9);
-
+	// Get the connectivity of the last reactant
+	connectivityArray = reactants.at(9)->getConnectivity();
+	// Since this is a helium cluster of size 10, it should interact with
+	// everything up to size 9.
+	for (int i = 0; i < 9; i++) {
+		BOOST_REQUIRE(1 == connectivityArray.at(i));
+	}
+	// And not the last one
+	BOOST_REQUIRE(0 == connectivityArray.at(9));
 
 	return;
 }
