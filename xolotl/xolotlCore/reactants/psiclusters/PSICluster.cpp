@@ -19,8 +19,18 @@ PSICluster::PSICluster(const int clusterSize) : Reactant() {
 	migrationEnergy = 0.0;
 	// Set the reactant name appropriately
 	name = "PSICluster";
-
 }
+
+
+PSICluster::PSICluster(const PSICluster &other) :
+	Reactant(other),
+	size(other.size),
+	diffusionFactor(other.diffusionFactor),
+	bindingEnergies(other.bindingEnergies),
+	migrationEnergy(other.migrationEnergy)
+{
+}
+
 
 PSICluster::~PSICluster() {}
 

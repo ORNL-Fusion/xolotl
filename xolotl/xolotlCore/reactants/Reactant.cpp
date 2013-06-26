@@ -8,51 +8,62 @@ using namespace xolotlCore;
 Reactant::Reactant() :
 concentration(0.0),name(""),id(0)
 {
-    //TODO Auto-generated method stub
 }
-Reactant::~Reactant() 
+
+
+Reactant::Reactant(const Reactant &other) :
+	concentration(other.concentration),
+	name(other.name),
+	id(other.id)
 {
-    //TODO Auto-generated method stub
 }
-Reactant::Reactant(double conc) : 
-concentration(0.0),name(""),id(0)
+
+
+Reactant::~Reactant() {
+}
+Reactant::Reactant(double conc) :
+	concentration(0.0),
+	name(""),
+	id(0)
 {
-    //TODO Auto-generated method stub
 }
-double Reactant::getConcentration() 
-{
-    //TODO Auto-generated method stub
-    return 0;
+
+
+double Reactant::getConcentration() {
+	return concentration;
 }
-void Reactant::increaseConcentration(double deltaConc) 
-{
-    //TODO Auto-generated method stub
-    return;
+
+
+void Reactant::increaseConcentration(double deltaConc) {
+	concentration += deltaConc;
 }
-void Reactant::decreaseConcentration(double deltaConc) 
-{
-    //TODO Auto-generated method stub
-    return;
+
+
+void Reactant::decreaseConcentration(double deltaConc) {
+	concentration -= deltaConc;
 }
-void Reactant::setConcentration(double conc) 
-{
-    //TODO Auto-generated method stub
-    return;
+
+
+void Reactant::setConcentration(double conc) {
+	concentration = conc;
 }
-void Reactant::zero() 
-{
-    //TODO Auto-generated method stub
-    return;
+
+
+void Reactant::zero() {
+	concentration = 0.0;
 }
+
+
 double Reactant::getTotalFlux() 
 {
-    //TODO Auto-generated method stub
-    return 0;
+	//TODO Auto-generated method stub
+	return 0;
 }
+
 void Reactant::setReactionNetwork(std::shared_ptr<ReactionNetwork> network)
 {
-    //TODO Auto-generated method stub
-    return;
+	//TODO Auto-generated method stub
+	return;
 }
 
 std::vector<int> Reactant::getConnectivity() {
@@ -62,7 +73,25 @@ std::vector<int> Reactant::getConnectivity() {
 
 const std::string Reactant::toString()
 {
-    //TODO Auto-generated method stub
-    return "fluffy";
+	//TODO Auto-generated method stub
+	return "fluffy";
 }
 
+
+ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) :
+	ReactionNetwork()
+{
+	// The copy constructor of std::map copies each of the keys and values.
+	properties.reset(new std::map<std::string, std::string>(*other.properties));
+	
+	// Copy the reactants list by pushing a copy of each element onto the
+	// reactants vector
+	
+	for (std::vector<std::shared_ptr<Reactant>>::iterator reactantIt =
+		other.reactants->begin(); reactantIt != other.reactants->end();
+		reactantIt++) {
+		
+		std::shared_ptr<Reactant> reactant(new Reactant(**reactantIt));
+		reactants->push_back(reactant);
+	}
+}

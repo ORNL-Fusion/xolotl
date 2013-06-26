@@ -314,6 +314,7 @@ PetscErrorCode InitialConditions(DM da, Vec C) {
 	/*
 	 Compute function over the locally owned part of the grid
 	 */
+	
 	for (i = xs; i < xs + xm; i++) {
 		x = i * hx;
 		for (He = 1; He < N + 1; He++)
@@ -919,8 +920,11 @@ void PetscSolver::setCommandLineOptions(int argc, char **argv) {
  */
 void PetscSolver::setNetworkLoader(std::shared_ptr<PSIClusterNetworkLoader> networkLoader) {
 	// Copy the value of the network loader
-	//this->networkLoader = networkLoader;
+	this->networkLoader = networkLoader;
 	
+	
+	// TEMP
+	// Debug the ReactionNetwork loaded by all tasks
 	std::shared_ptr<ReactionNetwork> network = networkLoader->load();
 	
 	std::map<std::string, std::string> props = *(network->properties);
@@ -964,7 +968,6 @@ void PetscSolver::initialize() {
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
-	// Why is the argv parameter not const?
 	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
 	
 	PetscFunctionBeginUser;

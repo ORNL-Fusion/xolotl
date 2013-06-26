@@ -29,78 +29,80 @@ class ReactionNetwork;
 class Reactant
 {
 
-    protected:
+	protected:
 
-        //! The total concentration of this Reactant.
-        double concentration;
+		//! The total concentration of this Reactant.
+		double concentration;
 
-        //! The name of this Reactant.
-        std::string name;
+		//! The name of this Reactant.
+		std::string name;
 
-        //! An integer identification number for this reactant.
-        int id;
+		//! An integer identification number for this reactant.
+		int id;
 
-    public:
+	public:
 
-        //! The constructor.
-        Reactant();
+		//! The constructor.
+		Reactant();
+		
+		Reactant(const Reactant &other);
 
-        //! Destructor
-        ~Reactant(); 
+		//! Destructor
+		~Reactant(); 
 
-        /**
-         * An alternative constructor that can be used to create a reactant
-         * with an initial concentration.
-         * @param conc The initial concentration
-         */
-        Reactant(double conc); 
+		/**
+		 * An alternative constructor that can be used to create a reactant
+		 * with an initial concentration.
+		 * @param conc The initial concentration
+		 */
+		Reactant(double conc); 
 
-        /**
-         * This operation returns the current concentration.
-         * @return The concentration of this reactant
-         */
-        double getConcentration(); 
+		/**
+		 * This operation returns the current concentration.
+		 * @return The concentration of this reactant
+		 */
+		double getConcentration(); 
 
-        /**
-         * This operation increases the concentration of the reactant by the
-         * specified amount.
-         * @param deltaConc the change in concentration
-         */
-        void increaseConcentration(double deltaConc); 
+		/**
+		 * This operation increases the concentration of the reactant by the
+		 * specified amount.
+		 * @param deltaConc the change in concentration
+		 */
+		void increaseConcentration(double deltaConc); 
 
-        /**
-         * This operation decreases the concentration of the reactant by the
-         * specified amount.
-         * @param deltaConc the change in concentration
-         */
-        void decreaseConcentration(double deltaConc); 
+		/**
+		 * This operation decreases the concentration of the reactant by the
+		 * specified amount.
+		 * @param deltaConc the change in concentration
+		 */
+		void decreaseConcentration(double deltaConc); 
 
-        /**
-         * This operation sets the concentration of the reactant to the
-         * specified amount.
-         * @param conc The new concentation
-         */
-        void setConcentration(double conc); 
+		/**
+		 * This operation sets the concentration of the reactant to the
+		 * specified amount.
+		 * @param conc The new concentation
+		 */
+		void setConcentration(double conc); 
 
-        /**
-         * This operation sets the concentration of the reactant to zero.
-         */
-        void zero(); 
+		/**
+		 * This operation sets the concentration of the reactant to zero.
+		 */
+		void zero(); 
 
-        /**
-         * This operation returns the total flux of this reactant in the
-         * current network.
-         * @return The total change in flux for this reactant due to all
-         * reactions
-         */
-        virtual double getTotalFlux();
+		/**
+		 * This operation returns the total flux of this reactant in the
+		 * current network.
+		 * @return The total change in flux for this reactant due to all
+		 * reactions
+		 */
+		virtual double getTotalFlux();
 
-        /**
-         * This operation sets the collection of other reactants that make up
-         * the reaction network in which this reactant exists.
-         * @param network The reaction network of which this reactant is a part
-         */
-        void setReactionNetwork(std::shared_ptr<ReactionNetwork> network);
+		/**
+		 * This operation sets the collection of other reactants that make up
+		 * the reaction network in which this reactant exists.
+		 * @param network The reaction network of which this reactant is a part
+		 */
+		void setReactionNetwork(std::shared_ptr<ReactionNetwork> network);
 
         /**
          * This operation returns a list that represents the connectivity
@@ -146,10 +148,12 @@ public:
 
 	//! The constructor. It initializes the properties map and reactants vector.
 	ReactionNetwork() :
-			properties(new std::map<std::string, std::string>()), reactants(
-					new std::vector<std::shared_ptr<Reactant>>()) {
-	}
-
+		properties(new std::map<std::string, std::string>()),
+		reactants(new std::vector<std::shared_ptr<Reactant>>())
+	{}
+	
+	ReactionNetwork(const ReactionNetwork &other);
+	
 	//! The destructor
 	virtual ~ReactionNetwork() {
 	}

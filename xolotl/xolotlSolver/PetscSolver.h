@@ -89,7 +89,7 @@ private:
 	//! The command line arguments
 	char **CLIArgs;
 	
-	PSIClusterNetworkLoader networkLoader;
+	std::shared_ptr<PSIClusterNetworkLoader> networkLoader;
 	
 }; //end class PetscSolver
 

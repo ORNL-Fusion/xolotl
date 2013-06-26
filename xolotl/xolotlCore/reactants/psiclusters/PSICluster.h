@@ -55,6 +55,8 @@ public:
 
 	//! Constructor
 	PSICluster(const int clusterSize);
+	
+	PSICluster(const PSICluster &other);
 
 	//! Destructor
 	virtual ~PSICluster();
