@@ -65,23 +65,33 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	// Local Declarations
 	PSICluster cluster(1);
 	cluster.setDiffusionFactor(1.0);
+	cluster.setMigrationEnergy(2.0);
+	
+	PSICluster copiedCluster(cluster);
 	
 	// Check Reactant copying
-	PSICluster copiedCluster(cluster);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(),
+		copiedCluster.getDiffusionFactor(), 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(),
+		copiedCluster.getMigrationEnergy(), 1e-5);
+	
+	// Modify some values to ensure a deep copy is occurring
 	copiedCluster.setDiffusionFactor(0.5); // This should not happen!
+	copiedCluster.setMigrationEnergy(7.0);
 	
 	// Check the diffusion factor
-	BOOST_CHECK_CLOSE(copiedCluster.getDiffusionFactor(), 0.5, 1e-5); // This should compare the two directly!
-	// BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(),copiedCluster.getDiffusionFactor(),1e-5);
-	// ONLY USE BOOST_REQUIRE, not BOOST_CHECK!
-	BOOST_CHECK(abs(cluster.getDiffusionFactor() - 
-		copiedCluster.getDiffusionFactor()) > 0.01);
+	BOOST_REQUIRE_CLOSE(copiedCluster.getDiffusionFactor(), 0.5, 1e-5);
+	BOOST_REQUIRE_CLOSE(copiedCluster.getMigrationEnergy(), 7.0, 1e-5);
+	
+	// Check that the original is not modified
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 1.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 2.0, 1e-5);
 	
 	// Check the migration energy
 	cluster.setMigrationEnergy(1.0);
 	copiedCluster.setMigrationEnergy(3.0);
-	BOOST_CHECK(cluster.getMigrationEnergy() <
-		copiedCluster.getMigrationEnergy());
+	BOOST_REQUIRE(abs(cluster.getMigrationEnergy() -
+		copiedCluster.getMigrationEnergy()) > 2.0 - 1e-5);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

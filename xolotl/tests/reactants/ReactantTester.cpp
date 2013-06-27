@@ -26,10 +26,23 @@ BOOST_AUTO_TEST_SUITE(Reactant_testSuite)
  * This operation tests the copy constructor.
  */
 BOOST_AUTO_TEST_CASE(checkCopying) {
-
-	// UNIMPLEMENTED!
-	BOOST_REQUIRE(1 == 0);
-
+	
+	// Create a reference Reactant
+	std::shared_ptr<Reactant> reactant(new Reactant);
+	reactant->setConcentration(10.0);
+	
+	// Copy the Reactant
+	std::shared_ptr<Reactant> reactant2(new Reactant(*reactant));
+	
+	// Check that the pointers are different
+	BOOST_REQUIRE_NE(reactant.get(), reactant2.get());
+	
+	reactant2->increaseConcentration(5.0);
+	
+	// The values should now be different,
+	// so check them against the known values
+	BOOST_REQUIRE_CLOSE(reactant->getConcentration(), 10.0, 1e-7);
+	BOOST_REQUIRE_CLOSE(reactant2->getConcentration(), 15.0, 1e-7);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

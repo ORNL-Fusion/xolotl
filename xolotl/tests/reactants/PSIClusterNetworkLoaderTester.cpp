@@ -159,17 +159,19 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Copy the ReactionNetwork
 	
 	shared_ptr<ReactionNetwork> network2(new ReactionNetwork(*network));
-	BOOST_CHECK_NE(network.get(), network2.get());
+	BOOST_REQUIRE_NE(network.get(), network2.get());
 	
 	// Check the reactants of the ReactionNetwork
 	
 	int reactantsLength = network->reactants->size();
-	BOOST_CHECK_EQUAL(reactantsLength, network2->reactants->size());
+	BOOST_REQUIRE_EQUAL(reactantsLength, network2->reactants->size());
 	
 	for (int i = 0; i < reactantsLength; i++)
 	{
 		// Check that the pointers to each reactant are not equal
-		BOOST_REQUIRE_NE(network->reactants->at(i).get(), network2->reactants->at(i).get());
+		BOOST_REQUIRE_NE(
+			network->reactants->at(i).get(),
+			network2->reactants->at(i).get());
 		
 		// Modify a value and check that it doesn't affect the other network
 		network->reactants->at(i)->setConcentration(3.0);
@@ -181,17 +183,17 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Check the properties of the copied reaction network
 	std::map<std::string, std::string> &props2 = *network2->properties;
 	
-	BOOST_CHECK_EQUAL(props2["maxHeClusterSize"], string("1"));
-	BOOST_CHECK_EQUAL(props2["maxVClusterSize"], string("50"));
-	BOOST_CHECK_EQUAL(props2["maxIClusterSize"], string("1"));
-	BOOST_CHECK_EQUAL(props2["numHeClusters"], string("1"));
-	BOOST_CHECK_EQUAL(props2["numVClusters"], string("1"));
-	BOOST_CHECK_EQUAL(props2["numIClusters"], string("1"));
-	BOOST_CHECK_EQUAL(props2["numMixedClusters"], string("1"));
+	BOOST_REQUIRE_EQUAL(props2["maxHeClusterSize"], string("1"));
+	BOOST_REQUIRE_EQUAL(props2["maxVClusterSize"], string("50"));
+	BOOST_REQUIRE_EQUAL(props2["maxIClusterSize"], string("1"));
+	BOOST_REQUIRE_EQUAL(props2["numHeClusters"], string("1"));
+	BOOST_REQUIRE_EQUAL(props2["numVClusters"], string("1"));
+	BOOST_REQUIRE_EQUAL(props2["numIClusters"], string("1"));
+	BOOST_REQUIRE_EQUAL(props2["numMixedClusters"], string("1"));
 	
 	// Check that the properties were actually copied deeply
 	network2->properties->at("maxHeClusterSize") = string("3295");
-	BOOST_CHECK_EQUAL(network->properties->at("maxHeClusterSize"), string("1"));
-	BOOST_CHECK_EQUAL(network2->properties->at("maxHeClusterSize"), string("3295"));
+	BOOST_REQUIRE_EQUAL(network->properties->at("maxHeClusterSize"), string("1"));
+	BOOST_REQUIRE_EQUAL(network2->properties->at("maxHeClusterSize"), string("3295"));
 }
 BOOST_AUTO_TEST_SUITE_END()
