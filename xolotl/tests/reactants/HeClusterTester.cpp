@@ -38,20 +38,23 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Local Declarations
 	vector<int> connectivityArray;
-	shared_ptr<ReactionNetwork> network = shared_ptr < ReactionNetwork
-			> (new ReactionNetwork());
+	shared_ptr<ReactionNetwork> network(new ReactionNetwork());
+	
+	// Fill the ReactionNetwork with 10 He clusters
+	for (int i = 1; i <= 10; i++) {
+		// Create a He cluster with cluster size i
+		shared_ptr<HeCluster> cluster(new HeCluster(i));
+		network->reactants->push_back(cluster);
+	}
+	
+	for (int i = 1; i <= 10; i++) {
+		// Register the network with the cluster
+		network->reactants->at(i)->setReactionNetwork(network);
+	}
+	
 	vector<shared_ptr<Reactant>> reactants = *(network->reactants);
 	std::map<std::string, std::string> props = *(network->properties);
-
-	// Load the ReactionNetwork with some He clusters
-	for (int i = 1; i < 11; i++) {
-		// Create a He cluster with cluster size i
-		shared_ptr<HeCluster> cluster = shared_ptr<HeCluster>(new HeCluster(i));
-		// Register the network with the cluster
-		cluster->setReactionNetwork(network);
-		// Add it to the network
-		reactants.push_back(cluster);
-	}
+	
 	// Setup the properties map
 	props["maxHeClusterSize"] = "10";
 	props["maxIClusterSize"] = "1";
