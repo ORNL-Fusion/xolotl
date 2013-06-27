@@ -40,6 +40,9 @@ class Reactant
 		//! An integer identification number for this reactant.
 		int id;
 
+		//! The reaction network that includes this reactant
+		std::shared_ptr<ReactionNetwork> network;
+
 	public:
 
 		//! The constructor.
@@ -102,7 +105,7 @@ class Reactant
 		 * the reaction network in which this reactant exists.
 		 * @param network The reaction network of which this reactant is a part
 		 */
-		void setReactionNetwork(std::shared_ptr<ReactionNetwork> network);
+		void setReactionNetwork(std::shared_ptr<ReactionNetwork> reactionNetwork);
 
         /**
          * This operation returns a list that represents the connectivity

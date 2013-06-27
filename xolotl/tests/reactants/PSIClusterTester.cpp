@@ -18,11 +18,9 @@ using namespace std;
 using namespace xolotlCore;
 
 /**
- * This suite is responsible for testing the PSIClusterNetworkLoader. It
- * creates a string stream that contains each of the available PSICluster types
- * and checks that the loader returns a list with each type in it.
+ * This suite is responsible for testing the PSICluster.
  */
-BOOST_AUTO_TEST_SUITE(PSIClusterNetworkLoader_testSuite)
+BOOST_AUTO_TEST_SUITE(PSICluster_testSuite)
 
 /** This operation checks the loader. */
 BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
@@ -57,24 +55,32 @@ BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 	cluster.setMigrationEnergy(0.013);
 	cluster.setDiffusionFactor(1.08E10);
 	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(1500.0),9766651101.800613,0.0000001);
-	
+}
+
+/**
+ * This operation tests the copy constructor.
+ */
+BOOST_AUTO_TEST_CASE(checkCopying) {
+
+	// Local Declarations
+	PSICluster cluster(1);
+	cluster.setDiffusionFactor(1.0);
 	
 	// Check Reactant copying
-	
 	PSICluster copiedCluster(cluster);
-	
-	cluster.setDiffusionFactor(1.0);
 	copiedCluster.setDiffusionFactor(0.5);
+	
+	// Check the diffusion factor
 	BOOST_CHECK_CLOSE(copiedCluster.getDiffusionFactor(), 0.5, 1e-5);
 	BOOST_CHECK(abs(cluster.getDiffusionFactor() - 
 		copiedCluster.getDiffusionFactor()) > 0.01);
 	
+	// Check the migration energy
 	cluster.setMigrationEnergy(1.0);
 	copiedCluster.setMigrationEnergy(3.0);
 	BOOST_CHECK(cluster.getMigrationEnergy() <
 		copiedCluster.getMigrationEnergy());
 }
-
 
 BOOST_AUTO_TEST_SUITE_END()
 
