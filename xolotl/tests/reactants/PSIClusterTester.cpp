@@ -68,10 +68,12 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	
 	// Check Reactant copying
 	PSICluster copiedCluster(cluster);
-	copiedCluster.setDiffusionFactor(0.5);
+	copiedCluster.setDiffusionFactor(0.5); // This should not happen!
 	
 	// Check the diffusion factor
-	BOOST_CHECK_CLOSE(copiedCluster.getDiffusionFactor(), 0.5, 1e-5);
+	BOOST_CHECK_CLOSE(copiedCluster.getDiffusionFactor(), 0.5, 1e-5); // This should compare the two directly!
+	// BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(),copiedCluster.getDiffusionFactor(),1e-5);
+	// ONLY USE BOOST_REQUIRE, not BOOST_CHECK!
 	BOOST_CHECK(abs(cluster.getDiffusionFactor() - 
 		copiedCluster.getDiffusionFactor()) > 0.01);
 	

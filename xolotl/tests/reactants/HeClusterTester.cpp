@@ -54,7 +54,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	}
 	// Setup the properties map
 	props["maxHeClusterSize"] = "10";
-	props["maxVClusterSize"] = "1";
 	props["maxIClusterSize"] = "1";
 	props["numHeClusters"] = "10";
 	props["numVClusters"] = "0";
@@ -72,10 +71,11 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	BOOST_TEST_MESSAGE("Number of I clusters = " << props["numIClusters"]);
 	BOOST_TEST_MESSAGE("Number of mixed clusters = " << props["numMixedClusters"]);
 
-	// Get the connectivity of the last reactant
-	connectivityArray = reactants.at(9)->getConnectivity();
-	// Since this is a helium cluster of size 10, it should interact with
+	// Get the connectivity of the first reactant
+	connectivityArray = reactants.at(0)->getConnectivity();
+	// Since this is a helium cluster of size 1, it should interact with
 	// everything up to size 9.
+	BOOST_TEST_MESSAGE("Connectivity Array Size = " << connectivityArray.size());
 	BOOST_REQUIRE(connectivityArray.size() == 10);
 	for (int i = 0; i < 9; i++) {
 		BOOST_REQUIRE(connectivityArray.at(i) == 1);

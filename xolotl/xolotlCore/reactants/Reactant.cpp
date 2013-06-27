@@ -1,5 +1,6 @@
 // Includes
 #include "Reactant.h"
+#include <iostream>
 
 // Namespaces
 using namespace xolotlCore;
@@ -43,8 +44,9 @@ double Reactant::getTotalFlux() {
 	return 0;
 }
 
-void Reactant::setReactionNetwork(std::shared_ptr<ReactionNetwork> reactionNetwork) {
-	//TODO Auto-generated method stub
+void Reactant::setReactionNetwork(const std::shared_ptr<ReactionNetwork> reactionNetwork) {
+	network = reactionNetwork;
+	std::cout << "Number of Reactants = " << network->reactants->size() << std::endl;
 	return;
 }
 
@@ -64,7 +66,6 @@ ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 
 	// Copy the reactants list by pushing a copy of each element onto the
 	// reactants vector
-
 	reactants.reset(new std::vector<std::shared_ptr<Reactant>>);
 
 	for (std::vector<std::shared_ptr<Reactant>>::iterator reactantIt =

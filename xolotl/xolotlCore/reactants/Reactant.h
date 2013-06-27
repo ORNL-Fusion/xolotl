@@ -105,7 +105,7 @@ class Reactant
 		 * the reaction network in which this reactant exists.
 		 * @param network The reaction network of which this reactant is a part
 		 */
-		void setReactionNetwork(std::shared_ptr<ReactionNetwork> reactionNetwork);
+		void setReactionNetwork(const std::shared_ptr<ReactionNetwork> reactionNetwork);
 
         /**
          * This operation returns a list that represents the connectivity
@@ -155,6 +155,10 @@ public:
 		reactants(new std::vector<std::shared_ptr<Reactant>>())
 	{}
 	
+	/**
+	 * The copy constructor
+	 * @param other The ReactionNetwork to copy
+	 */
 	ReactionNetwork(const ReactionNetwork &other);
 	
 	//! The destructor
