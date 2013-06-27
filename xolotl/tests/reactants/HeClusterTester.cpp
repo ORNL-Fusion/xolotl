@@ -39,43 +39,40 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Local Declarations
 	vector<int> connectivityArray;
 	shared_ptr<ReactionNetwork> network(new ReactionNetwork());
+	shared_ptr<vector<shared_ptr<Reactant> > > reactants = network->reactants;
+	shared_ptr<std::map<std::string, std::string>> props = network->properties;
 	
 	// Fill the ReactionNetwork with 10 He clusters
 	for (int i = 1; i <= 10; i++) {
 		// Create a He cluster with cluster size i
 		shared_ptr<HeCluster> cluster(new HeCluster(i));
-		network->reactants->push_back(cluster);
-	}
-	
-	for (int i = 1; i <= 10; i++) {
+		// Add it to the network
+		reactants->push_back(cluster);
 		// Register the network with the cluster
-		network->reactants->at(i)->setReactionNetwork(network);
+		cluster->setReactionNetwork(network);
 	}
-	
-	vector<shared_ptr<Reactant>> reactants = *(network->reactants);
-	std::map<std::string, std::string> props = *(network->properties);
-	
+
 	// Setup the properties map
-	props["maxHeClusterSize"] = "10";
-	props["maxIClusterSize"] = "1";
-	props["numHeClusters"] = "10";
-	props["numVClusters"] = "0";
-	props["numIClusters"] = "0";
-	props["numMixedClusters"] = "0";
+	(*props)["maxHeClusterSize"] = "10";
+	(*props)["maxIClusterSize"] = "1";
+	(*props)["numHeClusters"] = "10";
+	(*props)["numVClusters"] = "0";
+	(*props)["numIClusters"] = "0";
+	(*props)["numMixedClusters"] = "0";
 
 	// Write the cluster information to stdout
 	BOOST_TEST_MESSAGE("Sizes of clusters in network:");
-	for_each(reactants.begin(),reactants.end(),writeCluster);
-	BOOST_TEST_MESSAGE("Maximum He Cluster Size = " << props["maxHeClusterSize"]);
-	BOOST_TEST_MESSAGE("Maximum V Cluster Size = " << props["maxVClusterSize"]);
-	BOOST_TEST_MESSAGE("Maximum Interstitial Cluster Size = " << props["maxIClusterSize"]);
-	BOOST_TEST_MESSAGE("Number of He clusters = " << props["numHeClusters"]);
-	BOOST_TEST_MESSAGE("Number of V clusters = " << props["numVClusters"]);
-	BOOST_TEST_MESSAGE("Number of I clusters = " << props["numIClusters"]);
-	BOOST_TEST_MESSAGE("Number of mixed clusters = " << props["numMixedClusters"]);
+	for_each(reactants->begin(),reactants->end(),writeCluster);
+	BOOST_TEST_MESSAGE("Maximum He Cluster Size = " << (*props)["maxHeClusterSize"]);
+	BOOST_TEST_MESSAGE("Maximum V Cluster Size = " << (*props)["maxVClusterSize"]);
+	BOOST_TEST_MESSAGE("Maximum Interstitial Cluster Size = " << (*props)["maxIClusterSize"]);
+	BOOST_TEST_MESSAGE("Number of He clusters = " << (*props)["numHeClusters"]);
+	BOOST_TEST_MESSAGE("Number of V clusters = " << (*props)["numVClusters"]);
+	BOOST_TEST_MESSAGE("Number of I clusters = " << (*props)["numIClusters"]);
+	BOOST_TEST_MESSAGE("Number of mixed clusters = " << (*props)["numMixedClusters"]);
 
 	// Get the connectivity of the first reactant
-	connectivityArray = reactants.at(0)->getConnectivity();
+	connectivityArray = reactants->at(0)->getConnectivity();
 	// Since this is a helium cluster of size 1, it should interact with
 	// everything up to size 9.
 	BOOST_TEST_MESSAGE("Connectivity Array Size = " << connectivityArray.size());
