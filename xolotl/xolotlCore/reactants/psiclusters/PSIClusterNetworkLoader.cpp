@@ -126,12 +126,9 @@ void PSIClusterNetworkLoader::setInputstream(
 	networkStream = stream;
 }
 
-
-std::shared_ptr<std::istream> PSIClusterNetworkLoader::getInputstream()
-{
+std::shared_ptr<std::istream> PSIClusterNetworkLoader::getInputstream() {
 	return networkStream;
 }
-
 
 /**
  * This operation will load the reaction network from the inputstream in
@@ -169,7 +166,7 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		(*props)["maxHeClusterSize"] = "0";
 		(*props)["maxVClusterSize"] = "0";
 		(*props)["maxIClusterSize"] = "0";
-		(*props)["numHeClusters"] = "0"; 
+		(*props)["numHeClusters"] = "0";
 		(*props)["numVClusters"] = "0";
 		(*props)["numIClusters"] = "0";
 		(*props)["numMixedClusters"] = "0";
@@ -217,6 +214,16 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		// Load the mixed species clusters into the network
 		for (int i = 0; i < mixedClusters.size(); i++)
 			network->reactants->push_back(mixedClusters[i]);
+		// Set the max number of mixed clusters
+		int maxMixedClusterSize = strtol(
+				(*props)["maxHeClusterSize"].c_str(), NULL, 10)
+				+ strtol((*props)["maxVClusterSize"].c_str(),
+						NULL, 10)
+				+ strtol((*props)["maxIClusterSize"].c_str(),
+						NULL, 10);
+		(*props)["maxMixedClusterSize"] = std::to_string((long long) maxMixedClusterSize);
+		std::cout << "MSize = " << (*props)["maxMixedClusterSize"] << std::endl;
+
 	}
 
 	return network;

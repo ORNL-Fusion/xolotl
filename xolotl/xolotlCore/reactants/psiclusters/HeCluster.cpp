@@ -20,10 +20,6 @@ std::vector<int> HeCluster::getConnectivity() {
 	int maxHeSize = strtol(props["maxHeClusterSize"].c_str(),NULL,10);
 	std::vector<int> connectivityArray(maxHeSize,0);
 
-	std::cout << "Max He Cluster Size = " << props["maxHeClusterSize"] << std::endl;
-	std::cout << maxHeSize << std::endl;
-	std::cout << "Number of Reactants = " << network->reactants->size() << std::endl;
-
 	// ----- A*He + B*He -> (A+B)*He -----
 	// This cluster should interact with all other clusters of the same type up
 	// the max size minus one to produce larger clusters.

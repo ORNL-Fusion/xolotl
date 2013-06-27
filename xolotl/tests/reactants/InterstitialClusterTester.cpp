@@ -9,7 +9,7 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
-#include <HeCluster.h>
+#include <InterstitialCluster.h>
 #include <memory>
 #include <typeinfo>
 #include <limits>
@@ -29,11 +29,11 @@ void writeCluster(shared_ptr<Reactant> cluster) {
 }
 
 /**
- * This suite is responsible for testing the HeCluster.
+ * This suite is responsible for testing the InterstitialCluster.
  */
-BOOST_AUTO_TEST_SUITE(HeCluster_testSuite)
+BOOST_AUTO_TEST_SUITE(InterstitialCluster_testSuite)
 
-/** This operation checks the ability of the HeCluster to describe its connectivity to other clusters. */
+/** This operation checks the ability of the InterstitialCluster to describe its connectivity to other clusters. */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Local Declarations
@@ -42,10 +42,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	shared_ptr<vector<shared_ptr<Reactant> > > reactants = network->reactants;
 	shared_ptr<std::map<std::string, std::string>> props = network->properties;
 	
-	// Fill the ReactionNetwork with 10 He clusters
+	// Fill the ReactionNetwork with 10 interstitial clusters
 	for (int i = 1; i <= 10; i++) {
-		// Create a He cluster with cluster size i
-		shared_ptr<HeCluster> cluster(new HeCluster(i));
+		// Create an interstitial cluster with cluster size i
+		shared_ptr<InterstitialCluster> cluster(new InterstitialCluster(i));
 		// Add it to the network
 		reactants->push_back(cluster);
 		// Register the network with the cluster
@@ -74,8 +74,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Get the connectivity of the first reactant
 	connectivityArray = reactants->at(0)->getConnectivity();
-	// Since this is a helium cluster of size 1, it should interact with
-	// every other helium up to size 9.
+	// Since this is an interstitial cluster of size 1, it should interact with
+	// every other interstitial up to size 9.
 	BOOST_TEST_MESSAGE("Connectivity Array Size = " << connectivityArray.size());
 	BOOST_REQUIRE(connectivityArray.size() == 10);
 	for (int i = 0; i < 9; i++) {

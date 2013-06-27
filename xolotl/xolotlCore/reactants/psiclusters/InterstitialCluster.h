@@ -22,6 +22,13 @@ public:
 	//! Destructor
 	~InterstitialCluster();
 
+	/**
+	 * This operation overrides getConnectivity() from the base class to
+	 * provide the proper connectivity for a interstitial cluster.
+	 * @return The connectivity array
+	 */
+    virtual std::vector<int> getConnectivity();
+
 };
 //end class InterstitialCluster
 

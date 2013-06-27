@@ -52,6 +52,9 @@ namespace xolotlCore {
  * single-species V cluster.
  * > maxIClusterSize - The number of interstitials in the largest
  * single-species I cluster.
+ * > maxMixedClusterSize - The number of species of all types in the largest
+ * mixed species in the network. It is equal to the sum of the max single
+ * species sizes by default.
  * > numHeClusters - The number of single-species He clusters of all sizes in
  * the network.
  * > numVClusters - The number of single-species V clusters of all sizes in the
@@ -108,7 +111,8 @@ public:
 	 * The default constructor. The setInputstream() operation must be called
 	 * if this constructor is used.
 	 */
-	PSIClusterNetworkLoader() {}
+	PSIClusterNetworkLoader() {
+	}
 
 	/**
 	 * An alternative constructor provided for convenience.
@@ -120,7 +124,8 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~PSIClusterNetworkLoader() {}
+	virtual ~PSIClusterNetworkLoader() {
+	}
 
 	/**
 	 * This operation specifies the inputstream from which cluster data should
@@ -129,7 +134,7 @@ public:
 	 * loaded.
 	 */
 	void setInputstream(const std::shared_ptr<std::istream> stream);
-	
+
 	std::shared_ptr<std::istream> getInputstream();
 
 	/**

@@ -77,8 +77,8 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(!reactants.empty());
 	// It should have four reactants
 	BOOST_REQUIRE_EQUAL(4, reactants.size());
-	// It should have six properties
-	BOOST_REQUIRE_EQUAL(7, props.size());
+	// It should have eight properties
+	BOOST_REQUIRE_EQUAL(8, props.size());
 
 	// Check the properties
 	BOOST_TEST_MESSAGE("Maximum He Cluster Size = " << props["maxHeClusterSize"]);
@@ -87,6 +87,8 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(strtol(props["maxVClusterSize"].c_str(),NULL,10) == 50);
 	BOOST_TEST_MESSAGE("Maximum Interstitial Cluster Size = " << props["maxIClusterSize"]);
 	BOOST_REQUIRE(strtol(props["maxIClusterSize"].c_str(),NULL,10) == 1);
+	BOOST_TEST_MESSAGE("Maximum Mixed Species Cluster Size = " << props["maxMixedClusterSize"]);
+	BOOST_REQUIRE(strtol(props["maxMixedClusterSize"].c_str(),NULL,10) == 52);
 	BOOST_TEST_MESSAGE("Number of He clusters = " << props["numHeClusters"]);
 	BOOST_REQUIRE(strtol(props["numHeClusters"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Number of V clusters = " << props["numVClusters"]);

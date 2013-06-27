@@ -14,6 +14,12 @@ class VCluster : public PSICluster
 
     private:
 
+	/**
+	 * The default constructor is private because PSIClusters must always be
+	 * initialized with a size.
+	 */
+	VCluster():PSICluster(1) {}
+
     public:
 
         /**
@@ -24,6 +30,13 @@ class VCluster : public PSICluster
 
         //! Destructor
         ~VCluster(); 
+
+    	/**
+    	 * This operation overrides getConnectivity() from the base class to
+    	 * provide the proper connectivity for a V cluster.
+    	 * @return The connectivity array
+    	 */
+        virtual std::vector<int> getConnectivity();
 
 };  //end class VCluster
 

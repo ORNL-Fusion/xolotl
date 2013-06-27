@@ -46,7 +46,6 @@ double Reactant::getTotalFlux() {
 
 void Reactant::setReactionNetwork(const std::shared_ptr<ReactionNetwork> reactionNetwork) {
 	network = reactionNetwork;
-	std::cout << "Number of Reactants = " << network->reactants->size() << std::endl;
 	return;
 }
 
