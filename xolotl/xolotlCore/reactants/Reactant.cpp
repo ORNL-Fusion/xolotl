@@ -78,14 +78,15 @@ const std::string Reactant::toString()
 }
 
 
-ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) :
-	ReactionNetwork()
+ReactionNetwork::ReactionNetwork(const ReactionNetwork &other)
 {
 	// The copy constructor of std::map copies each of the keys and values.
 	properties.reset(new std::map<std::string, std::string>(*other.properties));
 	
 	// Copy the reactants list by pushing a copy of each element onto the
 	// reactants vector
+	
+	reactants.reset(new std::vector<std::shared_ptr<Reactant>>);
 	
 	for (std::vector<std::shared_ptr<Reactant>>::iterator reactantIt =
 		other.reactants->begin(); reactantIt != other.reactants->end();
