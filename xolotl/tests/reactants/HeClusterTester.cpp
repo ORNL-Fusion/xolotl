@@ -76,8 +76,9 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	connectivityArray = reactants.at(9)->getConnectivity();
 	// Since this is a helium cluster of size 10, it should interact with
 	// everything up to size 9.
+	BOOST_REQUIRE(connectivityArray.size() == 9);
 	for (int i = 0; i < 9; i++) {
-		BOOST_REQUIRE(1 == connectivityArray.at(i));
+		BOOST_REQUIRE(connectivityArray.at(i) == 1);
 	}
 	// And not the last one
 	BOOST_REQUIRE(0 == connectivityArray.at(9));

@@ -22,6 +22,14 @@ FIND_PACKAGE(PETSc REQUIRED)
 # Find MPI
 FIND_PACKAGE(MPI REQUIRED)
 
+# Report package information
+message("----- Configuration Information -----")
+message("PETSc includes = ${PETSC_INCLUDES}")
+message("PETSc libraries = ${PETSC_LIBRARIES}")
+message("MPI C includes = ${MPI_INCLUDE_PATH}")
+message("MPI C libraries = ${MPI_LIBRARIES}")
+message("----- End Configuration Information -----")
+
 # Enable testing.
 enable_testing()
 
@@ -47,10 +55,10 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
 include_directories(${PETSC_INCLUDES})
 
 # Setup the library list
-set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO ${PETSC_LIBRARIES} ${MPI_C_LIBRARIES})
+set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO ${PETSC_LIBRARIES} ${MPI_LIBRARIES})
 
 # Add an executable for the main program
-ADD_EXECUTABLE ( xolotl main.cpp)
+ADD_EXECUTABLE (xolotl main.cpp)
 
 # Link the reactants library
 target_link_libraries(xolotl ${XOLOTL_LIBS})

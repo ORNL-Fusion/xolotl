@@ -13,7 +13,7 @@ file(GLOB HEADERS *.h)
 file(GLOB SRC *.cpp)
 
 #Include the MPI directories
-include_directories(${MPI_C_INCLUDE_PATH})
+include_directories(${MPI_INCLUDE_PATH})
 
 #Add a library to hold the IO code (mostly MPI)
 add_library(${LIBRARY_NAME} SHARED ${SRC})
