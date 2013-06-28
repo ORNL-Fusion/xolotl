@@ -54,7 +54,7 @@ namespace xolotlCore {
  * single-species I cluster.
  * > maxMixedClusterSize - The number of species of all types in the largest
  * mixed species in the network. It is equal to the sum of the max single
- * species sizes by default.
+ * species helium and vacancy cluster sizes by default.
  * > numHeClusters - The number of single-species He clusters of all sizes in
  * the network.
  * > numVClusters - The number of single-species V clusters of all sizes in the

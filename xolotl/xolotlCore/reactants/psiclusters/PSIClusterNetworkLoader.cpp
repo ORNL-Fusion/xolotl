@@ -215,14 +215,11 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		for (int i = 0; i < mixedClusters.size(); i++)
 			network->reactants->push_back(mixedClusters[i]);
 		// Set the max number of mixed clusters
-		int maxMixedClusterSize = strtol(
-				(*props)["maxHeClusterSize"].c_str(), NULL, 10)
-				+ strtol((*props)["maxVClusterSize"].c_str(),
-						NULL, 10)
-				+ strtol((*props)["maxIClusterSize"].c_str(),
-						NULL, 10);
-		(*props)["maxMixedClusterSize"] = std::to_string((long long) maxMixedClusterSize);
-		std::cout << "MSize = " << (*props)["maxMixedClusterSize"] << std::endl;
+		int maxMixedClusterSize = strtol((*props)["maxHeClusterSize"].c_str(),
+				NULL, 10)
+				+ strtol((*props)["maxVClusterSize"].c_str(), NULL, 10);
+		(*props)["maxMixedClusterSize"] = std::to_string(
+				(long long) maxMixedClusterSize);
 
 	}
 

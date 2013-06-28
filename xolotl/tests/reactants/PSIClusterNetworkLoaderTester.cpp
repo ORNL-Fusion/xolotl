@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_TEST_MESSAGE("Maximum Interstitial Cluster Size = " << props["maxIClusterSize"]);
 	BOOST_REQUIRE(strtol(props["maxIClusterSize"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Maximum Mixed Species Cluster Size = " << props["maxMixedClusterSize"]);
-	BOOST_REQUIRE(strtol(props["maxMixedClusterSize"].c_str(),NULL,10) == 52);
+	BOOST_REQUIRE(strtol(props["maxMixedClusterSize"].c_str(),NULL,10) == 51);
 	BOOST_TEST_MESSAGE("Number of He clusters = " << props["numHeClusters"]);
 	BOOST_REQUIRE(strtol(props["numHeClusters"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Number of V clusters = " << props["numVClusters"]);
