@@ -9,13 +9,19 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
+#include <HeCluster.h>
 #include <VCluster.h>
+#include <InterstitialCluster.h>
+#include <MixedSpeciesCluster.h>
+#include "SimpleReactionNetwork.h"
 #include <memory>
 #include <typeinfo>
 #include <limits>
+#include <algorithm>
 
 using namespace std;
 using namespace xolotlCore;
+using namespace testUtils;
 
 /**
  * This operation writes information about the cluster to stdout
@@ -36,29 +42,11 @@ void writeCluster(shared_ptr<Reactant> cluster) {
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Local Declarations
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+	int maxClusterSize = 10, numClusters = maxClusterSize;
 	vector<int> connectivityArray;
-	shared_ptr<ReactionNetwork> network(new ReactionNetwork());
 	shared_ptr < vector<shared_ptr<Reactant> > > reactants = network->reactants;
 	shared_ptr<std::map<std::string, std::string>> props = network->properties;
-
-	// Fill the ReactionNetwork with 10 He clusters
-	for (int i = 1; i <= 10; i++) {
-		// Create a vacancy cluster with cluster size i
-		shared_ptr<VCluster> cluster(new VCluster(i));
-		// Add it to the network
-		reactants->push_back(cluster);
-		// Register the network with the cluster
-		cluster->setReactionNetwork(network);
-	}
-
-	// Setup the properties map
-	(*props)["maxHeClusterSize"] = "10";
-	(*props)["maxVClusterSize"] = "1";
-	(*props)["maxIClusterSize"] = "1";
-	(*props)["numHeClusters"] = "10";
-	(*props)["numVClusters"] = "0";
-	(*props)["numIClusters"] = "0";
-	(*props)["numMixedClusters"] = "0";
 
 	// Write the cluster information to stdout
 	BOOST_TEST_MESSAGE("Sizes of clusters in network:");
@@ -75,18 +63,41 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	BOOST_TEST_MESSAGE(
 			"Number of mixed clusters = " << (*props)["numMixedClusters"]);
 
-	// Get the connectivity of the first reactant
-	connectivityArray = reactants->at(0)->getConnectivity();
-	// Since this is a vacancy cluster of size 1, it should interact with
-	// everything up to size 9.
+	// Get the connectivity of the fifth vacancy (index 14)
+	connectivityArray = reactants->at(numClusters + 4)->getConnectivity();
+	// The connectivity array should be the same size as the reactants array
 	BOOST_TEST_MESSAGE(
 			"Connectivity Array Size = " << connectivityArray.size());
-	BOOST_REQUIRE(connectivityArray.size() == 10);
-	for (int i = 0; i < 9; i++) {
+	BOOST_REQUIRE(connectivityArray.size() == reactants->size());
+
+	// Since this is a vacancy cluster of size 5, it should not inteact with
+	// vacancies bigger than maxClusterSize - 5 (which is conveniently 5 in
+	// this case). So check the small vacancies first...
+	for (int i = numClusters; i < numClusters + maxClusterSize - 5; i++) {
 		BOOST_REQUIRE(connectivityArray.at(i) == 1);
 	}
-	// And not the last one
-	BOOST_REQUIRE(connectivityArray.at(9) == 0);
+	// ...and the big vacancies second.
+	for (int i = numClusters + maxClusterSize - 5;
+			i < numClusters + maxClusterSize; i++) {
+		BOOST_REQUIRE(connectivityArray.at(i) == 0);
+	}
+
+	// Vacancies can interact with everything else, within size limits.
+
+	// Check single-species He
+	for (int i = 0; i < numClusters - 5; i++) {
+		BOOST_REQUIRE(connectivityArray.at(i) == 1);
+	}
+
+	// Check single-species interstitials
+	for (int i = 2*numClusters; i < 3*numClusters; i++) {
+		BOOST_REQUIRE(connectivityArray.at(i) == 1);
+	}
+
+	// Check mixed species
+	for (int i = 3*numClusters; i < reactants->size()-5; i++) {
+		BOOST_REQUIRE(connectivityArray.at(i) == 1);
+	}
 
 	return;
 }

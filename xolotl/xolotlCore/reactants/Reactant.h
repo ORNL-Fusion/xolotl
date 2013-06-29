@@ -26,109 +26,110 @@ class ReactionNetwork;
  * manipulate the concentration, etc. It should be subclassed to add
  * functionality for calculate fluxes and computing connectivity.
  */
-class Reactant
-{
+class Reactant {
 
-	protected:
+protected:
 
-		//! The total concentration of this Reactant.
-		double concentration;
+	//! The total concentration of this Reactant.
+	double concentration;
 
-		//! The name of this Reactant.
-		std::string name;
+	//! The name of this Reactant.
+	std::string name;
 
-		//! An integer identification number for this reactant.
-		int id;
+	//! An integer identification number for this reactant.
+	int id;
 
-		//! The reaction network that includes this reactant
-		std::shared_ptr<ReactionNetwork> network;
+	//! The reaction network that includes this reactant
+	std::shared_ptr<ReactionNetwork> network;
 
-	public:
+public:
 
-		//! The constructor.
-		Reactant();
-		
-		Reactant(const Reactant &other);
+	//! The constructor.
+	Reactant();
 
-		//! Destructor
-		~Reactant(); 
+	Reactant(const Reactant &other);
 
-		/**
-		 * An alternative constructor that can be used to create a reactant
-		 * with an initial concentration.
-		 * @param conc The initial concentration
-		 */
-		Reactant(double conc); 
+	//! Destructor
+	~Reactant();
 
-		/**
-		 * This operation returns the current concentration.
-		 * @return The concentration of this reactant
-		 */
-		double getConcentration(); 
+	/**
+	 * An alternative constructor that can be used to create a reactant
+	 * with an initial concentration.
+	 * @param conc The initial concentration
+	 */
+	Reactant(double conc);
 
-		/**
-		 * This operation increases the concentration of the reactant by the
-		 * specified amount.
-		 * @param deltaConc the change in concentration
-		 */
-		void increaseConcentration(double deltaConc); 
+	/**
+	 * This operation returns the current concentration.
+	 * @return The concentration of this reactant
+	 */
+	double getConcentration();
 
-		/**
-		 * This operation decreases the concentration of the reactant by the
-		 * specified amount.
-		 * @param deltaConc the change in concentration
-		 */
-		void decreaseConcentration(double deltaConc); 
+	/**
+	 * This operation increases the concentration of the reactant by the
+	 * specified amount.
+	 * @param deltaConc the change in concentration
+	 */
+	void increaseConcentration(double deltaConc);
 
-		/**
-		 * This operation sets the concentration of the reactant to the
-		 * specified amount.
-		 * @param conc The new concentation
-		 */
-		void setConcentration(double conc); 
+	/**
+	 * This operation decreases the concentration of the reactant by the
+	 * specified amount.
+	 * @param deltaConc the change in concentration
+	 */
+	void decreaseConcentration(double deltaConc);
 
-		/**
-		 * This operation sets the concentration of the reactant to zero.
-		 */
-		void zero(); 
+	/**
+	 * This operation sets the concentration of the reactant to the
+	 * specified amount.
+	 * @param conc The new concentation
+	 */
+	void setConcentration(double conc);
 
-		/**
-		 * This operation returns the total flux of this reactant in the
-		 * current network.
-		 * @return The total change in flux for this reactant due to all
-		 * reactions
-		 */
-		virtual double getTotalFlux();
+	/**
+	 * This operation sets the concentration of the reactant to zero.
+	 */
+	void zero();
 
-		/**
-		 * This operation sets the collection of other reactants that make up
-		 * the reaction network in which this reactant exists.
-		 * @param network The reaction network of which this reactant is a part
-		 */
-		void setReactionNetwork(const std::shared_ptr<ReactionNetwork> reactionNetwork);
+	/**
+	 * This operation returns the total flux of this reactant in the
+	 * current network.
+	 * @return The total change in flux for this reactant due to all
+	 * reactions
+	 */
+	virtual double getTotalFlux();
 
-        /**
-         * This operation returns a list that represents the connectivity
-         * between this Reactant and other Reactants in the network.
-         * "Connectivity" indicates whether two Reactants interact, via any
-         * mechanism, in an abstract sense (as if they were nodes connected by
-         * an edge on a network graph).
-         * @return An array of ones and zeros that indicate whether or not this
-         * Reactant interacts via any mechanism with another Reactant. A "1" at
-         * the i-th entry in this array indicates that the Reactant interacts
-         * with the i-th Reactant in the ReactionNetwork and a "0" indicates
-         * that it does not.
-         */
-        virtual std::vector<int> getConnectivity();
+	/**
+	 * This operation sets the collection of other reactants that make up
+	 * the reaction network in which this reactant exists.
+	 * @param network The reaction network of which this reactant is a part
+	 */
+	void setReactionNetwork(
+			const std::shared_ptr<ReactionNetwork> reactionNetwork);
 
-        /**
-         * This operation writes the contents of the reactant to a string. This
-         * operation should be overridden by subclasses.
-         * @return A serialized version of this reactant as a string.
-         */
-        virtual const std::string toString();
+	/**
+	 * This operation returns a list that represents the connectivity
+	 * between this Reactant and other Reactants in the network.
+	 * "Connectivity" indicates whether two Reactants interact, via any
+	 * mechanism, in an abstract sense (as if they were nodes connected by
+	 * an edge on a network graph).
+	 * @return An array of ones and zeros that indicate whether or not this
+	 * Reactant interacts via any mechanism with another Reactant. A "1" at
+	 * the i-th entry in this array indicates that the Reactant interacts
+	 * with the i-th Reactant in the ReactionNetwork and a "0" indicates
+	 * that it does not.
+	 */
+	virtual std::vector<int> getConnectivity();
 
-};  //end class Reactant
+	/**
+	 * This operation writes the contents of the reactant to a string. This
+	 * operation should be overridden by subclasses.
+	 * @return A serialized version of this reactant as a string.
+	 */
+	virtual const std::string toString();
+
+};
+//end class Reactant
 
 /**
  *  This is a simple convenience class that contains a set of Reactants and the
@@ -147,20 +148,20 @@ public:
 	 * The set of reactants. The exact order of the reactants in the set is
 	 * specified by the class that loaded them.
 	 */
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> reactants;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants;
 
 	//! The constructor. It initializes the properties map and reactants vector.
 	ReactionNetwork() :
-		properties(new std::map<std::string, std::string>()),
-		reactants(new std::vector<std::shared_ptr<Reactant>>())
+	properties(new std::map<std::string, std::string>()),
+	reactants(new std::vector<std::shared_ptr<Reactant>>())
 	{}
-	
+
 	/**
 	 * The copy constructor
 	 * @param other The ReactionNetwork to copy
 	 */
 	ReactionNetwork(const ReactionNetwork &other);
-	
+
 	//! The destructor
 	virtual ~ReactionNetwork() {
 	}

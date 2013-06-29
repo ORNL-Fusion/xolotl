@@ -13,12 +13,15 @@
 #include <VCluster.h>
 #include <InterstitialCluster.h>
 #include <MixedSpeciesCluster.h>
+#include "SimpleReactionNetwork.h"
 #include <memory>
 #include <typeinfo>
 #include <limits>
+#include <algorithm>
 
 using namespace std;
 using namespace xolotlCore;
+using namespace testUtils;
 
 /**
  * This operation writes information about the cluster to stdout
@@ -39,62 +42,12 @@ void writeCluster(shared_ptr<Reactant> cluster) {
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Local Declarations
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+	int numHe = 1, numV = 1;
 	int maxClusterSize = 10, numClusters = maxClusterSize;
 	vector<int> connectivityArray;
-	shared_ptr<ReactionNetwork> network(new ReactionNetwork());
-	shared_ptr < vector<shared_ptr<Reactant> > > reactants = network->reactants;
+	shared_ptr<vector<shared_ptr<Reactant> > > reactants = network->reactants;
 	shared_ptr<std::map<std::string, std::string>> props = network->properties;
-
-	// Fill the ReactionNetwork with 10 He clusters
-	for (int i = 0; i < numClusters; i++) {
-		// Create a He cluster with cluster size i
-		shared_ptr<HeCluster> cluster(new HeCluster(i+1));
-		// Add it to the network
-		reactants->push_back(cluster);
-		// Register the network with the cluster
-		cluster->setReactionNetwork(network);
-	}
-
-	// Add vacancy clusters
-	for (int i = numClusters; i < 2*numClusters - 1; i++) {
-		// Create a He cluster with cluster size i
-		shared_ptr<VCluster> cluster(new VCluster(i+1-numClusters));
-		// Add it to the network
-		reactants->push_back(cluster);
-		// Register the network with the cluster
-		cluster->setReactionNetwork(network);
-	}
-
-	// Add interstitial clusters
-	for (int i = 2*numClusters; i < 3*numClusters - 1; i++) {
-		// Create a He cluster with cluster size i
-		shared_ptr<InterstitialCluster> cluster(new InterstitialCluster(i+1-2*numClusters));
-		// Add it to the network
-		reactants->push_back(cluster);
-		// Register the network with the cluster
-		cluster->setReactionNetwork(network);
-	}
-
-	// Add mixed-species clusters -- FIX SIZES!
-//	for (int i = 3*numClusters; i < 3*numClusters; i++) {
-//		// Create a He cluster with cluster size i
-//		shared_ptr<MixedSpeciesCluster> cluster(new MixedSpeciesCluster(i+1));
-//		// Add it to the network
-//		reactants->push_back(cluster);
-//		// Register the network with the cluster
-//		cluster->setReactionNetwork(network);
-//	}
-
-	// Setup the properties map
-	(*props)["maxHeClusterSize"] = std::to_string((long long) maxClusterSize);
-	(*props)["maxVClusterSize"] = std::to_string((long long) maxClusterSize);
-	(*props)["maxIClusterSize"] = std::to_string((long long) maxClusterSize);
-	(*props)["maxMixedClusterSize"] = std::to_string((long long) 2*maxClusterSize);
-	(*props)["numHeClusters"] = std::to_string((long long) numClusters);
-	(*props)["numVClusters"] = std::to_string((long long) numClusters);
-	(*props)["numIClusters"] = std::to_string((long long) numClusters);
-	(*props)["numMixedClusters"] = std::to_string(
-			(long long) (numClusters * numClusters));
 
 	// Write the cluster information to stdout
 	BOOST_TEST_MESSAGE("Sizes of clusters in network:");
@@ -136,8 +89,11 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Helium can interact with a mixed-species cluster so long as the sum of
 	// the number of helium atoms and the size of the mixed-species cluster
-	// does not exceed the maximum mixed-species cluster size.
+	// does not exceed the maximum mixed-species cluster size. Since
+	// MixedSpeciesClusters start with a minimum size of two in this case, He
+	// does not interact with the last two entries in the set.
 	for (int i = 3 * numClusters; i < reactants->size() - 1; i++) {
+		BOOST_TEST_MESSAGE("mixed index = " << i);
 		BOOST_REQUIRE(connectivityArray.at(i) == 1);
 	}
 	// Single-species Helium can interact with all but the last.

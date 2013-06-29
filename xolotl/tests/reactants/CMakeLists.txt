@@ -4,16 +4,19 @@ SET(PACKAGE_NAME "xolotl.tests.reactants")
 #Set the description
 SET(PACKAGE_DESCRIPTION "Tests for the Xolotl reactants package")
 
-#include directories from the source and boost binaries
+#Include directories from the source and boost binaries
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${Boost_BINARY_DIRS})
 
-#link the directories
+#Link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlCore/reactants)
 
 #Get the test files
-file(GLOB tests *.cpp)
+file(GLOB tests *Tester.cpp)
+
+#Create the utility library
+add_library(testUtils SimpleReactionNetwork.cpp)
 
 #If boost was found, create tests
 if(Boost_FOUND)
@@ -22,7 +25,7 @@ if(Boost_FOUND)
         message(STATUS "Making test ${test}")
         get_filename_component(testName ${test} NAME_WE)
         add_executable(${testName} ${test})
-        target_link_libraries(${testName} xolotlReactants)
+        target_link_libraries(${testName} xolotlReactants testUtils)
         add_test(${testName} ${testName}) 
         #add a label so the tests can be run separately
         set_property(TEST ${testName} PROPERTY LABELS ${PACKAGE_NAME})   

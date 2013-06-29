@@ -32,6 +32,7 @@
 								<option id="gnu.cpp.compiler.option.include.paths.1885871494" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/opt/petsc-latest_mpich-3.0.1/include"/>
 									<listOptionValue builtIn="false" value="/opt/mpich-3.0.1_gcc-4.4.6/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/xolotl-Source@xolotl}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.332986671" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -41,6 +42,7 @@
 								<option id="gnu.c.compiler.option.include.paths.1904182748" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/opt/petsc-latest_mpich-3.0.1/include"/>
 									<listOptionValue builtIn="false" value="/opt/mpich-3.0.1_gcc-4.4.6/include"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/xolotl-Source@xolotl}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1757270023" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -78,7 +80,11 @@
 		<project id="xolotl.cdt.managedbuild.target.gnu.exe.1508698512" name="Executable" projectType="cdt.managedbuild.target.gnu.exe"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
-	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/xolotl-Source@xolotl"/>
+		</configuration>
+	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings">
 		<doc-comment-owner id="org.eclipse.cdt.ui.doxygen">
 			<path value=""/>
