@@ -9,10 +9,6 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
-#include <HeCluster.h>
-#include <VCluster.h>
-#include <InterstitialCluster.h>
-#include <MixedSpeciesCluster.h>
 #include "SimpleReactionNetwork.h"
 #include <memory>
 #include <typeinfo>
@@ -38,7 +34,10 @@ void writeCluster(shared_ptr<Reactant> cluster) {
  * This suite is responsible for testing the HeCluster.
  */BOOST_AUTO_TEST_SUITE(HeCluster_testSuite)
 
-/** This operation checks the ability of the HeCluster to describe its connectivity to other clusters. */
+/**
+ * This operation checks the ability of the HeCluster to describe
+ * its connectivity to other clusters.
+ */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Local Declarations

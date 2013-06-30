@@ -31,11 +31,11 @@ void writeCluster(shared_ptr<Reactant> cluster) {
 }
 
 /**
- * This suite is responsible for testing the InterstitialCluster.
- */BOOST_AUTO_TEST_SUITE(InterstitialCluster_testSuite)
+ * This suite is responsible for testing the MixedSpeciesCluster.
+ */BOOST_AUTO_TEST_SUITE(MixedSpeciesCluster_testSuite)
 
 /**
- * This operation checks the ability of the InterstitialCluster to describe
+ * This operation checks the ability of the MixedSpeciesCluster to describe
  * its connectivity to other clusters.
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
@@ -62,47 +62,27 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	BOOST_TEST_MESSAGE(
 			"Number of mixed clusters = " << (*props)["numMixedClusters"]);
 
-	// Get the connectivity of the fifth interstitial (index 24)
-	connectivityArray = reactants->at(2 * numClusters + 4)->getConnectivity();
+	// Get the connectivity of the fifth mixed-species cluster (index 34). It
+	// has three helium atoms and three vacancies.
+	connectivityArray = reactants->at(3 * numClusters + 4)->getConnectivity();
 	// The connectivity array should be the same size as the reactants array
 	BOOST_TEST_MESSAGE(
 			"Connectivity Array Size = " << connectivityArray.size());
 	BOOST_REQUIRE(connectivityArray.size() == reactants->size());
 
-	// Since this is an interstitial cluster of size 5, it should not interact with
-	// interstitials bigger than maxClusterSize - 5 (which is conveniently 5 in
-	// this case). So check the small interstitials first...
-	for (int i = 2 * numClusters; i < 2 * numClusters + maxClusterSize - 5;
-			i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 1);
-	}
-	// ...and the big interstitials second.
-	for (int i = 2 * numClusters + maxClusterSize - 5;
-			i < 2 * numClusters + maxClusterSize; i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 0);
-	}
-
-	// Interstitials can interact with other interstitials, vacancies and
-	// mixed-species clusters, but not helium. They cannot cluster with other
-	// interstitials that are so large that the combination of the two would
-	// produce an interstitial above the maximum size.
-
-	// Check single-species He. Interstititals should never interact with He.
-	for (int i = 0; i < numClusters; i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 0);
-	}
-
-	// Check single-species V. Interstitials should always interact with V.
-	for (int i = numClusters; i < 2 * numClusters; i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 1);
-	}
-
-	// Check mixed species. Interstitials should always interact with
-	// mixed-species clusters because they only reduce the size, never
-	// increase it.
-	for (int i = 3 * numClusters; i < reactants->size(); i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 1);
-	}
+	// This cluster should only interact with a few specific clusters:
+	// >single He - helium dissociation
+	// >single V - vacancy dissociation
+	// >single I - interstitial absorption
+	// >[(A-1)*He](B*V) - helium dissociation
+	// >(A*He)*[(B-1)*V] - vacancy dissociation
+	// >(A*He)*[(B+1)*V] - interstitial absorption
+	BOOST_REQUIRE(connectivityArray.at(0) == 1);
+	BOOST_REQUIRE(connectivityArray.at(numClusters-1) == 1);
+	BOOST_REQUIRE(connectivityArray.at(2*numClusters-1) == 1);
+	BOOST_REQUIRE(connectivityArray.at(3*numClusters+2) == 1);
+	BOOST_REQUIRE(connectivityArray.at(3*numClusters+3) == 1);
+	BOOST_REQUIRE(connectivityArray.at(3*numClusters+6) == 1);
 
 	return;
 }

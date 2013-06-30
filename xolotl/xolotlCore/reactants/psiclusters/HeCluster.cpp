@@ -1,6 +1,5 @@
 // Includes
 #include "HeCluster.h"
-#include <iostream>
 
 using namespace xolotlCore;
 
@@ -17,7 +16,6 @@ std::vector<int> HeCluster::getConnectivity() {
 
 	// Local Declarations
 	std::map<std::string, std::string> props = *(network->properties);
-	int maxHeSize = strtol(props["maxHeClusterSize"].c_str(), NULL, 10);
 	int maxMixedSize = strtol(props["maxMixedClusterSize"].c_str(), NULL, 10);
 	int numHe = strtol(props["numHeClusters"].c_str(), NULL, 10);
 	int numV = strtol(props["numVClusters"].c_str(), NULL, 10);

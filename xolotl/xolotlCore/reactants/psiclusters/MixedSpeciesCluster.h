@@ -72,6 +72,13 @@ public:
 	 */
 	int getSpeciesSize(const std::string speciesName);
 
+	/**
+	 * This operation overrides getConnectivity() from the base class to
+	 * provide the proper connectivity for a mixed-species cluster.
+	 * @return The connectivity array
+	 */
+    virtual std::vector<int> getConnectivity();
+
 };
 //end class MixedSpeciesCluster
 

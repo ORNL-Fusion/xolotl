@@ -9,10 +9,6 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
-#include <HeCluster.h>
-#include <VCluster.h>
-#include <InterstitialCluster.h>
-#include <MixedSpeciesCluster.h>
 #include "SimpleReactionNetwork.h"
 #include <memory>
 #include <typeinfo>
@@ -38,7 +34,10 @@ void writeCluster(shared_ptr<Reactant> cluster) {
  * This suite is responsible for testing the VCluster.
  */BOOST_AUTO_TEST_SUITE (VCluster_testSuite)
 
-/** This operation checks the ability of the VCluster to describe its connectivity to other clusters. */
+/**
+ * This operation checks the ability of the VCluster to describe
+ * its connectivity to other clusters.
+ */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Local Declarations
@@ -70,7 +69,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			"Connectivity Array Size = " << connectivityArray.size());
 	BOOST_REQUIRE(connectivityArray.size() == reactants->size());
 
-	// Since this is a vacancy cluster of size 5, it should not inteact with
+	// Since this is a vacancy cluster of size 5, it should not interact with
 	// vacancies bigger than maxClusterSize - 5 (which is conveniently 5 in
 	// this case). So check the small vacancies first...
 	for (int i = numClusters; i < numClusters + maxClusterSize - 5; i++) {
@@ -84,18 +83,20 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Vacancies can interact with everything else, within size limits.
 
-	// Check single-species He
-	for (int i = 0; i < numClusters - 5; i++) {
+	// Check single-species He. Since this is a vacancy of size 5, it can
+	// interact with all of the single-species helium (all size 10 or less)
+	// in this network.
+	for (int i = 0; i < numClusters; i++) {
 		BOOST_REQUIRE(connectivityArray.at(i) == 1);
 	}
 
 	// Check single-species interstitials
-	for (int i = 2*numClusters; i < 3*numClusters; i++) {
+	for (int i = 2 * numClusters; i < 3 * numClusters; i++) {
 		BOOST_REQUIRE(connectivityArray.at(i) == 1);
 	}
 
 	// Check mixed species
-	for (int i = 3*numClusters; i < reactants->size()-5; i++) {
+	for (int i = 3 * numClusters; i < reactants->size() - 5; i++) {
 		BOOST_REQUIRE(connectivityArray.at(i) == 1);
 	}
 

@@ -7,7 +7,8 @@ namespace testUtils {
 
 /**
  * This class creates a simple reaction network used for testing. It contains
- * 10 each of He, V and I clusters and twenty HeV clusters.
+ * 10 each of He, V and I clusters and twenty HeV clusters. The HeV clusters are
+ * stored in ascending order of He and then V, (1,1;2,1;2,2;3,2;3,3;etc.).
  *
  * It does not register itself as the ReactionNetwork for its clusters because
  * of limitations with shared_ptrs and "this." So, the

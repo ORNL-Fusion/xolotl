@@ -1,6 +1,5 @@
 // Includes
 #include "VCluster.h"
-#include <iostream>
 
 using namespace xolotlCore;
 
@@ -17,7 +16,6 @@ std::vector<int> VCluster::getConnectivity() {
 
 	// Local Declarations
 	std::map<std::string, std::string> props = *(network->properties);
-	int maxHeSize = strtol(props["maxHeClusterSize"].c_str(), NULL, 10);
 	int maxMixedSize = strtol(props["maxMixedClusterSize"].c_str(), NULL, 10);
 	int numHe = strtol(props["numHeClusters"].c_str(), NULL, 10);
 	int numV = strtol(props["numVClusters"].c_str(), NULL, 10);
@@ -52,9 +50,7 @@ std::vector<int> VCluster::getConnectivity() {
 	//----- A*V + B*V --> (A+B)*V -----
 	// This cluster should interact with all other clusters of the same type up
 	// to the max size minus the size of this one to produce larger clusters.
-	std::cout << "starting index = " << numHe << std::endl;
 	for (int i = numHe; i < numHe + numV - size; i++) {
-		std::cout << "vacancy index = " << i << std::endl;
 		connectivityArray.at(i) = 1;
 	}
 
