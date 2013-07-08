@@ -31,11 +31,11 @@ void writeCluster(shared_ptr<Reactant> cluster) {
 }
 
 /**
- * This suite is responsible for testing the MixedSpeciesCluster.
- */BOOST_AUTO_TEST_SUITE(MixedSpeciesCluster_testSuite)
+ * This suite is responsible for testing the HeVCluster.
+ */BOOST_AUTO_TEST_SUITE(HeVCluster_testSuite)
 
 /**
- * This operation checks the ability of the MixedSpeciesCluster to describe
+ * This operation checks the ability of the HeVCluster to describe
  * its connectivity to other clusters.
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
@@ -54,11 +54,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			"Maximum He Cluster Size = " << (*props)["maxHeClusterSize"]);
 	BOOST_TEST_MESSAGE(
 			"Maximum V Cluster Size = " << (*props)["maxVClusterSize"]);
-	BOOST_TEST_MESSAGE(
-			"Maximum Interstitial Cluster Size = " << (*props)["maxIClusterSize"]);
 	BOOST_TEST_MESSAGE("Number of He clusters = " << (*props)["numHeClusters"]);
 	BOOST_TEST_MESSAGE("Number of V clusters = " << (*props)["numVClusters"]);
-	BOOST_TEST_MESSAGE("Number of I clusters = " << (*props)["numIClusters"]);
 	BOOST_TEST_MESSAGE(
 			"Number of mixed clusters = " << (*props)["numMixedClusters"]);
 
@@ -77,6 +74,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// >[(A-1)*He](B*V) - helium dissociation
 	// >(A*He)*[(B-1)*V] - vacancy dissociation
 	// >(A*He)*[(B+1)*V] - interstitial absorption
+	
+	for (int a : connectivityArray)
+		printf("%d\n", a);
+	
 	BOOST_REQUIRE(connectivityArray.at(0) == 1);
 	BOOST_REQUIRE(connectivityArray.at(numClusters-1) == 1);
 	BOOST_REQUIRE(connectivityArray.at(2*numClusters-1) == 1);

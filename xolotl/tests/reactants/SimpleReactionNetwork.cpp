@@ -10,7 +10,7 @@
 #include <HeCluster.h>
 #include <VCluster.h>
 #include <InterstitialCluster.h>
-#include <MixedSpeciesCluster.h>
+#include <HeVCluster.h>
 #include "SimpleReactionNetwork.h"
 #include <memory>
 #include <typeinfo>
@@ -60,8 +60,8 @@ SimpleReactionNetwork::SimpleReactionNetwork() :
 		speciesMap["He"] = numHe;
 		speciesMap["V"] = numV;
 		// Create a He cluster with cluster size i
-		std::shared_ptr<MixedSpeciesCluster> cluster(
-				new MixedSpeciesCluster(speciesMap));
+		std::shared_ptr<HeVCluster> cluster(
+				new HeVCluster(speciesMap));
 		// Add it to the network
 		reactants->push_back(cluster);
 		// Figure out which species to increment for the next iteration
@@ -77,12 +77,12 @@ SimpleReactionNetwork::SimpleReactionNetwork() :
 	(*properties)["maxHeClusterSize"] = std::to_string((long long) maxClusterSize);
 	(*properties)["maxVClusterSize"] = std::to_string((long long) maxClusterSize);
 	(*properties)["maxIClusterSize"] = std::to_string((long long) maxClusterSize);
-	(*properties)["maxMixedClusterSize"] = std::to_string(
+	(*properties)["maxHeVClusterSize"] = std::to_string(
 			(long long) 2 * maxClusterSize);
 	(*properties)["numHeClusters"] = std::to_string((long long) numClusters);
 	(*properties)["numVClusters"] = std::to_string((long long) numClusters);
 	(*properties)["numIClusters"] = std::to_string((long long) numClusters);
-	(*properties)["numMixedClusters"] = std::to_string(
+	(*properties)["numHeVClusters"] = std::to_string(
 			(long long) (numClusters * numClusters));
 
 }

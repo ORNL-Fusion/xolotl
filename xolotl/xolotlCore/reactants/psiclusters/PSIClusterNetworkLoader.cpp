@@ -13,7 +13,7 @@
 #include "HeCluster.h"
 #include "VCluster.h"
 #include "InterstitialCluster.h"
-#include "MixedSpeciesCluster.h"
+#include "HeVCluster.h"
 
 using namespace xolotlCore;
 
@@ -60,7 +60,7 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
 		speciesMap["He"] = numHe;
 		speciesMap["V"] = numV;
 		speciesMap["I"] = numI;
-		cluster = std::make_shared < MixedSpeciesCluster > (speciesMap);
+		cluster = std::make_shared < HeVCluster > (speciesMap);
 		numClustersTag = "numMixedClusters";
 		// Update the number of clusters
 		numClusters = strtol((*props)[numClustersTag].c_str(), NULL, 10) + 1;

@@ -969,7 +969,13 @@ void PetscSolver::initialize() {
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	
 	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
-	
+}
+
+#undef __FUNCT__
+#define __FUNCT__ "setupSolver"
+
+void PetscSolver::setupSolver()
+{
 	PetscFunctionBeginUser;
 	ctx.noreactions = PETSC_FALSE;
 	ctx.nodissociations = PETSC_FALSE;

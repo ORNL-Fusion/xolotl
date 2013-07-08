@@ -67,6 +67,12 @@ public:
 	 * throw an exception of type std::string.
 	 */
 	void initialize();
+	
+	/**
+	 * Loads the ReactionNetwork from the NetworkLoader and sets
+	 * the initial conditions of the solver
+	 */
+	void setupSolver();
 
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve
@@ -90,6 +96,7 @@ private:
 	char **CLIArgs;
 	
 	std::shared_ptr<PSIClusterNetworkLoader> networkLoader;
+	std::shared_ptr<ReactionNetwork> network;
 	
 }; //end class PetscSolver
 

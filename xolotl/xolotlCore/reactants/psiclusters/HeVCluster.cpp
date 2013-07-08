@@ -1,37 +1,33 @@
 // Includes
-#include "MixedSpeciesCluster.h"
+#include "HeVCluster.h"
 
 using namespace xolotlCore;
 
-MixedSpeciesCluster::MixedSpeciesCluster(std::map<std::string, int> speciesMap) :
+HeVCluster::HeVCluster(std::map<std::string, int> speciesMap) :
 		PSICluster(1) {
-	numD = 0;
-	numH = 0;
 	numHe = speciesMap["He"];
-	numI = speciesMap["I"];
-	numT = 0;
 	numV = speciesMap["V"];
-	size = numHe + numI + numV;
+	size = numHe + numV;
 	// Set the reactant name appropriately
-	name = "Mixed Species";
+	name = "HeV Cluster";
 }
-MixedSpeciesCluster::~MixedSpeciesCluster() {
+HeVCluster::~HeVCluster() {
 	//TODO Auto-generated method stub
 }
-double MixedSpeciesCluster::getGenByEm() {
-	//TODO Auto-generated method stub
-	return 0;
-}
-double MixedSpeciesCluster::getAnnByEm() {
+double HeVCluster::getGenByEm() {
 	//TODO Auto-generated method stub
 	return 0;
 }
-int MixedSpeciesCluster::getSpeciesSize(const std::string speciesName) {
+double HeVCluster::getAnnByEm() {
+	//TODO Auto-generated method stub
+	return 0;
+}
+int HeVCluster::getSpeciesSize(const std::string speciesName) {
 	//TODO Auto-generated method stub
 	return 0;
 }
 
-std::vector<int> MixedSpeciesCluster::getConnectivity() {
+std::vector<int> HeVCluster::getConnectivity() {
 
 	// Local Declarations
 	std::map<std::string, std::string> props = *(network->properties);
@@ -39,9 +35,9 @@ std::vector<int> MixedSpeciesCluster::getConnectivity() {
 	int totalNumVClusters = strtol(props["numVClusters"].c_str(), NULL, 10);
 	int totalNumIClusters = strtol(props["numIClusters"].c_str(), NULL, 10);
 	int maxMixedSize = strtol(props["maxMixedClusterSize"].c_str(), NULL, 10);
-	int numSingleSpeciesClusters = totalNumHeClusters + totalNumVClusters
-			+ totalNumIClusters;
+	int numSingleSpeciesClusters = totalNumHeClusters + totalNumVClusters;
 	std::vector<int> connectivityArray(network->reactants->size(), 0);
+	
 	// This cluster's index in reactants. It accounts for the interlaced array
 	// and the zero-indexing.
 	int clusterIndex = numSingleSpeciesClusters + (numHe + numV - 1) - 1;

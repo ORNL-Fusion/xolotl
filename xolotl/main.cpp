@@ -30,9 +30,6 @@ void printUsage() {
 //! Main program
 int main(int argc, char **argv) {
 
-	// Local Declarations
-	std::shared_ptr<PSIClusterNetworkLoader> networkLoader(new PSIClusterNetworkLoader());
-
 	printStartMessage();
 	
 	// Check the arguments
@@ -46,7 +43,7 @@ int main(int argc, char **argv) {
 	const char *networkFilename = argv[1];
 	
 	try {
-		// Setup and run the solver
+		// Setup the solver
 		xolotlSolver::PetscSolver solver;
 		solver.setCommandLineOptions(argc, argv);
 		solver.initialize();
@@ -65,8 +62,13 @@ int main(int argc, char **argv) {
 		networkStream = xolotlCore::MPIUtils::broadcastStream(
 			networkStream, 0, MPI_COMM_WORLD);
 		
+		// Create a network loader and set the istream on every MPI task
+		std::shared_ptr<PSIClusterNetworkLoader> networkLoader(
+			new PSIClusterNetworkLoader());
 		networkLoader->setInputstream(networkStream);
+		
 		solver.setNetworkLoader(networkLoader);
+		solver.setupSolver();
 		
 		// Launch the PetscSolver
 		/* solver.solve(); */
