@@ -10,6 +10,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
 #include "SimpleReactionNetwork.h"
+#include <HeVCluster.h>
 #include <memory>
 #include <typeinfo>
 #include <limits>
@@ -19,20 +20,19 @@ using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
 
-/**
- * This operation writes information about the cluster to stdout
- * @param cluster The cluster to dump
- */
-void writeCluster(shared_ptr<Reactant> cluster) {
-	shared_ptr<PSICluster> psiCluster = static_pointer_cast < PSICluster
-			> (cluster);
-	BOOST_TEST_MESSAGE(psiCluster->getSize());
-	return;
-}
 
 /**
  * This suite is responsible for testing the HeVCluster.
- */BOOST_AUTO_TEST_SUITE(HeVCluster_testSuite)
+ */
+BOOST_AUTO_TEST_SUITE(HeVCluster_testSuite)
+
+
+BOOST_AUTO_TEST_CASE(getSpeciesSize) {
+	HeVCluster cluster(4, 5);
+	BOOST_REQUIRE_EQUAL(cluster.getSpeciesSize("He"), 4);
+	BOOST_REQUIRE_EQUAL(cluster.getSpeciesSize("V"), 5);
+	BOOST_REQUIRE_EQUAL(cluster.getSpeciesSize("I"), 0);
+}
 
 /**
  * This operation checks the ability of the HeVCluster to describe
@@ -42,50 +42,74 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Local Declarations
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
-	int maxClusterSize = 10, numClusters = maxClusterSize;
-	vector<int> connectivityArray;
-	shared_ptr < vector<shared_ptr<Reactant> > > reactants = network->reactants;
-	shared_ptr<std::map<std::string, std::string>> props = network->properties;
+	int maxClusterSize = 10;
+	int numClusters = maxClusterSize;
+	
+	shared_ptr<vector<shared_ptr<Reactant>>> reactants = network->reactants;
+	shared_ptr<map<string, string>> props = network->properties;
 
 	// Write the cluster information to stdout
 	BOOST_TEST_MESSAGE("Sizes of clusters in network:");
-	for_each(reactants->begin(), reactants->end(), writeCluster);
-	BOOST_TEST_MESSAGE(
-			"Maximum He Cluster Size = " << (*props)["maxHeClusterSize"]);
-	BOOST_TEST_MESSAGE(
-			"Maximum V Cluster Size = " << (*props)["maxVClusterSize"]);
+	
+	for (auto reactant : *reactants) {
+		// Write the size of the psi cluster to stdout
+		shared_ptr<PSICluster> psiCluster = static_pointer_cast<PSICluster>(reactant);
+		BOOST_TEST_MESSAGE(psiCluster->getSize());
+	}
+	
+	BOOST_TEST_MESSAGE("Maximum He Cluster Size = " << (*props)["maxHeClusterSize"]);
+	BOOST_TEST_MESSAGE("Maximum V Cluster Size = " << (*props)["maxVClusterSize"]);
 	BOOST_TEST_MESSAGE("Number of He clusters = " << (*props)["numHeClusters"]);
 	BOOST_TEST_MESSAGE("Number of V clusters = " << (*props)["numVClusters"]);
-	BOOST_TEST_MESSAGE(
-			"Number of mixed clusters = " << (*props)["numMixedClusters"]);
+	BOOST_TEST_MESSAGE("Number of mixed clusters = " << (*props)["numMixedClusters"]);
 
-	// Get the connectivity of the fifth mixed-species cluster (index 34). It
-	// has three helium atoms and three vacancies.
-	connectivityArray = reactants->at(3 * numClusters + 4)->getConnectivity();
+	// Get the connectivity of the 20th HeV cluster (index 59).
+	shared_ptr<Reactant> reactant = reactants->at(3 * numClusters + 20 - 1);
+	shared_ptr<HeVCluster> cluster = dynamic_pointer_cast<HeVCluster>(reactant);
+	
+	vector<int> connectivityArray = cluster->getConnectivity();
+	
 	// The connectivity array should be the same size as the reactants array
-	BOOST_TEST_MESSAGE(
-			"Connectivity Array Size = " << connectivityArray.size());
-	BOOST_REQUIRE(connectivityArray.size() == reactants->size());
-
-	// This cluster should only interact with a few specific clusters:
-	// >single He - helium dissociation
-	// >single V - vacancy dissociation
-	// >single I - interstitial absorption
-	// >[(A-1)*He](B*V) - helium dissociation
-	// >(A*He)*[(B-1)*V] - vacancy dissociation
-	// >(A*He)*[(B+1)*V] - interstitial absorption
+	BOOST_TEST_MESSAGE("Connectivity Array Size = " << connectivityArray.size());
+	BOOST_REQUIRE_EQUAL(connectivityArray.size(), reactants->size());
 	
-	for (int a : connectivityArray)
-		printf("%d\n", a);
+	// The HeVCluster should have 6 He and 3 V, by the ordering of
+	// the SimpleReactionNetwork.
 	
-	BOOST_REQUIRE(connectivityArray.at(0) == 1);
-	BOOST_REQUIRE(connectivityArray.at(numClusters-1) == 1);
-	BOOST_REQUIRE(connectivityArray.at(2*numClusters-1) == 1);
-	BOOST_REQUIRE(connectivityArray.at(3*numClusters+2) == 1);
-	BOOST_REQUIRE(connectivityArray.at(3*numClusters+3) == 1);
-	BOOST_REQUIRE(connectivityArray.at(3*numClusters+6) == 1);
-
-	return;
+	BOOST_REQUIRE_EQUAL(cluster->getSpeciesSize("He"), 6);
+	BOOST_REQUIRE_EQUAL(cluster->getSpeciesSize("V"), 3);
+	
+	// The following are reactions of the HeVCluster
+	
+	// HeV[x, y] + He[z] --> HeV[x + z, y]
+	// HeV[x, y] + V[1]  --> HeV[x, y + 1]
+	// HeV[x, y] + I[z]  --> HeV[x, y - z]
+	
+	for (int conn : connectivityArray) {
+		printf("%d\n", conn);
+	}
+	
+	int connectivityExpected[] = {
+		// He
+		1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+		
+		// V
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		
+		// I
+		1, 1, 0, 0, 0, 0, 0, 0, 0, 0
+	};
+	
+	for (int i = 0; i < 30; i++) {
+		BOOST_REQUIRE_EQUAL(connectivityArray.at(i), connectivityExpected[i]);
+	}
+	
+	// Everything else should be 0
+	int connectivitySize = connectivityArray.size();
+	for (int i = 30; i < connectivitySize; i++) {
+		BOOST_REQUIRE_EQUAL(connectivityArray.at(i), 0);
+	}
 }
-BOOST_AUTO_TEST_SUITE_END()
 
+
+BOOST_AUTO_TEST_SUITE_END()

@@ -14,6 +14,7 @@
 #include "VCluster.h"
 #include "InterstitialCluster.h"
 #include "HeVCluster.h"
+// #include "HeInterstitialCluster.h"
 
 using namespace xolotlCore;
 
@@ -38,69 +39,75 @@ static inline double convertStrToDouble(const std::string inString) {
  * @param numI - The number of interstitial defects
  * @return The new cluster
  */
-std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
-		int numV, int numI,
-		std::shared_ptr<std::map<std::string, std::string>> props) {
-
+std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
+	int numHe, int numV, int numI,
+	std::shared_ptr<std::map<std::string, std::string>> props) {
+	
 	// Local Declarations
-	std::map<std::string, int> speciesMap;
-	int numClusters = 0;
-	long clusterSize = 0, maxClusterSize = 0;
-	std::string numClustersTag, maxClustersTag;
+	int clusterSize = 0;
+	std::string numClustersKey;
+	std::string maxClustersKey;
 	std::shared_ptr<PSICluster> cluster;
-
-	// Determine whether or not this is a mixed cluster
-	bool mixed = (((numHe > 0) + (numV > 0) + (numI > 0)) > 1);
-
-	/* Most of the clusters will be mixed - there are only about 30
-	 * single-species clusters.
-	 */
-	if (mixed) {
-		// Load the species map so that the mixed cluster can be properly created.
-		speciesMap["He"] = numHe;
-		speciesMap["V"] = numV;
-		speciesMap["I"] = numI;
-		cluster = std::make_shared < HeVCluster > (speciesMap);
-		numClustersTag = "numMixedClusters";
-		// Update the number of clusters
-		numClusters = strtol((*props)[numClustersTag].c_str(), NULL, 10) + 1;
-		(*props)[numClustersTag] = std::to_string(
-				static_cast<long long>(numClusters));
-		mixedClusters.push_back(cluster);
-	} else {
-		/* Switch over the three types, create the cluster and set the properties.
-		 * Start with He as they are probably listed first.
-		 */
-		if (numHe > 0) {
-			cluster = std::make_shared < HeCluster > (numHe);
-			clusterSize = numHe;
-			numClustersTag = "numHeClusters";
-			maxClustersTag = "maxHeClusterSize";
-			heClusters.push_back(cluster);
-		} else if (numV > 0) { // Vacancies
-			cluster = std::make_shared < VCluster > (numV);
-			clusterSize = numV;
-			numClustersTag = "numVClusters";
-			maxClustersTag = "maxVClusterSize";
-			vClusters.push_back(cluster);
-		} else { // Default to interstitial defects.
-			cluster = std::make_shared < InterstitialCluster > (numI);
-			clusterSize = numI;
-			numClustersTag = "numIClusters";
-			maxClustersTag = "maxIClusterSize";
-			iClusters.push_back(cluster);
-		}
-		// Update the number of clusters
-		numClusters = strtol((*props)[numClustersTag].c_str(), NULL, 10) + 1;
-		(*props)[numClustersTag] = std::to_string(
-				static_cast<long long>(numClusters));
-		// Update the max size if required - compute the max from the old and current values
-		maxClusterSize = strtol((*props)[maxClustersTag].c_str(), NULL, 10);
-		maxClusterSize = std::max(clusterSize, maxClusterSize);
-		(*props)[maxClustersTag] = std::to_string(
-				static_cast<long long>(clusterSize));
+	
+	// Determine the type of the cluster given the number of each species.
+	// Create a new cluster by that type and specify the names of the
+	// property keys.
+	
+	if (numHe > 0 && numV > 0) {
+		clusterSize = numHe + numV;
+		
+		// Create a new HeVCluster
+		cluster = std::make_shared<HeVCluster>(numHe, numV);
+		numClustersKey = "numHeVClusters";
+		maxClustersKey = "maxMixedClusterSize";
 	}
-
+	else if (numHe > 0 && numI > 0) {
+		clusterSize = numHe + numI;
+		
+		// Create a new HeInterstitialCluster
+		// cluster = std::make_shared<HeInterstitialCluster>(numHe, numI);
+		numClustersKey = "numHeIClusters";
+		maxClustersKey = "maxMixedClusterSize";
+	}
+	else if (numHe > 0) {
+		clusterSize = numHe;
+		
+		// Create a new HeCluster
+		cluster = std::make_shared<HeCluster>(numHe);
+		numClustersKey = "numHeClusters";
+		maxClustersKey = "maxMixedClusterSize";
+	}
+	else if (numV > 0) {
+		clusterSize = numV;
+		
+		// Create a new VCluster
+		cluster = std::make_shared<VCluster>(numV);
+		numClustersKey = "maxMixedClusterSize";
+		maxClustersKey = "numVClusters";
+	}
+	else if (numI > 0) {
+		clusterSize = numI;
+		
+		// Create a new ICluster
+		cluster = std::make_shared<InterstitialCluster>(numI);
+		numClustersKey = "maxMixedClusterSize";
+		maxClustersKey = "numIClusters";
+	}
+	
+	// Increment the number of total clusters of this type
+	
+	int numClusters = std::stoi(props->at(numClustersKey));
+	numClusters++;
+	props->at(numClustersKey) = std::to_string(numClusters);
+	
+	// Update the max size if required
+	
+	int maxClusterSize = std::stoi(props->at(maxClustersKey));
+	
+	if (clusterSize > maxClusterSize) {
+		props->at(maxClustersKey) = std::to_string(clusterSize);
+	}
+	
 	return cluster;
 }
 
@@ -166,10 +173,12 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		(*props)["maxHeClusterSize"] = "0";
 		(*props)["maxVClusterSize"] = "0";
 		(*props)["maxIClusterSize"] = "0";
+		(*props)["maxMixedClusterSize"] = "0";
 		(*props)["numHeClusters"] = "0";
 		(*props)["numVClusters"] = "0";
 		(*props)["numIClusters"] = "0";
-		(*props)["numMixedClusters"] = "0";
+		(*props)["numHeVClusters"] = "0";
+		(*props)["numHeIClusters"] = "0";
 		while (loadedLine.size() > 0) {
 			// Check the size of the loaded line
 			if (loadedLine.size() < 9)

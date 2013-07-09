@@ -21,70 +21,65 @@ using namespace xolotlCore;
 using namespace testUtils;
 
 SimpleReactionNetwork::SimpleReactionNetwork() :
-		ReactionNetwork() {
+	ReactionNetwork() {
+	
+	// Hard code the size of the largest cluster
+	int maxClusterSize = 10;
+	int numClusters = maxClusterSize;
 
-	// Local Declarations
-	int numHe = 1, numV = 1;
-	int maxClusterSize = 10, numClusters = maxClusterSize;
-
-	// Fill the ReactionNetwork with 10 He clusters
-	for (int i = 0; i < numClusters; i++) {
-		// Create a He cluster with cluster size i
-		std::shared_ptr<HeCluster> cluster(new HeCluster(i + 1));
+	// Add He clusters
+	for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
+		// Create a He cluster with cluster size numHe
+		std::shared_ptr<HeCluster> cluster(new HeCluster(numHe));
+		
 		// Add it to the network
 		reactants->push_back(cluster);
 	}
 
 	// Add vacancy clusters
-	for (int i = numClusters; i < 2 * numClusters; i++) {
-		// Create a He cluster with cluster size i
-		std::shared_ptr<VCluster> cluster(new VCluster(i + 1 - numClusters));
+	for (int numV = 1; numV <= maxClusterSize; numV++) {
+		// Create a He cluster with cluster size numV
+		std::shared_ptr<VCluster> cluster(new VCluster(numV));
+		
 		// Add it to the network
 		reactants->push_back(cluster);
 	}
 
 	// Add interstitial clusters
-	for (int i = 2 * numClusters; i < 3 * numClusters; i++) {
-		// Create a He cluster with cluster size i
+	for (int numI = 1; numI <= maxClusterSize; numI++) {
+		// Create a He cluster with cluster size numI
 		std::shared_ptr<InterstitialCluster> cluster(
-				new InterstitialCluster(i + 1 - 2 * numClusters));
+			new InterstitialCluster(numI));
+		
 		// Add it to the network
 		reactants->push_back(cluster);
 	}
 
-	// Add mixed-species clusters.
-	for (int i = 3 * numClusters; i < 3 * numClusters + 2 * maxClusterSize;
-			i++) {
-		// Create and configure the species map
-		std::map<std::string, int> speciesMap;
-		speciesMap["He"] = numHe;
-		speciesMap["V"] = numV;
-		// Create a He cluster with cluster size i
-		std::shared_ptr<HeVCluster> cluster(
-				new HeVCluster(speciesMap));
-		// Add it to the network
-		reactants->push_back(cluster);
-		// Figure out which species to increment for the next iteration
-		if (numHe <= numV && numHe < maxClusterSize)
-			numHe++;
-		else if (numV < maxClusterSize)
-			numV++;
-		else
-			break;
+	// Add HeV clusters
+	// I am assuming that HeV clusters can only be created if
+	// numV <= numHe.
+	
+	int numHeVClusters = 0;
+	
+	for (int numV = 1; numV <= maxClusterSize; numV++) {
+		for (int numHe = numV; numHe + numV <= maxClusterSize; numHe++) {
+			std::shared_ptr<HeVCluster> cluster(new HeVCluster(numHe, numV));
+			
+			numHeVClusters++;
+			reactants->push_back(cluster);
+		}
 	}
-
+	
 	// Setup the properties map
-	(*properties)["maxHeClusterSize"] = std::to_string((long long) maxClusterSize);
-	(*properties)["maxVClusterSize"] = std::to_string((long long) maxClusterSize);
-	(*properties)["maxIClusterSize"] = std::to_string((long long) maxClusterSize);
-	(*properties)["maxHeVClusterSize"] = std::to_string(
-			(long long) 2 * maxClusterSize);
-	(*properties)["numHeClusters"] = std::to_string((long long) numClusters);
-	(*properties)["numVClusters"] = std::to_string((long long) numClusters);
-	(*properties)["numIClusters"] = std::to_string((long long) numClusters);
-	(*properties)["numHeVClusters"] = std::to_string(
-			(long long) (numClusters * numClusters));
-
+	(*properties)["maxHeClusterSize"] = std::to_string(maxClusterSize);
+	(*properties)["maxVClusterSize"] = std::to_string(maxClusterSize);
+	(*properties)["maxIClusterSize"] = std::to_string(maxClusterSize);
+	(*properties)["maxMixedClusterSize"] = std::to_string(numHeVClusters);
+	
+	(*properties)["numHeClusters"] = std::to_string(numClusters);
+	(*properties)["numVClusters"] = std::to_string(numClusters);
+	(*properties)["numIClusters"] = std::to_string(numClusters);
+	(*properties)["numHeVClusters"] = std::to_string(numHeVClusters);
 }
 
 SimpleReactionNetwork::~SimpleReactionNetwork() {

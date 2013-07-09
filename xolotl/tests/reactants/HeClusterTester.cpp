@@ -51,17 +51,13 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Write the cluster information to stdout
 	BOOST_TEST_MESSAGE("Sizes of clusters in network:");
 	for_each(reactants->begin(), reactants->end(), writeCluster);
-	BOOST_TEST_MESSAGE(
-			"Maximum He Cluster Size = " << (*props)["maxHeClusterSize"]);
-	BOOST_TEST_MESSAGE(
-			"Maximum V Cluster Size = " << (*props)["maxVClusterSize"]);
-	BOOST_TEST_MESSAGE(
-			"Maximum Interstitial Cluster Size = " << (*props)["maxIClusterSize"]);
+	BOOST_TEST_MESSAGE("Maximum He Cluster Size = " << (*props)["maxHeClusterSize"]);
+	BOOST_TEST_MESSAGE("Maximum V Cluster Size = " << (*props)["maxVClusterSize"]);
+	BOOST_TEST_MESSAGE("Maximum Interstitial Cluster Size = " << (*props)["maxIClusterSize"]);
 	BOOST_TEST_MESSAGE("Number of He clusters = " << (*props)["numHeClusters"]);
 	BOOST_TEST_MESSAGE("Number of V clusters = " << (*props)["numVClusters"]);
 	BOOST_TEST_MESSAGE("Number of I clusters = " << (*props)["numIClusters"]);
-	BOOST_TEST_MESSAGE(
-			"Number of mixed clusters = " << (*props)["numMixedClusters"]);
+	BOOST_TEST_MESSAGE("Number of mixed clusters = " << (*props)["numMixedClusters"]);
 
 	// Get the connectivity of the first reactant
 	connectivityArray = reactants->at(0)->getConnectivity();

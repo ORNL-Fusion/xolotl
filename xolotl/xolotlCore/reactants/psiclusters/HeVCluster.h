@@ -25,7 +25,7 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	HeVCluster():PSICluster(1) {}
+	HeVCluster() : PSICluster(1) {}
 
 public:
 
@@ -36,7 +36,7 @@ public:
 	 * species as its values. The names of the species must be one of
 	 * {He,V}.
 	 */
-	HeVCluster(const std::map<std::string,int> speciesMap);
+	HeVCluster(int numHe, int numV);
 
 	//! Destructor
 	~HeVCluster();
