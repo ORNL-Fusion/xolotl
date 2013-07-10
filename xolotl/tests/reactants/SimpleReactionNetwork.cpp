@@ -71,15 +71,15 @@ SimpleReactionNetwork::SimpleReactionNetwork() :
 	}
 	
 	// Setup the properties map
-	(*properties)["maxHeClusterSize"] = std::to_string(maxClusterSize);
-	(*properties)["maxVClusterSize"] = std::to_string(maxClusterSize);
-	(*properties)["maxIClusterSize"] = std::to_string(maxClusterSize);
-	(*properties)["maxMixedClusterSize"] = std::to_string(numHeVClusters);
+	(*properties)["maxHeClusterSize"] = std::to_string((long long) maxClusterSize);
+	(*properties)["maxVClusterSize"] = std::to_string((long long) maxClusterSize);
+	(*properties)["maxIClusterSize"] = std::to_string((long long) maxClusterSize);
+	(*properties)["maxMixedClusterSize"] = std::to_string((long long) numHeVClusters);
 	
-	(*properties)["numHeClusters"] = std::to_string(numClusters);
-	(*properties)["numVClusters"] = std::to_string(numClusters);
-	(*properties)["numIClusters"] = std::to_string(numClusters);
-	(*properties)["numHeVClusters"] = std::to_string(numHeVClusters);
+	(*properties)["numHeClusters"] = std::to_string((long long) numClusters);
+	(*properties)["numVClusters"] = std::to_string((long long) numClusters);
+	(*properties)["numIClusters"] = std::to_string((long long) numClusters);
+	(*properties)["numHeVClusters"] = std::to_string((long long) numHeVClusters);
 }
 
 SimpleReactionNetwork::~SimpleReactionNetwork() {

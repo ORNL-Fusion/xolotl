@@ -98,14 +98,14 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 	
 	int numClusters = std::stoi(props->at(numClustersKey));
 	numClusters++;
-	props->at(numClustersKey) = std::to_string(numClusters);
+	props->at(numClustersKey) = std::to_string((long long) numClusters);
 	
 	// Update the max size if required
 	
 	int maxClusterSize = std::stoi(props->at(maxClustersKey));
 	
 	if (clusterSize > maxClusterSize) {
-		props->at(maxClustersKey) = std::to_string(clusterSize);
+		props->at(maxClustersKey) = std::to_string((long long) clusterSize);
 	}
 	
 	return cluster;
