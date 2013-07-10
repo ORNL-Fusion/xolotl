@@ -51,9 +51,9 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Write the cluster information to stdout
 	BOOST_TEST_MESSAGE("Sizes of clusters in network:");
 	
-	for (auto reactant : *reactants) {
+	for (auto reactantIt = reactants->begin(); reactantIt != reactants->end(); reactantIt++) {
 		// Write the size of the psi cluster to stdout
-		shared_ptr<PSICluster> psiCluster = static_pointer_cast<PSICluster>(reactant);
+		shared_ptr<PSICluster> psiCluster = static_pointer_cast<PSICluster>(*reactantIt);
 		BOOST_TEST_MESSAGE(psiCluster->getSize());
 	}
 	
@@ -84,10 +84,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// HeV[x, y] + He[z] --> HeV[x + z, y]
 	// HeV[x, y] + V[1]  --> HeV[x, y + 1]
 	// HeV[x, y] + I[z]  --> HeV[x, y - z]
-	
-	for (int conn : connectivityArray) {
-		printf("%d\n", conn);
-	}
 	
 	int connectivityExpected[] = {
 		// He
