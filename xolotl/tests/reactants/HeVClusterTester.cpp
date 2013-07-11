@@ -63,15 +63,11 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	BOOST_TEST_MESSAGE("Number of V clusters = " << (*props)["numVClusters"]);
 	BOOST_TEST_MESSAGE("Number of mixed clusters = " << (*props)["numMixedClusters"]);
 
-	// Get the connectivity of the 20th HeV cluster (index 59).
-	shared_ptr<Reactant> reactant = reactants->at(3 * numClusters + 20 - 1);
+	// Get the connectivity of the 23th HeV cluster (index 53).
+	shared_ptr<Reactant> reactant = reactants->at(3 * numClusters + 23 - 1);
 	shared_ptr<HeVCluster> cluster = dynamic_pointer_cast<HeVCluster>(reactant);
 	
-	vector<int> connectivityArray = cluster->getConnectivity();
-	
-	// The connectivity array should be the same size as the reactants array
-	BOOST_TEST_MESSAGE("Connectivity Array Size = " << connectivityArray.size());
-	BOOST_REQUIRE_EQUAL(connectivityArray.size(), reactants->size());
+	// Make sure we're retreiving the correct reactant
 	
 	// The HeVCluster should have 6 He and 3 V, by the ordering of
 	// the SimpleReactionNetwork.
@@ -79,11 +75,17 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	BOOST_REQUIRE_EQUAL(cluster->getSpeciesSize("He"), 6);
 	BOOST_REQUIRE_EQUAL(cluster->getSpeciesSize("V"), 3);
 	
+	vector<int> connectivityArray = cluster->getConnectivity();
+	
+	// The connectivity array should be the same size as the reactants array
+	BOOST_TEST_MESSAGE("Connectivity Array Size = " << connectivityArray.size());
+	BOOST_REQUIRE_EQUAL(connectivityArray.size(), reactants->size());
+	
 	// The following are reactions of the HeVCluster
 	
-	// HeV[x, y] + He[z] --> HeV[x + z, y]
-	// HeV[x, y] + V[1]  --> HeV[x, y + 1]
-	// HeV[x, y] + I[z]  --> HeV[x, y - z]
+	// xHe * yV + zHe --> (x + z)He + yV
+	// xHe * yV + V   --> xHe + (y + 1)V
+	// xHe * yV + zI  --> xHe + (y - z)V
 	
 	int connectivityExpected[] = {
 		// He

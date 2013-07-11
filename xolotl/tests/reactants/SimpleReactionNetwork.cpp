@@ -63,7 +63,6 @@ SimpleReactionNetwork::SimpleReactionNetwork() :
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
 			// Create a HeVCluster with the current amount of He and V
-			
 			std::shared_ptr<HeVCluster> cluster(new HeVCluster(numHe, numV));
 			
 			reactants->push_back(cluster);

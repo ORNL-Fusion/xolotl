@@ -42,9 +42,9 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Local Declarations
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
-	int numHe = 1, numV = 1;
+	int numHe = 1;
+	int numV = 1;
 	int maxClusterSize = 10, numClusters = maxClusterSize;
-	vector<int> connectivityArray;
 	shared_ptr<vector<shared_ptr<Reactant> > > reactants = network->reactants;
 	shared_ptr<std::map<std::string, std::string>> props = network->properties;
 
@@ -60,16 +60,16 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	BOOST_TEST_MESSAGE("Number of mixed clusters = " << (*props)["numMixedClusters"]);
 
 	// Get the connectivity of the first reactant
-	connectivityArray = reactants->at(0)->getConnectivity();
+	std::vector<int> connectivityArray = reactants->at(0)->getConnectivity();
 	// The connectivity array should be the same size as the reactants array
 	BOOST_TEST_MESSAGE(
 			"Connectivity Array Size = " << connectivityArray.size());
 	BOOST_REQUIRE(connectivityArray.size() == reactants->size());
-
+	
 	// Since this is a helium cluster of size 1, it should interact with
 	// every other helium up to size 9.
-	for (int i = 0; i < numClusters - 1; i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 1);
+	for (int i = 1; i + numHe <= numClusters; i++) {
+		BOOST_REQUIRE_EQUAL(connectivityArray.at(i - 1), 1);
 	}
 	// And not the last one
 	BOOST_REQUIRE(connectivityArray.at(numClusters - 1) == 0);
@@ -93,8 +93,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	}
 	// Single-species Helium can interact with all but the last.
 	BOOST_REQUIRE(connectivityArray.at(reactants->size() - 1) == 0);
-
-	return;
 }
 BOOST_AUTO_TEST_SUITE_END()
 

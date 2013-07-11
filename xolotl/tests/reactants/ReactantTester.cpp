@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(toClusterMap) {
 		// Get the actual He and V amounts
 		
 		shared_ptr<Reactant> reactant = network->reactants->at(i);
-		shared_ptr<HeVCluster> cluster = std::static_pointer_cast<HeVCluster>(reactant);
+		shared_ptr<HeVCluster> cluster = std::dynamic_pointer_cast<HeVCluster>(reactant);
 		int actualHe = cluster->getSpeciesSize("He");
 		int actualV = cluster->getSpeciesSize("V");
 		

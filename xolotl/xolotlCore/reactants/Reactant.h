@@ -156,7 +156,7 @@ public:
 	properties(new std::map<std::string, std::string>()),
 	reactants(new std::vector<std::shared_ptr<Reactant>>())
 	{}
-
+	
 	/**
 	 * The copy constructor
 	 * @param other The ReactionNetwork to copy

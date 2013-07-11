@@ -28,8 +28,8 @@ std::vector<int> HeCluster::getConnectivity() {
 	// ----- A*He + B*He --> (A+B)*He -----
 	// This cluster should interact with all other clusters of the same type up
 	// to the max size minus the size of this one to produce larger clusters.
-	for (int i = 0; i < numHe - size; i++)
-		connectivityArray.at(i) = 1;
+	for (int i = 1; i + numHe <= size; i++)
+		connectivityArray.at(i - 1) = 1;
 
 	// -----  A*He + B*V → (A*He)(B*V) -----
 	// Helium clusters can interact with any vacancy cluster so long as the sum

@@ -61,21 +61,21 @@ std::vector<int> HeVCluster::getConnectivity() {
 	
 	// This cluster is involved in the following interactions:
 	
-	// HeV[x, y] + He[z] --> HeV[x + z, y]
+	// xHe * yV + zHe --> (x + z)He + yV
 	for (int z = 1; numHe + z <= maxHeClusterSize; z++) {
-		// Select He[z]
+		// Select zHe
 		connectivityArray.at(z - 1) = 1;
 	}
 	
-	// HeV[x, y] + V[1]  --> HeV[x, y + 1]
+	// xHe * yV + V   --> xHe + (y + 1)V
 	if (numV + 1 <= maxVClusterSize) {
-		// Select V[1]
+		// Select V
 		connectivityArray.at(numHeClusters) = 1;
 	}
 	
-	// HeV[x, y] + I[z]  --> HeV[x, y - z]
+	// xHe * yV + zI  --> xHe + (y - z)V
 	for (int z = 1; numV - z >= 1; z++) {
-		// Select I[z]
+		// Select zI
 		connectivityArray.at(numHeClusters + numVClusters + z - 1) = 1;
 	}
 	
