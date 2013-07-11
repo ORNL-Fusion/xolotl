@@ -31,7 +31,7 @@ public:
  * always be called instead of constructing a SimpleReactionNetwork manually.
  * @return The reaction network.
  */
-std::shared_ptr<xolotlCore::ReactionNetwork> getSimpleReactionNetwork();
+std::shared_ptr<xolotlCore::ReactionNetwork>  getSimpleReactionNetwork();
 
 } /* end namespace testUtils */
 #endif

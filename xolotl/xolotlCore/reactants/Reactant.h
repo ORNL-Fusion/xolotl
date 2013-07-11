@@ -148,7 +148,7 @@ public:
 	 * The set of reactants. The exact order of the reactants in the set is
 	 * specified by the class that loaded them.
 	 */
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> reactants;
 
 	//! The constructor. It initializes the properties map and reactants vector.
 	ReactionNetwork() :
@@ -161,7 +161,22 @@ public:
 	 * @param other The ReactionNetwork to copy
 	 */
 	ReactionNetwork(const ReactionNetwork &other);
-
+	
+	/**
+	 * Converts an cluster index (found in the `reactants` vector)
+	 * to a map describing the cluster's 
+	 *
+	 * @returns a map with `speciesLabel` => `quantity`
+	 */
+	std::map<std::string, int> toClusterMap(int index);
+	
+	/**
+	 * Converts an cluster map (with `speciesLabel` => `quantity`)
+	 * to the index corresponding to its position in the reactants vector
+	 */
+	int toClusterIndex(std::map<std::string, int> clusterMap);
+	
+	
 	//! The destructor
 	virtual ~ReactionNetwork() {
 	}

@@ -46,7 +46,6 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 	// Local Declarations
 	int clusterSize = 0;
 	std::string numClustersKey;
-	std::string maxClustersKey;
 	std::shared_ptr<PSICluster> cluster;
 	
 	// Determine the type of the cluster given the number of each species.
@@ -59,7 +58,6 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 		// Create a new HeVCluster
 		cluster = std::make_shared<HeVCluster>(numHe, numV);
 		numClustersKey = "numHeVClusters";
-		maxClustersKey = "maxMixedClusterSize";
 	}
 	else if (numHe > 0 && numI > 0) {
 		clusterSize = numHe + numI;
@@ -67,7 +65,6 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 		// Create a new HeInterstitialCluster
 		// cluster = std::make_shared<HeInterstitialCluster>(numHe, numI);
 		numClustersKey = "numHeIClusters";
-		maxClustersKey = "maxMixedClusterSize";
 	}
 	else if (numHe > 0) {
 		clusterSize = numHe;
@@ -75,23 +72,20 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 		// Create a new HeCluster
 		cluster = std::make_shared<HeCluster>(numHe);
 		numClustersKey = "numHeClusters";
-		maxClustersKey = "maxMixedClusterSize";
 	}
 	else if (numV > 0) {
 		clusterSize = numV;
 		
 		// Create a new VCluster
 		cluster = std::make_shared<VCluster>(numV);
-		numClustersKey = "maxMixedClusterSize";
-		maxClustersKey = "numVClusters";
+		numClustersKey = "numVClusters";
 	}
 	else if (numI > 0) {
 		clusterSize = numI;
 		
 		// Create a new ICluster
 		cluster = std::make_shared<InterstitialCluster>(numI);
-		numClustersKey = "maxMixedClusterSize";
-		maxClustersKey = "numIClusters";
+		numClustersKey = "numIClusters";
 	}
 	
 	// Increment the number of total clusters of this type
@@ -99,14 +93,6 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 	int numClusters = std::stoi(props->at(numClustersKey));
 	numClusters++;
 	props->at(numClustersKey) = std::to_string((long long) numClusters);
-	
-	// Update the max size if required
-	
-	int maxClusterSize = std::stoi(props->at(maxClustersKey));
-	
-	if (clusterSize > maxClusterSize) {
-		props->at(maxClustersKey) = std::to_string((long long) clusterSize);
-	}
 	
 	return cluster;
 }
@@ -168,17 +154,19 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		reader.setInputStream(networkStream);
 		// Loop over each line of the file, which should each be PSIClusters.
 		loadedLine = reader.loadLine();
+		
 		// Setup the properties map
 		props = network->properties;
-		(*props)["maxHeClusterSize"] = "0";
-		(*props)["maxVClusterSize"] = "0";
-		(*props)["maxIClusterSize"] = "0";
-		(*props)["maxMixedClusterSize"] = "0";
+		(*props)["maxHeClusterSize"] = "10";
+		(*props)["maxVClusterSize"] = "10";
+		(*props)["maxIClusterSize"] = "10";
+		(*props)["maxMixedClusterSize"] = "10";
 		(*props)["numHeClusters"] = "0";
 		(*props)["numVClusters"] = "0";
 		(*props)["numIClusters"] = "0";
 		(*props)["numHeVClusters"] = "0";
 		(*props)["numHeIClusters"] = "0";
+		
 		while (loadedLine.size() > 0) {
 			// Check the size of the loaded line
 			if (loadedLine.size() < 9)
@@ -223,13 +211,6 @@ std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
 		// Load the mixed species clusters into the network
 		for (int i = 0; i < mixedClusters.size(); i++)
 			network->reactants->push_back(mixedClusters[i]);
-		// Set the max number of mixed clusters
-		int maxMixedClusterSize = strtol((*props)["maxHeClusterSize"].c_str(),
-				NULL, 10)
-				+ strtol((*props)["maxVClusterSize"].c_str(), NULL, 10);
-		(*props)["maxMixedClusterSize"] = std::to_string(
-				(long long) maxMixedClusterSize);
-
 	}
 
 	return network;

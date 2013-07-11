@@ -55,18 +55,19 @@ SimpleReactionNetwork::SimpleReactionNetwork() :
 		reactants->push_back(cluster);
 	}
 
-	// Add HeV clusters
-	// I am assuming that HeV clusters can only be created if
-	// numV <= numHe.
+	// Add HeV clusters, assuming that
+	// numHe + numV <= maxMixedClusterSize
 	
 	int numHeVClusters = 0;
 	
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
-		for (int numHe = numV; numHe + numV <= maxClusterSize; numHe++) {
+		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
+			// Create a HeVCluster with the current amount of He and V
+			
 			std::shared_ptr<HeVCluster> cluster(new HeVCluster(numHe, numV));
 			
-			numHeVClusters++;
 			reactants->push_back(cluster);
+			numHeVClusters++;
 		}
 	}
 	
@@ -74,7 +75,7 @@ SimpleReactionNetwork::SimpleReactionNetwork() :
 	(*properties)["maxHeClusterSize"] = std::to_string((long long) maxClusterSize);
 	(*properties)["maxVClusterSize"] = std::to_string((long long) maxClusterSize);
 	(*properties)["maxIClusterSize"] = std::to_string((long long) maxClusterSize);
-	(*properties)["maxMixedClusterSize"] = std::to_string((long long) numHeVClusters);
+	(*properties)["maxMixedClusterSize"] = std::to_string((long long) maxClusterSize);
 	
 	(*properties)["numHeClusters"] = std::to_string((long long) numClusters);
 	(*properties)["numVClusters"] = std::to_string((long long) numClusters);

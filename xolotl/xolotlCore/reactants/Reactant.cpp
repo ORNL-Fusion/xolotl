@@ -75,3 +75,88 @@ ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 		reactants->push_back(reactant);
 	}
 }
+
+
+std::map<std::string, int> ReactionNetwork::toClusterMap(int index) {
+	// This method defines the ordering and placement of all
+	// reactions in a ReactionNetwork
+	
+	std::map<std::string, int> clusterMap;
+	
+	// He clusters
+	// size of `numHeClusters`
+	
+	int numHeClusters = std::stoi(properties->at("numHeClusters"));
+	
+	if (index < numHeClusters) {
+		clusterMap["He"] = index + 1;
+		return clusterMap;
+	}
+	
+	index -= numHeClusters;
+	
+	// V (vacancy) clusters
+	// size of `numVClusters`
+	
+	int numVClusters = std::stoi(properties->at("numVClusters"));
+	
+	if (index < numVClusters) {
+		clusterMap["V"] = index + 1;
+		return clusterMap;
+	}
+	
+	index -= numVClusters;
+	
+	// I (interstitial) clusters
+	// size of `numIClusters`
+	
+	int numIClusters = std::stoi(properties->at("numIClusters"));
+	
+	if (index < numIClusters) {
+		clusterMap["I"] = index + 1;
+		return clusterMap;
+	}
+	
+	index -= numIClusters;
+	
+	// HeV clusters
+	// size of `numHeVClusters`
+	
+	int numHeVClusters = std::stoi(properties->at("numHeVClusters"));
+	int maxMixedClusterSize = std::stoi(properties->at("maxMixedClusterSize"));
+	
+	// Iterate through all posibilities of quantities for He and V
+	// under the condition that
+	// numHe + numV <= maxMixedClusterSize.
+	
+	// This doesn't need to be a loop, but it's less error prone than
+	// a closed form.
+	
+	for (int numV = 1; numV <= maxMixedClusterSize; numV++) {
+		int maxHe = maxMixedClusterSize - numV;
+		int numHe = index + 1;
+		
+		if (numHe <= maxHe) {
+			// The index must be referring to this quantity of He and V.
+			// Finalize and return the cluster map
+			
+			clusterMap["He"] = numHe;
+			clusterMap["V"] = numV;
+			return clusterMap;
+		}
+		
+		// Decrease the index by the number of vacancies
+		// possible with the current quantity of helium
+		index -= maxHe;
+	}
+	
+	// HeI clusters
+	// TODO
+	
+	throw std::string("HeI clusters cannot yet be indexed");
+}
+
+
+int ReactionNetwork::toClusterIndex(std::map<std::string, int> clusterMap) {
+	throw std::string("Unimplemented: ReactionNetwork::toClusterIndex()");
+}
