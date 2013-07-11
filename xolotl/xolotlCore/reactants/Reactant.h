@@ -50,7 +50,7 @@ public:
 	Reactant(const Reactant &other);
 
 	//! Destructor
-	~Reactant();
+	virtual ~Reactant();
 
 	/**
 	 * An alternative constructor that can be used to create a reactant
@@ -94,10 +94,11 @@ public:
 	/**
 	 * This operation returns the total flux of this reactant in the
 	 * current network.
+	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
 	 * @return The total change in flux for this reactant due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux();
+	virtual double getTotalFlux(const double temperature);
 
 	/**
 	 * This operation sets the collection of other reactants that make up
@@ -120,6 +121,8 @@ public:
 	 * that it does not.
 	 */
 	virtual std::vector<int> getConnectivity();
+
+	//virtual std::shared_ptr<Reactant> getReactionProduct(std::shared_ptr<Reactant> reactant);
 
 	/**
 	 * This operation writes the contents of the reactant to a string. This
@@ -177,9 +180,29 @@ public:
 	int toClusterIndex(std::map<std::string, int> clusterMap);
 	
 	
-	//! The destructor
-	virtual ~ReactionNetwork() {
-	}
+	/**
+	 * The destructor
+	 */
+	virtual ~ReactionNetwork() {}
+
+	/**
+	 * Return whether reactantI reacts with (or is connected in the network)
+	 * reactantJ.
+	 * @param reactantI
+	 * @param reactantJ
+	 * @return
+	 */
+	bool isConnected(int reactantI, int reactantJ);
+
+	/**
+	 * Return the Reactant product produced by reactantI and reactantJ in
+	 * this ReactionNetwork. Will return a null shared_ptr if these two
+	 * reactants are not connected in the network graph.
+	 * @param reactantI
+	 * @param reactantJ
+	 * @return
+	 */
+	std::shared_ptr<Reactant> getReactionProduct(int reactantI, int reactantJ);
 };
 
 } /* namespace xolotlCore */

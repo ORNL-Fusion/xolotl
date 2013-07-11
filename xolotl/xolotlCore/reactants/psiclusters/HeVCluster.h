@@ -25,7 +25,7 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	HeVCluster() : PSICluster(1) {}
+	HeVCluster() : PSICluster(1) { numHe = 1; numV = 1; }
 
 public:
 
@@ -65,6 +65,20 @@ public:
 	 * @return The connectivity array
 	 */
     virtual std::vector<int> getConnectivity();
+
+    /**
+	 * This operation returns the total change in this cluster due to
+	 * dissociation.
+	 * @return The flux due to dissociation.
+	 */
+	virtual double getDissociationFlux(const double temperature);
+
+	/**
+	 * This operation returns the total change in this cluster due to
+	 * production.
+	 * @return The flux due to this cluster being produced.
+	 */
+	virtual double getProductionFlux(const double temperature);
 
 };
 //end class HeVCluster

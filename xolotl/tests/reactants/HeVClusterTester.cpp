@@ -107,5 +107,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	}
 }
 
+BOOST_AUTO_TEST_CASE(checkGetFlux) {
+
+}
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -47,6 +47,40 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	BOOST_REQUIRE_CLOSE(reactant2->getConcentration(), 15.0, 1e-7);
 }
 
+BOOST_AUTO_TEST_CASE(checkManipulateConcentration) {
+
+	// Create a Reactant
+	std::shared_ptr<Reactant> reactant(new Reactant);
+	reactant->setConcentration(1.0);
+
+	// Make sure it was set correctly
+	BOOST_CHECK_EQUAL(1.0, reactant->getConcentration());
+
+	// Increase it
+	reactant->increaseConcentration(3.3);
+
+	// Make sure its correct
+	BOOST_CHECK_EQUAL(4.3, reactant->getConcentration());
+
+	// Decrease it
+	reactant->decreaseConcentration(1.3);
+
+	// Make sure its correct
+	BOOST_CHECK_EQUAL(3.0, reactant->getConcentration());
+
+	// Zero it
+	reactant->zero();
+
+	// Check it was zeroed
+	BOOST_CHECK_EQUAL(0.0, reactant->getConcentration());
+
+	// Make sure the base class getTotalFlux returns 0 for now
+	BOOST_CHECK_EQUAL(0.0, reactant->getTotalFlux(0.0));
+
+	// Also make sure the base class connectivity is empty
+	BOOST_CHECK_EQUAL(0, reactant->getConnectivity().size());
+}
+
 
 BOOST_AUTO_TEST_CASE(toClusterMap) {
 	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
@@ -111,3 +145,4 @@ BOOST_AUTO_TEST_CASE(toClusterMap) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+

@@ -39,8 +39,7 @@ void Reactant::zero() {
 	concentration = 0.0;
 }
 
-double Reactant::getTotalFlux() {
-	//TODO Auto-generated method stub
+double Reactant::getTotalFlux(const double temperature) {
 	return 0;
 }
 
@@ -74,6 +73,18 @@ ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 		std::shared_ptr<Reactant> reactant(new Reactant(**reactantIt));
 		reactants->push_back(reactant);
 	}
+}
+
+bool ReactionNetwork::isConnected(int reactantI, int reactantJ) {
+	return (reactants->at(reactantI)->getConnectivity().at(reactantJ) == 1);
+}
+
+std::shared_ptr<Reactant> ReactionNetwork::getReactionProduct(int reactantI, int reactantJ) {
+	std::shared_ptr<Reactant> retReactant;
+	if (isConnected(reactantI, reactantJ)) {
+		//retReactant = reactants->at(reactantI)->getReactionProduct(reactants->at(reactantJ));
+	}
+	return retReactant;
 }
 
 

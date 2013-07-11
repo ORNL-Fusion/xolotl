@@ -15,5 +15,8 @@ namespace xolotlCore {
 //! The Boltzmann constant in units of eV K^-1.
 static const double kBoltzmann = 8.6173324E-5;
 
+//! Pi
+static const double pi = 3.14159265359;
+
 } /* end namespace xolotlCore */
 #endif /* CONSTANTS_H_ */

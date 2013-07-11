@@ -6,22 +6,23 @@ using namespace xolotlCore;
 HeVCluster::HeVCluster(int numHe, int numV) :
 	PSICluster(1), numHe(numHe), numV(numV) {
 	
+	// Set the cluster size as the sum of
+	// the number of Helium and Vacancies
 	size = numHe + numV;
+
 	// Set the reactant name appropriately
 	name = "HeV Cluster";
 }
-HeVCluster::~HeVCluster() {
-	//TODO Auto-generated method stub
-}
+
+HeVCluster::~HeVCluster() {}
+
 double HeVCluster::getGenByEm() {
-	//TODO Auto-generated method stub
-	return 0;
-}
-double HeVCluster::getAnnByEm() {
-	//TODO Auto-generated method stub
 	return 0;
 }
 
+double HeVCluster::getAnnByEm() {
+	return 0;
+}
 
 int HeVCluster::getSpeciesSize(const std::string speciesName) {
 	if (speciesName == "He") {
@@ -34,7 +35,6 @@ int HeVCluster::getSpeciesSize(const std::string speciesName) {
 		return 0;
 	}
 }
-
 
 std::vector<int> HeVCluster::getConnectivity() {
 	
@@ -80,4 +80,51 @@ std::vector<int> HeVCluster::getConnectivity() {
 	
 	
 	return connectivityArray;
+}
+
+double HeVCluster::getDissociationFlux(const double temperature) {
+	return 0.0;
+}
+
+double HeVCluster::getProductionFlux(const double temperature) {
+	// Local declarations
+	double fluxOne = 0.0, fluxTwo = 0.0, kPlus = 0.0;
+	int thisClusterIndex = 0;
+	int numHeClusters = std::stoi(network->properties->at("numHeClusters"));
+	int numVClusters = std::stoi(network->properties->at("numVClusters"));
+	int numIClusters = std::stoi(network->properties->at("numIClusters"));
+	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
+
+	// This cluster's index in the reactants array
+	thisClusterIndex = numSingleSpeciesClusters + (numHe - 1) + (numV - 1) * numHeClusters;
+
+	// Loop over all possible clusters
+	for (int j = 0; j < network->reactants->size(); j++) {
+		for (int k = 0; k < network->reactants->size(); k++) {
+			// If the jth and kth reactants react to produce this reactant...
+			if (network->isConnected(j, k)
+					&& (network->getReactionProduct(j, k).get() == this)) {
+
+				// This fluxOne term considers all reactions that
+				// produce C_i
+				fluxOne = fluxOne + calculateReactionRateConstant(j, k, temperature)
+								* network->reactants->at(j)->getConcentration()
+								* network->reactants->at(k)->getConcentration();
+			}
+		}
+
+		// Calculate Second term of production flux
+		// this acts to take away from the current reactant
+		// as it is reacting with others, thus decreasing itself.
+		// This considers all populations that are produced by C_i
+		if (network->isConnected(j, thisClusterIndex)) {
+			fluxTwo = fluxTwo
+					+ calculateReactionRateConstant(thisClusterIndex, j, temperature)
+							* network->reactants->at(j)->getConcentration();
+		}
+	}
+
+	// Return the production flux
+	return fluxOne - (fluxTwo * getConcentration());
+
 }

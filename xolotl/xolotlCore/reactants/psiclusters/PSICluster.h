@@ -43,37 +43,57 @@ protected:
 	 */
 	double migrationEnergy;
 
+	/**
+	 * Calculate the reaction constant dependent on the
+	 * reaction radii and the diffusion coefficients for the
+	 * ith and jth reactants, which itself depends on the current
+	 * temperature
+	 * @param i
+	 * @param j
+	 * @param temperature
+	 * @return
+	 */
+	double calculateReactionRateConstant(int i, int j, const double temperature);
+
 private:
 
 	/**
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	PSICluster() {}
+	PSICluster();
 
 public:
 
 	//! Constructor
 	PSICluster(const int clusterSize);
 	
+	/**
+	 * The copy constructor
+	 * @param other
+	 */
 	PSICluster(const PSICluster &other);
 
-	//! Destructor
+	/**
+	 * The Destructor
+	 */
 	virtual ~PSICluster();
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * dissociation.
+	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
 	 * @return The flux due to dissociation.
 	 */
-	virtual double getDissociationFlux();
+	virtual double getDissociationFlux(const double temperature);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * production.
+	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
 	 * @return The flux due to this cluster being produced.
 	 */
-	virtual double getProductionFlux();
+	virtual double getProductionFlux(const double temperature);
 
 	/**
 	 * This operation returns the total size of the cluster.
@@ -128,6 +148,7 @@ public:
 	/**
 	 * This operation returns the diffusion coefficient for this cluster and is
 	 * calculated from the diffusion factor.
+	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
 	 * @return The diffusion coefficient.
 	 */
 	virtual double getDiffusionCoefficient(const double temperature);
