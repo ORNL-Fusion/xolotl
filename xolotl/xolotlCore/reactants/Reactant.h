@@ -122,8 +122,6 @@ public:
 	 */
 	virtual std::vector<int> getConnectivity();
 
-	//virtual std::shared_ptr<Reactant> getReactionProduct(std::shared_ptr<Reactant> reactant);
-
 	/**
 	 * This operation writes the contents of the reactant to a string. This
 	 * operation should be overridden by subclasses.
@@ -179,7 +177,6 @@ public:
 	 */
 	int toClusterIndex(std::map<std::string, int> clusterMap);
 	
-	
 	/**
 	 * The destructor
 	 */
@@ -194,15 +191,6 @@ public:
 	 */
 	bool isConnected(int reactantI, int reactantJ);
 
-	/**
-	 * Return the Reactant product produced by reactantI and reactantJ in
-	 * this ReactionNetwork. Will return a null shared_ptr if these two
-	 * reactants are not connected in the network graph.
-	 * @param reactantI
-	 * @param reactantJ
-	 * @return
-	 */
-	std::shared_ptr<Reactant> getReactionProduct(int reactantI, int reactantJ);
 };
 
 } /* namespace xolotlCore */

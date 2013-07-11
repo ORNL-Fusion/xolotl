@@ -144,5 +144,16 @@ BOOST_AUTO_TEST_CASE(toClusterMap) {
 	}
 }
 
+BOOST_AUTO_TEST_CASE(checkIsConnected) {
+
+	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+
+	/*for (int i = 0; i < network->reactants->size(); i++) {
+		for (int j = 0; j < network->reactants->size(); j++) {
+			//std::cout << i << " " << j << "\n";
+			//BOOST_REQUIRE_EQUAL(network->isConnected(i,j), network->isConnected(j,i));
+		}
+	}*/
+}
 BOOST_AUTO_TEST_SUITE_END()
 

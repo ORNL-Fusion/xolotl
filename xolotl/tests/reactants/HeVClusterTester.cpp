@@ -108,7 +108,25 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 }
 
 BOOST_AUTO_TEST_CASE(checkGetFlux) {
+	/*shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+	int maxClusterSize = 10;
+	int numClusters = maxClusterSize;
 
+	shared_ptr<vector<shared_ptr<Reactant>>> reactants = network->reactants;
+	shared_ptr<map<string, string>> props = network->properties;
+
+	for (int i = 0; i < reactants->size(); i++) {
+		reactants->at(i)->setConcentration(2.0*i);
+		(dynamic_pointer_cast<PSICluster>(reactants->at(i)))->setMigrationEnergy(1.0);
+		(dynamic_pointer_cast<PSICluster>(reactants->at(i)))->setDiffusionFactor(1.0);
+	}
+	// Get the connectivity of the 20th HeV cluster (index 59).
+	shared_ptr<Reactant> reactant = reactants->at(3 * numClusters + 20 - 1);
+	shared_ptr<HeVCluster> cluster = dynamic_pointer_cast<HeVCluster>(reactant);
+
+	double flux = cluster->getProductionFlux(1.0);
+
+	std::cout << "Flux is " << flux << "\n";*/
 }
 
 BOOST_AUTO_TEST_SUITE_END()

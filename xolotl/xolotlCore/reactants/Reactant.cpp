@@ -79,15 +79,6 @@ bool ReactionNetwork::isConnected(int reactantI, int reactantJ) {
 	return (reactants->at(reactantI)->getConnectivity().at(reactantJ) == 1);
 }
 
-std::shared_ptr<Reactant> ReactionNetwork::getReactionProduct(int reactantI, int reactantJ) {
-	std::shared_ptr<Reactant> retReactant;
-	if (isConnected(reactantI, reactantJ)) {
-		//retReactant = reactants->at(reactantI)->getReactionProduct(reactants->at(reactantJ));
-	}
-	return retReactant;
-}
-
-
 std::map<std::string, int> ReactionNetwork::toClusterMap(int index) {
 	// This method defines the ordering and placement of all
 	// reactions in a ReactionNetwork

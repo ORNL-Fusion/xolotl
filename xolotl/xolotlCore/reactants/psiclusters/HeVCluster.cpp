@@ -1,5 +1,6 @@
 // Includes
 #include "HeVCluster.h"
+#include <iostream>
 
 using namespace xolotlCore;
 
@@ -94,22 +95,44 @@ double HeVCluster::getProductionFlux(const double temperature) {
 	int numVClusters = std::stoi(network->properties->at("numVClusters"));
 	int numIClusters = std::stoi(network->properties->at("numIClusters"));
 	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
+	int jNumI = 0, kNumI = 0, jNumHe = 0, kNumHe = 0, jNumV = 0, kNumV = 0;
+	std::map<std::string, int> reactantJMap, reactantKMap;
 
-	// This cluster's index in the reactants array
+	// This cluster's index in the reactants array - this is Andrew's
 	thisClusterIndex = numSingleSpeciesClusters + (numHe - 1) + (numV - 1) * numHeClusters;
 
+	std::cout << "Calculating HeV Flux\n";
 	// Loop over all possible clusters
 	for (int j = 0; j < network->reactants->size(); j++) {
 		for (int k = 0; k < network->reactants->size(); k++) {
-			// If the jth and kth reactants react to produce this reactant...
-			if (network->isConnected(j, k)
-					&& (network->getReactionProduct(j, k).get() == this)) {
+			// Get the ClusterMap corresponding to the jth and kth
+			// reactant
+			reactantJMap = network->toClusterMap(j);
+			reactantKMap = network->toClusterMap(k);
 
+			// Grab the numbers for each species
+			// from each reactant
+			jNumI = reactantJMap["I"];
+			kNumI = reactantKMap["I"];
+			jNumHe = reactantJMap["He"];
+			kNumHe = reactantKMap["He"];
+			jNumV = reactantJMap["V"];
+			kNumV = reactantKMap["V"];
+
+
+			// If the jth and kth reactants react to produce this reactant...
+			if (network->isConnected(j, k) && ((jNumI + kNumI) == 0)
+					&& ((jNumHe + kNumHe) == numHe)
+					&& ((jNumV + kNumV) == numV)) {
+				std::cout << jNumI << " " << kNumI << " " << jNumHe << " " << kNumHe << " " << jNumV << " " << kNumV << " " << numHe << " " << numV << "\n";
+				std::cout << "Made it in\n";
 				// This fluxOne term considers all reactions that
 				// produce C_i
 				fluxOne = fluxOne + calculateReactionRateConstant(j, k, temperature)
 								* network->reactants->at(j)->getConcentration()
 								* network->reactants->at(k)->getConcentration();
+
+				std::cout << "fluxOne is " << fluxOne << "\n";
 			}
 		}
 
