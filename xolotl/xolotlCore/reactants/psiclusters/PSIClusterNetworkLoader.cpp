@@ -15,6 +15,7 @@
 #include "InterstitialCluster.h"
 #include "HeVCluster.h"
 // #include "HeInterstitialCluster.h"
+#include "PSIClusterReactionNetwork.h"
 
 using namespace xolotlCore;
 
@@ -131,12 +132,13 @@ std::shared_ptr<std::istream> PSIClusterNetworkLoader::getInputstream() {
  *
  * This operation throws a std::string as an exception if there is a problem.
  */
-std::shared_ptr<ReactionNetwork> PSIClusterNetworkLoader::load() {
+std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 
 	// Local Declarations
 	TokenizedLineReader<std::string> reader;
 	std::vector<std::string> loadedLine;
-	std::shared_ptr<ReactionNetwork> network(new ReactionNetwork());
+	std::shared_ptr<PSIClusterReactionNetwork> network(
+		new PSIClusterReactionNetwork());
 	std::istringstream dataStream;
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");

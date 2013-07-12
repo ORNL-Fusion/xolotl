@@ -20,8 +20,7 @@
 using namespace xolotlCore;
 using namespace testUtils;
 
-SimpleReactionNetwork::SimpleReactionNetwork() :
-	ReactionNetwork() {
+SimpleReactionNetwork::SimpleReactionNetwork() {
 	
 	// Hard code the size of the largest cluster
 	int maxClusterSize = 10;

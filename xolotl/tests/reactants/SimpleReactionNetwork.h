@@ -1,7 +1,7 @@
 #ifndef SIMPLEREACTIONNETWORK_H_
 #define SIMPLEREACTIONNETWORK_H_
 
-#include <Reactant.h>
+#include <PSIClusterReactionNetwork.h>
 
 namespace testUtils {
 
@@ -15,7 +15,7 @@ namespace testUtils {
  * TestUtils::getSimpleReactionNetwork() operation should always be called to
  * insure that it is properly initialized.
  */
-class SimpleReactionNetwork : public xolotlCore::ReactionNetwork {
+class SimpleReactionNetwork : public xolotlCore::PSIClusterReactionNetwork {
 
 public:
 	//! Constructor

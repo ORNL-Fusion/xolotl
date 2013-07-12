@@ -13,6 +13,9 @@
 #include <memory>
 #include <typeinfo>
 #include <limits>
+#include <PSIClusterNetworkLoader.h>
+#include <PSIClusterReactionNetwork.h>
+
 
 using namespace std;
 using namespace xolotlCore;
@@ -66,7 +69,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	loader.setInputstream(networkStream);
 
 	// Load the network
-	shared_ptr<ReactionNetwork> network = loader.load();
+	shared_ptr<PSIClusterReactionNetwork> network = loader.load();
 
 	// Check the network. It should not be empty
 	std::map<std::string, std::string> props = *(network->properties);
@@ -158,7 +161,9 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	
 	// Copy the ReactionNetwork
 	
-	shared_ptr<ReactionNetwork> network2(new ReactionNetwork(*network));
+	shared_ptr<PSIClusterReactionNetwork> network2(
+		new PSIClusterReactionNetwork(*network));
+	
 	BOOST_REQUIRE_NE(network.get(), network2.get());
 	
 	// Check the reactants of the ReactionNetwork

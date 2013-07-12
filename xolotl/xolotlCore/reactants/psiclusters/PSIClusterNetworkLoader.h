@@ -12,7 +12,7 @@
 #include <map>
 #include <memory>
 #include "PSICluster.h"
-#include <Reactant.h>
+#include <PSIClusterReactionNetwork.h>
 #include <string>
 
 namespace xolotlCore {
@@ -143,7 +143,7 @@ public:
 	 * be loaded.
 	 * @param network The reaction network
 	 */
-	std::shared_ptr<ReactionNetwork> load();
+	std::shared_ptr<PSIClusterReactionNetwork> load();
 };
 
 } /* namespace xolotlCore */
