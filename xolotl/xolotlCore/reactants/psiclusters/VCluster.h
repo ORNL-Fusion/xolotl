@@ -57,6 +57,19 @@ public:
 	 */
 	virtual std::map<std::string, int> getClusterMap();
 
+	/**
+	 * Return whether or not this PSICluster is a product
+	 * of the reaction between reactantI and reactantJ in
+	 * this Reactants ReactionNetwork. This method should be
+	 * specialized by subclasses to indicate whether or not they
+	 * are the product of the given reaction.
+	 *
+	 * @param reactantI
+	 * @param reactantJ
+	 * @return
+	 */
+	virtual bool isProductReactant(int reactantI, int reactantJ);
+
 };
 //end class VCluster
 

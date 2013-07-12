@@ -79,14 +79,19 @@ double HeCluster::getDissociationFlux(const double temperature) {
 	double diss = 0.0;
 	int numHelium = 0, deltaIndex = -1;
 
+	// Loop over all reactants
 	for (int j = 0; j < network->reactants->size(); j++) {
+
+		// Get the number of helium species in the jth reactant
 		numHelium = network->toClusterMap(j)["He"];
+
 		// If the Jth reactant contains Helium, then we calculate
 		if (numHelium > 0) {
 			// Search for the index of the cluster that contains exactly
 			// one less helium than reactant->at(j)
 			for (int k = 0; k < network->reactants->size(); k++) {
 				if ((network->toClusterMap(k)["He"] - numHelium) == 1) {
+					// Once found, get the current index
 					deltaIndex = k;
 				}
 			}
@@ -105,6 +110,32 @@ double HeCluster::getDissociationFlux(const double temperature) {
 
 	// Return the dissociation
 	return diss;
+}
+
+bool HeCluster::isProductReactant(int reactantI, int reactantJ) {
+
+	// Local Declarations, integers for species number for I, J reactants
+	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
+
+	// Get the ClusterMap corresponding to
+	// the given reactants
+	std::map<std::string, int> reactantIMap = network->toClusterMap(reactantI);
+	std::map<std::string, int> reactantJMap = network->toClusterMap(reactantJ);
+
+	// Grab the numbers for each species
+	// from each Reactant
+	rI_I = reactantIMap["I"];
+	rJ_I = reactantJMap["I"];
+	rI_He = reactantIMap["He"];
+	rJ_He = reactantJMap["He"];
+	rI_V = reactantIMap["V"];
+	rJ_V = reactantJMap["V"];
+
+	// We should have no interstitials, a
+	// total of size Helium, and a total of
+	// 0 Vacancies
+	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == size)
+			&& ((rI_V + rJ_V) == 0);
 }
 
 std::map<std::string, int> HeCluster::getClusterMap() {

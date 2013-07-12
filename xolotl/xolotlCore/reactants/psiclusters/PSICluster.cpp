@@ -53,6 +53,7 @@ double PSICluster::getTotalFlux(const double temperature) {
 }
 
 double PSICluster::getDissociationFlux(const double temperature) {
+	// Should be overridden by subclasses...
 	return 0.0;
 }
 
@@ -158,13 +159,15 @@ void PSICluster::setMigrationEnergy(const double energy) {
 }
 
 double PSICluster::calculateReactionRateConstant(int i, int j, const double temperature) {
+	// Get the reaction radii and diffusion coefficients
 	double ra = 1, rb = 1; // Will set these later
-	return 4 * xolotlCore::pi * (ra + rb)
-			* (std::dynamic_pointer_cast<PSICluster>(network->reactants->at(i))->getDiffusionCoefficient(
-					temperature)
-					+ std::dynamic_pointer_cast<PSICluster>(
-							network->reactants->at(j))->getDiffusionCoefficient(
-							temperature));
+	double iDiffusion = std::dynamic_pointer_cast<PSICluster>(
+			network->reactants->at(i))->getDiffusionCoefficient(temperature);
+	double jDiffusion = std::dynamic_pointer_cast<PSICluster>(
+			network->reactants->at(j))->getDiffusionCoefficient(temperature);
+
+	// Calculate and return
+	return 4 * xolotlCore::pi * (ra + rb) * (iDiffusion + jDiffusion);
 }
 
 double PSICluster::calculateDissociationConstant(int i, int j, double temperature) {
@@ -179,7 +182,7 @@ double PSICluster::calculateDissociationConstant(int i, int j, double temperatur
 
 	// Get the species at index i so we
 	// can get the binding energy index
-
+	// FIXME !!!!
 
 	// Make sure we found a valid binding energy
 	if (bindingEnergyIndex == -1) {

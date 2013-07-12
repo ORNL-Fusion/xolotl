@@ -83,6 +83,31 @@ double InterstitialCluster::getDissociationFlux(const double temperature) {
 	return diss;
 }
 
+bool InterstitialCluster::isProductReactant(int reactantI, int reactantJ) {
+
+	// Local Declarations, integers for species number for I, J reactants
+	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
+
+	// Get the ClusterMap corresponding to
+	// the given reactants
+	std::map<std::string, int> reactantIMap = network->toClusterMap(reactantI);
+	std::map<std::string, int> reactantJMap = network->toClusterMap(reactantJ);
+
+	// Grab the numbers for each species
+	// from each Reactant
+	rI_I = reactantIMap["I"];
+	rJ_I = reactantJMap["I"];
+	rI_He = reactantIMap["He"];
+	rJ_He = reactantJMap["He"];
+	rI_V = reactantIMap["V"];
+	rJ_V = reactantJMap["V"];
+
+	// We should have this->size interstitials, a
+	// total of 0 Helium, and a total of
+	// 0 Vacancies
+	return ((rI_I + rJ_I) == size) && ((rI_He + rJ_He) == 0)
+			&& ((rI_V + rJ_V) == 0);
+}
 
 std::map<std::string, int> InterstitialCluster::getClusterMap() {
 	// Local Declarations

@@ -123,6 +123,32 @@ double VCluster::getDissociationFlux(const double temperature) {
 	return diss;
 }
 
+bool VCluster::isProductReactant(int reactantI, int reactantJ) {
+
+	// Local Declarations, integers for species number for I, J reactants
+	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
+
+	// Get the ClusterMap corresponding to
+	// the given reactants
+	std::map<std::string, int> reactantIMap = network->toClusterMap(reactantI);
+	std::map<std::string, int> reactantJMap = network->toClusterMap(reactantJ);
+
+	// Grab the numbers for each species
+	// from each Reactant
+	rI_I = reactantIMap["I"];
+	rJ_I = reactantJMap["I"];
+	rI_He = reactantIMap["He"];
+	rJ_He = reactantJMap["He"];
+	rI_V = reactantIMap["V"];
+	rJ_V = reactantJMap["V"];
+
+	// We should have no interstitials, a
+	// total of 0 Helium, and a total of
+	// size Vacancies
+	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == 0)
+			&& ((rI_V + rJ_V) == size);
+}
+
 std::map<std::string, int> VCluster::getClusterMap() {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
