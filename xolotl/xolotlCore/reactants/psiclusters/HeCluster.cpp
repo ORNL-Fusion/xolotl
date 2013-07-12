@@ -73,3 +73,49 @@ std::vector<int> HeCluster::getConnectivity() {
 	return connectivityArray;
 }
 
+double HeCluster::getDissociationFlux(const double temperature) {
+
+	// Local Declarations
+	double diss = 0.0;
+	int numHelium = 0, deltaIndex = -1;
+
+	for (int j = 0; j < network->reactants->size(); j++) {
+		numHelium = network->toClusterMap(j)["He"];
+		// If the Jth reactant contains Helium, then we calculate
+		if (numHelium > 0) {
+			// Search for the index of the cluster that contains exactly
+			// one less helium than reactant->at(j)
+			for (int k = 0; k < network->reactants->size(); k++) {
+				if ((network->toClusterMap(k)["He"] - numHelium) == 1) {
+					deltaIndex = k;
+				}
+			}
+
+			// There may not have been an index that had one less
+			// helium, if so, we won't add to the dissociation flux
+			if (deltaIndex != -1) {
+				// Calculate the dissociation, with K^- evaluated
+				// at deltaIndex and this Helium Cluster's index.
+				diss = diss + calculateDissociationConstant(j,
+								network->toClusterIndex(getClusterMap()),
+								temperature) * network->reactants->at(j)->getConcentration();
+			}
+		}
+	}
+
+	// Return the dissociation
+	return diss;
+}
+
+std::map<std::string, int> HeCluster::getClusterMap() {
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
+
+	// Set the number of each species
+	clusterMap["He"] = size;
+	clusterMap["V"] = 0;
+	clusterMap["I"] = 0;
+
+	// Return it
+	return clusterMap;
+}

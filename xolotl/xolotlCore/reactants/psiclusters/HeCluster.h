@@ -39,6 +39,24 @@ public:
 	 */
     virtual std::vector<int> getConnectivity();
 
+	/**
+	 * This operation returns the total change in this cluster due to
+	 * dissociation.
+	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
+	 * @return The flux due to dissociation.
+	 */
+	virtual double getDissociationFlux(const double temperature);
+
+	/**
+	 * This virtual method is for subclasses to specialize
+	 * to return their representative cluster map, which is a mapping
+	 * of which species exist in the cluster to the integer number
+	 * of each species.
+	 *
+	 * @return
+	 */
+	virtual std::map<std::string, int> getClusterMap();
+
 };
 //end class HeCluster
 

@@ -34,8 +34,8 @@ std::vector<int> VCluster::getConnectivity() {
 	// with a size greater than the maximum mixed-species cluster size.
 	clusterIndex = 0;
 	// Get the size of the first helium cluster
-	heSize = (std::dynamic_pointer_cast < PSICluster
-			> (network->reactants->at(clusterIndex)))->getSize();
+	heSize = (std::dynamic_pointer_cast<PSICluster>(
+			network->reactants->at(clusterIndex)))->getSize();
 	// Loop over all of the valid helium clusters
 	while (size + heSize <= maxMixedSize && clusterIndex < numHe) {
 		// Set the connectivity to 1
@@ -43,8 +43,8 @@ std::vector<int> VCluster::getConnectivity() {
 		// Increment the counter
 		clusterIndex++;
 		// Get the size of the next vacancy cluster
-		heSize = (std::dynamic_pointer_cast < PSICluster
-				> (network->reactants->at(clusterIndex)))->getSize();
+		heSize = (std::dynamic_pointer_cast<PSICluster>(
+				network->reactants->at(clusterIndex)))->getSize();
 	}
 
 	//----- A*V + B*V --> (A+B)*V -----
@@ -69,8 +69,8 @@ std::vector<int> VCluster::getConnectivity() {
 	// does not exceed the maximum mixed-species cluster size.
 	clusterIndex = numHe + numV + numI;
 	// Get the size of the first vacancy cluster
-	mixedSize = (std::dynamic_pointer_cast < PSICluster
-			> (network->reactants->at(clusterIndex)))->getSize();
+	mixedSize = (std::dynamic_pointer_cast<PSICluster>(
+			network->reactants->at(clusterIndex)))->getSize();
 	// Loop over all of the mixed clusters -- FIX BOUNDS!
 	while (size + mixedSize <= maxMixedSize
 			&& clusterIndex < numHe + numV + numI + numMixed) {
@@ -79,9 +79,59 @@ std::vector<int> VCluster::getConnectivity() {
 		// Increment the counter
 		clusterIndex++;
 		// Get the size of the next mixed cluster
-		mixedSize = (std::dynamic_pointer_cast < PSICluster
-				> (network->reactants->at(clusterIndex)))->getSize();
+		mixedSize = (std::dynamic_pointer_cast<PSICluster>(
+				network->reactants->at(clusterIndex)))->getSize();
 	}
 
 	return connectivityArray;
+}
+
+double VCluster::getDissociationFlux(const double temperature) {
+
+	// Local Declarations
+	double diss = 0.0;
+	int numV = 0, deltaIndex = -1;
+
+	// Loop over all Reactants
+	for (int j = 0; j < network->reactants->size(); j++) {
+		numV = network->toClusterMap(j)["V"];
+		// If the Jth reactant contains Vacancy, then we calculate
+		if (numV > 0) {
+			// Search for the index of the cluster that contains exactly
+			// one less Vacancy than reactant->at(j)
+			for (int k = 0; k < network->reactants->size(); k++) {
+				if ((network->toClusterMap(k)["V"] - numV) == 1) {
+					deltaIndex = k;
+				}
+			}
+
+			// There may not have been an index that had one less
+			// Vacancy, if so, we won't add to the dissociation flux
+			if (deltaIndex != -1) {
+				// Calculate the dissociation, with K^- evaluated
+				// at deltaIndex and this Vacancy Cluster's index.
+				diss = diss
+						+ calculateDissociationConstant(j,
+								network->toClusterIndex(getClusterMap()),
+								temperature)
+								* network->reactants->at(j)->getConcentration();
+			}
+		}
+	}
+
+	// Return the dissociation
+	return diss;
+}
+
+std::map<std::string, int> VCluster::getClusterMap() {
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
+
+	// Set the number of each species
+	clusterMap["He"] = 0;
+	clusterMap["V"] = size;
+	clusterMap["I"] = 0;
+
+	// Return it
+	return clusterMap;
 }

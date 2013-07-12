@@ -74,12 +74,27 @@ public:
 	virtual double getDissociationFlux(const double temperature);
 
 	/**
-	 * This operation returns the total change in this cluster due to
-	 * production.
-	 * @return The flux due to this cluster being produced.
+	 * Return whether or not this PSICluster is a product
+	 * of the reaction between reactantI and reactantJ in
+	 * this Reactants ReactionNetwork. This method should be
+	 * specialized by subclasses to indicate whether or not they
+	 * are the product of the given reaction.
+	 *
+	 * @param reactantI
+	 * @param reactantJ
+	 * @return
 	 */
-	virtual double getProductionFlux(const double temperature);
+	virtual bool isProductReactant(int reactantI, int reactantJ);
 
+	/**
+	 * This virtual method is for subclasses to specialize
+	 * to return their representative cluster map, which is a mapping
+	 * of which species exist in the cluster to the integer number
+	 * of each species.
+	 *
+	 * @return
+	 */
+	virtual std::map<std::string, int> getClusterMap();
 };
 //end class HeVCluster
 

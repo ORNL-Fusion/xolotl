@@ -87,67 +87,39 @@ double HeVCluster::getDissociationFlux(const double temperature) {
 	return 0.0;
 }
 
-double HeVCluster::getProductionFlux(const double temperature) {
-	// Local declarations
-	double fluxOne = 0.0, fluxTwo = 0.0, kPlus = 0.0;
-	int thisClusterIndex = 0;
-	int numHeClusters = std::stoi(network->properties->at("numHeClusters"));
-	int numVClusters = std::stoi(network->properties->at("numVClusters"));
-	int numIClusters = std::stoi(network->properties->at("numIClusters"));
-	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
-	int jNumI = 0, kNumI = 0, jNumHe = 0, kNumHe = 0, jNumV = 0, kNumV = 0;
-	std::map<std::string, int> reactantJMap, reactantKMap;
+bool HeVCluster::isProductReactant(int reactantI, int reactantJ) {
+	// Local Declarations, integers for species number for I, J reactants
+	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
 
-	// This cluster's index in the reactants array - this is Andrew's
-	thisClusterIndex = numSingleSpeciesClusters + (numHe - 1) + (numV - 1) * numHeClusters;
+	// Get the ClusterMap corresponding to
+	// the given reactants
+	std::map<std::string, int> reactantIMap = network->toClusterMap(reactantI);
+	std::map<std::string, int> reactantJMap = network->toClusterMap(reactantJ);
 
-	std::cout << "Calculating HeV Flux\n";
-	// Loop over all possible clusters
-	for (int j = 0; j < network->reactants->size(); j++) {
-		for (int k = 0; k < network->reactants->size(); k++) {
-			// Get the ClusterMap corresponding to the jth and kth
-			// reactant
-			reactantJMap = network->toClusterMap(j);
-			reactantKMap = network->toClusterMap(k);
+	// Grab the numbers for each species
+	// from each Reactant
+	rI_I = reactantIMap["I"]; rJ_I = reactantJMap["I"];
+	rI_He = reactantIMap["He"]; rJ_He = reactantJMap["He"];
+	rI_V = reactantIMap["V"]; rJ_V = reactantJMap["V"];
 
-			// Grab the numbers for each species
-			// from each reactant
-			jNumI = reactantJMap["I"];
-			kNumI = reactantKMap["I"];
-			jNumHe = reactantJMap["He"];
-			kNumHe = reactantKMap["He"];
-			jNumV = reactantJMap["V"];
-			kNumV = reactantKMap["V"];
+	// We should have no interstitials, a
+	// total of numHe Helium, and a total of
+	// numV Vacancies
+	return ((rI_I + rJ_I) == 0)
+			&& ((rI_He + rJ_He) == numHe)
+			&& ((rI_V + rJ_V) == numV);
+}
 
 
-			// If the jth and kth reactants react to produce this reactant...
-			if (network->isConnected(j, k) && ((jNumI + kNumI) == 0)
-					&& ((jNumHe + kNumHe) == numHe)
-					&& ((jNumV + kNumV) == numV)) {
-				std::cout << jNumI << " " << kNumI << " " << jNumHe << " " << kNumHe << " " << jNumV << " " << kNumV << " " << numHe << " " << numV << "\n";
-				std::cout << "Made it in\n";
-				// This fluxOne term considers all reactions that
-				// produce C_i
-				fluxOne = fluxOne + calculateReactionRateConstant(j, k, temperature)
-								* network->reactants->at(j)->getConcentration()
-								* network->reactants->at(k)->getConcentration();
+std::map<std::string, int> HeVCluster::getClusterMap() {
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
 
-				std::cout << "fluxOne is " << fluxOne << "\n";
-			}
-		}
+	// Set the number of each species
+	clusterMap["He"] = numHe;
+	clusterMap["V"] = numV;
+	clusterMap["I"] = 0;
 
-		// Calculate Second term of production flux
-		// this acts to take away from the current reactant
-		// as it is reacting with others, thus decreasing itself.
-		// This considers all populations that are produced by C_i
-		if (network->isConnected(j, thisClusterIndex)) {
-			fluxTwo = fluxTwo
-					+ calculateReactionRateConstant(thisClusterIndex, j, temperature)
-							* network->reactants->at(j)->getConcentration();
-		}
-	}
-
-	// Return the production flux
-	return fluxOne - (fluxTwo * getConcentration());
-
+	// Return it
+	return clusterMap;
 }

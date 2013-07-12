@@ -48,12 +48,54 @@ PSICluster::PSICluster(const PSICluster &other) :
 PSICluster::~PSICluster() {
 }
 
+double PSICluster::getTotalFlux(const double temperature) {
+	return getProductionFlux(temperature) + getDissociationFlux(temperature);
+}
+
 double PSICluster::getDissociationFlux(const double temperature) {
 	return 0.0;
 }
 
 double PSICluster::getProductionFlux(const double temperature) {
-	return 0.0;
+	// Local declarations
+	double fluxOne = 0.0, fluxTwo = 0.0, kPlus = 0.0;
+	int thisClusterIndex = 0;
+	int numHeClusters = std::stoi(network->properties->at("numHeClusters"));
+	int numVClusters = std::stoi(network->properties->at("numVClusters"));
+	int numIClusters = std::stoi(network->properties->at("numIClusters"));
+	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
+
+	// This cluster's index in the reactants array - this is Andrew's
+	thisClusterIndex = network->toClusterIndex(getClusterMap());
+
+	// Loop over all possible clusters
+	for (int j = 0; j < network->reactants->size(); j++) {
+		for (int k = 0; k < network->reactants->size(); k++) {
+			// If the jth and kth reactants react to produce this reactant...
+			if (network->isConnected(j, k) && isProductReactant(j, k)) {
+				// This fluxOne term considers all reactions that
+				// produce C_i
+				fluxOne = fluxOne
+						+ calculateReactionRateConstant(j, k, temperature)
+								* network->reactants->at(j)->getConcentration()
+								* network->reactants->at(k)->getConcentration();
+			}
+		}
+
+		// Calculate Second term of production flux
+		// this acts to take away from the current reactant
+		// as it is reacting with others, thus decreasing itself.
+		// This considers all populations that are produced by C_i
+		if (network->isConnected(j, thisClusterIndex)) {
+			fluxTwo = fluxTwo
+					+ calculateReactionRateConstant(thisClusterIndex, j,
+							temperature)
+							* network->reactants->at(j)->getConcentration();
+		}
+	}
+
+	// Return the production flux
+	return fluxOne - (fluxTwo * getConcentration());
 }
 
 int PSICluster::getSize() {
@@ -75,7 +117,6 @@ double PSICluster::getDiffusionFactor() {
 }
 
 void PSICluster::setDiffusionFactor(const double factor) {
-
 	// Set the diffusion factor
 	diffusionFactor = factor;
 	return;
@@ -124,4 +165,38 @@ double PSICluster::calculateReactionRateConstant(int i, int j, const double temp
 					+ std::dynamic_pointer_cast<PSICluster>(
 							network->reactants->at(j))->getDiffusionCoefficient(
 							temperature));
+}
+
+double PSICluster::calculateDissociationConstant(int i, int j, double temperature) {
+
+	// Local Declarations
+	int bindingEnergyIndex = -1;
+	double atomicVolume = 1.0;
+	std::map<std::string, int> clusterMap = network->toClusterMap(i);
+
+	// Calculate the Reaction Rate Constant
+	double kPlus = calculateReactionRateConstant(i, j, temperature);
+
+	// Get the species at index i so we
+	// can get the binding energy index
+
+
+	// Make sure we found a valid binding energy
+	if (bindingEnergyIndex == -1) {
+		return 0.0;
+	} else {
+		return (1 / atomicVolume) * kPlus* exp(
+					bindingEnergies.at(bindingEnergyIndex)
+							/ (xolotlCore::kBoltzmann * temperature));
+	}
+}
+
+bool PSICluster::isProductReactant(int reactantI, int reactantJ) {
+	// Base class should just return false
+	return false;
+}
+
+std::map<std::string, int> PSICluster::getClusterMap() {
+	std::map<std::string, int> map;
+	return map;
 }

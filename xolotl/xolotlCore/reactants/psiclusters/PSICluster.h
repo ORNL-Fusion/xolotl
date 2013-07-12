@@ -55,6 +55,41 @@ protected:
 	 */
 	double calculateReactionRateConstant(int i, int j, const double temperature);
 
+	/**
+	 * Calculate the dissociation constant based on the current
+	 * reactants atomic volume, reaction rate constant, and binding
+	 * energies.
+	 *
+	 * @param i Index of Reactant
+	 * @param j Index of Reactant
+	 * @param temperature The current system temperature
+	 * @return
+	 */
+	double calculateDissociationConstant(int i, int j, double temperature);
+
+	/**
+	 * Return whether or not this PSICluster is a product
+	 * of the reaction between reactantI and reactantJ in
+	 * this Reactants ReactionNetwork. This method should be
+	 * specialized by subclasses to indicate whether or not they
+	 * are the product of the given reaction.
+	 *
+	 * @param reactantI
+	 * @param reactantJ
+	 * @return
+	 */
+	virtual bool isProductReactant(int reactantI, int reactantJ);
+
+	/**
+	 * This virtual method is for subclasses to specialize
+	 * to return their representative cluster map, which is a mapping
+	 * of which species exist in the cluster to the integer number
+	 * of each species.
+	 *
+	 * @return
+	 */
+	virtual std::map<std::string, int> getClusterMap();
+
 private:
 
 	/**
@@ -78,6 +113,15 @@ public:
 	 * The Destructor
 	 */
 	virtual ~PSICluster();
+
+	/**
+	 * This operation returns the total flux of this reactant in the
+	 * current network.
+	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
+	 * @return The total change in flux for this reactant due to all
+	 * reactions
+	 */
+	virtual double getTotalFlux(const double temperature);
 
 	/**
 	 * This operation returns the total change in this cluster due to
