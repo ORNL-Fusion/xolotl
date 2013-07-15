@@ -1,7 +1,9 @@
 
 #include "PSIClusterReactionNetwork.h"
+#include "PSICluster.h"
 
 using namespace xolotlCore;
+using std::shared_ptr;
 
 
 PSIClusterReactionNetwork::PSIClusterReactionNetwork()
@@ -16,82 +18,15 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 
 
 std::map<std::string, int> PSIClusterReactionNetwork::toClusterMap(int index) {
-	// This method defines the ordering and placement of all
-	// reactions in a PSIClusterReactionNetwork
 	
-	std::map<std::string, int> clusterMap;
+	// This functionality is implemented in PSICluster.
+	// Instead of redefining the map for all indices, we simply obtain
+	// the cluster map from the reactant in the reactants vector at the
+	// position of the index.
 	
-	// He clusters
-	// size of `numHeClusters`
-	
-	int numHeClusters = std::stoi(properties->at("numHeClusters"));
-	
-	if (index < numHeClusters) {
-		clusterMap["He"] = index + 1;
-		return clusterMap;
-	}
-	
-	index -= numHeClusters;
-	
-	// V (vacancy) clusters
-	// size of `numVClusters`
-	
-	int numVClusters = std::stoi(properties->at("numVClusters"));
-	
-	if (index < numVClusters) {
-		clusterMap["V"] = index + 1;
-		return clusterMap;
-	}
-	
-	index -= numVClusters;
-	
-	// I (interstitial) clusters
-	// size of `numIClusters`
-	
-	int numIClusters = std::stoi(properties->at("numIClusters"));
-	
-	if (index < numIClusters) {
-		clusterMap["I"] = index + 1;
-		return clusterMap;
-	}
-	
-	index -= numIClusters;
-	
-	// HeV clusters
-	// size of `numHeVClusters`
-	
-	int numHeVClusters = std::stoi(properties->at("numHeVClusters"));
-	int maxMixedClusterSize = std::stoi(properties->at("maxMixedClusterSize"));
-	
-	// Iterate through all posibilities of quantities for He and V
-	// under the condition that
-	// numHe + numV <= maxMixedClusterSize.
-	
-	// This doesn't need to be a loop, but it's less error prone than
-	// a closed form.
-	
-	for (int numV = 1; numV <= maxMixedClusterSize; numV++) {
-		int maxHe = maxMixedClusterSize - numV;
-		int numHe = index + 1;
-		
-		if (numHe <= maxHe) {
-			// The index must be referring to this quantity of He and V.
-			// Finalize and return the cluster map
-			
-			clusterMap["He"] = numHe;
-			clusterMap["V"] = numV;
-			return clusterMap;
-		}
-		
-		// Decrease the index by the number of vacancies
-		// possible with the current quantity of helium
-		index -= maxHe;
-	}
-	
-	// HeI clusters
-	// TODO
-	
-	throw std::string("HeI clusters cannot yet be indexed");
+	shared_ptr<PSICluster> cluster =
+		std::dynamic_pointer_cast<PSICluster>(reactants->at(index));
+	return cluster->getClusterMap();
 }
 
 
@@ -106,11 +41,12 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 	
 	// Convert the property strings so C++ can use them
 	
-	int numHeClusters = std::stoi(properties->at("numHeClusters"));
-	int numVClusters = std::stoi(properties->at("numVClusters"));
-	int numIClusters = std::stoi(properties->at("numIClusters"));
-	int numHeVClusters = std::stoi(properties->at("numHeVClusters"));
-	int maxMixedClusterSize = std::stoi(properties->at("maxMixedClusterSize"));
+	std::map<std::string, std::string> &props = *properties;
+	int numHeClusters = std::stoi(props["numHeClusters"]);
+	int numVClusters = std::stoi(props["numVClusters"]);
+	int numIClusters = std::stoi(props["numIClusters"]);
+	int numHeVClusters = std::stoi(props["numHeVClusters"]);
+	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
 	
 	int numSpecies = (numHe > 0) + (numV > 0) + (numI > 0);
 	
@@ -125,10 +61,10 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 			return numHe - 1;
 		}
 		else if (numV) {
-			return numV - numHeClusters - 1;
+			return numV + numHeClusters - 1;
 		}
 		else if (numI) {
-			return numI - numHeClusters - numVClusters - 1;
+			return numI + numHeClusters + numVClusters - 1;
 		}
 	} else if (numSpecies == 2) {
 		int indexOffset = numHeClusters + numVClusters + numIClusters;
@@ -140,7 +76,7 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 			// to an index
 			
 			int index = (numV - 1) * maxMixedClusterSize -
-				numV * (numV - 1) / 2 + numHe;
+				numV * (numV - 1) / 2 + numHe - 1;
 			
 			return indexOffset + index;
 		}

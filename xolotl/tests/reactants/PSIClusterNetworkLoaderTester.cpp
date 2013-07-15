@@ -72,17 +72,23 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	shared_ptr<PSIClusterReactionNetwork> network = loader.load();
 
 	// Check the network. It should not be empty
-	std::map<std::string, std::string> props = *(network->properties);
-	std::vector<std::shared_ptr<Reactant>> reactants = *(network->reactants);
+	std::map<std::string, std::string> &props = *(network->properties);
+	std::vector<std::shared_ptr<Reactant>> &reactants = *(network->reactants);
 	BOOST_TEST_MESSAGE("Network Size = " << reactants.size());
 	BOOST_TEST_MESSAGE("Number of properties = " << props.size());
 	BOOST_REQUIRE(!props.empty());
 	BOOST_REQUIRE(!reactants.empty());
 	// It should have four reactants
 	BOOST_REQUIRE_EQUAL(4, reactants.size());
-	// It should have eight properties
-	BOOST_REQUIRE_EQUAL(8, props.size());
-
+	
+	// Print the properties list to debug
+	for (auto it = props.begin(); it != props.end(); it++) {
+		printf("\"%s\" => \"%s\"\n", it->first.c_str(), it->second.c_str());
+	}
+	
+	// It should have nine properties
+	BOOST_REQUIRE_EQUAL(9, props.size());
+	
 	// Check the properties
 	BOOST_TEST_MESSAGE("Maximum He Cluster Size = " << props["maxHeClusterSize"]);
 	BOOST_REQUIRE(strtol(props["maxHeClusterSize"].c_str(),NULL,10) == 1);

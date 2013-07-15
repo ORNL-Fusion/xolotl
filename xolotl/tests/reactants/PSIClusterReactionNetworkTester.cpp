@@ -7,8 +7,10 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
+#include "SimpleReactionNetwork.h"
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
+#include <map>
 #include <memory>
 #include <typeinfo>
 #include <limits>
@@ -58,6 +60,26 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 		network2.properties->at("numMixedClusters"));
 	BOOST_REQUIRE_CLOSE(network.reactants->at(0)->getConcentration(), 50.0, 1e-5);
 	BOOST_REQUIRE_CLOSE(network2.reactants->at(0)->getConcentration(), 52.0, 1e-5);
+}
+
+
+BOOST_AUTO_TEST_CASE(clusterIndexConversions) {
+	
+	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+	
+	// Convert each index to a cluster map and back
+	
+	printf("i\tHe\tV\tI\n");
+	printf("===\t===\t===\t===\n");
+	
+	for (int index = 0; index < network->reactants->size(); index++) {
+		std::map<std::string, int> speciesMap = network->toClusterMap(index);
+		printf("%d\t%d\t%d\t%d\n", index,
+			speciesMap["He"], speciesMap["V"], speciesMap["I"]);
+		int convertedIndex = network->toClusterIndex(speciesMap);
+		
+		BOOST_REQUIRE_EQUAL(convertedIndex, index);
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()

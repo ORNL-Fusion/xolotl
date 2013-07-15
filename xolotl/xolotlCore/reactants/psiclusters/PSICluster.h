@@ -80,16 +80,6 @@ protected:
 	 */
 	virtual bool isProductReactant(int reactantI, int reactantJ);
 
-	/**
-	 * This virtual method is for subclasses to specialize
-	 * to return their representative cluster map, which is a mapping
-	 * of which species exist in the cluster to the integer number
-	 * of each species.
-	 *
-	 * @return
-	 */
-	virtual std::map<std::string, int> getClusterMap();
-
 private:
 
 	/**
@@ -210,6 +200,16 @@ public:
 	 * @return the migration energy
 	 */
 	double getMigrationEnergy();
+	
+	/**
+	 * This virtual method is for subclasses to specialize
+	 * to return their representative cluster map, which is a mapping
+	 * of which species exist in the cluster to the integer number
+	 * of each species.
+	 *
+	 * @return
+	 */
+	virtual std::map<std::string, int> getClusterMap();
 
 };
 //end class PSICluster

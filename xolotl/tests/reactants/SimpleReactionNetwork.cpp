@@ -17,6 +17,7 @@
 #include <limits>
 #include <algorithm>
 
+using std::shared_ptr;
 using namespace xolotlCore;
 using namespace testUtils;
 
@@ -98,5 +99,21 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
 	for (int i = 0; i < network->reactants->size(); i++) {
 		network->reactants->at(i)->setReactionNetwork(network);
 	}
+	
+	// TEMP
+	
+	for (shared_ptr<Reactant> reactant : *network->reactants)
+	{
+		std::vector<int> conn = reactant->getConnectivity();
+		
+		for (int a : conn)
+		{
+			printf("%s", a ? "* " : "  ");
+		}
+		printf("\n");
+	}
+	
+	
+	
 	return network;
 }

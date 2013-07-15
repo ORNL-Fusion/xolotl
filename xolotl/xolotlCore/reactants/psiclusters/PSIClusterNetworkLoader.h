@@ -89,9 +89,9 @@ private:
 	std::vector<std::shared_ptr<PSICluster>> iClusters;
 
 	/**
-	 * The internal list of mixed clusters
+	 * The internal list of HeV clusters
 	 */
-	std::vector<std::shared_ptr<PSICluster>> mixedClusters;
+	std::vector<std::shared_ptr<PSICluster>> heVClusters;
 
 	/**
 	 * This operation creates a singles-species cluster of helium, vacancies or

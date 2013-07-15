@@ -63,17 +63,22 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	BOOST_TEST_MESSAGE("Number of V clusters = " << (*props)["numVClusters"]);
 	BOOST_TEST_MESSAGE("Number of mixed clusters = " << (*props)["numMixedClusters"]);
 
-	// Get the connectivity of the 23th HeV cluster (index 53).
-	shared_ptr<Reactant> reactant = reactants->at(3 * numClusters + 23 - 1);
-	shared_ptr<HeVCluster> cluster = dynamic_pointer_cast<HeVCluster>(reactant);
+	// Get the connectivity of the HeV cluster with 5 He and 2 V
+	std::map<std::string, int> speciesMap;
+	speciesMap["He"] = 5;
+	speciesMap["V"] = 2;
+	int clusterIndex = network->toClusterIndex(speciesMap);
+	
+	shared_ptr<Reactant> reactant = reactants->at(clusterIndex);
+	shared_ptr<HeVCluster> cluster = std::dynamic_pointer_cast<HeVCluster>(reactant);
 	
 	// Make sure we're retreiving the correct reactant
 	
-	// The HeVCluster should have 6 He and 3 V, by the ordering of
+	// The HeVCluster should have 5 He and 2 V, by the ordering of
 	// the SimpleReactionNetwork.
 	
-	BOOST_REQUIRE_EQUAL(cluster->getSpeciesSize("He"), 6);
-	BOOST_REQUIRE_EQUAL(cluster->getSpeciesSize("V"), 3);
+	BOOST_REQUIRE_EQUAL(cluster->getSpeciesSize("He"), 5);
+	BOOST_REQUIRE_EQUAL(cluster->getSpeciesSize("V"), 2);
 	
 	vector<int> connectivityArray = cluster->getConnectivity();
 	
@@ -89,22 +94,24 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
 	int connectivityExpected[] = {
 		// He
-		1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
 		
 		// V
 		1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		
 		// I
-		1, 1, 0, 0, 0, 0, 0, 0, 0, 0
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	};
+	
+	// Check the He, V, and I reaction
 	
 	for (int i = 0; i < 30; i++) {
 		BOOST_REQUIRE_EQUAL(connectivityArray.at(i), connectivityExpected[i]);
 	}
 	
-	// Everything else should be 0
-	int connectivitySize = connectivityArray.size();
-	for (int i = 30; i < connectivitySize; i++) {
+	// The rest should be zero
+	
+	for (int i = 30; i < reactants->size(); i++) {
 		BOOST_REQUIRE_EQUAL(connectivityArray.at(i), 0);
 	}
 }

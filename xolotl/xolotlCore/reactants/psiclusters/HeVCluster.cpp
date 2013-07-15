@@ -44,41 +44,44 @@ std::vector<int> HeVCluster::getConnectivity() {
 	std::shared_ptr<std::map<std::string, std::string>> properties =
 		network->properties;
 	
-	int maxHeClusterSize = std::stoi(properties->at("maxHeClusterSize"));
-	int maxVClusterSize = std::stoi(properties->at("maxVClusterSize"));
-	int numHeClusters = std::stoi(properties->at("numHeClusters"));
-	int numVClusters = std::stoi(properties->at("numVClusters"));
-	int numIClusters = std::stoi(properties->at("numIClusters"));
-	
-	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
+	int maxMixedClusterSize = std::stoi(properties->at("maxMixedClusterSize"));
 	
 	// Initialize the return array with zeroes
 	std::vector<int> connectivityArray(network->reactants->size(), 0);
 	
-	// This cluster's index in the reactants array
-	int clusterIndex = numSingleSpeciesClusters + (numHe - 1) + (numV - 1) * numHeClusters;
-	
-	
 	// This cluster is involved in the following interactions:
 	
-	// xHe * yV + zHe --> (x + z)He + yV
-	for (int z = 1; numHe + z <= maxHeClusterSize; z++) {
-		// Select zHe
-		connectivityArray.at(z - 1) = 1;
+	// xHe*yV + zHe --> (x + z)He*yV
+	for (int z = 1; numHe + numV + z <= maxMixedClusterSize; z++) {
+		// Select the zHe index
+		std::map<std::string, int> speciesMap;
+		speciesMap["He"] = z;
+		int i = network->toClusterIndex(speciesMap);
+		
+		connectivityArray.at(i) = 1;
 	}
 	
-	// xHe * yV + V   --> xHe + (y + 1)V
-	if (numV + 1 <= maxVClusterSize) {
-		// Select V
-		connectivityArray.at(numHeClusters) = 1;
+	// xHe*yV + V   --> xHe*(y + 1)V
+	if (numHe + numV + 1 <= maxMixedClusterSize) {
+		// Select the single V index
+		std::map<std::string, int> speciesMap;
+		speciesMap["V"] = 1;
+		int i = network->toClusterIndex(speciesMap);
+		
+		connectivityArray.at(i) = 1;
 	}
 	
-	// xHe * yV + zI  --> xHe + (y - z)V
+	// xHe*yV + zI  --> xHe*(y - z)V
 	for (int z = 1; numV - z >= 1; z++) {
-		// Select zI
-		connectivityArray.at(numHeClusters + numVClusters + z - 1) = 1;
+		// Select the zI index
+		std::map<std::string, int> speciesMap;
+		speciesMap["I"] = z;
+		int i = network->toClusterIndex(speciesMap);
+		
+		connectivityArray.at(i) = 1;
 	}
 	
+	// Everything else is 0 (not connected)
 	
 	return connectivityArray;
 }

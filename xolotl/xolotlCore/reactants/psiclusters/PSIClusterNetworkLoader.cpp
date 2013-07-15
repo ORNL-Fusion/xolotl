@@ -59,13 +59,19 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 		// Create a new HeVCluster
 		cluster = std::make_shared<HeVCluster>(numHe, numV);
 		numClustersKey = "numHeVClusters";
+		
+		// Add it to the HeV
+		heVClusters.push_back(cluster);
 	}
 	else if (numHe > 0 && numI > 0) {
-		clusterSize = numHe + numI;
+		
+		throw std::string("InterstitialCluster is not implemented yet");
+		
+		// clusterSize = numHe + numI;
 		
 		// Create a new HeInterstitialCluster
 		// cluster = std::make_shared<HeInterstitialCluster>(numHe, numI);
-		numClustersKey = "numHeIClusters";
+		// numClustersKey = "numHeIClusters";
 	}
 	else if (numHe > 0) {
 		clusterSize = numHe;
@@ -73,6 +79,9 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 		// Create a new HeCluster
 		cluster = std::make_shared<HeCluster>(numHe);
 		numClustersKey = "numHeClusters";
+		
+		// Add it to the HeCluster list
+		heClusters.push_back(cluster);
 	}
 	else if (numV > 0) {
 		clusterSize = numV;
@@ -80,6 +89,9 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 		// Create a new VCluster
 		cluster = std::make_shared<VCluster>(numV);
 		numClustersKey = "numVClusters";
+		
+		// Add it to the VCluster list
+		vClusters.push_back(cluster);
 	}
 	else if (numI > 0) {
 		clusterSize = numI;
@@ -87,6 +99,9 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
 		// Create a new ICluster
 		cluster = std::make_shared<InterstitialCluster>(numI);
 		numClustersKey = "numIClusters";
+		
+		// Add it to the ICluster list
+		iClusters.push_back(cluster);
 	}
 	
 	// Increment the number of total clusters of this type
@@ -175,9 +190,9 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 				// And notify the calling function if the size is insufficient
 				throw error;
 			// Load the sizes
-			numHe = strtol(loadedLine[0].c_str(), NULL, 10);
-			numV = strtol(loadedLine[1].c_str(), NULL, 10);
-			numI = strtol(loadedLine[2].c_str(), NULL, 10);
+			numHe = std::stoi(loadedLine[0]);
+			numV  = std::stoi(loadedLine[1]);
+			numI  = std::stoi(loadedLine[2]);
 			// Create the cluster
 			std::shared_ptr<PSICluster> nextCluster = createCluster(numHe, numV,
 					numI, props);
@@ -211,8 +226,8 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 		for (int i = 0; i < iClusters.size(); i++)
 			network->reactants->push_back(iClusters[i]);
 		// Load the mixed species clusters into the network
-		for (int i = 0; i < mixedClusters.size(); i++)
-			network->reactants->push_back(mixedClusters[i]);
+		for (int i = 0; i < heVClusters.size(); i++)
+			network->reactants->push_back(heVClusters[i]);
 	}
 
 	return network;

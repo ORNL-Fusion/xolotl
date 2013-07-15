@@ -64,6 +64,9 @@ public:
 	/**
 	 * Return whether reactantI reacts with (or is connected in the network)
 	 * reactantJ.
+	 *
+	 * Depends on the result of Reactant::getConnectivity()
+	 *
 	 * @param reactantI
 	 * @param reactantJ
 	 * @return
