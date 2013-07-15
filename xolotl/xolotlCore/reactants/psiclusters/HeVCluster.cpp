@@ -84,7 +84,49 @@ std::vector<int> HeVCluster::getConnectivity() {
 }
 
 double HeVCluster::getDissociationFlux(const double temperature) {
-	return 0.0;
+
+	// Local Declarations
+	int vIndex = -1, iIndex = -1, heIndex = -1;
+	int thisIndex = network->toClusterIndex(getClusterMap());
+	std::map<std::string, int> oneHe;
+	std::map<std::string, int> oneV;
+	std::map<std::string, int> oneI;
+
+	// Set the cluster map data for 1 of each species
+	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
+	oneV["He"] = 0; oneV["V"] = 1; oneV["I"] = 0;
+	oneI["He"] = 0; oneI["V"] = 0; oneI["I"] = 1;
+
+	// Get their indices in the array
+	int oneHeIndex = network->toClusterIndex(oneHe);
+	int oneVIndex = network->toClusterIndex(oneV);
+	int oneIIndex = network->toClusterIndex(oneI);
+
+	// Find the indices such that they are the index of the
+	// concentration in C_bar that contain one additional species
+	// than this reactant
+	for (int k = 0; k < network->reactants->size(); k++) {
+		if ((network->toClusterMap(k)["He"] - numHe) == 1 && heIndex == -1) {
+			heIndex = k;
+		}
+		if ((network->toClusterMap(k)["V"] - numV) == 1 && vIndex == -1) {
+			vIndex = k;
+		}
+		if (network->toClusterMap(k)["I"] == 1 && iIndex == -1) {
+			iIndex = k;
+		}
+	}
+
+	// Calculate and return the dissociation constant
+	return calculateDissociationConstant(vIndex, oneVIndex, temperature)
+			* network->reactants->at(vIndex)->getConcentration()
+			+ calculateDissociationConstant(iIndex, oneIIndex, temperature)
+					* network->reactants->at(iIndex)->getConcentration()
+			+ calculateDissociationConstant(heIndex, oneHeIndex, temperature)
+					* network->reactants->at(heIndex)->getConcentration()
+			- (calculateDissociationConstant(thisIndex, oneVIndex, temperature)
+					+ calculateDissociationConstant(thisIndex, oneIIndex, temperature) +
+					calculateDissociationConstant(thisIndex, oneHeIndex, temperature)) * getConcentration();
 }
 
 bool HeVCluster::isProductReactant(int reactantI, int reactantJ) {

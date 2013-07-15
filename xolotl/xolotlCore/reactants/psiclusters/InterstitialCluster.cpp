@@ -54,16 +54,28 @@ double InterstitialCluster::getDissociationFlux(const double temperature) {
 	// Local Declarations
 	double diss = 0.0;
 	int numI = 0, deltaIndex = -1;
+	std::map<std::string, int> oneI;
 
+	// Set the cluster map data for 1 I
+	oneI["He"] = 0; oneI["V"] = 0; oneI["I"] = 1;
+
+	// Get teh index in the array
+	int oneIIndex = network->toClusterIndex(oneI);
+
+	// Loop over all reactants
 	for (int j = 0; j < network->reactants->size(); j++) {
+
+		// Get teh number of interstitials in C_j
 		numI = network->toClusterMap(j)["I"];
-		// If the Jth reactant contains Intersitials, then we calculate
+
+		// If the C_j contains Intersitials, then we calculate
 		if (numI > 0) {
 			// Search for the index of the cluster that contains exactly
-			// one less Interstitial than reactant->at(j)
+			// one less Interstitial than C_j, once found break from the loop
 			for (int k = 0; k < network->reactants->size(); k++) {
-				if ((network->toClusterMap(k)["I"] - numI) == 1) {
+				if ((numI - network->toClusterMap(k)["I"]) == 1) {
 					deltaIndex = k;
+					break;
 				}
 			}
 
@@ -72,8 +84,7 @@ double InterstitialCluster::getDissociationFlux(const double temperature) {
 			if (deltaIndex != -1) {
 				// Calculate the dissociation, with K^- evaluated
 				// at deltaIndex and this Intersitial Cluster's index.
-				diss = diss + calculateDissociationConstant(j,
-								network->toClusterIndex(getClusterMap()),
+				diss = diss + calculateDissociationConstant(deltaIndex, oneIIndex,
 								temperature) * network->reactants->at(j)->getConcentration();
 			}
 		}

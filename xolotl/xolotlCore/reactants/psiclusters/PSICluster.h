@@ -61,7 +61,7 @@ protected:
 	 * energies.
 	 *
 	 * @param i Index of Reactant
-	 * @param j Index of Reactant
+	 * @param species Name of species
 	 * @param temperature The current system temperature
 	 * @return
 	 */
@@ -100,7 +100,9 @@ private:
 
 public:
 
-	//! Constructor
+	/** Constructor
+	 * @param clusterSize
+	 */
 	PSICluster(const int clusterSize);
 	
 	/**

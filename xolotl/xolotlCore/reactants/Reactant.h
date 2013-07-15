@@ -28,37 +28,49 @@ class Reactant {
 
 protected:
 
-	//! The total concentration of this Reactant.
+	/** The total concentration of this Reactant.
+	 */
 	double concentration;
 
-	//! The name of this Reactant.
+	/** The name of this Reactant.
+	 */
 	std::string name;
 
-	//! An integer identification number for this reactant.
+	/** An integer identification number for this reactant.
+	 */
 	int id;
 
-	//! The reaction network that includes this reactant
+	/** The reaction network that includes this reactant.
+	 */
 	std::shared_ptr<ReactionNetwork> network;
 
 public:
 
-	//! The constructor.
+	/** The constructor.
+	 */
 	Reactant();
 
+	/** The copy constructor
+	 *
+	 * @param other
+	 */
 	Reactant(const Reactant &other);
 
-	//! Destructor
+	/** The destructor
+	 */
 	virtual ~Reactant();
 
 	/**
 	 * An alternative constructor that can be used to create a reactant
 	 * with an initial concentration.
+	 *
 	 * @param conc The initial concentration
 	 */
 	Reactant(double conc);
 
 	/**
 	 * This operation returns the current concentration.
+	 *
 	 * @return The concentration of this reactant
 	 */
 	double getConcentration();
@@ -66,6 +78,7 @@ public:
 	/**
 	 * This operation increases the concentration of the reactant by the
 	 * specified amount.
+	 *
 	 * @param deltaConc the change in concentration
 	 */
 	void increaseConcentration(double deltaConc);
@@ -73,6 +86,7 @@ public:
 	/**
 	 * This operation decreases the concentration of the reactant by the
 	 * specified amount.
+	 *
 	 * @param deltaConc the change in concentration
 	 */
 	void decreaseConcentration(double deltaConc);
@@ -80,6 +94,7 @@ public:
 	/**
 	 * This operation sets the concentration of the reactant to the
 	 * specified amount.
+	 *
 	 * @param conc The new concentation
 	 */
 	void setConcentration(double conc);
@@ -92,6 +107,7 @@ public:
 	/**
 	 * This operation returns the total flux of this reactant in the
 	 * current network.
+	 *
 	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
 	 * @return The total change in flux for this reactant due to all
 	 * reactions
@@ -101,6 +117,7 @@ public:
 	/**
 	 * This operation sets the collection of other reactants that make up
 	 * the reaction network in which this reactant exists.
+	 *
 	 * @param network The reaction network of which this reactant is a part
 	 */
 	void setReactionNetwork(
@@ -112,6 +129,7 @@ public:
 	 * "Connectivity" indicates whether two Reactants interact, via any
 	 * mechanism, in an abstract sense (as if they were nodes connected by
 	 * an edge on a network graph).
+	 *
 	 * @return An array of ones and zeros that indicate whether or not this
 	 * Reactant interacts via any mechanism with another Reactant. A "1" at
 	 * the i-th entry in this array indicates that the Reactant interacts
@@ -123,11 +141,12 @@ public:
 	/**
 	 * This operation writes the contents of the reactant to a string. This
 	 * operation should be overridden by subclasses.
+	 *
 	 * @return A serialized version of this reactant as a string.
 	 */
 	virtual const std::string toString();
 
-}; //end class Reactant
+};
+}
 
-} /* namespace xolotlCore */
 #endif

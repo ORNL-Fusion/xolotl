@@ -91,17 +91,28 @@ double VCluster::getDissociationFlux(const double temperature) {
 	// Local Declarations
 	double diss = 0.0;
 	int numV = 0, deltaIndex = -1;
+	std::map<std::string, int> oneV;
+
+	// Set the cluster map data for 1 of each species
+	oneV["He"] = 0; oneV["V"] = 1; oneV["I"] = 0;
+
+	// Get their indices in the array
+	int oneVIndex = network->toClusterIndex(oneV);
 
 	// Loop over all Reactants
 	for (int j = 0; j < network->reactants->size(); j++) {
+
+		// Get the number of vacancies in C_j
 		numV = network->toClusterMap(j)["V"];
-		// If the Jth reactant contains Vacancy, then we calculate
+
+		// If the C_j contains a Vacancy, then we calculate
 		if (numV > 0) {
 			// Search for the index of the cluster that contains exactly
-			// one less Vacancy than reactant->at(j)
+			// one less Vacancy than C_j, once found break from the loop
 			for (int k = 0; k < network->reactants->size(); k++) {
-				if ((network->toClusterMap(k)["V"] - numV) == 1) {
+				if ((numV - network->toClusterMap(k)["V"]) == 1) {
 					deltaIndex = k;
+					break;
 				}
 			}
 
@@ -110,11 +121,8 @@ double VCluster::getDissociationFlux(const double temperature) {
 			if (deltaIndex != -1) {
 				// Calculate the dissociation, with K^- evaluated
 				// at deltaIndex and this Vacancy Cluster's index.
-				diss = diss
-						+ calculateDissociationConstant(j,
-								network->toClusterIndex(getClusterMap()),
-								temperature)
-								* network->reactants->at(j)->getConcentration();
+				diss = diss	+ calculateDissociationConstant(deltaIndex, oneVIndex,
+								temperature) * network->reactants->at(j)->getConcentration();
 			}
 		}
 	}

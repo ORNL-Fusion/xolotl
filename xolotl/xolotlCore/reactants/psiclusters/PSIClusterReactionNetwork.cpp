@@ -118,8 +118,7 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 	
 	if (numSpecies == 0) {
 		throw std::string("Cluster map contains no species");
-	}
-	else if (numSpecies == 1) {
+	} else if (numSpecies == 1) {
 		// Single species
 		
 		if (numHe) {
@@ -131,8 +130,7 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 		else if (numI) {
 			return numI - numHeClusters - numVClusters - 1;
 		}
-	}
-	else if (numSpecies == 2) {
+	} else if (numSpecies == 2) {
 		int indexOffset = numHeClusters + numVClusters + numIClusters;
 		
 		if (numHe && numV) {

@@ -78,21 +78,29 @@ double HeCluster::getDissociationFlux(const double temperature) {
 	// Local Declarations
 	double diss = 0.0;
 	int numHelium = 0, deltaIndex = -1;
+	std::map<std::string, int> oneHe;
+
+	// Set the cluster map data for 1 of each species
+	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
+
+	// Get their indices in the array
+	int oneHeIndex = network->toClusterIndex(oneHe);
 
 	// Loop over all reactants
 	for (int j = 0; j < network->reactants->size(); j++) {
 
-		// Get the number of helium species in the jth reactant
+		// Get the number of helium species in C_j
 		numHelium = network->toClusterMap(j)["He"];
 
-		// If the Jth reactant contains Helium, then we calculate
+		// If the C_j contains Helium, then we calculate
 		if (numHelium > 0) {
 			// Search for the index of the cluster that contains exactly
-			// one less helium than reactant->at(j)
+			// one less helium than C_j, then break from the loop
 			for (int k = 0; k < network->reactants->size(); k++) {
-				if ((network->toClusterMap(k)["He"] - numHelium) == 1) {
+				if ((numHelium - network->toClusterMap(k)["He"]) == 1) {
 					// Once found, get the current index
 					deltaIndex = k;
+					break;
 				}
 			}
 
@@ -101,8 +109,7 @@ double HeCluster::getDissociationFlux(const double temperature) {
 			if (deltaIndex != -1) {
 				// Calculate the dissociation, with K^- evaluated
 				// at deltaIndex and this Helium Cluster's index.
-				diss = diss + calculateDissociationConstant(j,
-								network->toClusterIndex(getClusterMap()),
+				diss = diss + calculateDissociationConstant(deltaIndex, oneHeIndex,
 								temperature) * network->reactants->at(j)->getConcentration();
 			}
 		}

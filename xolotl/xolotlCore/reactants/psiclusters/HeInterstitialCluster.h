@@ -25,7 +25,7 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	HeInterstitialCluster():PSICluster(1) {}
+	HeInterstitialCluster() : PSICluster(1) {}
 
 public:
 
@@ -65,6 +65,13 @@ public:
 	 * @return The connectivity array
 	 */
     virtual std::vector<int> getConnectivity();
+
+    /**
+	 * This operation returns the total change in this cluster due to
+	 * dissociation.
+	 * @return The flux due to dissociation.
+	 */
+	virtual double getDissociationFlux(const double temperature);
 
 };
 //end class HeInterstitialCluster

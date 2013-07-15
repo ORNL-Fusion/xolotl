@@ -61,10 +61,6 @@ double PSICluster::getProductionFlux(const double temperature) {
 	// Local declarations
 	double fluxOne = 0.0, fluxTwo = 0.0, kPlus = 0.0;
 	int thisClusterIndex = 0;
-	int numHeClusters = std::stoi(network->properties->at("numHeClusters"));
-	int numVClusters = std::stoi(network->properties->at("numVClusters"));
-	int numIClusters = std::stoi(network->properties->at("numIClusters"));
-	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
 
 	// This cluster's index in the reactants array - this is Andrew's
 	thisClusterIndex = network->toClusterIndex(getClusterMap());
@@ -174,24 +170,28 @@ double PSICluster::calculateDissociationConstant(int i, int j, double temperatur
 
 	// Local Declarations
 	int bindingEnergyIndex = -1;
+	double ra = 1, rb = 1;
 	double atomicVolume = 1.0;
-	std::map<std::string, int> clusterMap = network->toClusterMap(i);
+	std::map<std::string, int> clusterMap = network->toClusterMap(j);
 
-	// Calculate the Reaction Rate Constant
+	// Get the binding energy index
+	if (clusterMap["He"] == 1 && clusterMap["V"] == 0 && clusterMap["I"] == 0) {
+		bindingEnergyIndex = 0;
+	} else if (clusterMap["He"] == 0 && clusterMap["V"] == 1 && clusterMap["I"] == 0) {
+		bindingEnergyIndex = 1;
+	} else if (clusterMap["He"] == 0 && clusterMap["V"] == 0 && clusterMap["I"] == 1) {
+		bindingEnergyIndex = 2;
+	} else {
+		return 0.0;
+	}
+
+	// Calculate the Reaction Rate Constant -- Cant use this, weird indices change in paper
 	double kPlus = calculateReactionRateConstant(i, j, temperature);
 
-	// Get the species at index i so we
-	// can get the binding energy index
-	// FIXME !!!!
-
-	// Make sure we found a valid binding energy
-	if (bindingEnergyIndex == -1) {
-		return 0.0;
-	} else {
-		return (1 / atomicVolume) * kPlus* exp(
-					bindingEnergies.at(bindingEnergyIndex)
+	// Calculate and return
+	return (1 / atomicVolume) * kPlus
+			* exp(bindingEnergies.at(bindingEnergyIndex)
 							/ (xolotlCore::kBoltzmann * temperature));
-	}
 }
 
 bool PSICluster::isProductReactant(int reactantI, int reactantJ) {
