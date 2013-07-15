@@ -100,20 +100,5 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
 		network->reactants->at(i)->setReactionNetwork(network);
 	}
 	
-	// TEMP
-	
-	for (shared_ptr<Reactant> reactant : *network->reactants)
-	{
-		std::vector<int> conn = reactant->getConnectivity();
-		
-		for (int a : conn)
-		{
-			printf("%s", a ? "* " : "  ");
-		}
-		printf("\n");
-	}
-	
-	
-	
 	return network;
 }
