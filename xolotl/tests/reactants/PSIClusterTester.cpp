@@ -94,5 +94,6 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 		copiedCluster.getMigrationEnergy()) > 2.0 - 1e-5);
 }
 
+
 BOOST_AUTO_TEST_SUITE_END()
 

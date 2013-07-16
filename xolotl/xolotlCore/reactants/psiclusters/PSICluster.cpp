@@ -210,3 +210,51 @@ std::map<std::string, int> PSICluster::getClusterMap() {
 double PSICluster::getReactionRadius() {
 	return 0.0;
 }
+
+
+std::vector<int> PSICluster::getConnectivity() {
+	
+	std::vector<int> reactionConn = getReactionConnectivity();
+	std::vector<int> dissConn = getDissociationConnectivity();
+	
+	// The vectors must be the same length.
+	
+	if (reactionConn.size() != dissConn.size()) {
+		throw std::string("The reaction and dissociation vectors "
+			"must be the same length");
+	}
+	
+	// Merge the two vectors such that the final vector contains
+	// a 1 at a positioin if either of the connectivity arrays
+	// have a 1
+	
+	int connLength = reactionConn.size();
+	for (int i = 0; i < connLength; i++) {
+		
+		// We can modify the reaction vector in place since it
+		// will not be needed by this method again.
+		reactionConn[i] |= dissConn[i];
+	}
+	
+	return reactionConn;
+}
+
+
+std::vector<int> PSICluster::getReactionConnectivity()
+{
+	// By default, return an array with a zero for each reactant
+	// in the network
+	
+	std::vector<int> reactionConn(network->reactants->size(), 0);
+	return reactionConn;
+}
+
+
+std::vector<int> PSICluster::getDissociationConnectivity()
+{
+	// By default, return an array with a zero for each reactant
+	// in the network
+	
+	std::vector<int> dissConn(network->reactants->size(), 0);
+	return dissConn;
+}

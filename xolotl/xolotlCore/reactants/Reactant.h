@@ -136,7 +136,7 @@ public:
 	 * with the i-th Reactant in the ReactionNetwork and a "0" indicates
 	 * that it does not.
 	 */
-	std::vector<int> getConnectivity();
+	virtual std::vector<int> getConnectivity();
 	
 	/**
 	 * This operation writes the contents of the reactant to a string. This
@@ -145,25 +145,6 @@ public:
 	 * @return A serialized version of this reactant as a string.
 	 */
 	virtual const std::string toString();
-	
-protected:
-	/**
-	 * Computes a row of the reaction connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants alone can form a reaction, the element at the position
-	 * of the second reactant is 1, otherwise 0.
-	 */
-	virtual std::vector<int> getReactionConnectivity();
-	
-	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
-	 */
-	virtual std::vector<int> getDissociationConnectivity();
 };
 }
 
