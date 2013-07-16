@@ -72,7 +72,9 @@ BOOST_AUTO_TEST_CASE(clusterIndexConversions) {
 	printf("i\tHe\tV\tI\n");
 	printf("===\t===\t===\t===\n");
 	
-	for (int index = 0; index < network->reactants->size(); index++) {
+	int reactionLength = network->reactants->size();
+	
+	for (int index = 0; index < reactionLength; index++) {
 		std::map<std::string, int> speciesMap = network->toClusterMap(index);
 		printf("%d\t%d\t%d\t%d\n", index,
 			speciesMap["He"], speciesMap["V"], speciesMap["I"]);

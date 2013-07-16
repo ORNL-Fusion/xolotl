@@ -60,7 +60,7 @@ std::vector<int> InterstitialCluster::getConnectivity() {
 		for (int numHeOther = 1; numVOther + numHeOther <= maxMixedClusterSize;
 			numHeOther++) {
 			
-			bool connected = numVOther + numHeOther - numI >= 1;
+			bool connected = numVOther - numI >= 1;
 			std::map<std::string, int> speciesMap;
 			speciesMap["He"] = numHeOther;
 			speciesMap["V"] = numVOther;

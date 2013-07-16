@@ -121,5 +121,20 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
 		network->reactants->at(i)->setReactionNetwork(network);
 	}
 	
+	
+	// Print the connectivity matrix
+	
+	for (auto reactantIt = network->reactants->begin();
+		reactantIt != network->reactants->end(); reactantIt++)
+	{
+		std::vector<int> conn = (*reactantIt)->getConnectivity();
+		
+		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++)
+		{
+			printf("%s", *connIt ? "* " : "  ");
+		}
+		printf("\n");
+	}
+	
 	return network;
 }

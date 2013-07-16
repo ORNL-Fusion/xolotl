@@ -85,42 +85,52 @@ double HeInterstitialCluster::getDissociationFlux(const double temperature) {
 std::vector<int> HeInterstitialCluster::getConnectivity() {
 	
 	// Local Declarations
-	std::shared_ptr<std::map<std::string, std::string>> properties =
-		network->properties;
+	std::map<std::string, std::string> &properties = *network->properties;
 	
-	int numHeClusters = std::stoi(properties->at("numHeClusters"));
-	int numVClusters = std::stoi(properties->at("numVClusters"));
-	int numIClusters = std::stoi(properties->at("numIClusters"));
+	int numHeClusters = std::stoi(properties["numHeClusters"]);
+	int numVClusters = std::stoi(properties["numVClusters"]);
+	int numIClusters = std::stoi(properties["numIClusters"]);
 	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
 	
-	int numHeVClusters = std::stoi(properties->at("numHeVClusters"));
+	int maxMixedClusterSize = std::stoi(properties["maxMixedClusterSize"]);
 	
 	// Initialize the return array with zeroes
 	std::vector<int> connectivityArray(network->reactants->size(), 0);
 	
-	// This cluster's index in the reactants array
-	int clusterIndex = numSingleSpeciesClusters + numHeVClusters +
-		(numHe - 1) + (numI - 1) * numHeVClusters;
-	
 	
 	// This cluster is involved in the following interactions:
 	
-	// Identity reaction
-	connectivityArray.at(clusterIndex) = 1;
-	
-	// xHe * yI + zHe --> [x+z]He * yI
-	for (int z = 1; numHe + z <= numHeClusters; z++) {
-		connectivityArray.at(z - 1) = 1;
+	// Growth through helium absorption
+	// xHe * yI + zHe --> (x+z)He * yI
+	// under the condition that x + y + z <= maxSize
+	for (int numHeOther = 1; numHe + numI + numHeOther <= numHeClusters;
+		numHeOther++) {
+		
+		std::map<std::string, int> speciesMap;
+		speciesMap["He"] = numHeOther;
+		int indexOther = network->toClusterIndex(speciesMap);
+		connectivityArray[indexOther] = 1;
 	}
 	
-	// xHe * yI + V --> xHe * [y - 1]I
-	if (numI - 1 <= numVClusters) {
-		connectivityArray.at(numHeClusters) = 1;
+	// Interstitial absorption (single)
+	// xHe * yI + I --> xHe * (y + 1)I
+	// if x + y + 1 <= maxSize
+	if (numHe + numI + 1 <= maxMixedClusterSize) {
+		
+		std::map<std::string, int> speciesMap;
+		speciesMap["I"] = 1;
+		int indexOther = network->toClusterIndex(speciesMap);
+		connectivityArray[indexOther] = 1;
 	}
 	
-	// xHe * yI + zI  --> xHe * [y + z]I
-	for (int z = 1; numI + z <= numVClusters; z++) {
-		connectivityArray.at(numHeClusters + numVClusters + z - 1) = 1;
+	// Reduction through vacancy absorption
+	// xHe * yI + zV --> xHe * (y - z)I
+	for (int numVOther = 1; numI - numVOther >= 1; numVOther++) {
+		
+		std::map<std::string, int> speciesMap;
+		speciesMap["V"] = numVOther;
+		int indexOther = network->toClusterIndex(speciesMap);
+		connectivityArray[indexOther] = 1;
 	}
 	
 	

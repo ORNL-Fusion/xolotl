@@ -72,10 +72,14 @@ std::vector<int> HeVCluster::getConnectivity() {
 	}
 	
 	// xHe*yV + zI  --> xHe*(y - z)V
-	for (int z = 1; numV - z >= 1; z++) {
+	
+	// Here I am assuming that the HeV and Interstitial can only interact if
+	// they would produce a positive number of vacancy species
+	
+	for (int numIOther = 1; numV - numIOther >= 1; numIOther++) {
 		// Select the zI index
 		std::map<std::string, int> speciesMap;
-		speciesMap["I"] = z;
+		speciesMap["I"] = numIOther;
 		int i = network->toClusterIndex(speciesMap);
 		
 		connectivityArray.at(i) = 1;

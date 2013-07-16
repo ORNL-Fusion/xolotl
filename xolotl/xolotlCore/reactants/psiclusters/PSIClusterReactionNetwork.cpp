@@ -68,10 +68,11 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 			return numI + numHeClusters + numVClusters - 1;
 		}
 	} else if (numSpecies == 2) {
+		
+		// HeVCluster
 		int indexOffset = numHeClusters + numVClusters + numIClusters;
 		
 		if (numHe && numV) {
-			// HeVCluster
 			
 			// Closed form for converting a top-left triangle grid
 			// to an index
@@ -80,9 +81,22 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 				numV * (numV - 1) / 2 + numHe - 1;
 			
 			return indexOffset + index;
-		} else if (numHe && numI) {
-			// FIXME... Andrew
-			return 0;
+		}
+		
+		// HeICluster
+		
+		// Increment the offset by the number of HeVClusters
+		// indexOffset += maxMixedClusterSize * (maxMixedClusterSize - 1) / 2;
+		indexOffset += numHeVClusters;
+		
+		if (numHe && numI) {
+			// Closed form for converting a top-left triangle grid
+			// to an index
+			
+			int index = (numI - 1) * maxMixedClusterSize -
+				numI * (numI - 1) / 2 + numHe - 1;
+			
+			return indexOffset + index;
 		}
 	}
 	
