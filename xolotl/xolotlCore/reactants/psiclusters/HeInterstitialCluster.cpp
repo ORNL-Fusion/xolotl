@@ -82,7 +82,7 @@ double HeInterstitialCluster::getDissociationFlux(const double temperature) {
 							temperature)) * getConcentration();
 }
 
-std::vector<int> HeInterstitialCluster::getConnectivity() {
+std::vector<int> HeInterstitialCluster::getReactionConnectivity() {
 	
 	// Local Declarations
 	std::map<std::string, std::string> &properties = *network->properties;

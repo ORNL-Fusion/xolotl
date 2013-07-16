@@ -11,7 +11,7 @@ InterstitialCluster::InterstitialCluster(int nI) :
 InterstitialCluster::~InterstitialCluster() {
 }
 
-std::vector<int> InterstitialCluster::getConnectivity() {
+std::vector<int> InterstitialCluster::getReactionConnectivity() {
 
 	std::map<std::string, std::string> &props = *network->properties;
 	

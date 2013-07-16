@@ -38,7 +38,7 @@ int HeVCluster::getSpeciesSize(const std::string speciesName) {
 	}
 }
 
-std::vector<int> HeVCluster::getConnectivity() {
+std::vector<int> HeVCluster::getReactionConnectivity() {
 	
 	// Extract some of the properties from the network
 	

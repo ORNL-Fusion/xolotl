@@ -33,11 +33,12 @@ public:
 	~VCluster();
 
 	/**
-	 * This operation overrides getConnectivity() from the base class to
-	 * provide the proper connectivity for a V cluster.
+	 * This operation overrides getReactionConnectivity() from
+	 * the base class to provide the proper reaction connectivity
+	 * for a V cluster.
 	 * @return The connectivity array
 	 */
-	virtual std::vector<int> getConnectivity();
+	std::vector<int> getReactionConnectivity();
 
 	/**
 	 * This operation returns the total change in this cluster due to

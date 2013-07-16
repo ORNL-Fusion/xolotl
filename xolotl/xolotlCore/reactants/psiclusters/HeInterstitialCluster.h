@@ -69,13 +69,14 @@ public:
 	int getSpeciesSize(const std::string speciesName);
 
 	/**
-	 * This operation overrides getConnectivity() from the base class to
-	 * provide the proper connectivity for a mixed-species cluster.
+	 * This operation overrides getReactionConnectivity() from
+	 * the base class to provide the proper reaction connectivity
+	 * for a He-Interstitial cluster.
 	 * @return The connectivity array
 	 */
-    virtual std::vector<int> getConnectivity();
+	std::vector<int> getReactionConnectivity();
 
-    /**
+	/**
 	 * This operation returns the total change in this cluster due to
 	 * dissociation.
 	 * @return The flux due to dissociation.

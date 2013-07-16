@@ -13,7 +13,7 @@ VCluster::VCluster(int nV) :
 VCluster::~VCluster() {
 }
 
-std::vector<int> VCluster::getConnectivity() {
+std::vector<int> VCluster::getReactionConnectivity() {
 	
 	std::map<std::string, std::string> &props = *(network->properties);
 	

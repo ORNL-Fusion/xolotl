@@ -14,7 +14,7 @@ HeCluster::HeCluster(int nHe) :
 HeCluster::~HeCluster() {
 }
 
-std::vector<int> HeCluster::getConnectivity() {
+std::vector<int> HeCluster::getReactionConnectivity() {
 	
 	// Note the reference to the properties map
 	std::map<std::string, std::string> &props = *(network->properties);
