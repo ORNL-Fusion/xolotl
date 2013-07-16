@@ -43,7 +43,7 @@ protected:
 	/** The reaction network that includes this reactant.
 	 */
 	std::shared_ptr<ReactionNetwork> network;
-
+	
 public:
 
 	/** The constructor.
@@ -136,7 +136,7 @@ public:
 	 * with the i-th Reactant in the ReactionNetwork and a "0" indicates
 	 * that it does not.
 	 */
-	virtual std::vector<int> getConnectivity();
+	std::vector<int> getConnectivity();
 
 	/**
 	 * This operation writes the contents of the reactant to a string. This
@@ -146,6 +146,9 @@ public:
 	 */
 	virtual const std::string toString();
 
+protected:
+	virtual std::vector<int> getReactionConnectivity();
+	virtual std::vector<int> getDissociationConnectivity();
 };
 }
 

@@ -75,13 +75,26 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		
 		// Check the connectivity for HeV
 		
-		for (int i = 30; i < reactants.size(); i++) {
+		for (int i = 30; i < 30 + numHeVClusters; i++) {
 			// Build a species map
 			std::map<std::string, int> speciesMap = network->toClusterMap(i);
 			int numHeOther = speciesMap["He"];
 			int numVOther = speciesMap["V"];
 			
 			bool connected = numHe + numHeOther + numVOther <= maxMixedClusterSize;
+			printf("%d\n", i);
+			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
+		}
+		
+		// Check the connectivity for HeI
+		
+		for (int i = numHeVClusters; i < connectivityArray.size(); i++) {
+			// Build a species map
+			std::map<std::string, int> speciesMap = network->toClusterMap(i);
+			int numHeOther = speciesMap["He"];
+			int numIOther = speciesMap["I"];
+			
+			bool connected = numHe + numHeOther + numIOther <= maxMixedClusterSize;
 			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
 		}
 	}
@@ -112,13 +125,25 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		
 		// Check the connectivity for HeV
 		
-		for (int i = 30; i < network->reactants->size(); i++) {
+		for (int i = 30; i < 30 + numHeVClusters; i++) {
 			// Build a species map
 			std::map<std::string, int> speciesMap = network->toClusterMap(i);
 			int numHeOther = speciesMap["He"];
 			int numVOther = speciesMap["V"];
 			
 			bool connected = numHe + numHeOther + numVOther <= maxMixedClusterSize;
+			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
+		}
+		
+		// Check the connectivity for HeI
+		
+		for (int i = numHeVClusters; i < connectivityArray.size(); i++) {
+			// Build a species map
+			std::map<std::string, int> speciesMap = network->toClusterMap(i);
+			int numHeOther = speciesMap["He"];
+			int numIOther = speciesMap["I"];
+			
+			bool connected = numHe + numHeOther + numIOther <= maxMixedClusterSize;
 			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
 		}
 	}

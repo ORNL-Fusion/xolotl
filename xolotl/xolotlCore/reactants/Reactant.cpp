@@ -52,10 +52,52 @@ void Reactant::setReactionNetwork(
 }
 
 std::vector<int> Reactant::getConnectivity() {
-	std::vector<int> dummy;
-	return dummy;
+	
+	std::vector<int> reactionConn = getReactionConnectivity();
+	std::vector<int> dissConn = getDissociationConnectivity();
+	
+	// The vectors must be the same length.
+	
+	if (reactionConn.size() != dissConn.size()) {
+		throw std::string("The reaction and dissociation vectors "
+			"must be the same length");
+	}
+	
+	// Merge the two vectors such that the final vector contains
+	// a 1 at a positioin if either of the connectivity arrays
+	// have a 1
+	
+	int connLength = reactionConn.size();
+	for (int i = 0; i < connLength; i++) {
+		
+		// We can modify the reaction vector in place since it
+		// will not be needed by this method again.
+		reactionConn[i] |= dissConn[i];
+	}
+	
+	return reactionConn;
 }
 
 const std::string Reactant::toString() {
 	throw std::string("Reactant::toString() is unimplemented");
+}
+
+
+std::vector<int> Reactant::getReactionConnectivity()
+{
+	// By default, return an array with a zero for each reactant
+	// in the network
+	
+	std::vector<int> reactionConn(network->reactants->size(), 0);
+	return reactionConn;
+}
+
+
+std::vector<int> Reactant::getDissociationConnectivity()
+{
+	// By default, return an array with a zero for each reactant
+	// in the network
+	
+	std::vector<int> dissConn(network->reactants->size(), 0);
+	return dissConn;
 }
