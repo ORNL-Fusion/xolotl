@@ -54,7 +54,7 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 		connectivityArray[indexOther] = 1;
 	}
 	
-	// ----- (A*He)(B*V) + (C*I) → (A*He)[(B-C)V] -----
+	// ----- (A*He)(B*V) + (C*I) --> (A*He)[(B-C)V] -----
 	// Interstitials interact with all mixed-species clusters by
 	// annihilating vacancies.
 	for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
@@ -67,6 +67,23 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 			speciesMap["V"] = numVOther;
 			int indexOther = network->toClusterIndex(speciesMap);
 			connectivityArray[indexOther] = (int) connected;
+		}
+	}
+	
+	// Interstitial absorption
+	// xHe*yI + I --> xHe*(y + 1)I
+	// Under the condition that (x + y + 1) <= maxSize
+	if (numI == 1) {
+		for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
+			for (int numHeOther = 1; numIOther + numHeOther + 1 <=
+				maxMixedClusterSize; numHeOther++) {
+				
+				std::map<std::string, int> speciesMap;
+				speciesMap["He"] = numHeOther;
+				speciesMap["I"] = numIOther;
+				int indexOther = network->toClusterIndex(speciesMap);
+				connectivityArray[indexOther] = 1;
+			}
 		}
 	}
 	

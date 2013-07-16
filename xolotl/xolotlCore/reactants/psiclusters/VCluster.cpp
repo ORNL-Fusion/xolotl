@@ -87,6 +87,24 @@ std::vector<int> VCluster::getReactionConnectivity() {
 		}
 	}
 	
+	
+	// Vacancy absorption of HeI:
+	// xHe*yI + zV --> xHe*(y - z)V
+	// under the condition that y - z >= 1
+	for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
+		for (int numHeOther = 1; numIOther + numHeOther <=
+			maxMixedClusterSize; numHeOther++) {
+			
+			bool connects = numIOther - numV >= 1;
+			std::map<std::string, int> speciesMap;
+			speciesMap["He"] = numHeOther;
+			speciesMap["I"] = numIOther;
+			int indexOther = network->toClusterIndex(speciesMap);
+			connectivityArray[indexOther] = (int) connects;
+		}
+	}
+	
+	
 	return connectivityArray;
 }
 

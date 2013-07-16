@@ -58,21 +58,30 @@ std::vector<int> HeCluster::getReactionConnectivity() {
 	
 	// Get the index of the first HeV cluster in the reactants list
 	
-	for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++)
-	{
+	for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
 		for (int numHeOther = 1; numVOther + numHeOther + numHe <=
-			maxMixedClusterSize; numHeOther++)
-		{
+			maxMixedClusterSize; numHeOther++) {
 			std::map<std::string, int> speciesMap;
 			speciesMap["He"] = numHeOther;
-			speciesMap["I"] = numVOther;
+			speciesMap["V"] = numVOther;
 			int indexOther = network->toClusterIndex(speciesMap);
 			connectivityArray[indexOther] = 1;
 		}
 	}
 	
-	// TODO
 	// (A*He)(B*I) + C*He --> ([A + C]*He)(B*I)
+	
+	for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
+		for (int numHeOther = 1; numIOther + numHeOther + numHe <=
+			maxMixedClusterSize; numHeOther++) {
+			
+			std::map<std::string, int> speciesMap;
+			speciesMap["He"] = numHeOther;
+			speciesMap["I"] = numIOther;
+			int indexOther = network->toClusterIndex(speciesMap);
+			connectivityArray[indexOther] = 1;
+		}
+	}
 	
 	return connectivityArray;
 }

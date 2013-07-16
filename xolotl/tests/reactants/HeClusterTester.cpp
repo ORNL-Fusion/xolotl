@@ -82,7 +82,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			int numVOther = speciesMap["V"];
 			
 			bool connected = numHe + numHeOther + numVOther <= maxMixedClusterSize;
-			printf("%d\n", i);
 			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
 		}
 		
