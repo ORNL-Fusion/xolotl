@@ -91,50 +91,32 @@ std::vector<int> HeVCluster::getReactionConnectivity() {
 	return connectivityArray;
 }
 
-double HeVCluster::getDissociationFlux(const double temperature) {
-
+std::vector<int> HeVCluster::getDissociationConnectivity() {
 	// Local Declarations
-	int vIndex = -1, iIndex = -1, heIndex = -1;
-	int thisIndex = network->toClusterIndex(getClusterMap());
-	std::map<std::string, int> oneHe;
-	std::map<std::string, int> oneV;
-	std::map<std::string, int> oneI;
+	int nReactants = network->reactants->size();
+	std::vector<int> dissConnections(nReactants, 0);
+	std::map<std::string, int> clusterMap;
 
-	// Set the cluster map data for 1 of each species
-	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
-	oneV["He"] = 0; oneV["V"] = 1; oneV["I"] = 0;
-	oneI["He"] = 0; oneI["V"] = 0; oneI["I"] = 1;
+	// Vacancy Dissociation
+	clusterMap["He"] = numHe-1; clusterMap["V"] = numV; clusterMap["I"] = 0;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	clusterMap["V"] = 0; clusterMap["He"] = 1;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
 
-	// Get their indices in the array
-	int oneHeIndex = network->toClusterIndex(oneHe);
-	int oneVIndex = network->toClusterIndex(oneV);
-	int oneIIndex = network->toClusterIndex(oneI);
+	// Trap Mutation
+	clusterMap["V"] = numV + 1; clusterMap["He"] = numHe;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	clusterMap["I"] = 1; clusterMap["V"] = 0; clusterMap["He"] = 0;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
 
-	// Find the indices such that they are the index of the
-	// concentration in C_bar that contain one additional species
-	// than this reactant
-	for (int k = 0; k < network->reactants->size(); k++) {
-		if ((network->toClusterMap(k)["He"] - numHe) == 1 && heIndex == -1) {
-			heIndex = k;
-		}
-		if ((network->toClusterMap(k)["V"] - numV) == 1 && vIndex == -1) {
-			vIndex = k;
-		}
-		if (network->toClusterMap(k)["I"] == 1 && iIndex == -1) {
-			iIndex = k;
-		}
-	}
+	// Vacancy Dissociation
+	clusterMap["He"] = numHe; clusterMap["V"] = numV - 1; clusterMap["I"] = 0;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	clusterMap["He"] = 0; clusterMap["V"] = 1; clusterMap["I"] = 0;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
 
-	// Calculate and return the dissociation constant
-	return calculateDissociationConstant(vIndex, oneVIndex, temperature)
-			* network->reactants->at(vIndex)->getConcentration()
-			+ calculateDissociationConstant(iIndex, oneIIndex, temperature)
-					* network->reactants->at(iIndex)->getConcentration()
-			+ calculateDissociationConstant(heIndex, oneHeIndex, temperature)
-					* network->reactants->at(heIndex)->getConcentration()
-			- (calculateDissociationConstant(thisIndex, oneVIndex, temperature)
-					+ calculateDissociationConstant(thisIndex, oneIIndex, temperature) +
-					calculateDissociationConstant(thisIndex, oneHeIndex, temperature)) * getConcentration();
+	// Return the connections
+	return dissConnections;
 }
 
 bool HeVCluster::isProductReactant(int reactantI, int reactantJ) {

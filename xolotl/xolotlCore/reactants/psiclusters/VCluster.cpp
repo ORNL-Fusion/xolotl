@@ -108,49 +108,28 @@ std::vector<int> VCluster::getReactionConnectivity() {
 	return connectivityArray;
 }
 
-double VCluster::getDissociationFlux(const double temperature) {
-
+std::vector<int> VCluster::getDissociationConnectivity() {
 	// Local Declarations
-	double diss = 0.0;
-	int numV = 0, deltaIndex = -1;
-	std::map<std::string, int> oneV;
+	int nReactants = network->reactants->size();
+	std::vector<int> dissConnections(nReactants, 0);
+	std::map<std::string, int> clusterMap;
 
-	// Set the cluster map data for 1 of each species
-	oneV["He"] = 0; oneV["V"] = 1; oneV["I"] = 0;
-
-	// Get their indices in the array
-	int oneVIndex = network->toClusterIndex(oneV);
-
-	// Loop over all Reactants
-	for (int j = 0; j < network->reactants->size(); j++) {
-
-		// Get the number of vacancies in C_j
-		numV = network->toClusterMap(j)["V"];
-
-		// If the C_j contains a Vacancy, then we calculate
-		if (numV > 0) {
-			// Search for the index of the cluster that contains exactly
-			// one less Vacancy than C_j, once found break from the loop
-			for (int k = 0; k < network->reactants->size(); k++) {
-				if ((numV - network->toClusterMap(k)["V"]) == 1) {
-					deltaIndex = k;
-					break;
-				}
-			}
-
-			// There may not have been an index that had one less
-			// Vacancy, if so, we won't add to the dissociation flux
-			if (deltaIndex != -1) {
-				// Calculate the dissociation, with K^- evaluated
-				// at deltaIndex and this Vacancy Cluster's index.
-				diss = diss	+ calculateDissociationConstant(deltaIndex, oneVIndex,
-								temperature) * network->reactants->at(j)->getConcentration();
-			}
-		}
+	// Vacancy Dissociation
+	clusterMap["He"] = 0; clusterMap["V"] = size - 1; clusterMap["I"] = 0;
+	if (size != 1) {
+		dissConnections[network->toClusterIndex(clusterMap)] = 1;
+		clusterMap["V"] = 1;
+		dissConnections[network->toClusterIndex(clusterMap)] = 1;
 	}
 
-	// Return the dissociation
-	return diss;
+	// Trap Mutation
+	clusterMap["V"] = size + 1;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	clusterMap["I"] = 1; clusterMap["V"] = 0;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+
+	// Return the connections
+	return dissConnections;
 }
 
 bool VCluster::isProductReactant(int reactantI, int reactantJ) {

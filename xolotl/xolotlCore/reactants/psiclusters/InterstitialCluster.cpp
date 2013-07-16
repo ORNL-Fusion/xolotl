@@ -90,48 +90,13 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 	return connectivityArray;
 }
 
-double InterstitialCluster::getDissociationFlux(const double temperature) {
+std::vector<int> InterstitialCluster::getDissociationConnectivity() {
 	// Local Declarations
-	double diss = 0.0;
-	int numI = 0, deltaIndex = -1;
-	std::map<std::string, int> oneI;
+	int nReactants = network->reactants->size();
+	std::vector<int> dissConnections(nReactants, 0);
 
-	// Set the cluster map data for 1 I
-	oneI["He"] = 0; oneI["V"] = 0; oneI["I"] = 1;
-
-	// Get teh index in the array
-	int oneIIndex = network->toClusterIndex(oneI);
-
-	// Loop over all reactants
-	for (int j = 0; j < network->reactants->size(); j++) {
-
-		// Get teh number of interstitials in C_j
-		numI = network->toClusterMap(j)["I"];
-
-		// If the C_j contains Intersitials, then we calculate
-		if (numI > 0) {
-			// Search for the index of the cluster that contains exactly
-			// one less Interstitial than C_j, once found break from the loop
-			for (int k = 0; k < network->reactants->size(); k++) {
-				if ((numI - network->toClusterMap(k)["I"]) == 1) {
-					deltaIndex = k;
-					break;
-				}
-			}
-
-			// There may not have been an index that had one less
-			// Interstitial, if so, we won't add to the dissociation flux
-			if (deltaIndex != -1) {
-				// Calculate the dissociation, with K^- evaluated
-				// at deltaIndex and this Intersitial Cluster's index.
-				diss = diss + calculateDissociationConstant(deltaIndex, oneIIndex,
-								temperature) * network->reactants->at(j)->getConcentration();
-			}
-		}
-	}
-
-	// Return the dissociation
-	return diss;
+	// Return the connections
+	return dissConnections;
 }
 
 bool InterstitialCluster::isProductReactant(int reactantI, int reactantJ) {

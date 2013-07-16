@@ -27,6 +27,26 @@ private:
 	 */
 	HeVCluster() : PSICluster(1) { numHe = 1; numV = 1; }
 
+protected:
+
+	/**
+	 * Computes a row of the reaction connectivity matrix corresponding to
+	 * this reactant.
+	 *
+	 * If two reactants alone can form a reaction, the element at the position
+	 * of the second reactant is 1, otherwise 0.
+	 */
+	virtual std::vector<int> getReactionConnectivity();
+
+	/**
+	 * Computes a row of the dissociation connectivity matrix corresponding to
+	 * this reactant.
+	 *
+	 * If two reactants together can be produced by a single reaction,
+	 * the element at the position of the second reactant is 1, otherwise 0.
+	 */
+	virtual std::vector<int> getDissociationConnectivity();
+
 public:
 
 	/**
@@ -59,20 +79,12 @@ public:
 	 */
 	int getSpeciesSize(const std::string speciesName);
 
-	/**
-	 * This operation overrides getReactionConnectivity() from
-	 * the base class to provide the proper reaction connectivity
-	 * for a HeV cluster.
-	 * @return The connectivity array
-	 */
-	std::vector<int> getReactionConnectivity();
-
     /**
 	 * This operation returns the total change in this cluster due to
 	 * dissociation.
 	 * @return The flux due to dissociation.
 	 */
-	virtual double getDissociationFlux(const double temperature);
+	//virtual double getDissociationFlux(const double temperature);
 
 	/**
 	 * Return whether or not this PSICluster is a product

@@ -145,6 +145,7 @@ public:
 	 * @return A serialized version of this reactant as a string.
 	 */
 	virtual const std::string toString();
+
 };
 }
 

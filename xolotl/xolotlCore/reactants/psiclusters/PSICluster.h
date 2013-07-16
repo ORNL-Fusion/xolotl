@@ -247,7 +247,6 @@ public:
 	 */
 	std::vector<int> getConnectivity();
 };
-//end class PSICluster
 
 } /* end namespace xolotlCore */
 #endif

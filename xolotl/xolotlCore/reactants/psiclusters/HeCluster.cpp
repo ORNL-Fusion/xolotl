@@ -86,50 +86,37 @@ std::vector<int> HeCluster::getReactionConnectivity() {
 	return connectivityArray;
 }
 
-double HeCluster::getDissociationFlux(const double temperature) {
+std::vector<int> HeCluster::getDissociationConnectivity() {
 
 	// Local Declarations
-	double diss = 0.0;
-	int numHelium = 0, deltaIndex = -1;
-	std::map<std::string, int> oneHe;
+	int nReactants = network->reactants->size();
+	std::vector<int> dissConnections(nReactants, 0);
+	std::map<std::string, int> clusterMap;
 
-	// Set the cluster map data for 1 of each species
-	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
+	// He_x -> He_(x-1) + He, so a connection
+	// to the Helium cluster with one helium,
+	// and the Helium cluster with (x-1) helium
+	clusterMap["He"] = size - 1;
+	clusterMap["V"] = 0;
+	clusterMap["I"] = 0;
 
-	// Get their indices in the array
-	int oneHeIndex = network->toClusterIndex(oneHe);
-
-	// Loop over all reactants
-	for (int j = 0; j < network->reactants->size(); j++) {
-
-		// Get the number of helium species in C_j
-		numHelium = network->toClusterMap(j)["He"];
-
-		// If the C_j contains Helium, then we calculate
-		if (numHelium > 0) {
-			// Search for the index of the cluster that contains exactly
-			// one less helium than C_j, then break from the loop
-			for (int k = 0; k < network->reactants->size(); k++) {
-				if ((numHelium - network->toClusterMap(k)["He"]) == 1) {
-					// Once found, get the current index
-					deltaIndex = k;
-					break;
-				}
-			}
-
-			// There may not have been an index that had one less
-			// helium, if so, we won't add to the dissociation flux
-			if (deltaIndex != -1) {
-				// Calculate the dissociation, with K^- evaluated
-				// at deltaIndex and this Helium Cluster's index.
-				diss = diss + calculateDissociationConstant(deltaIndex, oneHeIndex,
-								temperature) * network->reactants->at(j)->getConcentration();
-			}
-		}
+	// For Helium dissociation make sure we have
+	// more than one helium
+	if (size != 1) {
+		// He_x -> He_(x-1) + He
+		dissConnections[network->toClusterIndex(clusterMap)] = 1;
+		clusterMap["He"] = 1;
+		dissConnections[network->toClusterIndex(clusterMap)] = 1;
 	}
 
-	// Return the dissociation
-	return diss;
+	// Trap Mutation...
+	clusterMap["He"] = size; clusterMap["V"] = 1;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	clusterMap["He"] = 0; clusterMap["V"] = 0; clusterMap["I"] = 1;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+
+	// Return the connections
+	return dissConnections;
 }
 
 bool HeCluster::isProductReactant(int reactantI, int reactantJ) {

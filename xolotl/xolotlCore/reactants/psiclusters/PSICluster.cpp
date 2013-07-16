@@ -52,8 +52,82 @@ double PSICluster::getTotalFlux(const double temperature) {
 }
 
 double PSICluster::getDissociationFlux(const double temperature) {
-	// Should be overridden by subclasses...
-	return 0.0;
+
+	int nReactants = network->reactants->size(), oneIndex = -1;
+	double diss = 0.0, conc = 0.0;
+	std::vector<int> dissConnections = getDissociationConnectivity();
+	std::map<std::string, int> oneHe, oneV, oneI;
+
+	// Set the cluster map data for 1 of each species
+	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
+	oneV["He"] = 0; oneV["V"] = 1; oneV["I"] = 0;
+	oneI["He"] = 0; oneI["V"] = 0; oneI["I"] = 1;
+
+	// Get this PSICluster or subclasses' cluster map
+	std::map<std::string, int> thisMap = getClusterMap();
+
+	// Get the number of species to determine if this
+	// cluster is mixed or single
+	int numSpecies = (thisMap["He"] > 0) + (thisMap["V"] > 0) + (thisMap["I"] > 0);
+
+	// If no species, throw error
+	if (numSpecies == 0) {
+		// Bad if we have no species
+		throw std::string("Cluster map contains no species");
+
+	} else if (numSpecies == 1) {
+
+		// We know we are a single species,
+		// but we need to know which one so we can
+		// get the correct species He, V, or I to calculate
+		// the dissociation constant.
+		if (thisMap["He"]) {
+			oneIndex = network->toClusterIndex(oneHe);
+		} else if (thisMap["V"]) {
+			oneIndex = network->toClusterIndex(oneV);
+		} else if (thisMap["I"]) {
+			oneIndex = network->toClusterIndex(oneI);
+		}
+
+		// Loop over all reactants and see if we
+		// have a dissociation connection
+		for (int i = 0; i < nReactants; i++) {
+			// Only calculate if we are connected
+			if (dissConnections.at(i) == 1) {
+				// Calculate the dissociation flux
+				diss = diss + calculateDissociationConstant(i, oneIndex,
+								temperature)
+								* network->reactants->at(i)->getConcentration();
+			}
+		}
+	} else if (numSpecies == 2) {
+		// If more than one species, just tag
+		// it as mixed
+		/*for (int i = 0; i < nReactants; i++) {
+			if (dissConnections.at(i) == 1) {
+				diss =
+						diss + (1.0)
+								- (calculateDissociationConstant(i,
+										network->toClusterIndex(oneV),
+										temperature)
+										* network->reactants->at(i)->getConcentration()
+										+ calculateDissociationConstant(i,
+												network->toClusterIndex(oneI),
+												temperature)
+												* network->reactants->at(i)->getConcentration()
+										+ calculateDissociationConstant(i,
+												network->toClusterIndex(oneHe),
+												temperature)
+												* network->reactants->at(i)->getConcentration())
+										* network->reactants->at(i)->getConcentration();
+			}
+		}*/
+	}
+
+
+
+	// Return the flux
+	return diss;
 }
 
 double PSICluster::getProductionFlux(const double temperature) {
@@ -202,11 +276,6 @@ bool PSICluster::isProductReactant(int reactantI, int reactantJ) {
 	return false;
 }
 
-std::map<std::string, int> PSICluster::getClusterMap() {
-	std::map<std::string, int> map;
-	return map;
-}
-
 double PSICluster::getReactionRadius() {
 	return 0.0;
 }
@@ -240,8 +309,7 @@ std::vector<int> PSICluster::getConnectivity() {
 }
 
 
-std::vector<int> PSICluster::getReactionConnectivity()
-{
+std::vector<int> PSICluster::getReactionConnectivity() {
 	// By default, return an array with a zero for each reactant
 	// in the network
 	
@@ -250,11 +318,15 @@ std::vector<int> PSICluster::getReactionConnectivity()
 }
 
 
-std::vector<int> PSICluster::getDissociationConnectivity()
-{
+std::vector<int> PSICluster::getDissociationConnectivity() {
 	// By default, return an array with a zero for each reactant
 	// in the network
 	
 	std::vector<int> dissConn(network->reactants->size(), 0);
 	return dissConn;
+}
+
+std::map<std::string, int> PSICluster::getClusterMap() {
+	std::map<std::string, int> dummy;
+	return dummy;
 }

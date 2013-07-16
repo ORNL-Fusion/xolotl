@@ -75,13 +75,74 @@ BOOST_AUTO_TEST_CASE(checkManipulateConcentration) {
 	// Make sure the base class getTotalFlux returns 0 for now
 	BOOST_CHECK_EQUAL(0.0, reactant->getTotalFlux(0.0));
 
-	// Also make sure the base class connectivity is empty
-	BOOST_CHECK_EQUAL(0, reactant->getConnectivity().size());
 }
 
 
+/*BOOST_AUTO_TEST_CASE(toClusterMap) {
+	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+	
+	std::map<std::string, int> cluster;
+	
+	// Test a couple of the HeClusters
+	
+	cluster = network->toClusterMap(0);
+	BOOST_REQUIRE_EQUAL(cluster["He"], 1);
+	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
+	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
+	
+	cluster = network->toClusterMap(9);
+	BOOST_REQUIRE_EQUAL(cluster["He"], 10);
+	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
+	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
+	
+	// Test VClusters
+	
+	cluster = network->toClusterMap(10);
+	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
+	BOOST_REQUIRE_EQUAL(cluster["V"], 1);
+	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
+	
+	cluster = network->toClusterMap(19);
+	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
+	BOOST_REQUIRE_EQUAL(cluster["V"], 10);
+	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
+	
+	// Test IClusters
+	
+	cluster = network->toClusterMap(20);
+	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
+	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
+	BOOST_REQUIRE_EQUAL(cluster["I"], 1);
+	
+	cluster = network->toClusterMap(29);
+	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
+	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
+	BOOST_REQUIRE_EQUAL(cluster["I"], 10);
+	
+	// Test HeVClusters
+	
+	for (int i = 30; i < 75; i++) {
+		// Get the actual He and V amounts
+		
+		shared_ptr<Reactant> reactant = network->reactants->at(i);
+		shared_ptr<HeVCluster> cluster = std::dynamic_pointer_cast<HeVCluster>(reactant);
+		int actualHe = cluster->getSpeciesSize("He");
+		int actualV = cluster->getSpeciesSize("V");
+		
+		// Get the amounts expected by Reactant::toClusterMap()
+		
+		std::map<std::string, int> species = network->toClusterMap(i);
+		int expectedHe = species["He"];
+		int expectedV = species["V"];
+		
+		BOOST_REQUIRE_EQUAL(actualHe, expectedHe);
+		BOOST_REQUIRE_EQUAL(actualV, expectedV);
+	}
+}*/
+
 BOOST_AUTO_TEST_CASE(checkIsConnected) {
 
+	//shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
 	// shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
 
 	/*for (int i = 0; i < network->reactants->size(); i++) {
