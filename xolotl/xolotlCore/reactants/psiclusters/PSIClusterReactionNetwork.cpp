@@ -46,6 +46,7 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 	int numVClusters = std::stoi(props["numVClusters"]);
 	int numIClusters = std::stoi(props["numIClusters"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
+	int numHeIClusters = std::stoi(props["numHeIClusters"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
 	
 	int numSpecies = (numHe > 0) + (numV > 0) + (numI > 0);
@@ -79,6 +80,9 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 				numV * (numV - 1) / 2 + numHe - 1;
 			
 			return indexOffset + index;
+		} else if (numHe && numI) {
+			// FIXME... Andrew
+			return 0;
 		}
 	}
 	
