@@ -11,6 +11,7 @@
 #include <VCluster.h>
 #include <InterstitialCluster.h>
 #include <HeVCluster.h>
+#include <HeInterstitialCluster.h>
 #include "SimpleReactionNetwork.h"
 #include <memory>
 #include <typeinfo>
@@ -70,6 +71,25 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 		}
 	}
 	
+	// Create the HeI clusters in this simple reaction network
+	int numHeIClusters = 0;
+
+	// Create all possible combinations of numHe and numI
+	// clusters with numHe, numI < maxClusterSize
+	for (int numI = 1; numI <= maxClusterSize; numI++) {
+		for (int numHe = 1; numHe + numI <= maxClusterSize; numHe++) {
+			// Create the HeI cluster
+			std::shared_ptr<HeInterstitialCluster> cluster(new HeInterstitialCluster(numHe, numI));
+
+			// Add it to the reactants vector
+			reactants->push_back(cluster);
+
+			// Increment the number of
+			// HeIClusters for the properties map
+			numHeIClusters++;
+		}
+	}
+
 	// Setup the properties map
 	(*properties)["maxHeClusterSize"] = std::to_string((long long) maxClusterSize);
 	(*properties)["maxVClusterSize"] = std::to_string((long long) maxClusterSize);
@@ -80,6 +100,7 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 	(*properties)["numVClusters"] = std::to_string((long long) numClusters);
 	(*properties)["numIClusters"] = std::to_string((long long) numClusters);
 	(*properties)["numHeVClusters"] = std::to_string((long long) numHeVClusters);
+	(*properties)["numHeIClusters"] = std::to_string((long long) numHeIClusters);
 }
 
 SimpleReactionNetwork::~SimpleReactionNetwork() {

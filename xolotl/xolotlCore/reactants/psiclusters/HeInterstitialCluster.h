@@ -30,6 +30,15 @@ private:
 public:
 
 	/**
+	 * The constructor. All HeVClusters must be initialized with a map
+	 * that describes the species of which the cluster is composed. The map
+	 * should contain as its keys the names of the species and the sizes of the
+	 * species as its values. The names of the species must be one of
+	 * {He,V}.
+	 */
+	HeInterstitialCluster(int numHe, int numI);
+
+	/**
 	 * The constructor. All HeInterstitialClusters must be initialized with a map
 	 * that describes the species of which the cluster is composed. The map
 	 * should contain as its keys the names of the species and the sizes of the

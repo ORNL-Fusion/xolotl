@@ -3,6 +3,13 @@
 
 using namespace xolotlCore;
 
+HeInterstitialCluster::HeInterstitialCluster(int numHelium, int numInterstitial) : PSICluster(1) {
+	numHe = numHelium;
+	numI = numInterstitial;
+	size = numHe + numI;
+	name = "He-Interstitial Cluster";
+}
+
 HeInterstitialCluster::HeInterstitialCluster(std::map<std::string, int> speciesMap) :
 		PSICluster(1) {
 	numHe = speciesMap["He"];
@@ -11,22 +18,21 @@ HeInterstitialCluster::HeInterstitialCluster(std::map<std::string, int> speciesM
 	// Set the reactant name appropriately
 	name = "He-Interstitial Cluster";
 }
+
 HeInterstitialCluster::~HeInterstitialCluster() {
-	//TODO Auto-generated method stub
 }
+
 double HeInterstitialCluster::getGenByEm() {
-	//TODO Auto-generated method stub
-	return 0;
-}
-double HeInterstitialCluster::getAnnByEm() {
-	//TODO Auto-generated method stub
-	return 0;
-}
-int HeInterstitialCluster::getSpeciesSize(const std::string speciesName) {
-	//TODO Auto-generated method stub
 	return 0;
 }
 
+double HeInterstitialCluster::getAnnByEm() {
+	return 0;
+}
+
+int HeInterstitialCluster::getSpeciesSize(const std::string speciesName) {
+	return 0;
+}
 
 double HeInterstitialCluster::getDissociationFlux(const double temperature) {
 

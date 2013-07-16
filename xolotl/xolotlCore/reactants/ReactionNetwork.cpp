@@ -1,9 +1,7 @@
-
 #include "ReactionNetwork.h"
 #include "Reactant.h"
 
 using namespace xolotlCore;
-
 
 ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 	// The copy constructor of std::map copies each of the keys and values.
@@ -22,21 +20,16 @@ ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 	}
 }
 
-
 bool ReactionNetwork::isConnected(int reactantI, int reactantJ) {
 	return (reactants->at(reactantI)->getConnectivity().at(reactantJ) == 1);
 }
 
-
-std::map<std::string, int> ReactionNetwork::toClusterMap(int index)
-{
+std::map<std::string, int> ReactionNetwork::toClusterMap(int index) {
 	// This base class returns an empty map
 	return std::map<std::string, int>();
 }
 
-
-int ReactionNetwork::toClusterIndex(std::map<std::string, int> clusterMap)
-{
+int ReactionNetwork::toClusterIndex(std::map<std::string, int> clusterMap) {
 	// This base class returns a zero index value
 	return 0;
 }

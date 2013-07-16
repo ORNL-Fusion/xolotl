@@ -123,5 +123,13 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	}
 }
 
+/**
+ * This operation checks the HeCluster get*Flux methods.
+ */
+BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
+
+
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
