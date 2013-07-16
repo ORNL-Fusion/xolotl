@@ -1,6 +1,5 @@
 #include "PSICluster.h"
 #include <Constants.h>
-#include <math.h>
 #include <iostream>
 
 using namespace xolotlCore;
@@ -155,8 +154,12 @@ void PSICluster::setMigrationEnergy(const double energy) {
 }
 
 double PSICluster::calculateReactionRateConstant(int i, int j, const double temperature) {
+
 	// Get the reaction radii and diffusion coefficients
-	double ra = 1, rb = 1; // Will set these later
+	double ra = std::dynamic_pointer_cast<PSICluster>(network->reactants->at(i))->getReactionRadius();
+	double rb = std::dynamic_pointer_cast<PSICluster>(network->reactants->at(j))->getReactionRadius();
+
+	// Get the Diffusion coefficients
 	double iDiffusion = std::dynamic_pointer_cast<PSICluster>(
 			network->reactants->at(i))->getDiffusionCoefficient(temperature);
 	double jDiffusion = std::dynamic_pointer_cast<PSICluster>(
@@ -202,4 +205,8 @@ bool PSICluster::isProductReactant(int reactantI, int reactantJ) {
 std::map<std::string, int> PSICluster::getClusterMap() {
 	std::map<std::string, int> map;
 	return map;
+}
+
+double PSICluster::getReactionRadius() {
+	return 0.0;
 }

@@ -138,4 +138,21 @@ BOOST_AUTO_TEST_CASE(checkGetFlux) {
 	std::cout << "Flux is " << flux << "\n";*/
 }
 
+/**
+ * This operation checks the reaction radius for HeVCluster.
+ */
+BOOST_AUTO_TEST_CASE(checkReactionRadius) {
+
+	std::vector<std::shared_ptr<HeVCluster>> clusters;
+	std::shared_ptr<HeVCluster> cluster;
+	double expectedRadii[] = { 0.4330127019, 0.5609906819, 0.6507642333,
+			0.7222328328, 0.7825853415 };
+
+	for (int i = 1; i <= 5; i++) {
+		cluster = std::shared_ptr<HeVCluster>(new HeVCluster(1, i));
+		BOOST_CHECK_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
+				.000001);
+	}
+}
+
 BOOST_AUTO_TEST_SUITE_END()

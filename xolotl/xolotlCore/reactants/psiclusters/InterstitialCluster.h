@@ -60,6 +60,15 @@ public:
 	 */
 	virtual bool isProductReactant(int reactantI, int reactantJ);
 
+	/**
+	 * This virtual method is for subclasses to specialize
+	 * and should return the reaction radius for the
+	 * particular PSICluster subclass.
+	 *
+	 * @return
+	 */
+	virtual double getReactionRadius();
+
 };
 //end class InterstitialCluster
 

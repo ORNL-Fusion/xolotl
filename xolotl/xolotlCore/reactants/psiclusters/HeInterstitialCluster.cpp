@@ -149,3 +149,7 @@ std::map<std::string, int> HeInterstitialCluster::getClusterMap() {
 	// Return it
 	return clusterMap;
 }
+
+double HeInterstitialCluster::getReactionRadius() {
+	return 0.0;
+}

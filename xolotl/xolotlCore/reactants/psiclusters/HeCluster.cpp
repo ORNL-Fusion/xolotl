@@ -1,5 +1,7 @@
 // Includes
 #include "HeCluster.h"
+#include <Constants.h>
+#include <iostream>
 
 using namespace xolotlCore;
 
@@ -158,4 +160,12 @@ std::map<std::string, int> HeCluster::getClusterMap() {
 
 	// Return it
 	return clusterMap;
+}
+
+double HeCluster::getReactionRadius() {
+	double FourPi = 4.0 * xolotlCore::pi;
+	double aCubed = pow(xolotlCore::latticeConstant, 3);
+	double termOne = pow((3.0/FourPi)*(1.0/10.0)*aCubed*size,(1.0/3.0));
+	double termTwo = pow((3.0/FourPi)*(1.0/10.0)*aCubed,(1.0/3.0));
+	return .3 + termOne - termTwo;
 }

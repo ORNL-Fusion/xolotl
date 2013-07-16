@@ -18,5 +18,8 @@ static const double kBoltzmann = 8.6173324E-5;
 //! Pi
 static const double pi = 3.14159265359;
 
+//! Lattice Parameter
+static const double latticeConstant = 1.0;
+
 } /* end namespace xolotlCore */
 #endif /* CONSTANTS_H_ */

@@ -1,4 +1,5 @@
 #include "InterstitialCluster.h"
+#include <Constants.h>
 
 using namespace xolotlCore;
 
@@ -153,4 +154,15 @@ std::map<std::string, int> InterstitialCluster::getClusterMap() {
 
 	// Return it
 	return clusterMap;
+}
+
+double InterstitialCluster::getReactionRadius() {
+
+	double EightPi = 8.0 * xolotlCore::pi;
+	double aCubed = pow(xolotlCore::latticeConstant, 3.0);
+	double termOne = 1.15*(sqrt(3.0)/4.0) * xolotlCore::latticeConstant;
+	double termTwo = pow( (3.0/EightPi) * aCubed * size, (1.0/3.0));
+	double termThree = pow( (3.0/EightPi) * aCubed, (1.0/3.0));
+
+	return termOne + termTwo - termThree;
 }

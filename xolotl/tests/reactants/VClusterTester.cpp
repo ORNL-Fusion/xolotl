@@ -9,6 +9,7 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
+#include <VCluster.h>
 #include "SimpleReactionNetwork.h"
 #include <memory>
 #include <typeinfo>
@@ -97,7 +98,22 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	}
 }
 
+/**
+ * This operation checks the reaction radius for InterstitialCluster.
+ */
+BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
+	std::vector<std::shared_ptr<VCluster>> clusters;
+	std::shared_ptr<VCluster> cluster;
+	double expectedRadii[] = { 0.0 };
+
+	for (int i = 1; i <= 10; i++) {
+		cluster = std::shared_ptr<VCluster>(
+				new VCluster(i));
+		//BOOST_CHECK_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
+			//	.000001);
+	}
+}
 
 
 BOOST_AUTO_TEST_SUITE_END()

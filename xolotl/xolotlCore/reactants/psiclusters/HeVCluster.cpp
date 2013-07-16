@@ -1,6 +1,7 @@
 // Includes
 #include "HeVCluster.h"
 #include <iostream>
+#include <Constants.h>
 
 using namespace xolotlCore;
 
@@ -171,4 +172,14 @@ std::map<std::string, int> HeVCluster::getClusterMap() {
 
 	// Return it
 	return clusterMap;
+}
+
+double HeVCluster::getReactionRadius() {
+	return (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
+				+ pow((3.0 * pow(xolotlCore::latticeConstant, 3.0) * numV)
+								/ (8.0 * xolotlCore::pi),
+								(1.0 / 3.0))
+				- pow((3.0 * pow(xolotlCore::latticeConstant, 3.0))
+								/ (8.0 * xolotlCore::pi),
+								(1.0 / 3.0));
 }

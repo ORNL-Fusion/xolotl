@@ -1,5 +1,6 @@
 // Includes
 #include "VCluster.h"
+#include <Constants.h>
 
 using namespace xolotlCore;
 
@@ -171,4 +172,9 @@ std::map<std::string, int> VCluster::getClusterMap() {
 
 	// Return it
 	return clusterMap;
+}
+
+double VCluster::getReactionRadius() {
+	// FIXME Not right...
+	return (sqrt(3)/4) * xolotlCore::latticeConstant;
 }
