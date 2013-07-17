@@ -119,6 +119,56 @@ std::vector<int> HeVCluster::getDissociationConnectivity() {
 	return dissConnections;
 }
 
+double HeVCluster::getDissociationFlux(double temperature) {
+	// Local Declarations
+	std::map<std::string, int> oneHe, oneV, oneI, dissMap;
+	double f4 = 0.0, f3 = 0.0;
+	std::vector<int> dissConnectivity = getDissociationConnectivity();
+
+	// Set the cluster map data for 1 of each species
+	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
+	oneV["He"] = 0;	oneV["V"] = 1; oneV["I"] = 0;
+	oneI["He"] = 0; oneI["V"] = 0; oneI["I"] = 1;
+
+	// Get this PSICluster or subclasses' cluster map
+	std::map<std::string, int> thisMap = getClusterMap();
+
+	// Get the various indices
+	int thisIndex = network->toClusterIndex(thisMap);
+	int oneIIndex = network->toClusterIndex(oneI);
+	int oneVIndex = network->toClusterIndex(oneV);
+	int oneHeIndex = network->toClusterIndex(oneHe);
+
+	// Calculate the much easier f4 term...
+	f4 = calculateDissociationConstant(thisIndex, oneIIndex, temperature)
+					+ calculateDissociationConstant(thisIndex, oneVIndex,
+							temperature)
+					+ calculateDissociationConstant(thisIndex, oneHeIndex,
+							temperature);
+
+	// Loop over all the elements of the dissociation
+	// connectivity to find where this mixed species dissociates...
+	for (int i = 0; i < dissConnectivity.size(); i++) {
+		if (dissConnectivity[i] == 1) {
+			// Get the cluster map of this connection
+			dissMap = network->toClusterMap(i);
+
+			// We need to find if this is a Helium dissociation,
+			// Vacancy dissociation, or a trap mutation.
+			if (numHe - dissMap["He"] == 1 && numV == dissMap["V"] && dissMap["I"] == 0) {
+				f3 = f3 + calculateDissociationConstant(i, oneHeIndex, temperature) * network->reactants->at(i)->getConcentration();
+			} else if (numHe == dissMap["He"] && numV - dissMap["V"] == 1 && dissMap["I"] == 0) {
+				f3 = f3 + calculateDissociationConstant(i, oneVIndex, temperature) * network->reactants->at(i)->getConcentration();
+			} else if (numHe == dissMap["He"] && dissMap["V"] - numV == 1 && dissMap["I"] == 0) {
+				f3 = f3 + calculateDissociationConstant(i, oneIIndex, temperature) * network->reactants->at(i)->getConcentration();
+			}
+
+		}
+	}
+
+	return f3 - f4 * getConcentration();
+}
+
 bool HeVCluster::isProductReactant(int reactantI, int reactantJ) {
 	// Local Declarations, integers for species number for I, J reactants
 	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;

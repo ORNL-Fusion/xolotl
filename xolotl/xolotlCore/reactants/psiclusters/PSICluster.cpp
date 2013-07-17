@@ -101,30 +101,8 @@ double PSICluster::getDissociationFlux(const double temperature) {
 			}
 		}
 	} else if (numSpecies == 2) {
-		// If more than one species, just tag
-		// it as mixed
-		/*for (int i = 0; i < nReactants; i++) {
-			if (dissConnections.at(i) == 1) {
-				diss =
-						diss + (1.0)
-								- (calculateDissociationConstant(i,
-										network->toClusterIndex(oneV),
-										temperature)
-										* network->reactants->at(i)->getConcentration()
-										+ calculateDissociationConstant(i,
-												network->toClusterIndex(oneI),
-												temperature)
-												* network->reactants->at(i)->getConcentration()
-										+ calculateDissociationConstant(i,
-												network->toClusterIndex(oneHe),
-												temperature)
-												* network->reactants->at(i)->getConcentration())
-										* network->reactants->at(i)->getConcentration();
-			}
-		}*/
+		throw std::string("Mixed Species dissociation flux must be implemented by subclass.");
 	}
-
-
 
 	// Return the flux
 	return diss;
