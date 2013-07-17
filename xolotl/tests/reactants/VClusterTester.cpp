@@ -20,20 +20,11 @@ using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
 
-/**
- * This operation writes information about the cluster to stdout
- * @param cluster The cluster to dump
- */
-void writeCluster(shared_ptr<Reactant> cluster) {
-	shared_ptr<PSICluster> psiCluster = static_pointer_cast < PSICluster
-			> (cluster);
-	BOOST_TEST_MESSAGE(psiCluster->getSize());
-	return;
-}
 
 /**
  * This suite is responsible for testing the VCluster.
- */BOOST_AUTO_TEST_SUITE (VCluster_testSuite)
+ */
+BOOST_AUTO_TEST_SUITE(VCluster_testSuite)
 
 /**
  * This operation checks the ability of the VCluster to describe
@@ -63,9 +54,14 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the connectivity of the 2nd V reactant (numV=2)
 	
 	{
-		shared_ptr<Reactant> reactant = reactants.at(offsetV + 1);
-		std::vector<int> connectivityArray = reactant->getConnectivity();
-		int numV = 2;
+		// Get the index of the 2V reactant
+		std::map<std::string, int> species;
+		species["V"] = 2;
+		int index = network->toClusterIndex(species);
+		
+		shared_ptr<PSICluster> reactant =
+			std::dynamic_pointer_cast<PSICluster>(reactants.at(index));
+		std::vector<int> reactionConnectivity = reactant->getReactionConnectivity();
 		
 		// Check the connectivity for He, V, and I
 		
@@ -77,23 +73,35 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
 			
 			// I
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			
+			// HeV
+			// The VCluster type only reacts with HeV for
+			// single-V clusters.
+			0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0,
+			0, 0,
+			0,
+			
+			// HeI
+			0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1,
+			1, 1, 1, 1,
+			1, 1, 1,
+			1, 1,
+			1
 		};
 		
-		for (int i = 0; i < 30; i++) {
-			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), connectivityExpected[i]);
-		}
-		
-		// Check the connectivity for HeV
-		
-		for (int i = 30; i < reactants.size(); i++) {
-			// Build a species map
-			std::map<std::string, int> speciesMap = network->toClusterMap(i);
-			int numHeOther = speciesMap["He"];
-			int numVOther = speciesMap["V"];
-			
-			bool connected = numV + numHeOther + numVOther <= maxMixedClusterSize;
-			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
+		for (int i = 0; i < reactionConnectivity.size(); i++) {
+			BOOST_REQUIRE_EQUAL(reactionConnectivity.at(i), connectivityExpected[i]);
 		}
 	}
 }
