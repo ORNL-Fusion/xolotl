@@ -40,72 +40,63 @@ void writeCluster(shared_ptr<Reactant> cluster) {
  * its connectivity to other clusters.
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
-
-	// Local Declarations
-	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
-	int maxClusterSize = 10, numClusters = maxClusterSize;
-	vector<int> connectivityArray;
-	shared_ptr < vector<shared_ptr<Reactant> > > reactants = network->reactants;
-	shared_ptr<std::map<std::string, std::string>> props = network->properties;
-
-	// Write the cluster information to stdout
-	BOOST_TEST_MESSAGE("Sizes of clusters in network:");
-	for_each(reactants->begin(), reactants->end(), writeCluster);
-	BOOST_TEST_MESSAGE(
-			"Maximum He Cluster Size = " << (*props)["maxHeClusterSize"]);
-	BOOST_TEST_MESSAGE(
-			"Maximum V Cluster Size = " << (*props)["maxVClusterSize"]);
-	BOOST_TEST_MESSAGE(
-			"Maximum Interstitial Cluster Size = " << (*props)["maxIClusterSize"]);
-	BOOST_TEST_MESSAGE("Number of He clusters = " << (*props)["numHeClusters"]);
-	BOOST_TEST_MESSAGE("Number of V clusters = " << (*props)["numVClusters"]);
-	BOOST_TEST_MESSAGE("Number of I clusters = " << (*props)["numIClusters"]);
-	BOOST_TEST_MESSAGE(
-			"Number of mixed clusters = " << (*props)["numMixedClusters"]);
-
-	// Get the connectivity of the fifth interstitial (index 24)
-	connectivityArray = reactants->at(2 * numClusters + 4)->getConnectivity();
-	// The connectivity array should be the same size as the reactants array
-	BOOST_TEST_MESSAGE(
-			"Connectivity Array Size = " << connectivityArray.size());
-	BOOST_REQUIRE(connectivityArray.size() == reactants->size());
-
-	// Since this is an interstitial cluster of size 5, it should not interact with
-	// interstitials bigger than maxClusterSize - 5 (which is conveniently 5 in
-	// this case). So check the small interstitials first...
-	for (int i = 2 * numClusters; i < 2 * numClusters + maxClusterSize - 5;
-			i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 1);
+	
+	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+	std::vector<shared_ptr<Reactant>> &reactants = *network->reactants;
+	std::map<std::string, std::string> &props = *network->properties;
+	
+	// Check the reaction connectivity of the 4th interstitial cluster (4I)
+	
+	{
+		// Get the index of the 4V reactant
+		std::map<std::string, int> species;
+		species["I"] = 4;
+		int index = network->toClusterIndex(species);
+		
+		shared_ptr<PSICluster> reactant =
+			std::dynamic_pointer_cast<PSICluster>(reactants.at(index));
+		std::vector<int> reactionConnectivity = reactant->getReactionConnectivity();
+		
+		// Check the connectivity for He, V, and I
+		
+		int connectivityExpected[] = {
+			// He
+			1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+			
+			// V
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			
+			// I
+			1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+			
+			// HeV
+			0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1,
+			1, 1, 1, 1,
+			1, 1, 1,
+			1, 1,
+			1,
+			
+			// HeI
+			// Only a single-Interstitial cluster can react with a HeI cluster
+			0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0,
+			0, 0,
+			0
+		};
+		
+		for (int i = 0; i < reactionConnectivity.size(); i++) {
+			BOOST_REQUIRE_EQUAL(reactionConnectivity.at(i), connectivityExpected[i]);
+		}
 	}
-	// ...and the big interstitials second.
-	for (int i = 2 * numClusters + maxClusterSize - 5;
-			i < 2 * numClusters + maxClusterSize; i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 0);
-	}
-
-	// Interstitials can interact with other interstitials, vacancies and
-	// mixed-species clusters, but not helium. They cannot cluster with other
-	// interstitials that are so large that the combination of the two would
-	// produce an interstitial above the maximum size.
-
-	// Check single-species He. Interstititals should never interact with He.
-	for (int i = 0; i < numClusters; i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 0);
-	}
-
-	// Check single-species V. Interstitials should always interact with V.
-	for (int i = numClusters; i < 2 * numClusters; i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 1);
-	}
-
-	// Check mixed species. Interstitials should always interact with
-	// mixed-species clusters because they only reduce the size, never
-	// increase it.
-	for (int i = 3 * numClusters; i < reactants->size(); i++) {
-		BOOST_REQUIRE(connectivityArray.at(i) == 1);
-	}
-
-	return;
 }
 
 /**
@@ -128,4 +119,3 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

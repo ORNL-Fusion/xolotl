@@ -51,6 +51,15 @@ std::vector<int> HeCluster::getReactionConnectivity() {
 		connectivityArray[indexOther] = 1;
 	}
 	
+	// zHe + yI --> zHe*yI
+	for (int numIOther = 1; numIOther + numHe <= maxMixedClusterSize; numIOther++) {
+		
+		std::map<std::string, int> speciesMap;
+		speciesMap["I"] = numIOther;
+		int indexOther = network->toClusterIndex(speciesMap);
+		connectivityArray[indexOther] = 1;
+	}
+	
 	// ----- (A*He)(B*V) + C*He --> [(A+C)He](B*V) -----
 	// Helium can interact with a mixed-species cluster so long as the sum of
 	// the number of helium atoms and the size of the mixed-species cluster

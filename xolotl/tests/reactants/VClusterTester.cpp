@@ -36,21 +36,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	std::vector<shared_ptr<Reactant>> &reactants = *network->reactants;
 	std::map<std::string, std::string> &props = *network->properties;
 	
-	// Store network properties into local variables
-	
-	int numHeClusters = std::stoi(props["numHeClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
-	int numIClusters = std::stoi(props["numIClusters"]);
-	int numHeVClusters = std::stoi(props["numHeVClusters"]);
-	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
-	
-	// Offsets determine the position of the first type of cluster in the
-	// reactants array
-	
-	int offsetV = numHeClusters;
-	int offsetI = offsetV + numVClusters;
-	int offsetHeV = offsetI + numIClusters;
-	
 	// Check the connectivity of the 2nd V reactant (numV=2)
 	
 	{

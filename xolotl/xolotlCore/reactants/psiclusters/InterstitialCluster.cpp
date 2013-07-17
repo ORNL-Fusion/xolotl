@@ -27,11 +27,20 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 	std::vector<int> connectivityArray(reactantsLength, 0);
 	
 	
-	// Interstitials can interact with other interstitials, vacancies and
-	// mixed-species clusters, but not helium. They cannot cluster with other
+	// Interstitials can interact with other interstitials, vacancies,
+	// helium, and mixed-species clusters. They cannot cluster with other
 	// interstitials that are so large that the combination of the two would
 	// produce an interstitial above the maximum size.
-
+	
+	// xHe + yI --> xHe*yI
+	for (int numHeOther = 1; numHeOther + numI <= maxMixedClusterSize; numHeOther++) {
+		
+		std::map<std::string, int> speciesMap;
+		speciesMap["He"] = numHeOther;
+		int indexOther = network->toClusterIndex(speciesMap);
+		connectivityArray[indexOther] = 1;
+	}
+	
 	//----- A*I + B*V
 	// → (A-B)*I, if A > B
 	// → (B-I)*V, if A < B

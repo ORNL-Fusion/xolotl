@@ -122,12 +122,15 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
 	}
 	
 	
-	// Print the connectivity matrix
+	// TEMPORARY
+	// Print the reaction connectivity matrix
 	
 	for (auto reactantIt = network->reactants->begin();
 		reactantIt != network->reactants->end(); reactantIt++)
 	{
-		std::vector<int> conn = (*reactantIt)->getConnectivity();
+		std::shared_ptr<PSICluster> cluster =
+			std::dynamic_pointer_cast<PSICluster>(*reactantIt);
+		std::vector<int> conn = cluster->getReactionConnectivity();
 		
 		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++)
 		{
