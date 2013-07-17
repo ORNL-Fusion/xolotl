@@ -219,6 +219,7 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 			// Load the next line
 			loadedLine = reader.loadLine();
 		}
+
 		// Load the clusters into the network, starting with He
 		for (int i = 0; i < heClusters.size(); i++)
 			network->reactants->push_back(heClusters[i]);
@@ -231,8 +232,11 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 		// Load the mixed species clusters into the network
 		for (int i = 0; i < heVClusters.size(); i++)
 			network->reactants->push_back(heVClusters[i]);
+
+		for (int i = 0; i < network->reactants->size(); i++) {
+			network->reactants->at(i)->setReactionNetwork(network);
+		}
 	}
 
 	return network;
-
 }

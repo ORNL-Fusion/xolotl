@@ -91,21 +91,19 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	
 	// Check the properties
 	BOOST_TEST_MESSAGE("Maximum He Cluster Size = " << props["maxHeClusterSize"]);
-	BOOST_REQUIRE(strtol(props["maxHeClusterSize"].c_str(),NULL,10) == 1);
+	BOOST_REQUIRE(strtol(props["maxHeClusterSize"].c_str(),NULL,10) == 10);
 	BOOST_TEST_MESSAGE("Maximum V Cluster Size = " << props["maxVClusterSize"]);
-	BOOST_REQUIRE(strtol(props["maxVClusterSize"].c_str(),NULL,10) == 50);
+	BOOST_REQUIRE(strtol(props["maxVClusterSize"].c_str(),NULL,10) == 10);
 	BOOST_TEST_MESSAGE("Maximum Interstitial Cluster Size = " << props["maxIClusterSize"]);
-	BOOST_REQUIRE(strtol(props["maxIClusterSize"].c_str(),NULL,10) == 1);
+	BOOST_REQUIRE(strtol(props["maxIClusterSize"].c_str(),NULL,10) == 10);
 	BOOST_TEST_MESSAGE("Maximum Mixed Species Cluster Size = " << props["maxMixedClusterSize"]);
-	BOOST_REQUIRE(strtol(props["maxMixedClusterSize"].c_str(),NULL,10) == 51);
+	BOOST_REQUIRE(strtol(props["maxMixedClusterSize"].c_str(),NULL,10) == 10);
 	BOOST_TEST_MESSAGE("Number of He clusters = " << props["numHeClusters"]);
 	BOOST_REQUIRE(strtol(props["numHeClusters"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Number of V clusters = " << props["numVClusters"]);
 	BOOST_REQUIRE(strtol(props["numVClusters"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Number of I clusters = " << props["numIClusters"]);
 	BOOST_REQUIRE(strtol(props["numIClusters"].c_str(),NULL,10) == 1);
-	BOOST_TEST_MESSAGE("Number of mixed clusters = " << props["numMixedClusters"]);
-	BOOST_REQUIRE(strtol(props["numMixedClusters"].c_str(),NULL,10) == 1);
 
 	// Check the reactants - He first
 	std::shared_ptr<PSICluster> heCluster = static_pointer_cast<PSICluster>(reactants.at(0));
@@ -194,17 +192,16 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Check the properties of the copied reaction network
 	std::map<std::string, std::string> &props2 = *network2->properties;
 	
-	BOOST_REQUIRE_EQUAL(props2["maxHeClusterSize"], string("1"));
-	BOOST_REQUIRE_EQUAL(props2["maxVClusterSize"], string("50"));
-	BOOST_REQUIRE_EQUAL(props2["maxIClusterSize"], string("1"));
+	BOOST_REQUIRE_EQUAL(props2["maxHeClusterSize"], string("10"));
+	BOOST_REQUIRE_EQUAL(props2["maxVClusterSize"], string("10"));
+	BOOST_REQUIRE_EQUAL(props2["maxIClusterSize"], string("10"));
 	BOOST_REQUIRE_EQUAL(props2["numHeClusters"], string("1"));
 	BOOST_REQUIRE_EQUAL(props2["numVClusters"], string("1"));
 	BOOST_REQUIRE_EQUAL(props2["numIClusters"], string("1"));
-	BOOST_REQUIRE_EQUAL(props2["numMixedClusters"], string("1"));
 	
 	// Check that the properties were actually copied deeply
 	network2->properties->at("maxHeClusterSize") = string("3295");
-	BOOST_REQUIRE_EQUAL(network->properties->at("maxHeClusterSize"), string("1"));
+	BOOST_REQUIRE_EQUAL(network->properties->at("maxHeClusterSize"), string("10"));
 	BOOST_REQUIRE_EQUAL(network2->properties->at("maxHeClusterSize"), string("3295"));
 }
 BOOST_AUTO_TEST_SUITE_END()
