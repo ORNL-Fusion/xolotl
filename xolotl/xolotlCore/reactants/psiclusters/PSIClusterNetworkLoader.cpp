@@ -171,7 +171,7 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 		reader.setInputStream(networkStream);
 		// Loop over each line of the file, which should each be PSIClusters.
 		loadedLine = reader.loadLine();
-		
+
 		// Setup the properties map
 		props = network->properties;
 		(*props)["maxHeClusterSize"] = "10";
@@ -190,29 +190,32 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 				// And notify the calling function if the size is insufficient
 				throw error;
 			// Load the sizes
-			numHe = std::stoi(loadedLine[0]);
-			numV  = std::stoi(loadedLine[1]);
-			numI  = std::stoi(loadedLine[2]);
-			// Create the cluster
-			std::shared_ptr<PSICluster> nextCluster = createCluster(numHe, numV,
-					numI, props);
-			// Load the binding energies
-			heBindingE = convertStrToDouble(loadedLine[3]);
-			vBindingE = convertStrToDouble(loadedLine[4]);
-			iBindingE = convertStrToDouble(loadedLine[5]);
-			trapMutationBindingE = convertStrToDouble(loadedLine[6]);
-			migrationEnergy = convertStrToDouble(loadedLine[7]);
-			diffusionFactor = convertStrToDouble(loadedLine[8]);
-			// Create the binding energies array and set it
-			bindingEnergies.clear();
-			bindingEnergies.push_back(heBindingE);
-			bindingEnergies.push_back(vBindingE);
-			bindingEnergies.push_back(iBindingE);
-			bindingEnergies.push_back(trapMutationBindingE);
-			nextCluster->setBindingEnergies(bindingEnergies);
-			// Set the diffusion factor and migration energy
-			nextCluster->setMigrationEnergy(migrationEnergy);
-			nextCluster->setDiffusionFactor(diffusionFactor);
+			if (loadedLine[0][0] != '#') {
+				numHe = std::stoi(loadedLine[0]);
+				numV = std::stoi(loadedLine[1]);
+				numI = std::stoi(loadedLine[2]);
+				// Create the cluster
+				std::shared_ptr<PSICluster> nextCluster = createCluster(numHe,
+						numV, numI, props);
+				// Load the binding energies
+				heBindingE = convertStrToDouble(loadedLine[3]);
+				vBindingE = convertStrToDouble(loadedLine[4]);
+				iBindingE = convertStrToDouble(loadedLine[5]);
+				trapMutationBindingE = convertStrToDouble(loadedLine[6]);
+				migrationEnergy = convertStrToDouble(loadedLine[7]);
+				diffusionFactor = convertStrToDouble(loadedLine[8]);
+				// Create the binding energies array and set it
+				bindingEnergies.clear();
+				bindingEnergies.push_back(heBindingE);
+				bindingEnergies.push_back(vBindingE);
+				bindingEnergies.push_back(iBindingE);
+				bindingEnergies.push_back(trapMutationBindingE);
+				nextCluster->setBindingEnergies(bindingEnergies);
+				// Set the diffusion factor and migration energy
+				nextCluster->setMigrationEnergy(migrationEnergy);
+				nextCluster->setDiffusionFactor(diffusionFactor);
+			}
+
 			// Load the next line
 			loadedLine = reader.loadLine();
 		}
