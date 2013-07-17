@@ -95,7 +95,84 @@ std::vector<int> HeInterstitialCluster::getDissociationConnectivity() {
 	std::vector<int> dissConnections(nReactants, 0);
 	std::map<std::string, int> clusterMap;
 
+	// Vacancy Dissociation
+	clusterMap["He"] = numHe-1; clusterMap["V"] = 0; clusterMap["I"] = numI;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	clusterMap["I"] = 0; clusterMap["He"] = 1;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+
+	// Trap Mutation
+	clusterMap["I"] = numI + 1; clusterMap["He"] = numHe;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	clusterMap["I"] = 1; clusterMap["V"] = 0; clusterMap["He"] = 0;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+
+	// Vacancy Dissociation
+	clusterMap["He"] = numHe; clusterMap["V"] = 0; clusterMap["I"] = numI - 1;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	clusterMap["He"] = 0; clusterMap["V"] = 1; clusterMap["I"] = 0;
+	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+
 	return dissConnections;
+}
+
+double HeInterstitialCluster::getDissociationFlux(double temperature) {
+	// Local Declarations
+	std::map<std::string, int> oneHe, oneV, oneI, dissMap;
+	double f4 = 0.0, f3 = 0.0;
+	std::vector<int> dissConnectivity = getDissociationConnectivity();
+
+	// Set the cluster map data for 1 of each species
+	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
+	oneV["He"] = 0;	oneV["V"] = 1; oneV["I"] = 0;
+	oneI["He"] = 0; oneI["V"] = 0; oneI["I"] = 1;
+
+	// Get this PSICluster or subclasses' cluster map
+	std::map<std::string, int> thisMap = getClusterMap();
+
+	// Get the various indices
+	int thisIndex = network->toClusterIndex(thisMap);
+	int oneIIndex = network->toClusterIndex(oneI);
+	int oneVIndex = network->toClusterIndex(oneV);
+	int oneHeIndex = network->toClusterIndex(oneHe);
+
+	// Calculate the much easier f4 term...
+	f4 = calculateDissociationConstant(thisIndex, oneIIndex, temperature)
+					+ calculateDissociationConstant(thisIndex, oneVIndex,
+							temperature)
+					+ calculateDissociationConstant(thisIndex, oneHeIndex,
+							temperature);
+
+	// Loop over all the elements of the dissociation
+	// connectivity to find where this mixed species dissociates...
+	for (int i = 0; i < dissConnectivity.size(); i++) {
+		if (dissConnectivity[i] == 1) {
+			// Get the cluster map of this connection
+			dissMap = network->toClusterMap(i);
+
+			// We need to find if this is a Helium dissociation,
+			// Vacancy dissociation, or a trap mutation.
+			if (numHe - dissMap["He"] == 1 && numI == dissMap["I"]
+					&& dissMap["V"] == 0) {
+				f3 = f3	+ calculateDissociationConstant(i, oneHeIndex,
+								temperature)
+								* network->reactants->at(i)->getConcentration();
+			} else if (numHe == dissMap["He"] && numI - dissMap["V"] == 1
+					&& dissMap["V"] == 0) {
+				f3 = f3 + calculateDissociationConstant(i, oneVIndex,
+								temperature)
+								* network->reactants->at(i)->getConcentration();
+			} else if (numHe == dissMap["He"] && dissMap["I"] - numI == 1
+					&& dissMap["V"] == 0) {
+				f3 = f3 + calculateDissociationConstant(i, oneIIndex,
+								temperature)
+								* network->reactants->at(i)->getConcentration();
+			}
+
+		}
+	}
+
+	return f3 - f4 * getConcentration();
 }
 
 std::map<std::string, int> HeInterstitialCluster::getClusterMap() {

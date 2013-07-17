@@ -88,6 +88,13 @@ public:
 	 */
 	int getSpeciesSize(const std::string speciesName);
 
+    /**
+	 * This operation returns the total change in this cluster due to
+	 * dissociation.
+	 * @return The flux due to dissociation.
+	 */
+	virtual double getDissociationFlux(const double temperature);
+
 	/**
 	 * This virtual method is for subclasses to specialize
 	 * to return their representative cluster map, which is a mapping
