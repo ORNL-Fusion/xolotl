@@ -81,24 +81,6 @@ protected:
 	 */
 	virtual bool isProductReactant(int reactantI, int reactantJ);
 	
-	/**
-	 * Computes a row of the reaction connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants alone can form a reaction, the element at the position
-	 * of the second reactant is 1, otherwise 0.
-	 */
-	virtual std::vector<int> getReactionConnectivity();
-	
-	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
-	 */
-	virtual std::vector<int> getDissociationConnectivity();
-	
 private:
 
 	/**
@@ -246,6 +228,24 @@ public:
 	 * or the dissociation element is 1, the final element is 1.
 	 */
 	std::vector<int> getConnectivity();
+	
+	/**
+	 * Computes a row of the reaction connectivity matrix corresponding to
+	 * this reactant.
+	 *
+	 * If two reactants alone can form a reaction, the element at the position
+	 * of the second reactant is 1, otherwise 0.
+	 */
+	virtual std::vector<int> getReactionConnectivity();
+	
+	/**
+	 * Computes a row of the dissociation connectivity matrix corresponding to
+	 * this reactant.
+	 *
+	 * If two reactants together can be produced by a single reaction,
+	 * the element at the position of the second reactant is 1, otherwise 0.
+	 */
+	virtual std::vector<int> getDissociationConnectivity();
 };
 
 } /* end namespace xolotlCore */

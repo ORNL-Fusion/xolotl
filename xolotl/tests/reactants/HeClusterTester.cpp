@@ -18,7 +18,6 @@
 
 using std::shared_ptr;
 using namespace xolotlCore;
-using namespace testUtils;
 
 /**
  * This suite is responsible for testing the HeCluster.
@@ -31,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(HeCluster_testSuite)
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
-	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
 	std::vector<shared_ptr<Reactant>> &reactants = *network->reactants;
 	std::map<std::string, std::string> &props = *network->properties;
 	
@@ -50,59 +49,12 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	int offsetI = offsetV + numVClusters;
 	int offsetHeV = offsetI + numIClusters;
 	
-	// Check the connectivity of the first He reactant (numHe=1)
+	// Check the reaction connectivity of the 6th He reactant (numHe=6)
 	
 	{
-		std::vector<int> connectivityArray = reactants.at(0)->getConnectivity();
-		int numHe = 1;
-		
-		// Check the connectivity for He, V, and I
-		
-		int connectivityExpected[] = {
-			// He
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-			
-			// V
-			1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-			
-			// I
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-		};
-		
-		for (int i = 0; i < 30; i++) {
-			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), connectivityExpected[i]);
-		}
-		
-		// Check the connectivity for HeV
-		
-		for (int i = 30; i < 30 + numHeVClusters; i++) {
-			// Build a species map
-			std::map<std::string, int> speciesMap = network->toClusterMap(i);
-			int numHeOther = speciesMap["He"];
-			int numVOther = speciesMap["V"];
-			
-			bool connected = numHe + numHeOther + numVOther <= maxMixedClusterSize;
-			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
-		}
-		
-		// Check the connectivity for HeI
-		
-		for (int i = numHeVClusters; i < connectivityArray.size(); i++) {
-			// Build a species map
-			std::map<std::string, int> speciesMap = network->toClusterMap(i);
-			int numHeOther = speciesMap["He"];
-			int numIOther = speciesMap["I"];
-			
-			bool connected = numHe + numHeOther + numIOther <= maxMixedClusterSize;
-			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
-		}
-	}
-	
-	
-	// Check the connectivity of the 6th He reactant (numHe=6)
-	
-	{
-		std::vector<int> connectivityArray = reactants.at(5)->getConnectivity();
+		shared_ptr<PSICluster> reactant =
+			std::dynamic_pointer_cast<PSICluster>(reactants.at(5));
+		std::vector<int> reactionConnectivity = reactant->getReactionConnectivity();
 		int numHe = 6;
 		
 		// Check the connectivity for He, V, and I
@@ -115,35 +67,33 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
 			
 			// I
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			
+			// HeV
+			1, 1, 1, 0, 0, 0, 0, 0, 0,
+			1, 1, 0, 0, 0, 0, 0, 0,
+			1, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0,
+			0, 0,
+			0,
+			
+			// HeI
+			1, 1, 1, 0, 0, 0, 0, 0, 0,
+			1, 1, 0, 0, 0, 0, 0, 0,
+			1, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0,
+			0, 0,
+			0
 		};
 		
-		for (int i = 0; i < 30; i++) {
-			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), connectivityExpected[i]);
-		}
-		
-		// Check the connectivity for HeV
-		
-		for (int i = 30; i < 30 + numHeVClusters; i++) {
-			// Build a species map
-			std::map<std::string, int> speciesMap = network->toClusterMap(i);
-			int numHeOther = speciesMap["He"];
-			int numVOther = speciesMap["V"];
-			
-			bool connected = numHe + numHeOther + numVOther <= maxMixedClusterSize;
-			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
-		}
-		
-		// Check the connectivity for HeI
-		
-		for (int i = numHeVClusters; i < connectivityArray.size(); i++) {
-			// Build a species map
-			std::map<std::string, int> speciesMap = network->toClusterMap(i);
-			int numHeOther = speciesMap["He"];
-			int numIOther = speciesMap["I"];
-			
-			bool connected = numHe + numHeOther + numIOther <= maxMixedClusterSize;
-			BOOST_REQUIRE_EQUAL(connectivityArray.at(i), (int) connected);
+		for (int i = 0; i < reactionConnectivity.size(); i++) {
+			BOOST_REQUIRE_EQUAL(reactionConnectivity.at(i), connectivityExpected[i]);
 		}
 	}
 }
