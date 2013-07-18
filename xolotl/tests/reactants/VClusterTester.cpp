@@ -36,6 +36,9 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	std::vector<shared_ptr<Reactant>> &reactants = *network->reactants;
 	std::map<std::string, std::string> &props = *network->properties;
 	
+	// Prevent dissociation from being added to the connectivity array
+	props["dissociationsEnabled"] = "false";
+	
 	// Check the connectivity of the 2nd V reactant (numV=2)
 	
 	{
@@ -44,9 +47,12 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		species["V"] = 2;
 		int index = network->toClusterIndex(species);
 		
+		// Get the connectivity array from the reactant
+		
 		shared_ptr<PSICluster> reactant =
 			std::dynamic_pointer_cast<PSICluster>(reactants.at(index));
-		std::vector<int> reactionConnectivity = reactant->getReactionConnectivity();
+		shared_ptr<std::vector<int>> reactionConnectivity =
+			reactant->getConnectivity();
 		
 		// Check the connectivity for He, V, and I
 		
@@ -85,8 +91,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			1
 		};
 		
-		for (int i = 0; i < reactionConnectivity.size(); i++) {
-			BOOST_REQUIRE_EQUAL(reactionConnectivity.at(i), connectivityExpected[i]);
+		for (int i = 0; i < reactionConnectivity->size(); i++) {
+			BOOST_REQUIRE_EQUAL(reactionConnectivity->at(i), connectivityExpected[i]);
 		}
 	}
 }

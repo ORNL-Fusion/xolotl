@@ -19,8 +19,6 @@ private:
 	 */
 	HeCluster():PSICluster(1) {}
 
-protected:
-	
 public:
 
 	/**
@@ -65,7 +63,8 @@ public:
 	 * @return
 	 */
 	virtual double getReactionRadius();
-
+	
+protected:
 	/**
 	 * Computes a row of the reaction connectivity matrix corresponding to
 	 * this reactant.
@@ -73,8 +72,8 @@ public:
 	 * If two reactants alone can form a reaction, the element at the position
 	 * of the second reactant is 1, otherwise 0.
 	 */
-	virtual std::vector<int> getReactionConnectivity();
-
+	void createReactionConnectivity();
+	
 	/**
 	 * Computes a row of the dissociation connectivity matrix corresponding to
 	 * this reactant.
@@ -82,7 +81,7 @@ public:
 	 * If two reactants together can be produced by a single reaction,
 	 * the element at the position of the second reactant is 1, otherwise 0.
 	 */
-	virtual std::vector<int> getDissociationConnectivity();
+	void createDissociationConnectivity();
 };
 
 //end class HeCluster

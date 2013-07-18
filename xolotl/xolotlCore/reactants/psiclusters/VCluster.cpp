@@ -13,7 +13,7 @@ VCluster::VCluster(int nV) :
 VCluster::~VCluster() {
 }
 
-std::vector<int> VCluster::getReactionConnectivity() {
+void VCluster::createReactionConnectivity() {
 	
 	std::map<std::string, std::string> &props = *(network->properties);
 	
@@ -27,8 +27,7 @@ std::vector<int> VCluster::getReactionConnectivity() {
 	
 	// Initialize the connectivity row with zeroes
 	int reactantsLength = network->reactants->size();
-	std::vector<int> connectivityArray(reactantsLength, 0);
-	
+	reactionConnectivity.resize(reactantsLength, 0);
 	
 	// Vacancies interact with everything except for vacancies bigger than they
 	// would combine with to form vacancies larger than the size limit.
@@ -42,7 +41,7 @@ std::vector<int> VCluster::getReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
-		connectivityArray[indexOther] = 1;
+		reactionConnectivity[indexOther] = 1;
 	}
 	
 	//----- A*V + B*V --> (A+B)*V -----
@@ -53,7 +52,7 @@ std::vector<int> VCluster::getReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["V"] = numVOther;
 		int indexOther = network->toClusterIndex(speciesMap);
-		connectivityArray[indexOther] = 1;
+		reactionConnectivity[indexOther] = 1;
 	}
 	
 	//----- A*I + B*V
@@ -66,7 +65,7 @@ std::vector<int> VCluster::getReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["I"] = numIOther;
 		int indexOther = network->toClusterIndex(speciesMap);
-		connectivityArray[indexOther] = 1;
+		reactionConnectivity[indexOther] = 1;
 	}
 	
 	// ----- (A*He)(B*V) + C*V → (A*He)[(B+C)*V] -----
@@ -82,7 +81,7 @@ std::vector<int> VCluster::getReactionConnectivity() {
 				speciesMap["He"] = numHeOther;
 				speciesMap["V"] = numVOther;
 				int indexOther = network->toClusterIndex(speciesMap);
-				connectivityArray[indexOther] = 1;
+				reactionConnectivity[indexOther] = 1;
 			}
 		}
 	}
@@ -100,36 +99,33 @@ std::vector<int> VCluster::getReactionConnectivity() {
 			speciesMap["He"] = numHeOther;
 			speciesMap["I"] = numIOther;
 			int indexOther = network->toClusterIndex(speciesMap);
-			connectivityArray[indexOther] = (int) connects;
+			reactionConnectivity[indexOther] = (int) connects;
 		}
 	}
-	
-	
-	return connectivityArray;
 }
 
-std::vector<int> VCluster::getDissociationConnectivity() {
+void VCluster::createDissociationConnectivity() {
 	// Local Declarations
 	int nReactants = network->reactants->size();
-	std::vector<int> dissConnections(nReactants, 0);
 	std::map<std::string, int> clusterMap;
-
+	
+	// Resize the connectivity row with zeroes
+	int reactantsLength = network->reactants->size();
+	dissociationConnectivity.resize(reactantsLength, 0);
+	
 	// Vacancy Dissociation
 	clusterMap["He"] = 0; clusterMap["V"] = size - 1; clusterMap["I"] = 0;
 	if (size != 1) {
-		dissConnections[network->toClusterIndex(clusterMap)] = 1;
+		dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 		clusterMap["V"] = 1;
-		dissConnections[network->toClusterIndex(clusterMap)] = 1;
+		dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 	}
 
 	// Trap Mutation
 	clusterMap["V"] = size + 1;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 	clusterMap["I"] = 1; clusterMap["V"] = 0;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
-
-	// Return the connections
-	return dissConnections;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 }
 
 bool VCluster::isProductReactant(int reactantI, int reactantJ) {

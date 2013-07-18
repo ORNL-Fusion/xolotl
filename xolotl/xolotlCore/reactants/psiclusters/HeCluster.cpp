@@ -14,7 +14,7 @@ HeCluster::HeCluster(int nHe) :
 HeCluster::~HeCluster() {
 }
 
-std::vector<int> HeCluster::getReactionConnectivity() {
+void HeCluster::createReactionConnectivity() {
 	
 	// Note the reference to the properties map
 	std::map<std::string, std::string> &props = *(network->properties);
@@ -23,9 +23,9 @@ std::vector<int> HeCluster::getReactionConnectivity() {
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
 	
-	// Initialize the connectivity row with zeroes
+	// Resize the connectivity row with zeroes
 	int reactantsLength = network->reactants->size();
-	std::vector<int> connectivityArray(reactantsLength, 0);
+	reactionConnectivity.resize(reactantsLength, 0);
 	
 	// ----- A*He + B*He --> (A+B)*He -----
 	// This cluster should interact with all other clusters of the same type up
@@ -35,7 +35,7 @@ std::vector<int> HeCluster::getReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
-		connectivityArray[indexOther] = 1;
+		reactionConnectivity[indexOther] = 1;
 	}
 	
 	// -----  A*He + B*V --> (A*He)(B*V) -----
@@ -48,7 +48,7 @@ std::vector<int> HeCluster::getReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["V"] = numVOther;
 		int indexOther = network->toClusterIndex(speciesMap);
-		connectivityArray[indexOther] = 1;
+		reactionConnectivity[indexOther] = 1;
 	}
 	
 	// zHe + yI --> zHe*yI
@@ -57,7 +57,7 @@ std::vector<int> HeCluster::getReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["I"] = numIOther;
 		int indexOther = network->toClusterIndex(speciesMap);
-		connectivityArray[indexOther] = 1;
+		reactionConnectivity[indexOther] = 1;
 	}
 	
 	// ----- (A*He)(B*V) + C*He --> [(A+C)He](B*V) -----
@@ -70,11 +70,12 @@ std::vector<int> HeCluster::getReactionConnectivity() {
 	for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
 		for (int numHeOther = 1; numVOther + numHeOther + numHe <=
 			maxMixedClusterSize; numHeOther++) {
+			
 			std::map<std::string, int> speciesMap;
 			speciesMap["He"] = numHeOther;
 			speciesMap["V"] = numVOther;
 			int indexOther = network->toClusterIndex(speciesMap);
-			connectivityArray[indexOther] = 1;
+			reactionConnectivity[indexOther] = 1;
 		}
 	}
 	
@@ -88,20 +89,20 @@ std::vector<int> HeCluster::getReactionConnectivity() {
 			speciesMap["He"] = numHeOther;
 			speciesMap["I"] = numIOther;
 			int indexOther = network->toClusterIndex(speciesMap);
-			connectivityArray[indexOther] = 1;
+			reactionConnectivity[indexOther] = 1;
 		}
 	}
-	
-	return connectivityArray;
 }
 
-std::vector<int> HeCluster::getDissociationConnectivity() {
+void HeCluster::createDissociationConnectivity() {
 
 	// Local Declarations
-	int nReactants = network->reactants->size();
-	std::vector<int> dissConnections(nReactants, 0);
 	std::map<std::string, int> clusterMap;
-
+	
+	// Resize the connectivity row with zeroes
+	int reactantsLength = network->reactants->size();
+	dissociationConnectivity.resize(reactantsLength, 0);
+	
 	// He_x -> He_(x-1) + He, so a connection
 	// to the Helium cluster with one helium,
 	// and the Helium cluster with (x-1) helium
@@ -113,19 +114,16 @@ std::vector<int> HeCluster::getDissociationConnectivity() {
 	// more than one helium
 	if (size != 1) {
 		// He_x -> He_(x-1) + He
-		dissConnections[network->toClusterIndex(clusterMap)] = 1;
+		dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 		clusterMap["He"] = 1;
-		dissConnections[network->toClusterIndex(clusterMap)] = 1;
+		dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 	}
 
 	// Trap Mutation...
 	clusterMap["He"] = size; clusterMap["V"] = 1;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 	clusterMap["He"] = 0; clusterMap["V"] = 0; clusterMap["I"] = 1;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
-
-	// Return the connections
-	return dissConnections;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 }
 
 bool HeCluster::isProductReactant(int reactantI, int reactantJ) {
@@ -172,5 +170,5 @@ double HeCluster::getReactionRadius() {
 	double aCubed = pow(xolotlCore::latticeConstant, 3);
 	double termOne = pow((3.0/FourPi)*(1.0/10.0)*aCubed*size,(1.0/3.0));
 	double termTwo = pow((3.0/FourPi)*(1.0/10.0)*aCubed,(1.0/3.0));
-	return .3 + termOne - termTwo;
+	return 0.3 + termOne - termTwo;
 }

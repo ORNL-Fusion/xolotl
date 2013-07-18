@@ -4,6 +4,7 @@
 // Includes
 #include <Reactant.h>
 #include <math.h>
+#include <vector>
 
 namespace xolotlCore {
 
@@ -43,6 +44,24 @@ protected:
 	 * The migration energy for this cluster.
 	 */
 	double migrationEnergy;
+	
+	/**
+	 * The row of the reaction connectivity matrix corresponding to
+	 * this PSICluster
+	 *
+	 * If a reactant is involved in a reaction with this PSICluster,
+	 * the element at the reactant's index is 1, otherwise 0.
+	 */
+	std::vector<int> reactionConnectivity;
+	
+	/**
+	 * The row of the dissociation connectivity matrix corresponding to
+	 * this PSICluster
+	 *
+	 * If this PSICluster can dissociate into a particular reactant,
+	 * the element at the reactant's index is 1, otherwise 0.
+	 */
+	std::vector<int> dissociationConnectivity;
 
 	/**
 	 * Calculate the reaction constant dependent on the
@@ -81,6 +100,24 @@ protected:
 	 */
 	virtual bool isProductReactant(int reactantI, int reactantJ);
 	
+	/**
+	 * Computes a row of the reaction connectivity matrix corresponding to
+	 * this reactant.
+	 *
+	 * If two reactants alone can form a reaction, the element at the position
+	 * of the second reactant is 1, otherwise 0.
+	 */
+	virtual void createReactionConnectivity();
+	
+	/**
+	 * Computes a row of the dissociation connectivity matrix corresponding to
+	 * this reactant.
+	 *
+	 * If two reactants together can be produced by a single reaction,
+	 * the element at the position of the second reactant is 1, otherwise 0.
+	 */
+	virtual void createDissociationConnectivity();
+	
 private:
 
 	/**
@@ -107,6 +144,15 @@ public:
 	 */
 	virtual ~PSICluster();
 
+	/**
+	 * Sets the collection of other reactants that make up
+	 * the reaction network in which this reactant exists.
+	 *
+	 * @param network The reaction network of which this reactant is a part
+	 */
+	void setReactionNetwork(
+			const std::shared_ptr<ReactionNetwork> reactionNetwork);
+	
 	/**
 	 * This operation returns the total flux of this reactant in the
 	 * current network.
@@ -227,25 +273,7 @@ public:
 	 * For each element in the array, if either the reactant element
 	 * or the dissociation element is 1, the final element is 1.
 	 */
-	std::vector<int> getConnectivity();
-	
-	/**
-	 * Computes a row of the reaction connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants alone can form a reaction, the element at the position
-	 * of the second reactant is 1, otherwise 0.
-	 */
-	virtual std::vector<int> getReactionConnectivity();
-	
-	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
-	 */
-	virtual std::vector<int> getDissociationConnectivity();
+	std::shared_ptr<std::vector<int>> getConnectivity();
 };
 
 } /* end namespace xolotlCore */

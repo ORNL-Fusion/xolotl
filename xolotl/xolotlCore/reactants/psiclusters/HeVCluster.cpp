@@ -38,7 +38,7 @@ int HeVCluster::getSpeciesSize(const std::string speciesName) {
 	}
 }
 
-std::vector<int> HeVCluster::getReactionConnectivity() {
+void HeVCluster::createReactionConnectivity() {
 	
 	// Extract some of the properties from the network
 	
@@ -48,7 +48,8 @@ std::vector<int> HeVCluster::getReactionConnectivity() {
 	int maxMixedClusterSize = std::stoi(properties->at("maxMixedClusterSize"));
 	
 	// Initialize the return array with zeroes
-	std::vector<int> connectivityArray(network->reactants->size(), 0);
+	int reactantsLength = network->reactants->size();
+	reactionConnectivity.resize(reactantsLength, 0);
 	
 	// This cluster is involved in the following interactions:
 	
@@ -59,7 +60,7 @@ std::vector<int> HeVCluster::getReactionConnectivity() {
 		speciesMap["He"] = z;
 		int i = network->toClusterIndex(speciesMap);
 		
-		connectivityArray.at(i) = 1;
+		reactionConnectivity.at(i) = 1;
 	}
 	
 	// xHe*yV + V   --> xHe*(y + 1)V
@@ -69,7 +70,7 @@ std::vector<int> HeVCluster::getReactionConnectivity() {
 		speciesMap["V"] = 1;
 		int i = network->toClusterIndex(speciesMap);
 		
-		connectivityArray.at(i) = 1;
+		reactionConnectivity.at(i) = 1;
 	}
 	
 	// xHe*yV + zI  --> xHe*(y - z)V
@@ -83,47 +84,44 @@ std::vector<int> HeVCluster::getReactionConnectivity() {
 		speciesMap["I"] = numIOther;
 		int i = network->toClusterIndex(speciesMap);
 		
-		connectivityArray.at(i) = 1;
+		reactionConnectivity.at(i) = 1;
 	}
 	
 	// Everything else is 0 (not connected)
-	
-	return connectivityArray;
 }
 
-std::vector<int> HeVCluster::getDissociationConnectivity() {
-	// Local Declarations
-	int nReactants = network->reactants->size();
-	std::vector<int> dissConnections(nReactants, 0);
-	std::map<std::string, int> clusterMap;
 
+void HeVCluster::createDissociationConnectivity() {
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
+	
+	// Resize the connectivity row with zeroes
+	int reactantsLength = network->reactants->size();
+	dissociationConnectivity.resize(reactantsLength, 0);
+	
 	// Vacancy Dissociation
 	clusterMap["He"] = numHe-1; clusterMap["V"] = numV; clusterMap["I"] = 0;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 	clusterMap["V"] = 0; clusterMap["He"] = 1;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 
 	// Trap Mutation
 	clusterMap["V"] = numV + 1; clusterMap["He"] = numHe;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 	clusterMap["I"] = 1; clusterMap["V"] = 0; clusterMap["He"] = 0;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 
 	// Vacancy Dissociation
 	clusterMap["He"] = numHe; clusterMap["V"] = numV - 1; clusterMap["I"] = 0;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 	clusterMap["He"] = 0; clusterMap["V"] = 1; clusterMap["I"] = 0;
-	dissConnections[network->toClusterIndex(clusterMap)] = 1;
-
-	// Return the connections
-	return dissConnections;
+	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 }
 
 double HeVCluster::getDissociationFlux(double temperature) {
 	// Local Declarations
 	std::map<std::string, int> oneHe, oneV, oneI, dissMap;
 	double f4 = 0.0, f3 = 0.0;
-	std::vector<int> dissConnectivity = getDissociationConnectivity();
 
 	// Set the cluster map data for 1 of each species
 	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
@@ -148,8 +146,8 @@ double HeVCluster::getDissociationFlux(double temperature) {
 
 	// Loop over all the elements of the dissociation
 	// connectivity to find where this mixed species dissociates...
-	for (int i = 0; i < dissConnectivity.size(); i++) {
-		if (dissConnectivity[i] == 1) {
+	for (int i = 0; i < dissociationConnectivity.size(); i++) {
+		if (dissociationConnectivity[i] == 1) {
 			// Get the cluster map of this connection
 			dissMap = network->toClusterMap(i);
 

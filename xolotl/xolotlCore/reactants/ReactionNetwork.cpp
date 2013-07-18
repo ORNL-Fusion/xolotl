@@ -21,7 +21,10 @@ ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 }
 
 bool ReactionNetwork::isConnected(int reactantI, int reactantJ) {
-	return (reactants->at(reactantI)->getConnectivity().at(reactantJ) == 1);
+	// TODO
+	// Remove this method
+	
+	return (reactants->at(reactantI)->getConnectivity()->at(reactantJ) == 1);
 }
 
 std::map<std::string, int> ReactionNetwork::toClusterMap(int index) {

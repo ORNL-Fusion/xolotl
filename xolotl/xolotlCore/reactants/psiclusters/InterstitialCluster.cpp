@@ -11,7 +11,7 @@ InterstitialCluster::InterstitialCluster(int nI) :
 InterstitialCluster::~InterstitialCluster() {
 }
 
-std::vector<int> InterstitialCluster::getReactionConnectivity() {
+void InterstitialCluster::createReactionConnectivity() {
 
 	std::map<std::string, std::string> &props = *network->properties;
 	
@@ -24,8 +24,7 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 	
 	// Initialize the connectivity row with zeroes
 	int reactantsLength = network->reactants->size();
-	std::vector<int> connectivityArray(reactantsLength, 0);
-	
+	reactionConnectivity.resize(reactantsLength, 0);
 	
 	// Interstitials can interact with other interstitials, vacancies,
 	// helium, and mixed-species clusters. They cannot cluster with other
@@ -38,7 +37,7 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
-		connectivityArray[indexOther] = 1;
+		reactionConnectivity[indexOther] = 1;
 	}
 	
 	//----- A*I + B*V
@@ -51,7 +50,7 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["V"] = numVOther;
 		int indexOther = network->toClusterIndex(speciesMap);
-		connectivityArray[indexOther] = 1;
+		reactionConnectivity[indexOther] = 1;
 	}
 	
 	// A*I + B*I → (A+B)*I -----
@@ -60,7 +59,7 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["I"] = numIOther;
 		int indexOther = network->toClusterIndex(speciesMap);
-		connectivityArray[indexOther] = 1;
+		reactionConnectivity[indexOther] = 1;
 	}
 	
 	// ----- (A*He)(B*V) + (C*I) --> (A*He)[(B-C)V] -----
@@ -75,7 +74,7 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 			speciesMap["He"] = numHeOther;
 			speciesMap["V"] = numVOther;
 			int indexOther = network->toClusterIndex(speciesMap);
-			connectivityArray[indexOther] = (int) connected;
+			reactionConnectivity[indexOther] = (int) connected;
 		}
 	}
 	
@@ -91,22 +90,20 @@ std::vector<int> InterstitialCluster::getReactionConnectivity() {
 				speciesMap["He"] = numHeOther;
 				speciesMap["I"] = numIOther;
 				int indexOther = network->toClusterIndex(speciesMap);
-				connectivityArray[indexOther] = 1;
+				reactionConnectivity[indexOther] = 1;
 			}
 		}
 	}
+}
+
+
+void InterstitialCluster::createDissociationConnectivity() {
 	
-	return connectivityArray;
+	// Resize the connectivity row with zeroes
+	int reactantsLength = network->reactants->size();
+	dissociationConnectivity.resize(reactantsLength, 0);
 }
 
-std::vector<int> InterstitialCluster::getDissociationConnectivity() {
-	// Local Declarations
-	int nReactants = network->reactants->size();
-	std::vector<int> dissConnections(nReactants, 0);
-
-	// Return the connections
-	return dissConnections;
-}
 
 bool InterstitialCluster::isProductReactant(int reactantI, int reactantJ) {
 

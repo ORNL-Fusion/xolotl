@@ -44,19 +44,25 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	std::vector<shared_ptr<Reactant>> &reactants = *network->reactants;
 	std::map<std::string, std::string> &props = *network->properties;
 	
+	// Prevent dissociation from being added to the connectivity array
+	props["dissociationsEnabled"] = "false";
+	
 	// Check the reaction connectivity of the HeV cluster
 	// with 3He and 2V
 	
 	{
-		// Get the index of the 4V reactant
+		// Get the index of the 3He*2V reactant
 		std::map<std::string, int> species;
 		species["He"] = 3;
 		species["V"] = 2;
 		int index = network->toClusterIndex(species);
 		
+		// Get the connectivity array from the reactant
+		
 		shared_ptr<PSICluster> reactant =
 			std::dynamic_pointer_cast<PSICluster>(reactants.at(index));
-		std::vector<int> reactionConnectivity = reactant->getReactionConnectivity();
+		shared_ptr<std::vector<int>> reactionConnectivity =
+			reactant->getConnectivity();
 		
 		BOOST_REQUIRE_EQUAL(reactant->getClusterMap()["He"], 3);
 		BOOST_REQUIRE_EQUAL(reactant->getClusterMap()["V"], 2);
@@ -97,8 +103,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			0
 		};
 		
-		for (int i = 0; i < reactionConnectivity.size(); i++) {
-			BOOST_REQUIRE_EQUAL(reactionConnectivity.at(i), connectivityExpected[i]);
+		for (int i = 0; i < reactionConnectivity->size(); i++) {
+			BOOST_REQUIRE_EQUAL(reactionConnectivity->at(i), connectivityExpected[i]);
 		}
 	}
 }

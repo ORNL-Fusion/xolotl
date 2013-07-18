@@ -46,18 +46,20 @@ double Reactant::getTotalFlux(const double temperature) {
 }
 
 void Reactant::setReactionNetwork(
-		const std::shared_ptr<ReactionNetwork> reactionNetwork) {
+	const std::shared_ptr<ReactionNetwork> reactionNetwork) {
+	
 	network = reactionNetwork;
-	return;
 }
 
 
-std::vector<int> Reactant::getConnectivity() {
+std::shared_ptr<std::vector<int>> Reactant::getConnectivity() {
 	// The connectivity array by default is filled with
 	// zeroes.
 	
-	std::vector<int> conn(network->reactants->size());
-	return conn;
+	int connectivityLength = network->reactants->size();
+	std::shared_ptr<std::vector<int>> connectivity =
+		std::make_shared<std::vector<int>>(connectivityLength, 0);
+	return connectivity;
 }
 
 

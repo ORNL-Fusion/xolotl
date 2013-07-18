@@ -120,9 +120,9 @@ public:
 	 *
 	 * @param network The reaction network of which this reactant is a part
 	 */
-	void setReactionNetwork(
+	virtual void setReactionNetwork(
 			const std::shared_ptr<ReactionNetwork> reactionNetwork);
-
+	
 	/**
 	 * This operation returns a list that represents the connectivity
 	 * between this Reactant and other Reactants in the network.
@@ -136,7 +136,7 @@ public:
 	 * with the i-th Reactant in the ReactionNetwork and a "0" indicates
 	 * that it does not.
 	 */
-	virtual std::vector<int> getConnectivity();
+	virtual std::shared_ptr<std::vector<int>> getConnectivity();
 	
 	/**
 	 * This operation writes the contents of the reactant to a string. This

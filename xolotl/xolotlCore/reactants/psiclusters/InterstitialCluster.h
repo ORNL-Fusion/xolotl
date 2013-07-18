@@ -9,25 +9,6 @@ namespace xolotlCore {
 //! This class represents a cluster composed entirely of interstitial defects.
 class InterstitialCluster: public PSICluster {
 
-protected:
-
-	/**
-	 * This operation overrides getReactionConnectivity() from
-	 * the base class to provide the proper reaction connectivity
-	 * for an Interstitial cluster.
-	 * @return The connectivity array
-	 */
-	std::vector<int> getReactionConnectivity();
-
-	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
-	 */
-	virtual std::vector<int> getDissociationConnectivity();
-
 public:
 
 	/**
@@ -70,7 +51,25 @@ public:
 	 * @return
 	 */
 	virtual double getReactionRadius();
-
+	
+protected:
+	/**
+	 * Computes a row of the reaction connectivity matrix corresponding to
+	 * this reactant.
+	 *
+	 * If two reactants alone can form a reaction, the element at the position
+	 * of the second reactant is 1, otherwise 0.
+	 */
+	void createReactionConnectivity();
+	
+	/**
+	 * Computes a row of the dissociation connectivity matrix corresponding to
+	 * this reactant.
+	 *
+	 * If two reactants together can be produced by a single reaction,
+	 * the element at the position of the second reactant is 1, otherwise 0.
+	 */
+	void createDissociationConnectivity();
 };
 //end class InterstitialCluster
 

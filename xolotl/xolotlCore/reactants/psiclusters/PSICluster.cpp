@@ -47,6 +47,23 @@ PSICluster::PSICluster(const PSICluster &other) :
 PSICluster::~PSICluster() {
 }
 
+
+void PSICluster::setReactionNetwork(
+	const std::shared_ptr<ReactionNetwork> reactionNetwork) {
+	
+	// Call the superclass's method
+	
+	Reactant::setReactionNetwork(reactionNetwork);
+	
+	// Generate the reactant and dissociation connectivity arrays.
+	// This only must be done once since the arrays are stored as
+	// member attributes.
+	
+	createReactionConnectivity();
+	createDissociationConnectivity();
+}
+
+
 double PSICluster::getTotalFlux(const double temperature) {
 	return getProductionFlux(temperature) + getDissociationFlux(temperature);
 }
@@ -55,7 +72,6 @@ double PSICluster::getDissociationFlux(const double temperature) {
 
 	int nReactants = network->reactants->size(), oneIndex = -1;
 	double diss = 0.0, conc = 0.0;
-	std::vector<int> dissConnections = getDissociationConnectivity();
 	std::map<std::string, int> oneHe, oneV, oneI;
 
 	// Set the cluster map data for 1 of each species
@@ -93,7 +109,7 @@ double PSICluster::getDissociationFlux(const double temperature) {
 		// have a dissociation connection
 		for (int i = 0; i < nReactants; i++) {
 			// Only calculate if we are connected
-			if (dissConnections.at(i) == 1) {
+			if (dissociationConnectivity.at(i) == 1) {
 				// Calculate the dissociation flux
 				diss = diss + calculateDissociationConstant(i, oneIndex,
 								temperature)
@@ -259,52 +275,69 @@ double PSICluster::getReactionRadius() {
 }
 
 
-std::vector<int> PSICluster::getConnectivity() {
+std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() {
 	
-	std::vector<int> reactionConn = getReactionConnectivity();
-	std::vector<int> dissConn = getDissociationConnectivity();
+	int connectivityLength = network->reactants->size();
 	
-	// The vectors must be the same length.
+	// Extract properties from the network
 	
-	if (reactionConn.size() != dissConn.size()) {
-		throw std::string("The reaction and dissociation vectors "
-			"must be the same length");
+	std::map<std::string, std::string> &properties = *network->properties;
+	bool reactionsEnabled = (properties["reactionsEnabled"] == "true");
+	bool dissociationsEnabled = (properties["dissociationsEnabled"] == "true");
+	
+	// The reaction and dissociate vectors must be the same length
+	// as the number of reactants
+	
+	if (reactionsEnabled && reactionConnectivity.size() != connectivityLength) {
+		throw std::string("The reaction vector is an incorrect length");
 	}
+	
+	if (dissociationsEnabled && dissociationConnectivity.size() != connectivityLength) {
+		throw std::string("The dissociation vector is an incorrect length");
+	}
+	
+	// Create a smart pointer to a new connectivity array
+	
+	std::shared_ptr<std::vector<int>> connectivity =
+		std::make_shared<std::vector<int>>(connectivityLength);
 	
 	// Merge the two vectors such that the final vector contains
-	// a 1 at a positioin if either of the connectivity arrays
+	// a 1 at a position if either of the connectivity arrays
 	// have a 1
 	
-	int connLength = reactionConn.size();
-	for (int i = 0; i < connLength; i++) {
+	for (int i = 0; i < connectivityLength; i++) {
 		
-		// We can modify the reaction vector in place since it
-		// will not be needed by this method again.
-		reactionConn[i] |= dissConn[i];
+		// Consider each connectivity array only if its type is enabled
+		(*connectivity)[i] =
+			(reactionsEnabled     ? reactionConnectivity[i]     : 0) ||
+			(dissociationsEnabled ? dissociationConnectivity[i] : 0);
 	}
 	
-	return reactionConn;
+	return connectivity;
 }
 
 
-std::vector<int> PSICluster::getReactionConnectivity() {
-	// By default, return an array with a zero for each reactant
+void PSICluster::createReactionConnectivity() {
+	// By default, generate an array with a zero for each reactant
 	// in the network
 	
-	std::vector<int> reactionConn(network->reactants->size(), 0);
-	return reactionConn;
+	reactionConnectivity.clear();
+	reactionConnectivity.resize(network->reactants->size(), 0);
 }
 
 
-std::vector<int> PSICluster::getDissociationConnectivity() {
-	// By default, return an array with a zero for each reactant
+void PSICluster::createDissociationConnectivity() {
+	// By default, generate an array with a zero for each reactant
 	// in the network
 	
-	std::vector<int> dissConn(network->reactants->size(), 0);
-	return dissConn;
+	dissociationConnectivity.clear();
+	dissociationConnectivity.resize(network->reactants->size(), 0);
 }
+
 
 std::map<std::string, int> PSICluster::getClusterMap() {
-	std::map<std::string, int> dummy;
-	return dummy;
+	// Create an empty cluster map
+	
+	std::map<std::string, int> clusterMap;
+	return clusterMap;
 }

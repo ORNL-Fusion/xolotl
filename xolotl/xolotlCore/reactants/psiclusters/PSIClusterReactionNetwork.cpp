@@ -8,6 +8,10 @@ using std::shared_ptr;
 
 PSIClusterReactionNetwork::PSIClusterReactionNetwork()
 : ReactionNetwork() {
+	
+	// Initialize default properties
+	(*properties)["reactionsEnabled"] = "true";
+	(*properties)["dissociationsEnabled"] = "true";
 }
 
 
@@ -39,15 +43,23 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 	int numV = clusterMap["V"];
 	int numI = clusterMap["I"];
 	
+	
+	// // TEMP
+	// printf("============ %p\n", this);
+	// printf("%d %d %d\n", numHe, numV, numI);
+	// for (auto it = properties->begin(); it != properties->end(); it++)
+	// {
+	// 	printf("%s => %s [%p]\n", it->first.c_str(), it->second.c_str(), &it->second);
+	// }
+	
 	// Convert the property strings so C++ can use them
 	
-	std::map<std::string, std::string> &props = *properties;
-	int numHeClusters = std::stoi(props["numHeClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
-	int numIClusters = std::stoi(props["numIClusters"]);
-	int numHeVClusters = std::stoi(props["numHeVClusters"]);
-	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
+	int numHeClusters = std::stoi((*properties)["numHeClusters"]);
+	int numVClusters = std::stoi((*properties)["numVClusters"]);
+	int numIClusters = std::stoi((*properties)["numIClusters"]);
+	int numHeVClusters = std::stoi((*properties)["numHeVClusters"]);
+	int numHeIClusters = std::stoi((*properties)["numHeIClusters"]);
+	int maxMixedClusterSize = std::stoi((*properties)["maxMixedClusterSize"]);
 	
 	int numSpecies = (numHe > 0) + (numV > 0) + (numI > 0);
 	
