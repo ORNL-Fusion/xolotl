@@ -41,7 +41,7 @@ public:
 	 * Converts an cluster map (with `speciesLabel` => `quantity`)
 	 * to the index corresponding to its position in the reactants vector
 	 */
-	int toClusterIndex(std::map<std::string, int> &clusterMap);
+	int toClusterIndex(const std::map<std::string, int> clusterMap);
 };
 
 }

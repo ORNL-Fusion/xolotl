@@ -11,8 +11,10 @@ HeCluster::HeCluster(int nHe) :
 	name = "Helium";
 }
 
+
 HeCluster::~HeCluster() {
 }
+
 
 void HeCluster::createReactionConnectivity() {
 	
@@ -93,6 +95,7 @@ void HeCluster::createReactionConnectivity() {
 		}
 	}
 }
+
 
 void HeCluster::createDissociationConnectivity() {
 

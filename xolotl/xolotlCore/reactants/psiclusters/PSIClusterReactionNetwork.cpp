@@ -34,24 +34,41 @@ std::map<std::string, int> PSIClusterReactionNetwork::toClusterMap(int index) {
 }
 
 
-int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> &clusterMap) {
+int PSIClusterReactionNetwork::toClusterIndex(const std::map<std::string, int> clusterMap) {
 	
-	// If the clusterMap doesn't have one of these keys, the operator[] method
-	// returns zero.
+	// If the clusterMap doesn't have one of the following keys,
+	// the value will be set to zero.
 	
-	int numHe = clusterMap["He"];
-	int numV = clusterMap["V"];
-	int numI = clusterMap["I"];
+	typedef const std::map<std::string, int> clusterMap_t;
 	
+	int numHe = 0;
+	int numV = 0;
+	int numI = 0;
 	
-	// // TEMP
-//	 printf("============ %p\n", this);
-//	 printf("%d %d %d\n", numHe, numV, numI);
-//	 for (auto it = properties->begin(); it != properties->end(); it++)
-//	 {
-//	 	printf("%s => %s [%p]\n", it->first.c_str(), it->second.c_str(), &it->second);
-//	 }
-//
+	{
+		clusterMap_t::const_iterator numHe_it = clusterMap.find("He");
+		clusterMap_t::const_iterator numV_it = clusterMap.find("V");
+		clusterMap_t::const_iterator numI_it = clusterMap.find("I");
+		
+		if (numHe_it != clusterMap.end()) {
+			numHe = numHe_it->second;
+		}
+		if (numV_it != clusterMap.end()) {
+			numV = numV_it->second;
+		}
+		if (numI_it != clusterMap.end()) {
+			numI = numI_it->second;
+		}
+	}
+	
+	// TEMP
+	printf("============ %p\n", this);
+	printf("%d %d %d\n", numHe, numV, numI);
+	for (auto it = properties->begin(); it != properties->end(); it++)
+	{
+		printf("%s => %s [%p]\n", it->first.c_str(), it->second.c_str(), &it->second);
+	}
+	
 	// Convert the property strings so C++ can use them
 	
 	int numHeClusters = std::stoi((*properties)["numHeClusters"]);

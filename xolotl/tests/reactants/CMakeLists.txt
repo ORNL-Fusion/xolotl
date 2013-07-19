@@ -32,4 +32,3 @@ if(Boost_FOUND)
     endforeach(test ${tests})
 endif(Boost_FOUND)
 
-
