@@ -129,22 +129,27 @@ double PSICluster::getProductionFlux(const double temperature) {
 	// Local declarations
 	double fluxOne = 0.0, fluxTwo = 0.0, kPlus = 0.0;
 	int thisClusterIndex = 0;
+	std::shared_ptr<std::vector<int>> outerConnectivity;
+	std::shared_ptr<Reactant> outerReactant;
+	int size = network->reactants->size();
 
 	// This cluster's index in the reactants array - this is Andrew's
 	thisClusterIndex = network->toClusterIndex(getClusterMap());
 
 	std::cout << "looping production flux\n";
 	// Loop over all possible clusters
-	for (int j = 0; j < network->reactants->size(); j++) {
-		for (int k = 0; k < network->reactants->size(); k++) {
+	for (int j = 0; j < size; j++) {
+		outerReactant = network->reactants->at(j);
+		outerConnectivity = outerReactant->getConnectivity();
+		for (int k = 0; k < size; k++) {
 			// If the jth and kth reactants react to produce this reactant...
-			if ((network->reactants->at(j)->getConnectivity()->at(k) == 1)
+			if ((outerConnectivity->at(k) == 1)
 					&& isProductReactant(j, k)) {
 				// This fluxOne term considers all reactions that
 				// produce C_i
 				fluxOne = fluxOne
 						+ calculateReactionRateConstant(j, k, temperature)
-								* network->reactants->at(j)->getConcentration()
+								* outerReactant->getConcentration()
 								* network->reactants->at(k)->getConcentration();
 			}
 		}
@@ -157,7 +162,7 @@ double PSICluster::getProductionFlux(const double temperature) {
 			fluxTwo = fluxTwo
 					+ calculateReactionRateConstant(thisClusterIndex, j,
 							temperature)
-							* network->reactants->at(j)->getConcentration();
+							* outerReactant->getConcentration();
 		}
 	}
 

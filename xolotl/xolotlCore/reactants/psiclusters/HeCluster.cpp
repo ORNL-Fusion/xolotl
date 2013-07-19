@@ -24,17 +24,20 @@ void HeCluster::createReactionConnectivity() {
 	int numHe = size;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
+	std::map<std::string, int> speciesMap;
 	
 	// Resize the connectivity row with zeroes
 	int reactantsLength = network->reactants->size();
-	reactionConnectivity.resize(reactantsLength, 0);
+	reactionConnectivity.clear();
+	for (int i = 0; i < reactantsLength; i++) {
+		reactionConnectivity.push_back(0);
+	}
+	//reactionConnectivity.resize(reactantsLength, 0);
 	
 	// ----- A*He + B*He --> (A+B)*He -----
 	// This cluster should interact with all other clusters of the same type up
 	// to the max size minus the size of this one to produce larger clusters.
 	for (int numHeOther = 1; numHe + numHeOther <= maxHeClusterSize; numHeOther++) {
-		
-		std::map<std::string, int> speciesMap;
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -46,8 +49,8 @@ void HeCluster::createReactionConnectivity() {
 	// with a size greater than the maximum mixed-species cluster size.
 	
 	for (int numVOther = 1; numHe + numVOther <= maxMixedClusterSize; numVOther++) {
-		
-		std::map<std::string, int> speciesMap;
+		// Clear the map since we are reusing it
+		speciesMap.clear();
 		speciesMap["V"] = numVOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -55,8 +58,8 @@ void HeCluster::createReactionConnectivity() {
 	
 	// zHe + yI --> zHe*yI
 	for (int numIOther = 1; numIOther + numHe <= maxMixedClusterSize; numIOther++) {
-		
-		std::map<std::string, int> speciesMap;
+		// Clear the map since we are reusing it
+		speciesMap.clear();
 		speciesMap["I"] = numIOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -72,8 +75,8 @@ void HeCluster::createReactionConnectivity() {
 	for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
 		for (int numHeOther = 1; numVOther + numHeOther + numHe <=
 			maxMixedClusterSize; numHeOther++) {
-			
-			std::map<std::string, int> speciesMap;
+			// Clear the map since we are reusing it
+			speciesMap.clear();
 			speciesMap["He"] = numHeOther;
 			speciesMap["V"] = numVOther;
 			int indexOther = network->toClusterIndex(speciesMap);
@@ -86,8 +89,8 @@ void HeCluster::createReactionConnectivity() {
 	for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
 		for (int numHeOther = 1; numIOther + numHeOther + numHe <=
 			maxMixedClusterSize; numHeOther++) {
-			
-			std::map<std::string, int> speciesMap;
+			// Clear the map since we are reusing it
+			speciesMap.clear();
 			speciesMap["He"] = numHeOther;
 			speciesMap["I"] = numIOther;
 			int indexOther = network->toClusterIndex(speciesMap);

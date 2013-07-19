@@ -21,10 +21,14 @@ void InterstitialCluster::createReactionConnectivity() {
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
+	std::map<std::string, int> speciesMap;
 	
 	// Initialize the connectivity row with zeroes
 	int reactantsLength = network->reactants->size();
-	reactionConnectivity.resize(reactantsLength, 0);
+	for (int i = 0; i < reactantsLength; i++) {
+		reactionConnectivity.push_back(0);
+	}
+	//reactionConnectivity.resize(reactantsLength, 0);
 	
 	// Interstitials can interact with other interstitials, vacancies,
 	// helium, and mixed-species clusters. They cannot cluster with other
@@ -33,8 +37,6 @@ void InterstitialCluster::createReactionConnectivity() {
 	
 	// xHe + yI --> xHe*yI
 	for (int numHeOther = 1; numHeOther + numI <= maxMixedClusterSize; numHeOther++) {
-		
-		std::map<std::string, int> speciesMap;
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -46,8 +48,8 @@ void InterstitialCluster::createReactionConnectivity() {
 	// → 0, if A = B
 	// Annihilation
 	for (int numVOther = 1; numVOther <= numVClusters; numVOther++) {
-		
-		std::map<std::string, int> speciesMap;
+		// Clear the map since we are reusing it
+		speciesMap.clear();
 		speciesMap["V"] = numVOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -55,8 +57,8 @@ void InterstitialCluster::createReactionConnectivity() {
 	
 	// A*I + B*I → (A+B)*I -----
 	for (int numIOther = 1; numI + numIOther <= maxIClusterSize; numIOther++) {
-		
-		std::map<std::string, int> speciesMap;
+		// Clear the map since we are reusing it
+		speciesMap.clear();
 		speciesMap["I"] = numIOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -68,9 +70,9 @@ void InterstitialCluster::createReactionConnectivity() {
 	for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
 		for (int numHeOther = 1; numVOther + numHeOther <= maxMixedClusterSize;
 			numHeOther++) {
-			
+			// Clear the map since we are reusing it
+			speciesMap.clear();
 			bool connected = numVOther - numI >= 1;
-			std::map<std::string, int> speciesMap;
 			speciesMap["He"] = numHeOther;
 			speciesMap["V"] = numVOther;
 			int indexOther = network->toClusterIndex(speciesMap);
@@ -85,8 +87,8 @@ void InterstitialCluster::createReactionConnectivity() {
 		for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
 			for (int numHeOther = 1; numIOther + numHeOther + 1 <=
 				maxMixedClusterSize; numHeOther++) {
-				
-				std::map<std::string, int> speciesMap;
+				// Clear the map since we are reusing it
+				speciesMap.clear();
 				speciesMap["He"] = numHeOther;
 				speciesMap["I"] = numIOther;
 				int indexOther = network->toClusterIndex(speciesMap);

@@ -45,12 +45,15 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	int numVClusters = std::stoi(properties["numVClusters"]);
 	int numIClusters = std::stoi(properties["numIClusters"]);
 	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
-
 	int maxMixedClusterSize = std::stoi(properties["maxMixedClusterSize"]);
+	std::map<std::string, int> speciesMap;
 
 	// Resize the connectivity row with zeroes
 	int reactantsLength = network->reactants->size();
-	reactionConnectivity.resize(reactantsLength, 0);
+	for (int i = 0; i < reactantsLength; i++) {
+		reactionConnectivity.push_back(0);
+	}
+	//reactionConnectivity.resize(reactantsLength, 0);
 
 	// This cluster is involved in the following interactions:
 
@@ -59,8 +62,6 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	// under the condition that x + y + z <= maxSize
 	for (int numHeOther = 1; numHe + numI + numHeOther <= numHeClusters;
 			numHeOther++) {
-
-		std::map<std::string, int> speciesMap;
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -70,8 +71,8 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	// xHe * yI + I --> xHe * (y + 1)I
 	// if x + y + 1 <= maxSize
 	if (numHe + numI + 1 <= maxMixedClusterSize) {
-
-		std::map<std::string, int> speciesMap;
+		// Clear the map since we are reusing it
+		speciesMap.clear();
 		speciesMap["I"] = 1;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -80,42 +81,50 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	// Reduction through vacancy absorption
 	// xHe * yI + zV --> xHe * (y - z)I
 	for (int numVOther = 1; numI - numVOther >= 1; numVOther++) {
-
-		std::map<std::string, int> speciesMap;
+		// Clear the map since we are reusing it
+		speciesMap.clear();
 		speciesMap["V"] = numVOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
 	}
 }
 
-
 void HeInterstitialCluster::createDissociationConnectivity() {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
-	
+
 	// Resize the connectivity row with zeroes
 	int reactantsLength = network->reactants->size();
 	dissociationConnectivity.resize(reactantsLength, 0);
-	
+
 	// Vacancy Dissociation
-	clusterMap["He"] = numHe-1; clusterMap["V"] = 0; clusterMap["I"] = numI;
+	clusterMap["He"] = numHe - 1;
+	clusterMap["V"] = 0;
+	clusterMap["I"] = numI;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["I"] = 0; clusterMap["He"] = 1;
+	clusterMap["I"] = 0;
+	clusterMap["He"] = 1;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 
 	// Trap Mutation
-	clusterMap["I"] = numI + 1; clusterMap["He"] = numHe;
+	clusterMap["I"] = numI + 1;
+	clusterMap["He"] = numHe;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["I"] = 1; clusterMap["V"] = 0; clusterMap["He"] = 0;
+	clusterMap["I"] = 1;
+	clusterMap["V"] = 0;
+	clusterMap["He"] = 0;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 
 	// Vacancy Dissociation
-	clusterMap["He"] = numHe; clusterMap["V"] = 0; clusterMap["I"] = numI - 1;
+	clusterMap["He"] = numHe;
+	clusterMap["V"] = 0;
+	clusterMap["I"] = numI - 1;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["He"] = 0; clusterMap["V"] = 1; clusterMap["I"] = 0;
+	clusterMap["He"] = 0;
+	clusterMap["V"] = 1;
+	clusterMap["I"] = 0;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 }
-
 
 double HeInterstitialCluster::getDissociationFlux(double temperature) {
 	// Local Declarations
@@ -123,9 +132,15 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) {
 	double f4 = 0.0, f3 = 0.0;
 
 	// Set the cluster map data for 1 of each species
-	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
-	oneV["He"] = 0;	oneV["V"] = 1; oneV["I"] = 0;
-	oneI["He"] = 0; oneI["V"] = 0; oneI["I"] = 1;
+	oneHe["He"] = 1;
+	oneHe["V"] = 0;
+	oneHe["I"] = 0;
+	oneV["He"] = 0;
+	oneV["V"] = 1;
+	oneV["I"] = 0;
+	oneI["He"] = 0;
+	oneI["V"] = 0;
+	oneI["I"] = 1;
 
 	// Get this PSICluster or subclasses' cluster map
 	std::map<std::string, int> thisMap = getClusterMap();
@@ -138,10 +153,8 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) {
 
 	// Calculate the much easier f4 term...
 	f4 = calculateDissociationConstant(thisIndex, oneIIndex, temperature)
-					+ calculateDissociationConstant(thisIndex, oneVIndex,
-							temperature)
-					+ calculateDissociationConstant(thisIndex, oneHeIndex,
-							temperature);
+			+ calculateDissociationConstant(thisIndex, oneVIndex, temperature)
+			+ calculateDissociationConstant(thisIndex, oneHeIndex, temperature);
 
 	// Loop over all the elements of the dissociation
 	// connectivity to find where this mixed species dissociates...
@@ -154,17 +167,20 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) {
 			// Vacancy dissociation, or a trap mutation.
 			if (numHe - dissMap["He"] == 1 && numI == dissMap["I"]
 					&& dissMap["V"] == 0) {
-				f3 = f3	+ calculateDissociationConstant(i, oneHeIndex,
+				f3 = f3
+						+ calculateDissociationConstant(i, oneHeIndex,
 								temperature)
 								* network->reactants->at(i)->getConcentration();
 			} else if (numHe == dissMap["He"] && numI - dissMap["V"] == 1
 					&& dissMap["V"] == 0) {
-				f3 = f3 + calculateDissociationConstant(i, oneVIndex,
+				f3 = f3
+						+ calculateDissociationConstant(i, oneVIndex,
 								temperature)
 								* network->reactants->at(i)->getConcentration();
 			} else if (numHe == dissMap["He"] && dissMap["I"] - numI == 1
 					&& dissMap["V"] == 0) {
-				f3 = f3 + calculateDissociationConstant(i, oneIIndex,
+				f3 = f3
+						+ calculateDissociationConstant(i, oneIIndex,
 								temperature)
 								* network->reactants->at(i)->getConcentration();
 			}
@@ -174,7 +190,6 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) {
 
 	return f3 - f4 * getConcentration();
 }
-
 
 std::map<std::string, int> HeInterstitialCluster::getClusterMap() {
 	// Local Declarations
@@ -188,7 +203,6 @@ std::map<std::string, int> HeInterstitialCluster::getClusterMap() {
 	// Return it
 	return clusterMap;
 }
-
 
 double HeInterstitialCluster::getReactionRadius() {
 	return 0.0;

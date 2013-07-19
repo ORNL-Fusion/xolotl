@@ -49,7 +49,11 @@ void HeVCluster::createReactionConnectivity() {
 	
 	// Initialize the return array with zeroes
 	int reactantsLength = network->reactants->size();
-	reactionConnectivity.resize(reactantsLength, 0);
+	reactionConnectivity = std::vector<int>();
+	for (int i = 0; i < reactantsLength; i++) {
+		reactionConnectivity.push_back(0);
+	}
+	//reactionConnectivity.resize(reactantsLength, 0);
 	
 	// This cluster is involved in the following interactions:
 	

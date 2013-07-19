@@ -24,10 +24,14 @@ void VCluster::createReactionConnectivity() {
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
+	std::map<std::string, int> speciesMap;
 	
 	// Initialize the connectivity row with zeroes
 	int reactantsLength = network->reactants->size();
-	reactionConnectivity.resize(reactantsLength, 0);
+	for (int i = 0; i < reactantsLength; i++) {
+		reactionConnectivity.push_back(0);
+	}
+	//reactionConnectivity.resize(reactantsLength, 0);
 	
 	// Vacancies interact with everything except for vacancies bigger than they
 	// would combine with to form vacancies larger than the size limit.
@@ -37,8 +41,6 @@ void VCluster::createReactionConnectivity() {
 	// of the number of helium atoms and vacancies does not produce a cluster
 	// with a size greater than the maximum mixed-species cluster size.
 	for (int numHeOther = 1; numV + numHeOther <= maxMixedClusterSize; numHeOther++) {
-		
-		std::map<std::string, int> speciesMap;
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -48,8 +50,8 @@ void VCluster::createReactionConnectivity() {
 	// This cluster should interact with all other clusters of the same type up
 	// to the max size minus the size of this one to produce larger clusters.
 	for (int numVOther = 1; numV + numVOther <= maxVClusterSize; numVOther++) {
-		
-		std::map<std::string, int> speciesMap;
+		// Clear the map since we are reusing it
+		speciesMap.clear();
 		speciesMap["V"] = numVOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -61,8 +63,8 @@ void VCluster::createReactionConnectivity() {
 	// → 0, if A = B -----
 	// Vacancies always annihilate interstitials.
 	for (int numIOther = 1; numIOther <= numIClusters; numIOther++) {
-		
-		std::map<std::string, int> speciesMap;
+		// Clear the map since we are reusing it
+		speciesMap.clear();
 		speciesMap["I"] = numIOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
@@ -76,8 +78,8 @@ void VCluster::createReactionConnectivity() {
 		for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
 			for (int numHeOther = 1; (numHeOther + numVOther + numV) <=
 				maxMixedClusterSize; numHeOther++) {
-				
-				std::map<std::string, int> speciesMap;
+				// Clear the map since we are reusing it
+				speciesMap.clear();
 				speciesMap["He"] = numHeOther;
 				speciesMap["V"] = numVOther;
 				int indexOther = network->toClusterIndex(speciesMap);
@@ -93,9 +95,9 @@ void VCluster::createReactionConnectivity() {
 	for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
 		for (int numHeOther = 1; numIOther + numHeOther <=
 			maxMixedClusterSize; numHeOther++) {
-			
+			// Clear the map since we are reusing it
+			speciesMap.clear();
 			bool connects = numIOther - numV >= 1;
-			std::map<std::string, int> speciesMap;
 			speciesMap["He"] = numHeOther;
 			speciesMap["I"] = numIOther;
 			int indexOther = network->toClusterIndex(speciesMap);

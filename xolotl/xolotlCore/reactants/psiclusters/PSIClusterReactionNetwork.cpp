@@ -1,6 +1,7 @@
 
 #include "PSIClusterReactionNetwork.h"
 #include "PSICluster.h"
+#include <iostream>
 
 using namespace xolotlCore;
 using std::shared_ptr;
@@ -62,12 +63,12 @@ int PSIClusterReactionNetwork::toClusterIndex(const std::map<std::string, int> c
 	}
 	
 	// TEMP
-	printf("============ %p\n", this);
-	printf("%d %d %d\n", numHe, numV, numI);
-	for (auto it = properties->begin(); it != properties->end(); it++)
-	{
-		printf("%s => %s [%p]\n", it->first.c_str(), it->second.c_str(), &it->second);
-	}
+//	printf("============ %p\n", this);
+//	printf("%d %d %d\n", numHe, numV, numI);
+//	for (auto it = properties->begin(); it != properties->end(); it++)
+//	{
+//		printf("%s => %s [%p]\n", it->first.c_str(), it->second.c_str(), &it->second);
+//	}
 	
 	// Convert the property strings so C++ can use them
 	
@@ -76,7 +77,11 @@ int PSIClusterReactionNetwork::toClusterIndex(const std::map<std::string, int> c
 	int numIClusters = std::stoi((*properties)["numIClusters"]);
 	int numHeVClusters = std::stoi((*properties)["numHeVClusters"]);
 	int numHeIClusters = std::stoi((*properties)["numHeIClusters"]);
-	int maxMixedClusterSize = std::stoi((*properties)["maxMixedClusterSize"]);
+	//std::cout << (*properties)["maxMixedClusterSize"] << std::endl;
+	//std::string sizeString = (*properties)["maxMixedClusterSize"];
+	//int maxMixedClusterSize = std::stoi(sizeString);
+	int maxMixedClusterSize = 10;
+	numHeIClusters = std::stoi((*properties)["numHeIClusters"]);
 	
 	int numSpecies = (numHe > 0) + (numV > 0) + (numI > 0);
 	
