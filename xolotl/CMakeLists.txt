@@ -54,6 +54,8 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
 include_directories(${PETSC_INCLUDES})
 
+configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_SOURCE_DIR}/XolotlConfig.h")
+
 # Setup the library list
 set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO ${PETSC_LIBRARIES} ${MPI_LIBRARIES})
 

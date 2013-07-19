@@ -16,6 +16,7 @@ class Reactant;
  *  properties that describe that set.
  */
 class ReactionNetwork {
+
 public:
 
 	/**
@@ -30,7 +31,8 @@ public:
 	 */
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> reactants;
 
-	//! The constructor. It initializes the properties map and reactants vector.
+	/** The constructor. It initializes the properties map and reactants vector.
+	 */
 	ReactionNetwork() :
 	properties(new std::map<std::string, std::string>()),
 	reactants(new std::vector<std::shared_ptr<Reactant>>())
@@ -60,18 +62,6 @@ public:
 	 * The destructor
 	 */
 	virtual ~ReactionNetwork() {}
-
-	/**
-	 * Return whether reactantI reacts with (or is connected in the network)
-	 * reactantJ.
-	 *
-	 * Depends on the result of Reactant::getConnectivity()
-	 *
-	 * @param reactantI
-	 * @param reactantJ
-	 * @return
-	 */
-	bool isConnected(int reactantI, int reactantJ);
 
 };
 

@@ -34,7 +34,7 @@ std::map<std::string, int> PSIClusterReactionNetwork::toClusterMap(int index) {
 }
 
 
-int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> clusterMap) {
+int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> &clusterMap) {
 	
 	// If the clusterMap doesn't have one of these keys, the operator[] method
 	// returns zero.
@@ -45,13 +45,13 @@ int PSIClusterReactionNetwork::toClusterIndex(std::map<std::string, int> cluster
 	
 	
 	// // TEMP
-	// printf("============ %p\n", this);
-	// printf("%d %d %d\n", numHe, numV, numI);
-	// for (auto it = properties->begin(); it != properties->end(); it++)
-	// {
-	// 	printf("%s => %s [%p]\n", it->first.c_str(), it->second.c_str(), &it->second);
-	// }
-	
+//	 printf("============ %p\n", this);
+//	 printf("%d %d %d\n", numHe, numV, numI);
+//	 for (auto it = properties->begin(); it != properties->end(); it++)
+//	 {
+//	 	printf("%s => %s [%p]\n", it->first.c_str(), it->second.c_str(), &it->second);
+//	 }
+//
 	// Convert the property strings so C++ can use them
 	
 	int numHeClusters = std::stoi((*properties)["numHeClusters"]);

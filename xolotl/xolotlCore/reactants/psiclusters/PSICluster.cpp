@@ -70,6 +70,7 @@ double PSICluster::getTotalFlux(const double temperature) {
 
 double PSICluster::getDissociationFlux(const double temperature) {
 
+	std::cout << "In diss flux\n";
 	int nReactants = network->reactants->size(), oneIndex = -1;
 	double diss = 0.0, conc = 0.0;
 	std::map<std::string, int> oneHe, oneV, oneI;
@@ -132,11 +133,13 @@ double PSICluster::getProductionFlux(const double temperature) {
 	// This cluster's index in the reactants array - this is Andrew's
 	thisClusterIndex = network->toClusterIndex(getClusterMap());
 
+	std::cout << "looping production flux\n";
 	// Loop over all possible clusters
 	for (int j = 0; j < network->reactants->size(); j++) {
 		for (int k = 0; k < network->reactants->size(); k++) {
 			// If the jth and kth reactants react to produce this reactant...
-			if (network->isConnected(j, k) && isProductReactant(j, k)) {
+			if ((network->reactants->at(j)->getConnectivity()->at(k) == 1)
+					&& isProductReactant(j, k)) {
 				// This fluxOne term considers all reactions that
 				// produce C_i
 				fluxOne = fluxOne
@@ -150,7 +153,7 @@ double PSICluster::getProductionFlux(const double temperature) {
 		// this acts to take away from the current reactant
 		// as it is reacting with others, thus decreasing itself.
 		// This considers all populations that are produced by C_i
-		if (network->isConnected(j, thisClusterIndex)) {
+		if (reactionConnectivity.at(j) == 1) {
 			fluxTwo = fluxTwo
 					+ calculateReactionRateConstant(thisClusterIndex, j,
 							temperature)

@@ -15,8 +15,18 @@ namespace xolotlCore {
  *  properties that describe that set.
  */
 class PSIClusterReactionNetwork : public ReactionNetwork {
+
 public:
+
+	/**
+	 * The Constructor
+	 */
 	PSIClusterReactionNetwork();
+
+	/**
+	 * The copy constructor
+	 * @param other
+	 */
 	PSIClusterReactionNetwork(const PSIClusterReactionNetwork &other);
 	
 	/**
@@ -31,7 +41,7 @@ public:
 	 * Converts an cluster map (with `speciesLabel` => `quantity`)
 	 * to the index corresponding to its position in the reactants vector
 	 */
-	int toClusterIndex(std::map<std::string, int> clusterMap);
+	int toClusterIndex(std::map<std::string, int> &clusterMap);
 };
 
 }

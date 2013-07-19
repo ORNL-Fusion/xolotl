@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 		solver.setupSolver();
 		
 		// Launch the PetscSolver
-		/* solver.solve(); */
+		solver.solve();
 		solver.finalize();
 	}
 	catch (std::string error) {
