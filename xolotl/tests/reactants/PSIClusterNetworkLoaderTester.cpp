@@ -73,8 +73,8 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	shared_ptr<PSIClusterReactionNetwork> network = loader.load();
 
 	// Check the network. It should not be empty
-	std::map<std::string, std::string> &props = *(network->properties);
-	std::vector<std::shared_ptr<Reactant>> &reactants = *(network->reactants);
+	std::map<std::string, std::string> props = *(network->properties);
+	std::vector<std::shared_ptr<Reactant>> reactants = *(network->reactants);
 	BOOST_TEST_MESSAGE("Network Size = " << reactants.size());
 	BOOST_TEST_MESSAGE("Number of properties = " << props.size());
 	BOOST_REQUIRE(!props.empty());
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	}
 	
 	// Check the properties of the copied reaction network
-	std::map<std::string, std::string> &props2 = *network2->properties;
+	std::map<std::string, std::string> props2 = *network2->properties;
 	
 	BOOST_REQUIRE_EQUAL(props2["maxHeClusterSize"], string("10"));
 	BOOST_REQUIRE_EQUAL(props2["maxVClusterSize"], string("10"));

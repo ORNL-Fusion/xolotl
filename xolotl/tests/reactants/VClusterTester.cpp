@@ -33,8 +33,8 @@ BOOST_AUTO_TEST_SUITE(VCluster_testSuite)
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
-	std::vector<shared_ptr<Reactant>> &reactants = *network->reactants;
-	std::map<std::string, std::string> &props = *network->properties;
+	std::vector<shared_ptr<Reactant>> reactants = *network->reactants;
+	std::map<std::string, std::string> props = *network->properties;
 	
 	// Prevent dissociation from being added to the connectivity array
 	props["dissociationsEnabled"] = "false";

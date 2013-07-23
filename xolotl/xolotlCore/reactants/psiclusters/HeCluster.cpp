@@ -19,20 +19,12 @@ HeCluster::~HeCluster() {
 void HeCluster::createReactionConnectivity() {
 	
 	// Note the reference to the properties map
-	std::map<std::string, std::string> &props = *(network->properties);
+	std::map<std::string, std::string> props = *(network->properties);
 	
 	int numHe = size;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
 	std::map<std::string, int> speciesMap;
-	
-	// Resize the connectivity row with zeroes
-	int reactantsLength = network->reactants->size();
-	reactionConnectivity.clear();
-	for (int i = 0; i < reactantsLength; i++) {
-		reactionConnectivity.push_back(0);
-	}
-	//reactionConnectivity.resize(reactantsLength, 0);
 	
 	// ----- A*He + B*He --> (A+B)*He -----
 	// This cluster should interact with all other clusters of the same type up
@@ -104,10 +96,6 @@ void HeCluster::createDissociationConnectivity() {
 
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
-	
-	// Resize the connectivity row with zeroes
-	int reactantsLength = network->reactants->size();
-	dissociationConnectivity.resize(reactantsLength, 0);
 	
 	// He_x -> He_(x-1) + He, so a connection
 	// to the Helium cluster with one helium,

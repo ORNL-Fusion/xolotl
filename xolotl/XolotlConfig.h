@@ -1,1 +1,1 @@
-#define XolotlSourceDirectory "/home/bkj/research/xolotl/xolotl_workspace/xolotl-Source@xolotl"
+#define XolotlSourceDirectory "/home/jaybilly/research/xolotl_workspace/xolotl-Source@xolotl"

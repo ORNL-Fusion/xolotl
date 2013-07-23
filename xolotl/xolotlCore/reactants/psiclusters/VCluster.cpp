@@ -15,7 +15,7 @@ VCluster::~VCluster() {
 
 void VCluster::createReactionConnectivity() {
 	
-	std::map<std::string, std::string> &props = *(network->properties);
+	std::map<std::string, std::string> props = *(network->properties);
 	
 	int numV = size;
 	int numHeClusters = std::stoi(props["numHeClusters"]);
@@ -25,13 +25,6 @@ void VCluster::createReactionConnectivity() {
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	std::map<std::string, int> speciesMap;
-	
-	// Initialize the connectivity row with zeroes
-	int reactantsLength = network->reactants->size();
-	for (int i = 0; i < reactantsLength; i++) {
-		reactionConnectivity.push_back(0);
-	}
-	//reactionConnectivity.resize(reactantsLength, 0);
 	
 	// Vacancies interact with everything except for vacancies bigger than they
 	// would combine with to form vacancies larger than the size limit.
@@ -110,10 +103,6 @@ void VCluster::createDissociationConnectivity() {
 	// Local Declarations
 	int nReactants = network->reactants->size();
 	std::map<std::string, int> clusterMap;
-	
-	// Resize the connectivity row with zeroes
-	int reactantsLength = network->reactants->size();
-	dissociationConnectivity.resize(reactantsLength, 0);
 	
 	// Vacancy Dissociation
 	clusterMap["He"] = 0; clusterMap["V"] = size - 1; clusterMap["I"] = 0;

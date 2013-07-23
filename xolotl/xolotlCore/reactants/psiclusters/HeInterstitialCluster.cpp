@@ -39,7 +39,7 @@ int HeInterstitialCluster::getSpeciesSize(const std::string speciesName) {
 void HeInterstitialCluster::createReactionConnectivity() {
 
 	// Local Declarations
-	std::map<std::string, std::string> &properties = *network->properties;
+	std::map<std::string, std::string> properties = *network->properties;
 
 	int numHeClusters = std::stoi(properties["numHeClusters"]);
 	int numVClusters = std::stoi(properties["numVClusters"]);
@@ -47,13 +47,6 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
 	int maxMixedClusterSize = std::stoi(properties["maxMixedClusterSize"]);
 	std::map<std::string, int> speciesMap;
-
-	// Resize the connectivity row with zeroes
-	int reactantsLength = network->reactants->size();
-	for (int i = 0; i < reactantsLength; i++) {
-		reactionConnectivity.push_back(0);
-	}
-	//reactionConnectivity.resize(reactantsLength, 0);
 
 	// This cluster is involved in the following interactions:
 
@@ -92,10 +85,6 @@ void HeInterstitialCluster::createReactionConnectivity() {
 void HeInterstitialCluster::createDissociationConnectivity() {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
-
-	// Resize the connectivity row with zeroes
-	int reactantsLength = network->reactants->size();
-	dissociationConnectivity.resize(reactantsLength, 0);
 
 	// Vacancy Dissociation
 	clusterMap["He"] = numHe - 1;

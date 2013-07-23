@@ -63,6 +63,9 @@ protected:
 	 */
 	std::vector<int> dissociationConnectivity;
 
+	// Create a smart pointer to a new connectivity array
+	std::shared_ptr<std::vector<int>> connectivity;
+
 	/**
 	 * Calculate the reaction constant dependent on the
 	 * reaction radii and the diffusion coefficients for the

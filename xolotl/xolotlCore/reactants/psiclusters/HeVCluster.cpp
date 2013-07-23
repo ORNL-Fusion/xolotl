@@ -44,16 +44,7 @@ void HeVCluster::createReactionConnectivity() {
 	
 	std::shared_ptr<std::map<std::string, std::string>> properties =
 		network->properties;
-	
 	int maxMixedClusterSize = std::stoi(properties->at("maxMixedClusterSize"));
-	
-	// Initialize the return array with zeroes
-	int reactantsLength = network->reactants->size();
-	reactionConnectivity = std::vector<int>();
-	for (int i = 0; i < reactantsLength; i++) {
-		reactionConnectivity.push_back(0);
-	}
-	//reactionConnectivity.resize(reactantsLength, 0);
 	
 	// This cluster is involved in the following interactions:
 	
@@ -98,10 +89,6 @@ void HeVCluster::createReactionConnectivity() {
 void HeVCluster::createDissociationConnectivity() {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
-	
-	// Resize the connectivity row with zeroes
-	int reactantsLength = network->reactants->size();
-	dissociationConnectivity.resize(reactantsLength, 0);
 	
 	// Vacancy Dissociation
 	clusterMap["He"] = numHe-1; clusterMap["V"] = numV; clusterMap["I"] = 0;

@@ -13,7 +13,7 @@ InterstitialCluster::~InterstitialCluster() {
 
 void InterstitialCluster::createReactionConnectivity() {
 
-	std::map<std::string, std::string> &props = *network->properties;
+	std::map<std::string, std::string> props = *network->properties;
 	
 	int numI = size;
 	int numVClusters = std::stoi(props["numVClusters"]);
@@ -22,13 +22,6 @@ void InterstitialCluster::createReactionConnectivity() {
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
 	std::map<std::string, int> speciesMap;
-	
-	// Initialize the connectivity row with zeroes
-	int reactantsLength = network->reactants->size();
-	for (int i = 0; i < reactantsLength; i++) {
-		reactionConnectivity.push_back(0);
-	}
-	//reactionConnectivity.resize(reactantsLength, 0);
 	
 	// Interstitials can interact with other interstitials, vacancies,
 	// helium, and mixed-species clusters. They cannot cluster with other
@@ -101,9 +94,11 @@ void InterstitialCluster::createReactionConnectivity() {
 
 void InterstitialCluster::createDissociationConnectivity() {
 	
+	// Commented out the below because it is wrong! FIXME!
+
 	// Resize the connectivity row with zeroes
-	int reactantsLength = network->reactants->size();
-	dissociationConnectivity.resize(reactantsLength, 0);
+//	int reactantsLength = network->reactants->size();
+//	dissociationConnectivity.resize(reactantsLength, 0);
 }
 
 
