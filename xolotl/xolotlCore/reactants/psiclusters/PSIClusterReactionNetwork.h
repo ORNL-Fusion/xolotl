@@ -35,13 +35,13 @@ public:
 	 *
 	 * @returns a map with `speciesLabel` => `quantity`
 	 */
-	std::map<std::string, int> toClusterMap(int index);
+	std::map<std::string, int> toClusterMap(int index) const;
 	
 	/**
 	 * Converts an cluster map (with `speciesLabel` => `quantity`)
 	 * to the index corresponding to its position in the reactants vector
 	 */
-	int toClusterIndex(const std::map<std::string, int> clusterMap);
+	int toClusterIndex(const std::map<std::string, int> clusterMap) const;
 };
 
 }

@@ -14,11 +14,14 @@ using namespace std;
 using namespace xolotlCore;
 
 /**
+ * The test suite configuration
  */
-BOOST_AUTO_TEST_SUITE(TungstenIntegrationTester_testSuite)
+BOOST_AUTO_TEST_SUITE (TungstenIntegrationTester_testSuite)
 
 /**
- *  */
+ * This operation checks the fluxs from the reactant as best as is possible
+ * given that it requires external data.
+ */
 BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
 	string sourceDir(XolotlSourceDirectory);
 	string pathToFile("/tests/reactants/testfiles/tungsten.txt");
@@ -31,7 +34,7 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
 
 	// Create a network loader and set the istream on every MPI task
 	std::shared_ptr<PSIClusterNetworkLoader> networkLoader(
-		new PSIClusterNetworkLoader());
+			new PSIClusterNetworkLoader());
 	networkLoader->setInputstream(networkStream);
 
 	std::shared_ptr<ReactionNetwork> network = networkLoader->load();
@@ -39,8 +42,8 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
 	std::cout << "Size of the network is " << network->reactants->size() << "\n";
 
 	int nReactants = network->reactants->size();
-
-	std::cout << network->reactants->at(0)->getTotalFlux(273.0) << "\n";
+	for (int i = 0; i < 2; ++i)
+	    network->reactants->at(i)->getTotalFlux(273.0);
 
 }
 

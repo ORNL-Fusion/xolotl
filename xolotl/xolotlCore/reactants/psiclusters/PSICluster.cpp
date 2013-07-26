@@ -89,7 +89,6 @@ double PSICluster::getTotalFlux(const double temperature) {
 
 double PSICluster::getDissociationFlux(const double temperature) {
 
-	std::cout << "In diss flux\n";
 	int nReactants = network->reactants->size(), oneIndex = -1;
 	double diss = 0.0, conc = 0.0;
 	std::map<std::string, int> oneHe, oneV, oneI;
@@ -164,7 +163,6 @@ double PSICluster::getProductionFlux(const double temperature) {
 	// This cluster's index in the reactants array - this is Andrew's
 	thisClusterIndex = network->toClusterIndex(getClusterMap());
 
-	std::cout << "looping production flux\n";
 	// Loop over all possible clusters
 	for (int j = 0; j < size; j++) {
 		outerReactant = network->reactants->at(j);

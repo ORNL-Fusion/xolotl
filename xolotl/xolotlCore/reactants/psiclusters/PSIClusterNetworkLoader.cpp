@@ -232,7 +232,7 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 		// Load the mixed species clusters into the network
 		for (int i = 0; i < heVClusters.size(); i++)
 			network->reactants->push_back(heVClusters[i]);
-		
+		// Register the Reaction network with the clusters
 		for (int i = 0; i < network->reactants->size(); i++) {
 			network->reactants->at(i)->setReactionNetwork(network);
 		}

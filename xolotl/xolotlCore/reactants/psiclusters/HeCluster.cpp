@@ -20,7 +20,6 @@ void HeCluster::createReactionConnectivity() {
 	
 	// Note the reference to the properties map
 	std::map<std::string, std::string> props = *(network->properties);
-	
 	int numHe = size;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
@@ -39,7 +38,6 @@ void HeCluster::createReactionConnectivity() {
 	// Helium clusters can interact with any vacancy cluster so long as the sum
 	// of the number of helium atoms and vacancies does not produce a cluster
 	// with a size greater than the maximum mixed-species cluster size.
-	
 	for (int numVOther = 1; numHe + numVOther <= maxMixedClusterSize; numVOther++) {
 		// Clear the map since we are reusing it
 		speciesMap.clear();
@@ -48,7 +46,10 @@ void HeCluster::createReactionConnectivity() {
 		reactionConnectivity[indexOther] = 1;
 	}
 	
-	// zHe + yI --> zHe*yI
+	// ----- A*He + B*I --> (A*He)(B*I)
+	// Helium clusters can interact with any interstitial cluster so long as the sum
+	// of the number of helium atoms and interstitials does not produce a cluster
+	// with a size greater than the maximum mixed-species cluster size.
 	for (int numIOther = 1; numIOther + numHe <= maxMixedClusterSize; numIOther++) {
 		// Clear the map since we are reusing it
 		speciesMap.clear();
@@ -61,9 +62,9 @@ void HeCluster::createReactionConnectivity() {
 	// Helium can interact with a mixed-species cluster so long as the sum of
 	// the number of helium atoms and the size of the mixed-species cluster
 	// does not exceed the maximum mixed-species cluster size.
-	
+
 	// Get the index of the first HeV cluster in the reactants list
-	
+
 	for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
 		for (int numHeOther = 1; numVOther + numHeOther + numHe <=
 			maxMixedClusterSize; numHeOther++) {
@@ -77,7 +78,8 @@ void HeCluster::createReactionConnectivity() {
 	}
 	
 	// (A*He)(B*I) + C*He --> ([A + C]*He)(B*I)
-	
+	// Helium-interstitial clusters can absorb single-species helium clusters
+	// so long as the maximum cluster size limit is not violated.
 	for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
 		for (int numHeOther = 1; numIOther + numHeOther + numHe <=
 			maxMixedClusterSize; numHeOther++) {
@@ -89,6 +91,8 @@ void HeCluster::createReactionConnectivity() {
 			reactionConnectivity[indexOther] = 1;
 		}
 	}
+
+	return;
 }
 
 
