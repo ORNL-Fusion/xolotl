@@ -51,6 +51,11 @@ PSICluster::PSICluster(const PSICluster &other) :
 PSICluster::~PSICluster() {
 }
 
+int PSICluster::getSize() {
+	// Return this cluster's size
+	return size;
+}
+
 void PSICluster::setReactionNetwork(
 		const std::shared_ptr<ReactionNetwork> reactionNetwork) {
 
@@ -84,68 +89,76 @@ void PSICluster::setReactionNetwork(
 }
 
 double PSICluster::getTotalFlux(const double temperature) {
-	return getProductionFlux(temperature) + getDissociationFlux(temperature);
+	return getProductionFlux(temperature) - getCombinationFlux(temperature)
+			+ getDissociationFlux(temperature);
 }
 
 double PSICluster::getDissociationFlux(const double temperature) {
 
-	int nReactants = network->reactants->size(), oneIndex = -1;
+	int nReactants = 0, oneIndex = -1;
 	double diss = 0.0, conc = 0.0;
 	std::map<std::string, int> oneHe, oneV, oneI;
 
-	// Set the cluster map data for 1 of each species
-	oneHe["He"] = 1;
-	oneHe["V"] = 0;
-	oneHe["I"] = 0;
-	oneV["He"] = 0;
-	oneV["V"] = 1;
-	oneV["I"] = 0;
-	oneI["He"] = 0;
-	oneI["V"] = 0;
-	oneI["I"] = 1;
+	// Only try this if the network is available
+	if (network != NULL) {
+		// Get the total number of reactants in the network
+		nReactants = network->reactants->size();
+		// Set the cluster map data for 1 of each species
+		oneHe["He"] = 1;
+		oneHe["V"] = 0;
+		oneHe["I"] = 0;
+		oneV["He"] = 0;
+		oneV["V"] = 1;
+		oneV["I"] = 0;
+		oneI["He"] = 0;
+		oneI["V"] = 0;
+		oneI["I"] = 1;
 
-	// Get this PSICluster or subclasses' cluster map
-	std::map<std::string, int> thisMap = getClusterMap();
+		// Get this PSICluster or subclasses' cluster map
+		std::map<std::string, int> thisMap = getClusterMap();
 
-	// Get the number of species to determine if this
-	// cluster is mixed or single
-	int numSpecies = (thisMap["He"] > 0) + (thisMap["V"] > 0)
-			+ (thisMap["I"] > 0);
+		// Get the number of species to determine if this
+		// cluster is mixed or single
+		int numSpecies = (thisMap["He"] > 0) + (thisMap["V"] > 0)
+				+ (thisMap["I"] > 0);
 
-	// If no species, throw error
-	if (numSpecies == 0) {
-		// Bad if we have no species
-		throw std::string("Cluster map contains no species");
+		// If no species, throw error
+		if (numSpecies == 0) {
+			// Bad if we have no species
+			throw std::string("Cluster map contains no species");
 
-	} else if (numSpecies == 1) {
+		} else if (numSpecies == 1) {
 
-		// We know we are a single species,
-		// but we need to know which one so we can
-		// get the correct species He, V, or I to calculate
-		// the dissociation constant.
-		if (thisMap["He"]) {
-			oneIndex = network->toClusterIndex(oneHe);
-		} else if (thisMap["V"]) {
-			oneIndex = network->toClusterIndex(oneV);
-		} else if (thisMap["I"]) {
-			oneIndex = network->toClusterIndex(oneI);
-		}
-
-		// Loop over all reactants and see if we
-		// have a dissociation connection
-		for (int i = 0; i < nReactants; i++) {
-			// Only calculate if we are connected
-			if (dissociationConnectivity.at(i) == 1) {
-				// Calculate the dissociation flux
-				diss = diss
-						+ calculateDissociationConstant(i, oneIndex,
-								temperature)
-								* network->reactants->at(i)->getConcentration();
+			// We know we are a single species,
+			// but we need to know which one so we can
+			// get the correct species He, V, or I to calculate
+			// the dissociation constant.
+			if (thisMap["He"]) {
+				oneIndex = network->toClusterIndex(oneHe);
+			} else if (thisMap["V"]) {
+				oneIndex = network->toClusterIndex(oneV);
+			} else if (thisMap["I"]) {
+				oneIndex = network->toClusterIndex(oneI);
 			}
+
+			// Loop over all reactants and see if we
+			// have a dissociation connection
+			for (int i = 0; i < nReactants; i++) {
+				// Only calculate if we are connected
+				if (dissociationConnectivity.at(i) == 1) {
+					// Calculate the dissociation flux
+					diss =
+							diss
+									+ calculateDissociationConstant(i, oneIndex,
+											temperature)
+											* network->reactants->at(i)->getConcentration();
+				}
+			}
+		} else if (numSpecies == 2) {
+			throw std::string(
+					"Mixed Species dissociation flux must be implemented by subclass.");
 		}
-	} else if (numSpecies == 2) {
-		throw std::string(
-				"Mixed Species dissociation flux must be implemented by subclass.");
+
 	}
 
 	// Return the flux
@@ -153,59 +166,91 @@ double PSICluster::getDissociationFlux(const double temperature) {
 }
 
 double PSICluster::getProductionFlux(const double temperature) {
+
 	// Local declarations
-	double fluxOne = 0.0, fluxTwo = 0.0, kPlus = 0.0;
+	double flux = 0.0, kPlus = 0.0;
 	int thisClusterIndex = 0;
 	std::shared_ptr<std::vector<int>> outerConnectivity;
-	std::shared_ptr<Reactant> outerReactant;
-	int size = network->reactants->size();
+	std::shared_ptr<Reactant> firstReactant, secondReactant;
+	int nPairs = 0;
+	std::shared_ptr < std::vector<std::shared_ptr<ReactingPair>>>
+			reactingPairs (new std::vector<std::shared_ptr<ReactingPair>>);
 
-	// This cluster's index in the reactants array - this is Andrew's
-	thisClusterIndex = network->toClusterIndex(getClusterMap());
-
-	// Loop over all possible clusters
-	for (int j = 0; j < size; j++) {
-		outerReactant = network->reactants->at(j);
-		outerConnectivity = outerReactant->getConnectivity();
-		for (int k = 0; k < size; k++) {
-			// If the jth and kth reactants react to produce this reactant...
-			if ((outerConnectivity->at(k) == 1) && isProductReactant(j, k)) {
-				// This fluxOne term considers all reactions that
-				// produce C_i
-				fluxOne = fluxOne
-						+ calculateReactionRateConstant(j, k, temperature)
-								* outerReactant->getConcentration()
-								* network->reactants->at(k)->getConcentration();
-			}
+	// Only try this if the network is available
+	if (network != NULL) {
+		// Get the pairs of clusters that produce this cluster
+		getProducingClusters (reactingPairs);
+		// Set the total number of reacting pairs
+		nPairs = reactingPairs->size();
+		// Loop over all the reacting pairs
+		for (int i = 0; i < nPairs; i++) {
+			// Get the reactants
+			firstReactant = reactingPairs->at(i)->first;
+			secondReactant = reactingPairs->at(i)->second;
+			// Update the flux
+			flux += calculateReactionRateConstant(firstReactant, secondReactant,
+					temperature) * firstReactant->getConcentration()
+					* secondReactant->getConcentration();
 		}
 
-		// Calculate Second term of production flux
-		// this acts to take away from the current reactant
-		// as it is reacting with others, thus decreasing itself.
-		// This considers all populations that are produced by C_i
-		if (reactionConnectivity.at(j) == 1) {
-			fluxTwo = fluxTwo
-					+ calculateReactionRateConstant(thisClusterIndex, j,
-							temperature) * outerReactant->getConcentration();
-		}
 	}
 
 	// Return the production flux
-	return fluxOne - (fluxTwo * getConcentration());
+	return flux;
 }
 
-int PSICluster::getSize() {
-	// Return this cluster's size
-	return size;
+/**
+ * This operation returns the total change in this cluster due to
+ * the combination of this cluster with others.
+ * @param temperature The temperature at which to calculate the flux
+ * @return The flux due to this cluster combining with other clusters.
+ */
+double PSICluster::getCombinationFlux(const double temperature) {
+	// Local declarations
+	double flux = 0.0, kPlus = 0.0;
+	int thisClusterIndex = 0;
+	std::shared_ptr<std::vector<int>> outerConnectivity;
+	std::shared_ptr<Reactant> outerReactant;
+	int nReactants = 0;
+
+	// Only try this if the network is available
+	if (network != NULL) {
+		// Set the total network nReactants
+		nReactants = network->reactants->size();
+		// Get the index of this cluster in the network
+		thisClusterIndex = network->toClusterIndex(getClusterMap());
+		// Loop over all possible clusters
+		for (int j = 0; j < nReactants; j++) {
+			outerReactant = network->reactants->at(j);
+			outerConnectivity = outerReactant->getConnectivity();
+			// Calculate Second term of production flux
+			// this acts to take away from the current reactant
+			// as it is reacting with others, thus decreasing itself.
+			// This considers all populations that are produced by C_i
+			if (reactionConnectivity.at(j) == 1) {
+				flux += calculateReactionRateConstant(thisClusterIndex, j,
+						temperature) * outerReactant->getConcentration();
+			}
+		}
+
+	}
+
+	// Return the production flux
+	return (flux * getConcentration());
 }
 
-double PSICluster::getGenByCapt() {
-	return 0.0;
-}
-
-double PSICluster::getGenByAnn() {
-	return 0.0;
-}
+/**
+ * This operation returns by reference a set of ReactingPairs that
+ * represents a pair of reacting clusters that combine to produce this
+ * cluster in a standard direct combination reaction. This operation
+ * should be overridden by subclasses.
+ * @param The pairs. The base class will not modify these pointers
+ * because it does no work.
+ */
+void PSICluster::getProducingClusters(
+		std::shared_ptr<std::vector<std::shared_ptr<ReactingPair>>>) {
+			return;
+		}
 
 double PSICluster::getDiffusionFactor() {
 	// Return the diffusion factor
@@ -253,35 +298,41 @@ void PSICluster::setMigrationEnergy(const double energy) {
 	return;
 }
 
-double PSICluster::calculateReactionRateConstant(int i, int j,
+double PSICluster::calculateReactionRateConstant(
+		std::shared_ptr<xolotlCore::Reactant> firstReactant,
+		std::shared_ptr<xolotlCore::Reactant> secondReactant,
 		const double temperature) {
 
-	// Get the reaction radii and diffusion coefficients
-	double ra =
-			std::dynamic_pointer_cast<PSICluster>(network->reactants->at(i))->getReactionRadius();
-	double rb =
-			std::dynamic_pointer_cast<PSICluster>(network->reactants->at(j))->getReactionRadius();
+	// Get the reaction radii
+	double r_first =
+			(std::dynamic_pointer_cast < PSICluster > (firstReactant))->getReactionRadius();
+	double r_second =
+			(std::dynamic_pointer_cast < PSICluster > (secondReactant))->getReactionRadius();
 
-	// Get the Diffusion coefficients
-	double iDiffusion = std::dynamic_pointer_cast<PSICluster>(
-			network->reactants->at(i))->getDiffusionCoefficient(temperature);
-	double jDiffusion = std::dynamic_pointer_cast<PSICluster>(
-			network->reactants->at(j))->getDiffusionCoefficient(temperature);
+	// Get the diffusion coefficients
+	double firstDiffusion = (std::dynamic_pointer_cast < PSICluster
+			> (firstReactant))->getDiffusionCoefficient(temperature);
+	double secondDiffusion = (std::dynamic_pointer_cast < PSICluster
+			> (secondReactant))->getDiffusionCoefficient(temperature);
 
 	// Calculate and return
-	return 4 * xolotlCore::pi * (ra + rb) * (iDiffusion + jDiffusion);
+	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
+			* (firstDiffusion + secondDiffusion);
+	return k_plus;
 }
 
-double PSICluster::calculateDissociationConstant(int i, int j,
-		double temperature) {
+double PSICluster::calculateDissociationConstant(
+		std::shared_ptr<xolotlCore::Reactant> firstReactant,
+		std::shared_ptr<xolotlCore::Reactant> secondReactant,
+		const double temperature) {
 
-	// Local Declarations
+// Local Declarations
 	int bindingEnergyIndex = -1;
 	double ra = 1, rb = 1;
 	double atomicVolume = 1.0;
 	std::map<std::string, int> clusterMap = network->toClusterMap(j);
 
-	// Get the binding energy index
+// Get the binding energy index
 	if (clusterMap["He"] == 1 && clusterMap["V"] == 0 && clusterMap["I"] == 0) {
 		bindingEnergyIndex = 0;
 	} else if (clusterMap["He"] == 0 && clusterMap["V"] == 1
@@ -294,22 +345,27 @@ double PSICluster::calculateDissociationConstant(int i, int j,
 		return 0.0;
 	}
 
-	// Calculate the Reaction Rate Constant -- Cant use this, weird indices change in paper
-	double kPlus = calculateReactionRateConstant(i, j, temperature);
+	// Calculate the Reaction Rate Constant -- Cant use this,
+	// weird indices change in paper
+	std::shared_ptr < Reactant > firstReactant = network->reactants->at(i);
+	std::shared_ptr < Reactant > secondReactant = network->reactants->at(i);
+	double kPlus = calculateReactionRateConstant(firstReactant, secondReactant,
+			temperature);
 
 	// Calculate and return
-	return (1 / atomicVolume) * kPlus
-			* exp(
-					bindingEnergies.at(bindingEnergyIndex)
-							/ (xolotlCore::kBoltzmann * temperature));
+	double k_minus_exp = exp(
+			bindingEnergies.at(bindingEnergyIndex)
+					/ (xolotlCore::kBoltzmann * temperature));
+	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
+	return k_minus;
 }
 
 bool PSICluster::isProductReactant(int reactantI, int reactantJ) {
-	// Base class should just return false
+// Base class should just return false
 	return false;
 }
 
-double PSICluster::getReactionRadius() {
+const double PSICluster::getReactionRadius() const {
 	return 0.0;
 }
 
@@ -317,8 +373,8 @@ std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() {
 
 	int connectivityLength = network->reactants->size();
 
-	// The reaction and dissociate vectors must be the same length
-	// as the number of reactants
+// The reaction and dissociate vectors must be the same length
+// as the number of reactants
 	if (reactionConnectivity.size() != connectivityLength) {
 		throw std::string("The reaction vector is an incorrect length");
 	}
@@ -327,14 +383,14 @@ std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() {
 		throw std::string("The dissociation vector is an incorrect length");
 	}
 
-	// Resize the array if required
+// Resize the array if required
 	if (connectivityLength != connectivity->size()) {
-		connectivity->resize(connectivityLength,0);
+		connectivity->resize(connectivityLength, 0);
 	}
 
-	// Merge the two vectors such that the final vector contains
-	// a 1 at a position if either of the connectivity arrays
-	// have a 1
+// Merge the two vectors such that the final vector contains
+// a 1 at a position if either of the connectivity arrays
+// have a 1
 	for (int i = 0; i < connectivityLength; i++) {
 		// Consider each connectivity array only if its type is enabled
 		(*connectivity)[i] = reactionConnectivity[i]
@@ -345,23 +401,23 @@ std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() {
 }
 
 void PSICluster::createReactionConnectivity() {
-	// By default, generate an array with a zero for each reactant
-	// in the network
+// By default, generate an array with a zero for each reactant
+// in the network
 
 	reactionConnectivity.clear();
 	reactionConnectivity.resize(network->reactants->size(), 0);
 }
 
 void PSICluster::createDissociationConnectivity() {
-	// By default, generate an array with a zero for each reactant
-	// in the network
+// By default, generate an array with a zero for each reactant
+// in the network
 
 	dissociationConnectivity.clear();
 	dissociationConnectivity.resize(network->reactants->size(), 0);
 }
 
 std::map<std::string, int> PSICluster::getClusterMap() {
-	// Create an empty cluster map
+// Create an empty cluster map
 
 	std::map<std::string, int> clusterMap;
 	return clusterMap;

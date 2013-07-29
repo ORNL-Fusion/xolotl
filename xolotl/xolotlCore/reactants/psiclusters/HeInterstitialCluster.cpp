@@ -118,6 +118,8 @@ void HeInterstitialCluster::createDissociationConnectivity() {
 double HeInterstitialCluster::getDissociationFlux(double temperature) {
 	// Local Declarations
 	std::map<std::string, int> oneHe, oneV, oneI, dissMap;
+	std::shared_ptr < std::vector<std::shared_ptr<xolotlCore::Reactant>>
+			> reactants;
 	double f4 = 0.0, f3 = 0.0;
 
 	// Set the cluster map data for 1 of each species
@@ -139,11 +141,15 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) {
 	int oneIIndex = network->toClusterIndex(oneI);
 	int oneVIndex = network->toClusterIndex(oneV);
 	int oneHeIndex = network->toClusterIndex(oneHe);
-
+	reactants = network->reactants;
 	// Calculate the much easier f4 term...
-	f4 = calculateDissociationConstant(thisIndex, oneIIndex, temperature)
-			+ calculateDissociationConstant(thisIndex, oneVIndex, temperature)
-			+ calculateDissociationConstant(thisIndex, oneHeIndex, temperature);
+	// FIXME! Problem here!-----------|
+	f4 = calculateDissociationConstant(reactants->at(thisIndex), reactants->at(oneIIndex),
+			temperature)
+	+ calculateDissociationConstant(reactants->(thisIndex), reactants->at(oneVIndex),
+			temperature)
+	+ calculateDissociationConstant(reactants->(thisIndex),
+			reactants->at(oneHeIndex), temperature);
 
 	// Loop over all the elements of the dissociation
 	// connectivity to find where this mixed species dissociates...

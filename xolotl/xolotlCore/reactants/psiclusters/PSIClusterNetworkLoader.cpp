@@ -40,76 +40,72 @@ static inline double convertStrToDouble(const std::string inString) {
  * @param numI - The number of interstitial defects
  * @return The new cluster
  */
-std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(
-	int numHe, int numV, int numI,
-	std::shared_ptr<std::map<std::string, std::string>> props) {
-	
+std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
+		int numV, int numI,
+		std::shared_ptr<std::map<std::string, std::string>> props) {
+
 	// Local Declarations
 	int clusterSize = 0;
 	std::string numClustersKey;
 	std::shared_ptr<PSICluster> cluster;
-	
+
 	// Determine the type of the cluster given the number of each species.
 	// Create a new cluster by that type and specify the names of the
 	// property keys.
-	
+
 	if (numHe > 0 && numV > 0) {
 		clusterSize = numHe + numV;
-		
+
 		// Create a new HeVCluster
-		cluster = std::make_shared<HeVCluster>(numHe, numV);
+		cluster = std::make_shared < HeVCluster > (numHe, numV);
 		numClustersKey = "numHeVClusters";
-		
+
 		// Add it to the HeV
 		heVClusters.push_back(cluster);
-	}
-	else if (numHe > 0 && numI > 0) {
-		
+	} else if (numHe > 0 && numI > 0) {
+
 		throw std::string("InterstitialCluster is not implemented yet");
-		
+
 		// clusterSize = numHe + numI;
-		
+
 		// Create a new HeInterstitialCluster
 		// cluster = std::make_shared<HeInterstitialCluster>(numHe, numI);
 		// numClustersKey = "numHeIClusters";
-	}
-	else if (numHe > 0) {
+	} else if (numHe > 0) {
 		clusterSize = numHe;
-		
+
 		// Create a new HeCluster
-		cluster = std::make_shared<HeCluster>(numHe);
+		cluster = std::make_shared < HeCluster > (numHe);
 		numClustersKey = "numHeClusters";
-		
+
 		// Add it to the HeCluster list
 		heClusters.push_back(cluster);
-	}
-	else if (numV > 0) {
+	} else if (numV > 0) {
 		clusterSize = numV;
-		
+
 		// Create a new VCluster
-		cluster = std::make_shared<VCluster>(numV);
+		cluster = std::make_shared < VCluster > (numV);
 		numClustersKey = "numVClusters";
-		
+
 		// Add it to the VCluster list
 		vClusters.push_back(cluster);
-	}
-	else if (numI > 0) {
+	} else if (numI > 0) {
 		clusterSize = numI;
-		
+
 		// Create a new ICluster
-		cluster = std::make_shared<InterstitialCluster>(numI);
+		cluster = std::make_shared < InterstitialCluster > (numI);
 		numClustersKey = "numIClusters";
-		
+
 		// Add it to the ICluster list
 		iClusters.push_back(cluster);
 	}
-	
+
 	// Increment the number of total clusters of this type
-	
+
 	int numClusters = std::stoi(props->at(numClustersKey));
 	numClusters++;
 	props->at(numClustersKey) = std::to_string((long long) numClusters);
-	
+
 	return cluster;
 }
 
@@ -153,7 +149,7 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 	TokenizedLineReader<std::string> reader;
 	std::vector<std::string> loadedLine;
 	std::shared_ptr<PSIClusterReactionNetwork> network(
-		new PSIClusterReactionNetwork());
+			new PSIClusterReactionNetwork());
 	std::istringstream dataStream;
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
@@ -183,7 +179,7 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 		(*props)["numIClusters"] = "0";
 		(*props)["numHeVClusters"] = "0";
 		(*props)["numHeIClusters"] = "0";
-		
+
 		while (loadedLine.size() > 0) {
 			// Check the size of the loaded line
 			if (loadedLine.size() < 9)

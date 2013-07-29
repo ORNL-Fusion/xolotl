@@ -9,6 +9,7 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
+#include <PSIClusterReactionNetwork.h>
 #include <memory>
 #include <typeinfo>
 #include <limits>
@@ -20,7 +21,7 @@ using namespace xolotlCore;
 /**
  * This suite is responsible for testing the PSICluster.
  */
-BOOST_AUTO_TEST_SUITE(PSICluster_testSuite)
+BOOST_AUTO_TEST_SUITE (PSICluster_testSuite)
 
 /** This operation checks the loader. */
 BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
@@ -66,34 +67,50 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	PSICluster cluster(1);
 	cluster.setDiffusionFactor(1.0);
 	cluster.setMigrationEnergy(2.0);
-	
+
 	PSICluster copiedCluster(cluster);
-	
+
 	// Check Reactant copying
 	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(),
-		copiedCluster.getDiffusionFactor(), 1e-5);
+			copiedCluster.getDiffusionFactor(), 1e-5);
 	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(),
-		copiedCluster.getMigrationEnergy(), 1e-5);
-	
+			copiedCluster.getMigrationEnergy(), 1e-5);
+
 	// Modify some values to ensure a deep copy is occurring
-	copiedCluster.setDiffusionFactor(0.5); // This should not happen!
+	copiedCluster.setDiffusionFactor(0.5);// This should not happen!
 	copiedCluster.setMigrationEnergy(7.0);
-	
+
 	// Check the diffusion factor
 	BOOST_REQUIRE_CLOSE(copiedCluster.getDiffusionFactor(), 0.5, 1e-5);
 	BOOST_REQUIRE_CLOSE(copiedCluster.getMigrationEnergy(), 7.0, 1e-5);
-	
+
 	// Check that the original is not modified
 	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 1.0, 1e-5);
 	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 2.0, 1e-5);
-	
+
 	// Check the migration energy
 	cluster.setMigrationEnergy(1.0);
 	copiedCluster.setMigrationEnergy(3.0);
 	BOOST_REQUIRE(abs(cluster.getMigrationEnergy() -
-		copiedCluster.getMigrationEnergy()) > 2.0 - 1e-5);
+					copiedCluster.getMigrationEnergy()) > 2.0 - 1e-5);
 }
 
+/**
+ * This operation tests the default values returned by select flux routines.
+ */
+BOOST_AUTO_TEST_CASE(checkDefaultFluxes) {
+
+	// Local Declarations
+	PSICluster cluster(1);
+	shared_ptr<PSIClusterReactionNetwork> network(new PSIClusterReactionNetwork());
+
+	// Check the default values of the fluxes
+	BOOST_REQUIRE_CLOSE(cluster.getProductionFlux(273.0), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getCombinationFlux(273.0), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getDissociationFlux(273.0), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getTotalFlux(273.0), 0.0, 1e-5);
+
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 
