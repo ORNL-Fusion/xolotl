@@ -6,8 +6,8 @@
 using namespace xolotlCore;
 
 HeVCluster::HeVCluster(int numHe, int numV) :
-	PSICluster(1), numHe(numHe), numV(numV) {
-	
+		PSICluster(1), numHe(numHe), numV(numV) {
+
 	// Set the cluster size as the sum of
 	// the number of Helium and Vacancies
 	size = numHe + numV;
@@ -16,7 +16,8 @@ HeVCluster::HeVCluster(int numHe, int numV) :
 	name = "HeV Cluster";
 }
 
-HeVCluster::~HeVCluster() {}
+HeVCluster::~HeVCluster() {
+}
 
 double HeVCluster::getGenByEm() {
 	return 0;
@@ -29,95 +30,111 @@ double HeVCluster::getAnnByEm() {
 int HeVCluster::getSpeciesSize(const std::string speciesName) {
 	if (speciesName == "He") {
 		return numHe;
-	}
-	else if (speciesName == "V") {
+	} else if (speciesName == "V") {
 		return numV;
-	}
-	else {
+	} else {
 		return 0;
 	}
 }
 
 void HeVCluster::createReactionConnectivity() {
-	
+
 	// Extract some of the properties from the network
-	
+
 	std::shared_ptr<std::map<std::string, std::string>> properties =
-		network->properties;
+			network->properties;
 	int maxMixedClusterSize = std::stoi(properties->at("maxMixedClusterSize"));
-	
+
 	// This cluster is involved in the following interactions:
-	
+
 	// xHe*yV + zHe --> (x + z)He*yV
 	for (int z = 1; numHe + numV + z <= maxMixedClusterSize; z++) {
 		// Select the zHe index
 		std::map<std::string, int> speciesMap;
 		speciesMap["He"] = z;
 		int i = network->toClusterIndex(speciesMap);
-		
+
 		reactionConnectivity.at(i) = 1;
 	}
-	
+
 	// xHe*yV + V   --> xHe*(y + 1)V
 	if (numHe + numV + 1 <= maxMixedClusterSize) {
 		// Select the single V index
 		std::map<std::string, int> speciesMap;
 		speciesMap["V"] = 1;
 		int i = network->toClusterIndex(speciesMap);
-		
+
 		reactionConnectivity.at(i) = 1;
 	}
-	
+
 	// xHe*yV + zI  --> xHe*(y - z)V
-	
+
 	// Here I am assuming that the HeV and Interstitial can only interact if
 	// they would produce a positive number of vacancy species
-	
+
 	for (int numIOther = 1; numV - numIOther >= 1; numIOther++) {
 		// Select the zI index
 		std::map<std::string, int> speciesMap;
 		speciesMap["I"] = numIOther;
 		int i = network->toClusterIndex(speciesMap);
-		
+
 		reactionConnectivity.at(i) = 1;
 	}
-	
+
 	// Everything else is 0 (not connected)
 }
-
 
 void HeVCluster::createDissociationConnectivity() {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
-	
+
 	// Vacancy Dissociation
-	clusterMap["He"] = numHe-1; clusterMap["V"] = numV; clusterMap["I"] = 0;
+	clusterMap["He"] = numHe - 1;
+	clusterMap["V"] = numV;
+	clusterMap["I"] = 0;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["V"] = 0; clusterMap["He"] = 1;
+	clusterMap["V"] = 0;
+	clusterMap["He"] = 1;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 
 	// Trap Mutation
-	clusterMap["V"] = numV + 1; clusterMap["He"] = numHe;
+	clusterMap["V"] = numV + 1;
+	clusterMap["He"] = numHe;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["I"] = 1; clusterMap["V"] = 0; clusterMap["He"] = 0;
+	clusterMap["I"] = 1;
+	clusterMap["V"] = 0;
+	clusterMap["He"] = 0;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 
 	// Vacancy Dissociation
-	clusterMap["He"] = numHe; clusterMap["V"] = numV - 1; clusterMap["I"] = 0;
+	clusterMap["He"] = numHe;
+	clusterMap["V"] = numV - 1;
+	clusterMap["I"] = 0;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["He"] = 0; clusterMap["V"] = 1; clusterMap["I"] = 0;
+	clusterMap["He"] = 0;
+	clusterMap["V"] = 1;
+	clusterMap["I"] = 0;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 }
 
 double HeVCluster::getDissociationFlux(double temperature) {
 	// Local Declarations
 	std::map<std::string, int> oneHe, oneV, oneI, dissMap;
+	std::shared_ptr < std::vector<std::shared_ptr<xolotlCore::Reactant>>
+				> reactants;
+		std::shared_ptr<Reactant> currentReactant, secondReactant;
 	double f4 = 0.0, f3 = 0.0;
 
 	// Set the cluster map data for 1 of each species
-	oneHe["He"] = 1; oneHe["V"] = 0; oneHe["I"] = 0;
-	oneV["He"] = 0;	oneV["V"] = 1; oneV["I"] = 0;
-	oneI["He"] = 0; oneI["V"] = 0; oneI["I"] = 1;
+	oneHe["He"] = 1;
+	oneHe["V"] = 0;
+	oneHe["I"] = 0;
+	oneV["He"] = 0;
+	oneV["V"] = 1;
+	oneV["I"] = 0;
+	oneI["He"] = 0;
+	oneI["V"] = 0;
+	oneI["I"] = 1;
 
 	// Get this PSICluster or subclasses' cluster map
 	std::map<std::string, int> thisMap = getClusterMap();
@@ -129,30 +146,38 @@ double HeVCluster::getDissociationFlux(double temperature) {
 	int oneHeIndex = network->toClusterIndex(oneHe);
 
 	// Calculate the much easier f4 term...
-	f4 = calculateDissociationConstant(thisIndex, oneIIndex, temperature)
-					+ calculateDissociationConstant(thisIndex, oneVIndex,
-							temperature)
-					+ calculateDissociationConstant(thisIndex, oneHeIndex,
-							temperature);
+	reactants = network->reactants;
+	f4 = calculateDissociationConstant(reactants->at(thisIndex),
+			reactants->at(oneIIndex), temperature)
+			+ calculateDissociationConstant(reactants->at(thisIndex),
+					reactants->at(oneVIndex), temperature)
+			+ calculateDissociationConstant(reactants->at(thisIndex),
+					reactants->at(oneHeIndex), temperature);
 
 	// Loop over all the elements of the dissociation
 	// connectivity to find where this mixed species dissociates...
 	for (int i = 0; i < dissociationConnectivity.size(); i++) {
 		if (dissociationConnectivity[i] == 1) {
-			// Get the cluster map of this connection
-			dissMap = network->toClusterMap(i);
-
-			// We need to find if this is a Helium dissociation,
-			// Vacancy dissociation, or a trap mutation.
-			if (numHe - dissMap["He"] == 1 && numV == dissMap["V"] && dissMap["I"] == 0) {
-				f3 = f3 + calculateDissociationConstant(i, oneHeIndex, temperature) * network->reactants->at(i)->getConcentration();
-			} else if (numHe == dissMap["He"] && numV - dissMap["V"] == 1 && dissMap["I"] == 0) {
-				f3 = f3 + calculateDissociationConstant(i, oneVIndex, temperature) * network->reactants->at(i)->getConcentration();
-			} else if (numHe == dissMap["He"] && dissMap["V"] - numV == 1 && dissMap["I"] == 0) {
-				f3 = f3 + calculateDissociationConstant(i, oneIIndex, temperature) * network->reactants->at(i)->getConcentration();
+				// Set the current reactant
+				currentReactant = reactants->at(i);
+				// Get the cluster map of this connection
+				dissMap = network->toClusterMap(i);
+				// We need to find if this is a Helium dissociation,
+				// Vacancy dissociation, or a trap mutation.
+				if (numHe - dissMap["He"] == 1 && numV == dissMap["I"]
+						&& dissMap["V"] == 0) {
+					secondReactant = reactants->at(oneHeIndex);
+				} else if (numHe == dissMap["He"] && numV - dissMap["V"] == 1
+						&& dissMap["V"] == 0) {
+					secondReactant = reactants->at(oneVIndex);
+				} else if (numHe == dissMap["He"] && dissMap["I"] - numV == 1
+						&& dissMap["V"] == 0) {
+					secondReactant = reactants->at(oneIIndex);
+				}
+				// Update the flux calculation
+				f3 += calculateDissociationConstant(currentReactant, secondReactant,
+						temperature) * currentReactant->getConcentration();
 			}
-
-		}
 	}
 
 	return f3 - f4 * getConcentration();
@@ -169,18 +194,19 @@ bool HeVCluster::isProductReactant(int reactantI, int reactantJ) {
 
 	// Grab the numbers for each species
 	// from each Reactant
-	rI_I = reactantIMap["I"]; rJ_I = reactantJMap["I"];
-	rI_He = reactantIMap["He"]; rJ_He = reactantJMap["He"];
-	rI_V = reactantIMap["V"]; rJ_V = reactantJMap["V"];
+	rI_I = reactantIMap["I"];
+	rJ_I = reactantJMap["I"];
+	rI_He = reactantIMap["He"];
+	rJ_He = reactantJMap["He"];
+	rI_V = reactantIMap["V"];
+	rJ_V = reactantJMap["V"];
 
 	// We should have no interstitials, a
 	// total of numHe Helium, and a total of
 	// numV Vacancies
-	return ((rI_I + rJ_I) == 0)
-			&& ((rI_He + rJ_He) == numHe)
+	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == numHe)
 			&& ((rI_V + rJ_V) == numV);
 }
-
 
 std::map<std::string, int> HeVCluster::getClusterMap() {
 	// Local Declarations
@@ -197,10 +223,10 @@ std::map<std::string, int> HeVCluster::getClusterMap() {
 
 double HeVCluster::getReactionRadius() {
 	return (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
-				+ pow((3.0 * pow(xolotlCore::latticeConstant, 3.0) * numV)
-								/ (8.0 * xolotlCore::pi),
-								(1.0 / 3.0))
-				- pow((3.0 * pow(xolotlCore::latticeConstant, 3.0))
-								/ (8.0 * xolotlCore::pi),
-								(1.0 / 3.0));
+			+ pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0) * numV)
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+			- pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0))
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
 }

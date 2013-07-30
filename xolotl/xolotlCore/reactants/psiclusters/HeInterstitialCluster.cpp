@@ -120,6 +120,7 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) {
 	std::map<std::string, int> oneHe, oneV, oneI, dissMap;
 	std::shared_ptr < std::vector<std::shared_ptr<xolotlCore::Reactant>>
 			> reactants;
+	std::shared_ptr<Reactant> currentReactant, secondReactant;
 	double f4 = 0.0, f3 = 0.0;
 
 	// Set the cluster map data for 1 of each species
@@ -141,45 +142,39 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) {
 	int oneIIndex = network->toClusterIndex(oneI);
 	int oneVIndex = network->toClusterIndex(oneV);
 	int oneHeIndex = network->toClusterIndex(oneHe);
-	reactants = network->reactants;
+
 	// Calculate the much easier f4 term...
-	// FIXME! Problem here!-----------|
-	f4 = calculateDissociationConstant(reactants->at(thisIndex), reactants->at(oneIIndex),
-			temperature)
-	+ calculateDissociationConstant(reactants->(thisIndex), reactants->at(oneVIndex),
-			temperature)
-	+ calculateDissociationConstant(reactants->(thisIndex),
-			reactants->at(oneHeIndex), temperature);
+	reactants = network->reactants;
+	f4 = calculateDissociationConstant(reactants->at(thisIndex),
+			reactants->at(oneIIndex), temperature)
+			+ calculateDissociationConstant(reactants->at(thisIndex),
+					reactants->at(oneVIndex), temperature)
+			+ calculateDissociationConstant(reactants->at(thisIndex),
+					reactants->at(oneHeIndex), temperature);
 
 	// Loop over all the elements of the dissociation
 	// connectivity to find where this mixed species dissociates...
 	for (int i = 0; i < dissociationConnectivity.size(); i++) {
 		if (dissociationConnectivity[i] == 1) {
+			// Set the current reactant
+			currentReactant = reactants->at(i);
 			// Get the cluster map of this connection
 			dissMap = network->toClusterMap(i);
-
 			// We need to find if this is a Helium dissociation,
 			// Vacancy dissociation, or a trap mutation.
 			if (numHe - dissMap["He"] == 1 && numI == dissMap["I"]
 					&& dissMap["V"] == 0) {
-				f3 = f3
-						+ calculateDissociationConstant(i, oneHeIndex,
-								temperature)
-								* network->reactants->at(i)->getConcentration();
+				secondReactant = reactants->at(oneHeIndex);
 			} else if (numHe == dissMap["He"] && numI - dissMap["V"] == 1
 					&& dissMap["V"] == 0) {
-				f3 = f3
-						+ calculateDissociationConstant(i, oneVIndex,
-								temperature)
-								* network->reactants->at(i)->getConcentration();
+				secondReactant = reactants->at(oneVIndex);
 			} else if (numHe == dissMap["He"] && dissMap["I"] - numI == 1
 					&& dissMap["V"] == 0) {
-				f3 = f3
-						+ calculateDissociationConstant(i, oneIIndex,
-								temperature)
-								* network->reactants->at(i)->getConcentration();
+				secondReactant = reactants->at(oneIIndex);
 			}
-
+			// Update the flux calculation
+			f3 += calculateDissociationConstant(currentReactant, secondReactant,
+					temperature) * currentReactant->getConcentration();
 		}
 	}
 
