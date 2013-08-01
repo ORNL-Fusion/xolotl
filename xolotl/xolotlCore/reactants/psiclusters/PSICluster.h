@@ -151,11 +151,22 @@ protected:
 	 * represents a pair of reacting clusters that combine to produce this
 	 * cluster in a standard direct combination reaction. This operation
 	 * should be overridden by subclasses.
-	 * @param The pairs. The base class will not modify these pointers
-	 * because it does no work.
+	 * @param The pairs. The base class will not modify this list because it
+	 * does no work.
 	 */
 	virtual void getProducingClusters(
 			std::shared_ptr<std::vector<std::shared_ptr<ReactingPair>>>);
+
+	/**
+	 * This operation returns by reference a list of clusters that interact
+	 * with this cluster to produce a third via combination.This operation
+	 * should be overridden by subclasses.
+	 * @param The list of clusters. The base class will not modify this list
+	 * because it does no work.
+	 */
+	virtual void getCombiningClusters(
+			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>);
+
 
 		private:
 

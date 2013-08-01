@@ -42,8 +42,10 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
 	std::cout << "Size of the network is " << network->reactants->size() << "\n";
 
 	int nReactants = network->reactants->size();
-	for (int i = 0; i < 2; ++i)
-	    network->reactants->at(i)->getTotalFlux(273.0);
+	for (int i = 0; i < 9; ++i) {
+		std::shared_ptr<Reactant> reactant = network->reactants->at(i);
+		double flux = reactant->getTotalFlux(273.0);
+	}
 
 }
 

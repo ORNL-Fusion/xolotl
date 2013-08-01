@@ -97,12 +97,15 @@ double PSICluster::getDissociationFlux(const double temperature) {
 
 	int nReactants = 0, oneIndex = -1;
 	double diss = 0.0, conc = 0.0;
+	std::shared_ptr<Reactant> first, second;
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>> > reactants;
 	std::map<std::string, int> oneHe, oneV, oneI;
 
 	// Only try this if the network is available
 	if (network != NULL) {
 		// Get the total number of reactants in the network
-		nReactants = network->reactants->size();
+		reactants = network->reactants;
+		nReactants = reactants->size();
 		// Set the cluster map data for 1 of each species
 		oneHe["He"] = 1;
 		oneHe["V"] = 0;
@@ -140,18 +143,17 @@ double PSICluster::getDissociationFlux(const double temperature) {
 			} else if (thisMap["I"]) {
 				oneIndex = network->toClusterIndex(oneI);
 			}
-
+			second = reactants->at(oneIndex);
 			// Loop over all reactants and see if we
 			// have a dissociation connection
 			for (int i = 0; i < nReactants; i++) {
 				// Only calculate if we are connected
 				if (dissociationConnectivity.at(i) == 1) {
+					first = reactants->at(i);
 					// Calculate the dissociation flux
-					diss =
-							diss
-									+ calculateDissociationConstant(i, oneIndex,
-											temperature)
-											* network->reactants->at(i)->getConcentration();
+					diss += calculateDissociationConstant(first, second,
+							temperature)
+							* network->reactants->at(i)->getConcentration();
 				}
 			}
 		} else if (numSpecies == 2) {
@@ -210,27 +212,27 @@ double PSICluster::getCombinationFlux(const double temperature) {
 	double flux = 0.0, kPlus = 0.0;
 	int thisClusterIndex = 0;
 	std::shared_ptr<std::vector<int>> outerConnectivity;
-	std::shared_ptr<Reactant> outerReactant;
+	std::shared_ptr<Reactant> outerReactant, thisReactant;
 	int nReactants = 0;
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>
+			combiningReactants (new std::vector<std::shared_ptr<Reactant>>);
 
 	// Only try this if the network is available
 	if (network != NULL) {
+		// Get the set of reactants that combine with this one to produce other
+		// clusters.
+		getCombiningClusters (combiningReactants);
 		// Set the total network nReactants
-		nReactants = network->reactants->size();
+		nReactants = combiningReactants->size();
 		// Get the index of this cluster in the network
 		thisClusterIndex = network->toClusterIndex(getClusterMap());
+		thisReactant = network->reactants->at(thisClusterIndex);
 		// Loop over all possible clusters
 		for (int j = 0; j < nReactants; j++) {
-			outerReactant = network->reactants->at(j);
-			outerConnectivity = outerReactant->getConnectivity();
+			outerReactant = combiningReactants->at(j);
 			// Calculate Second term of production flux
-			// this acts to take away from the current reactant
-			// as it is reacting with others, thus decreasing itself.
-			// This considers all populations that are produced by C_i
-			if (reactionConnectivity.at(j) == 1) {
-				flux += calculateReactionRateConstant(thisClusterIndex, j,
-						temperature) * outerReactant->getConcentration();
-			}
+			flux += calculateReactionRateConstant(thisReactant, outerReactant,
+					temperature) * outerReactant->getConcentration();
 		}
 
 	}
@@ -244,11 +246,23 @@ double PSICluster::getCombinationFlux(const double temperature) {
  * represents a pair of reacting clusters that combine to produce this
  * cluster in a standard direct combination reaction. This operation
  * should be overridden by subclasses.
- * @param The pairs. The base class will not modify these pointers
+ * @param The pairs. The base class will not modify this list
  * because it does no work.
  */
 void PSICluster::getProducingClusters(
 		std::shared_ptr<std::vector<std::shared_ptr<ReactingPair>>>) {
+			return;
+		}
+
+/**
+ * This operation returns by reference a list of clusters that interact
+ * with this cluster to produce a third via combination.This operation
+ * should be overridden by subclasses.
+ * @param The list of clusters. The base class will not modify this list
+ * because it does no work.
+ */
+void PSICluster::getCombiningClusters(
+		std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>) {
 			return;
 		}
 
@@ -326,13 +340,16 @@ double PSICluster::calculateDissociationConstant(
 		std::shared_ptr<xolotlCore::Reactant> secondReactant,
 		const double temperature) {
 
-// Local Declarations
+	// Local Declarations
 	int bindingEnergyIndex = -1;
 	double ra = 1, rb = 1;
 	double atomicVolume = 1.0;
-	std::map<std::string, int> clusterMap = network->toClusterMap(j);
+	std::shared_ptr<PSICluster> castedSecondReactant =
+			(std::dynamic_pointer_cast < PSICluster > (secondReactant));
+	std::map<std::string, int> clusterMap =
+			castedSecondReactant->getClusterMap();
 
-// Get the binding energy index
+	// Get the binding energy index
 	if (clusterMap["He"] == 1 && clusterMap["V"] == 0 && clusterMap["I"] == 0) {
 		bindingEnergyIndex = 0;
 	} else if (clusterMap["He"] == 0 && clusterMap["V"] == 1
@@ -345,10 +362,7 @@ double PSICluster::calculateDissociationConstant(
 		return 0.0;
 	}
 
-	// Calculate the Reaction Rate Constant -- Cant use this,
-	// weird indices change in paper
-	std::shared_ptr < Reactant > firstReactant = network->reactants->at(i);
-	std::shared_ptr < Reactant > secondReactant = network->reactants->at(i);
+	// Calculate the Reaction Rate Constant
 	double kPlus = calculateReactionRateConstant(firstReactant, secondReactant,
 			temperature);
 
@@ -361,7 +375,7 @@ double PSICluster::calculateDissociationConstant(
 }
 
 bool PSICluster::isProductReactant(int reactantI, int reactantJ) {
-// Base class should just return false
+	// Base class should just return false
 	return false;
 }
 
@@ -373,8 +387,8 @@ std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() {
 
 	int connectivityLength = network->reactants->size();
 
-// The reaction and dissociate vectors must be the same length
-// as the number of reactants
+	// The reaction and dissociate vectors must be the same length
+	// as the number of reactants
 	if (reactionConnectivity.size() != connectivityLength) {
 		throw std::string("The reaction vector is an incorrect length");
 	}
@@ -383,14 +397,14 @@ std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() {
 		throw std::string("The dissociation vector is an incorrect length");
 	}
 
-// Resize the array if required
+	// Resize the array if required
 	if (connectivityLength != connectivity->size()) {
 		connectivity->resize(connectivityLength, 0);
 	}
 
-// Merge the two vectors such that the final vector contains
-// a 1 at a position if either of the connectivity arrays
-// have a 1
+	// Merge the two vectors such that the final vector contains
+	// a 1 at a position if either of the connectivity arrays
+	// have a 1
 	for (int i = 0; i < connectivityLength; i++) {
 		// Consider each connectivity array only if its type is enabled
 		(*connectivity)[i] = reactionConnectivity[i]
@@ -401,24 +415,21 @@ std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() {
 }
 
 void PSICluster::createReactionConnectivity() {
-// By default, generate an array with a zero for each reactant
-// in the network
-
+	// By default, generate an array with a zero for each reactant
+	// in the network
 	reactionConnectivity.clear();
 	reactionConnectivity.resize(network->reactants->size(), 0);
 }
 
 void PSICluster::createDissociationConnectivity() {
-// By default, generate an array with a zero for each reactant
-// in the network
-
+	// By default, generate an array with a zero for each reactant
+	// in the network
 	dissociationConnectivity.clear();
 	dissociationConnectivity.resize(network->reactants->size(), 0);
 }
 
 std::map<std::string, int> PSICluster::getClusterMap() {
-// Create an empty cluster map
-
+	// Create an empty cluster map
 	std::map<std::string, int> clusterMap;
 	return clusterMap;
 }
