@@ -14,31 +14,33 @@ VCluster::~VCluster() {
 }
 
 void VCluster::createReactionConnectivity() {
-	
+
 	std::map<std::string, std::string> props = *(network->properties);
-	
+
 	int numV = size;
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int numVClusters = std::stoi(props["numVClusters"]);
 	int numIClusters = std::stoi(props["numIClusters"]);
+	int numHeIClusters = std::stoi(props["numHeIClusters"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	std::map<std::string, int> speciesMap;
-	
+
 	// Vacancies interact with everything except for vacancies bigger than they
 	// would combine with to form vacancies larger than the size limit.
-	
+
 	// -----  A*He + B*V → (A*He)(B*V) -----
 	// Vacancy clusters can interact with any helium cluster so long as the sum
 	// of the number of helium atoms and vacancies does not produce a cluster
 	// with a size greater than the maximum mixed-species cluster size.
-	for (int numHeOther = 1; numV + numHeOther <= maxMixedClusterSize; numHeOther++) {
+	for (int numHeOther = 1; numV + numHeOther <= maxMixedClusterSize;
+			numHeOther++) {
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
 	}
-	
+
 	//----- A*V + B*V --> (A+B)*V -----
 	// This cluster should interact with all other clusters of the same type up
 	// to the max size minus the size of this one to produce larger clusters.
@@ -49,7 +51,7 @@ void VCluster::createReactionConnectivity() {
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
 	}
-	
+
 	//----- A*I + B*V
 	// → (A-B)*I, if A > B
 	// → (B-I)*V, if A < B
@@ -62,15 +64,16 @@ void VCluster::createReactionConnectivity() {
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
 	}
-	
+
 	// ----- (A*He)(B*V) + C*V → (A*He)[(B+C)*V] -----
 	// Vacancies can interact with a mixed-species cluster so long as the sum of
 	// the number of vacancy atoms and the size of the mixed-species cluster
 	// does not exceed the maximum mixed-species cluster size.
 	if (numV == 1) {
 		for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
-			for (int numHeOther = 1; (numHeOther + numVOther + numV) <=
-				maxMixedClusterSize; numHeOther++) {
+			for (int numHeOther = 1;
+					(numHeOther + numVOther + numV) <= maxMixedClusterSize;
+					numHeOther++) {
 				// Clear the map since we are reusing it
 				speciesMap.clear();
 				speciesMap["He"] = numHeOther;
@@ -80,32 +83,37 @@ void VCluster::createReactionConnectivity() {
 			}
 		}
 	}
-	
-	
-	// Vacancy absorption of HeI:
+
+	// Vacancy absorption by HeI:
 	// xHe*yI + zV --> xHe*(y - z)V
 	// under the condition that y - z >= 1
-	for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
-		for (int numHeOther = 1; numIOther + numHeOther <=
-			maxMixedClusterSize; numHeOther++) {
-			// Clear the map since we are reusing it
-			speciesMap.clear();
-			bool connects = numIOther - numV >= 1;
-			speciesMap["He"] = numHeOther;
-			speciesMap["I"] = numIOther;
-			int indexOther = network->toClusterIndex(speciesMap);
-			reactionConnectivity[indexOther] = (int) connects;
+	if (numHeIClusters > 0) {
+		for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
+			for (int numHeOther = 1;
+					numIOther + numHeOther <= maxMixedClusterSize;
+					numHeOther++) {
+				// Clear the map since we are reusing it
+				speciesMap.clear();
+				bool connects = numIOther - numV >= 1;
+				speciesMap["He"] = numHeOther;
+				speciesMap["I"] = numIOther;
+				int indexOther = network->toClusterIndex(speciesMap);
+				reactionConnectivity[indexOther] = (int) connects;
+			}
 		}
 	}
+
 }
 
 void VCluster::createDissociationConnectivity() {
 	// Local Declarations
 	int nReactants = network->reactants->size();
 	std::map<std::string, int> clusterMap;
-	
+
 	// Vacancy Dissociation
-	clusterMap["He"] = 0; clusterMap["V"] = size - 1; clusterMap["I"] = 0;
+	clusterMap["He"] = 0;
+	clusterMap["V"] = size - 1;
+	clusterMap["I"] = 0;
 	if (size != 1) {
 		dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 		clusterMap["V"] = 1;
@@ -115,7 +123,8 @@ void VCluster::createDissociationConnectivity() {
 	// Trap Mutation
 	clusterMap["V"] = size + 1;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["I"] = 1; clusterMap["V"] = 0;
+	clusterMap["I"] = 1;
+	clusterMap["V"] = 0;
 	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
 }
 
@@ -160,5 +169,5 @@ std::map<std::string, int> VCluster::getClusterMap() {
 
 double VCluster::getReactionRadius() {
 	// FIXME Not right...
-	return (sqrt(3)/4) * xolotlCore::latticeConstant;
+	return (sqrt(3) / 4) * xolotlCore::latticeConstant;
 }

@@ -43,7 +43,7 @@ protected:
 	/** The reaction network that includes this reactant.
 	 */
 	std::shared_ptr<ReactionNetwork> network;
-	
+
 public:
 
 	/** The constructor.
@@ -122,7 +122,7 @@ public:
 	 */
 	virtual void setReactionNetwork(
 			const std::shared_ptr<ReactionNetwork> reactionNetwork);
-	
+
 	/**
 	 * This operation returns a list that represents the connectivity
 	 * between this Reactant and other Reactants in the network.
@@ -137,7 +137,7 @@ public:
 	 * that it does not.
 	 */
 	virtual std::shared_ptr<std::vector<int>> getConnectivity();
-	
+
 	/**
 	 * This operation writes the contents of the reactant to a string. This
 	 * operation should be overridden by subclasses.

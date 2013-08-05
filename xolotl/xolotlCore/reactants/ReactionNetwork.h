@@ -50,13 +50,16 @@ public:
 	 *
 	 * @returns a map with `speciesLabel` => `quantity`
 	 */
-	virtual std::map<std::string, int> toClusterMap(int index);
+	virtual std::map<std::string, int> toClusterMap(int index) const;
 	
 	/**
 	 * Converts an cluster map (with `speciesLabel` => `quantity`)
-	 * to the index corresponding to its position in the reactants vector
+	 * to the index corresponding to its position in the reactants vector.
+	 * This operation is const, but the cluster map can not be marked const
+	 * because of the mechanics of effectively using maps in C++. Sorry
+	 * idealists! ;)
 	 */
-	virtual int toClusterIndex(std::map<std::string, int> clusterMap);
+	virtual int toClusterIndex(std::map<std::string, int> clusterMap) const;
 	
 	/**
 	 * The destructor

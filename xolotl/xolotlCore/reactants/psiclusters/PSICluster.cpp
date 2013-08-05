@@ -75,6 +75,9 @@ void PSICluster::setReactionNetwork(
 	// Resize the connectivity arrays
 	reactionConnectivity.resize(connectivityLength, 0);
 	dissociationConnectivity.resize(connectivityLength, 0);
+	// Clear the flux-related arrays
+	reactingPairs.clear();
+	combiningReactants.clear();
 
 	// Generate the reactant and dissociation connectivity arrays.
 	// This only must be done once since the arrays are stored as
@@ -86,11 +89,6 @@ void PSICluster::setReactionNetwork(
 	if (dissociationsEnabled) {
 		createDissociationConnectivity();
 	}
-}
-
-double PSICluster::getTotalFlux(const double temperature) {
-	return getProductionFlux(temperature) - getCombinationFlux(temperature)
-			+ getDissociationFlux(temperature);
 }
 
 double PSICluster::getDissociationFlux(const double temperature) {
@@ -175,20 +173,16 @@ double PSICluster::getProductionFlux(const double temperature) {
 	std::shared_ptr<std::vector<int>> outerConnectivity;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
 	int nPairs = 0;
-	std::shared_ptr < std::vector<std::shared_ptr<ReactingPair>>>
-			reactingPairs (new std::vector<std::shared_ptr<ReactingPair>>);
 
 	// Only try this if the network is available
 	if (network != NULL) {
-		// Get the pairs of clusters that produce this cluster
-		getProducingClusters (reactingPairs);
 		// Set the total number of reacting pairs
-		nPairs = reactingPairs->size();
+		nPairs = reactingPairs.size();
 		// Loop over all the reacting pairs
 		for (int i = 0; i < nPairs; i++) {
 			// Get the reactants
-			firstReactant = reactingPairs->at(i)->first;
-			secondReactant = reactingPairs->at(i)->second;
+			firstReactant = reactingPairs.at(i).first;
+			secondReactant = reactingPairs.at(i).second;
 			// Update the flux
 			flux += calculateReactionRateConstant(firstReactant, secondReactant,
 					temperature) * firstReactant->getConcentration()
@@ -214,22 +208,17 @@ double PSICluster::getCombinationFlux(const double temperature) {
 	std::shared_ptr<std::vector<int>> outerConnectivity;
 	std::shared_ptr<Reactant> outerReactant, thisReactant;
 	int nReactants = 0;
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>
-			combiningReactants (new std::vector<std::shared_ptr<Reactant>>);
 
 	// Only try this if the network is available
 	if (network != NULL) {
-		// Get the set of reactants that combine with this one to produce other
-		// clusters.
-		getCombiningClusters (combiningReactants);
 		// Set the total network nReactants
-		nReactants = combiningReactants->size();
+		nReactants = combiningReactants.size();
 		// Get the index of this cluster in the network
 		thisClusterIndex = network->toClusterIndex(getClusterMap());
 		thisReactant = network->reactants->at(thisClusterIndex);
 		// Loop over all possible clusters
 		for (int j = 0; j < nReactants; j++) {
-			outerReactant = combiningReactants->at(j);
+			outerReactant = combiningReactants.at(j);
 			// Calculate Second term of production flux
 			flux += calculateReactionRateConstant(thisReactant, outerReactant,
 					temperature) * outerReactant->getConcentration();
@@ -241,30 +230,10 @@ double PSICluster::getCombinationFlux(const double temperature) {
 	return (flux * getConcentration());
 }
 
-/**
- * This operation returns by reference a set of ReactingPairs that
- * represents a pair of reacting clusters that combine to produce this
- * cluster in a standard direct combination reaction. This operation
- * should be overridden by subclasses.
- * @param The pairs. The base class will not modify this list
- * because it does no work.
- */
-void PSICluster::getProducingClusters(
-		std::shared_ptr<std::vector<std::shared_ptr<ReactingPair>>>) {
-			return;
-		}
-
-/**
- * This operation returns by reference a list of clusters that interact
- * with this cluster to produce a third via combination.This operation
- * should be overridden by subclasses.
- * @param The list of clusters. The base class will not modify this list
- * because it does no work.
- */
-void PSICluster::getCombiningClusters(
-		std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>) {
-			return;
-		}
+double PSICluster::getTotalFlux(const double temperature) {
+	return getProductionFlux(temperature) - getCombinationFlux(temperature)
+			+ getDissociationFlux(temperature);
+}
 
 double PSICluster::getDiffusionFactor() {
 	// Return the diffusion factor
@@ -313,8 +282,8 @@ void PSICluster::setMigrationEnergy(const double energy) {
 }
 
 double PSICluster::calculateReactionRateConstant(
-		std::shared_ptr<xolotlCore::Reactant> firstReactant,
-		std::shared_ptr<xolotlCore::Reactant> secondReactant,
+		const std::shared_ptr<xolotlCore::Reactant> & firstReactant,
+		const std::shared_ptr<xolotlCore::Reactant> & secondReactant,
 		const double temperature) {
 
 	// Get the reaction radii
@@ -336,8 +305,8 @@ double PSICluster::calculateReactionRateConstant(
 }
 
 double PSICluster::calculateDissociationConstant(
-		std::shared_ptr<xolotlCore::Reactant> firstReactant,
-		std::shared_ptr<xolotlCore::Reactant> secondReactant,
+		const std::shared_ptr<xolotlCore::Reactant> & firstReactant,
+		const std::shared_ptr<xolotlCore::Reactant> & secondReactant,
 		const double temperature) {
 
 	// Local Declarations
@@ -374,7 +343,7 @@ double PSICluster::calculateDissociationConstant(
 	return k_minus;
 }
 
-bool PSICluster::isProductReactant(int reactantI, int reactantJ) {
+bool PSICluster::isProductReactant(const int reactantI, const int reactantJ) {
 	// Base class should just return false
 	return false;
 }

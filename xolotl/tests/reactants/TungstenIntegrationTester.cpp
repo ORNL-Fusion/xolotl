@@ -23,9 +23,11 @@ BOOST_AUTO_TEST_SUITE (TungstenIntegrationTester_testSuite)
  * given that it requires external data.
  */
 BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
+	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
 	string pathToFile("/tests/reactants/testfiles/tungsten.txt");
 	string networkFilename = sourceDir + pathToFile;
+	shared_ptr<std::vector<shared_ptr<Reactant> > > reactants;
 
 	std::cout << networkFilename << std::endl;
 	// Load the input file from the master task
@@ -36,14 +38,16 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
 	std::shared_ptr<PSIClusterNetworkLoader> networkLoader(
 			new PSIClusterNetworkLoader());
 	networkLoader->setInputstream(networkStream);
+	// Load the network
+	shared_ptr<ReactionNetwork> network = networkLoader->load();
 
-	std::shared_ptr<ReactionNetwork> network = networkLoader->load();
+	cout << "Network loaded." << endl;
 
-	std::cout << "Size of the network is " << network->reactants->size() << "\n";
-
+	cout << "Size of the network is " << network->reactants->size() << "\n";
 	int nReactants = network->reactants->size();
+	reactants = network->reactants;
 	for (int i = 0; i < 9; ++i) {
-		std::shared_ptr<Reactant> reactant = network->reactants->at(i);
+		shared_ptr<PSICluster> reactant = dynamic_pointer_cast < PSICluster > (reactants->at(i));
 		double flux = reactant->getTotalFlux(273.0);
 	}
 

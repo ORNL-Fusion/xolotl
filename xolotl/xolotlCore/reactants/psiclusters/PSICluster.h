@@ -80,6 +80,22 @@ protected:
 	std::vector<int> dissociationConnectivity;
 
 	/**
+	 * A vector of ReactingPairs that represent reacting pairs of clusters
+	 * that produce this cluster. This vector should be populated early in the
+	 * cluster's lifecycle by subclasses. In the standard Xolotl clusters,
+	 * this vector is filled in createReactionConnectivity.
+	 */
+	std::vector<ReactingPair> reactingPairs;
+
+	/**
+	 * A vector of Reactants that combine with this cluster to produce other
+	 * clusters. This vector should be populated early in the cluster's
+	 * lifecycle by subclasses. In the standard Xolotl clusters, this vector is
+	 * filled in createReactionConnectivity.
+	 */
+	std::vector<std::shared_ptr<Reactant> > combiningReactants;
+
+	/**
 	 * The merged connectivity array created from the reaction and
 	 * dissociation connectivities.
 	 */
@@ -96,8 +112,8 @@ protected:
 	 * @return
 	 */
 	double calculateReactionRateConstant(
-			std::shared_ptr<xolotlCore::Reactant> firstReactant,
-			std::shared_ptr<xolotlCore::Reactant> secondReactant,
+			const std::shared_ptr<xolotlCore::Reactant> & firstReactant,
+			const std::shared_ptr<xolotlCore::Reactant> & secondReactant,
 			const double temperature);
 
 	/**
@@ -111,8 +127,8 @@ protected:
 	 * @return
 	 */
 	double calculateDissociationConstant(
-			std::shared_ptr<xolotlCore::Reactant> firstReactant,
-			std::shared_ptr<xolotlCore::Reactant> secondReactant,
+			const std::shared_ptr<xolotlCore::Reactant> & firstReactant,
+			const std::shared_ptr<xolotlCore::Reactant> &secondReactant,
 			const double temperature);
 
 	/**
@@ -126,7 +142,7 @@ protected:
 	 * @param reactantJ
 	 * @return
 	 */
-	virtual bool isProductReactant(int reactantI, int reactantJ);
+	virtual bool isProductReactant(const int reactantI, const int reactantJ);
 
 	/**
 	 * Computes a row of the reaction connectivity matrix corresponding to
@@ -145,27 +161,6 @@ protected:
 	 * the element at the position of the second reactant is 1, otherwise 0.
 	 */
 	virtual void createDissociationConnectivity();
-
-	/**
-	 * This operation returns by reference a set of ReactingPairs that
-	 * represents a pair of reacting clusters that combine to produce this
-	 * cluster in a standard direct combination reaction. This operation
-	 * should be overridden by subclasses.
-	 * @param The pairs. The base class will not modify this list because it
-	 * does no work.
-	 */
-	virtual void getProducingClusters(
-			std::shared_ptr<std::vector<std::shared_ptr<ReactingPair>>>);
-
-	/**
-	 * This operation returns by reference a list of clusters that interact
-	 * with this cluster to produce a third via combination.This operation
-	 * should be overridden by subclasses.
-	 * @param The list of clusters. The base class will not modify this list
-	 * because it does no work.
-	 */
-	virtual void getCombiningClusters(
-			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>);
 
 
 		private:

@@ -21,6 +21,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
+	int numHeIClusters = std::stoi(props["numHeIClusters"]);
 	std::map<std::string, int> speciesMap;
 	
 	// Interstitials can interact with other interstitials, vacancies,
@@ -76,7 +77,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	// Interstitial absorption
 	// xHe*yI + I --> xHe*(y + 1)I
 	// Under the condition that (x + y + 1) <= maxSize
-	if (numI == 1) {
+	if (numI == 1 && numHeIClusters > 0) {
 		for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
 			for (int numHeOther = 1; numIOther + numHeOther + 1 <=
 				maxMixedClusterSize; numHeOther++) {
@@ -89,6 +90,8 @@ void InterstitialCluster::createReactionConnectivity() {
 			}
 		}
 	}
+
+	return;
 }
 
 

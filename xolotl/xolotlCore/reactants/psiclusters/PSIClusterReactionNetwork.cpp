@@ -32,7 +32,7 @@ std::map<std::string, int> PSIClusterReactionNetwork::toClusterMap(
 }
 
 int PSIClusterReactionNetwork::toClusterIndex(
-		const std::map<std::string, int> clusterMap) const {
+		std::map<std::string, int> clusterMap) const {
 
 	// If the clusterMap doesn't have one of the following keys,
 	// the value will be set to zero.
@@ -41,7 +41,7 @@ int PSIClusterReactionNetwork::toClusterIndex(
 	int numI = 0;
 	// A handy typedef
 	typedef const std::map<std::string, int> clusterMap_t;
-	// Convert the property strings so C++ can use them
+	// Convert the property strings so we can use them
 	int numHeClusters = std::stoi((*properties)["numHeClusters"]);
 	int numVClusters = std::stoi((*properties)["numVClusters"]);
 	int numIClusters = std::stoi((*properties)["numIClusters"]);
@@ -51,9 +51,9 @@ int PSIClusterReactionNetwork::toClusterIndex(
 	int numSpecies = 0;
 
 	// Update the indices
-	numHe = std::max(clusterMap.at("He"),0);
-	numV = std::max(clusterMap.at("V"),0);
-	numI = std::max(clusterMap.at("I"),0);
+	numHe = std::max(clusterMap["He"],0);
+	numV = std::max(clusterMap["V"],0);
+	numI = std::max(clusterMap["I"],0);
 	numSpecies = (numHe > 0) + (numV > 0) + (numI > 0);
 
 	// Cluster should either contain one or two types of species.
@@ -71,7 +71,7 @@ int PSIClusterReactionNetwork::toClusterIndex(
 	} else if (numSpecies == 2) {
 		// HeVCluster
 		int indexOffset = numHeClusters + numVClusters + numIClusters;
-		if (numHe && numV) {
+		if (numHe && numV && numHeVClusters > 0) {
 			// Closed form for converting a top-left triangle grid
 			// to an index
 			int index = (numV - 1) * maxMixedClusterSize - numV * (numV - 1) / 2
@@ -83,7 +83,7 @@ int PSIClusterReactionNetwork::toClusterIndex(
 		// Increment the offset by the number of HeVClusters
 		// indexOffset += maxMixedClusterSize * (maxMixedClusterSize - 1) / 2;
 		indexOffset += numHeVClusters;
-		if (numHe && numI) {
+		if (numHe && numI && numHeIClusters > 0) {
 			// Closed form for converting a top-left triangle grid
 			// to an index
 			int index = (numI - 1) * maxMixedClusterSize - numI * (numI - 1) / 2

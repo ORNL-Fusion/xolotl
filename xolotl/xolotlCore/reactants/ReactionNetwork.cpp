@@ -20,12 +20,12 @@ ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 	}
 }
 
-std::map<std::string, int> ReactionNetwork::toClusterMap(int index) {
+std::map<std::string, int> ReactionNetwork::toClusterMap(int index) const {
 	// This base class returns an empty map
 	return std::map<std::string, int>();
 }
 
-int ReactionNetwork::toClusterIndex(std::map<std::string, int> clusterMap) {
+int ReactionNetwork::toClusterIndex(std::map<std::string, int> clusterMap) const {
 	// This base class returns a zero index value
 	return 0;
 }

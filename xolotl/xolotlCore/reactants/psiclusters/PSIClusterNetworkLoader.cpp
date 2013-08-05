@@ -217,19 +217,24 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 		}
 
 		// Load the clusters into the network, starting with He
-		for (int i = 0; i < heClusters.size(); i++)
+		int heClusterSize = heClusters.size();
+		for (int i = 0; i < heClusterSize; i++)
 			network->reactants->push_back(heClusters[i]);
 		// Load the vacancies into the network
-		for (int i = 0; i < vClusters.size(); i++)
+		int vClusterSize = vClusters.size();
+		for (int i = 0; i < vClusterSize; i++)
 			network->reactants->push_back(vClusters[i]);
 		// Load the interstitials into the network
-		for (int i = 0; i < iClusters.size(); i++)
+		int iClusterSize = iClusters.size();
+		for (int i = 0; i < iClusterSize; i++)
 			network->reactants->push_back(iClusters[i]);
 		// Load the mixed species clusters into the network
-		for (int i = 0; i < heVClusters.size(); i++)
+		int heVClusterSize = heVClusters.size();
+		for (int i = 0; i < heVClusterSize; i++)
 			network->reactants->push_back(heVClusters[i]);
 		// Register the Reaction network with the clusters
-		for (int i = 0; i < network->reactants->size(); i++) {
+		int numReactants = network->reactants->size();
+		for (int i = 0; i < numReactants; i++) {
 			network->reactants->at(i)->setReactionNetwork(network);
 		}
 	}
