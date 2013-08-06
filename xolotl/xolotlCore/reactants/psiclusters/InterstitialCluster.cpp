@@ -64,13 +64,15 @@ void InterstitialCluster::createReactionConnectivity() {
 		totalSize = firstSize + secondSize;
 	}
 
-
-	// Interstitials can interact with other interstitials, vacancies,
-	// helium, and mixed-species clusters. They cannot cluster with other
-	// interstitials that are so large that the combination of the two would
-	// produce an interstitial above the maximum size.
-
-	// xHe + yI --> xHe*yI
+	/* ----- (A*He) + (B*I) --> (A*He)*(B*I)
+	 * Interstitials can interact with other interstitials, vacancies,
+	 * helium, and mixed-species clusters. They cannot cluster with other
+	 * interstitials that are so large that the combination of the two would
+	 * produce an interstitial above the maximum size.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	for (int numHeOther = 1; numHeOther + numI <= maxMixedClusterSize;
 			numHeOther++) {
 		speciesMap["He"] = numHeOther;
@@ -79,11 +81,15 @@ void InterstitialCluster::createReactionConnectivity() {
 		combiningReactants.push_back(reactants->at(indexOther));
 	}
 
-	//----- A*I + B*V
-	// → (A-B)*I, if A > B
-	// → (B-I)*V, if A < B
-	// → 0, if A = B
-	// Annihilation
+	/* ----- A*I + B*V -----
+	 * → (A-B)*I, if A > B
+	 * → (B-I)*V, if A < B
+	 * → 0, if A = B
+	 * Interstitial-Vacancy Annihilation
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	for (int numVOther = 1; numVOther <= numVClusters; numVOther++) {
 		// Clear the map since we are reusing it
 		speciesMap.clear();
@@ -93,7 +99,12 @@ void InterstitialCluster::createReactionConnectivity() {
 		combiningReactants.push_back(reactants->at(indexOther));
 	}
 
-	// A*I + B*I → (A+B)*I -----
+	/* ----- A*I + B*I → (A+B)*I -----
+	 *	Interstitial absorption
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	for (int numIOther = 1; numI + numIOther <= maxIClusterSize; numIOther++) {
 		// Clear the map since we are reusing it
 		speciesMap.clear();
@@ -103,9 +114,13 @@ void InterstitialCluster::createReactionConnectivity() {
 		combiningReactants.push_back(reactants->at(indexOther));
 	}
 
-	// ----- (A*He)(B*V) + (C*I) --> (A*He)[(B-C)V] -----
-	// Interstitials interact with all mixed-species clusters by
-	// annihilating vacancies.
+	/* ----- (A*He)(B*V) + (C*I) --> (A*He)[(B-C)V] -----
+	 * Interstitials interact with all mixed-species clusters by
+	 * annihilating vacancies.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
 		for (int numHeOther = 1; numVOther + numHeOther <= maxMixedClusterSize;
 				numHeOther++) {
@@ -120,9 +135,13 @@ void InterstitialCluster::createReactionConnectivity() {
 		}
 	}
 
-	// Interstitial absorption
-	// xHe*yI + I --> xHe*(y + 1)I
-	// Under the condition that (x + y + 1) <= maxSize
+	/* ----- (A*He)*(B*I) + I --> (A*He)*(B + 1)*I -----
+	 * Interstitial absorption by a He under the condition that (x + y + 1)
+	 * <= maxSize
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	if (numI == 1 && numHeIClusters > 0) {
 		for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
 			for (int numHeOther = 1;

@@ -67,10 +67,14 @@ void VCluster::createReactionConnectivity() {
 	// Vacancies interact with everything except for vacancies bigger than they
 	// would combine with to form vacancies larger than the size limit.
 
-	// -----  A*He + B*V → (A*He)(B*V) -----
-	// Vacancy clusters can interact with any helium cluster so long as the sum
-	// of the number of helium atoms and vacancies does not produce a cluster
-	// with a size greater than the maximum mixed-species cluster size.
+	/* -----  A*He + B*V → (A*He)(B*V) -----
+	 * Vacancy clusters can interact with any helium cluster so long as the sum
+	 * of the number of helium atoms and vacancies does not produce a cluster
+	 * with a size greater than the maximum mixed-species cluster size.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	for (int numHeOther = 1; numV + numHeOther <= maxMixedClusterSize;
 			numHeOther++) {
 		speciesMap["He"] = numHeOther;
@@ -79,9 +83,13 @@ void VCluster::createReactionConnectivity() {
 		combiningReactants.push_back(reactants->at(indexOther));
 	}
 
-	//----- A*V + B*V --> (A+B)*V -----
-	// This cluster should interact with all other clusters of the same type up
-	// to the max size minus the size of this one to produce larger clusters.
+	/* ----- A*V + B*V --> (A+B)*V -----
+	 * This cluster should interact with all other clusters of the same type up
+	 * to the max size minus the size of this one to produce larger clusters.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	for (int numVOther = 1; numV + numVOther <= maxVClusterSize; numVOther++) {
 		// Clear the map since we are reusing it
 		speciesMap.clear();
@@ -91,11 +99,15 @@ void VCluster::createReactionConnectivity() {
 		combiningReactants.push_back(reactants->at(indexOther));
 	}
 
-	//----- A*I + B*V
-	// → (A-B)*I, if A > B
-	// → (B-I)*V, if A < B
-	// → 0, if A = B -----
-	// Vacancies always annihilate interstitials.
+	/* ----- A*I + B*V -----
+	 * → (A-B)*I, if A > B
+	 * → (B-I)*V, if A < B
+	 * → 0, if A = B -----
+	 * Vacancies always annihilate interstitials.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	for (int numIOther = 1; numIOther <= numIClusters; numIOther++) {
 		// Clear the map since we are reusing it
 		speciesMap.clear();
@@ -105,10 +117,14 @@ void VCluster::createReactionConnectivity() {
 		combiningReactants.push_back(reactants->at(indexOther));
 	}
 
-	// ----- (A*He)(B*V) + C*V → (A*He)[(B+C)*V] -----
-	// Vacancies can interact with a mixed-species cluster so long as the sum of
-	// the number of vacancy atoms and the size of the mixed-species cluster
-	// does not exceed the maximum mixed-species cluster size.
+	/* ----- (A*He)(B*V) + C*V → (A*He)[(B+C)*V] -----
+	 * Vacancies can interact with a mixed-species cluster so long as the sum of
+	 * the number of vacancy atoms and the size of the mixed-species cluster
+	 * does not exceed the maximum mixed-species cluster size.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	if (numV == 1) {
 		for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
 			for (int numHeOther = 1;
@@ -125,9 +141,12 @@ void VCluster::createReactionConnectivity() {
 		}
 	}
 
-	// Vacancy absorption by HeI:
-	// xHe*yI + zV --> xHe*(y - z)V
-	// under the condition that y - z >= 1
+	/* ----- (AHe)*(BI) + (CV) --> (AHe)*(B - C)V -----
+	 * Vacancy absorption by HeI under the condition that y - z >= 1
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	if (numHeIClusters > 0) {
 		for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
 			for (int numHeOther = 1;
