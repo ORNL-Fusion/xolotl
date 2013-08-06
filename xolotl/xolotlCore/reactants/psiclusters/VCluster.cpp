@@ -15,17 +15,54 @@ VCluster::~VCluster() {
 
 void VCluster::createReactionConnectivity() {
 
+	// Local Declarations - Note the reference to the properties map
 	std::map<std::string, std::string> props = *(network->properties);
-
-	int numV = size;
-	int numHeClusters = std::stoi(props["numHeClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
-	int numIClusters = std::stoi(props["numIClusters"]);
-	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int numHeVClusters = std::stoi(props["numHeVClusters"]);
-	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
+	int numV = size, indexOther;
+	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
+	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
+	int numHeVClusters = std::stoi(props["numHeVClusters"]);
+	int numHeIClusters = std::stoi(props["numHeIClusters"]);
+	int numIClusters = std::stoi(props["numIClusters"]);
 	std::map<std::string, int> speciesMap;
+	int totalSize = 1, firstSize = 0, secondSize = 0;
+	int firstIndex = -1, secondIndex = -1;
+	std::map<std::string, int> firstSpeciesMap, secondSpeciesMap;
+	std::shared_ptr<Reactant> firstReactant, secondReactant;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants = network->reactants;
+
+	/*
+	 * This section fills the array of reacting pairs that combine to produce
+	 * this cluster. The only reactions that produce V clusters are those V
+	 * clusters that are smaller than this.size. Each cluster i combines with
+	 * a second cluster of size this.size - i.size.
+	 *
+	 * Total size starts with a value of one so that clusters of size one are
+	 * not considered in this loop.
+	 */
+	while (totalSize < size) {
+		// Increment the base sizes
+		++firstSize;
+		secondSize = size - firstSize;
+		// Update the maps
+		firstSpeciesMap["V"] = firstSize;
+		secondSpeciesMap["V"] = secondSize;
+		// Get the first and second reactants for the reaction
+		// first + second = this.
+		firstIndex = network->toClusterIndex(firstSpeciesMap);
+		firstReactant = reactants->at(firstIndex);
+		secondIndex = network->toClusterIndex(secondSpeciesMap);
+		secondReactant = reactants->at(secondIndex);
+		// Create a ReactingPair with the two reactants
+		ReactingPair pair;
+		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+		// Add the pair to the list
+		reactingPairs.push_back(pair);
+		// Update the total size. Do not delete this or you'll have an infinite
+		// loop!
+		totalSize = firstSize + secondSize;
+	}
 
 	// Vacancies interact with everything except for vacancies bigger than they
 	// would combine with to form vacancies larger than the size limit.
@@ -39,6 +76,7 @@ void VCluster::createReactionConnectivity() {
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
+		combiningReactants.push_back(reactants->at(indexOther));
 	}
 
 	//----- A*V + B*V --> (A+B)*V -----
@@ -50,6 +88,7 @@ void VCluster::createReactionConnectivity() {
 		speciesMap["V"] = numVOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
+		combiningReactants.push_back(reactants->at(indexOther));
 	}
 
 	//----- A*I + B*V
@@ -63,6 +102,7 @@ void VCluster::createReactionConnectivity() {
 		speciesMap["I"] = numIOther;
 		int indexOther = network->toClusterIndex(speciesMap);
 		reactionConnectivity[indexOther] = 1;
+		combiningReactants.push_back(reactants->at(indexOther));
 	}
 
 	// ----- (A*He)(B*V) + C*V → (A*He)[(B+C)*V] -----
@@ -80,6 +120,7 @@ void VCluster::createReactionConnectivity() {
 				speciesMap["V"] = numVOther;
 				int indexOther = network->toClusterIndex(speciesMap);
 				reactionConnectivity[indexOther] = 1;
+				combiningReactants.push_back(reactants->at(indexOther));
 			}
 		}
 	}
@@ -99,10 +140,12 @@ void VCluster::createReactionConnectivity() {
 				speciesMap["I"] = numIOther;
 				int indexOther = network->toClusterIndex(speciesMap);
 				reactionConnectivity[indexOther] = (int) connects;
+				combiningReactants.push_back(reactants->at(indexOther));
 			}
 		}
 	}
 
+	return;
 }
 
 void VCluster::createDissociationConnectivity() {
