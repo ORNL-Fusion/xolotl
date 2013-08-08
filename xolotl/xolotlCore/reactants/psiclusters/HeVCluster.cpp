@@ -50,8 +50,10 @@ void HeVCluster::createReactionConnectivity() {
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants =
 		network->reactants;
 
-	// Fill reacting pairs...
-	// xHe yV + zHe --> (x+z)He yV
+	/* (A*He)(B*V) + (C*He) --> [(A+C)He]*(B*V)
+	 * Fill reacting pairs for helium absorption by mixed clusters that results
+	 * in the production of this cluster.
+	 */
 	for (int z = 1; z <= maxHeClusterSize; z++) {
 		// Set the first reactant's map data
 		firstReactantMap["He"] = numHe - z;
@@ -76,6 +78,8 @@ void HeVCluster::createReactionConnectivity() {
 		reactingPairs.push_back(pair);
 	}
 
+	std::cout << "Completed first production loop" << std::endl;
+
 	// xHe yV + V --> xHe (y+1) V
 	// Set the first reactant's map data
 	firstReactantMap["He"] = numHe;
@@ -99,7 +103,9 @@ void HeVCluster::createReactionConnectivity() {
 	// Add the pair to the list
 	reactingPairs.push_back(pair);
 
-	// xHe yV + zI --> xHe (y-z)V
+	std::cout << "Added vacancy pair." << std::endl;
+
+	// (A*He)(B*V) + C*I --> (A*He)[(B-C)V]
 	for (int z = 1; z <= maxIClusterSize; z++) {
 		// Set the first reactant's map data
 		firstReactantMap["He"] = numHe;
@@ -112,17 +118,23 @@ void HeVCluster::createReactionConnectivity() {
 		secondReactantMap["I"] = z;
 
 		// Get those Reactants from the network
-		firstReactant = reactants->at(network->toClusterIndex(firstReactantMap));
-		secondReactant = reactants->at(network->toClusterIndex(secondReactantMap));
+		int firstReactantIndex = network->toClusterIndex(firstReactantMap);
+		int secondReactantIndex = network->toClusterIndex(secondReactantMap);
+		std::cout << firstReactantIndex << " " << secondReactantIndex << std::endl;
+		std::cout << numHe << " " << numV + z << " " << numV << " " << z << std::endl;
+		firstReactant = reactants->at(firstReactantIndex);
+		secondReactant = reactants->at(secondReactantIndex);
 
 		// Create the Reacting Pair
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster > (reactants->at(network->toClusterIndex(firstReactantMap)));
-		pair.second = std::dynamic_pointer_cast < PSICluster > (reactants->at(network->toClusterIndex(secondReactantMap)));
+		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
+		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
 
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 	}
+
+	std::cout << "Accounted for interstitial absorption." << std::endl;
 
 	// ---- Old Andrew Stuff ----
 	// This cluster is involved in the following interactions:

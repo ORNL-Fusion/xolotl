@@ -46,65 +46,63 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
 
 	// Local Declarations
 	int clusterSize = 0;
-	std::string numClustersKey;
+	std::string numClustersKey, maxSizeKey;
 	std::shared_ptr<PSICluster> cluster;
 
 	// Determine the type of the cluster given the number of each species.
 	// Create a new cluster by that type and specify the names of the
 	// property keys.
-
 	if (numHe > 0 && numV > 0) {
 		clusterSize = numHe + numV;
-
 		// Create a new HeVCluster
 		cluster = std::make_shared < HeVCluster > (numHe, numV);
 		numClustersKey = "numHeVClusters";
-
+		maxSizeKey = "maxMixedClusterSize";
 		// Add it to the HeV
 		heVClusters.push_back(cluster);
 	} else if (numHe > 0 && numI > 0) {
-
-		throw std::string("InterstitialCluster is not implemented yet");
-
+		throw std::string("HeliumInterstitialCluster is not implemented yet");
 		// clusterSize = numHe + numI;
-
 		// Create a new HeInterstitialCluster
 		// cluster = std::make_shared<HeInterstitialCluster>(numHe, numI);
 		// numClustersKey = "numHeIClusters";
+		// maxSizeKey = "maxMixedClusterSize";
+		// FIXME! Add code to add it to the list
 	} else if (numHe > 0) {
 		clusterSize = numHe;
-
 		// Create a new HeCluster
 		cluster = std::make_shared < HeCluster > (numHe);
 		numClustersKey = "numHeClusters";
-
+		maxSizeKey = "maxHeClusterSize";
 		// Add it to the HeCluster list
 		heClusters.push_back(cluster);
 	} else if (numV > 0) {
 		clusterSize = numV;
-
 		// Create a new VCluster
 		cluster = std::make_shared < VCluster > (numV);
 		numClustersKey = "numVClusters";
-
+		maxSizeKey = "maxVClusterSize";
 		// Add it to the VCluster list
 		vClusters.push_back(cluster);
 	} else if (numI > 0) {
 		clusterSize = numI;
-
 		// Create a new ICluster
 		cluster = std::make_shared < InterstitialCluster > (numI);
 		numClustersKey = "numIClusters";
-
+		maxSizeKey = "maxIClusterSize";
 		// Add it to the ICluster list
 		iClusters.push_back(cluster);
 	}
 
 	// Increment the number of total clusters of this type
-
 	int numClusters = std::stoi(props->at(numClustersKey));
 	numClusters++;
 	props->at(numClustersKey) = std::to_string((long long) numClusters);
+	// Increment the max cluster size key
+	int maxSize = std::stoi(props->at(maxSizeKey));
+	maxSize = std::max(numHe+numV+numI,maxSize);
+	std::cout << "Max size = " << maxSize << std::endl;
+	props->at(maxSizeKey) = std::to_string((long long) maxSize);
 
 	return cluster;
 }
@@ -170,10 +168,10 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 
 		// Setup the properties map
 		props = network->properties;
-		(*props)["maxHeClusterSize"] = "10";
-		(*props)["maxVClusterSize"] = "10";
-		(*props)["maxIClusterSize"] = "10";
-		(*props)["maxMixedClusterSize"] = "10";
+		(*props)["maxHeClusterSize"] = "1";
+		(*props)["maxVClusterSize"] = "1";
+		(*props)["maxIClusterSize"] = "1";
+		(*props)["maxMixedClusterSize"] = "1";
 		(*props)["numHeClusters"] = "0";
 		(*props)["numVClusters"] = "0";
 		(*props)["numIClusters"] = "0";

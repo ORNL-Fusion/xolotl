@@ -39,6 +39,8 @@ int PSIClusterReactionNetwork::toClusterIndex(
 	int numHe = 0;
 	int numV = 0;
 	int numI = 0;
+	int numReactants = reactants->size();
+	int finalIndex = 0;
 	// A handy typedef
 	typedef const std::map<std::string, int> clusterMap_t;
 	// Convert the property strings so we can use them
@@ -62,12 +64,13 @@ int PSIClusterReactionNetwork::toClusterIndex(
 	} else if (numSpecies == 1) {
 		// Single species
 		if (numHe) {
-			return numHe - 1;
+			finalIndex = numHe - 1;
 		} else if (numV) {
-			return numV + numHeClusters - 1;
+			finalIndex = numV + numHeClusters - 1;
 		} else if (numI) {
-			return numI + numHeClusters + numVClusters - 1;
+			finalIndex = numI + numHeClusters + numVClusters - 1;
 		}
+		return finalIndex;
 	} else if (numSpecies == 2) {
 		// HeVCluster
 		int indexOffset = numHeClusters + numVClusters + numIClusters;
@@ -76,20 +79,21 @@ int PSIClusterReactionNetwork::toClusterIndex(
 			// to an index
 			int index = (numV - 1) * maxMixedClusterSize - numV * (numV - 1) / 2
 					+ numHe - 1;
-			return indexOffset + index;
+			std::cout << indexOffset << " " << index << " " << maxMixedClusterSize << " " << numHe << " " << numV << std::endl;
+			finalIndex = indexOffset + index;
 		}
-
 		// ----- HeICluster -----
 		// Increment the offset by the number of HeVClusters
 		// indexOffset += maxMixedClusterSize * (maxMixedClusterSize - 1) / 2;
-		indexOffset += numHeVClusters;
-		if (numHe && numI && numHeIClusters > 0) {
+		else if (numHe && numI && numHeIClusters > 0) {
+			indexOffset += numHeVClusters;
 			// Closed form for converting a top-left triangle grid
 			// to an index
 			int index = (numI - 1) * maxMixedClusterSize - numI * (numI - 1) / 2
 					+ numHe - 1;
-			return indexOffset + index;
+			finalIndex = indexOffset + index;
 		}
+		return finalIndex;
 	}
 
 	throw std::string("Reaction index could not be found");

@@ -137,6 +137,7 @@ void HeCluster::createReactionConnectivity() {
 				speciesMap["V"] = numVOther;
 				indexOther = network->toClusterIndex(speciesMap);
 				reactionConnectivity[indexOther] = 1;
+				std::cout << numHeOther << " " << numVOther << " " << numHe << " "<< indexOther << " " << maxMixedClusterSize << std::endl;
 				combiningReactants.push_back(reactants->at(indexOther));
 			}
 		}
