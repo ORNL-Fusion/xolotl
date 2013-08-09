@@ -79,7 +79,8 @@ int PSIClusterReactionNetwork::toClusterIndex(
 			// to an index
 			int index = (numV - 1) * maxMixedClusterSize - numV * (numV - 1) / 2
 					+ numHe - 1;
-			std::cout << indexOffset << " " << index << " " << maxMixedClusterSize << " " << numHe << " " << numV << std::endl;
+			//std::cout << "[toClusterIndex]: " << indexOffset << " " << index
+			//		<< " " << maxMixedClusterSize << " " << numHe << " " << numV << std::endl;
 			finalIndex = indexOffset + index;
 		}
 		// ----- HeICluster -----

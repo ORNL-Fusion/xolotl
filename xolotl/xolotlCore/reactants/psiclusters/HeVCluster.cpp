@@ -65,17 +65,24 @@ void HeVCluster::createReactionConnectivity() {
 		secondReactantMap["V"] = 0;
 		secondReactantMap["I"] = 0;
 
-		// Get those Reactants from the network
-		firstReactant = reactants->at(network->toClusterIndex(firstReactantMap));
-		secondReactant = reactants->at(network->toClusterIndex(secondReactantMap));
+		int firstIndex = network->toClusterIndex(firstReactantMap);
+		int secondIndex = network->toClusterIndex(secondReactantMap);
 
-		// Create the Reacting Pair
-		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster > (reactants->at(network->toClusterIndex(firstReactantMap)));
-		pair.second = std::dynamic_pointer_cast < PSICluster > (reactants->at(network->toClusterIndex(secondReactantMap)));
+		if (firstIndex < reactants->size() && secondIndex < reactants->size()) {
+			// Get those Reactants from the network
+			firstReactant = reactants->at(firstIndex);
+			secondReactant = reactants->at(secondIndex);
 
-		// Add the pair to the list
-		reactingPairs.push_back(pair);
+			// Create the Reacting Pair
+			ReactingPair pair;
+			pair.first = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(firstIndex));
+			pair.second = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(secondIndex));
+
+			// Add the pair to the list
+			reactingPairs.push_back(pair);
+		}
 	}
 
 	std::cout << "Completed first production loop" << std::endl;
@@ -91,17 +98,24 @@ void HeVCluster::createReactionConnectivity() {
 	secondReactantMap["V"] = 1;
 	secondReactantMap["I"] = 0;
 
-	// Get those Reactants from the network
-	firstReactant = reactants->at(network->toClusterIndex(firstReactantMap));
-	secondReactant = reactants->at(network->toClusterIndex(secondReactantMap));
+	int firstIndex = network->toClusterIndex(firstReactantMap);
+	int secondIndex = network->toClusterIndex(secondReactantMap);
 
-	// Create the Reacting Pair
-	ReactingPair pair;
-	pair.first = std::dynamic_pointer_cast < PSICluster > (reactants->at(network->toClusterIndex(firstReactantMap)));
-	pair.second = std::dynamic_pointer_cast < PSICluster > (reactants->at(network->toClusterIndex(secondReactantMap)));
+	if (firstIndex < reactants->size() && secondIndex < reactants->size()) {
+		// Get those Reactants from the network
+		firstReactant = reactants->at(firstIndex);
+		secondReactant = reactants->at(secondIndex);
 
-	// Add the pair to the list
-	reactingPairs.push_back(pair);
+		// Create the Reacting Pair
+		ReactingPair pair;
+		pair.first = std::dynamic_pointer_cast<PSICluster>(
+				reactants->at(firstIndex));
+		pair.second = std::dynamic_pointer_cast<PSICluster>(
+				reactants->at(secondIndex));
+
+		// Add the pair to the list
+		reactingPairs.push_back(pair);
+	}
 
 	std::cout << "Added vacancy pair." << std::endl;
 
@@ -122,16 +136,20 @@ void HeVCluster::createReactionConnectivity() {
 		int secondReactantIndex = network->toClusterIndex(secondReactantMap);
 		std::cout << firstReactantIndex << " " << secondReactantIndex << std::endl;
 		std::cout << numHe << " " << numV + z << " " << numV << " " << z << std::endl;
-		firstReactant = reactants->at(firstReactantIndex);
-		secondReactant = reactants->at(secondReactantIndex);
 
-		// Create the Reacting Pair
-		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
-		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+		if (firstReactantIndex < reactants->size()
+				&& secondReactantIndex < reactants->size()) {
+			firstReactant = reactants->at(firstReactantIndex);
+			secondReactant = reactants->at(secondReactantIndex);
 
-		// Add the pair to the list
-		reactingPairs.push_back(pair);
+			// Create the Reacting Pair
+			ReactingPair pair;
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+
+			// Add the pair to the list
+			reactingPairs.push_back(pair);
+		}
 	}
 
 	std::cout << "Accounted for interstitial absorption." << std::endl;
@@ -145,6 +163,9 @@ void HeVCluster::createReactionConnectivity() {
 		speciesMap["He"] = z;
 		int i = network->toClusterIndex(speciesMap);
 
+		if (i >= reactants->size()) {
+			break;
+		}
 		reactionConnectivity.at(i) = 1;
 		combiningReactants.push_back(reactants->at(i));
 	}
@@ -155,9 +176,10 @@ void HeVCluster::createReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["V"] = 1;
 		int i = network->toClusterIndex(speciesMap);
-
-		reactionConnectivity.at(i) = 1;
-		combiningReactants.push_back(reactants->at(i));
+		if (i < reactants->size()) {
+			reactionConnectivity.at(i) = 1;
+			combiningReactants.push_back(reactants->at(i));
+		}
 	}
 
 	// xHe*yV + zI  --> xHe*(y - z)V
@@ -170,12 +192,16 @@ void HeVCluster::createReactionConnectivity() {
 		std::map<std::string, int> speciesMap;
 		speciesMap["I"] = numIOther;
 		int i = network->toClusterIndex(speciesMap);
+		if (i >= reactants->size()) {
+			break;
+		}
 
 		reactionConnectivity.at(i) = 1;
 		combiningReactants.push_back(reactants->at(i));
 	}
 
 	// Everything else is 0 (not connected)
+
 }
 
 void HeVCluster::createDissociationConnectivity() {

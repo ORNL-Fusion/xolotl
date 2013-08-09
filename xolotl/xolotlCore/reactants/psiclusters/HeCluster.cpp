@@ -28,8 +28,8 @@ void HeCluster::createReactionConnectivity() {
 	int firstIndex = -1, secondIndex = -1;
 	std::map<std::string, int> firstSpeciesMap, secondSpeciesMap;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>reactants =
-			network->reactants;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants =
+	network->reactants;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
@@ -55,8 +55,8 @@ void HeCluster::createReactionConnectivity() {
 		secondReactant = reactants->at(secondIndex);
 		// Create a ReactingPair with the two reactants
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
-		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 		// Update the total size. Do not delete this or you'll have an infinite
@@ -133,11 +133,14 @@ void HeCluster::createReactionConnectivity() {
 					numHeOther++) {
 				// Clear the map since we are reusing it
 				speciesMap.clear();
-				speciesMap["He"] = numHeOther;
-				speciesMap["V"] = numVOther;
+				speciesMap["He"] = numHeOther; // 155
+				speciesMap["V"] = numVOther; // 24
+
 				indexOther = network->toClusterIndex(speciesMap);
+				if (indexOther >= reactants->size()) {
+					break;
+				}
 				reactionConnectivity[indexOther] = 1;
-				std::cout << numHeOther << " " << numVOther << " " << numHe << " "<< indexOther << " " << maxMixedClusterSize << std::endl;
 				combiningReactants.push_back(reactants->at(indexOther));
 			}
 		}
@@ -162,6 +165,9 @@ void HeCluster::createReactionConnectivity() {
 				speciesMap["He"] = numHeOther;
 				speciesMap["I"] = numIOther;
 				indexOther = network->toClusterIndex(speciesMap);
+				if (indexOther >= reactants->size()) {
+					break;
+				}
 				reactionConnectivity[indexOther] = 1;
 				combiningReactants.push_back(reactants->at(indexOther));
 			}

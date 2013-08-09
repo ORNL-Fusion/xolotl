@@ -1,5 +1,6 @@
 // Includes
 #include "HeInterstitialCluster.h"
+#include <iostream>
 
 using namespace xolotlCore;
 
@@ -65,19 +66,24 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	secondReactantMap["V"] = 0;
 	secondReactantMap["I"] = 1;
 
-	// Get those Reactants from the network
-	firstReactant = reactants->at(network->toClusterIndex(firstReactantMap));
-	secondReactant = reactants->at(network->toClusterIndex(secondReactantMap));
+	int firstIndex = network->toClusterIndex(firstReactantMap);
+	int secondIndex = network->toClusterIndex(secondReactantMap);
 
-	// Create the Reacting Pair
-	ReactingPair pair;
-	pair.first = std::dynamic_pointer_cast<PSICluster>(
-			reactants->at(network->toClusterIndex(firstReactantMap)));
-	pair.second = std::dynamic_pointer_cast<PSICluster>(
-			reactants->at(network->toClusterIndex(secondReactantMap)));
+	if (firstIndex < reactants->size() && secondIndex < reactants->size()) {
+		// Get those Reactants from the network
+		firstReactant = reactants->at(firstIndex);
+		secondReactant = reactants->at(secondIndex);
 
-	// Add the pair to the list
-	reactingPairs.push_back(pair);
+		// Create the Reacting Pair
+		ReactingPair pair;
+		pair.first = std::dynamic_pointer_cast<PSICluster>(
+				reactants->at(firstIndex));
+		pair.second = std::dynamic_pointer_cast<PSICluster>(
+				reactants->at(secondIndex));
+
+		// Add the pair to the list
+		reactingPairs.push_back(pair);
+	}
 
 	// xHe yI + zV --> xHe (y-z)I
 	for (int z = 1; z <= maxVClusterSize; z++) {
@@ -91,19 +97,24 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		secondReactantMap["V"] = z;
 		secondReactantMap["I"] = 0;
 
-		// Get those Reactants from the network
-		firstReactant = reactants->at(network->toClusterIndex(firstReactantMap));
-		secondReactant = reactants->at(network->toClusterIndex(secondReactantMap));
+		int firstIndex = network->toClusterIndex(firstReactantMap);
+		int secondIndex = network->toClusterIndex(secondReactantMap);
 
-		// Create the Reacting Pair
-		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(
-				reactants->at(network->toClusterIndex(firstReactantMap)));
-		pair.second = std::dynamic_pointer_cast<PSICluster>(
-				reactants->at(network->toClusterIndex(secondReactantMap)));
+		if (firstIndex < reactants->size() && secondIndex < reactants->size()) {
+			// Get those Reactants from the network
+			firstReactant = reactants->at(firstIndex);
+			secondReactant = reactants->at(secondIndex);
 
-		// Add the pair to the list
-		reactingPairs.push_back(pair);
+			// Create the Reacting Pair
+			ReactingPair pair;
+			pair.first = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(firstIndex));
+			pair.second = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(secondIndex));
+
+			// Add the pair to the list
+			reactingPairs.push_back(pair);
+		}
 	}
 
 	// ---- Old Andrew Stuff -----
@@ -116,6 +127,9 @@ void HeInterstitialCluster::createReactionConnectivity() {
 			numHeOther++) {
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);
+		if (indexOther >= reactants->size()) {
+			break;
+		}
 		reactionConnectivity[indexOther] = 1;
 		combiningReactants.push_back(reactants->at(indexOther));
 	}
@@ -128,8 +142,10 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		speciesMap.clear();
 		speciesMap["I"] = 1;
 		int indexOther = network->toClusterIndex(speciesMap);
-		reactionConnectivity[indexOther] = 1;
-		combiningReactants.push_back(reactants->at(indexOther));
+		if (indexOther < reactants->size()) {
+			reactionConnectivity[indexOther] = 1;
+			combiningReactants.push_back(reactants->at(indexOther));
+		}
 	}
 
 	// Reduction through vacancy absorption
@@ -139,6 +155,9 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		speciesMap.clear();
 		speciesMap["V"] = numVOther;
 		int indexOther = network->toClusterIndex(speciesMap);
+		if (indexOther >= reactants->size()) {
+			break;
+		}
 		reactionConnectivity[indexOther] = 1;
 		combiningReactants.push_back(reactants->at(indexOther));
 	}

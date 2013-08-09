@@ -1,5 +1,6 @@
 #include "InterstitialCluster.h"
 #include <Constants.h>
+#include <iostream>
 
 using namespace xolotlCore;
 
@@ -130,6 +131,9 @@ void InterstitialCluster::createReactionConnectivity() {
 			speciesMap["He"] = numHeOther;
 			speciesMap["V"] = numVOther;
 			int indexOther = network->toClusterIndex(speciesMap);
+			if (indexOther >= reactants->size()) {
+				break;
+			}
 			reactionConnectivity[indexOther] = (int) connected;
 			combiningReactants.push_back(reactants->at(indexOther));
 		}
@@ -152,6 +156,9 @@ void InterstitialCluster::createReactionConnectivity() {
 				speciesMap["He"] = numHeOther;
 				speciesMap["I"] = numIOther;
 				int indexOther = network->toClusterIndex(speciesMap);
+				if (indexOther >= reactants->size()) {
+					break;
+				}
 				reactionConnectivity[indexOther] = 1;
 				combiningReactants.push_back(reactants->at(indexOther));
 			}

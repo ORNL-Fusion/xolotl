@@ -1,5 +1,6 @@
 // Includes
 #include "VCluster.h"
+#include <iostream>
 #include <Constants.h>
 
 using namespace xolotlCore;
@@ -135,6 +136,9 @@ void VCluster::createReactionConnectivity() {
 				speciesMap["He"] = numHeOther;
 				speciesMap["V"] = numVOther;
 				int indexOther = network->toClusterIndex(speciesMap);
+				if (indexOther >= reactants->size()) {
+					break;
+				}
 				reactionConnectivity[indexOther] = 1;
 				combiningReactants.push_back(reactants->at(indexOther));
 			}
@@ -158,6 +162,9 @@ void VCluster::createReactionConnectivity() {
 				speciesMap["He"] = numHeOther;
 				speciesMap["I"] = numIOther;
 				int indexOther = network->toClusterIndex(speciesMap);
+				if (indexOther >= reactants->size()) {
+					break;
+				}
 				reactionConnectivity[indexOther] = (int) connects;
 				combiningReactants.push_back(reactants->at(indexOther));
 			}
