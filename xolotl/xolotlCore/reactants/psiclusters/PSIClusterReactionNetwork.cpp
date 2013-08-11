@@ -39,10 +39,11 @@ int PSIClusterReactionNetwork::toClusterIndex(
 	int numHe = 0;
 	int numV = 0;
 	int numI = 0;
+	int indexOffset = 0;
 	int numReactants = reactants->size();
-	int finalIndex = 0;
-	// A handy typedef
-	typedef const std::map<std::string, int> clusterMap_t;
+	int finalIndex = -1;
+	std::map<std::string, int> otherClusterMap;
+	std::shared_ptr<PSICluster> cluster;
 	// Convert the property strings so we can use them
 	int numHeClusters = std::stoi((*properties)["numHeClusters"]);
 	int numVClusters = std::stoi((*properties)["numVClusters"]);
@@ -53,9 +54,9 @@ int PSIClusterReactionNetwork::toClusterIndex(
 	int numSpecies = 0;
 
 	// Update the indices
-	numHe = std::max(clusterMap["He"],0);
-	numV = std::max(clusterMap["V"],0);
-	numI = std::max(clusterMap["I"],0);
+	numHe = std::max(clusterMap["He"], 0);
+	numV = std::max(clusterMap["V"], 0);
+	numI = std::max(clusterMap["I"], 0);
 	numSpecies = (numHe > 0) + (numV > 0) + (numI > 0);
 
 	// Cluster should either contain one or two types of species.
@@ -70,32 +71,35 @@ int PSIClusterReactionNetwork::toClusterIndex(
 		} else if (numI) {
 			finalIndex = numI + numHeClusters + numVClusters - 1;
 		}
-		return finalIndex;
 	} else if (numSpecies == 2) {
 		// HeVCluster
-		int indexOffset = numHeClusters + numVClusters + numIClusters;
-		if (numHe && numV && numHeVClusters > 0) {
-			// Closed form for converting a top-left triangle grid
-			// to an index
-			int index = (numV - 1) * maxMixedClusterSize - numV * (numV - 1) / 2
-					+ numHe - 1;
-			//std::cout << "[toClusterIndex]: " << indexOffset << " " << index
-			//		<< " " << maxMixedClusterSize << " " << numHe << " " << numV << std::endl;
-			finalIndex = indexOffset + index;
+		if (numHe && numV) {
+			indexOffset = numHeClusters + numVClusters + numIClusters;
+			// Do a linear search across the set of HeV clusters to find the
+			// cluster. FIXME - THIS IS SLOW FOR LARGE N!
+//			for (int i = indexOffset; i < indexOffset + numHeVClusters; i++) {
+//				cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+//				otherClusterMap = cluster->getClusterMap();
+//				if (otherClusterMap.at("He") == numHe && otherClusterMap.at("V") == numV) {
+//					finalIndex = i;
+//					break;
+//				}
+//			}
+			// FIXME FIXME FIXME!!!!!!!!
+			finalIndex = 1;
 		}
 		// ----- HeICluster -----
 		// Increment the offset by the number of HeVClusters
 		// indexOffset += maxMixedClusterSize * (maxMixedClusterSize - 1) / 2;
 		else if (numHe && numI && numHeIClusters > 0) {
-			indexOffset += numHeVClusters;
+			indexOffset = numHeClusters + numVClusters + numIClusters + numHeVClusters;
 			// Closed form for converting a top-left triangle grid
 			// to an index
 			int index = (numI - 1) * maxMixedClusterSize - numI * (numI - 1) / 2
 					+ numHe - 1;
 			finalIndex = indexOffset + index;
 		}
-		return finalIndex;
 	}
 
-	throw std::string("Reaction index could not be found");
+	return finalIndex;
 }

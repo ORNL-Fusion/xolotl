@@ -29,8 +29,8 @@ void InterstitialCluster::createReactionConnectivity() {
 	int firstIndex = -1, secondIndex = -1;
 	std::map<std::string, int> firstSpeciesMap, secondSpeciesMap;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants =
-	network->reactants;
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>reactants =
+			network->reactants;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
@@ -122,46 +122,63 @@ void InterstitialCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
-		for (int numHeOther = 1; numVOther + numHeOther <= maxMixedClusterSize;
-				numHeOther++) {
-			// Clear the map since we are reusing it
-			speciesMap.clear();
-			bool connected = numVOther - numI >= 1;
-			speciesMap["He"] = numHeOther;
-			speciesMap["V"] = numVOther;
-			int indexOther = network->toClusterIndex(speciesMap);
-			if (indexOther >= reactants->size()) {
-				break;
-			}
-			reactionConnectivity[indexOther] = (int) connected;
-			combiningReactants.push_back(reactants->at(indexOther));
-		}
+	if (numHeVClusters > 0) {
+		// Get the index of the first HeV cluster. Clear the map since we are
+		// reusing it.
+		speciesMap.clear();
+		speciesMap["He"] = 1;
+		speciesMap["V"] = 1;
+		int heVIndex = network->toClusterIndex(speciesMap);
+		// Connect to the HeV clusters if possible
+		connectWithMixedClusters(heVIndex,heVIndex+numHeVClusters,"V");
 	}
 
 	/* ----- (A*He)*(B*I) + I --> (A*He)*(B + 1)*I -----
-	 * Interstitial absorption by a He under the condition that (x + y + 1)
-	 * <= maxSize
+	 * Single interstitial absorption by a HeI cluster under the condition
+	 * that (x + y + 1) <= maxSize
 	 *
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
 	if (numI == 1 && numHeIClusters > 0) {
-		for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
-			for (int numHeOther = 1;
-					numIOther + numHeOther + 1 <= maxMixedClusterSize;
-					numHeOther++) {
-				// Clear the map since we are reusing it
-				speciesMap.clear();
-				speciesMap["He"] = numHeOther;
-				speciesMap["I"] = numIOther;
-				int indexOther = network->toClusterIndex(speciesMap);
-				if (indexOther >= reactants->size()) {
-					break;
-				}
-				reactionConnectivity[indexOther] = 1;
-				combiningReactants.push_back(reactants->at(indexOther));
-			}
+		// Get the index of the first HeI cluster. Clear the map since we are
+		// reusing it.
+		speciesMap.clear();
+		speciesMap["He"] = 1;
+		speciesMap["I"] = 1;
+		int heIIndex = network->toClusterIndex(speciesMap);
+		// Connect to the HeV clusters if possible
+		connectWithMixedClusters(heIIndex,heIIndex+numHeIClusters,"V");
+	}
+
+	return;
+}
+
+void InterstitialCluster::connectWithMixedClusters(int startIndex,
+		int stopIndex, std::string mixedSpecies) {
+
+	// Local Declarations
+	int otherNumHe, otherNumMixed;
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>reactants =
+			network->reactants;
+	int maxMixedClusterSize = std::stoi(
+			network->properties->at("maxMixedClusterSize"));
+	std::map<std::string, int> otherSpeciesMap;
+	std::shared_ptr<PSICluster> mixedCluster;
+
+	// Loop over the mixed clusters
+	for (int i = startIndex; i < stopIndex; i++) {
+		mixedCluster = std::dynamic_pointer_cast < PSICluster
+				> (reactants->at(i));
+		// Get the cluster sizes for the mixed cluster
+		otherSpeciesMap = (std::dynamic_pointer_cast < PSICluster
+				> (reactants->at(i)))->getClusterMap();
+		otherNumHe = otherSpeciesMap["He"];
+		otherNumMixed = otherSpeciesMap[mixedSpecies];
+		// React with it if the sizes are compatible.
+		if (otherNumHe + otherNumMixed + size <= maxMixedClusterSize) {
+			reactionConnectivity[i] = 1;
+			combiningReactants.push_back(reactants->at(i));
 		}
 	}
 

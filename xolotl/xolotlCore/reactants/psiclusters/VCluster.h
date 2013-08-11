@@ -17,9 +17,17 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	VCluster() :
-			PSICluster(1) {
-	}
+	VCluster() : PSICluster(1) {}
+
+	/**
+	 * This operation computes the reaction connectivity and combining
+	 * reactants for a mixed species cluster with this cluster.
+	 * @param startIndex The starting index in the reactants array
+	 * @param stopIndex The final index in the reactants array
+	 * @param mixedSpecies The name of the "mixed species," i.e. - "V" or "I".
+	 */
+	void connectWithMixedClusters(int startIndex, int stopIndex,
+			std::string mixedSpecies);
 
 public:
 

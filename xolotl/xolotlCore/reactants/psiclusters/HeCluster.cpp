@@ -18,18 +18,18 @@ void HeCluster::createReactionConnectivity() {
 
 	// Local Declarations - Note the reference to the properties map
 	std::map<std::string, std::string> props = *(network->properties);
-	int numHe = size, indexOther;
+	int indexOther, otherNumHe, otherNumV, otherNumI;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	std::map<std::string, int> speciesMap;
+	std::map<std::string, int> speciesMap, otherSpeciesMap;
 	int totalSize = 1, firstSize = 0, secondSize = 0;
 	int firstIndex = -1, secondIndex = -1;
 	std::map<std::string, int> firstSpeciesMap, secondSpeciesMap;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants =
-	network->reactants;
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>reactants =
+			network->reactants;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
@@ -55,8 +55,8 @@ void HeCluster::createReactionConnectivity() {
 		secondReactant = reactants->at(secondIndex);
 		// Create a ReactingPair with the two reactants
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
+		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 		// Update the total size. Do not delete this or you'll have an infinite
@@ -71,7 +71,7 @@ void HeCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	for (int numHeOther = 1; numHe + numHeOther <= maxHeClusterSize;
+	for (int numHeOther = 1; size + numHeOther <= maxHeClusterSize;
 			numHeOther++) {
 		speciesMap["He"] = numHeOther;
 		indexOther = network->toClusterIndex(speciesMap);
@@ -87,7 +87,7 @@ void HeCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	for (int numVOther = 1; numHe + numVOther <= maxMixedClusterSize;
+	for (int numVOther = 1; size + numVOther <= maxMixedClusterSize;
 			numVOther++) {
 		// Clear the map since we are reusing it
 		speciesMap.clear();
@@ -106,7 +106,7 @@ void HeCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	for (int numIOther = 1; numIOther + numHe <= maxMixedClusterSize;
+	for (int numIOther = 1; numIOther + size <= maxMixedClusterSize;
 			numIOther++) {
 		// Clear the map since we are reusing it
 		speciesMap.clear();
@@ -127,23 +127,14 @@ void HeCluster::createReactionConnectivity() {
 	 * Find the clusters by looping over all size combinations of HeV clusters.
 	 */
 	if (numHeVClusters > 0) {
-		for (int numVOther = 1; numVOther <= maxMixedClusterSize; numVOther++) {
-			for (int numHeOther = 1;
-					numVOther + numHeOther + numHe <= maxMixedClusterSize;
-					numHeOther++) {
-				// Clear the map since we are reusing it
-				speciesMap.clear();
-				speciesMap["He"] = numHeOther; // 155
-				speciesMap["V"] = numVOther; // 24
-
-				indexOther = network->toClusterIndex(speciesMap);
-				if (indexOther >= reactants->size()) {
-					break;
-				}
-				reactionConnectivity[indexOther] = 1;
-				combiningReactants.push_back(reactants->at(indexOther));
-			}
-		}
+		// Get the index of the first HeV cluster. Clear the map since we are
+		// reusing it.
+		speciesMap.clear();
+		speciesMap["He"] = 1;
+		speciesMap["V"] = 1;
+		int heVIndex = network->toClusterIndex(speciesMap);
+		// Connect to the HeV clusters if possible
+		connectWithMixedClusters(heVIndex,heVIndex+numHeVClusters,"V");
 	}
 
 	/* ----- (A*He)(B*I) + C*He --> ([A + C]*He)(B*I) -----
@@ -156,21 +147,43 @@ void HeCluster::createReactionConnectivity() {
 	 * Find the clusters by looping over all size combinations of HeI clusters.
 	 */
 	if (numHeIClusters > 0) {
-		for (int numIOther = 1; numIOther <= maxMixedClusterSize; numIOther++) {
-			for (int numHeOther = 1;
-					numIOther + numHeOther + numHe <= maxMixedClusterSize;
-					numHeOther++) {
-				// Clear the map since we are reusing it
-				speciesMap.clear();
-				speciesMap["He"] = numHeOther;
-				speciesMap["I"] = numIOther;
-				indexOther = network->toClusterIndex(speciesMap);
-				if (indexOther >= reactants->size()) {
-					break;
-				}
-				reactionConnectivity[indexOther] = 1;
-				combiningReactants.push_back(reactants->at(indexOther));
-			}
+		// Get the index of the first HeI cluster. Clear the map since we are
+		// reusing it.
+		speciesMap.clear();
+		speciesMap["He"] = 1;
+		speciesMap["I"] = 1;
+		int heIIndex = network->toClusterIndex(speciesMap);
+		// Connect to the HeV clusters if possible
+		connectWithMixedClusters(heIIndex,heIIndex+numHeIClusters,"V");
+	}
+
+	return;
+}
+
+void HeCluster::connectWithMixedClusters(int startIndex, int stopIndex,
+		std::string mixedSpecies) {
+
+	// Local Declarations
+	int otherNumHe, otherNumMixed;
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>reactants =
+			network->reactants;
+	int maxMixedClusterSize = std::stoi(network->properties->at("maxMixedClusterSize"));
+	std::map<std::string, int> otherSpeciesMap;
+	std::shared_ptr<PSICluster> mixedCluster;
+
+	// Loop over the mixed clusters
+	for (int i = startIndex; i < stopIndex; i++) {
+		mixedCluster = std::dynamic_pointer_cast < PSICluster
+				> (reactants->at(i));
+		// Get the cluster sizes for the mixed cluster
+		otherSpeciesMap = (std::dynamic_pointer_cast < PSICluster
+				> (reactants->at(i)))->getClusterMap();
+		otherNumHe = otherSpeciesMap["He"];
+		otherNumMixed = otherSpeciesMap[mixedSpecies];
+		// React with it if the sizes are compatible.
+		if (otherNumHe + otherNumMixed + size <= maxMixedClusterSize) {
+			reactionConnectivity[i] = 1;
+			combiningReactants.push_back(reactants->at(i));
 		}
 	}
 
