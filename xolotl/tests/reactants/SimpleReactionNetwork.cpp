@@ -141,3 +141,76 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
 	
 	return network;
 }
+
+/**
+ * This operation returns a reactant with the given name and size if it
+ * exists in the network or null if not.
+ * @param name the name of the reactant
+ * @param size the size of the reactant
+ * @return A shared pointer to the reactant
+ */
+const std::shared_ptr<Reactant> & SimpleReactionNetwork::get(std::string name, int size) {return NULL;}
+
+/**
+ * This operation returns a compound reactant with the given name and size if it
+ * exists in the network or null if not.
+ * @param name the name of the compound reactant
+ * @param sizes an array containing the sizes of each piece of the reactant
+ * @return A shared pointer to the compound reactant
+ */
+const std::shared_ptr<Reactant> & SimpleReactionNetwork::getCompound(std::string name,
+		std::vector<int> sizes) {return NULL;}
+
+/**
+ * This operation adds a reactant or a compound reactant to the network.
+ * @param reactant The reactant that should be added to the network.
+ */
+void SimpleReactionNetwork::add(const std::shared_ptr<Reactant> & reactant) {return;}
+
+/**
+ * This operation returns the names of the reactants in the network.
+ * @return A vector with one each for each of the distinct reactant types
+ * in the network.
+ */
+const std::vector<std::string> & SimpleReactionNetwork::getNames() {
+
+	std::vector<std::string> vector;
+	std::vector<std::string> & vectorRef = vector;
+
+	return vector;
+}
+
+/**
+ * This operation returns the names of the compound reactants in the
+ * network.
+ * @return A vector with one each for each of the distinct compound
+ * reactant types in the network.
+ */
+const std::vector<std::string> & SimpleReactionNetwork::getCompoundNames() {
+	std::vector<std::string> vector;
+	std::vector<std::string> & vectorRef = vector;
+
+	return vectorRef;
+}
+
+/**
+ * This operation returns a map of the properties of this reaction network.
+ * @return The map of properties that has been configured for this
+ * ReactionNetwork.
+ */
+const std::map<std::string, std::string> & SimpleReactionNetwork::getProperties() {
+
+	std::map<std::string,std::string> map;
+	std::map<std::string,std::string> & mapRef = map;
+
+	return mapRef;
+}
+
+/**
+ * This operation sets a property with the given key to the specified value
+ * for the network. ReactionNetworks may reserve the right to ignore this
+ * operation for special key types.
+ * @param key The key for the property
+ * @param value The value to which the key should be set.
+ */
+void SimpleReactionNetwork::setProperty(std::string key, std::string value) {return;}

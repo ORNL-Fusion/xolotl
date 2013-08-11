@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(ReactionNetwork_testSuite)
  */
 BOOST_AUTO_TEST_CASE(checkCopying) {
 	
-	ReactionNetwork network;
+	PSIClusterReactionNetwork network;
 	
 	// Set some properties
 	(*network.properties)["numMixedClusters"] = "4";
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	
 	
 	// Copy the network
-	ReactionNetwork network2 = network;
+	PSIClusterReactionNetwork network2 = network;
 	
 	// Check that the ReactionNetwork fields are copied
 	BOOST_REQUIRE_NE(network.properties.get(), network2.properties.get());

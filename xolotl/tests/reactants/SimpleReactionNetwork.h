@@ -23,6 +23,62 @@ public:
 
 	//! Destructor
 	virtual ~SimpleReactionNetwork();
+
+	/**
+		 * This operation returns a reactant with the given name and size if it
+		 * exists in the network or null if not.
+		 * @param name the name of the reactant
+		 * @param size the size of the reactant
+		 * @return A shared pointer to the reactant
+		 */
+		const std::shared_ptr<xolotlCore::Reactant> & get(std::string name, int size);
+
+		/**
+		 * This operation returns a compound reactant with the given name and size if it
+		 * exists in the network or null if not.
+		 * @param name the name of the compound reactant
+		 * @param sizes an array containing the sizes of each piece of the reactant
+		 * @return A shared pointer to the compound reactant
+		 */
+		const std::shared_ptr<xolotlCore::Reactant> & getCompound(std::string name, std::vector<int> sizes);
+
+		/**
+		 * This operation adds a reactant or a compound reactant to the network.
+		 * @param reactant The reactant that should be added to the network.
+		 */
+		void add(const std::shared_ptr<xolotlCore::Reactant> & reactant);
+
+		/**
+		 * This operation returns the names of the reactants in the network.
+		 * @return A vector with one each for each of the distinct reactant types
+		 * in the network.
+		 */
+		const std::vector<std::string> & getNames();
+
+		/**
+		 * This operation returns the names of the compound reactants in the
+		 * network.
+		 * @return A vector with one each for each of the distinct compound
+		 * reactant types in the network.
+		 */
+		const std::vector<std::string> & getCompoundNames();
+
+		/**
+		 * This operation returns a map of the properties of this reaction network.
+		 * @return The map of properties that has been configured for this
+		 * ReactionNetwork.
+		 */
+		const std::map<std::string,std::string> & getProperties();
+
+		/**
+		 * This operation sets a property with the given key to the specified value
+		 * for the network. ReactionNetworks may reserve the right to ignore this
+		 * operation for special key types.
+		 * @param key The key for the property
+		 * @param value The value to which the key should be set.
+		 */
+		void setProperty(std::string key, std::string value);
+
 };
 
 /**

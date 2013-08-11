@@ -146,7 +146,21 @@ public:
 	 */
 	virtual const std::string toString();
 
+	/**
+	 * This operation returns the name of the reactant.
+	 * @return the name
+	 */
+	std::string getName();
+
+	/**
+	 * This operation returns the compositon of this reactant.
+	 * @return The composition returned as a map with keys naming distinct
+	 * elements and values indicating the amount of the element present.
+	 */
+	std::map<std::string,int> getComposition();
+
 };
-}
+
+}// end namespace xolotlCore
 
 #endif
