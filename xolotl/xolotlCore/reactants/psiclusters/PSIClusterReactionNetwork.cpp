@@ -126,7 +126,9 @@ int PSIClusterReactionNetwork::toClusterIndex(
  */
 const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(
 		std::string name, int size) {
-	return NULL;
+	std::shared_ptr<Reactant> nullPtr;
+
+	return nullPtr;
 }
 
 /**
@@ -138,7 +140,9 @@ const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(
  */
 const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::getCompound(
 		std::string name, std::vector<int> sizes) {
-	return NULL;
+	std::shared_ptr<Reactant> nullPtr;
+
+	return nullPtr;
 }
 
 /**
