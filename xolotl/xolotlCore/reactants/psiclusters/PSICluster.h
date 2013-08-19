@@ -16,6 +16,9 @@ namespace xolotlCore {
  *
  * PSIClusters must always be initialized with a size. If the constructor is
  * passed a size of zero or less, the actual size will be set to 1.
+ *
+ * The getComposition() operation is implemented by subclasses and will always
+ * return a map with the keys He, V, I, HeV or HeI.
  */
 class PSICluster: public Reactant {
 

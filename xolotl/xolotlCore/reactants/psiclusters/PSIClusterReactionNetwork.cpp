@@ -38,8 +38,8 @@ std::map<std::string, int> PSIClusterReactionNetwork::toClusterMap(
 	// Instead of redefining the map for all indices, we simply obtain
 	// the cluster map from the reactant in the reactants vector at the
 	// position of the index.
-	shared_ptr<PSICluster> cluster = std::dynamic_pointer_cast<PSICluster>(
-			reactants->at(index));
+	shared_ptr<PSICluster> cluster = std::dynamic_pointer_cast < PSICluster
+			> (reactants->at(index));
 	return cluster->getClusterMap();
 }
 
@@ -153,7 +153,9 @@ void PSIClusterReactionNetwork::add(
 		const std::shared_ptr<Reactant> & reactant) {
 
 	// Local Declarations
-	int numHe = 0, numV = 0, numI = 0, mixed = 0;
+	int numHe = 0, numV = 0, numI = 0;
+	bool isMixed = false;
+	std::string numClusterKey, clusterSizeKey;
 
 	// Only add a complete reactant
 	if (reactant != NULL) {
@@ -162,19 +164,50 @@ void PSIClusterReactionNetwork::add(
 		auto composition = reactant->getComposition();
 
 		// Get the cluster sizes
-		numHe = composition.at("numHeClusters");
-		numV = composition.at("numVClusters");
-		numI = composition.at("numIClusters");
+		numHe = composition.at("He");
+		numV = composition.at("V");
+		numI = composition.at("I");
 
-		// Determine if the cluster is a compound
-		mixed = (numHe > 0) + (numV > 0) + (numI > 0);
+		// Determine if the cluster is a compound. If there is more than one
+		// type, then the check below will sum to greater than one and we know
+		// that we have a mixed cluster.
+		isMixed = ((numHe > 0) + (numV > 0) + (numI > 0)) > 1;
 
-		// Add the compound or regular reactant
-		if (mixed > 1) {
-			mixedSpeciesMap[composition] = std::dynamic_pointer_cast<PSICluster>(reactant);
-		} else if (mixed == 1) {
-			singleSpeciesMap[composition] = std::dynamic_pointer_cast<PSICluster>(reactant);
+		// Add the compound or regular reactant.
+		if (isMixed) {
+			mixedSpeciesMap[composition] = std::dynamic_pointer_cast
+					< PSICluster > (reactant);
+			// Figure out whether we have HeV or HeI and set the keys
+			if (numV > 0) {
+				numClusterKey = "numHeVClusters";
+				clusterSizeKey = "maxHeVClusterSize";
+			} else {
+				numClusterKey = "numHeIClusters";
+				clusterSizeKey = "maxHeIClusterSize";
+			}
+		} else if (!isMixed) {
+			singleSpeciesMap[composition] = std::dynamic_pointer_cast
+					< PSICluster > (reactant);
+			// Figure out whether we have He, V or I and set the keys
+			if (numHe > 0) {
+				numClusterKey = "numHeClusters";
+				clusterSizeKey = "maxHeClusterSize";
+			} else if (numV > 0) {
+				numClusterKey = "numHVClusters";
+				clusterSizeKey = "maxVClusterSize";
+			} else {
+				numClusterKey = "numIClusters";
+				clusterSizeKey = "maxIClusterSize";
+			}
 		}
+		// Increment the number of total clusters of this type
+		int numClusters = std::stoi(properties->at(numClusterKey));
+		numClusters++;
+		(*properties)[numClusterKey] = std::to_string((long long) numClusters);
+		// Increment the max cluster size key
+		int maxSize = std::stoi(properties->at(clusterSizeKey));
+		maxSize = std::max(numHe + numV + numI, maxSize);
+		(*properties)[clusterSizeKey] = std::to_string((long long) maxSize);
 
 	}
 

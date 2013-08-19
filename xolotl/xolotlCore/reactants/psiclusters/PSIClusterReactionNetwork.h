@@ -29,16 +29,31 @@ private:
 			// Local Declarations
 			int numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
 			int numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
+			double index_lhs = 0.0, index_rhs = 0.0;
+			double bigNumber = 1.0e9;
 
 			// Get the cluster sizes
-			numHe_lhs = lhs.at("numHeClusters");
-			numV_lhs = lhs.at("numVClusters");
-			numI_lhs = lhs.at("numIClusters");
-			numHe_rhs = rhs.at("numHeClusters");
-			numV_rhs = rhs.at("numVClusters");
-			numI_rhs = rhs.at("numIClusters");
+			numHe_lhs = lhs.at("He");
+			numV_lhs = lhs.at("V");
+			numI_lhs = lhs.at("I");
+			numHe_rhs = rhs.at("He");
+			numV_rhs = rhs.at("V");
+			numI_rhs = rhs.at("I");
 
-			return lhs < rhs;
+			// Compute the indices/hashes. This simply bins the amount of each
+			// time in such a way that they can be compared without a large
+			// number of branches. He lands between 1 and 2, V between 2 and 3
+			// and I between 3 and 4. The "big number" was chosen to be
+			// sufficiently larger that a single species cluster would never
+			// reach that size because of physical limits.
+			index_lhs = (numHe_lhs > 0)*(1.0+(numHe_lhs/bigNumber))
+					+ (numV_lhs > 0)*(2.0+(numV_lhs/bigNumber))
+					+ (numI_lhs > 0)*(3.0+(numI_lhs/bigNumber));
+			index_rhs = (numHe_rhs > 0)*(1.0+(numHe_rhs/bigNumber))
+					+ (numV_rhs > 0)*(2.0+(numV_rhs/bigNumber))
+					+ (numI_rhs > 0)*(1.0+(numI_rhs/bigNumber));
+
+			return index_lhs < index_rhs;
 		}
 	};
 
@@ -46,7 +61,7 @@ private:
 	 * The map of single-species clusters, indexed by a map that contains the
 	 * name of the reactant and its size.
 	 */
-	std::map<std::map<std::string, int>, std::shared_ptr<PSICluster>> singleSpeciesMap;
+	std::map<std::map<std::string, int>, std::shared_ptr<PSICluster>, PSIClusterComparator> singleSpeciesMap;
 
 	/**
 	 * The map of mixed or compound species clusters, indexed by a map that

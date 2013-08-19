@@ -222,16 +222,16 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 
 	// Grab the properties afresh
 	auto propsWithClusters = psiNetwork->getProperties();
-	numHeClusters = std::stoi(props["numHeClusters"]);
-	maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
-	numHeVClusters = std::stoi(props["numHeVClusters"]);
-	maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
+	numHeClusters = std::stoi(propsWithClusters["numHeClusters"]);
+	maxHeClusterSize = std::stoi(propsWithClusters["maxHeClusterSize"]);
+	numHeVClusters = std::stoi(propsWithClusters["numHeVClusters"]);
+	maxHeVClusterSize = std::stoi(propsWithClusters["maxHeVClusterSize"]);
 
 	// Check the properties again
 	BOOST_REQUIRE_EQUAL(1,numHeClusters);
 	BOOST_REQUIRE_EQUAL(1,numHeVClusters);
 	BOOST_REQUIRE_EQUAL(5,maxHeClusterSize);
-	BOOST_REQUIRE_EQUAL(7,maxHeVClusterSize);
+	BOOST_REQUIRE_EQUAL(8,maxHeVClusterSize);
 
 	return;
 }

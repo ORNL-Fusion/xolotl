@@ -101,7 +101,6 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
 	// Increment the max cluster size key
 	int maxSize = std::stoi(props->at(maxSizeKey));
 	maxSize = std::max(numHe+numV+numI,maxSize);
-	std::cout << "Max size = " << maxSize << std::endl;
 	props->at(maxSizeKey) = std::to_string((long long) maxSize);
 
 	return cluster;
