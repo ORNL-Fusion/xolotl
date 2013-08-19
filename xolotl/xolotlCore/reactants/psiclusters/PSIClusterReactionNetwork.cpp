@@ -12,6 +12,18 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork() :
 	// Initialize default properties
 	(*properties)["reactionsEnabled"] = "true";
 	(*properties)["dissociationsEnabled"] = "true";
+	(*properties)["numHeClusters"] = "0";
+	(*properties)["numVClusters"] = "0";
+	(*properties)["numIClusters"] = "0";
+	(*properties)["numHeVClusters"] = "0";
+	(*properties)["numHeIClusters"] = "0";
+	(*properties)["maxHeClusterSize"] = "0";
+	(*properties)["maxVClusterSize"] = "0";
+	(*properties)["maxIClusterSize"] = "0";
+	(*properties)["maxHeVClusterSize"] = "0";
+	(*properties)["maxHeIClusterSize"] = "0";
+
+	return;
 }
 
 PSIClusterReactionNetwork::PSIClusterReactionNetwork(
@@ -112,7 +124,10 @@ int PSIClusterReactionNetwork::toClusterIndex(
  * @param size the size of the reactant
  * @return A shared pointer to the reactant
  */
-const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(std::string name, int size) {return NULL;}
+const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(
+		std::string name, int size) {
+	return NULL;
+}
 
 /**
  * This operation returns a compound reactant with the given name and size if it
@@ -121,14 +136,46 @@ const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(std::string nam
  * @param sizes an array containing the sizes of each piece of the reactant
  * @return A shared pointer to the compound reactant
  */
-const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::getCompound(std::string name,
-		std::vector<int> sizes) {return NULL;}
+const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::getCompound(
+		std::string name, std::vector<int> sizes) {
+	return NULL;
+}
 
 /**
  * This operation adds a reactant or a compound reactant to the network.
  * @param reactant The reactant that should be added to the network.
  */
-void PSIClusterReactionNetwork::add(const std::shared_ptr<Reactant> & reactant) {return;}
+void PSIClusterReactionNetwork::add(
+		const std::shared_ptr<Reactant> & reactant) {
+
+	// Local Declarations
+	int numHe = 0, numV = 0, numI = 0, mixed = 0;
+
+	// Only add a complete reactant
+	if (reactant != NULL) {
+
+		// Get the composition
+		auto composition = reactant->getComposition();
+
+		// Get the cluster sizes
+		numHe = composition.at("numHeClusters");
+		numV = composition.at("numVClusters");
+		numI = composition.at("numIClusters");
+
+		// Determine if the cluster is a compound
+		mixed = (numHe > 0) + (numV > 0) + (numI > 0);
+
+		// Add the compound or regular reactant
+		if (mixed > 1) {
+			mixedSpeciesMap[composition] = std::dynamic_pointer_cast<PSICluster>(reactant);
+		} else if (mixed == 1) {
+			singleSpeciesMap[composition] = std::dynamic_pointer_cast<PSICluster>(reactant);
+		}
+
+	}
+
+	return;
+}
 
 /**
  * This operation returns the names of the reactants in the network.
@@ -163,8 +210,8 @@ const std::vector<std::string> & PSIClusterReactionNetwork::getCompoundNames() {
  */
 const std::map<std::string, std::string> & PSIClusterReactionNetwork::getProperties() {
 
-	std::map<std::string,std::string> map;
-	std::map<std::string,std::string> & mapRef = map;
+	// Grab and return the reference
+	std::map<std::string, std::string> & mapRef = *properties;
 
 	return mapRef;
 }
@@ -172,9 +219,27 @@ const std::map<std::string, std::string> & PSIClusterReactionNetwork::getPropert
 /**
  * This operation sets a property with the given key to the specified value
  * for the network. ReactionNetworks may reserve the right to ignore this
- * operation for special key types.
+ * operation for special key types, most especially those that they manage on
+ * their own.
+ *
+ * Calling this operation will ignore all of the published properties that are
+ * configured by default.
  * @param key The key for the property
  * @param value The value to which the key should be set.
  */
-void PSIClusterReactionNetwork::setProperty(std::string key, std::string value) {return;}
+void PSIClusterReactionNetwork::setProperty(const std::string key,
+		const std::string value) {
+
+	// Check the keys and value before trying to set the property
+	if (!key.empty() && !value.empty() && key != "numHeClusters"
+			&& key != "numVClusters" && key != "numIClusters"
+			&& key != "maxHeClusterSize" && key != "maxVClusterSize"
+			&& key != "maxIClusterSize" && key != "maxHeVClusterSize"
+			&& key != "maxHeIClusterSize") {
+		// Add the property if it made it through that!
+		(*properties)[key] = value;
+	}
+
+	return;
+}
 

@@ -72,6 +72,13 @@ public:
 	 */
 	virtual double getReactionRadius();
 	
+	/**
+	 * This operation returns the compositon of this reactant.
+	 * @return The composition returned as a map with keys naming distinct
+	 * elements and values indicating the amount of the element present.
+	 */
+	virtual const std::map<std::string,int> getComposition();
+
 protected:
 	/**
 	 * Computes a row of the reaction connectivity matrix corresponding to

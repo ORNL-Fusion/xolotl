@@ -162,157 +162,156 @@ protected:
 	 */
 	virtual void createDissociationConnectivity();
 
+private:
 
-		private:
+	/**
+	 * The default constructor is private because PSIClusters must always be
+	 * initialized with a size.
+	 */
+	PSICluster();
 
-			/**
-			 * The default constructor is private because PSIClusters must always be
-			 * initialized with a size.
-			 */
-			PSICluster();
+public:
 
-		public:
+	/** Constructor
+	 * @param clusterSize
+	 */
+	PSICluster(const int clusterSize);
 
-			/** Constructor
-			 * @param clusterSize
-			 */
-			PSICluster(const int clusterSize);
+	/**
+	 * The copy constructor
+	 * @param other
+	 */
+	PSICluster(const PSICluster &other);
 
-			/**
-			 * The copy constructor
-			 * @param other
-			 */
-			PSICluster(const PSICluster &other);
+	/**
+	 * The Destructor
+	 */
+	virtual ~PSICluster();
 
-			/**
-			 * The Destructor
-			 */
-			virtual ~PSICluster();
+	/**
+	 * Sets the collection of other reactants that make up
+	 * the reaction network in which this reactant exists.
+	 *
+	 * @param network The reaction network of which this reactant is a part
+	 */
+	void setReactionNetwork(
+			const std::shared_ptr<ReactionNetwork> reactionNetwork);
 
-			/**
-			 * Sets the collection of other reactants that make up
-			 * the reaction network in which this reactant exists.
-			 *
-			 * @param network The reaction network of which this reactant is a part
-			 */
-			void setReactionNetwork(
-					const std::shared_ptr<ReactionNetwork> reactionNetwork);
+	/**
+	 * This operation returns the total flux of this reactant in the
+	 * current network.
+	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
+	 * @return The total change in flux for this reactant due to all
+	 * reactions
+	 */
+	virtual double getTotalFlux(const double temperature);
 
-			/**
-			 * This operation returns the total flux of this reactant in the
-			 * current network.
-			 * @param temperature The temperature at which to calculate the Diffusion Coefficient
-			 * @return The total change in flux for this reactant due to all
-			 * reactions
-			 */
-			virtual double getTotalFlux(const double temperature);
+	/**
+	 * This operation returns the total change in this cluster due to
+	 * dissociation.
+	 * @param temperature The temperature at which to calculate the flux
+	 * @return The flux due to dissociation.
+	 */
+	virtual double getDissociationFlux(const double temperature);
 
-			/**
-			 * This operation returns the total change in this cluster due to
-			 * dissociation.
-			 * @param temperature The temperature at which to calculate the flux
-			 * @return The flux due to dissociation.
-			 */
-			virtual double getDissociationFlux(const double temperature);
+	/**
+	 * This operation returns the total change in this cluster due to
+	 * the production of this cluster by other clusters.
+	 * @param temperature The temperature at which to calculate the flux
+	 * @return The flux due to this cluster being produced.
+	 */
+	virtual double getProductionFlux(const double temperature);
 
-			/**
-			 * This operation returns the total change in this cluster due to
-			 * the production of this cluster by other clusters.
-			 * @param temperature The temperature at which to calculate the flux
-			 * @return The flux due to this cluster being produced.
-			 */
-			virtual double getProductionFlux(const double temperature);
+	/**
+	 * This operation returns the total change in this cluster due to
+	 * the combination of this cluster with others.
+	 * @param temperature The temperature at which to calculate the flux
+	 * @return The flux due to this cluster combining with other clusters.
+	 */
+	virtual double getCombinationFlux(const double temperature);
 
-			/**
-			 * This operation returns the total change in this cluster due to
-			 * the combination of this cluster with others.
-			 * @param temperature The temperature at which to calculate the flux
-			 * @return The flux due to this cluster combining with other clusters.
-			 */
-			virtual double getCombinationFlux(const double temperature);
+	/**
+	 * This operation returns the total size of the cluster.
+	 * @return The total size of this cluster including the contributions
+	 * from all species types.
+	 */
+	virtual int getSize();
 
-			/**
-			 * This operation returns the total size of the cluster.
-			 * @return The total size of this cluster including the contributions
-			 * from all species types.
-			 */
-			virtual int getSize();
+	/**
+	 * This operation retrieves the binding energy for this cluster.
+	 * @return An array of the binding energies of this cluster with clusters
+	 * of other types as described above.
+	 */
+	std::vector<double> getBindingEnergies();
 
-			/**
-			 * This operation retrieves the binding energy for this cluster.
-			 * @return An array of the binding energies of this cluster with clusters
-			 * of other types as described above.
-			 */
-			std::vector<double> getBindingEnergies();
+	/**
+	 * This operation sets the binding energies for this cluster. It expects
+	 * the energy vector to be ordered as described above.
+	 * @param energies The vector of energies.
+	 */
+	void setBindingEnergies(const std::vector<double> energies);
 
-			/**
-			 * This operation sets the binding energies for this cluster. It expects
-			 * the energy vector to be ordered as described above.
-			 * @param energies The vector of energies.
-			 */
-			void setBindingEnergies(const std::vector<double> energies);
+	/**
+	 * This operation retrieves the diffusion factor, D_0, that is used to
+	 * calculate the diffusion coefficient for this cluster.
+	 * @return The diffusion factor of this cluster
+	 */
+	double getDiffusionFactor();
 
-			/**
-			 * This operation retrieves the diffusion factor, D_0, that is used to
-			 * calculate the diffusion coefficient for this cluster.
-			 * @return The diffusion factor of this cluster
-			 */
-			double getDiffusionFactor();
+	/**
+	 * This operation sets the diffusion factor, D_0, that is used to calculate
+	 * the diffusion coefficient for this cluster.
+	 * @param factor The diffusion factor.
+	 */
+	void setDiffusionFactor(const double factor);
 
-			/**
-			 * This operation sets the diffusion factor, D_0, that is used to calculate
-			 * the diffusion coefficient for this cluster.
-			 * @param factor The diffusion factor.
-			 */
-			void setDiffusionFactor(const double factor);
+	/**
+	 * This operation returns the diffusion coefficient for this cluster and is
+	 * calculated from the diffusion factor.
+	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
+	 * @return The diffusion coefficient.
+	 */
+	virtual double getDiffusionCoefficient(const double temperature);
 
-			/**
-			 * This operation returns the diffusion coefficient for this cluster and is
-			 * calculated from the diffusion factor.
-			 * @param temperature The temperature at which to calculate the Diffusion Coefficient
-			 * @return The diffusion coefficient.
-			 */
-			virtual double getDiffusionCoefficient(const double temperature);
+	/**
+	 * This operation sets the migration energy for this cluster.
+	 * @param energy The migration energy
+	 */
+	void setMigrationEnergy(const double energy);
 
-			/**
-			 * This operation sets the migration energy for this cluster.
-			 * @param energy The migration energy
-			 */
-			void setMigrationEnergy(const double energy);
+	/**
+	 * This operation retrieves the migration energy for this cluster
+	 * @return the migration energy
+	 */
+	double getMigrationEnergy();
 
-			/**
-			 * This operation retrieves the migration energy for this cluster
-			 * @return the migration energy
-			 */
-			double getMigrationEnergy();
+	/**
+	 * This virtual method is for subclasses to specialize
+	 * to return their representative cluster map, which is a mapping
+	 * of which species exist in the cluster to the integer number
+	 * of each species.
+	 *
+	 * @return
+	 */
+	virtual std::map<std::string, int> getClusterMap();
 
-			/**
-			 * This virtual method is for subclasses to specialize
-			 * to return their representative cluster map, which is a mapping
-			 * of which species exist in the cluster to the integer number
-			 * of each species.
-			 *
-			 * @return
-			 */
-			virtual std::map<std::string, int> getClusterMap();
+	/**
+	 * This virtual method is for subclasses to specialize
+	 * and should return the reaction radius for the
+	 * particular PSICluster subclass.
+	 *
+	 * @return
+	 */
+	virtual const double getReactionRadius() const;
 
-			/**
-			 * This virtual method is for subclasses to specialize
-			 * and should return the reaction radius for the
-			 * particular PSICluster subclass.
-			 *
-			 * @return
-			 */
-			virtual const double getReactionRadius() const;
+	/**
+	 * Combines the reactant and dissociation connectivity arrays
+	 *
+	 * For each element in the array, if either the reactant element
+	 * or the dissociation element is 1, the final element is 1.
+	 */
+	std::shared_ptr<std::vector<int>> getConnectivity();
+};
 
-			/**
-			 * Combines the reactant and dissociation connectivity arrays
-			 *
-			 * For each element in the array, if either the reactant element
-			 * or the dissociation element is 1, the final element is 1.
-			 */
-			std::shared_ptr<std::vector<int>> getConnectivity();
-		};
-
-		} /* end namespace xolotlCore */
+} /* end namespace xolotlCore */
 #endif

@@ -260,6 +260,19 @@ std::map<std::string, int> HeCluster::getClusterMap() {
 	return clusterMap;
 }
 
+const std::map<std::string,int> HeCluster::getComposition() {
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
+
+	// Set the number of each species
+	clusterMap["He"] = size;
+	clusterMap["V"] = 0;
+	clusterMap["I"] = 0;
+
+	// Return it
+	return clusterMap;
+}
+
 double HeCluster::getReactionRadius() {
 	double FourPi = 4.0 * xolotlCore::pi;
 	double aCubed = pow(xolotlCore::latticeConstant, 3);

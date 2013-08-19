@@ -153,11 +153,12 @@ public:
 	std::string getName();
 
 	/**
-	 * This operation returns the compositon of this reactant.
+	 * This operation returns the compositon of this reactant. This map is empty
+	 * when returned by the base class.
 	 * @return The composition returned as a map with keys naming distinct
 	 * elements and values indicating the amount of the element present.
 	 */
-	std::map<std::string,int> getComposition();
+	virtual const std::map<std::string,int> getComposition();
 
 };
 

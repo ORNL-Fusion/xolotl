@@ -16,6 +16,7 @@
 #include <math.h>
 #include "SimpleReactionNetwork.h"
 #include <HeVCluster.h>
+#include <HeCluster.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -147,6 +148,108 @@ BOOST_AUTO_TEST_CASE(toClusterMap) {
 	}
 }
 
+BOOST_AUTO_TEST_CASE(checkReactants) {
 
+	// Create the network
+	auto psiNetwork = make_shared<PSIClusterReactionNetwork>();
+
+	BOOST_FAIL("Unimplemented.");
+
+	// Add a few He, V and I PSIClusters
+
+	// Check the network
+
+	// Add a couple of HeV and HeI clusters ("compounds")
+
+	// Check the network
+
+	// Try to add a couple of things that can't be there.
+
+	// Make sure they didn't get added to the network.
+
+	return;
+}
+
+BOOST_AUTO_TEST_CASE(checkProperties) {
+
+	// Create the network
+	auto psiNetwork = make_shared<PSIClusterReactionNetwork>();
+
+	// Grab the map of properties from the network
+	auto props = psiNetwork->getProperties();
+	// Convert the property strings so we can use them
+	auto numHeClusters = std::stoi(props["numHeClusters"]);
+	auto numVClusters = std::stoi(props["numVClusters"]);
+	auto numIClusters = std::stoi(props["numIClusters"]);
+	auto numHeVClusters = std::stoi(props["numHeVClusters"]);
+	auto numHeIClusters = std::stoi(props["numHeIClusters"]);
+	auto maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
+	auto maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
+	auto maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
+	auto maxVClusterSize = std::stoi(props["maxVClusterSize"]);
+	auto maxIClusterSize = std::stoi(props["maxIClusterSize"]);
+
+	// Check the properties
+	BOOST_REQUIRE_EQUAL(0,numHeClusters);
+	BOOST_REQUIRE_EQUAL(0,numVClusters);
+	BOOST_REQUIRE_EQUAL(0,numIClusters);
+	BOOST_REQUIRE_EQUAL(0,numHeVClusters);
+	BOOST_REQUIRE_EQUAL(0,numHeIClusters);
+	BOOST_REQUIRE_EQUAL(0,maxHeVClusterSize);
+	BOOST_REQUIRE_EQUAL(0,maxHeIClusterSize);
+	BOOST_REQUIRE_EQUAL(0,maxHeClusterSize);
+	BOOST_REQUIRE_EQUAL(0,maxVClusterSize);
+	BOOST_REQUIRE_EQUAL(0,maxIClusterSize);
+
+	// Set a couple of properties
+	psiNetwork->setProperty("rangePenalty","5");
+	psiNetwork->setProperty("agility","d8");
+
+	// Grab the properties afresh
+	auto modifiedProps = psiNetwork->getProperties();
+
+	// Check for the new properties
+	auto rangePenalty = modifiedProps["rangePenalty"];
+	auto agility = modifiedProps["agility"];
+	BOOST_REQUIRE_EQUAL("5",rangePenalty);
+	BOOST_REQUIRE_EQUAL("d8",agility);
+
+	// Add a couple of clusters
+	auto heCluster = make_shared<HeCluster>(5);
+	psiNetwork->add(heCluster);
+	auto heVCluster = make_shared<HeVCluster>(5,3);
+	psiNetwork->add(heVCluster);
+
+	// Grab the properties afresh
+	auto propsWithClusters = psiNetwork->getProperties();
+	numHeClusters = std::stoi(props["numHeClusters"]);
+	maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
+	numHeVClusters = std::stoi(props["numHeVClusters"]);
+	maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
+
+	// Check the properties again
+	BOOST_REQUIRE_EQUAL(1,numHeClusters);
+	BOOST_REQUIRE_EQUAL(1,numHeVClusters);
+	BOOST_REQUIRE_EQUAL(5,maxHeClusterSize);
+	BOOST_REQUIRE_EQUAL(7,maxHeVClusterSize);
+
+	return;
+}
+
+BOOST_AUTO_TEST_CASE(checkNames) {
+
+	// Create the network
+	auto psiNetwork = make_shared<PSIClusterReactionNetwork>();
+
+	BOOST_FAIL("Unimplemented.");
+
+	// Create the names
+
+	// Check the names of the regular cluster types
+
+	// Check the names of the compound cluster types
+
+	return;
+}
 
 BOOST_AUTO_TEST_SUITE_END()

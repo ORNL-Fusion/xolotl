@@ -29,3 +29,11 @@ int ReactionNetwork::toClusterIndex(std::map<std::string, int> clusterMap) const
 	// This base class returns a zero index value
 	return 0;
 }
+
+const std::map<std::string,int> Reactant::getComposition() {
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
+
+	// Return an empty map
+	return clusterMap;
+}

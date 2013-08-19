@@ -275,6 +275,19 @@ std::map<std::string, int> HeInterstitialCluster::getClusterMap() {
 	return clusterMap;
 }
 
+const std::map<std::string,int> HeInterstitialCluster::getComposition() {
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
+
+	// Set the number of each species
+	clusterMap["He"] = numHe;
+	clusterMap["V"] = 0;
+	clusterMap["I"] = numI;
+
+	// Return it
+	return clusterMap;
+}
+
 double HeInterstitialCluster::getReactionRadius() {
 	return 0.0;
 }

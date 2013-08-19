@@ -213,4 +213,4 @@ const std::map<std::string, std::string> & SimpleReactionNetwork::getProperties(
  * @param key The key for the property
  * @param value The value to which the key should be set.
  */
-void SimpleReactionNetwork::setProperty(std::string key, std::string value) {return;}
+void SimpleReactionNetwork::setProperty(const std::string key, const std::string value) {return;}

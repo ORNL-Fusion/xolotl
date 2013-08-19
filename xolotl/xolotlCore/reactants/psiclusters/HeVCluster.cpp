@@ -48,8 +48,8 @@ void HeVCluster::createReactionConnectivity() {
 	int numHeClusters = std::stoi(properties->at("numHeClusters"));
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
 	std::map<std::string, int> firstReactantMap, secondReactantMap;
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>reactants =
-			network->reactants;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants =
+	network->reactants;
 	std::map<std::string, int> speciesMap;
 	std::shared_ptr<PSICluster> heCluster;
 
@@ -80,10 +80,10 @@ void HeVCluster::createReactionConnectivity() {
 
 			// Create the Reacting Pair
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast < PSICluster
-					> (reactants->at(firstIndex));
-			pair.second = std::dynamic_pointer_cast < PSICluster
-					> (reactants->at(secondIndex));
+			pair.first = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(firstIndex));
+			pair.second = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(secondIndex));
 
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
@@ -111,10 +111,10 @@ void HeVCluster::createReactionConnectivity() {
 
 		// Create the Reacting Pair
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster
-				> (reactants->at(firstIndex));
-		pair.second = std::dynamic_pointer_cast < PSICluster
-				> (reactants->at(secondIndex));
+		pair.first = std::dynamic_pointer_cast<PSICluster>(
+				reactants->at(firstIndex));
+		pair.second = std::dynamic_pointer_cast<PSICluster>(
+				reactants->at(secondIndex));
 
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
@@ -143,10 +143,8 @@ void HeVCluster::createReactionConnectivity() {
 
 			// Create the Reacting Pair
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast < PSICluster
-					> (firstReactant);
-			pair.second = std::dynamic_pointer_cast < PSICluster
-					> (secondReactant);
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
@@ -167,7 +165,7 @@ void HeVCluster::createReactionConnectivity() {
 	int heIndex = network->toClusterIndex(speciesMap);
 	// Loop over the He clusters
 	for (int i = heIndex; i < heIndex + numHeClusters; i++) {
-		heCluster = std::dynamic_pointer_cast < PSICluster > (reactants->at(i));
+		heCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 		// React with it if the sizes are compatible.
 		if (heCluster->getSize() + size <= maxMixedClusterSize) {
 			reactionConnectivity[i] = 1;
@@ -250,8 +248,7 @@ void HeVCluster::createDissociationConnectivity() {
 double HeVCluster::getDissociationFlux(double temperature) {
 // Local Declarations
 	std::map<std::string, int> oneHe, oneV, oneI, dissMap;
-	std::shared_ptr < std::vector<std::shared_ptr<xolotlCore::Reactant>>
-			> reactants;
+	std::shared_ptr<std::vector<std::shared_ptr<xolotlCore::Reactant>> > reactants;
 	std::shared_ptr<Reactant> currentReactant, secondReactant;
 	double f4 = 0.0, f3 = 0.0;
 
@@ -348,6 +345,19 @@ std::map<std::string, int> HeVCluster::getClusterMap() {
 	clusterMap["I"] = 0;
 
 // Return it
+	return clusterMap;
+}
+
+const std::map<std::string, int> HeVCluster::getComposition() {
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
+
+	// Set the number of each species
+	clusterMap["He"] = numHe;
+	clusterMap["V"] = numV;
+	clusterMap["I"] = 0;
+
+	// Return it
 	return clusterMap;
 }
 

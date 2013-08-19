@@ -88,7 +88,7 @@ public:
 
 	/**
 	 * This operation returns the names of the reactants in the network.
-	 * @return A vector with one each for each of the distinct reactant types
+	 * @return A vector with one entry for each of the distinct reactant types
 	 * in the network.
 	 */
 	virtual const std::vector<std::string> & getNames() = 0;
@@ -111,11 +111,12 @@ public:
 	/**
 	 * This operation sets a property with the given key to the specified value
 	 * for the network. ReactionNetworks may reserve the right to ignore this
-	 * operation for special key types.
+	 * operation for special key types, most especially those that they manage
+	 * on their own.
 	 * @param key The key for the property
 	 * @param value The value to which the key should be set.
 	 */
-	virtual void setProperty(std::string key, std::string value) = 0;
+	virtual void setProperty(const std::string key, const std::string value) = 0;
 
 	/**
 	 * The destructor

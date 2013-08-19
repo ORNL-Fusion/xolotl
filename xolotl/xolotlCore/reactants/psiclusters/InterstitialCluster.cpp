@@ -243,3 +243,17 @@ double InterstitialCluster::getReactionRadius() {
 
 	return termOne + termTwo - termThree;
 }
+
+const std::map<std::string,int> InterstitialCluster::getComposition() {
+
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
+
+	// Set the number of each species
+	clusterMap["He"] = 0;
+	clusterMap["V"] = 0;
+	clusterMap["I"] = size;
+
+	// Return it
+	return clusterMap;
+}

@@ -249,6 +249,19 @@ std::map<std::string, int> VCluster::getClusterMap() {
 	return clusterMap;
 }
 
+const std::map<std::string,int> VCluster::getComposition() {
+	// Local Declarations
+	std::map<std::string, int> clusterMap;
+
+	// Set the number of each species
+	clusterMap["He"] = 0;
+	clusterMap["V"] = size;
+	clusterMap["I"] = 0;
+
+	// Return it
+	return clusterMap;
+}
+
 double VCluster::getReactionRadius() {
 	// FIXME Not right...
 	return (sqrt(3) / 4) * xolotlCore::latticeConstant;
