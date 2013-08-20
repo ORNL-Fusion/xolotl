@@ -23,6 +23,14 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork() :
 	(*properties)["maxHeVClusterSize"] = "0";
 	(*properties)["maxHeIClusterSize"] = "0";
 
+	// Set the reactant names
+	names.push_back("He");
+	names.push_back("V");
+	names.push_back("I");
+	// Set the compound reactant names
+	compoundNames.push_back("HeV");
+	compoundNames.push_back("HeI");
+
 	return;
 }
 
@@ -221,10 +229,7 @@ void PSIClusterReactionNetwork::add(
  */
 const std::vector<std::string> & PSIClusterReactionNetwork::getNames() {
 
-	std::vector<std::string> vector;
-	std::vector<std::string> & vectorRef = vector;
-
-	return vector;
+	return names;
 }
 
 /**
@@ -234,10 +239,8 @@ const std::vector<std::string> & PSIClusterReactionNetwork::getNames() {
  * reactant types in the network.
  */
 const std::vector<std::string> & PSIClusterReactionNetwork::getCompoundNames() {
-	std::vector<std::string> vector;
-	std::vector<std::string> & vectorRef = vector;
 
-	return vectorRef;
+	return compoundNames;
 }
 
 /**
@@ -247,10 +250,7 @@ const std::vector<std::string> & PSIClusterReactionNetwork::getCompoundNames() {
  */
 const std::map<std::string, std::string> & PSIClusterReactionNetwork::getProperties() {
 
-	// Grab and return the reference
-	std::map<std::string, std::string> & mapRef = *properties;
-
-	return mapRef;
+	return *properties;
 }
 
 /**

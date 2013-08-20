@@ -111,6 +111,16 @@ private:
 	 */
 	std::map<std::map<std::string, int>, std::shared_ptr<PSICluster>, PSIMixedClusterComparator> mixedSpeciesMap;
 
+	/**
+	 * The names of the reactants supported by this network.
+	 */
+	std::vector<std::string> names;
+
+	/**
+	 * The names of the compound reactants supported by this network.
+	 */
+	std::vector<std::string> compoundNames;
+
 public:
 
 	/**
