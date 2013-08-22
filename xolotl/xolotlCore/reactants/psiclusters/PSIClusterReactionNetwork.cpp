@@ -133,7 +133,7 @@ int PSIClusterReactionNetwork::toClusterIndex(
  * @return A shared pointer to the reactant
  */
 const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(
-		std::string name, int size) {
+		const std::string name, const int size) {
 	std::shared_ptr<Reactant> nullPtr;
 
 	return nullPtr;
@@ -147,7 +147,7 @@ const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(
  * @return A shared pointer to the compound reactant
  */
 const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::getCompound(
-		std::string name, std::vector<int> sizes) {
+		const std::string name, const std::vector<int> sizes) {
 	std::shared_ptr<Reactant> nullPtr;
 
 	return nullPtr;
@@ -201,7 +201,7 @@ void PSIClusterReactionNetwork::add(
 				numClusterKey = "numHeClusters";
 				clusterSizeKey = "maxHeClusterSize";
 			} else if (numV > 0) {
-				numClusterKey = "numHVClusters";
+				numClusterKey = "numHeVClusters";
 				clusterSizeKey = "maxVClusterSize";
 			} else {
 				numClusterKey = "numIClusters";

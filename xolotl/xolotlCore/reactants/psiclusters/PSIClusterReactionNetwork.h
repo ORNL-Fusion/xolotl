@@ -158,7 +158,7 @@ public:
 	 * @param size the size of the reactant
 	 * @return A shared pointer to the reactant
 	 */
-	const std::shared_ptr<Reactant> & get(std::string name, int size);
+	const std::shared_ptr<Reactant> & get(const std::string name, const int size);
 
 	/**
 	 * This operation returns a compound reactant with the given name and size if it
@@ -167,8 +167,8 @@ public:
 	 * @param sizes an array containing the sizes of each piece of the reactant
 	 * @return A shared pointer to the compound reactant
 	 */
-	const std::shared_ptr<Reactant> & getCompound(std::string name,
-			std::vector<int> sizes);
+	const std::shared_ptr<Reactant> & getCompound(const std::string name,
+			const std::vector<int> sizes);
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.

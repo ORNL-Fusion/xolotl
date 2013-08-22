@@ -17,6 +17,9 @@
 #include "SimpleReactionNetwork.h"
 #include <HeVCluster.h>
 #include <HeCluster.h>
+#include <VCluster.h>
+#include <InterstitialCluster.h>
+#include <HeInterstitialCluster.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -36,7 +39,7 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	(*network.properties)["numMixedClusters"] = "4";
 
 	// Add a reactant
-	network.reactants->push_back(std::shared_ptr < Reactant > (new Reactant));
+	network.reactants->push_back(std::shared_ptr<Reactant>(new Reactant));
 	network.reactants->at(0)->setConcentration(50.0);
 
 	// Copy the network
@@ -133,8 +136,8 @@ BOOST_AUTO_TEST_CASE(toClusterMap) {
 		// Get the actual He and V amounts
 
 		shared_ptr<Reactant> reactant = network->reactants->at(i);
-		shared_ptr < HeVCluster > cluster = std::dynamic_pointer_cast
-				< HeVCluster > (reactant);
+		shared_ptr<HeVCluster> cluster = std::dynamic_pointer_cast<HeVCluster>(
+				reactant);
 		int actualHe = cluster->getSpeciesSize("He");
 		int actualV = cluster->getSpeciesSize("V");
 
@@ -154,19 +157,49 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	// Create the network
 	auto psiNetwork = make_shared<PSIClusterReactionNetwork>();
 
-	BOOST_FAIL("Unimplemented.");
-
 	// Add a few He, V and I PSIClusters
+	auto heCluster = make_shared<HeCluster>(10);
+	auto vCluster = make_shared<VCluster>(4);
+	auto interstitialCluster = make_shared<InterstitialCluster>(48);
+	psiNetwork->add(heCluster);
+	psiNetwork->add(vCluster);
+	psiNetwork->add(interstitialCluster);
 
 	// Check the network
+	auto retHeCluster = std::dynamic_pointer_cast<PSICluster>(
+			psiNetwork->get("He", 10));
+	BOOST_CHECK_EQUAL(10, retHeCluster->getSize());
+	BOOST_CHECK_EQUAL("He", retHeCluster->getName());
+	auto retVCluster = std::dynamic_pointer_cast<PSICluster>(
+			psiNetwork->get("V", 4));
+	BOOST_CHECK_EQUAL(4, retVCluster->getSize());
+	BOOST_CHECK_EQUAL("V", retVCluster->getName());
+	auto retICluster = std::dynamic_pointer_cast<PSICluster>(
+				psiNetwork->get("I", 48));
+	BOOST_CHECK_EQUAL(48, retICluster->getSize());
+	BOOST_CHECK_EQUAL("I", retICluster->getName());
 
 	// Add a couple of HeV and HeI clusters ("compounds")
+	auto heVCluster = make_shared<HeVCluster>(5, 3);
+	auto heICluster = make_shared<HeInterstitialCluster>(8, 8);
+	psiNetwork->add(heVCluster);
+	psiNetwork->add(heICluster);
 
 	// Check the network
-
-	// Try to add a couple of things that can't be there.
-
-	// Make sure they didn't get added to the network.
+	std::vector<int> sizes;
+	sizes.push_back(5);
+	sizes.push_back(3);
+	auto retHeVCluster = std::dynamic_pointer_cast<PSICluster>(
+				psiNetwork->getCompound("HeV", sizes));
+	BOOST_CHECK_EQUAL(8, retHeVCluster->getSize());
+	BOOST_CHECK_EQUAL("HeV", retHeVCluster->getName());
+	sizes.clear();
+	sizes.push_back(8);
+	sizes.push_back(8);
+	auto retHeICluster = std::dynamic_pointer_cast<PSICluster>(
+				psiNetwork->getCompound("HeI", sizes));
+	BOOST_CHECK_EQUAL(16, retHeICluster->getSize());
+	BOOST_CHECK_EQUAL("HeI", retHeICluster->getName());
 
 	return;
 }
@@ -216,9 +249,9 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 	BOOST_REQUIRE_EQUAL("d8", agility);
 
 	// Add a couple of clusters
-	auto heCluster = make_shared < HeCluster > (5);
+	auto heCluster = make_shared<HeCluster>(5);
 	psiNetwork->add(heCluster);
-	auto heVCluster = make_shared < HeVCluster > (5, 3);
+	auto heVCluster = make_shared<HeVCluster>(5, 3);
 	psiNetwork->add(heVCluster);
 
 	// Grab the properties afresh
@@ -256,7 +289,7 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 			++marker;
 	}
 	BOOST_REQUIRE_EQUAL(3, marker);
-	BOOST_REQUIRE_EQUAL(marker,names.size());
+	BOOST_REQUIRE_EQUAL(marker, names.size());
 
 	// Check the names of the compound cluster types. Use the same counting
 	// system as above.
@@ -269,7 +302,7 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 			++marker;
 	}
 	BOOST_REQUIRE_EQUAL(2, marker);
-	BOOST_REQUIRE_EQUAL(marker,compoundNames.size());
+	BOOST_REQUIRE_EQUAL(marker, compoundNames.size());
 
 	return;
 }

@@ -150,7 +150,7 @@ public:
 	 * This operation returns the name of the reactant.
 	 * @return the name
 	 */
-	std::string getName();
+	const std::string getName();
 
 	/**
 	 * This operation returns the compositon of this reactant. This map is empty

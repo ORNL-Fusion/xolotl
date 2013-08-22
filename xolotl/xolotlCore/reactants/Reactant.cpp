@@ -62,6 +62,13 @@ std::shared_ptr<std::vector<int>> Reactant::getConnectivity() {
 	return connectivity;
 }
 
+/**
+ * This operation returns the name of the reactant.
+ * @return the name
+ */
+const std::string Reactant::getName() {
+	return name;
+}
 
 const std::string Reactant::toString() {
 	throw std::string("Reactant::toString() is unimplemented");
