@@ -166,15 +166,17 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	psiNetwork->add(interstitialCluster);
 
 	// Check the network
-	auto retHeCluster = std::dynamic_pointer_cast<PSICluster>(
-			psiNetwork->get("He", 10));
+	const auto & reactant = psiNetwork->get("He", 10);
+	std::string name = reactant->getName();
+	BOOST_CHECK_EQUAL("He", name);
+	const std::shared_ptr<PSICluster> &retHeCluster = std::dynamic_pointer_cast<PSICluster>(
+			reactant);
 	BOOST_CHECK_EQUAL(10, retHeCluster->getSize());
-	BOOST_CHECK_EQUAL("He", retHeCluster->getName());
-	auto retVCluster = std::dynamic_pointer_cast<PSICluster>(
+	std::shared_ptr<PSICluster> retVCluster = std::dynamic_pointer_cast<PSICluster>(
 			psiNetwork->get("V", 4));
 	BOOST_CHECK_EQUAL(4, retVCluster->getSize());
 	BOOST_CHECK_EQUAL("V", retVCluster->getName());
-	auto retICluster = std::dynamic_pointer_cast<PSICluster>(
+	std::shared_ptr<PSICluster> retICluster = std::dynamic_pointer_cast<PSICluster>(
 				psiNetwork->get("I", 48));
 	BOOST_CHECK_EQUAL(48, retICluster->getSize());
 	BOOST_CHECK_EQUAL("I", retICluster->getName());
@@ -189,14 +191,14 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	std::vector<int> sizes;
 	sizes.push_back(5);
 	sizes.push_back(3);
-	auto retHeVCluster = std::dynamic_pointer_cast<PSICluster>(
+	std::shared_ptr<PSICluster> retHeVCluster = std::dynamic_pointer_cast<PSICluster>(
 				psiNetwork->getCompound("HeV", sizes));
 	BOOST_CHECK_EQUAL(8, retHeVCluster->getSize());
 	BOOST_CHECK_EQUAL("HeV", retHeVCluster->getName());
 	sizes.clear();
 	sizes.push_back(8);
 	sizes.push_back(8);
-	auto retHeICluster = std::dynamic_pointer_cast<PSICluster>(
+	std::shared_ptr<PSICluster> retHeICluster = std::dynamic_pointer_cast<PSICluster>(
 				psiNetwork->getCompound("HeI", sizes));
 	BOOST_CHECK_EQUAL(16, retHeICluster->getSize());
 	BOOST_CHECK_EQUAL("HeI", retHeICluster->getName());

@@ -9,7 +9,7 @@ HeInterstitialCluster::HeInterstitialCluster(int numHelium, int numInterstitial)
 	numHe = numHelium;
 	numI = numInterstitial;
 	size = numHe + numI;
-	name = "He-Interstitial Cluster";
+	name = "HeI";
 }
 
 HeInterstitialCluster::HeInterstitialCluster(
@@ -19,7 +19,7 @@ HeInterstitialCluster::HeInterstitialCluster(
 	numI = speciesMap["I"];
 	size = numHe + numI;
 	// Set the reactant name appropriately
-	name = "He-Interstitial Cluster";
+	name = "HeI";
 }
 
 HeInterstitialCluster::~HeInterstitialCluster() {

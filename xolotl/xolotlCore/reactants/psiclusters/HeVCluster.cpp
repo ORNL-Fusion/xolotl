@@ -13,7 +13,7 @@ HeVCluster::HeVCluster(int numHe, int numV) :
 	size = numHe + numV;
 
 	// Set the reactant name appropriately
-	name = "HeV Cluster";
+	name = "HeV";
 }
 
 HeVCluster::~HeVCluster() {

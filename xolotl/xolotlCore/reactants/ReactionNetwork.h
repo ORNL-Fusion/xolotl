@@ -69,7 +69,7 @@ public:
 	 * @param size the size of the reactant
 	 * @return A shared pointer to the reactant
 	 */
-	virtual const std::shared_ptr<Reactant> & get(const std::string name, const int size) = 0;
+	virtual const std::shared_ptr<Reactant> & get(const std::string rName, const int size) = 0;
 
 	/**
 	 * This operation returns a compound reactant with the given name and size if it
@@ -78,7 +78,7 @@ public:
 	 * @param sizes an array containing the sizes of each piece of the reactant
 	 * @return A shared pointer to the compound reactant
 	 */
-	virtual const std::shared_ptr<Reactant> & getCompound(const std::string name, const std::vector<int> sizes) = 0;
+	virtual const std::shared_ptr<Reactant> & getCompound(const std::string rName, const std::vector<int> sizes) = 0;
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.

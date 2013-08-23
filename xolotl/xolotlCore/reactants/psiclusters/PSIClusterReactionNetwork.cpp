@@ -133,24 +133,56 @@ int PSIClusterReactionNetwork::toClusterIndex(
  * @return A shared pointer to the reactant
  */
 const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(
-		const std::string name, const int size) {
-	std::shared_ptr<Reactant> nullPtr;
+		const std::string rName, const int size) {
 
-	return nullPtr;
+	// Local Declarations
+	std::map<std::string,int> composition;
+	std::shared_ptr<PSICluster> retReactant = std::shared_ptr<PSICluster>();
+
+	// Setup the composition map to default values
+	composition["He"] = 0;
+	composition["V"] = 0;
+	composition["I"] = 0;
+
+	// Only pull the reactant if the name is valid
+	if (rName == "He" || rName == "V" || rName == "I") {
+		composition[rName] = size;
+		retReactant = singleSpeciesMap.at(composition);
+	}
+
+	return retReactant;
 }
 
 /**
  * This operation returns a compound reactant with the given name and size if it
  * exists in the network or null if not.
- * @param name the name of the compound reactant
+ * @param rName the name of the compound reactant
  * @param sizes an array containing the sizes of each piece of the reactant
  * @return A shared pointer to the compound reactant
  */
 const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::getCompound(
-		const std::string name, const std::vector<int> sizes) {
+		const std::string rName, const std::vector<int> sizes) {
 	std::shared_ptr<Reactant> nullPtr;
 
-	return nullPtr;
+	// Local Declarations
+	std::map<std::string,int> composition;
+	std::shared_ptr<PSICluster> retReactant;
+
+	// Setup the composition map to default values
+	composition["He"] = 0;
+	composition["V"] = 0;
+	composition["I"] = 0;
+
+	// Only pull the reactant if the name is valid and there are enough sizes
+	// to fill the composition.
+	if ((rName == "HeV" || rName == "HeI") && sizes.size()) {
+		composition["He"] = sizes[0];
+		composition["V"] = sizes[1];
+		composition["I"] = sizes[2];
+		retReactant = mixedSpeciesMap.at(composition);
+	}
+
+	return retReactant;
 }
 
 /**
@@ -214,8 +246,11 @@ void PSIClusterReactionNetwork::add(
 		(*properties)[numClusterKey] = std::to_string((long long) numClusters);
 		// Increment the max cluster size key
 		int maxSize = std::stoi(properties->at(clusterSizeKey));
-		maxSize = std::max(numHe + numV + numI, maxSize);
+		int clusterSize = numHe + numV + numI;
+		maxSize = std::max(clusterSize, maxSize);
 		(*properties)[clusterSizeKey] = std::to_string((long long) maxSize);
+
+		std::cout << "Added cluster of type " << reactant->getName() << " with size " << clusterSize << std::endl;
 
 	}
 

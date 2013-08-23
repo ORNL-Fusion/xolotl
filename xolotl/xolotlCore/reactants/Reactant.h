@@ -17,7 +17,7 @@ namespace xolotlCore {
  * Reactants inherently know the other Reactants with which they interact. They
  * declare their interactions with other Reactants in the network after it is
  * set (setReactionNetwork) via the getConnectivity() operation. "Connectivity"
- * indicates whether two Reactants interact, via any mechanism, in an abstract
+ * indicates whether two Reacants interact, via any mechanism, in an abstract
  * sense (as if they were nodes connected by an edge on a network graph).
  *
  * This is an abstract base class that only provides direct support for
