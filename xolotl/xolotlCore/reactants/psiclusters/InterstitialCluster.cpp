@@ -9,7 +9,12 @@ InterstitialCluster::InterstitialCluster(int nI) :
 	// Set the reactant name appropriately
 	name = "I";
 }
+
 InterstitialCluster::~InterstitialCluster() {
+}
+
+Reactant InterstitialCluster::clone() {
+	return InterstitialCluster(*this);
 }
 
 void InterstitialCluster::createReactionConnectivity() {

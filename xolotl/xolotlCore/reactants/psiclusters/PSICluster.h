@@ -192,6 +192,19 @@ public:
 	virtual ~PSICluster();
 
 	/**
+	 * This operation returns a Reactant that is created using the copy
+	 * constructor. If this Reactant is actually a subclass of Reactant, the
+	 * clone will be of the same type and therefore carry all of the members
+	 * and virtual functions of the subclass in addition to those of the
+	 * Reactant. This type of copy is not only handy but, in fact, quite
+	 * necessary in those cases where a Reactant must be copied but its exact
+	 * subclass is unknown and there is no way to make a reasonable assumption
+	 * about it.
+	 * @return A copy of this reactant.
+	 */
+	virtual Reactant clone();
+
+	/**
 	 * Sets the collection of other reactants that make up
 	 * the reaction network in which this reactant exists.
 	 *

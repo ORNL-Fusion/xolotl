@@ -14,6 +14,10 @@ HeCluster::HeCluster(int nHe) :
 HeCluster::~HeCluster() {
 }
 
+Reactant HeCluster::clone() {
+	return HeCluster(*this);
+}
+
 void HeCluster::createReactionConnectivity() {
 
 	// Local Declarations - Note the reference to the properties map

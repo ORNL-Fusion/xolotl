@@ -93,6 +93,12 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	copiedCluster.setMigrationEnergy(3.0);
 	BOOST_REQUIRE(abs(cluster.getMigrationEnergy() -
 					copiedCluster.getMigrationEnergy()) > 2.0 - 1e-5);
+
+	// Check cloning
+	auto clusterClone = cluster.clone();
+	BOOST_REQUIRE_EQUAL(clusterClone.getName(), cluster.getName());
+
+	return;
 }
 
 /**

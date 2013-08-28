@@ -22,7 +22,16 @@ HeInterstitialCluster::HeInterstitialCluster(
 	name = "HeI";
 }
 
+HeInterstitialCluster::HeInterstitialCluster(const HeInterstitialCluster &other): PSICluster(other) {
+	numHe = other.numHe;
+	numI = other.numI;
+}
+
 HeInterstitialCluster::~HeInterstitialCluster() {
+}
+
+Reactant HeInterstitialCluster::clone() {
+	return HeInterstitialCluster(*this);
 }
 
 double HeInterstitialCluster::getGenByEm() {

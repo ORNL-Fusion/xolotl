@@ -39,6 +39,13 @@ public:
 	~InterstitialCluster();
 
 	/**
+	 * This operation returns a Reactant that is created using the copy
+	 * constructor of InterstitialCluster.
+	 * @return A copy of this reactant.
+	 */
+	virtual Reactant clone();
+
+	/**
 	 * This virtual method is for subclasses to specialize
 	 * to return their representative cluster map, which is a mapping
 	 * of which species exist in the cluster to the integer number

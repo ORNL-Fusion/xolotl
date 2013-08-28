@@ -17,6 +17,10 @@ Reactant::Reactant(const Reactant &other) :
 Reactant::~Reactant() {
 }
 
+Reactant Reactant::clone() {
+	return Reactant(*this);
+}
+
 Reactant::Reactant(double conc) :
 		concentration(0.0), name(""), id(0) {
 }

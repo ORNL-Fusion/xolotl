@@ -32,17 +32,23 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	reactant->setConcentration(10.0);
 	
 	// Copy the Reactant
-	std::shared_ptr<Reactant> reactant2(new Reactant(*reactant));
+	std::shared_ptr<Reactant> reactantCopy(new Reactant(*reactant));
 	
 	// Check that the pointers are different
-	BOOST_REQUIRE_NE(reactant.get(), reactant2.get());
+	BOOST_REQUIRE_NE(reactant.get(), reactantCopy.get());
 	
-	reactant2->increaseConcentration(5.0);
+	reactantCopy->increaseConcentration(5.0);
 	
 	// The values should now be different,
 	// so check them against the known values
 	BOOST_REQUIRE_CLOSE(reactant->getConcentration(), 10.0, 1e-7);
-	BOOST_REQUIRE_CLOSE(reactant2->getConcentration(), 15.0, 1e-7);
+	BOOST_REQUIRE_CLOSE(reactantCopy->getConcentration(), 15.0, 1e-7);
+
+	// Try cloning the Reactant
+	auto reactantClone = reactant->clone();
+	BOOST_REQUIRE_CLOSE(reactantClone.getConcentration(), 10.0, 1e-7);
+
+	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkManipulateConcentration) {

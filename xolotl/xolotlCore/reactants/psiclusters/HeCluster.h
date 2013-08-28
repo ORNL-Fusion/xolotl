@@ -43,6 +43,13 @@ public:
 	~HeCluster();
 
 	/**
+	 * This operation returns a Reactant that is created using the copy
+	 * constructor of HeCluster.
+	 * @return A copy of this HeCluster.
+	 */
+	virtual Reactant clone();
+
+	/**
 	 * This virtual method is for subclasses to specialize
 	 * to return their representative cluster map, which is a mapping
 	 * of which species exist in the cluster to the integer number

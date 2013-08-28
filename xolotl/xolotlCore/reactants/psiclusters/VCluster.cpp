@@ -14,6 +14,10 @@ VCluster::VCluster(int nV) :
 VCluster::~VCluster() {
 }
 
+Reactant VCluster::clone() {
+	return VCluster(*this);
+}
+
 void VCluster::createReactionConnectivity() {
 
 	// Local Declarations - Note the reference to the properties map

@@ -16,7 +16,16 @@ HeVCluster::HeVCluster(int numHe, int numV) :
 	name = "HeV";
 }
 
+HeVCluster::HeVCluster(const HeVCluster &other): PSICluster(other) {
+	numHe = other.numHe;
+	numV = other.numV;
+}
+
 HeVCluster::~HeVCluster() {
+}
+
+Reactant HeVCluster::clone() {
+	return HeVCluster(*this);
 }
 
 double HeVCluster::getGenByEm() {

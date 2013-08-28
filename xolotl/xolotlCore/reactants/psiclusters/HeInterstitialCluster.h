@@ -47,8 +47,21 @@ public:
 	 */
 	HeInterstitialCluster(const std::map<std::string,int> speciesMap);
 
+	/**
+	 * Copy constructor
+	 * @param other the reactant to be copied
+	 */
+	HeInterstitialCluster(const HeInterstitialCluster &other);
+
 	//! Destructor
 	~HeInterstitialCluster();
+
+	/**
+	 * This operation returns a Reactant that is created using the copy
+	 * constructor of HeInterstitialCluster.
+	 * @return A copy of this reactant.
+	 */
+	virtual Reactant clone();
 
 	/**
 	 * This operation returns the total generation rate due to emission for

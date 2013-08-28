@@ -48,6 +48,10 @@ PSICluster::PSICluster(const PSICluster &other) :
 				other.migrationEnergy) {
 }
 
+Reactant PSICluster::clone() {
+	return PSICluster(*this);
+}
+
 PSICluster::~PSICluster() {
 }
 
