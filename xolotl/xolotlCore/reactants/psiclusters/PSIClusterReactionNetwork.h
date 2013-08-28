@@ -8,6 +8,7 @@
 #include <map>
 #include <ReactionNetwork.h>
 #include <PSICluster.h>
+#include <iostream>
 
 namespace xolotlCore {
 
@@ -29,18 +30,19 @@ private:
 				const std::map<std::string, int>& rhs) const {
 
 			// Local Declarations
-			int numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
-			int numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
+			double numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
+			double numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
 			double index_lhs = 0.0, index_rhs = 0.0;
 			double bigNumber = 1.0e9;
 
-			// Get the cluster sizes
-			numHe_lhs = lhs.at("He");
-			numV_lhs = lhs.at("V");
-			numI_lhs = lhs.at("I");
-			numHe_rhs = rhs.at("He");
-			numV_rhs = rhs.at("V");
-			numI_rhs = rhs.at("I");
+			// Get the cluster sizes, left node first
+			numHe_lhs = (double) lhs.at("He");
+			numV_lhs = (double) lhs.at("V");
+			numI_lhs = (double) lhs.at("I");
+			// Right node second
+			numHe_rhs = (double) rhs.at("He");
+			numV_rhs = (double) rhs.at("V");
+			numI_rhs = (double) rhs.at("I");
 
 			// Compute the indices/hashes. This simply bins the amount of each
 			// time in such a way that they can be compared without a large
@@ -53,7 +55,7 @@ private:
 					+ (numI_lhs > 0)*(3.0+(numI_lhs/bigNumber));
 			index_rhs = (numHe_rhs > 0)*(1.0+(numHe_rhs/bigNumber))
 					+ (numV_rhs > 0)*(2.0+(numV_rhs/bigNumber))
-					+ (numI_rhs > 0)*(1.0+(numI_rhs/bigNumber));
+					+ (numI_rhs > 0)*(3.0+(numI_rhs/bigNumber));
 
 			return index_lhs < index_rhs;
 		}
@@ -158,7 +160,7 @@ public:
 	 * @param size the size of the reactant
 	 * @return A shared pointer to the reactant
 	 */
-	const std::shared_ptr<Reactant> & get(const std::string rName, const int size);
+	std::shared_ptr<Reactant> get(const std::string rName, const int size);
 
 	/**
 	 * This operation returns a compound reactant with the given name and size
@@ -170,7 +172,7 @@ public:
 	 * and I are contained in the mixed-species cluster.
 	 * @return A shared pointer to the compound reactant
 	 */
-	const std::shared_ptr<Reactant> & getCompound(const std::string rName,
+	std::shared_ptr<Reactant> getCompound(const std::string rName,
 			const std::vector<int> sizes);
 
 	/**
@@ -180,7 +182,7 @@ public:
 	 * adding null).
 	 * @param reactant The reactant that should be added to the network.
 	 */
-	void add(const std::shared_ptr<Reactant> & reactant);
+	void add(std::shared_ptr<Reactant> reactant);
 
 	/**
 	 * This operation returns the names of the reactants in the network. For a

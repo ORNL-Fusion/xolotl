@@ -28,46 +28,6 @@ using namespace xolotlCore;
  * This suite is responsible for testing the ReactionNetwork
  */BOOST_AUTO_TEST_SUITE(ReactionNetwork_testSuite)
 
-/**
- * This operation tests the copy constructor.
- */
-BOOST_AUTO_TEST_CASE(checkCopying) {
-
-	PSIClusterReactionNetwork network;
-
-	// Set some properties
-	(*network.properties)["numMixedClusters"] = "4";
-
-	// Add a reactant
-	network.reactants->push_back(std::shared_ptr<Reactant>(new Reactant));
-	network.reactants->at(0)->setConcentration(50.0);
-
-	// Copy the network
-	PSIClusterReactionNetwork network2 = network;
-
-	// Check that the ReactionNetwork fields are copied
-	BOOST_REQUIRE_NE(network.properties.get(), network2.properties.get());
-	BOOST_REQUIRE_EQUAL(network.properties->size(),
-			network2.properties->size());
-
-	BOOST_REQUIRE_NE(network.reactants.get(), network2.reactants.get());
-	BOOST_REQUIRE_EQUAL(network.reactants->size(), network2.reactants->size());
-
-	// Change the values of the copied ReactionNetwork
-	// This shouldn't modify the Reactants contained inside the
-	// first ReactionNetwork.
-
-	(*network2.properties)["numMixedClusters"] = "5";
-	network2.reactants->at(0)->setConcentration(52.0);
-
-	BOOST_REQUIRE_NE(network.properties->at("numMixedClusters"),
-			network2.properties->at("numMixedClusters"));
-	BOOST_REQUIRE_CLOSE(network.reactants->at(0)->getConcentration(), 50.0,
-			1e-5);
-	BOOST_REQUIRE_CLOSE(network2.reactants->at(0)->getConcentration(), 52.0,
-			1e-5);
-}
-
 BOOST_AUTO_TEST_CASE(clusterIndexConversions) {
 
 	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
@@ -165,21 +125,21 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	psiNetwork->add(vCluster);
 	psiNetwork->add(interstitialCluster);
 
-	// Check the network
-	const auto & reactant = psiNetwork->get("He", 10);
-	std::string name = reactant->getName();
-	BOOST_CHECK_EQUAL("He", name);
-	const std::shared_ptr<PSICluster> &retHeCluster = std::dynamic_pointer_cast<PSICluster>(
-			reactant);
-	BOOST_CHECK_EQUAL(10, retHeCluster->getSize());
-	std::shared_ptr<PSICluster> retVCluster = std::dynamic_pointer_cast<PSICluster>(
+	// Check the network, He first
+	auto retHeCluster = std::dynamic_pointer_cast<PSICluster>(
+			psiNetwork->get("He", 10));
+	BOOST_REQUIRE_EQUAL("He", retHeCluster->getName());
+	BOOST_REQUIRE_EQUAL(10, retHeCluster->getSize());
+	// V
+	auto retVCluster = std::dynamic_pointer_cast<PSICluster>(
 			psiNetwork->get("V", 4));
-	BOOST_CHECK_EQUAL(4, retVCluster->getSize());
-	BOOST_CHECK_EQUAL("V", retVCluster->getName());
-	std::shared_ptr<PSICluster> retICluster = std::dynamic_pointer_cast<PSICluster>(
+	BOOST_REQUIRE_EQUAL(4, retVCluster->getSize());
+	BOOST_REQUIRE_EQUAL("V", retVCluster->getName());
+	// IS
+	auto retICluster = std::dynamic_pointer_cast<PSICluster>(
 				psiNetwork->get("I", 48));
-	BOOST_CHECK_EQUAL(48, retICluster->getSize());
-	BOOST_CHECK_EQUAL("I", retICluster->getName());
+	BOOST_REQUIRE_EQUAL(48, retICluster->getSize());
+	BOOST_REQUIRE_EQUAL("I", retICluster->getName());
 
 	// Add a couple of HeV and HeI clusters ("compounds")
 	auto heVCluster = make_shared<HeVCluster>(5, 3);
@@ -187,21 +147,24 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	psiNetwork->add(heVCluster);
 	psiNetwork->add(heICluster);
 
-	// Check the network
+	// Check the network, start with HeV
 	std::vector<int> sizes;
 	sizes.push_back(5);
 	sizes.push_back(3);
+	sizes.push_back(0);
 	std::shared_ptr<PSICluster> retHeVCluster = std::dynamic_pointer_cast<PSICluster>(
 				psiNetwork->getCompound("HeV", sizes));
-	BOOST_CHECK_EQUAL(8, retHeVCluster->getSize());
-	BOOST_CHECK_EQUAL("HeV", retHeVCluster->getName());
+	BOOST_REQUIRE_EQUAL(8, retHeVCluster->getSize());
+	BOOST_REQUIRE_EQUAL("HeV", retHeVCluster->getName());
+	// Now do HeI
 	sizes.clear();
 	sizes.push_back(8);
+	sizes.push_back(0);
 	sizes.push_back(8);
-	std::shared_ptr<PSICluster> retHeICluster = std::dynamic_pointer_cast<PSICluster>(
+	auto retHeICluster = std::dynamic_pointer_cast<PSICluster>(
 				psiNetwork->getCompound("HeI", sizes));
-	BOOST_CHECK_EQUAL(16, retHeICluster->getSize());
-	BOOST_CHECK_EQUAL("HeI", retHeICluster->getName());
+	BOOST_REQUIRE_EQUAL(16, retHeICluster->getSize());
+	BOOST_REQUIRE_EQUAL("HeI", retHeICluster->getName());
 
 	return;
 }
@@ -308,4 +271,57 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 
 	return;
 }
+
+/**
+ * This operation tests the copy constructor.
+ */
+BOOST_AUTO_TEST_CASE(checkCopying) {
+
+	PSIClusterReactionNetwork network;
+
+	// Set some properties
+	//(*network.properties)["numMixedClusters"] = "4";
+
+	// Add a reactant
+	std::shared_ptr<Reactant> heCluster(new HeCluster(1));
+	heCluster->setConcentration(50.0);
+//	network.reactants->push_back(heCluster);
+//	network.reactants->at(0)->setConcentration(50.0);
+	network.add(heCluster);
+
+	// Copy the network
+	PSIClusterReactionNetwork networkCopy = network;
+
+	// Check that the ReactionNetwork fields are copied
+	auto properties = network.getProperties();
+	auto copiedProperties = networkCopy.getProperties();
+//	BOOST_REQUIRE_NE(network.properties.get(), networkCopy.properties.get());
+//	BOOST_REQUIRE_EQUAL(network.properties->size(),
+//			networkCopy.properties->size());
+	BOOST_REQUIRE_EQUAL(properties.size(),copiedProperties.size());
+	BOOST_REQUIRE_EQUAL(properties["numHeClusters"],copiedProperties["numHeClusters"]);
+
+//	BOOST_REQUIRE_NE(network.reactants.get(), networkCopy.reactants.get());
+//	BOOST_REQUIRE_EQUAL(network.reactants->size(), networkCopy.reactants->size());
+
+	// Change the composition of the copied cluster
+	auto copiedHeCluster = networkCopy.get("He",1);
+	copiedHeCluster->setConcentration(7.0);
+	BOOST_REQUIRE_CLOSE(7.0,heCluster->getConcentration(),1.0e-5);
+	// This shouldn't modify the Reactants contained inside the
+	// first network, so check the original cluster too.
+	BOOST_REQUIRE_CLOSE(50.0,heCluster->getConcentration(),1.0e-5);
+
+	// Check the properties of the copy
+//	(*networkCopy.properties)["numMixedClusters"] = "5";
+//	networkCopy.reactants->at(0)->setConcentration(52.0);
+
+//	BOOST_REQUIRE_NE(network.properties->at("numMixedClusters"),
+//			networkCopy.properties->at("numMixedClusters"));
+//	BOOST_REQUIRE_CLOSE(networkCopy.reactants->at(0)->getConcentration(), 52.0,
+//			1e-5);
+
+	return;
+}
+
 BOOST_AUTO_TEST_SUITE_END()

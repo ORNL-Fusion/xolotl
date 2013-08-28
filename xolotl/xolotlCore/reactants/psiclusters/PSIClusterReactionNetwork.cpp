@@ -132,7 +132,7 @@ int PSIClusterReactionNetwork::toClusterIndex(
  * @param size the size of the reactant
  * @return A shared pointer to the reactant
  */
-const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(
+std::shared_ptr<Reactant> PSIClusterReactionNetwork::get(
 		const std::string rName, const int size) {
 
 	// Local Declarations
@@ -160,7 +160,7 @@ const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::get(
  * @param sizes an array containing the sizes of each piece of the reactant
  * @return A shared pointer to the compound reactant
  */
-const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::getCompound(
+std::shared_ptr<Reactant> PSIClusterReactionNetwork::getCompound(
 		const std::string rName, const std::vector<int> sizes) {
 	std::shared_ptr<Reactant> nullPtr;
 
@@ -190,7 +190,7 @@ const std::shared_ptr<Reactant> & PSIClusterReactionNetwork::getCompound(
  * @param reactant The reactant that should be added to the network.
  */
 void PSIClusterReactionNetwork::add(
-		const std::shared_ptr<Reactant> & reactant) {
+		std::shared_ptr<Reactant> reactant) {
 
 	// Local Declarations
 	int numHe = 0, numV = 0, numI = 0;

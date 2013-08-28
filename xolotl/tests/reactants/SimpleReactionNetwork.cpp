@@ -154,7 +154,7 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
  * @param size the size of the reactant
  * @return A shared pointer to the reactant
  */
-const std::shared_ptr<Reactant> & SimpleReactionNetwork::get(const std::string rName,
+std::shared_ptr<Reactant> SimpleReactionNetwork::get(const std::string rName,
 		const int size) {
 	std::shared_ptr<Reactant> nullPtr;
 
@@ -168,7 +168,7 @@ const std::shared_ptr<Reactant> & SimpleReactionNetwork::get(const std::string r
  * @param sizes an array containing the sizes of each piece of the reactant
  * @return A shared pointer to the compound reactant
  */
-const std::shared_ptr<Reactant> & SimpleReactionNetwork::getCompound(
+std::shared_ptr<Reactant> SimpleReactionNetwork::getCompound(
 		const std::string rName, const std::vector<int> sizes) {
 	std::shared_ptr<Reactant> nullPtr;
 
@@ -179,7 +179,7 @@ const std::shared_ptr<Reactant> & SimpleReactionNetwork::getCompound(
  * This operation adds a reactant or a compound reactant to the network.
  * @param reactant The reactant that should be added to the network.
  */
-void SimpleReactionNetwork::add(const std::shared_ptr<Reactant> & reactant) {
+void SimpleReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 	return;
 }
 
