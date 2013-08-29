@@ -166,6 +166,10 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_REQUIRE_EQUAL(16, retHeICluster->getSize());
 	BOOST_REQUIRE_EQUAL("HeI", retHeICluster->getName());
 
+	// Check the getter for all reactants
+	auto clusters = psiNetwork->getAll();
+	BOOST_REQUIRE_EQUAL(5,clusters->size());
+
 	return;
 }
 

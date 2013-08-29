@@ -136,7 +136,7 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::get(
 		const std::string rName, const int size) {
 
 	// Local Declarations
-	std::map<std::string,int> composition;
+	std::map<std::string, int> composition;
 	std::shared_ptr<PSICluster> retReactant = std::shared_ptr<PSICluster>();
 
 	// Setup the composition map to default values
@@ -165,7 +165,7 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::getCompound(
 	std::shared_ptr<Reactant> nullPtr;
 
 	// Local Declarations
-	std::map<std::string,int> composition;
+	std::map<std::string, int> composition;
 	std::shared_ptr<PSICluster> retReactant;
 
 	// Setup the composition map to default values
@@ -189,8 +189,7 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::getCompound(
  * This operation adds a reactant or a compound reactant to the network.
  * @param reactant The reactant that should be added to the network.
  */
-void PSIClusterReactionNetwork::add(
-		std::shared_ptr<Reactant> reactant) {
+void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 
 	// Local Declarations
 	int numHe = 0, numV = 0, numI = 0;
@@ -250,11 +249,33 @@ void PSIClusterReactionNetwork::add(
 		maxSize = std::max(clusterSize, maxSize);
 		(*properties)[clusterSizeKey] = std::to_string((long long) maxSize);
 
-		std::cout << "Added cluster of type " << reactant->getName() << " with size " << clusterSize << std::endl;
-
 	}
 
 	return;
+}
+
+/**
+ * This operation returns all reactants in the network without regard for
+ * their composition or whether they are compound reactants. The list may
+ * or may not be ordered and the decision is left to implementers.
+ * @return The list of all of the reactants in the network
+ */
+std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>PSIClusterReactionNetwork::getAll() {
+
+	// Local Declarations
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> allReactants(new std::vector<std::shared_ptr<Reactant> >);
+
+	// Load the single-species clusters
+	for (auto it=singleSpeciesMap.begin(); it!=singleSpeciesMap.end(); ++it) {
+		allReactants->push_back(it->second);
+	}
+
+	// Load the mixed-species clusters
+	for (auto it=mixedSpeciesMap.begin(); it!=mixedSpeciesMap.end(); ++it) {
+		allReactants->push_back(it->second);
+	}
+
+	return allReactants;
 }
 
 /**
@@ -314,4 +335,3 @@ void PSIClusterReactionNetwork::setProperty(const std::string key,
 
 	return;
 }
-

@@ -79,6 +79,14 @@ public:
 		 */
 		void setProperty(const std::string key, const std::string value);
 
+		/**
+		 * This operation returns all reactants in the network without regard for
+		 * their composition or whether they are compound reactants. The list may
+		 * or may not be ordered and the decision is left to implementers.
+		 * @return The list of all of the reactants in the network
+		 */
+		std::shared_ptr<std::vector<std::shared_ptr<xolotlCore::Reactant> > > getAll();
+
 };
 
 /**

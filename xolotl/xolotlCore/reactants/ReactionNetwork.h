@@ -81,6 +81,14 @@ public:
 	virtual std::shared_ptr<Reactant> getCompound(const std::string rName, const std::vector<int> sizes) = 0;
 
 	/**
+	 * This operation returns all reactants in the network without regard for
+	 * their composition or whether they are compound reactants. The list may
+	 * or may not be ordered and the decision is left to implementers.
+	 * @return The list of all of the reactants in the network
+	 */
+	virtual std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll() = 0;
+
+	/**
 	 * This operation adds a reactant or a compound reactant to the network.
 	 * @param reactant The reactant that should be added to the network.
 	 */

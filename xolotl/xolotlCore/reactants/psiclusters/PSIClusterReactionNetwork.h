@@ -176,6 +176,14 @@ public:
 			const std::vector<int> sizes);
 
 	/**
+	 * This operation returns all reactants in the network without regard for
+	 * their composition or whether they are compound reactants. The list may
+	 * or may not be ordered and the decision is left to implementers.
+	 * @return The list of all of the reactants in the network
+	 */
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll();
+
+	/**
 	 * This operation adds a reactant or a compound reactant to the network.
 	 * The reactant will not be added to the network if the PSICluster does
 	 * not recognize it as a type of reactant that it cares about (including
