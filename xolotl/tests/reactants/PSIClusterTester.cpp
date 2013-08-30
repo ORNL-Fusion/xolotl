@@ -94,9 +94,9 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	BOOST_REQUIRE(abs(cluster.getMigrationEnergy() -
 					copiedCluster.getMigrationEnergy()) > 2.0 - 1e-5);
 
-	// Check cloning
+	// Check cloning. Note that clone returns a shared_ptr!
 	auto clusterClone = cluster.clone();
-	BOOST_REQUIRE_EQUAL(clusterClone.getName(), cluster.getName());
+	BOOST_REQUIRE_EQUAL(cluster.getName(), clusterClone->getName());
 
 	return;
 }

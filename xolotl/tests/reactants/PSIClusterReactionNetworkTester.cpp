@@ -308,12 +308,12 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 //	BOOST_REQUIRE_NE(network.reactants.get(), networkCopy.reactants.get());
 //	BOOST_REQUIRE_EQUAL(network.reactants->size(), networkCopy.reactants->size());
 
-	// Change the composition of the copied cluster
+	// Check that changing the concentration of a copy does not update the
+	// original. Start by updating the copy.
 	auto copiedHeCluster = networkCopy.get("He",1);
 	copiedHeCluster->setConcentration(7.0);
-	BOOST_REQUIRE_CLOSE(7.0,heCluster->getConcentration(),1.0e-5);
-	// This shouldn't modify the Reactants contained inside the
-	// first network, so check the original cluster too.
+	BOOST_REQUIRE_CLOSE(7.0,copiedHeCluster->getConcentration(),1.0e-5);
+	// Make sure the original wasn't changed.
 	BOOST_REQUIRE_CLOSE(50.0,heCluster->getConcentration(),1.0e-5);
 
 	// Check the properties of the copy

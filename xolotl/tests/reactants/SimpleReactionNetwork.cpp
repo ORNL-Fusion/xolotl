@@ -134,8 +134,8 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
 
 	for (auto reactantIt = network->reactants->begin();
 			reactantIt != network->reactants->end(); reactantIt++) {
-		std::shared_ptr<PSICluster> cluster = std::dynamic_pointer_cast
-				< PSICluster > (*reactantIt);
+		std::shared_ptr<PSICluster> cluster = std::dynamic_pointer_cast<
+				PSICluster>(*reactantIt);
 		std::vector<int> conn = *cluster->getConnectivity();
 
 		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++) {
@@ -155,7 +155,7 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
  * @return A shared pointer to the reactant
  */
 std::shared_ptr<Reactant> SimpleReactionNetwork::get(const std::string rName,
-		const int size) {
+		const int size) const {
 	std::shared_ptr<Reactant> nullPtr;
 
 	return nullPtr;
@@ -169,7 +169,7 @@ std::shared_ptr<Reactant> SimpleReactionNetwork::get(const std::string rName,
  * @return A shared pointer to the compound reactant
  */
 std::shared_ptr<Reactant> SimpleReactionNetwork::getCompound(
-		const std::string rName, const std::vector<int> sizes) {
+		const std::string rName, const std::vector<int> sizes) const {
 	std::shared_ptr<Reactant> nullPtr;
 
 	return nullPtr;
@@ -181,7 +181,7 @@ std::shared_ptr<Reactant> SimpleReactionNetwork::getCompound(
  * or may not be ordered and the decision is left to implementers.
  * @return The list of all of the reactants in the network
  */
-std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> SimpleReactionNetwork::getAll() {
+std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>SimpleReactionNetwork::getAll() const {
 
 	// Local Declarations
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> allReactants(new std::vector<std::shared_ptr<Reactant> >);
@@ -206,7 +206,7 @@ void SimpleReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
  * @return A vector with one each for each of the distinct reactant types
  * in the network.
  */
-const std::vector<std::string> & SimpleReactionNetwork::getNames() {
+const std::vector<std::string> & SimpleReactionNetwork::getNames() const {
 
 	std::vector<std::string> vector;
 	std::vector<std::string> & vectorRef = vector;
@@ -220,7 +220,7 @@ const std::vector<std::string> & SimpleReactionNetwork::getNames() {
  * @return A vector with one each for each of the distinct compound
  * reactant types in the network.
  */
-const std::vector<std::string> & SimpleReactionNetwork::getCompoundNames() {
+const std::vector<std::string> & SimpleReactionNetwork::getCompoundNames() const {
 	std::vector<std::string> vector;
 	std::vector<std::string> & vectorRef = vector;
 

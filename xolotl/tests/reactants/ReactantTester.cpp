@@ -19,26 +19,25 @@ using namespace xolotlCore;
 
 /**
  * This suite is responsible for testing the Reactant.
- */
-BOOST_AUTO_TEST_SUITE(Reactant_testSuite)
+ */BOOST_AUTO_TEST_SUITE(Reactant_testSuite)
 
 /**
  * This operation tests the copy constructor.
  */
 BOOST_AUTO_TEST_CASE(checkCopying) {
-	
+
 	// Create a reference Reactant
 	std::shared_ptr<Reactant> reactant(new Reactant);
 	reactant->setConcentration(10.0);
-	
+
 	// Copy the Reactant
 	std::shared_ptr<Reactant> reactantCopy(new Reactant(*reactant));
-	
+
 	// Check that the pointers are different
 	BOOST_REQUIRE_NE(reactant.get(), reactantCopy.get());
-	
+
 	reactantCopy->increaseConcentration(5.0);
-	
+
 	// The values should now be different,
 	// so check them against the known values
 	BOOST_REQUIRE_CLOSE(reactant->getConcentration(), 10.0, 1e-7);
@@ -46,7 +45,7 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 
 	// Try cloning the Reactant
 	auto reactantClone = reactant->clone();
-	BOOST_REQUIRE_CLOSE(reactantClone.getConcentration(), 10.0, 1e-7);
+	BOOST_REQUIRE_CLOSE(10.0, reactantClone->getConcentration(), 1e-7);
 
 	return;
 }
@@ -83,68 +82,67 @@ BOOST_AUTO_TEST_CASE(checkManipulateConcentration) {
 
 }
 
-
 /*BOOST_AUTO_TEST_CASE(toClusterMap) {
-	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
-	
-	std::map<std::string, int> cluster;
-	
-	// Test a couple of the HeClusters
-	
-	cluster = network->toClusterMap(0);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 1);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-	
-	cluster = network->toClusterMap(9);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 10);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-	
-	// Test VClusters
-	
-	cluster = network->toClusterMap(10);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 1);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-	
-	cluster = network->toClusterMap(19);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 10);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-	
-	// Test IClusters
-	
-	cluster = network->toClusterMap(20);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 1);
-	
-	cluster = network->toClusterMap(29);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 10);
-	
-	// Test HeVClusters
-	
-	for (int i = 30; i < 75; i++) {
-		// Get the actual He and V amounts
-		
-		shared_ptr<Reactant> reactant = network->reactants->at(i);
-		shared_ptr<HeVCluster> cluster = std::dynamic_pointer_cast<HeVCluster>(reactant);
-		int actualHe = cluster->getSpeciesSize("He");
-		int actualV = cluster->getSpeciesSize("V");
-		
-		// Get the amounts expected by Reactant::toClusterMap()
-		
-		std::map<std::string, int> species = network->toClusterMap(i);
-		int expectedHe = species["He"];
-		int expectedV = species["V"];
-		
-		BOOST_REQUIRE_EQUAL(actualHe, expectedHe);
-		BOOST_REQUIRE_EQUAL(actualV, expectedV);
-	}
-}*/
+ shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+
+ std::map<std::string, int> cluster;
+
+ // Test a couple of the HeClusters
+
+ cluster = network->toClusterMap(0);
+ BOOST_REQUIRE_EQUAL(cluster["He"], 1);
+ BOOST_REQUIRE_EQUAL(cluster["V"], 0);
+ BOOST_REQUIRE_EQUAL(cluster["I"], 0);
+
+ cluster = network->toClusterMap(9);
+ BOOST_REQUIRE_EQUAL(cluster["He"], 10);
+ BOOST_REQUIRE_EQUAL(cluster["V"], 0);
+ BOOST_REQUIRE_EQUAL(cluster["I"], 0);
+
+ // Test VClusters
+
+ cluster = network->toClusterMap(10);
+ BOOST_REQUIRE_EQUAL(cluster["He"], 0);
+ BOOST_REQUIRE_EQUAL(cluster["V"], 1);
+ BOOST_REQUIRE_EQUAL(cluster["I"], 0);
+
+ cluster = network->toClusterMap(19);
+ BOOST_REQUIRE_EQUAL(cluster["He"], 0);
+ BOOST_REQUIRE_EQUAL(cluster["V"], 10);
+ BOOST_REQUIRE_EQUAL(cluster["I"], 0);
+
+ // Test IClusters
+
+ cluster = network->toClusterMap(20);
+ BOOST_REQUIRE_EQUAL(cluster["He"], 0);
+ BOOST_REQUIRE_EQUAL(cluster["V"], 0);
+ BOOST_REQUIRE_EQUAL(cluster["I"], 1);
+
+ cluster = network->toClusterMap(29);
+ BOOST_REQUIRE_EQUAL(cluster["He"], 0);
+ BOOST_REQUIRE_EQUAL(cluster["V"], 0);
+ BOOST_REQUIRE_EQUAL(cluster["I"], 10);
+
+ // Test HeVClusters
+
+ for (int i = 30; i < 75; i++) {
+ // Get the actual He and V amounts
+
+ shared_ptr<Reactant> reactant = network->reactants->at(i);
+ shared_ptr<HeVCluster> cluster = std::dynamic_pointer_cast<HeVCluster>(reactant);
+ int actualHe = cluster->getSpeciesSize("He");
+ int actualV = cluster->getSpeciesSize("V");
+
+ // Get the amounts expected by Reactant::toClusterMap()
+
+ std::map<std::string, int> species = network->toClusterMap(i);
+ int expectedHe = species["He"];
+ int expectedV = species["V"];
+
+ BOOST_REQUIRE_EQUAL(actualHe, expectedHe);
+ BOOST_REQUIRE_EQUAL(actualV, expectedV);
+ }
+ }*/
 
 BOOST_AUTO_TEST_CASE(checkIsConnected) {
 
@@ -152,11 +150,11 @@ BOOST_AUTO_TEST_CASE(checkIsConnected) {
 	// shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
 
 	/*for (int i = 0; i < network->reactants->size(); i++) {
-		for (int j = 0; j < network->reactants->size(); j++) {
-			//std::cout << i << " " << j << "\n";
-			//BOOST_REQUIRE_EQUAL(network->isConnected(i,j), network->isConnected(j,i));
-		}
-	}*/
+	 for (int j = 0; j < network->reactants->size(); j++) {
+	 //std::cout << i << " " << j << "\n";
+	 //BOOST_REQUIRE_EQUAL(network->isConnected(i,j), network->isConnected(j,i));
+	 }
+	 }*/
 }
 BOOST_AUTO_TEST_SUITE_END()
 
