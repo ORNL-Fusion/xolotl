@@ -73,9 +73,8 @@ void PSICluster::setReactionNetwork(
 	Reactant::setReactionNetwork(reactionNetwork);
 
 	// Extract properties from the network
-	std::shared_ptr<std::map<std::string, std::string>> properties =
-			network->properties;
-	int connectivityLength = network->reactants->size();
+	auto properties = network->getProperties();
+	int connectivityLength = network->getAll()->size();
 
 	// Get the enabled reaction type flags
 	bool reactionsEnabled = ((*properties)["reactionsEnabled"] == "true");
@@ -180,7 +179,6 @@ double PSICluster::getProductionFlux(const double temperature) {
 	// Local declarations
 	double flux = 0.0, kPlus = 0.0;
 	int thisClusterIndex = 0;
-	std::shared_ptr<std::vector<int>> outerConnectivity;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
 	int nPairs = 0;
 
@@ -215,7 +213,6 @@ double PSICluster::getCombinationFlux(const double temperature) {
 	// Local declarations
 	double flux = 0.0, kPlus = 0.0;
 	int thisClusterIndex = 0;
-	std::shared_ptr<std::vector<int>> outerConnectivity;
 	std::shared_ptr<Reactant> outerReactant, thisReactant;
 	int nReactants = 0;
 

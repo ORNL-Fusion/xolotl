@@ -22,7 +22,7 @@ std::shared_ptr<Reactant> VCluster::clone() {
 void VCluster::createReactionConnectivity() {
 
 	// Local Declarations - Note the reference to the properties map
-	std::map<std::string, std::string> props = *(network->properties);
+	auto network->getProperties();
 	int numV = size, indexOther;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
@@ -31,11 +31,10 @@ void VCluster::createReactionConnectivity() {
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
 	int numIClusters = std::stoi(props["numIClusters"]);
 	std::map<std::string, int> speciesMap;
+	std::vector<int> firstComp, secondComp;
 	int totalSize = 1, firstSize = 0, secondSize = 0;
 	int firstIndex = -1, secondIndex = -1;
-	std::map<std::string, int> firstSpeciesMap, secondSpeciesMap;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants = network->reactants;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
@@ -50,15 +49,10 @@ void VCluster::createReactionConnectivity() {
 		// Increment the base sizes
 		++firstSize;
 		secondSize = size - firstSize;
-		// Update the maps
-		firstSpeciesMap["V"] = firstSize;
-		secondSpeciesMap["V"] = secondSize;
 		// Get the first and second reactants for the reaction
 		// first + second = this.
-		firstIndex = network->toClusterIndex(firstSpeciesMap);
-		firstReactant = reactants->at(firstIndex);
-		secondIndex = network->toClusterIndex(secondSpeciesMap);
-		secondReactant = reactants->at(secondIndex);
+		firstReactant = network->get("V",firstSize);
+		secondReactant = network->get("V",secondSize);
 		// Create a ReactingPair with the two reactants
 		ReactingPair pair;
 		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
@@ -83,10 +77,10 @@ void VCluster::createReactionConnectivity() {
 	 */
 	for (int numHeOther = 1; numV + numHeOther <= maxHeVClusterSize;
 			numHeOther++) {
-		speciesMap["He"] = numHeOther;
-		int indexOther = network->toClusterIndex(speciesMap);
-		reactionConnectivity[indexOther] = 1;
-		combiningReactants.push_back(reactants->at(indexOther));
+		//speciesMap["He"] = numHeOther;
+		//int indexOther = network->toClusterIndex(speciesMap);
+		reactionConnectivity[indexOther] = 1; // Ror row. FIXME!
+		combiningReactants.push_back(reactants->get("He",numHeOther));
 	}
 
 	/* ----- A*V + B*V --> (A+B)*V -----

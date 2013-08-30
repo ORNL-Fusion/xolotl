@@ -9,6 +9,7 @@
 #include <ReactionNetwork.h>
 #include <PSICluster.h>
 #include <iostream>
+#include <algorithm>
 
 namespace xolotlCore {
 
@@ -257,6 +258,30 @@ public:
 	 * @param value The value to which the key should be set.
 	 */
 	void setProperty(const std::string key, const std::string value);
+
+	/**
+	 * This is a utility operation that creates a composition vector with an
+	 * entry for helium, vacancies and interstitials. It is handy because it
+	 * removes the need to construct the vectors properly and locally. The
+	 * vector can be used to retrieve clusters.
+	 *
+	 * This function will never return an composition with less than three
+	 * elements and it will always return element sizes greater than zero. If
+	 * the elements are negative, it will default to 1,0,0 (single He).
+	 * @param numHe The number of helium atoms in the cluster
+	 * @param numV The number of atomic vacancies in the cluster
+	 * @param numI The number of interstitial defects in the cluster
+	 * @return A vector of size three with an entry for each of the parts
+	 * equal to the numbers that were passed for that part.
+	 */
+	std::vector<int> getCompositionVector(int numHe, int numV, int numI) {
+		std::vector<int> composition(3);
+		composition[0] = std::max(1,numHe);
+		composition[1] = std::max(0,numV);
+		composition[2] = std::max(0,numI);
+		composition[2] = std::max(0,numI);
+		return composition;
+	}
 
 };
 

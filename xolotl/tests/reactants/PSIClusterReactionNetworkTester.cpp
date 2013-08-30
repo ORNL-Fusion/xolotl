@@ -112,6 +112,35 @@ BOOST_AUTO_TEST_CASE(toClusterMap) {
 	}
 }
 
+BOOST_AUTO_TEST_CASE(checkCompositionCreation) {
+
+	// Create the network
+	auto psiNetwork = make_shared<PSIClusterReactionNetwork>();
+
+	// Get an HeV cluster with sizes 5,10
+	auto heVComp = psiNetwork->getCompositionVector(5,10,0);
+	BOOST_REQUIRE_EQUAL(3,heVComp->size());
+	BOOST_REQUIRE_EQUAL(5,heVComp[0]);
+	BOOST_REQUIRE_EQUAL(10,heVComp[1]);
+	BOOST_REQUIRE_EQUAL(0,heVComp[2]);
+
+	// Get an interstitial cluster with size 99
+	auto intComp = psiNetwork->getCompositionVector(0,0,99);
+	BOOST_REQUIRE_EQUAL(3,heVComp->size());
+	BOOST_REQUIRE_EQUAL(0,heVComp[0]);
+	BOOST_REQUIRE_EQUAL(0,heVComp[1]);
+	BOOST_REQUIRE_EQUAL(99,heVComp[2]);
+
+	// Try to get something bad
+	auto badComp = psiNetwork->getCompositionVector(-1,-8,-3);
+	// Make sure that it gives you single species helium back
+	BOOST_REQUIRE_EQUAL(3,heVComp->size());
+	BOOST_REQUIRE_EQUAL(1,heVComp[0]);
+	BOOST_REQUIRE_EQUAL(0,heVComp[1]);
+	BOOST_REQUIRE_EQUAL(0,heVComp[2]);
+
+}
+
 BOOST_AUTO_TEST_CASE(checkReactants) {
 
 	// Create the network
