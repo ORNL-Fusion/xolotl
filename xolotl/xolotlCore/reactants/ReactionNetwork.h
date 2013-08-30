@@ -69,7 +69,7 @@ public:
 	 * @param size the size of the reactant
 	 * @return A shared pointer to the reactant
 	 */
-	virtual std::shared_ptr<Reactant> get(const std::string rName, const int size) = 0;
+	virtual std::shared_ptr<Reactant> get(const std::string rName, const int size) const = 0;
 
 	/**
 	 * This operation returns a compound reactant with the given name and size if it
@@ -78,7 +78,7 @@ public:
 	 * @param sizes an array containing the sizes of each piece of the reactant
 	 * @return A shared pointer to the compound reactant
 	 */
-	virtual std::shared_ptr<Reactant> getCompound(const std::string rName, const std::vector<int> sizes) = 0;
+	virtual std::shared_ptr<Reactant> getCompound(const std::string rName, const std::vector<int> sizes) const = 0;
 
 	/**
 	 * This operation returns all reactants in the network without regard for
@@ -86,7 +86,7 @@ public:
 	 * or may not be ordered and the decision is left to implementers.
 	 * @return The list of all of the reactants in the network
 	 */
-	virtual std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll() = 0;
+	virtual std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll() const = 0;
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.
@@ -99,7 +99,7 @@ public:
 	 * @return A vector with one entry for each of the distinct reactant types
 	 * in the network.
 	 */
-	virtual const std::vector<std::string> & getNames() = 0;
+	virtual const std::vector<std::string> & getNames() const = 0;
 
 	/**
 	 * This operation returns the names of the compound reactants in the
@@ -107,7 +107,7 @@ public:
 	 * @return A vector with one each for each of the distinct compound
 	 * reactant types in the network.
 	 */
-	virtual const std::vector<std::string> & getCompoundNames() = 0;
+	virtual const std::vector<std::string> & getCompoundNames() const = 0;
 
 	/**
 	 * This operation returns a map of the properties of this reaction network.

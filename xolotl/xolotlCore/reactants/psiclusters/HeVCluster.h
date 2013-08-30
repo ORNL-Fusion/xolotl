@@ -52,7 +52,7 @@ public:
 	 * constructor of HeVCluster.
 	 * @return A copy of this reactant.
 	 */
-	virtual Reactant clone();
+	virtual std::shared_ptr<Reactant> clone();
 
 	/**
 	 * This operation returns the total generation rate due to emission for

@@ -17,8 +17,9 @@ Reactant::Reactant(const Reactant &other) :
 Reactant::~Reactant() {
 }
 
-Reactant Reactant::clone() {
-	return Reactant(*this);
+std::shared_ptr<Reactant> Reactant::clone() {
+	std::shared_ptr<Reactant> reactant(new Reactant(*this));
+	return reactant;
 }
 
 Reactant::Reactant(double conc) :

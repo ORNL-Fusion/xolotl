@@ -14,8 +14,9 @@ HeCluster::HeCluster(int nHe) :
 HeCluster::~HeCluster() {
 }
 
-Reactant HeCluster::clone() {
-	return HeCluster(*this);
+std::shared_ptr<Reactant> HeCluster::clone() {
+	std::shared_ptr<Reactant> reactant(new HeCluster(*this));
+	return reactant;
 }
 
 void HeCluster::createReactionConnectivity() {

@@ -13,8 +13,9 @@ InterstitialCluster::InterstitialCluster(int nI) :
 InterstitialCluster::~InterstitialCluster() {
 }
 
-Reactant InterstitialCluster::clone() {
-	return InterstitialCluster(*this);
+std::shared_ptr<Reactant> InterstitialCluster::clone() {
+	std::shared_ptr<Reactant> reactant(new InterstitialCluster(*this));
+	return reactant;
 }
 
 void InterstitialCluster::createReactionConnectivity() {

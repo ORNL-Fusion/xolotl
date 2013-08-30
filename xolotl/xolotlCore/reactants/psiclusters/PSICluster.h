@@ -202,7 +202,7 @@ public:
 	 * about it.
 	 * @return A copy of this reactant.
 	 */
-	virtual Reactant clone();
+	virtual std::shared_ptr<Reactant> clone();
 
 	/**
 	 * Sets the collection of other reactants that make up

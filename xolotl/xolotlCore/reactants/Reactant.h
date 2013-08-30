@@ -71,7 +71,7 @@ public:
 	 * about it.
 	 * @return A copy of this reactant.
 	 */
-	virtual Reactant clone();
+	virtual std::shared_ptr<Reactant> clone();
 
 	/**
 	 * An alternative constructor that can be used to create a reactant

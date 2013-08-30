@@ -30,8 +30,9 @@ HeInterstitialCluster::HeInterstitialCluster(const HeInterstitialCluster &other)
 HeInterstitialCluster::~HeInterstitialCluster() {
 }
 
-Reactant HeInterstitialCluster::clone() {
-	return HeInterstitialCluster(*this);
+std::shared_ptr<Reactant> HeInterstitialCluster::clone() {
+	std::shared_ptr<Reactant> reactant(new HeInterstitialCluster(*this));
+	return reactant;
 }
 
 double HeInterstitialCluster::getGenByEm() {

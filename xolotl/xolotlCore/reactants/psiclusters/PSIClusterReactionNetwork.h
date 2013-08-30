@@ -50,68 +50,69 @@ private:
 			// and I between 3 and 4. The "big number" was chosen to be
 			// sufficiently larger that a single species cluster would never
 			// reach that size because of physical limits.
-			index_lhs = (numHe_lhs > 0)*(1.0+(numHe_lhs/bigNumber))
-					+ (numV_lhs > 0)*(2.0+(numV_lhs/bigNumber))
-					+ (numI_lhs > 0)*(3.0+(numI_lhs/bigNumber));
-			index_rhs = (numHe_rhs > 0)*(1.0+(numHe_rhs/bigNumber))
-					+ (numV_rhs > 0)*(2.0+(numV_rhs/bigNumber))
-					+ (numI_rhs > 0)*(3.0+(numI_rhs/bigNumber));
+			index_lhs = (numHe_lhs > 0) * (1.0 + (numHe_lhs / bigNumber))
+					+ (numV_lhs > 0) * (2.0 + (numV_lhs / bigNumber))
+					+ (numI_lhs > 0) * (3.0 + (numI_lhs / bigNumber));
+			index_rhs = (numHe_rhs > 0) * (1.0 + (numHe_rhs / bigNumber))
+					+ (numV_rhs > 0) * (2.0 + (numV_rhs / bigNumber))
+					+ (numI_rhs > 0) * (3.0 + (numI_rhs / bigNumber));
 
 			return index_lhs < index_rhs;
 		}
 	};
 
 	/**
-		 * This structure compares two PSIClusters that are mixed species. It
-		 * only differs from the above comparator in the coefficients that it
-		 * assigned to the hash function. HeV clusters are put in a bin with a
-		 * center a max bound at -5 and HeI clusters at +5.
-		 */
-		struct PSIMixedClusterComparator {
-			bool operator()(const std::map<std::string, int>& lhs,
-					const std::map<std::string, int>& rhs) const {
+	 * This structure compares two PSIClusters that are mixed species. It
+	 * only differs from the above comparator in the coefficients that it
+	 * assigned to the hash function. HeV clusters are put in a bin with a
+	 * center a max bound at -5 and HeI clusters at +5.
+	 */
+	struct PSIMixedClusterComparator {
+		bool operator()(const std::map<std::string, int>& lhs,
+				const std::map<std::string, int>& rhs) const {
 
-				// Local Declarations
-				int numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
-				int numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
-				double index_lhs = 0.0, index_rhs = 0.0;
-				double bigNumber = 1.0e9;
+			// Local Declarations
+			int numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
+			int numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
+			double index_lhs = 0.0, index_rhs = 0.0;
+			double bigNumber = 1.0e9;
 
-				// Get the cluster sizes
-				numHe_lhs = lhs.at("He");
-				numV_lhs = lhs.at("V");
-				numI_lhs = lhs.at("I");
-				numHe_rhs = rhs.at("He");
-				numV_rhs = rhs.at("V");
-				numI_rhs = rhs.at("I");
+			// Get the cluster sizes
+			numHe_lhs = lhs.at("He");
+			numV_lhs = lhs.at("V");
+			numI_lhs = lhs.at("I");
+			numHe_rhs = rhs.at("He");
+			numV_rhs = rhs.at("V");
+			numI_rhs = rhs.at("I");
 
-				// Compute the indices/hashes. This simply bins the amount of each
-				// time in such a way that they can be compared without a large
-				// number of branches. HeV lands near -5 and HeI lands near +5.
-				index_lhs = (numHe_lhs > 0)*(1.0+(numHe_lhs/bigNumber))
-						+ (numV_lhs > 0)*(-5.0+(numV_lhs/bigNumber))
-						+ (numI_lhs > 0)*(5.0+(numI_lhs/bigNumber));
-				index_rhs = (numHe_rhs > 0)*(1.0+(numHe_rhs/bigNumber))
-						+ (numV_rhs > 0)*(-5.0+(numV_rhs/bigNumber))
-						+ (numI_rhs > 0)*(1.0+(numI_rhs/bigNumber));
+			// Compute the indices/hashes. This simply bins the amount of each
+			// time in such a way that they can be compared without a large
+			// number of branches. HeV lands near -5 and HeI lands near +5.
+			index_lhs = (numHe_lhs > 0) * (1.0 + (numHe_lhs / bigNumber))
+					+ (numV_lhs > 0) * (-5.0 + (numV_lhs / bigNumber))
+					+ (numI_lhs > 0) * (5.0 + (numI_lhs / bigNumber));
+			index_rhs = (numHe_rhs > 0) * (1.0 + (numHe_rhs / bigNumber))
+					+ (numV_rhs > 0) * (-5.0 + (numV_rhs / bigNumber))
+					+ (numI_rhs > 0) * (1.0 + (numI_rhs / bigNumber));
 
-				return index_lhs < index_rhs;
-			}
-		};
-
+			return index_lhs < index_rhs;
+		}
+	};
 
 	/**
 	 * The map of single-species clusters, indexed by a map that contains the
 	 * name of the reactant and its size.
 	 */
-	std::map<std::map<std::string, int>, std::shared_ptr<PSICluster>, PSIClusterComparator> singleSpeciesMap;
+	std::map<std::map<std::string, int>, std::shared_ptr<PSICluster>,
+			PSIClusterComparator> singleSpeciesMap;
 
 	/**
 	 * The map of mixed or compound species clusters, indexed by a map that
 	 * contains the name of the constituents of the compound reactant and their
 	 * sizes.
 	 */
-	std::map<std::map<std::string, int>, std::shared_ptr<PSICluster>, PSIMixedClusterComparator> mixedSpeciesMap;
+	std::map<std::map<std::string, int>, std::shared_ptr<PSICluster>,
+			PSIMixedClusterComparator> mixedSpeciesMap;
 
 	/**
 	 * The names of the reactants supported by this network.
@@ -122,6 +123,12 @@ private:
 	 * The names of the compound reactants supported by this network.
 	 */
 	std::vector<std::string> compoundNames;
+
+	/**
+	 * This operation sets the default values of the properties table and names
+	 * for this network. It is used on construction and during a copy.
+	 */
+	void setDefaultPropsAndNames();
 
 public:
 
@@ -160,7 +167,8 @@ public:
 	 * @param size the size of the reactant
 	 * @return A shared pointer to the reactant
 	 */
-	std::shared_ptr<Reactant> get(const std::string rName, const int size);
+	std::shared_ptr<Reactant> get(const std::string rName,
+			const int size) const;
 
 	/**
 	 * This operation returns a compound reactant with the given name and size
@@ -173,7 +181,7 @@ public:
 	 * @return A shared pointer to the compound reactant
 	 */
 	std::shared_ptr<Reactant> getCompound(const std::string rName,
-			const std::vector<int> sizes);
+			const std::vector<int> sizes) const;
 
 	/**
 	 * This operation returns all reactants in the network without regard for
@@ -181,7 +189,7 @@ public:
 	 * or may not be ordered and the decision is left to implementers.
 	 * @return The list of all of the reactants in the network
 	 */
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll();
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll() const;
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.
@@ -198,7 +206,7 @@ public:
 	 * @return A vector with one entry for each of the distinct reactant types
 	 * in the network.
 	 */
-	const std::vector<std::string> & getNames();
+	const std::vector<std::string> & getNames() const;
 
 	/**
 	 * This operation returns the names of the compound reactants in the
@@ -206,7 +214,7 @@ public:
 	 * @return A vector with one each for each of the distinct compound
 	 * reactant types in the network.
 	 */
-	const std::vector<std::string> & getCompoundNames();
+	const std::vector<std::string> & getCompoundNames() const;
 
 	/**
 	 * This operation returns a map of the properties of this reaction network.

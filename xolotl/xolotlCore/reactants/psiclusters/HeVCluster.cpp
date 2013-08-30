@@ -24,8 +24,9 @@ HeVCluster::HeVCluster(const HeVCluster &other): PSICluster(other) {
 HeVCluster::~HeVCluster() {
 }
 
-Reactant HeVCluster::clone() {
-	return HeVCluster(*this);
+std::shared_ptr<Reactant> HeVCluster::clone() {
+	std::shared_ptr<Reactant> reactant(new HeVCluster(*this));
+	return reactant;
 }
 
 double HeVCluster::getGenByEm() {

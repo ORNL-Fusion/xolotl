@@ -14,8 +14,9 @@ VCluster::VCluster(int nV) :
 VCluster::~VCluster() {
 }
 
-Reactant VCluster::clone() {
-	return VCluster(*this);
+std::shared_ptr<Reactant> VCluster::clone() {
+	std::shared_ptr<Reactant> reactant(new VCluster(*this));
+	return reactant;
 }
 
 void VCluster::createReactionConnectivity() {

@@ -42,14 +42,20 @@ PSICluster::PSICluster(const int clusterSize) :
 	connectivity = std::shared_ptr<std::vector<int>>(new std::vector<int>);
 }
 
+// The copy constructor with a huge initialization list!
 PSICluster::PSICluster(const PSICluster &other) :
 		Reactant(other), size(other.size), diffusionFactor(
 				other.diffusionFactor), bindingEnergies(other.bindingEnergies), migrationEnergy(
-				other.migrationEnergy) {
+				other.migrationEnergy), reactionConnectivity(
+				other.reactionConnectivity), dissociationConnectivity(
+				other.dissociationConnectivity), reactingPairs(
+				other.reactingPairs), combiningReactants(
+				other.combiningReactants) {
 }
 
-Reactant PSICluster::clone() {
-	return PSICluster(*this);
+std::shared_ptr<Reactant> PSICluster::clone() {
+	std::shared_ptr<Reactant> reactant(new PSICluster(*this));
+	return reactant;
 }
 
 PSICluster::~PSICluster() {
@@ -100,7 +106,7 @@ double PSICluster::getDissociationFlux(const double temperature) {
 	int nReactants = 0, oneIndex = -1;
 	double diss = 0.0, conc = 0.0;
 	std::shared_ptr<Reactant> first, second;
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>> > reactants;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>> > reactants;
 	std::map<std::string, int> oneHe, oneV, oneI;
 
 	// Only try this if the network is available
@@ -292,15 +298,15 @@ double PSICluster::calculateReactionRateConstant(
 
 	// Get the reaction radii
 	double r_first =
-			(std::dynamic_pointer_cast < PSICluster > (firstReactant))->getReactionRadius();
+			(std::dynamic_pointer_cast<PSICluster>(firstReactant))->getReactionRadius();
 	double r_second =
-			(std::dynamic_pointer_cast < PSICluster > (secondReactant))->getReactionRadius();
+			(std::dynamic_pointer_cast<PSICluster>(secondReactant))->getReactionRadius();
 
 	// Get the diffusion coefficients
-	double firstDiffusion = (std::dynamic_pointer_cast < PSICluster
-			> (firstReactant))->getDiffusionCoefficient(temperature);
-	double secondDiffusion = (std::dynamic_pointer_cast < PSICluster
-			> (secondReactant))->getDiffusionCoefficient(temperature);
+	double firstDiffusion = (std::dynamic_pointer_cast<PSICluster>(
+			firstReactant))->getDiffusionCoefficient(temperature);
+	double secondDiffusion = (std::dynamic_pointer_cast<PSICluster>(
+			secondReactant))->getDiffusionCoefficient(temperature);
 
 	// Calculate and return
 	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
@@ -318,7 +324,7 @@ double PSICluster::calculateDissociationConstant(
 	double ra = 1, rb = 1;
 	double atomicVolume = 1.0;
 	std::shared_ptr<PSICluster> castedSecondReactant =
-			(std::dynamic_pointer_cast < PSICluster > (secondReactant));
+			(std::dynamic_pointer_cast<PSICluster>(secondReactant));
 	std::map<std::string, int> clusterMap =
 			castedSecondReactant->getClusterMap();
 

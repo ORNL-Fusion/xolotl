@@ -43,7 +43,7 @@ public:
 	 * constructor of InterstitialCluster.
 	 * @return A copy of this reactant.
 	 */
-	virtual Reactant clone();
+	virtual std::shared_ptr<Reactant> clone();
 
 	/**
 	 * This virtual method is for subclasses to specialize

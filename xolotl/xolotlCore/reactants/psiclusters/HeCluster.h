@@ -47,7 +47,7 @@ public:
 	 * constructor of HeCluster.
 	 * @return A copy of this HeCluster.
 	 */
-	virtual Reactant clone();
+	virtual std::shared_ptr<Reactant> clone();
 
 	/**
 	 * This virtual method is for subclasses to specialize
