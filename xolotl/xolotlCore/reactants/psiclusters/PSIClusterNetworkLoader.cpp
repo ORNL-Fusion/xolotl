@@ -41,67 +41,36 @@ static inline double convertStrToDouble(const std::string inString) {
  * @return The new cluster
  */
 std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
-		int numV, int numI,
-		std::shared_ptr<std::map<std::string, std::string>> props) {
+		int numV, int numI) {
 
 	// Local Declarations
 	int clusterSize = 0;
-	std::string numClustersKey, maxSizeKey;
 	std::shared_ptr<PSICluster> cluster;
 
 	// Determine the type of the cluster given the number of each species.
 	// Create a new cluster by that type and specify the names of the
 	// property keys.
 	if (numHe > 0 && numV > 0) {
-		clusterSize = numHe + numV;
 		// Create a new HeVCluster
 		cluster = std::make_shared < HeVCluster > (numHe, numV);
-		numClustersKey = "numHeVClusters";
-		maxSizeKey = "maxMixedClusterSize";
-		// Add it to the HeV
-		heVClusters.push_back(cluster);
+		clusters.push_back(cluster);
 	} else if (numHe > 0 && numI > 0) {
 		throw std::string("HeliumInterstitialCluster is not implemented yet");
-		// clusterSize = numHe + numI;
-		// Create a new HeInterstitialCluster
-		// cluster = std::make_shared<HeInterstitialCluster>(numHe, numI);
-		// numClustersKey = "numHeIClusters";
-		// maxSizeKey = "maxMixedClusterSize";
 		// FIXME! Add code to add it to the list
 	} else if (numHe > 0) {
-		clusterSize = numHe;
 		// Create a new HeCluster
 		cluster = std::make_shared < HeCluster > (numHe);
-		numClustersKey = "numHeClusters";
-		maxSizeKey = "maxHeClusterSize";
-		// Add it to the HeCluster list
-		heClusters.push_back(cluster);
+		clusters.push_back(cluster);
 	} else if (numV > 0) {
-		clusterSize = numV;
 		// Create a new VCluster
 		cluster = std::make_shared < VCluster > (numV);
-		numClustersKey = "numVClusters";
-		maxSizeKey = "maxVClusterSize";
-		// Add it to the VCluster list
-		vClusters.push_back(cluster);
+		clusters.push_back(cluster);
 	} else if (numI > 0) {
-		clusterSize = numI;
 		// Create a new ICluster
 		cluster = std::make_shared < InterstitialCluster > (numI);
-		numClustersKey = "numIClusters";
-		maxSizeKey = "maxIClusterSize";
 		// Add it to the ICluster list
-		iClusters.push_back(cluster);
+		clusters.push_back(cluster);
 	}
-
-	// Increment the number of total clusters of this type
-	int numClusters = std::stoi(props->at(numClustersKey));
-	numClusters++;
-	props->at(numClustersKey) = std::to_string((long long) numClusters);
-	// Increment the max cluster size key
-	int maxSize = std::stoi(props->at(maxSizeKey));
-	maxSize = std::max(numHe+numV+numI,maxSize);
-	props->at(maxSizeKey) = std::to_string((long long) maxSize);
 
 	return cluster;
 }
@@ -150,7 +119,6 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 	std::istringstream dataStream;
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
-	std::shared_ptr<std::map<std::string, std::string>> props;
 	int numHe = 0, numV = 0, numI = 0;
 	double heBindingE = 0.0, vBindingE = 0.0, iBindingE = 0.0,
 			trapMutationBindingE = 0.0, migrationEnergy = 0.0;
@@ -165,18 +133,6 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 		// Loop over each line of the file, which should each be PSIClusters.
 		loadedLine = reader.loadLine();
 
-		// Setup the properties map
-		props = network->properties;
-		(*props)["maxHeClusterSize"] = "1";
-		(*props)["maxVClusterSize"] = "1";
-		(*props)["maxIClusterSize"] = "1";
-		(*props)["maxMixedClusterSize"] = "1";
-		(*props)["numHeClusters"] = "0";
-		(*props)["numVClusters"] = "0";
-		(*props)["numIClusters"] = "0";
-		(*props)["numHeVClusters"] = "0";
-		(*props)["numHeIClusters"] = "0";
-
 		while (loadedLine.size() > 0) {
 			// Check the size of the loaded line
 			if (loadedLine.size() < 9)
@@ -188,8 +144,8 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 				numV = std::stoi(loadedLine[1]);
 				numI = std::stoi(loadedLine[2]);
 				// Create the cluster
-				std::shared_ptr<PSICluster> nextCluster = createCluster(numHe,
-						numV, numI, props);
+				auto nextCluster = createCluster(numHe,
+						numV, numI);
 				// Load the binding energies
 				heBindingE = convertStrToDouble(loadedLine[3]);
 				vBindingE = convertStrToDouble(loadedLine[4]);
@@ -207,33 +163,16 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 				// Set the diffusion factor and migration energy
 				nextCluster->setMigrationEnergy(migrationEnergy);
 				nextCluster->setDiffusionFactor(diffusionFactor);
+				// Set the reference to the network for the new cluster
+				nextCluster->setReactionNetwork(network);
+				// Add the cluster to the network
+				network->add(nextCluster);
 			}
 
 			// Load the next line
 			loadedLine = reader.loadLine();
 		}
 
-		// Load the clusters into the network, starting with He
-		int heClusterSize = heClusters.size();
-		for (int i = 0; i < heClusterSize; i++)
-			network->reactants->push_back(heClusters[i]);
-		// Load the vacancies into the network
-		int vClusterSize = vClusters.size();
-		for (int i = 0; i < vClusterSize; i++)
-			network->reactants->push_back(vClusters[i]);
-		// Load the interstitials into the network
-		int iClusterSize = iClusters.size();
-		for (int i = 0; i < iClusterSize; i++)
-			network->reactants->push_back(iClusters[i]);
-		// Load the mixed species clusters into the network
-		int heVClusterSize = heVClusters.size();
-		for (int i = 0; i < heVClusterSize; i++)
-			network->reactants->push_back(heVClusters[i]);
-		// Register the Reaction network with the clusters
-		int numReactants = network->reactants->size();
-		for (int i = 0; i < numReactants; i++) {
-			network->reactants->at(i)->setReactionNetwork(network);
-		}
 	}
 
 	return network;

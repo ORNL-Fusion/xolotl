@@ -73,25 +73,11 @@ private:
 	 */
 	std::shared_ptr<std::istream> networkStream;
 
-	/**
-	 * The internal list of He clusters
-	 */
-	std::vector<std::shared_ptr<PSICluster>> heClusters;
 
 	/**
-	 * The internal list of vacancy clusters
+	 * The list of clusters that will be added to the network.
 	 */
-	std::vector<std::shared_ptr<PSICluster>> vClusters;
-
-	/**
-	 * The internal list of interstitial clusters
-	 */
-	std::vector<std::shared_ptr<PSICluster>> iClusters;
-
-	/**
-	 * The internal list of HeV clusters
-	 */
-	std::vector<std::shared_ptr<PSICluster>> heVClusters;
+	std::vector<std::shared_ptr<PSICluster>> clusters;
 
 	/**
 	 * This operation creates a singles-species cluster of helium, vacancies or
@@ -102,8 +88,7 @@ private:
 	 * @param numI - The number of interstitial defects
 	 * @return The new cluster
 	 */
-	std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI,
-			std::shared_ptr<std::map<std::string, std::string>> props);
+	std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI);
 
 public:
 

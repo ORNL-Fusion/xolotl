@@ -26,7 +26,7 @@ void VCluster::createReactionConnectivity() {
 	int numV = size, indexOther;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
-	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
+	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
 	int numIClusters = std::stoi(props["numIClusters"]);
@@ -81,7 +81,7 @@ void VCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	for (int numHeOther = 1; numV + numHeOther <= maxMixedClusterSize;
+	for (int numHeOther = 1; numV + numHeOther <= maxHeVClusterSize;
 			numHeOther++) {
 		speciesMap["He"] = numHeOther;
 		int indexOther = network->toClusterIndex(speciesMap);

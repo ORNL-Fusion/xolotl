@@ -51,7 +51,7 @@ double Reactant::getTotalFlux(const double temperature) {
 }
 
 void Reactant::setReactionNetwork(
-	const std::shared_ptr<ReactionNetwork> reactionNetwork) {
+	std::shared_ptr<ReactionNetwork> reactionNetwork) {
 	
 	network = reactionNetwork;
 }

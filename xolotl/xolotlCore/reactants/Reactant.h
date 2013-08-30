@@ -134,7 +134,7 @@ public:
 	 * @param network The reaction network of which this reactant is a part
 	 */
 	virtual void setReactionNetwork(
-			const std::shared_ptr<ReactionNetwork> reactionNetwork);
+			std::shared_ptr<ReactionNetwork> reactionNetwork);
 
 	/**
 	 * This operation returns a list that represents the connectivity
