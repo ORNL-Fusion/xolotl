@@ -52,8 +52,8 @@ int HeVCluster::getSpeciesSize(const std::string speciesName) {
 void HeVCluster::createReactionConnectivity() {
 
 	// Local Declarations
-	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
-			> (network);
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
 	auto props = psiNetwork->getProperties();
 	int networkSize = psiNetwork->size(), index = 0;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
@@ -69,8 +69,6 @@ void HeVCluster::createReactionConnectivity() {
 	std::shared_ptr<PSICluster> heCluster, vCluster, iCluster;
 	std::vector<int> firstComposition, secondComposition, speciesMap;
 
-	std::cout << numHe << " " << numV << " " << std::endl;
-
 	/* ----- (A*He)(B*V) + (C*He) --> [(A+C)He]*(B*V) -----
 	 * Helium absorption by HeV clusters that results
 	 * in the production of this cluster.
@@ -83,8 +81,8 @@ void HeVCluster::createReactionConnectivity() {
 		secondReactant = psiNetwork->get("He", z);
 		// Create the Reacting Pair
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
-		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 	}
@@ -99,7 +97,7 @@ void HeVCluster::createReactionConnectivity() {
 	auto reactants = psiNetwork->getAll("He");
 	int numReactants = reactants->size();
 	for (int i = 0; i < numReactants; i++) {
-		heCluster = std::dynamic_pointer_cast < PSICluster > (reactants->at(i));
+		heCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 		// React with it if the sizes are compatible
 		if (heCluster->getSize() + size <= maxHeVClusterSize) {
 			index = psiNetwork->getReactantId(*heCluster) - 1;
@@ -117,8 +115,8 @@ void HeVCluster::createReactionConnectivity() {
 	secondReactant = psiNetwork->get("V", 1);
 	// Create the Reacting Pair
 	ReactingPair pair;
-	pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
-	pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+	pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+	pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 	// Add the pair to the list
 	reactingPairs.push_back(pair);
 
@@ -134,8 +132,8 @@ void HeVCluster::createReactionConnectivity() {
 		secondReactant = psiNetwork->get("I", z);
 		// Create the Reacting Pair
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
-		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 	}
@@ -146,26 +144,23 @@ void HeVCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	if (numHe + numV + 1 <= maxHeVClusterSize) {
-		// Get the HeV cluster that is one He bigger than us.
-		firstComposition = psiNetwork->getCompositionVector(numHe + 1, numV, 0);
-		firstReactant = psiNetwork->getCompound("HeV", firstComposition);
-		// Add it to the list if it exists
-		if (firstReactant) {
-			index = psiNetwork->getReactantId(*firstReactant) - 1;
-			reactionConnectivity.at(index) = 1;
-			combiningReactants.push_back(firstReactant);
-		}
-		// Get the HeV cluster that is on V bigger than us.
-		secondComposition = psiNetwork->getCompositionVector(numHe, numV + 1,
-				0);
-		secondReactant = psiNetwork->getCompound("HeV", secondComposition);
-		// Add it to the list if it exists
-		if (secondReactant) {
-			index = psiNetwork->getReactantId(*secondReactant) - 1;
-			reactionConnectivity.at(index) = 1;
-			combiningReactants.push_back(secondReactant);
-		}
+	// Get the HeV cluster that is one He bigger than us.
+	firstComposition = psiNetwork->getCompositionVector(numHe + 1, numV, 0);
+	firstReactant = psiNetwork->getCompound("HeV", firstComposition);
+	// Add it to the list if it exists
+	if (firstReactant) {
+		index = psiNetwork->getReactantId(*firstReactant) - 1;
+		reactionConnectivity.at(index) = 1;
+		combiningReactants.push_back(firstReactant);
+	}
+	// Get the HeV cluster that is one V bigger than us.
+	secondComposition = psiNetwork->getCompositionVector(numHe, numV + 1, 0);
+	secondReactant = psiNetwork->getCompound("HeV", secondComposition);
+	// Add it to the list if it exists
+	if (secondReactant) {
+		index = psiNetwork->getReactantId(*secondReactant) - 1;
+		reactionConnectivity.at(index) = 1;
+		combiningReactants.push_back(secondReactant);
 	}
 
 	/* ----- (AHe)*(BV) + CI  --> (AHe)*(B - C)V -----
@@ -181,7 +176,7 @@ void HeVCluster::createReactionConnectivity() {
 	reactants = psiNetwork->getAll("I");
 	numReactants = reactants->size();
 	for (int i = 0; i < numReactants; i++) {
-		iCluster = std::dynamic_pointer_cast < PSICluster > (reactants->at(i));
+		iCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 		// Only add it if it exists!
 		if (iCluster->getSize() - numV >= 1) {
 			index = psiNetwork->getReactantId(*iCluster) - 1;
@@ -196,8 +191,8 @@ void HeVCluster::createReactionConnectivity() {
 void HeVCluster::createDissociationConnectivity() {
 
 	// Local Declarations
-	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
-			> (network);
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
 	auto props = psiNetwork->getProperties();
 	int index = 0;
 	std::vector<int> composition;
@@ -253,12 +248,10 @@ double HeVCluster::getDissociationFlux(double temperature) {
 	double f4 = 0.0, f3 = 0.0;
 
 	// Calculate the much easier f4 term...
-	auto heCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get("He", 1));
-	auto vCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get("V", 1));
-	auto iCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get("I", 1));
+	auto heCluster = std::dynamic_pointer_cast<PSICluster>(
+			network->get("He", 1));
+	auto vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+	auto iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
 	f4 = calculateDissociationConstant(*this, *iCluster, temperature)
 			+ calculateDissociationConstant(*this, *vCluster, temperature)
 			+ calculateDissociationConstant(*this, *heCluster, temperature);
@@ -270,26 +263,27 @@ double HeVCluster::getDissociationFlux(double temperature) {
 	for (int i = 0; i < numReactants; i++) {
 		if (dissociationConnectivity[i] == 1) {
 			// Set the current reactant
-			currentReactant = std::dynamic_pointer_cast < PSICluster
-					> (reactants->at(i));
+			currentReactant = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(i));
 			// Get the cluster map of this connection
 			composition = currentReactant->getComposition();
 			// We need to find if this is a Helium dissociation
 			if (numHe - composition["He"] == 1 && numV == composition["V"]
 					&& composition["I"] == 0) {
 				secondReactant = heCluster;
-			} else if (numHe == composition["He"] && numV - composition["V"] == 1
-					&& composition["V"] == 0) {
+			} else if (numHe == composition["He"]
+					&& numV - composition["V"] == 1 && composition["V"] == 0) {
 				// vacancy dissociation
 				secondReactant = vCluster;
-			} else if (numHe == composition["He"] && composition["I"] - numV == 1
-					&& composition["V"] == 0) {
+			} else if (numHe == composition["He"]
+					&& composition["I"] - numV == 1 && composition["V"] == 0) {
 				// or a trap mutation.
 				secondReactant = iCluster;
 			}
 			// Update the flux calculation
-			f3 += calculateDissociationConstant(*currentReactant, *secondReactant,
-					temperature) * currentReactant->getConcentration();
+			f3 += calculateDissociationConstant(*currentReactant,
+					*secondReactant, temperature)
+					* currentReactant->getConcentration();
 		}
 	}
 

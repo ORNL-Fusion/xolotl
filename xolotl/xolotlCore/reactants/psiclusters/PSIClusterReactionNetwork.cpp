@@ -164,12 +164,12 @@ std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>PSIClusterReactionNetwork
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> allReactants(new std::vector<std::shared_ptr<Reactant> >);
 
 	// Load the single-species clusters
-	for (auto it=singleSpeciesMap.begin(); it!=singleSpeciesMap.end(); ++it) {
+	for (auto it = singleSpeciesMap.begin(); it != singleSpeciesMap.end(); ++it) {
 		allReactants->push_back(it->second);
 	}
 
 	// Load the mixed-species clusters
-	for (auto it=mixedSpeciesMap.begin(); it!=mixedSpeciesMap.end(); ++it) {
+	for (auto it = mixedSpeciesMap.begin(); it != mixedSpeciesMap.end(); ++it) {
 		allReactants->push_back(it->second);
 	}
 
@@ -353,8 +353,7 @@ void PSIClusterReactionNetwork::setProperty(std::string key,
 /**
  * This operation returns the size or number of reactants in the network.
  * @return The number of reactants in the network
- */
-int PSIClusterReactionNetwork::size() {
+ */int PSIClusterReactionNetwork::size() {
 	return networkSize;
 }
 
@@ -363,8 +362,7 @@ int PSIClusterReactionNetwork::size() {
  * @param reactant The reactant
  * @return The id of the reactant. This id is guaranteed to be between 1 and
  * n, including both, for n reactants in the network.
- */
-int PSIClusterReactionNetwork::getReactantId(const Reactant & reactant) {
+ */int PSIClusterReactionNetwork::getReactantId(const Reactant & reactant) {
 	auto composition = reactant.getComposition();
 	return idMap.at(composition);
 }

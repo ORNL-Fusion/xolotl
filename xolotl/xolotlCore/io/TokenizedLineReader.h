@@ -85,15 +85,14 @@ public:
 		size_t lastDelimiterPos = 0, nextDelimiterPos = 0, finalDelimiterPos =
 				std::string::npos;
 		std::vector<dataType> dataVector;
-		std::string line, subLine;
+		std::string subLine;
 		std::istringstream dataStream;
 		dataType data;
 
 		// Check the inputstream before reading from it
-		if (inputstream->good()) {
-			std::cout << "TokenizedLineReader Message: "
-					<< " Stream is good and unread." << std::endl;
+		if (!inputstream->eof() && inputstream->good()) {
 			// Get the line
+			std::string line;
 			std::getline(*inputstream, line);
 			// Split it if it is not empty and does not start with the comment
 			// character

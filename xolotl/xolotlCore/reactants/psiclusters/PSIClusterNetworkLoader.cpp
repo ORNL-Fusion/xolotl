@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <limits>
 #include <algorithm>
+#include <vector>
 #include "HeCluster.h"
 #include "VCluster.h"
 #include "InterstitialCluster.h"
@@ -52,22 +53,22 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
 	// property keys.
 	if (numHe > 0 && numV > 0) {
 		// Create a new HeVCluster
-		cluster = std::make_shared < HeVCluster > (numHe, numV);
+		cluster = std::make_shared<HeVCluster>(numHe, numV);
 		clusters.push_back(cluster);
 	} else if (numHe > 0 && numI > 0) {
 		throw std::string("HeliumInterstitialCluster is not implemented yet");
 		// FIXME! Add code to add it to the list
 	} else if (numHe > 0) {
 		// Create a new HeCluster
-		cluster = std::make_shared < HeCluster > (numHe);
+		cluster = std::make_shared<HeCluster>(numHe);
 		clusters.push_back(cluster);
 	} else if (numV > 0) {
 		// Create a new VCluster
-		cluster = std::make_shared < VCluster > (numV);
+		cluster = std::make_shared<VCluster>(numV);
 		clusters.push_back(cluster);
 	} else if (numI > 0) {
 		// Create a new ICluster
-		cluster = std::make_shared < InterstitialCluster > (numI);
+		cluster = std::make_shared<InterstitialCluster>(numI);
 		// Add it to the ICluster list
 		clusters.push_back(cluster);
 	}
@@ -125,6 +126,7 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 	double diffusionFactor = 0.0;
 	bool mixed = false;
 	std::vector<double> bindingEnergies;
+	std::vector<std::shared_ptr<Reactant> > reactants;
 
 	// Load the network if the stream is available
 	if (networkStream != NULL) {
@@ -144,8 +146,7 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 				numV = std::stoi(loadedLine[1]);
 				numI = std::stoi(loadedLine[2]);
 				// Create the cluster
-				auto nextCluster = createCluster(numHe,
-						numV, numI);
+				auto nextCluster = createCluster(numHe, numV, numI);
 				// Load the binding energies
 				heBindingE = convertStrToDouble(loadedLine[3]);
 				vBindingE = convertStrToDouble(loadedLine[4]);
@@ -163,14 +164,19 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 				// Set the diffusion factor and migration energy
 				nextCluster->setMigrationEnergy(migrationEnergy);
 				nextCluster->setDiffusionFactor(diffusionFactor);
-				// Set the reference to the network for the new cluster
-				nextCluster->setReactionNetwork(network);
 				// Add the cluster to the network
 				network->add(nextCluster);
+				// Add it to the list so that we can set the network later
+				reactants.push_back(nextCluster);
 			}
 
 			// Load the next line
 			loadedLine = reader.loadLine();
+		}
+
+		for (auto reactantsIt = reactants.begin();
+				reactantsIt != reactants.end(); ++reactantsIt) {
+			(*reactantsIt)->setReactionNetwork(network);
 		}
 
 	}

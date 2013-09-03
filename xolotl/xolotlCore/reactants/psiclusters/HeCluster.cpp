@@ -38,129 +38,128 @@ void HeCluster::createReactionConnectivity() {
 	std::map<std::string, int> composition;
 	std::shared_ptr<PSICluster> psiCluster;
 
-//	/*
-//	 * This section fills the array of reacting pairs that combine to produce
-//	 * this cluster. The only reactions that produce He clusters are those He
-//	 * clusters that are smaller than this.size. Each cluster i combines with
-//	 * a second cluster of size this.size - i.size.
-//	 *
-//	 * Total size starts with a value of one so that clusters of size one are
-//	 * not considered in this loop.
-//	 */
-//	while (totalSize < size) {
-//		// Increment the base sizes
-//		++firstSize;
-//		secondSize = size - firstSize;
-//		// Get the first and second reactants for the reaction
-//		// first + second = this.
-//		firstReactant = network->get("He", firstSize);
-//		secondReactant = network->get("He", secondSize);
-//		// Create a ReactingPair with the two reactants
-//		ReactingPair pair;
-//		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
-//		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
-//		// Add the pair to the list
-//		reactingPairs.push_back(pair);
-//		// Update the total size. Do not delete this or you'll have an infinite
-//		// loop!
-//		totalSize = firstSize + secondSize;
-//	}
-//
-//	/* ----- A*He + B*He --> (A+B)*He -----
-//	 * This cluster should interact with all other clusters of the same type up
-//	 * to the max size minus the size of this one to produce larger clusters.
-//	 *
-//	 * All of these clusters are added to the set of combining reactants
-//	 * because they contribute to the flux due to combination reactions.
-//	 */
+	/*
+	 * This section fills the array of reacting pairs that combine to produce
+	 * this cluster. The only reactions that produce He clusters are those He
+	 * clusters that are smaller than this.size. Each cluster i combines with
+	 * a second cluster of size this.size - i.size.
+	 *
+	 * Total size starts with a value of one so that clusters of size one are
+	 * not considered in this loop.
+	 */
+	while (totalSize < size) {
+		// Increment the base sizes
+		++firstSize;
+		secondSize = size - firstSize;
+		// Get the first and second reactants for the reaction
+		// first + second = this.
+		firstReactant = network->get("He", firstSize);
+		secondReactant = network->get("He", secondSize);
+		// Create a ReactingPair with the two reactants
+		ReactingPair pair;
+		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+		// Add the pair to the list
+		reactingPairs.push_back(pair);
+		// Update the total size. Do not delete this or you'll have an infinite
+		// loop!
+		totalSize = firstSize + secondSize;
+	}
+
+	/* ----- A*He + B*He --> (A+B)*He -----
+	 * This cluster should interact with all other clusters of the same type up
+	 * to the max size minus the size of this one to produce larger clusters.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	auto reactants = network->getAll("He");
-//	reactantVecSize = reactants->size();
-//	for (int i = 0; i < reactantVecSize; i++) {
-//		// Get the reactant, its composition and id
-//		firstReactant = reactants->at(i);
-//		composition = firstReactant->getComposition();
-//		indexOther = network->getReactantId(*firstReactant) - 1;
-//		// React if the size of the product is valid
-//		if ((size + composition["He"] <= maxHeClusterSize)) {
-//			reactionConnectivity[indexOther] = 1;
-//			combiningReactants.push_back(firstReactant);
-//		} else
-//			continue;
-//	}
-//
-//	/* -----  A*He + B*V --> (A*He)(B*V) -----
-//	 * Helium clusters can interact with any vacancy cluster so long as the sum
-//	 * of the number of helium atoms and vacancies does not produce a cluster
-//	 * with a size greater than the maximum mixed-species cluster size.
-//	 *
-//	 * All of these clusters are added to the set of combining reactants
-//	 * because they contribute to the flux due to combination reactions.
-//	 */
-//	reactants = network->getAll("V");
-//	reactantVecSize = reactants->size();
-//	for (int i = 0; i < reactantVecSize; i++) {
-//		// Get the reactant, its composition and id
-//		firstReactant = reactants->at(i);
-//		composition = firstReactant->getComposition();
-//		indexOther = network->getReactantId(*firstReactant) - 1;
-//		// React if the size of the product is valid
-//		if ((size + composition["V"] <= maxHeVClusterSize)) {
-//			reactionConnectivity[indexOther] = 1;
-//			combiningReactants.push_back(firstReactant);
-//		} else
-//			continue;
-//	}
-//
-//	/* ----- A*He + B*I --> (A*He)(B*I)
-//	 * Helium clusters can interact with any interstitial cluster so long as
-//	 * the sum of the number of helium atoms and interstitials does not produce
-//	 * a cluster with a size greater than the maximum mixed-species cluster
-//	 * size.
-//
-//	 * All of these clusters are added to the set of combining reactants
-//	 * because they contribute to the flux due to combination reactions.
-//	 */
-//	reactants = network->getAll("I");
-//	reactantVecSize = reactants->size();
-//	for (int i = 0; i < reactantVecSize; i++) {
-//		// Get the reactant, its composition and id
-//		firstReactant = reactants->at(i);
-//		composition = firstReactant->getComposition();
-//		indexOther = network->getReactantId(*firstReactant) - 1;
-//		// React if the size of the product is valid
-//		if ((size + composition["I"] <= maxHeIClusterSize)) {
-//			reactionConnectivity[indexOther] = 1;
-//			combiningReactants.push_back(firstReactant);
-//		}
-//	}
-//
-//	/* ----- (A*He)(B*V) + C*He --> [(A+C)He](B*V) -----
-//	 * Helium can interact with a mixed-species cluster so long as the sum of
-//	 * the number of helium atoms and the size of the mixed-species cluster
-//	 * does not exceed the maximum mixed-species cluster size.
-//	 *
-//	 * All of these clusters are added to the set of combining reactants
-//	 * because they contribute to the flux due to combination reactions.
-//	 *
-//	 * Find the clusters by looping over all size combinations of HeV clusters.
-//	 */
-//	if (numHeVClusters > 0) {
-//		reactants = network->getAll("HeV");
-//		reactantVecSize = reactants->size();
-//		for (int i = 0; i < reactantVecSize; i++) {
-//			// Get the reactant, and its id
-//			firstReactant = reactants->at(i);
-//			indexOther = network->getReactantId(*firstReactant) - 1;
-//			// React if the size of the product is valid
-//			psiCluster = std::dynamic_pointer_cast < PSICluster
-//					> (firstReactant);
-//			//std::cout << "indexOther = " << indexOther << ", i = " << i << ", numHeVClusters = " << numHeVClusters << std::endl; // FIXME!!!
-//			if ((size + psiCluster->getSize() <= maxHeVClusterSize)) {
-//				reactionConnectivity[indexOther] = 1;
-//				combiningReactants.push_back(firstReactant);
-//			}
-//		}
-//	}
+	reactantVecSize = reactants->size();
+	for (int i = 0; i < reactantVecSize; i++) {
+		// Get the reactant, its composition and id
+		firstReactant = reactants->at(i);
+		composition = firstReactant->getComposition();
+		indexOther = network->getReactantId(*firstReactant) - 1;
+		// React if the size of the product is valid
+		if ((size + composition["He"] <= maxHeClusterSize)) {
+			reactionConnectivity[indexOther] = 1;
+			combiningReactants.push_back(firstReactant);
+		} else
+			continue;
+	}
+
+	/* -----  A*He + B*V --> (A*He)(B*V) -----
+	 * Helium clusters can interact with any vacancy cluster so long as the sum
+	 * of the number of helium atoms and vacancies does not produce a cluster
+	 * with a size greater than the maximum mixed-species cluster size.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
+	reactants = network->getAll("V");
+	reactantVecSize = reactants->size();
+	for (int i = 0; i < reactantVecSize; i++) {
+		// Get the reactant, its composition and id
+		firstReactant = reactants->at(i);
+		composition = firstReactant->getComposition();
+		indexOther = network->getReactantId(*firstReactant) - 1;
+		// React if the size of the product is valid
+		if ((size + composition["V"] <= maxHeVClusterSize)) {
+			reactionConnectivity[indexOther] = 1;
+			combiningReactants.push_back(firstReactant);
+		} else
+			continue;
+	}
+
+	/* ----- A*He + B*I --> (A*He)(B*I)
+	 * Helium clusters can interact with any interstitial cluster so long as
+	 * the sum of the number of helium atoms and interstitials does not produce
+	 * a cluster with a size greater than the maximum mixed-species cluster
+	 * size.
+
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
+	reactants = network->getAll("I");
+	reactantVecSize = reactants->size();
+	for (int i = 0; i < reactantVecSize; i++) {
+		// Get the reactant, its composition and id
+		firstReactant = reactants->at(i);
+		composition = firstReactant->getComposition();
+		indexOther = network->getReactantId(*firstReactant) - 1;
+		// React if the size of the product is valid
+		if ((size + composition["I"] <= maxHeIClusterSize)) {
+			reactionConnectivity[indexOther] = 1;
+			combiningReactants.push_back(firstReactant);
+		}
+	}
+
+	/* ----- (A*He)(B*V) + C*He --> [(A+C)He](B*V) -----
+	 * Helium can interact with a mixed-species cluster so long as the sum of
+	 * the number of helium atoms and the size of the mixed-species cluster
+	 * does not exceed the maximum mixed-species cluster size.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 *
+	 * Find the clusters by looping over all size combinations of HeV clusters.
+	 */
+	if (numHeVClusters > 0) {
+		reactants = network->getAll("HeV");
+		reactantVecSize = reactants->size();
+		for (int i = 0; i < reactantVecSize; i++) {
+			// Get the reactant, and its id
+			firstReactant = reactants->at(i);
+			indexOther = network->getReactantId(*firstReactant) - 1;
+			// React if the size of the product is valid
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			//std::cout << "indexOther = " << indexOther << ", i = " << i << ", numHeVClusters = " << numHeVClusters << std::endl; // FIXME!!!
+			if ((size + psiCluster->getSize() <= maxHeVClusterSize)) {
+				reactionConnectivity[indexOther] = 1;
+				combiningReactants.push_back(firstReactant);
+			}
+		}
+	}
 
 	/* ----- (A*He)(B*I) + C*He --> ([A + C]*He)(B*I) -----
 	 * Helium-interstitial clusters can absorb single-species helium clusters
@@ -178,8 +177,7 @@ void HeCluster::createReactionConnectivity() {
 			// Get the reactant and its id
 			firstReactant = reactants->at(i);
 			indexOther = network->getReactantId(*firstReactant) - 1;
-			psiCluster = std::dynamic_pointer_cast < PSICluster
-					> (firstReactant);
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(firstReactant);
 			if ((size + psiCluster->getSize()) <= maxHeIClusterSize) {
 				reactionConnectivity[indexOther] = 1; // FIXME!
 				combiningReactants.push_back(firstReactant);
@@ -193,19 +191,18 @@ void HeCluster::createReactionConnectivity() {
 void HeCluster::createDissociationConnectivity() {
 
 	// Local Declarations
-	std::shared_ptr<Reactant> reactant;
+	std::shared_ptr<Reactant> smallerHeReactant, singleHeReactant;
 
-	// He dissociation for size >= 2.
-	if (size >= 2) {
-		reactant = network->get("He", size - 1);
-		if (reactant) {
-			id = network->getReactantId(*reactant);
-			dissociationConnectivity[id] = 1;
-			// Single V
-			reactant = network->get("He", 1);
-			id = network->getReactantId(*reactant);
-			dissociationConnectivity[id] = 1;
-		}
+	// He dissociation
+	smallerHeReactant = network->get("He", size - 1);
+	singleHeReactant = network->get("He", 1);
+	if (smallerHeReactant && singleHeReactant) {
+		// Add the two reactants to the set. He has very simple dissociation
+		// rules.
+		id = network->getReactantId(*smallerHeReactant);
+		dissociationConnectivity[id] = 1;
+		id = network->getReactantId(*singleHeReactant);
+		dissociationConnectivity[id] = 1;
 	}
 
 	return;

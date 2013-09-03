@@ -88,7 +88,7 @@ private:
 			int numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
 			int numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
 			int p1 = 73856093, p2 = 19349663, p3 = 83492791;
-			int hashTableSize = 1000000, hash1 = 0, hash2 = 0;
+			int hashTableSize = 10000000, hash1 = 0, hash2 = 0;
 
 			// Get the cluster sizes
 			numHe_lhs = lhs.at("He");
@@ -101,6 +101,10 @@ private:
 			// Compute the hashes
 			hash1 =  ((numHe_lhs*p1)^(numV_lhs*p2)^(numI_lhs*p3))%hashTableSize;
 			hash2 = ((numHe_rhs*p1)^(numV_rhs*p2)^(numI_rhs*p3))%hashTableSize;
+
+//			std::cout << numHe_lhs << " " << numV_lhs << " " << numI_lhs << std::endl;
+//			std::cout << numHe_rhs << " " << numV_rhs << " " << numI_rhs << std::endl;
+//			std::cout << hash1 << " | " << hash2 << std::endl;
 
 			return hash1 < hash2;
 		}
@@ -209,6 +213,11 @@ public:
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.
+	 * Adding a reactant to the network does not set the network as the
+	 * reaction network for the reactant. This step must be performed
+	 * separately to allow for the scenario where the network is generated
+	 * entirely before running.
+	 *
 	 * The reactant will not be added to the network if the PSICluster does
 	 * not recognize it as a type of reactant that it cares about (including
 	 * adding null).

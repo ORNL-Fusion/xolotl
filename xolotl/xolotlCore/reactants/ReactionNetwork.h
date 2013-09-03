@@ -100,6 +100,10 @@ public:
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.
+	 * Adding a reactant to the network does not set the network as the
+	 * reaction network for the reactant. This step must be performed
+	 * separately to allow for the scenario where the network is generated
+	 * entirely before running.
 	 * @param reactant The reactant that should be added to the network.
 	 */
 	virtual void add(std::shared_ptr<Reactant> reactant) = 0;
