@@ -86,7 +86,7 @@ public:
 	 *
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration();
+	double getConcentration() const;
 
 	/**
 	 * This operation increases the concentration of the reactant by the
@@ -171,7 +171,7 @@ public:
 	 * @return The composition returned as a map with keys naming distinct
 	 * elements and values indicating the amount of the element present.
 	 */
-	virtual const std::map<std::string,int> getComposition();
+	virtual std::map<std::string,int> getComposition() const;
 
 };
 

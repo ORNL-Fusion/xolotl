@@ -26,91 +26,7 @@ using namespace xolotlCore;
 
 /**
  * This suite is responsible for testing the ReactionNetwork
- */BOOST_AUTO_TEST_SUITE(ReactionNetwork_testSuite)
-
-BOOST_AUTO_TEST_CASE(clusterIndexConversions) {
-
-	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
-
-	// Convert each index to a cluster map and back
-
-	printf("i\tHe\tV\tI\n");
-	printf("===\t===\t===\t===\n");
-
-	int reactionLength = network->reactants->size();
-
-	for (int index = 0; index < reactionLength; index++) {
-		std::map<std::string, int> speciesMap = network->toClusterMap(index);
-		printf("%d\t%d\t%d\t%d\n", index, speciesMap["He"], speciesMap["V"],
-				speciesMap["I"]);
-		int convertedIndex = network->toClusterIndex(speciesMap);
-
-		BOOST_REQUIRE_EQUAL(convertedIndex, index);
-	}
-}
-
-BOOST_AUTO_TEST_CASE(toClusterMap) {
-	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
-
-	std::map<std::string, int> cluster;
-
-	// Test a couple of the HeClusters
-
-	cluster = network->toClusterMap(0);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 1);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-
-	cluster = network->toClusterMap(9);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 10);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-
-	// Test VClusters
-
-	cluster = network->toClusterMap(10);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 1);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-
-	cluster = network->toClusterMap(19);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 10);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-
-	// Test IClusters
-
-	cluster = network->toClusterMap(20);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 1);
-
-	cluster = network->toClusterMap(29);
-	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-	BOOST_REQUIRE_EQUAL(cluster["I"], 10);
-
-	// Test HeVClusters
-
-	for (int i = 30; i < 75; i++) {
-		// Get the actual He and V amounts
-
-		shared_ptr<Reactant> reactant = network->reactants->at(i);
-		shared_ptr<HeVCluster> cluster = std::dynamic_pointer_cast<HeVCluster>(
-				reactant);
-		int actualHe = cluster->getSpeciesSize("He");
-		int actualV = cluster->getSpeciesSize("V");
-
-		// Get the amounts expected by Reactant::toClusterMap()
-
-		std::map<std::string, int> species = network->toClusterMap(i);
-		int expectedHe = species["He"];
-		int expectedV = species["V"];
-
-		BOOST_REQUIRE_EQUAL(actualHe, expectedHe);
-		BOOST_REQUIRE_EQUAL(actualV, expectedV);
-	}
-}
+ */BOOST_AUTO_TEST_SUITE(PSIReactionNetwork_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkCompositionCreation) {
 
@@ -118,26 +34,26 @@ BOOST_AUTO_TEST_CASE(checkCompositionCreation) {
 	auto psiNetwork = make_shared<PSIClusterReactionNetwork>();
 
 	// Get an HeV cluster with sizes 5,10
-	auto heVComp = psiNetwork->getCompositionVector(5,10,0);
-	BOOST_REQUIRE_EQUAL(3,heVComp->size());
-	BOOST_REQUIRE_EQUAL(5,heVComp[0]);
-	BOOST_REQUIRE_EQUAL(10,heVComp[1]);
-	BOOST_REQUIRE_EQUAL(0,heVComp[2]);
+	auto heVComp = psiNetwork->getCompositionVector(5, 10, 0);
+	BOOST_REQUIRE_EQUAL(3, heVComp.size());
+	BOOST_REQUIRE_EQUAL(5, heVComp[0]);
+	BOOST_REQUIRE_EQUAL(10, heVComp[1]);
+	BOOST_REQUIRE_EQUAL(0, heVComp[2]);
 
 	// Get an interstitial cluster with size 99
-	auto intComp = psiNetwork->getCompositionVector(0,0,99);
-	BOOST_REQUIRE_EQUAL(3,heVComp->size());
-	BOOST_REQUIRE_EQUAL(0,heVComp[0]);
-	BOOST_REQUIRE_EQUAL(0,heVComp[1]);
-	BOOST_REQUIRE_EQUAL(99,heVComp[2]);
+	auto intComp = psiNetwork->getCompositionVector(0, 0, 99);
+	BOOST_REQUIRE_EQUAL(3, intComp.size());
+	BOOST_REQUIRE_EQUAL(0, intComp[0]);
+	BOOST_REQUIRE_EQUAL(0, intComp[1]);
+	BOOST_REQUIRE_EQUAL(99, intComp[2]);
 
 	// Try to get something bad
-	auto badComp = psiNetwork->getCompositionVector(-1,-8,-3);
+	auto badComp = psiNetwork->getCompositionVector(-1, -8, -3);
 	// Make sure that it gives you single species helium back
-	BOOST_REQUIRE_EQUAL(3,heVComp->size());
-	BOOST_REQUIRE_EQUAL(1,heVComp[0]);
-	BOOST_REQUIRE_EQUAL(0,heVComp[1]);
-	BOOST_REQUIRE_EQUAL(0,heVComp[2]);
+	BOOST_REQUIRE_EQUAL(3, badComp.size());
+	BOOST_REQUIRE_EQUAL(1, badComp[0]);
+	BOOST_REQUIRE_EQUAL(0, badComp[1]);
+	BOOST_REQUIRE_EQUAL(0, badComp[2]);
 
 }
 
@@ -164,9 +80,9 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 			psiNetwork->get("V", 4));
 	BOOST_REQUIRE_EQUAL(4, retVCluster->getSize());
 	BOOST_REQUIRE_EQUAL("V", retVCluster->getName());
-	// IS
+	// I
 	auto retICluster = std::dynamic_pointer_cast<PSICluster>(
-				psiNetwork->get("I", 48));
+			psiNetwork->get("I", 48));
 	BOOST_REQUIRE_EQUAL(48, retICluster->getSize());
 	BOOST_REQUIRE_EQUAL("I", retICluster->getName());
 
@@ -177,27 +93,95 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	psiNetwork->add(heICluster);
 
 	// Check the network, start with HeV
-	std::vector<int> sizes;
-	sizes.push_back(5);
-	sizes.push_back(3);
-	sizes.push_back(0);
-	std::shared_ptr<PSICluster> retHeVCluster = std::dynamic_pointer_cast<PSICluster>(
-				psiNetwork->getCompound("HeV", sizes));
+	std::vector<int> sizes = psiNetwork->getCompositionVector(5, 3, 0);
+	std::shared_ptr<PSICluster> retHeVCluster = std::dynamic_pointer_cast<
+			PSICluster>(psiNetwork->getCompound("HeV", sizes));
 	BOOST_REQUIRE_EQUAL(8, retHeVCluster->getSize());
 	BOOST_REQUIRE_EQUAL("HeV", retHeVCluster->getName());
 	// Now do HeI
-	sizes.clear();
-	sizes.push_back(8);
-	sizes.push_back(0);
-	sizes.push_back(8);
+	sizes = psiNetwork->getCompositionVector(8, 0, 8);
 	auto retHeICluster = std::dynamic_pointer_cast<PSICluster>(
-				psiNetwork->getCompound("HeI", sizes));
+			psiNetwork->getCompound("HeI", sizes));
 	BOOST_REQUIRE_EQUAL(16, retHeICluster->getSize());
 	BOOST_REQUIRE_EQUAL("HeI", retHeICluster->getName());
 
 	// Check the getter for all reactants
 	auto clusters = psiNetwork->getAll();
-	BOOST_REQUIRE_EQUAL(5,clusters->size());
+	BOOST_REQUIRE_EQUAL(5, clusters->size());
+
+	// Check the size of the network
+	BOOST_REQUIRE_EQUAL(5, psiNetwork->size());
+
+	// Check the cluster ids. All we can do is check that they are between 1
+	// and 5. Start with the He cluster
+	int id = psiNetwork->getReactantId(*retHeCluster);
+	BOOST_REQUIRE(id > 0 && id <= 5);
+	// V
+	id = psiNetwork->getReactantId(*retVCluster);
+	BOOST_REQUIRE(id > 0 && id <= 5);
+	// I
+	id = psiNetwork->getReactantId(*retICluster);
+	BOOST_REQUIRE(id > 0 && id <= 5);
+	// HeV
+	id = psiNetwork->getReactantId(*retHeVCluster);
+	BOOST_REQUIRE(id > 0 && id <= 5);
+	// HeI
+	id = psiNetwork->getReactantId(*retHeICluster);
+	BOOST_REQUIRE(id > 0 && id <= 5);
+
+	// Add a whole bunch of HeV clusters to make sure that the network can
+	// handle large numbers of them properly.
+	int counter = 0;
+	int maxClusterSize = 10;
+	for (int numV = 1; numV <= maxClusterSize; numV++) {
+		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
+			std::shared_ptr<HeVCluster> cluster(new HeVCluster(numHe, numV));
+			psiNetwork->add(cluster);
+			counter++;
+		}
+	}
+	BOOST_TEST_MESSAGE("Added " << counter << " HeV clusters");
+
+	// Add a whole bunch of HeI clusters to make sure that the network can
+	// handle large numbers of them properly too. Use a different max cluster
+	// size to throw a little variability at the network.
+	counter = 0;
+	maxClusterSize = 9;
+	for (int numI = 1; numI <= maxClusterSize; numI++) {
+		for (int numHe = 1; numHe + numI <= maxClusterSize; numHe++) {
+			std::shared_ptr<HeInterstitialCluster> cluster(
+					new HeInterstitialCluster(numHe, numI));
+			psiNetwork->add(cluster);
+			counter++;
+		}
+	}
+	BOOST_TEST_MESSAGE("Added " << counter << " HeI clusters");
+
+	// Make sure that everything was added
+	auto reactants = psiNetwork->getAll();
+	BOOST_REQUIRE_EQUAL(85,reactants->size());
+	// Get the clusters by type and check them. Start with He.
+	reactants = psiNetwork->getAll("He");
+	BOOST_REQUIRE_EQUAL(1, reactants->size());
+	BOOST_REQUIRE_EQUAL("He", reactants->at(0)->getName());
+	// V
+	reactants = psiNetwork->getAll("V");
+	BOOST_REQUIRE_EQUAL(1, reactants->size());
+	BOOST_REQUIRE_EQUAL("V", reactants->at(0)->getName());
+	// I
+	reactants = psiNetwork->getAll("I");
+	BOOST_REQUIRE_EQUAL(1, reactants->size());
+	BOOST_REQUIRE_EQUAL("I", reactants->at(0)->getName());
+	// HeV
+	reactants = psiNetwork->getAll("HeV");
+	BOOST_REQUIRE_EQUAL(45, reactants->size());
+	BOOST_REQUIRE_EQUAL("HeV", reactants->at(0)->getName());
+	// HeI
+	reactants = psiNetwork->getAll("HeI");
+	BOOST_REQUIRE_EQUAL(37, reactants->size());
+	BOOST_REQUIRE_EQUAL("HeI", reactants->at(0)->getName());
+
+	// Try to get something that obviously isn't there
 
 	return;
 }
@@ -307,19 +291,13 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 
 /**
  * This operation tests the copy constructor.
- */
-BOOST_AUTO_TEST_CASE(checkCopying) {
+ */BOOST_AUTO_TEST_CASE(checkCopying) {
 
 	PSIClusterReactionNetwork network;
-
-	// Set some properties
-	//(*network.properties)["numMixedClusters"] = "4";
 
 	// Add a reactant
 	std::shared_ptr<Reactant> heCluster(new HeCluster(1));
 	heCluster->setConcentration(50.0);
-//	network.reactants->push_back(heCluster);
-//	network.reactants->at(0)->setConcentration(50.0);
 	network.add(heCluster);
 
 	// Copy the network
@@ -328,33 +306,21 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	// Check that the ReactionNetwork fields are copied
 	auto properties = network.getProperties();
 	auto copiedProperties = networkCopy.getProperties();
-//	BOOST_REQUIRE_NE(network.properties.get(), networkCopy.properties.get());
-//	BOOST_REQUIRE_EQUAL(network.properties->size(),
-//			networkCopy.properties->size());
-	BOOST_REQUIRE_EQUAL(properties.size(),copiedProperties.size());
-	BOOST_REQUIRE_EQUAL(properties["numHeClusters"],copiedProperties["numHeClusters"]);
-
-//	BOOST_REQUIRE_NE(network.reactants.get(), networkCopy.reactants.get());
-//	BOOST_REQUIRE_EQUAL(network.reactants->size(), networkCopy.reactants->size());
+	BOOST_REQUIRE_EQUAL(properties.size(), copiedProperties.size());
+	BOOST_REQUIRE_EQUAL(properties["numHeClusters"],
+			copiedProperties["numHeClusters"]);
 
 	// Check that changing the concentration of a copy does not update the
 	// original. Start by updating the copy.
-	auto copiedHeCluster = networkCopy.get("He",1);
+	auto copiedHeCluster = networkCopy.get("He", 1);
 	copiedHeCluster->setConcentration(7.0);
-	BOOST_REQUIRE_CLOSE(7.0,copiedHeCluster->getConcentration(),1.0e-5);
+	BOOST_REQUIRE_CLOSE(7.0, copiedHeCluster->getConcentration(), 1.0e-5);
 	// Make sure the original wasn't changed.
-	BOOST_REQUIRE_CLOSE(50.0,heCluster->getConcentration(),1.0e-5);
+	BOOST_REQUIRE_CLOSE(50.0, heCluster->getConcentration(), 1.0e-5);
 
-	// Check the properties of the copy
-//	(*networkCopy.properties)["numMixedClusters"] = "5";
-//	networkCopy.reactants->at(0)->setConcentration(52.0);
-
-//	BOOST_REQUIRE_NE(network.properties->at("numMixedClusters"),
-//			networkCopy.properties->at("numMixedClusters"));
-//	BOOST_REQUIRE_CLOSE(networkCopy.reactants->at(0)->getConcentration(), 52.0,
-//			1e-5);
+	// Check the size of the network
+	BOOST_REQUIRE_EQUAL(1, networkCopy.size());
 
 	return;
 }
-
 BOOST_AUTO_TEST_SUITE_END()

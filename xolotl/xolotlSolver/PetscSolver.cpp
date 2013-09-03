@@ -927,7 +927,7 @@ void PetscSolver::setNetworkLoader(std::shared_ptr<PSIClusterNetworkLoader> netw
 	// Debug the ReactionNetwork loaded by all tasks
 	std::shared_ptr<ReactionNetwork> network = networkLoader->load();
 	
-	std::map<std::string, std::string> props = *(network->properties);
+	auto props = network->getProperties();
 	std::cout << props["maxHeClusterSize"] << std::endl;
 }
 

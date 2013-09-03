@@ -41,8 +41,8 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
-	std::vector<shared_ptr<Reactant>> reactants = *network->reactants;
-	std::map<std::string, std::string> props = *network->properties;
+	auto reactants = network->getAll();
+	auto props = network->getProperties();
 	
 	// Prevent dissociation from being added to the connectivity array
 	props["dissociationsEnabled"] = "false";
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		// Get the connectivity array from the reactant
 		
 		shared_ptr<PSICluster> reactant =
-			std::dynamic_pointer_cast<PSICluster>(reactants.at(index));
+			std::dynamic_pointer_cast<PSICluster>(reactants->at(index));
 		shared_ptr<std::vector<int>> reactionConnectivity =
 			reactant->getConnectivity();
 		

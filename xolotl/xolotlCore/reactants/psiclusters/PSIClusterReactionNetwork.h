@@ -9,6 +9,7 @@
 #include <ReactionNetwork.h>
 #include <PSICluster.h>
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 
 namespace xolotlCore {
@@ -49,7 +50,7 @@ private:
 			// time in such a way that they can be compared without a large
 			// number of branches. He lands between 1 and 2, V between 2 and 3
 			// and I between 3 and 4. The "big number" was chosen to be
-			// sufficiently larger that a single species cluster would never
+			// sufficiently large that a single species cluster would never
 			// reach that size because of physical limits.
 			index_lhs = (numHe_lhs > 0) * (1.0 + (numHe_lhs / bigNumber))
 					+ (numV_lhs > 0) * (2.0 + (numV_lhs / bigNumber))
@@ -63,10 +64,21 @@ private:
 	};
 
 	/**
-	 * This structure compares two PSIClusters that are mixed species. It
-	 * only differs from the above comparator in the coefficients that it
-	 * assigned to the hash function. HeV clusters are put in a bin with a
-	 * center a max bound at -5 and HeI clusters at +5.
+	 * This structure compares two PSIClusters that are mixed species. It uses
+	 * a spatial hash, described in detail in the paper at:
+	 * http://www.beosil.com/download/CollisionDetectionHashing_VMV03.pdf
+	 *
+	 * This paper can also be found by reference:
+	 * Matthias Teschner et. al., "Optimized Spatial Hashing for Collision
+	 * Detection of Deformable Objects," VMV 2003. Munich, Germany. November
+	 * 19-21, 2003.
+	 *
+	 * The hash falls under the set of universal hashes for 3d vectors.
+	 *
+	 * The hash table size is set to 1000000 since there should never be a
+	 * cluster of size one million and it is still large enough to give good
+	 * hashes. Note that this number is 100x bigger than what they tested in
+	 * the paper. ;)
 	 */
 	struct PSIMixedClusterComparator {
 		bool operator()(const std::map<std::string, int>& lhs,
@@ -75,8 +87,8 @@ private:
 			// Local Declarations
 			int numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
 			int numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
-			double index_lhs = 0.0, index_rhs = 0.0;
-			double bigNumber = 1.0e9;
+			int p1 = 73856093, p2 = 19349663, p3 = 83492791;
+			int hashTableSize = 1000000, hash1 = 0, hash2 = 0;
 
 			// Get the cluster sizes
 			numHe_lhs = lhs.at("He");
@@ -86,17 +98,11 @@ private:
 			numV_rhs = rhs.at("V");
 			numI_rhs = rhs.at("I");
 
-			// Compute the indices/hashes. This simply bins the amount of each
-			// time in such a way that they can be compared without a large
-			// number of branches. HeV lands near -5 and HeI lands near +5.
-			index_lhs = (numHe_lhs > 0) * (1.0 + (numHe_lhs / bigNumber))
-					+ (numV_lhs > 0) * (-5.0 + (numV_lhs / bigNumber))
-					+ (numI_lhs > 0) * (5.0 + (numI_lhs / bigNumber));
-			index_rhs = (numHe_rhs > 0) * (1.0 + (numHe_rhs / bigNumber))
-					+ (numV_rhs > 0) * (-5.0 + (numV_rhs / bigNumber))
-					+ (numI_rhs > 0) * (1.0 + (numI_rhs / bigNumber));
+			// Compute the hashes
+			hash1 =  ((numHe_lhs*p1)^(numV_lhs*p2)^(numI_lhs*p3))%hashTableSize;
+			hash2 = ((numHe_rhs*p1)^(numV_rhs*p2)^(numI_rhs*p3))%hashTableSize;
 
-			return index_lhs < index_rhs;
+			return hash1 < hash2;
 		}
 	};
 
@@ -116,6 +122,16 @@ private:
 			PSIMixedClusterComparator> mixedSpeciesMap;
 
 	/**
+	 * This map stores all of the clusters in the network by type
+	 */
+	std::map<std::string,std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> > clusterTypeMap;
+
+	/**
+	 * The map of compositions to cluster ids
+	 */
+	std::map<std::map<std::string, int>, int> idMap;
+
+	/**
 	 * The names of the reactants supported by this network.
 	 */
 	std::vector<std::string> names;
@@ -124,6 +140,12 @@ private:
 	 * The names of the compound reactants supported by this network.
 	 */
 	std::vector<std::string> compoundNames;
+
+	/**
+	 * The size of the network. It is also used to set the id of new Reactants
+	 * that are added to the network.
+	 */
+	int networkSize;
 
 	/**
 	 * This operation sets the default values of the properties table and names
@@ -143,23 +165,6 @@ public:
 	 * @param other
 	 */
 	PSIClusterReactionNetwork(const PSIClusterReactionNetwork &other);
-
-	/**
-	 * Converts an cluster index (found in the `reactants` vector)
-	 * to a map describing the cluster's 
-	 *
-	 * @returns a map with `speciesLabel` => `quantity`
-	 */
-	std::map<std::string, int> toClusterMap(int index) const;
-
-	/**
-	 * Converts an cluster map (with `speciesLabel` => `quantity`)
-	 * to the index corresponding to its position in the reactants vector
-	 * @param the map of species labels to species size that describes the
-	 * desired cluster, i.e. "He",1 or "He",1;"V",2.
-	 * @returns the index of the cluster or -1 if it could not be found
-	 */
-	int toClusterIndex(std::map<std::string, int> clusterMap) const;
 
 	/**
 	 * This operation returns a reactant with the given name and size if it
@@ -191,6 +196,16 @@ public:
 	 * @return The list of all of the reactants in the network
 	 */
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll() const;
+
+	/**
+	 * This operation returns all reactants in the network with the given name.
+	 * The list may or may not be ordered and the decision is left to
+	 * implementers.
+	 * @param name The reactant or compound reactant name
+	 * @return The list of all of the reactants in the network or null if the
+	 * name is invalid.
+	 */
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll(std::string name) const;
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.
@@ -253,11 +268,26 @@ public:
 	/**
 	 * This operation sets a property with the given key to the specified value
 	 * for the network. ReactionNetworks may reserve the right to ignore this
-	 * operation for special key types.
+	 * operation for special key types, most especially those that they manage
+	 * on their own.
 	 * @param key The key for the property
 	 * @param value The value to which the key should be set.
 	 */
-	void setProperty(const std::string key, const std::string value);
+	void setProperty(std::string key, std::string value);
+
+	/**
+	 * This operation returns the size or number of reactants in the network.
+	 * @return The number of reactants in the network
+	 */
+	int size();
+
+	/**
+	 * This operation returns the id of a reactant if it exists in the network.
+	 * @param reactant The reactant
+	 * @return The id of the reactant. This id is guaranteed to be between 1 and
+	 * n, including both, for n reactants in the network.
+	 */
+	int getReactantId(const Reactant & reactant);
 
 	/**
 	 * This is a utility operation that creates a composition vector with an
@@ -267,7 +297,7 @@ public:
 	 *
 	 * This function will never return an composition with less than three
 	 * elements and it will always return element sizes greater than zero. If
-	 * the elements are negative, it will default to 1,0,0 (single He).
+	 * any of the elements are negative, it will default to 1,0,0 (single He).
 	 * @param numHe The number of helium atoms in the cluster
 	 * @param numV The number of atomic vacancies in the cluster
 	 * @param numI The number of interstitial defects in the cluster
@@ -275,10 +305,12 @@ public:
 	 * equal to the numbers that were passed for that part.
 	 */
 	std::vector<int> getCompositionVector(int numHe, int numV, int numI) {
+		// This flag is used so that negative numbers can be checked without
+		// branching.
+		int hasNegativeElement = ((numHe < 0) + (numV < 0) + (numI < 0) > 0);
 		std::vector<int> composition(3);
-		composition[0] = std::max(1,numHe);
+		composition[0] = std::max(1*hasNegativeElement,numHe);
 		composition[1] = std::max(0,numV);
-		composition[2] = std::max(0,numI);
 		composition[2] = std::max(0,numI);
 		return composition;
 	}

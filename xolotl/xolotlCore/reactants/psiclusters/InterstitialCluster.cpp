@@ -21,22 +21,19 @@ std::shared_ptr<Reactant> InterstitialCluster::clone() {
 void InterstitialCluster::createReactionConnectivity() {
 
 	// Local Declarations - Note the reference to the properties map
-	std::map<std::string, std::string> props = *(network->properties);
-	int numI = size, indexOther;
+	auto props = network->getProperties();
+	int numHe, indexOther, networkSize = network->size();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
-	int maxMixedClusterSize = std::stoi(props["maxMixedClusterSize"]);
+	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
+	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
-	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
-	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
-	std::map<std::string, int> speciesMap;
+	int numIClusters = std::stoi(props["numIClusters"]);
+	std::map<std::string, int> composition;
 	int totalSize = 1, firstSize = 0, secondSize = 0;
-	int firstIndex = -1, secondIndex = -1;
-	std::map<std::string, int> firstSpeciesMap, secondSpeciesMap;
+	int firstIndex = -1, secondIndex = -1, reactantVecSize = 0;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>reactants =
-			network->reactants;
+	std::shared_ptr<PSICluster> psiCluster;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
@@ -51,19 +48,14 @@ void InterstitialCluster::createReactionConnectivity() {
 		// Increment the base sizes
 		++firstSize;
 		secondSize = size - firstSize;
-		// Update the maps
-		firstSpeciesMap["I"] = firstSize;
-		secondSpeciesMap["I"] = secondSize;
 		// Get the first and second reactants for the reaction
 		// first + second = this.
-		firstIndex = network->toClusterIndex(firstSpeciesMap);
-		firstReactant = reactants->at(firstIndex);
-		secondIndex = network->toClusterIndex(secondSpeciesMap);
-		secondReactant = reactants->at(secondIndex);
+		firstReactant = network->get("I", firstSize);
+		secondReactant = network->get("I", secondSize);
 		// Create a ReactingPair with the two reactants
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
-		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 		// Update the total size. Do not delete this or you'll have an infinite
@@ -71,21 +63,47 @@ void InterstitialCluster::createReactionConnectivity() {
 		totalSize = firstSize + secondSize;
 	}
 
-	/* ----- (A*He) + (B*I) --> (A*He)*(B*I)
-	 * Interstitials can interact with other interstitials, vacancies,
-	 * helium, and mixed-species clusters. They cannot cluster with other
-	 * interstitials that are so large that the combination of the two would
-	 * produce an interstitial above the maximum size.
+	/* ----- A*I + B*I → (A+B)*I -----
+	 *	Interstitial absorption
 	 *
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	for (int numHeOther = 1; numHeOther + numI <= maxMixedClusterSize;
-			numHeOther++) {
-		speciesMap["He"] = numHeOther;
-		int indexOther = network->toClusterIndex(speciesMap);
-		reactionConnectivity[indexOther] = 1;
-		combiningReactants.push_back(reactants->at(indexOther));
+	auto reactants = network->getAll("I");
+	reactantVecSize = reactants->size();
+	for (int i = 0; i < reactantVecSize; i++) {
+		// Get the reactant, its composition and id
+		firstReactant = reactants->at(i);
+		composition = firstReactant->getComposition();
+		indexOther = network->getReactantId(*firstReactant) - 1;
+		// React if the size of the product is valid
+		if ((size + composition["I"] <= maxIClusterSize)) {
+			reactionConnectivity[indexOther] = 1;
+			combiningReactants.push_back(firstReactant);
+		}
+	}
+
+	/* ----- (A*He) + (B*I) --> (A*He)*(B*I)
+	 * Interstitials can interact with clusters of He to form HeI clusters.
+	 * They cannot cluster with He clusters that are so large that the
+	 * combination of the two would produce an HeI cluster above the
+	 * maximum size.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
+	reactants = network->getAll("He");
+	reactantVecSize = reactants->size();
+	for (int i = 0; i < reactantVecSize; i++) {
+		// Get the reactant, its composition and id
+		firstReactant = reactants->at(i);
+		composition = firstReactant->getComposition();
+		indexOther = network->getReactantId(*firstReactant) - 1;
+		// React if the size of the product is valid
+		if ((size + composition["He"] <= maxHeIClusterSize)) {
+			reactionConnectivity[indexOther] = 1;
+			combiningReactants.push_back(firstReactant);
+		}
 	}
 
 	/* ----- A*I + B*V -----
@@ -97,28 +115,15 @@ void InterstitialCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	for (int numVOther = 1; numVOther <= numVClusters; numVOther++) {
-		// Clear the map since we are reusing it
-		speciesMap.clear();
-		speciesMap["V"] = numVOther;
-		int indexOther = network->toClusterIndex(speciesMap);
+	reactants = network->getAll("V");
+	reactantVecSize = reactants->size();
+	for (int i = 0; i < reactantVecSize; i++) {
+		// Get the reactant and its id
+		firstReactant = reactants->at(i);
+		indexOther = network->getReactantId(*firstReactant) - 1;
+		// Always interact with vacancies
 		reactionConnectivity[indexOther] = 1;
-		combiningReactants.push_back(reactants->at(indexOther));
-	}
-
-	/* ----- A*I + B*I → (A+B)*I -----
-	 *	Interstitial absorption
-	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 */
-	for (int numIOther = 1; numI + numIOther <= maxIClusterSize; numIOther++) {
-		// Clear the map since we are reusing it
-		speciesMap.clear();
-		speciesMap["I"] = numIOther;
-		int indexOther = network->toClusterIndex(speciesMap);
-		reactionConnectivity[indexOther] = 1;
-		combiningReactants.push_back(reactants->at(indexOther));
+		combiningReactants.push_back(firstReactant);
 	}
 
 	/* ----- (A*He)(B*V) + (C*I) --> (A*He)[(B-C)V] -----
@@ -128,15 +133,17 @@ void InterstitialCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	if (numHeVClusters > 0) {
-		// Get the index of the first HeV cluster. Clear the map since we are
-		// reusing it.
-		speciesMap.clear();
-		speciesMap["He"] = 1;
-		speciesMap["V"] = 1;
-		int heVIndex = network->toClusterIndex(speciesMap);
-		// Connect to the HeV clusters if possible
-		connectWithMixedClusters(heVIndex,heVIndex+numHeVClusters,"V");
+	if (numHeIClusters > 0) {
+		reactants = network->getAll("HeV");
+		reactantVecSize = reactants->size();
+		for (int i = 0; i < reactantVecSize; i++) {
+			// Get the reactant and its id
+			firstReactant = reactants->at(i);
+			indexOther = network->getReactantId(*firstReactant) - 1;
+			// Always interact with HeV
+			reactionConnectivity[indexOther] = 1;
+			combiningReactants.push_back(firstReactant);
+		}
 	}
 
 	/* ----- (A*He)*(B*I) + I --> (A*He)*(B + 1)*I -----
@@ -146,45 +153,19 @@ void InterstitialCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	if (numI == 1 && numHeIClusters > 0) {
-		// Get the index of the first HeI cluster. Clear the map since we are
-		// reusing it.
-		speciesMap.clear();
-		speciesMap["He"] = 1;
-		speciesMap["I"] = 1;
-		int heIIndex = network->toClusterIndex(speciesMap);
-		// Connect to the HeV clusters if possible
-		connectWithMixedClusters(heIIndex,heIIndex+numHeIClusters,"V");
-	}
-
-	return;
-}
-
-void InterstitialCluster::connectWithMixedClusters(int startIndex,
-		int stopIndex, std::string mixedSpecies) {
-
-	// Local Declarations
-	int otherNumHe, otherNumMixed;
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>reactants =
-			network->reactants;
-	int maxMixedClusterSize = std::stoi(
-			network->properties->at("maxMixedClusterSize"));
-	std::map<std::string, int> otherSpeciesMap;
-	std::shared_ptr<PSICluster> mixedCluster;
-
-	// Loop over the mixed clusters
-	for (int i = startIndex; i < stopIndex; i++) {
-		mixedCluster = std::dynamic_pointer_cast < PSICluster
-				> (reactants->at(i));
-		// Get the cluster sizes for the mixed cluster
-		otherSpeciesMap = (std::dynamic_pointer_cast < PSICluster
-				> (reactants->at(i)))->getClusterMap();
-		otherNumHe = otherSpeciesMap["He"];
-		otherNumMixed = otherSpeciesMap[mixedSpecies];
-		// React with it if the sizes are compatible.
-		if (otherNumHe + otherNumMixed + size <= maxMixedClusterSize) {
-			reactionConnectivity[i] = 1;
-			combiningReactants.push_back(reactants->at(i));
+	if (size == 1 && numHeVClusters > 0) {
+		reactants = network->getAll("HeI");
+		reactantVecSize = reactants->size();
+		for (int i = 0; i < reactantVecSize; i++) {
+			// Get the reactant, and its id
+			firstReactant = reactants->at(i);
+			indexOther = network->getReactantId(*firstReactant) - 1;
+			// React if the size of the product is valid
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			if ((size + psiCluster->getSize() <= maxHeIClusterSize)) {
+				reactionConnectivity[indexOther] = 1;
+				combiningReactants.push_back(firstReactant);
+			}
 		}
 	}
 
@@ -193,22 +174,42 @@ void InterstitialCluster::connectWithMixedClusters(int startIndex,
 
 void InterstitialCluster::createDissociationConnectivity() {
 
-	// Commented out the below because it is wrong! FIXME!
+	// Local Declarations
+	int nReactants = network->size(), id = 0;
+	std::map<std::string, int> clusterMap;
+	std::shared_ptr<Reactant> reactant;
+	auto props = network->getProperties();
 
-	// Resize the connectivity row with zeroes
-//	int reactantsLength = network->reactants->size();
-//	dissociationConnectivity.resize(reactantsLength, 0);
+	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
+	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
+	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
+	int numHeVClusters = std::stoi(props["numHeVClusters"]);
+	int numHeIClusters = std::stoi(props["numHeIClusters"]);
+	int numIClusters = std::stoi(props["numIClusters"]);
+
+	// Interstitial dissociation, get a vacancy with size = size - 1
+	reactant = network->get("I", size - 1);
+	if (reactant) {
+		id = network->getReactantId(*reactant);
+		dissociationConnectivity[id] = 1;
+		// Single V
+		reactant = network->get("I", 1);
+		id = network->getReactantId(*reactant);
+		dissociationConnectivity[id] = 1;
+	}
+
+	return;
 }
 
-bool InterstitialCluster::isProductReactant(int reactantI, int reactantJ) {
+bool InterstitialCluster::isProductReactant(const Reactant & reactantI,
+		const Reactant & reactantJ) {
 
 	// Local Declarations, integers for species number for I, J reactants
 	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
 
-	// Get the ClusterMap corresponding to
-	// the given reactants
-	std::map<std::string, int> reactantIMap = network->toClusterMap(reactantI);
-	std::map<std::string, int> reactantJMap = network->toClusterMap(reactantJ);
+	// Get the compositions of the reactants
+	auto reactantIMap = reactantI.getComposition();
+	auto reactantJMap = reactantJ.getComposition();
 
 	// Grab the numbers for each species
 	// from each Reactant
@@ -239,18 +240,7 @@ std::map<std::string, int> InterstitialCluster::getClusterMap() {
 	return clusterMap;
 }
 
-double InterstitialCluster::getReactionRadius() {
-
-	double EightPi = 8.0 * xolotlCore::pi;
-	double aCubed = pow(xolotlCore::latticeConstant, 3.0);
-	double termOne = 1.15 * (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant;
-	double termTwo = pow((3.0 / EightPi) * aCubed * size, (1.0 / 3.0));
-	double termThree = pow((3.0 / EightPi) * aCubed, (1.0 / 3.0));
-
-	return termOne + termTwo - termThree;
-}
-
-const std::map<std::string,int> InterstitialCluster::getComposition() {
+std::map<std::string, int> InterstitialCluster::getComposition() const {
 
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
@@ -262,4 +252,15 @@ const std::map<std::string,int> InterstitialCluster::getComposition() {
 
 	// Return it
 	return clusterMap;
+}
+
+double InterstitialCluster::getReactionRadius() {
+
+	double EightPi = 8.0 * xolotlCore::pi;
+	double aCubed = pow(xolotlCore::latticeConstant, 3.0);
+	double termOne = 1.15 * (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant;
+	double termTwo = pow((3.0 / EightPi) * aCubed * size, (1.0 / 3.0));
+	double termThree = pow((3.0 / EightPi) * aCubed, (1.0 / 3.0));
+
+	return termOne + termTwo - termThree;
 }

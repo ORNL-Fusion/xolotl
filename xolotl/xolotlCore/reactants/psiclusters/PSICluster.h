@@ -115,9 +115,9 @@ protected:
 	 * @return
 	 */
 	double calculateReactionRateConstant(
-			const std::shared_ptr<xolotlCore::Reactant> & firstReactant,
-			const std::shared_ptr<xolotlCore::Reactant> & secondReactant,
-			const double temperature);
+			const PSICluster & firstReactant,
+			const PSICluster & secondReactant,
+			const double temperature) const;
 
 	/**
 	 * Calculate the dissociation constant based on the current
@@ -130,9 +130,9 @@ protected:
 	 * @return
 	 */
 	double calculateDissociationConstant(
-			const std::shared_ptr<xolotlCore::Reactant> & firstReactant,
-			const std::shared_ptr<xolotlCore::Reactant> &secondReactant,
-			const double temperature);
+			const PSICluster & firstReactant,
+			const PSICluster & secondReactant,
+			const double temperature) const;
 
 	/**
 	 * Return whether or not this PSICluster is a product
@@ -143,9 +143,9 @@ protected:
 	 *
 	 * @param reactantI
 	 * @param reactantJ
-	 * @return
+	 * @return true if this reactant is a product of i and j
 	 */
-	virtual bool isProductReactant(const int reactantI, const int reactantJ);
+	virtual bool isProductReactant(const Reactant & reactantI , const Reactant & reactantJ);
 
 	/**
 	 * Computes a row of the reaction connectivity matrix corresponding to
@@ -220,7 +220,7 @@ public:
 	 * @return The total change in flux for this reactant due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux(const double temperature);
+	virtual double getTotalFlux(double temperature) const;
 
 	/**
 	 * This operation returns the total change in this cluster due to
@@ -228,7 +228,7 @@ public:
 	 * @param temperature The temperature at which to calculate the flux
 	 * @return The flux due to dissociation.
 	 */
-	virtual double getDissociationFlux(const double temperature);
+	virtual double getDissociationFlux(double temperature) const;
 
 	/**
 	 * This operation returns the total change in this cluster due to
@@ -236,7 +236,7 @@ public:
 	 * @param temperature The temperature at which to calculate the flux
 	 * @return The flux due to this cluster being produced.
 	 */
-	virtual double getProductionFlux(const double temperature);
+	virtual double getProductionFlux(double temperature) const;
 
 	/**
 	 * This operation returns the total change in this cluster due to
@@ -244,35 +244,35 @@ public:
 	 * @param temperature The temperature at which to calculate the flux
 	 * @return The flux due to this cluster combining with other clusters.
 	 */
-	virtual double getCombinationFlux(const double temperature);
+	virtual double getCombinationFlux(double temperature) const;
 
 	/**
 	 * This operation returns the total size of the cluster.
 	 * @return The total size of this cluster including the contributions
 	 * from all species types.
 	 */
-	virtual int getSize();
+	virtual int getSize() const;
 
 	/**
 	 * This operation retrieves the binding energy for this cluster.
 	 * @return An array of the binding energies of this cluster with clusters
 	 * of other types as described above.
 	 */
-	std::vector<double> getBindingEnergies();
+	std::vector<double> getBindingEnergies() const;
 
 	/**
 	 * This operation sets the binding energies for this cluster. It expects
 	 * the energy vector to be ordered as described above.
 	 * @param energies The vector of energies.
 	 */
-	void setBindingEnergies(const std::vector<double> energies);
+	void setBindingEnergies(std::vector<double> energies);
 
 	/**
 	 * This operation retrieves the diffusion factor, D_0, that is used to
 	 * calculate the diffusion coefficient for this cluster.
 	 * @return The diffusion factor of this cluster
 	 */
-	double getDiffusionFactor();
+	double getDiffusionFactor() const;
 
 	/**
 	 * This operation sets the diffusion factor, D_0, that is used to calculate
@@ -287,7 +287,7 @@ public:
 	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
 	 * @return The diffusion coefficient.
 	 */
-	virtual double getDiffusionCoefficient(const double temperature);
+	virtual double getDiffusionCoefficient(double temperature) const;
 
 	/**
 	 * This operation sets the migration energy for this cluster.
@@ -299,7 +299,7 @@ public:
 	 * This operation retrieves the migration energy for this cluster
 	 * @return the migration energy
 	 */
-	double getMigrationEnergy();
+	double getMigrationEnergy() const;
 
 	/**
 	 * This virtual method is for subclasses to specialize
@@ -326,7 +326,7 @@ public:
 	 * For each element in the array, if either the reactant element
 	 * or the dissociation element is 1, the final element is 1.
 	 */
-	std::shared_ptr<std::vector<int>> getConnectivity();
+	std::shared_ptr<std::vector<int>> getConnectivity() const;
 };
 
 } /* end namespace xolotlCore */

@@ -88,9 +88,9 @@ public:
 	 *
 	 * @param reactantI
 	 * @param reactantJ
-	 * @return
+	 * @return true if this reactant is a product of i and j
 	 */
-	virtual bool isProductReactant(int reactantI, int reactantJ);
+	virtual bool isProductReactant(const Reactant & reactantI, const Reactant & reactantJ);
 
 	/**
 	 * This virtual method is for subclasses to specialize
@@ -116,7 +116,7 @@ public:
 	 * @return The composition returned as a map with keys naming distinct
 	 * elements and values indicating the amount of the element present.
 	 */
-	virtual const std::map<std::string,int> getComposition();
+	virtual std::map<std::string,int> getComposition() const;
 
 protected:
 	/**

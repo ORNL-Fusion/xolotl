@@ -27,7 +27,6 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
 	string sourceDir(XolotlSourceDirectory);
 	string pathToFile("/tests/reactants/testfiles/tungsten.txt");
 	string networkFilename = sourceDir + pathToFile;
-	shared_ptr<std::vector<shared_ptr<Reactant> > > reactants;
 
 	std::cout << networkFilename << std::endl;
 	// Load the input file from the master task
@@ -43,9 +42,9 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
 
 	cout << "Network loaded." << endl;
 
-	cout << "Size of the network is " << network->reactants->size() << "\n";
-	int nReactants = network->reactants->size();
-	reactants = network->reactants;
+	int nReactants = network->size();
+	auto reactants = network->getAll();
+	cout << "Size of the network is " << nReactants << "\n";
 	for (int i = 0; i < 9; ++i) {
 		shared_ptr<PSICluster> reactant = dynamic_pointer_cast < PSICluster > (reactants->at(i));
 		double flux = reactant->getTotalFlux(273.0);

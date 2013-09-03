@@ -17,6 +17,7 @@
 #include <typeinfo>
 #include <limits>
 #include <algorithm>
+#include <iostream>
 
 using std::shared_ptr;
 using namespace xolotlCore;
@@ -32,18 +33,16 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 	for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
 		// Create a He cluster with cluster size numHe
 		std::shared_ptr<HeCluster> cluster(new HeCluster(numHe));
-
 		// Add it to the network
-		reactants->push_back(cluster);
+		add(cluster);
 	}
 
 	// Add vacancy clusters
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		// Create a He cluster with cluster size numV
 		std::shared_ptr<VCluster> cluster(new VCluster(numV));
-
 		// Add it to the network
-		reactants->push_back(cluster);
+		add(cluster);
 	}
 
 	// Add interstitial clusters
@@ -51,29 +50,23 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 		// Create a He cluster with cluster size numI
 		std::shared_ptr<InterstitialCluster> cluster(
 				new InterstitialCluster(numI));
-
 		// Add it to the network
-		reactants->push_back(cluster);
+		add(cluster);
 	}
 
 	// Add HeV clusters, assuming that
 	// numHe + numV <= maxMixedClusterSize
-
 	int numHeVClusters = 0;
-
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
 			// Create a HeVCluster with the current amount of He and V
 			std::shared_ptr<HeVCluster> cluster(new HeVCluster(numHe, numV));
-
-			reactants->push_back(cluster);
-			numHeVClusters++;
+			add(cluster);
 		}
 	}
 
-	// Create the HeI clusters in this simple reaction network
+	// Add HeI clusters
 	int numHeIClusters = 0;
-
 	// Create all possible combinations of numHe and numI
 	// clusters with numHe, numI < maxClusterSize
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
@@ -81,33 +74,12 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 			// Create the HeI cluster
 			std::shared_ptr<HeInterstitialCluster> cluster(
 					new HeInterstitialCluster(numHe, numI));
-
 			// Add it to the reactants vector
-			reactants->push_back(cluster);
-
-			// Increment the number of
-			// HeIClusters for the properties map
-			numHeIClusters++;
+			add(cluster);
 		}
 	}
 
-	// Setup the properties map
-	(*properties)["maxHeClusterSize"] = std::to_string(
-			(long long) maxClusterSize);
-	(*properties)["maxVClusterSize"] = std::to_string(
-			(long long) maxClusterSize);
-	(*properties)["maxIClusterSize"] = std::to_string(
-			(long long) maxClusterSize);
-	(*properties)["maxMixedClusterSize"] = std::to_string(
-			(long long) maxClusterSize);
-
-	(*properties)["numHeClusters"] = std::to_string((long long) numClusters);
-	(*properties)["numVClusters"] = std::to_string((long long) numClusters);
-	(*properties)["numIClusters"] = std::to_string((long long) numClusters);
-	(*properties)["numHeVClusters"] = std::to_string(
-			(long long) numHeVClusters);
-	(*properties)["numHeIClusters"] = std::to_string(
-			(long long) numHeIClusters);
+	return;
 }
 
 SimpleReactionNetwork::~SimpleReactionNetwork() {
@@ -121,19 +93,22 @@ SimpleReactionNetwork::~SimpleReactionNetwork() {
  * @return The reaction network.
  */
 std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork() {
+
 	// Create the network
 	std::shared_ptr<xolotlCore::ReactionNetwork> network(
 			new SimpleReactionNetwork());
+	std::cout << "SimpleReactionNetwork Message: "
+			<< "Created network with size " << network->size() << std::endl;
 	// Register the reaction network with its clusters
-	for (int i = 0; i < network->reactants->size(); i++) {
-		network->reactants->at(i)->setReactionNetwork(network);
+	auto reactants = network->getAll();
+	for (int i = 0; i < reactants->size(); i++) {
+		reactants->at(i)->setReactionNetwork(network);
 	}
 
-	// TEMPORARY
+	// ----- TEMPORARY DEBUG OUTPUT!!!!! -----
 	// Print the reaction connectivity matrix
-
-	for (auto reactantIt = network->reactants->begin();
-			reactantIt != network->reactants->end(); reactantIt++) {
+	for (auto reactantIt = reactants->begin();
+			reactantIt != reactants->end(); reactantIt++) {
 		std::shared_ptr<PSICluster> cluster = std::dynamic_pointer_cast<
 				PSICluster>(*reactantIt);
 		std::vector<int> conn = *cluster->getConnectivity();
@@ -145,109 +120,4 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
 	}
 
 	return network;
-}
-
-/**
- * This operation returns a reactant with the given name and size if it
- * exists in the network or null if not.
- * @param name the name of the reactant
- * @param size the size of the reactant
- * @return A shared pointer to the reactant
- */
-std::shared_ptr<Reactant> SimpleReactionNetwork::get(const std::string rName,
-		const int size) const {
-	std::shared_ptr<Reactant> nullPtr;
-
-	return nullPtr;
-}
-
-/**
- * This operation returns a compound reactant with the given name and size if it
- * exists in the network or null if not.
- * @param name the name of the compound reactant
- * @param sizes an array containing the sizes of each piece of the reactant
- * @return A shared pointer to the compound reactant
- */
-std::shared_ptr<Reactant> SimpleReactionNetwork::getCompound(
-		const std::string rName, const std::vector<int> sizes) const {
-	std::shared_ptr<Reactant> nullPtr;
-
-	return nullPtr;
-}
-
-/**
- * This operation returns all reactants in the network without regard for
- * their composition or whether they are compound reactants. The list may
- * or may not be ordered and the decision is left to implementers.
- * @return The list of all of the reactants in the network
- */
-std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>SimpleReactionNetwork::getAll() const {
-
-	// Local Declarations
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> allReactants(new std::vector<std::shared_ptr<Reactant> >);
-
-	// Load the single-species clusters
-
-	// Load the mixed-species clusters
-
-	return allReactants;
-}
-
-/**
- * This operation adds a reactant or a compound reactant to the network.
- * @param reactant The reactant that should be added to the network.
- */
-void SimpleReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
-	return;
-}
-
-/**
- * This operation returns the names of the reactants in the network.
- * @return A vector with one each for each of the distinct reactant types
- * in the network.
- */
-const std::vector<std::string> & SimpleReactionNetwork::getNames() const {
-
-	std::vector<std::string> vector;
-	std::vector<std::string> & vectorRef = vector;
-
-	return vector;
-}
-
-/**
- * This operation returns the names of the compound reactants in the
- * network.
- * @return A vector with one each for each of the distinct compound
- * reactant types in the network.
- */
-const std::vector<std::string> & SimpleReactionNetwork::getCompoundNames() const {
-	std::vector<std::string> vector;
-	std::vector<std::string> & vectorRef = vector;
-
-	return vectorRef;
-}
-
-/**
- * This operation returns a map of the properties of this reaction network.
- * @return The map of properties that has been configured for this
- * ReactionNetwork.
- */
-const std::map<std::string, std::string> & SimpleReactionNetwork::getProperties() {
-
-	std::map<std::string, std::string> map;
-	std::map<std::string, std::string> & mapRef = map;
-
-	return mapRef;
-}
-
-/**
- * This operation sets a property with the given key to the specified value
- * for the network. ReactionNetworks may reserve the right to ignore this
- * operation for special key types.
- * @param key The key for the property
- * @param value The value to which the key should be set.
- */
-void SimpleReactionNetwork::setProperty(const std::string key,
-		const std::string value) {
-	return;
 }

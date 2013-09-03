@@ -1,5 +1,6 @@
 // Includes
 #include "HeVCluster.h"
+#include "PSIClusterReactionNetwork.h"
 #include <iostream>
 #include <Constants.h>
 
@@ -16,7 +17,8 @@ HeVCluster::HeVCluster(int numHe, int numV) :
 	name = "HeV";
 }
 
-HeVCluster::HeVCluster(const HeVCluster &other): PSICluster(other) {
+HeVCluster::HeVCluster(const HeVCluster &other) :
+		PSICluster(other) {
 	numHe = other.numHe;
 	numV = other.numV;
 }
@@ -49,138 +51,93 @@ int HeVCluster::getSpeciesSize(const std::string speciesName) {
 
 void HeVCluster::createReactionConnectivity() {
 
-	// Extract some of the properties from the network
-	std::shared_ptr<std::map<std::string, std::string>> properties =
-			network->properties;
-	int maxMixedClusterSize = std::stoi(properties->at("maxMixedClusterSize"));
-	int maxHeClusterSize = std::stoi(properties->at("maxHeClusterSize"));
-	int maxIClusterSize = std::stoi(properties->at("maxIClusterSize"));
-	int numHeClusters = std::stoi(properties->at("numHeClusters"));
+	// Local Declarations
+	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
+			> (network);
+	auto props = psiNetwork->getProperties();
+	int networkSize = psiNetwork->size(), index = 0;
+	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
+	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
+	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
+	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
+	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
+	int numHeClusters = std::stoi(props["numHeClusters"]);
+	int numVClusters = std::stoi(props["numVClusters"]);
+	int numIClusters = std::stoi(props["numIClusters"]);
+	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
-	std::map<std::string, int> firstReactantMap, secondReactantMap;
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants =
-	network->reactants;
-	std::map<std::string, int> speciesMap;
-	std::shared_ptr<PSICluster> heCluster;
+	std::shared_ptr<PSICluster> heCluster, vCluster, iCluster;
+	std::vector<int> firstComposition, secondComposition, speciesMap;
 
 	std::cout << numHe << " " << numV << " " << std::endl;
 
 	/* ----- (A*He)(B*V) + (C*He) --> [(A+C)He]*(B*V) -----
-	 * Fill reacting pairs for helium absorption by mixed clusters that results
+	 * Helium absorption by HeV clusters that results
 	 * in the production of this cluster.
 	 */
 	for (int z = 1; z <= maxHeClusterSize; z++) {
-		// Set the first reactant's map data
-		firstReactantMap["He"] = numHe - z;
-		firstReactantMap["V"] = numV;
-		firstReactantMap["I"] = 0;
-
-		// Set the second's data
-		secondReactantMap["He"] = z;
-		secondReactantMap["V"] = 0;
-		secondReactantMap["I"] = 0;
-
-		int firstIndex = network->toClusterIndex(firstReactantMap);
-		int secondIndex = network->toClusterIndex(secondReactantMap);
-
-		if (firstIndex < reactants->size() && secondIndex < reactants->size()) {
-			// Get those Reactants from the network
-			firstReactant = reactants->at(firstIndex);
-			secondReactant = reactants->at(secondIndex);
-
-			// Create the Reacting Pair
-			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(firstIndex));
-			pair.second = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(secondIndex));
-
-			// Add the pair to the list
-			reactingPairs.push_back(pair);
-		}
-	}
-
-	// xHe yV + V --> xHe (y+1) V
-	// Set the first reactant's map data
-	firstReactantMap["He"] = numHe;
-	firstReactantMap["V"] = numV - 1;
-	firstReactantMap["I"] = 0;
-
-	// Set the second's data
-	secondReactantMap["He"] = 0;
-	secondReactantMap["V"] = 1;
-	secondReactantMap["I"] = 0;
-
-	int firstIndex = network->toClusterIndex(firstReactantMap);
-	int secondIndex = network->toClusterIndex(secondReactantMap);
-
-	if (firstIndex < reactants->size() && secondIndex < reactants->size()) {
-		// Get those Reactants from the network
-		firstReactant = reactants->at(firstIndex);
-		secondReactant = reactants->at(secondIndex);
-
+		// Get the first reactant
+		firstComposition = psiNetwork->getCompositionVector(numHe - z, numV, 0);
+		firstReactant = psiNetwork->getCompound("HeV", firstComposition);
+		// Get the second reactant
+		secondReactant = psiNetwork->get("He", z);
 		// Create the Reacting Pair
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(
-				reactants->at(firstIndex));
-		pair.second = std::dynamic_pointer_cast<PSICluster>(
-				reactants->at(secondIndex));
-
+		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
+		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 	}
 
-	// (A*He)(B*V) + C*I --> (A*He)[(B-C)V]
-	for (int z = 1; z <= maxIClusterSize; z++) {
-		// Set the first reactant's map data
-		firstReactantMap["He"] = numHe;
-		firstReactantMap["V"] = numV + z;
-		firstReactantMap["I"] = 0;
-
-		// Set the second's data
-		secondReactantMap["He"] = 0;
-		secondReactantMap["V"] = 0;
-		secondReactantMap["I"] = z;
-
-		// Get those Reactants from the network
-		int firstReactantIndex = network->toClusterIndex(firstReactantMap);
-		int secondReactantIndex = network->toClusterIndex(secondReactantMap);
-
-		if (firstReactantIndex < reactants->size()
-				&& secondReactantIndex < reactants->size()) {
-			firstReactant = reactants->at(firstReactantIndex);
-			secondReactant = reactants->at(secondReactantIndex);
-
-			// Create the Reacting Pair
-			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
-
-			// Add the pair to the list
-			reactingPairs.push_back(pair);
-		}
-	}
-
 	/* ---- (AHe)*(BV) + (CHe) --> [(A + C)He]*(BV) ----
 	 * HeV clusters can absorb helium clusters so long as they do not cross
-	 * the max size.
+	 * the max size limit.
 	 *
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
-	 *
-	 * Start at single species He and count up.
 	 */
-	speciesMap.clear();
-	speciesMap["He"] = 1;
-	int heIndex = network->toClusterIndex(speciesMap);
-	// Loop over the He clusters
-	for (int i = heIndex; i < heIndex + numHeClusters; i++) {
-		heCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
-		// React with it if the sizes are compatible.
-		if (heCluster->getSize() + size <= maxMixedClusterSize) {
+	auto reactants = psiNetwork->getAll("He");
+	int numReactants = reactants->size();
+	for (int i = 0; i < numReactants; i++) {
+		heCluster = std::dynamic_pointer_cast < PSICluster > (reactants->at(i));
+		// React with it if the sizes are compatible
+		if (heCluster->getSize() + size <= maxHeVClusterSize) {
+			index = psiNetwork->getReactantId(*heCluster) - 1;
 			reactionConnectivity[i] = 1;
-			combiningReactants.push_back(reactants->at(i));
+			combiningReactants.push_back(heCluster);
 		}
+	}
+
+	/* ----- (A*He)(B*V) + V --> (A*He)[(B+1)*V] -----
+	 * Vacancies are also produced by single-vacancy absorption by an HeV
+	 * cluster. In this case, (A*He)[(B-1)*V] produces the current cluster.
+	 */
+	firstComposition = psiNetwork->getCompositionVector(numHe, numV - 1, 0);
+	firstReactant = psiNetwork->getCompound("HeV", firstComposition);
+	secondReactant = psiNetwork->get("V", 1);
+	// Create the Reacting Pair
+	ReactingPair pair;
+	pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
+	pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+	// Add the pair to the list
+	reactingPairs.push_back(pair);
+
+	/* ----- (A*He)(B*V) + C*I --> (A*He)[(B-C)V] -----
+	 * Interstitial absorption by an HeV cluster produces an HeV cluster of
+	 * size B-C vacancies smaller.
+	 */
+	for (int z = 1; z <= maxIClusterSize; z++) {
+		// Get the first reactant
+		firstComposition = psiNetwork->getCompositionVector(numHe, numV + z, 0);
+		firstReactant = psiNetwork->getCompound("HeV", firstComposition);
+		// Get the second reactant
+		secondReactant = psiNetwork->get("I", z);
+		// Create the Reacting Pair
+		ReactingPair pair;
+		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
+		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+		// Add the pair to the list
+		reactingPairs.push_back(pair);
 	}
 
 	/* ----- (AHe)*(BV) + V --> (AHe)*(B + 1)V -----
@@ -189,18 +146,29 @@ void HeVCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	if (numHe + numV + 1 <= maxMixedClusterSize) {
-		// Get the HeV cluster that is one bigger than us.
-		speciesMap.clear();
-		speciesMap["He"] = numHe;
-		speciesMap["V"] = numV;
-		int i = network->toClusterIndex(speciesMap);
-		// Set the connectivity and add the reactant to the list.
-		reactionConnectivity.at(i) = 1;
-		combiningReactants.push_back(reactants->at(i));
+	if (numHe + numV + 1 <= maxHeVClusterSize) {
+		// Get the HeV cluster that is one He bigger than us.
+		firstComposition = psiNetwork->getCompositionVector(numHe + 1, numV, 0);
+		firstReactant = psiNetwork->getCompound("HeV", firstComposition);
+		// Add it to the list if it exists
+		if (firstReactant) {
+			index = psiNetwork->getReactantId(*firstReactant) - 1;
+			reactionConnectivity.at(index) = 1;
+			combiningReactants.push_back(firstReactant);
+		}
+		// Get the HeV cluster that is on V bigger than us.
+		secondComposition = psiNetwork->getCompositionVector(numHe, numV + 1,
+				0);
+		secondReactant = psiNetwork->getCompound("HeV", secondComposition);
+		// Add it to the list if it exists
+		if (secondReactant) {
+			index = psiNetwork->getReactantId(*secondReactant) - 1;
+			reactionConnectivity.at(index) = 1;
+			combiningReactants.push_back(secondReactant);
+		}
 	}
 
-	/* ----- (AHe)*(BV) + (CI)  --> (AHe)*(B - C)V -----
+	/* ----- (AHe)*(BV) + CI  --> (AHe)*(B - C)V -----
 	 * Helium-vacancy clusters lose vacancies when they interact with
 	 * interstitial clusters.
 	 *
@@ -210,109 +178,99 @@ void HeVCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	for (int numIOther = 1; numV - numIOther >= 1; numIOther++) {
-		// Get the  index
-		speciesMap.clear();
-		speciesMap["I"] = numIOther;
-		int i = network->toClusterIndex(speciesMap);
-		reactionConnectivity.at(i) = 1;
-		combiningReactants.push_back(reactants->at(i));
+	reactants = psiNetwork->getAll("I");
+	numReactants = reactants->size();
+	for (int i = 0; i < numReactants; i++) {
+		iCluster = std::dynamic_pointer_cast < PSICluster > (reactants->at(i));
+		// Only add it if it exists!
+		if (iCluster->getSize() - numV >= 1) {
+			index = psiNetwork->getReactantId(*iCluster) - 1;
+			reactionConnectivity.at(index) = 1;
+			combiningReactants.push_back(firstReactant);
+		}
 	}
 
 	return;
 }
 
 void HeVCluster::createDissociationConnectivity() {
-// Local Declarations
-	std::map<std::string, int> clusterMap;
 
-// Vacancy Dissociation
-	clusterMap["He"] = numHe - 1;
-	clusterMap["V"] = numV;
-	clusterMap["I"] = 0;
-	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["V"] = 0;
-	clusterMap["He"] = 1;
-	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
+	// Local Declarations
+	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
+			> (network);
+	auto props = psiNetwork->getProperties();
+	int index = 0;
+	std::vector<int> composition;
+	std::shared_ptr<Reactant> cluster;
 
-// Trap Mutation
-	clusterMap["V"] = numV + 1;
-	clusterMap["He"] = numHe;
-	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["I"] = 1;
-	clusterMap["V"] = 0;
-	clusterMap["He"] = 0;
-	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
+	// He Dissociation
+	if (numHe - 1 >= 1) {
+		composition = psiNetwork->getCompositionVector(numHe - 1, numV, 0);
+		cluster = psiNetwork->getCompound("HeV", composition);
+		index = psiNetwork->getReactantId(*cluster) - 1;
+		dissociationConnectivity[index] = 1;
+		cluster = psiNetwork->get("He", 1);
+		index = psiNetwork->getReactantId(*cluster) - 1;
+		dissociationConnectivity[index] = 1;
+	}
 
-// Vacancy Dissociation
-	clusterMap["He"] = numHe;
-	clusterMap["V"] = numV - 1;
-	clusterMap["I"] = 0;
-	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
-	clusterMap["He"] = 0;
-	clusterMap["V"] = 1;
-	clusterMap["I"] = 0;
-	dissociationConnectivity[network->toClusterIndex(clusterMap)] = 1;
+	// Vacancy Dissociation
+	if (numV - 1 >= 1) {
+		composition = psiNetwork->getCompositionVector(numHe, numV - 1, 0);
+		cluster = psiNetwork->getCompound("HeV", composition);
+		int index = psiNetwork->getReactantId(*cluster) - 1;
+		dissociationConnectivity[index] = 1;
+		cluster = psiNetwork->get("V", 1);
+		index = psiNetwork->getReactantId(*cluster) - 1;
+		dissociationConnectivity[index] = 1;
+	}
+
 }
 
 double HeVCluster::getDissociationFlux(double temperature) {
-// Local Declarations
-	std::map<std::string, int> oneHe, oneV, oneI, dissMap;
-	std::shared_ptr<std::vector<std::shared_ptr<xolotlCore::Reactant>> > reactants;
-	std::shared_ptr<Reactant> currentReactant, secondReactant;
+
+	// Local Declarations
+	std::map<std::string, int> composition;
+	std::shared_ptr<PSICluster> currentReactant, secondReactant;
 	double f4 = 0.0, f3 = 0.0;
 
-// Set the cluster map data for 1 of each species
-	oneHe["He"] = 1;
-	oneHe["V"] = 0;
-	oneHe["I"] = 0;
-	oneV["He"] = 0;
-	oneV["V"] = 1;
-	oneV["I"] = 0;
-	oneI["He"] = 0;
-	oneI["V"] = 0;
-	oneI["I"] = 1;
+	// Calculate the much easier f4 term...
+	auto heCluster = std::dynamic_pointer_cast < PSICluster
+			> (network->get("He", 1));
+	auto vCluster = std::dynamic_pointer_cast < PSICluster
+			> (network->get("V", 1));
+	auto iCluster = std::dynamic_pointer_cast < PSICluster
+			> (network->get("I", 1));
+	f4 = calculateDissociationConstant(*this, *iCluster, temperature)
+			+ calculateDissociationConstant(*this, *vCluster, temperature)
+			+ calculateDissociationConstant(*this, *heCluster, temperature);
 
-// Get this PSICluster or subclasses' cluster map
-	std::map<std::string, int> thisMap = getClusterMap();
-
-// Get the various indices
-	int thisIndex = network->toClusterIndex(thisMap);
-	int oneIIndex = network->toClusterIndex(oneI);
-	int oneVIndex = network->toClusterIndex(oneV);
-	int oneHeIndex = network->toClusterIndex(oneHe);
-
-// Calculate the much easier f4 term...
-	reactants = network->reactants;
-	f4 = calculateDissociationConstant(reactants->at(thisIndex),
-			reactants->at(oneIIndex), temperature)
-			+ calculateDissociationConstant(reactants->at(thisIndex),
-					reactants->at(oneVIndex), temperature)
-			+ calculateDissociationConstant(reactants->at(thisIndex),
-					reactants->at(oneHeIndex), temperature);
-
-// Loop over all the elements of the dissociation
-// connectivity to find where this mixed species dissociates...
-	for (int i = 0; i < dissociationConnectivity.size(); i++) {
+	// Loop over all the elements of the dissociation
+	// connectivity to find where this mixed species dissociates
+	auto reactants = network->getAll();
+	int numReactants = dissociationConnectivity.size();
+	for (int i = 0; i < numReactants; i++) {
 		if (dissociationConnectivity[i] == 1) {
 			// Set the current reactant
-			currentReactant = reactants->at(i);
+			currentReactant = std::dynamic_pointer_cast < PSICluster
+					> (reactants->at(i));
 			// Get the cluster map of this connection
-			dissMap = network->toClusterMap(i);
-			// We need to find if this is a Helium dissociation,
-			// Vacancy dissociation, or a trap mutation.
-			if (numHe - dissMap["He"] == 1 && numV == dissMap["I"]
-					&& dissMap["V"] == 0) {
-				secondReactant = reactants->at(oneHeIndex);
-			} else if (numHe == dissMap["He"] && numV - dissMap["V"] == 1
-					&& dissMap["V"] == 0) {
-				secondReactant = reactants->at(oneVIndex);
-			} else if (numHe == dissMap["He"] && dissMap["I"] - numV == 1
-					&& dissMap["V"] == 0) {
-				secondReactant = reactants->at(oneIIndex);
+			composition = currentReactant->getComposition();
+			// We need to find if this is a Helium dissociation
+			if (numHe - composition["He"] == 1 && numV == composition["V"]
+					&& composition["I"] == 0) {
+				secondReactant = heCluster;
+			} else if (numHe == composition["He"] && numV - composition["V"] == 1
+					&& composition["V"] == 0) {
+				// vacancy dissociation
+				secondReactant = vCluster;
+			} else if (numHe == composition["He"] && composition["I"] - numV == 1
+					&& composition["V"] == 0) {
+				// or a trap mutation.
+				secondReactant = iCluster;
 			}
 			// Update the flux calculation
-			f3 += calculateDissociationConstant(currentReactant, secondReactant,
+			f3 += calculateDissociationConstant(*currentReactant, *secondReactant,
 					temperature) * currentReactant->getConcentration();
 		}
 	}
@@ -320,17 +278,17 @@ double HeVCluster::getDissociationFlux(double temperature) {
 	return f3 - f4 * getConcentration();
 }
 
-bool HeVCluster::isProductReactant(int reactantI, int reactantJ) {
-// Local Declarations, integers for species number for I, J reactants
+bool HeVCluster::isProductReactant(const Reactant & reactantI,
+		const Reactant & reactantJ) {
+	// Local Declarations, integers for species number for I, J reactants
 	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
 
-// Get the ClusterMap corresponding to
-// the given reactants
-	std::map<std::string, int> reactantIMap = network->toClusterMap(reactantI);
-	std::map<std::string, int> reactantJMap = network->toClusterMap(reactantJ);
+	// Get the compositions of the reactants
+	auto reactantIMap = reactantI.getComposition();
+	auto reactantJMap = reactantJ.getComposition();
 
-// Grab the numbers for each species
-// from each Reactant
+	// Grab the numbers for each species
+	// from each Reactant
 	rI_I = reactantIMap["I"];
 	rJ_I = reactantJMap["I"];
 	rI_He = reactantIMap["He"];
@@ -338,27 +296,27 @@ bool HeVCluster::isProductReactant(int reactantI, int reactantJ) {
 	rI_V = reactantIMap["V"];
 	rJ_V = reactantJMap["V"];
 
-// We should have no interstitials, a
-// total of numHe Helium, and a total of
-// numV Vacancies
+	// We should have no interstitials, a
+	// total of numHe Helium, and a total of
+	// numV Vacancies
 	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == numHe)
 			&& ((rI_V + rJ_V) == numV);
 }
 
 std::map<std::string, int> HeVCluster::getClusterMap() {
-// Local Declarations
+	// Local Declarations
 	std::map<std::string, int> clusterMap;
 
-// Set the number of each species
+	// Set the number of each species
 	clusterMap["He"] = numHe;
 	clusterMap["V"] = numV;
 	clusterMap["I"] = 0;
 
-// Return it
+	// Return it
 	return clusterMap;
 }
 
-const std::map<std::string, int> HeVCluster::getComposition() {
+std::map<std::string, int> HeVCluster::getComposition() const {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
 

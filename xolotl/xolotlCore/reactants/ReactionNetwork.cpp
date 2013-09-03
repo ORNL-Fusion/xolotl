@@ -6,18 +6,6 @@ using namespace xolotlCore;
 ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 	// The copy constructor of std::map copies each of the keys and values.
 	properties.reset(new std::map<std::string, std::string>(*other.properties));
-
-	// Copy the reactants list by pushing a copy of each element onto the
-	// reactants vector
-	reactants.reset(new std::vector<std::shared_ptr<Reactant>>);
-
-	for (std::vector<std::shared_ptr<Reactant>>::iterator reactantIt =
-			other.reactants->begin(); reactantIt != other.reactants->end();
-			reactantIt++) {
-
-		std::shared_ptr<Reactant> reactant(new Reactant(**reactantIt));
-		reactants->push_back(reactant);
-	}
 }
 
 std::map<std::string, int> ReactionNetwork::toClusterMap(int index) const {
@@ -30,7 +18,7 @@ int ReactionNetwork::toClusterIndex(std::map<std::string, int> clusterMap) const
 	return 0;
 }
 
-const std::map<std::string,int> Reactant::getComposition() {
+std::map<std::string,int> Reactant::getComposition() const {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
 

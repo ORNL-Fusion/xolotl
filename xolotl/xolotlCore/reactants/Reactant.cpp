@@ -26,7 +26,7 @@ Reactant::Reactant(double conc) :
 		concentration(0.0), name(""), id(0) {
 }
 
-double Reactant::getConcentration() {
+double Reactant::getConcentration() const {
 	return concentration;
 }
 
@@ -61,7 +61,7 @@ std::shared_ptr<std::vector<int>> Reactant::getConnectivity() {
 	// The connectivity array by default is filled with
 	// zeroes.
 	
-	int connectivityLength = network->reactants->size();
+	int connectivityLength = network->size();
 	std::shared_ptr<std::vector<int>> connectivity =
 		std::make_shared<std::vector<int>>(connectivityLength, 0);
 	return connectivity;

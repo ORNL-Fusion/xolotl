@@ -18,7 +18,7 @@ class Reactant;
  */
 class ReactionNetwork {
 
-public:
+protected:
 
 	/**
 	 * The properties of this network. The exact configuration of the map is
@@ -26,17 +26,12 @@ public:
 	 */
 	std::shared_ptr<std::map<std::string, std::string>> properties;
 
-	/**
-	 * The set of reactants. The exact order of the reactants in the set is
-	 * specified by the class that loaded them.
-	 */
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants;
+public:
 
 	/** The constructor. It initializes the properties map and reactants vector.
 	 */
 	ReactionNetwork() :
-	properties(new std::map<std::string, std::string>()),
-	reactants(new std::vector<std::shared_ptr<Reactant>>())
+	properties(new std::map<std::string, std::string>())
 	{}
 
 	/**
@@ -44,6 +39,11 @@ public:
 	 * @param other The ReactionNetwork to copy
 	 */
 	ReactionNetwork(const ReactionNetwork &other);
+
+	/**
+	 * The destructor
+	 */
+	virtual ~ReactionNetwork() {}
 
 	/**
 	 * Converts an cluster index (found in the `reactants` vector)
@@ -89,6 +89,16 @@ public:
 	virtual std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll() const = 0;
 
 	/**
+	 * This operation returns all reactants in the network with the given name.
+	 * The list may or may not be ordered and the decision is left to
+	 * implementers.
+	 * @param name The reactant or compound reactant name
+	 * @return The list of all of the reactants in the network or null if the
+	 * name is invalid.
+	 */
+	virtual std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > getAll(std::string name) const = 0;
+
+	/**
 	 * This operation adds a reactant or a compound reactant to the network.
 	 * @param reactant The reactant that should be added to the network.
 	 */
@@ -124,12 +134,21 @@ public:
 	 * @param key The key for the property
 	 * @param value The value to which the key should be set.
 	 */
-	virtual void setProperty(const std::string key, const std::string value) = 0;
+	virtual void setProperty(std::string key, std::string value) = 0;
 
 	/**
-	 * The destructor
+	 * This operation returns the size or number of reactants in the network.
+	 * @return The number of reactants in the network
 	 */
-	virtual ~ReactionNetwork() {}
+	virtual int size() = 0;
+
+	/**
+	 * This operation returns the id of a reactant if it exists in the network.
+	 * @param reactant The reactant
+	 * @return The id of the reactant. This id is guaranteed to be between 1 and
+	 * n, including both, for n reactants in the network.
+	 */
+	virtual int getReactantId(const Reactant & reactant) = 0;
 
 };
 
