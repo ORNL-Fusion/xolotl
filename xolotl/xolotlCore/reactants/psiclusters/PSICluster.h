@@ -99,12 +99,6 @@ protected:
 	std::vector<std::shared_ptr<Reactant> > combiningReactants;
 
 	/**
-	 * The merged connectivity array created from the reaction and
-	 * dissociation connectivities.
-	 */
-	std::shared_ptr<std::vector<int>> connectivity;
-
-	/**
 	 * Calculate the reaction constant dependent on the
 	 * reaction radii and the diffusion coefficients for the
 	 * ith and jth reactants, which itself depends on the current

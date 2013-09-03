@@ -107,10 +107,9 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::get(
 
 	// Only pull the reactant if the name and size are valid
 	if ((rName == "He" || rName == "V" || rName == "I") && size >= 1) {
-		maxSize = std::stoi((*properties)["max" + rName + "ClusterSize"]);
-		// Make sure the size does not exceed the maximum
+		composition[rName] = size;
+		// Make sure the reactant is in the map
 		if (singleSpeciesMap.count(composition)) {
-			composition[rName] = size;
 			retReactant = singleSpeciesMap.at(composition);
 		}
 	}
@@ -141,10 +140,11 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::getCompound(
 	// Only pull the reactant if the name is valid and there are enough sizes
 	// to fill the composition.
 	if ((rName == "HeV" || rName == "HeI") && sizes.size() == 3) {
+		composition["He"] = sizes[0];
+		composition["V"] = sizes[1];
+		composition["I"] = sizes[2];
+		// Make sure the reactant is in the map
 		if (mixedSpeciesMap.count(composition)) {
-			composition["He"] = sizes[0];
-			composition["V"] = sizes[1];
-			composition["I"] = sizes[2];
 			retReactant = mixedSpeciesMap.at(composition);
 		}
 	}
@@ -256,7 +256,7 @@ void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 						numClusterKey = "numHeClusters";
 						clusterSizeKey = "maxHeClusterSize";
 					} else if (numV > 0) {
-						numClusterKey = "numHeVClusters";
+						numClusterKey = "numVClusters";
 						clusterSizeKey = "maxVClusterSize";
 					} else {
 						numClusterKey = "numIClusters";

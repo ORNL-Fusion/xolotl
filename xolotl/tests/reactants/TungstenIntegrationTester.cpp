@@ -30,12 +30,10 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
 
 	std::cout << networkFilename << std::endl;
 	// Load the input file from the master task
-	shared_ptr<std::istream> networkStream;
-	networkStream.reset(new std::ifstream(networkFilename));
+	shared_ptr<std::istream> networkStream = make_shared<std::ifstream>(networkFilename);
 
 	// Create a network loader and set the istream on every MPI task
-	std::shared_ptr<PSIClusterNetworkLoader> networkLoader(
-			new PSIClusterNetworkLoader());
+	std::shared_ptr<PSIClusterNetworkLoader> networkLoader = make_shared<PSIClusterNetworkLoader>();
 	networkLoader->setInputstream(networkStream);
 	// Load the network
 	shared_ptr<ReactionNetwork> network = networkLoader->load();

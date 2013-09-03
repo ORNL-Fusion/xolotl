@@ -84,13 +84,13 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 
 	// Check the properties
 	BOOST_TEST_MESSAGE("Maximum He Cluster Size = " << props["maxHeClusterSize"]);
-	BOOST_REQUIRE(strtol(props["maxHeClusterSize"].c_str(),NULL,10) == 10);
+	BOOST_REQUIRE(strtol(props["maxHeClusterSize"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Maximum V Cluster Size = " << props["maxVClusterSize"]);
-	BOOST_REQUIRE(strtol(props["maxVClusterSize"].c_str(),NULL,10) == 10);
+	BOOST_REQUIRE(strtol(props["maxVClusterSize"].c_str(),NULL,10) == 50);
 	BOOST_TEST_MESSAGE("Maximum Interstitial Cluster Size = " << props["maxIClusterSize"]);
-	BOOST_REQUIRE(strtol(props["maxIClusterSize"].c_str(),NULL,10) == 10);
+	BOOST_REQUIRE(strtol(props["maxIClusterSize"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Maximum Mixed Species Cluster Size = " << props["maxMixedClusterSize"]);
-	BOOST_REQUIRE(strtol(props["maxMixedClusterSize"].c_str(),NULL,10) == 10);
+	BOOST_REQUIRE(strtol(props["maxHeVClusterSize"].c_str(),NULL,10) == 51);
 	BOOST_TEST_MESSAGE("Number of He clusters = " << props["numHeClusters"]);
 	BOOST_REQUIRE(strtol(props["numHeClusters"].c_str(),NULL,10) == 1);
 	BOOST_TEST_MESSAGE("Number of V clusters = " << props["numVClusters"]);

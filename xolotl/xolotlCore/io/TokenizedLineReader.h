@@ -41,14 +41,14 @@ public:
 
 	//!The constructor
 	TokenizedLineReader() :
-		dataDelimiter(" "), commentDelimiter("#") {
+			dataDelimiter(" "), commentDelimiter("#") {
 	}
 
 	/**
 	 * This operation sets the string (delimiter) that represents the delimiter separating the different data elements in the line.
 	 *
 	 */
-	void setDelimiter(const std::string delimiter) {
+	void setDelimiter(std::string delimiter) {
 
 		dataDelimiter = delimiter;
 
@@ -59,7 +59,7 @@ public:
 	 * This operation sets the character (delimiter) that represents the comment character.
 	 *
 	 */
-	void setCommentDelimiter(const std::string cdelimiter) {
+	void setCommentDelimiter(std::string cdelimiter) {
 
 		commentDelimiter = cdelimiter;
 
@@ -69,7 +69,7 @@ public:
 	/**
 	 * This operation sets the input stream that should be parsed.
 	 */
-	void setInputStream(const std::shared_ptr<std::istream> stream) {
+	void setInputStream(std::shared_ptr<std::istream> stream) {
 		inputstream = stream;
 		return;
 	}
@@ -90,23 +90,25 @@ public:
 		dataType data;
 
 		// Check the inputstream before reading from it
-		if (!inputstream->eof() && inputstream->good()) {
+		if (inputstream->good()) {
+			std::cout << "TokenizedLineReader Message: "
+					<< " Stream is good and unread." << std::endl;
 			// Get the line
 			std::getline(*inputstream, line);
 			// Split it if it is not empty and does not start with the comment
 			// character
 			if (!line.empty()) {
 				// If this line is a comment, skip it by calling this operation
-				// again - FIXME! - Update to compiler to support C++11 and use
+				// again - FIXME! - Update compiler to support C++11 and use
 				// std::string.front()!
 				if (line.find(commentDelimiter) == 0)
 					return loadLine();
-				//				// Remove delimiters at the beginning of the string
+				// Remove delimiters at the beginning of the string
 				if (line.find(dataDelimiter) == 0)
 					line = line.substr(1);
 				// Remove delimiters at the end of the string
-				if (line.find(dataDelimiter, line.size() - 2) == line.size()
-						- 1)
+				if (line.find(dataDelimiter, line.size() - 2)
+						== line.size() - 1)
 					line = line.erase(line.size() - 1);
 				// Find the first instance of the delimiter
 				nextDelimiterPos = line.find(dataDelimiter);
@@ -125,9 +127,9 @@ public:
 						dataStream >> data;
 						dataVector.push_back(data);
 						// Switch the delimiter positions and find the next
-						lastDelimiterPos = (nextDelimiterPos
-								!= finalDelimiterPos) ? nextDelimiterPos + 1
-								: nextDelimiterPos;
+						lastDelimiterPos =
+								(nextDelimiterPos != finalDelimiterPos) ?
+										nextDelimiterPos + 1 : nextDelimiterPos;
 						nextDelimiterPos = line.find(dataDelimiter,
 								lastDelimiterPos);
 					}
@@ -137,14 +139,18 @@ public:
 					dataVector.push_back(data);
 				}
 			}
-		} else
+		} else {
+			std::cout << "TokenizedLineReader Message: "
+					<< " Stream is empty or closed." << std::endl;
 			return dataVector;
+		}
 
 		return dataVector;
 	}
 
-}; //end class TokenizedLineReader
+};
+//end class TokenizedLineReader
 
-} // end namespace xolotCore.io
+}// end namespace xolotCore.io
 
 #endif

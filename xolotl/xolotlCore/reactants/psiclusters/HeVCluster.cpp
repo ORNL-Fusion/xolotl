@@ -201,30 +201,48 @@ void HeVCluster::createDissociationConnectivity() {
 	auto props = psiNetwork->getProperties();
 	int index = 0;
 	std::vector<int> composition;
-	std::shared_ptr<Reactant> cluster;
+	std::shared_ptr<Reactant> singleCluster, otherMixedCluster;
 
-	// He Dissociation
-	if (numHe - 1 >= 1) {
-		composition = psiNetwork->getCompositionVector(numHe - 1, numV, 0);
-		cluster = psiNetwork->getCompound("HeV", composition);
-		index = psiNetwork->getReactantId(*cluster) - 1;
+	// He Dissociation, get the [(numHe-1)*He]V and He
+	composition = psiNetwork->getCompositionVector(numHe - 1, numV, 0);
+	otherMixedCluster = psiNetwork->getCompound("HeV", composition);
+	singleCluster = psiNetwork->get("He", 1);
+	if (singleCluster && otherMixedCluster) {
+		// Add the HeV
+		index = psiNetwork->getReactantId(*otherMixedCluster) - 1;
 		dissociationConnectivity[index] = 1;
-		cluster = psiNetwork->get("He", 1);
-		index = psiNetwork->getReactantId(*cluster) - 1;
+		// Add the He
+		index = psiNetwork->getReactantId(*singleCluster) - 1;
 		dissociationConnectivity[index] = 1;
 	}
 
-	// Vacancy Dissociation
-	if (numV - 1 >= 1) {
-		composition = psiNetwork->getCompositionVector(numHe, numV - 1, 0);
-		cluster = psiNetwork->getCompound("HeV", composition);
-		int index = psiNetwork->getReactantId(*cluster) - 1;
+	// Vacancy Dissociation, get He[(numV-1)*V] and V
+	composition = psiNetwork->getCompositionVector(numHe, numV - 1, 0);
+	otherMixedCluster = psiNetwork->getCompound("HeV", composition);
+	singleCluster = psiNetwork->get("V", 1);
+	if (singleCluster && otherMixedCluster) {
+		// Handle the HeV
+		int index = psiNetwork->getReactantId(*otherMixedCluster) - 1;
 		dissociationConnectivity[index] = 1;
-		cluster = psiNetwork->get("V", 1);
-		index = psiNetwork->getReactantId(*cluster) - 1;
+		// Handle the V
+		index = psiNetwork->getReactantId(*singleCluster) - 1;
 		dissociationConnectivity[index] = 1;
 	}
 
+	// Trap mutation, get He[(numV+1)*V] and I
+	composition = psiNetwork->getCompositionVector(numHe, numV + 1, 0);
+	otherMixedCluster = psiNetwork->getCompound("HeV", composition);
+	singleCluster = psiNetwork->get("I", 1);
+	if (singleCluster && otherMixedCluster) {
+		// Handle the HeV
+		int index = psiNetwork->getReactantId(*otherMixedCluster) - 1;
+		dissociationConnectivity[index] = 1;
+		// Handle the I
+		index = psiNetwork->getReactantId(*singleCluster) - 1;
+		dissociationConnectivity[index] = 1;
+	}
+
+	return;
 }
 
 double HeVCluster::getDissociationFlux(double temperature) {

@@ -73,16 +73,19 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	// Check the network, He first
 	auto retHeCluster = std::dynamic_pointer_cast<PSICluster>(
 			psiNetwork->get("He", 10));
+	BOOST_REQUIRE(retHeCluster);
 	BOOST_REQUIRE_EQUAL("He", retHeCluster->getName());
 	BOOST_REQUIRE_EQUAL(10, retHeCluster->getSize());
 	// V
 	auto retVCluster = std::dynamic_pointer_cast<PSICluster>(
 			psiNetwork->get("V", 4));
+	BOOST_REQUIRE(retVCluster);
 	BOOST_REQUIRE_EQUAL(4, retVCluster->getSize());
 	BOOST_REQUIRE_EQUAL("V", retVCluster->getName());
 	// I
 	auto retICluster = std::dynamic_pointer_cast<PSICluster>(
 			psiNetwork->get("I", 48));
+	BOOST_REQUIRE(retICluster);
 	BOOST_REQUIRE_EQUAL(48, retICluster->getSize());
 	BOOST_REQUIRE_EQUAL("I", retICluster->getName());
 

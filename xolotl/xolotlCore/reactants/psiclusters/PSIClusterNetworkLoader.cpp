@@ -130,9 +130,9 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 	if (networkStream != NULL) {
 		// Load the stream
 		reader.setInputStream(networkStream);
+
 		// Loop over each line of the file, which should each be PSIClusters.
 		loadedLine = reader.loadLine();
-
 		while (loadedLine.size() > 0) {
 			// Check the size of the loaded line
 			if (loadedLine.size() < 9)
