@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 			counter++;
 		}
 	}
-	BOOST_TEST_MESSAGE("Added " << counter << " HeV clusters");
+	BOOST_TEST_MESSAGE("Added " << (counter-1) << " HeV clusters"); //-1 because of duplicate
 
 	// Add a whole bunch of HeI clusters to make sure that the network can
 	// handle large numbers of them properly too. Use a different max cluster

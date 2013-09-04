@@ -30,6 +30,11 @@ void printUsage() {
 //! Main program
 int main(int argc, char **argv) {
 
+	// Local Declarations
+	shared_ptr<std::istream> networkStream;
+	int rank;
+
+	// Say hello
 	printStartMessage();
 	
 	// Check the arguments
@@ -39,7 +44,7 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 	
-	// Extract the argument values
+	// Extract the argument for the file name
 	const char *networkFilename = argv[1];
 	
 	try {
@@ -48,27 +53,23 @@ int main(int argc, char **argv) {
 		solver.setCommandLineOptions(argc, argv);
 		solver.initialize();
 		
-		// Load the input file from the master task
-		shared_ptr<std::istream> networkStream;
-		
-		int rank;
+		// Get the MPI rank
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-		
+		// Set the input stream on the master
 		if (rank == 0) {
-			networkStream.reset(new std::ifstream(networkFilename));
+			networkStream = make_shared<std::ifstream>(networkFilename);
 		}
 		
 		// Broadcast the stream to all worker tasks
 		networkStream = xolotlCore::MPIUtils::broadcastStream(
 			networkStream, 0, MPI_COMM_WORLD);
 		
-		// Create a network loader and set the istream on every MPI task
+		// Create a network loader and set the stream on every MPI task
 		std::shared_ptr<PSIClusterNetworkLoader> networkLoader(
 			new PSIClusterNetworkLoader());
 		networkLoader->setInputstream(networkStream);
-		
+		// Give the network loader to PETSc as input
 		solver.setNetworkLoader(networkLoader);
-		solver.setupSolver();
 		
 		// Launch the PetscSolver
 		solver.solve();

@@ -88,7 +88,7 @@ private:
 			int numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
 			int numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
 			int p1 = 73856093, p2 = 19349663, p3 = 83492791;
-			int hashTableSize = 10000000, hash1 = 0, hash2 = 0;
+			int hashTableSize = 9999999, hash1 = 0, hash2 = 0;
 
 			// Get the cluster sizes
 			numHe_lhs = lhs.at("He");

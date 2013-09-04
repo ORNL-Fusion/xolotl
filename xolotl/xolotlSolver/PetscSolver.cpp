@@ -2,6 +2,10 @@
 #include "PetscSolver.h"
 #include <sstream>
 #include <iostream>
+#include <vector>
+#include <memory>
+
+using namespace xolotlCore;
 
 /*
  C_t =  -D*C_xx + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.
@@ -70,15 +74,13 @@ typedef struct {
 } AppCtx;
 
 extern PetscErrorCode IFunction(TS, PetscReal, Vec, Vec, Vec, void*);
-extern PetscErrorCode InitialConditions(DM, Vec);
 extern PetscErrorCode MyMonitorSetUp(TS);
-extern PetscErrorCode GetDfill(PetscInt*, void*);
 
 TS ts; /* nonlinear solver */
 Vec C; /* solution */
 PetscErrorCode ierr;
 DM da; /* manages the grid data */
-AppCtx ctx; /* holds problem specific paramters */
+AppCtx ctx; /* holds problem specific parameters */
 PetscInt He, dof = 3 * N + N * N, *ofill, *dfill;
 
 /* ----- Error Handling Code ----- */
@@ -250,16 +252,19 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 	PetscFunctionReturn(0);
 }
 
-
 /* ------------------------------------------------------------------- */
 #undef __FUNCT__
 #define __FUNCT__ "InitialConditions"
-PetscErrorCode InitialConditions(DM da, Vec C) {
+PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
+
+	// Local Declarations
 	PetscErrorCode ierr;
-	PetscInt i, I, He, V, xs, xm, Mx, cnt = 0;
-	Concentrations *c;
+	PetscInt i, nI, nHe, nV, xs, xm, Mx, cnt = 0;
+	PSIClusterReactionNetwork *c;
 	PetscReal hx, x;
 	char string[16];
+	auto reactants = network->getAll();
+	int size = reactants->size();
 
 	PetscFunctionBeginUser;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
@@ -267,35 +272,46 @@ PetscErrorCode InitialConditions(DM da, Vec C) {
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 			PETSC_IGNORE);
 	checkPetscError(ierr);
-	hx = 1.0 / (PetscReal)(Mx - 1);
+	hx = 1.0 / (PetscReal) (Mx - 1);
 
 	/* Name each of the concentrations */
-	for (He = 1; He < N + 1; He++) {
-		ierr = PetscSNPrintf(string, 16, "%d-He", He);
+	for (i = 0; i < size; i++) {
+		auto composition = reactants->at(i)->getComposition();
+		nHe = composition["He"];
+		nV = composition["V"];
+		nI = composition["I"];
+		ierr = PetscSNPrintf(string, 16, "He-%d,V-%d,I-%d", nHe, nV, nI);
 		checkPetscError(ierr);
 		ierr = DMDASetFieldName(da, cnt++, string);
 		checkPetscError(ierr);
 	}
-	for (V = 1; V < N + 1; V++) {
-		ierr = PetscSNPrintf(string, 16, "%d-V", V);
-		checkPetscError(ierr);
-		ierr = DMDASetFieldName(da, cnt++, string);
-		checkPetscError(ierr);
-	}
-	for (I = 1; I < N + 1; I++) {
-		ierr = PetscSNPrintf(string, 16, "%d-I", I);
-		checkPetscError(ierr);
-		ierr = DMDASetFieldName(da, cnt++, string);
-		checkPetscError(ierr);
-	}
-	for (He = 1; He < N + 1; He++) {
-		for (V = 1; V < N + 1; V++) {
-			ierr = PetscSNPrintf(string, 16, "%d-He-%d-V", He, V);
-			checkPetscError(ierr);
-			ierr = DMDASetFieldName(da, cnt++, string);
-			checkPetscError(ierr);
-		}
-	}
+
+//	for (He = 1; He < N + 1; He++) {
+//		ierr = PetscSNPrintf(string, 16, "%d-He", He);
+//		checkPetscError(ierr);
+//		ierr = DMDASetFieldName(da, cnt++, string);
+//		checkPetscError(ierr);
+//	}
+//	for (V = 1; V < N + 1; V++) {
+//		ierr = PetscSNPrintf(string, 16, "%d-V", V);
+//		checkPetscError(ierr);
+//		ierr = DMDASetFieldName(da, cnt++, string);
+//		checkPetscError(ierr);
+//	}
+//	for (I = 1; I < N + 1; I++) {
+//		ierr = PetscSNPrintf(string, 16, "%d-I", I);
+//		checkPetscError(ierr);
+//		ierr = DMDASetFieldName(da, cnt++, string);
+//		checkPetscError(ierr);
+//	}
+//	for (He = 1; He < N + 1; He++) {
+//		for (V = 1; V < N + 1; V++) {
+//			ierr = PetscSNPrintf(string, 16, "%d-He-%d-V", He, V);
+//			checkPetscError(ierr);
+//			ierr = DMDASetFieldName(da, cnt++, string);
+//			checkPetscError(ierr);
+//		}
+//	}
 
 	/*
 	 Get pointer to vector data
@@ -303,7 +319,7 @@ PetscErrorCode InitialConditions(DM da, Vec C) {
 	ierr = DMDAVecGetArray(da, C, &c);
 	checkPetscError(ierr);
 	/* Shift the c pointer to allow accessing with index of 1, instead of 0 */
-	c = (Concentrations*) (((PetscScalar*) c) - 1);
+	c = (PSIClusterReactionNetwork*) (((PetscScalar*) c) - 1);
 
 	/*
 	 Get local grid boundaries
@@ -314,25 +330,39 @@ PetscErrorCode InitialConditions(DM da, Vec C) {
 	/*
 	 Compute function over the locally owned part of the grid
 	 */
-	
+
 	for (i = xs; i < xs + xm; i++) {
 		x = i * hx;
-		for (He = 1; He < N + 1; He++)
-			c[i].He[He] = 0.0;
-		for (V = 1; V < N + 1; V++)
-			c[i].V[V] = 1.0;
-		for (I = 1; I < N + 1; I++)
-			c[i].I[I] = 1.0;
-		for (He = 1; He < N + 1; He++) {
-			for (V = 1; V < N + 1; V++)
-				c[i].HeV[He][V] = 0.0;
+		// Create a copy of the network for this grid point
+		c[i] = *network;
+		// Set the default vacancy concentrations
+		reactants = c[i].getAll("V");
+		size = reactants->size();
+		for (int j = 0; j < size; j++) {
+			reactants->at(i)->setConcentration(1.0);
 		}
+		// Set the default interstitial concentrations
+		reactants = c[i].getAll("I");
+		size = reactants->size();
+		for (int j = 0; j < size; j++) {
+			reactants->at(i)->setConcentration(1.0);
+		}
+//		for (He = 1; He < N + 1; He++)
+//			c[i].He[He] = 0.0;
+//		for (V = 1; V < N + 1; V++)
+//			c[i].V[V] = 1.0;
+//		for (I = 1; I < N + 1; I++)
+//			c[i].I[I] = 1.0;
+//		for (He = 1; He < N + 1; He++) {
+//			for (V = 1; V < N + 1; V++)
+//				c[i].HeV[He][V] = 0.0;
+//		}
 	}
 
 	/*
 	 Restore vectors
 	 */
-	c = (Concentrations*) (((PetscScalar*) c) + 1);
+	c = (PSIClusterReactionNetwork*) (((PetscScalar*) c) + 1);
 	ierr = DMDAVecRestoreArray(da, C, &c);
 	checkPetscError(ierr);
 	PetscFunctionReturn(0);
@@ -372,7 +402,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 			PETSC_IGNORE);
 	checkPetscError(ierr);
-	hx = 8.0 / (PetscReal)(Mx - 1);
+	hx = 8.0 / (PetscReal) (Mx - 1);
 	sx = 1.0 / (hx * hx);
 
 	/*
@@ -438,9 +468,8 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		 ---- Compute forcing that produces He of cluster size 1
 		 Crude cubic approximation of graph from Tibo's notes
 		 */
-		f[xi].He[1] -= ctx->forcingScale
-				* PetscMax(0.0,
-						0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
+		f[xi].He[1] -= ctx->forcingScale * PetscMax(0.0,
+				0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
 		/* Are V or I produced? */
 
 		if (ctx->noreactions)
@@ -643,254 +672,282 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "GetDfill"
+#define __FUNCT__ "getDiagonalFill"
 
-PetscErrorCode GetDfill(PetscInt *dfill, void *ptr) {
-	AppCtx *ctx = (AppCtx*) ptr;
-	PetscInt He, he, V, v, I, i, dof = 3 * N + N * N, reactants[3], row, col1,
-			col2, j;
+PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
+		int diagFillSize) {
 
-	if (!ctx->noreactions) {
+	// Local Declarations
+	int i = 0, j = 0, numReactants = network->size(), index = 0,
+			connectivityLength = 0, size = numReactants * numReactants;
+	std::shared_ptr<std::vector<int> > connectivity;
+	std::shared_ptr<Reactant> reactant;
 
-		for (He = 2; He < N + 1; He++) {
-			/* compute all pairs of clusters of smaller size that can combine to create a cluster of size He,
-			 remove the upper half since they are symmetric to the lower half of the pairs. For example
-			 when He = 5 (cluster size 5) the pairs are
-			 1   4
-			 2   2
-			 3   2  these last two are not needed in the sum since they repeat from above
-			 4   1  this is why he < (He/2) + 1            */
-			for (he = 1; he < (He / 2) + 1; he++) {
-				reactants[0] = he, reactants[1] = He - he, reactants[2] = He;
-				for (j = 0; j < 3; j++) {
-					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-					int index1 = (row - 1) * dof + col1 - 1, index2 = (row - 1) * dof
-							+ col2 - 1;
-					dfill[index1] = 1, dfill[index2] = 1;
-					//std::cout << He << " " << he << " " << row << " " << col1 << " " << col2 << " " << index1 << " " << index2 << std::endl;
-				}
+	// Fill the diagonal block if the sizes match up
+	if (diagFillSize == size) {
+		auto reactants = network->getAll();
+		auto testReactants = *reactants;
+		// Get the connectivity for each reactant
+		for (i = 0; i < numReactants; i++) {
+			// Get the reactant and its connectivity
+			reactant = reactants->at(i);
+			connectivity = reactant->getConnectivity();
+			// Add it to the diagonal fill block
+			connectivityLength = connectivity->size();
+			for (j = 0; j < connectivityLength; j++) {
+				index = i * numReactants + j;
+				diagFill[index] = connectivity->at(j);
 			}
 		}
-		for (int i = 0; i < dof*dof; i++)
-			std::cout << i << " " << dfill[i] << std::endl;
-
-		/*   V[V]  +  V[v] ->  V[V+v]  */
-		for (V = 2; V < N + 1; V++) {
-			for (v = 1; v < (V / 2) + 1; v++) {
-				reactants[0] = N + v, reactants[1] = N + V - v, reactants[2] = N
-						+ V;
-				for (j = 0; j < 3; j++) {
-					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
-							+ col2 - 1] = 1;
-				}
-			}
-		}
-
-		/*   I[I] +  I[i] -> I[I+i] */
-		for (I = 2; I < N + 1; I++) {
-			for (i = 1; i < (I / 2) + 1; i++) {
-				reactants[0] = 2 * N + i, reactants[1] = 2 * N + I - i, reactants[2] =
-						2 * N + I;
-				for (j = 0; j < 3; j++) {
-					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
-							+ col2 - 1] = 1;
-				}
-			}
-		}
-
-		/* He[1] +  V[1]  ->  He[1]-V[1] */
-		reactants[0] = 1, reactants[1] = N + 1, reactants[2] = 3 * N + 1;
-		for (j = 0; j < 3; j++) {
-			row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-			dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof + col2
-					- 1] = 1;
-		}
-
-		/*  He[He]-V[V] + He[he] -> He[He+he]-V[V]  */
-		for (He = 1; He < N; He++) {
-			for (V = 1; V < N + 1; V++) {
-				for (he = 1; he < N - He + 1; he++) {
-					reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = he, reactants[2] =
-							3 * N + (He + he - 1) * N + V;
-					for (j = 0; j < 3; j++) {
-						row = reactants[j], col1 = reactants[0], col2 =
-								reactants[1];
-						dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1)
-								* dof + col2 - 1] = 1;
-					}
-				}
-			}
-		}
-		/*  He[He]-V[V] + V[v] -> He[He][V+v] */
-		for (He = 1; He < N + 1; He++) {
-			for (V = 1; V < N; V++) {
-				for (v = 1; v < N - V + 1; v++) {
-					reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = N
-							+ v, reactants[2] = 3 * N + (He - 1) * N + V + v;
-					for (j = 0; j < 3; j++) {
-						row = reactants[j], col1 = reactants[0], col2 =
-								reactants[1];
-						dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1)
-								* dof + col2 - 1] = 1;
-					}
-				}
-			}
-		}
-
-		/*  He[He]-V[V]  + He[he]-V[v] -> He[He+he][V+v]  */
-		/*  Currently the reaction rates for this are zero */
-		for (He = 1; He < N; He++) {
-			for (V = 1; V < N; V++) {
-				for (he = 1; he < N - He + 1; he++) {
-					for (v = 1; v < N - V + 1; v++) {
-						reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] =
-								3 * N + (he - 1) * N + V, reactants[2] = 3 * N
-								+ (He + he - 1) * N + V + v;
-						for (j = 0; j < 3; j++) {
-							row = reactants[j], col1 = reactants[0], col2 =
-									reactants[1];
-							dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row
-									- 1) * dof + col2 - 1] = 1;
-						}
-					}
-				}
-			}
-		}
-		/*  V[V] + I[I]  ->   V[V-I] if V > I else I[I-V] */
-		/*  What should the correct reaction rate should be? */
-		for (V = 1; V < N + 1; V++) {
-			for (I = 1; I < V; I++) {
-				reactants[0] = N + V, reactants[1] = 2 * N + I, reactants[2] = N
-						+ V - I;
-				for (j = 0; j < 3; j++) {
-					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
-							+ col2 - 1] = 1;
-				}
-			}
-			for (I = V + 1; I < N + 1; I++) {
-				reactants[0] = N + V, reactants[1] = 2 * N + I, reactants[2] = 2
-						* N + I - V;
-				for (j = 0; j < 3; j++) {
-					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
-							+ col2 - 1] = 1;
-				}
-			}
-		}
+	} else {
+		std::string err =
+				"PetscSolver Exception: Invalid diagonal block size!\n";
+		throw std::string(err);
 	}
-	/* -------------------------------------------------------------------------
-	 ---- Compute dissociation terms that removes an item from a cluster
-	 I assume dissociation means losing only a single item from a cluster
-	 I cannot tell from the notes if clusters can break up into any sub-size.
-	 */
-	if (!ctx->nodissociations) {
-		/*   He[He] ->  He[He-1] + He[1] */
-		for (He = 2; He < N + 1; He++) {
-			reactants[0] = He, reactants[1] = He - 1, reactants[2] = 1;
 
-			for (j = 0; j < 3; j++) {
-				row = reactants[j], col1 = reactants[0];
-				dfill[(row - 1) * dof + col1 - 1] = 1;
-			}
-		}
-		/*   V[V] ->  V[V-1] + V[1] */
-		for (V = 2; V < N + 1; V++) {
-			reactants[0] = N + V, reactants[1] = N + V - 1, reactants[2] = N + 1;
+//
+//	if (!ctx->noreactions) {
+//
+//		for (He = 2; He < N + 1; He++) {
+//			/* compute all pairs of clusters of smaller size that can combine to create a cluster of size He,
+//			 remove the upper half since they are symmetric to the lower half of the pairs. For example
+//			 when He = 5 (cluster size 5) the pairs are
+//			 1   4
+//			 2   2
+//			 3   2  these last two are not needed in the sum since they repeat from above
+//			 4   1  this is why he < (He/2) + 1            */
+//			for (he = 1; he < (He / 2) + 1; he++) {
+//				reactants[0] = he, reactants[1] = He - he, reactants[2] = He;
+//				for (j = 0; j < 3; j++) {
+//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
+//					int index1 = (row - 1) * dof + col1 - 1, index2 = (row - 1)
+//							* dof + col2 - 1;
+//					dfill[index1] = 1, dfill[index2] = 1;
+//					//std::cout << He << " " << he << " " << row << " " << col1 << " " << col2 << " " << index1 << " " << index2 << std::endl;
+//				}
+//			}
+//		}
+//
+//		/*   V[V]  +  V[v] ->  V[V+v]  */
+//		for (V = 2; V < N + 1; V++) {
+//			for (v = 1; v < (V / 2) + 1; v++) {
+//				reactants[0] = N + v, reactants[1] = N + V - v, reactants[2] = N
+//						+ V;
+//				for (j = 0; j < 3; j++) {
+//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
+//					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
+//							+ col2 - 1] = 1;
+//				}
+//			}
+//		}
+//
+//		/*   I[I] +  I[i] -> I[I+i] */
+//		for (I = 2; I < N + 1; I++) {
+//			for (i = 1; i < (I / 2) + 1; i++) {
+//				reactants[0] = 2 * N + i, reactants[1] = 2 * N + I - i, reactants[2] =
+//						2 * N + I;
+//				for (j = 0; j < 3; j++) {
+//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
+//					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
+//							+ col2 - 1] = 1;
+//				}
+//			}
+//		}
+//
+//		/* He[1] +  V[1]  ->  He[1]-V[1] */
+//		reactants[0] = 1, reactants[1] = N + 1, reactants[2] = 3 * N + 1;
+//		for (j = 0; j < 3; j++) {
+//			row = reactants[j], col1 = reactants[0], col2 = reactants[1];
+//			dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof + col2
+//					- 1] = 1;
+//		}
+//
+//		/*  He[He]-V[V] + He[he] -> He[He+he]-V[V]  */
+//		for (He = 1; He < N; He++) {
+//			for (V = 1; V < N + 1; V++) {
+//				for (he = 1; he < N - He + 1; he++) {
+//					reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = he, reactants[2] =
+//							3 * N + (He + he - 1) * N + V;
+//					for (j = 0; j < 3; j++) {
+//						row = reactants[j], col1 = reactants[0], col2 =
+//								reactants[1];
+//						dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1)
+//								* dof + col2 - 1] = 1;
+//					}
+//				}
+//			}
+//		}
+//		/*  He[He]-V[V] + V[v] -> He[He][V+v] */
+//		for (He = 1; He < N + 1; He++) {
+//			for (V = 1; V < N; V++) {
+//				for (v = 1; v < N - V + 1; v++) {
+//					reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = N
+//							+ v, reactants[2] = 3 * N + (He - 1) * N + V + v;
+//					for (j = 0; j < 3; j++) {
+//						row = reactants[j], col1 = reactants[0], col2 =
+//								reactants[1];
+//						dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1)
+//								* dof + col2 - 1] = 1;
+//					}
+//				}
+//			}
+//		}
+//
+//		/*  He[He]-V[V]  + He[he]-V[v] -> He[He+he][V+v]  */
+//		/*  Currently the reaction rates for this are zero */
+//		for (He = 1; He < N; He++) {
+//			for (V = 1; V < N; V++) {
+//				for (he = 1; he < N - He + 1; he++) {
+//					for (v = 1; v < N - V + 1; v++) {
+//						reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] =
+//								3 * N + (he - 1) * N + V, reactants[2] = 3 * N
+//								+ (He + he - 1) * N + V + v;
+//						for (j = 0; j < 3; j++) {
+//							row = reactants[j], col1 = reactants[0], col2 =
+//									reactants[1];
+//							dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row
+//									- 1) * dof + col2 - 1] = 1;
+//						}
+//					}
+//				}
+//			}
+//		}
+//		/*  V[V] + I[I]  ->   V[V-I] if V > I else I[I-V] */
+//		/*  What should the correct reaction rate should be? */
+//		for (V = 1; V < N + 1; V++) {
+//			for (I = 1; I < V; I++) {
+//				reactants[0] = N + V, reactants[1] = 2 * N + I, reactants[2] = N
+//						+ V - I;
+//				for (j = 0; j < 3; j++) {
+//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
+//					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
+//							+ col2 - 1] = 1;
+//				}
+//			}
+//			for (I = V + 1; I < N + 1; I++) {
+//				reactants[0] = N + V, reactants[1] = 2 * N + I, reactants[2] = 2
+//						* N + I - V;
+//				for (j = 0; j < 3; j++) {
+//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
+//					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
+//							+ col2 - 1] = 1;
+//				}
+//			}
+//		}
+//	}
+//	/* -------------------------------------------------------------------------
+//	 ---- Compute dissociation terms that removes an item from a cluster
+//	 I assume dissociation means losing only a single item from a cluster
+//	 I cannot tell from the notes if clusters can break up into any sub-size.
+//	 */
+//	if (!ctx->nodissociations) {
+//		/*   He[He] ->  He[He-1] + He[1] */
+//		for (He = 2; He < N + 1; He++) {
+//			reactants[0] = He, reactants[1] = He - 1, reactants[2] = 1;
+//
+//			for (j = 0; j < 3; j++) {
+//				row = reactants[j], col1 = reactants[0];
+//				dfill[(row - 1) * dof + col1 - 1] = 1;
+//			}
+//		}
+//		/*   V[V] ->  V[V-1] + V[1] */
+//		for (V = 2; V < N + 1; V++) {
+//			reactants[0] = N + V, reactants[1] = N + V - 1, reactants[2] = N + 1;
+//
+//			for (j = 0; j < 3; j++) {
+//				row = reactants[j], col1 = reactants[0];
+//				dfill[(row - 1) * dof + col1 - 1] = 1;
+//			}
+//		}
+//
+//		/*   I[I] ->  I[I-1] + I[1] */
+//		for (I = 2; I < N + 1; I++) {
+//			reactants[0] = 2 * N + I, reactants[1] = 2 * N + I - 1, reactants[2] =
+//					2 * N + 1;
+//
+//			for (j = 0; j < 3; j++) {
+//				row = reactants[j], col1 = reactants[0];
+//				dfill[(row - 1) * dof + col1 - 1] = 1;
+//			}
+//		}
+//
+//		/* He[1]-V[1]  ->  He[1] + V[1] */
+//		reactants[0] = 3 * N + 1, reactants[1] = 1, reactants[2] = N + 1;
+//
+//		for (j = 0; j < 3; j++) {
+//			row = reactants[j], col1 = reactants[0];
+//			dfill[(row - 1) * dof + col1 - 1] = 1;
+//		}
+//
+//		/*   He[He]-V[1] ->  He[He] + V[1]  */
+//		for (He = 2; He < N + 1; He++) {
+//			reactants[0] = 3 * N + (He - 1) * N + 1, reactants[1] = He, reactants[2] =
+//					N + 1;
+//
+//			for (j = 0; j < 3; j++) {
+//				row = reactants[j], col1 = reactants[0];
+//				dfill[(row - 1) * dof + col1 - 1] = 1;
+//			}
+//		}
+//
+//		/*   He[1]-V[V] ->  He[1] + V[V]  */
+//		for (V = 2; V < N + 1; V++) {
+//			reactants[0] = 3 * N + V, reactants[1] = 1, reactants[2] = N + V;
+//
+//			for (j = 0; j < 3; j++) {
+//				row = reactants[j], col1 = reactants[0];
+//				dfill[(row - 1) * dof + col1 - 1] = 1;
+//			}
+//		}
+//
+//		/*   He[He]-V[V] ->  He[He-1]-V[V] + He[1]  */
+//		for (He = 2; He < N + 1; He++) {
+//			for (V = 2; V < N + 1; V++) {
+//				reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = 3 * N
+//						+ (He - 2) * N + V, reactants[2] = 1;
+//
+//				for (j = 0; j < 3; j++) {
+//					row = reactants[j], col1 = reactants[0];
+//					dfill[(row - 1) * dof + col1 - 1] = 1;
+//				}
+//			}
+//		}
+//
+//		/*   He[He]-V[V] ->  He[He]-V[V-1] + V[1]  */
+//		for (He = 2; He < N + 1; He++) {
+//			for (V = 2; V < N + 1; V++) {
+//				reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = 3 * N
+//						+ (He - 1) * N + V - 1, reactants[2] = N + 1;
+//
+//				for (j = 0; j < 3; j++) {
+//					row = reactants[j], col1 = reactants[0];
+//					dfill[(row - 1) * dof + col1 - 1] = 1;
+//				}
+//			}
+//		}
+//
+//		/*   He[He]-V[V] ->  He[He]-V[V+1] + I[1]  */
+//		/* Again, what is the reasonable dissociation rate? */
+//		for (He = 1; He < N + 1; He++) {
+//			for (V = 1; V < N; V++) {
+//				reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = 3 * N
+//						+ (He - 1) * N + V + 1, reactants[2] = 2 * N + 1;
+//
+//				for (j = 0; j < 3; j++) {
+//					row = reactants[j], col1 = reactants[0];
+//					dfill[(row - 1) * dof + col1 - 1] = 1;
+//				}
+//			}
+//		}
+//	}
 
-			for (j = 0; j < 3; j++) {
-				row = reactants[j], col1 = reactants[0];
-				dfill[(row - 1) * dof + col1 - 1] = 1;
-			}
-		}
-
-		/*   I[I] ->  I[I-1] + I[1] */
-		for (I = 2; I < N + 1; I++) {
-			reactants[0] = 2 * N + I, reactants[1] = 2 * N + I - 1, reactants[2] =
-					2 * N + 1;
-
-			for (j = 0; j < 3; j++) {
-				row = reactants[j], col1 = reactants[0];
-				dfill[(row - 1) * dof + col1 - 1] = 1;
-			}
-		}
-
-		/* He[1]-V[1]  ->  He[1] + V[1] */
-		reactants[0] = 3 * N + 1, reactants[1] = 1, reactants[2] = N + 1;
-
-		for (j = 0; j < 3; j++) {
-			row = reactants[j], col1 = reactants[0];
-			dfill[(row - 1) * dof + col1 - 1] = 1;
-		}
-
-		/*   He[He]-V[1] ->  He[He] + V[1]  */
-		for (He = 2; He < N + 1; He++) {
-			reactants[0] = 3 * N + (He - 1) * N + 1, reactants[1] = He, reactants[2] =
-					N + 1;
-
-			for (j = 0; j < 3; j++) {
-				row = reactants[j], col1 = reactants[0];
-				dfill[(row - 1) * dof + col1 - 1] = 1;
-			}
-		}
-
-		/*   He[1]-V[V] ->  He[1] + V[V]  */
-		for (V = 2; V < N + 1; V++) {
-			reactants[0] = 3 * N + V, reactants[1] = 1, reactants[2] = N + V;
-
-			for (j = 0; j < 3; j++) {
-				row = reactants[j], col1 = reactants[0];
-				dfill[(row - 1) * dof + col1 - 1] = 1;
-			}
-		}
-
-		/*   He[He]-V[V] ->  He[He-1]-V[V] + He[1]  */
-		for (He = 2; He < N + 1; He++) {
-			for (V = 2; V < N + 1; V++) {
-				reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = 3 * N
-						+ (He - 2) * N + V, reactants[2] = 1;
-
-				for (j = 0; j < 3; j++) {
-					row = reactants[j], col1 = reactants[0];
-					dfill[(row - 1) * dof + col1 - 1] = 1;
-				}
-			}
-		}
-
-		/*   He[He]-V[V] ->  He[He]-V[V-1] + V[1]  */
-		for (He = 2; He < N + 1; He++) {
-			for (V = 2; V < N + 1; V++) {
-				reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = 3 * N
-						+ (He - 1) * N + V - 1, reactants[2] = N + 1;
-
-				for (j = 0; j < 3; j++) {
-					row = reactants[j], col1 = reactants[0];
-					dfill[(row - 1) * dof + col1 - 1] = 1;
-				}
-			}
-		}
-
-		/*   He[He]-V[V] ->  He[He]-V[V+1] + I[1]  */
-		/* Again, what is the reasonable dissociation rate? */
-		for (He = 1; He < N + 1; He++) {
-			for (V = 1; V < N; V++) {
-				reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = 3 * N
-						+ (He - 1) * N + V + 1, reactants[2] = 2 * N + 1;
-
-				for (j = 0; j < 3; j++) {
-					row = reactants[j], col1 = reactants[0];
-					dfill[(row - 1) * dof + col1 - 1] = 1;
-				}
-			}
-		}
-	}
 	return 0;
 }
 
 //! The Constructor
 PetscSolver::PetscSolver() {
+	numCLIArgs = 0;
+	CLIArgs = NULL;
 }
 
 //! The Destructor
@@ -906,11 +963,10 @@ PetscSolver::~PetscSolver() {
  * @param argv The array of command line arguments
  */
 void PetscSolver::setCommandLineOptions(int argc, char **argv) {
-	
+
 	numCLIArgs = argc;
 	CLIArgs = argv;
 }
-
 
 /**
  * This operation sets the PSIClusterNetworkLoader that should be used by
@@ -918,19 +974,19 @@ void PetscSolver::setCommandLineOptions(int argc, char **argv) {
  * @param networkLoader The PSIClusterNetworkLoader that will load the
  * network.
  */
-void PetscSolver::setNetworkLoader(std::shared_ptr<PSIClusterNetworkLoader> networkLoader) {
-	// Copy the value of the network loader
-	this->networkLoader = networkLoader;
-	
-	
-	// TEMP
-	// Debug the ReactionNetwork loaded by all tasks
-	std::shared_ptr<ReactionNetwork> network = networkLoader->load();
-	
-	auto props = network->getProperties();
-	std::cout << props["maxHeClusterSize"] << std::endl;
-}
+void PetscSolver::setNetworkLoader(
+		std::shared_ptr<PSIClusterNetworkLoader> networkLoader) {
 
+// Store the loader and load the network
+	this->networkLoader = networkLoader;
+	network = networkLoader->load();
+
+// Debug
+	std::cout << "PETScSolver Message: " << "Loaded network of size "
+			<< network->size() << "." << std::endl;
+
+	return;
+}
 
 /**
  * This operation sets the run-time options of the solver. The map is a set
@@ -952,7 +1008,6 @@ void PetscSolver::setOptions(std::map<std::string, std::string> options) {
 void PetscSolver::setupMesh() {
 }
 
-
 #undef __FUNCT__
 #define __FUNCT__ "initialize"
 
@@ -967,15 +1022,25 @@ void PetscSolver::initialize() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	
 	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
+
+	return;
 }
 
-#undef __FUNCT__
-#define __FUNCT__ "setupSolver"
+/**
+ * This operation directs the Solver to perform the solve. If the solve
+ * fails, it will throw an exception of type std::string.
+ */
+void PetscSolver::solve() {
 
-void PetscSolver::setupSolver()
-{
+	// Check the network before getting busy.
+	if (!network) {
+		throw std::string("PetscSolver Exception: Network not set!");
+	}
+
+	// The degrees of freedom should be equal to the number of reactants.
+	dof = network->size();
+
 	PetscFunctionBeginUser;
 	ctx.noreactions = PETSC_FALSE;
 	ctx.nodissociations = PETSC_FALSE;
@@ -1024,7 +1089,7 @@ void PetscSolver::setupSolver()
 	checkPetscError(ierr);
 	ierr = PetscFree(ofill);
 	checkPetscError(ierr);
-	ierr = GetDfill(dfill, &ctx);
+	ierr = getDiagonalFill(dfill, dof * dof);
 	checkPetscError(ierr);
 	ierr = PetscFree(dfill);
 	checkPetscError(ierr);
@@ -1066,15 +1131,8 @@ void PetscSolver::setupSolver()
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set initial conditions
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = InitialConditions(da, C);
+	ierr = setupInitialConditions(da, C);
 	checkPetscError(ierr);
-}
-
-/**
- * This operation directs the Solver to perform the solve. If the solve
- * fails, it will throw an exception of type std::string.
- */
-void PetscSolver::solve() {
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system
@@ -1082,13 +1140,12 @@ void PetscSolver::solve() {
 	if (ts != NULL && C != NULL) {
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr);
-	}
-	else {
-		throw std::string("PetscSolver Exception: Unable to solve! Data not configured properly.");
+	} else {
+		throw std::string(
+				"PetscSolver Exception: Unable to solve! Data not configured properly.");
 	}
 
 }
-
 
 /**
  * This operation performs all necessary finalization for the solver

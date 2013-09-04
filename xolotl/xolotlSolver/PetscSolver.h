@@ -3,6 +3,8 @@
 
 // Includes
 #include "ISolver.h"
+#include <PSIClusterNetworkLoader.h>
+#include <PSIClusterReactionNetwork.h>
 #include <petscsys.h>
 #include <petscdmda.h>
 #include <petscts.h>
@@ -15,6 +17,39 @@ namespace xolotlSolver {
  * National Laboratory.
  */
 class PetscSolver : public ISolver {
+
+private:
+
+	//! The number command line arguments
+	int numCLIArgs;
+
+	//! The command line arguments
+	char **CLIArgs;
+
+	//! The network loader that can load the reaction network data.
+	std::shared_ptr<PSIClusterNetworkLoader> networkLoader;
+
+	//! The original network created from the network loader.
+	std::shared_ptr<PSIClusterReactionNetwork> network;
+
+	/**
+	 * This operation fills the diagonal block of the matrix. The diagonal
+	 * block in Xolotl represents the coupling between different reactants
+	 * via their reactions.
+	 * @param diagFill The diagonal block of the matrix.
+	 * @param diagFillSize The number of PetscInts in the diagonal block.
+	 * @return The error code. 0 if there is no error.
+	 */
+	PetscErrorCode getDiagonalFill(PetscInt *diagFill, int diagFillSize);
+
+	/**
+	 * This operation configures the initial conditions of the grid in Xolotl.
+	 * @param data The DM (data manager) created by Petsc
+	 * @param solutionVector The solution vector that contains the PDE
+	 * solution and which needs to be initialized.
+	 * @return The error code. 0 if there is no error.
+	 */
+	PetscErrorCode setupInitialConditions(DM data, Vec solutionVector);
 
 public:
 
@@ -67,12 +102,6 @@ public:
 	 * throw an exception of type std::string.
 	 */
 	void initialize();
-	
-	/**
-	 * Loads the ReactionNetwork from the NetworkLoader and sets
-	 * the initial conditions of the solver
-	 */
-	void setupSolver();
 
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve
@@ -87,17 +116,7 @@ public:
 	 * this operation will throw an exception of type std::string.
 	 */
 	void finalize();
-	
-private:
-	//! The number command line arguments
-	int numCLIArgs;
 
-	//! The command line arguments
-	char **CLIArgs;
-	
-	std::shared_ptr<PSIClusterNetworkLoader> networkLoader;
-	std::shared_ptr<ReactionNetwork> network;
-	
 }; //end class PetscSolver
 
 } /* end namespace xolotlSolver */

@@ -161,7 +161,7 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::getCompound(
 std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>PSIClusterReactionNetwork::getAll() const {
 
 	// Local Declarations
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> allReactants(new std::vector<std::shared_ptr<Reactant> >);
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> allReactants = std::make_shared<std::vector<std::shared_ptr<Reactant> >>();
 
 	// Load the single-species clusters
 	for (auto it = singleSpeciesMap.begin(); it != singleSpeciesMap.end(); ++it) {
@@ -172,6 +172,10 @@ std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>PSIClusterReactionNetwork
 	for (auto it = mixedSpeciesMap.begin(); it != mixedSpeciesMap.end(); ++it) {
 		allReactants->push_back(it->second);
 	}
+
+//	std::cout << "Num single species = " << singleSpeciesMap.size() << std::endl;
+//	std::cout << "Num mixed species = " << mixedSpeciesMap.size() << std::endl;
+//	std::cout << "Num species = " << allReactants->size() << std::endl;
 
 	return allReactants;
 }
@@ -281,6 +285,12 @@ void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 				// Get the vector for this reactant from the type map
 				auto clusters = clusterTypeMap[name];
 				clusters->push_back(reactant);
+//				std::cout << "Num single species = " << singleSpeciesMap.size()
+//						<< std::endl;
+//				std::cout << "Num mixed species = " << mixedSpeciesMap.size()
+//						<< std::endl;
+//				std::cout << "Num species = " << networkSize << std::endl;
+//				std::cout << "Real num species = " << (singleSpeciesMap.size() + mixedSpeciesMap.size()) << std::endl;
 			} else {
 				std::cout << "PSIClusterReactionNetwork Message: "
 						<< "Duplicate Reactant (He=" << numHe << ",V=" << numV
