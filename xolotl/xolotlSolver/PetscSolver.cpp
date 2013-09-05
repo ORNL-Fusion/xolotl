@@ -323,8 +323,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	ierr = DMDAVecGetArray(da, C, &clusters);
 	checkPetscError(ierr);
 	/* Shift the c pointer to allow accessing with index of 1, instead of 0 */
-	clusters = (PSIClusters*) (((PetscScalar*) clusters) - 1);
-
+	//clusters = (PSIClusters*) (((PetscScalar*) clusters) - 1);
 	/*
 	 Get local grid boundaries
 	 */
@@ -334,11 +333,13 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	/*
 	 Compute function over the locally owned part of the grid
 	 */
-	std::cout<< (xs+xm) << std::endl;
+	std::cout << (xs + xm) << std::endl;
+	std::cout << xs << " | " << xm << std::endl;
 	for (i = xs; i < xs + xm; i++) {
 		x = i * hx;
 		// Create a copy of the network for this grid point
-		clusters[i].network = std::make_shared<PSIClusterReactionNetwork>(*network);
+		clusters[i].network = std::make_shared<PSIClusterReactionNetwork>(
+				*network);
 		// Set the default vacancy concentrations
 		reactants = clusters[i].network->getAll("V");
 		size = reactants->size();
@@ -366,7 +367,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	/*
 	 Restore vectors
 	 */
-	clusters = (PSIClusters*) (((PetscScalar*) clusters) + 1);
+	//clusters = (PSIClusters*) (((PetscScalar*) clusters) + 1);
 	ierr = DMDAVecRestoreArray(da, C, &clusters);
 	checkPetscError(ierr);
 	PetscFunctionReturn(0);
@@ -394,7 +395,12 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	PetscInt xi, Mx, xs, xm, He, he, V, v, I, i;
 	PetscReal hx, sx, x;
 	Concentrations *c, *f;
+	PSIClusters *clusters, *updatedClusters;
 	Vec localC;
+	std::shared_ptr<PSICluster> oldCluster, newCluster, oldLeftCluster,
+			oldRightCluster;
+	int size = 0;
+	double concentration = 0.0, temperature = 1000.0;
 
 	PetscFunctionBeginUser;
 	ierr = TSGetDM(ts, &da);
@@ -429,13 +435,13 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	/*
 	 Get pointers to vector data
 	 */
-	ierr = DMDAVecGetArray(da, localC, &c);
+	ierr = DMDAVecGetArray(da, localC, &clusters);
 	checkPetscError(ierr);
 	/* Shift the c pointer to allow accessing with index of 1, instead of 0 */
-	c = (Concentrations*) (((PetscScalar*) c) - 1);
-	ierr = DMDAVecGetArray(da, F, &f);
+	//clusters = (PSIClusters*) (((PetscScalar*) clusters) - 1);
+	ierr = DMDAVecGetArray(da, F, &updatedClusters);
 	checkPetscError(ierr);
-	f = (Concentrations*) (((PetscScalar*) f) - 1);
+	//updatedClusters = (PSIClusters*) (((PetscScalar*) updatedClusters) - 1);
 
 	/*
 	 Get local grid boundaries
@@ -446,13 +452,38 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	/*
 	 Loop over grid points computing ODE terms for each grid point
 	 */
+	std::cout << (xs + xm) << std::endl;
+	std::cout << xs << " | " << xm << std::endl;
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
 
 		/* -------------------------------------------------------------
 		 ---- Compute diffusion over the locally owned part of the grid
 		 */
+
 		/* He clusters larger than 5 do not diffuse -- are immobile */
+		for (i = 1; i < 6; i++) {
+			// Get the Helium clusters for the old value at this point, its neighbors and the new value
+			oldCluster = std::dynamic_pointer_cast<PSICluster>(
+					clusters[xi].network->get("He", size));
+			oldLeftCluster = std::dynamic_pointer_cast<PSICluster>(
+					clusters[xi - 1].network->get("He", size));
+			oldRightCluster = std::dynamic_pointer_cast<PSICluster>(
+					clusters[xi + 1].network->get("He", size));
+			updatedClusters[xi].network = std::make_shared<
+					PSIClusterReactionNetwork>(*(clusters[xi].network));
+			newCluster = std::dynamic_pointer_cast<PSICluster>(
+					updatedClusters[xi].network->get("He", size));
+			// Only update the concentration if the clusters exist
+			if (oldCluster && oldLeftCluster && oldRightCluster && newCluster) {
+				concentration = oldCluster->getDiffusionCoefficient(temperature)
+						* (-2.0 * oldCluster->getConcentration()
+								+ oldLeftCluster->getConcentration()
+								+ oldRightCluster->getConcentration()) * sx;
+				newCluster->setConcentration(concentration);
+			}
+		}
+
 		for (He = 1; He < PetscMin(N + 1, 6); He++) {
 			f[xi].He[He] -=
 					ctx->HeDiffusion[He]
@@ -664,11 +695,11 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	/*
 	 Restore vectors
 	 */
-	c = (Concentrations*) (((PetscScalar*) c) + 1);
-	ierr = DMDAVecRestoreArray(da, localC, &c);
+	//clusters = (PSIClusters*) (((PetscScalar*) clusters) + 1);
+	ierr = DMDAVecRestoreArray(da, localC, &clusters);
 	checkPetscError(ierr);
-	f = (Concentrations*) (((PetscScalar*) f) + 1);
-	ierr = DMDAVecRestoreArray(da, F, &f);
+	//updatedClusters = (PSIClusters*) (((PetscScalar*) updatedClusters) + 1);
+	ierr = DMDAVecRestoreArray(da, F, &updatedClusters);
 	checkPetscError(ierr);
 	ierr = DMRestoreLocalVector(da, &localC);
 	checkPetscError(ierr);
