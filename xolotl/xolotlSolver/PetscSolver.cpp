@@ -59,6 +59,10 @@ typedef struct {
 	};
 } Concentrations;
 
+typedef struct {
+	std::shared_ptr<PSIClusterReactionNetwork> network;
+} PSIClusters;
+
 /**
  Holds problem specific options and data
  */
@@ -260,7 +264,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Local Declarations
 	PetscErrorCode ierr;
 	PetscInt i, nI, nHe, nV, xs, xm, Mx, cnt = 0;
-	PSIClusterReactionNetwork *c;
+	PSIClusters *clusters;
 	PetscReal hx, x;
 	char string[16];
 	auto reactants = network->getAll();
@@ -316,10 +320,10 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	/*
 	 Get pointer to vector data
 	 */
-	ierr = DMDAVecGetArray(da, C, &c);
+	ierr = DMDAVecGetArray(da, C, &clusters);
 	checkPetscError(ierr);
 	/* Shift the c pointer to allow accessing with index of 1, instead of 0 */
-	c = (PSIClusterReactionNetwork*) (((PetscScalar*) c) - 1);
+	clusters = (PSIClusters*) (((PetscScalar*) clusters) - 1);
 
 	/*
 	 Get local grid boundaries
@@ -330,22 +334,22 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	/*
 	 Compute function over the locally owned part of the grid
 	 */
-
+	std::cout<< (xs+xm) << std::endl;
 	for (i = xs; i < xs + xm; i++) {
 		x = i * hx;
 		// Create a copy of the network for this grid point
-		c[i] = *network;
+		clusters[i].network = std::make_shared<PSIClusterReactionNetwork>(*network);
 		// Set the default vacancy concentrations
-		reactants = c[i].getAll("V");
+		reactants = clusters[i].network->getAll("V");
 		size = reactants->size();
 		for (int j = 0; j < size; j++) {
-			reactants->at(i)->setConcentration(1.0);
+			reactants->at(j)->setConcentration(1.0);
 		}
 		// Set the default interstitial concentrations
-		reactants = c[i].getAll("I");
+		reactants = clusters[i].network->getAll("I");
 		size = reactants->size();
 		for (int j = 0; j < size; j++) {
-			reactants->at(i)->setConcentration(1.0);
+			reactants->at(j)->setConcentration(1.0);
 		}
 //		for (He = 1; He < N + 1; He++)
 //			c[i].He[He] = 0.0;
@@ -362,8 +366,8 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	/*
 	 Restore vectors
 	 */
-	c = (PSIClusterReactionNetwork*) (((PetscScalar*) c) + 1);
-	ierr = DMDAVecRestoreArray(da, C, &c);
+	clusters = (PSIClusters*) (((PetscScalar*) clusters) + 1);
+	ierr = DMDAVecRestoreArray(da, C, &clusters);
 	checkPetscError(ierr);
 	PetscFunctionReturn(0);
 }
