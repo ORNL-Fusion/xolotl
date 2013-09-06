@@ -124,11 +124,14 @@ double PSICluster::getDissociationFlux(double temperature) const {
 			// get the correct species He, V, or I to calculate
 			// the dissociation constant.
 			if (composition["He"]) {
-				second = std::dynamic_pointer_cast<PSICluster>(network->get("He", 1));
+				second = std::dynamic_pointer_cast<PSICluster>(
+						network->get("He", 1));
 			} else if (composition["V"]) {
-				second = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+				second = std::dynamic_pointer_cast<PSICluster>(
+						network->get("V", 1));
 			} else if (composition["I"]) {
-				second = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
+				second = std::dynamic_pointer_cast<PSICluster>(
+						network->get("I", 1));
 			}
 			// Loop over all reactants and see if we
 			// have a dissociation connection
@@ -136,14 +139,18 @@ double PSICluster::getDissociationFlux(double temperature) const {
 			for (int i = 0; i < nReactants; i++) {
 				// Only calculate if we are connected
 				if (dissociationConnectivity.at(i) == 1) {
-					first = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+					first = std::dynamic_pointer_cast<PSICluster>(
+							reactants->at(i));
 					// Calculate the dissociation flux
 					diss += calculateDissociationConstant(*first, *second,
-							temperature)
-							* first->getConcentration();
+							temperature) * first->getConcentration();
 				}
 			}
 		} else if (numSpecies == 2) {
+			std::cout << "PSICluster Message: "
+					<< "Caught invalid single-species composition! "
+					<< composition["He"] << " " << composition["V"] << " "
+					<< composition["I"] << std::endl;
 			throw std::string(
 					"Mixed Species dissociation flux must be implemented by subclass.");
 		}
@@ -172,8 +179,9 @@ double PSICluster::getProductionFlux(double temperature) const {
 			firstReactant = reactingPairs.at(i).first;
 			secondReactant = reactingPairs.at(i).second;
 			// Update the flux
-			flux += calculateReactionRateConstant(*firstReactant, *secondReactant,
-					temperature) * firstReactant->getConcentration()
+			flux += calculateReactionRateConstant(*firstReactant,
+					*secondReactant, temperature)
+					* firstReactant->getConcentration()
 					* secondReactant->getConcentration();
 		}
 
@@ -202,7 +210,8 @@ double PSICluster::getCombinationFlux(double temperature) const {
 		nReactants = combiningReactants.size();
 		// Loop over all possible clusters
 		for (int j = 0; j < nReactants; j++) {
-			outerReactant = std::dynamic_pointer_cast<PSICluster>(combiningReactants.at(j));
+			outerReactant = std::dynamic_pointer_cast<PSICluster>(
+					combiningReactants.at(j));
 			// Calculate Second term of production flux
 			flux += calculateReactionRateConstant(*this, *outerReactant,
 					temperature) * outerReactant->getConcentration();
@@ -215,8 +224,9 @@ double PSICluster::getCombinationFlux(double temperature) const {
 }
 
 double PSICluster::getTotalFlux(double temperature) const {
-	return getProductionFlux(temperature) - getCombinationFlux(temperature)
-			+ getDissociationFlux(temperature);
+	return this->getProductionFlux(temperature)
+			- this->getCombinationFlux(temperature)
+			+ this->getDissociationFlux(temperature);
 }
 
 double PSICluster::getDiffusionFactor() const {
@@ -230,7 +240,7 @@ void PSICluster::setDiffusionFactor(const double factor) {
 	return;
 }
 
-double PSICluster::getDiffusionCoefficient(double temperature) const{
+double PSICluster::getDiffusionCoefficient(double temperature) const {
 	// Use the Arrhenius equation to compute the diffusion coefficient
 	double k_b = xolotlCore::kBoltzmann;
 	double kernel = -migrationEnergy / (k_b * temperature);
@@ -265,9 +275,8 @@ void PSICluster::setMigrationEnergy(const double energy) {
 	return;
 }
 
-double PSICluster::calculateReactionRateConstant (
-		const PSICluster & firstReactant,
-		const PSICluster & secondReactant,
+double PSICluster::calculateReactionRateConstant(
+		const PSICluster & firstReactant, const PSICluster & secondReactant,
 		const double temperature) const {
 
 	// Get the reaction radii
@@ -275,8 +284,9 @@ double PSICluster::calculateReactionRateConstant (
 	double r_second = secondReactant.getReactionRadius();
 
 	// Get the diffusion coefficients
-	double firstDiffusion =  firstReactant.getDiffusionCoefficient(temperature);
-	double secondDiffusion = secondReactant.getDiffusionCoefficient(temperature);
+	double firstDiffusion = firstReactant.getDiffusionCoefficient(temperature);
+	double secondDiffusion = secondReactant.getDiffusionCoefficient(
+			temperature);
 
 	// Calculate and return
 	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
@@ -285,8 +295,7 @@ double PSICluster::calculateReactionRateConstant (
 }
 
 double PSICluster::calculateDissociationConstant(
-		const PSICluster & firstReactant,
-		const PSICluster & secondReactant,
+		const PSICluster & firstReactant, const PSICluster & secondReactant,
 		const double temperature) const {
 
 	// Local Declarations
@@ -296,7 +305,8 @@ double PSICluster::calculateDissociationConstant(
 	auto secondComposition = secondReactant.getComposition();
 
 	// Get the binding energy index
-	if (secondComposition["He"] == 1 && secondComposition["V"] == 0 && secondComposition["I"] == 0) {
+	if (secondComposition["He"] == 1 && secondComposition["V"] == 0
+			&& secondComposition["I"] == 0) {
 		bindingEnergyIndex = 0;
 	} else if (secondComposition["He"] == 0 && secondComposition["V"] == 1
 			&& secondComposition["I"] == 0) {
@@ -333,7 +343,8 @@ const double PSICluster::getReactionRadius() const {
 std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() const {
 
 	int connectivityLength = network->size();
-	std::shared_ptr<std::vector<int>> connectivity = std::make_shared<std::vector<int>>(connectivityLength,0);
+	std::shared_ptr<std::vector<int>> connectivity = std::make_shared<
+			std::vector<int>>(connectivityLength, 0);
 
 	// The reaction and dissociate vectors must be the same length
 	// as the number of reactants

@@ -79,12 +79,14 @@ void HeVCluster::createReactionConnectivity() {
 		firstReactant = psiNetwork->getCompound("HeV", firstComposition);
 		// Get the second reactant
 		secondReactant = psiNetwork->get("He", z);
-		// Create the Reacting Pair
-		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
-		// Add the pair to the list
-		reactingPairs.push_back(pair);
+		// Create a ReactingPair with the two reactants
+		if (firstReactant && secondReactant) {
+			ReactingPair pair;
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			// Add the pair to the list
+			reactingPairs.push_back(pair);
+		}
 	}
 
 	/* ---- (AHe)*(BV) + (CHe) --> [(A + C)He]*(BV) ----
@@ -113,12 +115,14 @@ void HeVCluster::createReactionConnectivity() {
 	firstComposition = psiNetwork->getCompositionVector(numHe, numV - 1, 0);
 	firstReactant = psiNetwork->getCompound("HeV", firstComposition);
 	secondReactant = psiNetwork->get("V", 1);
-	// Create the Reacting Pair
-	ReactingPair pair;
-	pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-	pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
-	// Add the pair to the list
-	reactingPairs.push_back(pair);
+	// Create a ReactingPair with the two reactants
+	if (firstReactant && secondReactant) {
+		ReactingPair pair;
+		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+		// Add the pair to the list
+		reactingPairs.push_back(pair);
+	}
 
 	/* ----- (A*He)(B*V) + C*I --> (A*He)[(B-C)V] -----
 	 * Interstitial absorption by an HeV cluster produces an HeV cluster of
@@ -131,11 +135,14 @@ void HeVCluster::createReactionConnectivity() {
 		// Get the second reactant
 		secondReactant = psiNetwork->get("I", z);
 		// Create the Reacting Pair
-		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
-		// Add the pair to the list
-		reactingPairs.push_back(pair);
+		// Create a ReactingPair with the two reactants
+		if (firstReactant && secondReactant) {
+			ReactingPair pair;
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			// Add the pair to the list
+			reactingPairs.push_back(pair);
+		}
 	}
 
 	/* ----- (AHe)*(BV) + V --> (AHe)*(B + 1)V -----

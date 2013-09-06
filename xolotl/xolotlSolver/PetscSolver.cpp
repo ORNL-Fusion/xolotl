@@ -626,9 +626,9 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		 /* He clusters larger than 5 do not diffuse -- are immobile */
 		for (i = 1; i < 6; i++) {
 			// Get the concentrations
-			oldConc = concs[xi].He.at(i);
-			oldLeftConc = concs[xi - 1].He.at(i);
-			oldRightConc = concs[xi + 1].He.at(i);
+			oldConc = concs[xi].He[i];
+			oldLeftConc = (xi - 1 >= 0) ? concs[xi - 1].He[i] : 0.0;
+			oldRightConc = (xi + 1 < 6) ? concs[xi + 1].He[i] : 0.0;
 			// Get size*He from the new network
 			newCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("He", size));
@@ -658,9 +658,9 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		// Only vacancy clusters of size 1 diffuse.
 		size = 1;
 		// Get the concentrations.
-		oldConc = concs[xi].V.at(i);
-		oldLeftConc = concs[xi - 1].V.at(i);
-		oldRightConc = concs[xi + 1].V.at(i);
+		oldConc = concs[xi].V[i];
+		oldLeftConc = (xi - 1 >= 0) ? concs[xi - 1].V[i] : 0.0;
+		oldRightConc = (xi + 1 < 6) ? concs[xi + 1].V[i] : 0.0;
 		// Get size*V from the new network
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("V", size));
@@ -675,9 +675,9 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 
 		// Only interstitial clusters of size 1 diffuse. Get the
 		// concentrations.
-		oldConc = concs[xi].I.at(i);
-		oldLeftConc = concs[xi - 1].I.at(i);
-		oldRightConc = concs[xi + 1].I.at(i);
+		oldConc = concs[xi].I[i];
+		oldLeftConc = (xi - 1 >= 0) ? concs[xi - 1].I[i] : 0.0;
+		oldRightConc = (xi + 1 < 6) ? concs[xi + 1].I[i] : 0.0;
 		// Get size*I from the new network
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("I", size));
@@ -710,9 +710,10 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 //		}
 		// ----- Convert He -----
 		size = concs[xi].He.size();
+		auto reactants = network->getAll("He");
 		for (int i = 0; i < size; i++) {
 			newCluster = std::dynamic_pointer_cast<PSICluster>(
-					network->get("He", i));
+					reactants->at(i));
 			flux = newCluster->getTotalFlux(temperature);
 			newCluster->decreaseConcentration(flux);
 		}
@@ -721,7 +722,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		size = concs[xi].V.size();
 		for (int i = 0; i < size; i++) {
 			newCluster = std::dynamic_pointer_cast<PSICluster>(
-					network->get("V", size));
+					network->get("V", i+1));
 			flux = newCluster->getTotalFlux(temperature);
 			newCluster->decreaseConcentration(flux);
 		}
@@ -730,14 +731,14 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		size = concs[xi].I.size();
 		for (int i = 0; i < size; i++) {
 			newCluster = std::dynamic_pointer_cast<PSICluster>(
-					network->get("I", size));
+					network->get("I", i+1));
 			flux = newCluster->getTotalFlux(temperature);
 			newCluster->decreaseConcentration(flux);
 		}
 
 		// ----- Convert HeV -----
 		size = concs[xi].HeV.size();
-		auto reactants = network->getAll("HeV");
+		reactants = network->getAll("HeV");
 		for (int i = 0; i < size; i++) {
 			newCluster = std::dynamic_pointer_cast<PSICluster>(
 					reactants->at(i));

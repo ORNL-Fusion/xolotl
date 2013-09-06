@@ -53,11 +53,13 @@ void InterstitialCluster::createReactionConnectivity() {
 		firstReactant = network->get("I", firstSize);
 		secondReactant = network->get("I", secondSize);
 		// Create a ReactingPair with the two reactants
-		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
-		// Add the pair to the list
-		reactingPairs.push_back(pair);
+		if (firstReactant && secondReactant) {
+			ReactingPair pair;
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			// Add the pair to the list
+			reactingPairs.push_back(pair);
+		}
 		// Update the total size. Do not delete this or you'll have an infinite
 		// loop!
 		totalSize = firstSize + secondSize;

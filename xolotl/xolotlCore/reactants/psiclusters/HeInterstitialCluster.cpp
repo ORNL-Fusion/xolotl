@@ -109,12 +109,14 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		firstReactant = psiNetwork->getCompound("HeI", firstComposition);
 		// Set the second reactant
 		secondReactant = psiNetwork->get("V", c);
-		// Create the Reacting Pair
-		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
-		// Add the pair to the list
-		reactingPairs.push_back(pair);
+		// Create a ReactingPair with the two reactants
+		if (firstReactant && secondReactant) {
+			ReactingPair pair;
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			// Add the pair to the list
+			reactingPairs.push_back(pair);
+		}
 	}
 	/* ----- (A*He)(B*I) + (C*V) --> (A*He)[(B-C)*I] -----
 	 * This section adds the clusters that ARE produced by this cluster to the
