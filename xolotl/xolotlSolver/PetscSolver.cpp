@@ -81,10 +81,6 @@ public:
 	std::vector<PetscScalar> HeI;
 };
 
-typedef struct {
-	PSIClusterReactionNetwork network;
-} PSIClusters;
-
 /**
  * This operation converts a PSIClusterReactionNetwork to Concentrations
  * struct. It assumes that the structures are aligned dimensionally.
@@ -102,18 +98,14 @@ void convertNetworkToConcentrations(
 
 	// ----- Convert He -----
 
-	std::cout << network->size() << std::endl;
-
 	// Setup the He concentrations array
 	concentrations->He.clear();
 	// Convert the He
 	auto reactants = network->getAll("He");
 	size = reactants->size();
-	// Resize the array
-	concentrations->He.resize(size, 0);
 	// Copy the He concentrations
 	for (i = 0; i < size; i++) {
-		concentrations->He.at(i) = reactants->at(i)->getConcentration();
+		concentrations->He.push_back(reactants->at(i)->getConcentration());
 	}
 
 	// ----- Convert V -----
@@ -123,11 +115,9 @@ void convertNetworkToConcentrations(
 	// Convert the V
 	reactants = network->getAll("V");
 	size = reactants->size();
-	// Resize the V array
-	concentrations->V.resize(size, 0);
 	// Copy the V concentrations
 	for (i = 0; i < size; i++) {
-		concentrations->V.at(i) = reactants->at(i)->getConcentration();
+		concentrations->V.push_back(reactants->at(i)->getConcentration());
 	}
 
 	// ----- Convert I -----
@@ -137,11 +127,9 @@ void convertNetworkToConcentrations(
 	// Convert the I
 	reactants = network->getAll("I");
 	size = reactants->size();
-	// Resize the I array
-	concentrations->I.resize(size, 0);
 	// Copy the I concentrations
 	for (i = 0; i < size; i++) {
-		concentrations->I.at(i) = reactants->at(i)->getConcentration();
+		concentrations->I.push_back(reactants->at(i)->getConcentration());
 	}
 
 	// ----- Convert HeV -----
@@ -151,11 +139,10 @@ void convertNetworkToConcentrations(
 	// Convert the HeV
 	reactants = network->getAll("HeV");
 	size = reactants->size();
-	// Resize the HeV array
-	concentrations->HeV.resize(size, 0);
+	std::cout << size << " | " << "cs = " << concentrations->HeV.size() << std::endl;
 	// Copy the HeV concentrations
 	for (i = 0; i < size; i++) {
-		concentrations->HeV.at(i) = reactants->at(i)->getConcentration();
+		concentrations->HeV.push_back(reactants->at(i)->getConcentration());
 	}
 
 	// ----- Convert HeI -----
@@ -165,11 +152,9 @@ void convertNetworkToConcentrations(
 	// Convert the HeI
 	reactants = network->getAll("HeI");
 	size = reactants->size();
-	// Resize the HeI array
-	concentrations->HeI.resize(size, 0);
 	// Copy the HeI concentrations
 	for (i = 0; i < size; i++) {
-		concentrations->HeI.at(i) = reactants->at(i)->getConcentration();
+		concentrations->HeI.push_back(reactants->at(i)->getConcentration());
 	}
 
 	return;
@@ -213,6 +198,7 @@ void convertConcentrationsToNetwork(Concentrations2 & concentrations,
 	// ----- Convert HeV -----
 	size = concentrations.HeV.size();
 	auto reactants = network->getAll("HeV");
+	std::cout << "cs = " << size << " | " << reactants->size() << std::endl;
 	for (int i = 0; i < size; i++) {
 		conc = concentrations.HeV.at(i);
 		reactants->at(i)->setConcentration(conc);
@@ -456,33 +442,6 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 		checkPetscError(ierr);
 	}
 
-//	for (He = 1; He < N + 1; He++) {
-//		ierr = PetscSNPrintf(string, 16, "%d-He", He);
-//		checkPetscError(ierr);
-//		ierr = DMDASetFieldName(da, cnt++, string);
-//		checkPetscError(ierr);
-//	}
-//	for (V = 1; V < N + 1; V++) {
-//		ierr = PetscSNPrintf(string, 16, "%d-V", V);
-//		checkPetscError(ierr);
-//		ierr = DMDASetFieldName(da, cnt++, string);
-//		checkPetscError(ierr);
-//	}
-//	for (I = 1; I < N + 1; I++) {
-//		ierr = PetscSNPrintf(string, 16, "%d-I", I);
-//		checkPetscError(ierr);
-//		ierr = DMDASetFieldName(da, cnt++, string);
-//		checkPetscError(ierr);
-//	}
-//	for (He = 1; He < N + 1; He++) {
-//		for (V = 1; V < N + 1; V++) {
-//			ierr = PetscSNPrintf(string, 16, "%d-He-%d-V", He, V);
-//			checkPetscError(ierr);
-//			ierr = DMDASetFieldName(da, cnt++, string);
-//			checkPetscError(ierr);
-//		}
-//	}
-
 	/*
 	 Get pointer to vector data
 	 */
@@ -515,16 +474,6 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 		// Create a copy of the network for this grid point by converting to a
 		// Concentrations struct
 		convertNetworkToConcentrations(network, &concentrations[i]);
-//		for (He = 1; He < N + 1; He++)
-//			c[i].He[He] = 0.0;
-//		for (V = 1; V < N + 1; V++)
-//			c[i].V[V] = 1.0;
-//		for (I = 1; I < N + 1; I++)
-//			c[i].I[I] = 1.0;
-//		for (He = 1; He < N + 1; He++) {
-//			for (V = 1; V < N + 1; V++)
-//				c[i].HeV[He][V] = 0.0;
-//		}
 	}
 
 	/*
@@ -627,8 +576,8 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		for (i = 1; i < 6; i++) {
 			// Get the concentrations
 			oldConc = concs[xi].He[i];
-			oldLeftConc = (xi - 1 >= 0) ? concs[xi - 1].He[i] : 0.0;
-			oldRightConc = (xi + 1 < 6) ? concs[xi + 1].He[i] : 0.0;
+			oldLeftConc = (xi - 1 > -1 && concs[xi-1].He.size() > 0) ? concs[xi - 1].He[i] : 0.0;
+			oldRightConc = (xi + 1 < 6 && concs[xi+1].He.size() > 0) ? concs[xi + 1].He[i] : 0.0;
 			// Get size*He from the new network
 			newCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("He", size));
@@ -649,18 +598,12 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 				0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
 		/* Are V or I produced? */
 
-//		for (He = 1; He < PetscMin(N + 1, 6); He++) {
-//			f[xi].He[He] -=
-//					ctx->HeDiffusion[He]
-//							* (-2.0 * c[xi].He[He] + c[xi - 1].He[He]
-//									+ c[xi + 1].He[He]) * sx;
-//		}
 		// Only vacancy clusters of size 1 diffuse.
 		size = 1;
 		// Get the concentrations.
 		oldConc = concs[xi].V[i];
-		oldLeftConc = (xi - 1 >= 0) ? concs[xi - 1].V[i] : 0.0;
-		oldRightConc = (xi + 1 < 6) ? concs[xi + 1].V[i] : 0.0;
+		oldLeftConc = (xi - 1 > -1 && concs[xi-1].V.size() > 0) ? concs[xi - 1].V[i] : 0.0;
+		oldRightConc = (xi + 1 < 6 && concs[xi+1].V.size() > 0) ? concs[xi + 1].V[i] : 0.0;
 		// Get size*V from the new network
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("V", size));
@@ -676,8 +619,8 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		// Only interstitial clusters of size 1 diffuse. Get the
 		// concentrations.
 		oldConc = concs[xi].I[i];
-		oldLeftConc = (xi - 1 >= 0) ? concs[xi - 1].I[i] : 0.0;
-		oldRightConc = (xi + 1 < 6) ? concs[xi + 1].I[i] : 0.0;
+		oldLeftConc = (xi - 1 > -1 && concs[xi-1].I.size() > 0) ? concs[xi - 1].I[i] : 0.0;
+		oldRightConc = (xi + 1 < 6 && concs[xi+1].I.size() > 0) ? concs[xi + 1].I[i] : 0.0;
 		// Get size*I from the new network
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("I", size));
@@ -690,24 +633,6 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 			newCluster->decreaseConcentration(conc);
 		}
 
-		/* V and I clusters ONLY of size 1 diffuse */
-//		f[xi].V[1] -= ctx->VDiffusion[1]
-//				* (-2.0 * c[xi].V[1] + c[xi - 1].V[1] + c[xi + 1].V[1]) * sx;
-//		f[xi].I[1] -= ctx->IDiffusion[1]
-//				* (-2.0 * c[xi].I[1] + c[xi - 1].I[1] + c[xi + 1].I[1]) * sx;
-		/*----- Mixed He - V clusters are immobile  -----*/
-
-//		if (ctx->noreactions)
-//			continue;
-		// Get all of the old and new reactants
-//		oldReactants = clusters[xi].network.getAll();
-//		newReactants = updatedClusters[xi].network.getAll();
-//		// Update the concentrations based fluxes from reaction term
-//		size = oldReactants->size();
-//		for (i = 0; i < size; i++) {
-//			newReactants->at(i)->decreaseConcentration(
-//					oldReactants->at(i)->getTotalFlux(1000));
-//		}
 		// ----- Convert He -----
 		size = concs[xi].He.size();
 		auto reactants = network->getAll("He");
@@ -754,193 +679,11 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 					reactants->at(i));
 			flux = newCluster->getTotalFlux(temperature);
 			newCluster->decreaseConcentration(flux);
-			;
 		}
 
 		// Convert the concentrations back to the PETSc structure
 		convertNetworkToConcentrations(network, &updatedConcs[xi]);
 
-		/* ----------------------------------------------------------------
-		 ---- Compute reaction terms that can create a cluster of given size
-		 */
-		/*   He[He] + He[he] -> He[He+he]  */
-//		for (He = 2; He < N + 1; He++) {
-//			/* compute all pairs of clusters of smaller size that can combine to create a cluster of size He,
-//			 remove the upper half since they are symmetric to the lower half of the pairs. For example
-//			 when He = 5 (cluster size 5) the pairs are
-//			 1   4
-//			 2   2
-//			 3   2  these last two are not needed in the sum since they repeat from above
-//			 4   1  this is why he < (He/2) + 1            */
-//			for (he = 1; he < (He / 2) + 1; he++) {
-//				f[xi].He[He] -= ctx->reactionScale * c[xi].He[he]
-//						* c[xi].He[He - he];
-//
-//				/* remove the two clusters that merged to form the larger cluster */
-//				f[xi].He[he] += ctx->reactionScale * c[xi].He[he]
-//						* c[xi].He[He - he];
-//				f[xi].He[He - he] += ctx->reactionScale * c[xi].He[he]
-//						* c[xi].He[He - he];
-//			}
-//		}
-//		/*   V[V]  +  V[v] ->  V[V+v]  */
-//		for (V = 2; V < N + 1; V++) {
-//			for (v = 1; v < (V / 2) + 1; v++) {
-//				f[xi].V[V] -= ctx->reactionScale * c[xi].V[v] * c[xi].V[V - v];
-//				/* remove the clusters that merged to form the larger cluster */
-//				f[xi].V[v] += ctx->reactionScale * c[xi].V[v] * c[xi].V[V - v];
-//				f[xi].V[V - v] += ctx->reactionScale * c[xi].V[v]
-//						* c[xi].V[V - v];
-//			}
-//		}
-//		/*   I[I] +  I[i] -> I[I+i] */
-//		for (I = 2; I < N + 1; I++) {
-//			for (i = 1; i < (I / 2) + 1; i++) {
-//				f[xi].I[I] -= ctx->reactionScale * c[xi].I[i] * c[xi].I[I - i];
-//				/* remove the clusters that merged to form the larger cluster */
-//				f[xi].I[i] += ctx->reactionScale * c[xi].I[i] * c[xi].I[I - i];
-//				f[xi].I[I - i] += ctx->reactionScale * c[xi].I[i]
-//						* c[xi].I[I - i];
-//			}
-//		}
-//		/* He[1] +  V[1]  ->  He[1]-V[1] */
-//		f[xi].HeV[1][1] -= 1000 * ctx->reactionScale * c[xi].He[1] * c[xi].V[1];
-//		/* remove the He and V  that merged to form the He-V cluster */
-//		f[xi].He[1] += 1000 * ctx->reactionScale * c[xi].He[1] * c[xi].V[1];
-//		f[xi].V[1] += 1000 * ctx->reactionScale * c[xi].He[1] * c[xi].V[1];
-//		/*  He[He]-V[V] + He[he] -> He[He+he]-V[V]  */
-//		for (He = 1; He < N; He++) {
-//			for (V = 1; V < N + 1; V++) {
-//				for (he = 1; he < N - He + 1; he++) {
-//					f[xi].HeV[He + he][V] -= ctx->reactionScale
-//							* c[xi].HeV[He][V] * c[xi].He[he];
-//					/* remove the two clusters that merged to form the larger cluster */
-//					f[xi].He[he] += ctx->reactionScale * c[xi].HeV[He][V]
-//							* c[xi].He[he];
-//					f[xi].HeV[He][V] += ctx->reactionScale * c[xi].HeV[He][V]
-//							* c[xi].He[he];
-//				}
-//			}
-//		}
-//		/*  He[He]-V[V] + V[v] -> He[He][V+v] */
-//		for (He = 1; He < N + 1; He++) {
-//			for (V = 1; V < N; V++) {
-//				for (v = 1; v < N - V + 1; v++) {
-//					f[xi].HeV[He][V + v] -= ctx->reactionScale
-//							* c[xi].HeV[He][V] * c[xi].V[v];
-//					/* remove the two clusters that merged to form the larger cluster */
-//					f[xi].V[v] += ctx->reactionScale * c[xi].HeV[He][V]
-//							* c[xi].V[v];
-//					f[xi].HeV[He][V] += ctx->reactionScale * c[xi].HeV[He][V]
-//							* c[xi].V[v];
-//				}
-//			}
-//		}
-//		/*  He[He]-V[V]  + He[he]-V[v] -> He[He+he][V+v]  */
-//		/*  Currently the reaction rates for this are zero */
-//		for (He = 1; He < N; He++) {
-//			for (V = 1; V < N; V++) {
-//				for (he = 1; he < N - He + 1; he++) {
-//					for (v = 1; v < N - V + 1; v++) {
-//						f[xi].HeV[He + he][V + v] -= 0.0 * c[xi].HeV[He][V]
-//								* c[xi].HeV[he][v];
-//						/* remove the two clusters that merged to form the larger cluster */
-//						f[xi].HeV[he][V] += 0.0 * c[xi].HeV[He][V]
-//								* c[xi].HeV[he][v];
-//						f[xi].HeV[He][V] += 0.0 * c[xi].HeV[He][V]
-//								* c[xi].HeV[he][v];
-//					}
-//				}
-//			}
-//		}
-//		/*  V[V] + I[I]  ->   V[V-I] if V > I else I[I-V] */
-//		/*  What should the correct reaction rate should be? */
-//		for (V = 1; V < N + 1; V++) {
-//			for (I = 1; I < V; I++) {
-//				f[xi].V[V - I] -= ctx->reactionScale * c[xi].V[V] * c[xi].I[I];
-//				f[xi].V[V] += ctx->reactionScale * c[xi].V[V] * c[xi].I[I];
-//				f[xi].I[I] += ctx->reactionScale * c[xi].V[V] * c[xi].I[I];
-//			}
-//			for (I = V + 1; I < N + 1; I++) {
-//				f[xi].I[I - V] -= ctx->reactionScale * c[xi].V[V] * c[xi].I[I];
-//				f[xi].V[V] += ctx->reactionScale * c[xi].V[V] * c[xi].I[I];
-//				f[xi].I[I] += ctx->reactionScale * c[xi].V[V] * c[xi].I[I];
-//			}
-//		}
-//
-//		if (ctx->nodissociations)
-//			continue;
-//		/* -------------------------------------------------------------------------
-//		 ---- Compute dissociation terms that removes an item from a cluster
-//		 I assume dissociation means losing only a single item from a cluster
-//		 I cannot tell from the notes if clusters can break up into any sub-size.
-//		 */
-//		/*   He[He] ->  He[He-1] + He[1] */
-//		for (He = 2; He < N + 1; He++) {
-//			f[xi].He[He - 1] -= ctx->dissociationScale * c[xi].He[He];
-//			f[xi].He[1] -= ctx->dissociationScale * c[xi].He[He];
-//			f[xi].He[He] += ctx->dissociationScale * c[xi].He[He];
-//		}
-//		/*   V[V] ->  V[V-1] + V[1] */
-//		for (V = 2; V < N + 1; V++) {
-//			f[xi].V[V - 1] -= ctx->dissociationScale * c[xi].V[V];
-//			f[xi].V[1] -= ctx->dissociationScale * c[xi].V[V];
-//			f[xi].V[V] += ctx->dissociationScale * c[xi].V[V];
-//		}
-//		/*   I[I] ->  I[I-1] + I[1] */
-//		for (I = 2; I < N + 1; I++) {
-//			f[xi].I[I - 1] -= ctx->dissociationScale * c[xi].I[I];
-//			f[xi].I[1] -= ctx->dissociationScale * c[xi].I[I];
-//			f[xi].I[I] += ctx->dissociationScale * c[xi].I[I];
-//		}
-//		/* He[1]-V[1]  ->  He[1] + V[1] */
-//		f[xi].He[1] -= 1000 * ctx->reactionScale * c[xi].HeV[1][1];
-//		f[xi].V[1] -= 1000 * ctx->reactionScale * c[xi].HeV[1][1];
-//		f[xi].HeV[1][1] += 1000 * ctx->reactionScale * c[xi].HeV[1][1];
-//		/*   He[He]-V[1] ->  He[He] + V[1]  */
-//		for (He = 2; He < N + 1; He++) {
-//			f[xi].He[He] -= 1000 * ctx->reactionScale * c[xi].HeV[He][1];
-//			f[xi].V[1] -= 1000 * ctx->reactionScale * c[xi].HeV[He][1];
-//			f[xi].HeV[He][1] += 1000 * ctx->reactionScale * c[xi].HeV[He][1];
-//		}
-//		/*   He[1]-V[V] ->  He[1] + V[V]  */
-//		for (V = 2; V < N + 1; V++) {
-//			f[xi].He[1] -= 1000 * ctx->reactionScale * c[xi].HeV[1][V];
-//			f[xi].V[V] -= 1000 * ctx->reactionScale * c[xi].HeV[1][V];
-//			f[xi].HeV[1][V] += 1000 * ctx->reactionScale * c[xi].HeV[1][V];
-//		}
-//		/*   He[He]-V[V] ->  He[He-1]-V[V] + He[1]  */
-//		for (He = 2; He < N + 1; He++) {
-//			for (V = 2; V < N + 1; V++) {
-//				f[xi].He[1] -= 1000 * ctx->reactionScale * c[xi].HeV[He][V];
-//				f[xi].HeV[He - 1][V] -= 1000 * ctx->reactionScale
-//						* c[xi].HeV[He][V];
-//				f[xi].HeV[He][V] += 1000 * ctx->reactionScale
-//						* c[xi].HeV[He][V];
-//			}
-//		}
-//		/*   He[He]-V[V] ->  He[He]-V[V-1] + V[1]  */
-//		for (He = 2; He < N + 1; He++) {
-//			for (V = 2; V < N + 1; V++) {
-//				f[xi].V[1] -= 1000 * ctx->reactionScale * c[xi].HeV[He][V];
-//				f[xi].HeV[He][V - 1] -= 1000 * ctx->reactionScale
-//						* c[xi].HeV[He][V];
-//				f[xi].HeV[He][V] += 1000 * ctx->reactionScale
-//						* c[xi].HeV[He][V];
-//			}
-//		}
-//		/*   He[He]-V[V] ->  He[He]-V[V+1] + I[1]  */
-//		/* Again, what is the reasonable dissociation rate? */
-//		for (He = 1; He < N + 1; He++) {
-//			for (V = 1; V < N; V++) {
-//				f[xi].HeV[He][V + 1] -= 1000 * ctx->reactionScale
-//						* c[xi].HeV[He][V];
-//				f[xi].I[1] -= 1000 * ctx->reactionScale * c[xi].HeV[He][V];
-//				f[xi].HeV[He][V] += 1000 * ctx->reactionScale
-//						* c[xi].HeV[He][V];
-//			}
-//		}
-//
 	}
 
 	/*

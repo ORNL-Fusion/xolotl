@@ -175,7 +175,7 @@ void HeInterstitialCluster::createDissociationConnectivity() {
 	return;
 }
 
-double HeInterstitialCluster::getDissociationFlux(double temperature) {
+double HeInterstitialCluster::getDissociationFlux(double temperature) const {
 
 	// Local Declarations
 	std::map<std::string, int> composition;
@@ -216,9 +216,11 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) {
 				secondReactant = iCluster;
 			}
 			// Update the flux calculation
-			f3 += calculateDissociationConstant(*currentReactant,
-					*secondReactant, temperature)
-					* currentReactant->getConcentration();
+			if (secondReactant) {
+				f3 += calculateDissociationConstant(*currentReactant,
+						*secondReactant, temperature)
+						* currentReactant->getConcentration();
+			}
 		}
 	}
 

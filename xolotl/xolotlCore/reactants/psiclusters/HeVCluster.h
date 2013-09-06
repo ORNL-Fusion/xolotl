@@ -77,7 +77,7 @@ public:
 	 * dissociation.
 	 * @return The flux due to dissociation.
 	 */
-	virtual double getDissociationFlux(const double temperature);
+	virtual double getDissociationFlux(double temperature) const;
 
 	/**
 	 * Return whether or not this PSICluster is a product

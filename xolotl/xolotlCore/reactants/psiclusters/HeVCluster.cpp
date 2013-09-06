@@ -108,9 +108,25 @@ void HeVCluster::createReactionConnectivity() {
 		}
 	}
 
+	/* ----- (AHe)*(BV) + V --> (AHe)*[(B + 1)V] -----
+	 * HeV clusters can absorb single vacancies.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
+	// Get the HeV cluster that is one V bigger than us.
+	secondComposition = psiNetwork->getCompositionVector(numHe, numV + 1, 0);
+	secondReactant = psiNetwork->getCompound("HeV", secondComposition);
+	// Add it to the list if it exists
+	if (secondReactant) {
+		index = psiNetwork->getReactantId(*secondReactant) - 1;
+		reactionConnectivity.at(index) = 1;
+		combiningReactants.push_back(secondReactant);
+	}
+
 	/* ----- (A*He)(B*V) + V --> (A*He)[(B+1)*V] -----
-	 * Vacancies are also produced by single-vacancy absorption by an HeV
-	 * cluster. In this case, (A*He)[(B-1)*V] produces the current cluster.
+	 * HeV clusters are also produced by single-vacancy absorption by another
+	 * HeV cluster. In this case, (A*He)[(B-1)*V] produces the current cluster.
 	 */
 	firstComposition = psiNetwork->getCompositionVector(numHe, numV - 1, 0);
 	firstReactant = psiNetwork->getCompound("HeV", firstComposition);
@@ -143,31 +159,6 @@ void HeVCluster::createReactionConnectivity() {
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
-	}
-
-	/* ----- (AHe)*(BV) + V --> (AHe)*(B + 1)V -----
-	 * HeV clusters can absorb single vacancies.
-	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 */
-	// Get the HeV cluster that is one He bigger than us.
-	firstComposition = psiNetwork->getCompositionVector(numHe + 1, numV, 0);
-	firstReactant = psiNetwork->getCompound("HeV", firstComposition);
-	// Add it to the list if it exists
-	if (firstReactant) {
-		index = psiNetwork->getReactantId(*firstReactant) - 1;
-		reactionConnectivity.at(index) = 1;
-		combiningReactants.push_back(firstReactant);
-	}
-	// Get the HeV cluster that is one V bigger than us.
-	secondComposition = psiNetwork->getCompositionVector(numHe, numV + 1, 0);
-	secondReactant = psiNetwork->getCompound("HeV", secondComposition);
-	// Add it to the list if it exists
-	if (secondReactant) {
-		index = psiNetwork->getReactantId(*secondReactant) - 1;
-		reactionConnectivity.at(index) = 1;
-		combiningReactants.push_back(secondReactant);
 	}
 
 	/* ----- (AHe)*(BV) + CI  --> (AHe)*(B - C)V -----
@@ -247,7 +238,7 @@ void HeVCluster::createDissociationConnectivity() {
 	return;
 }
 
-double HeVCluster::getDissociationFlux(double temperature) {
+double HeVCluster::getDissociationFlux(double temperature) const {
 
 	// Local Declarations
 	std::map<std::string, int> composition;
@@ -279,7 +270,7 @@ double HeVCluster::getDissociationFlux(double temperature) {
 					&& composition["I"] == 0) {
 				secondReactant = heCluster;
 			} else if (numHe == composition["He"]
-					&& numV - composition["V"] == 1 && composition["V"] == 0) {
+					&& numV - composition["V"] == 1 && composition["I"] == 0) {
 				// vacancy dissociation
 				secondReactant = vCluster;
 			} else if (numHe == composition["He"]
@@ -288,9 +279,11 @@ double HeVCluster::getDissociationFlux(double temperature) {
 				secondReactant = iCluster;
 			}
 			// Update the flux calculation
-			f3 += calculateDissociationConstant(*currentReactant,
-					*secondReactant, temperature)
-					* currentReactant->getConcentration();
+			if (secondReactant) {
+				f3 += calculateDissociationConstant(*currentReactant,
+						*secondReactant, temperature)
+						* currentReactant->getConcentration();
+			}
 		}
 	}
 

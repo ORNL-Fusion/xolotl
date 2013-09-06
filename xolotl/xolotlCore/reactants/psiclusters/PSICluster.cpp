@@ -199,7 +199,7 @@ double PSICluster::getProductionFlux(double temperature) const {
  */
 double PSICluster::getCombinationFlux(double temperature) const {
 	// Local declarations
-	double flux = 0.0, kPlus = 0.0;
+	double flux = 0.0, kPlus = 0.0, conc = 0.0;
 	int thisClusterIndex = 0;
 	std::shared_ptr<PSICluster> outerReactant, thisReactant;
 	int nReactants = 0;
@@ -209,12 +209,19 @@ double PSICluster::getCombinationFlux(double temperature) const {
 		// Set the total network nReactants
 		nReactants = combiningReactants.size();
 		// Loop over all possible clusters
+		auto composition = getComposition();
+//		std::cout << "PSICluster Message 1: " << composition["He"] << " "
+//				<< composition["V"] << " " << composition["I"] << std::endl;
 		for (int j = 0; j < nReactants; j++) {
 			outerReactant = std::dynamic_pointer_cast<PSICluster>(
 					combiningReactants.at(j));
+			conc = outerReactant->getConcentration();
+			composition = outerReactant->getComposition();
+//			std::cout << "PSICluster Message 2: " << composition["He"] << " "
+//					<< composition["V"] << " " << composition["I"] << std::endl;
 			// Calculate Second term of production flux
 			flux += calculateReactionRateConstant(*this, *outerReactant,
-					temperature) * outerReactant->getConcentration();
+					temperature) * conc;
 		}
 
 	}
