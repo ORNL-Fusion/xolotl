@@ -102,6 +102,8 @@ void convertNetworkToConcentrations(
 
 	// ----- Convert He -----
 
+	std::cout << network->size() << std::endl;
+
 	// Setup the He concentrations array
 	concentrations->He.clear();
 	// Convert the He
@@ -528,7 +530,6 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	/*
 	 Restore vectors
 	 */
-	concentrations = (Concentrations2*) (((PetscScalar*) concentrations) + 1);
 	ierr = DMDAVecRestoreArray(da, C, &concentrations);
 	checkPetscError(ierr);
 	PetscFunctionReturn(0);
@@ -598,10 +599,8 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	 */
 	ierr = DMDAVecGetArray(da, localC, &concs);
 	checkPetscError(ierr);
-	/* Shift the c pointer to allow accessing with index of 1, instead of 0 */
 	ierr = DMDAVecGetArray(da, F, &updatedConcs);
 	checkPetscError(ierr);
-	updatedConcs = (Concentrations2*) (((PetscScalar*) updatedConcs) - 1);
 
 	/*
 	 Get local grid boundaries
