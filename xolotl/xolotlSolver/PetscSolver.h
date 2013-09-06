@@ -16,7 +16,7 @@ namespace xolotlSolver {
  * advection-diffusion-reaction problem with the Petsc solvers from Argonne
  * National Laboratory.
  */
-class PetscSolver : public ISolver {
+class PetscSolver: public ISolver {
 
 private:
 
@@ -30,7 +30,7 @@ private:
 	std::shared_ptr<PSIClusterNetworkLoader> networkLoader;
 
 	//! The original network created from the network loader.
-	std::shared_ptr<PSIClusterReactionNetwork> network;
+	static std::shared_ptr<PSIClusterReactionNetwork> network;
 
 	/**
 	 * This operation fills the diagonal block of the matrix. The diagonal
@@ -68,14 +68,15 @@ public:
 	 * @param argv The array of command line arguments
 	 */
 	void setCommandLineOptions(int argc, char **argv);
-	
+
 	/**
 	 * This operation sets the PSIClusterNetworkLoader that should be used by
 	 * the ISolver to load the ReactionNetwork.
 	 * @param networkLoader The PSIClusterNetworkLoader that will load the
 	 * network.
 	 */
-	void setNetworkLoader(std::shared_ptr<PSIClusterNetworkLoader> networkLoader);
+	void setNetworkLoader(
+			std::shared_ptr<PSIClusterNetworkLoader> networkLoader);
 
 	/**
 	 * This operation sets the run-time options of the solver. The map is a set
@@ -117,7 +118,18 @@ public:
 	 */
 	void finalize();
 
-}; //end class PetscSolver
+	/**
+	 * This operation returns the network loaded for this solver. This
+	 * operation is only for use by PETSc code and is not part of the
+	 * ISolver interface.
+	 * @return The reaction network loaded for this solver
+	 */
+	static std::shared_ptr<PSIClusterReactionNetwork> getNetwork() {
+		return network;
+	}
+
+};
+//end class PetscSolver
 
 } /* end namespace xolotlSolver */
 #endif
