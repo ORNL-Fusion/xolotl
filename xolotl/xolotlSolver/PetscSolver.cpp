@@ -494,14 +494,14 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 
 	}
 
-	std::cout << "----- Printing concentrations -----" << std::endl;
-	std::cout.precision(15);
-	for (int i = 0; i < size; i++) {
-		auto composition = network->getAll()->at(i)->getComposition();
-		std::cout << "C(" << i << "), [" << composition["He"] << ", "
-				<< composition["V"] << ", " << composition["I"] << "] = "
-				<< concOffset[i] << std::endl;
-	}
+//	std::cout << "----- Printing concentrations -----" << std::endl;
+//	std::cout.precision(15);
+//	for (int i = 0; i < size; i++) {
+//		auto composition = network->getAll()->at(i)->getComposition();
+//		std::cout << "C(" << i << "), [" << composition["He"] << ", "
+//				<< composition["V"] << ", " << composition["I"] << "] = "
+//				<< concOffset[i] << std::endl;
+//	}
 
 	/*
 	 Restore vectors
