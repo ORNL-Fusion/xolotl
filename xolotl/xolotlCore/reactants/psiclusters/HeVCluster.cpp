@@ -100,8 +100,8 @@ void HeVCluster::createReactionConnectivity() {
 	int numReactants = reactants->size();
 	for (int i = 0; i < numReactants; i++) {
 		heCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
-		// React with it if the sizes are compatible
-		if (heCluster->getSize() + size <= maxHeVClusterSize) {
+		// React with it if the sizes are compatible and the cluster exists
+		if (heCluster && heCluster->getSize() + size <= maxHeVClusterSize) {
 			index = psiNetwork->getReactantId(*heCluster) - 1;
 			reactionConnectivity[i] = 1;
 			combiningReactants.push_back(heCluster);
@@ -176,10 +176,10 @@ void HeVCluster::createReactionConnectivity() {
 	for (int i = 0; i < numReactants; i++) {
 		iCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 		// Only add it if it exists!
-		if (iCluster->getSize() - numV >= 1) {
+		if (iCluster && iCluster->getSize() - numV >= 1) {
 			index = psiNetwork->getReactantId(*iCluster) - 1;
 			reactionConnectivity.at(index) = 1;
-			combiningReactants.push_back(firstReactant);
+			combiningReactants.push_back(iCluster);
 		}
 	}
 

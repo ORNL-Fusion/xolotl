@@ -168,7 +168,7 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int numVClusters = std::stoi(props["numVClusters"]);
-	int N = numHeClusters+numVClusters;
+	int N = numHeClusters + numVClusters;
 
 	PetscFunctionBeginUser;
 	ierr = PetscOptionsHasName(NULL, "-mymonitor", &flg);
@@ -343,7 +343,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	std::shared_ptr<PSICluster> newCluster;
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
 	int size = 0;
-	PetscScalar * concOffset, * leftConcOffset, * rightConcOffset;
+	PetscScalar * concOffset, *leftConcOffset, *rightConcOffset;
 	double oldConc = 0.0, oldLeftConc = 0.0, oldRightConc = 0.0, conc = 0.0,
 			temperature = 1000.0, flux = 0.0;
 	// Get the network
@@ -441,7 +441,6 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		/* Are V or I produced? */
 
 		// ----- Vacancy Diffusion -----
-
 		// Only vacancy clusters of size 1 diffuse. Get the concentrations from
 		// the first vacancy cluster in the network.
 		oldConc = concOffset[numHeClusters];
@@ -449,7 +448,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		oldRightConc = rightConcOffset[numHeClusters];
 		// Get size*V from the new network
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
-				network->get("V",1));
+				network->get("V", 1));
 		// Only update the concentration if the cluster exists
 		if (newCluster) {
 			// Use a simple midpoint stencil to compute the concentration
@@ -490,9 +489,18 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		}
 
 		// Convert the concentrations back to the PETSc structure
-		concOffset = updatedConcs + size*xi;
+		concOffset = updatedConcs + size * xi;
 		network->fillConcentrationsArray(concOffset);
 
+	}
+
+	std::cout << "----- Printing concentrations -----" << std::endl;
+	std::cout.precision(15);
+	for (int i = 0; i < size; i++) {
+		auto composition = network->getAll()->at(i)->getComposition();
+		std::cout << "C(" << i << "), [" << composition["He"] << ", "
+				<< composition["V"] << ", " << composition["I"] << "] = "
+				<< concOffset[i] << std::endl;
 	}
 
 	/*
@@ -689,7 +697,8 @@ void PetscSolver::solve() {
 	for (He = 0; He < PetscMin(numHeClusters, 5); He++)
 		ofill[He * dof + He] = 1;
 	// V
-	ofill[numHeClusters * dof + numVClusters] = ofill[2 * numHeClusters * dof + 2 * numVClusters] = 1;
+	ofill[numHeClusters * dof + numVClusters] = ofill[2 * numHeClusters * dof
+			+ 2 * numVClusters] = 1;
 
 	ierr = DMDASetBlockFills(da, NULL, ofill);
 	checkPetscError(ierr);

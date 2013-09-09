@@ -15,6 +15,8 @@
 #include <typeinfo>
 #include <limits>
 #include <algorithm>
+#include <math.h>
+#include <limits>
 
 using namespace std;
 using namespace xolotlCore;
@@ -109,26 +111,37 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	}
 }
 
-BOOST_AUTO_TEST_CASE(checkGetFlux) {
-	/*shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
-	int maxClusterSize = 10;
-	int numClusters = maxClusterSize;
+BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 
-	shared_ptr<vector<shared_ptr<Reactant>>> reactants = network->reactants;
-	shared_ptr<map<string, string>> props = network->properties;
+	// Local Declarations
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
-	for (int i = 0; i < reactants->size(); i++) {
-		reactants->at(i)->setConcentration(2.0*i);
-		(dynamic_pointer_cast<PSICluster>(reactants->at(i)))->setMigrationEnergy(1.0);
-		(dynamic_pointer_cast<PSICluster>(reactants->at(i)))->setDiffusionFactor(1.0);
-	}
-	// Get the connectivity of the 20th HeV cluster (index 59).
-	shared_ptr<Reactant> reactant = reactants->at(3 * numClusters + 20 - 1);
-	shared_ptr<HeVCluster> cluster = dynamic_pointer_cast<HeVCluster>(reactant);
+	// Get an HeV cluster with sizes 1,1,0.
+	std::vector<int> composition = {1,1,0};
+	auto cluster = std::dynamic_pointer_cast<PSICluster>(network->getCompound("HeV",composition));
+	// Get one that it combines with
+	composition.at(1) = 2;
+	auto secondCluster = std::dynamic_pointer_cast<PSICluster>(network->getCompound("HeV",composition));
 
-	double flux = cluster->getProductionFlux(1.0);
+	// Set the diffusion factor, migration and binding energies based on the
+	// values from the tungsten benchmark for this problem.
+	cluster->setDiffusionFactor(0.0);
+	cluster->setMigrationEnergy(std::numeric_limits<double>::infinity());
+	std::vector<double> energies = {5.09,5.09,std::numeric_limits<double>::infinity()};
+	cluster->setBindingEnergies(energies);
 
-	std::cout << "Flux is " << flux << "\n";*/
+	// Set the diffusion factor, migration and binding energies based on the
+	// values from the tungsten benchmark for this problem for the second cluster
+	secondCluster->setDiffusionFactor(0.0);
+	secondCluster->setMigrationEnergy(std::numeric_limits<double>::infinity());
+	energies = {5.39,0.725,std::numeric_limits<double>::infinity()};
+	secondCluster->setBindingEnergies(energies);
+
+	// The flux can pretty much be anything except "not a number" (nan).
+	double flux = cluster->getTotalFlux(1000.0);
+	std::cout.precision(15);
+	std::cout << "HeVClusterTester Message: " << " Flux is " << flux << "\n";
+	BOOST_REQUIRE(!isnan(flux));
 }
 
 /**

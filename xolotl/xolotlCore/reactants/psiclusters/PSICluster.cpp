@@ -331,7 +331,7 @@ double PSICluster::calculateDissociationConstant(
 
 	// Calculate and return
 	double k_minus_exp = exp(
-			bindingEnergies.at(bindingEnergyIndex)
+			-1.0 * bindingEnergies.at(bindingEnergyIndex)
 					/ (xolotlCore::kBoltzmann * temperature));
 	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
 	return k_minus;

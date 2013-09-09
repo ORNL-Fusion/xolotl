@@ -92,7 +92,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		firstReactant = reactants->at(i);
 		int numHeOther =
 				(std::dynamic_pointer_cast<PSICluster>(firstReactant))->getSize();
-		if (numHeOther + numHe + numI <= maxHeIClusterSize) {
+		if (firstReactant && numHeOther + numHe + numI <= maxHeIClusterSize) {
 			index = psiNetwork->getReactantId(*firstReactant) - 1;
 			reactionConnectivity[index] = 1;
 			combiningReactants.push_back(firstReactant);
@@ -127,7 +127,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	for (int i = 0; i < numReactants; i++) {
 		firstReactant = reactants->at(i);
 		auto clusterComposition = firstReactant->getComposition();
-		if (numI - clusterComposition["V"] >= 1) {
+		if (firstReactant && numI - clusterComposition["V"] >= 1) {
 			index = psiNetwork->getReactantId(*firstReactant) - 1;
 			reactionConnectivity[index] = 1;
 			combiningReactants.push_back(firstReactant);
