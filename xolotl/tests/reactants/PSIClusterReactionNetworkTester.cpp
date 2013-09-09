@@ -23,6 +23,7 @@
 
 using namespace std;
 using namespace xolotlCore;
+using namespace testUtils;
 
 /**
  * This suite is responsible for testing the ReactionNetwork
@@ -162,7 +163,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 
 	// Make sure that everything was added
 	auto reactants = psiNetwork->getAll();
-	BOOST_REQUIRE_EQUAL(85,reactants->size());
+	BOOST_REQUIRE_EQUAL(85, reactants->size());
 	// Get the clusters by type and check them. Start with He.
 	reactants = psiNetwork->getAll("He");
 	BOOST_REQUIRE_EQUAL(1, reactants->size());
@@ -323,6 +324,43 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 
 	// Check the size of the network
 	BOOST_REQUIRE_EQUAL(1, networkCopy.size());
+
+	return;
+}
+
+/**
+ * This operation tests the operations of the ReactionNetwork that copy the
+ * concentrations to and from a client array.
+ */BOOST_AUTO_TEST_CASE(checkArrayOperations) {
+
+	// Local Declarations
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+	int size = network->size();
+	double * concentrations = new double[size];
+
+	// Set default values
+	for (int i = 0; i < size; i++) {
+		concentrations[i] = 1.0;
+	}
+
+	// Set the array to the values in the Reaction network, which should
+	// all be zero.
+	network->fillConcentrationsArray(concentrations);
+	for (int i = 0; i < size; i++) {
+		BOOST_REQUIRE_CLOSE(0.0, concentrations[i], 1.0e-15);
+	}
+
+	// Reset values to something else
+	for (int i = 0; i < size; i++) {
+		concentrations[i] = 1.0;
+	}
+
+	// Update the network and check it
+	network->updateConcentrationsFromArray(concentrations);
+	auto reactants = network->getAll();
+	for (int i = 0; i < size; i++) {
+		BOOST_REQUIRE_CLOSE(1.0, reactants->at(i)->getConcentration(), 1.0e-15);
+	}
 
 	return;
 }

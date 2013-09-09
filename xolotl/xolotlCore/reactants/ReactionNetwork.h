@@ -154,6 +154,26 @@ public:
 	 */
 	virtual int getReactantId(const Reactant & reactant) = 0;
 
+	/**
+	 * This operation fills an array of doubles with the concentrations of all
+	 * of the Reactants in the network.
+	 * @param concentrations The array that will be filled with the
+	 * concentrations. This operation does NOT create, destroy or resize the
+	 * array. If the array is to small to hold the concentrations, SIGSEGV will
+	 * be thrown.
+	 */
+	void fillConcentrationsArray(double * concentrations);
+
+	/**
+	 * This operation updates the concentrations for all Reactants in the
+	 * network from an array.
+	 * @param concentrations The array of doubles that will be for the
+	 * concentrations. This operation does NOT create, destroy or resize the
+	 * array. Properly aligning the array in memory so that this operation
+	 * does not overrun is up to the caller.
+	 */
+	void updateConcentrationsFromArray(double * concentrations);
+
 };
 
 }

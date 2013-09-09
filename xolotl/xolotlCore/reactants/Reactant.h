@@ -172,7 +172,6 @@ public:
 	 * elements and values indicating the amount of the element present.
 	 */
 	virtual std::map<std::string,int> getComposition() const;
-
 };
 
 }// end namespace xolotlCore
