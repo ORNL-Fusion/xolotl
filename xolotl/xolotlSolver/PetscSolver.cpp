@@ -37,184 +37,6 @@ static char help[] =
 // Allocate the static network
 std::shared_ptr<PSIClusterReactionNetwork> PetscSolver::network;
 
-/**    Hard wire the number of cluster sizes for He, V, and I */
-#define N 15
-
-/**
- Define all the concentrations (there is one of these unions at each grid point)
-
- He[He] represents the clusters of pure Helium of size He
- V[V] the Vacencies of size V,
- I[I] represents the clusters of Interstials of size I,  and
- HeV[He][V]  the mixed Helium-Vacancy clusters of size He and V
-
- The variables He, V, I are always used to index into the concentrations of He, V, and I respectively
- Note that unlike in traditional C code the indices for He[], V[] and I[] run from 1 to N, NOT 0 to N-1
- (the use of the union below "tricks" the C compiler to allow the indices to start at 1.)
-
- */
-typedef struct {
-	PetscScalar He[N];
-	PetscScalar V[N];
-	union {
-		PetscScalar I[N];
-		PetscScalar HeV[N + 1][N]; /* actual size is N by N, the N+1 is there only to "trick" the compiler to have indices start at 1.*/
-	};
-} Concentrations;
-
-/**
- * A simple struct for holding concentrations from the network to pass to
- * PETSc. This structure should be used for networks whose reactants can be
- * ordered sequentially in size.
- */
-class Concentrations2 {
-public:
-	// Array of He
-	std::vector<PetscScalar> He;
-	// Array of V
-	std::vector<PetscScalar> V;
-	// Array of I
-	std::vector<PetscScalar> I;
-	// Array of HeV
-	std::vector<PetscScalar> HeV;
-	// Array of HeI
-	std::vector<PetscScalar> HeI;
-};
-
-/**
- * This operation converts a PSIClusterReactionNetwork to Concentrations
- * struct. It assumes that the structures are aligned dimensionally.
- * @param The PSIClusterReactionNetwork whose concentrations should be copied
- * to the concentrations
- * @param The concentrations that should be filled
- */
-void convertNetworkToConcentrations(
-		const std::shared_ptr<PSIClusterReactionNetwork> & network,
-		Concentrations2 * concentrations) {
-
-	// Local Declarations
-	int size = 0, i = 0, heSize = 0, vSize = 0, iSize = 0;
-	std::map<std::string, int> composition;
-
-	// ----- Convert He -----
-
-	// Setup the He concentrations array
-	concentrations->He.clear();
-	// Convert the He
-	auto reactants = network->getAll("He");
-	size = reactants->size();
-	// Copy the He concentrations
-	for (i = 0; i < size; i++) {
-		concentrations->He.push_back(reactants->at(i)->getConcentration());
-	}
-
-	// ----- Convert V -----
-
-	// Setup the V concentrations array
-	concentrations->V.clear();
-	// Convert the V
-	reactants = network->getAll("V");
-	size = reactants->size();
-	// Copy the V concentrations
-	for (i = 0; i < size; i++) {
-		concentrations->V.push_back(reactants->at(i)->getConcentration());
-	}
-
-	// ----- Convert I -----
-
-	// Setup the I concentrations array
-	concentrations->I.clear();
-	// Convert the I
-	reactants = network->getAll("I");
-	size = reactants->size();
-	// Copy the I concentrations
-	for (i = 0; i < size; i++) {
-		concentrations->I.push_back(reactants->at(i)->getConcentration());
-	}
-
-	// ----- Convert HeV -----
-
-	// Setup the HeV concentrations array
-	concentrations->HeV.clear();
-	// Convert the HeV
-	reactants = network->getAll("HeV");
-	size = reactants->size();
-	std::cout << size << " | " << "cs = " << concentrations->HeV.size() << std::endl;
-	// Copy the HeV concentrations
-	for (i = 0; i < size; i++) {
-		concentrations->HeV.push_back(reactants->at(i)->getConcentration());
-	}
-
-	// ----- Convert HeI -----
-
-	// Setup the HeI concentrations array
-	concentrations->HeI.clear();
-	// Convert the HeI
-	reactants = network->getAll("HeI");
-	size = reactants->size();
-	// Copy the HeI concentrations
-	for (i = 0; i < size; i++) {
-		concentrations->HeI.push_back(reactants->at(i)->getConcentration());
-	}
-
-	return;
-}
-
-/**
- * This operation converts Concentrations to a PSIClusterReactionNetwork. It
- * assumes that the network has previously been filled with clusters and is
- * aligned dimensionally with the concentrations.
- * @param The concentrations that should be converted
- * @param The PSIClusterReactionNetwork that should be filled
- */
-void convertConcentrationsToNetwork(Concentrations2 & concentrations,
-		const std::shared_ptr<PSIClusterReactionNetwork> & network) {
-
-	// Local Declarations
-	int size = 0, i = 0;
-	double conc = 0.0;
-
-	// ----- Convert He -----
-	size = concentrations.He.size();
-	for (int i = 0; i < size; i++) {
-		conc = concentrations.He.at(i);
-		network->get("He", i)->setConcentration(conc);
-	}
-
-	// ----- Convert V -----
-	size = concentrations.V.size();
-	for (int i = 0; i < size; i++) {
-		conc = concentrations.V.at(i);
-		network->get("V", i)->setConcentration(conc);
-	}
-
-	// ----- Convert I -----
-	size = concentrations.I.size();
-	for (int i = 0; i < size; i++) {
-		conc = concentrations.I.at(i);
-		network->get("I", i)->setConcentration(conc);
-	}
-
-	// ----- Convert HeV -----
-	size = concentrations.HeV.size();
-	auto reactants = network->getAll("HeV");
-	std::cout << "cs = " << size << " | " << reactants->size() << std::endl;
-	for (int i = 0; i < size; i++) {
-		conc = concentrations.HeV.at(i);
-		reactants->at(i)->setConcentration(conc);
-	}
-
-	// ----- Convert HeI -----
-	size = concentrations.HeI.size();
-	reactants = network->getAll("HeI");
-	for (int i = 0; i < size; i++) {
-		conc = concentrations.HeI.at(i);
-		reactants->at(i)->setConcentration(conc);
-	}
-
-	return;
-}
-
 /**
  Holds problem specific options and data
  */
@@ -237,7 +59,7 @@ Vec C; /* solution */
 PetscErrorCode ierr;
 DM da; /* manages the grid data */
 AppCtx ctx; /* holds problem specific parameters */
-PetscInt He, dof = 3 * N + N * N, *ofill, *dfill;
+PetscInt He, *ofill, *dfill;
 
 /* ----- Error Handling Code ----- */
 
@@ -331,7 +153,7 @@ static PetscErrorCode destroyPetscMonitor(void **ictx) {
 static PetscErrorCode setupPetscMonitor(TS ts) {
 	DM da;
 	PetscErrorCode ierr;
-	PetscInt xi, xs, xm, *idx, M, xj, cnt = 0, dof = 3 * N + N * N;
+	PetscInt xi, xs, xm, *idx, M, xj, cnt = 0;
 	const PetscInt *lx;
 	Vec C;
 	MyMonitorCtx *ctx;
@@ -339,6 +161,14 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 	IS is;
 	char ycoor[32];
 	PetscReal valuebounds[4] = { 0, 1.2, 0, 1.2 };
+	// Get the network
+	auto network = PetscSolver::getNetwork();
+	int size = network->size();
+	// Get the properties
+	auto props = network->getProperties();
+	int numHeClusters = std::stoi(props["numHeClusters"]);
+	int numVClusters = std::stoi(props["numVClusters"]);
+	int N = numHeClusters+numVClusters;
 
 	PetscFunctionBeginUser;
 	ierr = PetscOptionsHasName(NULL, "-mymonitor", &flg);
@@ -385,8 +215,8 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 	cnt = 0;
 	for (xj = 0; xj < N; xj++) {
 		for (xi = xs; xi < xs + xm; xi++) {
-			idx[cnt++] = dof * xi + xj;
-			idx[cnt++] = dof * xi + xj + N;
+			idx[cnt++] = size * xi + xj;
+			idx[cnt++] = size * xi + xj + N;
 		}
 	}
 	ierr = ISCreateGeneral(PetscObjectComm((PetscObject) ts), 2 * N * xm, idx,
@@ -416,11 +246,12 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Local Declarations
 	PetscErrorCode ierr;
 	PetscInt i, nI, nHe, nV, xs, xm, Mx, cnt = 0;
-	Concentrations2 *concentrations;
+	PetscScalar *concentrations;
 	PetscReal hx, x;
 	char string[16];
 	auto reactants = network->getAll();
 	int size = reactants->size();
+	double * concOffset;
 
 	PetscFunctionBeginUser;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
@@ -473,7 +304,9 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 		}
 		// Create a copy of the network for this grid point by converting to a
 		// Concentrations struct
-		convertNetworkToConcentrations(network, &concentrations[i]);
+		size = network->size();
+		concOffset = concentrations + size * i;
+		network->fillConcentrationsArray(concOffset);
 	}
 
 	/*
@@ -505,13 +338,20 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	PetscErrorCode ierr;
 	PetscInt xi, Mx, xs, xm, He, he, V, v, I, i;
 	PetscReal hx, sx, x;
-	Concentrations2 *concs, *updatedConcs;
+	PetscScalar *concs, *updatedConcs;
 	Vec localC;
 	std::shared_ptr<PSICluster> newCluster;
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
 	int size = 0;
+	PetscScalar * concOffset, * leftConcOffset, * rightConcOffset;
 	double oldConc = 0.0, oldLeftConc = 0.0, oldRightConc = 0.0, conc = 0.0,
 			temperature = 1000.0, flux = 0.0;
+	// Get the network
+	auto network = PetscSolver::getNetwork();
+	// Get the properties
+	auto props = network->getProperties();
+	int numHeClusters = std::stoi(props["numHeClusters"]);
+	int numVClusters = std::stoi(props["numVClusters"]);
 
 	PetscFunctionBeginUser;
 	ierr = TSGetDM(ts, &da);
@@ -557,27 +397,29 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 
-	// Get the network
-	auto network = PetscSolver::getNetwork();
-
 	/*
 	 Loop over grid points computing ODE terms for each grid point
 	 */
+	size = network->size();
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
 		// Copy data into the PSIClusterReactionNetwork so that it can
 		// compute the new concentrations.
-		convertConcentrationsToNetwork(updatedConcs[xi],
-				PetscSolver::getNetwork());
+		concOffset = updatedConcs + size * xi;
+		network->updateConcentrationsFromArray(concOffset);
 
-		/* ---- Compute diffusion over the locally owned part of the grid -----
+		// ---- Compute diffusion over the locally owned part of the grid -----
 
-		 /* He clusters larger than 5 do not diffuse -- are immobile */
+		// Compute the array offsets for He
+		concOffset = concs + size * xi;
+		leftConcOffset = concs + size * (xi - 1);
+		rightConcOffset = concs + size * (xi + 1);
+		/* He clusters larger than 5 do not diffuse -- are immobile */
 		for (i = 1; i < 6; i++) {
 			// Get the concentrations
-			oldConc = concs[xi].He[i];
-			oldLeftConc = (xi - 1 > -1 && concs[xi-1].He.size() > 0) ? concs[xi - 1].He[i] : 0.0;
-			oldRightConc = (xi + 1 < 6 && concs[xi+1].He.size() > 0) ? concs[xi + 1].He[i] : 0.0;
+			oldConc = concOffset[i];
+			oldLeftConc = leftConcOffset[i];
+			oldRightConc = rightConcOffset[i];
 			// Get size*He from the new network
 			newCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("He", size));
@@ -594,20 +436,21 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		/* ----- Compute forcing that produces He of cluster size 1 -----
 		 Crude cubic approximation of graph from Tibo's notes
 		 */
-		concs[xi].He.at(i) -= ctx->forcingScale * PetscMax(0.0,
+		concOffset[0] -= ctx->forcingScale * PetscMax(0.0,
 				0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
 		/* Are V or I produced? */
 
-		// Only vacancy clusters of size 1 diffuse.
-		size = 1;
-		// Get the concentrations.
-		oldConc = concs[xi].V[i];
-		oldLeftConc = (xi - 1 > -1 && concs[xi-1].V.size() > 0) ? concs[xi - 1].V[i] : 0.0;
-		oldRightConc = (xi + 1 < 6 && concs[xi+1].V.size() > 0) ? concs[xi + 1].V[i] : 0.0;
+		// ----- Vacancy Diffusion -----
+
+		// Only vacancy clusters of size 1 diffuse. Get the concentrations from
+		// the first vacancy cluster in the network.
+		oldConc = concOffset[numHeClusters];
+		oldLeftConc = leftConcOffset[numHeClusters];
+		oldRightConc = rightConcOffset[numHeClusters];
 		// Get size*V from the new network
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
-				network->get("V", size));
-		// Only update the concentration if the clusters exist
+				network->get("V",1));
+		// Only update the concentration if the cluster exists
 		if (newCluster) {
 			// Use a simple midpoint stencil to compute the concentration
 			conc = newCluster->getDiffusionCoefficient(temperature)
@@ -615,15 +458,17 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 			// Update the concentration of the new cluster
 			newCluster->decreaseConcentration(conc);
 		}
+
+		// ----- Interstitial Diffusion -----
 
 		// Only interstitial clusters of size 1 diffuse. Get the
 		// concentrations.
-		oldConc = concs[xi].I[i];
-		oldLeftConc = (xi - 1 > -1 && concs[xi-1].I.size() > 0) ? concs[xi - 1].I[i] : 0.0;
-		oldRightConc = (xi + 1 < 6 && concs[xi+1].I.size() > 0) ? concs[xi + 1].I[i] : 0.0;
+		oldConc = concOffset[numHeClusters + numVClusters];
+		oldLeftConc = leftConcOffset[numHeClusters + numVClusters];
+		oldRightConc = rightConcOffset[numHeClusters + numVClusters];
 		// Get size*I from the new network
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
-				network->get("I", size));
+				network->get("I", 1));
 		// Only update the concentration if the clusters exist
 		if (newCluster) {
 			// Use a simple midpoint stencil to compute the concentration
@@ -633,56 +478,20 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 			newCluster->decreaseConcentration(conc);
 		}
 
-		// ----- Convert He -----
-		size = concs[xi].He.size();
-		auto reactants = network->getAll("He");
+		// ----- Compute all of the new fluxes -----
+		auto reactants = network->getAll();
 		for (int i = 0; i < size; i++) {
 			newCluster = std::dynamic_pointer_cast<PSICluster>(
 					reactants->at(i));
+			// Compute the flux
 			flux = newCluster->getTotalFlux(temperature);
-			newCluster->decreaseConcentration(flux);
-		}
-
-		// ----- Convert V -----
-		size = concs[xi].V.size();
-		for (int i = 0; i < size; i++) {
-			newCluster = std::dynamic_pointer_cast<PSICluster>(
-					network->get("V", i+1));
-			flux = newCluster->getTotalFlux(temperature);
-			newCluster->decreaseConcentration(flux);
-		}
-
-		// ----- Convert I -----
-		size = concs[xi].I.size();
-		for (int i = 0; i < size; i++) {
-			newCluster = std::dynamic_pointer_cast<PSICluster>(
-					network->get("I", i+1));
-			flux = newCluster->getTotalFlux(temperature);
-			newCluster->decreaseConcentration(flux);
-		}
-
-		// ----- Convert HeV -----
-		size = concs[xi].HeV.size();
-		reactants = network->getAll("HeV");
-		for (int i = 0; i < size; i++) {
-			newCluster = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(i));
-			flux = newCluster->getTotalFlux(temperature);
-			newCluster->decreaseConcentration(flux);
-		}
-
-		// ----- Convert HeI -----
-		size = concs[xi].HeI.size();
-		reactants = network->getAll("HeI");
-		for (int i = 0; i < size; i++) {
-			newCluster = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(i));
-			flux = newCluster->getTotalFlux(temperature);
+			// Update the concentration
 			newCluster->decreaseConcentration(flux);
 		}
 
 		// Convert the concentrations back to the PETSc structure
-		convertNetworkToConcentrations(network, &updatedConcs[xi]);
+		concOffset = updatedConcs + size*xi;
+		network->fillConcentrationsArray(concOffset);
 
 	}
 
@@ -731,242 +540,6 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 				"PetscSolver Exception: Invalid diagonal block size!\n";
 		throw std::string(err);
 	}
-
-//
-//	if (!ctx->noreactions) {
-//
-//		for (He = 2; He < N + 1; He++) {
-//			/* compute all pairs of clusters of smaller size that can combine to create a cluster of size He,
-//			 remove the upper half since they are symmetric to the lower half of the pairs. For example
-//			 when He = 5 (cluster size 5) the pairs are
-//			 1   4
-//			 2   2
-//			 3   2  these last two are not needed in the sum since they repeat from above
-//			 4   1  this is why he < (He/2) + 1            */
-//			for (he = 1; he < (He / 2) + 1; he++) {
-//				reactants[0] = he, reactants[1] = He - he, reactants[2] = He;
-//				for (j = 0; j < 3; j++) {
-//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-//					int index1 = (row - 1) * dof + col1 - 1, index2 = (row - 1)
-//							* dof + col2 - 1;
-//					dfill[index1] = 1, dfill[index2] = 1;
-//					//std::cout << He << " " << he << " " << row << " " << col1 << " " << col2 << " " << index1 << " " << index2 << std::endl;
-//				}
-//			}
-//		}
-//
-//		/*   V[V]  +  V[v] ->  V[V+v]  */
-//		for (V = 2; V < N + 1; V++) {
-//			for (v = 1; v < (V / 2) + 1; v++) {
-//				reactants[0] = N + v, reactants[1] = N + V - v, reactants[2] = N
-//						+ V;
-//				for (j = 0; j < 3; j++) {
-//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-//					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
-//							+ col2 - 1] = 1;
-//				}
-//			}
-//		}
-//
-//		/*   I[I] +  I[i] -> I[I+i] */
-//		for (I = 2; I < N + 1; I++) {
-//			for (i = 1; i < (I / 2) + 1; i++) {
-//				reactants[0] = 2 * N + i, reactants[1] = 2 * N + I - i, reactants[2] =
-//						2 * N + I;
-//				for (j = 0; j < 3; j++) {
-//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-//					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
-//							+ col2 - 1] = 1;
-//				}
-//			}
-//		}
-//
-//		/* He[1] +  V[1]  ->  He[1]-V[1] */
-//		reactants[0] = 1, reactants[1] = N + 1, reactants[2] = 3 * N + 1;
-//		for (j = 0; j < 3; j++) {
-//			row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-//			dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof + col2
-//					- 1] = 1;
-//		}
-//
-//		/*  He[He]-V[V] + He[he] -> He[He+he]-V[V]  */
-//		for (He = 1; He < N; He++) {
-//			for (V = 1; V < N + 1; V++) {
-//				for (he = 1; he < N - He + 1; he++) {
-//					reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = he, reactants[2] =
-//							3 * N + (He + he - 1) * N + V;
-//					for (j = 0; j < 3; j++) {
-//						row = reactants[j], col1 = reactants[0], col2 =
-//								reactants[1];
-//						dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1)
-//								* dof + col2 - 1] = 1;
-//					}
-//				}
-//			}
-//		}
-//		/*  He[He]-V[V] + V[v] -> He[He][V+v] */
-//		for (He = 1; He < N + 1; He++) {
-//			for (V = 1; V < N; V++) {
-//				for (v = 1; v < N - V + 1; v++) {
-//					reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = N
-//							+ v, reactants[2] = 3 * N + (He - 1) * N + V + v;
-//					for (j = 0; j < 3; j++) {
-//						row = reactants[j], col1 = reactants[0], col2 =
-//								reactants[1];
-//						dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1)
-//								* dof + col2 - 1] = 1;
-//					}
-//				}
-//			}
-//		}
-//
-//		/*  He[He]-V[V]  + He[he]-V[v] -> He[He+he][V+v]  */
-//		/*  Currently the reaction rates for this are zero */
-//		for (He = 1; He < N; He++) {
-//			for (V = 1; V < N; V++) {
-//				for (he = 1; he < N - He + 1; he++) {
-//					for (v = 1; v < N - V + 1; v++) {
-//						reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] =
-//								3 * N + (he - 1) * N + V, reactants[2] = 3 * N
-//								+ (He + he - 1) * N + V + v;
-//						for (j = 0; j < 3; j++) {
-//							row = reactants[j], col1 = reactants[0], col2 =
-//									reactants[1];
-//							dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row
-//									- 1) * dof + col2 - 1] = 1;
-//						}
-//					}
-//				}
-//			}
-//		}
-//		/*  V[V] + I[I]  ->   V[V-I] if V > I else I[I-V] */
-//		/*  What should the correct reaction rate should be? */
-//		for (V = 1; V < N + 1; V++) {
-//			for (I = 1; I < V; I++) {
-//				reactants[0] = N + V, reactants[1] = 2 * N + I, reactants[2] = N
-//						+ V - I;
-//				for (j = 0; j < 3; j++) {
-//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-//					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
-//							+ col2 - 1] = 1;
-//				}
-//			}
-//			for (I = V + 1; I < N + 1; I++) {
-//				reactants[0] = N + V, reactants[1] = 2 * N + I, reactants[2] = 2
-//						* N + I - V;
-//				for (j = 0; j < 3; j++) {
-//					row = reactants[j], col1 = reactants[0], col2 = reactants[1];
-//					dfill[(row - 1) * dof + col1 - 1] = 1, dfill[(row - 1) * dof
-//							+ col2 - 1] = 1;
-//				}
-//			}
-//		}
-//	}
-//	/* -------------------------------------------------------------------------
-//	 ---- Compute dissociation terms that removes an item from a cluster
-//	 I assume dissociation means losing only a single item from a cluster
-//	 I cannot tell from the notes if clusters can break up into any sub-size.
-//	 */
-//	if (!ctx->nodissociations) {
-//		/*   He[He] ->  He[He-1] + He[1] */
-//		for (He = 2; He < N + 1; He++) {
-//			reactants[0] = He, reactants[1] = He - 1, reactants[2] = 1;
-//
-//			for (j = 0; j < 3; j++) {
-//				row = reactants[j], col1 = reactants[0];
-//				dfill[(row - 1) * dof + col1 - 1] = 1;
-//			}
-//		}
-//		/*   V[V] ->  V[V-1] + V[1] */
-//		for (V = 2; V < N + 1; V++) {
-//			reactants[0] = N + V, reactants[1] = N + V - 1, reactants[2] = N + 1;
-//
-//			for (j = 0; j < 3; j++) {
-//				row = reactants[j], col1 = reactants[0];
-//				dfill[(row - 1) * dof + col1 - 1] = 1;
-//			}
-//		}
-//
-//		/*   I[I] ->  I[I-1] + I[1] */
-//		for (I = 2; I < N + 1; I++) {
-//			reactants[0] = 2 * N + I, reactants[1] = 2 * N + I - 1, reactants[2] =
-//					2 * N + 1;
-//
-//			for (j = 0; j < 3; j++) {
-//				row = reactants[j], col1 = reactants[0];
-//				dfill[(row - 1) * dof + col1 - 1] = 1;
-//			}
-//		}
-//
-//		/* He[1]-V[1]  ->  He[1] + V[1] */
-//		reactants[0] = 3 * N + 1, reactants[1] = 1, reactants[2] = N + 1;
-//
-//		for (j = 0; j < 3; j++) {
-//			row = reactants[j], col1 = reactants[0];
-//			dfill[(row - 1) * dof + col1 - 1] = 1;
-//		}
-//
-//		/*   He[He]-V[1] ->  He[He] + V[1]  */
-//		for (He = 2; He < N + 1; He++) {
-//			reactants[0] = 3 * N + (He - 1) * N + 1, reactants[1] = He, reactants[2] =
-//					N + 1;
-//
-//			for (j = 0; j < 3; j++) {
-//				row = reactants[j], col1 = reactants[0];
-//				dfill[(row - 1) * dof + col1 - 1] = 1;
-//			}
-//		}
-//
-//		/*   He[1]-V[V] ->  He[1] + V[V]  */
-//		for (V = 2; V < N + 1; V++) {
-//			reactants[0] = 3 * N + V, reactants[1] = 1, reactants[2] = N + V;
-//
-//			for (j = 0; j < 3; j++) {
-//				row = reactants[j], col1 = reactants[0];
-//				dfill[(row - 1) * dof + col1 - 1] = 1;
-//			}
-//		}
-//
-//		/*   He[He]-V[V] ->  He[He-1]-V[V] + He[1]  */
-//		for (He = 2; He < N + 1; He++) {
-//			for (V = 2; V < N + 1; V++) {
-//				reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = 3 * N
-//						+ (He - 2) * N + V, reactants[2] = 1;
-//
-//				for (j = 0; j < 3; j++) {
-//					row = reactants[j], col1 = reactants[0];
-//					dfill[(row - 1) * dof + col1 - 1] = 1;
-//				}
-//			}
-//		}
-//
-//		/*   He[He]-V[V] ->  He[He]-V[V-1] + V[1]  */
-//		for (He = 2; He < N + 1; He++) {
-//			for (V = 2; V < N + 1; V++) {
-//				reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = 3 * N
-//						+ (He - 1) * N + V - 1, reactants[2] = N + 1;
-//
-//				for (j = 0; j < 3; j++) {
-//					row = reactants[j], col1 = reactants[0];
-//					dfill[(row - 1) * dof + col1 - 1] = 1;
-//				}
-//			}
-//		}
-//
-//		/*   He[He]-V[V] ->  He[He]-V[V+1] + I[1]  */
-//		/* Again, what is the reasonable dissociation rate? */
-//		for (He = 1; He < N + 1; He++) {
-//			for (V = 1; V < N; V++) {
-//				reactants[0] = 3 * N + (He - 1) * N + V, reactants[1] = 3 * N
-//						+ (He - 1) * N + V + 1, reactants[2] = 2 * N + 1;
-//
-//				for (j = 0; j < 3; j++) {
-//					row = reactants[j], col1 = reactants[0];
-//					dfill[(row - 1) * dof + col1 - 1] = 1;
-//				}
-//			}
-//		}
-//	}
 
 	return 0;
 }
@@ -1060,13 +633,17 @@ void PetscSolver::initialize() {
  */
 void PetscSolver::solve() {
 
+	// Get the properties
+	auto props = network->getProperties();
+	int numHeClusters = std::stoi(props["numHeClusters"]);
+	int numVClusters = std::stoi(props["numVClusters"]);
+	// The degrees of freedom should be equal to the number of reactants.
+	int dof = network->size();
+
 	// Check the network before getting busy.
 	if (!network) {
 		throw std::string("PetscSolver Exception: Network not set!");
 	}
-
-	// The degrees of freedom should be equal to the number of reactants.
-	dof = network->size();
 
 	PetscFunctionBeginUser;
 	ctx.noreactions = PETSC_FALSE;
@@ -1108,9 +685,11 @@ void PetscSolver::solve() {
 	ierr = PetscMemzero(dfill, dof * dof * sizeof(PetscInt));
 	checkPetscError(ierr);
 
-	for (He = 0; He < PetscMin(N, 5); He++)
+	// He
+	for (He = 0; He < PetscMin(numHeClusters, 5); He++)
 		ofill[He * dof + He] = 1;
-	ofill[N * dof + N] = ofill[2 * N * dof + 2 * N] = 1;
+	// V
+	ofill[numHeClusters * dof + numVClusters] = ofill[2 * numHeClusters * dof + 2 * numVClusters] = 1;
 
 	ierr = DMDASetBlockFills(da, NULL, ofill);
 	checkPetscError(ierr);
