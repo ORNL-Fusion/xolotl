@@ -352,6 +352,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int numVClusters = std::stoi(props["numVClusters"]);
+	int reactantIndex = 0;
 
 	PetscFunctionBeginUser;
 	ierr = TSGetDM(ts, &da);
@@ -401,6 +402,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	 Loop over grid points computing ODE terms for each grid point
 	 */
 	size = network->size();
+	oldReactants = network->getAll();
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
 		// Copy data into the PSIClusterReactionNetwork so that it can
@@ -408,18 +410,29 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		concOffset = concs + size * xi;
 		network->updateConcentrationsFromArray(concOffset);
 
-		// ---- Compute diffusion over the locally owned part of the grid -----
+		/* ----- Account for flux of incoming He by computing forcing that
+		 * produces He of cluster size 1 -----
+		 Crude cubic approximation of graph from Tibo's notes
+		 */
+		newCluster = std::dynamic_pointer_cast<PSICluster>(
+				network->get("He", 1));
+		newCluster->decreaseConcentration(ctx->forcingScale * PetscMax(0.0,
+				0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x));
+		/* Are V or I produced? */
 
+		// ---- Compute diffusion over the locally owned part of the grid -----
 		// Compute the array offsets for He
 		concOffset = concs + size * xi;
 		leftConcOffset = concs + size * (xi - 1);
 		rightConcOffset = concs + size * (xi + 1);
 		/* He clusters larger than 5 do not diffuse -- are immobile */
 		for (i = 1; i < 6; i++) {
+			// Get the reactant index
+			reactantIndex = network->getReactantId(*(oldReactants->at(i))) - 1;
 			// Get the concentrations
-			oldConc = concOffset[i];
-			oldLeftConc = leftConcOffset[i];
-			oldRightConc = rightConcOffset[i];
+			oldConc = concOffset[reactantIndex];
+			oldLeftConc = leftConcOffset[reactantIndex];
+			oldRightConc = rightConcOffset[reactantIndex];
 			// Get size*He from the new network
 			newCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("He", size));
@@ -432,13 +445,6 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 				newCluster->decreaseConcentration(conc);
 			}
 		}
-
-		/* ----- Compute forcing that produces He of cluster size 1 -----
-		 Crude cubic approximation of graph from Tibo's notes
-		 */
-		concOffset[0] -= ctx->forcingScale * PetscMax(0.0,
-				0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
-		/* Are V or I produced? */
 
 		// ----- Vacancy Diffusion -----
 		// Only vacancy clusters of size 1 diffuse. Get the concentrations from
