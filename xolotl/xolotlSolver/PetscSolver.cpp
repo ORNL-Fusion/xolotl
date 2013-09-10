@@ -341,6 +341,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	PetscScalar *concs, *updatedConcs;
 	Vec localC;
 	std::shared_ptr<PSICluster> newCluster;
+	std::shared_ptr<Reactant> heCluster;
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
 	int size = 0;
 	PetscScalar * concOffset, *leftConcOffset, *rightConcOffset;
@@ -402,7 +403,6 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	 Loop over grid points computing ODE terms for each grid point
 	 */
 	size = network->size();
-	oldReactants = network->getAll();
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
 		// Copy data into the PSIClusterReactionNetwork so that it can
@@ -428,7 +428,8 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		/* He clusters larger than 5 do not diffuse -- are immobile */
 		for (i = 1; i < 6; i++) {
 			// Get the reactant index
-			reactantIndex = network->getReactantId(*(oldReactants->at(i))) - 1;
+			heCluster = network->get("He",i);
+			reactantIndex = network->getReactantId(*(heCluster)) - 1;
 			// Get the concentrations
 			oldConc = concOffset[reactantIndex];
 			oldLeftConc = leftConcOffset[reactantIndex];
