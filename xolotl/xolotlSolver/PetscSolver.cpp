@@ -405,7 +405,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		x = xi * hx;
 		// Copy data into the PSIClusterReactionNetwork so that it can
 		// compute the new concentrations.
-		concOffset = updatedConcs + size * xi;
+		concOffset = concs + size * xi;
 		network->updateConcentrationsFromArray(concOffset);
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
