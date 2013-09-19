@@ -531,7 +531,7 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 	// Local Declarations
 	int i = 0, j = 0, numReactants = network->size(), index = 0,
 			connectivityLength = 0, size = numReactants * numReactants;
-	std::shared_ptr<std::vector<int> > connectivity;
+	std::vector<int> connectivity;
 	std::shared_ptr<Reactant> reactant;
 
 	// Fill the diagonal block if the sizes match up
@@ -544,10 +544,10 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 			reactant = reactants->at(i);
 			connectivity = reactant->getConnectivity();
 			// Add it to the diagonal fill block
-			connectivityLength = connectivity->size();
+			connectivityLength = connectivity.size();
 			for (j = 0; j < connectivityLength; j++) {
 				index = i * numReactants + j;
-				diagFill[index] = connectivity->at(j);
+				diagFill[index] = connectivity[j];
 			}
 		}
 	} else {

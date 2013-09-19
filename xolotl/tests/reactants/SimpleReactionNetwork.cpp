@@ -111,7 +111,7 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
 			reactantIt != reactants->end(); reactantIt++) {
 		std::shared_ptr<PSICluster> cluster = std::dynamic_pointer_cast<
 				PSICluster>(*reactantIt);
-		std::vector<int> conn = *cluster->getConnectivity();
+		std::vector<int> conn = cluster->getConnectivity();
 
 		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++) {
 			printf("%s", *connIt ? "* " : "  ");

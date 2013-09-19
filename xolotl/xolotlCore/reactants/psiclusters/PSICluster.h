@@ -320,7 +320,7 @@ public:
 	 * For each element in the array, if either the reactant element
 	 * or the dissociation element is 1, the final element is 1.
 	 */
-	std::shared_ptr<std::vector<int>> getConnectivity() const;
+	std::vector<int> getConnectivity() const;
 };
 
 } /* end namespace xolotlCore */

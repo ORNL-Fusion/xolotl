@@ -347,11 +347,10 @@ const double PSICluster::getReactionRadius() const {
 	return 0.0;
 }
 
-std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() const {
+std::vector<int> PSICluster::getConnectivity() const {
 
 	int connectivityLength = network->size();
-	std::shared_ptr<std::vector<int>> connectivity = std::make_shared<
-			std::vector<int>>(connectivityLength, 0);
+	std::vector<int> connectivity = std::vector<int>(connectivityLength, 0);
 
 	// The reaction and dissociate vectors must be the same length
 	// as the number of reactants
@@ -368,7 +367,7 @@ std::shared_ptr<std::vector<int>> PSICluster::getConnectivity() const {
 	// have a 1
 	for (int i = 0; i < connectivityLength; i++) {
 		// Consider each connectivity array only if its type is enabled
-		(*connectivity)[i] = reactionConnectivity[i]
+		connectivity[i] = reactionConnectivity[i]
 				|| dissociationConnectivity[i];
 	}
 

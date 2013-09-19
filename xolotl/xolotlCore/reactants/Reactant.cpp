@@ -57,13 +57,12 @@ void Reactant::setReactionNetwork(
 }
 
 
-std::shared_ptr<std::vector<int>> Reactant::getConnectivity() {
+std::vector<int> Reactant::getConnectivity() {
 	// The connectivity array by default is filled with
 	// zeroes.
 	
 	int connectivityLength = network->size();
-	std::shared_ptr<std::vector<int>> connectivity =
-		std::make_shared<std::vector<int>>(connectivityLength, 0);
+	std::vector<int> connectivity = std::vector<int>(connectivityLength, 0);
 	return connectivity;
 }
 

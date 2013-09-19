@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		
 		shared_ptr<PSICluster> reactant =
 			std::dynamic_pointer_cast<PSICluster>(reactants->at(index));
-		shared_ptr<std::vector<int>> reactionConnectivity =
+		std::vector<int> reactionConnectivity =
 			reactant->getConnectivity();
 		
 		// Check the connectivity for He, V, and I
@@ -87,8 +87,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			0
 		};
 		
-		for (int i = 0; i < reactionConnectivity->size(); i++) {
-			BOOST_REQUIRE_EQUAL(reactionConnectivity->at(i), connectivityExpected[i]);
+		for (int i = 0; i < reactionConnectivity.size(); i++) {
+			BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
 		}
 	}
 }

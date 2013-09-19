@@ -149,7 +149,7 @@ public:
 	 * with the i-th Reactant in the ReactionNetwork and a "0" indicates
 	 * that it does not.
 	 */
-	virtual std::shared_ptr<std::vector<int>> getConnectivity();
+	virtual std::vector<int> getConnectivity();
 
 	/**
 	 * This operation writes the contents of the reactant to a string. This

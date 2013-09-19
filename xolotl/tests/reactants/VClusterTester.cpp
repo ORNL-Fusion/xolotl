@@ -68,8 +68,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 				1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 				1, 1, 1 };
 
-		for (int i = 0; i < reactionConnectivity->size(); i++) {
-			BOOST_REQUIRE_EQUAL(reactionConnectivity->at(i),
+		for (int i = 0; i < reactionConnectivity.size(); i++) {
+			BOOST_REQUIRE_EQUAL(reactionConnectivity[i],
 					connectivityExpected[i]);
 		}
 	}
