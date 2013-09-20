@@ -340,7 +340,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	PetscErrorCode ierr;
 	PetscInt xi, Mx, xs, xm, He, he, V, v, I, i;
 	PetscReal hx, sx, x;
-	PetscScalar *concs, *updatedConcs;
+	PetscReal *concs, *updatedConcs;
 	Vec localC;
 	std::shared_ptr<PSICluster> newCluster;
 	std::shared_ptr<Reactant> heCluster;
@@ -416,7 +416,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		 */
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("He", 1));
-		newCluster->decreaseConcentration(ctx->forcingScale * PetscMax(0.0,
+		newCluster->increaseConcentration(ctx->forcingScale * PetscMax(0.0,
 				0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x));
 		/* Are V or I produced? */
 
@@ -425,8 +425,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		concOffset = concs + size * xi;
 		leftConcOffset = concs + size * (xi - 1);
 		rightConcOffset = concs + size * (xi + 1);
-		/* He clusters larger than 5 do not diffuse -- are immobile */
-		for (i = 1; i < 6; i++) {
+		/* He clusters larger than 5 do not diffuse -- they are immobile */
+		for (i = 1; i < PetscMin(numHeClusters,6); i++) {
 			// Get the reactant index
 			heCluster = network->get("He", i);
 			reactantIndex = network->getReactantId(*(heCluster)) - 1;
@@ -443,7 +443,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 				conc = newCluster->getDiffusionCoefficient(temperature)
 						* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
 				// Update the concentration of the new cluster
-				newCluster->decreaseConcentration(conc);
+				newCluster->increaseConcentration(conc);
 			}
 		}
 
@@ -462,7 +462,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			conc = newCluster->getDiffusionCoefficient(temperature)
 					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
 			// Update the concentration of the new cluster
-			newCluster->decreaseConcentration(conc);
+			newCluster->increaseConcentration(conc);
 		}
 
 		// ----- Interstitial Diffusion -----
@@ -481,7 +481,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			conc = newCluster->getDiffusionCoefficient(temperature)
 					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
 			// Update the concentration of the new cluster
-			newCluster->decreaseConcentration(conc);
+			newCluster->increaseConcentration(conc);
 		}
 
 		// ----- Compute all of the new fluxes -----
@@ -492,7 +492,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			// Compute the flux
 			flux = newCluster->getTotalFlux(temperature);
 			// Update the concentration
-			newCluster->decreaseConcentration(flux);
+			newCluster->increaseConcentration(flux);
 		}
 
 		// Convert the concentrations back to the PETSc structure
@@ -529,77 +529,77 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
  */
 PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		MatStructure *str, void *ptr) {
-//	AppCtx *ctx = (AppCtx*) ptr;
-//	DM da;
-//	PetscErrorCode ierr;
-//	PetscInt xi, Mx, xs, xm, He, he, V, v, I, i;
-//	PetscInt row[3], col[3];
-//	PetscReal hx, sx, x, val[6];
-//	const Concentrations *c, *f;
-//	Vec localC;
-//	const PetscReal *rowstart, *colstart;
-//	const PetscReal **cHeV, **fHeV;
-//	PetscBool initialized = PETSC_FALSE;
-//
-//	PetscFunctionBeginUser;
-//	ierr = cHeVCreate((PetscScalar***) &cHeV);
-//	CHKERRQ(ierr);
-//	ierr = cHeVCreate((PetscScalar***) &fHeV);
-//	CHKERRQ(ierr);
-//	ierr = MatZeroEntries(*J);
-//	CHKERRQ(ierr);
-//	ierr = TSGetDM(ts, &da);
-//	CHKERRQ(ierr);
-//	ierr = DMGetLocalVector(da, &localC);
-//	CHKERRQ(ierr);
-//	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-//			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-//			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-//			PETSC_IGNORE);
-//	CHKERRQ(ierr);
-//	hx = 8.0 / (PetscReal) (Mx - 1);
-//	sx = 1.0 / (hx * hx);
-//
-//	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
-//	CHKERRQ(ierr);
-//	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
-//	CHKERRQ(ierr);
-//
-//	/*
-//	 The f[] is dummy, values are never set into it. It is only used to determine the
-//	 local row for the entries in the Jacobian
-//	 */
-//	ierr = DMDAVecGetArray(da, localC, &c);
-//	CHKERRQ(ierr);
-//	/* Shift the c pointer to allow accessing with index of 1, instead of 0 */
-//	c = (Concentrations*) (((PetscScalar*) c) - 1);
-//	ierr = DMDAVecGetArray(da, C, &f);
-//	CHKERRQ(ierr);
-//	f = (Concentrations*) (((PetscScalar*) f) - 1);
-//
-//	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-//	CHKERRQ(ierr);
-//
-//	rowstart = &f[xs].He[1] - DOF;
-//	colstart = &c[xs - 1].He[1];
-//
-//	if (!initialized) {
-//		/*
-//		 Loop over grid points computing Jacobian terms for each grid point
-//		 */
-//		for (xi = xs; xi < xs + xm; xi++) {
-//			x = xi * hx;
-//
-//			ierr = cHeVInitialize(&c[xi].He[1], (PetscScalar**) cHeV);
-//			CHKERRQ(ierr);
-//			ierr = cHeVInitialize(&f[xi].He[1], (PetscScalar**) fHeV);
-//			CHKERRQ(ierr);
-//
-//			/* -------------------------------------------------------------
-//			 ---- Compute diffusion over the locally owned part of the grid
-//			 */
-//			/* He clusters larger than 5 do not diffuse -- are immobile */
-//			for (He = 1; He < PetscMin(NHe+1,6); He++) {
+	AppCtx *ctx = (AppCtx*) ptr;
+	DM da;
+	PetscErrorCode ierr;
+	PetscInt xi, Mx, xs, xm, He, he, V, v, I, i;
+	PetscInt row[3], col[3];
+	PetscReal hx, sx, x, val[6];
+	PetscReal *concs, *updatedConcs;
+	Vec localC;
+	static PetscBool initialized = PETSC_FALSE;
+	std::shared_ptr<PSICluster> psiCluster;
+	std::shared_ptr<Reactant> heCluster;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
+	// Get the network
+	auto network = PetscSolver::getNetwork();
+	// Get the properties
+	auto props = network->getProperties();
+	int numHeClusters = std::stoi(props["numHeClusters"]);
+	int numVClusters = std::stoi(props["numVClusters"]);
+	int reactantIndex = 0;
+	int size = 0;
+
+	PetscFunctionBeginUser;
+	ierr = MatZeroEntries(*J);
+	checkPetscError(ierr);
+	ierr = TSGetDM(ts, &da);
+	checkPetscError(ierr);
+	ierr = DMGetLocalVector(da, &localC);
+	checkPetscError(ierr);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
+	checkPetscError(ierr);
+	hx = 8.0 / (PetscReal) (Mx - 1);
+	sx = 1.0 / (hx * hx);
+
+	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
+	checkPetscError(ierr);
+	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
+	checkPetscError(ierr);
+
+	/*
+	 The f[] is a dummy, values are never set into it. It is only used to
+	 determine the local row for the entries in the Jacobian
+	 */
+	ierr = DMDAVecGetArray(da, localC, &concs);
+	checkPetscError(ierr);
+	ierr = DMDAVecGetArray(da, localC, &updatedConcs);
+	checkPetscError(ierr);
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+	checkPetscError(ierr);
+
+	// Store network size for both the linear and nonlinear parts of the
+	// computation.
+	size = network->size();
+
+	// Only compute the linear part of the Jacobian once
+	if (!initialized) {
+		/*
+		 Loop over grid points computing Jacobian terms for each grid point
+		 */
+		for (xi = xs; xi < xs + xm; xi++) {
+			x = xi * hx;
+
+			/* -------------------------------------------------------------
+			 ---- Compute diffusion over the locally owned part of the grid
+			 */
+
+			/* He clusters larger than 5 do not diffuse -- they are immobile */
+			// ---- Compute diffusion over the locally owned part of the grid -----
+			for (i = 1; i < PetscMin(numHeClusters,6); i++) {
 //				row[0] = &f[xi].He[He] - rowstart;
 //				col[0] = &c[xi - 1].He[He] - colstart;
 //				col[1] = &c[xi].He[He] - colstart;
@@ -607,11 +607,26 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 //				val[0] = ctx->HeDiffusion[He] * sx;
 //				val[1] = -2.0 * ctx->HeDiffusion[He] * sx;
 //				val[2] = ctx->HeDiffusion[He] * sx;
-//				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
-//				CHKERRQ(ierr);
-//			}
-//
-//			/* V and I clusters ONLY of size 1 diffuse */
+				// Get the cluster
+				psiCluster = std::dynamic_pointer_cast<PSICluster>(
+						network->get("He", i));
+				// Compute the partial derivatives for diffusion of this cluster
+				val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+				val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
+						* sx;
+				val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+				// Get the reactant index
+				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+				// Set the row and column indices
+				row[0] = reactantIndex;
+				col[0] = reactantIndex - size;
+				col[1] = reactantIndex;
+				col[2] = reactantIndex + size;
+				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+				checkPetscError(ierr);
+			}
+
+			/* V and I clusters ONLY of size 1 diffuse */
 //			row[0] = &f[xi].V[1] - rowstart;
 //			col[0] = &c[xi - 1].V[1] - colstart;
 //			col[1] = &c[xi].V[1] - colstart;
@@ -619,9 +634,24 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 //			val[0] = ctx->VDiffusion[1] * sx;
 //			val[1] = -2.0 * ctx->VDiffusion[1] * sx;
 //			val[2] = ctx->VDiffusion[1] * sx;
-//			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
-//			CHKERRQ(ierr);
-//
+			// Get the V cluster
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+					network->get("V", 1));
+			// Compute the partial derivatives for diffusion of this cluster
+			val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+			val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
+					* sx;
+			val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+			// Get the reactant index
+			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+			// Set the row and column indices
+			row[0] = reactantIndex;
+			col[0] = reactantIndex - size;
+			col[1] = reactantIndex;
+			col[2] = reactantIndex + size;
+			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+			checkPetscError(ierr);
+
 //			row[0] = &f[xi].I[1] - rowstart;
 //			col[0] = &c[xi - 1].I[1] - colstart;
 //			col[1] = &c[xi].I[1] - colstart;
@@ -629,212 +659,81 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 //			val[0] = ctx->IDiffusion[1] * sx;
 //			val[1] = -2.0 * ctx->IDiffusion[1] * sx;
 //			val[2] = ctx->IDiffusion[1] * sx;
-//			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
-//			CHKERRQ(ierr);
-//
-//			/* Mixed He - V clusters are immobile  */
-//
-//			/* -------------------------------------------------------------------------
-//			 ---- Compute dissociation terms that removes an item from a cluster
-//			 I assume dissociation means losing only a single item from a cluster
-//			 I cannot tell from the notes if clusters can break up into any sub-size.
-//			 */
-//
-//			/*   He[He] ->  He[He-1] + He[1] */
-//			for (He = 2; He < NHe + 1; He++) {
-//				row[0] = &f[xi].He[He - 1] - rowstart;
-//				row[1] = &f[xi].He[1] - rowstart;
-//				row[2] = &f[xi].He[He] - rowstart;
-//				col[0] = &c[xi].He[He] - colstart;
-//				val[0] = ctx->dissociationScale;
-//				val[1] = ctx->dissociationScale;
-//				val[2] = -ctx->dissociationScale;
-//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
-//				CHKERRQ(ierr);
-//			}
-//
-//			/*   V[V] ->  V[V-1] + V[1] */
-//			for (V = 2; V < NV + 1; V++) {
-//				row[0] = &f[xi].V[V - 1] - rowstart;
-//				row[1] = &f[xi].V[1] - rowstart;
-//				row[2] = &f[xi].V[V] - rowstart;
-//				col[0] = &c[xi].V[V] - colstart;
-//				val[0] = ctx->dissociationScale;
-//				val[1] = ctx->dissociationScale;
-//				val[2] = -ctx->dissociationScale;
-//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
-//				CHKERRQ(ierr);
-//			}
-//
-//			/*   I[I] ->  I[I-1] + I[1] */
-//			for (I = 2; I < NI + 1; I++) {
-//				row[0] = &f[xi].I[I - 1] - rowstart;
-//				row[1] = &f[xi].I[1] - rowstart;
-//				row[2] = &f[xi].I[I] - rowstart;
-//				col[0] = &c[xi].I[I] - colstart;
-//				val[0] = ctx->dissociationScale;
-//				val[1] = ctx->dissociationScale;
-//				val[2] = -ctx->dissociationScale;
-//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
-//				CHKERRQ(ierr);
-//			}
-//
-//			/*   He[He]-V[1] ->  He[He] + V[1]  */
-//			for (He = 1; He < NHeV[1] + 1; He++) {
-//				row[0] = &f[xi].He[He] - rowstart;
-//				row[1] = &f[xi].V[1] - rowstart;
-//				row[2] = &fHeV[1][He] - rowstart;
-//				col[0] = &cHeV[1][He] - colstart;
-//				val[0] = 1000 * ctx->dissociationScale;
-//				val[1] = 1000 * ctx->dissociationScale;
-//				val[2] = -1000 * ctx->dissociationScale;
-//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
-//				CHKERRQ(ierr);
-//			}
-//
-//			/*   He[1]-V[V] ->  He[1] + V[V]  */
-//			for (V = 2; V < MHeV + 1; V++) {
-//				row[0] = &f[xi].He[1] - rowstart;
-//				row[1] = &f[xi].V[V] - rowstart;
-//				row[2] = &fHeV[V][1] - rowstart;
-//				col[0] = &cHeV[V][1] - colstart;
-//				val[0] = 1000 * ctx->dissociationScale;
-//				val[1] = 1000 * ctx->dissociationScale;
-//				val[2] = -1000 * ctx->dissociationScale;
-//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
-//				CHKERRQ(ierr);
-//			}
-//
-//			/*   He[He]-V[V] ->  He[He-1]-V[V] + He[1]  */
-//			for (V = 2; V < MHeV + 1; V++) {
-//				for (He = 2; He < NHeV[V] + 1; He++) {
-//					row[0] = &f[xi].He[1] - rowstart;
-//					row[1] = &fHeV[V][He - 1] - rowstart;
-//					row[2] = &fHeV[V][He] - rowstart;
-//					col[0] = &cHeV[V][He] - colstart;
-//					val[0] = 1000 * ctx->dissociationScale;
-//					val[1] = 1000 * ctx->dissociationScale;
-//					val[2] = -1000 * ctx->dissociationScale;
-//					ierr = MatSetValuesLocal(*J, 3, row, 1, col, val,
-//							ADD_VALUES);
-//					CHKERRQ(ierr);
-//				}
-//			}
-//
-//			/*   He[He]-V[V] ->  He[He]-V[V-1] + V[1]  */
-//			for (V = 2; V < MHeV + 1; V++) {
-//				for (He = 2; He < NHeV[V - 1] + 1; He++) {
-//					row[0] = &f[xi].V[1] - rowstart;
-//					row[1] = &fHeV[V - 1][He] - rowstart;
-//					row[2] = &fHeV[V][He] - rowstart;
-//					col[0] = &cHeV[V][He] - colstart;
-//					val[0] = 1000 * ctx->dissociationScale;
-//					val[1] = 1000 * ctx->dissociationScale;
-//					val[2] = -1000 * ctx->dissociationScale;
-//					ierr = MatSetValuesLocal(*J, 3, row, 1, col, val,
-//							ADD_VALUES);
-//					CHKERRQ(ierr);
-//				}
-//			}
-//
-//			/*   He[He]-V[V] ->  He[He]-V[V+1] + I[1]  */
-//			for (V = 1; V < MHeV; V++) {
-//				for (He = 1; He < NHeV[V] + 1; He++) {
-//					row[0] = &fHeV[V + 1][He] - rowstart;
-//					row[1] = &f[xi].I[1] - rowstart;
-//					row[2] = &fHeV[V][He] - rowstart;
-//					col[0] = &cHeV[V][He] - colstart;
-//					val[0] = 1000 * ctx->dissociationScale;
-//					val[1] = 1000 * ctx->dissociationScale;
-//					val[2] = -1000 * ctx->dissociationScale;
-//					ierr = MatSetValuesLocal(*J, 3, row, 1, col, val,
-//							ADD_VALUES);
-//					CHKERRQ(ierr);
-//				}
-//			}
-//		}
-//		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
-//		CHKERRQ(ierr);
-//		ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
-//		CHKERRQ(ierr);
-//		ierr = MatSetOption(*J, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
-//		CHKERRQ(ierr);
-//		ierr = MatStoreValues(*J);
-//		CHKERRQ(ierr);
-//		MatSetFromOptions(*J);
-//		initialized = PETSC_TRUE;
-//	} else {
-//		ierr = MatRetrieveValues(*J);
-//		CHKERRQ(ierr);
-//	}
-//
-//	/*
-//	 Loop over grid points computing Jacobian terms for each grid point for reaction terms
-//	 */
-//	for (xi = xs; xi < xs + xm; xi++) {
-//		x = xi * hx;
-//		ierr = cHeVInitialize(&c[xi].He[1], (PetscScalar**) cHeV);
-//		CHKERRQ(ierr);
-//		ierr = cHeVInitialize(&f[xi].He[1], (PetscScalar**) fHeV);
-//		CHKERRQ(ierr);
-//		/* ----------------------------------------------------------------
-//		 ---- Compute reaction terms that can create a cluster of given size
-//		 */
-//		/*   He[He] + He[he] -> He[He+he]  */
-//		for (He = 2; He < NHe + 1; He++) {
-//			/* compute all pairs of clusters of smaller size that can combine to create a cluster of size He,
-//			 remove the upper half since they are symmetric to the lower half of the pairs. For example
-//			 when He = 5 (cluster size 5) the pairs are
-//			 1   4
-//			 2   2
-//			 3   2  these last two are not needed in the sum since they repeat from above
-//			 4   1  this is why he < (He/2) + 1            */
-//			for (he = 1; he < (He / 2) + 1; he++) {
-//				row[0] = &f[xi].He[He] - rowstart;
-//				row[1] = &f[xi].He[he] - rowstart;
-//				row[2] = &f[xi].He[He - he] - rowstart;
-//				col[0] = &c[xi].He[he] - colstart;
-//				col[1] = &c[xi].He[He - he] - colstart;
-//				val[0] = ctx->reactionScale * c[xi].He[He - he];
-//				val[1] = ctx->reactionScale * c[xi].He[he];
-//				val[2] = -ctx->reactionScale * c[xi].He[He - he];
-//				val[3] = -ctx->reactionScale * c[xi].He[he];
-//				val[4] = -ctx->reactionScale * c[xi].He[He - he];
-//				val[5] = -ctx->reactionScale * c[xi].He[he];
-//				ierr = MatSetValuesLocal(*J, 3, row, 2, col, val, ADD_VALUES);
-//				CHKERRQ(ierr);
-//			}
-//		}
-//
-//	}
-//
-//	/*
-//	 Restore vectors
-//	 */
-//	c = (Concentrations*) (((PetscScalar*) c) + 1);
-//	ierr = DMDAVecRestoreArray(da, localC, &c);
-//	CHKERRQ(ierr);
-//	f = (Concentrations*) (((PetscScalar*) f) + 1);
-//	ierr = DMDAVecRestoreArray(da, C, &f);
-//	CHKERRQ(ierr);
-//	ierr = DMRestoreLocalVector(da, &localC);
-//	CHKERRQ(ierr);
-//	ierr = cHeVDestroy((PetscScalar**) cHeV);
-//	CHKERRQ(ierr);
-//	ierr = cHeVDestroy((PetscScalar**) fHeV);
-//	CHKERRQ(ierr);
-//
-//	*str = SAME_NONZERO_PATTERN;
-//	ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
-//	CHKERRQ(ierr);
-//	ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
-//	CHKERRQ(ierr);
-//	if (*A != *J) {
-//		ierr = MatAssemblyBegin(*A, MAT_FINAL_ASSEMBLY);
-//		CHKERRQ(ierr);
-//		ierr = MatAssemblyEnd(*A, MAT_FINAL_ASSEMBLY);
-//		CHKERRQ(ierr);
-//	}
+			// Get the I cluster
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+					network->get("I", 1));
+			// Compute the partial derivatives for diffusion of this cluster
+			val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+			val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
+					* sx;
+			val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+			// Get the reactant index
+			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+			// Set the row and column indices
+			row[0] = reactantIndex;
+			col[0] = reactantIndex - size;
+			col[1] = reactantIndex;
+			col[2] = reactantIndex + size;
+			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+			checkPetscError(ierr);
+
+			/* Mixed He - V clusters are immobile  */
+
+		}
+		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
+		checkPetscError(ierr);
+		ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
+		checkPetscError(ierr);
+		ierr = MatSetOption(*J, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
+		checkPetscError(ierr);
+		ierr = MatStoreValues(*J);
+		checkPetscError(ierr);
+		MatSetFromOptions(*J);
+		initialized = PETSC_TRUE;
+	} else {
+		ierr = MatRetrieveValues(*J);
+		checkPetscError(ierr);
+	}
+
+	// Create a new columns array of size n and set the column ids
+	PetscInt columns[size];
+	for (int i = 0; i < size; i++) {
+		columns[i] = i;
+	}
+
+	/* ----- Compute the partial derivatives for the reaction term ----- */
+	auto reactants = network->getAll();
+	std::vector<double> partials;
+	for (int i = 0; i < size; i++) {
+		psiCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+		// Set the row and column indices
+		row[0] = i;
+		// Get the partial derivatives
+		partials = psiCluster->getPartialDerivatives(temperature);
+		// Update the matrix
+		ierr = MatSetValuesLocal(*J, 1, row, size, columns, partials.data(), ADD_VALUES);
+	}
+
+	/*
+	 Restore vectors
+	 */
+	ierr = DMDAVecRestoreArray(da, C, &concs);
+	checkPetscError(ierr);
+	ierr = DMDAVecRestoreArray(da, C, &updatedConcs);
+	checkPetscError(ierr);
+	ierr = DMRestoreLocalVector(da, &localC);
+	checkPetscError(ierr);
+	*str = SAME_NONZERO_PATTERN;
+	ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
+	checkPetscError(ierr);
+	ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
+	checkPetscError(ierr);
+	if (*A != *J) {
+		ierr = MatAssemblyBegin(*A, MAT_FINAL_ASSEMBLY);
+		checkPetscError(ierr);
+		ierr = MatAssemblyEnd(*A, MAT_FINAL_ASSEMBLY);
+		checkPetscError(ierr);
+	}
 	PetscFunctionReturn(0);
 }
 
@@ -1053,7 +952,7 @@ void PetscSolver::solve() {
 	checkPetscError(ierr);
 	ierr = TSSetRHSFunction(ts, NULL, RHSFunction, &ctx);
 	checkPetscError(ierr);
-	ierr = TSSetRHSJacobian(ts,NULL,NULL,RHSJacobian,&ctx);
+	ierr = TSSetRHSJacobian(ts, NULL, NULL, RHSJacobian, &ctx);
 	checkPetscError(ierr);
 	ierr = TSSetSolution(ts, C);
 	checkPetscError(ierr);
