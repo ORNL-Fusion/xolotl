@@ -43,9 +43,10 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxes) {
 	int nReactants = network->size();
 	auto reactants = network->getAll();
 	cout << "Size of the network is " << nReactants << "\n";
-	for (int i = 0; i < 9; ++i) {
+	for (int i = 0; i < nReactants; ++i) {
 		shared_ptr<PSICluster> reactant = dynamic_pointer_cast < PSICluster > (reactants->at(i));
 		double flux = reactant->getTotalFlux(273.0);
+		auto partials = reactant->getPartialDerivatives(273.0);
 	}
 
 }

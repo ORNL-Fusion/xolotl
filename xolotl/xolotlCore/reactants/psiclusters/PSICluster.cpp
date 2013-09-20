@@ -393,3 +393,63 @@ std::map<std::string, int> PSICluster::getClusterMap() {
 	std::map<std::string, int> clusterMap;
 	return clusterMap;
 }
+
+/**
+ * This operation returns the list of partial derivatives of this Reactant
+ * with respect to all other reactants in the network. The combined lists
+ * of partial derivatives from all of the reactants in the network can be
+ * used to form, for example, a Jacobian.
+ *
+ * @param the temperature at which the reactions are occurring
+ * @return The partial derivatives for this reactant where index zero
+ * corresponds to the first reactant in the list returned by the
+ * ReactionNetwork::getAll() operation.
+ */
+std::vector<double> PSICluster::getPartialDerivatives(double temperature) const {
+
+	// Create the array and fill it with zeros
+	int length = network->size(), size = 0, index = 0;
+	std::vector<double> partialDerivatives = std::vector<double>(length, 0.0);
+	ReactingPair pair;
+	std::shared_ptr<PSICluster> cluster;
+
+	// Load up everything from the reacting pairs array
+	size = reactingPairs.size();
+	for (int i = 0; i < size; i++) {
+		pair = reactingPairs[i];
+		// Compute the contribution from the first part of the reacting pair
+		index = network->getReactantId(*(pair.first)) - 1;
+		partialDerivatives[index] += calculateReactionRateConstant(*this,
+				*(pair.first), temperature);
+		// Compute the contribution from the second part of the reacting pair
+		index = network->getReactantId(*(pair.second)) - 1;
+		partialDerivatives[index] += calculateReactionRateConstant(*this,
+				*(pair.second), temperature);
+	}
+
+	// Load up everything from the combining reactants
+	size = combiningReactants.size();
+	for (int i = 0; i < size; i++) {
+		cluster = std::dynamic_pointer_cast<PSICluster>(combiningReactants[i]);
+		// Compute the contribution from the cluster
+		index = network->getReactantId(*cluster) - 1;
+		partialDerivatives[index] += calculateReactionRateConstant(*this,
+				*cluster, temperature);
+	}
+
+	// Load up everything from the dissociating reactants
+	size = dissociationConnectivity.size();
+	auto reactants = network->getAll();
+	for (int i = 0; i < size; i++) {
+		// Figure out if this cluster dissociates to another
+		if (dissociationConnectivity[i] == 1) {
+			cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+			// Compute the contribution from the cluster
+			index = network->getReactantId(*cluster) - 1;
+			partialDerivatives[index] += calculateDissociationConstant(*this,
+					*cluster, temperature);
+		}
+	}
+
+	return partialDerivatives;
+}

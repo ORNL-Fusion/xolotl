@@ -315,12 +315,32 @@ public:
 	virtual const double getReactionRadius() const;
 
 	/**
-	 * Combines the reactant and dissociation connectivity arrays
+	 * This operation returns a list that represents the connectivity
+	 * between this Reactant and other Reactants in the network.
+	 * "Connectivity" indicates whether two Reactants interact, via any
+	 * mechanism, in an abstract sense (as if they were nodes connected by
+	 * an edge on a network graph).
 	 *
-	 * For each element in the array, if either the reactant element
-	 * or the dissociation element is 1, the final element is 1.
+	 * @return An array of ones and zeros that indicate whether or not this
+	 * Reactant interacts via any mechanism with another Reactant. A "1" at
+	 * the i-th entry in this array indicates that the Reactant interacts
+	 * with the i-th Reactant in the ReactionNetwork and a "0" indicates
+	 * that it does not.
 	 */
 	std::vector<int> getConnectivity() const;
+
+	/**
+	 * This operation returns the list of partial derivatives of this Reactant
+	 * with respect to all other reactants in the network. The combined lists
+	 * of partial derivatives from all of the reactants in the network can be
+	 * used to form, for example, a Jacobian.
+	 *
+	 * @param the temperature at which the reactions are occurring
+	 * @return The partial derivatives for this reactant where index zero
+	 * corresponds to the first reactant in the list returned by the
+	 * ReactionNetwork::getAll() operation.
+	 */
+	std::vector<double> getPartialDerivatives(double temperature) const;
 };
 
 } /* end namespace xolotlCore */

@@ -152,6 +152,19 @@ public:
 	virtual std::vector<int> getConnectivity();
 
 	/**
+	 * This operation returns the list of partial derivatives of this Reactant
+	 * with respect to all other reactants in the network. The combined lists
+	 * of partial derivatives from all of the reactants in the network can be
+	 * used to form, for example, a Jacobian.
+	 *
+	 * @param the temperature at which the reactions are occurring
+	 * @return The partial derivatives for this reactant where index zero
+	 * corresponds to the first reactant in the list returned by the
+	 * ReactionNetwork::getAll() operation.
+	 */
+	virtual std::vector<double> getPartialDerivatives(double temperature) const;
+
+	/**
 	 * This operation writes the contents of the reactant to a string. This
 	 * operation should be overridden by subclasses.
 	 *
@@ -171,9 +184,9 @@ public:
 	 * @return The composition returned as a map with keys naming distinct
 	 * elements and values indicating the amount of the element present.
 	 */
-	virtual std::map<std::string,int> getComposition() const;
+	virtual std::map<std::string, int> getComposition() const;
 };
 
-}// end namespace xolotlCore
+} // end namespace xolotlCore
 
 #endif
