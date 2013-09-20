@@ -51,7 +51,9 @@ typedef struct {
 	PetscScalar dissociationScale;
 } AppCtx;
 
-extern PetscErrorCode IFunction(TS, PetscReal, Vec, Vec, Vec, void*);
+extern PetscErrorCode RHSFunction(TS, PetscReal, Vec, Vec, void*);
+extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat*, Mat*, MatStructure*,
+		void*);
 extern PetscErrorCode MyMonitorSetUp(TS);
 
 TS ts; /* nonlinear solver */
@@ -60,6 +62,7 @@ PetscErrorCode ierr;
 DM da; /* manages the grid data */
 AppCtx ctx; /* holds problem specific parameters */
 PetscInt He, *ofill, *dfill;
+double temperature = 1000.0;
 
 /* ----- Error Handling Code ----- */
 
@@ -161,10 +164,10 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 	IS is;
 	char ycoor[32];
 	PetscReal valuebounds[4] = { 0, 1.2, 0, 1.2 };
-	// Get the network
+// Get the network
 	auto network = PetscSolver::getNetwork();
 	int size = network->size();
-	// Get the properties
+// Get the properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int numVClusters = std::stoi(props["numVClusters"]);
@@ -243,7 +246,7 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 #define __FUNCT__ "InitialConditions"
 PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
-	// Local Declarations
+// Local Declarations
 	PetscErrorCode ierr;
 	PetscInt i, nI, nHe, nV, xs, xm, Mx, cnt = 0;
 	PetscScalar *concentrations;
@@ -331,8 +334,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
  Output Parameter:
  .  F - function values
  */
-PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
-		void *ptr) {
+PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	AppCtx *ctx = (AppCtx*) ptr;
 	DM da;
 	PetscErrorCode ierr;
@@ -346,7 +348,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	int size = 0;
 	PetscScalar * concOffset, *leftConcOffset, *rightConcOffset;
 	double oldConc = 0.0, oldLeftConc = 0.0, oldRightConc = 0.0, conc = 0.0,
-			temperature = 1000.0, flux = 0.0;
+			flux = 0.0;
 	// Get the network
 	auto network = PetscSolver::getNetwork();
 	// Get the properties
@@ -369,12 +371,6 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	sx = 1.0 / (hx * hx);
 
 	/*
-	 F  = Cdot +  all the diffusion and reaction terms added below
-	 */
-	ierr = VecCopy(Cdot, F);
-	checkPetscError(ierr);
-
-	/*
 	 Scatter ghost points to local vector,using the 2-step process
 	 DMGlobalToLocalBegin(),DMGlobalToLocalEnd().
 	 By placing code between these two statements, computations can be
@@ -383,6 +379,10 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
 	checkPetscError(ierr);
 	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
+	checkPetscError(ierr);
+
+	// Set the initial values of F
+	ierr = VecSet(F, 0.0);
 	checkPetscError(ierr);
 
 	/*
@@ -428,7 +428,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 		/* He clusters larger than 5 do not diffuse -- are immobile */
 		for (i = 1; i < 6; i++) {
 			// Get the reactant index
-			heCluster = network->get("He",i);
+			heCluster = network->get("He", i);
 			reactantIndex = network->getReactantId(*(heCluster)) - 1;
 			// Get the concentrations
 			oldConc = concOffset[reactantIndex];
@@ -523,18 +523,334 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec C, Vec Cdot, Vec F,
 }
 
 #undef __FUNCT__
+#define __FUNCT__ "RHSJacobian"
+/*
+ Compute the Jacobian entries based on IFuction() and insert them into the matrix
+ */
+PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
+		MatStructure *str, void *ptr) {
+//	AppCtx *ctx = (AppCtx*) ptr;
+//	DM da;
+//	PetscErrorCode ierr;
+//	PetscInt xi, Mx, xs, xm, He, he, V, v, I, i;
+//	PetscInt row[3], col[3];
+//	PetscReal hx, sx, x, val[6];
+//	const Concentrations *c, *f;
+//	Vec localC;
+//	const PetscReal *rowstart, *colstart;
+//	const PetscReal **cHeV, **fHeV;
+//	PetscBool initialized = PETSC_FALSE;
+//
+//	PetscFunctionBeginUser;
+//	ierr = cHeVCreate((PetscScalar***) &cHeV);
+//	CHKERRQ(ierr);
+//	ierr = cHeVCreate((PetscScalar***) &fHeV);
+//	CHKERRQ(ierr);
+//	ierr = MatZeroEntries(*J);
+//	CHKERRQ(ierr);
+//	ierr = TSGetDM(ts, &da);
+//	CHKERRQ(ierr);
+//	ierr = DMGetLocalVector(da, &localC);
+//	CHKERRQ(ierr);
+//	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+//			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+//			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+//			PETSC_IGNORE);
+//	CHKERRQ(ierr);
+//	hx = 8.0 / (PetscReal) (Mx - 1);
+//	sx = 1.0 / (hx * hx);
+//
+//	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
+//	CHKERRQ(ierr);
+//	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
+//	CHKERRQ(ierr);
+//
+//	/*
+//	 The f[] is dummy, values are never set into it. It is only used to determine the
+//	 local row for the entries in the Jacobian
+//	 */
+//	ierr = DMDAVecGetArray(da, localC, &c);
+//	CHKERRQ(ierr);
+//	/* Shift the c pointer to allow accessing with index of 1, instead of 0 */
+//	c = (Concentrations*) (((PetscScalar*) c) - 1);
+//	ierr = DMDAVecGetArray(da, C, &f);
+//	CHKERRQ(ierr);
+//	f = (Concentrations*) (((PetscScalar*) f) - 1);
+//
+//	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+//	CHKERRQ(ierr);
+//
+//	rowstart = &f[xs].He[1] - DOF;
+//	colstart = &c[xs - 1].He[1];
+//
+//	if (!initialized) {
+//		/*
+//		 Loop over grid points computing Jacobian terms for each grid point
+//		 */
+//		for (xi = xs; xi < xs + xm; xi++) {
+//			x = xi * hx;
+//
+//			ierr = cHeVInitialize(&c[xi].He[1], (PetscScalar**) cHeV);
+//			CHKERRQ(ierr);
+//			ierr = cHeVInitialize(&f[xi].He[1], (PetscScalar**) fHeV);
+//			CHKERRQ(ierr);
+//
+//			/* -------------------------------------------------------------
+//			 ---- Compute diffusion over the locally owned part of the grid
+//			 */
+//			/* He clusters larger than 5 do not diffuse -- are immobile */
+//			for (He = 1; He < PetscMin(NHe+1,6); He++) {
+//				row[0] = &f[xi].He[He] - rowstart;
+//				col[0] = &c[xi - 1].He[He] - colstart;
+//				col[1] = &c[xi].He[He] - colstart;
+//				col[2] = &c[xi + 1].He[He] - colstart;
+//				val[0] = ctx->HeDiffusion[He] * sx;
+//				val[1] = -2.0 * ctx->HeDiffusion[He] * sx;
+//				val[2] = ctx->HeDiffusion[He] * sx;
+//				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+//				CHKERRQ(ierr);
+//			}
+//
+//			/* V and I clusters ONLY of size 1 diffuse */
+//			row[0] = &f[xi].V[1] - rowstart;
+//			col[0] = &c[xi - 1].V[1] - colstart;
+//			col[1] = &c[xi].V[1] - colstart;
+//			col[2] = &c[xi + 1].V[1] - colstart;
+//			val[0] = ctx->VDiffusion[1] * sx;
+//			val[1] = -2.0 * ctx->VDiffusion[1] * sx;
+//			val[2] = ctx->VDiffusion[1] * sx;
+//			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+//			CHKERRQ(ierr);
+//
+//			row[0] = &f[xi].I[1] - rowstart;
+//			col[0] = &c[xi - 1].I[1] - colstart;
+//			col[1] = &c[xi].I[1] - colstart;
+//			col[2] = &c[xi + 1].I[1] - colstart;
+//			val[0] = ctx->IDiffusion[1] * sx;
+//			val[1] = -2.0 * ctx->IDiffusion[1] * sx;
+//			val[2] = ctx->IDiffusion[1] * sx;
+//			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+//			CHKERRQ(ierr);
+//
+//			/* Mixed He - V clusters are immobile  */
+//
+//			/* -------------------------------------------------------------------------
+//			 ---- Compute dissociation terms that removes an item from a cluster
+//			 I assume dissociation means losing only a single item from a cluster
+//			 I cannot tell from the notes if clusters can break up into any sub-size.
+//			 */
+//
+//			/*   He[He] ->  He[He-1] + He[1] */
+//			for (He = 2; He < NHe + 1; He++) {
+//				row[0] = &f[xi].He[He - 1] - rowstart;
+//				row[1] = &f[xi].He[1] - rowstart;
+//				row[2] = &f[xi].He[He] - rowstart;
+//				col[0] = &c[xi].He[He] - colstart;
+//				val[0] = ctx->dissociationScale;
+//				val[1] = ctx->dissociationScale;
+//				val[2] = -ctx->dissociationScale;
+//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
+//				CHKERRQ(ierr);
+//			}
+//
+//			/*   V[V] ->  V[V-1] + V[1] */
+//			for (V = 2; V < NV + 1; V++) {
+//				row[0] = &f[xi].V[V - 1] - rowstart;
+//				row[1] = &f[xi].V[1] - rowstart;
+//				row[2] = &f[xi].V[V] - rowstart;
+//				col[0] = &c[xi].V[V] - colstart;
+//				val[0] = ctx->dissociationScale;
+//				val[1] = ctx->dissociationScale;
+//				val[2] = -ctx->dissociationScale;
+//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
+//				CHKERRQ(ierr);
+//			}
+//
+//			/*   I[I] ->  I[I-1] + I[1] */
+//			for (I = 2; I < NI + 1; I++) {
+//				row[0] = &f[xi].I[I - 1] - rowstart;
+//				row[1] = &f[xi].I[1] - rowstart;
+//				row[2] = &f[xi].I[I] - rowstart;
+//				col[0] = &c[xi].I[I] - colstart;
+//				val[0] = ctx->dissociationScale;
+//				val[1] = ctx->dissociationScale;
+//				val[2] = -ctx->dissociationScale;
+//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
+//				CHKERRQ(ierr);
+//			}
+//
+//			/*   He[He]-V[1] ->  He[He] + V[1]  */
+//			for (He = 1; He < NHeV[1] + 1; He++) {
+//				row[0] = &f[xi].He[He] - rowstart;
+//				row[1] = &f[xi].V[1] - rowstart;
+//				row[2] = &fHeV[1][He] - rowstart;
+//				col[0] = &cHeV[1][He] - colstart;
+//				val[0] = 1000 * ctx->dissociationScale;
+//				val[1] = 1000 * ctx->dissociationScale;
+//				val[2] = -1000 * ctx->dissociationScale;
+//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
+//				CHKERRQ(ierr);
+//			}
+//
+//			/*   He[1]-V[V] ->  He[1] + V[V]  */
+//			for (V = 2; V < MHeV + 1; V++) {
+//				row[0] = &f[xi].He[1] - rowstart;
+//				row[1] = &f[xi].V[V] - rowstart;
+//				row[2] = &fHeV[V][1] - rowstart;
+//				col[0] = &cHeV[V][1] - colstart;
+//				val[0] = 1000 * ctx->dissociationScale;
+//				val[1] = 1000 * ctx->dissociationScale;
+//				val[2] = -1000 * ctx->dissociationScale;
+//				ierr = MatSetValuesLocal(*J, 3, row, 1, col, val, ADD_VALUES);
+//				CHKERRQ(ierr);
+//			}
+//
+//			/*   He[He]-V[V] ->  He[He-1]-V[V] + He[1]  */
+//			for (V = 2; V < MHeV + 1; V++) {
+//				for (He = 2; He < NHeV[V] + 1; He++) {
+//					row[0] = &f[xi].He[1] - rowstart;
+//					row[1] = &fHeV[V][He - 1] - rowstart;
+//					row[2] = &fHeV[V][He] - rowstart;
+//					col[0] = &cHeV[V][He] - colstart;
+//					val[0] = 1000 * ctx->dissociationScale;
+//					val[1] = 1000 * ctx->dissociationScale;
+//					val[2] = -1000 * ctx->dissociationScale;
+//					ierr = MatSetValuesLocal(*J, 3, row, 1, col, val,
+//							ADD_VALUES);
+//					CHKERRQ(ierr);
+//				}
+//			}
+//
+//			/*   He[He]-V[V] ->  He[He]-V[V-1] + V[1]  */
+//			for (V = 2; V < MHeV + 1; V++) {
+//				for (He = 2; He < NHeV[V - 1] + 1; He++) {
+//					row[0] = &f[xi].V[1] - rowstart;
+//					row[1] = &fHeV[V - 1][He] - rowstart;
+//					row[2] = &fHeV[V][He] - rowstart;
+//					col[0] = &cHeV[V][He] - colstart;
+//					val[0] = 1000 * ctx->dissociationScale;
+//					val[1] = 1000 * ctx->dissociationScale;
+//					val[2] = -1000 * ctx->dissociationScale;
+//					ierr = MatSetValuesLocal(*J, 3, row, 1, col, val,
+//							ADD_VALUES);
+//					CHKERRQ(ierr);
+//				}
+//			}
+//
+//			/*   He[He]-V[V] ->  He[He]-V[V+1] + I[1]  */
+//			for (V = 1; V < MHeV; V++) {
+//				for (He = 1; He < NHeV[V] + 1; He++) {
+//					row[0] = &fHeV[V + 1][He] - rowstart;
+//					row[1] = &f[xi].I[1] - rowstart;
+//					row[2] = &fHeV[V][He] - rowstart;
+//					col[0] = &cHeV[V][He] - colstart;
+//					val[0] = 1000 * ctx->dissociationScale;
+//					val[1] = 1000 * ctx->dissociationScale;
+//					val[2] = -1000 * ctx->dissociationScale;
+//					ierr = MatSetValuesLocal(*J, 3, row, 1, col, val,
+//							ADD_VALUES);
+//					CHKERRQ(ierr);
+//				}
+//			}
+//		}
+//		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
+//		CHKERRQ(ierr);
+//		ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
+//		CHKERRQ(ierr);
+//		ierr = MatSetOption(*J, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
+//		CHKERRQ(ierr);
+//		ierr = MatStoreValues(*J);
+//		CHKERRQ(ierr);
+//		MatSetFromOptions(*J);
+//		initialized = PETSC_TRUE;
+//	} else {
+//		ierr = MatRetrieveValues(*J);
+//		CHKERRQ(ierr);
+//	}
+//
+//	/*
+//	 Loop over grid points computing Jacobian terms for each grid point for reaction terms
+//	 */
+//	for (xi = xs; xi < xs + xm; xi++) {
+//		x = xi * hx;
+//		ierr = cHeVInitialize(&c[xi].He[1], (PetscScalar**) cHeV);
+//		CHKERRQ(ierr);
+//		ierr = cHeVInitialize(&f[xi].He[1], (PetscScalar**) fHeV);
+//		CHKERRQ(ierr);
+//		/* ----------------------------------------------------------------
+//		 ---- Compute reaction terms that can create a cluster of given size
+//		 */
+//		/*   He[He] + He[he] -> He[He+he]  */
+//		for (He = 2; He < NHe + 1; He++) {
+//			/* compute all pairs of clusters of smaller size that can combine to create a cluster of size He,
+//			 remove the upper half since they are symmetric to the lower half of the pairs. For example
+//			 when He = 5 (cluster size 5) the pairs are
+//			 1   4
+//			 2   2
+//			 3   2  these last two are not needed in the sum since they repeat from above
+//			 4   1  this is why he < (He/2) + 1            */
+//			for (he = 1; he < (He / 2) + 1; he++) {
+//				row[0] = &f[xi].He[He] - rowstart;
+//				row[1] = &f[xi].He[he] - rowstart;
+//				row[2] = &f[xi].He[He - he] - rowstart;
+//				col[0] = &c[xi].He[he] - colstart;
+//				col[1] = &c[xi].He[He - he] - colstart;
+//				val[0] = ctx->reactionScale * c[xi].He[He - he];
+//				val[1] = ctx->reactionScale * c[xi].He[he];
+//				val[2] = -ctx->reactionScale * c[xi].He[He - he];
+//				val[3] = -ctx->reactionScale * c[xi].He[he];
+//				val[4] = -ctx->reactionScale * c[xi].He[He - he];
+//				val[5] = -ctx->reactionScale * c[xi].He[he];
+//				ierr = MatSetValuesLocal(*J, 3, row, 2, col, val, ADD_VALUES);
+//				CHKERRQ(ierr);
+//			}
+//		}
+//
+//	}
+//
+//	/*
+//	 Restore vectors
+//	 */
+//	c = (Concentrations*) (((PetscScalar*) c) + 1);
+//	ierr = DMDAVecRestoreArray(da, localC, &c);
+//	CHKERRQ(ierr);
+//	f = (Concentrations*) (((PetscScalar*) f) + 1);
+//	ierr = DMDAVecRestoreArray(da, C, &f);
+//	CHKERRQ(ierr);
+//	ierr = DMRestoreLocalVector(da, &localC);
+//	CHKERRQ(ierr);
+//	ierr = cHeVDestroy((PetscScalar**) cHeV);
+//	CHKERRQ(ierr);
+//	ierr = cHeVDestroy((PetscScalar**) fHeV);
+//	CHKERRQ(ierr);
+//
+//	*str = SAME_NONZERO_PATTERN;
+//	ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
+//	CHKERRQ(ierr);
+//	ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
+//	CHKERRQ(ierr);
+//	if (*A != *J) {
+//		ierr = MatAssemblyBegin(*A, MAT_FINAL_ASSEMBLY);
+//		CHKERRQ(ierr);
+//		ierr = MatAssemblyEnd(*A, MAT_FINAL_ASSEMBLY);
+//		CHKERRQ(ierr);
+//	}
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ "getDiagonalFill"
 
 PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 		int diagFillSize) {
 
-	// Local Declarations
+// Local Declarations
 	int i = 0, j = 0, numReactants = network->size(), index = 0,
 			connectivityLength = 0, size = numReactants * numReactants;
 	std::vector<int> connectivity;
 	std::shared_ptr<Reactant> reactant;
 
-	// Fill the diagonal block if the sizes match up
+// Fill the diagonal block if the sizes match up
 	if (diagFillSize == size) {
 		auto reactants = network->getAll();
 		auto testReactants = *reactants;
@@ -648,14 +964,14 @@ void PetscSolver::initialize() {
  */
 void PetscSolver::solve() {
 
-	// Get the properties
+// Get the properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int numVClusters = std::stoi(props["numVClusters"]);
-	// The degrees of freedom should be equal to the number of reactants.
+// The degrees of freedom should be equal to the number of reactants.
 	int dof = network->size();
 
-	// Check the network before getting busy.
+// Check the network before getting busy.
 	if (!network) {
 		throw std::string("PetscSolver Exception: Network not set!");
 	}
@@ -700,10 +1016,10 @@ void PetscSolver::solve() {
 	ierr = PetscMemzero(dfill, dof * dof * sizeof(PetscInt));
 	checkPetscError(ierr);
 
-	// He
+// He
 	for (He = 0; He < PetscMin(numHeClusters, 5); He++)
 		ofill[He * dof + He] = 1;
-	// V
+// V
 	ofill[numHeClusters * dof + numVClusters] = ofill[2 * numHeClusters * dof
 			+ 2 * numVClusters] = 1;
 
@@ -729,11 +1045,15 @@ void PetscSolver::solve() {
 	checkPetscError(ierr);
 	ierr = TSSetType(ts, TSARKIMEX);
 	checkPetscError(ierr);
+	ierr = TSARKIMEXSetFullyImplicit(ts, PETSC_TRUE);
+	checkPetscError(ierr);
 	ierr = TSSetDM(ts, da);
 	checkPetscError(ierr);
 	ierr = TSSetProblemType(ts, TS_NONLINEAR);
 	checkPetscError(ierr);
-	ierr = TSSetIFunction(ts, NULL, IFunction, &ctx);
+	ierr = TSSetRHSFunction(ts, NULL, RHSFunction, &ctx);
+	checkPetscError(ierr);
+	ierr = TSSetRHSJacobian(ts,NULL,NULL,RHSJacobian,&ctx);
 	checkPetscError(ierr);
 	ierr = TSSetSolution(ts, C);
 	checkPetscError(ierr);
