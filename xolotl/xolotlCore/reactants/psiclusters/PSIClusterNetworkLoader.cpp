@@ -56,7 +56,7 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
 		cluster = std::make_shared<HeVCluster>(numHe, numV);
 		clusters.push_back(cluster);
 	} else if (numHe > 0 && numI > 0) {
-		throw std::string("HeliumInterstitialCluster is not implemented yet");
+		throw std::string("HeliumInterstitialCluster is not yet implemented.");
 		// FIXME! Add code to add it to the list
 	} else if (numHe > 0) {
 		// Create a new HeCluster

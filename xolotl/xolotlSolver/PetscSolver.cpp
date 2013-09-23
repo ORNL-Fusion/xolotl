@@ -426,7 +426,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		leftConcOffset = concs + size * (xi - 1);
 		rightConcOffset = concs + size * (xi + 1);
 		/* He clusters larger than 5 do not diffuse -- they are immobile */
-		for (i = 1; i < PetscMin(numHeClusters,6); i++) {
+		for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
 			// Get the reactant index
 			heCluster = network->get("He", i);
 			reactantIndex = network->getReactantId(*(heCluster)) - 1;
@@ -599,14 +599,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 			/* He clusters larger than 5 do not diffuse -- they are immobile */
 			// ---- Compute diffusion over the locally owned part of the grid -----
-			for (i = 1; i < PetscMin(numHeClusters,6); i++) {
-//				row[0] = &f[xi].He[He] - rowstart;
-//				col[0] = &c[xi - 1].He[He] - colstart;
-//				col[1] = &c[xi].He[He] - colstart;
-//				col[2] = &c[xi + 1].He[He] - colstart;
-//				val[0] = ctx->HeDiffusion[He] * sx;
-//				val[1] = -2.0 * ctx->HeDiffusion[He] * sx;
-//				val[2] = ctx->HeDiffusion[He] * sx;
+			for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
 				// Get the cluster
 				psiCluster = std::dynamic_pointer_cast<PSICluster>(
 						network->get("He", i));
@@ -618,22 +611,18 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				// Get the reactant index
 				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
 				// Set the row and column indices
-				row[0] = reactantIndex;
-				col[0] = reactantIndex - size;
-				col[1] = reactantIndex;
-				col[2] = reactantIndex + size;
+				row[0] = xi*size + reactantIndex;
+				col[0] = (xi - 1) * size + reactantIndex;
+				col[1] = xi * size + reactantIndex;
+				col[2] = (xi + 1) * size + reactantIndex;
+//				std::cout << i << " " << xi << " " << row[0] << " " << col[0]
+//						<< " " << col[1] << " " << col[2] << std::endl;
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
 
-			/* V and I clusters ONLY of size 1 diffuse */
-//			row[0] = &f[xi].V[1] - rowstart;
-//			col[0] = &c[xi - 1].V[1] - colstart;
-//			col[1] = &c[xi].V[1] - colstart;
-//			col[2] = &c[xi + 1].V[1] - colstart;
-//			val[0] = ctx->VDiffusion[1] * sx;
-//			val[1] = -2.0 * ctx->VDiffusion[1] * sx;
-//			val[2] = ctx->VDiffusion[1] * sx;
+			/* ONLY V and I clusters of size 1 diffuse */
+
 			// Get the V cluster
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("V", 1));
@@ -652,13 +641,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 			checkPetscError(ierr);
 
-//			row[0] = &f[xi].I[1] - rowstart;
-//			col[0] = &c[xi - 1].I[1] - colstart;
-//			col[1] = &c[xi].I[1] - colstart;
-//			col[2] = &c[xi + 1].I[1] - colstart;
-//			val[0] = ctx->IDiffusion[1] * sx;
-//			val[1] = -2.0 * ctx->IDiffusion[1] * sx;
-//			val[2] = ctx->IDiffusion[1] * sx;
 			// Get the I cluster
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("I", 1));
@@ -676,7 +658,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			col[2] = reactantIndex + size;
 			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 			checkPetscError(ierr);
-
 			/* Mixed He - V clusters are immobile  */
 
 		}
@@ -690,6 +671,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		checkPetscError(ierr);
 		MatSetFromOptions(*J);
 		initialized = PETSC_TRUE;
+		// Debug line for viewing the matrix
+		//MatView(*J, PETSC_VIEWER_STDOUT_WORLD);
 	} else {
 		ierr = MatRetrieveValues(*J);
 		checkPetscError(ierr);
@@ -711,7 +694,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		// Get the partial derivatives
 		partials = psiCluster->getPartialDerivatives(temperature);
 		// Update the matrix
-		ierr = MatSetValuesLocal(*J, 1, row, size, columns, partials.data(), ADD_VALUES);
+		ierr = MatSetValuesLocal(*J, 1, row, size, columns, partials.data(),
+				ADD_VALUES);
 	}
 
 	/*
@@ -743,13 +727,13 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 		int diagFillSize) {
 
-// Local Declarations
+	// Local Declarations
 	int i = 0, j = 0, numReactants = network->size(), index = 0,
 			connectivityLength = 0, size = numReactants * numReactants;
 	std::vector<int> connectivity;
 	std::shared_ptr<Reactant> reactant;
 
-// Fill the diagonal block if the sizes match up
+	// Fill the diagonal block if the sizes match up
 	if (diagFillSize == size) {
 		auto reactants = network->getAll();
 		auto testReactants = *reactants;
@@ -863,14 +847,14 @@ void PetscSolver::initialize() {
  */
 void PetscSolver::solve() {
 
-// Get the properties
+	// Get the properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int numVClusters = std::stoi(props["numVClusters"]);
-// The degrees of freedom should be equal to the number of reactants.
+	// The degrees of freedom should be equal to the number of reactants.
 	int dof = network->size();
 
-// Check the network before getting busy.
+	// Check the network before getting busy.
 	if (!network) {
 		throw std::string("PetscSolver Exception: Network not set!");
 	}
@@ -915,12 +899,34 @@ void PetscSolver::solve() {
 	ierr = PetscMemzero(dfill, dof * dof * sizeof(PetscInt));
 	checkPetscError(ierr);
 
-// He
-	for (He = 0; He < PetscMin(numHeClusters, 5); He++)
-		ofill[He * dof + He] = 1;
-// V
-	ofill[numHeClusters * dof + numVClusters] = ofill[2 * numHeClusters * dof
-			+ 2 * numVClusters] = 1;
+	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion, with for He.
+	int reactantIndex = 0;
+	std::shared_ptr<Reactant> reactant;
+	for (int numHe = 1; numHe < PetscMin(numHeClusters+1, 6); numHe++) {
+		reactant = network->get("He", numHe);
+		// Only couple if the reactant exists
+		if (reactant) {
+			// Subtract one from the id to get a unique index between 0 and network->size() - 1
+			reactantIndex = network->getReactantId(*reactant) - 1;
+			ofill[reactantIndex*dof + reactantIndex] = 1;
+		}
+	}
+	// Now for single V
+	reactant = network->get("V", 1);
+	// Only couple if the reactant exists
+	if (reactant) {
+		// Subtract one from the id to get a unique index between 0 and network->size() - 1
+		reactantIndex = network->getReactantId(*reactant) - 1;
+		ofill[reactantIndex*dof + reactantIndex] = 1;
+	}
+	// Now for single I
+	reactant = network->get("I", 1);
+	// Only couple if the reactant exists
+	if (reactant) {
+		// Subtract one from the id to get a unique index between 0 and network->size() - 1
+		reactantIndex = network->getReactantId(*reactant) - 1;
+		ofill[reactantIndex*dof + reactantIndex] = 1;
+	}
 
 	ierr = DMDASetBlockFills(da, NULL, ofill);
 	checkPetscError(ierr);
