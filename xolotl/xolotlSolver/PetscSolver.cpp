@@ -604,14 +604,15 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				psiCluster = std::dynamic_pointer_cast<PSICluster>(
 						network->get("He", i));
 				// Compute the partial derivatives for diffusion of this cluster
-				val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
-				val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
-						* sx;
-				val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+				double diffCoeff = psiCluster->getDiffusionCoefficient(
+						temperature);
+				val[0] = diffCoeff * sx;
+				val[1] = -2.0 * diffCoeff * sx;
+				val[2] = diffCoeff * sx;
 				// Get the reactant index
 				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
 				// Set the row and column indices
-				row[0] = xi*size + reactantIndex;
+				row[0] = xi * size + reactantIndex;
 				col[0] = (xi - 1) * size + reactantIndex;
 				col[1] = xi * size + reactantIndex;
 				col[2] = (xi + 1) * size + reactantIndex;
@@ -626,39 +627,42 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			// Get the V cluster
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("V", 1));
-			// Compute the partial derivatives for diffusion of this cluster
-			val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
-			val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
-					* sx;
-			val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
-			// Get the reactant index
-			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
-			// Set the row and column indices
-			row[0] = reactantIndex;
-			col[0] = reactantIndex - size;
-			col[1] = reactantIndex;
-			col[2] = reactantIndex + size;
-			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
-			checkPetscError(ierr);
+			if (psiCluster) {
+				// Compute the partial derivatives for diffusion of this cluster
+				val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+				val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
+						* sx;
+				val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+				// Get the reactant index
+				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+				// Set the row and column indices
+				row[0] = reactantIndex;
+				col[0] = reactantIndex - size;
+				col[1] = reactantIndex;
+				col[2] = reactantIndex + size;
+				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+				checkPetscError(ierr);
+			}
 
 			// Get the I cluster
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("I", 1));
-			// Compute the partial derivatives for diffusion of this cluster
-			val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
-			val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
-					* sx;
-			val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
-			// Get the reactant index
-			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
-			// Set the row and column indices
-			row[0] = reactantIndex;
-			col[0] = reactantIndex - size;
-			col[1] = reactantIndex;
-			col[2] = reactantIndex + size;
-			ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
-			checkPetscError(ierr);
-			/* Mixed He - V clusters are immobile  */
+			if (psiCluster) {
+				// Compute the partial derivatives for diffusion of this cluster
+				val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+				val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
+						* sx;
+				val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+				// Get the reactant index
+				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+				// Set the row and column indices
+				row[0] = reactantIndex;
+				col[0] = reactantIndex - size;
+				col[1] = reactantIndex;
+				col[2] = reactantIndex + size;
+				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+				checkPetscError(ierr);
+			}
 
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
@@ -679,9 +683,9 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	}
 
 	// Create a new columns array of size n and set the column ids
-	PetscInt columns[size];
+	PetscInt rows[size];
 	for (int i = 0; i < size; i++) {
-		columns[i] = i;
+		rows[i] = i;
 	}
 
 	/* ----- Compute the partial derivatives for the reaction term ----- */
@@ -690,11 +694,11 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	for (int i = 0; i < size; i++) {
 		psiCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 		// Set the row and column indices
-		row[0] = i;
+		col[0] = i;
 		// Get the partial derivatives
 		partials = psiCluster->getPartialDerivatives(temperature);
 		// Update the matrix
-		ierr = MatSetValuesLocal(*J, 1, row, size, columns, partials.data(),
+		ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
 				ADD_VALUES);
 	}
 
@@ -745,7 +749,7 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 			// Add it to the diagonal fill block
 			connectivityLength = connectivity.size();
 			for (j = 0; j < connectivityLength; j++) {
-				index = i * numReactants + j;
+				index = j * numReactants + i;
 				diagFill[index] = connectivity[j];
 			}
 		}
@@ -908,7 +912,7 @@ void PetscSolver::solve() {
 		if (reactant) {
 			// Subtract one from the id to get a unique index between 0 and network->size() - 1
 			reactantIndex = network->getReactantId(*reactant) - 1;
-			ofill[reactantIndex*dof + reactantIndex] = 1;
+			ofill[reactantIndex * dof + reactantIndex] = 1;
 		}
 	}
 	// Now for single V
@@ -917,7 +921,7 @@ void PetscSolver::solve() {
 	if (reactant) {
 		// Subtract one from the id to get a unique index between 0 and network->size() - 1
 		reactantIndex = network->getReactantId(*reactant) - 1;
-		ofill[reactantIndex*dof + reactantIndex] = 1;
+		ofill[reactantIndex * dof + reactantIndex] = 1;
 	}
 	// Now for single I
 	reactant = network->get("I", 1);
@@ -925,7 +929,7 @@ void PetscSolver::solve() {
 	if (reactant) {
 		// Subtract one from the id to get a unique index between 0 and network->size() - 1
 		reactantIndex = network->getReactantId(*reactant) - 1;
-		ofill[reactantIndex*dof + reactantIndex] = 1;
+		ofill[reactantIndex * dof + reactantIndex] = 1;
 	}
 
 	ierr = DMDASetBlockFills(da, NULL, ofill);

@@ -182,44 +182,51 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) const {
 	std::shared_ptr<PSICluster> currentReactant, secondReactant;
 	double f4 = 0.0, f3 = 0.0;
 
-	// Calculate the much easier f4 term...
+	// Get the required dissociation clusters
 	auto heCluster = std::dynamic_pointer_cast<PSICluster>(
 			network->get("He", 1));
 	auto vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
 	auto iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
-	f4 = calculateDissociationConstant(*this, *iCluster, temperature)
-			+ calculateDissociationConstant(*this, *vCluster, temperature)
-			+ calculateDissociationConstant(*this, *heCluster, temperature);
 
-	// Loop over all the elements of the dissociation
-	// connectivity to find where this mixed species dissociates
-	auto reactants = network->getAll();
-	int numReactants = dissociationConnectivity.size();
-	for (int i = 0; i < numReactants; i++) {
-		if (dissociationConnectivity[i] == 1) {
-			// Set the current reactant
-			currentReactant = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(i));
-			// Get the cluster map of this connection
-			composition = currentReactant->getComposition();
-			// We need to find if this is a Helium dissociation
-			if (numHe - composition["He"] == 1 && numI == composition["I"]
-					&& composition["V"] == 0) {
-				secondReactant = heCluster;
-			} else if (numHe == composition["He"]
-					&& numI - composition["V"] == 1 && composition["V"] == 0) {
-				// trap mutation
-				secondReactant = vCluster;
-			} else if (numHe == composition["He"]
-					&& composition["I"] - numI == 1 && composition["V"] == 0) {
-				// or interstitial dissociation
-				secondReactant = iCluster;
-			}
-			// Update the flux calculation
-			if (secondReactant) {
-				f3 += calculateDissociationConstant(*currentReactant,
-						*secondReactant, temperature)
-						* currentReactant->getConcentration();
+	// Only dissociate if possible
+	if (heCluster && vCluster && iCluster) {
+		// Calculate the much easier f4 term...
+		f4 = calculateDissociationConstant(*this, *iCluster, temperature)
+				+ calculateDissociationConstant(*this, *vCluster, temperature)
+				+ calculateDissociationConstant(*this, *heCluster, temperature);
+
+		// Loop over all the elements of the dissociation
+		// connectivity to find where this mixed species dissociates
+		auto reactants = network->getAll();
+		int numReactants = dissociationConnectivity.size();
+		for (int i = 0; i < numReactants; i++) {
+			if (dissociationConnectivity[i] == 1) {
+				// Set the current reactant
+				currentReactant = std::dynamic_pointer_cast<PSICluster>(
+						reactants->at(i));
+				// Get the cluster map of this connection
+				composition = currentReactant->getComposition();
+				// We need to find if this is a Helium dissociation
+				if (numHe - composition["He"] == 1 && numI == composition["I"]
+						&& composition["V"] == 0) {
+					secondReactant = heCluster;
+				} else if (numHe == composition["He"]
+						&& numI - composition["V"] == 1
+						&& composition["V"] == 0) {
+					// trap mutation
+					secondReactant = vCluster;
+				} else if (numHe == composition["He"]
+						&& composition["I"] - numI == 1
+						&& composition["V"] == 0) {
+					// or interstitial dissociation
+					secondReactant = iCluster;
+				}
+				// Update the flux calculation
+				if (secondReactant) {
+					f3 += calculateDissociationConstant(*currentReactant,
+							*secondReactant, temperature)
+							* currentReactant->getConcentration();
+				}
 			}
 		}
 	}
