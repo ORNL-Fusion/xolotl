@@ -266,7 +266,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
 	/* Name each of the concentrations */
 	for (i = 0; i < size; i++) {
-		auto composition = reactants->at(i)->getComposition();
+		auto composition = reactants->at(i)->getComposition();/// FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		nHe = composition["He"];
 		nV = composition["V"];
 		nI = composition["I"];
@@ -420,8 +420,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //		/* Are V or I produced? */
 //
 		// ---- Compute diffusion over the locally owned part of the grid -----
-		// Compute the array offsets
-		concOffset = concs + size * xi;
+		// Compute the left and right array offsets
 		leftConcOffset = concs + size * (xi - 1);
 		rightConcOffset = concs + size * (xi + 1);
 
