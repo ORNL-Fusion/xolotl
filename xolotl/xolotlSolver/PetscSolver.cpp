@@ -305,8 +305,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 		for (int j = 0; j < size; j++) {
 			reactants->at(j)->setConcentration(1.0);
 		}
-		// Create a copy of the network for this grid point by converting to a
-		// Concentrations struct
+		// Update the PETSc concentrations array
 		size = network->size();
 		concOffset = concentrations + size * i;
 		network->fillConcentrationsArray(concOffset);
@@ -409,62 +408,63 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// compute the new concentrations.
 		concOffset = concs + size * xi;
 		network->updateConcentrationsFromArray(concOffset);
-
-		/* ----- Account for flux of incoming He by computing forcing that
-		 * produces He of cluster size 1 -----
-		 Crude cubic approximation of graph from Tibo's notes
-		 */
-		newCluster = std::dynamic_pointer_cast<PSICluster>(
-				network->get("He", 1));
-		newCluster->increaseConcentration(ctx->forcingScale * PetscMax(0.0,
-				0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x));
-		/* Are V or I produced? */
-
+//
+//		/* ----- Account for flux of incoming He by computing forcing that
+//		 * produces He of cluster size 1 -----
+//		 Crude cubic approximation of graph from Tibo's notes
+//		 */
+//		newCluster = std::dynamic_pointer_cast<PSICluster>(
+//				network->get("He", 1));
+//		newCluster->increaseConcentration(ctx->forcingScale * PetscMax(0.0,
+//				0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x));
+//		/* Are V or I produced? */
+//
 		// ---- Compute diffusion over the locally owned part of the grid -----
-		// Compute the array offsets for He
+		// Compute the array offsets
 		concOffset = concs + size * xi;
 		leftConcOffset = concs + size * (xi - 1);
 		rightConcOffset = concs + size * (xi + 1);
-		/* He clusters larger than 5 do not diffuse -- they are immobile */
-		for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
-			// Get the reactant index
-			heCluster = network->get("He", i);
-			reactantIndex = network->getReactantId(*(heCluster)) - 1;
-			// Get the concentrations
-			oldConc = concOffset[reactantIndex];
-			oldLeftConc = leftConcOffset[reactantIndex];
-			oldRightConc = rightConcOffset[reactantIndex];
-			// Get size*He from the new network
-			newCluster = std::dynamic_pointer_cast<PSICluster>(
-					network->get("He", size));
-			// Only update the concentration if the clusters exist
-			if (newCluster) {
-				// Use a simple midpoint stencil to compute the concentration
-				conc = newCluster->getDiffusionCoefficient(temperature)
-						* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
-				// Update the concentration of the new cluster
-				newCluster->increaseConcentration(conc);
-			}
-		}
 
-		// ----- Vacancy Diffusion -----
-		// Only vacancy clusters of size 1 diffuse. Get the concentrations from
-		// the first vacancy cluster in the network.
-		oldConc = concOffset[numHeClusters];
-		oldLeftConc = leftConcOffset[numHeClusters];
-		oldRightConc = rightConcOffset[numHeClusters];
-		// Get size*V from the new network
-		newCluster = std::dynamic_pointer_cast<PSICluster>(
-				network->get("V", 1));
-		// Only update the concentration if the cluster exists
-		if (newCluster) {
-			// Use a simple midpoint stencil to compute the concentration
-			conc = newCluster->getDiffusionCoefficient(temperature)
-					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
-			// Update the concentration of the new cluster
-			newCluster->increaseConcentration(conc);
-		}
-
+//		/* He clusters larger than 5 do not diffuse -- they are immobile */
+//		for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
+//			// Get the reactant index
+//			heCluster = network->get("He", i);
+//			reactantIndex = network->getReactantId(*(heCluster)) - 1;
+//			// Get the concentrations
+//			oldConc = concOffset[reactantIndex];
+//			oldLeftConc = leftConcOffset[reactantIndex];
+//			oldRightConc = rightConcOffset[reactantIndex];
+//			// Get size*He from the new network
+//			newCluster = std::dynamic_pointer_cast<PSICluster>(
+//					network->get("He", size));
+//			// Only update the concentration if the clusters exist
+//			if (newCluster) {
+//				// Use a simple midpoint stencil to compute the concentration
+//				conc = newCluster->getDiffusionCoefficient(temperature)
+//						* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
+//				// Update the concentration of the new cluster
+//				newCluster->increaseConcentration(conc);
+//			}
+//		}
+//
+//		// ----- Vacancy Diffusion -----
+//		// Only vacancy clusters of size 1 diffuse. Get the concentrations from
+//		// the first vacancy cluster in the network.
+//		oldConc = concOffset[numHeClusters];
+//		oldLeftConc = leftConcOffset[numHeClusters];
+//		oldRightConc = rightConcOffset[numHeClusters];
+//		// Get size*V from the new network
+//		newCluster = std::dynamic_pointer_cast<PSICluster>(
+//				network->get("V", 1));
+//		// Only update the concentration if the cluster exists
+//		if (newCluster) {
+//			// Use a simple midpoint stencil to compute the concentration
+//			conc = newCluster->getDiffusionCoefficient(temperature)
+//					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
+//			// Update the concentration of the new cluster
+//			newCluster->increaseConcentration(conc);
+//		}
+//
 		// ----- Interstitial Diffusion -----
 
 		// Only interstitial clusters of size 1 diffuse. Get the
@@ -483,17 +483,17 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			// Update the concentration of the new cluster
 			newCluster->increaseConcentration(conc);
 		}
-
-		// ----- Compute all of the new fluxes -----
-		auto reactants = network->getAll();
-		for (int i = 0; i < size; i++) {
-			newCluster = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(i));
-			// Compute the flux
-			flux = newCluster->getTotalFlux(temperature);
-			// Update the concentration
-			newCluster->increaseConcentration(flux);
-		}
+//
+//		// ----- Compute all of the new fluxes -----
+//		auto reactants = network->getAll();
+//		for (int i = 0; i < size; i++) {
+//			newCluster = std::dynamic_pointer_cast<PSICluster>(
+//					reactants->at(i));
+//			// Compute the flux
+//			flux = newCluster->getTotalFlux(temperature);
+//			// Update the concentration
+//			newCluster->increaseConcentration(flux);
+//		}
 
 		// Convert the concentrations back to the PETSc structure
 		concOffset = updatedConcs + size * xi;
@@ -536,11 +536,12 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	PetscInt row[3], col[3];
 	PetscReal hx, sx, x, val[6];
 	PetscReal *concs, *updatedConcs;
+	double * concOffset;
 	Vec localC;
 	static PetscBool initialized = PETSC_FALSE;
 	std::shared_ptr<PSICluster> psiCluster;
 	std::shared_ptr<Reactant> heCluster;
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> reactants;
 	// Get the network
 	auto network = PetscSolver::getNetwork();
 	// Get the properties
@@ -550,6 +551,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	int reactantIndex = 0;
 	int size = 0;
 
+	// Get the matrix from PETSc
 	PetscFunctionBeginUser;
 	ierr = MatZeroEntries(*J);
 	checkPetscError(ierr);
@@ -565,6 +567,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	hx = 8.0 / (PetscReal) (Mx - 1);
 	sx = 1.0 / (hx * hx);
 
+	// Get the complete data array
 	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
 	checkPetscError(ierr);
 	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
@@ -587,79 +590,89 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 	// Only compute the linear part of the Jacobian once
 	if (!initialized) {
+
 		/*
-		 Loop over grid points computing Jacobian terms for each grid point
+		 Loop over grid points computing Jacobian terms for diffusion at each
+		 grid point
 		 */
 		for (xi = xs; xi < xs + xm; xi++) {
 			x = xi * hx;
 
-			/* -------------------------------------------------------------
-			 ---- Compute diffusion over the locally owned part of the grid
-			 */
-
-			/* He clusters larger than 5 do not diffuse -- they are immobile */
-			// ---- Compute diffusion over the locally owned part of the grid -----
-			for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
-				// Get the cluster
-				psiCluster = std::dynamic_pointer_cast<PSICluster>(
-						network->get("He", i));
+			// Copy data into the PSIClusterReactionNetwork so that it can
+			// compute the new concentrations.
+			concOffset = concs + size * xi;
+			network->updateConcentrationsFromArray(concOffset);
+//
+//			/* -------------------------------------------------------------
+//			 ---- Compute diffusion over the locally owned part of the grid
+//			 */
+//
+//			/* He clusters larger than 5 do not diffuse -- they are immobile */
+//			// ---- Compute diffusion over the locally owned part of the grid -----
+//			for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
+//				// Get the cluster
+//				psiCluster = std::dynamic_pointer_cast<PSICluster>(
+//						network->get("He", i));
+//				// Compute the partial derivatives for diffusion of this cluster
+//				double diffCoeff = psiCluster->getDiffusionCoefficient(
+//						temperature);
+////				val[0] = diffCoeff * sx;
+////				val[1] = -2.0 * diffCoeff * sx;
+////				val[2] = diffCoeff * sx;
+//				// Get the reactant index
+//				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+//				// Set the row and column indices
+//				row[0] = xi * size + reactantIndex;
+//				col[0] = (xi - 1) * size + reactantIndex;
+//				col[1] = xi * size + reactantIndex;
+//				col[2] = (xi + 1) * size + reactantIndex;
+////				std::cout << i << " " << xi << " " << row[0] << " " << col[0]
+////						<< " " << col[1] << " " << col[2] << std::endl;
+//				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+//				checkPetscError(ierr);
+//			}
+//
+//			/* ONLY V and I clusters of size 1 diffuse */
+//
+//			// Get the V cluster
+//			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+//					network->get("V", 1));
+//			if (psiCluster) {
+//				// Compute the partial derivatives for diffusion of this cluster
+//				val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+//				val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
+//						* sx;
+//				val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
+//				// Get the reactant index
+//				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+//				// Set the row and column indices
+//				row[0] = reactantIndex;
+//				col[0] = reactantIndex - size;
+//				col[1] = reactantIndex;
+//				col[2] = reactantIndex + size;
+//				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+//				checkPetscError(ierr);
+//			}
+//
+			// Get the I cluster
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+					network->get("I", 1));
+			if (psiCluster) {
 				// Compute the partial derivatives for diffusion of this cluster
 				double diffCoeff = psiCluster->getDiffusionCoefficient(
-						temperature);
+								temperature);
 				val[0] = diffCoeff * sx;
 				val[1] = -2.0 * diffCoeff * sx;
 				val[2] = diffCoeff * sx;
 				// Get the reactant index
 				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
 				// Set the row and column indices
-				row[0] = xi * size + reactantIndex;
-				col[0] = (xi - 1) * size + reactantIndex;
-				col[1] = xi * size + reactantIndex;
-				col[2] = (xi + 1) * size + reactantIndex;
-//				std::cout << i << " " << xi << " " << row[0] << " " << col[0]
-//						<< " " << col[1] << " " << col[2] << std::endl;
-				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
-				checkPetscError(ierr);
-			}
-
-			/* ONLY V and I clusters of size 1 diffuse */
-
-			// Get the V cluster
-			psiCluster = std::dynamic_pointer_cast<PSICluster>(
-					network->get("V", 1));
-			if (psiCluster) {
-				// Compute the partial derivatives for diffusion of this cluster
-				val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
-				val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
-						* sx;
-				val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
-				// Get the reactant index
-				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
-				// Set the row and column indices
-				row[0] = reactantIndex;
+				row[0] = (xi - xs)*size + reactantIndex;
 				col[0] = reactantIndex - size;
 				col[1] = reactantIndex;
 				col[2] = reactantIndex + size;
-				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
-				checkPetscError(ierr);
-			}
-
-			// Get the I cluster
-			psiCluster = std::dynamic_pointer_cast<PSICluster>(
-					network->get("I", 1));
-			if (psiCluster) {
-				// Compute the partial derivatives for diffusion of this cluster
-				val[0] = psiCluster->getDiffusionCoefficient(temperature) * sx;
-				val[1] = -2.0 * psiCluster->getDiffusionCoefficient(temperature)
-						* sx;
-				val[2] = psiCluster->getDiffusionCoefficient(temperature) * sx;
-				// Get the reactant index
-				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
-				// Set the row and column indices
-				row[0] = reactantIndex;
-				col[0] = reactantIndex - size;
-				col[1] = reactantIndex;
-				col[2] = reactantIndex + size;
+				std::cout << row[0] + xi << " " << col[0] << " " << col[1] << " " << col[2] << std::endl;
+				std::cout << val[0] << " " << val[1] << " " << val[2] << std::endl;
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
@@ -681,26 +694,47 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		ierr = MatRetrieveValues(*J);
 		checkPetscError(ierr);
 	}
-
-	// Create a new columns array of size n and set the column ids
-	PetscInt rows[size];
-	for (int i = 0; i < size; i++) {
-		rows[i] = i;
-	}
-
-	/* ----- Compute the partial derivatives for the reaction term ----- */
-	auto reactants = network->getAll();
-	std::vector<double> partials;
-	for (int i = 0; i < size; i++) {
-		psiCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
-		// Set the row and column indices
-		col[0] = i;
-		// Get the partial derivatives
-		partials = psiCluster->getPartialDerivatives(temperature);
-		// Update the matrix
-		ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
-				ADD_VALUES);
-	}
+//
+//	// Create a new columns array of size n and set the column ids
+//	PetscInt rows[size];
+//	for (int i = 0; i < size; i++) {
+//		rows[i] = i;
+//	}
+//
+//	/* ----- Compute the partial derivatives for the reaction term at each
+//	 * grid point ----- */
+//	std::vector<double> partials;
+//	for (xi = xs; xi < xs + xm; xi++) {
+//		x = xi * hx;
+//
+//		// Copy data into the PSIClusterReactionNetwork so that it can
+//		// compute the new concentrations.
+//		concOffset = concs + size * xi;
+//		network->updateConcentrationsFromArray(concOffset);
+//
+//		// Get the reactants
+//		reactants = network->getAll();
+//		// Update the column in the Jacobian that represents each reactant
+//		for (int i = 0; i < size; i++) {
+//			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+//					reactants->at(i));
+//			std::cout << "reactant " << psiCluster->getName() << " of size "
+//					<< psiCluster->getSize() << " and id "
+//					<< network->getReactantId(*psiCluster) << std::endl;
+//			// Get the column id
+//			col[0] = network->getReactantId(*psiCluster) - 1;
+//			// Get the partial derivatives
+//			partials = psiCluster->getPartialDerivatives(temperature);
+//			std::cout.precision(8);
+//			for (int j = 0; j < size; j++) {
+//				partials[j] = -1.0;
+//				std::cout << partials[j] << std::endl;
+//			}
+//			// Update the matrix
+//			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
+//					ADD_VALUES);
+//		}
+//	}
 
 	/*
 	 Restore vectors
@@ -749,7 +783,7 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 			// Add it to the diagonal fill block
 			connectivityLength = connectivity.size();
 			for (j = 0; j < connectivityLength; j++) {
-				index = j * numReactants + i;
+				index = j * connectivityLength + i;
 				diagFill[index] = connectivity[j];
 			}
 		}

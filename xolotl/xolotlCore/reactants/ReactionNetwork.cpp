@@ -29,7 +29,8 @@ std::map<std::string, int> Reactant::getComposition() const {
 
 /**
  * This operation fills an array of doubles with the concentrations of all
- * of the Reactants in the network.
+ * of the Reactants in the network. The array is ordered by increasing
+ * reactant id, starting at 1.
  * @param concentrations The array that will be filled with the
  * concentrations. This operation does NOT create, destroy or resize the
  * array. If the array is to small to hold the concentrations, SIGSEGV will
@@ -40,10 +41,12 @@ void ReactionNetwork::fillConcentrationsArray(double * concentrations) {
 	// Local Declarations
 	auto reactants = getAll();
 	int size = reactants->size();
+	int id = 1;
 
 	// Fill the array
 	for (int i = 0; i < size; i++) {
-		concentrations[i] = reactants->at(i)->getConcentration();
+		id = getReactantId(*(reactants->at(i))) - 1;
+		concentrations[id] = reactants->at(i)->getConcentration();
 	}
 
 	return;
@@ -62,10 +65,12 @@ void ReactionNetwork::updateConcentrationsFromArray(double * concentrations) {
 	// Local Declarations
 	auto reactants = getAll();
 	int size = reactants->size();
+	int id = 1;
 
 	// Set the concentrations
 	for (int i = 0; i < size; i++) {
-		reactants->at(i)->setConcentration(concentrations[i]);
+		id = getReactantId(*(reactants->at(i))) - 1;
+		reactants->at(i)->setConcentration(concentrations[id]);
 	}
 
 	return;

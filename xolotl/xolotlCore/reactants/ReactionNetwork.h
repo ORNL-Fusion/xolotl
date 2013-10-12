@@ -148,7 +148,8 @@ public:
 
 	/**
 	 * This operation returns the id of a reactant if it exists in the network.
-	 * @param reactant The reactant
+	 * @param reactant The reactant The array is ordered by increasing reactant
+	 * id, starting at 1.
 	 * @return The id of the reactant. This id is guaranteed to be between 1 and
 	 * n, including both, for n reactants in the network.
 	 */
