@@ -82,6 +82,7 @@ void InterstitialCluster::createReactionConnectivity() {
 		if ((size + composition["I"] <= maxIClusterSize)) {
 			reactionConnectivity[indexOther] = 1;
 			combiningReactants.push_back(firstReactant);
+			std::cout << "Connectivity = " << reactionConnectivity[indexOther] << ", size = " << size << ", size + comp[I] = " << size + composition["I"] << std::endl;
 		}
 	}
 

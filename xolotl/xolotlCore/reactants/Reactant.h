@@ -149,7 +149,7 @@ public:
 	 * with the i-th Reactant in the ReactionNetwork and a "0" indicates
 	 * that it does not.
 	 */
-	virtual std::vector<int> getConnectivity();
+	virtual std::vector<int> getConnectivity() const;
 
 	/**
 	 * This operation returns the list of partial derivatives of this Reactant

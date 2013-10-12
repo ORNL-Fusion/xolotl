@@ -668,9 +668,9 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
 				// Set the row and column indices
 				row[0] = (xi - xs)*size + reactantIndex;
-				col[0] = reactantIndex - size;
-				col[1] = reactantIndex;
-				col[2] = reactantIndex + size;
+				col[0] = (xi - xs)*size + reactantIndex;
+				col[1] = (xi - xs + 1)*size + reactantIndex;
+				col[2] = (xi - xs + 2)*size + reactantIndex;
 				std::cout << row[0] + xi << " " << col[0] << " " << col[1] << " " << col[2] << std::endl;
 				std::cout << val[0] << " " << val[1] << " " << val[2] << std::endl;
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
@@ -785,6 +785,7 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 			for (j = 0; j < connectivityLength; j++) {
 				index = j * connectivityLength + i;
 				diagFill[index] = connectivity[j];
+				std::cout << index << " " << connectivity[j] << std::endl;
 			}
 		}
 	} else {
@@ -964,6 +965,7 @@ void PetscSolver::solve() {
 		// Subtract one from the id to get a unique index between 0 and network->size() - 1
 		reactantIndex = network->getReactantId(*reactant) - 1;
 		ofill[reactantIndex * dof + reactantIndex] = 1;
+		std::cout << "Diffusion indices: " << reactantIndex << " " << (reactantIndex*dof + reactantIndex) << std::endl;
 	}
 
 	ierr = DMDASetBlockFills(da, NULL, ofill);

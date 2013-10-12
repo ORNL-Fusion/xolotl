@@ -57,7 +57,7 @@ void Reactant::setReactionNetwork(
 }
 
 
-std::vector<int> Reactant::getConnectivity() {
+std::vector<int> Reactant::getConnectivity() const {
 	// The connectivity array by default is filled with
 	// zeroes.
 	int connectivityLength = network->size();
