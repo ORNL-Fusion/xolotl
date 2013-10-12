@@ -972,7 +972,7 @@ void PetscSolver::solve() {
 	checkPetscError(ierr);
 	ierr = PetscFree(ofill);
 	checkPetscError(ierr);
-	ierr = getDiagonalFill(dfill, dof * dof);
+	//ierr = getDiagonalFill(dfill, dof * dof);////// !~!!!!!!!!!!~~~!!!~!~!!~~!!!~!~!!!!!!!!!!!!!~~~~~~~~~~~~~~~~!~!~FIXME FIXME FIXME FIXME 32340923423904823049238//
 	checkPetscError(ierr);
 	ierr = PetscFree(dfill);
 	checkPetscError(ierr);
