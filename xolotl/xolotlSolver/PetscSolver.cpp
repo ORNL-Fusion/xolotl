@@ -344,7 +344,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	std::shared_ptr<PSICluster> newCluster;
 	std::shared_ptr<Reactant> heCluster;
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
-	int size = 0;
+	int size = 0, reactantIndex = 0;
 	PetscScalar * concOffset, *leftConcOffset, *rightConcOffset;
 	double oldConc = 0.0, oldLeftConc = 0.0, oldRightConc = 0.0, conc = 0.0,
 			flux = 0.0;
@@ -354,7 +354,6 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int numVClusters = std::stoi(props["numVClusters"]);
-	int reactantIndex = 0;
 
 	PetscFunctionBeginUser;
 	ierr = TSGetDM(ts, &da);
@@ -466,14 +465,15 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //
 		// ----- Interstitial Diffusion -----
 
-		// Only interstitial clusters of size 1 diffuse. Get the
-		// concentrations.
-		oldConc = concOffset[numHeClusters + numVClusters];
-		oldLeftConc = leftConcOffset[numHeClusters + numVClusters];
-		oldRightConc = rightConcOffset[numHeClusters + numVClusters];
-		// Get size*I from the new network
+		// Get 1I from the new network and gets its position in the array
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("I", 1));
+		reactantIndex = network->getReactantId(*(newCluster)) - 1;
+		// Only interstitial clusters of size 1 diffuse. Get the
+		// concentrations.
+		oldConc = concOffset[reactantIndex];
+		oldLeftConc = leftConcOffset[reactantIndex];
+		oldRightConc = rightConcOffset[reactantIndex];
 		// Only update the concentration if the clusters exist
 		if (newCluster) {
 			// Use a simple midpoint stencil to compute the concentration
@@ -497,7 +497,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Convert the concentrations back to the PETSc structure
 		concOffset = updatedConcs + size * xi;
 		network->fillConcentrationsArray(concOffset);
-
+		//std::cout << concOffset[0] << " " << concOffset[1] << " " << concOffset[2] << " " << concOffset[3] << std::endl;
 	}
 
 //	std::cout << "----- Printing concentrations -----" << std::endl;
@@ -670,7 +670,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				col[0] = (xi - xs)*size + reactantIndex;
 				col[1] = (xi - xs + 1)*size + reactantIndex;
 				col[2] = (xi - xs + 2)*size + reactantIndex;
-				std::cout << row[0] + xi << " " << col[0] << " " << col[1] << " " << col[2] << std::endl;
+				std::cout << row[0] << " " << col[0] << " " << col[1] << " " << col[2] << std::endl;
 				std::cout << val[0] << " " << val[1] << " " << val[2] << std::endl;
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
@@ -940,23 +940,23 @@ void PetscSolver::solve() {
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion, with for He.
 	int reactantIndex = 0;
 	std::shared_ptr<Reactant> reactant;
-	for (int numHe = 1; numHe < PetscMin(numHeClusters+1, 6); numHe++) {
-		reactant = network->get("He", numHe);
-		// Only couple if the reactant exists
-		if (reactant) {
-			// Subtract one from the id to get a unique index between 0 and network->size() - 1
-			reactantIndex = network->getReactantId(*reactant) - 1;
-			ofill[reactantIndex * dof + reactantIndex] = 1;
-		}
-	}
-	// Now for single V
-	reactant = network->get("V", 1);
-	// Only couple if the reactant exists
-	if (reactant) {
-		// Subtract one from the id to get a unique index between 0 and network->size() - 1
-		reactantIndex = network->getReactantId(*reactant) - 1;
-		ofill[reactantIndex * dof + reactantIndex] = 1;
-	}
+//	for (int numHe = 1; numHe < PetscMin(numHeClusters+1, 6); numHe++) {
+//		reactant = network->get("He", numHe);
+//		// Only couple if the reactant exists
+//		if (reactant) {
+//			// Subtract one from the id to get a unique index between 0 and network->size() - 1
+//			reactantIndex = network->getReactantId(*reactant) - 1;
+//			ofill[reactantIndex * dof + reactantIndex] = 1;
+//		}
+//	}
+//	// Now for single V
+//	reactant = network->get("V", 1);
+//	// Only couple if the reactant exists
+//	if (reactant) {
+//		// Subtract one from the id to get a unique index between 0 and network->size() - 1
+//		reactantIndex = network->getReactantId(*reactant) - 1;
+//		ofill[reactantIndex * dof + reactantIndex] = 1;
+//	}
 	// Now for single I
 	reactant = network->get("I", 1);
 	// Only couple if the reactant exists
