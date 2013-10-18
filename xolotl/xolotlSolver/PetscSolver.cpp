@@ -266,7 +266,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
 	/* Name each of the concentrations */
 	for (i = 0; i < size; i++) {
-		auto composition = reactants->at(i)->getComposition();/// FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		auto composition = reactants->at(i)->getComposition(); /// FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		nHe = composition["He"];
 		nV = composition["V"];
 		nI = composition["I"];
@@ -303,12 +303,18 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 		reactants = network->getAll("I");
 		size = reactants->size();
 		for (int j = 0; j < size; j++) {
-			reactants->at(j)->setConcentration(1.0);
+			reactants->at(j)->setConcentration(0.0); /// FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		}
+		network->get("I",1)->setConcentration(1.0);
 		// Update the PETSc concentrations array
 		size = network->size();
 		concOffset = concentrations + size * i;
 		network->fillConcentrationsArray(concOffset);
+		std::cout << "----- Initial Concentrations -----" << std::endl;
+		for (int i = 0; i < 4; i++) {
+			std::cout << "c[" << i << "] = " << concOffset[i] << std::endl;
+		}
+		std::cout << "----- End Initial Concentrations -----" << std::endl;
 	}
 
 	/*
@@ -367,6 +373,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	checkPetscError(ierr);
 	hx = 8.0 / (PetscReal) (Mx - 1);
 	sx = 1.0 / (hx * hx);
+	static int counter = 0;
 
 	/*
 	 Scatter ghost points to local vector,using the 2-step process
@@ -401,12 +408,17 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	 Loop over grid points computing ODE terms for each grid point
 	 */
 	size = network->size();
+	counter++;
+	std::cout << "Computing concentration updates, time " << counter << std::endl;
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
 		// Copy data into the PSIClusterReactionNetwork so that it can
 		// compute the new concentrations.
 		concOffset = concs + size * xi;
 		network->updateConcentrationsFromArray(concOffset);
+		// Compute the left and right array offsets
+		leftConcOffset = concs + size * (xi - 1);
+		rightConcOffset = concs + size * (xi + 1);
 //
 //		/* ----- Account for flux of incoming He by computing forcing that
 //		 * produces He of cluster size 1 -----
@@ -419,9 +431,6 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //		/* Are V or I produced? */
 //
 		// ---- Compute diffusion over the locally owned part of the grid -----
-		// Compute the left and right array offsets
-		leftConcOffset = concs + size * (xi - 1);
-		rightConcOffset = concs + size * (xi + 1);
 
 //		/* He clusters larger than 5 do not diffuse -- they are immobile */
 //		for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
@@ -468,6 +477,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Get 1I from the new network and gets its position in the array
 		newCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("I", 1));
+		auto newClusterNonPtr = *newCluster;
 		reactantIndex = network->getReactantId(*(newCluster)) - 1;
 		// Only interstitial clusters of size 1 diffuse. Get the
 		// concentrations.
@@ -481,7 +491,14 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
 			// Update the concentration of the new cluster
 			newCluster->increaseConcentration(conc);
+			std::cout << "RHS-F: " << xi << " " << newCluster->getDiffusionCoefficient(temperature) << " "
+					<< oldLeftConc << " " << -2.0*oldConc << " " << oldRightConc << " "
+					<< conc << " " << newCluster->getConcentration() << std::endl;
 		}
+		for (int i = 0; i < 12; i++) {
+			std::cout << "c[" << i << "] = " << concs[i] << std::endl;
+		}
+
 //
 //		// ----- Compute all of the new fluxes -----
 //		auto reactants = network->getAll();
@@ -496,18 +513,16 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 
 		// Convert the concentrations back to the PETSc structure
 		concOffset = updatedConcs + size * xi;
-		network->fillConcentrationsArray(concOffset);
+		//network->fillConcentrationsArray(concOffset); /////////////////////-------------------FIXME!!!!!!!!!!!!!!!!!!!!!!
+		concOffset[1] = newCluster->getConcentration();
+		concOffset[0] = concOffset[2] = concOffset[3] = 0.0;
+//		for (int i = 0; i < 4; i++) {
+//			std::cout << "c[" << i << "] = " << concOffset[i] << std::endl;
+//		}
+//		std::cout << "-----" << std::endl;
 		//std::cout << concOffset[0] << " " << concOffset[1] << " " << concOffset[2] << " " << concOffset[3] << std::endl;
+		break; //FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
-
-//	std::cout << "----- Printing concentrations -----" << std::endl;
-//	std::cout.precision(15);
-//	for (int i = 0; i < size; i++) {
-//		auto composition = network->getAll()->at(i)->getComposition();
-//		std::cout << "C(" << i << "), [" << composition["He"] << ", "
-//				<< composition["V"] << ", " << composition["I"] << "] = "
-//				<< concOffset[i] << std::endl;
-//	}
 
 	/*
 	 Restore vectors
@@ -540,7 +555,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	static PetscBool initialized = PETSC_FALSE;
 	std::shared_ptr<PSICluster> psiCluster;
 	std::shared_ptr<Reactant> heCluster;
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> reactants;
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants;
 	// Get the network
 	auto network = PetscSolver::getNetwork();
 	// Get the properties
@@ -594,6 +609,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		 Loop over grid points computing Jacobian terms for diffusion at each
 		 grid point
 		 */
+		// FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! xi < xs+xm
 		for (xi = xs; xi < xs + xm; xi++) {
 			x = xi * hx;
 
@@ -653,29 +669,34 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 //				checkPetscError(ierr);
 //			}
 //
-			// Get the I cluster
+			// Get the 1I cluster
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("I", 1));
 			if (psiCluster) {
 				// Compute the partial derivatives for diffusion of this cluster
 				double diffCoeff = psiCluster->getDiffusionCoefficient(
-								temperature);
+						temperature);
 				val[0] = diffCoeff * sx;
 				val[1] = -2.0 * diffCoeff * sx;
 				val[2] = diffCoeff * sx;
 				// Get the reactant index
 				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
-				// Set the row and column indices
-				row[0] = (xi - xs)*size + reactantIndex;
-				col[0] = (xi - xs)*size + reactantIndex;
-				col[1] = (xi - xs + 1)*size + reactantIndex;
-				col[2] = (xi - xs + 2)*size + reactantIndex;
-				std::cout << row[0] << " " << col[0] << " " << col[1] << " " << col[2] << std::endl;
-				std::cout << val[0] << " " << val[1] << " " << val[2] << std::endl;
+				// Set the row and column indices. These indices are computed
+				// by using xi, xi-1 and xi+1 and the arrays are shifted to
+				// (xs+1)*size to properly account for the neighboring ghost
+				// cells.
+				row[0] = (xi - xs + 1) * size + reactantIndex;
+				col[0] = ((xi - 1) - xs + 1) * size + reactantIndex;
+				col[1] = (xi - xs + 1) * size + reactantIndex;
+				col[2] = ((xi + 1 + 1) - xs) * size + reactantIndex;
+				std::cout.precision(16);
+				std::cout << "RHS-J: " << xi << " " << diffCoeff << " " << val[0] << " " << val[1] << " "
+						<< val[2] << " " << row[0] << " " << col[0] << " " << col[1] << " "
+						<< col[2] << " " << std::endl;
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
-
+			break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -964,7 +985,8 @@ void PetscSolver::solve() {
 		// Subtract one from the id to get a unique index between 0 and network->size() - 1
 		reactantIndex = network->getReactantId(*reactant) - 1;
 		ofill[reactantIndex * dof + reactantIndex] = 1;
-		std::cout << "Diffusion indices: " << reactantIndex << " " << (reactantIndex*dof + reactantIndex) << std::endl;
+		std::cout << "Diffusion indices: " << reactantIndex << " "
+				<< (reactantIndex * dof + reactantIndex) << std::endl;
 	}
 
 	ierr = DMDASetBlockFills(da, NULL, ofill);
@@ -1005,7 +1027,7 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = TSSetInitialTimeStep(ts, 0.0, .001);
+	ierr = TSSetInitialTimeStep(ts, 0.0, 1.0e-10);
 	checkPetscError(ierr);
 	ierr = TSSetDuration(ts, 100, 50.0);
 	checkPetscError(ierr);
