@@ -34,7 +34,7 @@ void HeCluster::createReactionConnectivity() {
 	int numIClusters = std::stoi(props["numIClusters"]);
 	int totalSize = 1, firstSize = 0, secondSize = 0;
 	int firstIndex = -1, secondIndex = -1, reactantVecSize = 0;
-	std::shared_ptr<Reactant> firstReactant, secondReactant;
+	std::shared_ptr<Reactant> firstReactant, secondReactant, productReactant;
 	std::map<std::string, int> composition;
 	std::shared_ptr<PSICluster> psiCluster;
 
@@ -78,16 +78,23 @@ void HeCluster::createReactionConnectivity() {
 	auto reactants = network->getAll("He");
 	reactantVecSize = reactants->size();
 	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the reactant, its composition and id
+		// Get the B*He reactant, its composition and id
 		firstReactant = reactants->at(i);
 		composition = firstReactant->getComposition();
 		indexOther = network->getReactantId(*firstReactant) - 1;
-		// React if the size of the product is valid
-		if ((size + composition["He"] <= maxHeClusterSize)) {
+		// Get the product, (A+B)*He
+		int productSize = size + composition["He"];
+		productReactant = network->get("He",productSize);
+		// React if the size of the product is valid and it exists in the network
+		if (productSize <= maxHeClusterSize && productReactant) {
+			// Connect to B*He
 			reactionConnectivity[indexOther] = 1;
+			// Connect to (A+B)*He
+			int indexProduct = network->getReactantId(*productReactant) - 1;
+			reactionConnectivity[indexProduct] = 1;
+			// Push B*He onto the list of cluster that we combine with
 			combiningReactants.push_back(firstReactant);
-		} else
-			continue;
+		}
 	}
 
 	/* -----  A*He + B*V --> (A*He)(B*V) -----
