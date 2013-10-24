@@ -45,11 +45,11 @@ void ReactionNetwork::fillConcentrationsArray(double * concentrations) {
 	int id = 1;
 
 	// Fill the array
-	//std::cout << "Filling concentration array..." << std::endl;
+	std::cout << "Filling concentration array..." << std::endl;
 	for (int i = 0; i < size; i++) {
 		id = getReactantId(*(reactants->at(i))) - 1;
 		concentrations[id] = reactants->at(i)->getConcentration();
-		//std::cout << "id = " << id << ", c = " << reactants->at(i)->getConcentration() << std::endl;
+		std::cout << "id = " << id << ", c = " << reactants->at(i)->getConcentration() << std::endl;
 	}
 
 	return;
@@ -71,11 +71,11 @@ void ReactionNetwork::updateConcentrationsFromArray(double * concentrations) {
 	int id = 1;
 
 	// Set the concentrations
-	//std::cout << "Loading concentration array..." << std::endl;
+	std::cout << "Loading concentration array..." << std::endl;
 	for (int i = 0; i < size; i++) {
 		id = getReactantId(*(reactants->at(i))) - 1;
 		reactants->at(i)->setConcentration(concentrations[id]);
-		//std::cout << "id = " << id << ", c = " << reactants->at(i)->getConcentration() << std::endl;
+		std::cout << "id = " << id << ", c = " << reactants->at(i)->getConcentration() << std::endl;
 	}
 
 	return;

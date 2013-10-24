@@ -7,7 +7,6 @@
 #include <PSIClusterReactionNetwork.h>
 #include <petscsys.h>
 #include <petscdmda.h>
-#include <petscts.h>
 
 namespace xolotlSolver {
 
