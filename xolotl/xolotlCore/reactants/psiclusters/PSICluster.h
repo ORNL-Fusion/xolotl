@@ -108,10 +108,8 @@ protected:
 	 * @param temperature
 	 * @return
 	 */
-	double calculateReactionRateConstant(
-			const PSICluster & firstReactant,
-			const PSICluster & secondReactant,
-			const double temperature) const;
+	double calculateReactionRateConstant(const PSICluster & firstReactant,
+			const PSICluster & secondReactant, const double temperature) const;
 
 	/**
 	 * Calculate the dissociation constant based on the current
@@ -123,10 +121,8 @@ protected:
 	 * @param temperature The current system temperature
 	 * @return
 	 */
-	double calculateDissociationConstant(
-			const PSICluster & firstReactant,
-			const PSICluster & secondReactant,
-			const double temperature) const;
+	double calculateDissociationConstant(const PSICluster & firstReactant,
+			const PSICluster & secondReactant, const double temperature) const;
 
 	/**
 	 * Return whether or not this PSICluster is a product
@@ -139,7 +135,8 @@ protected:
 	 * @param reactantJ
 	 * @return true if this reactant is a product of i and j
 	 */
-	virtual bool isProductReactant(const Reactant & reactantI , const Reactant & reactantJ);
+	virtual bool isProductReactant(const Reactant & reactantI,
+			const Reactant & reactantJ);
 
 	/**
 	 * Computes a row of the reaction connectivity matrix corresponding to
@@ -158,6 +155,27 @@ protected:
 	 * the element at the position of the second reactant is 1, otherwise 0.
 	 */
 	virtual void createDissociationConnectivity();
+
+	/**
+	 * This operation "combines" clusters in the sense that it handles all of
+	 * the logic and caching required to correctly process the reaction
+	 *
+	 * A_x + A_y --> A_(x+y)
+	 *
+	 * A_x + B_y --> (A_x)(B_y)
+	 *
+	 * or
+	 *
+	 * (A_x)(B_y) + B_z --> (A_x)[B_(z+y)]
+	 *
+	 * for each reactant in the set that interacts with this reactant.
+	 *
+	 * @param reactants The reactants that can combine with this reactant.
+	 * @param maxSize The maximum size of the compound produced in the reaction.
+	 * @param compoundName The name of the compound produced in the reaction.
+	 */
+	void combineClusters(std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
+			int maxSize, std::string compoundName);
 
 private:
 

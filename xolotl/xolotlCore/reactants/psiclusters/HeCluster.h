@@ -98,9 +98,6 @@ protected:
 	 */
 	void createDissociationConnectivity();
 
-	void connectClusters(
-			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants, int maxSize, std::string productName);
-
 };
 
 //end class HeCluster

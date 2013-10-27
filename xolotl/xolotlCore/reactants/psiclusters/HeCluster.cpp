@@ -20,60 +20,6 @@ std::shared_ptr<Reactant> HeCluster::clone() {
 	return reactant;
 }
 
-void HeCluster::connectClusters(
-		std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants, int maxSize, std::string productName) {
-
-	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
-			> (network);
-	std::map<std::string,int> myComposition = getComposition(), secondComposition;
-	int numHe, numV, numI, secondNumHe, secondNumV, secondNumI;
-	int otherIndex, productIndex;
-	std::vector<int> mixedSizes;
-	std::shared_ptr<PSICluster> secondCluster, productCluster;
-	// Setup the composition variables for this cluster
-	numHe = myComposition["He"];
-	numV = myComposition["V"];
-	numI = myComposition["I"];
-
-	int reactantVecSize = reactants->size();
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the B*He reactant, its composition and its index
-		secondCluster = std::dynamic_pointer_cast <PSICluster> (reactants->at(i));
-		secondComposition = secondCluster->getComposition();
-		secondNumHe = secondComposition["He"];
-		secondNumV = secondComposition["V"];
-		secondNumI = secondComposition["I"];
-		otherIndex = psiNetwork->getReactantId(*secondCluster) - 1;
-		// Get the product
-		int productSize = size + secondCluster->getSize();
-		if (productName == "HeV" || productName == "HeI") {
-			mixedSizes = psiNetwork->getCompositionVector(numHe + secondNumHe,
-					numV + secondNumV, numI + secondNumI);
-			productCluster = std::dynamic_pointer_cast < PSICluster
-					> (psiNetwork->getCompound(productName, mixedSizes));
-		} else {
-			productCluster = std::dynamic_pointer_cast < PSICluster
-			> (psiNetwork->get(productName, productSize));
-		}
-		// React if the size of the product is valid and it exists in the network
-		if (productSize <= maxSize && secondCluster && productCluster) {
-			// Connect to B*He
-			reactionConnectivity[otherIndex] = 1;
-			std::cout << secondCluster->getSize() << secondCluster->getName() << ": "
-					<< "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << std::endl;
-			// Connect to (A+B)*He
-			productIndex = psiNetwork->getReactantId(*productCluster) - 1;
-			reactionConnectivity[productIndex] = 1;
-			std::cout << productSize << productName << ": " << "reactionConnectivity["<< productIndex << "] = "
-					<< reactionConnectivity[productIndex] << std::endl;
-			// Push B*He onto the list of clusters that we combine with
-			combiningReactants.push_back(secondCluster);
-		}
-	}
-
-	return;
-}
-
 void HeCluster::createReactionConnectivity() {
 
 	// Local Declarations - Note the reference to the properties map
@@ -165,7 +111,7 @@ void HeCluster::createReactionConnectivity() {
 //			combiningReactants.push_back(secondReactant);
 //		}
 //	}
-	connectClusters(reactants,maxHeClusterSize,"He");
+	combineClusters(reactants,maxHeClusterSize,"He");
 
 	/* -----  A*He + B*V --> (A*He)(B*V) -----
 	 * Helium clusters can interact with any vacancy cluster so long as the sum
@@ -199,7 +145,7 @@ void HeCluster::createReactionConnectivity() {
 //			combiningReactants.push_back(secondReactant);
 //		}
 //	}
-	connectClusters(reactants,maxHeVClusterSize,"HeV");
+	combineClusters(reactants,maxHeVClusterSize,"HeV");
 
 	/* ----- A*He + B*I --> (A*He)(B*I)
 	 * Helium clusters can interact with any interstitial cluster so long as
@@ -234,7 +180,7 @@ void HeCluster::createReactionConnectivity() {
 //			combiningReactants.push_back(secondReactant);
 //		}
 //	}
-	connectClusters(reactants,maxHeIClusterSize,"HeI");
+	combineClusters(reactants,maxHeIClusterSize,"HeI");
 
 	/* ----- A*He + (B*He)(C*V) --> [(A+B)He](C*V) -----
 	 * Helium can interact with a mixed-species cluster so long as the sum of
@@ -276,7 +222,7 @@ void HeCluster::createReactionConnectivity() {
 //				combiningReactants.push_back(secondReactant);
 //			}
 //		}
-		connectClusters(reactants,maxHeVClusterSize,"HeV");
+		combineClusters(reactants,maxHeVClusterSize,"HeV");
 	}
 
 	/* ----- A*He + (B*He)(C*I) --> ([A+B]*He)(C*I) -----
@@ -317,7 +263,7 @@ void HeCluster::createReactionConnectivity() {
 //				combiningReactants.push_back(secondReactant);
 //			}
 //		}
-		connectClusters(reactants,maxHeIClusterSize,"HeI");
+		combineClusters(reactants,maxHeIClusterSize,"HeI");
 	}
 
 	return;
