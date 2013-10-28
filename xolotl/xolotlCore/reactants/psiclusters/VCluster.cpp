@@ -67,7 +67,7 @@ void VCluster::createReactionConnectivity() {
 		totalSize = firstSize + secondSize;
 	}
 
-	/* -----  A*He + B*V → (A*He)(B*V) -----
+	/* -----  He_a + V_b --> (He_a)(V_b) -----
 	 * Vacancy clusters can interact with any helium cluster so long as the sum
 	 * of the number of helium atoms and vacancies does not produce a cluster
 	 * with a size greater than the maximum mixed-species cluster size.
@@ -76,20 +76,9 @@ void VCluster::createReactionConnectivity() {
 	 * because they contribute to the flux due to combination reactions.
 	 */
 	auto reactants = network->getAll("He");
-	reactantVecSize = reactants->size();
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the reactant, its composition and id
-		firstReactant = reactants->at(i);
-		composition = firstReactant->getComposition();
-		indexOther = network->getReactantId(*firstReactant) - 1;
-		// React if the size of the product is valid
-		if ((size + composition["He"] <= maxHeVClusterSize)) {
-			reactionConnectivity[indexOther] = 1;
-			combiningReactants.push_back(firstReactant);
-		}
-	}
+	combineClusters(reactants, maxHeClusterSize, "HeV");
 
-	/* ----- A*V + B*V --> (A+B)*V -----
+	/* ----- V_a + V_b --> V_(a+b) -----
 	 * This cluster should interact with all other clusters of the same type up
 	 * to the max size minus the size of this one to produce larger clusters.
 	 *
@@ -97,23 +86,12 @@ void VCluster::createReactionConnectivity() {
 	 * because they contribute to the flux due to combination reactions.
 	 */
 	reactants = network->getAll("V");
-	reactantVecSize = reactants->size();
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the reactant, its composition and id
-		firstReactant = reactants->at(i);
-		composition = firstReactant->getComposition();
-		indexOther = network->getReactantId(*firstReactant) - 1;
-		// React if the size of the product is valid
-		if ((size + composition["V"] <= maxVClusterSize)) {
-			reactionConnectivity[indexOther] = 1;
-			combiningReactants.push_back(firstReactant);
-		}
-	}
+	combineClusters(reactants, maxVClusterSize, "V");
 
-	/* ----- A*I + B*V -----
-	 * → (A-B)*I, if A > B
-	 * → (B-I)*V, if A < B
-	 * → 0, if A = B -----
+	/* ----- I_a + V_b -----
+	 * --> I_(a-b), if a > b
+	 * --> V_(b-a), if a < b
+	 * --> 0, if a = b -----
 	 * Vacancies always annihilate interstitials.
 	 *
 	 * All of these clusters are added to the set of combining reactants
@@ -130,7 +108,7 @@ void VCluster::createReactionConnectivity() {
 		combiningReactants.push_back(firstReactant);
 	}
 
-	/* ----- (A*He)(B*V) + V → (A*He)[(B+1)*V] -----
+	/* ----- (He_a)(V_b) + V → (He_a)[V_(b+1)] -----
 	 * Single vacancies can interact with a mixed-species cluster so long as
 	 * the sum of the number of vacancy atoms and the size of the mixed-species
 	 * cluster does not exceed the maximum mixed-species cluster size.
@@ -140,21 +118,10 @@ void VCluster::createReactionConnectivity() {
 	 */
 	if (size == 1 && numHeVClusters > 0) {
 		reactants = network->getAll("HeV");
-		reactantVecSize = reactants->size();
-		for (int i = 0; i < reactantVecSize; i++) {
-			// Get the reactant, and its id
-			firstReactant = reactants->at(i);
-			indexOther = network->getReactantId(*firstReactant) - 1;
-			// React if the size of the product is valid
-			psiCluster = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-			if ((size + psiCluster->getSize() <= maxHeVClusterSize)) {
-				reactionConnectivity[indexOther] = 1;
-				combiningReactants.push_back(firstReactant);
-			}
-		}
+		combineClusters(reactants, maxHeVClusterSize, "HeV");
 	}
 
-	/* ----- (AHe)*(BI) + (CV) --> (AHe)*(B - C)V -----
+	/* ----- (He_a)*(I_b) + (V_c) --> (He_a)*[I_(b-c)] -----
 	 * Vacancy absorption by HeI under the condition that y - z >= 1
 	 *
 	 * All of these clusters are added to the set of combining reactants
@@ -162,15 +129,7 @@ void VCluster::createReactionConnectivity() {
 	 */
 	if (numHeIClusters > 0) {
 		reactants = network->getAll("HeI");
-		reactantVecSize = reactants->size();
-		for (int i = 0; i < reactantVecSize; i++) {
-			// Get the reactant and its id
-			firstReactant = reactants->at(i);
-			indexOther = network->getReactantId(*firstReactant) - 1;
-			// Always interact with HeI
-			reactionConnectivity[indexOther] = 1;
-			combiningReactants.push_back(firstReactant);
-		}
+		replaceInCompound(reactants,"I","V");
 	}
 
 	return;

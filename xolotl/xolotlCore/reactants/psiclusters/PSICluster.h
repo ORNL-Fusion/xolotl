@@ -162,6 +162,8 @@ protected:
 	 *
 	 * A_x + A_y --> A_(x+y)
 	 *
+	 * or
+	 *
 	 * A_x + B_y --> (A_x)(B_y)
 	 *
 	 * or
@@ -175,7 +177,27 @@ protected:
 	 * @param compoundName The name of the compound produced in the reaction.
 	 */
 	void combineClusters(std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
-			int maxSize, std::string compoundName);
+			int maxSize, std::string compoundName)
+	;
+
+	/**
+	 * This operation handles partial replacement reactions of the form
+	 *
+	 * (A_x)(B_y) + C_z --> (A_x)[B_(y-z)]
+	 *
+	 * for each compound reactant in the set.
+	 *
+	 * @param reactants The reactants that have part of their B components
+	 * replaced. It is assumed that each element of this set represents a
+	 * reactant of the form (A_x)(B_y).
+	 * @param oldComponentName The name of the component that will be partially
+	 * replaced.
+	 * @param newComponentName The name of the component that will replace the old
+	 * component.
+	 */
+	void replaceInCompound(
+			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
+			std::string oldComponentName, std::string newComponentName);
 
 private:
 
