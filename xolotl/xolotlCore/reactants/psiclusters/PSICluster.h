@@ -346,13 +346,12 @@ public:
 	virtual std::map<std::string, int> getClusterMap();
 
 	/**
-	 * This virtual method is for subclasses to specialize
-	 * and should return the reaction radius for the
-	 * particular PSICluster subclass.
+	 * This operation returns the reaction radius for the
+	 * particular cluster.
 	 *
 	 * @return
 	 */
-	virtual const double getReactionRadius() const;
+	double getReactionRadius() const;
 
 	/**
 	 * This operation returns a list that represents the connectivity

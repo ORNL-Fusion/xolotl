@@ -343,8 +343,8 @@ bool PSICluster::isProductReactant(const Reactant & reactantI,
 	return false;
 }
 
-const double PSICluster::getReactionRadius() const {
-	return 0.0;
+double PSICluster::getReactionRadius() const {
+	return 0.001; // FIXME!
 }
 
 std::vector<int> PSICluster::getConnectivity() const {
