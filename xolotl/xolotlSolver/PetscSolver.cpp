@@ -393,7 +393,10 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Copy data into the PSIClusterReactionNetwork so that it can
 		// compute the new concentrations.
 		concOffset = concs + size * xi;
-		network->updateConcentrationsFromArray(concOffset);
+		oldReactants = network->getAll();
+		for (int i = 0; i < size; i++) {
+			oldReactants->at(i)->setConcentration(0.0);
+		}
 		// Compute the left and right array offsets
 		leftConcOffset = concs + size * (xi - 1);
 		rightConcOffset = concs + size * (xi + 1);
@@ -494,9 +497,9 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Convert the concentrations back to the PETSc structure
 		concOffset = updatedConcs + size * xi;
 		network->fillConcentrationsArray(concOffset);
-//		for (int i = 0; i < 4; i++) {
-//			std::cout << "c[" << i << "] = " << concOffset[i] << std::endl;
-//		}
+		for (int i = 0; i < 4; i++) {
+			std::cout << "c[" << i << "]_out = " << concOffset[i] << std::endl;
+		}
 //		std::cout << "-----" << std::endl;
 		//std::cout << concOffset[0] << " " << concOffset[1] << " " << concOffset[2] << " " << concOffset[3] << std::endl;
 		break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -987,7 +990,7 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = TSSetInitialTimeStep(ts, 0.0, 1.0e10);
+	ierr = TSSetInitialTimeStep(ts, 0.0, 1.0e-3);
 	checkPetscError(ierr);
 	ierr = TSSetDuration(ts, 100, 50.0);
 	checkPetscError(ierr);
