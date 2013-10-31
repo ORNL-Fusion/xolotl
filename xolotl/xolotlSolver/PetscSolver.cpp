@@ -281,18 +281,17 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	for (i = xs; i < xs + xm; i++) {
 		x = i * hx;
 		// Set the default vacancy concentrations
-//		reactants = network->getAll("V");
-//		size = reactants->size();
-//		for (int j = 0; j < size; j++) {
-//			reactants->at(j)->setConcentration(1.0);
-//		}
-//		// Set the default interstitial concentrations
-//		reactants = network->getAll("I");
-//		size = reactants->size();
-//		for (int j = 0; j < size; j++) {
-//			reactants->at(j)->setConcentration(1.0);
-//		}
-		network->get("I", 1)->setConcentration(1.0);
+		reactants = network->getAll("V");
+		size = reactants->size();
+		for (int j = 0; j < size; j++) {
+			reactants->at(j)->setConcentration(1.0);
+		}
+		// Set the default interstitial concentrations
+		reactants = network->getAll("I");
+		size = reactants->size();
+		for (int j = 0; j < size; j++) {
+			reactants->at(j)->setConcentration(1.0);
+		}
 		// Update the PETSc concentrations array
 		size = network->size();
 		concOffset = concentrations + size * i;
@@ -395,70 +394,76 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		concOffset = concs + size * xi;
 		oldReactants = network->getAll();
 		for (int i = 0; i < size; i++) {
-			oldReactants->at(i)->setConcentration(0.0);
+			oldReactants->at(i)->zero();
 		}
 		// Compute the left and right array offsets
 		leftConcOffset = concs + size * (xi - 1);
 		rightConcOffset = concs + size * (xi + 1);
 
-		for (int i = 0; i < 4; i++) {
-			std::cout << "c[" << i << "] = " << concOffset[i] << std::endl;
-		}
+//		for (int i = 0; i < 4; i++) {
+//			std::cout << "c[" << i << "] = " << concOffset[i] << std::endl;
+//		}
 
 		/* ----- Account for flux of incoming He by computing forcing that
 		 * produces He of cluster size 1 -----
 		 Crude cubic approximation of graph from Tibo's notes
 		 */
-//		heCluster = std::dynamic_pointer_cast<PSICluster>(
-//				network->get("He", 1));
-//		heCluster->increaseConcentration(100.0 * PetscMax(0.0,
-//				0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x));
-//		/* Are V or I produced? */
-//
-//		// ---- Compute diffusion over the locally owned part of the grid -----
-//
-//		/* He clusters larger than 5 do not diffuse -- they are immobile */
-//		for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
-//			// Get the reactant index
-//			clusterDummy = network->get("He", i);
-//			heCluster = std::dynamic_pointer_cast<PSICluster>(clusterDummy);
-//			// Only update the concentration if the cluster exists
-//			if (heCluster) {
-//				reactantIndex = network->getReactantId(*(heCluster)) - 1;
-//				// Get the concentrations
-//				oldConc = concOffset[reactantIndex];
-//				oldLeftConc = leftConcOffset[reactantIndex];
-//				oldRightConc = rightConcOffset[reactantIndex];
-//				// Use a simple midpoint stencil to compute the concentration
-//				conc = heCluster->getDiffusionCoefficient(temperature)
-//						* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
-//				// Update the concentration of the new cluster
-//				heCluster->increaseConcentration(conc);
+		heCluster = std::dynamic_pointer_cast<PSICluster>(
+				network->get("He", 1));
+		if (heCluster) {
+			heCluster->increaseConcentration(100.0 * PetscMax(0.0,
+					0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x));
+		}
+
+		// ---- Compute diffusion over the locally owned part of the grid -----
+
+		/* He clusters larger than 5 do not diffuse -- they are immobile */
+		for (int i = 1; i < PetscMin(numHeClusters+1,6); i++) {
+			// Get the reactant index
+			clusterDummy = network->get("He", i);
+			heCluster = std::dynamic_pointer_cast<PSICluster>(clusterDummy);
+			// Only update the concentration if the cluster exists
+			if (heCluster) {
+				reactantIndex = network->getReactantId(*(heCluster)) - 1;
+				// Get the concentrations
+				oldConc = concOffset[reactantIndex];
+				oldLeftConc = leftConcOffset[reactantIndex];
+				oldRightConc = rightConcOffset[reactantIndex];
+				// Use a simple midpoint stencil to compute the concentration
+				conc = heCluster->getDiffusionCoefficient(temperature)
+						* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
+				// Update the concentration of the new cluster
+				heCluster->increaseConcentration(conc);
 //				std::cout << "RHS-F: " << xi << " "
 //						<< heCluster->getDiffusionCoefficient(temperature)
 //						<< " " << oldLeftConc << " " << -2.0 * oldConc << " "
 //						<< oldRightConc << " " << conc << " "
-//						<< heCluster->getConcentration() << std::endl;
-//			}
-//		}
-//
-//		// ----- Vacancy Diffusion -----
-//		// Only vacancy clusters of size 1 diffuse, so grab 1V.
-//		vCluster = std::dynamic_pointer_cast<PSICluster>(
-//				network->get("V", 1));
-//		// Only update the concentration if the cluster exists
-//		if (vCluster) {
-//			// Get the concentrations for the first vacancy cluster in the network.
-//			reactantIndex = network->getReactantId(*(vCluster)) - 1;
-//			oldConc = concOffset[reactantIndex];
-//			oldLeftConc = leftConcOffset[reactantIndex];
-//			oldRightConc = rightConcOffset[reactantIndex];
-//			// Use a simple midpoint stencil to compute the concentration
-//			conc = vCluster->getDiffusionCoefficient(temperature)
-//					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
-//			// Update the concentration of the new cluster
-//			vCluster->increaseConcentration(conc);
-//		}
+//						<< heCluster->getConcentration() << " " << heCluster->getSize() << std::endl;
+			}
+		}
+
+		// ----- Vacancy Diffusion -----
+		// Only vacancy clusters of size 1 diffuse, so grab 1V.
+		vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+		// Only update the concentration if the cluster exists
+		if (vCluster) {
+			// Get the concentrations for the first vacancy cluster in the network.
+			reactantIndex = network->getReactantId(*(vCluster)) - 1;
+			oldConc = concOffset[reactantIndex];
+			oldLeftConc = leftConcOffset[reactantIndex];
+			oldRightConc = rightConcOffset[reactantIndex];
+			// Use a simple midpoint stencil to compute the concentration
+			conc = vCluster->getDiffusionCoefficient(temperature)
+					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
+			// Update the concentration of the new cluster
+			vCluster->increaseConcentration(conc);
+//			std::cout << "RHS-F: " << xi << " "
+//					<< vCluster->getDiffusionCoefficient(temperature) << " "
+//					<< oldLeftConc << " " << -2.0 * oldConc << " "
+//					<< oldRightConc << " " << conc << " "
+//					<< vCluster->getConcentration() << std::endl;
+		}
+
 		// ----- Interstitial Diffusion -----
 		// Get 1I from the new network and gets its position in the array
 		iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
@@ -475,11 +480,6 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
 			// Update the concentration of the new cluster
 			iCluster->increaseConcentration(conc);
-			std::cout << "RHS-F: " << xi << " "
-					<< iCluster->getDiffusionCoefficient(temperature) << " "
-					<< oldLeftConc << " " << -2.0 * oldConc << " "
-					<< oldRightConc << " " << conc << " "
-					<< iCluster->getConcentration() << std::endl;
 		}
 
 //
@@ -497,12 +497,12 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Convert the concentrations back to the PETSc structure
 		concOffset = updatedConcs + size * xi;
 		network->fillConcentrationsArray(concOffset);
-		for (int i = 0; i < 4; i++) {
-			std::cout << "c[" << i << "]_out = " << concOffset[i] << std::endl;
-		}
+//		for (int i = 0; i < 4; i++) {
+//			std::cout << "c[" << i << "]_out = " << concOffset[i] << std::endl;
+//		}
 //		std::cout << "-----" << std::endl;
 		//std::cout << concOffset[0] << " " << concOffset[1] << " " << concOffset[2] << " " << concOffset[3] << std::endl;
-		break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
 	/*
@@ -601,55 +601,56 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			 ---- Compute diffusion over the locally owned part of the grid
 			 */
 
-//			/* He clusters larger than 5 do not diffuse -- they are immobile */
-//			// ---- Compute diffusion over the locally owned part of the grid -----
-//			for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
-//				// Get the cluster
-//				psiCluster = std::dynamic_pointer_cast<PSICluster>(
-//						network->get("He", i));
-//				// Get the reactant index
-//				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
-//				// Compute the partial derivatives for diffusion of this cluster
-//				diffCoeff = psiCluster->getDiffusionCoefficient(temperature);
-//				val[0] = diffCoeff * sx;
-//				val[1] = -2.0 * diffCoeff * sx;
-//				val[2] = diffCoeff * sx;
-//				// Set the row and column indices. These indices are computed
-//				// by using xi, xi-1 and xi+1 and the arrays are shifted to
-//				// (xs+1)*size to properly account for the neighboring ghost
-//				// cells.
-//				row[0] = (xi - xs + 1) * size + reactantIndex;
-//				col[0] = ((xi - 1) - xs + 1) * size + reactantIndex;
-//				col[1] = (xi - xs + 1) * size + reactantIndex;
-//				col[2] = ((xi + 1 + 1) - xs) * size + reactantIndex;
-//				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
-//				checkPetscError(ierr);
-//			}
-//
-//			/* 1V and 1I are the only other clusters that diffuse */
-//
-//			// Get the V cluster
-//			psiCluster = std::dynamic_pointer_cast<PSICluster>(
-//					network->get("V", 1));
-//			if (psiCluster) {
-//				diffCoeff = psiCluster->getDiffusionCoefficient(temperature);
-//				// Compute the partial derivatives for diffusion of this cluster
-//				val[0] = diffCoeff * sx;
-//				val[1] = -2.0 * diffCoeff * sx;
-//				val[2] = diffCoeff * sx;
-//				// Get the reactant index
-//				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
-//				// Set the row and column indices. These indices are computed
-//				// by using xi, xi-1 and xi+1 and the arrays are shifted to
-//				// (xs+1)*size to properly account for the neighboring ghost
-//				// cells.
-//				row[0] = (xi - xs + 1) * size + reactantIndex;
-//				col[0] = ((xi - 1) - xs + 1) * size + reactantIndex;
-//				col[1] = (xi - xs + 1) * size + reactantIndex;
-//				col[2] = ((xi + 1 + 1) - xs) * size + reactantIndex;
-//				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
-//				checkPetscError(ierr);
-//			}
+			/* He clusters larger than 5 do not diffuse -- they are immobile */
+			// ---- Compute diffusion over the locally owned part of the grid -----
+			for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
+				// Get the cluster
+				psiCluster = std::dynamic_pointer_cast<PSICluster>(
+						network->get("He", i));
+				// Get the reactant index
+				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+				// Compute the partial derivatives for diffusion of this cluster
+				diffCoeff = psiCluster->getDiffusionCoefficient(temperature);
+				val[0] = diffCoeff * sx;
+				val[1] = -2.0 * diffCoeff * sx;
+				val[2] = diffCoeff * sx;
+				// Set the row and column indices. These indices are computed
+				// by using xi, xi-1 and xi+1 and the arrays are shifted to
+				// (xs+1)*size to properly account for the neighboring ghost
+				// cells.
+				row[0] = (xi - xs + 1) * size + reactantIndex;
+				col[0] = ((xi - 1) - xs + 1) * size + reactantIndex;
+				col[1] = (xi - xs + 1) * size + reactantIndex;
+				col[2] = ((xi + 1 + 1) - xs) * size + reactantIndex;
+				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+				checkPetscError(ierr);
+			}
+
+			/* 1V and 1I are the only other clusters that diffuse */
+
+			// Get the V cluster
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+					network->get("V", 1));
+			if (psiCluster) {
+				diffCoeff = psiCluster->getDiffusionCoefficient(temperature);
+				// Compute the partial derivatives for diffusion of this cluster
+				val[0] = diffCoeff * sx;
+				val[1] = -2.0 * diffCoeff * sx;
+				val[2] = diffCoeff * sx;
+				// Get the reactant index
+				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+				// Set the row and column indices. These indices are computed
+				// by using xi, xi-1 and xi+1 and the arrays are shifted to
+				// (xs+1)*size to properly account for the neighboring ghost
+				// cells.
+				row[0] = (xi - xs + 1) * size + reactantIndex;
+				col[0] = ((xi - 1) - xs + 1) * size + reactantIndex;
+				col[1] = (xi - xs + 1) * size + reactantIndex;
+				col[2] = ((xi + 1 + 1) - xs) * size + reactantIndex;
+				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+				checkPetscError(ierr);
+			}
+
 			// Get the 1I cluster
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("I", 1));
@@ -669,14 +670,14 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				col[0] = ((xi - 1) - xs + 1) * size + reactantIndex;
 				col[1] = (xi - xs + 1) * size + reactantIndex;
 				col[2] = ((xi + 1 + 1) - xs) * size + reactantIndex;
-				std::cout << "RHS-J: " << xi << " " << diffCoeff << " "
-						<< val[0] << " " << val[1] << " " << val[2] << " "
-						<< row[0] << " " << col[0] << " " << col[1] << " "
-						<< col[2] << " " << std::endl;
+//				std::cout << "RHS-J: " << xi << " " << diffCoeff << " "
+//						<< val[0] << " " << val[1] << " " << val[2] << " "
+//						<< row[0] << " " << col[0] << " " << col[1] << " "
+//						<< col[2] << " " << std::endl;
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
-			break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			//break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -785,7 +786,7 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 			for (j = 0; j < connectivityLength; j++) {
 				index = j * connectivityLength + i;
 				diagFill[index] = connectivity[j];
-				std::cout << index << " " << connectivity[j] << std::endl;
+				//std::cout << index << " " << connectivity[j] << std::endl;
 			}
 		}
 	} else {
