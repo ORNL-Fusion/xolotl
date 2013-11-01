@@ -57,8 +57,10 @@ void VCluster::createReactionConnectivity() {
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			pair.first = std::dynamic_pointer_cast < PSICluster
+					> (firstReactant);
+			pair.second = std::dynamic_pointer_cast < PSICluster
+					> (secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -92,42 +94,11 @@ void VCluster::createReactionConnectivity() {
 	 * --> I_(a-b), if a > b
 	 * --> V_(b-a), if a < b
 	 * --> 0, if a = b -----
-	 * Vacancies always annihilate interstitials.
 	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
+	 * Vacancies are always filled by interstitials.
 	 */
-
 	reactants = network->getAll("I");
-	reactantVecSize = reactants->size();
-
-	// Local Declarations
-	std::shared_ptr<PSICluster> secondCluster, productCluster;
-	std::string firstClusterName = "V", secondClusterName = "I", productClusterName;
-	int firstClusterSize = 0, secondClusterSize = 0, productClusterSize = 0;
-	int secondIndex = 0, productIndex = 0;
-
-	// Get the number of V or I in this cluster (the "first")
-	firstClusterSize = (getComposition())[firstClusterName];
-	// Look at all of the second clusters, either V or I, and determine
-	// if a connection exists.
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the second cluster, its id and size
-		secondCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
-		secondIndex = network->getReactantId(*firstReactant) - 1;
-		secondClusterSize = (secondCluster->getComposition())[secondClusterName];
-		// Set the product size and composition
-		if (firstClusterName == "V")
-			productClusterSize = (firstClusterSize < secondClusterSize) ? secondClusterSize - firstClusterSize : firstClusterSize - secondClusterSize;
-		else if (name == "I")
-			// a > b, a < b
-			productClusterSize = (firstClusterSize > secondClusterSize) ? firstClusterSize - secondClusterSize : secondClusterSize - firstClusterSize;
-
-//		// Always interact with interstitials
-//		reactionConnectivity[indexOther] = 1;
-//		combiningReactants.push_back(firstReactant);
-
-	}
+	fillVWithI("I",reactants);
 
 	/* ----- (He_a)(V_b) + V → (He_a)[V_(b+1)] -----
 	 * Single vacancies can interact with a mixed-species cluster so long as
@@ -150,7 +121,7 @@ void VCluster::createReactionConnectivity() {
 	 */
 	if (numHeIClusters > 0) {
 		reactants = network->getAll("HeI");
-		replaceInCompound(reactants,"I","V");
+		replaceInCompound(reactants, "I", "V");
 	}
 
 	return;

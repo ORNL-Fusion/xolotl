@@ -172,6 +172,9 @@ protected:
 	 *
 	 * for each reactant in the set that interacts with this reactant.
 	 *
+	 * This operation fills the reaction connectivity array as well as the
+	 * array of combining reactants.
+	 *
 	 * @param reactants The reactants that can combine with this reactant.
 	 * @param maxSize The maximum size of the compound produced in the reaction.
 	 * @param compoundName The name of the compound produced in the reaction.
@@ -187,6 +190,9 @@ protected:
 	 *
 	 * for each compound reactant in the set.
 	 *
+	 * This operation fills the reaction connectivity array as well as the
+	 * array of combining reactants.
+	 *
 	 * @param reactants The reactants that have part of their B components
 	 * replaced. It is assumed that each element of this set represents a
 	 * reactant of the form (A_x)(B_y).
@@ -198,6 +204,32 @@ protected:
 	void replaceInCompound(
 			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
 			std::string oldComponentName, std::string newComponentName);
+
+	/* This operation handles reactions where interstitials fill vacancies,
+	 * sometimes referred to vacancy-interstitial annihilation. The reaction
+	 * is of the form
+	 *
+	 * I_a + V_b
+	 * --> I_(a-b), if a > b
+	 * --> V_(b-a), if a < b
+	 * --> 0, if a = b
+	 *
+	 * It is important to note that I_a + V_b = V_b + I_a.
+	 *
+	 * The operation assumes "this" is the first cluster in the reaction and
+	 * relies on the caller to specify the second cluster name/type.
+	 *
+	 * This operation fills the reaction connectivity array as well as the
+	 * array of combining reactants.
+	 *
+	 * @param secondClusterName The name of the first cluster in the reaction,
+	 * either "V" or "I" and always the opposite or alternative of
+	 * this->getName().
+	 * @param reactants The set of clusters of the second type that interact
+	 * with this cluster.
+     **/
+	void fillVWithI(std::string secondClusterName,
+			std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > reactants);
 
 private:
 
