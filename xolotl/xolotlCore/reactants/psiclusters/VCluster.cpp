@@ -33,7 +33,7 @@ void VCluster::createReactionConnectivity() {
 	int numIClusters = std::stoi(props["numIClusters"]);
 	std::map<std::string, int> composition;
 	int totalSize = 1, firstSize = 0, secondSize = 0;
-	int firstIndex = -1, secondIndex = -1, reactantVecSize = 0;
+	int firstIndex = -1, reactantVecSize = 0;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
 	std::shared_ptr<PSICluster> psiCluster;
 
@@ -97,15 +97,36 @@ void VCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
+
 	reactants = network->getAll("I");
 	reactantVecSize = reactants->size();
+
+	// Local Declarations
+	std::shared_ptr<PSICluster> secondCluster, productCluster;
+	std::string firstClusterName = "V", secondClusterName = "I", productClusterName;
+	int firstClusterSize = 0, secondClusterSize = 0, productClusterSize = 0;
+	int secondIndex = 0, productIndex = 0;
+
+	// Get the number of V or I in this cluster (the "first")
+	firstClusterSize = (getComposition())[firstClusterName];
+	// Look at all of the second clusters, either V or I, and determine
+	// if a connection exists.
 	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the reactant and its id
-		firstReactant = reactants->at(i);
-		indexOther = network->getReactantId(*firstReactant) - 1;
-		// Always interact with interstitials
-		reactionConnectivity[indexOther] = 1;
-		combiningReactants.push_back(firstReactant);
+		// Get the second cluster, its id and size
+		secondCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+		secondIndex = network->getReactantId(*firstReactant) - 1;
+		secondClusterSize = (secondCluster->getComposition())[secondClusterName];
+		// Set the product size and composition
+		if (firstClusterName == "V")
+			productClusterSize = (firstClusterSize < secondClusterSize) ? secondClusterSize - firstClusterSize : firstClusterSize - secondClusterSize;
+		else if (name == "I")
+			// a > b, a < b
+			productClusterSize = (firstClusterSize > secondClusterSize) ? firstClusterSize - secondClusterSize : secondClusterSize - firstClusterSize;
+
+//		// Always interact with interstitials
+//		reactionConnectivity[indexOther] = 1;
+//		combiningReactants.push_back(firstReactant);
+
 	}
 
 	/* ----- (He_a)(V_b) + V → (He_a)[V_(b+1)] -----
