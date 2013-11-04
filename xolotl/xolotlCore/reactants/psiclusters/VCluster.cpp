@@ -100,7 +100,7 @@ void VCluster::createReactionConnectivity() {
 	reactants = network->getAll("I");
 	fillVWithI("I",reactants);
 
-	/* ----- (He_a)(V_b) + V → (He_a)[V_(b+1)] -----
+	/* ----- (He_a)(V_b) + V --> (He_a)[V_(b+1)] -----
 	 * Single vacancies can interact with a mixed-species cluster so long as
 	 * the sum of the number of vacancy atoms and the size of the mixed-species
 	 * cluster does not exceed the maximum mixed-species cluster size.

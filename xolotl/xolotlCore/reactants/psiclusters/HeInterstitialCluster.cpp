@@ -43,7 +43,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
 			network);
 	auto props = psiNetwork->getProperties();
-	int networkSize = psiNetwork->size(), index = 0;
+	int networkSize = psiNetwork->size(), index = 0, numReactants = 0;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
@@ -55,6 +55,26 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
 	std::vector<int> firstComposition, secondComposition, speciesMap;
+
+	/* ----- (A*He)(B*I) + (C*V) --> (A*He)[(B-C)*I] -----
+	 * This section adds the clusters that produce this cluster to the array
+	 * for vacancy absorption by HeI.
+	 */
+	for (int c = 1; c <= maxVClusterSize; c++) { // hehe... c++!
+		// Get the first reactant's composition and then retrieve it
+		firstComposition = psiNetwork->getCompositionVector(numHe, 0, numI + c);
+		firstReactant = psiNetwork->getCompound("HeI", firstComposition);
+		// Set the second reactant
+		secondReactant = psiNetwork->get("V", c);
+		// Create a ReactingPair with the two reactants
+		if (firstReactant && secondReactant) {
+			ReactingPair pair;
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			// Add the pair to the list
+			reactingPairs.push_back(pair);
+		}
+	}
 
 	/* ----- (A*He)(B*I) + I --> (A*He)[(B+1)*I] -----
 	 * This section adds the clusters that produce this cluster to the array
@@ -87,37 +107,8 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	 * maximum size limit is not violated.
 	 */
 	auto reactants = psiNetwork->getAll("He");
-	int numReactants = reactants->size();
-	for (int i = 0; i < numReactants; i++) {
-		firstReactant = reactants->at(i);
-		int numHeOther =
-				(std::dynamic_pointer_cast<PSICluster>(firstReactant))->getSize();
-		if (firstReactant && numHeOther + numHe + numI <= maxHeIClusterSize) {
-			index = psiNetwork->getReactantId(*firstReactant) - 1;
-			reactionConnectivity[index] = 1;
-			combiningReactants.push_back(firstReactant);
-		}
-	}
+	combineClusters(reactants,maxHeIClusterSize,"HeI");
 
-	/* ----- (A*He)(B*I) + (C*V) --> (A*He)[(B-C)*I] -----
-	 * This section adds the clusters that produce this cluster to the array
-	 * for vacancy absorption by HeI.
-	 */
-	for (int c = 1; c <= maxVClusterSize; c++) { // hehe... c++!
-		// Get the first reactant's composition and then retrieve it
-		firstComposition = psiNetwork->getCompositionVector(numHe, 0, numI + c);
-		firstReactant = psiNetwork->getCompound("HeI", firstComposition);
-		// Set the second reactant
-		secondReactant = psiNetwork->get("V", c);
-		// Create a ReactingPair with the two reactants
-		if (firstReactant && secondReactant) {
-			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
-			// Add the pair to the list
-			reactingPairs.push_back(pair);
-		}
-	}
 	/* ----- (A*He)(B*I) + (C*V) --> (A*He)[(B-C)*I] -----
 	 * This section adds the clusters that ARE produced by this cluster to the
 	 * array for vacancy absorption by HeI.

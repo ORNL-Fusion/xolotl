@@ -65,28 +65,16 @@ void InterstitialCluster::createReactionConnectivity() {
 		totalSize = firstSize + secondSize;
 	}
 
-	/* ----- A*I + B*I → (A+B)*I -----
+	/* ----- I_a + I_b --> I_(a+b) -----
 	 *	Interstitial absorption
 	 *
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
 	auto reactants = network->getAll("I");
-	reactantVecSize = reactants->size();
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the reactant, its composition and id
-		firstReactant = reactants->at(i);
-		composition = firstReactant->getComposition();
-		indexOther = network->getReactantId(*firstReactant) - 1;
-		// React if the size of the product is valid
-		if ((size + composition["I"] <= maxIClusterSize)) {
-			reactionConnectivity[indexOther] = 1;
-			combiningReactants.push_back(firstReactant);
-			std::cout << "Connectivity = " << reactionConnectivity[indexOther] << ", size = " << size << ", size + comp[I] = " << size + composition["I"] << std::endl;
-		}
-	}
+	combineClusters(reactants,maxIClusterSize,"I");
 
-	/* ----- (A*He) + (B*I) --> (A*He)*(B*I)
+	/* ----- He_a + I_b --> (He_a)*(I_b)
 	 * Interstitials can interact with clusters of He to form HeI clusters.
 	 * They cannot cluster with He clusters that are so large that the
 	 * combination of the two would produce an HeI cluster above the
@@ -96,40 +84,21 @@ void InterstitialCluster::createReactionConnectivity() {
 	 * because they contribute to the flux due to combination reactions.
 	 */
 	reactants = network->getAll("He");
-	reactantVecSize = reactants->size();
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the reactant, its composition and id
-		firstReactant = reactants->at(i);
-		composition = firstReactant->getComposition();
-		indexOther = network->getReactantId(*firstReactant) - 1;
-		// React if the size of the product is valid
-		if ((size + composition["He"] <= maxHeIClusterSize)) {
-			reactionConnectivity[indexOther] = 1;
-			combiningReactants.push_back(firstReactant);
-		}
-	}
+	combineClusters(reactants,maxHeIClusterSize,"HeI");
 
-	/* ----- A*I + B*V -----
-	 * → (A-B)*I, if A > B
-	 * → (B-I)*V, if A < B
-	 * → 0, if A = B
+	/* ----- I_a + V_b -----
+	 * --> I_(a-b), if a > b
+	 * --> V_(b-a), if a < b
+	 * --> 0, if a = b
 	 * Interstitial-Vacancy Annihilation
 	 *
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
 	reactants = network->getAll("V");
-	reactantVecSize = reactants->size();
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the reactant and its id
-		firstReactant = reactants->at(i);
-		indexOther = network->getReactantId(*firstReactant) - 1;
-		// Always interact with vacancies
-		reactionConnectivity[indexOther] = 1;
-		combiningReactants.push_back(firstReactant);
-	}
+	fillVWithI("V",reactants);
 
-	/* ----- (A*He)(B*V) + (C*I) --> (A*He)[(B-C)V] -----
+	/* ----- (He_a)(V_b) + (I_c) --> (He_a)[V_(b-c)] -----
 	 * Interstitials interact with all mixed-species clusters by
 	 * annihilating vacancies.
 	 *
@@ -138,18 +107,10 @@ void InterstitialCluster::createReactionConnectivity() {
 	 */
 	if (numHeIClusters > 0) {
 		reactants = network->getAll("HeV");
-		reactantVecSize = reactants->size();
-		for (int i = 0; i < reactantVecSize; i++) {
-			// Get the reactant and its id
-			firstReactant = reactants->at(i);
-			indexOther = network->getReactantId(*firstReactant) - 1;
-			// Always interact with HeV
-			reactionConnectivity[indexOther] = 1;
-			combiningReactants.push_back(firstReactant);
-		}
+		replaceInCompound(reactants,"V","I");
 	}
 
-	/* ----- (A*He)*(B*I) + I --> (A*He)*(B + 1)*I -----
+	/* ----- (He_a)*(I_b) + I --> (He_a)*[I_(b + 1)] -----
 	 * Single interstitial absorption by a HeI cluster under the condition
 	 * that (x + y + 1) <= maxSize
 	 *
@@ -158,18 +119,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	 */
 	if (size == 1 && numHeVClusters > 0) {
 		reactants = network->getAll("HeI");
-		reactantVecSize = reactants->size();
-		for (int i = 0; i < reactantVecSize; i++) {
-			// Get the reactant, and its id
-			firstReactant = reactants->at(i);
-			indexOther = network->getReactantId(*firstReactant) - 1;
-			// React if the size of the product is valid
-			psiCluster = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-			if ((size + psiCluster->getSize() <= maxHeIClusterSize)) {
-				reactionConnectivity[indexOther] = 1;
-				combiningReactants.push_back(firstReactant);
-			}
-		}
+		combineClusters(reactants,maxHeIClusterSize,"HeI");
 	}
 
 	return;
