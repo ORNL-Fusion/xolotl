@@ -68,8 +68,8 @@ protected:
 	 * The row of the reaction connectivity matrix corresponding to
 	 * this PSICluster
 	 *
-	 * If a reactant is involved in a reaction with this PSICluster,
-	 * the element at the reactant's index is 1, otherwise 0.
+	 * If a cluster is involved in a reaction with this PSICluster,
+	 * the element at the cluster's index is 1, otherwise 0.
 	 */
 	std::vector<int> reactionConnectivity;
 
@@ -77,8 +77,8 @@ protected:
 	 * The row of the dissociation connectivity matrix corresponding to
 	 * this PSICluster
 	 *
-	 * If this PSICluster can dissociate into a particular reactant,
-	 * the element at the reactant's index is 1, otherwise 0.
+	 * If this PSICluster can dissociate into a particular cluster,
+	 * the element at the cluster's index is 1, otherwise 0.
 	 */
 	std::vector<int> dissociationConnectivity;
 
@@ -91,7 +91,7 @@ protected:
 	std::vector<ReactingPair> reactingPairs;
 
 	/**
-	 * A vector of Reactants that combine with this cluster to produce other
+	 * A vector of clusters that combine with this cluster to produce other
 	 * clusters. This vector should be populated early in the cluster's
 	 * lifecycle by subclasses. In the standard Xolotl clusters, this vector is
 	 * filled in createReactionConnectivity.
@@ -101,58 +101,67 @@ protected:
 	/**
 	 * Calculate the reaction constant dependent on the
 	 * reaction radii and the diffusion coefficients for the
-	 * ith and jth reactants, which itself depends on the current
+	 * ith and jth clusters, which itself depends on the current
 	 * temperature
-	 * @param The first reactant interacting
-	 * @param The second reactant interacting
+	 * @param The first cluster interacting
+	 * @param The second cluster interacting
 	 * @param temperature
 	 * @return
 	 */
-	double calculateReactionRateConstant(const PSICluster & firstReactant,
-			const PSICluster & secondReactant, const double temperature) const;
+	double calculateReactionRateConstant(const PSICluster & firstcluster,
+			const PSICluster & secondcluster, const double temperature) const;
 
 	/**
 	 * Calculate the dissociation constant based on the current
-	 * reactants atomic volume, reaction rate constant, and binding
+	 * clusters atomic volume, reaction rate constant, and binding
 	 * energies.
 	 *
-	 * @param The first reactant interacting
-	 * @param The second reactant interacting
+	 * @param The first cluster interacting
+	 * @param The second cluster interacting
 	 * @param temperature The current system temperature
 	 * @return
 	 */
-	double calculateDissociationConstant(const PSICluster & firstReactant,
-			const PSICluster & secondReactant, const double temperature) const;
+	double calculateDissociationConstant(const PSICluster & firstcluster,
+			const PSICluster & secondcluster, const double temperature) const;
 
 	/**
 	 * Return whether or not this PSICluster is a product
-	 * of the reaction between reactantI and reactantJ in
-	 * this Reactants ReactionNetwork. This method should be
+	 * of the reaction between clusterI and clusterJ in
+	 * this clusters ReactionNetwork. This method should be
 	 * specialized by subclasses to indicate whether or not they
 	 * are the product of the given reaction.
 	 *
-	 * @param reactantI
-	 * @param reactantJ
-	 * @return true if this reactant is a product of i and j
+	 * @param clusterI
+	 * @param clusterJ
+	 * @return true if this cluster is a product of i and j
 	 */
-	virtual bool isProductReactant(const Reactant & reactantI,
-			const Reactant & reactantJ);
+	virtual bool isProductReactant(const Reactant & clusterI,
+			const Reactant & clusterJ);
 
 	/**
-	 * Computes a row of the reaction connectivity matrix corresponding to
-	 * this reactant.
+	 * Computes a row (or column) of the reaction connectivity matrix
+	 * corresponding to this cluster.
 	 *
-	 * If two reactants alone can form a reaction, the element at the position
-	 * of the second reactant is 1, otherwise 0.
+	 * Connections are made between this cluster and any clusters it
+	 * affects in combination and production reactions.
+	 *
+	 * The base-class implementation does nothing and must be overridden
+	 * by subclasses.
 	 */
 	virtual void createReactionConnectivity();
 
 	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
+	 * Computes a row (or column) of the dissociation connectivity matrix
+	 * corresponding to this cluster.
 	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
+	 * Connections are made between this cluster and any clusters it affects
+	 * in a dissociation reaction.
+	 *
+	 * The base-class implementation handles dissociation for regular clusters
+	 * by processing the reaction
+	 *
+	 * A_x --> A_(x-1) + A
+	 *
 	 */
 	virtual void createDissociationConnectivity();
 
@@ -170,16 +179,16 @@ protected:
 	 *
 	 * (A_x)(B_y) + B_z --> (A_x)[B_(z+y)]
 	 *
-	 * for each reactant in the set that interacts with this reactant.
+	 * for each cluster in the set that interacts with this cluster.
 	 *
 	 * This operation fills the reaction connectivity array as well as the
-	 * array of combining reactants.
+	 * array of combining clusters.
 	 *
-	 * @param reactants The reactants that can combine with this reactant.
+	 * @param clusters The clusters that can combine with this cluster.
 	 * @param maxSize The maximum size of the compound produced in the reaction.
 	 * @param compoundName The name of the compound produced in the reaction.
 	 */
-	void combineClusters(std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
+	void combineClusters(std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>clusters,
 			int maxSize, std::string compoundName)
 	;
 
@@ -188,21 +197,21 @@ protected:
 	 *
 	 * (A_x)(B_y) + C_z --> (A_x)[B_(y-z)]
 	 *
-	 * for each compound reactant in the set.
+	 * for each compound cluster in the set.
 	 *
 	 * This operation fills the reaction connectivity array as well as the
-	 * array of combining reactants.
+	 * array of combining clusters.
 	 *
-	 * @param reactants The reactants that have part of their B components
+	 * @param clusters The clusters that have part of their B components
 	 * replaced. It is assumed that each element of this set represents a
-	 * reactant of the form (A_x)(B_y).
+	 * cluster of the form (A_x)(B_y).
 	 * @param oldComponentName The name of the component that will be partially
 	 * replaced.
 	 * @param newComponentName The name of the component that will replace the old
 	 * component.
 	 */
 	void replaceInCompound(
-			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
+			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>clusters,
 			std::string oldComponentName, std::string newComponentName);
 
 	/* This operation handles reactions where interstitials fill vacancies,
@@ -220,16 +229,16 @@ protected:
 	 * relies on the caller to specify the second cluster name/type.
 	 *
 	 * This operation fills the reaction connectivity array as well as the
-	 * array of combining reactants.
+	 * array of combining clusters.
 	 *
 	 * @param secondClusterName The name of the first cluster in the reaction,
 	 * either "V" or "I" and always the opposite or alternative of
 	 * this->getName().
-	 * @param reactants The set of clusters of the second type that interact
+	 * @param clusters The set of clusters of the second type that interact
 	 * with this cluster.
      **/
 	void fillVWithI(std::string secondClusterName,
-			std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > reactants);
+			std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > clusters);
 
 private:
 
@@ -258,32 +267,32 @@ public:
 	virtual ~PSICluster();
 
 	/**
-	 * This operation returns a Reactant that is created using the copy
-	 * constructor. If this Reactant is actually a subclass of Reactant, the
+	 * This operation returns a cluster that is created using the copy
+	 * constructor. If this cluster is actually a subclass of cluster, the
 	 * clone will be of the same type and therefore carry all of the members
 	 * and virtual functions of the subclass in addition to those of the
-	 * Reactant. This type of copy is not only handy but, in fact, quite
-	 * necessary in those cases where a Reactant must be copied but its exact
+	 * cluster. This type of copy is not only handy but, in fact, quite
+	 * necessary in those cases where a cluster must be copied but its exact
 	 * subclass is unknown and there is no way to make a reasonable assumption
 	 * about it.
-	 * @return A copy of this reactant.
+	 * @return A copy of this cluster.
 	 */
 	virtual std::shared_ptr<Reactant> clone();
 
 	/**
-	 * Sets the collection of other reactants that make up
-	 * the reaction network in which this reactant exists.
+	 * Sets the collection of other clusters that make up
+	 * the reaction network in which this cluster exists.
 	 *
-	 * @param network The reaction network of which this reactant is a part
+	 * @param network The reaction network of which this cluster is a part
 	 */
 	void setReactionNetwork(
 			const std::shared_ptr<ReactionNetwork> reactionNetwork);
 
 	/**
-	 * This operation returns the total flux of this reactant in the
+	 * This operation returns the total flux of this cluster in the
 	 * current network.
 	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
-	 * @return The total change in flux for this reactant due to all
+	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
 	virtual double getTotalFlux(double temperature) const;
@@ -387,28 +396,28 @@ public:
 
 	/**
 	 * This operation returns a list that represents the connectivity
-	 * between this Reactant and other Reactants in the network.
-	 * "Connectivity" indicates whether two Reactants interact, via any
+	 * between this cluster and other clusters in the network.
+	 * "Connectivity" indicates whether two clusters interact, via any
 	 * mechanism, in an abstract sense (as if they were nodes connected by
 	 * an edge on a network graph).
 	 *
 	 * @return An array of ones and zeros that indicate whether or not this
-	 * Reactant interacts via any mechanism with another Reactant. A "1" at
-	 * the i-th entry in this array indicates that the Reactant interacts
-	 * with the i-th Reactant in the ReactionNetwork and a "0" indicates
+	 * cluster interacts via any mechanism with another cluster. A "1" at
+	 * the i-th entry in this array indicates that the cluster interacts
+	 * with the i-th cluster in the ReactionNetwork and a "0" indicates
 	 * that it does not.
 	 */
 	std::vector<int> getConnectivity() const;
 
 	/**
-	 * This operation returns the list of partial derivatives of this Reactant
-	 * with respect to all other reactants in the network. The combined lists
-	 * of partial derivatives from all of the reactants in the network can be
+	 * This operation returns the list of partial derivatives of this cluster
+	 * with respect to all other clusters in the network. The combined lists
+	 * of partial derivatives from all of the clusters in the network can be
 	 * used to form, for example, a Jacobian.
 	 *
 	 * @param the temperature at which the reactions are occurring
-	 * @return The partial derivatives for this reactant where index zero
-	 * corresponds to the first reactant in the list returned by the
+	 * @return The partial derivatives for this cluster where index zero
+	 * corresponds to the first cluster in the list returned by the
 	 * ReactionNetwork::getAll() operation.
 	 */
 	std::vector<double> getPartialDerivatives(double temperature) const;

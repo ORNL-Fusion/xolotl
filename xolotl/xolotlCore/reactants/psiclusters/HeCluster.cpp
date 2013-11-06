@@ -141,26 +141,6 @@ void HeCluster::createReactionConnectivity() {
 	return;
 }
 
-void HeCluster::createDissociationConnectivity() {
-
-	// Local Declarations
-	std::shared_ptr<Reactant> smallerHeReactant, singleHeReactant;
-
-	// He dissociation
-	smallerHeReactant = network->get("He", size - 1);
-	singleHeReactant = network->get("He", 1);
-	if (smallerHeReactant && singleHeReactant) {
-		// Add the two reactants to the set. He has very simple dissociation
-		// rules.
-		id = network->getReactantId(*smallerHeReactant);
-		dissociationConnectivity[id] = 1;
-		id = network->getReactantId(*singleHeReactant);
-		dissociationConnectivity[id] = 1;
-	}
-
-	return;
-}
-
 bool HeCluster::isProductReactant(const Reactant & reactantI,
 		const Reactant & reactantJ) {
 

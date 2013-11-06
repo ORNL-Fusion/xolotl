@@ -57,10 +57,8 @@ void VCluster::createReactionConnectivity() {
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast < PSICluster
-					> (firstReactant);
-			pair.second = std::dynamic_pointer_cast < PSICluster
-					> (secondReactant);
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -98,7 +96,7 @@ void VCluster::createReactionConnectivity() {
 	 * Vacancies are always filled by interstitials.
 	 */
 	reactants = network->getAll("I");
-	fillVWithI("I",reactants);
+	fillVWithI("I", reactants);
 
 	/* ----- (He_a)(V_b) + V --> (He_a)[V_(b+1)] -----
 	 * Single vacancies can interact with a mixed-species cluster so long as
@@ -122,35 +120,6 @@ void VCluster::createReactionConnectivity() {
 	if (numHeIClusters > 0) {
 		reactants = network->getAll("HeI");
 		replaceInCompound(reactants, "I", "V");
-	}
-
-	return;
-}
-
-void VCluster::createDissociationConnectivity() {
-
-	// Local Declarations
-	int nReactants = network->size(), id = 0;
-	std::map<std::string, int> clusterMap;
-	std::shared_ptr<Reactant> reactant;
-	auto props = network->getProperties();
-
-	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
-	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
-	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
-	int numHeVClusters = std::stoi(props["numHeVClusters"]);
-	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int numIClusters = std::stoi(props["numIClusters"]);
-
-	// Vacancy dissociation, get a vacancy with size = size - 1
-	reactant = network->get("V", size - 1);
-	if (reactant) {
-		id = network->getReactantId(*reactant);
-		dissociationConnectivity[id] = 1;
-		// Single V
-		reactant = network->get("V", 1);
-		id = network->getReactantId(*reactant);
-		dissociationConnectivity[id] = 1;
 	}
 
 	return;

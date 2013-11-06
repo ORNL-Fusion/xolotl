@@ -126,35 +126,6 @@ void InterstitialCluster::createReactionConnectivity() {
 	return;
 }
 
-void InterstitialCluster::createDissociationConnectivity() {
-
-	// Local Declarations
-	int nReactants = network->size(), id = 0;
-	std::map<std::string, int> clusterMap;
-	std::shared_ptr<Reactant> reactant;
-	auto props = network->getProperties();
-
-	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
-	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
-	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
-	int numHeVClusters = std::stoi(props["numHeVClusters"]);
-	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int numIClusters = std::stoi(props["numIClusters"]);
-
-	// Interstitial dissociation, get a vacancy with size = size - 1
-	reactant = network->get("I", size - 1);
-	if (reactant) {
-		id = network->getReactantId(*reactant);
-		dissociationConnectivity[id] = 1;
-		// Single V
-		reactant = network->get("I", 1);
-		id = network->getReactantId(*reactant);
-		dissociationConnectivity[id] = 1;
-	}
-
-	return;
-}
-
 bool InterstitialCluster::isProductReactant(const Reactant & reactantI,
 		const Reactant & reactantJ) {
 

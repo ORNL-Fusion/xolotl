@@ -352,12 +352,11 @@ std::vector<int> PSICluster::getConnectivity() const {
 	int connectivityLength = network->size();
 	std::vector<int> connectivity = std::vector<int>(connectivityLength, 0);
 
-	// The reaction and dissociate vectors must be the same length
-	// as the number of reactants
+	// The reaction and dissociation vectors must have a length equal to the
+	// number of clusters
 	if (reactionConnectivity.size() != connectivityLength) {
 		throw std::string("The reaction vector is an incorrect length");
 	}
-
 	if (dissociationConnectivity.size() != connectivityLength) {
 		throw std::string("The dissociation vector is an incorrect length");
 	}
@@ -367,16 +366,17 @@ std::vector<int> PSICluster::getConnectivity() const {
 	// have a 1
 	for (int i = 0; i < connectivityLength; i++) {
 		// Consider each connectivity array only if its type is enabled
-		connectivity[i] = reactionConnectivity[i];
-// FIXME!			//	|| dissociationConnectivity[i]; // FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		connectivity[i] = reactionConnectivity[i]
+				|| dissociationConnectivity[i];
 	}
 
 	// DEBUG
-	std::cout << std::endl << "Reactant Column: " << this->name << "_" << this->size << std::endl;
+	std::cout << std::endl << "Reactant Column: " << this->name << "_"
+			<< this->size << std::endl;
 
 	// DEBUG
-	for (int i = 0; i < reactionConnectivity.size();i++) {
-		std::cout << reactionConnectivity[i] << " ";
+	for (int i = 0; i < connectivity.size(); i++) {
+		std::cout << connectivity[i] << " ";
 	}
 	std::cout << std::endl;
 
@@ -391,10 +391,27 @@ void PSICluster::createReactionConnectivity() {
 }
 
 void PSICluster::createDissociationConnectivity() {
-	// By default, generate an array with a zero for each reactant
-	// in the network
-	dissociationConnectivity.clear();
-	dissociationConnectivity.resize(network->size(), 0);
+
+	// Local Declarations
+	int index = 0;
+	std::shared_ptr<Reactant> smallerReactant, singleReactant;
+
+	// ----- X_a --> X_(a-1) + X ------
+	smallerReactant = network->get(name, size - 1);
+	singleReactant = network->get(name, 1);
+	if (smallerReactant && singleReactant) {
+		// Add the two reactants to the set. "He" has very simple dissociation
+		// rules.
+		index = network->getReactantId(*smallerReactant) - 1;
+		dissociationConnectivity[index] = 1;
+		index = network->getReactantId(*singleReactant) - 1;
+		dissociationConnectivity[index] = 1;
+		// Connect this cluster to itself since any reaction will affect it
+		index = network->getReactantId(*this) - 1;
+		dissociationConnectivity[index] = 1;
+	}
+
+	return;
 }
 
 std::map<std::string, int> PSICluster::getClusterMap() {
@@ -468,115 +485,115 @@ void PSICluster::combineClusters(
 		std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
 		int maxSize, std::string compoundName) {
 
-	std::map<std::string,int> myComposition = getComposition(), secondComposition;
-	int numHe, numV, numI, secondNumHe, secondNumV, secondNumI;
-	int otherIndex, productIndex;
-	std::vector<int> compositionSizes {0,0,0};
-	std::shared_ptr<PSICluster> secondCluster, productCluster;
-	// Setup the composition variables for this cluster
-	numHe = myComposition["He"];
-	numV = myComposition["V"];
-	numI = myComposition["I"];
+			std::map<std::string,int> myComposition = getComposition(), secondComposition;
+			int numHe, numV, numI, secondNumHe, secondNumV, secondNumI;
+			int otherIndex, productIndex;
+			std::vector<int> compositionSizes {0,0,0};
+			std::shared_ptr<PSICluster> secondCluster, productCluster;
+			// Setup the composition variables for this cluster
+			numHe = myComposition["He"];
+			numV = myComposition["V"];
+			numI = myComposition["I"];
 
-	int reactantVecSize = reactants->size();
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the second reactant, its composition and its index
-		secondCluster = std::dynamic_pointer_cast <PSICluster> (reactants->at(i));
-		secondComposition = secondCluster->getComposition();
-		secondNumHe = secondComposition["He"];
-		secondNumV = secondComposition["V"];
-		secondNumI = secondComposition["I"];
-		otherIndex = network->getReactantId(*secondCluster) - 1;
-		int productSize = size + secondCluster->getSize();
-		// Get and handle product for compounds
-		if (compoundName == "HeV" || compoundName == "HeI") {
-			// Modify the composition vector
-			compositionSizes[0] = numHe + secondNumHe;
-			compositionSizes[1] = numV + secondNumV;
-			compositionSizes[2] = numI + secondNumI;
-			// Get the product
-			productCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->getCompound(compoundName, compositionSizes));
-		} else {
-			// Just get the product if it is a single-species
-			productCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get(compoundName, productSize));
-		}
-		// React if the size of the product is valid and it exists in the network
-		if (productSize <= maxSize && productCluster) {
-			// Setup the connectivity array for the second reactant
-			reactionConnectivity[otherIndex] = 1;
-			// FIXME! - Debug output
+			int reactantVecSize = reactants->size();
+			for (int i = 0; i < reactantVecSize; i++) {
+				// Get the second reactant, its composition and its index
+				secondCluster = std::dynamic_pointer_cast <PSICluster> (reactants->at(i));
+				secondComposition = secondCluster->getComposition();
+				secondNumHe = secondComposition["He"];
+				secondNumV = secondComposition["V"];
+				secondNumI = secondComposition["I"];
+				otherIndex = network->getReactantId(*secondCluster) - 1;
+				int productSize = size + secondCluster->getSize();
+				// Get and handle product for compounds
+				if (compoundName == "HeV" || compoundName == "HeI") {
+					// Modify the composition vector
+					compositionSizes[0] = numHe + secondNumHe;
+					compositionSizes[1] = numV + secondNumV;
+					compositionSizes[2] = numI + secondNumI;
+					// Get the product
+					productCluster = std::dynamic_pointer_cast < PSICluster
+					> (network->getCompound(compoundName, compositionSizes));
+				} else {
+					// Just get the product if it is a single-species
+					productCluster = std::dynamic_pointer_cast < PSICluster
+					> (network->get(compoundName, productSize));
+				}
+				// React if the size of the product is valid and it exists in the network
+				if (productSize <= maxSize && productCluster) {
+					// Setup the connectivity array for the second reactant
+					reactionConnectivity[otherIndex] = 1;
+					// FIXME! - Debug output
 //			std::cout << secondCluster->getSize() << secondCluster->getName() << ": "
 //			<< "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << std::endl;
-			// Setup the connectivity array for the product
-			productIndex = network->getReactantId(*productCluster) - 1;
-			reactionConnectivity[productIndex] = 1;
-			// FIXME! - Debug output
+					// Setup the connectivity array for the product
+					productIndex = network->getReactantId(*productCluster) - 1;
+					reactionConnectivity[productIndex] = 1;
+					// FIXME! - Debug output
 //			std::cout << productSize << compoundName << ": " << "reactionConnectivity["<< productIndex << "] = "
 //			<< reactionConnectivity[productIndex] << std::endl;
-			// Push the product onto the list of clusters that combine with this one
-			combiningReactants.push_back(secondCluster);
-		}
-	}
+					// Push the product onto the list of clusters that combine with this one
+					combiningReactants.push_back(secondCluster);
+				}
+			}
 
-	return;
+			return;
 		}
 
 void PSICluster::replaceInCompound(
 		std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
 		std::string oldComponentName, std::string newComponentName) {
 
-	// Local Declarations
-	std::map<std::string, int> myComp = getComposition(),
-	secondReactantComp, productReactantComp;
-	int myComponentNumber = myComp[newComponentName];
-	int productNumHe = 0, productNumV = 0, productNumI = 0;
-	int numReactants = reactants->size();
-	int secondIndex = 0, productIndex = 0;
-	std::shared_ptr<Reactant> secondReactant, productReactant;
-	std::vector<int> productCompositionVector(myComp.size());
+			// Local Declarations
+			std::map<std::string, int> myComp = getComposition(),
+			secondReactantComp, productReactantComp;
+			int myComponentNumber = myComp[newComponentName];
+			int productNumHe = 0, productNumV = 0, productNumI = 0;
+			int numReactants = reactants->size();
+			int secondIndex = 0, productIndex = 0;
+			std::shared_ptr<Reactant> secondReactant, productReactant;
+			std::vector<int> productCompositionVector(myComp.size());
 
-	// Loop over all of the extra reactants in this reaction and handle the replacement
-	for (int i = 0; i < numReactants; i++) {
-		// Get the second reactant and its composition
-		secondReactant = reactants->at(i);
-		secondReactantComp = secondReactant->getComposition();
-		// Create the composition vector
-		productReactantComp = secondReactantComp;
-		// Updated the modified components
-		productReactantComp[oldComponentName] =
-		secondReactantComp[oldComponentName] - myComponentNumber;
-		// Create the composition vector -- FIXME! This should be general!
-		productCompositionVector[0] = productReactantComp["He"];
-		productCompositionVector[1] = productReactantComp["V"];
-		productCompositionVector[2] = productReactantComp["I"];
-		// Get the product
-		productReactant = network->getCompound(secondReactant->getName(),
-		productCompositionVector);
-		// If the product exists, mark the proper reaction arrays and it it to the list
-		if (productReactant) {
-			// Setup the connectivity array for the second reactant
-			secondIndex = network->getReactantId(*secondReactant) - 1;
-			reactionConnectivity[secondIndex] = 1;
+			// Loop over all of the extra reactants in this reaction and handle the replacement
+			for (int i = 0; i < numReactants; i++) {
+				// Get the second reactant and its composition
+				secondReactant = reactants->at(i);
+				secondReactantComp = secondReactant->getComposition();
+				// Create the composition vector
+				productReactantComp = secondReactantComp;
+				// Updated the modified components
+				productReactantComp[oldComponentName] =
+				secondReactantComp[oldComponentName] - myComponentNumber;
+				// Create the composition vector -- FIXME! This should be general!
+				productCompositionVector[0] = productReactantComp["He"];
+				productCompositionVector[1] = productReactantComp["V"];
+				productCompositionVector[2] = productReactantComp["I"];
+				// Get the product
+				productReactant = network->getCompound(secondReactant->getName(),
+						productCompositionVector);
+				// If the product exists, mark the proper reaction arrays and it it to the list
+				if (productReactant) {
+					// Setup the connectivity array for the second reactant
+					secondIndex = network->getReactantId(*secondReactant) - 1;
+					reactionConnectivity[secondIndex] = 1;
 //		std::cout << secondCluster->getSize()
 //		<< secondCluster->getName() << ": "
 //		<< "reactionConnectivity[" << otherIndex << "] = "
 //		<< reactionConnectivity[otherIndex] << std::endl;
-			// Setup the connectivity array for the product
-			productIndex = network->getReactantId(*productReactant) - 1;
-			reactionConnectivity[productIndex] = 1;
-			// FIXME! - Debug output
+					// Setup the connectivity array for the product
+					productIndex = network->getReactantId(*productReactant) - 1;
+					reactionConnectivity[productIndex] = 1;
+					// FIXME! - Debug output
 //		std::cout << productSize << compoundName << ": "
 //		<< "reactionConnectivity[" << productIndex << "] = "
 //		<< reactionConnectivity[productIndex] << std::endl;
-			// Push the product onto the list of clusters that combine with this one
-			combiningReactants.push_back(secondReactant);
-		}
-	}
+					// Push the product onto the list of clusters that combine with this one
+					combiningReactants.push_back(secondReactant);
+				}
+			}
 
-	return;
-}
+			return;
+		}
 
 void PSICluster::fillVWithI(std::string secondClusterName,
 		std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > reactants) {
@@ -593,8 +610,7 @@ void PSICluster::fillVWithI(std::string secondClusterName,
 	reactantVecSize = reactants->size();
 	for (int i = 0; i < reactantVecSize; i++) {
 		// Get the second cluster its size
-		secondCluster = std::dynamic_pointer_cast < PSICluster
-				> (reactants->at(i));
+		secondCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 		secondClusterSize =
 				(secondCluster->getComposition())[secondClusterName];
 		// We have to switch on cluster type to make sure that the annihilation
@@ -621,8 +637,8 @@ void PSICluster::fillVWithI(std::string secondClusterName,
 			}
 		}
 		// Get the product
-		productCluster = std::dynamic_pointer_cast < PSICluster
-				> (network->get(productClusterName, productClusterSize));
+		productCluster = std::dynamic_pointer_cast<PSICluster>(
+				network->get(productClusterName, productClusterSize));
 		// Only deal with this reaction if the product exists. Otherwise the whole reaction is forbidden.
 		if (productCluster) {
 			// Setup the connectivity array for the second reactant

@@ -88,15 +88,6 @@ protected:
 	 * of the second reactant is 1, otherwise 0.
 	 */
 	void createReactionConnectivity();
-	
-	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
-	 */
-	void createDissociationConnectivity();
 
 };
 
