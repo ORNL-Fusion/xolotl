@@ -43,20 +43,20 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
 			network);
 	auto props = psiNetwork->getProperties();
-	int networkSize = psiNetwork->size(), index = 0, numReactants = 0;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
 	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
-	int numHeClusters = std::stoi(props["numHeClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
-	int numIClusters = std::stoi(props["numIClusters"]);
-	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
+	int index = 0;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
-	std::vector<int> firstComposition, secondComposition, speciesMap;
+	std::vector<int> firstComposition, secondComposition;
 
-	/* ----- (A*He)(B*I) + (C*V) --> (A*He)[(B-C)*I] -----
+	// Connect this cluster to itself since any reaction will affect it
+	index = network->getReactantId(*this) - 1;
+	reactionConnectivity[index] = 1;
+
+	/* ----- (He_a)(I_b) + (V_c) --> (He_a)[I_(b-c)] -----
 	 * This section adds the clusters that produce this cluster to the array
 	 * for vacancy absorption by HeI.
 	 */
@@ -76,7 +76,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		}
 	}
 
-	/* ----- (A*He)(B*I) + I --> (A*He)[(B+1)*I] -----
+	/* ----- (He_a)(I_b) + I --> (He_a)[I_(b+1)] -----
 	 * This section adds the clusters that produce this cluster to the array
 	 * for single species interstitial absorption by HeI.
 	 *
@@ -102,7 +102,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		combiningReactants.push_back(secondReactant);
 	}
 
-	/* ----- (A*He)(B*I) + C*He --> [(A+C)*He](B*I)
+	/* ----- (He_a)(I_b) + He_c --> [He_(a+c)](I_b)
 	 * HeI clusters can absorb helium clusters of any size so long as the
 	 * maximum size limit is not violated.
 	 */
@@ -110,20 +110,11 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	combineClusters(reactants,maxHeIClusterSize,"HeI");
 
 	/* ----- (A*He)(B*I) + (C*V) --> (A*He)[(B-C)*I] -----
-	 * This section adds the clusters that ARE produced by this cluster to the
+	 * This section adds the clusters that are produced by this cluster to the
 	 * array for vacancy absorption by HeI.
 	 */
 	reactants = psiNetwork->getAll("V");
-	numReactants = reactants->size();
-	for (int i = 0; i < numReactants; i++) {
-		firstReactant = reactants->at(i);
-		auto clusterComposition = firstReactant->getComposition();
-		if (firstReactant && numI - clusterComposition["V"] >= 1) {
-			index = psiNetwork->getReactantId(*firstReactant) - 1;
-			reactionConnectivity[index] = 1;
-			combiningReactants.push_back(firstReactant);
-		}
-	}
+	fillVWithI("V",reactants);
 
 	return;
 }

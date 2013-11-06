@@ -22,18 +22,19 @@ void InterstitialCluster::createReactionConnectivity() {
 
 	// Local Declarations - Note the reference to the properties map
 	auto props = network->getProperties();
-	int numHe, indexOther, networkSize = network->size();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int numIClusters = std::stoi(props["numIClusters"]);
-	std::map<std::string, int> composition;
 	int totalSize = 1, firstSize = 0, secondSize = 0;
-	int firstIndex = -1, secondIndex = -1, reactantVecSize = 0;
+	int firstIndex = -1, secondIndex = -1;
+	int index = 0;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
-	std::shared_ptr<PSICluster> psiCluster;
+
+	// Connect this cluster to itself since any reaction will affect it
+	index = network->getReactantId(*this) - 1;
+	reactionConnectivity[index] = 1;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce

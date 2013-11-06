@@ -767,7 +767,7 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 		int diagFillSize) {
 
 	// Local Declarations
-	int i = 0, j = 0, numReactants = network->size(), index = 0,
+	int i = 0, j = 0, numReactants = network->size(), index = 0, id = 0,
 			connectivityLength = 0, size = numReactants * numReactants;
 	std::vector<int> connectivity;
 	std::shared_ptr<Reactant> reactant;
@@ -775,20 +775,31 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 	// Fill the diagonal block if the sizes match up
 	if (diagFillSize == size) {
 		auto reactants = network->getAll();
-		auto testReactants = *reactants;
 		// Get the connectivity for each reactant
 		for (i = 0; i < numReactants; i++) {
 			// Get the reactant and its connectivity
 			reactant = reactants->at(i);
 			connectivity = reactant->getConnectivity();
-			// Add it to the diagonal fill block
 			connectivityLength = connectivity.size();
+			// Get the reactant id so that the connectivity can be lined up in
+			// the proper column
+			id = network->getReactantId(*reactant) - 1;
+			// Add it to the diagonal fill block
 			for (j = 0; j < connectivityLength; j++) {
-				index = j * connectivityLength + i;
+				// The id starts at j*connectivity length and is always offset
+				// by the id, which denotes the exact column.
+				index = j*connectivityLength + id;
 				diagFill[index] = connectivity[j];
-				//std::cout << index << " " << connectivity[j] << std::endl;
 			}
 		}
+		printf("Number of degrees of freedom = %d\n", numReactants);
+		for (i = 0; i < numReactants; i++) {
+			for (j = 0; j < numReactants; j++) {
+				printf("%d ", dfill[i * numReactants + j]);
+			}
+			printf("\n");
+		}
+		printf("\n");
 	} else {
 		std::string err =
 				"PetscSolver Exception: Invalid diagonal block size!\n";
@@ -957,7 +968,7 @@ void PetscSolver::solve() {
 	checkPetscError(ierr);
 	ierr = PetscFree(ofill);
 	checkPetscError(ierr);
-	//ierr = getDiagonalFill(dfill, dof * dof);////// !~!!!!!!!!!!~~~!!!~!~!!~~!!!~!~!!!!!!!!!!!!!~~~~~~~~~~~~~~~~!~!~FIXME FIXME FIXME FIXME 32340923423904823049238//
+	ierr = getDiagonalFill(dfill, dof * dof);////// !~!!!!!!!!!!~~~!!!~!~!!~~!!!~!~!!!!!!!!!!!!!~~~~~~~~~~~~~~~~!~!~FIXME FIXME FIXME FIXME 32340923423904823049238//
 	checkPetscError(ierr);
 	ierr = PetscFree(dfill);
 	checkPetscError(ierr);

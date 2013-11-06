@@ -55,21 +55,19 @@ void HeVCluster::createReactionConnectivity() {
 	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
 			network);
 	auto props = psiNetwork->getProperties();
-	int networkSize = psiNetwork->size(), index = 0;
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
-	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
 	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
-	int numHeClusters = std::stoi(props["numHeClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
-	int numIClusters = std::stoi(props["numIClusters"]);
-	int numSingleSpeciesClusters = numHeClusters + numVClusters + numIClusters;
+	int thisIndex = 0;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
-	std::shared_ptr<PSICluster> heCluster, vCluster, iCluster;
-	std::vector<int> firstComposition, secondComposition, speciesMap;
+	std::vector<int> firstComposition, secondComposition;
 
-	/* ----- (A*He)(B*V) + (C*He) --> [(A+C)He]*(B*V) -----
+	// Connect this cluster to itself since any reaction will affect it
+	thisIndex = network->getReactantId(*this) - 1;
+	reactionConnectivity[thisIndex] = 1;
+
+	/* ----- (He_a)(V_b) + (He_c) --> [He_(a+c)]*(V_b) -----
 	 * Helium absorption by HeV clusters that results
 	 * in the production of this cluster.
 	 */
@@ -89,42 +87,7 @@ void HeVCluster::createReactionConnectivity() {
 		}
 	}
 
-	/* ---- (AHe)*(BV) + (CHe) --> [(A + C)He]*(BV) ----
-	 * HeV clusters can absorb helium clusters so long as they do not cross
-	 * the max size limit.
-	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 */
-	auto reactants = psiNetwork->getAll("He");
-	int numReactants = reactants->size();
-	for (int i = 0; i < numReactants; i++) {
-		heCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
-		// React with it if the sizes are compatible and the cluster exists
-		if (heCluster && heCluster->getSize() + size <= maxHeVClusterSize) {
-			index = psiNetwork->getReactantId(*heCluster) - 1;
-			reactionConnectivity[i] = 1;
-			combiningReactants.push_back(heCluster);
-		}
-	}
-
-	/* ----- (AHe)*(BV) + V --> (AHe)*[(B + 1)V] -----
-	 * HeV clusters can absorb single vacancies.
-	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 */
-	// Get the HeV cluster that is one V bigger than us.
-	secondComposition = psiNetwork->getCompositionVector(numHe, numV + 1, 0);
-	secondReactant = psiNetwork->getCompound("HeV", secondComposition);
-	// Add it to the list if it exists
-	if (secondReactant) {
-		index = psiNetwork->getReactantId(*secondReactant) - 1;
-		reactionConnectivity.at(index) = 1;
-		combiningReactants.push_back(secondReactant);
-	}
-
-	/* ----- (A*He)(B*V) + V --> (A*He)[(B+1)*V] -----
+	/* ----- (He_a)(V_b) + V --> (He_a)[V_(b+1)] -----
 	 * HeV clusters are also produced by single-vacancy absorption by another
 	 * HeV cluster. In this case, (A*He)[(B-1)*V] produces the current cluster.
 	 */
@@ -161,7 +124,35 @@ void HeVCluster::createReactionConnectivity() {
 		}
 	}
 
-	/* ----- (AHe)*(BV) + CI  --> (AHe)*(B - C)V -----
+	/* ---- (He_a)*(V_b) + He_c --> [He_(a+c)]*(V_b) ----
+	 * HeV clusters can absorb helium clusters so long as they do not cross
+	 * the max size limit.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
+	auto reactants = psiNetwork->getAll("He");
+	combineClusters(reactants, maxHeVClusterSize, "HeV");
+
+	/* ----- (He_a)*(V_b) + V --> (He_a)*[V_(b+1)] -----
+	 * HeV clusters can absorb single vacancies.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
+	// Get the HeV cluster that is one V bigger than us.
+	secondComposition = psiNetwork->getCompositionVector(numHe, numV + 1, 0);
+	secondReactant = psiNetwork->getCompound("HeV", secondComposition);
+	// Create a container for it
+	auto singleVInVector = std::make_shared<
+			std::vector<std::shared_ptr<Reactant>>>();
+	singleVInVector->push_back(secondReactant);
+	// Call the combination function even though there is only one cluster
+	// because it handles all of the work to properly connect the three
+	// clusters in the reaction.
+	combineClusters(singleVInVector,maxHeVClusterSize,"HeV");
+
+	/* ----- (He_a)*(V_b) + I_c  --> (He_a)*[V_(b-c)] -----
 	 * Helium-vacancy clusters lose vacancies when they interact with
 	 * interstitial clusters.
 	 *
@@ -172,16 +163,7 @@ void HeVCluster::createReactionConnectivity() {
 	 * because they contribute to the flux due to combination reactions.
 	 */
 	reactants = psiNetwork->getAll("I");
-	numReactants = reactants->size();
-	for (int i = 0; i < numReactants; i++) {
-		iCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
-		// Only add it if it exists!
-		if (iCluster && iCluster->getSize() - numV >= 1) {
-			index = psiNetwork->getReactantId(*iCluster) - 1;
-			reactionConnectivity.at(index) = 1;
-			combiningReactants.push_back(iCluster);
-		}
-	}
+	fillVWithI("I", reactants);
 
 	return;
 }

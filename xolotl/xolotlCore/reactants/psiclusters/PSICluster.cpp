@@ -367,9 +367,18 @@ std::vector<int> PSICluster::getConnectivity() const {
 	// have a 1
 	for (int i = 0; i < connectivityLength; i++) {
 		// Consider each connectivity array only if its type is enabled
-		connectivity[i] = reactionConnectivity[i]
-				|| dissociationConnectivity[i];
+		connectivity[i] = reactionConnectivity[i];
+// FIXME!			//	|| dissociationConnectivity[i]; // FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
+
+	// DEBUG
+	std::cout << std::endl << "Reactant Column: " << this->name << "_" << this->size << std::endl;
+
+	// DEBUG
+	for (int i = 0; i < reactionConnectivity.size();i++) {
+		std::cout << reactionConnectivity[i] << " ";
+	}
+	std::cout << std::endl;
 
 	return connectivity;
 }

@@ -26,7 +26,7 @@ void HeCluster::createReactionConnectivity() {
 	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
 			> (network);
 	std::map<std::string, std::string> props = psiNetwork->getProperties();
-	int thisIndex, indexOther, otherNumHe, otherNumV, otherNumI, networkSize =
+	int thisIndex, networkSize =
 			psiNetwork->size();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
@@ -34,20 +34,15 @@ void HeCluster::createReactionConnectivity() {
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int numIClusters = std::stoi(props["numIClusters"]);
 	int totalSize = 1, firstSize = 0, secondSize = 0;
 	int firstIndex = -1, secondIndex = -1, reactantVecSize = 0;
 	std::map<std::string, int> composition;
 	std::shared_ptr<PSICluster> psiCluster, firstReactant, secondReactant,
 			productReactant;
 
-	std::cout << std::endl << "Reactant Column: " << this->size << this->name << std::endl;
-
-	// Reactants react with themselves, thus the connectivity of this reactant with itself is 1
+	// Connect this cluster to itself since any reaction will affect it
 	thisIndex = network->getReactantId(*this) - 1;
 	reactionConnectivity[thisIndex] = 1;
-	std::cout << this->size << this->name << ": " << "reactionConnectivity["<< thisIndex
-			<< "] = " << reactionConnectivity[thisIndex] << std::endl;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
