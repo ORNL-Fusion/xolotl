@@ -133,26 +133,13 @@ void HeInterstitialCluster::createDissociationConnectivity() {
 	composition = psiNetwork->getCompositionVector(numHe - 1, 0, numI);
 	otherMixedCluster = psiNetwork->getCompound("HeI", composition);
 	singleCluster = psiNetwork->get("He", 1);
-	if (singleCluster && otherMixedCluster) {
-		// Mark the reactant in the dissociation array
-		index = psiNetwork->getReactantId(*otherMixedCluster) - 1;
-		dissociationConnectivity[index] = 1;
-		// Mark single He
-		index = psiNetwork->getReactantId(*singleCluster) - 1;
-		dissociationConnectivity[index] = 1;
-	}
+	dissociateClusters(singleCluster,otherMixedCluster);
 
 	// Interstitial Dissociation
 	composition = psiNetwork->getCompositionVector(numHe, 0, numI - 1);
 	otherMixedCluster = psiNetwork->getCompound("HeI", composition);
 	singleCluster = psiNetwork->get("I", 1);
-	if (singleCluster && otherMixedCluster) {
-		// Mark the reactant in the dissociation array
-		int index = psiNetwork->getReactantId(*otherMixedCluster) - 1;
-		dissociationConnectivity[index] = 1;
-		index = psiNetwork->getReactantId(*singleCluster) - 1;
-		dissociationConnectivity[index] = 1;
-	}
+	dissociateClusters(singleCluster,otherMixedCluster);
 
 	return;
 }

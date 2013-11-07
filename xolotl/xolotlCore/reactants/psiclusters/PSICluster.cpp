@@ -399,12 +399,31 @@ void PSICluster::createDissociationConnectivity() {
 	// ----- X_a --> X_(a-1) + X ------
 	smallerReactant = network->get(name, size - 1);
 	singleReactant = network->get(name, 1);
-	if (smallerReactant && singleReactant) {
+	dissociateClusters(singleReactant,smallerReactant);
+
+	return;
+}
+
+/**
+ * This operation creates the two dissociated clusters from this cluster.
+ * It is called by createDissociationConnectivity to process the reaction
+ * and handle the connectivity.
+ * @param firstDissociatedCluster The first cluster removed by
+ * dissociation.
+ * @param secondDissociatedCluster The second cluster removed by
+ * dissociation.
+ */
+void PSICluster::dissociateClusters(const std::shared_ptr<Reactant> & firstDissociatedCluster,
+		const std::shared_ptr<Reactant> & secondDissociatedCluster) {
+
+	int index = 0;
+
+	if (firstDissociatedCluster && secondDissociatedCluster) {
 		// Add the two reactants to the set. "He" has very simple dissociation
 		// rules.
-		index = network->getReactantId(*smallerReactant) - 1;
+		index = network->getReactantId(*firstDissociatedCluster) - 1;
 		dissociationConnectivity[index] = 1;
-		index = network->getReactantId(*singleReactant) - 1;
+		index = network->getReactantId(*secondDissociatedCluster) - 1;
 		dissociationConnectivity[index] = 1;
 		// Connect this cluster to itself since any reaction will affect it
 		index = network->getReactantId(*this) - 1;

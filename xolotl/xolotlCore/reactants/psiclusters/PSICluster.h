@@ -162,8 +162,23 @@ protected:
 	 *
 	 * A_x --> A_(x-1) + A
 	 *
+	 * Compound clusters should implement their own version of this operation.
+	 *
 	 */
 	virtual void createDissociationConnectivity();
+
+	/**
+	 * This operation creates the two dissociated clusters from this cluster.
+	 * It is called by createDissociationConnectivity to process the reaction
+	 * and handle the connectivity.
+	 *
+	 * @param firstDissociatedCluster The first cluster removed by
+	 * dissociation.
+	 * @param secondDissociatedCluster The second cluster removed by
+	 * dissociation.
+	 */
+	void dissociateClusters(const std::shared_ptr<Reactant> & firstDissociatedCluster,
+			const std::shared_ptr<Reactant> & secondDissociatedCluster);
 
 	/**
 	 * This operation "combines" clusters in the sense that it handles all of
@@ -236,7 +251,7 @@ protected:
 	 * this->getName().
 	 * @param clusters The set of clusters of the second type that interact
 	 * with this cluster.
-     **/
+	 **/
 	void fillVWithI(std::string secondClusterName,
 			std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > clusters);
 
