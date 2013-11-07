@@ -143,14 +143,16 @@ void HeVCluster::createReactionConnectivity() {
 	// Get the HeV cluster that is one V bigger than us.
 	secondComposition = psiNetwork->getCompositionVector(numHe, numV + 1, 0);
 	secondReactant = psiNetwork->getCompound("HeV", secondComposition);
-	// Create a container for it
-	auto singleVInVector = std::make_shared<
-			std::vector<std::shared_ptr<Reactant>>>();
-	singleVInVector->push_back(secondReactant);
-	// Call the combination function even though there is only one cluster
-	// because it handles all of the work to properly connect the three
-	// clusters in the reaction.
-	combineClusters(singleVInVector,maxHeVClusterSize,"HeV");
+	if (secondReactant) {
+		// Create a container for it
+		auto singleVInVector = std::make_shared<
+				std::vector<std::shared_ptr<Reactant>>>();
+		singleVInVector->push_back(secondReactant);
+		// Call the combination function even though there is only one cluster
+		// because it handles all of the work to properly connect the three
+		// clusters in the reaction.
+		combineClusters(singleVInVector,maxHeVClusterSize,"HeV");
+	}
 
 	/* ----- (He_a)*(V_b) + I_c  --> (He_a)*[V_(b-c)] -----
 	 * Helium-vacancy clusters lose vacancies when they interact with
