@@ -331,7 +331,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	std::shared_ptr<Reactant> clusterDummy;
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
 	int size = 0, reactantIndex = 0;
-	PetscScalar * concOffset, *leftConcOffset, *rightConcOffset, *updatedConcOffset;
+	PetscScalar * concOffset, *leftConcOffset, *rightConcOffset,
+			*updatedConcOffset;
 	double oldConc = 0.0, oldLeftConc = 0.0, oldRightConc = 0.0, conc = 0.0,
 			flux = 0.0;
 	// Get the network
@@ -689,14 +690,13 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		checkPetscError(ierr);
 	}
 
-	// Create a new columns array of size n and set the column ids
-	PetscInt rows[size];
-	for (int i = 0; i < size; i++) {
-		rows[i] = i;
-	}
-
 	/* ----- Compute the partial derivatives for the reaction term at each
 	 * grid point ----- */
+
+	// Create a new row array of size n
+	PetscInt rows[size];
+
+	// Loop over the grid points
 	std::vector<double> partials;
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
@@ -712,16 +712,16 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		for (int i = 0; i < size; i++) {
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					reactants->at(i));
-			std::cout << "reactant " << psiCluster->getName() << " of size "
-					<< psiCluster->getSize() << " and id "
-					<< network->getReactantId(*psiCluster) << std::endl;
+			// Get the reactant index
+			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
 			// Get the column id
-			col[0] = network->getReactantId(*psiCluster) - 1;
+			col[0] = (xi - xs + 1) * size + reactantIndex;
 			// Get the partial derivatives
 			partials = psiCluster->getPartialDerivatives(temperature);
-			std::cout.precision(8);
+			// Set the row indices
 			for (int j = 0; j < size; j++) {
-				std::cout << partials[j] << std::endl;
+				row[j] = (xi - xs + 1) * size + j;
+				std::cout << "dp[" << j << "] = " << partials[j] << std::endl;
 			}
 			// Update the matrix
 			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
