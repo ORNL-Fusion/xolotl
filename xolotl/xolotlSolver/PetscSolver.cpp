@@ -331,7 +331,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	std::shared_ptr<Reactant> clusterDummy;
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
 	int size = 0, reactantIndex = 0;
-	PetscScalar * concOffset, *leftConcOffset, *rightConcOffset;
+	PetscScalar * concOffset, *leftConcOffset, *rightConcOffset, *updatedConcOffset;
 	double oldConc = 0.0, oldLeftConc = 0.0, oldRightConc = 0.0, conc = 0.0,
 			flux = 0.0;
 	// Get the network
@@ -389,18 +389,16 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	size = network->size();
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
-		// Copy data into the PSIClusterReactionNetwork so that it can
-		// compute the new concentrations.
+
+		// Compute the middle, left, right and new array offsets
 		concOffset = concs + size * xi;
-		// Zero out the concentrations so that the new ones can be properly
-		// computed.
-		oldReactants = network->getAll();
-		for (int i = 0; i < size; i++) {
-			oldReactants->at(i)->zero();
-		}
-		// Compute the left and right array offsets
 		leftConcOffset = concs + size * (xi - 1);
 		rightConcOffset = concs + size * (xi + 1);
+		updatedConcOffset = updatedConcs + size * xi;
+
+		// Copy data into the PSIClusterReactionNetwork so that it can
+		// compute the fluxes properly.
+		network->updateConcentrationsFromArray(concOffset);
 
 //		for (int i = 0; i < 4; i++) {
 //			std::cout << "c[" << i << "] = " << concOffset[i] << std::endl;
@@ -434,8 +432,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 				// Use a simple midpoint stencil to compute the concentration
 				conc = heCluster->getDiffusionCoefficient(temperature)
 						* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
-				// Update the concentration of the new cluster
-				heCluster->increaseConcentration(conc);
+				// Update the concentration of the cluster
+				updatedConcs[reactantIndex] += conc;
 //				std::cout << "RHS-F: " << xi << " "
 //						<< heCluster->getDiffusionCoefficient(temperature)
 //						<< " " << oldLeftConc << " " << -2.0 * oldConc << " "
@@ -457,8 +455,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			// Use a simple midpoint stencil to compute the concentration
 			conc = vCluster->getDiffusionCoefficient(temperature)
 					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
-			// Update the concentration of the new cluster
-			vCluster->increaseConcentration(conc);
+			// Update the concentration of the cluster
+			updatedConcs[reactantIndex] += conc;
 //			std::cout << "RHS-F: " << xi << " "
 //					<< vCluster->getDiffusionCoefficient(temperature) << " "
 //					<< oldLeftConc << " " << -2.0 * oldConc << " "
@@ -480,32 +478,23 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			// Use a simple midpoint stencil to compute the concentration
 			conc = iCluster->getDiffusionCoefficient(temperature)
 					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
-			// Update the concentration of the new cluster
-			iCluster->increaseConcentration(conc);
+			// Update the concentration of the cluster
+			updatedConcs[reactantIndex] += conc;
 		}
 
 		// ----- Compute all of the new fluxes -----
-//		auto reactants = network->getAll();
-//		for (int i = 0; i < size; i++) {
-		auto reactants = network->getAll("He"); /// FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		for (int i = 0; i < reactants->size(); i++) {
+		auto reactants = network->getAll();
+		for (int i = 0; i < size; i++) {
 			cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 			// Compute the flux
 			flux = cluster->getTotalFlux(temperature);
-			// Update the concentration
-			cluster->increaseConcentration(flux);
+			// Update the concentration of the cluster
+			reactantIndex = network->getReactantId(*(iCluster)) - 1;
+			updatedConcs[reactantIndex] += conc;
 			std::cout << "New flux = " << flux << " "
 					<< cluster->getConcentration() << std::endl;
 		}
 
-		// Convert the concentrations back to the PETSc structure
-		concOffset = updatedConcs + size * xi;
-		network->fillConcentrationsArray(concOffset);
-//		for (int i = 0; i < 4; i++) {
-//			std::cout << "c[" << i << "]_out = " << concOffset[i] << std::endl;
-//		}
-//		std::cout << "-----" << std::endl;
-		//std::cout << concOffset[0] << " " << concOffset[1] << " " << concOffset[2] << " " << concOffset[3] << std::endl;
 		break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
@@ -708,38 +697,39 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 	/* ----- Compute the partial derivatives for the reaction term at each
 	 * grid point ----- */
-//	std::vector<double> partials;
-//	for (xi = xs; xi < xs + xm; xi++) {
-//		x = xi * hx;
-//
-//		// Copy data into the PSIClusterReactionNetwork so that it can
-//		// compute the new concentrations.
-//		concOffset = concs + size * xi;
-//		network->updateConcentrationsFromArray(concOffset);
-//
-//		// Get the reactants
-//		reactants = network->getAll();
-//		// Update the column in the Jacobian that represents each reactant
-//		for (int i = 0; i < size; i++) {
-//			psiCluster = std::dynamic_pointer_cast<PSICluster>(
-//					reactants->at(i));
-//			std::cout << "reactant " << psiCluster->getName() << " of size "
-//					<< psiCluster->getSize() << " and id "
-//					<< network->getReactantId(*psiCluster) << std::endl;
-//			// Get the column id
-//			col[0] = network->getReactantId(*psiCluster) - 1;
-//			// Get the partial derivatives
-//			partials = psiCluster->getPartialDerivatives(temperature);
-//			std::cout.precision(8);
-//			for (int j = 0; j < size; j++) {
-//				std::cout << partials[j] << std::endl;
-//			}
-//			// Update the matrix
-//			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
-//					ADD_VALUES);
-//		}
-//		break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//	}
+	std::vector<double> partials;
+	for (xi = xs; xi < xs + xm; xi++) {
+		x = xi * hx;
+
+		// Copy data into the PSIClusterReactionNetwork so that it can
+		// compute the new concentrations.
+		concOffset = concs + size * xi;
+		network->updateConcentrationsFromArray(concOffset);
+
+		// Get the reactants
+		reactants = network->getAll();
+		// Update the column in the Jacobian that represents each reactant
+		for (int i = 0; i < size; i++) {
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(i));
+			std::cout << "reactant " << psiCluster->getName() << " of size "
+					<< psiCluster->getSize() << " and id "
+					<< network->getReactantId(*psiCluster) << std::endl;
+			// Get the column id
+			col[0] = network->getReactantId(*psiCluster) - 1;
+			// Get the partial derivatives
+			partials = psiCluster->getPartialDerivatives(temperature);
+			std::cout.precision(8);
+			for (int j = 0; j < size; j++) {
+				std::cout << partials[j] << std::endl;
+			}
+			// Update the matrix
+			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
+					ADD_VALUES);
+		}
+		break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	}
+
 	/*
 	 Restore vectors
 	 */

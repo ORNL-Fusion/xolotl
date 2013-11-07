@@ -240,8 +240,8 @@ double PSICluster::getCombinationFlux(double temperature) const {
 double PSICluster::getTotalFlux(double temperature) const {
 	std::cout << "Production flux = " << getProductionFlux(temperature) << std::endl;
 	return getProductionFlux(temperature)
-			- getCombinationFlux(temperature);
-			//+ getDissociationFlux(temperature);//////////////////////???????FIXME!////////////////////////
+			- getCombinationFlux(temperature)
+			+ getDissociationFlux(temperature);
 }
 
 double PSICluster::getDiffusionFactor() const {
