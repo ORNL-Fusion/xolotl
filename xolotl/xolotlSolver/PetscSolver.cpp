@@ -327,7 +327,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	PetscReal hx, sx, x;
 	PetscReal *concs, *updatedConcs;
 	Vec localC;
-	std::shared_ptr<PSICluster> heCluster, vCluster, iCluster;
+	std::shared_ptr<PSICluster> heCluster, vCluster, iCluster, cluster;
 	std::shared_ptr<Reactant> clusterDummy;
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
 	int size = 0, reactantIndex = 0;
@@ -482,17 +482,17 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			iCluster->increaseConcentration(conc);
 		}
 
-//
-//		// ----- Compute all of the new fluxes -----
-//		auto reactants = network->getAll();
-//		for (int i = 0; i < size; i++) {
-//			newCluster = std::dynamic_pointer_cast<PSICluster>(
-//					reactants->at(i));
-//			// Compute the flux
-//			flux = newCluster->getTotalFlux(temperature);
-//			// Update the concentration
-//			newCluster->increaseConcentration(flux);
-//		}
+
+		// ----- Compute all of the new fluxes -----
+		auto reactants = network->getAll();
+		for (int i = 0; i < size; i++) {
+			cluster = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(i));
+			// Compute the flux
+			flux = cluster->getTotalFlux(temperature);
+			// Update the concentration
+			cluster->increaseConcentration(flux);
+		}
 
 		// Convert the concentrations back to the PETSc structure
 		concOffset = updatedConcs + size * xi;
@@ -502,7 +502,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //		}
 //		std::cout << "-----" << std::endl;
 		//std::cout << concOffset[0] << " " << concOffset[1] << " " << concOffset[2] << " " << concOffset[3] << std::endl;
-		//break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
 	/*
@@ -677,7 +677,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
-			//break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -695,47 +695,47 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		ierr = MatRetrieveValues(*J);
 		checkPetscError(ierr);
 	}
-//
-//	// Create a new columns array of size n and set the column ids
-//	PetscInt rows[size];
-//	for (int i = 0; i < size; i++) {
-//		rows[i] = i;
-//	}
-//
-//	/* ----- Compute the partial derivatives for the reaction term at each
-//	 * grid point ----- */
-//	std::vector<double> partials;
-//	for (xi = xs; xi < xs + xm; xi++) {
-//		x = xi * hx;
-//
-//		// Copy data into the PSIClusterReactionNetwork so that it can
-//		// compute the new concentrations.
-//		concOffset = concs + size * xi;
-//		network->updateConcentrationsFromArray(concOffset);
-//
-//		// Get the reactants
-//		reactants = network->getAll();
-//		// Update the column in the Jacobian that represents each reactant
-//		for (int i = 0; i < size; i++) {
-//			psiCluster = std::dynamic_pointer_cast<PSICluster>(
-//					reactants->at(i));
-//			std::cout << "reactant " << psiCluster->getName() << " of size "
-//					<< psiCluster->getSize() << " and id "
-//					<< network->getReactantId(*psiCluster) << std::endl;
-//			// Get the column id
-//			col[0] = network->getReactantId(*psiCluster) - 1;
-//			// Get the partial derivatives
-//			partials = psiCluster->getPartialDerivatives(temperature);
-//			std::cout.precision(8);
-//			for (int j = 0; j < size; j++) {
-//				partials[j] = -1.0;
-//				std::cout << partials[j] << std::endl;
-//			}
-//			// Update the matrix
-//			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
-//					ADD_VALUES);
-//		}
-//	}
+
+	// Create a new columns array of size n and set the column ids
+	PetscInt rows[size];
+	for (int i = 0; i < size; i++) {
+		rows[i] = i;
+	}
+
+	/* ----- Compute the partial derivatives for the reaction term at each
+	 * grid point ----- */
+	std::vector<double> partials;
+	for (xi = xs; xi < xs + xm; xi++) {
+		x = xi * hx;
+
+		// Copy data into the PSIClusterReactionNetwork so that it can
+		// compute the new concentrations.
+		concOffset = concs + size * xi;
+		network->updateConcentrationsFromArray(concOffset);
+
+		// Get the reactants
+		reactants = network->getAll();
+		// Update the column in the Jacobian that represents each reactant
+		for (int i = 0; i < size; i++) {
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(i));
+			std::cout << "reactant " << psiCluster->getName() << " of size "
+					<< psiCluster->getSize() << " and id "
+					<< network->getReactantId(*psiCluster) << std::endl;
+			// Get the column id
+			col[0] = network->getReactantId(*psiCluster) - 1;
+			// Get the partial derivatives
+			partials = psiCluster->getPartialDerivatives(temperature);
+			std::cout.precision(8);
+			for (int j = 0; j < size; j++) {
+				std::cout << partials[j] << std::endl;
+			}
+			// Update the matrix
+			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
+					ADD_VALUES);
+		}
+		break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	}
 
 	/*
 	 Restore vectors

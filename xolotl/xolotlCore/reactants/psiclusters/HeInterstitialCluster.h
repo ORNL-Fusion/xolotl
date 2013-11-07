@@ -81,22 +81,12 @@ public:
 
 	/**
 	 * This virtual method is for subclasses to specialize
-	 * to return their representative cluster map, which is a mapping
-	 * of which species exist in the cluster to the integer number
-	 * of each species.
-	 *
-	 * @return
-	 */
-	virtual std::map<std::string, int> getClusterMap();
-
-	/**
-	 * This virtual method is for subclasses to specialize
 	 * and should return the reaction radius for the
 	 * particular PSICluster subclass.
 	 *
 	 * @return
 	 */
-	virtual double getReactionRadius();
+	virtual double getReactionRadius() const;
 	
 	/**
 	 * This operation returns the compositon of this reactant.

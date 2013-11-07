@@ -151,19 +151,6 @@ bool VCluster::isProductReactant(const Reactant & reactantI,
 			&& ((rI_V + rJ_V) == size);
 }
 
-std::map<std::string, int> VCluster::getClusterMap() {
-	// Local Declarations
-	std::map<std::string, int> clusterMap;
-
-	// Set the number of each species
-	clusterMap["He"] = 0;
-	clusterMap["V"] = size;
-	clusterMap["I"] = 0;
-
-	// Return it
-	return clusterMap;
-}
-
 std::map<std::string, int> VCluster::getComposition() const {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
@@ -177,7 +164,7 @@ std::map<std::string, int> VCluster::getComposition() const {
 	return clusterMap;
 }
 
-double VCluster::getReactionRadius() {
+double VCluster::getReactionRadius() const {
 	// FIXME Not right...
 	return (sqrt(3) / 4) * xolotlCore::latticeConstant;
 }

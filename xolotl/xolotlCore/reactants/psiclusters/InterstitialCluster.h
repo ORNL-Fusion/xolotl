@@ -36,16 +36,6 @@ public:
 	virtual std::shared_ptr<Reactant> clone();
 
 	/**
-	 * This virtual method is for subclasses to specialize
-	 * to return their representative cluster map, which is a mapping
-	 * of which species exist in the cluster to the integer number
-	 * of each species.
-	 *
-	 * @return
-	 */
-	virtual std::map<std::string, int> getClusterMap();
-
-	/**
 	 * Return whether or not this PSICluster is a product
 	 * of the reaction between reactantI and reactantJ in
 	 * this Reactants ReactionNetwork. This method should be
@@ -65,7 +55,7 @@ public:
 	 *
 	 * @return
 	 */
-	virtual double getReactionRadius();
+	virtual double getReactionRadius() const;
 	
 	/**
 	 * This operation returns the compositon of this reactant.

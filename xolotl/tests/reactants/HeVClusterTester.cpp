@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		std::vector<int> reactionConnectivity =
 			reactant->getConnectivity();
 		
-		BOOST_REQUIRE_EQUAL(reactant->getClusterMap()["He"], 3);
-		BOOST_REQUIRE_EQUAL(reactant->getClusterMap()["V"], 2);
+		BOOST_REQUIRE_EQUAL(reactant->getComposition()["He"], 3);
+		BOOST_REQUIRE_EQUAL(reactant->getComposition()["V"], 2);
 		
 		// Check the connectivity for He, V, and I
 		

@@ -203,19 +203,6 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) const {
 	return f3 - f4 * getConcentration();
 }
 
-std::map<std::string, int> HeInterstitialCluster::getClusterMap() {
-	// Local Declarations
-	std::map<std::string, int> clusterMap;
-
-	// Set the number of each species
-	clusterMap["He"] = numHe;
-	clusterMap["V"] = 0;
-	clusterMap["I"] = numI;
-
-	// Return it
-	return clusterMap;
-}
-
 std::map<std::string, int> HeInterstitialCluster::getComposition() const {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
@@ -229,6 +216,6 @@ std::map<std::string, int> HeInterstitialCluster::getComposition() const {
 	return clusterMap;
 }
 
-double HeInterstitialCluster::getReactionRadius() {
+double HeInterstitialCluster::getReactionRadius() const {
 	return 0.0;
 }

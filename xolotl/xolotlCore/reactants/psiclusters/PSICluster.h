@@ -392,22 +392,12 @@ public:
 	double getMigrationEnergy() const;
 
 	/**
-	 * This virtual method is for subclasses to specialize
-	 * to return their representative cluster map, which is a mapping
-	 * of which species exist in the cluster to the integer number
-	 * of each species.
-	 *
-	 * @return
-	 */
-	virtual std::map<std::string, int> getClusterMap();
-
-	/**
 	 * This operation returns the reaction radius for the
 	 * particular cluster.
 	 *
 	 * @return
 	 */
-	double getReactionRadius() const;
+	virtual double getReactionRadius() const;
 
 	/**
 	 * This operation returns a list that represents the connectivity

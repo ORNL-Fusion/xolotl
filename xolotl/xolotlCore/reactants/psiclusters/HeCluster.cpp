@@ -167,19 +167,6 @@ bool HeCluster::isProductReactant(const Reactant & reactantI,
 			&& ((rI_V + rJ_V) == 0);
 }
 
-std::map<std::string, int> HeCluster::getClusterMap() {
-	// Local Declarations
-	std::map<std::string, int> clusterMap;
-
-	// Set the number of each species
-	clusterMap["He"] = size;
-	clusterMap["V"] = 0;
-	clusterMap["I"] = 0;
-
-	// Return it
-	return clusterMap;
-}
-
 std::map<std::string, int> HeCluster::getComposition() const {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
@@ -193,7 +180,7 @@ std::map<std::string, int> HeCluster::getComposition() const {
 	return clusterMap;
 }
 
-double HeCluster::getReactionRadius() {
+double HeCluster::getReactionRadius() const {
 	double FourPi = 4.0 * xolotlCore::pi;
 	double aCubed = pow(xolotlCore::latticeConstant, 3);
 	double termOne = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * size,

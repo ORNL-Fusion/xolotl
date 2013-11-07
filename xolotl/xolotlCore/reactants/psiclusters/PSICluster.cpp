@@ -433,12 +433,6 @@ void PSICluster::dissociateClusters(const std::shared_ptr<Reactant> & firstDisso
 	return;
 }
 
-std::map<std::string, int> PSICluster::getClusterMap() {
-	// Create an empty cluster map
-	std::map<std::string, int> clusterMap;
-	return clusterMap;
-}
-
 /**
  * This operation returns the list of partial derivatives of this Reactant
  * with respect to all other reactants in the network. The combined lists
@@ -471,6 +465,7 @@ std::vector<double> PSICluster::getPartialDerivatives(
 		index = network->getReactantId(*(pair.second)) - 1;
 		partialDerivatives[index] += calculateReactionRateConstant(*this,
 				*(pair.second), temperature);
+		std::cout << "Partial Derivative = " << partialDerivatives[index] << std::endl;
 	}
 
 	// Load up everything from the combining reactants
@@ -481,6 +476,7 @@ std::vector<double> PSICluster::getPartialDerivatives(
 		index = network->getReactantId(*cluster) - 1;
 		partialDerivatives[index] += calculateReactionRateConstant(*this,
 				*cluster, temperature);
+		std::cout << "Combining Partial Derivative = " << partialDerivatives[index] << std::endl;
 	}
 
 	// Load up everything from the dissociating reactants
