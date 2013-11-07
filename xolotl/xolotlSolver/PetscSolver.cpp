@@ -490,7 +490,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			// Compute the flux
 			flux = cluster->getTotalFlux(temperature);
 			// Update the concentration of the cluster
-			reactantIndex = network->getReactantId(*(iCluster)) - 1;
+			reactantIndex = network->getReactantId(*(cluster)) - 1;
 			updatedConcs[reactantIndex] += conc;
 			std::cout << "New flux = " << flux << " "
 					<< cluster->getConcentration() << std::endl;
@@ -622,7 +622,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 			/* 1V and 1I are the only other clusters that diffuse */
 
-			// Get the V cluster
+			// ----- Vacancy Diffusion -----
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("V", 1));
 			if (psiCluster) {
@@ -645,7 +645,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				checkPetscError(ierr);
 			}
 
-			// Get the 1I cluster
+			// ----- Interstitial Diffusion -----
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					network->get("I", 1));
 			if (psiCluster) {
