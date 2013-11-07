@@ -167,6 +167,7 @@ double PSICluster::getProductionFlux(double temperature) const {
 	double flux = 0.0, kPlus = 0.0;
 	int thisClusterIndex = 0;
 	std::shared_ptr<PSICluster> firstReactant, secondReactant;
+	double conc1 = 0.0, conc2 = 0.0;
 	int nPairs = 0;
 
 	// Only try this if the network is available
@@ -179,12 +180,19 @@ double PSICluster::getProductionFlux(double temperature) const {
 			firstReactant = reactingPairs.at(i).first;
 			secondReactant = reactingPairs.at(i).second;
 			// Update the flux
+			conc1 = firstReactant->getConcentration();
+			conc2 = secondReactant->getConcentration();
 			flux += calculateReactionRateConstant(*firstReactant,
 					*secondReactant, temperature)
-					* firstReactant->getConcentration()
-					* secondReactant->getConcentration();
+					* conc1
+					* conc2;
+			if (size == 2) {
+				std::cout << calculateReactionRateConstant(*firstReactant,*secondReactant,temperature) << std::endl;
+			std::cout << "Concs in pdflux calc = " << conc1 << " " << conc2 << std::endl;
+			}
 		}
-
+		if (size == 2)
+		std::cout << "Flux for " << name << "_" << size << " = " << flux << std::endl;
 	}
 
 	// Return the production flux
@@ -210,30 +218,30 @@ double PSICluster::getCombinationFlux(double temperature) const {
 		nReactants = combiningReactants.size();
 		// Loop over all possible clusters
 		auto composition = getComposition();
-//		std::cout << "PSICluster Message 1: " << composition["He"] << " "
-//				<< composition["V"] << " " << composition["I"] << std::endl;
 		for (int j = 0; j < nReactants; j++) {
 			outerReactant = std::dynamic_pointer_cast<PSICluster>(
 					combiningReactants.at(j));
 			conc = outerReactant->getConcentration();
 			composition = outerReactant->getComposition();
-//			std::cout << "PSICluster Message 2: " << composition["He"] << " "
-//					<< composition["V"] << " " << composition["I"] << std::endl;
 			// Calculate Second term of production flux
 			flux += calculateReactionRateConstant(*this, *outerReactant,
 					temperature) * conc;
+			std::cout << "CConc = " << conc << " Combining flux += " << calculateReactionRateConstant(*this, *outerReactant,
+					temperature) * conc << std::endl;
 		}
 
 	}
 
 	// Return the production flux
+	std::cout << "CConcTotal = " << flux * getConcentration() << std::endl;
 	return (flux * getConcentration());
 }
 
 double PSICluster::getTotalFlux(double temperature) const {
-	return this->getProductionFlux(temperature)
-			- this->getCombinationFlux(temperature)
-			+ this->getDissociationFlux(temperature);
+	std::cout << "Production flux = " << getProductionFlux(temperature) << std::endl;
+	return getProductionFlux(temperature)
+			- getCombinationFlux(temperature);
+			//+ getDissociationFlux(temperature);//////////////////////???????FIXME!////////////////////////
 }
 
 double PSICluster::getDiffusionFactor() const {
@@ -250,7 +258,7 @@ void PSICluster::setDiffusionFactor(const double factor) {
 double PSICluster::getDiffusionCoefficient(double temperature) const {
 	// Use the Arrhenius equation to compute the diffusion coefficient
 	double k_b = xolotlCore::kBoltzmann;
-	double kernel = -migrationEnergy / (k_b * temperature);
+	double kernel = -1.0 * migrationEnergy / (k_b * temperature);
 	return diffusionFactor * exp(kernel);
 }
 

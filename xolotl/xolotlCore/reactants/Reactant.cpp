@@ -32,18 +32,23 @@ double Reactant::getConcentration() const {
 
 void Reactant::increaseConcentration(double deltaConc) {
 	concentration += deltaConc;
+	std::cout << "Conc = " << concentration << ", delta = " << deltaConc << std::endl;
+	return;
 }
 
 void Reactant::decreaseConcentration(double deltaConc) {
 	concentration -= deltaConc;
+	return;
 }
 
 void Reactant::setConcentration(double conc) {
 	concentration = conc;
+	return;
 }
 
 void Reactant::zero() {
-	concentration = 0.0;
+	concentration = 0.0e16;
+	return;
 }
 
 double Reactant::getTotalFlux(const double temperature) {

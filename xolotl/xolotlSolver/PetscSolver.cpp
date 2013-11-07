@@ -392,6 +392,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Copy data into the PSIClusterReactionNetwork so that it can
 		// compute the new concentrations.
 		concOffset = concs + size * xi;
+		// Zero out the concentrations so that the new ones can be properly
+		// computed.
 		oldReactants = network->getAll();
 		for (int i = 0; i < size; i++) {
 			oldReactants->at(i)->zero();
@@ -482,16 +484,18 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			iCluster->increaseConcentration(conc);
 		}
 
-
 		// ----- Compute all of the new fluxes -----
-		auto reactants = network->getAll();
-		for (int i = 0; i < size; i++) {
-			cluster = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(i));
+//		auto reactants = network->getAll();
+//		for (int i = 0; i < size; i++) {
+		auto reactants = network->getAll("He"); /// FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		for (int i = 0; i < reactants->size(); i++) {
+			cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 			// Compute the flux
 			flux = cluster->getTotalFlux(temperature);
 			// Update the concentration
 			cluster->increaseConcentration(flux);
+			std::cout << "New flux = " << flux << " "
+					<< cluster->getConcentration() << std::endl;
 		}
 
 		// Convert the concentrations back to the PETSc structure
@@ -704,39 +708,38 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 	/* ----- Compute the partial derivatives for the reaction term at each
 	 * grid point ----- */
-	std::vector<double> partials;
-	for (xi = xs; xi < xs + xm; xi++) {
-		x = xi * hx;
-
-		// Copy data into the PSIClusterReactionNetwork so that it can
-		// compute the new concentrations.
-		concOffset = concs + size * xi;
-		network->updateConcentrationsFromArray(concOffset);
-
-		// Get the reactants
-		reactants = network->getAll();
-		// Update the column in the Jacobian that represents each reactant
-		for (int i = 0; i < size; i++) {
-			psiCluster = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(i));
-			std::cout << "reactant " << psiCluster->getName() << " of size "
-					<< psiCluster->getSize() << " and id "
-					<< network->getReactantId(*psiCluster) << std::endl;
-			// Get the column id
-			col[0] = network->getReactantId(*psiCluster) - 1;
-			// Get the partial derivatives
-			partials = psiCluster->getPartialDerivatives(temperature);
-			std::cout.precision(8);
-			for (int j = 0; j < size; j++) {
-				std::cout << partials[j] << std::endl;
-			}
-			// Update the matrix
-			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
-					ADD_VALUES);
-		}
-		break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	}
-
+//	std::vector<double> partials;
+//	for (xi = xs; xi < xs + xm; xi++) {
+//		x = xi * hx;
+//
+//		// Copy data into the PSIClusterReactionNetwork so that it can
+//		// compute the new concentrations.
+//		concOffset = concs + size * xi;
+//		network->updateConcentrationsFromArray(concOffset);
+//
+//		// Get the reactants
+//		reactants = network->getAll();
+//		// Update the column in the Jacobian that represents each reactant
+//		for (int i = 0; i < size; i++) {
+//			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+//					reactants->at(i));
+//			std::cout << "reactant " << psiCluster->getName() << " of size "
+//					<< psiCluster->getSize() << " and id "
+//					<< network->getReactantId(*psiCluster) << std::endl;
+//			// Get the column id
+//			col[0] = network->getReactantId(*psiCluster) - 1;
+//			// Get the partial derivatives
+//			partials = psiCluster->getPartialDerivatives(temperature);
+//			std::cout.precision(8);
+//			for (int j = 0; j < size; j++) {
+//				std::cout << partials[j] << std::endl;
+//			}
+//			// Update the matrix
+//			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
+//					ADD_VALUES);
+//		}
+//		break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//	}
 	/*
 	 Restore vectors
 	 */
@@ -788,7 +791,7 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 			for (j = 0; j < connectivityLength; j++) {
 				// The id starts at j*connectivity length and is always offset
 				// by the id, which denotes the exact column.
-				index = j*connectivityLength + id;
+				index = j * connectivityLength + id;
 				diagFill[index] = connectivity[j];
 			}
 		}
