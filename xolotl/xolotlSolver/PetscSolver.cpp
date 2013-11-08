@@ -672,6 +672,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 //						<< val[0] << " " << val[1] << " " << val[2] << " "
 //						<< row[0] << " " << col[0] << " " << col[1] << " "
 //						<< col[2] << " " << std::endl;
+				std::cout << "xs = " << xs << std::endl;
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
@@ -702,6 +703,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 	// Loop over the grid points
 	std::vector<double> partials;
+	std::cout << "xs = " << xs << std::endl;
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
 
@@ -723,9 +725,10 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			// Get the partial derivatives
 			partials = psiCluster->getPartialDerivatives(temperature);
 			// Set the row indices
+			std::cout << xi << " " << xs << " " << size << " " << (xi - xs + 1)*size << std::endl;
 			for (int j = 0; j < size; j++) {
 				row[j] = (xi - xs + 1) * size + j;
-				std::cout << "dp[" << j << "] = " << partials[j] << " , row = "<< row[j] << std::endl;
+				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << row[j] << "," << col[0] << "]"<< std::endl;
 			}
 			// Update the matrix
 			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
