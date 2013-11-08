@@ -321,27 +321,36 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
  .  F - function values
  */
 PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
+	// Important petsc stuff (related to the grid mostly)
 	DM da;
 	PetscErrorCode ierr;
-	PetscInt xi, Mx, xs, xm, He, he, V, v, I, i;
+	PetscInt xi, Mx, xs, xm;
 	PetscReal hx, sx, x;
+	// Pointers to the Petsc arrays that start at the beginning (xs) of the
+	// local array!
 	PetscReal *concs, *updatedConcs;
 	Vec localC;
+	// Loop variables
+	int size = 0, reactantIndex = 0, i = 0;
+	// Handy pointers to keep the code clean
 	std::shared_ptr<PSICluster> heCluster, vCluster, iCluster, cluster;
 	std::shared_ptr<Reactant> clusterDummy;
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>oldReactants, newReactants;
-	int size = 0, reactantIndex = 0;
+	// The following pointers are set to the first position in the conc or
+	// updatedConc arrays that correspond to the beginning of the data for the
+	// current gridpoint. They are accessed just like regular arrays.
 	PetscScalar * concOffset, *leftConcOffset, *rightConcOffset,
 			*updatedConcOffset;
+	// Dummy variables to keep the code clean
 	double oldConc = 0.0, oldLeftConc = 0.0, oldRightConc = 0.0, conc = 0.0,
 			flux = 0.0;
-	// Get the network
+	// Get the handle to the network that will be used to compute fluxes.
 	auto network = PetscSolver::getNetwork();
-	// Get the properties
+	// Some required properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int numVClusters = std::stoi(props["numVClusters"]);
 
+	// Get the local data vector from petsc
 	PetscFunctionBeginUser;
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr);
@@ -352,15 +361,14 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 			PETSC_IGNORE);
 	checkPetscError(ierr);
+	// Setup some step size variables
 	hx = 8.0 / (PetscReal) (Mx - 1);
 	sx = 1.0 / (hx * hx);
 
-	/*
-	 Scatter ghost points to local vector,using the 2-step process
-	 DMGlobalToLocalBegin(),DMGlobalToLocalEnd().
-	 By placing code between these two statements, computations can be
-	 done while messages are in transition.
-	 */
+	// Scatter ghost points to local vector,using the 2-step process
+	// DMGlobalToLocalBegin(),DMGlobalToLocalEnd().
+	// By placing code between these two statements, computations can be
+	// done while messages are in transition.
 	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
 	checkPetscError(ierr);
 	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
@@ -370,23 +378,17 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	ierr = VecSet(F, 0.0);
 	checkPetscError(ierr);
 
-	/*
-	 Get pointers to vector data
-	 */
+	// Get pointers to vector data
 	ierr = DMDAVecGetArray(da, localC, &concs);
 	checkPetscError(ierr);
 	ierr = DMDAVecGetArray(da, F, &updatedConcs);
 	checkPetscError(ierr);
 
-	/*
-	 Get local grid boundaries
-	 */
+	//Get local grid boundaries
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 
-	/*
-	 Loop over grid points computing ODE terms for each grid point
-	 */
+	// Loop over grid points computing ODE terms for each grid point
 	size = network->size();
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
@@ -405,10 +407,9 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //			std::cout << "c[" << i << "] = " << concOffset[i] << std::endl;
 //		}
 
-		/* ----- Account for flux of incoming He by computing forcing that
-		 * produces He of cluster size 1 -----
-		 Crude cubic approximation of graph from Tibo's notes
-		 */
+		// ----- Account for flux of incoming He by computing forcing that
+		// produces He of cluster size 1 -----
+		// Crude cubic approximation of graph from Tibo's notes
 		heCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("He", 1));
 		if (heCluster) {
@@ -418,7 +419,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
 
-		/* He clusters larger than 5 do not diffuse -- they are immobile */
+		// He clusters larger than 5 do not diffuse -- they are immobile
 		for (int i = 1; i < PetscMin(numHeClusters+1,6); i++) {
 			// Get the reactant index
 			clusterDummy = network->get("He", i);
@@ -434,7 +435,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 				conc = heCluster->getDiffusionCoefficient(temperature)
 						* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
 				// Update the concentration of the cluster
-				updatedConcs[reactantIndex] += conc;
+				updatedConcOffset[reactantIndex] += conc;
 //				std::cout << "RHS-F: " << xi << " "
 //						<< heCluster->getDiffusionCoefficient(temperature)
 //						<< " " << oldLeftConc << " " << -2.0 * oldConc << " "
@@ -457,7 +458,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			conc = vCluster->getDiffusionCoefficient(temperature)
 					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
 			// Update the concentration of the cluster
-			updatedConcs[reactantIndex] += conc;
+			updatedConcOffset[reactantIndex] += conc;
 //			std::cout << "RHS-F: " << xi << " "
 //					<< vCluster->getDiffusionCoefficient(temperature) << " "
 //					<< oldLeftConc << " " << -2.0 * oldConc << " "
@@ -480,23 +481,23 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			conc = iCluster->getDiffusionCoefficient(temperature)
 					* (-2.0 * oldConc + oldLeftConc + oldRightConc) * sx;
 			// Update the concentration of the cluster
-			updatedConcs[reactantIndex] += conc;
+			updatedConcOffset[reactantIndex] += conc;
 		}
 
-		// ----- Compute all of the new fluxes -----
-		auto reactants = network->getAll();
-		for (int i = 0; i < size; i++) {
-			cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
-			// Compute the flux
-			flux = cluster->getTotalFlux(temperature);
-			// Update the concentration of the cluster
-			reactantIndex = network->getReactantId(*(cluster)) - 1;
-			updatedConcs[reactantIndex] += flux;
-			std::cout << "New flux = " << flux << " "
-					<< cluster->getConcentration() << std::endl;
-		}
+//		// ----- Compute all of the new fluxes -----
+//		auto reactants = network->getAll();
+//		for (int i = 0; i < size; i++) {
+//			cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+//			// Compute the flux
+//			flux = cluster->getTotalFlux(temperature);
+//			// Update the concentration of the cluster
+//			reactantIndex = network->getReactantId(*(cluster)) - 1;
+//			updatedConcOffset[reactantIndex] += flux;
+//			std::cout << "New flux = " << flux << " "
+//					<< cluster->getConcentration() << std::endl;
+//		}
 
-		break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
 	/*
@@ -671,7 +672,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
-			break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			//break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -698,37 +699,37 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 	// Loop over the grid points
 	std::vector<double> partials;
-	for (xi = xs; xi < xs + xm; xi++) {
-		x = xi * hx;
-
-		// Copy data into the PSIClusterReactionNetwork so that it can
-		// compute the new concentrations.
-		concOffset = concs + size * xi;
-		network->updateConcentrationsFromArray(concOffset);
-
-		// Get the reactants
-		reactants = network->getAll();
-		// Update the column in the Jacobian that represents each reactant
-		for (int i = 0; i < size; i++) {
-			psiCluster = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(i));
-			// Get the reactant index
-			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
-			// Get the column id
-			col[0] = (xi - xs + 1) * size + reactantIndex;
-			// Get the partial derivatives
-			partials = psiCluster->getPartialDerivatives(temperature);
-			// Set the row indices
-			for (int j = 0; j < size; j++) {
-				row[j] = (xi - xs + 1) * size + j;
-				std::cout << "dp[" << j << "] = " << partials[j] << std::endl;
-			}
-			// Update the matrix
-			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
-					ADD_VALUES);
-		}
-		break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	}
+//	for (xi = xs; xi < xs + xm; xi++) {
+//		x = xi * hx;
+//
+//		// Copy data into the PSIClusterReactionNetwork so that it can
+//		// compute the new concentrations.
+//		concOffset = concs + size * xi;
+//		network->updateConcentrationsFromArray(concOffset);
+//
+//		// Get the reactants
+//		reactants = network->getAll();
+//		// Update the column in the Jacobian that represents each reactant
+//		for (int i = 0; i < size; i++) {
+//			psiCluster = std::dynamic_pointer_cast<PSICluster>(
+//					reactants->at(i));
+//			// Get the reactant index
+//			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+//			// Get the column id
+//			col[0] = (xi - xs + 1) * size + reactantIndex;
+//			// Get the partial derivatives
+//			partials = psiCluster->getPartialDerivatives(temperature);
+//			// Set the row indices
+//			for (int j = 0; j < size; j++) {
+//				row[j] = (xi - xs + 1) * size + j;
+//				std::cout << "dp[" << j << "] = " << partials[j] << std::endl;
+//			}
+//			// Update the matrix
+//			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
+//					ADD_VALUES);
+//		}
+//	//	break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//	}
 
 	/*
 	 Restore vectors
