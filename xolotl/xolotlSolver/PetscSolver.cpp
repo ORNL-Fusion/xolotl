@@ -491,7 +491,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			flux = cluster->getTotalFlux(temperature);
 			// Update the concentration of the cluster
 			reactantIndex = network->getReactantId(*(cluster)) - 1;
-			updatedConcs[reactantIndex] += conc;
+			updatedConcs[reactantIndex] += flux;
 			std::cout << "New flux = " << flux << " "
 					<< cluster->getConcentration() << std::endl;
 		}

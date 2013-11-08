@@ -183,16 +183,8 @@ double PSICluster::getProductionFlux(double temperature) const {
 			conc1 = firstReactant->getConcentration();
 			conc2 = secondReactant->getConcentration();
 			flux += calculateReactionRateConstant(*firstReactant,
-					*secondReactant, temperature)
-					* conc1
-					* conc2;
-			if (size == 2) {
-				std::cout << calculateReactionRateConstant(*firstReactant,*secondReactant,temperature) << std::endl;
-			std::cout << "Concs in pdflux calc = " << conc1 << " " << conc2 << std::endl;
-			}
+					*secondReactant, temperature) * conc1 * conc2;
 		}
-		if (size == 2)
-		std::cout << "Flux for " << name << "_" << size << " = " << flux << std::endl;
 	}
 
 	// Return the production flux
@@ -226,22 +218,24 @@ double PSICluster::getCombinationFlux(double temperature) const {
 			// Calculate Second term of production flux
 			flux += calculateReactionRateConstant(*this, *outerReactant,
 					temperature) * conc;
-			std::cout << "CConc = " << conc << " Combining flux += " << calculateReactionRateConstant(*this, *outerReactant,
-					temperature) * conc << std::endl;
 		}
 
 	}
 
 	// Return the production flux
-	std::cout << "CConcTotal = " << flux * getConcentration() << std::endl;
 	return (flux * getConcentration());
 }
 
 double PSICluster::getTotalFlux(double temperature) const {
-	std::cout << "Production flux = " << getProductionFlux(temperature) << std::endl;
-	return getProductionFlux(temperature)
-			- getCombinationFlux(temperature)
-			+ getDissociationFlux(temperature);
+	std::cout << "----- Cluster " << name << "_" << size << " fluxes -----" << std::endl;
+	std::cout << "Production flux = " << getProductionFlux(temperature)
+			<< std::endl;
+	std::cout << "Combination flux = " << getCombinationFlux(temperature)
+				<< std::endl;
+	std::cout << "Dissociation flux = " << getDissociationFlux(temperature)
+				<< std::endl;
+	return 0.0;//getProductionFlux(temperature) - getCombinationFlux(temperature)
+			//+ getDissociationFlux(temperature);
 }
 
 double PSICluster::getDiffusionFactor() const {
@@ -352,7 +346,7 @@ bool PSICluster::isProductReactant(const Reactant & reactantI,
 }
 
 double PSICluster::getReactionRadius() const {
-	return 0.001; // FIXME!
+	return 0.001; // Just a default value. Subclasses override this.
 }
 
 std::vector<int> PSICluster::getConnectivity() const {
@@ -407,7 +401,7 @@ void PSICluster::createDissociationConnectivity() {
 	// ----- X_a --> X_(a-1) + X ------
 	smallerReactant = network->get(name, size - 1);
 	singleReactant = network->get(name, 1);
-	dissociateClusters(singleReactant,smallerReactant);
+	dissociateClusters(singleReactant, smallerReactant);
 
 	return;
 }
@@ -421,7 +415,8 @@ void PSICluster::createDissociationConnectivity() {
  * @param secondDissociatedCluster The second cluster removed by
  * dissociation.
  */
-void PSICluster::dissociateClusters(const std::shared_ptr<Reactant> & firstDissociatedCluster,
+void PSICluster::dissociateClusters(
+		const std::shared_ptr<Reactant> & firstDissociatedCluster,
 		const std::shared_ptr<Reactant> & secondDissociatedCluster) {
 
 	int index = 0;
@@ -473,7 +468,8 @@ std::vector<double> PSICluster::getPartialDerivatives(
 		index = network->getReactantId(*(pair.second)) - 1;
 		partialDerivatives[index] += calculateReactionRateConstant(*this,
 				*(pair.second), temperature);
-		std::cout << "Partial Derivative = " << partialDerivatives[index] << std::endl;
+		std::cout << "Partial Derivative = " << partialDerivatives[index]
+				<< std::endl;
 	}
 
 	// Load up everything from the combining reactants
@@ -484,7 +480,8 @@ std::vector<double> PSICluster::getPartialDerivatives(
 		index = network->getReactantId(*cluster) - 1;
 		partialDerivatives[index] += calculateReactionRateConstant(*this,
 				*cluster, temperature);
-		std::cout << "Combining Partial Derivative = " << partialDerivatives[index] << std::endl;
+		std::cout << "Combining Partial Derivative = "
+				<< partialDerivatives[index] << std::endl;
 	}
 
 	// Load up everything from the dissociating reactants
@@ -498,6 +495,8 @@ std::vector<double> PSICluster::getPartialDerivatives(
 			index = network->getReactantId(*cluster) - 1;
 			partialDerivatives[index] += calculateDissociationConstant(*this,
 					*cluster, temperature);
+			std::cout << "Dissociation Partial Derivative = "
+					<< partialDerivatives[index] << std::endl;
 		}
 	}
 
