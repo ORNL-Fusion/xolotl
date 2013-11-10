@@ -393,6 +393,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
 
+		//xi = 4; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 		// Compute the middle, left, right and new array offsets
 		concOffset = concs + size * xi;
 		leftConcOffset = concs + size * (xi - 1);
@@ -415,8 +417,9 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Crude cubic approximation of graph from Tibo's notes
 		heCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("He", 1));
+		std::cout << "x = " << x << std::endl;
 		if (heCluster) {
-			heCluster->increaseConcentration(100.0 * PetscMax(0.0,
+			heCluster->increaseConcentration(1.0E-9*PetscMax(0.0,
 					0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x));
 		}
 
@@ -500,7 +503,11 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 					<< cluster->getConcentration() << std::endl;
 		}
 
-		break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		for (int i = 0; i < size; i++) {
+			std::cout << updatedConcOffset[i] << std::endl;
+		}
+
+		//break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
 	/*
@@ -542,6 +549,9 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	int numVClusters = std::stoi(props["numVClusters"]);
 	int reactantIndex = 0;
 	int size = 0;
+
+	// Post some debug content to make it clear we are setting the Jacobian.
+	std::cout << "PetscSolver.cpp Message: " << "Setting Hand-Coded Jacobian" << std::endl;
 
 	// Get the matrix from PETSc
 	PetscFunctionBeginUser;
@@ -589,6 +599,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		 */
 		for (xi = xs; xi < xs + xm; xi++) {
 			x = xi * hx;
+
+			//xi = 4; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 			// Copy data into the PSIClusterReactionNetwork so that it can
 			// compute the new concentrations.
@@ -668,15 +680,15 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				col[0] = ((xi - 1) - xs + 1) * size + reactantIndex;
 				col[1] = (xi - xs + 1) * size + reactantIndex;
 				col[2] = ((xi + 1 + 1) - xs) * size + reactantIndex;
-//				std::cout << "RHS-J: " << xi << " " << diffCoeff << " "
-//						<< val[0] << " " << val[1] << " " << val[2] << " "
-//						<< row[0] << " " << col[0] << " " << col[1] << " "
-//						<< col[2] << " " << std::endl;
+				std::cout << "RHS-J: " << xi << " " << diffCoeff << " "
+						<< val[0] << " " << val[1] << " " << val[2] << " "
+						<< row[0] << " " << col[0] << " " << col[1] << " "
+						<< col[2] << " " << std::endl;
 				std::cout << "xs = " << xs << std::endl;
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
-			break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			//break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -699,13 +711,14 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	 * grid point ----- */
 
 	// Create a new row array of size n
-	PetscInt rows[size];
-
+	PetscInt pdRowIds[size];
 	// Loop over the grid points
 	std::vector<double> partials;
 	std::cout << "xs = " << xs << std::endl;
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
+
+		//xi = 4; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 		// Copy data into the PSIClusterReactionNetwork so that it can
 		// compute the new concentrations.
@@ -726,15 +739,16 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			partials = psiCluster->getPartialDerivatives(temperature);
 			// Set the row indices
 			std::cout << xi << " " << xs << " " << size << " " << (xi - xs + 1)*size << std::endl;
+			std::cout << "PD for " << psiCluster->getName() << "_" << psiCluster->getSize() << std::endl;
 			for (int j = 0; j < size; j++) {
-				row[j] = (xi - xs + 1) * size + j;
-				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << row[j] << "," << col[0] << "]"<< std::endl;
+				pdRowIds[j] = (xi - xs + 1) * size + j;
+				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << pdRowIds[j] << "," << col[0] << "]"<< std::endl;
 			}
 			// Update the matrix
-			ierr = MatSetValuesLocal(*J, size, rows, 1, col, partials.data(),
+			ierr = MatSetValuesLocal(*J, size, pdRowIds, 1, col, partials.data(),
 					ADD_VALUES);
 		}
-		break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
 	/*

@@ -47,8 +47,8 @@ void HeCluster::createReactionConnectivity() {
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
 	 * this cluster. The only reactions that produce He clusters are those He
-	 * clusters that are smaller than this.size. Each cluster i combines with
-	 * a second cluster of size this.size - i.size.
+	 * clusters that are smaller than this one. Each cluster i combines with
+	 * a second cluster of this size - i.size.
 	 *
 	 * Total size starts with a value of one so that clusters of size one are
 	 * not considered in this loop.

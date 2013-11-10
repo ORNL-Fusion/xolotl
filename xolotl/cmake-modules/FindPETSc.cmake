@@ -72,6 +72,7 @@ find_path (PETSC_DIR include/petsc.h
   HINTS ENV PETSC_DIR
   PATHS
   # Debian paths
+  /usr/lib/petscdir/3.4
   /usr/lib/petscdir/3.3 /usr/lib/petscdir/3.2 /usr/lib/petscdir/3.1
   /usr/lib/petscdir/3.0.0 /usr/lib/petscdir/2.3.3 /usr/lib/petscdir/2.3.2
   $ENV{HOME}/petsc
@@ -320,3 +321,4 @@ include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (PETSc
   "PETSc could not be found.  Be sure to set PETSC_DIR and PETSC_ARCH."
   PETSC_INCLUDES PETSC_LIBRARIES PETSC_EXECUTABLE_RUNS)
+

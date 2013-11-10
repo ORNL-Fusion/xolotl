@@ -96,7 +96,7 @@ std::vector<double> Reactant::getPartialDerivatives(double temperature) const {
  * This operation returns the name of the reactant.
  * @return the name
  */
-const std::string Reactant::getName() {
+const std::string Reactant::getName() const {
 	return name;
 }
 
