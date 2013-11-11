@@ -1014,7 +1014,7 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = TSSetInitialTimeStep(ts, 0.0, 1.0e-3);
+	ierr = TSSetInitialTimeStep(ts, 0.0, 1.0e-13);
 	checkPetscError(ierr);
 	ierr = TSSetDuration(ts, 100, 50.0);
 	checkPetscError(ierr);
