@@ -150,10 +150,10 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 	IS is;
 	char ycoor[32];
 	PetscReal valuebounds[4] = { 0, 1.2, 0, 1.2 };
-// Get the network
+	// Get the network
 	auto network = PetscSolver::getNetwork();
 	int size = network->size();
-// Get the properties
+	// Get the properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int numVClusters = std::stoi(props["numVClusters"]);
@@ -173,6 +173,11 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 			PETSC_DECIDE, PETSC_DECIDE, 600, 400, &ctx->viewer);
 	checkPetscError(ierr);
 
+	// Get the He_1 and He_2 indices from the network
+	auto he1Cluster = network->get("He",1), he2Cluster = network->get("He",2);
+	int he1Index = network->getReactantId(*he1Cluster);
+	int he2Index = network->getReactantId(*he2Cluster);
+
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &M, PETSC_IGNORE, PETSC_IGNORE,
@@ -186,9 +191,9 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 			DMDA_BOUNDARY_NONE, DMDA_STENCIL_STAR, M, N, PETSC_DETERMINE, 1, 2,
 			1, lx, NULL, &ctx->da);
 	checkPetscError(ierr);
-	ierr = DMDASetFieldName(ctx->da, 0, "He");
+	ierr = DMDASetFieldName(ctx->da, he1Index, "He_1");
 	checkPetscError(ierr);
-	ierr = DMDASetFieldName(ctx->da, 1, "V");
+	ierr = DMDASetFieldName(ctx->da, he2Index, "He_2");
 	checkPetscError(ierr);
 	ierr = DMDASetCoordinateName(ctx->da, 0, "X coordinate direction");
 	checkPetscError(ierr);
@@ -307,19 +312,23 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 }
 
 /* ------------------------------------------------------------------- */
+
+
 #undef __FUNCT__
-#define __FUNCT__ "IFunction"
+#define __FUNCT__ "RHSFunction"
 /*
- IFunction - Evaluates nonlinear function that defines the ODE
+ RHSFunction - Evaluates the right-hand-side of the nonlinear function defining the ODE
 
  Input Parameters:
  .  ts - the TS context
- .  U - input vector
+ .  ftime - the physical time at which the function is evaluated
+ .  C - input vector
  .  ptr - optional user-defined context
 
  Output Parameter:
  .  F - function values
  */
+/* ------------------------------------------------------------------- */
 PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	// Important petsc stuff (related to the grid mostly)
 	DM da;
