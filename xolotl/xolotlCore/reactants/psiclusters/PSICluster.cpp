@@ -211,7 +211,7 @@ double PSICluster::getCombinationFlux(double temperature) const {
 			flux += calculateReactionRateConstant(*this, *outerReactant,
 					temperature) * conc;
 		}
-		std::cout << "PSICluster::getCF ----- cf = " << flux << std::endl;
+//		std::cout << "PSICluster::getCF ----- cf = " << flux << std::endl;
 	}
 
 	// Return the production flux
@@ -219,14 +219,14 @@ double PSICluster::getCombinationFlux(double temperature) const {
 }
 
 double PSICluster::getTotalFlux(double temperature) const {
-	std::cout << "----- Cluster " << name << "_" << size << " fluxes -----"
-			<< std::endl;
-	std::cout << "Production flux = " << getProductionFlux(temperature)
-			<< std::endl;
-	std::cout << "Combination flux = " << getCombinationFlux(temperature)
-			<< std::endl;
-	std::cout << "Dissociation flux = " << getDissociationFlux(temperature)
-			<< std::endl;
+//	std::cout << "----- Cluster " << name << "_" << size << " fluxes -----"
+//			<< std::endl;
+//	std::cout << "Production flux = " << getProductionFlux(temperature)
+//			<< std::endl;
+//	std::cout << "Combination flux = " << getCombinationFlux(temperature)
+//			<< std::endl;
+//	std::cout << "Dissociation flux = " << getDissociationFlux(temperature)
+//			<< std::endl;
 
 	// Get the fluxes
 	double prodFlux = getProductionFlux(temperature); // Turns off 6k difference in He_2 with He_1
@@ -295,12 +295,10 @@ double PSICluster::calculateReactionRateConstant(
 	double secondDiffusion = secondReactant.getDiffusionCoefficient(
 			temperature);
 
-
-
-	std::cout << "Handling reaction: " << name << "_" << size << " <-- "
-			<< firstReactant.getName() << "_" << firstReactant.getSize()
-			<< " + " << secondReactant.getName() << "_"
-			<< secondReactant.getSize() << std::endl;
+//	std::cout << "Handling reaction: " << name << "_" << size << " <-- "
+//			<< firstReactant.getName() << "_" << firstReactant.getSize()
+//			<< " + " << secondReactant.getName() << "_"
+//			<< secondReactant.getSize() << std::endl;
 
 	// Calculate and return
 	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
@@ -379,15 +377,15 @@ std::vector<int> PSICluster::getConnectivity() const {
 				|| dissociationConnectivity[i];
 	}
 
-	// DEBUG
-	std::cout << std::endl << "Reactant Column: " << this->name << "_"
-			<< this->size << std::endl;
-
-	// DEBUG
-	for (int i = 0; i < connectivity.size(); i++) {
-		std::cout << connectivity[i] << " ";
-	}
-	std::cout << std::endl;
+//	// DEBUG
+//	std::cout << std::endl << "Reactant Column: " << this->name << "_"
+//			<< this->size << std::endl;
+//
+//	// DEBUG
+//	for (int i = 0; i < connectivity.size(); i++) {
+//		std::cout << connectivity[i] << " ";
+//	}
+//	std::cout << std::endl;
 
 	return connectivity;
 }
@@ -430,9 +428,9 @@ void PSICluster::dissociateClusters(
 
 	if (firstDissociatedCluster && secondDissociatedCluster) {
 
-		std::cout << "Configuring dissociation: " << name << "_" << size
-				<< " --> " << firstDissociatedCluster->getName() << " + "
-				<< secondDissociatedCluster->getName() << std::endl;
+//		std::cout << "Configuring dissociation: " << name << "_" << size
+//				<< " --> " << firstDissociatedCluster->getName() << " + "
+//				<< secondDissociatedCluster->getName() << std::endl;
 
 		// Add the two reactants to the set. "He" has very simple dissociation
 		// rules.
@@ -496,12 +494,12 @@ std::vector<double> PSICluster::getPartialDerivatives(
 		// due to combinations is OUTGOING (-=)!
 		partialDerivatives[index] -= calculateReactionRateConstant(*this,
 				*cluster, temperature) * cluster->getConcentration();
-		std::cout << "Combining Partial Derivative = "
-				<< partialDerivatives[index] << ", oc = "
-				<< cluster->getConcentration() << ", rc = "
-				<< calculateReactionRateConstant(*this, *cluster, temperature)
-				<< ", of " << name << "_" << size << ", with "
-				<< cluster->getName() << "_" << cluster->getSize() << std::endl;
+//		std::cout << "Combining Partial Derivative = "
+//				<< partialDerivatives[index] << ", oc = "
+//				<< cluster->getConcentration() << ", rc = "
+//				<< calculateReactionRateConstant(*this, *cluster, temperature)
+//				<< ", of " << name << "_" << size << ", with "
+//				<< cluster->getName() << "_" << cluster->getSize() << std::endl;
 	}
 
 //	// Load up everything from the dissociating reactants
@@ -566,14 +564,14 @@ void PSICluster::combineClusters(
 					// Setup the connectivity array for the second reactant
 					reactionConnectivity[otherIndex] = 1;
 					// FIXME! - Debug output
-					std::cout << "Second " << secondCluster->getSize() << secondCluster->getName() << ": "
-					<< "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << " " << getName() << std::endl;
+//					std::cout << "Second " << secondCluster->getSize() << secondCluster->getName() << ": "
+//					<< "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << " " << getName() << std::endl;
 					// Setup the connectivity array for the product
 					productIndex = network->getReactantId(*productCluster) - 1;
 					reactionConnectivity[productIndex] = 1;
 					// FIXME! - Debug output
-					std::cout << productSize << compoundName << ": " << "reactionConnectivity["<< productIndex << "] = "
-					<< reactionConnectivity[productIndex] << std::endl;
+//					std::cout << productSize << compoundName << ": " << "reactionConnectivity["<< productIndex << "] = "
+//					<< reactionConnectivity[productIndex] << std::endl;
 					// Push the product onto the list of clusters that combine with this one
 					combiningReactants.push_back(secondCluster);
 				}
