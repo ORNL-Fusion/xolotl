@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <fstream>
 
 using namespace xolotlCore;
 
@@ -90,8 +91,23 @@ typedef struct {
  */
 static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
+	// Create the monitor context
 	MyMonitorCtx *ctx = (MyMonitorCtx*) ictx;
+	// Network size
+	int size = PetscSolver::getNetwork()->size();
+	// Get the processor id
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	// Header and output string streams
+	std::stringstream header, outputData;
+	// Create a stream for naming the file
+	std::stringstream outputFileNameStream;
+	outputFileNameStream << "xolotl_out_" << procId << "_" << timestep;
 	PetscErrorCode ierr;
+	PetscViewer viewer;
+	PetscReal *solutionArray, *gridPointSolution, x, hx;
+	PetscInt xs, xm, Mx;
+	int xi, i,j;
 
 	PetscFunctionBeginUser;
 	ierr = VecScatterBegin(ctx->scatter, solution, ctx->He, INSERT_VALUES,
@@ -103,8 +119,51 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	ierr = VecView(ctx->He, ctx->viewer);
 	checkPetscError(ierr);
 
-	// Dump the output to a file
-	//std::ofstream outputFile ("example.bin", ios::out | ios::app | ios::binary);
+	// Create the PETScViewer and get the data
+	VecGetArray(solution, &solutionArray);
+	PetscViewerASCIIOpen(PETSC_COMM_WORLD, outputFileNameStream.str().c_str(), &viewer);
+
+	// Create the header for the file
+	auto reactants = PetscSolver::getNetwork()->getAll();
+	std::shared_ptr<PSICluster> cluster;
+	header << "# t x ";
+	for (int i = 0; i < size; i++) {
+		cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+		auto composition = cluster->getComposition();
+		header << cluster->getName() << "_(" << composition["He"] << "," << composition["V"] << "," << composition["I"] << ") ";
+	}
+	header << "\n";
+	PetscViewerASCIIPrintf(viewer, header.str().c_str());
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(ctx->da, &xs, NULL, NULL, &xm, NULL, NULL);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
+	checkPetscError(ierr);
+	// Setup some step size variables
+	hx = 8.0 / (PetscReal) (Mx - 1);
+	checkPetscError(ierr);
+	// Print the solution data
+	for (xi = xs; xi < xs+xm; xi++) {
+		// Dump x
+		x = xi * hx;
+	    outputData << timestep << " " << x << " ";
+	    // Get the pointer to the beginning of the solution data for this grid point
+		gridPointSolution = solutionArray + size * (xi - 1);
+		// Dump the data to the stream
+	    for (i = 0; i < size; i++) {
+	      	outputData << gridPointSolution[i] << " ";
+	    }
+	    // End the line
+	    outputData << "\n";
+	}
+    // Dump the data to file
+    PetscViewerASCIIPrintf(viewer, outputData.str().c_str());
+	// Restore the array and kill the viewer
+	VecRestoreArray(solution, &solutionArray);
+	PetscViewerDestroy(&viewer);
 
 	PetscFunctionReturn(0);
 }
@@ -380,7 +439,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	hx = 8.0 / (PetscReal) (Mx - 1);
 	sx = 1.0 / (hx * hx);
 
-	// Scatter ghost points to local vector,using the 2-step process
+	// Scatter ghost points to local vector, using the 2-step process
 	// DMGlobalToLocalBegin(),DMGlobalToLocalEnd().
 	// By placing code between these two statements, computations can be
 	// done while messages are in transition.
