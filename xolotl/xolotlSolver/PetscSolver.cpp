@@ -35,6 +35,8 @@ namespace xolotlSolver {
 static char help[] =
 		"Solves C_t =  -D*C_xx + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.\n";
 
+// ----- GLOBAL VARIABLES ----- //
+
 // Allocate the static network
 std::shared_ptr<PSIClusterReactionNetwork> PetscSolver::network;
 
@@ -100,6 +102,10 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 	ierr = VecView(ctx->He, ctx->viewer);
 	checkPetscError(ierr);
+
+	// Dump the output to a file
+	//std::ofstream outputFile ("example.bin", ios::out | ios::app | ios::binary);
+
 	PetscFunctionReturn(0);
 }
 
@@ -195,9 +201,9 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 	checkPetscError(ierr);
 	ierr = DMDASetFieldName(ctx->da, he2Index, "He_2");
 	checkPetscError(ierr);
-	ierr = DMDASetCoordinateName(ctx->da, 0, "X coordinate direction");
+	ierr = DMDASetCoordinateName(ctx->da, 0, "-Z direction (depth into surface)");
 	checkPetscError(ierr);
-	ierr = PetscSNPrintf(ycoor, 32, "%D ... Cluster size ... 1", N);
+	ierr = PetscSNPrintf(ycoor, 6, "%D ... Cluster size ... 1", N);
 	checkPetscError(ierr);
 	ierr = DMDASetCoordinateName(ctx->da, 1, ycoor);
 	checkPetscError(ierr);
@@ -747,10 +753,10 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			// Set the row indices
 //			std::cout << xi << " " << xs << " " << size << " " << (xi - xs + 1)*size << std::endl;
 //			std::cout << "PD for " << psiCluster->getName() << "_" << psiCluster->getSize() << std::endl;
-//			for (int j = 0; j < size; j++) {
-//				pdRowIds[j] = (xi - xs + 1) * size + j;
+			for (int j = 0; j < size; j++) {
+				pdRowIds[j] = (xi - xs + 1) * size + j;
 //				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << pdRowIds[j] << "," << col[0] << "]"<< std::endl;
-//			}
+			}
 			// Update the matrix
 			ierr = MatSetValuesLocal(*J, size, pdRowIds, 1, col, partials.data(),
 					ADD_VALUES);
