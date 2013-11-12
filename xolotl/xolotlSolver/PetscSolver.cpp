@@ -494,7 +494,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		if (heCluster) {
 			reactantIndex = network->getReactantId(*(heCluster)) - 1;
 			// Update the concentration of the cluster
-			updatedConcOffset[reactantIndex] += 1.0E-3*PetscMax(0.0,
+			updatedConcOffset[reactantIndex] += 1.0E4*PetscMax(0.0,
 					0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
 		}
 
