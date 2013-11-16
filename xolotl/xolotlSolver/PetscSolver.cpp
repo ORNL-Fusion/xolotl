@@ -582,7 +582,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //			std::cout << updatedConcOffset[i] << std::endl;
 //		}
 
-		//break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//		break;//FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
 	/*
@@ -760,7 +760,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
-			//break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//			break; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -784,6 +784,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 	// Create a new row array of size n
 	PetscInt pdColIds[size];
+	PetscInt rowId = 0;
 	// Loop over the grid points
 	std::vector<double> partials;
 //	std::cout << "xs = " << xs << std::endl;
@@ -806,7 +807,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			// Get the reactant index
 			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
 			// Get the column id
-			row[0] = (xi - xs + 1) * size + reactantIndex;
+			rowId = (xi - xs + 1) * size + reactantIndex;
 			// Get the partial derivatives
 			partials = psiCluster->getPartialDerivatives(temperature);
 			// Set the row indices
@@ -814,13 +815,13 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 //			std::cout << "PD for " << psiCluster->getName() << "_" << psiCluster->getSize() << std::endl;
 			for (int j = 0; j < size; j++) {
 				pdColIds[j] = (xi - xs + 1) * size + j;
-//				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << row[0] << "," << pdColIds[j] << "]"<< std::endl;
+//				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << rowId << "," << pdColIds[j] << "]"<< std::endl;
 			}
 			// Update the matrix
-			ierr = MatSetValuesLocal(*J, 1, row, size, pdColIds, partials.data(),
+			ierr = MatSetValuesLocal(*J, 1, &rowId, size, pdColIds, partials.data(),
 					ADD_VALUES);
 		}
-		//break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//		break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	}
 
 	/*
