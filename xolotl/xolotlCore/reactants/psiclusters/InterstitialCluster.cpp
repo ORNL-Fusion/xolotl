@@ -38,9 +38,8 @@ void InterstitialCluster::createReactionConnectivity() {
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
-	 * this cluster. The only reactions that produce I clusters are those I
-	 * clusters that are smaller than this.size. Each cluster i combines with
-	 * a second cluster of size this.size - i.size.
+	 * this cluster from I clusters that are smaller than this.size. Each
+	 * cluster i combines with a second cluster of size this.size - i.size.
 	 *
 	 * Total size starts with a value of one so that clusters of size one are
 	 * not considered in this loop.
@@ -106,7 +105,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	if (numHeIClusters > 0) {
+	if (numHeVClusters > 0) {
 		reactants = network->getAll("HeV");
 		replaceInCompound(reactants,"V","I");
 	}
@@ -118,7 +117,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	if (size == 1 && numHeVClusters > 0) {
+	if (size == 1 && numHeIClusters > 0) {
 		reactants = network->getAll("HeI");
 		combineClusters(reactants,maxHeIClusterSize,"HeI");
 	}

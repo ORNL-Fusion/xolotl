@@ -482,7 +482,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// grid point) at the expense of being a little tricky to comprehend.
 		network->updateConcentrationsFromArray(concOffset);
 
-//		for (int i = 0; i < 4; i++) {
+//		for (int i = 0; i < 5; i++) {
 //			std::cout << "c[" << i << "] = " << concOffset[i] << std::endl;
 //		}
 
@@ -783,7 +783,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	 * grid point ----- */
 
 	// Create a new row array of size n
-	PetscInt pdRowIds[size];
+	PetscInt pdColIds[size];
 	// Loop over the grid points
 	std::vector<double> partials;
 //	std::cout << "xs = " << xs << std::endl;
@@ -806,18 +806,18 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			// Get the reactant index
 			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
 			// Get the column id
-			col[0] = (xi - xs + 1) * size + reactantIndex;
+			row[0] = (xi - xs + 1) * size + reactantIndex;
 			// Get the partial derivatives
 			partials = psiCluster->getPartialDerivatives(temperature);
 			// Set the row indices
 //			std::cout << xi << " " << xs << " " << size << " " << (xi - xs + 1)*size << std::endl;
 //			std::cout << "PD for " << psiCluster->getName() << "_" << psiCluster->getSize() << std::endl;
 			for (int j = 0; j < size; j++) {
-				pdRowIds[j] = (xi - xs + 1) * size + j;
-//				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << pdRowIds[j] << "," << col[0] << "]"<< std::endl;
+				pdColIds[j] = (xi - xs + 1) * size + j;
+//				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << row[0] << "," << pdColIds[j] << "]"<< std::endl;
 			}
 			// Update the matrix
-			ierr = MatSetValuesLocal(*J, size, pdRowIds, 1, col, partials.data(),
+			ierr = MatSetValuesLocal(*J, 1, row, size, pdColIds, partials.data(),
 					ADD_VALUES);
 		}
 		//break;////////////////////////////////////////////////////////////////////////?FIXMEFIXMEFIXMEFIXMEFIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1050,14 +1050,13 @@ void PetscSolver::solve() {
 		ofill[reactantIndex * dof + reactantIndex] = 1;
 	}
 
-	ierr = DMDASetBlockFills(da, NULL, ofill);
-	checkPetscError(ierr);
-	ierr = PetscFree(ofill);
-	checkPetscError(ierr);
-	ierr = getDiagonalFill(dfill, dof * dof);////// !~!!!!!!!!!!~~~!!!~!~!!~~!!!~!~!!!!!!!!!!!!!~~~~~~~~~~~~~~~~!~!~FIXME FIXME FIXME FIXME 32340923423904823049238//
-	checkPetscError(ierr);
-	ierr = PetscFree(dfill);
-	checkPetscError(ierr);
+	// Get the diagonal fill
+	ierr = getDiagonalFill(dfill, dof * dof);checkPetscError(ierr);
+	// Load up the block fills
+	ierr = DMDASetBlockFills(da, NULL, ofill);checkPetscError(ierr);
+	// Free the temporary fill arrays
+	ierr = PetscFree(ofill);checkPetscError(ierr);
+	ierr = PetscFree(dfill);checkPetscError(ierr);
 
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Extract global vector from DMDA to hold solution

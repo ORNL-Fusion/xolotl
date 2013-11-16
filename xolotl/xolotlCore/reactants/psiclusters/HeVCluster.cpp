@@ -217,9 +217,14 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 	// Only dissociate if possible
 	if (heCluster && vCluster && iCluster) {
 		// Calculate the much easier f4 term first
-		f4 = calculateDissociationConstant(*this, *iCluster, temperature)
-				+ calculateDissociationConstant(*this, *vCluster, temperature)
-				+ calculateDissociationConstant(*this, *heCluster, temperature);
+
+		// FIXME! Make sure that this works as expected! Make sure that it
+		// correctly picks out right component in
+		// calculateDissociationConstant!
+
+		f4 = calculateDissociationConstant(*this, temperature)
+				+ calculateDissociationConstant(*this, temperature)
+				+ calculateDissociationConstant(*this, temperature);
 
 		// Loop over all the elements of the dissociation
 		// connectivity to find where this mixed species dissociates
@@ -249,8 +254,7 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 				}
 				// Update the flux calculation
 				if (secondReactant) {
-					f3 += calculateDissociationConstant(*currentReactant,
-							*secondReactant, temperature)
+					f3 += calculateDissociationConstant(*currentReactant, temperature)
 							* currentReactant->getConcentration();
 				}
 			}

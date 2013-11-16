@@ -99,6 +99,18 @@ protected:
 	std::vector<std::shared_ptr<Reactant> > combiningReactants;
 
 	/**
+	 * A vector of clusters that dissociate to form this cluster.
+	 *
+	 * Entries in this vector are added by the dissociating cluster itself, not
+	 * the cluster which it creates. The array is filled this way for
+	 * mathematical and computational simplicity. For single-species clusters,
+	 * this is performed in PSICluster.cpp::dissociateClusters(). Compound
+	 * clusters that override dissociateClusters() or don't call it should
+	 * make sure that they fill this list.
+	 */
+	std::vector<std::shared_ptr<PSICluster>> dissociatingClusters;
+
+	/**
 	 * Calculate the reaction constant dependent on the
 	 * reaction radii and the diffusion coefficients for the
 	 * ith and jth clusters, which itself depends on the current
@@ -109,20 +121,18 @@ protected:
 	 * @return
 	 */
 	double calculateReactionRateConstant(const PSICluster & firstcluster,
-			const PSICluster & secondcluster, const double temperature) const;
+			const PSICluster & secondcluster, double temperature) const;
 
 	/**
-	 * Calculate the dissociation constant based on the current
-	 * clusters atomic volume, reaction rate constant, and binding
-	 * energies.
+	 * Calculate the dissociation constant of the first cluster with respect to
+	 * the single-species cluster of the same type based on the current clusters
+	 * atomic volume, reaction rate constant, and binding energies.
 	 *
-	 * @param The first cluster interacting
-	 * @param The second cluster interacting
+	 * @param The cluster that dissociated to with this cluster from the parent
 	 * @param temperature The current system temperature
 	 * @return
 	 */
-	double calculateDissociationConstant(const PSICluster & firstcluster,
-			const PSICluster & secondcluster, const double temperature) const;
+	double calculateDissociationConstant(const PSICluster & otherCluster, double temperature) const;
 
 	/**
 	 * Return whether or not this PSICluster is a product
@@ -245,6 +255,12 @@ protected:
 	 *
 	 * This operation fills the reaction connectivity array as well as the
 	 * array of combining clusters.
+	 *
+	 * This operation also I_a and V_b as a reacting pair of the product. It
+	 * is simpler and cheaper (O(C)) to do this operation here and quite
+	 * computationally difficult by comparison (O(numI*numV)) to do this
+	 * operation on the child since it has to search all of the possible
+	 * parents.
 	 *
 	 * @param secondClusterName The name of the first cluster in the reaction,
 	 * either "V" or "I" and always the opposite or alternative of
