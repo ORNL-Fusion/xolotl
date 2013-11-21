@@ -7,7 +7,7 @@
 using namespace xolotlCore;
 
 Reactant::Reactant() :
-		concentration(0.0), name(""), id(0) {
+		concentration(0.0e-16), name(""), id(0) {
 }
 
 Reactant::Reactant(const Reactant &other) :
@@ -23,7 +23,7 @@ std::shared_ptr<Reactant> Reactant::clone() {
 }
 
 Reactant::Reactant(double conc) :
-		concentration(0.0), name(""), id(0) {
+		concentration(conc), name(""), id(0) {
 }
 
 double Reactant::getConcentration() const {
@@ -47,12 +47,12 @@ void Reactant::setConcentration(double conc) {
 }
 
 void Reactant::zero() {
-	concentration = 0.0e16;
+	concentration = 0.0e-16;
 	return;
 }
 
 double Reactant::getTotalFlux(const double temperature) {
-	return 0;
+	return 0.0;
 }
 
 void Reactant::setReactionNetwork(
