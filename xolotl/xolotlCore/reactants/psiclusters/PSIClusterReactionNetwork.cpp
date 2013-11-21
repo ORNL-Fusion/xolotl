@@ -145,8 +145,6 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::getCompound(
 		// Make sure the reactant is in the map
 		if (mixedSpeciesMap.count(composition)) {
 			retReactant = mixedSpeciesMap.at(composition);
-		} else {
-			std::cout << rName << "_(" << sizes[0] << ", " << sizes[1] << ", " << sizes[2] << ") not found!" << std::endl;
 		}
 	}
 
