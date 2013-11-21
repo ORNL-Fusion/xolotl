@@ -119,6 +119,16 @@ public:
 	virtual std::map<std::string,int> getComposition() const;
 
 protected:
+
+	/**
+	 * This operation overrides the base class implementation to provide
+	 * the proper pointer for HeV, which is a compound.
+	 *
+	 * @return The shared_ptr from the network or a null shared_ptr if the
+	 * network does not contain this reactant.
+	 */
+	std::shared_ptr<PSICluster> getThisSharedPtrFromNetwork() const;
+
 	/**
 	 * Computes a row of the reaction connectivity matrix corresponding to
 	 * this reactant.
@@ -136,6 +146,7 @@ protected:
 	 * the element at the position of the second reactant is 1, otherwise 0.
 	 */
 	void createDissociationConnectivity();
+
 };
 //end class HeVCluster
 

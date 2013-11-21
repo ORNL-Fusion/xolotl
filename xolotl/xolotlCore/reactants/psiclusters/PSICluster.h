@@ -111,6 +111,19 @@ protected:
 	std::vector<std::shared_ptr<PSICluster>> dissociatingClusters;
 
 	/**
+	 * This operation retrieves the shared_ptr for this cluster from the
+	 * network so that the reference count will be maintained.
+	 *
+	 * Simply creating a shared_ptr with the "this" pointer will break
+	 * the reference count, so it is important to have the exact
+	 * shared pointer that the network is storing.
+	 *
+	 * @return The shared_ptr from the network or a null shared_ptr if the
+	 * network does not contain this reactant.
+	 */
+	virtual std::shared_ptr<PSICluster> getThisSharedPtrFromNetwork() const;
+
+	/**
 	 * Calculate the reaction constant dependent on the
 	 * reaction radii and the diffusion coefficients for the
 	 * ith and jth clusters, which itself depends on the current

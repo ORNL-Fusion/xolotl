@@ -97,7 +97,7 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::get(
 
 	// Local Declarations
 	std::map<std::string, int> composition;
-	std::shared_ptr<PSICluster> retReactant = std::shared_ptr<PSICluster>();
+	std::shared_ptr<PSICluster> retReactant;
 	int maxSize = 0;
 
 	// Setup the composition map to default values
@@ -126,7 +126,6 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::get(
  */
 std::shared_ptr<Reactant> PSIClusterReactionNetwork::getCompound(
 		const std::string rName, const std::vector<int> sizes) const {
-	std::shared_ptr<Reactant> nullPtr;
 
 	// Local Declarations
 	std::map<std::string, int> composition;
@@ -146,6 +145,8 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::getCompound(
 		// Make sure the reactant is in the map
 		if (mixedSpeciesMap.count(composition)) {
 			retReactant = mixedSpeciesMap.at(composition);
+		} else {
+			std::cout << rName << "_(" << sizes[0] << ", " << sizes[1] << ", " << sizes[2] << ") not found!" << std::endl;
 		}
 	}
 

@@ -26,6 +26,12 @@ HeVCluster::HeVCluster(const HeVCluster &other) :
 HeVCluster::~HeVCluster() {
 }
 
+std::shared_ptr<PSICluster> HeVCluster::getThisSharedPtrFromNetwork() const {
+	auto composition = getComposition();
+	std::vector<int> compVec = {composition["He"],composition["V"],composition["I"]};
+	return std::dynamic_pointer_cast<PSICluster>(network->getCompound(name, compVec));
+}
+
 std::shared_ptr<Reactant> HeVCluster::clone() {
 	std::shared_ptr<Reactant> reactant(new HeVCluster(*this));
 	return reactant;
@@ -184,6 +190,9 @@ void HeVCluster::createDissociationConnectivity() {
 	composition = psiNetwork->getCompositionVector(numHe - 1, numV, 0);
 	otherMixedCluster = psiNetwork->getCompound("HeV", composition);
 	singleCluster = psiNetwork->get("He", 1);
+	if (!otherMixedCluster) {
+		std::cout << "It's NULL!" << std::endl;
+	}
 	dissociateClusters(singleCluster,otherMixedCluster);
 
 	// Vacancy Dissociation, get He[(numV-1)*V] and V
