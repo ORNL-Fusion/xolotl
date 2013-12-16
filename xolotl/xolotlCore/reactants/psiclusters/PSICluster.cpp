@@ -106,7 +106,8 @@ double PSICluster::getDissociationFlux(double temperature) const {
 
 	int nClusters = 0, oneIndex = -1, smallerClusterSize = 0.0;
 	double flux = 0.0, fluxMultiplier = 1.0;
-	std::shared_ptr<PSICluster> dissociatingCluster, smallerCluster;
+	std::shared_ptr<PSICluster> dissociatingCluster, smallerCluster,
+			singleSpeciesCluster;
 	std::map<std::string, int> oneHe, oneV, oneI;
 
 	// Only try this if the network is available
@@ -137,6 +138,9 @@ double PSICluster::getDissociationFlux(double temperature) const {
 				// Get the cluster one size smaller than the dissociating cluster.
 				smallerCluster = std::dynamic_pointer_cast<PSICluster>(
 						network->get(name, smallerClusterSize));
+				// Get the single species cluster that comes out with it
+				singleSpeciesCluster = std::dynamic_pointer_cast<PSICluster>(
+						network->get(dissociatingCluster->getName(), 1));
 				// Set the flux multiplier to 2.0 if the size of this cluster
 				// is 1. If that is true, that means that the clusters splits
 				// and that the flux is actually twice the normal flux of a
@@ -149,7 +153,7 @@ double PSICluster::getDissociationFlux(double temperature) const {
 				// Calculate Second term of production flux
 				flux += fluxMultiplier
 						* calculateDissociationConstant(*smallerCluster,
-								temperature)
+								*singleSpeciesCluster, temperature)
 						* dissociatingCluster->getConcentration();
 //				std::cout << "Adding dissociation flux for "
 //						<< dissociatingCluster->getName() << "_"
@@ -345,7 +349,8 @@ double PSICluster::calculateReactionRateConstant(
 }
 
 double PSICluster::calculateDissociationConstant(
-		const PSICluster & otherCluster, double temperature) const {
+		const PSICluster & firstCluster, const PSICluster & secondCluster,
+		double temperature) const {
 
 	// Local Declarations
 	int bindingEnergyIndex = -1;
@@ -353,43 +358,39 @@ double PSICluster::calculateDissociationConstant(
 	double bindingEnergy = 0.0;
 	std::vector<int> parentCompVector = { 0, 0, 0 };
 	std::shared_ptr<PSICluster> singleSpeciesCluster;
-	auto otherComposition = otherCluster.getComposition();
+	auto otherComposition = firstCluster.getComposition();
+	std::map<std::string, int> bindingEnergyIndexMap = { { "He", 0 },
+			{ "V", 1 }, { "I", 2 } };
 
-	// Get the binding energy index
-	if (otherComposition["He"] != 0 && otherComposition["V"] == 0
-			&& otherComposition["I"] == 0) {
-		bindingEnergyIndex = 0;
-		singleSpeciesCluster = std::dynamic_pointer_cast<PSICluster>(
-				network->get("He", 1));
-		atomicVolume = 4.0 * xolotlCore::pi * (0.031 * 0.031 * 0.031)
-				* otherComposition["He"] / 3.0;
-	} else if (otherComposition["He"] == 0 && otherComposition["V"] != 0
-			&& otherComposition["I"] == 0) {
-		bindingEnergyIndex = 1;
-		singleSpeciesCluster = std::dynamic_pointer_cast<PSICluster>(
-				network->get("V", 1));
-		atomicVolume = 4.0 * xolotlCore::pi * (0.193 * 0.193 * 0.193)
-				* otherComposition["V"] / 3.0;
-	} else if (otherComposition["He"] == 0 && otherComposition["V"] == 0
-			&& otherComposition["I"] != 0) {
-		bindingEnergyIndex = 2;
-		singleSpeciesCluster = std::dynamic_pointer_cast<PSICluster>(
-				network->get("I", 1));
-		atomicVolume = 4.0 * xolotlCore::pi * (0.193 * 0.193 * 0.193)
-				* otherComposition["I"] / 3.0;
-	} else {
-		return 0.0;
-	}
+	// Get the binding energy index and the atomic volume
+	bindingEnergyIndex = bindingEnergyIndexMap[firstCluster.getName()];
+	atomicVolume = (4.0 / 3.0) * xolotlCore::pi
+			* (xolotlCore::latticeConstant * xolotlCore::latticeConstant
+					* xolotlCore::latticeConstant);
+
+//	// Get the binding energy index
+//	if (firstCluster.getName() == "He") {
+//		atomicVolume = 4.0 * xolotlCore::pi * (0.031 * 0.031 * 0.031)
+//				* otherComposition["He"] / 3.0;
+//	} else if (firstCluster.getName() == "V") {
+//		atomicVolume = 4.0 * xolotlCore::pi * (0.193 * 0.193 * 0.193)
+//				* otherComposition["V"] / 3.0;
+//	} else if (firstCluster.getName() == "I") {
+//		atomicVolume = 4.0 * xolotlCore::pi * (0.193 * 0.193 * 0.193)
+//				* otherComposition["I"] / 3.0;
+//	} else {
+//		return 0.0;
+//	}
 
 	// Calculate the Reaction Rate Constant
 	double kPlus = 0.0;
 	if (singleSpeciesCluster) {
-		kPlus = calculateReactionRateConstant(otherCluster,
+		kPlus = calculateReactionRateConstant(firstCluster,
 				*singleSpeciesCluster, temperature);
 	}
 
 	// Calculate and return
-	bindingEnergy = otherCluster.getBindingEnergies()[bindingEnergyIndex];
+	bindingEnergy = firstCluster.getBindingEnergies()[bindingEnergyIndex];
 	double k_minus_exp = exp(
 			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature));
 	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
@@ -403,7 +404,7 @@ double PSICluster::calculateDissociationConstant(
 //	std::cout << "atomic volume in " << name << "_" << size << " = " << atomicVolume
 //			<< std::endl;
 //	std::cout << "E_b in " << name << "_" << size << " = "
-//			<< otherCluster.getBindingEnergies()[bindingEnergyIndex]
+//			<< firstCluster.getBindingEnergies()[bindingEnergyIndex]
 //			<< " at index = " << bindingEnergyIndex << std::endl;
 
 	return k_minus;
@@ -545,7 +546,7 @@ std::vector<double> PSICluster::getPartialDerivatives(
 	std::vector<double> partialDerivatives = std::vector<double>(length, 0.0);
 	ReactingPair pair;
 	double rateConstant = 0.0;
-	std::shared_ptr<PSICluster> cluster, smallerCluster;
+	std::shared_ptr<PSICluster> cluster, smallerCluster, singleSpeciesCluster;
 
 	// Load up everything from the reacting pairs array. The partial
 	// derivative for production reactions is k+_(j,m)*C_m where j is the index
@@ -641,10 +642,13 @@ std::vector<double> PSICluster::getPartialDerivatives(
 				network->get(name, smallerClusterSize));
 		// Compute the contribution from the smaller cluster
 		index = network->getReactantId(*cluster) - 1;
+		// Get the single species cluster that comes out with it
+		singleSpeciesCluster = std::dynamic_pointer_cast<PSICluster>(
+				network->get(name, 1));
 		// Only modify the derivative if the smaller cluster exists
-		if (smallerCluster) {
+		if (smallerCluster && singleSpeciesCluster) {
 			partialDerivatives[index] += calculateDissociationConstant(
-					*smallerCluster, temperature);
+					*smallerCluster, *singleSpeciesCluster, temperature);
 //		std::cout << name << "_" << size << " Dissociation Partial Derivative = "
 //				<< partialDerivatives[index] << " with " << index << std::endl;
 		}

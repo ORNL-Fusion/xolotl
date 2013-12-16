@@ -214,7 +214,7 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 
 	// Local Declarations
 	std::map<std::string, int> composition;
-	std::shared_ptr<PSICluster> currentReactant, secondReactant;
+	std::shared_ptr<PSICluster> currentCluster, secondCluster;
 	double f4 = 0.0, f3 = 0.0;
 
 	// Get the required dissociation clusters
@@ -225,46 +225,44 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 
 	// Only dissociate if possible
 	if (heCluster && vCluster && iCluster) {
-		// Calculate the much easier f4 term first
-
 		// FIXME! Make sure that this works as expected! Make sure that it
 		// correctly picks out right component in
 		// calculateDissociationConstant!
-
-		f4 = calculateDissociationConstant(*this, temperature)
-				+ calculateDissociationConstant(*this, temperature)
-				+ calculateDissociationConstant(*this, temperature);
+		// Calculate the much easier f4 term... first
+		f4 = calculateDissociationConstant(*this, *heCluster, temperature)
+				+ calculateDissociationConstant(*this, *vCluster, temperature)
+				+ calculateDissociationConstant(*this, *iCluster, temperature);
 
 		// Loop over all the elements of the dissociation
 		// connectivity to find where this mixed species dissociates
 		auto reactants = network->getAll();
-		int numReactants = dissociationConnectivity.size();
-		for (int i = 0; i < numReactants; i++) {
+		int numClusters = dissociationConnectivity.size();
+		for (int i = 0; i < numClusters; i++) {
 			if (dissociationConnectivity[i] == 1) {
 				// Set the current reactant
-				currentReactant = std::dynamic_pointer_cast<PSICluster>(
+				currentCluster = std::dynamic_pointer_cast<PSICluster>(
 						reactants->at(i));
 				// Get the cluster map of this connection
-				composition = currentReactant->getComposition();
+				composition = currentCluster->getComposition();
 				// We need to find if this is a Helium dissociation
 				if (numHe - composition["He"] == 1 && numV == composition["V"]
 						&& composition["I"] == 0) {
-					secondReactant = heCluster;
+					secondCluster = heCluster;
 				} else if (numHe == composition["He"]
 						&& numV - composition["V"] == 1
 						&& composition["I"] == 0) {
 					// vacancy dissociation
-					secondReactant = vCluster;
+					secondCluster = vCluster;
 				} else if (numHe == composition["He"]
 						&& composition["I"] - numV == 1
 						&& composition["V"] == 0) {
 					// or a trap mutation.
-					secondReactant = iCluster;
+					secondCluster = iCluster;
 				}
 				// Update the flux calculation
-				if (secondReactant) {
-					f3 += calculateDissociationConstant(*currentReactant, temperature)
-							* currentReactant->getConcentration();
+				if (secondCluster) {
+					f3 += calculateDissociationConstant(*currentCluster, *secondCluster, temperature)
+							* currentCluster->getConcentration();
 				}
 			}
 		}

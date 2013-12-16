@@ -141,11 +141,13 @@ protected:
 	 * the single-species cluster of the same type based on the current clusters
 	 * atomic volume, reaction rate constant, and binding energies.
 	 *
-	 * @param The cluster that dissociated to with this cluster from the parent
+	 * @param One of the clusters that dissociated from the parent
+	 * @param The second cluster that dissociated from the parent
 	 * @param temperature The current system temperature
 	 * @return
 	 */
-	double calculateDissociationConstant(const PSICluster & otherCluster, double temperature) const;
+	double calculateDissociationConstant(const PSICluster & firstCluster,
+			const PSICluster & secondCluster, double temperature) const;
 
 	/**
 	 * Return whether or not this PSICluster is a product
@@ -200,7 +202,8 @@ protected:
 	 * @param secondDissociatedCluster The second cluster removed by
 	 * dissociation.
 	 */
-	void dissociateClusters(const std::shared_ptr<Reactant> & firstDissociatedCluster,
+	void dissociateClusters(
+			const std::shared_ptr<Reactant> & firstDissociatedCluster,
 			const std::shared_ptr<Reactant> & secondDissociatedCluster);
 
 	/**
@@ -454,7 +457,7 @@ public:
 	 * corresponds to the first cluster in the list returned by the
 	 * ReactionNetwork::getAll() operation.
 	 */
-	std::vector<double> getPartialDerivatives(double temperature) const;
+	virtual std::vector<double> getPartialDerivatives(double temperature) const;
 };
 
 } /* end namespace xolotlCore */

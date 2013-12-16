@@ -22,8 +22,10 @@ HeInterstitialCluster::~HeInterstitialCluster() {
 
 std::shared_ptr<PSICluster> HeInterstitialCluster::getThisSharedPtrFromNetwork() const {
 	auto composition = getComposition();
-	std::vector<int> compVec = {composition["He"],composition["V"],composition["I"]};
-	return std::dynamic_pointer_cast<PSICluster>(network->getCompound(name, compVec));
+	std::vector<int> compVec = { composition["He"], composition["V"],
+			composition["I"] };
+	return std::dynamic_pointer_cast<PSICluster>(
+			network->getCompound(name, compVec));
 }
 
 std::shared_ptr<Reactant> HeInterstitialCluster::clone() {
@@ -46,8 +48,8 @@ int HeInterstitialCluster::getSpeciesSize(const std::string speciesName) {
 void HeInterstitialCluster::createReactionConnectivity() {
 
 	// Local Declarations
-	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
-			> (network);
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
 	auto props = psiNetwork->getProperties();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
@@ -75,10 +77,8 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast < PSICluster
-					> (firstReactant);
-			pair.second = std::dynamic_pointer_cast < PSICluster
-					> (secondReactant);
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -99,8 +99,8 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	if (firstReactant && secondReactant) {
 		// Create the Reacting Pair
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
-		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 		// Add single I to the list of clusters this one interacts with if it
@@ -130,8 +130,8 @@ void HeInterstitialCluster::createReactionConnectivity() {
 void HeInterstitialCluster::createDissociationConnectivity() {
 
 	// Local Declarations
-	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
-			> (network);
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
 	auto props = psiNetwork->getProperties();
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]), index = 0;
 	std::vector<int> composition;
@@ -156,65 +156,63 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) const {
 
 	// Local Declarations
 	std::map<std::string, int> composition;
-	std::shared_ptr<PSICluster> currentReactant, secondReactant;
+	std::shared_ptr<PSICluster> currentCluster, secondCluster;
 	double f4 = 0.0, f3 = 0.0;
 
 	// Get the required dissociation clusters
-	auto heCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get("He", 1));
-	auto vCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get("V", 1));
-	auto iCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get("I", 1));
+	auto heCluster = std::dynamic_pointer_cast<PSICluster>(
+			network->get("He", 1));
+	auto vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+	auto iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
 
 	// Only dissociate if possible
 	if (heCluster && vCluster && iCluster) {
-		// Calculate the much easier f4 term...
-
 		// FIXME! Make sure that this works as expected! Make sure that it
 		// correctly picks out right component in
 		// calculateDissociationConstant!
-
-		f4 = calculateDissociationConstant(*this, temperature)
-				+ calculateDissociationConstant(*this, temperature)
-				+ calculateDissociationConstant(*this, temperature);
+		// Calculate the much easier f4 term... first
+		f4 = calculateDissociationConstant(*this, *heCluster, temperature)
+				+ calculateDissociationConstant(*this, *vCluster, temperature)
+				+ calculateDissociationConstant(*this, *iCluster, temperature);
 
 		// Loop over all the elements of the dissociation
-		// connectivity to find where this mixed species dissociates
+		// connectivity to find where this mixed species dissociates and
+		// calculate the f3 term.
 		auto reactants = network->getAll();
-		int numReactants = dissociationConnectivity.size();
-		for (int i = 0; i < numReactants; i++) {
+		int numClusters = dissociationConnectivity.size();
+		for (int i = 0; i < numClusters; i++) {
 			if (dissociationConnectivity[i] == 1) {
 				// Set the current reactant
-				currentReactant = std::dynamic_pointer_cast < PSICluster
-						> (reactants->at(i));
+				currentCluster = std::dynamic_pointer_cast<PSICluster>(
+						reactants->at(i));
 				// Get the cluster map of this connection
-				composition = currentReactant->getComposition();
+				composition = currentCluster->getComposition();
 				// We need to find if this is a Helium dissociation
 				if (numHe - composition["He"] == 1 && numI == composition["I"]
 						&& composition["V"] == 0) {
-					secondReactant = heCluster;
+					secondCluster = heCluster;
 				} else if (numHe == composition["He"]
 						&& numI - composition["V"] == 1
 						&& composition["V"] == 0) {
 					// trap mutation
-					secondReactant = vCluster;
+					secondCluster = vCluster;
 				} else if (numHe == composition["He"]
 						&& composition["I"] - numI == 1
 						&& composition["V"] == 0) {
 					// or interstitial dissociation
-					secondReactant = iCluster;
+					secondCluster = iCluster;
 				}
 				// Update the flux calculation
-				if (secondReactant) {
-					f3 += calculateDissociationConstant(*currentReactant, temperature)
-							* currentReactant->getConcentration();
+				if (secondCluster) {
+					// Get the single species cluster that comes out with it
+					f3 += calculateDissociationConstant(*currentCluster,*secondCluster,
+							temperature) * currentCluster->getConcentration();
 				}
 			}
 		}
 	}
 
-	return f3 - f4 * getConcentration();
+	return f3 - (f4 * getConcentration());
 }
 
 std::map<std::string, int> HeInterstitialCluster::getComposition() const {
