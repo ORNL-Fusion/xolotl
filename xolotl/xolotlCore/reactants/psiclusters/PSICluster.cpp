@@ -373,20 +373,6 @@ double PSICluster::calculateDissociationConstant(
 	atomicVolume = 0.5 * xolotlCore::latticeConstant
 			* xolotlCore::latticeConstant * xolotlCore::latticeConstant;
 
-//	// Get the binding energy index
-//	if (firstCluster.getName() == "He") {
-//		atomicVolume = 4.0 * xolotlCore::pi * (0.031 * 0.031 * 0.031)
-//				* otherComposition["He"] / 3.0;
-//	} else if (firstCluster.getName() == "V") {
-//		atomicVolume = 4.0 * xolotlCore::pi * (0.193 * 0.193 * 0.193)
-//				* otherComposition["V"] / 3.0;
-//	} else if (firstCluster.getName() == "I") {
-//		atomicVolume = 4.0 * xolotlCore::pi * (0.193 * 0.193 * 0.193)
-//				* otherComposition["I"] / 3.0;
-//	} else {
-//		return 0.0;
-//	}
-
 	// Calculate the Reaction Rate Constant
 	double kPlus = 0.0;
 	if (singleSpeciesCluster) {
