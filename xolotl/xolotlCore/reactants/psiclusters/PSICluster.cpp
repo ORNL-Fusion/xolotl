@@ -362,11 +362,16 @@ double PSICluster::calculateDissociationConstant(
 	std::map<std::string, int> bindingEnergyIndexMap = { { "He", 0 },
 			{ "V", 1 }, { "I", 2 } };
 
-	// Get the binding energy index and the atomic volume
+	// Get the binding energy index.
 	bindingEnergyIndex = bindingEnergyIndexMap[firstCluster.getName()];
-	atomicVolume = (4.0 / 3.0) * xolotlCore::pi
-			* (xolotlCore::latticeConstant * xolotlCore::latticeConstant
-					* xolotlCore::latticeConstant);
+	// The atomic volume is computed by considering the BCC structure of the
+	// tungsten. In a given lattice cell in tungsten there are tungsten atoms
+	// at each corner and a tungsten atom in the center. The tungsten atoms at
+	// the corners are shared across a total of eight cells. The fraction of
+	// the volume of the lattice cell that is filled with tungsten atoms is the
+	// atomic volume and is a_0^3/(8*1/8 + 1) = 0.5*a_0^3.
+	atomicVolume = 0.5 * xolotlCore::latticeConstant
+			* xolotlCore::latticeConstant * xolotlCore::latticeConstant;
 
 //	// Get the binding energy index
 //	if (firstCluster.getName() == "He") {
