@@ -518,26 +518,19 @@ void PSICluster::dissociateClusters(
 }
 
 /**
- * This operation returns the list of partial derivatives of this Reactant
- * with respect to all other reactants in the network. The combined lists
- * of partial derivatives from all of the reactants in the network can be
- * used to form, for example, a Jacobian.
+ * This operation computes the partial derivatives due to production
+ * reactions.
  *
- * @param the temperature at which the reactions are occurring
- * @return The partial derivatives for this reactant where index zero
- * corresponds to the first reactant in the list returned by the
- * ReactionNetwork::getAll() operation.
+ * @param partials The vector into which the partial derivatives should be
+ * inserted.
  */
-std::vector<double> PSICluster::getPartialDerivatives(
+void PSICluster::getProductionPartialDerivatives(std::vector<double> & partials,
 		double temperature) const {
 
 	// Create the array and fill it with zeros
-	int length = network->size(), numReactants = 0, index = 0;
-	int smallerClusterSize = 0;
-	std::vector<double> partialDerivatives = std::vector<double>(length, 0.0);
+	int length = partials.size(), numReactants = 0, index = 0;
 	ReactingPair pair;
 	double rateConstant = 0.0;
-	std::shared_ptr<PSICluster> cluster, smallerCluster, singleSpeciesCluster;
 
 	// Load up everything from the reacting pairs array. The partial
 	// derivative for production reactions is k+_(j,m)*C_m where j is the index
@@ -554,19 +547,34 @@ std::vector<double> PSICluster::getPartialDerivatives(
 				*(pair.second), temperature);
 		// Compute the contribution from the first part of the reacting pair
 		index = network->getReactantId(*(pair.first)) - 1;
-		partialDerivatives[index] += rateConstant
-				* pair.second->getConcentration();
+		partials[index] += rateConstant * pair.second->getConcentration();
 //		std::cout << "RP1 - Partial Derivative = " << partialDerivatives[index]
 //				<< " from " << pair.first->getName() << "_"
 //				<< pair.first->getSize() << std::endl;
 		// Compute the contribution from the second part of the reacting pair
 		index = network->getReactantId(*(pair.second)) - 1;
-		partialDerivatives[index] += rateConstant
-				* pair.first->getConcentration();
+		partials[index] += rateConstant * pair.first->getConcentration();
 //		std::cout << "RP2 - Partial Derivative = " << partialDerivatives[index]
 //				<< " from " << pair.second->getName() << "_"
 //				<< pair.second->getSize() << std::endl;
 	}
+
+	return;
+}
+
+/**
+ * This operation computes the partial derivatives due to combination
+ * reactions.
+ *
+ * @param partials The vector into which the partial derivatives should be
+ * inserted.
+ */
+void PSICluster::getCombinationPartialDerivatives(
+		std::vector<double> & partials, double temperature) const{
+
+	// Create the array and fill it with zeros
+	int length = partials.size(), numReactants = 0, index = 0;
+	std::shared_ptr<PSICluster> cluster, smallerCluster, singleSpeciesCluster;
 
 	// Load up everything from the combining reactants.
 	// Combination fluxes are an outgoing flux, so they only
@@ -586,7 +594,7 @@ std::vector<double> PSICluster::getPartialDerivatives(
 		index = network->getReactantId(*cluster) - 1;
 		// Compute the contribution from the cluster. Remember that the flux
 		// due to combinations is OUTGOING (-=)!
-		partialDerivatives[index] -= calculateReactionRateConstant(*this,
+		partials[index] -= calculateReactionRateConstant(*this,
 				*cluster, temperature) * getConcentration();
 //		std::cout << "Combining Partial Derivative = "
 //				<< partialDerivatives[index] << ", c = " << getConcentration()
@@ -609,11 +617,29 @@ std::vector<double> PSICluster::getPartialDerivatives(
 		cluster = std::dynamic_pointer_cast<PSICluster>(combiningReactants[i]);
 		// Compute the contribution from the cluster. Remember that the flux
 		// due to combinations is OUTGOING (-=)!
-		partialDerivatives[index] -= calculateReactionRateConstant(*this,
+		partials[index] -= calculateReactionRateConstant(*this,
 				*cluster, temperature) * cluster->getConcentration();
 	}
 //	std::cout << "Combining Partial Derivative for df(C_i)/dC_i) = "
 //			<< partialDerivatives[index] << std::endl;
+
+	return;
+}
+
+/**
+ * This operation computes the partial derivatives due to dissociation
+ * reactions.
+ *
+ * @param partials The vector into which the partial derivatives should be
+ * inserted.
+ */
+void PSICluster::getDissociationPartialDerivatives(
+		std::vector<double> & partials, double temperature) const {
+
+	// Create the array and fill it with zeros
+	int length = partials.size(), numReactants = 0, index = 0;
+	int smallerClusterSize = 0;
+	std::shared_ptr<PSICluster> cluster, smallerCluster, singleSpeciesCluster;
 
 	// Load up everything from the dissociating reactants. The partial
 	// derivative for dissociation is just the dissociation constant between
@@ -638,14 +664,39 @@ std::vector<double> PSICluster::getPartialDerivatives(
 				network->get(name, 1));
 		// Only modify the derivative if the smaller cluster exists
 		if (smallerCluster && singleSpeciesCluster) {
-			partialDerivatives[index] += calculateDissociationConstant(
+			partials[index] += calculateDissociationConstant(
 					*smallerCluster, *singleSpeciesCluster, temperature);
 //		std::cout << name << "_" << size << " Dissociation Partial Derivative = "
 //				<< partialDerivatives[index] << " with " << index << std::endl;
 		}
 	}
 
-	return partialDerivatives;
+	return;
+}
+
+/**
+ * This operation returns the list of partial derivatives of this Reactant
+ * with respect to all other reactants in the network. The combined lists
+ * of partial derivatives from all of the reactants in the network can be
+ * used to form, for example, a Jacobian.
+ *
+ * @param the temperature at which the reactions are occurring
+ * @return The partial derivatives for this reactant where index zero
+ * corresponds to the first reactant in the list returned by the
+ * ReactionNetwork::getAll() operation.
+ */
+std::vector<double> PSICluster::getPartialDerivatives(
+		double temperature) const {
+
+	// Local Declarations
+	std::vector<double> partials(network->size(),0.0);
+
+	// Get the partial derivatives for each reaction type
+	getProductionPartialDerivatives(partials,temperature);
+	getCombinationPartialDerivatives(partials,temperature);
+	getDissociationPartialDerivatives(partials,temperature);
+
+	return partials;
 }
 
 void PSICluster::combineClusters(
