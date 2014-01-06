@@ -3073,7 +3073,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_OtcWE1YAEeOXusRRCt-row" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_OtcWEVYAEeOXusRRCt-row" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_OtbH8VYAEeOXusRRCt-row" points="[-594, -698, 5105, 3492]$[-594, -1346, 5105, 2844]$[-6037, -1346, -338, 2844]$[-6037, -2292, -338, 1898]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_OtbH8VYAEeOXusRRCt-row" points="[-594, -698, 5105, 3492]$[-594, -1346, 5105, 2844]$[-5852, -1346, -153, 2844]$[-5852, -2292, -153, 1898]"/>
           </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_HlDxkFYVEeOZavon2DC1GQ" element="_Uh2GcFCWEeOR2uM9TJNq5w" source="_uNSSkEVhEeOTkpIp2VY3Rg" target="_kkmd4EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_HlEYoFYVEeOZavon2DC1GQ" type="NameLabel">
@@ -3089,7 +3089,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_l855wVYVEeOZavon2DC1GQ" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_l85SsVYVEeOZavon2DC1GQ" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_l84roVYVEeOZavon2DC1GQ" points="[-634, -698, -6836, 3492]$[-634, -1346, -6836, 2844]$[5864, -1346, -338, 2844]$[5864, -2292, -338, 1898]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_l84roVYVEeOZavon2DC1GQ" points="[-634, -698, -6836, 3492]$[-634, -1346, -6836, 2844]$[6049, -1346, -153, 2844]$[6049, -2292, -153, 1898]"/>
           </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_NSjqcFYWEeOZavon2DC1GQ" element="_Mqd3EFYTEeOZavon2DC1GQ" source="_o9D1cEVpEeOTkpIp2VY3Rg" target="_kkmd4EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_NSkRgFYWEeOZavon2DC1GQ" type="NameLabel">
@@ -3206,7 +3206,7 @@ Check the reactants - He first
       <packagedElement xmi:type="uml:Interface" xmi:id="_iI4CUEVdEeOTkpIp2VY3Rg" name="Timer">
         <eAnnotations xmi:id="_wtU9kEb6EeOPDa8Cefg4Cg" source="uml2.diagrams"/>
         <ownedComment xmi:id="_1UJu8EVeEeOTkpIp2VY3Rg" annotatedElement="_iI4CUEVdEeOTkpIp2VY3Rg">
-          <body>&lt;p>The interface Timer is used to collect specific timing information such as the total runtime of the program and duration of each function call.&lt;/p></body>
+          <body>&lt;p>Realizations of this interface are responsible for the collection of timing statistics.&lt;/p></body>
         </ownedComment>
         <ownedOperation xmi:id="_92xuIEMrEeOTkpIp2VY3Rg" name="Timer">
           <ownedComment xmi:id="_GItIEEMsEeOTkpIp2VY3Rg" annotatedElement="_92xuIEMrEeOTkpIp2VY3Rg">
@@ -3265,7 +3265,7 @@ Check the reactants - He first
       </packagedElement>
       <packagedElement xmi:type="uml:Interface" xmi:id="_whqFwEVdEeOTkpIp2VY3Rg" name="EventCounter">
         <ownedComment xmi:id="_gtsBQEVeEeOTkpIp2VY3Rg" annotatedElement="_whqFwEVdEeOTkpIp2VY3Rg">
-          <body>&lt;p>The interface EventCounter is used to collect information such as the frequency of each function call or event as well as the usage of different sections or instructions within the code.&lt;/p></body>
+          <body>&lt;p>Realizations of this interface are responsible for the collection of event counter data.&lt;/p></body>
         </ownedComment>
         <ownedOperation xmi:id="_Xl1sUEM3EeOTkpIp2VY3Rg" name="EventCounter">
           <ownedComment xmi:id="_N3Fx0EYmEeOPDa8Cefg4Cg" annotatedElement="_Xl1sUEM3EeOTkpIp2VY3Rg">
@@ -3308,7 +3308,7 @@ Check the reactants - He first
       </packagedElement>
       <packagedElement xmi:type="uml:Interface" xmi:id="_yYrRwEVdEeOTkpIp2VY3Rg" name="HardwareCounter">
         <ownedComment xmi:id="_SgCvcEVhEeOTkpIp2VY3Rg" annotatedElement="_yYrRwEVdEeOTkpIp2VY3Rg">
-          <body>&lt;p>The interface HardwareCounter is used to collect hardware information such as frequency of memory access and cache misses.&lt;/p></body>
+          <body>&lt;p>Realizations of this interface are responsible for the collection of hardware counter data.&lt;/p>&lt;p>&lt;/p></body>
         </ownedComment>
         <ownedOperation xmi:id="_0ldLYEM5EeOTkpIp2VY3Rg" name="HardwareCounter">
           <ownedComment xmi:id="_CBL60EYmEeOPDa8Cefg4Cg" annotatedElement="_0ldLYEM5EeOTkpIp2VY3Rg">
@@ -3382,14 +3382,6 @@ Check the reactants - He first
         <interfaceRealization xmi:id="_Mqd3EFYTEeOZavon2DC1GQ" supplier="_iI4CUEVdEeOTkpIp2VY3Rg" client="_nRaL8EVpEeOTkpIp2VY3Rg" contract="_iI4CUEVdEeOTkpIp2VY3Rg"/>
         <interfaceRealization xmi:id="_W-8XkFYTEeOZavon2DC1GQ" supplier="_yYrRwEVdEeOTkpIp2VY3Rg" client="_nRaL8EVpEeOTkpIp2VY3Rg" contract="_yYrRwEVdEeOTkpIp2VY3Rg"/>
         <interfaceRealization xmi:id="_aYr6kFYTEeOZavon2DC1GQ" supplier="_whqFwEVdEeOTkpIp2VY3Rg" client="_nRaL8EVpEeOTkpIp2VY3Rg" contract="_whqFwEVdEeOTkpIp2VY3Rg"/>
-      </packagedElement>
-      <packagedElement xmi:type="uml:Package" xmi:id="_vN14kFbkEeOM44Tiy8H9AQ" name="Timer">
-        <eAnnotations xmi:id="_vOmGgFbkEeOM44Tiy8H9AQ" source="uml2.diagrams" references="_vOmGgVbkEeOM44Tiy8H9AQ">
-          <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_vOmGgVbkEeOM44Tiy8H9AQ" type="Freeform" name="Main">
-            <element xsi:nil="true"/>
-          </contents>
-        </eAnnotations>
-        <packagedElement xmi:type="uml:Interface" xmi:id="_YHPT8FblEeOM44Tiy8H9AQ" name="Interface1"/>
       </packagedElement>
     </packagedElement>
     <profileApplication xmi:id="_biIvZXVKEeKM6_T6gw_pCg">
