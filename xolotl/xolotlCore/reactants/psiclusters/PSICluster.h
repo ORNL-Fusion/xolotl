@@ -118,6 +118,9 @@ protected:
 	 * the reference count, so it is important to have the exact
 	 * shared pointer that the network is storing.
 	 *
+	 * This operation will fail if the network of which the cluster is a
+	 * member has not been set.
+	 *
 	 * @return The shared_ptr from the network or a null shared_ptr if the
 	 * network does not contain this reactant.
 	 */
@@ -255,7 +258,7 @@ protected:
 			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>clusters,
 			std::string oldComponentName, std::string newComponentName);
 
-	/* This operation handles reactions where interstitials fill vacancies,
+	/** This operation handles reactions where interstitials fill vacancies,
 	 * sometimes referred to vacancy-interstitial annihilation. The reaction
 	 * is of the form
 	 *
