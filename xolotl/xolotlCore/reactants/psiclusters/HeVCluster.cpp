@@ -30,8 +30,8 @@ std::shared_ptr<PSICluster> HeVCluster::getThisSharedPtrFromNetwork() const {
 	auto composition = getComposition();
 	std::vector<int> compVec = { composition["He"], composition["V"],
 			composition["I"] };
-	return std::dynamic_pointer_cast < PSICluster
-			> (network->getCompound(name, compVec));
+	return std::dynamic_pointer_cast<PSICluster>(
+			network->getCompound(name, compVec));
 }
 
 std::shared_ptr<Reactant> HeVCluster::clone() {
@@ -60,8 +60,8 @@ int HeVCluster::getSpeciesSize(const std::string speciesName) {
 void HeVCluster::createReactionConnectivity() {
 
 	// Local Declarations
-	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
-			> (network);
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
 	auto props = psiNetwork->getProperties();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
@@ -88,10 +88,8 @@ void HeVCluster::createReactionConnectivity() {
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast < PSICluster
-					> (firstReactant);
-			pair.second = std::dynamic_pointer_cast < PSICluster
-					> (secondReactant);
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -107,8 +105,8 @@ void HeVCluster::createReactionConnectivity() {
 	// Create a ReactingPair with the two reactants
 	if (firstReactant && secondReactant) {
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
-		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
+		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 	}
@@ -127,10 +125,8 @@ void HeVCluster::createReactionConnectivity() {
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast < PSICluster
-					> (firstReactant);
-			pair.second = std::dynamic_pointer_cast < PSICluster
-					> (secondReactant);
+			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
+			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -185,8 +181,8 @@ void HeVCluster::createReactionConnectivity() {
 void HeVCluster::createDissociationConnectivity() {
 
 	// Local Declarations
-	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
-			> (network);
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
 	auto props = psiNetwork->getProperties();
 	int index = 0;
 	std::vector<int> composition;
@@ -223,13 +219,11 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 	std::shared_ptr<PSICluster> currentCluster, secondCluster;
 	double f4 = 0.0, f3 = 0.0;
 
-	// Get the required dissociation clusters
-	auto heCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get("He", 1));
-	auto vCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get("V", 1));
-	auto iCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get("I", 1));
+	// Get the required dissociating clusters
+	auto heCluster = std::dynamic_pointer_cast<PSICluster>(
+			network->get("He", 1));
+	auto vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+	auto iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
 
 	// Only dissociate if possible
 	if (heCluster && vCluster && iCluster) {
@@ -248,8 +242,8 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 		for (int i = 0; i < numClusters; i++) {
 			if (dissociationConnectivity[i] == 1) {
 				// Set the current reactant
-				currentCluster = std::dynamic_pointer_cast < PSICluster
-						> (reactants->at(i));
+				currentCluster = std::dynamic_pointer_cast<PSICluster>(
+						reactants->at(i));
 				// Get the cluster map of this connection
 				composition = currentCluster->getComposition();
 				// We need to find if this is a Helium dissociation
@@ -354,4 +348,48 @@ double HeVCluster::getReactionRadius() {
 void HeVCluster::getDissociationPartialDerivatives(
 		std::vector<double> & partials, double temperature) const {
 
+	// Get the required dissociation clusters
+	auto heCluster = std::dynamic_pointer_cast<PSICluster>(
+			network->get("He", 1));
+	auto vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+	auto iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
+
+	// Partial derivative with respect to changes in this cluster
+	double partialDeriv = calculateDissociationConstant(*this, *heCluster,
+			temperature)
+			+ calculateDissociationConstant(*this, *vCluster, temperature)
+			+ calculateDissociationConstant(*this, *iCluster, temperature);
+	// Get the index
+	int index = network->getReactantId(*getThisSharedPtrFromNetwork());
+	// Add it to the list of partials
+	partials[index] += partialDeriv;
+
+	// Partial derivative with respect to an HeV cluster with one less helium
+	std::vector<int> compositionVec = { numHe - 1, numV, 0 };
+	auto heVClusterLessHe = std::dynamic_pointer_cast<PSICluster>(
+			network->getCompound("HeV", compositionVec));
+	// Compute the partial derivative if the smaller clusters exists
+	if (heVClusterLessHe) {
+		partialDeriv = calculateDissociationConstant(*heVClusterLessHe,
+				*heCluster, temperature);
+		index = network->getReactantId(*heVClusterLessHe);
+		partials[index] += partialDeriv;
+	}
+
+	// Partial derivative with respect to an HeV cluster with one less vacancy
+	compositionVec = { numHe, numV - 1, 0 };
+	auto heVClusterLessV = std::dynamic_pointer_cast<PSICluster>(
+			network->getCompound("HeV", compositionVec));
+	// Compute the partial derivative if the smaller clusters exists
+	if (heVClusterLessV) {
+		partialDeriv = calculateDissociationConstant(*heVClusterLessV,
+				*vCluster, temperature);
+		index = network->getReactantId(*heVClusterLessV);
+		partials[index] += partialDeriv;
+	}
+
+	// This cluster cannot dissociate into a smaller HeV cluster and an
+	// interstitial, so there is no partial derivative term for that case.
+
+	return;
 }
