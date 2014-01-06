@@ -1893,7 +1893,7 @@
         </packagedElement>
         <packagedElement xmi:type="uml:Class" xmi:id="_j8p9cHVyEeK-BchXMSC_6w" name="Reactant">
           <ownedComment xmi:id="_3F7VEHbKEeKQvNYKWE13lg" annotatedElement="_j8p9cHVyEeK-BchXMSC_6w">
-            <body>&lt;p>A Reactant is a general reacting body in a reaction network. It represents any body whose population can change with time due to reactions of any type.&lt;/p>&lt;p>Reactants inherently know the other Reactants with which they interact. They declare their interactions with other Reactants in the network after it is set (setReactionNetwork) via the getConnectivity() operation. &quot;Connectivity&quot; indicates whether two Reactants interact, via any mechanism, in an abstract sense (as if they were nodes connected by an edge on a network graph).&lt;/p>&lt;p>This is an abstract base class that only provides direct support for manipulate the concentration, etc. It should be subclassed to add functionality for calculate fluxes and computing connectivity.&lt;/p></body>
+            <body>&lt;p>A Reactant is a general reacting body in a reaction network. It represents any body whose population can change with time due to reactions of any type.&lt;/p>&lt;p>Reactants inherently know the other Reactants with which they interact. They declare their interactions with other Reactants in the network after it is set (setReactionNetwork) via the getConnectivity() operation. &quot;Connectivity&quot; indicates whether two Reactants interact, via any mechanism, in an abstract sense (as if they were nodes connected by an edge on a network graph).&lt;/p>&lt;p>This is an abstract base class that only provides direct support for manipulating the concentration, etc. It should be subclassed to add functionality for calculating fluxes and computing connectivity.&lt;/p></body>
           </ownedComment>
           <ownedAttribute xmi:id="_s4GOcHVyEeK-BchXMSC_6w" name="concentration" visibility="private">
             <ownedComment xmi:id="_UjGKgHYXEeK4zMANKvvP2g" annotatedElement="_s4GOcHVyEeK-BchXMSC_6w">
@@ -2964,7 +2964,7 @@ Check the reactants - He first
         <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_bpWm4UL8EeOTkpIp2VY3Rg" type="Freeform" name="Main">
           <element xsi:nil="true"/>
         </contents>
-        <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_NzhHYEMbEeOTkpIp2VY3Rg" type="Class" name="performanceDiagram" description="&lt;p>Performance interface class diagram.&lt;/p>">
+        <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_NzhHYEMbEeOTkpIp2VY3Rg" type="Class" name="Performance Interface Class Diagram" description="&lt;p>Performance interface class diagram.&lt;/p>">
           <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_bplRwEM7EeOTkpIp2VY3Rg" element="_BMrGMEMcEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
             <children xmi:type="notation:DecorationNode" xmi:id="_bpmf4EM7EeOTkpIp2VY3Rg" type="ImageCompartment">
               <layoutConstraint xmi:type="notation:Size" xmi:id="_bpmf4UM7EeOTkpIp2VY3Rg" width="530" height="530"/>
@@ -2976,7 +2976,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bpnuAEM7EeOTkpIp2VY3Rg" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bpnuAUM7EeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bpoVEEM7EeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_bplRwUM7EeOTkpIp2VY3Rg" x="10461" y="-634"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_bplRwUM7EeOTkpIp2VY3Rg" x="11095" y="3487"/>
           </children>
           <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_kkmd4EVdEeOTkpIp2VY3Rg" element="_iI4CUEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
             <children xmi:type="notation:DecorationNode" xmi:id="_kknE8EVdEeOTkpIp2VY3Rg" type="ImageCompartment">
@@ -2989,7 +2989,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_kkoTEUVdEeOTkpIp2VY3Rg" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_kko6IEVdEeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_kko6IUVdEeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_kkmd4UVdEeOTkpIp2VY3Rg" x="4755" y="9827"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_kkmd4UVdEeOTkpIp2VY3Rg" x="5389" y="13314"/>
           </children>
           <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_zvqS0EVdEeOTkpIp2VY3Rg" element="_whqFwEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
             <children xmi:type="notation:DecorationNode" xmi:id="_zvq54EVdEeOTkpIp2VY3Rg" type="ImageCompartment">
@@ -3002,7 +3002,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_zvsIAkVdEeOTkpIp2VY3Rg" type="AttributeCompartment" collapsed="true"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_zvsvEEVdEeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_zvsvEUVdEeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvqS0UVdEeOTkpIp2VY3Rg" x="12363" y="10275"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvqS0UVdEeOTkpIp2VY3Rg" x="12997" y="13762"/>
           </children>
           <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_0EMYYEVdEeOTkpIp2VY3Rg" element="_yYrRwEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
             <children xmi:type="notation:DecorationNode" xmi:id="_0ENmgEVdEeOTkpIp2VY3Rg" type="ImageCompartment">
@@ -3015,7 +3015,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_0EO0oEVdEeOTkpIp2VY3Rg" type="AttributeCompartment" collapsed="true"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_0EO0oUVdEeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_0EPbsEVdEeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_0EMYYUVdEeOTkpIp2VY3Rg" x="20922" y="9827"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_0EMYYUVdEeOTkpIp2VY3Rg" x="21556" y="13314"/>
           </children>
           <children xmi:type="umlnotation:UMLShape" xmi:id="_uNSSkEVhEeOTkpIp2VY3Rg" element="_p-NDAEVhEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
             <children xmi:type="notation:DecorationNode" xmi:id="_uNS5oEVhEeOTkpIp2VY3Rg" type="ImageCompartment">
@@ -3028,7 +3028,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_uNUHwEVhEeOTkpIp2VY3Rg" type="OperationCompartment" collapsed="true"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_uNUHwUVhEeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_uNUu0EVhEeOTkpIp2VY3Rg" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_uNSSkUVhEeOTkpIp2VY3Rg" x="317" y="11250"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_uNSSkUVhEeOTkpIp2VY3Rg" x="951" y="14737"/>
           </children>
           <children xmi:type="umlnotation:UMLShape" xmi:id="_merHcEVpEeOTkpIp2VY3Rg" element="_kNP3YEVpEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
             <children xmi:type="notation:DecorationNode" xmi:id="_mesVkEVpEeOTkpIp2VY3Rg" type="ImageCompartment">
@@ -3041,7 +3041,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_metjsEVpEeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_metjsUVpEeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_meuKwEVpEeOTkpIp2VY3Rg" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_merHcUVpEeOTkpIp2VY3Rg" x="8559" y="5389"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_merHcUVpEeOTkpIp2VY3Rg" x="9193" y="8876"/>
           </children>
           <children xmi:type="umlnotation:UMLShape" xmi:id="_o9D1cEVpEeOTkpIp2VY3Rg" element="_nRaL8EVpEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
             <children xmi:type="notation:DecorationNode" xmi:id="_o9EcgEVpEeOTkpIp2VY3Rg" type="ImageCompartment">
@@ -3054,7 +3054,17 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_o9FqoEVpEeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_o9FqoUVpEeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_o9FqokVpEeOTkpIp2VY3Rg" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_o9D1cUVpEeOTkpIp2VY3Rg" x="20288" y="5389"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_o9D1cUVpEeOTkpIp2VY3Rg" x="20922" y="8876"/>
+          </children>
+          <children xmi:type="notation:Shape" xmi:id="_cvmH4HbeEeO2ybnm-LBKtQ" type="Text" fontName="Sans" fontHeight="24" description="Performance Interface Class Diagram" transparency="0" lineColor="0" lineWidth="2">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_cvmH4XbeEeO2ybnm-LBKtQ" type="DiagramName">
+              <element xsi:nil="true"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_cvmH4nbeEeO2ybnm-LBKtQ" type="Description">
+              <element xsi:nil="true"/>
+            </children>
+            <element xsi:nil="true"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_cvmH43beEeO2ybnm-LBKtQ" x="9827" y="1268" width="16880" height="926"/>
           </children>
           <element xsi:nil="true"/>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_OtbH8FYAEeOXusRRCt-row" element="_OqzRwFYAEeOXusRRCt-row" source="_o9D1cEVpEeOTkpIp2VY3Rg" target="_bplRwEM7EeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -3063,7 +3073,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_OtcWE1YAEeOXusRRCt-row" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_OtcWEVYAEeOXusRRCt-row" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_OtbH8VYAEeOXusRRCt-row" points="[-6, -27, 210, 156]$[-123, -111, 93, 72]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_OtbH8VYAEeOXusRRCt-row" points="[-594, -698, 5105, 3492]$[-594, -1346, 5105, 2844]$[-6037, -1346, -338, 2844]$[-6037, -2292, -338, 1898]"/>
           </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_HlDxkFYVEeOZavon2DC1GQ" element="_Uh2GcFCWEeOR2uM9TJNq5w" source="_uNSSkEVhEeOTkpIp2VY3Rg" target="_kkmd4EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_HlEYoFYVEeOZavon2DC1GQ" type="NameLabel">
@@ -3079,7 +3089,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_l855wVYVEeOZavon2DC1GQ" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_l85SsVYVEeOZavon2DC1GQ" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_l84roVYVEeOZavon2DC1GQ" points="[0, 0, 0, 0]$[0, 0, 0, 0]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_l84roVYVEeOZavon2DC1GQ" points="[-634, -698, -6836, 3492]$[-634, -1346, -6836, 2844]$[5864, -1346, -338, 2844]$[5864, -2292, -338, 1898]"/>
           </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_NSjqcFYWEeOZavon2DC1GQ" element="_Mqd3EFYTEeOZavon2DC1GQ" source="_o9D1cEVpEeOTkpIp2VY3Rg" target="_kkmd4EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_NSkRgFYWEeOZavon2DC1GQ" type="NameLabel">
@@ -3112,9 +3122,12 @@ Check the reactants - He first
         <body>&lt;p>The collection of classes in Xolotl that are used for performance monitoring.&lt;/p></body>
       </ownedComment>
       <packagedElement xmi:type="uml:Interface" xmi:id="_BMrGMEMcEeOTkpIp2VY3Rg" name="IHandlerRegistry">
+        <ownedComment xmi:id="_2UCgkHbgEeO2ybnm-LBKtQ" annotatedElement="_BMrGMEMcEeOTkpIp2VY3Rg">
+          <body>&lt;p>Realizations of this interface are responsible for the collection of performance data.&lt;/p></body>
+        </ownedComment>
         <ownedOperation xmi:id="_SnUYIEMcEeOTkpIp2VY3Rg" name="getTimer">
           <ownedComment xmi:id="_qeLfkEMcEeOTkpIp2VY3Rg" annotatedElement="_SnUYIEMcEeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the timer specified by the parameter.&lt;/p></body>
+            <body>&lt;p>This operation returns the Timer specified by the parameter.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_c_VU0EMcEeOTkpIp2VY3Rg" name="name">
             <ownedComment xmi:id="_mOO3oEYtEeOPDa8Cefg4Cg" annotatedElement="_c_VU0EMcEeOTkpIp2VY3Rg">
@@ -3130,7 +3143,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_3M6nwEM3EeOTkpIp2VY3Rg" name="getEventCounter">
           <ownedComment xmi:id="_FarJsEYnEeOPDa8Cefg4Cg" annotatedElement="_3M6nwEM3EeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the EventCounter specified by the parameter.&lt;/p></body>
+            <body>&lt;p>This operation returns the EventCounter specified by the parameter.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_7KdbYEM3EeOTkpIp2VY3Rg" name="name">
             <ownedComment xmi:id="_R_nCMEYtEeOPDa8Cefg4Cg" annotatedElement="_7KdbYEM3EeOTkpIp2VY3Rg">
@@ -3146,7 +3159,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_ryb6YEVZEeOTkpIp2VY3Rg" name="getHardwareCounter">
           <ownedComment xmi:id="_RFt0gEYnEeOPDa8Cefg4Cg" annotatedElement="_ryb6YEVZEeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the HardwareCounter specified by&lt;/p></body>
+            <body>&lt;p>This operation returns the specified HardwareCounter.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_x_aaAEVZEeOTkpIp2VY3Rg" name="name">
             <ownedComment xmi:id="_2flpcEYxEeOPDa8Cefg4Cg" annotatedElement="_x_aaAEVZEeOTkpIp2VY3Rg">
@@ -3170,7 +3183,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_y5mxYEVZEeOTkpIp2VY3Rg" name="getHardwareQuantities">
           <ownedComment xmi:id="_Htff4EYyEeOPDa8Cefg4Cg" annotatedElement="_y5mxYEVZEeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the array of quantities the HardwareCounter monitors.&lt;/p></body>
+            <body>&lt;p>This operation returns a list of the specified quantities monitored by the HardwareCounter.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_2Q-84EVZEeOTkpIp2VY3Rg" name="quantities" direction="return">
             <ownedComment xmi:id="_Q9Qp0EYsEeOPDa8Cefg4Cg" annotatedElement="_2Q-84EVZEeOTkpIp2VY3Rg">
@@ -3183,7 +3196,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_0ZzOMEYcEeOPDa8Cefg4Cg" name="dump">
           <ownedComment xmi:id="_IX8yEEb2EeOPDa8Cefg4Cg" annotatedElement="_0ZzOMEYcEeOPDa8Cefg4Cg">
-            <body>&lt;p>Function to dump the information gathered.&lt;/p></body>
+            <body>&lt;p>This operation outputs the information gathered.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_aoxosEYzEeOPDa8Cefg4Cg" name="out">
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALServices.emx#_1aU9kJ00Ed6PFuZfe9Fxaw?UALServices/OutputStream?"/>
@@ -3193,7 +3206,7 @@ Check the reactants - He first
       <packagedElement xmi:type="uml:Interface" xmi:id="_iI4CUEVdEeOTkpIp2VY3Rg" name="Timer">
         <eAnnotations xmi:id="_wtU9kEb6EeOPDa8Cefg4Cg" source="uml2.diagrams"/>
         <ownedComment xmi:id="_1UJu8EVeEeOTkpIp2VY3Rg" annotatedElement="_iI4CUEVdEeOTkpIp2VY3Rg">
-          <body>&lt;p>The interface Timer is used to collect information such as the total runtime of the program and duration of each function call.&lt;/p></body>
+          <body>&lt;p>The interface Timer is used to collect specific timing information such as the total runtime of the program and duration of each function call.&lt;/p></body>
         </ownedComment>
         <ownedOperation xmi:id="_92xuIEMrEeOTkpIp2VY3Rg" name="Timer">
           <ownedComment xmi:id="_GItIEEMsEeOTkpIp2VY3Rg" annotatedElement="_92xuIEMrEeOTkpIp2VY3Rg">
@@ -3208,17 +3221,17 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_ei4igEMtEeOTkpIp2VY3Rg" name="start">
           <ownedComment xmi:id="_ojo1wEMtEeOTkpIp2VY3Rg" annotatedElement="_ei4igEMtEeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to start the timer.&lt;/p></body>
+            <body>&lt;p>This operations starts the Timer.&lt;/p></body>
           </ownedComment>
         </ownedOperation>
         <ownedOperation xmi:id="_pTIZAEMtEeOTkpIp2VY3Rg" name="stop">
           <ownedComment xmi:id="_rXZW0EMtEeOTkpIp2VY3Rg" annotatedElement="_pTIZAEMtEeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to stop the timer.&lt;/p></body>
+            <body>&lt;p>This operation stops the Timer.&lt;/p></body>
           </ownedComment>
         </ownedOperation>
         <ownedOperation xmi:id="_r3PUgEMtEeOTkpIp2VY3Rg" name="getValue">
           <ownedComment xmi:id="_b6648EYmEeOPDa8Cefg4Cg" annotatedElement="_r3PUgEMtEeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the value of the Timer.&lt;/p></body>
+            <body>&lt;p>This operation returns the value of the Timer.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_OrNpwEMuEeOTkpIp2VY3Rg" name="value" direction="return">
             <ownedComment xmi:id="_33emQEYtEeOPDa8Cefg4Cg" annotatedElement="_OrNpwEMuEeOTkpIp2VY3Rg">
@@ -3229,7 +3242,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_5J25wEMwEeOTkpIp2VY3Rg" name="getUnits">
           <ownedComment xmi:id="_aCf-wEYmEeOPDa8Cefg4Cg" annotatedElement="_5J25wEMwEeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the units of the Timer.&lt;/p></body>
+            <body>&lt;p>This operation returns the units of the Timer.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_8ro-cEMwEeOTkpIp2VY3Rg" name="units" direction="return">
             <ownedComment xmi:id="_zr6kwEYtEeOPDa8Cefg4Cg" annotatedElement="_8ro-cEMwEeOTkpIp2VY3Rg">
@@ -3240,7 +3253,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_gHKfEEM1EeOTkpIp2VY3Rg" name="getName">
           <ownedComment xmi:id="_Xav5YEYmEeOPDa8Cefg4Cg" annotatedElement="_gHKfEEM1EeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the name of the Timer.&lt;/p></body>
+            <body>&lt;p>This operation returns the name of the Timer.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_waBpkEM1EeOTkpIp2VY3Rg" name="name" direction="return">
             <ownedComment xmi:id="_wFaYIEYtEeOPDa8Cefg4Cg" annotatedElement="_waBpkEM1EeOTkpIp2VY3Rg">
@@ -3252,7 +3265,7 @@ Check the reactants - He first
       </packagedElement>
       <packagedElement xmi:type="uml:Interface" xmi:id="_whqFwEVdEeOTkpIp2VY3Rg" name="EventCounter">
         <ownedComment xmi:id="_gtsBQEVeEeOTkpIp2VY3Rg" annotatedElement="_whqFwEVdEeOTkpIp2VY3Rg">
-          <body>&lt;p>The interface EventCounter is used to collect information such as the frequency of each function call or event as well as the usage of the different sections or instructions within the code.&lt;/p></body>
+          <body>&lt;p>The interface EventCounter is used to collect information such as the frequency of each function call or event as well as the usage of different sections or instructions within the code.&lt;/p></body>
         </ownedComment>
         <ownedOperation xmi:id="_Xl1sUEM3EeOTkpIp2VY3Rg" name="EventCounter">
           <ownedComment xmi:id="_N3Fx0EYmEeOPDa8Cefg4Cg" annotatedElement="_Xl1sUEM3EeOTkpIp2VY3Rg">
@@ -3267,7 +3280,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_szLz0EM3EeOTkpIp2VY3Rg" name="getValue">
           <ownedComment xmi:id="_I-MJMEYmEeOPDa8Cefg4Cg" annotatedElement="_szLz0EM3EeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the value of the EventCounter.&lt;/p></body>
+            <body>&lt;p>This operation returns the value of the EventCounter, the frequency of the specified event.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_wX1mUEM3EeOTkpIp2VY3Rg" name="value" direction="return">
             <ownedComment xmi:id="_4V0V0EYyEeOPDa8Cefg4Cg" annotatedElement="_wX1mUEM3EeOTkpIp2VY3Rg">
@@ -3278,7 +3291,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_x5CTUEM3EeOTkpIp2VY3Rg" name="getName">
           <ownedComment xmi:id="_GzgaUEYmEeOPDa8Cefg4Cg" annotatedElement="_x5CTUEM3EeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the name of the EventCounter.&lt;/p></body>
+            <body>&lt;p>This operation returns the name of the EventCounter.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_z79NUEM3EeOTkpIp2VY3Rg" name="name" direction="return">
             <ownedComment xmi:id="_xHMzAEYyEeOPDa8Cefg4Cg" annotatedElement="_z79NUEM3EeOTkpIp2VY3Rg">
@@ -3289,17 +3302,17 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_06cO0EM3EeOTkpIp2VY3Rg" name="increment">
           <ownedComment xmi:id="_FUe3kEYmEeOPDa8Cefg4Cg" annotatedElement="_06cO0EM3EeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to increment the EventCounter.&lt;/p></body>
+            <body>&lt;p>This operation increments the EventCounter.&lt;/p></body>
           </ownedComment>
         </ownedOperation>
       </packagedElement>
       <packagedElement xmi:type="uml:Interface" xmi:id="_yYrRwEVdEeOTkpIp2VY3Rg" name="HardwareCounter">
         <ownedComment xmi:id="_SgCvcEVhEeOTkpIp2VY3Rg" annotatedElement="_yYrRwEVdEeOTkpIp2VY3Rg">
-          <body>&lt;p>The interface HardwareCounter is used to collect information such as frequency of memory access and cache misses.&lt;/p></body>
+          <body>&lt;p>The interface HardwareCounter is used to collect hardware information such as frequency of memory access and cache misses.&lt;/p></body>
         </ownedComment>
         <ownedOperation xmi:id="_0ldLYEM5EeOTkpIp2VY3Rg" name="HardwareCounter">
           <ownedComment xmi:id="_CBL60EYmEeOPDa8Cefg4Cg" annotatedElement="_0ldLYEM5EeOTkpIp2VY3Rg">
-            <body>&lt;p>Constructor that takes the name of the HardwareCounter and the array of the different quantities that specific HardwareCounter should monitor.&lt;/p></body>
+            <body>&lt;p>Constructor that takes the name of the HardwareCounter and a list of the different quantities that specific HardwareCounter should monitor.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_3U07sEM5EeOTkpIp2VY3Rg" name="name">
             <ownedComment xmi:id="_ZplgwEYsEeOPDa8Cefg4Cg" annotatedElement="_3U07sEM5EeOTkpIp2VY3Rg">
@@ -3318,7 +3331,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_aqV3wEM6EeOTkpIp2VY3Rg" name="getValues">
           <ownedComment xmi:id="_wlhVMEYlEeOPDa8Cefg4Cg" annotatedElement="_aqV3wEM6EeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the array of values of the HardwareCounters.&lt;/p></body>
+            <body>&lt;p>This operation returns a list of values of the, initially specified, quantities monitored by the HardwareCounter.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_ktU_oEM6EeOTkpIp2VY3Rg" name="values" direction="return">
             <ownedComment xmi:id="_dnCqQEYrEeOPDa8Cefg4Cg" annotatedElement="_ktU_oEM6EeOTkpIp2VY3Rg">
@@ -3331,7 +3344,7 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_o3eE0EM6EeOTkpIp2VY3Rg" name="getName">
           <ownedComment xmi:id="_iiA-MEYlEeOPDa8Cefg4Cg" annotatedElement="_o3eE0EM6EeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to get the name of the HardwareCounter.&lt;/p></body>
+            <body>&lt;p>This operation returns the name of the HardwareCounter.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_q0BREEM6EeOTkpIp2VY3Rg" name="name" direction="return">
             <ownedComment xmi:id="_gvnaMEYqEeOPDa8Cefg4Cg" annotatedElement="_q0BREEM6EeOTkpIp2VY3Rg">
@@ -3342,19 +3355,19 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_IARlUEM6EeOTkpIp2VY3Rg" name="increment">
           <ownedComment xmi:id="_gkgvsEYlEeOPDa8Cefg4Cg" annotatedElement="_IARlUEM6EeOTkpIp2VY3Rg">
-            <body>&lt;p>Function to increment the HardwareCounter&lt;/p></body>
+            <body>&lt;p>This operation increments the HardwareCounter.&lt;/p></body>
           </ownedComment>
         </ownedOperation>
       </packagedElement>
       <packagedElement xmi:type="uml:Class" xmi:id="_p-NDAEVhEeOTkpIp2VY3Rg" name="GPTLTimer" clientDependency="_Uh2GcFCWEeOR2uM9TJNq5w">
         <ownedComment xmi:id="_oQ1swEYmEeOPDa8Cefg4Cg" annotatedElement="_p-NDAEVhEeOTkpIp2VY3Rg">
-          <body>&lt;p>Class GPTLTimer that realizes the Timer interface.&lt;/p></body>
+          <body>&lt;p>The GPTLTimer class realizes the Timer interface to access the General Purpose Timing Library (GPTL) performance data.&lt;/p></body>
         </ownedComment>
         <interfaceRealization xmi:id="_Uh2GcFCWEeOR2uM9TJNq5w" supplier="_iI4CUEVdEeOTkpIp2VY3Rg" client="_p-NDAEVhEeOTkpIp2VY3Rg" contract="_iI4CUEVdEeOTkpIp2VY3Rg"/>
       </packagedElement>
       <packagedElement xmi:type="uml:Class" xmi:id="_kNP3YEVpEeOTkpIp2VY3Rg" name="DummyHandlerRegistry" clientDependency="_zYE9YEYaEeOPDa8Cefg4Cg _83zygE4CEeOPZ42GSMKIcQ _X3HOkFCVEeOR2uM9TJNq5w _TQ1HEFYTEeOZavon2DC1GQ">
         <ownedComment xmi:id="__CwH4EYyEeOPDa8Cefg4Cg" annotatedElement="_kNP3YEVpEeOTkpIp2VY3Rg">
-          <body>&lt;p>DummyHandlerRegistry realizes the interface IHandlerRegistry.&lt;/p></body>
+          <body>&lt;p>The DummyHandlerRegistry class realizes the interface IHandlerRegistry to support the &quot;always on&quot; performance data collection acquired from realizing the Timer, EventCounter, and HardwareCounter interfaces.&lt;/p></body>
         </ownedComment>
         <interfaceRealization xmi:id="_zYE9YEYaEeOPDa8Cefg4Cg" supplier="_BMrGMEMcEeOTkpIp2VY3Rg" client="_kNP3YEVpEeOTkpIp2VY3Rg" contract="_BMrGMEMcEeOTkpIp2VY3Rg"/>
         <interfaceRealization xmi:id="_83zygE4CEeOPZ42GSMKIcQ" supplier="_whqFwEVdEeOTkpIp2VY3Rg" client="_kNP3YEVpEeOTkpIp2VY3Rg" contract="_whqFwEVdEeOTkpIp2VY3Rg"/>
@@ -3363,12 +3376,20 @@ Check the reactants - He first
       </packagedElement>
       <packagedElement xmi:type="uml:Class" xmi:id="_nRaL8EVpEeOTkpIp2VY3Rg" name="StandardHandlerRegistry" clientDependency="_OqzRwFYAEeOXusRRCt-row _Mqd3EFYTEeOZavon2DC1GQ _W-8XkFYTEeOZavon2DC1GQ _aYr6kFYTEeOZavon2DC1GQ">
         <ownedComment xmi:id="_BgwbYEYzEeOPDa8Cefg4Cg" annotatedElement="_nRaL8EVpEeOTkpIp2VY3Rg">
-          <body>&lt;p>StandardHandlerRegistry realizes the interface IHandlerRegistry.&lt;/p></body>
+          <body>&lt;p>The StandardHandlerRegistry class realizes the interface IHandlerRegistry to acquire the performance data found from realizing the Timer, EventCounter, and HardwareCounter interfaces.&lt;/p></body>
         </ownedComment>
         <interfaceRealization xmi:id="_OqzRwFYAEeOXusRRCt-row" supplier="_BMrGMEMcEeOTkpIp2VY3Rg" client="_nRaL8EVpEeOTkpIp2VY3Rg" contract="_BMrGMEMcEeOTkpIp2VY3Rg"/>
         <interfaceRealization xmi:id="_Mqd3EFYTEeOZavon2DC1GQ" supplier="_iI4CUEVdEeOTkpIp2VY3Rg" client="_nRaL8EVpEeOTkpIp2VY3Rg" contract="_iI4CUEVdEeOTkpIp2VY3Rg"/>
         <interfaceRealization xmi:id="_W-8XkFYTEeOZavon2DC1GQ" supplier="_yYrRwEVdEeOTkpIp2VY3Rg" client="_nRaL8EVpEeOTkpIp2VY3Rg" contract="_yYrRwEVdEeOTkpIp2VY3Rg"/>
         <interfaceRealization xmi:id="_aYr6kFYTEeOZavon2DC1GQ" supplier="_whqFwEVdEeOTkpIp2VY3Rg" client="_nRaL8EVpEeOTkpIp2VY3Rg" contract="_whqFwEVdEeOTkpIp2VY3Rg"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Package" xmi:id="_vN14kFbkEeOM44Tiy8H9AQ" name="Timer">
+        <eAnnotations xmi:id="_vOmGgFbkEeOM44Tiy8H9AQ" source="uml2.diagrams" references="_vOmGgVbkEeOM44Tiy8H9AQ">
+          <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_vOmGgVbkEeOM44Tiy8H9AQ" type="Freeform" name="Main">
+            <element xsi:nil="true"/>
+          </contents>
+        </eAnnotations>
+        <packagedElement xmi:type="uml:Interface" xmi:id="_YHPT8FblEeOM44Tiy8H9AQ" name="Interface1"/>
       </packagedElement>
     </packagedElement>
     <profileApplication xmi:id="_biIvZXVKEeKM6_T6gw_pCg">
@@ -3766,4 +3787,5 @@ Check the reactants - He first
   <Default:Documentation xmi:id="__CzLMEYyEeOPDa8Cefg4Cg" base_Comment="__CwH4EYyEeOPDa8Cefg4Cg"/>
   <Default:Documentation xmi:id="_Bg0FwEYzEeOPDa8Cefg4Cg" base_Comment="_BgwbYEYzEeOPDa8Cefg4Cg"/>
   <Default:Documentation xmi:id="_IYAccEb2EeOPDa8Cefg4Cg" base_Comment="_IX8yEEb2EeOPDa8Cefg4Cg"/>
+  <Default:Documentation xmi:id="_2Usn4HbgEeO2ybnm-LBKtQ" base_Comment="_2UCgkHbgEeO2ybnm-LBKtQ"/>
 </xmi:XMI>
