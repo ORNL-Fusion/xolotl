@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--xtools2_universal_type_manager-->
-<?com.ibm.xtools.emf.core.signature <signature id="com.ibm.xtools.uml.msl.model" version="7.0.0"><feature description="" name="com.ibm.xtools.ruml.feature" url="" version="7.0.0"/></signature>?>
 <?com.ibm.xtools.emf.core.signature <signature id="com.ibm.xtools.mmi.ui.signatures.diagram" version="7.0.0"><feature description="" name="Rational Modeling Platform (com.ibm.xtools.rmp)" url="" version="7.0.0"/></signature>?>
+<?com.ibm.xtools.emf.core.signature <signature id="com.ibm.xtools.uml.msl.model" version="7.0.0"><feature description="" name="com.ibm.xtools.ruml.feature" url="" version="7.0.0"/></signature>?>
 <xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:CPPTransformation="http:///schemas/CPPTransformation/_H4OWcHIDEd-JqNgocchFjQ/47" xmlns:Default="http:///schemas/Default/_fNm3AAqoEd6-N_NOT9vsCA/2" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation" xmlns:uml="http://www.eclipse.org/uml2/3.0.0/UML" xmlns:umlnotation="http://www.ibm.com/xtools/1.5.3/Umlnotation" xsi:schemaLocation="http:///schemas/CPPTransformation/_H4OWcHIDEd-JqNgocchFjQ/47 pathmap://TRANSFORM_CPP_PROFILES/cpp_profile.epx#_H4YHcHIDEd-JqNgocchFjQ?CPPTransformation/CPPTransformation? http:///schemas/Default/_fNm3AAqoEd6-N_NOT9vsCA/2 pathmap://UML2_MSL_PROFILES/Default.epx#_fNwoAAqoEd6-N_NOT9vsCA?Default/Default?">
   <uml:Model xmi:id="_biIvYHVKEeKM6_T6gw_pCg" name="xolotl">
     <eAnnotations xmi:id="_biIvYXVKEeKM6_T6gw_pCg" source="uml2.diagrams" references="_biIvYnVKEeKM6_T6gw_pCg">
@@ -2926,7 +2926,10 @@ Check the reactants - He first
             <body>&lt;p>This operation sets the run-time options of the solver. The map is a set of key-value std::string pairs that are interpreted by the solver. These options may change during execution, but it is up to Solvers to monitor the map for changes and they may do so at their discretion.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_7slpILfvEeKdoYp0Rmlq6Q" name="options">
-            <type xmi:type="uml:Interface" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_9I9vIFObEd2M5enXlfCuwQ?UALContainers/Map?"/>
+            <ownedComment xmi:id="_EF3ysHfnEeODlfDGqk4_6Q" annotatedElement="_7slpILfvEeKdoYp0Rmlq6Q">
+              <body>&lt;p>The map of key-value string pairs.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:Interface" href="platform:/resource/xolotlPapyrusModel/UALContainers.uml#_9RqX2JiBEeK8V76VVnzvqA"/>
           </ownedParameter>
         </ownedOperation>
         <ownedOperation xmi:id="_bCEkoLf4EeKdoYp0Rmlq6Q" name="setupMesh">
@@ -3066,6 +3069,18 @@ Check the reactants - He first
             <element xsi:nil="true"/>
             <layoutConstraint xmi:type="notation:Bounds" xmi:id="_cvmH43beEeO2ybnm-LBKtQ" x="9827" y="1268" width="16880" height="926"/>
           </children>
+          <children xmi:type="notation:Shape" xmi:id="_ELLUAHfoEeODlfDGqk4_6Q" type="Note" fontName="Sans" fontHeight="8" description="&lt;p>This is wrong because everything is implementing pieces with which they should have a different relationship. The registry realizations of IHandlerRegistry are correct and so is the GPTLTimer realization of Timer. However, the other realizations are wrong. Show dependency relationships between IHandlerRegistry and the three performance interfaces and remove the erroneous realizations please.&lt;/p>&lt;p>Also, please create two additional diagrams, one called &quot;Dummy Performance Interface Class Diagram&quot; and one called &quot;Standard Performance Interface Class Diagram,&quot; to show the classes that implement the performance interfaces for the two different registry classes.&lt;/p>" fillColor="13956346" transparency="0" lineColor="12632258" lineWidth="1">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_ELNwQHfoEeODlfDGqk4_6Q" type="DiagramName">
+              <element xsi:nil="true"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_ELOXUHfoEeODlfDGqk4_6Q" type="Description">
+              <element xsi:nil="true"/>
+            </children>
+            <styles xmi:type="notation:TextStyle" xmi:id="_ELLUAXfoEeODlfDGqk4_6Q"/>
+            <styles xmi:type="notation:LineTypeStyle" xmi:id="_ELLUAnfoEeODlfDGqk4_6Q"/>
+            <element xsi:nil="true"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ELLUA3foEeODlfDGqk4_6Q" x="592" y="592" width="7112" height="9906"/>
+          </children>
           <element xsi:nil="true"/>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_OtbH8FYAEeOXusRRCt-row" element="_OqzRwFYAEeOXusRRCt-row" source="_o9D1cEVpEeOTkpIp2VY3Rg" target="_bplRwEM7EeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_OtcWEFYAEeOXusRRCt-row" type="NameLabel">
@@ -3097,7 +3112,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_NSk4kVYWEeOZavon2DC1GQ" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_NSkRgVYWEeOZavon2DC1GQ" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_NSjqcVYWEeOZavon2DC1GQ" points="[-32, 699, 16255, -5162]$[-32, 1824, 16255, -4037]$[-16304, 1824, -17, -4037]$[-16304, 3740, -17, -2121]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_NSjqcVYWEeOZavon2DC1GQ" points="[1248, 732, 17572, -5116]$[1248, 2161, 17572, -3687]$[-16329, 2161, -5, -3687]$[-16329, 3707, -5, -2141]"/>
           </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_eTpM4FYWEeOZavon2DC1GQ" element="_TQ1HEFYTEeOZavon2DC1GQ" source="_merHcEVpEeOTkpIp2VY3Rg" target="_0EMYYEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_eTpz8FYWEeOZavon2DC1GQ" type="NameLabel">
@@ -3105,7 +3120,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_eTrCEFYWEeOZavon2DC1GQ" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_eTpz8VYWEeOZavon2DC1GQ" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_eTpM4VYWEeOZavon2DC1GQ" points="[0, 699, -14705, -4714]$[0, 1824, -14705, -3589]$[15054, 1824, 349, -3589]$[15054, 3740, 349, -1673]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_eTpM4VYWEeOZavon2DC1GQ" points="[0, 732, -14804, -4665]$[0, 2782, -14804, -2615]$[15120, 2782, 316, -2615]$[15120, 3707, 316, -1690]"/>
           </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_uRdUcFYWEeOZavon2DC1GQ" element="_aYr6kFYTEeOZavon2DC1GQ" source="_o9D1cEVpEeOTkpIp2VY3Rg" target="_zvqS0EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_uRd7gFYWEeOZavon2DC1GQ" type="NameLabel">
@@ -3398,7 +3413,7 @@ Check the reactants - He first
     </profileApplication>
     <profileApplication xmi:id="_biIvaXVKEeKM6_T6gw_pCg">
       <eAnnotations xmi:id="_biIvanVKEeKM6_T6gw_pCg" source="http://www.eclipse.org/uml2/2.0.0/UML">
-        <references xmi:type="ecore:EPackage" href="pathmap://UML2_MSL_PROFILES/Deployment.epx#_IrdAUMmBEdqBcN1R6EvWUw?Deployment/Deployment?"/>
+        <references xmi:type="ecore:EPackage" href="pathmap://UML2_MSL_PROFILES/Deployment.epx#_4OVBUD0TEeKt-L0gyEptgQ?Deployment/Deployment?"/>
       </eAnnotations>
       <appliedProfile href="pathmap://UML2_MSL_PROFILES/Deployment.epx#_vjbuwOvHEdiDX5bji0iVSA?Deployment?"/>
     </profileApplication>
@@ -3780,4 +3795,5 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_Bg0FwEYzEeOPDa8Cefg4Cg" base_Comment="_BgwbYEYzEeOPDa8Cefg4Cg"/>
   <Default:Documentation xmi:id="_IYAccEb2EeOPDa8Cefg4Cg" base_Comment="_IX8yEEb2EeOPDa8Cefg4Cg"/>
   <Default:Documentation xmi:id="_2Usn4HbgEeO2ybnm-LBKtQ" base_Comment="_2UCgkHbgEeO2ybnm-LBKtQ"/>
+  <Default:Documentation xmi:id="_EGQ0QHfnEeODlfDGqk4_6Q" base_Comment="_EF3ysHfnEeODlfDGqk4_6Q"/>
 </xmi:XMI>
