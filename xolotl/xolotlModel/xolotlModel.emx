@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--xtools2_universal_type_manager-->
-<?com.ibm.xtools.emf.core.signature <signature id="com.ibm.xtools.uml.msl.model" version="7.0.0"><feature description="" name="com.ibm.xtools.ruml.feature" url="" version="7.0.0"/></signature>?>
 <?com.ibm.xtools.emf.core.signature <signature id="com.ibm.xtools.mmi.ui.signatures.diagram" version="7.0.0"><feature description="" name="Rational Modeling Platform (com.ibm.xtools.rmp)" url="" version="7.0.0"/></signature>?>
+<?com.ibm.xtools.emf.core.signature <signature id="com.ibm.xtools.uml.msl.model" version="7.0.0"><feature description="" name="com.ibm.xtools.ruml.feature" url="" version="7.0.0"/></signature>?>
 <xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:CPPTransformation="http:///schemas/CPPTransformation/_H4OWcHIDEd-JqNgocchFjQ/47" xmlns:Default="http:///schemas/Default/_fNm3AAqoEd6-N_NOT9vsCA/2" xmlns:Standard="http://www.eclipse.org/uml2/schemas/Standard/1" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation" xmlns:uml="http://www.eclipse.org/uml2/3.0.0/UML" xmlns:umlnotation="http://www.ibm.com/xtools/1.5.3/Umlnotation" xsi:schemaLocation="http:///schemas/CPPTransformation/_H4OWcHIDEd-JqNgocchFjQ/47 pathmap://TRANSFORM_CPP_PROFILES/cpp_profile.epx#_H4YHcHIDEd-JqNgocchFjQ?CPPTransformation/CPPTransformation? http:///schemas/Default/_fNm3AAqoEd6-N_NOT9vsCA/2 pathmap://UML2_MSL_PROFILES/Default.epx#_fNwoAAqoEd6-N_NOT9vsCA?Default/Default? http://www.eclipse.org/uml2/schemas/Standard/1 pathmap://UML_PROFILES/Standard.profile.uml#_yzU58YinEdqtvbnfB2L_5w">
   <uml:Model xmi:id="_biIvYHVKEeKM6_T6gw_pCg" name="xolotl">
     <eAnnotations xmi:id="_biIvYXVKEeKM6_T6gw_pCg" source="uml2.diagrams" references="_biIvYnVKEeKM6_T6gw_pCg">
@@ -3157,7 +3157,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_gA6mYHiZEeO_LPATlPj4SA" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_gA6mYXiZEeO_LPATlPj4SA" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_gA6mYniZEeO_LPATlPj4SA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_gAl2QXiZEeO_LPATlPj4SA" x="13631" y="12680"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_gAl2QXiZEeO_LPATlPj4SA" x="13640" y="12090"/>
           </children>
           <children xmi:type="umlnotation:UMLShape" xmi:id="_t-6LQHiZEeO_LPATlPj4SA" element="_JDcYUHiJEeO_LPATlPj4SA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
             <children xmi:type="notation:DecorationNode" xmi:id="_t-6yUHiZEeO_LPATlPj4SA" type="ImageCompartment">
@@ -3171,6 +3171,18 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_t-9OkHiZEeO_LPATlPj4SA" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_t-9OkXiZEeO_LPATlPj4SA" visible="false" type="StructureCompartment"/>
             <layoutConstraint xmi:type="notation:Bounds" xmi:id="_t-6LQXiZEeO_LPATlPj4SA" x="26628" y="8559"/>
+          </children>
+          <children xmi:type="notation:Shape" xmi:id="_3cyWgHk_EeODlfDGqk4_6Q" type="Note" fontName="Sans" fontHeight="8" description="&lt;p>Change aEventCounter to GTPLEventCounter and aHardwareCounter to GPTLHardwareCounter.&lt;/p>" fillColor="13956346" transparency="0" lineColor="12632258" lineWidth="1">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_3czkoHk_EeODlfDGqk4_6Q" type="DiagramName">
+              <element xsi:nil="true"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_3czkoXk_EeODlfDGqk4_6Q" type="Description">
+              <element xsi:nil="true"/>
+            </children>
+            <styles xmi:type="notation:TextStyle" xmi:id="_3cyWgXk_EeODlfDGqk4_6Q"/>
+            <styles xmi:type="notation:LineTypeStyle" xmi:id="_3cyWgnk_EeODlfDGqk4_6Q"/>
+            <element xsi:nil="true"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_3cyWg3k_EeODlfDGqk4_6Q" x="903" y="2765" width="6462" height="4600"/>
           </children>
           <element xsi:nil="true"/>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_kpr9wHiYEeO_LPATlPj4SA" element="_OqzRwFYAEeOXusRRCt-row" source="_iq-OUHiYEeO_LPATlPj4SA" target="_kpqIkHiYEeO_LPATlPj4SA" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -3270,6 +3282,18 @@ Check the reactants - He first
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_kMahAniaEeO_LPATlPj4SA" visible="false" type="StructureCompartment"/>
             <layoutConstraint xmi:type="notation:Bounds" xmi:id="_kMZS4XiaEeO_LPATlPj4SA" x="13314" y="9193"/>
           </children>
+          <children xmi:type="notation:Shape" xmi:id="_tJN08Hk_EeODlfDGqk4_6Q" type="Note" fontName="Sans" fontHeight="8" description="&lt;p>Add DummyTimer, etc.&lt;/p>" fillColor="13956346" transparency="0" lineColor="12632258" lineWidth="1">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_tJPDEHk_EeODlfDGqk4_6Q" type="DiagramName">
+              <element xsi:nil="true"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_tJPDEXk_EeODlfDGqk4_6Q" type="Description">
+              <element xsi:nil="true"/>
+            </children>
+            <styles xmi:type="notation:TextStyle" xmi:id="_tJN08Xk_EeODlfDGqk4_6Q"/>
+            <styles xmi:type="notation:LineTypeStyle" xmi:id="_tJN08nk_EeODlfDGqk4_6Q"/>
+            <element xsi:nil="true"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_tJN083k_EeODlfDGqk4_6Q" x="1834" y="8974" width="8015" height="3668"/>
+          </children>
           <element xsi:nil="true"/>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_kMbIEHiaEeO_LPATlPj4SA" element="_zYE9YEYaEeOPDa8Cefg4Cg" source="_kMZS4HiaEeO_LPATlPj4SA" target="_gHvKoHiaEeO_LPATlPj4SA" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_kMbIEniaEeO_LPATlPj4SA" type="NameLabel">
@@ -3362,7 +3386,10 @@ Check the reactants - He first
             <body>&lt;p>This operation outputs the information gathered.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_aoxosEYzEeOPDa8Cefg4Cg" name="out">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALServices.emx#_1aU9kJ00Ed6PFuZfe9Fxaw?UALServices/OutputStream?"/>
+            <ownedComment xmi:id="_ah44AHlAEeODlfDGqk4_6Q" annotatedElement="_aoxosEYzEeOPDa8Cefg4Cg">
+              <body>&lt;p>The output stream to which the performance information should be dumped.&lt;/p></body>
+            </ownedComment>
+            <type xmi:type="uml:Class" href="mmi:///#cdt.typedef%5En=std'ostream%5Ep=&amp;includedir&amp;/iosfwd$uml.Class"/>
           </ownedParameter>
         </ownedOperation>
       </packagedElement>
@@ -3969,4 +3996,5 @@ Check the reactants - He first
   <Standard:Instantiate xmi:id="_IACcwHiYEeO_LPATlPj4SA" base_Usage="_H__ZcHiYEeO_LPATlPj4SA"/>
   <Standard:Instantiate xmi:id="_sQXl0HiZEeO_LPATlPj4SA" base_Usage="_sQUigHiZEeO_LPATlPj4SA"/>
   <Standard:Instantiate xmi:id="_vUmL0HiZEeO_LPATlPj4SA" base_Usage="_vUjIgHiZEeO_LPATlPj4SA"/>
+  <Default:Documentation xmi:id="_ah7UQHlAEeODlfDGqk4_6Q" base_Comment="_ah44AHlAEeODlfDGqk4_6Q"/>
 </xmi:XMI>
