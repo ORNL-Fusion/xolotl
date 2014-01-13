@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--xtools2_universal_type_manager-->
-<?com.ibm.xtools.emf.core.signature <signature id="com.ibm.xtools.uml.msl.model" version="7.0.0"><feature description="" name="com.ibm.xtools.ruml.feature" url="" version="7.0.0"/></signature>?>
 <?com.ibm.xtools.emf.core.signature <signature id="com.ibm.xtools.mmi.ui.signatures.diagram" version="7.0.0"><feature description="" name="Rational Modeling Platform (com.ibm.xtools.rmp)" url="" version="7.0.0"/></signature>?>
+<?com.ibm.xtools.emf.core.signature <signature id="com.ibm.xtools.uml.msl.model" version="7.0.0"><feature description="" name="com.ibm.xtools.ruml.feature" url="" version="7.0.0"/></signature>?>
 <xmi:XMI xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:CPPTransformation="http:///schemas/CPPTransformation/_H4OWcHIDEd-JqNgocchFjQ/47" xmlns:Default="http:///schemas/Default/_fNm3AAqoEd6-N_NOT9vsCA/2" xmlns:Standard="http://www.eclipse.org/uml2/schemas/Standard/1" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation" xmlns:uml="http://www.eclipse.org/uml2/3.0.0/UML" xmlns:umlnotation="http://www.ibm.com/xtools/1.5.3/Umlnotation" xsi:schemaLocation="http:///schemas/CPPTransformation/_H4OWcHIDEd-JqNgocchFjQ/47 pathmap://TRANSFORM_CPP_PROFILES/cpp_profile.epx#_H4YHcHIDEd-JqNgocchFjQ?CPPTransformation/CPPTransformation? http:///schemas/Default/_fNm3AAqoEd6-N_NOT9vsCA/2 pathmap://UML2_MSL_PROFILES/Default.epx#_fNwoAAqoEd6-N_NOT9vsCA?Default/Default? http://www.eclipse.org/uml2/schemas/Standard/1 pathmap://UML_PROFILES/Standard.profile.uml#_yzU58YinEdqtvbnfB2L_5w">
   <uml:Model xmi:id="_biIvYHVKEeKM6_T6gw_pCg" name="xolotl">
     <eAnnotations xmi:id="_biIvYXVKEeKM6_T6gw_pCg" source="uml2.diagrams" references="_biIvYnVKEeKM6_T6gw_pCg">
@@ -3305,7 +3305,7 @@ Check the reactants - He first
       <packagedElement xmi:type="uml:Dependency" xmi:id="_6VX0oHh4EeO_LPATlPj4SA" supplier="_iI4CUEVdEeOTkpIp2VY3Rg" client="_BMrGMEMcEeOTkpIp2VY3Rg"/>
       <packagedElement xmi:type="uml:Dependency" xmi:id="_ASYloHh5EeO_LPATlPj4SA" supplier="_whqFwEVdEeOTkpIp2VY3Rg" client="_BMrGMEMcEeOTkpIp2VY3Rg"/>
       <packagedElement xmi:type="uml:Dependency" xmi:id="_D8NzEHh5EeO_LPATlPj4SA" supplier="_yYrRwEVdEeOTkpIp2VY3Rg" client="_BMrGMEMcEeOTkpIp2VY3Rg"/>
-      <packagedElement xmi:type="uml:Package" xmi:id="_5cd2oHutEeO_LPATlPj4SA" name="Dummy">
+      <packagedElement xmi:type="uml:Package" xmi:id="_5cd2oHutEeO_LPATlPj4SA" name="dummy">
         <eAnnotations xmi:id="_5cedsHutEeO_LPATlPj4SA" source="uml2.diagrams" references="_5cfEwHutEeO_LPATlPj4SA">
           <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_5cfEwHutEeO_LPATlPj4SA" type="Freeform" name="Main">
             <element xsi:nil="true"/>
@@ -3487,6 +3487,9 @@ Check the reactants - He first
             </edges>
           </contents>
         </eAnnotations>
+        <ownedComment xmi:id="_7mJlQHyEEeODlfDGqk4_6Q" annotatedElement="_5cd2oHutEeO_LPATlPj4SA">
+          <body>&lt;p>A NO-OP performance package for those times when performance doesn't need to be monitored.&lt;/p></body>
+        </ownedComment>
         <packagedElement xmi:type="uml:Class" xmi:id="_kNP3YEVpEeOTkpIp2VY3Rg" name="DummyHandlerRegistry" clientDependency="_zYE9YEYaEeOPDa8Cefg4Cg _amVlEHuvEeO_LPATlPj4SA _dIicEHuvEeO_LPATlPj4SA _fTROQHuvEeO_LPATlPj4SA">
           <ownedComment xmi:id="__CwH4EYyEeOPDa8Cefg4Cg" annotatedElement="_kNP3YEVpEeOTkpIp2VY3Rg">
             <body>&lt;p>The DummyHandlerRegistry class realizes the interface IHandlerRegistry to support the &quot;always on&quot; performance data collection acquired by implementing the performance interfaces Timer, EventCounter, and HardwareCounter.&lt;/p></body>
@@ -3515,7 +3518,7 @@ Check the reactants - He first
         <packagedElement xmi:type="uml:Usage" xmi:id="_dIicEHuvEeO_LPATlPj4SA" name="" supplier="_U46vQHuvEeO_LPATlPj4SA" client="_kNP3YEVpEeOTkpIp2VY3Rg"/>
         <packagedElement xmi:type="uml:Usage" xmi:id="_fTROQHuvEeO_LPATlPj4SA" name="" supplier="_WP4iMHuvEeO_LPATlPj4SA" client="_kNP3YEVpEeOTkpIp2VY3Rg"/>
       </packagedElement>
-      <packagedElement xmi:type="uml:Package" xmi:id="__oSfsHutEeO_LPATlPj4SA" name="Standard">
+      <packagedElement xmi:type="uml:Package" xmi:id="__oSfsHutEeO_LPATlPj4SA" name="standard">
         <eAnnotations xmi:id="__oTGwHutEeO_LPATlPj4SA" source="uml2.diagrams" references="__oTGwXutEeO_LPATlPj4SA">
           <contents xmi:type="umlnotation:UMLDiagram" xmi:id="__oTGwXutEeO_LPATlPj4SA" type="Freeform" name="Main">
             <element xsi:nil="true"/>
@@ -3697,6 +3700,9 @@ Check the reactants - He first
             </edges>
           </contents>
         </eAnnotations>
+        <ownedComment xmi:id="_AdNa0HyFEeODlfDGqk4_6Q" annotatedElement="__oSfsHutEeO_LPATlPj4SA">
+          <body>&lt;p>Xolotl's standard performance monitoring package implemented in GPTL.&lt;/p></body>
+        </ownedComment>
         <packagedElement xmi:type="uml:Class" xmi:id="_DQVxQHiJEeO_LPATlPj4SA" name="GPTLEventCounter" clientDependency="_keTrkHu2EeO_LPATlPj4SA">
           <ownedComment xmi:id="_NsJzYHiKEeO_LPATlPj4SA" annotatedElement="_DQVxQHiJEeO_LPATlPj4SA">
             <body>&lt;p>The GPTLEventCounter class is instantiated by the StandardHandlerRegistry class and realizes the EventCounter interface to access event performance counter data found via the General Purpose Timing Library (GPTL).&lt;/p></body>
@@ -4135,4 +4141,6 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_utGCgHuwEeO_LPATlPj4SA" base_Comment="_utDmQHuwEeO_LPATlPj4SA"/>
   <Default:Documentation xmi:id="_kybzYHu0EeO_LPATlPj4SA" base_Comment="_kyZXIHu0EeO_LPATlPj4SA"/>
   <Default:Documentation xmi:id="_2-4gQHu1EeO_LPATlPj4SA" base_Comment="_2-2rEHu1EeO_LPATlPj4SA"/>
+  <Default:Documentation xmi:id="_7mMBgHyEEeODlfDGqk4_6Q" base_Comment="_7mJlQHyEEeODlfDGqk4_6Q"/>
+  <Default:Documentation xmi:id="_AdP3EHyFEeODlfDGqk4_6Q" base_Comment="_AdNa0HyFEeODlfDGqk4_6Q"/>
 </xmi:XMI>
