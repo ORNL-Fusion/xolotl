@@ -1,6 +1,7 @@
 // Includes
 #include "PetscSolver.h"
 #include <petscts.h>
+#include <petscsys.h>
 #include <sstream>
 #include <iostream>
 #include <vector>
@@ -232,7 +233,7 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr);
-	ierr = PetscNew(MyMonitorCtx, &ctx);
+	ierr = PetscNew(&ctx);
 	checkPetscError(ierr);
 	ierr = PetscViewerDrawOpen(PetscObjectComm((PetscObject) da), NULL, "",
 			PETSC_DECIDE, PETSC_DECIDE, 600, 400, &ctx->viewer);
@@ -882,14 +883,14 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 				diagFill[index] = connectivity[j];
 			}
 		}
-		printf("Number of degrees of freedom = %d\n", numReactants);
-		for (i = 0; i < numReactants; i++) {
-			for (j = 0; j < numReactants; j++) {
-				printf("%d ", dfill[i * numReactants + j]);
-			}
-			printf("\n");
-		}
-		printf("\n");
+//		printf("Number of degrees of freedom = %d\n", numReactants);
+//		for (i = 0; i < numReactants; i++) {
+//			for (j = 0; j < numReactants; j++) {
+//				printf("%d ", dfill[i * numReactants + j]);
+//			}
+//			printf("\n");
+//		}
+//		printf("\n");
 	} else {
 		std::string err =
 				"PetscSolver Exception: Invalid diagonal block size!\n";
@@ -1091,7 +1092,7 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = TSSetInitialTimeStep(ts, 0.0, 1.0e-12);
+	ierr = TSSetInitialTimeStep(ts, 0.0, 1.0e-8);
 	checkPetscError(ierr);
 	ierr = TSSetDuration(ts, 100, 50.0);
 	checkPetscError(ierr);

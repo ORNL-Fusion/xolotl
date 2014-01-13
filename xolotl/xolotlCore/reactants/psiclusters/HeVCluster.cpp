@@ -192,9 +192,6 @@ void HeVCluster::createDissociationConnectivity() {
 	composition = psiNetwork->getCompositionVector(numHe - 1, numV, 0);
 	otherMixedCluster = psiNetwork->getCompound("HeV", composition);
 	singleCluster = psiNetwork->get("He", 1);
-	if (!otherMixedCluster) {
-		std::cout << "It's NULL!" << std::endl;
-	}
 	dissociateClusters(singleCluster, otherMixedCluster);
 
 	// Vacancy Dissociation, get He[(numV-1)*V] and V
