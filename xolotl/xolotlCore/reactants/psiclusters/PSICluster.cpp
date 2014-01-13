@@ -495,12 +495,12 @@ void PSICluster::dissociateClusters(
 		castedSecondCluster = std::dynamic_pointer_cast < PSICluster
 				> (secondDissociatedCluster);
 
-		std::cout << "Configuring dissociation: " << name << "_" << size
-				<< " --> " << firstDissociatedCluster->getName() << "_"
-				<< firstDissociatedCluster->getComposition()[name] << " + "
-				<< secondDissociatedCluster->getName() << "_"
-				<< secondDissociatedCluster->getComposition()[name]
-				<< std::endl;
+//		std::cout << "Configuring dissociation: " << name << "_" << size
+//				<< " --> " << firstDissociatedCluster->getName() << "_"
+//				<< firstDissociatedCluster->getComposition()[name] << " + "
+//				<< secondDissociatedCluster->getName() << "_"
+//				<< secondDissociatedCluster->getComposition()[name]
+//				<< std::endl;
 
 		// Add the two reactants to the set. Also add this cluster to
 		// their lists of dissociating clusters. Handle the first one.
