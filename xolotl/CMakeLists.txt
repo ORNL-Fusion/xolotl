@@ -13,7 +13,7 @@ list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 FIND_PACKAGE(Boost REQUIRED)
 IF (Boost_FOUND)
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-    ADD_DEFINITIONS( "-DHAS_BOOST" )
+    set( hasBoost "")
 ENDIF()
 
 # Find PETSc
@@ -22,21 +22,25 @@ FIND_PACKAGE(PETSc REQUIRED)
 # Find MPI
 FIND_PACKAGE(MPI REQUIRED)
 
-# Report package information
-message("----- Configuration Information -----")
-message("PETSc includes = ${PETSC_INCLUDES}")
-message("PETSc libraries = ${PETSC_LIBRARIES}")
-message("MPI C includes = ${MPI_INCLUDE_PATH}")
-message("MPI C libraries = ${MPI_LIBRARIES}")
-message("----- End Configuration Information -----")
-
-# Enable testing.
-enable_testing()
-
 # Add the I/O, data structures and reactor directories
 add_subdirectory(xolotlCore)
 add_subdirectory(xolotlSolver)
-add_subdirectory(tests)
+
+# Enable testing.
+enable_testing()
+# Add the tests is Boost is available
+IF (DEFINED hasBoost)
+    message(STATUS "Boost found. Tests will be built.")
+	add_subdirectory(tests)
+ENDIF()
+
+# Report package information
+message(STATUS "----- Configuration Information -----")
+message(STATUS "PETSc includes = ${PETSC_INCLUDES}")
+message(STATUS "PETSc libraries = ${PETSC_LIBRARIES}")
+message(STATUS "MPI C includes = ${MPI_INCLUDE_PATH}")
+message(STATUS "MPI C libraries = ${MPI_LIBRARIES}")
+message(STATUS "----- End Configuration Information -----")
 
 # Create the documentation directory and set up the doc target.
 set(DOC_DIR "documentation")
