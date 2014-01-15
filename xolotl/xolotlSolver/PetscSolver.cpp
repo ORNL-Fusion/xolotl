@@ -1058,7 +1058,7 @@ void PetscSolver::solve() {
 	// Get the diagonal fill
 	ierr = getDiagonalFill(dfill, dof * dof);checkPetscError(ierr);
 	// Load up the block fills
-	ierr = DMDASetBlockFills(da, NULL, ofill);checkPetscError(ierr);
+	ierr = DMDASetBlockFills(da, dfill, ofill);checkPetscError(ierr);
 	// Free the temporary fill arrays
 	ierr = PetscFree(ofill);checkPetscError(ierr);
 	ierr = PetscFree(dfill);checkPetscError(ierr);
