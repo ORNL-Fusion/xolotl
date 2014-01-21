@@ -300,7 +300,7 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 
 /* ------------------------------------------------------------------- */
 #undef __FUNCT__
-#define __FUNCT__ "InitialConditions"
+#define __FUNCT__ "setupInitialConditions"
 PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
 // Local Declarations
