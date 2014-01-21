@@ -233,7 +233,7 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr);
-	ierr = PetscNew(&ctx);
+	ierr = PetscNew(MyMonitorCtx,&ctx);
 	checkPetscError(ierr);
 	ierr = PetscViewerDrawOpen(PetscObjectComm((PetscObject) da), NULL, "",
 			PETSC_DECIDE, PETSC_DECIDE, 600, 400, &ctx->viewer);
