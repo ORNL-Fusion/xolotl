@@ -108,7 +108,7 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	PetscViewer viewer;
 	PetscReal *solutionArray, *gridPointSolution, x, hx;
 	PetscInt xs, xm, Mx;
-	int xi, i,j;
+	int xi, i, j;
 
 	PetscFunctionBeginUser;
 	ierr = VecScatterBegin(ctx->scatter, solution, ctx->He, INSERT_VALUES,
@@ -122,7 +122,8 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 
 	// Create the PETScViewer and get the data
 	VecGetArray(solution, &solutionArray);
-	PetscViewerASCIIOpen(PETSC_COMM_WORLD, outputFileNameStream.str().c_str(), &viewer);
+	PetscViewerASCIIOpen(PETSC_COMM_WORLD, outputFileNameStream.str().c_str(),
+			&viewer);
 
 	// Create the header for the file
 	auto reactants = PetscSolver::getNetwork()->getAll();
@@ -131,7 +132,8 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	for (int i = 0; i < size; i++) {
 		cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 		auto composition = cluster->getComposition();
-		header << cluster->getName() << "_(" << composition["He"] << "," << composition["V"] << "," << composition["I"] << ") ";
+		header << cluster->getName() << "_(" << composition["He"] << ","
+				<< composition["V"] << "," << composition["I"] << ") ";
 	}
 	header << "\n";
 	PetscViewerASCIIPrintf(viewer, header.str().c_str());
@@ -147,21 +149,21 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	hx = 8.0 / (PetscReal) (Mx - 1);
 	checkPetscError(ierr);
 	// Print the solution data
-	for (xi = xs; xi < xs+xm; xi++) {
+	for (xi = xs; xi < xs + xm; xi++) {
 		// Dump x
 		x = xi * hx;
-	    outputData << timestep << " " << x << " ";
-	    // Get the pointer to the beginning of the solution data for this grid point
+		outputData << timestep << " " << x << " ";
+		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray + size * (xi - 1);
 		// Dump the data to the stream
-	    for (i = 0; i < size; i++) {
-	      	outputData << gridPointSolution[i] << " ";
-	    }
-	    // End the line
-	    outputData << "\n";
+		for (i = 0; i < size; i++) {
+			outputData << gridPointSolution[i] << " ";
+		}
+		// End the line
+		outputData << "\n";
 	}
-    // Dump the data to file
-    PetscViewerASCIIPrintf(viewer, outputData.str().c_str());
+	// Dump the data to file
+	PetscViewerASCIIPrintf(viewer, outputData.str().c_str());
 	// Restore the array and kill the viewer
 	VecRestoreArray(solution, &solutionArray);
 	PetscViewerDestroy(&viewer);
@@ -233,14 +235,14 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr);
-	ierr = PetscNew(MyMonitorCtx,&ctx);
+	ierr = PetscNew(MyMonitorCtx, &ctx);
 	checkPetscError(ierr);
 	ierr = PetscViewerDrawOpen(PetscObjectComm((PetscObject) da), NULL, "",
 			PETSC_DECIDE, PETSC_DECIDE, 600, 400, &ctx->viewer);
 	checkPetscError(ierr);
 
 	// Get the He_1 and He_2 indices from the network
-	auto he1Cluster = network->get("He",1), he2Cluster = network->get("He",2);
+	auto he1Cluster = network->get("He", 1), he2Cluster = network->get("He", 2);
 	int he1Index = network->getReactantId(*he1Cluster);
 	int he2Index = network->getReactantId(*he2Cluster);
 
@@ -261,7 +263,8 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 	checkPetscError(ierr);
 	ierr = DMDASetFieldName(ctx->da, he2Index, "He_2");
 	checkPetscError(ierr);
-	ierr = DMDASetCoordinateName(ctx->da, 0, "-Z direction (depth into surface)");
+	ierr = DMDASetCoordinateName(ctx->da, 0,
+			"-Z direction (depth into surface)");
 	checkPetscError(ierr);
 	ierr = PetscSNPrintf(ycoor, 6, "%D ... Cluster size ... 1", N);
 	checkPetscError(ierr);
@@ -379,7 +382,6 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
 /* ------------------------------------------------------------------- */
 
-
 #undef __FUNCT__
 #define __FUNCT__ "RHSFunction"
 /*
@@ -495,14 +497,15 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		if (heCluster) {
 			reactantIndex = network->getReactantId(*(heCluster)) - 1;
 			// Update the concentration of the cluster
-			updatedConcOffset[reactantIndex] += 1.0E4*PetscMax(0.0,
-					0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
+			updatedConcOffset[reactantIndex] += 1.0E4
+					* PetscMax(0.0,
+							0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
 		}
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
 
 		// He clusters larger than 5 do not diffuse -- they are immobile
-		for (int i = 1; i < PetscMin(numHeClusters+1,6); i++) {
+		for (int i = 1; i < PetscMin(numHeClusters + 1, 6); i++) {
 			// Get the reactant index
 			clusterDummy = network->get("He", i);
 			heCluster = std::dynamic_pointer_cast<PSICluster>(clusterDummy);
@@ -687,7 +690,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 			/* He clusters larger than 5 do not diffuse -- they are immobile */
 			// ---- Compute diffusion over the locally owned part of the grid -----
-			for (i = 1; i < PetscMin(numHeClusters+1,6); i++) {
+			for (i = 1; i < PetscMin(numHeClusters + 1, 6); i++) {
 				// Get the cluster
 				psiCluster = std::dynamic_pointer_cast<PSICluster>(
 						network->get("He", i));
@@ -821,8 +824,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 //				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << rowId << "," << pdColIds[j] << "]"<< std::endl;
 			}
 			// Update the matrix
-			ierr = MatSetValuesLocal(*J, 1, &rowId, size, pdColIds, partials.data(),
-					ADD_VALUES);
+			ierr = MatSetValuesLocal(*J, 1, &rowId, size, pdColIds,
+					partials.data(), ADD_VALUES);
 		}
 		// Uncomment this line for debugging in a single cell.
 		// break;
@@ -933,13 +936,18 @@ void PetscSolver::setCommandLineOptions(int argc, char **argv) {
 void PetscSolver::setNetworkLoader(
 		std::shared_ptr<PSIClusterNetworkLoader> networkLoader) {
 
-// Store the loader and load the network
+	// Store the loader and load the network
 	this->networkLoader = networkLoader;
 	network = networkLoader->load();
 
-// Debug
-	std::cout << "PETScSolver Message: " << "Loaded network of size "
-			<< network->size() << "." << std::endl;
+	// Debug
+	// Get the processor id
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	if (procId == 1) {
+		std::cout << "PETScSolver Message: " << "Master loaded network of size "
+				<< network->size() << "." << std::endl;
+	}
 
 	return;
 }
@@ -1030,7 +1038,7 @@ void PetscSolver::solve() {
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion, with for He.
 	int reactantIndex = 0;
 	std::shared_ptr<Reactant> reactant;
-	for (int numHe = 1; numHe < PetscMin(numHeClusters+1, 6); numHe++) {
+	for (int numHe = 1; numHe < PetscMin(numHeClusters + 1, 6); numHe++) {
 		reactant = network->get("He", numHe);
 		// Only couple if the reactant exists
 		if (reactant) {
@@ -1057,12 +1065,16 @@ void PetscSolver::solve() {
 	}
 
 	// Get the diagonal fill
-	ierr = getDiagonalFill(dfill, dof * dof);checkPetscError(ierr);
+	ierr = getDiagonalFill(dfill, dof * dof);
+	checkPetscError(ierr);
 	// Load up the block fills
-	ierr = DMDASetBlockFills(da, dfill, ofill);checkPetscError(ierr);
+	ierr = DMDASetBlockFills(da, dfill, ofill);
+	checkPetscError(ierr);
 	// Free the temporary fill arrays
-	ierr = PetscFree(ofill);checkPetscError(ierr);
-	ierr = PetscFree(dfill);checkPetscError(ierr);
+	ierr = PetscFree(ofill);
+	checkPetscError(ierr);
+	ierr = PetscFree(dfill);
+	checkPetscError(ierr);
 
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Extract global vector from DMDA to hold solution
