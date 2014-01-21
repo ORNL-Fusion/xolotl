@@ -966,7 +966,6 @@ void PetscSolver::setupMesh() {
 
 #undef __FUNCT__
 #define __FUNCT__ "initialize"
-
 /**
  * This operation performs all necessary initialization for the solver
  * possibly including but not limited to setting up MPI and loading initial
@@ -983,6 +982,8 @@ void PetscSolver::initialize() {
 	return;
 }
 
+#undef __FUNCT__
+#define __FUNCT__ "solve"
 /**
  * This operation directs the Solver to perform the solve. If the solve
  * fails, it will throw an exception of type std::string.
