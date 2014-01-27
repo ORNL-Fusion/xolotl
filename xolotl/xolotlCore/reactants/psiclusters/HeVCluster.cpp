@@ -47,16 +47,6 @@ double HeVCluster::getAnnByEm() {
 	return 0;
 }
 
-int HeVCluster::getSpeciesSize(const std::string speciesName) {
-	if (speciesName == "He") {
-		return numHe;
-	} else if (speciesName == "V") {
-		return numV;
-	} else {
-		return 0;
-	}
-}
-
 void HeVCluster::createReactionConnectivity() {
 
 	// Local Declarations
@@ -64,6 +54,7 @@ void HeVCluster::createReactionConnectivity() {
 			network);
 	auto props = psiNetwork->getProperties();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
+	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
 	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
@@ -267,7 +258,6 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 			}
 		}
 	}
-
 	return f3 - f4 * getConcentration();
 }
 
@@ -294,19 +284,6 @@ bool HeVCluster::isProductReactant(const Reactant & reactantI,
 	// numV Vacancies
 	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == numHe)
 			&& ((rI_V + rJ_V) == numV);
-}
-
-std::map<std::string, int> HeVCluster::getClusterMap() {
-	// Local Declarations
-	std::map<std::string, int> clusterMap;
-
-	// Set the number of each species
-	clusterMap["He"] = numHe;
-	clusterMap["V"] = numV;
-	clusterMap["I"] = 0;
-
-	// Return it
-	return clusterMap;
 }
 
 std::map<std::string, int> HeVCluster::getComposition() const {

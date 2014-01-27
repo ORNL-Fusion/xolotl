@@ -51,17 +51,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the reaction connectivity of the 4th interstitial cluster (4I)
 	
 	{
-		// Get the index of the 4I reactant
-		std::map<std::string, int> species;
-		species["I"] = 4;
-		int index = network->toClusterIndex(species);
-		
 		// Get the connectivity array from the reactant
-		
-		shared_ptr<PSICluster> reactant =
-			std::dynamic_pointer_cast<PSICluster>(reactants->at(index));
-		std::vector<int> reactionConnectivity =
-			reactant->getConnectivity();
+		auto reactant = std::dynamic_pointer_cast < PSICluster
+				> (network->get("I", 4));
+		auto reactionConnectivity = reactant->getConnectivity();
 		
 		// Check the connectivity for He, V, and I
 		
@@ -73,13 +66,13 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			
 			// I
-			1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			
 			// HeV
-			0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 0, 0, 0, 0,
+			1, 1, 1, 1, 0, 0, 0, 0,
+			1, 1, 1, 0, 0, 0, 0,
+			1, 1, 0, 0, 0, 0,
 			1, 1, 1, 1, 1,
 			1, 1, 1, 1,
 			1, 1, 1,
@@ -91,7 +84,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 1,
 			0, 0, 0, 0, 0,
 			0, 0, 0, 0,
 			0, 0, 0,
@@ -112,9 +105,9 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
 	std::vector<std::shared_ptr<InterstitialCluster>> clusters;
 	std::shared_ptr<InterstitialCluster> cluster;
-	double expectedRadii[] = { 0.4979646072, 0.6259425872, 0.7157161386,
-			0.7871847381, 0.8475372467, 0.9002923252, 0.9474668259,
-			0.9903371181, 1.0297681911, 1.0663765142 };
+	double expectedRadii[] = { 0.1578547805, 0.1984238001, 0.2268820159,
+			0.2495375620, 0.2686693072, 0.2853926671, 0.3003469838,
+			0.3139368664, 0.3264365165, 0.3380413550 };
 
 	for (int i = 1; i <= 10; i++) {
 		cluster = std::shared_ptr<InterstitialCluster>(

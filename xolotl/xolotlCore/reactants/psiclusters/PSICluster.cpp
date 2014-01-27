@@ -150,7 +150,7 @@ double PSICluster::getDissociationFlux(double temperature) const {
 //							<< std::endl;
 					fluxMultiplier = 2.0;
 				}
-				// Calculate Second term of production flux
+				// Calculate Second term of Dissociation flux
 				if (smallerCluster) {
 					flux += fluxMultiplier
 							* calculateDissociationConstant(*smallerCluster,
@@ -224,12 +224,6 @@ double PSICluster::getProductionFlux(double temperature) const {
 	return flux;
 }
 
-/**
- * This operation returns the total change in this cluster due to
- * the combination of this cluster with others.
- * @param temperature The temperature at which to calculate the flux
- * @return The flux due to this cluster combining with other clusters.
- */
 double PSICluster::getCombinationFlux(double temperature) const {
 
 	// Local declarations

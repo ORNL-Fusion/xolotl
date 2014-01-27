@@ -16,7 +16,6 @@
 #include <limits>
 #include <algorithm>
 
-using std::shared_ptr;
 using namespace xolotlCore;
 
 /**
@@ -30,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(HeCluster_testSuite)
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
-	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+	std::shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
 	auto reactants = network->getAll();
 	auto props = network->getProperties();
 	
@@ -40,23 +39,16 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the reaction connectivity of the 6th He reactant (numHe=6)
 	
 	{
-		// Get the index of the 6He reactant
-		std::map<std::string, int> species;
-		species["He"] = 6;
-		int index = network->toClusterIndex(species);
-		
 		// Get the connectivity array from the reactant
-		
-		shared_ptr<PSICluster> reactant =
-			std::dynamic_pointer_cast<PSICluster>(reactants->at(index));
-		std::vector<int> reactionConnectivity =
-			reactant->getConnectivity();
+		auto reactant = std::dynamic_pointer_cast < PSICluster
+				> (network->get("He", 6));
+		auto reactionConnectivity = reactant->getConnectivity();
 		
 		// Check the connectivity for He, V, and I
 		
 		int connectivityExpected[] = {
 			// He
-			1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 			
 			// V
 			1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
@@ -65,10 +57,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
 			
 			// HeV
-			1, 1, 1, 0, 0, 0, 0, 0, 0,
-			1, 1, 0, 0, 0, 0, 0, 0,
-			1, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
+			1, 1, 1, 0, 0, 1, 1, 1, 1,
+			1, 1, 0, 0, 0, 1, 1, 1,
+			1, 0, 0, 0, 0, 1, 1,
+			0, 0, 0, 0, 0, 1,
 			0, 0, 0, 0, 0,
 			0, 0, 0, 0,
 			0, 0, 0,
@@ -76,17 +68,17 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			0,
 			
 			// HeI
-			1, 1, 1, 0, 0, 0, 0, 0, 0,
-			1, 1, 0, 0, 0, 0, 0, 0,
-			1, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
+			1, 1, 1, 0, 0, 1, 1, 1, 1,
+			1, 1, 0, 0, 0, 1, 1, 1,
+			1, 0, 0, 0, 0, 1, 1,
+			0, 0, 0, 0, 0, 1,
 			0, 0, 0, 0, 0,
 			0, 0, 0, 0,
 			0, 0, 0,
 			0, 0,
 			0
 		};
-		
+
 		for (int i = 0; i < reactionConnectivity.size(); i++) {
 			BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
 		}
@@ -107,9 +99,9 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	std::vector<std::shared_ptr<HeCluster>> clusters;
 	std::shared_ptr<HeCluster> cluster;
 
-	double expectedRadii[] = { 0.3, 0.3748419767, 0.4273418681, 0.4691369586,
-			0.5044313198, 0.5352826768, 0.5628704922, 0.5879411911,
-			0.6110006225, 0.6324092998 };
+	double expectedRadii[] = { 0.3, 0.3237249066, 0.3403673722, 0.3536164159,
+				0.3648047284, 0.3745846085, 0.3833299460, 0.3912773576,
+				0.3985871973, 0.4053737480 };
 
 	for (int i = 1; i <= 10; i++) {
 		cluster = std::shared_ptr<HeCluster>(new HeCluster(i));

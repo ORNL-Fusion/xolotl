@@ -2,12 +2,18 @@
 #include "HeInterstitialCluster.h"
 #include "PSIClusterReactionNetwork.h"
 #include <iostream>
+#include <Constants.h>
 
 using namespace xolotlCore;
 
 HeInterstitialCluster::HeInterstitialCluster(int numHelium, int numInterstitial) :
 		PSICluster(1), numHe(numHelium), numI(numInterstitial) {
+
+	// Set the cluster size as the sum of
+	// the number of Helium and Interstitials
 	size = numHe + numI;
+
+	// Set the reactant name appropriately
 	name = "HeI";
 }
 
@@ -38,10 +44,6 @@ double HeInterstitialCluster::getGenByEm() {
 }
 
 double HeInterstitialCluster::getAnnByEm() {
-	return 0;
-}
-
-int HeInterstitialCluster::getSpeciesSize(const std::string speciesName) {
 	return 0;
 }
 
@@ -133,17 +135,16 @@ void HeInterstitialCluster::createDissociationConnectivity() {
 	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
 			network);
 	auto props = psiNetwork->getProperties();
-	int maxIClusterSize = std::stoi(props["maxIClusterSize"]), index = 0;
 	std::vector<int> composition;
 	std::shared_ptr<Reactant> singleCluster, otherMixedCluster;
 
-	// He Dissociation
+	// He Dissociation, get the [(numHe-1)*He]I and He
 	composition = psiNetwork->getCompositionVector(numHe - 1, 0, numI);
 	otherMixedCluster = psiNetwork->getCompound("HeI", composition);
 	singleCluster = psiNetwork->get("He", 1);
 	dissociateClusters(singleCluster, otherMixedCluster);
 
-	// Interstitial Dissociation
+	// Interstitial Dissociation, get He[(numV-1)*I] and I
 	composition = psiNetwork->getCompositionVector(numHe, 0, numI - 1);
 	otherMixedCluster = psiNetwork->getCompound("HeI", composition);
 	singleCluster = psiNetwork->get("I", 1);
@@ -192,13 +193,13 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) const {
 						&& composition["V"] == 0) {
 					secondCluster = heCluster;
 				} else if (numHe == composition["He"]
-						&& numI - composition["V"] == 1
+						&& numI - composition["I"] == 1
 						&& composition["V"] == 0) {
 					// trap mutation
 					secondCluster = vCluster;
 				} else if (numHe == composition["He"]
-						&& composition["I"] - numI == 1
-						&& composition["V"] == 0) {
+						&& composition["V"] - numI == 1
+						&& composition["I"] == 0) {
 					// or interstitial dissociation
 					secondCluster = iCluster;
 				}
@@ -215,6 +216,31 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) const {
 	return f3 - (f4 * getConcentration());
 }
 
+bool HeInterstitialCluster::isProductReactant(const Reactant & reactantI,
+		const Reactant & reactantJ) {
+	// Local Declarations, integers for species number for I, J reactants
+	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
+
+	// Get the compositions of the reactants
+	auto reactantIMap = reactantI.getComposition();
+	auto reactantJMap = reactantJ.getComposition();
+
+	// Grab the numbers for each species
+	// from each Reactant
+	rI_I = reactantIMap["I"];
+	rJ_I = reactantJMap["I"];
+	rI_He = reactantIMap["He"];
+	rJ_He = reactantJMap["He"];
+	rI_V = reactantIMap["V"];
+	rJ_V = reactantJMap["V"];
+
+	// We should have no Vacancies, a
+	// total of numHe Helium, and a total of
+	// numI Interstitials
+	return ((rI_V + rJ_V) == 0) && ((rI_He + rJ_He) == numHe)
+			&& ((rI_I + rJ_I) == numI);
+}
+
 std::map<std::string, int> HeInterstitialCluster::getComposition() const {
 	// Local Declarations
 	std::map<std::string, int> clusterMap;
@@ -229,7 +255,13 @@ std::map<std::string, int> HeInterstitialCluster::getComposition() const {
 }
 
 double HeInterstitialCluster::getReactionRadius() const {
-	return 0.0;
+	return (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
+			+ pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0) * numI)
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+			- pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0))
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
 }
 
 /**
@@ -274,7 +306,7 @@ void HeInterstitialCluster::getDissociationPartialDerivatives(
 	}
 
 	// Partial derivative with respect to an HeI cluster with one less
-	// vacancy
+	// interstitial
 	compositionVec = { numHe, 0, numI - 1 };
 	auto heIClusterLessI = std::dynamic_pointer_cast<PSICluster>(
 			network->getCompound("HeI", compositionVec));

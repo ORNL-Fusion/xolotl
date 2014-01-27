@@ -25,7 +25,7 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	HeInterstitialCluster() : PSICluster(1) {}
+	HeInterstitialCluster() : PSICluster(1) { numHe = 1; numI = 1; }
 
 protected:
 
@@ -45,11 +45,11 @@ protected:
 public:
 
 	/**
-	 * The constructor. All HeVClusters must be initialized with a map
+	 * The constructor. All HeInterstitialClusters must be initialized with a map
 	 * that describes the species of which the cluster is composed. The map
 	 * should contain as its keys the names of the species and the sizes of the
 	 * species as its values. The names of the species must be one of
-	 * {He,V}.
+	 * {He,I}.
 	 */
 	HeInterstitialCluster(int numHe, int numI);
 
@@ -81,18 +81,25 @@ public:
 	 */
 	double getAnnByEm();
 
-	/**
-	 * This operation returns the number of a given "species" within this
-	 * cluster by passing one of {He,I} as an input argument.
-	 */
-	int getSpeciesSize(const std::string speciesName);
-
     /**
 	 * This operation returns the total change in this cluster due to
 	 * dissociation.
 	 * @return The flux due to dissociation.
 	 */
 	virtual double getDissociationFlux(double temperature) const;
+
+	/**
+	 * Return whether or not this PSICluster is a product
+	 * of the reaction between reactantI and reactantJ in
+	 * this Reactants ReactionNetwork. This method should be
+	 * specialized by subclasses to indicate whether or not they
+	 * are the product of the given reaction.
+	 *
+	 * @param reactantI
+	 * @param reactantJ
+	 * @return true if this reactant is a product of i and j
+	 */
+	virtual bool isProductReactant(const Reactant & reactantI, const Reactant & reactantJ);
 
 	/**
 	 * This virtual method is for subclasses to specialize
@@ -114,7 +121,7 @@ protected:
 
 	/**
 	 * This operation overrides the base class implementation to provide
-	 * the proper pointer for HeV, which is a compound.
+	 * the proper pointer for HeI, which is a compound.
 	 *
 	 * @return The shared_ptr from the network or a null shared_ptr if the
 	 * network does not contain this reactant.

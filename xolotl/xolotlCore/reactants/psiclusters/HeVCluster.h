@@ -80,12 +80,6 @@ public:
 	 */
 	double getAnnByEm();
 
-	/**
-	 * This operation returns the number of a given "species" within this
-	 * cluster by passing one of {He,V} as an input argument.
-	 */
-	int getSpeciesSize(const std::string speciesName);
-
     /**
 	 * This operation returns the total change in this cluster due to
 	 * dissociation.
@@ -105,16 +99,6 @@ public:
 	 * @return true if this reactant is a product of i and j
 	 */
 	virtual bool isProductReactant(const Reactant & reactantI, const Reactant & reactantJ);
-
-	/**
-	 * This virtual method is for subclasses to specialize
-	 * to return their representative cluster map, which is a mapping
-	 * of which species exist in the cluster to the integer number
-	 * of each species.
-	 *
-	 * @return
-	 */
-	virtual std::map<std::string, int> getClusterMap();
 
 	/**
 	 * This virtual method is for subclasses to specialize

@@ -10,6 +10,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
 #include "SimpleReactionNetwork.h"
+#include <HeCluster.h>
 #include <HeVCluster.h>
 #include <memory>
 #include <typeinfo>
@@ -31,9 +32,14 @@ BOOST_AUTO_TEST_SUITE(HeVCluster_testSuite)
 
 BOOST_AUTO_TEST_CASE(getSpeciesSize) {
 	HeVCluster cluster(4, 5);
-	BOOST_REQUIRE_EQUAL(cluster.getSpeciesSize("He"), 4);
-	BOOST_REQUIRE_EQUAL(cluster.getSpeciesSize("V"), 5);
-	BOOST_REQUIRE_EQUAL(cluster.getSpeciesSize("I"), 0);
+
+	// Get the composition back
+	auto composition = cluster.getComposition();
+
+	// Check the composition is the created one
+	BOOST_REQUIRE_EQUAL(composition["He"], 4);
+	BOOST_REQUIRE_EQUAL(composition["V"], 5);
+	BOOST_REQUIRE_EQUAL(composition["I"], 0);
 }
 
 /**
@@ -53,18 +59,11 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// with 3He and 2V
 	
 	{
-		// Get the index of the 3He*2V reactant
-		std::map<std::string, int> species;
-		species["He"] = 3;
-		species["V"] = 2;
-		int index = network->toClusterIndex(species);
-		
 		// Get the connectivity array from the reactant
-		
-		shared_ptr<PSICluster> reactant =
-			std::dynamic_pointer_cast<PSICluster>(reactants->at(index));
-		std::vector<int> reactionConnectivity =
-			reactant->getConnectivity();
+		std::vector<int> composition = {3, 2, 0 };
+		auto reactant = std::dynamic_pointer_cast < PSICluster
+				> (network->getCompound("HeV", composition));
+		auto reactionConnectivity = reactant->getConnectivity();
 		
 		BOOST_REQUIRE_EQUAL(reactant->getComposition()["He"], 3);
 		BOOST_REQUIRE_EQUAL(reactant->getComposition()["V"], 2);
@@ -83,9 +82,9 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			
 			// HeV
-			0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0,
+			0, 0, 1, 0, 0, 0, 0, 0, 0,
+			0, 1, 1, 1, 1, 1, 1, 1,
+			0, 0, 1, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0,
 			0, 0, 0, 0,
@@ -111,37 +110,45 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	}
 }
 
+/**
+ * This operation checks the ability of the HeVCluster to compute the total flux.
+ */
 BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 
 	// Local Declarations
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
-	// Get an HeV cluster with sizes 1,1,0.
-	std::vector<int> composition = {1,1,0};
-	auto cluster = std::dynamic_pointer_cast<PSICluster>(network->getCompound("HeV",composition));
-	// Get one that it combines with
-	composition.at(1) = 2;
-	auto secondCluster = std::dynamic_pointer_cast<PSICluster>(network->getCompound("HeV",composition));
-
+	// Get an HeV cluster with compostion 2,1,0.
+	std::vector<int> composition = {2, 1, 0};
+	auto cluster = std::dynamic_pointer_cast<PSICluster>(network->getCompound(
+			"HeV",composition));
+	// Get one that it combines with (He)
+	auto secondCluster = std::dynamic_pointer_cast<PSICluster>(network->get("He", 1));
 	// Set the diffusion factor, migration and binding energies based on the
 	// values from the tungsten benchmark for this problem.
 	cluster->setDiffusionFactor(0.0);
 	cluster->setMigrationEnergy(std::numeric_limits<double>::infinity());
-	std::vector<double> energies = {5.09,5.09,std::numeric_limits<double>::infinity()};
+	std::vector<double> energies = {3.02, 7.25,
+			std::numeric_limits<double>::infinity(), 10.2};
 	cluster->setBindingEnergies(energies);
+	cluster->setConcentration(0.5);
 
 	// Set the diffusion factor, migration and binding energies based on the
 	// values from the tungsten benchmark for this problem for the second cluster
-	secondCluster->setDiffusionFactor(0.0);
-	secondCluster->setMigrationEnergy(std::numeric_limits<double>::infinity());
-	energies = {5.39,0.725,std::numeric_limits<double>::infinity()};
+	secondCluster->setDiffusionFactor(2.950E+10);
+	secondCluster->setMigrationEnergy(0.13);
+	energies = {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(),
+			std::numeric_limits<double>::infinity(), 8.27};
 	secondCluster->setBindingEnergies(energies);
-
+	secondCluster->setConcentration(0.5);
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(1000.0);
 	std::cout.precision(15);
-	std::cout << "HeVClusterTester Message: " << " Flux is " << flux << "\n";
-	BOOST_REQUIRE(!std::isnan(flux));
+	std::cout << "HeVClusterTester Message: \n" << "Total Flux is " << flux << "\n"
+			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
+			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
+			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n";
+	BOOST_CHECK_CLOSE(-6171164946., flux, 10.);
 }
 
 /**
@@ -151,8 +158,8 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
 	std::vector<std::shared_ptr<HeVCluster>> clusters;
 	std::shared_ptr<HeVCluster> cluster;
-	double expectedRadii[] = { 0.4330127019, 0.5609906819, 0.6507642333,
-			0.7222328328, 0.7825853415 };
+	double expectedRadii[] = { 0.1372650265, 0.1778340462, 0.2062922619,
+			0.2289478080, 0.2480795532 };
 
 	for (int i = 1; i <= 5; i++) {
 		cluster = std::shared_ptr<HeVCluster>(new HeVCluster(1, i));
