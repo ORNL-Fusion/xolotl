@@ -113,9 +113,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  * the total flux.
  */
 BOOST_AUTO_TEST_CASE(checkTotalFlux) {
-	std::cout << "HeInterstitialClusterTester Message: \n"
-			  << "BOOST_AUTO_TEST_CASE(checkTotalFlux): arbitrary values because of lack of data"
-			  << "\n";
+	BOOST_TEST_MESSAGE("HeInterstitialClusterTester Message: \n"
+			  << "BOOST_AUTO_TEST_CASE(checkTotalFlux): "
+			  << "Arbitrary values used because of lack of data!"
+			  << "\n");
 
 	// Local Declarations
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
@@ -124,8 +125,8 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	std::vector<int> composition = {1, 0, 1};
 	auto cluster = std::dynamic_pointer_cast<PSICluster>(network->getCompound(
 			"HeI",composition));
-	// Get one that it combines with (V)
-	auto secondCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+	// Get one that it combines with (I)
+	auto secondCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
 	// Set the diffusion factor, migration and binding energies to arbitrary
 	// values because HeI does not exist in benchmarks
 	cluster->setDiffusionFactor(1.5E+10);
@@ -146,12 +147,16 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(1000.0);
 	std::cout.precision(15);
-	std::cout << "HeInterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"
+	BOOST_TEST_MESSAGE("HeInterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"
 			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
-			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n";
+			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n");
 
-	BOOST_FAIL( "BOOST_AUTO_TEST_CASE(checkTotalFlux): this test is not ready yet" );
+	// The flux should be zero because the binding energies for all the data that we have are
+	// zero for I1.
+	BOOST_REQUIRE_CLOSE(0.0, flux,.000001);
+
+	return;
 }
 
 /**
@@ -166,9 +171,11 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
 	for (int i = 1; i <= 5; i++) {
 		cluster = std::shared_ptr<HeInterstitialCluster>(new HeInterstitialCluster(1, i));
-		BOOST_CHECK_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
+		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
 				.000001);
 	}
+
+	return;
 }
 
 

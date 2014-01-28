@@ -32,7 +32,7 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 	// Add He clusters
 	for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
 		// Create a He cluster with cluster size numHe
-		std::shared_ptr<HeCluster> cluster(new HeCluster(numHe));
+		std::shared_ptr<HeCluster> cluster = std::make_shared<HeCluster>(numHe);
 		// Add it to the network
 		add(cluster);
 	}
@@ -40,7 +40,7 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 	// Add vacancy clusters
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		// Create a He cluster with cluster size numV
-		std::shared_ptr<VCluster> cluster(new VCluster(numV));
+		std::shared_ptr<VCluster> cluster = std::make_shared<VCluster>(numV);
 		// Add it to the network
 		add(cluster);
 	}
@@ -48,32 +48,28 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 	// Add interstitial clusters
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
 		// Create a He cluster with cluster size numI
-		std::shared_ptr<InterstitialCluster> cluster(
-				new InterstitialCluster(numI));
+		std::shared_ptr<InterstitialCluster> cluster = std::make_shared<InterstitialCluster>(numI);
 		// Add it to the network
 		add(cluster);
 	}
 
 	// Add HeV clusters, assuming that
 	// numHe + numV <= maxMixedClusterSize
-	int numHeVClusters = 0;
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
 			// Create a HeVCluster with the current amount of He and V
-			std::shared_ptr<HeVCluster> cluster(new HeVCluster(numHe, numV));
+			std::shared_ptr<HeVCluster> cluster = std::make_shared<HeVCluster>(numHe, numV);
 			add(cluster);
 		}
 	}
 
 	// Add HeI clusters
-	int numHeIClusters = 0;
 	// Create all possible combinations of numHe and numI
 	// clusters with numHe, numI < maxClusterSize
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
 		for (int numHe = 1; numHe + numI <= maxClusterSize; numHe++) {
 			// Create the HeI cluster
-			std::shared_ptr<HeInterstitialCluster> cluster(
-					new HeInterstitialCluster(numHe, numI));
+			std::shared_ptr<HeInterstitialCluster> cluster = std::make_shared<HeInterstitialCluster>(numHe, numI);
 			// Add it to the reactants vector
 			add(cluster);
 		}
