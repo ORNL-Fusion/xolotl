@@ -3045,7 +3045,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_AScQAHh5EeO_LPATlPj4SA" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ASbo83h5EeO_LPATlPj4SA" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_ASbo8Xh5EeO_LPATlPj4SA" points="[-762, 1898, 172, -5803]$[-762, 4113, 172, -3588]$[-966, 4113, -32, -3588]$[-966, 6028, -32, -1673]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_ASbo8Xh5EeO_LPATlPj4SA" points="[-762, 1898, -307, -3901]$[-762, 2844, -307, -2955]$[-487, 2844, -32, -2955]$[-487, 4126, -32, -1673]"/>
           </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_D8RdcHh5EeO_LPATlPj4SA" element="_D8NzEHh5EeO_LPATlPj4SA" source="_bplRwEM7EeOTkpIp2VY3Rg" target="_0EMYYEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_D8SEgHh5EeO_LPATlPj4SA" type="NameLabel">
@@ -3111,13 +3111,13 @@ Check the reactants - He first
             </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
           </ownedParameter>
-          <ownedParameter xmi:id="_x_bBEEVZEeOTkpIp2VY3Rg" name="quantities">
-            <ownedComment xmi:id="_8l6HcEYxEeOPDa8Cefg4Cg" annotatedElement="_x_bBEEVZEeOTkpIp2VY3Rg">
-              <body>&lt;p>The array of particular quantities that HardwareCounter monitors.&lt;/p></body>
+          <ownedParameter xmi:id="_xISK0IeeEeOJldxzwIPVCQ" name="quantities">
+            <ownedComment xmi:id="_Hw4Y8IkLEeO74ZO5tXUQMg" annotatedElement="_xISK0IeeEeOJldxzwIPVCQ">
+              <body>&lt;p >The list of particular PAPI preset quantities, or events, the HardwareCounter monitors.&lt;/p>&lt;p >Some of the PAPI preset events which will be included are PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM for the levels 1-3 total cache misses, PAPI_BR_MSP for the number mispredicted branches, PAPI_TOT_CYC and PAPI_TOT_INS for the total number of instructions and cycles executed which can be used for the calculation of the total number of instructions (cycles) per cycle (instruction), and PAPI_FP_INS for the number of floating point instructions executed which can be used for the calculation of floating point operations.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-            <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_x_boIEVZEeOTkpIp2VY3Rg" value="*"/>
-            <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_x_bBEUVZEeOTkpIp2VY3Rg"/>
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+            <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_nSzCMIj4EeO74ZO5tXUQMg" value="*"/>
+            <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_nSGeoIj4EeO74ZO5tXUQMg"/>
           </ownedParameter>
           <ownedParameter xmi:id="_x_cPMEVZEeOTkpIp2VY3Rg" name="hardwareCounter" type="_yYrRwEVdEeOTkpIp2VY3Rg" direction="return">
             <ownedComment xmi:id="_N4T1oEYtEeOPDa8Cefg4Cg" annotatedElement="_x_cPMEVZEeOTkpIp2VY3Rg">
@@ -3127,13 +3127,13 @@ Check the reactants - He first
         </ownedOperation>
         <ownedOperation xmi:id="_y5mxYEVZEeOTkpIp2VY3Rg" name="getHardwareQuantities">
           <ownedComment xmi:id="_Htff4EYyEeOPDa8Cefg4Cg" annotatedElement="_y5mxYEVZEeOTkpIp2VY3Rg">
-            <body>&lt;p>This operation returns a list of the specified quantities monitored by the HardwareCounter.&lt;/p></body>
+            <body>&lt;p>This operation returns a list of values of the, initially specified, PAPI preset quantities monitored by the HardwareCounter.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_2Q-84EVZEeOTkpIp2VY3Rg" name="quantities" direction="return">
             <ownedComment xmi:id="_Q9Qp0EYsEeOPDa8Cefg4Cg" annotatedElement="_2Q-84EVZEeOTkpIp2VY3Rg">
-              <body>&lt;p>The array of particular quantities the HardwareCounter monitors.&lt;/p></body>
+              <body>&lt;p >The list of particular PAPI preset quantities, or events, the HardwareCounter monitors.&lt;/p>&lt;p >Some of the PAPI preset events which will be included are PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM for the levels 1-3 total cache misses, PAPI_BR_MSP for the number mispredicted branches, PAPI_TOT_CYC and PAPI_TOT_INS for the total number of instructions and cycles executed which can be used for the calculation of the total number of instructions (cycles) per cycle (instruction), and PAPI_FP_INS for the number of floating point instructions executed which can be used for the calculation of floating point operations.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_2Q-84kVZEeOTkpIp2VY3Rg" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_2Q-84UVZEeOTkpIp2VY3Rg"/>
           </ownedParameter>
@@ -3269,18 +3269,18 @@ Check the reactants - He first
           </ownedParameter>
           <ownedParameter xmi:id="_-bAUMEM5EeOTkpIp2VY3Rg" name="quantities">
             <ownedComment xmi:id="_mIresEYsEeOPDa8Cefg4Cg" annotatedElement="_-bAUMEM5EeOTkpIp2VY3Rg">
-              <body>&lt;p>The array of the specific quantities that HardwareCounter monitors. &lt;/p></body>
+              <body>&lt;p>The list of particular PAPI preset quantities, or events, the HardwareCounter monitors.&lt;/p>&lt;p>Some of the PAPI preset events which will be included are PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM for the levels 1-3 total cache misses, PAPI_BR_MSP for the number mispredicted branches, PAPI_TOT_CYC and PAPI_TOT_INS for the total number of instructions and cycles executed which can be used for the calculation of the total number of instructions (cycles) per cycle (instruction), and PAPI_FP_INS for the number of floating point instructions executed which can be used for the calculation of floating point operations.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__AHMYUM5EeOTkpIp2VY3Rg" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__AHMYEM5EeOTkpIp2VY3Rg"/>
           </ownedParameter>
         </ownedOperation>
         <ownedOperation xmi:id="_aqV3wEM6EeOTkpIp2VY3Rg" name="getValues">
           <ownedComment xmi:id="_wlhVMEYlEeOPDa8Cefg4Cg" annotatedElement="_aqV3wEM6EeOTkpIp2VY3Rg">
-            <body>&lt;p>This operation returns a list of values of the, initially specified, quantities monitored by the HardwareCounter.&lt;/p></body>
+            <body>&lt;p>This operation returns a list of values of the, initially specified, PAPI preset quantities monitored by the HardwareCounter.&lt;/p></body>
           </ownedComment>
-          <ownedParameter xmi:id="_ktU_oEM6EeOTkpIp2VY3Rg" name="values" direction="return">
+          <ownedParameter xmi:id="_ktU_oEM6EeOTkpIp2VY3Rg" name="values" isOrdered="true" direction="return">
             <ownedComment xmi:id="_dnCqQEYrEeOPDa8Cefg4Cg" annotatedElement="_ktU_oEM6EeOTkpIp2VY3Rg">
               <body>&lt;p>The array of values of the HardwareCounter.&lt;/p></body>
             </ownedComment>
@@ -3336,7 +3336,7 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_gHvxtHiaEeO_LPATlPj4SA" type="AttributeCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_gHvxtXiaEeO_LPATlPj4SA" type="OperationCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_gHwYwHiaEeO_LPATlPj4SA" visible="false" type="SignalCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_gHvKoXiaEeO_LPATlPj4SA" x="6657" y="2853"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_gHvKoXiaEeO_LPATlPj4SA" x="6974" y="2853"/>
             </children>
             <children xmi:type="umlnotation:UMLShape" xmi:id="_-CQEEHuvEeO_LPATlPj4SA" element="_kNP3YEVpEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
               <children xmi:type="notation:DecorationNode" xmi:id="_-CQEEnuvEeO_LPATlPj4SA" type="ImageCompartment">
@@ -3614,7 +3614,7 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_ny6YgXiYEeO_LPATlPj4SA" type="AttributeCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_ny6YgniYEeO_LPATlPj4SA" type="OperationCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_ny6_kHiYEeO_LPATlPj4SA" visible="false" type="SignalCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ny4jUXiYEeO_LPATlPj4SA" x="20605" y="11729"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ny4jUXiYEeO_LPATlPj4SA" x="20605" y="11412"/>
             </children>
             <children xmi:type="umlnotation:UMLShape" xmi:id="_gAl2QHiZEeO_LPATlPj4SA" element="_DQVxQHiJEeO_LPATlPj4SA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
               <children xmi:type="notation:DecorationNode" xmi:id="_gA5_UHiZEeO_LPATlPj4SA" type="ImageCompartment">
@@ -3950,7 +3950,7 @@ Check the reactants - He first
           </ownedComment>
           <ownedAttribute xmi:id="_f8g60IULEeOdAZHPUXPhMw" name="testTimer" visibility="private" type="_AYGR4IRHEeOdAZHPUXPhMw"/>
           <ownedAttribute xmi:id="_klEaUIULEeOdAZHPUXPhMw" name="testEventCounter" visibility="private">
-            <type xmi:type="uml:Class" href="../../%5BSubprojects%5D/xolotl/xolotlModel/xolotlModel.emx#__JnK8IOVEeOdAZHPUXPhMw?xolotl/performance/tests/EventCounterTester/EventCounterTester?"/>
+            <type xmi:type="uml:Class" href="platform:/resource/code/xolotl/xolotlModel/xolotlModel.emx#_dExRsIRHEeOdAZHPUXPhMw?xolotl/performance/tests/EventCounterTester?"/>
           </ownedAttribute>
           <ownedAttribute xmi:id="_mzqY0IULEeOdAZHPUXPhMw" name="testHardwareCounter" visibility="private" type="_iBxXMIRHEeOdAZHPUXPhMw"/>
           <ownedOperation xmi:id="_2BVSkIRrEeOdAZHPUXPhMw" name="checkTimer">
@@ -4365,7 +4365,6 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_33hpkEYtEeOPDa8Cefg4Cg" base_Comment="_33emQEYtEeOPDa8Cefg4Cg"/>
   <Default:Documentation xmi:id="_7y-LcEYtEeOPDa8Cefg4Cg" base_Comment="_7y6hEEYtEeOPDa8Cefg4Cg"/>
   <Default:Documentation xmi:id="_2foswEYxEeOPDa8Cefg4Cg" base_Comment="_2flpcEYxEeOPDa8Cefg4Cg"/>
-  <Default:Documentation xmi:id="_8l9x0EYxEeOPDa8Cefg4Cg" base_Comment="_8l6HcEYxEeOPDa8Cefg4Cg"/>
   <Default:Documentation xmi:id="_HtjKQEYyEeOPDa8Cefg4Cg" base_Comment="_Htff4EYyEeOPDa8Cefg4Cg"/>
   <Default:Documentation xmi:id="_SdzAwEYyEeOPDa8Cefg4Cg" base_Comment="_SdvWYEYyEeOPDa8Cefg4Cg"/>
   <Default:Documentation xmi:id="_xHQdYEYyEeOPDa8Cefg4Cg" base_Comment="_xHMzAEYyEeOPDa8Cefg4Cg"/>
@@ -4399,4 +4398,5 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_cj3HsIUxEeOdAZHPUXPhMw" base_Comment="_cj0rcIUxEeOdAZHPUXPhMw"/>
   <Default:Documentation xmi:id="_WsB8MIUyEeOdAZHPUXPhMw" base_Comment="_WsAuEIUyEeOdAZHPUXPhMw"/>
   <Default:Documentation xmi:id="_fDsy8IVMEeOdAZHPUXPhMw" base_Comment="_fDq9wIVMEeOdAZHPUXPhMw"/>
+  <Default:Documentation xmi:id="_Hw61MIkLEeO74ZO5tXUQMg" base_Comment="_Hw4Y8IkLEeO74ZO5tXUQMg"/>
 </xmi:XMI>
