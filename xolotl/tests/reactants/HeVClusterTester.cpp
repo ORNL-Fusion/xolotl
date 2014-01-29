@@ -23,7 +23,6 @@ using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
 
-
 /**
  * This suite is responsible for testing the HeVCluster.
  */
@@ -48,7 +47,7 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
-	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 	auto reactants = network->getAll();
 	auto props = network->getProperties();
 	
@@ -60,8 +59,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
 	{
 		// Get the connectivity array from the reactant
-		std::vector<int> composition = {3, 2, 0 };
-		auto reactant = std::dynamic_pointer_cast < PSICluster
+		vector<int> composition = {3, 2, 0 };
+		auto reactant = dynamic_pointer_cast < PSICluster
 				> (network->getCompound("HeV", composition));
 		auto reactionConnectivity = reactant->getConnectivity();
 		
@@ -119,17 +118,17 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
 	// Get an HeV cluster with compostion 2,1,0.
-	std::vector<int> composition = {2, 1, 0};
-	auto cluster = std::dynamic_pointer_cast<PSICluster>(network->getCompound(
+	vector<int> composition = {2, 1, 0};
+	auto cluster = dynamic_pointer_cast<PSICluster>(network->getCompound(
 			"HeV",composition));
 	// Get one that it combines with (He)
-	auto secondCluster = std::dynamic_pointer_cast<PSICluster>(network->get("He", 1));
+	auto secondCluster = dynamic_pointer_cast<PSICluster>(network->get("He", 1));
 	// Set the diffusion factor, migration and binding energies based on the
 	// values from the tungsten benchmark for this problem.
 	cluster->setDiffusionFactor(0.0);
-	cluster->setMigrationEnergy(std::numeric_limits<double>::infinity());
-	std::vector<double> energies = {3.02, 7.25,
-			std::numeric_limits<double>::infinity(), 10.2};
+	cluster->setMigrationEnergy(numeric_limits<double>::infinity());
+	vector<double> energies = {3.02, 7.25,
+			numeric_limits<double>::infinity(), 10.2};
 	cluster->setBindingEnergies(energies);
 	cluster->setConcentration(0.5);
 
@@ -137,18 +136,17 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	// values from the tungsten benchmark for this problem for the second cluster
 	secondCluster->setDiffusionFactor(2.950E+10);
 	secondCluster->setMigrationEnergy(0.13);
-	energies = {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(),
-			std::numeric_limits<double>::infinity(), 8.27};
+	energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
+			numeric_limits<double>::infinity(), 8.27};
 	secondCluster->setBindingEnergies(energies);
 	secondCluster->setConcentration(0.5);
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(1000.0);
-	std::cout.precision(15);
-	std::cout << "HeVClusterTester Message: \n" << "Total Flux is " << flux << "\n"
+	BOOST_TEST_MESSAGE("HeVClusterTester Message: \n" << "Total Flux is " << flux << "\n"
 			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
-			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n";
-	BOOST_CHECK_CLOSE(-6171164946., flux, 10.);
+			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n");
+	BOOST_REQUIRE_CLOSE(-6171164946., flux, 10.);
 }
 
 /**
@@ -156,14 +154,14 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
  */
 BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
-	std::vector<std::shared_ptr<HeVCluster>> clusters;
-	std::shared_ptr<HeVCluster> cluster;
+	vector<shared_ptr<HeVCluster>> clusters;
+	shared_ptr<HeVCluster> cluster;
 	double expectedRadii[] = { 0.1372650265, 0.1778340462, 0.2062922619,
 			0.2289478080, 0.2480795532 };
 
 	for (int i = 1; i <= 5; i++) {
-		cluster = std::shared_ptr<HeVCluster>(new HeVCluster(1, i));
-		BOOST_CHECK_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
+		cluster = shared_ptr<HeVCluster>(new HeVCluster(1, i));
+		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
 				.000001);
 	}
 }

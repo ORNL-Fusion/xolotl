@@ -27,7 +27,8 @@ using namespace testUtils;
 
 /**
  * This suite is responsible for testing the ReactionNetwork
- */BOOST_AUTO_TEST_SUITE(PSIReactionNetwork_testSuite)
+ */
+BOOST_AUTO_TEST_SUITE(PSIReactionNetwork_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkCompositionCreation) {
 
@@ -72,19 +73,19 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	psiNetwork->add(interstitialCluster);
 
 	// Check the network, He first
-	auto retHeCluster = std::dynamic_pointer_cast<PSICluster>(
+	auto retHeCluster = dynamic_pointer_cast<PSICluster>(
 			psiNetwork->get("He", 10));
 	BOOST_REQUIRE(retHeCluster);
 	BOOST_REQUIRE_EQUAL("He", retHeCluster->getName());
 	BOOST_REQUIRE_EQUAL(10, retHeCluster->getSize());
 	// V
-	auto retVCluster = std::dynamic_pointer_cast<PSICluster>(
+	auto retVCluster = dynamic_pointer_cast<PSICluster>(
 			psiNetwork->get("V", 4));
 	BOOST_REQUIRE(retVCluster);
 	BOOST_REQUIRE_EQUAL(4, retVCluster->getSize());
 	BOOST_REQUIRE_EQUAL("V", retVCluster->getName());
 	// I
-	auto retICluster = std::dynamic_pointer_cast<PSICluster>(
+	auto retICluster = dynamic_pointer_cast<PSICluster>(
 			psiNetwork->get("I", 48));
 	BOOST_REQUIRE(retICluster);
 	BOOST_REQUIRE_EQUAL(48, retICluster->getSize());
@@ -97,14 +98,14 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	psiNetwork->add(heICluster);
 
 	// Check the network, start with HeV
-	std::vector<int> sizes = psiNetwork->getCompositionVector(5, 3, 0);
-	std::shared_ptr<PSICluster> retHeVCluster = std::dynamic_pointer_cast<
+	vector<int> sizes = psiNetwork->getCompositionVector(5, 3, 0);
+	shared_ptr<PSICluster> retHeVCluster = dynamic_pointer_cast<
 			PSICluster>(psiNetwork->getCompound("HeV", sizes));
 	BOOST_REQUIRE_EQUAL(8, retHeVCluster->getSize());
 	BOOST_REQUIRE_EQUAL("HeV", retHeVCluster->getName());
 	// Now do HeI
 	sizes = psiNetwork->getCompositionVector(8, 0, 8);
-	auto retHeICluster = std::dynamic_pointer_cast<PSICluster>(
+	auto retHeICluster = dynamic_pointer_cast<PSICluster>(
 			psiNetwork->getCompound("HeI", sizes));
 	BOOST_REQUIRE_EQUAL(16, retHeICluster->getSize());
 	BOOST_REQUIRE_EQUAL("HeI", retHeICluster->getName());
@@ -139,7 +140,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	int maxClusterSize = 10;
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
-			std::shared_ptr<HeVCluster> cluster(new HeVCluster(numHe, numV));
+			shared_ptr<HeVCluster> cluster(new HeVCluster(numHe, numV));
 			psiNetwork->add(cluster);
 			counter++;
 		}
@@ -153,7 +154,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	maxClusterSize = 9;
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
 		for (int numHe = 1; numHe + numI <= maxClusterSize; numHe++) {
-			std::shared_ptr<HeInterstitialCluster> cluster(
+			shared_ptr<HeInterstitialCluster> cluster(
 					new HeInterstitialCluster(numHe, numI));
 			psiNetwork->add(cluster);
 			counter++;
@@ -186,8 +187,6 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_REQUIRE_EQUAL("HeI", reactants->at(0)->getName());
 
 	// Try to get something that obviously isn't there
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkProperties) {
@@ -198,16 +197,16 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 	// Grab the map of properties from the network
 	auto props = psiNetwork->getProperties();
 	// Convert the property strings so we can use them
-	auto numHeClusters = std::stoi(props["numHeClusters"]);
-	auto numVClusters = std::stoi(props["numVClusters"]);
-	auto numIClusters = std::stoi(props["numIClusters"]);
-	auto numHeVClusters = std::stoi(props["numHeVClusters"]);
-	auto numHeIClusters = std::stoi(props["numHeIClusters"]);
-	auto maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
-	auto maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
-	auto maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
-	auto maxVClusterSize = std::stoi(props["maxVClusterSize"]);
-	auto maxIClusterSize = std::stoi(props["maxIClusterSize"]);
+	auto numHeClusters = stoi(props["numHeClusters"]);
+	auto numVClusters = stoi(props["numVClusters"]);
+	auto numIClusters = stoi(props["numIClusters"]);
+	auto numHeVClusters = stoi(props["numHeVClusters"]);
+	auto numHeIClusters = stoi(props["numHeIClusters"]);
+	auto maxHeVClusterSize = stoi(props["maxHeVClusterSize"]);
+	auto maxHeIClusterSize = stoi(props["maxHeIClusterSize"]);
+	auto maxHeClusterSize = stoi(props["maxHeClusterSize"]);
+	auto maxVClusterSize = stoi(props["maxVClusterSize"]);
+	auto maxIClusterSize = stoi(props["maxIClusterSize"]);
 
 	// Check the properties
 	BOOST_REQUIRE_EQUAL(0, numHeClusters);
@@ -242,18 +241,16 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 
 	// Grab the properties afresh
 	auto propsWithClusters = psiNetwork->getProperties();
-	numHeClusters = std::stoi(propsWithClusters["numHeClusters"]);
-	maxHeClusterSize = std::stoi(propsWithClusters["maxHeClusterSize"]);
-	numHeVClusters = std::stoi(propsWithClusters["numHeVClusters"]);
-	maxHeVClusterSize = std::stoi(propsWithClusters["maxHeVClusterSize"]);
+	numHeClusters = stoi(propsWithClusters["numHeClusters"]);
+	maxHeClusterSize = stoi(propsWithClusters["maxHeClusterSize"]);
+	numHeVClusters = stoi(propsWithClusters["numHeVClusters"]);
+	maxHeVClusterSize = stoi(propsWithClusters["maxHeVClusterSize"]);
 
 	// Check the properties again
 	BOOST_REQUIRE_EQUAL(1, numHeClusters);
 	BOOST_REQUIRE_EQUAL(1, numHeVClusters);
 	BOOST_REQUIRE_EQUAL(5, maxHeClusterSize);
 	BOOST_REQUIRE_EQUAL(8, maxHeVClusterSize);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkNames) {
@@ -289,8 +286,6 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 	}
 	BOOST_REQUIRE_EQUAL(2, marker);
 	BOOST_REQUIRE_EQUAL(marker, compoundNames.size());
-
-	return;
 }
 
 /**
@@ -300,7 +295,7 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 	PSIClusterReactionNetwork network;
 
 	// Add a reactant
-	std::shared_ptr<Reactant> heCluster(new HeCluster(1));
+	shared_ptr<Reactant> heCluster(new HeCluster(1));
 	heCluster->setConcentration(50.0);
 	network.add(heCluster);
 
@@ -324,8 +319,6 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 
 	// Check the size of the network
 	BOOST_REQUIRE_EQUAL(1, networkCopy.size());
-
-	return;
 }
 
 /**
@@ -361,7 +354,5 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 	for (int i = 0; i < size; i++) {
 		BOOST_REQUIRE_CLOSE(1.0, reactants->at(i)->getConcentration(), 1.0e-15);
 	}
-
-	return;
 }
 BOOST_AUTO_TEST_SUITE_END()

@@ -99,50 +99,50 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(strtol(props["numIClusters"].c_str(),NULL,10) == 1);
 
 	// Check the reactants - He first
-	std::shared_ptr<PSICluster> heCluster = static_pointer_cast<PSICluster>(network->get("He",1));
+	shared_ptr<PSICluster> heCluster = static_pointer_cast<PSICluster>(network->get("He",1));
 	BOOST_REQUIRE(heCluster->getSize() == 1);
-	std::vector<double> bindingEnergies = heCluster->getBindingEnergies();
+	vector<double> bindingEnergies = heCluster->getBindingEnergies();
 	BOOST_REQUIRE_CLOSE(bindingEnergies.at(0), 0.0, 0.00);
-	BOOST_REQUIRE(bindingEnergies.at(1) == std::numeric_limits<double>::infinity());
-	BOOST_REQUIRE(bindingEnergies.at(2) == std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies.at(1) == numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies.at(2) == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(bindingEnergies.at(3), 8.2699999, 0.0001);
 	BOOST_REQUIRE_CLOSE(heCluster->getMigrationEnergy(),0.999,0.001);
 	BOOST_REQUIRE_CLOSE(heCluster->getDiffusionFactor(),1.34,0.01);
 	// V
-	std::shared_ptr<PSICluster> vCluster = static_pointer_cast<PSICluster>(network->get("V",50));
+	shared_ptr<PSICluster> vCluster = static_pointer_cast<PSICluster>(network->get("V",50));
 	BOOST_REQUIRE(vCluster->getSize() == 50);
 	bindingEnergies.clear();
 	bindingEnergies = vCluster->getBindingEnergies();
-	BOOST_REQUIRE(bindingEnergies[0] == std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies[0] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(bindingEnergies[1], 2.4900, 0.0001);
-	BOOST_REQUIRE(bindingEnergies[2] == std::numeric_limits<double>::infinity());
-	BOOST_REQUIRE(bindingEnergies[3] == std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies[2] == numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies[3] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(vCluster->getMigrationEnergy(),0.888,0.001);
 	BOOST_REQUIRE_CLOSE(vCluster->getDiffusionFactor(),2.345,0.001);
 	// I
-	std::shared_ptr<PSICluster> iCluster = static_pointer_cast<PSICluster>(network->get("I",1));
+	shared_ptr<PSICluster> iCluster = static_pointer_cast<PSICluster>(network->get("I",1));
 	BOOST_REQUIRE(iCluster->getSize() == 1);
 	bindingEnergies.clear();
 	bindingEnergies = iCluster->getBindingEnergies();
-	BOOST_REQUIRE(bindingEnergies[0] == std::numeric_limits<double>::infinity());
-	BOOST_REQUIRE(bindingEnergies[1] == std::numeric_limits<double>::infinity());
-	BOOST_REQUIRE(bindingEnergies[2] == std::numeric_limits<double>::infinity());
-	BOOST_REQUIRE(bindingEnergies[3] == std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies[0] == numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies[1] == numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies[2] == numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies[3] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(iCluster->getMigrationEnergy(),0.7777,0.0001);
 	BOOST_REQUIRE_CLOSE(iCluster->getDiffusionFactor(),3.456,0.001);
 	// HeV
-	std::vector<int> composition;
+	vector<int> composition;
 	composition.push_back(1);
 	composition.push_back(50);
 	composition.push_back(0);
-	std::shared_ptr<PSICluster> heVCluster = static_pointer_cast<PSICluster>(network->getCompound("HeV",composition));
+	shared_ptr<PSICluster> heVCluster = static_pointer_cast<PSICluster>(network->getCompound("HeV",composition));
 	BOOST_REQUIRE(heVCluster->getSize() == 51);
 	bindingEnergies.clear();
 	bindingEnergies = heVCluster->getBindingEnergies();
 	BOOST_REQUIRE_CLOSE(bindingEnergies[0], 6.160001, 0.00001);
 	BOOST_REQUIRE_CLOSE(bindingEnergies[1], 2.4900, 0.0001);
-	BOOST_REQUIRE(bindingEnergies[2] == std::numeric_limits<double>::infinity());
-	BOOST_REQUIRE(bindingEnergies[3] == std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies[2] == numeric_limits<double>::infinity());
+	BOOST_REQUIRE(bindingEnergies[3] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(heVCluster->getMigrationEnergy(),6.789,0.001);
 	BOOST_REQUIRE_CLOSE(heVCluster->getDiffusionFactor(),4.5678,0.0001);
 
@@ -152,12 +152,10 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Make sure the exception is caught when loading the bad string
 	try {
 		loader.load();
-	} catch (std::string error) {
+	} catch (string error) {
 		// Do nothing but flip the flag
 		caughtFlag = true;
 	}
 	BOOST_REQUIRE(caughtFlag);
-
-	return;
 }
 BOOST_AUTO_TEST_SUITE_END()

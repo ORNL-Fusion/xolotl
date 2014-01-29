@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
-	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 	auto reactants = network->getAll();
 	auto props = network->getProperties();
 	
@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
 	{
 		// Get the connectivity array from the reactant
-		std::vector<int> composition = {5, 0, 3 };
-		auto reactant = std::dynamic_pointer_cast < PSICluster
+		vector<int> composition = {5, 0, 3 };
+		auto reactant = dynamic_pointer_cast < PSICluster
 				> (network->getCompound("HeI", composition));
 		auto reactionConnectivity = reactant->getConnectivity();
 		
@@ -122,31 +122,30 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
 	// Get an HeI cluster with compostion 1,0,1.
-	std::vector<int> composition = {1, 0, 1};
-	auto cluster = std::dynamic_pointer_cast<PSICluster>(network->getCompound(
+	vector<int> composition = {1, 0, 1};
+	auto cluster = dynamic_pointer_cast<PSICluster>(network->getCompound(
 			"HeI",composition));
-	// Get one that it combines with (I)
-	auto secondCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
+	// Get one that it combines with (I2)
+	auto secondCluster = dynamic_pointer_cast<PSICluster>(network->get("I", 1));
 	// Set the diffusion factor, migration and binding energies to arbitrary
 	// values because HeI does not exist in benchmarks
 	cluster->setDiffusionFactor(1.5E+10);
-	cluster->setMigrationEnergy(std::numeric_limits<double>::infinity());
-	std::vector<double> energies = {5.09, std::numeric_limits<double>::infinity(),
+	cluster->setMigrationEnergy(numeric_limits<double>::infinity());
+	vector<double> energies = {5.09, numeric_limits<double>::infinity(),
 			5.09, 12.6};
 	cluster->setBindingEnergies(energies);
 	cluster->setConcentration(0.5);
 
 	// Set the diffusion factor, migration and binding energies based on the
 	// values from the tungsten benchmark for this problem for the second cluster
-	secondCluster->setDiffusionFactor(2.410E+11);
-	secondCluster->setMigrationEnergy(1.66);
-	energies = {std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(),
-			std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
+	secondCluster->setDiffusionFactor(2.13E+10);
+	secondCluster->setMigrationEnergy(0.013);
+	energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
+			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
 	secondCluster->setBindingEnergies(energies);
 	secondCluster->setConcentration(0.5);
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(1000.0);
-	std::cout.precision(15);
 	BOOST_TEST_MESSAGE("HeInterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"
 			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
@@ -155,8 +154,6 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	// The flux should be zero because the binding energies for all the data that we have are
 	// zero for I1.
 	BOOST_REQUIRE_CLOSE(0.0, flux,.000001);
-
-	return;
 }
 
 /**
@@ -164,18 +161,16 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
  */
 BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
-	std::vector<std::shared_ptr<HeInterstitialCluster>> clusters;
-	std::shared_ptr<HeInterstitialCluster> cluster;
+	vector<shared_ptr<HeInterstitialCluster>> clusters;
+	shared_ptr<HeInterstitialCluster> cluster;
 	double expectedRadii[] = { 0.1372650265, 0.1778340462, 0.2062922619,
 			0.2289478080, 0.2480795532 };
 
 	for (int i = 1; i <= 5; i++) {
-		cluster = std::shared_ptr<HeInterstitialCluster>(new HeInterstitialCluster(1, i));
+		cluster = shared_ptr<HeInterstitialCluster>(new HeInterstitialCluster(1, i));
 		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
 				.000001);
 	}
-
-	return;
 }
 
 

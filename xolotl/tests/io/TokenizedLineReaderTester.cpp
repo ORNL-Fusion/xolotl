@@ -84,8 +84,6 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	BOOST_REQUIRE_EQUAL(2,iLine.at(1));
 	BOOST_REQUIRE_EQUAL(4,iLine.at(2));
 	BOOST_REQUIRE_EQUAL(6,iLine.at(3));
-
-	return;
 }
 
 /**This operation checks the TokenizedLineReader when the token is changed to a comma.*/
@@ -123,8 +121,6 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing) {
 	BOOST_REQUIRE_EQUAL(2,iLine.at(1));
 	BOOST_REQUIRE_EQUAL(4,iLine.at(2));
 	BOOST_REQUIRE_EQUAL(6,iLine.at(3));
-
-	return;
 }
 
 /**This operation checks the TokenizedLineReader when the comment token is changed.*/
@@ -169,8 +165,6 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	BOOST_REQUIRE_CLOSE_FRACTION(0.000382,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(883.33,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(74.832,dLine.at(2),0.0001);
-
-	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

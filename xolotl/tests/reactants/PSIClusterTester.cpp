@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(1.0),exp(0.0),0.00001);
 
 	// Make sure the diffusion coefficient is 0.0 if E_m is infinite
-	cluster.setMigrationEnergy(std::numeric_limits<double>::infinity());
+	cluster.setMigrationEnergy(numeric_limits<double>::infinity());
 	cluster.setDiffusionFactor(1.0);
 	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(1.0),0.0,0.00000);
 
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 	cluster.setMigrationEnergy(5.0);
 	cluster.setDiffusionFactor(1.0);
 	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(
-					std::numeric_limits<double>::infinity()),1.0,0.00000);
+					numeric_limits<double>::infinity()),1.0,0.00000);
 
 	// Throw something random in there to be certain
 	cluster.setMigrationEnergy(0.013);
@@ -97,8 +97,6 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	// Check cloning. Note that clone returns a shared_ptr!
 	auto clusterClone = cluster.clone();
 	BOOST_REQUIRE_EQUAL(cluster.getName(), clusterClone->getName());
-
-	return;
 }
 
 /**

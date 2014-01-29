@@ -16,7 +16,9 @@
 #include <limits>
 #include <algorithm>
 
+using namespace std;
 using namespace xolotlCore;
+using namespace testUtils;
 
 /**
  * This suite is responsible for testing the HeCluster.
@@ -29,7 +31,7 @@ BOOST_AUTO_TEST_SUITE(HeCluster_testSuite)
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
-	std::shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 	auto reactants = network->getAll();
 	auto props = network->getProperties();
 	
@@ -37,15 +39,13 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	props["dissociationsEnabled"] = "false";
 	
 	// Check the reaction connectivity of the 6th He reactant (numHe=6)
-	
 	{
 		// Get the connectivity array from the reactant
-		auto reactant = std::dynamic_pointer_cast < PSICluster
+		auto reactant = dynamic_pointer_cast < PSICluster
 				> (network->get("He", 6));
 		auto reactionConnectivity = reactant->getConnectivity();
 		
 		// Check the connectivity for He, V, and I
-		
 		int connectivityExpected[] = {
 			// He
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -89,6 +89,37 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  * This operation checks the HeCluster get*Flux methods.
  */
 BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
+	// Local Declarations
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+
+	// Get an He cluster with compostion 1,0,0.
+	auto cluster = dynamic_pointer_cast<PSICluster>(network->get("He", 1));
+	// Get one that it combines with (He2)
+	auto secondCluster = dynamic_pointer_cast<PSICluster>(network->get("He", 2));
+	// Set the diffusion factor, migration and binding energies based on the
+	// values from the tungsten benchmark for this problem.
+	cluster->setDiffusionFactor(2.950E+10);
+	cluster->setMigrationEnergy(0.13);
+	vector<double> energies = {numeric_limits<double>::infinity(),
+			numeric_limits<double>::infinity(), numeric_limits<double>::infinity(), 8.27};
+	cluster->setBindingEnergies(energies);
+	cluster->setConcentration(0.5);
+
+	// Set the diffusion factor, migration and binding energies based on the
+	// values from the tungsten benchmark for this problem for the second cluster
+	secondCluster->setDiffusionFactor(3.240E+010);
+	secondCluster->setMigrationEnergy(0.2);
+	energies = {0.864, numeric_limits<double>::infinity(),
+			numeric_limits<double>::infinity(), 6.12};
+	secondCluster->setBindingEnergies(energies);
+	secondCluster->setConcentration(0.5);
+	// The flux can pretty much be anything except "not a number" (nan).
+	double flux = cluster->getTotalFlux(1000.0);
+	BOOST_TEST_MESSAGE("HeClusterTester Message: \n" << "Total Flux is " << flux << "\n"
+			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
+			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
+			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n");
+	BOOST_REQUIRE_CLOSE(-43623893263., flux, 10);
 }
 
 /**
@@ -96,16 +127,16 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
  */
 BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
-	std::vector<std::shared_ptr<HeCluster>> clusters;
-	std::shared_ptr<HeCluster> cluster;
+	vector<shared_ptr<HeCluster>> clusters;
+	shared_ptr<HeCluster> cluster;
 
 	double expectedRadii[] = { 0.3, 0.3237249066, 0.3403673722, 0.3536164159,
 				0.3648047284, 0.3745846085, 0.3833299460, 0.3912773576,
 				0.3985871973, 0.4053737480 };
 
 	for (int i = 1; i <= 10; i++) {
-		cluster = std::shared_ptr<HeCluster>(new HeCluster(i));
-		BOOST_CHECK_CLOSE(expectedRadii[i-1], cluster->getReactionRadius(), .000001);
+		cluster = shared_ptr<HeCluster>(new HeCluster(i));
+		BOOST_REQUIRE_CLOSE(expectedRadii[i-1], cluster->getReactionRadius(), .000001);
 	}
 }
 

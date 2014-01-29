@@ -21,17 +21,6 @@ using namespace xolotlCore;
 using namespace testUtils;
 
 /**
- * This operation writes information about the cluster to stdout
- * @param cluster The cluster to dump
- */
-void writeCluster(shared_ptr<Reactant> cluster) {
-	shared_ptr<PSICluster> psiCluster = static_pointer_cast < PSICluster
-			> (cluster);
-	BOOST_TEST_MESSAGE(psiCluster->getSize());
-	return;
-}
-
-/**
  * This suite is responsible for testing the InterstitialCluster.
  */BOOST_AUTO_TEST_SUITE(InterstitialCluster_testSuite)
 
@@ -41,7 +30,7 @@ void writeCluster(shared_ptr<Reactant> cluster) {
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
-	shared_ptr<ReactionNetwork> network = testUtils::getSimpleReactionNetwork();
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 	auto reactants = network->getAll();
 	auto props = network->getProperties();
 	
@@ -52,7 +41,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
 	{
 		// Get the connectivity array from the reactant
-		auto reactant = std::dynamic_pointer_cast < PSICluster
+		auto reactant = dynamic_pointer_cast < PSICluster
 				> (network->get("I", 4));
 		auto reactionConnectivity = reactant->getConnectivity();
 		
@@ -98,21 +87,58 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	}
 }
 
+ /**
+  * This operation checks the InterstitialCluster get*Flux methods.
+  */
+ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
+ 	// Local Declarations
+ 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+
+ 	// Get an I cluster with compostion 0,0,1.
+ 	auto cluster = dynamic_pointer_cast<PSICluster>(network->get("I", 1));
+ 	// Get one that it combines with (I2)
+ 	auto secondCluster = dynamic_pointer_cast<PSICluster>(network->get("I", 2));
+ 	// Set the diffusion factor, migration and binding energies based on the
+ 	// values from the tungsten benchmark for this problem.
+ 	cluster->setDiffusionFactor(2.13E+10);
+ 	cluster->setMigrationEnergy(0.013);
+ 	vector<double> energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
+ 			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
+ 	cluster->setBindingEnergies(energies);
+ 	cluster->setConcentration(0.5);
+
+ 	// Set the diffusion factor, migration and binding energies based on the
+ 	// values from the tungsten benchmark for this problem for the second cluster
+ 	secondCluster->setDiffusionFactor(1.065E+10);
+ 	secondCluster->setMigrationEnergy(0.013);
+ 	energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
+ 			2.12, numeric_limits<double>::infinity()};
+ 	secondCluster->setBindingEnergies(energies);
+ 	secondCluster->setConcentration(0.5);
+ 	// The flux can pretty much be anything except "not a number" (nan).
+ 	double flux = cluster->getTotalFlux(1000.0);
+ 	BOOST_TEST_MESSAGE("InterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"
+ 			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
+ 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
+ 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n");
+ 	BOOST_REQUIRE_CLOSE(-67088824870., flux, 10);
+ }
+
 /**
  * This operation checks the reaction radius for InterstitialCluster.
  */
 BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
-	std::vector<std::shared_ptr<InterstitialCluster>> clusters;
-	std::shared_ptr<InterstitialCluster> cluster;
+	vector<shared_ptr<InterstitialCluster>> clusters;
+	shared_ptr<InterstitialCluster> cluster;
 	double expectedRadii[] = { 0.1578547805, 0.1984238001, 0.2268820159,
 			0.2495375620, 0.2686693072, 0.2853926671, 0.3003469838,
 			0.3139368664, 0.3264365165, 0.3380413550 };
 
 	for (int i = 1; i <= 10; i++) {
-		cluster = std::shared_ptr<InterstitialCluster>(
+		cluster = shared_ptr<InterstitialCluster>(
 				new InterstitialCluster(i));
-		BOOST_CHECK_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
+		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
 				.000001);
 	}
 }

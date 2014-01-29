@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	{
 		// Get the connectivity array from the reactant for a vacancy cluster of size 2.
-		auto reactant = std::dynamic_pointer_cast < PSICluster
+		auto reactant = dynamic_pointer_cast < PSICluster
 				> (network->get("V", 2));
 		auto reactionConnectivity = reactant->getConnectivity();
 
@@ -86,23 +86,51 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 					connectivityExpected[i]);
 		}
 	}
-
-	return;
 }
 
+ /**
+  * This operation checks the VCluster get*Flux methods.
+  */
+ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
+ 	// Local Declarations
+ 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+
+ 	// Get an V cluster with compostion 0,1,0.
+ 	auto cluster = dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+ 	// Get one that it combines with (V2)
+ 	auto secondCluster = dynamic_pointer_cast<PSICluster>(network->get("V", 2));
+ 	// Set the diffusion factor, migration and binding energies based on the
+ 	// values from the tungsten benchmark for this problem.
+ 	cluster->setDiffusionFactor(2.41E+11);
+ 	cluster->setMigrationEnergy(1.66);
+ 	vector<double> energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
+ 			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
+ 	cluster->setBindingEnergies(energies);
+ 	cluster->setConcentration(0.5);
+
+ 	// Set the diffusion factor, migration and binding energies based on the
+ 	// values from the tungsten benchmark for this problem for the second cluster
+ 	secondCluster->setDiffusionFactor(0.);
+ 	secondCluster->setMigrationEnergy(numeric_limits<double>::infinity());
+ 	energies = {numeric_limits<double>::infinity(), 0.432,
+ 			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
+ 	secondCluster->setBindingEnergies(energies);
+ 	secondCluster->setConcentration(0.5);
+ 	// The flux can pretty much be anything except "not a number" (nan).
+ 	double flux = cluster->getTotalFlux(1000.0);
+ 	BOOST_TEST_MESSAGE("InterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"
+ 			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
+ 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
+ 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n");
+ 	BOOST_REQUIRE_CLOSE(-2684., flux, 10);
+ }
+
 /**
- * This operation checks the reaction radius for InterstitialCluster.
- */BOOST_AUTO_TEST_CASE(checkReactionRadius) {
-
-	std::vector<std::shared_ptr<VCluster>> clusters;
-	std::shared_ptr<VCluster> cluster;
-	double expectedRadii[] = { 0.0 };
-
-	for (int i = 1; i <= 10; i++) {
-		cluster = std::shared_ptr < VCluster > (new VCluster(i));
-		//BOOST_CHECK_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
-		//	.000001);
-	}
+ * This operation checks the reaction radius for VCluster.
+ */
+ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
+	BOOST_TEST_MESSAGE("VClustertTester Message: BOOST_AUTO_TEST_CASE(checkReactionRadius): \n"
+			<< "getReactionRadius needs to be fixed");
 }
 BOOST_AUTO_TEST_SUITE_END()
 

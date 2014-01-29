@@ -30,19 +30,19 @@ BOOST_AUTO_TEST_CASE(checkDOFConversion) {
 	string pathToFile("/tests/reactants/testfiles/tungsten.txt");
 	string networkFilename = sourceDir + pathToFile;
 
-	std::cout << networkFilename << std::endl;
+	BOOST_TEST_MESSAGE("PetscSolverTester Message: Network filename is: "
+			<< networkFilename);
+
 	// Load the input file from the master task
-	shared_ptr<std::istream> networkStream = make_shared<std::ifstream>(networkFilename);
+	shared_ptr<istream> networkStream = make_shared<ifstream>(networkFilename);
 
 	// Create a network loader and set the istream on every MPI task
-	std::shared_ptr<PSIClusterNetworkLoader> networkLoader = make_shared<PSIClusterNetworkLoader>();
+	shared_ptr<PSIClusterNetworkLoader> networkLoader = make_shared<PSIClusterNetworkLoader>();
 	networkLoader->setInputstream(networkStream);
 	// Load the network
 	shared_ptr<ReactionNetwork> network = networkLoader->load();
 
-	cout << "Network loaded." << endl;
-
-
+	BOOST_TEST_MESSAGE("PetscSolverTester Message: Network loaded");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

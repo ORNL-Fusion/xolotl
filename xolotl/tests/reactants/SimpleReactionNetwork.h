@@ -18,8 +18,12 @@ namespace testUtils {
 class SimpleReactionNetwork: public xolotlCore::PSIClusterReactionNetwork {
 
 public:
-	//! Constructor
-	SimpleReactionNetwork();
+	/**
+	 * Constructor
+	 * @param maxClusterSize the maximal size of the clusters that will be in
+	 * the network. Set to 10 by default.
+	 */
+	SimpleReactionNetwork(const int maxClusterSize = 10);
 
 	//! Destructor
 	virtual ~SimpleReactionNetwork();
@@ -30,9 +34,11 @@ public:
  * This operation creates a SimpleReactionNetwork and makes sure that it is
  * properly registered with the clusters it contains. This operation should
  * always be called instead of constructing a SimpleReactionNetwork manually.
+ * @param maxClusterSize the maximal size of the clusters that will be in
+ * the network. Set to 10 by default.
  * @return The reaction network.
  */
-std::shared_ptr<xolotlCore::ReactionNetwork> getSimpleReactionNetwork();
+std::shared_ptr<xolotlCore::ReactionNetwork> getSimpleReactionNetwork(const int maxClusterSize = 10);
 
 } /* end namespace testUtils */
 #endif

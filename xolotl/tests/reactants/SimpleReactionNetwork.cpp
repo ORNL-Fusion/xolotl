@@ -19,20 +19,21 @@
 #include <algorithm>
 #include <iostream>
 
-using std::shared_ptr;
+using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
 
-SimpleReactionNetwork::SimpleReactionNetwork() {
-
-	// Hard code the size of the largest cluster
-	int maxClusterSize = 10;
-	int numClusters = maxClusterSize;
+/**
+ * Constructor
+ * @param maxClusterSize the maximal size of the clusters that will be in
+ * the network. Set to 10 by default.
+ */
+SimpleReactionNetwork::SimpleReactionNetwork(const int maxClusterSize) {
 
 	// Add He clusters
 	for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
 		// Create a He cluster with cluster size numHe
-		std::shared_ptr<HeCluster> cluster = std::make_shared<HeCluster>(numHe);
+		shared_ptr<HeCluster> cluster = make_shared<HeCluster>(numHe);
 		// Add it to the network
 		add(cluster);
 	}
@@ -40,7 +41,7 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 	// Add vacancy clusters
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		// Create a He cluster with cluster size numV
-		std::shared_ptr<VCluster> cluster = std::make_shared<VCluster>(numV);
+		shared_ptr<VCluster> cluster = make_shared<VCluster>(numV);
 		// Add it to the network
 		add(cluster);
 	}
@@ -48,7 +49,7 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 	// Add interstitial clusters
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
 		// Create a He cluster with cluster size numI
-		std::shared_ptr<InterstitialCluster> cluster = std::make_shared<InterstitialCluster>(numI);
+		shared_ptr<InterstitialCluster> cluster = make_shared<InterstitialCluster>(numI);
 		// Add it to the network
 		add(cluster);
 	}
@@ -58,7 +59,7 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
 			// Create a HeVCluster with the current amount of He and V
-			std::shared_ptr<HeVCluster> cluster = std::make_shared<HeVCluster>(numHe, numV);
+			shared_ptr<HeVCluster> cluster = make_shared<HeVCluster>(numHe, numV);
 			add(cluster);
 		}
 	}
@@ -69,7 +70,7 @@ SimpleReactionNetwork::SimpleReactionNetwork() {
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
 		for (int numHe = 1; numHe + numI <= maxClusterSize; numHe++) {
 			// Create the HeI cluster
-			std::shared_ptr<HeInterstitialCluster> cluster = std::make_shared<HeInterstitialCluster>(numHe, numI);
+			shared_ptr<HeInterstitialCluster> cluster = make_shared<HeInterstitialCluster>(numHe, numI);
 			// Add it to the reactants vector
 			add(cluster);
 		}
@@ -86,15 +87,17 @@ SimpleReactionNetwork::~SimpleReactionNetwork() {
  * This operation creates a SimpleReactionNetwork and makes sure that it is
  * properly registered with the clusters it contains. This operation should
  * always be called instead of constructing a SimpleReactionNetwork manually.
+ * @param maxClusterSize the maximal size of the clusters that will be in
+ * the network. Set to 10 by default.
  * @return The reaction network.
  */
-std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork() {
+shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork(const int maxClusterSize) {
 
 	// Create the network
-	std::shared_ptr<xolotlCore::ReactionNetwork> network(
-			new SimpleReactionNetwork());
-	std::cout << "SimpleReactionNetwork Message: "
-			<< "Created network with size " << network->size() << std::endl;
+	shared_ptr<xolotlCore::ReactionNetwork> network(
+			new SimpleReactionNetwork(maxClusterSize));
+	cout << "SimpleReactionNetwork Message: "
+			<< "Created network with size " << network->size() << endl;
 	// Register the reaction network with its clusters
 	auto reactants = network->getAll();
 	for (int i = 0; i < reactants->size(); i++) {
@@ -105,12 +108,12 @@ std::shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork
 	// Print the reaction connectivity matrix
 	for (auto reactantIt = reactants->begin();
 			reactantIt != reactants->end(); reactantIt++) {
-		std::shared_ptr<PSICluster> cluster = std::dynamic_pointer_cast<
+		shared_ptr<PSICluster> cluster = dynamic_pointer_cast<
 				PSICluster>(*reactantIt);
-		std::vector<int> conn = cluster->getConnectivity();
+		vector<int> conn = cluster->getConnectivity();
 
 		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++) {
-			printf("%s", *connIt ? "* " : "  ");
+			printf("%s", *connIt ? "* " : "' ");
 		}
 		printf("\n");
 	}
