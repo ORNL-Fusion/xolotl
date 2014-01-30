@@ -152,6 +152,12 @@ private:
 	int networkSize;
 
 	/**
+	 * The list of all of the reactants in the network. This list is filled and
+	 * maintained by the getAll() operation.
+	 */
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > allReactants;
+
+	/**
 	 * This operation sets the default values of the properties table and names
 	 * for this network. It is used on construction and during a copy.
 	 */

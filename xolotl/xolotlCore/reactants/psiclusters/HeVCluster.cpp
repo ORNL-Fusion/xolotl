@@ -15,6 +15,11 @@ HeVCluster::HeVCluster(int numHe, int numV) :
 
 	// Set the reactant name appropriately
 	name = "HeV";
+
+	// Update the composition map
+	compositionMap["He"] = numHe;
+	compositionMap["V"] = numV;
+
 }
 
 HeVCluster::HeVCluster(const HeVCluster &other) :
@@ -179,6 +184,21 @@ void HeVCluster::createDissociationConnectivity() {
 	std::vector<int> composition;
 	std::shared_ptr<Reactant> singleCluster, otherMixedCluster;
 
+	// Get the required dissociating clusters. These are stored for the flux
+	// computation later.
+	heCluster = std::dynamic_pointer_cast<PSICluster>(network->get("He", 1));
+	vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+	iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
+
+	// Store the cluster with one less helium
+	std::vector<int> compositionVec = { numHe - 1, numV, 0 };
+	heVClusterLessHe = std::dynamic_pointer_cast<PSICluster>(
+			network->getCompound("HeV", compositionVec));
+	// Store the cluster with one less vacancy
+	compositionVec = {numHe, numV - 1, 0};
+	heVClusterLessV = std::dynamic_pointer_cast<PSICluster>(
+			network->getCompound("HeV", compositionVec));
+
 	// He Dissociation, get the [(numHe-1)*He]V and He
 	composition = psiNetwork->getCompositionVector(numHe - 1, numV, 0);
 	otherMixedCluster = psiNetwork->getCompound("HeV", composition);
@@ -206,12 +226,6 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 	std::map<std::string, int> composition;
 	std::shared_ptr<PSICluster> currentCluster, secondCluster;
 	double f4 = 0.0, f3 = 0.0;
-
-	// Get the required dissociating clusters
-	auto heCluster = std::dynamic_pointer_cast<PSICluster>(
-			network->get("He", 1));
-	auto vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
-	auto iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
 
 	// Only dissociate if possible
 	if (heCluster && vCluster && iCluster) {
@@ -286,19 +300,6 @@ bool HeVCluster::isProductReactant(const Reactant & reactantI,
 			&& ((rI_V + rJ_V) == numV);
 }
 
-std::map<std::string, int> HeVCluster::getComposition() const {
-	// Local Declarations
-	std::map<std::string, int> clusterMap;
-
-	// Set the number of each species
-	clusterMap["He"] = numHe;
-	clusterMap["V"] = numV;
-	clusterMap["I"] = 0;
-
-	// Return it
-	return clusterMap;
-}
-
 double HeVCluster::getReactionRadius() {
 	return (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
 			+ pow(
@@ -322,27 +323,18 @@ double HeVCluster::getReactionRadius() {
 void HeVCluster::getDissociationPartialDerivatives(
 		std::vector<double> & partials, double temperature) const {
 
-	// Get the required dissociation clusters
-	auto heCluster = std::dynamic_pointer_cast<PSICluster>(
-			network->get("He", 1));
-	auto vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
-	auto iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
+	// Local Declarations
+	int index = 0;
 
 	// Partial derivative with respect to changes in this cluster
 	double partialDeriv = calculateDissociationConstant(*this, *heCluster,
 			temperature)
 			+ calculateDissociationConstant(*this, *vCluster, temperature)
 			+ calculateDissociationConstant(*this, *iCluster, temperature);
-	// Get the index
-	int index = network->getReactantId(*getThisSharedPtrFromNetwork());
 	// Add it to the list of partials
-	partials[index] += partialDeriv;
+	partials[thisNetworkIndex] += partialDeriv;
 
-	// Partial derivative with respect to an HeV cluster with one less helium
-	std::vector<int> compositionVec = { numHe - 1, numV, 0 };
-	auto heVClusterLessHe = std::dynamic_pointer_cast<PSICluster>(
-			network->getCompound("HeV", compositionVec));
-	// Compute the partial derivative if the smaller clusters exists
+	// Compute the partial derivative if the cluster with one less He exists
 	if (heVClusterLessHe) {
 		partialDeriv = calculateDissociationConstant(*heVClusterLessHe,
 				*heCluster, temperature);
@@ -350,11 +342,7 @@ void HeVCluster::getDissociationPartialDerivatives(
 		partials[index] += partialDeriv;
 	}
 
-	// Partial derivative with respect to an HeV cluster with one less vacancy
-	compositionVec = { numHe, numV - 1, 0 };
-	auto heVClusterLessV = std::dynamic_pointer_cast<PSICluster>(
-			network->getCompound("HeV", compositionVec));
-	// Compute the partial derivative if the smaller clusters exists
+	// Compute the partial derivative if the cluster with one less V exists
 	if (heVClusterLessV) {
 		partialDeriv = calculateDissociationConstant(*heVClusterLessV,
 				*vCluster, temperature);

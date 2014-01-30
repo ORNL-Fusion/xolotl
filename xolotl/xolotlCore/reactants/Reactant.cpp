@@ -11,7 +11,7 @@ Reactant::Reactant() :
 }
 
 Reactant::Reactant(const Reactant &other) :
-		concentration(other.concentration), name(other.name), id(other.id) {
+		concentration(other.concentration), name(other.name), id(other.id), compositionMap(other.compositionMap) {
 }
 
 Reactant::~Reactant() {
@@ -102,4 +102,9 @@ const std::string Reactant::getName() const {
 
 const std::string Reactant::toString() {
 	throw std::string("Reactant::toString() is unimplemented");
+}
+
+const std::map<std::string, int> & Reactant::getComposition() const {
+	// Return the composition map
+	return compositionMap;
 }

@@ -10,6 +10,8 @@ HeCluster::HeCluster(int nHe) :
 		PSICluster(nHe) {
 	// Set the reactant name appropriately
 	name = "He";
+	// Update the composition map
+	compositionMap[name] = size;
 }
 
 HeCluster::~HeCluster() {
@@ -165,19 +167,6 @@ bool HeCluster::isProductReactant(const Reactant & reactantI,
 	// 0 Vacancies
 	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == size)
 			&& ((rI_V + rJ_V) == 0);
-}
-
-std::map<std::string, int> HeCluster::getComposition() const {
-	// Local Declarations
-	std::map<std::string, int> clusterMap;
-
-	// Set the number of each species
-	clusterMap["He"] = size;
-	clusterMap["V"] = 0;
-	clusterMap["I"] = 0;
-
-	// Return it
-	return clusterMap;
 }
 
 double HeCluster::getReactionRadius() const {

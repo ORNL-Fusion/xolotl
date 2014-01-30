@@ -53,6 +53,18 @@ protected:
 	double diffusionFactor;
 
 	/**
+	 * The shared pointer to this cluster in the network. It is assigned in
+	 * setReactionNetwork().
+	 */
+	std::shared_ptr<PSICluster> thisSharedPtr;
+
+	/**
+	 * The index/id of this cluster in the reaction network - 1. It is used for
+	 * indexing arrays (thus the -1).
+	 */
+	int thisNetworkIndex;
+
+	/**
 	 * The binding energies for this cluster with clusters of other species
 	 * types. There is one binding energy for each of the other species ordered
 	 * by He, V, I and mixed species at indices 0, 1, 2 and 3 respectively.

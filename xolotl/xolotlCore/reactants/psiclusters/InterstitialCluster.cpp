@@ -8,6 +8,8 @@ InterstitialCluster::InterstitialCluster(int nI) :
 		PSICluster(nI) {
 	// Set the reactant name appropriately
 	name = "I";
+	// Update the composition map
+	compositionMap[name] = size;
 }
 
 InterstitialCluster::~InterstitialCluster() {
@@ -149,20 +151,6 @@ bool InterstitialCluster::isProductReactant(const Reactant & reactantI,
 	// 0 Vacancies
 	return ((rI_I + rJ_I) == size) && ((rI_He + rJ_He) == 0)
 			&& ((rI_V + rJ_V) == 0);
-}
-
-std::map<std::string, int> InterstitialCluster::getComposition() const {
-
-	// Local Declarations
-	std::map<std::string, int> clusterMap;
-
-	// Set the number of each species
-	clusterMap["He"] = 0;
-	clusterMap["V"] = 0;
-	clusterMap["I"] = size;
-
-	// Return it
-	return clusterMap;
 }
 
 double InterstitialCluster::getReactionRadius() const {

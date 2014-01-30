@@ -58,13 +58,6 @@ public:
 	 * @return
 	 */
 	virtual double getReactionRadius() const;
-	
-	/**
-	 * This operation returns the compositon of this reactant.
-	 * @return The composition returned as a map with keys naming distinct
-	 * elements and values indicating the amount of the element present.
-	 */
-	virtual std::map<std::string,int> getComposition() const;
 
 protected:
 	/**

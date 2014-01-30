@@ -22,6 +22,31 @@ private:
 	int numV;
 
 	/**
+	 * A pointer to He_1 that is used for the dissociation flux calculation
+	 */
+	std::shared_ptr<PSICluster> heCluster;
+
+	/**
+	 * A pointer to V_1 that is used for the dissociation flux calculation
+	 */
+	std::shared_ptr<PSICluster> vCluster;
+
+	/**
+	 * A pointer to I_1 that is used for the dissociation flux calculation
+	 */
+	std::shared_ptr<PSICluster> iCluster;
+
+	/**
+	 * A pointer to the HeV cluster with one less He than this cluster
+	 */
+	std::shared_ptr<PSICluster> heVClusterLessHe;
+
+	/**
+	 * A pointer to the HeV cluster with one less V than this cluster
+	 */
+	std::shared_ptr<PSICluster> heVClusterLessV;
+
+	/**
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
@@ -108,13 +133,6 @@ public:
 	 * @return
 	 */
 	virtual double getReactionRadius();
-	
-	/**
-	 * This operation returns the compositon of this reactant.
-	 * @return The composition returned as a map with keys naming distinct
-	 * elements and values indicating the amount of the element present.
-	 */
-	virtual std::map<std::string,int> getComposition() const;
 
 protected:
 

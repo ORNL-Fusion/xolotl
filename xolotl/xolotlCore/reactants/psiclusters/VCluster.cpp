@@ -10,6 +10,8 @@ VCluster::VCluster(int nV) :
 		PSICluster(nV) {
 	// Set the reactant name appropriately
 	name = "V";
+	// Update the composition map
+	compositionMap[name] = size;
 }
 
 VCluster::~VCluster() {
@@ -149,19 +151,6 @@ bool VCluster::isProductReactant(const Reactant & reactantI,
 	// size Vacancies
 	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == 0)
 			&& ((rI_V + rJ_V) == size);
-}
-
-std::map<std::string, int> VCluster::getComposition() const {
-	// Local Declarations
-	std::map<std::string, int> clusterMap;
-
-	// Set the number of each species
-	clusterMap["He"] = 0;
-	clusterMap["V"] = size;
-	clusterMap["I"] = 0;
-
-	// Return it
-	return clusterMap;
 }
 
 double VCluster::getReactionRadius() const {

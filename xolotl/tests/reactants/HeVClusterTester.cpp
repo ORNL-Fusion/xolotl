@@ -64,8 +64,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 				> (network->getCompound("HeV", composition));
 		auto reactionConnectivity = reactant->getConnectivity();
 		
-		BOOST_REQUIRE_EQUAL(reactant->getComposition()["He"], 3);
-		BOOST_REQUIRE_EQUAL(reactant->getComposition()["V"], 2);
+		BOOST_REQUIRE_EQUAL(reactant->getComposition().at("He"), 3);
+		BOOST_REQUIRE_EQUAL(reactant->getComposition().at("V"), 2);
 		
 		// Check the connectivity for He, V, and I
 		

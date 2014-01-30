@@ -5,6 +5,8 @@
  *      Author: bkj
  */
 
+#include <memory>
+
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 

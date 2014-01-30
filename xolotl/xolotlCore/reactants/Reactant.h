@@ -44,6 +44,11 @@ protected:
 	 */
 	std::shared_ptr<ReactionNetwork> network;
 
+	/**
+	 * The map that contains the composition of this cluster
+	 */
+	std::map<std::string,int> compositionMap;
+
 public:
 
 	/** The constructor.
@@ -184,7 +189,7 @@ public:
 	 * @return The composition returned as a map with keys naming distinct
 	 * elements and values indicating the amount of the element present.
 	 */
-	virtual std::map<std::string, int> getComposition() const;
+	virtual const std::map<std::string, int> & getComposition() const;
 };
 
 } // end namespace xolotlCore

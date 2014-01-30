@@ -1,6 +1,7 @@
 #include "PSIClusterReactionNetwork.h"
 #include "PSICluster.h"
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 
 using namespace xolotlCore;
@@ -9,16 +10,19 @@ using std::shared_ptr;
 void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 
 	// Shared pointers for the cluster type map
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>heVector(
-			new std::vector<std::shared_ptr<Reactant>>);
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>vVector(
-			new std::vector<std::shared_ptr<Reactant>>);
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>iVector(
-			new std::vector<std::shared_ptr<Reactant>>);
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>heVVector(
-			new std::vector<std::shared_ptr<Reactant>>);
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>heIVector(
-			new std::vector<std::shared_ptr<Reactant>>);
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> heVector
+		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> vVector
+		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> iVector
+		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> heVVector
+	 	 = std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> heIVector
+	 	 = std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+
+	// Initialize the list of all reactants used by getAll.
+	allReactants = std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
 
 	// Initialize default properties
 	(*properties)["reactionsEnabled"] = "true";
@@ -34,7 +38,7 @@ void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 	(*properties)["maxHeVClusterSize"] = "0";
 	(*properties)["maxHeIClusterSize"] = "0";
 
-	// Initialize the size to 0
+	// Initialize the current and last size to 0
 	networkSize = 0;
 	// Set the reactant names
 	names.push_back("He");
@@ -159,17 +163,18 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::getCompound(
  */
 std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>PSIClusterReactionNetwork::getAll() const {
 
-	// Local Declarations
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> allReactants = std::make_shared<std::vector<std::shared_ptr<Reactant> >>();
-
-	// Load the single-species clusters
-	for (auto it = singleSpeciesMap.begin(); it != singleSpeciesMap.end(); ++it) {
-		allReactants->push_back(it->second);
-	}
-
-	// Load the mixed-species clusters
-	for (auto it = mixedSpeciesMap.begin(); it != mixedSpeciesMap.end(); ++it) {
-		allReactants->push_back(it->second);
+	// Reload the array of all reactants if the size has changed
+	if (allReactants->size() != networkSize) {
+		// Clear the list
+		allReactants->clear();
+		// Load the single-species clusters
+		for (auto it = singleSpeciesMap.begin(); it != singleSpeciesMap.end(); ++it) {
+			allReactants->push_back(it->second);
+		}
+		// Load the mixed-species clusters
+		for (auto it = mixedSpeciesMap.begin(); it != mixedSpeciesMap.end(); ++it) {
+			allReactants->push_back(it->second);
+		}
 	}
 
 //	std::cout << "Num single species = " << singleSpeciesMap.size() << std::endl;

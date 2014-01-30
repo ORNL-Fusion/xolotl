@@ -113,7 +113,6 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	// Check the getter for all reactants
 	auto clusters = psiNetwork->getAll();
 	BOOST_REQUIRE_EQUAL(5, clusters->size());
-
 	// Check the size of the network
 	BOOST_REQUIRE_EQUAL(5, psiNetwork->size());
 

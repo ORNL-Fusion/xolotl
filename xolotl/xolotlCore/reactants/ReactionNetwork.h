@@ -31,8 +31,7 @@ public:
 	/** The constructor. It initializes the properties map and reactants vector.
 	 */
 	ReactionNetwork() :
-	properties(new std::map<std::string, std::string>())
-	{}
+		properties(new std::map<std::string, std::string>()){}
 
 	/**
 	 * The copy constructor
@@ -44,23 +43,6 @@ public:
 	 * The destructor
 	 */
 	virtual ~ReactionNetwork() {}
-
-	/**
-	 * Converts an cluster index (found in the `reactants` vector)
-	 * to a map describing the cluster's 
-	 *
-	 * @returns a map with `speciesLabel` => `quantity`
-	 */
-	virtual std::map<std::string, int> toClusterMap(int index) const;
-
-	/**
-	 * Converts an cluster map (with `speciesLabel` => `quantity`)
-	 * to the index corresponding to its position in the reactants vector.
-	 * This operation is const, but the cluster map can not be marked const
-	 * because of the mechanics of effectively using maps in C++. Sorry
-	 * idealists! ;)
-	 */
-	virtual int toClusterIndex(std::map<std::string, int> clusterMap) const;
 
 	/**
 	 * This operation returns a reactant with the given name and size if it
