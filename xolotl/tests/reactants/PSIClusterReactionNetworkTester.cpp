@@ -27,8 +27,7 @@ using namespace testUtils;
 
 /**
  * This suite is responsible for testing the ReactionNetwork
- */
-BOOST_AUTO_TEST_SUITE(PSIReactionNetwork_testSuite)
+ */BOOST_AUTO_TEST_SUITE(PSIReactionNetwork_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkCompositionCreation) {
 
@@ -91,46 +90,21 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_REQUIRE_EQUAL(48, retICluster->getSize());
 	BOOST_REQUIRE_EQUAL("I", retICluster->getName());
 
-	// Add a couple of HeV and HeI clusters ("compounds")
-	auto heVCluster = make_shared<HeVCluster>(5, 3);
-	auto heICluster = make_shared<HeInterstitialCluster>(8, 8);
-	psiNetwork->add(heVCluster);
-	psiNetwork->add(heICluster);
-
-	// Check the network, start with HeV
-	vector<int> sizes = psiNetwork->getCompositionVector(5, 3, 0);
-	shared_ptr<PSICluster> retHeVCluster = dynamic_pointer_cast<
-			PSICluster>(psiNetwork->getCompound("HeV", sizes));
-	BOOST_REQUIRE_EQUAL(8, retHeVCluster->getSize());
-	BOOST_REQUIRE_EQUAL("HeV", retHeVCluster->getName());
-	// Now do HeI
-	sizes = psiNetwork->getCompositionVector(8, 0, 8);
-	auto retHeICluster = dynamic_pointer_cast<PSICluster>(
-			psiNetwork->getCompound("HeI", sizes));
-	BOOST_REQUIRE_EQUAL(16, retHeICluster->getSize());
-	BOOST_REQUIRE_EQUAL("HeI", retHeICluster->getName());
-
 	// Check the getter for all reactants
 	auto clusters = psiNetwork->getAll();
-	BOOST_REQUIRE_EQUAL(5, clusters->size());
+	BOOST_REQUIRE_EQUAL(3, clusters->size());
 	// Check the size of the network
-	BOOST_REQUIRE_EQUAL(5, psiNetwork->size());
+	BOOST_REQUIRE_EQUAL(3, psiNetwork->size());
 
 	// Check the cluster ids. All we can do is check that they are between 1
 	// and 5. Start with the He cluster
-	int id = psiNetwork->getReactantId(*retHeCluster);
+	int id = retHeCluster->getId();
 	BOOST_REQUIRE(id > 0 && id <= 5);
 	// V
-	id = psiNetwork->getReactantId(*retVCluster);
+	id = retVCluster->getId();
 	BOOST_REQUIRE(id > 0 && id <= 5);
 	// I
-	id = psiNetwork->getReactantId(*retICluster);
-	BOOST_REQUIRE(id > 0 && id <= 5);
-	// HeV
-	id = psiNetwork->getReactantId(*retHeVCluster);
-	BOOST_REQUIRE(id > 0 && id <= 5);
-	// HeI
-	id = psiNetwork->getReactantId(*retHeICluster);
+	id = retICluster->getId();
 	BOOST_REQUIRE(id > 0 && id <= 5);
 
 	// Add a whole bunch of HeV clusters to make sure that the network can
@@ -139,12 +113,13 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	int maxClusterSize = 10;
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
-			shared_ptr<HeVCluster> cluster(new HeVCluster(numHe, numV));
+			shared_ptr<HeVCluster> cluster = std::make_shared<HeVCluster>(numHe,
+					numV);
 			psiNetwork->add(cluster);
 			counter++;
 		}
 	}
-	BOOST_TEST_MESSAGE("Added " << (counter-1) << " HeV clusters"); //-1 because of duplicate
+	BOOST_TEST_MESSAGE("Added " << counter << " HeV clusters");
 
 	// Add a whole bunch of HeI clusters to make sure that the network can
 	// handle large numbers of them properly too. Use a different max cluster
@@ -161,9 +136,21 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	}
 	BOOST_TEST_MESSAGE("Added " << counter << " HeI clusters");
 
+	// Try adding a duplicate HeV and catch the exception
+	shared_ptr<HeVCluster> duplicateCluster = std::make_shared<HeVCluster>(5,
+			3);
+	try {
+		psiNetwork->add(duplicateCluster);
+		BOOST_FAIL(
+				"Test failed because adding a duplicate"
+						<< " to the network was allowed.");
+	} catch (const std::string & e) {
+		// Do nothing. It was supposed to fail.
+	}
+
 	// Make sure that everything was added
 	auto reactants = psiNetwork->getAll();
-	BOOST_REQUIRE_EQUAL(85, reactants->size());
+	BOOST_REQUIRE_EQUAL(84, reactants->size());
 	// Get the clusters by type and check them. Start with He.
 	reactants = psiNetwork->getAll("He");
 	BOOST_REQUIRE_EQUAL(1, reactants->size());
@@ -182,10 +169,12 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_REQUIRE_EQUAL("HeV", reactants->at(0)->getName());
 	// HeI
 	reactants = psiNetwork->getAll("HeI");
-	BOOST_REQUIRE_EQUAL(37, reactants->size());
+	BOOST_REQUIRE_EQUAL(36, reactants->size());
 	BOOST_REQUIRE_EQUAL("HeI", reactants->at(0)->getName());
 
 	// Try to get something that obviously isn't there
+
+	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkProperties) {

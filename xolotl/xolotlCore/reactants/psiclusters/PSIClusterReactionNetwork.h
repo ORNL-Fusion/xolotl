@@ -6,134 +6,65 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include <ReactionNetwork.h>
 #include <PSICluster.h>
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
 
+// Override the hash operation for the composition maps used by the
+// PSIClusterReactionNetwork to store reactants.
+namespace std {
+template<>
+class hash<std::map<std::string, int>> {
+public:
+	long operator()(const std::map<std::string, int>& composition) const {
+		int bigNumber = 1e9;
+		return (composition.at("He") * 10 + composition.at("V") * 200
+				+ composition.at("I") * 3000) * bigNumber;
+	}
+};
+}
+
 namespace xolotlCore {
 
 /**
- *  This is a simple convenience class that contains a set of Reactants and the
- *  properties that describe that set.
+ *  This class manages the set of reactants and compound reactants (
+ *  combinations of normal reactants) for PSI clusters. It also manages a
+ *  set of properties that describes the total collection.
+ *
+ *  This class is a very heavyweight class that should not be abused.
+ *
+ *  Reactants that are added to this network must be added as with shared_ptrs.
+ *  Furthermore, reactants that are added to this network have their ids set to
+ *  a network specific id. Reactants should not be shared between separate
+ *  instances of a PSIClusterReactionNetwork.
  */
 class PSIClusterReactionNetwork: public ReactionNetwork {
 
 private:
 
-	/**
-	 * This structure compares two PSIClusters that are single species.
-	 * Clusters are binned more or less uniformly between 1, 2, 3 and 4 for He,
-	 * V and I respectively.
-	 */
-	struct PSIClusterComparator {
-		bool operator()(const std::map<std::string, int>& lhs,
-				const std::map<std::string, int>& rhs) const {
 
-			// Local Declarations
-			double numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
-			double numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
-			double index_lhs = 0.0, index_rhs = 0.0;
-			double bigNumber = 1.0e9;
-
-			// Get the cluster sizes, left node first
-			numHe_lhs = (double) lhs.at("He");
-			numV_lhs = (double) lhs.at("V");
-			numI_lhs = (double) lhs.at("I");
-			// Right node second
-			numHe_rhs = (double) rhs.at("He");
-			numV_rhs = (double) rhs.at("V");
-			numI_rhs = (double) rhs.at("I");
-
-			// Compute the indices/hashes. This simply bins the amount of each
-			// time in such a way that they can be compared without a large
-			// number of branches. He lands between 1 and 2, V between 2 and 3
-			// and I between 3 and 4. The "big number" was chosen to be
-			// sufficiently large that a single species cluster would never
-			// reach that size because of physical limits.
-			index_lhs = (numHe_lhs > 0) * (1.0 + (numHe_lhs / bigNumber))
-					+ (numV_lhs > 0) * (2.0 + (numV_lhs / bigNumber))
-					+ (numI_lhs > 0) * (3.0 + (numI_lhs / bigNumber));
-			index_rhs = (numHe_rhs > 0) * (1.0 + (numHe_rhs / bigNumber))
-					+ (numV_rhs > 0) * (2.0 + (numV_rhs / bigNumber))
-					+ (numI_rhs > 0) * (3.0 + (numI_rhs / bigNumber));
-
-			return index_lhs < index_rhs;
-		}
-	};
-
-	/**
-	 * This structure compares two PSIClusters that are mixed species. It uses
-	 * a spatial hash, described in detail in the paper at:
-	 * http://www.beosil.com/download/CollisionDetectionHashing_VMV03.pdf
-	 *
-	 * This paper can also be found by reference:
-	 * Matthias Teschner et. al., "Optimized Spatial Hashing for Collision
-	 * Detection of Deformable Objects," VMV 2003. Munich, Germany. November
-	 * 19-21, 2003.
-	 *
-	 * The hash falls under the set of universal hashes for 3d vectors.
-	 *
-	 * The hash table size is set to 1000000 since there should never be a
-	 * cluster of size one million and it is still large enough to give good
-	 * hashes. Note that this number is 100x bigger than what they tested in
-	 * the paper. ;)
-	 */
-	struct PSIMixedClusterComparator {
-		bool operator()(const std::map<std::string, int>& lhs,
-				const std::map<std::string, int>& rhs) const {
-
-			// Local Declarations
-			int numHe_lhs = 0, numV_lhs = 0, numI_lhs = 0;
-			int numHe_rhs = 0, numV_rhs = 0, numI_rhs = 0;
-			int p1 = 73856093, p2 = 19349663, p3 = 83492791;
-			int hashTableSize = 9999999, hash1 = 0, hash2 = 0;
-
-			// Get the cluster sizes
-			numHe_lhs = lhs.at("He");
-			numV_lhs = lhs.at("V");
-			numI_lhs = lhs.at("I");
-			numHe_rhs = rhs.at("He");
-			numV_rhs = rhs.at("V");
-			numI_rhs = rhs.at("I");
-
-			// Compute the hashes
-			hash1 =  ((numHe_lhs*p1)^(numV_lhs*p2)^(numI_lhs*p3))%hashTableSize;
-			hash2 = ((numHe_rhs*p1)^(numV_rhs*p2)^(numI_rhs*p3))%hashTableSize;
-
-//			std::cout << numHe_lhs << " " << numV_lhs << " " << numI_lhs << std::endl;
-//			std::cout << numHe_rhs << " " << numV_rhs << " " << numI_rhs << std::endl;
-//			std::cout << hash1 << " | " << hash2 << std::endl;
-
-			return hash1 < hash2;
-		}
-	};
 
 	/**
 	 * The map of single-species clusters, indexed by a map that contains the
 	 * name of the reactant and its size.
 	 */
-	std::map<std::map<std::string, int>, std::shared_ptr<PSICluster>,
-			PSIClusterComparator> singleSpeciesMap;
+	std::unordered_map<std::map<std::string, int>, std::shared_ptr<PSICluster>> singleSpeciesMap;
 
 	/**
 	 * The map of mixed or compound species clusters, indexed by a map that
 	 * contains the name of the constituents of the compound reactant and their
 	 * sizes.
 	 */
-	std::map<std::map<std::string, int>, std::shared_ptr<PSICluster>,
-			PSIMixedClusterComparator> mixedSpeciesMap;
+	std::unordered_map<std::map<std::string, int>, std::shared_ptr<PSICluster>> mixedSpeciesMap;
 
 	/**
 	 * This map stores all of the clusters in the network by type
 	 */
-	std::map<std::string,std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> > clusterTypeMap;
-
-	/**
-	 * The map of compositions to cluster ids
-	 */
-	std::map<std::map<std::string, int>, int> idMap;
+	std::map<std::string,
+			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> >clusterTypeMap;
 
 	/**
 	 * The names of the reactants supported by this network.
@@ -224,9 +155,15 @@ public:
 	 * separately to allow for the scenario where the network is generated
 	 * entirely before running.
 	 *
+	 * This operation sets the id of the reactant to one that is specific
+	 * to this network. Do not share Reactants across networks! This id is
+	 * guaranteed to be between 1 and n, including both, for n reactants in
+	 * the network.
+	 *
 	 * The reactant will not be added to the network if the PSICluster does
 	 * not recognize it as a type of reactant that it cares about (including
-	 * adding null).
+	 * adding null). This operation throws an exception of type std::string
+	 * if the reactant is  already in the network.
 	 * @param reactant The reactant that should be added to the network.
 	 */
 	void add(std::shared_ptr<Reactant> reactant);
@@ -295,14 +232,6 @@ public:
 	 * @return The number of reactants in the network
 	 */
 	int size();
-
-	/**
-	 * This operation returns the id of a reactant if it exists in the network.
-	 * @param reactant The reactant
-	 * @return The id of the reactant. This id is guaranteed to be between 1 and
-	 * n, including both, for n reactants in the network.
-	 */
-	int getReactantId(const Reactant & reactant);
 
 	/**
 	 * This is a utility operation that creates a composition vector with an

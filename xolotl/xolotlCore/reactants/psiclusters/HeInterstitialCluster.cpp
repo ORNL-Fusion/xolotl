@@ -20,6 +20,15 @@ HeInterstitialCluster::HeInterstitialCluster(int numHelium, int numInterstitial)
 	compositionMap["He"] = numHe;
 	compositionMap["I"] = numI;
 
+	// Compute the reaction radius
+	reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
+			+ pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0) * numI)
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+			- pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0))
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+
 }
 
 HeInterstitialCluster::HeInterstitialCluster(const HeInterstitialCluster &other) :
@@ -68,7 +77,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	std::vector<int> firstComposition, secondComposition;
 
 	// Connect this cluster to itself since any reaction will affect it
-	index = network->getReactantId(*this) - 1;
+	index = getId() - 1;
 	reactionConnectivity[index] = 1;
 
 	/* ----- (He_a)(I_b) + (V_c) --> (He_a)[I_(b-c)] -----
@@ -112,7 +121,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		reactingPairs.push_back(pair);
 		// Add single I to the list of clusters this one interacts with if it
 		// doesn't violate the maximum size limit.
-		index = psiNetwork->getReactantId(*secondReactant) - 1;
+		index = secondReactant->getId() - 1;
 		reactionConnectivity[index] = 1;
 		combiningReactants.push_back(secondReactant);
 	}
@@ -150,7 +159,7 @@ void HeInterstitialCluster::createDissociationConnectivity() {
 	iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
 
 	// Store the cluster with one less helium
-	std::vector<int> compositionVec = { numHe - 1, 0, numI};
+	std::vector<int> compositionVec = { numHe - 1, 0, numI };
 	heIClusterLessHe = std::dynamic_pointer_cast<PSICluster>(
 			network->getCompound("HeI", compositionVec));
 	// Store the cluster with one less vacancy
@@ -256,16 +265,6 @@ bool HeInterstitialCluster::isProductReactant(const Reactant & reactantI,
 			&& ((rI_I + rJ_I) == numI);
 }
 
-double HeInterstitialCluster::getReactionRadius() const {
-	return (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
-			+ pow(
-					(3.0 * pow(xolotlCore::latticeConstant, 3.0) * numI)
-							/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
-			- pow(
-					(3.0 * pow(xolotlCore::latticeConstant, 3.0))
-							/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
-}
-
 /**
  * This operation computes the partial derivatives due to dissociation
  * reactions. The partial derivatives due to dissociation for compound
@@ -294,7 +293,7 @@ void HeInterstitialCluster::getDissociationPartialDerivatives(
 	if (heIClusterLessHe) {
 		partialDeriv = calculateDissociationConstant(*heIClusterLessHe,
 				*heCluster, temperature);
-		index = network->getReactantId(*heIClusterLessHe);
+		index = heIClusterLessHe->getId() - 1;
 		partials[index] += partialDeriv;
 	}
 
@@ -302,7 +301,7 @@ void HeInterstitialCluster::getDissociationPartialDerivatives(
 	if (heIClusterLessI) {
 		partialDeriv = calculateDissociationConstant(*heIClusterLessI,
 				*vCluster, temperature);
-		index = network->getReactantId(*heIClusterLessI);
+		index = heIClusterLessI->getId() - 1;
 		partials[index] += partialDeriv;
 	}
 

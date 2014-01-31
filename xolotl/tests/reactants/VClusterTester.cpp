@@ -36,55 +36,51 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Prevent dissociation from being added to the connectivity array
 	props["dissociationsEnabled"] = "false";
 
-	// Check the connectivity of the 2nd V reactant (numV=2)
+	// Get the connectivity array from the reactant for a vacancy cluster of size 2.
+	auto reactant = dynamic_pointer_cast < PSICluster
+			> (network->get("V", 2));
+	auto reactionConnectivity = reactant->getConnectivity();
 
-	{
-		// Get the connectivity array from the reactant for a vacancy cluster of size 2.
-		auto reactant = dynamic_pointer_cast < PSICluster
-				> (network->get("V", 2));
-		auto reactionConnectivity = reactant->getConnectivity();
+	// Check the connectivity for He, V, and I
+	int connectivityExpected[] = {
+			// He
+			1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+			// V
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			// I
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 
-		// Check the connectivity for He, V, and I
+			// HeV
+			// The VCluster type only reacts with HeV for
+			// single-V clusters.
+			0, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 1, 1, 1,
+			0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0,
+			0, 0,
+			0,
 
-		int connectivityExpected[] = {
-				// He
-				1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+			// HeI
+			1, 1, 1, 1, 1, 1, 1, 0, 0,
+			1, 1, 1, 1, 1, 1, 0, 0,
+			1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1,
+			1, 1, 1, 1,
+			1, 1, 1,
+			1, 1,
+			1
+	};
 
-				// V
-				1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-
-				// I
-				1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-
-				// HeV
-				// The VCluster type only reacts with HeV for
-				// single-V clusters.
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
-				1, 1, 1, 1, 1, 1, 1, 1,
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0,
-				0, 0, 0, 0,
-				0, 0, 0,
-				0, 0,
-				0,
-
-				// HeI
-				1, 1, 1, 1, 1, 1, 1, 0, 0,
-				1, 1, 1, 1, 1, 1, 0, 0,
-				1, 1, 1, 1, 1, 1, 1,
-				1, 1, 1, 1, 1, 1,
-				1, 1, 1, 1, 1,
-				1, 1, 1, 1,
-				1, 1, 1,
-				1, 1,
-				1
-		};
-
-		for (int i = 0; i < reactionConnectivity.size(); i++) {
-			BOOST_REQUIRE_EQUAL(reactionConnectivity[i],
-					connectivityExpected[i]);
-		}
+	for (int i = 0; i < reactionConnectivity.size(); i++) {
+		BOOST_TEST_MESSAGE("Connectivity [" << i << "] = " << reactionConnectivity[i]);
+	}
+	for (int i = 0; i < reactionConnectivity.size(); i++) {
+		BOOST_REQUIRE_EQUAL(reactionConnectivity[i],
+				connectivityExpected[i]);
 	}
 }
 

@@ -10,16 +10,16 @@ using std::shared_ptr;
 void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 
 	// Shared pointers for the cluster type map
-	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> heVector
-		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>heVector
+	= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
 	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> vVector
-		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
 	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> iVector
-		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
 	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> heVVector
-	 	 = std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
 	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> heIVector
-	 	 = std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
 
 	// Initialize the list of all reactants used by getAll.
 	allReactants = std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
@@ -236,70 +236,69 @@ void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 			numHe = composition.at("He");
 			numV = composition.at("V");
 			numI = composition.at("I");
+			// Determine if the cluster is a compound. If there is more than one
+			// type, then the check below will sum to greater than one and we know
+			// that we have a mixed cluster.
+			isMixed = ((numHe > 0) + (numV > 0) + (numI > 0)) > 1;
 			// Only add the element if we don't already have it
-			if (idMap.count(composition) == 0) {
-				// Determine if the cluster is a compound. If there is more than one
-				// type, then the check below will sum to greater than one and we know
-				// that we have a mixed cluster.
-				isMixed = ((numHe > 0) + (numV > 0) + (numI > 0)) > 1;
-				// Add the compound or regular reactant.
-				if (isMixed) {
-					// Put the compound in its map
-					mixedSpeciesMap[composition] = std::dynamic_pointer_cast<
-							PSICluster>(reactant);
-					// Figure out whether we have HeV or HeI and set the keys
-					if (numV > 0) {
-						numClusterKey = "numHeVClusters";
-						clusterSizeKey = "maxHeVClusterSize";
-					} else {
-						numClusterKey = "numHeIClusters";
-						clusterSizeKey = "maxHeIClusterSize";
-					}
-				} else if (!isMixed) {
-					/// Put the reactant in its map
-					singleSpeciesMap[composition] = std::dynamic_pointer_cast<
-							PSICluster>(reactant);
-					// Figure out whether we have He, V or I and set the keys
-					if (numHe > 0) {
-						numClusterKey = "numHeClusters";
-						clusterSizeKey = "maxHeClusterSize";
-					} else if (numV > 0) {
-						numClusterKey = "numVClusters";
-						clusterSizeKey = "maxVClusterSize";
-					} else {
-						numClusterKey = "numIClusters";
-						clusterSizeKey = "maxIClusterSize";
-					}
+			// Add the compound or regular reactant.
+			if (isMixed && mixedSpeciesMap.count(composition) == 0) {
+				// Put the compound in its map
+				mixedSpeciesMap[composition] = std::dynamic_pointer_cast<
+						PSICluster>(reactant);
+				// Figure out whether we have HeV or HeI and set the keys
+				if (numV > 0) {
+					numClusterKey = "numHeVClusters";
+					clusterSizeKey = "maxHeVClusterSize";
+				} else {
+					numClusterKey = "numHeIClusters";
+					clusterSizeKey = "maxHeIClusterSize";
 				}
-				// Increment the number of total clusters of this type
-				int numClusters = std::stoi(properties->at(numClusterKey));
-				numClusters++;
-				(*properties)[numClusterKey] = std::to_string(
-						(long long) numClusters);
-				// Increment the max cluster size key
-				int maxSize = std::stoi(properties->at(clusterSizeKey));
-				int clusterSize = numHe + numV + numI;
-				maxSize = std::max(clusterSize, maxSize);
-				(*properties)[clusterSizeKey] = std::to_string(
-						(long long) maxSize);
-				// Update the size
-				++networkSize;
-				// Set the id for this cluster
-				idMap[composition] = networkSize;
-				// Get the vector for this reactant from the type map
-				auto clusters = clusterTypeMap[name];
-				clusters->push_back(reactant);
+			} else if (!isMixed && singleSpeciesMap.count(composition) == 0) {
+				/// Put the reactant in its map
+				singleSpeciesMap[composition] = std::dynamic_pointer_cast<
+						PSICluster>(reactant);
+				// Figure out whether we have He, V or I and set the keys
+				if (numHe > 0) {
+					numClusterKey = "numHeClusters";
+					clusterSizeKey = "maxHeClusterSize";
+				} else if (numV > 0) {
+					numClusterKey = "numVClusters";
+					clusterSizeKey = "maxVClusterSize";
+				} else {
+					numClusterKey = "numIClusters";
+					clusterSizeKey = "maxIClusterSize";
+				}
+			} else {
+				std::stringstream errStream;
+				errStream << "PSIClusterReactionNetwork Message: "
+						<< "Duplicate Reactant (He=" << numHe << ",V=" << numV
+						<< ",I=" << numI << ") not added!" << std::endl;
+				throw errStream.str();
+			}
+			// Increment the number of total clusters of this type
+			int numClusters = std::stoi(properties->at(numClusterKey));
+			numClusters++;
+			(*properties)[numClusterKey] = std::to_string(
+					(long long) numClusters);
+			// Increment the max cluster size key
+			int maxSize = std::stoi(properties->at(clusterSizeKey));
+			int clusterSize = numHe + numV + numI;
+			maxSize = std::max(clusterSize, maxSize);
+			(*properties)[clusterSizeKey] = std::to_string((long long) maxSize);
+			// Update the size
+			++networkSize;
+			// Set the id for this cluster
+			reactant->setId(networkSize);
+			// Get the vector for this reactant from the type map
+			auto clusters = clusterTypeMap[name];
+			clusters->push_back(reactant);
 //				std::cout << "Num single species = " << singleSpeciesMap.size()
 //						<< std::endl;
 //				std::cout << "Num mixed species = " << mixedSpeciesMap.size()
 //						<< std::endl;
 //				std::cout << "Num species = " << networkSize << std::endl;
 //				std::cout << "Real num species = " << (singleSpeciesMap.size() + mixedSpeciesMap.size()) << std::endl;
-			} else {
-				std::cout << "PSIClusterReactionNetwork Message: "
-						<< "Duplicate Reactant (He=" << numHe << ",V=" << numV
-						<< ",I=" << numI << ") not added!" << std::endl;
-			}
 		}
 	}
 
@@ -351,7 +350,7 @@ const std::map<std::string, std::string> & PSIClusterReactionNetwork::getPropert
 void PSIClusterReactionNetwork::setProperty(std::string key,
 		std::string value) {
 
-	// Check the keys and value before trying to set the property
+// Check the keys and value before trying to set the property
 	if (!key.empty() && !value.empty() && key != "numHeClusters"
 			&& key != "numVClusters" && key != "numIClusters"
 			&& key != "maxHeClusterSize" && key != "maxVClusterSize"
@@ -369,14 +368,4 @@ void PSIClusterReactionNetwork::setProperty(std::string key,
  * @return The number of reactants in the network
  */int PSIClusterReactionNetwork::size() {
 	return networkSize;
-}
-
-/**
- * This operation returns the id of a reactant if it exists in the network.
- * @param reactant The reactant
- * @return The id of the reactant. This id is guaranteed to be between 1 and
- * n, including both, for n reactants in the network.
- */int PSIClusterReactionNetwork::getReactantId(const Reactant & reactant) {
-	auto composition = reactant.getComposition();
-	return idMap.at(composition);
 }

@@ -10,6 +10,15 @@ InterstitialCluster::InterstitialCluster(int nI) :
 	name = "I";
 	// Update the composition map
 	compositionMap[name] = size;
+
+	// Compute the reaction radius
+	double EightPi = 8.0 * xolotlCore::pi;
+	double aCubed = pow(xolotlCore::latticeConstant, 3.0);
+	double termOne = 1.15 * (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant;
+	double termTwo = pow((3.0 / EightPi) * aCubed * size, (1.0 / 3.0));
+	double termThree = pow((3.0 / EightPi) * aCubed, (1.0 / 3.0));
+	reactionRadius = termOne + termTwo - termThree;
+
 }
 
 InterstitialCluster::~InterstitialCluster() {
@@ -35,8 +44,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
 
 	// Connect this cluster to itself since any reaction will affect it
-	index = network->getReactantId(*this) - 1;
-	reactionConnectivity[index] = 1;
+	reactionConnectivity[thisNetworkIndex] = 1;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
@@ -151,15 +159,4 @@ bool InterstitialCluster::isProductReactant(const Reactant & reactantI,
 	// 0 Vacancies
 	return ((rI_I + rJ_I) == size) && ((rI_He + rJ_He) == 0)
 			&& ((rI_V + rJ_V) == 0);
-}
-
-double InterstitialCluster::getReactionRadius() const {
-
-	double EightPi = 8.0 * xolotlCore::pi;
-	double aCubed = pow(xolotlCore::latticeConstant, 3.0);
-	double termOne = 1.15 * (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant;
-	double termTwo = pow((3.0 / EightPi) * aCubed * size, (1.0 / 3.0));
-	double termThree = pow((3.0 / EightPi) * aCubed, (1.0 / 3.0));
-
-	return termOne + termTwo - termThree;
 }

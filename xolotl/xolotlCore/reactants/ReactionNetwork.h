@@ -12,7 +12,7 @@ namespace xolotlCore {
 class Reactant;
 
 /**
- *  This class manages the set of reactant and compound reactants (
+ *  This class manages the set of reactants and compound reactants (
  *  combinations of normal reactants). It also manages a set of properties
  *  that describe both.
  */
@@ -127,15 +127,6 @@ public:
 	 * @return The number of reactants in the network
 	 */
 	virtual int size() = 0;
-
-	/**
-	 * This operation returns the id of a reactant if it exists in the network.
-	 * @param reactant The reactant The array is ordered by increasing reactant
-	 * id, starting at 1.
-	 * @return The id of the reactant. This id is guaranteed to be between 1 and
-	 * n, including both, for n reactants in the network.
-	 */
-	virtual int getReactantId(const Reactant & reactant) = 0;
 
 	/**
 	 * This operation fills an array of doubles with the concentrations of all

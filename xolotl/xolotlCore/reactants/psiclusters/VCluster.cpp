@@ -12,6 +12,11 @@ VCluster::VCluster(int nV) :
 	name = "V";
 	// Update the composition map
 	compositionMap[name] = size;
+
+	// Compute the reaction radius
+	// FIXME Not right...
+	reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant;
+
 }
 
 VCluster::~VCluster() {
@@ -36,8 +41,7 @@ void VCluster::createReactionConnectivity() {
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
 
 	// Connect this cluster to itself since any reaction will affect it
-	index = network->getReactantId(*this) - 1;
-	reactionConnectivity[index] = 1;
+	reactionConnectivity[thisNetworkIndex] = 1;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
@@ -151,9 +155,4 @@ bool VCluster::isProductReactant(const Reactant & reactantI,
 	// size Vacancies
 	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == 0)
 			&& ((rI_V + rJ_V) == size);
-}
-
-double VCluster::getReactionRadius() const {
-	// FIXME Not right...
-	return (sqrt(3) / 4) * xolotlCore::latticeConstant;
 }

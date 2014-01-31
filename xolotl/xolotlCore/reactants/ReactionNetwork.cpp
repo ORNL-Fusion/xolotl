@@ -27,7 +27,7 @@ void ReactionNetwork::fillConcentrationsArray(double * concentrations) {
 
 	// Fill the array
 	for (int i = 0; i < size; i++) {
-		id = getReactantId(*(reactants->at(i))) - 1;
+		id = reactants->at(i)->getId() - 1;
 		concentrations[id] = reactants->at(i)->getConcentration();
 	}
 
@@ -51,7 +51,7 @@ void ReactionNetwork::updateConcentrationsFromArray(double * concentrations) {
 
 	// Set the concentrations
 	for (int i = 0; i < size; i++) {
-		id = getReactantId(*(reactants->at(i))) - 1;
+		id = reactants->at(i)->getId() - 1;
 		reactants->at(i)->setConcentration(concentrations[id]);
 	}
 

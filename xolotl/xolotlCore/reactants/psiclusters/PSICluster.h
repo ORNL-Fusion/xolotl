@@ -5,6 +5,7 @@
 #include <Reactant.h>
 #include <math.h>
 #include <vector>
+#include <unordered_map>
 
 namespace xolotlCore {
 
@@ -72,9 +73,19 @@ protected:
 	std::vector<double> bindingEnergies;
 
 	/**
+	 * A map used to look up binding energy indices quickly.
+	 */
+	static std::unordered_map<std::string, int> bindingEnergyIndexMap;
+
+	/**
 	 * The migration energy for this cluster.
 	 */
 	double migrationEnergy;
+
+	/**
+	 * The reaction radius of this cluster
+	 */
+	double reactionRadius;
 
 	/**
 	 * The row of the reaction connectivity matrix corresponding to

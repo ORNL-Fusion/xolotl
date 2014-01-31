@@ -243,8 +243,8 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 
 	// Get the He_1 and He_2 indices from the network
 	auto he1Cluster = network->get("He", 1), he2Cluster = network->get("He", 2);
-	int he1Index = network->getReactantId(*he1Cluster);
-	int he2Index = network->getReactantId(*he2Cluster);
+	int he1Index = he1Cluster->getId();
+	int he2Index = he2Cluster->getId();
 
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
@@ -495,7 +495,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		heCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("He", 1));
 		if (heCluster) {
-			reactantIndex = network->getReactantId(*(heCluster)) - 1;
+			reactantIndex = heCluster->getId() - 1;
 			// Update the concentration of the cluster
 			updatedConcOffset[reactantIndex] += 1.0E4
 					* PetscMax(0.0,
@@ -511,7 +511,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			heCluster = std::dynamic_pointer_cast<PSICluster>(clusterDummy);
 			// Only update the concentration if the cluster exists
 			if (heCluster) {
-				reactantIndex = network->getReactantId(*(heCluster)) - 1;
+				reactantIndex = heCluster->getId() - 1;
 				// Get the concentrations
 				oldConc = concOffset[reactantIndex];
 				oldLeftConc = leftConcOffset[reactantIndex];
@@ -535,7 +535,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Only update the concentration if the cluster exists
 		if (vCluster) {
 			// Get the concentrations for the first vacancy cluster in the network.
-			reactantIndex = network->getReactantId(*(vCluster)) - 1;
+			reactantIndex = vCluster->getId() - 1;
 			oldConc = concOffset[reactantIndex];
 			oldLeftConc = leftConcOffset[reactantIndex];
 			oldRightConc = rightConcOffset[reactantIndex];
@@ -556,7 +556,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
 		// Only update the concentration if the clusters exist
 		if (iCluster) {
-			reactantIndex = network->getReactantId(*(iCluster)) - 1;
+			reactantIndex = iCluster->getId() - 1;
 			// Only interstitial clusters of size 1 diffuse. Get the
 			// concentrations.
 			oldConc = concOffset[reactantIndex];
@@ -576,7 +576,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			// Compute the flux
 			flux = cluster->getTotalFlux(temperature);
 			// Update the concentration of the cluster
-			reactantIndex = network->getReactantId(*(cluster)) - 1;
+			reactantIndex = cluster->getId() - 1;
 			updatedConcOffset[reactantIndex] += flux;
 //			std::cout << "New flux = " << flux << " "
 //					<< cluster->getConcentration() << std::endl;
@@ -695,7 +695,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				psiCluster = std::dynamic_pointer_cast<PSICluster>(
 						network->get("He", i));
 				// Get the reactant index
-				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+				reactantIndex = psiCluster->getId() - 1;
 				// Compute the partial derivatives for diffusion of this cluster
 				diffCoeff = psiCluster->getDiffusionCoefficient(temperature);
 				val[0] = diffCoeff * sx;
@@ -725,7 +725,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				val[1] = -2.0 * diffCoeff * sx;
 				val[2] = diffCoeff * sx;
 				// Get the reactant index
-				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+				reactantIndex = psiCluster->getId() - 1;
 				// Set the row and column indices. These indices are computed
 				// by using xi, xi-1 and xi+1 and the arrays are shifted to
 				// (xs+1)*size to properly account for the neighboring ghost
@@ -748,7 +748,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				val[1] = -2.0 * diffCoeff * sx;
 				val[2] = diffCoeff * sx;
 				// Get the reactant index
-				reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+				reactantIndex = psiCluster->getId() - 1;
 				// Set the row and column indices. These indices are computed
 				// by using xi, xi-1 and xi+1 and the arrays are shifted to
 				// (xs+1)*size to properly account for the neighboring ghost
@@ -811,7 +811,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(
 					reactants->at(i));
 			// Get the reactant index
-			reactantIndex = network->getReactantId(*(psiCluster)) - 1;
+			reactantIndex = psiCluster->getId() - 1;
 			// Get the column id
 			rowId = (xi - xs + 1) * size + reactantIndex;
 			// Get the partial derivatives
@@ -877,7 +877,7 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 			connectivityLength = connectivity.size();
 			// Get the reactant id so that the connectivity can be lined up in
 			// the proper column
-			id = network->getReactantId(*reactant) - 1;
+			id = reactant->getId() - 1;
 			// Add it to the diagonal fill block
 			for (j = 0; j < connectivityLength; j++) {
 				// The id starts at j*connectivity length and is always offset
@@ -1043,7 +1043,7 @@ void PetscSolver::solve() {
 		// Only couple if the reactant exists
 		if (reactant) {
 			// Subtract one from the id to get a unique index between 0 and network->size() - 1
-			reactantIndex = network->getReactantId(*reactant) - 1;
+			reactantIndex = reactant->getId() - 1;
 			ofill[reactantIndex * dof + reactantIndex] = 1;
 		}
 	}
@@ -1052,7 +1052,7 @@ void PetscSolver::solve() {
 	// Only couple if the reactant exists
 	if (reactant) {
 		// Subtract one from the id to get a unique index between 0 and network->size() - 1
-		reactantIndex = network->getReactantId(*reactant) - 1;
+		reactantIndex = reactant->getId() - 1;
 		ofill[reactantIndex * dof + reactantIndex] = 1;
 	}
 	// Now for single I
@@ -1060,7 +1060,7 @@ void PetscSolver::solve() {
 	// Only couple if the reactant exists
 	if (reactant) {
 		// Subtract one from the id to get a unique index between 0 and network->size() - 1
-		reactantIndex = network->getReactantId(*reactant) - 1;
+		reactantIndex = reactant->getId() - 1;
 		ofill[reactantIndex * dof + reactantIndex] = 1;
 	}
 

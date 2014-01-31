@@ -20,6 +20,15 @@ HeVCluster::HeVCluster(int numHe, int numV) :
 	compositionMap["He"] = numHe;
 	compositionMap["V"] = numV;
 
+	// Compute the reaction radius
+	reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
+			+ pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0) * numV)
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+			- pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0))
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+
 }
 
 HeVCluster::HeVCluster(const HeVCluster &other) :
@@ -68,8 +77,7 @@ void HeVCluster::createReactionConnectivity() {
 	std::vector<int> firstComposition, secondComposition;
 
 	// Connect this cluster to itself since any reaction will affect it
-	thisIndex = network->getReactantId(*this) - 1;
-	reactionConnectivity[thisIndex] = 1;
+	reactionConnectivity[thisNetworkIndex] = 1;
 
 	/* ----- (He_a)(V_b) + (He_c) --> [He_(a+c)]*(V_b) -----
 	 * Helium absorption by HeV clusters that results
@@ -300,16 +308,6 @@ bool HeVCluster::isProductReactant(const Reactant & reactantI,
 			&& ((rI_V + rJ_V) == numV);
 }
 
-double HeVCluster::getReactionRadius() {
-	return (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
-			+ pow(
-					(3.0 * pow(xolotlCore::latticeConstant, 3.0) * numV)
-							/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
-			- pow(
-					(3.0 * pow(xolotlCore::latticeConstant, 3.0))
-							/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
-}
-
 /**
  * This operation computes the partial derivatives due to dissociation
  * reactions. The partial derivatives due to dissociation for compound
@@ -338,7 +336,7 @@ void HeVCluster::getDissociationPartialDerivatives(
 	if (heVClusterLessHe) {
 		partialDeriv = calculateDissociationConstant(*heVClusterLessHe,
 				*heCluster, temperature);
-		index = network->getReactantId(*heVClusterLessHe);
+		index = heVClusterLessHe->getId() - 1;
 		partials[index] += partialDeriv;
 	}
 
@@ -346,7 +344,7 @@ void HeVCluster::getDissociationPartialDerivatives(
 	if (heVClusterLessV) {
 		partialDeriv = calculateDissociationConstant(*heVClusterLessV,
 				*vCluster, temperature);
-		index = network->getReactantId(*heVClusterLessV);
+		index = heVClusterLessV->getId() - 1;
 		partials[index] += partialDeriv;
 	}
 

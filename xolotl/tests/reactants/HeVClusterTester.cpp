@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n");
-	BOOST_REQUIRE_CLOSE(-6171164946., flux, 10.);
+	BOOST_REQUIRE_CLOSE(-8964899015.0, flux, 10.0);
 }
 
 /**

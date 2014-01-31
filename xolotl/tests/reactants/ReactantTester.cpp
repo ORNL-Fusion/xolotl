@@ -21,16 +21,23 @@ using namespace testUtils;
 
 /**
  * This suite is responsible for testing the Reactant.
+ */BOOST_AUTO_TEST_SUITE(Reactant_testSuite)
+
+/**
+ * This operation asserts that the default composition is empty.
  */
-BOOST_AUTO_TEST_SUITE(Reactant_testSuite)
+BOOST_AUTO_TEST_CASE(checkComposition) {
+	Reactant reactant;
+	BOOST_REQUIRE_EQUAL(0, reactant.getComposition().size());
+}
 
 /**
  * This operation tests the copy constructor.
- */
-BOOST_AUTO_TEST_CASE(checkCopying) {
+ */BOOST_AUTO_TEST_CASE(checkCopying) {
 
 	// Create a reference Reactant
 	shared_ptr<Reactant> reactant(new Reactant);
+	reactant->setId(5);
 	reactant->setConcentration(10.0);
 
 	// Copy the Reactant
@@ -38,7 +45,11 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 
 	// Check that the pointers are different
 	BOOST_REQUIRE_NE(reactant.get(), reactantCopy.get());
+	// Check the ids and names
+	BOOST_REQUIRE_EQUAL(reactant->getId(), reactantCopy->getId());
+	BOOST_REQUIRE_EQUAL(reactant->getName(), reactantCopy->getName());
 
+	// Increase the concentration
 	reactantCopy->increaseConcentration(5.0);
 
 	// The values should now be different,
@@ -51,7 +62,10 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	BOOST_REQUIRE_CLOSE(10.0, reactantClone->getConcentration(), 1e-7);
 }
 
-BOOST_AUTO_TEST_CASE(checkManipulateConcentration) {
+/**
+ * This operation insures that the concentration can be manipulated
+ * appropriately.
+ */BOOST_AUTO_TEST_CASE(checkConcentration) {
 
 	// Create a Reactant
 	shared_ptr<Reactant> reactant(new Reactant);
@@ -83,115 +97,73 @@ BOOST_AUTO_TEST_CASE(checkManipulateConcentration) {
 
 }
 
-BOOST_AUTO_TEST_CASE(toClusterMap) {
-
- 	BOOST_TEST_MESSAGE("ReactantTester Message: toClusterMap returns an empty map");
-
-//	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
-//
-//	map<string, int> cluster;
-//
-//	// Test a couple of the HeClusters
-//
-//	cluster = network->toClusterMap(0);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 1);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-//
-//	cluster = network->toClusterMap(9);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 10);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-//
-//	// Test VClusters
-//
-//	cluster = network->toClusterMap(10);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 1);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-//
-//	cluster = network->toClusterMap(19);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 10);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-//
-//	// Test IClusters
-//
-//	cluster = network->toClusterMap(20);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 1);
-//
-//	cluster = network->toClusterMap(29);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 10);
-//
-//	// Test HeVClusters
-//
-//	cluster = network->toClusterMap(40);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 2);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 2);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-//
-//	cluster = network->toClusterMap(60);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 1);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 5);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 0);
-//
-//	// Test HeInterstitialClusters
-//
-//	cluster = network->toClusterMap(80);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 6);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 1);
-//
-//	cluster = network->toClusterMap(100);
-//	BOOST_REQUIRE_EQUAL(cluster["He"], 2);
-//	BOOST_REQUIRE_EQUAL(cluster["V"], 0);
-//	BOOST_REQUIRE_EQUAL(cluster["I"], 4);
-}
-
 BOOST_AUTO_TEST_CASE(checkIsConnected) {
 	// Create a reaction network containing only clusters with maximum size 2
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork(2);
 
 	// Check the connectivity matrix (8 * 8)
 	int connectivityExpected[8][8] = {
-			1, 1, 1, 0, 1, 0, 1, 1,
-			1, 1, 0, 0, 0, 0, 0, 0,
-			1, 0, 1, 1, 1, 1, 1, 0,
-			0, 0, 1, 1, 1, 1, 0, 0,
-			1, 0, 1, 1, 1, 1, 0, 1,
-			0, 0, 1, 1, 1, 1, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 1,
-			0, 0, 0, 0, 0, 0, 1, 0
+			1, 1, 1, 0, 1, 0, 1, 1, // He
+			1, 1, 0, 0, 0, 0, 0, 0, // He_2
+			1, 0, 1, 1, 1, 1, 1, 0, // V
+			0, 0, 1, 1, 1, 1, 0, 0, // V_2
+			1, 0, 1, 1, 1, 1, 0, 1, // I
+			0, 0, 1, 1, 1, 1, 0, 0, // I_2
+			0, 0, 0, 0, 0, 0, 1, 0, // HeV
+			0, 0, 0, 0, 0, 0, 0, 1  // HeI
 	};
 
-	// Initialyze i and j to access the connectivityExpected matrix
-	int i = 0;
-	int j = 0;
-
-	// Get the connectivity matrix from the network
-	auto reactants = network->getAll();
-	for (auto reactantIt = reactants->begin();
-			reactantIt != reactants->end(); reactantIt++) {
-		shared_ptr<PSICluster> cluster = dynamic_pointer_cast<
-				PSICluster>(*reactantIt);
-		vector<int> reactionConnectivity = cluster->getConnectivity();
-
-		for (auto connIt = reactionConnectivity.begin(); connIt != reactionConnectivity.end(); connIt++) {
-			// Compare values between what is in the network and expected
-			BOOST_REQUIRE_EQUAL(*connIt, connectivityExpected[i][j]);
-			j++;
-		}
-		i++;
-		// j has to be reset to 0 when i is incremented
-		j = 0;
+	// Check He
+	auto reactantConnectivity = network->get("He", 1)->getConnectivity();
+	for (int j = 0; j < 8; j++) {
+		BOOST_REQUIRE_EQUAL(connectivityExpected[0][j],reactantConnectivity[j]);
 	}
 
+	// Check He_2
+	reactantConnectivity = network->get("He", 2)->getConnectivity();
+	for (int j = 0; j < 8; j++) {
+		BOOST_REQUIRE_EQUAL(connectivityExpected[1][j],reactantConnectivity[j]);
+	}
+
+	// Check V
+	reactantConnectivity = network->get("V", 1)->getConnectivity();
+	for (int j = 0; j < 8; j++) {
+		BOOST_REQUIRE_EQUAL(connectivityExpected[2][j],reactantConnectivity[j]);
+	}
+
+	// Check V_2
+	reactantConnectivity = network->get("V", 2)->getConnectivity();
+	for (int j = 0; j < 8; j++) {
+		BOOST_REQUIRE_EQUAL(connectivityExpected[3][j],reactantConnectivity[j]);
+	}
+
+	// Check I
+	reactantConnectivity = network->get("I", 1)->getConnectivity();
+	for (int j = 0; j < 8; j++) {
+		BOOST_REQUIRE_EQUAL(connectivityExpected[4][j],reactantConnectivity[j]);
+	}
+
+	// Check I_2
+	reactantConnectivity = network->get("I", 2)->getConnectivity();
+	for (int j = 0; j < 8; j++) {
+		BOOST_REQUIRE_EQUAL(connectivityExpected[5][j],reactantConnectivity[j]);
+	}
+
+	// Check HeV
+	std::vector<int> compositionVector = {1,1,0};
+	reactantConnectivity = network->getCompound("HeV", compositionVector)->getConnectivity();
+	for (int j = 0; j < 8; j++) {
+		BOOST_REQUIRE_EQUAL(connectivityExpected[6][j],reactantConnectivity[j]);
+	}
+
+	// Check HeI
+	compositionVector = {1,0,1};
+	reactantConnectivity = network->getCompound("HeI", compositionVector)->getConnectivity();
+	for (int j = 0; j < 8; j++) {
+		BOOST_REQUIRE_EQUAL(connectivityExpected[7][j],reactantConnectivity[j]);
+	}
+
+	return;
 }
-
-
 BOOST_AUTO_TEST_SUITE_END()
 

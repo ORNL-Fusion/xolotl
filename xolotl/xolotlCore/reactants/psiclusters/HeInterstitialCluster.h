@@ -126,15 +126,6 @@ public:
 	 */
 	virtual bool isProductReactant(const Reactant & reactantI, const Reactant & reactantJ);
 
-	/**
-	 * This virtual method is for subclasses to specialize
-	 * and should return the reaction radius for the
-	 * particular PSICluster subclass.
-	 *
-	 * @return
-	 */
-	virtual double getReactionRadius() const;
-
 protected:
 
 	/**

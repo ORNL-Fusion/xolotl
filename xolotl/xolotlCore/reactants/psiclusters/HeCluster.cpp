@@ -12,6 +12,16 @@ HeCluster::HeCluster(int nHe) :
 	name = "He";
 	// Update the composition map
 	compositionMap[name] = size;
+
+	// Compute the reaction radius
+	double FourPi = 4.0 * xolotlCore::pi;
+	double aCubed = pow(xolotlCore::latticeConstant, 3);
+	double termOne = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * size,
+			(1.0 / 3.0));
+	double termTwo = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed, (1.0 / 3.0));
+	reactionRadius = 0.3 + termOne - termTwo;
+
+	return;
 }
 
 HeCluster::~HeCluster() {
@@ -43,8 +53,7 @@ void HeCluster::createReactionConnectivity() {
 			productReactant;
 
 	// Connect this cluster to itself since any reaction will affect it
-	thisIndex = network->getReactantId(*this) - 1;
-	reactionConnectivity[thisIndex] = 1;
+	reactionConnectivity[thisNetworkIndex] = 1;
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
@@ -167,13 +176,4 @@ bool HeCluster::isProductReactant(const Reactant & reactantI,
 	// 0 Vacancies
 	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == size)
 			&& ((rI_V + rJ_V) == 0);
-}
-
-double HeCluster::getReactionRadius() const {
-	double FourPi = 4.0 * xolotlCore::pi;
-	double aCubed = pow(xolotlCore::latticeConstant, 3);
-	double termOne = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * size,
-			(1.0 / 3.0));
-	double termTwo = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed, (1.0 / 3.0));
-	return 0.3 + termOne - termTwo;
 }

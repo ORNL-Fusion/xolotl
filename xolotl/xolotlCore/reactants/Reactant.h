@@ -190,6 +190,24 @@ public:
 	 * elements and values indicating the amount of the element present.
 	 */
 	virtual const std::map<std::string, int> & getComposition() const;
+
+	/**
+	 * This operation sets the id of the reactant, The id is zero by default
+	 * and clients, most likely the ReactionNetwork, are expected to set the
+	 * id as needed.
+	 * @param nId The new id for this reactant
+	 */
+	void setId(int nId) {
+		id = nId;
+	}
+
+	/**
+	 * This operation returns the id for this reactant.
+	 * @return The id
+	 */
+	int getId() const {
+		return id;
+	}
 };
 
 } // end namespace xolotlCore
