@@ -397,7 +397,7 @@ double PSICluster::calculateDissociationConstant(
 
 	// Calculate the Reaction Rate Constant
 	double kPlus = 0.0;
-	if (singleSpeciesCluster) {
+	if (singleSpeciesCluster) { // WHOA! WTF is this? FIXME!!!! ~JJB 20140202 20:47
 		kPlus = calculateReactionRateConstant(firstCluster,
 				*singleSpeciesCluster, temperature);
 	}
