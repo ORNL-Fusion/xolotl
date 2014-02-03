@@ -3286,33 +3286,41 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bQUbwIqNEeOUtaE7Hpff1Q" type="EnumerationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bQUbwYqNEeOUtaE7Hpff1Q" visible="false" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bQUbwoqNEeOUtaE7Hpff1Q" visible="false" type="OperationCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_bQR_gIqNEeOUtaE7Hpff1Q" x="24092" y="12997" width="5579"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_bQR_gIqNEeOUtaE7Hpff1Q" x="27896" y="4121" width="5579"/>
           </children>
           <element xsi:nil="true"/>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_6VbfAHh4EeO_LPATlPj4SA" element="_6VX0oHh4EeO_LPATlPj4SA" source="_bplRwEM7EeOTkpIp2VY3Rg" target="_kkmd4EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_6VbfAnh4EeO_LPATlPj4SA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_6VbfBHh4EeO_LPATlPj4SA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_6VcGEHh4EeO_LPATlPj4SA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_6VbfA3h4EeO_LPATlPj4SA" y="-186"/>
+          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_OW-csIz8EeOsJLr0M3rJfg" element="_OWsv4Iz8EeOsJLr0M3rJfg" source="_0EMYYEVdEeOTkpIp2VY3Rg" target="_bQRYcIqNEeOUtaE7Hpff1Q" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
+            <children xmi:type="notation:DecorationNode" xmi:id="_OXCHEIz8EeOsJLr0M3rJfg" type="NameLabel">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_OXCuIIz8EeOsJLr0M3rJfg" type="Stereotype"/>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_OXCuIYz8EeOsJLr0M3rJfg" type="Name"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_OXCHEYz8EeOsJLr0M3rJfg" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_6VbfAXh4EeO_LPATlPj4SA" points="[-596, 1898, 9954, -4666]$[-596, 3161, 9954, -3403]$[-10565, 3161, -15, -3403]$[-10565, 4443, -15, -2121]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_OW-csYz8EeOsJLr0M3rJfg" points="[72, -63, -118, 122]$[124, -102, -66, 83]"/>
           </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_ASbo8Hh5EeO_LPATlPj4SA" element="_ASYloHh5EeO_LPATlPj4SA" source="_bplRwEM7EeOTkpIp2VY3Rg" target="_zvqS0EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_ASbo8nh5EeO_LPATlPj4SA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_ASbo9Hh5EeO_LPATlPj4SA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_AScQAHh5EeO_LPATlPj4SA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ASbo83h5EeO_LPATlPj4SA" y="-186"/>
+          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_R3wb0Iz8EeOsJLr0M3rJfg" element="_R3mq0Iz8EeOsJLr0M3rJfg" source="_bplRwEM7EeOTkpIp2VY3Rg" target="_0EMYYEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
+            <children xmi:type="notation:DecorationNode" xmi:id="_R3wb0oz8EeOsJLr0M3rJfg" type="NameLabel">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_R3xC4Iz8EeOsJLr0M3rJfg" type="Stereotype"/>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_R3xC4Yz8EeOsJLr0M3rJfg" type="Name"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_R3wb04z8EeOsJLr0M3rJfg" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_ASbo8Xh5EeO_LPATlPj4SA" points="[-596, 1898, 1050, -4218]$[-596, 3161, 1050, -2955]$[-1678, 3161, -32, -2955]$[-1678, 4443, -32, -1673]"/>
-          </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_D8RdcHh5EeO_LPATlPj4SA" element="_D8NzEHh5EeO_LPATlPj4SA" source="_bplRwEM7EeOTkpIp2VY3Rg" target="_0EMYYEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_D8SEgHh5EeO_LPATlPj4SA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_D8SEgnh5EeO_LPATlPj4SA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_D8SEg3h5EeO_LPATlPj4SA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_D8SEgXh5EeO_LPATlPj4SA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_D8RdcXh5EeO_LPATlPj4SA" points="[59, 104, -11318, -4218]$[59, 1367, -11318, -2955]$[11712, 1367, 335, -2955]$[11712, 2649, 335, -1673]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_R3wb0Yz8EeOsJLr0M3rJfg" points="[59, 104, -11318, -4218]$[59, 1367, -11318, -2955]$[11712, 1367, 335, -2955]$[11712, 2649, 335, -1673]"/>
             <sourceAnchor xmi:type="notation:IdentityAnchor" xmi:id="_GmRSoHiGEeO_LPATlPj4SA" id="(0.46154371118542276,0.9728205128205129)"/>
+          </edges>
+          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_VUCVcIz8EeOsJLr0M3rJfg" element="_VT8O0Iz8EeOsJLr0M3rJfg" source="_bplRwEM7EeOTkpIp2VY3Rg" target="_zvqS0EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
+            <children xmi:type="notation:DecorationNode" xmi:id="_VUC8gIz8EeOsJLr0M3rJfg" type="NameLabel">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_VUDjkIz8EeOsJLr0M3rJfg" type="Stereotype"/>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_VUDjkYz8EeOsJLr0M3rJfg" type="Name"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_VUC8gYz8EeOsJLr0M3rJfg" y="-186"/>
+            </children>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_VUCVcYz8EeOsJLr0M3rJfg" points="[-596, 1898, 1050, -4218]$[-596, 3161, 1050, -2955]$[-1678, 3161, -32, -2955]$[-1678, 4443, -32, -1673]"/>
+          </edges>
+          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_cXAB4Iz8EeOsJLr0M3rJfg" element="_cW6iUIz8EeOsJLr0M3rJfg" source="_bplRwEM7EeOTkpIp2VY3Rg" target="_kkmd4EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
+            <children xmi:type="notation:DecorationNode" xmi:id="_cXBQAIz8EeOsJLr0M3rJfg" type="NameLabel">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_cXBQAoz8EeOsJLr0M3rJfg" type="Stereotype"/>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_cXB3EIz8EeOsJLr0M3rJfg" type="Name"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_cXBQAYz8EeOsJLr0M3rJfg" y="-186"/>
+            </children>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_cXAo8Iz8EeOsJLr0M3rJfg" points="[-596, 1898, 9954, -4666]$[-596, 3161, 9954, -3403]$[-10565, 3161, -15, -3403]$[-10565, 4443, -15, -2121]"/>
           </edges>
         </contents>
       </eAnnotations>
@@ -3359,7 +3367,7 @@ Check the reactants - He first
           </ownedComment>
         </ownedLiteral>
       </packagedElement>
-      <packagedElement xmi:type="uml:Interface" xmi:id="_BMrGMEMcEeOTkpIp2VY3Rg" name="IHandlerRegistry" clientDependency="_6VX0oHh4EeO_LPATlPj4SA _ASYloHh5EeO_LPATlPj4SA _D8NzEHh5EeO_LPATlPj4SA">
+      <packagedElement xmi:type="uml:Interface" xmi:id="_BMrGMEMcEeOTkpIp2VY3Rg" name="IHandlerRegistry" clientDependency="_R3mq0Iz8EeOsJLr0M3rJfg _VT8O0Iz8EeOsJLr0M3rJfg _cW6iUIz8EeOsJLr0M3rJfg">
         <ownedComment xmi:id="_2UCgkHbgEeO2ybnm-LBKtQ" annotatedElement="_BMrGMEMcEeOTkpIp2VY3Rg">
           <body>&lt;p>Realizations of this interface are responsible for the collection of performance data.&lt;/p></body>
         </ownedComment>
@@ -3413,7 +3421,7 @@ Check the reactants - He first
             <ownedComment xmi:id="_Hw4Y8IkLEeO74ZO5tXUQMg" annotatedElement="_xISK0IeeEeOJldxzwIPVCQ">
               <body>&lt;p >The list of particular PAPI preset quantities, or events, the HardwareCounter monitors.&lt;/p>&lt;p >Some of the PAPI preset events which will be included are PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM for the levels 1-3 total cache misses, PAPI_BR_MSP for the number mispredicted branches, PAPI_TOT_CYC and PAPI_TOT_INS for the total number of instructions and cycles executed which can be used for the calculation of the total number of instructions (cycles) per cycle (instruction), and PAPI_FP_INS for the number of floating point instructions executed which can be used for the calculation of floating point operations.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:Enumeration" href="../../%5BSubprojects%5D/xolotl/xolotlModel/xolotlModel.emx#_6fJdQInzEeOUtaE7Hpff1Q?xolotl/performance/HardwareCounter/HardwareQuantities?"/>
+            <type xmi:type="uml:Enumeration" href="../../%5BSubprojects%5D/xolotl/xolotlModel/xolotlModel.emx#_6fJdQInzEeOUtaE7Hpff1Q?xolotl/performance/HardwareQuantities?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_nSzCMIj4EeO74ZO5tXUQMg" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_nSGeoIj4EeO74ZO5tXUQMg"/>
           </ownedParameter>
@@ -3550,7 +3558,7 @@ Check the reactants - He first
           </ownedComment>
         </ownedOperation>
       </packagedElement>
-      <packagedElement xmi:type="uml:Interface" xmi:id="_yYrRwEVdEeOTkpIp2VY3Rg" name="HardwareCounter">
+      <packagedElement xmi:type="uml:Interface" xmi:id="_yYrRwEVdEeOTkpIp2VY3Rg" name="HardwareCounter" clientDependency="_OWsv4Iz8EeOsJLr0M3rJfg">
         <ownedComment xmi:id="_SgCvcEVhEeOTkpIp2VY3Rg" annotatedElement="_yYrRwEVdEeOTkpIp2VY3Rg">
           <body>&lt;p>Realizations of this interface are responsible for the collection of hardware performance counter data.&lt;/p>&lt;p>&lt;/p></body>
         </ownedComment>
@@ -3568,7 +3576,7 @@ Check the reactants - He first
             <ownedComment xmi:id="_mIresEYsEeOPDa8Cefg4Cg" annotatedElement="_-bAUMEM5EeOTkpIp2VY3Rg">
               <body>&lt;p>The list of particular quantities the HardwareCounter monitors.&lt;/p>&lt;p>Some of the PAPI preset events which will be included are PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM for the levels 1-3 total cache misses, PAPI_BR_MSP for the number mispredicted branches, PAPI_TOT_CYC and PAPI_TOT_INS for the total number of instructions and cycles executed which can be used for the calculation of the total number of instructions (cycles) per cycle (instruction), and PAPI_FP_INS for the number of floating point instructions executed which can be used for the calculation of floating point operations.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:Enumeration" href="platform:/resource/xolotl-Source@xolotl/xolotlModel/xolotlModel.emx#_6fJdQInzEeOUtaE7Hpff1Q?xolotl/performance/HardwareCounter/HardwareQuantities?"/>
+            <type xmi:type="uml:Enumeration" href="platform:/resource/xolotl-Source@xolotl/xolotlModel/xolotlModel.emx#_6fJdQInzEeOUtaE7Hpff1Q?xolotl/performance/HardwareQuantities?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__AHMYUM5EeOTkpIp2VY3Rg" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__AHMYEM5EeOTkpIp2VY3Rg"/>
           </ownedParameter>
@@ -3603,9 +3611,6 @@ Check the reactants - He first
           </ownedComment>
         </ownedOperation>
       </packagedElement>
-      <packagedElement xmi:type="uml:Dependency" xmi:id="_6VX0oHh4EeO_LPATlPj4SA" supplier="_iI4CUEVdEeOTkpIp2VY3Rg" client="_BMrGMEMcEeOTkpIp2VY3Rg"/>
-      <packagedElement xmi:type="uml:Dependency" xmi:id="_ASYloHh5EeO_LPATlPj4SA" supplier="_whqFwEVdEeOTkpIp2VY3Rg" client="_BMrGMEMcEeOTkpIp2VY3Rg"/>
-      <packagedElement xmi:type="uml:Dependency" xmi:id="_D8NzEHh5EeO_LPATlPj4SA" supplier="_yYrRwEVdEeOTkpIp2VY3Rg" client="_BMrGMEMcEeOTkpIp2VY3Rg"/>
       <packagedElement xmi:type="uml:Package" xmi:id="_5cd2oHutEeO_LPATlPj4SA" name="dummy">
         <eAnnotations xmi:id="_5cedsHutEeO_LPATlPj4SA" source="uml2.diagrams" references="_5cfEwHutEeO_LPATlPj4SA">
           <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_5cfEwHutEeO_LPATlPj4SA" type="Freeform" name="Main">
@@ -4032,6 +4037,10 @@ Check the reactants - He first
         <packagedElement xmi:type="uml:Usage" xmi:id="_vUjIgHiZEeO_LPATlPj4SA" supplier="_JDcYUHiJEeO_LPATlPj4SA" client="_nRaL8EVpEeOTkpIp2VY3Rg"/>
         <packagedElement xmi:type="uml:Usage" xmi:id="_sQUigHiZEeO_LPATlPj4SA" supplier="_DQVxQHiJEeO_LPATlPj4SA" client="_nRaL8EVpEeOTkpIp2VY3Rg"/>
       </packagedElement>
+      <packagedElement xmi:type="uml:Dependency" xmi:id="_OWsv4Iz8EeOsJLr0M3rJfg" supplier="_6fJdQInzEeOUtaE7Hpff1Q" client="_yYrRwEVdEeOTkpIp2VY3Rg"/>
+      <packagedElement xmi:type="uml:Realization" xmi:id="_R3mq0Iz8EeOsJLr0M3rJfg" supplier="_yYrRwEVdEeOTkpIp2VY3Rg" client="_BMrGMEMcEeOTkpIp2VY3Rg"/>
+      <packagedElement xmi:type="uml:Realization" xmi:id="_VT8O0Iz8EeOsJLr0M3rJfg" supplier="_whqFwEVdEeOTkpIp2VY3Rg" client="_BMrGMEMcEeOTkpIp2VY3Rg"/>
+      <packagedElement xmi:type="uml:Realization" xmi:id="_cW6iUIz8EeOsJLr0M3rJfg" supplier="_iI4CUEVdEeOTkpIp2VY3Rg" client="_BMrGMEMcEeOTkpIp2VY3Rg"/>
     </packagedElement>
     <profileApplication xmi:id="_biIvZXVKEeKM6_T6gw_pCg">
       <eAnnotations xmi:id="_biIvZnVKEeKM6_T6gw_pCg" source="http://www.eclipse.org/uml2/2.0.0/UML">
