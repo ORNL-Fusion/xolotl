@@ -587,7 +587,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //		}
 
 		// Uncomment this line for debugging in a single cell.
-		// break;
+		break;
 	}
 
 	/*
@@ -766,17 +766,17 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				checkPetscError(ierr);
 			}
 			// Uncomment this line for debugging in a single cell.
-			// break;
+			break;
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
 		ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
-		ierr = MatSetOption(*J, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
-		checkPetscError(ierr);
-		ierr = MatStoreValues(*J);
-		checkPetscError(ierr);
-		MatSetFromOptions(*J);
+//		ierr = MatSetOption(*J, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
+//		checkPetscError(ierr);
+//		ierr = MatStoreValues(*J);
+//		checkPetscError(ierr);
+//		MatSetFromOptions(*J);
 		initialized = PETSC_TRUE;
 		// Debug line for viewing the matrix
 		//MatView(*J, PETSC_VIEWER_STDOUT_WORLD);
@@ -828,7 +828,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 					partials.data(), ADD_VALUES);
 		}
 		// Uncomment this line for debugging in a single cell.
-		// break;
+		break;
 	}
 
 	/*
@@ -886,14 +886,16 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 				diagFill[index] = connectivity[j];
 			}
 		}
-//		printf("Number of degrees of freedom = %d\n", numReactants);
-//		for (i = 0; i < numReactants; i++) {
-//			for (j = 0; j < numReactants; j++) {
-//				printf("%d ", dfill[i * numReactants + j]);
-//			}
-//			printf("\n");
-//		}
-//		printf("\n");
+		std::cout << "Number of degrees of freedom = " << numReactants
+				<< std::endl;
+		printf("\n");
+		for (i = 0; i < numReactants; i++) {
+			for (j = 0; j < numReactants; j++) {
+				printf("%d ", dfill[i * numReactants + j]);
+			}
+			printf("\n");
+		}
+		printf("\n");
 	} else {
 		std::string err =
 				"PetscSolver Exception: Invalid diagonal block size!\n";
@@ -1067,6 +1069,11 @@ void PetscSolver::solve() {
 	// Get the diagonal fill
 	ierr = getDiagonalFill(dfill, dof * dof);
 	checkPetscError(ierr);
+
+	for (int i = 0; i < dof * dof; i++) {
+		printf("%d ", dfill[i]);
+	}
+
 	// Load up the block fills
 	ierr = DMDASetBlockFills(da, dfill, ofill);
 	checkPetscError(ierr);
