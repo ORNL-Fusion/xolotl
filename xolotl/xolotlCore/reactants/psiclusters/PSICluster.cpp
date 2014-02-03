@@ -5,7 +5,7 @@
 using namespace xolotlCore;
 
 // Create the static map of binding energies
-std::unordered_map<std::string,int> PSICluster::bindingEnergyIndexMap;
+std::unordered_map<std::string, int> PSICluster::bindingEnergyIndexMap;
 
 PSICluster::PSICluster() {
 	// Set the size
@@ -28,8 +28,8 @@ PSICluster::PSICluster() {
 	// Set the default reaction radius to 0. (Doesn't react.)
 	reactionRadius = 0.0;
 	// Setup the binding energy index map
-	bindingEnergyIndexMap = { { "He", 0 },
-				{ "V", 1 }, { "I", 2 } };
+	bindingEnergyIndexMap = { {"He", 0},
+		{	"V", 1}, {"I", 2}};
 }
 
 PSICluster::PSICluster(const int clusterSize) :
@@ -66,8 +66,9 @@ PSICluster::PSICluster(const PSICluster &other) :
 				other.dissociationConnectivity), reactingPairs(
 				other.reactingPairs), combiningReactants(
 				other.combiningReactants), dissociatingClusters(
-				other.dissociatingClusters), thisNetworkIndex(other.thisNetworkIndex),
-				thisSharedPtr(other.thisSharedPtr), reactionRadius(other.reactionRadius) {
+				other.dissociatingClusters), thisNetworkIndex(
+				other.thisNetworkIndex), thisSharedPtr(other.thisSharedPtr), reactionRadius(
+				other.reactionRadius) {
 }
 
 std::shared_ptr<Reactant> PSICluster::clone() {
@@ -287,18 +288,20 @@ double PSICluster::getCombinationFlux(double temperature) const {
 double PSICluster::getTotalFlux(double temperature) const {
 
 	// Get the fluxes
-	double prodFlux = getProductionFlux(temperature);
-	double combFlux = getCombinationFlux(temperature);
-	double dissFlux = getDissociationFlux(temperature);
+	double prodFlux, combFlux, dissFlux;
+	prodFlux = getProductionFlux(temperature);
+	combFlux = getCombinationFlux(temperature);
+	dissFlux = getDissociationFlux(temperature);
 
-	//	std::cout << "----- Cluster " << name << "_" << size << " fluxes -----"
-	//			<< std::endl;
-//		std::cout << "FINAL Production flux = " << getProductionFlux(temperature)
-//				<< std::endl;
-	//	std::cout << "FINAL Combination flux = " << getCombinationFlux(temperature)
-	//			<< std::endl;
-//		std::cout << "FINAL Dissociation flux = " << getDissociationFlux(temperature)
-//				<< " for " << getName() << "_ " << getSize() << std::endl;
+//	std::cout << "----- Cluster " << name << "_" << size << " fluxes -----"
+//			<< std::endl;
+//	std::cout << "FINAL Production flux = " << getProductionFlux(temperature)
+//			<< std::endl;
+//	std::cout << "FINAL Combination flux = " << getCombinationFlux(temperature)
+//			<< std::endl;
+//	std::cout << "FINAL Dissociation flux = "
+//			<< getDissociationFlux(temperature) << " for " << getName() << "_ "
+//			<< getSize() << std::endl;
 
 	return prodFlux - combFlux + dissFlux;
 }
@@ -381,7 +384,6 @@ double PSICluster::calculateDissociationConstant(
 	double atomicVolume = 1.0; // Currently calculated below for He and W only!
 	double bindingEnergy = 0.0;
 	std::vector<int> parentCompVector = { 0, 0, 0 };
-	std::shared_ptr<PSICluster> singleSpeciesCluster;
 	auto otherComposition = firstCluster.getComposition();
 
 	// Get the binding energy index.
@@ -397,10 +399,8 @@ double PSICluster::calculateDissociationConstant(
 
 	// Calculate the Reaction Rate Constant
 	double kPlus = 0.0;
-	if (singleSpeciesCluster) { // WHOA! WTF is this? FIXME!!!! ~JJB 20140202 20:47
-		kPlus = calculateReactionRateConstant(firstCluster,
-				*singleSpeciesCluster, temperature);
-	}
+	kPlus = calculateReactionRateConstant(firstCluster, secondCluster,
+			temperature);
 
 	// Calculate and return
 	bindingEnergy = firstCluster.getBindingEnergies()[bindingEnergyIndex];
@@ -606,7 +606,7 @@ void PSICluster::getCombinationPartialDerivatives(
 	// This means that we compute k+ and then multiply by the concentration
 	// of this cluster.
 	//
-	// This only computers the partial derivatives with respect to the
+	// This only computes the partial derivatives with respect to the
 	// combining reactants. The final term, df(C_i)/dC_i is computed below.
 	numReactants = combiningReactants.size();
 	for (int i = 0; i < numReactants; i++) {
@@ -625,13 +625,13 @@ void PSICluster::getCombinationPartialDerivatives(
 //				<< cluster->getName() << "_" << cluster->getSize() << std::endl;
 	}
 
-	// This section computers the partial derivative of the combining flux due
+	// This section computes the partial derivative of the combining flux due
 	// to changes in the concentration of this cluster.
 	//
 	// This is simply a loop over all of the combining clusters to compute
 	// df(C_i)/dC_i = sum(k+_(i,j)*C_j).
 	//
-	// Loop over all of the clusters and compute the sume
+	// Loop over all of the clusters and compute the sum
 	for (int i = 0; i < numReactants; i++) {
 		cluster = std::dynamic_pointer_cast<PSICluster>(combiningReactants[i]);
 		// Compute the contribution from the cluster. Remember that the flux
@@ -723,115 +723,115 @@ void PSICluster::combineClusters(
 		std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
 		int maxSize, std::string compoundName) {
 
-	std::map<std::string,int> myComposition = getComposition(), secondComposition;
-	int numHe, numV, numI, secondNumHe, secondNumV, secondNumI;
-	int otherIndex, productIndex;
-	std::vector<int> compositionSizes {0,0,0};
-	std::shared_ptr<PSICluster> secondCluster, productCluster;
-	// Setup the composition variables for this cluster
-	numHe = myComposition["He"];
-	numV = myComposition["V"];
-	numI = myComposition["I"];
+			std::map<std::string,int> myComposition = getComposition(), secondComposition;
+			int numHe, numV, numI, secondNumHe, secondNumV, secondNumI;
+			int otherIndex, productIndex;
+			std::vector<int> compositionSizes {0,0,0};
+			std::shared_ptr<PSICluster> secondCluster, productCluster;
+			// Setup the composition variables for this cluster
+			numHe = myComposition["He"];
+			numV = myComposition["V"];
+			numI = myComposition["I"];
 
-	int reactantVecSize = reactants->size();
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the second reactant, its composition and its index
-		secondCluster = std::dynamic_pointer_cast <PSICluster> (reactants->at(i));
-		secondComposition = secondCluster->getComposition();
-		secondNumHe = secondComposition["He"];
-		secondNumV = secondComposition["V"];
-		secondNumI = secondComposition["I"];
-		otherIndex = secondCluster->getId() - 1;
-		int productSize = size + secondCluster->getSize();
-		// Get and handle product for compounds
-		if (compoundName == "HeV" || compoundName == "HeI") {
-			// Modify the composition vector
-			compositionSizes[0] = numHe + secondNumHe;
-			compositionSizes[1] = numV + secondNumV;
-			compositionSizes[2] = numI + secondNumI;
-			// Get the product
-			productCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->getCompound(compoundName, compositionSizes));
-		} else {
-			// Just get the product if it is a single-species
-			productCluster = std::dynamic_pointer_cast < PSICluster
-			> (network->get(compoundName, productSize));
-		}
-		// React if the size of the product is valid and it exists in the network
-		if (productSize <= maxSize && productCluster) {
-			// Setup the connectivity array for the second reactant
-			reactionConnectivity[otherIndex] = 1;
-			// FIXME! - Debug output
-//			std::cout << "Second " << secondCluster->getSize() << secondCluster->getName() << ": "
-//			<< "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << " " << getName() << std::endl;
-			// Setup the connectivity array for the product
-			productIndex = productCluster->getId() - 1;
-			reactionConnectivity[productIndex] = 1;
-			// FIXME! - Debug output
-//			std::cout << productSize << compoundName << ": " << "reactionConnectivity["<< productIndex << "] = "
-//			<< reactionConnectivity[productIndex] << std::endl;
-			// Push the product onto the list of clusters that combine with this one
-			combiningReactants.push_back(secondCluster);
-		}
-	}
+			int reactantVecSize = reactants->size();
+			for (int i = 0; i < reactantVecSize; i++) {
+				// Get the second reactant, its composition and its index
+				secondCluster = std::dynamic_pointer_cast <PSICluster> (reactants->at(i));
+				secondComposition = secondCluster->getComposition();
+				secondNumHe = secondComposition["He"];
+				secondNumV = secondComposition["V"];
+				secondNumI = secondComposition["I"];
+				otherIndex = secondCluster->getId() - 1;
+				int productSize = size + secondCluster->getSize();
+				// Get and handle product for compounds
+				if (compoundName == "HeV" || compoundName == "HeI") {
+					// Modify the composition vector
+					compositionSizes[0] = numHe + secondNumHe;
+					compositionSizes[1] = numV + secondNumV;
+					compositionSizes[2] = numI + secondNumI;
+					// Get the product
+					productCluster = std::dynamic_pointer_cast < PSICluster
+					> (network->getCompound(compoundName, compositionSizes));
+				} else {
+					// Just get the product if it is a single-species
+					productCluster = std::dynamic_pointer_cast < PSICluster
+					> (network->get(compoundName, productSize));
+				}
+				// React if the size of the product is valid and it exists in the network
+				if (productSize <= maxSize && productCluster) {
+					// Setup the connectivity array for the second reactant
+					reactionConnectivity[otherIndex] = 1;
+					// FIXME! - Debug output
+			std::cout << getName() << "_" << getSize() << " + Second " << secondCluster->getSize() << secondCluster->getName() << ": "
+			<< "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << " " << getName() << std::endl;
+					// Setup the connectivity array for the product
+					productIndex = productCluster->getId() - 1;
+					reactionConnectivity[productIndex] = 1;
+					// FIXME! - Debug output
+			std::cout << productSize << compoundName << ": " << "reactionConnectivity["<< productIndex << "] = "
+			<< reactionConnectivity[productIndex] << std::endl;
+					// Push the product onto the list of clusters that combine with this one
+					combiningReactants.push_back(secondCluster);
+				}
+			}
 
-	return;
-}
+			return;
+		}
 
 void PSICluster::replaceInCompound(
 		std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants,
 		std::string oldComponentName, std::string newComponentName) {
 
-	// Local Declarations
-	std::map<std::string, int> myComp = getComposition(),
-	secondReactantComp, productReactantComp;
-	int myComponentNumber = myComp[newComponentName];
-	int productNumHe = 0, productNumV = 0, productNumI = 0;
-	int numReactants = reactants->size();
-	int secondIndex = 0, productIndex = 0;
-	std::shared_ptr<Reactant> secondReactant, productReactant;
-	std::vector<int> productCompositionVector(myComp.size());
+			// Local Declarations
+			std::map<std::string, int> myComp = getComposition(),
+			secondReactantComp, productReactantComp;
+			int myComponentNumber = myComp[newComponentName];
+			int productNumHe = 0, productNumV = 0, productNumI = 0;
+			int numReactants = reactants->size();
+			int secondIndex = 0, productIndex = 0;
+			std::shared_ptr<Reactant> secondReactant, productReactant;
+			std::vector<int> productCompositionVector(myComp.size());
 
-	// Loop over all of the extra reactants in this reaction and handle the replacement
-	for (int i = 0; i < numReactants; i++) {
-		// Get the second reactant and its composition
-		secondReactant = reactants->at(i);
-		secondReactantComp = secondReactant->getComposition();
-		// Create the composition vector
-		productReactantComp = secondReactantComp;
-		// Updated the modified components
-		productReactantComp[oldComponentName] =
+			// Loop over all of the extra reactants in this reaction and handle the replacement
+			for (int i = 0; i < numReactants; i++) {
+				// Get the second reactant and its composition
+				secondReactant = reactants->at(i);
+				secondReactantComp = secondReactant->getComposition();
+				// Create the composition vector
+				productReactantComp = secondReactantComp;
+				// Updated the modified components
+				productReactantComp[oldComponentName] =
 				secondReactantComp[oldComponentName] - myComponentNumber;
-		// Create the composition vector -- FIXME! This should be general!
-		productCompositionVector[0] = productReactantComp["He"];
-		productCompositionVector[1] = productReactantComp["V"];
-		productCompositionVector[2] = productReactantComp["I"];
-		// Get the product
-		productReactant = network->getCompound(secondReactant->getName(),
-				productCompositionVector);
-		// If the product exists, mark the proper reaction arrays and it it to the list
-		if (productReactant) {
-			// Setup the connectivity array for the second reactant
-			secondIndex = secondReactant->getId() - 1;
-			reactionConnectivity[secondIndex] = 1;
-			//std::cout << secondCluster->getSize()
-			//<< secondCluster->getName() << ": "
-			//<< "reactionConnectivity[" << otherIndex << "] = "
-			//<< reactionConnectivity[otherIndex] << std::endl;
-			// Setup the connectivity array for the product
-			productIndex = productReactant->getId() - 1;
-			reactionConnectivity[productIndex] = 1;
-			// FIXME! - Debug output
-			//std::cout << productSize << compoundName << ": "
-			//<< "reactionConnectivity[" << productIndex << "] = "
-			//<< reactionConnectivity[productIndex] << std::endl;
-			// Push the product onto the list of clusters that combine with this one
-			combiningReactants.push_back(secondReactant);
-		}
-	}
+				// Create the composition vector -- FIXME! This should be general!
+				productCompositionVector[0] = productReactantComp["He"];
+				productCompositionVector[1] = productReactantComp["V"];
+				productCompositionVector[2] = productReactantComp["I"];
+				// Get the product
+				productReactant = network->getCompound(secondReactant->getName(),
+						productCompositionVector);
+				// If the product exists, mark the proper reaction arrays and it it to the list
+				if (productReactant) {
+					// Setup the connectivity array for the second reactant
+					secondIndex = secondReactant->getId() - 1;
+					reactionConnectivity[secondIndex] = 1;
+					//std::cout << secondCluster->getSize()
+					//<< secondCluster->getName() << ": "
+					//<< "reactionConnectivity[" << otherIndex << "] = "
+					//<< reactionConnectivity[otherIndex] << std::endl;
+					// Setup the connectivity array for the product
+					productIndex = productReactant->getId() - 1;
+					reactionConnectivity[productIndex] = 1;
+					// FIXME! - Debug output
+					//std::cout << productSize << compoundName << ": "
+					//<< "reactionConnectivity[" << productIndex << "] = "
+					//<< reactionConnectivity[productIndex] << std::endl;
+					// Push the product onto the list of clusters that combine with this one
+					combiningReactants.push_back(secondReactant);
+				}
+			}
 
-	return;
-}
+			return;
+		}
 
 void PSICluster::fillVWithI(std::string secondClusterName,
 		std::shared_ptr<std::vector<std::shared_ptr<Reactant> > > reactants) {

@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <fstream>
+#include <unordered_map>
 
 using namespace xolotlCore;
 
@@ -53,6 +54,14 @@ PetscErrorCode ierr;
 DM da; /* manages the grid data */
 PetscInt He, *ofill, *dfill;
 double temperature = 1000.0;
+
+/**
+ * A map for storing the dfill configuration and accelerating the formation of
+ * the Jacobian. Its keys are reactant/cluster ids and its values are integer
+ * vectors of the column ids that are marked as connected for that cluster in
+ * the dfill array.
+ */
+static std::unordered_map<int,std::vector<int> > dFillMap;
 
 /* ----- Error Handling Code ----- */
 
@@ -587,7 +596,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //		}
 
 		// Uncomment this line for debugging in a single cell.
-		break;
+		//break;
 	}
 
 	/*
@@ -619,7 +628,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	Vec localC;
 	static PetscBool initialized = PETSC_FALSE;
 	std::shared_ptr<PSICluster> psiCluster;
-	std::shared_ptr<Reactant> heCluster;
+	std::shared_ptr<Reactant> heCluster, reactant;
 	std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>reactants;
 	// Get the network
 	auto network = PetscSolver::getNetwork();
@@ -766,7 +775,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				checkPetscError(ierr);
 			}
 			// Uncomment this line for debugging in a single cell.
-			break;
+			//break;
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -789,10 +798,13 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	 * grid point ----- */
 
 	// Create a new row array of size n
-	PetscInt pdColIds[size];
+	PetscInt localPDColIds[size];
 	PetscInt rowId = 0;
+	// Create arrays for storing the partial derivatives
+	std::vector<double> reactingPartialsForCluster(size,0.0);
+	std::vector<double> allPartialsForCluster;
+	int pdColIdsVectorSize = 0;
 	// Loop over the grid points
-	std::vector<double> partials;
 //	std::cout << "xs = " << xs << std::endl;
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
@@ -808,27 +820,35 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		reactants = network->getAll();
 		// Update the column in the Jacobian that represents each reactant
 		for (int i = 0; i < size; i++) {
-			psiCluster = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(i));
+			reactant = reactants->at(i);
 			// Get the reactant index
-			reactantIndex = psiCluster->getId() - 1;
+			reactantIndex = reactant->getId() - 1;
 			// Get the column id
 			rowId = (xi - xs + 1) * size + reactantIndex;
 			// Get the partial derivatives
-			partials = psiCluster->getPartialDerivatives(temperature);
+			allPartialsForCluster = reactant->getPartialDerivatives(temperature);
 			// Set the row indices
-//			std::cout << xi << " " << xs << " " << size << " " << (xi - xs + 1)*size << std::endl;
-//			std::cout << "PD for " << psiCluster->getName() << "_" << psiCluster->getSize() << std::endl;
-			for (int j = 0; j < size; j++) {
-				pdColIds[j] = (xi - xs + 1) * size + j;
-//				std::cout << "dp[" << j << "] = " << partials[j] << " , [r,c] = "<< "[" << rowId << "," << pdColIds[j] << "]"<< std::endl;
+			psiCluster = std::dynamic_pointer_cast<PSICluster>(reactant);
+			std::cout << xi << " " << xs << " " << size << " " << (xi - xs + 1)*size << std::endl;
+			std::cout << "PD for " << psiCluster->getName() << "_" << psiCluster->getSize() << " at " << reactantIndex << std::endl;
+			// Get the list of column ids from the map
+			auto pdColIdsVector = dFillMap.at(reactantIndex);
+			pdColIdsVectorSize = pdColIdsVector.size();
+			std::cout << "Number of partial derivatives = " << pdColIdsVectorSize << std::endl;
+			// Loop over the list of column ids
+			for (int j = 0; j < pdColIdsVectorSize; j++) {
+				// Calculate the appropriate index to match the dfill array configuration
+				localPDColIds[j] = (xi - xs + 1) * size + pdColIdsVector[j];
+				// Get the partial derivative from the array of all of the partials
+				reactingPartialsForCluster[j] = allPartialsForCluster[pdColIdsVector[j]];
+				std::cout << "dp[" << j << "] = " << pdColIdsVector[j] << " , [r,c] = "<< "[" << rowId << "," << localPDColIds[j] << "] = " << reactingPartialsForCluster[j]<< std::endl;
 			}
 			// Update the matrix
-			ierr = MatSetValuesLocal(*J, 1, &rowId, size, pdColIds,
-					partials.data(), ADD_VALUES);
+			ierr = MatSetValuesLocal(*J, 1, &rowId, pdColIdsVectorSize, localPDColIds,
+					reactingPartialsForCluster.data(), ADD_VALUES);
 		}
 		// Uncomment this line for debugging in a single cell.
-		break;
+		//break;
 	}
 
 	/*
@@ -878,13 +898,22 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 			// Get the reactant id so that the connectivity can be lined up in
 			// the proper column
 			id = reactant->getId() - 1;
+			// Create the vector that will be inserted into the dFill map
+			std::vector<int> columnIds;
 			// Add it to the diagonal fill block
 			for (j = 0; j < connectivityLength; j++) {
 				// The id starts at j*connectivity length and is always offset
 				// by the id, which denotes the exact column.
-				index = j * connectivityLength + id;
+				index = id * connectivityLength + j;
 				diagFill[index] = connectivity[j];
+				// Add a column id if the connectivity is equal to 1.
+				if (connectivity[j] == 1) {
+					columnIds.push_back(j);
+					std::cout << id << " " << j << " " << reactant->getName() << " conn = " << connectivity[j] << std::endl;
+				}
 			}
+			// Update the map
+			dFillMap[id] = columnIds;
 		}
 		std::cout << "Number of degrees of freedom = " << numReactants
 				<< std::endl;
@@ -1076,6 +1105,12 @@ void PetscSolver::solve() {
 
 	// Load up the block fills
 	ierr = DMDASetBlockFills(da, dfill, ofill);
+
+	printf("\n");
+	for (int i = 0; i < dof * dof; i++) {
+		printf("%d ", dfill[i]);
+	}
+
 	checkPetscError(ierr);
 	// Free the temporary fill arrays
 	ierr = PetscFree(ofill);
