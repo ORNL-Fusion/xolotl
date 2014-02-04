@@ -105,7 +105,9 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	// Create the monitor context
 	MyMonitorCtx *ctx = (MyMonitorCtx*) ictx;
 	// Network size
-	int size = PetscSolver::getNetwork()->size();
+	const int size = PetscSolver::getNetwork()->size();
+	// The array of cluster names
+	std::vector<std::string> names(size);
 	// Get the processor id
 	int procId;
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
@@ -139,15 +141,16 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	auto reactants = PetscSolver::getNetwork()->getAll();
 	std::shared_ptr<PSICluster> cluster;
 	header << "# t x ";
-	std::string names[size];
 	for (int i = 0; i < size; i++) {
+		// Get the cluster from the list, its id and composition
 		cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 		int id = cluster->getId() - 1;
-
 		auto composition = cluster->getComposition();
+		// Make the header entry
 		std::stringstream name;
 		name << (cluster->getName()).c_str() << "_(" << composition["He"] << ","
 				<< composition["V"] << "," << composition["I"] << ") ";
+		// Push the header entry on the array
 		name >> names[id];
 	}
 	for (int i = 0; i < size; i++) {
@@ -602,7 +605,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //		}
 
 		// Uncomment this line for debugging in a single cell.
-		//break;
+		break;
 	}
 
 	/*
@@ -780,7 +783,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				checkPetscError(ierr);
 			}
 			// Uncomment this line for debugging in a single cell.
-			//break;
+			break;
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -788,8 +791,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		checkPetscError(ierr);
 //		ierr = MatSetOption(*J, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
 //		checkPetscError(ierr);
-//		ierr = MatStoreValues(*J);
-//		checkPetscError(ierr);
+		ierr = MatStoreValues(*J);
+		checkPetscError(ierr);
 //		MatSetFromOptions(*J);
 		initialized = PETSC_TRUE;
 		// Debug line for viewing the matrix
@@ -852,7 +855,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 					reactingPartialsForCluster.data(), ADD_VALUES);
 		}
 		// Uncomment this line for debugging in a single cell.
-		//break;
+		break;
 	}
 
 	/*
