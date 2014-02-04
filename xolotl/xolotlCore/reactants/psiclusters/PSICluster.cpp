@@ -169,7 +169,7 @@ double PSICluster::getDissociationFlux(double temperature) const {
 						network->get(name, smallerClusterSize));
 				// Get the single species cluster that comes out with it
 				singleSpeciesCluster = std::dynamic_pointer_cast<PSICluster>(
-						network->get(dissociatingCluster->getName(), 1));
+						network->get(name, 1));
 				// Set the flux multiplier to 2.0 if the size of this cluster
 				// is 1. If that is true, that means that the clusters splits
 				// and that the flux is actually twice the normal flux of a
