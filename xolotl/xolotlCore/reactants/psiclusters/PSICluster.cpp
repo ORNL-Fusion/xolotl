@@ -170,15 +170,6 @@ double PSICluster::getDissociationFlux(double temperature) const {
 				// Get the single species cluster that comes out with it
 				singleSpeciesCluster = std::dynamic_pointer_cast<PSICluster>(
 						network->get(name, 1));
-				// Set the flux multiplier to 2.0 if the size of this cluster
-				// is 1. If that is true, that means that the clusters splits
-				// and that the flux is actually twice the normal flux of a
-				// dissociation reaction.
-				if (dissociatingCluster->getSize() == 2 * size) {
-//					std::cout << "Dissociation flux multiplier set to 2.0!"
-//							<< std::endl;
-					fluxMultiplier = 2.0;
-				}
 				// Calculate Second term of Dissociation flux
 				if (smallerCluster) {
 					flux += fluxMultiplier
@@ -762,14 +753,14 @@ void PSICluster::combineClusters(
 					// Setup the connectivity array for the second reactant
 					reactionConnectivity[otherIndex] = 1;
 					// FIXME! - Debug output
-			std::cout << getName() << "_" << getSize() << " + Second " << secondCluster->getSize() << secondCluster->getName() << ": "
-			<< "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << " " << getName() << std::endl;
+					std::cout << getName() << "_" << getSize() << " + Second " << secondCluster->getSize() << secondCluster->getName() << ": "
+					<< "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << " " << getName() << std::endl;
 					// Setup the connectivity array for the product
 					productIndex = productCluster->getId() - 1;
 					reactionConnectivity[productIndex] = 1;
 					// FIXME! - Debug output
-			std::cout << productSize << compoundName << ": " << "reactionConnectivity["<< productIndex << "] = "
-			<< reactionConnectivity[productIndex] << std::endl;
+					std::cout << productSize << compoundName << ": " << "reactionConnectivity["<< productIndex << "] = "
+					<< reactionConnectivity[productIndex] << std::endl;
 					// Push the product onto the list of clusters that combine with this one
 					combiningReactants.push_back(secondCluster);
 				}
@@ -851,53 +842,63 @@ void PSICluster::fillVWithI(std::string secondClusterName,
 		// Get the second cluster its size
 		secondCluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
 		secondClusterSize = (secondCluster->getSize());
-		// We have to switch on cluster type to make sure that the annihilation
-		// is computed correctly.
-		if (firstClusterName == "V") {
-			// Compute the product size and set the product name for the case
-			// where I is the second cluster
-			if (secondClusterSize > firstClusterSize) {
-				productClusterSize = secondClusterSize - firstClusterSize;
-				productClusterName = "I";
-			} else if (secondClusterSize < firstClusterSize) {
-				productClusterSize = firstClusterSize - secondClusterSize;
-				productClusterName = "V";
+		// The only way this reaction is allowed is if the sizes are not equal.
+		if (firstClusterSize != secondClusterSize) {
+			// We have to switch on cluster type to make sure that the annihilation
+			// is computed correctly.
+			if (firstClusterName == "V") {
+				// Compute the product size and set the product name for the case
+				// where I is the second cluster
+				if (secondClusterSize > firstClusterSize) {
+					productClusterSize = secondClusterSize - firstClusterSize;
+					productClusterName = "I";
+				} else if (secondClusterSize < firstClusterSize) {
+					productClusterSize = firstClusterSize - secondClusterSize;
+					productClusterName = "V";
+				}
+			} else if (firstClusterName == "I") {
+				// Compute the product size and set the product name for the case
+				// where V is the second cluster
+				if (firstClusterSize > secondClusterSize) {
+					productClusterSize = firstClusterSize - secondClusterSize;
+					productClusterName = "I";
+				} else if (firstClusterSize < secondClusterSize) {
+					productClusterSize = secondClusterSize - firstClusterSize;
+					productClusterName = "V";
+				}
 			}
-		} else if (firstClusterName == "I") {
-			// Compute the product size and set the product name for the case
-			// where V is the second cluster
-			if (firstClusterSize > secondClusterSize) {
-				productClusterSize = firstClusterSize - secondClusterSize;
-				productClusterName = "I";
-			} else if (firstClusterSize < secondClusterSize) {
-				productClusterSize = secondClusterSize - firstClusterSize;
-				productClusterName = "V";
+			// Get the product
+			productCluster = std::dynamic_pointer_cast<PSICluster>(
+					network->get(productClusterName, productClusterSize));
+			// Only deal with this reaction if the product exists. Otherwise the
+			// whole reaction is forbidden.
+			if (productCluster) {
+				std::cout << "Trap Mutation: " << name << size << " + "
+						<< secondCluster->getName() << secondCluster->getSize()
+						<< " = " << productCluster->getName()
+						<< productCluster->getSize() << " "
+						<< productClusterName << productClusterSize
+						<< std::endl;
+				// Setup the connectivity array to handle the second reactant
+				secondIndex = secondCluster->getId() - 1;
+				reactionConnectivity[secondIndex] = 1;
+				// Push the second cluster onto the list of clusters that combine
+				// with this one
+				combiningReactants.push_back(secondCluster);
+				// Setup the connectivity array to handle the product
+				productIndex = productCluster->getId() - 1;
+				reactionConnectivity[productIndex] = 1;
+				// Add the current cluster and the second cluster as a reacting
+				// pair for the product. Start by getting the pointer for this
+				// cluster.
+				thisCluster = getThisSharedPtrFromNetwork();
+				// Create the pair
+				pair.first = std::dynamic_pointer_cast<PSICluster>(thisCluster);
+				pair.second = std::dynamic_pointer_cast<PSICluster>(
+						secondCluster);
+				// Add the pair to the list
+				productCluster->reactingPairs.push_back(pair);
 			}
-		}
-		// Get the product
-		productCluster = std::dynamic_pointer_cast<PSICluster>(
-				network->get(productClusterName, productClusterSize));
-		// Only deal with this reaction if the product exists. Otherwise the
-		// whole reaction is forbidden.
-		if (productCluster) {
-			// Setup the connectivity array to handle the second reactant
-			secondIndex = secondCluster->getId() - 1;
-			reactionConnectivity[secondIndex] = 1;
-			// Push the second cluster onto the list of clusters that combine
-			// with this one
-			combiningReactants.push_back(secondCluster);
-			// Setup the connectivity array to handle the product
-			productIndex = productCluster->getId() - 1;
-			reactionConnectivity[productIndex] = 1;
-			// Add the current cluster and the second cluster as a reacting
-			// pair for the product. Start by getting the pointer for this
-			// cluster.
-			thisCluster = getThisSharedPtrFromNetwork();
-			// Create the pair
-			pair.first = std::dynamic_pointer_cast<PSICluster>(thisCluster);
-			pair.second = std::dynamic_pointer_cast<PSICluster>(secondCluster);
-			// Add the pair to the list
-			productCluster->reactingPairs.push_back(pair);
 		}
 	}
 }

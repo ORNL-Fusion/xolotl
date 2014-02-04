@@ -38,10 +38,10 @@ void InterstitialCluster::createReactionConnectivity() {
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int totalSize = 1, firstSize = 0, secondSize = 0;
+	int totalSize = 1, firstSize = 0, secondSize = 0, reactantsSize = 0;
 	int firstIndex = -1, secondIndex = -1;
 	int index = 0;
-	std::shared_ptr<Reactant> firstReactant, secondReactant;
+	std::shared_ptr<PSICluster> firstReactant, secondReactant;
 
 	// Connect this cluster to itself since any reaction will affect it
 	reactionConnectivity[thisNetworkIndex] = 1;
@@ -60,13 +60,13 @@ void InterstitialCluster::createReactionConnectivity() {
 		secondSize = size - firstSize;
 		// Get the first and second reactants for the reaction
 		// first + second = this.
-		firstReactant = network->get("I", firstSize);
-		secondReactant = network->get("I", secondSize);
+		firstReactant = std::dynamic_pointer_cast<PSICluster>(network->get("I", firstSize));
+		secondReactant = std::dynamic_pointer_cast<PSICluster>(network->get("I", secondSize));
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			pair.first = firstReactant;
+			pair.second = secondReactant;
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -107,6 +107,22 @@ void InterstitialCluster::createReactionConnectivity() {
 	 */
 	reactants = network->getAll("V");
 	fillVWithI("V",reactants);
+	// Mark the reaction connectivity for the cases where this cluster is
+	// produced by the above reaction. This has to be checked for every
+	// vacancy.
+	reactantsSize = reactants->size();
+	for (int i = 0; i < reactantsSize; i++) {
+		firstReactant = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+		// Get the interstitial cluster that is bigger than the vacancy
+		// and can form this cluster. I only results when it is bigger than V.
+		secondReactant = std::dynamic_pointer_cast<PSICluster>(network->get(name,firstReactant->getSize() + size));
+		// Update the connectivity
+		if (secondReactant) {
+			std::cout << "Found " << secondReactant->getName() << secondReactant->getSize() << " from " << name << size << std::endl;
+			reactionConnectivity[firstReactant->getId() - 1] = 1;
+			reactionConnectivity[secondReactant->getId() - 1] = 1;
+		}
+	}
 
 	/* ----- (He_a)(V_b) + (I_c) --> (He_a)[V_(b-c)] -----
 	 * Interstitials interact with all mixed-species clusters by
