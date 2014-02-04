@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <fstream>
+#include <string>
 #include <unordered_map>
 
 using namespace xolotlCore;
@@ -21,7 +22,7 @@ using namespace xolotlCore;
 
  Sample Options:
  -ts_monitor_draw_solution               -- plot the solution for each concentration as a function of x each in a separate 1d graph
- -draw_fields_by_name 1-He-2-V,1-He  -- only plot the solution for these two concentrations
+ -draw_fields_by_name 1-He-2-V,1-He 	 -- only plot the solution for these two concentrations
  -mymonitor                              -- plot the concentrations of He and V as a function of x and cluster size (2d contour plot)
  -da_refine <n=1,2,...>                  -- run on a finer grid
  -ts_max_steps maxsteps                  -- maximum number of time-steps to take
@@ -138,11 +139,19 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	auto reactants = PetscSolver::getNetwork()->getAll();
 	std::shared_ptr<PSICluster> cluster;
 	header << "# t x ";
+	std::string names[size];
 	for (int i = 0; i < size; i++) {
 		cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+		int id = cluster->getId() - 1;
+
 		auto composition = cluster->getComposition();
-		header << cluster->getName() << "_(" << composition["He"] << ","
+		std::stringstream name;
+		name << (cluster->getName()).c_str() << "_(" << composition["He"] << ","
 				<< composition["V"] << "," << composition["I"] << ") ";
+		name >> names[id];
+	}
+	for (int i = 0; i < size; i++) {
+		header << names[i] << " ";
 	}
 	header << "\n";
 	PetscViewerASCIIPrintf(viewer, header.str().c_str());
@@ -163,7 +172,7 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 		x = xi * hx;
 		outputData << timestep << " " << x << " ";
 		// Get the pointer to the beginning of the solution data for this grid point
-		gridPointSolution = solutionArray + size * (xi - 1);
+		gridPointSolution = solutionArray + size * xi;
 		// Dump the data to the stream
 		for (i = 0; i < size; i++) {
 			outputData << gridPointSolution[i] << " ";
@@ -319,7 +328,6 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	PetscErrorCode ierr;
 	PetscInt i, nI, nHe, nV, xs, xm, Mx, cnt = 0;
 	PetscScalar *concentrations;
-	PetscReal hx, x;
 	char string[16];
 	auto reactants = network->getAll();
 	int size = reactants->size();
@@ -332,7 +340,6 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 			PETSC_IGNORE);
 	checkPetscError(ierr);
-	hx = 1.0 / (PetscReal) (Mx - 1);
 
 	/* Name each of the concentrations */
 	for (i = 0; i < size; i++) {
@@ -362,7 +369,6 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	 Compute function over the locally owned part of the grid
 	 */
 	for (i = xs; i < xs + xm; i++) {
-		x = i * hx;
 		// Set the default vacancy concentrations
 		reactants = network->getAll("V");
 		size = reactants->size();
@@ -622,7 +628,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	PetscErrorCode ierr;
 	PetscInt xi, Mx, xs, xm, He, he, V, v, I, i;
 	PetscInt row[3], col[3];
-	PetscReal hx, sx, x, val[6];
+	PetscReal hx, sx, val[6];
 	PetscReal *concs, *updatedConcs;
 	double * concOffset, diffCoeff = 0.0;
 	Vec localC;
@@ -684,7 +690,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		 grid point
 		 */
 		for (xi = xs; xi < xs + xm; xi++) {
-			x = xi * hx;
 
 			//xi = 4; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -807,7 +812,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	// Loop over the grid points
 //	std::cout << "xs = " << xs << std::endl;
 	for (xi = xs; xi < xs + xm; xi++) {
-		x = xi * hx;
 
 		//xi = 4; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
