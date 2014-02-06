@@ -605,7 +605,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //		}
 
 		// Uncomment this line for debugging in a single cell.
-		break;
+		//break;
 	}
 
 	/*
@@ -783,7 +783,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				checkPetscError(ierr);
 			}
 			// Uncomment this line for debugging in a single cell.
-			break;
+			//break;
 		}
 		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -838,9 +838,9 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(reactant);
 			std::cout << xi << " " << xs << " " << size << " " << (xi - xs + 1)*size << std::endl;
 			std::cout << "PD for " << psiCluster->getName() << "_" << psiCluster->getSize() << " at " << reactantIndex << std::endl;
-			for (int k = 0; k < allPartialsForCluster.size(); k++) {
-				std::cout << "pd[" << k << "] = " << allPartialsForCluster[k] << std::endl;
-			}
+//			for (int k = 0; k < allPartialsForCluster.size(); k++) {
+//				std::cout << "pd[" << k << "] = " << allPartialsForCluster[k] << std::endl;
+//			}
 			// Get the list of column ids from the map
 			auto pdColIdsVector = dFillMap.at(reactantIndex);
 			pdColIdsVectorSize = pdColIdsVector.size();
@@ -856,9 +856,10 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			// Update the matrix
 			ierr = MatSetValuesLocal(*J, 1, &rowId, pdColIdsVectorSize, localPDColIds,
 					reactingPartialsForCluster.data(), ADD_VALUES);
+			checkPetscError(ierr);
 		}
 		// Uncomment this line for debugging in a single cell.
-		break;
+		//break;
 	}
 
 	/*
