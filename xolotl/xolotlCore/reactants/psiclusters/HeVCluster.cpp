@@ -44,8 +44,8 @@ std::shared_ptr<PSICluster> HeVCluster::getThisSharedPtrFromNetwork() const {
 	auto composition = getComposition();
 	std::vector<int> compVec = { composition["He"], composition["V"],
 			composition["I"] };
-	return std::dynamic_pointer_cast<PSICluster>(
-			network->getCompound(name, compVec));
+	return std::dynamic_pointer_cast < PSICluster
+			> (network->getCompound(name, compVec));
 }
 
 std::shared_ptr<Reactant> HeVCluster::clone() {
@@ -64,8 +64,8 @@ double HeVCluster::getAnnByEm() {
 void HeVCluster::createReactionConnectivity() {
 
 	// Local Declarations
-	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
-			network);
+	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
+			> (network);
 	auto props = psiNetwork->getProperties();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
@@ -92,8 +92,10 @@ void HeVCluster::createReactionConnectivity() {
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			pair.first = std::dynamic_pointer_cast < PSICluster
+					> (firstReactant);
+			pair.second = std::dynamic_pointer_cast < PSICluster
+					> (secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -109,8 +111,8 @@ void HeVCluster::createReactionConnectivity() {
 	// Create a ReactingPair with the two reactants
 	if (firstReactant && secondReactant) {
 		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+		pair.first = std::dynamic_pointer_cast < PSICluster > (firstReactant);
+		pair.second = std::dynamic_pointer_cast < PSICluster > (secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 	}
@@ -129,8 +131,10 @@ void HeVCluster::createReactionConnectivity() {
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
 			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			pair.first = std::dynamic_pointer_cast < PSICluster
+					> (firstReactant);
+			pair.second = std::dynamic_pointer_cast < PSICluster
+					> (secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -152,9 +156,7 @@ void HeVCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	// Get the HeV cluster that is one V bigger than us.
-	secondComposition = psiNetwork->getCompositionVector(numHe, numV + 1, 0);
-	secondReactant = psiNetwork->getCompound("HeV", secondComposition);
+	secondReactant = psiNetwork->get("V",1);
 	if (secondReactant) {
 		// Create a container for it
 		auto singleVInVector = std::make_shared<
@@ -163,19 +165,19 @@ void HeVCluster::createReactionConnectivity() {
 		// Call the combination function even though there is only one cluster
 		// because it handles all of the work to properly connect the three
 		// clusters in the reaction.
-				combineClusters(singleVInVector,maxHeVClusterSize,"HeV");
-			}
+		combineClusters(singleVInVector,maxHeVClusterSize,"HeV");
+	}
 
-		/* ----- (He_a)*(V_b) + I_c  --> (He_a)*[V_(b-c)] -----
-		 * Helium-vacancy clusters lose vacancies when they interact with
-		 * interstitial clusters.
-		 *
-		 * We assume that the HeV and interstitial cluster can only
-		 * interact if they would produce another HeV cluster, not single He.
-		 *
-		 * All of these clusters are added to the set of combining reactants
-		 * because they contribute to the flux due to combination reactions.
-		 */
+	/* ----- (He_a)*(V_b) + I_c  --> (He_a)*[V_(b-c)] -----
+	 * Helium-vacancy clusters lose vacancies when they interact with
+	 * interstitial clusters.
+	 *
+	 * We assume that the HeV and interstitial cluster can only
+	 * interact if they would produce another HeV cluster, not single He.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the flux due to combination reactions.
+	 */
 	reactants = psiNetwork->getAll("I");
 	fillVWithI("I", reactants);
 
@@ -185,8 +187,8 @@ void HeVCluster::createReactionConnectivity() {
 void HeVCluster::createDissociationConnectivity() {
 
 	// Local Declarations
-	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
-			network);
+	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
+			> (network);
 	auto props = psiNetwork->getProperties();
 	int index = 0;
 	std::vector<int> composition;
@@ -194,18 +196,19 @@ void HeVCluster::createDissociationConnectivity() {
 
 	// Get the required dissociating clusters. These are stored for the flux
 	// computation later.
-	heCluster = std::dynamic_pointer_cast<PSICluster>(network->get("He", 1));
-	vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
-	iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
+	heCluster = std::dynamic_pointer_cast < PSICluster
+			> (network->get("He", 1));
+	vCluster = std::dynamic_pointer_cast < PSICluster > (network->get("V", 1));
+	iCluster = std::dynamic_pointer_cast < PSICluster > (network->get("I", 1));
 
 	// Store the cluster with one less helium
 	std::vector<int> compositionVec = { numHe - 1, numV, 0 };
-	heVClusterLessHe = std::dynamic_pointer_cast<PSICluster>(
-			network->getCompound("HeV", compositionVec));
+	heVClusterLessHe = std::dynamic_pointer_cast < PSICluster
+			> (network->getCompound("HeV", compositionVec));
 	// Store the cluster with one less vacancy
 	compositionVec = {numHe, numV - 1, 0};
-	heVClusterLessV = std::dynamic_pointer_cast<PSICluster>(
-			network->getCompound("HeV", compositionVec));
+	heVClusterLessV = std::dynamic_pointer_cast < PSICluster
+			> (network->getCompound("HeV", compositionVec));
 
 	// He Dissociation, get the [(numHe-1)*He]V and He
 	composition = psiNetwork->getCompositionVector(numHe - 1, numV, 0);
@@ -252,8 +255,8 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 		for (int i = 0; i < numClusters; i++) {
 			if (dissociationConnectivity[i] == 1) {
 				// Set the current reactant
-				currentCluster = std::dynamic_pointer_cast<PSICluster>(
-						reactants->at(i));
+				currentCluster = std::dynamic_pointer_cast < PSICluster
+						> (reactants->at(i));
 				// Get the cluster map of this connection
 				composition = currentCluster->getComposition();
 				// We need to find if this is a Helium dissociation

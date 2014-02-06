@@ -253,10 +253,10 @@ protected:
 	 *
 	 * @param clusters The clusters that can combine with this cluster.
 	 * @param maxSize The maximum size of the compound produced in the reaction.
-	 * @param compoundName The name of the compound produced in the reaction.
+	 * @param productName The name of the product produced in the reaction.
 	 */
 	void combineClusters(std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>clusters,
-			int maxSize, std::string compoundName)
+			int maxSize, std::string productName)
 	;
 
 	/**
@@ -345,6 +345,24 @@ protected:
 	 * @param temperature The temperature at which the reactions are occurring.
 	 */
 	virtual void getDissociationPartialDerivatives(std::vector<double> & partials, double temperature) const;
+
+	/**
+	 * This operation prints a forward reaction given the three reactants in
+	 * A + B -> C.
+	 * @param firstReactant - The first reactant in the reaction, A.
+	 * @param secondReactant - The second reactant in the reaction, B.
+	 * @param thirdReactant - The third reactant in the reaction, C.
+	 */
+	void printReaction(const Reactant & firstReactant, const Reactant & secondReactant, const Reactant & productReactant);
+
+	/**
+	 * This operation prints a backward reaction given the three reactants in
+	 * A -> B + C.
+	 * @param firstReactant - The first reactant in the reaction, A.
+	 * @param secondReactant - The second reactant in the reaction, B.
+	 * @param thirdReactant - The third reactant in the reaction, C.
+	 */
+	void printDissociation(const Reactant & firstReactant, const Reactant & secondReactant, const Reactant & productReactant);
 
 private:
 
