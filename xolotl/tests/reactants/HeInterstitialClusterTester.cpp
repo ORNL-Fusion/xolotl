@@ -151,9 +151,9 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n");
 
-	// The flux should be zero because the binding energies for all the data that we have are
-	// zero for I1.
-	BOOST_REQUIRE_CLOSE(0.0, flux,.000001);
+	// The flux should be nearly zero because the binding energies for all the
+	// data that we have are infinite for I1.
+	BOOST_REQUIRE_CLOSE(-4.747e-14, flux,.01);
 }
 
 /**

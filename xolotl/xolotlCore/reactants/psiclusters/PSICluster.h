@@ -353,7 +353,9 @@ protected:
 	 * @param secondReactant - The second reactant in the reaction, B.
 	 * @param thirdReactant - The third reactant in the reaction, C.
 	 */
-	void printReaction(const Reactant & firstReactant, const Reactant & secondReactant, const Reactant & productReactant);
+	void printReaction(const Reactant & firstReactant,
+			const Reactant & secondReactant,
+			const Reactant & productReactant) const;
 
 	/**
 	 * This operation prints a backward reaction given the three reactants in
@@ -362,7 +364,9 @@ protected:
 	 * @param secondReactant - The second reactant in the reaction, B.
 	 * @param thirdReactant - The third reactant in the reaction, C.
 	 */
-	void printDissociation(const Reactant & firstReactant, const Reactant & secondReactant, const Reactant & productReactant);
+	void printDissociation(const Reactant & firstReactant,
+			const Reactant & secondReactant,
+			const Reactant & productReactant) const;
 
 private:
 

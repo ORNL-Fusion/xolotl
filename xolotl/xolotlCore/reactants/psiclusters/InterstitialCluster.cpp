@@ -118,7 +118,6 @@ void InterstitialCluster::createReactionConnectivity() {
 		secondReactant = std::dynamic_pointer_cast<PSICluster>(network->get(name,firstReactant->getSize() + size));
 		// Update the connectivity
 		if (secondReactant) {
-			std::cout << "Found " << secondReactant->getName() << secondReactant->getSize() << " from " << name << size << std::endl;
 			reactionConnectivity[firstReactant->getId() - 1] = 1;
 			reactionConnectivity[secondReactant->getId() - 1] = 1;
 		}

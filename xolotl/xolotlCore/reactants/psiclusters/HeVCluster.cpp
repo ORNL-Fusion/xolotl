@@ -119,26 +119,24 @@ void HeVCluster::createReactionConnectivity() {
 
 	/* ----- (A*He)(B*V) + C*I --> (A*He)[(B-C)V] -----
 	 * Interstitial absorption by an HeV cluster produces an HeV cluster of
-	 * size B-C vacancies smaller.
+	 * size B-C vacancies smaller. The connectivity for this and the
+	 * addition of this reaction to the reacting pairs is
+	 * handled in the next call to fillVWithI.
 	 */
-	for (int z = 1; z <= maxIClusterSize; z++) {
-		// Get the first reactant
-		firstComposition = psiNetwork->getCompositionVector(numHe, numV + z, 0);
-		firstReactant = psiNetwork->getCompound("HeV", firstComposition);
-		// Get the second reactant
-		secondReactant = psiNetwork->get("I", z);
-		// Create the Reacting Pair
-		// Create a ReactingPair with the two reactants
-		if (firstReactant && secondReactant) {
-			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast < PSICluster
-					> (firstReactant);
-			pair.second = std::dynamic_pointer_cast < PSICluster
-					> (secondReactant);
-			// Add the pair to the list
-			reactingPairs.push_back(pair);
-		}
-	}
+
+	/* ----- (He_a)*(V_b) + I_c  --> (He_a)*[V_(b-c)] -----
+	 * Helium-vacancy clusters lose vacancies when they interact with
+	 * interstitial clusters.
+	 *
+	 * We assume that the HeV and interstitial cluster can only
+	 * interact if they would produce another HeV cluster, not single He.
+	 *
+	 * All of these clusters are added to the set of combining reactants
+	 * because they contribute to the (outgoing) flux due to combination
+	 * reactions.
+	 */
+	auto reactants = psiNetwork->getAll("I");
+	fillVWithI("I", reactants);
 
 	/* ---- (He_a)*(V_b) + He_c --> [He_(a+c)]*(V_b) ----
 	 * HeV clusters can absorb helium clusters so long as they do not cross
@@ -147,7 +145,7 @@ void HeVCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	auto reactants = psiNetwork->getAll("He");
+	reactants = psiNetwork->getAll("He");
 	combineClusters(reactants, maxHeVClusterSize, "HeV");
 
 	/* ----- (He_a)*(V_b) + V --> (He_a)*[V_(b+1)] -----
@@ -167,19 +165,6 @@ void HeVCluster::createReactionConnectivity() {
 		// clusters in the reaction.
 		combineClusters(singleVInVector,maxHeVClusterSize,"HeV");
 	}
-
-	/* ----- (He_a)*(V_b) + I_c  --> (He_a)*[V_(b-c)] -----
-	 * Helium-vacancy clusters lose vacancies when they interact with
-	 * interstitial clusters.
-	 *
-	 * We assume that the HeV and interstitial cluster can only
-	 * interact if they would produce another HeV cluster, not single He.
-	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 */
-	reactants = psiNetwork->getAll("I");
-	fillVWithI("I", reactants);
 
 	return;
 }

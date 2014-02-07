@@ -836,22 +836,22 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			allPartialsForCluster = reactant->getPartialDerivatives(temperature);
 			// Set the row indices
 			psiCluster = std::dynamic_pointer_cast<PSICluster>(reactant);
-			std::cout << xi << " " << xs << " " << size << " " << (xi - xs + 1)*size << std::endl;
-			std::cout << "PD for " << psiCluster->getName() << "_" << psiCluster->getSize() << " at " << reactantIndex << std::endl;
+//			std::cout << xi << " " << xs << " " << size << " " << (xi - xs + 1)*size << std::endl;
+//			std::cout << "PD for " << psiCluster->getName() << "_" << psiCluster->getSize() << " at " << reactantIndex << std::endl;
 //			for (int k = 0; k < allPartialsForCluster.size(); k++) {
 //				std::cout << "pd[" << k << "] = " << allPartialsForCluster[k] << std::endl;
 //			}
 			// Get the list of column ids from the map
 			auto pdColIdsVector = dFillMap.at(reactantIndex);
 			pdColIdsVectorSize = pdColIdsVector.size();
-			std::cout << "Number of partial derivatives = " << pdColIdsVectorSize << std::endl;
+//			std::cout << "Number of partial derivatives = " << pdColIdsVectorSize << std::endl;
 			// Loop over the list of column ids
 			for (int j = 0; j < pdColIdsVectorSize; j++) {
 				// Calculate the appropriate index to match the dfill array configuration
 				localPDColIds[j] = (xi - xs + 1) * size + pdColIdsVector[j];
 				// Get the partial derivative from the array of all of the partials
 				reactingPartialsForCluster[j] = allPartialsForCluster[pdColIdsVector[j]];
-				std::cout << "dp[" << j << "] = " << pdColIdsVector[j] << " , [r,c] = "<< "[" << rowId << "," << localPDColIds[j] << "] = " << reactingPartialsForCluster[j]<< std::endl;
+//				std::cout << "dp[" << j << "] = " << pdColIdsVector[j] << " , [r,c] = "<< "[" << rowId << "," << localPDColIds[j] << "] = " << reactingPartialsForCluster[j]<< std::endl;
 			}
 			// Update the matrix
 			ierr = MatSetValuesLocal(*J, 1, &rowId, pdColIdsVectorSize, localPDColIds,
@@ -920,22 +920,22 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 				// Add a column id if the connectivity is equal to 1.
 				if (connectivity[j] == 1) {
 					columnIds.push_back(j);
-					std::cout << id << " " << j << " " << reactant->getName() << " conn = " << connectivity[j] << std::endl;
 				}
 			}
 			// Update the map
 			dFillMap[id] = columnIds;
 		}
-		std::cout << "Number of degrees of freedom = " << numReactants
-				<< std::endl;
-		printf("\n");
-		for (i = 0; i < numReactants; i++) {
-			for (j = 0; j < numReactants; j++) {
-				printf("%d ", dfill[i * numReactants + j]);
-			}
-			printf("\n");
-		}
-		printf("\n");
+		// Debug output
+//		std::cout << "Number of degrees of freedom = " << numReactants
+//				<< std::endl;
+//		printf("\n");
+//		for (i = 0; i < numReactants; i++) {
+//			for (j = 0; j < numReactants; j++) {
+//				printf("%d ", dfill[i * numReactants + j]);
+//			}
+//			printf("\n");
+//		}
+//		printf("\n");
 	} else {
 		std::string err =
 				"PetscSolver Exception: Invalid diagonal block size!\n";
@@ -1110,17 +1110,8 @@ void PetscSolver::solve() {
 	ierr = getDiagonalFill(dfill, dof * dof);
 	checkPetscError(ierr);
 
-	for (int i = 0; i < dof * dof; i++) {
-		printf("%d ", dfill[i]);
-	}
-
 	// Load up the block fills
 	ierr = DMDASetBlockFills(da, dfill, ofill);
-
-	printf("\n");
-	for (int i = 0; i < dof * dof; i++) {
-		printf("%d ", dfill[i]);
-	}
 
 	checkPetscError(ierr);
 	// Free the temporary fill arrays

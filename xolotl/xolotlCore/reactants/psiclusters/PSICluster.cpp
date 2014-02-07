@@ -91,7 +91,7 @@ PSICluster::~PSICluster() {
  * @param thirdReactant - The third reactant in the reaction, C.
  */
 void PSICluster::printReaction(const Reactant & firstReactant,
-		const Reactant & secondReactant, const Reactant & productReactant) {
+		const Reactant & secondReactant, const Reactant & productReactant) const {
 
 	auto firstComp = firstReactant.getComposition();
 	auto secondComp = secondReactant.getComposition();
@@ -115,7 +115,7 @@ void PSICluster::printReaction(const Reactant & firstReactant,
  * @param thirdReactant - The third reactant in the reaction, C.
  */
 void PSICluster::printDissociation(const Reactant & firstReactant,
-		const Reactant & secondReactant, const Reactant & productReactant) {
+		const Reactant & secondReactant, const Reactant & productReactant) const {
 
 	auto firstComp = firstReactant.getComposition();
 	auto secondComp = secondReactant.getComposition();
@@ -276,15 +276,8 @@ double PSICluster::getProductionFlux(double temperature) const {
 			conc2 = secondReactant->getConcentration();
 			flux += calculateReactionRateConstant(*firstReactant,
 					*secondReactant, temperature) * conc1 * conc2;
-//			std::cout << "Adding production flux for "
-//					<< firstReactant->getName() << "_"
-//					<< firstReactant->getSize() << " + "
-//					<< secondReactant->getName() << "_"
-//					<< secondReactant->getSize() << " --> " << getName() << "_"
-//					<< getSize() << " = "
-//					<< calculateReactionRateConstant(*firstReactant,
-//							*secondReactant, temperature) * conc1 * conc2
-//					<< std::endl;
+			// Debug output.
+			//printReaction(*firstReactant,*secondReactant,*this);
 		}
 	}
 
@@ -803,14 +796,14 @@ void PSICluster::combineClusters(
 			// Setup the connectivity array for the second reactant
 			reactionConnectivity[otherIndex] = 1;
 			// FIXME! - Debug output
-			printReaction(*this,*secondCluster,*productCluster);
-			std::cout << "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << " " << getName() << std::endl;
+			//printReaction(*this,*secondCluster,*productCluster);
+//			std::cout << "reactionConnectivity["<< otherIndex << "] = " << reactionConnectivity[otherIndex] << " " << getName() << std::endl;
 			// Setup the connectivity array for the product
 			productIndex = productCluster->getId() - 1;
 			reactionConnectivity[productIndex] = 1;
 			// FIXME! - Debug output
-			std::cout << productSize << productName << ": " << "reactionConnectivity["<< productIndex << "] = "
-			<< reactionConnectivity[productIndex] << std::endl;
+//			std::cout << productSize << productName << ": " << "reactionConnectivity["<< productIndex << "] = "
+//			<< reactionConnectivity[productIndex] << std::endl;
 			// Push the product onto the list of clusters that combine with this one
 			combiningReactants.push_back(secondCluster);
 		}
@@ -924,12 +917,12 @@ void PSICluster::fillVWithI(std::string secondClusterName,
 			// Only deal with this reaction if the product exists. Otherwise the
 			// whole reaction is forbidden.
 			if (productCluster) {
-				std::cout << "Trap Mutation: " << name << size << " + "
-						<< secondCluster->getName() << secondCluster->getSize()
-						<< " = " << productCluster->getName()
-						<< productCluster->getSize() << " "
-						<< productClusterName << productClusterSize
-						<< std::endl;
+//				std::cout << "Trap Mutation: " << name << size << " + "
+//						<< secondCluster->getName() << secondCluster->getSize()
+//						<< " = " << productCluster->getName()
+//						<< productCluster->getSize() << " "
+//						<< productClusterName << productClusterSize
+//						<< std::endl;
 				// Setup the connectivity array to handle the second reactant
 				secondIndex = secondCluster->getId() - 1;
 				reactionConnectivity[secondIndex] = 1;
