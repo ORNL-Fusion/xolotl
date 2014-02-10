@@ -12,7 +12,7 @@ Assuming you have all of the dependencies for Xolotl built, Xolotl itself is qui
 
 Create a directory in which you want to build Xolotl and change into it. It can be any directory except for the source directory. Most people create a directory called "build" in the source directory and build from there. From inside the build directory run the following commands:
 
-cmake ..
+cmake -DCMAKE_CXX_COMPILER=mpicxx (or the full path to mpicxx) ..
 make
 
 You can also run make in parallel (make -jN, where N is the number of processes) to build Xolotl faster. This is recommended if you have a big machine.
