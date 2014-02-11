@@ -158,7 +158,7 @@ energiesFit.set_ylabel("Helium binding energy",fontsize=16)
 #         ## Loop on Helium number
 #         for k in range(1, len(HeF)):
 #              
-#             ## Keep only ration He/V < 4
+#             ## Keep only ratio He/V < 4
 #             if (HeF[k] < 4*VF):
 #              
 #                 ## Filter on Helium number and vacancy number 
