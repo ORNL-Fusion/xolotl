@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+#=======================================================================================
+# computeHeliumFormationEnergy.py
+# Takes formation energies from the file  'formationEnergies.dat' and helium binding 
+# energies from '../../../benchmarks/tungsten.txt' and computes the helium formation
+# energy with the formula:
+#   Ef(He) = Eb(He_x, V_y) + Ef(He_x, V_y) - Ef(He_x-1, V_y)
+# Plots this energy in a histogram and fit it with a normal distribution to obtain the 
+# mean and the standard deviation
+#=======================================================================================
 
 import numpy as np
 import math
@@ -52,7 +61,7 @@ for i in range(1, 50):
             
            
 ## Plot the histogram 
-data = HeSpread.hist(HeEnergy, 50, color='c', normed=True) 
+HeSpread.hist(HeEnergy, 50, color='c', normed=True) 
 
 ## Fit a normal distribution to the data
 mean, deviation = norm.fit(HeEnergy)
