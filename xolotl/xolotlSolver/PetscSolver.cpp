@@ -120,7 +120,7 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	PetscViewer viewer;
 	PetscReal *solutionArray, *gridPointSolution, x, hx;
 	PetscInt xs, xm, Mx;
-	int xi, i, j;
+	int xi, i;
 
 	PetscFunctionBeginUser;
 	ierr = VecScatterBegin(ctx->scatter, solution, ctx->He, INSERT_VALUES,
@@ -426,7 +426,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	PetscReal *concs, *updatedConcs;
 	Vec localC;
 	// Loop variables
-	int size = 0, reactantIndex = 0, i = 0;
+	int size = 0, reactantIndex = 0;
 	// Handy pointers to keep the code clean
 	std::shared_ptr<PSICluster> heCluster, vCluster, iCluster, cluster;
 	std::shared_ptr<Reactant> clusterDummy;
@@ -443,7 +443,6 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	// Some required properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
 
 	// Get the local data vector from petsc
 	PetscFunctionBeginUser;
@@ -629,7 +628,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		MatStructure *str, void *ptr) {
 	DM da;
 	PetscErrorCode ierr;
-	PetscInt xi, Mx, xs, xm, He, he, V, v, I, i;
+	PetscInt xi, Mx, xs, xm, i;
 	PetscInt row[3], col[3];
 	PetscReal hx, sx, val[6];
 	PetscReal *concs, *updatedConcs;
@@ -644,7 +643,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	// Get the properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
 	int reactantIndex = 0;
 	int size = 0;
 
@@ -1043,7 +1041,6 @@ void PetscSolver::solve() {
 	// Get the properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
 	// The degrees of freedom should be equal to the number of reactants.
 	int dof = network->size();
 

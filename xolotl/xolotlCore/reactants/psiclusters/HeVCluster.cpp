@@ -68,11 +68,7 @@ void HeVCluster::createReactionConnectivity() {
 			> (network);
 	auto props = psiNetwork->getProperties();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
-	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
-	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
 	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
-	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
-	int thisIndex = 0;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
 	std::vector<int> firstComposition, secondComposition;
 
@@ -175,7 +171,6 @@ void HeVCluster::createDissociationConnectivity() {
 	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
 			> (network);
 	auto props = psiNetwork->getProperties();
-	int index = 0;
 	std::vector<int> composition;
 	std::shared_ptr<Reactant> singleCluster, otherMixedCluster;
 

@@ -38,16 +38,12 @@ void HeCluster::createReactionConnectivity() {
 	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
 			> (network);
 	std::map<std::string, std::string> props = psiNetwork->getProperties();
-	int thisIndex, networkSize =
-			psiNetwork->size();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
-	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
 	int totalSize = 1, firstSize = 0, secondSize = 0;
-	int firstIndex = -1, secondIndex = -1, reactantVecSize = 0;
 	std::map<std::string, int> composition;
 	std::shared_ptr<PSICluster> psiCluster, firstReactant, secondReactant,
 			productReactant;

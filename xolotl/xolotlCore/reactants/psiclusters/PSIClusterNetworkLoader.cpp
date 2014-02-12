@@ -45,7 +45,6 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
 		int numV, int numI) {
 
 	// Local Declarations
-	int clusterSize = 0;
 	std::shared_ptr<PSICluster> cluster;
 
 	// Determine the type of the cluster given the number of each species.
@@ -124,7 +123,6 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 	double heBindingE = 0.0, vBindingE = 0.0, iBindingE = 0.0,
 			trapMutationBindingE = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
-	bool mixed = false;
 	std::vector<double> bindingEnergies;
 	std::vector<std::shared_ptr<Reactant> > reactants;
 

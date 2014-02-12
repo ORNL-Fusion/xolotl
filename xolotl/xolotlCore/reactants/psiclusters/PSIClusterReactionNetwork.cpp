@@ -102,7 +102,6 @@ std::shared_ptr<Reactant> PSIClusterReactionNetwork::get(
 	// Local Declarations
 	std::map<std::string, int> composition;
 	std::shared_ptr<PSICluster> retReactant;
-	int maxSize = 0;
 
 	// Setup the composition map to default values
 	composition["He"] = 0;

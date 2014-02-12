@@ -65,9 +65,10 @@ PSICluster::PSICluster(const PSICluster &other) :
 				other.reactionConnectivity), dissociationConnectivity(
 				other.dissociationConnectivity), reactingPairs(
 				other.reactingPairs), combiningReactants(
-				other.combiningReactants), dissociatingClusters(
-				other.dissociatingClusters), thisNetworkIndex(
-				other.thisNetworkIndex), thisSharedPtr(other.thisSharedPtr), reactionRadius(
+				other.combiningReactants), thisSharedPtr(
+				other.thisSharedPtr), thisNetworkIndex(
+				other.thisNetworkIndex), dissociatingClusters(
+				other.dissociatingClusters), reactionRadius(
 				other.reactionRadius) {
 }
 
@@ -181,7 +182,7 @@ void PSICluster::setReactionNetwork(
 
 double PSICluster::getDissociationFlux(double temperature) const {
 
-	int nClusters = 0, oneIndex = -1, smallerClusterSize = 0.0;
+	int nClusters = 0, smallerClusterSize = 0.0;
 	double flux = 0.0, fluxMultiplier = 1.0;
 	std::shared_ptr<PSICluster> dissociatingCluster, smallerCluster,
 			singleSpeciesCluster;
@@ -254,8 +255,7 @@ double PSICluster::getDissociationFlux(double temperature) const {
 double PSICluster::getProductionFlux(double temperature) const {
 
 	// Local declarations
-	double flux = 0.0, kPlus = 0.0;
-	int thisClusterIndex = 0;
+	double flux = 0.0;
 	ReactingPair pair;
 	std::shared_ptr<PSICluster> firstReactant, secondReactant;
 	double conc1 = 0.0, conc2 = 0.0;
@@ -289,7 +289,6 @@ double PSICluster::getCombinationFlux(double temperature) const {
 
 	// Local declarations
 	double flux = 0.0, conc = 0.0;
-	int thisClusterIndex = 0;
 	std::shared_ptr<PSICluster> otherCluster;
 	int nReactants = 0;
 
@@ -317,7 +316,7 @@ double PSICluster::getCombinationFlux(double temperature) const {
 	return (flux * getConcentration());
 }
 
-double PSICluster::getTotalFlux(double temperature) const {
+double PSICluster::getTotalFlux(const double temperature) {
 
 	// Get the fluxes
 	double prodFlux, combFlux, dissFlux;
@@ -511,7 +510,6 @@ void PSICluster::createReactionConnectivity() {
 void PSICluster::createDissociationConnectivity() {
 
 	// Local Declarations
-	int index = 0;
 	std::shared_ptr<Reactant> smallerReactant, singleReactant;
 
 	// ----- X_a --> X_(a-1) + X ------
@@ -581,7 +579,7 @@ void PSICluster::getProductionPartialDerivatives(std::vector<double> & partials,
 		double temperature) const {
 
 	// Create the array and fill it with zeros
-	int length = partials.size(), numReactants = 0, index = 0;
+	int numReactants = 0, index = 0;
 	ReactingPair pair;
 	double rateConstant = 0.0;
 
@@ -626,7 +624,7 @@ void PSICluster::getCombinationPartialDerivatives(
 		std::vector<double> & partials, double temperature) const {
 
 	// Create the array and fill it with zeros
-	int length = partials.size(), numReactants = 0, index = 0;
+	int numReactants = 0, index = 0;
 	std::shared_ptr<PSICluster> cluster, smallerCluster, singleSpeciesCluster;
 
 	// Load up everything from the combining reactants.
@@ -690,7 +688,7 @@ void PSICluster::getDissociationPartialDerivatives(
 		std::vector<double> & partials, double temperature) const {
 
 	// Create the array and fill it with zeros
-	int length = partials.size(), numReactants = 0, index = 0;
+	int numReactants = 0, index = 0;
 	int smallerClusterSize = 0;
 	std::shared_ptr<PSICluster> cluster, smallerCluster, singleSpeciesCluster;
 	// Get the single species cluster that comes out of this one during the
@@ -820,7 +818,6 @@ void PSICluster::replaceInCompound(
 	std::map<std::string, int> myComp = getComposition(),
 	secondReactantComp, productReactantComp;
 	int myComponentNumber = myComp[newComponentName];
-	int productNumHe = 0, productNumV = 0, productNumI = 0;
 	int numReactants = reactants->size();
 	int secondIndex = 0, productIndex = 0;
 	std::shared_ptr<Reactant> secondReactant, productReactant;

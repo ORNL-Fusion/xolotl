@@ -27,7 +27,6 @@ BOOST_AUTO_TEST_SUITE (PSICluster_testSuite)
 BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 
 	// Local Declarations
-	double temperature = 1.0;
 	PSICluster cluster(1);
 
 	// Check E_m = 0.0

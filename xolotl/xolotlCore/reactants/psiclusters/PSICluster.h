@@ -423,7 +423,7 @@ public:
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux(double temperature) const;
+	virtual double getTotalFlux(const double temperature);
 
 	/**
 	 * This operation returns the total change in this cluster due to

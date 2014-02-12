@@ -37,7 +37,6 @@ void VCluster::createReactionConnectivity() {
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
 	int totalSize = 1, firstSize = 0, secondSize = 0;
-	int firstIndex = -1, index = 0;
 	std::shared_ptr<PSICluster> firstReactant, secondReactant;
 
 	// Connect this cluster to itself since any reaction will affect it

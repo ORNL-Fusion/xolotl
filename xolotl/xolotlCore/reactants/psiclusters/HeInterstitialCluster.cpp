@@ -67,10 +67,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
 			network);
 	auto props = psiNetwork->getProperties();
-	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
-	int maxIClusterSize = std::stoi(props["maxIClusterSize"]);
-	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
 	int index = 0;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
