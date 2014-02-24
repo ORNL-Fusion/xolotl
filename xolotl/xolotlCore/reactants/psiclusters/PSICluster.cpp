@@ -60,16 +60,17 @@ PSICluster::PSICluster(const int clusterSize) :
 // The copy constructor with a huge initialization list!
 PSICluster::PSICluster(const PSICluster &other) :
 		Reactant(other), size(other.size), diffusionFactor(
-				other.diffusionFactor), bindingEnergies(other.bindingEnergies), migrationEnergy(
-				other.migrationEnergy), reactionConnectivity(
+				other.diffusionFactor), thisSharedPtr(
+				other.thisSharedPtr), thisNetworkIndex(
+				other.thisNetworkIndex), bindingEnergies(
+				other.bindingEnergies), migrationEnergy(
+				other.migrationEnergy), reactionRadius(
+				other.reactionRadius), reactionConnectivity(
 				other.reactionConnectivity), dissociationConnectivity(
 				other.dissociationConnectivity), reactingPairs(
 				other.reactingPairs), combiningReactants(
-				other.combiningReactants), thisSharedPtr(
-				other.thisSharedPtr), thisNetworkIndex(
-				other.thisNetworkIndex), dissociatingClusters(
-				other.dissociatingClusters), reactionRadius(
-				other.reactionRadius) {
+				other.combiningReactants), dissociatingClusters(
+				other.dissociatingClusters) {
 }
 
 std::shared_ptr<Reactant> PSICluster::clone() {

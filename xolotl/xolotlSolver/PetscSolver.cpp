@@ -85,13 +85,6 @@ static inline int petscReturn() {
 
 /* ----- Monitoring Code ----- */
 
-typedef struct {
-	DM da; /* defines the 2d layout of the He subvector */
-	Vec He;
-	VecScatter scatter;
-	PetscViewer viewer;
-} MyMonitorCtx;
-
 #undef __FUNCT__
 #define __FUNCT__ "monitorSolve"
 /**
@@ -102,8 +95,6 @@ typedef struct {
  */
 static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
-	// Create the monitor context
-	MyMonitorCtx *ctx = (MyMonitorCtx*) ictx;
 	// Network size
 	const int size = PetscSolver::getNetwork()->size();
 	// The array of cluster names
@@ -123,14 +114,6 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	int xi, i;
 
 	PetscFunctionBeginUser;
-	ierr = VecScatterBegin(ctx->scatter, solution, ctx->He, INSERT_VALUES,
-			SCATTER_FORWARD);
-	checkPetscError(ierr);
-	ierr = VecScatterEnd(ctx->scatter, solution, ctx->He, INSERT_VALUES,
-			SCATTER_FORWARD);
-	checkPetscError(ierr);
-	ierr = VecView(ctx->He, ctx->viewer);
-	checkPetscError(ierr);
 
 	// Create the PETScViewer and get the data
 	VecGetArray(solution, &solutionArray);
@@ -159,8 +142,13 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	header << "\n";
 	PetscViewerASCIIPrintf(viewer, header.str().c_str());
 
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	checkPetscError(ierr);
+
 	// Get the corners of the grid
-	ierr = DMDAGetCorners(ctx->da, &xs, NULL, NULL, &xm, NULL, NULL);
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
@@ -176,9 +164,16 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 		outputData << timestep << " " << x << " ";
 		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray + size * xi;
+		// Update the concentrations in the network to have physics results
+		// (non negative)
+		PetscSolver::getNetwork()->updateConcentrationsFromArray(gridPointSolution);
+		// Get the concentrations from the network
+		double concentrations[size];
+		double * concentration = &concentrations[0];
+		PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
 		// Dump the data to the stream
 		for (i = 0; i < size; i++) {
-			outputData << gridPointSolution[i] << " ";
+			outputData << concentration[i] << " ";
 		}
 		// End the line
 		outputData << "\n";
@@ -193,33 +188,6 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "destroyPetscMonitor"
-/**
- * This operation frees all data structures associated with the monitor. It is
- * not a member variable of the class because the monitoring code requires a C
- * callback function (via a function pointer).
- * @param ictx The monitor
- * @return A standard PETSc error code
- */
-static PetscErrorCode destroyPetscMonitor(void **ictx) {
-	MyMonitorCtx **ctx = (MyMonitorCtx**) ictx;
-	PetscErrorCode ierr;
-
-	PetscFunctionBeginUser;
-	ierr = VecScatterDestroy(&(*ctx)->scatter);
-	checkPetscError(ierr);
-	ierr = VecDestroy(&(*ctx)->He);
-	checkPetscError(ierr);
-	ierr = DMDestroy(&(*ctx)->da);
-	checkPetscError(ierr);
-	ierr = PetscViewerDestroy(&(*ctx)->viewer);
-	checkPetscError(ierr);
-	ierr = PetscFree(*ctx);
-	checkPetscError(ierr);
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ "setupPetscMonitor"
 /**
  * This operation sets up a monitor that will display He as a function of space
@@ -229,24 +197,8 @@ static PetscErrorCode destroyPetscMonitor(void **ictx) {
  * @return A standard PETSc error code
  */
 static PetscErrorCode setupPetscMonitor(TS ts) {
-	DM da;
 	PetscErrorCode ierr;
-	PetscInt xi, xs, xm, *idx, M, xj, cnt = 0;
-	const PetscInt *lx;
-	Vec C;
-	MyMonitorCtx *ctx;
 	PetscBool flg;
-	IS is;
-	char ycoor[32];
-	PetscReal valuebounds[4] = { 0, 1.2, 0, 1.2 };
-	// Get the network
-	auto network = PetscSolver::getNetwork();
-	int size = network->size();
-	// Get the properties
-	auto props = network->getProperties();
-	int numHeClusters = std::stoi(props["numHeClusters"]);
-	int numVClusters = std::stoi(props["numVClusters"]);
-	int N = numHeClusters + numVClusters;
 
 	PetscFunctionBeginUser;
 	ierr = PetscOptionsHasName(NULL, "-mymonitor", &flg);
@@ -254,70 +206,7 @@ static PetscErrorCode setupPetscMonitor(TS ts) {
 	if (!flg)
 		PetscFunctionReturn(0);
 
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr);
-	ierr = PetscNew(&ctx);
-	checkPetscError(ierr);
-	ierr = PetscViewerDrawOpen(PetscObjectComm((PetscObject) da), NULL, "",
-			PETSC_DECIDE, PETSC_DECIDE, 600, 400, &ctx->viewer);
-	checkPetscError(ierr);
-
-	// Get the He_1 and He_2 indices from the network
-	auto he1Cluster = network->get("He", 1), he2Cluster = network->get("He", 2);
-	int he1Index = he1Cluster->getId();
-	int he2Index = he2Cluster->getId();
-
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	checkPetscError(ierr);
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &M, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
-	checkPetscError(ierr);
-	ierr = DMDAGetOwnershipRanges(da, &lx, NULL, NULL);
-	checkPetscError(ierr);
-	ierr = DMDACreate2d(PetscObjectComm((PetscObject) da), DMDA_BOUNDARY_NONE,
-			DMDA_BOUNDARY_NONE, DMDA_STENCIL_STAR, M, N, PETSC_DETERMINE, 1, 2,
-			1, lx, NULL, &ctx->da);
-	checkPetscError(ierr);
-	ierr = DMDASetFieldName(ctx->da, he1Index, "He_1");
-	checkPetscError(ierr);
-	ierr = DMDASetFieldName(ctx->da, he2Index, "He_2");
-	checkPetscError(ierr);
-	ierr = DMDASetCoordinateName(ctx->da, 0,
-			"-Z direction (depth into surface)");
-	checkPetscError(ierr);
-	ierr = PetscSNPrintf(ycoor, 6, "%D ... Cluster size ... 1", N);
-	checkPetscError(ierr);
-	ierr = DMDASetCoordinateName(ctx->da, 1, ycoor);
-	checkPetscError(ierr);
-
-	ierr = DMCreateGlobalVector(ctx->da, &ctx->He);
-	checkPetscError(ierr);
-	ierr = PetscMalloc(2 * N * xm * sizeof(PetscInt), &idx);
-	checkPetscError(ierr);
-	cnt = 0;
-	for (xj = 0; xj < N; xj++) {
-		for (xi = xs; xi < xs + xm; xi++) {
-			idx[cnt++] = size * xi + xj;
-			idx[cnt++] = size * xi + xj + N;
-		}
-	}
-	ierr = ISCreateGeneral(PetscObjectComm((PetscObject) ts), 2 * N * xm, idx,
-			PETSC_OWN_POINTER, &is);
-	checkPetscError(ierr);
-	ierr = TSGetSolution(ts, &C);
-	checkPetscError(ierr);
-	ierr = VecScatterCreate(C, is, ctx->He, NULL, &ctx->scatter);
-	checkPetscError(ierr);
-	ierr = ISDestroy(&is);
-	checkPetscError(ierr);
-
-	/* sets the bounds on the contour plot values so the colors mean the same thing for different timesteps */
-	ierr = PetscViewerDrawSetBounds(ctx->viewer, 2, valuebounds);
-	checkPetscError(ierr);
-
-	ierr = TSMonitorSet(ts, monitorSolve, ctx, destroyPetscMonitor);
+	ierr = TSMonitorSet(ts, monitorSolve, NULL, NULL);
 	checkPetscError(ierr);
 	PetscFunctionReturn(0);
 }
@@ -372,6 +261,13 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	 Compute function over the locally owned part of the grid
 	 */
 	for (i = xs; i < xs + xm; i++) {
+		// Intitialiaze all concentration to 0 for each grid point
+		reactants = network->getAll();
+		size = reactants->size();
+		for (int j = 0; j < size; j++) {
+			reactants->at(j)->setConcentration(0.0);
+		}
+
 		// Set the default vacancy concentrations
 		reactants = network->getAll("V");
 		size = reactants->size();
@@ -384,6 +280,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 		for (int j = 0; j < size; j++) {
 			reactants->at(j)->setConcentration(1.0);
 		}
+
 		// Update the PETSc concentrations array
 		size = network->size();
 		concOffset = concentrations + size * i;
