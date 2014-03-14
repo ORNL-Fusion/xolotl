@@ -1,70 +1,71 @@
 #ifndef GPTLTIMER_H
 #define GPTLTIMER_H
 
-#include "Timer.h"
-#include "/home/cxj/Libraries/GPTL/GPTL/gptl-5.0/include/gptl.h"
 #include <string>
+#include "ITimer.h"
+#include "Identifiable.h"
+
 
 namespace xolotlPerf {
 
 /**
  * The GPTLTimer class is instantiated by the StandardHandlerRegistry class
- * and realizes the Timer interface to access the timing statistics found
+ * and realizes the ITimer interface to access the timing statistics found
  * General Purpose Timing Library (GPTL).
  */
-class GPTLTimer: public Timer {
+class GPTLTimer: public ITimer, public xolotlCore::Identifiable {
 
 private:
 
 	/**
-	 * The value of this Timer.
-	 */
-	double value;
-
-	/**
-	 * The default constructor is declared private since all EventCounters
+	 * The default constructor is declared private since all Timers
 	 *  must be initialized with a name.
 	 */
-	GPTLTimer():Timer("") { }
+    GPTLTimer()
+      : xolotlCore::Identifiable("unused")
+    { }
 
 public:
 
 	/**
-	 * GPTLEventCounter constructor that takes the argument name
+	 * GPTLTimer constructor that takes the argument
+	 * timerName
 	 *
-	 * @param aname The GPTLEventCounter's name
+	 * @param name The GPTLTimer's name
 	 */
-	GPTLTimer(std::string aname);
-//	GPTLTimer(const std::string &name);
+	GPTLTimer(std::string name)
+      : xolotlCore::Identifiable(name)
+    { }
 
 	/**
 	 * The destructor
 	 */
-	~GPTLTimer();
+	virtual ~GPTLTimer() { }
 
-	// This operations starts the Timer.
-	void start();
+    /**
+     * This operations starts the ITimer.
+     */
+	virtual void start();
 
-	// This operation stops the Timer.
-	void stop();
+    /**
+     * This operation stops the ITimer.
+     */
+	virtual void stop();
+
+    /**
+     * This operation returns the value of the GPTLTimer.
+     */
+	virtual double getValue() const;
 
 	/**
-	 * This operation returns the name of the GPTLTimer.
+	 * This operation returns the units of the GPTLTimer.
 	 *
-	 * @return The name of this Timer
+	 * NOTE:  wall -- wallclock time (seconds)
+	 * 		  usr -- user CPU time (seconds)
+	 * 		  sys -- system CPU time (seconds)
+	 *
 	 */
-	const std::string getName() const;
-
-	// This operation returns the value of the Timer.
-//	long long getValue() const;
-	double getValue();
-
-	// This operation returns the units of the Timer.
-	long getUnits() const;
-
-	// This operation returns the name of the Timer.
-//	const std::string getName() const;
-
+	virtual std::string getUnits() const;
 };
 //end class GPTLTimer
 

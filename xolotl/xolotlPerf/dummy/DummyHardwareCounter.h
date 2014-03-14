@@ -4,8 +4,10 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "Identifiable.h"
+#include "IHardwareCounter.h"
 #include "HardwareQuantities.h"
-#include "HardwareCounter.h"
+
 
 namespace xolotlPerf{
 
@@ -13,16 +15,19 @@ namespace xolotlPerf{
  * The DummyHardwareCounter class is instantiated by the DummyHandlerRegistry class
  * and realizes the DummyHardwareCounter interface.
  */
-class DummyHardwareCounter : public HardwareCounter
+class DummyHardwareCounter : public IHardwareCounter, public xolotlCore::Identifiable
 {
 
 private:
 
 	/**
-	 * The default constructor is private because HardwareCounters must
-	 * always be initialized with a name.
+	 * The default constructor is private because HardwareCounters
+	 * must always be given a name and a vector of quantities to
+	 * be monitored.
 	 */
-//	DummyHardwareCounter():HardwareCounter() {}
+	DummyHardwareCounter()
+		: xolotlCore::Identifiable("unused")
+	{ }
 
 public:
 
@@ -30,43 +35,31 @@ public:
 	 * DummyHardwareCounter constructor that takes the name and a
 	 * list of the different quantities it should monitor.
 	 *
-	 * @param aname The DummyHardwareCounter's name
-	 * @param hquantities The DummyHardwareCounter's list of quantities
+	 * @param counterName The DummyHardwareCounter's name
+	 * @param counterQuantities The vector of quantities the DummyHardwareCounter will monitor
 	 */
-	DummyHardwareCounter(std::string aname, const std::vector<HardwareQuantities> &hquantities);
-
-	/**
-	 * The copy constructor.
-	 * @param other The DummyHardwareCounter to copy
-	 */
-//	DummyHardwareCounter(const DummyHardwareCounter &other);
+	DummyHardwareCounter(std::string counterName,
+			const std::vector<HardwareQuantities> &counterQuantities)
+		: xolotlCore::Identifiable("unused")
+	{ }
 
 	/**
 	 * The destructor
 	 */
-	~DummyHardwareCounter();
-
-	/**
-	 * This operation returns a DummyHardwareCounter that is created using the copy
-	 * constructor. If this DummyHardwareCounter is actually a subclass of DummyHardwareCounter, the
-	 * clone will be of the same type and therefore carry all of the members
-	 * and virtual functions of the subclass in addition to those of the
-	 * DummyHardwareCounter.
-	 * @return A copy of this DummyHardwareCounter.
-	 */
-//	virtual std::shared_ptr<HardwareCounter> clone();
+	virtual ~DummyHardwareCounter() { }
 
     /**
      * This operation returns a list of values of the, initially specified,
-     * PAPI preset quantities monitored by the DummyHardwareCounter.
+     * hardware quantities monitored by the DummyHardwareCounter.
      */
-    std::vector<long long> getValues() const;
+    std::vector<double> getValues(void) const;
 
-    // This operation returns the name of the DummyHardwareCounter.
-    const std::string getName() const;
 
-    // This operation increments the DummyHardwareCounter.
-    void increment();
+	/**
+	 * This operation returns the list of hardware
+	 * quantities monitored by the GPTLHardwareCounter.
+	 */
+	virtual std::vector<std::string> getHardwareQuantities() const;
 
 };  //end class DummyHardwareCounter
 

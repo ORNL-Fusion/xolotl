@@ -1,13 +1,34 @@
 #include "ReactionNetwork.h"
 #include "Reactant.h"
+#include "xolotlPerf/HandlerRegistryFactory.h"
 #include <iostream>
 
 using namespace xolotlCore;
 
+
+ReactionNetwork::ReactionNetwork( void )
+  : properties(new std::map<std::string, std::string>())
+{
+    concUpdateCounter = xolotlPerf::getHandlerRegistry()->getEventCounter("net_conc_updates");
+}
+
 ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 	// The copy constructor of std::map copies each of the keys and values.
 	properties.reset(new std::map<std::string, std::string>(*other.properties));
+
+    // TODO - do we copy the source ReactionNetwork's counter also?
+    // Or should we have our own counter?  How to distinguish them by name?
+    concUpdateCounter = xolotlPerf::getHandlerRegistry()->getEventCounter("net_conc_updates");
 }
+
+
+ReactionNetwork::~ReactionNetwork(void)
+{
+    std::cout << "ReactionNetwork: updated " 
+        << concUpdateCounter->getValue() << " times"
+        << std::endl;
+}
+
 
 /**
  * This operation fills an array of doubles with the concentrations of all
@@ -49,7 +70,9 @@ void ReactionNetwork::updateConcentrationsFromArray(double * concentrations) {
 	int size = reactants->size();
 	int id = 1;
 
+
 	// Set the concentrations
+    concUpdateCounter->increment();
 	for (int i = 0; i < size; i++) {
 		id = reactants->at(i)->getId() - 1;
 		reactants->at(i)->setConcentration(concentrations[id]);

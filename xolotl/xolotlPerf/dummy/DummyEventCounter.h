@@ -2,24 +2,29 @@
 #define DUMMYEVENTCOUNTER_H
 
 #include <string>
-#include <memory>
-#include "EventCounter.h"
+#include "Identifiable.h"
+#include "IEventCounter.h"
 
 using namespace std;
 
 namespace xolotlPerf{
 
-// The DummyEventCounter class is instantiated by the DummyHandlerRegistry
-// class and realizes the DummyEventCounter interface.
-class DummyEventCounter : public EventCounter
+/**
+ * The DummyEventCounter class is instantiated by the DummyHandlerRegistry
+ * class and realizes the DummyEventCounter interface.
+ */
+class DummyEventCounter : public IEventCounter, public xolotlCore::Identifiable
 {
 
 private:
 
-	/** The default constructor is declared private since all EventCounters
+	/**
+	 * The default constructor is declared private since all EventCounters
 	 *  must be initialized with a name.
 	 */
-	DummyEventCounter():EventCounter("") {}
+    DummyEventCounter(void)
+      : xolotlCore::Identifiable("unused")
+    { }
 
 
 public:
@@ -27,53 +32,29 @@ public:
 	/**
 	 * DummyEventCounter constructor that takes the argument name
 	 *
-	 * @param aname The DummyEventCounter's name
+	 * @param name The DummyEventCounter's name
 	 */
-	DummyEventCounter(std::string aname);
+	DummyEventCounter(std::string name)
+      : xolotlCore::Identifiable("unused")
+    { }
+
 
 	/**
-	 * The copy constructor.
-	 * @param other The DummyEventCounter to copy
+	 * The destructor
 	 */
-	DummyEventCounter(const DummyEventCounter &other);
-
-	/** The destructor
-	 */
-	~DummyEventCounter();
-
-	/**
-	 * This operation returns a DummyEventCounter that is created using the copy
-	 * constructor. If this DummyEventCounter is actually a subclass of DummyEventCounter, the
-	 * clone will be of the same type and therefore carry all of the members
-	 * and virtual functions of the subclass in addition to those of the
-	 * DummyEventCounter.
-	 * @return A copy of this DummyEventCounter.
-	 */
-//	virtual std::shared_ptr<EventCounter> clone();
+	virtual ~DummyEventCounter() { }
 
 	/**
 	 * This operation returns the value of the DummyEventCounter,
 	 * the frequency of the specified event.
 	 */
-	int getValue();
+	virtual unsigned long getValue() const  { return 0; }
+
 
 	/**
-	 * This operation returns the name of the DummyEventCounter.
-	 *
-	 * @return The name of this DummyEventCounter
+	 * This operation increments the DummyEventCounter.
 	 */
-	const std::string getName() const;
-
-	/**
-	 * This operation sets the name of the DummyEventCounter to the
-	 * specified name.
-	 *
-	 * @param name The new name
-	 */
-//	void setName(std::string aname);
-
-	//This operation increments the DummyEventCounter.
-	void increment();
+	virtual void increment()    {  }
 
 
 };  //end class DummyEventCounter

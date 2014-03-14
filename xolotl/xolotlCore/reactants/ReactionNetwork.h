@@ -7,6 +7,12 @@
 #include <memory>
 #include <map>
 
+// #include "xolotlPerf/IEventCounter.h"
+
+namespace xolotlPerf {
+    class IEventCounter;
+};
+
 namespace xolotlCore {
 
 class Reactant;
@@ -26,12 +32,16 @@ protected:
 	 */
 	std::shared_ptr<std::map<std::string, std::string>> properties;
 
+    /**
+     * Counter for the number of times the network concentration is updated.
+     */
+    std::shared_ptr<xolotlPerf::IEventCounter> concUpdateCounter;
+
 public:
 
 	/** The constructor. It initializes the properties map and reactants vector.
 	 */
-	ReactionNetwork() :
-		properties(new std::map<std::string, std::string>()){}
+	ReactionNetwork();
 
 	/**
 	 * The copy constructor
@@ -42,7 +52,7 @@ public:
 	/**
 	 * The destructor
 	 */
-	virtual ~ReactionNetwork() {}
+	virtual ~ReactionNetwork();
 
 	/**
 	 * This operation returns a reactant with the given name and size if it

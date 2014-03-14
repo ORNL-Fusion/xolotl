@@ -1,14 +1,47 @@
 #include "DummyHandlerRegistry.h"
 
-using namespace xolotlPerf;
+namespace xolotlPerf
+{
 
-////@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-//DummyHandlerRegistry::DummyHandlerRegistry(DummyHandlerRegistry & arg)
-//{
-//    //TODO Auto-generated method stub
-//}
-////@generated "UML to C++ (com.ibm.xtools.transform.uml2.cpp.CPPTransformation)"
-//DummyHandlerRegistry::~DummyHandlerRegistry()
-//{
-//    //TODO Auto-generated method stub
-//}
+// Obtain a Timer by name.
+std::shared_ptr<ITimer>
+DummyHandlerRegistry::getTimer( std::string name )
+{
+    // TODO is there a need for us to retain access to this Timer?
+    // TODO do we need to check wehther client has already created
+    // an object with this name and return that object?
+    return std::make_shared<DummyTimer>( name );
+}
+
+
+// Obtain an EventCounter by name.
+std::shared_ptr<IEventCounter>
+DummyHandlerRegistry::getEventCounter( std::string name )
+{
+    // TODO is there a need for us to retain access to this Timer?
+    // TODO do we need to check wehther client has already created
+    // an object with this name and return that object?
+    return std::make_shared<DummyEventCounter>( name );
+}
+
+// Obtain a HardwareCounter object by name and by the
+// counter data it collects.
+std::shared_ptr<IHardwareCounter>
+DummyHandlerRegistry::getHardwareCounter( std::string name, 
+                                        std::vector<HardwareQuantities> hwq )
+{
+    // TODO is there a need for us to retain access to this Timer?
+    // TODO do we need to check wehther client has already created
+    // an object with this name and return that object?
+    return std::make_shared<DummyHardwareCounter>( name, hwq );
+}
+
+// Output any collected performance data to the given output stream.
+void
+DummyHandlerRegistry::dump( std::ostream& /* os */ ) const
+{
+    // do nothing
+}
+
+};  // end namespace xolotlPerf
+

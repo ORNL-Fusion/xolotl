@@ -1,56 +1,26 @@
-#include <iostream>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <math.h>
 #include <time.h>
-#include "Timer.h"
+#include "gptl.h"
 #include "GPTLTimer.h"
 
 
 using namespace xolotlPerf;
 
-//GPTLTimer::GPTLTimer():Timer("") {
-//	GPTLinitialize();
-//}
 
-GPTLTimer::GPTLTimer(std::string aname) : Timer(aname) {
-
-	value = 0.0;
-
-//~~~~~~~~~~~~~~~~~MOVE SOME WHERE
-//	GPTLsetoption (GPTLcpu, 1);
-//	GPTLsetoption (GPTLwall, 1);
-//	GPTLinitialize();
-//	GPTLinit_handle(name.c_str(), &handle);
-}
-
-//GPTLTimer::GPTLTimer(const std::string &name) : Timer(name) {
-//	GPTLinitialize();
-//	GPTLinit_handle(name.c_str(), &handle);
-//}
-
-GPTLTimer::~GPTLTimer() {
-}
-
-// This operations starts the Timer.
+// This operations starts the ITimer.
 void GPTLTimer::start(){
-//	GPTLstart_handle(aname.c_str(), &handle);
-	GPTLstart(name.c_str());
+//	GPTLstart_handle(timerName.c_str(), &handle);
+	GPTLstart(this->getName().c_str());
 }
 
-// This operation stops the Timer.
+// This operation stops the ITimer.
 void GPTLTimer::stop(){
 //	GPTLstop_handle(name.c_str(), &handle);
-	GPTLstop(name.c_str());
+	GPTLstop(this->getName().c_str());
 }
 
-const std::string GPTLTimer::getName() const {
-	return name;
-}
 
-// This operation returns the value of the Timer.
-double GPTLTimer::getValue() {
+// This operation returns the value of the ITimer.
+double GPTLTimer::getValue() const {
 
 	/*
 	** GPTLget_wallclock: return wallclock accumulation for a timer.
@@ -62,13 +32,15 @@ double GPTLTimer::getValue() {
 	** Output args:
 	** double *value: current wallclock accumulation for the timer
 	*/
-    int gret = GPTLget_wallclock( name.c_str(), -1, &value );
+//    int gret = GPTLget_wallclock( name.c_str(), -1, &value );
+    double value = -1.0;
+    GPTLget_wallclock( this->getName().c_str(), -1, &value );
 
     return value;
 }
 
-// This operation returns the units of the Timer.
-long GPTLTimer::getUnits() const {
-//	return this->units;
+// This operation returns the units of the ITimer.
+std::string GPTLTimer::getUnits() const {
+    return "s";
 }
 

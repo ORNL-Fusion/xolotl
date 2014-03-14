@@ -19,9 +19,13 @@ ENDIF()
 # Find PETSc
 FIND_PACKAGE(PETSc REQUIRED)
 
+# Build the performance library first, so it can be used by other libraries.
+add_subdirectory(xolotlPerf)
+
 # Add the I/O, data structures and reactor directories
 add_subdirectory(xolotlCore)
 add_subdirectory(xolotlSolver)
+
 
 # Enable testing.
 enable_testing()
@@ -48,15 +52,18 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
 include(UseDoxygen OPTIONAL)
 
 # Include directories for the main program
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 include_directories(${PETSC_INCLUDES})
 
 configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_SOURCE_DIR}/XolotlConfig.h")
 
 # Setup the library list
-set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO ${PETSC_LIBRARIES})
+set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlCL ${PETSC_LIBRARIES})
 
 # Add an executable for the main program
 ADD_EXECUTABLE (xolotl main.cpp)
