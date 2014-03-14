@@ -13,28 +13,39 @@
 
 namespace xolotlPerf {
 
-//
-// Factory for building performance data collection objects, such
-// as timers and counters.
+/**
+ * Factory for building performance data collection objects, such
+ * as timers and counters.
+ */
 class IHandlerRegistry {
 
 public:
 
-	// The destructor
+	/**
+	 * The destructor
+	 */
 	virtual ~IHandlerRegistry(){}
 
-	// This operation returns the ITimer specified by the parameter.
+	/**
+	 * This operation returns the ITimer specified by the parameter.
+	 */
 	virtual std::shared_ptr<ITimer> getTimer(std::string name) = 0;
 
-	// This operation returns the IEventCounter specified by the parameter.
+	/**
+	 * This operation returns the IEventCounter specified by the parameter.
+	 */
 	virtual std::shared_ptr<IEventCounter> getEventCounter( std::string name) = 0;
 
-	// This operation returns the specified IHardwareCounter.
+	/**
+	 * This operation returns the specified IHardwareCounter.
+	 */
 	virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( std::string name,
 			            std::vector<HardwareQuantities> quantities) = 0;
 
-	// This operation outputs the information gathered to the given
-    // output stream.
+	/**
+	 * This operation outputs the information gathered to the given
+	 * output stream.
+	 */
 	virtual void dump(std::ostream& os) const = 0;
 
 };

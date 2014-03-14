@@ -6,15 +6,19 @@
 using namespace xolotlPerf;
 
 
-// This operations starts the ITimer.
+/**
+ * This operations starts the ITimer.
+ */
 void GPTLTimer::start(){
-//	GPTLstart_handle(timerName.c_str(), &handle);
+
 	GPTLstart(this->getName().c_str());
 }
 
-// This operation stops the ITimer.
+/**
+ * This operation stops the ITimer.
+ */
 void GPTLTimer::stop(){
-//	GPTLstop_handle(name.c_str(), &handle);
+
 	GPTLstop(this->getName().c_str());
 }
 
@@ -32,14 +36,15 @@ double GPTLTimer::getValue() const {
 	** Output args:
 	** double *value: current wallclock accumulation for the timer
 	*/
-//    int gret = GPTLget_wallclock( name.c_str(), -1, &value );
     double value = -1.0;
     GPTLget_wallclock( this->getName().c_str(), -1, &value );
 
     return value;
 }
 
-// This operation returns the units of the ITimer.
+/**
+ * This operation returns the units of the ITimer.
+ */
 std::string GPTLTimer::getUnits() const {
     return "s";
 }

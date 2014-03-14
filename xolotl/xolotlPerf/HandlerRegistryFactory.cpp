@@ -1,6 +1,7 @@
 #include "XolotlConfigPerf.h"
 #include "HandlerRegistryFactory.h"
 #include "dummy/DummyHandlerRegistry.h"
+#include <iostream>
 
 #if defined(HAVE_PERFLIB_STD)
 #include "standard/StandardHandlerRegistry.h"
@@ -64,5 +65,5 @@ getHandlerRegistry( void )
 }
 
 
-} // end namedpsace xolotlPerf
+} // end namespace xolotlPerf
 

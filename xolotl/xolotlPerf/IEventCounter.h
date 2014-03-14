@@ -5,17 +5,11 @@
 
 namespace xolotlPerf {
 
-//Realizations of this interface are responsible for the collection
-//of event performance counter data.
+/**
+ * Realizations of this interface are responsible for the collection
+ * of event performance counter data.
+ */
 class IEventCounter : public virtual xolotlCore::IIdentifiable {
-
-//private:
-
-	/**
-	 * The default constructor is declared private since all event counters
-	 * must be initialized with a name.
-	 */
-//	IEventCounter();
 
 public:
 
@@ -35,9 +29,8 @@ public:
 	 */
 	virtual void increment() = 0;
 
-};
-//end class IEventCounter
+}; //end class IEventCounter
 
-}//end namespace xolotlPerf
+} //end namespace xolotlPerf
 
 #endif

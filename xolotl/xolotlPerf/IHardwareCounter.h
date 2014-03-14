@@ -24,7 +24,6 @@ public:
      * This operation returns a list of values of the, initially specified,
      * hardware quantities monitored by the IHardwareCounter.
      */
-//    virtual std::vector<int> getValues() const = 0;
     virtual std::vector<double> getValues() const = 0;
 
 	/**

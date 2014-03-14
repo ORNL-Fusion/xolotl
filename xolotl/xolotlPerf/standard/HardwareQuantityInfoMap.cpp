@@ -1,5 +1,3 @@
-#include "HardwareQuantityInfoMap.h"
-
 #include "papi.h"
 #include "HardwareQuantityInfoMap.h"
 

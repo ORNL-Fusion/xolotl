@@ -90,10 +90,6 @@ public:
 	 */
 	virtual std::vector<std::string> getHardwareQuantities() const;
 
-//	std::vector<HardwareQuantities> getHardwareQuantitiesAsEnum() const;
-//	std::vector<std::string> getPAPInames() const;
-
-
 };  //end class GPTLHardwareCounter
 
 }  //end namespace xolotlPerf

@@ -8,7 +8,7 @@ std::shared_ptr<ITimer>
 DummyHandlerRegistry::getTimer( std::string name )
 {
     // TODO is there a need for us to retain access to this Timer?
-    // TODO do we need to check wehther client has already created
+    // TODO do we need to check whether client has already created
     // an object with this name and return that object?
     return std::make_shared<DummyTimer>( name );
 }
@@ -19,7 +19,7 @@ std::shared_ptr<IEventCounter>
 DummyHandlerRegistry::getEventCounter( std::string name )
 {
     // TODO is there a need for us to retain access to this Timer?
-    // TODO do we need to check wehther client has already created
+    // TODO do we need to check whether client has already created
     // an object with this name and return that object?
     return std::make_shared<DummyEventCounter>( name );
 }
@@ -31,7 +31,7 @@ DummyHandlerRegistry::getHardwareCounter( std::string name,
                                         std::vector<HardwareQuantities> hwq )
 {
     // TODO is there a need for us to retain access to this Timer?
-    // TODO do we need to check wehther client has already created
+    // TODO do we need to check whether client has already created
     // an object with this name and return that object?
     return std::make_shared<DummyHardwareCounter>( name, hwq );
 }

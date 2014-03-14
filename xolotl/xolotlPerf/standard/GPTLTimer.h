@@ -66,9 +66,9 @@ public:
 	 *
 	 */
 	virtual std::string getUnits() const;
-};
-//end class GPTLTimer
 
-}//end namespace xolotlPerf
+}; //end class GPTLTimer
+
+} //end namespace xolotlPerf
 
 #endif

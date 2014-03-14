@@ -25,13 +25,8 @@ find_path(GPTL_PREFIX include/gptl.h
     NAMES HINTS ENV GPTL_PREFIX
 )
 
-#find_path(GPTL_PREFIX include/gptl.h
-#    HINTS ENV GPTL_PREFIX
-#)
-
 find_library(GPTL_LIBRARIES
-    NAMES libgptl_pmpi.a gptl
-#    HINTS ${GPTL_PREFIX} ${GPTL_PREFIX}/lib ${HILTIDEPS}/lib
+    NAMES libgptl_pmpi.a libgptl.a gptl
     HINTS ${GPTL_PREFIX}/lib ${HILTIDEPS}/lib
 )
 

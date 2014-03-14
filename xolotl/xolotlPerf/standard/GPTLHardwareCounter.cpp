@@ -1,11 +1,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
-//#include <assert.h>
-//#include <math.h>
 #include "gptl.h"
 #include <papi.h>
-//#include "Identifiable.h"
 #include "GPTLHardwareCounter.h"
 
 using namespace xolotlPerf;
@@ -41,7 +38,6 @@ GPTLHardwareCounter::GPTLHardwareCounter(std::string name,
 
 	for (unsigned i = 0; i < counterQuantities.size(); i++)
 	{
-		//std::unordered_map<HardwareQuantities,hardwareQuantity>::const_iterator search =
 		std::unordered_map<int,hardwareQuantity>::const_iterator search =
 				AllHardwareQuantitiesMap.find(counterQuantities.at(i));
 		hardwareQuantitiesMap.insert( {search->first, search->second} );
@@ -98,21 +94,5 @@ std::vector<std::string> GPTLHardwareCounter::getHardwareQuantities() const {
 	return namesOfQuantities;
 }
 
-//std::vector<HardwareQuantities> GPTLHardwareCounter::getHardwareQuantitiesAsEnum() const {
-//
-//	return quantities;
-//}
-
-//std::vector<std::string> GPTLHardwareCounter::getPAPInames() const {
-//
-//	std::vector<std::string> papiNames;
-//
-//	for (auto it = hardwareQuantitiesMap.begin(); it != hardwareQuantitiesMap.end(); ++it)
-//	{
-//		papiNames.push_back (it->second.papiQuantityString);
-//	}
-//
-//	return papiNames;
-//}
 
 
