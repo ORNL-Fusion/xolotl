@@ -30,7 +30,7 @@ find_path(GPTL_PREFIX include/gptl.h
 #)
 
 find_library(GPTL_LIBRARIES
-    NAMES libgptl_pmpi.so gptl
+    NAMES libgptl_pmpi.a gptl
 #    HINTS ${GPTL_PREFIX} ${GPTL_PREFIX}/lib ${HILTIDEPS}/lib
     HINTS ${GPTL_PREFIX}/lib ${HILTIDEPS}/lib
 )
