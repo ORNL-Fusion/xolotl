@@ -52,6 +52,14 @@ initialize( bool useStdRegistry,
 std::shared_ptr<IHandlerRegistry>
 getHandlerRegistry( void )
 {
+    if( !theHandlerRegistry )
+    {
+        // We have not yet been initialized.
+        // Issue a warning and use a dummy (stub) registry.
+        std::cerr << "Warning: xolotlPerf handler registry requested, but library has not been initialized; using dummy handlers" << std::endl;
+
+        xolotlPerf::initialize( false );
+    }
     return theHandlerRegistry;
 }
 
