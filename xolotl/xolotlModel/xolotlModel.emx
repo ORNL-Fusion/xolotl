@@ -2898,7 +2898,7 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_DCSx0oRIEeOdAZHPUXPhMw" type="AttributeCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_DCTY4IRIEeOdAZHPUXPhMw" type="OperationCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_DCT_8IRIEeOdAZHPUXPhMw" visible="false" type="SignalCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_DCRjsYRIEeOdAZHPUXPhMw" x="20922" y="8242"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_DCRjsYRIEeOdAZHPUXPhMw" x="21239" y="8559"/>
             </children>
             <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_GAHN0IRIEeOdAZHPUXPhMw" element="_iI4CUEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
               <children xmi:type="notation:DecorationNode" xmi:id="_GAH04IRIEeOdAZHPUXPhMw" type="ImageCompartment">
@@ -2999,17 +2999,22 @@ Check the reactants - He first
           <ownedComment xmi:id="_CzsnMIUvEeOdAZHPUXPhMw" annotatedElement="_dExRsIRHEeOdAZHPUXPhMw">
             <body>&lt;p>This class is responsible for testing the EventCounter.&lt;/p></body>
           </ownedComment>
+          <ownedOperation xmi:id="_l-n9kK3kEeO0BKdobV1hNQ" name="checkName"/>
+          <ownedOperation xmi:id="_ndYakK3kEeO0BKdobV1hNQ" name="checkInitialValue"/>
           <ownedOperation xmi:id="_eu0YsIRHEeOdAZHPUXPhMw" name="checkCounting">
             <ownedComment xmi:id="_QCPsIIUvEeOdAZHPUXPhMw" annotatedElement="_eu0YsIRHEeOdAZHPUXPhMw">
               <body>&lt;p>This operation checks to ensure the counter is incrementing properly.&lt;/p></body>
             </ownedComment>
           </ownedOperation>
         </packagedElement>
-        <packagedElement xmi:type="uml:Class" xmi:id="_iBxXMIRHEeOdAZHPUXPhMw" name="HardwareCounterTester" clientDependency="_5d4cUIRHEeOdAZHPUXPhMw">
+        <packagedElement xmi:type="uml:Class" xmi:id="_iBxXMIRHEeOdAZHPUXPhMw" name="GPTLHardwareCounterTester" clientDependency="_5d4cUIRHEeOdAZHPUXPhMw">
           <ownedComment xmi:id="_Bef5YIUwEeOdAZHPUXPhMw" annotatedElement="_iBxXMIRHEeOdAZHPUXPhMw">
             <body>&lt;p>This class is responsible for testing the HardwareCounter.&lt;/p></body>
           </ownedComment>
-          <ownedOperation xmi:id="_j81VsIRHEeOdAZHPUXPhMw" name="checkCounting">
+          <ownedOperation xmi:id="_ricygK3kEeO0BKdobV1hNQ" name="checkName"/>
+          <ownedOperation xmi:id="_tKg8gK3kEeO0BKdobV1hNQ" name="check_getHardwareQuantities"/>
+          <ownedOperation xmi:id="_vohQAK3kEeO0BKdobV1hNQ" name="check_getSingleValue"/>
+          <ownedOperation xmi:id="_j81VsIRHEeOdAZHPUXPhMw" name="check_getValues">
             <ownedComment xmi:id="_R_OWMIUvEeOdAZHPUXPhMw" annotatedElement="_j81VsIRHEeOdAZHPUXPhMw">
               <body>&lt;p>This operation checks to ensure the counter is incrementing properly.&lt;/p></body>
             </ownedComment>
@@ -3021,7 +3026,7 @@ Check the reactants - He first
           </ownedComment>
           <ownedAttribute xmi:id="_f8g60IULEeOdAZHPUXPhMw" name="testTimer" visibility="private" type="_AYGR4IRHEeOdAZHPUXPhMw"/>
           <ownedAttribute xmi:id="_klEaUIULEeOdAZHPUXPhMw" name="testEventCounter" visibility="private">
-            <type xmi:type="uml:Class" href="platform:/resource/code/xolotl/xolotlModel/xolotlModel.emx#_dExRsIRHEeOdAZHPUXPhMw?xolotl/performance/tests/EventCounterTester?"/>
+            <type xmi:type="uml:Class" href="platform:/resource/code/xolotl/xolotlModel/xolotlModel.emx#_dExRsIRHEeOdAZHPUXPhMw?xolotl/tests/performance/EventCounterTester?"/>
           </ownedAttribute>
           <ownedAttribute xmi:id="_mzqY0IULEeOdAZHPUXPhMw" name="testHardwareCounter" visibility="private" type="_iBxXMIRHEeOdAZHPUXPhMw"/>
           <ownedOperation xmi:id="_2BVSkIRrEeOdAZHPUXPhMw" name="checkTimer">
@@ -3040,10 +3045,11 @@ Check the reactants - He first
             </ownedComment>
           </ownedOperation>
         </packagedElement>
-        <packagedElement xmi:type="uml:Class" xmi:id="_AYGR4IRHEeOdAZHPUXPhMw" name="TimerTester" clientDependency="_1CVeEIRHEeOdAZHPUXPhMw">
+        <packagedElement xmi:type="uml:Class" xmi:id="_AYGR4IRHEeOdAZHPUXPhMw" name="GPTLTimerTester" clientDependency="_1CVeEIRHEeOdAZHPUXPhMw">
           <ownedComment xmi:id="_yeT3sIUvEeOdAZHPUXPhMw" annotatedElement="_AYGR4IRHEeOdAZHPUXPhMw">
             <body>&lt;p>This class is responsible for testing the Timer.&lt;/p></body>
           </ownedComment>
+          <ownedOperation xmi:id="_ga7EcK3kEeO0BKdobV1hNQ" name="checkName"/>
           <ownedOperation xmi:id="_NrsO4IRHEeOdAZHPUXPhMw" name="checkTiming">
             <ownedComment xmi:id="_vTwAMIUvEeOdAZHPUXPhMw" annotatedElement="_NrsO4IRHEeOdAZHPUXPhMw">
               <body>&lt;p>This operation checks that the timing is being properly recorded.&lt;/p></body>
