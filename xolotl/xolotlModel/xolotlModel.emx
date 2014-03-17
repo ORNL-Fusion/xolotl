@@ -3384,7 +3384,7 @@ Check the reactants - He first
             <ownedComment xmi:id="_mOO3oEYtEeOPDa8Cefg4Cg" annotatedElement="_c_VU0EMcEeOTkpIp2VY3Rg">
               <body>&lt;p>The name of the Timer.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            <type xmi:type="uml:Class" href="mmi:///#cdt.typedef%5En=std'string%5Ep=&amp;includedir&amp;/bits/stringfwd.h$uml.Class"/>
             <defaultValue xmi:type="uml:OpaqueExpression" xmi:id="_clIUIIOeEeOdAZHPUXPhMw" name="">
               <language></language>
               <body></body>
@@ -3404,7 +3404,7 @@ Check the reactants - He first
             <ownedComment xmi:id="_R_nCMEYtEeOPDa8Cefg4Cg" annotatedElement="_7KdbYEM3EeOTkpIp2VY3Rg">
               <body>&lt;p>The name of the EventCounter.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            <type xmi:type="uml:Class" href="mmi:///#cdt.typedef%5En=std'string%5Ep=&amp;includedir&amp;/bits/stringfwd.h$uml.Class"/>
           </ownedParameter>
           <ownedParameter xmi:id="_7KeCcEM3EeOTkpIp2VY3Rg" name="eventCounter" type="_whqFwEVdEeOTkpIp2VY3Rg" direction="return">
             <ownedComment xmi:id="_Yg7aIEYtEeOPDa8Cefg4Cg" annotatedElement="_7KeCcEM3EeOTkpIp2VY3Rg">
@@ -3420,7 +3420,7 @@ Check the reactants - He first
             <ownedComment xmi:id="_2flpcEYxEeOPDa8Cefg4Cg" annotatedElement="_x_aaAEVZEeOTkpIp2VY3Rg">
               <body>&lt;p>The name of the HardwareCounter.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            <type xmi:type="uml:Class" href="mmi:///#cdt.typedef%5En=std'string%5Ep=&amp;includedir&amp;/bits/stringfwd.h$uml.Class"/>
           </ownedParameter>
           <ownedParameter xmi:id="_xISK0IeeEeOJldxzwIPVCQ" name="quantities">
             <ownedComment xmi:id="_Hw4Y8IkLEeO74ZO5tXUQMg" annotatedElement="_xISK0IeeEeOJldxzwIPVCQ">
@@ -3891,7 +3891,7 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_gA6mYHiZEeO_LPATlPj4SA" type="OperationCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_gA6mYXiZEeO_LPATlPj4SA" visible="false" type="SignalCompartment"/>
               <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_gA6mYniZEeO_LPATlPj4SA" visible="false" type="StructureCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_gAl2QXiZEeO_LPATlPj4SA" x="11421" y="11773"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_gAl2QXiZEeO_LPATlPj4SA" x="11729" y="11729"/>
             </children>
             <children xmi:type="umlnotation:UMLShape" xmi:id="_t-6LQHiZEeO_LPATlPj4SA" element="_JDcYUHiJEeO_LPATlPj4SA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
               <children xmi:type="notation:DecorationNode" xmi:id="_t-6yUHiZEeO_LPATlPj4SA" type="ImageCompartment">
@@ -3971,7 +3971,7 @@ Check the reactants - He first
         <ownedComment xmi:id="_AdNa0HyFEeODlfDGqk4_6Q" annotatedElement="__oSfsHutEeO_LPATlPj4SA">
           <body>&lt;p>Xolotl's standard performance monitoring package implemented in GPTL.&lt;/p></body>
         </ownedComment>
-        <packagedElement xmi:type="uml:Class" xmi:id="_DQVxQHiJEeO_LPATlPj4SA" name="GPTLEventCounter" clientDependency="_keTrkHu2EeO_LPATlPj4SA">
+        <packagedElement xmi:type="uml:Class" xmi:id="_DQVxQHiJEeO_LPATlPj4SA" name="EventCounter" clientDependency="_keTrkHu2EeO_LPATlPj4SA">
           <ownedComment xmi:id="_NsJzYHiKEeO_LPATlPj4SA" annotatedElement="_DQVxQHiJEeO_LPATlPj4SA">
             <body>&lt;p>The GPTLEventCounter class is instantiated by the StandardHandlerRegistry class and realizes the EventCounter interface to access event performance counter data found via the General Purpose Timing Library (GPTL).&lt;/p></body>
           </ownedComment>
