@@ -3461,7 +3461,7 @@ Check the reactants - He first
             <ownedComment xmi:id="_7y6hEEYtEeOPDa8Cefg4Cg" annotatedElement="_R41HMEMsEeOTkpIp2VY3Rg">
               <body>&lt;p>The name of the Timer.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            <type xmi:type="uml:Class" href="mmi:///#cdt.typedef%5En=std'string%5Ep=&amp;includedir&amp;/bits/stringfwd.h$uml.Class"/>
           </ownedParameter>
         </ownedOperation>
         <ownedOperation xmi:id="_ei4igEMtEeOTkpIp2VY3Rg" name="start">
@@ -3509,7 +3509,7 @@ Check the reactants - He first
             <ownedComment xmi:id="_SdvWYEYyEeOPDa8Cefg4Cg" annotatedElement="_Z_zNUEM3EeOTkpIp2VY3Rg">
               <body>&lt;p>The name of the EventCounter.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            <type xmi:type="uml:Class" href="mmi:///#cdt.typedef%5En=std'string%5Ep=&amp;includedir&amp;/bits/stringfwd.h$uml.Class"/>
           </ownedParameter>
         </ownedOperation>
         <ownedOperation xmi:id="_szLz0EM3EeOTkpIp2VY3Rg" name="getValue">
@@ -3541,7 +3541,7 @@ Check the reactants - He first
             <ownedComment xmi:id="_ZplgwEYsEeOPDa8Cefg4Cg" annotatedElement="_3U07sEM5EeOTkpIp2VY3Rg">
               <body>&lt;p>The name of the HardwareCounter.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+            <type xmi:type="uml:Class" href="mmi:///#cdt.typedef%5En=std'string%5Ep=&amp;includedir&amp;/bits/stringfwd.h$uml.Class"/>
           </ownedParameter>
           <ownedParameter xmi:id="_-bAUMEM5EeOTkpIp2VY3Rg" name="quantities ">
             <ownedComment xmi:id="_mIresEYsEeOPDa8Cefg4Cg" annotatedElement="_-bAUMEM5EeOTkpIp2VY3Rg">
