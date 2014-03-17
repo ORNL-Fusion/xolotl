@@ -164,8 +164,6 @@ BOOST_AUTO_TEST_CASE(check_getValues) {
 		                       << " = " << tester.getValues()[i] << " ");
 	}
 
-//	GPTLpr(0);
-
 	GPTLfinalize();
 }
 #endif // READY
