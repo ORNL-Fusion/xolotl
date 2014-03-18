@@ -2,7 +2,7 @@
 #define ITIMER_H
 
 #include <string>
-#include "IIdentifiable.h"
+#include "../xolotlCore/IIdentifiable.h"
 
 using namespace std;
 

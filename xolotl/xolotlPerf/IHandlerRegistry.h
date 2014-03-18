@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "ITimer.h" //Dependency Generated Source:IHandlerRegistry Target:ITimer
-#include "IEventCounter.h" //Dependency Generated Source:IHandlerRegistry Target:IEventCounter
-#include "IHardwareCounter.h" //Dependency Generated Source:IHandlerRegistry Target:IHardwareCounter
+#include "ITimer.h"
+#include "IEventCounter.h"
+#include "IHardwareCounter.h"
 #include "HardwareQuantities.h"
 
 
@@ -48,9 +48,8 @@ public:
 	 */
 	virtual void dump(std::ostream& os) const = 0;
 
-};
-//end class IHandlerRegistry
+}; //end class IHandlerRegistry
 
-}//end namespace xolotlPerf
+} //end namespace xolotlPerf
 
 #endif

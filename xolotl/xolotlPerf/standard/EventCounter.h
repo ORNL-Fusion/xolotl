@@ -8,7 +8,7 @@ namespace xolotlPerf{
 
 /**
  * An EventCounter keeps a count.  Code using an EventCounter can
- * increment the counter whenver an event of interest occurs, and 
+ * increment the counter whenever an event of interest occurs, and
  * retrieve the count whenever it is desired.
  */
 class EventCounter : public IEventCounter, public xolotlCore::Identifiable

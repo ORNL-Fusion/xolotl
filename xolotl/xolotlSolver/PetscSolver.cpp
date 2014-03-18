@@ -1,5 +1,6 @@
 // Includes
 #include "PetscSolver.h"
+#include "../xolotlPerf/HandlerRegistryFactory.h"
 #include <petscts.h>
 #include <petscsys.h>
 #include <sstream>
@@ -34,6 +35,13 @@ using namespace xolotlCore;
  */
 
 namespace xolotlSolver {
+
+/**
+ * Counter for the number of times RHSFunction is called.
+ */
+std::shared_ptr<xolotlPerf::IEventCounter> RHSFunctionCounter;
+
+
 
 //! Help message
 static char help[] =
@@ -313,6 +321,9 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
  */
 /* ------------------------------------------------------------------- */
 PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
+
+	RHSFunctionCounter->increment();
+
 	// Important petsc stuff (related to the grid mostly)
 	DM da;
 	PetscErrorCode ierr;
@@ -523,6 +534,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
  */
 PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		MatStructure *str, void *ptr) {
+
 	DM da;
 	PetscErrorCode ierr;
 	PetscInt xi, Mx, xs, xm, i;
@@ -844,11 +856,20 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 PetscSolver::PetscSolver() {
 	numCLIArgs = 0;
 	CLIArgs = NULL;
+
+	RHSFunctionCounter =
+			xolotlPerf::getHandlerRegistry()->getEventCounter("RHSFunction_Counter");
 }
 
 //! The Destructor
 PetscSolver::~PetscSolver() {
+
+//    std::cout << "PetscSolver: Called RHSFunction "
+//        << RHSFunctionCounter->getValue() << " times"
+//        << std::endl;
+
 }
+
 
 /**
  * This operation transfers the input arguments passed to the program on

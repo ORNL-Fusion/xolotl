@@ -7,6 +7,10 @@
 #include <vector>
 #include <unordered_map>
 
+namespace xolotlPerf {
+	class IEventCounter;
+};
+
 namespace xolotlCore {
 
 /**
@@ -132,6 +136,11 @@ protected:
 	 * make sure that they fill this list.
 	 */
 	std::vector<std::shared_ptr<PSICluster>> dissociatingClusters;
+
+    /**
+     * Counter for the number of times getDissociationFlux is called.
+     */
+    std::shared_ptr<xolotlPerf::IEventCounter> getDissociationFluxCounter;
 
 	/**
 	 * This operation retrieves the shared_ptr for this cluster from the

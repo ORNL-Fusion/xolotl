@@ -24,6 +24,7 @@ bool initialize( bool useStdRegistry,
 
 /**
  * Access the handler registry.
+ *
  *  @return The handler registry object.
  */
 std::shared_ptr<IHandlerRegistry> getHandlerRegistry( void );

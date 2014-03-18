@@ -72,7 +72,7 @@ void ReactionNetwork::updateConcentrationsFromArray(double * concentrations) {
 
 
 	// Set the concentrations
-    concUpdateCounter->increment();
+    concUpdateCounter->increment();		// increment the update concentration counter
 	for (int i = 0; i < size; i++) {
 		id = reactants->at(i)->getId() - 1;
 		reactants->at(i)->setConcentration(concentrations[id]);

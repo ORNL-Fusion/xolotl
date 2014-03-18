@@ -39,7 +39,8 @@ protected:
 
 public:
 
-	/** The constructor. It initializes the properties map and reactants vector.
+	/**
+	 * The constructor. It initializes the properties map and reactants vector.
 	 */
 	ReactionNetwork();
 

@@ -1,4 +1,5 @@
 #include "PSICluster.h"
+#include "xolotlPerf/HandlerRegistryFactory.h"
 #include <Constants.h>
 #include <iostream>
 
@@ -7,7 +8,7 @@ using namespace xolotlCore;
 // Create the static map of binding energies
 std::unordered_map<std::string, int> PSICluster::bindingEnergyIndexMap;
 
-PSICluster::PSICluster() {
+PSICluster::PSICluster(){
 	// Set the size
 	size = 1;
 	// Zero out the binding energies
@@ -30,6 +31,10 @@ PSICluster::PSICluster() {
 	// Setup the binding energy index map
 	bindingEnergyIndexMap = { {"He", 0},
 		{	"V", 1}, {"I", 2}};
+
+	// Set up an event counter to count the number of times getDissociationFlux is called
+	getDissociationFluxCounter =
+			xolotlPerf::getHandlerRegistry()->getEventCounter("getDissociationFlux_Counter");
 }
 
 PSICluster::PSICluster(const int clusterSize) :
@@ -55,6 +60,9 @@ PSICluster::PSICluster(const int clusterSize) :
 	// Set the default reaction radius to 0. (Doesn't react.)
 	reactionRadius = 0.0;
 
+	getDissociationFluxCounter =
+			xolotlPerf::getHandlerRegistry()->getEventCounter("getDissociationFlux_Counter");
+
 }
 
 // The copy constructor with a huge initialization list!
@@ -71,6 +79,10 @@ PSICluster::PSICluster(const PSICluster &other) :
 				other.reactingPairs), combiningReactants(
 				other.combiningReactants), dissociatingClusters(
 				other.dissociatingClusters) {
+
+	getDissociationFluxCounter =
+			xolotlPerf::getHandlerRegistry()->getEventCounter("getDissociationFlux_Counter");
+
 }
 
 std::shared_ptr<Reactant> PSICluster::clone() {
@@ -83,6 +95,11 @@ std::shared_ptr<PSICluster> PSICluster::getThisSharedPtrFromNetwork() const {
 }
 
 PSICluster::~PSICluster() {
+
+    std::cout << "PSICluster: Called getDissociationFlux "
+        << getDissociationFluxCounter->getValue() << " times"
+        << std::endl;
+
 }
 
 /**
@@ -182,6 +199,9 @@ void PSICluster::setReactionNetwork(
 }
 
 double PSICluster::getDissociationFlux(double temperature) const {
+
+	// increment the getDissociationFlux counter
+	getDissociationFluxCounter->increment();
 
 	int nClusters = 0, smallerClusterSize = 0.0;
 	double flux = 0.0, fluxMultiplier = 1.0;

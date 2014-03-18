@@ -7,6 +7,7 @@
 #include <memory>
 #include <map>
 #include "ReactionNetwork.h"
+//#include "IHandlerRegistry.h"
 
 namespace xolotlCore {
 
@@ -25,6 +26,13 @@ namespace xolotlCore {
  * functionality for calculate fluxes and computing connectivity.
  */
 class Reactant {
+
+private:
+
+	/**
+	 * The constructor.
+	 */
+	//Reactant();
 
 protected:
 
@@ -51,9 +59,11 @@ protected:
 
 public:
 
-	/** The constructor.
+	/**
+	 * The constructor.
 	 */
 	Reactant();
+	//Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry);
 
 	/**
 	 * The copy constructor. All reactants MUST be deep copied.
@@ -61,7 +71,8 @@ public:
 	 */
 	Reactant(const Reactant &other);
 
-	/** The destructor
+	/**
+	 * The destructor
 	 */
 	virtual ~Reactant();
 

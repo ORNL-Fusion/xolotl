@@ -109,7 +109,7 @@ StandardHandlerRegistry::dump(std::ostream& os) const
     // TODO - aggregation when run with more than one process?
 
     // TODO is there a way to get nesting based on call site of event counters?
-    os << "EventCounters:\n";
+    os << "\nEventCounters:\n";
     for( auto iter = allEventCounters.begin(); 
             iter != allEventCounters.end(); 
             iter++ )

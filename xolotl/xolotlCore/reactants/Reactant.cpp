@@ -1,6 +1,7 @@
 // Includes
 #include "Reactant.h"
 #include "ReactionNetwork.h"
+#include "xolotlPerf/HandlerRegistryFactory.h"
 #include <iostream>
 
 // Namespaces

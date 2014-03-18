@@ -1,7 +1,7 @@
 #ifndef IEVENTCOUNTER_H
 #define IEVENTCOUNTER_H
 
-#include "IIdentifiable.h"
+#include "../xolotlCore/IIdentifiable.h"
 
 namespace xolotlPerf {
 

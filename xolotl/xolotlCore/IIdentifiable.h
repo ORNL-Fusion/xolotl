@@ -5,13 +5,17 @@
 
 namespace xolotlCore {
 
-// An Identifiable is an object that has some identification (e.g., a name
-// and/or an ID).
+/**
+ * An Identifiable is an object that has some identification (e.g., a name
+ * and/or an ID).
+ */
 class IIdentifiable
 {
 public:
 
-    // Obtain the object's given name.
+    /**
+     * Obtain the object's given name.
+     */
     virtual std::string getName( void ) const = 0;
 };
 

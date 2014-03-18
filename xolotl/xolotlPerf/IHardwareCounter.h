@@ -1,7 +1,7 @@
 #ifndef IHARDWARECOUNTER_H
 #define IHARDWARECOUNTER_H
 
-#include "IIdentifiable.h"
+#include "../xolotlCore/IIdentifiable.h"
 
 using namespace std;
 

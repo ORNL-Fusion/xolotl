@@ -50,8 +50,7 @@ initialize( bool useStdRegistry,
 
 
 // Provide access to our handler registry.
-std::shared_ptr<IHandlerRegistry>
-getHandlerRegistry( void )
+std::shared_ptr<IHandlerRegistry> getHandlerRegistry( void )
 {
     if( !theHandlerRegistry )
     {
