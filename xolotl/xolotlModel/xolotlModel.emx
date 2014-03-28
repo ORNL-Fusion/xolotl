@@ -3025,9 +3025,7 @@ Check the reactants - He first
             <body>&lt;p>This class is responsible for testing StandardHandlerRegistry.&lt;/p></body>
           </ownedComment>
           <ownedAttribute xmi:id="_f8g60IULEeOdAZHPUXPhMw" name="testTimer" visibility="private" type="_AYGR4IRHEeOdAZHPUXPhMw"/>
-          <ownedAttribute xmi:id="_klEaUIULEeOdAZHPUXPhMw" name="testEventCounter" visibility="private">
-            <type xmi:type="uml:Class" href="platform:/resource/code/xolotl/xolotlModel/xolotlModel.emx#_dExRsIRHEeOdAZHPUXPhMw?xolotl/tests/performance/EventCounterTester?"/>
-          </ownedAttribute>
+          <ownedAttribute xmi:id="_klEaUIULEeOdAZHPUXPhMw" name="testEventCounter" visibility="private" type="_dExRsIRHEeOdAZHPUXPhMw"/>
           <ownedAttribute xmi:id="_mzqY0IULEeOdAZHPUXPhMw" name="testHardwareCounter" visibility="private" type="_iBxXMIRHEeOdAZHPUXPhMw"/>
           <ownedOperation xmi:id="_2BVSkIRrEeOdAZHPUXPhMw" name="checkTimer">
             <ownedComment xmi:id="_cj0rcIUxEeOdAZHPUXPhMw" annotatedElement="_2BVSkIRrEeOdAZHPUXPhMw">
@@ -3434,7 +3432,7 @@ Check the reactants - He first
           <element xsi:nil="true"/>
         </contents>
         <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_0_URYLdWEeKdoYp0Rmlq6Q" type="Class" name="Solver Class Diagram">
-          <children xmi:type="notation:Shape" xmi:id="_0_URYbdWEeKdoYp0Rmlq6Q" type="Text" fontName="Sans" fontHeight="24" description="Solver Class Diagram" transparency="0" lineColor="0" lineWidth="2">
+          <children xmi:type="notation:Shape" xmi:id="_0_URYbdWEeKdoYp0Rmlq6Q" type="Text" fontName="Sans" fontHeight="10" description="Solver Class Diagram" transparency="0" lineColor="0" lineWidth="2">
             <children xmi:type="notation:BasicDecorationNode" xmi:id="_0_URYrdWEeKdoYp0Rmlq6Q" type="DiagramName">
               <element xsi:nil="true"/>
             </children>
@@ -3470,7 +3468,7 @@ Check the reactants - He first
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_T7QNwLgKEeKdoYp0Rmlq6Q" visible="false" type="StructureCompartment"/>
             <layoutConstraint xmi:type="notation:Bounds" xmi:id="_T7NxgbgKEeKdoYp0Rmlq6Q" x="6981" y="11374"/>
           </children>
-          <children xmi:type="notation:Shape" xmi:id="_NI_MAMFbEeKdoYp0Rmlq6Q" type="Note" fontName="Sans" fontHeight="24" description="&lt;p>&lt;span style=&quot;font-size:18pt;&quot;>Note explicit dependency on PSIClusters!&lt;/span>&lt;/p>" transparency="0" lineColor="14263149" lineWidth="1">
+          <children xmi:type="notation:Shape" xmi:id="_NI_MAMFbEeKdoYp0Rmlq6Q" type="Note" fontName="Sans" fontHeight="8" description="&lt;p>&lt;span style=&quot;font-size:18pt;&quot;>Note explicit dependency on PSIClusters!&lt;/span>&lt;/p>" fillColor="13956346" transparency="0" lineColor="12632258" lineWidth="1">
             <children xmi:type="notation:BasicDecorationNode" xmi:id="_NJBBMMFbEeKdoYp0Rmlq6Q" type="DiagramName">
               <element xsi:nil="true"/>
             </children>
@@ -3496,6 +3494,53 @@ Check the reactants - He first
             <styles xmi:type="notation:LineTypeStyle" xmi:id="_NPsQ8sFbEeKdoYp0Rmlq6Q"/>
             <element xsi:nil="true"/>
             <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_NPsQ88FbEeKdoYp0Rmlq6Q" points="[-129, -84, 185, 120]$[-314, -204, 0, 0]"/>
+          </edges>
+        </contents>
+        <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_97Dk8K-6EeO2kNrAzNWg-w" type="Class" name="IFluxHandler">
+          <children xmi:type="notation:Shape" xmi:id="_MNehsK-7EeO2kNrAzNWg-w" type="Text" fontName="Sans" fontHeight="24" description="IFluxHandler Class Diagram" transparency="0" lineColor="12632258" lineWidth="1">
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_MNehsa-7EeO2kNrAzNWg-w" type="DiagramName">
+              <element xsi:nil="true"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_MNehsq-7EeO2kNrAzNWg-w" type="Description">
+              <element xsi:nil="true"/>
+            </children>
+            <element xsi:nil="true"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_MNehs6-7EeO2kNrAzNWg-w" x="6666" y="1507" width="16853" height="899"/>
+          </children>
+          <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_2QxdAK--EeO2kNrAzNWg-w" element="_2QvAwK--EeO2kNrAzNWg-w" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
+            <children xmi:type="notation:DecorationNode" xmi:id="_2QyrIK--EeO2kNrAzNWg-w" type="ImageCompartment">
+              <layoutConstraint xmi:type="notation:Size" xmi:id="_2QyrIa--EeO2kNrAzNWg-w" width="530" height="530"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_2QyrIq--EeO2kNrAzNWg-w" type="Stereotype"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_2QzSMK--EeO2kNrAzNWg-w" type="Kind"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_2QzSMa--EeO2kNrAzNWg-w" type="Name"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_2Qz5QK--EeO2kNrAzNWg-w" type="Parent"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_2Qz5Qa--EeO2kNrAzNWg-w" type="AttributeCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_2Q0gUK--EeO2kNrAzNWg-w" type="OperationCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_2Q0gUa--EeO2kNrAzNWg-w" visible="false" type="SignalCompartment"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_2QxdAa--EeO2kNrAzNWg-w" x="6657" y="4121"/>
+          </children>
+          <children xmi:type="umlnotation:UMLShape" xmi:id="_GTrf8K-_EeO2kNrAzNWg-w" element="_igbfAK--EeO2kNrAzNWg-w" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
+            <children xmi:type="notation:DecorationNode" xmi:id="_GTsHAK-_EeO2kNrAzNWg-w" type="ImageCompartment">
+              <layoutConstraint xmi:type="notation:Size" xmi:id="_GTsHAa-_EeO2kNrAzNWg-w" width="1320" height="1320"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_GTsuEK-_EeO2kNrAzNWg-w" type="Stereotype"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_GTsuEa-_EeO2kNrAzNWg-w" type="Name"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_GTsuEq-_EeO2kNrAzNWg-w" type="Parent"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_GTtVIK-_EeO2kNrAzNWg-w" type="AttributeCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_GTtVIa-_EeO2kNrAzNWg-w" type="OperationCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_GTtVIq-_EeO2kNrAzNWg-w" visible="false" type="SignalCompartment"/>
+            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_GTt8MK-_EeO2kNrAzNWg-w" visible="false" type="StructureCompartment"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_GTrf8a-_EeO2kNrAzNWg-w" x="13314" y="8242"/>
+          </children>
+          <element xsi:nil="true"/>
+          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_ggqxQK-_EeO2kNrAzNWg-w" element="_ggUL8K-_EeO2kNrAzNWg-w" source="_GTrf8K-_EeO2kNrAzNWg-w" target="_2QxdAK--EeO2kNrAzNWg-w" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
+            <children xmi:type="notation:DecorationNode" xmi:id="_ggr_YK-_EeO2kNrAzNWg-w" type="NameLabel">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_ggsmcK-_EeO2kNrAzNWg-w" type="Stereotype"/>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_ggsmca-_EeO2kNrAzNWg-w" type="Name"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ggr_Ya-_EeO2kNrAzNWg-w" y="-186"/>
+            </children>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_ggqxQa-_EeO2kNrAzNWg-w" points="[-2, -26, -29, 176]$[-16, -139, -43, 63]"/>
           </edges>
         </contents>
       </eAnnotations>
@@ -3575,6 +3620,59 @@ Check the reactants - He first
       </packagedElement>
       <packagedElement xmi:type="uml:Dependency" xmi:id="_xyQkEMFdEeKNUrlkrq0IuQ" supplier="_mnX-cHVKEeKM6_T6gw_pCg" client="_aIxXoLdUEeKdoYp0Rmlq6Q"/>
       <packagedElement xmi:type="uml:Dependency" xmi:id="_qkAKsO8dEeKTwuoQU2LHEg" supplier="_0OEywHVMEeKM6_T6gw_pCg" client="_VMf6kLgHEeKdoYp0Rmlq6Q"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="_igbfAK--EeO2kNrAzNWg-w" name="FitFluxHandler" clientDependency="_ggUL8K-_EeO2kNrAzNWg-w">
+        <ownedComment xmi:id="_pgeSULT4EeOgv49v9u1mlw" annotatedElement="_igbfAK--EeO2kNrAzNWg-w">
+          <body>&lt;p>This class realizes the IFluxHandler interface to calculate the incident and outgoing fluxes.&lt;/p></body>
+        </ownedComment>
+        <interfaceRealization xmi:id="_ggUL8K-_EeO2kNrAzNWg-w" supplier="_2QvAwK--EeO2kNrAzNWg-w" client="_igbfAK--EeO2kNrAzNWg-w" contract="_2QvAwK--EeO2kNrAzNWg-w"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Interface" xmi:id="_2QvAwK--EeO2kNrAzNWg-w" name="IFluxHandler">
+        <ownedComment xmi:id="_eR3hgLA6EeOnM6RBxn00Qw" annotatedElement="_2QvAwK--EeO2kNrAzNWg-w">
+          <body>&lt;p>Realizations of this interface are responsible for handling the incident (incoming) and outgoing flux calculations.&lt;/p></body>
+        </ownedComment>
+        <ownedOperation xmi:id="__7LFwK--EeO2kNrAzNWg-w" name="getIncidentFlux">
+          <ownedComment xmi:id="_7b2IYLA6EeOnM6RBxn00Qw" annotatedElement="__7LFwK--EeO2kNrAzNWg-w">
+            <body>&lt;p>This operation returns the incident flux for a specific concentration, position, and time.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="__7LFwa--EeO2kNrAzNWg-w" name="incidentFlux" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="__7LFwq--EeO2kNrAzNWg-w" name="composition">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+            <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__7LFw6--EeO2kNrAzNWg-w" value="*"/>
+            <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__7LFxK--EeO2kNrAzNWg-w"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="__7LFxa--EeO2kNrAzNWg-w" name="position">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+            <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__7LFxq--EeO2kNrAzNWg-w" value="*"/>
+            <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__7LFx6--EeO2kNrAzNWg-w"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="__7LFyK--EeO2kNrAzNWg-w" name="time">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="__7MT6a--EeO2kNrAzNWg-w" name="setOutgoingFlux">
+          <ownedComment xmi:id="_fEusYLA7EeOnM6RBxn00Qw" annotatedElement="__7MT6a--EeO2kNrAzNWg-w">
+            <body>&lt;p>Given a specific concentration, position, and time, this operation sets the outgoing flux to the specified amount.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="__7MT66--EeO2kNrAzNWg-w" name="composition">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+            <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__7MT7K--EeO2kNrAzNWg-w" value="*"/>
+            <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__7MT7a--EeO2kNrAzNWg-w"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="__7MT7q--EeO2kNrAzNWg-w" name="position">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
+            <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__7MT76--EeO2kNrAzNWg-w" value="*"/>
+            <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__7MT8K--EeO2kNrAzNWg-w"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="__7MT8a--EeO2kNrAzNWg-w" name="time">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+          </ownedParameter>
+          <ownedParameter xmi:id="__7MT6q--EeO2kNrAzNWg-w" name="outgoingFlux">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
+          </ownedParameter>
+        </ownedOperation>
+      </packagedElement>
     </packagedElement>
     <packagedElement xmi:type="uml:Package" xmi:id="_bpOrEEL8EeOTkpIp2VY3Rg" name="performance">
       <eAnnotations xmi:id="_bpWm4EL8EeOTkpIp2VY3Rg" source="uml2.diagrams" references="_bpWm4UL8EeOTkpIp2VY3Rg">
@@ -3593,7 +3691,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bpnuAEM7EeOTkpIp2VY3Rg" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bpnuAUM7EeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bpoVEEM7EeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_bplRwUM7EeOTkpIp2VY3Rg" x="6340" y="3170"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_bplRwUM7EeOTkpIp2VY3Rg" x="6657" y="3170"/>
           </children>
           <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_kkmd4EVdEeOTkpIp2VY3Rg" element="_iI4CUEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
             <children xmi:type="notation:DecorationNode" xmi:id="_kknE8EVdEeOTkpIp2VY3Rg" type="ImageCompartment">
@@ -3606,7 +3704,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_kkoTEUVdEeOTkpIp2VY3Rg" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_kko6IEVdEeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_kko6IUVdEeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_kkmd4UVdEeOTkpIp2VY3Rg" x="1902" y="9958"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_kkmd4UVdEeOTkpIp2VY3Rg" x="3487" y="8559"/>
           </children>
           <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_zvqS0EVdEeOTkpIp2VY3Rg" element="_whqFwEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
             <children xmi:type="notation:DecorationNode" xmi:id="_zvq54EVdEeOTkpIp2VY3Rg" type="ImageCompartment">
@@ -3619,7 +3717,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_zvsIAkVdEeOTkpIp2VY3Rg" type="AttributeCompartment" collapsed="true"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_zvsvEEVdEeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_zvsvEUVdEeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvqS0UVdEeOTkpIp2VY3Rg" x="10778" y="9958"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_zvqS0UVdEeOTkpIp2VY3Rg" x="8876" y="8876"/>
           </children>
           <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_0EMYYEVdEeOTkpIp2VY3Rg" element="_yYrRwEVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="10" showListSignature="true" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
             <children xmi:type="notation:DecorationNode" xmi:id="_0ENmgEVdEeOTkpIp2VY3Rg" type="ImageCompartment">
@@ -3632,7 +3730,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_0EO0oEVdEeOTkpIp2VY3Rg" type="AttributeCompartment" collapsed="true"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_0EO0oUVdEeOTkpIp2VY3Rg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_0EPbsEVdEeOTkpIp2VY3Rg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_0EMYYUVdEeOTkpIp2VY3Rg" x="19654" y="10144"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_0EMYYUVdEeOTkpIp2VY3Rg" x="15533" y="8559"/>
           </children>
           <children xmi:type="notation:Shape" xmi:id="_cvmH4HbeEeO2ybnm-LBKtQ" type="Text" fontName="Sans" fontHeight="24" description="Performance Interface Class Diagram" transparency="0" lineColor="0" lineWidth="2">
             <children xmi:type="notation:BasicDecorationNode" xmi:id="_cvmH4XbeEeO2ybnm-LBKtQ" type="DiagramName">
@@ -3655,7 +3753,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bQUbwIqNEeOUtaE7Hpff1Q" type="EnumerationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bQUbwYqNEeOUtaE7Hpff1Q" visible="false" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_bQUbwoqNEeOUtaE7Hpff1Q" visible="false" type="OperationCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_bQR_gIqNEeOUtaE7Hpff1Q" x="27896" y="4121" width="5579"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_bQR_gIqNEeOUtaE7Hpff1Q" x="16801" y="12353"/>
           </children>
           <element xsi:nil="true"/>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_OW-csIz8EeOsJLr0M3rJfg" element="_OWsv4Iz8EeOsJLr0M3rJfg" source="_0EMYYEVdEeOTkpIp2VY3Rg" target="_bQRYcIqNEeOUtaE7Hpff1Q" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -3672,7 +3770,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_R3xC4Yz8EeOsJLr0M3rJfg" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_R3wb04z8EeOsJLr0M3rJfg" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_R3wb0Yz8EeOsJLr0M3rJfg" points="[-440, 91, -12455, -5300]$[-440, 2120, -12455, -3271]$[12350, 2120, 335, -3271]$[12350, 3718, 335, -1673]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_R3wb0Yz8EeOsJLr0M3rJfg" points="[-440, 91, -8017, -3491]$[-440, 1167, -8017, -2415]$[7912, 1167, 335, -2415]$[7912, 2133, 335, -1449]"/>
             <sourceAnchor xmi:type="notation:IdentityAnchor" xmi:id="_GmRSoHiGEeO_LPATlPj4SA" id="(0.46154371118542276,0.9728205128205129)"/>
           </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_VUCVcIz8EeOsJLr0M3rJfg" element="_VT8O0Iz8EeOsJLr0M3rJfg" source="_bplRwEM7EeOTkpIp2VY3Rg" target="_zvqS0EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -3681,7 +3779,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_VUDjkYz8EeOsJLr0M3rJfg" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_VUC8gYz8EeOsJLr0M3rJfg" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_VUCVcYz8EeOsJLr0M3rJfg" points="[-1099, 1674, -34, -5114]$[-1099, 3703, -34, -3085]$[-1097, 3703, -32, -3085]$[-1097, 5115, -32, -1673]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_VUCVcYz8EeOsJLr0M3rJfg" points="[-1099, 1674, 2185, -3808]$[-1099, 2750, 2185, -2732]$[-3316, 2750, -32, -2732]$[-3316, 4033, -32, -1449]"/>
           </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_cXAB4Iz8EeOsJLr0M3rJfg" element="_cW6iUIz8EeOsJLr0M3rJfg" source="_bplRwEM7EeOTkpIp2VY3Rg" target="_kkmd4EVdEeOTkpIp2VY3Rg" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_cXBQAIz8EeOsJLr0M3rJfg" type="NameLabel">
@@ -3689,7 +3787,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_cXB3EIz8EeOsJLr0M3rJfg" type="Name"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_cXBQAYz8EeOsJLr0M3rJfg" y="-186"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_cXAo8Iz8EeOsJLr0M3rJfg" points="[-1099, 1674, 9504, -5562]$[-1099, 3686, 9504, -3550]$[-10618, 3686, -15, -3550]$[-10618, 5115, -15, -2121]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_cXAo8Iz8EeOsJLr0M3rJfg" points="[-1099, 1674, 8236, -3939]$[-1099, 2750, 8236, -2863]$[-9350, 2750, -15, -2863]$[-9350, 3716, -15, -1897]"/>
           </edges>
         </contents>
       </eAnnotations>
@@ -3795,7 +3893,7 @@ Check the reactants - He first
             <ownedComment xmi:id="_Hw4Y8IkLEeO74ZO5tXUQMg" annotatedElement="_xISK0IeeEeOJldxzwIPVCQ">
               <body>&lt;p >The list of particular PAPI preset quantities, or events, the HardwareCounter monitors.&lt;/p>&lt;p >Some of the PAPI preset events which will be included are PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM for the levels 1-3 total cache misses, PAPI_BR_MSP for the number mispredicted branches, PAPI_TOT_CYC and PAPI_TOT_INS for the total number of instructions and cycles executed which can be used for the calculation of the total number of instructions (cycles) per cycle (instruction), and PAPI_FP_INS for the number of floating point instructions executed which can be used for the calculation of floating point operations.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:Enumeration" href="../../%5BSubprojects%5D/xolotl/xolotlModel/xolotlModel.emx#_6fJdQInzEeOUtaE7Hpff1Q?xolotl/performance/HardwareQuantities?"/>
+            <type xmi:type="uml:Enumeration" href="platform:/resource/xolotlModel/xolotlModel.emx#_6fJdQInzEeOUtaE7Hpff1Q?xolotl/performance/HardwareQuantities?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_nSzCMIj4EeO74ZO5tXUQMg" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_nSGeoIj4EeO74ZO5tXUQMg"/>
           </ownedParameter>
@@ -3912,11 +4010,10 @@ Check the reactants - He first
             </ownedComment>
             <type xmi:type="uml:Class" href="mmi:///#cdt.typedef%5En=std'string%5Ep=&amp;includedir&amp;/bits/stringfwd.h$uml.Class"/>
           </ownedParameter>
-          <ownedParameter xmi:id="_-bAUMEM5EeOTkpIp2VY3Rg" name="quantities ">
+          <ownedParameter xmi:id="_-bAUMEM5EeOTkpIp2VY3Rg" name="quantities " type="_6fJdQInzEeOUtaE7Hpff1Q">
             <ownedComment xmi:id="_mIresEYsEeOPDa8Cefg4Cg" annotatedElement="_-bAUMEM5EeOTkpIp2VY3Rg">
               <body>&lt;p>The list of particular quantities the HardwareCounter monitors.&lt;/p>&lt;p>Some of the PAPI preset events which will be included are PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM for the levels 1-3 total cache misses, PAPI_BR_MSP for the number mispredicted branches, PAPI_TOT_CYC and PAPI_TOT_INS for the total number of instructions and cycles executed which can be used for the calculation of the total number of instructions (cycles) per cycle (instruction), and PAPI_FP_INS for the number of floating point instructions executed which can be used for the calculation of floating point operations.&lt;/p></body>
             </ownedComment>
-            <type xmi:type="uml:Enumeration" href="platform:/resource/xolotl-Source@xolotl/xolotlModel/xolotlModel.emx#_6fJdQInzEeOUtaE7Hpff1Q?xolotl/performance/HardwareQuantities?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__AHMYUM5EeOTkpIp2VY3Rg" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__AHMYEM5EeOTkpIp2VY3Rg"/>
           </ownedParameter>
@@ -6212,7 +6309,7 @@ Check the reactants - He first
     </profileApplication>
     <profileApplication xmi:id="_Hld-sJ76EeOxfKKbPJ98Rg">
       <eAnnotations xmi:id="_HlfM0J76EeOxfKKbPJ98Rg" source="http://www.eclipse.org/uml2/2.0.0/UML">
-        <references xmi:type="ecore:EPackage" href="pathmap://XSD_PROFILES/XSDProfile.epx#_vvGR0PDPEdq5wKwOrH0SmA?XSDProfile/XSDProfile?"/>
+        <references xmi:type="ecore:EPackage" href="pathmap://XSD_PROFILES/XSDProfile.epx#_0S7XILmyEeCPE-4cAROvtA?XSDProfile/XSDProfile?"/>
       </eAnnotations>
       <appliedProfile href="pathmap://XSD_PROFILES/XSDProfile.epx#_w1-ykSkOEdmj4ajjgbmSxQ?XSDProfile?"/>
     </profileApplication>
@@ -6775,4 +6872,8 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_vKM5Eq6kEeOK1JEl0e3Y4w" base_Comment="_vKKc0a6kEeOK1JEl0e3Y4w"/>
   <Default:Documentation xmi:id="_vKNgIK6kEeOK1JEl0e3Y4w" base_Comment="_vKLD4a6kEeOK1JEl0e3Y4w"/>
   <Default:Documentation xmi:id="_DLFRsK3aEeO2yvTvEyDBEw" base_Comment="_DLDcgK3aEeO2yvTvEyDBEw"/>
+  <Default:Documentation xmi:id="_eR4voLA6EeOnM6RBxn00Qw" base_Comment="_eR3hgLA6EeOnM6RBxn00Qw"/>
+  <Default:Documentation xmi:id="_7b5ywLA6EeOnM6RBxn00Qw" base_Comment="_7b2IYLA6EeOnM6RBxn00Qw"/>
+  <Default:Documentation xmi:id="_fEv6gLA7EeOnM6RBxn00Qw" base_Comment="_fEusYLA7EeOnM6RBxn00Qw"/>
+  <Default:Documentation xmi:id="_phSxsLT4EeOgv49v9u1mlw" base_Comment="_pgeSULT4EeOgv49v9u1mlw"/>
 </xmi:XMI>
