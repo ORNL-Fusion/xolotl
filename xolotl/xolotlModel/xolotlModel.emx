@@ -3632,22 +3632,34 @@ Check the reactants - He first
         </ownedComment>
         <ownedOperation xmi:id="__7LFwK--EeO2kNrAzNWg-w" name="getIncidentFlux">
           <ownedComment xmi:id="_7b2IYLA6EeOnM6RBxn00Qw" annotatedElement="__7LFwK--EeO2kNrAzNWg-w">
-            <body>&lt;p>This operation returns the incident flux for a specific concentration, position, and time.&lt;/p></body>
+            <body>&lt;p>This operation returns the incident flux for a specific composition, position, and time.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="__7LFwa--EeO2kNrAzNWg-w" name="incidentFlux" direction="return">
+            <ownedComment xmi:id="_ijhTsLjcEeO6MOipXetLJw" annotatedElement="__7LFwa--EeO2kNrAzNWg-w">
+              <body>&lt;p>The incident flux at the given position and time of the cluster with the specified composition.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
           </ownedParameter>
           <ownedParameter xmi:id="__7LFwq--EeO2kNrAzNWg-w" name="composition">
+            <ownedComment xmi:id="_gJAZELjcEeO6MOipXetLJw" annotatedElement="__7LFwq--EeO2kNrAzNWg-w">
+              <body>&lt;p>The composition of the cluster.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__7LFw6--EeO2kNrAzNWg-w" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__7LFxK--EeO2kNrAzNWg-w"/>
           </ownedParameter>
           <ownedParameter xmi:id="__7LFxa--EeO2kNrAzNWg-w" name="position">
+            <ownedComment xmi:id="_moeW4LjcEeO6MOipXetLJw" annotatedElement="__7LFxa--EeO2kNrAzNWg-w">
+              <body>&lt;p>The position of the given cluster.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__7LFxq--EeO2kNrAzNWg-w" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__7LFx6--EeO2kNrAzNWg-w"/>
           </ownedParameter>
           <ownedParameter xmi:id="__7LFyK--EeO2kNrAzNWg-w" name="time">
+            <ownedComment xmi:id="_siA9ILjcEeO6MOipXetLJw" annotatedElement="__7LFyK--EeO2kNrAzNWg-w">
+              <body>&lt;p>The time of the given cluster.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
           </ownedParameter>
         </ownedOperation>
@@ -3656,19 +3668,31 @@ Check the reactants - He first
             <body>&lt;p>Given a specific concentration, position, and time, this operation sets the outgoing flux to the specified amount.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="__7MT66--EeO2kNrAzNWg-w" name="composition">
+            <ownedComment xmi:id="_2qVQ8LjcEeO6MOipXetLJw" annotatedElement="__7MT66--EeO2kNrAzNWg-w">
+              <body>&lt;p>The composition of the cluster.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__7MT7K--EeO2kNrAzNWg-w" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__7MT7a--EeO2kNrAzNWg-w"/>
           </ownedParameter>
           <ownedParameter xmi:id="__7MT7q--EeO2kNrAzNWg-w" name="position">
+            <ownedComment xmi:id="_vyvHALjcEeO6MOipXetLJw" annotatedElement="__7MT7q--EeO2kNrAzNWg-w">
+              <body>&lt;p>The position of the given cluster.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPt6bXEdqm1P7n_cTT_g?C++%20Types/int?"/>
             <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__7MT76--EeO2kNrAzNWg-w" value="*"/>
             <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__7MT8K--EeO2kNrAzNWg-w"/>
           </ownedParameter>
           <ownedParameter xmi:id="__7MT8a--EeO2kNrAzNWg-w" name="time">
+            <ownedComment xmi:id="_ul6HgLjcEeO6MOipXetLJw" annotatedElement="__7MT8a--EeO2kNrAzNWg-w">
+              <body>&lt;p>The time of the given cluster.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
           </ownedParameter>
           <ownedParameter xmi:id="__7MT6q--EeO2kNrAzNWg-w" name="outgoingFlux">
+            <ownedComment xmi:id="_zk_QoLjcEeO6MOipXetLJw" annotatedElement="__7MT6q--EeO2kNrAzNWg-w">
+              <body>&lt;p>The outgoing flux at the given position and time of the cluster with the specified composition.&lt;/p></body>
+            </ownedComment>
             <type xmi:type="uml:PrimitiveType" href="pathmap://TRANSFORM_CPP_LIBRARIES/CPPPrimitiveTypes.emx#_phDPvqbXEdqm1P7n_cTT_g?C++%20Types/double?"/>
           </ownedParameter>
         </ownedOperation>
@@ -6876,4 +6900,12 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_7b5ywLA6EeOnM6RBxn00Qw" base_Comment="_7b2IYLA6EeOnM6RBxn00Qw"/>
   <Default:Documentation xmi:id="_fEv6gLA7EeOnM6RBxn00Qw" base_Comment="_fEusYLA7EeOnM6RBxn00Qw"/>
   <Default:Documentation xmi:id="_phSxsLT4EeOgv49v9u1mlw" base_Comment="_pgeSULT4EeOgv49v9u1mlw"/>
+  <Default:Documentation xmi:id="_gJCOQLjcEeO6MOipXetLJw" base_Comment="_gJAZELjcEeO6MOipXetLJw"/>
+  <Default:Documentation xmi:id="_ijih0LjcEeO6MOipXetLJw" base_Comment="_ijhTsLjcEeO6MOipXetLJw"/>
+  <Default:Documentation xmi:id="_moflALjcEeO6MOipXetLJw" base_Comment="_moeW4LjcEeO6MOipXetLJw"/>
+  <Default:Documentation xmi:id="_siCLQLjcEeO6MOipXetLJw" base_Comment="_siA9ILjcEeO6MOipXetLJw"/>
+  <Default:Documentation xmi:id="_ul9K0LjcEeO6MOipXetLJw" base_Comment="_ul6HgLjcEeO6MOipXetLJw"/>
+  <Default:Documentation xmi:id="_vyyxYLjcEeO6MOipXetLJw" base_Comment="_vyvHALjcEeO6MOipXetLJw"/>
+  <Default:Documentation xmi:id="_zlC7ALjcEeO6MOipXetLJw" base_Comment="_zk_QoLjcEeO6MOipXetLJw"/>
+  <Default:Documentation xmi:id="_2qXGILjcEeO6MOipXetLJw" base_Comment="_2qVQ8LjcEeO6MOipXetLJw"/>
 </xmi:XMI>
