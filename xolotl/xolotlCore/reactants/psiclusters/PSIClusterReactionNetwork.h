@@ -253,9 +253,9 @@ public:
 		// branching.
 		int hasNegativeElement = ((numHe < 0) + (numV < 0) + (numI < 0) > 0);
 		std::vector<int> composition(3);
-		composition[0] = std::max(1*hasNegativeElement,numHe);
-		composition[1] = std::max(0,numV);
-		composition[2] = std::max(0,numI);
+		composition[0] = std::max(0,numHe*!hasNegativeElement);
+		composition[1] = std::max(0,numV*!hasNegativeElement);
+		composition[2] = std::max(0,numI*!hasNegativeElement);
 		return composition;
 	}
 

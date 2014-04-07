@@ -37,7 +37,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int totalSize = 1, firstSize = 0, secondSize = 0, reactantsSize = 0;
+	int firstSize = 0, secondSize = 0, reactantsSize = 0;
 	std::shared_ptr<PSICluster> firstReactant, secondReactant;
 
 	// Connect this cluster to itself since any reaction will affect it
@@ -51,9 +51,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	 * Total size starts with a value of one so that clusters of size one are
 	 * not considered in this loop.
 	 */
-	while (totalSize < size) {
-		// Increment the base sizes
-		++firstSize;
+	for (firstSize = 1; firstSize <= (int) size/2; firstSize++) {
 		secondSize = size - firstSize;
 		// Get the first and second reactants for the reaction
 		// first + second = this.
@@ -67,9 +65,6 @@ void InterstitialCluster::createReactionConnectivity() {
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
-		// Update the total size. Do not delete this or you'll have an infinite
-		// loop!
-		totalSize = firstSize + secondSize;
 	}
 
 	/* ----- I_a + I_b --> I_(a+b) -----
@@ -145,30 +140,4 @@ void InterstitialCluster::createReactionConnectivity() {
 	}
 
 	return;
-}
-
-bool InterstitialCluster::isProductReactant(const Reactant & reactantI,
-		const Reactant & reactantJ) {
-
-	// Local Declarations, integers for species number for I, J reactants
-	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
-
-	// Get the compositions of the reactants
-	auto reactantIMap = reactantI.getComposition();
-	auto reactantJMap = reactantJ.getComposition();
-
-	// Grab the numbers for each species
-	// from each Reactant
-	rI_I = reactantIMap["I"];
-	rJ_I = reactantJMap["I"];
-	rI_He = reactantIMap["He"];
-	rJ_He = reactantJMap["He"];
-	rI_V = reactantIMap["V"];
-	rJ_V = reactantJMap["V"];
-
-	// We should have this->size interstitials, a
-	// total of 0 Helium, and a total of
-	// 0 Vacancies
-	return ((rI_I + rJ_I) == size) && ((rI_He + rJ_He) == 0)
-			&& ((rI_V + rJ_V) == 0);
 }

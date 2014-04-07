@@ -11,7 +11,7 @@ namespace xolotlCore {
 /**
  *  A cluster composed of helium and vacancies
  */
-class HeVCluster : public PSICluster {
+class HeVCluster: public PSICluster {
 
 private:
 
@@ -50,7 +50,7 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	HeVCluster() : PSICluster(1) { numHe = 1; numV = 1; }
+	HeVCluster() : PSICluster(1) { numHe = 1; numV = 1;}
 
 protected:
 
@@ -64,8 +64,9 @@ protected:
 	 * network.
 	 * @param temperature The temperature at which the reactions are occurring.
 	 */
-	virtual void getDissociationPartialDerivatives(std::vector<double> & partials, double temperature) const;
-	
+	virtual void getDissociationPartialDerivatives(
+			std::vector<double> & partials, double temperature) const;
+
 public:
 
 	/**
@@ -105,25 +106,12 @@ public:
 	 */
 	double getAnnByEm();
 
-    /**
+	/**
 	 * This operation returns the total change in this cluster due to
 	 * dissociation.
 	 * @return The flux due to dissociation.
 	 */
 	virtual double getDissociationFlux(double temperature) const;
-
-	/**
-	 * Return whether or not this PSICluster is a product
-	 * of the reaction between reactantI and reactantJ in
-	 * this Reactants ReactionNetwork. This method should be
-	 * specialized by subclasses to indicate whether or not they
-	 * are the product of the given reaction.
-	 *
-	 * @param reactantI
-	 * @param reactantJ
-	 * @return true if this reactant is a product of i and j
-	 */
-	virtual bool isProductReactant(const Reactant & reactantI, const Reactant & reactantJ);
 
 protected:
 
@@ -144,7 +132,7 @@ protected:
 	 * of the second reactant is 1, otherwise 0.
 	 */
 	void createReactionConnectivity();
-	
+
 	/**
 	 * Computes a row of the dissociation connectivity matrix corresponding to
 	 * this reactant.

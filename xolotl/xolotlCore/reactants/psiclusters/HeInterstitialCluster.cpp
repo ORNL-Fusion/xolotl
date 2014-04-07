@@ -135,7 +135,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	 * array for vacancy absorption by HeI.
 	 */
 	reactants = psiNetwork->getAll("V");
-	fillVWithI("V", reactants);
+	replaceInCompound(reactants, "V", "I");
 
 	return;
 }
@@ -235,31 +235,6 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) const {
 	}
 
 	return f3 - (f4 * getConcentration());
-}
-
-bool HeInterstitialCluster::isProductReactant(const Reactant & reactantI,
-		const Reactant & reactantJ) {
-	// Local Declarations, integers for species number for I, J reactants
-	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
-
-	// Get the compositions of the reactants
-	auto reactantIMap = reactantI.getComposition();
-	auto reactantJMap = reactantJ.getComposition();
-
-	// Grab the numbers for each species
-	// from each Reactant
-	rI_I = reactantIMap["I"];
-	rJ_I = reactantJMap["I"];
-	rI_He = reactantIMap["He"];
-	rJ_He = reactantJMap["He"];
-	rI_V = reactantIMap["V"];
-	rJ_V = reactantJMap["V"];
-
-	// We should have no Vacancies, a
-	// total of numHe Helium, and a total of
-	// numI Interstitials
-	return ((rI_V + rJ_V) == 0) && ((rI_He + rJ_He) == numHe)
-			&& ((rI_I + rJ_I) == numI);
 }
 
 /**

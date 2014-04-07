@@ -185,20 +185,6 @@ protected:
 			const PSICluster & secondCluster, double temperature) const;
 
 	/**
-	 * Return whether or not this PSICluster is a product
-	 * of the reaction between clusterI and clusterJ in
-	 * this clusters ReactionNetwork. This method should be
-	 * specialized by subclasses to indicate whether or not they
-	 * are the product of the given reaction.
-	 *
-	 * @param clusterI
-	 * @param clusterJ
-	 * @return true if this cluster is a product of i and j
-	 */
-	virtual bool isProductReactant(const Reactant & clusterI,
-			const Reactant & clusterJ);
-
-	/**
 	 * Computes a row (or column) of the reaction connectivity matrix
 	 * corresponding to this cluster.
 	 *

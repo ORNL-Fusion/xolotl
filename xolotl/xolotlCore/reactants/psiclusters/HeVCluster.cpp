@@ -113,12 +113,24 @@ void HeVCluster::createReactionConnectivity() {
 		reactingPairs.push_back(pair);
 	}
 
-	/* ----- (A*He)(B*V) + C*I --> (A*He)[(B-C)V] -----
-	 * Interstitial absorption by an HeV cluster produces an HeV cluster of
-	 * size B-C vacancies smaller. The connectivity for this and the
-	 * addition of this reaction to the reacting pairs is
-	 * handled in the next call to fillVWithI.
+	/* ----- (He_a) + (V_b) --> (He_a)(V_b) -----
+	 * Helium-vacancy clustering that results
+	 * in the production of this cluster.
 	 */
+	// Get the first reactant
+	firstReactant = psiNetwork->get("He", numHe);
+	// Get the second reactant
+	secondReactant = psiNetwork->get("V", numV);
+	// Create a ReactingPair with the two reactants
+	if (firstReactant && secondReactant) {
+		ReactingPair pair;
+		pair.first = std::dynamic_pointer_cast < PSICluster
+				> (firstReactant);
+		pair.second = std::dynamic_pointer_cast < PSICluster
+				> (secondReactant);
+		// Add the pair to the list
+		reactingPairs.push_back(pair);
+	}
 
 	/* ----- (He_a)*(V_b) + I_c  --> (He_a)*[V_(b-c)] -----
 	 * Helium-vacancy clusters lose vacancies when they interact with
@@ -132,7 +144,7 @@ void HeVCluster::createReactionConnectivity() {
 	 * reactions.
 	 */
 	auto reactants = psiNetwork->getAll("I");
-	fillVWithI("I", reactants);
+	replaceInCompound(reactants, "I", "V");
 
 	/* ---- (He_a)*(V_b) + He_c --> [He_(a+c)]*(V_b) ----
 	 * HeV clusters can absorb helium clusters so long as they do not cross
@@ -264,31 +276,6 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 		}
 	}
 	return f3 - f4 * getConcentration();
-}
-
-bool HeVCluster::isProductReactant(const Reactant & reactantI,
-		const Reactant & reactantJ) {
-	// Local Declarations, integers for species number for I, J reactants
-	int rI_I = 0, rJ_I = 0, rI_He = 0, rJ_He = 0, rI_V = 0, rJ_V = 0;
-
-	// Get the compositions of the reactants
-	auto reactantIMap = reactantI.getComposition();
-	auto reactantJMap = reactantJ.getComposition();
-
-	// Grab the numbers for each species
-	// from each Reactant
-	rI_I = reactantIMap["I"];
-	rJ_I = reactantJMap["I"];
-	rI_He = reactantIMap["He"];
-	rJ_He = reactantJMap["He"];
-	rI_V = reactantIMap["V"];
-	rJ_V = reactantJMap["V"];
-
-	// We should have no interstitials, a
-	// total of numHe Helium, and a total of
-	// numV Vacancies
-	return ((rI_I + rJ_I) == 0) && ((rI_He + rJ_He) == numHe)
-			&& ((rI_V + rJ_V) == numV);
 }
 
 /**
