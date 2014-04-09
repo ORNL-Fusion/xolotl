@@ -12,7 +12,7 @@
 # to be set before calling find_package:
 #
 #  GPTL_PREFIX         Set this variable to the root installation of
-#                      libpapi if the module has problems finding the
+#                      libgptl if the module has problems finding the
 #                      proper installation path.
 #
 # Variables defined by this module:
@@ -32,7 +32,7 @@ find_library(GPTL_LIBRARIES
 
 find_path(GPTL_INCLUDE_DIRS
     NAMES gptl.h
-    HINTS ${GPTL_PREFIX} ${GPTL_PREFIX}/include ${HILTIDEPS}/include
+    HINTS ${GPTL_PREFIX}/include ${HILTIDEPS}/include
 )
 
 include(FindPackageHandleStandardArgs)

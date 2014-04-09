@@ -94,6 +94,14 @@ public:
 	 */
 	virtual void dump(std::ostream& os) const;
 
+	/**
+	 * This operation outputs the information gathered to the given
+	 * output stream.
+	 *
+	 * @param os The output stream to which performance data is written.
+	 */
+	virtual void dump(int rank) const;
+
 };  //end class StandardHandlerRegistry
 
 }//end namespace xolotlPerf

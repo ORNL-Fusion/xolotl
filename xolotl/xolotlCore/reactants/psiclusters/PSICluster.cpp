@@ -8,7 +8,9 @@ using namespace xolotlCore;
 // Create the static map of binding energies
 std::unordered_map<std::string, int> PSICluster::bindingEnergyIndexMap;
 
-PSICluster::PSICluster(){
+PSICluster::PSICluster() :
+		Reactant( )
+{
 	// Set the size
 	size = 1;
 	// Zero out the binding energies
@@ -32,13 +34,11 @@ PSICluster::PSICluster(){
 	bindingEnergyIndexMap = { {"He", 0},
 		{	"V", 1}, {"I", 2}};
 
-	// Set up an event counter to count the number of times getDissociationFlux is called
-	getDissociationFluxCounter =
-			xolotlPerf::getHandlerRegistry()->getEventCounter("getDissociationFlux_Counter");
 }
 
-PSICluster::PSICluster(const int clusterSize) :
-		Reactant() {
+PSICluster::PSICluster(const int clusterSize,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		Reactant(registry) {
 
 	// Set the size
 	size = (clusterSize > 0) ? clusterSize : 1;
@@ -60,8 +60,9 @@ PSICluster::PSICluster(const int clusterSize) :
 	// Set the default reaction radius to 0. (Doesn't react.)
 	reactionRadius = 0.0;
 
+	// Set up an event counter to count the number of times getDissociationFlux is called
 	getDissociationFluxCounter =
-			xolotlPerf::getHandlerRegistry()->getEventCounter("getDissociationFlux_Counter");
+			handlerRegistry->getEventCounter("PSICluster_getDissociationFlux_Counter");
 
 }
 
@@ -80,8 +81,9 @@ PSICluster::PSICluster(const PSICluster &other) :
 				other.combiningReactants), dissociatingClusters(
 				other.dissociatingClusters) {
 
+	// Set up an event counter to count the number of times getDissociationFlux is called
 	getDissociationFluxCounter =
-			xolotlPerf::getHandlerRegistry()->getEventCounter("getDissociationFlux_Counter");
+			handlerRegistry->getEventCounter("getDissociationFlux_Counter");
 
 }
 

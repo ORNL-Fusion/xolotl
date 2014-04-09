@@ -4,8 +4,8 @@
 
 using namespace xolotlCore;
 
-InterstitialCluster::InterstitialCluster(int nI) :
-		PSICluster(nI) {
+InterstitialCluster::InterstitialCluster(int nI, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		PSICluster(nI, registry) {
 	// Set the reactant name appropriately
 	name = "I";
 	// Update the composition map

@@ -9,16 +9,31 @@ using namespace xolotlCore;
 ReactionNetwork::ReactionNetwork( void )
   : properties(new std::map<std::string, std::string>())
 {
-    concUpdateCounter = xolotlPerf::getHandlerRegistry()->getEventCounter("net_conc_updates");
+//    concUpdateCounter = xolotlPerf::getHandlerRegistry()->getEventCounter("net_conc_updates");
 }
 
+
+ReactionNetwork::ReactionNetwork(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry)
+  : properties(new std::map<std::string, std::string>()), handlerRegistry(registry)
+{
+	// Counter for the number of times the network concentration is updated.
+    concUpdateCounter = handlerRegistry->getEventCounter("net_conc_updates");
+}
+
+
 ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
+
 	// The copy constructor of std::map copies each of the keys and values.
 	properties.reset(new std::map<std::string, std::string>(*other.properties));
 
+	handlerRegistry = other.handlerRegistry;
+
     // TODO - do we copy the source ReactionNetwork's counter also?
     // Or should we have our own counter?  How to distinguish them by name?
-    concUpdateCounter = xolotlPerf::getHandlerRegistry()->getEventCounter("net_conc_updates");
+//    concUpdateCounter = xolotlPerf::getHandlerRegistry()->getEventCounter("net_conc_updates");
+
+	// Counter for the number of times the network concentration is updated.
+    concUpdateCounter = handlerRegistry->getEventCounter("net_conc_updates");
 }
 
 

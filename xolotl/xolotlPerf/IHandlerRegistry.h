@@ -48,6 +48,12 @@ public:
 	 */
 	virtual void dump(std::ostream& os) const = 0;
 
+	/**
+	 * This operation outputs the information gathered to the given
+	 * output stream.
+	 */
+	virtual void dump(int rank) const = 0;
+
 }; //end class IHandlerRegistry
 
 } //end namespace xolotlPerf

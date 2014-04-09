@@ -12,7 +12,6 @@
 #include <InterstitialCluster.h>
 #include <HeVCluster.h>
 #include <HeInterstitialCluster.h>
-#include "SimpleReactionNetwork.h"
 #include <memory>
 #include <typeinfo>
 #include <limits>
@@ -22,26 +21,29 @@
 using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
+using namespace xolotlPerf;
 
 /**
  * Constructor
  * @param maxClusterSize the maximal size of the clusters that will be in
  * the network. Set to 10 by default.
  */
-SimpleReactionNetwork::SimpleReactionNetwork(const int maxClusterSize) {
+SimpleReactionNetwork::SimpleReactionNetwork(const int maxClusterSize,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+	PSIClusterReactionNetwork(registry){
 
 	// Add He clusters
 	for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
 		// Create a He cluster with cluster size numHe
-		shared_ptr<HeCluster> cluster = make_shared<HeCluster>(numHe);
+		shared_ptr<HeCluster> cluster = make_shared<HeCluster>(numHe, registry);
 		// Add it to the network
 		add(cluster);
 	}
 
 	// Add vacancy clusters
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
-		// Create a He cluster with cluster size numV
-		shared_ptr<VCluster> cluster = make_shared<VCluster>(numV);
+		// Create a V cluster with cluster size numV
+		shared_ptr<VCluster> cluster = make_shared<VCluster>(numV, registry);
 		// Add it to the network
 		add(cluster);
 	}
@@ -49,7 +51,7 @@ SimpleReactionNetwork::SimpleReactionNetwork(const int maxClusterSize) {
 	// Add interstitial clusters
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
 		// Create a He cluster with cluster size numI
-		shared_ptr<InterstitialCluster> cluster = make_shared<InterstitialCluster>(numI);
+		shared_ptr<InterstitialCluster> cluster = make_shared<InterstitialCluster>(numI, registry);
 		// Add it to the network
 		add(cluster);
 	}
@@ -59,7 +61,7 @@ SimpleReactionNetwork::SimpleReactionNetwork(const int maxClusterSize) {
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
 			// Create a HeVCluster with the current amount of He and V
-			shared_ptr<HeVCluster> cluster = make_shared<HeVCluster>(numHe, numV);
+			shared_ptr<HeVCluster> cluster = make_shared<HeVCluster>(numHe, numV, registry);
 			add(cluster);
 		}
 	}
@@ -70,7 +72,7 @@ SimpleReactionNetwork::SimpleReactionNetwork(const int maxClusterSize) {
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
 		for (int numHe = 1; numHe + numI <= maxClusterSize; numHe++) {
 			// Create the HeI cluster
-			shared_ptr<HeInterstitialCluster> cluster = make_shared<HeInterstitialCluster>(numHe, numI);
+			shared_ptr<HeInterstitialCluster> cluster = make_shared<HeInterstitialCluster>(numHe, numI, registry);
 			// Add it to the reactants vector
 			add(cluster);
 		}
@@ -91,11 +93,12 @@ SimpleReactionNetwork::~SimpleReactionNetwork() {
  * the network. Set to 10 by default.
  * @return The reaction network.
  */
-shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork(const int maxClusterSize) {
+shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork(const int maxClusterSize,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
 
 	// Create the network
 	shared_ptr<xolotlCore::ReactionNetwork> network(
-			new SimpleReactionNetwork(maxClusterSize));
+			new SimpleReactionNetwork(maxClusterSize, registry));
 	cout << "SimpleReactionNetwork Message: "
 			<< "Created network with size " << network->size() << endl;
 	// Register the reaction network with its clusters

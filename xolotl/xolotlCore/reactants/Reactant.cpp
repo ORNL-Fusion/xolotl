@@ -9,10 +9,22 @@ using namespace xolotlCore;
 
 Reactant::Reactant() :
 		concentration(0.0e-16), name(""), id(0) {
+
+	// Temporary definition used to specify the type of performance handler registry
+	// that will be used (standard or dummy).  Currently, the handler registry is set via
+	// commandline argument and the only way to access which handler registry will be used
+	// is through getHandlerRegistry
+//	handlerRegistry = xolotlPerf::getHandlerRegistry();
+}
+
+Reactant::Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		concentration(0.0e-16), name(""), id(0), handlerRegistry(registry) {
+
 }
 
 Reactant::Reactant(const Reactant &other) :
-		concentration(other.concentration), name(other.name), id(other.id), compositionMap(other.compositionMap) {
+		concentration(other.concentration), name(other.name), id(other.id),
+		compositionMap(other.compositionMap), handlerRegistry(other.handlerRegistry) {
 }
 
 Reactant::~Reactant() {
@@ -23,8 +35,8 @@ std::shared_ptr<Reactant> Reactant::clone() {
 	return reactant;
 }
 
-Reactant::Reactant(double conc) :
-		concentration(conc), name(""), id(0) {
+Reactant::Reactant(double conc, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		concentration(conc), name(""), id(0), handlerRegistry(registry) {
 }
 
 double Reactant::getConcentration() const {

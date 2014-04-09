@@ -7,10 +7,6 @@
 #include <vector>
 #include <unordered_map>
 
-namespace xolotlPerf {
-	class IEventCounter;
-};
-
 namespace xolotlCore {
 
 /**
@@ -363,6 +359,12 @@ protected:
 			const Reactant & secondReactant,
 			const Reactant & productReactant) const;
 
+	/**
+	 * This constructor is protected because PSIClusters must always be
+	 * initialized with a size.
+	 */
+	PSICluster(const int clusterSize);
+
 private:
 
 	/**
@@ -376,7 +378,8 @@ public:
 	/** Constructor
 	 * @param clusterSize
 	 */
-	PSICluster(const int clusterSize);
+	PSICluster(const int clusterSize,
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * The copy constructor

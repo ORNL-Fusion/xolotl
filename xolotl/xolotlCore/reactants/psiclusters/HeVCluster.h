@@ -3,6 +3,7 @@
 
 // Includes
 #include "PSICluster.h"
+#include "../../xolotlPerf/HandlerRegistryFactory.h"
 #include <string>
 #include <map>
 
@@ -50,7 +51,9 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	HeVCluster() : PSICluster(1) { numHe = 1; numV = 1;}
+	HeVCluster() :
+		PSICluster(1)
+	{ numHe = 1; numV = 1; }
 
 protected:
 
@@ -64,8 +67,8 @@ protected:
 	 * network.
 	 * @param temperature The temperature at which the reactions are occurring.
 	 */
-	virtual void getDissociationPartialDerivatives(
-			std::vector<double> & partials, double temperature) const;
+	virtual void getDissociationPartialDerivatives(std::vector<double> & partials,
+			double temperature) const;
 
 public:
 
@@ -76,7 +79,8 @@ public:
 	 * species as its values. The names of the species must be one of
 	 * {He,V}.
 	 */
-	HeVCluster(int numHe, int numV);
+	HeVCluster(int numHe, int numV,
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * Copy constructor

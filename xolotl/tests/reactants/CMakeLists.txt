@@ -7,10 +7,14 @@ SET(PACKAGE_DESCRIPTION "Tests for the Xolotl reactants package")
 #Include directories from the source and boost binaries
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
 include_directories(${Boost_BINARY_DIRS})
 
 #Link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlCore/reactants)
+
 
 #Get the test files
 file(GLOB tests *Tester.cpp)
@@ -31,4 +35,3 @@ if(Boost_FOUND)
         set_property(TEST ${testName} PROPERTY LABELS ${PACKAGE_NAME})   
     endforeach(test ${tests})
 endif(Boost_FOUND)
-

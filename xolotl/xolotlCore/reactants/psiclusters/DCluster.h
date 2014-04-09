@@ -14,7 +14,7 @@ private:
 public:
 
 	//! The constructor. All DClusters must be initialized with a size.
-	DCluster(int nD);
+	DCluster(int nD, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! Destructor
 	~DCluster();

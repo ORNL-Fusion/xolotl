@@ -19,6 +19,8 @@ using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
 
+static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared<xolotlPerf::DummyHandlerRegistry>();
+
 /**
  * This suite is responsible for testing the Reactant.
  */BOOST_AUTO_TEST_SUITE(Reactant_testSuite)
@@ -27,7 +29,7 @@ using namespace testUtils;
  * This operation asserts that the default composition is empty.
  */
 BOOST_AUTO_TEST_CASE(checkComposition) {
-	Reactant reactant;
+	Reactant reactant(registry);
 	BOOST_REQUIRE_EQUAL(0, reactant.getComposition().size());
 }
 
@@ -36,7 +38,7 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
  */BOOST_AUTO_TEST_CASE(checkCopying) {
 
 	// Create a reference Reactant
-	shared_ptr<Reactant> reactant(new Reactant);
+	shared_ptr<Reactant> reactant(new Reactant(registry));
 	reactant->setId(5);
 	reactant->setConcentration(10.0);
 
@@ -68,7 +70,7 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
  */BOOST_AUTO_TEST_CASE(checkConcentration) {
 
 	// Create a Reactant
-	shared_ptr<Reactant> reactant(new Reactant);
+	shared_ptr<Reactant> reactant(new Reactant(registry));
 	reactant->setConcentration(1.0);
 
 	// Make sure it was set correctly
@@ -166,4 +168,3 @@ BOOST_AUTO_TEST_CASE(checkIsConnected) {
 	return;
 }
 BOOST_AUTO_TEST_SUITE_END()
-

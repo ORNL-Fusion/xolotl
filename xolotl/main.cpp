@@ -14,7 +14,6 @@
 #include "xolotlPerf/HandlerRegistryFactory.h"
 #include "xolotlPerf/HardwareQuantities.h"
 
-
 using namespace std;
 using std::shared_ptr;
 
@@ -25,13 +24,17 @@ void printStartMessage() {
 	// TODO! Print date and time
 }
 
+std::vector<xolotlPerf::HardwareQuantities> declareHWcounters();
+bool initPerf(bool opts, std::vector<xolotlPerf::HardwareQuantities> hwq);
+xolotlSolver::PetscSolver setUpSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, int argc, char **argv);
+void launchPetscSolver(xolotlSolver::PetscSolver solver, std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry);
+std::shared_ptr<PSIClusterNetworkLoader> setUpNetworkLoader(int rank, MPI_Comm comm, std::string networkFilename);
+
 
 //! Main program
 int main(int argc, char **argv) {
 
 	// Local Declarations
-	shared_ptr<std::istream> networkStream;
-	std::shared_ptr<PSIClusterNetworkLoader> networkLoader;
 	int rank;
 
 	// Check the command line arguments.
@@ -54,15 +57,8 @@ int main(int argc, char **argv) {
 	try {
         // Set up our performance data infrastructure.
         // Indicate we want to monitor some important hardware counters.
-        std::vector<xolotlPerf::HardwareQuantities> hwq;
-        hwq.push_back( xolotlPerf::FP_OPS );
-        hwq.push_back( xolotlPerf::L3_CACHE_MISS );
-        bool perfInitOK = xolotlPerf::initialize( xopts.useStandardHandlers(), hwq );
-        if( !perfInitOK )
-        {
-            std::cerr << "Unable to initialize requested performance data infrastructure.  Aborting" << std::endl;
-            return EXIT_FAILURE;
-        }
+        auto hwq = declareHWcounters();
+        auto perfInitOK = initPerf( xopts.useStandardHandlers(), hwq );
 
         // Initialize MPI.  We do this instead of leaving it to some 
         // other package (e.g., PETSc), because we want to avoid problems 
@@ -76,44 +72,25 @@ int main(int argc, char **argv) {
         auto totalTimer = handlerRegistry->getTimer( "total" );
         totalTimer->start();
 
-		// Setup the solver
-        auto solverInitTimer = handlerRegistry->getTimer( "initSolver" );
-        solverInitTimer->start();
-		xolotlSolver::PetscSolver solver;
-		solver.setCommandLineOptions(argc, argv);
-		solver.initialize();
-        solverInitTimer->stop();
+    	// Setup the solver
+        auto solver = setUpSolver(handlerRegistry, argc, argv);
 
+        // Load the network
         auto networkLoadTimer =  handlerRegistry->getTimer( "loadNetwork" );
         networkLoadTimer->start();
 
 		// Get the MPI rank
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-		// Setup the master
-		if (rank == 0) {
-			// Say hello
-			printStartMessage();
-			// Set the input stream on the master
-			networkStream = make_shared<std::ifstream>(networkFilename);
-		}
 
-		// Broadcast the stream to all worker tasks
-		networkLoader = std::make_shared<
-					PSIClusterNetworkLoader>();
-		networkStream = xolotlCore::MPIUtils::broadcastStream(networkStream, 0,
-				MPI_COMM_WORLD );
+		// Set up the network loader
+		auto networkLoader = setUpNetworkLoader(rank, MPI_COMM_WORLD, networkFilename);
 
-		// Create a network loader and set the stream on every MPI task
-		networkLoader->setInputstream(networkStream);
 		// Give the network loader to PETSc as input
 		solver.setNetworkLoader(networkLoader);
         networkLoadTimer->stop();
 
 		// Launch the PetscSolver
-        auto solverTimer = handlerRegistry->getTimer( "solve" );
-        solverTimer->start();
-		solver.solve();
-        solverTimer->stop();
+        launchPetscSolver(solver, handlerRegistry);
 
         // Finalize our use of the solver.
 		solver.finalize();
@@ -124,7 +101,7 @@ int main(int argc, char **argv) {
         // given stream, but Timer and any hardware counter data is
         // written by the underlying timing library to files, one per process.
         if( rank == 0 ) {
-            handlerRegistry->dump( std::cout );
+            handlerRegistry->dump( std::cout);
         }
 
 	} catch (std::string & error) {
@@ -137,4 +114,77 @@ int main(int argc, char **argv) {
     MPI_Finalize();
 
 	return EXIT_SUCCESS;
+}
+
+std::vector<xolotlPerf::HardwareQuantities> declareHWcounters(){
+
+    // Indicate we want to monitor some important hardware counters.
+    std::vector<xolotlPerf::HardwareQuantities> hwq;
+
+    hwq.push_back( xolotlPerf::FP_OPS );
+    hwq.push_back( xolotlPerf::L1_CACHE_MISS );
+
+    return hwq;
+}
+
+bool initPerf(bool opts, std::vector<xolotlPerf::HardwareQuantities> hwq){
+
+    bool perfInitOK = xolotlPerf::initialize( opts, hwq );
+    if( !perfInitOK )
+    {
+        std::cerr << "Unable to initialize requested performance data infrastructure.  Aborting" << std::endl;
+        return EXIT_FAILURE;
+    }
+    else
+    	return perfInitOK;
+}
+
+xolotlSolver::PetscSolver setUpSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, int argc, char **argv){
+
+	// Setup the solver
+    auto solverInitTimer = handlerRegistry->getTimer( "initSolver" );
+    solverInitTimer->start();
+	xolotlSolver::PetscSolver solver(handlerRegistry);
+	solver.setCommandLineOptions(argc, argv);
+	solver.initialize();
+    solverInitTimer->stop();
+
+    return solver;
+}
+
+void launchPetscSolver(xolotlSolver::PetscSolver solver, std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry){
+
+	// Launch the PetscSolver
+    auto solverTimer = handlerRegistry->getTimer( "solve" );
+    solverTimer->start();
+    // Create object to handle incident flux calculations
+    auto fitFluxHandler = std::make_shared<xolotlSolver::FitFluxHandler>();
+	solver.solve(fitFluxHandler);
+    solverTimer->stop();
+
+
+}
+
+std::shared_ptr<PSIClusterNetworkLoader> setUpNetworkLoader(int rank, MPI_Comm comm, std::string networkFilename){
+
+	std::shared_ptr<PSIClusterNetworkLoader> networkLoader;
+	shared_ptr<std::istream> networkStream;
+
+	// Setup the master
+	if (rank == 0) {
+		// Say hello
+		printStartMessage();
+		// Set the input stream on the master
+		networkStream = make_shared<std::ifstream>(networkFilename);
+	}
+
+	// Broadcast the stream to all worker tasks
+	networkLoader = std::make_shared<PSIClusterNetworkLoader>();
+	networkStream = xolotlCore::MPIUtils::broadcastStream(networkStream, 0,
+			comm );
+
+	// Create a network loader and set the stream on every MPI task
+	networkLoader->setInputstream(networkStream);
+
+	return networkLoader;
 }

@@ -6,8 +6,8 @@
 
 using namespace xolotlCore;
 
-HeCluster::HeCluster(int nHe) :
-		PSICluster(nHe) {
+HeCluster::HeCluster(int nHe, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		PSICluster(nHe, registry) {
 	// Set the reactant name appropriately
 	name = "He";
 	// Update the composition map

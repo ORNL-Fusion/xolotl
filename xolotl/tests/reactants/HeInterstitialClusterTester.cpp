@@ -21,6 +21,7 @@ using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
 
+static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared<xolotlPerf::DummyHandlerRegistry>();
 
 /**
  * This suite is responsible for testing the HeInterstitialCluster.
@@ -29,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(HeInterstitialCluster_testSuite)
 
 
 BOOST_AUTO_TEST_CASE(getSpeciesSize) {
-	HeInterstitialCluster cluster(4, 2);
+	HeInterstitialCluster cluster(4, 2, registry);
 
 	// Get the composition back
 	auto composition = cluster.getComposition();
@@ -167,7 +168,7 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 			0.2289478080, 0.2480795532 };
 
 	for (int i = 1; i <= 5; i++) {
-		cluster = shared_ptr<HeInterstitialCluster>(new HeInterstitialCluster(1, i));
+		cluster = shared_ptr<HeInterstitialCluster>(new HeInterstitialCluster(1, i, registry));
 		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
 				.000001);
 	}

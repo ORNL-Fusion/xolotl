@@ -35,6 +35,9 @@ public:
     // Output any collected performance data to the given output stream.
     virtual void dump( std::ostream& os ) const;
 
+    // Output any collected performance data to the given output stream.
+    virtual void dump( int rank) const;
+
 
 };  //end class DummyHandlerRegistry
 

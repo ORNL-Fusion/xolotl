@@ -10,6 +10,7 @@
 // #include "xolotlPerf/IEventCounter.h"
 
 namespace xolotlPerf {
+	class IHandlerRegistry;
     class IEventCounter;
 };
 
@@ -33,16 +34,29 @@ protected:
 	std::shared_ptr<std::map<std::string, std::string>> properties;
 
     /**
+     * The performance handler registry that will be used with
+     * this class.
+     */
+    std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
+
+    /**
      * Counter for the number of times the network concentration is updated.
      */
     std::shared_ptr<xolotlPerf::IEventCounter> concUpdateCounter;
 
+	/**
+	 * The default constructor. It initializes the properties map and reactants vector.
+	 */
+	ReactionNetwork();
+
 public:
 
 	/**
-	 * The constructor. It initializes the properties map and reactants vector.
+	 * The constructor that takes the performance handler registry.
+	 * It initializes the properties map and reactants vector.
 	 */
-	ReactionNetwork();
+	ReactionNetwork(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+
 
 	/**
 	 * The copy constructor

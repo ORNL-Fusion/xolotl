@@ -17,8 +17,15 @@
 #include "HeVCluster.h"
 // #include "HeInterstitialCluster.h"
 #include "PSIClusterReactionNetwork.h"
+#include "xolotlPerf/HandlerRegistryFactory.h"
 
 using namespace xolotlCore;
+
+// TEMPORARY variable definition used to specify the type of performance handler registry
+// that will be used (standard or dummy).  Currently, the handler registry is set via
+// commandline argument and the only way to access which handler registry will be used is
+// through getHandlerRegistry
+#define performanceHandlerRegistry xolotlPerf::getHandlerRegistry()
 
 /**
  * This operation converts a string to a double, taking in to account the fact
@@ -52,22 +59,26 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
 	// property keys.
 	if (numHe > 0 && numV > 0) {
 		// Create a new HeVCluster
-		cluster = std::make_shared<HeVCluster>(numHe, numV);
+		cluster = std::make_shared<HeVCluster>(numHe, numV, performanceHandlerRegistry);
+
 		clusters.push_back(cluster);
 	} else if (numHe > 0 && numI > 0) {
 		throw std::string("HeliumInterstitialCluster is not yet implemented.");
 		// FIXME! Add code to add it to the list
 	} else if (numHe > 0) {
 		// Create a new HeCluster
-		cluster = std::make_shared<HeCluster>(numHe);
+		cluster = std::make_shared<HeCluster>(numHe, performanceHandlerRegistry);
+
 		clusters.push_back(cluster);
 	} else if (numV > 0) {
 		// Create a new VCluster
-		cluster = std::make_shared<VCluster>(numV);
+		cluster = std::make_shared<VCluster>(numV, performanceHandlerRegistry);
+
 		clusters.push_back(cluster);
 	} else if (numI > 0) {
 		// Create a new ICluster
-		cluster = std::make_shared<InterstitialCluster>(numI);
+		cluster = std::make_shared<InterstitialCluster>(numI, performanceHandlerRegistry);
+
 		// Add it to the ICluster list
 		clusters.push_back(cluster);
 	}
@@ -115,7 +126,8 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 	TokenizedLineReader<std::string> reader;
 	std::vector<std::string> loadedLine;
 	std::shared_ptr<PSIClusterReactionNetwork> network(
-			new PSIClusterReactionNetwork());
+			new PSIClusterReactionNetwork(performanceHandlerRegistry) );
+
 	std::istringstream dataStream;
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");

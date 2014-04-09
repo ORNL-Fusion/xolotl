@@ -73,7 +73,7 @@ std::vector<double> GPTLHardwareCounter::getValues() const {
 	for (auto it = hardwareQuantitiesMap.begin(); it != hardwareQuantitiesMap.end(); ++it)
 	{
 		double papiVal = 0.0;
-		std::cout << "papistring = " << it->second.papiQuantityString.c_str() << std::endl;
+		//std::cout << "papistring = " << it->second.papiQuantityString.c_str() << std::endl;
 		GPTLget_eventvalue(this->getName().c_str(), (it->second.papiQuantityString).c_str(), -1, &papiVal);
 		papiValues.push_back (papiVal);
 	}

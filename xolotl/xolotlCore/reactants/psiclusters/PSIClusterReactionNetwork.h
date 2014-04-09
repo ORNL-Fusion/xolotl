@@ -2,6 +2,7 @@
 #define PSI_CLUSTER_REACTION_NETWORK_H
 
 // Includes
+//#include "xolotlPerf/HandlerRegistryFactory.h"
 #include <string>
 #include <vector>
 #include <memory>
@@ -44,8 +45,6 @@ namespace xolotlCore {
 class PSIClusterReactionNetwork: public ReactionNetwork {
 
 private:
-
-
 
 	/**
 	 * The map of single-species clusters, indexed by a map that contains the
@@ -94,12 +93,17 @@ private:
 	 */
 	void setDefaultPropsAndNames();
 
+	/**
+	 * The Constructor
+	 */
+	PSIClusterReactionNetwork();
+
 public:
 
 	/**
 	 * The Constructor
 	 */
-	PSIClusterReactionNetwork();
+	PSIClusterReactionNetwork(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * The copy constructor

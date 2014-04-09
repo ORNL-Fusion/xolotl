@@ -5,7 +5,6 @@
 #include "ITimer.h"
 #include "Identifiable.h"
 
-
 namespace xolotlPerf {
 
 /**
@@ -43,14 +42,15 @@ public:
 	virtual ~GPTLTimer() { }
 
     /**
-     * This operations starts the ITimer.
+     * This operations starts the Timer.
      */
 	virtual void start();
 
     /**
-     * This operation stops the ITimer.
+     * This operation stops the Timer.
      */
 	virtual void stop();
+
 
     /**
      * This operation returns the value of the GPTLTimer.
@@ -64,6 +64,8 @@ public:
 	 * 		  usr -- user CPU time (seconds)
 	 * 		  sys -- system CPU time (seconds)
 	 *
+	 * Note that GPTL always returns the time in seconds,
+	 * thus the units will always be seconds
 	 */
 	virtual std::string getUnits() const;
 

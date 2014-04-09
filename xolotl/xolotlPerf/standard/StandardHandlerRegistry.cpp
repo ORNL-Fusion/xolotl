@@ -1,6 +1,7 @@
 #include <cassert>
 #include "StandardHandlerRegistry.h"
 #include "gptl.h"
+#include <sstream>
 
 
 namespace xolotlPerf
@@ -16,6 +17,10 @@ StandardHandlerRegistry::StandardHandlerRegistry( std::vector<HardwareQuantities
     // This assumption includes the assumption that there are no
     // other instances of StandardHandlerRegistry.
     //
+
+	// This option allows for the use of multiple hardware counters
+	// NOTE: multiplexing events reduces the accuracy of the reported results
+	//GPTLsetoption(GPTLmultiplex, 1);
 
     // Indicate to GPTL any hardware counters it should be monitoring.
     for( auto iter = hwq.begin(); iter != hwq.end(); iter++ )
@@ -41,11 +46,10 @@ StandardHandlerRegistry::StandardHandlerRegistry( std::vector<HardwareQuantities
     }
 
     // Initialize the GPTL library.
-    // GPTLsetoption(GPTLverbose, 1);   // useful for debugging
+    //GPTLsetoption(GPTLverbose, 1);   // useful for debugging
+    GPTLsetoption(GPTLpercent, 1);   // lists the percentage of wallclock time each region took compared to the first region timed
     GPTLinitialize();
 }
-
-
 
 
 StandardHandlerRegistry::~StandardHandlerRegistry( void )
@@ -103,8 +107,7 @@ StandardHandlerRegistry::getHardwareCounter( std::string name,
 }
 
 
-void
-StandardHandlerRegistry::dump(std::ostream& os) const
+void StandardHandlerRegistry::dump(std::ostream& os) const
 {
     // TODO - aggregation when run with more than one process?
 
@@ -120,8 +123,17 @@ StandardHandlerRegistry::dump(std::ostream& os) const
             << '\n';
     }
     os << std::endl;
+
+}
+
+void StandardHandlerRegistry::dump(int rank) const
+{
+	std::stringstream outfile;
+	outfile << "perfData." << rank;
+
+    GPTLpr_file(outfile.str().c_str());
 }
 
 
-}//end namespace xolotlPerf
+} //end namespace xolotlPerf
 

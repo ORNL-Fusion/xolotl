@@ -3,6 +3,7 @@
 
 // Includes
 #include "PSICluster.h"
+#include "../../xolotlPerf/HandlerRegistryFactory.h"
 #include <string>
 #include <map>
 
@@ -50,7 +51,9 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	HeInterstitialCluster() : PSICluster(1) { numHe = 1; numI = 1; }
+	HeInterstitialCluster() :
+		PSICluster(1)
+	{ numHe = 1; numI = 1; }
 
 protected:
 
@@ -76,7 +79,8 @@ public:
 	 * species as its values. The names of the species must be one of
 	 * {He,I}.
 	 */
-	HeInterstitialCluster(int numHe, int numI);
+	HeInterstitialCluster(int numHe, int numI,
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * Copy constructor

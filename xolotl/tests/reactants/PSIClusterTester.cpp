@@ -8,6 +8,8 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
+#include "../../xolotlPerf/HandlerRegistryFactory.h"
+#include "../../xolotlPerf/dummy/DummyHandlerRegistry.h"
 #include <PSICluster.h>
 #include <PSIClusterReactionNetwork.h>
 #include <memory>
@@ -18,6 +20,8 @@
 using namespace std;
 using namespace xolotlCore;
 
+static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared<xolotlPerf::DummyHandlerRegistry>();
+
 /**
  * This suite is responsible for testing the PSICluster.
  */
@@ -27,7 +31,7 @@ BOOST_AUTO_TEST_SUITE (PSICluster_testSuite)
 BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 
 	// Local Declarations
-	PSICluster cluster(1);
+	PSICluster cluster(1, registry);
 
 	// Check E_m = 0.0
 	cluster.setMigrationEnergy(0.0);
@@ -63,7 +67,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 BOOST_AUTO_TEST_CASE(checkCopying) {
 
 	// Local Declarations
-	PSICluster cluster(1);
+	PSICluster cluster(1, registry);
 	cluster.setDiffusionFactor(1.0);
 	cluster.setMigrationEnergy(2.0);
 
@@ -104,8 +108,10 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 BOOST_AUTO_TEST_CASE(checkDefaultFluxes) {
 
 	// Local Declarations
-	PSICluster cluster(1);
-	shared_ptr<PSIClusterReactionNetwork> network(new PSIClusterReactionNetwork());
+	PSICluster cluster(1, registry);
+//	shared_ptr<PSIClusterReactionNetwork> network(new PSIClusterReactionNetwork());
+
+	shared_ptr<PSIClusterReactionNetwork> network(new PSIClusterReactionNetwork(registry));
 
 	// Check the default values of the fluxes
 	BOOST_REQUIRE_CLOSE(cluster.getProductionFlux(273.0), 0.0, 1e-5);
@@ -116,4 +122,3 @@ BOOST_AUTO_TEST_CASE(checkDefaultFluxes) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-

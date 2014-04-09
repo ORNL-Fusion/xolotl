@@ -21,13 +21,9 @@
 #  PAPI_LIBRARIES          The PAPI library
 #  PAPI_INCLUDE_DIRS       The location of PAPI headers
 
-find_path(PAPI_PREFIX 
-    NAMES include/papi.h
+find_path(PAPI_PREFIX include/papi.h
+    NAMES HINTS ENV PAPI_PREFIX
 )
-
-#find_path(PAPI_PREFIX include/papi.h
-#    NAMES HINTS ENV PAPI_PREFIX
-#)
 
 find_library(PAPI_LIBRARIES
     NAMES libpapi.so papi

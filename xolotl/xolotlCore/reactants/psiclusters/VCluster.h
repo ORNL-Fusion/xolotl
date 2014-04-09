@@ -3,6 +3,7 @@
 
 // Includes
 #include "PSICluster.h"
+#include "../../xolotlPerf/HandlerRegistryFactory.h"
 
 namespace xolotlCore {
 
@@ -17,7 +18,9 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	VCluster() : PSICluster(1) {}
+	VCluster() :
+		PSICluster(1)
+	{ }
 
 public:
 
@@ -25,7 +28,7 @@ public:
 	 * The constructor. All VClusters must be initialized with a size.
 	 * @param nV the number of atomic vacancies in the cluster
 	 */
-	VCluster(int nV);
+	VCluster(int nV, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! Destructor
 	~VCluster();

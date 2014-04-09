@@ -3,10 +3,13 @@
 
 // Includes
 #include "PSICluster.h"
+#include "../../xolotlPerf/HandlerRegistryFactory.h"
 
 namespace xolotlCore {
 
-//! This class represents a cluster composed entirely of interstitial defects.
+/**
+ * This class represents a cluster composed entirely of interstitial defects.
+ */
 class InterstitialCluster: public PSICluster {
 
 private:
@@ -15,7 +18,8 @@ private:
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
 	 */
-	InterstitialCluster() : PSICluster(1) {}
+	InterstitialCluster() :
+		PSICluster(1) {}
 
 public:
 
@@ -23,9 +27,11 @@ public:
 	 * The constructor. All InterstitialClusters must be initialized with
 	 * a size.
 	 */
-	InterstitialCluster(int nI);
+	InterstitialCluster(int nI, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
-	//! Destructor
+	/**
+	 * The Destructor
+	 */
 	~InterstitialCluster();
 
 	/**

@@ -7,6 +7,12 @@
 #include <PSIClusterReactionNetwork.h>
 #include <petscsys.h>
 #include <petscdmda.h>
+#include <memory>
+
+namespace xolotlPerf {
+	class IHandlerRegistry;
+    class IEventCounter;
+};
 
 namespace xolotlSolver {
 
@@ -31,6 +37,9 @@ private:
 	//! The original network created from the network loader.
 	static std::shared_ptr<PSIClusterReactionNetwork> network;
 
+	//! The original flux handler created.
+	static std::shared_ptr<IFluxHandler> fluxHandler;
+
 	/**
 	 * This operation fills the diagonal block of the matrix. The diagonal
 	 * block in Xolotl represents the coupling between different reactants
@@ -50,10 +59,13 @@ private:
 	 */
 	PetscErrorCode setupInitialConditions(DM data, Vec solutionVector);
 
+	//! The Constructor
+	PetscSolver();
+
 public:
 
 	//! The Constructor
-	PetscSolver();
+	PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! The Destructor
 	~PetscSolver();
@@ -106,8 +118,10 @@ public:
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
+	 * @param fluxHandler The flux handler that will be used when performing
+	 * the solve
 	 */
-	void solve();
+	void solve(std::shared_ptr<IFluxHandler> fluxHandler);
 
 	/**
 	 * This operation performs all necessary finalization for the solver
@@ -127,8 +141,27 @@ public:
 		return network;
 	}
 
-};
-//end class PetscSolver
+	/**
+	 * This operation returns the flux handler for this solver. This
+	 * operation is only for use by PETSc code and is not part of the
+	 * ISolver interface.
+	 * @return The flux handler for this solver
+	 */
+	static std::shared_ptr<IFluxHandler> getFluxHandler() {
+		return fluxHandler;
+	}
+
+protected:
+
+    /**
+     * The performance handler registry that will be used
+     * for this class.
+     */
+    std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
+
+
+
+}; //end class PetscSolver
 
 } /* end namespace xolotlSolver */
 #endif

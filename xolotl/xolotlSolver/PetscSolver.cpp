@@ -1,6 +1,7 @@
 // Includes
 #include "PetscSolver.h"
 #include "../xolotlPerf/HandlerRegistryFactory.h"
+#include "FitFluxHandler.h"
 #include <petscts.h>
 #include <petscsys.h>
 #include <sstream>
@@ -41,7 +42,16 @@ namespace xolotlSolver {
  */
 std::shared_ptr<xolotlPerf::IEventCounter> RHSFunctionCounter;
 
+/**
+ * Counter for the number of times RHSJacobian is called.
+ */
+std::shared_ptr<xolotlPerf::IEventCounter> RHSJacobianCounter;
 
+/**
+ * Timer for how long it takes to solve the ODE system in the
+ * function solve()
+ */
+std::shared_ptr<xolotlPerf::ITimer> solveODEsystem;
 
 //! Help message
 static char help[] =
@@ -51,11 +61,13 @@ static char help[] =
 
 // Allocate the static network
 std::shared_ptr<PSIClusterReactionNetwork> PetscSolver::network;
+// Allocate the static flux handler
+std::shared_ptr<IFluxHandler> PetscSolver::fluxHandler;
 
 extern PetscErrorCode RHSFunction(TS, PetscReal, Vec, Vec, void*);
 extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat*, Mat*, MatStructure*,
 		void*);
-extern PetscErrorCode MyMonitorSetUp(TS);
+extern PetscErrorCode setupPetscMonitor(TS);
 
 TS ts; /* nonlinear solver */
 Vec C; /* solution */
@@ -88,134 +100,6 @@ static inline bool checkPetscError(PetscErrorCode errorCode) {
  * @return The return code from Petsc.
  */
 static inline int petscReturn() {
-	PetscFunctionReturn(0);
-}
-
-/* ----- Monitoring Code ----- */
-
-#undef __FUNCT__
-#define __FUNCT__ "monitorSolve"
-/**
- * This is a monitoring operation that displays He and V as a function of space
- * and cluster size for each time step. It is not a member variable of the class
- * because the monitoring code requires a C callback function (via a function
- * pointer).
- */
-static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *ictx) {
-	// Network size
-	const int size = PetscSolver::getNetwork()->size();
-	// The array of cluster names
-	std::vector<std::string> names(size);
-	// Get the processor id
-	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
-	// Header and output string streams
-	std::stringstream header, outputData;
-	// Create a stream for naming the file
-	std::stringstream outputFileNameStream;
-	outputFileNameStream << "xolotl_out_" << procId << "_" << timestep;
-	PetscErrorCode ierr;
-	PetscViewer viewer;
-	PetscReal *solutionArray, *gridPointSolution, x, hx;
-	PetscInt xs, xm, Mx;
-	int xi, i;
-
-	PetscFunctionBeginUser;
-
-	// Create the PETScViewer and get the data
-	VecGetArray(solution, &solutionArray);
-	PetscViewerASCIIOpen(PETSC_COMM_WORLD, outputFileNameStream.str().c_str(),
-			&viewer);
-
-	// Create the header for the file
-	auto reactants = PetscSolver::getNetwork()->getAll();
-	std::shared_ptr<PSICluster> cluster;
-	header << "# t x ";
-	for (int i = 0; i < size; i++) {
-		// Get the cluster from the list, its id and composition
-		cluster = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
-		int id = cluster->getId() - 1;
-		auto composition = cluster->getComposition();
-		// Make the header entry
-		std::stringstream name;
-		name << (cluster->getName()).c_str() << "_(" << composition["He"] << ","
-				<< composition["V"] << "," << composition["I"] << ") ";
-		// Push the header entry on the array
-		name >> names[id];
-	}
-	for (int i = 0; i < size; i++) {
-		header << names[i] << " ";
-	}
-	header << "\n";
-	PetscViewerASCIIPrintf(viewer, header.str().c_str());
-
-	// Get the da from ts
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
-	checkPetscError(ierr);
-	// Setup some step size variables
-	hx = 8.0 / (PetscReal) (Mx - 1);
-	checkPetscError(ierr);
-	// Print the solution data
-	for (xi = xs; xi < xs + xm; xi++) {
-		// Dump x
-		x = xi * hx;
-		outputData << timestep << " " << x << " ";
-		// Get the pointer to the beginning of the solution data for this grid point
-		gridPointSolution = solutionArray + size * xi;
-		// Update the concentrations in the network to have physics results
-		// (non negative)
-		PetscSolver::getNetwork()->updateConcentrationsFromArray(gridPointSolution);
-		// Get the concentrations from the network
-		double concentrations[size];
-		double * concentration = &concentrations[0];
-		PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
-		// Dump the data to the stream
-		for (i = 0; i < size; i++) {
-			outputData << concentration[i] << " ";
-		}
-		// End the line
-		outputData << "\n";
-	}
-	// Dump the data to file
-	PetscViewerASCIIPrintf(viewer, outputData.str().c_str());
-	// Restore the array and kill the viewer
-	VecRestoreArray(solution, &solutionArray);
-	PetscViewerDestroy(&viewer);
-
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ "setupPetscMonitor"
-/**
- * This operation sets up a monitor that will display He as a function of space
- * and cluster size for each time step. It was not made a member function so
- * that it would be consistent with the other monitor callbacks.
- * @param ts The time stepper
- * @return A standard PETSc error code
- */
-static PetscErrorCode setupPetscMonitor(TS ts) {
-	PetscErrorCode ierr;
-	PetscBool flg;
-
-	PetscFunctionBeginUser;
-	ierr = PetscOptionsHasName(NULL, "-mymonitor", &flg);
-	checkPetscError(ierr);
-	if (!flg)
-		PetscFunctionReturn(0);
-
-	ierr = TSMonitorSet(ts, monitorSolve, NULL, NULL);
-	checkPetscError(ierr);
 	PetscFunctionReturn(0);
 }
 
@@ -322,6 +206,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 /* ------------------------------------------------------------------- */
 PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 
+	// increment the event counter monitoring this function
 	RHSFunctionCounter->increment();
 
 	// Important petsc stuff (related to the grid mostly)
@@ -351,6 +236,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	// Some required properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
+	// Get the flux handler that will be used to compute fluxes.
+	auto fluxHandler = PetscSolver::getFluxHandler();
 
 	// Get the local data vector from petsc
 	PetscFunctionBeginUser;
@@ -390,10 +277,19 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 
+	// Variable to represent the real, or current, time
+	PetscReal realTime;
+	// Get the current time
+	ierr = TSGetTime(ts, &realTime);
+
 	// Loop over grid points computing ODE terms for each grid point
 	size = network->size();
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
+
+		// Vector representing the position at which the flux will be calculated
+		// Currently we are only in 1D
+		std::vector<double> gridPosition = {0,x,0};
 
 		//xi = 4; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -419,12 +315,17 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Crude cubic approximation of graph from Tibo's notes
 		heCluster = std::dynamic_pointer_cast<PSICluster>(
 				network->get("He", 1));
+		// Get the composition of the cluster
+		auto thisComp = heCluster->getComposition();
+		// Create the composition vector for the cluster
+		std::vector<int> compVec = {thisComp["He"], thisComp["V"], thisComp["I"]};
 		if (heCluster) {
 			reactantIndex = heCluster->getId() - 1;
+			// Calculate the incident flux
+			auto incidentFlux = fluxHandler->getIncidentFlux(compVec, gridPosition, realTime);
 			// Update the concentration of the cluster
-			updatedConcOffset[reactantIndex] += 1.0E4
-					* PetscMax(0.0,
-							0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
+			updatedConcOffset[reactantIndex] += 1.0E4 * PetscMax(0.0, incidentFlux);
+			// where incidentFlux = 0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x);
 		}
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
@@ -525,6 +426,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	ierr = DMRestoreLocalVector(da, &localC);
 	checkPetscError(ierr);
 	PetscFunctionReturn(0);
+
 }
 
 #undef __FUNCT__
@@ -534,6 +436,9 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
  */
 PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		MatStructure *str, void *ptr) {
+
+	// increment the event counter monitoring this function
+	RHSJacobianCounter->increment();
 
 	DM da;
 	PetscErrorCode ierr;
@@ -790,6 +695,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 		checkPetscError(ierr);
 	}
 	PetscFunctionReturn(0);
+
 }
 
 #undef __FUNCT__
@@ -856,17 +762,22 @@ PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 PetscSolver::PetscSolver() {
 	numCLIArgs = 0;
 	CLIArgs = NULL;
+}
 
-	RHSFunctionCounter =
-			xolotlPerf::getHandlerRegistry()->getEventCounter("RHSFunction_Counter");
+PetscSolver::PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+	handlerRegistry(registry){
+
+	numCLIArgs = 0;
+	CLIArgs = NULL;
+
+	RHSFunctionCounter = handlerRegistry->getEventCounter("Petsc_RHSFunction_Counter");
+	RHSJacobianCounter = handlerRegistry->getEventCounter("Petsc_RHSJacobian_Counter");
+	solveODEsystem = handlerRegistry->getTimer("solveODEsystem");
+
 }
 
 //! The Destructor
 PetscSolver::~PetscSolver() {
-
-//    std::cout << "PetscSolver: Called RHSFunction "
-//        << RHSFunctionCounter->getValue() << " times"
-//        << std::endl;
 
 }
 
@@ -954,7 +865,10 @@ void PetscSolver::initialize() {
  * This operation directs the Solver to perform the solve. If the solve
  * fails, it will throw an exception of type std::string.
  */
-void PetscSolver::solve() {
+void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler) {
+
+	// Set the flux handler
+	PetscSolver::fluxHandler = fluxHandler;
 
 	// Get the properties
 	auto props = network->getProperties();
@@ -1082,6 +996,8 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	// Time how long it takes to solve the ODE system
+	solveODEsystem->start();  // start the timer
 	if (ts != NULL && C != NULL) {
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr);
@@ -1089,6 +1005,7 @@ void PetscSolver::solve() {
 		throw std::string(
 				"PetscSolver Exception: Unable to solve! Data not configured properly.");
 	}
+	solveODEsystem->stop();  // stop the timer
 
 }
 

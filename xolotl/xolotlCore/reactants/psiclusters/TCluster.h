@@ -14,7 +14,7 @@ private:
 public:
 
 	//! The constructor. All TClusters must be initialized with a size.
-	TCluster(int nT);
+	TCluster(int nT, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! Destructor
 	~TCluster();

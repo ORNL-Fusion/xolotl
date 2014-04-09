@@ -20,7 +20,7 @@ include_directories(${PETSC_INCLUDES})
 
 #Add the library
 add_library(${LIBRARY_NAME} SHARED ${SRC})
-target_link_libraries(${LIBRARY_NAME} xolotlReactants xolotlIO ${PETSC_LIBRARIES})
+target_link_libraries(${LIBRARY_NAME} xolotlReactants xolotlIO ${PETSC_LIBRARIES} xolotlPerf)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

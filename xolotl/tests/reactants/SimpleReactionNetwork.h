@@ -2,6 +2,8 @@
 #define SIMPLEREACTIONNETWORK_H_
 
 #include <PSIClusterReactionNetwork.h>
+#include "../../xolotlPerf/HandlerRegistryFactory.h"
+#include "../../xolotlPerf/dummy/DummyHandlerRegistry.h"
 
 namespace testUtils {
 
@@ -23,7 +25,8 @@ public:
 	 * @param maxClusterSize the maximal size of the clusters that will be in
 	 * the network. Set to 10 by default.
 	 */
-	SimpleReactionNetwork(const int maxClusterSize = 10);
+	SimpleReactionNetwork(const int maxClusterSize = 10,
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 
 	//! Destructor
 	virtual ~SimpleReactionNetwork();
@@ -38,7 +41,8 @@ public:
  * the network. Set to 10 by default.
  * @return The reaction network.
  */
-std::shared_ptr<xolotlCore::ReactionNetwork> getSimpleReactionNetwork(const int maxClusterSize = 10);
+std::shared_ptr<xolotlCore::ReactionNetwork> getSimpleReactionNetwork(const int maxClusterSize = 10,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 
 } /* end namespace testUtils */
 #endif

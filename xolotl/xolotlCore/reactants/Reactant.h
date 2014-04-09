@@ -7,7 +7,11 @@
 #include <memory>
 #include <map>
 #include "ReactionNetwork.h"
-//#include "IHandlerRegistry.h"
+
+namespace xolotlPerf {
+	class IHandlerRegistry;
+    class IEventCounter;
+};
 
 namespace xolotlCore {
 
@@ -26,13 +30,6 @@ namespace xolotlCore {
  * functionality for calculate fluxes and computing connectivity.
  */
 class Reactant {
-
-private:
-
-	/**
-	 * The constructor.
-	 */
-	//Reactant();
 
 protected:
 
@@ -57,13 +54,25 @@ protected:
 	 */
 	std::map<std::string,int> compositionMap;
 
-public:
+    /**
+     * The performance handler registry that will be used with
+     * this class.
+     */
+    std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
 
 	/**
 	 * The constructor.
 	 */
 	Reactant();
-	//Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry);
+
+public:
+
+	/**
+	 * The constructor.
+	 *
+	 * @param registry  The performance handler registry to use
+	 */
+	Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * The copy constructor. All reactants MUST be deep copied.
@@ -95,7 +104,7 @@ public:
 	 *
 	 * @param conc The initial concentration
 	 */
-	Reactant(double conc);
+	Reactant(double conc, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * This operation returns the current concentration.

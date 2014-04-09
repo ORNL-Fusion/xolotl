@@ -1,5 +1,6 @@
 #include "PSIClusterReactionNetwork.h"
 #include "PSICluster.h"
+#include "xolotlPerf/HandlerRegistryFactory.h"
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -59,13 +60,24 @@ void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 }
 
 PSIClusterReactionNetwork::PSIClusterReactionNetwork() :
-		ReactionNetwork() {
+		ReactionNetwork( )
+{
 
 	// Setup the properties map and the name lists
 	setDefaultPropsAndNames();
 
 	return;
 }
+
+PSIClusterReactionNetwork::PSIClusterReactionNetwork(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		ReactionNetwork(registry){
+
+	// Setup the properties map and the name lists
+	setDefaultPropsAndNames();
+
+	return;
+}
+
 
 PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 		const PSIClusterReactionNetwork &other) :
@@ -88,6 +100,7 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 	}
 
 }
+
 
 /**
  * This operation returns a reactant with the given name and size if it

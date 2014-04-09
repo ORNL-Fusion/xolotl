@@ -6,8 +6,8 @@
 
 using namespace xolotlCore;
 
-VCluster::VCluster(int nV) :
-		PSICluster(nV) {
+VCluster::VCluster(int nV, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		PSICluster(nV, registry) {
 	// Set the reactant name appropriately
 	name = "V";
 	// Update the composition map

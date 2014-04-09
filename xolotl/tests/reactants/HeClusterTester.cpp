@@ -20,6 +20,8 @@ using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
 
+static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared<xolotlPerf::DummyHandlerRegistry>();
+
 /**
  * This suite is responsible for testing the HeCluster.
  */
@@ -135,11 +137,10 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 				0.3985871973, 0.4053737480 };
 
 	for (int i = 1; i <= 10; i++) {
-		cluster = shared_ptr<HeCluster>(new HeCluster(i));
+		cluster = shared_ptr<HeCluster>(new HeCluster(i, registry));
 		BOOST_REQUIRE_CLOSE(expectedRadii[i-1], cluster->getReactionRadius(), .000001);
 	}
 }
 
 
 BOOST_AUTO_TEST_SUITE_END()
-

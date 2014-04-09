@@ -3,6 +3,7 @@
 
 // Includes
 #include "PSICluster.h"
+#include "../../xolotlPerf/HandlerRegistryFactory.h"
 
 namespace xolotlCore {
 
@@ -15,9 +16,11 @@ private:
 
 	/**
 	 * The default constructor is private because PSIClusters must always be
-	 * initialized with a size.
+	 * initialized with a size and performance handler registry
 	 */
-	HeCluster():PSICluster(1) {}
+	HeCluster() :
+		PSICluster(1)
+	{ }
 
 public:
 
@@ -25,7 +28,7 @@ public:
 	 * The constructor. All HeClusters must be initialized with a size.
 	 * @param nHe the number of helium atoms in the cluster
 	 */
-	HeCluster(int nHe);
+	HeCluster(int nHe, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * Destructor
@@ -50,9 +53,8 @@ protected:
 	 */
 	void createReactionConnectivity();
 
-};
 
-//end class HeCluster
+}; //end class HeCluster
 
 } /* namespace xolotlCore */
 #endif
