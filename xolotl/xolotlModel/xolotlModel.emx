@@ -3067,74 +3067,6 @@ Check the reactants - He first
           <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_7tWnoaMfEeOT0L2IlTA9PA" type="Freeform" name="Main">
             <element xsi:nil="true"/>
           </contents>
-          <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_NLiVwKMgEeOT0L2IlTA9PA" type="Class" name="LabelProviderTester">
-            <children xmi:type="notation:Shape" xmi:id="_bSqogKMgEeOT0L2IlTA9PA" type="Text" fontName="Sans" fontHeight="24" description="LabelProviderTester Class Diagram" transparency="0" lineColor="0" lineWidth="2">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_bSqogaMgEeOT0L2IlTA9PA" type="DiagramName">
-                <element xsi:nil="true"/>
-              </children>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_bSqogqMgEeOT0L2IlTA9PA" type="Description">
-                <element xsi:nil="true"/>
-              </children>
-              <element xsi:nil="true"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_bSqog6MgEeOT0L2IlTA9PA" x="6340" y="-213" width="16748" height="793"/>
-            </children>
-            <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_wkg1gKMgEeOT0L2IlTA9PA" element="_WxAJcJ5lEeOYFMqvY2mpFg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
-              <children xmi:type="notation:DecorationNode" xmi:id="_wkg1gaMgEeOT0L2IlTA9PA" type="ImageCompartment">
-                <layoutConstraint xmi:type="notation:Size" xmi:id="_wkg1gqMgEeOT0L2IlTA9PA" width="502" height="502"/>
-              </children>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_wkg1g6MgEeOT0L2IlTA9PA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_wkg1hKMgEeOT0L2IlTA9PA" type="Kind"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_wkg1haMgEeOT0L2IlTA9PA" type="Name"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_wkg1hqMgEeOT0L2IlTA9PA" type="Parent"/>
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="_wkg1h6MgEeOT0L2IlTA9PA" type="AttributeCompartment"/>
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="_wkg1iKMgEeOT0L2IlTA9PA" type="OperationCompartment"/>
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="_wkg1iaMgEeOT0L2IlTA9PA" visible="false" type="SignalCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wkg1iqMgEeOT0L2IlTA9PA" x="3487" y="2536"/>
-            </children>
-            <children xmi:type="umlnotation:UMLShape" xmi:id="_wkhckKMgEeOT0L2IlTA9PA" element="_NyjnYKCMEeOYCKbYrRMQtA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-              <children xmi:type="notation:DecorationNode" xmi:id="_wkhckaMgEeOT0L2IlTA9PA" type="ImageCompartment">
-                <layoutConstraint xmi:type="notation:Size" xmi:id="_wkhckqMgEeOT0L2IlTA9PA" width="1296" height="1296"/>
-              </children>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_wkiDoKMgEeOT0L2IlTA9PA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_wkiDoaMgEeOT0L2IlTA9PA" type="Name"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_wkiDoqMgEeOT0L2IlTA9PA" type="Parent"/>
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="_wkiDo6MgEeOT0L2IlTA9PA" type="AttributeCompartment"/>
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="_wkiDpKMgEeOT0L2IlTA9PA" type="OperationCompartment"/>
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="_wkiDpaMgEeOT0L2IlTA9PA" visible="false" type="SignalCompartment"/>
-              <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_wkiDpqMgEeOT0L2IlTA9PA" visible="false" type="StructureCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wkiDp6MgEeOT0L2IlTA9PA" x="12509" y="3645"/>
-            </children>
-            <children xmi:type="umlnotation:UMLShape" xmi:id="_3MB8EKMgEeOT0L2IlTA9PA" element="_3L6nUKMgEeOT0L2IlTA9PA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-              <children xmi:type="notation:DecorationNode" xmi:id="_3MDKMKMgEeOT0L2IlTA9PA" type="ImageCompartment">
-                <layoutConstraint xmi:type="notation:Size" xmi:id="_3MDKMaMgEeOT0L2IlTA9PA" width="1320" height="1320"/>
-              </children>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_3MDKMqMgEeOT0L2IlTA9PA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_3MDxQKMgEeOT0L2IlTA9PA" type="Name"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_3MDxQaMgEeOT0L2IlTA9PA" type="Parent"/>
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="_3MDxQqMgEeOT0L2IlTA9PA" type="AttributeCompartment"/>
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="_3MEYUKMgEeOT0L2IlTA9PA" type="OperationCompartment"/>
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="_3ME_YKMgEeOT0L2IlTA9PA" visible="false" type="SignalCompartment"/>
-              <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_3MFmcKMgEeOT0L2IlTA9PA" visible="false" type="StructureCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_3MB8EaMgEeOT0L2IlTA9PA" x="21351" y="4365"/>
-            </children>
-            <element xsi:nil="true"/>
-            <edges xmi:type="umlnotation:UMLConnector" xmi:id="_wkmVEKMgEeOT0L2IlTA9PA" element="_Sy7xAKCMEeOYCKbYrRMQtA" source="_wkhckKMgEeOT0L2IlTA9PA" target="_wkg1gKMgEeOT0L2IlTA9PA" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
-              <children xmi:type="notation:DecorationNode" xmi:id="_wkmVEaMgEeOT0L2IlTA9PA" type="NameLabel">
-                <children xmi:type="notation:BasicDecorationNode" xmi:id="_wkmVEqMgEeOT0L2IlTA9PA" type="Stereotype"/>
-                <children xmi:type="notation:BasicDecorationNode" xmi:id="_wkmVE6MgEeOT0L2IlTA9PA" type="Name"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wkmVFKMgEeOT0L2IlTA9PA" y="-186"/>
-              </children>
-              <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_wkmVFaMgEeOT0L2IlTA9PA" points="[-80, 0, 317, -53]$[-318, -27, 79, -80]"/>
-            </edges>
-            <edges xmi:type="umlnotation:UMLConnector" xmi:id="_-eO-YKMgEeOT0L2IlTA9PA" element="_-eHpoKMgEeOT0L2IlTA9PA" source="_3MB8EKMgEeOT0L2IlTA9PA" target="_wkhckKMgEeOT0L2IlTA9PA" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
-              <children xmi:type="notation:DecorationNode" xmi:id="_-ePlcKMgEeOT0L2IlTA9PA" type="NameLabel">
-                <children xmi:type="notation:BasicDecorationNode" xmi:id="_-ePlcqMgEeOT0L2IlTA9PA" type="Stereotype"/>
-                <children xmi:type="notation:BasicDecorationNode" xmi:id="_-ePlc6MgEeOT0L2IlTA9PA" type="Name"/>
-                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_-ePlcaMgEeOT0L2IlTA9PA" y="-186"/>
-              </children>
-              <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_-eO-YaMgEeOT0L2IlTA9PA" points="[-99, 6, 363, -27]$[-383, 26, 79, -7]"/>
-            </edges>
-          </contents>
           <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_PUJicKOsEeODcs71kOGBxA" type="Class" name="DataProviderTester">
             <children xmi:type="notation:Shape" xmi:id="_VqgAgKOsEeODcs71kOGBxA" type="Text" fontName="Sans" fontHeight="24" description="DataProviderTester Class Diagram" transparency="0" lineColor="0" lineWidth="2">
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_VqgAgaOsEeODcs71kOGBxA" type="DiagramName">
@@ -3170,7 +3102,7 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_cErOp6OsEeODcs71kOGBxA" type="AttributeCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_cErOqKOsEeODcs71kOGBxA" type="OperationCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_cErOqaOsEeODcs71kOGBxA" visible="false" type="SignalCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_cErOqqOsEeODcs71kOGBxA" x="12680" y="1902"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_cErOqqOsEeODcs71kOGBxA" x="12680" y="2219"/>
             </children>
             <children xmi:type="umlnotation:UMLShape" xmi:id="_cErOq6OsEeODcs71kOGBxA" element="_jZk9sKCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
               <children xmi:type="notation:DecorationNode" xmi:id="_cErOrKOsEeODcs71kOGBxA" type="ImageCompartment">
@@ -3183,7 +3115,7 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_cErOsqOsEeODcs71kOGBxA" type="OperationCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_cErOs6OsEeODcs71kOGBxA" visible="false" type="SignalCompartment"/>
               <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_cErOtKOsEeODcs71kOGBxA" visible="false" type="StructureCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_cErOtaOsEeODcs71kOGBxA" x="19020" y="3170"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_cErOtaOsEeODcs71kOGBxA" x="19020" y="2219"/>
             </children>
             <children xmi:type="umlnotation:UMLShape" xmi:id="_hTKswKOsEeODcs71kOGBxA" element="_hSun4KOsEeODcs71kOGBxA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
               <children xmi:type="notation:DecorationNode" xmi:id="_hTQzYKOsEeODcs71kOGBxA" type="ImageCompartment">
@@ -3197,6 +3129,19 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_hTTPoKOsEeODcs71kOGBxA" visible="false" type="SignalCompartment"/>
               <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_hTT2sKOsEeODcs71kOGBxA" visible="false" type="StructureCompartment"/>
               <layoutConstraint xmi:type="notation:Bounds" xmi:id="_hTKswaOsEeODcs71kOGBxA" x="18703" y="9193"/>
+            </children>
+            <children xmi:type="umlnotation:UMLShape" xmi:id="_ZD-NgMS4EeOcOoPo6rd1xA" element="_ZD4G4MS4EeOcOoPo6rd1xA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
+              <children xmi:type="notation:DecorationNode" xmi:id="_ZD_boMS4EeOcOoPo6rd1xA" type="ImageCompartment">
+                <layoutConstraint xmi:type="notation:Size" xmi:id="_ZD_bocS4EeOcOoPo6rd1xA" width="1320" height="1320"/>
+              </children>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_ZEApwMS4EeOcOoPo6rd1xA" type="Stereotype"/>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_ZEApwcS4EeOcOoPo6rd1xA" type="Name"/>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_ZEApwsS4EeOcOoPo6rd1xA" type="Parent"/>
+              <children xmi:type="notation:SemanticListCompartment" xmi:id="_ZEBQ0MS4EeOcOoPo6rd1xA" type="AttributeCompartment"/>
+              <children xmi:type="notation:SemanticListCompartment" xmi:id="_ZEB34MS4EeOcOoPo6rd1xA" type="OperationCompartment"/>
+              <children xmi:type="notation:SemanticListCompartment" xmi:id="_ZEB34cS4EeOcOoPo6rd1xA" visible="false" type="SignalCompartment"/>
+              <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_ZECe8MS4EeOcOoPo6rd1xA" visible="false" type="StructureCompartment"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ZD-NgcS4EeOcOoPo6rd1xA" x="13678" y="9193"/>
             </children>
             <element xsi:nil="true"/>
             <edges xmi:type="umlnotation:UMLConnector" xmi:id="_cEscwKOsEeODcs71kOGBxA" element="_jq0UgJ5lEeOYFMqvY2mpFg" source="_cErOoKOsEeODcs71kOGBxA" target="_cEqAgKOsEeODcs71kOGBxA" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -3255,6 +3200,14 @@ Check the reactants - He first
               </children>
               <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_ofdUUaOsEeODcs71kOGBxA" points="[-2, -27, 24, 159]$[50, -192, 76, -6]"/>
             </edges>
+            <edges xmi:type="umlnotation:UMLConnector" xmi:id="_7iJR4MS4EeOcOoPo6rd1xA" element="_7iGOkMS4EeOcOoPo6rd1xA" source="_ZD-NgMS4EeOcOoPo6rd1xA" target="_cErOq6OsEeODcs71kOGBxA" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
+              <children xmi:type="notation:DecorationNode" xmi:id="_7iJ48MS4EeOcOoPo6rd1xA" type="NameLabel">
+                <children xmi:type="notation:BasicDecorationNode" xmi:id="_7iJ48sS4EeOcOoPo6rd1xA" type="Stereotype"/>
+                <children xmi:type="notation:BasicDecorationNode" xmi:id="_7iJ488S4EeOcOoPo6rd1xA" type="Name"/>
+                <layoutConstraint xmi:type="notation:Bounds" xmi:id="_7iJ48cS4EeOcOoPo6rd1xA" y="-186"/>
+              </children>
+              <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_7iJR4cS4EeOcOoPo6rd1xA" points="[0, -777, -5368, 4549]$[0, -1742, -5368, 3584]$[5368, -1742, 0, 3584]$[5368, -2901, 0, 2425]"/>
+            </edges>
           </contents>
           <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_ZlqHIKOvEeODcs71kOGBxA" type="Class" name="PlotTester">
             <children xmi:type="notation:Shape" xmi:id="_clgjcaOvEeODcs71kOGBxA" type="Text" fontName="Sans" fontHeight="24" description="PlotTester Class Diagram" transparency="0" lineColor="0" lineWidth="2">
@@ -3278,7 +3231,7 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_o95cgqOvEeODcs71kOGBxA" type="AttributeCompartment" collapsed="true"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_o95cg6OvEeODcs71kOGBxA" type="OperationCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_o95chKOvEeODcs71kOGBxA" visible="false" type="SignalCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_o95chaOvEeODcs71kOGBxA" x="4755" y="3487"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_o95chaOvEeODcs71kOGBxA" x="4755" y="1902"/>
             </children>
             <children xmi:type="umlnotation:UMLShape" xmi:id="_o96DgKOvEeODcs71kOGBxA" element="_Sh7PAJ5nEeOYFMqvY2mpFg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
               <children xmi:type="notation:DecorationNode" xmi:id="_o96DgaOvEeODcs71kOGBxA" type="ImageCompartment">
@@ -3304,7 +3257,7 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_o96DkqOvEeODcs71kOGBxA" type="EnumerationCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_o96Dk6OvEeODcs71kOGBxA" visible="false" type="AttributeCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_o96DlKOvEeODcs71kOGBxA" visible="false" type="OperationCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_o96DlaOvEeODcs71kOGBxA" x="19654" y="5072"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_o96DlaOvEeODcs71kOGBxA" x="19654" y="3487"/>
             </children>
             <children xmi:type="umlnotation:UMLShape" xmi:id="_FtemUKOwEeODcs71kOGBxA" element="_FtKdQKOwEeODcs71kOGBxA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
               <children xmi:type="notation:DecorationNode" xmi:id="_Ftf0cKOwEeODcs71kOGBxA" type="ImageCompartment">
@@ -3317,7 +3270,7 @@ Check the reactants - He first
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_FthCkKOwEeODcs71kOGBxA" type="OperationCompartment"/>
               <children xmi:type="notation:SemanticListCompartment" xmi:id="_FthCkaOwEeODcs71kOGBxA" visible="false" type="SignalCompartment"/>
               <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_FthCkqOwEeODcs71kOGBxA" visible="false" type="StructureCompartment"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_FtemUaOwEeODcs71kOGBxA" x="12680" y="13631"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_FtemUaOwEeODcs71kOGBxA" x="12997" y="9827"/>
             </children>
             <element xsi:nil="true"/>
             <edges xmi:type="umlnotation:UMLConnector" xmi:id="_o96qkKOvEeODcs71kOGBxA" element="_DNHLsJ5oEeOYFMqvY2mpFg" source="_o96DgKOvEeODcs71kOGBxA" target="_o95ce6OvEeODcs71kOGBxA" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -3346,39 +3299,13 @@ Check the reactants - He first
             </edges>
           </contents>
         </eAnnotations>
-        <packagedElement xmi:type="uml:Class" xmi:id="_3L6nUKMgEeOT0L2IlTA9PA" name="LabelProviderTester" clientDependency="_-eHpoKMgEeOT0L2IlTA9PA">
-          <ownedComment xmi:id="_LognUKMhEeOT0L2IlTA9PA" annotatedElement="_3L6nUKMgEeOT0L2IlTA9PA">
-            <body>&lt;p>Class testing the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedOperation xmi:id="_PEm6wKMhEeOT0L2IlTA9PA" name="checkLabels">
-            <ownedComment xmi:id="_d5C_cKMhEeOT0L2IlTA9PA" annotatedElement="_PEm6wKMhEeOT0L2IlTA9PA">
-              <body>&lt;p>Method checking all the different getLabel() and setLabel() methods from the label provider.&lt;/p></body>
-            </ownedComment>
-          </ownedOperation>
-        </packagedElement>
-        <packagedElement xmi:type="uml:Dependency" xmi:id="_-eHpoKMgEeOT0L2IlTA9PA" supplier="_NyjnYKCMEeOYCKbYrRMQtA" client="_3L6nUKMgEeOT0L2IlTA9PA"/>
         <packagedElement xmi:type="uml:Class" xmi:id="_hSun4KOsEeODcs71kOGBxA" name="DataProviderTester" clientDependency="_ofTjUKOsEeODcs71kOGBxA">
           <ownedComment xmi:id="_Q5JU4KOtEeODcs71kOGBxA" annotatedElement="_hSun4KOsEeODcs71kOGBxA">
             <body>&lt;p>Class testing the data provider.&lt;/p></body>
           </ownedComment>
-          <ownedOperation xmi:id="_iEOg0KOtEeODcs71kOGBxA" name="checkUnits">
-            <ownedComment xmi:id="_8tooYKOtEeODcs71kOGBxA" annotatedElement="_iEOg0KOtEeODcs71kOGBxA">
-              <body>&lt;p>Method checking you can set and get the unit of the data.&lt;/p></body>
-            </ownedComment>
-          </ownedOperation>
-          <ownedOperation xmi:id="_j9XzwKOtEeODcs71kOGBxA" name="checkPoints">
+          <ownedOperation xmi:id="_j9XzwKOtEeODcs71kOGBxA" name="checkData">
             <ownedComment xmi:id="_ARJLYKOuEeODcs71kOGBxA" annotatedElement="_j9XzwKOtEeODcs71kOGBxA">
-              <body>&lt;p>Method checking you can add points to the data, and getting the data.&lt;/p></body>
-            </ownedComment>
-          </ownedOperation>
-          <ownedOperation xmi:id="_mkxT0KOtEeODcs71kOGBxA" name="checkName">
-            <ownedComment xmi:id="_BaCGEKOuEeODcs71kOGBxA" annotatedElement="_mkxT0KOtEeODcs71kOGBxA">
-              <body>&lt;p>Method checking you can set and get the name of the data.&lt;/p></body>
-            </ownedComment>
-          </ownedOperation>
-          <ownedOperation xmi:id="_vICk8KhZEeO9W5nw_aDz6w" name="checkGetDataMean">
-            <ownedComment xmi:id="_7ks58KhZEeO9W5nw_aDz6w" annotatedElement="_vICk8KhZEeO9W5nw_aDz6w">
-              <body>&lt;p>Method checking getting the mean of the value of the data points.&lt;/p></body>
+              <body>&lt;p>Method checking you can add points to the data, get the data, and getDataMean().&lt;/p></body>
             </ownedComment>
           </ownedOperation>
         </packagedElement>
@@ -3387,24 +3314,14 @@ Check the reactants - He first
           <ownedComment xmi:id="_hqrRAKOwEeODcs71kOGBxA" annotatedElement="_FtKdQKOwEeODcs71kOGBxA">
             <body>&lt;p>Class testing the general Plot class.&lt;/p></body>
           </ownedComment>
-          <ownedOperation xmi:id="_iPhDcKOwEeODcs71kOGBxA" name="checkUnit">
-            <ownedComment xmi:id="_HdIJkKOxEeODcs71kOGBxA" annotatedElement="_iPhDcKOwEeODcs71kOGBxA">
-              <body>&lt;p>Method checking getting and setting the unit.&lt;/p></body>
-            </ownedComment>
-          </ownedOperation>
           <ownedOperation xmi:id="_1vXuYKOwEeODcs71kOGBxA" name="checkPlottingStyle">
             <ownedComment xmi:id="_LxsWEKOxEeODcs71kOGBxA" annotatedElement="_1vXuYKOwEeODcs71kOGBxA">
               <body>&lt;p>Method checking the ability to choose a PlottingStyle.&lt;/p></body>
             </ownedComment>
           </ownedOperation>
-          <ownedOperation xmi:id="_51z_UKOwEeODcs71kOGBxA" name="checkLabelProvider">
-            <ownedComment xmi:id="_PITFgKOxEeODcs71kOGBxA" annotatedElement="_51z_UKOwEeODcs71kOGBxA">
-              <body>&lt;p>Method checking everything related the label provider.&lt;/p></body>
-            </ownedComment>
-          </ownedOperation>
-          <ownedOperation xmi:id="_7naf0KOwEeODcs71kOGBxA" name="checkTitle">
-            <ownedComment xmi:id="_Rz1esKOxEeODcs71kOGBxA" annotatedElement="_7naf0KOwEeODcs71kOGBxA">
-              <body>&lt;p>Method checking the ability to change the title.&lt;/p></body>
+          <ownedOperation xmi:id="_MDTQAKh-EeO9W5nw_aDz6w" name="checkDataProvider">
+            <ownedComment xmi:id="_iVwlcKh-EeO9W5nw_aDz6w" annotatedElement="_MDTQAKh-EeO9W5nw_aDz6w">
+              <body>&lt;p>Method checking everything related to the data provider in the plot.&lt;/p></body>
             </ownedComment>
           </ownedOperation>
           <ownedOperation xmi:id="_9fXf8KOwEeODcs71kOGBxA" name="checkLegend">
@@ -3417,13 +3334,19 @@ Check the reactants - He first
               <body>&lt;p>Method checking the writing of the file.&lt;/p></body>
             </ownedComment>
           </ownedOperation>
-          <ownedOperation xmi:id="_MDTQAKh-EeO9W5nw_aDz6w" name="checkDataProvider">
-            <ownedComment xmi:id="_iVwlcKh-EeO9W5nw_aDz6w" annotatedElement="_MDTQAKh-EeO9W5nw_aDz6w">
-              <body>&lt;p>Method checking everything related to the data provider in the plot.&lt;/p></body>
+        </packagedElement>
+        <packagedElement xmi:type="uml:Dependency" xmi:id="_L_XbIKOwEeODcs71kOGBxA" supplier="_Sh7PAJ5nEeOYFMqvY2mpFg" client="_FtKdQKOwEeODcs71kOGBxA"/>
+        <packagedElement xmi:type="uml:Class" xmi:id="_ZD4G4MS4EeOcOoPo6rd1xA" name="CvsXDPTester" clientDependency="_7iGOkMS4EeOcOoPo6rd1xA">
+          <ownedComment xmi:id="_NZ26UMS5EeOcOoPo6rd1xA" annotatedElement="_ZD4G4MS4EeOcOoPo6rd1xA">
+            <body>&lt;p>Class testing the CvsXDataProvider.&lt;/p></body>
+          </ownedComment>
+          <ownedOperation xmi:id="_cRboAMS4EeOcOoPo6rd1xA" name="checkGetVector">
+            <ownedComment xmi:id="_vBra8MS4EeOcOoPo6rd1xA" annotatedElement="_cRboAMS4EeOcOoPo6rd1xA">
+              <body>&lt;p>Method checking you can get the axis vectors.&lt;/p></body>
             </ownedComment>
           </ownedOperation>
         </packagedElement>
-        <packagedElement xmi:type="uml:Dependency" xmi:id="_L_XbIKOwEeODcs71kOGBxA" supplier="_Sh7PAJ5nEeOYFMqvY2mpFg" client="_FtKdQKOwEeODcs71kOGBxA"/>
+        <packagedElement xmi:type="uml:Dependency" xmi:id="_7iGOkMS4EeOcOoPo6rd1xA" supplier="_jZk9sKCNEeOYCKbYrRMQtA" client="_ZD4G4MS4EeOcOoPo6rd1xA"/>
       </packagedElement>
     </packagedElement>
     <packagedElement xmi:type="uml:Package" xmi:id="_aIxXoLdUEeKdoYp0Rmlq6Q" name="xolotlSolver" clientDependency="_xyQkEMFdEeKNUrlkrq0IuQ">
@@ -4524,20 +4447,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_A5uUIp5lEeOYFMqvY2mpFg" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_A5u7MJ5lEeOYFMqvY2mpFg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_A5viQJ5lEeOYFMqvY2mpFg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_A5r34Z5lEeOYFMqvY2mpFg" x="17118" y="3487"/>
-          </children>
-          <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_WxU5kJ5lEeOYFMqvY2mpFg" element="_WxAJcJ5lEeOYFMqvY2mpFg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
-            <children xmi:type="notation:DecorationNode" xmi:id="_WxWHsJ5lEeOYFMqvY2mpFg" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_WxWHsZ5lEeOYFMqvY2mpFg" width="530" height="530"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_WxWHsp5lEeOYFMqvY2mpFg" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_WxWuwJ5lEeOYFMqvY2mpFg" type="Kind"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_WxXV0J5lEeOYFMqvY2mpFg" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_WxX84J5lEeOYFMqvY2mpFg" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_WxX84Z5lEeOYFMqvY2mpFg" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_WxYj8J5lEeOYFMqvY2mpFg" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_WxYj8Z5lEeOYFMqvY2mpFg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_WxU5kZ5lEeOYFMqvY2mpFg" x="1902" y="3487"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_A5r34Z5lEeOYFMqvY2mpFg" x="17118" y="4438"/>
           </children>
           <children xmi:type="notation:Shape" xmi:id="_7IH0kJ72EeOxfKKbPJ98Rg" type="Text" fontName="Sans" fontHeight="24" description="Visualization Interface Class Diagram" transparency="0" lineColor="0" lineWidth="2">
             <children xmi:type="notation:BasicDecorationNode" xmi:id="_7IH0kZ72EeOxfKKbPJ98Rg" type="DiagramName">
@@ -4560,7 +4470,20 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_50b2p6CMEeOYCKbYrRMQtA" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_50b2qKCMEeOYCKbYrRMQtA" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_50b2qaCMEeOYCKbYrRMQtA" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_50b2qqCMEeOYCKbYrRMQtA" x="9510" y="3170"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_50b2qqCMEeOYCKbYrRMQtA" x="9510" y="3804"/>
+          </children>
+          <children xmi:type="umlnotation:UMLShape" xmi:id="_LGfj0MSpEeOcOoPo6rd1xA" element="_NyjnYKCMEeOYCKbYrRMQtA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
+            <children xmi:type="notation:DecorationNode" xmi:id="_LGfj0cSpEeOcOoPo6rd1xA" type="ImageCompartment">
+              <layoutConstraint xmi:type="notation:Size" xmi:id="_LGfj0sSpEeOcOoPo6rd1xA" width="1296" height="1296"/>
+            </children>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_LGfj08SpEeOcOoPo6rd1xA" type="Stereotype"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_LGfj1MSpEeOcOoPo6rd1xA" type="Name"/>
+            <children xmi:type="notation:BasicDecorationNode" xmi:id="_LGfj1cSpEeOcOoPo6rd1xA" type="Parent"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_LGfj1sSpEeOcOoPo6rd1xA" type="AttributeCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_LGfj18SpEeOcOoPo6rd1xA" type="OperationCompartment"/>
+            <children xmi:type="notation:SemanticListCompartment" xmi:id="_LGfj2MSpEeOcOoPo6rd1xA" visible="false" type="SignalCompartment"/>
+            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_LGfj2cSpEeOcOoPo6rd1xA" visible="false" type="StructureCompartment"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_LGfj2sSpEeOcOoPo6rd1xA" x="2536" y="4755"/>
           </children>
           <element xsi:nil="true"/>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_jrVR4J5lEeOYFMqvY2mpFg" element="_jq0UgJ5lEeOYFMqvY2mpFg" source="_A5r34J5lEeOYFMqvY2mpFg" target="_Tu1RoJszEeOyd4fiW3rUpw" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -4643,45 +4566,45 @@ Check the reactants - He first
             </children>
             <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_8tIiEaCMEeOYCKbYrRMQtA" points="[49, 3, -216, 3]$[190, 24, -75, 24]"/>
           </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="__uNGYKCMEeOYCKbYrRMQtA" element="__tUVkKCMEeOYCKbYrRMQtA" source="_50b2oKCMEeOYCKbYrRMQtA" target="_WxU5kJ5lEeOYFMqvY2mpFg" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="__uNtcKCMEeOYCKbYrRMQtA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="__uNtcqCMEeOYCKbYrRMQtA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="__uOUgKCMEeOYCKbYrRMQtA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="__uNtcaCMEeOYCKbYrRMQtA" y="-186"/>
+          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_FRd0sMSqEeOcOoPo6rd1xA" element="_FROkIMSqEeOcOoPo6rd1xA" source="_50b2oKCMEeOYCKbYrRMQtA" target="_LGfj0MSpEeOcOoPo6rd1xA" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
+            <children xmi:type="notation:DecorationNode" xmi:id="_FRfC0MSqEeOcOoPo6rd1xA" type="NameLabel">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_FRfC0sSqEeOcOoPo6rd1xA" type="Stereotype"/>
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_FRfp4MSqEeOcOoPo6rd1xA" type="Name"/>
+              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_FRfC0cSqEeOcOoPo6rd1xA" y="-186"/>
             </children>
-            <children xmi:type="notation:DecorationNode" xmi:id="__uOUgaCMEeOYCKbYrRMQtA" type="ToMultiplicityLabel" element="__tX_8KCMEeOYCKbYrRMQtA">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="__uOUg6CMEeOYCKbYrRMQtA" type="ToMultiplicity"/>
-              <layoutConstraint xmi:type="notation:Location" xmi:id="__uOUgqCMEeOYCKbYrRMQtA" y="396"/>
+            <children xmi:type="notation:DecorationNode" xmi:id="_FRgQ8MSqEeOcOoPo6rd1xA" type="ToMultiplicityLabel" element="_FRVR0MSqEeOcOoPo6rd1xA">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_FRgQ8sSqEeOcOoPo6rd1xA" type="ToMultiplicity"/>
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_FRgQ8cSqEeOcOoPo6rd1xA" y="396"/>
             </children>
-            <children xmi:type="notation:DecorationNode" xmi:id="__uO7kKCMEeOYCKbYrRMQtA" type="ToRoleLabel" element="__tX_8KCMEeOYCKbYrRMQtA">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="__uO7kqCMEeOYCKbYrRMQtA" type="ToRole"/>
-              <layoutConstraint xmi:type="notation:Location" xmi:id="__uO7kaCMEeOYCKbYrRMQtA" y="-397"/>
+            <children xmi:type="notation:DecorationNode" xmi:id="_FRg4AMSqEeOcOoPo6rd1xA" type="ToRoleLabel" element="_FRVR0MSqEeOcOoPo6rd1xA">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_FRg4AsSqEeOcOoPo6rd1xA" type="ToRole"/>
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_FRg4AcSqEeOcOoPo6rd1xA" y="-397"/>
             </children>
-            <children xmi:type="notation:DecorationNode" xmi:id="__uO7k6CMEeOYCKbYrRMQtA" type="FromMultiplicityLabel" element="__tVjsKCMEeOYCKbYrRMQtA">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="__uPioKCMEeOYCKbYrRMQtA" type="FromMultiplicity"/>
-              <layoutConstraint xmi:type="notation:Location" xmi:id="__uO7lKCMEeOYCKbYrRMQtA" y="396"/>
+            <children xmi:type="notation:DecorationNode" xmi:id="_FRhfEMSqEeOcOoPo6rd1xA" type="FromMultiplicityLabel" element="_FRRncMSqEeOcOoPo6rd1xA">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_FRhfEsSqEeOcOoPo6rd1xA" type="FromMultiplicity"/>
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_FRhfEcSqEeOcOoPo6rd1xA" y="396"/>
             </children>
-            <children xmi:type="notation:DecorationNode" xmi:id="__uPioaCMEeOYCKbYrRMQtA" visible="false" type="FromRoleLabel" element="__tVjsKCMEeOYCKbYrRMQtA">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="__uQJsKCMEeOYCKbYrRMQtA" type="FromRole"/>
-              <layoutConstraint xmi:type="notation:Location" xmi:id="__uPioqCMEeOYCKbYrRMQtA" y="-397"/>
+            <children xmi:type="notation:DecorationNode" xmi:id="_FRiGIMSqEeOcOoPo6rd1xA" visible="false" type="FromRoleLabel" element="_FRRncMSqEeOcOoPo6rd1xA">
+              <children xmi:type="notation:BasicDecorationNode" xmi:id="_FRiGIsSqEeOcOoPo6rd1xA" type="FromRole"/>
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_FRiGIcSqEeOcOoPo6rd1xA" y="-397"/>
             </children>
-            <children xmi:type="notation:DecorationNode" xmi:id="__uQJsaCMEeOYCKbYrRMQtA" type="ToQualifierLabel" element="__tX_8KCMEeOYCKbYrRMQtA">
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="__uQJs6CMEeOYCKbYrRMQtA" type="QualifierCompartment"/>
-              <layoutConstraint xmi:type="notation:Location" xmi:id="__uQJsqCMEeOYCKbYrRMQtA" y="-186"/>
+            <children xmi:type="notation:DecorationNode" xmi:id="_FRiGI8SqEeOcOoPo6rd1xA" type="ToQualifierLabel" element="_FRVR0MSqEeOcOoPo6rd1xA">
+              <children xmi:type="notation:SemanticListCompartment" xmi:id="_FRitMMSqEeOcOoPo6rd1xA" type="QualifierCompartment"/>
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_FRiGJMSqEeOcOoPo6rd1xA" y="-186"/>
             </children>
-            <children xmi:type="notation:DecorationNode" xmi:id="__uQwwKCMEeOYCKbYrRMQtA" type="FromQualifierLabel" element="__tVjsKCMEeOYCKbYrRMQtA">
-              <children xmi:type="notation:SemanticListCompartment" xmi:id="__uQwwqCMEeOYCKbYrRMQtA" type="QualifierCompartment"/>
-              <layoutConstraint xmi:type="notation:Location" xmi:id="__uQwwaCMEeOYCKbYrRMQtA" y="-186"/>
+            <children xmi:type="notation:DecorationNode" xmi:id="_FRitMcSqEeOcOoPo6rd1xA" type="FromQualifierLabel" element="_FRRncMSqEeOcOoPo6rd1xA">
+              <children xmi:type="notation:SemanticListCompartment" xmi:id="_FRjUQMSqEeOcOoPo6rd1xA" type="QualifierCompartment"/>
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_FRitMsSqEeOcOoPo6rd1xA" y="-186"/>
             </children>
-            <children xmi:type="notation:DecorationNode" xmi:id="__uQww6CMEeOYCKbYrRMQtA" type="ToConstraintLabel" element="__tX_8KCMEeOYCKbYrRMQtA">
-              <children xmi:type="notation:ListCompartment" xmi:id="__uRX0KCMEeOYCKbYrRMQtA" type="ToConstraintCompartment"/>
-              <layoutConstraint xmi:type="notation:Location" xmi:id="__uQwxKCMEeOYCKbYrRMQtA" y="1058"/>
+            <children xmi:type="notation:DecorationNode" xmi:id="_FRjUQcSqEeOcOoPo6rd1xA" type="ToConstraintLabel" element="_FRVR0MSqEeOcOoPo6rd1xA">
+              <children xmi:type="notation:ListCompartment" xmi:id="_FRjUQ8SqEeOcOoPo6rd1xA" type="ToConstraintCompartment"/>
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_FRjUQsSqEeOcOoPo6rd1xA" y="1058"/>
             </children>
-            <children xmi:type="notation:DecorationNode" xmi:id="__uRX0aCMEeOYCKbYrRMQtA" type="FromConstraintLabel" element="__tVjsKCMEeOYCKbYrRMQtA">
-              <children xmi:type="notation:ListCompartment" xmi:id="__uRX06CMEeOYCKbYrRMQtA" type="FromConstraintCompartment"/>
-              <layoutConstraint xmi:type="notation:Location" xmi:id="__uRX0qCMEeOYCKbYrRMQtA" y="1058"/>
+            <children xmi:type="notation:DecorationNode" xmi:id="_FRj7UMSqEeOcOoPo6rd1xA" type="FromConstraintLabel" element="_FRRncMSqEeOcOoPo6rd1xA">
+              <children xmi:type="notation:ListCompartment" xmi:id="_FRj7UsSqEeOcOoPo6rd1xA" type="FromConstraintCompartment"/>
+              <layoutConstraint xmi:type="notation:Location" xmi:id="_FRj7UcSqEeOcOoPo6rd1xA" y="1058"/>
             </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="__uNGYaCMEeOYCKbYrRMQtA" points="[-49, 3, 222, 3]$[-193, 3, 78, 3]"/>
+            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_FRd0scSqEeOcOoPo6rd1xA" points="[-81, -4, 187, 4]$[-191, -10, 77, -2]"/>
           </edges>
         </contents>
         <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_bTe-kJ2TEeOe5bVrZ2pJpA" type="Class" name="IPlot">
@@ -4696,7 +4619,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_CQpSkZ2bEeOe5bVrZ2pJpA" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_CQp5oJ2bEeOe5bVrZ2pJpA" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_CQp5oZ2bEeOe5bVrZ2pJpA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_CQndYZ2bEeOe5bVrZ2pJpA" x="16801" y="12680"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_CQndYZ2bEeOe5bVrZ2pJpA" x="16801" y="8876"/>
           </children>
           <children xmi:type="umlnotation:UMLShape" xmi:id="_IzlbIJ2bEeOe5bVrZ2pJpA" element="_IzZN4J2bEeOe5bVrZ2pJpA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
             <children xmi:type="notation:DecorationNode" xmi:id="_IzmCMJ2bEeOe5bVrZ2pJpA" type="ImageCompartment">
@@ -4709,7 +4632,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_IznQUJ2bEeOe5bVrZ2pJpA" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_IznQUZ2bEeOe5bVrZ2pJpA" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_IznQUp2bEeOe5bVrZ2pJpA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_IzlbIZ2bEeOe5bVrZ2pJpA" x="10778" y="13314"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_IzlbIZ2bEeOe5bVrZ2pJpA" x="10778" y="9510"/>
           </children>
           <children xmi:type="umlnotation:UMLShape" xmi:id="_TBI0QJ2bEeOe5bVrZ2pJpA" element="_TA7Y4J2bEeOe5bVrZ2pJpA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
             <children xmi:type="notation:DecorationNode" xmi:id="_TBJbUJ2bEeOe5bVrZ2pJpA" type="ImageCompartment">
@@ -4722,7 +4645,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_TBL3kJ2bEeOe5bVrZ2pJpA" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_TBL3kZ2bEeOe5bVrZ2pJpA" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_TBL3kp2bEeOe5bVrZ2pJpA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_TBI0QZ2bEeOe5bVrZ2pJpA" x="5072" y="13314"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_TBI0QZ2bEeOe5bVrZ2pJpA" x="5072" y="9510"/>
           </children>
           <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_wW2SUJ5REeOYFMqvY2mpFg" element="_wVBtYJ5REeOYFMqvY2mpFg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
             <children xmi:type="notation:DecorationNode" xmi:id="_wW9AAJ5REeOYFMqvY2mpFg" type="ImageCompartment">
@@ -4735,7 +4658,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_wW_cQZ5REeOYFMqvY2mpFg" type="AttributeCompartment" collapsed="true"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_wXCfkJ5REeOYFMqvY2mpFg" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_wXDGoJ5REeOYFMqvY2mpFg" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wW2SUZ5REeOYFMqvY2mpFg" x="3487" y="1585"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_wW2SUZ5REeOYFMqvY2mpFg" x="3487" y="951"/>
           </children>
           <children xmi:type="umlnotation:UMLShape" xmi:id="_SiKfkJ5nEeOYFMqvY2mpFg" element="_Sh7PAJ5nEeOYFMqvY2mpFg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
             <children xmi:type="notation:DecorationNode" xmi:id="_SiLtsJ5nEeOYFMqvY2mpFg" type="ImageCompartment">
@@ -4761,7 +4684,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_NY6ZcJ75EeOxfKKbPJ98Rg" type="EnumerationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_NY6ZcZ75EeOxfKKbPJ98Rg" visible="false" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_NY7AgJ75EeOxfKKbPJ98Rg" visible="false" type="OperationCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_NY39MJ75EeOxfKKbPJ98Rg" x="19020" y="4121"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_NY39MJ75EeOxfKKbPJ98Rg" x="19020" y="2219"/>
           </children>
           <children xmi:type="notation:Shape" xmi:id="_t16I4Z78EeOxfKKbPJ98Rg" type="Text" fontName="Sans" fontHeight="24" description="IPlot Class Diagram" transparency="0" lineColor="0" lineWidth="2">
             <children xmi:type="notation:BasicDecorationNode" xmi:id="_t16I4p78EeOxfKKbPJ98Rg" type="DiagramName">
@@ -4855,53 +4778,6 @@ Check the reactants - He first
             <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_EU1N4aLrEeOT0L2IlTA9PA" points="[0, -1529, 5929, 5386]$[0, -1857, 5929, 5058]$[-6241, -1857, -312, 5058]$[-6241, -2474, -312, 4441]"/>
           </edges>
         </contents>
-        <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_cRcvUKCLEeOYCKbYrRMQtA" type="Class" name="ILabelProvider">
-          <children xmi:type="notation:Shape" xmi:id="_gnkbAKCLEeOYCKbYrRMQtA" type="Text" fontName="Sans" fontHeight="24" description="ILabelProvider Class Diagram" transparency="0" lineColor="0" lineWidth="2">
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_gnkbAaCLEeOYCKbYrRMQtA" type="DiagramName">
-              <element xsi:nil="true"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_gnkbAqCLEeOYCKbYrRMQtA" type="Description">
-              <element xsi:nil="true"/>
-            </children>
-            <element xsi:nil="true"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_gnkbA6CLEeOYCKbYrRMQtA" x="5555" y="-451" width="16774" height="820"/>
-          </children>
-          <children xmi:type="umlnotation:UMLClassifierShape" xmi:id="_pgRhEKCLEeOYCKbYrRMQtA" element="_WxAJcJ5lEeOYFMqvY2mpFg" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label" useClassifierShape="true">
-            <children xmi:type="notation:DecorationNode" xmi:id="_pgRhEaCLEeOYCKbYrRMQtA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_pgRhEqCLEeOYCKbYrRMQtA" width="529" height="529"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_pgRhE6CLEeOYCKbYrRMQtA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_pgRhFKCLEeOYCKbYrRMQtA" type="Kind"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_pgRhFaCLEeOYCKbYrRMQtA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_pgRhFqCLEeOYCKbYrRMQtA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_pgRhF6CLEeOYCKbYrRMQtA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_pgRhGKCLEeOYCKbYrRMQtA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_pgRhGaCLEeOYCKbYrRMQtA" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_pgRhGqCLEeOYCKbYrRMQtA" x="6023" y="3170"/>
-          </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_NzD9sKCMEeOYCKbYrRMQtA" element="_NyjnYKCMEeOYCKbYrRMQtA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_NzFL0KCMEeOYCKbYrRMQtA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_NzFL0aCMEeOYCKbYrRMQtA" width="1320" height="1320"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_NzFL0qCMEeOYCKbYrRMQtA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_NzFy4KCMEeOYCKbYrRMQtA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_NzFy4aCMEeOYCKbYrRMQtA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_NzFy4qCMEeOYCKbYrRMQtA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_NzGZ8KCMEeOYCKbYrRMQtA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_NzGZ8aCMEeOYCKbYrRMQtA" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_NzHBAKCMEeOYCKbYrRMQtA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_NzD9saCMEeOYCKbYrRMQtA" x="15372" y="4286"/>
-          </children>
-          <element xsi:nil="true"/>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_SzcHUKCMEeOYCKbYrRMQtA" element="_Sy7xAKCMEeOYCKbYrRMQtA" source="_NzD9sKCMEeOYCKbYrRMQtA" target="_pgRhEKCLEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_SzejkKCMEeOYCKbYrRMQtA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_SzejkqCMEeOYCKbYrRMQtA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_SzfKoKCMEeOYCKbYrRMQtA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_SzejkaCMEeOYCKbYrRMQtA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_SzcHUaCMEeOYCKbYrRMQtA" points="[-76, 7, 328, -41]$[-305, -8, 99, -56]"/>
-          </edges>
-        </contents>
         <contents xmi:type="umlnotation:UMLDiagram" xmi:id="_uvp6kKCMEeOYCKbYrRMQtA" type="Class" name="IDataProvider">
           <children xmi:type="notation:Shape" xmi:id="_ylcgYaCMEeOYCKbYrRMQtA" type="Text" fontName="Sans" fontHeight="24" description="IDataProvider Class Diagram" transparency="0" lineColor="0" lineWidth="2">
             <children xmi:type="notation:BasicDecorationNode" xmi:id="_ylcgYqCMEeOYCKbYrRMQtA" type="DiagramName">
@@ -4937,7 +4813,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_PvKol6CNEeOYCKbYrRMQtA" type="AttributeCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_PvKomKCNEeOYCKbYrRMQtA" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_PvKomaCNEeOYCKbYrRMQtA" visible="false" type="SignalCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_PvKomqCNEeOYCKbYrRMQtA" x="9193" y="1902"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_PvKomqCNEeOYCKbYrRMQtA" x="9193" y="3170"/>
           </children>
           <children xmi:type="umlnotation:UMLShape" xmi:id="_jaEF4KCNEeOYCKbYrRMQtA" element="_jZk9sKCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
             <children xmi:type="notation:DecorationNode" xmi:id="_jaFUAKCNEeOYCKbYrRMQtA" type="ImageCompartment">
@@ -4963,46 +4839,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_F099sa3dEeOUcsQ0qdBVBA" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_F0_L0K3dEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_F0_y4K3dEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_F01a0a3dEeOUcsQ0qdBVBA" x="-317" y="10778"/>
-          </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_RYqqYK3dEeOUcsQ0qdBVBA" element="_RYBKIK3dEeOUcsQ0qdBVBA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_RYr4gK3dEeOUcsQ0qdBVBA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_RYr4ga3dEeOUcsQ0qdBVBA" width="1320" height="1320"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_RYr4gq3dEeOUcsQ0qdBVBA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_RYsfkK3dEeOUcsQ0qdBVBA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_RYsfka3dEeOUcsQ0qdBVBA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_RYsfkq3dEeOUcsQ0qdBVBA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_RYtGoK3dEeOUcsQ0qdBVBA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_RYtGoa3dEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_RYtGoq3dEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_RYqqYa3dEeOUcsQ0qdBVBA" x="2536" y="13631"/>
-          </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_WejmIK3dEeOUcsQ0qdBVBA" element="_Wd43wK3dEeOUcsQ0qdBVBA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_WekNMK3dEeOUcsQ0qdBVBA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_WekNMa3dEeOUcsQ0qdBVBA" width="1320" height="1320"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_Wek0QK3dEeOUcsQ0qdBVBA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_Wek0Qa3dEeOUcsQ0qdBVBA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_Wek0Qq3dEeOUcsQ0qdBVBA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_WelbUK3dEeOUcsQ0qdBVBA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_WelbUa3dEeOUcsQ0qdBVBA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_WemCYK3dEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_WemCYa3dEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_WejmIa3dEeOUcsQ0qdBVBA" x="5389" y="10778"/>
-          </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_aEOFQK3dEeOUcsQ0qdBVBA" element="_aDTfQK3dEeOUcsQ0qdBVBA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_aEPTYK3dEeOUcsQ0qdBVBA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_aEPTYa3dEeOUcsQ0qdBVBA" width="1320" height="1320"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_aEP6cK3dEeOUcsQ0qdBVBA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_aEP6ca3dEeOUcsQ0qdBVBA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_aEP6cq3dEeOUcsQ0qdBVBA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_aEQhgK3dEeOUcsQ0qdBVBA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_aEQhga3dEeOUcsQ0qdBVBA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_aEQhgq3dEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_aERIkK3dEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_aEOFQa3dEeOUcsQ0qdBVBA" x="7925" y="13631"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_F01a0a3dEeOUcsQ0qdBVBA" x="11729" y="10778"/>
           </children>
           <children xmi:type="umlnotation:UMLShape" xmi:id="_0dKyIK3hEeOUcsQ0qdBVBA" element="_0ce1oK3hEeOUcsQ0qdBVBA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
             <children xmi:type="notation:DecorationNode" xmi:id="_0dMAQK3hEeOUcsQ0qdBVBA" type="ImageCompartment">
@@ -5015,72 +4852,7 @@ Check the reactants - He first
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_0dNOYK3hEeOUcsQ0qdBVBA" type="OperationCompartment"/>
             <children xmi:type="notation:SemanticListCompartment" xmi:id="_0dNOYa3hEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
             <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_0dNOYq3hEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_0dKyIa3hEeOUcsQ0qdBVBA" x="14265" y="10778"/>
-          </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_8G0rIK3hEeOUcsQ0qdBVBA" element="_8GIHkK3hEeOUcsQ0qdBVBA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_8G1SMK3hEeOUcsQ0qdBVBA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_8G1SMa3hEeOUcsQ0qdBVBA" width="1320" height="1320"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_8G1SMq3hEeOUcsQ0qdBVBA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_8G15QK3hEeOUcsQ0qdBVBA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_8G15Qa3hEeOUcsQ0qdBVBA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_8G15Qq3hEeOUcsQ0qdBVBA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_8G2gUK3hEeOUcsQ0qdBVBA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_8G2gUa3hEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_8G2gUq3hEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_8G0rIa3hEeOUcsQ0qdBVBA" x="17118" y="13631"/>
-          </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_APWmwK3iEeOUcsQ0qdBVBA" element="_AOqDMK3iEeOUcsQ0qdBVBA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_APXN0K3iEeOUcsQ0qdBVBA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_APXN0a3iEeOUcsQ0qdBVBA" width="1320" height="1320"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_APXN0q3iEeOUcsQ0qdBVBA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_APX04K3iEeOUcsQ0qdBVBA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_APX04a3iEeOUcsQ0qdBVBA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_APX04q3iEeOUcsQ0qdBVBA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_APYb8K3iEeOUcsQ0qdBVBA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_APYb8a3iEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_APYb8q3iEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_APWmwa3iEeOUcsQ0qdBVBA" x="19971" y="10778"/>
-          </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_brv_kK3kEeOUcsQ0qdBVBA" element="_bq98cK3kEeOUcsQ0qdBVBA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_brwmoK3kEeOUcsQ0qdBVBA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_brwmoa3kEeOUcsQ0qdBVBA" width="1320" height="1320"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_brxNsK3kEeOUcsQ0qdBVBA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_brxNsa3kEeOUcsQ0qdBVBA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_brxNsq3kEeOUcsQ0qdBVBA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_brx0wK3kEeOUcsQ0qdBVBA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_brx0wa3kEeOUcsQ0qdBVBA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_bryb0K3kEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_bryb0a3kEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_brv_ka3kEeOUcsQ0qdBVBA" x="26628" y="10778"/>
-          </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_hv1B4K3kEeOUcsQ0qdBVBA" element="_hvEM4K3kEeOUcsQ0qdBVBA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_hv2QAK3kEeOUcsQ0qdBVBA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_hv2QAa3kEeOUcsQ0qdBVBA" width="1320" height="1320"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_hv2QAq3kEeOUcsQ0qdBVBA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_hv23EK3kEeOUcsQ0qdBVBA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_hv23Ea3kEeOUcsQ0qdBVBA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_hv23Eq3kEeOUcsQ0qdBVBA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_hv23E63kEeOUcsQ0qdBVBA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_hv3eIK3kEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_hv3eIa3kEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_hv1o8K3kEeOUcsQ0qdBVBA" x="30115" y="13948"/>
-          </children>
-          <children xmi:type="umlnotation:UMLShape" xmi:id="_m2R-UK3kEeOUcsQ0qdBVBA" element="_m1eGAK3kEeOUcsQ0qdBVBA" fontName="Sans" fontHeight="10" transparency="0" lineColor="0" lineWidth="2" showStereotype="Label">
-            <children xmi:type="notation:DecorationNode" xmi:id="_m2TMcK3kEeOUcsQ0qdBVBA" type="ImageCompartment">
-              <layoutConstraint xmi:type="notation:Size" xmi:id="_m2TMca3kEeOUcsQ0qdBVBA" width="1320" height="1320"/>
-            </children>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_m2TMcq3kEeOUcsQ0qdBVBA" type="Stereotype"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_m2TzgK3kEeOUcsQ0qdBVBA" type="Name"/>
-            <children xmi:type="notation:BasicDecorationNode" xmi:id="_m2Tzga3kEeOUcsQ0qdBVBA" type="Parent"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_m2Tzgq3kEeOUcsQ0qdBVBA" type="AttributeCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_m2Tzg63kEeOUcsQ0qdBVBA" type="OperationCompartment"/>
-            <children xmi:type="notation:SemanticListCompartment" xmi:id="_m2UakK3kEeOUcsQ0qdBVBA" visible="false" type="SignalCompartment"/>
-            <children xmi:type="umlnotation:UMLShapeCompartment" xmi:id="_m2Uaka3kEeOUcsQ0qdBVBA" visible="false" type="StructureCompartment"/>
-            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_m2R-Ua3kEeOUcsQ0qdBVBA" x="33602" y="10778"/>
+            <layoutConstraint xmi:type="notation:Bounds" xmi:id="_0dKyIa3hEeOUcsQ0qdBVBA" x="17752" y="10778"/>
           </children>
           <element xsi:nil="true"/>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_PvMdwKCNEeOYCKbYrRMQtA" element="_jq0UgJ5lEeOYFMqvY2mpFg" source="_PvKokKCNEeOYCKbYrRMQtA" target="_PvJacKCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="10" lineColor="0" lineWidth="2" showStereotype="Text">
@@ -5101,7 +4873,7 @@ Check the reactants - He first
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_PvMdzKCNEeOYCKbYrRMQtA" type="FromMultiplicity"/>
               <layoutConstraint xmi:type="notation:Location" xmi:id="_PvMdzaCNEeOYCKbYrRMQtA" y="396"/>
             </children>
-            <children xmi:type="notation:DecorationNode" xmi:id="_PvMdzqCNEeOYCKbYrRMQtA" type="FromRoleLabel" element="_jq50EJ5lEeOYFMqvY2mpFg">
+            <children xmi:type="notation:DecorationNode" xmi:id="_PvMdzqCNEeOYCKbYrRMQtA" visible="false" type="FromRoleLabel" element="_jq50EJ5lEeOYFMqvY2mpFg">
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_PvMdz6CNEeOYCKbYrRMQtA" type="FromRole"/>
               <layoutConstraint xmi:type="notation:Location" xmi:id="_PvMd0KCNEeOYCKbYrRMQtA" y="-397"/>
             </children>
@@ -5139,30 +4911,6 @@ Check the reactants - He first
             </children>
             <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_QfMEsa3dEeOUcsQ0qdBVBA" points="[108, -1001, -17248, 5855]$[108, -2726, -17248, 4130]$[17226, -2726, -130, 4130]$[17226, -5103, -130, 1753]"/>
           </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_VnrogK3dEeOUcsQ0qdBVBA" element="_VnbJ0K3dEeOUcsQ0qdBVBA" source="_RYqqYK3dEeOUcsQ0qdBVBA" target="_jaEF4KCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_VnsPkK3dEeOUcsQ0qdBVBA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_Vns2oK3dEeOUcsQ0qdBVBA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_Vns2oa3dEeOUcsQ0qdBVBA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_VnsPka3dEeOUcsQ0qdBVBA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_Vnroga3dEeOUcsQ0qdBVBA" points="[112, -1001, -14391, 8708]$[112, -5579, -14391, 4130]$[14373, -5579, -130, 4130]$[14373, -7956, -130, 1753]"/>
-          </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_ZN6vYK3dEeOUcsQ0qdBVBA" element="_ZNq3wK3dEeOUcsQ0qdBVBA" source="_WejmIK3dEeOUcsQ0qdBVBA" target="_jaEF4KCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_ZN79gK3dEeOUcsQ0qdBVBA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_ZN8kkK3dEeOUcsQ0qdBVBA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_ZN9LoK3dEeOUcsQ0qdBVBA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_ZN79ga3dEeOUcsQ0qdBVBA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_ZN6vYa3dEeOUcsQ0qdBVBA" points="[117, -1001, -11533, 5855]$[117, -2726, -11533, 4130]$[11520, -2726, -130, 4130]$[11520, -5103, -130, 1753]"/>
-          </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_cL6xkK3dEeOUcsQ0qdBVBA" element="_cLq58K3dEeOUcsQ0qdBVBA" source="_aEOFQK3dEeOUcsQ0qdBVBA" target="_jaEF4KCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_cL7YoK3dEeOUcsQ0qdBVBA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_cL7Yoq3dEeOUcsQ0qdBVBA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_cL7_sK3dEeOUcsQ0qdBVBA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_cL7Yoa3dEeOUcsQ0qdBVBA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_cL6xka3dEeOUcsQ0qdBVBA" points="[80, -1001, -8676, 8708]$[80, -5579, -8676, 4130]$[8626, -5579, -130, 4130]$[8626, -7956, -130, 1753]"/>
-          </edges>
           <edges xmi:type="umlnotation:UMLConnector" xmi:id="_4mjpYK3hEeOUcsQ0qdBVBA" element="_4mTKsK3hEeOUcsQ0qdBVBA" source="_0dKyIK3hEeOUcsQ0qdBVBA" target="_jaEF4KCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
             <children xmi:type="notation:DecorationNode" xmi:id="_4mkQcK3hEeOUcsQ0qdBVBA" type="NameLabel">
               <children xmi:type="notation:BasicDecorationNode" xmi:id="_4mkQcq3hEeOUcsQ0qdBVBA" type="Stereotype"/>
@@ -5171,81 +4919,46 @@ Check the reactants - He first
             </children>
             <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_4mjpYa3hEeOUcsQ0qdBVBA" points="[-29, -1225, -2670, 5855]$[-29, -2950, -2670, 4130]$[2511, -2950, -130, 4130]$[2511, -5327, -130, 1753]"/>
           </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="__gRTMK3hEeOUcsQ0qdBVBA" element="__gCpsK3hEeOUcsQ0qdBVBA" source="_8G0rIK3hEeOUcsQ0qdBVBA" target="_jaEF4KCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="__gR6QK3hEeOUcsQ0qdBVBA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="__gR6Qq3hEeOUcsQ0qdBVBA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="__gShUK3hEeOUcsQ0qdBVBA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="__gR6Qa3hEeOUcsQ0qdBVBA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="__gRTMa3hEeOUcsQ0qdBVBA" points="[-24, -1225, 188, 8708]$[-24, -5803, 188, 4130]$[-342, -5803, -130, 4130]$[-342, -8180, -130, 1753]"/>
-          </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_DT9AMK3iEeOUcsQ0qdBVBA" element="_DTuWsK3iEeOUcsQ0qdBVBA" source="_APWmwK3iEeOUcsQ0qdBVBA" target="_jaEF4KCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_DT9nQK3iEeOUcsQ0qdBVBA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_DT9nQq3iEeOUcsQ0qdBVBA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_DT-1YK3iEeOUcsQ0qdBVBA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_DT9nQa3iEeOUcsQ0qdBVBA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_DT9AMa3iEeOUcsQ0qdBVBA" points="[0, -1225, 3065, 5855]$[0, -2950, 3065, 4130]$[-3195, -2950, -130, 4130]$[-3195, -5327, -130, 1753]"/>
-          </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_hDs7sK3kEeOUcsQ0qdBVBA" element="_hDdrIK3kEeOUcsQ0qdBVBA" source="_brv_kK3kEeOUcsQ0qdBVBA" target="_jaEF4KCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_hDtiwK3kEeOUcsQ0qdBVBA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_hDtiwq3kEeOUcsQ0qdBVBA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_hDuJ0K3kEeOUcsQ0qdBVBA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_hDtiwa3kEeOUcsQ0qdBVBA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_hDs7sa3kEeOUcsQ0qdBVBA" points="[-181, -1449, 10030, 5855]$[-181, -3174, 10030, 4130]$[-10341, -3174, -130, 4130]$[-10341, -5551, -130, 1753]"/>
-          </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_l6baEK3kEeOUcsQ0qdBVBA" element="_l6MwkK3kEeOUcsQ0qdBVBA" source="_hv1B4K3kEeOUcsQ0qdBVBA" target="_jaEF4KCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_l6baEq3kEeOUcsQ0qdBVBA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_l6cBIK3kEeOUcsQ0qdBVBA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_l6cBIa3kEeOUcsQ0qdBVBA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_l6baE63kEeOUcsQ0qdBVBA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_l6baEa3kEeOUcsQ0qdBVBA" points="[142, -1449, 13840, 9025]$[142, -6344, 13840, 4130]$[-13828, -6344, -130, 4130]$[-13828, -8721, -130, 1753]"/>
-          </edges>
-          <edges xmi:type="umlnotation:UMLConnector" xmi:id="_plYB0K3kEeOUcsQ0qdBVBA" element="_plHjIK3kEeOUcsQ0qdBVBA" source="_m2R-UK3kEeOUcsQ0qdBVBA" target="_jaEF4KCNEeOYCKbYrRMQtA" fontName="Sans" fontHeight="8" routing="Tree" lineColor="0" lineWidth="2" showStereotype="Text">
-            <children xmi:type="notation:DecorationNode" xmi:id="_plYo4K3kEeOUcsQ0qdBVBA" type="NameLabel">
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_plYo4q3kEeOUcsQ0qdBVBA" type="Stereotype"/>
-              <children xmi:type="notation:BasicDecorationNode" xmi:id="_plZP8K3kEeOUcsQ0qdBVBA" type="Name"/>
-              <layoutConstraint xmi:type="notation:Bounds" xmi:id="_plYo4a3kEeOUcsQ0qdBVBA" y="-186"/>
-            </children>
-            <bendpoints xmi:type="notation:RelativeBendpoints" xmi:id="_plYB0a3kEeOUcsQ0qdBVBA" points="[0, -1449, 17185, 5855]$[0, -3174, 17185, 4130]$[-17315, -3174, -130, 4130]$[-17315, -5551, -130, 1753]"/>
-          </edges>
         </contents>
       </eAnnotations>
       <packagedElement xmi:type="uml:Class" xmi:id="_TuqSgJszEeOyd4fiW3rUpw" name="Point">
         <ownedComment xmi:id="_wLtsMJ8IEeOxfKKbPJ98Rg" annotatedElement="_TuqSgJszEeOyd4fiW3rUpw">
           <body>&lt;p>Class describing the structure of data points. The attributes are the three spatial dimensions, the time, and the value of the quantity under consideration at this position.&lt;/p></body>
         </ownedComment>
-        <ownedAttribute xmi:id="_ZQDegJszEeOyd4fiW3rUpw" name="t" visibility="private">
+        <ownedAttribute xmi:id="_ZQDegJszEeOyd4fiW3rUpw" name="t" visibility="public">
           <ownedComment xmi:id="_x87LIJ8IEeOxfKKbPJ98Rg" annotatedElement="_ZQDegJszEeOyd4fiW3rUpw">
             <body>&lt;p>The time step.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UAL_LIBRARIES/UALPrimitiveDatatypes.emx#_lwY4wFIzEd2exLDlzlaiIA?UALPrimitiveDatatypes/double?"/>
+          <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_vnwr4MSqEeOcOoPo6rd1xA"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_db-sYJszEeOyd4fiW3rUpw" name="x" visibility="private">
+        <ownedAttribute xmi:id="_db-sYJszEeOyd4fiW3rUpw" name="x" visibility="public">
           <ownedComment xmi:id="_0rQZoJ8IEeOxfKKbPJ98Rg" annotatedElement="_db-sYJszEeOyd4fiW3rUpw">
             <body>&lt;p>The X position on the grid.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UAL_LIBRARIES/UALPrimitiveDatatypes.emx#_lwY4wFIzEd2exLDlzlaiIA?UALPrimitiveDatatypes/double?"/>
+          <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_wzNyYMSqEeOcOoPo6rd1xA"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_g8wEcJszEeOyd4fiW3rUpw" name="y" visibility="private">
+        <ownedAttribute xmi:id="_g8wEcJszEeOyd4fiW3rUpw" name="y" visibility="public">
           <ownedComment xmi:id="_2wQ-UJ8IEeOxfKKbPJ98Rg" annotatedElement="_g8wEcJszEeOyd4fiW3rUpw">
             <body>&lt;p>The Y position on the grid.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UAL_LIBRARIES/UALPrimitiveDatatypes.emx#_lwY4wFIzEd2exLDlzlaiIA?UALPrimitiveDatatypes/double?"/>
+          <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_4kbr8MSqEeOcOoPo6rd1xA"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_j26IcJszEeOyd4fiW3rUpw" name="z" visibility="private">
+        <ownedAttribute xmi:id="_j26IcJszEeOyd4fiW3rUpw" name="z" visibility="public">
           <ownedComment xmi:id="_6K8VcJ8IEeOxfKKbPJ98Rg" annotatedElement="_j26IcJszEeOyd4fiW3rUpw">
             <body>&lt;p>The Z position on the grid.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UAL_LIBRARIES/UALPrimitiveDatatypes.emx#_lwY4wFIzEd2exLDlzlaiIA?UALPrimitiveDatatypes/double?"/>
+          <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_5FGJAMSqEeOcOoPo6rd1xA"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_mf9OUJszEeOyd4fiW3rUpw" name="value" visibility="private">
+        <ownedAttribute xmi:id="_mf9OUJszEeOyd4fiW3rUpw" name="value" visibility="public">
           <ownedComment xmi:id="_FloQEJ8JEeOxfKKbPJ98Rg" annotatedElement="_mf9OUJszEeOyd4fiW3rUpw">
             <body>&lt;p>Value of the quantity of interest at the time step t and position on the grid x,y,z.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UAL_LIBRARIES/UALPrimitiveDatatypes.emx#_lwY4wFIzEd2exLDlzlaiIA?UALPrimitiveDatatypes/double?"/>
+          <defaultValue xmi:type="uml:LiteralInteger" xmi:id="_5lqfcMSqEeOcOoPo6rd1xA"/>
         </ownedAttribute>
       </packagedElement>
       <packagedElement xmi:type="uml:Class" xmi:id="_CQbQIJ2bEeOe5bVrZ2pJpA" name="VideoPlot">
@@ -5253,12 +4966,6 @@ Check the reactants - He first
           <body>&lt;p>Plot the data value as a function of two different spatial dimensions for each time step and change the time step with time to have a video-like rendering, each frame being a SurfacePlot. The available PlottingStyle are POINTS, LINE, COLORMAP, and SURFACE. It can be associated to QvsXYTimeDataProvider, QvsXZTimeDataProvider, or QvsYZTimeDataProvider.&lt;/p></body>
         </ownedComment>
         <generalization xmi:id="_EUgdwKLrEeOT0L2IlTA9PA" general="_Sh7PAJ5nEeOYFMqvY2mpFg"/>
-        <ownedAttribute xmi:id="_ScQxAJ8ZEeOxfKKbPJ98Rg" name="data" visibility="private">
-          <ownedComment xmi:id="_9Qw2wKCQEeOYCKbYrRMQtA" annotatedElement="_ScQxAJ8ZEeOxfKKbPJ98Rg">
-            <body>&lt;p>Vector containing four fields: one for the value, two for the spatial directions as a function of which the value is plotted, and the last one for the time step.&lt;/p></body>
-          </ownedComment>
-          <type xmi:type="uml:Class" href="pathmap://ROSE_LIBRARIES/RoseJavaDatatypes.emx#_Q6BsoQddEdm1Sa24K-Ukow?RoseJavaDatatypes/java/util/Vector?"/>
-        </ownedAttribute>
         <ownedAttribute xmi:id="_37-yIKCKEeOYCKbYrRMQtA" name="frameRate" visibility="private">
           <ownedComment xmi:id="_Kvj-MKCREeOYCKbYrRMQtA" annotatedElement="_37-yIKCKEeOYCKbYrRMQtA">
             <body>&lt;p>Number of frames shown per second.&lt;/p></body>
@@ -5298,60 +5005,12 @@ Check the reactants - He first
             <type xmi:type="uml:PrimitiveType" href="pathmap://UAL_LIBRARIES/UALPrimitiveDatatypes.emx#_lwY4wFIzEd2exLDlzlaiIA?UALPrimitiveDatatypes/double?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_XfKMIKh6EeO9W5nw_aDz6w" name="getPoints">
-          <ownedComment xmi:id="_tzTjoKh6EeO9W5nw_aDz6w" annotatedElement="_XfKMIKh6EeO9W5nw_aDz6w">
-            <body>&lt;p>Method returning the data points that are stored in the data vector.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_uKUVcKh6EeO9W5nw_aDz6w" name="points" type="_TuqSgJszEeOyd4fiW3rUpw" direction="return"/>
-        </ownedOperation>
-        <ownedOperation xmi:id="_ZFDy8Kh6EeO9W5nw_aDz6w" name="getXAxisLabel">
-          <ownedComment xmi:id="_uee_YK6gEeOK1JEl0e3Y4w" annotatedElement="_ZFDy8Kh6EeO9W5nw_aDz6w">
-            <body>&lt;p>Method getting the X axis label with the help of the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_xDErQKh6EeO9W5nw_aDz6w" name="xLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-            <defaultValue xmi:type="uml:OpaqueExpression" xmi:id="_07iKkKh6EeO9W5nw_aDz6w" name="">
-              <language></language>
-              <body></body>
-            </defaultValue>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_b7Ou0Kh6EeO9W5nw_aDz6w" name="getYAxisLabel">
-          <ownedComment xmi:id="_w4lDQK6gEeOK1JEl0e3Y4w" annotatedElement="_b7Ou0Kh6EeO9W5nw_aDz6w">
-            <body>&lt;p>Method getting the Y axis label with the help of the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_2931wKh6EeO9W5nw_aDz6w" name="yLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_WxT8wKh8EeO9W5nw_aDz6w" name="getZAxisLabel">
-          <ownedComment xmi:id="_z40hIK6gEeOK1JEl0e3Y4w" annotatedElement="_WxT8wKh8EeO9W5nw_aDz6w">
-            <body>&lt;p>Method getting the Z axis label with the help of the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_eAsUkKh8EeO9W5nw_aDz6w" name="zLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_240HYK6gEeOK1JEl0e3Y4w" name="getTimeAxisLabel">
-          <ownedComment xmi:id="_Eew_sK6hEeOK1JEl0e3Y4w" annotatedElement="_240HYK6gEeOK1JEl0e3Y4w">
-            <body>&lt;p>Method getting the time axis label with the help of the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_8NMLEK6gEeOK1JEl0e3Y4w" name="timeLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
       </packagedElement>
       <packagedElement xmi:type="uml:Class" xmi:id="_IzZN4J2bEeOe5bVrZ2pJpA" name="SurfacePlot">
         <ownedComment xmi:id="_qB3AoKCKEeOYCKbYrRMQtA" annotatedElement="_IzZN4J2bEeOe5bVrZ2pJpA">
           <body>&lt;p>Plot the data value as a function of two different dimensions. The available PlottingStyle are POINTS, LINE, COLORMAP, and SURFACE.  It can be associated to QvsXYDataProvider, QvsXZDataProvider, or QvsYZDataProvider.&lt;/p></body>
         </ownedComment>
         <generalization xmi:id="_G-1R8J75EeOxfKKbPJ98Rg" general="_Sh7PAJ5nEeOYFMqvY2mpFg"/>
-        <ownedAttribute xmi:id="_FcxbwJ8ZEeOxfKKbPJ98Rg" name="data" visibility="private">
-          <ownedComment xmi:id="_zX5UMKCQEeOYCKbYrRMQtA" annotatedElement="_FcxbwJ8ZEeOxfKKbPJ98Rg">
-            <body>&lt;p>Vector containing three fields: one for the value and two for the directions as a function of which the value is plotted.&lt;/p></body>
-          </ownedComment>
-          <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-        </ownedAttribute>
         <ownedOperation xmi:id="_ITa4wJ8ZEeOxfKKbPJ98Rg" name="render">
           <ownedComment xmi:id="_uFeNwKCPEeOYCKbYrRMQtA" annotatedElement="_ITa4wJ8ZEeOxfKKbPJ98Rg">
             <body>&lt;p>Method managing everything that is related to the rendering of a plot.&lt;/p></body>
@@ -5361,48 +5020,12 @@ Check the reactants - He first
             <defaultValue xmi:type="uml:LiteralBoolean" xmi:id="_QB940J8ZEeOxfKKbPJ98Rg"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_MPmDwKh3EeO9W5nw_aDz6w" name="getPoints">
-          <ownedComment xmi:id="_vQbwUKh3EeO9W5nw_aDz6w" annotatedElement="_MPmDwKh3EeO9W5nw_aDz6w">
-            <body>&lt;p>Method returning the data points that are stored in the data vector.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_m2Lg0Kh3EeO9W5nw_aDz6w" name="points" type="_TuqSgJszEeOyd4fiW3rUpw" direction="return"/>
-        </ownedOperation>
-        <ownedOperation xmi:id="_Ppy5wKh3EeO9W5nw_aDz6w" name="getXAxisLabel">
-          <ownedComment xmi:id="_1DyPAKh3EeO9W5nw_aDz6w" annotatedElement="_Ppy5wKh3EeO9W5nw_aDz6w">
-            <body>&lt;p>Method getting the X axis label with the help of the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_828z4Kh4EeO9W5nw_aDz6w" name="xLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_e0pTUKh3EeO9W5nw_aDz6w" name="getYAxisLabel">
-          <ownedComment xmi:id="_26vwoKh3EeO9W5nw_aDz6w" annotatedElement="_e0pTUKh3EeO9W5nw_aDz6w">
-            <body>&lt;p>Method getting the Y axis label with the help of the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_BA1aYKh5EeO9W5nw_aDz6w" name="yLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="__ZZ3oKh6EeO9W5nw_aDz6w" name="getZAxisLabel">
-          <ownedComment xmi:id="_D2qtIKh7EeO9W5nw_aDz6w" annotatedElement="__ZZ3oKh6EeO9W5nw_aDz6w">
-            <body>&lt;p>Method getting the Z axis label with the help of the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_EKoyAKh7EeO9W5nw_aDz6w" name="zLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
       </packagedElement>
       <packagedElement xmi:type="uml:Class" xmi:id="_TA7Y4J2bEeOe5bVrZ2pJpA" name="ScatterPlot">
         <ownedComment xmi:id="_6q594KCHEeOYCKbYrRMQtA" annotatedElement="_TA7Y4J2bEeOe5bVrZ2pJpA">
           <body>&lt;p>Plot the data value as a function of one dimension. Available PlottingStyle are POINTS or LINE. It can be associated to QvsXDataProvider, QvsYDataProvider, QvsZDataProvider, or QvsTimeDataProvider.&lt;/p></body>
         </ownedComment>
         <generalization xmi:id="_IccfcJ75EeOxfKKbPJ98Rg" general="_Sh7PAJ5nEeOYFMqvY2mpFg"/>
-        <ownedAttribute xmi:id="_bObcIJ8XEeOxfKKbPJ98Rg" name="data" visibility="private">
-          <ownedComment xmi:id="_wQ4f8KCQEeOYCKbYrRMQtA" annotatedElement="_bObcIJ8XEeOxfKKbPJ98Rg">
-            <body>&lt;p>Vector containing two fields: one for the value and one for the direction as a function of which the value is plotted.&lt;/p></body>
-          </ownedComment>
-          <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-        </ownedAttribute>
         <ownedOperation xmi:id="_wijEkJ8YEeOxfKKbPJ98Rg" name="render">
           <ownedComment xmi:id="_tN9W8KCPEeOYCKbYrRMQtA" annotatedElement="_wijEkJ8YEeOxfKKbPJ98Rg">
             <body>&lt;p>Method managing everything that is related to the rendering of a plot.&lt;/p></body>
@@ -5410,28 +5033,6 @@ Check the reactants - He first
           <ownedParameter xmi:id="_9LkakJ8YEeOxfKKbPJ98Rg" name="isCumulative">
             <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
             <defaultValue xmi:type="uml:LiteralBoolean" xmi:id="_D4gzsJ8ZEeOxfKKbPJ98Rg"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_0srhIKh4EeO9W5nw_aDz6w" name="getPoints">
-          <ownedComment xmi:id="_MzZCcKh5EeO9W5nw_aDz6w" annotatedElement="_0srhIKh4EeO9W5nw_aDz6w">
-            <body>&lt;p>Method returning the data points that are stored in the data vector.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_I0x30Kh5EeO9W5nw_aDz6w" name="points" type="_TuqSgJszEeOyd4fiW3rUpw" direction="return"/>
-        </ownedOperation>
-        <ownedOperation xmi:id="_25W0EKh4EeO9W5nw_aDz6w" name="getXAxisLabel">
-          <ownedComment xmi:id="_jZyAgKh5EeO9W5nw_aDz6w" annotatedElement="_25W0EKh4EeO9W5nw_aDz6w">
-            <body>&lt;p>Method getting the X axis label with the help of the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_QXVqUKh5EeO9W5nw_aDz6w" name="xLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_rySRoKh7EeO9W5nw_aDz6w" name="getYAxisLabel">
-          <ownedComment xmi:id="_TlruQKh8EeO9W5nw_aDz6w" annotatedElement="_rySRoKh7EeO9W5nw_aDz6w">
-            <body>&lt;p>Method getting the Y axis label with the help of the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_uJ6QUKh7EeO9W5nw_aDz6w" name="yLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
           </ownedParameter>
         </ownedOperation>
       </packagedElement>
@@ -5443,19 +5044,10 @@ Check the reactants - He first
           <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_8rzsYaCMEeOYCKbYrRMQtA" value="1"/>
           <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_8rzsYKCMEeOYCKbYrRMQtA" value="1"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="__tVjsKCMEeOYCKbYrRMQtA" name="iLabelProvider" visibility="private" type="_WxAJcJ5lEeOYFMqvY2mpFg" association="__tUVkKCMEeOYCKbYrRMQtA">
-          <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__tWx0aCMEeOYCKbYrRMQtA" value="1"/>
-          <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__tWx0KCMEeOYCKbYrRMQtA" value="1"/>
+        <ownedAttribute xmi:id="_FRRncMSqEeOcOoPo6rd1xA" name="labelProvider" visibility="private" type="_NyjnYKCMEeOYCKbYrRMQtA" association="_FROkIMSqEeOcOoPo6rd1xA">
+          <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_FRUqwMSqEeOcOoPo6rd1xA" value="1"/>
+          <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_FRUDsMSqEeOcOoPo6rd1xA" value="1"/>
         </ownedAttribute>
-        <ownedOperation xmi:id="_J3VdcJ5nEeOYFMqvY2mpFg" name="showLegend">
-          <ownedComment xmi:id="_51bqQKCOEeOYCKbYrRMQtA" annotatedElement="_J3VdcJ5nEeOYFMqvY2mpFg">
-            <body>&lt;p>Method that enables the rendering of the legend.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_cyNzEJ5nEeOYFMqvY2mpFg" name="legendShow">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
-            <defaultValue xmi:type="uml:LiteralBoolean" xmi:id="_v6MJgJ5nEeOYFMqvY2mpFg"/>
-          </ownedParameter>
-        </ownedOperation>
         <ownedOperation xmi:id="_MgJSwJ5nEeOYFMqvY2mpFg" name="render">
           <ownedComment xmi:id="_fp58EKCPEeOYCKbYrRMQtA" annotatedElement="_MgJSwJ5nEeOYFMqvY2mpFg">
             <body>&lt;p>Method managing everything that is related to the rendering of a plot.&lt;/p></body>
@@ -5473,27 +5065,17 @@ Check the reactants - He first
             <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_HIS0AKLrEeOT0L2IlTA9PA" name="setTitle">
-          <ownedComment xmi:id="_WbkpcKLuEeOT0L2IlTA9PA" annotatedElement="_HIS0AKLrEeOT0L2IlTA9PA">
-            <body>&lt;p>Method that allows the user to set his own title.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_Wr49YKLuEeOT0L2IlTA9PA" name="title">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
         <ownedOperation xmi:id="_Zm1rUKhvEeO9W5nw_aDz6w" name="setPlottingStyle">
           <ownedComment xmi:id="_EXsXkKhwEeO9W5nw_aDz6w" annotatedElement="_Zm1rUKhvEeO9W5nw_aDz6w">
             <body>&lt;p>Method allowing the user to set the PlottingStyle.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_OThukKhwEeO9W5nw_aDz6w" name="style" type="_NYSHUJ75EeOxfKKbPJ98Rg"/>
         </ownedOperation>
-        <ownedOperation xmi:id="_8aw9QKhvEeO9W5nw_aDz6w" name="setUnit">
-          <ownedComment xmi:id="_IOLg8KhwEeO9W5nw_aDz6w" annotatedElement="_8aw9QKhvEeO9W5nw_aDz6w">
-            <body>&lt;p>Method allowing the user to set the unit of the value plotted.&lt;/p></body>
+        <ownedOperation xmi:id="_3uTfwMSrEeOcOoPo6rd1xA" name="getPlottingStyle">
+          <ownedComment xmi:id="_B-zfMMSsEeOcOoPo6rd1xA" annotatedElement="_3uTfwMSrEeOcOoPo6rd1xA">
+            <body>&lt;p>Method getting the PlottingStyle.&lt;/p></body>
           </ownedComment>
-          <ownedParameter xmi:id="_RcnmcKhwEeO9W5nw_aDz6w" name="unit">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
+          <ownedParameter xmi:id="_CdKPIMSsEeOcOoPo6rd1xA" name="plottingStyle" type="_NYSHUJ75EeOxfKKbPJ98Rg" direction="return"/>
         </ownedOperation>
         <ownedOperation xmi:id="_eY0WEKuwEeO6_9ChDgJv8g" name="setDataProvider">
           <ownedComment xmi:id="_eY0WEauwEeO6_9ChDgJv8g" annotatedElement="_eY0WEKuwEeO6_9ChDgJv8g">
@@ -5519,20 +5101,13 @@ Check the reactants - He first
           </ownedComment>
           <ownedParameter xmi:id="_2OefAK6iEeOK1JEl0e3Y4w" name="labelProvider" type="_NyjnYKCMEeOYCKbYrRMQtA" direction="return"/>
         </ownedOperation>
-        <ownedOperation xmi:id="_oJaGYKuwEeO6_9ChDgJv8g" name="getUnit">
-          <ownedComment xmi:id="_oJaGYauwEeO6_9ChDgJv8g" annotatedElement="_oJaGYKuwEeO6_9ChDgJv8g">
-            <body>&lt;p>Method getting the unit from the data provider and setting the attribute unit with this value.&lt;/p></body>
+        <ownedOperation xmi:id="_J3VdcJ5nEeOYFMqvY2mpFg" name="showLegend">
+          <ownedComment xmi:id="_51bqQKCOEeOYCKbYrRMQtA" annotatedElement="_J3VdcJ5nEeOYFMqvY2mpFg">
+            <body>&lt;p>Method that enables the rendering of the legend.&lt;/p></body>
           </ownedComment>
-          <ownedParameter xmi:id="_XMtCwKuyEeO6_9ChDgJv8g" name="unit" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_qhO5YKuwEeO6_9ChDgJv8g" name="getTitle">
-          <ownedComment xmi:id="_qhPgcKuwEeO6_9ChDgJv8g" annotatedElement="_qhO5YKuwEeO6_9ChDgJv8g">
-            <body>&lt;p>Method getting the title with the help of the data provider and the label provider and setting the title attribute.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_dRqO0KuyEeO6_9ChDgJv8g" name="title" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          <ownedParameter xmi:id="_cyNzEJ5nEeOYFMqvY2mpFg" name="legendShow">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
+            <defaultValue xmi:type="uml:LiteralBoolean" xmi:id="_v6MJgJ5nEeOYFMqvY2mpFg"/>
           </ownedParameter>
         </ownedOperation>
         <ownedOperation xmi:id="_u_z9gKuwEeO6_9ChDgJv8g" name="getLegend">
@@ -5556,22 +5131,6 @@ Check the reactants - He first
           <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_jq-skJ5lEeOYFMqvY2mpFg" value="*"/>
           <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_jq-FgJ5lEeOYFMqvY2mpFg"/>
         </ownedAttribute>
-        <ownedOperation xmi:id="_WTc08KCNEeOYCKbYrRMQtA" name="getDataName">
-          <ownedComment xmi:id="_gaphsKLuEeOT0L2IlTA9PA" annotatedElement="_WTc08KCNEeOYCKbYrRMQtA">
-            <body>&lt;p>Returns a string the name of the data.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_ibpJEKLuEeOT0L2IlTA9PA" name="dataName" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_Z5knEKCNEeOYCKbYrRMQtA" name="getDataUnit">
-          <ownedComment xmi:id="_oIBdEKLuEeOT0L2IlTA9PA" annotatedElement="_Z5knEKCNEeOYCKbYrRMQtA">
-            <body>&lt;p>Returns a string of the data unit.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_oVw-IKLuEeOT0L2IlTA9PA" name="dataUnit" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
         <ownedOperation xmi:id="_bT-vkKCNEeOYCKbYrRMQtA" name="getDataPoints">
           <ownedComment xmi:id="_wv8VIKLuEeOT0L2IlTA9PA" annotatedElement="_bT-vkKCNEeOYCKbYrRMQtA">
             <body>&lt;p>Returns a collection of the data points.&lt;/p></body>
@@ -5588,29 +5147,13 @@ Check the reactants - He first
             <type xmi:type="uml:PrimitiveType" href="pathmap://UAL_LIBRARIES/UALPrimitiveDatatypes.emx#_lwY4wFIzEd2exLDlzlaiIA?UALPrimitiveDatatypes/double?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_hqeV4K3mEeOUcsQ0qdBVBA" name="setName">
-          <ownedComment xmi:id="_hqeV4a3mEeOUcsQ0qdBVBA" annotatedElement="_hqeV4K3mEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method setting the name of the data.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_hqeV4q3mEeOUcsQ0qdBVBA" name="name">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_kdepAK3mEeOUcsQ0qdBVBA" name="setUnits">
-          <ownedComment xmi:id="_kdepAa3mEeOUcsQ0qdBVBA" annotatedElement="_kdepAK3mEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method setting the unit of the data.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_kdepAq3mEeOUcsQ0qdBVBA" name="unit">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
         <ownedOperation xmi:id="_mqpEIK3mEeOUcsQ0qdBVBA" name="setPoints">
           <ownedComment xmi:id="_mqpEIa3mEeOUcsQ0qdBVBA" annotatedElement="_mqpEIK3mEeOUcsQ0qdBVBA">
             <body>&lt;p>Method filling the data collection.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_mqpEIq3mEeOUcsQ0qdBVBA" name="Points" type="_TuqSgJszEeOyd4fiW3rUpw"/>
         </ownedOperation>
-        <ownedOperation xmi:id="_oYRqoK3mEeOUcsQ0qdBVBA" name="getXVector">
+        <ownedOperation xmi:id="_oYRqoK3mEeOUcsQ0qdBVBA" name="getAxis1Vector">
           <ownedComment xmi:id="_oYRqoa3mEeOUcsQ0qdBVBA" annotatedElement="_oYRqoK3mEeOUcsQ0qdBVBA">
             <body>&lt;p>Method returning the vector of quantity that will be plotted on the X axis. Quantity being x, y, z, t, or value.&lt;/p></body>
           </ownedComment>
@@ -5618,7 +5161,7 @@ Check the reactants - He first
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_pTBboK3mEeOUcsQ0qdBVBA" name="getYVector">
+        <ownedOperation xmi:id="_pTBboK3mEeOUcsQ0qdBVBA" name="getAxis2Vector">
           <ownedComment xmi:id="_pTBboa3mEeOUcsQ0qdBVBA" annotatedElement="_pTBboK3mEeOUcsQ0qdBVBA">
             <body>&lt;p>Method returning the vector of quantity that will be plotted on the Y axis. Quantity being x, y, z, t, or value.&lt;/p></body>
           </ownedComment>
@@ -5626,7 +5169,7 @@ Check the reactants - He first
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_qaW3IK3mEeOUcsQ0qdBVBA" name="getZVector">
+        <ownedOperation xmi:id="_qaW3IK3mEeOUcsQ0qdBVBA" name="getAxis3Vector">
           <ownedComment xmi:id="_qaW3Ia3mEeOUcsQ0qdBVBA" annotatedElement="_qaW3IK3mEeOUcsQ0qdBVBA">
             <body>&lt;p>Method returning the vector of quantity that will be plotted on the Z axis. Quantity being x, y, z, t, or value.&lt;/p></body>
           </ownedComment>
@@ -5634,100 +5177,12 @@ Check the reactants - He first
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_raW7kK3mEeOUcsQ0qdBVBA" name="getTimeVector">
+        <ownedOperation xmi:id="_raW7kK3mEeOUcsQ0qdBVBA" name="getAxis4Vector">
           <ownedComment xmi:id="_raW7ka3mEeOUcsQ0qdBVBA" annotatedElement="_raW7kK3mEeOUcsQ0qdBVBA">
             <body>&lt;p>Method returning the vector of time steps that will be used for the VideoPlots.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_raW7kq3mEeOUcsQ0qdBVBA" name="timeVector" direction="return">
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-      </packagedElement>
-      <packagedElement xmi:type="uml:Interface" xmi:id="_WxAJcJ5lEeOYFMqvY2mpFg" name="ILabelProvider">
-        <ownedComment xmi:id="_ZDx8wJ8HEeOxfKKbPJ98Rg" annotatedElement="_WxAJcJ5lEeOYFMqvY2mpFg">
-          <body>&lt;p>ILabelProvider describes the structure needed to provide axis labels, titles, etc. for the plots.&lt;/p></body>
-        </ownedComment>
-        <ownedOperation xmi:id="_uFFwEKCLEeOYCKbYrRMQtA" name="getXAxisLabel">
-          <ownedComment xmi:id="_YX1MsKLsEeOT0L2IlTA9PA" annotatedElement="_uFFwEKCLEeOYCKbYrRMQtA">
-            <body>&lt;p>Returns the label of the X axis which doesn't necessary correspond to the physical X direction.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_zbGJQKLtEeOT0L2IlTA9PA" name="xGridLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_xTuPQKCLEeOYCKbYrRMQtA" name="getYAxisLabel">
-          <ownedComment xmi:id="_i1p2cKLsEeOT0L2IlTA9PA" annotatedElement="_xTuPQKCLEeOYCKbYrRMQtA">
-            <body>&lt;p>Returns the label of the Y axis which doesn't necessary correspond to the physical Y direction.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_52ffYKLtEeOT0L2IlTA9PA" name="yGridLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_zaNaoKCLEeOYCKbYrRMQtA" name="getZAxisLabel">
-          <ownedComment xmi:id="_kvV78KLsEeOT0L2IlTA9PA" annotatedElement="_zaNaoKCLEeOYCKbYrRMQtA">
-            <body>&lt;p>Returns the label of the Z axis which doesn't necessary correspond to the physical Z direction.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_VypjQKC0EeOiAr3XRZN7Ww" name="zGridLabel" direction="return">
-            <ownedComment xmi:id="_gExTUKC0EeOiAr3XRZN7Ww" annotatedElement="_VypjQKC0EeOiAr3XRZN7Ww">
-              <body>&lt;p>The z axis label.&lt;/p></body>
-            </ownedComment>
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_1gvCQKCLEeOYCKbYrRMQtA" name="getTimeAxisLabel">
-          <ownedComment xmi:id="_mZfJkKLsEeOT0L2IlTA9PA" annotatedElement="_1gvCQKCLEeOYCKbYrRMQtA">
-            <body>&lt;p>Returns a string of the time label.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="__nSZUKLtEeOT0L2IlTA9PA" name="timeLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_xNnaQKhtEeO9W5nw_aDz6w" name="getTitleLabel">
-          <ownedComment xmi:id="_Io1HgKhuEeO9W5nw_aDz6w" annotatedElement="_xNnaQKhtEeO9W5nw_aDz6w">
-            <body>&lt;p>Returns a string of the title label.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_vJJ00KuyEeO6_9ChDgJv8g" name="titleLabel" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_vsjasKhuEeO9W5nw_aDz6w" name="setXAxisLabel">
-          <ownedComment xmi:id="_9oslcKhuEeO9W5nw_aDz6w" annotatedElement="_vsjasKhuEeO9W5nw_aDz6w">
-            <body>&lt;p>Sets the name of the X axis of the plot.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_dpgPgKhvEeO9W5nw_aDz6w" name="xLabel">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_yZRfoKhuEeO9W5nw_aDz6w" name="setYAxisLabel">
-          <ownedComment xmi:id="_-g28gKhuEeO9W5nw_aDz6w" annotatedElement="_yZRfoKhuEeO9W5nw_aDz6w">
-            <body>&lt;p>Sets the name of the Y axis of the plot.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_hN6KYKhvEeO9W5nw_aDz6w" name="yLabel">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_0BlhQKhuEeO9W5nw_aDz6w" name="setZAxisLabel">
-          <ownedComment xmi:id="__wFIsKhuEeO9W5nw_aDz6w" annotatedElement="_0BlhQKhuEeO9W5nw_aDz6w">
-            <body>&lt;p>Sets the name of the Z axis of the plot.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_kt7UgKhvEeO9W5nw_aDz6w" name="zLabel">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_2DUvgKhuEeO9W5nw_aDz6w" name="setTimeAxisLabel">
-          <ownedComment xmi:id="_B4pXsKhvEeO9W5nw_aDz6w" annotatedElement="_2DUvgKhuEeO9W5nw_aDz6w">
-            <body>&lt;p>Sets the name of the time axis of the plot.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_on52wKhvEeO9W5nw_aDz6w" name="timeLabel">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_4c-HcKhuEeO9W5nw_aDz6w" name="setTitleLabel">
-          <ownedComment xmi:id="_DXKkIKhvEeO9W5nw_aDz6w" annotatedElement="_4c-HcKhuEeO9W5nw_aDz6w">
-            <body>&lt;p>Sets the name of the title of the plot.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_vY-h8KhvEeO9W5nw_aDz6w" name="title">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
           </ownedParameter>
         </ownedOperation>
       </packagedElement>
@@ -5741,42 +5196,12 @@ Check the reactants - He first
         <ownedComment xmi:id="_hbBaAKADEeO-voh9ltD6tQ" annotatedElement="_Sh7PAJ5nEeOYFMqvY2mpFg">
           <body>&lt;p>Plot is the class that realizes the interface Iplot. It is a general class that provides general methods, but to actual plot anything, the user needs to use one of its subclasses.&lt;/p></body>
         </ownedComment>
-        <ownedAttribute xmi:id="_WaQygJ5nEeOYFMqvY2mpFg" name="unit" visibility="private">
-          <ownedComment xmi:id="_277REKCPEeOYCKbYrRMQtA" annotatedElement="_WaQygJ5nEeOYFMqvY2mpFg">
-            <body>&lt;p>Unit of the data that is being plotted.&lt;/p></body>
-          </ownedComment>
-          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-        </ownedAttribute>
-        <ownedAttribute xmi:id="_DQT2IJ8XEeOxfKKbPJ98Rg" name="style" visibility="private" type="_NYSHUJ75EeOxfKKbPJ98Rg">
+        <ownedAttribute xmi:id="_DQT2IJ8XEeOxfKKbPJ98Rg" name="plotStyle" visibility="protected" type="_NYSHUJ75EeOxfKKbPJ98Rg">
           <ownedComment xmi:id="_5rUPgKCPEeOYCKbYrRMQtA" annotatedElement="_DQT2IJ8XEeOxfKKbPJ98Rg">
             <body>&lt;p>Choice of PlottingStyle.&lt;/p></body>
           </ownedComment>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_kwfoQJ8XEeOxfKKbPJ98Rg" name="XAxisLabel" visibility="private">
-          <ownedComment xmi:id="__UKHUKCPEeOYCKbYrRMQtA" annotatedElement="_kwfoQJ8XEeOxfKKbPJ98Rg">
-            <body>&lt;p>Label that will appear of the X axis of the plot.&lt;/p></body>
-          </ownedComment>
-          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-        </ownedAttribute>
-        <ownedAttribute xmi:id="_pIZcoJ8XEeOxfKKbPJ98Rg" name="YAxisLabel" visibility="private">
-          <ownedComment xmi:id="_AaHp0KCQEeOYCKbYrRMQtA" annotatedElement="_pIZcoJ8XEeOxfKKbPJ98Rg">
-            <body>&lt;p>Label that will appear of the Y axis of the plot.&lt;/p></body>
-          </ownedComment>
-          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-        </ownedAttribute>
-        <ownedAttribute xmi:id="_ywZ4sJ8XEeOxfKKbPJ98Rg" name="ZAxisLabel" visibility="private">
-          <ownedComment xmi:id="_Bs9xwKCQEeOYCKbYrRMQtA" annotatedElement="_ywZ4sJ8XEeOxfKKbPJ98Rg">
-            <body>&lt;p>Label that will appear of the Z axis of the plot.&lt;/p></body>
-          </ownedComment>
-          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-        </ownedAttribute>
-        <ownedAttribute xmi:id="_1wJAQJ8XEeOxfKKbPJ98Rg" name="title" visibility="private">
-          <ownedComment xmi:id="_OIrEgKCQEeOYCKbYrRMQtA" annotatedElement="_1wJAQJ8XEeOxfKKbPJ98Rg">
-            <body>&lt;p>Title of the plot. Can be set by the user by using setTitle().&lt;/p></body>
-          </ownedComment>
-          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-        </ownedAttribute>
-        <ownedAttribute xmi:id="_uSOq8J8cEeOxfKKbPJ98Rg" name="enableLegend" visibility="private">
+        <ownedAttribute xmi:id="_uSOq8J8cEeOxfKKbPJ98Rg" name="enableLegend" visibility="protected">
           <ownedComment xmi:id="_VpaSEKCQEeOYCKbYrRMQtA" annotatedElement="_uSOq8J8cEeOxfKKbPJ98Rg">
             <body>&lt;p>If it is equal to True, the legend will be displayed.&lt;/p></body>
           </ownedComment>
@@ -5785,62 +5210,21 @@ Check the reactants - He first
             <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
           </defaultValue>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_7YJ0QKhwEeO9W5nw_aDz6w" name="dataProvider" visibility="private" type="_jZk9sKCNEeOYCKbYrRMQtA">
+        <ownedAttribute xmi:id="_7YJ0QKhwEeO9W5nw_aDz6w" name="plotDataProvider" visibility="protected" type="_jZk9sKCNEeOYCKbYrRMQtA">
           <ownedComment xmi:id="_yrxrQKh2EeO9W5nw_aDz6w" annotatedElement="_7YJ0QKhwEeO9W5nw_aDz6w">
             <body>&lt;p>Data provider used for the plot.&lt;/p></body>
           </ownedComment>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_0AV4IKuwEeO6_9ChDgJv8g" name="labelProvider" visibility="private" type="_NyjnYKCMEeOYCKbYrRMQtA">
+        <ownedAttribute xmi:id="_0AV4IKuwEeO6_9ChDgJv8g" name="plotLabelProvider" visibility="public" type="_NyjnYKCMEeOYCKbYrRMQtA">
           <ownedComment xmi:id="_8ydOAKuwEeO6_9ChDgJv8g" annotatedElement="_0AV4IKuwEeO6_9ChDgJv8g">
             <body>&lt;p>LabelProvider used for the Plot.&lt;/p></body>
           </ownedComment>
         </ownedAttribute>
-        <ownedOperation xmi:id="_Fl-F8J8XEeOxfKKbPJ98Rg" name="getUnit">
-          <ownedComment xmi:id="_29aSEKLwEeOT0L2IlTA9PA" annotatedElement="_Fl-F8J8XEeOxfKKbPJ98Rg">
-            <body>&lt;p>Method getting the unit from the data provider and setting the attribute unit with this value.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_5P87IKuxEeO6_9ChDgJv8g" name="unit" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_IDnNEJ8XEeOxfKKbPJ98Rg" name="getTitle">
-          <ownedComment xmi:id="_qCKHIKLxEeOT0L2IlTA9PA" annotatedElement="_IDnNEJ8XEeOxfKKbPJ98Rg">
-            <body>&lt;p>Method getting the title with the help of the data provider and the label provider and setting the title attribute.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_A5rFkKuyEeO6_9ChDgJv8g" name="title" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_K5GzgJ8XEeOxfKKbPJ98Rg" name="showLegend">
-          <ownedComment xmi:id="_r7lwIKCPEeOYCKbYrRMQtA" annotatedElement="_K5GzgJ8XEeOxfKKbPJ98Rg">
-            <body>&lt;p>Method that enables the rendering of the legend.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_ujSI8KLxEeOT0L2IlTA9PA" name="legendShow">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
-            <defaultValue xmi:type="uml:LiteralBoolean" xmi:id="_yUBPoKLxEeOT0L2IlTA9PA"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_X86lwKCQEeOYCKbYrRMQtA" name="getLegend">
-          <ownedComment xmi:id="_GksTgKLyEeOT0L2IlTA9PA" annotatedElement="_X86lwKCQEeOYCKbYrRMQtA">
-            <body>&lt;p>Method defining the legend with the help of the data provider and the label provider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_GD0PMKuyEeO6_9ChDgJv8g" name="legend" direction="return">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
         <ownedOperation xmi:id="_M9peIJ8XEeOxfKKbPJ98Rg" name="write">
           <ownedComment xmi:id="_lofaYKCPEeOYCKbYrRMQtA" annotatedElement="_M9peIJ8XEeOxfKKbPJ98Rg">
             <body>&lt;p>Method that will save the plotted plot in a file.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_HX5SEKLyEeOT0L2IlTA9PA" name="fileName">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_qt2aYKLvEeOT0L2IlTA9PA" name="setTitle">
-          <ownedComment xmi:id="_Qunw4KLyEeOT0L2IlTA9PA" annotatedElement="_qt2aYKLvEeOT0L2IlTA9PA">
-            <body>&lt;p>Method that allows the user to set his own title.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_Q8hqAKLyEeOT0L2IlTA9PA" name="title">
             <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
           </ownedParameter>
         </ownedOperation>
@@ -5850,10 +5234,11 @@ Check the reactants - He first
           </ownedComment>
           <ownedParameter xmi:id="_tAD04KOwEeODcs71kOGBxA" name="style" type="_NYSHUJ75EeOxfKKbPJ98Rg"/>
         </ownedOperation>
-        <ownedOperation xmi:id="_K3z1oKhwEeO9W5nw_aDz6w" name="setUnit">
-          <ownedParameter xmi:id="_Wh9IkKhwEeO9W5nw_aDz6w" name="unit">
-            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-          </ownedParameter>
+        <ownedOperation xmi:id="_ckXWoMSuEeOcOoPo6rd1xA" name="getPlottingStyle">
+          <ownedComment xmi:id="_ckXWocSuEeOcOoPo6rd1xA" annotatedElement="_ckXWoMSuEeOcOoPo6rd1xA">
+            <body>&lt;p>Method getting the PlottingStyle.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_ckXWosSuEeOcOoPo6rd1xA" name="plottingStyle" type="_NYSHUJ75EeOxfKKbPJ98Rg" direction="return"/>
         </ownedOperation>
         <ownedOperation xmi:id="_s2fhoKhwEeO9W5nw_aDz6w" name="setDataProvider">
           <ownedComment xmi:id="_vhfgkKh2EeO9W5nw_aDz6w" annotatedElement="_s2fhoKhwEeO9W5nw_aDz6w">
@@ -5878,6 +5263,23 @@ Check the reactants - He first
             <body>&lt;p>Gets the label provider used.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_DE6l8a6jEeOK1JEl0e3Y4w" name="labelProvider" type="_NyjnYKCMEeOYCKbYrRMQtA" direction="return"/>
+        </ownedOperation>
+        <ownedOperation xmi:id="_K5GzgJ8XEeOxfKKbPJ98Rg" name="showLegend">
+          <ownedComment xmi:id="_r7lwIKCPEeOYCKbYrRMQtA" annotatedElement="_K5GzgJ8XEeOxfKKbPJ98Rg">
+            <body>&lt;p>Method that enables the rendering of the legend.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_ujSI8KLxEeOT0L2IlTA9PA" name="legendShow">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
+            <defaultValue xmi:type="uml:LiteralBoolean" xmi:id="_yUBPoKLxEeOT0L2IlTA9PA"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_X86lwKCQEeOYCKbYrRMQtA" name="getLegend">
+          <ownedComment xmi:id="_GksTgKLyEeOT0L2IlTA9PA" annotatedElement="_X86lwKCQEeOYCKbYrRMQtA">
+            <body>&lt;p>Method defining the legend with the help of the data provider and the label provider.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_GD0PMKuyEeO6_9ChDgJv8g" name="legend" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          </ownedParameter>
         </ownedOperation>
       </packagedElement>
       <packagedElement xmi:type="uml:Realization" xmi:id="_DNHLsJ5oEeOYFMqvY2mpFg" supplier="_wVBtYJ5REeOYFMqvY2mpFg" client="_Sh7PAJ5nEeOYFMqvY2mpFg"/>
@@ -5907,59 +5309,55 @@ Check the reactants - He first
         </ownedLiteral>
       </packagedElement>
       <packagedElement xmi:type="uml:Dependency" xmi:id="_jY4wYJ78EeOxfKKbPJ98Rg" supplier="_NYSHUJ75EeOxfKKbPJ98Rg" client="_Sh7PAJ5nEeOYFMqvY2mpFg"/>
-      <packagedElement xmi:type="uml:Class" xmi:id="_NyjnYKCMEeOYCKbYrRMQtA" name="LabelProvider" clientDependency="_Sy7xAKCMEeOYCKbYrRMQtA">
+      <packagedElement xmi:type="uml:Class" xmi:id="_NyjnYKCMEeOYCKbYrRMQtA" name="LabelProvider">
         <ownedComment xmi:id="_V4UAUK3vEeOUcsQ0qdBVBA" annotatedElement="_NyjnYKCMEeOYCKbYrRMQtA">
           <body>&lt;p>Class realizing the interface ILavelProvider. Contains different string attributes representing the labels for the plots. LabelProvider is a class attached to a single Plot at its creation.&lt;/p></body>
         </ownedComment>
-        <ownedAttribute xmi:id="_UXQqgKCMEeOYCKbYrRMQtA" name="xAxisLabel" visibility="private">
+        <ownedAttribute xmi:id="_UXQqgKCMEeOYCKbYrRMQtA" name="axis1Label" visibility="public">
           <ownedComment xmi:id="_UXQusKL2EeOT0L2IlTA9PA" annotatedElement="_UXQqgKCMEeOYCKbYrRMQtA">
             <body>&lt;p>The label of the X axis of the plot.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_WBgl0KCMEeOYCKbYrRMQtA" name="yAxisLabel" visibility="private">
+        <ownedAttribute xmi:id="_WBgl0KCMEeOYCKbYrRMQtA" name="axis2Label" visibility="public">
           <ownedComment xmi:id="_VWGVgKL2EeOT0L2IlTA9PA" annotatedElement="_WBgl0KCMEeOYCKbYrRMQtA">
             <body>&lt;p>The label of the Y axis of the plot.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_Xg4G0KCMEeOYCKbYrRMQtA" name="zAxisLabel" visibility="private">
+        <ownedAttribute xmi:id="_Xg4G0KCMEeOYCKbYrRMQtA" name="axis3Label" visibility="public">
           <ownedComment xmi:id="_ZKsBcKL2EeOT0L2IlTA9PA" annotatedElement="_Xg4G0KCMEeOYCKbYrRMQtA">
             <body>&lt;p>The label of the Z axis of the plot.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_bA4p4KCMEeOYCKbYrRMQtA" name="timeAxisLabel" visibility="private">
+        <ownedAttribute xmi:id="_bA4p4KCMEeOYCKbYrRMQtA" name="axis4Label" visibility="public">
           <ownedComment xmi:id="_cadJEKL2EeOT0L2IlTA9PA" annotatedElement="_bA4p4KCMEeOYCKbYrRMQtA">
             <body>&lt;p>The label for the time steps.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_P9fn8KhuEeO9W5nw_aDz6w" name="titleLabel" visibility="private">
+        <ownedAttribute xmi:id="_P9fn8KhuEeO9W5nw_aDz6w" name="titleLabel" visibility="public">
           <ownedComment xmi:id="_ca48wKhuEeO9W5nw_aDz6w" annotatedElement="_P9fn8KhuEeO9W5nw_aDz6w">
             <body>&lt;p>Title label for the plot.&lt;/p></body>
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
         </ownedAttribute>
+        <ownedAttribute xmi:id="_ke4vcMSpEeOcOoPo6rd1xA" name="unitLabel" visibility="public">
+          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+        </ownedAttribute>
       </packagedElement>
-      <packagedElement xmi:type="uml:Realization" xmi:id="_Sy7xAKCMEeOYCKbYrRMQtA" supplier="_WxAJcJ5lEeOYFMqvY2mpFg" client="_NyjnYKCMEeOYCKbYrRMQtA"/>
       <packagedElement xmi:type="uml:Association" xmi:id="_8rva8KCMEeOYCKbYrRMQtA" memberEnd="_8rx3MKCMEeOYCKbYrRMQtA _8r06gKCMEeOYCKbYrRMQtA">
         <ownedEnd xmi:id="_8r06gKCMEeOYCKbYrRMQtA" name="" visibility="private" type="_wVBtYJ5REeOYFMqvY2mpFg" association="_8rva8KCMEeOYCKbYrRMQtA">
           <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_8r2IoKCMEeOYCKbYrRMQtA" value="*"/>
           <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_8r1hkKCMEeOYCKbYrRMQtA"/>
         </ownedEnd>
       </packagedElement>
-      <packagedElement xmi:type="uml:Association" xmi:id="__tUVkKCMEeOYCKbYrRMQtA" memberEnd="__tVjsKCMEeOYCKbYrRMQtA __tX_8KCMEeOYCKbYrRMQtA">
-        <ownedEnd xmi:id="__tX_8KCMEeOYCKbYrRMQtA" name="" visibility="private" type="_wVBtYJ5REeOYFMqvY2mpFg" association="__tUVkKCMEeOYCKbYrRMQtA">
-          <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="__tYnAaCMEeOYCKbYrRMQtA" value="*"/>
-          <lowerValue xmi:type="uml:LiteralInteger" xmi:id="__tYnAKCMEeOYCKbYrRMQtA"/>
-        </ownedEnd>
-      </packagedElement>
       <packagedElement xmi:type="uml:Class" xmi:id="_jZk9sKCNEeOYCKbYrRMQtA" name="DataProvider" clientDependency="_oJozYKCNEeOYCKbYrRMQtA">
         <ownedComment xmi:id="_kGZ9kKL1EeOT0L2IlTA9PA" annotatedElement="_jZk9sKCNEeOYCKbYrRMQtA">
           <body>&lt;p>Realization of the IDataProvider interface. This is a general class with general methods, to actually get data from the data provider, one needs to use the subclasses.&lt;/p></body>
         </ownedComment>
-        <ownedAttribute xmi:id="_pP-JUKCNEeOYCKbYrRMQtA" name="data" visibility="private">
+        <ownedAttribute xmi:id="_pP-JUKCNEeOYCKbYrRMQtA" name="dataPoints" visibility="private">
           <ownedComment xmi:id="_oQ_usKL1EeOT0L2IlTA9PA" annotatedElement="_pP-JUKCNEeOYCKbYrRMQtA">
             <body>&lt;p>Collection of data points.&lt;/p></body>
           </ownedComment>
@@ -5971,13 +5369,29 @@ Check the reactants - He first
           </ownedComment>
           <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
         </ownedAttribute>
-        <ownedAttribute xmi:id="_t6pvwKCNEeOYCKbYrRMQtA" name="dataUnit" visibility="private">
-          <ownedComment xmi:id="_ApeVcKL2EeOT0L2IlTA9PA" annotatedElement="_t6pvwKCNEeOYCKbYrRMQtA">
-            <body>&lt;p>Unit of the data contained in the data attribute.&lt;/p></body>
+        <ownedOperation xmi:id="_J8KBMMS1EeOcOoPo6rd1xA" name="getDataPoints">
+          <ownedComment xmi:id="_J8KBMcS1EeOcOoPo6rd1xA" annotatedElement="_J8KBMMS1EeOcOoPo6rd1xA">
+            <body>&lt;p>Returns a collection of the data points.&lt;/p></body>
           </ownedComment>
-          <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
-        </ownedAttribute>
-        <ownedOperation xmi:id="_vKJOsK6kEeOK1JEl0e3Y4w" name="getXVector" isAbstract="true">
+          <ownedParameter xmi:id="_J8KBMsS1EeOcOoPo6rd1xA" name="dataPoints" direction="return">
+            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_J8LPUMS1EeOcOoPo6rd1xA" name="setPoints">
+          <ownedComment xmi:id="_J8LPUcS1EeOcOoPo6rd1xA" annotatedElement="_J8LPUMS1EeOcOoPo6rd1xA">
+            <body>&lt;p>Method filling the data collection.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_J8LPUsS1EeOcOoPo6rd1xA" name="Points" type="_TuqSgJszEeOyd4fiW3rUpw"/>
+        </ownedOperation>
+        <ownedOperation xmi:id="_J8KoQMS1EeOcOoPo6rd1xA" name="getDataMean">
+          <ownedComment xmi:id="_J8KoQcS1EeOcOoPo6rd1xA" annotatedElement="_J8KoQMS1EeOcOoPo6rd1xA">
+            <body>&lt;p>Returns the value of the mean of all the data points.&lt;/p></body>
+          </ownedComment>
+          <ownedParameter xmi:id="_J8KoQsS1EeOcOoPo6rd1xA" name="dataMean" direction="return">
+            <type xmi:type="uml:PrimitiveType" href="pathmap://UAL_LIBRARIES/UALPrimitiveDatatypes.emx#_lwY4wFIzEd2exLDlzlaiIA?UALPrimitiveDatatypes/double?"/>
+          </ownedParameter>
+        </ownedOperation>
+        <ownedOperation xmi:id="_vKJOsK6kEeOK1JEl0e3Y4w" name="getAxis1Vector" isAbstract="true">
           <ownedComment xmi:id="_vKJOsa6kEeOK1JEl0e3Y4w" annotatedElement="_vKJOsK6kEeOK1JEl0e3Y4w">
             <body>&lt;p>Virtual method returning the vector of quantity that will be plotted on the X axis. Quantity being x, y, z, t, or value.&lt;/p></body>
           </ownedComment>
@@ -5985,7 +5399,7 @@ Check the reactants - He first
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_vKJ1wK6kEeOK1JEl0e3Y4w" name="getYVector" isAbstract="true">
+        <ownedOperation xmi:id="_vKJ1wK6kEeOK1JEl0e3Y4w" name="getAxis2Vector" isAbstract="true">
           <ownedComment xmi:id="_vKJ1wa6kEeOK1JEl0e3Y4w" annotatedElement="_vKJ1wK6kEeOK1JEl0e3Y4w">
             <body>&lt;p>Virtual method returning the vector of quantity that will be plotted on the Y axis. Quantity being x, y, z, t, or value.&lt;/p></body>
           </ownedComment>
@@ -5993,7 +5407,7 @@ Check the reactants - He first
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_vKKc0K6kEeOK1JEl0e3Y4w" name="getZVector" isAbstract="true">
+        <ownedOperation xmi:id="_vKKc0K6kEeOK1JEl0e3Y4w" name="getAxis3Vector" isAbstract="true">
           <ownedComment xmi:id="_vKKc0a6kEeOK1JEl0e3Y4w" annotatedElement="_vKKc0K6kEeOK1JEl0e3Y4w">
             <body>&lt;p>Virtual method returning the vector of quantity that will be plotted on the Z axis. Quantity being x, y, z, t, or value.&lt;/p></body>
           </ownedComment>
@@ -6001,7 +5415,7 @@ Check the reactants - He first
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_vKLD4K6kEeOK1JEl0e3Y4w" name="getTimeVector" isAbstract="true">
+        <ownedOperation xmi:id="_vKLD4K6kEeOK1JEl0e3Y4w" name="getAxis4Vector" isAbstract="true">
           <ownedComment xmi:id="_vKLD4a6kEeOK1JEl0e3Y4w" annotatedElement="_vKLD4K6kEeOK1JEl0e3Y4w">
             <body>&lt;p>Virtual method returning the vector of time steps that will be used for the VideoPlots.&lt;/p></body>
           </ownedComment>
@@ -6014,12 +5428,12 @@ Check the reactants - He first
       <packagedElement xmi:type="uml:Association" xmi:id="_8-MXgKLqEeOT0L2IlTA9PA" memberEnd="_8-ddQKLqEeOT0L2IlTA9PA _8-qRkKLqEeOT0L2IlTA9PA">
         <ownedEnd xmi:id="_8-qRkKLqEeOT0L2IlTA9PA" name="" visibility="private" type="_CQbQIJ2bEeOe5bVrZ2pJpA" association="_8-MXgKLqEeOT0L2IlTA9PA"/>
       </packagedElement>
-      <packagedElement xmi:type="uml:Class" xmi:id="_Fy9ykK3dEeOUcsQ0qdBVBA" name="QvsXDataProvider">
+      <packagedElement xmi:type="uml:Class" xmi:id="_Fy9ykK3dEeOUcsQ0qdBVBA" name="CvsXDataProvider">
         <ownedComment xmi:id="_dYckMK3fEeOUcsQ0qdBVBA" annotatedElement="_Fy9ykK3dEeOUcsQ0qdBVBA">
           <body>&lt;p>Subclass of DataProvider that will provide the methods to give the value and X data to a ScatterPlot.&lt;/p></body>
         </ownedComment>
         <generalization xmi:id="_Qewm4K3dEeOUcsQ0qdBVBA" general="_jZk9sKCNEeOYCKbYrRMQtA"/>
-        <ownedOperation xmi:id="_AC-CgK3gEeOUcsQ0qdBVBA" name="getXVector">
+        <ownedOperation xmi:id="_AC-CgK3gEeOUcsQ0qdBVBA" name="getAxis1Vector">
           <ownedComment xmi:id="_kU3uUK3gEeOUcsQ0qdBVBA" annotatedElement="_AC-CgK3gEeOUcsQ0qdBVBA">
             <body>&lt;p>Method returning a vector containing the 'x' field of the collection of Point of the DataProvider.&lt;/p></body>
           </ownedComment>
@@ -6027,7 +5441,7 @@ Check the reactants - He first
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_CoM_YK3gEeOUcsQ0qdBVBA" name="getYVector">
+        <ownedOperation xmi:id="_CoM_YK3gEeOUcsQ0qdBVBA" name="getAxis2Vector">
           <ownedComment xmi:id="_h5htQK3gEeOUcsQ0qdBVBA" annotatedElement="_CoM_YK3gEeOUcsQ0qdBVBA">
             <body>&lt;p>Method returning a vector containing the 'value' field of the collection of Point of the DataProvider.&lt;/p></body>
           </ownedComment>
@@ -6036,78 +5450,12 @@ Check the reactants - He first
           </ownedParameter>
         </ownedOperation>
       </packagedElement>
-      <packagedElement xmi:type="uml:Class" xmi:id="_RYBKIK3dEeOUcsQ0qdBVBA" name="QvsYDataProvider">
-        <ownedComment xmi:id="_egQg0K3fEeOUcsQ0qdBVBA" annotatedElement="_RYBKIK3dEeOUcsQ0qdBVBA">
-          <body>&lt;p>Subclass of DataProvider that will provide the methods to give the value and Y data to a ScatterPlot.&lt;/p></body>
-        </ownedComment>
-        <generalization xmi:id="_VnbJ0K3dEeOUcsQ0qdBVBA" general="_jZk9sKCNEeOYCKbYrRMQtA"/>
-        <ownedOperation xmi:id="_qEcgQK3gEeOUcsQ0qdBVBA" name="getXVector">
-          <ownedComment xmi:id="_qEcgQa3gEeOUcsQ0qdBVBA" annotatedElement="_qEcgQK3gEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'y' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_qEcgQq3gEeOUcsQ0qdBVBA" name="xVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_q5q4EK3gEeOUcsQ0qdBVBA" name="getYVector">
-          <ownedComment xmi:id="_q5q4Ea3gEeOUcsQ0qdBVBA" annotatedElement="_q5q4EK3gEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'value' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_q5q4Eq3gEeOUcsQ0qdBVBA" name="yVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-      </packagedElement>
-      <packagedElement xmi:type="uml:Class" xmi:id="_Wd43wK3dEeOUcsQ0qdBVBA" name="QvsZDataProvider">
-        <ownedComment xmi:id="_fjxzUK3fEeOUcsQ0qdBVBA" annotatedElement="_Wd43wK3dEeOUcsQ0qdBVBA">
-          <body>&lt;p>Subclass of DataProvider that will provide the methods to give the value and Z data to a ScatterPlot.&lt;/p></body>
-        </ownedComment>
-        <generalization xmi:id="_ZNq3wK3dEeOUcsQ0qdBVBA" general="_jZk9sKCNEeOYCKbYrRMQtA"/>
-        <ownedOperation xmi:id="_svgYUK3gEeOUcsQ0qdBVBA" name="getXVector">
-          <ownedComment xmi:id="_svgYUa3gEeOUcsQ0qdBVBA" annotatedElement="_svgYUK3gEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'z' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_svgYUq3gEeOUcsQ0qdBVBA" name="xVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_rp0ioK3gEeOUcsQ0qdBVBA" name="getYVector">
-          <ownedComment xmi:id="_rp0ioa3gEeOUcsQ0qdBVBA" annotatedElement="_rp0ioK3gEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'value' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_rp0ioq3gEeOUcsQ0qdBVBA" name="yVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-      </packagedElement>
-      <packagedElement xmi:type="uml:Class" xmi:id="_aDTfQK3dEeOUcsQ0qdBVBA" name="QvsTimeDataProvider">
-        <ownedComment xmi:id="_hqyjIK3fEeOUcsQ0qdBVBA" annotatedElement="_aDTfQK3dEeOUcsQ0qdBVBA">
-          <body>&lt;p>Subclass of DataProvider that will provide the methods to give the value and time data to a ScatterPlot.&lt;/p></body>
-        </ownedComment>
-        <generalization xmi:id="_cLq58K3dEeOUcsQ0qdBVBA" general="_jZk9sKCNEeOYCKbYrRMQtA"/>
-        <ownedOperation xmi:id="_x66tQK3gEeOUcsQ0qdBVBA" name="getXVector">
-          <ownedComment xmi:id="_x66tQa3gEeOUcsQ0qdBVBA" annotatedElement="_x66tQK3gEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 't' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_x66tQq3gEeOUcsQ0qdBVBA" name="xVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_ypXusK3gEeOUcsQ0qdBVBA" name="getYVector">
-          <ownedComment xmi:id="_ypXusa3gEeOUcsQ0qdBVBA" annotatedElement="_ypXusK3gEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'value' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_ypXusq3gEeOUcsQ0qdBVBA" name="yVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-      </packagedElement>
-      <packagedElement xmi:type="uml:Class" xmi:id="_0ce1oK3hEeOUcsQ0qdBVBA" name="QvsXYDataProvider">
+      <packagedElement xmi:type="uml:Class" xmi:id="_0ce1oK3hEeOUcsQ0qdBVBA" name="CvsXYDataProvider">
         <ownedComment xmi:id="_o_exYK3iEeOUcsQ0qdBVBA" annotatedElement="_0ce1oK3hEeOUcsQ0qdBVBA">
           <body>&lt;p>Subclass of DataProvider that will provide the methods to give the value, and X and Y data to a SurfacePlot.&lt;/p></body>
         </ownedComment>
         <generalization xmi:id="_4mTKsK3hEeOUcsQ0qdBVBA" general="_jZk9sKCNEeOYCKbYrRMQtA"/>
-        <ownedOperation xmi:id="_uxoWMK3iEeOUcsQ0qdBVBA" name="getXVector">
+        <ownedOperation xmi:id="_uxoWMK3iEeOUcsQ0qdBVBA" name="getAxis1Vector">
           <ownedComment xmi:id="_6iNoUK3iEeOUcsQ0qdBVBA" annotatedElement="_uxoWMK3iEeOUcsQ0qdBVBA">
             <body>&lt;p>Method returning a vector containing the 'x' field of the collection of Point of the DataProvider.&lt;/p></body>
           </ownedComment>
@@ -6115,7 +5463,7 @@ Check the reactants - He first
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_xT--MK3iEeOUcsQ0qdBVBA" name="getYVector">
+        <ownedOperation xmi:id="_xT--MK3iEeOUcsQ0qdBVBA" name="getAxis2Vector">
           <ownedComment xmi:id="_7WUl0K3iEeOUcsQ0qdBVBA" annotatedElement="_xT--MK3iEeOUcsQ0qdBVBA">
             <body>&lt;p>Method returning a vector containing the 'y' field of the collection of Point of the DataProvider.&lt;/p></body>
           </ownedComment>
@@ -6123,41 +5471,11 @@ Check the reactants - He first
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
-        <ownedOperation xmi:id="_zzrTwK3iEeOUcsQ0qdBVBA" name="getZVector">
+        <ownedOperation xmi:id="_zzrTwK3iEeOUcsQ0qdBVBA" name="getAxis3Vector">
           <ownedComment xmi:id="_9GJksK3iEeOUcsQ0qdBVBA" annotatedElement="_zzrTwK3iEeOUcsQ0qdBVBA">
             <body>&lt;p>Method returning a vector containing the 'value' field of the collection of Point of the DataProvider.&lt;/p></body>
           </ownedComment>
           <ownedParameter xmi:id="_9ZmsMK3iEeOUcsQ0qdBVBA" name="zVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-      </packagedElement>
-      <packagedElement xmi:type="uml:Class" xmi:id="_8GIHkK3hEeOUcsQ0qdBVBA" name="QvsXZDataProvider">
-        <ownedComment xmi:id="_pZqL8K3iEeOUcsQ0qdBVBA" annotatedElement="_8GIHkK3hEeOUcsQ0qdBVBA">
-          <body>&lt;p>Subclass of DataProvider that will provide the methods to give the value, and X and Z data to a SurfacePlot.&lt;/p></body>
-        </ownedComment>
-        <generalization xmi:id="__gCpsK3hEeOUcsQ0qdBVBA" general="_jZk9sKCNEeOYCKbYrRMQtA"/>
-        <ownedOperation xmi:id="_Ml3bAK3jEeOUcsQ0qdBVBA" name="getXVector">
-          <ownedComment xmi:id="_Ml4CEK3jEeOUcsQ0qdBVBA" annotatedElement="_Ml3bAK3jEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'x' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_Ml4CEa3jEeOUcsQ0qdBVBA" name="xVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_OeB2gK3jEeOUcsQ0qdBVBA" name="getYVector">
-          <ownedComment xmi:id="_OeB2ga3jEeOUcsQ0qdBVBA" annotatedElement="_OeB2gK3jEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'z' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_OeB2gq3jEeOUcsQ0qdBVBA" name="yVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_Pmi9wK3jEeOUcsQ0qdBVBA" name="getZVector">
-          <ownedComment xmi:id="_Pmi9wa3jEeOUcsQ0qdBVBA" annotatedElement="_Pmi9wK3jEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'value' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_Pmi9wq3jEeOUcsQ0qdBVBA" name="zVector" direction="return">
             <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
           </ownedParameter>
         </ownedOperation>
@@ -6192,119 +5510,11 @@ Check the reactants - He first
           </ownedParameter>
         </ownedOperation>
       </packagedElement>
-      <packagedElement xmi:type="uml:Class" xmi:id="_bq98cK3kEeOUcsQ0qdBVBA" name="QvsXYTimeDataProvider">
-        <ownedComment xmi:id="_wyESAK3kEeOUcsQ0qdBVBA" annotatedElement="_bq98cK3kEeOUcsQ0qdBVBA">
-          <body>&lt;p>Subclass of DataProvider that will provide the methods to give the value, X and Y data, and time to a VideoPlot.&lt;/p></body>
-        </ownedComment>
-        <generalization xmi:id="_hDdrIK3kEeOUcsQ0qdBVBA" general="_jZk9sKCNEeOYCKbYrRMQtA"/>
-        <ownedOperation xmi:id="_4FrCgK3kEeOUcsQ0qdBVBA" name="getXVector">
-          <ownedComment xmi:id="_4FrCga3kEeOUcsQ0qdBVBA" annotatedElement="_4FrCgK3kEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'x' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_4FrCgq3kEeOUcsQ0qdBVBA" name="xVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_4vjF8K3kEeOUcsQ0qdBVBA" name="getYVector">
-          <ownedComment xmi:id="_4vjF8a3kEeOUcsQ0qdBVBA" annotatedElement="_4vjF8K3kEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'y' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_4vjF8q3kEeOUcsQ0qdBVBA" name="yVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_5WLBEK3kEeOUcsQ0qdBVBA" name="getZVector">
-          <ownedComment xmi:id="_5WLBEa3kEeOUcsQ0qdBVBA" annotatedElement="_5WLBEK3kEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'value' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_5WLBEq3kEeOUcsQ0qdBVBA" name="zVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_7AaVUK3kEeOUcsQ0qdBVBA" name="getTimeVector">
-          <ownedComment xmi:id="_F4iVcK3lEeOUcsQ0qdBVBA" annotatedElement="_7AaVUK3kEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'time' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_-i2hUK3kEeOUcsQ0qdBVBA" name="timeVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-      </packagedElement>
-      <packagedElement xmi:type="uml:Class" xmi:id="_hvEM4K3kEeOUcsQ0qdBVBA" name="QvsXZTimeDataProvider">
-        <ownedComment xmi:id="_yT_XwK3kEeOUcsQ0qdBVBA" annotatedElement="_hvEM4K3kEeOUcsQ0qdBVBA">
-          <body>&lt;p>Subclass of DataProvider that will provide the methods to give the value, X and Z data, and time to a VideoPlot.&lt;/p></body>
-        </ownedComment>
-        <generalization xmi:id="_l6MwkK3kEeOUcsQ0qdBVBA" general="_jZk9sKCNEeOYCKbYrRMQtA"/>
-        <ownedOperation xmi:id="_JYnxAK3lEeOUcsQ0qdBVBA" name="getXVector">
-          <ownedComment xmi:id="_JYnxAa3lEeOUcsQ0qdBVBA" annotatedElement="_JYnxAK3lEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'x' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_JYnxAq3lEeOUcsQ0qdBVBA" name="xVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_KqK4cK3lEeOUcsQ0qdBVBA" name="getYVector">
-          <ownedComment xmi:id="_KqK4ca3lEeOUcsQ0qdBVBA" annotatedElement="_KqK4cK3lEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'z' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_KqK4cq3lEeOUcsQ0qdBVBA" name="yVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_MAw38K3lEeOUcsQ0qdBVBA" name="getZVector">
-          <ownedComment xmi:id="_MAw38a3lEeOUcsQ0qdBVBA" annotatedElement="_MAw38K3lEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'value' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_MAw38q3lEeOUcsQ0qdBVBA" name="zVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_NA2b8K3lEeOUcsQ0qdBVBA" name="getTimeVector">
-          <ownedComment xmi:id="_NA2b8a3lEeOUcsQ0qdBVBA" annotatedElement="_NA2b8K3lEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'time' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_NA2b8q3lEeOUcsQ0qdBVBA" name="timeVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-      </packagedElement>
-      <packagedElement xmi:type="uml:Class" xmi:id="_m1eGAK3kEeOUcsQ0qdBVBA" name="QvsYZTimeDataProvider">
-        <ownedComment xmi:id="_3Bm9cK3kEeOUcsQ0qdBVBA" annotatedElement="_m1eGAK3kEeOUcsQ0qdBVBA">
-          <body>&lt;p>Subclass of DataProvider that will provide the methods to give the value, Y and Z data, and time to a VideoPlot.&lt;/p></body>
-        </ownedComment>
-        <generalization xmi:id="_plHjIK3kEeOUcsQ0qdBVBA" general="_jZk9sKCNEeOYCKbYrRMQtA"/>
-        <ownedOperation xmi:id="_JtIocK3lEeOUcsQ0qdBVBA" name="getXVector">
-          <ownedComment xmi:id="_JtIoca3lEeOUcsQ0qdBVBA" annotatedElement="_JtIocK3lEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'y' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_JtIocq3lEeOUcsQ0qdBVBA" name="xVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_K_6e8K3lEeOUcsQ0qdBVBA" name="getYVector">
-          <ownedComment xmi:id="_K_6e8a3lEeOUcsQ0qdBVBA" annotatedElement="_K_6e8K3lEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'z' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_K_6e8q3lEeOUcsQ0qdBVBA" name="yVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_MUIf4K3lEeOUcsQ0qdBVBA" name="getZVector">
-          <ownedComment xmi:id="_MUIf4a3lEeOUcsQ0qdBVBA" annotatedElement="_MUIf4K3lEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'value' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_MUIf4q3lEeOUcsQ0qdBVBA" name="zVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
-        <ownedOperation xmi:id="_NiH9AK3lEeOUcsQ0qdBVBA" name="getTimeVector">
-          <ownedComment xmi:id="_NiH9Aa3lEeOUcsQ0qdBVBA" annotatedElement="_NiH9AK3lEeOUcsQ0qdBVBA">
-            <body>&lt;p>Method returning a vector containing the 'time' field of the collection of Point of the DataProvider.&lt;/p></body>
-          </ownedComment>
-          <ownedParameter xmi:id="_NiH9Aq3lEeOUcsQ0qdBVBA" name="timeVector" direction="return">
-            <type xmi:type="uml:Class" href="pathmap://UAL_LIBRARIES/UALContainers.emx#_wVEbUFOaEd2M5enXlfCuwQ?UALContainers/Vector?"/>
-          </ownedParameter>
-        </ownedOperation>
+      <packagedElement xmi:type="uml:Association" xmi:id="_FROkIMSqEeOcOoPo6rd1xA" memberEnd="_FRRncMSqEeOcOoPo6rd1xA _FRVR0MSqEeOcOoPo6rd1xA">
+        <ownedEnd xmi:id="_FRVR0MSqEeOcOoPo6rd1xA" name="" visibility="private" type="_wVBtYJ5REeOYFMqvY2mpFg" association="_FROkIMSqEeOcOoPo6rd1xA">
+          <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_FRXuEcSqEeOcOoPo6rd1xA" value="*"/>
+          <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_FRXuEMSqEeOcOoPo6rd1xA"/>
+        </ownedEnd>
       </packagedElement>
     </packagedElement>
     <profileApplication xmi:id="_biIvZXVKEeKM6_T6gw_pCg">
@@ -6733,7 +5943,6 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_Kjz24In4EeOUtaE7Hpff1Q" base_Comment="_KjwzkIn4EeOUtaE7Hpff1Q"/>
   <Default:Documentation xmi:id="_UPAJ0In4EeOUtaE7Hpff1Q" base_Comment="_UO-7sIn4EeOUtaE7Hpff1Q"/>
   <Default:Documentation xmi:id="_k5tNgIqxEeOUtaE7Hpff1Q" base_Comment="_k5rYUIqxEeOUtaE7Hpff1Q"/>
-  <Default:Documentation xmi:id="_ZD3cUJ8HEeOxfKKbPJ98Rg" base_Comment="_ZDx8wJ8HEeOxfKKbPJ98Rg"/>
   <Default:Documentation xmi:id="_IxMCkJ8IEeOxfKKbPJ98Rg" base_Comment="_IxIYMJ8IEeOxfKKbPJ98Rg"/>
   <Default:Documentation xmi:id="_wLwvgJ8IEeOxfKKbPJ98Rg" base_Comment="_wLtsMJ8IEeOxfKKbPJ98Rg"/>
   <Default:Documentation xmi:id="_x8-OcJ8IEeOxfKKbPJ98Rg" base_Comment="_x87LIJ8IEeOxfKKbPJ98Rg"/>
@@ -6759,134 +5968,55 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_tOAaQKCPEeOYCKbYrRMQtA" base_Comment="_tN9W8KCPEeOYCKbYrRMQtA"/>
   <Default:Documentation xmi:id="_uFk7cKCPEeOYCKbYrRMQtA" base_Comment="_uFeNwKCPEeOYCKbYrRMQtA"/>
   <Default:Documentation xmi:id="_y8p_IKCPEeOYCKbYrRMQtA" base_Comment="_y8m70KCPEeOYCKbYrRMQtA"/>
-  <Default:Documentation xmi:id="_27-UYKCPEeOYCKbYrRMQtA" base_Comment="_277REKCPEeOYCKbYrRMQtA"/>
   <Default:Documentation xmi:id="_5rZIAKCPEeOYCKbYrRMQtA" base_Comment="_5rUPgKCPEeOYCKbYrRMQtA"/>
-  <Default:Documentation xmi:id="__UNKoKCPEeOYCKbYrRMQtA" base_Comment="__UKHUKCPEeOYCKbYrRMQtA"/>
-  <Default:Documentation xmi:id="_AaOXgKCQEeOYCKbYrRMQtA" base_Comment="_AaHp0KCQEeOYCKbYrRMQtA"/>
-  <Default:Documentation xmi:id="_BtA1EKCQEeOYCKbYrRMQtA" base_Comment="_Bs9xwKCQEeOYCKbYrRMQtA"/>
-  <Default:Documentation xmi:id="_OIuH0KCQEeOYCKbYrRMQtA" base_Comment="_OIrEgKCQEeOYCKbYrRMQtA"/>
   <Default:Documentation xmi:id="_VpdVYKCQEeOYCKbYrRMQtA" base_Comment="_VpaSEKCQEeOYCKbYrRMQtA"/>
-  <Default:Documentation xmi:id="_wQ7jQKCQEeOYCKbYrRMQtA" base_Comment="_wQ4f8KCQEeOYCKbYrRMQtA"/>
-  <Default:Documentation xmi:id="_zX8XgKCQEeOYCKbYrRMQtA" base_Comment="_zX5UMKCQEeOYCKbYrRMQtA"/>
-  <Default:Documentation xmi:id="_9Qz6EKCQEeOYCKbYrRMQtA" base_Comment="_9Qw2wKCQEeOYCKbYrRMQtA"/>
   <Default:Documentation xmi:id="_KvnBgKCREeOYCKbYrRMQtA" base_Comment="_Kvj-MKCREeOYCKbYrRMQtA"/>
-  <Default:Documentation xmi:id="_gE5PIKC0EeOiAr3XRZN7Ww" base_Comment="_gExTUKC0EeOiAr3XRZN7Ww"/>
-  <Default:Documentation xmi:id="_YX6FMKLsEeOT0L2IlTA9PA" base_Comment="_YX1MsKLsEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_i1tg0KLsEeOT0L2IlTA9PA" base_Comment="_i1p2cKLsEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_kvY_QKLsEeOT0L2IlTA9PA" base_Comment="_kvV78KLsEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_mZl3QKLsEeOT0L2IlTA9PA" base_Comment="_mZfJkKLsEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_WbnswKLuEeOT0L2IlTA9PA" base_Comment="_WbkpcKLuEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_gaslAKLuEeOT0L2IlTA9PA" base_Comment="_gaphsKLuEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_oIG8oKLuEeOT0L2IlTA9PA" base_Comment="_oIBdEKLuEeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_wwAmkKLuEeOT0L2IlTA9PA" base_Comment="_wv8VIKLuEeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_LhHRkKLvEeOT0L2IlTA9PA" base_Comment="_LhE1UKLvEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_29dVYKLwEeOT0L2IlTA9PA" base_Comment="_29aSEKLwEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_qCMjYKLxEeOT0L2IlTA9PA" base_Comment="_qCKHIKLxEeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_GkvW0KLyEeOT0L2IlTA9PA" base_Comment="_GksTgKLyEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_QuqNIKLyEeOT0L2IlTA9PA" base_Comment="_Qunw4KLyEeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_kGdA4KL1EeOT0L2IlTA9PA" base_Comment="_kGZ9kKL1EeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_oRCyAKL1EeOT0L2IlTA9PA" base_Comment="_oQ_usKL1EeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_3jN7kKL1EeOT0L2IlTA9PA" base_Comment="_3jKRMKL1EeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_ApgxsKL2EeOT0L2IlTA9PA" base_Comment="_ApeVcKL2EeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_UXTK8KL2EeOT0L2IlTA9PA" base_Comment="_UXQusKL2EeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_VWJY0KL2EeOT0L2IlTA9PA" base_Comment="_VWGVgKL2EeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_ZKudsKL2EeOT0L2IlTA9PA" base_Comment="_ZKsBcKL2EeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_caflUKL2EeOT0L2IlTA9PA" base_Comment="_cadJEKL2EeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_LojqoKMhEeOT0L2IlTA9PA" base_Comment="_LognUKMhEeOT0L2IlTA9PA"/>
-  <Default:Documentation xmi:id="_d5GCwKMhEeOT0L2IlTA9PA" base_Comment="_d5C_cKMhEeOT0L2IlTA9PA"/>
   <Default:Documentation xmi:id="_Q5PbgKOtEeODcs71kOGBxA" base_Comment="_Q5JU4KOtEeODcs71kOGBxA"/>
-  <Default:Documentation xmi:id="_8tvWEKOtEeODcs71kOGBxA" base_Comment="_8tooYKOtEeODcs71kOGBxA"/>
   <Default:Documentation xmi:id="_ARM1wKOuEeODcs71kOGBxA" base_Comment="_ARJLYKOuEeODcs71kOGBxA"/>
-  <Default:Documentation xmi:id="_BaFwcKOuEeODcs71kOGBxA" base_Comment="_BaCGEKOuEeODcs71kOGBxA"/>
   <Default:Documentation xmi:id="_hquUUKOwEeODcs71kOGBxA" base_Comment="_hqrRAKOwEeODcs71kOGBxA"/>
   <Default:Documentation xmi:id="_sv4q4KOwEeODcs71kOGBxA" base_Comment="_sv1nkKOwEeODcs71kOGBxA"/>
-  <Default:Documentation xmi:id="_HdO3QKOxEeODcs71kOGBxA" base_Comment="_HdIJkKOxEeODcs71kOGBxA"/>
   <Default:Documentation xmi:id="_LxwAcKOxEeODcs71kOGBxA" base_Comment="_LxsWEKOxEeODcs71kOGBxA"/>
-  <Default:Documentation xmi:id="_PIWI0KOxEeODcs71kOGBxA" base_Comment="_PITFgKOxEeODcs71kOGBxA"/>
-  <Default:Documentation xmi:id="_Rz4iAKOxEeODcs71kOGBxA" base_Comment="_Rz1esKOxEeODcs71kOGBxA"/>
   <Default:Documentation xmi:id="_UpVsMKOxEeODcs71kOGBxA" base_Comment="_UpQMoKOxEeODcs71kOGBxA"/>
   <Default:Documentation xmi:id="_aUa_sKOxEeODcs71kOGBxA" base_Comment="_aUX8YKOxEeODcs71kOGBxA"/>
-  <Default:Documentation xmi:id="_7kwkUKhZEeO9W5nw_aDz6w" base_Comment="_7ks58KhZEeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_Io7OIKhuEeO9W5nw_aDz6w" base_Comment="_Io1HgKhuEeO9W5nw_aDz6w"/>
   <Default:Documentation xmi:id="_ca8AEKhuEeO9W5nw_aDz6w" base_Comment="_ca48wKhuEeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_9ovowKhuEeO9W5nw_aDz6w" base_Comment="_9oslcKhuEeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_-g5_0KhuEeO9W5nw_aDz6w" base_Comment="_-g28gKhuEeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="__wIMAKhuEeO9W5nw_aDz6w" base_Comment="__wFIsKhuEeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_B4sbAKhvEeO9W5nw_aDz6w" base_Comment="_B4pXsKhvEeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_DXNncKhvEeO9W5nw_aDz6w" base_Comment="_DXKkIKhvEeO9W5nw_aDz6w"/>
   <Default:Documentation xmi:id="_EXva4KhwEeO9W5nw_aDz6w" base_Comment="_EXsXkKhwEeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_IOOkQKhwEeO9W5nw_aDz6w" base_Comment="_IOLg8KhwEeO9W5nw_aDz6w"/>
   <Default:Documentation xmi:id="_jnWp0Kh2EeO9W5nw_aDz6w" base_Comment="_jnS_cKh2EeO9W5nw_aDz6w"/>
   <Default:Documentation xmi:id="_nlQCwKh2EeO9W5nw_aDz6w" base_Comment="_nlM_cKh2EeO9W5nw_aDz6w"/>
   <Default:Documentation xmi:id="_vhmOQKh2EeO9W5nw_aDz6w" base_Comment="_vhfgkKh2EeO9W5nw_aDz6w"/>
   <Default:Documentation xmi:id="_yr4Y8Kh2EeO9W5nw_aDz6w" base_Comment="_yrxrQKh2EeO9W5nw_aDz6w"/>
   <Default:Documentation xmi:id="_7_UTMKh2EeO9W5nw_aDz6w" base_Comment="_7_RP4Kh2EeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_vQfasKh3EeO9W5nw_aDz6w" base_Comment="_vQbwUKh3EeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_1D48sKh3EeO9W5nw_aDz6w" base_Comment="_1DyPAKh3EeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_261QMKh3EeO9W5nw_aDz6w" base_Comment="_26vwoKh3EeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_MzdT4Kh5EeO9W5nw_aDz6w" base_Comment="_MzZCcKh5EeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_jZ1D0Kh5EeO9W5nw_aDz6w" base_Comment="_jZyAgKh5EeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_tzV_4Kh6EeO9W5nw_aDz6w" base_Comment="_tzTjoKh6EeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_D2twcKh7EeO9W5nw_aDz6w" base_Comment="_D2qtIKh7EeO9W5nw_aDz6w"/>
-  <Default:Documentation xmi:id="_TlwmwKh8EeO9W5nw_aDz6w" base_Comment="_TlruQKh8EeO9W5nw_aDz6w"/>
   <Default:Documentation xmi:id="_iVzowKh-EeO9W5nw_aDz6w" base_Comment="_iVwlcKh-EeO9W5nw_aDz6w"/>
   <Default:Documentation xmi:id="_eY1kMKuwEeO6_9ChDgJv8g" base_Comment="_eY0WEauwEeO6_9ChDgJv8g"/>
   <Default:Documentation xmi:id="_h6BzAKuwEeO6_9ChDgJv8g" base_Comment="_h6Ak4auwEeO6_9ChDgJv8g"/>
-  <Default:Documentation xmi:id="_oJb7kKuwEeO6_9ChDgJv8g" base_Comment="_oJaGYauwEeO6_9ChDgJv8g"/>
-  <Default:Documentation xmi:id="_qhQHgKuwEeO6_9ChDgJv8g" base_Comment="_qhPgcKuwEeO6_9ChDgJv8g"/>
   <Default:Documentation xmi:id="_u_0kkKuwEeO6_9ChDgJv8g" base_Comment="_u_z9gauwEeO6_9ChDgJv8g"/>
   <Default:Documentation xmi:id="_8yg4YKuwEeO6_9ChDgJv8g" base_Comment="_8ydOAKuwEeO6_9ChDgJv8g"/>
   <Default:Documentation xmi:id="_dYhcsK3fEeOUcsQ0qdBVBA" base_Comment="_dYckMK3fEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_egULMK3fEeOUcsQ0qdBVBA" base_Comment="_egQg0K3fEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_fj1dsK3fEeOUcsQ0qdBVBA" base_Comment="_fjxzUK3fEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_hq1mcK3fEeOUcsQ0qdBVBA" base_Comment="_hqyjIK3fEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_h5tTcK3gEeOUcsQ0qdBVBA" base_Comment="_h5htQK3gEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_kU6xoK3gEeOUcsQ0qdBVBA" base_Comment="_kU3uUK3gEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_qEduYK3gEeOUcsQ0qdBVBA" base_Comment="_qEcgQa3gEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_q5rfIK3gEeOUcsQ0qdBVBA" base_Comment="_q5q4Ea3gEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_rp1JsK3gEeOUcsQ0qdBVBA" base_Comment="_rp0ioa3gEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_svg_YK3gEeOUcsQ0qdBVBA" base_Comment="_svgYUa3gEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_x67UUK3gEeOUcsQ0qdBVBA" base_Comment="_x66tQa3gEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_ypYVwK3gEeOUcsQ0qdBVBA" base_Comment="_ypXusa3gEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_o_jC0K3iEeOUcsQ0qdBVBA" base_Comment="_o_exYK3iEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_pZtPQK3iEeOUcsQ0qdBVBA" base_Comment="_pZqL8K3iEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_pzY6kK3iEeOUcsQ0qdBVBA" base_Comment="_pzV3QK3iEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_6iQroK3iEeOUcsQ0qdBVBA" base_Comment="_6iNoUK3iEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_7WXCEK3iEeOUcsQ0qdBVBA" base_Comment="_7WUl0K3iEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_9GMoAK3iEeOUcsQ0qdBVBA" base_Comment="_9GJksK3iEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_Ml4CEq3jEeOUcsQ0qdBVBA" base_Comment="_Ml4CEK3jEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_NZlW8K3jEeOUcsQ0qdBVBA" base_Comment="_NZkv4a3jEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_OeCdkK3jEeOUcsQ0qdBVBA" base_Comment="_OeB2ga3jEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_O8TG4K3jEeOUcsQ0qdBVBA" base_Comment="_O8Sf0a3jEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_PmkL4K3jEeOUcsQ0qdBVBA" base_Comment="_Pmi9wa3jEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_P9s5gK3jEeOUcsQ0qdBVBA" base_Comment="_P9sSca3jEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_wyHVUK3kEeOUcsQ0qdBVBA" base_Comment="_wyESAK3kEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_yUB0AK3kEeOUcsQ0qdBVBA" base_Comment="_yT_XwK3kEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_3BqAwK3kEeOUcsQ0qdBVBA" base_Comment="_3Bm9cK3kEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_4FrpkK3kEeOUcsQ0qdBVBA" base_Comment="_4FrCga3kEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_4vjtAK3kEeOUcsQ0qdBVBA" base_Comment="_4vjF8a3kEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_5WMPMK3kEeOUcsQ0qdBVBA" base_Comment="_5WLBEa3kEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_F4kxsK3lEeOUcsQ0qdBVBA" base_Comment="_F4iVcK3lEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_JYnxA63lEeOUcsQ0qdBVBA" base_Comment="_JYnxAa3lEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_JtJPgK3lEeOUcsQ0qdBVBA" base_Comment="_JtIoca3lEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_KqLfgK3lEeOUcsQ0qdBVBA" base_Comment="_KqK4ca3lEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_K_7GAK3lEeOUcsQ0qdBVBA" base_Comment="_K_6e8a3lEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_MAxfAK3lEeOUcsQ0qdBVBA" base_Comment="_MAw38a3lEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_MUJG8K3lEeOUcsQ0qdBVBA" base_Comment="_MUIf4a3lEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_NA3DAK3lEeOUcsQ0qdBVBA" base_Comment="_NA2b8a3lEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_NiIkEK3lEeOUcsQ0qdBVBA" base_Comment="_NiH9Aa3lEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_hqe88K3mEeOUcsQ0qdBVBA" base_Comment="_hqeV4a3mEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_kdfQEK3mEeOUcsQ0qdBVBA" base_Comment="_kdepAa3mEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_mqqSQK3mEeOUcsQ0qdBVBA" base_Comment="_mqpEIa3mEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_oYSRsK3mEeOUcsQ0qdBVBA" base_Comment="_oYRqoa3mEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_pTCCsK3mEeOUcsQ0qdBVBA" base_Comment="_pTBboa3mEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_qaXeMK3mEeOUcsQ0qdBVBA" base_Comment="_qaW3Ia3mEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_raXioK3mEeOUcsQ0qdBVBA" base_Comment="_raW7ka3mEeOUcsQ0qdBVBA"/>
   <Default:Documentation xmi:id="_V4WckK3vEeOUcsQ0qdBVBA" base_Comment="_V4UAUK3vEeOUcsQ0qdBVBA"/>
-  <Default:Documentation xmi:id="_ueltEK6gEeOK1JEl0e3Y4w" base_Comment="_uee_YK6gEeOK1JEl0e3Y4w"/>
-  <Default:Documentation xmi:id="_w4otoK6gEeOK1JEl0e3Y4w" base_Comment="_w4lDQK6gEeOK1JEl0e3Y4w"/>
-  <Default:Documentation xmi:id="_z43kcK6gEeOK1JEl0e3Y4w" base_Comment="_z40hIK6gEeOK1JEl0e3Y4w"/>
-  <Default:Documentation xmi:id="_Ee2fQK6hEeOK1JEl0e3Y4w" base_Comment="_Eew_sK6hEeOK1JEl0e3Y4w"/>
   <Default:Documentation xmi:id="_YYvv8K6jEeOK1JEl0e3Y4w" base_Comment="_YYssoK6jEeOK1JEl0e3Y4w"/>
   <Default:Documentation xmi:id="_ZjS3gK6jEeOK1JEl0e3Y4w" base_Comment="_ZjP0MK6jEeOK1JEl0e3Y4w"/>
   <Default:Documentation xmi:id="_cOKiUK6jEeOK1JEl0e3Y4w" base_Comment="_cOHfAK6jEeOK1JEl0e3Y4w"/>
@@ -6908,4 +6038,11 @@ Check the reactants - He first
   <Default:Documentation xmi:id="_vyyxYLjcEeO6MOipXetLJw" base_Comment="_vyvHALjcEeO6MOipXetLJw"/>
   <Default:Documentation xmi:id="_zlC7ALjcEeO6MOipXetLJw" base_Comment="_zk_QoLjcEeO6MOipXetLJw"/>
   <Default:Documentation xmi:id="_2qXGILjcEeO6MOipXetLJw" base_Comment="_2qVQ8LjcEeO6MOipXetLJw"/>
+  <Default:Documentation xmi:id="_B-4XsMSsEeOcOoPo6rd1xA" base_Comment="_B-zfMMSsEeOcOoPo6rd1xA"/>
+  <Default:Documentation xmi:id="_ckZL0MSuEeOcOoPo6rd1xA" base_Comment="_ckXWocSuEeOcOoPo6rd1xA"/>
+  <Default:Documentation xmi:id="_J8L2YMS1EeOcOoPo6rd1xA" base_Comment="_J8KBMcS1EeOcOoPo6rd1xA"/>
+  <Default:Documentation xmi:id="_J8L2YcS1EeOcOoPo6rd1xA" base_Comment="_J8KoQcS1EeOcOoPo6rd1xA"/>
+  <Default:Documentation xmi:id="_J8L2YsS1EeOcOoPo6rd1xA" base_Comment="_J8LPUcS1EeOcOoPo6rd1xA"/>
+  <Default:Documentation xmi:id="_vBueQMS4EeOcOoPo6rd1xA" base_Comment="_vBra8MS4EeOcOoPo6rd1xA"/>
+  <Default:Documentation xmi:id="_NZ5WkMS5EeOcOoPo6rd1xA" base_Comment="_NZ26UMS5EeOcOoPo6rd1xA"/>
 </xmi:XMI>
