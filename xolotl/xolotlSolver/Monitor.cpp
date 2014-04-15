@@ -3,6 +3,8 @@
 #include <petscts.h>
 #include <petscsys.h>
 #include <sstream>
+#include <iostream>
+#include <fstream>
 #include <vector>
 #include <memory>
 
@@ -31,26 +33,43 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	const int size = PetscSolver::getNetwork()->size();
 	// The array of cluster names
 	std::vector<std::string> names(size);
-	// Get the processor id
-	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 	// Header and output string streams
 	std::stringstream header, outputData;
-	// Create a stream for naming the file
-	std::stringstream outputFileNameStream;
-	outputFileNameStream << "xolotl_out_" << procId << "_" << timestep;
+	std::ofstream outputFile;
 	PetscErrorCode ierr;
-	PetscViewer viewer;
 	PetscReal *solutionArray, *gridPointSolution, x, hx;
+	Vec localSolution;
 	PetscInt xs, xm, Mx;
 	int xi, i;
 
 	PetscFunctionBeginUser;
 
-	// Create the PETScViewer and get the data
-	VecGetArray(solution, &solutionArray);
-	PetscViewerASCIIOpen(PETSC_COMM_WORLD, outputFileNameStream.str().c_str(),
-			&viewer);
+	// Get the processor id
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Create a stream for naming the file
+	std::stringstream outputFileNameStream;
+	outputFileNameStream << "xolotl_out_" << procId << "_" << timestep;
+
+	// Open the text output file
+	outputFile.open(outputFileNameStream.str());
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	checkPetscError(ierr);
+
+	// Get the local vector, which is capital when running in parallel,
+	// and put it into solutionArray
+	ierr = DMGetLocalVector(da, &localSolution);
+	checkPetscError(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	checkPetscError(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	checkPetscError(ierr);
+	ierr = DMDAVecGetArray(da, localSolution, &solutionArray);
+	checkPetscError(ierr);
 
 	// Create the header for the file
 	auto reactants = PetscSolver::getNetwork()->getAll();
@@ -72,12 +91,9 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 		header << names[i] << " ";
 	}
 	header << "\n";
-	PetscViewerASCIIPrintf(viewer, header.str().c_str());
 
-	// Get the da from ts
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr);
+	// Writing the header in the output file
+	outputFile << header.str();
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
@@ -112,10 +128,10 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 		outputData << "\n";
 	}
 	// Dump the data to file
-	PetscViewerASCIIPrintf(viewer, outputData.str().c_str());
-	// Restore the array and kill the viewer
+	outputFile << outputData.str();
+	// Restore the array and close the output file
 	VecRestoreArray(solution, &solutionArray);
-	PetscViewerDestroy(&viewer);
+	outputFile.close();
 
 	PetscFunctionReturn(0);
 }
