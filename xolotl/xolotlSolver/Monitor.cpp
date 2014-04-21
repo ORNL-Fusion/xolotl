@@ -71,6 +71,7 @@ static PetscErrorCode monitorSolve(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAVecGetArray(da, localSolution, &solutionArray);
 	checkPetscError(ierr);
 
+
 	// Create the header for the file
 	auto reactants = PetscSolver::getNetwork()->getAll();
 	std::shared_ptr<PSICluster> cluster;

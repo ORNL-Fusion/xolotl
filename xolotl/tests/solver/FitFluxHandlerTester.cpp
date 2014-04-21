@@ -12,9 +12,9 @@ using namespace xolotlSolver;
  */
 BOOST_AUTO_TEST_SUITE (FitFluxHandlerTester_testSuite)
 
-BOOST_AUTO_TEST_CASE(check_getIncidentFlux) {
+BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 
-	FitFluxHandler testFitFlux;
+    auto testFitFlux = std::make_shared<xolotlSolver::FitFluxHandler>();
 
 	// Create a composition vector
 	std::vector<int> compVec = {1, 0, 0};
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(check_getIncidentFlux) {
 	double fitFunction = 0.0006 * x[1] * x[1] * x[1] - 0.0087 * x[1] * x[1] + 0.0300 * x[1];
 	//fitFunction = 0.02381807580174927
 
-	auto testFlux = testFitFlux.getIncidentFlux(compVec, x, 1);
+	auto testFlux = testFitFlux->getIncidentFlux(compVec, x, 1);
 
 	BOOST_TEST_MESSAGE( "\n" << "\nFitFluxHandlerTester Message: \n"
 						<< "incidentFlux = " << testFlux << " with composition "
@@ -37,6 +37,5 @@ BOOST_AUTO_TEST_CASE(check_getIncidentFlux) {
 	BOOST_REQUIRE_EQUAL(testFlux, fitFunction);
 
 }
-
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -93,7 +93,10 @@ int main(int argc, char **argv) {
         launchPetscSolver(solver, handlerRegistry);
 
         // Finalize our use of the solver.
+        auto solverFinalizeTimer = handlerRegistry->getTimer( "solverFinalize" );
+        solverFinalizeTimer->start();
 		solver.finalize();
+		solverFinalizeTimer->stop();
         totalTimer->stop();
 
         // Report the performance data about the run we just completed
@@ -112,6 +115,12 @@ int main(int argc, char **argv) {
 
     // finalize our use of MPI
     MPI_Finalize();
+
+    // Uncomment if GPTL was built with pmpi disabled
+    // Output performance data if pmpi is disabled in GPTL
+    // Access the handler registry to output performance data
+//    auto handlerRegistry = xolotlPerf::getHandlerRegistry();
+//    handlerRegistry->dump(rank);
 
 	return EXIT_SUCCESS;
 }
@@ -159,7 +168,9 @@ void launchPetscSolver(xolotlSolver::PetscSolver solver, std::shared_ptr<xolotlP
     solverTimer->start();
     // Create object to handle incident flux calculations
     auto fitFluxHandler = std::make_shared<xolotlSolver::FitFluxHandler>();
-	solver.solve(fitFluxHandler);
+    // Create object to handle temperature
+    auto tempHandler = std::make_shared<xolotlSolver::TemperatureHandler>();
+	solver.solve(fitFluxHandler, tempHandler);
     solverTimer->stop();
 
 
