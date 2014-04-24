@@ -1,6 +1,6 @@
- #He V I E_He E_V E_I E_t E_migration D_0 
- 0 0 1 Infinity Infinity Infinity Infinity 1.300E-002 2.130E+010
- 1 0 0 Infinity Infinity Infinity 8.270E+000 1.300E-001 2.950E+010
- 2 0 0 8.640E-001 Infinity Infinity 6.120E+000 2.000E-001 3.240E+010
- 0 1 0 Infinity Infinity Infinity Infinity 1.660E+000 2.410E+011
- 2 1 0 3.020E+000 7.250E+000 Infinity 1.020E+001 Infinity 0.000E+000
+#He V I E_He E_V E_I E_migration D_0
+0 0 1 Infinity Infinity Infinity 1.300E-002 2.130E+010
+1 0 0 Infinity Infinity Infinity 1.300E-001 2.950E+010
+2 0 0 8.640E-001 Infinity Infinity 2.000E-001 3.240E+010
+0 1 0 Infinity Infinity Infinity 1.660E+000 2.410E+011
+2 1 0 3.020E+000 7.250E+000 Infinity Infinity 0.000E+000
