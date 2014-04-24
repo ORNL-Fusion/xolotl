@@ -30,7 +30,6 @@ namespace xolotlCore {
  * > The He binding energy
  * > The V binding energy
  * > The I binding energy
- * > The trap mutation binding energy
  *
  * Where appropriate, any binding energy may be specified as "Infinity" to
  * signify that the cluster does not undergo that type of dissociation.

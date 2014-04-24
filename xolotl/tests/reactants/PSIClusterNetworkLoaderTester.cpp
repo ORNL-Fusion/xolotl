@@ -33,14 +33,14 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Local Declarations
 	shared_ptr<stringstream> networkStream(
 			new stringstream(stringstream::in | stringstream::out));
-	string singleHeString = "1 0 0 0.0 Infinity Infinity 8.269996 0.999 1.34\n";
+	string singleHeString = "1 0 0 0.0 Infinity Infinity 0.999 1.34\n";
 	string singleVString =
-			"0 50 0 Infinity 2.49000002 Infinity Infinity 0.888 2.345\n";
-	string singleIString = "0 0 1 Infinity Infinity Infinity Infinity 0.7777 3.456\n";
+			"0 50 0 Infinity 2.49000002 Infinity 0.888 2.345\n";
+	string singleIString = "0 0 1 Infinity Infinity Infinity 0.7777 3.456\n";
 	string mixedString =
-			"1 50 0 6.160001 2.4900002 Infinity Infinity 6.789 4.5678\n";
+			"1 50 0 6.160001 2.4900002 Infinity 6.789 4.5678\n";
 	// This string is bad because it is one value short
-	string badString = "1 2 3 4 5 6 7 8\n";
+	string badString = "1 2 3 4 5 6 7\n";
 	bool caughtFlag = false;
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader();
 	
@@ -105,7 +105,6 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE_CLOSE(bindingEnergies.at(0), 0.0, 0.00);
 	BOOST_REQUIRE(bindingEnergies.at(1) == numeric_limits<double>::infinity());
 	BOOST_REQUIRE(bindingEnergies.at(2) == numeric_limits<double>::infinity());
-	BOOST_REQUIRE_CLOSE(bindingEnergies.at(3), 8.2699999, 0.0001);
 	BOOST_REQUIRE_CLOSE(heCluster->getMigrationEnergy(),0.999,0.001);
 	BOOST_REQUIRE_CLOSE(heCluster->getDiffusionFactor(),1.34,0.01);
 	// V
@@ -116,7 +115,6 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(bindingEnergies[0] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(bindingEnergies[1], 2.4900, 0.0001);
 	BOOST_REQUIRE(bindingEnergies[2] == numeric_limits<double>::infinity());
-	BOOST_REQUIRE(bindingEnergies[3] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(vCluster->getMigrationEnergy(),0.888,0.001);
 	BOOST_REQUIRE_CLOSE(vCluster->getDiffusionFactor(),2.345,0.001);
 	// I
@@ -127,7 +125,6 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(bindingEnergies[0] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE(bindingEnergies[1] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE(bindingEnergies[2] == numeric_limits<double>::infinity());
-	BOOST_REQUIRE(bindingEnergies[3] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(iCluster->getMigrationEnergy(),0.7777,0.0001);
 	BOOST_REQUIRE_CLOSE(iCluster->getDiffusionFactor(),3.456,0.001);
 	// HeV
@@ -142,7 +139,6 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE_CLOSE(bindingEnergies[0], 6.160001, 0.00001);
 	BOOST_REQUIRE_CLOSE(bindingEnergies[1], 2.4900, 0.0001);
 	BOOST_REQUIRE(bindingEnergies[2] == numeric_limits<double>::infinity());
-	BOOST_REQUIRE(bindingEnergies[3] == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(heVCluster->getMigrationEnergy(),6.789,0.001);
 	BOOST_REQUIRE_CLOSE(heVCluster->getDiffusionFactor(),4.5678,0.0001);
 
