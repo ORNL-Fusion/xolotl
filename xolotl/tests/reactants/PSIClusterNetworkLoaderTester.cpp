@@ -15,6 +15,7 @@
 #include <limits>
 #include <PSIClusterNetworkLoader.h>
 #include <PSIClusterReactionNetwork.h>
+#include <DummyHandlerRegistry.h>
 
 
 using namespace std;
@@ -42,7 +43,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// This string is bad because it is one value short
 	string badString = "1 2 3 4 5 6 7\n";
 	bool caughtFlag = false;
-	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader();
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 	
 	
 	// Load the network stream. This simulates a file with single He, single

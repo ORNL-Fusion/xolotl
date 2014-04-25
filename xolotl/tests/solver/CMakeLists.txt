@@ -5,9 +5,13 @@ SET(PACKAGE_NAME "xolotl.tests.solver")
 SET(PACKAGE_DESCRIPTION "Tests for the Xolotl solver package")
 
 #Include directories from the source and boost binaries
+include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
 include_directories(${Boost_BINARY_DIRS})
 include_directories(${PETSC_INCLUDES})
 

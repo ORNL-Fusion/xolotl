@@ -13,6 +13,7 @@
 #include <memory>
 #include "PSICluster.h"
 #include <PSIClusterReactionNetwork.h>
+#include <IHandlerRegistry.h>
 #include <string>
 
 namespace xolotlCore {
@@ -72,11 +73,22 @@ private:
 	 */
 	std::shared_ptr<std::istream> networkStream;
 
-
 	/**
 	 * The list of clusters that will be added to the network.
 	 */
 	std::vector<std::shared_ptr<PSICluster>> clusters;
+
+	/**
+	 * The performance handler registry used to measure runtime performance
+	 * during loads.
+	 */
+	std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
+
+	/**
+	 * Private nullary constructor.
+	 */
+	PSIClusterNetworkLoader() {
+	};
 
 	/**
 	 * This operation creates a singles-species cluster of helium, vacancies or
@@ -95,7 +107,8 @@ public:
 	 * The default constructor. The setInputstream() operation must be called
 	 * if this constructor is used.
 	 */
-	PSIClusterNetworkLoader() {
+	PSIClusterNetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
+		handlerRegistry = registry;
 	}
 
 	/**
@@ -103,7 +116,8 @@ public:
 	 * @param inputstream The inputstream from which the cluster data should be
 	 * loaded.
 	 */
-	PSIClusterNetworkLoader(const std::shared_ptr<std::istream> stream);
+	PSIClusterNetworkLoader(const std::shared_ptr<std::istream> stream,
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * Destructor

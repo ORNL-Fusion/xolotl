@@ -21,12 +21,6 @@
 
 using namespace xolotlCore;
 
-// TEMPORARY variable definition used to specify the type of performance handler registry
-// that will be used (standard or dummy).  Currently, the handler registry is set via
-// commandline argument and the only way to access which handler registry will be used is
-// through getHandlerRegistry
-#define performanceHandlerRegistry xolotlPerf::getHandlerRegistry()
-
 /**
  * This operation converts a string to a double, taking in to account the fact
  * that the input file may contain keys such as "infinite."
@@ -59,7 +53,7 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
 	// property keys.
 	if (numHe > 0 && numV > 0) {
 		// Create a new HeVCluster
-		cluster = std::make_shared<HeVCluster>(numHe, numV, performanceHandlerRegistry);
+		cluster = std::make_shared<HeVCluster>(numHe, numV, handlerRegistry);
 
 		clusters.push_back(cluster);
 	} else if (numHe > 0 && numI > 0) {
@@ -67,17 +61,17 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
 		// FIXME! Add code to add it to the list
 	} else if (numHe > 0) {
 		// Create a new HeCluster
-		cluster = std::make_shared<HeCluster>(numHe, performanceHandlerRegistry);
+		cluster = std::make_shared<HeCluster>(numHe, handlerRegistry);
 
 		clusters.push_back(cluster);
 	} else if (numV > 0) {
 		// Create a new VCluster
-		cluster = std::make_shared<VCluster>(numV, performanceHandlerRegistry);
+		cluster = std::make_shared<VCluster>(numV, handlerRegistry);
 
 		clusters.push_back(cluster);
 	} else if (numI > 0) {
 		// Create a new ICluster
-		cluster = std::make_shared<InterstitialCluster>(numI, performanceHandlerRegistry);
+		cluster = std::make_shared<InterstitialCluster>(numI, handlerRegistry);
 
 		// Add it to the ICluster list
 		clusters.push_back(cluster);
@@ -92,7 +86,9 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createCluster(int numHe,
  * loaded.
  */
 PSIClusterNetworkLoader::PSIClusterNetworkLoader(
-		const std::shared_ptr<std::istream> stream) {
+		const std::shared_ptr<std::istream> stream,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
+	handlerRegistry = registry;
 	setInputstream(stream);
 }
 
@@ -125,14 +121,15 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 	// Local Declarations
 	TokenizedLineReader<std::string> reader;
 	std::vector<std::string> loadedLine;
-	std::shared_ptr<PSIClusterReactionNetwork> network(
-			new PSIClusterReactionNetwork(performanceHandlerRegistry) );
+	std::shared_ptr<PSIClusterReactionNetwork> network = std::make_shared<
+			PSIClusterReactionNetwork>(handlerRegistry);
 
 	std::istringstream dataStream;
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
 	int numHe = 0, numV = 0, numI = 0;
-	double heBindingE = 0.0, vBindingE = 0.0, iBindingE = 0.0, migrationEnergy = 0.0;
+	double heBindingE = 0.0, vBindingE = 0.0, iBindingE = 0.0, migrationEnergy =
+			0.0;
 	double diffusionFactor = 0.0;
 	std::vector<double> bindingEnergies;
 	std::vector<std::shared_ptr<Reactant> > reactants;
