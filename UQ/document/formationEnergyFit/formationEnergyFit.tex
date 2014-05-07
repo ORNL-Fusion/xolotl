@@ -335,6 +335,69 @@
      \end{figure}
 \end{frame}
 
+\begin{frame}{Bayesian Inference in UQTk: $V = 27$ Formation Energies}
+	\large
+	    \begin{itemize}
+    	\item[$\blacktriangleright$] Suppose the following function is used to fit
+    	the data
+    	$$f(x) = a + b x + c x^2 + d x^3 + f x^4 + g x^5$$
+    	\item[$\blacktriangleright$] Fitting the data using GNUplot gives
+    	\begin{align*}
+    	a = 49.0722,~&b = -1.0619, c = -4.87474, d = 9.92562, \\
+    	&f = -2.47767, g = 0.200702
+    	\end{align*}
+    	\item[$\blacktriangleright$] Model the data with
+    	\begin{align*}
+    	M(x) = \texttt{param\_a} &+ \texttt{param\_b} \cdot x - \texttt{param\_c}
+    	\cdot x^2 + \texttt{param\_d} \cdot x^3 \\
+    	 & \texttt{param\_f} \cdot x^4 + \texttt{param\_g} \cdot x^5
+    	\end{align*}
+    	to infer $6$~parameters.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Bayesian Inference in UQTk: $V = 27$ Formation Energies}
+     \begin{figure}
+         \includegraphics[width=0.5\textwidth]{prob5_postpred}
+     \end{figure}
+     
+     \begin{figure}
+         \includegraphics[width=0.5\textwidth]{prob5_postpred_noise}
+     \end{figure}
+\end{frame}
+
+\begin{frame}{Bayesian Inference in UQTk: $V = 27$ Formation Energies}
+  	\begin{columns}[onlytextwith]
+    	\begin{column}{0.5\textwidth}
+      		\begin{figure}
+        		\includegraphics[width=0.95\textwidth]{prob5_chn_param_a}
+      		\end{figure}
+      		\begin{figure}
+        		\includegraphics[width=0.95\textwidth]{prob5_chn_param_d}
+      		\end{figure}
+    	\end{column}  
+    	\begin{column}{0.5\textwidth}
+      		\begin{figure}
+        		\includegraphics[height=0.2\textheight]{posterior_a}
+        		\hspace{0.1in}
+        		\includegraphics[height=0.2\textheight]{posterior_b}
+      		\end{figure}
+      		
+      		\begin{figure}
+        		\includegraphics[height=0.2\textheight]{posterior_c}
+        		\hspace{0.1in}
+        		\includegraphics[height=0.2\textheight]{posterior_d}
+      		\end{figure}
+      		
+      		\begin{figure}
+        		\includegraphics[height=0.2\textheight]{posterior_f}
+        		\hspace{0.1in}
+        		\includegraphics[height=0.2\textheight]{posterior_g}
+      		\end{figure}
+    	\end{column}
+  	\end{columns}
+\end{frame}
+
 \begin{frame}{Next Steps}
 	\Large
     \begin{itemize}
@@ -345,6 +408,42 @@
     	\item[$\blacktriangleright$] Conduct a preliminary global sensitivity
     	analysis on Xolotl using this function as an input.
     \end{itemize}
+\end{frame}
+
+\begin{frame}{Scaling of the Parameters with Python Fit}
+	\begin{figure}
+        \includegraphics[width=0.95\textwidth]{parametersIN}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Scaling of the Parameters with Python Fit}
+	\begin{figure}
+        \includegraphics[width=0.95\textwidth]{energyIN}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Scaling of the Parameters with Python Fit}
+	\begin{figure}
+        \includegraphics[width=0.95\textwidth]{ratioIN}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Excluding V~$=1, 2$}
+	\begin{figure}
+        \includegraphics[width=0.95\textwidth]{parametersEX}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Excluding V~$=1, 2$}
+	\begin{figure}
+        \includegraphics[width=0.95\textwidth]{energyEX}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Excluding V~$=1, 2$}
+	\begin{figure}
+        \includegraphics[width=0.95\textwidth]{ratioEX}
+    \end{figure}
 \end{frame}
 
 % \begin{frame}{Bayesian Inference in UQTk: Burn-in}
@@ -691,5 +790,29 @@
 %     	\end{column}
 %   	\end{columns}
 % \end{frame}
+
+\begin{frame}{}
+\begin{center}
+  \huge{\textbf{Back-Up}}
+\end{center}
+\end{frame}
+
+\begin{frame}{Excluding V~$=1, 2$, up to V~$=87$}
+	\begin{figure}
+        \includegraphics[width=0.95\textwidth]{parameters80}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Excluding V~$=1, 2$, up to V~$=87$}
+	\begin{figure}
+        \includegraphics[width=0.95\textwidth]{energy80}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Excluding V~$=1, 2$, up to V~$=87$}
+	\begin{figure}
+        \includegraphics[width=0.95\textwidth]{ratio80}
+    \end{figure}
+\end{frame}
 
 \end{document}
