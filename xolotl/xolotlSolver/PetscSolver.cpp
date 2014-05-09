@@ -311,7 +311,10 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 
 	// Get the total number of grid points specified by the command line option
 	PetscInt numOfxGridPoints;
-	PetscOptionsGetInt(NULL, "-da_grid_x", &numOfxGridPoints, NULL);
+	PetscBool flg;
+	PetscOptionsGetInt(NULL, "-da_grid_x", &numOfxGridPoints, &flg);
+	if ( !flg )
+		numOfxGridPoints = 8.0;
 
 	// Setup some step size variables
 	hx = numOfxGridPoints / (PetscReal)(Mx - 1);
@@ -545,7 +548,10 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 	// Get the total number of grid points specified by the command line option
 	PetscInt numOfxGridPoints;
-	PetscOptionsGetInt(NULL, "-da_grid_x", &numOfxGridPoints, NULL);
+	PetscBool flg;
+	PetscOptionsGetInt(NULL, "-da_grid_x", &numOfxGridPoints, &flg);
+	if ( !flg )
+		numOfxGridPoints = 8.0;
 
 	// Setup some step size variables
 	hx = numOfxGridPoints / (PetscReal)(Mx - 1);
