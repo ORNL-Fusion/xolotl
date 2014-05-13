@@ -449,9 +449,9 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		computeNewFluxes->stop();
 
 		// Boundary conditions
-		if (x == 0.0) {
+		if (xi == 0) {
 			for (int i = 0; i < size; i++) {
-				updatedConcOffset[i] = 1e12 * concs[i];
+				updatedConcOffset[i] = 1.0e12 * concs[i];
 			}
 		}
 
@@ -774,17 +774,17 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	// Boundary conditions
 	// Loop over the grid points
 	for (xi = xs; xi < xs + xm; xi++) {
-		// Get the reactants
-		reactants = network->getAll();
-		// Loop on the reactants
-		for (int i = 0; i < size; i++) {
-			reactant = reactants->at(i);
-			// Get the reactant index
-			reactantIndex = reactant->getId() - 1;
-			// Get the row id
-			rowId = (xi - xs + 1) * size + reactantIndex;
+		if (xi == 0) {
+			// Get the reactants
+			reactants = network->getAll();
+			// Loop on the reactants
+			for (int i = 0; i < size; i++) {
+				reactant = reactants->at(i);
+				// Get the reactant index
+				reactantIndex = reactant->getId() - 1;
+				// Get the row id
+				rowId = (xi - xs + 1) * size + reactantIndex;
 
-			if (xi * hx == 0.0) {
 				// Get the list of column ids from the map
 				auto pdColIdsVector = dFillMap.at(reactantIndex);
 				pdColIdsVectorSize = pdColIdsVector.size(); //Number of partial derivatives
@@ -794,7 +794,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 					localPDColIds[j] = (xi - xs + 1) * size + pdColIdsVector[j];
 					// Get the partial derivative from the array of all of the partials
 					if (pdColIdsVector[j] == reactantIndex)
-						reactingPartialsForCluster[j] = 1e12;
+						reactingPartialsForCluster[j] = 1.0e12;
 					else
 						reactingPartialsForCluster[j] = 0.0;
 				}
@@ -1042,7 +1042,7 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	ierr = DMDACreate1d(PETSC_COMM_WORLD, DMDA_BOUNDARY_MIRROR, -8, dof, 1,
-	NULL, &da);
+			NULL, &da);
 	checkPetscError(ierr);
 
 	/* The only spatial coupling in the Jacobian (diffusion) is for the first 5 He, the first V, and the first I.
