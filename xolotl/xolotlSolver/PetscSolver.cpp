@@ -135,9 +135,9 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
 	PetscFunctionBeginUser;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	/* Name each of the concentrations */
@@ -175,17 +175,21 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 			reactants->at(j)->setConcentration(0.0);
 		}
 
-		// Set the default vacancy concentrations
-		reactants = network->getAll("V");
-		size = reactants->size();
-		for (int j = 0; j < size; j++) {
-			reactants->at(j)->setConcentration(1.0);
-		}
-		// Set the default interstitial concentrations
-		reactants = network->getAll("I");
-		size = reactants->size();
-		for (int j = 0; j < size; j++) {
-			reactants->at(j)->setConcentration(1.0);
+		// For boundary conditions all the concentrations are 0
+		// at i == 0
+		if (i != 0) {
+			// Set the default vacancy concentrations
+			reactants = network->getAll("V");
+			size = reactants->size();
+			for (int j = 0; j < size; j++) {
+				reactants->at(j)->setConcentration(1.0);
+			}
+			// Set the default interstitial concentrations
+			reactants = network->getAll("I");
+			size = reactants->size();
+			for (int j = 0; j < size; j++) {
+				reactants->at(j)->setConcentration(1.0);
+			}
 		}
 
 		// Update the PETSc concentrations array
@@ -304,16 +308,16 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	ierr = DMGetLocalVector(da, &localC);
 	checkPetscError(ierr);
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Get the total number of grid points specified by the command line option
 	PetscInt numOfxGridPoints;
 	PetscBool flg;
 	PetscOptionsGetInt(NULL, "-da_grid_x", &numOfxGridPoints, &flg);
-	if ( !flg )
+	if (!flg)
 		numOfxGridPoints = 8.0;
 
 	// Setup some step size variables
@@ -444,6 +448,13 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		}
 		computeNewFluxes->stop();
 
+		// Boundary conditions
+		if (x == 0.0) {
+			for (int i = 0; i < size; i++) {
+				updatedConcOffset[i] = 1e12 * concs[i];
+			}
+		}
+
 //		for (int i = 0; i < size; i++) {
 //			std::cout << updatedConcOffset[i] << std::endl;
 //		}
@@ -499,6 +510,12 @@ void computePartialsForDiffusion(std::shared_ptr<PSICluster> cluster,
 	col[1] = (xi - xs + 1) * size + reactantIndex;
 	col[2] = ((xi + 1 + 1) - xs) * size + reactantIndex;
 
+	// Boundary conditions
+	if (xi == 0) {
+		val[0] = 0.0;
+		val[1] = 0.0;
+		val[2] = 0.0;
+	}
 }
 
 #undef __FUNCT__
@@ -541,16 +558,16 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	ierr = DMGetLocalVector(da, &localC);
 	checkPetscError(ierr);
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Get the total number of grid points specified by the command line option
 	PetscInt numOfxGridPoints;
 	PetscBool flg;
 	PetscOptionsGetInt(NULL, "-da_grid_x", &numOfxGridPoints, &flg);
-	if ( !flg )
+	if (!flg)
 		numOfxGridPoints = 8.0;
 
 	// Setup some step size variables
@@ -753,6 +770,50 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	checkPetscError(ierr);
 	ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
 	checkPetscError(ierr);
+
+	// Boundary conditions
+	// Loop over the grid points
+	for (xi = xs; xi < xs + xm; xi++) {
+		// Get the reactants
+		reactants = network->getAll();
+		// Loop on the reactants
+		for (int i = 0; i < size; i++) {
+			reactant = reactants->at(i);
+			// Get the reactant index
+			reactantIndex = reactant->getId() - 1;
+			// Get the row id
+			rowId = (xi - xs + 1) * size + reactantIndex;
+
+			if (xi * hx == 0.0) {
+				// Get the list of column ids from the map
+				auto pdColIdsVector = dFillMap.at(reactantIndex);
+				pdColIdsVectorSize = pdColIdsVector.size(); //Number of partial derivatives
+				// Loop over the list of column ids
+				for (int j = 0; j < pdColIdsVectorSize; j++) {
+					// Calculate the appropriate index to match the dfill array configuration
+					localPDColIds[j] = (xi - xs + 1) * size + pdColIdsVector[j];
+					// Get the partial derivative from the array of all of the partials
+					if (pdColIdsVector[j] == reactantIndex)
+						reactingPartialsForCluster[j] = 1e12;
+					else
+						reactingPartialsForCluster[j] = 0.0;
+				}
+
+				// Update the matrix
+				ierr = MatSetValuesLocal(*J, 1, &rowId, pdColIdsVectorSize,
+						localPDColIds, reactingPartialsForCluster.data(),
+						INSERT_VALUES);
+				checkPetscError(ierr);
+			}
+		}
+	}
+
+	// Assemble again
+	ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
+	checkPetscError(ierr);
+	ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
+	checkPetscError(ierr);
+
 	if (*A != *J) {
 		ierr = MatAssemblyBegin(*A, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
