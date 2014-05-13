@@ -5,6 +5,7 @@
 #include <Reactant.h>
 #include <math.h>
 #include <vector>
+#include <set>
 #include <unordered_map>
 
 namespace xolotlCore {
@@ -88,24 +89,6 @@ protected:
 	double reactionRadius;
 
 	/**
-	 * The row of the reaction connectivity matrix corresponding to
-	 * this PSICluster
-	 *
-	 * If a cluster is involved in a reaction with this PSICluster,
-	 * the element at the cluster's index is 1, otherwise 0.
-	 */
-	std::vector<int> reactionConnectivity;
-
-	/**
-	 * The row of the dissociation connectivity matrix corresponding to
-	 * this PSICluster
-	 *
-	 * If this PSICluster can dissociate into a particular cluster,
-	 * the element at the cluster's index is 1, otherwise 0.
-	 */
-	std::vector<int> dissociationConnectivity;
-
-	/**
 	 * A vector of ReactingPairs that represent reacting pairs of clusters
 	 * that produce this cluster. This vector should be populated early in the
 	 * cluster's lifecycle by subclasses. In the standard Xolotl clusters,
@@ -133,10 +116,10 @@ protected:
 	 */
 	std::vector<std::shared_ptr<PSICluster>> dissociatingClusters;
 
-    /**
-     * Counter for the number of times getDissociationFlux is called.
-     */
-    std::shared_ptr<xolotlPerf::IEventCounter> getDissociationFluxCounter;
+	/**
+	 * Counter for the number of times getDissociationFlux is called.
+	 */
+	std::shared_ptr<xolotlPerf::IEventCounter> getDissociationFluxCounter;
 
 	/**
 	 * This operation retrieves the shared_ptr for this cluster from the
@@ -247,8 +230,7 @@ protected:
 	 * @param productName The name of the product produced in the reaction.
 	 */
 	void combineClusters(std::shared_ptr<std::vector<std::shared_ptr<Reactant>>>clusters,
-			int maxSize, std::string productName)
-	;
+			int maxSize, std::string productName);
 
 	/**
 	 * This operation handles partial replacement reactions of the form
@@ -360,12 +342,80 @@ protected:
 			const Reactant & productReactant) const;
 
 	/**
+	 * This operation signifies that the cluster with cluster Id should be
+	 * listed as connected with this cluster through forward reactions.
+	 * @param clusterId - The integer id of the cluster that is connected
+	 * to this cluster.
+	 */
+	virtual void setReactionConnectivity(int clusterId);
+
+	/**
+	 * This operation returns the connectivity array for this cluster for
+	 * forward reactions. An entry with value one means that this cluster
+	 * and the cluster with id = index + 1 are connected.
+	 * @return The connectivity array for "forward" (non-dissociating)
+	 * reactions.
+	 */
+	virtual std::vector<int> getReactionConnectivity() const;
+
+	/**
+	 * This operation returns a set that contains only the entries of the
+	 * reaction connectivity array that are non-zero.
+	 * @return The set of connected reactants. Each entry in the set is the id
+	 * of a connected cluster for forward reactions.
+	 */
+	std::set<int> getReactionConnectivitySet() const;
+
+	/**
+	 * This operation signifies that the cluster with cluster Id should be
+	 * listed as connected with this cluster through forward reactions.
+	 * @param clusterId - The integer id of the cluster that is connected
+	 * to this cluster.
+	 */
+	virtual void setDissociationConnectivity(int clusterId);
+
+	/**
+	 * This operation returns the connectivity array for this cluster for
+	 * forward reactions. An entry with value one means that this cluster
+	 * and the cluster with id = index + 1 are connected.
+	 * @return The connectivity array for "forward" (non-dissociating)
+	 * reactions.
+	 */
+	virtual std::vector<int> getDissociationConnectivity() const;
+
+	/**
+	 * This operation returns a set that contains only the entries of the
+	 * dissociation connectivity array that are non-zero.
+	 * @return The set of connected reactants. Each entry in the set is the id
+	 * of a connected cluster for dissociation reactions.
+	 */
+	std::set<int> getDissociationConnectivitySet() const;
+
+	/**
 	 * This constructor is protected because PSIClusters must always be
 	 * initialized with a size.
 	 */
 	PSICluster(const int clusterSize);
 
 private:
+
+	/**
+	 * The row of the reaction connectivity matrix corresponding to
+	 * this PSICluster stored as a set.
+	 *
+	 * If a cluster is involved in a reaction with this PSICluster,
+	 * the cluster id is an element of this set.
+	 */
+	std::set<int> reactionConnectivitySet;
+
+	/**
+	 * The row of the dissociation connectivity matrix corresponding to
+	 * this PSICluster stored as a set.
+	 *
+	 * If this PSICluster can dissociate into a particular cluster,
+	 * the cluster id is an element of this set.
+	 */
+	std::set<int> dissociationConnectivitySet;
 
 	/**
 	 * The default constructor is private because PSIClusters must always be
@@ -537,6 +587,7 @@ public:
 	 * ReactionNetwork::getAll() operation.
 	 */
 	virtual std::vector<double> getPartialDerivatives(double temperature) const;
+
 };
 
 } /* end namespace xolotlCore */

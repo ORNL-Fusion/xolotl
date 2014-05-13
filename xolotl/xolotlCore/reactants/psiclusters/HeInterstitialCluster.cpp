@@ -70,13 +70,11 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	auto props = psiNetwork->getProperties();
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
-	int index = 0;
 	std::shared_ptr<Reactant> firstReactant, secondReactant;
 	std::vector<int> firstComposition, secondComposition;
 
 	// Connect this cluster to itself since any reaction will affect it
-	index = getId() - 1;
-	reactionConnectivity[index] = 1;
+	setReactionConnectivity(getId());
 
 	/* ----- (He_a)(I_b) + (V_c) --> (He_a)[I_(b-c)] -----
 	 * This section adds the clusters that produce this cluster to the array
@@ -119,8 +117,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 		reactingPairs.push_back(pair);
 		// Add single I to the list of clusters this one interacts with if it
 		// doesn't violate the maximum size limit.
-		index = secondReactant->getId() - 1;
-		reactionConnectivity[index] = 1;
+		setReactionConnectivity(secondReactant->getId());
 		combiningReactants.push_back(secondReactant);
 	}
 
@@ -200,37 +197,37 @@ double HeInterstitialCluster::getDissociationFlux(double temperature) const {
 		// Loop over all the elements of the dissociation
 		// connectivity to find where this mixed species dissociates and
 		// calculate the f3 term.
+		//
+		// TODO - What's the performance difference between getting all of the
+		// reactants and pulling each reactant separately?
 		auto reactants = network->getAll();
-		int numClusters = dissociationConnectivity.size();
-		for (int i = 0; i < numClusters; i++) {
-			if (dissociationConnectivity[i] == 1) {
-				// Set the current reactant
-				currentCluster = std::dynamic_pointer_cast<PSICluster>(
-						reactants->at(i));
-				// Get the cluster map of this connection
-				composition = currentCluster->getComposition();
-				// We need to find if this is a Helium dissociation
-				if (numHe - composition["He"] == 1 && numI == composition["I"]
-						&& composition["V"] == 0) {
-					secondCluster = heCluster;
-				} else if (numHe == composition["He"]
-						&& numI - composition["I"] == 1
-						&& composition["V"] == 0) {
-					// trap mutation
-					secondCluster = vCluster;
-				} else if (numHe == composition["He"]
-						&& composition["V"] - numI == 1
-						&& composition["I"] == 0) {
-					// or interstitial dissociation
-					secondCluster = iCluster;
-				}
-				// Update the flux calculation
-				if (secondCluster) {
-					// Get the single species cluster that comes out with it
-					f3 += calculateDissociationConstant(*currentCluster,
-							*secondCluster, temperature)
-							* currentCluster->getConcentration();
-				}
+		auto dissociatingSet = getDissociationConnectivitySet();
+		for (auto it = dissociatingSet.begin(); it != dissociatingSet.end();
+				it++) {
+			// Set the current reactant
+			currentCluster = std::dynamic_pointer_cast<PSICluster>(
+					reactants->at(*it - 1));
+			// Get the cluster map of this connection
+			composition = currentCluster->getComposition();
+			// We need to find if this is a Helium dissociation
+			if (numHe - composition["He"] == 1 && numI == composition["I"]
+					&& composition["V"] == 0) {
+				secondCluster = heCluster;
+			} else if (numHe == composition["He"]
+					&& numI - composition["I"] == 1 && composition["V"] == 0) {
+				// trap mutation
+				secondCluster = vCluster;
+			} else if (numHe == composition["He"]
+					&& composition["V"] - numI == 1 && composition["I"] == 0) {
+				// or interstitial dissociation
+				secondCluster = iCluster;
+			}
+			// Update the flux calculation
+			if (secondCluster) {
+				// Get the single species cluster that comes out with it
+				f3 += calculateDissociationConstant(*currentCluster,
+						*secondCluster, temperature)
+						* currentCluster->getConcentration();
 			}
 		}
 	}

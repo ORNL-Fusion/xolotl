@@ -41,7 +41,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	std::shared_ptr<PSICluster> firstReactant, secondReactant;
 
 	// Connect this cluster to itself since any reaction will affect it
-	reactionConnectivity[thisNetworkIndex] = 1;
+	setReactionConnectivity(getId());
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
@@ -110,8 +110,8 @@ void InterstitialCluster::createReactionConnectivity() {
 		secondReactant = std::dynamic_pointer_cast<PSICluster>(network->get(name,firstReactant->getSize() + size));
 		// Update the connectivity
 		if (secondReactant) {
-			reactionConnectivity[firstReactant->getId() - 1] = 1;
-			reactionConnectivity[secondReactant->getId() - 1] = 1;
+			setReactionConnectivity(firstReactant->getId());
+			setReactionConnectivity(secondReactant->getId());
 		}
 	}
 

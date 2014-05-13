@@ -49,7 +49,7 @@ void HeCluster::createReactionConnectivity() {
 			productReactant;
 
 	// Connect this cluster to itself since any reaction will affect it
-	reactionConnectivity[thisNetworkIndex] = 1;
+	setReactionConnectivity(getId());
 
 	/*
 	 * This section fills the array of reacting pairs that combine to produce
