@@ -168,32 +168,16 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	 Compute function over the locally owned part of the grid
 	 */
 	for (i = xs; i < xs + xm; i++) {
-		// Intitialiaze all concentration to 0 for each grid point
-		reactants = network->getAll();
-		size = reactants->size();
-		for (int j = 0; j < size; j++) {
-			reactants->at(j)->setConcentration(0.0);
-		}
 
 		// For boundary conditions all the concentrations are 0
-		// at i == 0
+		// at i == 0. Everywhere else, only I1 has a non-zero concentration.
 		if (i != 0) {
-			// Set the default vacancy concentrations
-			reactants = network->getAll("V");
-			size = reactants->size();
-			for (int j = 0; j < size; j++) {
-				reactants->at(j)->setConcentration(1.0);
-			}
 			// Set the default interstitial concentrations
-			reactants = network->getAll("I");
-			size = reactants->size();
-			for (int j = 0; j < size; j++) {
-				reactants->at(j)->setConcentration(1.0);
-			}
+			auto reactant = network->get("I",1);
+			reactant->setConcentration(0.0023);
 		}
 
 		// Update the PETSc concentrations array
-		size = network->size();
 		concOffset = concentrations + size * i;
 		network->fillConcentrationsArray(concOffset);
 	}
@@ -451,7 +435,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Boundary conditions
 		if (xi == 0) {
 			for (int i = 0; i < size; i++) {
-				updatedConcOffset[i] = 1.0e12 * concs[i];
+				updatedConcOffset[i] = 1.0 * concs[i];
 			}
 		}
 
@@ -794,7 +778,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 					localPDColIds[j] = (xi - xs + 1) * size + pdColIdsVector[j];
 					// Get the partial derivative from the array of all of the partials
 					if (pdColIdsVector[j] == reactantIndex)
-						reactingPartialsForCluster[j] = 1.0e12;
+						reactingPartialsForCluster[j] = 1.0;
 					else
 						reactingPartialsForCluster[j] = 0.0;
 				}
@@ -1135,8 +1119,8 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	ierr = TSSetInitialTimeStep(ts, 0.0, 1.0e-8);
 	checkPetscError(ierr);
-	ierr = TSSetDuration(ts, 100, 50.0);
-	checkPetscError(ierr);
+//	ierr = TSSetDuration(ts, 100, 50.0);
+//	checkPetscError(ierr);
 	ierr = TSSetFromOptions(ts);
 	checkPetscError(ierr);
 	ierr = setupPetscMonitor(ts);
