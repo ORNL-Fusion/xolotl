@@ -80,8 +80,7 @@ std::shared_ptr<IFluxHandler> PetscSolver::fluxHandler;
 std::shared_ptr<ITemperatureHandler> PetscSolver::temperatureHandler;
 
 extern PetscErrorCode RHSFunction(TS, PetscReal, Vec, Vec, void*);
-extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat*, Mat*, MatStructure*,
-		void*);
+extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat, Mat);
 extern PetscErrorCode setupPetscMonitor(TS);
 extern void computeRetention(TS, Vec);
 
@@ -507,8 +506,7 @@ void computePartialsForDiffusion(std::shared_ptr<PSICluster> cluster,
 /*
  Compute the Jacobian entries based on IFuction() and insert them into the matrix
  */
-PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
-		MatStructure *str, void *ptr) {
+PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr) {
 
 	// increment the event counter monitoring this function
 	RHSJacobianCounter->increment();
@@ -535,7 +533,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 
 	// Get the matrix from PETSc
 	PetscFunctionBeginUser;
-	ierr = MatZeroEntries(*J);
+	ierr = MatZeroEntries(J);
 	checkPetscError(ierr);
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr);
@@ -621,7 +619,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 						> (network->get("He", i));
 				computePartialsForDiffusion(psiCluster, temperature, sx, val,
 						row, col, xi, xs, size);
-				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+				ierr = MatSetValuesLocal(J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
 
@@ -633,7 +631,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			if (psiCluster) {
 				computePartialsForDiffusion(psiCluster, temperature, sx, val,
 						row, col, xi, xs, size);
-				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+				ierr = MatSetValuesLocal(J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
 
@@ -643,27 +641,27 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 			if (psiCluster) {
 				computePartialsForDiffusion(psiCluster, temperature, sx, val,
 						row, col, xi, xs, size);
-				ierr = MatSetValuesLocal(*J, 1, row, 3, col, val, ADD_VALUES);
+				ierr = MatSetValuesLocal(J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
 			//break;   // Uncomment this line for debugging in a single cell.
 		}
 		computeJacobianDiffusionTerms->stop();
 
-		ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
+		ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
-		ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
+		ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
-//		ierr = MatSetOption(*J, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
+//		ierr = MatSetOption(J, MAT_NEW_NONZERO_LOCATIONS, PETSC_FALSE);
 //		checkPetscError(ierr);
-		ierr = MatStoreValues(*J);
+		ierr = MatStoreValues(J);
 		checkPetscError(ierr);
-//		MatSetFromOptions(*J);
+//		MatSetFromOptions(J);
 		initialized = PETSC_TRUE;
 		// Debug line for viewing the matrix
-		//MatView(*J, PETSC_VIEWER_STDOUT_WORLD);
+		//MatView(J, PETSC_VIEWER_STDOUT_WORLD);
 	} else {
-		ierr = MatRetrieveValues(*J);
+		ierr = MatRetrieveValues(J);
 		checkPetscError(ierr);
 	}
 
@@ -729,7 +727,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 //				std::cout << "dp[" << j << "] = " << pdColIdsVector[j] << " , [r,c] = "<< "[" << rowId << "," << localPDColIds[j] << "] = " << reactingPartialsForCluster[j]<< std::endl;
 			}
 			// Update the matrix
-			ierr = MatSetValuesLocal(*J, 1, &rowId, pdColIdsVectorSize,
+			ierr = MatSetValuesLocal(J, 1, &rowId, pdColIdsVectorSize,
 					localPDColIds, reactingPartialsForCluster.data(),
 					ADD_VALUES);
 			checkPetscError(ierr);
@@ -749,10 +747,9 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	checkPetscError(ierr);
 	ierr = DMRestoreLocalVector(da, &localC);
 	checkPetscError(ierr);
-	*str = SAME_NONZERO_PATTERN;
-	ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
+	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
 	checkPetscError(ierr);
-	ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
+	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
 	checkPetscError(ierr);
 
 	// Boundary conditions
@@ -784,7 +781,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 				}
 
 				// Update the matrix
-				ierr = MatSetValuesLocal(*J, 1, &rowId, pdColIdsVectorSize,
+				ierr = MatSetValuesLocal(J, 1, &rowId, pdColIdsVectorSize,
 						localPDColIds, reactingPartialsForCluster.data(),
 						INSERT_VALUES);
 				checkPetscError(ierr);
@@ -793,26 +790,25 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
 	}
 
 	// Assemble again
-	ierr = MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY);
+	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
 	checkPetscError(ierr);
-	ierr = MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY);
+	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
 	checkPetscError(ierr);
 
-	if (*A != *J) {
-		ierr = MatAssemblyBegin(*A, MAT_FINAL_ASSEMBLY);
+	if (A != J) {
+		ierr = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
-		ierr = MatAssemblyEnd(*A, MAT_FINAL_ASSEMBLY);
+		ierr = MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
 	}
 	PetscFunctionReturn(0);
 
 }
 
-PetscErrorCode callRHSJacobian(TS ts, PetscReal ftime, Vec C, Mat *A, Mat *J,
-		MatStructure *str, void *ptr) {
+PetscErrorCode callRHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void *ptr) {
 	PetscErrorCode ierr;
 	RHSJacobianTimer->start();
-	ierr = RHSJacobian(ts, ftime, C, A, J, str, &ptr);
+	ierr = RHSJacobian(ts, ftime, C, A, J, &ptr);
 	RHSJacobianTimer->stop();
 
 	return ierr;
@@ -1025,7 +1021,7 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = DMDACreate1d(PETSC_COMM_WORLD, DMDA_BOUNDARY_MIRROR, -8, dof, 1,
+	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR, -8, dof, 1,
 			NULL, &da);
 	checkPetscError(ierr);
 
