@@ -93,7 +93,7 @@ void SeriesPlot::render(std::string fileName) {
     	AddRectilinearMesh(data, coords, coordNames, true, "RectilinearGridCells");
 
     	// Give the yVector to the axisValues
-    	eavlArray *axisValues = new eavlFloatArray(plotDataProviders->at(i)->dataName, 1);
+    	eavlArray *axisValues = new eavlFloatArray(plotDataProviders->at(i)->getDataName(), 1);
     	axisValues->SetNumberOfTuples(data->GetNumPoints());
     	for (int i = 0; i < yVector.size(); i++){
     		axisValues->SetComponentFromDouble(i, 0, yVector.at(i));
@@ -108,7 +108,7 @@ void SeriesPlot::render(std::string fileName) {
     	plot = new eavlCurveRenderer(data, NULL,
     			lineColor[i%6],
     			"",
-    			plotDataProviders->at(i)->dataName);
+    			plotDataProviders->at(i)->getDataName());
 
     	// Add the plot to the scene
     	scene->plots.push_back(plot);

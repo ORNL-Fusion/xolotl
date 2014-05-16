@@ -49,7 +49,7 @@ void ScatterPlot::render(std::string fileName) {
 	AddRectilinearMesh(data, coords, coordNames, true, "RectilinearGridCells");
 
 	// Give the yVector to the axisValues
-	eavlArray *axisValues = new eavlFloatArray(plotDataProvider->dataName, 1);
+	eavlArray *axisValues = new eavlFloatArray(plotDataProvider->getDataName(), 1);
 	axisValues->SetNumberOfTuples(data->GetNumPoints());
 	for (int i = 0; i < yVector.size(); i++){
 		axisValues->SetComponentFromDouble(i, 0, yVector.at(i));
@@ -100,7 +100,7 @@ void ScatterPlot::render(std::string fileName) {
     plot = new eavlCurveRenderer(data, NULL,
                                  eavlColor::magenta,
                                  "",
-                                 plotDataProvider->dataName);
+                                 plotDataProvider->getDataName());
     scene->plots.push_back(plot);
 
     // Set the view

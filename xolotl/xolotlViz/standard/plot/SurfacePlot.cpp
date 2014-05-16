@@ -52,7 +52,7 @@ void SurfacePlot::render(std::string fileName) {
 	AddRectilinearMesh(data, coords, coordNames, true, "RectilinearGridCells");
 
 	// Give the zVector to the axisValues
-	eavlArray *axisValues = new eavlFloatArray(plotDataProvider->dataName, 1);
+	eavlArray *axisValues = new eavlFloatArray(plotDataProvider->getDataName(), 1);
 	axisValues->SetNumberOfTuples(data->GetNumPoints());
 	for (int i = 0; i < zVector.size(); i++){
 		axisValues->SetComponentFromDouble(i, 0, zVector.at(i));
@@ -107,7 +107,7 @@ void SurfacePlot::render(std::string fileName) {
                                        "temperature",
                                        false,
                                        data->GetCellSet(0)->GetName(),
-                                       plotDataProvider->dataName);
+                                       plotDataProvider->getDataName());
     scene->plots.push_back(plot);
 
     // Set the view
