@@ -1,0 +1,7 @@
+#ifndef XOLOTLCONFIGVIZ_H
+#define XOLOTLCONFIGVIZ_H
+// Configuration header for the xolotlViz library.
+
+#cmakedefine HAVE_VIZLIB_STD
+
+#endif // XOLOTLCONFIGVIZ_H

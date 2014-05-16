@@ -1,0 +1,16 @@
+#include "DummyHandlerRegistry.h"
+
+namespace xolotlViz {
+
+DummyHandlerRegistry::DummyHandlerRegistry() {
+}
+
+DummyHandlerRegistry::~DummyHandlerRegistry() {
+}
+
+std::shared_ptr<IPlot> DummyHandlerRegistry::getPlot(std::string name, PlotType type) {
+	return std::make_shared <DummyPlot> (name);
+}
+
+}    //end namespace xolotlViz
+
