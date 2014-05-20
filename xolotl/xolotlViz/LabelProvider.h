@@ -8,9 +8,8 @@
 namespace xolotlViz {
 
 /**
- * Class realizing the interface ILavelProvider. Contains public string attributes representing the labels
- * for the plots. LabelProvider is a class attached to a single Plot at its creation.
- * One can simply access to the fields by doing myLabelProvider.axis1Label = "theLabel"; .
+ * LabelProvider provides a series of labels to print on the plots.
+ * One Plot must have only one LabelProvider.
  */
 class LabelProvider: public xolotlCore::Identifiable {
 

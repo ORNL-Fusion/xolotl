@@ -7,7 +7,10 @@
 namespace xolotlViz {
 
 /**
- * Factory for creating plots
+ * Factory for creating plots that are dummies, meaning that they have the
+ * same structure as IPlot but don't actually do anything. This is so that
+ * the code can be written to use the visualization infrastructure without
+ * regard to whether visualization is active or disabled.
  */
 class DummyHandlerRegistry : public IVizHandlerRegistry
 {
