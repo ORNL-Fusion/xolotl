@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(helpOption)
     // If the help option is given, 
     // the program shouldn't run
     // but it isn't a failure (so a success exit code).
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 1 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 1 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), false );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_SUCCESS );
 }
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(networkFilename)
     fargv += 1;
     int nOptsUsed = xopts.parseCommandLine( fargc, fargv );
 
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 1 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 1 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), true );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_SUCCESS );
     BOOST_REQUIRE_EQUAL( xopts.getNetworkFilename(), fname );
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(netFilenameAndBadOption)
 
     // An unrecognized option should result in indicating
     // the program shouldn't run, and an error exit code.
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 2 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 2 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), false );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_FAILURE );
 }
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(handlersNoArg)
 
     // An unrecognized option should result in indicating
     // the program shouldn't run, and an error exit code.
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 2 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 2 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), false );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_FAILURE );
 }
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(handlersDummyArg)
     fargv += 1;
     int nOptsUsed = xopts.parseCommandLine( fargc, fargv );
 
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 3 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 3 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), true );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_SUCCESS );
     BOOST_REQUIRE_EQUAL( xopts.useStandardHandlers(), false );
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(handlersStdArg)
     fargv += 1;
     int nOptsUsed = xopts.parseCommandLine( fargc, fargv );
 
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 3 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 3 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), true );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_SUCCESS );
     BOOST_REQUIRE_EQUAL( xopts.useStandardHandlers(), true );
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(handlersBadArg)
 
     // An unrecognized option should result in indicating
     // the program shouldn't run, and an error exit code.
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 3 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 3 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), false );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_FAILURE );
 }
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(petscArg)
     fargv += 1;
     int nOptsUsed = xopts.parseCommandLine( fargc, fargv );
 
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 2 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 2 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), true );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_SUCCESS );
     BOOST_REQUIRE_EQUAL( xopts.useStandardHandlers(), true );

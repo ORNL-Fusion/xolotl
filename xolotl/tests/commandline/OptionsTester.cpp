@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(noOptions)
     int nOptsUsed = xopts.parseCommandLine( fargc, fargv );
 
     // As far as the Options class is concerned, an empty command line is OK.
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 0 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 0 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), true );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_SUCCESS );
 }
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(badOption)
 
     // An unrecognized option should result in indicating
     // the program shouldn't run, and an error exit code.
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 1 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 1 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), false );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_FAILURE );
 }
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(helpOption)
     // If the help option is given, 
     // the program shouldn't run
     // but it isn't a failure (so a success exit code).
-    BOOST_REQUIRE_EQUAL( nOptsUsed, 1 );
+    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 1 );
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), false );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_SUCCESS );
 }
