@@ -14,12 +14,16 @@ HeVCluster::HeVCluster(int numHe, int numV,
 	// the number of Helium and Vacancies
 	size = numHe + numV;
 
-	// Set the reactant name appropriately
-	name = "HeV";
-
 	// Update the composition map
-	compositionMap["He"] = numHe;
-	compositionMap["V"] = numV;
+	compositionMap[heType] = numHe;
+	compositionMap[vType] = numV;
+
+	// Set the reactant name appropriately
+	std::stringstream nameStream;
+	nameStream << "He_" << numHe << "V_" << numV;
+	name = nameStream.str();
+	// Set the typename appropriately
+	typeName = "HeV";
 
 	// Compute the reaction radius
 	reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
@@ -39,14 +43,6 @@ HeVCluster::HeVCluster(const HeVCluster &other) :
 }
 
 HeVCluster::~HeVCluster() {
-}
-
-std::shared_ptr<PSICluster> HeVCluster::getThisSharedPtrFromNetwork() const {
-	auto composition = getComposition();
-	std::vector<int> compVec = { composition["He"], composition["V"],
-			composition["I"] };
-	return std::dynamic_pointer_cast<PSICluster>(
-			network->getCompound(name, compVec));
 }
 
 std::shared_ptr<Reactant> HeVCluster::clone() {
@@ -70,7 +66,6 @@ void HeVCluster::createReactionConnectivity() {
 	auto props = psiNetwork->getProperties();
 	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
 	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
-	std::shared_ptr<Reactant> firstReactant, secondReactant;
 	std::vector<int> firstComposition, secondComposition;
 
 	// Connect this cluster to itself since any reaction will affect it
@@ -83,14 +78,12 @@ void HeVCluster::createReactionConnectivity() {
 	for (int z = 1; z <= maxHeClusterSize; z++) {
 		// Get the first reactant
 		firstComposition = psiNetwork->getCompositionVector(numHe - z, numV, 0);
-		firstReactant = psiNetwork->getCompound("HeV", firstComposition);
+		auto firstReactant = psiNetwork->getCompound("HeV", firstComposition);
 		// Get the second reactant
-		secondReactant = psiNetwork->get("He", z);
+		auto secondReactant = psiNetwork->get(heType, z);
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
-			ReactingPair pair;
-			pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-			pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+			ReactingPair pair((PSICluster *) firstReactant, (PSICluster *) secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -101,13 +94,11 @@ void HeVCluster::createReactionConnectivity() {
 	 * HeV cluster. In this case, (A*He)[(B-1)*V] produces the current cluster.
 	 */
 	firstComposition = psiNetwork->getCompositionVector(numHe, numV - 1, 0);
-	firstReactant = psiNetwork->getCompound("HeV", firstComposition);
-	secondReactant = psiNetwork->get("V", 1);
+	auto firstReactant = psiNetwork->getCompound("HeV", firstComposition);
+	auto secondReactant = psiNetwork->get(vType, 1);
 	// Create a ReactingPair with the two reactants
 	if (firstReactant && secondReactant) {
-		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+		ReactingPair pair((PSICluster *) firstReactant, (PSICluster *) secondReactant);
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 	}
@@ -117,14 +108,12 @@ void HeVCluster::createReactionConnectivity() {
 	 * in the production of this cluster.
 	 */
 	// Get the first reactant
-	firstReactant = psiNetwork->get("He", numHe);
+	firstReactant = psiNetwork->get(heType, numHe);
 	// Get the second reactant
-	secondReactant = psiNetwork->get("V", numV);
+	secondReactant = psiNetwork->get(vType, numV);
 	// Create a ReactingPair with the two reactants
 	if (firstReactant && secondReactant) {
-		ReactingPair pair;
-		pair.first = std::dynamic_pointer_cast<PSICluster>(firstReactant);
-		pair.second = std::dynamic_pointer_cast<PSICluster>(secondReactant);
+		ReactingPair pair((PSICluster *) firstReactant, (PSICluster *) secondReactant);;
 		// Add the pair to the list
 		reactingPairs.push_back(pair);
 	}
@@ -140,8 +129,8 @@ void HeVCluster::createReactionConnectivity() {
 	 * because they contribute to the (outgoing) flux due to combination
 	 * reactions.
 	 */
-	auto reactants = psiNetwork->getAll("I");
-	replaceInCompound(reactants, "I", "V");
+	auto reactants = psiNetwork->getAll(iType);
+	replaceInCompound(reactants, iType, vType);
 
 	/* ---- (He_a)*(V_b) + He_c --> [He_(a+c)]*(V_b) ----
 	 * HeV clusters can absorb helium clusters so long as they do not cross
@@ -150,7 +139,7 @@ void HeVCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	reactants = psiNetwork->getAll("He");
+	reactants = psiNetwork->getAll(heType);
 	combineClusters(reactants, maxHeVClusterSize, "HeV");
 
 	/* ----- (He_a)*(V_b) + V --> (He_a)*[V_(b+1)] -----
@@ -159,17 +148,29 @@ void HeVCluster::createReactionConnectivity() {
 	 * All of these clusters are added to the set of combining reactants
 	 * because they contribute to the flux due to combination reactions.
 	 */
-	secondReactant = psiNetwork->get("V", 1);
+	secondReactant = psiNetwork->get(vType, 1);
 	if (secondReactant) {
 		// Create a container for it
-		auto singleVInVector = std::make_shared<
-				std::vector<std::shared_ptr<Reactant>>>();
-		singleVInVector->push_back(secondReactant);
+		std::vector<Reactant *> singleVInVector;
+		singleVInVector.push_back(secondReactant);
 		// Call the combination function even though there is only one cluster
 		// because it handles all of the work to properly connect the three
 		// clusters in the reaction.
-				combineClusters(singleVInVector,maxHeVClusterSize,"HeV");
-			}
+		combineClusters(singleVInVector,maxHeVClusterSize,"HeV");
+	}
+
+	// Set the references to the size one clusters
+	heCluster = (PSICluster *) network->get(heType, 1);
+	vCluster = (PSICluster *) network->get(vType, 1);
+	iCluster = (PSICluster *) network->get(iType, 1);
+
+	// Set the references for clusters one size smaller than this cluster,
+	// starting with one less He.
+	std::vector<int> compositionVec = { numHe - 1, numV, 0 };
+	heVClusterLessHe = (PSICluster *) network->getCompound(heVType, compositionVec);
+	// Store the cluster with one less vacancy
+	compositionVec = {numHe, numV - 1, 0};
+	heVClusterLessV = (PSICluster *) network->getCompound(heVType, compositionVec);
 
 	return;
 }
@@ -181,40 +182,44 @@ void HeVCluster::createDissociationConnectivity() {
 			network);
 	auto props = psiNetwork->getProperties();
 	std::vector<int> composition;
-	std::shared_ptr<Reactant> singleCluster, otherMixedCluster;
-
-	// Get the required dissociating clusters. These are stored for the flux
-	// computation later.
-	heCluster = std::dynamic_pointer_cast<PSICluster>(network->get("He", 1));
-	vCluster = std::dynamic_pointer_cast<PSICluster>(network->get("V", 1));
-	iCluster = std::dynamic_pointer_cast<PSICluster>(network->get("I", 1));
 
 	// Store the cluster with one less helium
 	std::vector<int> compositionVec = { numHe - 1, numV, 0 };
-	heVClusterLessHe = std::dynamic_pointer_cast<PSICluster>(
-			network->getCompound("HeV", compositionVec));
+	auto heVClusterLessHe = network->getCompound("HeV", compositionVec);
 	// Store the cluster with one less vacancy
 	compositionVec = {numHe, numV - 1, 0};
-	heVClusterLessV = std::dynamic_pointer_cast<PSICluster>(
-			network->getCompound("HeV", compositionVec));
+	auto heVClusterLessV = network->getCompound("HeV", compositionVec);
 
 	// He Dissociation, get the [(numHe-1)*He]V and He
 	composition = psiNetwork->getCompositionVector(numHe - 1, numV, 0);
-	otherMixedCluster = psiNetwork->getCompound("HeV", composition);
-	singleCluster = psiNetwork->get("He", 1);
+	auto otherMixedCluster = psiNetwork->getCompound("HeV", composition);
+	auto singleCluster = psiNetwork->get(heType, 1);
 	dissociateClusters(singleCluster, otherMixedCluster);
 
 	// Vacancy Dissociation, get He[(numV-1)*V] and V
 	composition = psiNetwork->getCompositionVector(numHe, numV - 1, 0);
 	otherMixedCluster = psiNetwork->getCompound("HeV", composition);
-	singleCluster = psiNetwork->get("V", 1);
+	singleCluster = psiNetwork->get(vType, 1);
 	dissociateClusters(singleCluster, otherMixedCluster);
 
 	// Trap mutation, get He[(numV+1)*V] and I
 	composition = psiNetwork->getCompositionVector(numHe, numV + 1, 0);
 	otherMixedCluster = psiNetwork->getCompound("HeV", composition);
-	singleCluster = psiNetwork->get("I", 1);
+	singleCluster = psiNetwork->get(iType, 1);
 	dissociateClusters(singleCluster, otherMixedCluster);
+
+	return;
+}
+
+void HeVCluster::setTemperature(double temp) {
+
+	// Call the base class version to set all of the basic quantities.
+	PSICluster::setTemperature(temp);
+
+	// Calculate the much easier f4 term... first
+	f4 = calculateDissociationConstant(*this, *heCluster, temperature)
+			+ calculateDissociationConstant(*this, *vCluster, temperature)
+			+ calculateDissociationConstant(*this, *iCluster, temperature);
 
 	return;
 }
@@ -222,19 +227,17 @@ void HeVCluster::createDissociationConnectivity() {
 double HeVCluster::getDissociationFlux(double temperature) const {
 
 	// Local Declarations
-	std::map<std::string, int> composition;
-	std::shared_ptr<PSICluster> currentCluster, secondCluster;
-	double f4 = 0.0, f3 = 0.0;
+	PSICluster * currentCluster;
+	double f3 = 0.0;
+
+	// Get the required dissociating clusters. These are stored for the flux
+	// computation later.'
 
 	// Only dissociate if possible
 	if (heCluster && vCluster && iCluster) {
 		// FIXME! Make sure that this works as expected! Make sure that it
-		// correctly picks out right component in
+		// correctly picks out the right component in
 		// calculateDissociationConstant!
-		// Calculate the much easier f4 term... first
-		f4 = calculateDissociationConstant(*this, *heCluster, temperature)
-				+ calculateDissociationConstant(*this, *vCluster, temperature)
-				+ calculateDissociationConstant(*this, *iCluster, temperature);
 
 		// Loop over all the elements of the dissociation
 		// connectivity to find where this mixed species dissociates
@@ -246,27 +249,26 @@ double HeVCluster::getDissociationFlux(double temperature) const {
 		for (auto it = dissociatingSet.begin(); it != dissociatingSet.end();
 				it++) {
 			// Set the current reactant
-			currentCluster = std::dynamic_pointer_cast<PSICluster>(
-					reactants->at(*it - 1));
+			currentCluster = (PSICluster *) reactants->at(*it - 1);
 			// Get the cluster map of this connection
-			composition = currentCluster->getComposition();
+			auto dissClusterComposition = currentCluster->getComposition();
 			// We need to find if this is a Helium dissociation
-			if (numHe - composition["He"] == 1 && numV == composition["V"]
-					&& composition["I"] == 0) {
-				secondCluster = heCluster;
-			} else if (numHe == composition["He"]
-					&& numV - composition["V"] == 1 && composition["I"] == 0) {
-				// vacancy dissociation
-				secondCluster = vCluster;
-			} else if (numHe == composition["He"]
-					&& composition["I"] - numV == 1 && composition["V"] == 0) {
-				// or a trap mutation.
-				secondCluster = iCluster;
-			}
-			// Update the flux calculation
-			if (secondCluster) {
+			if (numHe - dissClusterComposition[heType] == 1 && numV == dissClusterComposition[vType]
+					&& dissClusterComposition[iType] == 0) {
 				f3 += calculateDissociationConstant(*currentCluster,
-						*secondCluster, temperature)
+						*heCluster, temperature)
+						* currentCluster->getConcentration();
+			} else if (numHe == dissClusterComposition[heType]
+					&& numV - dissClusterComposition[vType] == 1 && dissClusterComposition[iType] == 0) {
+				// vacancy dissociation
+				f3 += calculateDissociationConstant(*currentCluster,
+						*vCluster, temperature)
+						* currentCluster->getConcentration();
+			} else if (numHe == dissClusterComposition[heType]
+					&& dissClusterComposition[iType] - numV == 1 && dissClusterComposition[vType] == 0) {
+				// or a trap mutation.
+				f3 += calculateDissociationConstant(*currentCluster,
+						*iCluster, temperature)
 						* currentCluster->getConcentration();
 			}
 		}

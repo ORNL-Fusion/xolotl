@@ -8,10 +8,16 @@ using namespace xolotlCore;
 
 VCluster::VCluster(int nV, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(nV, registry) {
+
 	// Set the reactant name appropriately
-	name = "V";
+	std::stringstream nameStream;
+	nameStream << "V_" << size;
+	name = nameStream.str();
+	// Set the typename appropriately
+	typeName = "V";
+
 	// Update the composition map
-	compositionMap[name] = size;
+	compositionMap["V"] = size;
 
 	// Compute the reaction radius
 	// FIXME Not right...
@@ -37,7 +43,6 @@ void VCluster::createReactionConnectivity() {
 	int numHeVClusters = std::stoi(props["numHeVClusters"]);
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
 	int firstSize = 0, secondSize = 0;
-	std::shared_ptr<PSICluster> firstReactant, secondReactant;
 
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(getId());
@@ -55,13 +60,11 @@ void VCluster::createReactionConnectivity() {
 		secondSize = size - firstSize;
 		// Get the first and second reactants for the reaction
 		// first + second = this.
-		firstReactant = std::dynamic_pointer_cast<PSICluster>(network->get("V", firstSize));
-		secondReactant = std::dynamic_pointer_cast<PSICluster>(network->get("V", secondSize));
+		auto firstReactant = (PSICluster *) network->get("V", firstSize);
+		auto secondReactant = (PSICluster *) network->get("V", secondSize);
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
-			ReactingPair pair;
-			pair.first = firstReactant;
-			pair.second = secondReactant;
+			ReactingPair pair(firstReactant,secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}
@@ -100,12 +103,12 @@ void VCluster::createReactionConnectivity() {
 	// Mark the reaction connectivity for the cases where this cluster is
 	// produced by the above reaction. This has to be checked for every
 	// vacancy.
-	auto reactantsSize = reactants->size();
+	auto reactantsSize = reactants.size();
 	for (int i = 0; i < reactantsSize; i++) {
-		firstReactant = std::dynamic_pointer_cast<PSICluster>(reactants->at(i));
+		auto firstReactant = (PSICluster *) reactants[i];
 		// Get the interstitial cluster that is bigger than the vacancy
 		// and can form this cluster. V only results when it is bigger than I.
-		secondReactant = std::dynamic_pointer_cast<PSICluster>(network->get(name,firstReactant->getSize() + size));
+		auto secondReactant = (PSICluster *) network->get("V",firstReactant->getSize() + size);
 		// Update the connectivity
 		if (secondReactant) {
 			setReactionConnectivity(firstReactant->getId());

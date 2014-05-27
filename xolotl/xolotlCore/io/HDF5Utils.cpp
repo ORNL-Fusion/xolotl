@@ -83,8 +83,7 @@ void HDF5Utils::fillNetwork(std::shared_ptr<PSIClusterReactionNetwork> network) 
 	// Loop on them
 	for (int i = 0; i < networkSize; i++) {
 		// Get the i-st reactant
-		std::shared_ptr<PSICluster> reactant =
-				std::static_pointer_cast<PSICluster>(reactants->at(i));
+		auto reactant = (PSICluster *) reactants->at(i);
 
 		// Get its composition to store it
 		auto composition = reactant->getComposition();

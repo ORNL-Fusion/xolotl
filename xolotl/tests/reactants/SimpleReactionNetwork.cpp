@@ -111,8 +111,7 @@ shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork(cons
 	// Print the reaction connectivity matrix
 	for (auto reactantIt = reactants->begin();
 			reactantIt != reactants->end(); reactantIt++) {
-		shared_ptr<PSICluster> cluster = dynamic_pointer_cast<
-				PSICluster>(*reactantIt);
+		auto cluster = (PSICluster *) (*reactantIt);
 		vector<int> conn = cluster->getConnectivity();
 
 		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++) {

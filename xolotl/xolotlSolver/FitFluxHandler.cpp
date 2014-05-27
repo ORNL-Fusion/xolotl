@@ -13,7 +13,7 @@ FitFluxHandler::~FitFluxHandler() {
 double FitFluxHandler::getIncidentFlux(std::vector<int> compositionVec,
 				std::vector<double> position, double currentTime){
 
-	double incidentFlux = 0.0e-16;
+	double incidentFlux = 0.0;
 
 	incidentFlux = 0.0006 * position[1] * position[1] * position[1] - 0.0087 * position[1] * position[1] + 0.0300 * position[1];
 

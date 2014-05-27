@@ -37,8 +37,9 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	props["dissociationsEnabled"] = "false";
 
 	// Get the connectivity array from the reactant for a vacancy cluster of size 2.
-	auto reactant = dynamic_pointer_cast < PSICluster
-			> (network->get("V", 2));
+	auto reactant = (PSICluster *) network->get("V", 2);
+	// Check the type name
+	BOOST_REQUIRE_EQUAL("V",reactant->getType());
 	auto reactionConnectivity = reactant->getConnectivity();
 
 	// Check the connectivity for He, V, and I
@@ -92,13 +93,14 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
  	// Get an V cluster with compostion 0,1,0.
- 	auto cluster = dynamic_pointer_cast<PSICluster>(network->get("V", 1));
+ 	auto cluster = (PSICluster *) network->get("V", 1);
  	// Get one that it combines with (V2)
- 	auto secondCluster = dynamic_pointer_cast<PSICluster>(network->get("V", 2));
+ 	auto secondCluster = (PSICluster *) network->get("V", 2);
  	// Set the diffusion factor, migration and binding energies based on the
  	// values from the tungsten benchmark for this problem.
  	cluster->setDiffusionFactor(2.41E+11);
  	cluster->setMigrationEnergy(1.66);
+ 	cluster->setTemperature(1000.0);
  	vector<double> energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
  			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
  	cluster->setBindingEnergies(energies);
@@ -112,6 +114,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
  	secondCluster->setBindingEnergies(energies);
  	secondCluster->setConcentration(0.5);
+ 	secondCluster->setTemperature(1000.0);
  	// The flux can pretty much be anything except "not a number" (nan).
  	double flux = cluster->getTotalFlux(1000.0);
  	BOOST_TEST_MESSAGE("InterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"

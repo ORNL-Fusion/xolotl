@@ -36,29 +36,39 @@ BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 	// Check E_m = 0.0
 	cluster.setMigrationEnergy(0.0);
 	cluster.setDiffusionFactor(1.0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(1.0),exp(0.0),0.00001);
+	cluster.setTemperature(1.0);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),exp(0.0),0.00001);
+	BOOST_REQUIRE_CLOSE(1.0,cluster.getTemperature(),0.0001);
 
 	// Make sure the diffusion coefficient is 0.0 if E_m is infinite
 	cluster.setMigrationEnergy(numeric_limits<double>::infinity());
 	cluster.setDiffusionFactor(1.0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(1.0),0.0,0.00000);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),0.0,0.00000);
 
 	// Make sure the diffusion coefficient is zero if the diffusion factor is zero
 	cluster.setMigrationEnergy(5.0);
 	cluster.setDiffusionFactor(0.0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(1.0),0.0,0.00000);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),0.0,0.00000);
 
 	// Make sure the diffusion coefficient is equal to the diffusion factor
 	// if the temperature is infinite
 	cluster.setMigrationEnergy(5.0);
 	cluster.setDiffusionFactor(1.0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(
-					numeric_limits<double>::infinity()),1.0,0.00000);
+	cluster.setTemperature(numeric_limits<double>::infinity());
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),1.0,0.00000);
 
 	// Throw something random in there to be certain
 	cluster.setMigrationEnergy(0.013);
 	cluster.setDiffusionFactor(1.08E10);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(1500.0),9766651101.800613,0.0000001);
+	cluster.setTemperature(1500.0);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),9766651101.800613,0.0000001);
+
+	// Do the same test, but make sure the order of the calls doesn't affect the outcome.
+	cluster.setTemperature(1500.0);
+	cluster.setDiffusionFactor(1.08E10);
+	cluster.setMigrationEnergy(0.013);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),9766651101.800613,0.0000001);
+
 }
 
 /**
@@ -78,6 +88,8 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 			copiedCluster.getDiffusionFactor(), 1e-5);
 	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(),
 			copiedCluster.getMigrationEnergy(), 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),
+			copiedCluster.getDiffusionCoefficient(), 1e-5);
 
 	// Modify some values to ensure a deep copy is occurring
 	copiedCluster.setDiffusionFactor(0.5);// This should not happen!
@@ -109,9 +121,6 @@ BOOST_AUTO_TEST_CASE(checkDefaultFluxes) {
 
 	// Local Declarations
 	PSICluster cluster(1, registry);
-//	shared_ptr<PSIClusterReactionNetwork> network(new PSIClusterReactionNetwork());
-
-	shared_ptr<PSIClusterReactionNetwork> network(new PSIClusterReactionNetwork(registry));
 
 	// Check the default values of the fluxes
 	BOOST_REQUIRE_CLOSE(cluster.getProductionFlux(273.0), 0.0, 1e-5);

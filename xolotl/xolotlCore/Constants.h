@@ -25,5 +25,17 @@ static const double pi = 3.1415926535897932;
 //! Journal of Nuclear Materials 403 (2010) 75–88. Given in units here of nm.
 static const double latticeConstant = 0.31700000000000000;
 
+/**
+ * Statically defined type names. This are used to optimize the lookup
+ * calls in the maps so that new strings are not constantly created
+ * dynamically. It accounts for a small but significant amount of
+ * performance.
+ */
+static const std::string heType = "He";
+static const std::string vType = "V";
+static const std::string iType = "I";
+static const std::string heVType = "HeV";
+static const std::string heIType = "HeI";
+
 } /* end namespace xolotlCore */
 #endif /* CONSTANTS_H_ */
