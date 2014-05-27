@@ -8,10 +8,16 @@ using namespace xolotlCore;
 
 HeCluster::HeCluster(int nHe, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(nHe, registry) {
-	// Set the reactant name appropriately
-	name = "He";
+
 	// Update the composition map
-	compositionMap[name] = size;
+	compositionMap["He"] = size;
+
+	// Set the reactant name appropriately
+	std::stringstream nameStream;
+	nameStream << "He_" << size;
+	name = nameStream.str();
+	// Set the typename appropriately
+	typeName = "He";
 
 	// Compute the reaction radius
 	double FourPi = 4.0 * xolotlCore::pi;
@@ -45,8 +51,7 @@ void HeCluster::createReactionConnectivity() {
 	int numHeIClusters = std::stoi(props["numHeIClusters"]);
 	int firstSize = 0, secondSize = 0;
 	std::map<std::string, int> composition;
-	std::shared_ptr<PSICluster> psiCluster, firstReactant, secondReactant,
-			productReactant;
+	std::shared_ptr<PSICluster> psiCluster, productReactant;
 
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(getId());
@@ -64,15 +69,11 @@ void HeCluster::createReactionConnectivity() {
 		secondSize = size - firstSize;
 		// Get the first and second reactants for the reaction
 		// first + second = this.
-		firstReactant = std::dynamic_pointer_cast < PSICluster
-				> (psiNetwork->get("He", firstSize));
-		secondReactant = std::dynamic_pointer_cast < PSICluster
-				> (psiNetwork->get("He", secondSize));
+		auto firstReactant = (PSICluster *) psiNetwork->get("He", firstSize);
+		auto secondReactant = (PSICluster *) psiNetwork->get("He", secondSize);
 		// Create a ReactingPair with the two reactants
 		if (firstReactant && secondReactant) {
-			ReactingPair pair;
-			pair.first = firstReactant;
-			pair.second = secondReactant;
+			ReactingPair pair(firstReactant,secondReactant);
 			// Add the pair to the list
 			reactingPairs.push_back(pair);
 		}

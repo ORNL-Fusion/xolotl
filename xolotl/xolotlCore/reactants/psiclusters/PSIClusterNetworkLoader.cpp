@@ -178,6 +178,7 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 			loadedLine = reader.loadLine();
 		}
 
+		// Set the network for all of the reactants. This MUST be done manually.
 		for (auto reactantsIt = reactants.begin();
 				reactantsIt != reactants.end(); ++reactantsIt) {
 			(*reactantsIt)->setReactionNetwork(network);

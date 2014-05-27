@@ -34,7 +34,6 @@ BOOST_AUTO_TEST_SUITE(HeCluster_testSuite)
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
-	auto reactants = network->getAll();
 	auto props = network->getProperties();
 	
 	// Prevent dissociation from being added to the connectivity array
@@ -43,8 +42,9 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the reaction connectivity of the 6th He reactant (numHe=6)
 	{
 		// Get the connectivity array from the reactant
-		auto reactant = dynamic_pointer_cast < PSICluster
-				> (network->get("He", 6));
+		auto reactant = (PSICluster *) network->get("He", 6);
+		// Check the type name
+		BOOST_REQUIRE_EQUAL("He",reactant->getType());
 		auto reactionConnectivity = reactant->getConnectivity();
 		
 		// Check the connectivity for He, V, and I
@@ -95,13 +95,14 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
 	// Get an He cluster with compostion 1,0,0.
-	auto cluster = dynamic_pointer_cast<PSICluster>(network->get("He", 1));
+	auto cluster = (PSICluster *) network->get("He", 1);
 	// Get one that it combines with (He2)
-	auto secondCluster = dynamic_pointer_cast<PSICluster>(network->get("He", 2));
+	auto secondCluster = (PSICluster *) network->get("He", 2);
 	// Set the diffusion factor, migration and binding energies based on the
 	// values from the tungsten benchmark for this problem.
 	cluster->setDiffusionFactor(2.950E+10);
 	cluster->setMigrationEnergy(0.13);
+ 	cluster->setTemperature(1000.0);
 	vector<double> energies = {numeric_limits<double>::infinity(),
 			numeric_limits<double>::infinity(), numeric_limits<double>::infinity(), 8.27};
 	cluster->setBindingEnergies(energies);
@@ -115,6 +116,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 			numeric_limits<double>::infinity(), 6.12};
 	secondCluster->setBindingEnergies(energies);
 	secondCluster->setConcentration(0.5);
+ 	secondCluster->setTemperature(1000.0);
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(1000.0);
 	BOOST_TEST_MESSAGE("HeClusterTester Message: \n" << "Total Flux is " << flux << "\n"

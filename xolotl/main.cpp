@@ -25,12 +25,6 @@ void printStartMessage() {
 	// TODO! Print date and time
 }
 
-//std::vector<xolotlPerf::HardwareQuantities> declareHWcounters();
-//bool initPerf(bool opts, std::vector<xolotlPerf::HardwareQuantities> hwq);
-//xolotlSolver::PetscSolver setUpSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, int argc, char **argv);
-//void launchPetscSolver(xolotlSolver::PetscSolver solver, std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry);
-//std::shared_ptr<PSIClusterNetworkLoader> setUpNetworkLoader(int rank, MPI_Comm comm, std::string networkFilename);
-
 std::vector<xolotlPerf::HardwareQuantities> declareHWcounters() {
 
 	// Indicate we want to monitor some important hardware counters.

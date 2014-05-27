@@ -255,8 +255,7 @@ static PetscErrorCode heliumRetention(TS ts, PetscInt timestep, PetscReal time,
 	double hx = 8.0 / (PetscReal) (Mx - 1);
 
 	// Get the helium cluster
-	auto heCluster = std::dynamic_pointer_cast < PSICluster
-			> (PetscSolver::getNetwork()->get("He", 1));
+	auto heCluster = (PSICluster *) PetscSolver::getNetwork()->get("He", 1);
 
 	// Exit if there is no helium cluster in the network
 	if (!heCluster)
@@ -349,14 +348,12 @@ static PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 		// Fill the array of clusters name because the Id is not the same as
 		// reactants->at(i)
 		auto reactants = PetscSolver::getNetwork()->getAll();
-		std::shared_ptr<PSICluster> cluster;
 
 		// Loop on the reactants
 		for (int i = 0; i < networkSize; i++) {
 
 			// Get the cluster from the list, its id and composition
-			cluster = std::dynamic_pointer_cast < PSICluster
-					> (reactants->at(i));
+			auto cluster = (PSICluster *) reactants->at(i);
 			int id = cluster->getId() - 1;
 			auto composition = cluster->getComposition();
 
@@ -547,13 +544,11 @@ static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 		// Fill the array of clusters name because the Id is not the same as
 		// reactants->at(i)
 		auto reactants = PetscSolver::getNetwork()->getAll();
-		std::shared_ptr<PSICluster> cluster;
 
 		// Loop on the reactants
 		for (int i = 0; i < networkSize; i++) {
 			// Get the cluster from the list, its id and composition
-			cluster = std::dynamic_pointer_cast < PSICluster
-					> (reactants->at(i));
+			auto cluster = reactants->at(i);
 			int id = cluster->getId() - 1;
 			auto composition = cluster->getComposition();
 
@@ -770,8 +765,8 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 		double * concentration = &concentrations[0];
 		PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
 
-		// Prepare the cluster
-		std::shared_ptr<PSICluster> cluster;
+		// A pointer for the clusters used below
+		PSICluster * cluster;
 
 		// Loop on Y = V number
 		for (int i = 0; i < maxHeVClusterSize; i++) {
@@ -780,8 +775,7 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 				double conc = 0.0;
 				// V clusters
 				if (j == 0) {
-					cluster = std::dynamic_pointer_cast < PSICluster
-							> (PetscSolver::getNetwork()->get("V", i));
+					cluster = (PSICluster *) PetscSolver::getNetwork()->get("V", i);
 					if (cluster) {
 						// Get the ID of the cluster
 						int id = cluster->getId() - 1;
@@ -790,8 +784,7 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 				}
 				// He clusters
 				else if (i == 0) {
-					cluster = std::dynamic_pointer_cast < PSICluster
-							> (PetscSolver::getNetwork()->get("He", j));
+					cluster = (PSICluster *) PetscSolver::getNetwork()->get("He", j);
 					if (cluster) {
 						// Get the ID of the cluster
 						int id = cluster->getId() - 1;
@@ -800,9 +793,8 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 				}
 				// HeV clusters
 				else {
-					cluster = std::dynamic_pointer_cast < PSICluster
-							> (PetscSolver::getNetwork()->getCompound("HeV", {
-									j, i, 0 }));
+					cluster = (PSICluster *) PetscSolver::getNetwork()->getCompound("HeV", {
+									j, i, 0 });
 					if (cluster) {
 						// Get the ID of the cluster
 						int id = cluster->getId() - 1;
@@ -1153,8 +1145,7 @@ void computeRetention(TS ts, Vec C) {
 	const int size = PetscSolver::getNetwork()->size();
 
 	// Get the helium cluster
-	auto heCluster = std::dynamic_pointer_cast < PSICluster
-			> (PetscSolver::getNetwork()->get("He", 1));
+	auto heCluster = (PSICluster *) PetscSolver::getNetwork()->get("He", 1);
 
 	if (!heCluster) {
 		throw std::string(
