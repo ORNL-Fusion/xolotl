@@ -46,9 +46,19 @@ public class ClusterTest {
 		cluster.E_I = Double.POSITIVE_INFINITY;
 		cluster.E_m = Double.POSITIVE_INFINITY;
 		clusterAsString = "1 23 52 Infinity Infinity Infinity Infinity 1.1";
-		assertEquals(clusterAsString,cluster.toString());
+		assertEquals(clusterAsString, cluster.toString());
 		// Consequently, such a cluster would be the ultimate sink in the
 		// network!
+
+		// Modify the migration energy and diffusion factor and check that this
+		// does not interfere with the other properties. 
+		cluster.E_He = Double.POSITIVE_INFINITY;
+		cluster.E_V = Double.POSITIVE_INFINITY;
+		cluster.E_I = Double.POSITIVE_INFINITY;
+		cluster.E_m = 0.13;
+		cluster.D_0 = 2.9e-8;
+		clusterAsString = "1 23 52 Infinity Infinity Infinity 0.13 2.9E-8";
+		assertEquals(clusterAsString, cluster.toString());
 
 		return;
 	}

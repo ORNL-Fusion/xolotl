@@ -30,6 +30,8 @@ import java.util.ArrayList;
  * D_0 - The diffusion factor that sets the scale of the diffusion. (Used to
  * calculate the diffusion coefficient.)
  * 
+ * All energies are in eV and all diffusion factors are in m^2/s.
+ * 
  * @author Jay Jay Billings
  * 
  */
@@ -38,25 +40,50 @@ public class Preprocessor {
 	// The maximum size of a Helium cluster in the network.
 	private int maxHe = 8;
 
+	// The maximum size of a mobile He cluster.
+	private int maxHeDiffusionSize = 6;
+
+	// The diffusion factors for single species Helium clusters.
+	private double[] heDiffusionFactors = { 0.0, 2.9e-8, 3.2e-8, 2.3e-8,
+			1.7e-8, 0.5e-8, 0.1e-8 };
+
+	// The migration energies for single species Helium clusters.
+	private double[] heMigrationEnergies = { Double.POSITIVE_INFINITY, 0.13,
+			0.20, 0.25, 0.20, 0.12, 0.3 };
+
 	// The maximum size of a vacancy cluster in the network.
 	private int maxV = 29;
 
+	// The diffusion factor for a single vacancy.
+	private double vOneDiffusionFactor = 1.8e-6;
+
+	// The migration energy for a single vacancy.
+	private double vOneMigrationEnergy = 1.30;
+
 	// The maximum size of an interstitial cluster in the network.
-	private int maxI = 2;
+	private int maxI = 6;
+
+	// The maximum size of a mobile interstitial cluster.
+	private int maxIDiffusionSize = 5;
+
+	// The diffusion coefficients for single species interstitial clusters.
+	private double[] iDiffusionFactors = { 0.0, 8.8e-8, 8.0e-8, 3.9e-8, 2.0e-8,
+			1.0e-8 };
+
+	// The migration energies for single species interstitial clusters.
+	private double[] iMigrationEnergies = { Double.POSITIVE_INFINITY, 0.01,
+			0.02, 0.03, 0.04, 0.05 };
 
 	/**
 	 * The maximum number of Helium atoms that can be combined with a vacancy
-	 * cluster with size equal to the index i in the array. For example, an HeV
-	 * size cluster with size 1 would have size = i = 1 and could support a
-	 * mixture of up to nine Helium atoms with one vacancy.
-	 * 
-	 * The special case size = i = 0 is just the maximum size of single Helium.
-	 * It is stored in the array for efficiency since it allows us to combine
-	 * the loops over helium, vacancies and HeV clusters.
+	 * cluster with size equal to the index i in the array plus one. For
+	 * example, an HeV size cluster with size 1 would have size = i+1 = 1 and i
+	 * = 0. It could support a mixture of up to nine Helium atoms with one
+	 * vacancy.
 	 */
-	private int[] maxHePerV = { maxHe, 9, 14, 18, 20, 27, 30, 35, 40, 45, 50,
-			55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101, 103, 105, 107,
-			109, 110, 112, 116 };
+	private int[] maxHePerV = { 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55, 60,
+			65, 70, 75, 80, 85, 90, 95, 98, 100, 101, 103, 105, 107, 109, 110,
+			112, 116 };
 
 	/**
 	 * The binding energy engine used to generate binding energies for the
@@ -65,7 +92,63 @@ public class Preprocessor {
 	private BindingEnergyEngine bindingEnergyEngine = new BindingEnergyEngine();
 
 	/**
-	 * This operation generates all He, V and HeV clusters in the network.
+	 * This operation generates all Helium clusters in the network.
+	 * 
+	 * @return A list of clusters configured to satisfy the bounds and composed
+	 *         solely of Helium.
+	 */
+	private ArrayList<Cluster> generateHe() {
+
+		// Local Declarations
+		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
+
+		// Create the He clusters
+		for (int i = 0; i < maxHe; i++) {
+			// Create the cluster
+			Cluster tmpCluster = new Cluster();
+			tmpCluster.nHe = i + 1;
+			tmpCluster.E_He = bindingEnergyEngine.getHeBindingEnergy(i + 1);
+			// Add the cluster to the list
+			clusterList.add(tmpCluster);
+		}
+
+		// Configure the diffusion parameters.
+		for (int i = 0; i < maxHeDiffusionSize; i++) {
+			Cluster tmpCluster = clusterList.get(i);
+			tmpCluster.D_0 = heDiffusionFactors[i + 1];
+			tmpCluster.E_m = heMigrationEnergies[i + 1];
+		}
+
+		return clusterList;
+	}
+
+	/**
+	 * This operation creates an HeV cluster with the specified size. It
+	 * configures the binding energies on its own.
+	 * 
+	 * @param heSize The number of Helium atoms in the cluster
+	 * @param vSize The number of vacancies in the cluster
+	 * @return The cluster.
+	 */
+	private Cluster makeHeVCluster(int heSize, int vSize) {
+		// Create the cluster
+		Cluster cluster = new Cluster();
+		cluster.nHe = heSize;
+		cluster.nV = vSize;
+		// Treat everything like a mixed cluster and let the
+		// BindingEnergyEngine delegate for single species clusters.
+		cluster.E_He = bindingEnergyEngine.getHeVtoHeBindingEnergy(heSize,
+				vSize);
+		cluster.E_V = bindingEnergyEngine.getHeVtoVBindingEnergy(heSize, vSize);
+
+		return cluster;
+	}
+
+	/**
+	 * This operation generates all V and HeV clusters in the network.
+	 * 
+	 * @return A list of clusters configured to satisfy the bounds and composed
+	 *         solely of V and HeV clusters.
 	 */
 	private ArrayList<Cluster> generateHeV() {
 
@@ -73,36 +156,38 @@ public class Preprocessor {
 		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
 
 		// Loop over vacancies in the outer loop. Start at zero to account for
-		// single He.
-		for (int i = 0; i < maxV; ++i) {
+		// single He. This creates V and HeV up to the maximum size in the
+		// maxHePerV array.
+		for (int i = 1; i <= maxV && i <= maxHePerV.length; ++i) {
 			// Add Helium
-			for (int j = 0; j < maxHePerV[i]; j++) {
-				// Create the cluster
-				Cluster tmpCluster = new Cluster();
-				tmpCluster.nHe = j + 1;
-				tmpCluster.nV = i;
-				// Treat everything like a mixed cluster and let the
-				// BindingEnergyEngine delegate for single species clusters.
-				tmpCluster.E_He = bindingEnergyEngine.getHeVtoHeBindingEnergy(
-						j + 1, i);
-				tmpCluster.E_V = bindingEnergyEngine.getHeVtoVBindingEnergy(
-						j + 1, i);
-				// He, V and HeV cannot dissociate into I by normal means.
-				tmpCluster.E_I = Double.POSITIVE_INFINITY;
-				tmpCluster.E_m = Double.POSITIVE_INFINITY; // FIXME! Need to add
-															// migration
-															// energies.
-				tmpCluster.D_0 = 0.0; // FIXME! Need to add diffusion factors.
+			for (int j = 0; j < maxHePerV[i - 1]; j++) {
 				// Add the cluster to the list
-				clusterList.add(tmpCluster);
+				clusterList.add(makeHeVCluster(j, i));
 			}
 		}
+
+		// Create V and HeV up to the maximum length with a constant nHe/nV = 4.
+		for (int i = maxHePerV.length; i <= maxV; i++) {
+			// Add Helium
+			for (int j = 0; j <= i * 4; j++) {
+				// Add the cluster to the list
+				clusterList.add(makeHeVCluster(j, i));
+			}
+		}
+
+		// Set V_1 diffusion parameters. V_1 is the first in the list, so it is
+		// straightforward to set it.
+		clusterList.get(0).D_0 = vOneDiffusionFactor;
+		clusterList.get(0).E_m = vOneMigrationEnergy;
 
 		return clusterList;
 	};
 
 	/**
-	 * This operation generates all interstitial clusters in the network.
+	 * This operation generates all interstitials clusters in the network.
+	 * 
+	 * @return A list of clusters configured to satisfy the bounds and composed
+	 *         solely of interstitials.
 	 */
 	private ArrayList<Cluster> generateInterstitials() {
 
@@ -115,14 +200,15 @@ public class Preprocessor {
 			Cluster tmpCluster = new Cluster();
 			tmpCluster.nI = i + 1;
 			tmpCluster.E_I = bindingEnergyEngine.getIBindingEnergy(i + 1);
-			// Interstitials cannot dissociate into He and V!
-			tmpCluster.E_He = Double.POSITIVE_INFINITY;
-			tmpCluster.E_V = Double.POSITIVE_INFINITY;
-			tmpCluster.E_m = Double.POSITIVE_INFINITY; // FIXME! Need to add
-														// migration energies.
-			tmpCluster.D_0 = 0.0; // FIXME! Need to add diffusion factors.
 			// Add the cluster to the list
 			clusterList.add(tmpCluster);
+		}
+
+		// Configure the diffusion parameters.
+		for (int i = 0; i < maxIDiffusionSize; i++) {
+			Cluster tmpCluster = clusterList.get(i);
+			tmpCluster.D_0 = iDiffusionFactors[i + 1];
+			tmpCluster.E_m = iMigrationEnergies[i + 1];
 		}
 
 		return clusterList;
@@ -144,6 +230,7 @@ public class Preprocessor {
 
 		// Add all of the clusters to the list
 		clusterList.addAll(generateInterstitials());
+		clusterList.addAll(generateHe());
 		clusterList.addAll(generateHeV());
 
 		return clusterList;
