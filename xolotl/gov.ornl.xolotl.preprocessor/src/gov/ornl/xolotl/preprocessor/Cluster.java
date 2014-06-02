@@ -23,15 +23,15 @@ public class Cluster {
 
 	// The binding energy of the cluster with He_1. Default value is infinity so
 	// that the cluster does not dissociate.
-	public double E_He = 0.0;
+	public double E_He = Double.POSITIVE_INFINITY;
 
 	// The binding energy of the cluster with V_1. Default value is infinity so
 	// that the cluster does not dissociate.
-	public double E_V = 0.0;
+	public double E_V = Double.POSITIVE_INFINITY;
 
 	// The binding energy of the cluster with I_1. Default value is infinity so
 	// that the cluster does not dissociate.
-	public double E_I = 0.0;
+	public double E_I = Double.POSITIVE_INFINITY;
 
 	// The migration energy with which the cluster diffuses. Default value is
 	// infinity so that the cluster is immobile.

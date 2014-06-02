@@ -56,6 +56,14 @@ public class BindingEnergyEngine {
 			0.0007179606, -9.40486423253e-6 };
 
 	/**
+	 * The constructor
+	 */
+	public BindingEnergyEngine() {
+		// READ file with coefficients from here
+		
+	};
+	
+	/**
 	 * This operation computes and returns the formation energy of a Helium
 	 * cluster of the specified size.
 	 * 

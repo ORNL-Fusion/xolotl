@@ -160,14 +160,14 @@ public class Preprocessor {
 		// maxHePerV array.
 		for (int i = 1; i <= maxV && i <= maxHePerV.length; ++i) {
 			// Add Helium
-			for (int j = 0; j < maxHePerV[i - 1]; j++) {
+			for (int j = 0; j <= maxHePerV[i - 1]; j++) {
 				// Add the cluster to the list
 				clusterList.add(makeHeVCluster(j, i));
 			}
 		}
 
 		// Create V and HeV up to the maximum length with a constant nHe/nV = 4.
-		for (int i = maxHePerV.length; i <= maxV; i++) {
+		for (int i = maxHePerV.length + 1; i <= maxV; i++) {
 			// Add Helium
 			for (int j = 0; j <= i * 4; j++) {
 				// Add the cluster to the list
