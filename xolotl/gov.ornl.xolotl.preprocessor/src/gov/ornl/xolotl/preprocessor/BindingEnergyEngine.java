@@ -60,9 +60,9 @@ public class BindingEnergyEngine {
 	 */
 	public BindingEnergyEngine() {
 		// READ file with coefficients from here
-		
+
 	};
-	
+
 	/**
 	 * This operation computes and returns the formation energy of a Helium
 	 * cluster of the specified size.
@@ -73,7 +73,7 @@ public class BindingEnergyEngine {
 	 *         the binding energy equation.
 	 */
 	private double getHeFormationEnergy(int size) {
-		
+
 		double energy = Double.POSITIVE_INFINITY;
 
 		if (size < 9 && size > 0)
@@ -116,8 +116,26 @@ public class BindingEnergyEngine {
 
 		if (size < 3 && size > 0)
 			energy = vFormationEnergies[size];
-		else if (size >= 3)
-			energy = Double.NEGATIVE_INFINITY;
+		else if (size >= 3) {
+			// The following coefficients are computed using the above and are
+			// used to evaluate the full function f(x,y).
+			double[] coefficients = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+			// Get the coefficients for He_xV_y
+			coefficients[0] = compute3rdOrderPolynomial((double) size,
+					c0Coefficients);
+			coefficients[1] = compute3rdOrderPolynomial((double) size,
+					c1Coefficients);
+			coefficients[2] = compute3rdOrderPolynomial((double) size,
+					c2Coefficients);
+			coefficients[3] = compute3rdOrderPolynomial((double) size,
+					c3Coefficients);
+			coefficients[4] = compute3rdOrderPolynomial((double) size,
+					c4Coefficients);
+			coefficients[5] = compute3rdOrderPolynomial((double) size,
+					c5Coefficients);
+			// Get the energy for He_xV_y
+			energy = compute5thOrderPolynomial(0.0, coefficients);
+		}
 
 		return energy;
 	}
@@ -128,7 +146,8 @@ public class BindingEnergyEngine {
 	 * 
 	 * V_x --> V_(x-1) + V_1
 	 * 
-	 * For size != 2 it returns Double.POSITIVE_INFINITY.
+	 * It is valid for all sizes of V > 0. For size > 2 it uses the same fit as
+	 * that used for HeV clusters.
 	 * 
 	 * @param size
 	 *            the number of atomic vacancies in the dissociating cluster
@@ -215,7 +234,7 @@ public class BindingEnergyEngine {
 	 *            The coefficients array.
 	 */
 	private double compute5thOrderPolynomial(double x, double[] coeffs) {
-		
+
 		double value = 0.0;
 
 		// Compute the value

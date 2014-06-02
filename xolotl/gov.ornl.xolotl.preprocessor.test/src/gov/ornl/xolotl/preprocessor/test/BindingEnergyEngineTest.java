@@ -57,9 +57,9 @@ public class BindingEnergyEngineTest {
 		assertEquals(Double.POSITIVE_INFINITY, engine.getVBindingEnergy(1),
 				1.0e-16);
 
-		// Check the code for the invalid case where size > 2.
-		assertEquals(Double.POSITIVE_INFINITY, engine.getVBindingEnergy(3),
-				1.0e-16);
+		// Check V = 29 to make sure the larger size clusters are computed
+		// correctly.
+		assertEquals(2.40,engine.getVBindingEnergy(29),1.0e-2);
 
 		return;
 	}
