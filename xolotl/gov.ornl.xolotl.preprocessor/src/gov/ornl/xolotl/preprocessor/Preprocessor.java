@@ -30,7 +30,7 @@ import java.util.ArrayList;
  * D_0 - The diffusion factor that sets the scale of the diffusion. (Used to
  * calculate the diffusion coefficient.)
  * 
- * All energies are in eV and all diffusion factors are in m^2/s.
+ * All energies are in eV and all diffusion factors are in nm^2/s.
  * 
  * @author Jay Jay Billings
  * 
@@ -44,8 +44,8 @@ public class Preprocessor {
 	private int maxHeDiffusionSize = 6;
 
 	// The diffusion factors for single species Helium clusters.
-	private double[] heDiffusionFactors = { 0.0, 2.9e-8, 3.2e-8, 2.3e-8,
-			1.7e-8, 0.5e-8, 0.1e-8 };
+	private double[] heDiffusionFactors = { 0.0, 29.0, 32.0, 23.0,
+			17.0, 5.0, 10.0 };
 
 	// The migration energies for single species Helium clusters.
 	private double[] heMigrationEnergies = { Double.POSITIVE_INFINITY, 0.13,
@@ -55,7 +55,7 @@ public class Preprocessor {
 	private int maxV = 29;
 
 	// The diffusion factor for a single vacancy.
-	private double vOneDiffusionFactor = 1.8e-6;
+	private double vOneDiffusionFactor = 1800.0;
 
 	// The migration energy for a single vacancy.
 	private double vOneMigrationEnergy = 1.30;
@@ -67,8 +67,8 @@ public class Preprocessor {
 	private int maxIDiffusionSize = 5;
 
 	// The diffusion coefficients for single species interstitial clusters.
-	private double[] iDiffusionFactors = { 0.0, 8.8e-8, 8.0e-8, 3.9e-8, 2.0e-8,
-			1.0e-8 };
+	private double[] iDiffusionFactors = { 0.0, 88.0, 80.0, 39.0, 20.0,
+			10.0 };
 
 	// The migration energies for single species interstitial clusters.
 	private double[] iMigrationEnergies = { Double.POSITIVE_INFINITY, 0.01,
