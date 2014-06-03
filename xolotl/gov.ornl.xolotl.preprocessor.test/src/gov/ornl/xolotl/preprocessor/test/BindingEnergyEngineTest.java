@@ -51,7 +51,7 @@ public class BindingEnergyEngineTest {
 
 		// Check the code for V_2 --> V_1 + V_1. That is the only valid size for
 		// this cluster type at the moment.
-		assertEquals(-0.05, engine.getVBindingEnergy(2), 1.0e-2);
+		assertEquals(0.5519, engine.getVBindingEnergy(2), 1.0e-2);
 
 		// Check the code for the invalid case with size = 1.
 		assertEquals(Double.POSITIVE_INFINITY, engine.getVBindingEnergy(1),
@@ -59,7 +59,7 @@ public class BindingEnergyEngineTest {
 
 		// Check V = 29 to make sure the larger size clusters are computed
 		// correctly.
-		assertEquals(2.40,engine.getVBindingEnergy(29),1.0e-2);
+		assertEquals(2.63,engine.getVBindingEnergy(29),1.0e-2);
 
 		return;
 	}
@@ -107,28 +107,28 @@ public class BindingEnergyEngineTest {
 		assertEquals(3.85, engine.getHeVtoHeBindingEnergy(31, 6), 1.0e-2);
 
 		// Check the code for He_1V_44 -> He_1V_43 + V_1
-		assertEquals(2.52, engine.getHeVtoVBindingEnergy(1, 44), 1.0e-2);
+		assertEquals(2.75, engine.getHeVtoVBindingEnergy(1, 44), 1.0e-2);
 
 		// Check the code for He_8 --> He_7 + He_1 to make sure work is
 		// delegated to the
 		assertEquals(2.28, engine.getHeBindingEnergy(8), 1.0e-2);
 
-		// Check the code for V_2 --> V_1 + V_1. That is the only valid size for
-		// this cluster type at the moment.
-		assertEquals(-0.05, engine.getVBindingEnergy(2), 1.0e-2);
-
 		// Check that requesting He_1V_1 returns a value other than for this
 		// special case.
-		assertEquals(3.26, engine.getHeVtoHeBindingEnergy(1, 1), 1.0e-2);
-		assertEquals(3.26, engine.getHeVtoVBindingEnergy(1, 1), 1.0e-2);
+		assertEquals(4.83, engine.getHeVtoHeBindingEnergy(1, 1), 1.0e-2);
+		assertEquals(4.83, engine.getHeVtoVBindingEnergy(1, 1), 1.0e-2);
 
+		// Check that larger V = 1 clusters like He_6V_1 are correct.
+		assertEquals(2.56, engine.getHeVtoHeBindingEnergy(6, 1), 1.0e-2);
+		assertEquals(11.78, engine.getHeVtoVBindingEnergy(6, 1), 1.0e-2);
+		
 		// Make sure that if there is no He or V the engine returns infinity for
 		// the respective calls.
 		assertEquals(Double.POSITIVE_INFINITY,
 				engine.getHeVtoHeBindingEnergy(0, 1), 1.0e-2);
 		assertEquals(Double.POSITIVE_INFINITY,
 				engine.getHeVtoVBindingEnergy(1, 0), 1.0e-2);
-
+		
 		return;
 	}
 
