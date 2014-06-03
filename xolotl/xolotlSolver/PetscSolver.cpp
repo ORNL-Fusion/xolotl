@@ -1,6 +1,6 @@
 // Includes
 #include "PetscSolver.h"
-#include <HandlerRegistryFactory.h>
+#include <xolotlPerf.h>
 #include "FitFluxHandler.h"
 #include "TemperatureHandler.h"
 #include <MathUtils.h>

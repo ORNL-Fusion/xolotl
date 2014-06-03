@@ -1,5 +1,5 @@
 #include "XolotlConfigPerf.h"
-#include "HandlerRegistryFactory.h"
+#include "xolotlPerf.h"
 #include <DummyHandlerRegistry.h>
 #include <iostream>
 
@@ -38,7 +38,7 @@ initialize( bool useStdRegistry,
         // Note that the dummy (stub) handlers don't take the 
         // collection of hardware quantities to monitor, since
         // they don't monitor anything.
-        theHandlerRegistry = std::make_shared<DummyHandlerRegistry>();
+        theHandlerRegistry = std::make_shared<xolotlPerf::DummyHandlerRegistry>();
     }
 
     return ret;

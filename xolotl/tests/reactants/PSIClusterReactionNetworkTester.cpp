@@ -20,7 +20,7 @@
 #include <VCluster.h>
 #include <InterstitialCluster.h>
 #include <HeInterstitialCluster.h>
-#include <xolotlPerf/HandlerRegistryFactory.h>
+#include <xolotlPerf/xolotlPerf.h>
 
 using namespace std;
 using namespace xolotlCore;

@@ -1,5 +1,5 @@
-#ifndef HANDLERREGISTRYFACTORY_H
-#define HANDLERREGISTRYFACTORY_H
+#ifndef XOLOTLPERF_H
+#define XOLOTLPERF_H
 
 #include <memory>
 #include <vector>
@@ -31,4 +31,4 @@ std::shared_ptr<IHandlerRegistry> getHandlerRegistry( void );
 
 }; // end namespace xolotlPerf
 
-#endif // HANDLERREGISTRYFACTORY_H
+#endif // XOLOTLPERF_H

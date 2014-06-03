@@ -1,6 +1,6 @@
 // Includes
 #include "PetscSolver.h"
-#include <HandlerRegistryFactory.h>
+#include <xolotlPerf.h>
 #include <VizHandlerRegistryFactory.h>
 #include <PlotType.h>
 #include <CvsXDataProvider.h>

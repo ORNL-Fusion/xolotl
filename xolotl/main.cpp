@@ -11,7 +11,7 @@
 #include <mpi.h>
 #include <MPIUtils.h>
 #include <XolotlOptions.h>
-#include <HandlerRegistryFactory.h>
+#include <xolotlPerf.h>
 #include <HardwareQuantities.h>
 #include <IHandlerRegistry.h>
 
