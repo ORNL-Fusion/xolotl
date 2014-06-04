@@ -168,9 +168,9 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
 	PetscFunctionBeginUser;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	/* Name each of the concentrations */
@@ -206,7 +206,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 		// at i == 0. Everywhere else, only I1 has a non-zero concentration.
 		if (i != 0) {
 			// Set the default interstitial concentrations
-			auto reactant = network->get("I",1);
+			auto reactant = network->get("I", 1);
 			reactant->setConcentration(0.0023);
 		}
 
@@ -223,9 +223,8 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	PetscFunctionReturn(0);
 }
 
-void getIncomingHeFlux(PSICluster * cluster,
-		std::vector<double> gridPos, PetscReal curTime,
-		PetscScalar *updatedConcOffset) {
+void getIncomingHeFlux(PSICluster * cluster, std::vector<double> gridPos,
+		PetscReal curTime, PetscScalar *updatedConcOffset) {
 
 	int reactantIndex = 0;
 	// Get the flux handler that will be used to compute fluxes.
@@ -249,8 +248,8 @@ void getIncomingHeFlux(PSICluster * cluster,
 	return;
 }
 
-void computeDiffusion(PSICluster * cluster, double temp,
-		PetscReal sx, PetscScalar *concOffset, PetscScalar *leftConcOffset,
+void computeDiffusion(PSICluster * cluster, double temp, PetscReal sx,
+		PetscScalar *concOffset, PetscScalar *leftConcOffset,
 		PetscScalar *rightConcOffset, PetscScalar *updatedConcOffset) {
 
 	int reactantIndex = 0;
@@ -306,7 +305,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	// Loop variables
 	int size = 0, reactantIndex = 0;
 	// Handy pointers to keep the code clean
-	PSICluster * heCluster = NULL, * vCluster = NULL, * iCluster = NULL, * cluster = NULL;
+	PSICluster * heCluster = NULL, *vCluster = NULL, *iCluster = NULL,
+			*cluster = NULL;
 	// The following pointers are set to the first position in the conc or
 	// updatedConc arrays that correspond to the beginning of the data for the
 	// current gridpoint. They are accessed just like regular arrays.
@@ -327,9 +327,9 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	ierr = DMGetLocalVector(da, &localC);
 	checkPetscError(ierr);
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Get the total number of grid points specified by the command line option
@@ -391,12 +391,12 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 				realTime);
 
 		// Update the network if the temperature changed
-		if (!xolotlCore::equal(temperature,lastTemperature)) {
+		if (!xolotlCore::equal(temperature, lastTemperature)) {
 			network->setTemperature(temperature);
 			lastTemperature = temperature;
 		}
 
-		//xi = 4; // Debugging
+//		xi = 1; // Uncomment this line for debugging in a single cell.
 
 		// Compute the middle, left, right and new array offsets
 		concOffset = concs + size * xi;
@@ -479,7 +479,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //		}
 
 		// Uncomment this line for debugging in a single cell.
-		//break;
+//		break;
 	}
 	computeODEtermPerGP->stop();
 
@@ -506,9 +506,9 @@ PetscErrorCode callRHSFunction(TS ts, PetscReal ftime, Vec C, Vec F,
 	return ierr;
 }
 
-void computePartialsForDiffusion(PSICluster * cluster,
-		double temp, PetscReal sx, PetscReal val[6], PetscInt row[3],
-		PetscInt col[3], PetscInt xi, PetscInt xs, int size) {
+void computePartialsForDiffusion(PSICluster * cluster, double temp,
+		PetscReal sx, PetscReal val[6], PetscInt row[3], PetscInt col[3],
+		PetscInt xi, PetscInt xs, int size) {
 
 	int reactantIndex = 0;
 	double diffCoeff = 0.0;
@@ -542,7 +542,8 @@ void computePartialsForDiffusion(PSICluster * cluster,
 /*
  Compute the Jacobian entries based on IFuction() and insert them into the matrix
  */
-PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr) {
+PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
+		void *ptr) {
 
 	// increment the event counter monitoring this function
 	RHSJacobianCounter->increment();
@@ -573,9 +574,9 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr
 	ierr = DMGetLocalVector(da, &localC);
 	checkPetscError(ierr);
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Get the total number of grid points specified by the command line option
@@ -633,7 +634,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr
 			auto temperature = temperatureHandler->getTemperature(gridPosition,
 					realTime);
 
-			//xi = 4; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//			xi = 1; // Uncomment this line for debugging in a single cell
 
 			// Copy data into the PSIClusterReactionNetwork so that it can
 			// compute the new concentrations.
@@ -674,7 +675,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr
 				ierr = MatSetValuesLocal(J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
-			//break;   // Uncomment this line for debugging in a single cell.
+//			break;   // Uncomment this line for debugging in a single cell.
 		}
 		computeJacobianDiffusionTerms->stop();
 
@@ -715,7 +716,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr
 		auto temperature = temperatureHandler->getTemperature(gridPosition,
 				realTime);
 
-		//xi = 4; ///FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//		xi = 1; // Uncomment this line for debugging in a single cell
 
 		// Copy data into the PSIClusterReactionNetwork so that it can
 		// compute the new concentrations.
@@ -730,7 +731,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr
 			// Get the column id
 			rowId = (xi - xs + 1) * size + reactantIndex;
 			// Get the partial derivatives
-			reactant->getPartialDerivatives(temperature,clusterPartials);
+			reactant->getPartialDerivatives(temperature, clusterPartials);
 			// Get the list of column ids from the map
 			auto pdColIdsVector = dFillMap.at(reactantIndex);
 			//Number of partial derivatives
@@ -755,7 +756,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr
 		}
 		updateJacobianCol->stop();
 		// Uncomment this line for debugging in a single cell.
-		//break;
+//		break;
 	}
 	computeReactionTermPartials->stop();
 
@@ -773,8 +774,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr
 	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
 	checkPetscError(ierr);
 
-	// Boundary conditions
-	// Loop over the grid points
+	// Enforce the Boundary conditions. Loop over the grid points and set the
+	// conditions.
 	for (xi = xs; xi < xs + xm; xi++) {
 		if (xi == 0) {
 			// Loop on the reactants
@@ -824,7 +825,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,void *ptr
 
 }
 
-PetscErrorCode callRHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void *ptr) {
+PetscErrorCode callRHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
+		void *ptr) {
 	PetscErrorCode ierr;
 	RHSJacobianTimer->start();
 	ierr = RHSJacobian(ts, ftime, C, A, J, &ptr);
@@ -911,7 +913,8 @@ PetscSolver::PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry)
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
 	computeODEtermPerGP = handlerRegistry->getTimer("computeODEtermPerGP");
 	computeNewFluxes = handlerRegistry->getTimer("computeNewFluxes");
-	computeIncidentFluxTimer = handlerRegistry->getTimer("computeIncidentFluxTimer");
+	computeIncidentFluxTimer = handlerRegistry->getTimer(
+			"computeIncidentFluxTimer");
 	computeDiffusionTimer = handlerRegistry->getTimer("computeDiffusionTimer");
 	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
 	computeReactionTermPartials = handlerRegistry->getTimer(
@@ -1030,8 +1033,8 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	int dof = network->size();
 
 	// Set the size of the partial derivatives vectors
-	clusterPartials.resize(dof,0.0);
-	reactingPartialsForCluster.resize(dof,0.0);
+	clusterPartials.resize(dof, 0.0);
+	reactingPartialsForCluster.resize(dof, 0.0);
 
 	// Check the network before getting busy.
 	if (!network) {
@@ -1046,7 +1049,7 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR, -8, dof, 1,
-			NULL, &da);
+	NULL, &da);
 	checkPetscError(ierr);
 
 	/* The only spatial coupling in the Jacobian (diffusion) is for the first 5 He, the first V, and the first I.
