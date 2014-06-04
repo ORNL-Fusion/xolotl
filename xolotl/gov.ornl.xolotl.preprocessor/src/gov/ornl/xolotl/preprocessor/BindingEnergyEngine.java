@@ -26,7 +26,7 @@ public class BindingEnergyEngine {
 	 * padding to make the indexing easy.
 	 */
 	private static double[] vFormationEnergies = { Double.POSITIVE_INFINITY,
-			3.82644, 7.10098 };
+			3.6, 7.25 };
 
 	/**
 	 * The set of interstitial formation energies up to I_6 indexed by size.
@@ -58,19 +58,20 @@ public class BindingEnergyEngine {
 	/**
 	 * The formation energies for He_xV_1. The entry at i = 0 is for a single
 	 * vacancy (He_0V_1) and is there as a buffer. Like the formation energies,
-	 * i = size.
+	 * i = heSize.
 	 */
-	private double[] heV1FormationEnergies = { 3.82644, 5.14166, 8.20919,
-			11.5304, 14.8829, 18.6971, 22.2847, 26.3631, 30.1049, 34.0081 };
+	private double[] heV1FormationEnergies = { vFormationEnergies[1], 5.14166,
+			8.20919, 11.5304, 14.8829, 18.6971, 22.2847, 26.3631, 30.1049,
+			34.0081 };
 
 	/**
-	 * The formation energies for He_xV_2. The entry at i = 0 is for a single
-	 * vacancy (He_0V_2) and is there as a buffer. Like the formation energies,
-	 * i = size.
+	 * The formation energies for He_xV_2. The entry at i = 0 is for a
+	 * di-vacancy (He_0V_2) and is there as a buffer. Like the formation
+	 * energies, i = heSize.
 	 */
-	private double[] heV2FormationEnergies = { 7.10098, 8.39913, 9.41133,
-			11.8748, 14.8296, 17.7259, 20.7747, 23.7993, 26.7984, 30.0626,
-			33.0385, 36.5173, 39.9406, 43.48, 46.8537 };
+	private double[] heV2FormationEnergies = { vFormationEnergies[2], 7.10098,
+			8.39913, 9.41133, 11.8748, 14.8296, 17.7259, 20.7747, 23.7993,
+			26.7984, 30.0626, 33.0385, 36.5173, 39.9406, 43.48, 46.8537 };
 
 	/**
 	 * The constructor
@@ -135,7 +136,7 @@ public class BindingEnergyEngine {
 			energy = vFormationEnergies[size];
 		else if (size >= 3) {
 			// Get the energy for He_xV_y
-			energy = getHeVFormationEnergy(0,size);
+			energy = getHeVFormationEnergy(0, size);
 		}
 
 		return energy;
