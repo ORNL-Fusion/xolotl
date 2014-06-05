@@ -3,9 +3,20 @@
  */
 package gov.ornl.xolotl.preprocessor;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+
 /**
  * This class computes the binding energies for a cluster with a given
  * composition. All binding energies are in electron volts (eV).
+ * 
+ * This class looks in the user directory during construction and will override
+ * the fit coefficients if it finds a csv file with one set of coefficients per
+ * row and named fit.csv. There should be six rows with four coefficients per
+ * row.
  * 
  * @author Jay Jay Billings
  * 
@@ -74,11 +85,76 @@ public class BindingEnergyEngine {
 			26.7984, 30.0626, 33.0385, 36.5173, 39.9406, 43.48, 46.8537 };
 
 	/**
-	 * The constructor
+	 * The constructor. If the file fit.csv exists in user.dir, this operation
+	 * will try to load the coefficients from it. It closes the file when it is
+	 * finished.
 	 */
 	public BindingEnergyEngine() {
-		// READ file with coefficients from here
 
+		// Get the fit file
+		File fitFile = new File("fit.csv");
+
+		// Load the file if it exists
+		if (fitFile.exists()) {
+			try {
+				// Create the readers
+				FileReader fitFileReader = new FileReader(fitFile);
+				BufferedReader fitReader = new BufferedReader(fitFileReader);
+				// Read the fit from the file
+				String [] c0Strings = fitReader.readLine().split(",");
+				String [] c1Strings = fitReader.readLine().split(",");
+				String [] c2Strings = fitReader.readLine().split(",");
+				String [] c3Strings = fitReader.readLine().split(",");
+				String [] c4Strings = fitReader.readLine().split(",");
+				String [] c5Strings = fitReader.readLine().split(",");
+				// Convert the c0 coefficients
+				c0Coefficients[0] = Double.valueOf(c0Strings[0]);
+				c0Coefficients[1] = Double.valueOf(c0Strings[1]);
+				c0Coefficients[2] = Double.valueOf(c0Strings[2]);
+				c0Coefficients[3] = Double.valueOf(c0Strings[3]);
+				// Convert the c1 coefficients
+				c1Coefficients[0] = Double.valueOf(c1Strings[0]);
+				c1Coefficients[1] = Double.valueOf(c1Strings[1]);
+				c1Coefficients[2] = Double.valueOf(c1Strings[2]);
+				c1Coefficients[3] = Double.valueOf(c1Strings[3]);
+				// Convert the c2 coefficients
+				c2Coefficients[0] = Double.valueOf(c2Strings[0]);
+				c2Coefficients[1] = Double.valueOf(c2Strings[1]);
+				c2Coefficients[2] = Double.valueOf(c2Strings[2]);
+				c2Coefficients[3] = Double.valueOf(c2Strings[3]);
+				// Convert the c3 coefficients
+				c3Coefficients[0] = Double.valueOf(c3Strings[0]);
+				c3Coefficients[1] = Double.valueOf(c3Strings[1]);
+				c3Coefficients[2] = Double.valueOf(c3Strings[2]);
+				c3Coefficients[3] = Double.valueOf(c3Strings[3]);
+				// Convert the c4 coefficients
+				c4Coefficients[0] = Double.valueOf(c4Strings[0]);
+				c4Coefficients[1] = Double.valueOf(c4Strings[1]);
+				c4Coefficients[2] = Double.valueOf(c4Strings[2]);
+				c4Coefficients[3] = Double.valueOf(c4Strings[3]);
+				// Convert the c5 coefficients
+				c5Coefficients[0] = Double.valueOf(c5Strings[0]);
+				c5Coefficients[1] = Double.valueOf(c5Strings[1]);
+				c5Coefficients[2] = Double.valueOf(c5Strings[2]);
+				c5Coefficients[3] = Double.valueOf(c5Strings[3]);
+				// Close the reader
+				fitReader.close();
+			} catch (FileNotFoundException e) {
+				// Complain
+				System.err.println("BindingEnergyEngine Message:"
+						+ " There is something wrong with your fit.csv file! "
+						+ " It does not exist. Aborting.");
+				e.printStackTrace();
+			} catch (IOException e) {
+				// Complain
+				System.err.println("BindingEnergyEngine Message:"
+						+ " There is something wrong with your fit.csv file! "
+						+ " It cannot be read. Aborting.");
+				e.printStackTrace();
+			}
+		}
+
+		return;
 	};
 
 	/**

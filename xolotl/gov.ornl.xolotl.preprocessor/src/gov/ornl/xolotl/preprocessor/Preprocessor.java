@@ -33,11 +33,10 @@ import java.util.ArrayList;
  * All energies are in eV and all diffusion factors are in nm^2/s.
  * 
  * The preprocessor generates 2067 clusters with its default configuration. If
- * only the maximum number of vacancies is changed it generates
+ * only the maximum number of vacancies is changed it generates a number of
+ * clusters equal to
  * 
- * maxI + maxHe + 2053 + (maxV - 29) + sum{30<= i <= maxV}(4*i)
- * 
- * clusters.
+ * maxI + maxHe + 2053 + (maxV - 29) + 2(maxV - 29)(30 + maxV)
  * 
  * @author Jay Jay Billings
  * 
@@ -59,7 +58,7 @@ public class Preprocessor {
 			0.20, 0.25, 0.20, 0.12, 0.3 };
 
 	// The maximum size of a vacancy cluster in the network.
-	private int maxV = 96;
+	private int maxV = 29;
 
 	// The diffusion factor for a single vacancy.
 	private double vOneDiffusionFactor = 1800.0;
