@@ -9,10 +9,11 @@ list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
 # Xolotl requires C++11 to use shared pointers
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
+# Tell CMake to look for static libraries
+SET(BUILD_SHARED_LIBS OFF)
+
 # Find PETSc
 FIND_PACKAGE(PETSc REQUIRED)
-
-SET(BUILD_SHARED_LIBS OFF)
 
 # Find HDF5 - Optional for now until we actually require it
 FIND_PACKAGE(HDF5 REQUIRED)
