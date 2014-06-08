@@ -12,15 +12,6 @@ file(GLOB HEADERS *.h)
 #Grab all of the source files
 file(GLOB SRC *.cpp)
 
-# Find HDF5
-FIND_PACKAGE(HDF5 REQUIRED)
-IF (HDF5_FOUND)
-    IF (NOT HDF5_IS_PARALLEL)
-        message(STATUS "WARNING! HDF5 is not supporting parallel IO")
-    ENDIF()
-    INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
-ENDIF()
-
 #Include the MPI directories
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)

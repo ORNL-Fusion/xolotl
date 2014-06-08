@@ -3,39 +3,50 @@ PROJECT ( xolotl C CXX )
 # Set the minimum required version of cmake for this project.
 cmake_minimum_required(VERSION 2.8)
 
+# Add an option to notify the build that it is on a batch system
+option(withBatch "Notify the build that it is running on a batch system")
+
 # Include the modules to find PETSC, ITAPS, etc. from Jed Brown
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
 
 # Xolotl requires C++11 to use shared pointers
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
-# Find Boost
-FIND_PACKAGE(Boost REQUIRED)
-IF (Boost_FOUND)
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-    set( hasBoost "")
-ENDIF()
+# Check for and notify the user about building in batch mode
+if (withBatch)
+   message("NOTICE: Batch build mode detected.")
+   message("Disabling thorough PETSc linking tests.")
+   set(PETSC_EXECUTABLE_RUNS YES)
+endif()
 
 # Find PETSc
 FIND_PACKAGE(PETSc REQUIRED)
 
+# Find HDF5 - Optional for now until we actually require it
+FIND_PACKAGE(HDF5 REQUIRED)
+# Check for parallel I/O support in the HDF5 installation.
+IF (NOT HDF5_IS_PARALLEL)
+   message(STATUS "WARNING! Detected HDF5 installation does not support parallel I/O!")
+ENDIF()
+# Include the headers
+INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
+
 # Build the performance library first, so it can be used by other libraries.
 add_subdirectory(xolotlPerf)
-
 # Add the visualization directory
 add_subdirectory(xolotlViz)
-
 # Add the I/O, data structures and reactor directories
 add_subdirectory(xolotlCore)
 add_subdirectory(xolotlSolver)
 
-
 # Enable testing.
 enable_testing()
 # Add the tests is Boost is available
-IF (DEFINED hasBoost)
+FIND_PACKAGE(Boost)
+IF (Boost_FOUND)
     message(STATUS "Boost version ${Boost_VERSION} found.")
     message(STATUS "Tests will be built since Boost was found.")
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
     add_subdirectory(tests)
 ENDIF()
 
