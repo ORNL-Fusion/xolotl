@@ -11,6 +11,3 @@ file(GLOB HEADERS *.h)
 #and glob them in SRC
 file(GLOB SRC *.cpp)
 
-
-
-#install(FILES ${HEADERS} DESTINATION include)

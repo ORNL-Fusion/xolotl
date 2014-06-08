@@ -12,6 +12,8 @@ list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 # Find PETSc
 FIND_PACKAGE(PETSc REQUIRED)
 
+SET(BUILD_SHARED_LIBS OFF)
+
 # Find HDF5 - Optional for now until we actually require it
 FIND_PACKAGE(HDF5 REQUIRED)
 # Check for parallel I/O support in the HDF5 installation.

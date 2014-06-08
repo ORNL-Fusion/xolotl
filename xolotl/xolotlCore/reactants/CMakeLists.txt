@@ -24,7 +24,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/standard)
 
 #Add the library
-add_library(${LIBRARY_NAME} SHARED ${SRC})
+add_library(${LIBRARY_NAME} STATIC ${SRC})
 target_link_libraries(${LIBRARY_NAME} xolotlPerf)
 
 #Install the xolotl header files
