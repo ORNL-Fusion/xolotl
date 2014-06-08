@@ -3,21 +3,11 @@ PROJECT ( xolotl C CXX )
 # Set the minimum required version of cmake for this project.
 cmake_minimum_required(VERSION 2.8)
 
-# Add an option to notify the build that it is on a batch system
-option(withBatch "Notify the build that it is running on a batch system")
-
 # Include the modules to find PETSC, ITAPS, etc. from Jed Brown
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
 
 # Xolotl requires C++11 to use shared pointers
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
-
-# Check for and notify the user about building in batch mode
-if (withBatch)
-   message("NOTICE: Batch build mode detected.")
-   message("Disabling thorough PETSc linking tests.")
-   set(PETSC_EXECUTABLE_RUNS YES)
-endif()
 
 # Find PETSc
 FIND_PACKAGE(PETSc REQUIRED)
