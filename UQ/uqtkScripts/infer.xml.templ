@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<SurfRxnDemo>
+    
+    <!-- Data and noise type for inference-->
+    <Data file="inputdata.dat" noise="infer_stdev">
+        
+        <noise_types>
+            <const_stn stdparam="0.1"/> <!-- Constant stdev/mean ratio -->
+            <const_stdev stdparam="0.237"/> <!-- Constant stdev -->
+            <infer_stdev stdparam="-2"/> <!-- Infering stdev -->
+        </noise_types>
+        
+    </Data>
+    
+    <!-- MCMC specific information -->
+    <MCMC name="line_inference" method="am" chainparam="default" output="txt">
+        
+        <method_types>
+            <am  nsteps="10000" gamma="1.0" eps_cov="1e-8" adstart="1000" adstep="10" adstop="1000000000" />
+            <ss  nsteps="10000"/>
+        </method_types>
+        
+        <!-- Specifies chain start and (initial) proposal sigmas -->
+        <chainparam_types>
+            <default/>  <!-- default takes values from model block -->
+            <file chstart="chain_st.dat" chsig="chain_sg.dat" /> <!-- read from files -->
+        </chainparam_types>
+        
+        <!-- Specifies the output types and options -->
+        <output_types>
+            <txt file="CHAINFILE" freq="1000" screen="1000"/> <!-- Text file -->
+            <bin file="chain.bin" freq="1000" screen="20000"/> <!-- Binary file -->
+        </output_types>
+        
+    </MCMC>
+    
+    <!-- Model parameters -->
+    <ModelParameters model_order="5" model_dim="1">
+        
+        <!-- all parameters with their nominal value.
+         
+         value: nominal value for deterministic run
+              : initial chain position for inference
+              : nominal or 0th order term for isp/nisp
+         
+         type: det: deterministic, no further specification needed
+         
+         type: infer: sought by inference code
+           sigma: proposal sigma
+           prior: prior type
+           pr1,pr2: prior parameters
+         
+         type: uncertain: sought by isp/nisp codes
+           cf_X: PC coefficients, X>0
+         -->
+        <param_a value="PAR_1" type="infer" sigma="0.05" prior="uniform" pr1="-1000" pr2="1000"/>
+        <param_b value="PAR_2" type="infer" sigma="0.05" prior="uniform" pr1="-1000" pr2="1000"/>
+        <param_c value="PAR_3" type="infer" sigma="0.05" prior="uniform" pr1="-1000" pr2="1000"/>
+		<param_d value="PAR_4" type="infer" sigma="0.05" prior="uniform" pr1="-1000" pr2="1000"/>
+        <param_f value="PAR_5" type="infer" sigma="0.05" prior="uniform" pr1="-1000" pr2="1000"/>
+        <param_g value="PAR_6" type="infer" sigma="0.05" prior="uniform" pr1="-1000" pr2="1000"/>
+        <param_logsigma value="PAR_7" type="infer" sigma="0.05" prior="uniform" pr1="-1000" pr2="1000"/>
+ 
+        
+    </ModelParameters>
+    
+   
+    
+</SurfRxnDemo>
