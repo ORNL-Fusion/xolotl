@@ -217,7 +217,7 @@ def main(argv):
         # Append the results
         pccf_all.append(pccf)
         mindex_all.append(mindex)
-    np.savetxt('pccf_'+str(i)+'.dat',pccf)
+        np.savetxt('pccf_'+str(i)+'.dat',pccf)
 
         ################################
         
@@ -226,13 +226,14 @@ def main(argv):
         #cmd="pce_sens -m'mindex.dat' -f'PCcoeff_quad.dat' -x"+pc_type+" > pcsens_"+str(i)+".log"
         print "Running "+cmd
         os.system(cmd)
-        
+        # Save the mean and variance to a file
         cmd='grep -e "Mean, Var = " pcsens.log | cut -c 13- > mean_var.log'
         os.system(cmd)
         ins = open("mean_var.log", "r")
         line = ins.readline().split()
         line[0] = line[0] +"\n"
-        evalPCsurrFile.write("%s %s %s" %(xin[i],line[0]))
+        # Save each of the x values and corresponding mean and variance to a file
+        evalPCsurrFile.write("%s %s" %(xin[i],line[0]))
         allsens[:,i]=np.loadtxt('mainsens.dat')
         print "AAA", allsens.shape
 
@@ -245,11 +246,9 @@ def main(argv):
     # Save results
     pick.dump(results,open('results.pk','wb'),-1)
 
-
     # Cleanup of unneeded leftovers
     #del_cmd='rm -rf ydata_pc.dat ydata.dat xdata.dat pccf.dat varfrac.dat totsens.dat mainsens.dat jointsens.dat sp_mindex*dat mindex.dat PCcoeff.dat xwghts.dat wghts.dat qdpts.dat'
     #os.system(del_cmd)
-
 
 if __name__ == "__main__":
    main(sys.argv[1:])
