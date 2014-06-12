@@ -32,10 +32,6 @@ def model_example(modelPar):
 
 # Evaluates the PC surrogate
 
-    # Create the design parameters #TODO maybe should be done outside
-    #designPar=np.array(range(nout)).reshape(-1,1) #/float(nout-1)
-    #np.savetxt('designPar.dat',designPar)
-
     # Load the (scaled to [-1,1]) inputdata
     xin = np.loadtxt('inputdata.dat', usecols = (0,), unpack=True)
     nout=len(xin)

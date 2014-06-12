@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-# This file uses forward UQ to propagate the uncertainties, it
-# also allows for seperate preprocessing and postprocessing
+# This file uses forward UQ to propagate the uncertainties.
+# This file also allows for seperate preprocessing and postprocessing
+
 
 import os
 import getopt
@@ -13,7 +14,7 @@ import random as rnd
 from scipy import stats, mgrid, reshape, random
 import cPickle as pick
 
-from model import model
+from model1D import model
 
 #############################################################
 def usage():
@@ -26,7 +27,7 @@ def usage():
     print "Default values are"
     print def_str
     #print "For more detailed information on parameters, refer to the UQTk Manual"
-    
+
 #######################################################################################
 
 def main(argv):
@@ -117,6 +118,7 @@ def main(argv):
     # (1) Generate sample points for online or offline_prep regimes 
     if run_regime=="online" or run_regime=="offline_prep":
         # TODO LU or CC?
+    # TODO is this part needed?  since we are already doing the pce_quad
         cmd="generate_quad -d"+str(in_pcdim)+"  -g"+pc_type+" -x"+sp_type+" -p"+str(nqd)+" > gq.log"
         print "Running "+cmd
         os.system(cmd)
@@ -124,13 +126,6 @@ def main(argv):
         inqdp=np.loadtxt('qdpts.dat')
         npt=inqdp.shape[0]
         print "Quadrature points are in %s in a format %d x %d " % ('qdpts.dat',npt,in_pcdim)
-
-        # Generate points, if requested, for the validation of the surrogate
-        #if nval>0:
-            #pval=2.*np.random.rand(nval,dim)-1.
-            #pval_unsc=0.5*(pdom[:,1]-pdom[:,0])*pval+0.5*(pdom[:,1]+pdom[:,0])
-            #np.savetxt(input_val,pval_unsc)
-            #print "Parameter samples for surrogate validation are in %s in a format %d x %d " % (input_val,nval,dim)
 
         # Evaluate input PCs at quadrature points
         np.savetxt('xdata.dat',inqdp)
@@ -195,6 +190,8 @@ def main(argv):
     output_pc=np.empty((npt,nout))
     allsens=np.empty((in_pcdim,nout)) #in_pcdim or npar?
     
+    evalPCsurrFile = open('evalPCsurr.dat', 'w')
+    xin, yin = np.loadtxt('inputdata.dat', usecols = (0,1), unpack=True)
     # Loop over all output observables/locations
     for i in range(nout):
         
@@ -205,6 +202,7 @@ def main(argv):
         print "Building surrogate for observable %d / %d" % (i+1,nout)
         np.savetxt('ydata.dat',output[:,i])
 
+        # NOTE: only LEG is implemented in pce_resp
         cmd="pce_resp -x"+pc_type+" -o"+str(out_pcord)+" -d"+str(in_pcdim)+" -e > pcr.log"
         print "Running "+cmd
         os.system(cmd)
@@ -219,41 +217,28 @@ def main(argv):
         # Append the results
         pccf_all.append(pccf)
         mindex_all.append(mindex)
-        np.savetxt('pccf_'+str(i)+'.dat',pccf)
-        ################################
+    np.savetxt('pccf_'+str(i)+'.dat',pccf)
 
-        ## (4b) Evaluate the PC surrogate at training and validation points
-        #print "Evaluating surrogate at %d training points" % (npt)
-        #ytrain_pc[:,i]=model_pc(ptrain_unsc,pdom,[mindex,pccf])
-        #err_training=np.linalg.norm(ytrain[:,i]-ytrain_pc[:,i])/np.linalg.norm(ytrain[:,i])
-        #print "Surrogate relative error at training points : ", err_training
-
-
-        #if (nval>0):
-        #    print "Evaluating surrogate at %d validation points" % (nval)
-        #    yval_pc[:,i]=model_pc(pval_unsc,pdom,[mindex,pccf])
-        #    err_val=np.linalg.norm(yval[:,i]-yval_pc[:,i])/np.linalg.norm(yval[:,i])
-        #    print "Surrogate relative error at validation points : ", err_val
-        #   #np.savetxt('yval_pc.'+str(i+1)+'.dat',yval_pc)
-        
         ################################
         
         # (4c) Compute moments
         cmd="pce_sens -m'mindex.dat' -f'PCcoeff_quad.dat' -x"+pc_type+" > pcsens.log"
+        #cmd="pce_sens -m'mindex.dat' -f'PCcoeff_quad.dat' -x"+pc_type+" > pcsens_"+str(i)+".log"
         print "Running "+cmd
         os.system(cmd)
+        
+        cmd='grep -e "Mean, Var = " pcsens.log | cut -c 13- > mean_var.log'
+        os.system(cmd)
+        ins = open("mean_var.log", "r")
+        line = ins.readline().split()
+        line[0] = line[0] +"\n"
+        evalPCsurrFile.write("%s %s %s" %(xin[i],line[0]))
         allsens[:,i]=np.loadtxt('mainsens.dat')
         print "AAA", allsens.shape
+
+    evalPCsurrFile.close()
         
     ############################################################################
-
-  
-
-    # Results container
-    #if(nval>0):
-    #    results = {'training':(pdom,ptrain_unsc,ytrain,ytrain_pc),'validation':(pdom,pval_unsc,yval,yval_pc),'pcmi':(pccf_all,mindex_all),'sens':(allsens,allsens_sc),'err':(err_training,err_val)}
-    #else:
-    #    results = {'training':(pdom,ptrain_unsc,ytrain,ytrain_pc),'pcmi':(pccf_all,mindex_all),'sens':(allsens,allsens_sc),'err':(err_training)}
 
     results = {'feval':(inpar,output,output_pc),'pcmi':(pccf_all,mindex_all),'sens':(allsens)}
 
