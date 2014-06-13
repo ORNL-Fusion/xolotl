@@ -3,5 +3,17 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="deps/fits.jar"/>
+	<classpathentry kind="lib" path="deps/jarfitsobj.jar"/>
+	<classpathentry kind="lib" path="deps/jarh4obj.jar"/>
+	<classpathentry kind="lib" path="deps/jarh5obj.jar"/>
+	<classpathentry kind="lib" path="deps/jarhdf-2.10.0.jar"/>
+	<classpathentry kind="lib" path="deps/jarhdf5-2.10.0.jar"/>
+	<classpathentry kind="lib" path="deps/jarhdfobj.jar"/>
+	<classpathentry kind="lib" path="deps/jarnc2obj.jar"/>
+	<classpathentry kind="lib" path="deps/jhdfview.jar"/>
+	<classpathentry kind="lib" path="deps/netcdf.jar"/>
+	<classpathentry kind="lib" path="deps/slf4j-api-1.7.5.jar"/>
+	<classpathentry kind="lib" path="deps/slf4j-nop-1.7.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
