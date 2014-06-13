@@ -28,9 +28,12 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 
+		// Local Declarations
+		Arguments myArgs = null;
+		
 		// Get command line arguments
 		try {
-			Arugments myArgs = CliFactory.parseArguments(Arugments.class, args);
+			myArgs = CliFactory.parseArguments(Arguments.class, args);
 		} catch (ArgumentValidationException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -52,8 +55,8 @@ public class Main {
 			e.printStackTrace();
 		}
 		
-		// Create the Preprocessor
-		Preprocessor preprocessor = new Preprocessor();
+		// Create the Preprocessor - FIXME! Check myArgs != null
+		Preprocessor preprocessor = new Preprocessor(myArgs);
 
 		// Generate the clusters
 		ArrayList<Cluster> clusters = preprocessor.generate(args);

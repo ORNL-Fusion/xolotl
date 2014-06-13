@@ -97,6 +97,17 @@ public class Preprocessor {
 	private BindingEnergyEngine bindingEnergyEngine = new BindingEnergyEngine();
 
 	/**
+	 * Constructor
+	 * 
+	 * @param args
+	 *            The command line arguments as specified by the Arguments
+	 *            interface.
+	 */
+	public Preprocessor(Arguments args) {
+
+	}
+
+	/**
 	 * This operation generates all Helium clusters in the network.
 	 * 
 	 * @return A list of clusters configured to satisfy the bounds and composed
