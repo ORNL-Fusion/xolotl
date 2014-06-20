@@ -929,6 +929,12 @@ PetscSolver::PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry)
 //! The Destructor
 PetscSolver::~PetscSolver() {
 
+    // std::cerr << "Destroying a PetscSolver" << std::endl;
+
+    // Break "pointer" cycles so that network, clusters, reactants
+    // will deallocate when the std::shared_ptrs owning them 
+    // are destroyed.
+    network->askReactantsToReleaseNetwork();
 }
 
 /**

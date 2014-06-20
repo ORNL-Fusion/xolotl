@@ -54,6 +54,8 @@ StandardHandlerRegistry::StandardHandlerRegistry( std::vector<HardwareQuantities
 
 StandardHandlerRegistry::~StandardHandlerRegistry( void )
 {
+    // std::cerr << "Destroying a StandardHandlerRegistry" << std::endl;
+
     // We have been using GPTL for data collection, and 
     // since we assume that we are the only GPTL user in the process
     // (see the comment in the ctor), we can gracefully clean up GPTL.

@@ -4,10 +4,11 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <cassert>
 #include <Constants.h>
 
 using namespace xolotlCore;
-using std::shared_ptr;
+
 
 void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 
@@ -111,6 +112,13 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 	}
 
 }
+
+
+PSIClusterReactionNetwork::~PSIClusterReactionNetwork( void )
+{
+    // std::cerr << "Destroying a PSIClusterReactionNetwork" << std::endl;
+}
+
 
 /**
  * This operation sets the temperature at which the reactants currently
@@ -396,3 +404,18 @@ void PSIClusterReactionNetwork::setProperty(std::string key,
  */int PSIClusterReactionNetwork::size() {
 	return networkSize;
 }
+
+
+void
+PSIClusterReactionNetwork::askReactantsToReleaseNetwork( void )
+{
+    for( auto iter = allReactants->begin(); iter != allReactants->end(); ++iter )
+    {
+        Reactant* currReactant = *iter;
+        assert( currReactant != NULL );
+
+        currReactant->releaseReactionNetwork();
+    }
+}
+
+
