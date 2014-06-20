@@ -117,6 +117,7 @@ public:
 	 */
 	PSIClusterReactionNetwork(const PSIClusterReactionNetwork &other);
 
+
 	/**
 	 * This operation sets the temperature at which the reactants currently
 	 * exists. It calls setTemperature() on each reactant.
@@ -285,7 +286,6 @@ public:
 		composition[2] = std::max(0,numI*!hasNegativeElement);
 		return composition;
 	}
-
 };
 
 }

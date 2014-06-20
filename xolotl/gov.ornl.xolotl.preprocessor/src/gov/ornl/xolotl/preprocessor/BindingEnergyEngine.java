@@ -3,9 +3,20 @@
  */
 package gov.ornl.xolotl.preprocessor;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+
 /**
  * This class computes the binding energies for a cluster with a given
  * composition. All binding energies are in electron volts (eV).
+ * 
+ * This class looks in the user directory during construction and will override
+ * the fit coefficients if it finds a csv file with one set of coefficients per
+ * row and named fit.csv. There should be six rows with four coefficients per
+ * row.
  * 
  * @author Jay Jay Billings
  * 
@@ -26,7 +37,7 @@ public class BindingEnergyEngine {
 	 * padding to make the indexing easy.
 	 */
 	private static double[] vFormationEnergies = { Double.POSITIVE_INFINITY,
-			3.60, 7.25 };
+			3.6, 7.25 };
 
 	/**
 	 * The set of interstitial formation energies up to I_6 indexed by size.
@@ -56,11 +67,94 @@ public class BindingEnergyEngine {
 			0.0007179606, -9.40486423253e-6 };
 
 	/**
-	 * The constructor
+	 * The formation energies for He_xV_1. The entry at i = 0 is for a single
+	 * vacancy (He_0V_1) and is there as a buffer. Like the formation energies,
+	 * i = heSize.
+	 */
+	private double[] heV1FormationEnergies = { vFormationEnergies[1], 5.14166,
+			8.20919, 11.5304, 14.8829, 18.6971, 22.2847, 26.3631, 30.1049,
+			34.0081 };
+
+	/**
+	 * The formation energies for He_xV_2. The entry at i = 0 is for a
+	 * di-vacancy (He_0V_2) and is there as a buffer. Like the formation
+	 * energies, i = heSize.
+	 */
+	private double[] heV2FormationEnergies = { vFormationEnergies[2], 7.10098,
+			8.39913, 9.41133, 11.8748, 14.8296, 17.7259, 20.7747, 23.7993,
+			26.7984, 30.0626, 33.0385, 36.5173, 39.9406, 43.48, 46.8537 };
+
+	/**
+	 * The constructor. If the file fit.csv exists in user.dir, this operation
+	 * will try to load the coefficients from it. It closes the file when it is
+	 * finished.
 	 */
 	public BindingEnergyEngine() {
-		// READ file with coefficients from here
 
+		// Get the fit file
+		File fitFile = new File("fit.csv");
+
+		// Load the file if it exists
+		if (fitFile.exists()) {
+			try {
+				// Create the readers
+				FileReader fitFileReader = new FileReader(fitFile);
+				BufferedReader fitReader = new BufferedReader(fitFileReader);
+				// Read the fit from the file
+				String [] c0Strings = fitReader.readLine().split(",");
+				String [] c1Strings = fitReader.readLine().split(",");
+				String [] c2Strings = fitReader.readLine().split(",");
+				String [] c3Strings = fitReader.readLine().split(",");
+				String [] c4Strings = fitReader.readLine().split(",");
+				String [] c5Strings = fitReader.readLine().split(",");
+				// Convert the c0 coefficients
+				c0Coefficients[0] = Double.valueOf(c0Strings[0]);
+				c0Coefficients[1] = Double.valueOf(c0Strings[1]);
+				c0Coefficients[2] = Double.valueOf(c0Strings[2]);
+				c0Coefficients[3] = Double.valueOf(c0Strings[3]);
+				// Convert the c1 coefficients
+				c1Coefficients[0] = Double.valueOf(c1Strings[0]);
+				c1Coefficients[1] = Double.valueOf(c1Strings[1]);
+				c1Coefficients[2] = Double.valueOf(c1Strings[2]);
+				c1Coefficients[3] = Double.valueOf(c1Strings[3]);
+				// Convert the c2 coefficients
+				c2Coefficients[0] = Double.valueOf(c2Strings[0]);
+				c2Coefficients[1] = Double.valueOf(c2Strings[1]);
+				c2Coefficients[2] = Double.valueOf(c2Strings[2]);
+				c2Coefficients[3] = Double.valueOf(c2Strings[3]);
+				// Convert the c3 coefficients
+				c3Coefficients[0] = Double.valueOf(c3Strings[0]);
+				c3Coefficients[1] = Double.valueOf(c3Strings[1]);
+				c3Coefficients[2] = Double.valueOf(c3Strings[2]);
+				c3Coefficients[3] = Double.valueOf(c3Strings[3]);
+				// Convert the c4 coefficients
+				c4Coefficients[0] = Double.valueOf(c4Strings[0]);
+				c4Coefficients[1] = Double.valueOf(c4Strings[1]);
+				c4Coefficients[2] = Double.valueOf(c4Strings[2]);
+				c4Coefficients[3] = Double.valueOf(c4Strings[3]);
+				// Convert the c5 coefficients
+				c5Coefficients[0] = Double.valueOf(c5Strings[0]);
+				c5Coefficients[1] = Double.valueOf(c5Strings[1]);
+				c5Coefficients[2] = Double.valueOf(c5Strings[2]);
+				c5Coefficients[3] = Double.valueOf(c5Strings[3]);
+				// Close the reader
+				fitReader.close();
+			} catch (FileNotFoundException e) {
+				// Complain
+				System.err.println("BindingEnergyEngine Message:"
+						+ " There is something wrong with your fit.csv file! "
+						+ " It does not exist. Aborting.");
+				e.printStackTrace();
+			} catch (IOException e) {
+				// Complain
+				System.err.println("BindingEnergyEngine Message:"
+						+ " There is something wrong with your fit.csv file! "
+						+ " It cannot be read. Aborting.");
+				e.printStackTrace();
+			}
+		}
+
+		return;
 	};
 
 	/**
@@ -117,24 +211,8 @@ public class BindingEnergyEngine {
 		if (size < 3 && size > 0)
 			energy = vFormationEnergies[size];
 		else if (size >= 3) {
-			// The following coefficients are computed using the above and are
-			// used to evaluate the full function f(x,y).
-			double[] coefficients = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-			// Get the coefficients for He_xV_y
-			coefficients[0] = compute3rdOrderPolynomial((double) size,
-					c0Coefficients);
-			coefficients[1] = compute3rdOrderPolynomial((double) size,
-					c1Coefficients);
-			coefficients[2] = compute3rdOrderPolynomial((double) size,
-					c2Coefficients);
-			coefficients[3] = compute3rdOrderPolynomial((double) size,
-					c3Coefficients);
-			coefficients[4] = compute3rdOrderPolynomial((double) size,
-					c4Coefficients);
-			coefficients[5] = compute3rdOrderPolynomial((double) size,
-					c5Coefficients);
 			// Get the energy for He_xV_y
-			energy = compute5thOrderPolynomial(0.0, coefficients);
+			energy = getHeVFormationEnergy(0, size);
 		}
 
 		return energy;
@@ -246,6 +324,52 @@ public class BindingEnergyEngine {
 	}
 
 	/**
+	 * This operation returns the formation energy for an HeV cluster.
+	 * 
+	 * @param heSize
+	 *            The number of Helium atoms in the cluster
+	 * @param vSize
+	 *            The number of vacancies in the cluster
+	 * @return The formation energy
+	 */
+	private double getHeVFormationEnergy(int heSize, int vSize) {
+
+		double energy = Double.NEGATIVE_INFINITY;
+		// The following coefficients are computed using the above and are used
+		// to evaluate the full function f(x,y).
+		double[] coefficients = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+
+		// Check to see if the vacancy size is large enough that the energy can
+		// be computed from the fit or if it is so small that the exact values
+		// must be used instead.
+		if (vSize > 2) {
+			// Get the coefficients
+			coefficients[0] = compute3rdOrderPolynomial((double) vSize,
+					c0Coefficients);
+			coefficients[1] = compute3rdOrderPolynomial((double) vSize,
+					c1Coefficients);
+			coefficients[2] = compute3rdOrderPolynomial((double) vSize,
+					c2Coefficients);
+			coefficients[3] = compute3rdOrderPolynomial((double) vSize,
+					c3Coefficients);
+			coefficients[4] = compute3rdOrderPolynomial((double) vSize,
+					c4Coefficients);
+			coefficients[5] = compute3rdOrderPolynomial((double) vSize,
+					c5Coefficients);
+			// Get the energy for He_xV_y
+			energy = compute5thOrderPolynomial(
+					(double) heSize / (double) vSize, coefficients);
+		} else if ((vSize == 1 && heSize < heV1FormationEnergies.length)
+				|| (vSize == 2 && heSize < heV2FormationEnergies.length)) {
+			// Get the exact energy
+			energy = (vSize == 1) ? heV1FormationEnergies[heSize]
+					: heV2FormationEnergies[heSize];
+		}
+
+		return energy;
+	}
+
+	/**
 	 * This operation returns the binding energy for a cluster composed of
 	 * Helium and vacancies that dissociates as
 	 * 
@@ -275,35 +399,17 @@ public class BindingEnergyEngine {
 
 		// Local Declarations
 		double heVE_f = 0.0, heMinusOneVE_f = 0.0, energy = Double.POSITIVE_INFINITY;
-		// The following coefficients are computed using the above and are used
-		// to evaluate the full function f(x,y).
-		double[] coefficients = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
 		// Check the bounds and delegate if necessary. Start with the normal
 		// case where both heSize and vSize are equal to or greater than 1.
 		if (heSize > 0 && vSize > 0) {
-			// Get the coefficients
-			coefficients[0] = compute3rdOrderPolynomial((double) vSize,
-					c0Coefficients);
-			coefficients[1] = compute3rdOrderPolynomial((double) vSize,
-					c1Coefficients);
-			coefficients[2] = compute3rdOrderPolynomial((double) vSize,
-					c2Coefficients);
-			coefficients[3] = compute3rdOrderPolynomial((double) vSize,
-					c3Coefficients);
-			coefficients[4] = compute3rdOrderPolynomial((double) vSize,
-					c4Coefficients);
-			coefficients[5] = compute3rdOrderPolynomial((double) vSize,
-					c5Coefficients);
 			// Get the energy for He_xV_y
-			heVE_f = compute5thOrderPolynomial(
-					(double) heSize / (double) vSize, coefficients);
+			heVE_f = getHeVFormationEnergy(heSize, vSize);
 			// Most of the time the clusters will have more than one Helium
 			// atom.
 			if (heSize > 1) {
 				// Get the energy for He_(x-1)V_y
-				heMinusOneVE_f = compute5thOrderPolynomial(
-						(double) (heSize - 1) / (double) vSize, coefficients);
+				heMinusOneVE_f = getHeVFormationEnergy(heSize - 1, vSize);
 				// Compute the energy
 				energy = heMinusOneVE_f + heFormationEnergies[1] - heVE_f;
 			} else {
@@ -349,60 +455,28 @@ public class BindingEnergyEngine {
 
 		// Local Declarations
 		double heVE_f = 0.0, heVMinusOneE_f = 0.0, energy = Double.POSITIVE_INFINITY;
-		// The following coefficients are computed using the above and are used
-		// to evaluate the full function f(x,y).
-		double[] coefficients = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
 		// Check the bounds and delegate if necessary
 		if (heSize > 0 && vSize > 0) {
-			// Get the coefficients for He_xV_y
-			coefficients[0] = compute3rdOrderPolynomial((double) vSize,
-					c0Coefficients);
-			coefficients[1] = compute3rdOrderPolynomial((double) vSize,
-					c1Coefficients);
-			coefficients[2] = compute3rdOrderPolynomial((double) vSize,
-					c2Coefficients);
-			coefficients[3] = compute3rdOrderPolynomial((double) vSize,
-					c3Coefficients);
-			coefficients[4] = compute3rdOrderPolynomial((double) vSize,
-					c4Coefficients);
-			coefficients[5] = compute3rdOrderPolynomial((double) vSize,
-					c5Coefficients);
 			// Get the energy for He_xV_y
-			heVE_f = compute5thOrderPolynomial(
-					(double) heSize / (double) vSize, coefficients);
+			heVE_f = getHeVFormationEnergy(heSize, vSize);
 			// Most of the time the clusters will have more than one Helium
 			// atom.
 			if (vSize > 1) {
-				// Recompute the coefficients to compute He_xV_(y-1)
-				double vMinus1 = (double) (vSize - 1);
-				coefficients[0] = compute3rdOrderPolynomial(vMinus1,
-						c0Coefficients);
-				coefficients[1] = compute3rdOrderPolynomial(vMinus1,
-						c1Coefficients);
-				coefficients[2] = compute3rdOrderPolynomial(vMinus1,
-						c2Coefficients);
-				coefficients[3] = compute3rdOrderPolynomial(vMinus1,
-						c3Coefficients);
-				coefficients[4] = compute3rdOrderPolynomial(vMinus1,
-						c4Coefficients);
-				coefficients[5] = compute3rdOrderPolynomial(vMinus1,
-						c5Coefficients);
 				// Get the energy for He_(x-1)V_y. This accounts for the case
-				// where
-				// V == 1 by getting the He binding energy instead of querying
-				// the
-				// fit, which results in a NaN in that case. This is a pretty
+				// where V == 1 by getting the He binding energy instead of
+				// querying
+				// the fit, which results in a NaN in that case. This is a
+				// pretty
 				// special case in general and needs to be investigated further.
-				heVMinusOneE_f = (vSize == 1) ? getHeBindingEnergy(heSize)
-						: compute5thOrderPolynomial((double) heSize / vMinus1,
-								coefficients);
+				heVMinusOneE_f = (vSize == 1) ? getHeFormationEnergy(heSize)
+						: getHeVFormationEnergy(heSize, vSize - 1);
 				// Compute the energy
 				energy = heVMinusOneE_f + vFormationEnergies[1] - heVE_f;
 			} else {
 				// vSize == 1 is a special case where the cluster breaks apart
 				// into the vacancy clusters plus single helium.
-				energy = getHeFormationEnergy(vSize) + vFormationEnergies[1]
+				energy = getHeFormationEnergy(heSize) + vFormationEnergies[1]
 						- heVE_f;
 			}
 		} else if (heSize == 0) {

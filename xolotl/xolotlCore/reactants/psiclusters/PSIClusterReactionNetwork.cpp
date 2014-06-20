@@ -7,7 +7,7 @@
 #include <Constants.h>
 
 using namespace xolotlCore;
-using std::shared_ptr;
+
 
 void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 
@@ -111,6 +111,7 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 	}
 
 }
+
 
 /**
  * This operation sets the temperature at which the reactants currently
@@ -396,3 +397,5 @@ void PSIClusterReactionNetwork::setProperty(std::string key,
  */int PSIClusterReactionNetwork::size() {
 	return networkSize;
 }
+
+

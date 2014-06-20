@@ -16,12 +16,12 @@ include_directories(${Boost_BINARY_DIRS})
 #Link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlCore/reactants)
 
-
 #Get the test files
 file(GLOB tests *Tester.cpp)
 
 #Create the utility library
-add_library(testUtils SimpleReactionNetwork.cpp)
+add_library(testUtils STATIC SimpleReactionNetwork.cpp)
+target_link_libraries(testUtils xolotlReactants)
 
 #If boost was found, create tests
 if(Boost_FOUND)

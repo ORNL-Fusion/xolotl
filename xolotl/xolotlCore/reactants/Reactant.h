@@ -172,6 +172,19 @@ public:
 	virtual void setReactionNetwork(
 			std::shared_ptr<ReactionNetwork> reactionNetwork);
 
+
+    /**
+     * Release the reaction network object.
+     *
+     * This should only be done when the reaction network is no longer needed
+     * by the program, and is done to break dependence cycles that would
+     * otherwise keep the network and reactant objects from being destroyed.
+     */
+    virtual void releaseReactionNetwork( void ) {
+        network.reset();
+    }
+
+
 	/**
 	 * This operation returns a list that represents the connectivity
 	 * between this Reactant and other Reactants in the network.
@@ -289,6 +302,7 @@ public:
 	double getTemperature() const {
 		return temperature;
 	}
+
 
 };
 

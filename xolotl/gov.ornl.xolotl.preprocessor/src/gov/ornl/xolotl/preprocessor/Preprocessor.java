@@ -32,6 +32,12 @@ import java.util.ArrayList;
  * 
  * All energies are in eV and all diffusion factors are in nm^2/s.
  * 
+ * The preprocessor generates 2067 clusters with its default configuration. If
+ * only the maximum number of vacancies is changed it generates a number of
+ * clusters equal to
+ * 
+ * maxI + maxHe + 2053 + (maxV - 29) + 2(maxV - 29)(30 + maxV)
+ * 
  * @author Jay Jay Billings
  * 
  */
@@ -44,8 +50,8 @@ public class Preprocessor {
 	private int maxHeDiffusionSize = 6;
 
 	// The diffusion factors for single species Helium clusters.
-	private double[] heDiffusionFactors = { 0.0, 29.0, 32.0, 23.0,
-			17.0, 5.0, 10.0 };
+	private double[] heDiffusionFactors = { 0.0, 29.0, 32.0, 23.0, 17.0, 5.0,
+			10.0 };
 
 	// The migration energies for single species Helium clusters.
 	private double[] heMigrationEnergies = { Double.POSITIVE_INFINITY, 0.13,
@@ -67,8 +73,7 @@ public class Preprocessor {
 	private int maxIDiffusionSize = 5;
 
 	// The diffusion coefficients for single species interstitial clusters.
-	private double[] iDiffusionFactors = { 0.0, 88.0, 80.0, 39.0, 20.0,
-			10.0 };
+	private double[] iDiffusionFactors = { 0.0, 88.0, 80.0, 39.0, 20.0, 10.0 };
 
 	// The migration energies for single species interstitial clusters.
 	private double[] iMigrationEnergies = { Double.POSITIVE_INFINITY, 0.01,
@@ -90,6 +95,17 @@ public class Preprocessor {
 	 * different clusters.
 	 */
 	private BindingEnergyEngine bindingEnergyEngine = new BindingEnergyEngine();
+
+	/**
+	 * Constructor
+	 * 
+	 * @param args
+	 *            The command line arguments as specified by the Arguments
+	 *            interface.
+	 */
+	public Preprocessor(Arguments args) {
+
+	}
 
 	/**
 	 * This operation generates all Helium clusters in the network.
@@ -126,8 +142,10 @@ public class Preprocessor {
 	 * This operation creates an HeV cluster with the specified size. It
 	 * configures the binding energies on its own.
 	 * 
-	 * @param heSize The number of Helium atoms in the cluster
-	 * @param vSize The number of vacancies in the cluster
+	 * @param heSize
+	 *            The number of Helium atoms in the cluster
+	 * @param vSize
+	 *            The number of vacancies in the cluster
 	 * @return The cluster.
 	 */
 	private Cluster makeHeVCluster(int heSize, int vSize) {
