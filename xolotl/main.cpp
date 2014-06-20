@@ -48,22 +48,23 @@ bool initPerf(bool opts, std::vector<xolotlPerf::HardwareQuantities> hwq) {
 		return perfInitOK;
 }
 
-xolotlSolver::PetscSolver setUpSolver(
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, int argc,
-		char **argv) {
+std::shared_ptr<xolotlSolver::PetscSolver>
+setUpSolver( std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, 
+            int argc, char **argv) {
 
 	// Setup the solver
 	auto solverInitTimer = handlerRegistry->getTimer("initSolver");
 	solverInitTimer->start();
-	xolotlSolver::PetscSolver solver(handlerRegistry);
-	solver.setCommandLineOptions(argc, argv);
-	solver.initialize();
+	std::shared_ptr<xolotlSolver::PetscSolver> solver = 
+        std::make_shared<xolotlSolver::PetscSolver>(handlerRegistry);
+	solver->setCommandLineOptions(argc, argv);
+	solver->initialize();
 	solverInitTimer->stop();
 
 	return solver;
 }
 
-void launchPetscSolver(xolotlSolver::PetscSolver solver,
+void launchPetscSolver(std::shared_ptr<xolotlSolver::PetscSolver> solver,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry) {
 
 	// Launch the PetscSolver
@@ -73,7 +74,7 @@ void launchPetscSolver(xolotlSolver::PetscSolver solver,
 	auto fitFluxHandler = std::make_shared<xolotlSolver::FitFluxHandler>();
 	// Create object to handle temperature
 	auto tempHandler = std::make_shared<xolotlSolver::TemperatureHandler>();
-	solver.solve(fitFluxHandler, tempHandler);
+	solver->solve(fitFluxHandler, tempHandler);
 	solverTimer->stop();
 
 }
@@ -159,7 +160,7 @@ int main(int argc, char **argv) {
 				networkFilename, handlerRegistry);
 
 		// Give the network loader to PETSc as input
-		solver.setNetworkLoader(networkLoader);
+		solver->setNetworkLoader(networkLoader);
 		networkLoadTimer->stop();
 
 		// Launch the PetscSolver
@@ -168,7 +169,7 @@ int main(int argc, char **argv) {
 		// Finalize our use of the solver.
 		auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");
 		solverFinalizeTimer->start();
-		solver.finalize();
+		solver->finalize();
 		solverFinalizeTimer->stop();
 		totalTimer->stop();
 
