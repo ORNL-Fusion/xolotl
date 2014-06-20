@@ -366,4 +366,38 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 		BOOST_REQUIRE_CLOSE(1.0, reactants->at(0)->getConcentration(), 1.0e-15);
 	}
 }
+
+
+BOOST_AUTO_TEST_CASE(checkRefCounts) {
+
+    // Obtain a network to work with.
+    // This network was built programmatically.
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+    
+    // Because each Reactant in the network is given a pointer
+    // (a shared_ptr) to the network, and we have one shared_ptr to it,
+    // its reference count should be network's size + 1.
+	BOOST_TEST_MESSAGE("After creation, network size: " << network->size());
+	BOOST_TEST_MESSAGE("After creation, network ref count: " << network.use_count());
+    BOOST_REQUIRE_EQUAL(network.use_count(), network->size() + 1);
+    
+    // Tell the network to break dependency cycles between 
+    // the Reactants in the network and the network itself.
+    // In a "real" use, this allows the network and Reactants
+    // to be destroyed gracefully when the shared_ptr pointing
+    // to the network goes out of scope, because it allows
+    // the network's reference count to reach zero.
+    network->askReactantsToReleaseNetwork();
+
+    // All objects from within the network should have released their
+    // shared_ptr to the network, so our shared_ptr should be the
+    // only remaining shared_ptr.  Thus, the network's reference
+    // count should be 1 at this point.
+    // If it is, when our shared_ptr goes out of scope the network will 
+    // be destroyed.  We can't easily test that it is destroyed.
+	BOOST_TEST_MESSAGE("After releasing network refs, network size: " << network->size());
+	BOOST_TEST_MESSAGE("After releasing network refs, network ref count: " << network.use_count());
+    BOOST_REQUIRE_EQUAL(network.use_count(), 1);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

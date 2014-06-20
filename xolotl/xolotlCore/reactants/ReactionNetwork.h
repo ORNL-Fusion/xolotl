@@ -190,6 +190,23 @@ public:
 	 */
 	void updateConcentrationsFromArray(double * concentrations);
 
+
+
+    /**
+     * Request that all Reactants in the network release their 
+     * pointers to the network, to break cycles and allow the
+     * network and the clusters/reactant objects it contains to 
+     * be destroyed gracefully.
+     *
+     * Should only be done when the network is no longer needed.
+     * Ideally, we would do this from the network's destructor.
+     * However, unless the reactants in the network release their
+     * shared_ptrs to the network, the reference count on the
+     * network's shared_ptr will never reach zero and the 
+     * object it owns will never be destroyed.  (Hence, the
+     * reactant objects will also never be destroyed.)
+     */
+    void askReactantsToReleaseNetwork( void );
 };
 
 }

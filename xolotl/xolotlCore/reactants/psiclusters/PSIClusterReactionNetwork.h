@@ -118,12 +118,6 @@ public:
 	PSIClusterReactionNetwork(const PSIClusterReactionNetwork &other);
 
 
-    /**
-     * Destroy a PSIClusterReactionNetwork.
-     */
-    virtual ~PSIClusterReactionNetwork( void );
-
-
 	/**
 	 * This operation sets the temperature at which the reactants currently
 	 * exists. It calls setTemperature() on each reactant.
@@ -292,23 +286,6 @@ public:
 		composition[2] = std::max(0,numI*!hasNegativeElement);
 		return composition;
 	}
-
-
-    /**
-     * Request that all Reactants in the network release their 
-     * pointers to the network, to break cycles and allow the
-     * network and the clusters/reactant objects it contains to 
-     * be destroyed gracefully.
-     *
-     * Should only be done when the network is no longer needed.
-     * Ideally, we would do this from the network's destructor.
-     * However, unless the reactants in the network release their
-     * shared_ptrs to the network, the reference count on the
-     * network's shared_ptr will never reach zero and the 
-     * object it owns will never be destroyed.  (Hence, the
-     * reactant objects will also never be destroyed.)
-     */
-    virtual void askReactantsToReleaseNetwork( void );
 };
 
 }

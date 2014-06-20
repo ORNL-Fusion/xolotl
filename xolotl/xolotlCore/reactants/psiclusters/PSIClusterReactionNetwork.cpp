@@ -4,7 +4,6 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
-#include <cassert>
 #include <Constants.h>
 
 using namespace xolotlCore;
@@ -111,12 +110,6 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 		add(reactants[i]->clone());
 	}
 
-}
-
-
-PSIClusterReactionNetwork::~PSIClusterReactionNetwork( void )
-{
-    // std::cerr << "Destroying a PSIClusterReactionNetwork" << std::endl;
 }
 
 
@@ -403,19 +396,6 @@ void PSIClusterReactionNetwork::setProperty(std::string key,
  * @return The number of reactants in the network
  */int PSIClusterReactionNetwork::size() {
 	return networkSize;
-}
-
-
-void
-PSIClusterReactionNetwork::askReactantsToReleaseNetwork( void )
-{
-    for( auto iter = allReactants->begin(); iter != allReactants->end(); ++iter )
-    {
-        Reactant* currReactant = *iter;
-        assert( currReactant != NULL );
-
-        currReactant->releaseReactionNetwork();
-    }
 }
 
 
