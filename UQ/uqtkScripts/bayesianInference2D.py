@@ -176,7 +176,9 @@ zstd=zstd/nchn
 # pushed forward std dev
 std_push=(z2psh-zpp**2)**0.5
 # Posterior predictive std dev
-std_pp=(std_push**2 + zstd**2)**0.5
+std_pp=(std_push**2 + zstd**2)**0.5# Scale back x and y
+xin = (xin+1.) * 3.8125/2.
+yin = ((yin+1.) * 43./2.) + 1.
 
 # Loop on the list of V numbers
 Vlist = {1, 2, 6, 14, 18, 19, 27, 32, 44}
@@ -186,7 +188,6 @@ fig = plt.figure(figsize=(10,7))
 ax=fig.add_axes([0.10,0.15,0.85,0.75])
 for v in Vlist:
   # Filter everything
-  v=2.*((v-1)/43.)-1.
   xinF = xin[yin == v]
   zinF = zin[yin == v]
   zppF = zpp[yin == v]
@@ -196,7 +197,7 @@ for v in Vlist:
   
   plt.fill_between(xinF,zppF-std_ppF,zppF+std_ppF,color='lightgrey',label='Post predictive stdev')
   plt.fill_between(xinF,zppF-std_pushF,zppF+std_pushF,color='grey',label='Pushed forward stdev')
-  plt.scatter(xinF, zppF, s=2, color='red', label='Mean prediction')
+  plt.plot(xinF, zppF, linewidth=1, color='red', label='Mean prediction')
   plt.plot(xinF, zinF,'o', markersize=4, color='black', label='Data')
 
 ax.set_xlabel("x",fontsize=22)
@@ -210,7 +211,6 @@ fig = plt.figure(figsize=(10,7))
 ax=fig.add_axes([0.10,0.15,0.85,0.75])
 for v in Vlist:
   # Filter everything
-  v=2.*((v-1)/43.)-1.
   xinF = xin[yin == v]
   zinF = zin[yin == v]
   zppF = zpp[yin == v]
