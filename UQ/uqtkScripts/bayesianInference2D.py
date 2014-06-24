@@ -179,6 +179,8 @@ std_push=(z2psh-zpp**2)**0.5
 std_pp=(std_push**2 + zstd**2)**0.5# Scale back x and y
 xin = (xin+1.) * 3.8125/2.
 yin = ((yin+1.) * 43./2.) + 1.
+# and convert y to integers
+yin = np.asarray([int(y+0.5) for y in yin])
 
 # Loop on the list of V numbers
 Vlist = {1, 2, 6, 14, 18, 19, 27, 32, 44}
