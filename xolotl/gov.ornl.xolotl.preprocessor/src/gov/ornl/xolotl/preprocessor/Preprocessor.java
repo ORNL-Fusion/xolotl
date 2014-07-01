@@ -3,7 +3,17 @@
  */
 package gov.ornl.xolotl.preprocessor;
 
+import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Properties;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
 
 /**
  * This class generates a valid Xolotl input file with each line representing a
@@ -97,6 +107,97 @@ public class Preprocessor {
 	private BindingEnergyEngine bindingEnergyEngine = new BindingEnergyEngine();
 
 	/**
+	 * The list of parameters that will be passed to Xolotl
+	 */
+	public Properties xolotlParams = new Properties();
+
+	/**
+	 * This operation generates a single string containing the Petsc arguments
+	 * that will be used to set the Petsc parameter required to run Xolotl.
+	 * 
+	 * @param petscArgs
+	 *            The Petsc command line arguments as specified by the Arguments
+	 *            interface
+	 * @return A string containing the Petsc arguments that will be passed to
+	 *         Xolotl
+	 */
+	private String generatePetscArgs(String petscArgs) {
+
+		// Create a map of default Petsc options
+		Map<String, String> petscOptions = new HashMap<String, String>();
+		petscOptions.put("-da_grid_x", "10");
+		petscOptions.put("-ts_final_time", "1000");
+		petscOptions.put("-ts_max_steps", "3");
+		petscOptions.put("-ts_adapt_dt_max", "10");
+		petscOptions.put("-ts_max_snes_failures", "200");
+		petscOptions.put("-pc_type", "fieldsplit");
+		petscOptions.put("-pc_fieldsplit_detect_coupling", "");
+		petscOptions.put("-fieldsplit_0_pc_type", "redundant");
+		petscOptions.put("-fieldsplit_1_pc_type", "sor");
+		petscOptions.put("-snes_monitor", "");
+		petscOptions.put("-ksp_monitor", "");
+		petscOptions.put("-ts_monitor", "");
+
+		// Get the string of Petsc arguments from the command line
+		// and split the string around the blank spaces
+		List<String> petscList = new ArrayList<String>();
+		for (String str : petscArgs.split(" ")) {
+			petscList.add(str);
+		}
+
+		// Create a map containing the Petsc options and their corresponding
+		// arguments, if any, where the key is the option and the value is 
+		// the argument
+		Map<String, String> petscMap = new HashMap<String, String>();
+		for (int i = 1; i < petscList.size(); i++) {
+			// Check if the last string in the petscList is an option
+			if ((i == ((petscList.size()) - 1))
+					&& ((petscList.get(i)).contains("-")))
+				petscMap.put(petscList.get(i), "");
+			else {
+				// Check if there is an option followed by a corresponding
+				// argument
+				if (((petscList.get(i - 1)).contains("-"))
+						&& (!(petscList.get(i)).contains("-"))) {
+					petscMap.put(petscList.get(i - 1), petscList.get(i));
+				}
+				// Check if there is an option immediately followed by another
+				// option
+				else if ((petscList.get(i - 1).contains("-"))
+						&& (petscList.get(i).contains("-"))) {
+					petscMap.put(petscList.get(i - 1), "");
+				}
+				// Check if there is an option between an argument and an option
+				else if ((!(petscList.get(i - 2)).contains("-"))
+						&& ((petscList.get(i - 1)).contains("-"))
+						&& ((petscList.get(i)).contains("-"))) {
+					petscMap.put(petscList.get(i - 1), "");
+				} else {
+					petscMap.put(petscList.get(i), "");
+				}
+			}
+		}
+		petscList.clear();
+		System.out.println();
+		// Replace the default Petsc options with those from the command line
+		for (String key : petscMap.keySet()) {
+			petscOptions.put(key, petscMap.get(key));
+		}
+
+		// Get the list of petscArgs and create a single string for them
+		// in order to set the petsc parameter
+		StringBuilder petscString = new StringBuilder();
+		for (String key : petscOptions.keySet()) {
+			if (petscOptions.get(key) == "")
+				petscString.append(key + petscOptions.get(key) + " ");
+			else
+				petscString.append(key + " " + petscOptions.get(key) + " ");
+		}
+
+		return petscString.toString();
+	}
+
+	/**
 	 * Constructor
 	 * 
 	 * @param args
@@ -104,6 +205,27 @@ public class Preprocessor {
 	 *            interface.
 	 */
 	public Preprocessor(Arguments args) {
+
+		// Set the parameter options that will be passed to Xolotl
+		xolotlParams.setProperty("startTemp", args.getStartTemp());
+		xolotlParams.setProperty("networkFile", args.getNetworkFile());
+		xolotlParams.setProperty("perfHandler", args.getPerfHandler());
+		xolotlParams.setProperty("vizHandler", args.getVizHandler());
+		xolotlParams.setProperty("petscArgs",
+				generatePetscArgs(args.getPetscArgs()));
+
+		// The following parameter options are optional and will only
+		// be set if they are specified via the command line
+		if (args.isMaterial())
+			xolotlParams.setProperty("material", args.getMaterial());
+		if (args.isTempFile())
+			xolotlParams.setProperty("tempFile", args.getTempFile());
+		if (args.isHeFlux())
+			xolotlParams.setProperty("heFlux", args.getHeFlux());
+		if (args.isHeFluence())
+			xolotlParams.setProperty("heFluence", args.getHeFluence());		
+		if (args.isCheckpoint())
+			xolotlParams.setProperty("checkpoint", args.getCheckpoint());
 
 	}
 
@@ -241,7 +363,7 @@ public class Preprocessor {
 	 * @return The list of clusters created by the preprocessor based on its
 	 *         arguments and settings.
 	 */
-	public ArrayList<Cluster> generate(String[] args) {
+	public ArrayList<Cluster> generateNetwork(String[] args) {
 
 		// Create the list of clusters
 		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
@@ -254,4 +376,252 @@ public class Preprocessor {
 		return clusterList;
 	}
 
+	/**
+	 * This operation writes the parameters file that is needed to run Xolotl.
+	 * 
+	 * @param parameterFile
+	 *            The parameter file name
+	 * @param parameters
+	 *            The parameters that will be written to the file
+	 */
+	public void writeParameterFile(String parameterFile, Properties parameters) {
+
+		try {
+			// Create the file containing the parameters
+			FileOutputStream paramsFile = new FileOutputStream(parameterFile);
+
+			// Write the parameters to the output file and save
+			// the file to the project root folder
+			parameters.store(paramsFile, null);
+			// Close the parameter file
+			paramsFile.close();
+
+		} catch (IOException io) {
+			io.printStackTrace();
+		}
+
+		return;
+	}
+
+	/**
+	 * This operation loads the parameters file that is needed to run Xolotl.
+	 * 
+	 * @param parameterFile
+	 *            The parameter file name
+	 */
+	public Properties loadParameterFile(String parameterFile) {
+
+		// Local declarations
+		Properties inProperties = new Properties();
+
+		try {
+
+			FileInputStream inParamsFile = new FileInputStream(parameterFile);
+			// Load the properties from the file
+			inProperties.load(inParamsFile);
+			// Close the parameter file
+			inParamsFile.close();
+
+		} catch (IOException io) {
+			System.out.println("Error loading file.");
+			io.printStackTrace();
+		}
+		return inProperties;
+	}
+
+	/**
+	 * This operation generates the grid needed to write the concentrations.
+	 * 
+	 * @param dimension
+	 *            The physical length of the grid
+	 * @param refinement
+	 *            The refinement of the grid
+	 * 
+	 * @return The array of physical positions on the grid
+	 */
+	public double[] generateGrid(int dimension, int refinement) {
+		int totalLength = dimension;
+		// Compute the total number of positions
+		for (int i = 0; i < refinement; i++) {
+			totalLength = (totalLength * 2) - 1;
+		}
+		// Create the array to return
+		double[] toReturn = new double[totalLength];
+		// Compute the distance between every position
+		double increment = (double) dimension / (totalLength - 1);
+
+		for (int i = 0; i < totalLength; i++) {
+			toReturn[i] = i * increment;
+		}
+
+		return toReturn;
+	}
+
+	/**
+	 * This operation creates the HDF5 file needed by Xolotl
+	 * 
+	 * @param name
+	 *            The name of the HDF5 file
+	 */
+	public void createHDF5(String name) {
+		// The status of the previous HDF5 operation
+		int status;
+
+		try {
+			// Create the HDF5 file
+			int fileId = H5.H5Fcreate(name, HDF5Constants.H5F_ACC_TRUNC,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+			// Close the HDF5 file
+			status = H5.H5Fclose(fileId);
+		} catch (Exception e) {
+			// Complain
+			e.printStackTrace();
+		}
+
+		return;
+	}
+
+	/**
+	 * This operation writes the header in the HDF5 file
+	 * 
+	 * @param name
+	 *            The name of the HDF5 file
+	 * @param dimension
+	 *            The physical dimension of the grid
+	 * @param refinement
+	 *            The refinement of the grid
+	 */
+	public void writeHeader(String name, int[] dimension, int[] refinement) {
+		// The status of the previous HDF5 operation
+		int status;
+
+		try {
+			// Open the HDF5 file
+			int fileId = H5.H5Fopen(name, HDF5Constants.H5F_ACC_RDWR,
+					HDF5Constants.H5P_DEFAULT);
+
+			// Create the header group
+			int headerGroupId = H5.H5Gcreate(fileId, "headerGroup",
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+
+			// Create, write, and close the physicalDim attribute
+			int dimSId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
+			int dimAId = H5.H5Acreate(headerGroupId, "physicalDim",
+					HDF5Constants.H5T_STD_I32LE, dimSId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			status = H5
+					.H5Awrite(dimAId, HDF5Constants.H5T_STD_I32LE, dimension);
+			status = H5.H5Aclose(dimAId);
+
+			// Create, write, and close the refinement attribute
+			int refineSId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
+			int refineAId = H5.H5Acreate(headerGroupId, "refinement",
+					HDF5Constants.H5T_STD_I32LE, refineSId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			status = H5.H5Awrite(refineAId, HDF5Constants.H5T_STD_I32LE,
+					refinement);
+			status = H5.H5Aclose(refineAId);
+
+			// Close everything
+			status = H5.H5Gclose(headerGroupId);
+			status = H5.H5Fclose(fileId);
+		} catch (Exception e) {
+			// Complain
+			e.printStackTrace();
+		}
+
+		return;
+	}
+
+	/**
+	 * This operation writes the generated network in the HDF5 file
+	 * 
+	 * @param name
+	 *            The name of the HDF5 file
+	 * @param clusters
+	 *            The list of clusters representing the network
+	 */
+	public void writeNetwork(String name, ArrayList<Cluster> clusters) {
+		// The status of the previous HDF5 operation
+		int status;
+
+		try {
+			// Open the HDF5 file
+			int fileId = H5.H5Fopen(name, HDF5Constants.H5F_ACC_RDWR,
+					HDF5Constants.H5P_DEFAULT);
+
+			// Create the header group
+			int networkGroupId = H5.H5Gcreate(fileId, "networkGroup",
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+
+			// Create the array that will store the network
+			int networkSize = clusters.size();
+			double[][] networkArray = new double[networkSize][8];
+
+			int id = 0;
+			// Loop on the clusters
+			for (Cluster cluster : clusters) {
+				// Store the composition
+				networkArray[id][0] = cluster.nHe;
+				networkArray[id][1] = cluster.nV;
+				networkArray[id][2] = cluster.nI;
+
+				// Store the binding energies
+				networkArray[id][3] = cluster.E_He;
+				networkArray[id][4] = cluster.E_V;
+				networkArray[id][5] = cluster.E_I;
+
+				// Store the migration energy
+				networkArray[id][6] = cluster.E_m;
+
+				// Store the diffusion factor
+				networkArray[id][7] = cluster.D_0;
+
+				// increment the id number
+				id++;
+			}
+
+			// Create the dataspace for the network with dimension dims
+			long[] dims = new long[2];
+			dims[0] = networkSize;
+			dims[1] = 8;
+			int networkSId = H5.H5Screate_simple(2, dims, null);
+
+			// Create the dataset for the network
+			int datasetId = H5.H5Dcreate(networkGroupId, "network",
+					HDF5Constants.H5T_IEEE_F64LE, networkSId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+
+			// Write networkArray in the dataset
+			status = H5.H5Dwrite(datasetId, HDF5Constants.H5T_IEEE_F64LE,
+					HDF5Constants.H5S_ALL, HDF5Constants.H5S_ALL,
+					HDF5Constants.H5P_DEFAULT, networkArray);
+
+			// Create the attribute for the network size
+			int networkSizeSId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
+			int networkSizeAId = H5.H5Acreate(datasetId, "networkSize",
+					HDF5Constants.H5T_STD_I32LE, networkSizeSId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+			// Write it
+			int[] tempNetworkSize = { networkSize };
+			status = H5.H5Awrite(networkSizeAId, HDF5Constants.H5T_STD_I32LE,
+					tempNetworkSize);
+
+			// Close everything
+			status = H5.H5Aclose(networkSizeAId);
+			status = H5.H5Dclose(datasetId);
+			status = H5.H5Gclose(networkGroupId);
+			status = H5.H5Fclose(fileId);
+		} catch (Exception e) {
+			// Complain
+			e.printStackTrace();
+		}
+
+		return;
+	}
 }

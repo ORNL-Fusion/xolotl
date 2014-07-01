@@ -3,13 +3,10 @@
  */
 package gov.ornl.xolotl.preprocessor;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import uk.co.flamingpenguin.jewel.cli.ArgumentValidationException;
 import uk.co.flamingpenguin.jewel.cli.CliFactory;
-import ncsa.hdf.object.FileFormat;
-import ncsa.hdf.object.h5.H5File;
 
 /**
  * This class launches the Xolotl preprocessor.
@@ -27,43 +24,47 @@ public class Main {
 	 *            Command line arguments.
 	 */
 	public static void main(String[] args) {
-
 		// Local Declarations
 		Arguments myArgs = null;
-		
+
 		// Get command line arguments
 		try {
+
 			myArgs = CliFactory.parseArguments(Arguments.class, args);
+
+			if (myArgs != null) {
+				try {
+					// Create the Preprocessor
+					Preprocessor preprocessor = new Preprocessor(myArgs);
+
+					// Generate the network of clusters
+					ArrayList<Cluster> clusters = preprocessor
+							.generateNetwork(args);
+
+					// Create the HDF5 file
+					preprocessor.createHDF5("networkInit.h5");
+
+					// Write the header in it
+					int[] dim = { 8 };
+					int[] refinement = { 0 };
+					preprocessor.writeHeader("networkInit.h5", dim, refinement);
+
+					// Write the network in it
+					preprocessor.writeNetwork("networkInit.h5", clusters);
+
+					// Write the file containing the parameters that are needed
+					// to run Xolotl
+					preprocessor.writeParameterFile("params.txt",
+							preprocessor.xolotlParams);
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
 		} catch (ArgumentValidationException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		}
-		
-		// Create a file from the uri
-		File file = new File("test.hdf5");
-
-		// Retrieve an instance of the HDF5 format
-		FileFormat fileFormat = FileFormat
-				.getFileFormat(FileFormat.FILE_TYPE_HDF5);
-
-		// Create an H5 file. If it exists already, then delete it.
-		try {
-			H5File h5File = (H5File) fileFormat.createFile(file.getPath(),
-					FileFormat.FILE_CREATE_DELETE);
-		} catch (Exception e) {
-			// Complain
-			e.printStackTrace();
-		}
-		
-		// Create the Preprocessor - FIXME! Check myArgs != null
-		Preprocessor preprocessor = new Preprocessor(myArgs);
-
-		// Generate the clusters
-		ArrayList<Cluster> clusters = preprocessor.generate(args);
-
-		// Dump the clusters to stdout
-		for (Cluster cluster : clusters) {
-			System.out.println(cluster.toString());
 		}
 
 		return;
