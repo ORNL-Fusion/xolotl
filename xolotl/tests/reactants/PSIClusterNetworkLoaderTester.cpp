@@ -13,7 +13,6 @@
 #include <memory>
 #include <typeinfo>
 #include <limits>
-#include <PSIClusterNetworkLoader.h>
 #include <PSIClusterReactionNetwork.h>
 #include <DummyHandlerRegistry.h>
 

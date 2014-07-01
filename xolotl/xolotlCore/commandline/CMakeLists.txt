@@ -14,6 +14,7 @@ file(GLOB SRC *.cpp)
 
 # Where to look for include files
 include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
 
 #Add a library to hold the command line handling code
 add_library(${LIBRARY_NAME} STATIC ${SRC})

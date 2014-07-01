@@ -1,0 +1,71 @@
+#include "TemperatureHandlerFactory.h"
+#include "TemperatureHandler.h"
+#include "TemperatureProfileHandler.h"
+#include <XolotlOptions.h>
+#include <fstream>
+#include <iostream>
+
+namespace xolotlSolver
+{
+
+static std::shared_ptr<ITemperatureHandler> theTemperatureHandler;
+
+// Create the desired type of handler registry.
+bool initializeTempHandler( bool useConstTempRegistry, bool useTempProfileRegistry,
+		xolotlCore::XolotlOptions &options)
+{
+    bool ret = true;
+
+    if ( useConstTempRegistry && useTempProfileRegistry )
+    {
+        // A constant temperature value AND a temperature profile cannot both be given.
+    	throw std::string("\nA constant temperature value AND a temperature file cannot both be given.");
+    }
+    else if( useConstTempRegistry )
+    {
+    	auto temp = options.getConstTemperature();
+        // we are to use a constant temperature handler
+    	//std::cout << "\nHandler Temp = " << temp << std::endl;
+        theTemperatureHandler = std::make_shared<TemperatureHandler>( temp );
+        //theTemperatureHandler->initializeTemperature();
+    }
+    else if( useTempProfileRegistry )
+    {
+    	auto tempFileName = options.getTempProfileFilename();
+    	//std::cout << "\nHandler Temperature file = " << tempFileName << std::endl;
+        theTemperatureHandler = std::make_shared<TemperatureProfileHandler>( tempFileName );
+        theTemperatureHandler->initializeTemperature();
+    }
+    else
+    {
+    	std::cerr << "\nWarning: Temperature information has not been given.  Defaulting to constant"
+    			" temperature = 1000K \n" << std::endl;
+    	auto temp = options.getConstTemperature();
+        // we are to use a constant temperature handler
+        theTemperatureHandler = std::make_shared<TemperatureHandler>( temp );
+        //theTemperatureHandler->initializeTemperature();
+    }
+
+    return ret;
+}
+
+// Provide access to our handler registry.
+std::shared_ptr<ITemperatureHandler> getTemperatureHandler( xolotlCore::XolotlOptions &options )
+{
+    if( !theTemperatureHandler )
+    {
+        // We have not yet been initialized.
+//        std::cerr << "\nWarning: xolotlSolver temperature handler requested, but "
+//        		"library has not been initialized" << std::endl;
+//        xolotlSolver::initializeTempHandler( false, false, options );
+
+        throw std::string("\nxolotlSolver temperature handler requested, but "
+        		"library has not been initialized");
+    }
+    return theTemperatureHandler;
+}
+
+
+} // end namespace xolotlSolver
+
+

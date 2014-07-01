@@ -1,0 +1,2 @@
+#Bad list of parameters
+netFile=tungsten.txt

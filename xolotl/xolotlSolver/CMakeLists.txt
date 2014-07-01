@@ -7,25 +7,30 @@ SET(LIBRARY_NAME "xolotlSolver")
 
 #Collect all header filenames in this project 
 #and glob them in HEADERS
-file(GLOB HEADERS *.h)
+file(GLOB HEADERS *.h flux/*.h temperature/*.h)
 
 #Collect all of the cpp files in this folder 
 #and glob them in SRC
-file(GLOB SRC *.cpp)
+file(GLOB SRC *.cpp flux/*.cpp temperature/*.cpp)
 
 #Include headers so that the solvers can be built
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/flux)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/temperature)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlViz)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlViz/dataprovider)
+
 include_directories(${PETSC_INCLUDES})
 
 #Add the library
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} xolotlReactants xolotlIO
+target_link_libraries(${LIBRARY_NAME} xolotlReactants xolotlIO xolotlCL
 ${PETSC_LIBRARIES} xolotlPerf xolotlViz)
 
 #Install the xolotl header files

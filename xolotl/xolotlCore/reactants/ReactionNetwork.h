@@ -7,8 +7,6 @@
 #include <memory>
 #include <map>
 
-// #include "xolotlPerf/IEventCounter.h"
-
 namespace xolotlPerf {
 	class IHandlerRegistry;
     class IEventCounter;

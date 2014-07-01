@@ -3,7 +3,6 @@
 #include "gptl.h"
 #include <sstream>
 
-
 namespace xolotlPerf
 {
 

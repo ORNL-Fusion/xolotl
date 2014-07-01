@@ -109,5 +109,3 @@ void ReactionNetwork::askReactantsToReleaseNetwork(void) {
         currReactant->releaseReactionNetwork();
     }
 }
-
-

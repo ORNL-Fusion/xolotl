@@ -6,6 +6,7 @@ SET(PACKAGE_DESCRIPTION "Tests for the Xolotl reactants package")
 
 #Include directories from the source and boost binaries
 include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
@@ -15,6 +16,7 @@ include_directories(${Boost_BINARY_DIRS})
 
 #Link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlCore/reactants)
+
 
 #Get the test files
 file(GLOB tests *Tester.cpp)

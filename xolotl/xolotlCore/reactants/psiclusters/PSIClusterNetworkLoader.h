@@ -66,7 +66,7 @@ namespace xolotlCore {
  */
 class PSIClusterNetworkLoader {
 
-private:
+protected:
 
 	/**
 	 * The istream from which the network of clusters will be read.
@@ -141,7 +141,7 @@ public:
 	 * be loaded.
 	 * @param network The reaction network
 	 */
-	std::shared_ptr<PSIClusterReactionNetwork> load();
+	virtual std::shared_ptr<PSIClusterReactionNetwork> load();
 };
 
 } /* namespace xolotlCore */
