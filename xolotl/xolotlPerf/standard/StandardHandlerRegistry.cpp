@@ -47,6 +47,7 @@ StandardHandlerRegistry::StandardHandlerRegistry( std::vector<HardwareQuantities
     // Initialize the GPTL library.
     //GPTLsetoption(GPTLverbose, 1);   // useful for debugging
     GPTLsetoption(GPTLpercent, 1);   // lists the percentage of wallclock time each region took compared to the first region timed
+    GPTLsetoption(GPTLpersec, 0);
     GPTLinitialize();
 }
 

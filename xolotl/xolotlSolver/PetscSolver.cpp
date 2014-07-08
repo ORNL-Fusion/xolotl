@@ -50,11 +50,11 @@ std::shared_ptr<xolotlPerf::ITimer> RHSFunctionTimer;
 //Timer for how long it takes to compute ODE terms for each grid point
 std::shared_ptr<xolotlPerf::ITimer> computeODEtermPerGP;
 //Timer for how long it takes to compute new fluxes in RHSFunction()
-std::shared_ptr<xolotlPerf::ITimer> computeNewFluxes;
+//std::shared_ptr<xolotlPerf::ITimer> computeNewFluxes;
 //Timer for how long it takes to compute the incident flux in RHSFunction()
-std::shared_ptr<xolotlPerf::ITimer> computeIncidentFluxTimer;
+//std::shared_ptr<xolotlPerf::ITimer> computeIncidentFluxTimer;
 //Timers for how long it takes to compute He, V, and I diffusion in RHSFunction()
-std::shared_ptr<xolotlPerf::ITimer> computeDiffusionTimer;
+//std::shared_ptr<xolotlPerf::ITimer> computeDiffusionTimer;
 
 //Timer for RHSJacobian()
 std::shared_ptr<xolotlPerf::ITimer> RHSJacobianTimer;
@@ -441,12 +441,12 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// produces He of cluster size 1 -----
 		// Crude cubic approximation of graph from Tibo's notes
 		heCluster = (PSICluster *) network->get("He", 1);
-		computeIncidentFluxTimer->start();
+		//computeIncidentFluxTimer->start();
 		getIncomingHeFlux(heCluster, gridPosition, realTime, updatedConcOffset);
-		computeIncidentFluxTimer->stop();
+		//computeIncidentFluxTimer->stop();
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
-		computeDiffusionTimer->start();
+		//computeDiffusionTimer->start();
 
 		// He clusters larger than 5 do not diffuse -- they are immobile
 		for (int i = 1; i < PetscMin(numHeClusters + 1, 6); i++) {
@@ -477,10 +477,10 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			computeDiffusion(iCluster, temperature, sx, concOffset,
 					leftConcOffset, rightConcOffset, updatedConcOffset);
 		}
-		computeDiffusionTimer->stop();
+		//computeDiffusionTimer->stop();
 
 		// ----- Compute all of the new fluxes -----
-		computeNewFluxes->start();
+		//computeNewFluxes->start();
 		for (int i = 0; i < size; i++) {
 			cluster = (PSICluster *) allReactants->at(i);
 			// Compute the flux
@@ -491,7 +491,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //			std::cout << "New flux = " << flux << " "
 //					<< cluster->getConcentration() << std::endl;
 		}
-		computeNewFluxes->stop();
+		//computeNewFluxes->stop();
 
 		// Boundary conditions
 		if (xi == 0) {
@@ -937,10 +937,9 @@ PetscSolver::PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry)
 
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
 	computeODEtermPerGP = handlerRegistry->getTimer("computeODEtermPerGP");
-	computeNewFluxes = handlerRegistry->getTimer("computeNewFluxes");
-	computeIncidentFluxTimer = handlerRegistry->getTimer(
-			"computeIncidentFluxTimer");
-	computeDiffusionTimer = handlerRegistry->getTimer("computeDiffusionTimer");
+	//computeNewFluxes = handlerRegistry->getTimer("computeNewFluxes");
+	//computeIncidentFluxTimer = handlerRegistry->getTimer("computeIncidentFluxTimer");
+	//computeDiffusionTimer = handlerRegistry->getTimer("computeDiffusionTimer");
 	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
 	computeReactionTermPartials = handlerRegistry->getTimer(
 			"computeReactionTermPartials");

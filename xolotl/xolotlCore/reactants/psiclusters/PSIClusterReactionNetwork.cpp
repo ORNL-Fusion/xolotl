@@ -394,7 +394,8 @@ void PSIClusterReactionNetwork::setProperty(std::string key,
 /**
  * This operation returns the size or number of reactants in the network.
  * @return The number of reactants in the network
- */int PSIClusterReactionNetwork::size() {
+ */
+int PSIClusterReactionNetwork::size() {
 	return networkSize;
 }
 
