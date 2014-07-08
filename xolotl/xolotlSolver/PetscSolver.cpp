@@ -819,10 +819,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 					// Calculate the appropriate index to match the dfill array configuration
 					localPDColIds[j] = (xi - xs + 1) * size + pdColIdsVector[j];
 					// Get the partial derivative from the array of all of the partials
-					if (pdColIdsVector[j] == reactantIndex)
-						reactingPartialsForCluster[j] = 1.0;
-					else
-						reactingPartialsForCluster[j] = 0.0;
+					reactingPartialsForCluster[j] = 0.0;
 				}
 
 				// Update the matrix
