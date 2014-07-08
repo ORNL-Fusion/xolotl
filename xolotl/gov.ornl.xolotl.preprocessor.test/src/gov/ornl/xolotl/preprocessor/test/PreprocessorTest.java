@@ -79,7 +79,7 @@ public class PreprocessorTest {
 
 		try {
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--perfHandler", "std",
+					new String[] { "--perfHandler", "dummy",
 							"--petscArgs=" + "-da_grid_x 8 -ts_final_time 2" });
 
 			if (parsedArgs != null) {

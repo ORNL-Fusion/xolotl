@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     BOOST_REQUIRE_EQUAL( xopts.useConstTemperatureHandlers(), true );
 
     // Check the performance handler
-    BOOST_REQUIRE_EQUAL( xopts.usePerfStandardHandlers(), false );
+    BOOST_REQUIRE_EQUAL( xopts.usePerfStandardHandlers(), true );
 
     // Check the performance handler
     BOOST_REQUIRE_EQUAL( xopts.useVizStandardHandlers(), true );

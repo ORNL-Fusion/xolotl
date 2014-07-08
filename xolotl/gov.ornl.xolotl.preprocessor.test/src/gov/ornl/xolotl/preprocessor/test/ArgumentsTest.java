@@ -43,8 +43,8 @@ public class ArgumentsTest {
 			// Check if there is an heFluence argument
 			assertEquals(false, args.isHeFluence());
 
-			// Check that the default perfHandler is dummy
-			assertEquals("dummy", args.getPerfHandler());
+			// Check that the default perfHandler is std
+			assertEquals("std", args.getPerfHandler());
 
 			// Check if there is a vizHandler argument
 			assertEquals("dummy", args.getVizHandler());
@@ -82,7 +82,7 @@ public class ArgumentsTest {
 			// Parse the specified string of arguments
 			args = CliFactory.parseArguments(Arguments.class, new String[] {
 					"--startTemp", "900", "--material", "Fe", "--perfHandler",
-					"std" });
+					"dummy" });
 			
 			// Check if there is a material argument
 			assertEquals(true, args.isMaterial());
@@ -102,8 +102,8 @@ public class ArgumentsTest {
 			// Check if there is an heFluence argument
 			assertEquals(false, args.isHeFluence());
 
-			// Check that the default perfHandler is dummy
-			assertEquals("std", args.getPerfHandler());
+			// Check that the perfHandler is dummy
+			assertEquals("dummy", args.getPerfHandler());
 
 			// Check if there is a vizHandler argument
 			assertEquals("dummy", args.getVizHandler());

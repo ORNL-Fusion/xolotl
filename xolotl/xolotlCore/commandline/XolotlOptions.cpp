@@ -12,7 +12,7 @@ namespace xolotlCore {
 XolotlOptions::XolotlOptions( void )
   : useConstTempHandlers ( false ),	// by default, use constant temperature handlers
     useTempProfileHandlers ( false ),
-    usePerfStdHandlers( false ),  // by default, use "dummy" handlers for performance
+    usePerfStdHandlers( true ),  // by default, use "std" handlers for performance
     useVizStdHandlers( false ), // and "dummy" handlers for visualization
     constTemp(1000)	// by default, the constant temperature is 1000K
 {
@@ -29,7 +29,7 @@ XolotlOptions::XolotlOptions( void )
         "\n			      (NOTE: If a temperature file is given, a constant temperature should NOT be given)",
         handleTemperatureFileOptionCB );
     optionsMap["perfHandler"] = new OptInfo(
-        "perfHandler {std,dummy}     Which set of performance handlers to use. (default = dummy)",
+        "perfHandler {std,dummy}     Which set of performance handlers to use. (default = std)",
         handlePerfHandlersOptionCB );
     optionsMap["vizHandler"] = new OptInfo(
         "vizHandler {std,dummy}      Which set of handlers to use for the visualization. (default = dummy)",

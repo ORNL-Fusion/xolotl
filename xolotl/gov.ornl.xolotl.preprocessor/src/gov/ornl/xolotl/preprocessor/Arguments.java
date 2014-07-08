@@ -55,7 +55,7 @@ public interface Arguments {
 	// merged into the trunk
 	boolean isHeFluence();
 
-	@Option(longName = "perfHandler", defaultValue = "dummy", 
+	@Option(longName = "perfHandler", defaultValue = "std", 
 			description = "{dummy, std}  Which set of performance handlers to use")
 	String getPerfHandler();
 

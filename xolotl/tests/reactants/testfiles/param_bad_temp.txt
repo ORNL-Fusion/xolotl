@@ -5,4 +5,4 @@ it -fieldsplit_1_pc_type sor -ts_final_time 1000 -ts_max_steps 3
 networkFile=tungsten.txt
 startTemp=900
 tempFile=tempFile.txt
-perfHandler=dummy
+perfHandler=std
