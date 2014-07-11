@@ -494,22 +494,22 @@ public class Preprocessor {
 					HDF5Constants.H5P_DEFAULT);
 
 			// Create, write, and close the physicalDim attribute
-			int dimSId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int dimAId = H5.H5Acreate(headerGroupId, "physicalDim",
-					HDF5Constants.H5T_STD_I32LE, dimSId,
+			int dimDataSpaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
+			int dimAttributeId = H5.H5Acreate(headerGroupId, "physicalDim",
+					HDF5Constants.H5T_STD_I32LE, dimDataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			status = H5
-					.H5Awrite(dimAId, HDF5Constants.H5T_STD_I32LE, dimension);
-			status = H5.H5Aclose(dimAId);
+					.H5Awrite(dimAttributeId, HDF5Constants.H5T_STD_I32LE, dimension);
+			status = H5.H5Aclose(dimAttributeId);
 
 			// Create, write, and close the refinement attribute
-			int refineSId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int refineAId = H5.H5Acreate(headerGroupId, "refinement",
-					HDF5Constants.H5T_STD_I32LE, refineSId,
+			int refineDataSpaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
+			int refineAttributeId = H5.H5Acreate(headerGroupId, "refinement",
+					HDF5Constants.H5T_STD_I32LE, refineDataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(refineAId, HDF5Constants.H5T_STD_I32LE,
+			status = H5.H5Awrite(refineAttributeId, HDF5Constants.H5T_STD_I32LE,
 					refinement);
-			status = H5.H5Aclose(refineAId);
+			status = H5.H5Aclose(refineAttributeId);
 
 			// Close everything
 			status = H5.H5Gclose(headerGroupId);
@@ -575,11 +575,11 @@ public class Preprocessor {
 			long[] dims = new long[2];
 			dims[0] = networkSize;
 			dims[1] = 8;
-			int networkSId = H5.H5Screate_simple(2, dims, null);
+			int networkDataSpaceId = H5.H5Screate_simple(2, dims, null);
 
 			// Create the dataset for the network
 			int datasetId = H5.H5Dcreate(networkGroupId, "network",
-					HDF5Constants.H5T_IEEE_F64LE, networkSId,
+					HDF5Constants.H5T_IEEE_F64LE, networkDataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
 
@@ -589,18 +589,18 @@ public class Preprocessor {
 					HDF5Constants.H5P_DEFAULT, networkArray);
 
 			// Create the attribute for the network size
-			int networkSizeSId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int networkSizeAId = H5.H5Acreate(datasetId, "networkSize",
-					HDF5Constants.H5T_STD_I32LE, networkSizeSId,
+			int networkSizeDataSpaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
+			int networkSizeAttributeId = H5.H5Acreate(datasetId, "networkSize",
+					HDF5Constants.H5T_STD_I32LE, networkSizeDataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 
 			// Write it
 			int[] tempNetworkSize = { networkSize };
-			status = H5.H5Awrite(networkSizeAId, HDF5Constants.H5T_STD_I32LE,
+			status = H5.H5Awrite(networkSizeAttributeId, HDF5Constants.H5T_STD_I32LE,
 					tempNetworkSize);
 
 			// Close everything
-			status = H5.H5Aclose(networkSizeAId);
+			status = H5.H5Aclose(networkSizeAttributeId);
 			status = H5.H5Dclose(datasetId);
 			status = H5.H5Gclose(networkGroupId);
 			status = H5.H5Fclose(fileId);

@@ -45,17 +45,20 @@ public class Main {
 				ArrayList<Cluster> clusters = preprocessor
 						.generateNetwork(args);
 				System.out.println("Network generated.");
+				
+				// Get the name of the networkFile from xolotlParams
+				String networkFileName = preprocessor.xolotlParams.getProperty("networkFile");
 
 				// Create the HDF5 file
-				preprocessor.createHDF5("networkInit.h5");
+				preprocessor.createHDF5(networkFileName);
 
 				// Write the header in it
 				int[] dim = { 8 };
 				int[] refinement = { 0 };
-				preprocessor.writeHeader("networkInit.h5", dim, refinement);
+				preprocessor.writeHeader(networkFileName, dim, refinement);
 
 				// Write the network in it
-				preprocessor.writeNetwork("networkInit.h5", clusters);
+				preprocessor.writeNetwork(networkFileName, clusters);
 				System.out.println("HDF5 file generated.");
 
 				// Write the file containing the parameters that are needed
