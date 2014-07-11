@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <hdf5.h>
+#include <mpi.h>
 
 using namespace xolotlCore;
 
