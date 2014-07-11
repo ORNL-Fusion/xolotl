@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
+import uk.co.flamingpenguin.jewel.cli.*;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 
@@ -123,7 +125,9 @@ public class Preprocessor {
 	 */
 	private String generatePetscArgs(String petscArgs) {
 
-		// Create a map of default Petsc options
+		// Create a map of the default Petsc options and their corresponding
+		// arguments, if any, where the key is the option and the value is
+		// the argument
 		Map<String, String> petscOptions = new HashMap<String, String>();
 		petscOptions.put("-da_grid_x", "10");
 		petscOptions.put("-ts_final_time", "1000");
@@ -145,43 +149,24 @@ public class Preprocessor {
 			petscList.add(str);
 		}
 
-		// Create a map containing the Petsc options and their corresponding
-		// arguments, if any, where the key is the option and the value is 
-		// the argument
-		Map<String, String> petscMap = new HashMap<String, String>();
+		// Check if the last string in the petscList is a stand-alone option
+		if ((petscList.get((petscList.size() - 1))).contains("-")) 
+			petscOptions.put(petscList.get((petscList.size() - 1)), "");
+
+		// Loop through the Petsc list of strings to pair Petsc options with
+		// their corresponding arguments and identify the stand-alone options
 		for (int i = 1; i < petscList.size(); i++) {
-			// Check if the last string in the petscList is an option
-			if ((i == ((petscList.size()) - 1))
-					&& ((petscList.get(i)).contains("-")))
-				petscMap.put(petscList.get(i), "");
-			else {
-				// Check if there is an option followed by a corresponding
-				// argument
-				if (((petscList.get(i - 1)).contains("-"))
-						&& (!(petscList.get(i)).contains("-"))) {
-					petscMap.put(petscList.get(i - 1), petscList.get(i));
-				}
-				// Check if there is an option immediately followed by another
-				// option
-				else if ((petscList.get(i - 1).contains("-"))
-						&& (petscList.get(i).contains("-"))) {
-					petscMap.put(petscList.get(i - 1), "");
-				}
-				// Check if there is an option between an argument and an option
-				else if ((!(petscList.get(i - 2)).contains("-"))
-						&& ((petscList.get(i - 1)).contains("-"))
-						&& ((petscList.get(i)).contains("-"))) {
-					petscMap.put(petscList.get(i - 1), "");
-				} else {
-					petscMap.put(petscList.get(i), "");
-				}
+			// Check if there is an option followed by a corresponding argument
+			if (((petscList.get(i - 1)).contains("-"))
+					&& (!(petscList.get(i)).contains("-"))) {
+				// Replace the default argument value with the specified value
+				petscOptions.put(petscList.get(i - 1), petscList.get(i));
+				i++;
 			}
-		}
-		petscList.clear();
-		System.out.println();
-		// Replace the default Petsc options with those from the command line
-		for (String key : petscMap.keySet()) {
-			petscOptions.put(key, petscMap.get(key));
+			// Identify stand-alone options
+			else {
+				petscOptions.put(petscList.get(i - 1), "");
+			}
 		}
 
 		// Get the list of petscArgs and create a single string for them
@@ -213,7 +198,7 @@ public class Preprocessor {
 		xolotlParams.setProperty("vizHandler", args.getVizHandler());
 		xolotlParams.setProperty("petscArgs",
 				generatePetscArgs(args.getPetscArgs()));
-
+		
 		// The following parameter options are optional and will only
 		// be set if they are specified via the command line
 		if (args.isMaterial())
@@ -223,7 +208,7 @@ public class Preprocessor {
 		if (args.isHeFlux())
 			xolotlParams.setProperty("heFlux", args.getHeFlux());
 		if (args.isHeFluence())
-			xolotlParams.setProperty("heFluence", args.getHeFluence());		
+			xolotlParams.setProperty("heFluence", args.getHeFluence());
 		if (args.isCheckpoint())
 			xolotlParams.setProperty("checkpoint", args.getCheckpoint());
 
@@ -393,6 +378,8 @@ public class Preprocessor {
 			// Write the parameters to the output file and save
 			// the file to the project root folder
 			parameters.store(paramsFile, null);
+			// Flush the parameters to the intended stream
+			paramsFile.flush();
 			// Close the parameter file
 			paramsFile.close();
 
@@ -423,7 +410,7 @@ public class Preprocessor {
 			inParamsFile.close();
 
 		} catch (IOException io) {
-			System.out.println("Error loading file.");
+			System.err.println("Error loading parameter file.");
 			io.printStackTrace();
 		}
 		return inProperties;
