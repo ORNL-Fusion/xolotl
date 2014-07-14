@@ -183,7 +183,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Setup some step size variables
 	PetscReal hx;
 	hx = numOfxGridPoints / (PetscReal) (Mx - 1);
-	// Display the number of grid points that will be used
+//	// Display the number of grid points that will be used
 //	std::cout << "\nNumber of x grid points = " << numOfxGridPoints << std::endl;
 //	std::cout << "Number of grid points = " << Mx << std::endl;
 //	std::cout << "Step size hx = " << hx << std::endl;
@@ -231,6 +231,13 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 		for (int k = 0; k < size; k++) {
 			concOffset[k] = 0.0;
 		}
+
+//		// Uncomment this for debugging
+//		if (i > 0) {
+//			for (int k = 0; k < size; k++) {
+//				concOffset[k] = 0.001;
+//			}
+//		}
 
 		if (tempTimeStep >= 0) {
 			// Read the concentrations from the HDF5 file
@@ -700,8 +707,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 				ierr = MatSetValuesLocal(J, 1, row, 3, col, val, ADD_VALUES);
 				checkPetscError(ierr);
 			}
-			
-			//break;   // Uncomment this line for debugging in a single cell.
+
+//			break;   // Uncomment this line for debugging in a single cell.
 		}
 		computeJacobianDiffusionTerms->stop();
 

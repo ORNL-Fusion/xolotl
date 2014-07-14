@@ -38,6 +38,9 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlot;
 //! The pointer to the plot that will be used to visualize performance data.
 std::shared_ptr<xolotlViz::IPlot> perfPlot;
 
+//! Physical length of the grid
+int xGridLength = 8;
+
 //! The double that will store the accumulation of helium flux.
 double heliumFluence = 0.0;
 
@@ -101,7 +104,7 @@ static PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 
 	// Setup step size variable
-	double hx = 8.0 / (PetscReal)(Mx - 1);
+	double hx = (double) xGridLength / (PetscReal)(Mx - 1);
 
 	// Open the already created HDF5 file
 	xolotlCore::HDF5Utils::openFile(outputFileName);
@@ -226,7 +229,7 @@ static PetscErrorCode heliumRetention(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 
 	// Setup step size variable
-	double hx = 8.0 / (PetscReal)(Mx - 1);
+	double hx = (double) xGridLength / (PetscReal)(Mx - 1);
 
 	// Get the helium cluster
 	auto heCluster = (PSICluster *) PetscSolver::getNetwork()->get("He", 1);
@@ -256,7 +259,7 @@ static PetscErrorCode heliumRetention(TS ts, PetscInt timestep, PetscReal time,
 				realTime);
 
 		// And add it to the fluence
-		heliumFluence += 10000.0 * incidentFlux * time;
+		heliumFluence += 10000.0 * std::max(0.0, incidentFlux) * time;
 	}
 
 	PetscFunctionReturn(0);
@@ -310,7 +313,7 @@ static PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 			PETSC_IGNORE);
 	checkPetscError(ierr);
 	// Setup some step size variables
-	hx = 8.0 / (PetscReal)(Mx - 1);
+	hx = (double) xGridLength / (PetscReal)(Mx - 1);
 
 	// Choice of the cluster to be plotted
 	int iCluster = 7;
@@ -485,10 +488,10 @@ static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 			PETSC_IGNORE);
 	checkPetscError(ierr);
 	// Setup some step size variables
-	hx = 8.0 / (PetscReal)(Mx - 1);
+	hx = (double) xGridLength / (PetscReal)(Mx - 1);
 
-	// To plot a minimum of 15 clusters of the whole benchmark
-	const int loopSize = std::min(15, networkSize);
+	// To plot a maximum of 18 clusters of the whole benchmark
+	const int loopSize = std::min(18, networkSize);
 
 	if (procId == 0) {
 		// Create a Point vector to store the data to give to the data provider
@@ -670,7 +673,7 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 			PETSC_IGNORE);
 	checkPetscError(ierr);
 	// Setup some step size variables
-	hx = 8.0 / (PetscReal)(Mx - 1);
+	hx = (double) xGridLength / (PetscReal)(Mx - 1);
 
 	// Get the maximum size of HeV clusters
 	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
@@ -887,6 +890,13 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	//! The xolotlViz handler registry
 	auto vizHandlerRegistry = xolotlViz::getVizHandlerRegistry();
 
+	// Get the physical length of the grid
+	PetscBool flg;
+	PetscInt length;
+	PetscOptionsGetInt(NULL, "-da_grid_x", &length, &flg);
+	if (flg) xGridLength = (int) length;
+	else xGridLength = 8;
+
 	// Flags to launch the monitors or not
 	PetscBool flag2DPlot, flag1DPlot, flagSeries, flagPerf, flagRetention,
 			flagStatus;
@@ -971,8 +981,8 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 		// Network size
 		const int networkSize = PetscSolver::getNetwork()->size();
 
-		// To plot a minimum of 15 clusters of the whole benchmark
-		const int loopSize = std::min(15, networkSize);
+		// To plot a maximum of 18 clusters of the whole benchmark
+		const int loopSize = std::min(18, networkSize);
 
 		// Create a data provider for each cluster in the network
 		for (int i = 0; i < loopSize; i++) {
@@ -1086,7 +1096,7 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 		xolotlCore::HDF5Utils::initializeFile(outputFileName, networkSize, Mx);
 
 		// Setup step size variable
-		double hx = 8.0 / (PetscReal) (Mx - 1);
+		double hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
 		// Get the physical dimension of the grid
 		int dimension = (Mx - 1) * hx;

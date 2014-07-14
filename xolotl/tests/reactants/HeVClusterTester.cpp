@@ -76,20 +76,19 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
 			
 			// V
-			// Only single-V clusters react with HeV
-			1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
 			
 			// I
-			1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
 			
 			// HeV
 			0, 0, 1, 0, 0, 0, 0, 0, 0,
-			0, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 0, 0, 0, 0,
 			0, 0, 1, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0,
-			0, 0, 0, 0,
-			0, 0, 0,
+			0, 0, 1, 0, 0, 0,
+			0, 0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 1,
 			0, 0,
 			0,
 			
@@ -144,12 +143,16 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 			numeric_limits<double>::infinity(), 8.27};
 	secondCluster->setBindingEnergies(energies);
 	secondCluster->setConcentration(0.5);
+
+ 	// Compute the rate constants that are needed for the flux
+ 	cluster->computeRateConstants(1000.0);
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(1000.0);
 	BOOST_TEST_MESSAGE("HeVClusterTester Message: \n" << "Total Flux is " << flux << "\n"
 			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
-			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n");
+			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n"
+	  	  	  << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
 	BOOST_REQUIRE_CLOSE(-8964899015.0, flux, 10.0);
 }
 

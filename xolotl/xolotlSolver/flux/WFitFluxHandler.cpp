@@ -17,6 +17,7 @@ void WFitFluxHandler::initializeFluxHandler(int numGridpoints, double step){
 		auto x = i * stepSize;
 		auto incidentFlux = 0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x;
 		if (x > 7.0) incidentFlux = 0.0;
+		
 		incidentFluxVec.push_back(incidentFlux);
 	}
 //	std::cout << "\n\nincidentFluxVec: " << std::endl;
