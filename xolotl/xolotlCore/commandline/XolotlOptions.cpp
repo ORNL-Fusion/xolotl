@@ -4,6 +4,7 @@
 #include <fstream>
 #include <memory>
 #include <sstream>
+#include <string.h>
 #include <TokenizedLineReader.h>
 #include "XolotlOptions.h"
 
@@ -37,6 +38,18 @@ XolotlOptions::XolotlOptions( void )
     optionsMap["petscArgs"] = new OptInfo(
         "petscArgs                   All the arguments that will be given to PETSc",
         handlePetscOptionCB );
+}
+
+
+XolotlOptions::~XolotlOptions( void )
+{
+    // release the dynamically-allocated PETSc arguments
+    for( unsigned int i = 0; i < petscArgc; ++i )
+    {
+        delete[] petscArgv[i];
+    }
+    delete[] petscArgv;
+    petscArgv = NULL;
 }
 
 
@@ -260,38 +273,30 @@ XolotlOptions::handlePetscOption( std::string arg )
     bool ret = true;
     assert( !arg.empty() );
 
-	// Local Declarations
-	TokenizedLineReader<std::string> reader;
+    // Build an input stream from the argument string.
+    xolotlCore::TokenizedLineReader<std::string> reader;
+    auto argSS = std::make_shared<std::istringstream>(arg);
+    reader.setInputStream(argSS);
 
-	// Load the stream from the argument
-	auto argSS = std::make_shared<std::stringstream>();
-	(*argSS) << arg;
+    // Break the argument into tokens.
+    auto tokens = reader.loadLine();
 
-	reader.setInputStream(argSS);
-
-	// Find out the number of strings in the argument
-	auto line = reader.loadLine();
-
-	// Set the PETSc options
-	petscArgc = line.size();
-	// Construct the PETSc argv
-	// Have to create the vectors with new() to be sure that petscArgv won't be overwritten later
-	std::istringstream ss(arg);
-	std::string tmp;
-	std::vector<std::string> *tmpStr = new std::vector<std::string>();
-	std::vector<char*> *tmpArgv = new std::vector<char*>();
-	while (ss >> tmp)
-	{
-	   (*tmpStr).push_back(tmp);
-	   (*tmpArgv).push_back(const_cast<char*>((*tmpStr).back().c_str()));
-	}
-	// null pointer to terminate
-	(*tmpArgv).push_back(0);
-
-	petscArgv = &(*tmpArgv)[0];
+    // Construct the PETSc argv from the stream of tokens.
+    // The PETSc argv is an array of pointers to C strings.
+    petscArgc = tokens.size();
+    petscArgv = new char*[petscArgc+1];
+    int idx = 0;
+    for( auto iter = tokens.begin(); iter != tokens.end(); ++iter )
+    {
+        petscArgv[idx] = new char[iter->length()+1];
+        strcpy(petscArgv[idx], iter->c_str());
+        ++idx;
+    }
+    petscArgv[idx] = 0; // null-terminate the array
 
     return ret;
 }
+
 
 bool
 XolotlOptions::handlePetscOptionCB( Options* opts, std::string arg )

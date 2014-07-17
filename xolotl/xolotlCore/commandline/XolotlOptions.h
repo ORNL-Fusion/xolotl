@@ -94,6 +94,7 @@ private:
 public:
 
     XolotlOptions( void );
+    virtual ~XolotlOptions( void );
 
     // Read the parameters from the given file to set the different
     // xolotl options.
