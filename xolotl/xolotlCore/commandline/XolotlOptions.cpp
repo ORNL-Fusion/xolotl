@@ -15,6 +15,8 @@ XolotlOptions::XolotlOptions( void )
     useTempProfileHandlers ( false ),
     usePerfStdHandlers( true ),  // by default, use "std" handlers for performance
     useVizStdHandlers( false ), // and "dummy" handlers for visualization
+    petscArgc( 0 ),
+    petscArgv( NULL ),
     constTemp(1000)	// by default, the constant temperature is 1000K
 {
     // Add our notion of which options we support.
