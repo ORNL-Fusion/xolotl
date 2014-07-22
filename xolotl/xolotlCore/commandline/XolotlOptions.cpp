@@ -1,82 +1,200 @@
+#include <iostream>
 #include <cassert>
-#include "xolotlCore/commandline/XolotlOptions.h"
+#include <cstdlib>
+#include <fstream>
+#include <memory>
+#include <sstream>
+#include <string.h>
+#include <TokenizedLineReader.h>
+#include "XolotlOptions.h"
 
 namespace xolotlCore {
 
-
 XolotlOptions::XolotlOptions( void )
-  : useStdHandlers( true )              // by default, use "standard" handlers
+  : useConstTempHandlers ( false ),	// by default, use constant temperature handlers
+    useTempProfileHandlers ( false ),
+    usePerfStdHandlers( true ),  // by default, use "std" handlers for performance
+    useVizStdHandlers( false ), // and "dummy" handlers for visualization
+    constTemp(1000)	// by default, the constant temperature is 1000K
 {
     // Add our notion of which options we support.
-    optionsMap["--handlers"] = new OptInfo( true,
-        "--handlers {std,dummy}     Which set of handlers to use.",
-        handleHandlersOptionCB );
-    optionsMap["--petsc"] = new OptInfo( false,
-        "--petsc                    All subsequent command line args should be given to PETSc",
+    optionsMap["networkFile"] = new OptInfo(
+        "networkFile                 The network will be loaded from this file.",
+        handleNetworkOptionCB );
+    optionsMap["startTemp"] = new OptInfo(
+        "startTemp <const_temp>      The temperature (in Kelvin) will be the constant floating point value specified. (default = 1000)"
+        "\n			      (NOTE: Use only ONE temperature option)",
+        handleConstTemperatureOptionCB );
+    optionsMap["tempFile"] = new OptInfo(
+        "tempFile <filename>         A temperature profile is given by the specified file, then linear interpolation is used to fit the data."
+        "\n			      (NOTE: If a temperature file is given, a constant temperature should NOT be given)",
+        handleTemperatureFileOptionCB );
+    optionsMap["perfHandler"] = new OptInfo(
+        "perfHandler {std,dummy}     Which set of performance handlers to use. (default = std)",
+        handlePerfHandlersOptionCB );
+    optionsMap["vizHandler"] = new OptInfo(
+        "vizHandler {std,dummy}      Which set of handlers to use for the visualization. (default = dummy)",
+        handleVizHandlersOptionCB );
+    optionsMap["petscArgs"] = new OptInfo(
+        "petscArgs                   All the arguments that will be given to PETSc",
         handlePetscOptionCB );
 }
 
 
-int
-XolotlOptions::parseCommandLine( int argc, char* argv[] )
+XolotlOptions::~XolotlOptions( void )
 {
-    int nArgsUsed = 0;
+    // release the dynamically-allocated PETSc arguments
+    for( unsigned int i = 0; i < petscArgc; ++i )
+    {
+        delete[] petscArgv[i];
+    }
+    delete[] petscArgv;
+    petscArgv = NULL;
+}
 
-    // Check if we were given at least our positional arguments.
+
+void
+XolotlOptions::readParams( int argc, char* argv[] )
+{
+	// Check if we were given at least our positional arguments.
     if( argc < 1 )
     {
         std::cerr << "Insufficient input provided! Aborting!" << std::endl;
         showHelp( std::cerr );
         shouldRunFlag = false;
         exitCode = EXIT_FAILURE;
+
+        return;
     }
     else
     {
-        // Try to interpret first argument as the network file name.
+        // Try to interpret first argument as the parameters file name.
         // If it starts with a dash, it's probably not.
         // But it is a common thing to try to get help by passing
         // only a help flag, so we check for that special case.
         std::string currArg = argv[0];
         if( currArg == "--help" )
         {
-            // let the base class handle it
-            nArgsUsed = Options::parseCommandLine( argc, argv );
+        	// Print the help message asked by the user
+        	showHelp( std::cout );
+            shouldRunFlag = false;
         }
         else if( currArg[0] == '-' )
         {
             // this looks like an option, not the required filename.
-            std::cerr << "No network file provided.  Aborting!" << std::endl;
+            std::cerr << "No parameter file provided.  Aborting!" << std::endl;
             showHelp( std::cerr );
             shouldRunFlag = false;
             exitCode = EXIT_FAILURE;
+
+            return;
         }
         else
         {
-            // Use the first argument as the network file name
-            netFileName = argv[0];
-            nArgsUsed = 1;  // one for network file name
-
             // Let the base Options class handle our options.
-            nArgsUsed += Options::parseCommandLine( argc - nArgsUsed, argv + nArgsUsed );
+            Options::readParams(argc, argv);
         }
     }
 
-    return nArgsUsed;
+    return;
 }
 
 
 void
 XolotlOptions::showHelp( std::ostream& os ) const
 {
-    os << "usage: xolotl network_file_name [OPTIONS]\n\n"
-        << "See the Xolotl documentation for PETSc options."
+    os << "usage: xolotl param_file_name \n\n"
+        << "See the Xolotl documentation for PETSc options. \n"
+        << "param_file_name should contain:"
         << std::endl;
     Options::showHelp( os );
 }
 
 
 bool
-XolotlOptions::handleHandlersOption( std::string arg )
+XolotlOptions::handleNetworkOption( std::string arg )
+{
+    bool ret = true;
+
+    // The base class should check for situations where
+    // we expect an argument but don't get one.
+    assert( !arg.empty() );
+
+    // Set the name of the network file
+    networkFileName = arg;
+
+    return ret;
+}
+
+bool
+XolotlOptions::handleNetworkOptionCB( Options* opts, std::string arg )
+{
+    return static_cast<XolotlOptions*>( opts )->handleNetworkOption( arg );
+}
+
+
+bool
+XolotlOptions::handleConstTemperatureOption( std::string arg )
+{
+	bool ret = true;
+
+    // The base class should check for situations where
+    // we expect an argument but don't get one.
+    assert( !arg.empty() );
+
+    useConstTempHandlers = true;
+    constTemp = strtod(arg.c_str(), NULL);
+    tempProfileFileName = "";
+
+    return ret;
+}
+
+bool
+XolotlOptions::handleConstTemperatureOptionCB( Options* opts, std::string arg )
+{
+    return static_cast<XolotlOptions*>( opts )->handleConstTemperatureOption( arg );
+}
+
+
+bool
+XolotlOptions::handleTemperatureFileOption( std::string arg )
+{
+    bool ret = true;
+
+    // The base class should check for situations where
+    // we expect an argument but don't get one.
+    assert( !arg.empty() );
+
+    // Check to make sure the temperature file exists
+    std::ifstream inFile(arg.c_str());
+    if (!inFile)
+    {
+    	std::cerr << "\nCould not open file containing temperature profile data.  "
+    			"Aborting!" << std::endl;
+    	showHelp( std::cerr );
+    	shouldRunFlag = false;
+    	exitCode = EXIT_FAILURE;
+    	ret = false;
+    }
+    else
+    {
+        useTempProfileHandlers = true;
+        tempProfileFileName = arg;
+        constTemp = 0;
+    }
+
+    return ret;
+}
+
+bool
+XolotlOptions::handleTemperatureFileOptionCB( Options* opts, std::string arg )
+{
+    return static_cast<XolotlOptions*>( opts )->handleTemperatureFileOption( arg );
+}
+
+
+bool
+XolotlOptions::handlePerfHandlersOption( std::string arg )
 {
     bool ret = true;
 
@@ -87,11 +205,11 @@ XolotlOptions::handleHandlersOption( std::string arg )
     // Determine the type of handlers we are being asked to use
     if( arg == "std" )
     {
-        useStdHandlers = true;
+        usePerfStdHandlers = true;
     }
     else if( arg == "dummy" )
     {
-        useStdHandlers = false;
+        usePerfStdHandlers = false;
     }
     else
     {
@@ -106,20 +224,77 @@ XolotlOptions::handleHandlersOption( std::string arg )
 }
 
 bool
-XolotlOptions::handleHandlersOptionCB( Options* opts, std::string arg )
+XolotlOptions::handlePerfHandlersOptionCB( Options* opts, std::string arg )
 {
-    return static_cast<XolotlOptions*>( opts )->handleHandlersOption( arg );
+    return static_cast<XolotlOptions*>( opts )->handlePerfHandlersOption( arg );
+}
+
+
+bool
+XolotlOptions::handleVizHandlersOption( std::string arg )
+{
+    bool ret = true;
+
+    // The base class should check for situations where
+    // we expect an argument but don't get one.
+    assert( !arg.empty() );
+
+    // Determine the type of handlers we are being asked to use
+    if( arg == "std" )
+    {
+        useVizStdHandlers = true;
+    }
+    else if( arg == "dummy" )
+    {
+        useVizStdHandlers = false;
+    }
+    else
+    {
+        std::cerr << "Options: unrecognized argument " << arg << std::endl;
+        showHelp( std::cerr );
+        shouldRunFlag = false;
+        exitCode = EXIT_FAILURE;
+        ret = false;
+    }
+
+    return ret;
+}
+
+bool
+XolotlOptions::handleVizHandlersOptionCB( Options* opts, std::string arg )
+{
+    return static_cast<XolotlOptions*>( opts )->handleVizHandlersOption( arg );
 }
 
 
 bool
 XolotlOptions::handlePetscOption( std::string arg )
 {
-    assert( arg.empty() );
+    bool ret = true;
+    assert( !arg.empty() );
 
-    // we are done parsing our own arguments, the rest are assumed 
-    // to be arguments for PETSc.
-    return false;   
+    // Build an input stream from the argument string.
+    xolotlCore::TokenizedLineReader<std::string> reader;
+    auto argSS = std::make_shared<std::istringstream>(arg);
+    reader.setInputStream(argSS);
+
+    // Break the argument into tokens.
+    auto tokens = reader.loadLine();
+
+    // Construct the PETSc argv from the stream of tokens.
+    // The PETSc argv is an array of pointers to C strings.
+    petscArgc = tokens.size();
+    petscArgv = new char*[petscArgc+1];
+    int idx = 0;
+    for( auto iter = tokens.begin(); iter != tokens.end(); ++iter )
+    {
+        petscArgv[idx] = new char[iter->length()+1];
+        strcpy(petscArgv[idx], iter->c_str());
+        ++idx;
+    }
+    petscArgv[idx] = 0; // null-terminate the array
+
+    return ret;
 }
 
 

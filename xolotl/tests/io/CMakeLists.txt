@@ -5,7 +5,13 @@ SET(PACKAGE_NAME "xolotl.tests.io")
 SET(PACKAGE_DESCRIPTION "Xolotl I/O tests")
 
 #include directories from the source and boost binaries
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
 include_directories(${Boost_BINARY_DIRS})
 
 #link the directories
@@ -21,6 +27,7 @@ if(Boost_FOUND)
         message(STATUS "Making test ${test}")
         get_filename_component(testName ${test} NAME_WE)
         add_executable(${testName} ${test})
+        target_link_libraries(${testName} xolotlReactants testUtils xolotlPerf ${HDF5_LIBRARIES})
         add_test(${testName} ${testName}) 
         #add a label so the tests can be run separately
         set_property(TEST ${testName} PROPERTY LABELS ${PACKAGE_NAME})   

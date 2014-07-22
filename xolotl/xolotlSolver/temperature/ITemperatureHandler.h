@@ -1,7 +1,8 @@
-#ifndef TEMPERATUREHANDLER_H
-#define TEMPERATUREHANDLER_H
+#ifndef ITEMPERATUREHANDLER_H
+#define ITEMPERATUREHANDLER_H
 
-#include "ITemperatureHandler.h"
+#include <vector>
+#include <memory>
 
 namespace xolotlSolver{
 
@@ -9,19 +10,13 @@ namespace xolotlSolver{
  * Realizations of this interface are responsible for handling the incident (incoming)
  * and outgoing Temperature calculations.
  */
-class TemperatureHandler: public ITemperatureHandler {
+class ITemperatureHandler {
 
 public:
 
-	/**
-	 * The constructor
-	 */
-	TemperatureHandler();
+	virtual ~ITemperatureHandler() { }
 
-	/**
-	 * The Destructor
-	 */
-	~TemperatureHandler();
+	virtual void initializeTemperature() = 0;
 
 	/**
 	 * This operation returns the temperature at the given position
@@ -30,9 +25,9 @@ public:
 	 * @param currentTime     The time
 	 * @return temperature   The temperature
 	 */
-	virtual double getTemperature(std::vector<double> position, double currentTime) const;
+	virtual double getTemperature(std::vector<double> position, double currentTime) const = 0;
 
-}; //end class TemperatureHandler
+}; //end class ITemperatureHandler
 
 }
 

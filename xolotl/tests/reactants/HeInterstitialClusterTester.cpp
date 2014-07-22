@@ -71,14 +71,13 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		
 		int connectivityExpected[] = {
 			// He
-			1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
 			
 			// V
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
 			
 			// I
-			// Only single-I clusters react with HeI
-			1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
 			
 			// HeV
 			0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -94,9 +93,9 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			// HeI
 			0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 1, 0, 0, 0,
-			0, 0, 0, 1, 1, 1, 1,
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0,
+			1, 1, 1, 1, 1, 1, 0,
+			0, 0, 0, 0, 1, 0,
+			0, 0, 0, 0, 1,
 			0, 0, 0, 0,
 			0, 0, 0,
 			0, 0,
@@ -147,16 +146,20 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	secondCluster->setBindingEnergies(energies);
 	secondCluster->setConcentration(0.5);
  	secondCluster->setTemperature(1000.0);
+
+ 	// Compute the rate constants that are needed for the flux
+ 	cluster->computeRateConstants(1000.0);
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(1000.0);
 	BOOST_TEST_MESSAGE("HeInterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"
 			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
-			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n");
+			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n"
+	  	  	  << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
 
 	// The flux should be nearly zero because the binding energies for all the
 	// data that we have are infinite for I1.
-	BOOST_REQUIRE_CLOSE(-5958214005696.4355, flux,.01);
+	BOOST_REQUIRE_CLOSE(-16982855380.0, flux, 10.0);
 
 	return;
 }

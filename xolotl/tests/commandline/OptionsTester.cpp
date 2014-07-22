@@ -2,7 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include "xolotlCore/commandline/Options.h"
+#include <Options.h>
 
 
 
@@ -29,64 +29,13 @@ BOOST_AUTO_TEST_CASE(noOptions)
     // attempt to parse the command line
     fargc -= 1;
     fargv += 1;
-    int nOptsUsed = xopts.parseCommandLine( fargc, fargv );
+    xopts.readParams( fargc, fargv );
 
-    // As far as the Options class is concerned, an empty command line is OK.
-    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 0 );
-    BOOST_REQUIRE_EQUAL( xopts.shouldRun(), true );
-    BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_SUCCESS );
-}
-
-BOOST_AUTO_TEST_CASE(badOption)
-{
-    xolotlCore::Options xopts;
-
-    // cons a command line with a bad option.
-    int fargc = 2;
-    char* args[3];
-    args[0] = const_cast<char*>("./xolotl");
-    args[1] = const_cast<char*>("--bogus");
-    args[2] = NULL;
-    char** fargv = args;
-
-    // attempt to parse the command line
-    fargc -= 1;
-    fargv += 1;
-    int nOptsUsed = xopts.parseCommandLine( fargc, fargv );
-
-    // An unrecognized option should result in indicating
-    // the program shouldn't run, and an error exit code.
-    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 1 );
+    // The Option class does not like empty command line
+    // a parameter file is always needed
     BOOST_REQUIRE_EQUAL( xopts.shouldRun(), false );
     BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_FAILURE );
 }
 
-BOOST_AUTO_TEST_CASE(helpOption)
-{
-    xolotlCore::Options xopts;
-
-    // cons a command line with the help option
-    int fargc = 2;
-    char* args[3];
-    args[0] = const_cast<char*>("./xolotl");
-    args[1] = const_cast<char*>("--help");
-    args[2] = NULL;
-    char** fargv = args;
-
-    // attempt to parse the command line
-    fargc -= 1;
-    fargv += 1;
-    int nOptsUsed = xopts.parseCommandLine( fargc, fargv );
-
-    // If the help option is given, 
-    // the program shouldn't run
-    // but it isn't a failure (so a success exit code).
-    BOOST_REQUIRE_EQUAL( nOptsUsed+1, 1 );
-    BOOST_REQUIRE_EQUAL( xopts.shouldRun(), false );
-    BOOST_REQUIRE_EQUAL( xopts.getExitCode(), EXIT_SUCCESS );
-}
-
 BOOST_AUTO_TEST_SUITE_END()
-
-
 

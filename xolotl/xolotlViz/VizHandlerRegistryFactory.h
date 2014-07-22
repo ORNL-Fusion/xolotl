@@ -13,7 +13,7 @@ namespace xolotlViz
  * Build the desired type of handler registry.
  * @return True iff the handler registry was created successfully.
  */
-bool initialize();
+bool initialize(bool useStdRegistry);
 
 /**
  * Access the handler registry.

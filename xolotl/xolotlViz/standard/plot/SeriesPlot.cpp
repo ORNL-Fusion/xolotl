@@ -40,9 +40,13 @@ void SeriesPlot::render(std::string fileName) {
     // Pick a background color
     eavlColor bg(1,1,1,1);
 
-    eavlColor lineColor[6] =
+    eavlColor lineColor[18] =
     {eavlColor::magenta, eavlColor::blue, eavlColor::red,
-    eavlColor::cyan, eavlColor::green, eavlColor::yellow};
+    eavlColor::cyan, eavlColor::green, eavlColor::yellow,
+    eavlColor(0.5, 0.0, 1.0), eavlColor(1.0, 0.0, 0.5), eavlColor(0.5, 0.0, 0.5),
+    eavlColor(0.0, 0.5, 0.5), eavlColor(1.0, 0.5, 0.0), eavlColor(0.5, 0.0, 0.0),
+    eavlColor(0.0, 0.5, 0.0), eavlColor(0.0, 0.0, 0.5), eavlColor(0.5, 0.5, 0.5),
+    eavlColor(0.2, 0.8, 0.2), eavlColor(0.8, 0.2, 0.2), eavlColor(0.2, 0.2, 0.1)};
 
     // Create a window
     eavlScene *scene = new eavl1DGLScene();
@@ -106,7 +110,7 @@ void SeriesPlot::render(std::string fileName) {
     	// Set up a plot for the data set
     	eavlRenderer *plot;
     	plot = new eavlCurveRenderer(data, NULL,
-    			lineColor[i%6],
+    			lineColor[i%18],
     			"",
     			plotDataProviders->at(i)->getDataName());
 

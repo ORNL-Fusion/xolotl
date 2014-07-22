@@ -17,6 +17,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${MPI_INCLUDE_PATH})
+include_directories(${HDF5_INCLUDE_DIR})
 
 #Add a library to hold the IO code (mostly MPI)
 add_library(${LIBRARY_NAME} STATIC ${SRC})

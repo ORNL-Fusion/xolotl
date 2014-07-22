@@ -51,6 +51,19 @@ protected:
 	 */
 	void createReactionConnectivity();
 
+	/**
+	 * Computes a row (or column) of the dissociation connectivity matrix
+	 * corresponding to this cluster.
+	 *
+	 * Connections are made between this cluster and any clusters it affects
+	 * in a dissociation reaction.
+	 *
+	 * The base-class implementation handles dissociation for regular clusters
+	 * by processing the reaction.
+	 *
+	 */
+	void createDissociationConnectivity();
+
 };
 //end class InterstitialCluster
 

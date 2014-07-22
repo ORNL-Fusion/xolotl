@@ -10,11 +10,6 @@ using namespace xolotlCore;
 Reactant::Reactant() :
 		concentration(0.0), name(""), id(0), temperature(0.0) {
 
-	// Temporary definition used to specify the type of performance handler registry
-	// that will be used (standard or dummy).  Currently, the handler registry is set via
-	// commandline argument and the only way to access which handler registry will be used
-	// is through getHandlerRegistry
-//	handlerRegistry = xolotlPerf::getHandlerRegistry();
 }
 
 Reactant::Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :

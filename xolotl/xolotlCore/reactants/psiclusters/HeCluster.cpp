@@ -6,9 +6,9 @@
 
 using namespace xolotlCore;
 
-HeCluster::HeCluster(int nHe, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+HeCluster::HeCluster(int nHe,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(nHe, registry) {
-
 	// Update the composition map
 	compositionMap["He"] = size;
 
@@ -39,106 +39,85 @@ std::shared_ptr<Reactant> HeCluster::clone() {
 }
 
 void HeCluster::createReactionConnectivity() {
+	// Call the function from the PSICluster class to take care of the single
+	// species reactions
+	PSICluster::createReactionConnectivity();
 
-	// Local Declarations - Note the reference to the properties map
-	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
-			> (network);
-	std::map<std::string, std::string> props = psiNetwork->getProperties();
-	int maxHeClusterSize = std::stoi(props["maxHeClusterSize"]);
-	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
-	int maxHeIClusterSize = std::stoi(props["maxHeIClusterSize"]);
-	int numHeVClusters = std::stoi(props["numHeVClusters"]);
-	int numHeIClusters = std::stoi(props["numHeIClusters"]);
-	int firstSize = 0, secondSize = 0;
-	std::map<std::string, int> composition;
-	std::shared_ptr<PSICluster> psiCluster, productReactant;
+	// This cluster is always He_a
 
-	// Connect this cluster to itself since any reaction will affect it
-	setReactionConnectivity(getId());
+	// Helium-Vacancy clustering
+	// He_a + V_b --> (He_a)(V_b)
+	// Get all the V clusters from the network
+	auto reactants = network->getAll(vType);
+	// combineClusters handles V combining with He to form HeV
+	combineClusters(reactants, heVType);
 
-	/*
-	 * This section fills the array of reacting pairs that combine to produce
-	 * this cluster. The only reactions that produce He clusters are those He
-	 * clusters that are smaller than this one. Each cluster i combines with
-	 * a second cluster of this size - i.size.
-	 *
-	 * Total size starts with a value of one so that clusters of size one are
-	 * not considered in this loop.
-	 */
-	for (firstSize = 1; firstSize <= (int) size/2; firstSize++) {
-		secondSize = size - firstSize;
-		// Get the first and second reactants for the reaction
-		// first + second = this.
-		auto firstReactant = (PSICluster *) psiNetwork->get("He", firstSize);
-		auto secondReactant = (PSICluster *) psiNetwork->get("He", secondSize);
-		// Create a ReactingPair with the two reactants
-		if (firstReactant && secondReactant) {
-			ReactingPair pair(firstReactant,secondReactant);
-			// Add the pair to the list
-			reactingPairs.push_back(pair);
+	// Helium-Interstitial clustering
+	// He_a + I_b --> (He_a)(I_b)
+	// Get all the I clusters from the network
+	reactants = network->getAll(iType);
+	// combineClusters handles I combining with He to form HeI
+	combineClusters(reactants, heIType);
+
+	// Helium absorption by HeV clusters
+	// He_a + (He_b)(V_c) --> [He_(a+b)](V_c)
+	// Get all the HeV clusters from the network
+	reactants = network->getAll(heVType);
+	// combineClusters handles HeV combining with He to form HeV
+	combineClusters(reactants, heVType);
+
+	// Helium absorption by HeI clusters
+	// He_a + (He_b)(I_c) --> [He_(a+b)](I_c)
+	// Get all the HeI clusters from the network
+	reactants = network->getAll(heIType);
+	// combineClusters handles HeI combining with He to form HeI
+	combineClusters(reactants, heIType);
+
+	return;
+}
+
+void HeCluster::createDissociationConnectivity() {
+	// Call the function from the PSICluster class to take care of the single
+	// species dissociation
+	PSICluster::createDissociationConnectivity();
+
+	// This cluster is always He_a
+
+	// Specific case for the single species cluster
+	if (size == 1) {
+		// He dissociation of HeV cluster is handled here
+		// (He_b)(V_c) --> [He_(b-a)](V_c) + He_a
+		// for a = 1
+		// Get all the HeV clusters of the network
+		auto allHeVReactants = network->getAll(heVType);
+		for (int i = 0; i < allHeVReactants.size(); i++) {
+			auto cluster = (PSICluster *) allHeVReactants[i];
+
+			// (He_b)(V_c) is the dissociating one, [He_(b-a)](V_c) is the one
+			// that is also emitted during the dissociation
+			auto comp = cluster->getComposition();
+			std::vector<int> compositionVec = { comp[heType] - 1, comp[vType],
+					comp[iType] };
+			auto smallerReactant = network->getCompound(heVType, compositionVec);
+			dissociateCluster(cluster, smallerReactant);
 		}
-	}
 
-	/* ----- He_a + He_b --> He_(a+b) -----
-	 * This cluster should interact with all other clusters of the same type up
-	 * to the max size minus the size of this one to produce larger clusters.
-	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 */
-	auto reactants = psiNetwork->getAll("He");
-	combineClusters(reactants,maxHeClusterSize,"He");
+		// He dissociation of HeI cluster is handled here
+		// (He_b)(I_c) --> [He_(b-a)](I_c) + He_a
+		// for a = 1
+		// Get all the HeI clusters of the network
+		auto allHeIReactants = network->getAll(heIType);
+		for (int i = 0; i < allHeIReactants.size(); i++) {
+			auto cluster = (PSICluster *) allHeIReactants[i];
 
-	/* -----  He_a + V_b --> (He_a)(V_b) -----
-	 * Helium clusters can interact with any vacancy cluster so long as the sum
-	 * of the number of helium atoms and vacancies does not produce a cluster
-	 * with a size greater than the maximum mixed-species cluster size.
-	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 */
-	reactants = psiNetwork->getAll("V");
-	combineClusters(reactants,maxHeVClusterSize,"HeV");
-
-	/* ----- He_a + I_b --> (He_a)(I_b)
-	 * Helium clusters can interact with any interstitial cluster so long as
-	 * the sum of the number of helium atoms and interstitials does not produce
-	 * a cluster with a size greater than the maximum mixed-species cluster
-	 * size.
-
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 */
-	reactants = psiNetwork->getAll("I");
-	combineClusters(reactants,maxHeIClusterSize,"HeI");
-
-	/* ----- He_a + (He_b)(V_c) --> [He_(a+b)](V_c) -----
-	 * Helium can interact with a mixed-species cluster so long as the sum of
-	 * the number of helium atoms and the size of the mixed-species cluster
-	 * does not exceed the maximum mixed-species cluster size.
-	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 *
-	 * Find the clusters by looping over all size combinations of HeV clusters.
-	 */
-	if (numHeVClusters > 0) {
-		reactants = psiNetwork->getAll("HeV");
-		combineClusters(reactants,maxHeVClusterSize,"HeV");
-	}
-
-	/* ----- He_a + (He_b)(I_c) --> [He_(a+b)](I_c) -----
-	 * Helium-interstitial clusters can absorb single-species helium clusters
-	 * so long as the maximum cluster size limit is not violated.
-	 *
-	 * All of these clusters are added to the set of combining reactants
-	 * because they contribute to the flux due to combination reactions.
-	 *
-	 * Find the clusters by looping over all size combinations of HeI clusters.
-	 */
-	if (numHeIClusters > 0) {
-		reactants = psiNetwork->getAll("HeI");
-		combineClusters(reactants,maxHeIClusterSize,"HeI");
+			// (He_b)(I_c) is the dissociating one, [He_(b-a)](I_c) is the one
+			// that is also emitted during the dissociation
+			auto comp = cluster->getComposition();
+			std::vector<int> compositionVec = { comp[heType] - 1, comp[vType],
+					comp[iType] };
+			auto smallerReactant = network->getCompound(heIType, compositionVec);
+			dissociateCluster(cluster, smallerReactant);
+		}
 	}
 
 	return;

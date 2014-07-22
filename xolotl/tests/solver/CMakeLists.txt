@@ -7,6 +7,8 @@ SET(PACKAGE_DESCRIPTION "Tests for the Xolotl solver package")
 #Include directories from the source and boost binaries
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/flux)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/temperature)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
@@ -17,6 +19,8 @@ include_directories(${PETSC_INCLUDES})
 
 #Link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlSolver)
+link_directories(${CMAKE_SOURCE_DIR}/src/xolotlSolver/flux)
+link_directories(${CMAKE_SOURCE_DIR}/src/xolotlSolver/temperature)
 
 #Get the test files
 file(GLOB tests *Tester.cpp)

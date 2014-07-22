@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <vector>
+#include <memory>
 
 
 namespace xolotlCore {
@@ -14,9 +16,6 @@ protected:
     // Information about a specific option we support
     struct OptInfo
     {
-        // is an argument required?
-        bool argRequired;
-
         // help message describing the option
         std::string helpMessage;
 
@@ -24,11 +23,9 @@ protected:
         // optArg might be an empty string if no argument is given
         bool (*optHandler)( Options* opts, std::string optArg );
 
-        OptInfo( bool _argRequired,
-                    std::string _helpMessage,
-                    bool (*_handler)( Options* opts, std::string optArg ) )
-          : argRequired( _argRequired ),
-            helpMessage( _helpMessage ),
+        OptInfo(std::string _helpMessage,
+                bool (*_handler)( Options* opts, std::string optArg ) )
+          : helpMessage( _helpMessage ),
             optHandler( _handler )
         { }
     };
@@ -49,29 +46,23 @@ protected:
     // program shouldn't run.
     int exitCode;
 
-
-    // Deal with the help option.
-    bool handleHelpOption( std::string arg );
-
-
-    // Callback when have seen the help option.
-    static bool handleHelpOptionCB( Options* opts, std::string optArg );
-
 public:
     Options( void );
     virtual ~Options( void );
 
 
-    // Parse the given command line for user-configurable settings.
-    // We assume that the executable file/path has been skipped before
-    // calling this method.  (E.g., the program's main() function
-    // called this with something like 
-    //   xopts.parseCommandLine( argc - 1, argv + 1 );
+    // Read the parameters from the given file to set the different
+    // xolotl options.
     //
     // @param argc The number of arguments in the argv vector.
     // @param argv Vector of argument strings.
-    // @return Number of command line arguments used.
-    virtual int parseCommandLine( int argc, char* argv[] );
+    virtual void readParams( int argc, char* argv[] );
+
+
+    // Read the lines in the parameter file.
+    //
+    // @return The vector of key and options
+    virtual std::vector<std::string> ParamReadLine(std::shared_ptr<std::istream> inputstream);
 
 
     // Show our help message.

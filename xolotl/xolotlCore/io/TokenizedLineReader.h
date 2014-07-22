@@ -2,6 +2,7 @@
 #define TOKENIZEDLINEREADER_H
 
 // Includes
+#include <vector>
 #include <memory>
 #include <iostream>
 #include <sstream>

@@ -117,14 +117,12 @@ std::shared_ptr<std::istream> PSIClusterNetworkLoader::getInputstream() {
  * This operation throws a std::string as an exception if there is a problem.
  */
 std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
-
 	// Local Declarations
 	TokenizedLineReader<std::string> reader;
 	std::vector<std::string> loadedLine;
 	std::shared_ptr<PSIClusterReactionNetwork> network = std::make_shared<
 			PSIClusterReactionNetwork>(handlerRegistry);
 
-	std::istringstream dataStream;
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
 	int numHe = 0, numV = 0, numI = 0;
