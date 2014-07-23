@@ -2,28 +2,75 @@
 #define XOLOTLPERF_H
 
 #include <memory>
-#include <vector>
+#include <sstream>
 #include "IHandlerRegistry.h"
-#include "HardwareQuantities.h"
+#include "RuntimeError.h"
 
 
 namespace xolotlPerf
 {
 
 /**
- * Build the desired type of handler registry.
- * TODO determine if we need to take an enum instead of a bool,
- * if we need to support more than these two types of registries.
+ * Detect the type of performance handlers registry to create based
+ * on a string argument (e.g., taken from the command line).
+ * Throws an std::invalid_argument exception if arg does not
+ * specify a registry type we know about.
  *
- * @param useStdRegistry Whether to use the "standard" handlers or dummy handlers.
- * @param hwQuantities Collection of hardware quantities to monitor along with our timings.  (Default: none)
- * @return True iff the handler registry was created successfully.
+ * NOTE: We define the function in the header to avoid adding a dependency
+ * on the performance library for the command line library which uses
+ * this function to parse its command line.
+ *
+ * @param arg String description of performance handler registry to create.
+ * @return The performance handler registry type to create.
  */
-bool initialize( bool useStdRegistry,
-                    std::vector<HardwareQuantities> hwQuantities = std::vector<HardwareQuantities>() );
+inline
+IHandlerRegistry::RegistryType
+toPerfRegistryType(std::string arg)
+{
+    IHandlerRegistry::RegistryType ret;
+
+    if( arg == "dummy" )
+    {
+        ret = IHandlerRegistry::dummy;
+    }
+    else if( arg == "std" )
+    {
+        ret = IHandlerRegistry::std;
+    }
+    else if( arg == "os" )
+    {
+        ret = IHandlerRegistry::os;
+    }
+    else if( arg == "papi" )
+    {
+        ret = IHandlerRegistry::papi;
+    }
+    else
+    {
+        std::ostringstream estr;
+        estr << "Invalid performance handler argument \"" << arg << "\" seen.";
+        throw std::invalid_argument(estr.str());
+    }
+    return ret;
+}
+
+
+
+
+/**
+ * Initialize the performance library for using the desired type of handlers.
+ * Throws a std::invalid_argument if caller requests a registry type that
+ * we do not support.
+ *
+ * @param rtype Type of handlerRegistry to create.
+ */
+void initialize( IHandlerRegistry::RegistryType rtype );
+
 
 /**
  * Access the handler registry.
+ * Throws a std::runtime_error if called before the xolotlPerf classes
+ * have been initialized.
  *
  *  @return The handler registry object.
  */

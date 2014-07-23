@@ -4,6 +4,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include <XolotlOptions.h>
 #include <XolotlConfig.h>
+#include "xolotlPerf/IHandlerRegistry.h"
 
 using namespace std;
 using namespace xolotlCore;
@@ -173,7 +174,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     BOOST_REQUIRE_EQUAL( xopts.useConstTemperatureHandlers(), true );
 
     // Check the performance handler
-    BOOST_REQUIRE_EQUAL( xopts.usePerfStandardHandlers(), true );
+    BOOST_REQUIRE_EQUAL( xopts.getPerfRegistryType(), xolotlPerf::IHandlerRegistry::std );
 
     // Check the performance handler
     BOOST_REQUIRE_EQUAL( xopts.useVizStandardHandlers(), true );

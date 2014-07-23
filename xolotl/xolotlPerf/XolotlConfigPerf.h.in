@@ -1,7 +1,0 @@
-#ifndef XOLOTLCONFIGPERF_H
-#define XOLOTLCONFIGPERF_H
-// Configuration header for the xolotlPerf library.
-
-#cmakedefine HAVE_PERFLIB_STD
-
-#endif // XOLOTLCONFIGPERF_H

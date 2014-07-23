@@ -1,0 +1,11 @@
+#ifndef PERFCONFIG_H
+#define PERFCONFIG_H
+// Configuration header for the xolotlPerf library.
+
+#cmakedefine HAVE_GETTIMEOFDAY
+
+#cmakedefine HAVE_CLOCK_GETTIME
+
+#cmakedefine HAVE_PAPI
+
+#endif // PERFCONFIG_H

@@ -12,6 +12,11 @@ namespace xolotlPerf {
 class IEventCounter : public virtual xolotlCore::IIdentifiable {
 
 public:
+    /**
+     * Type of the counter.
+     */
+    typedef unsigned long   ValType;
+
 
 	/**
 	 * The destructor
@@ -22,7 +27,7 @@ public:
 	 * This operation returns the value of the IEventCounter, the frequency
 	 * of the specified event.
 	 */
-	virtual unsigned long getValue() const = 0;
+	virtual ValType getValue() const = 0;
 
 	/**
 	 * This operation increments the IEventCounter.

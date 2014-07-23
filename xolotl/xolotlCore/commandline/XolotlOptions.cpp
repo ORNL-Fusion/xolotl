@@ -13,8 +13,10 @@ namespace xolotlCore {
 XolotlOptions::XolotlOptions( void )
   : useConstTempHandlers ( false ),	// by default, use constant temperature handlers
     useTempProfileHandlers ( false ),
-    usePerfStdHandlers( true ),  // by default, use "std" handlers for performance
+    perfRegistryType( xolotlPerf::IHandlerRegistry::std ),  // by default use "std" performance handlers
     useVizStdHandlers( false ), // and "dummy" handlers for visualization
+    petscArgc(0),
+    petscArgv(NULL),
     constTemp(1000)	// by default, the constant temperature is 1000K
 {
     // Add our notion of which options we support.
@@ -30,7 +32,7 @@ XolotlOptions::XolotlOptions( void )
         "\n			      (NOTE: If a temperature file is given, a constant temperature should NOT be given)",
         handleTemperatureFileOptionCB );
     optionsMap["perfHandler"] = new OptInfo(
-        "perfHandler {std,dummy}     Which set of performance handlers to use. (default = std)",
+        "perfHandler {std,dummy,os,papi} Which set of performance handlers to use. (default = std)",
         handlePerfHandlersOptionCB );
     optionsMap["vizHandler"] = new OptInfo(
         "vizHandler {std,dummy}      Which set of handlers to use for the visualization. (default = dummy)",
@@ -198,30 +200,20 @@ XolotlOptions::handlePerfHandlersOption( std::string arg )
 {
     bool ret = true;
 
-    // The base class should check for situations where
-    // we expect an argument but don't get one.
-    assert( !arg.empty() );
-
-    // Determine the type of handlers we are being asked to use
-    if( arg == "std" )
+    try
     {
-        usePerfStdHandlers = true;
+        perfRegistryType = xolotlPerf::toPerfRegistryType(arg);
     }
-    else if( arg == "dummy" )
+    catch( std::invalid_argument& e )
     {
-        usePerfStdHandlers = false;
-    }
-    else
-    {
-        std::cerr << "Options: unrecognized argument " << arg << std::endl;
-        showHelp( std::cerr );
+        std::cerr << e.what() << std::endl;
+        showHelp(std::cerr);
         shouldRunFlag = false;
         exitCode = EXIT_FAILURE;
-        ret = false;
     }
-
     return ret;
 }
+
 
 bool
 XolotlOptions::handlePerfHandlersOptionCB( Options* opts, std::string arg )

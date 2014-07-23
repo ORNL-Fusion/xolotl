@@ -15,29 +15,19 @@
 #include <MaterialHandlerFactory.h>
 #include <TemperatureHandlerFactory.h>
 #include <VizHandlerRegistryFactory.h>
-#include <HardwareQuantities.h>
 #include <HDF5NetworkLoader.h>
 #include <IVizHandlerRegistry.h>
 
 using namespace std;
 using std::shared_ptr;
+namespace xperf = xolotlPerf;
+
 
 //! This operation prints the start message
 void printStartMessage() {
 	cout << "Starting Xolotl Plasma-Surface Interactions Simulator" << endl;
 	// TODO! Print copyright message
 	// TODO! Print date and time
-}
-
-std::vector<xolotlPerf::HardwareQuantities> declareHWcounters() {
-
-	// Indicate we want to monitor some important hardware counters.
-	std::vector<xolotlPerf::HardwareQuantities> hwq;
-
-	hwq.push_back(xolotlPerf::FP_OPS);
-	hwq.push_back(xolotlPerf::L1_CACHE_MISS);
-
-	return hwq;
 }
 
 bool initMaterial() {
@@ -62,17 +52,6 @@ bool initTemp(bool opts, bool opts1, XolotlOptions &options) {
 		return tempInitOK;
 }
 
-bool initPerf(bool opts, std::vector<xolotlPerf::HardwareQuantities> hwq) {
-
-	bool perfInitOK = xolotlPerf::initialize(opts, hwq);
-	if (!perfInitOK) {
-		std::cerr
-				<< "Unable to initialize requested performance data infrastructure.  Aborting"
-				<< std::endl;
-		return EXIT_FAILURE;
-	} else
-		return perfInitOK;
-}
 
 bool initViz(bool opts) {
 
@@ -158,9 +137,7 @@ int main(int argc, char **argv) {
 				xopts.useTemperatureProfileHandlers(), xopts);
 
 		// Set up our performance data infrastructure.
-		// Indicate we want to monitor some important hardware counters.
-		auto hwq = declareHWcounters();
-		auto perfInitOK = initPerf(xopts.usePerfStandardHandlers(), hwq);
+        xperf::initialize(xopts.getPerfRegistryType());
 
 		// Set up the visualization infrastructure.
 		auto vizInitOK = initViz(xopts.useVizStandardHandlers());
@@ -210,6 +187,7 @@ int main(int argc, char **argv) {
 		//solverFinalizeTimer->stop();
 		totalTimer->stop();
 
+#if READY
 		// Report the performance data about the run we just completed
 		// TODO Currently, this call writes EventCounter data to the
 		// given stream, but Timer and any hardware counter data is
@@ -217,6 +195,13 @@ int main(int argc, char **argv) {
 		if (rank == 0) {
 			handlerRegistry->dump(std::cout);
 		}
+#endif // READY
+
+    } catch (std::exception& e ) {
+
+        std::cerr << e.what() << std::endl;
+        std::cerr << "Aborting." << std::endl;
+        return EXIT_FAILURE;
 
 	} catch (std::string & error) {
 		std::cout << error << std::endl;
@@ -227,11 +212,13 @@ int main(int argc, char **argv) {
 	// finalize our use of MPI
 	MPI_Finalize();
 
+#if READY
 	// Uncomment if GPTL was built with pmpi disabled
 	// Output performance data if pmpi is disabled in GPTL
 	// Access the handler registry to output performance data
     auto handlerRegistry = xolotlPerf::getHandlerRegistry();
     handlerRegistry->dump(rank);
+#endif // READY
 
 	return EXIT_SUCCESS;
 }

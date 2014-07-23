@@ -1,8 +1,8 @@
 #ifndef DUMMYTIMER_H
 #define DUMMYTIMER_H
 
-#include "ITimer.h"
-#include "Identifiable.h"
+#include "xolotlPerf/ITimer.h"
+#include "xolotlCore/Identifiable.h"
 
 using namespace std;
 
@@ -54,7 +54,7 @@ public:
     /**
      * This operation returns the value of the DummyTimer.
      */
-    virtual double getValue() const;
+    virtual ITimer::ValType getValue() const;
 
 	/**
 	 * This operation returns the units of the GPTLTimer.

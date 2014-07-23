@@ -1,10 +1,10 @@
 #ifndef DUMMYHANDLERREGISTRY_H
 #define DUMMYHANDLERREGISTRY_H
 
-#include "IHandlerRegistry.h"
-#include "DummyTimer.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyTimer
-#include "DummyEventCounter.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyEventCounter
-#include "DummyHardwareCounter.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyHardwareCounter
+#include "xolotlPerf/IHandlerRegistry.h"
+#include "xolotlPerf/dummy/DummyTimer.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyTimer
+#include "xolotlPerf/dummy/DummyEventCounter.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyEventCounter
+#include "xolotlPerf/dummy/DummyHardwareCounter.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyHardwareCounter
 
 namespace xolotlPerf {
 
@@ -30,7 +30,7 @@ public:
     // Obtain a HardwareCounter object by name and by the
     // counter data it collects.
     virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( std::string name,
-                std::vector<HardwareQuantities> quantities );
+                        const IHardwareCounter::SpecType& ctrSpec );
 
     // Output any collected performance data to the given output stream.
     virtual void dump( std::ostream& os ) const;

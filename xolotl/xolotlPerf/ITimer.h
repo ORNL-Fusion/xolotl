@@ -15,6 +15,12 @@ namespace xolotlPerf {
 class ITimer : public virtual xolotlCore::IIdentifiable {
 
 public:
+    
+    /**
+     * The type of a timer value.
+     */
+    typedef double ValType;
+
 
 	/**
 	 * The destructor
@@ -35,7 +41,7 @@ public:
     /**
      * This operation returns the value of the ITimer.
      */
-    virtual double getValue() const = 0;
+    virtual ValType getValue() const = 0;
 
     /**
      * This operation returns the units of the ITimer.

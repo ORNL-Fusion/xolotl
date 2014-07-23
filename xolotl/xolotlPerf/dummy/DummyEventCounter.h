@@ -2,8 +2,8 @@
 #define DUMMYEVENTCOUNTER_H
 
 #include <string>
-#include "Identifiable.h"
-#include "IEventCounter.h"
+#include "xolotlCore/Identifiable.h"
+#include "xolotlPerf/IEventCounter.h"
 
 using namespace std;
 
@@ -48,7 +48,7 @@ public:
 	 * This operation returns the value of the DummyEventCounter,
 	 * the frequency of the specified event.
 	 */
-	virtual unsigned long getValue() const  { return 0; }
+	virtual IEventCounter::ValType getValue() const  { return 0; }
 
 
 	/**

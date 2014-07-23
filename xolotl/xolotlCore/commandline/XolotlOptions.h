@@ -3,6 +3,7 @@
 
 #include <string>
 #include "Options.h"
+#include "xolotlPerf/xolotlPerf.h"
 
 namespace xolotlCore {
 
@@ -16,8 +17,8 @@ private:
     // Use the temperature profile set of handlers?
     bool useTempProfileHandlers;
 
-    // Use the "standard" set of handlers for the performance infrastructure?
-    bool usePerfStdHandlers;
+    // Which type of performance infrastucture should we use?
+    xolotlPerf::IHandlerRegistry::RegistryType perfRegistryType;
 
     // Use the "standard" set of handlers for the visualization?
     bool useVizStdHandlers;
@@ -122,13 +123,9 @@ public:
     // @return Constant temperature.
     double getConstTemperature( void ) const  { return constTemp; }
 
-    // Should we use the "standard" set of handlers?
-    // If false, use dummy (stub) handlers.
-    // TODO will we ever have more than {dummy, standard} such that 
-    // we will need an enum?
-    // @return true if program should use standard handlers, false if 
-    // should use dummy handlers.
-    bool usePerfStandardHandlers( void ) const  { return usePerfStdHandlers; }
+    // Which type of performance handlers should we use?
+    // @return Enum value indicating type of performance handlers to use.
+    xolotlPerf::IHandlerRegistry::RegistryType getPerfRegistryType(void) const { return perfRegistryType; }
 
     // Should we use the "standard" set of handlers?
     // If false, use dummy handlers.

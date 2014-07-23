@@ -28,12 +28,12 @@ DummyHandlerRegistry::getEventCounter( std::string name )
 // counter data it collects.
 std::shared_ptr<IHardwareCounter>
 DummyHandlerRegistry::getHardwareCounter( std::string name, 
-                                        std::vector<HardwareQuantities> hwq )
+                                        const IHardwareCounter::SpecType& ctrSpec )
 {
     // TODO is there a need for us to retain access to this Timer?
     // TODO do we need to check whether client has already created
     // an object with this name and return that object?
-    return std::make_shared<DummyHardwareCounter>( name, hwq );
+    return std::make_shared<DummyHardwareCounter>( name, ctrSpec );
 }
 
 // Output any collected performance data to the given output stream.

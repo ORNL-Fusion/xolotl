@@ -1,6 +1,6 @@
 // Includes
 #include "PetscSolver.h"
-#include <xolotlPerf.h>
+#include "xolotlPerf/xolotlPerf.h"
 #include <HDF5NetworkLoader.h>
 #include "TemperatureHandler.h"
 #include <MathUtils.h>
