@@ -50,21 +50,14 @@ public:
 	virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( std::string name,
                         const IHardwareCounter::SpecType& ctrSpec ) = 0;
 
-#if READY
-	/**
-	 * This operation outputs the information gathered to the given
-	 * output stream.
-	 */
-	virtual void dump(std::ostream& os) const = 0;
+    /**
+     * Report statistics about any performance data collected 
+     * to the given stream.
+     */
+    virtual void reportStatistics(std::ostream& os) const = 0;
 
-	/**
-	 * This operation outputs the information gathered to the given
-	 * output stream.
-	 */
-	virtual void dump(int rank) const = 0;
-#endif // READY
 
-}; //end class IHandlerRegistry
+};
 
 } //end namespace xolotlPerf
 

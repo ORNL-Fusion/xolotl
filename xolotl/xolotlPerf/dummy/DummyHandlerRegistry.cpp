@@ -36,16 +36,10 @@ DummyHandlerRegistry::getHardwareCounter( std::string name,
     return std::make_shared<DummyHardwareCounter>( name, ctrSpec );
 }
 
-// Output any collected performance data to the given output stream.
-void DummyHandlerRegistry::dump( std::ostream& /* os */ ) const
+void DummyHandlerRegistry::reportStatistics( std::ostream& /* os */ ) const
 {
     // do nothing
 }
 
-void DummyHandlerRegistry::dump( int rank) const
-{
-    // do nothing
-}
-
-};  // end namespace xolotlPerf
+};  // namespace xolotlPerf
 

@@ -105,6 +105,7 @@ std::shared_ptr<PSIClusterNetworkLoader> setUpNetworkLoader(int rank,
 	return networkLoader;
 }
 
+
 //! Main program
 int main(int argc, char **argv) {
 
@@ -181,21 +182,12 @@ int main(int argc, char **argv) {
 				tempHandler);
 
 		// Finalize our use of the solver.
-		//auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");
-		//solverFinalizeTimer->start();
 		solver->finalize();
-		//solverFinalizeTimer->stop();
+
 		totalTimer->stop();
 
-#if READY
-		// Report the performance data about the run we just completed
-		// TODO Currently, this call writes EventCounter data to the
-		// given stream, but Timer and any hardware counter data is
-		// written by the underlying timing library to files, one per process.
-		if (rank == 0) {
-			handlerRegistry->dump(std::cout);
-		}
-#endif // READY
+        // Report the performance data about the run we just completed.
+        handlerRegistry->reportStatistics(std::cout);
 
     } catch (std::exception& e ) {
 
@@ -211,14 +203,6 @@ int main(int argc, char **argv) {
 
 	// finalize our use of MPI
 	MPI_Finalize();
-
-#if READY
-	// Uncomment if GPTL was built with pmpi disabled
-	// Output performance data if pmpi is disabled in GPTL
-	// Access the handler registry to output performance data
-    auto handlerRegistry = xolotlPerf::getHandlerRegistry();
-    handlerRegistry->dump(rank);
-#endif // READY
 
 	return EXIT_SUCCESS;
 }

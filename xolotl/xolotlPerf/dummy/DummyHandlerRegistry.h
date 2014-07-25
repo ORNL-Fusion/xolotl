@@ -32,14 +32,13 @@ public:
     virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( std::string name,
                         const IHardwareCounter::SpecType& ctrSpec );
 
-    // Output any collected performance data to the given output stream.
-    virtual void dump( std::ostream& os ) const;
-
-    // Output any collected performance data to the given output stream.
-    virtual void dump( int rank) const;
-
-
-};  //end class DummyHandlerRegistry
+    /**
+     * Report statistics about any performance data collected to 
+     * the given stream.
+     * This operation is a stub.
+     */
+    virtual void reportStatistics(std::ostream& os) const;
+};
 
 } //end namespace xolotlPerf
 
