@@ -3,9 +3,11 @@ TOPDIR=${UQTK_SRC}
 # Many macros are defined in the below included site-specific configuration file
 include $(TOPDIR)/config/config.site
 TARGET = infer.x
-SRCS = infer.cpp
-OBJS = $(SRCS:.cpp=.o)
-INCS = XMLreader.h posterior.h
+SRCS1 = infer.cpp 
+OBJS1 = $(SRCS1:.cpp=.o)
+SRCS2 = infer2D.cpp 
+OBJS2 = $(SRCS2:.cpp=.o)
+INCS = XMLreader.h posterior.h XMLreader2D.h posterior2D.h
 LIBINCDIR = $(TOPDIR)/src_cpp/include
 LIBBINDIR = $(TOPDIR)/src_cpp/lib
 INCDIRS = -I. -I$(LIBINCDIR)
@@ -15,13 +17,16 @@ LDEP = $(LIBBINDIR)/libUQTk.a $(LIBBINDIR)/libquad.a $(LIBBINDIR)/libuqtktools.a
 DEFS = -D__$(FTNNAME)
 .SUFFIXES : .cpp
 
-all: $(TARGET)
+all: infer.x infer2D.x
 
-$(TARGET): $(OBJS) $(INCS) $(LDEP)
-	$(CXX) $(CXXFLAGS) $(DEFS) $(INCDIRS) -o $(TARGET) $(OBJS) $(LIBS)
+infer.x: $(OBJS1) $(INCS) $(LDEP)
+	$(CXX) $(CXXFLAGS) $(DEFS) $(INCDIRS) -o infer.x $(OBJS1) $(LIBS)
+
+infer2D.x: $(OBJS2) $(INCS) $(LDEP)
+	$(CXX) $(CXXFLAGS) $(DEFS) $(INCDIRS) -o infer2D.x $(OBJS2) $(LIBS)
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS1) $(OBJS2) infer.x infer2D.x
 	rm -f *.pdf *.log *.pyc *.xml
 	rm -f chain.dat inputdata.dat
 
@@ -33,10 +38,6 @@ clean:
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(DEFS) $(INCDIRS) -c $*.cpp
-
-examples: $(TARGET)
-	@echo "Examples Line Inference"
-	./bayesianInference1D.py
 
 test: $(TARGET)
 	@echo "The test target has not been implemented for $(TARGET)"
