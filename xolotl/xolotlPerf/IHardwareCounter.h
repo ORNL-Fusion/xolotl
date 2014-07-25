@@ -1,6 +1,7 @@
 #ifndef IHARDWARECOUNTER_H
 #define IHARDWARECOUNTER_H
 
+#include "mpi.h"
 #include <vector>
 #include "../xolotlCore/IIdentifiable.h"
 

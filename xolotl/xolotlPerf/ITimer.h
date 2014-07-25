@@ -1,7 +1,9 @@
 #ifndef ITIMER_H
 #define ITIMER_H
 
+#include "mpi.h"
 #include <string>
+#include <float.h>
 #include "../xolotlCore/IIdentifiable.h"
 
 using namespace std;
@@ -20,6 +22,24 @@ public:
      * The type of a timer value.
      */
     typedef double ValType;
+
+
+    /**
+     * The MPI type to use when transferring a ValType.
+     */
+    static constexpr MPI_Datatype MPIValType = MPI_DOUBLE;
+
+
+    /**
+     * The minimum value possible.
+     */
+    static constexpr ValType MinValue = 0.0;
+
+
+    /**
+     * The maximum value possible.
+     */
+    static constexpr ValType MaxValue = DBL_MAX;
 
 
 	/**

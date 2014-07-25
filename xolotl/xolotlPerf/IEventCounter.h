@@ -1,6 +1,8 @@
 #ifndef IEVENTCOUNTER_H
 #define IEVENTCOUNTER_H
 
+#include "mpi.h"
+#include <limits.h>
 #include "../xolotlCore/IIdentifiable.h"
 
 namespace xolotlPerf {
@@ -16,6 +18,25 @@ public:
      * Type of the counter.
      */
     typedef unsigned long   ValType;
+
+
+    /**
+     * MPI type used when transmitting a ValType.
+     */
+    static constexpr MPI_Datatype MPIValType = MPI_UNSIGNED_LONG;
+
+
+    /**
+     * The minimum value possible.
+     */
+    static const ValType MinValue = 0;
+
+
+    /**
+     * The maximum value possible.
+     */
+    static const ValType MaxValue = ULONG_MAX;
+
 
 
 	/**

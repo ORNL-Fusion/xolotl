@@ -206,18 +206,19 @@ StdHandlerRegistry::AggregateStatistics( int myRank,
 
         // collect min value of current object
         typename T::ValType* pMinVal = (myRank == 0) ? &(tsiter->second.min) : NULL;
-        typename T::ValType myVal = knowObject ? currObjIter->second->getValue() : DBL_MAX;
-        MPI_Reduce(&myVal, pMinVal, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+        typename T::ValType myVal = knowObject ? currObjIter->second->getValue() : T::MaxValue;
+        MPI_Reduce(&myVal, pMinVal, 1, T::MPIValType, MPI_MIN, 0, MPI_COMM_WORLD);
 
         // collect max value of current object
         typename T::ValType* pMaxVal = (myRank == 0) ? &(tsiter->second.max) : NULL;
-        myVal = knowObject ? currObjIter->second->getValue() : 0.0;
-        MPI_Reduce(&myVal, pMaxVal, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+        myVal = knowObject ? currObjIter->second->getValue() : T::MinValue;
+        MPI_Reduce(&myVal, pMaxVal, 1, T::MPIValType, MPI_MAX, 0, MPI_COMM_WORLD);
 
         // collect sum of current object's values (for computing avg and stdev)
         double valSum;
         // use the same myVal as for max: actual value if known, 0 otherwise
-        MPI_Reduce(&myVal, &valSum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        double myValAsDouble = (double)myVal;
+        MPI_Reduce(&myValAsDouble, &valSum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         if( myRank == 0 )
         {
             tsiter->second.average = valSum / tsiter->second.processCount;
@@ -225,7 +226,7 @@ StdHandlerRegistry::AggregateStatistics( int myRank,
 
         // collect sum of squares of current object's values (for stdev)
         double valSquaredSum;
-        double myValSquared = myVal*myVal;
+        double myValSquared = myValAsDouble*myValAsDouble;
         MPI_Reduce(&myValSquared, &valSquaredSum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         if( myRank == 0 )
         {
