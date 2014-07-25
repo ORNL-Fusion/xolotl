@@ -27,6 +27,15 @@ public class ArgumentsTest {
 		try {
 			// Parse the empty string of arguments
 			args = CliFactory.parseArguments(Arguments.class, new String[] {});
+			
+			// Check that the default maximum Helium cluster size is 8
+			assertEquals(8, args.getMaxHeSize());
+			
+			// Check that the default maximum vacancy cluster size is 29
+			assertEquals(29, args.getMaxVSize());
+			
+			// Check that the default maximum interstitial cluster size is 6
+			assertEquals(6, args.getMaxISize());
 
 			// Check if there is a material argument
 			assertEquals(false, args.isMaterial());
@@ -82,7 +91,16 @@ public class ArgumentsTest {
 			// Parse the specified string of arguments
 			args = CliFactory.parseArguments(Arguments.class, new String[] {
 					"--startTemp", "900", "--material", "Fe", "--perfHandler",
-					"dummy" });
+					"dummy", "--maxHeSize", "7", "--maxVSize", "30", "--maxISize", "5" });
+			
+			// Check that the maximum Helium cluster size is 7
+			assertEquals(7, args.getMaxHeSize());
+			
+			// Check that the maximum vacancy cluster size is 30
+			assertEquals(30, args.getMaxVSize());
+			
+			// Check that the maximum interstitial cluster size is 5
+			assertEquals(5, args.getMaxISize());
 			
 			// Check if there is a material argument
 			assertEquals(true, args.isMaterial());

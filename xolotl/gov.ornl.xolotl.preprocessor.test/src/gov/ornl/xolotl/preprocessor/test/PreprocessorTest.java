@@ -12,6 +12,7 @@ import gov.ornl.xolotl.preprocessor.Arguments;
 import gov.ornl.xolotl.preprocessor.Cluster;
 
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import uk.co.flamingpenguin.jewel.cli.ArgumentValidationException;
 import uk.co.flamingpenguin.jewel.cli.CliFactory;
@@ -162,6 +163,38 @@ public class PreprocessorTest {
 				new File("optionalOpsTest").delete();
 
 			}
+		} catch (ArgumentValidationException e1) {
+			e1.printStackTrace();
+		}
+
+		return;
+	}
+	
+	/**
+	 * This operation checks if the optional options are specified via the
+	 * command line, that they will be included in the parameter file.
+	 */
+	@Test(expected=IllegalArgumentException.class)
+	public void testBadMaxClusterSizeOptions() {
+
+		// Local Declarations
+		Arguments parsedArgs = null;
+
+		try {
+			parsedArgs = CliFactory.parseArguments(Arguments.class,
+					new String[] { "--maxHeSize", "10", "--maxISize", "7" });
+			
+			// Check that the max Helium cluster size is 10
+			assertEquals(10, parsedArgs.getMaxHeSize());
+			
+			// Check that the max interstitial cluster size is 7
+			assertEquals(7, parsedArgs.getMaxISize());
+
+			if (parsedArgs != null) {
+				Preprocessor preprocessor = new Preprocessor(parsedArgs);
+				fail("Should have thrown an IllegalArgumentException because the maximum He and I cluster sizes are out of range.");
+			}
+
 		} catch (ArgumentValidationException e1) {
 			e1.printStackTrace();
 		}

@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import uk.co.flamingpenguin.jewel.cli.*;
-
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 
@@ -56,7 +55,7 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 public class Preprocessor {
 
 	// The maximum size of a Helium cluster in the network.
-	private int maxHe = 8;
+	private int maxHe;
 
 	// The maximum size of a mobile He cluster.
 	private int maxHeDiffusionSize = 6;
@@ -70,7 +69,7 @@ public class Preprocessor {
 			0.20, 0.25, 0.20, 0.12, 0.3 };
 
 	// The maximum size of a vacancy cluster in the network.
-	private int maxV = 29;
+	private int maxV;
 
 	// The diffusion factor for a single vacancy.
 	private double vOneDiffusionFactor = 1800.0;
@@ -79,7 +78,7 @@ public class Preprocessor {
 	private double vOneMigrationEnergy = 1.30;
 
 	// The maximum size of an interstitial cluster in the network.
-	private int maxI = 6;
+	private int maxI;
 
 	// The maximum size of a mobile interstitial cluster.
 	private int maxIDiffusionSize = 5;
@@ -150,7 +149,7 @@ public class Preprocessor {
 		}
 
 		// Check if the last string in the petscList is a stand-alone option
-		if ((petscList.get((petscList.size() - 1))).contains("-")) 
+		if ((petscList.get((petscList.size() - 1))).contains("-"))
 			petscOptions.put(petscList.get((petscList.size() - 1)), "");
 
 		// Loop through the Petsc list of strings to pair Petsc options with
@@ -191,6 +190,24 @@ public class Preprocessor {
 	 */
 	public Preprocessor(Arguments args) {
 
+		// Set the maximum size of a Helium cluster in the network.
+		maxHe = args.getMaxHeSize();
+		// Check to make sure the user entered an appropriate value
+		if ( !(maxHe < 9) || !(maxHe > 0) ) {
+			throw new IllegalArgumentException(
+					"The maxium Helium size must be greater than 0 and less than 9 ( 0 < maxHeSize < 9 )");
+		}
+
+		// Set the maximum size of a vacancy cluster in the network.
+		maxV = args.getMaxVSize();
+		
+		// The maximum size of an interstitial cluster in the network.
+		maxI = args.getMaxISize();
+		if ( !(maxI < 7) || !(maxI > 0) ) {
+			throw new IllegalArgumentException(
+					"The maxium interstitial size must be greater than 0 and less than 7 ( 0 < maxHeSize < 7 )");
+		}
+
 		// Set the parameter options that will be passed to Xolotl
 		xolotlParams.setProperty("startTemp", args.getStartTemp());
 		xolotlParams.setProperty("networkFile", args.getNetworkFile());
@@ -198,7 +215,7 @@ public class Preprocessor {
 		xolotlParams.setProperty("vizHandler", args.getVizHandler());
 		xolotlParams.setProperty("petscArgs",
 				generatePetscArgs(args.getPetscArgs()));
-		
+
 		// The following parameter options are optional and will only
 		// be set if they are specified via the command line
 		if (args.isMaterial())
@@ -498,8 +515,8 @@ public class Preprocessor {
 			int dimAttributeId = H5.H5Acreate(headerGroupId, "physicalDim",
 					HDF5Constants.H5T_STD_I32LE, dimDataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5
-					.H5Awrite(dimAttributeId, HDF5Constants.H5T_STD_I32LE, dimension);
+			status = H5.H5Awrite(dimAttributeId, HDF5Constants.H5T_STD_I32LE,
+					dimension);
 			status = H5.H5Aclose(dimAttributeId);
 
 			// Create, write, and close the refinement attribute
@@ -507,8 +524,8 @@ public class Preprocessor {
 			int refineAttributeId = H5.H5Acreate(headerGroupId, "refinement",
 					HDF5Constants.H5T_STD_I32LE, refineDataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(refineAttributeId, HDF5Constants.H5T_STD_I32LE,
-					refinement);
+			status = H5.H5Awrite(refineAttributeId,
+					HDF5Constants.H5T_STD_I32LE, refinement);
 			status = H5.H5Aclose(refineAttributeId);
 
 			// Close everything
@@ -596,8 +613,8 @@ public class Preprocessor {
 
 			// Write it
 			int[] tempNetworkSize = { networkSize };
-			status = H5.H5Awrite(networkSizeAttributeId, HDF5Constants.H5T_STD_I32LE,
-					tempNetworkSize);
+			status = H5.H5Awrite(networkSizeAttributeId,
+					HDF5Constants.H5T_STD_I32LE, tempNetworkSize);
 
 			// Close everything
 			status = H5.H5Aclose(networkSizeAttributeId);

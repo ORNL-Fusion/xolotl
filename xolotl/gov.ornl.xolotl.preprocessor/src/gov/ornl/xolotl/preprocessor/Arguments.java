@@ -10,6 +10,69 @@ import uk.co.flamingpenguin.jewel.cli.Option;
 public interface Arguments {
 
 	/**
+	 * This Option annotation corresponds to the '--maxHeSize' option which
+	 * defines a default value of 8 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maxium size of a Helium cluster in
+	 *            the network if this option is not specified via the command
+	 *            line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "8", description = "The maximum size of a Helium cluster in the network satisfying the condition 0 < maxHeSize < 9. (default = 8)")
+	/**
+	 * This operation produces the required command line option '--maxHeSize' which 
+	 * takes a single integer value and is defined by the previous Option annotation
+	 * 
+	 * @return The maximum size of a Helium cluster in the network satisfying the condition 0 < maxHeSize < 9
+	 */
+	int getMaxHeSize();
+
+	/**
+	 * This Option annotation corresponds to the '--maxVSize' option which
+	 * defines a default value of 29 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maxium size of a vacancy cluster
+	 *            in the network if this option is not specified via the
+	 *            command line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "29", description = "The maximum size of a vacancy cluster in the network. (default = 29)")
+	/**
+	 * This operation produces the required command line option '--maxVSize' which 
+	 * takes a single integer value and is defined by the previous Option annotation
+	 * 
+	 * @return The maxium size of a vacancy cluster in the network
+	 */
+	int getMaxVSize();
+
+	/**
+	 * This Option annotation corresponds to the '--maxISize' option which
+	 * defines a default value of 6 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maxium size of an interstitial
+	 *            cluster in the network if this option is not specified via
+	 *            the command line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "6", description = "The maximum size of an interstitial cluster in the network satisfying the condition 0 < maxISize < 7. (default = 6)")
+	/**
+	 * This operation produces the required command line option '--maxISize' which 
+	 * takes a single integer value and is defined by the previous Option annotation
+	 * 
+	 * @return The maximum size of an interstitial cluster in the network satisfying the condition 0 < maxISize < 7
+	 */
+	int getMaxISize();
+
+	/**
 	 * This Option annotation corresponds to the '--startTemp' option which
 	 * defines a default value of 1000 and additionally provides a brief
 	 * description of this option.
@@ -85,8 +148,7 @@ public interface Arguments {
 	@Option(defaultValue = "-da_grid_x 10 -ts_final_time 1000 "
 			+ "-ts_max_steps 3 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
 			+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type redundant "
-			+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor", 
-			description = "List of arguments to be passed to PETSc")
+			+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor", description = "List of arguments to be passed to PETSc")
 	/**
 	 * This operation produces the required command line option '--petscArgs' which 
 	 * takes a single string value and is defined by the previous Option annotation
