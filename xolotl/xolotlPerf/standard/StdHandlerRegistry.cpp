@@ -69,140 +69,152 @@ StdHandlerRegistry::PerfObjStatistics<T>::outputTo(std::ostream& os) const
 }
 
 
+template<typename T>
 void
-StdHandlerRegistry::CollectTimerNames( int myRank,
-    std::map<std::string, PerfObjStatistics<ITimer::ValType> >& timerStats ) const
+StdHandlerRegistry::CollectObjectNames( int myRank,
+    const std::vector<std::string>& myNames,
+    std::map<std::string, PerfObjStatistics<T> >& stats ) const
 {
-    // Determine amount of space required for timer names
+    // Determine amount of space required for names
     unsigned int nBytes = 0;
-    for( auto timerIter = allTimers.begin(); timerIter != allTimers.end(); ++timerIter )
+    for( auto nameIter = myNames.begin(); nameIter != myNames.end(); ++nameIter )
     {
-        // Add enough space for the timer name plus a NUL terminating character.
-        nBytes += (timerIter->first.length() + 1);
+        // Add enough space for the name plus a NUL terminating character.
+        nBytes += (nameIter->length() + 1);
     }
     
-    // Let root know how much space it needs to collect all timer names
+    // Let root know how much space it needs to collect all object names
     unsigned int totalNumBytes = 0;
     MPI_Reduce( &nBytes, &totalNumBytes, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD );
 
-    // Marshal all our timer names.
-    char* myTimerNames = new char[nBytes];
-    char* pTimerName = myTimerNames;
-    for( auto timerIter = allTimers.begin(); timerIter != allTimers.end(); ++timerIter )
+    // Marshal all our object names.
+    char* myNamesBuf = new char[nBytes];
+    char* pName = myNamesBuf;
+    for( auto nameIter = myNames.begin(); nameIter != myNames.end(); ++nameIter )
     {
-        strcpy( pTimerName, timerIter->first.c_str() );
-        pTimerName += (timerIter->first.length() + 1);   // skip the NUL terminator
+        strcpy( pName, nameIter->c_str() );
+        pName += (nameIter->length() + 1);   // skip the NUL terminator
     }
-    assert( pTimerName == (myTimerNames + nBytes) );
+    assert( pName == (myNamesBuf + nBytes) );
 
-    // Provide all timer names to root.
+    // Provide all names to root.
+    // First, provide the amount of data from each process.
     int cwSize;
     MPI_Comm_size( MPI_COMM_WORLD, &cwSize );
-    char* allTimerNames = (myRank == 0) ? new char[totalNumBytes] : NULL;
-    int* allTimerNameCounts = (myRank == 0) ? new int[cwSize] : NULL;
-    int* allTimerNameDispls = (myRank == 0) ? new int[cwSize] : NULL;
+    char* allNames = (myRank == 0) ? new char[totalNumBytes] : NULL;
+    int* allNameCounts = (myRank == 0) ? new int[cwSize] : NULL;
+    int* allNameDispls = (myRank == 0) ? new int[cwSize] : NULL;
 
-    MPI_Gather( &nBytes, 1, MPI_INT, allTimerNameCounts, 1, MPI_INT, 0, MPI_COMM_WORLD );
+    MPI_Gather( &nBytes, 1, MPI_INT, allNameCounts, 1, MPI_INT, 0, MPI_COMM_WORLD );
 
+    // Next, root computes the displacements for data from each process.
     if( myRank == 0 )
     {
-        allTimerNameDispls[0] = 0;
+        allNameDispls[0] = 0;
         for( unsigned int i = 1; i < cwSize; ++i )
         {
-            allTimerNameDispls[i] = allTimerNameDispls[i-1] + allTimerNameCounts[i-1];
+            allNameDispls[i] = allNameDispls[i-1] + allNameCounts[i-1];
         }
     }
 
-    MPI_Gatherv( myTimerNames, 
+    // Finally, gather all names to the root process.
+    MPI_Gatherv( myNamesBuf, 
                     nBytes, 
                     MPI_CHAR,
-                    allTimerNames,
-                    allTimerNameCounts,
-                    allTimerNameDispls,
+                    allNames,
+                    allNameCounts,
+                    allNameDispls,
                     MPI_CHAR,
                     0,
                     MPI_COMM_WORLD );
 
     if( myRank == 0 )
     {
-        // Process the gathered timer names to determine the 
-        // set of all known timer names.
-        pTimerName = allTimerNames;
-        while( pTimerName < (allTimerNames + totalNumBytes) )
+        // Process the gathered names to determine the 
+        // set of all known object names.
+        pName = allNames;
+        while( pName < (allNames + totalNumBytes) )
         {
-            auto iter = timerStats.find(pTimerName);
-            if( iter == timerStats.end() )
+            auto iter = stats.find(pName);
+            if( iter == stats.end() )
             {
-                // This is a timer name we have not seen before.
-                // Add it to the timer statistics map.
-                timerStats.insert( std::pair<std::string, PerfObjStatistics<ITimer::ValType> >(pTimerName, PerfObjStatistics<ITimer::ValType>(pTimerName) ) );
+                // This is an object  name we have not seen before.
+                // Add it to the statistics map.
+                stats.insert( std::pair<std::string, PerfObjStatistics<T> >(pName, PerfObjStatistics<T>(pName) ) );
             }
             
-            // Advance to next timer name
-            pTimerName += (strlen(pTimerName) + 1);
+            // Advance to next object name
+            pName += (strlen(pName) + 1);
         }
-        assert( pTimerName == allTimerNames + totalNumBytes );
+        assert( pName == allNames + totalNumBytes );
     }
 
     // clean up
-    delete[] myTimerNames;
-    delete[] allTimerNames;
-    delete[] allTimerNameCounts;
-    delete[] allTimerNameDispls;
+    delete[] myNamesBuf;
+    delete[] allNames;
+    delete[] allNameCounts;
+    delete[] allNameDispls;
 }
 
 
+template<typename T>
 void
-StdHandlerRegistry::AggregateTimerStatistics( int myRank,
-    std::map<std::string, PerfObjStatistics<ITimer::ValType> >& timerStats ) const
+StdHandlerRegistry::AggregateStatistics( int myRank,
+    const std::map<std::string, std::shared_ptr<T> >& allObjs,
+    std::map<std::string, PerfObjStatistics<typename T::ValType> >& stats ) const
 {
-    // Determine the set of timer names known across all processes.
-    // Since some processes may define a timer that others don't, we
+    // Determine the set of object names known across all processes.
+    // Since some processes may define an object that others don't, we
     // have to form the union across all processes.
     // Unfortunately, because the strings are of different lengths,
     // we have a more difficult marshal/unmarshal problem than we'd like.
-    CollectTimerNames( myRank, timerStats );
+    std::vector<std::string> objNames;
+    for( auto oiter = allObjs.begin(); oiter != allObjs.end(); ++oiter )
+    {
+        objNames.push_back(oiter->first);
+    }
+    CollectObjectNames<typename T::ValType>( myRank, objNames, stats );
 
-    // Now collect statistics for each timer the program defined.
-    int nTimers;
+    // Now collect statistics for each object the program defined.
+    int nObjs;
     if( myRank == 0 )
     {
-        nTimers = timerStats.size();
+        nObjs = stats.size();
     }
-    MPI_Bcast( &nTimers, 1, MPI_INT, 0, MPI_COMM_WORLD );
-    assert( nTimers >= 0 );
+    MPI_Bcast( &nObjs, 1, MPI_INT, 0, MPI_COMM_WORLD );
+    assert( nObjs >= 0 );
 
-    auto tsiter = timerStats.begin();
-    for( unsigned int timerIdx = 0; timerIdx < nTimers; ++timerIdx )
+    auto tsiter = stats.begin();
+    for( unsigned int idx = 0; idx < nObjs; ++idx )
     {
-        // broadcast the current timer's name
+        // broadcast the current object's name
         int nameLen = (myRank == 0) ? tsiter->second.name.length() : -1;
         MPI_Bcast( &nameLen, 1, MPI_INT, 0, MPI_COMM_WORLD );
         // we can safely cast away const on the tsiter data string because
         // the only process that accesses that string is rank 0,
         // and it only reads the data.
-        char* timerName = (myRank == 0) ? const_cast<char*>(tsiter->second.name.c_str()) : new char[nameLen+1];
-        MPI_Bcast( timerName, nameLen+1, MPI_CHAR, 0, MPI_COMM_WORLD );
+        char* objName = (myRank == 0) ? const_cast<char*>(tsiter->second.name.c_str()) : new char[nameLen+1];
+        MPI_Bcast( objName, nameLen+1, MPI_CHAR, 0, MPI_COMM_WORLD );
 
-        // do we know about the current timer?
-        auto currTimerIter = allTimers.find(timerName);
-        int knowTimer = (currTimerIter != allTimers.end()) ? 1 : 0;
+        // do we know about the current object?
+        auto currObjIter = allObjs.find(objName);
+        int knowObject = (currObjIter != allObjs.end()) ? 1 : 0;
 
-        // collect count of processes knowing the current timer
+        // collect count of processes knowing the current object
         unsigned int* pcount = (myRank == 0) ? &(tsiter->second.processCount) : NULL;
-        MPI_Reduce(&knowTimer, pcount, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&knowObject, pcount, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-        // collect min value of current timer        
-        ITimer::ValType* pMinVal = (myRank == 0) ? &(tsiter->second.min) : NULL;
-        ITimer::ValType myVal = knowTimer ? currTimerIter->second->getValue() : DBL_MAX;
+        // collect min value of current object
+        typename T::ValType* pMinVal = (myRank == 0) ? &(tsiter->second.min) : NULL;
+        typename T::ValType myVal = knowObject ? currObjIter->second->getValue() : DBL_MAX;
         MPI_Reduce(&myVal, pMinVal, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
 
-        // collect max value of current timer
-        ITimer::ValType* pMaxVal = (myRank == 0) ? &(tsiter->second.max) : NULL;
-        myVal = knowTimer ? currTimerIter->second->getValue() : 0.0;
+        // collect max value of current object
+        typename T::ValType* pMaxVal = (myRank == 0) ? &(tsiter->second.max) : NULL;
+        myVal = knowObject ? currObjIter->second->getValue() : 0.0;
         MPI_Reduce(&myVal, pMaxVal, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-        // collect sum of current timer's values (for computing avg and stdev)
+        // collect sum of current object's values (for computing avg and stdev)
         double valSum;
         // use the same myVal as for max: actual value if known, 0 otherwise
         MPI_Reduce(&myVal, &valSum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -211,7 +223,7 @@ StdHandlerRegistry::AggregateTimerStatistics( int myRank,
             tsiter->second.average = valSum / tsiter->second.processCount;
         }
 
-        // collect sum of squares of current timer's values (for stdev)
+        // collect sum of squares of current object's values (for stdev)
         double valSquaredSum;
         double myValSquared = myVal*myVal;
         MPI_Reduce(&myValSquared, &valSquaredSum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -223,10 +235,10 @@ StdHandlerRegistry::AggregateTimerStatistics( int myRank,
         // clean up
         if( myRank != 0 )
         {
-            delete[] timerName;
+            delete[] objName;
         }
 
-        // advance to next timer
+        // advance to next object
         if( myRank == 0 )
         {
             ++tsiter;
@@ -245,10 +257,12 @@ StdHandlerRegistry::reportStatistics(std::ostream& os) const
 
     // Compute statistics about performance data collected by all processes.
     std::map<std::string, PerfObjStatistics<ITimer::ValType> > timerStats;
-    std::map<std::string, PerfObjStatistics<IEventCounter::ValType> > counterStats;
-    std::map<std::string, PerfObjStatistics<IHardwareCounter::CounterType> > hwCounterStats;
-    AggregateTimerStatistics( myRank, timerStats );
+    AggregateStatistics<ITimer>( myRank, allTimers, timerStats );
 
+    std::map<std::string, PerfObjStatistics<IEventCounter::ValType> > counterStats;
+    AggregateStatistics<IEventCounter>( myRank, allEventCounters, counterStats );
+
+    std::map<std::string, PerfObjStatistics<IHardwareCounter::CounterType> > hwCounterStats;
 
     // If I am the rank 0 process, output statistics on the given stream.
     if( myRank == 0 )

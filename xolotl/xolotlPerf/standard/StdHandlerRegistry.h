@@ -60,11 +60,13 @@ private:
         void outputTo(std::ostream& os ) const;
     };
 
-    void AggregateTimerStatistics( int myRank, 
-            std::map<std::string, PerfObjStatistics<ITimer::ValType> >& timerStats ) const;
+    template<typename T> void AggregateStatistics( int myRank, 
+            const std::map<std::string, std::shared_ptr<T> >& allObjs,
+            std::map<std::string, PerfObjStatistics<typename T::ValType> >& stats ) const;
 
-    void CollectTimerNames( int myRank,
-            std::map<std::string, PerfObjStatistics<ITimer::ValType> >& timerStats ) const;
+    template<typename T> void CollectObjectNames( int myRank,
+                                const std::vector<std::string>& myNames,
+                                std::map<std::string, PerfObjStatistics<T> >& stats ) const;
 
 protected:
     /**
