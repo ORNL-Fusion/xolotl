@@ -1135,17 +1135,45 @@ void computeRetention(TS ts, Vec C) {
 	// Network size
 	const int size = PetscSolver::getNetwork()->size();
 
-	// Get the helium cluster
-	auto heCluster = (PSICluster *) PetscSolver::getNetwork()->get("He", 1);
+	// Declare the vector that will store the Id of the helium clusters
+	std::vector<int> indices;
 
-	if (!heCluster) {
-		throw std::string(
-				"PetscSolver Exception: Cannot compute the retention because there is no helium1 in the network.");
-		return;
+	// Declare the vector that will store the weight of the helium clusters
+	// (their He composition)
+	std::vector<int> weight;
+
+	// Get all the helium clusters
+	auto heClusters = PetscSolver::getNetwork()->getAll(heType);
+
+	// Get all the helium-vacancy clusters
+	auto heVClusters = PetscSolver::getNetwork()->getAll(heVType);
+
+	// Loop on the helium clusters
+	for (int i = 0; i < heClusters.size(); i++) {
+		auto cluster = (PSICluster *) heClusters[i];
+		int id = cluster->getId() - 1;
+		// Add the Id to the vector
+		indices.push_back(id);
+		// Add the number of heliums of this cluster to the weight
+		weight.push_back(cluster->getSize());
 	}
 
-	// Keep the ID of the helium
-	int reactantIndex = heCluster->getId() - 1;
+	// Loop on the helium-vacancy clusters
+	for (int i = 0; i < heVClusters.size(); i++) {
+		auto cluster = (PSICluster *) heVClusters[i];
+		int id = cluster->getId() - 1;
+		// Add the Id to the vector
+		indices.push_back(id);
+		// Add the number of heliums of this cluster to the weight
+		auto comp = cluster->getComposition();
+		weight.push_back(comp[heType]);
+	}
+
+	if (indices.size() == 0) {
+		throw std::string(
+				"PetscSolver Exception: Cannot compute the retention because there is no helium or helium-vacancy cluster in the network.");
+		return;
+	}
 
 	// Get the da from ts
 	DM da;
@@ -1161,6 +1189,17 @@ void computeRetention(TS ts, Vec C) {
 	PetscInt xs, xm;
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
+
+	// Get the size of the total grid
+	PetscInt Mx;
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
+	checkPetscError(ierr);
+
+	// Setup step size variable
+	double hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
 	// Store the concentration over the grid
 	double heConcentration = 0;
@@ -1181,8 +1220,12 @@ void computeRetention(TS ts, Vec C) {
 		double * concentration = &concentrations[0];
 		PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
 
-		// Add the current concentration
-		heConcentration += concentration[reactantIndex];
+		// Loop on all the indices
+		for (int i = 0; i < indices.size(); i++) {
+			// Add the current concentration times the number of helium in the cluster
+			// (from the weight vector)
+			heConcentration += concentration[indices[i]] * weight[i] * hx;
+		}
 	}
 
 	// Get the number of processes
@@ -1210,9 +1253,18 @@ void computeRetention(TS ts, Vec C) {
 			heliumFluence += otherFluence;
 		}
 
+		// Get the final time
+		PetscReal time;
+		ierr = TSGetTime(ts, &time);
+		checkPetscError(ierr);
+
 		// Print the result
+		std::cout << "Final time: " << time << std::endl;
 		std::cout << "Helium retention = "
-				<< 100.0 * heConcentration / heliumFluence << " %" << std::endl;
+				<< 100.0 * (heConcentration / heliumFluence) << " %"
+				<< std::endl;
+		std::cout << "Helium concentration = " << heConcentration << std::endl;
+		std::cout << "Helium fluence = " << heliumFluence << std::endl;
 	}
 
 	else {
@@ -1220,6 +1272,7 @@ void computeRetention(TS ts, Vec C) {
 		MPI_Send(&heConcentration, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
 		MPI_Send(&heliumFluence, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
 	}
+
 	return;
 }
 
