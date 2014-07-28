@@ -15,6 +15,7 @@ XolotlOptions::XolotlOptions( void )
     useTempProfileHandlers ( false ),
     usePerfStdHandlers( true ),  // by default, use "std" handlers for performance
     useVizStdHandlers( false ), // and "dummy" handlers for visualization
+    useMaxHeFluence( false ),   // by default do not use the maximum Helium fluence option
     petscArgc( 0 ),
     petscArgv( NULL ),
     constTemp(1000)	// by default, the constant temperature is 1000K
@@ -37,6 +38,9 @@ XolotlOptions::XolotlOptions( void )
     optionsMap["vizHandler"] = new OptInfo(
         "vizHandler {std,dummy}      Which set of handlers to use for the visualization. (default = dummy)",
         handleVizHandlersOptionCB );
+    optionsMap["maxHeFluence"] = new OptInfo(
+        "maxHeFluence <value>      The maximum value of the Helium fluence the user wishes to integrate to.",
+        handleHeFluenceOptionCB );
     optionsMap["petscArgs"] = new OptInfo(
         "petscArgs                   All the arguments that will be given to PETSc",
         handlePetscOptionCB );
@@ -266,6 +270,27 @@ bool
 XolotlOptions::handleVizHandlersOptionCB( Options* opts, std::string arg )
 {
     return static_cast<XolotlOptions*>( opts )->handleVizHandlersOption( arg );
+}
+
+bool
+XolotlOptions::handleHeFluenceOption( std::string arg )
+{
+    bool ret = true;
+
+    // The base class should check for situations where
+    // we expect an argument but don't get one.
+    assert( !arg.empty() );
+
+    useMaxHeFluence = true;
+    maxHeliumFluence = strtod(arg.c_str(), NULL);
+
+    return ret;
+}
+
+bool
+XolotlOptions::handleHeFluenceOptionCB( Options* opts, std::string arg )
+{
+    return static_cast<XolotlOptions*>( opts )->handleHeFluenceOption( arg );
 }
 
 

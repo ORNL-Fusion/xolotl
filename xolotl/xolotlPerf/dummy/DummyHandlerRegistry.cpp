@@ -13,7 +13,6 @@ DummyHandlerRegistry::getTimer( std::string name )
     return std::make_shared<DummyTimer>( name );
 }
 
-
 // Obtain an EventCounter by name.
 std::shared_ptr<IEventCounter>
 DummyHandlerRegistry::getEventCounter( std::string name )

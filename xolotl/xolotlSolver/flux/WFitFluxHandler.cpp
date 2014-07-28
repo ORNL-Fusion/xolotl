@@ -15,14 +15,14 @@ void WFitFluxHandler::initializeFluxHandler(int numGridpoints, double step){
 	for(int i = 0; i < numGridpoints; i++)
 	{
 		auto x = i * stepSize;
-		auto incidentFlux = 0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x;
+		auto incidentFlux = 6.0 * x * x * x - 87.0 * x * x + 300.0 * x;
 		if (x > 7.0) incidentFlux = 0.0;
 		
+		// Insure the flux is nonnegative
+		incidentFlux = std::max(0.0, incidentFlux);
+
 		incidentFluxVec.push_back(incidentFlux);
 	}
-//	std::cout << "\n\nincidentFluxVec: " << std::endl;
-//	for(int i = 0; i < numGridpoints; i++)
-//		std::cout << incidentFluxVec[i] << std::endl;
 
 }
 

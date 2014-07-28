@@ -12,6 +12,9 @@ namespace xolotlSolver{
  */
 class FluxHandler: public IFluxHandler {
 
+private:
+
+
 protected:
 
 	/**
@@ -25,10 +28,25 @@ protected:
 	 */
 	double stepSize;
 
+	/**
+	 * Helium fluence
+	 */
+	double heFluence;
+
+	/**
+	 * Should the program use the maximum Helium fluence value?
+	 */
+	bool usingMaxHeFluence;
+
+	/**
+	 * The maximum Helium fluence value?
+	 */
+	double maxHeFluence;
+
 public:
 
 	FluxHandler()
-		: stepSize(0.0e-16)
+		: stepSize(0.0e-16), heFluence(0.0e-16), usingMaxHeFluence(false)
 	{ }
 
 	~FluxHandler() { }
@@ -56,6 +74,38 @@ public:
 	 */
 	virtual void setOutgoingFlux(std::vector<int> compositionVec,
 			std::vector<int> position, double time, double outgoingFlux);
+
+	/**
+	 * This operation increments the Helium fluence at the current time step.
+	 * @param dt			The length of the time step
+	 * @param step			The grid step size
+	 * @return				The value of the Helium fluence at the current time step
+	 */
+	virtual double incrementHeFluence(double dt, double step);
+
+	/**
+	 * This operation returns the Helium fluence
+	 * @return	The Helium fluence at current time step
+	 */
+	virtual double getHeFluence() const;
+
+	/**
+	 * This operation sets the maximum value of the Helium fluence.
+	 * @param fluence	The maximim Helium fluence value
+	 */
+	virtual void setMaxHeFluence(double fluence);
+
+	/**
+	 * This function returns the maximum value of the Helium fluence.
+	 */
+	virtual double getMaxHeFluence() const;
+
+	/**
+	 * This operation sets whether or not the maximum Helium fluence will be used
+	 * @param use	If the program should or should not use the max He fluence
+	 * @return	True if program will use the max He fluence, and false if it won't
+	 */
+	virtual bool useMaximumHeFluence();
 
 }; //end class FluxHandler
 

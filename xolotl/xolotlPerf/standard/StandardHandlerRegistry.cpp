@@ -1,6 +1,6 @@
 #include <cassert>
 #include "StandardHandlerRegistry.h"
-#include "gptl.h"
+#include <gptl.h>
 #include <sstream>
 
 namespace xolotlPerf
@@ -135,7 +135,6 @@ void StandardHandlerRegistry::dump(int rank) const
 
     GPTLpr_file(outfile.str().c_str());
 }
-
 
 } //end namespace xolotlPerf
 

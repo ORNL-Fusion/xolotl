@@ -22,6 +22,9 @@ private:
     // Use the "standard" set of handlers for the visualization?
     bool useVizStdHandlers;
 
+    // Use the helium fluence option?
+    bool useMaxHeFluence;
+
     // Name of the input network file.
     std::string networkFileName;
 
@@ -36,6 +39,9 @@ private:
 
     // Name of the input temperature profile file.
     std::string tempProfileFileName;
+
+    // Value of the Helium fluence
+    double maxHeliumFluence;
 
     // Deal with the name of the network file.
     // @param arg Argument given for the network file.
@@ -81,6 +87,15 @@ private:
     // @param opts Options object for the program.
     // @param arg Argument provided to the option.
     static bool handleVizHandlersOptionCB( Options* opts, std::string arg );
+
+    // Deal with the Helium fluence option.
+    // @param arg Argument given to the handler selection option.
+    bool handleHeFluenceOption( std::string arg );
+
+    // Callback when the maxHeFluence option is present.
+    // @param opts Options object for the program.
+    // @param arg Argument provided to the option.
+    static bool handleHeFluenceOptionCB( Options* opts, std::string arg );
 
     // Deal with the PETSc arguments option.
     // @param arg Unused
@@ -135,6 +150,16 @@ public:
     // @return true if program should use standard handlers, false if
     // should use dummy handlers.
     bool useVizStandardHandlers( void ) const  { return useVizStdHandlers; }
+
+    // Should we use the Helium fluence option?
+    // If false, it will not be used.
+    // @return true if the Helium fluence option was present in the parameter file,
+    // false if it was not.
+    bool useMaxHeliumFluence( void ) const  { return useMaxHeFluence; }
+
+    // Obtain the value of the Helium fluence to be used.
+    // @return Constant temperature.
+    double getMaxHeliumFluence( void ) const  { return maxHeliumFluence; }
 
     // Obtain the name of the file holding the input network.
     // @return Name of the input network file.

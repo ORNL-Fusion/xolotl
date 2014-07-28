@@ -40,9 +40,9 @@ std::vector<xolotlPerf::HardwareQuantities> declareHWcounters() {
 	return hwq;
 }
 
-bool initMaterial() {
+bool initMaterial(XolotlOptions &options) {
 
-	bool materialInitOK = xolotlSolver::initializeMaterial();
+	bool materialInitOK = xolotlSolver::initializeMaterial(options);
 	if (!materialInitOK) {
 		std::cerr << "Unable to initialize requested material.  Aborting"
 				<< std::endl;
@@ -90,13 +90,13 @@ std::shared_ptr<xolotlSolver::PetscSolver>
 setUpSolver( std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, 
             int argc, char **argv) {
 	// Setup the solver
-	//auto solverInitTimer = handlerRegistry->getTimer("initSolver");
-	//solverInitTimer->start();
+	auto solverInitTimer = handlerRegistry->getTimer("initSolver");
+	solverInitTimer->start();
 	std::shared_ptr<xolotlSolver::PetscSolver> solver = 
         std::make_shared<xolotlSolver::PetscSolver>(handlerRegistry);
 	solver->setCommandLineOptions(argc, argv);
 	solver->initialize();
-	//solverInitTimer->stop();
+	solverInitTimer->stop();
 
 	return solver;
 }
@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
 	assert(!networkFilename.empty());
 
 	try {
-		auto materialInitOK = initMaterial();
+		auto materialInitOK = initMaterial(xopts);
 		auto tempInitOK = initTemp(xopts.useConstTemperatureHandlers(),
 				xopts.useTemperatureProfileHandlers(), xopts);
 
@@ -204,10 +204,10 @@ int main(int argc, char **argv) {
 				tempHandler);
 
 		// Finalize our use of the solver.
-		//auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");
-		//solverFinalizeTimer->start();
+		auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");
+		solverFinalizeTimer->start();
 		solver->finalize();
-		//solverFinalizeTimer->stop();
+		solverFinalizeTimer->stop();
 		totalTimer->stop();
 
 		// Report the performance data about the run we just completed

@@ -38,7 +38,6 @@ public:
     // Output any collected performance data to the given output stream.
     virtual void dump( int rank) const;
 
-
 };  //end class DummyHandlerRegistry
 
 } //end namespace xolotlPerf
