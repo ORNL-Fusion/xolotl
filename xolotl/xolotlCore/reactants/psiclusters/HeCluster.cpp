@@ -98,7 +98,7 @@ void HeCluster::createDissociationConnectivity() {
 			auto comp = cluster->getComposition();
 			std::vector<int> compositionVec = { comp[heType] - 1, comp[vType],
 					comp[iType] };
-			auto smallerReactant = network->getCompound(heVType, compositionVec);
+			auto smallerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
 			dissociateCluster(cluster, smallerReactant);
 		}
 
@@ -115,7 +115,7 @@ void HeCluster::createDissociationConnectivity() {
 			auto comp = cluster->getComposition();
 			std::vector<int> compositionVec = { comp[heType] - 1, comp[vType],
 					comp[iType] };
-			auto smallerReactant = network->getCompound(heIType, compositionVec);
+			auto smallerReactant = (PSICluster *) network->getCompound(heIType, compositionVec);
 			dissociateCluster(cluster, smallerReactant);
 		}
 	}
@@ -127,9 +127,9 @@ void HeCluster::createDissociationConnectivity() {
 		// for a = 9
 		// Get (He_a)(V)
 		std::vector<int> compositionVec = { size, 1, 0 };
-		auto biggerReactant = network->getCompound(heVType, compositionVec);
+		auto biggerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
 		// Get I
-		auto singleReactant = network->get(iType, 1);
+		auto singleReactant = (PSICluster *) network->get(iType, 1);
 		emitClusters(singleReactant, biggerReactant);
 	}
 

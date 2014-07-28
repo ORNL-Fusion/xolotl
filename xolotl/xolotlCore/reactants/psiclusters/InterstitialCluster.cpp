@@ -128,7 +128,7 @@ void InterstitialCluster::createDissociationConnectivity() {
 			auto comp = cluster->getComposition();
 			std::vector<int> compositionVec = { comp[heType], comp[vType],
 					comp[iType] - 1 };
-			auto smallerReactant = network->getCompound(heIType,
+			auto smallerReactant = (PSICluster *) network->getCompound(heIType,
 					compositionVec);
 			dissociateCluster(cluster, smallerReactant);
 		}
@@ -146,7 +146,7 @@ void InterstitialCluster::createDissociationConnectivity() {
 			auto comp = cluster->getComposition();
 			std::vector<int> compositionVec = { comp[heType], comp[vType] + 1,
 					comp[iType] };
-			auto biggerReactant = network->getCompound(heVType, compositionVec);
+			auto biggerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
 			dissociateCluster(cluster, biggerReactant);
 		}
 
@@ -154,10 +154,10 @@ void InterstitialCluster::createDissociationConnectivity() {
 		// He_b --> (He_b)(V_a) + I_a
 		// for a = 1 and b = 9
 		// Get He_b
-		auto dissociatingReactant = network->get(heType, 9);
+		auto dissociatingReactant = (PSICluster *) network->get(heType, 9);
 		// Get (He_b)(V_a)
 		std::vector<int> compositionVec = { 9, 1, 0 };
-		auto biggerReactant = network->getCompound(heVType, compositionVec);
+		auto biggerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
 		dissociateCluster(dissociatingReactant, biggerReactant);
 	}
 

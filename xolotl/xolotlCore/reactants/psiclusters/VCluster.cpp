@@ -124,7 +124,7 @@ void VCluster::createDissociationConnectivity() {
 			auto comp = cluster->getComposition();
 			std::vector<int> compositionVec = { comp[heType], comp[vType] - 1,
 					comp[iType] };
-			auto smallerReactant = network->getCompound(heVType, compositionVec);
+			auto smallerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
 			dissociateCluster(cluster, smallerReactant);
 		}
 	}

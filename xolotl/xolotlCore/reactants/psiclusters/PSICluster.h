@@ -9,6 +9,10 @@
 #include <unordered_map>
 #include <sstream>
 
+namespace xolotlPerf {
+    class ITimer;
+};
+
 namespace xolotlCore {
 
 /**
@@ -23,6 +27,11 @@ namespace xolotlCore {
  * The getComposition() operation is implemented by subclasses and will always
  * return a map with the keys He, V, I, HeV or HeI. The operation getTypeName()
  * will always return one of the same values.
+ *
+ * As a rule, it is possible to access directly some of the private members of
+ * this class (id, concentration, reactionRadius, diffusionCoefficient, size,
+ * typeName) instead of using the "get" functions for performance reasons. In
+ * order to change these values the "set" functions must still be used.
  */
 class PSICluster: public Reactant {
 
@@ -134,12 +143,19 @@ protected:
 	double reactionRadius;
 
 	/**
-	 * A vector of ClusterPairs that represent reacting pairs of clusters
+	 * A vector of ClusterPairs that represents reacting pairs of clusters
 	 * that produce this cluster. This vector should be populated early in the
 	 * cluster's lifecycle by subclasses. In the standard Xolotl clusters,
 	 * this vector is filled in createReactionConnectivity.
 	 */
 	std::vector<ClusterPair> reactingPairs;
+
+	/**
+	 * A vector of pointers to ClusterPairs that represents the effective reacting
+	 * pairs, i.e. those for which the reaction rate is not 0.0. Should be filled
+	 * every time the temperature changes.
+	 */
+	std::vector<ClusterPair *> effReactingPairs;
 
 	/**
 	 * A vector of clusters that combine with this cluster to produce other
@@ -148,6 +164,13 @@ protected:
 	 * filled in createReactionConnectivity.
 	 */
 	std::vector<CombiningCluster> combiningReactants;
+
+	/**
+	 * A vector of pointers to CombiningCluster that represents the effective
+	 * combining clusters, i.e. those for which the reaction rate is not 0.0.
+	 * Should be filled every time the temperature changes.
+	 */
+	std::vector<CombiningCluster *> effCombiningReactants;
 
 	/**
 	 * A vector of pairs of clusters: the first one is the one dissociation into
@@ -160,6 +183,13 @@ protected:
 	std::vector<ClusterPair> dissociatingPairs;
 
 	/**
+	 * A vector of pointers to ClusterPairs that represents the effective dissociating
+	 * pairs, i.e. those for which the dissociation rate is not 0.0. Should be filled
+	 * every time the temperature changes.
+	 */
+	std::vector<ClusterPair *> effDissociatingPairs;
+
+	/**
 	 * A vector of ClusterPairs that represent pairs of clusters that are emitted
 	 * from the dissociation of this cluster. This vector should be populated early
 	 * in the cluster's lifecycle by subclasses. In the standard Xolotl clusters,
@@ -169,15 +199,40 @@ protected:
 	std::vector<ClusterPair> emissionPairs;
 
 	/**
-	 * A pointer to the cluster of the same type as this one that has
-	 * size equal to 1. The reference is set in setReactionNetwork().
+	 * A vector of pointers to ClusterPairs that represents the effective emission
+	 * pairs, i.e. those for which the dissociation rate is not 0.0. Should be filled
+	 * every time the temperature changes.
 	 */
-	PSICluster * sameTypeSizeOneCluster;
+	std::vector<ClusterPair *> effEmissionPairs;
 
 	/**
 	 * Counter for the number of times getDissociationFlux is called.
 	 */
 	std::shared_ptr<xolotlPerf::IEventCounter> getDissociationFluxCounter;
+
+	/**
+	 * Timers for getFlux functions
+	 */
+	std::shared_ptr<xolotlPerf::ITimer> getTotalFluxTimer;
+	std::shared_ptr<xolotlPerf::ITimer> getDissociationFluxTimer;
+	std::shared_ptr<xolotlPerf::ITimer> getProductionFluxTimer;
+	std::shared_ptr<xolotlPerf::ITimer> getEmissionFluxTimer;
+	std::shared_ptr<xolotlPerf::ITimer> getCombinationFluxTimer;
+
+	/**
+	 * Timers for the getPartialDerivatives functions
+	 */
+	std::shared_ptr<xolotlPerf::ITimer> getPartials;
+	std::shared_ptr<xolotlPerf::ITimer> getCombinationPartials;
+	std::shared_ptr<xolotlPerf::ITimer> getProductionPartials;
+	std::shared_ptr<xolotlPerf::ITimer> getDissociationPartials;
+	std::shared_ptr<xolotlPerf::ITimer> getEmissionPartials;
+
+	/**
+	 * Timers for getCombinationPartialDerivatives
+	 */
+	std::shared_ptr<xolotlPerf::ITimer> computeContribFromThis;
+	std::shared_ptr<xolotlPerf::ITimer> computeContribFromCombining;
 
 	/**
 	 * Calculate the reaction constant dependent on the
@@ -250,7 +305,7 @@ protected:
 	 * @param emittedCluster The cluster that is also emitted during the
 	 * dissociation.
 	 */
-	void dissociateCluster(Reactant * dissociatingCluster, Reactant * emittedCluster);
+	void dissociateCluster(PSICluster * dissociatingCluster, PSICluster * emittedCluster);
 
 	/**
 	 * This operation creates the two emitted clusters from the dissociation of
@@ -264,8 +319,8 @@ protected:
 	 * dissociation.
 	 */
 	void emitClusters(
-			Reactant * firstEmittedCluster,
-			Reactant * secondEmittedCluster);
+			PSICluster * firstEmittedCluster,
+			PSICluster * secondEmittedCluster);
 
 	/**
 	 * This operation "combines" clusters in the sense that it handles all of
@@ -399,9 +454,9 @@ protected:
 	 * @param secondReactant - The second reactant in the reaction, B.
 	 * @param thirdReactant - The third reactant in the reaction, C.
 	 */
-	void printReaction(const Reactant & firstReactant,
-			const Reactant & secondReactant,
-			const Reactant & productReactant) const;
+	void printReaction(const PSICluster & firstReactant,
+			const PSICluster & secondReactant,
+			const PSICluster & productReactant) const;
 
 	/**
 	 * This operation prints a backward reaction given the three reactants in
@@ -410,9 +465,9 @@ protected:
 	 * @param secondReactant - The second reactant in the reaction, B.
 	 * @param thirdReactant - The third reactant in the reaction, C.
 	 */
-	void printDissociation(const Reactant & firstReactant,
-			const Reactant & secondReactant,
-			const Reactant & productReactant) const;
+	void printDissociation(const PSICluster & firstReactant,
+			const PSICluster & secondReactant,
+			const PSICluster & productReactant) const;
 
 	/**
 	 * This operation signifies that the cluster with cluster Id should be
