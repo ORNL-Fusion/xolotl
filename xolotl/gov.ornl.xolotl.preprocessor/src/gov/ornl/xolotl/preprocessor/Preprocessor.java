@@ -224,8 +224,8 @@ public class Preprocessor {
 			xolotlParams.setProperty("tempFile", args.getTempFile());
 		if (args.isHeFlux())
 			xolotlParams.setProperty("heFlux", args.getHeFlux());
-		if (args.isHeFluence())
-			xolotlParams.setProperty("heFluence", args.getHeFluence());
+		if (args.isMaxHeFluence())
+			xolotlParams.setProperty("maxHeFluence", args.getMaxHeFluence());
 		if (args.isCheckpoint())
 			xolotlParams.setProperty("checkpoint", args.getCheckpoint());
 

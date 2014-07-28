@@ -254,29 +254,29 @@ public interface Arguments {
 	boolean isHeFlux();
 
 	/**
-	 * This Option annotation corresponds to the optional '--heFluence' option
+	 * This Option annotation corresponds to the optional '--maxHeFluence' option
 	 * and provides a brief description of the option.
 	 * 
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "The Helium fluence value that will be used")
-	// defaultValue = "1.0e19")
+	@Option(description = "The maxium Helium fluence value (in nm) that will be used")
+	// defaultValue = "10")
 	/**
-	 * This operation produces the optional command line option '--heFluence' which 
+	 * This operation produces the optional command line option '--maxHeFluence' which 
 	 * takes a single string value and is defined by the previous Option annotation
 	 * 
-	 * @return The Helium fluence
+	 * @return The maximum Helium fluence value
 	 */
-	String getHeFluence();
+	String getMaxHeFluence();
 
 	/**
-	 * This operation makes the command line option '--heFluence' optional.
+	 * This operation makes the command line option '--maxHeFluence' optional.
 	 * 
 	 * @return Returns true if the option has been specified and false if it has
 	 *         not
 	 */
-	boolean isHeFluence();
+	boolean isMaxHeFluence();
 
 	@Option(description = "{true, false}  Start the solver with the concentrations, time, "
 			+ "and step size from the HDF5 file")

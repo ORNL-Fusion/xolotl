@@ -50,7 +50,7 @@ public class ArgumentsTest {
 			assertEquals(false, args.isHeFlux());
 			
 			// Check if there is an heFluence argument
-			assertEquals(false, args.isHeFluence());
+			assertEquals(false, args.isMaxHeFluence());
 
 			// Check that the default perfHandler is std
 			assertEquals("std", args.getPerfHandler());
@@ -118,7 +118,7 @@ public class ArgumentsTest {
 			assertEquals(false, args.isHeFlux());
 			
 			// Check if there is an heFluence argument
-			assertEquals(false, args.isHeFluence());
+			assertEquals(false, args.isMaxHeFluence());
 
 			// Check that the perfHandler is dummy
 			assertEquals("dummy", args.getPerfHandler());
