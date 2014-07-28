@@ -280,6 +280,17 @@ void HeVCluster::createDissociationConnectivity() {
 	// because it is the dissociating one.
 	dissociateCluster(heVClusterLessV, singleCluster);
 
+	// Trap mutation of He
+	// He_a --> (He_a)(V_b) + I_b
+	// for a = 9 and b = 1
+	if (numHe == 9 && numV == 1) {
+		// Get He_a
+		auto dissociatingReactant = network->get(heType, 9);
+		// Get I_b
+		auto singleReactant = network->get(iType, 1);
+		dissociateCluster(dissociatingReactant, singleReactant);
+	}
+
 	return;
 }
 

@@ -29,7 +29,7 @@ public class BindingEnergyEngine {
 	 * padding to make the indexing easy.
 	 */
 	private static double[] heFormationEnergies = { Double.POSITIVE_INFINITY,
-			6.15, 11.44, 16.35, 21.0, 26.1, 30.24, 34.93, 38.80 };
+			6.15, 11.44, 16.35, 21.0, 26.1, 30.24, 34.93, 38.80, 42.90 };
 
 	/**
 	 * The set of vacancy formation energies up to V_2 indexed by size. That is
@@ -73,7 +73,7 @@ public class BindingEnergyEngine {
 	 */
 	private double[] heV1FormationEnergies = { vFormationEnergies[1], 5.14166,
 			8.20919, 11.5304, 14.8829, 18.6971, 22.2847, 26.3631, 30.1049,
-			34.0081 };
+			34.0081, 38.2069, 42.4217, 46.7378, 51.1551, 55.6738 };
 
 	/**
 	 * The formation energies for He_xV_2. The entry at i = 0 is for a
@@ -82,7 +82,8 @@ public class BindingEnergyEngine {
 	 */
 	private double[] heV2FormationEnergies = { vFormationEnergies[2], 7.10098,
 			8.39913, 9.41133, 11.8748, 14.8296, 17.7259, 20.7747, 23.7993,
-			26.7984, 30.0626, 33.0385, 36.5173, 39.9406, 43.48, 46.8537 };
+			26.7984, 30.0626, 33.0385, 36.5173, 39.9406, 43.48, 46.8537,
+			50.4484, 54.0879, 57.7939 };
 
 	/**
 	 * The constructor. If the file fit.csv exists in user.dir, this operation
@@ -170,9 +171,9 @@ public class BindingEnergyEngine {
 
 		double energy = Double.POSITIVE_INFINITY;
 
-		if (size < 9 && size > 0)
+		if (size <= 9 && size > 0)
 			energy = heFormationEnergies[size];
-		else if (size >= 9)
+		else if (size > 9)
 			energy = Double.NEGATIVE_INFINITY;
 
 		return energy;
