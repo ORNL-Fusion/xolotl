@@ -14,6 +14,7 @@ const string doubleCSVDoubleSlashCommentString =
 		"0.0,1.0,5.0\n0.11,0.55,22.86,99.283\n// Comment\n0.000382,883.33,74.832\n";
 const string intString = "1 3 5 7 9\n# Comment\n 0 2 4 6 \n";
 const string intCSVString = "1,3,5,7,9\n# Comment\n0,2,4,6\n";
+const string equalDelimiterString = "arg=many different strings\nno equal sign here\n";
 
 BOOST_AUTO_TEST_SUITE(TokenizedLineReader_testSuite)
 
@@ -165,6 +166,33 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	BOOST_REQUIRE_CLOSE_FRACTION(0.000382,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(883.33,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(74.832,dLine.at(2),0.0001);
+}
+
+/**This operation checks the TokenizedLineReader when the delimiter is changed to a the equal sign.*/
+BOOST_AUTO_TEST_CASE(checkDelimiterParsing) {
+
+	// Local Declarations
+	TokenizedLineReader<std::string> stringReader;
+	vector<std::string> iLine;
+
+	// Create the input stream
+	shared_ptr<stringstream> stringTestStream(
+			new stringstream(stringstream::in | stringstream::out));
+	*stringTestStream << equalDelimiterString;
+	// Configure the delimiter
+	stringReader.setDelimiter("=");
+	// Load the int reader
+	stringReader.setInputStream(stringTestStream);
+	// Get the first line and check it
+	iLine = stringReader.loadLine();
+	BOOST_REQUIRE(!iLine.empty());
+	BOOST_REQUIRE_EQUAL(2,iLine.size());
+	BOOST_REQUIRE_EQUAL("arg",iLine.at(0));
+	BOOST_REQUIRE_EQUAL("many different strings",iLine.at(1));
+	// Get the second line and check it
+	iLine = stringReader.loadLine();
+	BOOST_REQUIRE_EQUAL(1,iLine.size());
+	BOOST_REQUIRE_EQUAL("no equal sign here",iLine.at(0));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

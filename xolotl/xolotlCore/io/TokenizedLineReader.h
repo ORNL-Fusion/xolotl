@@ -10,6 +10,80 @@
 namespace xolotlCore {
 
 /**
+ * This operation load the subline into the data when the dataType is a string.
+ * This function is different from the other ones that overriding it for it to work
+ * when the data delimiter is different than the space but some of the strings
+ * are still separated by a space. For instance, loadData("one two", data);
+ * will load "one two" in data and not just "one".
+ *
+ * See the last test of the TokenizedLineReaderTester to see the use of this function.
+ *
+ * @param subline the subline to load in the data.
+ * @param data the reference to the data to be loaded.
+ */
+static void loadData(std::string subline, std::string &data) {
+	data = subline;
+
+	return;
+}
+
+/**
+ * This operation load the subline into the data when the dataType is a char.
+ *
+ * @param subline the subline to load in the data.
+ * @param data the reference to the data to be loaded.
+ */
+static void loadData(std::string subline, char &data) {
+	std::istringstream dataStream;
+	dataStream.str(subline);
+	dataStream >> data;
+
+	return;
+}
+
+/**
+ * This operation load the subline into the data when the dataType is a bool.
+ *
+ * @param subline the subline to load in the data.
+ * @param data the reference to the data to be loaded.
+ */
+static void loadData(std::string subline, bool &data) {
+	std::istringstream dataStream;
+	dataStream.str(subline);
+	dataStream >> data;
+
+	return;
+}
+
+/**
+ * This operation load the subline into the data when the dataType is a double.
+ *
+ * @param subline the subline to load in the data.
+ * @param data the reference to the data to be loaded.
+ */
+static void loadData(std::string subline, double &data) {
+	std::istringstream dataStream;
+	dataStream.str(subline);
+	dataStream >> data;
+
+	return;
+}
+
+/**
+ * This operation load the subline into the data when the dataType is a int.
+ *
+ * @param subline the subline to load in the data.
+ * @param data the reference to the data to be loaded.
+ */
+static void loadData(std::string subline, int &data) {
+	std::istringstream dataStream;
+	dataStream.str(subline);
+	dataStream >> data;
+
+	return;
+}
+
+/**
  * This is a simple class for parsing lines from an input stream and
  * splitting that line to retrieve delimiters. A line in this case is defined as any
  * sequence of characters that terminates with an end-of-line character such
@@ -121,10 +195,10 @@ public:
 						// data between the delimiters
 						subLine = line.substr(lastDelimiterPos,
 								nextDelimiterPos - lastDelimiterPos);
-						// Clear the stream, reset the substring, load the data
-						dataStream.clear();
-						dataStream.str(subLine);
-						dataStream >> data;
+						// Load the subLine in the data
+						// This function is defined only for string, bool, char, int double
+						loadData(subLine, data);
+						// Add it to the vector
 						dataVector.push_back(data);
 						// Switch the delimiter positions and find the next
 						lastDelimiterPos =
@@ -133,9 +207,12 @@ public:
 						nextDelimiterPos = line.find(dataDelimiter,
 								lastDelimiterPos);
 					}
-				} else {
-					// Otherwise just put the whole line in the array
-					dataStream >> data;
+				}
+				// Otherwise just put the whole line in the array
+				else {
+					// Load the line in the data
+					// This function is defined only for string, bool, char, int double
+					loadData(line, data);
 					dataVector.push_back(data);
 				}
 			}
