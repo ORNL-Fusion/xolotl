@@ -4,3 +4,5 @@ petscArgs=-fieldsplit_0_pc_type redundant -ts_max_snes_failures 200 -ksp_monitor
 networkFile=tungsten.txt
 startTemp=900
 perfHandler=std
+maxHeFluence=10
+heFlux=1.5

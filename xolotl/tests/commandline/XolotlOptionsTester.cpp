@@ -178,6 +178,12 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     // Check the performance handler
     BOOST_REQUIRE_EQUAL( xopts.useVizStandardHandlers(), true );
 
+    // Check if the maxHeFluence option is used
+    BOOST_REQUIRE_EQUAL( xopts.useMaxHeliumFluence(), true );
+
+    // Check if the heFlux option is used
+    BOOST_REQUIRE_EQUAL( xopts.useHeliumFlux(), true );
+
     // Check the PETSc options
     BOOST_REQUIRE_EQUAL( xopts.getPetscArgc(), 20 );
 }

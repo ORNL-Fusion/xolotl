@@ -53,3 +53,11 @@ double FluxHandler::getMaxHeFluence() const {
 bool FluxHandler::useMaximumHeFluence() {
 	return usingMaxHeFluence;
 }
+
+void FluxHandler::setHeFlux(double flux) {
+	heFlux = flux;
+}
+
+double FluxHandler::getHeFlux() const {
+	return heFlux;
+}

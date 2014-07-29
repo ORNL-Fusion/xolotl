@@ -78,6 +78,18 @@ public:
 	 */
 	virtual bool useMaximumHeFluence() = 0;
 
+	/**
+	 * This operation sets the factor to change the Helium flux.
+	 * @param flux	Helium flux value
+	 */
+	virtual void setHeFlux(double flux) = 0;
+
+	/**
+	 * This operation gets the factor that changes the Helium flux.
+	 * @return	Helium flux value
+	 */
+	virtual double getHeFlux() const = 0;
+
 }; //end class IFluxHandler
 
 }

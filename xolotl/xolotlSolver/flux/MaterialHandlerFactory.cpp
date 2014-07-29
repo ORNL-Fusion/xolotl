@@ -20,6 +20,12 @@ bool initializeMaterial( xolotlCore::XolotlOptions &options ) {
 		theFluxHandler->setMaxHeFluence(options.getMaxHeliumFluence());
 	}
 
+	// If the helium flux option is present, set the value
+	if( options.useHeliumFlux() )
+	{
+		theFluxHandler->setHeFlux(options.getHeliumFlux());
+	}
+
 	return ret;
 }
 

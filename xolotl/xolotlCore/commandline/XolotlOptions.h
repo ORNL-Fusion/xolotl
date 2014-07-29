@@ -25,6 +25,9 @@ private:
     // Use the helium fluence option?
     bool useMaxHeFluence;
 
+    // Use the helium flux option?
+    bool useHeFlux;
+
     // Name of the input network file.
     std::string networkFileName;
 
@@ -42,6 +45,9 @@ private:
 
     // Value of the Helium fluence
     double maxHeliumFluence;
+
+    // Value of the Helium flux
+    double heliumFlux;
 
     // Deal with the name of the network file.
     // @param arg Argument given for the network file.
@@ -96,6 +102,15 @@ private:
     // @param opts Options object for the program.
     // @param arg Argument provided to the option.
     static bool handleHeFluenceOptionCB( Options* opts, std::string arg );
+
+    // Deal with the Helium flux option.
+    // @param arg Argument given to the handler selection option.
+    bool handleHeFluxOption( std::string arg );
+
+    // Callback when the heFlux option is present.
+    // @param opts Options object for the program.
+    // @param arg Argument provided to the option.
+    static bool handleHeFluxOptionCB( Options* opts, std::string arg );
 
     // Deal with the PETSc arguments option.
     // @param arg Unused
@@ -158,8 +173,18 @@ public:
     bool useMaxHeliumFluence( void ) const  { return useMaxHeFluence; }
 
     // Obtain the value of the Helium fluence to be used.
-    // @return Constant temperature.
+    // @return Helium fluence.
     double getMaxHeliumFluence( void ) const  { return maxHeliumFluence; }
+
+    // Should we use the Helium flux option?
+    // If false, it will not be used.
+    // @return true if the Helium flux option was present in the parameter file,
+    // false if it was not.
+    bool useHeliumFlux( void ) const  { return useHeFlux; }
+
+    // Obtain the value of the Helium flux to be used.
+    // @return Helium flux.
+    double getHeliumFlux( void ) const  { return heliumFlux; }
 
     // Obtain the name of the file holding the input network.
     // @return Name of the input network file.

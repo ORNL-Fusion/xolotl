@@ -1060,7 +1060,8 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	auto fluxHandler = PetscSolver::getFluxHandler();
 
 	// Set the monitor to compute the helium fluence for the retention calculation
-	if ( flagRetention || fluxHandler->useMaximumHeFluence() ) {
+	PetscBool heFluenceOption = (PetscBool) (fluxHandler->useMaximumHeFluence());
+	if ( flagRetention || heFluenceOption ) {
 		// computeHeliumFluence will be called at each timestep
 		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);
 		checkPetscError(ierr);

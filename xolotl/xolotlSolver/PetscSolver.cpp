@@ -1171,7 +1171,10 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 		ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);
 		checkPetscError(ierr);
 
-		if (flagRetention)
+		// Get the flux handler that will be used to compute fluxes.
+		auto fluxHandler = PetscSolver::getFluxHandler();
+		PetscBool heFluenceOption = (PetscBool) (fluxHandler->useMaximumHeFluence());
+		if ( heFluenceOption || flagRetention )
 			computeRetention(ts, C);
 	} else {
 		throw std::string(

@@ -4,7 +4,7 @@
 #include "IFluxHandler.h"
 #include <vector>
 
-namespace xolotlSolver{
+namespace xolotlSolver {
 
 /**
  * Realizations of this interface are responsible for handling the incident (incoming)
@@ -13,7 +13,6 @@ namespace xolotlSolver{
 class FluxHandler: public IFluxHandler {
 
 private:
-
 
 protected:
 
@@ -43,13 +42,20 @@ protected:
 	 */
 	double maxHeFluence;
 
+	/**
+	 * The amplitude of the flux
+	 */
+	double heFlux;
+
 public:
 
-	FluxHandler()
-		: stepSize(0.0e-16), heFluence(0.0e-16), usingMaxHeFluence(false)
-	{ }
+	FluxHandler() :
+			stepSize(0.0e-16), heFluence(0.0e-16), usingMaxHeFluence(false), maxHeFluence(
+					0.0e-16), heFlux(1.0) {
+	}
 
-	~FluxHandler() { }
+	~FluxHandler() {
+	}
 
 	/**
 	 * This operation returns the incident flux for a specific cluster composition,
@@ -107,7 +113,20 @@ public:
 	 */
 	virtual bool useMaximumHeFluence();
 
-}; //end class FluxHandler
+	/**
+	 * This operation sets the factor to change the Helium flux.
+	 * @param flux	Helium flux value
+	 */
+	virtual void setHeFlux(double flux);
+
+	/**
+	 * This operation gets the factor that changes the Helium flux.
+	 * @return	Helium flux value
+	 */
+	virtual double getHeFlux() const;
+
+};
+//end class FluxHandler
 
 }
 
