@@ -83,11 +83,11 @@ BOOST_AUTO_TEST_CASE(checkheFluence) {
 
 	// Increment the helium fluence
 	testFitFlux->incrementHeFluence(1.0e-8, 4/3);
-	BOOST_REQUIRE_EQUAL(testFitFlux->getHeFluence(), 9.1521865889212782e-06);
+	auto fluence1 = testFitFlux->getHeFluence();
 	// Increment the helium fluence again, although the helium fluence value should not change
 	testFitFlux->incrementHeFluence(1.0e-7, 4/3);
 	// Check to make sure the helium fluence value did not increment a second time
-	BOOST_REQUIRE_EQUAL(testFitFlux->getHeFluence(), 9.1521865889212782e-06);
+	BOOST_REQUIRE_EQUAL(testFitFlux->getHeFluence(), fluence1);	//9.1521865889212782e-06);
 	// Since the maximum helium fluence value has been exceeded, an incident flux of 0 should be returned
 	BOOST_REQUIRE_EQUAL(testFitFlux->getIncidentFlux(compVec, x, 1), 0.0);
 
