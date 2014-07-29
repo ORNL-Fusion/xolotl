@@ -235,13 +235,12 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "The Helium insertion flux")
-	// defaultValue = "2.5e27")
+	@Option(description = "This option allows the user to change the Helium flux by the factor specified (in nm).")
 	/**
 	 * This operation produces the optional command line option '--heFlux' which 
 	 * takes a single string value and is defined by the previous Option annotation
 	 * 
-	 * @return The Helium insertion flux
+	 * @return The Helium flux
 	 */
 	String getHeFlux();
 
