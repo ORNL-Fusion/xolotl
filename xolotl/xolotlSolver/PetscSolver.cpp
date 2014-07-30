@@ -61,6 +61,7 @@ std::shared_ptr<ITemperatureHandler> PetscSolver::temperatureHandler;
 extern PetscErrorCode RHSFunction(TS, PetscReal, Vec, Vec, void*);
 extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat, Mat);
 extern PetscErrorCode setupPetscMonitor(TS);
+extern PetscErrorCode computeHeliumFluence(TS, PetscInt, PetscReal, Vec, void *);
 extern void computeRetention(TS, Vec);
 
 TS ts; /* nonlinear solver */
@@ -1147,6 +1148,21 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 //	checkPetscError(ierr);
 	ierr = TSSetFromOptions(ts);
 	checkPetscError(ierr);
+
+	// Flag to identify if the helium retention option is present
+	PetscBool flagRetention;
+	// Check for the option -helium_retention
+	ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);
+	checkPetscError(ierr);
+
+	bool heFluenceOption = fluxHandler->getUsingMaxHeFluence();
+	// If the the option --maxHeFluence is present, compute the fluence
+	if ( heFluenceOption && !flagRetention )
+	{
+		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);
+		checkPetscError(ierr);
+	}
+
 	ierr = setupPetscMonitor(ts);
 	checkPetscError(ierr);
 
@@ -1159,22 +1175,11 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	// Time how long it takes to solve the ODE system
 	if (ts != NULL && C != NULL) {
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr);
 
-		// Flags to launch the monitors or not
-		PetscBool flagRetention;
-
-		// Check the option -helium_retention
-		ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);
-		checkPetscError(ierr);
-
-		// Get the flux handler that will be used to compute fluxes.
-		auto fluxHandler = PetscSolver::getFluxHandler();
-		PetscBool heFluenceOption = (PetscBool) (fluxHandler->useMaximumHeFluence());
-		if ( heFluenceOption || flagRetention )
+		if ( flagRetention )
 			computeRetention(ts, C);
 	} else {
 		throw std::string(

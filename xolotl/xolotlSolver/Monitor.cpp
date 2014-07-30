@@ -12,6 +12,7 @@
 #include <vector>
 #include <memory>
 #include <HDF5Utils.h>
+//#include <FluxHandler.h>
 
 namespace xolotlSolver {
 
@@ -199,7 +200,7 @@ static PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that will compute the total helium fluence
  */
-static PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Network size
 	const int size = PetscSolver::getNetwork()->size();
@@ -207,10 +208,6 @@ static PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal t
 	PetscInt xs, xm, Mx;
 
 	PetscFunctionBeginUser;
-
-	// Variable to represent the real, or current, time
-	PetscReal realTime;
-	ierr = TSGetTime(ts, &realTime);
 
 	// Get the flux handler that will be used to compute fluxes.
 	auto fluxHandler = PetscSolver::getFluxHandler();
@@ -1056,12 +1053,8 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 
 	}
 
-	// Get the flux handler that will be used to compute fluxes.
-	auto fluxHandler = PetscSolver::getFluxHandler();
-
 	// Set the monitor to compute the helium fluence for the retention calculation
-	PetscBool heFluenceOption = (PetscBool) (fluxHandler->useMaximumHeFluence());
-	if ( flagRetention || heFluenceOption ) {
+	if ( flagRetention ) {
 		// computeHeliumFluence will be called at each timestep
 		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);
 		checkPetscError(ierr);
@@ -1263,7 +1256,7 @@ void computeRetention(TS ts, Vec C) {
 		checkPetscError(ierr);
 		
 		// Print the result
-		std::cout << "Final time: " << time << std::endl;
+		std::cout << "\nFinal time: " << time << std::endl;
 		std::cout << "Helium retention = "
 				<< 100.0 * (heConcentration / heliumFluence) << " %"
 				<< std::endl;

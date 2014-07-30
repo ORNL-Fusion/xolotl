@@ -12,8 +12,6 @@ namespace xolotlSolver {
  */
 class FluxHandler: public IFluxHandler {
 
-private:
-
 protected:
 
 	/**
@@ -107,11 +105,10 @@ public:
 	virtual double getMaxHeFluence() const;
 
 	/**
-	 * This operation sets whether or not the maximum Helium fluence will be used
-	 * @param use	If the program should or should not use the max He fluence
+	 * This operation gets whether or not the maximum Helium fluence will be used
 	 * @return	True if program will use the max He fluence, and false if it won't
 	 */
-	virtual bool useMaximumHeFluence();
+	virtual bool getUsingMaxHeFluence();
 
 	/**
 	 * This operation sets the factor to change the Helium flux.

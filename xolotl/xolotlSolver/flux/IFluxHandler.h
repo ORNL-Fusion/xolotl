@@ -72,11 +72,10 @@ public:
 	virtual double getMaxHeFluence() const = 0;
 
 	/**
-	 * This operation sets whether or not the maximum Helium fluence will be used
-	 * @param use	If the program should or should not use the max He fluence
+	 * This operation gets whether or not the maximum Helium fluence will be used
 	 * @return	True if program will use the max He fluence, and false if it won't
 	 */
-	virtual bool useMaximumHeFluence() = 0;
+	virtual bool getUsingMaxHeFluence() = 0;
 
 	/**
 	 * This operation sets the factor to change the Helium flux.
