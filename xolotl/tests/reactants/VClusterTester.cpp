@@ -128,6 +128,43 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  	BOOST_REQUIRE_CLOSE(-1485.0, flux, 10);
  }
 
+ /**
+  * This operation checks the HeCluster get*PartialDerivatives methods.
+  */
+ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
+ 	// Local Declarations
+ 	// The vector of partial derivatives to compare with
+ 	double knownPartials[] = {-2850.42, -3005.08, 0.0, -14316.7, 897079.0, 224717.0,
+ 			0.0, -2188.27, -2373.78, -1789.59, 0.0, 224717.0, 0.0, 0.0, -2054.05};
+ 	// Get the simple reaction network
+ 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork(3);
+
+ 	// Get an V cluster with compostion 0,1,0.
+ 	auto cluster = (PSICluster *) network->get("V", 1);
+ 	// Set the diffusion factor, migration and binding energies based on the
+ 	// values from the tungsten benchmark for this problem.
+ 	cluster->setDiffusionFactor(2.41E+11);
+ 	cluster->setMigrationEnergy(1.66);
+ 	cluster->setTemperature(1000.0);
+ 	vector<double> energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
+ 			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
+ 	cluster->setBindingEnergies(energies);
+ 	cluster->setConcentration(0.5);
+
+ 	// Compute the rate constants that are needed for the partial derivatives
+ 	cluster->computeRateConstants(1000.0);
+ 	// Get the vector of partial derivatives
+ 	auto partials = cluster->getPartialDerivatives(1000.0);
+
+ 	// Check the size of the partials
+ 	BOOST_REQUIRE_EQUAL(partials.size(), 15);
+
+ 	// Check all the values
+ 	for (int i = 0; i < partials.size(); i++) {
+ 		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 10.0);
+ 	}
+ }
+
 /**
  * This operation checks the reaction radius for VCluster.
  */
