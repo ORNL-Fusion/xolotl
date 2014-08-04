@@ -1,14 +1,13 @@
 #include "MaterialHandlerFactory.h"
 #include "WFitFluxHandler.h"
 #include <FluxHandler.h>
-#include <XolotlOptions.h>
 #include <iostream>
 
 namespace xolotlSolver {
 
 static std::shared_ptr<IFluxHandler> theFluxHandler;
 
-bool initializeMaterial( xolotlCore::XolotlOptions &options ) {
+bool initializeMaterial( xolotlCore::Options &options ) {
 	bool ret = true;
 
 	// we are to use a tungsten, W, flux handler

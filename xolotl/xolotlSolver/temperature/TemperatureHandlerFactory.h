@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "ITemperatureHandler.h"
-#include <XolotlOptions.h>
+#include <Options.h>
 
 namespace xolotlSolver
 {
@@ -19,14 +19,14 @@ namespace xolotlSolver
  * @return True iff the handler registry was created successfully.
  */
 bool initializeTempHandler( bool useConstTempRegistry, bool useTempProfileRegistry,
-		xolotlCore::XolotlOptions &options);
+		xolotlCore::Options &options);
 
 /**
  * Access the handler registry.
  *
  *  @return The handler registry object.
  */
-std::shared_ptr<ITemperatureHandler> getTemperatureHandler( xolotlCore::XolotlOptions &options );
+std::shared_ptr<ITemperatureHandler> getTemperatureHandler( xolotlCore::Options &options );
 
 }; // end namespace xolotlPerf
 

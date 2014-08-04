@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "IFluxHandler.h"
-#include <XolotlOptions.h>
+#include <Options.h>
 
 namespace xolotlSolver
 {
@@ -17,7 +17,7 @@ namespace xolotlSolver
  * @param options	Xolotl options set from the parameter file
  * @return True iff the handler registry was created successfully.
  */
-bool initializeMaterial( xolotlCore::XolotlOptions &options );
+bool initializeMaterial( xolotlCore::Options &options );
 
 //bool initializeMaterial( bool useWRegistry );
 

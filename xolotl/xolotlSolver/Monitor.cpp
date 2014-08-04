@@ -55,7 +55,7 @@ std::string outputFileName = "xolotlStop.h5";
  * This is a monitoring method that will save an hdf5 file at each time step.
  * HDF5 is handling the parallel part, so no call to MPI here.
  */
-static PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
@@ -257,7 +257,7 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that will save 1D plots of one concentration
  */
-static PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
@@ -432,7 +432,7 @@ static PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that will save 1D plots of many concentrations
  */
-static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
@@ -476,6 +476,7 @@ static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 	PETSC_IGNORE);
 	checkPetscError(ierr);
+
 	// Setup some step size variables
 	hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
@@ -503,10 +504,13 @@ static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 			PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
 
 			for (int i = 0; i < loopSize; i++) {
+
+				int index = 2084 - i;
+
 				// Create a Point with the concentration[iCluster] as the value
 				// and add it to myPoints
 				xolotlViz::Point aPoint;
-				aPoint.value = concentration[i];
+				aPoint.value = concentration[index];
 				aPoint.t = time;
 				aPoint.x = x;
 				myPoints[i].push_back(aPoint);
@@ -617,7 +621,7 @@ static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will save 2D plots for each depths of
  * the concentration as a function of the cluster composition.
  */
-static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
@@ -661,6 +665,7 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 	PETSC_IGNORE);
 	checkPetscError(ierr);
+
 	// Setup some step size variables
 	hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
@@ -672,6 +677,9 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 
 	// Loop on the grid points
 	for (xi = xs; xi < xs + xm; xi++) {
+
+		if (xi != 2) continue;
+
 		// Create a Point vector to store the data to give to the data provider
 		// for the visualization
 		auto myPoints = std::make_shared<std::vector<xolotlViz::Point> >();
@@ -772,7 +780,7 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that will save 1D plots of one performance timer
  */
-static PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	PetscInt ierr;
 
