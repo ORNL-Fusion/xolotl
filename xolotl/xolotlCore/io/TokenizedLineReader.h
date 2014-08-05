@@ -169,6 +169,10 @@ public:
 			// Get the line
 			std::string line;
 			std::getline(*inputstream, line);
+			// Handle the case where there is a carriage return (\r) before
+			// the newline (\n)
+			if (line[line.size() - 1] == '\r')
+				line.resize(line.size() - 1);
 			// Split it if it is not empty and does not start with the comment
 			// character
 			if (!line.empty()) {

@@ -504,13 +504,10 @@ PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 			PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
 
 			for (int i = 0; i < loopSize; i++) {
-
-				int index = 2084 - i;
-
 				// Create a Point with the concentration[iCluster] as the value
 				// and add it to myPoints
 				xolotlViz::Point aPoint;
-				aPoint.value = concentration[index];
+				aPoint.value = concentration[i];
 				aPoint.t = time;
 				aPoint.x = x;
 				myPoints[i].push_back(aPoint);
