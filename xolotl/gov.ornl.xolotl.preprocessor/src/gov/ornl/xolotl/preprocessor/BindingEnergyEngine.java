@@ -47,24 +47,16 @@ public class BindingEnergyEngine {
 	private static double[] iFormationEnergies = { Double.POSITIVE_INFINITY,
 			10.0, 18.5, 27.0, 35.0, 42.5, 48.0 };
 
+	// Coefficients for the Legendre polynomial fit
 	// Coefficients for c_0 in the 2D E_f,HeV fit
-	private double[] c0Coefficients = { 2.0918047239, 2.424457391,
-			-0.0330724815, 0.0002688409 };
-	// Coefficients for c_1 in the 2D E_f,HeV fit
-	private double[] c1Coefficients = { 1.3409500982, -0.8075623963,
-			0.0378738095, -0.0004038271 };
-	// Coefficients for c_2 in the 2D E_f,HeV fit
-	private double[] c2Coefficients = { 1.0115538203, 0.9313017002,
-			-0.0612676135, 0.0006779278 };
-	// Coefficients for c_3 in the 2D E_f,HeV fit
-	private double[] c3Coefficients = { -0.3332680916, -0.2007444968,
-			0.0320255177, -0.0003860637 };
-	// Coefficients for c_4 in the 2D E_f,HeV fit
-	private double[] c4Coefficients = { 0.0145638563, 0.0466697556,
-			-0.007875649, 0.0001003462 };
-	// Coefficients for c_5 in the 2D E_f,HeV fit
-	private double[] c5Coefficients = { 0.0034776952, -0.0050987442,
-			0.0007179606, -9.40486423253e-6 };
+	 private double[] c0Coefficients = { 8.11632e-01, 6.99475e-01,
+	 -4.15369e-02 };
+	 // Coefficients for c_1 in the 2D E_f,HeV fit
+	 private double[] c1Coefficients = { 1.03498e+00, 9.53649e-01,
+	 -2.91401e-02 };
+	 // Coefficients for c_2 in the 2D E_f,HeV fit
+	 private double[] c2Coefficients = { 3.63264e-01, 3.67345e-01,
+	 -1.57605e-04 };
 
 	/**
 	 * The formation energies for He_xV_1. The entry at i = 0 is for a single
@@ -101,43 +93,25 @@ public class BindingEnergyEngine {
 				// Create the readers
 				FileReader fitFileReader = new FileReader(fitFile);
 				BufferedReader fitReader = new BufferedReader(fitFileReader);
-				// Read the fit from the file
-				String [] c0Strings = fitReader.readLine().split(",");
-				String [] c1Strings = fitReader.readLine().split(",");
-				String [] c2Strings = fitReader.readLine().split(",");
-				String [] c3Strings = fitReader.readLine().split(",");
-				String [] c4Strings = fitReader.readLine().split(",");
-				String [] c5Strings = fitReader.readLine().split(",");
+
+				// Read from the Legendre fit file
+				String[] c0Strings = fitReader.readLine().split(",");
+				String[] c1Strings = fitReader.readLine().split(",");
+				String[] c2Strings = fitReader.readLine().split(",");
+
 				// Convert the c0 coefficients
 				c0Coefficients[0] = Double.valueOf(c0Strings[0]);
 				c0Coefficients[1] = Double.valueOf(c0Strings[1]);
 				c0Coefficients[2] = Double.valueOf(c0Strings[2]);
-				c0Coefficients[3] = Double.valueOf(c0Strings[3]);
 				// Convert the c1 coefficients
 				c1Coefficients[0] = Double.valueOf(c1Strings[0]);
 				c1Coefficients[1] = Double.valueOf(c1Strings[1]);
 				c1Coefficients[2] = Double.valueOf(c1Strings[2]);
-				c1Coefficients[3] = Double.valueOf(c1Strings[3]);
 				// Convert the c2 coefficients
 				c2Coefficients[0] = Double.valueOf(c2Strings[0]);
 				c2Coefficients[1] = Double.valueOf(c2Strings[1]);
 				c2Coefficients[2] = Double.valueOf(c2Strings[2]);
-				c2Coefficients[3] = Double.valueOf(c2Strings[3]);
-				// Convert the c3 coefficients
-				c3Coefficients[0] = Double.valueOf(c3Strings[0]);
-				c3Coefficients[1] = Double.valueOf(c3Strings[1]);
-				c3Coefficients[2] = Double.valueOf(c3Strings[2]);
-				c3Coefficients[3] = Double.valueOf(c3Strings[3]);
-				// Convert the c4 coefficients
-				c4Coefficients[0] = Double.valueOf(c4Strings[0]);
-				c4Coefficients[1] = Double.valueOf(c4Strings[1]);
-				c4Coefficients[2] = Double.valueOf(c4Strings[2]);
-				c4Coefficients[3] = Double.valueOf(c4Strings[3]);
-				// Convert the c5 coefficients
-				c5Coefficients[0] = Double.valueOf(c5Strings[0]);
-				c5Coefficients[1] = Double.valueOf(c5Strings[1]);
-				c5Coefficients[2] = Double.valueOf(c5Strings[2]);
-				c5Coefficients[3] = Double.valueOf(c5Strings[3]);
+
 				// Close the reader
 				fitReader.close();
 			} catch (FileNotFoundException e) {
@@ -272,60 +246,70 @@ public class BindingEnergyEngine {
 	}
 
 	/**
-	 * This operation computes the function
+	 * This operation computes the Legendre polynomial, P_n (x), of degree n.
 	 * 
-	 * f(x) = a + b*x + c*x^2 + d*x^3
-	 * 
-	 * for a coefficient set {a,b,c,d}.
-	 * 
-	 * This function is called to compute coefficients c_i for the vacancy size
-	 * dimension of the HeV binding energy fit.
+	 * The Legendre polynomials of degree 0 and 1 are P_0(x)=1.0 and P_1(x)=x,
+	 * respectively. With these conditions, the Legendre polynomials satisfy the
+	 * following recurrence relation: 
+	 * (n+1)*P_(n+1)(x) = (2n+1)*x*P_n(x) - n*P_(n-1)(x)
 	 * 
 	 * @param x
-	 *            The x value of the function.
-	 * @param coeffs
-	 *            The coefficients array.
+	 *            The x value of the function
+	 * @param order
+	 *            The order of the polynomial
 	 */
-	private double compute3rdOrderPolynomial(double x, double[] coeffs) {
+	private double legendrePolynomial(double x, int degree) {
 
-		double value = 0.0;
+		if (degree == 0)
+			return 1.0;
+		else if (degree == 1)
+			return x;
 
-		// Compute the value
-		value = coeffs[0] + coeffs[1] * x + coeffs[2] * x * x + coeffs[3] * x
-				* x * x;
+		double Pn2 = 1.0, Pn1 = x, Pn = 0.0;
 
-		return value;
+		for (int n = 1; n < degree; n++) {
+			Pn = (((2.0 * (double) n + 1.0) * x * Pn1) - ((double) n * Pn2))
+					/ ((double) n + 1.0);
+			Pn2 = Pn1;
+			Pn1 = Pn;
+		}
+
+		return Pn;
 	}
 
 	/**
-	 * This operation computes the function
+	 * This operation computes the 2nd order Legendre polynomial expansion
 	 * 
-	 * f(x) = a + b*x + c*x^2 + d*x^3 + e*x^4 + f*x^5
+	 * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x) = c0 + c1*x + c2*P_2(x)
 	 * 
-	 * for a coefficient set {a,b,c,d,e,f}.
-	 * 
-	 * This function is called to compute the final formation energy for the HeV
-	 * formation energy fit f(x,y).
+	 * for a coefficient set {c0,c1,c2}.
 	 * 
 	 * @param x
 	 *            The x value of the function.
 	 * @param coeffs
 	 *            The coefficients array.
 	 */
-	private double compute5thOrderPolynomial(double x, double[] coeffs) {
+	private double compute2ndOrderLegendrePCE(double x, double[] coeffs) {
 
 		double value = 0.0;
 
 		// Compute the value
-		value = coeffs[0] + coeffs[1] * x + coeffs[2] * x * x + coeffs[3] * x
-				* x * x + coeffs[4] * x * x * x * x + coeffs[5] * x * x * x * x
-				* x;
+		value = coeffs[0] + coeffs[1] * x + coeffs[2]
+				* legendrePolynomial(x, 2);
 
 		return value;
 	}
 
 	/**
 	 * This operation returns the formation energy for an HeV cluster.
+	 * 
+	 * The formation energies are determined using the following 2D,
+	 * second order, Legendre polynomial fit
+	 * 
+	 * f(y,x/y) = [c_0 + c_1*y + c_2*P_2(y)] + [c_3 + c_4*y + c_5*P_2(y)]*(x/y)
+	 * 			 + [c_6 + c_7*y + c_8*P_2(y)]*P_2(x/y)
+	 * 
+	 * where y = vSize and x/y = heSize/vSize
 	 * 
 	 * @param heSize
 	 *            The number of Helium atoms in the cluster
@@ -338,28 +322,28 @@ public class BindingEnergyEngine {
 		double energy = Double.NEGATIVE_INFINITY;
 		// The following coefficients are computed using the above and are used
 		// to evaluate the full function f(x,y).
-		double[] coefficients = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+		double[] coefficients = { 0.0, 0.0, 0.0 };
 
 		// Check to see if the vacancy size is large enough that the energy can
 		// be computed from the fit or if it is so small that the exact values
 		// must be used instead.
 		if (vSize > 2) {
+			// Get the Vacancy number
+			double y = 2.0 * (((double) vSize - 1.0) / 43.0) - 1.0;
 			// Get the coefficients
-			coefficients[0] = compute3rdOrderPolynomial((double) vSize,
+			coefficients[0] = compute2ndOrderLegendrePCE(y,
 					c0Coefficients);
-			coefficients[1] = compute3rdOrderPolynomial((double) vSize,
+			coefficients[1] = compute2ndOrderLegendrePCE(y,
 					c1Coefficients);
-			coefficients[2] = compute3rdOrderPolynomial((double) vSize,
+			coefficients[2] = compute2ndOrderLegendrePCE(y,
 					c2Coefficients);
-			coefficients[3] = compute3rdOrderPolynomial((double) vSize,
-					c3Coefficients);
-			coefficients[4] = compute3rdOrderPolynomial((double) vSize,
-					c4Coefficients);
-			coefficients[5] = compute3rdOrderPolynomial((double) vSize,
-					c5Coefficients);
+			// Get the He/V ratio
+			double x = 2.0 * (((double) heSize / (double) vSize) / 9.0) - 1.0;
 			// Get the energy for He_xV_y
-			energy = compute5thOrderPolynomial(
-					(double) heSize / (double) vSize, coefficients);
+			energy = compute2ndOrderLegendrePCE(x, coefficients);
+
+			energy = energy * 281.254;
+
 		} else if ((vSize == 1 && heSize < heV1FormationEnergies.length)
 				|| (vSize == 2 && heSize < heV2FormationEnergies.length)) {
 			// Get the exact energy
@@ -376,16 +360,20 @@ public class BindingEnergyEngine {
 	 * 
 	 * (He_x)(V_y) --> (He_x-1)(V_y) + He_1
 	 * 
-	 * It uses a 2D fit of the formation energies as a function of vSize and
-	 * heSize/vSize to compute the formation energy and then the binding energy.
-	 * The fit is of the form
+	 * It uses a 2D Legendre polynomial fit of the formation energies as a
+	 * function of vsize and heSize/vSize to compute the formation energy 
+	 * and then the binding energy.  The fit is of the form
 	 * 
-	 * f(y,y/x) = c_0(y) + c_1(y)*(y/x) + c_2(y)*(y/x)^2 + c_3(y)*(y/x)^3 +
-	 * c_4(y)*(y/x)^4 + c_5(y)*(y/x)^5 + c_6(y)*(y/x)^6
+	 * f(y,x/y) = c_0 + c_1*(x/y) + c_2*P_2(x/y)
 	 * 
-	 * where each function c_i(y) is
+	 * where each coefficient c_i is determined as follows,
 	 * 
-	 * c_i(y) = d_0 + d_1*y + d_2*y^2 + d_3*y_3 + d_4*y_4
+	 * c_i = d_0 + d_1*y + d_2*P_2(y)
+	 * 
+	 * Hence,
+	 * 
+	 * f(y,x/y) = [c_0 + c_1*y + c_2*P_2(y)] + [c_3 + c_4*y + c_5*P_2(y)]*(x/y)
+	 * 			 + [c_6 + c_7*y + c_8*P_2(y)]*P_2(x/y)
 	 * 
 	 * If heSize or vSize is equal to zero, this function will return the value
 	 * of the single species routines for He and V respectively.
@@ -433,15 +421,20 @@ public class BindingEnergyEngine {
 	 * 
 	 * (He_x)(V_y) --> (He_x)(V_y-1) + V_1
 	 * 
-	 * It uses a 2D fit of the formation energies as a function of vSize and
-	 * heSize/vSize to compute the formation energy and then the binding energy.
+	 * It uses a 2D Legendre polynomial fit of the formation energies as a
+	 * function of vsize and heSize/vSize to compute the formation energy 
+	 * and then the binding energy.  The fit is of the form
 	 * 
-	 * f(y,y/x) = c_0(y) + c_1(y)*(y/x) + c_2(y)*(y/x)^2 + c_3(y)*(y/x)^3 +
-	 * c_4(y)*(y/x)^4 + c_5(y)*(y/x)^5 + c_6(y)*(y/x)^6
+	 * f(y,x/y) = c_0 + c_1*(x/y) + c_2*P_2(x/y)
 	 * 
-	 * where each function c_i(y) is
+	 * where each coefficient c_i is determined as follows,
 	 * 
-	 * c_i(y) = d_0 + d_1*y + d_2*y^2 + d_3*y_3 + d_4*y_4
+	 * c_i = d_0 + d_1*y + d_2*P_2(y)
+	 * 
+	 * Hence,
+	 * 
+	 * f(y,x/y) = [c_0 + c_1*y + c_2*P_2(y)] + [c_3 + c_4*y + c_5*P_2(y)]*(x/y)
+	 * 			 + [c_6 + c_7*y + c_8*P_2(y)]*P_2(x/y)
 	 * 
 	 * If heSize or vSize is equal to zero, this function will return the value
 	 * of the single species routines for He and V respectively.
