@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	auto heCluster = (PSICluster *) network->get("He",1);
 	BOOST_REQUIRE(heCluster->getSize() == 1);
 	vector<double> bindingEnergies = heCluster->getBindingEnergies();
-	BOOST_REQUIRE_CLOSE(bindingEnergies.at(0), 0.0, 0.00);
+	BOOST_REQUIRE_CLOSE(bindingEnergies.at(0), 0.0, 0.001);
 	BOOST_REQUIRE(bindingEnergies.at(1) == numeric_limits<double>::infinity());
 	BOOST_REQUIRE(bindingEnergies.at(2) == numeric_limits<double>::infinity());
 	BOOST_REQUIRE_CLOSE(heCluster->getMigrationEnergy(),0.999,0.001);

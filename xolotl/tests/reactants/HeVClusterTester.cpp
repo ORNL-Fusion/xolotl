@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n"
 	  	  	  << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
-	BOOST_REQUIRE_CLOSE(-8964899015.0, flux, 10.0);
+	BOOST_REQUIRE_CLOSE(-8964899015.0, flux, 0.1);
 }
 
 /**
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Check all the values
 	for (int i = 0; i < partials.size(); i++) {
-		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 10.0);
+		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
 	}
 }
 

@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 		reactant->getPartialDerivatives(temperature,secondPartials);
 		// Compare the two arrays of partial derivatives
 		for (int j = 0; j < nReactants; ++j) {
-			BOOST_REQUIRE_CLOSE(partials[j],secondPartials[j],temperature);
+			BOOST_REQUIRE_CLOSE(partials[j],secondPartials[j],1.0);
 		}
 		// Zero the partials array
 		std::fill(secondPartials.begin(),secondPartials.end(),0.0);

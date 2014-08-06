@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n"
 			  << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
-	BOOST_REQUIRE_CLOSE(-67953316139.0, flux, 10);
+	BOOST_REQUIRE_CLOSE(-67953316139.0, flux, 0.1);
 }
 
 /**
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
 	double knownPartials[] = {-1.96821e+11, 1.23317e+13, 3.21149e+12,
-			-1.79298e+10, -1.79298e+10, 0.0, -1.87741e+10, -2.04376e+10, 0.0, -1.79298e+10,
+			-1.79298e+10, -1.95933e+10, 0.0, -1.87741e+10, -2.04376e+10, 0.0, -1.79298e+10,
 			2.25143e+12, 0.0, -1.79298e+10, 2.25143e+12, 0.0};
 	// Get the simple reaction network
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork(3);
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Check all the values
 	for (int i = 0; i < partials.size(); i++) {
-		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 10.0);
+		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
 	}
 }
 
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
 	for (int i = 1; i <= 10; i++) {
 		cluster = shared_ptr<HeCluster>(new HeCluster(i, registry));
-		BOOST_REQUIRE_CLOSE(expectedRadii[i-1], cluster->getReactionRadius(), .000001);
+		BOOST_REQUIRE_CLOSE(expectedRadii[i-1], cluster->getReactionRadius(), 0.000001);
 	}
 }
 

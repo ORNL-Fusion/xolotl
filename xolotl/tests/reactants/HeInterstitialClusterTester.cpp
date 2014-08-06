@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 			"HeInterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n" << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n" << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n" << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n" << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
 
 	// Check the flux
-	BOOST_REQUIRE_CLOSE(-16982855380.0, flux, 10.0);
+	BOOST_REQUIRE_CLOSE(-16982855380.0, flux, 0.1);
 
 	return;
 }
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Check all the values
 	for (int i = 0; i < partials.size(); i++) {
-		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 10.0);
+		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
 	}
 }
 
