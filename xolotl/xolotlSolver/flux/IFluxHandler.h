@@ -35,6 +35,12 @@ public:
 			std::vector<double> position, double currentTime) = 0;
 
 	/**
+	 * This operation returns the incident flux vector
+	 * @return incidentFluxVec   The incident flux vector
+	 */
+	virtual std::vector<double> getIncidentFluxVec() = 0;
+
+	/**
 	 * Given a specific concentration, position, and time, this operation sets the outgoing
 	 * flux to the specified amount.
 	 * @param composition  The composition of the cluster

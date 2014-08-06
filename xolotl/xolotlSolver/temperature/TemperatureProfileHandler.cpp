@@ -27,12 +27,6 @@ void TemperatureProfileHandler::initializeTemperature() {
 		temp.push_back(ytemp);
 	}
 
-//	std::cout << "\n\ntime    temp" << std::endl;
-//	for(int i=0;i<time.size();i++)
-//	{
-//		std::cout << time[i] << "    " << temp[i] << std::endl;
-//	}
-
 }
 
 double TemperatureProfileHandler::getTemperature(std::vector<double> position,

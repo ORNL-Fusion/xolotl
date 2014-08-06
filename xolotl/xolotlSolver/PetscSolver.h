@@ -174,8 +174,6 @@ protected:
      */
     std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
 
-
-
 }; //end class PetscSolver
 
 } /* end namespace xolotlSolver */

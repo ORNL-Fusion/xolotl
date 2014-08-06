@@ -4,17 +4,23 @@
 
 using namespace xolotlSolver;
 
+FluxHandler::FluxHandler() :
+		stepSize(0.0e-16), heFluence(0.0e-16), usingMaxHeFluence(false), maxHeFluence(
+				0.0e-16), heFlux(1.0), incidentFluxZero(false) {
+
+}
+
 double FluxHandler::getIncidentFlux(std::vector<int> compositionVec,
 		std::vector<double> position, double currentTime) {
 
 	auto i = position[0] / stepSize;
 	auto incidentFlux = incidentFluxVec[i];
 
-	if (usingMaxHeFluence && heFluence >= maxHeFluence) {
-		incidentFlux = 0.0;
-	}
-
 	return incidentFlux;
+}
+
+std::vector<double> FluxHandler::getIncidentFluxVec() {
+	return incidentFluxVec;
 }
 
 void FluxHandler::setOutgoingFlux(std::vector<int> compositionVec,
@@ -24,12 +30,17 @@ void FluxHandler::setOutgoingFlux(std::vector<int> compositionVec,
 
 double FluxHandler::incrementHeFluence(double dt, double step) {
 
-	if (usingMaxHeFluence && heFluence >= maxHeFluence)
-		heFluence += 0.0 * dt * step;
-	else {
+	if ( !usingMaxHeFluence || !(heFluence >= maxHeFluence) )
+	{
 		for (int i = 0; i < incidentFluxVec.size(); i++) {
 			heFluence += incidentFluxVec[i] * dt * step;
 		}
+	}
+
+	if ( !incidentFluxZero && usingMaxHeFluence && heFluence >= maxHeFluence ) {
+		for (int i = 0; i < incidentFluxVec.size(); i++)
+			incidentFluxVec[i] = 0.0;
+		incidentFluxZero = true;
 	}
 
 	return heFluence;

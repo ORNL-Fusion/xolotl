@@ -156,15 +156,15 @@ int main(int argc, char **argv) {
 	assert(!networkFilename.empty());
 
 	try {
-		auto materialInitOK = initMaterial(opts);
-		auto tempInitOK = initTemp(opts.useConstTemperatureHandlers(),
-				opts.useTemperatureProfileHandlers(), opts);
-
 		// Set up our performance data infrastructure.
 		// Indicate we want to monitor some important hardware counters.
 		auto hwq = declareHWcounters();
-
 		auto perfInitOK = initPerf(opts.usePerfStandardHandlers(), hwq);
+		// Set up the material infrastructure that is used to calculate flux
+		auto materialInitOK = initMaterial(opts);
+		// Set up the temperature infrastructure
+		auto tempInitOK = initTemp(opts.useConstTemperatureHandlers(),
+				opts.useTemperatureProfileHandlers(), opts);
 
 		// Set up the visualization infrastructure.
 		auto vizInitOK = initViz(opts.useVizStandardHandlers());

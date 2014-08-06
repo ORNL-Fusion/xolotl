@@ -3,6 +3,11 @@
 
 #include "IFluxHandler.h"
 #include <vector>
+#include <memory>
+
+namespace xolotlPerf {
+    class ITimer;
+};
 
 namespace xolotlSolver {
 
@@ -45,12 +50,15 @@ protected:
 	 */
 	double heFlux;
 
+	/**
+	 * Has the incident flux been turned off, i.e. the incident
+	 * flux vector is comprised of only zero values
+	 */
+	bool incidentFluxZero;
+
 public:
 
-	FluxHandler() :
-			stepSize(0.0e-16), heFluence(0.0e-16), usingMaxHeFluence(false), maxHeFluence(
-					0.0e-16), heFlux(1.0) {
-	}
+	FluxHandler();
 
 	~FluxHandler() {
 	}
@@ -66,6 +74,12 @@ public:
 	 */
 	virtual double getIncidentFlux(std::vector<int> compositionVec,
 			std::vector<double> position, double currentTime);
+
+	/**
+	 * This operation returns the incident flux vector
+	 * @return incidentFluxVec   The incident flux vector
+	 */
+	virtual std::vector<double> getIncidentFluxVec();
 
 	/**
 	 * Given a specific concentration, position, and time, this operation sets the outgoing
