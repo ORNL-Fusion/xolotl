@@ -62,7 +62,6 @@ extern PetscErrorCode RHSFunction(TS, PetscReal, Vec, Vec, void*);
 extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat, Mat);
 extern PetscErrorCode setupPetscMonitor(TS);
 extern PetscErrorCode computeHeliumFluence(TS, PetscInt, PetscReal, Vec, void *);
-extern void computeRetention(TS, Vec);
 
 TS ts; /* nonlinear solver */
 Vec C; /* solution */
@@ -1149,20 +1148,6 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	ierr = TSSetFromOptions(ts);
 	checkPetscError(ierr);
 
-	// Flag to identify if the helium retention option is present
-	PetscBool flagRetention;
-	// Check for the option -helium_retention
-	ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);
-	checkPetscError(ierr);
-
-	bool heFluenceOption = fluxHandler->getUsingMaxHeFluence();
-	// If the the option --maxHeFluence is present, compute the fluence
-	if ( heFluenceOption && !flagRetention )
-	{
-		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);
-		checkPetscError(ierr);
-	}
-
 	ierr = setupPetscMonitor(ts);
 	checkPetscError(ierr);
 
@@ -1178,9 +1163,6 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	if (ts != NULL && C != NULL) {
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr);
-
-		if ( flagRetention )
-			computeRetention(ts, C);
 	} else {
 		throw std::string(
 				"PetscSolver Exception: Unable to solve! Data not configured properly.");
