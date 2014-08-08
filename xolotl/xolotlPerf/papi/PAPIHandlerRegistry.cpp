@@ -2,9 +2,22 @@
 #include "xolotlPerf/papi/PAPITimer.h"
 #include "xolotlPerf/standard/EventCounter.h"
 #include "xolotlPerf/papi/PAPIHardwareCounter.h"
+#include "xolotlPerf/RuntimeError.h"
+
 
 namespace xolotlPerf
 {
+
+PAPIHandlerRegistry::PAPIHandlerRegistry(void)
+{
+    int ret;
+    ret = PAPI_library_init(PAPI_VER_CURRENT);
+    if( ret != PAPI_VER_CURRENT )
+    {
+        throw xolotlPerf::runtime_error( "Unable to initialize PAPI library for performance data collection", ret );
+    }
+}
+
 
 std::shared_ptr<ITimer>
 PAPIHandlerRegistry::getTimer(std::string name)
@@ -38,7 +51,7 @@ PAPIHandlerRegistry::getHardwareCounter( std::string name,
     // TODO - associate the object we create with the current region
     std::shared_ptr<IHardwareCounter> ret;
 
-    // Check if we have already created a dummy hardware counter set with this name.
+    // Check if we have already created a hardware counter set with this name.
     auto iter = allHWCounterSets.find(name);
     if( iter != allHWCounterSets.end() )
     {

@@ -85,10 +85,18 @@ void launchPetscSolver(std::shared_ptr<xolotlSolver::PetscSolver> solver,
 		std::shared_ptr<xolotlSolver::IFluxHandler> materialHandler,
 		std::shared_ptr<xolotlSolver::ITemperatureHandler> tempHandler) {
 
+    xperf::IHardwareCounter::SpecType hwctrSpec;
+    hwctrSpec.push_back( xperf::IHardwareCounter::FPOps );
+    hwctrSpec.push_back( xperf::IHardwareCounter::Cycles );
+    hwctrSpec.push_back( xperf::IHardwareCounter::L3CacheMisses );
+
 	// Launch the PetscSolver
 	auto solverTimer = handlerRegistry->getTimer("solve");
+    auto solverHwctr = handlerRegistry->getHardwareCounter( "solve", hwctrSpec );
 	solverTimer->start();
+    solverHwctr->start();
 	solver->solve(materialHandler, tempHandler);
+    solverHwctr->stop();
 	solverTimer->stop();
 }
 

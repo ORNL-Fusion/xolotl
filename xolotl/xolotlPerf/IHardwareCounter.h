@@ -3,6 +3,7 @@
 
 #include "mpi.h"
 #include <vector>
+#include <limits.h>
 #include "../xolotlCore/IIdentifiable.h"
 
 using namespace std;
@@ -37,6 +38,26 @@ public:
 
     /// Type of the IHardwareCounter's configuration
     typedef std::vector<CounterSpec> SpecType;
+
+
+    /**
+     * The MPI type to use when transferring a component of the ValType
+     * when aggregating values.
+     */
+    static constexpr MPI_Datatype MPIValType = MPI_LONG_LONG_INT;
+
+
+    /**
+     * The minimum value possible for an individual counter.
+     */
+    static constexpr CounterType MinValue = 0;
+
+    /**
+     * The maximum value possible for an individual counter.
+     */
+    static constexpr CounterType MaxValue = LLONG_MAX;
+
+
 
 
 	/**

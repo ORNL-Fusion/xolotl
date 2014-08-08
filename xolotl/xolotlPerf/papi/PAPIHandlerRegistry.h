@@ -16,7 +16,7 @@ class PAPIHandlerRegistry : public StdHandlerRegistry
 public:
 
     /// Construct a handler registry.
-    PAPIHandlerRegistry( void ) { }
+    PAPIHandlerRegistry( void );
 
     /// Destroy the handler registry.
     virtual ~PAPIHandlerRegistry( void ) { }
