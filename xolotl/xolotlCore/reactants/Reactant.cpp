@@ -50,7 +50,7 @@ void Reactant::decreaseConcentration(double deltaConc) {
 }
 
 void Reactant::setConcentration(double conc) {
-	concentration = std::max(conc, 0.);
+	concentration = std::max(conc, 0.0);
 	return;
 }
 

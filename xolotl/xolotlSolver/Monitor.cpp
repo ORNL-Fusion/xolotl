@@ -9,6 +9,8 @@
 #include <petscts.h>
 #include <petscsys.h>
 #include <sstream>
+#include <fstream>
+#include <iostream>
 #include <vector>
 #include <memory>
 #include <HDF5Utils.h>
@@ -349,6 +351,13 @@ PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
 				<< std::endl;
 		std::cout << "Helium concentration = " << heConcentration << std::endl;
 		std::cout << "Helium fluence = " << heliumFluence << "\n" << std::endl;
+
+//		// Uncomment to write the retention and the fluence in a file
+//		std::ofstream outputFile;
+//		outputFile.open("retentionOut.txt", ios::app);
+//		outputFile << heliumFluence << " "
+//				<< 100.0 * (heConcentration / heliumFluence) << std::endl;
+//		outputFile.close();
 	}
 
 	else {
@@ -776,6 +785,7 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 			> (PetscSolver::getNetwork());
 	std::map<std::string, std::string> props = psiNetwork->getProperties();
 	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
+	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 
 	// Loop on the grid points
 	for (xi = xs; xi < xs + xm; xi++) {
@@ -802,9 +812,9 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 		PSICluster * cluster;
 
 		// Loop on Y = V number
-		for (int i = 0; i < maxHeVClusterSize; i++) {
+		for (int i = 0; i < maxVClusterSize; i++) {
 			// Loop on X = He number
-			for (int j = 0; j < maxHeVClusterSize; j++) {
+			for (int j = 0; j < maxHeVClusterSize - maxVClusterSize; j++) {
 				double conc = 0.0;
 				// V clusters
 				if (j == 0) {
@@ -838,10 +848,15 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 					}
 				}
 
+				double value = 0.0;
+				if (conc > 1.0e-16) {
+					value = 20.0 + log(conc);
+				}
+
 				// Create a Point with the concentration as the value
 				// and add it to myPoints
 				xolotlViz::Point aPoint;
-				aPoint.value = conc;
+				aPoint.value = value;
 				aPoint.t = time;
 				aPoint.x = j;
 				aPoint.y = i;
@@ -1197,6 +1212,11 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 		// computeHeliumRetention will be called at each timestep
 		ierr = TSMonitorSet(ts, computeHeliumRetention, NULL, NULL);
 		checkPetscError(ierr);
+
+//		// Uncomment to clear the file where the retention will be written
+//		std::ofstream outputFile;
+//		outputFile.open("retentionOut.txt");
+//		outputFile.close();
 	}
 
 	// Set only the monitor to compute the fluence in the case the retention

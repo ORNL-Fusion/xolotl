@@ -61,7 +61,6 @@ PSICluster::PSICluster(const int clusterSize,
 	// Set up an event counter to count the number of times getDissociationFlux is called
 //	getDissociationFluxCounter = handlerRegistry->getEventCounter(
 //			"getDissociationFlux_Counter");
-
 }
 
 // The copy constructor with a huge initialization list!
@@ -81,7 +80,6 @@ PSICluster::PSICluster(const PSICluster &other) :
 
 	// Recompute all of the temperature-dependent quantities
 	setTemperature(other.getTemperature());
-
 }
 
 std::shared_ptr<Reactant> PSICluster::clone() {
@@ -230,7 +228,8 @@ double PSICluster::getDissociationFlux(double temperature) const {
 
 	// Initial declarations
 	int nPairs = 0;
-	double flux = 0.0, fluxMultiplier = 1.0;
+	double flux = 0.0;
+	// Note: is there a use for a flux multiplier?
 
 	// Only try this if the network is available
 	if (network != NULL) {
@@ -238,22 +237,11 @@ double PSICluster::getDissociationFlux(double temperature) const {
 		nPairs = effDissociatingPairs.size();
 		// Loop over all dissociating clusters that form this cluster
 		for (int j = 0; j < nPairs; j++) {
+			// Get the dissociating cluster
 			auto dissociatingCluster = effDissociatingPairs[j]->first;
-			// The second element of the pair is the cluster that is also
-			// emitted by the dissociation
-			auto otherEmittedCluster = effDissociatingPairs[j]->second;
 			// Calculate the Dissociation flux
-			flux += fluxMultiplier
-					* effDissociatingPairs[j]->kConstant
+			flux += effDissociatingPairs[j]->kConstant
 					* dissociatingCluster->concentration;
-
-			// Need to be added twice when a cluster is emitted with itself
-			// because it is just once in the dissociation pairs list
-			if (id == otherEmittedCluster->id) {
-				flux += fluxMultiplier
-						* effDissociatingPairs[j]->kConstant
-						* dissociatingCluster->concentration;
-			}
 		}
 	}
 
@@ -261,11 +249,11 @@ double PSICluster::getDissociationFlux(double temperature) const {
 	return flux;
 }
 
-double PSICluster::getEmissionFlux(double temperature) const {
 
+double PSICluster::getEmissionFlux(double temperature) const {
 	// Initial declarations
 	int nPairs = 0;
-	double flux = 0.0, fluxMultiplier = 1.0;
+	double flux = 0.0;
 
 	// Only try this if the network is available
 	if (network != NULL) {
@@ -273,21 +261,16 @@ double PSICluster::getEmissionFlux(double temperature) const {
 		nPairs = effEmissionPairs.size();
 		// Loop over all the pairs
 		for (int i = 0; i < nPairs; i++) {
-			auto firstCluster = effEmissionPairs[i]->first;
-			auto secondCluster = effEmissionPairs[i]->second;
 			// Update the flux
 			flux += effEmissionPairs[i]->kConstant;
 		}
 	}
 
-	double rtnFlux = flux * concentration;
-
-	return rtnFlux;
+	return flux * concentration;
 }
 
 double PSICluster::getProductionFlux(double temperature) const {
-
-	// Local declarations
+// Local declarations
 	double flux = 0.0;
 	double conc1 = 0.0, conc2 = 0.0;
 	int nPairs = 0;
@@ -298,13 +281,13 @@ double PSICluster::getProductionFlux(double temperature) const {
 		nPairs = effReactingPairs.size();
 		// Loop over all the reacting pairs
 		for (int i = 0; i < nPairs; i++) {
-			// Get the reactants
+			// Get the two reacting clusters
 			auto firstReactant = effReactingPairs[i]->first;
 			auto secondReactant = effReactingPairs[i]->second;
 			// Update the flux
-			conc1 = firstReactant->concentration;
-			conc2 = secondReactant->concentration;
-			flux += effReactingPairs[i]->kConstant * conc1 * conc2;
+			flux += effReactingPairs[i]->kConstant
+					* firstReactant->concentration
+					* secondReactant->concentration;
 		}
 	}
 
@@ -313,7 +296,6 @@ double PSICluster::getProductionFlux(double temperature) const {
 }
 
 double PSICluster::getCombinationFlux(double temperature) const {
-
 	// Local declarations
 	double flux = 0.0, conc = 0.0;
 	int nReactants = 0;
@@ -322,30 +304,24 @@ double PSICluster::getCombinationFlux(double temperature) const {
 	nReactants = effCombiningReactants.size();
 	// Loop over all possible clusters
 	for (int j = 0; j < nReactants; j++) {
-		auto otherCluster = (PSICluster *) effCombiningReactants[j]->combining;
-		conc = otherCluster->concentration;
+		// Get the cluster that combines with this one
+		auto combiningCluster = effCombiningReactants[j]->combining;
 		// Calculate Second term of production flux
-		flux += effCombiningReactants[j]->kConstant * conc;
-
-		// Need to be added twice when a cluster combine with itself
-		// because it is just once in the combining reactant list
-		if (id == otherCluster->id) {
-			flux += effCombiningReactants[j]->kConstant * conc;
-		}
+		flux += effCombiningReactants[j]->kConstant
+				* combiningCluster->concentration;
 	}
 
-	double rtnFlux = flux * concentration;
-
-	return rtnFlux;
+	return flux * concentration;
 }
 
 double PSICluster::getTotalFlux(const double temperature) {
-
 	// Get the fluxes
 	double prodFlux, combFlux, dissFlux, emissFlux;
 	prodFlux = getProductionFlux(temperature);
 	dissFlux = getDissociationFlux(temperature);
 
+	// Don't compute the combination and emission flux if the
+	// concentration is 0.0 because they are proportional to it
 	if (concentration != 0.0) {
 		combFlux = getCombinationFlux(temperature);
 		emissFlux = getEmissionFlux(temperature);
@@ -355,9 +331,7 @@ double PSICluster::getTotalFlux(const double temperature) {
 		emissFlux = 0.0;
 	}
 	
-	double returnFlux = prodFlux - combFlux + dissFlux - emissFlux;
-
-	return returnFlux;
+	return prodFlux - combFlux + dissFlux - emissFlux;
 }
 
 double PSICluster::getDiffusionFactor() const {
@@ -503,6 +477,10 @@ void PSICluster::computeRateConstants(double temperature) {
 		// if the rate is not 0.0
 		if (rate != 0.0) {
 			effCombiningReactants.push_back(&combiningReactants[i]);
+
+			// Add itself to the list again to account for the correct rate
+			if (id == combiningReactant->id)
+				effCombiningReactants.push_back(&combiningReactants[i]);
 		}
 	}
 
@@ -538,6 +516,10 @@ void PSICluster::computeRateConstants(double temperature) {
 		// if the rate is not 0.0
 		if (rate != 0.0) {
 			effDissociatingPairs.push_back(&dissociatingPairs[i]);
+
+			// Add itself to the list again to account for the correct rate
+			if (id == otherEmittedCluster->id)
+				effDissociatingPairs.push_back(&dissociatingPairs[i]);
 		}
 	}
 
@@ -712,7 +694,6 @@ void PSICluster::emitClusters(PSICluster * firstEmittedCluster,
 
 void PSICluster::getProductionPartialDerivatives(std::vector<double> & partials,
 		double temperature) const {
-
 	// Initial declarations
 	int numReactants = 0, index = 0;
 	double rateConstant = 0.0;
@@ -741,7 +722,6 @@ void PSICluster::getProductionPartialDerivatives(std::vector<double> & partials,
 
 void PSICluster::getCombinationPartialDerivatives(
 		std::vector<double> & partials, double temperature) const {
-
 	// Initial declarations
 	int numReactants = 0, otherIndex = 0;
 
@@ -762,15 +742,6 @@ void PSICluster::getCombinationPartialDerivatives(
 		partials[thisNetworkIndex] -= effCombiningReactants[i]->kConstant * cluster->concentration;
 		// Compute the contribution from the combining cluster
 		partials[otherIndex] -= effCombiningReactants[i]->kConstant * concentration;
-
-		// Need to be added twice when a cluster combine with itself
-		// because it is just once in the combining reactant list
-		if (id == cluster->id) {
-			// Compute the contribution from this cluster
-			partials[thisNetworkIndex] -= effCombiningReactants[i]->kConstant * cluster->concentration;
-			// Compute the contribution from the combining cluster
-			partials[otherIndex] -= effCombiningReactants[i]->kConstant * concentration;
-		}
 	}
 
 	return;
@@ -778,7 +749,6 @@ void PSICluster::getCombinationPartialDerivatives(
 
 void PSICluster::getDissociationPartialDerivatives(
 		std::vector<double> & partials, double temperature) const {
-
 	// Initial declarations
 	int numPairs = 0, index = 0;
 
@@ -795,12 +765,6 @@ void PSICluster::getDissociationPartialDerivatives(
 		auto emittedCluster = effDissociatingPairs[i]->second;
 		index = cluster->id - 1;
 		partials[index] += effDissociatingPairs[i]->kConstant;
-
-		// Need to be added twice when a cluster is emitted with itself
-		// because it is just once in the dissociation pairs list
-		if (id == emittedCluster->id) {
-			partials[index] += effDissociatingPairs[i]->kConstant;
-		}
 	}
 
 	return;
@@ -808,7 +772,6 @@ void PSICluster::getDissociationPartialDerivatives(
 
 void PSICluster::getEmissionPartialDerivatives(std::vector<double> & partials,
 		double temperature) const {
-
 	// Initial declarations
 	int numPairs = 0, index = 0;
 
@@ -828,7 +791,6 @@ void PSICluster::getEmissionPartialDerivatives(std::vector<double> & partials,
 		// due to emission is OUTGOING (-=)!
 		index = id - 1;
 		partials[index] -= effEmissionPairs[i]->kConstant;
-
 	}
 
 	return;
@@ -850,7 +812,6 @@ std::vector<double> PSICluster::getPartialDerivatives(
 
 void PSICluster::getPartialDerivatives(double temperature,
 		std::vector<double> & partials) const {
-
 	// Get the partial derivatives for each reaction type
 	getProductionPartialDerivatives(partials, temperature);
 	getCombinationPartialDerivatives(partials, temperature);
@@ -897,6 +858,7 @@ void PSICluster::combineClusters(std::vector<Reactant *> & reactants,
 			productCluster = (PSICluster *) network->get(productName,
 					productSize);
 		}
+		
 		// React if the product exists in the network
 		if (productCluster) {
 			// Setup the connectivity array for the second reactant
