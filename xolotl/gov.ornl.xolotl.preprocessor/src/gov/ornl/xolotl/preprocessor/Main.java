@@ -52,13 +52,23 @@ public class Main {
 				// Create the HDF5 file
 				preprocessor.createHDF5(networkFileName);
 
-				// Write the header in it
-				int[] dim = { 8 };
-				int[] refinement = { 0 };
-				preprocessor.writeHeader(networkFileName, dim, refinement);
-
 				// Write the network in it
 				preprocessor.writeNetwork(networkFileName, clusters);
+
+				if (myArgs.isCheckpoint()) {
+					String HDF5FileName = myArgs.getCheckpoint();
+					// Read the header and the concentration from this file 
+					// and copy them to the network file
+					int gridPoints = preprocessor.copyHeader(HDF5FileName, networkFileName);
+					preprocessor.copyConcentration(HDF5FileName, networkFileName, gridPoints);
+				}
+				else {
+					// Write the header in it
+					int[] dim = { 8 };
+					int[] refinement = { 0 };
+					preprocessor.writeHeader(networkFileName, dim, refinement);
+				}
+
 				System.out.println("HDF5 file generated.");
 
 				// Write the file containing the parameters that are needed

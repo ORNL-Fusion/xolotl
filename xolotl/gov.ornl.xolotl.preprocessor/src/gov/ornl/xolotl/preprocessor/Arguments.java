@@ -277,13 +277,13 @@ public interface Arguments {
 	 */
 	boolean isMaxHeFluence();
 
-	@Option(description = "{true, false}  Start the solver with the concentrations, time, "
-			+ "and step size from the HDF5 file")
+	@Option(description = "<HDF5FileName>  Start the solver with the concentrations, time, "
+			+ "and step size present in the HDF5 file")
 	/**
 	 * This operation produces the optional command line option '--checkpoint' which 
 	 * takes a single string value and is defined by the previous Option annotation
 	 * 
-	 * @return If the users wishes to use the checkpoint restart, i.e. true or false (as a string)
+	 * @return The name of the file to read from to create the new HDF5 network file
 	 */
 	String getCheckpoint();
 
