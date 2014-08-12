@@ -197,7 +197,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
 	// Get the last time step written in the HDF5 file
 	int tempTimeStep = -2;
-	HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep);
+	bool hasConcentrations = HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep);
 
 	// Loop on all the grid points
 	for (i = xs; i < xs + xm; i++) {
@@ -213,16 +213,24 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 //				concOffset[k] = 0.001;
 //			}
 //		}
+	}
 
-		if (tempTimeStep >= 0) {
+	// If the concentration must be set from the HDF5 file
+	if (hasConcentrations) {
+		// Loop on the full grid
+		for (int i = 0; i < Mx; i++) {
 			// Read the concentrations from the HDF5 file
 			auto concVector = HDF5Utils::readGridPoint(fileName, tempTimeStep,
 					i);
 
-			// Loop on the concVector size
-			for (int k = 0; k < concVector.size(); k++) {
-				concOffset[(int) concVector.at(k).at(0)] = concVector.at(k).at(
-						1);
+			// Change the concentration only if we are on the locally owned part of the grid
+			if (i >= xs && i < xs + xm) {
+				concOffset = concentrations + size * i;
+				// Loop on the concVector size
+				for (int k = 0; k < concVector.size(); k++) {
+					concOffset[(int) concVector.at(k).at(0)] = concVector.at(k).at(
+							1);
+				}
 			}
 		}
 	}
@@ -277,7 +285,6 @@ void computeDiffusion(PSICluster * cluster, double temp, PetscReal sx,
  */
 /* ------------------------------------------------------------------- */
 PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
-
 	// Start the RHSFunction Timer
 	RHSFunctionTimer->start();
 
@@ -529,7 +536,6 @@ void computePartialsForDiffusion(PSICluster * cluster, double temp,
  */
 PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 		void *ptr) {
-
 	// Start the RHSJacobian timer
 	RHSJacobianTimer->start();
 

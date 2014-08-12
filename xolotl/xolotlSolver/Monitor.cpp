@@ -848,15 +848,15 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 					}
 				}
 
-				double value = 0.0;
-				if (conc > 1.0e-16) {
-					value = 20.0 + log(conc);
-				}
+//				double value = 0.0;
+//				if (conc > 1.0e-16) {
+//					value = 20.0 + log(conc);
+//				}
 
 				// Create a Point with the concentration as the value
 				// and add it to myPoints
 				xolotlViz::Point aPoint;
-				aPoint.value = value;
+				aPoint.value = conc;
 				aPoint.t = time;
 				aPoint.x = j;
 				aPoint.y = i;

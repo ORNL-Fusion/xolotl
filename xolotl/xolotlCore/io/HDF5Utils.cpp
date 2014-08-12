@@ -190,7 +190,7 @@ void HDF5Utils::addConcentrationSubGroup(int timeStep, int networkSize,
 	// (needed to be able to write the datasets without having
 	// HDF5 screaming).
 	propertyListId = H5Pcreate(H5P_DATASET_XFER);
-	status = H5Pset_dxpl_mpio(propertyListId, H5FD_MPIO_COLLECTIVE);
+	status = H5Pset_dxpl_mpio(propertyListId, H5FD_MPIO_INDEPENDENT);
 
 	return;
 }
