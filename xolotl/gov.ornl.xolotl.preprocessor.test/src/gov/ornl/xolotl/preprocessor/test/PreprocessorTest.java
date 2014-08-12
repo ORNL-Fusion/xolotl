@@ -224,25 +224,12 @@ public class PreprocessorTest {
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
 
-				// Create the known grid array
-				double[] knownGrid = new double[15];
-
-				// Fill it with known values
-				for (int i = 0; i < 15; i++) {
-					knownGrid[i] = (double) i * 0.57142857142;
-				}
-
 				try {
 					// Generate a grid
-					double[] newGrid = preprocessor.generateGrid(8, 1);
+					int newGrid = preprocessor.generateGrid(8, 1);
 
 					// Check the length of it
-					assertEquals(newGrid.length, knownGrid.length);
-
-					// Check all the values
-					for (int i = 0; i < newGrid.length; i++) {
-						assertEquals(newGrid[i], knownGrid[i], 1.0e-5);
-					}
+					assertEquals(newGrid, 15);
 
 				} catch (Exception e) {
 					// Complain and fail
