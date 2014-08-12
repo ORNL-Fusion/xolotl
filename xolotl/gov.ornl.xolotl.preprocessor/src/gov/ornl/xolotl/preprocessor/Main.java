@@ -63,8 +63,11 @@ public class Main {
 					preprocessor.copyConcentration(HDF5FileName, networkFileName, gridPoints);
 				}
 				else {
+					// Get the grid size
+					String xgrid = preprocessor.petscOptions.get("-da_grid_x");
+					
 					// Write the header in it
-					int[] dim = { 8 };
+					int[] dim = { Integer.parseInt(xgrid) };
 					int[] refinement = { 0 };
 					preprocessor.writeHeader(networkFileName, dim, refinement);
 				}

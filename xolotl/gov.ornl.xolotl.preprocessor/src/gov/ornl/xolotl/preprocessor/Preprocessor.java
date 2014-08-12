@@ -60,7 +60,7 @@ public class Preprocessor {
 	// The maximum size of a mobile He cluster.
 	private int maxHeDiffusionSize = 6;
 	
-	// The diffusion factors for single species Helium clusters in (nm)^2
+	// The diffusion factors for single species Helium clusters.
 	private double[] heDiffusionFactors = { 0.0, 2.9e+10, 3.2e+10, 2.3e+10, 1.7e+10, 5.0e+09,
 			1.0e+09 };
 
@@ -71,7 +71,7 @@ public class Preprocessor {
 	// The maximum size of a vacancy cluster in the network.
 	private int maxV;
 
-	// The diffusion factor for a single vacancy in (nm)^2.
+	// The diffusion factor for a single vacancy.
 	private double vOneDiffusionFactor = 1.8e+12;
 
 	// The migration energy for a single vacancy.
@@ -83,7 +83,7 @@ public class Preprocessor {
 	// The maximum size of a mobile interstitial cluster.
 	private int maxIDiffusionSize = 5;
 	
-	// The diffusion coefficients for single species interstitial clusters in (nm)^2.
+	// The diffusion coefficients for single species interstitial clusters.
 	private double[] iDiffusionFactors = { 0.0, 8.8e+10, 8.0e+10, 3.9e+10, 2.0e+10, 1.0e+10 };
 
 	// The migration energies for single species interstitial clusters.
@@ -111,6 +111,8 @@ public class Preprocessor {
 	 * The list of parameters that will be passed to Xolotl
 	 */
 	public Properties xolotlParams = new Properties();
+	
+	public Map<String, String> petscOptions = new HashMap<String, String>();
 
 	/**
 	 * This operation generates a single string containing the Petsc arguments
@@ -127,9 +129,10 @@ public class Preprocessor {
 		// Create a map of the default Petsc options and their corresponding
 		// arguments, if any, where the key is the option and the value is
 		// the argument
-		Map<String, String> petscOptions = new HashMap<String, String>();
+		//Map<String, String> petscOptions = new HashMap<String, String>();
 		petscOptions.put("-da_grid_x", "10");
 		petscOptions.put("-ts_final_time", "1000");
+		petscOptions.put("-ts_dt", "1.0e-12");
 		petscOptions.put("-ts_max_steps", "3");
 		petscOptions.put("-ts_adapt_dt_max", "10");
 		petscOptions.put("-ts_max_snes_failures", "200");
