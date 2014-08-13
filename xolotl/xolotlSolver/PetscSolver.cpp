@@ -758,15 +758,14 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 
 	// Enforce the Boundary conditions. Loop over the grid points and set the
 	// conditions.
-	for (xi = xs; xi < xs + xm; xi++) {
-		if (xi == 0) {
+	if (xs == 0) {
 			// Loop on the reactants
 			for (int i = 0; i < size; i++) {
 				auto reactant = allReactants->at(i);
 				// Get the reactant index
 				reactantIndex = reactant->getId() - 1;
 				// Get the row id
-				rowId = (xi - xs + 1) * size + reactantIndex;
+				rowId = size + reactantIndex;
 
 				// Get the list of column ids from the map
 				auto pdColIdsVector = dFillMap.at(reactantIndex);
@@ -774,7 +773,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 				// Loop over the list of column ids
 				for (int j = 0; j < pdColIdsVectorSize; j++) {
 					// Calculate the appropriate index to match the dfill array configuration
-					localPDColIds[j] = (xi - xs + 1) * size + pdColIdsVector[j];
+					localPDColIds[j] = size + pdColIdsVector[j];
 					// Get the partial derivative from the array of all of the partials
 					reactingPartialsForCluster[j] = 0.0;
 				}
@@ -786,7 +785,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 				checkPetscError(ierr);
 			}
 		}
-	}
+
 
 	// Assemble again
 	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
