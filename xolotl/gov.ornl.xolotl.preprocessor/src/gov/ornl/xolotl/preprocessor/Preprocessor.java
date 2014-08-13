@@ -129,7 +129,6 @@ public class Preprocessor {
 		// Create a map of the default Petsc options and their corresponding
 		// arguments, if any, where the key is the option and the value is
 		// the argument
-		//Map<String, String> petscOptions = new HashMap<String, String>();
 		petscOptions.put("-da_grid_x", "10");
 		petscOptions.put("-ts_final_time", "1000");
 		petscOptions.put("-ts_dt", "1.0e-12");
@@ -152,15 +151,17 @@ public class Preprocessor {
 		}
 
 		// Check if the last string in the petscList is a stand-alone option
-		if ((petscList.get((petscList.size() - 1))).contains("-"))
+		String str = "-";
+		char dash = str.charAt(0);
+		if ( ((petscList.get((petscList.size() - 1))).charAt(0)) == dash ) {
 			petscOptions.put(petscList.get((petscList.size() - 1)), "");
+		}
 
 		// Loop through the Petsc list of strings to pair Petsc options with
 		// their corresponding arguments and identify the stand-alone options
 		for (int i = 1; i < petscList.size(); i++) {
 			// Check if there is an option followed by a corresponding argument
-			if (((petscList.get(i - 1)).contains("-"))
-					&& (!(petscList.get(i)).contains("-"))) {
+			if ( ((petscList.get(i - 1)).charAt(0) == dash) && !((petscList.get(i)).charAt(0) == dash) ) {
 				// Replace the default argument value with the specified value
 				petscOptions.put(petscList.get(i - 1), petscList.get(i));
 				i++;
