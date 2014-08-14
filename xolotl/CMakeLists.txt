@@ -37,15 +37,11 @@ set(CMAKE_JAVA_CLASS_OUTPUT_PATH ${PREPROCESSOR_DIR})
 add_jar(xolotlPreprocessor ${PREPROCESSOR_SRC}/Main.java ${PREPROCESSOR_SRC}/Preprocessor.java ${PREPROCESSOR_SRC}/Arguments.java 
         ${PREPROCESSOR_SRC}/Cluster.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
         OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
-#get_target_property(_jarFile Main JAR_FILE)
-#get_target_property(_classDir Main CLASSDIR)
 get_target_property(_jarFile xolotlPreprocessor JAR_FILE)
 get_target_property(_classDir xolotlPreprocessor CLASSDIR)
 message(STATUS "xolotlPreprocessor Jar file:  ${_jarFile}")
 # The preprocessor .class files will be written to preprocessor/CMakeFiles/xolotlPreprocessor.dir/gov/ornl/xolotl/preprocessor
 message(STATUS "xolotlPreprocessor class compiled to ${_classDir}")
-## To run the preprocessor from the build directory
-## java -cp .:../xolotl-Source\@xolotl/gov.ornl.xolotl.preprocessor/deps/*:preprocessor/CMakeFiles/xolotlPreprocessor.dir/ gov.ornl.xolotl.preprocessor.Main
 
 # Xolotl requires C++11 to use shared pointers
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
