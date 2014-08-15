@@ -20,7 +20,7 @@ using namespace xolotlCore;
 /*
  C_t =  -D*C_xx + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.
 
- D*C_xx  - diffusion of He[1-5] and V[1] and I[1]
+ D*C_xx  - diffusion of He[1-6] and V[1] and I[1]
  F(C)  -   forcing function; He being created.
  R(C)  -   reaction terms   (clusters combining)
  D(C)  -   dissociation terms (cluster breaking up)
@@ -416,7 +416,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// ---- Compute diffusion over the locally owned part of the grid -----
 
 		// He clusters larger than 5 do not diffuse -- they are immobile
-		for (int i = 1; i < PetscMin(numHeClusters + 1, 6); i++) {
+		for (int i = 1; i < PetscMin(numHeClusters + 1, 7); i++) {
 			// Get the reactant index
 			heCluster = (PSICluster *) network->get("He", i);
 
@@ -636,7 +636,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 
 			/* He clusters larger than 5 do not diffuse -- they are immobile */
 			// ---- Compute diffusion over the locally owned part of the grid -----
-			for (i = 1; i < PetscMin(numHeClusters + 1, 6); i++) {
+			for (i = 1; i < PetscMin(numHeClusters + 1, 7); i++) {
 				// Get the cluster
 				auto psiCluster = (PSICluster *) network->get("He", i);
 				computePartialsForDiffusion(psiCluster, temperature, sx, val,
