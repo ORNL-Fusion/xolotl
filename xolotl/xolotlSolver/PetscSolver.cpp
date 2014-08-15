@@ -416,7 +416,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// ---- Compute diffusion over the locally owned part of the grid -----
 
 		// He clusters larger than 6 do not diffuse -- they are immobile
-		for (int i = 1; i < PetscMin(numHeClusters + 1, 7); i++) {
+		for (int i = 1; i < PetscMin(numHeClusters + 1, 6); i++) {
 			// Get the reactant index
 			heCluster = (PSICluster *) network->get("He", i);
 
@@ -636,7 +636,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 
 			/* He clusters larger than 6 do not diffuse -- they are immobile */
 			// ---- Compute diffusion over the locally owned part of the grid -----
-			for (i = 1; i < PetscMin(numHeClusters + 1, 7); i++) {
+			for (i = 1; i < PetscMin(numHeClusters + 1, 6); i++) {
 				// Get the cluster
 				auto psiCluster = (PSICluster *) network->get("He", i);
 				computePartialsForDiffusion(psiCluster, temperature, sx, val,
