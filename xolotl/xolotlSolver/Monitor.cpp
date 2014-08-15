@@ -850,7 +850,7 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 
 //				double value = 0.0;
 //				if (conc > 1.0e-16) {
-//					value = 20.0 + log(conc);
+//					value = 20.0 + log10(conc);
 //				}
 
 				// Create a Point with the concentration as the value

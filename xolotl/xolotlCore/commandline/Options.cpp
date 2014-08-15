@@ -25,40 +25,23 @@ Options::Options() :
 		heliumFluxFlag(false),
 		perfStandardHandlersFlag(true),
 		vizStandardHandlersFlag(false) {
+
 	// Create the network option handler
-	auto networkHandler = new
-			NetworkOptionHandler("networkFile",
-					"networkFile <filename>      The network will be loaded from this file.");
+	auto networkHandler = new NetworkOptionHandler();
 	// Create the PETSc option handler
-	auto petscHandler = new
-			PetscOptionHandler("petscArgs",
-					"petscArgs                   All the arguments that will be given to PETSc");
+	auto petscHandler = new PetscOptionHandler();
 	// Create the constant temperature option handler
-	auto constTempHandler = new
-			ConstTempOptionHandler("startTemp",
-					"startTemp <value>           The temperature (in Kelvin) will be the constant floating point value specified. (default = 1000)"
-							"\n	                      (NOTE: Use only ONE temperature option)");
+	auto constTempHandler = new ConstTempOptionHandler();
 	// Create the temperature profile option handler
-	auto tempProfileHandler = new
-			TempProfileOptionHandler("tempFile",
-					"tempFile <filename>         A temperature profile is given by the specified file, then linear interpolation is used to fit the data."
-							"\n	                      (NOTE: If a temperature file is given, a constant temperature should NOT be given)");
+	auto tempProfileHandler = new TempProfileOptionHandler();
 	// Create the maximum fluence option handler
-	auto fluenceHandler = new
-			FluenceOptionHandler("maxHeFluence",
-					"maxHeFluence <value>        The maximum value of the Helium fluence the user wishes to integrate to.");
+	auto fluenceHandler = new FluenceOptionHandler();
 	// Create the flux option handler
-	auto fluxHandler = new
-			FluxOptionHandler("heFlux",
-					"heFlux <value>              This option allows the user to change the Helium flux by the factor specified (in nm).");
+	auto fluxHandler = new FluxOptionHandler();
 	// Create the performance handler option handler
-	auto perfHandler = new
-			PerfOptionHandler("perfHandler",
-					"perfHandler {std,dummy}     Which set of performance handlers to use. (default = std)");
+	auto perfHandler = new PerfOptionHandler();
 	// Create the visualization handler option handler
-	auto vizHandler = new
-			VizOptionHandler("vizHandler",
-					"vizHandler {std,dummy}      Which set of handlers to use for the visualization. (default = dummy)");
+	auto vizHandler = new VizOptionHandler();
 
 	// Add our notion of which options we support.
 	optionsMap[networkHandler->key] = networkHandler;

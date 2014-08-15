@@ -10,26 +10,15 @@ namespace xolotlCore {
  * TempProfileOptionHandler handles the case where we want to use a temperature profile.
  */
 class TempProfileOptionHandler: public OptionHandler {
-protected:
+public:
 
 	/**
 	 * The default constructor
 	 */
 	TempProfileOptionHandler() :
-			OptionHandler() {
-	}
-	;
-
-public:
-
-	/**
-	 * The constructor to use.
-	 * @param keyName The name for the key.
-	 * @param msg The help message.
-	 */
-	TempProfileOptionHandler(std::string keyName, std::string msg) :
-			OptionHandler(keyName, msg) {
-	}
+		OptionHandler("tempFile",
+				"tempFile <filename>         A temperature profile is given by the specified file, then linear interpolation is used to fit the data."
+				"\n	                      (NOTE: If a temperature file is given, a constant temperature should NOT be given)") {}
 
 	/**
 	 * The destructor

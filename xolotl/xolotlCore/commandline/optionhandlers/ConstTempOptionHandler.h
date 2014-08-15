@@ -10,23 +10,15 @@ namespace xolotlCore {
  * ConstTempOptionHandler handles the case where we want to use a constant temperature.
  */
 class ConstTempOptionHandler : public OptionHandler {
-protected:
+public:
 
 	/**
 	 * The default constructor
 	 */
-    ConstTempOptionHandler() : OptionHandler() {};
-
-
-public:
-
-	/**
-	 * The constructor to use.
-	 * @param keyName The name for the key.
-	 * @param msg The help message.
-	 */
-    ConstTempOptionHandler(std::string keyName, std::string msg) :
-    	OptionHandler(keyName, msg) {}
+    ConstTempOptionHandler() :
+    	OptionHandler("startTemp",
+    			"startTemp <value>           The temperature (in Kelvin) will be the constant floating point value specified. (default = 1000)"
+    			"\n	                      (NOTE: Use only ONE temperature option)") {}
 
 	/**
 	 * The destructor

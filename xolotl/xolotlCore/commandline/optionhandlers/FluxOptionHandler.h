@@ -10,23 +10,14 @@ namespace xolotlCore {
  * FluxOptionHandler handles the flux option.
  */
 class FluxOptionHandler : public OptionHandler {
-protected:
+public:
 
 	/**
 	 * The default constructor
 	 */
-    FluxOptionHandler() : OptionHandler() {};
-
-
-public:
-
-	/**
-	 * The constructor to use.
-	 * @param keyName The name for the key.
-	 * @param msg The help message.
-	 */
-    FluxOptionHandler(std::string keyName, std::string msg) :
-    	OptionHandler(keyName, msg) {}
+    FluxOptionHandler() :
+    	OptionHandler("heFlux",
+    			"heFlux <value>              This option allows the user to change the Helium flux by the factor specified (in nm).") {}
 
 	/**
 	 * The destructor

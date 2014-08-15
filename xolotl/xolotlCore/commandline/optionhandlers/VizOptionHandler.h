@@ -10,26 +10,14 @@ namespace xolotlCore {
  * VizOptionHandler handles the choice of handlers for the visualization infrastructure.
  */
 class VizOptionHandler: public OptionHandler {
-protected:
+public:
 
 	/**
 	 * The default constructor
 	 */
 	VizOptionHandler() :
-			OptionHandler() {
-	}
-	;
-
-public:
-
-	/**
-	 * The constructor to use.
-	 * @param keyName The name for the key.
-	 * @param msg The help message.
-	 */
-	VizOptionHandler(std::string keyName, std::string msg) :
-			OptionHandler(keyName, msg) {
-	}
+		OptionHandler("vizHandler",
+				"vizHandler {std,dummy}      Which set of handlers to use for the visualization. (default = dummy)") {}
 
 	/**
 	 * The destructor

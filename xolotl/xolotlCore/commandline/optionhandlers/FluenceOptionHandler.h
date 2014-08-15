@@ -10,23 +10,14 @@ namespace xolotlCore {
  * FluenceOptionHandler handles the use of the maximum fluence option.
  */
 class FluenceOptionHandler : public OptionHandler {
-protected:
+public:
 
 	/**
 	 * The default constructor
 	 */
-    FluenceOptionHandler() : OptionHandler() {};
-
-
-public:
-
-	/**
-	 * The constructor to use.
-	 * @param keyName The name for the key.
-	 * @param msg The help message.
-	 */
-    FluenceOptionHandler(std::string keyName, std::string msg) :
-    	OptionHandler(keyName, msg) {}
+    FluenceOptionHandler() :
+    	OptionHandler("maxHeFluence",
+    			"maxHeFluence <value>        The maximum value of the Helium fluence the user wishes to integrate to.") {}
 
 	/**
 	 * The destructor

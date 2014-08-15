@@ -10,23 +10,14 @@ namespace xolotlCore {
  * NetworkOptionHandler handles the name of the network file.
  */
 class NetworkOptionHandler : public OptionHandler {
-protected:
+public:
 
 	/**
 	 * The default constructor
 	 */
-    NetworkOptionHandler() : OptionHandler() {};
-
-
-public:
-
-	/**
-	 * The constructor to use.
-	 * @param keyName The name for the key.
-	 * @param msg The help message.
-	 */
-    NetworkOptionHandler(std::string keyName, std::string msg) :
-    	OptionHandler(keyName, msg) {}
+    NetworkOptionHandler() :
+    	OptionHandler("networkFile",
+    			"networkFile <filename>      The network will be loaded from this file.") {}
 
 	/**
 	 * The destructor

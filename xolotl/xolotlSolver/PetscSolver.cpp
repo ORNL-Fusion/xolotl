@@ -415,7 +415,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
 
-		// He clusters larger than 5 do not diffuse -- they are immobile
+		// He clusters larger than 6 do not diffuse -- they are immobile
 		for (int i = 1; i < PetscMin(numHeClusters + 1, 7); i++) {
 			// Get the reactant index
 			heCluster = (PSICluster *) network->get("He", i);
@@ -634,7 +634,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 			 ---- Compute diffusion over the locally owned part of the grid
 			 */
 
-			/* He clusters larger than 5 do not diffuse -- they are immobile */
+			/* He clusters larger than 6 do not diffuse -- they are immobile */
 			// ---- Compute diffusion over the locally owned part of the grid -----
 			for (i = 1; i < PetscMin(numHeClusters + 1, 7); i++) {
 				// Get the cluster
@@ -1039,7 +1039,7 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	NULL, &da);
 	checkPetscError(ierr);
 
-	/* The only spatial coupling in the Jacobian (diffusion) is for the first 5 He, the first V, and the first I.
+	/* The only spatial coupling in the Jacobian (diffusion) is for the first 6 He, the first V, and the first I.
 	 The ofill (thought of as a dof by dof 2d (row-oriented) array represents the nonzero coupling between degrees
 	 of freedom at one point with degrees of freedom on the adjacent point to the left or right. A 1 at i,j in the
 	 ofill array indicates that the degree of freedom i at a point is coupled to degree of freedom j at the
@@ -1056,7 +1056,7 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion, with for He.
 	int reactantIndex = 0;
 	Reactant * reactant;
-	for (int numHe = 1; numHe < PetscMin(numHeClusters + 1, 6); numHe++) {
+	for (int numHe = 1; numHe < PetscMin(numHeClusters + 1, 7); numHe++) {
 		reactant = network->get("He", numHe);
 		// Only couple if the reactant exists
 		if (reactant) {

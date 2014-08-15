@@ -13,26 +13,14 @@ namespace xolotlCore {
  * PetscOptionHandler handles all the Petsc options.
  */
 class PetscOptionHandler: public OptionHandler {
-protected:
+public:
 
 	/**
 	 * The default constructor
 	 */
 	PetscOptionHandler() :
-			OptionHandler() {
-	}
-	;
-
-public:
-
-	/**
-	 * The constructor to use.
-	 * @param keyName The name for the key.
-	 * @param msg The help message.
-	 */
-	PetscOptionHandler(std::string keyName, std::string msg) :
-			OptionHandler(keyName, msg) {
-	}
+		OptionHandler("petscArgs",
+				"petscArgs                   All the arguments that will be given to PETSc") {}
 
 	/**
 	 * The destructor

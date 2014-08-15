@@ -10,26 +10,14 @@ namespace xolotlCore {
  * PerfOptionHandler handles the choice of handlers for the performance infrastructure.
  */
 class PerfOptionHandler: public OptionHandler {
-protected:
+public:
 
 	/**
 	 * The default constructor
 	 */
 	PerfOptionHandler() :
-			OptionHandler() {
-	}
-	;
-
-public:
-
-	/**
-	 * The constructor to use.
-	 * @param keyName The name for the key.
-	 * @param msg The help message.
-	 */
-	PerfOptionHandler(std::string keyName, std::string msg) :
-			OptionHandler(keyName, msg) {
-	}
+		OptionHandler("perfHandler",
+				"perfHandler {std,dummy}     Which set of performance handlers to use. (default = std)") {}
 
 	/**
 	 * The destructor

@@ -385,7 +385,9 @@ public class Preprocessor {
 
 	/**
 	 * This operation generates unstable clusters in the network. They are the ones 
-	 * just after the maximum number of He per V and will go under trap mutation.
+	 * just after the maximum number of He per V and will go under trap mutation. The
+	 * last one should not be added to the network because it won't be able to 
+	 * dissociate into a cluster with a higher V number.
 	 * 
 	 * @return A list of clusters.
 	 */
@@ -398,13 +400,13 @@ public class Preprocessor {
 		clusterList.add(makeUnstableCluster(maxHe + 1, 0));
 		
 		// Loop over vacancies
-		for (int i = 1; i <= maxV && i <= maxHePerV.length; ++i) {
+		for (int i = 1; i < maxV && i <= maxHePerV.length; ++i) {
 			// Add the unstable cluster to the list
 			clusterList.add(makeUnstableCluster(maxHePerV[i - 1] + 1, i));
 		}
 
 		// Create unstable clusters for the cases where max He per V = 4.
-		for (int i = maxHePerV.length + 1; i <= maxV; i++) {
+		for (int i = maxHePerV.length + 1; i < maxV; i++) {
 			// Add the unstable cluster to the list
 			clusterList.add(makeUnstableCluster((i*4) + 1, i));
 		}
