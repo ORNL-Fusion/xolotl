@@ -56,27 +56,31 @@ void SeriesPlot::render(std::string fileName) {
 
     // Print the title
     auto titleAnnotation = new eavlScreenTextAnnotation(window, plotLabelProvider->titleLabel,
-    		eavlColor::black, 0.065, 0.0, 0.9);
+    		eavlColor::black, 0.065, 0.2, 0.8);
     window->AddAnnotation(titleAnnotation);
 
     // Print the axis labels
     auto axis1Annotation = new eavlScreenTextAnnotation(window, plotLabelProvider->axis1Label,
-    		eavlColor::black, 0.05, 0.0, -0.9);
+    		eavlColor::black, 0.05, 0.2, -0.8);
     window->AddAnnotation(axis1Annotation);
     auto axis2Annotation = new eavlScreenTextAnnotation(window, plotLabelProvider->axis2Label,
-    		eavlColor::black, 0.05, -0.9, 0.0, 90.0);
+    		eavlColor::black, 0.05, -0.65, 0.0, 90.0);
     window->AddAnnotation(axis2Annotation);
 
     // Add the time information
     auto timeAnnotation = new eavlScreenTextAnnotation(window, plotLabelProvider->timeLabel,
-    		eavlColor::black, 0.055, 0.8, -0.85);
+    		eavlColor::black, 0.055, -0.8, -0.85);
     window->AddAnnotation(timeAnnotation);
     auto timeStepAnnotation = new eavlScreenTextAnnotation(window, plotLabelProvider->timeStepLabel,
-    		eavlColor::black, 0.055, 0.8, -0.91);
+    		eavlColor::black, 0.055, -0.8, -0.91);
     window->AddAnnotation(timeStepAnnotation);
 
     // Set the log scale
     if (enableLogScale) window->view.view2d.logy = true;
+
+    // Translate the viewport not to have the legend on top of the y axis
+    window->view.vl = -0.45;
+    window->view.vr = 0.85;
 
     // Loop on all the data providers to plot the different series
     for (int i = 0; i < getDataProviderNumber(); i++){

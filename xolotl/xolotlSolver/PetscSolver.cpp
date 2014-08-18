@@ -20,7 +20,7 @@ using namespace xolotlCore;
 /*
  C_t =  -D*C_xx + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.
 
- D*C_xx  - diffusion of He[1-5] and V[1] and I[1]
+ D*C_xx  - diffusion of He[1-6] and V[1] and I[1]
  F(C)  -   forcing function; He being created.
  R(C)  -   reaction terms   (clusters combining)
  D(C)  -   dissociation terms (cluster breaking up)
@@ -31,41 +31,20 @@ using namespace xolotlCore;
  -mymonitor                              -- plot the concentrations of He and V as a function of x and cluster size (2d contour plot)
  -da_refine <n=1,2,...>                  -- run on a finer grid
  -da_grid_x <nx>						 -- number of grid points in the x direction
- -ts_max_steps maxsteps                  -- maximum number of time-steps to take
- -ts_final_time time                     -- maximum time to compute to
+ -ts_max_steps <maxsteps>                -- maximum number of time-steps to take
+ -ts_final_time <time>                   -- maximum time to compute to
+ -ts_dt <size>							 -- initial size of the time step
 
  Rules for maximum number of He allowed for V in cluster
  */
 
 namespace xolotlSolver {
 
-//Counter for the number of times RHSFunction is called.
-std::shared_ptr<xolotlPerf::IEventCounter> RHSFunctionCounter;
-
-//Counter for the number of times RHSJacobian is called.
-std::shared_ptr<xolotlPerf::IEventCounter> RHSJacobianCounter;
-
 //Timer for RHSFunction()
 std::shared_ptr<xolotlPerf::ITimer> RHSFunctionTimer;
-//Timer for how long it takes to compute ODE terms for each grid point
-std::shared_ptr<xolotlPerf::ITimer> computeODEtermPerGP;
-//Timer for how long it takes to compute new fluxes in RHSFunction()
-//std::shared_ptr<xolotlPerf::ITimer> computeNewFluxes;
-//Timer for how long it takes to compute the incident flux in RHSFunction()
-//std::shared_ptr<xolotlPerf::ITimer> computeIncidentFluxTimer;
-//Timers for how long it takes to compute He, V, and I diffusion in RHSFunction()
-//std::shared_ptr<xolotlPerf::ITimer> computeDiffusionTimer;
 
-//Timer for RHSJacobian()
+////Timer for RHSJacobian()
 std::shared_ptr<xolotlPerf::ITimer> RHSJacobianTimer;
-//Timer for computing reaction term partials per grid point in RHSJacobian()
-std::shared_ptr<xolotlPerf::ITimer> computeReactionTermPartials;
-//Timer for computing Jacobian diffusion terms per grid point in RHSJacobian()
-std::shared_ptr<xolotlPerf::ITimer> computeJacobianDiffusionTerms;
-std::shared_ptr<xolotlPerf::ITimer> updateJacobianCol;
-
-//Timer for how long it takes to solve the ODE system in the function solve()
-std::shared_ptr<xolotlPerf::ITimer> solveODEsystem;
 
 //! Help message
 static char help[] =
@@ -83,7 +62,6 @@ std::shared_ptr<ITemperatureHandler> PetscSolver::temperatureHandler;
 extern PetscErrorCode RHSFunction(TS, PetscReal, Vec, Vec, void*);
 extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat, Mat);
 extern PetscErrorCode setupPetscMonitor(TS);
-extern void computeRetention(TS, Vec);
 
 TS ts; /* nonlinear solver */
 Vec C; /* solution */
@@ -183,10 +161,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Setup some step size variables
 	PetscReal hx;
 	hx = numOfxGridPoints / (PetscReal) (Mx - 1);
-//	// Display the number of grid points that will be used
-//	std::cout << "\nNumber of x grid points = " << numOfxGridPoints << std::endl;
-//	std::cout << "Number of grid points = " << Mx << std::endl;
-//	std::cout << "Step size hx = " << hx << std::endl;
+
 	// Get the flux handler that will be used to compute fluxes.
 	auto fluxHandler = PetscSolver::getFluxHandler();
 	fluxHandler->initializeFluxHandler(Mx, hx);
@@ -216,13 +191,13 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	checkPetscError(ierr);
 
 	// Get the name of the HDF5 file to read the concentrations from
-	std::shared_ptr<HDF5NetworkLoader> HDF5Loader
-		= std::dynamic_pointer_cast<HDF5NetworkLoader> (networkLoader);
+	std::shared_ptr<HDF5NetworkLoader> HDF5Loader = std::dynamic_pointer_cast<
+			HDF5NetworkLoader>(networkLoader);
 	auto fileName = HDF5Loader->getFilename();
 
 	// Get the last time step written in the HDF5 file
 	int tempTimeStep = -2;
-	HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep);
+	bool hasConcentrations = HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep);
 
 	// Loop on all the grid points
 	for (i = xs; i < xs + xm; i++) {
@@ -238,15 +213,24 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 //				concOffset[k] = 0.001;
 //			}
 //		}
+	}
 
-		if (tempTimeStep >= 0) {
+	// If the concentration must be set from the HDF5 file
+	if (hasConcentrations) {
+		// Loop on the full grid
+		for (int i = 0; i < Mx; i++) {
 			// Read the concentrations from the HDF5 file
-			auto concVector = HDF5Utils::readGridPoint(fileName,
-					tempTimeStep, i);
+			auto concVector = HDF5Utils::readGridPoint(fileName, tempTimeStep,
+					i);
 
-			// Loop on the concVector size
-			for (int k = 0; k < concVector.size(); k++) {
-				concOffset[(int) concVector.at(k).at(0)] = concVector.at(k).at(1);
+			// Change the concentration only if we are on the locally owned part of the grid
+			if (i >= xs && i < xs + xm) {
+				concOffset = concentrations + size * i;
+				// Loop on the concVector size
+				for (int k = 0; k < concVector.size(); k++) {
+					concOffset[(int) concVector.at(k).at(0)] = concVector.at(k).at(
+							1);
+				}
 			}
 		}
 	}
@@ -257,31 +241,6 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	ierr = DMDAVecRestoreArray(da, C, &concentrations);
 	checkPetscError(ierr);
 	PetscFunctionReturn(0);
-}
-
-void getIncomingHeFlux(PSICluster * cluster, std::vector<double> gridPos,
-		PetscReal curTime, PetscScalar *updatedConcOffset) {
-
-	int reactantIndex = 0;
-	// Get the flux handler that will be used to compute fluxes.
-	auto fluxHandler = PetscSolver::getFluxHandler();
-
-	// Get the composition of the cluster
-	auto thisComp = cluster->getComposition();
-	// Create the composition vector for the cluster
-	std::vector<int> compVec = { thisComp["He"], thisComp["V"], thisComp["I"] };
-	// Only update the concentration if the cluster exists
-	if (cluster) {
-		reactantIndex = cluster->getId() - 1;
-		// Calculate the incident flux
-		auto incidentFlux = fluxHandler->getIncidentFlux(compVec, gridPos,
-				curTime);
-		// Update the concentration of the cluster
-		updatedConcOffset[reactantIndex] += 1.0E4 * PetscMax(0.0, incidentFlux);
-		// where incidentFlux = 0.0006 * x * x * x - 0.0087 * x * x + 0.0300 * x
-	}
-
-	return;
 }
 
 void computeDiffusion(PSICluster * cluster, double temp, PetscReal sx,
@@ -326,9 +285,8 @@ void computeDiffusion(PSICluster * cluster, double temp, PetscReal sx,
  */
 /* ------------------------------------------------------------------- */
 PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
-
-	// increment the event counter monitoring this function
-	RHSFunctionCounter->increment();
+	// Start the RHSFunction Timer
+	RHSFunctionTimer->start();
 
 	// Important petsc stuff (related to the grid mostly)
 	DM da;
@@ -353,6 +311,11 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	double flux = 0.0;
 	// Get the handle to the network that will be used to compute fluxes.
 	auto network = PetscSolver::getNetwork();
+	// Get the temperature handler that will be used to compute fluxes.
+	auto temperatureHandler = PetscSolver::getTemperatureHandler();
+	// Get the flux handler that will be used to compute fluxes.
+	auto fluxHandler = PetscSolver::getFluxHandler();
+	auto incidentFluxVector = fluxHandler->getIncidentFluxVec();
 	// Some required properties
 	auto props = network->getProperties();
 	int numHeClusters = std::stoi(props["numHeClusters"]);
@@ -410,16 +373,12 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 
 	// Loop over grid points computing ODE terms for each grid point
 	size = network->size();
-	computeODEtermPerGP->start();
 	for (xi = xs; xi < xs + xm; xi++) {
 		x = xi * hx;
 
 		// Vector representing the position at which the flux will be calculated
 		// Currently we are only in 1D
 		std::vector<double> gridPosition = { x, 0, 0 };
-
-		// Get the temperature handler that will be used to compute fluxes.
-		auto temperatureHandler = PetscSolver::getTemperatureHandler();
 		auto temperature = temperatureHandler->getTemperature(gridPosition,
 				realTime);
 
@@ -428,7 +387,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			network->setTemperature(temperature);
 			lastTemperature = temperature;
 		}
-				
+
 //		xi = 1; // Uncomment this line for debugging in a single cell.
 
 		// Compute the middle, left, right and new array offsets
@@ -448,15 +407,16 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// produces He of cluster size 1 -----
 		// Crude cubic approximation of graph from Tibo's notes
 		heCluster = (PSICluster *) network->get("He", 1);
-		//computeIncidentFluxTimer->start();
-		getIncomingHeFlux(heCluster, gridPosition, realTime, updatedConcOffset);
-		//computeIncidentFluxTimer->stop();
+		if (heCluster) {
+			reactantIndex = heCluster->getId() - 1;
+			// Update the concentration of the cluster
+			updatedConcOffset[reactantIndex] += incidentFluxVector[xi];
+		}
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
-		//computeDiffusionTimer->start();
 
-		// He clusters larger than 5 do not diffuse -- they are immobile
-		for (int i = 1; i < PetscMin(numHeClusters + 1, 6); i++) {
+		// He clusters larger than 6 do not diffuse -- they are immobile
+		for (int i = 1; i < PetscMin(numHeClusters + 1, 7); i++) {
 			// Get the reactant index
 			heCluster = (PSICluster *) network->get("He", i);
 
@@ -484,10 +444,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 			computeDiffusion(iCluster, temperature, sx, concOffset,
 					leftConcOffset, rightConcOffset, updatedConcOffset);
 		}
-		//computeDiffusionTimer->stop();
 
 		// ----- Compute all of the new fluxes -----
-		//computeNewFluxes->start();
 		for (int i = 0; i < size; i++) {
 			cluster = (PSICluster *) allReactants->at(i);
 			// Compute the flux
@@ -498,7 +456,6 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //			std::cout << "New flux = " << flux << " "
 //					<< cluster->getConcentration() << std::endl;
 		}
-		//computeNewFluxes->stop();
 
 		// Boundary conditions
 		if (xi == 0) {
@@ -514,7 +471,6 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Uncomment this line for debugging in a single cell.
 //		break;
 	}
-	computeODEtermPerGP->stop();
 
 	/*
 	 Restore vectors
@@ -525,16 +481,19 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	checkPetscError(ierr);
 	ierr = DMRestoreLocalVector(da, &localC);
 	checkPetscError(ierr);
+
+	// Stop the RHSFunction Timer
+	RHSFunctionTimer->stop();
+
 	PetscFunctionReturn(0);
 
 }
 
 PetscErrorCode callRHSFunction(TS ts, PetscReal ftime, Vec C, Vec F,
 		void *ptr) {
+
 	PetscErrorCode ierr;
-	RHSFunctionTimer->start();
 	ierr = RHSFunction(ts, ftime, C, F, &ptr);
-	RHSFunctionTimer->stop();
 
 	return ierr;
 }
@@ -577,9 +536,8 @@ void computePartialsForDiffusion(PSICluster * cluster, double temp,
  */
 PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 		void *ptr) {
-
-	// increment the event counter monitoring this function
-	RHSJacobianCounter->increment();
+	// Start the RHSJacobian timer
+	RHSJacobianTimer->start();
 
 	DM da;
 	PetscErrorCode ierr;
@@ -597,6 +555,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int reactantIndex = 0;
 	int size = 0;
+	// Get the temperature handler that will be used to compute fluxes.
+	auto temperatureHandler = PetscSolver::getTemperatureHandler();
 
 	// Get the matrix from PETSc
 	PetscFunctionBeginUser;
@@ -652,7 +612,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	// Only compute the linear part of the Jacobian once
 	if (!initialized) {
 
-		computeJacobianDiffusionTerms->start();
 		/*
 		 Loop over grid points computing Jacobian terms for diffusion at each
 		 grid point
@@ -661,8 +620,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 			// Vector representing the position at which the flux will be calculated
 			// Currently we are only in 1D
 			std::vector<double> gridPosition = { xi * hx, 0, 0 };
-			// Get the temperature handler that will be used to compute fluxes.
-			auto temperatureHandler = PetscSolver::getTemperatureHandler();
 			auto temperature = temperatureHandler->getTemperature(gridPosition,
 					realTime);
 
@@ -677,9 +634,9 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 			 ---- Compute diffusion over the locally owned part of the grid
 			 */
 
-			/* He clusters larger than 5 do not diffuse -- they are immobile */
+			/* He clusters larger than 6 do not diffuse -- they are immobile */
 			// ---- Compute diffusion over the locally owned part of the grid -----
-			for (i = 1; i < PetscMin(numHeClusters + 1, 6); i++) {
+			for (i = 1; i < PetscMin(numHeClusters + 1, 7); i++) {
 				// Get the cluster
 				auto psiCluster = (PSICluster *) network->get("He", i);
 				computePartialsForDiffusion(psiCluster, temperature, sx, val,
@@ -710,7 +667,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 
 //			break;   // Uncomment this line for debugging in a single cell.
 		}
-		computeJacobianDiffusionTerms->stop();
 
 		ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
@@ -737,14 +693,11 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	PetscInt rowId = 0;
 	int pdColIdsVectorSize = 0;
 
-	computeReactionTermPartials->start();
 	// Loop over the grid points
 	for (xi = xs; xi < xs + xm; xi++) {
 		// Vector representing the position at which the flux will be calculated
 		// Currently we are only in 1D
 		std::vector<double> gridPosition = { xi * hx, 0, 0 };
-		// Get the temperature handler that will be used to compute fluxes.
-		auto temperatureHandler = PetscSolver::getTemperatureHandler();
 		auto temperature = temperatureHandler->getTemperature(gridPosition,
 				realTime);
 
@@ -754,7 +707,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 		// compute the new concentrations.
 		concOffset = concs + size * xi;
 		network->updateConcentrationsFromArray(concOffset);
-		updateJacobianCol->start();
 		// Update the column in the Jacobian that represents each reactant
 		for (int i = 0; i < size; i++) {
 			auto reactant = allReactants->at(i);
@@ -786,11 +738,9 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 					ADD_VALUES);
 			checkPetscError(ierr);
 		}
-		updateJacobianCol->stop();
 		// Uncomment this line for debugging in a single cell.
 //		break;
 	}
-	computeReactionTermPartials->stop();
 
 	/*
 	 Restore vectors
@@ -808,15 +758,14 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 
 	// Enforce the Boundary conditions. Loop over the grid points and set the
 	// conditions.
-	for (xi = xs; xi < xs + xm; xi++) {
-		if (xi == 0) {
+	if (xs == 0) {
 			// Loop on the reactants
 			for (int i = 0; i < size; i++) {
 				auto reactant = allReactants->at(i);
 				// Get the reactant index
 				reactantIndex = reactant->getId() - 1;
 				// Get the row id
-				rowId = (xi - xs + 1) * size + reactantIndex;
+				rowId = size + reactantIndex;
 
 				// Get the list of column ids from the map
 				auto pdColIdsVector = dFillMap.at(reactantIndex);
@@ -824,7 +773,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 				// Loop over the list of column ids
 				for (int j = 0; j < pdColIdsVectorSize; j++) {
 					// Calculate the appropriate index to match the dfill array configuration
-					localPDColIds[j] = (xi - xs + 1) * size + pdColIdsVector[j];
+					localPDColIds[j] = size + pdColIdsVector[j];
 					// Get the partial derivative from the array of all of the partials
 					reactingPartialsForCluster[j] = 0.0;
 				}
@@ -836,7 +785,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 				checkPetscError(ierr);
 			}
 		}
-	}
+
 
 	// Assemble again
 	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
@@ -850,16 +799,19 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 		ierr = MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
 		checkPetscError(ierr);
 	}
+
+	// Stop the RHSJacobian timer
+	RHSJacobianTimer->stop();
+
 	PetscFunctionReturn(0);
 
 }
 
 PetscErrorCode callRHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 		void *ptr) {
+
 	PetscErrorCode ierr;
-	RHSJacobianTimer->start();
 	ierr = RHSJacobian(ts, ftime, C, A, J, &ptr);
-	RHSJacobianTimer->stop();
 
 	return ierr;
 }
@@ -934,35 +886,20 @@ PetscSolver::PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry)
 	numCLIArgs = 0;
 	CLIArgs = NULL;
 
-	RHSFunctionCounter = handlerRegistry->getEventCounter(
-			"Petsc_RHSFunction_Counter");
-	RHSJacobianCounter = handlerRegistry->getEventCounter(
-			"Petsc_RHSJacobian_Counter");
-
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
-	computeODEtermPerGP = handlerRegistry->getTimer("computeODEtermPerGP");
-	//computeNewFluxes = handlerRegistry->getTimer("computeNewFluxes");
-	//computeIncidentFluxTimer = handlerRegistry->getTimer("computeIncidentFluxTimer");
-	//computeDiffusionTimer = handlerRegistry->getTimer("computeDiffusionTimer");
 	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
-	computeReactionTermPartials = handlerRegistry->getTimer(
-			"computeReactionTermPartials");
-	computeJacobianDiffusionTerms = handlerRegistry->getTimer(
-			"computeJacobianDiffusionTerms");
-	updateJacobianCol = handlerRegistry->getTimer("updateJacobianCol");
-	solveODEsystem = handlerRegistry->getTimer("solveODEsystem");
 
 }
 
 //! The Destructor
 PetscSolver::~PetscSolver() {
 
-    // std::cerr << "Destroying a PetscSolver" << std::endl;
+	// std::cerr << "Destroying a PetscSolver" << std::endl;
 
-    // Break "pointer" cycles so that network, clusters, reactants
-    // will deallocate when the std::shared_ptrs owning them 
-    // are destroyed.
-    network->askReactantsToReleaseNetwork();
+	// Break "pointer" cycles so that network, clusters, reactants
+	// will deallocate when the std::shared_ptrs owning them 
+	// are destroyed.
+	network->askReactantsToReleaseNetwork();
 }
 
 /**
@@ -1080,13 +1017,13 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	PetscFunctionBeginUser;
 
 	// Get the name of the HDF5 file to read the concentrations from
-	std::shared_ptr<HDF5NetworkLoader> HDF5Loader
-		= std::dynamic_pointer_cast<HDF5NetworkLoader> (networkLoader);
+	std::shared_ptr<HDF5NetworkLoader> HDF5Loader = std::dynamic_pointer_cast<
+			HDF5NetworkLoader>(networkLoader);
 	auto fileName = HDF5Loader->getFilename();
 
 	// Get starting conditions from HDF5 file
 	int gridLength = 0;
-	double time = 0.0, deltaTime = 1.0e-8;
+	double time = 0.0, deltaTime = 1.0e-12;
 	int tempTimeStep = -2;
 	HDF5Utils::readHeader(fileName, gridLength);
 
@@ -1102,7 +1039,7 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	NULL, &da);
 	checkPetscError(ierr);
 
-	/* The only spatial coupling in the Jacobian (diffusion) is for the first 5 He, the first V, and the first I.
+	/* The only spatial coupling in the Jacobian (diffusion) is for the first 6 He, the first V, and the first I.
 	 The ofill (thought of as a dof by dof 2d (row-oriented) array represents the nonzero coupling between degrees
 	 of freedom at one point with degrees of freedom on the adjacent point to the left or right. A 1 at i,j in the
 	 ofill array indicates that the degree of freedom i at a point is coupled to degree of freedom j at the
@@ -1119,7 +1056,7 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion, with for He.
 	int reactantIndex = 0;
 	Reactant * reactant;
-	for (int numHe = 1; numHe < PetscMin(numHeClusters + 1, 6); numHe++) {
+	for (int numHe = 1; numHe < PetscMin(numHeClusters + 1, 7); numHe++) {
 		reactant = network->get("He", numHe);
 		// Only couple if the reactant exists
 		if (reactant) {
@@ -1179,10 +1116,8 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	ierr = TSSetProblemType(ts, TS_NONLINEAR);
 	checkPetscError(ierr);
 	ierr = TSSetRHSFunction(ts, NULL, callRHSFunction, NULL);
-//ierr = TSSetRHSFunction(ts, NULL, RHSFunction, NULL);
 	checkPetscError(ierr);
 	ierr = TSSetRHSJacobian(ts, NULL, NULL, callRHSJacobian, NULL);
-//ierr = TSSetRHSJacobian(ts, NULL, NULL, RHSJacobian, NULL);
 	checkPetscError(ierr);
 	ierr = TSSetSolution(ts, C);
 	checkPetscError(ierr);
@@ -1192,10 +1127,9 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	ierr = TSSetInitialTimeStep(ts, time, deltaTime);
 	checkPetscError(ierr);
-//	ierr = TSSetDuration(ts, 100, 50.0);
-//	checkPetscError(ierr);
 	ierr = TSSetFromOptions(ts);
 	checkPetscError(ierr);
+
 	ierr = setupPetscMonitor(ts);
 	checkPetscError(ierr);
 
@@ -1208,23 +1142,9 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	// Time how long it takes to solve the ODE system
-	solveODEsystem->start();  // start the timer
 	if (ts != NULL && C != NULL) {
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr);
-
-		solveODEsystem->stop();  // stop the timer
-
-		// Flags to launch the monitors or not
-		PetscBool flagRetention;
-
-		// Check the option -helium_retention
-		ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);
-		checkPetscError(ierr);
-
-		if (flagRetention)
-			computeRetention(ts, C);
 	} else {
 		throw std::string(
 				"PetscSolver Exception: Unable to solve! Data not configured properly.");

@@ -40,13 +40,13 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 						<< "(" << compVec[0] << "," << compVec[1] << "," << compVec[2] << "), "
 						<< "at position " << "(" << x[0] << "," << x[1] << "," << x[2] << "), "
 						<< "at time = " << currTime << "\n");
-	BOOST_REQUIRE_EQUAL(testFlux, 1.0394067746526634);
+	BOOST_REQUIRE_CLOSE(testFlux, 1.0394067746526634, 1e-10);
 
 	BOOST_TEST_MESSAGE( "\n" << "incidentFlux = " << testFlux1 << " with composition "
 						<< "(" << compVec[0] << "," << compVec[1] << "," << compVec[2] << "), "
 						<< "at position " << "(" << x[0] << "," << x[1] << "," << x[2] << "), "
 						<< "at time = " << currTime << "\n");
-	BOOST_REQUIRE_EQUAL(testFlux1, 0.9887042553323879);
+	BOOST_REQUIRE_CLOSE(testFlux1, 0.9887042553323879, 1e-10);
 
 }
 

@@ -53,7 +53,9 @@ std::vector<double> CvsXYDataProvider::getAxis3Vector() const {
 }
 
 void CvsXYDataProvider::addValue(std::vector<double>& vector, double value) const {
+	// Check if the value is already in the vector
 	auto it = std::find (vector.begin(), vector.end(), value);
+	// If it is not, add the value to the vector
 	if (it == vector.end()) vector.push_back(value);
 
 	return;

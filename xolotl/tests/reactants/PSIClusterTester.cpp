@@ -43,19 +43,19 @@ BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 	// Make sure the diffusion coefficient is 0.0 if E_m is infinite
 	cluster.setMigrationEnergy(numeric_limits<double>::infinity());
 	cluster.setDiffusionFactor(1.0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),0.0,0.00000);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),0.0,0.000001);
 
 	// Make sure the diffusion coefficient is zero if the diffusion factor is zero
 	cluster.setMigrationEnergy(5.0);
 	cluster.setDiffusionFactor(0.0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),0.0,0.00000);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),0.0,0.000001);
 
 	// Make sure the diffusion coefficient is equal to the diffusion factor
 	// if the temperature is infinite
 	cluster.setMigrationEnergy(5.0);
 	cluster.setDiffusionFactor(1.0);
 	cluster.setTemperature(numeric_limits<double>::infinity());
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),1.0,0.00000);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),1.0,0.000001);
 
 	// Throw something random in there to be certain
 	cluster.setMigrationEnergy(0.013);

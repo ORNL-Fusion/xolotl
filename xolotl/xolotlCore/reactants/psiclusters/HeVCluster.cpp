@@ -101,7 +101,7 @@ void HeVCluster::replaceInCompound(std::vector<Reactant *> & reactants,
 
 void HeVCluster::createReactionConnectivity() {
 	// Connect this cluster to itself since any reaction will affect it
-	setReactionConnectivity(getId());
+	setReactionConnectivity(id);
 
 	// This cluster is always (He_a)(V_b)
 
@@ -229,56 +229,66 @@ void HeVCluster::createReactionConnectivity() {
 		combineClusters(singleVInVector, typeName);
 	}
 
-	// Set the references to the size one clusters
-	heCluster = (PSICluster *) network->get(heType, 1);
-	vCluster = (PSICluster *) network->get(vType, 1);
-	iCluster = (PSICluster *) network->get(iType, 1);
-
 	return;
 }
 
 void HeVCluster::createDissociationConnectivity() {
-	// Store the cluster with one less helium
-	std::vector<int> compositionVec = { numHe - 1, numV, 0 };
-	auto heVClusterLessHe = network->getCompound(typeName, compositionVec);
-	// Store the cluster with one more helium
-	compositionVec = { numHe + 1, numV, 0 };
-	auto heVClusterMoreHe = network->getCompound(typeName, compositionVec);
-	// Store the cluster with one less vacancy
-	compositionVec = {numHe, numV - 1, 0};
-	auto heVClusterLessV = network->getCompound(typeName, compositionVec);
-	// Store the cluster with one more vacancy
-	compositionVec = {numHe, numV + 1, 0};
-	auto heVClusterMoreV = network->getCompound(typeName, compositionVec);
 
 	// This cluster is always (He_a)(V_b)
 
 	// He Dissociation
 	// (He_a)(V_b) --> [He_(a-1)](V_b) + He
-	auto singleCluster = network->get(heType, 1);
+	// Get the cluster with one less helium
+	std::vector<int> compositionVec = { numHe - 1, numV, 0 };
+	auto heVClusterLessHe = (PSICluster *) network->getCompound(typeName, compositionVec);
+	// Get the single helium cluster
+	auto singleCluster = (PSICluster *) network->get(heType, 1);
 	emitClusters(singleCluster, heVClusterLessHe);
 	// [He_(a+1)](V_b) --> (He_a)(V_b) + He
+	// Get the cluster with one more helium
+	compositionVec = { numHe + 1, numV, 0 };
+	auto heVClusterMoreHe = (PSICluster *) network->getCompound(typeName, compositionVec);
 	// Here it is important that heVClusterMoreHe is the first cluster
 	// because it is the dissociating one.
 	dissociateCluster(heVClusterMoreHe, singleCluster);
 
 	// Vacancy Dissociation
 	// (He_a)(V_b) --> He_(a)[V_(b-1)] + V
-	singleCluster = network->get(vType, 1);
+	// Get the cluster with one less vacancy
+	compositionVec = {numHe, numV - 1, 0};
+	auto heVClusterLessV = (PSICluster *) network->getCompound(typeName, compositionVec);
+	// Get the single vacancy cluster
+	singleCluster = (PSICluster *) network->get(vType, 1);
 	emitClusters(singleCluster, heVClusterLessV);
 	// He_(a)[V_(b+1)] --> (He_a)(V_b) + V
+	// Get the cluster with one more vacancy
+	compositionVec = {numHe, numV + 1, 0};
+	auto heVClusterMoreV = (PSICluster *) network->getCompound(typeName, compositionVec);
 	// Here it is important that heVClusterMoreV is the first cluster
 	// because it is the dissociating one.
 	dissociateCluster(heVClusterMoreV, singleCluster);
 
 	// Trap mutation
 	// (He_a)(V_b) --> He_(a)[V_(b+1)] + I
-	singleCluster = network->get(iType, 1);
+	// Get the single interstitial cluster (we already have the one with
+	// one more vacancy)
+	singleCluster = (PSICluster *) network->get(iType, 1);
 	emitClusters(singleCluster, heVClusterMoreV);
 	// He_(a)[V_(b-1)] --> (He_a)(V_b) + I
 	// Here it is important that heVClusterLessV is the first cluster
 	// because it is the dissociating one.
 	dissociateCluster(heVClusterLessV, singleCluster);
+
+	// Trap mutation of He
+	// He_a --> (He_a)(V_b) + I_b
+	// for a = 9 and b = 1
+	if (numHe == 9 && numV == 1) {
+		// Get He_a
+		auto dissociatingReactant = (PSICluster *) network->get(heType, 9);
+		// Get I_b
+		auto singleReactant = (PSICluster *) network->get(iType, 1);
+		dissociateCluster(dissociatingReactant, singleReactant);
+	}
 
 	return;
 }

@@ -10,6 +10,69 @@ import uk.co.flamingpenguin.jewel.cli.Option;
 public interface Arguments {
 
 	/**
+	 * This Option annotation corresponds to the '--maxHeSize' option which
+	 * defines a default value of 8 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maxium size of a Helium cluster in
+	 *            the network if this option is not specified via the command
+	 *            line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "8", description = "The maximum size of a Helium cluster in the network satisfying the condition 0 < maxHeSize < 9. (default = 8)")
+	/**
+	 * This operation produces the required command line option '--maxHeSize' which 
+	 * takes a single integer value and is defined by the previous Option annotation
+	 * 
+	 * @return The maximum size of a Helium cluster in the network satisfying the condition 0 < maxHeSize < 9
+	 */
+	int getMaxHeSize();
+
+	/**
+	 * This Option annotation corresponds to the '--maxVSize' option which
+	 * defines a default value of 29 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maxium size of a vacancy cluster
+	 *            in the network if this option is not specified via the
+	 *            command line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "29", description = "The maximum size of a vacancy cluster in the network. (default = 29)")
+	/**
+	 * This operation produces the required command line option '--maxVSize' which 
+	 * takes a single integer value and is defined by the previous Option annotation
+	 * 
+	 * @return The maxium size of a vacancy cluster in the network
+	 */
+	int getMaxVSize();
+
+	/**
+	 * This Option annotation corresponds to the '--maxISize' option which
+	 * defines a default value of 6 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maxium size of an interstitial
+	 *            cluster in the network if this option is not specified via
+	 *            the command line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "6", description = "The maximum size of an interstitial cluster in the network satisfying the condition 0 < maxISize < 7. (default = 6)")
+	/**
+	 * This operation produces the required command line option '--maxISize' which 
+	 * takes a single integer value and is defined by the previous Option annotation
+	 * 
+	 * @return The maximum size of an interstitial cluster in the network satisfying the condition 0 < maxISize < 7
+	 */
+	int getMaxISize();
+
+	/**
 	 * This Option annotation corresponds to the '--startTemp' option which
 	 * defines a default value of 1000 and additionally provides a brief
 	 * description of this option.
@@ -82,11 +145,10 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "-da_grid_x 10 -ts_final_time 1000 "
+	@Option(defaultValue = "-da_grid_x 10 -ts_final_time 1000 -ts_dt 1.0e-12 "
 			+ "-ts_max_steps 3 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
 			+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type redundant "
-			+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor", 
-			description = "List of arguments to be passed to PETSc")
+			+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor", description = "List of arguments to be passed to PETSc")
 	/**
 	 * This operation produces the required command line option '--petscArgs' which 
 	 * takes a single string value and is defined by the previous Option annotation
@@ -173,13 +235,12 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "The Helium insertion flux")
-	// defaultValue = "2.5e27")
+	@Option(description = "This option allows the user to change the Helium flux by the factor specified (in nm).")
 	/**
 	 * This operation produces the optional command line option '--heFlux' which 
 	 * takes a single string value and is defined by the previous Option annotation
 	 * 
-	 * @return The Helium insertion flux
+	 * @return The Helium flux
 	 */
 	String getHeFlux();
 
@@ -192,37 +253,37 @@ public interface Arguments {
 	boolean isHeFlux();
 
 	/**
-	 * This Option annotation corresponds to the optional '--heFluence' option
+	 * This Option annotation corresponds to the optional '--maxHeFluence' option
 	 * and provides a brief description of the option.
 	 * 
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "The Helium fluence value that will be used")
-	// defaultValue = "1.0e19")
+	@Option(description = "The maxium Helium fluence value (in nm) that will be used")
+	// defaultValue = "10")
 	/**
-	 * This operation produces the optional command line option '--heFluence' which 
+	 * This operation produces the optional command line option '--maxHeFluence' which 
 	 * takes a single string value and is defined by the previous Option annotation
 	 * 
-	 * @return The Helium fluence
+	 * @return The maximum Helium fluence value
 	 */
-	String getHeFluence();
+	String getMaxHeFluence();
 
 	/**
-	 * This operation makes the command line option '--heFluence' optional.
+	 * This operation makes the command line option '--maxHeFluence' optional.
 	 * 
 	 * @return Returns true if the option has been specified and false if it has
 	 *         not
 	 */
-	boolean isHeFluence();
+	boolean isMaxHeFluence();
 
-	@Option(description = "{true, false}  Start the solver with the concentrations, time, "
-			+ "and step size from the HDF5 file")
+	@Option(description = "<HDF5FileName>  Start the solver with the concentrations, time, "
+			+ "and step size present in the HDF5 file")
 	/**
 	 * This operation produces the optional command line option '--checkpoint' which 
 	 * takes a single string value and is defined by the previous Option annotation
 	 * 
-	 * @return If the users wishes to use the checkpoint restart, i.e. true or false (as a string)
+	 * @return The name of the file to read from to create the new HDF5 network file
 	 */
 	String getCheckpoint();
 

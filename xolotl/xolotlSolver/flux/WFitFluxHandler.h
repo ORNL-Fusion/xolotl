@@ -3,7 +3,7 @@
 
 #include "FluxHandler.h"
 
-namespace xolotlSolver{
+namespace xolotlSolver {
 
 /**
  * This class realizes the IFluxHandler interface to calculate the incident and outgoing fluxes.
@@ -15,12 +15,13 @@ public:
 	/**
 	 * The constructor
 	 */
-	WFitFluxHandler();
+	WFitFluxHandler() { }
 
 	/**
 	 * The Destructor
 	 */
-	~WFitFluxHandler() { }
+	~WFitFluxHandler() {
+	}
 
 	/**
 	 * Function to calculate and store the incident flux values at each grid point
@@ -29,7 +30,8 @@ public:
 	 */
 	void initializeFluxHandler(int numGridpoints, double step);
 
-}; //end class WFitFluxHandler
+};
+//end class WFitFluxHandler
 
 }
 

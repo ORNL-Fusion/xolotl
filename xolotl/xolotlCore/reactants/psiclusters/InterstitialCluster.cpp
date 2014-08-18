@@ -4,7 +4,8 @@
 
 using namespace xolotlCore;
 
-InterstitialCluster::InterstitialCluster(int nI, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+InterstitialCluster::InterstitialCluster(int nI,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(nI, registry) {
 
 	// Update the composition map
@@ -78,7 +79,8 @@ void InterstitialCluster::createReactionConnectivity() {
 		auto firstReactant = (PSICluster *) reactants[i];
 		// Get the interstitial cluster that is bigger than the vacancy
 		// and can form this cluster.
-		auto secondReactant = (PSICluster *) network->get(typeName,firstReactant->getSize() + size);
+		auto secondReactant = (PSICluster *) network->get(typeName,
+				firstReactant->getSize() + size);
 		// Add to the reacting pairs if the second reactant exists
 		if (secondReactant) {
 			// Create the pair
@@ -126,7 +128,8 @@ void InterstitialCluster::createDissociationConnectivity() {
 			auto comp = cluster->getComposition();
 			std::vector<int> compositionVec = { comp[heType], comp[vType],
 					comp[iType] - 1 };
-			auto smallerReactant = network->getCompound(heIType, compositionVec);
+			auto smallerReactant = (PSICluster *) network->getCompound(heIType,
+					compositionVec);
 			dissociateCluster(cluster, smallerReactant);
 		}
 
@@ -143,9 +146,19 @@ void InterstitialCluster::createDissociationConnectivity() {
 			auto comp = cluster->getComposition();
 			std::vector<int> compositionVec = { comp[heType], comp[vType] + 1,
 					comp[iType] };
-			auto biggerReactant = network->getCompound(heVType, compositionVec);
+			auto biggerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
 			dissociateCluster(cluster, biggerReactant);
 		}
+
+		// Trap mutation of He cluster is handled here
+		// He_b --> (He_b)(V_a) + I_a
+		// for a = 1 and b = 9
+		// Get He_b
+		auto dissociatingReactant = (PSICluster *) network->get(heType, 9);
+		// Get (He_b)(V_a)
+		std::vector<int> compositionVec = { 9, 1, 0 };
+		auto biggerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
+		dissociateCluster(dissociatingReactant, biggerReactant);
 	}
 
 	return;

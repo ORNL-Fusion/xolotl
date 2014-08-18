@@ -20,9 +20,14 @@ VCluster::VCluster(int nV, std::shared_ptr<xolotlPerf::IHandlerRegistry> registr
 	compositionMap["V"] = size;
 
 	// Compute the reaction radius
-	// FIXME Not right...
-	reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant;
-
+	// It is the same formula than for HeV clusters
+	reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
+			+ pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0) * size)
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+			- pow(
+					(3.0 * pow(xolotlCore::latticeConstant, 3.0))
+							/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
 }
 
 VCluster::~VCluster() {
@@ -124,7 +129,7 @@ void VCluster::createDissociationConnectivity() {
 			auto comp = cluster->getComposition();
 			std::vector<int> compositionVec = { comp[heType], comp[vType] - 1,
 					comp[iType] };
-			auto smallerReactant = network->getCompound(heVType, compositionVec);
+			auto smallerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
 			dissociateCluster(cluster, smallerReactant);
 		}
 	}

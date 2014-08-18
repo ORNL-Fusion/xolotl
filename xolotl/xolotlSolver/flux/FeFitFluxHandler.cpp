@@ -37,7 +37,6 @@ void FeFitFluxHandler::initializeFluxHandler(int numGridpoints, double step) {
 	double b8 = -0.00035910;
 	double w = 0.013880;
 
-//	std::cout << "\n\nincidentFluxVec: 		x:" << std::endl;
 	for (int i = 0; i < numGridpoints; i++) {
 		auto x = i * stepSize;
 		auto incidentFlux = a0 + a1 * cos(x * w) + b1 * sin(x * w)
@@ -50,11 +49,6 @@ void FeFitFluxHandler::initializeFluxHandler(int numGridpoints, double step) {
 				+ a8 * cos(8.0 * x * w) + b8 * sin(8.0 * x * w);
 		incidentFluxVec.push_back(incidentFlux);
 
-//		std::cout << incidentFluxVec[i] << "		" << x << std::endl;
 	}
-//	std::cout << "\n\nincidentFluxVec: " << std::endl;
-//	for(int i = 0; i < numGridpoints; i++)
-//		std::cout << incidentFluxVec[i] << std::endl;
-//	std::cout << std::endl;
 
 }

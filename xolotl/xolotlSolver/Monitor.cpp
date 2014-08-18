@@ -9,9 +9,12 @@
 #include <petscts.h>
 #include <petscsys.h>
 #include <sstream>
+#include <fstream>
+#include <iostream>
 #include <vector>
 #include <memory>
 #include <HDF5Utils.h>
+//#include <FluxHandler.h>
 
 namespace xolotlSolver {
 
@@ -41,8 +44,8 @@ std::shared_ptr<xolotlViz::IPlot> perfPlot;
 //! Physical length of the grid
 int xGridLength = 8;
 
-//! The double that will store the accumulation of helium flux.
-double heliumFluence = 0.0;
+//! The variable to store the time at the previous time step.
+PetscReal previousTime;
 
 //! How often HDF5 file is written
 PetscInt stride = 0;
@@ -50,12 +53,19 @@ PetscInt stride = 0;
 //! HDF5 output file name
 std::string outputFileName = "xolotlStop.h5";
 
+// Declare the vector that will store the Id of the helium clusters
+std::vector<int> indices;
+
+// Declare the vector that will store the weight of the helium clusters
+// (their He composition)
+std::vector<int> weight;
+
 /**
  * This is a monitoring method that will save an hdf5 file at each time step.
  * HDF5 is handling the parallel part, so no call to MPI here.
  */
-static PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *ictx) {
+PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution,
+		void *ictx) {
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
@@ -98,13 +108,13 @@ static PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Setup step size variable
-	double hx = (double) xGridLength / (PetscReal)(Mx - 1);
+	double hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
 	// Open the already created HDF5 file
 	xolotlCore::HDF5Utils::openFile(outputFileName);
@@ -118,15 +128,15 @@ static PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 
 	// Add a concentration sub group
-	xolotlCore::HDF5Utils::addConcentrationSubGroup(timestep, networkSize,
-			time, currentTimeStep);
+	xolotlCore::HDF5Utils::addConcentrationSubGroup(timestep, networkSize, time,
+			currentTimeStep);
 
 	// Loop on the full grid
 	for (int xi = 0; xi < Mx; xi++) {
 		// Size of the concentration that will be stored
 		int concSize = -1;
 		// Vector for the concentrations
-		std::vector< std::vector<double> > concVector;
+		std::vector<std::vector<double> > concVector;
 
 		// If it is the locally owned part of the grid
 		if (xi >= xs && xi < xs + xm) {
@@ -160,7 +170,8 @@ static PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
 			// Loop on all the processes
 			for (int i = 0; i < worldSize; i++) {
 				// Skip its own
-				if (i == procId) continue;
+				if (i == procId)
+					continue;
 
 				// Send the size
 				MPI_Send(&concSize, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
@@ -174,7 +185,8 @@ static PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
 		}
 
 		// Skip the grid point if the size is 0
-		if (concSize == 0) continue;
+		if (concSize == 0)
+			continue;
 
 		// All processes must create the dataset
 		xolotlCore::HDF5Utils::addConcentrationDataset(xi, concSize);
@@ -197,7 +209,7 @@ static PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that will compute the total helium fluence
  */
-static PetscErrorCode heliumRetention(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Network size
 	const int size = PetscSolver::getNetwork()->size();
@@ -205,10 +217,6 @@ static PetscErrorCode heliumRetention(TS ts, PetscInt timestep, PetscReal time,
 	PetscInt xs, xm, Mx;
 
 	PetscFunctionBeginUser;
-
-	// Variable to represent the real, or current, time
-	PetscReal realTime;
-	ierr = TSGetTime(ts, &realTime);
 
 	// Get the flux handler that will be used to compute fluxes.
 	auto fluxHandler = PetscSolver::getFluxHandler();
@@ -223,43 +231,138 @@ static PetscErrorCode heliumRetention(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Setup step size variable
-	double hx = (double) xGridLength / (PetscReal)(Mx - 1);
+	double hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
-	// Get the helium cluster
-	auto heCluster = (PSICluster *) PetscSolver::getNetwork()->get("He", 1);
+	// The length of the time step
+	auto dt = time - previousTime;
 
-	// Exit if there is no helium cluster in the network
-	if (!heCluster)
-		PetscFunctionReturn(0);
+	// Increment the fluence with the value at this current timestep
+	auto heliumFluence = fluxHandler->incrementHeFluence(dt, hx);
 
-	// Get the composition of the cluster
-	auto thisComp = heCluster->getComposition();
-	std::vector<int> compVec = { thisComp["He"], thisComp["V"], thisComp["I"] };
+	// Set the previous time to the current time for the next timestep
+	previousTime = time;
 
-	// Define the reactant ID
-	int reactantIndex = heCluster->getId() - 1;
+	PetscFunctionReturn(0);
+}
+
+/**
+ * This is a monitoring method that will compute the total helium fluence
+ */
+PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void *ictx) {
+	// Network size
+	const int size = PetscSolver::getNetwork()->size();
+	PetscErrorCode ierr;
+	PetscInt xs, xm, Mx;
+
+	PetscFunctionBeginUser;
+
+	// Get the flux handler that will be used to compute fluxes.
+	auto fluxHandler = PetscSolver::getFluxHandler();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	checkPetscError(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+	checkPetscError(ierr);
+	// Get the size of the total grid
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
+	checkPetscError(ierr);
+
+	// Setup step size variable
+	double hx = (double) xGridLength / (PetscReal) (Mx - 1);
+
+	// Get the array of concentration
+	PetscReal *solutionArray;
+	ierr = DMDAVecGetArray(da, solution, &solutionArray);
+	checkPetscError(ierr);
+
+	// Store the concentration over the grid
+	double heConcentration = 0;
 
 	// Loop on the grid
 	for (int xi = xs; xi < xs + xm; xi++) {
-		// Actual position in nm
-		double x = xi * hx;
+		// Get the pointer to the beginning of the solution data for this grid point
+		PetscReal *gridPointSolution;
+		gridPointSolution = solutionArray + size * xi;
 
-		// Vector representing the position at which the flux will be calculated
-		// Currently we are only in 1D
-		std::vector<double> gridPosition = { x, 0, 0 };
+		// Update the concentrations in the network to have physics results
+		// (non negative)
+		PetscSolver::getNetwork()->updateConcentrationsFromArray(
+				gridPointSolution);
 
-		// Calculate the incident flux
-		auto incidentFlux = fluxHandler->getIncidentFlux(compVec, gridPosition,
-				realTime);
+		// Get the concentrations from the network
+		double concentrations[size];
+		double * concentration = &concentrations[0];
+		PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
 
-		// And add it to the fluence
-		heliumFluence += 10000.0 * std::max(0.0, incidentFlux) * time;
+		// Loop on all the indices
+		for (int i = 0; i < indices.size(); i++) {
+			// Add the current concentration times the number of helium in the cluster
+			// (from the weight vector)
+			heConcentration += concentration[indices[i]] * weight[i] * hx;
+		}
+	}
+
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+	// Get the current process ID
+	int procId;
+	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+
+	// Master process
+	if (procId == 0) {
+		// Loop on all the other processes
+		for (int i = 1; i < worldSize; i++) {
+			double otherConcentration = 0.0;
+
+			// Receive the value from the other processes
+			MPI_Recv(&otherConcentration, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+					MPI_STATUS_IGNORE);
+
+			// Add them to the master one
+			heConcentration += otherConcentration;
+		}
+		// Get the final time
+		PetscReal time;
+		ierr = TSGetTime(ts, &time);
+		checkPetscError(ierr);
+
+		// Get the fluence
+		double heliumFluence = fluxHandler->getHeFluence();
+
+		// Print the result
+		std::cout << "\nTime: " << time << std::endl;
+		std::cout << "Helium retention = "
+				<< 100.0 * (heConcentration / heliumFluence) << " %"
+				<< std::endl;
+		std::cout << "Helium concentration = " << heConcentration << std::endl;
+		std::cout << "Helium fluence = " << heliumFluence << "\n" << std::endl;
+
+//		// Uncomment to write the retention and the fluence in a file
+//		std::ofstream outputFile;
+//		outputFile.open("retentionOut.txt", ios::app);
+//		outputFile << heliumFluence << " "
+//				<< 100.0 * (heConcentration / heliumFluence) << std::endl;
+//		outputFile.close();
+	}
+
+	else {
+		// Send the value of the timer to the master process
+		MPI_Send(&heConcentration, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
 	}
 
 	PetscFunctionReturn(0);
@@ -268,7 +371,7 @@ static PetscErrorCode heliumRetention(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that will save 1D plots of one concentration
  */
-static PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
@@ -308,12 +411,12 @@ static PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	checkPetscError(ierr);
 	// Setup some step size variables
-	hx = (double) xGridLength / (PetscReal)(Mx - 1);
+	hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
 	// Choice of the cluster to be plotted
 	int iCluster = 7;
@@ -443,7 +546,7 @@ static PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that will save 1D plots of many concentrations
  */
-static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
@@ -483,12 +586,13 @@ static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	checkPetscError(ierr);
+
 	// Setup some step size variables
-	hx = (double) xGridLength / (PetscReal)(Mx - 1);
+	hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
 	// To plot a maximum of 18 clusters of the whole benchmark
 	const int loopSize = std::min(18, networkSize);
@@ -496,7 +600,7 @@ static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 	if (procId == 0) {
 		// Create a Point vector to store the data to give to the data provider
 		// for the visualization
-		std::vector < std::vector<xolotlViz::Point> > myPoints(loopSize);
+		std::vector<std::vector<xolotlViz::Point> > myPoints(loopSize);
 
 		// Loop on the grid
 		for (xi = xs; xi < xs + xm; xi++) {
@@ -628,7 +732,7 @@ static PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will save 2D plots for each depths of
  * the concentration as a function of the cluster composition.
  */
-static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
@@ -668,21 +772,27 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	checkPetscError(ierr);
+
 	// Setup some step size variables
-	hx = (double) xGridLength / (PetscReal)(Mx - 1);
+	hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
 	// Get the maximum size of HeV clusters
 	auto psiNetwork = std::dynamic_pointer_cast < PSIClusterReactionNetwork
 			> (PetscSolver::getNetwork());
-	std::map < std::string, std::string > props = psiNetwork->getProperties();
+	std::map<std::string, std::string> props = psiNetwork->getProperties();
 	int maxHeVClusterSize = std::stoi(props["maxHeVClusterSize"]);
+	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 
 	// Loop on the grid points
 	for (xi = xs; xi < xs + xm; xi++) {
+
+		if (xi != 2)
+			continue;
+
 		// Create a Point vector to store the data to give to the data provider
 		// for the visualization
 		auto myPoints = std::make_shared<std::vector<xolotlViz::Point> >();
@@ -702,13 +812,14 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 		PSICluster * cluster;
 
 		// Loop on Y = V number
-		for (int i = 0; i < maxHeVClusterSize; i++) {
+		for (int i = 0; i < maxVClusterSize; i++) {
 			// Loop on X = He number
-			for (int j = 0; j < maxHeVClusterSize; j++) {
+			for (int j = 0; j < maxHeVClusterSize - maxVClusterSize; j++) {
 				double conc = 0.0;
 				// V clusters
 				if (j == 0) {
-					cluster = (PSICluster *) PetscSolver::getNetwork()->get("V", i);
+					cluster = (PSICluster *) PetscSolver::getNetwork()->get("V",
+							i);
 					if (cluster) {
 						// Get the ID of the cluster
 						int id = cluster->getId() - 1;
@@ -717,7 +828,8 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 				}
 				// He clusters
 				else if (i == 0) {
-					cluster = (PSICluster *) PetscSolver::getNetwork()->get("He", j);
+					cluster = (PSICluster *) PetscSolver::getNetwork()->get(
+							"He", j);
 					if (cluster) {
 						// Get the ID of the cluster
 						int id = cluster->getId() - 1;
@@ -726,14 +838,20 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 				}
 				// HeV clusters
 				else {
-					cluster = (PSICluster *) PetscSolver::getNetwork()->getCompound("HeV", {
-									j, i, 0 });
+					cluster =
+							(PSICluster *) PetscSolver::getNetwork()->getCompound(
+									"HeV", { j, i, 0 });
 					if (cluster) {
 						// Get the ID of the cluster
 						int id = cluster->getId() - 1;
 						conc = concentration[id];
 					}
 				}
+
+//				double value = 0.0;
+//				if (conc > 1.0e-16) {
+//					value = 20.0 + log10(conc);
+//				}
 
 				// Create a Point with the concentration as the value
 				// and add it to myPoints
@@ -780,7 +898,7 @@ static PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that will save 1D plots of one performance timer
  */
-static PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	PetscInt ierr;
 
@@ -894,8 +1012,10 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	PetscBool flg;
 	PetscInt length;
 	PetscOptionsGetInt(NULL, "-da_grid_x", &length, &flg);
-	if (flg) xGridLength = (int) length;
-	else xGridLength = 8;
+	if (flg)
+		xGridLength = (int) length;
+	else
+		xGridLength = 8;
 
 	// Flags to launch the monitors or not
 	PetscBool flag2DPlot, flag1DPlot, flagSeries, flagPerf, flagRetention,
@@ -924,14 +1044,6 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	// Check the option -start_stop
 	ierr = PetscOptionsHasName(NULL, "-start_stop", &flagStatus);
 	checkPetscError(ierr);
-
-	// Use this instead of trying every flag
-	int bigFlag = flag1DPlot + flag2DPlot + flagSeries + flagPerf
-			+ flagRetention + flagStatus;
-
-	// Don't do anything if no option is set
-	if (!bigFlag)
-		PetscFunctionReturn(0);
 
 	// Set the monitor to save 1D plot of one concentration
 	if (flag1DPlot) {
@@ -1061,8 +1173,61 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 
 	// Set the monitor to compute the helium fluence for the retention calculation
 	if (flagRetention) {
-		// heliumRetention will be called at each timestep
-		ierr = TSMonitorSet(ts, heliumRetention, NULL, NULL);
+		// Get all the helium clusters
+		auto heClusters = PetscSolver::getNetwork()->getAll(heType);
+
+		// Get all the helium-vacancy clusters
+		auto heVClusters = PetscSolver::getNetwork()->getAll(heVType);
+
+		// Loop on the helium clusters
+		for (int i = 0; i < heClusters.size(); i++) {
+			auto cluster = (PSICluster *) heClusters[i];
+			int id = cluster->getId() - 1;
+			// Add the Id to the vector
+			indices.push_back(id);
+			// Add the number of heliums of this cluster to the weight
+			weight.push_back(cluster->getSize());
+		}
+
+		// Loop on the helium-vacancy clusters
+		for (int i = 0; i < heVClusters.size(); i++) {
+			auto cluster = (PSICluster *) heVClusters[i];
+			int id = cluster->getId() - 1;
+			// Add the Id to the vector
+			indices.push_back(id);
+			// Add the number of heliums of this cluster to the weight
+			auto comp = cluster->getComposition();
+			weight.push_back(comp[heType]);
+		}
+
+		if (indices.size() == 0) {
+			throw std::string(
+					"PetscSolver Exception: Cannot compute the retention because there is no helium or helium-vacancy cluster in the network.");
+		}
+
+		// computeHeliumFluence will be called at each timestep
+		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);
+		checkPetscError(ierr);
+
+		// computeHeliumRetention will be called at each timestep
+		ierr = TSMonitorSet(ts, computeHeliumRetention, NULL, NULL);
+		checkPetscError(ierr);
+
+//		// Uncomment to clear the file where the retention will be written
+//		std::ofstream outputFile;
+//		outputFile.open("retentionOut.txt");
+//		outputFile.close();
+	}
+
+	// Set only the monitor to compute the fluence in the case the retention
+	// option is not used but the fluence one is
+	// Get the flux handler that will be used to compute fluxes.
+	auto fluxHandler = PetscSolver::getFluxHandler();
+	// Get the fluence option
+	bool heFluenceOption = fluxHandler->getUsingMaxHeFluence();
+	if (!flagRetention && heFluenceOption) {
+		// computeHeliumFluence will be called at each timestep
+		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);
 		checkPetscError(ierr);
 	}
 
@@ -1123,104 +1288,6 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	}
 
 	PetscFunctionReturn(0);
-}
-
-/**
- * This operation computes and prints the helium retention.
- * @param ts The time stepper.
- * @param C The vector of solution.
- */
-void computeRetention(TS ts, Vec C) {
-	PetscErrorCode ierr;
-	// Network size
-	const int size = PetscSolver::getNetwork()->size();
-
-	// Get the helium cluster
-	auto heCluster = (PSICluster *) PetscSolver::getNetwork()->get("He", 1);
-
-	if (!heCluster) {
-		throw std::string(
-				"PetscSolver Exception: Cannot compute the retention because there is no helium1 in the network.");
-		return;
-	}
-
-	// Keep the ID of the helium
-	int reactantIndex = heCluster->getId() - 1;
-
-	// Get the da from ts
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr);
-
-	// Get the array of concentration
-	PetscReal *solutionArray;
-	ierr = DMDAVecGetArray(da, C, &solutionArray);
-	checkPetscError(ierr);
-
-	//Get local grid boundaries
-	PetscInt xs, xm;
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	checkPetscError(ierr);
-
-	// Store the concentration over the grid
-	double heConcentration = 0;
-
-	// Loop on the grid
-	for (int xi = xs; xi < xs + xm; xi++) {
-		// Get the pointer to the beginning of the solution data for this grid point
-		PetscReal *gridPointSolution;
-		gridPointSolution = solutionArray + size * xi;
-
-		// Update the concentrations in the network to have physics results
-		// (non negative)
-		PetscSolver::getNetwork()->updateConcentrationsFromArray(
-				gridPointSolution);
-
-		// Get the concentrations from the network
-		double concentrations[size];
-		double * concentration = &concentrations[0];
-		PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
-
-		// Add the current concentration
-		heConcentration += concentration[reactantIndex];
-	}
-
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
-	// Get the current process ID
-	int procId;
-	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
-
-	// Master process
-	if (procId == 0) {
-		// Loop on all the other processes
-		for (int i = 1; i < worldSize; i++) {
-			double otherConcentration = 0.0;
-			double otherFluence = 0.0;
-
-			// Receive the value from the other processes
-			MPI_Recv(&otherConcentration, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
-					MPI_STATUS_IGNORE);
-			MPI_Recv(&otherFluence, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
-					MPI_STATUS_IGNORE);
-
-			// Add them to the master one
-			heConcentration += otherConcentration;
-			heliumFluence += otherFluence;
-		}
-
-		// Print the result
-		std::cout << "Helium retention = "
-				<< 100.0 * heConcentration / heliumFluence << " %" << std::endl;
-	}
-
-	else {
-		// Send the value of the timer to the master process
-		MPI_Send(&heConcentration, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-		MPI_Send(&heliumFluence, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-	}
-	return;
 }
 
 }

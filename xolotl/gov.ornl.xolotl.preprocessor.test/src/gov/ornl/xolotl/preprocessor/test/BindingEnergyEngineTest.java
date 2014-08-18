@@ -40,7 +40,7 @@ public class BindingEnergyEngineTest {
 				1.0e-16);
 
 		// Check the code for the invalid case where size > 8.
-		assertEquals(Double.POSITIVE_INFINITY, engine.getHeBindingEnergy(9),
+		assertEquals(Double.POSITIVE_INFINITY, engine.getHeBindingEnergy(10),
 				1.0e-16);
 
 		return;
@@ -65,7 +65,7 @@ public class BindingEnergyEngineTest {
 
 		// Check V = 29 to make sure the larger size clusters are computed
 		// correctly.
-		assertEquals(2.40, engine.getVBindingEnergy(29), 1.0e-2);
+		assertEquals(2.257, engine.getVBindingEnergy(29), 1.0e-2);
 
 		return;
 	}
@@ -109,11 +109,11 @@ public class BindingEnergyEngineTest {
 		// Local Declarations
 		BindingEnergyEngine engine = new BindingEnergyEngine();
 
-		// Check the code for He_31V_6 -> He_30V_6 + He_1
-		assertEquals(3.85, engine.getHeVtoHeBindingEnergy(31, 6), 1.0e-2);
+		// Check the code for He_30V_6 -> He_29V_6 + He_1
+		assertEquals(2.87, engine.getHeVtoHeBindingEnergy(30, 6), 1.0e-2);
 
 		// Check the code for He_1V_44 -> He_1V_43 + V_1
-		assertEquals(2.52, engine.getHeVtoVBindingEnergy(1, 44), 1.0e-2);
+		assertEquals(2.609, engine.getHeVtoVBindingEnergy(1, 44), 1.0e-2);
 
 		// Check the code for He_8 --> He_7 + He_1 to make sure work is
 		// delegated to the
@@ -165,11 +165,11 @@ public class BindingEnergyEngineTest {
 			// Delete the fit file
 			fitFile.delete();
 
-			// Check the code for He_31V_6 -> He_30V_6 + He_1 using the original
+			// Check the code for He_30V_6 -> He_29V_6 + He_1 using the original
 			// coefficients. (Make sure the values from the file don't hang
 			// around.)
 			engine = new BindingEnergyEngine();
-			assertEquals(3.85, engine.getHeVtoHeBindingEnergy(31, 6), 1.0e-2);
+			assertEquals(2.87, engine.getHeVtoHeBindingEnergy(30, 6), 1.0e-2);
 
 		} catch (IOException e) {
 			// Complain and fail

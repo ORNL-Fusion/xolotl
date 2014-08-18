@@ -1,10 +1,47 @@
 # Set a name for this project.
-PROJECT ( xolotl C CXX )
+PROJECT ( xolotl C CXX Java )
 # Set the minimum required version of cmake for this project.
 cmake_minimum_required(VERSION 2.8)
 
 # Include the modules to find PETSC, ITAPS, etc. from Jed Brown
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
+
+# Find Java to run the preprocessor
+FIND_PACKAGE(Java REQUIRED)
+include(UseJava)
+# Collect all of the preprocessor's dependencies
+file(GLOB JAVA_DEPS "${CMAKE_SOURCE_DIR}/gov.ornl.xolotl.preprocessor" 
+                    "${CMAKE_SOURCE_DIR}/gov.ornl.xolotl.preprocessor/deps" 
+                    "${CMAKE_SOURCE_DIR}/gov.ornl.xolotl.preprocessor/deps/*" 
+                    "${CMAKE_BINARY_DIR}/deps" "${CMAKE_BINARY_DIR}/deps/*")
+                    
+if (WIN32 AND NOT CYGWIN AND CMAKE_HOST_SYSTEM_NAME MATCHES "Windows")
+     set(CMAKE_JAVA_INCLUDE_FLAG_SEP ";")
+else ()
+     set(CMAKE_JAVA_INCLUDE_FLAG_SEP ":")
+endif()
+
+# Add the preprocessor dependencies to the Java include path
+foreach(dep ${JAVA_DEPS})
+    set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${dep}${CMAKE_JAVA_INCLUDE_FLAG_SEP}${CMAKE_JAVA_INCLUDE_PATH_FINAL}")
+endforeach(dep ${JAVA_DEPS})
+# Create a directory to contain the compiled preprocessor Java files
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/preprocessor)
+set(PREPROCESSOR_DIR ${CMAKE_CURRENT_BINARY_DIR}/preprocessor)
+# Tell CMake where to look for the preprocessor source files
+set(PREPROCESSOR_SRC ${CMAKE_SOURCE_DIR}/gov.ornl.xolotl.preprocessor/src/gov/ornl/xolotl/preprocessor)
+set(CMAKE_JAVA_TARGET_OUTPUT_DIR ${PREPROCESSOR_DIR})
+set(CMAKE_JAVA_CLASS_OUTPUT_PATH ${PREPROCESSOR_DIR})
+
+# Compile the preprocessor files
+add_jar(xolotlPreprocessor ${PREPROCESSOR_SRC}/Main.java ${PREPROCESSOR_SRC}/Preprocessor.java ${PREPROCESSOR_SRC}/Arguments.java 
+        ${PREPROCESSOR_SRC}/Cluster.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
+        OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
+get_target_property(_jarFile xolotlPreprocessor JAR_FILE)
+get_target_property(_classDir xolotlPreprocessor CLASSDIR)
+message(STATUS "xolotlPreprocessor Jar file:  ${_jarFile}")
+# The preprocessor .class files will be written to preprocessor/CMakeFiles/xolotlPreprocessor.dir/gov/ornl/xolotl/preprocessor
+message(STATUS "xolotlPreprocessor class compiled to ${_classDir}")
 
 # Xolotl requires C++11 to use shared pointers
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")

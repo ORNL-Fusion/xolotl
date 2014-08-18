@@ -1,7 +1,6 @@
 #include "TemperatureHandlerFactory.h"
 #include "TemperatureHandler.h"
 #include "TemperatureProfileHandler.h"
-#include <XolotlOptions.h>
 #include <fstream>
 #include <iostream>
 
@@ -12,7 +11,7 @@ static std::shared_ptr<ITemperatureHandler> theTemperatureHandler;
 
 // Create the desired type of handler registry.
 bool initializeTempHandler( bool useConstTempRegistry, bool useTempProfileRegistry,
-		xolotlCore::XolotlOptions &options)
+		xolotlCore::Options &options)
 {
     bool ret = true;
 
@@ -25,9 +24,7 @@ bool initializeTempHandler( bool useConstTempRegistry, bool useTempProfileRegist
     {
     	auto temp = options.getConstTemperature();
         // we are to use a constant temperature handler
-    	//std::cout << "\nHandler Temp = " << temp << std::endl;
         theTemperatureHandler = std::make_shared<TemperatureHandler>( temp );
-        //theTemperatureHandler->initializeTemperature();
     }
     else if( useTempProfileRegistry )
     {
@@ -43,22 +40,17 @@ bool initializeTempHandler( bool useConstTempRegistry, bool useTempProfileRegist
     	auto temp = options.getConstTemperature();
         // we are to use a constant temperature handler
         theTemperatureHandler = std::make_shared<TemperatureHandler>( temp );
-        //theTemperatureHandler->initializeTemperature();
     }
 
     return ret;
 }
 
 // Provide access to our handler registry.
-std::shared_ptr<ITemperatureHandler> getTemperatureHandler( xolotlCore::XolotlOptions &options )
+std::shared_ptr<ITemperatureHandler> getTemperatureHandler( xolotlCore::Options &options )
 {
     if( !theTemperatureHandler )
     {
         // We have not yet been initialized.
-//        std::cerr << "\nWarning: xolotlSolver temperature handler requested, but "
-//        		"library has not been initialized" << std::endl;
-//        xolotlSolver::initializeTempHandler( false, false, options );
-
         throw std::string("\nxolotlSolver temperature handler requested, but "
         		"library has not been initialized");
     }

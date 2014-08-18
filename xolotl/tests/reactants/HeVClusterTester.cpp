@@ -153,7 +153,46 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n"
 	  	  	  << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
-	BOOST_REQUIRE_CLOSE(-8964899015.0, flux, 10.0);
+	BOOST_REQUIRE_CLOSE(-8964899015.0, flux, 0.1);
+}
+
+/**
+ * This operation checks the HeCluster get*PartialDerivatives methods.
+ */
+BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
+	// Local Declarations
+	// The vector of partial derivatives to compare with
+	double knownPartials[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			0.0, 0.0, 0.0, 0.0, 0.0};
+	// Get the simple reaction network
+	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork(3);
+
+	// Get an HeV cluster with compostion 2,1,0.
+	vector<int> composition = {2, 1, 0};
+	auto cluster = (PSICluster *) network->getCompound(
+			"HeV",composition);
+	// Set the diffusion factor, migration and binding energies based on the
+	// values from the tungsten benchmark for this problem.
+	cluster->setDiffusionFactor(0.0);
+	cluster->setMigrationEnergy(numeric_limits<double>::infinity());
+	vector<double> energies = {3.02, 7.25,
+			numeric_limits<double>::infinity(), 10.2};
+	cluster->setTemperature(1000.0);
+	cluster->setBindingEnergies(energies);
+	cluster->setConcentration(0.5);
+
+	// Compute the rate constants that are needed for the partial derivatives
+	cluster->computeRateConstants(1000.0);
+	// Get the vector of partial derivatives
+	auto partials = cluster->getPartialDerivatives(1000.0);
+
+	// Check the size of the partials
+	BOOST_REQUIRE_EQUAL(partials.size(), 15);
+
+	// Check all the values
+	for (int i = 0; i < partials.size(); i++) {
+		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
+	}
 }
 
 /**

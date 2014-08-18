@@ -22,21 +22,6 @@ private:
 	//! The number of interstitial defects in this cluster.
 	int numI;
 
-	//! The helium cluster of size 1
-	PSICluster * heCluster;
-
-	//! The vacancy cluster of size 1
-	PSICluster * vCluster;
-
-	//! The interstitial cluster of size 1
-	PSICluster * iCluster;
-
-	//! The HeI cluster with one less helium
-	PSICluster * heIClusterLessHe;
-
-	//! The HeI cluster with one less vacancy
-	PSICluster * heIClusterLessI;
-
 	/**
 	 * The default constructor is private because PSIClusters must always be
 	 * initialized with a size.
@@ -98,8 +83,6 @@ public:
 	 * @param temp
 	 */
 	virtual void setTemperature(double temp);
-
-protected:
 
 	/**
 	 * This operation handles partial replacement reactions of the form

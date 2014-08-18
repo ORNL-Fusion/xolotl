@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "IFluxHandler.h"
+#include <Options.h>
 
 namespace xolotlSolver
 {
@@ -12,9 +13,11 @@ namespace xolotlSolver
  * TODO determine if we need to take an enum instead of a bool,
  * if we need to support more than these two types of registries.
  *
+ * @param usesMaxHeFluence	Whether the maximum Helium fluence option was specified
+ * @param options	Xolotl options set from the parameter file
  * @return True iff the handler registry was created successfully.
  */
-bool initializeMaterial( );
+bool initializeMaterial( xolotlCore::Options &options );
 
 //bool initializeMaterial( bool useWRegistry );
 

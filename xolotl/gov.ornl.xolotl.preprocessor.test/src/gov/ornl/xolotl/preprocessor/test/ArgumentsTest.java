@@ -27,6 +27,15 @@ public class ArgumentsTest {
 		try {
 			// Parse the empty string of arguments
 			args = CliFactory.parseArguments(Arguments.class, new String[] {});
+			
+			// Check that the default maximum Helium cluster size is 8
+			assertEquals(8, args.getMaxHeSize());
+			
+			// Check that the default maximum vacancy cluster size is 29
+			assertEquals(29, args.getMaxVSize());
+			
+			// Check that the default maximum interstitial cluster size is 6
+			assertEquals(6, args.getMaxISize());
 
 			// Check if there is a material argument
 			assertEquals(false, args.isMaterial());
@@ -41,7 +50,7 @@ public class ArgumentsTest {
 			assertEquals(false, args.isHeFlux());
 			
 			// Check if there is an heFluence argument
-			assertEquals(false, args.isHeFluence());
+			assertEquals(false, args.isMaxHeFluence());
 
 			// Check that the default perfHandler is std
 			assertEquals("std", args.getPerfHandler());
@@ -57,7 +66,7 @@ public class ArgumentsTest {
 
 			// Check the default petscArgs
 			assertEquals(
-					"-da_grid_x 10 -ts_final_time 1000 "
+					"-da_grid_x 10 -ts_final_time 1000 -ts_dt 1.0e-12 "
 							+ "-ts_max_steps 3 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
 							+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type redundant "
 							+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor",
@@ -82,7 +91,17 @@ public class ArgumentsTest {
 			// Parse the specified string of arguments
 			args = CliFactory.parseArguments(Arguments.class, new String[] {
 					"--startTemp", "900", "--material", "Fe", "--perfHandler",
-					"dummy" });
+					"dummy", "--maxHeSize", "7", "--maxVSize", "30", "--maxISize", "5",
+					"--checkpoint", "xolotlStop.h5" });
+			
+			// Check that the maximum Helium cluster size is 7
+			assertEquals(7, args.getMaxHeSize());
+			
+			// Check that the maximum vacancy cluster size is 30
+			assertEquals(30, args.getMaxVSize());
+			
+			// Check that the maximum interstitial cluster size is 5
+			assertEquals(5, args.getMaxISize());
 			
 			// Check if there is a material argument
 			assertEquals(true, args.isMaterial());
@@ -100,7 +119,7 @@ public class ArgumentsTest {
 			assertEquals(false, args.isHeFlux());
 			
 			// Check if there is an heFluence argument
-			assertEquals(false, args.isHeFluence());
+			assertEquals(false, args.isMaxHeFluence());
 
 			// Check that the perfHandler is dummy
 			assertEquals("dummy", args.getPerfHandler());
@@ -109,14 +128,17 @@ public class ArgumentsTest {
 			assertEquals("dummy", args.getVizHandler());
 
 			// Check if there is a checkpoint argument
-			assertEquals(false, args.isCheckpoint());
+			assertEquals(true, args.isCheckpoint());
+
+			// Check the name of the file for the checkpoint
+			assertEquals("xolotlStop.h5", args.getCheckpoint());
 
 			// Check that the default networkFile is networkInit.h5
 			assertEquals("networkInit.h5", args.getNetworkFile());
 
 			// Check the default petscArgs
 			assertEquals(
-					"-da_grid_x 10 -ts_final_time 1000 "
+					"-da_grid_x 10 -ts_final_time 1000 -ts_dt 1.0e-12 "
 							+ "-ts_max_steps 3 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
 							+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type redundant "
 							+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor",
