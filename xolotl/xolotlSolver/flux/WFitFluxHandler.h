@@ -9,6 +9,15 @@ namespace xolotlSolver {
  * This class realizes the IFluxHandler interface to calculate the incident and outgoing fluxes.
  */
 class WFitFluxHandler: public FluxHandler {
+private:
+	/**
+	 * Function that calculate the flux at a given position x (in nm).
+	 * This function is not normalized. The surface is supposed to be (100).
+	 *
+	 * @param x The position where to evaluate he fit
+	 * @return the evaluated value
+	 */
+	double FitFunction100(double x);
 
 public:
 
@@ -25,6 +34,7 @@ public:
 
 	/**
 	 * Function to calculate and store the incident flux values at each grid point
+	 *
 	 * @param numGridpoints The total number of grid points that will be used
 	 * @param step The step size between grid points
 	 */

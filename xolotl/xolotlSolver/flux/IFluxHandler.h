@@ -55,10 +55,8 @@ public:
 	/**
 	 * This operation increments the Helium fluence at the current time step.
 	 * @param dt			The length of the time step
-	 * @param step			The grid step size
-	 * @return				The value of the Helium fluence at the current time step
 	 */
-	virtual double incrementHeFluence(double dt, double step) = 0;
+	virtual void incrementHeFluence(double dt) = 0;
 
 	/**
 	 * This operation returns the Helium fluence

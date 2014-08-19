@@ -243,7 +243,7 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 	auto dt = time - previousTime;
 
 	// Increment the fluence with the value at this current timestep
-	auto heliumFluence = fluxHandler->incrementHeFluence(dt, hx);
+	fluxHandler->incrementHeFluence(dt);
 
 	// Set the previous time to the current time for the next timestep
 	previousTime = time;
@@ -419,7 +419,7 @@ PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 	hx = (double) xGridLength / (PetscReal) (Mx - 1);
 
 	// Choice of the cluster to be plotted
-	int iCluster = 7;
+	int iCluster = 6;
 
 	if (procId == 0) {
 		// Create a Point vector to store the data to give to the data provider
@@ -789,10 +789,6 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 
 	// Loop on the grid points
 	for (xi = xs; xi < xs + xm; xi++) {
-
-		if (xi != 2)
-			continue;
-
 		// Create a Point vector to store the data to give to the data provider
 		// for the visualization
 		auto myPoints = std::make_shared<std::vector<xolotlViz::Point> >();
@@ -847,11 +843,6 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 						conc = concentration[id];
 					}
 				}
-
-//				double value = 0.0;
-//				if (conc > 1.0e-16) {
-//					value = 20.0 + log10(conc);
-//				}
 
 				// Create a Point with the concentration as the value
 				// and add it to myPoints
