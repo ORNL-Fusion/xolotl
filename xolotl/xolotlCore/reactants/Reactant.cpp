@@ -31,7 +31,7 @@ std::shared_ptr<Reactant> Reactant::clone() {
 }
 
 Reactant::Reactant(double conc, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		concentration(conc), name(""), id(0), handlerRegistry(registry) {
+		concentration(conc), name(""), id(0), temperature(0.0), handlerRegistry(registry) {
 }
 
 double Reactant::getConcentration() const {
@@ -140,3 +140,13 @@ const std::map<std::string, int> & Reactant::getComposition() const {
 	// Return the composition map
 	return compositionMap;
 }
+
+namespace xolotlCore {
+std::ostream& operator<< (std::ostream& out, const Reactant& reactant) {
+
+	// Output the name and Id of the reactant
+	out << reactant.name << "  Reactant Id: " << reactant.id-1;
+
+	return out;
+}
+};

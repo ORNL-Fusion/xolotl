@@ -7,11 +7,13 @@
 #include <memory>
 #include <map>
 #include "ReactionNetwork.h"
+#include <iostream>
 
 namespace xolotlPerf {
-	class IHandlerRegistry;
-    class IEventCounter;
-};
+class IHandlerRegistry;
+class IEventCounter;
+}
+;
 
 namespace xolotlCore {
 
@@ -26,18 +28,27 @@ namespace xolotlCore {
  * sense (as if they were nodes connected by an edge on a network graph).
  *
  * This is an abstract base class that only provides direct support for
- * manipulate the concentration, etc. It should be subclassed to add
+ * manipulating the concentration, etc. It should be subclassed to add
  * functionality for calculate fluxes and computing connectivity.
  */
 class Reactant {
 
+//	/**
+//	 * Function to overload the streaming operator in order to output Reactant
+//	 * information easily.
+//	 */
+//	friend std::ostream& operator<<(std::ostream& out,
+//			const Reactant& reactant);
+
 protected:
 
-	/** The total concentration of this Reactant.
+	/**
+	 * The total concentration of this Reactant.
 	 */
 	double concentration;
 
-	/** The name of this Reactant.
+	/**
+	 * The name of this Reactant.
 	 */
 	std::string name;
 
@@ -46,30 +57,32 @@ protected:
 	 */
 	std::string typeName;
 
-	/** An integer identification number for this reactant.
+	/**
+	 * An integer identification number for this reactant.
 	 */
 	int id;
 
 	/**
-	 * The temperature t which the cluster currently exists. The diffusion
+	 * The temperature at which the cluster currently exists. The diffusion
 	 * coefficient is recomputed each time the temperature is changed.
 	 */
 	double temperature;
 
-	/** The reaction network that includes this reactant.
+	/**
+	 * The reaction network that includes this reactant.
 	 */
 	std::shared_ptr<ReactionNetwork> network;
 
 	/**
 	 * The map that contains the composition of this cluster
 	 */
-	std::map<std::string,int> compositionMap;
+	std::map<std::string, int> compositionMap;
 
-    /**
-     * The performance handler registry that will be used with
-     * this class.
-     */
-    std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
+	/**
+	 * The performance handler registry that will be used with
+	 * this class.
+	 */
+	std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
 
 	/**
 	 * The constructor.
@@ -115,7 +128,8 @@ public:
 	 *
 	 * @param conc The initial concentration
 	 */
-	Reactant(double conc, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	Reactant(double conc,
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * This operation returns the current concentration.
@@ -172,18 +186,16 @@ public:
 	virtual void setReactionNetwork(
 			std::shared_ptr<ReactionNetwork> reactionNetwork);
 
-
-    /**
-     * Release the reaction network object.
-     *
-     * This should only be done when the reaction network is no longer needed
-     * by the program, and is done to break dependence cycles that would
-     * otherwise keep the network and reactant objects from being destroyed.
-     */
-    virtual void releaseReactionNetwork( void ) {
-        network.reset();
-    }
-
+	/**
+	 * Release the reaction network object.
+	 *
+	 * This should only be done when the reaction network is no longer needed
+	 * by the program, and is done to break dependence cycles that would
+	 * otherwise keep the network and reactant objects from being destroyed.
+	 */
+	virtual void releaseReactionNetwork(void) {
+		network.reset();
+	}
 
 	/**
 	 * This operation returns a list that represents the connectivity
@@ -228,7 +240,8 @@ public:
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
 	 */
-	virtual void getPartialDerivatives(double temperature, std::vector<double> & partials) const;
+	virtual void getPartialDerivatives(double temperature,
+			std::vector<double> & partials) const;
 
 	/**
 	 * This operation writes the contents of the reactant to a string. This
@@ -303,6 +316,15 @@ public:
 		return temperature;
 	}
 
+	/**
+	 * Function to overload the streaming operator in order to output Reactant
+	 * information easily.
+	 * @param out The output stream
+	 * @param reactant The reactant
+	 * @return The output stream that will print desired Reactant information
+	 */
+	friend std::ostream& operator<<(std::ostream& out,
+			const Reactant& reactant);
 
 };
 

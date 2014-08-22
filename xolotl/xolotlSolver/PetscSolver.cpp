@@ -159,8 +159,8 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 		numOfxGridPoints = 8.0;
 
 	// Setup some step size variables
-	PetscReal hx;
-	hx = numOfxGridPoints / (PetscReal) (Mx - 1);
+//	PetscReal hx;
+	double hx = (double) numOfxGridPoints / (PetscReal) (Mx - 1);
 
 	// Get the flux handler that will be used to compute fluxes.
 	auto fluxHandler = PetscSolver::getFluxHandler();

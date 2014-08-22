@@ -30,7 +30,7 @@ void WFitFluxHandler::initializeFluxHandler(int numGridpoints, double step) {
 		normFactor += FitFunction100(x) * stepSize;
 	}
 
-	std::cout << normFactor << std::endl;
+//	std::cout << normFactor << std::endl;
 
 	// Factor the incident flux will be multiplied by
 	double heFluxNormalized = heFlux / normFactor;
