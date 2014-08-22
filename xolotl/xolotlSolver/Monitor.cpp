@@ -334,7 +334,7 @@ PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
 			double otherConcentration = 0.0;
 
 			// Receive the value from the other processes
-			MPI_Recv(&otherConcentration, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+			MPI_Recv(&otherConcentration, 1, MPI_DOUBLE, i, 1, MPI_COMM_WORLD,
 					MPI_STATUS_IGNORE);
 
 			// Add them to the master one
@@ -356,17 +356,17 @@ PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
 		std::cout << "Helium concentration = " << heConcentration << std::endl;
 		std::cout << "Helium fluence = " << heliumFluence << "\n" << std::endl;
 
-		// Uncomment to write the retention and the fluence in a file
-		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << heliumFluence << " "
-				<< 100.0 * (heConcentration / heliumFluence) << std::endl;
-		outputFile.close();
+//		// Uncomment to write the retention and the fluence in a file
+//		std::ofstream outputFile;
+//		outputFile.open("retentionOut.txt", ios::app);
+//		outputFile << heliumFluence << " "
+//				<< 100.0 * (heConcentration / heliumFluence) << std::endl;
+//		outputFile.close();
 	}
 
 	else {
 		// Send the value of the timer to the master process
-		MPI_Send(&heConcentration, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+		MPI_Send(&heConcentration, 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
 	}
 
 	PetscFunctionReturn(0);
@@ -458,18 +458,18 @@ PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 		for (int i = 1; i < worldSize; i++) {
 			// Get the size of the local grid of that process
 			int localSize = 0;
-			MPI_Recv(&localSize, 1, MPI_INT, i, 0, MPI_COMM_WORLD,
+			MPI_Recv(&localSize, 1, MPI_INT, i, 2, MPI_COMM_WORLD,
 					MPI_STATUS_IGNORE);
 
 			// Loop on their grid
 			for (int k = 0; k < localSize; k++) {
 				// Get the position
-				MPI_Recv(&x, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+				MPI_Recv(&x, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD,
 						MPI_STATUS_IGNORE);
 
 				// and the concentration
 				double conc = 0.0;
-				MPI_Recv(&conc, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+				MPI_Recv(&conc, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD,
 						MPI_STATUS_IGNORE);
 
 				// Create a Point with the concentration[iCluster] as the value
@@ -517,7 +517,7 @@ PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 
 	else {
 		// Send the value of the local grid size to the master process
-		MPI_Send(&xm, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+		MPI_Send(&xm, 1, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
 
 		// Loop on the grid
 		for (xi = xs; xi < xs + xm; xi++) {
@@ -536,10 +536,10 @@ PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 			PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
 
 			// Send the value of the local position to the master process
-			MPI_Send(&x, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+			MPI_Send(&x, 1, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
 
 			// Send the value of the concentration to the master process
-			MPI_Send(&concentration[iCluster], 1, MPI_DOUBLE, 0, 0,
+			MPI_Send(&concentration[iCluster], 1, MPI_DOUBLE, 0, 2,
 					MPI_COMM_WORLD);
 		}
 	}
@@ -636,19 +636,19 @@ PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 		for (int i = 1; i < worldSize; i++) {
 			// Get the size of the local grid of that process
 			int localSize = 0;
-			MPI_Recv(&localSize, 1, MPI_INT, i, 0, MPI_COMM_WORLD,
+			MPI_Recv(&localSize, 1, MPI_INT, i, 3, MPI_COMM_WORLD,
 					MPI_STATUS_IGNORE);
 
 			// Loop on their grid
 			for (int k = 0; k < localSize; k++) {
 				// Get the position
-				MPI_Recv(&x, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+				MPI_Recv(&x, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD,
 						MPI_STATUS_IGNORE);
 
 				for (int j = 0; j < loopSize; j++) {
 					// and the concentrations
 					double conc;
-					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD,
 							MPI_STATUS_IGNORE);
 
 					// Create a Point with the concentration[iCluster] as the value
@@ -700,7 +700,7 @@ PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 
 	else {
 		// Send the value of the local grid size to the master process
-		MPI_Send(&xm, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+		MPI_Send(&xm, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
 
 		// Loop on the grid
 		for (xi = xs; xi < xs + xm; xi++) {
@@ -719,11 +719,11 @@ PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 			PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
 
 			// Send the value of the local position to the master process
-			MPI_Send(&x, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+			MPI_Send(&x, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
 
 			for (int i = 0; i < loopSize; i++) {
 				// Send the value of the concentrations to the master process
-				MPI_Send(&concentration[i], 1, MPI_DOUBLE, 0, 0,
+				MPI_Send(&concentration[i], 1, MPI_DOUBLE, 0, 3,
 						MPI_COMM_WORLD);
 			}
 		}
@@ -940,7 +940,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 			double counter = 0.0;
 
 			// Receive the value from the other processes
-			MPI_Recv(&counter, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+			MPI_Recv(&counter, 1, MPI_DOUBLE, i, 4, MPI_COMM_WORLD,
 					MPI_STATUS_IGNORE);
 
 			// Give it the value for procId = i
@@ -983,7 +983,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 		double counter = solverTimer->getValue();
 
 		// Send the value of the timer to the master process
-		MPI_Send(&counter, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+		MPI_Send(&counter, 1, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);
 	}
 
 	// Restart the timer
