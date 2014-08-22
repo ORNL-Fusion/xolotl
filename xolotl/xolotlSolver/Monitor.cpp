@@ -246,15 +246,6 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 	// The length of the time step
 	float dt = time - previousTime;
 
-//	// Get the number of processes
-//	int worldSize;
-//	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
-//	// Gets the process ID (important when it is running in parallel)
-//	int procId;
-//	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
-//	if (procId == 0)
-//		std::cout << "\ndt = " << dt;
-
 	// Increment the fluence with the value at this current timestep
 	fluxHandler->incrementHeFluence(dt);
 
@@ -365,12 +356,12 @@ PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
 		std::cout << "Helium concentration = " << heConcentration << std::endl;
 		std::cout << "Helium fluence = " << heliumFluence << "\n" << std::endl;
 
-//		// Uncomment to write the retention and the fluence in a file
-//		std::ofstream outputFile;
-//		outputFile.open("retentionOut.txt", ios::app);
-//		outputFile << heliumFluence << " "
-//				<< 100.0 * (heConcentration / heliumFluence) << std::endl;
-//		outputFile.close();
+		// Uncomment to write the retention and the fluence in a file
+		std::ofstream outputFile;
+		outputFile.open("retentionOut.txt", ios::app);
+		outputFile << heliumFluence << " "
+				<< 100.0 * (heConcentration / heliumFluence) << std::endl;
+		outputFile.close();
 	}
 
 	else {
@@ -1121,7 +1112,7 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 		for (int i = 1; i < worldSize; i++) {
 			// Get the size of the local grid of that process
 			int localSize = 0;
-			MPI_Recv(&localSize, 1, MPI_INT, i, 0, MPI_COMM_WORLD,
+			MPI_Recv(&localSize, 1, MPI_INT, i, 5, MPI_COMM_WORLD,
 					MPI_STATUS_IGNORE);
 
 			// Loop on their grid
@@ -1130,11 +1121,11 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 				// concentration is greater than 1.0e-16
 				if (!printMaxClusterConc) {
 					// Get the position
-					MPI_Recv(&x, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+					MPI_Recv(&x, 1, MPI_DOUBLE, i, 5, MPI_COMM_WORLD,
 							MPI_STATUS_IGNORE);
 					// Get the concentration
 					double conc = 0.0;
-					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 5, MPI_COMM_WORLD,
 							MPI_STATUS_IGNORE);
 
 					// Don't do anything unless the concentration of the max stable HeV
@@ -1172,7 +1163,7 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 
 	else {
 		// Send the value of the local grid size to the master process
-		MPI_Send(&xm, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+		MPI_Send(&xm, 1, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
 
 		// Loop on the grid
 		for (xi = xs; xi < xs + xm; xi++) {
@@ -1197,10 +1188,10 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 							{ maxStableHeVCluster, maxVClusterSize, 0 });
 
 			// Send the position to the master process
-			MPI_Send(&x, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+			MPI_Send(&x, 1, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
 			// Send the value of the concentration to the master process
 			MPI_Send(&concentration[maxStableHeV->getId() - 1], 1, MPI_DOUBLE,
-					0, 0, MPI_COMM_WORLD);
+					0, 5, MPI_COMM_WORLD);
 
 		}
 	}
