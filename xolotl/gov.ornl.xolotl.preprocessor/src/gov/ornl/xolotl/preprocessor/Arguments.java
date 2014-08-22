@@ -15,7 +15,7 @@ public interface Arguments {
 	 * description of this option.
 	 * 
 	 * @param defaultValue
-	 *            The default value for the maxium size of a Helium cluster in
+	 *            The default value for the maximum size of a Helium cluster in
 	 *            the network if this option is not specified via the command
 	 *            line
 	 * @param description
@@ -36,7 +36,7 @@ public interface Arguments {
 	 * description of this option.
 	 * 
 	 * @param defaultValue
-	 *            The default value for the maxium size of a vacancy cluster
+	 *            The default value for the maximum size of a vacancy cluster
 	 *            in the network if this option is not specified via the
 	 *            command line
 	 * @param description
@@ -57,7 +57,7 @@ public interface Arguments {
 	 * description of this option.
 	 * 
 	 * @param defaultValue
-	 *            The default value for the maxium size of an interstitial
+	 *            The default value for the maximum size of an interstitial
 	 *            cluster in the network if this option is not specified via
 	 *            the command line
 	 * @param description
@@ -145,8 +145,8 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "-da_grid_x 10 -ts_final_time 1000 -ts_dt 1.0e-12 "
-			+ "-ts_max_steps 3 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
+	@Option(defaultValue = "-da_grid_x 10 -ts_final_time 50 -ts_dt 1.0e-12 "
+			+ "-ts_max_steps 100 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
 			+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type redundant "
 			+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor", description = "List of arguments to be passed to PETSc")
 	/**
@@ -260,7 +260,7 @@ public interface Arguments {
 	 *            Brief description of this option
 	 */
 	@Option(description = "The maxium Helium fluence value (in nm) that will be used")
-	// defaultValue = "10")
+	
 	/**
 	 * This operation produces the optional command line option '--maxHeFluence' which 
 	 * takes a single string value and is defined by the previous Option annotation
