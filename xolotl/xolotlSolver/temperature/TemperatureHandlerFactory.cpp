@@ -10,23 +10,23 @@ namespace xolotlSolver
 static std::shared_ptr<ITemperatureHandler> theTemperatureHandler;
 
 // Create the desired type of handler registry.
-bool initializeTempHandler( bool useConstTempRegistry, bool useTempProfileRegistry,
-		xolotlCore::Options &options)
+bool initializeTempHandler(xolotlCore::Options &options)
 {
     bool ret = true;
 
-    if ( useConstTempRegistry && useTempProfileRegistry )
+    if ( options.useConstTemperatureHandlers()
+    		&& options.useTemperatureProfileHandlers() )
     {
         // A constant temperature value AND a temperature profile cannot both be given.
     	throw std::string("\nA constant temperature value AND a temperature file cannot both be given.");
     }
-    else if( useConstTempRegistry )
+    else if( options.useConstTemperatureHandlers() )
     {
     	auto temp = options.getConstTemperature();
         // we are to use a constant temperature handler
         theTemperatureHandler = std::make_shared<TemperatureHandler>( temp );
     }
-    else if( useTempProfileRegistry )
+    else if( options.useTemperatureProfileHandlers() )
     {
     	auto tempFileName = options.getTempProfileFilename();
     	//std::cout << "\nHandler Temperature file = " << tempFileName << std::endl;

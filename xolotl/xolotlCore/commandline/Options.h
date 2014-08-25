@@ -95,6 +95,16 @@ protected:
 	 */
 	bool vizStandardHandlersFlag;
 
+	/**
+	 * Use the material option?
+	 */
+	bool materialFlag;
+
+	/**
+	 * Name of the material.
+	 */
+	std::string materialName;
+
 public:
 
 	/**
@@ -305,6 +315,30 @@ public:
      * \see IOptions.h
      */
     void setVizStandardHandlers(bool flag) {vizStandardHandlersFlag = flag;}
+
+    /**
+     * Should we use a specific material for the helium flux profile?
+     * \see IOptions.h
+     */
+    bool useMaterial() const {return materialFlag;}
+
+    /**
+     * Set the materialFlag.
+     * \see IOptions.h
+     */
+    void setMaterialFlag(bool flag) {materialFlag = flag;}
+
+    /**
+     * Obtain the name of the material to be used for the flux profile.
+     * \see IOptions.h
+     */
+    std::string getMaterial() const {return materialName;}
+
+    /**
+     * Set the name of the material to be used for the flux profile.
+     * \see IOptions.h
+     */
+    void setMaterial(std::string material) {materialName = material;}
 
 
 };//end class Options

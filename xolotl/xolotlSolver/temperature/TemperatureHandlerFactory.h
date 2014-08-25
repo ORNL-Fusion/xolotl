@@ -13,13 +13,10 @@ namespace xolotlSolver
  * TODO determine if we need to take an enum instead of a bool,
  * if we need to support more than these two types of registries.
  *
- * @param useConstRegistry Whether to use the constant temperature handlers.
- * @param useTempProfileRegistry Whether to use the temperature profile handlers.
  * @param options Options for the program
  * @return True iff the handler registry was created successfully.
  */
-bool initializeTempHandler( bool useConstTempRegistry, bool useTempProfileRegistry,
-		xolotlCore::Options &options);
+bool initializeTempHandler(xolotlCore::Options &options);
 
 /**
  * Access the handler registry.

@@ -21,12 +21,15 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "8", description = "The maximum size of a Helium cluster in the network satisfying the condition 0 < maxHeSize < 9. (default = 8)")
+	@Option(defaultValue = "8", 
+			description = "The maximum size of a Helium cluster in the network "
+			+ "satisfying the condition 0 < maxHeSize < 9. (default = 8)")
 	/**
 	 * This operation produces the required command line option '--maxHeSize' which 
 	 * takes a single integer value and is defined by the previous Option annotation
 	 * 
-	 * @return The maximum size of a Helium cluster in the network satisfying the condition 0 < maxHeSize < 9
+	 * @return The maximum size of a Helium cluster in the network satisfying 
+	 * the condition 0 < maxHeSize < 9
 	 */
 	int getMaxHeSize();
 
@@ -42,7 +45,8 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "29", description = "The maximum size of a vacancy cluster in the network. (default = 29)")
+	@Option(defaultValue = "29", 
+			description = "The maximum size of a vacancy cluster in the network. (default = 29)")
 	/**
 	 * This operation produces the required command line option '--maxVSize' which 
 	 * takes a single integer value and is defined by the previous Option annotation
@@ -63,12 +67,15 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "6", description = "The maximum size of an interstitial cluster in the network satisfying the condition 0 < maxISize < 7. (default = 6)")
+	@Option(defaultValue = "6", 
+			description = "The maximum size of an interstitial cluster in the network "
+			+ "satisfying the condition 0 < maxISize < 7. (default = 6)")
 	/**
 	 * This operation produces the required command line option '--maxISize' which 
 	 * takes a single integer value and is defined by the previous Option annotation
 	 * 
-	 * @return The maximum size of an interstitial cluster in the network satisfying the condition 0 < maxISize < 7
+	 * @return The maximum size of an interstitial cluster in the network satisfying 
+	 * the condition 0 < maxISize < 7
 	 */
 	int getMaxISize();
 
@@ -105,7 +112,8 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "std", description = "{dummy, std}  Which set of performance handlers to use (default = std)")
+	@Option(defaultValue = "std", 
+			description = "{dummy, std}  Which set of performance handlers to use (default = std)")
 	/**
 	 * This operation produces the required command line option '--perfHandler' which 
 	 * takes a single string value and is defined by the previous Option annotation
@@ -125,7 +133,8 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "dummy", description = "{dummy, std}  Which set of visualization handlers to use")
+	@Option(defaultValue = "dummy", 
+			description = "{dummy, std}  Which set of visualization handlers to use")
 	/**
 	 * This operation produces the required command line option '--vizHandler' which 
 	 * takes a single string value and is defined by the previous Option annotation
@@ -148,7 +157,8 @@ public interface Arguments {
 	@Option(defaultValue = "-da_grid_x 10 -ts_final_time 50 -ts_dt 1.0e-12 "
 			+ "-ts_max_steps 100 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
 			+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type redundant "
-			+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor", description = "List of arguments to be passed to PETSc")
+			+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor", 
+			description = "List of arguments to be passed to PETSc")
 	/**
 	 * This operation produces the required command line option '--petscArgs' which 
 	 * takes a single string value and is defined by the previous Option annotation
@@ -168,7 +178,8 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "networkInit.h5", description = "<fileName>  The HDF5 file containing the network (default = networkInit.h5)")
+	@Option(defaultValue = "networkInit.h5", 
+			description = "<fileName>  The HDF5 file containing the network (default = networkInit.h5)")
 	/**
 	 * This operation produces the required command line option '--networkFile' which 
 	 * takes a single string value and is defined by the previous Option annotation
@@ -184,7 +195,8 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "{W}  The optional option declaring which material will be used (Tungsten, W, is currently the only material Xolotl uses)")
+	@Option(description = "{W100, W111}  The optional option declaring which material will be used "
+			+ "(W is for tungsten and the numbers correspond to the surface orientation)")
 	/**
 	 * This operation produces the optional command line option '--material' which 
 	 * takes a single string value and is defined by the previous Option annotation
@@ -235,7 +247,8 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "This option allows the user to change the Helium flux by the factor specified (in nm).")
+	@Option(description = "This option allows the user to change the Helium flux by "
+			+ "the factor specified (in nm).")
 	/**
 	 * This operation produces the optional command line option '--heFlux' which 
 	 * takes a single string value and is defined by the previous Option annotation

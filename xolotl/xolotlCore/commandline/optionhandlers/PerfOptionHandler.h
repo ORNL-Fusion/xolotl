@@ -17,7 +17,8 @@ public:
 	 */
 	PerfOptionHandler() :
 		OptionHandler("perfHandler",
-				"perfHandler {std,dummy}     Which set of performance handlers to use. (default = std)") {}
+				"perfHandler {std,dummy}     "
+				"Which set of performance handlers to use. (default = std)") {}
 
 	/**
 	 * The destructor

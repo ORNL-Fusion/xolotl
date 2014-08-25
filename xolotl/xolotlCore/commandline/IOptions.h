@@ -226,6 +226,31 @@ public:
      */
     virtual void setVizStandardHandlers(bool flag) = 0;
 
+    /**
+     * Should we use a specific material for the helium flux profile?
+     * @return true if the material option was present in the parameter file,
+	 * false if it was not.
+     */
+    virtual bool useMaterial() const = 0;
+
+    /**
+     * Set the materialFlag.
+     * @param flag The value for the materialFlag.
+     */
+    virtual void setMaterialFlag(bool flag) = 0;
+
+    /**
+     * Obtain the name of the material to be used for the flux profile.
+     * @return The name of the material.
+     */
+    virtual std::string getMaterial() const = 0;
+
+    /**
+     * Set the name of the material to be used for the flux profile.
+     * @param material The name of the material.
+     */
+    virtual void setMaterial(std::string material) = 0;
+
 };//end class IOptions
 
 } /* namespace xolotlCore */

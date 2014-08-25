@@ -9,6 +9,7 @@
 #include <FluxOptionHandler.h>
 #include <PerfOptionHandler.h>
 #include <VizOptionHandler.h>
+#include <MaterialOptionHandler.h>
 #include "Options.h"
 
 namespace xolotlCore {
@@ -24,7 +25,8 @@ Options::Options() :
 		heliumFluenceFlag(false),
 		heliumFluxFlag(false),
 		perfStandardHandlersFlag(true),
-		vizStandardHandlersFlag(false) {
+		vizStandardHandlersFlag(false),
+		materialFlag(false) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();
@@ -42,6 +44,8 @@ Options::Options() :
 	auto perfHandler = new PerfOptionHandler();
 	// Create the visualization handler option handler
 	auto vizHandler = new VizOptionHandler();
+	// Create the material option handler
+	auto materialHandler = new MaterialOptionHandler();
 
 	// Add our notion of which options we support.
 	optionsMap[networkHandler->key] = networkHandler;
@@ -52,6 +56,7 @@ Options::Options() :
 	optionsMap[fluxHandler->key] = fluxHandler;
 	optionsMap[perfHandler->key] = perfHandler;
 	optionsMap[vizHandler->key] = vizHandler;
+	optionsMap[materialHandler->key] = materialHandler;
 }
 
 Options::~Options(void) {

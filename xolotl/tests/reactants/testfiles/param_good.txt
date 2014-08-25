@@ -6,3 +6,4 @@ startTemp=900
 perfHandler=std
 maxHeFluence=10
 heFlux=1.5
+material=W100

@@ -13,8 +13,6 @@
 #include <Options.h>
 #include <MaterialHandlerFactory.h>
 #include <TemperatureHandlerFactory.h>
-#include <MaterialHandlerFactory.h>
-#include <TemperatureHandlerFactory.h>
 #include <HandlerRegistryFactory.h>
 #include <VizHandlerRegistryFactory.h>
 #include <HardwareQuantities.h>
@@ -53,9 +51,9 @@ bool initMaterial(Options &options) {
 		return materialInitOK;
 }
 
-bool initTemp(bool opts, bool opts1, Options &options) {
+bool initTemp(Options &options) {
 
-	bool tempInitOK = xolotlSolver::initializeTempHandler(opts, opts1, options);
+	bool tempInitOK = xolotlSolver::initializeTempHandler(options);
 	if (!tempInitOK) {
 		std::cerr << "Unable to initialize requested temperature.  Aborting"
 				<< std::endl;
@@ -163,8 +161,7 @@ int main(int argc, char **argv) {
 		// Set up the material infrastructure that is used to calculate flux
 		auto materialInitOK = initMaterial(opts);
 		// Set up the temperature infrastructure
-		auto tempInitOK = initTemp(opts.useConstTemperatureHandlers(),
-				opts.useTemperatureProfileHandlers(), opts);
+		auto tempInitOK = initTemp(opts);
 
 		// Set up the visualization infrastructure.
 		auto vizInitOK = initViz(opts.useVizStandardHandlers());

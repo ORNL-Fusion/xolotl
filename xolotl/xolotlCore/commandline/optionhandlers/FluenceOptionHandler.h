@@ -17,7 +17,8 @@ public:
 	 */
     FluenceOptionHandler() :
     	OptionHandler("maxHeFluence",
-    			"maxHeFluence <value>        The maximum value of the Helium fluence the user wishes to integrate to.") {}
+    			"maxHeFluence <value>        "
+    			"The maximum value of the Helium fluence the user wishes to integrate to.") {}
 
 	/**
 	 * The destructor

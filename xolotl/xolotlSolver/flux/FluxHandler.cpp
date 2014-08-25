@@ -15,6 +15,36 @@ FluxHandler::FluxHandler() :
 
 }
 
+void FluxHandler::initializeFluxHandler(int numGridpoints, double step) {
+
+	// Set the step size
+	stepSize = step;
+
+	double normFactor = 0.0;
+	for (int i = 1; i < numGridpoints; i++) {
+		double x = (double) i * stepSize;
+
+		normFactor += FitFunction(x) * stepSize;
+	}
+
+	// Factor the incident flux will be multiplied by
+	double heFluxNormalized = heFlux / normFactor;
+
+	// The first value should always be 0.0 because of boundary conditions
+	incidentFluxVec.push_back(0.0);
+
+	// Starts a i = 1 because the first value was already put in the vector
+	for (int i = 1; i < numGridpoints; i++) {
+		auto x = i * stepSize;
+
+		auto incidentFlux = heFluxNormalized * FitFunction(x);
+
+		incidentFluxVec.push_back(incidentFlux);
+	}
+
+	return;
+}
+
 double FluxHandler::getIncidentFlux(std::vector<int> compositionVec,
 		std::vector<double> position, double currentTime) {
 

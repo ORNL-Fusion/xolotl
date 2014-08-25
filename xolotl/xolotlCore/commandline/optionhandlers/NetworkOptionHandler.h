@@ -17,7 +17,8 @@ public:
 	 */
     NetworkOptionHandler() :
     	OptionHandler("networkFile",
-    			"networkFile <filename>      The network will be loaded from this file.") {}
+    			"networkFile <filename>      "
+    			"The network will be loaded from this file.") {}
 
 	/**
 	 * The destructor

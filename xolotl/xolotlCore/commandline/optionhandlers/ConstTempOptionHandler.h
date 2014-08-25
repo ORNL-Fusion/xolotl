@@ -17,7 +17,9 @@ public:
 	 */
     ConstTempOptionHandler() :
     	OptionHandler("startTemp",
-    			"startTemp <value>           The temperature (in Kelvin) will be the constant floating point value specified. (default = 1000)"
+    			"startTemp <value>           "
+    			"The temperature (in Kelvin) will be the constant floating point value specified. "
+    			"(default = 1000)"
     			"\n	                      (NOTE: Use only ONE temperature option)") {}
 
 	/**

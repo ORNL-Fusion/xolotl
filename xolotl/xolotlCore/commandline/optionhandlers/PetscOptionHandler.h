@@ -20,7 +20,8 @@ public:
 	 */
 	PetscOptionHandler() :
 		OptionHandler("petscArgs",
-				"petscArgs                   All the arguments that will be given to PETSc") {}
+				"petscArgs                   "
+				"All the arguments that will be given to PETSc") {}
 
 	/**
 	 * The destructor

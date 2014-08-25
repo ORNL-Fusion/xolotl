@@ -141,6 +141,10 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     // Check the performance handler
     BOOST_REQUIRE_EQUAL(opts.useVizStandardHandlers(), true);
 
+    // Check the material option
+    BOOST_REQUIRE_EQUAL(opts.useMaterial(), true);
+    BOOST_REQUIRE_EQUAL(opts.getMaterial(), "W100");
+
     // Check the PETSc options
     BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 20);
 }

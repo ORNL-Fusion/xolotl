@@ -2,7 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include "WFitFluxHandler.h"
+#include "W100FitFluxHandler.h"
 
 using namespace std;
 using namespace xolotlSolver;
@@ -10,7 +10,7 @@ using namespace xolotlSolver;
 /**
  * The test suite is responsible for testing the WFitFluxHandler.
  */
-BOOST_AUTO_TEST_SUITE (FitFluxHandlerTester_testSuite)
+BOOST_AUTO_TEST_SUITE (W100FitFluxHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 
@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 	// Specify the step size between grid points
 	double step = 1.25;
 
-    auto testFitFlux = std::make_shared<xolotlSolver::WFitFluxHandler>();
+    auto testFitFlux = std::make_shared<xolotlSolver::W100FitFluxHandler>();
     // Initialize the flux handler
     testFitFlux->initializeFluxHandler(nGridpts, step);
 
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 
 	auto testFlux = testFitFlux->getIncidentFlux(compVec, x, 1);
 
-	BOOST_TEST_MESSAGE( "\nWFitFluxHandlerTester Message: \n"
+	BOOST_TEST_MESSAGE( "\nW100FitFluxHandlerTester Message: \n"
 						<< "incidentFlux = " << testFlux << " with position "
 						<< "(" << x[0] << "," << x[1] << "," << x[2] << ") "
 						<< "at time = " << currTime << "\n");
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(checkHeFluence) {
 	// Specify the step size between grid points
 	double step = 1.25;
 
-    auto testFitFlux = std::make_shared<xolotlSolver::WFitFluxHandler>();
+    auto testFitFlux = std::make_shared<xolotlSolver::W100FitFluxHandler>();
     // Initialize the flux handler
     testFitFlux->initializeFluxHandler(nGridpts, step);
 
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(checkHeFlux) {
 	// Specify the step size between grid points
 	double step = 1.25;
 
-    auto testFitFlux = std::make_shared<xolotlSolver::WFitFluxHandler>();
+    auto testFitFlux = std::make_shared<xolotlSolver::W100FitFluxHandler>();
     // Set the factor to change the Helium flux
     testFitFlux->setHeFlux(2.5);
     // Initialize the flux handler
