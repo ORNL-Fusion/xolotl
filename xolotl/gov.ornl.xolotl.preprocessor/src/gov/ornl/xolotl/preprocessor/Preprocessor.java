@@ -131,9 +131,9 @@ public class Preprocessor {
 		// arguments, if any, where the key is the option and the value is
 		// the argument
 		petscOptions.put("-da_grid_x", "10");
-		petscOptions.put("-ts_final_time", "1000");
+		petscOptions.put("-ts_final_time", "50");
 		petscOptions.put("-ts_dt", "1.0e-12");
-		petscOptions.put("-ts_max_steps", "3");
+		petscOptions.put("-ts_max_steps", "100");
 		petscOptions.put("-ts_adapt_dt_max", "10");
 		petscOptions.put("-ts_max_snes_failures", "200");
 		petscOptions.put("-pc_type", "fieldsplit");
