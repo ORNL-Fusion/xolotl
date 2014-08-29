@@ -13,38 +13,38 @@ namespace xolotlViz {
  */
 class Point {
 
-
 public:
 
 	/**
 	 * The time step.
 	 */
-	double t = 0.0;
+	double t;
 
 	/**
 	 * The X position on the grid.
 	 */
-	double x = 0.0;
+	double x;
 
 	/**
 	 * The Y position on the grid.
 	 */
-	double y = 0.0;
+	double y;
 
 	/**
 	 * The Z position on the grid.
 	 */
-	double z = 0.0;
+	double z;
 
 	/**
 	 * Value of the quantity of interest at the time step t and position on the grid x,y,z.
 	 */
-	double value = 0.0;
+	double value;
 
 	/**
 	 * The default constructor
 	 */
-	Point() {}
+	Point() :
+			t(0.0), x(0.0), y(0.0), z(0.0), value(0.0) {}
 
 	/**
 	 * The destructor
