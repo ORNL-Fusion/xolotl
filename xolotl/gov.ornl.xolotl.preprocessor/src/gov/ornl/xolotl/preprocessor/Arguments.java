@@ -195,7 +195,7 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "{W100, W111}  The optional option declaring which material will be used "
+	@Option(description = "{W100, W110, W111, W210, W211, Fe}  The optional option declaring which material will be used "
 			+ "(W is for tungsten and the numbers correspond to the surface orientation)")
 	/**
 	 * This operation produces the optional command line option '--material' which 
