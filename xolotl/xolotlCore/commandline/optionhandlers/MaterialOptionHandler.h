@@ -17,9 +17,9 @@ public:
 	 */
     MaterialOptionHandler() :
     	OptionHandler("material",
-    			"material <name>             "
+    			"material {W100, W110, W111, W210, W211, Fe}             "
     			"This option allows the user to change the profile of "
-    			"the helium flux corresponding to the material.") {}
+    			"the helium flux corresponding to the material.  (default = W100)") {}
 
 	/**
 	 * The destructor

@@ -2,7 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include "W111FitFluxHandler.h"
+#include "W110FitFluxHandler.h"
 
 using namespace std;
 using namespace xolotlSolver;
@@ -10,7 +10,7 @@ using namespace xolotlSolver;
 /**
  * The test suite is responsible for testing the WFitFluxHandler.
  */
-BOOST_AUTO_TEST_SUITE (W111FitFluxHandlerTester_testSuite)
+BOOST_AUTO_TEST_SUITE (W110FitFluxHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 
@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 	// Specify the step size between grid points
 	double step = 1.25;
 
-    auto testFitFlux = std::make_shared<xolotlSolver::W111FitFluxHandler>();
+    auto testFitFlux = std::make_shared<xolotlSolver::W110FitFluxHandler>();
     // Initialize the flux handler
     testFitFlux->initializeFluxHandler(nGridpts, step);
 
@@ -33,11 +33,11 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 
 	auto testFlux = testFitFlux->getIncidentFlux(compVec, x, 1);
 
-	BOOST_TEST_MESSAGE( "\nW111FitFluxHandlerTester Message: \n"
-						<< "At time = " << currTime
-						<< " and position (" << x[0] << "," << x[1] << "," << x[2] << "), "
-						<< "incidentFlux = " << testFlux << "\n");
-	BOOST_REQUIRE_CLOSE(testFlux, 0.359942, 0.01);
+	BOOST_TEST_MESSAGE( "\nW110FitFluxHandlerTester Message: \n"
+						<< "incidentFlux = " << testFlux << " with position "
+						<< "(" << x[0] << "," << x[1] << "," << x[2] << ") "
+						<< "at time = " << currTime << "\n");
+	BOOST_REQUIRE_CLOSE(testFlux, 0.510213, 0.01);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

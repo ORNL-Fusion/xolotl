@@ -84,6 +84,7 @@ set(CMAKE_JAVA_INCLUDE_PATH
    )
    
 # Compile the preprocessor tests
+message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/BindingEnergyEngineTest.java")
 add_jar(BindingEnergyEngineTest ${PREPROCESSOR_TEST_SRC}/BindingEnergyEngineTest.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
     OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
 get_target_property(_jarFile BindingEnergyEngineTest JAR_FILE)
@@ -99,7 +100,9 @@ add_junit_test(BindingEnergyEngineTest
         gov.ornl.xolotl.preprocessor.test.BindingEnergyEngineTest
 )
 
+
 # Compile the preprocessor tests
+message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/PreprocessorTest.java")
 add_jar(PreprocessorTest ${PREPROCESSOR_TEST_SRC}/PreprocessorTest.java ${PREPROCESSOR_SRC}/Preprocessor.java ${PREPROCESSOR_SRC}/Arguments.java 
     ${PREPROCESSOR_SRC}/Cluster.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
     OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
@@ -117,6 +120,7 @@ add_junit_test(PreprocessorTest
 )
 
 # Compile the preprocessor tests
+message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/ArgumentsTest.java")
 add_jar(ArgumentsTest ${PREPROCESSOR_TEST_SRC}/ArgumentsTest.java ${PREPROCESSOR_SRC}/Arguments.java 
     OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
 get_target_property(_jarFile ArgumentsTest JAR_FILE)
@@ -133,6 +137,7 @@ add_junit_test(ArgumentsTest
 )
 
 # Compile the preprocessor tests
+message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/ClusterTest.java")
 add_jar(ClusterTest ${PREPROCESSOR_TEST_SRC}/ClusterTest.java ${PREPROCESSOR_SRC}/Cluster.java 
     OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
 get_target_property(_jarFile ClusterTest JAR_FILE)
@@ -158,7 +163,7 @@ SET(BUILD_SHARED_LIBS OFF)
 FIND_PACKAGE(PETSc REQUIRED)
 
 # Make sure that we only pull the static HDF5
-set(HDF5_USE_STATIC_LIBRARIES yes)
+#set(HDF5_USE_STATIC_LIBRARIES yes)
 # Find HDF5 - Optional for now until we actually require it
 FIND_PACKAGE(HDF5 REQUIRED)
 # Check for parallel I/O support in the HDF5 installation.
