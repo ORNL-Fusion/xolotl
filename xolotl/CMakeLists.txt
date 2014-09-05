@@ -45,113 +45,122 @@ message(STATUS "xolotlPreprocessor class compiled to ${_classDir}")
 # Enable testing.
 enable_testing()
 
-include(JUnit)
+if ( ( DEFINED ENV{JUNIT_JAR} ) AND (DEFINED ENV{HAMCREST_JAR} ) )
+    message(STATUS "Building Java JUnit tests since JUNIT_JAR and HAMCREST_JAR are defined.")
 
-# Tell CMake where to look for the junit.jar file, JUNIT_JAR needs to be added to your path
-set(JUNIT_JAR $ENV{JUNIT_JAR})
-set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${JUNIT_JAR}${CMAKE_JAVA_INCLUDE_FLAG_SEP}${CMAKE_JAVA_INCLUDE_PATH_FINAL}")
+    include(JUnit)
 
-# Tell CMake where to look for the hamcrest .jar file, HAMCREST_JAR needs to be added to your path
-set(HAMCREST_JAR $ENV{HAMCREST_JAR})
-set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${HAMCREST_JAR}${CMAKE_JAVA_INCLUDE_FLAG_SEP}${CMAKE_JAVA_INCLUDE_PATH_FINAL}")
+    # Tell CMake where to look for the junit.jar file, JUNIT_JAR needs to be added to your path
+    set(JUNIT_JAR $ENV{JUNIT_JAR})
+    set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${JUNIT_JAR}${CMAKE_JAVA_INCLUDE_FLAG_SEP}${CMAKE_JAVA_INCLUDE_PATH_FINAL}")
 
-# Collect all of the preprocessor's tests
-file(GLOB JAVA_JUNIT "${CMAKE_SOURCE_DIR}/gov.ornl.xolotl.preprocessor.test/src/gov/ornl/xolotl/preprocessor/test/*.java")                  
+    # Tell CMake where to look for the hamcrest .jar file, HAMCREST_JAR needs to be added to your path
+    set(HAMCREST_JAR $ENV{HAMCREST_JAR})
+    set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${HAMCREST_JAR}${CMAKE_JAVA_INCLUDE_FLAG_SEP}${CMAKE_JAVA_INCLUDE_PATH_FINAL}")
 
-file(GLOB JAVA_FILES "${PREPROCESSOR_SRC}/*.java")
-# Add the preprocessor dependencies to the Java include path
-foreach(jfile ${JAVA_FILES})
-    set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${JFILE}${CMAKE_JAVA_INCLUDE_FLAG_SEP}${CMAKE_JAVA_INCLUDE_PATH_FINAL}")
-endforeach(jfile ${JAVA_FILES})
+    # Collect all of the preprocessor's tests
+    file(GLOB JAVA_JUNIT "${CMAKE_SOURCE_DIR}/gov.ornl.xolotl.preprocessor.test/src/gov/ornl/xolotl/preprocessor/test/*.java")                  
 
-# Add the preprocessor tests to the Java include path
-foreach(test ${JAVA_JUNIT})
-    set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${CMAKE_JAVA_INCLUDE_PATH_FINAL}${CMAKE_JAVA_INCLUDE_FLAG_SEP}${test}")
-endforeach(test ${JAVA_JUNIT})
+    file(GLOB JAVA_FILES "${PREPROCESSOR_SRC}/*.java")
+    # Add the preprocessor dependencies to the Java include path
+    foreach(jfile ${JAVA_FILES})
+        set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${JFILE}${CMAKE_JAVA_INCLUDE_FLAG_SEP}${CMAKE_JAVA_INCLUDE_PATH_FINAL}")
+    endforeach(jfile ${JAVA_FILES})
 
-# Create a directory to contain the compiled preprocessor Java test files
-FILE(MAKE_DIRECTORY ${PREPROCESSOR_DIR}/test)
-set(PREPROCESSOR_TEST_DIR ${PREPROCESSOR_DIR}/test)
-# Tell CMake where to look for the preprocessor's test source files
-set(PREPROCESSOR_TEST_SRC ${CMAKE_SOURCE_DIR}/gov.ornl.xolotl.preprocessor.test/src/gov/ornl/xolotl/preprocessor/test)
-set(CMAKE_JAVA_TARGET_OUTPUT_DIR ${PREPROCESSOR_TEST_DIR})
-set(CMAKE_JAVA_CLASS_OUTPUT_PATH ${PREPROCESSOR_TEST_DIR})
+    # Add the preprocessor tests to the Java include path
+    foreach(test ${JAVA_JUNIT})
+        set(CMAKE_JAVA_INCLUDE_PATH_FINAL "${CMAKE_JAVA_INCLUDE_PATH_FINAL}${CMAKE_JAVA_INCLUDE_FLAG_SEP}${test}")
+    endforeach(test ${JAVA_JUNIT})
 
-set(CMAKE_JAVA_INCLUDE_PATH
-   ${JUNIT_JAR}
-   ${HAMCREST_JAR}
-   ${CMAKE_JAVA_INCLUDE_PATH_FINAL}
-   )
+    # Create a directory to contain the compiled preprocessor Java test files
+    FILE(MAKE_DIRECTORY ${PREPROCESSOR_DIR}/test)
+    set(PREPROCESSOR_TEST_DIR ${PREPROCESSOR_DIR}/test)
+    # Tell CMake where to look for the preprocessor's test source files
+    set(PREPROCESSOR_TEST_SRC ${CMAKE_SOURCE_DIR}/gov.ornl.xolotl.preprocessor.test/src/gov/ornl/xolotl/preprocessor/test)
+    set(CMAKE_JAVA_TARGET_OUTPUT_DIR ${PREPROCESSOR_TEST_DIR})
+    set(CMAKE_JAVA_CLASS_OUTPUT_PATH ${PREPROCESSOR_TEST_DIR})
+
+    set(CMAKE_JAVA_INCLUDE_PATH
+       ${JUNIT_JAR}
+       ${HAMCREST_JAR}
+       ${CMAKE_JAVA_INCLUDE_PATH_FINAL}
+    )
    
-# Compile the preprocessor tests
-message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/BindingEnergyEngineTest.java")
-add_jar(BindingEnergyEngineTest ${PREPROCESSOR_TEST_SRC}/BindingEnergyEngineTest.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
-    OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
-get_target_property(_jarFile BindingEnergyEngineTest JAR_FILE)
-# The preprocessor .class files will be written to /preprocessor/test/CMakeFiles/BindingEnergyEngineTest.dir
-get_target_property(_classDir BindingEnergyEngineTest CLASSDIR)
-message(STATUS "BindingEnergyEngineTest class compiled to ${_classDir}")
-# Define the preprocessor JUnit test target
-add_junit_test(BindingEnergyEngineTest 
-    CLASSPATH 
-        ${CMAKE_JAVA_INCLUDE_PATH} 
-        ${_classDir}
-    TESTS 
-        gov.ornl.xolotl.preprocessor.test.BindingEnergyEngineTest
-)
+    # Compile the preprocessor tests
+    message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/BindingEnergyEngineTest.java")
+    add_jar(BindingEnergyEngineTest ${PREPROCESSOR_TEST_SRC}/BindingEnergyEngineTest.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
+        OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
+    get_target_property(_jarFile BindingEnergyEngineTest JAR_FILE)
+    # The preprocessor .class files will be written to /preprocessor/test/CMakeFiles/BindingEnergyEngineTest.dir
+    get_target_property(_classDir BindingEnergyEngineTest CLASSDIR)
+    message(STATUS "BindingEnergyEngineTest class compiled to ${_classDir}")
+    # Define the preprocessor JUnit test target
+    add_junit_test(BindingEnergyEngineTest 
+        CLASSPATH 
+            ${CMAKE_JAVA_INCLUDE_PATH} 
+            ${_classDir}
+        TESTS 
+            gov.ornl.xolotl.preprocessor.test.BindingEnergyEngineTest
+    )
 
 
-# Compile the preprocessor tests
-message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/PreprocessorTest.java")
-add_jar(PreprocessorTest ${PREPROCESSOR_TEST_SRC}/PreprocessorTest.java ${PREPROCESSOR_SRC}/Preprocessor.java ${PREPROCESSOR_SRC}/Arguments.java 
-    ${PREPROCESSOR_SRC}/Cluster.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
-    OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
-get_target_property(_jarFile PreprocessorTest JAR_FILE)
-# The preprocessor test .class files will be written to preprocessor/test/CMakeFiles/PreprocessorTest.dir 
-get_target_property(_classDir PreprocessorTest CLASSDIR)
-message(STATUS "PreprocessorTest class compiled to ${_classDir}")
-# Define the preprocessor JUnit test target
-add_junit_test(PreprocessorTest 
-    CLASSPATH 
-        ${CMAKE_JAVA_INCLUDE_PATH} 
-        ${_classDir}
-    TESTS 
-        gov.ornl.xolotl.preprocessor.test.PreprocessorTest
-)
+    # Compile the preprocessor tests
+    message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/PreprocessorTest.java")
+    add_jar(PreprocessorTest ${PREPROCESSOR_TEST_SRC}/PreprocessorTest.java ${PREPROCESSOR_SRC}/Preprocessor.java ${PREPROCESSOR_SRC}/Arguments.java 
+        ${PREPROCESSOR_SRC}/Cluster.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
+        OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
+    get_target_property(_jarFile PreprocessorTest JAR_FILE)
+    # The preprocessor test .class files will be written to preprocessor/test/CMakeFiles/PreprocessorTest.dir 
+    get_target_property(_classDir PreprocessorTest CLASSDIR)
+    message(STATUS "PreprocessorTest class compiled to ${_classDir}")
+    # Define the preprocessor JUnit test target
+    add_junit_test(PreprocessorTest 
+        CLASSPATH 
+            ${CMAKE_JAVA_INCLUDE_PATH} 
+            ${_classDir}
+        TESTS 
+            gov.ornl.xolotl.preprocessor.test.PreprocessorTest
+    )
 
-# Compile the preprocessor tests
-message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/ArgumentsTest.java")
-add_jar(ArgumentsTest ${PREPROCESSOR_TEST_SRC}/ArgumentsTest.java ${PREPROCESSOR_SRC}/Arguments.java 
-    OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
-get_target_property(_jarFile ArgumentsTest JAR_FILE)
-# The preprocessor .class files will be written to /preprocessor/test/CMakeFiles/ArgumentsTest.dir
-get_target_property(_classDir ArgumentsTest CLASSDIR)
-message(STATUS "ArgumentsTest class compiled to ${_classDir}")
-# Define the preprocessor JUnit test target 
-add_junit_test(ArgumentsTest 
-    CLASSPATH 
-        ${CMAKE_JAVA_INCLUDE_PATH} 
-        ${_classDir}
-    TESTS 
-        gov.ornl.xolotl.preprocessor.test.ArgumentsTest
-)
+    # Compile the preprocessor tests
+    message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/ArgumentsTest.java")
+    add_jar(ArgumentsTest ${PREPROCESSOR_TEST_SRC}/ArgumentsTest.java ${PREPROCESSOR_SRC}/Arguments.java 
+        OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
+    get_target_property(_jarFile ArgumentsTest JAR_FILE)
+    # The preprocessor .class files will be written to /preprocessor/test/CMakeFiles/ArgumentsTest.dir
+    get_target_property(_classDir ArgumentsTest CLASSDIR)
+    message(STATUS "ArgumentsTest class compiled to ${_classDir}")
+    # Define the preprocessor JUnit test target 
+    add_junit_test(ArgumentsTest 
+        CLASSPATH 
+            ${CMAKE_JAVA_INCLUDE_PATH} 
+            ${_classDir}
+        TESTS 
+            gov.ornl.xolotl.preprocessor.test.ArgumentsTest
+    )
 
-# Compile the preprocessor tests
-message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/ClusterTest.java")
-add_jar(ClusterTest ${PREPROCESSOR_TEST_SRC}/ClusterTest.java ${PREPROCESSOR_SRC}/Cluster.java 
-    OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
-get_target_property(_jarFile ClusterTest JAR_FILE)
-# The preprocessor .class files will be written to preprocessor/test/CMakeFiles/ClusterTest.dir
-get_target_property(_classDir ClusterTest CLASSDIR)
-message(STATUS "ClusterTest class compiled to ${_classDir}")
-# Define the preprocessor JUnit test target
-add_junit_test(ClusterTest 
-    CLASSPATH 
-        ${CMAKE_JAVA_INCLUDE_PATH} 
-        ${_classDir}
-    TESTS 
-        gov.ornl.xolotl.preprocessor.test.ClusterTest
-)
+    # Compile the preprocessor tests
+    message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/ClusterTest.java")
+    add_jar(ClusterTest ${PREPROCESSOR_TEST_SRC}/ClusterTest.java ${PREPROCESSOR_SRC}/Cluster.java 
+        OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
+    get_target_property(_jarFile ClusterTest JAR_FILE)
+    # The preprocessor .class files will be written to preprocessor/test/CMakeFiles/ClusterTest.dir
+    get_target_property(_classDir ClusterTest CLASSDIR)
+    message(STATUS "ClusterTest class compiled to ${_classDir}")
+    # Define the preprocessor JUnit test target
+    add_junit_test(ClusterTest 
+        CLASSPATH 
+            ${CMAKE_JAVA_INCLUDE_PATH} 
+            ${_classDir}
+        TESTS 
+            gov.ornl.xolotl.preprocessor.test.ClusterTest
+    )
+
+else ()
+    message(STATUS "The preprocessor JUnit tests will not be built since JUNIT_JAR and HAMCREST_JAR are not defined.")
+    message(STATUS " CMake needs to know where to find junit.jar and the hamcrest jar in order to build these tests.")
+    
+endif ()
 
 # Xolotl requires C++11 to use shared pointers
 list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
