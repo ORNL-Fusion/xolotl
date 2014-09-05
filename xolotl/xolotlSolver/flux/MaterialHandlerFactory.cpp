@@ -22,55 +22,49 @@ bool initializeMaterial(xolotlCore::Options &options) {
 
 	if (options.useMaterial()) {
 		std::string materialName = options.getMaterial();
+		std::cout << "\nThe material being used is: " << materialName << std::endl;
 
-		// W (100) case
-		if (materialName == "W100") {
-			theFluxHandler = std::make_shared<W100FitFluxHandler>();
+		if ( materialName.substr(0,1) == "W" ) {
+
+			std::string surfaceOrientation = materialName.substr(1, 3);
+			int orientation = std::stoi(surfaceOrientation);
+
+			switch ( orientation ) {
+			case 100:
+				theFluxHandler = std::make_shared<W100FitFluxHandler>();
+				break;
+			case 110:
+				theFluxHandler = std::make_shared<W110FitFluxHandler>();
+				break;
+			case 111:
+				theFluxHandler = std::make_shared<W111FitFluxHandler>();
+				break;
+			case 210:
+				theFluxHandler = std::make_shared<W210FitFluxHandler>();
+				break;
+			case 211:
+				theFluxHandler = std::make_shared<W211FitFluxHandler>();
+				break;
+			case 221:
+				theFluxHandler = std::make_shared<W221FitFluxHandler>();
+				break;
+			case 310:
+				theFluxHandler = std::make_shared<W310FitFluxHandler>();
+				break;
+			case 311:
+				theFluxHandler = std::make_shared<W311FitFluxHandler>();
+				break;
+			case 320:
+				theFluxHandler = std::make_shared<W320FitFluxHandler>();
+				break;
+			case 321:
+				theFluxHandler = std::make_shared<W321FitFluxHandler>();
+				break;
+
+			}
+
 		}
-		// W (110) case
-		else if (materialName == "W110") {
-			std::cout << "\nThe material being used is W with a (110) surface orientation." << std::endl;
-			theFluxHandler = std::make_shared<W110FitFluxHandler>();
-		}
-		// W (111) case
-		else if (materialName == "W111") {
-			theFluxHandler = std::make_shared<W111FitFluxHandler>();
-		}
-		// W (210) case
-		else if (materialName == "W210") {
-			std::cout << "\nThe material is: " << materialName << std::endl;
-			theFluxHandler = std::make_shared<W210FitFluxHandler>();
-		}
-		// W (211) case
-		else if (materialName == "W211") {
-			std::cout << "\nThe material is: " << materialName << std::endl;
-			theFluxHandler = std::make_shared<W211FitFluxHandler>();
-		}
-		// W (211) case
-		else if (materialName == "W221") {
-			std::cout << "\nThe material is: " << materialName << std::endl;
-			theFluxHandler = std::make_shared<W221FitFluxHandler>();
-		}
-		// W (310) case
-		else if (materialName == "W310") {
-			std::cout << "\nThe material is: " << materialName << std::endl;
-			theFluxHandler = std::make_shared<W310FitFluxHandler>();
-		}
-		// W (311) case
-		else if (materialName == "W311") {
-			std::cout << "\nThe material is: " << materialName << std::endl;
-			theFluxHandler = std::make_shared<W311FitFluxHandler>();
-		}
-		// W (320) case
-		else if (materialName == "W320") {
-			std::cout << "\nThe material is: " << materialName << std::endl;
-			theFluxHandler = std::make_shared<W320FitFluxHandler>();
-		}
-		// W (321) case
-		else if (materialName == "W321") {
-			std::cout << "\nThe material is: " << materialName << std::endl;
-			theFluxHandler = std::make_shared<W321FitFluxHandler>();
-		}
+
 		// Fe case
 		else if (materialName == "Fe") {
 			theFluxHandler = std::make_shared<FeFitFluxHandler>();
