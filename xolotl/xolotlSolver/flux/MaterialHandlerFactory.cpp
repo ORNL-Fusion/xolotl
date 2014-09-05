@@ -4,6 +4,11 @@
 #include "W111FitFluxHandler.h"
 #include "W210FitFluxHandler.h"
 #include "W211FitFluxHandler.h"
+#include "W221FitFluxHandler.h"
+#include "W310FitFluxHandler.h"
+#include "W311FitFluxHandler.h"
+#include "W320FitFluxHandler.h"
+#include "W321FitFluxHandler.h"
 #include "FeFitFluxHandler.h"
 #include <FluxHandler.h>
 #include <iostream>
@@ -33,13 +38,38 @@ bool initializeMaterial(xolotlCore::Options &options) {
 		}
 		// W (210) case
 		else if (materialName == "W210") {
-			std::cout << "\nThe material: " << materialName << std::endl;
+			std::cout << "\nThe material is: " << materialName << std::endl;
 			theFluxHandler = std::make_shared<W210FitFluxHandler>();
 		}
 		// W (211) case
 		else if (materialName == "W211") {
-			std::cout << "\nThe material: " << materialName << std::endl;
+			std::cout << "\nThe material is: " << materialName << std::endl;
 			theFluxHandler = std::make_shared<W211FitFluxHandler>();
+		}
+		// W (211) case
+		else if (materialName == "W221") {
+			std::cout << "\nThe material is: " << materialName << std::endl;
+			theFluxHandler = std::make_shared<W221FitFluxHandler>();
+		}
+		// W (310) case
+		else if (materialName == "W310") {
+			std::cout << "\nThe material is: " << materialName << std::endl;
+			theFluxHandler = std::make_shared<W310FitFluxHandler>();
+		}
+		// W (311) case
+		else if (materialName == "W311") {
+			std::cout << "\nThe material is: " << materialName << std::endl;
+			theFluxHandler = std::make_shared<W311FitFluxHandler>();
+		}
+		// W (320) case
+		else if (materialName == "W320") {
+			std::cout << "\nThe material is: " << materialName << std::endl;
+			theFluxHandler = std::make_shared<W320FitFluxHandler>();
+		}
+		// W (321) case
+		else if (materialName == "W321") {
+			std::cout << "\nThe material is: " << materialName << std::endl;
+			theFluxHandler = std::make_shared<W321FitFluxHandler>();
 		}
 		// Fe case
 		else if (materialName == "Fe") {

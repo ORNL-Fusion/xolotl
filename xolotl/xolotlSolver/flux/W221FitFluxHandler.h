@@ -1,5 +1,5 @@
-#ifndef W211FITFLUXHANDLER_H
-#define W211FITFLUXHANDLER_H
+#ifndef W221FITFLUXHANDLER_H
+#define W221FITFLUXHANDLER_H
 
 #include "FluxHandler.h"
 #include <cmath>
@@ -9,12 +9,12 @@ namespace xolotlSolver {
 /**
  * This class realizes the IFluxHandler interface to calculate the incident and outgoing fluxes.
  */
-class W211FitFluxHandler: public FluxHandler {
+class W221FitFluxHandler: public FluxHandler {
 private:
 
 	/**
 	 * Function that calculate the flux at a given position x (in nm).
-	 * This function is not normalized. The surface is supposed to be (211).
+	 * This function is not normalized. The surface is supposed to be (221).
 	 *
 	 * @param x The position where to evaluate the fit
 	 * @return the evaluated value
@@ -26,9 +26,10 @@ private:
 		if (x > x1) return 0.0;
 
 		// Compute the fit
-		double value = 4.07203818 + 5.34773722 * x - 4.98297871 * pow(x, 2)
-		+ 1.55833787 * pow(x, 3) - 0.234772157 * pow(x, 4) + 0.0165912511 * pow(x, 5)
-		- 2.38031874e-04 * pow(x, 6) - 3.18871642e-05 * pow(x, 7) + 1.27931311e-06 * pow(x, 8);
+		double value = 2.31116232 + 9.06474711 * x - 8.70839454 * pow(x, 2)
+		+ 3.56696873 * pow(x, 3) - 0.842027679 * pow(x, 4) + 0.124415681 * pow(x, 5)
+		- 0.0116876851 * pow(x, 6) + 6.78081089e-04 * pow(x, 7) - 2.21502063e-05 * pow(x, 8)
+		+ 3.11533589e-07 * pow(x, 9);
 
 		return value;
 	}
@@ -38,15 +39,15 @@ public:
 	/**
 	 * The constructor
 	 */
-	W211FitFluxHandler() {}
+	W221FitFluxHandler() {}
 
 	/**
 	 * The Destructor
 	 */
-	~W211FitFluxHandler() {}
+	~W221FitFluxHandler() {}
 
 };
-//end class W211FitFluxHandler
+//end class W221FitFluxHandler
 
 }
 
