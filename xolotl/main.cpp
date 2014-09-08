@@ -154,6 +154,14 @@ int main(int argc, char **argv) {
 	assert(!networkFilename.empty());
 
 	try {
+		// Initialize MPI. We do this instead of leaving it to some
+		// other package (e.g., PETSc), because we want to avoid problems
+		// with overlapping Timer scopes.
+		MPI_Init(&argc, &argv);
+
+		// Get the MPI rank
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
 		// Set up our performance data infrastructure.
 		// Indicate we want to monitor some important hardware counters.
 		auto hwq = declareHWcounters();
@@ -165,11 +173,6 @@ int main(int argc, char **argv) {
 
 		// Set up the visualization infrastructure.
 		auto vizInitOK = initViz(opts.useVizStandardHandlers());
-
-		// Initialize MPI. We do this instead of leaving it to some
-		// other package (e.g., PETSc), because we want to avoid problems
-		// with overlapping Timer scopes.
-		MPI_Init(&argc, &argv);
 
 		auto materialHandler = xolotlSolver::getMaterialHandler();
 		auto tempHandler = xolotlSolver::getTemperatureHandler(opts);
@@ -188,9 +191,6 @@ int main(int argc, char **argv) {
 		// Load the network
 		auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
 		networkLoadTimer->start();
-
-		// Get the MPI rank
-		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 		// Set up the network loader
 		auto networkLoader = setUpNetworkLoader(rank, MPI_COMM_WORLD,
