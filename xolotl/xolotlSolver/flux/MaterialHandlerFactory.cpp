@@ -21,20 +21,17 @@ static std::shared_ptr<IFluxHandler> theFluxHandler;
 bool initializeMaterial(xolotlCore::Options &options) {
 	bool ret = true;
 
-	// Get the number of tasks
-	int tasks;
-	MPI_Comm_size(MPI_COMM_WORLD, &tasks);
 	// Get the current process ID
 	int procId;
 	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
 	if (options.useMaterial()) {
 		std::string materialName = options.getMaterial();
-		// Master process
-		if (procId == 0) {
-			std::cout << "\nThe material being used is: " << materialName
-					<< std::endl;
-		}
+//		// Only print the message once when running in parallel
+//		if (procId == 0) {
+//			std::cout << "Using material:  " << materialName
+//					<< std::endl;
+//		}
 
 		if (materialName.substr(0, 1) == "W") {
 
@@ -83,6 +80,7 @@ bool initializeMaterial(xolotlCore::Options &options) {
 				break;
 
 			default:
+				// Only print the error message once when running in parallel
 				if (procId == 0) {
 					throw std::string(
 							"\nThe Tungsten surface orientation is not known: "
@@ -91,13 +89,13 @@ bool initializeMaterial(xolotlCore::Options &options) {
 				break;
 
 			}
-
 		}
 
 		// Fe case
 		else if (materialName == "Fe") {
 			theFluxHandler = std::make_shared<FeFitFluxHandler>();
 		} else {
+			// Only print the error message once when running in parallel
 			if (procId == 0) {
 				// The name was not recognized
 				throw std::string(
@@ -108,10 +106,10 @@ bool initializeMaterial(xolotlCore::Options &options) {
 	}
 
 	else {
+		// Only print the error message once when running in parallel
 		if (procId == 0) {
 			std::cout << "\nWarning: Material information has not been given."
-					"\nDefaulting to tungsten with (100) surface \n"
-					<< std::endl;
+					"\nDefaulting to tungsten with (100) surface " << std::endl;
 		}
 		// we are to use a tungsten, W, flux handler
 		theFluxHandler = std::make_shared<W100FitFluxHandler>();
@@ -132,22 +130,11 @@ bool initializeMaterial(xolotlCore::Options &options) {
 
 // Provide access to our handler registry.
 std::shared_ptr<IFluxHandler> getMaterialHandler(void) {
-
-	// Get the number of tasks
-	int tasks;
-	MPI_Comm_size(MPI_COMM_WORLD, &tasks);
-	// Get the current process ID
-	int procId;
-	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
-
 	if (!theFluxHandler) {
 		// We have not yet been initialized.
 		// Issue a warning.
-		if (procId == 0) {
-			std::cout
-					<< "Warning: xolotlSolver material handler requested, but "
-							"library has not been initialized." << std::endl;
-		}
+		std::cout << "Warning: xolotlSolver material handler requested, but "
+				"library has not been initialized." << std::endl;
 	}
 
 	return theFluxHandler;

@@ -4,8 +4,14 @@
 #include <boost/test/included/unit_test.hpp>
 #include <Options.h>
 #include <XolotlConfig.h>
+#include <mpi.h>
 
 using namespace std;
+
+int fargc = 1;
+char* args[2] = {const_cast<char*>("./xolotl"), NULL};
+char** fargv = args;
+int ierr = MPI_Init(&fargc, &fargv);
 
 /**
  * Test suite for the Options class.

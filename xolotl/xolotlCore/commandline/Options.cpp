@@ -11,6 +11,7 @@
 #include <VizOptionHandler.h>
 #include <MaterialOptionHandler.h>
 #include "Options.h"
+#include <mpi.h>
 
 namespace xolotlCore {
 
@@ -81,15 +82,22 @@ void Options::readParams(int argc, char* argv[]) {
 	// We assume that the name of this file is the first and only
 	// argument.
 
+	// Get the current process ID
+	int procId;
+	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+
 	// Load the content of the file in a stream
 	// Create the param stream
 	std::shared_ptr<std::ifstream> paramStream;
-	paramStream = std::make_shared < std::ifstream > (argv[0]);
+	paramStream = std::make_shared<std::ifstream>(argv[0]);
 
 	if (!paramStream->good()) {
-		// The file is empty.
-		std::cerr << "The parameter file is empty. Aborting!" << std::endl;
-		showHelp(std::cerr);
+		// Only print the error message once when running in parallel
+		if (procId == 0) {
+			// The file is empty.
+			std::cerr << "The parameter file is empty. Aborting!" << std::endl;
+			showHelp(std::cerr);
+		}
 		shouldRunFlag = false;
 		exitCode = EXIT_FAILURE;
 
@@ -107,7 +115,7 @@ void Options::readParams(int argc, char* argv[]) {
 	// And start looping on the lines
 	while (line.size() > 0) {
 		auto iter = optionsMap.find(line[0]);
-		// If the option if found
+		// If the option is found
 		if (iter != optionsMap.end()) {
 			// Call the option's handler
 			auto currOpt = iter->second;
@@ -116,9 +124,13 @@ void Options::readParams(int argc, char* argv[]) {
 			bool continueReading = currOpt->handler(this, line[1]);
 
 			if (!continueReading) {
-				// Something went wrong.
-				std::cerr << "Option: Something went wrong setting the options."
-						<< std::endl;
+				// Only print the error message once when running in parallel
+				if (procId == 0) {
+					// Something went wrong.
+					std::cerr
+							<< "\nOption: Something went wrong while setting the options."
+							<< std::endl;
+				}
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
 				break;
@@ -126,8 +138,13 @@ void Options::readParams(int argc, char* argv[]) {
 		}
 
 		else {
-			// We did not recognize the option.
-			std::cerr << "Option: unrecognized option " << line[0] << std::endl;
+			// Only print the error message once when running in parallel
+			if (procId == 0) {
+				// We did not recognize the option.
+				std::cerr << "\nOption: Unrecognized option in the parameter file:  " << line[0]
+						<< "\n" << std::endl;
+				showHelp(std::cerr);
+			}
 			shouldRunFlag = false;
 			exitCode = EXIT_FAILURE;
 			break;
@@ -140,7 +157,7 @@ void Options::readParams(int argc, char* argv[]) {
 }
 
 void Options::showHelp(std::ostream& os) const {
-	os << "usage: xolotl param_file_name \n\n"
+	os << "Usage: xolotl param_file_name \n\n"
 			<< "See the Xolotl documentation for PETSc options. \n"
 			<< "Supported options:\n";
 

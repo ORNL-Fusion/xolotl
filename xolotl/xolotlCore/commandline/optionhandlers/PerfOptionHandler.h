@@ -42,7 +42,7 @@ public:
 			opt->setPerfStandardHandlers(false);
 		}
 		else {
-			std::cerr << "Options: unrecognized argument in the performance option handler: " << arg << std::endl;
+			std::cerr << "Options: Unrecognized argument in the performance option handler: " << arg << std::endl;
 			opt->showHelp(std::cerr);
 			opt->setShouldRunFlag(false);
 			opt->setExitCode(EXIT_FAILURE);

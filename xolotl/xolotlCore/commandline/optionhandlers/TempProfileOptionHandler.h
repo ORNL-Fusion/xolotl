@@ -3,6 +3,7 @@
 
 // Includes
 #include "OptionHandler.h"
+#include <mpi.h>
 
 namespace xolotlCore {
 
@@ -16,12 +17,13 @@ public:
 	 * The default constructor
 	 */
 	TempProfileOptionHandler() :
-		OptionHandler("tempFile",
-				"tempFile <filename>         "
-				"A temperature profile is given by the specified file, "
-				"then linear interpolation is used to fit the data."
-				"\n	                      (NOTE: If a temperature file is given, "
-				"a constant temperature should NOT be given)") {}
+			OptionHandler("tempFile",
+					"tempFile <filename>         "
+							"A temperature profile is given by the specified file, "
+							"then linear interpolation is used to fit the data."
+							"\n	                      (NOTE: If a temperature file is given, "
+							"a constant temperature should NOT be given)") {
+	}
 
 	/**
 	 * The destructor
@@ -37,13 +39,21 @@ public:
 	 * @param arg The name of the file where the profile is stored.
 	 */
 	bool handler(IOptions *opt, std::string arg) {
-		// Check the profile file exists
+
+		// Get the current process ID
+		int procId;
+		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+
+		// Check that the profile file exists
 		std::ifstream inFile(arg.c_str());
 		if (!inFile) {
-			std::cerr
-					<< "\nCould not open file containing temperature profile data. "
-							"Aborting!" << std::endl;
-			opt->showHelp(std::cerr);
+			// Only print the error message once when running in parallel
+			if (procId == 0) {
+				std::cerr
+						<< "\nCould not open file containing temperature profile data. "
+								"Aborting!\n" << std::endl;
+				opt->showHelp(std::cerr);
+			}
 			opt->setShouldRunFlag(false);
 			opt->setExitCode(EXIT_FAILURE);
 

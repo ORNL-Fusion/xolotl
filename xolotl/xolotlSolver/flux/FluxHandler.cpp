@@ -2,6 +2,7 @@
 #include <HandlerRegistryFactory.h>
 #include <iostream>
 #include <limits>
+#include <mpi.h>
 
 using namespace xolotlSolver;
 

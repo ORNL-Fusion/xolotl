@@ -18,15 +18,18 @@
 #include <HardwareQuantities.h>
 #include <HDF5NetworkLoader.h>
 #include <IVizHandlerRegistry.h>
+#include <ctime>
 
 using namespace std;
 using std::shared_ptr;
 
 //! This operation prints the start message
 void printStartMessage() {
-	cout << "Starting Xolotl Plasma-Surface Interactions Simulator" << endl;
+	std::cout << "Starting Xolotl Plasma-Surface Interactions Simulator" << std::endl;
 	// TODO! Print copyright message
-	// TODO! Print date and time
+	// Print date and time
+	std::time_t currentTime = std::time(NULL);
+	std::cout << std::asctime(std::localtime(&currentTime)); // << std::endl;
 }
 
 std::vector<xolotlPerf::HardwareQuantities> declareHWcounters() {
@@ -86,14 +89,14 @@ bool initViz(bool opts) {
 		return vizInitOK;
 }
 
-std::shared_ptr<xolotlSolver::PetscSolver>
-setUpSolver( std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, 
-            int argc, char **argv) {
+std::shared_ptr<xolotlSolver::PetscSolver> setUpSolver(
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, int argc,
+		char **argv) {
 	// Setup the solver
 	auto solverInitTimer = handlerRegistry->getTimer("initSolver");
 	solverInitTimer->start();
-	std::shared_ptr<xolotlSolver::PetscSolver> solver = 
-        std::make_shared<xolotlSolver::PetscSolver>(handlerRegistry);
+	std::shared_ptr<xolotlSolver::PetscSolver> solver = std::make_shared<
+			xolotlSolver::PetscSolver>(handlerRegistry);
 	solver->setCommandLineOptions(argc, argv);
 	solver->initialize();
 	solverInitTimer->stop();
@@ -132,12 +135,15 @@ int main(int argc, char **argv) {
 	// Local Declarations
 	int rank;
 
+	// Initialize MPI. We do this instead of leaving it to some
+	// other package (e.g., PETSc), because we want to avoid problems
+	// with overlapping Timer scopes.
+	MPI_Init(&argc, &argv);
+
 	// Check the command line arguments.
 	// Skip the executable name before parsing.
 	argc -= 1; // one for the executable name
 	argv += 1; // one for the executable name
-
-
 	Options opts;
 	opts.readParams(argc, argv);
 	if (!opts.shouldRun()) {
@@ -154,13 +160,13 @@ int main(int argc, char **argv) {
 	assert(!networkFilename.empty());
 
 	try {
-		// Initialize MPI. We do this instead of leaving it to some
-		// other package (e.g., PETSc), because we want to avoid problems
-		// with overlapping Timer scopes.
-		MPI_Init(&argc, &argv);
-
 		// Get the MPI rank
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+		if (rank == 0) {
+			// Print the start message
+			printStartMessage();
+		}
 
 		// Set up our performance data infrastructure.
 		// Indicate we want to monitor some important hardware counters.
@@ -170,14 +176,15 @@ int main(int argc, char **argv) {
 		auto materialInitOK = initMaterial(opts);
 		// Set up the temperature infrastructure
 		auto tempInitOK = initTemp(opts);
-
 		// Set up the visualization infrastructure.
 		auto vizInitOK = initViz(opts.useVizStandardHandlers());
 
+		// Access the material handler registry to get the material
 		auto materialHandler = xolotlSolver::getMaterialHandler();
+		// Access the temperature handler registry to get the temperature
 		auto tempHandler = xolotlSolver::getTemperatureHandler(opts);
 
-		// Access our handler registry to obtain a Timer
+		// Access our performance handler registry to obtain a Timer
 		// measuring the runtime of the entire program.
 		// NOTE: these long template types could be replaced with 'auto'
 		auto handlerRegistry = xolotlPerf::getHandlerRegistry();
@@ -185,8 +192,8 @@ int main(int argc, char **argv) {
 		totalTimer->start();
 
 		// Setup the solver
-		auto solver = setUpSolver(handlerRegistry,
-				opts.getPetscArgc(), opts.getPetscArgv());
+		auto solver = setUpSolver(handlerRegistry, opts.getPetscArgc(),
+				opts.getPetscArgv());
 
 		// Load the network
 		auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
@@ -231,8 +238,8 @@ int main(int argc, char **argv) {
 	// Uncomment if GPTL was built with pmpi disabled
 	// Output performance data if pmpi is disabled in GPTL
 	// Access the handler registry to output performance data
-    auto handlerRegistry = xolotlPerf::getHandlerRegistry();
-    handlerRegistry->dump(rank);
+	auto handlerRegistry = xolotlPerf::getHandlerRegistry();
+	handlerRegistry->dump(rank);
 
 	return EXIT_SUCCESS;
 }
