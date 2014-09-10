@@ -135,11 +135,6 @@ int main(int argc, char **argv) {
 	// Local Declarations
 	int rank;
 
-	// Initialize MPI. We do this instead of leaving it to some
-	// other package (e.g., PETSc), because we want to avoid problems
-	// with overlapping Timer scopes.
-	MPI_Init(&argc, &argv);
-
 	// Check the command line arguments.
 	// Skip the executable name before parsing.
 	argc -= 1; // one for the executable name
@@ -160,6 +155,16 @@ int main(int argc, char **argv) {
 	assert(!networkFilename.empty());
 
 	try {
+		// Set up our performance data infrastructure.
+		// Indicate we want to monitor some important hardware counters.
+		auto hwq = declareHWcounters();
+		auto perfInitOK = initPerf(opts.usePerfStandardHandlers(), hwq);
+
+		// Initialize MPI. We do this instead of leaving it to some
+		// other package (e.g., PETSc), because we want to avoid problems
+		// with overlapping Timer scopes.
+		MPI_Init(&argc, &argv);
+
 		// Get the MPI rank
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -168,10 +173,6 @@ int main(int argc, char **argv) {
 			printStartMessage();
 		}
 
-		// Set up our performance data infrastructure.
-		// Indicate we want to monitor some important hardware counters.
-		auto hwq = declareHWcounters();
-		auto perfInitOK = initPerf(opts.usePerfStandardHandlers(), hwq);
 		// Set up the material infrastructure that is used to calculate flux
 		auto materialInitOK = initMaterial(opts);
 		// Set up the temperature infrastructure

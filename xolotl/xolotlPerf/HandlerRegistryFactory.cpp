@@ -2,7 +2,6 @@
 #include "HandlerRegistryFactory.h"
 #include <DummyHandlerRegistry.h>
 #include <iostream>
-#include <mpi.h>
 
 #if defined(HAVE_PERFLIB_STD)
 #include <StandardHandlerRegistry.h>
@@ -24,16 +23,10 @@ bool initialize(bool useStdRegistry,
 		theHandlerRegistry = std::make_shared<StandardHandlerRegistry>(
 				hwQuantities);
 #else
-		// Get the current process ID
-		int procId;
-		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
-		// Only print the error message once when running in parallel
-		if (procId == 0) {
-			// TODO is there another mechanism for writing errors
-			// e.g., one that logs error messages?
-			throw std::string("\nxolotlPerf::initialize: unable to build requested standard performance "
-					"handler registry due to missing dependencies");
-		}
+		// TODO is there another mechanism for writing errors
+		// e.g., one that logs error messages?
+		throw std::string("\nxolotlPerf::initialize: unable to build requested standard performance "
+				"handler registry due to missing dependencies");
 #endif // defined(HAVE_PERFLIB_STD)
 	} else {
 		// use a dummy HandlerRegistry for this run
