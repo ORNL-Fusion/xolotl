@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(badParamFileName)
     xolotlCore::Options opts;
 
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/reactants/testfiles/bla.txt");
+	string pathToFile("/tests/testfiles/bla.txt");
 	string filename = sourceDir + pathToFile;
     const char* fname = filename.c_str();
 
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(badParamFile)
     xolotlCore::Options opts;
 
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/reactants/testfiles/param_bad.txt");
+	string pathToFile("/tests/testfiles/param_bad.txt");
 	string filename = sourceDir + pathToFile;
     const char* fname = filename.c_str();
 
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     xolotlCore::Options opts;
 
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/reactants/testfiles/param_good.txt");
+	string pathToFile("/tests/testfiles/param_good.txt");
 	string filename = sourceDir + pathToFile;
     const char* fname = filename.c_str();
 
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(wrongPerfHandler)
     xolotlCore::Options opts;
 
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/reactants/testfiles/param_wrong.txt");
+	string pathToFile("/tests/testfiles/param_wrong.txt");
 	string filename = sourceDir + pathToFile;
     const char* fname = filename.c_str();
 
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(bothTempArgs)
     xolotlCore::Options opts;
 
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/reactants/testfiles/param_bad_temp.txt");
+	string pathToFile("/tests/testfiles/param_bad_temp.txt");
 	string filename = sourceDir + pathToFile;
     const char* fname = filename.c_str();
 

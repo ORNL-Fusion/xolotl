@@ -43,7 +43,7 @@ using namespace xolotlCore;
 BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/reactants/testfiles/tungsten.txt");
+	string pathToFile("/tests/testfiles/tungsten.txt");
 	string networkFilename = sourceDir + pathToFile;
 
 	BOOST_TEST_MESSAGE(
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
  	// Local Declarations
  	string sourceDir(XolotlSourceDirectory);
  	// This file contains specific values to obtain round numbers for the partial derivatives
- 	string pathToFile("/tests/reactants/testfiles/single_reaction.txt");
+ 	string pathToFile("/tests/testfiles/single_reaction.txt");
  	string networkFilename = sourceDir + pathToFile;
 
  	BOOST_TEST_MESSAGE(

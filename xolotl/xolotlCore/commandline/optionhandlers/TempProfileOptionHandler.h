@@ -40,20 +40,13 @@ public:
 	 */
 	bool handler(IOptions *opt, std::string arg) {
 
-		// Get the current process ID
-		int procId;
-		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
-
 		// Check that the profile file exists
 		std::ifstream inFile(arg.c_str());
 		if (!inFile) {
-			// Only print the error message once when running in parallel
-			if (procId == 0) {
-				std::cerr
-						<< "\nCould not open file containing temperature profile data. "
-								"Aborting!\n" << std::endl;
-				opt->showHelp(std::cerr);
-			}
+			std::cerr
+					<< "\nCould not open file containing temperature profile data. "
+							"Aborting!\n" << std::endl;
+			opt->showHelp(std::cerr);
 			opt->setShouldRunFlag(false);
 			opt->setExitCode(EXIT_FAILURE);
 

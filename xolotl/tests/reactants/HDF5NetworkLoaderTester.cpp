@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Define the filename to load the network from
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/reactants/testfiles/tungsten_diminutive.h5");
+	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
 	string filename = sourceDir + pathToFile;
 	// Give the filename to the network loader
 	loader.setFilename(filename);
