@@ -31,7 +31,7 @@ bool initializeTempHandler(xolotlCore::Options &options) {
 		theTemperatureHandler = std::make_shared<TemperatureHandler>(temp);
 	} else if (options.useTemperatureProfileHandlers()) {
 		auto tempFileName = options.getTempProfileFilename();
-		//std::cout << "\nHandler Temperature file = " << tempFileName << std::endl;
+//		std::cout << "\nHandler Temperature file = " << tempFileName << std::endl;
 		theTemperatureHandler = std::make_shared<TemperatureProfileHandler>(
 				tempFileName);
 		theTemperatureHandler->initializeTemperature();
@@ -40,7 +40,7 @@ bool initializeTempHandler(xolotlCore::Options &options) {
 		if (procId == 0) {
 			std::cerr
 					<< "\nWarning: Temperature information has not been given.  Defaulting to constant"
-							" temperature = 1000K \n" << std::endl;
+							" temperature = 1000K " << std::endl;
 		}
 		auto temp = options.getConstTemperature();
 		// we are to use a constant temperature handler

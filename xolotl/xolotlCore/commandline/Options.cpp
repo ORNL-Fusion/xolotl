@@ -19,7 +19,7 @@ Options::Options() :
 		exitCode(EXIT_SUCCESS),
 		petscArgc(0),
 		petscArgv(NULL),
-		constTempFlag(true),
+		constTempFlag(false),
 		tempProfileFlag(false),
 		constTemperature(1000.0),
 		heliumFluenceFlag(false),
@@ -155,7 +155,5 @@ void Options::showHelp(std::ostream& os) const {
 	os << std::endl;
 }
 
-}
-;
-// end namespace xolotlCore
+};  // end namespace xolotlCore
 

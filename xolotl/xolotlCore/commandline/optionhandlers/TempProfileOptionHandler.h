@@ -39,6 +39,7 @@ public:
 	 * @param arg The name of the file where the profile is stored.
 	 */
 	bool handler(IOptions *opt, std::string arg) {
+		bool ret = true;
 
 		// Check that the profile file exists
 		std::ifstream inFile(arg.c_str());
@@ -46,20 +47,18 @@ public:
 			std::cerr
 					<< "\nCould not open file containing temperature profile data. "
 							"Aborting!\n" << std::endl;
-			opt->showHelp(std::cerr);
 			opt->setShouldRunFlag(false);
 			opt->setExitCode(EXIT_FAILURE);
+			ret = false;
+		} else {
+			// Set the flag to use a temperature profile to true
+			opt->setTempProfileFlag(true);
 
-			return false;
+			// Set the name of the file
+			opt->setTempProfileFilename(arg);
 		}
 
-		// Set the flag to use a temperature profile to true
-		opt->setTempProfileFlag(true);
-
-		// Set the name of the file
-		opt->setTempProfileFilename(arg);
-
-		return true;
+		return ret;
 	}
 
 };
