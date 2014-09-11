@@ -56,12 +56,28 @@ protected:
 	 */
 	bool incidentFluxZero;
 
+	/**
+	 * Function that calculate the flux at a given position x (in nm).
+	 * It needs to be implemented by the daughter classes.
+	 *
+	 * @param x The position where to evaluate he fit
+	 * @return the evaluated value
+	 */
+	virtual double FitFunction(double x) {return 0.0;}
+
 public:
 
 	FluxHandler();
 
 	~FluxHandler() {
 	}
+
+	/**
+	 * Function to calculate and store the incident flux values at each grid point
+	 * @param numGridpoints The total number of grid points that will be used
+	 * @param step The step size between grid points
+	 */
+	virtual void initializeFluxHandler(int numGridpoints, double step);
 
 	/**
 	 * This operation returns the incident flux for a specific cluster composition,
@@ -96,10 +112,8 @@ public:
 	/**
 	 * This operation increments the Helium fluence at the current time step.
 	 * @param dt			The length of the time step
-	 * @param step			The grid step size
-	 * @return				The value of the Helium fluence at the current time step
 	 */
-	virtual double incrementHeFluence(double dt, double step);
+	virtual void incrementHeFluence(double dt);
 
 	/**
 	 * This operation returns the Helium fluence

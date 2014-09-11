@@ -1,22 +1,59 @@
 #include <FluxHandler.h>
 #include "xolotlPerf/xolotlPerf.h"
 #include <iostream>
+#include <limits>
+#include <mpi.h>
 
 using namespace xolotlSolver;
 
 FluxHandler::FluxHandler() :
-		stepSize(0.0e-16), heFluence(0.0e-16), usingMaxHeFluence(false), maxHeFluence(
-				0.0e-16), heFlux(1.0), incidentFluxZero(false) {
+		stepSize(0.0),
+		heFluence(0.0),
+		usingMaxHeFluence(false),
+		maxHeFluence(std::numeric_limits<double>::max()),
+		heFlux(1.0),
+		incidentFluxZero(false) {
 
+}
+
+void FluxHandler::initializeFluxHandler(int numGridpoints, double step) {
+
+	// Set the step size
+	stepSize = step;
+
+	double normFactor = 0.0;
+	for (int i = 1; i < numGridpoints; i++) {
+		double x = (double) i * stepSize;
+
+		normFactor += FitFunction(x) * stepSize;
+	}
+
+	// Factor the incident flux will be multiplied by
+	double heFluxNormalized = heFlux / normFactor;
+
+	// The first value should always be 0.0 because of boundary conditions
+	incidentFluxVec.push_back(0.0);
+
+	// Starts a i = 1 because the first value was already put in the vector
+	for (int i = 1; i < numGridpoints; i++) {
+		auto x = i * stepSize;
+
+		auto incidentFlux = heFluxNormalized * FitFunction(x);
+
+		incidentFluxVec.push_back(incidentFlux);
+	}
+
+	return;
 }
 
 double FluxHandler::getIncidentFlux(std::vector<int> compositionVec,
 		std::vector<double> position, double currentTime) {
 
-	auto i = position[0] / stepSize;
-	auto incidentFlux = incidentFluxVec[i];
+	// Get the index number from the position
+	int i = position[0] / stepSize;
 
-	return incidentFlux;
+	// Return the corresponding value
+	return incidentFluxVec[i];
 }
 
 std::vector<double> FluxHandler::getIncidentFluxVec() {
@@ -26,24 +63,23 @@ std::vector<double> FluxHandler::getIncidentFluxVec() {
 void FluxHandler::setOutgoingFlux(std::vector<int> compositionVec,
 		std::vector<int> position, double time, double outgoingFlux) {
 
+	return;
 }
 
-double FluxHandler::incrementHeFluence(double dt, double step) {
+void FluxHandler::incrementHeFluence(double dt) {
 
-	if ( !usingMaxHeFluence || !(heFluence >= maxHeFluence) )
+	if (heFluence < maxHeFluence)
 	{
-		for (int i = 0; i < incidentFluxVec.size(); i++) {
-			heFluence += incidentFluxVec[i] * dt * step;
-		}
+		heFluence += heFlux * dt;
 	}
 
-	if ( !incidentFluxZero && usingMaxHeFluence && heFluence >= maxHeFluence ) {
+	else if (!incidentFluxZero) {
 		for (int i = 0; i < incidentFluxVec.size(); i++)
 			incidentFluxVec[i] = 0.0;
 		incidentFluxZero = true;
 	}
 
-	return heFluence;
+	return;
 }
 
 double FluxHandler::getHeFluence() const {
@@ -51,10 +87,10 @@ double FluxHandler::getHeFluence() const {
 }
 
 void FluxHandler::setMaxHeFluence(double fluence) {
-
 	usingMaxHeFluence = true;
-
 	maxHeFluence = fluence;
+
+	return;
 }
 
 double FluxHandler::getMaxHeFluence() const {

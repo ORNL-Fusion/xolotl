@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 			PSIClusterNetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Define the filename to load the network from
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/reactants/testfiles/tungsten.txt");
+	string pathToFile("/tests/testfiles/tungsten.txt");
 	string filename = sourceDir + pathToFile;
 	// Create the network stream
 	shared_ptr<istream> networkStream;

@@ -19,8 +19,6 @@ namespace xolotlSolver
  */
 bool initializeMaterial( xolotlCore::Options &options );
 
-//bool initializeMaterial( bool useWRegistry );
-
 /**
  * Access the handler registry.
  *

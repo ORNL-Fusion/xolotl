@@ -17,7 +17,8 @@ public:
 	 */
 	PerfOptionHandler() :
 		OptionHandler("perfHandler",
-				"perfHandler {std,dummy,os,papi}     Which set of performance handlers to use. (default = std)") {}
+				"perfHandler {std,dummy,os,papi}     "
+				"Which set of performance handlers to use. (default = std)") {}
 
 	/**
 	 * Destroy the PerfOptionHandler.
@@ -38,6 +39,7 @@ public:
 
         try
         {
+		    // Determine the type of handlers we are being asked to use
             xolotlPerf::IHandlerRegistry::RegistryType rtype = xolotlPerf::toPerfRegistryType(arg);
             opt->setPerfHandlerType( rtype );
         }

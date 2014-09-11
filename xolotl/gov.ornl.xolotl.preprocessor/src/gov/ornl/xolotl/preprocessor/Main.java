@@ -60,7 +60,7 @@ public class Main {
 					// Read the header and the concentration from this file 
 					// and copy them to the network file
 					int gridPoints = preprocessor.copyHeader(HDF5FileName, networkFileName);
-					preprocessor.copyConcentration(HDF5FileName, networkFileName, gridPoints);
+					preprocessor.copyConcentration(HDF5FileName, networkFileName, gridPoints, clusters);
 				}
 				else {
 					// Get the grid size

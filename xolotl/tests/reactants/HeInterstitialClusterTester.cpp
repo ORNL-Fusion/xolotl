@@ -137,9 +137,11 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	cluster->computeRateConstants(1000.0);
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(1000.0);
-	BOOST_TEST_MESSAGE(
-			"HeInterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n" << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n" << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n" << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n" << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
-
+	BOOST_TEST_MESSAGE("HeInterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"
+			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
+			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
+			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n"
+	  	  	  << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
 	// Check the flux
 	BOOST_REQUIRE_CLOSE(-16982855380.0, flux, 0.1);
 

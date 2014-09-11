@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(checkDOFConversion) {
 
 	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/reactants/testfiles/tungsten.txt");
+	string pathToFile("/tests/testfiles/tungsten.txt");
 	string networkFilename = sourceDir + pathToFile;
 
 	BOOST_TEST_MESSAGE(
