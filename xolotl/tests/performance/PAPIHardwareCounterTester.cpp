@@ -7,6 +7,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include "papi.h"
 #include "xolotlPerf/papi/PAPIHardwareCounter.h"
+#include "tests/performance/perfTestConfig.h"
 
 
 using namespace xolotlPerf;
@@ -91,9 +92,10 @@ BOOST_AUTO_TEST_CASE(check_getValues)
     PAPIHardwareCounter tester( "test", test_ctrSpec );
     std::string testName = tester.getName();
 
+    const unsigned int nMultiplies = 1000;
     tester.start();
     double a = 2;
-    for(unsigned i = 0; i < 1000; i++)
+    for(unsigned int i = 0; i < nMultiplies; i++)
     {
         a *= ((double)(i+1));
     }
@@ -125,7 +127,25 @@ BOOST_AUTO_TEST_CASE(check_getValues)
     // did in our test loop.
     // NOTE: the indices into testVals must change if you change
     // the test_ctrSpec specification.
-    BOOST_REQUIRE_CLOSE( testVals[2], (double)1000, 5.0 );
+    std::ostringstream vstr;
+    vstr << "We believe:\n"
+        << "* this test program was compiled "
+#if defined(XOLOTL_TEST_HWCTR_DEBUGEXP)
+        << "without"
+#else
+        << "with"
+#endif // defined(XOLOTL_HWCTR_DEBUGEXP)
+        << " compiler optimizations enabled.\n"
+        << "* the hardware counter should measure approximately "
+        << XOLOTL_HWCTR_EXPVAL
+        << " FP ops +/-"
+        << XOLOTL_HWCTR_TOL
+        << "\%\n  when executing a multiplication statement "
+        << nMultiplies
+        << " times in a loop.";
+    BOOST_TEST_MESSAGE( vstr.str() );
+
+    BOOST_REQUIRE_CLOSE( testVals[2], (double)XOLOTL_HWCTR_EXPVAL, XOLOTL_HWCTR_TOL );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

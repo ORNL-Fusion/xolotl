@@ -36,6 +36,18 @@ if(Boost_FOUND)
     # Make a list of all performance infrastructure tests we will build
     set(tests ${DUMMY_TEST_SRCS} ${COMMON_TEST_SRCS} ${PAPI_TEST_SRCS} ${OS_TEST_SRCS})
 
+    if(CMAKE_BUILD_TYPE MATCHES "^Debug$")
+        set(XOLOTL_TEST_HWCTR_DEBUGEXP 1)
+        set(XOLOTL_TEST_HWCTR_EXPVAL 1150)
+        set(XOLOTL_TEST_HWCTR_TOL 10)
+    else(CMAKE_BUILD_TYPE MATCHES "^Debug$")
+        set(XOLOTL_TEST_HWCTR_DEBUGEXP 0)
+        set(XOLOTL_TEST_HWCTR_EXPVAL 1000)
+        set(XOLOTL_TEST_HWCTR_TOL 5)
+    endif(CMAKE_BUILD_TYPE MATCHES "^Debug$")
+
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/perfTestConfig.h.in" "${CMAKE_CURRENT_BINARY_DIR}/perfTestConfig.h")
+
     # Define executables for each of the testers.
     foreach(test ${tests})
         message(STATUS "Defining test ${test}")
@@ -50,6 +62,7 @@ if(Boost_FOUND)
 else(Boost_FOUND)
     message(STATUS "Not building xperf library tests; required Boost library not available")
 endif(Boost_FOUND)
+
 
 
 
