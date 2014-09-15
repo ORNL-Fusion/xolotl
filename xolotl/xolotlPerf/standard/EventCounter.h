@@ -1,8 +1,8 @@
 #ifndef EVENTCOUNTER_H
 #define EVENTCOUNTER_H
 
-#include "Identifiable.h"
-#include "IEventCounter.h"
+#include "xolotlCore/Identifiable.h"
+#include "xolotlPerf/IEventCounter.h"
 
 namespace xolotlPerf{
 
@@ -18,7 +18,7 @@ private:
 	/**
 	 * The value of this IEventCounter.
 	 */
-	unsigned long value;
+    IEventCounter::ValType value;
 
 	/**
      * We declare a private default constructor to force 
@@ -52,7 +52,7 @@ public:
 	 * This operation returns the value of the EventCounter,
 	 * the frequency of the specified event.
 	 */
-	virtual unsigned long getValue() const  { return value; }
+	virtual IEventCounter::ValType getValue() const  { return value; }
 
 	/**
 	 * This operation increments the EventCounter.

@@ -1,6 +1,6 @@
 #include "ReactionNetwork.h"
 #include "Reactant.h"
-#include "xolotlPerf/HandlerRegistryFactory.h"
+#include "xolotlPerf/xolotlPerf.h"
 #include <iostream>
 #include <cassert>
 

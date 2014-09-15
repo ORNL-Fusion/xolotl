@@ -1,10 +1,10 @@
 #ifndef DUMMYHANDLERREGISTRY_H
 #define DUMMYHANDLERREGISTRY_H
 
-#include "IHandlerRegistry.h"
-#include "DummyTimer.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyTimer
-#include "DummyEventCounter.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyEventCounter
-#include "DummyHardwareCounter.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyHardwareCounter
+#include "xolotlPerf/IHandlerRegistry.h"
+#include "xolotlPerf/dummy/DummyTimer.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyTimer
+#include "xolotlPerf/dummy/DummyEventCounter.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyEventCounter
+#include "xolotlPerf/dummy/DummyHardwareCounter.h" //Dependency Generated Source:DummyHandlerRegistry Target:DummyHardwareCounter
 
 namespace xolotlPerf {
 
@@ -30,15 +30,38 @@ public:
     // Obtain a HardwareCounter object by name and by the
     // counter data it collects.
     virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( std::string name,
-                std::vector<HardwareQuantities> quantities );
+                        const IHardwareCounter::SpecType& ctrSpec );
 
-    // Output any collected performance data to the given output stream.
-    virtual void dump( std::ostream& os ) const;
+    /**
+     * Collect statistics about any performance data collected by
+     * processes of the program.
+     * This method is a stub.
+     *
+     * @param timerStats Map of timer statistics, keyed by timer name.
+     * @param counterStats Map of counter statistics, keyed by counter name.
+     * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
+     * 
+     */
+    virtual void collectStatistics( PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats );
 
-    // Output any collected performance data to the given output stream.
-    virtual void dump( int rank) const;
 
-};  //end class DummyHandlerRegistry
+    /**
+     * Report performance data statistics to the given stream.
+     * This method is a stub in this class.
+     *
+     * @param os Stream on which to output statistics.
+     * @param timerStats Map of timer statistics, keyed by timer name.
+     * @param counterStats Map of counter statistics, keyed by counter name.
+     * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
+     * 
+     */
+    virtual void reportStatistics( std::ostream& os, 
+                    const PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats ) const;
+};
 
 } //end namespace xolotlPerf
 

@@ -86,9 +86,9 @@ protected:
 	double heliumFlux;
 
 	/**
-	 * Use the "standard" set of handlers for the performance infrastructure?
+	 * Which type of performance infrastructure should we use?
 	 */
-	bool perfStandardHandlersFlag;
+	xolotlPerf::IHandlerRegistry::RegistryType perfRegistryType;
 
 	/**
 	 * Use the "standard" set of handlers for the visualization infrastructure?
@@ -291,17 +291,16 @@ public:
     void setHeliumFlux(double flux) {heliumFlux = flux;}
 
     /**
-     * Should we use the "standard" set of handlers for the performance?
-     * If false, use dummy (stub) handlers.
+     * Which type of performance handlers should we use?
      * \see IOptions.h
      */
-    bool usePerfStandardHandlers() const {return perfStandardHandlersFlag;}
+    xolotlPerf::IHandlerRegistry::RegistryType getPerfHandlerType(void) const { return perfRegistryType; }
 
     /**
-     * Set the perfStandardHandlersFlag.
+     * Set the type of performance handlers to use.
      * \see IOptions.h
      */
-    void setPerfStandardHandlers(bool flag) {perfStandardHandlersFlag = flag;}
+    void setPerfHandlerType(xolotlPerf::IHandlerRegistry::RegistryType rtype) { perfRegistryType = rtype; }
 
     /**
      * Should we use the "standard" set of handlers for the visualization?

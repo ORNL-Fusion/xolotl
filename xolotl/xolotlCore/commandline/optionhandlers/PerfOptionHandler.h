@@ -13,15 +13,15 @@ class PerfOptionHandler: public OptionHandler {
 public:
 
 	/**
-	 * The default constructor
+	 * Construct a PerfOptionHandler.
 	 */
 	PerfOptionHandler() :
 		OptionHandler("perfHandler",
-				"perfHandler {std,dummy}     "
+				"perfHandler {std,dummy,os,papi}     "
 				"Which set of performance handlers to use. (default = std)") {}
 
 	/**
-	 * The destructor
+	 * Destroy the PerfOptionHandler.
 	 */
 	~PerfOptionHandler() {
 	}
@@ -34,22 +34,25 @@ public:
 	 * @param arg The argument for the flag.
 	 */
 	bool handler(IOptions *opt, std::string arg) {
-		// Determine the type of handlers we are being asked to use
-		if (arg == "std") {
-			opt->setPerfStandardHandlers(true);
-		}
-		else if (arg == "dummy") {
-			opt->setPerfStandardHandlers(false);
-		}
-		else {
-			std::cerr << "Options: Unrecognized argument in the performance option handler: " << arg << std::endl;
-			opt->showHelp(std::cerr);
-			opt->setShouldRunFlag(false);
-			opt->setExitCode(EXIT_FAILURE);
-			return false;
-		}
+        
+        bool ret = true;
 
-		return true;
+        try
+        {
+		    // Determine the type of handlers we are being asked to use
+            xolotlPerf::IHandlerRegistry::RegistryType rtype = xolotlPerf::toPerfRegistryType(arg);
+            opt->setPerfHandlerType( rtype );
+        }
+        catch( std::invalid_argument& e )
+        {
+            std::cerr << e.what() << std::endl;
+            opt->showHelp(std::cerr);
+            opt->setShouldRunFlag(false);
+            opt->setExitCode(EXIT_FAILURE);
+            ret = false;
+        }
+
+		return ret;
 	}
 
 };

@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include "xolotlPerf/xolotlPerf.h"
+
 
 namespace xolotlCore {
 
@@ -199,18 +201,17 @@ public:
     virtual void setHeliumFlux(double flux) = 0;
 
     /**
-     * Should we use the "standard" set of handlers for the performance?
-     * If false, use dummy (stub) handlers.
-     * @return true if program should use standard handlers, false if
-     * should use dummy handlers.
+     * Which type of performance handlers should we use?
+     * @return The type of performance handler registry to use.
      */
-    virtual bool usePerfStandardHandlers() const = 0;
+    virtual xolotlPerf::IHandlerRegistry::RegistryType getPerfHandlerType(void) const = 0;
 
     /**
-     * Set the perfStandardHandlersFlag.
-     * @param flag The value for the perfStandardHandlersFlag.
+     * Set the type of performance handlers to use.
+     * @param rtype The type of performance handler registry to use.
      */
-    virtual void setPerfStandardHandlers(bool flag) = 0;
+    virtual void setPerfHandlerType(xolotlPerf::IHandlerRegistry::RegistryType rtype) = 0;
+
 
     /**
      * Should we use the "standard" set of handlers for the visualization?

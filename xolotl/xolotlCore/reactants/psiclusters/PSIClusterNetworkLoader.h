@@ -13,7 +13,7 @@
 #include <memory>
 #include "PSICluster.h"
 #include <PSIClusterReactionNetwork.h>
-#include <IHandlerRegistry.h>
+#include "xolotlPerf/IHandlerRegistry.h"
 #include <string>
 
 namespace xolotlCore {

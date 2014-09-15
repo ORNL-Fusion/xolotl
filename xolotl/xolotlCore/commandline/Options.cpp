@@ -24,7 +24,7 @@ Options::Options() :
 		constTemperature(1000.0),
 		heliumFluenceFlag(false),
 		heliumFluxFlag(false),
-		perfStandardHandlersFlag(true),
+        perfRegistryType( xolotlPerf::IHandlerRegistry::std ),
 		vizStandardHandlersFlag(false),
 		materialFlag(false) {
 

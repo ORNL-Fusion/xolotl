@@ -1,0 +1,56 @@
+#include <iostream>
+#include <stdexcept>
+#include "xolotlPerf/papi/PAPITimer.h"
+
+namespace xolotlPerf {
+
+PAPITimer::Timestamp PAPITimer::invalidValue = -1;
+
+
+PAPITimer::~PAPITimer( void )
+{
+    // nothing to do
+}
+
+
+
+void
+PAPITimer::start( void )
+{
+    if( isRunning() )
+    {
+        throw std::runtime_error( "Attempting to start a timer that is already running." );
+    }
+    
+    // Start the timer by sampling the current time.
+    startTime = GetCurrentTime();
+}
+
+
+
+void
+PAPITimer::stop( void )
+{
+    if( !isRunning() )
+    {
+        throw std::runtime_error( "Attempting to stop a timer that was not running." );
+    }
+
+    // Form the difference between the end timestamp and 
+    // our saved start timestamp.
+    val = ToSeconds(GetCurrentTime() - startTime);
+
+    // Indicate the timer is no longer running.
+    startTime = invalidValue;
+}
+
+
+std::string 
+PAPITimer::getUnits( void ) const
+{
+    return std::string("s");
+}
+
+
+} // namespace xolotlPerf
+

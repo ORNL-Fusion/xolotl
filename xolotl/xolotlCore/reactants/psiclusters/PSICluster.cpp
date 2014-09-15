@@ -1,5 +1,5 @@
 #include "PSICluster.h"
-#include <HandlerRegistryFactory.h>
+#include "xolotlPerf.h"
 #include <Constants.h>
 #include <iostream>
 

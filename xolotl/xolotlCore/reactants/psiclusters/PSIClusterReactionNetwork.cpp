@@ -1,6 +1,6 @@
 #include "PSIClusterReactionNetwork.h"
 #include "PSICluster.h"
-#include <HandlerRegistryFactory.h>
+#include <xolotlPerf.h>
 #include <iostream>
 #include <sstream>
 #include <algorithm>

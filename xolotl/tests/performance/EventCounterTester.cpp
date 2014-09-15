@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
-#include "EventCounter.h"
+#include "xolotlPerf/standard/EventCounter.h"
 
 using namespace std;
 using namespace xolotlPerf;
