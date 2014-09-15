@@ -358,61 +358,7 @@ public class Preprocessor {
 		}
 
 		return clusterList;
-	};
-
-	/**
-	 * This operation creates an unstable cluster with the specified size.
-	 * Unstable means that it will go through trap mutation with a relatively
-	 * big dissociation rate.
-	 * 
-	 * @param heSize
-	 *            The number of Helium atoms in the cluster
-	 * @param vSize
-	 *            The number of vacancies in the cluster
-	 * @return The cluster.
-	 */
-	private Cluster makeUnstableCluster(int heSize, int vSize) {
-		// Create the cluster
-		Cluster cluster = new Cluster();
-		cluster.nHe = heSize;
-		cluster.nV = vSize;
-		// Set its I binding energy to -5.0 to obtain a big dissociation rate
-		// in Xolotl
-		cluster.E_I = -5.0;
-
-		return cluster;
 	}
-
-	/**
-	 * This operation generates unstable clusters in the network. They are the
-	 * ones just after the maximum number of He per V and will go under trap
-	 * mutation. The last one should not be added to the network because it
-	 * won't be able to dissociate into a cluster with a higher V number.
-	 * 
-	 * @return A list of clusters.
-	 */
-	private ArrayList<Cluster> generateUnstable() {
-
-		// Local Declarations
-		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
-
-		// Add the He one to the list
-		clusterList.add(makeUnstableCluster(maxHe + 1, 0));
-
-		// Loop over vacancies
-		for (int i = 1; i < maxV && i <= maxHePerV.length; ++i) {
-			// Add the unstable cluster to the list
-			clusterList.add(makeUnstableCluster(maxHePerV[i - 1] + 1, i));
-		}
-
-		// Create unstable clusters for the cases where max He per V = 4.
-		for (int i = maxHePerV.length + 1; i < maxV; i++) {
-			// Add the unstable cluster to the list
-			clusterList.add(makeUnstableCluster((i * 4) + 1, i));
-		}
-
-		return clusterList;
-	};
 
 	/**
 	 * This operation generates the initial conditions based on the defaults and
@@ -432,7 +378,6 @@ public class Preprocessor {
 		clusterList.addAll(generateInterstitials());
 		clusterList.addAll(generateHe());
 		clusterList.addAll(generateHeV());
-		clusterList.addAll(generateUnstable());
 
 		return clusterList;
 	}

@@ -34,12 +34,15 @@ HeInterstitialCluster::HeInterstitialCluster(int numHelium, int numInterstitial,
 					(3.0 * pow(xolotlCore::latticeConstant, 3.0))
 							/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
 
+	return;
 }
 
 HeInterstitialCluster::HeInterstitialCluster(const HeInterstitialCluster &other) :
 		PSICluster(other) {
 	numHe = other.numHe;
 	numI = other.numI;
+
+	return;
 }
 
 HeInterstitialCluster::~HeInterstitialCluster() {
@@ -47,15 +50,8 @@ HeInterstitialCluster::~HeInterstitialCluster() {
 
 std::shared_ptr<Reactant> HeInterstitialCluster::clone() {
 	std::shared_ptr<Reactant> reactant = std::make_shared<HeInterstitialCluster>(*this);
+
 	return reactant;
-}
-
-double HeInterstitialCluster::getGenByEm() {
-	return 0;
-}
-
-double HeInterstitialCluster::getAnnByEm() {
-	return 0;
 }
 
 void HeInterstitialCluster::replaceInCompound(std::vector<Reactant *> & reactants,

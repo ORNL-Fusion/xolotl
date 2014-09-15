@@ -211,36 +211,6 @@ protected:
 	//std::shared_ptr<xolotlPerf::IEventCounter> getDissociationFluxCounter;
 
 	/**
-	 * Calculate the reaction constant dependent on the
-	 * reaction radii and the diffusion coefficients for the
-	 * ith and jth clusters, which itself depends on the current
-	 * temperature
-	 * @param The first cluster interacting
-	 * @param The second cluster interacting
-	 * @param temperature
-	 * @return The rate
-	 */
-	double calculateReactionRateConstant(const PSICluster & firstcluster,
-			const PSICluster & secondcluster, double temperature) const;
-
-	/**
-	 * Calculate the dissociation constant of the first cluster with respect to
-	 * the single-species cluster of the same type based on the current clusters
-	 * atomic volume, reaction rate constant, and binding energies.
-	 *
-	 * @param dissociatingCluster The cluster that is dissociating, it is its binding
-	 * energy that must be used
-	 * @param singleCluster One of the clusters that dissociated from the parent,
-	 * must be the single size one in order to select the right type of binding energy
-	 * @param secondCluster The second cluster that dissociated from the parent
-	 * @param temperature The current system temperature
-	 * @return
-	 */
-	double calculateDissociationConstant(const PSICluster & dissociatingCluster,
-			const PSICluster & singleCluster, const PSICluster & secondCluster,
-			double temperature) const;
-
-	/**
 	 * Computes a row (or column) of the reaction connectivity matrix
 	 * corresponding to this cluster.
 	 *
@@ -271,6 +241,36 @@ protected:
 	 *
 	 */
 	virtual void createDissociationConnectivity();
+
+	/**
+	 * Calculate the reaction constant dependent on the
+	 * reaction radii and the diffusion coefficients for the
+	 * ith and jth clusters, which itself depends on the current
+	 * temperature
+	 * @param The first cluster interacting
+	 * @param The second cluster interacting
+	 * @param temperature
+	 * @return The rate
+	 */
+	double calculateReactionRateConstant(const PSICluster & firstcluster,
+			const PSICluster & secondcluster, double temperature) const;
+
+	/**
+	 * Calculate the dissociation constant of the first cluster with respect to
+	 * the single-species cluster of the same type based on the current clusters
+	 * atomic volume, reaction rate constant, and binding energies.
+	 *
+	 * @param dissociatingCluster The cluster that is dissociating, it is its binding
+	 * energy that must be used
+	 * @param singleCluster One of the clusters that dissociated from the parent,
+	 * must be the single size one in order to select the right type of binding energy
+	 * @param secondCluster The second cluster that dissociated from the parent
+	 * @param temperature The current system temperature
+	 * @return
+	 */
+	double calculateDissociationConstant(const PSICluster & dissociatingCluster,
+			const PSICluster & singleCluster, const PSICluster & secondCluster,
+			double temperature) const;
 
 	/**
 	 * This operation adds the dissociating cluster to the list of dissociatingPairs.
@@ -320,7 +320,7 @@ protected:
 	 * @param clusters The clusters that can combine with this cluster.
 	 * @param productName The name of the product produced in the reaction.
 	 */
-	void combineClusters(std::vector<Reactant *> & clusters,
+	virtual void combineClusters(std::vector<Reactant *> & clusters,
 			std::string productName);
 
 	/**
@@ -377,50 +377,6 @@ protected:
 	 * with this cluster.
 	 **/
 	void fillVWithI(std::string secondClusterName, std::vector<Reactant *> & clusters);
-
-	/**
-	 * This operation computes the partial derivatives due to production
-	 * reactions.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted. This vector should have a length equal to the size of the
-	 * network.
-	 * @param temperature The temperature at which the reactions are occurring.
-	 */
-	virtual void getProductionPartialDerivatives(std::vector<double> & partials, double temperature) const;
-
-	/**
-	 * This operation computes the partial derivatives due to combination
-	 * reactions.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted. This vector should have a length equal to the size of the
-	 * network.
-	 * @param temperature The temperature at which the reactions are occurring.
-	 */
-	virtual void getCombinationPartialDerivatives(std::vector<double> & partials, double temperature) const;
-
-	/**
-	 * This operation computes the partial derivatives due to dissociation of
-	 * other clusters into this one.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted. This vector should have a length equal to the size of the
-	 * network.
-	 * @param temperature The temperature at which the reactions are occurring.
-	 */
-	virtual void getDissociationPartialDerivatives(std::vector<double> & partials, double temperature) const;
-
-	/**
-	 * This operation computes the partial derivatives due to emission
-	 * reactions.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted. This vector should have a length equal to the size of the
-	 * network.
-	 * @param temperature The temperature at which the reactions are occurring.
-	 */
-	virtual void getEmissionPartialDerivatives(std::vector<double> & partials, double temperature) const;
 
 
 	/**
@@ -618,6 +574,79 @@ public:
 	virtual double getCombinationFlux(double temperature) const;
 
 	/**
+	 * This operation returns the list of partial derivatives of this cluster
+	 * with respect to all other clusters in the network. The combined lists
+	 * of partial derivatives from all of the clusters in the network can be
+	 * used to form, for example, a Jacobian.
+	 *
+	 * @param the temperature at which the reactions are occurring
+	 * @return The partial derivatives for this cluster where index zero
+	 * corresponds to the first cluster in the list returned by the
+	 * ReactionNetwork::getAll() operation.
+	 */
+	virtual std::vector<double> getPartialDerivatives(double temperature) const;
+
+	/**
+	 * This operation works as getPartialDerivatives above, but instead of
+	 * returning a vector that it creates it fills a vector that is passed to
+	 * it by the caller. This allows the caller to optimize the amount of
+	 * memory allocations to just one if they are accessing the partial
+	 * derivatives many times.
+	 *
+	 * @param the temperature at which the reactions are occurring
+	 * @param the vector that should be filled with the partial derivatives
+	 * for this reactant where index zero corresponds to the first reactant in
+	 * the list returned by the ReactionNetwork::getAll() operation. The size of
+	 * the vector should be equal to ReactionNetwork::size().
+	 *
+	 */
+	virtual void getPartialDerivatives(double temperature, std::vector<double> & partials) const;
+
+	/**
+	 * This operation computes the partial derivatives due to production
+	 * reactions.
+	 *
+	 * @param partials The vector into which the partial derivatives should be
+	 * inserted. This vector should have a length equal to the size of the
+	 * network.
+	 * @param temperature The temperature at which the reactions are occurring.
+	 */
+	virtual void getProductionPartialDerivatives(std::vector<double> & partials, double temperature) const;
+
+	/**
+	 * This operation computes the partial derivatives due to combination
+	 * reactions.
+	 *
+	 * @param partials The vector into which the partial derivatives should be
+	 * inserted. This vector should have a length equal to the size of the
+	 * network.
+	 * @param temperature The temperature at which the reactions are occurring.
+	 */
+	virtual void getCombinationPartialDerivatives(std::vector<double> & partials, double temperature) const;
+
+	/**
+	 * This operation computes the partial derivatives due to dissociation of
+	 * other clusters into this one.
+	 *
+	 * @param partials The vector into which the partial derivatives should be
+	 * inserted. This vector should have a length equal to the size of the
+	 * network.
+	 * @param temperature The temperature at which the reactions are occurring.
+	 */
+	virtual void getDissociationPartialDerivatives(std::vector<double> & partials, double temperature) const;
+
+	/**
+	 * This operation computes the partial derivatives due to emission
+	 * reactions.
+	 *
+	 * @param partials The vector into which the partial derivatives should be
+	 * inserted. This vector should have a length equal to the size of the
+	 * network.
+	 * @param temperature The temperature at which the reactions are occurring.
+	 */
+	virtual void getEmissionPartialDerivatives(std::vector<double> & partials, double temperature) const;
+
+	/**
 	 * This operation returns the total size of the cluster.
 	 * @return The total size of this cluster including the contributions
 	 * from all species types.
@@ -694,35 +723,6 @@ public:
 	 * that it does not.
 	 */
 	std::vector<int> getConnectivity() const;
-
-	/**
-	 * This operation returns the list of partial derivatives of this cluster
-	 * with respect to all other clusters in the network. The combined lists
-	 * of partial derivatives from all of the clusters in the network can be
-	 * used to form, for example, a Jacobian.
-	 *
-	 * @param the temperature at which the reactions are occurring
-	 * @return The partial derivatives for this cluster where index zero
-	 * corresponds to the first cluster in the list returned by the
-	 * ReactionNetwork::getAll() operation.
-	 */
-	virtual std::vector<double> getPartialDerivatives(double temperature) const;
-	
-	/**
-	 * This operation works as getPartialDerivatives above, but instead of
-	 * returning a vector that it creates it fills a vector that is passed to
-	 * it by the caller. This allows the caller to optimize the amount of
-	 * memory allocations to just one if they are accessing the partial
-	 * derivatives many times.
-	 *
-	 * @param the temperature at which the reactions are occurring
-	 * @param the vector that should be filled with the partial derivatives
-	 * for this reactant where index zero corresponds to the first reactant in
-	 * the list returned by the ReactionNetwork::getAll() operation. The size of
-	 * the vector should be equal to ReactionNetwork::size().
-	 *
-	 */
-	virtual void getPartialDerivatives(double temperature, std::vector<double> & partials) const;
 
 	/**
 	 * Calculate all the rate constants for the reactions and dissociations in which this

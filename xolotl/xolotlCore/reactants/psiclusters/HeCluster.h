@@ -22,6 +22,24 @@ private:
 		PSICluster(1)
 	{ }
 
+	/**
+	 * This operation "combines" clusters in the sense that it handles all of
+	 * the logic and caching required to correctly process the reaction
+	 *
+	 * (He_c)(V_b) + He_a --> [He_(a+c)][V_(b+1)] + I
+	 *
+	 * in the case of [He_(a+c)](V_b) not in the network
+	 *
+	 * This operation fills the reaction connectivity array as well as the
+	 * array of combining clusters.
+	 *
+	 * @param clusters The clusters that can combine with this cluster.
+	 * (Here it will be HeV clusters and He clusters)
+	 * @param productName The name of the product produced in the reaction.
+	 */
+	void combineClusters(std::vector<Reactant *> & clusters,
+			std::string productName);
+
 public:
 
 	/**
