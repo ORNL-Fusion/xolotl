@@ -18,7 +18,7 @@ if(Boost_FOUND)
     file(GLOB DUMMY_TEST_SRCS Dummy*Tester.cpp)
 
     # Always build the testers for the Standard classes that are always built
-    set(COMMON_TEST_SRCS EventCounterTester.cpp)
+    set(COMMON_TEST_SRCS EventCounterTester.cpp StdHandlerRegistryTester.cpp)
 
     # Always build the testers for the OS classes that are always built.
     file(GLOB OS_TEST_SRCS OS*Tester.cpp)
