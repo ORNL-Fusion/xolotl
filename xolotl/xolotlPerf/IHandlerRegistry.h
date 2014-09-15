@@ -8,6 +8,7 @@
 #include "ITimer.h"
 #include "IEventCounter.h"
 #include "IHardwareCounter.h"
+#include "PerfObjStatistics.h"
 
 
 namespace xolotlPerf {
@@ -51,11 +52,32 @@ public:
                         const IHardwareCounter::SpecType& ctrSpec ) = 0;
 
     /**
-     * Report statistics about any performance data collected 
-     * to the given stream.
+     * Collect statistics about any performance data collected by
+     * processes of the program.
+     *
+     * @param timerStats Map of timer statistics, keyed by timer name.
+     * @param counterStats Map of counter statistics, keyed by counter name.
+     * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
+     * 
      */
-    virtual void reportStatistics(std::ostream& os) const = 0;
+    virtual void collectStatistics( PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats ) = 0;
 
+    
+    /**
+     * Report performance data statistics to the given stream.
+     *
+     * @param os Stream on which to output statistics.
+     * @param timerStats Map of timer statistics, keyed by timer name.
+     * @param counterStats Map of counter statistics, keyed by counter name.
+     * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
+     * 
+     */
+    virtual void reportStatistics( std::ostream& os, 
+                    const PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats ) const = 0;
 
 };
 

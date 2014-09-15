@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include "xolotlPerf/IHandlerRegistry.h"
+#include "xolotlPerf/PerfObjStatistics.h"
 
 
 namespace xolotlPerf {
@@ -15,73 +16,6 @@ namespace xolotlPerf {
 class StdHandlerRegistry : public IHandlerRegistry
 {
 private:
-    /**
-     * Statistics (min,max,avg,stdev) for a performance metric we collected
-     * during a program run.
-     */
-    template<class T>
-    struct PerfObjStatistics
-    {
-        std::string name;           //< name of the metric
-        unsigned int processCount;  //< number of procesess that collected data for this metric
-        T min;                      //< min value across all processes that collected data for the metric
-        T max;                      //< max value across all processes that collected data for the metric
-        double average;             //< average value across all processes that collected data for the metric
-        double stdev;               //< standard deviation of values across all processes that collected data for the metric
-
-
-        /**
-         * Construct a PerfObjStatistics struct with default values.
-         * @param _name The metric name.
-         */
-        PerfObjStatistics( std::string _name )
-          : name( _name ),
-            processCount( 0 ),
-            min( 0 ),
-            max( 0 ),
-            average( 0 ),
-            stdev( 0 )
-        { }
-
-        /**
-         * Construct a PerfObjStatistics struct as a copy of another.
-         * @param obj The object to be copied.
-         */
-        PerfObjStatistics( const PerfObjStatistics& obj )
-          : name( obj.name ),
-            processCount( obj.processCount ),
-            min( obj.min ),
-            max( obj.max ),
-            average( obj.average ),
-            stdev( obj.stdev )
-        { }
-
-        /**
-         * Replace my own values to be a copy of another PerfObjStatistics.
-         * @param obj The object to be copied.
-         */
-        PerfObjStatistics& operator=( const PerfObjStatistics& obj )
-        {
-            if( &obj != this )
-            {
-                name = obj.name;
-                processCount = obj.processCount;
-                min = obj.min;
-                max = obj.max;
-                average = obj.average;
-                stdev = obj.stdev;
-            }
-            return *this;
-        }
-
-        /**
-         * Output our name and statistics to the given output stream.
-         * @param os The output stream on which we will write our statistics.
-         */
-        void outputTo(std::ostream& os ) const;
-    };
-
-
     /**
      * Collect performance data from all program processes.
      * In the process with rank 0, compute statistics for each
@@ -192,10 +126,32 @@ public:
 
 
     /**
-     * Report statistics about any collected performance data 
-     * to the given stream.
+     * Collect statistics about any performance data collected by
+     * processes of the program.
+     *
+     * @param timerStats Map of timer statistics, keyed by timer name.
+     * @param counterStats Map of counter statistics, keyed by counter name.
+     * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
+     * 
      */
-    virtual void reportStatistics(std::ostream& os) const;
+    virtual void collectStatistics( PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats );
+
+
+    /**
+     * Report performance data statistics to the given stream.
+     *
+     * @param os Stream on which to output statistics.
+     * @param timerStats Map of timer statistics, keyed by timer name.
+     * @param counterStats Map of counter statistics, keyed by counter name.
+     * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
+     */
+    virtual void reportStatistics( std::ostream& os, 
+                    const PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats ) const;
+
 };
 
 } // namespace xolotlPerf

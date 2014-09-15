@@ -206,8 +206,19 @@ int main(int argc, char **argv) {
 
 		totalTimer->stop();
 
-        // Report the performance data about the run we just completed.
-        handlerRegistry->reportStatistics(std::cout);
+        // Report statistics about the performance data collected during
+        // the run we just completed.
+        xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
+        xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> counterStats;
+        xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
+        handlerRegistry->collectStatistics( timerStats, counterStats, hwCtrStats );
+        if( rank == 0 )
+        {
+            handlerRegistry->reportStatistics( std::cout, 
+                                                timerStats, 
+                                                counterStats, 
+                                                hwCtrStats );
+        }
 
     } catch (std::exception& e ) {
 

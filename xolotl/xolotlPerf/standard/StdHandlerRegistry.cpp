@@ -57,20 +57,6 @@ StdHandlerRegistry::getEventCounter(std::string name)
 }
 
 
-template<class T>
-void
-StdHandlerRegistry::PerfObjStatistics<T>::outputTo(std::ostream& os) const
-{
-    os << "  " << "name: " << name << '\n'
-        << "    " << "process_count: " << processCount << '\n'
-        << "    " << "min: " << min << '\n'
-        << "    " << "max: " << max << '\n'
-        << "    " << "average: " << average << '\n'
-        << "    " << "stdev: " << stdev << '\n'
-        << std::endl;
-}
-
-
 template<typename T, typename V>
 void
 StdHandlerRegistry::CollectAllObjectNames( int myRank,
@@ -353,45 +339,49 @@ StdHandlerRegistry::AggregateStatistics( int myRank,
 
 
 void
-StdHandlerRegistry::reportStatistics(std::ostream& os) const
+StdHandlerRegistry::collectStatistics( 
+    PerfObjStatsMap<ITimer::ValType>& timerStats,
+    PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+    PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats )
 {
     int myRank;
     MPI_Comm_rank( MPI_COMM_WORLD, &myRank );
 
     // Aggregate statistics about counters in all processes.
     // First, timers...
-    std::map<std::string, PerfObjStatistics<ITimer::ValType> > timerStats;
     AggregateStatistics<ITimer, ITimer::ValType>( myRank, allTimers, timerStats );
 
     // ...next event counters...
-    std::map<std::string, PerfObjStatistics<IEventCounter::ValType> > counterStats;
     AggregateStatistics<IEventCounter, IEventCounter::ValType>( myRank, allEventCounters, counterStats );
 
     // ...finally hardware counters.
-    std::map<std::string, PerfObjStatistics<IHardwareCounter::CounterType> > hwCounterStats;
     AggregateStatistics<IHardwareCounter, IHardwareCounter::CounterType>( myRank, allHWCounterSets, hwCounterStats );
+}
 
 
-    // If I am the rank 0 process, output statistics on the given stream.
-    if( myRank == 0 )
+
+void
+StdHandlerRegistry::reportStatistics( std::ostream& os, 
+                    const PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats ) const
+{
+    os << "\nTimers:\n";
+    for( auto iter = timerStats.begin(); iter != timerStats.end(); ++iter )
     {
-        os << "\nTimers:\n";
-        for( auto iter = timerStats.begin(); iter != timerStats.end(); ++iter )
-        {
-            iter->second.outputTo(os);
-        }
+        iter->second.outputTo(os);
+    }
 
-        os << "\nCounters:\n";
-        for( auto iter = counterStats.begin(); iter != counterStats.end(); ++iter )
-        {
-            iter->second.outputTo(os);
-        }
+    os << "\nCounters:\n";
+    for( auto iter = counterStats.begin(); iter != counterStats.end(); ++iter )
+    {
+        iter->second.outputTo(os);
+    }
 
-        os << "\nHardwareCounters:\n";
-        for( auto iter = hwCounterStats.begin(); iter != hwCounterStats.end(); ++iter )
-        {
-            iter->second.outputTo(os);
-        }
+    os << "\nHardwareCounters:\n";
+    for( auto iter = hwCounterStats.begin(); iter != hwCounterStats.end(); ++iter )
+    {
+        iter->second.outputTo(os);
     }
 }
 

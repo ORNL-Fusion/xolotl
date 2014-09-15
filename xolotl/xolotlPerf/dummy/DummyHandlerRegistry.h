@@ -33,11 +33,34 @@ public:
                         const IHardwareCounter::SpecType& ctrSpec );
 
     /**
-     * Report statistics about any performance data collected to 
-     * the given stream.
-     * This operation is a stub.
+     * Collect statistics about any performance data collected by
+     * processes of the program.
+     * This method is a stub.
+     *
+     * @param timerStats Map of timer statistics, keyed by timer name.
+     * @param counterStats Map of counter statistics, keyed by counter name.
+     * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
+     * 
      */
-    virtual void reportStatistics(std::ostream& os) const;
+    virtual void collectStatistics( PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats );
+
+
+    /**
+     * Report performance data statistics to the given stream.
+     * This method is a stub in this class.
+     *
+     * @param os Stream on which to output statistics.
+     * @param timerStats Map of timer statistics, keyed by timer name.
+     * @param counterStats Map of counter statistics, keyed by counter name.
+     * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
+     * 
+     */
+    virtual void reportStatistics( std::ostream& os, 
+                    const PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats ) const;
 };
 
 } //end namespace xolotlPerf

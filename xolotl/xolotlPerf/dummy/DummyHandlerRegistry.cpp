@@ -35,10 +35,25 @@ DummyHandlerRegistry::getHardwareCounter( std::string name,
     return std::make_shared<DummyHardwareCounter>( name, ctrSpec );
 }
 
-void DummyHandlerRegistry::reportStatistics( std::ostream& /* os */ ) const
+void 
+DummyHandlerRegistry::collectStatistics( PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats )
 {
     // do nothing
 }
+
+
+void 
+DummyHandlerRegistry::reportStatistics( std::ostream& os, 
+                    const PerfObjStatsMap<ITimer::ValType>& timerStats,
+                    const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+                    const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats ) const
+{
+    // do nothing
+}
+
+
 
 };  // namespace xolotlPerf
 
