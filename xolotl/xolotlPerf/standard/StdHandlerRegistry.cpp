@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <float.h>
 #include <math.h>
+#include <string.h>
 #include "xolotlPerf/standard/StdHandlerRegistry.h"
 #include "xolotlPerf/standard/EventCounter.h"
 
