@@ -8,7 +8,7 @@ OSRTimestamp OSRTimestamp::invalidValue;
 
 
 void
-OSTimer::start( void )
+OSTimer::start(void)
 {
     if( isRunning() )
     {
@@ -22,7 +22,7 @@ OSTimer::start( void )
 
 
 void
-OSTimer::stop( void )
+OSTimer::stop(void)
 {
     if( !isRunning() )
     {
@@ -35,15 +35,28 @@ OSTimer::stop( void )
 
     // Form the difference between the end timestamp and 
     // our saved start timestamp.
-    val = (endTimestamp - startTime).ToSeconds();
+    val += (endTimestamp - startTime).ToSeconds();
 
     // Indicate the timer is no longer running.
     startTime = OSRTimestamp::invalidValue;
 }
 
 
+void
+OSTimer::reset(void)
+{
+    if( isRunning() )
+    {
+        throw std::runtime_error( "Attempting to reset a timer that is running" );
+    }
+
+    val = 0;
+}
+
+
+
 std::string 
-OSTimer::getUnits( void ) const
+OSTimer::getUnits(void) const
 {
     return std::string("s");
 }

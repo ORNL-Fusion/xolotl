@@ -53,4 +53,44 @@ BOOST_AUTO_TEST_CASE(checkTiming) {
 	BOOST_REQUIRE_EQUAL("s", tester.getUnits());
 }
 
+
+BOOST_AUTO_TEST_CASE(accumulate)
+{
+    xperf::OSTimer tester("test");
+
+    const unsigned int sleepSeconds = 2;
+
+    tester.start();
+    sleep(sleepSeconds);
+    tester.stop();
+    tester.start();
+    sleep(sleepSeconds);
+    tester.stop();
+    
+    double timerValue = tester.getValue();
+    double expValue = 2*sleepSeconds;   // we had two sleep intervals
+    BOOST_REQUIRE_CLOSE(expValue, timerValue, 0.03);
+}
+
+
+BOOST_AUTO_TEST_CASE(reset)
+{
+    xperf::OSTimer tester("test");
+
+    const unsigned int sleepSeconds = 2;
+
+    tester.start();
+    sleep(sleepSeconds);
+    tester.stop();
+    tester.reset();
+    BOOST_REQUIRE_EQUAL(tester.getValue(), 0.0);
+    tester.start();
+    sleep(sleepSeconds);
+    tester.stop();
+
+    double timerValue = tester.getValue();
+    double expValue = sleepSeconds;     // should only represent last sleep interval
+    BOOST_REQUIRE_CLOSE(expValue, timerValue, 0.03);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

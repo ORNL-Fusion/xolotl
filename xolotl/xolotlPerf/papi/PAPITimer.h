@@ -34,7 +34,7 @@ private:
 
     /// Construct a timer.
     /// The default constructor is private to force callers to provide a name for the timer object.
-    PAPITimer( void )
+    PAPITimer(void)
       : xolotlCore::Identifiable( "unused" ),
         val( 0 )
     { }
@@ -43,7 +43,7 @@ private:
     /// Sample the current time.
     ///
     /// @return The current time.
-    Timestamp GetCurrentTime( void ) const
+    Timestamp GetCurrentTime(void) const
     {
         return PAPI_get_real_nsec();
     }
@@ -74,21 +74,28 @@ public:
     ///
     /// Destroy the timer.
     ///
-	virtual ~PAPITimer( void );
+	virtual ~PAPITimer(void);
 
 
     ///
     /// Start the timer.
     /// Throws std::runtime_error if starting a timer that was already started.
     ///
-    virtual void start( void );
+    virtual void start(void);
 
 
     ///
     /// Stop the timer.
     /// Throws std::runtime_error if stopping a timer that was not running.
     ///
-    virtual void stop( void );
+    virtual void stop(void);
+
+
+    ///
+    /// Reset the timer.
+    /// Throws std::runtime_error if timer is running.
+    ///
+    virtual void reset(void);
 
 
     ///
@@ -96,7 +103,7 @@ public:
     /// 
     /// @return true if the Timer is running, false otherwise.
     ///
-    virtual bool isRunning( void ) const    { return (startTime != invalidValue); }
+    virtual bool isRunning(void) const    { return (startTime != invalidValue); }
 
     ///
     /// Retrieve the value of the timer.
@@ -104,14 +111,14 @@ public:
     ///
     /// @return The elapsed time measured by this timer.
     ///
-    virtual ValType  getValue( void ) const { return val; }
+    virtual ValType  getValue(void) const { return val; }
 
 
     ///
     /// Retrieve the Timer value's units.
     /// @return The units in which the timer's value is given.
     ///
-    virtual std::string getUnits( void ) const;
+    virtual std::string getUnits(void) const;
 
 
     /// Add the given Timer's value to my value.

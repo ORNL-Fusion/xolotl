@@ -68,6 +68,14 @@ public:
 
 
     ///
+    /// Reset the timer's value.
+    /// Throws std::runtime_error if resetting a timer that was running.
+    ///
+    virtual void reset( void );
+
+
+
+    ///
     /// Determine if the Timer is currently running.
     /// 
     /// @return true if the Timer is running, false otherwise.

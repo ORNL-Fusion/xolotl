@@ -38,10 +38,22 @@ PAPITimer::stop( void )
 
     // Form the difference between the end timestamp and 
     // our saved start timestamp.
-    val = ToSeconds(GetCurrentTime() - startTime);
+    val += ToSeconds(GetCurrentTime() - startTime);
 
     // Indicate the timer is no longer running.
     startTime = invalidValue;
+}
+
+
+void
+PAPITimer::reset(void)
+{
+    if( isRunning() )
+    {
+        throw std::runtime_error( "Attempting to reset a timer that is running" );
+    }
+
+    val = 0;
 }
 
 

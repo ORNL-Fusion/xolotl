@@ -20,7 +20,7 @@ private:
 	 * The default constructor is declared as private since Timers
 	 *  must be initialized with a name.
 	 */
-    DummyTimer()
+    DummyTimer(void)
       : xolotlCore::Identifiable("unused")
     { }
 
@@ -37,29 +37,34 @@ public:
     { }
 
 	/**
-	 * The destructor.
+	 * Destroy the timer.
 	 */
-	virtual ~DummyTimer() { }
+	virtual ~DummyTimer(void) { }
 
     /**
-     * This operations starts the ITimer.
+     * Start the timer.
      */
-	virtual void start();
+	virtual void start(void);
 
     /**
-     * This operation stops the ITimer.
+     * Stop the timer.
      */
-	virtual void stop();
+	virtual void stop(void);
 
     /**
-     * This operation returns the value of the DummyTimer.
+     * Reset the timer's value.
      */
-    virtual ITimer::ValType getValue() const;
+    virtual void reset(void);
+
+    /**
+     * Obtain the timer's value.
+     */
+    virtual ITimer::ValType getValue(void) const;
 
 	/**
-	 * This operation returns the units of the GPTLTimer.
+	 * Obtain a string describing the units of the timer's value.
 	 */
-    virtual std::string getUnits() const;
+    virtual std::string getUnits(void) const;
 
 };  //end class DummyTimer
 
