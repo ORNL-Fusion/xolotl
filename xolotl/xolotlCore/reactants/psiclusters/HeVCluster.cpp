@@ -296,6 +296,9 @@ void HeVCluster::createReactionConnectivity() {
 			// Get the other reactant [He_(a-c)][V_(b-1)] that can be He or HeV
 			PSICluster * otherReactant;
 			if (comp[vType] == 1) {
+				// We want (a-c) to be smaller or equal to c in order to avoid double counting
+				if (comp[heType] > 2 * heReactant->getSize()) continue;
+
 				otherReactant = (PSICluster *) network->get(heType, comp[heType] - heReactant->getSize());
 			}
 			else {
