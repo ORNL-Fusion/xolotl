@@ -20,6 +20,8 @@ using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
 
+static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared<xolotlPerf::DummyHandlerRegistry>();
+
 /**
  * This suite is responsible for testing the VCluster.
  */BOOST_AUTO_TEST_SUITE(VCluster_testSuite)
@@ -169,8 +171,18 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  * This operation checks the reaction radius for VCluster.
  */
  BOOST_AUTO_TEST_CASE(checkReactionRadius) {
-	BOOST_TEST_MESSAGE("VClustertTester Message: BOOST_AUTO_TEST_CASE(checkReactionRadius): \n"
-			<< "getReactionRadius needs to be fixed");
+
+	vector<shared_ptr<VCluster>> clusters;
+	shared_ptr<VCluster> cluster;
+
+	double expectedRadii[] = { 0.1372650265, 0.1778340462, 0.2062922619,
+			0.2289478080, 0.2480795532 };
+
+	for (int i = 1; i <= 5; i++) {
+		cluster = shared_ptr<VCluster>(new VCluster(i, registry));
+		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
+				.000001);
+	}
 }
 BOOST_AUTO_TEST_SUITE_END()
 

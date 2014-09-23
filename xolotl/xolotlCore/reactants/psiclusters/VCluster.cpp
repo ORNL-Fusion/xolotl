@@ -20,7 +20,7 @@ VCluster::VCluster(int nV, std::shared_ptr<xolotlPerf::IHandlerRegistry> registr
 	compositionMap["V"] = size;
 
 	// Compute the reaction radius
-	// It is the same formula than for HeV clusters
+	// It is the same formula for HeV clusters
 	reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
 			+ pow(
 					(3.0 * pow(xolotlCore::latticeConstant, 3.0) * size)
