@@ -121,16 +121,10 @@ protected:
 	int thisNetworkIndex;
 
 	/**
-	 * The binding energies for this cluster with clusters of other species
-	 * types. There is one binding energy for each of the other species ordered
-	 * by He, V, and I at indices 0, 1, and 2 respectively.
+	 * The formation energy of this cluster. It will be used to compute the
+	 * binding energies appearing in the dissociation constant calculation.
 	 */
-	std::vector<double> bindingEnergies;
-
-	/**
-	 * A map used to look up binding energy indices quickly.
-	 */
-	static std::unordered_map<std::string, int> bindingEnergyIndexMap;
+	double formationEnergy;
 
 	/**
 	 * The migration energy for this cluster.
@@ -249,11 +243,10 @@ protected:
 	 * temperature
 	 * @param The first cluster interacting
 	 * @param The second cluster interacting
-	 * @param temperature
 	 * @return The rate
 	 */
 	double calculateReactionRateConstant(const PSICluster & firstcluster,
-			const PSICluster & secondcluster, double temperature) const;
+			const PSICluster & secondcluster) const;
 
 	/**
 	 * Calculate the dissociation constant of the first cluster with respect to
@@ -265,13 +258,23 @@ protected:
 	 * @param singleCluster One of the clusters that dissociated from the parent,
 	 * must be the single size one in order to select the right type of binding energy
 	 * @param secondCluster The second cluster that dissociated from the parent
-	 * @param temperature The current system temperature
 	 * @return
 	 */
 	double calculateDissociationConstant(const PSICluster & dissociatingCluster,
-			const PSICluster & singleCluster, const PSICluster & secondCluster,
-			double temperature) const;
-
+			const PSICluster & singleCluster, const PSICluster & secondCluster) const;
+			
+	/**
+	 * Calculate the binding energy for the dissociation cluster to emit the single
+	 * and second cluster.
+	 *
+	 * @param dissociatingCluster The cluster that is dissociating
+	 * @param singleCluster One of the clusters that dissociated from the parent
+	 * @param secondCluster The second cluster that dissociated from the parent
+	 * @return The binding energy corresponding to this dissociation.
+	 */
+	double computeBindingEnergy(const PSICluster & dissociatingCluster,
+			const PSICluster & singleCluster, const PSICluster & secondCluster) const;
+			
 	/**
 	 * This operation adds the dissociating cluster to the list of dissociatingPairs.
 	 * It is called by createDissociationConnectivity to process the reaction.
@@ -377,7 +380,6 @@ protected:
 	 * with this cluster.
 	 **/
 	void fillVWithI(std::string secondClusterName, std::vector<Reactant *> & clusters);
-
 
 	/**
 	 * This operation prints a forward reaction given the three reactants in
@@ -535,43 +537,38 @@ public:
 	/**
 	 * This operation returns the total flux of this cluster in the
 	 * current network.
-	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux(const double temperature);
+	virtual double getTotalFlux();
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it.
-	 * @param temperature The temperature at which to calculate the flux
 	 * @return The flux due to dissociation of other clusters.
 	 */
-	virtual double getDissociationFlux(double temperature) const;
+	virtual double getDissociationFlux() const;
 
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation.
-	 * @param temperature The temperature at which to calculate the flux
 	 * @return The flux due to its dissociation.
 	 */
-	virtual double getEmissionFlux(double temperature) const;
+	virtual double getEmissionFlux() const;
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters.
-	 * @param temperature The temperature at which to calculate the flux
 	 * @return The flux due to this cluster being produced.
 	 */
-	virtual double getProductionFlux(double temperature) const;
+	virtual double getProductionFlux() const;
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others.
-	 * @param temperature The temperature at which to calculate the flux
 	 * @return The flux due to this cluster combining with other clusters.
 	 */
-	virtual double getCombinationFlux(double temperature) const;
+	virtual double getCombinationFlux() const;
 
 	/**
 	 * This operation returns the list of partial derivatives of this cluster
@@ -579,12 +576,11 @@ public:
 	 * of partial derivatives from all of the clusters in the network can be
 	 * used to form, for example, a Jacobian.
 	 *
-	 * @param the temperature at which the reactions are occurring
 	 * @return The partial derivatives for this cluster where index zero
 	 * corresponds to the first cluster in the list returned by the
 	 * ReactionNetwork::getAll() operation.
 	 */
-	virtual std::vector<double> getPartialDerivatives(double temperature) const;
+	virtual std::vector<double> getPartialDerivatives() const;
 
 	/**
 	 * This operation works as getPartialDerivatives above, but instead of
@@ -593,14 +589,13 @@ public:
 	 * memory allocations to just one if they are accessing the partial
 	 * derivatives many times.
 	 *
-	 * @param the temperature at which the reactions are occurring
 	 * @param the vector that should be filled with the partial derivatives
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
 	 *
 	 */
-	virtual void getPartialDerivatives(double temperature, std::vector<double> & partials) const;
+	virtual void getPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
 	 * This operation computes the partial derivatives due to production
@@ -609,9 +604,8 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
-	 * @param temperature The temperature at which the reactions are occurring.
 	 */
-	virtual void getProductionPartialDerivatives(std::vector<double> & partials, double temperature) const;
+	virtual void getProductionPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -620,9 +614,8 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
-	 * @param temperature The temperature at which the reactions are occurring.
 	 */
-	virtual void getCombinationPartialDerivatives(std::vector<double> & partials, double temperature) const;
+	virtual void getCombinationPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -631,9 +624,8 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
-	 * @param temperature The temperature at which the reactions are occurring.
 	 */
-	virtual void getDissociationPartialDerivatives(std::vector<double> & partials, double temperature) const;
+	virtual void getDissociationPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -642,9 +634,8 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
-	 * @param temperature The temperature at which the reactions are occurring.
 	 */
-	virtual void getEmissionPartialDerivatives(std::vector<double> & partials, double temperature) const;
+	virtual void getEmissionPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
 	 * This operation returns the total size of the cluster.
@@ -654,18 +645,16 @@ public:
 	virtual int getSize() const;
 
 	/**
-	 * This operation retrieves the binding energy for this cluster.
-	 * @return An array of the binding energies of this cluster with clusters
-	 * of other types as described above.
+	 * This operation retrieves the formation energy for this cluster.
+	 * @return The value of the formation energy.
 	 */
-	std::vector<double> getBindingEnergies() const;
+	double getFormationEnergy() const;
 
 	/**
-	 * This operation sets the binding energies for this cluster. It expects
-	 * the energy vector to be ordered as described above.
-	 * @param energies The vector of energies.
+	 * This operation sets the formation energy for this cluster.
+	 * @param energy The formation energy.
 	 */
-	void setBindingEnergies(std::vector<double> energies);
+	void setFormationEnergy(double energy);
 
 	/**
 	 * This operation retrieves the diffusion factor, D_0, that is used to
@@ -684,7 +673,6 @@ public:
 	/**
 	 * This operation returns the diffusion coefficient for this cluster and is
 	 * calculated from the diffusion factor.
-	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
 	 * @return The diffusion coefficient.
 	 */
 	virtual double getDiffusionCoefficient() const;
@@ -728,10 +716,8 @@ public:
 	 * Calculate all the rate constants for the reactions and dissociations in which this
 	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
 	 * or CombiningCluster. Need to be called only when the temperature changes.
-	 *
-	 * @param temperature The current system temperature
 	 */
-	void computeRateConstants(double temperature);
+	void computeRateConstants();
 
 	/**
 	 * This operation overrides Reactant's setTemperature operation to

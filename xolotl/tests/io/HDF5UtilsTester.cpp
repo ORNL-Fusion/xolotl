@@ -129,19 +129,17 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 		BOOST_REQUIRE_EQUAL((int) line[1], composition["V"]);
 		BOOST_REQUIRE_EQUAL((int) line[2], composition["I"]);
 
-		// Check the binding energies
-		auto bindingEnergies = reactant->getBindingEnergies();
-		BOOST_REQUIRE_EQUAL(line[3], bindingEnergies.at(0)); // Helium binding energy
-		BOOST_REQUIRE_EQUAL(line[4], bindingEnergies.at(1)); // Vacancy binding energy
-		BOOST_REQUIRE_EQUAL(line[5], bindingEnergies.at(2)); // Interstitial binding energy
+		// Check the formation energy
+		auto formationEnergy = reactant->getFormationEnergy();
+		BOOST_REQUIRE_EQUAL(line[3], formationEnergy);
 
 		// Check the migration energy
 		double migrationEnergy = reactant->getMigrationEnergy();
-		BOOST_REQUIRE_EQUAL(line[6], migrationEnergy);
+		BOOST_REQUIRE_EQUAL(line[4], migrationEnergy);
 
 		// Check the diffusion factor
 		double diffusionFactor = reactant->getDiffusionFactor();
-		BOOST_REQUIRE_EQUAL(line[7], diffusionFactor);
+		BOOST_REQUIRE_EQUAL(line[5], diffusionFactor);
 	}
 
 	// If the HDF5 file contains initial concentrations

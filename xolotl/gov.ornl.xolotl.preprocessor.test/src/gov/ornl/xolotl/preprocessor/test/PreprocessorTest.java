@@ -269,9 +269,7 @@ public class PreprocessorTest {
 				cluster.nHe = 1;
 				cluster.nV = 23;
 				cluster.nI = 52;
-				cluster.E_He = 9.325;
-				cluster.E_V = 34.2346;
-				cluster.E_I = 3326424.2323543;
+				cluster.E_f = 12.3;
 				cluster.E_m = 0.04;
 				cluster.D_0 = 1.1;
 

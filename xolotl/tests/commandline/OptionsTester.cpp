@@ -40,7 +40,6 @@ BOOST_AUTO_TEST_CASE(noOptions)
     BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
 }
 
-
 BOOST_AUTO_TEST_CASE(badParamFileName)
 {
     xolotlCore::Options opts;

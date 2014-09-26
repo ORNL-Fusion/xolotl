@@ -266,11 +266,3 @@ void HeInterstitialCluster::createDissociationConnectivity() {
 
 	return;
 }
-
-void HeInterstitialCluster::setTemperature(double temp) {
-
-	// Call the base class version to set all of the basic quantities.
-	PSICluster::setTemperature(temp);
-
-	return;
-}

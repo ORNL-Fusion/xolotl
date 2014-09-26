@@ -361,25 +361,6 @@ void HeVCluster::createDissociationConnectivity() {
 	// Here it is important that heVClusterMoreV is the first cluster
 	// because it is the dissociating one.
 	dissociateCluster(heVClusterMoreV, singleCluster);
-	
-	// Trap mutation
-	// (He_a)(V_b) --> He_(a)[V_(b+1)] + I
-	// Get the single interstitial cluster (we already have the one with
-	// one more vacancy)
-	singleCluster = (PSICluster *) network->get(iType, 1);
-	emitClusters(singleCluster, heVClusterMoreV);
-	// He_(a)[V_(b-1)] --> (He_a)(V_b) + I
-	// Here it is important that heVClusterLessV is the first cluster
-	// because it is the dissociating one.
-	dissociateCluster(heVClusterLessV, singleCluster);
-
-	return;
-}
-
-void HeVCluster::setTemperature(double temp) {
-
-	// Call the base class version to set all of the basic quantities.
-	PSICluster::setTemperature(temp);
 
 	return;
 }

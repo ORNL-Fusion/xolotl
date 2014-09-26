@@ -35,7 +35,7 @@ set(CMAKE_JAVA_CLASS_OUTPUT_PATH ${PREPROCESSOR_DIR})
 
 # Compile the preprocessor files
 add_jar(xolotlPreprocessor ${PREPROCESSOR_SRC}/Main.java ${PREPROCESSOR_SRC}/Preprocessor.java ${PREPROCESSOR_SRC}/Arguments.java 
-        ${PREPROCESSOR_SRC}/Cluster.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
+        ${PREPROCESSOR_SRC}/Cluster.java ${PREPROCESSOR_SRC}/FormationEnergyEngine.java 
         OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
 get_target_property(_jarFile xolotlPreprocessor JAR_FILE)
 get_target_property(_classDir xolotlPreprocessor CLASSDIR)
@@ -87,27 +87,27 @@ if ( ( DEFINED ENV{JUNIT_JAR} ) AND (DEFINED ENV{HAMCREST_JAR} ) )
     )
    
     # Compile the preprocessor tests
-    message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/BindingEnergyEngineTest.java")
-    add_jar(BindingEnergyEngineTest ${PREPROCESSOR_TEST_SRC}/BindingEnergyEngineTest.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
+    message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/FormationEnergyEngineTest.java")
+    add_jar(FormationEnergyEngineTest ${PREPROCESSOR_TEST_SRC}/FormationEnergyEngineTest.java ${PREPROCESSOR_SRC}/FormationEnergyEngine.java 
         OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
-    get_target_property(_jarFile BindingEnergyEngineTest JAR_FILE)
-    # The preprocessor .class files will be written to /preprocessor/test/CMakeFiles/BindingEnergyEngineTest.dir
-    get_target_property(_classDir BindingEnergyEngineTest CLASSDIR)
-    message(STATUS "BindingEnergyEngineTest class compiled to ${_classDir}")
+    get_target_property(_jarFile FormationEnergyEngineTest JAR_FILE)
+    # The preprocessor .class files will be written to /preprocessor/test/CMakeFiles/FormationEnergyEngineTest.dir
+    get_target_property(_classDir FormationEnergyEngineTest CLASSDIR)
+    message(STATUS "FormationEnergyEngineTest class compiled to ${_classDir}")
     # Define the preprocessor JUnit test target
-    add_junit_test(BindingEnergyEngineTest 
+    add_junit_test(FormationEnergyEngineTest 
         CLASSPATH 
             ${CMAKE_JAVA_INCLUDE_PATH} 
             ${_classDir}
         TESTS 
-            gov.ornl.xolotl.preprocessor.test.BindingEnergyEngineTest
+            gov.ornl.xolotl.preprocessor.test.FormationEnergyEngineTest
     )
 
 
     # Compile the preprocessor tests
     message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/PreprocessorTest.java")
     add_jar(PreprocessorTest ${PREPROCESSOR_TEST_SRC}/PreprocessorTest.java ${PREPROCESSOR_SRC}/Preprocessor.java ${PREPROCESSOR_SRC}/Arguments.java 
-        ${PREPROCESSOR_SRC}/Cluster.java ${PREPROCESSOR_SRC}/BindingEnergyEngine.java 
+        ${PREPROCESSOR_SRC}/Cluster.java ${PREPROCESSOR_SRC}/FormationEnergyEngine.java 
         OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
     get_target_property(_jarFile PreprocessorTest JAR_FILE)
     # The preprocessor test .class files will be written to preprocessor/test/CMakeFiles/PreprocessorTest.dir 

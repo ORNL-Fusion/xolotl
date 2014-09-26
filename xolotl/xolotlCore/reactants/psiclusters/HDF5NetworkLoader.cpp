@@ -20,10 +20,8 @@ std::shared_ptr<PSIClusterReactionNetwork> HDF5NetworkLoader::load() {
 
 	// Initialization
 	int numHe = 0, numV = 0, numI = 0;
-	double heBindingE = 0.0, vBindingE = 0.0, iBindingE = 0.0, migrationEnergy =
-			0.0;
+	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
-	std::vector<double> bindingEnergies;
 	std::vector<std::shared_ptr<Reactant> > reactants;
 
 	// Prepare the network
@@ -40,19 +38,13 @@ std::shared_ptr<PSIClusterReactionNetwork> HDF5NetworkLoader::load() {
 		// Create the cluster
 		auto nextCluster = createCluster(numHe, numV, numI);
 
-		// Binding energies
-		heBindingE = (*lineIt)[3];
-		vBindingE = (*lineIt)[4];
-		iBindingE = (*lineIt)[5];
-		migrationEnergy = (*lineIt)[6];
-		diffusionFactor = (*lineIt)[7];
+		// Energies
+		formationEnergy = (*lineIt)[3];
+		migrationEnergy = (*lineIt)[4];
+		diffusionFactor = (*lineIt)[5];
 
-		// Create the binding energies array and set it
-		bindingEnergies.clear();
-		bindingEnergies.push_back(heBindingE);
-		bindingEnergies.push_back(vBindingE);
-		bindingEnergies.push_back(iBindingE);
-		nextCluster->setBindingEnergies(bindingEnergies);
+		// Set the formation energy
+		nextCluster->setFormationEnergy(formationEnergy);
 		// Set the diffusion factor and migration energy
 		nextCluster->setMigrationEnergy(migrationEnergy);
 		nextCluster->setDiffusionFactor(diffusionFactor);

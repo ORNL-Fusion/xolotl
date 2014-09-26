@@ -86,9 +86,9 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 	for (int i = 0; i < nReactants; ++i) {
 		auto reactant = (PSICluster *) reactants->at(i);
 		// Get the partials using method 1
-		auto partials = reactant->getPartialDerivatives(temperature);
+		auto partials = reactant->getPartialDerivatives();
 		// Get the partials using method 2
-		reactant->getPartialDerivatives(temperature,secondPartials);
+		reactant->getPartialDerivatives(secondPartials);
 		// Compare the two arrays of partial derivatives
 		for (int j = 0; j < nReactants; ++j) {
 			BOOST_REQUIRE_CLOSE(partials[j],secondPartials[j],1.0);
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 	// Get He_1
 	auto reactant = (PSICluster *) reactants->at(0);
 	// Its partial derivatives
-	auto partials = reactant->getPartialDerivatives(temperature);
+	auto partials = reactant->getPartialDerivatives();
 
 	// Check the values of the partial derivatives
 	BOOST_REQUIRE_CLOSE(partials[0], -2.0, 0.1);
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 	// Get He_2
 	reactant = (PSICluster *) reactants->at(1);
 	// Its partial derivatives
-	partials = reactant->getPartialDerivatives(temperature);
+	partials = reactant->getPartialDerivatives();
 
 	// Check the values of the partial derivatives
 	BOOST_REQUIRE_CLOSE(partials[0], 1.0, 0.1);

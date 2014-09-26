@@ -21,17 +21,8 @@ public class Cluster {
 	// The number of interstitials in the cluster. Default value is 0.
 	public int nI = 0;
 
-	// The binding energy of the cluster with He_1. Default value is infinity so
-	// that the cluster does not dissociate.
-	public double E_He = Double.POSITIVE_INFINITY;
-
-	// The binding energy of the cluster with V_1. Default value is infinity so
-	// that the cluster does not dissociate.
-	public double E_V = Double.POSITIVE_INFINITY;
-
-	// The binding energy of the cluster with I_1. Default value is infinity so
-	// that the cluster does not dissociate.
-	public double E_I = Double.POSITIVE_INFINITY;
+	// The formation energy of this cluster
+	public double E_f = 0.0;
 
 	// The migration energy with which the cluster diffuses. Default value is
 	// infinity so that the cluster is immobile.
@@ -45,22 +36,17 @@ public class Cluster {
 	/**
 	 * This operation returns the cluster as a string of the form
 	 * 
-	 * nHe nV nI E_He E_V E_I E_migration D_0
+	 * nHe nV nI E_f E_migration D_0
 	 */
 	public String toString() {
 
 		// Convert infinite energies
-		String EHeAsString = (!Double.isInfinite(E_He)) ? String.valueOf(E_He)
-				: "Infinity";
-		String EVAsString = (!Double.isInfinite(E_V)) ? String.valueOf(E_V)
-				: "Infinity";
-		String EIAsString = (!Double.isInfinite(E_I)) ? String.valueOf(E_I)
+		String EfAsString = (!Double.isInfinite(E_f)) ? String.valueOf(E_f)
 				: "Infinity";
 		String EMAsString = (!Double.isInfinite(E_m)) ? String.valueOf(E_m)
 				: "Infinity";
 
-		return nHe + " " + nV + " " + nI + " " + EHeAsString + " " + EVAsString
-				+ " " + EIAsString + " " + EMAsString + " " + D_0;
+		return nHe + " " + nV + " " + nI + " " + EfAsString + " " + EMAsString + " " + D_0;
 	}
 
 }

@@ -8,8 +8,8 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include "../../xolotlPerf/xolotlPerf.h"
-#include "../../xolotlPerf/dummy/DummyHandlerRegistry.h"
+#include <xolotlPerf.h>
+#include <DummyHandlerRegistry.h>
 #include <PSICluster.h>
 #include <PSIClusterReactionNetwork.h>
 #include <memory>
@@ -123,10 +123,10 @@ BOOST_AUTO_TEST_CASE(checkDefaultFluxes) {
 	PSICluster cluster(1, registry);
 
 	// Check the default values of the fluxes
-	BOOST_REQUIRE_CLOSE(cluster.getProductionFlux(273.0), 0.0, 1e-5);
-	BOOST_REQUIRE_CLOSE(cluster.getCombinationFlux(273.0), 0.0, 1e-5);
-	BOOST_REQUIRE_CLOSE(cluster.getDissociationFlux(273.0), 0.0, 1e-5);
-	BOOST_REQUIRE_CLOSE(cluster.getTotalFlux(273.0), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getProductionFlux(), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getCombinationFlux(), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getDissociationFlux(), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getTotalFlux(), 0.0, 1e-5);
 
 }
 

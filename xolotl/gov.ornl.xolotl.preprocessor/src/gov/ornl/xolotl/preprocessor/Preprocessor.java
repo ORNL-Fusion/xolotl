@@ -30,11 +30,7 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
  * 
  * nI - The number of interstitials in the cluster.
  * 
- * E_He - The binding energy of the cluster with He_1.
- * 
- * E_V - The binding energy of the cluster with V_1.
- * 
- * E_I - The binding energy of the cluster with I_1.
+ * E_f - The formation energy of the cluster
  * 
  * E_migration - The migration energy with which the cluster diffuses.
  * 
@@ -43,11 +39,7 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
  * 
  * All energies are in eV and all diffusion factors are in nm^2/s.
  * 
- * The preprocessor generates 2067 clusters with its default configuration. If
- * only the maximum number of vacancies is changed it generates a number of
- * clusters equal to
- * 
- * maxI + maxHe + 2053 + (maxV - 29) + 2(maxV - 29)(30 + maxV)
+ * The preprocessor generates 2067 clusters with its default configuration.
  * 
  * @author Jay Jay Billings
  * 
@@ -103,10 +95,10 @@ public class Preprocessor {
 			112, 116 };
 
 	/**
-	 * The binding energy engine used to generate binding energies for the
+	 * The formation energy engine used to generate formation energies for the
 	 * different clusters.
 	 */
-	private BindingEnergyEngine bindingEnergyEngine = new BindingEnergyEngine();
+	private FormationEnergyEngine formationEnergyEngine = new FormationEnergyEngine();
 
 	/**
 	 * The list of parameters that will be passed to Xolotl
@@ -236,7 +228,7 @@ public class Preprocessor {
 	}
 
 	/**
-	 * This operation generates all Helium clusters in the network.
+	 * This operation generates all helium clusters in the network.
 	 * 
 	 * @return A list of clusters configured to satisfy the bounds and composed
 	 *         solely of Helium.
@@ -251,7 +243,7 @@ public class Preprocessor {
 			// Create the cluster
 			Cluster tmpCluster = new Cluster();
 			tmpCluster.nHe = i + 1;
-			tmpCluster.E_He = bindingEnergyEngine.getHeBindingEnergy(i + 1);
+			tmpCluster.E_f = formationEnergyEngine.getHeFormationEnergy(i + 1);
 			// Add the cluster to the list
 			clusterList.add(tmpCluster);
 		}
@@ -268,7 +260,7 @@ public class Preprocessor {
 
 	/**
 	 * This operation creates an HeV cluster with the specified size. It
-	 * configures the binding energies on its own.
+	 * configures the formation energies on its own.
 	 * 
 	 * @param heSize
 	 *            The number of Helium atoms in the cluster
@@ -281,12 +273,15 @@ public class Preprocessor {
 		Cluster cluster = new Cluster();
 		cluster.nHe = heSize;
 		cluster.nV = vSize;
-		// Treat everything like a mixed cluster and let the
-		// BindingEnergyEngine delegate for single species clusters.
-		cluster.E_He = bindingEnergyEngine.getHeVtoHeBindingEnergy(heSize,
-				vSize);
-		cluster.E_V = bindingEnergyEngine.getHeVtoVBindingEnergy(heSize, vSize);
-
+		// Separate the case where it is simply a V cluster
+		if (heSize == 0) {
+			cluster.E_f = formationEnergyEngine.getVFormationEnergy(vSize);
+		}
+		else {
+			cluster.E_f = formationEnergyEngine.getHeVFormationEnergy(heSize,
+					vSize);
+		}
+		
 		return cluster;
 	}
 
@@ -345,7 +340,7 @@ public class Preprocessor {
 			// Create the cluster
 			Cluster tmpCluster = new Cluster();
 			tmpCluster.nI = i + 1;
-			tmpCluster.E_I = bindingEnergyEngine.getIBindingEnergy(i + 1);
+			tmpCluster.E_f = formationEnergyEngine.getIFormationEnergy(i + 1);
 			// Add the cluster to the list
 			clusterList.add(tmpCluster);
 		}
@@ -861,7 +856,7 @@ public class Preprocessor {
 			status = H5.H5Aclose(networkSizeAttributeId);
 
 			// Create the array that will receive the network
-			double[][] networkArray = new double[networkSize[0]][8];
+			double[][] networkArray = new double[networkSize[0]][6];
 
 			// Read the data set
 			status = H5.H5Dread(datasetId, HDF5Constants.H5T_IEEE_F64LE, HDF5Constants.H5S_ALL, 
@@ -1208,7 +1203,7 @@ public class Preprocessor {
 
 			// Create the array that will store the network
 			int networkSize = clusters.size();
-			double[][] networkArray = new double[networkSize][8];
+			double[][] networkArray = new double[networkSize][6];
 
 			int id = 0;
 			// Loop on the clusters
@@ -1218,16 +1213,14 @@ public class Preprocessor {
 				networkArray[id][1] = cluster.nV;
 				networkArray[id][2] = cluster.nI;
 
-				// Store the binding energies
-				networkArray[id][3] = cluster.E_He;
-				networkArray[id][4] = cluster.E_V;
-				networkArray[id][5] = cluster.E_I;
+				// Store the formation energy
+				networkArray[id][3] = cluster.E_f;
 
 				// Store the migration energy
-				networkArray[id][6] = cluster.E_m;
+				networkArray[id][4] = cluster.E_m;
 
 				// Store the diffusion factor
-				networkArray[id][7] = cluster.D_0;
+				networkArray[id][5] = cluster.D_0;
 
 				// increment the id number
 				id++;
@@ -1236,7 +1229,7 @@ public class Preprocessor {
 			// Create the dataspace for the network with dimension dims
 			long[] dims = new long[2];
 			dims[0] = networkSize;
-			dims[1] = 8;
+			dims[1] = 6;
 			int networkDataSpaceId = H5.H5Screate_simple(2, dims, null);
 
 			// Create the dataset for the network

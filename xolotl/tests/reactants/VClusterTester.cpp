@@ -98,40 +98,34 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  	auto cluster = (PSICluster *) network->get("V", 1);
  	// Get one that it combines with (V2)
  	auto secondCluster = (PSICluster *) network->get("V", 2);
- 	// Set the diffusion factor, migration and binding energies based on the
+ 	// Set the diffusion factor, and migration energy based on the
  	// values from the tungsten benchmark for this problem.
  	cluster->setDiffusionFactor(2.41E+11);
  	cluster->setMigrationEnergy(1.66);
  	cluster->setTemperature(1000.0);
- 	vector<double> energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
- 			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
- 	cluster->setBindingEnergies(energies);
  	cluster->setConcentration(0.5);
 
- 	// Set the diffusion factor, migration and binding energies based on the
+ 	// Set the diffusion factor and migration energy based on the
  	// values from the tungsten benchmark for this problem for the second cluster
- 	secondCluster->setDiffusionFactor(0.);
+ 	secondCluster->setDiffusionFactor(0.0);
  	secondCluster->setMigrationEnergy(numeric_limits<double>::infinity());
- 	energies = {numeric_limits<double>::infinity(), 0.432,
- 			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
- 	secondCluster->setBindingEnergies(energies);
  	secondCluster->setConcentration(0.5);
  	secondCluster->setTemperature(1000.0);
 
  	// Compute the rate constants that are needed for the flux
- 	cluster->computeRateConstants(1000.0);
+ 	cluster->computeRateConstants();
  	// The flux can pretty much be anything except "not a number" (nan).
- 	double flux = cluster->getTotalFlux(1000.0);
+ 	double flux = cluster->getTotalFlux();
  	BOOST_TEST_MESSAGE("InterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"
- 			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
- 			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
- 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n"
- 			  << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
- 	BOOST_REQUIRE_CLOSE(-1617.51, flux, 0.1);
+ 			  << "   -Production Flux: " << cluster->getProductionFlux() << "\n"
+ 			  << "   -Combination Flux: " << cluster->getCombinationFlux() << "\n"
+ 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux() << "\n"
+ 			  << "   -Emission Flux: " << cluster->getEmissionFlux() << "\n");
+ 	BOOST_REQUIRE_CLOSE(444828.3, flux, 0.1);
  }
 
  /**
-  * This operation checks the HeCluster get*PartialDerivatives methods.
+  * This operation checks the VCluster get*PartialDerivatives methods.
   */
  BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
  	// Local Declarations
@@ -143,20 +137,17 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
  	// Get an V cluster with compostion 0,1,0.
  	auto cluster = (PSICluster *) network->get("V", 1);
- 	// Set the diffusion factor, migration and binding energies based on the
+ 	// Set the diffusion factor and migration energy based on the
  	// values from the tungsten benchmark for this problem.
  	cluster->setDiffusionFactor(2.41E+11);
  	cluster->setMigrationEnergy(1.66);
  	cluster->setTemperature(1000.0);
- 	vector<double> energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
- 			numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
- 	cluster->setBindingEnergies(energies);
  	cluster->setConcentration(0.5);
 
  	// Compute the rate constants that are needed for the partial derivatives
- 	cluster->computeRateConstants(1000.0);
+ 	cluster->computeRateConstants();
  	// Get the vector of partial derivatives
- 	auto partials = cluster->getPartialDerivatives(1000.0);
+ 	auto partials = cluster->getPartialDerivatives();
 
  	// Check the size of the partials
  	BOOST_REQUIRE_EQUAL(partials.size(), 15);
@@ -165,7 +156,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  	for (int i = 0; i < partials.size(); i++) {
  		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
  	}
- }
+}
 
 /**
  * This operation checks the reaction radius for VCluster.
@@ -184,5 +175,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 				.000001);
 	}
 }
+
 BOOST_AUTO_TEST_SUITE_END()
 

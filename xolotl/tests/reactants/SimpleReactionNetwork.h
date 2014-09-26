@@ -2,8 +2,8 @@
 #define SIMPLEREACTIONNETWORK_H_
 
 #include <PSIClusterReactionNetwork.h>
-#include "../../xolotlPerf/xolotlPerf.h"
-#include "../../xolotlPerf/dummy/DummyHandlerRegistry.h"
+#include <xolotlPerf.h>
+#include <DummyHandlerRegistry.h>
 
 namespace testUtils {
 

@@ -33,7 +33,7 @@ void HDF5Utils::initializeFile(std::string fileName, int networkSize,
 	// Create the dataspace for the network with dimension dims
 	hsize_t dims[2];
 	dims[0] = networkSize;
-	dims[1] = 8;
+	dims[1] = 6;
 	networkDataspaceId = H5Screate_simple(2, dims, NULL);
 
 	// Create the group where the concentrations will be stored
@@ -92,7 +92,7 @@ void HDF5Utils::fillNetwork(
 		std::shared_ptr<PSIClusterReactionNetwork> network) {
 	// Create the array that will store the network
 	int networkSize = network->size();
-	double networkArray[networkSize][8];
+	double networkArray[networkSize][6];
 
 	// Get all the reactants
 	auto reactants = network->getAll();
@@ -108,19 +108,17 @@ void HDF5Utils::fillNetwork(
 		networkArray[i][1] = composition["V"];
 		networkArray[i][2] = composition["I"];
 
-		// Get its binding energies to store them
-		auto bindingEnergies = reactant->getBindingEnergies();
-		networkArray[i][3] = bindingEnergies.at(0); // Helium binding energy
-		networkArray[i][4] = bindingEnergies.at(1); // Vacancy binding energy
-		networkArray[i][5] = bindingEnergies.at(2); // Interstitial binding energy
+		// Get its formation energy to store it
+		auto formationEnergy = reactant->getFormationEnergy();
+		networkArray[i][3] = formationEnergy;
 
 		// Get its migration energy to store it
 		double migrationEnergy = reactant->getMigrationEnergy();
-		networkArray[i][6] = migrationEnergy;
+		networkArray[i][4] = migrationEnergy;
 
 		// Get its diffusion factor to store it
 		double diffusionFactor = reactant->getDiffusionFactor();
-		networkArray[i][7] = diffusionFactor;
+		networkArray[i][5] = diffusionFactor;
 	}
 
 	// Create the dataset for the network
@@ -405,7 +403,7 @@ std::vector<std::vector<double> > HDF5Utils::readNetwork(std::string fileName) {
 	status = H5Aclose(networkSizeAttributeId);
 
 	// Create the array that will receive the network
-	double networkArray[networkSize][8];
+	double networkArray[networkSize][6];
 
 	// Read the data set
 	status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
@@ -417,7 +415,7 @@ std::vector<std::vector<double> > HDF5Utils::readNetwork(std::string fileName) {
 	for (int i = 0; i < networkSize; i++) {
 		// Create the line to give to the vector
 		std::vector<double> line;
-		for (int j = 0; j < 8; j++) {
+		for (int j = 0; j < 6; j++) {
 			line.push_back(networkArray[i][j]);
 		}
 		networkVector.push_back(line);

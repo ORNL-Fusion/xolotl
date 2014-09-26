@@ -104,14 +104,6 @@ public:
 	virtual bool isMixed() const { return true; };
 
 	/**
-	 * This operation overrides Reactant's setTemperature operation to
-	 * correctly recompute the diffusion coefficient and other
-	 * temperature-dependent quantities when the temperature is set.
-	 * @param temp
-	 */
-	virtual void setTemperature(double temp);
-
-	/**
 	 * Computes a row of the reaction connectivity matrix corresponding to
 	 * this reactant.
 	 *

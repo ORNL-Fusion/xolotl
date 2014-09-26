@@ -46,7 +46,6 @@ public:
                     PerfObjStatsMap<IEventCounter::ValType>& counterStats,
                     PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats );
 
-
     /**
      * Report performance data statistics to the given stream.
      * This method is a stub in this class.

@@ -10,18 +10,18 @@ import java.io.FileReader;
 import java.io.IOException;
 
 /**
- * This class computes the binding energies for a cluster with a given
- * composition. All binding energies are in electron volts (eV).
+ * This class computes the formation energies for a cluster with a given
+ * composition. All formation energies are in electron volts (eV).
  * 
  * This class looks in the user directory during construction and will override
  * the fit coefficients if it finds a csv file with one set of coefficients per
- * row and named fit.csv. There should be six rows with four coefficients per
+ * row and named fit.csv. There should be three rows with three coefficients per
  * row.
  * 
  * @author Jay Jay Billings
  * 
  */
-public class BindingEnergyEngine {
+public class FormationEnergyEngine {
 
 	/**
 	 * The set of Helium formation energies up to He_8 indexed by size. That is
@@ -29,7 +29,7 @@ public class BindingEnergyEngine {
 	 * padding to make the indexing easy.
 	 */
 	private static double[] heFormationEnergies = { Double.POSITIVE_INFINITY,
-			6.15, 11.44, 16.35, 21.0, 26.1, 30.24, 34.93, 38.80, 42.90 };
+			6.15, 11.44, 16.35, 21.0, 26.1, 30.24, 34.93, 38.80 };
 
 	/**
 	 * The set of vacancy formation energies up to V_2 indexed by size. That is
@@ -82,7 +82,7 @@ public class BindingEnergyEngine {
 	 * will try to load the coefficients from it. It closes the file when it is
 	 * finished.
 	 */
-	public BindingEnergyEngine() {
+	public FormationEnergyEngine() {
 
 		// Get the fit file
 		File fitFile = new File("fit.csv");
@@ -116,13 +116,13 @@ public class BindingEnergyEngine {
 				fitReader.close();
 			} catch (FileNotFoundException e) {
 				// Complain
-				System.err.println("BindingEnergyEngine Message:"
+				System.err.println("FormationEnergyEngine Message:"
 						+ " There is something wrong with your fit.csv file! "
 						+ " It does not exist. Aborting.");
 				e.printStackTrace();
 			} catch (IOException e) {
 				// Complain
-				System.err.println("BindingEnergyEngine Message:"
+				System.err.println("FormationEnergyEngine Message:"
 						+ " There is something wrong with your fit.csv file! "
 						+ " It cannot be read. Aborting.");
 				e.printStackTrace();
@@ -133,41 +133,21 @@ public class BindingEnergyEngine {
 	};
 
 	/**
-	 * This operation computes and returns the formation energy of a Helium
+	 * This operation computes and returns the formation energy of a helium
 	 * cluster of the specified size.
 	 * 
 	 * @param size
 	 *            The size of the Helium cluster.
-	 * @return The formation energy or the proper type of infinite to satisfy
-	 *         the binding energy equation.
+	 * @return The formation energy.
 	 */
-	private double getHeFormationEnergy(int size) {
+	public double getHeFormationEnergy(int size) {
 
 		double energy = Double.POSITIVE_INFINITY;
 
-		if (size <= 9 && size > 0)
+		if (size < 9 && size > 0)
 			energy = heFormationEnergies[size];
-		else if (size > 9)
-			energy = Double.NEGATIVE_INFINITY;
 
 		return energy;
-	}
-
-	/**
-	 * This operation returns the binding energy for a cluster composed of only
-	 * Helium that dissociates as
-	 * 
-	 * He_x --> He_(x-1) + He_1
-	 * 
-	 * For size > 8 or size < 2 it returns Double.POSITIVE_INFINITY.
-	 * 
-	 * @param size
-	 *            the number of Helium atoms in the dissociating cluster
-	 * @return the binding energy
-	 */
-	public double getHeBindingEnergy(int size) {
-		return getHeFormationEnergy(size - 1) + heFormationEnergies[1]
-				- getHeFormationEnergy(size);
 	}
 
 	/**
@@ -176,10 +156,9 @@ public class BindingEnergyEngine {
 	 * 
 	 * @param size
 	 *            The size of the vacancy cluster.
-	 * @return The formation energy or the proper type of infinite to satisfy
-	 *         the binding energy equation.
+	 * @return The formation energy.
 	 */
-	private double getVFormationEnergy(int size) {
+	public double getVFormationEnergy(int size) {
 
 		double energy = Double.POSITIVE_INFINITY;
 
@@ -194,53 +173,27 @@ public class BindingEnergyEngine {
 	}
 
 	/**
-	 * This operation returns the binding energy for a cluster composed of only
-	 * atomic vacancies that dissociates as
+	 * This operation returns the formation energy for a cluster composed of only
+	 * interstitial defects.
 	 * 
-	 * V_x --> V_(x-1) + V_1
-	 * 
-	 * It is valid for all sizes of V > 0. For size > 2 it uses the same fit as
-	 * that used for HeV clusters.
-	 * 
-	 * @param size
-	 *            the number of atomic vacancies in the dissociating cluster
-	 * @return the binding energy
-	 */
-	public double getVBindingEnergy(int size) {
-		return getVFormationEnergy(size - 1) + vFormationEnergies[1]
-				- getVFormationEnergy(size);
-	}
-
-	/**
-	 * This operation returns the binding energy for a cluster composed of only
-	 * interstitial defects that dissociates as
-	 * 
-	 * I_x --> I_(x-1) + I_1
-	 * 
-	 * For size < 2 it returns Double.POSITIVE_INFINITY. It is valid for all
-	 * other sizes and computes the formation energy using
-	 * 
-	 * E_f(size) = 48 + 6*(size - 6)
+	 * The values are taken from the iFormationEnergies array for a size smaller 
+	 * or equal to 5, and computed with the formula
+	 * 		E_f = 48 + 6 * (size - 6) eV
+	 * starting at size = 6.
 	 * 
 	 * @param size
 	 *            the number of interstitials in the cluster
-	 * @return the binding energy
+	 * @return the formation energy
 	 */
-	public double getIBindingEnergy(int size) {
-
+	public double getIFormationEnergy(int size) {
+		// Initialize the energy
 		double energy = Double.POSITIVE_INFINITY;
 
-		// The formation energies from the table are valid for 2 <= size < 6.
-		if (size >= 2 && size < 6) {
-			energy = iFormationEnergies[size - 1] + iFormationEnergies[1]
-					- iFormationEnergies[size];
-		} else if (size == 6) {
-			// The formation energy for I_6 is 48 based on the formula.
-			energy = 48.0 + iFormationEnergies[1] - iFormationEnergies[5];
-		} else if (size > 6)
-			// All larger clusters have the same binding energy based on
-			// the formula.
-			energy = 16.0;
+		// The formation energies from the table are valid for 0 < size < 6.
+		if (size > 0 && size < 6) {
+			energy = iFormationEnergies[size];
+		} else if (size > 5)
+			energy = 48.0 + 6.0 * (size - 6.0);
 
 		return energy;
 	}
@@ -317,7 +270,7 @@ public class BindingEnergyEngine {
 	 *            The number of vacancies in the cluster
 	 * @return The formation energy
 	 */
-	private double getHeVFormationEnergy(int heSize, int vSize) {
+	public double getHeVFormationEnergy(int heSize, int vSize) {
 
 		double energy = Double.NEGATIVE_INFINITY;
 		// The following coefficients are computed using the above and are used
@@ -341,7 +294,7 @@ public class BindingEnergyEngine {
 			double x = 2.0 * (((double) heSize / (double) vSize) / 9.0) - 1.0;
 			// Get the energy for He_xV_y
 			energy = compute2ndOrderLegendrePCE(x, coefficients);
-
+			// Unscaling the energy
 			energy = energy * 281.254;
 
 		} else if ((vSize == 1 && heSize < heV1FormationEnergies.length)
@@ -349,138 +302,9 @@ public class BindingEnergyEngine {
 			// Get the exact energy
 			energy = (vSize == 1) ? heV1FormationEnergies[heSize]
 					: heV2FormationEnergies[heSize];
-		}
+		} 
 
 		return energy;
 	}
-
-	/**
-	 * This operation returns the binding energy for a cluster composed of
-	 * Helium and vacancies that dissociates as
-	 * 
-	 * (He_x)(V_y) --> (He_x-1)(V_y) + He_1
-	 * 
-	 * It uses a 2D Legendre polynomial fit of the formation energies as a
-	 * function of vsize and heSize/vSize to compute the formation energy 
-	 * and then the binding energy.  The fit is of the form
-	 * 
-	 * f(y,x/y) = c_0 + c_1*(x/y) + c_2*P_2(x/y)
-	 * 
-	 * where each coefficient c_i is determined as follows,
-	 * 
-	 * c_i = d_0 + d_1*y + d_2*P_2(y)
-	 * 
-	 * Hence,
-	 * 
-	 * f(y,x/y) = [c_0 + c_1*y + c_2*P_2(y)] + [c_3 + c_4*y + c_5*P_2(y)]*(x/y)
-	 * 			 + [c_6 + c_7*y + c_8*P_2(y)]*P_2(x/y)
-	 * 
-	 * If heSize or vSize is equal to zero, this function will return the value
-	 * of the single species routines for He and V respectively.
-	 * 
-	 * @param heSize
-	 *            the number of Helium atoms in the cluster
-	 * @param vSize
-	 *            the number of vacancies in the cluster
-	 * @return the binding energy
-	 */
-	public double getHeVtoHeBindingEnergy(int heSize, int vSize) {
-
-		// Local Declarations
-		double heVE_f = 0.0, heMinusOneVE_f = 0.0, energy = Double.POSITIVE_INFINITY;
-
-		// Check the bounds and delegate if necessary. Start with the normal
-		// case where both heSize and vSize are equal to or greater than 1.
-		if (heSize > 0 && vSize > 0) {
-			// Get the energy for He_xV_y
-			heVE_f = getHeVFormationEnergy(heSize, vSize);
-			// Most of the time the clusters will have more than one Helium
-			// atom.
-			if (heSize > 1) {
-				// Get the energy for He_(x-1)V_y
-				heMinusOneVE_f = getHeVFormationEnergy(heSize - 1, vSize);
-				// Compute the energy
-				energy = heMinusOneVE_f + heFormationEnergies[1] - heVE_f;
-			} else {
-				// heSize == 1 is a special case where the cluster breaks apart
-				// into the vacancy clusters plus single helium.
-				energy = heFormationEnergies[1] + getVFormationEnergy(vSize)
-						- heVE_f;
-			}
-		} else if (vSize == 0) {
-			// Deal with Helium
-			energy = getHeBindingEnergy(heSize);
-		}
-
-		return energy;
-	}
-
-	/**
-	 * This operation returns the binding energy for a cluster composed of
-	 * Helium and vacancies that dissociates as
-	 * 
-	 * (He_x)(V_y) --> (He_x)(V_y-1) + V_1
-	 * 
-	 * It uses a 2D Legendre polynomial fit of the formation energies as a
-	 * function of vsize and heSize/vSize to compute the formation energy 
-	 * and then the binding energy.  The fit is of the form
-	 * 
-	 * f(y,x/y) = c_0 + c_1*(x/y) + c_2*P_2(x/y)
-	 * 
-	 * where each coefficient c_i is determined as follows,
-	 * 
-	 * c_i = d_0 + d_1*y + d_2*P_2(y)
-	 * 
-	 * Hence,
-	 * 
-	 * f(y,x/y) = [c_0 + c_1*y + c_2*P_2(y)] + [c_3 + c_4*y + c_5*P_2(y)]*(x/y)
-	 * 			 + [c_6 + c_7*y + c_8*P_2(y)]*P_2(x/y)
-	 * 
-	 * If heSize or vSize is equal to zero, this function will return the value
-	 * of the single species routines for He and V respectively.
-	 * 
-	 * @param heSize
-	 *            the number of Helium atoms in the cluster
-	 * @param vSize
-	 *            the number of vacancies in the cluster
-	 * @return the binding energy
-	 */
-	public double getHeVtoVBindingEnergy(int heSize, int vSize) {
-
-		// Local Declarations
-		double heVE_f = 0.0, heVMinusOneE_f = 0.0, energy = Double.POSITIVE_INFINITY;
-
-		// Check the bounds and delegate if necessary
-		if (heSize > 0 && vSize > 0) {
-			// Get the energy for He_xV_y
-			heVE_f = getHeVFormationEnergy(heSize, vSize);
-			// Most of the time the clusters will have more than one Helium
-			// atom.
-			if (vSize > 1) {
-				// Get the energy for He_(x-1)V_y. This accounts for the case
-				// where V == 1 by getting the He binding energy instead of
-				// querying
-				// the fit, which results in a NaN in that case. This is a
-				// pretty
-				// special case in general and needs to be investigated further.
-				heVMinusOneE_f = (vSize == 1) ? getHeFormationEnergy(heSize)
-						: getHeVFormationEnergy(heSize, vSize - 1);
-				// Compute the energy
-				energy = heVMinusOneE_f + vFormationEnergies[1] - heVE_f;
-			} else {
-				// vSize == 1 is a special case where the cluster breaks apart
-				// into the vacancy clusters plus single helium.
-				energy = getHeFormationEnergy(heSize) + vFormationEnergies[1]
-						- heVE_f;
-			}
-		} else if (heSize == 0) {
-			// Deal with vacancies
-			energy = getVBindingEnergy(vSize);
-		}
-
-		return energy;
-	}
-
-	// Add binding energy routines for HeI below.
 
 }

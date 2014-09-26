@@ -113,35 +113,28 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	auto cluster = (PSICluster *) network->getCompound("HeI", composition);
 	// Get one that it combines with (I)
 	auto secondCluster = (PSICluster *) network->get("I", 1);
-	// Set the diffusion factor, migration and binding energies to arbitrary
-	// values because HeI does not exist in benchmarks
+	// Set the diffusion factor and migration energy to arbitrary values
 	cluster->setDiffusionFactor(1.5E+10);
 	cluster->setTemperature(1000.0);
 	cluster->setMigrationEnergy(numeric_limits<double>::infinity());
-	vector<double> energies = { 5.09, numeric_limits<double>::infinity(), 5.09,
-			12.6 };
-	cluster->setBindingEnergies(energies);
 	cluster->setConcentration(0.5);
 
-	// Set the diffusion factor, migration and binding energies based on the
-	// values from the tungsten benchmark for this problem for the second cluster
+	// Set the diffusion factor and migration energy based on the
+	// values from the preprocessor
 	secondCluster->setDiffusionFactor(2.13E+10);
 	secondCluster->setMigrationEnergy(0.013);
-	energies = {numeric_limits<double>::infinity(), numeric_limits<double>::infinity(),
-		numeric_limits<double>::infinity(), numeric_limits<double>::infinity()};
-	secondCluster->setBindingEnergies(energies);
 	secondCluster->setConcentration(0.5);
 	secondCluster->setTemperature(1000.0);
 
 	// Compute the rate constants that are needed for the flux
-	cluster->computeRateConstants(1000.0);
+	cluster->computeRateConstants();
 	// The flux can pretty much be anything except "not a number" (nan).
-	double flux = cluster->getTotalFlux(1000.0);
+	double flux = cluster->getTotalFlux();
 	BOOST_TEST_MESSAGE("HeInterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n"
-			  << "   -Production Flux: " << cluster->getProductionFlux(1000.0) << "\n"
-			  << "   -Combination Flux: " << cluster->getCombinationFlux(1000.0) << "\n"
-			  << "   -Dissociation Flux: " << cluster->getDissociationFlux(1000.0) << "\n"
-	  	  	  << "   -Emission Flux: " << cluster->getEmissionFlux(1000.0) << "\n");
+			  << "   -Production Flux: " << cluster->getProductionFlux() << "\n"
+			  << "   -Combination Flux: " << cluster->getCombinationFlux() << "\n"
+			  << "   -Dissociation Flux: " << cluster->getDissociationFlux() << "\n"
+	  	  	  << "   -Emission Flux: " << cluster->getEmissionFlux() << "\n");
 	// Check the flux
 	BOOST_REQUIRE_CLOSE(-16982855380.0, flux, 0.1);
 
@@ -149,7 +142,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 }
 
 /**
- * This operation checks the HeCluster get*PartialDerivatives methods.
+ * This operation checks the HeInterstitialCluster get*PartialDerivatives methods.
  */
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
@@ -162,20 +155,15 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Get an HeI cluster with compostion 2,0,1.
 	vector<int> composition = { 2, 0, 1 };
 	auto cluster = (PSICluster *) network->getCompound("HeI", composition);
-	// Set the diffusion factor, migration and binding energies to arbitrary
-	// values because HeI does not exist in benchmarks
+	// Set the diffusion factor and migration energy to arbitrary values
 	cluster->setDiffusionFactor(1.5E+10);
 	cluster->setTemperature(1000.0);
-	cluster->setMigrationEnergy(numeric_limits<double>::infinity());
-	vector<double> energies = { 5.09, numeric_limits<double>::infinity(), 5.09,
-			12.6 };
-	cluster->setBindingEnergies(energies);
 	cluster->setConcentration(0.5);
 
 	// Compute the rate constants that are needed for the partial derivatives
-	cluster->computeRateConstants(1000.0);
+	cluster->computeRateConstants();
 	// Get the vector of partial derivatives
-	auto partials = cluster->getPartialDerivatives(1000.0);
+	auto partials = cluster->getPartialDerivatives();
 
 	// Check the size of the partials
 	BOOST_REQUIRE_EQUAL(partials.size(), 15);

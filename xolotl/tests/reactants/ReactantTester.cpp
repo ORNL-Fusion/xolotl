@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
 	BOOST_REQUIRE_EQUAL(0.0, reactant.getConcentration());
 
 	// Make sure the base class getTotalFlux returns 0 for now
-	BOOST_REQUIRE_EQUAL(0.0, reactant.getTotalFlux(0.0));
+	BOOST_REQUIRE_EQUAL(0.0, reactant.getTotalFlux());
 
 }
 

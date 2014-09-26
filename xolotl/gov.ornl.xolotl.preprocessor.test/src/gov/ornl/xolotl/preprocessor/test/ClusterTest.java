@@ -28,36 +28,30 @@ public class ClusterTest {
 		cluster.nHe = 1;
 		cluster.nV = 23;
 		cluster.nI = 52;
-		cluster.E_He = 9.325;
-		cluster.E_V = 34.2346;
-		cluster.E_I = 3326424.2323543;
+		cluster.E_f = 9.325;
 		cluster.E_m = 0.04;
 		cluster.D_0 = 1.1;
 
 		// Create the test string and make sure they match.
-		String clusterAsString = "1 23 52 9.325 34.2346 3326424.2323543 0.04 1.1";
+		String clusterAsString = "1 23 52 9.325 0.04 1.1";
 		assertEquals(clusterAsString, cluster.toString());
 
-		// Modify the binding energies to be infinite and check the strings
+		// Modify the formation energy to be infinite and check the strings
 		// again. The cluster class should return "Infinity" instead of a value
 		// for the energies.
-		cluster.E_He = Double.POSITIVE_INFINITY;
-		cluster.E_V = Double.POSITIVE_INFINITY;
-		cluster.E_I = Double.POSITIVE_INFINITY;
+		cluster.E_f = Double.POSITIVE_INFINITY;
 		cluster.E_m = Double.POSITIVE_INFINITY;
-		clusterAsString = "1 23 52 Infinity Infinity Infinity Infinity 1.1";
+		clusterAsString = "1 23 52 Infinity Infinity 1.1";
 		assertEquals(clusterAsString, cluster.toString());
 		// Consequently, such a cluster would be the ultimate sink in the
 		// network!
 
 		// Modify the migration energy and diffusion factor and check that this
 		// does not interfere with the other properties. 
-		cluster.E_He = Double.POSITIVE_INFINITY;
-		cluster.E_V = Double.POSITIVE_INFINITY;
-		cluster.E_I = Double.POSITIVE_INFINITY;
+		cluster.E_f = Double.POSITIVE_INFINITY;
 		cluster.E_m = 0.13;
 		cluster.D_0 = 2.9e-8;
-		clusterAsString = "1 23 52 Infinity Infinity Infinity 0.13 2.9E-8";
+		clusterAsString = "1 23 52 Infinity 0.13 2.9E-8";
 		assertEquals(clusterAsString, cluster.toString());
 
 		return;

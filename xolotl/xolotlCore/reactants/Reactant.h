@@ -171,11 +171,10 @@ public:
 	 * This operation returns the total flux of this reactant in the
 	 * current network.
 	 *
-	 * @param temperature The temperature at which to calculate the Diffusion Coefficient
 	 * @return The total change in flux for this reactant due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux(const double temperature);
+	virtual double getTotalFlux();
 
 	/**
 	 * This operation sets the collection of other reactants that make up
@@ -218,12 +217,11 @@ public:
 	 * of partial derivatives from all of the reactants in the network can be
 	 * used to form, for example, a Jacobian.
 	 *
-	 * @param the temperature at which the reactions are occurring
 	 * @return the partial derivatives for this reactant where index zero
 	 * corresponds to the first reactant in the list returned by the
 	 * ReactionNetwork::getAll() operation.
 	 */
-	virtual std::vector<double> getPartialDerivatives(double temperature) const;
+	virtual std::vector<double> getPartialDerivatives() const;
 
 	/**
 	 * This operation works as getPartialDerivatives above, but instead of
@@ -234,14 +232,12 @@ public:
 	 *
 	 * The base class (Reactant) implementation does nothing.
 	 *
-	 * @param the temperature at which the reactions are occurring
 	 * @param the vector that should be filled with the partial derivatives
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
 	 */
-	virtual void getPartialDerivatives(double temperature,
-			std::vector<double> & partials) const;
+	virtual void getPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
 	 * This operation writes the contents of the reactant to a string. This
@@ -325,7 +321,6 @@ public:
 	 */
 	friend std::ostream& operator<<(std::ostream& out,
 			const Reactant& reactant);
-
 };
 
 } // end namespace xolotlCore

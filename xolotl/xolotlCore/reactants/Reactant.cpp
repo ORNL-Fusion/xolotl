@@ -59,7 +59,7 @@ void Reactant::zero() {
 	return;
 }
 
-double Reactant::getTotalFlux(const double temperature) {
+double Reactant::getTotalFlux() {
 	return 0.0;
 }
 
@@ -79,19 +79,7 @@ std::vector<int> Reactant::getConnectivity() const {
 	return connectivity;
 }
 
-
-/**
- * This operation returns the list of partial derivatives of this Reactant
- * with respect to all other reactants in the network. The combined lists
- * of partial derivatives from all of the reactants in the network can be
- * used to form, for example, a Jacobian.
- *
- * @param the temperature at which the reactions are occurring
- * @return The partial derivatives for this reactant where index zero
- * corresponds to the first reactant in the list returned by the
- * ReactionNetwork::getAll() operation.
- */
-std::vector<double> Reactant::getPartialDerivatives(double temperature) const {
+std::vector<double> Reactant::getPartialDerivatives() const {
 	// The partial derivatives array by default is filled with
 	// zeroes.
 	int length = network->size();
@@ -100,22 +88,7 @@ std::vector<double> Reactant::getPartialDerivatives(double temperature) const {
 	return partial_derivatives;
 }
 
-
-/**
- * This operation works as getPartialDerivatives above, but instead of
- * returning a vector that it creates it fills a vector that is passed to
- * it by the caller. This allows the caller to optimize the amount of
- * memory allocations to just one if they are accessing the partial
- * derivatives many times.
- *
- * @param the temperature at which the reactions are occurring
- * @param the vector that should be filled with the partial derivatives
- * for this reactant where index zero corresponds to the first reactant in
- * the list returned by the ReactionNetwork::getAll() operation. The size of
- * the vector should be equal to ReactionNetwork::size().
- *
- */
-void Reactant::getPartialDerivatives(double temperature, std::vector<double> & partials) const {
+void Reactant::getPartialDerivatives(std::vector<double> & partials) const {
 	// Do nothing.
 	return;
 }

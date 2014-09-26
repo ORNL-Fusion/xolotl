@@ -231,23 +231,6 @@ void InterstitialCluster::createDissociationConnectivity() {
 					compositionVec);
 			dissociateCluster(cluster, smallerReactant);
 		}
-
-		// Trap mutation of HeV cluster is handled here
-		// (He_c)(V_b) --> He_(c)[V_(b+a)] + I_a
-		// for a = 1
-		// Get all the HeV clusters of the network
-		auto allHeVReactants = network->getAll(heVType);
-		for (int i = 0; i < allHeVReactants.size(); i++) {
-			auto cluster = (PSICluster *) allHeVReactants[i];
-
-			// (He_c)(V_b) is the dissociating one, (He_c)[V_(b+a)] is the one
-			// that is also emitted during the dissociation
-			auto comp = cluster->getComposition();
-			std::vector<int> compositionVec = { comp[heType], comp[vType] + 1,
-					comp[iType] };
-			auto biggerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
-			dissociateCluster(cluster, biggerReactant);
-		}
 	}
 
 	return;

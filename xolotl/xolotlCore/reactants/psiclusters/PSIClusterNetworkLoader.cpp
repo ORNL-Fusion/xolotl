@@ -126,10 +126,8 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
 	int numHe = 0, numV = 0, numI = 0;
-	double heBindingE = 0.0, vBindingE = 0.0, iBindingE = 0.0, migrationEnergy =
-			0.0;
+	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
-	std::vector<double> bindingEnergies;
 	std::vector<std::shared_ptr<Reactant> > reactants;
 
 	// Load the network if the stream is available
@@ -141,7 +139,7 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 		loadedLine = reader.loadLine();
 		while (loadedLine.size() > 0) {
 			// Check the size of the loaded line
-			if (loadedLine.size() < 8)
+			if (loadedLine.size() < 6)
 				// And notify the calling function if the size is insufficient
 				throw error;
 			// Load the sizes
@@ -151,18 +149,12 @@ std::shared_ptr<PSIClusterReactionNetwork> PSIClusterNetworkLoader::load() {
 				numI = std::stoi(loadedLine[2]);
 				// Create the cluster
 				auto nextCluster = createCluster(numHe, numV, numI);
-				// Load the binding energies
-				heBindingE = convertStrToDouble(loadedLine[3]);
-				vBindingE = convertStrToDouble(loadedLine[4]);
-				iBindingE = convertStrToDouble(loadedLine[5]);
-				migrationEnergy = convertStrToDouble(loadedLine[6]);
-				diffusionFactor = convertStrToDouble(loadedLine[7]);
-				// Create the binding energies array and set it
-				bindingEnergies.clear();
-				bindingEnergies.push_back(heBindingE);
-				bindingEnergies.push_back(vBindingE);
-				bindingEnergies.push_back(iBindingE);
-				nextCluster->setBindingEnergies(bindingEnergies);
+				// Load the energies
+				formationEnergy = convertStrToDouble(loadedLine[3]);
+				migrationEnergy = convertStrToDouble(loadedLine[4]);
+				diffusionFactor = convertStrToDouble(loadedLine[5]);
+				// Set the formation energy
+				nextCluster->setFormationEnergy(formationEnergy);
 				// Set the diffusion factor and migration energy
 				nextCluster->setMigrationEnergy(migrationEnergy);
 				nextCluster->setDiffusionFactor(diffusionFactor);
