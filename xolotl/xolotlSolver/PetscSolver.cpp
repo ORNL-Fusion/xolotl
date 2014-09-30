@@ -58,6 +58,8 @@ std::shared_ptr<PSIClusterReactionNetwork> PetscSolver::network;
 std::shared_ptr<IFluxHandler> PetscSolver::fluxHandler;
 // Allocate the static temperature handler
 std::shared_ptr<ITemperatureHandler> PetscSolver::temperatureHandler;
+// Allocate the static step size
+double PetscSolver::hx;
 
 extern PetscErrorCode RHSFunction(TS, PetscReal, Vec, Vec, void*);
 extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat, Mat);
@@ -67,7 +69,7 @@ TS ts; /* nonlinear solver */
 Vec C; /* solution */
 PetscErrorCode ierr;
 DM da; /* manages the grid data */
-PetscInt He, *ofill, *dfill;
+PetscInt *ofill, *dfill;
 
 /**
  * A map for storing the dfill configuration and accelerating the formation of
@@ -151,16 +153,8 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	PETSC_IGNORE);
 	checkPetscError(ierr);
 
-	// Get the total number of grid points specified by the command line option
-	PetscInt numOfxGridPoints;
-	PetscBool flg;
-	PetscOptionsGetInt(NULL, "-da_grid_x", &numOfxGridPoints, &flg);
-	if (!flg)
-		numOfxGridPoints = 8.0;
-
-	// Setup some step size variables
-//	PetscReal hx;
-	double hx = (double) numOfxGridPoints / (PetscReal) (Mx - 1);
+	// Get the step size
+	double hx = PetscSolver::getStepSize();
 
 	// Get the flux handler that will be used to compute fluxes.
 	auto fluxHandler = PetscSolver::getFluxHandler();
@@ -297,7 +291,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	DM da;
 	PetscErrorCode ierr;
 	PetscInt xi, Mx, xs, xm;
-	PetscReal hx, sx, x;
+	PetscReal sx, x;
 	// Pointers to the Petsc arrays that start at the beginning (xs) of the
 	// local array!
 	PetscReal *concs, *updatedConcs;
@@ -337,15 +331,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	PETSC_IGNORE);
 	checkPetscError(ierr);
 
-	// Get the total number of grid points specified by the command line option
-	PetscInt numOfxGridPoints;
-	PetscBool flg;
-	PetscOptionsGetInt(NULL, "-da_grid_x", &numOfxGridPoints, &flg);
-	if (!flg)
-		numOfxGridPoints = 8.0;
-
 	// Setup some step size variables
-	hx = numOfxGridPoints / (PetscReal) (Mx - 1);
+	double hx = PetscSolver::getStepSize();
 	sx = 1.0 / (hx * hx);
 
 	// Scatter ghost points to local vector, using the 2-step process
@@ -549,7 +536,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	PetscErrorCode ierr;
 	PetscInt xi, Mx, xs, xm, i;
 	PetscInt row[3], col[3];
-	PetscReal hx, sx, val[6];
+	PetscReal sx, val[6];
 	PetscReal *concs, *updatedConcs;
 	double * concOffset;
 	Vec localC;
@@ -578,15 +565,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	PETSC_IGNORE);
 	checkPetscError(ierr);
 
-	// Get the total number of grid points specified by the command line option
-	PetscInt numOfxGridPoints;
-	PetscBool flg;
-	PetscOptionsGetInt(NULL, "-da_grid_x", &numOfxGridPoints, &flg);
-	if (!flg)
-		numOfxGridPoints = 8.0;
-
 	// Setup some step size variables
-	hx = numOfxGridPoints / (PetscReal) (Mx - 1);
+	double hx = PetscSolver::getStepSize();
 	sx = 1.0 / (hx * hx);
 
 	// Get the complete data array
@@ -877,13 +857,11 @@ PetscSolver::PetscSolver() {
 
 PetscSolver::PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		handlerRegistry(registry) {
-
 	numCLIArgs = 0;
 	CLIArgs = NULL;
 
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
 	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
-
 }
 
 //! The Destructor
@@ -983,13 +961,17 @@ void PetscSolver::initialize() {
  * fails, it will throw an exception of type std::string.
  */
 void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
-		std::shared_ptr<ITemperatureHandler> temperatureHandler) {
+		std::shared_ptr<ITemperatureHandler> temperatureHandler,
+		double stepSize) {
 
 	// Set the flux handler
 	PetscSolver::fluxHandler = fluxHandler;
 
 	// Set the temperature handler
 	PetscSolver::temperatureHandler = temperatureHandler;
+
+	// Set the grid step size
+	PetscSolver::hx = stepSize;
 
 	// Get the properties
 	auto props = network->getProperties();

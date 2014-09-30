@@ -64,6 +64,9 @@ public class ArgumentsTest {
 			// Check that the default networkFile is networkInit.h5
 			assertEquals("networkInit.h5", args.getNetworkFile());
 
+			// Check that the default stepSize is 1.0
+			assertEquals("1.0", args.getStepSize());
+
 			// Check the default petscArgs
 			assertEquals(
 					"-da_grid_x 10 -ts_final_time 50 -ts_dt 1.0e-12 "
@@ -92,7 +95,7 @@ public class ArgumentsTest {
 			args = CliFactory.parseArguments(Arguments.class, new String[] {
 					"--startTemp", "900", "--material", "Fe", "--perfHandler",
 					"dummy", "--maxHeSize", "7", "--maxVSize", "30", "--maxISize", "5",
-					"--checkpoint", "xolotlStop.h5" });
+					"--checkpoint", "xolotlStop.h5", "--stepSize", "3.0" });
 			
 			// Check that the maximum Helium cluster size is 7
 			assertEquals(7, args.getMaxHeSize());
@@ -135,6 +138,9 @@ public class ArgumentsTest {
 
 			// Check that the default networkFile is networkInit.h5
 			assertEquals("networkInit.h5", args.getNetworkFile());
+
+			// Check that the default networkFile is networkInit.h5
+			assertEquals("3.0", args.getStepSize());
 
 			// Check the default petscArgs
 			assertEquals(

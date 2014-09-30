@@ -124,6 +124,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     // Check the network filename
     BOOST_REQUIRE_EQUAL(opts.getNetworkFilename(), "tungsten.txt");
 
+    // Check the step size option
+    BOOST_REQUIRE_EQUAL(opts.getStepSize(), 2.0);
+
     // Check the temperature
     BOOST_REQUIRE_EQUAL(opts.useConstTemperatureHandlers(), true);
     BOOST_REQUIRE_EQUAL(opts.getConstTemperature(), 900.0);

@@ -41,9 +41,14 @@ protected:
 	int petscArgc;
 
 	/**
-	 * The pointer to the options that will be given to PETSc
+	 * The pointer to the options that will be given to PETSc.
 	 */
 	char **petscArgv;
+
+	/**
+	 * The value of the step size for the spatial grid.
+	 */
+	double stepSize;
 
 	/**
 	 * Use the constant temperature set of handlers?
@@ -191,6 +196,18 @@ public:
      * \see IOptions.h
      */
     void setPetscArgv(char** argv) {petscArgv = argv;}
+
+    /**
+     * Get the value of the step size.
+     * \see IOptions.h
+     */
+    double getStepSize() const {return stepSize;}
+
+    /**
+     * Set the value of the step size.
+     * \see IOptions.h
+     */
+    void setStepSize(double value) {stepSize = value;}
 
     /**
      * Should we use const temperature handlers?

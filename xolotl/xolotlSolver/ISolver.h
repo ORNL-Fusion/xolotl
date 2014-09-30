@@ -79,9 +79,13 @@ public:
 	 * fails, it will throw an exception of type std::string.
 	 * @param fluxHandler The flux handler that will be used when performing
 	 * the solve
+	 * @param temperatureHandler The temperature handler that will be used
+	 * when performing the solve
+	 * @param stepSize The spatial grid step size
 	 */
 	virtual void solve(std::shared_ptr<IFluxHandler> fluxHandler,
-			std::shared_ptr<ITemperatureHandler> temperatureHandler) = 0;
+			std::shared_ptr<ITemperatureHandler> temperatureHandler,
+			double stepSize) = 0;
 
 	/**
 	 * This operation performs all necessary finalization for the solver

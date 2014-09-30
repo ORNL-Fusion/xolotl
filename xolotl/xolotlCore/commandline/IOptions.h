@@ -101,6 +101,18 @@ public:
     virtual void setPetscArgv(char** argv) = 0;
 
     /**
+     * Get the value of the step size.
+     * @return the step size.
+     */
+    virtual double getStepSize() const = 0;
+
+    /**
+     * Set the value of the step size.
+     * @param value The value for the step size.
+     */
+    virtual void setStepSize(double value) = 0;
+
+    /**
      * Should we use const temperature handlers?
      * @return true if xolotl must use a constant temperature.
      */

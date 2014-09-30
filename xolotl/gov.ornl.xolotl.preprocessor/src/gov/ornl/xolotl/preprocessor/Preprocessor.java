@@ -209,6 +209,7 @@ public class Preprocessor {
 		// Set the parameter options that will be passed to Xolotl
 		xolotlParams.setProperty("startTemp", args.getStartTemp());
 		xolotlParams.setProperty("networkFile", args.getNetworkFile());
+		xolotlParams.setProperty("stepSize", args.getStepSize());
 		xolotlParams.setProperty("perfHandler", args.getPerfHandler());
 		xolotlParams.setProperty("vizHandler", args.getVizHandler());
 		xolotlParams.setProperty("petscArgs",

@@ -118,7 +118,7 @@ PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution,
 	checkPetscError(ierr);
 
 	// Setup step size variable
-	double hx = (double) xGridLength / (PetscReal) (Mx - 1);
+	double hx = PetscSolver::getStepSize();
 
 	// Open the already created HDF5 file
 	xolotlCore::HDF5Utils::openFile(outputFileName);
@@ -240,9 +240,6 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 	PETSC_IGNORE);
 	checkPetscError(ierr);
 
-	// Setup step size variable
-	double hx = (double) xGridLength / (PetscReal) (Mx - 1);
-
 	// The length of the time step
 	float dt = time - previousTime;
 
@@ -286,7 +283,7 @@ PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 
 	// Setup step size variable
-	double hx = (double) xGridLength / (PetscReal) (Mx - 1);
+	double hx = PetscSolver::getStepSize();
 
 	// Get the array of concentration
 	PetscReal *solutionArray;
@@ -380,7 +377,7 @@ PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution, x, hx;
+	PetscReal *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
 	PetscInt xs, xm, Mx;
 	int xi, i;
@@ -420,7 +417,7 @@ PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 	PETSC_IGNORE);
 	checkPetscError(ierr);
 	// Setup some step size variables
-	hx = (double) xGridLength / (PetscReal) (Mx - 1);
+	double hx = PetscSolver::getStepSize();
 
 	// Choice of the cluster to be plotted
 	int iCluster = 6;
@@ -555,7 +552,7 @@ PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution, x, hx;
+	PetscReal *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
 	PetscInt xs, xm, Mx;
 	int xi, i;
@@ -596,7 +593,7 @@ PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 
 	// Setup some step size variables
-	hx = (double) xGridLength / (PetscReal) (Mx - 1);
+	double hx = PetscSolver::getStepSize();
 
 	// To plot a maximum of 18 clusters of the whole benchmark
 	const int loopSize = std::min(18, networkSize);
@@ -741,7 +738,7 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution, x, hx;
+	PetscReal *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
 	PetscInt xs, xm, Mx;
 	int xi, i;
@@ -782,7 +779,7 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 
 	// Setup some step size variables
-	hx = (double) xGridLength / (PetscReal) (Mx - 1);
+	double hx = PetscSolver::getStepSize();
 
 	// Get the maximum size of HeV clusters
 	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
@@ -1002,7 +999,7 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution, x, hx;
+	PetscReal *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
 	PetscInt xs, xm, Mx;
 	int xi, i;
@@ -1035,7 +1032,7 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 	checkPetscError(ierr);
 
 	// Setup some step size variables
-	hx = (double) xGridLength / (PetscReal) (Mx - 1);
+	double hx = PetscSolver::getStepSize();
 
 	// Get the maximum size of HeV clusters
 	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
@@ -1471,7 +1468,7 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 		xolotlCore::HDF5Utils::initializeFile(outputFileName, networkSize, Mx);
 
 		// Setup step size variable
-		double hx = (double) xGridLength / (PetscReal) (Mx - 1);
+		double hx = PetscSolver::getStepSize();
 
 		// Get the physical dimension of the grid
 		int dimension = (Mx - 1) * hx;

@@ -37,6 +37,9 @@ private:
 	//! The original network created from the network loader.
 	static std::shared_ptr<PSIClusterReactionNetwork> network;
 
+	//! The grid step size.
+	static double hx;
+
 	//! The original flux handler created.
 	static std::shared_ptr<IFluxHandler> fluxHandler;
 
@@ -123,9 +126,13 @@ public:
 	 * fails, it will throw an exception of type std::string.
 	 * @param fluxHandler The flux handler that will be used when performing
 	 * the solve
+	 * @param temperatureHandler The temperature handler that will be used
+	 * when performing the solve
+	 * @param stepSize The spatial grid step size
 	 */
 	void solve(std::shared_ptr<IFluxHandler> fluxHandler,
-			std::shared_ptr<ITemperatureHandler> temperatureHandler);
+			std::shared_ptr<ITemperatureHandler> temperatureHandler,
+			double stepSize);
 
 
 	/**
@@ -144,6 +151,15 @@ public:
 	 */
 	static std::shared_ptr<PSIClusterReactionNetwork> getNetwork() {
 		return network;
+	}
+
+	/**
+	 * This operation returns the grid step size. This operation is only for
+	 * use by PETSc cade and is not part of the ISolver interface.
+	 * @return The grid step size
+	 */
+	static double getStepSize() {
+		return hx;
 	}
 
 	/**

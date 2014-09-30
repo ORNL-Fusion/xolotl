@@ -188,6 +188,27 @@ public interface Arguments {
 	String getNetworkFile();
 
 	/**
+	 * This Option annotation corresponds to the '--stepSize' option which
+	 * defines a default step size and additionally provides a brief description 
+	 * of the option.
+	 * 
+	 * @param defaultValue
+	 *            The default step size that will be used if this option
+	 *            is not specified via the command line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "1.0", 
+			description = "<value>  The value of the step size in nm (default = 1.0)")
+	/**
+	 * This operation produces the required command line option '--stepSize' which 
+	 * takes a single string value and is defined by the previous Option annotation
+	 * 
+	 * @return The value of the step size
+	 */
+	String getStepSize();
+
+	/**
 	 * This Option annotation corresponds to the optional '--material' option
 	 * and provides a brief description of the option.
 	 * 

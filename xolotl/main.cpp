@@ -86,7 +86,8 @@ std::shared_ptr<xolotlSolver::PetscSolver> setUpSolver(
 void launchPetscSolver(std::shared_ptr<xolotlSolver::PetscSolver> solver,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry,
 		std::shared_ptr<xolotlSolver::IFluxHandler> materialHandler,
-		std::shared_ptr<xolotlSolver::ITemperatureHandler> tempHandler) {
+		std::shared_ptr<xolotlSolver::ITemperatureHandler> tempHandler,
+		double stepSize) {
 
     xperf::IHardwareCounter::SpecType hwctrSpec;
     hwctrSpec.push_back( xperf::IHardwareCounter::FPOps );
@@ -98,7 +99,7 @@ void launchPetscSolver(std::shared_ptr<xolotlSolver::PetscSolver> solver,
     auto solverHwctr = handlerRegistry->getHardwareCounter( "solve", hwctrSpec );
 	solverTimer->start();
     solverHwctr->start();
-	solver->solve(materialHandler, tempHandler);
+	solver->solve(materialHandler, tempHandler, stepSize);
     solverHwctr->stop();
 	solverTimer->stop();
 }
@@ -196,7 +197,7 @@ int main(int argc, char **argv) {
 
 		// Launch the PetscSolver
 		launchPetscSolver(solver, handlerRegistry, materialHandler,
-				tempHandler);
+				tempHandler, opts.getStepSize());
 
 		// Finalize our use of the solver.
 		auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");
