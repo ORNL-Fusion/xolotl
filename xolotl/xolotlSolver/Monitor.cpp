@@ -40,11 +40,11 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlot;
 //! The pointer to the plot that will be used to visualize performance data.
 std::shared_ptr<xolotlViz::IPlot> perfPlot;
 
-//! Physical length of the grid
-int xGridLength = 8;
-
 //! The variable to store the time at the previous time step.
-PetscReal previousTime;
+double previousTime = 0.0;
+
+//! The variable to store the interstitial flux at the previous time step.
+double previousFlux = 0.0;
 
 //! How often HDF5 file is written
 PetscInt stride = 0;
@@ -63,6 +63,21 @@ std::vector<int> weight;
 // HeV cluster is greater than 1.0e-16 and that the corresponding information
 // has been printed
 bool printMaxClusterConc = false;
+
+/**
+ * This is a monitoring method set the previous time to the time. This is needed here
+ * because multiple monitors need the previous time value from the previous timestep.
+ * This monitor is called last.
+ */
+PetscErrorCode monitorTime(TS ts, PetscInt timestep, PetscReal time, Vec solution,
+		void *ictx) {
+	PetscFunctionBeginUser;
+
+	// Set the previous time to the current time for the next timestep
+	previousTime = time;
+
+	PetscFunctionReturn(0);
+}
 
 /**
  * This is a monitoring method that will save an hdf5 file at each time step.
@@ -218,7 +233,7 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int size = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscInt xs, xm, Mx;
+	PetscInt xs, xm;
 
 	PetscFunctionBeginUser;
 
@@ -233,21 +248,12 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	checkPetscError(ierr);
 
 	// The length of the time step
 	double dt = time - previousTime;
 
 	// Increment the fluence with the value at this current timestep
 	fluxHandler->incrementHeFluence(dt);
-
-	// Set the previous time to the current time for the next timestep
-	previousTime = time;
 
 	PetscFunctionReturn(0);
 }
@@ -260,7 +266,7 @@ PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int size = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscInt xs, xm, Mx;
+	PetscInt xs, xm;
 
 	PetscFunctionBeginUser;
 
@@ -274,12 +280,6 @@ PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	checkPetscError(ierr);
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Setup step size variable
@@ -379,7 +379,7 @@ PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 	PetscErrorCode ierr;
 	PetscReal *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
-	PetscInt xs, xm, Mx;
+	PetscInt xs, xm;
 	int xi, i;
 
 	PetscFunctionBeginUser;
@@ -411,11 +411,7 @@ PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	checkPetscError(ierr);
+
 	// Setup some step size variables
 	double hx = PetscSolver::getStepSize();
 
@@ -554,7 +550,7 @@ PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 	PetscErrorCode ierr;
 	PetscReal *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
-	PetscInt xs, xm, Mx;
+	PetscInt xs, xm;
 	int xi, i;
 
 	PetscFunctionBeginUser;
@@ -585,11 +581,6 @@ PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	checkPetscError(ierr);
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Setup some step size variables
@@ -740,7 +731,7 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 	PetscErrorCode ierr;
 	PetscReal *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
-	PetscInt xs, xm, Mx;
+	PetscInt xs, xm;
 	int xi, i;
 
 	PetscFunctionBeginUser;
@@ -771,11 +762,6 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	checkPetscError(ierr);
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Setup some step size variables
@@ -995,13 +981,12 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
-
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
 	PetscReal *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
-	PetscInt xs, xm, Mx;
+	PetscInt xs, xm;
 	int xi, i;
 
 	PetscFunctionBeginUser;
@@ -1024,11 +1009,6 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	checkPetscError(ierr);
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
 	checkPetscError(ierr);
 
 	// Setup some step size variables
@@ -1201,6 +1181,108 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 }
 
 /**
+ * This is a monitoring method that will compute the flux of interstitials
+ * at the surface
+ */
+PetscErrorCode monitorInterstitial(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void *ictx) {
+	// Network size
+	const int networkSize = PetscSolver::getNetwork()->size();
+	PetscErrorCode ierr;
+	PetscReal *solutionArray, *gridPointSolution, x;
+	Vec localSolution;
+	PetscInt xs, xm;
+	int xi, i;
+
+	PetscFunctionBeginUser;
+
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+
+	// Gets the process ID
+	int procId;
+	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	checkPetscError(ierr);
+
+	// Get the local vector, which is capital when running in parallel,
+	// and put it into solutionArray
+	ierr = DMGetLocalVector(da, &localSolution);
+	checkPetscError(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	checkPetscError(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	checkPetscError(ierr);
+	ierr = DMDAVecGetArray(da, localSolution, &solutionArray);
+	checkPetscError(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+	checkPetscError(ierr);
+
+	// Return if the grid point 1 is not on this process
+	if (xs > 1) PetscFunctionReturn(0);
+
+	// Setup some step size variables
+	double hx = PetscSolver::getStepSize();
+	double sx = 1.0 / (hx * hx);
+
+	// Get the concentrations at xi = 1
+	xi = 1;
+	gridPointSolution = solutionArray + networkSize * xi;
+	// Update the concentrations in the network to have physics results
+	// (non negative)
+	PetscSolver::getNetwork()->updateConcentrationsFromArray(
+			gridPointSolution);
+	// Get the concentrations from the network
+	double concentrations[networkSize];
+	double * concentration = &concentrations[0];
+	PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
+
+	// Get the delta time from the previous timestep to this timestep
+	double dt = time - previousTime;
+
+	// Compute the total density of intersitials that escaped from the
+	// surface since last timestep using the stored flux
+	double nInterstitial = previousFlux * dt;
+
+//	// Uncomment to write the interstitial flux in a file
+//	std::ofstream outputFile;
+//	outputFile.open("interstitialOut.txt", ios::app);
+//	outputFile << time << " "
+//			<< nInterstitial << std::endl;
+//	outputFile.close();
+
+	// Initialize the value for the flux
+	double newFlux = 0.0;
+
+	// Get all the interstitial clusters
+	auto interstitials = PetscSolver::getNetwork()->getAll("I");
+	// Loop on them
+	for (int i = 0; i < interstitials.size(); i++) {
+		// Get the cluster
+		auto cluster = (PSICluster *) interstitials.at(i);
+		// Get its id and concentration
+		int id = cluster->getId() - 1;
+		double conc = concentration[id];
+		// Get its size and diffusion coefficient
+		int size = cluster->getSize();
+		double coef = cluster->getDiffusionCoefficient();
+
+		// Compute the flux
+		newFlux += (double) size * sx * coef * conc;
+	}
+
+	previousFlux = newFlux;
+
+    PetscFunctionReturn(0);
+}
+
+/**
  * This operation sets up a monitor that will call monitorSolve
  * @param ts The time stepper
  * @return A standard PETSc error code
@@ -1211,18 +1293,9 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	//! The xolotlViz handler registry
 	auto vizHandlerRegistry = xolotlViz::getVizHandlerRegistry();
 
-	// Get the physical length of the grid
-	PetscBool flg;
-	PetscInt length;
-	PetscOptionsGetInt(NULL, "-da_grid_x", &length, &flg);
-	if (flg)
-		xGridLength = (int) length;
-	else
-		xGridLength = 8;
-
 	// Flags to launch the monitors or not
 	PetscBool flag2DPlot, flag1DPlot, flagSeries, flagPerf, flagRetention,
-			flagStatus, flagMaxClusterConc;
+			flagStatus, flagMaxClusterConc, flagInterstitial;
 
 	// Check the option -plot_perf
 	ierr = PetscOptionsHasName(NULL, "-plot_perf", &flagPerf);
@@ -1248,8 +1321,12 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	ierr = PetscOptionsHasName(NULL, "-start_stop", &flagStatus);
 	checkPetscError(ierr);
 
-	// Check the option -maxClusterConc
-	ierr = PetscOptionsHasName(NULL, "-maxClusterConc", &flagMaxClusterConc);
+	// Check the option -max_cluster_conc
+	ierr = PetscOptionsHasName(NULL, "-max_cluster_conc", &flagMaxClusterConc);
+	checkPetscError(ierr);
+
+	// Check the option -interstitial_diff
+	ierr = PetscOptionsHasName(NULL, "-interstitial_diff", &flagInterstitial);
 	checkPetscError(ierr);
 
 	// Set the monitor to save 1D plot of one concentration
@@ -1499,6 +1576,25 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	if (flagMaxClusterConc) {
 		// monitorMaxClusterConc will be called at each timestep
 		ierr = TSMonitorSet(ts, monitorMaxClusterConc, NULL, NULL);
+		checkPetscError(ierr);
+	}
+
+	// Set the monitor on the outgoing flux of interstitials at the surface
+	if (flagInterstitial) {
+		// monitorInterstitial will be called at each timestep
+		ierr = TSMonitorSet(ts, monitorInterstitial, NULL, NULL);
+		checkPetscError(ierr);
+
+//		// Uncomment to clear the file where the interstitial flux will be written
+//		std::ofstream outputFile;
+//		outputFile.open("interstitialOut.txt");
+//		outputFile.close();
+	}
+
+	// Set the monitor to simply change the previous time to the new time
+	if (flagRetention || heFluenceOption || flagInterstitial) {
+		// monitorTime will be called at each timestep
+		ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
 		checkPetscError(ierr);
 	}
 
