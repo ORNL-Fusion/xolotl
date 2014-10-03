@@ -96,7 +96,8 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 	BOOST_REQUIRE_EQUAL(diffusionFactor, 2.9e+10);
 
 	// Get the third reactant of the network
-	reactant = (PSICluster *) reactants->at(2);// Check the composition
+	reactant = (PSICluster *) reactants->at(2);
+	// Check the composition
 	composition = reactant->getComposition();
 	BOOST_REQUIRE_EQUAL(composition["He"], 2);
 	BOOST_REQUIRE_EQUAL(composition["V"], 0);

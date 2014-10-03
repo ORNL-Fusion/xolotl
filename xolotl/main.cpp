@@ -11,7 +11,7 @@
 #include <mpi.h>
 #include <MPIUtils.h>
 #include <Options.h>
-#include "xolotlPerf.h"
+#include <xolotlPerf.h>
 #include <MaterialHandlerFactory.h>
 #include <TemperatureHandlerFactory.h>
 #include <VizHandlerRegistryFactory.h>

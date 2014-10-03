@@ -1,30 +1,25 @@
 #Set the package name
-SET(PACKAGE_NAME "xolotl.tests.solver")
+SET(PACKAGE_NAME "xolotl.tests.diffusion")
 
 #Set the description
-SET(PACKAGE_DESCRIPTION "Tests for the Xolotl solver package")
+SET(PACKAGE_DESCRIPTION "Xolotl Diffusion tests")
 
-#Include directories from the source and boost binaries
+#include directories from the source and boost binaries
 include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/flux)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/temperature)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/diffusion)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/diffusion)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
 include_directories(${Boost_BINARY_DIRS})
 include_directories(${PETSC_INCLUDES})
 
-#Link the directories
-link_directories(${CMAKE_SOURCE_DIR}/src/xolotlSolver)
-link_directories(${CMAKE_SOURCE_DIR}/src/xolotlSolver/flux)
-link_directories(${CMAKE_SOURCE_DIR}/src/xolotlSolver/temperature)
+#link the directories
+link_directories(${CMAKE_SOURCE_DIR}/src/xolotlCore/diffusion)
 
 #Get the test files
-file(GLOB tests *Tester.cpp)
+file(GLOB tests *.cpp)
 
 #If boost was found, create tests
 if(Boost_FOUND)
@@ -33,10 +28,9 @@ if(Boost_FOUND)
         message(STATUS "Making test ${test}")
         get_filename_component(testName ${test} NAME_WE)
         add_executable(${testName} ${test})
-        target_link_libraries(${testName} xolotlSolver xolotlReactants ${PETSC_LIBRARIES} xolotlPerf)
+        target_link_libraries(${testName} xolotlDiffusion xolotlReactants xolotlPerf)
         add_test(${testName} ${testName}) 
         #add a label so the tests can be run separately
         set_property(TEST ${testName} PROPERTY LABELS ${PACKAGE_NAME})   
     endforeach(test ${tests})
 endif(Boost_FOUND)
-
