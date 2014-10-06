@@ -1,5 +1,5 @@
 #include <FluxHandler.h>
-#include "xolotlPerf/xolotlPerf.h"
+#include <xolotlPerf.h>
 #include <iostream>
 #include <limits>
 #include <mpi.h>

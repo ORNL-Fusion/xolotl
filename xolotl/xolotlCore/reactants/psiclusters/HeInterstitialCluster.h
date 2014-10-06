@@ -3,7 +3,6 @@
 
 // Includes
 #include "PSICluster.h"
-#include "../../xolotlPerf/xolotlPerf.h"
 #include <string>
 #include <map>
 

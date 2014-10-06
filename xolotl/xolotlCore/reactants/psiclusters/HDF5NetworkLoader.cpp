@@ -9,7 +9,7 @@
 #include "HeVCluster.h"
 // #include "HeInterstitialCluster.h"
 #include "PSIClusterReactionNetwork.h"
-#include "xolotlPerf.h"
+#include <xolotlPerf.h>
 #include <HDF5Utils.h>
 
 using namespace xolotlCore;

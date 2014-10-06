@@ -1,6 +1,6 @@
 // Includes
 #include "PetscSolver.h"
-#include "xolotlPerf/xolotlPerf.h"
+#include <xolotlPerf.h>
 #include <VizHandlerRegistryFactory.h>
 #include <PlotType.h>
 #include <CvsXDataProvider.h>
@@ -243,6 +243,11 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
+	checkPetscError(ierr);
+
+	// Get the current time step
+	PetscReal currentTimeStep;
+	ierr = TSGetTimeStep(ts, &currentTimeStep);
 	checkPetscError(ierr);
 
 	// Get the corners of the grid

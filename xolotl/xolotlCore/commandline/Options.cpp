@@ -89,7 +89,7 @@ void Options::readParams(int argc, char* argv[]) {
 	// Load the content of the file in a stream
 	// Create the param stream
 	std::shared_ptr<std::ifstream> paramStream;
-	paramStream = std::make_shared<std::ifstream>(argv[0]);
+	paramStream = std::make_shared < std::ifstream > (argv[0]);
 
 	if (!paramStream->good()) {
 		// The file is empty.

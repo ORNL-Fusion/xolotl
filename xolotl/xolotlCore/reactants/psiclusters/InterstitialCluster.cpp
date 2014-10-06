@@ -109,10 +109,10 @@ void InterstitialCluster::createReactionConnectivity() {
 	// Helium absorption by HeV clusters leading to trap mutation producing
 	// a single interstitial
 	// (He_b)(V_c) + He_d --> [He_(b+d)][V_(c+a)] + I_a
-	// for a =1
-	// Happens only if [He_(b+d)](V_c) is not present in the network
-	// Only if the size of this cluster is 1
-	if (size == 1) {
+	// for a < 3
+	// Happens only if [He_(b+d)][V_(c+a-1)] is not present in the network
+	// Only if the size of this cluster is < 3
+	if (size < 3) {
 		// Get all the HeV clusters from the network
 		auto heVReactants = network->getAll(heVType);
 		// Get all the He clusters from the network
@@ -127,18 +127,16 @@ void InterstitialCluster::createReactionConnectivity() {
 				// Get the He cluster and its composition He_d
 				auto heCluster = (PSICluster *) heReactants[j];
 				auto heComp = heCluster->getComposition();
-				// Check that the simple product [He_(b+d)](V_c) doesn't exist
+				// Check that the smaller product [He_(b+d)][V_(c+a-1)] doesn't exist
 				std::vector<int> comp = {heVComp[heType] + heComp[heType],
-					heVComp[vType] + heComp[vType],
-					heVComp[iType] + heComp[iType]};
-				auto simpleProduct = network->getCompound(heVType, comp);
-				if (simpleProduct) continue;
-				// The simple product doesn't exist so the reaction producing
-				// a single interstitial is allowed if the second product is
+					heVComp[vType] + size - 1, 0};
+				auto smallerProduct = network->getCompound(heVType, comp);
+				if (smallerProduct) continue;
+				// The smaller product doesn't exist so the reaction producing
+				// a interstitial is allowed if the second product is
 				// present in the network [He_(b+d)][V_(c+a)]
 				comp = {heVComp[heType] + heComp[heType],
-						heVComp[vType] + heComp[vType] + size,
-						heVComp[iType] + heComp[iType]};
+						heVComp[vType] + size, 0};
 				auto otherProduct = network->getCompound(heVType, comp);
 				if (otherProduct) {
 					// The reaction is really allowed
@@ -160,10 +158,10 @@ void InterstitialCluster::createReactionConnectivity() {
 	// Helium clustering leading to trap mutation producing
 	// a single interstitial
 	// He_b + He_c --> [He_(b+c)](V_a) + I_a
-	// for a =1
-	// Happens only if He_(b+c) is not present in the network
-	// Only if the size of this cluster is 1
-	if (size == 1) {
+	// for a < 3
+	// Happens only if [He_(b+c)][V_(a-1)] is not present in the network
+	// Only if the size of this cluster is < 3
+	if (size < 3) {
 		// Get all the He clusters from the network
 		auto heReactants = network->getAll(heType);
 		// Loop on the first He clusters
@@ -171,16 +169,24 @@ void InterstitialCluster::createReactionConnectivity() {
 			// Get the He cluster and its size He_b
 			auto firstCluster = (PSICluster *) heReactants[i];
 			auto firstSize = firstCluster->getSize();
-			// Loop on the second He clusters starting at firstSize to avoid double counting
+			// Loop on the second He clusters starting at firstSize - 1 to avoid double counting
 			// This works only if the He clusters are ordered
-			for (int j = firstSize; j < heReactants.size(); j++) {
+			for (int j = firstSize - 1; j < heReactants.size(); j++) {
 				// Get the He cluster and its size He_d
 				auto secondCluster = (PSICluster *) heReactants[j];
 				auto secondSize = secondCluster->getSize();
-				// Check that the simple product He_(b+c) doesn't exist
-				auto simpleProduct = network->get(heType, firstSize + secondSize);
-				if (simpleProduct) continue;
-				// The simple product doesn't exist so the reaction producing
+				// Check that the smaller product [He_(b+c)][V_(a-1)] doesn't exist
+				// It can be a He ar a HeV cluster
+				PSICluster * smallerProduct;
+				if (size == 1) {
+					smallerProduct = (PSICluster *) network->get(heType, firstSize + secondSize);
+				}
+				else {
+					std::vector<int> comp = {firstSize + secondSize, 1, 0};
+					smallerProduct = (PSICluster *) network->getCompound(heVType, comp);
+				}
+				if (smallerProduct) continue;
+				// The smaller product doesn't exist so the reaction producing
 				// a single interstitial is allowed if the second product is
 				// present in the network [He_(b+c)](V_a)
 				std::vector<int> comp = {firstSize + secondSize, size, 0};

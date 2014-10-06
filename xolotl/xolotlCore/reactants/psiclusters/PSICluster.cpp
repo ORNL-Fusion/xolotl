@@ -171,9 +171,9 @@ double PSICluster::calculateReactionRateConstant(
 
 	// Calculate and return
 	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
-			* (firstDiffusion + secondDiffusion);
+					* (firstDiffusion + secondDiffusion);
 	return k_plus;
-}
+} 
 
 double PSICluster::calculateDissociationConstant(
 		const PSICluster & dissociatingCluster,
@@ -603,7 +603,7 @@ double PSICluster::getProductionFlux() const {
 	// Local declarations
 	double flux = 0.0;
 	int nPairs = 0;
-
+	
 	// Set the total number of reacting pairs
 	nPairs = effReactingPairs.size();
 	// Loop over all the reacting pairs

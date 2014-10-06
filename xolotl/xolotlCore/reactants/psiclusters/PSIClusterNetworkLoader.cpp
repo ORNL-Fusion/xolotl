@@ -17,7 +17,7 @@
 #include "HeVCluster.h"
 // #include "HeInterstitialCluster.h"
 #include "PSIClusterReactionNetwork.h"
-#include "xolotlPerf/xolotlPerf.h"
+#include <xolotlPerf.h>
 
 using namespace xolotlCore;
 

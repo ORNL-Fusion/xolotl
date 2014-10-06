@@ -79,7 +79,7 @@ protected:
 	 * Value for the maximum fluence.
 	 */
 	double maxHeliumFluence;
-
+	
 	/**
 	 * Use the helium flux option?
 	 */
