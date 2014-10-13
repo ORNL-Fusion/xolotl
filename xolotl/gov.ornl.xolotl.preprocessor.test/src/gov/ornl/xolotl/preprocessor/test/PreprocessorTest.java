@@ -188,13 +188,10 @@ public class PreprocessorTest {
 
 		try {
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--maxHeSize", "10", "--maxISize", "-1" });
+					new String[] { "--maxHeSize", "10" });
 			
 			// Check that the max Helium cluster size is 10
 			assertEquals(10, parsedArgs.getMaxHeSize());
-			
-			// Check that the max interstitial cluster size is 7
-			assertEquals(7, parsedArgs.getMaxISize());
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
