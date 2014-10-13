@@ -23,13 +23,13 @@ public interface Arguments {
 	 */
 	@Option(defaultValue = "8", 
 			description = "The maximum size of a Helium cluster in the network "
-			+ "satisfying the condition 0 < maxHeSize < 9. (default = 8)")
+			+ "satisfying the condition 0 <= maxHeSize < 9. (default = 8)")
 	/**
 	 * This operation produces the required command line option '--maxHeSize' which 
 	 * takes a single integer value and is defined by the previous Option annotation
 	 * 
 	 * @return The maximum size of a Helium cluster in the network satisfying 
-	 * the condition 0 < maxHeSize < 9
+	 * the condition 0 <= maxHeSize < 9
 	 */
 	int getMaxHeSize();
 
@@ -46,7 +46,8 @@ public interface Arguments {
 	 *            Brief description of this option
 	 */
 	@Option(defaultValue = "29", 
-			description = "The maximum size of a vacancy cluster in the network. (default = 29)")
+			description = "The maximum size of a vacancy cluster in the network "
+			+ "satisfying the condition 0 <= maxVSize.. (default = 29)")
 	/**
 	 * This operation produces the required command line option '--maxVSize' which 
 	 * takes a single integer value and is defined by the previous Option annotation
@@ -69,13 +70,13 @@ public interface Arguments {
 	 */
 	@Option(defaultValue = "6", 
 			description = "The maximum size of an interstitial cluster in the network "
-			+ "satisfying the condition 0 < maxISize < 7. (default = 6)")
+			+ "satisfying the condition 0 <= maxISize. (default = 6)")
 	/**
 	 * This operation produces the required command line option '--maxISize' which 
 	 * takes a single integer value and is defined by the previous Option annotation
 	 * 
 	 * @return The maximum size of an interstitial cluster in the network satisfying 
-	 * the condition 0 < maxISize < 7
+	 * the condition 0 <= maxISize
 	 */
 	int getMaxISize();
 

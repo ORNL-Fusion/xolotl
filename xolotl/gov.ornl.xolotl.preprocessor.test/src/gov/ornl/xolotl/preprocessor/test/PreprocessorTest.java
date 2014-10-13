@@ -188,7 +188,7 @@ public class PreprocessorTest {
 
 		try {
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--maxHeSize", "10", "--maxISize", "7" });
+					new String[] { "--maxHeSize", "10", "--maxISize", "-1" });
 			
 			// Check that the max Helium cluster size is 10
 			assertEquals(10, parsedArgs.getMaxHeSize());

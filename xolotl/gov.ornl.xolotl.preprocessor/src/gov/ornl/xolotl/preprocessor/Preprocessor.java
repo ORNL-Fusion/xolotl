@@ -191,19 +191,23 @@ public class Preprocessor {
 		// Set the maximum size of a Helium cluster in the network.
 		maxHe = args.getMaxHeSize();
 		// Check to make sure the user entered an appropriate value
-		if (!(maxHe < 9) || !(maxHe > 0)) {
+		if ((maxHe > 8) || (maxHe < 0)) {
 			throw new IllegalArgumentException(
-					"The maxium Helium size must be greater than 0 and less than 9 ( 0 < maxHeSize < 9 )");
+					"The maxium Helium size must be less than 9 ( 0 <= maxHeSize < 9 )");
 		}
 
 		// Set the maximum size of a vacancy cluster in the network.
 		maxV = args.getMaxVSize();
+		if (maxV < 0) {
+			throw new IllegalArgumentException(
+					"The maxium vacancy must be positive ( 0 <= maxVSize )");
+		}
 
 		// The maximum size of an interstitial cluster in the network.
 		maxI = args.getMaxISize();
-		if (!(maxI < 7) || !(maxI > 0)) {
+		if (maxI < 0) {
 			throw new IllegalArgumentException(
-					"The maxium interstitial size must be greater than 0 and less than 7 ( 0 < maxHeSize < 7 )");
+					"The maxium interstitial must be positive ( 0 <= maxISize )");
 		}
 
 		// Set the parameter options that will be passed to Xolotl
@@ -250,7 +254,7 @@ public class Preprocessor {
 		}
 
 		// Configure the diffusion parameters.
-		for (int i = 0; i < maxHeDiffusionSize; i++) {
+		for (int i = 0; i < Math.min(maxHeDiffusionSize, maxHe); i++) {
 			Cluster tmpCluster = clusterList.get(i);
 			tmpCluster.D_0 = heDiffusionFactors[i + 1];
 			tmpCluster.E_m = heMigrationEnergies[i + 1];
@@ -319,8 +323,10 @@ public class Preprocessor {
 
 		// Set V_1 diffusion parameters. V_1 is the first in the list, so it is
 		// straightforward to set it.
-		clusterList.get(0).D_0 = vOneDiffusionFactor;
-		clusterList.get(0).E_m = vOneMigrationEnergy;
+		if (maxV > 0) {
+			clusterList.get(0).D_0 = vOneDiffusionFactor;
+			clusterList.get(0).E_m = vOneMigrationEnergy;
+		}
 
 		return clusterList;
 	};
@@ -347,7 +353,7 @@ public class Preprocessor {
 		}
 
 		// Configure the diffusion parameters.
-		for (int i = 0; i < maxIDiffusionSize; i++) {
+		for (int i = 0; i < Math.min(maxIDiffusionSize, maxI); i++) {
 			Cluster tmpCluster = clusterList.get(i);
 			tmpCluster.D_0 = iDiffusionFactors[i + 1];
 			tmpCluster.E_m = iMigrationEnergies[i + 1];
