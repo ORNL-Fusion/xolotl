@@ -18,8 +18,8 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	// Create a file with temperature profile data
 	// First column with the time and the second with
 	// the temperature at that time.
-	std::ofstream writetempFile("tempFile.dat");
-	writetempFile << "0.0 2.0 \n"
+	std::ofstream writeTempFile("tempFile.dat");
+	writeTempFile << "0.0 2.0 \n"
 			"1.0 1.99219766723 \n"
 			"2.0 1.87758256189 \n"
 			"3.0 1.4311765168 \n"
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 			"8.0 0.854499966191 \n"
 			"9.0 0.235300873168 \n"
 			"10.0 1.99779827918";
-	writetempFile.close();
+	writeTempFile.close();
 
 	std::string tempFile = "tempFile.dat";
 	auto testTemp = std::make_shared<xolotlSolver::TemperatureProfileHandler>(tempFile);

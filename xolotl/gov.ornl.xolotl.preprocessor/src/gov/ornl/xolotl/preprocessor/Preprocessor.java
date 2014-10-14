@@ -227,6 +227,8 @@ public class Preprocessor {
 			xolotlParams.setProperty("tempFile", args.getTempFile());
 		if (args.isHeFlux())
 			xolotlParams.setProperty("heFlux", args.getHeFlux());
+		if (args.isFluxFile())
+			xolotlParams.setProperty("fluxFile", args.getTempFile());
 		if (args.isMaxHeFluence())
 			xolotlParams.setProperty("maxHeFluence", args.getMaxHeFluence());
 

@@ -108,5 +108,47 @@ BOOST_AUTO_TEST_CASE(checkHeFlux) {
 	BOOST_REQUIRE_CLOSE(testFlux, 2.5 * 0.449045, 0.01);
 }
 
+BOOST_AUTO_TEST_CASE(checkTimeProfile) {
+
+	// Create a file with a time profile for the flux
+	// First column with the time and the second with
+	// the amplitude (in He/nm2/s) at that time.
+	std::ofstream writeFluxFile("fluxFile.dat");
+	writeFluxFile << "0.0 1000.0 \n"
+			"1.0 4000.0 \n"
+			"2.0 2000.0 \n"
+			"3.0 3000.0 \n"
+			"4.0 0.0";
+	writeFluxFile.close();
+
+	// Specify the number of grid points that will be used
+	int nGridpts = 5;
+	// Specify the step size between grid points
+	double step = 1.25;
+
+    auto testFitFlux = std::make_shared<xolotlSolver::W100FitFluxHandler>();
+    // Initialize the time profile
+	std::string fluxFile = "fluxFile.dat";
+    testFitFlux->initializeTimeProfile(fluxFile);
+    // Initialize the flux handler
+    testFitFlux->initializeFluxHandler(nGridpts, step);
+
+	// Create a composition vector
+	std::vector<int> compVec = {1, 0, 0};
+	// Create a time
+	double currTime = 1.0;
+
+	// Create a vector representing the position of the cluster
+	std::vector<double> x = {1.25, 0.0, 0.0};
+
+	auto testFlux = testFitFlux->getIncidentFlux(compVec, x, currTime);
+	BOOST_REQUIRE_CLOSE(testFlux, 1796.18, 0.01);
+
+	// Check at a different time
+	currTime = 3.5;
+	testFlux = testFitFlux->getIncidentFlux(compVec, x, currTime);
+	BOOST_REQUIRE_CLOSE(testFlux, 673.567, 0.01);
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()

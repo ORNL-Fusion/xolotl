@@ -48,6 +48,9 @@ public class ArgumentsTest {
 
 			// Check if there is an heFlux argument
 			assertEquals(false, args.isHeFlux());
+
+			// Check if there is an fluxFile argument
+			assertEquals(false, args.isFluxFile());
 			
 			// Check if there is an heFluence argument
 			assertEquals(false, args.isMaxHeFluence());

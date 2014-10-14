@@ -195,7 +195,7 @@ public class PreprocessorTest {
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-				fail("Should have thrown an IllegalArgumentException because the maximum He and I cluster sizes are out of range.");
+				fail("Should have thrown an IllegalArgumentException because the maximum He size is out of range.");
 			}
 
 		} catch (ArgumentValidationException e1) {

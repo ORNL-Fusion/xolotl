@@ -16,7 +16,7 @@ void TemperatureProfileHandler::initializeTemperature() {
 	while (getline(inputFile, line)) {
 		if (!line.length() || line[0] == '#')
 			continue;
-		double xtemp = 0.0e-16, ytemp = 0.0e-16;
+		double xtemp = 0.0, ytemp = 0.0;
 		sscanf(line.c_str(), "%lf %lf", &xtemp, &ytemp);
 		time.push_back(xtemp);
 		temp.push_back(ytemp);
@@ -38,14 +38,16 @@ double TemperatureProfileHandler::getTemperature(std::vector<double> position,
 		return f = temp[time.size() - 1];
 
 	// loop to determine the interval x falls in, ie x[k] < x < x[k+1]
-	if (currentTime > time[0] && currentTime < time[time.size() - 1]) {
-		int k = floor(currentTime);
+	for (int k = 0; k < time.size() - 1; k++) {
+		if (currentTime < time[k]) continue;
+		if (currentTime > time[k + 1]) continue;
+
 		f = temp[k]
 				+ (temp[k + 1] - temp[k]) * (currentTime - time[k])
 						/ (time[k + 1] - time[k]);
+		break;
 	}
 
 	return f;
-
 }
 

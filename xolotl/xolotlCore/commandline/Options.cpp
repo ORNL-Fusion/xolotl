@@ -8,6 +8,7 @@
 #include <TempProfileOptionHandler.h>
 #include <FluenceOptionHandler.h>
 #include <FluxOptionHandler.h>
+#include <FluxProfileOptionHandler.h>
 #include <PerfOptionHandler.h>
 #include <VizOptionHandler.h>
 #include <MaterialOptionHandler.h>
@@ -26,6 +27,7 @@ Options::Options() :
 		constTemperature(1000.0),
 		heliumFluenceFlag(false),
 		heliumFluxFlag(false),
+		fluxProfileFlag(false),
         perfRegistryType( xolotlPerf::IHandlerRegistry::std ),
 		vizStandardHandlersFlag(false),
 		materialFlag(false) {
@@ -44,6 +46,8 @@ Options::Options() :
 	auto fluenceHandler = new FluenceOptionHandler();
 	// Create the flux option handler
 	auto fluxHandler = new FluxOptionHandler();
+	// Create the flux time profile option handler
+	auto fluxProfileHandler = new FluxProfileOptionHandler();
 	// Create the performance handler option handler
 	auto perfHandler = new PerfOptionHandler();
 	// Create the visualization handler option handler
@@ -59,6 +63,7 @@ Options::Options() :
 	optionsMap[tempProfileHandler->key] = tempProfileHandler;
 	optionsMap[fluenceHandler->key] = fluenceHandler;
 	optionsMap[fluxHandler->key] = fluxHandler;
+	optionsMap[fluxProfileHandler->key] = fluxProfileHandler;
 	optionsMap[perfHandler->key] = perfHandler;
 	optionsMap[vizHandler->key] = vizHandler;
 	optionsMap[materialHandler->key] = materialHandler;

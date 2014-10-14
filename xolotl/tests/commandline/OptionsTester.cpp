@@ -180,13 +180,13 @@ BOOST_AUTO_TEST_CASE(wrongPerfHandler)
     BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
 }
 
-BOOST_AUTO_TEST_CASE(goodParamFileWithTempFile)
+BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 {
 	// Create a file with temperature profile data
 	// First column with the time and the second with
 	// the temperature at that time.
-	std::ofstream writetempFile("temperatureFile.dat");
-	writetempFile << "0.0 2.0 \n"
+	std::ofstream writeTempFile("temperatureFile.dat");
+	writeTempFile << "0.0 2.0 \n"
 			"1.0 1.99219766723 \n"
 			"2.0 1.87758256189 \n"
 			"3.0 1.4311765168 \n"
@@ -197,12 +197,23 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithTempFile)
 			"8.0 0.854499966191 \n"
 			"9.0 0.235300873168 \n"
 			"10.0 1.99779827918";
-	writetempFile.close();
+	writeTempFile.close();
+
+	// Create a file with a time profile for the flux
+	// First column with the time and the second with
+	// the amplitude (in He/nm2/s) at that time.
+	std::ofstream writeFluxFile("fluxFile.dat");
+	writeFluxFile << "0.0 1000.0 \n"
+			"1.0 4000.0 \n"
+			"2.0 2000.0 \n"
+			"3.0 3000.0 \n"
+			"4.0 0.0";
+	writeFluxFile.close();
 
     xolotlCore::Options opts;
 
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/param_good_tempFile.txt");
+	string pathToFile("/tests/testfiles/param_good_profiles.txt");
 	string filename = sourceDir + pathToFile;
     const char* fname = filename.c_str();
 
@@ -231,12 +242,14 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithTempFile)
     BOOST_REQUIRE_EQUAL(opts.getTempProfileFilename(), "temperatureFile.dat");
 
     // Check if the maxHeFluence option is used
-    BOOST_REQUIRE_EQUAL(opts.useMaxHeliumFluence(), true);
-    BOOST_REQUIRE_EQUAL(opts.getMaxHeliumFluence(), 10.0);
+    BOOST_REQUIRE_EQUAL(opts.useMaxHeliumFluence(), false);
 
     // Check if the heFlux option is used
-    BOOST_REQUIRE_EQUAL(opts.useHeliumFlux(), true);
-    BOOST_REQUIRE_EQUAL(opts.getHeliumFlux(), 1.5);
+    BOOST_REQUIRE_EQUAL(opts.useHeliumFlux(), false);
+
+    // Check if the time profile option is used for the flux
+    BOOST_REQUIRE_EQUAL(opts.useFluxTimeProfile(), true);
+    BOOST_REQUIRE_EQUAL(opts.getFluxProfileName(), "fluxFile.dat");
 
     // Check the performance handler
     BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(), xolotlPerf::IHandlerRegistry::std);

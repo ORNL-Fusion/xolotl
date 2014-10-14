@@ -2,6 +2,7 @@
 #define IFLUXHANDLER_H
 
 #include <vector>
+#include <string>
 
 namespace xolotlSolver{
 
@@ -23,6 +24,13 @@ public:
 	virtual void initializeFluxHandler(int numGridpoints, double step) = 0;
 
 	/**
+	 * This method reads the values on the time profile file and store them in the
+	 * time and amplitude vectors.
+	 * @param fileName The name of the file where the values are stored
+	 */
+	virtual void initializeTimeProfile(std::string fileName) = 0;
+
+	/**
 	 * This operation returns the incident flux for a specific cluster composition,
 	 * position, and time.
 	 * @param compositionVec  The composition of the cluster
@@ -36,9 +44,10 @@ public:
 
 	/**
 	 * This operation returns the incident flux vector
+	 * @param currentTime     	 The time
 	 * @return incidentFluxVec   The incident flux vector
 	 */
-	virtual std::vector<double> getIncidentFluxVec() = 0;
+	virtual std::vector<double> getIncidentFluxVec(double currentTime) = 0;
 
 	/**
 	 * Given a specific concentration, position, and time, this operation sets the outgoing

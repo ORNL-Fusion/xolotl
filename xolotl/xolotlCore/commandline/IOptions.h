@@ -213,6 +213,31 @@ public:
     virtual void setHeliumFlux(double flux) = 0;
 
     /**
+     * Should we use a time profile for the helium flux?
+     * @return True is a time profile file is given for the helium flux.
+     */
+    virtual bool useFluxTimeProfile() const = 0;
+
+    /**
+     * Set the fluxProfileFlag.
+     * @param flag The value for the flag.
+     */
+    virtual void setFluxProfileFlag(bool flag) = 0;
+
+    /**
+     * Obtain the name of the file containing the time profile data for the
+     * helium flux.
+     * @return The name of the file.
+     */
+    virtual std::string getFluxProfileName() const = 0;
+
+    /**
+     * Set the name of the time profile file to use.
+     * @param name The name of the file.
+     */
+    virtual void setFluxProfileName(std::string name) = 0;
+
+    /**
      * Which type of performance handlers should we use?
      * @return The type of performance handler registry to use.
      */

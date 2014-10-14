@@ -91,6 +91,16 @@ protected:
 	double heliumFlux;
 
 	/**
+	 * Use a time profile for the helium flux?
+	 */
+	bool fluxProfileFlag;
+
+	/**
+	 * Name of the input time profile file for the flux.
+	 */
+	std::string fluxProfileFilename;
+
+	/**
 	 * Which type of performance infrastructure should we use?
 	 */
 	xolotlPerf::IHandlerRegistry::RegistryType perfRegistryType;
@@ -306,6 +316,31 @@ public:
      * \see IOptions.h
      */
     void setHeliumFlux(double flux) {heliumFlux = flux;}
+
+    /**
+     * Should we use a time profile for the helium flux?
+     * \see IOptions.h
+     */
+    bool useFluxTimeProfile() const {return fluxProfileFlag;}
+
+    /**
+     * Set the fluxProfileFlag.
+     * \see IOptions.h
+     */
+    void setFluxProfileFlag(bool flag) {fluxProfileFlag = flag;}
+
+    /**
+     * Obtain the name of the file containing the time profile data for the
+     * helium flux.
+     * \see IOptions.h
+     */
+    std::string getFluxProfileName() const {return fluxProfileFilename;}
+
+    /**
+     * Set the name of the time profile file to use.
+     * \see IOptions.h
+     */
+    void setFluxProfileName(std::string name) {fluxProfileFilename = name;}
 
     /**
      * Which type of performance handlers should we use?

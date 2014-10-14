@@ -299,10 +299,6 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	auto temperatureHandler = PetscSolver::getTemperatureHandler();
 	// Get the flux handler that will be used to compute fluxes.
 	auto fluxHandler = PetscSolver::getFluxHandler();
-	auto incidentFluxVector = fluxHandler->getIncidentFluxVec();
-	// Some required properties
-	auto props = network->getProperties();
-	int numHeClusters = std::stoi(props["numHeClusters"]);
 
 	// Get the local data vector from petsc
 	PetscFunctionBeginUser;
@@ -347,6 +343,9 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	PetscReal realTime;
 	// Get the current time
 	ierr = TSGetTime(ts, &realTime);
+
+	// Get the incident flux vector
+	auto incidentFluxVector = fluxHandler->getIncidentFluxVec(realTime);
 
 	// Get the diffusion handler
 	auto diffusionHandler = PetscSolver::getDiffusionHandler();
@@ -465,9 +464,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	Vec localC;
 	// Get the network
 	auto network = PetscSolver::getNetwork();
-	// Get the properties
-	auto props = network->getProperties();
-	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int reactantIndex = 0;
 	int size = 0;
 
@@ -894,10 +890,7 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	// Set the grid step size
 	PetscSolver::hx = stepSize;
 	
-	// Get the properties
-	auto props = network->getProperties();
-	int numHeClusters = std::stoi(props["numHeClusters"]);
-	// The degrees of freedom should be equal to the number of reactants.
+	// Degrees of freedom
 	int dof = network->size();
 
 	// Set the size of the partial derivatives vectors

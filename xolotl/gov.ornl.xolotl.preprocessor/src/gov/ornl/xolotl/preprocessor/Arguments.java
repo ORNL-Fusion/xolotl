@@ -288,6 +288,33 @@ public interface Arguments {
 	boolean isHeFlux();
 
 	/**
+	 * This Option annotation corresponds to the optional '--fluxFile' option
+	 * and provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "<fluxFileName>  A time profile is given for the flux "
+			+ "by the specified file, then linear interpolation is used to fit the data")
+	/**
+	 * This operation produces the optional command line option '--fluxFile' which 
+	 * takes a single string value and is defined by the previous Option annotation.
+	 * NOTE:  This option should only be used when the user wishes to pass a file 
+	 * containing a time profile profile for the flux to Xolotl.
+	 * 
+	 * @return The name of the flux file
+	 */
+	String getFluxFile();
+
+	/**
+	 * This operation makes the command line option '--fluxFile' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isFluxFile();
+
+	/**
 	 * This Option annotation corresponds to the optional '--maxHeFluence' option
 	 * and provides a brief description of the option.
 	 * 

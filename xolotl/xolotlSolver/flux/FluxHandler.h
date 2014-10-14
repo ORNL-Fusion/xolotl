@@ -57,6 +57,28 @@ protected:
 	bool incidentFluxZero;
 
 	/**
+	 * Are we using a time profile for the amplitude of the helium incoming flux?
+	 */
+	bool useTimeProfile;
+
+	/**
+	 * Value of the fit function integrated on the grid
+	 */
+	double normFactor;
+
+	/**
+	 * Vector to hold the time read from the input
+	 * time profile file
+	 */
+	std::vector<double> time;
+
+	/**
+	 * Vector to hold the amplitude read from the input
+	 * time profile file
+	 */
+	std::vector<double> amplitude;
+
+	/**
 	 * Function that calculate the flux at a given position x (in nm).
 	 * It needs to be implemented by the daughter classes.
 	 *
@@ -64,6 +86,20 @@ protected:
 	 * @return the evaluated value
 	 */
 	virtual double FitFunction(double x) {return 0.0;}
+
+	/**
+	 * This method returns the value of the helium incident flux amplitude at the
+	 * given time when a time profile is used.
+	 * @param currentTime The time
+	 * @return The value of the helium flux at this time
+	 */
+	double getAmplitude(double currentTime) const;
+
+	/**
+	 * This method recomputes the values of the incident flux vector when
+	 * a time profile is given.
+	 */
+	void recomputeFluxHandler();
 
 public:
 
@@ -80,6 +116,13 @@ public:
 	virtual void initializeFluxHandler(int numGridpoints, double step);
 
 	/**
+	 * This method reads the values on the time profile file and store them in the
+	 * time and amplitude vectors.
+	 * @param fileName The name of the file where the values are stored
+	 */
+	void initializeTimeProfile(std::string fileName);
+
+	/**
 	 * This operation returns the incident flux for a specific cluster composition,
 	 * position, and time.
 	 * @param compositionVec  The composition of the cluster
@@ -93,9 +136,10 @@ public:
 
 	/**
 	 * This operation returns the incident flux vector
+	 * @param currentTime     	 The time
 	 * @return incidentFluxVec   The incident flux vector
 	 */
-	virtual std::vector<double> getIncidentFluxVec();
+	virtual std::vector<double> getIncidentFluxVec(double currentTime);
 
 	/**
 	 * Given a specific concentration, position, and time, this operation sets the outgoing
