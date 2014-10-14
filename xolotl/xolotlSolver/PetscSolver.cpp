@@ -93,6 +93,13 @@ static std::shared_ptr<std::vector<Reactant *>> allReactants;
 static double lastTemperature = 0.0;
 
 /**
+ * A boolean that is true if the temperature has changed. It is set to true
+ * in the RHSFunction, and back to false once the off-diagonal part of the
+ * Jacobian is computed in the RHSJacobian method.
+ */
+static bool temperatureChanged = false;
+
+/**
  * A vector for holding the partial derivatives of one cluster. It is sized in
  * the solve() operation.
  *
@@ -205,7 +212,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
 //		if (i > 0) {
 //			int k = 14; // initial concentration for V only
-//			concOffset[k] = 0.00315 / hx;
+//			concOffset[k] = 0.000315 / hx;
 //		}
 
 //		// Uncomment this for debugging
@@ -362,6 +369,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		if (!xolotlCore::equal(temperature, lastTemperature)) {
 			network->setTemperature(temperature);
 			lastTemperature = temperature;
+			temperatureChanged = true;
 		}
 
 		// Compute the middle, left, right and new array offsets
@@ -455,7 +463,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	PetscReal *concs, *updatedConcs;
 	double * concOffset;
 	Vec localC;
-	static PetscBool initialized = PETSC_FALSE;
 	// Get the network
 	auto network = PetscSolver::getNetwork();
 	// Get the properties
@@ -463,8 +470,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	int numHeClusters = std::stoi(props["numHeClusters"]);
 	int reactantIndex = 0;
 	int size = 0;
-	// Get the temperature handler that will be used to compute fluxes.
-	auto temperatureHandler = PetscSolver::getTemperatureHandler();
 
 	// Get the matrix from PETSc
 	PetscFunctionBeginUser;
@@ -509,9 +514,10 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	PetscReal realTime;
 	// Get the current time
 	ierr = TSGetTime(ts, &realTime);
+	checkPetscError(ierr);
 
-	// Only compute the linear part of the Jacobian once
-	if (!initialized) {
+	// Only compute the linear part of the Jacobian if the temperature has changed
+	if (temperatureChanged) {
 
 		// Create the diffusion handler
 		auto diffusionHandler = PetscSolver::getDiffusionHandler();
@@ -570,7 +576,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 		ierr = MatStoreValues(J);
 		checkPetscError(ierr);
 //		MatSetFromOptions(J);
-		initialized = PETSC_TRUE;
+		temperatureChanged = false;
 		// Debug line for viewing the matrix
 		//MatView(J, PETSC_VIEWER_STDOUT_WORLD);
 	} else {
@@ -931,12 +937,12 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	NULL, &da);
 	checkPetscError(ierr);
 
-	/*  The only spatial coupling in the Jacobian (diffusion) is for the first 6 He,
-	 *  the first V, and the first I. The ofill (thought of as a dof by dof 2d
-	 *  (row-oriented) array represents the nonzero coupling between degrees
-	 *  of freedom at one point with degrees of freedom on the adjacent point to
-	 *  the left or right. A 1 at i,j in the ofill array indicates that the degree
-	 *  of freedom i at a point is coupled to degree of freedom j at the adjacent point.
+	/*  The only spatial coupling in the Jacobian is due to diffusion.
+	 *  The ofill (thought of as a dof by dof 2d (row-oriented) array represents
+	 *  the nonzero coupling between degrees of freedom at one point with degrees
+	 *  of freedom on the adjacent point to the left or right. A 1 at i,j in the
+	 *  ofill array indicates that the degree of freedom i at a point is coupled
+	 *  to degree of freedom j at the adjacent point.
 	 *  In this case ofill has only a few diagonal entries since the only spatial
 	 *  coupling is regular diffusion.
 	 */
