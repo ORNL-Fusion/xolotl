@@ -13,6 +13,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
 include_directories(${Boost_BINARY_DIRS})
+include_directories(${MPI_INCLUDE_PATH})
 
 #link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlCore/io)
@@ -27,7 +28,8 @@ if(Boost_FOUND)
         message(STATUS "Making test ${test}")
         get_filename_component(testName ${test} NAME_WE)
         add_executable(${testName} ${test})
-        target_link_libraries(${testName} xolotlReactants testUtils xolotlPerf ${HDF5_LIBRARIES})
+        target_link_libraries(${testName} xolotlReactants testUtils xolotlPerf 
+        ${HDF5_LIBRARIES} ${MPI_LIBRARIES})
         add_test(${testName} ${testName}) 
         #add a label so the tests can be run separately
         set_property(TEST ${testName} PROPERTY LABELS ${PACKAGE_NAME})   
