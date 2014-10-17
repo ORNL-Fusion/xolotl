@@ -26,7 +26,7 @@ void FluxHandler::initializeFluxHandler(int numGridpoints, double step) {
 	stepSize = step;
 
 	normFactor = 0.0;
-	for (int i = 1; i < numGridpoints; i++) {
+	for (int i = 1; i < numGridpoints - 1; i++) {
 		double x = (double) i * stepSize;
 
 		normFactor += FitFunction(x) * stepSize;
@@ -39,13 +39,16 @@ void FluxHandler::initializeFluxHandler(int numGridpoints, double step) {
 	incidentFluxVec.push_back(0.0);
 
 	// Starts a i = 1 because the first value was already put in the vector
-	for (int i = 1; i < numGridpoints; i++) {
+	for (int i = 1; i < numGridpoints - 1; i++) {
 		auto x = i * stepSize;
 
 		auto incidentFlux = heFluxNormalized * FitFunction(x);
 
 		incidentFluxVec.push_back(incidentFlux);
 	}
+
+	// The last value should always be 0.0 because of boundary conditions
+	incidentFluxVec.push_back(0.0);
 
 	return;
 }

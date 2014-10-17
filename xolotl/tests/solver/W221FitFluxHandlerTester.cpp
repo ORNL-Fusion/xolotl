@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 						<< "At time = " << currTime
 						<< " and position (" << x[0] << "," << x[1] << "," << x[2] << "), "
 						<< "incidentFlux = " << testFlux << "\n");
-	BOOST_REQUIRE_CLOSE(testFlux, 0.405296, 0.01);
+	BOOST_REQUIRE_CLOSE(testFlux, 0.431739, 0.01);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
