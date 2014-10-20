@@ -339,13 +339,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 
-	// Variable to represent the real, or current, time
-	PetscReal realTime;
-	// Get the current time
-	ierr = TSGetTime(ts, &realTime);
-
 	// Get the incident flux vector
-	auto incidentFluxVector = fluxHandler->getIncidentFluxVec(realTime);
+	auto incidentFluxVector = fluxHandler->getIncidentFluxVec(ftime);
 
 	// Get the diffusion handler
 	auto diffusionHandler = PetscSolver::getDiffusionHandler();
@@ -377,7 +372,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// Currently we are only in 1D
 		std::vector<double> gridPosition = { x, 0, 0 };
 		auto temperature = temperatureHandler->getTemperature(gridPosition,
-				realTime);
+				ftime);
 
 		// Update the network if the temperature changed
 		if (!xolotlCore::equal(temperature, lastTemperature)) {
