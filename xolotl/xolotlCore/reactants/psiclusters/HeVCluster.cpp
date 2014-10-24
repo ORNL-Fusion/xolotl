@@ -60,11 +60,10 @@ void HeVCluster::replaceInCompound(std::vector<Reactant *> & reactants,
 	std::map<std::string, int> myComp = getComposition(),
 			productReactantComp;
 	int myComponentNumber = myComp[oldComponentName];
-	int numReactants = reactants.size();
 	int secondId = 0, productId = 0;
 
 	// Loop over all of the extra reactants in this reaction and handle the replacement
-	for (int i = 0; i < numReactants; i++) {
+	for (int i = 0; i < reactants.size(); i++) {
 		// Get the second reactant and its size
 		auto secondReactant = (PSICluster *) reactants[i];
 		auto secondReactantSize = secondReactant->getSize();
@@ -75,7 +74,7 @@ void HeVCluster::replaceInCompound(std::vector<Reactant *> & reactants,
 				myComponentNumber - secondReactantSize;
 		// Create the composition vector -- FIXME! This should be general!
 		std::vector<int> productCompositionVector = { productReactantComp[heType],
-				productReactantComp[vType], productReactantComp[iType] };
+				productReactantComp[vType], 0 };
 		// Get the product of the same type as the second reactant
 		auto productReactant = network->getCompound(typeName,
 				productCompositionVector);
@@ -101,9 +100,8 @@ void HeVCluster::combineClusters(std::vector<Reactant *> & clusters,
 	std::map<std::string, int> myComposition = getComposition(),
 			secondComposition;
 
-	int size = clusters.size();
 	// Loop on the potential combining reactants
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < clusters.size(); i++) {
 		// Get the second reactant, its composition and its index
 		auto secondCluster = (PSICluster *) clusters[i];
 		secondComposition = secondCluster->getComposition();
@@ -168,15 +166,14 @@ void HeVCluster::createReactionConnectivity() {
 	// He_(a-i) + (He_i)(V_b) --> (He_a)(V_b)
 	// Get all the He clusters from the network
 	auto reactants = network->getAll(heType);
-	auto reactantsSize = reactants.size();
-	for (int i = 0; i < reactantsSize; i++) {
+	for (int i = 0; i < reactants.size(); i++) {
 		auto heliumReactant = (PSICluster *) reactants[i];
 		auto heliumReactantSize = heliumReactant->getSize();
 		// Get the second reactant, i.e. HeV cluster with He number smaller
 		// by the size of the helium reactant
 		auto comp = getComposition();
 		std::vector<int> compositionVec = { comp[heType] - heliumReactantSize,
-				comp[vType], comp[iType] };
+				comp[vType], 0 };
 		auto secondReactant = (PSICluster *) network->getCompound(typeName, compositionVec);
 		// Create a ReactingPair with the two reactants if they both exist
 		if (secondReactant) {
@@ -199,7 +196,7 @@ void HeVCluster::createReactionConnectivity() {
 	// Get the second reactant, i.e. HeV cluster with one less V
 	auto comp = getComposition();
 	std::vector<int> compositionVec = { comp[heType], comp[vType] - 1,
-			comp[iType] };
+			0 };
 	auto secondReactant = (PSICluster *) network->getCompound(typeName, compositionVec);
 	// Create a ReactingPair with the two reactants if they both exist
 	if (singleVReactant && secondReactant) {
@@ -237,16 +234,15 @@ void HeVCluster::createReactionConnectivity() {
 	// (He_a)[V_(b+c)] + (I_c) --> (He_a)(V_b)
 	// Get all the I clusters from the network
 	reactants = network->getAll(iType);
-	reactantsSize = reactants.size();
 	// Get the composition of this cluster
 	comp = getComposition();
-	for (int i = 0; i < reactantsSize; i++) {
+	for (int i = 0; i < reactants.size(); i++) {
 		auto interstitialReactant = (PSICluster *) reactants[i];
 		auto interstitialReactantSize = interstitialReactant->getSize();
 		// Get the second reactant, i.e. HeV cluster with V number bigger
 		// by the size of the interstitial reactant
 		std::vector<int> compositionVec = { comp[heType],
-				comp[vType] + interstitialReactantSize, comp[iType] };
+				comp[vType] + interstitialReactantSize, 0 };
 		auto secondReactant = (PSICluster *) network->getCompound(typeName, compositionVec);
 		// Create a ReactingPair with the two reactants if they both exist
 		if (secondReactant) {

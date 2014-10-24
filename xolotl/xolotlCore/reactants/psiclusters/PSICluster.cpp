@@ -143,8 +143,9 @@ void PSICluster::createDissociationConnectivity() {
 		// all the cluster of the same type dissociate into it
 		auto allSameTypeReactants = network->getAll(typeName);
 		for (int i = 0; i < allSameTypeReactants.size(); i++) {
-			// X_2 --> X + X
 			auto cluster = (PSICluster *) allSameTypeReactants[i];
+			// X_1 cannot dissociate and X_2 --> X + X was already
+			// counted in the previous step
 			if (cluster->size < 3)
 				continue;
 			// X_b is the dissociating one, X_(b-a) is the one

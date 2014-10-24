@@ -166,7 +166,7 @@ void InterstitialCluster::createReactionConnectivity() {
 		auto heReactants = network->getAll(heType);
 		// Loop on the first He clusters
 		for (int i = 0; i < heReactants.size(); i++) {
-			// Get the He cluster and its size He_b
+			// Get the He cluster and its size b
 			auto firstCluster = (PSICluster *) heReactants[i];
 			auto firstSize = firstCluster->getSize();
 			// Loop on the second He clusters starting at firstSize - 1 to avoid double counting
@@ -176,7 +176,7 @@ void InterstitialCluster::createReactionConnectivity() {
 				auto secondCluster = (PSICluster *) heReactants[j];
 				auto secondSize = secondCluster->getSize();
 				// Check that the smaller product [He_(b+c)][V_(a-1)] doesn't exist
-				// It can be a He ar a HeV cluster
+				// It can be a He or a HeV cluster
 				PSICluster * smallerProduct;
 				if (size == 1) {
 					smallerProduct = (PSICluster *) network->get(heType, firstSize + secondSize);

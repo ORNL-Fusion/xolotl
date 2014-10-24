@@ -60,11 +60,10 @@ void HeInterstitialCluster::replaceInCompound(std::vector<Reactant *> & reactant
 	std::map<std::string, int> myComp = getComposition(),
 			productReactantComp;
 	int myComponentNumber = myComp[oldComponentName];
-	int numReactants = reactants.size();
 	int secondId = 0, productId = 0;
 
 	// Loop over all of the extra reactants in this reaction and handle the replacement
-	for (int i = 0; i < numReactants; i++) {
+	for (int i = 0; i < reactants.size(); i++) {
 		// Get the second reactant and its size
 		auto secondReactant = (PSICluster *) reactants[i];
 		auto secondReactantSize = secondReactant->getSize();
@@ -75,7 +74,7 @@ void HeInterstitialCluster::replaceInCompound(std::vector<Reactant *> & reactant
 				myComponentNumber - secondReactantSize;
 		// Create the composition vector -- FIXME! This should be general!
 		std::vector<int> productCompositionVector = { productReactantComp[heType],
-				productReactantComp[vType], productReactantComp[iType] };
+				0, productReactantComp[iType] };
 		// Get the product of the same type as the second reactant
 		auto productReactant = network->getCompound(typeName,
 				productCompositionVector);
@@ -105,15 +104,14 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	// He_(a-i) + (He_i)(I_b) --> (He_a)(I_b)
 	// Get all the He clusters from the network
 	auto reactants = network->getAll(heType);
-	auto reactantsSize = reactants.size();
-	for (int i = 0; i < reactantsSize; i++) {
+	for (int i = 0; i < reactants.size(); i++) {
 		auto heliumReactant = (PSICluster *) reactants[i];
 		auto heliumReactantSize = heliumReactant->getSize();
 		// Get the second reactant, i.e. HeI cluster with He number smaller
 		// by the size of the helium reactant
 		auto comp = getComposition();
 		std::vector<int> compositionVec = { comp[heType] - heliumReactantSize,
-				comp[vType], comp[iType] };
+				0, comp[iType] };
 		auto secondReactant = (PSICluster *) network->getCompound(typeName, compositionVec);
 		// Create a ReactingPair with the two reactants if they both exist
 		if (secondReactant) {
@@ -135,7 +133,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	auto singleIReactant = (PSICluster *) network->get(iType, 1);
 	// Get the second reactant, i.e. HeI cluster with one less I
 	auto comp = getComposition();
-	std::vector<int> compositionVec = { comp[heType], comp[vType],
+	std::vector<int> compositionVec = { comp[heType], 0,
 			comp[iType] - 1 };
 	auto secondReactant = (PSICluster *) network->getCompound(typeName, compositionVec);
 	// Create a ReactingPair with the two reactants if they both exist
@@ -174,15 +172,14 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	// (He_a)[I_(b+i)] + (V_i) --> (He_a)(I_b)
 	// Get all the V clusters from the network
 	reactants = network->getAll(vType);
-	reactantsSize = reactants.size();
-	for (int i = 0; i < reactantsSize; i++) {
+	for (int i = 0; i < reactants.size(); i++) {
 		auto vacancyReactant = (PSICluster *) reactants[i];
 		auto vacancyReactantSize = vacancyReactant->getSize();
 		// Get the second reactant, i.e. HeI cluster with I number bigger
 		// by the size of the vacancy reactant
 		auto comp = getComposition();
 		std::vector<int> compositionVec = { comp[heType],
-				comp[vType], comp[iType] + vacancyReactantSize};
+				0, comp[iType] + vacancyReactantSize};
 		auto secondReactant = (PSICluster *) network->getCompound(typeName, compositionVec);
 		// Create a ReactingPair with the two reactants if they both exist
 		if (secondReactant) {
