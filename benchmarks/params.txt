@@ -1,8 +1,8 @@
-#Wed Oct 01 09:46:04 EDT 2014
 petscArgs=-fieldsplit_0_pc_type redundant -ts_max_snes_failures 200 -pc_fieldsplit_detect_coupling -da_grid_x 24 -ts_dt 1.0e-12 -ts_adapt_dt_max 1.0e-8 -ts_monitor -snes_monitor -ksp_monitor -pc_type fieldsplit -fieldsplit_1_pc_type sor -ts_final_time 1.0e-6 -ts_max_steps 200
 vizHandler=dummy
-networkFile=networkInit.h5
+networkFile=tungsten.h5
 perfHandler=dummy
-startTempt=933
+startTemp=933
 heFlux=4.0e7
 stepSize=1.0
+material=W100
