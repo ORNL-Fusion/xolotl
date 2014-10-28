@@ -59,10 +59,10 @@ std::vector<int> indices;
 // (their He composition)
 std::vector<int> weight;
 
-// Variable to indicate whether or not the concentration of the max stable
-// HeV cluster is greater than 1.0e-16 and that the corresponding information
-// has been printed
-bool printMaxClusterConc = false;
+// Variable to indicate whether or not the fact that the concentration of the biggest
+// cluster in the network is higher than 1.0e-16 should be printed.
+// Becomes false once it is printed.
+bool printMaxClusterConc = true;
 
 /**
  * This is a monitoring method set the previous time to the time. This is needed here
@@ -88,9 +88,9 @@ PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution;
+	double *solutionArray, *gridPointSolution;
 	Vec localSolution;
-	PetscInt xs, xm, Mx;
+	int xs, xm, Mx;
 
 	PetscFunctionBeginUser;
 
@@ -142,7 +142,7 @@ PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution,
 	int dimension = (Mx - 1) * hx;
 
 	// Get the current time step
-	PetscReal currentTimeStep;
+	double currentTimeStep;
 	ierr = TSGetTimeStep(ts, &currentTimeStep);
 	checkPetscError(ierr);
 
@@ -210,8 +210,6 @@ PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution,
 		// All processes must create the dataset
 		xolotlCore::HDF5Utils::addConcentrationDataset(xi, concSize);
 
-		MPI_Barrier(MPI_COMM_WORLD);
-
 		// If it is the locally owned part of the grid
 		if (xi >= xs && xi < xs + xm) {
 			// Fill the dataset
@@ -230,10 +228,8 @@ PetscErrorCode startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution,
  */
 PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
-	// Network size
-	const int size = PetscSolver::getNetwork()->size();
+	//
 	PetscErrorCode ierr;
-	PetscInt xs, xm;
 
 	PetscFunctionBeginUser;
 
@@ -243,15 +239,6 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr);
-
-	// Get the current time step
-	PetscReal currentTimeStep;
-	ierr = TSGetTimeStep(ts, &currentTimeStep);
-	checkPetscError(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 
 	// The length of the time step
@@ -271,7 +258,7 @@ PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int size = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscInt xs, xm;
+	int xs, xm;
 
 	PetscFunctionBeginUser;
 
@@ -342,10 +329,6 @@ PetscErrorCode computeHeliumRetention(TS ts, PetscInt timestep, PetscReal time,
 			// Add them to the master one
 			heConcentration += otherConcentration;
 		}
-		// Get the final time
-		PetscReal time;
-		ierr = TSGetTime(ts, &time);
-		checkPetscError(ierr);
 
 		// Get the fluence
 		double heliumFluence = fluxHandler->getHeFluence();
@@ -382,10 +365,9 @@ PetscErrorCode monitorScatter(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution, x;
+	double *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
-	PetscInt xs, xm;
-	int xi, i;
+	int xs, xm, xi;
 
 	PetscFunctionBeginUser;
 
@@ -553,10 +535,9 @@ PetscErrorCode monitorSeries(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution, x;
+	double *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
-	PetscInt xs, xm;
-	int xi, i;
+	int xs, xm, xi;
 
 	PetscFunctionBeginUser;
 
@@ -734,10 +715,9 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution, x;
+	double *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
-	PetscInt xs, xm;
-	int xi, i;
+	int xs, xm, xi;
 
 	PetscFunctionBeginUser;
 
@@ -989,12 +969,14 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution, x;
+	double *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
-	PetscInt xs, xm;
-	int xi, i;
+	int xs, xm, xi;
 
 	PetscFunctionBeginUser;
+
+	// Don't do anything if it was already printed
+	if (!printMaxClusterConc) PetscFunctionReturn(0);
 
 	// Get the da from ts
 	DM da;
@@ -1027,8 +1009,39 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 	// Get the maximum size of V clusters
 	int maxVClusterSize = std::stoi(props["maxVClusterSize"]);
 	// Get the number of He in the max HeV cluster
-	int maxStableHeVCluster = (maxHeVClusterSize - maxVClusterSize) - 1;
+	int maxHeSize = (maxHeVClusterSize - maxVClusterSize);
+	// Get the maximum stable HeV cluster
+	PSICluster * maxHeV;
+	maxHeV = (PSICluster *) PetscSolver::getNetwork()->getCompound(
+			"HeV", { maxHeSize, maxVClusterSize, 0 });
 
+	// Boolean to know if the concentration is too big
+	bool maxHeVTooBig = false;
+
+	// Check the concentration of the biggest cluster at each grid point
+	for (xi = xs; xi < xs + xm; xi++) {
+		// Position
+		x = xi * hx;
+
+		// Get the pointer to the beginning of the solution data for this grid point
+		gridPointSolution = solutionArray + networkSize * xi;
+
+		// Update the concentrations in the network
+		PetscSolver::getNetwork()->updateConcentrationsFromArray(
+				gridPointSolution);
+
+		// Get the concentrations from the network
+		double concentrations[networkSize];
+		double * concentration = &concentrations[0];
+		PetscSolver::getNetwork()->fillConcentrationsArray(
+				concentration);
+		// Get the concentration of the maximum HeV cluster
+		auto maxHeVConc = concentration[maxHeV->getId() - 1];
+
+		if (maxHeVConc > 1.0e-16) maxHeVTooBig = true;
+	}
+
+	// Slaves send the information about maxHeVTooBig to the main
 	// Get the number of processes
 	int worldSize;
 	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
@@ -1036,150 +1049,45 @@ PetscErrorCode monitorMaxClusterConc(TS ts, PetscInt timestep, PetscReal time,
 	int procId;
 	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
+	// Main process
 	if (procId == 0) {
-
-		// Loop on the grid points
-		for (xi = xs; xi < xs + xm; xi++) {
-			// Position
-			x = xi * hx;
-
-			// Only print information regarding the first time the max stable HeV cluster
-			// concentration is greater than 1.0e-16
-			if (!printMaxClusterConc) {
-				// Get the pointer to the beginning of the solution data for this grid point
-				gridPointSolution = solutionArray + networkSize * xi;
-
-				// Update the concentrations in the network to have physics results
-				// (non negative)
-				PetscSolver::getNetwork()->updateConcentrationsFromArray(
-						gridPointSolution);
-
-				// Get the concentrations from the network
-				double concentrations[networkSize];
-				double * concentration = &concentrations[0];
-				PetscSolver::getNetwork()->fillConcentrationsArray(
-						concentration);
-				// Get the maximum stable HeV cluster
-				PSICluster * maxStableHeV;
-				maxStableHeV =
-						(PSICluster *) PetscSolver::getNetwork()->getCompound(
-								"HeV",
-								{ maxStableHeVCluster, maxVClusterSize, 0 });
-				// Get the concentration of the maximum stable HeV cluster
-				auto maxStableHeVConc = concentration[maxStableHeV->getId() - 1];
-				// Don't do anything unless the concentration of the max stable HeV
-				// cluster in the network is greater than 1.0e-16
-				if (maxStableHeVConc > 1.0e-16) {
-					// Get the final time
-					PetscReal time;
-					ierr = TSGetTime(ts, &time);
-					checkPetscError(ierr);
-					// Get the timestep
-					PetscInt timeStep;
-					TSGetTimeStepNumber(ts, &timeStep);
-					// Print the result
-					std::cout << "Time Step: " << timeStep << "  Time: " << time
-							<< std::endl;
-					std::cout << "Grid Point: " << x / hx << "; x = " << x
-							<< std::endl;
-					std::cout << "Max Stable HeV Cluster: " << *maxStableHeV << std::endl;
-					std::cout << "Concentration = " << concentration[maxStableHeV->getId() - 1]
-							<< std::endl << std::endl;
-
-					// Indicate that the concentration of the max stable HeV cluster
-					// is greater than 1.0e-16 and the corresponding information has
-					// been printed
-					printMaxClusterConc = true;
-				}
-			}
-		}
-
 		// Loop on the other processes
 		for (int i = 1; i < worldSize; i++) {
-			// Get the size of the local grid of that process
-			int localSize = 0;
-			MPI_Recv(&localSize, 1, MPI_INT, i, 5, MPI_COMM_WORLD,
+			int otherBool;
+			MPI_Recv(&otherBool, 1, MPI_INT, i, 5, MPI_COMM_WORLD,
 					MPI_STATUS_IGNORE);
 
-			// Loop on their grid
-			for (int k = 0; k < localSize; k++) {
-				// Only print information regarding the first time the max stable HeV cluster
-				// concentration is greater than 1.0e-16
-				if (!printMaxClusterConc) {
-					// Get the position
-					MPI_Recv(&x, 1, MPI_DOUBLE, i, 5, MPI_COMM_WORLD,
-							MPI_STATUS_IGNORE);
-					// Get the concentration
-					double conc = 0.0;
-					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 5, MPI_COMM_WORLD,
-							MPI_STATUS_IGNORE);
-
-					// Don't do anything unless the concentration of the max stable HeV
-					// cluster in the network is greater than 1.0e-16
-					if (conc > 1.0e-16) {
-						// Get the final time
-						PetscReal time;
-						ierr = TSGetTime(ts, &time);
-						checkPetscError(ierr);
-						// Get the timestep
-						PetscInt timeStep;
-						TSGetTimeStepNumber(ts, &timeStep);
-						// Print the result
-						std::cout << "Time Step: " << timeStep << "  Time: "
-								<< time << std::endl;
-						std::cout << "Grid Point: " << x / hx << "; x = " << x
-								<< std::endl;
-						auto stableHeVComp = psiNetwork->getCompositionVector(
-													maxStableHeVCluster, maxVClusterSize, 0);
-						std::cout << "Max Stable HeV Cluster: He_" << stableHeVComp[0] << "V_"
-								<< stableHeVComp[1] << std::endl;
-						std::cout << "Concentration = " << conc << std::endl << std::endl;
-
-						// Indicate that the concentration of the max stable HeV cluster
-						// is greater than 1.0e-16 and the corresponding information has
-						// been printed
-						printMaxClusterConc = true;
-					}
-				}
-
-			}
+			// Update maxHeVTooBig
+			maxHeVTooBig = maxHeVTooBig || otherBool;
 		}
 
+		// Print if maxHeVTooBig is true
+		if (maxHeVTooBig) {
+			std::cout << std::endl;
+			std::cout << "At time step: " << timestep << " and time: " << time
+					<< " the biggest cluster: " << *maxHeV
+					<< " reached a concentration above 1.0e-16 at at least one grid point."
+					<< std::endl << std::endl;
+
+			// Don't print anymore
+			printMaxClusterConc = false;
+		}
+
+		// Send this information to the other processes
+		for (int i = 1; i < worldSize; i++) {
+			int printMaxClusterConcInt = (int) printMaxClusterConc;
+			MPI_Send(&printMaxClusterConcInt, 1, MPI_INT, i, 5, MPI_COMM_WORLD);
+		}
 	}
-
+	// Other processes
 	else {
-		// Send the value of the local grid size to the master process
-		MPI_Send(&xm, 1, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
+		// Send the maxHeVTooBig value
+		int maxHeVTooBigInt = (int) maxHeVTooBig;
+		MPI_Send(&maxHeVTooBigInt, 1, MPI_INT, 0, 5, MPI_COMM_WORLD);
 
-		// Loop on the grid
-		for (xi = xs; xi < xs + xm; xi++) {
-			// Position
-			x = xi * hx;
-			// Get the pointer to the beginning of the solution data for this grid point
-			gridPointSolution = solutionArray + networkSize * xi;
-
-			// Update the concentrations in the network to have physics results
-			// (non negative)
-			PetscSolver::getNetwork()->updateConcentrationsFromArray(
-					gridPointSolution);
-
-			// Get the concentrations from the network
-			double concentrations[networkSize];
-			double * concentration = &concentrations[0];
-			PetscSolver::getNetwork()->fillConcentrationsArray(concentration);
-			// Get the maximum stable HeV cluster
-			PSICluster * maxStableHeV;
-			maxStableHeV =
-					(PSICluster *) PetscSolver::getNetwork()->getCompound("HeV",
-							{ maxStableHeVCluster, maxVClusterSize, 0 });
-
-			// Send the position to the master process
-			MPI_Send(&x, 1, MPI_DOUBLE, 0, 5, MPI_COMM_WORLD);
-			// Send the value of the concentration to the master process
-			MPI_Send(&concentration[maxStableHeV->getId() - 1], 1, MPI_DOUBLE,
-					0, 5, MPI_COMM_WORLD);
-
-		}
+		// Receive the printMaxClusterConc value
+		MPI_Recv(&printMaxClusterConc, 1, MPI_INT, 0, 5, MPI_COMM_WORLD,
+				MPI_STATUS_IGNORE);
 	}
 
 	PetscFunctionReturn(0);
@@ -1194,10 +1102,9 @@ PetscErrorCode monitorInterstitial(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int networkSize = PetscSolver::getNetwork()->size();
 	PetscErrorCode ierr;
-	PetscReal *solutionArray, *gridPointSolution, x;
+	double *solutionArray, *gridPointSolution, x;
 	Vec localSolution;
-	PetscInt xs, xm;
-	int xi, i;
+	int xs, xm, xi;
 
 	PetscFunctionBeginUser;
 
