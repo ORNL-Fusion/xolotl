@@ -794,6 +794,12 @@ PetscSolver::~PetscSolver() {
  * startup to the solver. These options are static options specified at
  * the start of the program whereas the options passed to setOptions() may
  * change.
+ *
+ * PETSc expects that it is given all of the program's command line arguments.
+ * In particular, it expects that argv[0] is the program name.
+ * We assume that our caller has ensured that argv[0] is the program name
+ * (or is a fake one).
+ *
  * @param argc The number of command line arguments
  * @param argv The array of command line arguments
  */

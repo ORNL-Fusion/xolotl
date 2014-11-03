@@ -67,14 +67,31 @@ bool initViz(bool opts) {
 }
 
 std::shared_ptr<xolotlSolver::PetscSolver> setUpSolver(
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, int argc,
-		char **argv) {
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry, 
+        const char* argv0,
+        int argc, char **argv) {
 	// Setup the solver
 	auto solverInitTimer = handlerRegistry->getTimer("initSolver");
 	solverInitTimer->start();
 	std::shared_ptr<xolotlSolver::PetscSolver> solver = std::make_shared<
 			xolotlSolver::PetscSolver>(handlerRegistry);
-	solver->setCommandLineOptions(argc, argv);
+
+    // PETSc assumes that argv[0] in the arguments it is given is the
+    // program name.  But our parsing of the PETSc arguments from
+    // the input parameter file gives us only the PETSc arguments without
+    // the program name as argv[0].  So - we adjust the arguments array
+    // so that it has the right argv[0].
+    int petscArgc = argc + 1;
+    char** petscArgv = new char*[petscArgc+1];
+    petscArgv[0] = new char[strlen(argv0)+1];
+    strcpy( petscArgv[0], argv0 );
+    for( int idx = 0; idx < petscArgc; ++idx )
+    {
+        petscArgv[idx+1] = argv[idx];
+    }
+    petscArgv[petscArgc] = NULL;
+	solver->setCommandLineOptions(petscArgc, petscArgv);
+
 	solver->initialize();
 	solverInitTimer->stop();
 
@@ -123,7 +140,9 @@ int main(int argc, char **argv) {
 	int rank;
 
 	// Check the command line arguments.
-	// Skip the executable name before parsing.
+	// Skip the executable name before parsing (but save it, 
+    // because PETSc expects it in its argument list).
+    char* progName = argv[0];
 	argc -= 1; // one for the executable name
 	argv += 1; // one for the executable name
 	Options opts;
@@ -176,8 +195,8 @@ int main(int argc, char **argv) {
 		totalTimer->start();
 
 		// Setup the solver
-		auto solver = setUpSolver(handlerRegistry, opts.getPetscArgc(),
-				opts.getPetscArgv());
+		auto solver = setUpSolver(handlerRegistry, progName,
+                                    opts.getPetscArgc(), opts.getPetscArgv());
 
 		// Load the network
 		auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
