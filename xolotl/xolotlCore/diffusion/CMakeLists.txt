@@ -12,16 +12,13 @@ file(GLOB HEADERS *.h)
 #Grab all of the source files
 file(GLOB SRC *.cpp)
 
-#Include the MPI directories
+#Include directories
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 
-include_directories(${PETSC_INCLUDES})
-
-#Add a library to hold the IO code (mostly MPI)
+#Add a library 
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} ${PETSC_LIBRARIES})
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

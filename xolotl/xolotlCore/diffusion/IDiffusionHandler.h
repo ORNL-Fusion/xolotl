@@ -2,7 +2,6 @@
 #define IDIFFUSIONHANDLER_H
 
 // Includes
-#include <petscsys.h>
 #include <PSICluster.h>
 #include <PSIClusterReactionNetwork.h>
 #include <memory>
@@ -32,7 +31,7 @@ public:
 	 * of the diffusing clusters, 0 if they are not diffusing
 	 */
 	virtual void initializeOFill(std::shared_ptr<PSIClusterReactionNetwork> network,
-			PetscInt *ofill) = 0;
+			int *ofill) = 0;
 
 	/**
 	 * Compute the flux due to the diffusion for all the cluster that are diffusing,
@@ -51,8 +50,8 @@ public:
 	 * point where the diffusion is computed used to find the next solution
 	 */
 	virtual void computeDiffusion(std::shared_ptr<PSIClusterReactionNetwork> network, double sx,
-			PetscScalar *concOffset, PetscScalar *leftConcOffset,
-			PetscScalar *rightConcOffset, PetscScalar *updatedConcOffset) = 0;
+			double *concOffset, double *leftConcOffset,
+			double *rightConcOffset, double *updatedConcOffset) = 0;
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters given
@@ -71,8 +70,8 @@ public:
 	 * @param xs The index of the first grid point on the locally owned grid
 	 */
 	virtual void computePartialsForDiffusion(std::shared_ptr<PSIClusterReactionNetwork> network,
-			double sx, PetscReal *val, PetscInt *row, PetscInt *col, PetscInt xi,
-			PetscInt xs) = 0;
+			double sx, double *val, int *row, int *col, int xi,
+			int xs) = 0;
 
 	/**
 	 * Get the total number of diffusing clusters in the network.

@@ -216,8 +216,9 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "{W100, W110, W111, W210, W211, W221, W310, W311, W320, W321, Fe} "
-			+ "The optional option declaring which material will be used "
+	@Option(defaultValue = "W100",
+			description = "{W100, W110, W111} "
+			+ "The option declaring which material will be used "
 			+ "(W is for tungsten and the numbers correspond to the surface orientation)")
 	/**
 	 * This operation produces the optional command line option '--material' which 
@@ -226,14 +227,6 @@ public interface Arguments {
 	 * @return The material
 	 */
 	String getMaterial();
-
-	/**
-	 * This operation makes the command line option '--material' optional.
-	 * 
-	 * @return Returns true if the option has been specified and false if it has
-	 *         not
-	 */
-	boolean isMaterial();
 
 	/**
 	 * This Option annotation corresponds to the optional '--tempFile' option

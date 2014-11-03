@@ -213,6 +213,7 @@ public class Preprocessor {
 		// Set the parameter options that will be passed to Xolotl
 		xolotlParams.setProperty("startTemp", args.getStartTemp());
 		xolotlParams.setProperty("networkFile", args.getNetworkFile());
+		xolotlParams.setProperty("material", args.getMaterial());
 		xolotlParams.setProperty("stepSize", args.getStepSize());
 		xolotlParams.setProperty("perfHandler", args.getPerfHandler());
 		xolotlParams.setProperty("vizHandler", args.getVizHandler());
@@ -221,8 +222,6 @@ public class Preprocessor {
 
 		// The following parameter options are optional and will only
 		// be set if they are specified via the command line
-		if (args.isMaterial())
-			xolotlParams.setProperty("material", args.getMaterial());
 		if (args.isTempFile())
 			xolotlParams.setProperty("tempFile", args.getTempFile());
 		if (args.isHeFlux())

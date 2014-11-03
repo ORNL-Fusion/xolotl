@@ -4,7 +4,7 @@
 namespace xolotlCore {
 
 void DiffusionHandler::initializeOFill(std::shared_ptr<PSIClusterReactionNetwork> network,
-		PetscInt *ofill) {
+		int *ofill) {
 	// Get all the reactant
 	auto reactants = network->getAll();
 	int size = reactants->size();
@@ -35,8 +35,8 @@ void DiffusionHandler::initializeOFill(std::shared_ptr<PSIClusterReactionNetwork
 }
 
 void DiffusionHandler::computeDiffusion(std::shared_ptr<PSIClusterReactionNetwork> network,
-		double sx, PetscScalar *concOffset, PetscScalar *leftConcOffset,
-		PetscScalar *rightConcOffset, PetscScalar *updatedConcOffset) {
+		double sx, double *concOffset, double *leftConcOffset,
+		double *rightConcOffset, double *updatedConcOffset) {
 	// Get all the reactant
 	auto reactants = network->getAll();
 	// Get the number of diffusing cluster
@@ -67,8 +67,8 @@ void DiffusionHandler::computeDiffusion(std::shared_ptr<PSIClusterReactionNetwor
 
 void DiffusionHandler::computePartialsForDiffusion(
 		std::shared_ptr<PSIClusterReactionNetwork> network,
-		double sx, PetscReal *val, PetscInt *row, PetscInt *col, PetscInt xi,
-		PetscInt xs) {
+		double sx, double *val, int *row, int *col, int xi,
+		int xs) {
 	// Get all the reactant
 	auto reactants = network->getAll();
 	// And the size of the network

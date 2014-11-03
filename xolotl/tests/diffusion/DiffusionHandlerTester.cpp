@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	DiffusionHandler diffusionHandler;
 
 	// Create ofill
-	PetscInt mat[size*size];
-	PetscInt *ofill = &mat[0];
+	int mat[size*size];
+	int *ofill = &mat[0];
 
 	// Initialize it
 	diffusionHandler.initializeOFill(network, ofill);
@@ -64,12 +64,12 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	double sx = 1.0;
 
 	// The arrays of concentration
-	PetscReal concentration[3*size];
-	PetscReal newConcentration[3*size];
+	double concentration[3*size];
+	double newConcentration[3*size];
 
 	// Initialize their values
 	for (int i = 0; i < 3*size; i++) {
-		concentration[i] = (PetscReal) i * i;
+		concentration[i] = (double) i * i;
 		newConcentration[i] = 0.0;
 	}
 
@@ -81,14 +81,14 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	}
 
 	// Get pointers
-	PetscReal *conc = &concentration[0];
-	PetscReal *updatedConc = &newConcentration[0];
+	double *conc = &concentration[0];
+	double *updatedConc = &newConcentration[0];
 
 	// Get the offset for the grid point in the middle
-	PetscReal *concOffset = conc + size ;
-	PetscReal *leftConcOffset = conc;
-	PetscReal *rightConcOffset = conc + size * 2;
-	PetscReal *updatedConcOffset = updatedConc + size;
+	double *concOffset = conc + size ;
+	double *leftConcOffset = conc;
+	double *rightConcOffset = conc + size * 2;
+	double *updatedConcOffset = updatedConc + size;
 
 	// Compute the diffusion at this grid point
 	diffusionHandler.computeDiffusion(network, sx, concOffset,
@@ -103,12 +103,12 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Initialize the rows, columns, and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();
-	PetscInt row[nDiff], col[3*nDiff];
-	PetscReal val[3*nDiff];
+	int row[nDiff], col[3*nDiff];
+	double val[3*nDiff];
 	// Get the pointer on them for the compute diffusion method
-	PetscInt *rowPointer = &row[0];
-	PetscInt *colPointer = &col[0];
-	PetscReal *valPointer = &val[0];
+	int *rowPointer = &row[0];
+	int *colPointer = &col[0];
+	double *valPointer = &val[0];
 
 	// Compute the partial derivatives for the diffusion a the grid point 1
 	diffusionHandler.computePartialsForDiffusion(network, sx, valPointer,

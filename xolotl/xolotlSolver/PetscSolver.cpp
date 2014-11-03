@@ -1,8 +1,7 @@
 // Includes
-#include "PetscSolver.h"
+#include <PetscSolver.h>
 #include <xolotlPerf.h>
 #include <HDF5NetworkLoader.h>
-#include <TemperatureHandler.h>
 #include <MathUtils.h>
 #include <petscts.h>
 #include <petscsys.h>
@@ -14,14 +13,14 @@
 #include <string>
 #include <unordered_map>
 #include <HDF5Utils.h>
-#include <DiffusionHandler.h>
 
 using namespace xolotlCore;
 
 /*
- C_t =  -D*C_xx + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.
+ C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.
 
  D*C_xx  - diffusion of He and V and I
+ A*C_x   - advection of He
  F(C)    - forcing function; He being created.
  R(C)    - reaction terms   (clusters combining)
  D(C)    - dissociation terms (cluster breaking up)
@@ -47,7 +46,7 @@ std::shared_ptr<xolotlPerf::ITimer> RHSJacobianTimer;
 
 //! Help message
 static char help[] =
-		"Solves C_t =  -D*C_xx + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.\n";
+		"Solves C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.\n";
 
 // ----- GLOBAL VARIABLES ----- //
 
@@ -59,6 +58,8 @@ std::shared_ptr<IFluxHandler> PetscSolver::fluxHandler;
 std::shared_ptr<ITemperatureHandler> PetscSolver::temperatureHandler;
 // Allocate the static diffusion handler
 std::shared_ptr<IDiffusionHandler> PetscSolver::diffusionHandler;
+// Allocate the static advection handler
+std::shared_ptr<IAdvectionHandler> PetscSolver::advectionHandler;
 // Allocate the static step size
 double PetscSolver::hx;
 
@@ -345,6 +346,9 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	// Get the diffusion handler
 	auto diffusionHandler = PetscSolver::getDiffusionHandler();
 
+	// Get the advection handler
+	auto advectionHandler = PetscSolver::getAdvectionHandler();
+
 	// Loop over grid points computing ODE terms for each grid point
 	size = network->size();
 	for (xi = xs; xi < xs + xm; xi++) {
@@ -400,6 +404,10 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 		// ---- Compute diffusion over the locally owned part of the grid -----
 		diffusionHandler->computeDiffusion(network, sx, concOffset,
 				leftConcOffset, rightConcOffset, updatedConcOffset);
+
+		// ---- Compute advection over the locally owned part of the grid -----
+		advectionHandler->computeAdvection(network, hx, xi,
+				concOffset, rightConcOffset, updatedConcOffset);
 
 		// ----- Compute all of the new fluxes -----
 		for (int i = 0; i < size; i++) {
@@ -512,14 +520,19 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	// Only compute the linear part of the Jacobian if the temperature has changed
 	if (temperatureChanged) {
 
-		// Create the diffusion handler
+		// Get the diffusion handler
 		auto diffusionHandler = PetscSolver::getDiffusionHandler();
 		// Get the total number of diffusing clusters
 		const int nDiff = diffusionHandler->getNumberOfDiffusing();
 
+		// Get the advection handler
+		auto advectionHandler = PetscSolver::getAdvectionHandler();
+		// Get the total number of advecting clusters
+		const int nAdvec = advectionHandler->getNumberOfAdvecting();
+
 		/*
-		 Loop over grid points computing Jacobian terms for diffusion at each
-		 grid point
+		 Loop over grid points computing Jacobian terms for diffusion and advection
+		 at each grid point
 		 */
 		for (xi = xs; xi < xs + xm; xi++) {
 
@@ -554,6 +567,29 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 				valPointer = &val[3*i];
 
 				ierr = MatSetValuesLocal(J, 1, rowPointer, 3, colPointer, valPointer, ADD_VALUES);
+				checkPetscError(ierr);
+			}
+
+			// Get the pointer on them for the compute advection method
+			// This is safe to use the same arrays because there cannot be more advecting
+			// clusters than diffusing ones
+			rowPointer = &row[0];
+			colPointer = &col[0];
+			valPointer = &val[0];
+
+			/* -------------------------------------------------------------
+			 ---- Compute advection over the locally owned part of the grid
+			 */
+			advectionHandler->computePartialsForAdvection(network, hx, valPointer,
+					rowPointer, colPointer, xi, xs);
+
+			// Loop on the number of advecting cluster to set the values in the Jacobian
+			for(int i = 0; i < nAdvec; i++) {
+				rowPointer = &row[i];
+				colPointer = &col[2*i];
+				valPointer = &val[2*i];
+
+				ierr = MatSetValuesLocal(J, 1, rowPointer, 2, colPointer, valPointer, ADD_VALUES);
 				checkPetscError(ierr);
 			}
 
@@ -838,18 +874,21 @@ void PetscSolver::initialize() {
  * This operation directs the Solver to perform the solve. If the solve
  * fails, it will throw an exception of type std::string.
  */
-void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
+void PetscSolver::solve(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 		std::shared_ptr<ITemperatureHandler> temperatureHandler,
 		double stepSize) {
 
 	// Set the flux handler
-	PetscSolver::fluxHandler = fluxHandler;
+	PetscSolver::fluxHandler = material->getFluxHandler();
 
 	// Set the temperature handler
 	PetscSolver::temperatureHandler = temperatureHandler;
 
 	// Set the diffusion handler
-	PetscSolver::diffusionHandler = std::make_shared<DiffusionHandler>();
+	PetscSolver::diffusionHandler = material->getDiffusionHandler();
+
+	// Set the advection handler
+	PetscSolver::advectionHandler = material->getAdvectionHandler();
 
 	// Set the grid step size
 	PetscSolver::hx = stepSize;
@@ -971,6 +1010,9 @@ void PetscSolver::solve(std::shared_ptr<IFluxHandler> fluxHandler,
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	ierr = setupInitialConditions(da, C);
 	checkPetscError(ierr);
+
+	// Initialize the advection handler
+	PetscSolver::advectionHandler->initialize(network);
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system

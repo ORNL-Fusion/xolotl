@@ -38,7 +38,7 @@ public class ArgumentsTest {
 			assertEquals(6, args.getMaxISize());
 
 			// Check if there is a material argument
-			assertEquals(false, args.isMaterial());
+			assertEquals("W100", args.getMaterial());
 
 			// Check if there is a startTemp argument
 			assertEquals("1000", args.getStartTemp());
@@ -96,7 +96,7 @@ public class ArgumentsTest {
 		try {
 			// Parse the specified string of arguments
 			args = CliFactory.parseArguments(Arguments.class, new String[] {
-					"--startTemp", "900", "--material", "Fe", "--perfHandler",
+					"--startTemp", "900", "--material", "W111", "--perfHandler",
 					"dummy", "--maxHeSize", "7", "--maxVSize", "30", "--maxISize", "5",
 					"--checkpoint", "xolotlStop.h5", "--stepSize", "3.0" });
 			
@@ -109,11 +109,8 @@ public class ArgumentsTest {
 			// Check that the maximum interstitial cluster size is 5
 			assertEquals(5, args.getMaxISize());
 			
-			// Check if there is a material argument
-			assertEquals(true, args.isMaterial());
-			
-			// Check that the material is Fe
-			assertEquals("Fe", args.getMaterial());
+			// Check that the material is W111
+			assertEquals("W111", args.getMaterial());
 			
 			// Check that the startTemp is 900
 			assertEquals("900", args.getStartTemp());

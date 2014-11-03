@@ -1203,7 +1203,7 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	PetscErrorCode ierr;
 
 	//! The xolotlViz handler registry
-	auto vizHandlerRegistry = xolotlViz::getVizHandlerRegistry();
+	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
 	PetscBool flag2DPlot, flag1DPlot, flagSeries, flagPerf, flagRetention,

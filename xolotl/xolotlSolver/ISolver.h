@@ -4,7 +4,7 @@
 // Includes
 #include <PSIClusterNetworkLoader.h>
 #include <map>
-#include <IFluxHandler.h>
+#include <IMaterialFactory.h>
 #include <ITemperatureHandler.h>
 
 using namespace xolotlCore;
@@ -76,13 +76,12 @@ public:
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
-	 * @param fluxHandler The flux handler that will be used when performing
-	 * the solve
+	 * @param material The material factory
 	 * @param temperatureHandler The temperature handler that will be used
 	 * when performing the solve
 	 * @param stepSize The spatial grid step size
 	 */
-	virtual void solve(std::shared_ptr<IFluxHandler> fluxHandler,
+	virtual void solve(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<ITemperatureHandler> temperatureHandler,
 			double stepSize) = 0;
 

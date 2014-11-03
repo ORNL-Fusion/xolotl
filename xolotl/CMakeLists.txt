@@ -188,6 +188,9 @@ add_subdirectory(xolotlPerf)
 add_subdirectory(xolotlViz)
 # Add the I/O, data structures and reactor directories
 add_subdirectory(xolotlCore)
+# Add the factory directory
+add_subdirectory(xolotlFactory)
+# Keep the solver for the end (it uses everything else)
 add_subdirectory(xolotlSolver)
 
 # Add the tests is Boost is available
@@ -221,11 +224,15 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/diffusion)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/temperature)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/flux)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/material)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/vizHandler)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/temperatureHandler)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/temperature)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/flux)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlViz)
 include_directories(${PETSC_INCLUDES})
@@ -233,7 +240,8 @@ include_directories(${PETSC_INCLUDES})
 configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_SOURCE_DIR}/XolotlConfig.h")
 
 # Setup the library list
-set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz xolotlCL ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
+set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
+xolotlFactory xolotlCL ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
 
 # Add an executable for the main program
 ADD_EXECUTABLE (xolotl main.cpp)

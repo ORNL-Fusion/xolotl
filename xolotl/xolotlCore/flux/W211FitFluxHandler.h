@@ -1,0 +1,53 @@
+#ifndef W211FITFLUXHANDLER_H
+#define W211FITFLUXHANDLER_H
+
+#include "FluxHandler.h"
+#include <cmath>
+
+namespace xolotlCore {
+
+/**
+ * This class realizes the IFluxHandler interface to calculate the incident and outgoing fluxes.
+ */
+class W211FitFluxHandler: public FluxHandler {
+private:
+
+	/**
+	 * Function that calculate the flux at a given position x (in nm).
+	 * This function is not normalized. The surface is supposed to be (211).
+	 *
+	 * @param x The position where to evaluate the fit
+	 * @return the evaluated value
+	 */
+	double FitFunction(double x) {
+		// Value at which the flux goes to 0
+		double x1 = 10.0;
+
+		if (x > x1) return 0.0;
+
+		// Compute the fit
+		double value = 4.07203818 + 5.34773722 * x - 4.98297871 * pow(x, 2)
+		+ 1.55833787 * pow(x, 3) - 0.234772157 * pow(x, 4) + 0.0165912511 * pow(x, 5)
+		- 2.38031874e-04 * pow(x, 6) - 3.18871642e-05 * pow(x, 7) + 1.27931311e-06 * pow(x, 8);
+
+		return value;
+	}
+
+public:
+
+	/**
+	 * The constructor
+	 */
+	W211FitFluxHandler() {}
+
+	/**
+	 * The Destructor
+	 */
+	~W211FitFluxHandler() {}
+
+};
+//end class W211FitFluxHandler
+
+}
+
+#endif

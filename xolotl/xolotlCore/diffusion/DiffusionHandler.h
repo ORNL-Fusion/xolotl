@@ -13,7 +13,7 @@ namespace xolotlCore {
 class DiffusionHandler: public IDiffusionHandler {
 private:
 
-	//! The vector containing the indices of the diffusion clusters
+	//! The vector containing the indices of the diffusing clusters
 	std::vector<int> indexVector;
 
 public:
@@ -34,7 +34,7 @@ public:
 	 * @param ofill The pointer to the array that will contain the value 1 at the indices
 	 * of the diffusing clusters, 0 if they are not diffusing
 	 */
-	void initializeOFill(std::shared_ptr<PSIClusterReactionNetwork> network, PetscInt *ofill);
+	void initializeOFill(std::shared_ptr<PSIClusterReactionNetwork> network, int *ofill);
 
 	/**
 	 * Compute the flux due to the diffusion for all the cluster that are diffusing,
@@ -59,8 +59,8 @@ public:
 	 * point where the diffusion is computed used to find the next solution
 	 */
 	void computeDiffusion(std::shared_ptr<PSIClusterReactionNetwork> network,
-			double sx, PetscScalar *concOffset, PetscScalar *leftConcOffset,
-			PetscScalar *rightConcOffset, PetscScalar *updatedConcOffset);
+			double sx, double *concOffset, double *leftConcOffset,
+			double *rightConcOffset, double *updatedConcOffset);
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters given
@@ -82,8 +82,8 @@ public:
 	 * @param xs The index of the first grid point on the locally owned grid
 	 */
 	void computePartialsForDiffusion(std::shared_ptr<PSIClusterReactionNetwork> network,
-			double sx, PetscReal *val, PetscInt *row, PetscInt *col, PetscInt xi,
-			PetscInt xs);
+			double sx, double *val, int *row, int *col, int xi,
+			int xs);
 
 	/**
 	 * Get the total number of diffusing clusters in the network.

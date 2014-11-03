@@ -6,6 +6,7 @@
 #include <PSIClusterNetworkLoader.h>
 #include <PSIClusterReactionNetwork.h>
 #include <IDiffusionHandler.h>
+#include <IAdvectionHandler.h>
 #include <petscsys.h>
 #include <petscdmda.h>
 #include <memory>
@@ -49,6 +50,9 @@ private:
 
 	//! The original diffusion handler created.
 	static std::shared_ptr<IDiffusionHandler> diffusionHandler;
+
+	//! The original diffusion handler created.
+	static std::shared_ptr<IAdvectionHandler> advectionHandler;
 
 	/**
 	 * This operation fills the diagonal block of the matrix. The diagonal
@@ -128,13 +132,12 @@ public:
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
-	 * @param fluxHandler The flux handler that will be used when performing
-	 * the solve
+	 * @param material The material factory
 	 * @param temperatureHandler The temperature handler that will be used
 	 * when performing the solve
 	 * @param stepSize The spatial grid step size
 	 */
-	void solve(std::shared_ptr<IFluxHandler> fluxHandler,
+	void solve(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<ITemperatureHandler> temperatureHandler,
 			double stepSize);
 
@@ -194,6 +197,16 @@ public:
 	 */
 	static std::shared_ptr<IDiffusionHandler> getDiffusionHandler() {
 		return diffusionHandler;
+	}
+
+	/**
+	 * This operation returns the advection handler for this solver. This
+	 * operation is only for use by PETSc code and is not part of the
+	 * ISolver interface.
+	 * @return The advection handler for this solver
+	 */
+	static std::shared_ptr<IAdvectionHandler> getAdvectionHandler() {
+		return advectionHandler;
 	}
 
 protected:

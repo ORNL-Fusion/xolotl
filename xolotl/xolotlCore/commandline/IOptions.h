@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include "xolotlPerf/xolotlPerf.h"
+#include <xolotlPerf.h>
 
 
 namespace xolotlCore {
