@@ -59,7 +59,7 @@ void SurfacePlot::render(std::string fileName) {
 	}
 
 	// Add the axisValues to a field of the data set
-	eavlField *field = new eavlField(1, axisValues, eavlField::ASSOC_POINTS);
+	eavlField *field = new eavlField(0, axisValues, eavlField::ASSOC_CELL_SET, "RectilinearGridCells");
 	data->AddField(field);
 
     // Create an offscreen render surface

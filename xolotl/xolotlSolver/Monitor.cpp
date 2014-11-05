@@ -780,9 +780,9 @@ PetscErrorCode monitorSurface(TS ts, PetscInt timestep, PetscReal time,
 		PSICluster * cluster;
 
 		// Loop on Y = V number
-		for (int i = 0; i < maxVClusterSize; i++) {
+		for (int i = 0; i <= maxVClusterSize; i++) {
 			// Loop on X = He number
-			for (int j = 0; j < maxHeVClusterSize - maxVClusterSize; j++) {
+			for (int j = 0; j <= maxHeVClusterSize - maxVClusterSize; j++) {
 				double conc = 0.0;
 				// V clusters
 				if (j == 0) {

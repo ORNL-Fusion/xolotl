@@ -21,6 +21,9 @@ std::vector<double> CvsXYDataProvider::getAxis1Vector() const {
 		addValue(xVector, (*it).x);
 	}
 
+	// Add the last point for the mesh (data are in cells, we need one more mesh points than cell points)
+	xVector.push_back(xVector.size());
+
 	return xVector;
 }
 
@@ -34,6 +37,9 @@ std::vector<double> CvsXYDataProvider::getAxis2Vector() const {
 		// Fill the yVector
 		addValue(yVector, (*it).y);
 	}
+
+	// Add the last point for the mesh (data are in cells, we need one more mesh points than cell points)
+	yVector.push_back(yVector.size());
 
 	return yVector;
 }
