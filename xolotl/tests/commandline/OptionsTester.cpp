@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     BOOST_REQUIRE_EQUAL(opts.getMaterial(), "W100");
 
     // Check the PETSc options
-    BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 20);
+    BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 21);
 }
 
 BOOST_AUTO_TEST_CASE(wrongPerfHandler)
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
     BOOST_REQUIRE_EQUAL(opts.getMaterial(), "W100");
 
     // Check the PETSc options
-    BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 20);
+    BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 21);
 
     std::string tempFile = "temperatureFile.dat";
     std::remove(tempFile.c_str());
