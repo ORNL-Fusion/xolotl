@@ -149,6 +149,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     BOOST_REQUIRE_EQUAL(opts.useMaterial(), true);
     BOOST_REQUIRE_EQUAL(opts.getMaterial(), "W100");
 
+    // Check the initial vacancy concentration option
+    BOOST_REQUIRE_EQUAL(opts.getInitialVConcentration(), 0.05);
+
     // Check the PETSc options
     BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 21);
 }

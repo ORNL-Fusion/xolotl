@@ -351,6 +351,32 @@ public interface Arguments {
 	boolean isCheckpoint();
 
 	/**
+	 * This Option annotation corresponds to the optional '--initialV' option
+	 * and provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "The initial concentration of vacancies in the material (in #/nm3) "
+			+ "that will be used.")
+	
+	/**
+	 * This operation produces the optional command line option '--initialV' which 
+	 * takes a single string value and is defined by the previous Option annotation
+	 * 
+	 * @return The initial vacancy concentration of the material
+	 */
+	String getInitialV();
+
+	/**
+	 * This operation makes the command line option '--initialV' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isInitialV();
+
+	/**
 	 * This produces the command line arguments '--help' or '-h' either of which
 	 * can be used to print usage help
 	 * 

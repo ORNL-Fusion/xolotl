@@ -62,6 +62,8 @@ std::shared_ptr<IDiffusionHandler> PetscSolver::diffusionHandler;
 std::shared_ptr<IAdvectionHandler> PetscSolver::advectionHandler;
 // Allocate the static step size
 double PetscSolver::hx;
+// Allocate the static initial vacancy concentration
+double PetscSolver::initialV;
 
 extern PetscErrorCode RHSFunction(TS, PetscReal, Vec, Vec, void*);
 extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat, Mat);
@@ -193,6 +195,13 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr);
 
+	// Get the handle to the network in order to find the single vacancy ID.
+	auto network = PetscSolver::getNetwork();
+	int vacancyIndex = (network->get(vType, 1)->getId()) - 1;
+
+	// Get the intial concentration for vacancies
+	double initialVConc = PetscSolver::getInitialV();
+
 	// Get the name of the HDF5 file to read the concentrations from
 	std::shared_ptr<HDF5NetworkLoader> HDF5Loader = std::dynamic_pointer_cast
 			< HDF5NetworkLoader > (networkLoader);
@@ -211,10 +220,10 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 			concOffset[k] = 0.0;
 		}
 
-//		if (i > 0) {
-//			int k = 14; // initial concentration for V only
-//			concOffset[k] = 0.000315 / hx;
-//		}
+		// Initialize the vacancy concentration
+		if (i > 0 && i < Mx - 1) {
+			concOffset[vacancyIndex] = initialVConc / hx;
+		}
 
 //		// Uncomment this for debugging
 //		if (i > 0) {
@@ -882,7 +891,7 @@ void PetscSolver::initialize() {
  */
 void PetscSolver::solve(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 		std::shared_ptr<ITemperatureHandler> temperatureHandler,
-		double stepSize) {
+		Options &options) {
 
 	// Set the flux handler
 	PetscSolver::fluxHandler = material->getFluxHandler();
@@ -897,7 +906,10 @@ void PetscSolver::solve(std::shared_ptr<xolotlFactory::IMaterialFactory> materia
 	PetscSolver::advectionHandler = material->getAdvectionHandler();
 
 	// Set the grid step size
-	PetscSolver::hx = stepSize;
+	PetscSolver::hx = options.getStepSize();
+
+	// Set the initial vacancy concentration
+	PetscSolver::initialV = options.getInitialVConcentration();
 	
 	// Degrees of freedom
 	int dof = network->size();

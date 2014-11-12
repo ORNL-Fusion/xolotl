@@ -120,6 +120,11 @@ protected:
 	 */
 	std::string materialName;
 
+	/**
+	 * Value of the initial vacancy concentration.
+	 */
+	double initialVConcentration;
+
 public:
 
 	/**
@@ -390,6 +395,18 @@ public:
      * \see IOptions.h
      */
     void setMaterial(std::string material) {materialName = material;}
+
+    /**
+     * Obtain the value of the concentration for the vacancies.
+     * \see IOptions.h
+     */
+    double getInitialVConcentration() const {return initialVConcentration;}
+
+    /**
+     * Set the value of the concentration for the vacancies.
+     * \see IOptions.h
+     */
+    void setInitialVConcentration(double conc) {initialVConcentration = conc;}
 
 
 };//end class Options

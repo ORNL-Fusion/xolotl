@@ -12,6 +12,7 @@
 #include <PerfOptionHandler.h>
 #include <VizOptionHandler.h>
 #include <MaterialOptionHandler.h>
+#include <VConcentrationOptionHandler.h>
 #include "Options.h"
 
 namespace xolotlCore {
@@ -30,7 +31,8 @@ Options::Options() :
 		fluxProfileFlag(false),
         perfRegistryType( xolotlPerf::IHandlerRegistry::std ),
 		vizStandardHandlersFlag(false),
-		materialFlag(false) {
+		materialFlag(false),
+		initialVConcentration(0.0) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();
@@ -54,6 +56,8 @@ Options::Options() :
 	auto vizHandler = new VizOptionHandler();
 	// Create the material option handler
 	auto materialHandler = new MaterialOptionHandler();
+	// Create the initial vacancy concentration option handler
+	auto vConcHandler = new VConcentrationOptionHandler();
 
 	// Add our notion of which options we support.
 	optionsMap[networkHandler->key] = networkHandler;
@@ -67,6 +71,7 @@ Options::Options() :
 	optionsMap[perfHandler->key] = perfHandler;
 	optionsMap[vizHandler->key] = vizHandler;
 	optionsMap[materialHandler->key] = materialHandler;
+	optionsMap[vConcHandler->key] = vConcHandler;
 }
 
 Options::~Options(void) {

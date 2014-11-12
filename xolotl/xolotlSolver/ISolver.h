@@ -6,6 +6,7 @@
 #include <map>
 #include <IMaterialFactory.h>
 #include <ITemperatureHandler.h>
+#include <Options.h>
 
 using namespace xolotlCore;
 
@@ -79,11 +80,11 @@ public:
 	 * @param material The material factory
 	 * @param temperatureHandler The temperature handler that will be used
 	 * when performing the solve
-	 * @param stepSize The spatial grid step size
+	 * @param options The options from the parameter file
 	 */
 	virtual void solve(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<ITemperatureHandler> temperatureHandler,
-			double stepSize) = 0;
+			Options &options) = 0;
 
 	/**
 	 * This operation performs all necessary finalization for the solver

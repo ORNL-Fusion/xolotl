@@ -42,6 +42,9 @@ private:
 	//! The grid step size.
 	static double hx;
 
+	//! The initial vacancy concentration.
+	static double initialV;
+
 	//! The original flux handler created.
 	static std::shared_ptr<IFluxHandler> fluxHandler;
 
@@ -135,11 +138,11 @@ public:
 	 * @param material The material factory
 	 * @param temperatureHandler The temperature handler that will be used
 	 * when performing the solve
-	 * @param stepSize The spatial grid step size
+	 * @param options The options from the parameter file
 	 */
 	void solve(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<ITemperatureHandler> temperatureHandler,
-			double stepSize);
+			Options &options);
 
 
 	/**
@@ -162,11 +165,20 @@ public:
 
 	/**
 	 * This operation returns the grid step size. This operation is only for
-	 * use by PETSc cade and is not part of the ISolver interface.
+	 * use by PETSc code and is not part of the ISolver interface.
 	 * @return The grid step size
 	 */
 	static double getStepSize() {
 		return hx;
+	}
+
+	/**
+	 * This operation returns the initial vacancy concentration. This operation
+	 * is only for use by PETSc code and is not part of the ISolver interface.
+	 * @return The grid step size
+	 */
+	static double getInitialV() {
+		return initialV;
 	}
 
 	/**

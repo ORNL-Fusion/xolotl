@@ -289,6 +289,18 @@ public:
      */
     virtual void setMaterial(std::string material) = 0;
 
+    /**
+     * Obtain the value of the concentration for the vacancies.
+     * @return The concentration value.
+     */
+    virtual double getInitialVConcentration() const = 0;
+
+    /**
+     * Set the value of the concentration for the vacancies.
+     * @param conc The value for the concentration.
+     */
+    virtual void setInitialVConcentration(double conc) = 0;
+
 };//end class IOptions
 
 } /* namespace xolotlCore */
