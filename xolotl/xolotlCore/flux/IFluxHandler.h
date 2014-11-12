@@ -74,23 +74,6 @@ public:
 	virtual double getHeFluence() const = 0;
 
 	/**
-	 * This operation sets the maximum value of the Helium fluence.
-	 * @param	The maximim Helium fluence value
-	 */
-	virtual void setMaxHeFluence(double fluence) = 0;
-
-	/**
-	 * This function returns the maximum value of the Helium fluence.
-	 */
-	virtual double getMaxHeFluence() const = 0;
-
-	/**
-	 * This operation gets whether or not the maximum Helium fluence will be used
-	 * @return	True if program will use the max He fluence, and false if it won't
-	 */
-	virtual bool getUsingMaxHeFluence() = 0;
-
-	/**
 	 * This operation sets the factor to change the Helium flux.
 	 * @param flux	Helium flux value
 	 */

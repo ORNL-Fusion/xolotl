@@ -1415,18 +1415,6 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 //		outputFile.close();
 	}
 
-	// Set only the monitor to compute the fluence in the case the retention
-	// option is not used but the fluence one is
-	// Get the flux handler that will be used to compute fluxes.
-	auto fluxHandler = PetscSolver::getFluxHandler();
-	// Get the fluence option
-	bool heFluenceOption = fluxHandler->getUsingMaxHeFluence();
-	if (!flagRetention && heFluenceOption) {
-		// computeHeliumFluence will be called at each timestep
-		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);
-		checkPetscError(ierr);
-	}
-
 	// Set the monitor to save the status of the simulation in hdf5 file
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
@@ -1504,7 +1492,7 @@ PetscErrorCode setupPetscMonitor(TS ts) {
 	}
 
 	// Set the monitor to simply change the previous time to the new time
-	if (flagRetention || heFluenceOption || flagInterstitial) {
+	if (flagRetention || flagInterstitial) {
 		// monitorTime will be called at each timestep
 		ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
 		checkPetscError(ierr);

@@ -306,32 +306,14 @@ public interface Arguments {
 	 *         not
 	 */
 	boolean isFluxFile();
-
+	
 	/**
-	 * This Option annotation corresponds to the optional '--maxHeFluence' option
+	 * This Option annotation corresponds to the optional '--checkpoint' option
 	 * and provides a brief description of the option.
 	 * 
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "The maxium Helium fluence value (in nm) that will be used")
-	
-	/**
-	 * This operation produces the optional command line option '--maxHeFluence' which 
-	 * takes a single string value and is defined by the previous Option annotation
-	 * 
-	 * @return The maximum Helium fluence value
-	 */
-	String getMaxHeFluence();
-
-	/**
-	 * This operation makes the command line option '--maxHeFluence' optional.
-	 * 
-	 * @return Returns true if the option has been specified and false if it has
-	 *         not
-	 */
-	boolean isMaxHeFluence();
-
 	@Option(description = "<HDF5FileName>  Start the solver with the concentrations, time, "
 			+ "and step size present in the HDF5 file")
 	/**

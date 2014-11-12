@@ -69,16 +69,6 @@ protected:
 	 * Name of the input temperature profile file.
 	 */
 	std::string tempProfileFilename;
-
-	/**
-	 * Use the helium fluence option?
-	 */
-	bool heliumFluenceFlag;
-
-	/**
-	 * Value for the maximum fluence.
-	 */
-	double maxHeliumFluence;
 	
 	/**
 	 * Use the helium flux option?
@@ -109,11 +99,6 @@ protected:
 	 * Use the "standard" set of handlers for the visualization infrastructure?
 	 */
 	bool vizStandardHandlersFlag;
-
-	/**
-	 * Use the material option?
-	 */
-	bool materialFlag;
 
 	/**
 	 * Name of the material.
@@ -273,31 +258,6 @@ public:
     void setTempProfileFilename(std::string name) {tempProfileFilename = name;}
 
     /**
-     * Should we use the Helium fluence option?
-	 * If false, it will not be used.
-     * \see IOptions.h
-     */
-    bool useMaxHeliumFluence() const {return heliumFluenceFlag;}
-
-    /**
-     * Set the heliumFluenceFlag.
-     * \see IOptions.h
-     */
-    void setHeliumFluenceFlag(bool flag) {heliumFluenceFlag = flag;}
-
-    /**
-     * Obtain the value of the Helium fluence to be used.
-     * \see IOptions.h
-     */
-    double getMaxHeliumFluence() const {return maxHeliumFluence;}
-
-    /**
-     * Set the value for the maximum fluence to which we want to integrate.
-     * \see IOptions.h
-     */
-    void setMaxHeliumFluence(double fluence) {maxHeliumFluence = fluence;}
-
-    /**
      * Should we use the Helium flux option?
 	 * If false, it will not be used.
      * \see IOptions.h
@@ -371,18 +331,6 @@ public:
      * \see IOptions.h
      */
     void setVizStandardHandlers(bool flag) {vizStandardHandlersFlag = flag;}
-
-    /**
-     * Should we use a specific material for the helium flux profile?
-     * \see IOptions.h
-     */
-    bool useMaterial() const {return materialFlag;}
-
-    /**
-     * Set the materialFlag.
-     * \see IOptions.h
-     */
-    void setMaterialFlag(bool flag) {materialFlag = flag;}
 
     /**
      * Obtain the name of the material to be used for the flux profile.

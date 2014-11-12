@@ -131,10 +131,6 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     BOOST_REQUIRE_EQUAL(opts.useConstTemperatureHandlers(), true);
     BOOST_REQUIRE_EQUAL(opts.getConstTemperature(), 900.0);
 
-    // Check if the maxHeFluence option is used
-    BOOST_REQUIRE_EQUAL(opts.useMaxHeliumFluence(), true);
-    BOOST_REQUIRE_EQUAL(opts.getMaxHeliumFluence(), 10.0);
-
     // Check if the heFlux option is used
     BOOST_REQUIRE_EQUAL(opts.useHeliumFlux(), true);
     BOOST_REQUIRE_EQUAL(opts.getHeliumFlux(), 1.5);
@@ -146,7 +142,6 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     BOOST_REQUIRE_EQUAL(opts.useVizStandardHandlers(), true);
 
     // Check the material option
-    BOOST_REQUIRE_EQUAL(opts.useMaterial(), true);
     BOOST_REQUIRE_EQUAL(opts.getMaterial(), "W100");
 
     // Check the initial vacancy concentration option
@@ -244,9 +239,6 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
     BOOST_REQUIRE_EQUAL(opts.useTemperatureProfileHandlers(), true);
     BOOST_REQUIRE_EQUAL(opts.getTempProfileFilename(), "temperatureFile.dat");
 
-    // Check if the maxHeFluence option is used
-    BOOST_REQUIRE_EQUAL(opts.useMaxHeliumFluence(), false);
-
     // Check if the heFlux option is used
     BOOST_REQUIRE_EQUAL(opts.useHeliumFlux(), false);
 
@@ -261,7 +253,6 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
     BOOST_REQUIRE_EQUAL(opts.useVizStandardHandlers(), true);
 
     // Check the material option
-    BOOST_REQUIRE_EQUAL(opts.useMaterial(), true);
     BOOST_REQUIRE_EQUAL(opts.getMaterial(), "W100");
 
     // Check the PETSc options

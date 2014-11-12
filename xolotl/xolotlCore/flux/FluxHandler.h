@@ -32,25 +32,9 @@ protected:
 	double heFluence;
 
 	/**
-	 * Should the program use the maximum Helium fluence value?
-	 */
-	bool usingMaxHeFluence;
-
-	/**
-	 * The maximum Helium fluence value?
-	 */
-	double maxHeFluence;
-
-	/**
 	 * The amplitude of the flux
 	 */
 	double heFlux;
-
-	/**
-	 * Has the incident flux been turned off, i.e. the incident
-	 * flux vector is comprised of only zero values
-	 */
-	bool incidentFluxZero;
 
 	/**
 	 * Are we using a time profile for the amplitude of the helium incoming flux?
@@ -160,23 +144,6 @@ public:
 	 * @return	The Helium fluence at current time step
 	 */
 	virtual double getHeFluence() const;
-
-	/**
-	 * This operation sets the maximum value of the Helium fluence.
-	 * @param fluence	The maximim Helium fluence value
-	 */
-	virtual void setMaxHeFluence(double fluence);
-
-	/**
-	 * This function returns the maximum value of the Helium fluence.
-	 */
-	virtual double getMaxHeFluence() const;
-
-	/**
-	 * This operation gets whether or not the maximum Helium fluence will be used
-	 * @return	True if program will use the max He fluence, and false if it won't
-	 */
-	virtual bool getUsingMaxHeFluence();
 
 	/**
 	 * This operation sets the factor to change the Helium flux.

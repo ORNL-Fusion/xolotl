@@ -42,11 +42,6 @@ public:
 	 * @param options The Xolotl options.
 	 */
 	void initializeMaterial(xolotlCore::Options &options) {
-		// If the Helium fluence option is present, set the value
-		if (options.useMaxHeliumFluence()) {
-			theFluxHandler->setMaxHeFluence(options.getMaxHeliumFluence());
-		}
-
 		// Wrong if both he flux and time profile options are used
 		if (options.useHeliumFlux() && options.useFluxTimeProfile()) {
 			// A constant flux value AND a time profile cannot both be given.

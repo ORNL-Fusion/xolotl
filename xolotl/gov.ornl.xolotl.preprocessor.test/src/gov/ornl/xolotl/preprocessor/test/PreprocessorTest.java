@@ -127,21 +127,15 @@ public class PreprocessorTest {
 
 		try {
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--startTemp", "900", "--maxHeFluence", "10", "--heFlux", "1.5" });
+					new String[] { "--startTemp", "900", "--heFlux", "1.5" });
 			
 			// Check that the startTemp is 900
 			assertEquals("900", parsedArgs.getStartTemp());
 			
-			// Check that the maxHeFluence option is present
-			assertEquals(true, parsedArgs.isMaxHeFluence());
-			
-			// Check the value of the maxHeFluence option
-			assertEquals("10", parsedArgs.getMaxHeFluence());
-			
 			// Check that the HeFlux option is present
 			assertEquals(true, parsedArgs.isHeFlux());
 			
-			// Check the value of the maxHeFluence option
+			// Check the value of the HeFlux option
 			assertEquals("1.5", parsedArgs.getHeFlux());
 
 			if (parsedArgs != null) {

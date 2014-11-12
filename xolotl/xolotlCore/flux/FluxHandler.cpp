@@ -11,10 +11,7 @@ namespace xolotlCore {
 FluxHandler::FluxHandler() :
 		stepSize(0.0),
 		heFluence(0.0),
-		usingMaxHeFluence(false),
-		maxHeFluence(std::numeric_limits<double>::max()),
 		heFlux(1.0),
-		incidentFluxZero(false),
 		useTimeProfile(false),
 		normFactor(0.0){
 
@@ -158,38 +155,14 @@ void FluxHandler::setOutgoingFlux(std::vector<int> compositionVec,
 }
 
 void FluxHandler::incrementHeFluence(double dt) {
-
-	if (heFluence < maxHeFluence)
-	{
-		heFluence += heFlux * dt;
-	}
-
-	else if (!incidentFluxZero) {
-		for (int i = 0; i < incidentFluxVec.size(); i++)
-			incidentFluxVec[i] = 0.0;
-		incidentFluxZero = true;
-	}
+	// the fluence is the flux times the time
+	heFluence += heFlux * dt;
 
 	return;
 }
 
 double FluxHandler::getHeFluence() const {
 	return heFluence;
-}
-
-void FluxHandler::setMaxHeFluence(double fluence) {
-	usingMaxHeFluence = true;
-	maxHeFluence = fluence;
-
-	return;
-}
-
-double FluxHandler::getMaxHeFluence() const {
-	return maxHeFluence;
-}
-
-bool FluxHandler::getUsingMaxHeFluence() {
-	return usingMaxHeFluence;
 }
 
 void FluxHandler::setHeFlux(double flux) {

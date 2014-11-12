@@ -6,7 +6,6 @@
 #include <StepSizeOptionHandler.h>
 #include <ConstTempOptionHandler.h>
 #include <TempProfileOptionHandler.h>
-#include <FluenceOptionHandler.h>
 #include <FluxOptionHandler.h>
 #include <FluxProfileOptionHandler.h>
 #include <PerfOptionHandler.h>
@@ -26,12 +25,11 @@ Options::Options() :
 		constTempFlag(false),
 		tempProfileFlag(false),
 		constTemperature(1000.0),
-		heliumFluenceFlag(false),
 		heliumFluxFlag(false),
 		fluxProfileFlag(false),
         perfRegistryType( xolotlPerf::IHandlerRegistry::std ),
 		vizStandardHandlersFlag(false),
-		materialFlag(false),
+		materialName(""),
 		initialVConcentration(0.0) {
 
 	// Create the network option handler
@@ -44,8 +42,6 @@ Options::Options() :
 	auto constTempHandler = new ConstTempOptionHandler();
 	// Create the temperature profile option handler
 	auto tempProfileHandler = new TempProfileOptionHandler();
-	// Create the maximum fluence option handler
-	auto fluenceHandler = new FluenceOptionHandler();
 	// Create the flux option handler
 	auto fluxHandler = new FluxOptionHandler();
 	// Create the flux time profile option handler
@@ -65,7 +61,6 @@ Options::Options() :
 	optionsMap[stepHandler->key] = stepHandler;
 	optionsMap[constTempHandler->key] = constTempHandler;
 	optionsMap[tempProfileHandler->key] = tempProfileHandler;
-	optionsMap[fluenceHandler->key] = fluenceHandler;
 	optionsMap[fluxHandler->key] = fluxHandler;
 	optionsMap[fluxProfileHandler->key] = fluxProfileHandler;
 	optionsMap[perfHandler->key] = perfHandler;

@@ -38,9 +38,7 @@ public:
      * @param arg The name of the material.
      */
     bool handler(IOptions *opt, std::string arg) {
-    	// Set the corresponding flag to true
-    	opt->setMaterialFlag(true);
-
+    	// Set the material name
     	opt->setMaterial(arg);
     	return true;
     }

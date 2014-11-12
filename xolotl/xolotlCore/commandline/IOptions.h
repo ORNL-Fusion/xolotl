@@ -161,32 +161,6 @@ public:
     virtual void setTempProfileFilename(std::string name) = 0;
 
     /**
-     * Should we use the Helium fluence option?
-	 * If false, it will not be used.
-     * @return true if the Helium fluence option was present in the parameter file,
-	 * false if it was not.
-     */
-    virtual bool useMaxHeliumFluence() const = 0;
-
-    /**
-     * Set the heliumFluenceFlag.
-     * @param flag The value for the heliumFluenceFlag.
-     */
-    virtual void setHeliumFluenceFlag(bool flag) = 0;
-
-    /**
-     * Obtain the value of the Helium fluence to be used.
-     * @return The value of the maximum fluence.
-     */
-    virtual double getMaxHeliumFluence() const = 0;
-
-    /**
-     * Set the value for the maximum fluence to which we want to integrate.
-     * @param fluence The value for the maximum fluence.
-     */
-    virtual void setMaxHeliumFluence(double fluence) = 0;
-
-    /**
      * Should we use the Helium flux option?
 	 * If false, it will not be used.
      * @return true if the Helium flux option was present in the parameter file,
@@ -196,7 +170,7 @@ public:
 
     /**
      * Set the heliumFluxFlag.
-     * @param flag The value for the heliumFluenceFlag.
+     * @param flag The value for the heliumFluxFlag.
      */
     virtual void setHeliumFluxFlag(bool flag) = 0;
 
@@ -263,19 +237,6 @@ public:
      * @param flag The value for the vizStandardHandlersFlag.
      */
     virtual void setVizStandardHandlers(bool flag) = 0;
-
-    /**
-     * Should we use a specific material for the helium flux profile?
-     * @return true if the material option was present in the parameter file,
-	 * false if it was not.
-     */
-    virtual bool useMaterial() const = 0;
-
-    /**
-     * Set the materialFlag.
-     * @param flag The value for the materialFlag.
-     */
-    virtual void setMaterialFlag(bool flag) = 0;
 
     /**
      * Obtain the name of the material to be used for the flux profile.
