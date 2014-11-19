@@ -161,9 +161,9 @@ int main(int argc, char **argv) {
 		// Set up the material infrastructure that is used to calculate flux
 		auto material = initMaterial(opts);
 		// Set up the temperature infrastructure
-		auto tempInitOK = initTemp(opts);
+		bool tempInitOK = initTemp(opts);
 		// Set up the visualization infrastructure.
-		auto vizInitOK = initViz(opts.useVizStandardHandlers());
+		bool vizInitOK = initViz(opts.useVizStandardHandlers());
 
 		// Access the temperature handler registry to get the temperature
 		auto tempHandler = xolotlFactory::getTemperatureHandler();
