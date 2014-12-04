@@ -170,7 +170,6 @@ int main(int argc, char **argv) {
 
 		// Access our performance handler registry to obtain a Timer
 		// measuring the runtime of the entire program.
-		// NOTE: these long template types could be replaced with 'auto'
 		auto handlerRegistry = xolotlPerf::getHandlerRegistry();
 		auto totalTimer = handlerRegistry->getTimer("total");
 		totalTimer->start();

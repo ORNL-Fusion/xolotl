@@ -232,4 +232,17 @@ protected:
 }; //end class PetscSolver
 
 } /* end namespace xolotlSolver */
+
+// Some compilers (e.g., recent versions of Intel) define __func__ 
+// to include the namespace or class scope when compiled with the C++11
+// support enabled.  Others don't.  Because PETSc's PetscFunctionBeginUser
+// does a straight string comparison between what we call the function name
+// and what it determines from the compiler, we need a way to provide
+// either the scoped name or the unscoped name.
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+#  define Actual__FUNCT__(sname,fname)  sname "::" fname
+#else
+#  define Actual__FUNCT__(sname,fname)  fname
+#endif /* if it is the Intel compiler */
+
 #endif

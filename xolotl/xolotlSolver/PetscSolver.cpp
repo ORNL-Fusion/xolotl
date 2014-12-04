@@ -145,7 +145,7 @@ static inline int petscReturn() {
 
 /* ------------------------------------------------------------------- */
 #undef __FUNCT__
-#define __FUNCT__ "setupInitialConditions"
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver::PetscSolver","setupInitialConditions")
 PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 
 // Local Declarations
@@ -264,7 +264,7 @@ PetscErrorCode PetscSolver::setupInitialConditions(DM da, Vec C) {
 /* ------------------------------------------------------------------- */
 
 #undef __FUNCT__
-#define __FUNCT__ "RHSFunction"
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "RHSFunction")
 /*
  RHSFunction - Evaluates the right-hand-side of the nonlinear function defining the ODE
 
@@ -461,7 +461,7 @@ PetscErrorCode callRHSFunction(TS ts, PetscReal ftime, Vec C, Vec F,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "RHSJacobian"
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver","RHSJacobian")
 /*
  Compute the Jacobian entries based on IFuction() and insert them into the matrix
  */
@@ -715,7 +715,7 @@ PetscErrorCode callRHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "getDiagonalFill"
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver::PetscSolver","getDiagonalFill")
 
 PetscErrorCode PetscSolver::getDiagonalFill(PetscInt *diagFill,
 		int diagFillSize) {
@@ -867,7 +867,7 @@ void PetscSolver::setupMesh() {
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "initialize"
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver::PetscSolver","initialize")
 /**
  * This operation performs all necessary initialization for the solver
  * possibly including but not limited to setting up MPI and loading initial
@@ -884,7 +884,7 @@ void PetscSolver::initialize() {
 }
 
 #undef __FUNCT__
-#define __FUNCT__ "solve"
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver::PetscSolver","solve")
 /**
  * This operation directs the Solver to perform the solve. If the solve
  * fails, it will throw an exception of type std::string.
