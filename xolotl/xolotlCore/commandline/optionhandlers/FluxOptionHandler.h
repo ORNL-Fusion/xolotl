@@ -2,6 +2,7 @@
 #define FLUXOPTIONHANDLER_H
 
 // Includes
+#include <stdlib.h>
 #include "OptionHandler.h"
 
 namespace xolotlCore {
