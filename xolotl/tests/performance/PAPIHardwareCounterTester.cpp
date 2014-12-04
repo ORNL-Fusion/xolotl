@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(check_getValues)
         << XOLOTL_HWCTR_EXPVAL
         << " FP ops +/-"
         << XOLOTL_HWCTR_TOL
-        << "\%\n  when executing a multiplication statement "
+        << "%\nwhen executing a multiplication statement "
         << nMultiplies
         << " times in a loop.";
     BOOST_TEST_MESSAGE( vstr.str() );
