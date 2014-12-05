@@ -20,7 +20,7 @@ private:
 	 */
 	double FitFunction(double x){
 		// Value at which the flux goes to 0
-		double x1 = 128.0;
+		double x1 = 20.0;
 
 		if (x > x1) return 0.0;
 

@@ -114,7 +114,7 @@ public interface Arguments {
 	 *            Brief description of this option
 	 */
 	@Option(defaultValue = "std", 
-			description = "{dummy, std}  Which set of performance handlers to use (default = std)")
+			description = "{dummy, std, io, papi}  Which set of performance handlers to use (default = std)")
 	/**
 	 * This operation produces the required command line option '--perfHandler' which 
 	 * takes a single string value and is defined by the previous Option annotation
