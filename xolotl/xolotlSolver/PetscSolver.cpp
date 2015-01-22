@@ -65,8 +65,6 @@ double PetscSolver::hx;
 // Allocate the static initial vacancy concentration
 double PetscSolver::initialV;
 
-extern PetscErrorCode RHSFunction(TS, PetscReal, Vec, Vec, void*);
-extern PetscErrorCode RHSJacobian(TS, PetscReal, Vec, Mat, Mat);
 extern PetscErrorCode setupPetscMonitor(TS);
 
 TS ts; /* nonlinear solver */
@@ -451,14 +449,6 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 
 }
 
-PetscErrorCode callRHSFunction(TS ts, PetscReal ftime, Vec C, Vec F,
-		void *ptr) {
-
-	PetscErrorCode ierr;
-	ierr = RHSFunction(ts, ftime, C, F, &ptr);
-
-	return ierr;
-}
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver","RHSJacobian")
@@ -703,15 +693,6 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 
 	PetscFunctionReturn(0);
 
-}
-
-PetscErrorCode callRHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
-		void *ptr) {
-
-	PetscErrorCode ierr;
-	ierr = RHSJacobian(ts, ftime, C, A, J, &ptr);
-
-	return ierr;
 }
 
 #undef __FUNCT__
@@ -1005,9 +986,9 @@ void PetscSolver::solve(std::shared_ptr<xolotlFactory::IMaterialFactory> materia
 	checkPetscError(ierr);
 	ierr = TSSetProblemType(ts, TS_NONLINEAR);
 	checkPetscError(ierr);
-	ierr = TSSetRHSFunction(ts, NULL, callRHSFunction, NULL);
+	ierr = TSSetRHSFunction(ts, NULL, RHSFunction, NULL);
 	checkPetscError(ierr);
-	ierr = TSSetRHSJacobian(ts, NULL, NULL, callRHSJacobian, NULL);
+	ierr = TSSetRHSJacobian(ts, NULL, NULL, RHSJacobian, NULL);
 	checkPetscError(ierr);
 	ierr = TSSetSolution(ts, C);
 	checkPetscError(ierr);
