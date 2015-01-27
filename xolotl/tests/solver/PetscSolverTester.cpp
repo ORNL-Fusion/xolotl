@@ -98,9 +98,9 @@ BOOST_AUTO_TEST_CASE(checkConcentrations) {
 
     BOOST_REQUIRE_CLOSE(concs[0], 0.0, 0.01);
     BOOST_REQUIRE_CLOSE(concs[1], 8.082e-17, 0.01);
-    BOOST_REQUIRE_CLOSE(concs[2], -5.242e-29, 0.01);
+    BOOST_REQUIRE_CLOSE(concs[2], 2.823e-29, 0.01);
     BOOST_REQUIRE_CLOSE(concs[3], 0.025, 0.01);
-    BOOST_REQUIRE_CLOSE(concs[4], -1.632e-30, 0.01);
+    BOOST_REQUIRE_CLOSE(concs[4], 3.803e-31, 0.01);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

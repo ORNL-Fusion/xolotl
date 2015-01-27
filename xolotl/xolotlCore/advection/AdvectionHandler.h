@@ -66,10 +66,14 @@ public:
 	 * the space parameter hx and the position index xi.
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *
-	 * The partial derivative on the left grid point is the opposite of the one
-	 * on this grid point which is (same notation as for the computeAdvection method)
+	 * The partial derivative on the right grid point is given by (same notation as for
+	 * the computeAdvection method)
 	 *
-	 * - (3 * A * D) / (K * T * hx * (xi * hx)^4)
+	 * (3 * A * D) / [K * T * hx * ((xi + 1) * hx)^4]
+	 *
+	 * and on this grid point we have
+	 *
+	 * - (3 * A * D) / [K * T * hx * (xi * hx)^4]
 	 *
 	 * @param network The network
 	 * @param hx The space parameter, here the grid step size

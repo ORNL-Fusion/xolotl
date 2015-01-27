@@ -428,7 +428,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 //					<< cluster->getConcentration() << std::endl;
 		}
 
-		// Uncomment this line for debugging in a single cell.
+//		// Uncomment this line for debugging in a single cell.
 //		break;
 	}
 
