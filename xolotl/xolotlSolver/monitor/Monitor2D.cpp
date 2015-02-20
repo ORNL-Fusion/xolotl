@@ -298,7 +298,7 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	PetscErrorCode ierr;
 	const double ***solutionArray, *gridPointSolution;
 	int xs, xm, Mx, ys, ym, My;
-	double x, y
+	double x, y;
 
 	PetscFunctionBeginUser;
 
