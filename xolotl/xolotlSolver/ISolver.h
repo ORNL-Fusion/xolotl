@@ -4,8 +4,7 @@
 // Includes
 #include <PSIClusterNetworkLoader.h>
 #include <map>
-#include <IMaterialFactory.h>
-#include <ITemperatureHandler.h>
+#include <ISolverHandler.h>
 #include <Options.h>
 
 using namespace xolotlCore;
@@ -57,7 +56,7 @@ public:
 	 * for keys and associated values mapped to those keys. A relevant example
 	 * is "startTime" and "0.01" where both are of type std::string.
 	 */
-	virtual void setOptions(std::map<std::string,std::string> options) = 0;
+	virtual void setOptions(std::map<std::string, std::string> options) = 0;
 
 	/**
 	 * This operation sets up the mesh that will be used by the solver and
@@ -71,20 +70,15 @@ public:
 	 * possibly including but not limited to setting up MPI and loading initial
 	 * conditions. If the solver can not be initialized, this operation will
 	 * throw an exception of type std::string.
+	 * @param solverHandler The solver handler
 	 */
-	virtual void initialize() = 0;
+	virtual void initialize(std::shared_ptr<ISolverHandler> solverHandler) = 0;
 
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
-	 * @param material The material factory
-	 * @param temperatureHandler The temperature handler that will be used
-	 * when performing the solve
-	 * @param options The options from the parameter file
 	 */
-	virtual void solve(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
-			std::shared_ptr<ITemperatureHandler> temperatureHandler,
-			Options &options) = 0;
+	virtual void solve() = 0;
 
 	/**
 	 * This operation performs all necessary finalization for the solver

@@ -17,8 +17,8 @@ public:
 	 */
 	VizOptionHandler() :
 		OptionHandler("vizHandler",
-				"vizHandler {std,dummy}      "
-				"Which set of handlers to use for the visualization. (default = dummy)") {}
+				"vizHandler {std,dummy}            "
+				"Which set of handlers to use for the visualization. (default = dummy)\n") {}
 
 	/**
 	 * The destructor

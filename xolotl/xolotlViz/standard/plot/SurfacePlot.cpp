@@ -84,7 +84,7 @@ void SurfacePlot::render(std::string fileName) {
 
     // Print the axis labels
     auto axis1Annotation = new eavlScreenTextAnnotation(window, plotLabelProvider->axis1Label,
-    		eavlColor::white, 0.05, 0.0, -0.35);
+    		eavlColor::white, 0.05, 0.0, -0.9);
     window->AddAnnotation(axis1Annotation);
     auto axis2Annotation = new eavlScreenTextAnnotation(window, plotLabelProvider->axis2Label,
     		eavlColor::white, 0.05, -0.9, 0.0, 90.0);

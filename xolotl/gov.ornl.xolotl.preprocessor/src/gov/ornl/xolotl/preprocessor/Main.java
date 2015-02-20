@@ -59,17 +59,14 @@ public class Main {
 					String HDF5FileName = myArgs.getCheckpoint();
 					// Read the header and the concentration from this file 
 					// and copy them to the network file
-					int gridPoints = preprocessor.copyHeader(HDF5FileName, networkFileName);
-					preprocessor.copyConcentration(HDF5FileName, networkFileName, gridPoints, clusters);
+					int[] gridSize = preprocessor.copyHeader(HDF5FileName, networkFileName);
+					preprocessor.copyConcentration(HDF5FileName, networkFileName, 
+							gridSize, clusters);
 				}
 				else {
-					// Get the grid size
-					String xgrid = preprocessor.petscOptions.get("-da_grid_x");
 					
-					// Write the header in it
-					int[] dim = { Integer.parseInt(xgrid) };
-					int[] refinement = { 0 };
-					preprocessor.writeHeader(networkFileName, dim, refinement);
+					// Write the header in it with the size options from the preprocessor
+					preprocessor.writeHeader(networkFileName, myArgs);
 				}
 
 				System.out.println("HDF5 file generated.");

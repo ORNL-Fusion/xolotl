@@ -27,7 +27,7 @@ public:
 	 *
 	 * @param network The network
 	 */
-	void initialize(std::shared_ptr<PSIClusterReactionNetwork> network) {
+	void initialize(PSIClusterReactionNetwork *network) {
 		// Get all the reactant
 		auto reactants = network->getAll();
 		int size = reactants->size();

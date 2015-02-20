@@ -18,11 +18,11 @@ public:
 	 */
 	TempProfileOptionHandler() :
 			OptionHandler("tempFile",
-					"tempFile <filename>         "
+					"tempFile <filename>               "
 							"A temperature profile is given by the specified file, "
 							"then linear interpolation is used to fit the data."
-							"\n	                      (NOTE: If a temperature file is given, "
-							"a constant temperature should NOT be given)") {
+							"\n	                            (NOTE: If a temperature file is given, "
+							"a constant temperature should NOT be given)\n") {
 	}
 
 	/**

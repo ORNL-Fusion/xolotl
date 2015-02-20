@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 
 	std::vector<double> x = {1.142857142857143, 0.0, 0.0};
 	// x is a gridpoint in PetscSolver, RHSFunction
-	//x=1.142857142857143=8/7 where x = xi * hx with xi=1, hx=1.142857142857143
+	//x=1.142857142857143=8/7 where x = xi * h with xi=1, h=1.142857142857143
 
 	auto temp = testTemp->getTemperature(x, 1);
 

@@ -7,10 +7,12 @@ SET(LIBRARY_NAME "xolotlFactory")
 
 #Collect all header filenames in this project 
 #and glob them in HEADERS
-file(GLOB HEADERS material/*.h vizHandler/*.h temperatureHandler/*.h)
+file(GLOB HEADERS material/*.h vizHandler/*.h temperatureHandler/*.h
+solverHandler/*.h)
 
 #Grab all of the source files
-file(GLOB SRC material/*.cpp vizHandler/*.cpp temperatureHandler/*.cpp)
+file(GLOB SRC material/*.cpp vizHandler/*.cpp temperatureHandler/*.cpp
+solverHandler/*.cpp)
 
 #Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -29,6 +31,11 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlViz)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlViz/dummy)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/temperatureHandler)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/temperature)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/solverHandler)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/solverhandler)
+
+include_directories(${PETSC_INCLUDES})
 
 # Find EAVL
 FIND_PACKAGE(EAVL)
@@ -41,7 +48,7 @@ endif(EAVL_FOUND AND MESA_FOUND)
 
 #Add a library to hold the factory code
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} xolotlViz)
+target_link_libraries(${LIBRARY_NAME} xolotlViz xolotlSolver)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

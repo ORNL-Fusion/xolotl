@@ -1,10 +1,10 @@
 #Good list of parameters
 vizHandler=std
-petscArgs=-fieldsplit_0_pc_type redundant -ts_max_snes_failures 200 -pc_fieldsplit_detect_coupling -da_grid_x 10 -ts_adapt_dt_max 10 -pc_type fieldsplit -fieldsplit_1_pc_type sor -ts_final_time 1000 -ts_max_steps 3
+petscArgs=-fieldsplit_0_pc_type redundant -ts_max_snes_failures 200 -pc_fieldsplit_detect_coupling -ts_adapt_dt_max 10 -pc_type fieldsplit -fieldsplit_1_pc_type sor -ts_final_time 1000 -ts_max_steps 3
 networkFile=tungsten.txt
 startTemp=900
 perfHandler=std
 heFlux=1.5
 material=W100
-stepSize=2.0
 initialV=0.05
+dimensions=1

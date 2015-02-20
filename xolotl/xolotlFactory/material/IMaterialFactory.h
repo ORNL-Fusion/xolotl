@@ -53,9 +53,11 @@ public:
 	 * Function that create the wanted material factory depending on the given type.
 	 *
 	 * @param materialType The type of wanted material.
+	 * @param dimension The number of dimensions of the problem.
 	 * @return The material factory.
 	 */
-	static std::shared_ptr<IMaterialFactory> createMaterialFactory(std::string materialType);
+	static std::shared_ptr<IMaterialFactory> createMaterialFactory(std::string materialType,
+			int dimension);
 
 };
 

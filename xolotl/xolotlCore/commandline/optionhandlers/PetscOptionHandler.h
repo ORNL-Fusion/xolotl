@@ -10,7 +10,7 @@
 namespace xolotlCore {
 
 /**
- * PetscOptionHandler handles all the Petsc options.
+ * PetscOptionHandler handles all the PETSc options.
  */
 class PetscOptionHandler: public OptionHandler {
 public:
@@ -20,8 +20,8 @@ public:
 	 */
 	PetscOptionHandler() :
 		OptionHandler("petscArgs",
-				"petscArgs                   "
-				"All the arguments that will be given to PETSc") {}
+				"petscArgs                         "
+				"All the arguments that will be given to PETSc.\n") {}
 
 	/**
 	 * The destructor

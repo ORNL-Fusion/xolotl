@@ -10,6 +10,7 @@ namespace xolotlCore {
 
 FluxHandler::FluxHandler() :
 		stepSize(0.0),
+		elementarySurfaceSize(0.0),
 		heFluence(0.0),
 		heFlux(1.0),
 		useTimeProfile(false),
@@ -17,26 +18,28 @@ FluxHandler::FluxHandler() :
 
 }
 
-void FluxHandler::initializeFluxHandler(int numGridpoints, double step) {
+void FluxHandler::initializeFluxHandler(int nx, double hx, double hy,
+		double hz) {
 
-	// Set the step size
-	stepSize = step;
+	// Set the step and elementary surface sizes
+	stepSize = hx;
+	elementarySurfaceSize = hy * hz;
 
 	normFactor = 0.0;
-	for (int i = 1; i < numGridpoints - 1; i++) {
+	for (int i = 1; i < nx - 1; i++) {
 		double x = (double) i * stepSize;
 
 		normFactor += FitFunction(x) * stepSize;
 	}
 
 	// Factor the incident flux will be multiplied by
-	double heFluxNormalized = heFlux / normFactor;
+	double heFluxNormalized = elementarySurfaceSize * heFlux / normFactor;
 
 	// The first value should always be 0.0 because of boundary conditions
 	incidentFluxVec.push_back(0.0);
 
 	// Starts a i = 1 because the first value was already put in the vector
-	for (int i = 1; i < numGridpoints - 1; i++) {
+	for (int i = 1; i < nx - 1; i++) {
 		auto x = i * stepSize;
 
 		auto incidentFlux = heFluxNormalized * FitFunction(x);
@@ -52,7 +55,7 @@ void FluxHandler::initializeFluxHandler(int numGridpoints, double step) {
 
 void FluxHandler::recomputeFluxHandler() {
 	// Factor the incident flux will be multiplied by
-	double heFluxNormalized = heFlux / normFactor;
+	double heFluxNormalized = elementarySurfaceSize * heFlux / normFactor;
 
 	// Get the number of grid points
 	int numGridPoints = incidentFluxVec.size();

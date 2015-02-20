@@ -18,8 +18,8 @@ public:
 	 */
     VConcentrationOptionHandler() :
     	OptionHandler("initialV",
-    			"initialV <value>        "
-    			"The value of the initial concentration of vacancies in the material.") {}
+    			"initialV <value>                  "
+    			"The value of the initial concentration of vacancies in the material.\n") {}
 
 	/**
 	 * The destructor

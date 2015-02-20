@@ -45,23 +45,23 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 	loader.setInputstream(bufferSS);
 
 	// Load the network
-	auto network = loader.load();
+	auto network = (PSIClusterReactionNetwork *) loader.load().get();
 
 	// Get the size of the network
 	int networkSize = network->size();
 	// Set the time step number
 	int timeStep = 0;
 	// Initialize the HDF5 file
-	HDF5Utils::initializeFile("test.h5", networkSize, 1);
+	HDF5Utils::initializeFile("test.h5", networkSize);
 
-	// Set the physical dimension of the grid and the refinement
-	int dimension = 5;
-	int refinement = 0;
+	// Set the number of grid points and step size
+	int nGrid = 5;
+	double stepSize = 0.5;
 	// Set the time information
 	double currentTime = 0.0001;
 	double currentTimeStep = 0.000001;
 	// Write the header in the HDF5 file
-	HDF5Utils::fillHeader(dimension, refinement);
+	HDF5Utils::fillHeader(nGrid, stepSize);
 
 	// Write the network in the HDF5 file
 	HDF5Utils::fillNetwork(network);
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 	// Add the concentration dataset
 	int length = 5;
 	int gridPoint = 0;
-	HDF5Utils::addConcentrationDataset(gridPoint, length);
+	HDF5Utils::addConcentrationDataset(length, gridPoint);
 
 	// Create a vector of concentration for one grid point
 	std::vector< std::vector<double> > concVector;
@@ -100,10 +100,16 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 	xolotlCore::HDF5Utils::closeFile();
 
 	// Read the header of the written file
-	int dim = 0;
-	HDF5Utils::readHeader("test.h5", dim);
+	int nx = 0, ny = 0, nz = 0;
+	double hx = 0.0, hy = 0.0, hz = 0.0;
+	HDF5Utils::readHeader("test.h5", nx, hx, ny, hy, nz, hz);
 	// Check the obtained values
-	BOOST_REQUIRE_EQUAL(dim, dimension);
+	BOOST_REQUIRE_EQUAL(nx, nGrid);
+	BOOST_REQUIRE_CLOSE(hx, stepSize, 0.0001);
+	BOOST_REQUIRE_EQUAL(ny, 0);
+	BOOST_REQUIRE_CLOSE(hy, 0.0, 0.0001);
+	BOOST_REQUIRE_EQUAL(nz, 0);
+	BOOST_REQUIRE_CLOSE(hz, 0.0, 0.0001);
 
 	// Read the times
 	double t = 0.0, dt = 0.0;
@@ -154,8 +160,8 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 		BOOST_REQUIRE_EQUAL(returnedVector.size(), concVector.size());
 		// Check the values
 		for (int i = 0; i < returnedVector.size(); i++) {
-			BOOST_REQUIRE_EQUAL(returnedVector.at(i).at(0), concVector.at(i).at(0));
-			BOOST_REQUIRE_EQUAL(returnedVector.at(i).at(1), concVector.at(i).at(1));
+			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(0), concVector.at(i).at(0), 0.0001);
+			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1), concVector.at(i).at(1), 0.0001);
 		}
 	}
 

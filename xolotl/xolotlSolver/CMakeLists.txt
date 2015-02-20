@@ -7,15 +7,17 @@ SET(LIBRARY_NAME "xolotlSolver")
 
 #Collect all header filenames in this project 
 #and glob them in HEADERS
-file(GLOB HEADERS *.h)
+file(GLOB HEADERS *.h solverhandler/*.h monitor/*.h)
 
 #Collect all of the cpp files in this folder 
 #and glob them in SRC
-file(GLOB SRC *.cpp)
+file(GLOB SRC *.cpp solverhandler/*.cpp monitor/*.cpp)
 
 #Include headers so that the solvers can be built
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/solverhandler)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/monitor)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)

@@ -101,18 +101,6 @@ public:
     virtual void setPetscArgv(char** argv) = 0;
 
     /**
-     * Get the value of the step size.
-     * @return the step size.
-     */
-    virtual double getStepSize() const = 0;
-
-    /**
-     * Set the value of the step size.
-     * @param value The value for the step size.
-     */
-    virtual void setStepSize(double value) = 0;
-
-    /**
      * Should we use const temperature handlers?
      * @return true if xolotl must use a constant temperature.
      */
@@ -261,6 +249,18 @@ public:
      * @param conc The value for the concentration.
      */
     virtual void setInitialVConcentration(double conc) = 0;
+
+    /**
+     * Obtain the number of dimensions for the simulation.
+     * @return The number of dimensions.
+     */
+    virtual int getDimensionNumber() const = 0;
+
+    /**
+     * Set the number of dimensions for the simulation.
+     * @param number The number of dimensions.
+     */
+    virtual void setDimensionNumber(int number) = 0;
 
 };//end class IOptions
 

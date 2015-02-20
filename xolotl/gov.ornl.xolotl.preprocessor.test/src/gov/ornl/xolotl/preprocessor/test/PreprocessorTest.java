@@ -200,43 +200,6 @@ public class PreprocessorTest {
 	}
 
 	/**
-	 * This operation checks generateGrid.
-	 */
-	@Test
-	public void testGenerateGrid() {
-
-		// Local Declarations
-		Arguments parsedArgs = null;
-
-		try {
-			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] {});
-
-			if (parsedArgs != null) {
-				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-
-				try {
-					// Generate a grid
-					int newGrid = preprocessor.generateGrid(8, 1);
-
-					// Check the length of it
-					assertEquals(newGrid, 15);
-
-				} catch (Exception e) {
-					// Complain and fail
-					e.printStackTrace();
-					fail();
-				}
-
-			}
-		} catch (ArgumentValidationException e1) {
-			e1.printStackTrace();
-		}
-
-		return;
-	}
-
-	/**
 	 * This operation checks the writing of the HDF5 file.
 	 */
 	@Test
@@ -272,9 +235,7 @@ public class PreprocessorTest {
 					preprocessor.createHDF5("test.h5");
 
 					// Write the header in it
-					int[] dim = { 4 };
-					int[] refinement = { 0 };
-					preprocessor.writeHeader("test.h5", dim, refinement);
+					preprocessor.writeHeader("test.h5", parsedArgs);
 
 					// Write the network in it
 					preprocessor.writeNetwork("test.h5", clusters);
