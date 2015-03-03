@@ -7,18 +7,21 @@
 namespace xolotlCore {
 
 /**
- * This class overwrites load() for HDF5 files
+ * This class overwrites the load() methods of PSIClusterNetworkLoader
+ * for HDF5 files.
  */
 class HDF5NetworkLoader: public PSIClusterNetworkLoader {
 private:
 
+	/**
+	 * Name of the file to load the network from.
+	 */
 	std::string fileName;
 
 	/**
 	 * Private nullary constructor.
 	 */
-	HDF5NetworkLoader() {
-	};
+	HDF5NetworkLoader() {}
 
 public:
 
@@ -31,31 +34,35 @@ public:
 	}
 
 	/**
-	 * Destructor
+	 * The destructor.
 	 */
 	virtual ~HDF5NetworkLoader() {
 	}
 
 	/**
-	 * This operation will load the reaction network from the HDF5 file xolotlStart.h5 in
+	 * This operation will load the reaction network from the HDF5 file in
 	 * the format specified previously. The network will be empty if it can not
 	 * be loaded.
+	 *
 	 * @return The reaction network.
 	 */
 	std::shared_ptr<PSIClusterReactionNetwork> load();
 
 	/**
 	 * This operation will set the name of the file where to take the network from.
-	 * @param name The name of the file.
+	 *
+	 * @param name The name of the file
 	 */
 	void setFilename (std::string name);
 
 	/**
 	 * This operation will get the name of the file where to take the network from.
-	 * @return The name of the file.
+	 *
+	 * @return The name of the file
 	 */
 	std::string getFilename () const;
 };
 
 } /* namespace xolotlCore */
+
 #endif /* HDF5NETWORKLOADER_H_ */

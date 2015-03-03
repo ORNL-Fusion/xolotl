@@ -40,19 +40,17 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	// Get its size
 	const int size = network->getAll()->size();
 
-	// Create the advection handler
+	// Create the advection handler and initialize it
 	W111AdvectionHandler advectionHandler;
-
-	// Initialize it
 	advectionHandler.initialize(network);
 
 	// Check the total number of advecting clusters
 	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 6);
 
-	// The size parameter in the x direction
+	// Set the size parameter in the x direction
 	double hx = 1.0;
 
-	// The arrays of concentration
+	// Create the arrays of concentration
 	double concentration[3*size];
 	double newConcentration[3*size];
 
@@ -62,7 +60,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 		newConcentration[i] = 0.0;
 	}
 
-	// Set the temperature to 1000 K to initialize the diffusion coefficients
+	// Set the temperature to 1000K to initialize the diffusion coefficients
 	auto reactants = network->getAll();
 	for (int i = 0; i < size; i++) {
 		auto cluster = (PSICluster *) reactants->at(i);

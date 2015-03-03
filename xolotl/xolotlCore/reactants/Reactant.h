@@ -18,11 +18,11 @@ class IEventCounter;
 namespace xolotlCore {
 
 /**
- * A Reactant is a general reacting body in a reaction network. It represents
+ * A reactant is a general reacting body in a reaction network. It represents
  * any body whose population can change with time due to reactions of any type.
  *
- * Reactants inherently know the other Reactants with which they interact. They
- * declare their interactions with other Reactants in the network after it is
+ * Reactants inherently know the other reactants with which they interact. They
+ * declare their interactions with other reactants in the network after it is
  * set (setReactionNetwork) via the getConnectivity() operation. "Connectivity"
  * indicates whether two Reacants interact, via any mechanism, in an abstract
  * sense (as if they were nodes connected by an edge on a network graph).
@@ -33,22 +33,15 @@ namespace xolotlCore {
  */
 class Reactant {
 
-//	/**
-//	 * Function to overload the streaming operator in order to output Reactant
-//	 * information easily.
-//	 */
-//	friend std::ostream& operator<<(std::ostream& out,
-//			const Reactant& reactant);
-
 protected:
 
 	/**
-	 * The total concentration of this Reactant.
+	 * The total concentration of this reactant.
 	 */
 	double concentration;
 
 	/**
-	 * The name of this Reactant.
+	 * The name of this reactant.
 	 */
 	std::string name;
 
@@ -74,7 +67,7 @@ protected:
 	std::shared_ptr<ReactionNetwork> network;
 
 	/**
-	 * The map that contains the composition of this cluster
+	 * The map that contains the composition of this cluster.
 	 */
 	std::map<std::string, int> compositionMap;
 
@@ -94,12 +87,23 @@ public:
 	/**
 	 * The constructor.
 	 *
-	 * @param registry  The performance handler registry to use
+	 * @param registry The performance handler registry to use
 	 */
 	Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
+	 * An alternative constructor that can be used to create a reactant
+	 * with an initial concentration.
+	 *
+	 * @param conc The initial concentration
+	 * @param registry The performance handler registry to use
+	 */
+	Reactant(double conc,
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+
+	/**
 	 * The copy constructor. All reactants MUST be deep copied.
+	 *
 	 * @param other The reactant to copy
 	 */
 	Reactant(const Reactant &other);
@@ -107,29 +111,21 @@ public:
 	/**
 	 * The destructor
 	 */
-	virtual ~Reactant();
+	virtual ~Reactant() {}
 
 	/**
-	 * This operation returns a Reactant that is created using the copy
-	 * constructor. If this Reactant is actually a subclass of Reactant, the
+	 * This operation returns a reactant that is created using the copy
+	 * constructor. If this reactant is actually a subclass of reactant, the
 	 * clone will be of the same type and therefore carry all of the members
 	 * and virtual functions of the subclass in addition to those of the
-	 * Reactant. This type of copy is not only handy but, in fact, quite
-	 * necessary in those cases where a Reactant must be copied but its exact
+	 * reactant. This type of copy is not only handy but, in fact, quite
+	 * necessary in those cases where a reactant must be copied but its exact
 	 * subclass is unknown and there is no way to make a reasonable assumption
 	 * about it.
+	 *
 	 * @return A copy of this reactant.
 	 */
 	virtual std::shared_ptr<Reactant> clone();
-
-	/**
-	 * An alternative constructor that can be used to create a reactant
-	 * with an initial concentration.
-	 *
-	 * @param conc The initial concentration
-	 */
-	Reactant(double conc,
-			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * This operation returns the current concentration.
@@ -192,27 +188,25 @@ public:
 	 * by the program, and is done to break dependence cycles that would
 	 * otherwise keep the network and reactant objects from being destroyed.
 	 */
-	virtual void releaseReactionNetwork(void) {
-		network.reset();
-	}
+	virtual void releaseReactionNetwork() {network.reset();}
 
 	/**
 	 * This operation returns a list that represents the connectivity
-	 * between this Reactant and other Reactants in the network.
-	 * "Connectivity" indicates whether two Reactants interact, via any
+	 * between this reactant and other reactants in the network.
+	 * "Connectivity" indicates whether two reactants interact, via any
 	 * mechanism, in an abstract sense (as if they were nodes connected by
 	 * an edge on a network graph).
 	 *
 	 * @return An array of ones and zeros that indicate whether or not this
-	 * Reactant interacts via any mechanism with another Reactant. A "1" at
-	 * the i-th entry in this array indicates that the Reactant interacts
-	 * with the i-th Reactant in the ReactionNetwork and a "0" indicates
+	 * reactant interacts via any mechanism with another reactant. A "1" at
+	 * the i-th entry in this array indicates that the reactant interacts
+	 * with the i-th reactant in the ReactionNetwork and a "0" indicates
 	 * that it does not.
 	 */
 	virtual std::vector<int> getConnectivity() const;
 
 	/**
-	 * This operation returns the list of partial derivatives of this Reactant
+	 * This operation returns the list of partial derivatives of this reactant
 	 * with respect to all other reactants in the network. The combined lists
 	 * of partial derivatives from all of the reactants in the network can be
 	 * used to form, for example, a Jacobian.
@@ -232,7 +226,7 @@ public:
 	 *
 	 * The base class (Reactant) implementation does nothing.
 	 *
-	 * @param the vector that should be filled with the partial derivatives
+	 * @param partials The vector that should be filled with the partial derivatives
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
@@ -249,20 +243,23 @@ public:
 
 	/**
 	 * This operation returns the name of the reactant.
-	 * @return the name
+	 *
+	 * @return The name
 	 */
 	const std::string getName() const;
 
 	/**
 	 * This operation returns the reactant's type. It is up to subclasses to
 	 * define exactly what the allowed types may be.
-	 * @return The type of this reactant as a string.
+	 *
+	 * @return The type of this reactant as a string
 	 */
 	std::string getType() const;
 
 	/**
-	 * This operation returns the compositon of this reactant. This map is empty
+	 * This operation returns the composition of this reactant. This map is empty
 	 * when returned by the base class.
+	 *
 	 * @return The composition returned as a map with keys naming distinct
 	 * elements and values indicating the amount of the element present.
 	 */
@@ -272,19 +269,17 @@ public:
 	 * This operation sets the id of the reactant, The id is zero by default
 	 * and clients, most likely the ReactionNetwork, are expected to set the
 	 * id as needed.
+	 *
 	 * @param nId The new id for this reactant
 	 */
-	void setId(int nId) {
-		id = nId;
-	}
+	void setId(int nId) {id = nId;}
 
 	/**
 	 * This operation returns the id for this reactant.
+	 *
 	 * @return The id
 	 */
-	int getId() const {
-		return id;
-	}
+	int getId() const {return id;}
 
 	/**
 	 * This operation sets the temperature at which the reactant currently
@@ -300,24 +295,22 @@ public:
 	 *
 	 * @param temp The new cluster temperature
 	 */
-	virtual void setTemperature(double temp) {
-		temperature = temp;
-	}
+	virtual void setTemperature(double temp) {temperature = temp;}
 
 	/**
 	 * This operation returns the temperature at which the reactant currently exists.
+	 *
 	 * @return The temperature.
 	 */
-	double getTemperature() const {
-		return temperature;
-	}
+	double getTemperature() const {return temperature;}
 
 	/**
-	 * Function to overload the streaming operator in order to output Reactant
+	 * Function to overload the streaming operator in order to output reactant
 	 * information easily.
+	 *
 	 * @param out The output stream
 	 * @param reactant The reactant
-	 * @return The output stream that will print desired Reactant information
+	 * @return The output stream that will print desired reactant information
 	 */
 	friend std::ostream& operator<<(std::ostream& out,
 			const Reactant& reactant);

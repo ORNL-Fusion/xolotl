@@ -22,7 +22,6 @@ BOOST_AUTO_TEST_SUITE(HDF5NetworkLoader_testSuite)
  * Method checking the loading of the network from the HDF5 file.
  */
 BOOST_AUTO_TEST_CASE(checkLoad) {
-
 	// Initialize MPI for HDF5
 	int argc = 0;
 	char **argv;
@@ -97,6 +96,8 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 
 	// Finalize MPI
 	MPI_Finalize();
+
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -23,15 +23,15 @@ public:
 	virtual ~IAdvectionHandler() {}
 
 	/**
-	 * The off-diagonal part of the Jacobian is already initialized by the diffusion handler.
-	 * This function initialize the list of clusters that will move through advection.
+	 * This function initialize the list of clusters that will move through advection
+	 * and their corresponding sink strength (or driving forces).
 	 *
 	 * @param network The network
 	 */
 	virtual void initialize(PSIClusterReactionNetwork *network) = 0;
 
 	/**
-	 * Compute the flux due to the advection for all the cluster,
+	 * Compute the flux due to the advection for all the helium clusters,
 	 * given the space parameter hx and the position.
 	 * This method is called by the RHSFunction from the PetscSolver.
 	 *
@@ -47,7 +47,7 @@ public:
 			std::vector<double> &pos, double **concVector, double *updatedConcOffset) = 0;
 
 	/**
-	 * Compute the partials due to the advection of all the clusters given
+	 * Compute the partial derivatives due to the advection of all the helium clusters given
 	 * the space parameter hx and the position.
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *

@@ -20,7 +20,6 @@ BOOST_AUTO_TEST_SUITE(TokenizedLineReader_testSuite)
 
 /**This operation checks default parsing setup of the TokenizedLineReader.*/
 BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
-
 	// Local Declarations
 	TokenizedLineReader<double> doubleReader;
 	TokenizedLineReader<int> intReader;
@@ -35,6 +34,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	*doubleTestStream << doubleString;
 	// Load the double reader
 	doubleReader.setInputStream(doubleTestStream);
+
 	// Get the first line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
@@ -42,6 +42,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	BOOST_REQUIRE_CLOSE_FRACTION(0.0,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(1.0,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(5.0,dLine.at(2),0.001);
+
 	// Get the second line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
@@ -50,6 +51,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	BOOST_REQUIRE_CLOSE_FRACTION(0.55,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(22.86,dLine.at(2),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(99.283,dLine.at(3),0.0001);
+
 	// The third line should skipped because it is a comment so, get the fourth
 	// line and check it
 	dLine = doubleReader.loadLine();
@@ -67,6 +69,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	*intTestStream << intString;
 	// Load the int reader
 	intReader.setInputStream(intTestStream);
+
 	// Get the first line and check it
 	iLine = intReader.loadLine();
 	BOOST_REQUIRE(!iLine.empty());
@@ -76,6 +79,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	BOOST_REQUIRE_EQUAL(5,iLine.at(2));
 	BOOST_REQUIRE_EQUAL(7,iLine.at(3));
 	BOOST_REQUIRE_EQUAL(9,iLine.at(4));
+
 	// The second line should skipped because it is a comment so, get the fourth
 	// line and check it
 	iLine = intReader.loadLine();
@@ -85,11 +89,12 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	BOOST_REQUIRE_EQUAL(2,iLine.at(1));
 	BOOST_REQUIRE_EQUAL(4,iLine.at(2));
 	BOOST_REQUIRE_EQUAL(6,iLine.at(3));
+
+	return;
 }
 
 /**This operation checks the TokenizedLineReader when the token is changed to a comma.*/
 BOOST_AUTO_TEST_CASE(checkCSVParsing) {
-
 	// Local Declarations
 	TokenizedLineReader<int> intReader;
 	vector<int> iLine;
@@ -104,6 +109,7 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing) {
 	intReader.setDelimiter(",");
 	// Load the int reader
 	intReader.setInputStream(intTestStream);
+
 	// Get the first line and check it
 	iLine = intReader.loadLine();
 	BOOST_REQUIRE(!iLine.empty());
@@ -113,6 +119,7 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing) {
 	BOOST_REQUIRE_EQUAL(5,iLine.at(2));
 	BOOST_REQUIRE_EQUAL(7,iLine.at(3));
 	BOOST_REQUIRE_EQUAL(9,iLine.at(4));
+
 	// The second line should skipped because it is a comment so, get the fourth
 	// line and check it
 	iLine = intReader.loadLine();
@@ -122,11 +129,12 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing) {
 	BOOST_REQUIRE_EQUAL(2,iLine.at(1));
 	BOOST_REQUIRE_EQUAL(4,iLine.at(2));
 	BOOST_REQUIRE_EQUAL(6,iLine.at(3));
+
+	return;
 }
 
 /**This operation checks the TokenizedLineReader when the comment token is changed.*/
 BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
-
 	// Local Declarations
 	TokenizedLineReader<double> doubleReader;
 	vector<double> dLine;
@@ -143,6 +151,7 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	doubleReader.setCommentDelimiter("//");
 	// Load the double reader
 	doubleReader.setInputStream(doubleTestStream);
+
 	// Get the first line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
@@ -150,6 +159,7 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	BOOST_REQUIRE_CLOSE_FRACTION(0.0,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(1.0,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(5.0,dLine.at(2),0.001);
+
 	// Get the second line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
@@ -158,6 +168,7 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	BOOST_REQUIRE_CLOSE_FRACTION(0.55,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(22.86,dLine.at(2),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(99.283,dLine.at(3),0.0001);
+
 	// The third line should skipped because it is a comment so, get the fourth
 	// line and check it
 	dLine = doubleReader.loadLine();
@@ -166,11 +177,12 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	BOOST_REQUIRE_CLOSE_FRACTION(0.000382,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(883.33,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(74.832,dLine.at(2),0.0001);
+
+	return;
 }
 
 /**This operation checks the TokenizedLineReader when the delimiter is changed to a the equal sign.*/
 BOOST_AUTO_TEST_CASE(checkDelimiterParsing) {
-
 	// Local Declarations
 	TokenizedLineReader<std::string> stringReader;
 	vector<std::string> iLine;
@@ -183,16 +195,20 @@ BOOST_AUTO_TEST_CASE(checkDelimiterParsing) {
 	stringReader.setDelimiter("=");
 	// Load the int reader
 	stringReader.setInputStream(stringTestStream);
+
 	// Get the first line and check it
 	iLine = stringReader.loadLine();
 	BOOST_REQUIRE(!iLine.empty());
 	BOOST_REQUIRE_EQUAL(2,iLine.size());
 	BOOST_REQUIRE_EQUAL("arg",iLine.at(0));
 	BOOST_REQUIRE_EQUAL("many different strings",iLine.at(1));
+
 	// Get the second line and check it
 	iLine = stringReader.loadLine();
 	BOOST_REQUIRE_EQUAL(1,iLine.size());
 	BOOST_REQUIRE_EQUAL("no equal sign here",iLine.at(0));
+
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -6,8 +6,8 @@
 namespace xolotlCore{
 
 /**
- * Realizations of this interface are responsible for handling the incident (incoming)
- * and outgoing Temperature calculations.
+ * This class realizes the ITemperatureHandler, it is responsible for the
+ * handling of a temperature constant with time.
  */
 class TemperatureHandler: public ITemperatureHandler {
 
@@ -23,35 +23,40 @@ private:
 	 * must be initialized with a temperature
 	 */
 	TemperatureHandler() :
-		temperature( 0.0e-16 )
-	{ }
+		temperature(0.0) {}
 
 public:
 
 	/**
 	 * The constructor
+	 *
 	 * @param constTemperature the temperature
 	 */
 	TemperatureHandler(double constTemperature) :
-		temperature( constTemperature )
-	{ }
+		temperature(constTemperature) {}
 
 	/**
-	 * The Destructor
+	 * The destructor.
 	 */
-	virtual ~TemperatureHandler() { }
+	virtual ~TemperatureHandler() {}
 
-	virtual void initializeTemperature() { }
+	/**
+	 * This operation reads in the time and temperature data from the input
+	 * temperature file that was specified by the command line if the profile
+	 * option is used;
+	 */
+	virtual void initializeTemperature() {}
 
 	/**
 	 * This operation returns the temperature at the given position
 	 * and time.
-	 * @param position        The position
-	 * @param currentTime     The time
-	 * @return temperature   The temperature
+	 *
+	 * @param position The position
+	 * @param currentTime The time
+	 * @return The temperature
 	 */
 	virtual double getTemperature(std::vector<double> position,
-			double currentTime) const	{ return temperature; }
+			double currentTime) const {return temperature;}
 
 }; //end class TemperatureHandler
 

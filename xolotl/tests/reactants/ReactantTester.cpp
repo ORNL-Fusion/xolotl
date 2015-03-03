@@ -1,14 +1,8 @@
-/*
- * PSIClusterTester.cpp
- *
- *  Created on: May 6, 2013
- *      Author: Jay Jay Billings
- */
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include <PSICluster.h>
+#include <Reactant.h>
 #include "SimpleReactionNetwork.h"
 #include <memory>
 #include <typeinfo>
@@ -32,6 +26,8 @@ BOOST_AUTO_TEST_CASE(checkTemperature) {
 	Reactant reactant(registry);
 	reactant.setTemperature(1000.0);
 	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(),0.0001);
+
+	return;
 }
 
 /**
@@ -40,6 +36,8 @@ BOOST_AUTO_TEST_CASE(checkTemperature) {
 BOOST_AUTO_TEST_CASE(checkComposition) {
 	Reactant reactant(registry);
 	BOOST_REQUIRE_EQUAL(0, reactant.getComposition().size());
+
+	return;
 }
 
 /**
@@ -65,19 +63,20 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
 
 	// The values should now be different,
 	// so check them against the known values
-	BOOST_REQUIRE_CLOSE(reactant.getConcentration(), 10.0, 1e-7);
-	BOOST_REQUIRE_CLOSE(reactantCopy.getConcentration(), 15.0, 1e-7);
+	BOOST_REQUIRE_CLOSE(reactant.getConcentration(), 10.0, 1.0e-7);
+	BOOST_REQUIRE_CLOSE(reactantCopy.getConcentration(), 15.0, 1.0e-7);
 
 	// Try cloning the Reactant
 	auto reactantClone = reactant.clone();
-	BOOST_REQUIRE_CLOSE(10.0, reactantClone->getConcentration(), 1e-7);
+	BOOST_REQUIRE_CLOSE(10.0, reactantClone->getConcentration(), 1.0e-7);
+
+	return;
 }
 
 /**
  * This operation insures that the concentration can be manipulated
  * appropriately.
  */BOOST_AUTO_TEST_CASE(checkConcentration) {
-
 	// Create a Reactant
 	Reactant reactant(registry);
 	reactant.setConcentration(1.0);
@@ -106,6 +105,7 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
 	// Make sure the base class getTotalFlux returns 0 for now
 	BOOST_REQUIRE_EQUAL(0.0, reactant.getTotalFlux());
 
+	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkIsConnected) {
@@ -176,4 +176,5 @@ BOOST_AUTO_TEST_CASE(checkIsConnected) {
 
 	return;
 }
+
 BOOST_AUTO_TEST_SUITE_END()

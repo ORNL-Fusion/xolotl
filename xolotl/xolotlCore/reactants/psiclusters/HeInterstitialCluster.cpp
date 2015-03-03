@@ -9,7 +9,6 @@ using namespace xolotlCore;
 HeInterstitialCluster::HeInterstitialCluster(int numHelium, int numInterstitial,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(1, registry), numHe(numHelium), numI(numInterstitial) {
-
 	// Set the cluster size as the sum of
 	// the number of Helium and Interstitials
 	size = numHe + numI;
@@ -43,9 +42,6 @@ HeInterstitialCluster::HeInterstitialCluster(const HeInterstitialCluster &other)
 	numI = other.numI;
 
 	return;
-}
-
-HeInterstitialCluster::~HeInterstitialCluster() {
 }
 
 std::shared_ptr<Reactant> HeInterstitialCluster::clone() {
@@ -226,7 +222,6 @@ void HeInterstitialCluster::createReactionConnectivity() {
 }
 
 void HeInterstitialCluster::createDissociationConnectivity() {
-
 	// This cluster is always (He_a)(I_b)
 
 	// He Dissociation

@@ -32,7 +32,6 @@ PSICluster::PSICluster() :
 PSICluster::PSICluster(const int clusterSize,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		Reactant(registry) {
-
 	// Set the size
 	size = (clusterSize > 0) ? clusterSize : 1;
 	// Zero out the formation energy
@@ -50,25 +49,24 @@ PSICluster::PSICluster(const int clusterSize,
 	// Set the default reaction radius to 0. (Doesn't react.)
 	reactionRadius = 0.0;
 
-	// Set up an event counter to count the number of times getDissociationFlux is called
-//	getDissociationFluxCounter = handlerRegistry->getEventCounter(
-//			"getDissociationFlux_Counter");
-
 	return;
 }
 
 // The copy constructor with a huge initialization list!
 PSICluster::PSICluster(const PSICluster &other) :
-		Reactant(other), size(other.size), diffusionFactor(
-				other.diffusionFactor), thisNetworkIndex(
-				other.thisNetworkIndex), formationEnergy(other.formationEnergy), migrationEnergy(
-				other.migrationEnergy), reactionRadius(other.reactionRadius), reactingPairs(
-				other.reactingPairs), combiningReactants(
-				other.combiningReactants), dissociatingPairs(
-				other.dissociatingPairs), emissionPairs(other.emissionPairs), reactionConnectivitySet(
-				other.reactionConnectivitySet), dissociationConnectivitySet(
-				other.dissociationConnectivitySet) {
-
+		Reactant(other),
+		size(other.size),
+		diffusionFactor(other.diffusionFactor),
+		thisNetworkIndex(other.thisNetworkIndex),
+		formationEnergy(other.formationEnergy),
+		migrationEnergy(other.migrationEnergy),
+		reactionRadius(other.reactionRadius),
+		reactingPairs(other.reactingPairs),
+		combiningReactants(other.combiningReactants),
+		dissociatingPairs(other.dissociatingPairs),
+		emissionPairs(other.emissionPairs),
+		reactionConnectivitySet(other.reactionConnectivitySet),
+		dissociationConnectivitySet(other.dissociationConnectivitySet) {
 	// Recompute all of the temperature-dependent quantities
 	setTemperature(other.getTemperature());
 
@@ -79,9 +77,6 @@ std::shared_ptr<Reactant> PSICluster::clone() {
 	std::shared_ptr<Reactant> reactant(new PSICluster(*this));
 
 	return reactant;
-}
-
-PSICluster::~PSICluster() {
 }
 
 void PSICluster::createReactionConnectivity() {
@@ -123,7 +118,6 @@ void PSICluster::createReactionConnectivity() {
 }
 
 void PSICluster::createDissociationConnectivity() {
-
 	// This cluster is always X_a
 
 	// Single species dissociation
@@ -161,7 +155,6 @@ void PSICluster::createDissociationConnectivity() {
 
 double PSICluster::calculateReactionRateConstant(
 		const PSICluster & firstReactant, const PSICluster & secondReactant) const {
-
 	// Get the reaction radii
 	double r_first = firstReactant.reactionRadius;
 	double r_second = secondReactant.reactionRadius;
@@ -179,7 +172,6 @@ double PSICluster::calculateReactionRateConstant(
 double PSICluster::calculateDissociationConstant(
 		const PSICluster & dissociatingCluster,
 		const PSICluster & singleCluster, const PSICluster & secondCluster) const {
-
 	// Local Declarations
 	double atomicVolume = 1.0; // Currently calculated below for He and W only!
 	double bindingEnergy = 0.0;
@@ -499,7 +491,6 @@ int PSICluster::getSize() const {
 
 void PSICluster::setReactionNetwork(
 		const std::shared_ptr<ReactionNetwork> reactionNetwork) {
-
 	// Call the superclass's method to actually set the reference
 	Reactant::setReactionNetwork(reactionNetwork);
 

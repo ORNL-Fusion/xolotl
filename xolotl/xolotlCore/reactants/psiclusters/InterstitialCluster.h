@@ -25,22 +25,27 @@ public:
 	/**
 	 * The constructor. All InterstitialClusters must be initialized with
 	 * a size.
+	 *
+	 * @param nI The number of interstitial defect in this cluster
+	 * @param registry The performance handler registry
 	 */
 	InterstitialCluster(int nI, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * The Destructor
 	 */
-	~InterstitialCluster();
+	~InterstitialCluster() {}
 
 	/**
 	 * This operation returns a Reactant that is created using the copy
 	 * constructor of InterstitialCluster.
-	 * @return A copy of this reactant.
+	 *
+	 * @return A copy of this reactant
 	 */
 	virtual std::shared_ptr<Reactant> clone();
 
 protected:
+
 	/**
 	 * Computes a row of the reaction connectivity matrix corresponding to
 	 * this reactant.
@@ -51,7 +56,7 @@ protected:
 	void createReactionConnectivity();
 
 	/**
-	 * Computes a row (or column) of the dissociation connectivity matrix
+	 * Computes a row of the dissociation connectivity matrix
 	 * corresponding to this cluster.
 	 *
 	 * Connections are made between this cluster and any clusters it affects

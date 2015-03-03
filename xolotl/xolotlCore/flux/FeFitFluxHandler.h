@@ -6,7 +6,8 @@
 namespace xolotlCore {
 
 /**
- * This class realizes the IFluxHandler interface to calculate the incident and outgoing fluxes.
+ * This class realizes the IFluxHandler interface to calculate the incident helium flux
+ * for iron material.
  */
 class FeFitFluxHandler: public FluxHandler {
 private:
@@ -16,7 +17,7 @@ private:
 	 * This function is not normalized.
 	 *
 	 * @param x The position where to evaluate he fit
-	 * @return the evaluated value
+	 * @return The evaluated value
 	 */
 	double FitFunction(double x){
 		// Value at which the flux goes to 0

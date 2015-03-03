@@ -29,7 +29,6 @@ BOOST_AUTO_TEST_SUITE (PSICluster_testSuite)
 
 /** This operation checks the loader. */
 BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
-
 	// Local Declarations
 	PSICluster cluster(1, registry);
 
@@ -69,13 +68,13 @@ BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 	cluster.setMigrationEnergy(0.013);
 	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(),9766651101.800613,0.0000001);
 
+	return;
 }
 
 /**
  * This operation tests the copy constructor.
  */
 BOOST_AUTO_TEST_CASE(checkCopying) {
-
 	// Local Declarations
 	PSICluster cluster(1, registry);
 	cluster.setDiffusionFactor(1.0);
@@ -112,13 +111,14 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	// Check cloning. Note that clone returns a shared_ptr!
 	auto clusterClone = cluster.clone();
 	BOOST_REQUIRE_EQUAL(cluster.getName(), clusterClone->getName());
+
+	return;
 }
 
 /**
  * This operation tests the default values returned by select flux routines.
  */
 BOOST_AUTO_TEST_CASE(checkDefaultFluxes) {
-
 	// Local Declarations
 	PSICluster cluster(1, registry);
 

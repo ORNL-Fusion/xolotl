@@ -14,8 +14,7 @@ class Options : public IOptions {
 
 protected:
 	/**
-	 * Map of options we support, keyed by option switch string
-	 * (including leading dashes)
+	 * Map of options we support, keyed by option switch string.
 	 */
 	typedef std::map<std::string, IOptionHandler*> OptionsMap;
 	OptionsMap optionsMap;
@@ -136,9 +135,7 @@ public:
     void showHelp(std::ostream& os) const;
 
     /**
-     * Should the program run after parsing the command line?
-     * (Or did parsing the command line suggest the program
-     * shouldn't/couldn't run?)
+     * Should the program run after parsing the parameter file?
      * \see IOptions.h
      */
     bool shouldRun() const {return shouldRunFlag;}
@@ -156,7 +153,7 @@ public:
     int getExitCode() const {return exitCode;}
 
     /**
-     * Set the value for the exit code
+     * Set the value for the exit code.
      * \see IOptions.h
      */
     void setExitCode(int code) {exitCode = code;}
@@ -246,8 +243,7 @@ public:
     void setTempProfileFilename(std::string name) {tempProfileFilename = name;}
 
     /**
-     * Should we use the Helium flux option?
-	 * If false, it will not be used.
+     * Should we use the helium flux option?
      * \see IOptions.h
      */
     bool useHeliumFlux() const {return heliumFluxFlag;};
@@ -259,13 +255,13 @@ public:
     void setHeliumFluxFlag(bool flag) {heliumFluxFlag = flag;}
 
     /**
-     * Obtain the value of the Helium flux to be used.
+     * Obtain the value of the helium flux intensity to be used.
      * \see IOptions.h
      */
     double getHeliumFlux() const {return heliumFlux;}
 
     /**
-     * Set the value for the flux to use.
+     * Set the value for the flux intensity to use.
      * \see IOptions.h
      */
     void setHeliumFlux(double flux) {heliumFlux = flux;}
@@ -321,13 +317,13 @@ public:
     void setVizStandardHandlers(bool flag) {vizStandardHandlersFlag = flag;}
 
     /**
-     * Obtain the name of the material to be used for the flux profile.
+     * Obtain the name of the material to be used for simulation.
      * \see IOptions.h
      */
     std::string getMaterial() const {return materialName;}
 
     /**
-     * Set the name of the material to be used for the flux profile.
+     * Set the name of the material to be used for the simulation.
      * \see IOptions.h
      */
     void setMaterial(std::string material) {materialName = material;}

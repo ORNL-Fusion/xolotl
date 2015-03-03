@@ -3,7 +3,6 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <Options.h>
-#include <XolotlConfig.h>
 #include <fstream>
 #include <iostream>
 
@@ -44,9 +43,8 @@ BOOST_AUTO_TEST_CASE(badParamFileName)
 {
     xolotlCore::Options opts;
 
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/bla.txt");
-	string filename = sourceDir + pathToFile;
+	string pathToFile("bla.txt");
+	string filename = pathToFile;
     const char* fname = filename.c_str();
 
     // Build a command line with a non existing parameter file
@@ -71,9 +69,13 @@ BOOST_AUTO_TEST_CASE(badParamFile)
 {
     xolotlCore::Options opts;
 
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/param_bad.txt");
-	string filename = sourceDir + pathToFile;
+	// Create a bad parameter file
+	std::ofstream badParamFile("param_bad.txt");
+	badParamFile << "netFile=tungsten.txt" << std::endl;
+	badParamFile.close();
+
+	string pathToFile("param_bad.txt");
+	string filename = pathToFile;
     const char* fname = filename.c_str();
 
     // Build a command line with a parameter file containing bad options
@@ -93,15 +95,36 @@ BOOST_AUTO_TEST_CASE(badParamFile)
     // the program shouldn't run, and an error exit code.
     BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
     BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+
+    // Remove the created file
+    std::string tempFile = "param_bad.txt";
+    std::remove(tempFile.c_str());
 }
 
 BOOST_AUTO_TEST_CASE(goodParamFile)
 {
     xolotlCore::Options opts;
 
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/param_good.txt");
-	string filename = sourceDir + pathToFile;
+	// Create a good parameter file
+	std::ofstream goodParamFile("param_good.txt");
+	goodParamFile << "vizHandler=std" << std::endl
+			<< "petscArgs=-fieldsplit_0_pc_type redundant "
+					"-ts_max_snes_failures 200 "
+					"-pc_fieldsplit_detect_coupling "
+					"-ts_adapt_dt_max 10 -pc_type fieldsplit "
+					"-fieldsplit_1_pc_type sor -ts_final_time 1000 "
+					"-ts_max_steps 3" << std::endl
+			<< "networkFile=tungsten.txt" << std::endl
+			<< "startTemp=900" << std::endl
+			<< "perfHandler=std" << std::endl
+			<< "heFlux=1.5" << std::endl
+			<< "material=W100" << std::endl
+			<< "initialV=0.05" << std::endl
+			<< "dimensions=1" << std::endl;
+	goodParamFile.close();
+
+	string pathToFile("param_good.txt");
+	string filename = pathToFile;
     const char* fname = filename.c_str();
 
     // Build a command line with a parameter file containing good options
@@ -149,15 +172,23 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 
     // Check the PETSc options
     BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 16);
+
+    // Remove the created file
+    std::string tempFile = "param_good.txt";
+    std::remove(tempFile.c_str());
 }
 
 BOOST_AUTO_TEST_CASE(wrongPerfHandler)
 {
     xolotlCore::Options opts;
 
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/param_wrong.txt");
-	string filename = sourceDir + pathToFile;
+	// Create a parameter file with a wrong performance handler name
+	std::ofstream paramFile("param_perf_wrong.txt");
+	paramFile << "perfHandler=bogus" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_perf_wrong.txt");
+	string filename = pathToFile;
     const char* fname = filename.c_str();
 
     // Build a command line with a parameter file containing a wrong performance handler option
@@ -176,6 +207,10 @@ BOOST_AUTO_TEST_CASE(wrongPerfHandler)
     // Xolotl should not be able to run with a wrong performance handler parameter
     BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
     BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+
+    // Remove the created file
+    std::string tempFile = "param_perf_wrong.txt";
+    std::remove(tempFile.c_str());
 }
 
 BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
@@ -210,12 +245,18 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 
     xolotlCore::Options opts;
 
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/param_good_profiles.txt");
-	string filename = sourceDir + pathToFile;
+	// Create a parameter file using these two profile files
+	std::ofstream paramFile("param_good_profiles.txt");
+	paramFile << "fluxFile=fluxFile.dat" << std::endl
+			<< "tempFile=temperatureFile.dat" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_good_profiles.txt");
+	string filename = pathToFile;
     const char* fname = filename.c_str();
 
-    // Build a command line with a parameter file containing the two temperature options
+    // Build a command line with a parameter file containing
+    // the two profile options
     int fargc = 2;
     char* args[3];
     args[0] = const_cast<char*>("./xolotl");
@@ -232,9 +273,6 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
     BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
     BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
 
-    // Check the network filename
-    BOOST_REQUIRE_EQUAL(opts.getNetworkFilename(), "tungsten.txt");
-
     // Check the temperature
     BOOST_REQUIRE_EQUAL(opts.useTemperatureProfileHandlers(), true);
     BOOST_REQUIRE_EQUAL(opts.getTempProfileFilename(), "temperatureFile.dat");
@@ -246,19 +284,12 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
     BOOST_REQUIRE_EQUAL(opts.useFluxTimeProfile(), true);
     BOOST_REQUIRE_EQUAL(opts.getFluxProfileName(), "fluxFile.dat");
 
-    // Check the performance handler
-    BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(), xolotlPerf::IHandlerRegistry::std);
-
-    // Check the performance handler
-    BOOST_REQUIRE_EQUAL(opts.useVizStandardHandlers(), true);
-
-    // Check the material option
-    BOOST_REQUIRE_EQUAL(opts.getMaterial(), "W100");
-
-    // Check the PETSc options
-    BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 21);
-
+    // Remove the created files
     std::string tempFile = "temperatureFile.dat";
+    std::remove(tempFile.c_str());
+    tempFile = "fluxFile.dat";
+    std::remove(tempFile.c_str());
+    tempFile = "param_good_profiles.txt";
     std::remove(tempFile.c_str());
 }
 
@@ -266,12 +297,16 @@ BOOST_AUTO_TEST_CASE(papiPerfHandler)
 {
     xolotlCore::Options opts;
 
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/param_good_perf_papi.txt");
-	string filename = sourceDir + pathToFile;
+	// Create a parameter file using the PAPI performance handlers
+	std::ofstream paramFile("param_good_perf_papi.txt");
+	paramFile << "perfHandler=papi" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_good_perf_papi.txt");
+	string filename = pathToFile;
     const char* fname = filename.c_str();
 
-    // Build a command line with a parameter file containing good options
+    // Build a command line with a parameter file
     int fargc = 2;
     char* args[3];
     args[0] = const_cast<char*>("./xolotl");
@@ -290,18 +325,26 @@ BOOST_AUTO_TEST_CASE(papiPerfHandler)
 
     // Check the performance handler
     BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(), xolotlPerf::IHandlerRegistry::papi);
+
+    // Remove the created file
+    std::string tempFile = "param_good_perf_papi.txt";
+    std::remove(tempFile.c_str());
 }
 
 BOOST_AUTO_TEST_CASE(osPerfHandler)
 {
     xolotlCore::Options opts;
 
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/param_good_perf_os.txt");
-	string filename = sourceDir + pathToFile;
+	// Create a parameter file using the OS performance handlers
+	std::ofstream paramFile("param_good_perf_os.txt");
+	paramFile << "perfHandler=os" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_good_perf_os.txt");
+	string filename = pathToFile;
     const char* fname = filename.c_str();
 
-    // Build a command line with a parameter file containing good options
+    // Build a command line with a parameter file
     int fargc = 2;
     char* args[3];
     args[0] = const_cast<char*>("./xolotl");
@@ -320,15 +363,23 @@ BOOST_AUTO_TEST_CASE(osPerfHandler)
 
     // Check the performance handler
     BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(), xolotlPerf::IHandlerRegistry::os);
+
+    // Remove the created file
+    std::string tempFile = "param_good_perf_os.txt";
+    std::remove(tempFile.c_str());
 }
 
 BOOST_AUTO_TEST_CASE(dummyPerfHandler)
 {
     xolotlCore::Options opts;
 
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/param_good_perf_dummy.txt");
-	string filename = sourceDir + pathToFile;
+	// Create a parameter file using the dummy performance handlers
+	std::ofstream paramFile("param_good_perf_dummy.txt");
+	paramFile << "perfHandler=dummy" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_good_perf_dummy.txt");
+	string filename = pathToFile;
     const char* fname = filename.c_str();
 
     // Build a command line with a parameter file containing good options
@@ -350,6 +401,10 @@ BOOST_AUTO_TEST_CASE(dummyPerfHandler)
 
     // Check the performance handler
     BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(), xolotlPerf::IHandlerRegistry::dummy);
+
+    // Remove the created file
+    std::string tempFile = "param_good_perf_dummy.txt";
+    std::remove(tempFile.c_str());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

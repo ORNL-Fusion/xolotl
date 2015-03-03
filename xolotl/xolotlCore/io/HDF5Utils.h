@@ -24,8 +24,8 @@ namespace HDF5Utils {
 	void openFile(std::string fileName);
 
 	/**
-	 * Fill the header with the number of dimensions and the number of
-	 * points and step size for each of them.
+	 * Fill the header with the number of points and step size in
+	 * each direction.
 	 *
 	 * @param nx The number of grid points in the x direction (depth)
 	 * @param hx The step size in the x direction
@@ -105,7 +105,7 @@ namespace HDF5Utils {
 	 *
 	 * @param fileName The name of the file to read from
 	 * @param lastTimeStep The value of the last written time step to be changed
-	 * @return True is the file contains a valid concentration group
+	 * @return True if the file contains a valid concentration group
 	 */
 	bool hasConcentrationGroup(std::string fileName, int &lastTimeStep);
 

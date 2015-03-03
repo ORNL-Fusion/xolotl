@@ -9,7 +9,7 @@ namespace xolotlCore {
 
 /**
  * Realizations of this interface are responsible for handling the incident (incoming)
- * and outgoing flux calculations.
+ * flux calculations.
  */
 class FluxHandler: public IFluxHandler {
 
@@ -17,28 +17,28 @@ protected:
 
 	/**
 	 * Vector to hold the incident flux values at each grid
-	 * point (x position)
+	 * point (x position).
 	 */
 	std::vector<double> incidentFluxVec;
 
 	/**
-	 * Step size between each grid point in the x direction
+	 * Step size between each grid point in the x direction.
 	 */
 	double stepSize;
 
 	/**
-	 * Size of the surface (dy * dz) on which the flux is integrated
-	 * Needed to scale the flux amplitude
+	 * Size of the surface (dy * dz) on which the flux is integrated.
+	 * Needed to scale the flux amplitude.
 	 */
 	double elementarySurfaceSize;
 
 	/**
-	 * Helium fluence
+	 * Helium fluence.
 	 */
 	double heFluence;
 
 	/**
-	 * The amplitude of the flux
+	 * The amplitude of the flux.
 	 */
 	double heFlux;
 
@@ -48,34 +48,35 @@ protected:
 	bool useTimeProfile;
 
 	/**
-	 * Value of the fit function integrated on the grid
+	 * Value of the fit function integrated on the grid.
 	 */
 	double normFactor;
 
 	/**
 	 * Vector to hold the time read from the input
-	 * time profile file
+	 * time profile file.
 	 */
 	std::vector<double> time;
 
 	/**
 	 * Vector to hold the amplitude read from the input
-	 * time profile file
+	 * time profile file.
 	 */
 	std::vector<double> amplitude;
 
 	/**
-	 * Function that calculate the flux at a given position x (in nm).
+	 * Function that calculates the flux at a given position x (in nm).
 	 * It needs to be implemented by the daughter classes.
 	 *
-	 * @param x The position where to evaluate he fit
-	 * @return the evaluated value
+	 * @param x The position where to evaluate the fit
+	 * @return The evaluated value
 	 */
 	virtual double FitFunction(double x) {return 0.0;}
 
 	/**
 	 * This method returns the value of the helium incident flux amplitude at the
 	 * given time when a time profile is used.
+	 *
 	 * @param currentTime The time
 	 * @return The value of the helium flux at this time
 	 */
@@ -95,12 +96,8 @@ public:
 	}
 
 	/**
-	 * Function to calculate and store the incident flux values at each grid point
-	 * @param numGridpoints The total number of grid points that will be used
-	 * @param nx The total number of grid points that will be used on the x axis
-	 * @param hx The step size between grid points on the x axis
-	 * @param hy The step size between grid points on the y axis
-	 * @param hz The step size between grid points on the z axis
+	 * Compute and store the incident flux values at each grid point.
+     * \see IFluxHandler.h
 	 */
 	virtual void initializeFluxHandler(int nx, double hx, double hy = 1.0,
 			double hz = 1.0);
@@ -108,62 +105,37 @@ public:
 	/**
 	 * This method reads the values on the time profile file and store them in the
 	 * time and amplitude vectors.
-	 * @param fileName The name of the file where the values are stored
+     * \see IFluxHandler.h
 	 */
 	void initializeTimeProfile(std::string fileName);
 
 	/**
-	 * This operation returns the incident flux for a specific cluster composition,
-	 * position, and time.
-	 * @param compositionVec  The composition of the cluster
-	 * @param position        The position of the cluster
-	 * @param currentTime     The time
-	 * @return incidentFlux   The incident flux at the given position and time of the cluster with
-	 * the specified composition
-	 */
-	virtual double getIncidentFlux(std::vector<int> compositionVec,
-			std::vector<double> position, double currentTime);
-
-	/**
-	 * This operation returns the incident flux vector
-	 * @param currentTime     	 The time
-	 * @return incidentFluxVec   The incident flux vector
+	 * This operation returns the incident flux vector.
+     * \see IFluxHandler.h
 	 */
 	virtual std::vector<double> getIncidentFluxVec(double currentTime);
 
 	/**
-	 * Given a specific concentration, position, and time, this operation sets the outgoing
-	 * flux to the specified amount.
-	 * @param composition  The composition of the cluster
-	 * @param position     The position of the cluster
-	 * @param time         The time
-	 * @return outgoingFlux  The outgoing flux at the given position and time of the cluster with
-	 * the specified composition
-	 */
-	virtual void setOutgoingFlux(std::vector<int> compositionVec,
-			std::vector<int> position, double time, double outgoingFlux);
-
-	/**
-	 * This operation increments the Helium fluence at the current time step.
-	 * @param dt			The length of the time step
+	 * This operation increments the helium fluence at the current time step.
+     * \see IFluxHandler.h
 	 */
 	virtual void incrementHeFluence(double dt);
 
 	/**
-	 * This operation returns the Helium fluence
-	 * @return	The Helium fluence at current time step
+	 * This operation returns the helium fluence.
+     * \see IFluxHandler.h
 	 */
 	virtual double getHeFluence() const;
 
 	/**
-	 * This operation sets the factor to change the Helium flux.
-	 * @param flux	Helium flux value
+	 * This operation sets the factor to change the intensity of the helium flux.
+     * \see IFluxHandler.h
 	 */
 	virtual void setHeFlux(double flux);
 
 	/**
-	 * This operation gets the factor that changes the Helium flux.
-	 * @return	Helium flux value
+	 * This operation gets the factor that changes the helium flux intensity.
+     * \see IFluxHandler.h
 	 */
 	virtual double getHeFlux() const;
 

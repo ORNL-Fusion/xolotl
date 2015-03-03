@@ -9,7 +9,6 @@ using namespace xolotlCore;
 HeVCluster::HeVCluster(int numHe, int numV,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(1, registry), numHe(numHe), numV(numV) {
-
 	// Set the cluster size as the sum of
 	// the number of Helium and Vacancies
 	size = numHe + numV;
@@ -43,9 +42,6 @@ HeVCluster::HeVCluster(const HeVCluster &other) :
 	numV = other.numV;
 
 	return;
-}
-
-HeVCluster::~HeVCluster() {
 }
 
 std::shared_ptr<Reactant> HeVCluster::clone() {
@@ -379,7 +375,6 @@ void HeVCluster::createReactionConnectivity() {
 }
 
 void HeVCluster::createDissociationConnectivity() {
-
 	// This cluster is always (He_a)(V_b)
 
 	// He Dissociation

@@ -51,20 +51,22 @@ private:
 	 * The map of single-species clusters, indexed by a map that contains the
 	 * name of the reactant and its size.
 	 */
-	std::unordered_map<std::map<std::string,int>, std::shared_ptr<PSICluster>> singleSpeciesMap;
+	std::unordered_map< std::map< std::string, int >,
+		std::shared_ptr<PSICluster> > singleSpeciesMap;
 
 	/**
 	 * The map of mixed or compound species clusters, indexed by a map that
 	 * contains the name of the constituents of the compound reactant and their
 	 * sizes.
 	 */
-	std::unordered_map<std::map<std::string, int>, std::shared_ptr<PSICluster>> mixedSpeciesMap;
+	std::unordered_map< std::map< std::string, int >,
+		std::shared_ptr<PSICluster> > mixedSpeciesMap;
 
 	/**
-	 * This map stores all of the clusters in the network by type
+	 * This map stores all of the clusters in the network by type.
 	 */
-	std::map<std::string,
-			std::shared_ptr<std::vector<std::shared_ptr<Reactant>>> >clusterTypeMap;
+	std::map<std::string, std::shared_ptr<
+		std::vector< std::shared_ptr<Reactant> > > > clusterTypeMap;
 
 	/**
 	 * The names of the reactants supported by this network.
@@ -91,7 +93,7 @@ private:
 	 * The list of all of the reactants in the network. This list is filled and
 	 * maintained by the getAll() operation.
 	 */
-	std::shared_ptr<std::vector<Reactant *>> allReactants;
+	std::shared_ptr< std::vector<Reactant *> > allReactants;
 
 	/**
 	 * This operation sets the default values of the properties table and names
@@ -108,15 +110,17 @@ public:
 
 	/**
 	 * The Constructor
+	 *
+	 * @param registry The performance handler registry
 	 */
 	PSIClusterReactionNetwork(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
-	 * The copy constructor
+	 * The copy constructor.
+	 *
 	 * @param other
 	 */
 	PSIClusterReactionNetwork(const PSIClusterReactionNetwork &other);
-
 
 	/**
 	 * This operation sets the temperature at which the reactants currently
@@ -131,29 +135,32 @@ public:
 
 	/**
 	 * This operation returns the temperature at which the cluster currently exists.
+	 *
 	 * @return The temperature.
 	 */
 	virtual double getTemperature() const;
 
 	/**
-	 * This operation returns a reactant with the given name and size if it
+	 * This operation returns a reactant with the given type and size if it
 	 * exists in the network or null if not.
+	 *
 	 * @param type the type of the reactant
 	 * @param size the size of the reactant
-	 * @return A shared pointer to the reactant
+	 * @return A pointer to the reactant
 	 */
 	Reactant * get(const std::string type,
 			const int size) const;
 
 	/**
-	 * This operation returns a compound reactant with the given name and size
+	 * This operation returns a compound reactant with the given type and size
 	 * if it exists in the network or null if not.
+	 *
 	 * @param type the type of the compound reactant
 	 * @param sizes an array containing the sizes of each piece of the reactant.
 	 * For PSIClusters, this array must be ordered in size by He, V and I. This
 	 * array must contain an entry for He, V and I, even if only He and V or He
 	 * and I are contained in the mixed-species cluster.
-	 * @return A shared pointer to the compound reactant
+	 * @return A pointer to the compound reactant
 	 */
 	Reactant * getCompound(const std::string type,
 			const std::vector<int> sizes) const;
@@ -162,6 +169,7 @@ public:
 	 * This operation returns all reactants in the network without regard for
 	 * their composition or whether they are compound reactants. The list may
 	 * or may not be ordered and the decision is left to implementers.
+	 *
 	 * @return The list of all of the reactants in the network
 	 */
 	const std::shared_ptr<std::vector<Reactant *>> & getAll() const;
@@ -170,6 +178,7 @@ public:
 	 * This operation returns all reactants in the network with the given name.
 	 * The list may or may not be ordered and the decision is left to
 	 * implementers.
+	 *
 	 * @param name The reactant or compound reactant name
 	 * @return The list of all of the reactants in the network or null if the
 	 * name is invalid.
@@ -192,6 +201,7 @@ public:
 	 * not recognize it as a type of reactant that it cares about (including
 	 * adding null). This operation throws an exception of type std::string
 	 * if the reactant is  already in the network.
+	 *
 	 * @param reactant The reactant that should be added to the network.
 	 */
 	void add(std::shared_ptr<Reactant> reactant);
@@ -199,21 +209,24 @@ public:
 	/**
 	 * This operation returns the names of the reactants in the network. For a
 	 * PSIClusterReactionNetwork, these are He, V, I, HeV, HeI.
+	 *
 	 * @return A vector with one entry for each of the distinct reactant types
-	 * in the network.
+	 * in the network
 	 */
 	const std::vector<std::string> & getNames() const;
 
 	/**
 	 * This operation returns the names of the compound reactants in the
 	 * network.
+	 *
 	 * @return A vector with one each for each of the distinct compound
-	 * reactant types in the network.
+	 * reactant types in the network
 	 */
 	const std::vector<std::string> & getCompoundNames() const;
 
 	/**
 	 * This operation returns a map of the properties of this reaction network.
+	 *
 	 * @return The map of properties that has been configured for this
 	 * ReactionNetwork.
 	 *
@@ -250,13 +263,15 @@ public:
 	 * for the network. ReactionNetworks may reserve the right to ignore this
 	 * operation for special key types, most especially those that they manage
 	 * on their own.
+	 *
 	 * @param key The key for the property
-	 * @param value The value to which the key should be set.
+	 * @param value The value to which the key should be set
 	 */
 	void setProperty(std::string key, std::string value);
 
 	/**
 	 * This operation returns the size or number of reactants in the network.
+	 *
 	 * @return The number of reactants in the network
 	 */
 	int size();
@@ -267,12 +282,14 @@ public:
 	 * removes the need to construct the vectors properly and locally. The
 	 * vector can be used to retrieve clusters.
 	 *
-	 * This function will never return an composition with less than three
+	 * This function will never return a composition with less than three
 	 * elements and it will always return element sizes greater than zero. If
 	 * any of the elements are negative, it will default to 1,0,0 (single He).
+	 *
 	 * @param numHe The number of helium atoms in the cluster
 	 * @param numV The number of atomic vacancies in the cluster
 	 * @param numI The number of interstitial defects in the cluster
+	 *
 	 * @return A vector of size three with an entry for each of the parts
 	 * equal to the numbers that were passed for that part.
 	 */
@@ -280,10 +297,13 @@ public:
 		// This flag is used so that negative numbers can be checked without
 		// branching.
 		int hasNegativeElement = ((numHe < 0) + (numV < 0) + (numI < 0) > 0);
+
 		std::vector<int> composition(3);
+
 		composition[0] = std::max(0,numHe*!hasNegativeElement);
 		composition[1] = std::max(0,numV*!hasNegativeElement);
 		composition[2] = std::max(0,numI*!hasNegativeElement);
+
 		return composition;
 	}
 };

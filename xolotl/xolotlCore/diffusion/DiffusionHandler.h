@@ -8,7 +8,7 @@ namespace xolotlCore {
 
 /**
  * This class realizes the IDiffusionHandler interface responsible for all
- * the physical parts for the diffusion of mobile cluster. It needs to have
+ * the physical parts for the diffusion of mobile clusters. It needs to have
  * subclasses implementing the compute diffusion methods.
  */
 class DiffusionHandler: public IDiffusionHandler {
@@ -27,23 +27,23 @@ public:
 
 	/**
 	 * Initialize the off-diagonal part of the Jacobian. If this step is skipped it
-	 * won't be possible to set the partials for the diffusion.
+	 * won't be possible to set the partial derivatives for the diffusion.
 	 *
 	 * The value 1 is set in ofill if a cluster has a non zero diffusion coefficient.
 	 *
 	 * @param network The network
 	 * @param ofill The pointer to the array that will contain the value 1 at the indices
-	 * of the diffusing clusters, 0 if they are not diffusing
+	 * of the diffusing clusters
 	 */
 	void initializeOFill(PSIClusterReactionNetwork *network, int *ofill) {
-		// Get all the reactant
+		// Get all the reactants
 		auto reactants = network->getAll();
 		int size = reactants->size();
 
 		// Clear the index vector
 		indexVector.clear();
 
-		// Loop on them
+		// Loop on the reactants
 		for (int i = 0; i < size; i++) {
 			// Get the i-th cluster
 			auto cluster = (PSICluster *) reactants->at(i);

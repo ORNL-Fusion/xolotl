@@ -16,25 +16,8 @@ using namespace xolotlCore;
 
 /**
  * The test suite configuration
- */BOOST_AUTO_TEST_SUITE (TungstenIntegrationTester_testSuite)
-
-/**
- * I just noticed that there is no unit test for checking the partial
- * derivatives computed by Xolotl. I think I did this because there is no good
- * way to unit test them other than computing them and then sticking that array
- * in for a direct comparison. Ideally there would be some analytic version to
- * which we could compare.
- *
- * The simplest way to test these is to use PETSc’s -snes_type test option and
- * grep/diff the output.
- *
- * I just modified the test below to checks the convenience method I added to
- * get the partials in a pre-allocated array against the original. They should
- * give the same results.
- *
- * ~JJB 20140525 10:19
- *
  */
+BOOST_AUTO_TEST_SUITE (TungstenIntegrationTester_testSuite)
 
 /**
  * This operation checks the fluxs from the reactant as best as is possible
@@ -96,6 +79,8 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 		// Zero the partials array
 		std::fill(secondPartials.begin(),secondPartials.end(),0.0);
 	}
+
+	return;
 }
 
  /**
@@ -157,6 +142,8 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 	// Check the values of the partial derivatives
 	BOOST_REQUIRE_CLOSE(partials[0], 1.0, 0.1);
 	BOOST_REQUIRE_CLOSE(partials[1], -0.5, 0.1);
+
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

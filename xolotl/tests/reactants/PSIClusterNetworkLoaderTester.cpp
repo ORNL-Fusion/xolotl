@@ -1,10 +1,3 @@
-/*
- * PSIClusterNetworkLoaderTester.cpp
- *
- *  Created on: Mar 30, 2013
- *      Author: jaybilly
- */
-
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
@@ -15,7 +8,6 @@
 #include <limits>
 #include <PSIClusterReactionNetwork.h>
 #include <DummyHandlerRegistry.h>
-
 
 using namespace std;
 using namespace xolotlCore;
@@ -29,7 +21,6 @@ BOOST_AUTO_TEST_SUITE(PSIClusterNetworkLoader_testSuite)
 
 /** This operation checks the loader. */
 BOOST_AUTO_TEST_CASE(checkLoading) {
-
 	// Local Declarations
 	shared_ptr<stringstream> networkStream(
 			new stringstream(stringstream::in | stringstream::out));
@@ -141,4 +132,5 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	}
 	BOOST_REQUIRE(caughtFlag);
 }
+
 BOOST_AUTO_TEST_SUITE_END()

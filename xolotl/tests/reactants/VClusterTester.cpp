@@ -31,7 +31,6 @@ static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared
  * its connectivity to other clusters.
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
-
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 	auto props = network->getProperties();
 
@@ -79,12 +78,11 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	};
 
 	for (int i = 0; i < reactionConnectivity.size(); i++) {
-		BOOST_TEST_MESSAGE("Connectivity [" << i << "] = " << reactionConnectivity[i]);
-	}
-	for (int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i],
 				connectivityExpected[i]);
 	}
+
+	return;
 }
 
  /**
@@ -121,7 +119,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  			  << "   -Combination Flux: " << cluster->getCombinationFlux() << "\n"
  			  << "   -Dissociation Flux: " << cluster->getDissociationFlux() << "\n"
  			  << "   -Emission Flux: " << cluster->getEmissionFlux() << "\n");
+
  	BOOST_REQUIRE_CLOSE(444828.3, flux, 0.1);
+
+ 	return;
  }
 
  /**
@@ -156,24 +157,29 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  	for (int i = 0; i < partials.size(); i++) {
  		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
  	}
+
+ 	return;
 }
 
 /**
  * This operation checks the reaction radius for VCluster.
  */
  BOOST_AUTO_TEST_CASE(checkReactionRadius) {
+	 // Create the vacancy clsuter
+	 shared_ptr<VCluster> cluster;
 
-	vector<shared_ptr<VCluster>> clusters;
-	shared_ptr<VCluster> cluster;
-
-	double expectedRadii[] = { 0.1372650265, 0.1778340462, 0.2062922619,
+	 // The vector of radii to compare with
+	 double expectedRadii[] = { 0.1372650265, 0.1778340462, 0.2062922619,
 			0.2289478080, 0.2480795532 };
 
-	for (int i = 1; i <= 5; i++) {
-		cluster = shared_ptr<VCluster>(new VCluster(i, registry));
-		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
-				.000001);
-	}
+	 // Check all the values
+	 for (int i = 1; i <= 5; i++) {
+		 cluster = shared_ptr<VCluster>(new VCluster(i, registry));
+		 BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
+				 0.000001);
+	 }
+
+	 return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

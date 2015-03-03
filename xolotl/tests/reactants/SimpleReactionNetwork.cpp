@@ -23,15 +23,9 @@ using namespace xolotlCore;
 using namespace testUtils;
 using namespace xolotlPerf;
 
-/**
- * Constructor
- * @param maxClusterSize the maximal size of the clusters that will be in
- * the network. Set to 10 by default.
- */
 SimpleReactionNetwork::SimpleReactionNetwork(const int maxClusterSize,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 	PSIClusterReactionNetwork(registry){
-
 	// Add He clusters
 	for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
 		// Create a He cluster with cluster size numHe
@@ -81,21 +75,8 @@ SimpleReactionNetwork::SimpleReactionNetwork(const int maxClusterSize,
 	return;
 }
 
-SimpleReactionNetwork::~SimpleReactionNetwork() {
-	// Nothing to do
-}
-
-/**
- * This operation creates a SimpleReactionNetwork and makes sure that it is
- * properly registered with the clusters it contains. This operation should
- * always be called instead of constructing a SimpleReactionNetwork manually.
- * @param maxClusterSize the maximal size of the clusters that will be in
- * the network. Set to 10 by default.
- * @return The reaction network.
- */
 shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork(const int maxClusterSize,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
-
 	// Create the network
 	shared_ptr<xolotlCore::ReactionNetwork> network(
 			new SimpleReactionNetwork(maxClusterSize, registry));

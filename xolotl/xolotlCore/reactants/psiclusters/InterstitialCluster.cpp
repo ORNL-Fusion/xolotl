@@ -7,7 +7,6 @@ using namespace xolotlCore;
 InterstitialCluster::InterstitialCluster(int nI,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(nI, registry) {
-
 	// Update the composition map
 	compositionMap["I"] = size;
 
@@ -27,9 +26,6 @@ InterstitialCluster::InterstitialCluster(int nI,
 	reactionRadius = termOne + termTwo - termThree;
 
 	return;
-}
-
-InterstitialCluster::~InterstitialCluster() {
 }
 
 std::shared_ptr<Reactant> InterstitialCluster::clone() {

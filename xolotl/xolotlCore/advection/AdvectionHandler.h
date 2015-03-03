@@ -8,7 +8,8 @@ namespace xolotlCore {
 
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
- * the physical parts for the advection of mobile cluster.
+ * the physical parts for the advection of mobile helium clusters. It needs to have subclasses
+ * that implement the initialize method.
  */
 class AdvectionHandler: public IAdvectionHandler {
 protected:
@@ -28,16 +29,7 @@ public:
 	~AdvectionHandler() {}
 
 	/**
-	 * The off-diagonal part of the Jacobian is already initialized by the diffusion handler.
-	 * This function initialize the list of clusters that will move through advection.
-	 * It must be overridden by the subclasses for specific surface orientations.
-	 *
-	 * @param network The network
-	 */
-	virtual void initialize(PSIClusterReactionNetwork *network) {return;}
-
-	/**
-	 * Compute the flux due to the advection for all the cluster,
+	 * Compute the flux due to the advection for all the helium clusters,
 	 * given the space parameter hx and the position.
 	 * This method is called by the RHSFunction from the PetscSolver.
 	 *
@@ -59,7 +51,7 @@ public:
 			std::vector<double> &pos, double **concVector, double *updatedConcOffset);
 
 	/**
-	 * Compute the partials due to the advection of all the clusters given
+	 * Compute the partials due to the advection of all the helium clusters given
 	 * the space parameter hx and the position.
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *

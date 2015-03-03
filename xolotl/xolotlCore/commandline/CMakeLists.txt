@@ -1,7 +1,7 @@
 #Set the package name
 SET(PACKAGE_NAME "xolotl.commandline")
 #Set the description
-SET(PACKAGE_DESCRIPTION "Xolotl Command Line Handling")
+SET(PACKAGE_DESCRIPTION "Xolotl Command Line Option Handling")
 #Set the library name
 SET(LIBRARY_NAME "xolotlCL")
 

@@ -26,21 +26,25 @@ public:
 
 	/**
 	 * The constructor. All VClusters must be initialized with a size.
+	 *
 	 * @param nV the number of atomic vacancies in the cluster
+	 * @param registry The performance handler registry
 	 */
 	VCluster(int nV, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! Destructor
-	~VCluster();
+	~VCluster() {}
 
 	/**
 	 * This operation returns a Reactant that is created using the copy
 	 * constructor of VCluster.
-	 * @return A copy of this reactant.
+	 *
+	 * @return A copy of this reactant
 	 */
 	virtual std::shared_ptr<Reactant> clone();
 
 protected:
+
 	/**
 	 * Computes a row of the reaction connectivity matrix corresponding to
 	 * this reactant.
@@ -51,7 +55,7 @@ protected:
 	void createReactionConnectivity();
 
 	/**
-	 * Computes a row (or column) of the dissociation connectivity matrix
+	 * Computes a row of the dissociation connectivity matrix
 	 * corresponding to this cluster.
 	 *
 	 * Connections are made between this cluster and any clusters it affects

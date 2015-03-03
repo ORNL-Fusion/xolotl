@@ -24,18 +24,18 @@ public:
 
 	/**
 	 * Initialize the off-diagonal part of the Jacobian. If this step is skipped it
-	 * won't be possible to set the partials for the diffusion.
+	 * won't be possible to set the partial derivatives for the diffusion.
 	 *
 	 * @param network The network
 	 * @param ofill The pointer to the array that will contain the value 1 at the indices
-	 * of the diffusing clusters, 0 if they are not diffusing
+	 * of the diffusing clusters
 	 */
 	virtual void initializeOFill(PSIClusterReactionNetwork *network,
 			int *ofill) = 0;
 
 	/**
 	 * Compute the flux due to the diffusion for all the cluster that are diffusing,
-	 * given the space parameter s.
+	 * given the space parameters.
 	 * This method is called by the RHSFunction from the PetscSolver.
 	 *
 	 * @param network The network
@@ -53,7 +53,7 @@ public:
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters given
-	 * the space parameter s.
+	 * the space parameters.
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *
 	 * @param network The network

@@ -13,7 +13,6 @@ using namespace xolotlCore;
 BOOST_AUTO_TEST_SUITE (W211FitFluxHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
-
 	// Specify the number of grid points that will be used
 	int nGridpts = 5;
 	// Specify the step size between grid points
@@ -23,21 +22,18 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
     // Initialize the flux handler
     testFitFlux->initializeFluxHandler(nGridpts, step);
 
-	// Create a composition vector
-	vector<int> compVec = {1, 0, 0};
 	// Create a time
 	double currTime = 1.0;
 
-	// Create a vector representing the position of the cluster
-	vector<double> x = {1.25, 0.0, 0.0};
+	// Get the flux vector
+	auto testFluxVec = testFitFlux->getIncidentFluxVec(currTime);
 
-	auto testFlux = testFitFlux->getIncidentFlux(compVec, x, 1);
+	// Check the value at some grid points
+	BOOST_REQUIRE_CLOSE(testFluxVec[1], 0.454047, 0.01);
+	BOOST_REQUIRE_CLOSE(testFluxVec[2], 0.249781, 0.01);
+	BOOST_REQUIRE_CLOSE(testFluxVec[3], 0.096172, 0.01);
 
-	BOOST_TEST_MESSAGE( "\nW211FitFluxHandlerTester Message: \n"
-						<< "At time = " << currTime
-						<< " and position (" << x[0] << "," << x[1] << "," << x[2] << "), "
-						<< "incidentFlux = " << testFlux << "\n");
-	BOOST_REQUIRE_CLOSE(testFlux, 0.454047, 0.01);
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -8,7 +8,7 @@ namespace xolotlCore {
 
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
- * the physical parts for the advection of mobile cluster.
+ * the physical parts for the advection of mobile helium cluster.
  */
 class W110AdvectionHandler: public AdvectionHandler {
 
@@ -21,14 +21,13 @@ public:
 	~W110AdvectionHandler() {}
 
 	/**
-	 * The off-diagonal part of the Jacobian is already initialized by the diffusion handler.
 	 * This function initialize the list of clusters that will move through advection for a
 	 * (110) tungsten material.
 	 *
 	 * @param network The network
 	 */
 	void initialize(PSIClusterReactionNetwork *network) {
-		// Get all the reactant
+		// Get all the reactants and their number
 		auto reactants = network->getAll();
 		int size = reactants->size();
 
@@ -36,7 +35,7 @@ public:
 		indexVector.clear();
 		sinkStrengthVector.clear();
 
-		// Loop on them
+		// Loop on all the reactants
 		for (int i = 0; i < size; i++) {
 			// Get the i-th cluster
 			auto cluster = (PSICluster *) reactants->at(i);
@@ -46,15 +45,15 @@ public:
 			// Don't do anything if the diffusion factor is 0.0
 			if (diffFactor == 0.0) continue;
 
-			// Only helium clusters
+			// Keep only the helium clusters
 			if (cluster->getType() != heType) continue;
 
 			// Get its size
-			int size = cluster->getSize();
+			int heSize = cluster->getSize();
 
-			// Switch on it to get the sink strength (in eV.nm3)
+			// Switch on the size to get the sink strength (in eV.nm3)
 			double sinkStrength = 0.0;
-			switch (size) {
+			switch (heSize) {
 				case 1:
 					sinkStrength = 0.92e-3;
 					break;
@@ -76,12 +75,12 @@ public:
 				case 7:
 					sinkStrength = 41.90e-3;
 					break;
-			}
+		}
 
 			// If the sink strength is still 0.0, this cluster is not advecting
 			if (sinkStrength == 0.0) continue;
 
-			// Add it's index (i) to the vector of indices
+			// Add its index (i) to the vector of indices
 			indexVector.push_back(i);
 
 			// Add the sink strength to the vector

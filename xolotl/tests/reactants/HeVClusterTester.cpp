@@ -41,6 +41,8 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
 	BOOST_REQUIRE_EQUAL(composition["He"], 4);
 	BOOST_REQUIRE_EQUAL(composition["V"], 5);
 	BOOST_REQUIRE_EQUAL(composition["I"], 0);
+
+	return;
 }
 
 /**
@@ -48,7 +50,6 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
  * its connectivity to other clusters.
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
-
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 	auto props = network->getProperties();
 	
@@ -57,64 +58,62 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	
 	// Check the reaction connectivity of the HeV cluster
 	// with 3He and 2V
+	// Get the connectivity array from the reactant
+	vector<int> composition = {3, 2, 0 };
+	auto reactant = (PSICluster *) network->getCompound("HeV", composition);
 	
-	{
-		// Get the connectivity array from the reactant
-		vector<int> composition = {3, 2, 0 };
-		auto reactant = (PSICluster *) network->getCompound("HeV", composition);
-		// Check the type name
-		BOOST_REQUIRE_EQUAL("HeV",reactant->getType());
-		auto reactionConnectivity = reactant->getConnectivity();
+	// Check the type name
+	BOOST_REQUIRE_EQUAL("HeV",reactant->getType());
+	auto reactionConnectivity = reactant->getConnectivity();
 		
-		BOOST_REQUIRE_EQUAL(reactant->getComposition().at("He"), 3);
-		BOOST_REQUIRE_EQUAL(reactant->getComposition().at("V"), 2);
+	BOOST_REQUIRE_EQUAL(reactant->getComposition().at("He"), 3);
+	BOOST_REQUIRE_EQUAL(reactant->getComposition().at("V"), 2);
 		
-		// Check the connectivity for He, V, and I
+	// Check the connectivity for He, V, and I
+	int connectivityExpected[] = {
+		// He
+		1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+			
+		// V
+		1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			
+		// I
+		1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+			
+		// HeV
+		0, 0, 1, 0, 0, 0, 0, 0, 0,
+		1, 1, 1, 1, 0, 0, 0, 0,
+		0, 0, 1, 0, 0, 0, 0,
+		0, 0, 1, 0, 0, 0,
+		0, 0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 1,
+		0, 0,
+		0,
+			
+		// HeI
+		0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0,
+		0, 0, 0, 0,
+		0, 0, 0,
+		0, 0,
+		0
+	};
 		
-		int connectivityExpected[] = {
-			// He
-			1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-			
-			// V
-			1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-			
-			// I
-			1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-			
-			// HeV
-			0, 0, 1, 0, 0, 0, 0, 0, 0,
-			1, 1, 1, 1, 0, 0, 0, 0,
-			0, 0, 1, 0, 0, 0, 0,
-			0, 0, 1, 0, 0, 0,
-			0, 0, 1, 0, 0,
-			0, 0, 1, 0,
-			0, 0, 1,
-			0, 0,
-			0,
-			
-			// HeI
-			0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0,
-			0, 0, 0, 0,
-			0, 0, 0,
-			0, 0,
-			0
-		};
-		
-		for (int i = 0; i < reactionConnectivity.size(); i++) {
-			BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
-		}
+	for (int i = 0; i < reactionConnectivity.size(); i++) {
+		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
 	}
+
+	return;
 }
 
 /**
  * This operation checks the ability of the HeVCluster to compute the total flux.
  */
 BOOST_AUTO_TEST_CASE(checkTotalFlux) {
-
 	// Local Declarations
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
@@ -147,7 +146,10 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 			  << "   -Combination Flux: " << cluster->getCombinationFlux() << "\n"
 			  << "   -Dissociation Flux: " << cluster->getDissociationFlux() << "\n"
 	  	  	  << "   -Emission Flux: " << cluster->getEmissionFlux() << "\n");
+
 	BOOST_REQUIRE_CLOSE(-1134677704810.4, flux, 0.1);
+
+	return;
 }
 
 /**
@@ -184,23 +186,29 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	for (int i = 0; i < partials.size(); i++) {
 		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
 	}
+
+	return;
 }
 
 /**
  * This operation checks the reaction radius for HeVCluster.
  */
 BOOST_AUTO_TEST_CASE(checkReactionRadius) {
-
-	vector<shared_ptr<HeVCluster>> clusters;
+	// Create the HeV cluster
 	shared_ptr<HeVCluster> cluster;
+
+	// The vector of radii to compare with
 	double expectedRadii[] = { 0.1372650265, 0.1778340462, 0.2062922619,
 			0.2289478080, 0.2480795532 };
 
+	// Check all the values
 	for (int i = 1; i <= 5; i++) {
 		cluster = shared_ptr<HeVCluster>(new HeVCluster(1, i, registry));
 		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
-				.000001);
+				0.000001);
 	}
+
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

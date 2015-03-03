@@ -1,2 +1,0 @@
-#Wrong parameter for performance handler
-perfHandler=bogus

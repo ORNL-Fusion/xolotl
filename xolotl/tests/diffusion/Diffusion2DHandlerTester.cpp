@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 		newConcentration[i] = 0.0;
 	}
 
-	// Set the temperature to 1000 K to initialize the diffusion coefficients
+	// Set the temperature to 1000K to initialize the diffusion coefficients
 	auto reactants = network->getAll();
 	for (int i = 0; i < size; i++) {
 		auto cluster = (PSICluster *) reactants->at(i);

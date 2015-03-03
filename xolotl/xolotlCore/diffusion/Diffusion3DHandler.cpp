@@ -6,19 +6,15 @@ namespace xolotlCore {
 void Diffusion3DHandler::computeDiffusion(PSIClusterReactionNetwork *network,
 		double **concVector, double *updatedConcOffset,
 		double sx, double sy, double sz) {
-	// Get all the reactant
+	// Get all the reactants
 	auto reactants = network->getAll();
-	// Get the number of diffusing cluster
+	// Get the number of diffusing clusters
 	int nDiff = indexVector.size();
-
-	// Get the number of degrees of freedom which is the size of the network
-	int dof = reactants->size();
 
 	// Loop on them
 	for (int i = 0; i < nDiff; i++) {
-		// Get the diffusing cluster
+		// Get the diffusing cluster and its index
 		auto cluster = (PSICluster *) reactants->at(indexVector[i]);
-		// Get the index of the cluster
 		int index = cluster->getId() - 1;
 
 		// Get the initial concentrations
@@ -47,18 +43,15 @@ void Diffusion3DHandler::computePartialsForDiffusion(
 		PSIClusterReactionNetwork *network,
 		double *val, int *indices,
 		double sx, double sy, double sz) {
-	// Get all the reactant
+	// Get all the reactants
 	auto reactants = network->getAll();
-	// And the size of the network
-	int size = reactants->size();
-	// Get the number of diffusing cluster
+	// Get the number of diffusing clusters
 	int nDiff = indexVector.size();
 
 	// Loop on them
 	for (int i = 0; i < nDiff; i++) {
-		// Get the diffusing cluster
+		// Get the diffusing cluster and its index
 		auto cluster = (PSICluster *) reactants->at(indexVector[i]);
-		// Get the index of the cluster
 		int index = cluster->getId() - 1;
 		// Get the diffusion coefficient of the cluster
 		double diffCoeff = cluster->getDiffusionCoefficient();

@@ -7,7 +7,8 @@
 namespace xolotlCore {
 
 /**
- * This class realizes the IFluxHandler interface to calculate the incident and outgoing fluxes.
+ * This class realizes the IFluxHandler interface to calculate the incident helium flux
+ * for a (221) oriented tungsten material.
  */
 class W221FitFluxHandler: public FluxHandler {
 private:
@@ -17,7 +18,7 @@ private:
 	 * This function is not normalized. The surface is supposed to be (221).
 	 *
 	 * @param x The position where to evaluate the fit
-	 * @return the evaluated value
+	 * @return The evaluated value
 	 */
 	double FitFunction(double x) {
 		// Value at which the flux goes to 0

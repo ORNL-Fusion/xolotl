@@ -7,7 +7,8 @@
 namespace xolotlCore {
 
 /**
- * This class is a subclass of DiffusionHandler for the isotropic diffusion in 2D.
+ * This class is a subclass of DiffusionHandler for the isotropic diffusion of
+ * mobile clusters in 2D.
  */
 class Diffusion2DHandler: public DiffusionHandler {
 public:
@@ -20,12 +21,11 @@ public:
 
 	/**
 	 * Compute the flux due to the diffusion for all the cluster that are diffusing,
-	 * given the space parameter s.
+	 * given the space parameters.
 	 * This method is called by the RHSFunction from the PetscSolver.
 	 *
 	 * If D is the diffusion coefficient, and C_l, C_r, C_b, C_t, C_m the left, right,
-	 * bottom, top, and middle concentration of this cluster, the value to add to the
-	 * updated concentration is:
+	 * bottom, top, and middle concentration of this cluster, the value of the flux is:
 	 *
 	 * D * [sx * (C_l + C_r  - 4*C_m) + sy * (C_b + C_t - 2*C_m)]
 	 *
@@ -44,7 +44,7 @@ public:
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters given
-	 * the space parameter s.
+	 * the space parameters.
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *
 	 * On the directly neighboring grid points the partial will be D * si with D the diffusion

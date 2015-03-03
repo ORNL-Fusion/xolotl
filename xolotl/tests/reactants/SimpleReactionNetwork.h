@@ -22,14 +22,16 @@ class SimpleReactionNetwork: public xolotlCore::PSIClusterReactionNetwork {
 public:
 	/**
 	 * Constructor
+	 *
 	 * @param maxClusterSize the maximal size of the clusters that will be in
 	 * the network. Set to 10 by default.
+	 * @param registry The dummy handler registry by default
 	 */
 	SimpleReactionNetwork(const int maxClusterSize = 10,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 
 	//! Destructor
-	virtual ~SimpleReactionNetwork();
+	virtual ~SimpleReactionNetwork() {}
 
 };
 
@@ -37,8 +39,10 @@ public:
  * This operation creates a SimpleReactionNetwork and makes sure that it is
  * properly registered with the clusters it contains. This operation should
  * always be called instead of constructing a SimpleReactionNetwork manually.
+ *
  * @param maxClusterSize the maximal size of the clusters that will be in
  * the network. Set to 10 by default.
+	 * @param registry The dummy handler registry by default
  * @return The reaction network.
  */
 std::shared_ptr<xolotlCore::ReactionNetwork> getSimpleReactionNetwork(const int maxClusterSize = 10,

@@ -11,14 +11,10 @@ void AdvectionHandler::computeAdvection(PSIClusterReactionNetwork *network,
 	// Get the number of advecting cluster
 	int nAdvec = indexVector.size();
 
-	// Get the number of degrees of freedom which is the size of the network
-	int dof = reactants->size();
-
-	// Loop on them
+	// Loop on the advecting clusters
 	for (int i = 0; i < nAdvec; i++) {
-		// Get the advecting cluster
+		// Get a specific one and its index
 		auto cluster = (PSICluster *) reactants->at(indexVector[i]);
-		// Get the index of the cluster
 		int index = cluster->getId() - 1;
 
 		// Get the initial concentrations
@@ -42,16 +38,13 @@ void AdvectionHandler::computePartialsForAdvection(
 		double hx, double *val, int *indices, std::vector<double> &pos) {
 	// Get all the reactant
 	auto reactants = network->getAll();
-	// And the size of the network
-	int size = reactants->size();
-	// Get the number of diffusing cluster
+	// Get the number of advecting cluster
 	int nAdvec = indexVector.size();
 
-	// Loop on them
+	// Loop on the advecting clusters
 	for (int i = 0; i < nAdvec; i++) {
-		// Get the diffusing cluster
+		// Get a specific one and its index
 		auto cluster = (PSICluster *) reactants->at(indexVector[i]);
-		// Get the index of the cluster
 		int index = cluster->getId() - 1;
 		// Get the diffusion coefficient of the cluster
 		double diffCoeff = cluster->getDiffusionCoefficient();

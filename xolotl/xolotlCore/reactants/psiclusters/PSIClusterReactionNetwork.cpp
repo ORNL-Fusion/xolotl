@@ -8,9 +8,7 @@
 
 using namespace xolotlCore;
 
-
 void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
-
 	// Shared pointers for the cluster type map
 	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>heVector =
 			std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
@@ -62,7 +60,6 @@ void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 
 PSIClusterReactionNetwork::PSIClusterReactionNetwork() :
 		ReactionNetwork() {
-
 	// Setup the properties map and the name lists
 	setDefaultPropsAndNames();
 
@@ -72,7 +69,6 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork() :
 PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		ReactionNetwork(registry) {
-
 	// Setup the properties map and the name lists
 	setDefaultPropsAndNames();
 
@@ -82,7 +78,6 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 		const PSIClusterReactionNetwork &other) :
 		ReactionNetwork(other) {
-
 	// The size and ids do not need to be copied. They will be fixed when the
 	// reactants are added.
 
@@ -110,18 +105,9 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 		add(reactants[i]->clone());
 	}
 
+	return;
 }
 
-
-/**
- * This operation sets the temperature at which the reactants currently
- * exists. It calls setTemperature() on each reactant.
- *
- * This is the simplest way to set the temperature for all reactants is to
- * call the ReactionNetwork::setTemperature() operation.
- *
- * @param temp The new temperature
- */
 void PSIClusterReactionNetwork::setTemperature(double temp) {
 	// Set the temperature
 	temperature = temp;
@@ -144,24 +130,12 @@ void PSIClusterReactionNetwork::setTemperature(double temp) {
 	return;
 }
 
-/**
- * This operation returns the temperature at which the cluster currently exists.
- * @return The temperature.
- */
 double PSIClusterReactionNetwork::getTemperature() const {
 	return temperature;
 }
 
-/**
- * This operation returns a reactant with the given name and size if it
- * exists in the network or null if not.
- * @param type the name of the reactant
- * @param size the size of the reactant
- * @return A shared pointer to the reactant
- */
 Reactant * PSIClusterReactionNetwork::get(const std::string type,
 		const int size) const {
-
 	// Local Declarations
 	static std::map<std::string, int> composition = { { heType, 0 },
 			{ vType, 0 }, { iType, 0 } };
@@ -185,16 +159,8 @@ Reactant * PSIClusterReactionNetwork::get(const std::string type,
 	return (Reactant *) retReactant.get();
 }
 
-/**
- * This operation returns a compound reactant with the given name and size if it
- * exists in the network or null if not.
- * @param type the type of the compound reactant
- * @param sizes an array containing the sizes of each piece of the reactant
- * @return A shared pointer to the compound reactant
- */
 Reactant * PSIClusterReactionNetwork::getCompound(const std::string type,
 		const std::vector<int> sizes) const {
-
 	// Local Declarations
 	static std::map<std::string, int> composition = { { heType, 0 },
 			{ vType, 0 }, { iType, 0 } };
@@ -220,27 +186,12 @@ Reactant * PSIClusterReactionNetwork::getCompound(const std::string type,
 	return (Reactant *) retReactant.get();
 }
 
-/**
- * This operation returns all reactants in the network without regard for
- * their composition or whether they are compound reactants. The list may
- * or may not be ordered and the decision is left to implementers.
- * @return The list of all of the reactants in the network
- */
 const std::shared_ptr<std::vector<Reactant *>> & PSIClusterReactionNetwork::getAll() const {
 	return allReactants;
 }
 
-/**
- * This operation returns all reactants in the network with the given name.
- * The list may or may not be ordered and the decision is left to
- * implementers.
- * @param name The reactant or compound reactant name
- * @return The list of all of the reactants in the network or null if the
- * name is invalid.
- */
 std::vector<Reactant *> PSIClusterReactionNetwork::getAll(
 		std::string name) const {
-
 	// Local Declarations
 	std::vector<Reactant *> reactants;
 
@@ -258,12 +209,7 @@ std::vector<Reactant *> PSIClusterReactionNetwork::getAll(
 	return reactants;
 }
 
-/**
- * This operation adds a reactant or a compound reactant to the network.
- * @param reactant The reactant that should be added to the network.
- */
 void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
-
 	// Local Declarations
 	int numHe = 0, numV = 0, numI = 0;
 	bool isMixed = false;
@@ -297,7 +243,8 @@ void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 				numClusterKey = "numHeIClusters";
 				clusterSizeKey = "maxHeIClusterSize";
 			}
-		} else if (!isMixed && singleSpeciesMap.count(composition) == 0) {
+		}
+		else if (!isMixed && singleSpeciesMap.count(composition) == 0) {
 			/// Put the reactant in its map
 			singleSpeciesMap[composition] = std::dynamic_pointer_cast
 					< PSICluster > (reactant);
@@ -312,13 +259,15 @@ void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 				numClusterKey = "numIClusters";
 				clusterSizeKey = "maxIClusterSize";
 			}
-		} else {
+		}
+		else {
 			std::stringstream errStream;
 			errStream << "PSIClusterReactionNetwork Message: "
 					<< "Duplicate Reactant (He=" << numHe << ",V=" << numV
 					<< ",I=" << numI << ") not added!" << std::endl;
 			throw errStream.str();
 		}
+
 		// Increment the number of total clusters of this type
 		int numClusters = std::stoi(properties->at(numClusterKey));
 		numClusters++;
@@ -342,52 +291,21 @@ void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 	return;
 }
 
-/**
- * This operation returns the names of the reactants in the network.
- * @return A vector with one each for each of the distinct reactant types
- * in the network.
- */
 const std::vector<std::string> & PSIClusterReactionNetwork::getNames() const {
-
 	return names;
 }
 
-/**
- * This operation returns the names of the compound reactants in the
- * network.
- * @return A vector with one each for each of the distinct compound
- * reactant types in the network.
- */
 const std::vector<std::string> & PSIClusterReactionNetwork::getCompoundNames() const {
-
 	return compoundNames;
 }
 
-/**
- * This operation returns a map of the properties of this reaction network.
- * @return The map of properties that has been configured for this
- * ReactionNetwork.
- */
 const std::map<std::string, std::string> & PSIClusterReactionNetwork::getProperties() {
-
 	return *properties;
 }
 
-/**
- * This operation sets a property with the given key to the specified value
- * for the network. ReactionNetworks may reserve the right to ignore this
- * operation for special key types, most especially those that they manage on
- * their own.
- *
- * Calling this operation will ignore all of the published properties that are
- * configured by default.
- * @param key The key for the property
- * @param value The value to which the key should be set.
- */
 void PSIClusterReactionNetwork::setProperty(std::string key,
 		std::string value) {
-
-// Check the keys and value before trying to set the property
+	// Check the keys and value before trying to set the property
 	if (!key.empty() && !value.empty() && key != "numHeClusters"
 			&& key != "numVClusters" && key != "numIClusters"
 			&& key != "maxHeClusterSize" && key != "maxVClusterSize"
@@ -400,10 +318,6 @@ void PSIClusterReactionNetwork::setProperty(std::string key,
 	return;
 }
 
-/**
- * This operation returns the size or number of reactants in the network.
- * @return The number of reactants in the network
- */
 int PSIClusterReactionNetwork::size() {
 	return networkSize;
 }
