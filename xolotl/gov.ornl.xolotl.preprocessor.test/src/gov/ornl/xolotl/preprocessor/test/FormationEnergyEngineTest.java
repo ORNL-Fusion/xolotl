@@ -64,7 +64,7 @@ public class FormationEnergyEngineTest {
 
 		// Check V = 29 to make sure the larger size clusters are computed
 		// correctly.
-		assertEquals(50.256, engine.getVFormationEnergy(29), 1.0e-2);
+		assertEquals(51.765, engine.getVFormationEnergy(29), 1.0e-2);
 
 		return;
 	}
@@ -103,18 +103,17 @@ public class FormationEnergyEngineTest {
 	 */
 	@Test
 	public void testHeVEnergies() {
-
 		// Local Declarations
 		FormationEnergyEngine engine = new FormationEnergyEngine();
 
 		// Check the code for He_30V_6
-		assertEquals(70.931, engine.getHeVFormationEnergy(30, 6), 1.0e-2);
+		assertEquals(75.049, engine.getHeVFormationEnergy(30, 6), 1.0e-2);
 
 		// Check the code for He_1V_44
-		assertEquals(67.329, engine.getHeVFormationEnergy(1, 44), 1.0e-2);
+		assertEquals(66.311, engine.getHeVFormationEnergy(1, 44), 1.0e-2);
 
 		// Check the code for He_1V_1
-		assertEquals(5.14166, engine.getHeVFormationEnergy(1, 1), 1.0e-2);
+		assertEquals(5.142, engine.getHeVFormationEnergy(1, 1), 1.0e-2);
 
 		return;
 	}
@@ -133,8 +132,8 @@ public class FormationEnergyEngineTest {
 			BufferedWriter fitWriter = new BufferedWriter(fitFileWriter);
 
 			// Write to the file
-			for (int i = 0; i < 6; i++) {
-				fitWriter.write("0.0,0.0,0.0,0.0\n");
+			for (int i = 0; i < 8; i++) {
+				fitWriter.write("0.0,0.0,0.0,0.0,0.0,0.0\n");
 			}
 			fitWriter.close();
 
@@ -150,7 +149,7 @@ public class FormationEnergyEngineTest {
 			// coefficients. (Make sure the values from the file don't hang
 			// around.)
 			engine = new FormationEnergyEngine();
-			assertEquals(70.931, engine.getHeVFormationEnergy(30, 6), 1.0e-2);
+			assertEquals(75.049, engine.getHeVFormationEnergy(30, 6), 1.0e-2);
 
 		} catch (IOException e) {
 			// Complain and fail

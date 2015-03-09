@@ -48,15 +48,24 @@ public class FormationEnergyEngine {
 			10.0, 18.5, 27.0, 35.0, 42.5, 48.0 };
 
 	// Coefficients for the Legendre polynomial fit
+	// Low means V <= 27
 	// Coefficients for c_0 in the 2D E_f,HeV fit
-	 private double[] c0Coefficients = { 8.11632e-01, 6.99475e-01,
-	 -4.15369e-02 };
-	 // Coefficients for c_1 in the 2D E_f,HeV fit
-	 private double[] c1Coefficients = { 1.03498e+00, 9.53649e-01,
-	 -2.91401e-02 };
-	 // Coefficients for c_2 in the 2D E_f,HeV fit
-	 private double[] c2Coefficients = { 3.63264e-01, 3.67345e-01,
-	 -1.57605e-04 };
+	private double[] c0CoefficientsLow = { 253.35, 435.36, 336.50, 198.92, 95.154, 21.544 };
+	// Coefficients for c_1 in the 2D E_f,HeV fit
+	private double[] c1CoefficientsLow = { 493.29, 1061.3, 1023.9, 662.92, 294.24, 66.962 };
+	// Coefficients for c_2 in the 2D E_f,HeV fit
+	private double[] c2CoefficientsLow = { 410.40, 994.89, 1044.6, 689.41, 286.52, 60.712 };
+	// Coefficients for c_3 in the 2D E_f,HeV fit
+	private double[] c3CoefficientsLow = { 152.99, 353.16, 356.10, 225.75, 87.077, 15.640 };
+	// High means V > 27
+	// Coefficients for c_0 in the 2D E_f,HeV fit
+	private double[] c0CoefficientsHigh = { -847.90, -3346.9, -4510.3, -3094.7, -971.18, -83.770 };
+	// Coefficients for c_1 in the 2D E_f,HeV fit
+	private double[] c1CoefficientsHigh = { -1589.3, -4894.6, -6001.8, -4057.5, -1376.4, -161.91 };
+	// Coefficients for c_2 in the 2D E_f,HeV fit
+	private double[] c2CoefficientsHigh = { 834.91, 1981.8, 1885.7, 1027.1, 296.69, 29.902 };
+	// Coefficients for c_3 in the 2D E_f,HeV fit
+	private double[] c3CoefficientsHigh = { 1547.2, 3532.3, 3383.6, 1969.2, 695.17, 119.23 };
 
 	/**
 	 * The formation energies for He_xV_1. The entry at i = 0 is for a single
@@ -98,19 +107,68 @@ public class FormationEnergyEngine {
 				String[] c0Strings = fitReader.readLine().split(",");
 				String[] c1Strings = fitReader.readLine().split(",");
 				String[] c2Strings = fitReader.readLine().split(",");
+				String[] c3Strings = fitReader.readLine().split(",");
+				String[] c4Strings = fitReader.readLine().split(",");
+				String[] c5Strings = fitReader.readLine().split(",");
+				String[] c6Strings = fitReader.readLine().split(",");
+				String[] c7Strings = fitReader.readLine().split(",");
 
 				// Convert the c0 coefficients
-				c0Coefficients[0] = Double.valueOf(c0Strings[0]);
-				c0Coefficients[1] = Double.valueOf(c0Strings[1]);
-				c0Coefficients[2] = Double.valueOf(c0Strings[2]);
+				c0CoefficientsLow[0] = Double.valueOf(c0Strings[0]);
+				c0CoefficientsLow[1] = Double.valueOf(c0Strings[1]);
+				c0CoefficientsLow[2] = Double.valueOf(c0Strings[2]);
+				c0CoefficientsLow[3] = Double.valueOf(c0Strings[3]);
+				c0CoefficientsLow[4] = Double.valueOf(c0Strings[4]);
+				c0CoefficientsLow[5] = Double.valueOf(c0Strings[5]);
 				// Convert the c1 coefficients
-				c1Coefficients[0] = Double.valueOf(c1Strings[0]);
-				c1Coefficients[1] = Double.valueOf(c1Strings[1]);
-				c1Coefficients[2] = Double.valueOf(c1Strings[2]);
+				c1CoefficientsLow[0] = Double.valueOf(c1Strings[0]);
+				c1CoefficientsLow[1] = Double.valueOf(c1Strings[1]);
+				c1CoefficientsLow[2] = Double.valueOf(c1Strings[2]);
+				c1CoefficientsLow[3] = Double.valueOf(c1Strings[3]);
+				c1CoefficientsLow[4] = Double.valueOf(c1Strings[4]);
+				c1CoefficientsLow[5] = Double.valueOf(c1Strings[5]);
 				// Convert the c2 coefficients
-				c2Coefficients[0] = Double.valueOf(c2Strings[0]);
-				c2Coefficients[1] = Double.valueOf(c2Strings[1]);
-				c2Coefficients[2] = Double.valueOf(c2Strings[2]);
+				c2CoefficientsLow[0] = Double.valueOf(c2Strings[0]);
+				c2CoefficientsLow[1] = Double.valueOf(c2Strings[1]);
+				c2CoefficientsLow[2] = Double.valueOf(c2Strings[2]);
+				c2CoefficientsLow[3] = Double.valueOf(c2Strings[3]);
+				c2CoefficientsLow[4] = Double.valueOf(c2Strings[4]);
+				c2CoefficientsLow[5] = Double.valueOf(c2Strings[5]);
+				// Convert the c3 coefficients
+				c3CoefficientsLow[0] = Double.valueOf(c3Strings[0]);
+				c3CoefficientsLow[1] = Double.valueOf(c3Strings[1]);
+				c3CoefficientsLow[2] = Double.valueOf(c3Strings[2]);
+				c3CoefficientsLow[3] = Double.valueOf(c3Strings[3]);
+				c3CoefficientsLow[4] = Double.valueOf(c3Strings[4]);
+				c3CoefficientsLow[5] = Double.valueOf(c3Strings[5]);
+				// Convert the c0 coefficients
+				c0CoefficientsHigh[0] = Double.valueOf(c4Strings[0]);
+				c0CoefficientsHigh[1] = Double.valueOf(c4Strings[1]);
+				c0CoefficientsHigh[2] = Double.valueOf(c4Strings[2]);
+				c0CoefficientsHigh[3] = Double.valueOf(c4Strings[3]);
+				c0CoefficientsHigh[4] = Double.valueOf(c4Strings[4]);
+				c0CoefficientsHigh[5] = Double.valueOf(c4Strings[5]);
+				// Convert the c1 coefficients
+				c1CoefficientsHigh[0] = Double.valueOf(c5Strings[0]);
+				c1CoefficientsHigh[1] = Double.valueOf(c5Strings[1]);
+				c1CoefficientsHigh[2] = Double.valueOf(c5Strings[2]);
+				c1CoefficientsHigh[3] = Double.valueOf(c5Strings[3]);
+				c1CoefficientsHigh[4] = Double.valueOf(c5Strings[4]);
+				c1CoefficientsHigh[5] = Double.valueOf(c5Strings[5]);
+				// Convert the c2 coefficients
+				c2CoefficientsHigh[0] = Double.valueOf(c6Strings[0]);
+				c2CoefficientsHigh[1] = Double.valueOf(c6Strings[1]);
+				c2CoefficientsHigh[2] = Double.valueOf(c6Strings[2]);
+				c2CoefficientsHigh[3] = Double.valueOf(c6Strings[3]);
+				c2CoefficientsHigh[4] = Double.valueOf(c6Strings[4]);
+				c2CoefficientsHigh[5] = Double.valueOf(c6Strings[5]);
+				// Convert the c3 coefficients
+				c3CoefficientsHigh[0] = Double.valueOf(c7Strings[0]);
+				c3CoefficientsHigh[1] = Double.valueOf(c7Strings[1]);
+				c3CoefficientsHigh[2] = Double.valueOf(c7Strings[2]);
+				c3CoefficientsHigh[3] = Double.valueOf(c7Strings[3]);
+				c3CoefficientsHigh[4] = Double.valueOf(c7Strings[4]);
+				c3CoefficientsHigh[5] = Double.valueOf(c7Strings[5]);
 
 				// Close the reader
 				fitReader.close();
@@ -231,24 +289,53 @@ public class FormationEnergyEngine {
 	}
 
 	/**
-	 * This operation computes the 2nd order Legendre polynomial expansion
+	 * This operation computes the 3rd order Legendre polynomials
 	 * 
-	 * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x) = c0 + c1*x + c2*P_2(x)
+	 * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x)  + c3*P_3(x)
+	 * 		= c0 + c1 * x + c2*P_2(x)  + c3*P_3(x)
 	 * 
-	 * for a coefficient set {c0,c1,c2}.
+	 * for a coefficient set {c0,c1,c2,c3}.
 	 * 
 	 * @param x
 	 *            The x value of the function.
 	 * @param coeffs
 	 *            The coefficients array.
 	 */
-	private double compute2ndOrderLegendrePCE(double x, double[] coeffs) {
+	private double compute3rdOrderLegendre(double x, double[] coeffs) {
 
 		double value = 0.0;
 
 		// Compute the value
-		value = coeffs[0] + coeffs[1] * x + coeffs[2]
-				* legendrePolynomial(x, 2);
+		value = coeffs[0] + coeffs[1] * x 
+				+ coeffs[2] * legendrePolynomial(x, 2) 
+				+ coeffs[3] * legendrePolynomial(x, 3);
+
+		return value;
+	}
+
+	/**
+	 * This operation computes the 5th order Legendre polynomials
+	 * 
+	 * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x)  + c3*P_3(x) + c4*P_4(x)  + c5*P_5(x)
+	 * 		= c0 + c1 * x + c2*P_2(x)  + c3*P_3(x) + c4*P_4(x)  + c5*P_5(x)
+	 * 
+	 * for a coefficient set {c0,c1,c2,c3,c4,c5}.
+	 * 
+	 * @param x
+	 *            The x value of the function.
+	 * @param coeffs
+	 *            The coefficients array.
+	 */
+	private double compute5thOrderLegendre(double x, double[] coeffs) {
+
+		double value = 0.0;
+
+		// Compute the value
+		value = coeffs[0] + coeffs[1] * x 
+				+ coeffs[2] * legendrePolynomial(x, 2) 
+				+ coeffs[3] * legendrePolynomial(x, 3)
+				+ coeffs[4] * legendrePolynomial(x, 4)
+				+ coeffs[5] * legendrePolynomial(x, 5);
 
 		return value;
 	}
@@ -256,13 +343,8 @@ public class FormationEnergyEngine {
 	/**
 	 * This operation returns the formation energy for an HeV cluster.
 	 * 
-	 * The formation energies are determined using the following 2D,
-	 * second order, Legendre polynomial fit
-	 * 
-	 * f(y,x/y) = [c_0 + c_1*y + c_2*P_2(y)] + [c_3 + c_4*y + c_5*P_2(y)]*(x/y)
-	 * 			 + [c_6 + c_7*y + c_8*P_2(y)]*P_2(x/y)
-	 * 
-	 * where y = vSize and x/y = heSize/vSize
+	 * The formation energies are determined using a 2D Legendre polynomial fit
+	 * f(x/y,y) where y = vSize and x/y = heSize/vSize.
 	 * 
 	 * @param heSize
 	 *            The number of Helium atoms in the cluster
@@ -275,27 +357,38 @@ public class FormationEnergyEngine {
 		double energy = Double.NEGATIVE_INFINITY;
 		// The following coefficients are computed using the above and are used
 		// to evaluate the full function f(x,y).
-		double[] coefficients = { 0.0, 0.0, 0.0 };
+		double[] coefficients = { 0.0, 0.0, 0.0, 0.0 };
 
 		// Check to see if the vacancy size is large enough that the energy can
 		// be computed from the fit or if it is so small that the exact values
 		// must be used instead.
 		if (vSize > 2) {
-			// Get the Vacancy number
-			double y = 2.0 * (((double) vSize - 1.0) / 43.0) - 1.0;
-			// Get the coefficients
-			coefficients[0] = compute2ndOrderLegendrePCE(y,
-					c0Coefficients);
-			coefficients[1] = compute2ndOrderLegendrePCE(y,
-					c1Coefficients);
-			coefficients[2] = compute2ndOrderLegendrePCE(y,
-					c2Coefficients);
 			// Get the He/V ratio
 			double x = 2.0 * (((double) heSize / (double) vSize) / 9.0) - 1.0;
-			// Get the energy for He_xV_y
-			energy = compute2ndOrderLegendrePCE(x, coefficients);
-			// Unscaling the energy
-			energy = energy * 281.254;
+			// Initialize the vacancy number
+			double y = 0.0;
+			
+			// We have 2 fits, one for low V and one for high V
+			if (vSize <= 27) {
+				// Compute the vacancy number
+				y = 2.0 * (((double) vSize - 1.0) / 26.0) - 1.0;
+				// Get the coefficients
+				coefficients[0] = compute5thOrderLegendre(x, c0CoefficientsLow);
+				coefficients[1] = compute5thOrderLegendre(x, c1CoefficientsLow);
+				coefficients[2] = compute5thOrderLegendre(x, c2CoefficientsLow);
+				coefficients[3] = compute5thOrderLegendre(x, c3CoefficientsLow);
+			}
+			else {
+				// Compute the vacancy number
+				y = 2.0 * (((double) vSize - 1.0) / 451.0) - 1.0;
+				// Get the coefficients
+				coefficients[0] = compute5thOrderLegendre(x, c0CoefficientsHigh);
+				coefficients[1] = compute5thOrderLegendre(x, c1CoefficientsHigh);
+				coefficients[2] = compute5thOrderLegendre(x, c2CoefficientsHigh);
+				coefficients[3] = compute5thOrderLegendre(x, c3CoefficientsHigh);
+			}
+			// Get the energy 
+			energy = compute3rdOrderLegendre(y, coefficients);
 
 		} else if ((vSize == 1 && heSize < heV1FormationEnergies.length)
 				|| (vSize == 2 && heSize < heV2FormationEnergies.length)) {
