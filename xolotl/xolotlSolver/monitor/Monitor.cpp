@@ -20,6 +20,8 @@ std::shared_ptr<xolotlViz::IPlot> perfPlot;
 //! The variable to store the time at the previous time step.
 double previousTime = 0.0;
 
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorTime")
 /**
  * This is a monitoring method set the previous time to the time. This is needed here
  * because multiple monitors need the previous time value from the previous timestep.

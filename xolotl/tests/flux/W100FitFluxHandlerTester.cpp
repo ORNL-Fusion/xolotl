@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(checkHeFluence) {
 
 	// Increment the helium fluence
 	testFitFlux->incrementHeFluence(1.0e-8);
-
+	
 	// Check that the fluence is not 0.0 anymore
 	BOOST_REQUIRE_EQUAL(testFitFlux->getHeFluence(), 1.0e-8);
 

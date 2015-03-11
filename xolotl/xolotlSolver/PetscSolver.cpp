@@ -35,18 +35,9 @@ static char help[] =
 		"Solves C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.\n";
 
 // ----- GLOBAL VARIABLES ----- //
-
 extern PetscErrorCode setupPetsc1DMonitor(TS);
 extern PetscErrorCode setupPetsc2DMonitor(TS);
 extern PetscErrorCode setupPetsc3DMonitor(TS);
-
-/**
- * This operation "returns" in a way that PETSc expects.
- * @return The return code from PETSc.
- */
-static inline int petscReturn() {
-	PetscFunctionReturn(0);
-}
 
 void PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Initialize the concentrations in the solution vector
@@ -80,6 +71,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 	PetscErrorCode ierr;
 
 	// Get the local data vector from PETSc
+	PetscFunctionBeginUser;
 	DM da;
 	ierr = TSGetDM(ts, &da);CHKERRQ(ierr);
 	Vec localC;
@@ -308,9 +300,8 @@ void PetscSolver::finalize() {
 
 	ierr = PetscFinalize();
 	checkPetscError(ierr, "PetscSolver::finalize: PetscFinalize failed.");
-	if (petscReturn() != 0) {
-		throw std::string("PetscSolver Exception: Unable to finalize solve!");
-	}
+
+	return;
 }
 
 } /* end namespace xolotlSolver */

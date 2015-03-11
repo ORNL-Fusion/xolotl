@@ -3,6 +3,7 @@
 #include <Constants.h>
 #include <iostream>
 #include <limits>
+#include <MathUtils.h>
 
 using namespace xolotlCore;
 
@@ -539,7 +540,7 @@ double PSICluster::getTotalFlux() {
 
 	// Don't compute the combination and emission flux if the
 	// concentration is 0.0 because they are proportional to it
-	if (concentration != 0.0) {
+	if (!xolotlCore::equal(concentration, 0.0)) {
 		combFlux = getCombinationFlux();
 		emissFlux = getEmissionFlux();
 	}
@@ -823,7 +824,7 @@ std::vector<int> PSICluster::getConnectivity() const {
 
 void PSICluster::recomputeDiffusionCoefficient(double temp) {
 	// Return zero if the diffusion factor is zero.
-	if (diffusionFactor == 0.0) {
+	if (xolotlCore::equal(diffusionFactor, 0.0)) {
 		diffusionCoefficient = 0.0;
 	} else {
 		// Otherwise use the Arrhenius equation to compute the diffusion
@@ -865,7 +866,7 @@ void PSICluster::computeRateConstants() {
 
 		// Add the reacting pair to the effective vector
 		// if the rate is not 0.0
-		if (rate != 0.0) {
+		if (!xolotlCore::equal(rate, 0.0)) {
 			effReactingPairs.push_back(&reactingPairs[i]);
 		}
 	}
@@ -884,7 +885,7 @@ void PSICluster::computeRateConstants() {
 
 		// Add the combining reactant to the effective vector
 		// if the rate is not 0.0
-		if (rate != 0.0) {
+		if (!xolotlCore::equal(rate, 0.0)) {
 			effCombiningReactants.push_back(&combiningReactants[i]);
 
 			// Add itself to the list again to account for the correct rate
@@ -921,7 +922,7 @@ void PSICluster::computeRateConstants() {
 
 		// Add the dissociating pair to the effective vector
 		// if the rate is not 0.0
-		if (rate != 0.0) {
+		if (!xolotlCore::equal(rate, 0.0)) {
 			effDissociatingPairs.push_back(&dissociatingPairs[i]);
 
 			// Add itself to the list again to account for the correct rate
@@ -945,7 +946,7 @@ void PSICluster::computeRateConstants() {
 
 		// Add the emission pair to the effective vector
 		// if the rate is not 0.0
-		if (rate != 0.0) {
+		if (!xolotlCore::equal(rate, 0.0)) {
 			effEmissionPairs.push_back(&emissionPairs[i]);
 		}
 	}

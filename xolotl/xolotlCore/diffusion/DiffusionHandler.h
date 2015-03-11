@@ -3,6 +3,7 @@
 
 // Includes
 #include "IDiffusionHandler.h"
+#include <MathUtils.h>
 
 namespace xolotlCore {
 
@@ -51,9 +52,9 @@ public:
 			double diffFactor = cluster->getDiffusionFactor();
 
 			// Don't do anything if the diffusion factor is 0.0
-			if (diffFactor == 0.0) continue;
+			if (xolotlCore::equal(diffFactor, 0.0)) continue;
 
-			// Add it's index (i) to the vector of indices
+			// Add its index (i) to the vector of indices
 			indexVector.push_back(i);
 
 			// Get its id

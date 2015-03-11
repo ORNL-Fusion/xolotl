@@ -42,7 +42,7 @@ public:
  *
  * @param maxClusterSize the maximal size of the clusters that will be in
  * the network. Set to 10 by default.
-	 * @param registry The dummy handler registry by default
+ * @param registry The dummy handler registry by default
  * @return The reaction network.
  */
 std::shared_ptr<xolotlCore::ReactionNetwork> getSimpleReactionNetwork(const int maxClusterSize = 10,
