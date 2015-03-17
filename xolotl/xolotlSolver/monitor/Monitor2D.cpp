@@ -78,9 +78,9 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time, Vec solutio
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);CHKERRQ(ierr);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -247,9 +247,9 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt timestep, PetscReal time
 		// Get the total size of the grid rescale the concentrations
 		int Mx, My;
 		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE);CHKERRQ(ierr);
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE);CHKERRQ(ierr);
 
 		// Compute the total surface irradiated by the helium flux
 		double surface = (double) My * hy;
@@ -321,9 +321,9 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);CHKERRQ(ierr);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -445,7 +445,8 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 /**
- * This operation sets up a monitor that will call monitorSolve
+ * This operation sets up all the needed monitors.
+ *
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
@@ -463,20 +464,16 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	PetscBool flagPerf, flagRetention, flagStatus, flag2DPlot;
 
 	// Check the option -plot_perf
-	ierr = PetscOptionsHasName(NULL, "-plot_perf", &flagPerf);
-	checkPetscError(ierr, "setupPetsc2DMonitor: PetscOptionsHasName (-plot_perf) failed.");
+	ierr = PetscOptionsHasName(NULL, "-plot_perf", &flagPerf);CHKERRQ(ierr);
 
 	// Check the option -plot_2d
-	ierr = PetscOptionsHasName(NULL, "-plot_2d", &flag2DPlot);
-	checkPetscError(ierr, "setupPetsc2DMonitor: PetscOptionsHasName (-plot_2d) failed.");
+	ierr = PetscOptionsHasName(NULL, "-plot_2d", &flag2DPlot);CHKERRQ(ierr);
 
 	// Check the option -helium_retention
-	ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);
-	checkPetscError(ierr, "setupPetsc2DMonitor: PetscOptionsHasName (-helium_retention) failed.");
+	ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);CHKERRQ(ierr);
 
 	// Check the option -start_stop
-	ierr = PetscOptionsHasName(NULL, "-start_stop", &flagStatus);
-	checkPetscError(ierr, "setupPetsc2DMonitor: PetscOptionsHasName (-start_stop) failed.");
+	ierr = PetscOptionsHasName(NULL, "-start_stop", &flagStatus);CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -511,8 +508,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		}
 
 		// monitorPerf will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorPerf, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc2DMonitor: TSMonitorSet (monitorPerf) failed.");
+		ierr = TSMonitorSet(ts, monitorPerf, NULL, NULL);CHKERRQ(ierr);
 	}
 
 	// Set the monitor to compute the helium fluence for the retention calculation
@@ -546,17 +542,16 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 
 		if (heIndices2D.size() == 0) {
 			throw std::string(
-					"PetscSolver Exception: Cannot compute the retention because there is "
-					"no helium or helium-vacancy cluster in the network.");
+					"PetscSolver Exception: Cannot compute the retention "
+					"because there is no helium or helium-vacancy cluster "
+					"in the network.");
 		}
 
 		// computeHeliumFluence will be called at each timestep
-		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc2DMonitor: TSMonitorSet (computeHeliumFluence) failed.");
+		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);CHKERRQ(ierr);
 
 		// computeHeliumRetention2D will be called at each timestep
-		ierr = TSMonitorSet(ts, computeHeliumRetention2D, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc2DMonitor: TSMonitorSet (computeHeliumRetention2D) failed.");
+		ierr = TSMonitorSet(ts, computeHeliumRetention2D, NULL, NULL);CHKERRQ(ierr);
 
 //		// Uncomment to clear the file where the retention will be written
 //		std::ofstream outputFile;
@@ -568,8 +563,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetInt(NULL, "-start_stop", &hdf5Stride2D, &flag);
-		checkPetscError(ierr, "setupPetsc2DMonitor: PetscOptionsGetInt (-start_stop) failed.");
+		ierr = PetscOptionsGetInt(NULL, "-start_stop", &hdf5Stride2D, &flag);CHKERRQ(ierr);
 		if (!flag)
 			hdf5Stride2D = 1;
 
@@ -578,15 +572,13 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 
 		// Get the da from ts
 		DM da;
-		ierr = TSGetDM(ts, &da);
-		checkPetscError(ierr, "setupPetsc2DMonitor: TSGetDM failed.");
+		ierr = TSGetDM(ts, &da);CHKERRQ(ierr);
 
 		// Get the size of the total grid
 		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE);
-		checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetInfo failed.");
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE);CHKERRQ(ierr);
 
 		// Initialize the HDF5 file for all the processes
 		xolotlCore::HDF5Utils::initializeFile(hdf5OutputName2D, networkSize);
@@ -608,8 +600,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		xolotlCore::HDF5Utils::finalizeFile();
 
 		// startStop2D will be called at each timestep
-		ierr = TSMonitorSet(ts, startStop2D, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc2DMonitor: TSMonitorSet (startStop2D) failed.");
+		ierr = TSMonitorSet(ts, startStop2D, NULL, NULL);CHKERRQ(ierr);
 	}
 
 	// Set the monitor to save surface plots of clusters concentration
@@ -639,15 +630,13 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		}
 
 		// monitorSurface2D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorSurface2D, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc2DMonitor: TSMonitorSet (monitorSurface2D) failed.");
+		ierr = TSMonitorSet(ts, monitorSurface2D, NULL, NULL);CHKERRQ(ierr);
 	}
 
 	// Set the monitor to simply change the previous time to the new time
 	if (flagRetention) {
 		// monitorTime will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc2DMonitor: TSMonitorSet (monitorTime) failed.");
+		ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);CHKERRQ(ierr);
 	}
 
 	PetscFunctionReturn(0);

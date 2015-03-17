@@ -166,16 +166,16 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 	// Grab the map of properties from the network
 	auto props = psiNetwork->getProperties();
 	// Convert the property strings so we can use them
-	auto numHeClusters = stoi(props["numHeClusters"]);
-	auto numVClusters = stoi(props["numVClusters"]);
-	auto numIClusters = stoi(props["numIClusters"]);
-	auto numHeVClusters = stoi(props["numHeVClusters"]);
-	auto numHeIClusters = stoi(props["numHeIClusters"]);
-	auto maxHeVClusterSize = stoi(props["maxHeVClusterSize"]);
-	auto maxHeIClusterSize = stoi(props["maxHeIClusterSize"]);
-	auto maxHeClusterSize = stoi(props["maxHeClusterSize"]);
-	auto maxVClusterSize = stoi(props["maxVClusterSize"]);
-	auto maxIClusterSize = stoi(props["maxIClusterSize"]);
+	int numHeClusters = stoi(props["numHeClusters"]);
+	int numVClusters = stoi(props["numVClusters"]);
+	int numIClusters = stoi(props["numIClusters"]);
+	int numHeVClusters = stoi(props["numHeVClusters"]);
+	int numHeIClusters = stoi(props["numHeIClusters"]);
+	int maxHeVClusterSize = stoi(props["maxHeVClusterSize"]);
+	int maxHeIClusterSize = stoi(props["maxHeIClusterSize"]);
+	int maxHeClusterSize = stoi(props["maxHeClusterSize"]);
+	int maxVClusterSize = stoi(props["maxVClusterSize"]);
+	int maxIClusterSize = stoi(props["maxIClusterSize"]);
 
 	// Check the properties
 	BOOST_REQUIRE_EQUAL(0, numHeClusters);

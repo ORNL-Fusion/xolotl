@@ -132,7 +132,7 @@ void HDF5Utils::fillNetwork(PSIClusterReactionNetwork *network) {
 		networkArray[i][2] = composition["I"];
 
 		// Get its formation energy to store it
-		auto formationEnergy = reactant->getFormationEnergy();
+		double formationEnergy = reactant->getFormationEnergy();
 		networkArray[i][3] = formationEnergy;
 
 		// Get its migration energy to store it

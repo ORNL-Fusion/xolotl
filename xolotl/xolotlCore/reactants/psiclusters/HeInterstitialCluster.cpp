@@ -102,7 +102,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	auto reactants = network->getAll(heType);
 	for (int i = 0; i < reactants.size(); i++) {
 		auto heliumReactant = (PSICluster *) reactants[i];
-		auto heliumReactantSize = heliumReactant->getSize();
+		int heliumReactantSize = heliumReactant->getSize();
 		// Get the second reactant, i.e. HeI cluster with He number smaller
 		// by the size of the helium reactant
 		auto comp = getComposition();
@@ -170,7 +170,7 @@ void HeInterstitialCluster::createReactionConnectivity() {
 	reactants = network->getAll(vType);
 	for (int i = 0; i < reactants.size(); i++) {
 		auto vacancyReactant = (PSICluster *) reactants[i];
-		auto vacancyReactantSize = vacancyReactant->getSize();
+		int vacancyReactantSize = vacancyReactant->getSize();
 		// Get the second reactant, i.e. HeI cluster with I number bigger
 		// by the size of the vacancy reactant
 		auto comp = getComposition();

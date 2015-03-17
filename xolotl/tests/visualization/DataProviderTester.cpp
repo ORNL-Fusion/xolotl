@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(checkData) {
 	}
 
 	// Get the mean value of the data
-	auto mean = myDataProvider->getDataMean();
+	double mean = myDataProvider->getDataMean();
 
 	// Check it is the right mean value:
 	// (3 + 2 + 5 - 8 + 7) / 5

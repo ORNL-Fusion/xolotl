@@ -80,9 +80,9 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time, Vec solutio
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);CHKERRQ(ierr);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -116,7 +116,8 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time, Vec solutio
 				// If it is the locally owned part of the grid
 				if (i >= xs && i < xs + xm && j >= ys && j < ys + ym
 						&& k >= zs && k < zs + zm) {
-					// Get the pointer to the beginning of the solution data for this grid point
+					// Get the pointer to the beginning of the solution data
+					// for this grid point
 					gridPointSolution = solutionArray[k][j][i];
 
 					// Loop on the concentrations
@@ -225,9 +226,10 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt timestep, PetscReal time
 
 				// Loop on all the indices
 				for (int l = 0; l < heIndices3D.size(); l++) {
-					// Add the current concentration times the number of helium in the cluster
-					// (from the weight vector)
-					heConcentration += gridPointSolution[heIndices3D[l]] * heWeights3D[l] * hx;
+					// Add the current concentration times the number of
+					// helium in the cluster (from the weight vector)
+					heConcentration += gridPointSolution[heIndices3D[l]]
+					                                     * heWeights3D[l] * hx;
 				}
 			}
 		}
@@ -257,9 +259,9 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt timestep, PetscReal time
 		// Get the total size of the grid rescale the concentrations
 		int Mx, My, Mz;
 		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE);CHKERRQ(ierr);
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE);CHKERRQ(ierr);
 
 		// Compute the total surface irradiated by the helium flux
 		double surface = (double) (My * Mz) * hy * hz;
@@ -331,9 +333,9 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);CHKERRQ(ierr);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -489,9 +491,9 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);CHKERRQ(ierr);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -542,7 +544,7 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 					// Else send the values to procId == 0
 					else {
 						// Send the value of the concentration to the master process
-						MPI_Send(&gridPointSolution[iCluster], 1, MPI_DOUBLE, 0, 2,
+						MPI_Send(&gridPointSolution[iCluster], 1, MPI_DOUBLE, 0, 3,
 								MPI_COMM_WORLD);
 					}
 				}
@@ -551,7 +553,7 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 				else if (procId == 0) {
 					// Receive the concentration from other processes
 					double tempConc = 0.0;
-					MPI_Recv(&tempConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2, MPI_COMM_WORLD,
+					MPI_Recv(&tempConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 3, MPI_COMM_WORLD,
 							MPI_STATUS_IGNORE);
 
 					// Add it to the integrated one
@@ -614,7 +616,8 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 /**
- * This operation sets up a monitor that will call monitorSolve
+ * This operation sets up all the needed monitors.
+ *
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
@@ -632,24 +635,19 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	PetscBool flagPerf, flagRetention, flagStatus, flag2DXYPlot, flag2DXZPlot;
 
 	// Check the option -plot_perf
-	ierr = PetscOptionsHasName(NULL, "-plot_perf", &flagPerf);
-	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-plot_perf) failed.");
+	ierr = PetscOptionsHasName(NULL, "-plot_perf", &flagPerf);CHKERRQ(ierr);
 
 	// Check the option -plot_2d_xy
-	ierr = PetscOptionsHasName(NULL, "-plot_2d_xy", &flag2DXYPlot);
-	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xy) failed.");
+	ierr = PetscOptionsHasName(NULL, "-plot_2d_xy", &flag2DXYPlot);CHKERRQ(ierr);
 
 	// Check the option -plot_2d_xz
-	ierr = PetscOptionsHasName(NULL, "-plot_2d_xz", &flag2DXZPlot);
-	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xz) failed.");
+	ierr = PetscOptionsHasName(NULL, "-plot_2d_xz", &flag2DXZPlot);CHKERRQ(ierr);
 
 	// Check the option -helium_retention
-	ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);
-	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-helium_retention) failed.");
+	ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);CHKERRQ(ierr);
 
 	// Check the option -start_stop
-	ierr = PetscOptionsHasName(NULL, "-start_stop", &flagStatus);
-	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-start_stop) failed.");
+	ierr = PetscOptionsHasName(NULL, "-start_stop", &flagStatus);CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -684,8 +682,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		}
 
 		// monitorPerf will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorPerf, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorPerf) failed.");
+		ierr = TSMonitorSet(ts, monitorPerf, NULL, NULL);CHKERRQ(ierr);
 	}
 
 	// Set the monitor to compute the helium fluence for the retention calculation
@@ -719,16 +716,15 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 
 		if (heIndices3D.size() == 0) {
 			throw std::string(
-					"PetscSolver Exception: Cannot compute the retention because there is no helium or helium-vacancy cluster in the network.");
+					"PetscSolver Exception: Cannot compute the retention because "
+					"there is no helium or helium-vacancy cluster in the network.");
 		}
 
 		// computeHeliumFluence will be called at each timestep
-		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSMonitorSet (computeHeliumFluence) failed.");
+		ierr = TSMonitorSet(ts, computeHeliumFluence, NULL, NULL);CHKERRQ(ierr);
 
 		// computeHeliumRetention3D will be called at each timestep
-		ierr = TSMonitorSet(ts, computeHeliumRetention3D, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSMonitorSet (computeHeliumRetention3D) failed.");
+		ierr = TSMonitorSet(ts, computeHeliumRetention3D, NULL, NULL);CHKERRQ(ierr);
 
 //		// Uncomment to clear the file where the retention will be written
 //		std::ofstream outputFile;
@@ -740,8 +736,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetInt(NULL, "-start_stop", &hdf5Stride3D, &flag);
-		checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsGetInt (-start_stop) failed.");
+		ierr = PetscOptionsGetInt(NULL, "-start_stop", &hdf5Stride3D, &flag);CHKERRQ(ierr);
 		if (!flag)
 			hdf5Stride3D = 1;
 
@@ -750,15 +745,13 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 
 		// Get the da from ts
 		DM da;
-		ierr = TSGetDM(ts, &da);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSGetDM failed.");
+		ierr = TSGetDM(ts, &da);CHKERRQ(ierr);
 
 		// Get the size of the total grid
 		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE);
-		checkPetscError(ierr, "setupPetsc3DMonitor: DMDAGetInfo failed.");
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE);CHKERRQ(ierr);
 
 		// Initialize the HDF5 file for all the processes
 		xolotlCore::HDF5Utils::initializeFile(hdf5OutputName3D, networkSize);
@@ -781,8 +774,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		xolotlCore::HDF5Utils::finalizeFile();
 
 		// startStop3D will be called at each timestep
-		ierr = TSMonitorSet(ts, startStop3D, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSMonitorSet (startStop3D) failed.");
+		ierr = TSMonitorSet(ts, startStop3D, NULL, NULL);CHKERRQ(ierr);
 	}
 
 	// Set the monitor to save surface plots of clusters concentration
@@ -812,8 +804,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		}
 
 		// monitorSurfaceXY3D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorSurfaceXY3D, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorSurfaceXY3D) failed.");
+		ierr = TSMonitorSet(ts, monitorSurfaceXY3D, NULL, NULL);CHKERRQ(ierr);
 	}
 
 	// Set the monitor to save surface plots of clusters concentration
@@ -843,15 +834,13 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		}
 
 		// monitorSurfaceXZ3D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorSurfaceXZ3D, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorSurfaceXZ3D) failed.");
+		ierr = TSMonitorSet(ts, monitorSurfaceXZ3D, NULL, NULL);CHKERRQ(ierr);
 	}
 
 	// Set the monitor to simply change the previous time to the new time
 	if (flagRetention) {
 		// monitorTime will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorTime) failed.");
+		ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);CHKERRQ(ierr);
 	}
 
 	PetscFunctionReturn(0);

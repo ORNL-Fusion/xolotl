@@ -72,7 +72,7 @@ void VCluster::createReactionConnectivity() {
 	// Vacancy-Interstitial annihilation producing this cluster
 	// I_b + V_(a+b) --> V_a
 	// All the I clusters are already in reactants
-	auto reactantsSize = reactants.size();
+	int reactantsSize = reactants.size();
 	for (int i = 0; i < reactantsSize; i++) {
 		auto firstReactant = (PSICluster *) reactants[i];
 		// Get the vacancy cluster that is bigger than the interstitial

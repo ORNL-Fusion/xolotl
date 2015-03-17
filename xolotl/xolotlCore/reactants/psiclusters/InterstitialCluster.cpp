@@ -80,7 +80,7 @@ void InterstitialCluster::createReactionConnectivity() {
 	// I_(a+b) + V_b --> I_a
 	// Get all the V clusters from the network
 	reactants = network->getAll(vType);
-	auto reactantsSize = reactants.size();
+	int reactantsSize = reactants.size();
 	for (int i = 0; i < reactantsSize; i++) {
 		auto firstReactant = (PSICluster *) reactants[i];
 		// Get the interstitial cluster that is bigger than the vacancy
@@ -164,7 +164,7 @@ void InterstitialCluster::createReactionConnectivity() {
 		for (int i = 0; i < heReactants.size(); i++) {
 			// Get the He cluster and its size b
 			auto firstCluster = (PSICluster *) heReactants[i];
-			auto firstSize = firstCluster->getSize();
+			int firstSize = firstCluster->getSize();
 			// Loop on the second He clusters starting at firstSize - 1 to avoid double counting
 			// This works only if the He clusters are ordered
 			for (int j = firstSize - 1; j < heReactants.size(); j++) {
