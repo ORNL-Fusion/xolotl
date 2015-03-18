@@ -34,7 +34,6 @@ using namespace xolotlCore;
  * in 1D.
  */
 BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
-
 	// Initialize MPI for HDF5
 	int argc = 0;
 	char **argv;
@@ -43,10 +42,28 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
 
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "vizHandler=dummy" << std::endl
+			<< "petscArgs=-fieldsplit_0_pc_type redundant "
+					"-ts_max_snes_failures 200 "
+					"-pc_fieldsplit_detect_coupling "
+					"-ts_adapt_dt_max 10 "
+					"-pc_type fieldsplit "
+					"-fieldsplit_1_pc_type sor "
+					"-ts_final_time 1000 "
+					"-ts_max_steps 5" << std::endl
+			<< "startTemp=900" << std::endl
+			<< "perfHandler=dummy" << std::endl
+			<< "heFlux=4.0e5" << std::endl
+			<< "material=W100" << std::endl
+			<< "dimensions=1" << std::endl;
+	paramFile.close();
+
 	// Create a fake command line to read the options
 	argc = 1;
 	argv = new char*[2];
-	std::string parameterFile = sourceDir + "/tests/testfiles/param_good.txt";
+	std::string parameterFile = "param.txt";
 	argv[0] = new char[parameterFile.length() + 1];
 	strcpy(argv[0], parameterFile.c_str());
 	argv[1] = 0; // null-terminate the array
@@ -106,11 +123,15 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	network->fillConcentrationsArray(concs);
 
 	// Check some concentrations
-    BOOST_REQUIRE_CLOSE(concs[0], 8.082e-17, 0.01);
-    BOOST_REQUIRE_CLOSE(concs[1], 3.0035e-29, 0.01);
-    BOOST_REQUIRE_CLOSE(concs[2], 4.329e-42, 0.01);
-    BOOST_REQUIRE_CLOSE(concs[7], 4.4165e-106, 0.01);
-    BOOST_REQUIRE_CLOSE(concs[8], 0.02500, 0.01);
+    BOOST_REQUIRE_CLOSE(concs[0], 3.9559e-11, 0.01);
+    BOOST_REQUIRE_CLOSE(concs[1], 2.2999e-18, 0.01);
+    BOOST_REQUIRE_CLOSE(concs[2], 4.1979e-26, 0.01);
+    BOOST_REQUIRE_CLOSE(concs[7], -1.3576e-62, 0.01);
+    BOOST_REQUIRE_CLOSE(concs[8], 0.0, 0.01);
+
+    // Remove the created file
+    std::string tempFile = "param.txt";
+    std::remove(tempFile.c_str());
 }
 
  /**
@@ -118,7 +139,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
   * in 2D.
   */
  BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
-
  	// Initialize MPI for HDF5
  	int argc = 0;
  	char **argv;
@@ -127,13 +147,31 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
  	// Local Declarations
  	string sourceDir(XolotlSourceDirectory);
 
- 	// Create a fake command line to read the options
- 	argc = 1;
- 	argv = new char*[2];
- 	std::string parameterFile = sourceDir + "/tests/testfiles/param_good_2D.txt";
- 	argv[0] = new char[parameterFile.length() + 1];
- 	strcpy(argv[0], parameterFile.c_str());
- 	argv[1] = 0; // null-terminate the array
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "vizHandler=dummy" << std::endl
+			<< "petscArgs=-fieldsplit_0_pc_type redundant "
+					"-ts_max_snes_failures 200 "
+					"-pc_fieldsplit_detect_coupling "
+					"-ts_adapt_dt_max 10 "
+					"-pc_type fieldsplit "
+					"-fieldsplit_1_pc_type sor "
+					"-ts_final_time 1000 "
+					"-ts_max_steps 5" << std::endl
+			<< "startTemp=900" << std::endl
+			<< "perfHandler=dummy" << std::endl
+			<< "heFlux=4.0e5" << std::endl
+			<< "material=W100" << std::endl
+			<< "dimensions=2" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	argc = 1;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
 
  	// Read the options
  	Options opts;
@@ -190,11 +228,15 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
  	network->fillConcentrationsArray(concs);
 
  	// Check some concentrations
-     BOOST_REQUIRE_CLOSE(concs[0], 1.418e-92, 0.01);
-     BOOST_REQUIRE_CLOSE(concs[1], 1.0244e-183, 0.01);
-     BOOST_REQUIRE_CLOSE(concs[6], 6.187e-12, 0.01);
+     BOOST_REQUIRE_CLOSE(concs[0], 2.7841e-74, 0.01);
+     BOOST_REQUIRE_CLOSE(concs[1], 1.6807e-146, 0.01);
+     BOOST_REQUIRE_CLOSE(concs[6], 6.5151e-11, 0.01);
      BOOST_REQUIRE_CLOSE(concs[14], 0.0, 0.01);
-     BOOST_REQUIRE_CLOSE(concs[23], 1.0094e-96, 0.01);
+     BOOST_REQUIRE_CLOSE(concs[23], 2.1984e-72, 0.01);
+
+     // Remove the created file
+     std::string tempFile = "param.txt";
+     std::remove(tempFile.c_str());
  }
 
  /**
@@ -202,7 +244,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
   * in 3D.
   */
  BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
-
  	// Initialize MPI for HDF5
  	int argc = 0;
  	char **argv;
@@ -211,13 +252,31 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
  	// Local Declarations
  	string sourceDir(XolotlSourceDirectory);
 
- 	// Create a fake command line to read the options
- 	argc = 1;
- 	argv = new char*[2];
- 	std::string parameterFile = sourceDir + "/tests/testfiles/param_good_3D.txt";
- 	argv[0] = new char[parameterFile.length() + 1];
- 	strcpy(argv[0], parameterFile.c_str());
- 	argv[1] = 0; // null-terminate the array
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "vizHandler=dummy" << std::endl
+			<< "petscArgs=-fieldsplit_0_pc_type redundant "
+					"-ts_max_snes_failures 200 "
+					"-pc_fieldsplit_detect_coupling "
+					"-ts_adapt_dt_max 10 "
+					"-pc_type fieldsplit "
+					"-fieldsplit_1_pc_type sor "
+					"-ts_final_time 1000 "
+					"-ts_max_steps 5" << std::endl
+			<< "startTemp=900" << std::endl
+			<< "perfHandler=dummy" << std::endl
+			<< "heFlux=4.0e5" << std::endl
+			<< "material=W100" << std::endl
+			<< "dimensions=3" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	argc = 1;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
 
  	// Read the options
  	Options opts;
@@ -274,11 +333,15 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
  	network->fillConcentrationsArray(concs);
 
  	// Check some concentrations
-     BOOST_REQUIRE_CLOSE(concs[0], 6.101e-90, 0.01);
-     BOOST_REQUIRE_CLOSE(concs[6], 6.075e-11, 0.01);
-     BOOST_REQUIRE_CLOSE(concs[14], 0.05000, 0.01);
-     BOOST_REQUIRE_CLOSE(concs[15], 5.975e-12, 0.01);
-     BOOST_REQUIRE_CLOSE(concs[16], 7.818e-22, 0.01);
+     BOOST_REQUIRE_CLOSE(concs[0], -7.4983e-79, 0.01);
+     BOOST_REQUIRE_CLOSE(concs[6], 8.8196e-11, 0.01);
+     BOOST_REQUIRE_CLOSE(concs[14], 0.0, 0.01);
+     BOOST_REQUIRE_CLOSE(concs[15], -3.0887e-157, 0.01);
+     BOOST_REQUIRE_CLOSE(concs[16], -5.5119e-144, 0.01);
+
+     // Remove the created file
+     std::string tempFile = "param.txt";
+     std::remove(tempFile.c_str());
  }
 
 BOOST_AUTO_TEST_SUITE_END()
