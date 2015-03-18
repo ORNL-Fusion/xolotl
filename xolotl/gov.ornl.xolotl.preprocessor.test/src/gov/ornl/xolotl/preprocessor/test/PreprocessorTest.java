@@ -28,7 +28,6 @@ public class PreprocessorTest {
 	 */
 	@Test
 	public void testParameterFile() {
-
 		// Local Declarations
 		Arguments parsedArgs = null;
 
@@ -45,8 +44,8 @@ public class PreprocessorTest {
 
 				// Load the properties from the parameter file to check they
 				// were written correctly
-				Properties inProps = preprocessor
-						.loadParameterFile("paramsTest");
+				Properties inProps = preprocessor.loadParameterFile("paramsTest");
+				
 				// Enumeration to hold the parameter names
 				Enumeration<?> paramNames = inProps.propertyNames();
 				while (paramNames.hasMoreElements()) {
@@ -54,16 +53,18 @@ public class PreprocessorTest {
 					String value = inProps.getProperty(key);
 					// Check that the default parameter values were used
 					assertEquals(preprocessor.xolotlParams.getProperty(key),
-							value);
+								value);
 				}
 
 				// Delete the parameter file
 				new File("paramsTest").delete();
-
 			}
-		} catch (ArgumentValidationException e1) {
-			e1.printStackTrace();
 		}
+		catch (ArgumentValidationException e) {
+			// Complain and fail
+			e.printStackTrace();
+			fail();
+		} 
 
 		return;
 	}
@@ -74,14 +75,13 @@ public class PreprocessorTest {
 	 */
 	@Test
 	public void testCLOptionOverride() {
-
 		// Local Declarations
 		Arguments parsedArgs = null;
 
 		try {
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
 					new String[] { "--perfHandler", "dummy",
-							"--petscArgs=" + "-da_grid_x 8 -ts_final_time 2" });
+				"--petscArgs=" + "-da_grid_x 8 -ts_final_time 2" });
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
@@ -92,8 +92,8 @@ public class PreprocessorTest {
 
 				// Load the properties from the parameter file to check they
 				// were written correctly
-				Properties inProps = preprocessor
-						.loadParameterFile("clOptionsTest");
+				Properties inProps = preprocessor.loadParameterFile("clOptionsTest");
+			
 				// Enumeration to hold the parameter names
 				Enumeration<?> paramNames = inProps.propertyNames();
 				while (paramNames.hasMoreElements()) {
@@ -106,11 +106,13 @@ public class PreprocessorTest {
 
 				// Delete the parameter file
 				new File("clOptionsTest").delete();
-
 			}
-		} catch (ArgumentValidationException e1) {
-			e1.printStackTrace();
 		}
+		catch (ArgumentValidationException e) {
+			// Complain and fail
+			e.printStackTrace();
+			fail();
+		} 
 
 		return;
 	}
@@ -121,22 +123,12 @@ public class PreprocessorTest {
 	 */
 	@Test
 	public void testOptionalOptions() {
-
 		// Local Declarations
 		Arguments parsedArgs = null;
 
 		try {
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
 					new String[] { "--startTemp", "900", "--heFlux", "1.5" });
-			
-			// Check that the startTemp is 900
-			assertEquals("900", parsedArgs.getStartTemp());
-			
-			// Check that the HeFlux option is present
-			assertEquals(true, parsedArgs.isHeFlux());
-			
-			// Check the value of the HeFlux option
-			assertEquals("1.5", parsedArgs.getHeFlux());
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
@@ -149,6 +141,7 @@ public class PreprocessorTest {
 				// were written correctly
 				Properties inProps = preprocessor
 						.loadParameterFile("optionalOpsTest");
+			
 				// Enumeration to hold the parameter names
 				Enumeration<?> paramNames = inProps.propertyNames();
 				while (paramNames.hasMoreElements()) {
@@ -161,18 +154,20 @@ public class PreprocessorTest {
 
 				// Delete the parameter file
 				new File("optionalOpsTest").delete();
-
 			}
-		} catch (ArgumentValidationException e1) {
-			e1.printStackTrace();
 		}
+		catch (ArgumentValidationException e) {
+			// Complain and fail
+			e.printStackTrace();
+			fail();
+		} 
 
 		return;
 	}
 	
 	/**
-	 * This operation checks if the optional options are specified via the
-	 * command line, that they will be included in the parameter file.
+	 * This operation checks that it is not possible to give wrong 
+	 * sizes for He, I, and V.
 	 */
 	@Test(expected=IllegalArgumentException.class)
 	public void testBadMaxClusterSizeOptions() {
@@ -181,20 +176,104 @@ public class PreprocessorTest {
 		Arguments parsedArgs = null;
 
 		try {
+			// Try a number of helium that is too big
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
 					new String[] { "--maxHeSize", "10" });
 			
-			// Check that the max Helium cluster size is 10
+			// Check that the max helium cluster size is 10
 			assertEquals(10, parsedArgs.getMaxHeSize());
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-				fail("Should have thrown an IllegalArgumentException because the maximum He size is out of range.");
+				fail("Should have thrown an IllegalArgumentException because "
+						+ "the maximum He size is out of range.");
+			}
+		}
+		catch (ArgumentValidationException e) {
+			e.printStackTrace();
+		} 
+
+		try {
+			// Try a number of vacancy that is negative
+			parsedArgs = CliFactory.parseArguments(Arguments.class,
+					new String[] { "--maxVSize", "-1" });
+			
+			// Check that the max interstitial cluster size is -1
+			assertEquals(-2, parsedArgs.getMaxVSize());
+
+			if (parsedArgs != null) {
+				Preprocessor preprocessor = new Preprocessor(parsedArgs);
+				fail("Should have thrown an IllegalArgumentException because "
+						+ "the maximum V size is out of range.");
+			}
+		}
+		catch (ArgumentValidationException e) {
+			e.printStackTrace();
+		} 
+		
+		try {
+			// Try a number of interstitial that is negative
+			parsedArgs = CliFactory.parseArguments(Arguments.class,
+					new String[] { "--maxISize", "-2" });
+			
+			// Check that the max interstitial cluster size is -2
+			assertEquals(-2, parsedArgs.getMaxISize());
+
+			if (parsedArgs != null) {
+				Preprocessor preprocessor = new Preprocessor(parsedArgs);
+				fail("Should have thrown an IllegalArgumentException because "
+						+ "the maximum I size is out of range.");
+				}
+		}
+		catch (ArgumentValidationException e) {
+			e.printStackTrace();
+		} 
+
+		return;
+	}
+
+	/**
+	 * This operation checks the generation of the network.
+	 */
+	@Test
+	public void testNetworkGeneration() {
+		// Local Declarations
+		Arguments parsedArgs = null;
+
+		try {
+			// Keep the default arguments
+			parsedArgs = CliFactory.parseArguments(Arguments.class,
+					new String[] {});
+
+			if (parsedArgs != null) {
+				Preprocessor preprocessor = new Preprocessor(parsedArgs);
+
+				// Generate the network
+				ArrayList<Cluster> network = preprocessor.generateNetwork();
+
+				// Check the size of the network
+				assertEquals(network.size(), 2067);
 			}
 
-		} catch (ArgumentValidationException e1) {
-			e1.printStackTrace();
+			// Change the number of V clusters
+			parsedArgs = CliFactory.parseArguments(Arguments.class,
+					new String[] { "--maxVSize", "60" });
+
+			if (parsedArgs != null) {
+				Preprocessor preprocessor = new Preprocessor(parsedArgs);
+
+				// Generate the network
+				ArrayList<Cluster> network = preprocessor.generateNetwork();
+
+				// Check the size of the network
+				assertEquals(network.size(), 7678);
+			}
 		}
+		catch (ArgumentValidationException e) {
+			// Complain and fail
+			e.printStackTrace();
+			fail();
+		} 
 
 		return;
 	}
@@ -204,7 +283,6 @@ public class PreprocessorTest {
 	 */
 	@Test
 	public void testHDF5Writing() {
-
 		// Local Declarations
 		Arguments parsedArgs = null;
 
@@ -230,31 +308,26 @@ public class PreprocessorTest {
 				// Add it to clusters
 				clusters.add(cluster);
 
-				try {
-					// Create the HDF5 file
-					preprocessor.createHDF5("test.h5");
+				// Create the HDF5 file
+				preprocessor.createHDF5("test.h5");
 
-					// Write the header in it
-					preprocessor.writeHeader("test.h5", parsedArgs);
+				// Write the header in it
+				preprocessor.writeHeader("test.h5", parsedArgs);
 
-					// Write the network in it
-					preprocessor.writeNetwork("test.h5", clusters);
+				// Write the network in it
+				preprocessor.writeNetwork("test.h5", clusters);
 
-					// Check that the file was created
-					File f = new File("test.h5");
-					boolean fileExists = (f.exists() && !f.isDirectory());
-					assertEquals(fileExists, true);
-
-				} catch (Exception e) {
-					// Complain and fail
-					e.printStackTrace();
-					fail();
-				}
-
+				// Check that the file was created
+				File f = new File("test.h5");
+				boolean fileExists = (f.exists() && !f.isDirectory());
+				assertEquals(fileExists, true);
 			}
-		} catch (ArgumentValidationException e1) {
-			e1.printStackTrace();
 		}
+		catch (ArgumentValidationException e) {
+			// Complain and fail
+			e.printStackTrace();
+			fail();
+		} 
 
 		return;
 	}

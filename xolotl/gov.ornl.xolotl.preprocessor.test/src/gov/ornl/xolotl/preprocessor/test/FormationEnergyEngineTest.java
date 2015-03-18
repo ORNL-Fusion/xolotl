@@ -25,7 +25,6 @@ public class FormationEnergyEngineTest {
 	 */
 	@Test
 	public void testHeEnergies() {
-
 		// Local Declarations
 		FormationEnergyEngine engine = new FormationEnergyEngine();
 
@@ -51,7 +50,6 @@ public class FormationEnergyEngineTest {
 	 */
 	@Test
 	public void testVEnergies() {
-
 		// Local Declarations
 		FormationEnergyEngine engine = new FormationEnergyEngine();
 
@@ -74,7 +72,6 @@ public class FormationEnergyEngineTest {
 	 */
 	@Test
 	public void testIEnergies() {
-
 		// Local Declarations
 		FormationEnergyEngine engine = new FormationEnergyEngine();
 
@@ -124,7 +121,6 @@ public class FormationEnergyEngineTest {
 	 */
 	@Test
 	public void testFitFile() {
-
 		try {
 			// Create the fit file
 			File fitFile = new File("fit.csv");
@@ -150,14 +146,13 @@ public class FormationEnergyEngineTest {
 			// around.)
 			engine = new FormationEnergyEngine();
 			assertEquals(75.049, engine.getHeVFormationEnergy(30, 6), 1.0e-2);
-
-		} catch (IOException e) {
+		} 
+		catch (IOException e) {
 			// Complain and fail
 			e.printStackTrace();
 			fail();
-		}
+		} 
 
 		return;
 	}
-
 }

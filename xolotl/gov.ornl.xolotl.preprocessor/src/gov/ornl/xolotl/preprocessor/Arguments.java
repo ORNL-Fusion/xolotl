@@ -229,7 +229,7 @@ public interface Arguments {
 	 * 
 	 * @return The number of grid points in the x direction
 	 */
-	String getNxGrid();
+	int getNxGrid();
 
 	/**
 	 * This Option annotation corresponds to the '--nyGrid' option which defines a 
@@ -251,7 +251,7 @@ public interface Arguments {
 	 * 
 	 * @return The number of grid points in the y direction
 	 */
-	String getNyGrid();
+	int getNyGrid();
 
 	/**
 	 * This Option annotation corresponds to the '--nzGrid' option which defines a 
@@ -273,7 +273,7 @@ public interface Arguments {
 	 * 
 	 * @return The number of grid points in the z direction
 	 */
-	String getNzGrid();
+	int getNzGrid();
 
 	/**
 	 * This Option annotation corresponds to the '--xStepSize' option which
@@ -295,7 +295,7 @@ public interface Arguments {
 	 * 
 	 * @return The value of the step size
 	 */
-	String getXStepSize();
+	double getXStepSize();
 
 	/**
 	 * This Option annotation corresponds to the '--yStepSize' option which
@@ -317,7 +317,7 @@ public interface Arguments {
 	 * 
 	 * @return The value of the step size
 	 */
-	String getYStepSize();
+	double getYStepSize();
 
 	/**
 	 * This Option annotation corresponds to the '--zStepSize' option which
@@ -339,7 +339,7 @@ public interface Arguments {
 	 * 
 	 * @return The value of the step size
 	 */
-	String getZStepSize();
+	double getZStepSize();
 
 	/**
 	 * This Option annotation corresponds to the optional '--material' option

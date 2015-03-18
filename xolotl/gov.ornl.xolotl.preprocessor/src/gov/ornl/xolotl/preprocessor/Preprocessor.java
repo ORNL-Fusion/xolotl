@@ -118,7 +118,6 @@ public class Preprocessor {
 	 *         Xolotl
 	 */
 	private String generatePetscArgs(String petscArgs) {
-
 		// Create a map of the default Petsc options and their corresponding
 		// arguments, if any, where the key is the option and the value is
 		// the argument
@@ -142,26 +141,29 @@ public class Preprocessor {
 			petscList.add(str);
 		}
 
-		// Check if the last string in the petscList is a stand-alone option
+		// Create the dash character
 		String str = "-";
 		char dash = str.charAt(0);
-		if (((petscList.get((petscList.size() - 1))).charAt(0)) == dash) {
-			petscOptions.put(petscList.get((petscList.size() - 1)), "");
-		}
 
 		// Loop through the Petsc list of strings to pair Petsc options with
 		// their corresponding arguments and identify the stand-alone options
-		for (int i = 1; i < petscList.size(); i++) {
-			// Check if there is an option followed by a corresponding argument
-			if (((petscList.get(i - 1)).charAt(0) == dash)
-					&& !((petscList.get(i)).charAt(0) == dash)) {
-				// Replace the default argument value with the specified value
-				petscOptions.put(petscList.get(i - 1), petscList.get(i));
-				i++;
-			}
-			// Identify stand-alone options
-			else {
-				petscOptions.put(petscList.get(i - 1), "");
+		for (int i = 0; i < petscList.size(); i++) {
+			// Check that we are reading the name of the option
+			// ("-" at the beginning)
+			if (petscList.get(i).charAt(0) == dash) {
+				// If there is another element after and the element doesn't 
+				// start with "-", this is an option with value
+				if (i < petscList.size() - 1 
+						&& !((petscList.get(i + 1)).charAt(0) == dash)) {
+					petscOptions.put(petscList.get(i), petscList.get(i + 1));
+					
+					// Skip the value now
+					i++;
+				}
+				// Else the option is not associated to a value
+				else {
+					petscOptions.put(petscList.get(i), "");
+				}
 			}
 		}
 
@@ -366,12 +368,10 @@ public class Preprocessor {
 	 * This operation generates the initial conditions based on the defaults and
 	 * the incoming command line arguments.
 	 * 
-	 * @param args
-	 *            The arguments read from the command line
 	 * @return The list of clusters created by the preprocessor based on its
 	 *         arguments and settings.
 	 */
-	public ArrayList<Cluster> generateNetwork(String[] args) {
+	public ArrayList<Cluster> generateNetwork() {
 
 		// Create the list of clusters
 		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
@@ -478,13 +478,13 @@ public class Preprocessor {
 		int status;
 		
 		// Get the grid size
-		int[] nxGrid = { Integer.parseInt(args.getNxGrid()) };
-		int[] nyGrid = { Integer.parseInt(args.getNyGrid()) };
-		int[] nzGrid = { Integer.parseInt(args.getNzGrid()) };
+		int[] nxGrid = { args.getNxGrid() };
+		int[] nyGrid = { args.getNyGrid() };
+		int[] nzGrid = { args.getNzGrid() };
 		//Get the step sizes
-		double[] hx = { Double.parseDouble(args.getXStepSize()) };
-		double[] hy = { Double.parseDouble(args.getYStepSize()) };
-		double[] hz = { Double.parseDouble(args.getZStepSize()) };
+		double[] hx = { args.getXStepSize() };
+		double[] hy = { args.getYStepSize() };
+		double[] hz = { args.getZStepSize() };
 
 		try {
 			// Open the HDF5 file

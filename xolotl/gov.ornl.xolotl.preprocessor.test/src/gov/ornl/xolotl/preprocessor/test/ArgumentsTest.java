@@ -20,9 +20,8 @@ public class ArgumentsTest {
 	 */
 	@Test
 	public void testDefaultArguments() {
-
 		// Local Declarations
-		final Arguments args;
+		Arguments args;
 
 		try {
 			// Parse the empty string of arguments
@@ -37,23 +36,48 @@ public class ArgumentsTest {
 			// Check that the default maximum interstitial cluster size is 6
 			assertEquals(6, args.getMaxISize());
 
-			// Check the default material argument
-			assertEquals("W100", args.getMaterial());
+			// Check if there is a startTemp argument
+			assertEquals("1000", args.getStartTemp());
+
+			// Check that the default perfHandler is std
+			assertEquals("std", args.getPerfHandler());
+
+			// Check if there is a vizHandler argument
+			assertEquals("dummy", args.getVizHandler());
+
+			// Check the default petscArgs
+			assertEquals("-ts_final_time 50 -ts_dt 1.0e-12 "
+					+ "-ts_max_steps 100 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
+					+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type redundant "
+					+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor",
+					args.getPetscArgs());
+
+			// Check that the default networkFile is networkInit.h5
+			assertEquals("networkInit.h5", args.getNetworkFile());
 
 			// Check the default number of dimensions
 			assertEquals("1", args.getDimensions());
 
 			// Check the default number of grid points in the x direction
-			assertEquals("20", args.getNxGrid());
+			assertEquals(20, args.getNxGrid());
 
 			// Check the default number of grid points in the y direction
-			assertEquals("0", args.getNyGrid());
+			assertEquals(0, args.getNyGrid());
 
 			// Check the default number of grid points in the z direction
-			assertEquals("0", args.getNzGrid());
+			assertEquals(0, args.getNzGrid());
 
-			// Check if there is a startTemp argument
-			assertEquals("1000", args.getStartTemp());
+			// Check that the default xStepSize is 1.0
+			assertEquals(1.0, args.getXStepSize(), 0.001);
+
+			// Check that the default yStepSize is 0.0
+			assertEquals(0.0, args.getYStepSize(), 0.001);
+
+			// Check that the default zStepSize is 0.0
+			assertEquals(0.0, args.getZStepSize(), 0.001);
+
+			// Check the default material argument
+			assertEquals("W100", args.getMaterial());
 
 			// Check if there is a tempFile argument
 			assertEquals(false, args.isTempFile());
@@ -64,37 +88,19 @@ public class ArgumentsTest {
 			// Check if there is an fluxFile argument
 			assertEquals(false, args.isFluxFile());
 
-			// Check that the default perfHandler is std
-			assertEquals("std", args.getPerfHandler());
-
-			// Check if there is a vizHandler argument
-			assertEquals("dummy", args.getVizHandler());
-
 			// Check if there is a checkpoint argument
 			assertEquals(false, args.isCheckpoint());
 
-			// Check that the default networkFile is networkInit.h5
-			assertEquals("networkInit.h5", args.getNetworkFile());
-
-			// Check that the default xStepSize is 1.0
-			assertEquals("1.0", args.getXStepSize());
-
-			// Check that the default yStepSize is 0.0
-			assertEquals("0.0", args.getYStepSize());
-
-			// Check that the default zStepSize is 0.0
-			assertEquals("0.0", args.getZStepSize());
-
-			// Check the default petscArgs
-			assertEquals(
-					"-ts_final_time 50 -ts_dt 1.0e-12 "
-							+ "-ts_max_steps 100 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
-							+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type redundant "
-							+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor",
-					args.getPetscArgs());
-		} catch (ArgumentValidationException e) {
-			e.printStackTrace();
+			// Check if there is a initial vacancy concentration argument
+			assertEquals(false, args.isInitialV());
 		}
+		catch (ArgumentValidationException e) {
+			// Complain and fail
+			e.printStackTrace();
+			fail();
+		} 
+		
+		return;
 	}
 
 	/**
@@ -104,17 +110,20 @@ public class ArgumentsTest {
 	 */
 	@Test
 	public void testSpecifiedArguments() {
-
 		// Local Declarations
-		final Arguments args;
+		Arguments args;
 
 		try {
 			// Parse the specified string of arguments
 			args = CliFactory.parseArguments(Arguments.class, new String[] {
-					"--startTemp", "900", "--material", "W111", "--perfHandler",
-					"dummy", "--dimensions", "2", "--nyGrid", "50", "--maxHeSize", 
-					"7", "--maxVSize", "30", "--maxISize", "5", "--checkpoint", 
-					"xolotlStop.h5", "--xStepSize", "3.0", "--initialV", "0.05"});
+				"--maxHeSize", "7", "--maxVSize", "30", "--maxISize", "5",
+				"--startTemp", "900", "--perfHandler", "dummy", "--vizHandler", "std", 
+				"--petscArgs=-plot", "--networkFile", "net.h5",
+				"--dimensions", "2", "--nxGrid", "50", "--nyGrid", "10", "--nzGrid", "30", 
+				"--xStepSize", "0.2", "--yStepSize", "1.5", "--zStepSize", "10.0", 
+				"--material", "W111", "--tempFile", "temp.dat", "--heFlux", "5.0e5", 
+				"--fluxFile", "flux.dat", "--checkpoint", "xolotlStop.h5", 
+				"--initialV", "0.05" });
 			
 			// Check that the maximum Helium cluster size is 7
 			assertEquals(7, args.getMaxHeSize());
@@ -124,56 +133,82 @@ public class ArgumentsTest {
 			
 			// Check that the maximum interstitial cluster size is 5
 			assertEquals(5, args.getMaxISize());
-			
-			// Check that the material is W111
-			assertEquals("W111", args.getMaterial());
-			
-			// Check that the number of dimensions is 2
-			assertEquals("2", args.getDimensions());
-			
-			// Check that the number of grid points in the y direction is 50
-			assertEquals("50", args.getNyGrid());
-			
-			// Check that the startTemp is 900
+
+			// Check that the temperature is 900
 			assertEquals("900", args.getStartTemp());
-
-			// Check if there is a tempFile argument
-			assertEquals(false, args.isTempFile());
-
-			// Check if there is an heFlux argument
-			assertEquals(false, args.isHeFlux());
 
 			// Check that the perfHandler is dummy
 			assertEquals("dummy", args.getPerfHandler());
 
-			// Check if there is a vizHandler argument
-			assertEquals("dummy", args.getVizHandler());
+			// Check that the vizHandler is std
+			assertEquals("std", args.getVizHandler());
 
+			// Check the petscArgs
+			assertEquals("-plot", args.getPetscArgs());
+
+			// Check that the networkFile is net.h5
+			assertEquals("net.h5", args.getNetworkFile());
+			
+			// Check that the number of dimensions is 2
+			assertEquals("2", args.getDimensions());
+			
+			// Check that the number of grid points in the x direction is 50
+			assertEquals(50, args.getNxGrid());
+			
+			// Check that the number of grid points in the y direction is 10
+			assertEquals(10, args.getNyGrid());
+			
+			// Check that the number of grid points in the z direction is 30
+			assertEquals(30, args.getNzGrid());
+
+			// Check that the xStepSize was set to 0.2
+			assertEquals(0.2, args.getXStepSize(), 0.001);
+
+			// Check that the yStepSize was set to 1.5
+			assertEquals(1.5, args.getYStepSize(), 0.001);
+
+			// Check that the zStepSize was set to 10.0
+			assertEquals(10.0, args.getZStepSize(), 0.001);
+		
+			// Check that the material is W111
+			assertEquals("W111", args.getMaterial());
+
+			// Check if there is a tempFile argument
+			assertEquals(true, args.isTempFile());
+
+			// Check that the tempFile argument is temp.dat
+			assertEquals("temp.dat", args.getTempFile());
+
+			// Check if there is an heFlux argument
+			assertEquals(true, args.isHeFlux());
+
+			// Check that the heFlux argument is 5.0e5
+			assertEquals("5.0e5", args.getHeFlux());
+
+			// Check if there is an fluxFile argument
+			assertEquals(true, args.isFluxFile());
+
+			// Check that the fluxFile argument is flux.dat
+			assertEquals("flux.dat", args.getFluxFile());
+		
 			// Check if there is a checkpoint argument
 			assertEquals(true, args.isCheckpoint());
 
 			// Check the name of the file for the checkpoint
 			assertEquals("xolotlStop.h5", args.getCheckpoint());
-
+			
 			// Check if there is an initial vacancy concentration argument
 			assertEquals(true, args.isInitialV());
 
 			// Check its value
 			assertEquals("0.05", args.getInitialV());
-
-			// Check that the xStepSize was set to 3.0
-			assertEquals("3.0", args.getXStepSize());
-
-			// Check the default petscArgs
-			assertEquals(
-					"-ts_final_time 50 -ts_dt 1.0e-12 "
-							+ "-ts_max_steps 100 -ts_adapt_dt_max 10 -ts_max_snes_failures 200 "
-							+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type redundant "
-							+ "-fieldsplit_1_pc_type sor -snes_monitor -ksp_monitor -ts_monitor",
-					args.getPetscArgs());
-		} catch (ArgumentValidationException e) {
+		} 
+		catch (ArgumentValidationException e) {
+			// Complain and fail
 			e.printStackTrace();
-		}
+			fail();
+		} 
+		
+		return;
 	}
-
 }

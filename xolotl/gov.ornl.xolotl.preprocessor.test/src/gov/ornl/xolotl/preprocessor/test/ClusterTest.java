@@ -22,7 +22,6 @@ public class ClusterTest {
 	 */
 	@Test
 	public final void testToString() {
-
 		// Create a cluster
 		Cluster cluster = new Cluster();
 		cluster.nHe = 1;
@@ -56,5 +55,4 @@ public class ClusterTest {
 
 		return;
 	}
-
 }

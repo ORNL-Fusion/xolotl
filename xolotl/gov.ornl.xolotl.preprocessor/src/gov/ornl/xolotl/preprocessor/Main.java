@@ -43,7 +43,7 @@ public class Main {
 
 				// Generate the network of clusters
 				ArrayList<Cluster> clusters = preprocessor
-						.generateNetwork(args);
+						.generateNetwork();
 				System.out.println("Network generated.");
 				
 				// Get the name of the networkFile from xolotlParams
@@ -64,7 +64,6 @@ public class Main {
 							gridSize, clusters);
 				}
 				else {
-					
 					// Write the header in it with the size options from the preprocessor
 					preprocessor.writeHeader(networkFileName, myArgs);
 				}
