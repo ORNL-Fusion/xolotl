@@ -441,7 +441,7 @@ static std::vector<int> getFullConnectivityVector(std::set<int> connectivitySet,
 
 	// Set the value of the connectivity array to one for each element that is
 	// in the set.
-	for (auto it = connectivitySet.begin(); it != connectivitySet.end(); it++) {
+	for (auto it = connectivitySet.begin(); it != connectivitySet.end(); ++it) {
 		connectivity[*it - 1] = 1;
 	}
 

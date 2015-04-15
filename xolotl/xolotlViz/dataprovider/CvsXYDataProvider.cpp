@@ -1,6 +1,7 @@
 // Includes
 #include "CvsXYDataProvider.h"
 #include <algorithm>
+#include <iostream>
 
 using namespace xolotlViz;
 
@@ -18,7 +19,12 @@ std::vector<double> CvsXYDataProvider::getAxis1Vector() const {
 
 	// Loop on all the points in the data vector
 	for (auto it = dataPoints->begin();
-			it != dataPoints->end(); it++) {
+			it != dataPoints->end(); ++it) {
+		// Find the max and almostMax
+		if ((*it).x > max) {
+			almostMax = max;
+			max = (*it).x;
+		}
 		// Find the max and almostMax
 		if ((*it).x > max) {
 			almostMax = max;
@@ -43,7 +49,17 @@ std::vector<double> CvsXYDataProvider::getAxis2Vector() const {
 
 	// Loop on all the points in the data vector
 	for (auto it = dataPoints->begin();
-			it != dataPoints->end(); it++) {
+			it != dataPoints->end(); ++it) {
+		// Find the max and almostMax
+		if ((*it).y > max) {
+			almostMax = max;
+			max = (*it).y;
+		}
+		// Find the max and almostMax
+		if ((*it).y > max) {
+			almostMax = max;
+			max = (*it).y;
+		}
 		// Find the max and almostMax
 		if ((*it).y > max) {
 			almostMax = max;
@@ -65,7 +81,7 @@ std::vector<double> CvsXYDataProvider::getAxis3Vector() const {
 
 	// Loop on all the points in the data vector
 	for (auto it = dataPoints->begin();
-			it != dataPoints->end(); it++) {
+			it != dataPoints->end(); ++it) {
 
 		// Fill the concentrationVector
 		concentrationVector.push_back(std::max((*it).value, 1.0e-16));

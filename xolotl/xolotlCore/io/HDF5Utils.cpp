@@ -243,7 +243,7 @@ void HDF5Utils::addConcentrationDataset(int size, int i, int j, int k) {
 	return;
 }
 
-void HDF5Utils::fillConcentrations(std::vector<std::vector<double> > concVector,
+void HDF5Utils::fillConcentrations(const std::vector<std::vector<double> >& concVector,
 		int i, int j, int k) {
 	// Create the concentration array
 	double concArray[concVector.size()][2];

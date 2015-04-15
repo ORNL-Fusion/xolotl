@@ -73,7 +73,7 @@ namespace HDF5Utils {
 	 * @param j The index of the position on the grid on the y direction
 	 * @param k The index of the position on the grid on the z direction
 	 */
-	void fillConcentrations(std::vector< std::vector<double> > concVector,
+	void fillConcentrations(const std::vector< std::vector<double> >& concVector,
 			int i, int j = -1, int k = -1);
 
 	/**

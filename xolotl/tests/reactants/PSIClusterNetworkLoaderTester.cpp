@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(!props.empty());
 	
 	// Print the properties list to debug
-	for (auto it = props.begin(); it != props.end(); it++) {
+	for (auto it = props.begin(); it != props.end(); ++it) {
 		printf("\"%s\" => \"%s\"\n", it->first.c_str(), it->second.c_str());
 	}
 

@@ -55,7 +55,7 @@ shared_ptr<std::istream> MPIUtils::broadcastStream(
 	bufferSS->seekg(0);
 
 	// Clean up the buffer memory and return it
-	delete buffer;
+	delete[] buffer;
 	
 	return bufferSS;
 }
