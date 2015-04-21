@@ -19,31 +19,68 @@ static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared
  * This suite is responsible for testing the Reactant.
  */BOOST_AUTO_TEST_SUITE(Reactant_testSuite)
 
-/**
- * This operation checks the ability to set the temperature
- */
 BOOST_AUTO_TEST_CASE(checkTemperature) {
+	// Create a reactant
 	Reactant reactant(registry);
+	// Set its temperature
 	reactant.setTemperature(1000.0);
-	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(),0.0001);
+
+	// Check its temperature
+	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(), 0.0001);
 
 	return;
 }
 
-/**
- * This operation asserts that the default composition is empty.
- */
 BOOST_AUTO_TEST_CASE(checkComposition) {
+	// Create a reactant
 	Reactant reactant(registry);
+
+	// Check its default composition
 	BOOST_REQUIRE_EQUAL(0, reactant.getComposition().size());
 
 	return;
 }
 
-/**
- * This operation tests the copy constructor.
- */BOOST_AUTO_TEST_CASE(checkCopying) {
+BOOST_AUTO_TEST_CASE(checkConnectivity) {
+	// Create a reactant
+	Reactant reactant(registry);
 
+	// Create a network and set it
+	auto network = make_shared<PSIClusterReactionNetwork>(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	reactant.setReactionNetwork(network);
+
+	// Check its default connectivity
+	BOOST_REQUIRE_EQUAL(0, reactant.getConnectivity().size());
+
+	return;
+}
+
+BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
+	// Create a reactant
+	Reactant reactant(registry);
+
+	// Create a network and set it
+	auto network = make_shared<PSIClusterReactionNetwork>(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	reactant.setReactionNetwork(network);
+
+	// Check its default partial derivatives
+	BOOST_REQUIRE_EQUAL(0, reactant.getPartialDerivatives().size());
+
+	// Create a reference and temp partial derivative vector
+	std::vector<double> refPartials = std::vector<double>(3, 0.0);
+	std::vector<double> tempPartials = std::vector<double>(3, 0.0);
+
+	reactant.getPartialDerivatives(tempPartials);
+
+	// Compare to the refence one
+	BOOST_REQUIRE_EQUAL(tempPartials[0], refPartials[0]);
+	BOOST_REQUIRE_EQUAL(tempPartials[1], refPartials[1]);
+	BOOST_REQUIRE_EQUAL(tempPartials[2], refPartials[2]);
+
+	return;
+}
+
+BOOST_AUTO_TEST_CASE(checkCopying) {
 	// Create a reference Reactant
 	Reactant reactant(registry);
 	reactant.setId(5);
@@ -73,10 +110,7 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
 	return;
 }
 
-/**
- * This operation insures that the concentration can be manipulated
- * appropriately.
- */BOOST_AUTO_TEST_CASE(checkConcentration) {
+BOOST_AUTO_TEST_CASE(checkConcentration) {
 	// Create a Reactant
 	Reactant reactant(registry);
 	reactant.setConcentration(1.0);

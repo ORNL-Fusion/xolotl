@@ -234,14 +234,6 @@ public:
 	virtual void getPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
-	 * This operation writes the contents of the reactant to a string. This
-	 * operation should be overridden by subclasses.
-	 *
-	 * @return A serialized version of this reactant as a string.
-	 */
-	virtual const std::string toString();
-
-	/**
 	 * This operation returns the name of the reactant.
 	 *
 	 * @return The name

@@ -40,6 +40,9 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
 	BOOST_REQUIRE_EQUAL(composition["V"], 0);
 	BOOST_REQUIRE_EQUAL(composition["I"], 2);
 
+	// Check if it is a mixed cluster
+	BOOST_REQUIRE_EQUAL(cluster.isMixed(), true);
+
 	return;
 }
 

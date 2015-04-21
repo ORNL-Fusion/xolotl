@@ -16,18 +16,18 @@ BOOST_AUTO_TEST_SUITE(CvsXDataProvider_testSuite)
  * Method checking the ability to use a name.
  */
 BOOST_AUTO_TEST_CASE(checkName) {
-
 	// Create myCvsXDataProvider
 	auto myCvsXDataProvider = make_shared<CvsXDataProvider>("myCvsXDataProvider");
 
 	BOOST_REQUIRE_EQUAL("myCvsXDataProvider", myCvsXDataProvider->getName());
+
+	return;
 }
 
 /**
  * Method checking you can get the axis vectors.
  */
 BOOST_AUTO_TEST_CASE(checkGetVector) {
-
 	// Create myCvsXDataProvider
 	auto myCvsXDataProvider = make_shared<CvsXDataProvider>("myCvsXDataProvider");
 
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(checkGetVector) {
 	BOOST_REQUIRE_EQUAL(axis2Vector.size(), myPoints->size());
 
 	// Loop on all the points in myPoints
-	for (int i = 0; i < myPoints->size()-2; i++) {
+	for (int i = 0; i < myPoints->size() - 2; i++) {
 		BOOST_REQUIRE_EQUAL(axis1Vector.at(i), myPoints->at(i).x);
 		BOOST_REQUIRE_EQUAL(axis2Vector.at(i), myPoints->at(i).value);
 	}
@@ -72,6 +72,8 @@ BOOST_AUTO_TEST_CASE(checkGetVector) {
 	BOOST_REQUIRE_EQUAL(axis2Vector.at(4), 1.0e-16);
 	BOOST_REQUIRE_EQUAL(axis1Vector.at(5), myPoints->at(5).x);
 	BOOST_REQUIRE_EQUAL(axis2Vector.at(5), 1.0e-16);
+
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

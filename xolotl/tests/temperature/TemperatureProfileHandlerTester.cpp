@@ -14,12 +14,11 @@ using namespace xolotlCore;
 BOOST_AUTO_TEST_SUITE (TemperatureProfileHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(check_getTemperature) {
-
 	// Create a file with temperature profile data
 	// First column with the time and the second with
 	// the temperature at that time.
-	std::ofstream writetempFile("tempFile.dat");
-	writetempFile << "0.0 2.0 \n"
+	std::ofstream writeTempFile("tempFile.dat");
+	writeTempFile << "0.0 2.0 \n"
 			"1.0 1.99219766723 \n"
 			"2.0 1.87758256189 \n"
 			"3.0 1.4311765168 \n"
@@ -30,14 +29,14 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 			"8.0 0.854499966191 \n"
 			"9.0 0.235300873168 \n"
 			"10.0 1.99779827918";
-	writetempFile.close();
+	writeTempFile.close();
 
-	std::string tempFile = "tempFile.dat";
-	auto testTemp = make_shared<TemperatureProfileHandler>(tempFile);
+	// Create and initialize the temperature profile handler
+	auto testTemp = make_shared<TemperatureProfileHandler>("tempFile.dat");
 	testTemp->initializeTemperature();
 	std::vector<double> pos = {1.142857142857143, 0.0, 0.0};
 
-	// Vector to hold the user defined t values
+	// Vector to hold the user defined time values
 	std::vector<double> t;
 	t.push_back(1.57894736842);
 	t.push_back(4.21052631579);
@@ -58,16 +57,18 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	// Vector to hold interpolated values
 	std::vector<double> tempInterp;
 	for (int i = 0; i < t.size(); i++) {
-		tempInterp.push_back( testTemp->getTemperature(pos, t[i]));
+		tempInterp.push_back(testTemp->getTemperature(pos, t[i]));
 	}
 
-	BOOST_TEST_MESSAGE( "\n" << "\nindex  tdata  approx  true: \n");
-	for(int j = 0; j < t.size(); j++)
-		BOOST_TEST_MESSAGE( j << " " << t[j] << " " << tempInterp[j] << " " << trueInterp[j] << "\n");
-
+	// Verify the values
 	for(int j = 0; j < t.size(); j++)
 		BOOST_REQUIRE_CLOSE(tempInterp[j], trueInterp[j], 10e-8);
 
+    // Remove the created file
+	std::string tempFile = "tempFile.dat";
+    std::remove(tempFile.c_str());
+
+    return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

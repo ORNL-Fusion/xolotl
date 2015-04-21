@@ -13,7 +13,7 @@ using namespace xolotlCore;
 BOOST_AUTO_TEST_SUITE (TemperatureHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(check_getTemperature) {
-
+	// Create the temperature handler
 	auto testTemp = make_shared<TemperatureHandler>(1000);
 
 	// Create a time
@@ -31,6 +31,7 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 						<< "at time = " << currTime << "\n");
 	BOOST_REQUIRE_EQUAL(temp, 1000.0);
 
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

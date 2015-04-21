@@ -111,10 +111,6 @@ std::string Reactant::getType() const {
 	return typeName;
 }
 
-const std::string Reactant::toString() {
-	throw std::string("Reactant::toString() is unimplemented");
-}
-
 const std::map<std::string, int> & Reactant::getComposition() const {
 	// Return the composition map
 	return compositionMap;

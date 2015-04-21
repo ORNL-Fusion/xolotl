@@ -173,6 +173,24 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     // Check the PETSc options
     BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 16);
 
+    // Get the detailed PETSc argument
+    auto petscArgv = opts.getPetscArgv();
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[1], "-fieldsplit_0_pc_type"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[2], "redundant"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[3], "-ts_max_snes_failures"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[4], "200"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[5], "-pc_fieldsplit_detect_coupling"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[6], "-ts_adapt_dt_max"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[7], "10"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[8], "-pc_type"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[9], "fieldsplit"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[10], "-fieldsplit_1_pc_type"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[11], "sor"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[12], "-ts_final_time"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[13], "1000"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[14], "-ts_max_steps"), 0);
+    BOOST_REQUIRE_EQUAL(strcmp(petscArgv[15], "3"), 0);
+
     // Remove the created file
     std::string tempFile = "param_good.txt";
     std::remove(tempFile.c_str());
@@ -210,6 +228,41 @@ BOOST_AUTO_TEST_CASE(wrongPerfHandler)
 
     // Remove the created file
     std::string tempFile = "param_perf_wrong.txt";
+    std::remove(tempFile.c_str());
+}
+
+BOOST_AUTO_TEST_CASE(wrongVizHandler)
+{
+    xolotlCore::Options opts;
+
+	// Create a parameter file with a wrong visualization handler name
+	std::ofstream paramFile("param_viz_wrong.txt");
+	paramFile << "vizHandler=bogus" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_viz_wrong.txt");
+	string filename = pathToFile;
+    const char* fname = filename.c_str();
+
+    // Build a command line with a parameter file containing a wrong performance handler option
+    int fargc = 2;
+    char* args[3];
+    args[0] = const_cast<char*>("./xolotl");
+    args[1] = const_cast<char*>(fname);
+    args[2] = NULL;
+    char** fargv = args;
+
+    // Attempt to read the parameter file
+    fargc -= 1;
+    fargv += 1;
+    opts.readParams(fargc, fargv);
+
+    // Xolotl should not be able to run with a wrong visualization handler parameter
+    BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
+    BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+
+    // Remove the created file
+    std::string tempFile = "param_viz_wrong.txt";
     std::remove(tempFile.c_str());
 }
 
@@ -290,6 +343,76 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
     tempFile = "fluxFile.dat";
     std::remove(tempFile.c_str());
     tempFile = "param_good_profiles.txt";
+    std::remove(tempFile.c_str());
+}
+
+BOOST_AUTO_TEST_CASE(wrongFluxProfile)
+{
+    xolotlCore::Options opts;
+
+	// Create a parameter file with a wrong flux profile file name name
+	std::ofstream paramFile("param_flux_wrong.txt");
+	paramFile << "fluxFile=bogus" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_flux_wrong.txt");
+	string filename = pathToFile;
+    const char* fname = filename.c_str();
+
+    // Build a command line with a parameter file containing a wrong performance handler option
+    int fargc = 2;
+    char* args[3];
+    args[0] = const_cast<char*>("./xolotl");
+    args[1] = const_cast<char*>(fname);
+    args[2] = NULL;
+    char** fargv = args;
+
+    // Attempt to read the parameter file
+    fargc -= 1;
+    fargv += 1;
+    opts.readParams(fargc, fargv);
+
+    // Xolotl should not be able to run with a wrong flux profile file name
+    BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
+    BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+
+    // Remove the created file
+    std::string tempFile = "param_flux_wrong.txt";
+    std::remove(tempFile.c_str());
+}
+
+BOOST_AUTO_TEST_CASE(wrongTempProfile)
+{
+    xolotlCore::Options opts;
+
+	// Create a parameter file with a wrong temperature profile file name name
+	std::ofstream paramFile("param_temp_wrong.txt");
+	paramFile << "tempFile=bogus" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_temp_wrong.txt");
+	string filename = pathToFile;
+    const char* fname = filename.c_str();
+
+    // Build a command line with a parameter file containing a wrong performance handler option
+    int fargc = 2;
+    char* args[3];
+    args[0] = const_cast<char*>("./xolotl");
+    args[1] = const_cast<char*>(fname);
+    args[2] = NULL;
+    char** fargv = args;
+
+    // Attempt to read the parameter file
+    fargc -= 1;
+    fargv += 1;
+    opts.readParams(fargc, fargv);
+
+    // Xolotl should not be able to run with a wrong temperature profile file name
+    BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
+    BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+
+    // Remove the created file
+    std::string tempFile = "param_temp_wrong.txt";
     std::remove(tempFile.c_str());
 }
 
