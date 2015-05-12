@@ -230,20 +230,12 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt timestep, PetscReal time
 	int procId;
 	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
+	// Sum all the concentrations through MPI reduce
+	double totalHeConcentration = 0.0;
+	MPI_Reduce(&heConcentration, &totalHeConcentration, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
 	// Master process
 	if (procId == 0) {
-		// Loop on all the other processes
-		for (int i = 1; i < worldSize; i++) {
-			double otherConcentration = 0.0;
-
-			// Receive the value from the other processes
-			MPI_Recv(&otherConcentration, 1, MPI_DOUBLE, i, 1, MPI_COMM_WORLD,
-					MPI_STATUS_IGNORE);
-
-			// Add them to the master one
-			heConcentration += otherConcentration;
-		}
-
 		// Get the total size of the grid rescale the concentrations
 		int Mx, My;
 		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
@@ -255,7 +247,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt timestep, PetscReal time
 		double surface = (double) My * hy;
 
 		// Rescale the concentration
-		heConcentration = heConcentration / surface;
+		totalHeConcentration = totalHeConcentration / surface;
 
 		// Get the fluence
 		double heliumFluence = fluxHandler->getHeFluence();
@@ -263,22 +255,17 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt timestep, PetscReal time
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Helium retention = "
-				<< 100.0 * (heConcentration / heliumFluence) << " %"
+				<< 100.0 * (totalHeConcentration / heliumFluence) << " %"
 				<< std::endl;
-		std::cout << "Helium mean concentration = " << heConcentration << std::endl;
+		std::cout << "Helium mean concentration = " << totalHeConcentration << std::endl;
 		std::cout << "Helium fluence = " << heliumFluence << "\n" << std::endl;
 
 //		// Uncomment to write the retention and the fluence in a file
 //		std::ofstream outputFile;
 //		outputFile.open("retentionOut.txt", ios::app);
 //		outputFile << heliumFluence << " "
-//				<< 100.0 * (heConcentration / heliumFluence) << std::endl;
+//				<< 100.0 * (totalHeConcentration / heliumFluence) << std::endl;
 //		outputFile.close();
-	}
-
-	else {
-		// Send the value of the timer to the master process
-		MPI_Send(&heConcentration, 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
 	}
 
 	// Restore the solutionArray
@@ -352,8 +339,8 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 				// Get the pointer to the beginning of the solution data for this grid point
 				gridPointSolution = solutionArray[j][i];
 				// Compute x and y
-				x = i * hx;
-				y = j * hy;
+				x = (double) i * hx;
+				y = (double) j * hy;
 
 				// If it is procId 0 just store the value in the myPoints vector
 				if (procId == 0) {
@@ -368,12 +355,12 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 				// Else, the values must be sent to procId 0
 				else {
 					// Send the value of the local position to the master process
-					MPI_Send(&x, 1, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+					MPI_Send(&x, 1, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
 					// Send the value of the local position to the master process
-					MPI_Send(&y, 1, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+					MPI_Send(&y, 1, MPI_DOUBLE, 0, 11, MPI_COMM_WORLD);
 
 					// Send the value of the concentration to the master process
-					MPI_Send(&gridPointSolution[iCluster], 1, MPI_DOUBLE, 0, 2,
+					MPI_Send(&gridPointSolution[iCluster], 1, MPI_DOUBLE, 0, 12,
 							MPI_COMM_WORLD);
 				}
 			}
@@ -381,14 +368,14 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 			// it should receive the values for the point and add them to myPoint
 			else if (procId == 0) {
 				// Get the position
-				MPI_Recv(&x, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2, MPI_COMM_WORLD,
+				MPI_Recv(&x, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10, MPI_COMM_WORLD,
 						MPI_STATUS_IGNORE);
-				MPI_Recv(&y, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2, MPI_COMM_WORLD,
+				MPI_Recv(&y, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD,
 						MPI_STATUS_IGNORE);
 
 				// and the concentration
 				double conc = 0.0;
-				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2, MPI_COMM_WORLD,
+				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 12, MPI_COMM_WORLD,
 						MPI_STATUS_IGNORE);
 
 				// Modify the Point with the received values and add it to myPoints
