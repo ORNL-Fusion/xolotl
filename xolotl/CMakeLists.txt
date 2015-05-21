@@ -7,7 +7,16 @@ cmake_minimum_required(VERSION 2.8)
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
 
 # Xolotl requires C++11 to use shared pointers
-list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+INCLUDE (CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" CXX_SUPPORTS_CXX11_FLAG)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" CXX_SUPPORTS_CXX0X_FLAG)
+IF (CXX_SUPPORTS_CXX11_FLAG)
+    SET( CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+ELSEIF (CXX_SUPPORTS_CXX0X_FLAG)
+    SET( CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
+ELSE()
+    MESSAGE(FATAL_ERROR "XOLOTL requires C++11 support from C++ compiler")
+ENDIF()
 
 # Tell CMake to look for static libraries
 SET(BUILD_SHARED_LIBS OFF)
