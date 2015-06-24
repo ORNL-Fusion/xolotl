@@ -81,6 +81,23 @@ public interface Arguments {
 	int getMaxISize();
 
 	/**
+	 * This Option annotation corresponds to the '--phaseCut' option which doesn't have 
+	 * a default value because it is used as a flag.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "Should the network be reduced with the phase-cut "
+					+ "method?")
+	/**
+	 * This operation produces the required command line option '--phaseCut' which 
+	 * doesn't take a value and is defined by the previous Option annotation
+	 * 
+	 * @return Whether we use the phase cut or not
+	 */
+	boolean isPhaseCut();
+
+	/**
 	 * This Option annotation corresponds to the '--startTemp' option which
 	 * defines a default value of 1000 and additionally provides a brief
 	 * description of this option.

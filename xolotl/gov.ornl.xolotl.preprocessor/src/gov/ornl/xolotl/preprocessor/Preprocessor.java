@@ -82,6 +82,9 @@ public class Preprocessor {
 	// The migration energies for single species interstitial clusters.
 	private double[] iMigrationEnergies = { Double.POSITIVE_INFINITY, 0.01,
 			0.02, 0.03, 0.04, 0.05 };
+	
+	// Whether the phase-cut method is used for the network of not
+	private boolean usePhaseCut = false;
 
 	/**
 	 * The maximum number of Helium atoms that can be combined with a vacancy
@@ -210,6 +213,9 @@ public class Preprocessor {
 			throw new IllegalArgumentException(
 					"The maxium interstitial must be positive ( 0 <= maxISize )");
 		}
+		
+		// Whether the phase-cut method will be used or not
+		usePhaseCut = args.isPhaseCut();
 
 		// Set the parameter options that will be passed to Xolotl
 		xolotlParams.setProperty("dimensions", args.getDimensions());
@@ -302,24 +308,62 @@ public class Preprocessor {
 
 		// Local Declarations
 		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
+		
+		// Check if the phase-cut method need to be applied
+		if (usePhaseCut) {
+			// Loop over vacancies in the outer loop. 
+			// This creates V and HeV.
+			for (int i = 1; i <= maxV && i <= maxHePerV.length; ++i) {
+				// For V < 12 loop on all the possible helium numbers up to
+				// the maximum size in the maxHePerV array
+				if (i < 12) {
+					for (int j = 0; j <= maxHePerV[i - 1]; j++) {
+						// Add the cluster to the list
+						clusterList.add(makeHeVCluster(j, i));
+					}
+				}
+				// For bigger V only add the last four helium sizes
+	            else {
+	            	// Add the vacancy cluster
+	                clusterList.add(makeHeVCluster(0, i));
+	                for (int j = maxHePerV[i - 1] - 4; j <= maxHePerV[i - 1]; j++) {
+	                    // Add the cluster to the list
+	                    clusterList.add(makeHeVCluster(j, i));
+	                } 
+	            }
+			}
 
-		// Loop over vacancies in the outer loop. Start at zero to account for
-		// single He. This creates V and HeV up to the maximum size in the
-		// maxHePerV array.
-		for (int i = 1; i <= maxV && i <= maxHePerV.length; ++i) {
-			// Add Helium
-			for (int j = 0; j <= maxHePerV[i - 1]; j++) {
-				// Add the cluster to the list
-				clusterList.add(makeHeVCluster(j, i));
+			// Create V and HeV up to the maximum length with a constant nHe/nV = 4,
+			// Keeping only the last four ones
+			for (int i = maxHePerV.length + 1; i <= maxV; i++) {
+            	// Add the vacancy cluster
+	            clusterList.add(makeHeVCluster(0, i)); 
+				for (int j = (i * 4) - 3; j <= i * 4; j++) {
+					// Add the cluster to the list
+					clusterList.add(makeHeVCluster(j, i));
+				}
 			}
 		}
+		// Else use the full network
+		else {
+			// Loop over vacancies in the outer loop. 
+			// This creates V and HeV up to the maximum size in the
+			// maxHePerV array.
+			for (int i = 1; i <= maxV && i <= maxHePerV.length; ++i) {
+				// Loop on the helium number
+				for (int j = 0; j <= maxHePerV[i - 1]; j++) {
+					// Add the cluster to the list
+					clusterList.add(makeHeVCluster(j, i));
+				}
+			}
 
-		// Create V and HeV up to the maximum length with a constant nHe/nV = 4.
-		for (int i = maxHePerV.length + 1; i <= maxV; i++) {
-			// Add Helium
-			for (int j = 0; j <= i * 4; j++) {
-				// Add the cluster to the list
-				clusterList.add(makeHeVCluster(j, i));
+			// Create V and HeV up to the maximum length with a constant nHe/nV = 4.
+			for (int i = maxHePerV.length + 1; i <= maxV; i++) {
+				// Loop on the helium number
+				for (int j = 0; j <= i * 4; j++) {
+					// Add the cluster to the list
+					clusterList.add(makeHeVCluster(j, i));
+				}
 			}
 		}
 

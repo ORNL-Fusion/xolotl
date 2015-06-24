@@ -268,6 +268,20 @@ public class PreprocessorTest {
 				// Check the size of the network
 				assertEquals(network.size(), 7678);
 			}
+
+			// Use the phase-cut method
+			parsedArgs = CliFactory.parseArguments(Arguments.class,
+					new String[] { "--phaseCut"});
+
+			if (parsedArgs != null) {
+				Preprocessor preprocessor = new Preprocessor(parsedArgs);
+
+				// Generate the network
+				ArrayList<Cluster> network = preprocessor.generateNetwork();
+
+				// Check the size of the network
+				assertEquals(network.size(), 476);
+			}
 		}
 		catch (ArgumentValidationException e) {
 			// Complain and fail
