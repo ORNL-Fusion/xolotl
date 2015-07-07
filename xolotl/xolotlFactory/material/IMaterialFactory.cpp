@@ -7,7 +7,7 @@ namespace xolotlFactory {
 
 static std::shared_ptr<IMaterialFactory> theMaterialFactory;
 
-std::shared_ptr<IMaterialFactory> IMaterialFactory::createMaterialFactory(std::string materialType,
+std::shared_ptr<IMaterialFactory> IMaterialFactory::createMaterialFactory(const std::string& materialType,
 		int dimension) {
 	// W100 case
 	if (materialType == "W100") theMaterialFactory = std::make_shared<W100MaterialFactory>(dimension);

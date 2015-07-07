@@ -148,7 +148,7 @@ public:
 	 * @param size the size of the reactant
 	 * @return A pointer to the reactant
 	 */
-	Reactant * get(const std::string type,
+	Reactant * get(const std::string& type,
 			const int size) const;
 
 	/**
@@ -162,8 +162,8 @@ public:
 	 * and I are contained in the mixed-species cluster.
 	 * @return A pointer to the compound reactant
 	 */
-	Reactant * getCompound(const std::string type,
-			const std::vector<int> sizes) const;
+	Reactant * getCompound(const std::string& type,
+			const std::vector<int>& sizes) const;
 
 	/**
 	 * This operation returns all reactants in the network without regard for
@@ -183,7 +183,7 @@ public:
 	 * @return The list of all of the reactants in the network or null if the
 	 * name is invalid.
 	 */
-	std::vector<Reactant *> getAll(std::string name) const;
+	std::vector<Reactant *> getAll(const std::string& name) const;
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.
@@ -267,7 +267,7 @@ public:
 	 * @param key The key for the property
 	 * @param value The value to which the key should be set
 	 */
-	void setProperty(std::string key, std::string value);
+	void setProperty(const std::string& key, const std::string& value);
 
 	/**
 	 * This operation returns the size or number of reactants in the network.

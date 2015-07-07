@@ -33,14 +33,14 @@ public:
 	/**
 	 * Method managing everything that is related to the rendering of a plot.
 	 */
-	virtual void render(std::string fileName = "fileName") = 0;
+	virtual void render(const std::string& fileName = "fileName") = 0;
 
 	/**
 	 * Method that will save the plotted plot in a file.
 	 * @param fileName The name of the file where the plot
 	 * will be saved.
 	 */
-	virtual void write(std::string fileName) = 0;
+	virtual void write(const std::string& fileName) = 0;
 
 	/**
 	 * Method allowing the user to set the PlottingStyle.

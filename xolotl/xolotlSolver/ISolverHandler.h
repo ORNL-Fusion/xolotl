@@ -45,7 +45,7 @@ public:
 	 * @param fileName The name of the file from which the network was loaded
 	 * @param net The network
 	 */
-	virtual void initializeNetwork(std::string fileName,
+	virtual void initializeNetwork(const std::string& fileName,
 			xolotlCore::PSIClusterReactionNetwork *net) = 0;
 
 	/**

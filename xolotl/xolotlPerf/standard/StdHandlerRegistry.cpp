@@ -34,7 +34,7 @@ StdHandlerRegistry::~StdHandlerRegistry(void)
 // We can create the EventCounters, since they don't depend on
 // more specialized functionality from any of our subclasses.
 std::shared_ptr<IEventCounter>
-StdHandlerRegistry::getEventCounter(std::string name)
+StdHandlerRegistry::getEventCounter(const std::string& name)
 {
     // TODO - associate the object we create with the current region
     std::shared_ptr<IEventCounter> ret;
@@ -186,7 +186,7 @@ StdHandlerRegistry::CollectMyObjectNames<IHardwareCounter>( const std::map<std::
 
 template<typename T, typename V>
 std::pair<bool, V>
-StdHandlerRegistry::GetObjValue( const std::map<std::string, std::shared_ptr<T> >& myObjs, std::string objName ) const
+StdHandlerRegistry::GetObjValue( const std::map<std::string, std::shared_ptr<T> >& myObjs, const std::string& objName ) const
 {
     auto currObjIter = myObjs.find(objName);
     bool found = currObjIter != myObjs.end();
@@ -207,7 +207,7 @@ StdHandlerRegistry::GetObjValue( const std::map<std::string, std::shared_ptr<T> 
 
 template<>
 std::pair<bool, IHardwareCounter::CounterType>
-StdHandlerRegistry::GetObjValue( const std::map<std::string, std::shared_ptr<IHardwareCounter> >& myObjs, std::string objName ) const
+StdHandlerRegistry::GetObjValue( const std::map<std::string, std::shared_ptr<IHardwareCounter> >& myObjs, const std::string& objName ) const
 {
     // Split the objName into an IHardwareCounter object name and a 
     // hardware counter name.

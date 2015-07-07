@@ -105,6 +105,7 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 
 	// Try cloning the Reactant
 	auto reactantClone = reactant.clone();
+	
 	BOOST_REQUIRE_CLOSE(10.0, reactantClone->getConcentration(), 1.0e-7);
 
 	return;

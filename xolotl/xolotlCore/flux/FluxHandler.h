@@ -107,7 +107,7 @@ public:
 	 * time and amplitude vectors.
      * \see IFluxHandler.h
 	 */
-	void initializeTimeProfile(std::string fileName);
+	void initializeTimeProfile(const std::string& fileName);
 
 	/**
 	 * This operation returns the incident flux vector.

@@ -25,8 +25,8 @@ private:
         std::string papiName;   ///< PAPI's name for the counter.
         int papiEventID;        ///< PAPI event code for the counter.
 
-        CounterSpecInfo( std::string _name,
-                            std::string _papiName,
+        CounterSpecInfo( const std::string& _name,
+                            const std::string& _papiName,
                             int _papiEventID )
           : name( _name ),
             papiName( _papiName ),
@@ -77,7 +77,7 @@ public:
     /// @param name The name to associate with the collected counts.
     /// @param cset The collection of hardware counter spec values indicating
     ///             The set of hardware counters we should monitor.
-    PAPIHardwareCounter( std::string name, const IHardwareCounter::SpecType& cset );
+    PAPIHardwareCounter( const std::string& name, const IHardwareCounter::SpecType& cset );
 
 
 	/// Destroy the counter set.

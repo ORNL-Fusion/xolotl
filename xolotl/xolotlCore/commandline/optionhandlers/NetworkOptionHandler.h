@@ -32,7 +32,7 @@ public:
      * @param opt The pointer to the option that will be modified.
      * @param arg The argument for the networkFilename.
      */
-    bool handler(IOptions *opt, std::string arg) {
+    bool handler(IOptions *opt, const std::string& arg) {
     	// Set the name of the network file
     	opt->setNetworkFilename(arg);
 

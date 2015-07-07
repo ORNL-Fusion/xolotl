@@ -168,7 +168,7 @@ public:
      * Set the name of the network file.
      * \see IOptions.h
      */
-    void setNetworkFilename(std::string name) {networkFilename = name;}
+    void setNetworkFilename(const std::string& name) {networkFilename = name;}
 
     /**
      * Get the Argc for PETSc.
@@ -240,7 +240,7 @@ public:
      * Set the name of the profile file to use.
      * \see IOptions.h
      */
-    void setTempProfileFilename(std::string name) {tempProfileFilename = name;}
+    void setTempProfileFilename(const std::string& name) {tempProfileFilename = name;}
 
     /**
      * Should we use the helium flux option?
@@ -289,7 +289,7 @@ public:
      * Set the name of the time profile file to use.
      * \see IOptions.h
      */
-    void setFluxProfileName(std::string name) {fluxProfileFilename = name;}
+    void setFluxProfileName(const std::string& name) {fluxProfileFilename = name;}
 
     /**
      * Which type of performance handlers should we use?
@@ -326,7 +326,7 @@ public:
      * Set the name of the material to be used for the simulation.
      * \see IOptions.h
      */
-    void setMaterial(std::string material) {materialName = material;}
+    void setMaterial(const std::string& material) {materialName = material;}
 
     /**
      * Obtain the value of the concentration for the vacancies.

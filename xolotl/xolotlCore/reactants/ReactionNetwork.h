@@ -95,7 +95,7 @@ public:
 	 * @param size The size of the reactant
 	 * @return A pointer to the reactant
 	 */
-	virtual Reactant * get(const std::string type, const int size) const = 0;
+	virtual Reactant * get(const std::string& type, const int size) const = 0;
 
 	/**
 	 * This operation returns a compound reactant with the given type and size if it
@@ -105,8 +105,8 @@ public:
 	 * @param sizes An array containing the sizes of each piece of the reactant
 	 * @return A pointer to the compound reactant
 	 */
-	virtual Reactant * getCompound(const std::string type,
-			const std::vector<int> sizes) const = 0;
+	virtual Reactant * getCompound(const std::string& type,
+			const std::vector<int>& sizes) const = 0;
 
 	/**
 	 * This operation returns all reactants in the network without regard for
@@ -126,7 +126,7 @@ public:
 	 * @return The list of all of the reactants in the network or null if the
 	 * type is invalid
 	 */
-	virtual std::vector<Reactant *> getAll(std::string type) const = 0;
+	virtual std::vector<Reactant *> getAll(const std::string& type) const = 0;
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.
@@ -173,7 +173,7 @@ public:
 	 * @param key The key for the property
 	 * @param value The value to which the key should be set
 	 */
-	virtual void setProperty(std::string key, std::string value) = 0;
+	virtual void setProperty(const std::string& key, const std::string& value) = 0;
 
 	/**
 	 * This operation returns the size or number of reactants in the network.

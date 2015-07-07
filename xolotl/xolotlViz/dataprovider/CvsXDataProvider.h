@@ -25,7 +25,7 @@ public:
 	/**
 	 * The default constructor
 	 */
-	CvsXDataProvider(std::string name);
+	CvsXDataProvider(const std::string& name);
 
 	/**
 	 * The destructor

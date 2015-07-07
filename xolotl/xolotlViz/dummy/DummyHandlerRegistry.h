@@ -32,7 +32,7 @@ public:
      * @param name The name of the Plot.
      * @return A shared pointer to the newly-created Plot.
      */
-    virtual std::shared_ptr<IPlot> getPlot(std::string name, PlotType type);
+    virtual std::shared_ptr<IPlot> getPlot(const std::string& name, PlotType type);
 
 };  //end class DummyHandlerRegistry
 

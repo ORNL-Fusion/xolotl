@@ -32,10 +32,6 @@ BOOST_AUTO_TEST_CASE(checkTiming) {
 	xperf::OSTimer tester("test");
 	double sleepSeconds = 2.0;
 
-
-	double wall, usr, sys;
-	double wallStart, wallStop;
-
     // Simulate some computation/communication with a sleep of known duration.
     // Time the duration of the operation.
 	tester.start();

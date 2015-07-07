@@ -50,7 +50,7 @@ public:
 	 * @param counterName The DummyHardwareCounter's name
 	 * @param counterQuantities The vector of quantities the DummyHardwareCounter will monitor
 	 */
-	DummyHardwareCounter(std::string counterName,
+	DummyHardwareCounter(const std::string& counterName,
                             const IHardwareCounter::SpecType& ctrSpec)
 		: xolotlCore::Identifiable("unused")
 	{ }

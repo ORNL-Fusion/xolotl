@@ -53,7 +53,7 @@ public:
 	 * for keys and associated values mapped to those keys. A relevant example
 	 * is "startTime" and "0.01" where both are of type std::string.
 	 */
-	void setOptions(std::map<std::string, std::string> options);
+	void setOptions(const std::map<std::string, std::string>& options);
 
 	/**
 	 * This operation sets up the mesh that will be used by the solver and

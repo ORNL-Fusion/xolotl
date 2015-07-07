@@ -104,9 +104,8 @@ public:
 	 *
 	 * @param registry The performance handler registry
 	 */
-	PSIClusterNetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
-		handlerRegistry = registry;
-	}
+	PSIClusterNetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		handlerRegistry(registry) {}
 
 	/**
 	 * An alternative constructor provided for convenience.

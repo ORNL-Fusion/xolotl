@@ -78,7 +78,7 @@ public:
  	 * This operation sets the name of the data.
  	 * @param name the name of the data
  	 */ 
-	virtual void setDataName(std::string name) = 0;
+	virtual void setDataName(const std::string& name) = 0;
 
 };
 

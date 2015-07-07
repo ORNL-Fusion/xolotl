@@ -37,7 +37,7 @@ private:
 	 * @param productName The name of the product produced in the reaction
 	 */
 	void combineClusters(std::vector<Reactant *> & clusters,
-			std::string productName);
+			const std::string& productName);
 
 public:
 

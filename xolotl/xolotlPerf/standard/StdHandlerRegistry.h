@@ -50,7 +50,7 @@ private:
      */
     template<typename T, typename V>
     std::pair<bool, V> GetObjValue( const std::map<std::string, std::shared_ptr<T> >& myObjs,
-        std::string objName ) const;
+        const std::string& objName ) const;
 
 
     /**
@@ -122,7 +122,7 @@ public:
      * @param name The object's name.
      * @return The object with the given name.
 	 */
-	virtual std::shared_ptr<IEventCounter> getEventCounter( std::string name);
+	virtual std::shared_ptr<IEventCounter> getEventCounter( const std::string& name );
 
 
     /**

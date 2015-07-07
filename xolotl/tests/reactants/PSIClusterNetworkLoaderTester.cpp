@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Make sure the exception is caught when loading the bad string
 	try {
 		loader.load();
-	} catch (string error) {
+	} catch (const string& /* error */) {
 		// Do nothing but flip the flag
 		caughtFlag = true;
 	}

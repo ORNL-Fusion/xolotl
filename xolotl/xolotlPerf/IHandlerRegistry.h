@@ -38,17 +38,17 @@ public:
 	/**
 	 * This operation returns the ITimer specified by the parameter.
 	 */
-	virtual std::shared_ptr<ITimer> getTimer(std::string name) = 0;
+	virtual std::shared_ptr<ITimer> getTimer(const std::string& name) = 0;
 
 	/**
 	 * This operation returns the IEventCounter specified by the parameter.
 	 */
-	virtual std::shared_ptr<IEventCounter> getEventCounter( std::string name) = 0;
+	virtual std::shared_ptr<IEventCounter> getEventCounter( const std::string& name) = 0;
 
 	/**
 	 * This operation returns the specified IHardwareCounter.
 	 */
-	virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( std::string name,
+	virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( const std::string& name,
                         const IHardwareCounter::SpecType& ctrSpec ) = 0;
 
     /**

@@ -65,7 +65,7 @@ public:
 	/**
 	 * The default constructor
 	 */
-	LabelProvider(std::string name) :
+	LabelProvider(const std::string& name) :
 		xolotlCore::Identifiable(name),
 		axis1Label(" "),
 		axis2Label(" "),

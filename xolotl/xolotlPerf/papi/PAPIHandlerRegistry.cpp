@@ -20,7 +20,7 @@ PAPIHandlerRegistry::PAPIHandlerRegistry(void)
 
 
 std::shared_ptr<ITimer>
-PAPIHandlerRegistry::getTimer(std::string name)
+PAPIHandlerRegistry::getTimer(const std::string& name)
 {
     // TODO - associate the object we create with the current region.
     std::shared_ptr<ITimer> ret;
@@ -45,7 +45,7 @@ PAPIHandlerRegistry::getTimer(std::string name)
 
 
 std::shared_ptr<IHardwareCounter>
-PAPIHandlerRegistry::getHardwareCounter( std::string name,
+PAPIHandlerRegistry::getHardwareCounter( const std::string& name,
                         const IHardwareCounter::SpecType& ctrSpec )
 {
     // TODO - associate the object we create with the current region

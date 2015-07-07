@@ -5,7 +5,7 @@
 
 using namespace xolotlViz;
 
-CvsXYDataProvider::CvsXYDataProvider(std::string name) : DataProvider(name) {
+CvsXYDataProvider::CvsXYDataProvider(const std::string& name) : DataProvider(name) {
 }
 
 CvsXYDataProvider::~CvsXYDataProvider() {
@@ -20,11 +20,6 @@ std::vector<double> CvsXYDataProvider::getAxis1Vector() const {
 	// Loop on all the points in the data vector
 	for (auto it = dataPoints->begin();
 			it != dataPoints->end(); ++it) {
-		// Find the max and almostMax
-		if ((*it).x > max) {
-			almostMax = max;
-			max = (*it).x;
-		}
 		// Find the max and almostMax
 		if ((*it).x > max) {
 			almostMax = max;
@@ -50,16 +45,6 @@ std::vector<double> CvsXYDataProvider::getAxis2Vector() const {
 	// Loop on all the points in the data vector
 	for (auto it = dataPoints->begin();
 			it != dataPoints->end(); ++it) {
-		// Find the max and almostMax
-		if ((*it).y > max) {
-			almostMax = max;
-			max = (*it).y;
-		}
-		// Find the max and almostMax
-		if ((*it).y > max) {
-			almostMax = max;
-			max = (*it).y;
-		}
 		// Find the max and almostMax
 		if ((*it).y > max) {
 			almostMax = max;

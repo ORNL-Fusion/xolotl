@@ -10,23 +10,27 @@ using namespace xolotlCore;
 Reactant::Reactant() :
 		concentration(0.0),
 		name(""), id(0),
-		temperature(0.0) {}
+		temperature(0.0),
+		network(nullptr),
+		handlerRegistry(nullptr) {}
 
 Reactant::Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		concentration(0.0),
 		name(""),
 		id(0),
 		temperature(0.0),
+		network(nullptr),
 		handlerRegistry(registry) {}
 
 Reactant::Reactant(const Reactant &other) :
 		concentration(other.concentration),
 		name(other.name),
+		typeName(other.typeName),
 		id(other.id),
+		temperature(other.temperature),
+		network(other.network),
 		compositionMap(other.compositionMap),
-		temperature(0.0),
-		handlerRegistry(other.handlerRegistry),
-		typeName(other.typeName)  {}
+		handlerRegistry(other.handlerRegistry) {}
 
 std::shared_ptr<Reactant> Reactant::clone() {
 	std::shared_ptr<Reactant> reactant(new Reactant(*this));
@@ -38,6 +42,7 @@ Reactant::Reactant(double conc, std::shared_ptr<xolotlPerf::IHandlerRegistry> re
 		name(""),
 		id(0),
 		temperature(0.0),
+		network(nullptr),
 		handlerRegistry(registry) {}
 
 double Reactant::getConcentration() const {

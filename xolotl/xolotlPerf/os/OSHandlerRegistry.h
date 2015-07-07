@@ -29,7 +29,7 @@ public:
      * @param name The object's name.
      * @return The object with the given name.
      */
-	virtual std::shared_ptr<ITimer> getTimer(std::string name);
+	virtual std::shared_ptr<ITimer> getTimer(const std::string& name);
 
 
     /**
@@ -39,7 +39,7 @@ public:
      * @param name The object's name.
      * @return The object with the given name.
      */
-	virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( std::string name,
+	virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( const std::string& name,
                         const IHardwareCounter::SpecType& ctrSpec );
 };
 

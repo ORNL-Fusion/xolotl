@@ -40,7 +40,7 @@ public:
     /// Construct a timer.
     ///
     /// @param name The name to associate with the timer.
-    OSTimer( std::string name )
+    OSTimer( const std::string& name )
       : xolotlCore::Identifiable( name ),
         val( 0 ),
         startTime( OSRTimestamp::invalidValue )

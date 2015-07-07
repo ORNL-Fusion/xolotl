@@ -3,7 +3,7 @@
 
 using namespace xolotlViz;
 
-CvsXDataProvider::CvsXDataProvider(std::string name) : DataProvider(name) {
+CvsXDataProvider::CvsXDataProvider(const std::string& name) : DataProvider(name) {
 }
 
 CvsXDataProvider::~CvsXDataProvider() {

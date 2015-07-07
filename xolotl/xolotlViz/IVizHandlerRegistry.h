@@ -26,7 +26,7 @@ public:
 	/**
 	 * This operation returns the IPlot specified by the parameter.
 	 */
-	virtual std::shared_ptr<IPlot> getPlot(std::string name, PlotType type) = 0;
+	virtual std::shared_ptr<IPlot> getPlot(const std::string& name, PlotType type) = 0;
 
 }; //end class IVizHandlerRegistry
 

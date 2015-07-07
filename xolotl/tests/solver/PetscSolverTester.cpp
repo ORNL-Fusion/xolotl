@@ -21,13 +21,15 @@
 #include <IMaterialFactory.h>
 #include <TemperatureHandlerFactory.h>
 #include <VizHandlerRegistryFactory.h>
+#include <cassert>
 
 using namespace std;
 using namespace xolotlCore;
 
 /**
  * The test suite configuration
- */BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
+ */
+BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 
 /**
  * This operation checks the concentration of clusters after solving a test case
@@ -71,7 +73,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	opts.readParams(argc, argv);
 
 	// Create the network loader
-	std::shared_ptr<HDF5NetworkLoader> loader = std::make_shared
+	std::shared_ptr < HDF5NetworkLoader > loader = std::make_shared
 			< HDF5NetworkLoader
 			> (make_shared<xolotlPerf::DummyHandlerRegistry>());
 
@@ -97,6 +99,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 
 	// Initialize and get the temperature handler
 	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
+	assert(tempInitOK);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Set up our dummy performance and visualization infrastructures
@@ -177,7 +180,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	opts.readParams(argc, argv);
 
 	// Create the network loader
-	std::shared_ptr<HDF5NetworkLoader> loader = std::make_shared
+	std::shared_ptr < HDF5NetworkLoader > loader = std::make_shared
 			< HDF5NetworkLoader
 			> (make_shared<xolotlPerf::DummyHandlerRegistry>());
 
@@ -203,6 +206,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 
 	// Initialize and get the temperature handler
 	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
+	assert(tempInitOK);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Set up our dummy performance and visualization infrastructures
@@ -283,7 +287,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 	opts.readParams(argc, argv);
 
 	// Create the network loader
-	std::shared_ptr<HDF5NetworkLoader> loader = std::make_shared
+	std::shared_ptr < HDF5NetworkLoader > loader = std::make_shared
 			< HDF5NetworkLoader
 			> (make_shared<xolotlPerf::DummyHandlerRegistry>());
 
@@ -309,6 +313,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 
 	// Initialize and get the temperature handler
 	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
+	assert(tempInitOK);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Set up our dummy performance and visualization infrastructures

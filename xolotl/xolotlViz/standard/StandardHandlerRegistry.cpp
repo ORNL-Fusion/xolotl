@@ -15,7 +15,7 @@ StandardHandlerRegistry::StandardHandlerRegistry() {
 StandardHandlerRegistry::~StandardHandlerRegistry() {
 }
 
-std::shared_ptr<IPlot> StandardHandlerRegistry::getPlot(std::string name, PlotType type) {
+std::shared_ptr<IPlot> StandardHandlerRegistry::getPlot(const std::string& name, PlotType type) {
 	switch(type) {
 	case PlotType::SCATTER: return std::make_shared <ScatterPlot> (name);
 	case PlotType::SERIES: return std::make_shared <SeriesPlot> (name);

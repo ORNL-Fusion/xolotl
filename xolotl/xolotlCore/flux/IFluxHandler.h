@@ -32,7 +32,7 @@ public:
 	 *
 	 * @param fileName The name of the file where the values are stored
 	 */
-	virtual void initializeTimeProfile(std::string fileName) = 0;
+	virtual void initializeTimeProfile(const std::string& fileName) = 0;
 
 	/**
 	 * This operation returns the incident flux vector.

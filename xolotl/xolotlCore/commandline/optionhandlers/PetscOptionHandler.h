@@ -36,7 +36,7 @@ public:
 	 * @param opt The pointer to the option that will be modified.
 	 * @param arg The list of PETSc options.
 	 */
-	bool handler(IOptions *opt, std::string arg) {
+	bool handler(IOptions *opt, const std::string& arg) {
 		// Build an input stream from the argument string.
 		xolotlCore::TokenizedLineReader<std::string> reader;
 		auto argSS = std::make_shared < std::istringstream > (arg);

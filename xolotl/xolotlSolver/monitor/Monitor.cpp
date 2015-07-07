@@ -111,19 +111,21 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
     // Collect all sampled timer values to rank 0.
     double* allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
-    MPI_Gather(&solverTimerValue,  // send buffer
-               1,                  // number of values to send
-               MPI_DOUBLE,         // type of items in send buffer
-               allTimerValues,     // receive buffer (only valid at root)
-               1,                  // number of values to receive from each process
-               MPI_DOUBLE,         // type of items in receive buffer
-               0,                  // root of MPI collective operation
-               PETSC_COMM_WORLD);  // communicator defining processes involved in the operation
+    MPI_Gather( &solverTimerValue,  // send buffer
+                1,                  // number of values to send
+                MPI_DOUBLE,         // type of items in send buffer
+                allTimerValues,     // receive buffer (only valid at root)
+                1,                  // number of values to receive from each process
+                MPI_DOUBLE,         // type of items in receive buffer
+                0,                  // root of MPI collective operation
+                PETSC_COMM_WORLD ); // communicator defining processes involved in the operation
 
-    if(cwRank == 0) {
+    if( cwRank == 0 )
+    {
         auto allPoints = std::make_shared<std::vector<xolotlViz::Point> >();
 
-        for(unsigned int i = 0; i < cwSize; ++i) {
+        for( unsigned int i = 0; i < cwSize; ++i )
+        {
             xolotlViz::Point aPoint;
             aPoint.value = allTimerValues[i];
             aPoint.x = i;

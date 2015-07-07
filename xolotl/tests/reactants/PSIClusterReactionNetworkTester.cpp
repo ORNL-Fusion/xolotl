@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 		BOOST_FAIL(
 				"Test failed because adding a duplicate"
 						<< " to the network was allowed.");
-	} catch (const std::string & e) {
+	} catch (const std::string& /* e */) {
 		// Do nothing. It was supposed to fail.
 	}
 

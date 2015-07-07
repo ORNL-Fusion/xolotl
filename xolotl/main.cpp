@@ -109,7 +109,7 @@ void launchPetscSolver(std::shared_ptr<xolotlSolver::PetscSolver> solver,
 }
 
 std::shared_ptr<PSIClusterNetworkLoader> setUpNetworkLoader(int rank,
-		MPI_Comm comm, std::string networkFilename,
+		MPI_Comm comm, const std::string& networkFilename,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
 
 	// Create a HDF5NetworkLoader
@@ -168,8 +168,10 @@ int main(int argc, char **argv) {
 		auto material = initMaterial(opts);
 		// Set up the temperature infrastructure
 		bool tempInitOK = initTemp(opts);
+		assert(tempInitOK);
 		// Set up the visualization infrastructure.
 		bool vizInitOK = initViz(opts.useVizStandardHandlers());
+		assert(vizInitOK);
 
 		// Access the temperature handler registry to get the temperature
 		auto tempHandler = xolotlFactory::getTemperatureHandler();
@@ -182,6 +184,7 @@ int main(int argc, char **argv) {
 
 		// Initialize and get the solver handler
 		bool dimOK = xolotlFactory::initializeDimension(opts);
+		assert(dimOK);
 		auto solvHandler = xolotlFactory::getSolverHandler();
 
 		// Setup the solver
@@ -225,13 +228,12 @@ int main(int argc, char **argv) {
                                                 hwCtrStats );
         }
 
-    } catch (std::exception& e ) {
-
+    } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         std::cerr << "Aborting." << std::endl;
         return EXIT_FAILURE;
 
-	} catch (std::string & error) {
+	} catch (const std::string& error) {
 		std::cout << error << std::endl;
 		std::cout << "Aborting." << std::endl;
 		return EXIT_FAILURE;

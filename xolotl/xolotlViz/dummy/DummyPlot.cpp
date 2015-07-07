@@ -3,17 +3,17 @@
 
 using namespace xolotlViz;
 
-DummyPlot::DummyPlot(std::string name) : xolotlCore::Identifiable("unused") {
+DummyPlot::DummyPlot(const std::string& name) : xolotlCore::Identifiable("unused") {
 }
 
 DummyPlot::~DummyPlot() {
 }
 
-void DummyPlot::render(std::string fileName) {
+void DummyPlot::render(const std::string& fileName) {
 	return;
 }
 
-void DummyPlot::write(std::string fileName) {
+void DummyPlot::write(const std::string& fileName) {
 	return;
 }
 

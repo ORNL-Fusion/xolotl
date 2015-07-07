@@ -53,7 +53,7 @@ public:
 	 *
 	 * @param name The name of the file
 	 */
-	void setFilename (std::string name);
+	void setFilename (const std::string& name);
 
 	/**
 	 * This operation will get the name of the file where to take the network from.

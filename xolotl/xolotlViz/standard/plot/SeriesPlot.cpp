@@ -13,14 +13,13 @@ using namespace xolotlViz;
 #define W_WIDTH 1024
 #define W_HEIGHT 1024
 
-SeriesPlot::SeriesPlot(std::string name) : Plot(name) {
-	plotDataProviders = std::make_shared< std::vector< std::shared_ptr<IDataProvider> > > ();
-}
+SeriesPlot::SeriesPlot(const std::string& name) : Plot(name),
+	plotDataProviders(std::make_shared< std::vector< std::shared_ptr<IDataProvider> > > ()) {}
 
 SeriesPlot::~SeriesPlot() {
 }
 
-void SeriesPlot::render(std::string fileName) {
+void SeriesPlot::render(const std::string& fileName) {
 
 	// Check if the label provider is set
 	if (!plotLabelProvider){
@@ -129,9 +128,7 @@ void SeriesPlot::render(std::string fileName) {
     window->Paint();
 
     // Save the final buffer as an image
-    char fn[25];
-    sprintf(fn, (fileName).c_str());
-    window->SaveWindowAsPNM(fn);
+    window->SaveWindowAsPNM(fileName);
 
 	return;
 }

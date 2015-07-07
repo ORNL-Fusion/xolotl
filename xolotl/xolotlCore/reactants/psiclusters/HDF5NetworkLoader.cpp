@@ -63,7 +63,7 @@ std::shared_ptr<PSIClusterReactionNetwork> HDF5NetworkLoader::load() {
 	return network;
 }
 
-void HDF5NetworkLoader::setFilename (std::string name) {
+void HDF5NetworkLoader::setFilename (const std::string& name) {
 	fileName = name;
 
 	return;

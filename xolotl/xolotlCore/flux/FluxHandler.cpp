@@ -88,7 +88,7 @@ void FluxHandler::recomputeFluxHandler() {
 	return;
 }
 
-void FluxHandler::initializeTimeProfile(std::string fileName) {
+void FluxHandler::initializeTimeProfile(const std::string& fileName) {
 	// Set use time profile to true
 	useTimeProfile = true;
 

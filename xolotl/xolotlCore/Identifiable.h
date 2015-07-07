@@ -18,7 +18,7 @@ private:
 
 public:
 
-    Identifiable( std::string _name )
+    Identifiable( const std::string& _name )
       : name( _name )
     { }
 

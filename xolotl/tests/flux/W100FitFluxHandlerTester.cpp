@@ -143,5 +143,4 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	return;
 }
 
-
 BOOST_AUTO_TEST_SUITE_END()

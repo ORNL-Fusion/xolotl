@@ -81,7 +81,7 @@ public:
 	 * Initialize the network and network file name.
 	 * \see ISolverHandler.h
 	 */
-	void initializeNetwork(std::string fileName,
+	void initializeNetwork(const std::string& fileName,
 			xolotlCore::PSIClusterReactionNetwork *net) {
 
 		// Set the network loader

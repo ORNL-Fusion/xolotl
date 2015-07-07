@@ -33,7 +33,7 @@ public:
      * @param opt The pointer to the option that will be modified.
      * @param arg The value for the initial vacancy concentration.
      */
-    bool handler(IOptions *opt, std::string arg) {
+    bool handler(IOptions *opt, const std::string& arg) {
     	// Set the value for the initial vacancy concentration
     	double conc = strtod(arg.c_str(), NULL);
 

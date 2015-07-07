@@ -13,13 +13,13 @@ using namespace xolotlViz;
 #define W_WIDTH 1024
 #define W_HEIGHT 1024
 
-ScatterPlot::ScatterPlot(std::string name) : Plot(name) {
+ScatterPlot::ScatterPlot(const std::string& name) : Plot(name) {
 }
 
 ScatterPlot::~ScatterPlot() {
 }
 
-void ScatterPlot::render(std::string fileName) {
+void ScatterPlot::render(const std::string& fileName) {
 
 	// Check if the label provider is set
 	if (!plotLabelProvider){
@@ -110,9 +110,7 @@ void ScatterPlot::render(std::string fileName) {
     window->Paint();
 
     // Save the final buffer as an image
-    char fn[25];
-    sprintf(fn, fileName.c_str());
-    window->SaveWindowAsPNM(fn);
+    window->SaveWindowAsPNM(fileName);
 
 	return;
 }

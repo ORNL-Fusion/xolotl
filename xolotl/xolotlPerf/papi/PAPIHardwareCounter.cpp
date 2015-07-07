@@ -13,7 +13,7 @@ namespace xolotlPerf {
 PAPIHardwareCounter::CounterSpecMap PAPIHardwareCounter::csMap;
 
 
-PAPIHardwareCounter::PAPIHardwareCounter( std::string name, 
+PAPIHardwareCounter::PAPIHardwareCounter( const std::string& name,
                                     const IHardwareCounter::SpecType& cset )
   : xolotlCore::Identifiable( name ),
     spec( cset ),

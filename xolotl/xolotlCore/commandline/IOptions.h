@@ -79,7 +79,7 @@ public:
      *
      * @param name Name for the network file
      */
-    virtual void setNetworkFilename(std::string name) = 0;
+    virtual void setNetworkFilename(const std::string& name) = 0;
 
     /**
      * Get the Argc for PETSc.
@@ -163,7 +163,7 @@ public:
      *
      * @param name The name of the file
      */
-    virtual void setTempProfileFilename(std::string name) = 0;
+    virtual void setTempProfileFilename(const std::string& name) = 0;
 
     /**
      * Should we use the helium flux option?
@@ -222,7 +222,7 @@ public:
      *
      * @param name The name of the file
      */
-    virtual void setFluxProfileName(std::string name) = 0;
+    virtual void setFluxProfileName(const std::string& name) = 0;
 
     /**
      * Which type of performance handlers should we use?
@@ -267,7 +267,7 @@ public:
      *
      * @param material The name of the material
      */
-    virtual void setMaterial(std::string material) = 0;
+    virtual void setMaterial(const std::string& material) = 0;
 
     /**
      * Obtain the value of the concentration for the vacancies.

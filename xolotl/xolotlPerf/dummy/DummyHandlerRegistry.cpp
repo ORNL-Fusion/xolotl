@@ -5,7 +5,7 @@ namespace xolotlPerf
 
 // Obtain a Timer by name.
 std::shared_ptr<ITimer>
-DummyHandlerRegistry::getTimer( std::string name )
+DummyHandlerRegistry::getTimer( const std::string& name )
 {
     // TODO is there a need for us to retain access to this Timer?
     // TODO do we need to check whether client has already created
@@ -15,7 +15,7 @@ DummyHandlerRegistry::getTimer( std::string name )
 
 // Obtain an EventCounter by name.
 std::shared_ptr<IEventCounter>
-DummyHandlerRegistry::getEventCounter( std::string name )
+DummyHandlerRegistry::getEventCounter( const std::string& name )
 {
     // TODO is there a need for us to retain access to this Timer?
     // TODO do we need to check whether client has already created
@@ -26,7 +26,7 @@ DummyHandlerRegistry::getEventCounter( std::string name )
 // Obtain a HardwareCounter object by name and by the
 // counter data it collects.
 std::shared_ptr<IHardwareCounter>
-DummyHandlerRegistry::getHardwareCounter( std::string name, 
+DummyHandlerRegistry::getHardwareCounter( const std::string& name,
                                         const IHardwareCounter::SpecType& ctrSpec )
 {
     // TODO is there a need for us to retain access to this Timer?

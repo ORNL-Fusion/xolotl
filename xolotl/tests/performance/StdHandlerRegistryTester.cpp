@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 
         BOOST_TEST_MESSAGE("Dummy handler registry created successfully.");
     }
-    catch( std::exception& e )
+    catch (const std::exception& e)
     {
         BOOST_TEST_MESSAGE("DummyHandlerRegistry creation failed: " << e.what());
     }
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(createStdHandlerReg)
 
         BOOST_TEST_MESSAGE("Standard handler registry created successfully.");
     }
-    catch( std::exception& e )
+    catch (const std::exception& e)
     {
         BOOST_TEST_MESSAGE("StdHandlerRegistry creation failed: " << e.what());
     }
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(createOSHandlerReg)
 
         BOOST_TEST_MESSAGE("OS handler registry created successfully.");
     }
-    catch( std::exception& e )
+    catch (const std::exception& e)
     {
         BOOST_TEST_MESSAGE("OSHandlerRegistry creation failed: " << e.what());
     }
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
             BOOST_REQUIRE_CLOSE( ctrStatsObj.stdev, expStdev, 0.01 );
         }
     }
-    catch( std::exception& e )
+    catch (const std::exception& e)
     {
         BOOST_TEST_MESSAGE("Test of aggregating counter stats failed: " << e.what());
     }

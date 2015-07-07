@@ -25,7 +25,7 @@ namespace xolotlPerf
  */
 inline
 IHandlerRegistry::RegistryType
-toPerfRegistryType(std::string arg)
+toPerfRegistryType(const std::string& arg)
 {
     IHandlerRegistry::RegistryType ret;
 

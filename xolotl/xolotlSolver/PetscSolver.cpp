@@ -156,7 +156,7 @@ PetscSolver::PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry)
 PetscSolver::~PetscSolver() {
 }
 
-void PetscSolver::setOptions(std::map<std::string, std::string> options) {
+void PetscSolver::setOptions(const std::map<std::string, std::string>& options) {
 }
 
 void PetscSolver::setupMesh() {

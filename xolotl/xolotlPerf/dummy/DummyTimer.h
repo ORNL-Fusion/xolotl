@@ -32,7 +32,7 @@ public:
 	 *
 	 * @param timerName The DummyTimer's name
 	 */
-	DummyTimer(std::string name)
+	DummyTimer(const std::string& name)
       : xolotlCore::Identifiable("unused")
     { }
 

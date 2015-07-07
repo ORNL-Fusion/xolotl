@@ -3,17 +3,17 @@
 
 using namespace xolotlViz;
 
-Plot::Plot(std::string name) : xolotlCore::Identifiable(name) {
+Plot::Plot(const std::string& name) : xolotlCore::Identifiable(name) {
 }
 
 Plot::~Plot() {
 }
 
-void Plot::render(std::string fileName) {
+void Plot::render(const std::string& fileName) {
 	return;
 }
 
-void Plot::write(std::string fileName) {
+void Plot::write(const std::string& fileName) {
 	render(fileName);
 	return;
 }

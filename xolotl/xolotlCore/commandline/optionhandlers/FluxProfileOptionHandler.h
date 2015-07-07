@@ -38,7 +38,7 @@ public:
 	 * @param opt The pointer to the option that will be modified.
 	 * @param arg The name of the file where the profile is stored.
 	 */
-	bool handler(IOptions *opt, std::string arg) {
+	bool handler(IOptions *opt, const std::string& arg) {
 		bool ret = true;
 
 		// Check that the profile file exists

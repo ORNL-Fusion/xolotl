@@ -35,7 +35,7 @@ public:
 	/**
 	 * The default constructor.
 	 */
-	DataProvider(std::string name);
+	DataProvider(const std::string& name);
 
 	/**
 	 * The destructor.
@@ -112,7 +112,7 @@ public:
  	 * This operation sets the name of the data.
  	 * @param name the name of the data
  	 */ 
-	virtual void setDataName(std::string name) {
+	virtual void setDataName(const std::string& name) {
                 dataName = name;
         }
 

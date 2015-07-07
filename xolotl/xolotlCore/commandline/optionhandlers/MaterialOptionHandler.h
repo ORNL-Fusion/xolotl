@@ -38,7 +38,7 @@ public:
      * @param opt The pointer to the option that will be modified.
      * @param arg The name of the material.
      */
-    bool handler(IOptions *opt, std::string arg) {
+    bool handler(IOptions *opt, const std::string& arg) {
     	// Set the material name
     	opt->setMaterial(arg);
     	return true;

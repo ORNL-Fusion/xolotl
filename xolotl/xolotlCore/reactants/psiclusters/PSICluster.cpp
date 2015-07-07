@@ -26,6 +26,8 @@ PSICluster::PSICluster() :
 	compositionMap[iType] = 0;
 	// Set the default reaction radius to 0. (Doesn't react.)
 	reactionRadius = 0.0;
+	// Set the initial index/id to -1
+	thisNetworkIndex = -1;
 
 	return;
 }
@@ -49,6 +51,8 @@ PSICluster::PSICluster(const int clusterSize,
 	compositionMap[iType] = 0;
 	// Set the default reaction radius to 0. (Doesn't react.)
 	reactionRadius = 0.0;
+	// Set the initial index/id to -1
+	thisNetworkIndex = -1;
 
 	return;
 }
@@ -243,7 +247,7 @@ void PSICluster::emitClusters(PSICluster * firstEmittedCluster,
 }
 
 void PSICluster::combineClusters(std::vector<Reactant *> & reactants,
-		std::string productName) {
+		const std::string& productName) {
 	// Initial declarations
 	std::map<std::string, int> myComposition = getComposition(),
 			secondComposition;
@@ -296,7 +300,7 @@ void PSICluster::combineClusters(std::vector<Reactant *> & reactants,
 }
 
 void PSICluster::replaceInCompound(std::vector<Reactant *> & reactants,
-		std::string oldComponentName, std::string newComponentName) {
+		const std::string& oldComponentName, const std::string& newComponentName) {
 	// Local Declarations
 	std::map<std::string, int> secondReactantComp, productReactantComp;
 	int numReactants = reactants.size();
@@ -335,7 +339,7 @@ void PSICluster::replaceInCompound(std::vector<Reactant *> & reactants,
 	return;
 }
 
-void PSICluster::fillVWithI(std::string secondClusterName,
+void PSICluster::fillVWithI(const std::string& secondClusterName,
 		std::vector<Reactant *> & reactants) {
 	// Local Declarations
 	std::string productClusterName;
@@ -460,10 +464,6 @@ std::vector<int> PSICluster::getReactionConnectivity() const {
 	return getFullConnectivityVector(reactionConnectivitySet, network->size());
 }
 
-std::set<int> PSICluster::getReactionConnectivitySet() const {
-	return std::set<int>(reactionConnectivitySet);
-}
-
 void PSICluster::setDissociationConnectivity(int clusterId) {
 	// Add the cluster to the set.
 	dissociationConnectivitySet.insert(clusterId);
@@ -475,10 +475,6 @@ std::vector<int> PSICluster::getDissociationConnectivity() const {
 	// Create the full vector from the set and return it
 	return getFullConnectivityVector(dissociationConnectivitySet,
 			network->size());
-}
-
-const std::set<int> & PSICluster::getDissociationConnectivitySet() const {
-	return dissociationConnectivitySet;
 }
 
 int PSICluster::getSize() const {
@@ -493,7 +489,6 @@ void PSICluster::setReactionNetwork(
 
 	// Extract properties from the network
 	auto properties = network->getProperties();
-	int connectivityLength = network->size();
 
 	// Get the enabled reaction type flags
 	bool reactionsEnabled = (properties["reactionsEnabled"] == "true");
@@ -508,7 +503,7 @@ void PSICluster::setReactionNetwork(
 	// Get the index/id of this cluster in the reaction network.
 	thisNetworkIndex = id - 1;
 
-	// ----- Handle the connectivty for PSIClusters -----
+	// ----- Handle the connectivity for PSIClusters -----
 
 	// Generate the reactant and dissociation connectivity arrays.
 	// This only must be done once since the arrays are stored as

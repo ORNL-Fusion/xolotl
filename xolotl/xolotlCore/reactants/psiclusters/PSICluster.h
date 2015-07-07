@@ -320,7 +320,7 @@ protected:
 	 * @param productName The name of the product produced in the reaction
 	 */
 	virtual void combineClusters(std::vector<Reactant *> & clusters,
-			std::string productName);
+			const std::string& productName);
 
 	/**
 	 * This operation handles partial replacement reactions of the form
@@ -344,7 +344,7 @@ protected:
 	 * component
 	 */
 	virtual void replaceInCompound(std::vector<Reactant *> & clusters,
-			std::string oldComponentName, std::string newComponentName);
+			const std::string& oldComponentName, const std::string& newComponentName);
 
 	/** This operation handles reactions where interstitials fill vacancies,
 	 * sometimes referred to vacancy-interstitial annihilation. The reaction
@@ -375,7 +375,7 @@ protected:
 	 * @param clusters The set of clusters of the second type that interact
 	 * with this cluster
 	 **/
-	void fillVWithI(std::string secondClusterName, std::vector<Reactant *> & clusters);
+	void fillVWithI(const std::string& secondClusterName, std::vector<Reactant *> & clusters);
 
 	/**
 	 * This operation prints a forward reaction given the three reactants in
@@ -421,15 +421,6 @@ protected:
 	virtual std::vector<int> getReactionConnectivity() const;
 
 	/**
-	 * This operation returns a set that contains only the entries of the
-	 * reaction connectivity array that are non-zero.
-	 *
-	 * @return The set of connected reactants. Each entry in the set is the id
-	 * of a connected cluster for forward reactions.
-	 */
-	std::set<int> getReactionConnectivitySet() const;
-
-	/**
 	 * This operation signifies that the cluster with cluster Id should be
 	 * listed as connected with this cluster through forward reactions.
 	 *
@@ -447,15 +438,6 @@ protected:
 	 * reactions
 	 */
 	virtual std::vector<int> getDissociationConnectivity() const;
-
-	/**
-	 * This operation returns a set that contains only the entries of the
-	 * dissociation connectivity array that are non-zero.
-	 *
-	 * @return The set of connected reactants. Each entry in the set is the id
-	 * of a connected cluster for dissociation reactions
-	 */
-	const std::set<int> & getDissociationConnectivitySet() const;
 
 	/**
 	 * This operation recomputes the diffusion coefficient. It is called

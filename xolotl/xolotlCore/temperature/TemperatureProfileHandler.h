@@ -47,7 +47,7 @@ public:
 	 *
 	 * @param profileFileName The name of the profile file
 	 */
-	TemperatureProfileHandler(std::string profileFileName)
+	TemperatureProfileHandler(const std::string& profileFileName)
 		: tempFile(profileFileName) {}
 
 	/**

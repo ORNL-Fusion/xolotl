@@ -48,7 +48,7 @@ private:
 	 * component.
 	 */
 	void replaceInCompound(std::vector<Reactant *> & clusters,
-			std::string oldComponentName, std::string newComponentName);
+			const std::string& oldComponentName, const std::string& newComponentName);
 
 public:
 

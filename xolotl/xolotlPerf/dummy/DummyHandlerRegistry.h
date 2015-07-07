@@ -22,14 +22,14 @@ public:
     virtual ~DummyHandlerRegistry( void ) { }
 
     // Obtain a Timer by name.
-    virtual std::shared_ptr<ITimer> getTimer( std::string name );
+    virtual std::shared_ptr<ITimer> getTimer( const std::string& name );
 
     // Obtain an EventCounter by name.
-    virtual std::shared_ptr<IEventCounter> getEventCounter( std::string name );
+    virtual std::shared_ptr<IEventCounter> getEventCounter( const std::string& name );
 
     // Obtain a HardwareCounter object by name and by the
     // counter data it collects.
-    virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( std::string name,
+    virtual std::shared_ptr<IHardwareCounter> getHardwareCounter( const std::string& name,
                         const IHardwareCounter::SpecType& ctrSpec );
 
     /**

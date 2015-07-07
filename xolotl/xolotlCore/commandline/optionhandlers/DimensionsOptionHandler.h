@@ -35,7 +35,7 @@ public:
      * @param opt The pointer to the option that will be modified.
      * @param arg The number of dimensions.
      */
-    bool handler(IOptions *opt, std::string arg) {
+    bool handler(IOptions *opt, const std::string& arg) {
     	// Convert to integer
     	int number = strtol(arg.c_str(), NULL, 10);
     	// Set the number of dimensions

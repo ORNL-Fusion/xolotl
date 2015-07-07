@@ -33,7 +33,7 @@ public:
 	 * @param opt The pointer to the option that will be modified.
 	 * @param arg The argument for the flag.
 	 */
-	bool handler(IOptions *opt, std::string arg) {
+	bool handler(IOptions *opt, const std::string& arg) {
         
         bool ret = true;
 
@@ -43,7 +43,7 @@ public:
             xolotlPerf::IHandlerRegistry::RegistryType rtype = xolotlPerf::toPerfRegistryType(arg);
             opt->setPerfHandlerType( rtype );
         }
-        catch( std::invalid_argument& e )
+        catch (const std::invalid_argument& e)
         {
             std::cerr << e.what() << std::endl;
             opt->showHelp(std::cerr);

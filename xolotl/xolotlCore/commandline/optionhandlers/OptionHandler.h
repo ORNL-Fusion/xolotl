@@ -26,7 +26,7 @@ public:
 	 * @param keyName The name for the key.
 	 * @param msg The help message.
 	 */
-    OptionHandler(std::string keyName, std::string msg) {
+    OptionHandler(const std::string& keyName, const std::string& msg) {
     	key = keyName;
     	helpMessage = msg;
     }
@@ -43,7 +43,7 @@ public:
      * @param opt The pointer to the option that will be modified.
      * @param arg The argument for the option.
      */
-    virtual bool handler(IOptions *opt, std::string arg) {return false;}
+    virtual bool handler(IOptions *opt, const std::string& arg) {return false;}
 
 };//end class OptionHandler
 

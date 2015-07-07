@@ -10,7 +10,7 @@ hid_t propertyListId, fileId, concentrationGroupId, subConcGroupId, concDataspac
 		networkDataspaceId, headerGroupId;
 herr_t status;
 
-void HDF5Utils::initializeFile(std::string fileName, int networkSize) {
+void HDF5Utils::initializeFile(const std::string& fileName, int networkSize) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
@@ -51,7 +51,7 @@ void HDF5Utils::initializeFile(std::string fileName, int networkSize) {
 	return;
 }
 
-void HDF5Utils::openFile(std::string fileName) {
+void HDF5Utils::openFile(const std::string& fileName) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
@@ -292,7 +292,7 @@ void HDF5Utils::closeFile() {
 	return;
 }
 
-void HDF5Utils::readHeader(std::string fileName, int &nx, double &hx, int &ny,
+void HDF5Utils::readHeader(const std::string& fileName, int &nx, double &hx, int &ny,
 		double &hy, int &nz, double &hz) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
@@ -341,7 +341,7 @@ void HDF5Utils::readHeader(std::string fileName, int &nx, double &hx, int &ny,
 	return;
 }
 
-bool HDF5Utils::hasConcentrationGroup(std::string fileName,
+bool HDF5Utils::hasConcentrationGroup(const std::string& fileName,
 		int &lastTimeStep) {
 	// Initialize the boolean to return
 	bool hasGroup = true;
@@ -384,7 +384,7 @@ bool HDF5Utils::hasConcentrationGroup(std::string fileName,
 	return hasGroup;
 }
 
-void HDF5Utils::readTimes(std::string fileName, int lastTimeStep, double &time,
+void HDF5Utils::readTimes(const std::string& fileName, int lastTimeStep, double &time,
 		double &deltaTime) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
@@ -420,7 +420,7 @@ void HDF5Utils::readTimes(std::string fileName, int lastTimeStep, double &time,
 	return;
 }
 
-std::vector<std::vector<double> > HDF5Utils::readNetwork(std::string fileName) {
+std::vector<std::vector<double> > HDF5Utils::readNetwork(const std::string& fileName) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
@@ -466,7 +466,7 @@ std::vector<std::vector<double> > HDF5Utils::readNetwork(std::string fileName) {
 	return networkVector;
 }
 
-std::vector< std::vector<double> > HDF5Utils::readGridPoint(std::string fileName,
+std::vector< std::vector<double> > HDF5Utils::readGridPoint(const std::string& fileName,
 		int lastTimeStep, int i, int j, int k) {
 	// Create te vector to return
 	std::vector< std::vector<double> > toReturn;

@@ -7,7 +7,7 @@ namespace xolotlPerf
 {
 
 std::shared_ptr<ITimer>
-OSHandlerRegistry::getTimer(std::string name)
+OSHandlerRegistry::getTimer(const std::string& name)
 {
     // TODO - associate the object we create with the current region.
     std::shared_ptr<ITimer> ret;
@@ -32,7 +32,7 @@ OSHandlerRegistry::getTimer(std::string name)
 
 
 std::shared_ptr<IHardwareCounter>
-OSHandlerRegistry::getHardwareCounter( std::string name,
+OSHandlerRegistry::getHardwareCounter( const std::string& name,
                         const IHardwareCounter::SpecType& ctrSpec )
 {
     // TODO - associate the object we create with the current region

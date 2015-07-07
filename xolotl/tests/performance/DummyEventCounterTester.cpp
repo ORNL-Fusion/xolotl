@@ -32,8 +32,6 @@ BOOST_AUTO_TEST_CASE(checkCounting) {
 
 	DummyEventCounter tester("test");
 
-	long count = 3;
-
 	for(int i = 0; i < 3; i++){
 		tester.increment();
 	}

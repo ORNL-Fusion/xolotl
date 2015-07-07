@@ -33,7 +33,7 @@ public:
 	 * @param opt The pointer to the option that will be modified.
 	 * @param arg The argument for the flag.
 	 */
-	bool handler(IOptions *opt, std::string arg) {
+	bool handler(IOptions *opt, const std::string& arg) {
 		// Determine the type of handlers we are being asked to use
 		if (arg == "std") {
 			opt->setVizStandardHandlers(true);

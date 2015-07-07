@@ -37,7 +37,7 @@ public:
 	 *
 	 * @param name The EventCounter's name
 	 */
-	EventCounter(std::string name)
+	EventCounter(const std::string& name)
       : xolotlCore::Identifiable( name ),
         value( 0 )
     { }

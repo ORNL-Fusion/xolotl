@@ -27,7 +27,7 @@ public:
 	/**
 	 * The default constructor
 	 */
-	SurfacePlot(std::string name);
+	SurfacePlot(const std::string& name);
 
 	/**
 	 * The destructor
@@ -37,7 +37,7 @@ public:
 	/**
 	 * Method managing everything that is related to the rendering of a plot.
 	 */
-	void render(std::string fileName = "fileName");
+	void render(const std::string& fileName = "fileName");
 
 };
 

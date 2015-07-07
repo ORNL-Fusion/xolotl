@@ -14,14 +14,14 @@ namespace HDF5Utils {
 	 * @param fileName The name of the file to create
 	 * @param networkSize The total number of cluster in the network
 	 */
-	void initializeFile(std::string fileName, int networkSize);
+	void initializeFile(const std::string& fileName, int networkSize);
 
 	/**
 	 * Open the already existing HDF5 file.
 	 *
 	 * @param fileName The name of the file to open
 	 */
-	void openFile(std::string fileName);
+	void openFile(const std::string& fileName);
 
 	/**
 	 * Fill the header with the number of points and step size in
@@ -97,7 +97,7 @@ namespace HDF5Utils {
 	 * @param nz The number of grid points in the z direction
 	 * @param hz The step size in the z direction
 	 */
-	void readHeader(std::string fileName, int &nx, double &hx, int &ny,
+	void readHeader(const std::string& fileName, int &nx, double &hx, int &ny,
 			double &hy, int &nz, double &hz);
 
 	/**
@@ -107,7 +107,7 @@ namespace HDF5Utils {
 	 * @param lastTimeStep The value of the last written time step to be changed
 	 * @return True if the file contains a valid concentration group
 	 */
-	bool hasConcentrationGroup(std::string fileName, int &lastTimeStep);
+	bool hasConcentrationGroup(const std::string& fileName, int &lastTimeStep);
 
 	/**
 	 * Read the times from the concentration group of a HDF5 file.
@@ -117,7 +117,7 @@ namespace HDF5Utils {
 	 * @param time The physical time to be changed
 	 * @param deltaTime The time step length to be changed
 	 */
-	void readTimes(std::string fileName, int lastTimeStep, double &time,
+	void readTimes(const std::string& fileName, int lastTimeStep, double &time,
 			double &deltaTime);
 
 	/**
@@ -125,7 +125,7 @@ namespace HDF5Utils {
 	 * @param fileName The name of the file to read from.
 	 * @return The vector of vector which contain the network dataset.
 	 */
-	std::vector< std::vector <double> > readNetwork(std::string fileName);
+	std::vector< std::vector <double> > readNetwork(const std::string& fileName);
 
 	/**
 	 * Read the (i,j,k)-th grid point concentrations from a HDF5 file.
@@ -137,7 +137,7 @@ namespace HDF5Utils {
 	 * @param k The index of the grid point on the z axis
 	 * @return The vector of concentrations
 	 */
-	std::vector< std::vector<double> > readGridPoint(std::string fileName,
+	std::vector< std::vector<double> > readGridPoint(const std::string& fileName,
 			int lastTimeStep, int i, int j = -1, int k = -1);
 
 };

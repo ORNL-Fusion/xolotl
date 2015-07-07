@@ -37,7 +37,7 @@ std::shared_ptr<Reactant> HeCluster::clone() {
 }
 
 void HeCluster::combineClusters(std::vector<Reactant *> & clusters,
-		std::string productName) {
+		const std::string& productName) {
 	// Initial declarations
 	std::map<std::string, int> secondComposition;
 

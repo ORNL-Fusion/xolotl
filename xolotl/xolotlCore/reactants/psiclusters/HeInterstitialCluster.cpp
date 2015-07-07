@@ -51,12 +51,12 @@ std::shared_ptr<Reactant> HeInterstitialCluster::clone() {
 }
 
 void HeInterstitialCluster::replaceInCompound(std::vector<Reactant *> & reactants,
-		std::string oldComponentName, std::string newComponentName) {
+		const std::string& oldComponentName, const std::string& newComponentName) {
 	// Local Declarations
 	std::map<std::string, int> myComp = getComposition(),
 			productReactantComp;
 	int myComponentNumber = myComp[oldComponentName];
-	int secondId = 0, productId = 0;
+	int secondId = 0;
 
 	// Loop over all of the extra reactants in this reaction and handle the replacement
 	for (int i = 0; i < reactants.size(); i++) {

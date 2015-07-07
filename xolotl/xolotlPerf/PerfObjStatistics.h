@@ -16,7 +16,7 @@ template<class T>
 struct PerfObjStatistics
 {
     std::string name;           //< name of the metric
-    unsigned int processCount;  //< number of procesess that collected data for this metric
+    unsigned int processCount;  //< number of processes that collected data for this metric
     T min;                      //< min value across all processes that collected data for the metric
     T max;                      //< max value across all processes that collected data for the metric
     double average;             //< average value across all processes that collected data for the metric
@@ -27,7 +27,7 @@ struct PerfObjStatistics
      * Construct a PerfObjStatistics struct with default values.
      * @param _name The metric name.
      */
-    PerfObjStatistics( std::string _name )
+    PerfObjStatistics( const std::string& _name )
       : name( _name ),
         processCount( 0 ),
         min( 0 ),

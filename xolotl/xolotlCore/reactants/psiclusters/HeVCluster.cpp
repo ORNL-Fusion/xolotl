@@ -51,12 +51,12 @@ std::shared_ptr<Reactant> HeVCluster::clone() {
 }
 
 void HeVCluster::replaceInCompound(std::vector<Reactant *> & reactants,
-		std::string oldComponentName, std::string newComponentName) {
+		const std::string& oldComponentName, const std::string& newComponentName) {
 	// Local Declarations
 	std::map<std::string, int> myComp = getComposition(),
 			productReactantComp;
 	int myComponentNumber = myComp[oldComponentName];
-	int secondId = 0, productId = 0;
+	int secondId = 0;
 
 	// Loop over all of the extra reactants in this reaction and handle the replacement
 	for (int i = 0; i < reactants.size(); i++) {
@@ -91,7 +91,7 @@ void HeVCluster::replaceInCompound(std::vector<Reactant *> & reactants,
 }
 
 void HeVCluster::combineClusters(std::vector<Reactant *> & clusters,
-		std::string productName) {
+		const std::string& productName) {
 	// Initial declarations
 	std::map<std::string, int> myComposition = getComposition(),
 			secondComposition;

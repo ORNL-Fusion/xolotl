@@ -48,7 +48,7 @@ private:
 	 * component.
 	 */
 	void replaceInCompound(std::vector<Reactant *> & clusters,
-			std::string oldComponentName, std::string newComponentName);
+			const std::string& oldComponentName, const std::string& newComponentName);
 
 	/**
 	 * This operation "combines" clusters in the sense that it handles all of
@@ -66,7 +66,7 @@ private:
 	 * @param productName The name of the product produced in the reaction.
 	 */
 	void combineClusters(std::vector<Reactant *> & clusters,
-			std::string productName);
+			const std::string& productName);
 
 public:
 

@@ -90,7 +90,6 @@ BOOST_AUTO_TEST_CASE(check_getValues)
     BOOST_REQUIRE_EQUAL(papiInitialized, true);
 
     PAPIHardwareCounter tester( "test", test_ctrSpec );
-    std::string testName = tester.getName();
 
     const unsigned int nMultiplies = 1000;
     tester.start();

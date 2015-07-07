@@ -152,8 +152,6 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 	int tempTimeStep = -2;
 	if (HDF5Utils::hasConcentrationGroup("test.h5", tempTimeStep)) {
 		// Read the concentrations at the given grid point
-		double newConcentrations[networkSize];
-		double * newConc = &newConcentrations[0];
 		auto returnedVector = HDF5Utils::readGridPoint("test.h5", tempTimeStep, gridPoint);
 
 		// Check the size of the vector
