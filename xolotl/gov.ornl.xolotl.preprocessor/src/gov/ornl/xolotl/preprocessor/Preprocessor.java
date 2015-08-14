@@ -104,10 +104,18 @@ public class Preprocessor {
 	private FormationEnergyEngine formationEnergyEngine = new FormationEnergyEngine();
 
 	/**
+	 * The number of spacial dimensions.
+	 */
+	private int dim;
+
+	/**
 	 * The list of parameters that will be passed to Xolotl
 	 */
 	public Properties xolotlParams = new Properties();
 
+	/**
+	 * The list of standard Petsc options
+	 */
 	public Map<String, String> petscOptions = new HashMap<String, String>();
 
 	/**
@@ -124,17 +132,15 @@ public class Preprocessor {
 		// Create a map of the default Petsc options and their corresponding
 		// arguments, if any, where the key is the option and the value is
 		// the argument
-		petscOptions.put("-ts_final_time", "50");
+		petscOptions.put("-ts_final_time", "1.0");
 		petscOptions.put("-ts_dt", "1.0e-12");
 		petscOptions.put("-ts_max_steps", "100");
-		petscOptions.put("-ts_adapt_dt_max", "10");
+		petscOptions.put("-ts_adapt_dt_max", "1.0e-6");
 		petscOptions.put("-ts_max_snes_failures", "200");
 		petscOptions.put("-pc_type", "fieldsplit");
 		petscOptions.put("-pc_fieldsplit_detect_coupling", "");
 		petscOptions.put("-fieldsplit_0_pc_type", "redundant");
 		petscOptions.put("-fieldsplit_1_pc_type", "sor");
-		petscOptions.put("-snes_monitor", "");
-		petscOptions.put("-ksp_monitor", "");
 		petscOptions.put("-ts_monitor", "");
 
 		// Get the string of Petsc arguments from the command line
@@ -142,6 +148,13 @@ public class Preprocessor {
 		List<String> petscList = new ArrayList<String>();
 		for (String str : petscArgs.split(" ")) {
 			petscList.add(str);
+		}
+		
+		// Change the default preconditionner if we are not in 1D
+		if (dim > 1) {
+			petscList.add("-fieldsplit_0_pc_type"); petscList.add("gamg");
+			petscList.add("-fieldsplit_0_ksp_type"); petscList.add("gmres");
+			petscList.add("-ksp_type"); petscList.add("fgmres");
 		}
 
 		// Create the dash character
@@ -191,7 +204,6 @@ public class Preprocessor {
 	 *            interface.
 	 */
 	public Preprocessor(Arguments args) {
-
 		// Set the maximum size of a Helium cluster in the network.
 		maxHe = args.getMaxHeSize();
 		// Check to make sure the user entered an appropriate value
@@ -216,6 +228,9 @@ public class Preprocessor {
 		
 		// Whether the phase-cut method will be used or not
 		usePhaseCut = args.isPhaseCut();
+		
+		// The number of dimension for the problem to solve
+		dim = Integer.parseInt(args.getDimensions());
 
 		// Set the parameter options that will be passed to Xolotl
 		xolotlParams.setProperty("dimensions", args.getDimensions());
