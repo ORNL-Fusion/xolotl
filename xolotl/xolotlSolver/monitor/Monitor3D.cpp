@@ -227,7 +227,8 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt timestep, PetscReal time
 				for (int l = 0; l < heIndices3D.size(); l++) {
 					// Add the current concentration times the number of helium in the cluster
 					// (from the weight vector)
-					heConcentration += gridPointSolution[heIndices3D[l]] * heWeights3D[l] * hx;
+					heConcentration += gridPointSolution[heIndices3D[l]]
+														 * heWeights3D[l] * hx * hy * hz;
 				}
 			}
 		}

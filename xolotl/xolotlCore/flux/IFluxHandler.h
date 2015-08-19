@@ -21,11 +21,8 @@ public:
 	 *
 	 * @param nx The total number of grid points that will be used on the x axis
 	 * @param hx The step size between grid points on the x axis
-	 * @param hy The step size between grid points on the y axis
-	 * @param hz The step size between grid points on the z axis
 	 */
-	virtual void initializeFluxHandler(int nx, double hx, double hy = 1.0,
-			double hz = 1.0) = 0;
+	virtual void initializeFluxHandler(int nx, double hx) = 0;
 	/**
 	 * This method reads the values on the time profile file and store them in the
 	 * time and amplitude vectors.

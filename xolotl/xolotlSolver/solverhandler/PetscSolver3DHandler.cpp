@@ -101,7 +101,7 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) const {
 	checkPetscError(ierr, "PetscSolver3DHandler::initializeConcentration: DMDAGetInfo failed.");
 
 	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(Mx, hX, hY, hZ);
+	fluxHandler->initializeFluxHandler(Mx, hX);
 
 	// Initialize the advection handler
 	advectionHandler->initialize(network);
@@ -131,7 +131,7 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) const {
 
 				// Initialize the vacancy concentration
 				if (i > 0 && i < Mx - 1 && vacancyIndex > 0) {
-					concOffset[vacancyIndex] = initialVConc / hX;
+					concOffset[vacancyIndex] = initialVConc;
 				}
 			}
 		}

@@ -126,7 +126,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) const {
 
 		// Initialize the vacancy concentration
 		if (i > 0 && i < Mx - 1 && vacancyIndex > 0) {
-			concOffset[vacancyIndex] = initialVConc / hX;
+			concOffset[vacancyIndex] = initialVConc;
 		}
 	}
 
