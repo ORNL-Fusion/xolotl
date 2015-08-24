@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <PSIClusterReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -19,10 +20,12 @@ public:
 	/**
 	 * Compute and store the incident flux values at each grid point.
 	 *
+	 * @param network The reaction network
 	 * @param nx The total number of grid points that will be used on the x axis
 	 * @param hx The step size between grid points on the x axis
 	 */
-	virtual void initializeFluxHandler(int nx, double hx) = 0;
+	virtual void initializeFluxHandler(PSIClusterReactionNetwork *network,
+			int nx, double hx) = 0;
 	/**
 	 * This method reads the values on the time profile file and store them in the
 	 * time and amplitude vectors.
@@ -40,32 +43,41 @@ public:
 	virtual std::vector<double> getIncidentFluxVec(double currentTime) = 0;
 
 	/**
-	 * This operation increments the helium fluence at the current time step.
+	 * This operation returns the index of the cluster that is irradiating
+	 * the material.
+	 *
+	 * @return The index of the incident flux cluster
+	 */
+	virtual int getIncidentFluxClusterIndex() = 0;
+
+	/**
+	 * This operation increments the fluence at the current time step.
 	 *
 	 * @param dt The length of the time step
 	 */
-	virtual void incrementHeFluence(double dt) = 0;
+	virtual void incrementFluence(double dt) = 0;
 
 	/**
-	 * This operation returns the helium fluence.
+	 * This operation returns the fluence.
 	 *
-	 * @return The helium fluence
+	 * @return The fluence
 	 */
-	virtual double getHeFluence() const = 0;
+	virtual double getFluence() const = 0;
 
 	/**
-	 * This operation sets the factor to change the intensity of the helium flux.
+	 * This operation sets the factor to change the intensity of the flux.
 	 *
-	 * @param flux The helium flux intensity
+	 * @param flux The flux intensity
 	 */
-	virtual void setHeFlux(double flux) = 0;
+	virtual void setFluxAmplitude(double flux) = 0;
 
 	/**
-	 * This operation gets the factor that changes the helium flux intensity.
+	 * This operation gets the factor that changes the flux
+	 * intensity/amplitude.
 	 *
-	 * @return The helium flux value
+	 * @return The flux amplitude
 	 */
-	virtual double getHeFlux() const = 0;
+	virtual double getFluxAmplitude() const = 0;
 
 }; //end class IFluxHandler
 

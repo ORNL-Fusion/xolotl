@@ -128,7 +128,7 @@ public class PreprocessorTest {
 
 		try {
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--startTemp", "900", "--heFlux", "1.5" });
+					new String[] { "--startTemp", "900", "--flux", "1.5" });
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);

@@ -248,7 +248,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt timestep, PetscReal time
 		totalHeConcentration = totalHeConcentration / surface;
 
 		// Get the fluence
-		double heliumFluence = fluxHandler->getHeFluence();
+		double heliumFluence = fluxHandler->getFluence();
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;

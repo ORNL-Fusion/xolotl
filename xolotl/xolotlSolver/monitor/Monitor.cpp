@@ -54,7 +54,7 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
 	double dt = time - previousTime;
 
 	// Increment the fluence with the value at this current timestep
-	fluxHandler->incrementHeFluence(dt);
+	fluxHandler->incrementFluence(dt);
 
 	PetscFunctionReturn(0);
 }

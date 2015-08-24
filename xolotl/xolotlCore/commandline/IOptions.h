@@ -166,34 +166,34 @@ public:
     virtual void setTempProfileFilename(const std::string& name) = 0;
 
     /**
-     * Should we use the helium flux option?
+     * Should we use the flux amplitude option?
 	 * If false, it will not be used.
 	 *
-     * @return true if the Helium flux option was present in the parameter file,
-	 * false if it was not
+     * @return true if the flux amplitude option was present in
+     * the parameter file, false if it was not
      */
-    virtual bool useHeliumFlux() const = 0;
+    virtual bool useFluxAmplitude() const = 0;
 
     /**
-     * Set the heliumFluxFlag.
+     * Set the fluxFlag.
      *
-     * @param flag The value for the heliumFluxFlag
+     * @param flag The value for the fluxFlag
      */
-    virtual void setHeliumFluxFlag(bool flag) = 0;
+    virtual void setFluxFlag(bool flag) = 0;
 
     /**
-     * Obtain the value of the intensity of helium flux to be used.
+     * Obtain the value of the intensity of the flux to be used.
      *
-     * @return The value of the flux
+     * @return The value of the flux amplitude
      */
-    virtual double getHeliumFlux() const = 0;
+    virtual double getFluxAmplitude() const = 0;
 
     /**
      * Set the value for the flux intensity to use.
      *
-     * @param flux The value for the flux
+     * @param flux The value for the flux amplitude
      */
-    virtual void setHeliumFlux(double flux) = 0;
+    virtual void setFluxAmplitude(double flux) = 0;
 
     /**
      * Should we use a time profile for the helium flux?

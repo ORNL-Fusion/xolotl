@@ -24,7 +24,7 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
  * 
  * Each element is:
  * 
- * nHe - The number of Helium atoms in the cluster.
+ * nHe - The number of helium atoms in the cluster.
  * 
  * nV - The number of vacancies in the cluster.
  * 
@@ -46,17 +46,17 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
  */
 public class Preprocessor {
 
-	// The maximum size of a Helium cluster in the network.
+	// The maximum size of a helium cluster in the network.
 	private int maxHe;
 
 	// The maximum size of a mobile He cluster.
 	private int maxHeDiffusionSize = 6;
 
-	// The diffusion factors for single species Helium clusters.
+	// The diffusion factors for single species helium clusters.
 	private double[] heDiffusionFactors = { 0.0, 2.9e+10, 3.2e+10, 2.3e+10,
 			1.7e+10, 5.0e+09, 1.0e+09 };
 
-	// The migration energies for single species Helium clusters.
+	// The migration energies for single species helium clusters.
 	private double[] heMigrationEnergies = { Double.POSITIVE_INFINITY, 0.13,
 			0.20, 0.25, 0.20, 0.12, 0.3 };
 
@@ -87,10 +87,10 @@ public class Preprocessor {
 	private boolean usePhaseCut = false;
 
 	/**
-	 * The maximum number of Helium atoms that can be combined with a vacancy
+	 * The maximum number of helium atoms that can be combined with a vacancy
 	 * cluster with size equal to the index i in the array plus one. For
 	 * example, an HeV size cluster with size 1 would have size = i+1 = 1 and i
-	 * = 0. It could support a mixture of up to nine Helium atoms with one
+	 * = 0. It could support a mixture of up to nine helium atoms with one
 	 * vacancy.
 	 */
 	private int[] maxHePerV = { 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55, 60,
@@ -204,12 +204,12 @@ public class Preprocessor {
 	 *            interface.
 	 */
 	public Preprocessor(Arguments args) {
-		// Set the maximum size of a Helium cluster in the network.
+		// Set the maximum size of a helium cluster in the network.
 		maxHe = args.getMaxHeSize();
 		// Check to make sure the user entered an appropriate value
 		if ((maxHe > 8) || (maxHe < 0)) {
 			throw new IllegalArgumentException(
-					"The maxium Helium size must be less than 9 ( 0 <= maxHeSize < 9 )");
+					"The maxium helium size must be less than 9 ( 0 <= maxHeSize < 9 )");
 		}
 
 		// Set the maximum size of a vacancy cluster in the network.
@@ -246,8 +246,8 @@ public class Preprocessor {
 		// be set if they are specified via the command line
 		if (args.isTempFile())
 			xolotlParams.setProperty("tempFile", args.getTempFile());
-		if (args.isHeFlux())
-			xolotlParams.setProperty("heFlux", args.getHeFlux());
+		if (args.isFlux())
+			xolotlParams.setProperty("flux", args.getFlux());
 		if (args.isFluxFile())
 			xolotlParams.setProperty("fluxFile", args.getTempFile());
 		if (args.isInitialV())
@@ -259,7 +259,7 @@ public class Preprocessor {
 	 * This operation generates all helium clusters in the network.
 	 * 
 	 * @return A list of clusters configured to satisfy the bounds and composed
-	 *         solely of Helium.
+	 *         solely of helium.
 	 */
 	private ArrayList<Cluster> generateHe() {
 
@@ -291,7 +291,7 @@ public class Preprocessor {
 	 * configures the formation energies on its own.
 	 * 
 	 * @param heSize
-	 *            The number of Helium atoms in the cluster
+	 *            The number of helium atoms in the cluster
 	 * @param vSize
 	 *            The number of vacancies in the cluster
 	 * @return The cluster.

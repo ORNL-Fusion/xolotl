@@ -65,17 +65,17 @@ protected:
 	std::string tempProfileFilename;
 	
 	/**
-	 * Use the helium flux option?
+	 * Use the flux amplitude option?
 	 */
-	bool heliumFluxFlag;
+	bool fluxFlag;
 
 	/**
 	 * Value for the  flux.
 	 */
-	double heliumFlux;
+	double fluxAmplitude;
 
 	/**
-	 * Use a time profile for the helium flux?
+	 * Use a time profile for the flux?
 	 */
 	bool fluxProfileFlag;
 
@@ -243,31 +243,31 @@ public:
     void setTempProfileFilename(const std::string& name) {tempProfileFilename = name;}
 
     /**
-     * Should we use the helium flux option?
+     * Should we use the flux option?
      * \see IOptions.h
      */
-    bool useHeliumFlux() const {return heliumFluxFlag;};
+    bool useFluxAmplitude() const {return fluxFlag;};
 
     /**
-     * Set the heliumFluxFlag.
+     * Set the fluxFlag.
      * \see IOptions.h
      */
-    void setHeliumFluxFlag(bool flag) {heliumFluxFlag = flag;}
+    void setFluxFlag(bool flag) {fluxFlag = flag;}
 
     /**
-     * Obtain the value of the helium flux intensity to be used.
+     * Obtain the value of the flux intensity to be used.
      * \see IOptions.h
      */
-    double getHeliumFlux() const {return heliumFlux;}
+    double getFluxAmplitude() const {return fluxAmplitude;}
 
     /**
      * Set the value for the flux intensity to use.
      * \see IOptions.h
      */
-    void setHeliumFlux(double flux) {heliumFlux = flux;}
+    void setFluxAmplitude(double flux) {fluxAmplitude = flux;}
 
     /**
-     * Should we use a time profile for the helium flux?
+     * Should we use a time profile for the flux?
      * \see IOptions.h
      */
     bool useFluxTimeProfile() const {return fluxProfileFlag;}
@@ -280,7 +280,7 @@ public:
 
     /**
      * Obtain the name of the file containing the time profile data for the
-     * helium flux.
+     * flux.
      * \see IOptions.h
      */
     std::string getFluxProfileName() const {return fluxProfileFilename;}

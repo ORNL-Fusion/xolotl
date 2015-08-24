@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 					"-fieldsplit_1_pc_type sor "
 					"-ts_final_time 1000 "
 					"-ts_max_steps 5" << std::endl << "startTemp=900"
-			<< std::endl << "perfHandler=dummy" << std::endl << "heFlux=4.0e5"
+			<< std::endl << "perfHandler=dummy" << std::endl << "flux=4.0e5"
 			<< std::endl << "material=W100" << std::endl << "dimensions=1"
 			<< std::endl;
 	paramFile.close();
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 					"-fieldsplit_1_pc_type sor "
 					"-ts_final_time 1000 "
 					"-ts_max_steps 5" << std::endl << "startTemp=900"
-			<< std::endl << "perfHandler=dummy" << std::endl << "heFlux=4.0e5"
+			<< std::endl << "perfHandler=dummy" << std::endl << "flux=4.0e5"
 			<< std::endl << "material=W100" << std::endl << "dimensions=2"
 			<< std::endl;
 	paramFile.close();
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 					"-fieldsplit_1_pc_type sor "
 					"-ts_final_time 1000 "
 					"-ts_max_steps 5" << std::endl << "startTemp=900"
-			<< std::endl << "perfHandler=dummy" << std::endl << "heFlux=4.0e5"
+			<< std::endl << "perfHandler=dummy" << std::endl << "flux=4.0e5"
 			<< std::endl << "material=W100" << std::endl << "dimensions=3"
 			<< std::endl;
 	paramFile.close();

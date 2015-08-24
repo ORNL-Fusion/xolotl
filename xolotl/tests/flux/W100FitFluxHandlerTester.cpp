@@ -2,7 +2,11 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include "W100FitFluxHandler.h"
+#include <W100FitFluxHandler.h>
+#include <HDF5NetworkLoader.h>
+#include <XolotlConfig.h>
+#include <DummyHandlerRegistry.h>
+#include <mpi.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -13,14 +17,35 @@ using namespace xolotlCore;
 BOOST_AUTO_TEST_SUITE (W100FitFluxHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkGetIncidentFlux) {
+	// Initialize MPI for HDF5
+	int argc = 0;
+	char **argv;
+	MPI_Init(&argc, &argv);
+
+	// Create the network loader
+	HDF5NetworkLoader loader =
+			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Define the filename to load the network from
+	string sourceDir(XolotlSourceDirectory);
+	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
+	string filename = sourceDir + pathToFile;
+	// Give the filename to the network loader
+	loader.setFilename(filename);
+
+	// Load the network
+	auto network = (PSIClusterReactionNetwork *) loader.load().get();
+
 	// Specify the number of grid points that will be used
 	int nGridpts = 5;
 	// Specify the step size between grid points
 	double step = 1.25;
 
+	// Create the flux handler
     auto testFitFlux = make_shared<W100FitFluxHandler>();
+    // Set the factor to change the helium flux
+    testFitFlux->setFluxAmplitude(1.0);
     // Initialize the flux handler
-    testFitFlux->initializeFluxHandler(nGridpts, step);
+    testFitFlux->initializeFluxHandler(network, nGridpts, step);
 
 	// Create a time
 	double currTime = 1.0;
@@ -36,42 +61,106 @@ BOOST_AUTO_TEST_CASE(checkGetIncidentFlux) {
 	return;
 }
 
-BOOST_AUTO_TEST_CASE(checkHeFluence) {
+BOOST_AUTO_TEST_CASE(checkFluxIndex) {
+	// Create the network loader
+	HDF5NetworkLoader loader =
+			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Define the filename to load the network from
+	string sourceDir(XolotlSourceDirectory);
+	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
+	string filename = sourceDir + pathToFile;
+	// Give the filename to the network loader
+	loader.setFilename(filename);
+
+	// Load the network
+	auto network = (PSIClusterReactionNetwork *) loader.load().get();
+
 	// Specify the number of grid points that will be used
 	int nGridpts = 5;
 	// Specify the step size between grid points
 	double step = 1.25;
 
+	// Create the flux handler
     auto testFitFlux = make_shared<W100FitFluxHandler>();
+    // Set the factor to change the helium flux
+    testFitFlux->setFluxAmplitude(1.0);
     // Initialize the flux handler
-    testFitFlux->initializeFluxHandler(nGridpts, step);
+    testFitFlux->initializeFluxHandler(network, nGridpts, step);
 
-	// Check that the fluence is 0.0 at the beginning
-	BOOST_REQUIRE_EQUAL(testFitFlux->getHeFluence(), 0.0);
-
-	// Increment the helium fluence
-	testFitFlux->incrementHeFluence(1.0e-8);
-	
-	// Check that the fluence is not 0.0 anymore
-	BOOST_REQUIRE_EQUAL(testFitFlux->getHeFluence(), 1.0e-8);
+    // Check the value of the index of the cluster for the flux
+    BOOST_REQUIRE_EQUAL(testFitFlux->getIncidentFluxClusterIndex(), 0);
 
 	return;
 }
 
-BOOST_AUTO_TEST_CASE(checkHeFlux) {
+BOOST_AUTO_TEST_CASE(checkFluence) {
+	// Create the network loader
+	HDF5NetworkLoader loader =
+			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Define the filename to load the network from
+	string sourceDir(XolotlSourceDirectory);
+	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
+	string filename = sourceDir + pathToFile;
+	// Give the filename to the network loader
+	loader.setFilename(filename);
+
+	// Load the network
+	auto network = (PSIClusterReactionNetwork *) loader.load().get();
+
 	// Specify the number of grid points that will be used
 	int nGridpts = 5;
 	// Specify the step size between grid points
 	double step = 1.25;
 
+	// Create the flux handler
     auto testFitFlux = make_shared<W100FitFluxHandler>();
     // Set the factor to change the helium flux
-    testFitFlux->setHeFlux(2.5);
+    testFitFlux->setFluxAmplitude(1.0);
     // Initialize the flux handler
-    testFitFlux->initializeFluxHandler(nGridpts, step);
+    testFitFlux->initializeFluxHandler(network, nGridpts, step);
+
+	// Check that the fluence is 0.0 at the beginning
+	BOOST_REQUIRE_EQUAL(testFitFlux->getFluence(), 0.0);
+
+	// Increment the fluence
+	testFitFlux->incrementFluence(1.0e-8);
+	
+	// Check that the fluence is not 0.0 anymore
+	BOOST_REQUIRE_EQUAL(testFitFlux->getFluence(), 1.0e-8);
+
+	return;
+}
+
+BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
+	// Create the network loader
+	HDF5NetworkLoader loader =
+			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Define the filename to load the network from
+	string sourceDir(XolotlSourceDirectory);
+	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
+	string filename = sourceDir + pathToFile;
+	// Give the filename to the network loader
+	loader.setFilename(filename);
+
+	// Load the network
+	auto network = (PSIClusterReactionNetwork *) loader.load().get();
+
+	// Specify the number of grid points that will be used
+	int nGridpts = 5;
+	// Specify the step size between grid points
+	double step = 1.25;
+
+	// Create the flux handler
+    auto testFitFlux = make_shared<W100FitFluxHandler>();
+    // Set the factor to change the helium flux
+    testFitFlux->setFluxAmplitude(1.0);
+    // Set the factor to change the helium flux
+    testFitFlux->setFluxAmplitude(2.5);
+    // Initialize the flux handler
+    testFitFlux->initializeFluxHandler(network, nGridpts, step);
 
     // Check the value of the helium flux
-    BOOST_REQUIRE_EQUAL(testFitFlux->getHeFlux(), 2.5);
+    BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2.5);
 
 	// Create a time
 	double currTime = 1.0;
@@ -88,6 +177,19 @@ BOOST_AUTO_TEST_CASE(checkHeFlux) {
 }
 
 BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
+	// Create the network loader
+	HDF5NetworkLoader loader =
+			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Define the filename to load the network from
+	string sourceDir(XolotlSourceDirectory);
+	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
+	string filename = sourceDir + pathToFile;
+	// Give the filename to the network loader
+	loader.setFilename(filename);
+
+	// Load the network
+	auto network = (PSIClusterReactionNetwork *) loader.load().get();
+
 	// Specify the number of grid points that will be used
 	int nGridpts = 5;
 	// Specify the step size between grid points
@@ -104,11 +206,12 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 			"4.0 0.0";
 	writeFluxFile.close();
 
+	// Create the flux handler
     auto testFitFlux = make_shared<W100FitFluxHandler>();
     // Initialize the time profile for the flux handler
     testFitFlux->initializeTimeProfile("fluxFile.dat");
     // Initialize the flux handler
-    testFitFlux->initializeFluxHandler(nGridpts, step);
+    testFitFlux->initializeFluxHandler(network, nGridpts, step);
 
 	// Create a time
 	double currTime = 0.5;
@@ -121,7 +224,7 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	BOOST_REQUIRE_CLOSE(testFluxVec[2], 564.902, 0.01);
 	BOOST_REQUIRE_CLOSE(testFluxVec[3], 243.050, 0.01);
 	// Check the value of the helium flux
-    BOOST_REQUIRE_EQUAL(testFitFlux->getHeFlux(), 2500.0);
+    BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2500.0);
 
     // Change the current time
     currTime = 3.5;
@@ -134,11 +237,14 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	BOOST_REQUIRE_CLOSE(testFluxVec[2], 338.941, 0.01);
 	BOOST_REQUIRE_CLOSE(testFluxVec[3], 145.830, 0.01);
 	// Check the value of the helium flux
-    BOOST_REQUIRE_EQUAL(testFitFlux->getHeFlux(), 1500.0);
+    BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 1500.0);
 
     // Remove the created file
     std::string tempFile = "fluxFile.dat";
     std::remove(tempFile.c_str());
+
+	// Finalize MPI
+	MPI_Finalize();
 
 	return;
 }

@@ -43,14 +43,14 @@ public:
 	 */
 	void initializeMaterial(xolotlCore::Options &options) {
 		// Wrong if both he flux and time profile options are used
-		if (options.useHeliumFlux() && options.useFluxTimeProfile()) {
+		if (options.useFluxAmplitude() && options.useFluxTimeProfile()) {
 			// A constant flux value AND a time profile cannot both be given.
 			throw std::string(
 					"\nA constant flux value AND a time profile cannot both be given.");
 		}
-		else if (options.useHeliumFlux()) {
+		else if (options.useFluxAmplitude()) {
 			// Set the constant value of the flux
-			theFluxHandler->setHeFlux(options.getHeliumFlux());
+			theFluxHandler->setFluxAmplitude(options.getFluxAmplitude());
 		}
 		else if (options.useFluxTimeProfile()) {
 			// Initialize the time profile

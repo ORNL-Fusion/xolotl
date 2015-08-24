@@ -242,7 +242,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt timestep, PetscReal time
 	// Master process
 	if (procId == 0) {
 		// Get the fluence
-		double heliumFluence = fluxHandler->getHeFluence();
+		double heliumFluence = fluxHandler->getFluence();
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;

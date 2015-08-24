@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 			<< "networkFile=tungsten.txt" << std::endl
 			<< "startTemp=900" << std::endl
 			<< "perfHandler=std" << std::endl
-			<< "heFlux=1.5" << std::endl
+			<< "flux=1.5" << std::endl
 			<< "material=W100" << std::endl
 			<< "initialV=0.05" << std::endl
 			<< "dimensions=1" << std::endl;
@@ -151,9 +151,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
     BOOST_REQUIRE_EQUAL(opts.useConstTemperatureHandlers(), true);
     BOOST_REQUIRE_EQUAL(opts.getConstTemperature(), 900.0);
 
-    // Check if the heFlux option is used
-    BOOST_REQUIRE_EQUAL(opts.useHeliumFlux(), true);
-    BOOST_REQUIRE_EQUAL(opts.getHeliumFlux(), 1.5);
+    // Check if the flux option is used
+    BOOST_REQUIRE_EQUAL(opts.useFluxAmplitude(), true);
+    BOOST_REQUIRE_EQUAL(opts.getFluxAmplitude(), 1.5);
 
     // Check the performance handler
     BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(), xolotlPerf::IHandlerRegistry::std);
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
     BOOST_REQUIRE_EQUAL(opts.getTempProfileFilename(), "temperatureFile.dat");
 
     // Check if the heFlux option is used
-    BOOST_REQUIRE_EQUAL(opts.useHeliumFlux(), false);
+    BOOST_REQUIRE_EQUAL(opts.useFluxAmplitude(), false);
 
     // Check if the time profile option is used for the flux
     BOOST_REQUIRE_EQUAL(opts.useFluxTimeProfile(), true);
