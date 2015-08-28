@@ -152,8 +152,9 @@ public class Preprocessor {
 		
 		// Change the default preconditionner if we are not in 1D
 		if (dim > 1) {
-			petscList.add("-fieldsplit_0_pc_type"); petscList.add("gamg");
-			petscList.add("-fieldsplit_0_ksp_type"); petscList.add("gmres");
+			petscList.add("-fieldsplit_0_pc_type"); petscList.add("sor");
+			petscList.add("-fieldsplit_1_pc_type"); petscList.add("gamg");
+			petscList.add("-fieldsplit_1_ksp_type"); petscList.add("gmres");
 			petscList.add("-ksp_type"); petscList.add("fgmres");
 		}
 
