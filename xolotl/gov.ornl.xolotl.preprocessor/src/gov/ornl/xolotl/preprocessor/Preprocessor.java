@@ -139,8 +139,8 @@ public class Preprocessor {
 		petscOptions.put("-ts_max_snes_failures", "200");
 		petscOptions.put("-pc_type", "fieldsplit");
 		petscOptions.put("-pc_fieldsplit_detect_coupling", "");
-		petscOptions.put("-fieldsplit_0_pc_type", "redundant");
-		petscOptions.put("-fieldsplit_1_pc_type", "sor");
+		petscOptions.put("-fieldsplit_0_pc_type", "sor");
+		petscOptions.put("-fieldsplit_1_pc_type", "redundant");
 		petscOptions.put("-ts_monitor", "");
 
 		// Get the string of Petsc arguments from the command line
@@ -152,7 +152,6 @@ public class Preprocessor {
 		
 		// Change the default preconditionner if we are not in 1D
 		if (dim > 1) {
-			petscList.add("-fieldsplit_0_pc_type"); petscList.add("sor");
 			petscList.add("-fieldsplit_1_pc_type"); petscList.add("gamg");
 			petscList.add("-fieldsplit_1_ksp_type"); petscList.add("gmres");
 			petscList.add("-ksp_type"); petscList.add("fgmres");
