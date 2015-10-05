@@ -82,11 +82,11 @@ public class ArgumentsTest {
 			// Check the default material argument
 			assertEquals("W100", args.getMaterial());
 
+			// Check the default flux argument
+			assertEquals("4.0e7", args.getFlux());
+
 			// Check if there is a tempFile argument
 			assertEquals(false, args.isTempFile());
-
-			// Check if there is an flux argument
-			assertEquals(false, args.isFlux());
 
 			// Check if there is an fluxFile argument
 			assertEquals(false, args.isFluxFile());
@@ -179,17 +179,14 @@ public class ArgumentsTest {
 			// Check that the material is W111
 			assertEquals("W111", args.getMaterial());
 
+			// Check that the flux argument is 5.0e5
+			assertEquals("5.0e5", args.getFlux());
+
 			// Check if there is a tempFile argument
 			assertEquals(true, args.isTempFile());
 
 			// Check that the tempFile argument is temp.dat
 			assertEquals("temp.dat", args.getTempFile());
-
-			// Check if there is an flux argument
-			assertEquals(true, args.isFlux());
-
-			// Check that the flux argument is 5.0e5
-			assertEquals("5.0e5", args.getFlux());
 
 			// Check if there is an fluxFile argument
 			assertEquals(true, args.isFluxFile());

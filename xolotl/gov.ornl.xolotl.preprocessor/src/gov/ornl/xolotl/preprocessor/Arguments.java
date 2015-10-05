@@ -360,7 +360,7 @@ public interface Arguments {
 	double getZStepSize();
 
 	/**
-	 * This Option annotation corresponds to the optional '--material' option
+	 * This Option annotation corresponds to the  '--material' option
 	 * and provides a brief description of the option.
 	 * 
 	 * @param description
@@ -377,6 +377,25 @@ public interface Arguments {
 	 * @return The material
 	 */
 	String getMaterial();
+
+	/**
+	 * This Option annotation corresponds to the '--flux' option and
+	 * provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "4.0e7",
+			description = "This option allows the user to change the flux by "
+			+ "the factor specified (in nm).")
+	
+	/**
+	 * This operation produces the optional command line option '--heFlux' which 
+	 * takes a single string value and is defined by the previous Option annotation
+	 * 
+	 * @return The flux amplitude
+	 */
+	String getFlux();
 
 	/**
 	 * This Option annotation corresponds to the optional '--tempFile' option
@@ -404,31 +423,6 @@ public interface Arguments {
 	 *         not
 	 */
 	boolean isTempFile();
-
-	/**
-	 * This Option annotation corresponds to the optional '--flux' option and
-	 * provides a brief description of the option.
-	 * 
-	 * @param description
-	 *            Brief description of this option
-	 */
-	@Option(description = "This option allows the user to change the flux by "
-			+ "the factor specified (in nm).")
-	/**
-	 * This operation produces the optional command line option '--heFlux' which 
-	 * takes a single string value and is defined by the previous Option annotation
-	 * 
-	 * @return The flux amplitude
-	 */
-	String getFlux();
-
-	/**
-	 * This operation makes the command line option '--flux' optional.
-	 * 
-	 * @return Returns true if the option has been specified and false if it has
-	 *         not
-	 */
-	boolean isFlux();
 
 	/**
 	 * This Option annotation corresponds to the optional '--fluxFile' option
