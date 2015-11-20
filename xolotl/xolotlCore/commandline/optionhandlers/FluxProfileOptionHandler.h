@@ -8,7 +8,7 @@
 namespace xolotlCore {
 
 /**
- * FluxProfileOptionHandler handles the case where we want to use a temperature profile.
+ * FluxProfileOptionHandler handles the case where we want to use a helium flux profile.
  */
 class FluxProfileOptionHandler: public OptionHandler {
 public:
@@ -51,7 +51,7 @@ public:
 			opt->setExitCode(EXIT_FAILURE);
 			ret = false;
 		} else {
-			// Set the flag to use a temperature profile to true
+			// Set the flag to use a helium profile to true
 			opt->setFluxProfileFlag(true);
 
 			// Set the name of the file
