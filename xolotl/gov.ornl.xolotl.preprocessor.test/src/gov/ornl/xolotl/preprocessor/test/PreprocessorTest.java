@@ -32,39 +32,35 @@ public class PreprocessorTest {
 		Arguments parsedArgs = null;
 
 		try {
-			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] {});
+			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] {});
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
 
 				// Write the parameter file
-				preprocessor.writeParameterFile("paramsTest",
-						preprocessor.xolotlParams);
+				preprocessor.writeParameterFile("paramsTest", preprocessor.xolotlParams);
 
 				// Load the properties from the parameter file to check they
 				// were written correctly
 				Properties inProps = preprocessor.loadParameterFile("paramsTest");
-				
+
 				// Enumeration to hold the parameter names
 				Enumeration<?> paramNames = inProps.propertyNames();
 				while (paramNames.hasMoreElements()) {
 					String key = (String) paramNames.nextElement();
 					String value = inProps.getProperty(key);
 					// Check that the default parameter values were used
-					assertEquals(preprocessor.xolotlParams.getProperty(key),
-								value);
+					assertEquals(preprocessor.xolotlParams.getProperty(key), value);
 				}
 
 				// Delete the parameter file
 				new File("paramsTest").delete();
 			}
-		}
-		catch (ArgumentValidationException e) {
+		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
 			fail();
-		} 
+		}
 
 		return;
 	}
@@ -80,39 +76,35 @@ public class PreprocessorTest {
 
 		try {
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--perfHandler", "dummy",
-				"--petscArgs=" + "-da_grid_x 8 -ts_final_time 2" });
+					new String[] { "--perfHandler", "dummy", "--petscArgs=" + "-da_grid_x 8 -ts_final_time 2" });
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
 
 				// Write the parameter file
-				preprocessor.writeParameterFile("clOptionsTest",
-						preprocessor.xolotlParams);
+				preprocessor.writeParameterFile("clOptionsTest", preprocessor.xolotlParams);
 
 				// Load the properties from the parameter file to check they
 				// were written correctly
 				Properties inProps = preprocessor.loadParameterFile("clOptionsTest");
-			
+
 				// Enumeration to hold the parameter names
 				Enumeration<?> paramNames = inProps.propertyNames();
 				while (paramNames.hasMoreElements()) {
 					String key = (String) paramNames.nextElement();
 					String value = inProps.getProperty(key);
 					// Check that the default parameter values were used
-					assertEquals(preprocessor.xolotlParams.getProperty(key),
-							value);
+					assertEquals(preprocessor.xolotlParams.getProperty(key), value);
 				}
 
 				// Delete the parameter file
 				new File("clOptionsTest").delete();
 			}
-		}
-		catch (ArgumentValidationException e) {
+		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
 			fail();
-		} 
+		}
 
 		return;
 	}
@@ -134,100 +126,80 @@ public class PreprocessorTest {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
 
 				// Write the parameter file
-				preprocessor.writeParameterFile("optionalOpsTest",
-						preprocessor.xolotlParams);
+				preprocessor.writeParameterFile("optionalOpsTest", preprocessor.xolotlParams);
 
 				// Load the properties from the parameter file to check they
 				// were written correctly
-				Properties inProps = preprocessor
-						.loadParameterFile("optionalOpsTest");
-			
+				Properties inProps = preprocessor.loadParameterFile("optionalOpsTest");
+
 				// Enumeration to hold the parameter names
 				Enumeration<?> paramNames = inProps.propertyNames();
 				while (paramNames.hasMoreElements()) {
 					String key = (String) paramNames.nextElement();
 					String value = inProps.getProperty(key);
 					// Check that the default parameter values were used
-					assertEquals(preprocessor.xolotlParams.getProperty(key),
-							value);
+					assertEquals(preprocessor.xolotlParams.getProperty(key), value);
 				}
 
 				// Delete the parameter file
 				new File("optionalOpsTest").delete();
 			}
-		}
-		catch (ArgumentValidationException e) {
+		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
 			fail();
-		} 
+		}
 
 		return;
 	}
-	
-	/**
-	 * This operation checks that it is not possible to give wrong 
-	 * sizes for He, I, and V.
-	 */
-	@Test(expected=IllegalArgumentException.class)
-	public void testBadMaxClusterSizeOptions() {
 
+	/**
+	 * This operation checks that it is not possible to give wrong size for He.
+	 */
+	@Test(expected = IllegalArgumentException.class)
+	public void testBadMaxHeSizeOptions() {
 		// Local Declarations
 		Arguments parsedArgs = null;
+		boolean thrown = false;
 
 		try {
 			// Try a number of helium that is too big
-			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--maxHeSize", "10" });
-			
-			// Check that the max helium cluster size is 10
-			assertEquals(10, parsedArgs.getMaxHeSize());
+			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] { "--maxHeSize", "10" });
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-				fail("Should have thrown an IllegalArgumentException because "
-						+ "the maximum He size is out of range.");
 			}
-		}
-		catch (ArgumentValidationException e) {
+		} catch (ArgumentValidationException e) {
 			e.printStackTrace();
-		} 
+			thrown = true;
+		}
+		assertEquals(true, thrown);
+
+		return;
+	}
+
+	/**
+	 * This operation checks that it is not possible to give wrong size Y and Z in 3D.
+	 */
+	@Test(expected = IllegalArgumentException.class)
+	public void testBadGridSizeOptions() {
+		// Local Declarations
+		Arguments parsedArgs = null;
+		boolean thrown = false;
 
 		try {
-			// Try a number of vacancy that is negative
+			// Try wrong number of grid points in 3D
 			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--maxVSize", "-1" });
-			
-			// Check that the max interstitial cluster size is -1
-			assertEquals(-2, parsedArgs.getMaxVSize());
+					new String[] { "--dimensions", "3", "--nyGrid", "21", "--nzGrid", "20" });
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-				fail("Should have thrown an IllegalArgumentException because "
-						+ "the maximum V size is out of range.");
 			}
-		}
-		catch (ArgumentValidationException e) {
+		} catch (ArgumentValidationException e) {
 			e.printStackTrace();
-		} 
-		
-		try {
-			// Try a number of interstitial that is negative
-			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--maxISize", "-2" });
-			
-			// Check that the max interstitial cluster size is -2
-			assertEquals(-2, parsedArgs.getMaxISize());
-
-			if (parsedArgs != null) {
-				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-				fail("Should have thrown an IllegalArgumentException because "
-						+ "the maximum I size is out of range.");
-				}
+			thrown = true;
 		}
-		catch (ArgumentValidationException e) {
-			e.printStackTrace();
-		} 
+		assertEquals(true, thrown);
 
 		return;
 	}
@@ -242,8 +214,7 @@ public class PreprocessorTest {
 
 		try {
 			// Keep the default arguments
-			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] {});
+			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] {});
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
@@ -256,8 +227,7 @@ public class PreprocessorTest {
 			}
 
 			// Change the number of V clusters
-			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--maxVSize", "60" });
+			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] { "--maxVSize", "60" });
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
@@ -270,8 +240,7 @@ public class PreprocessorTest {
 			}
 
 			// Use the phase-cut method
-			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--phaseCut"});
+			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] { "--phaseCut" });
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
@@ -282,12 +251,11 @@ public class PreprocessorTest {
 				// Check the size of the network
 				assertEquals(network.size(), 476);
 			}
-		}
-		catch (ArgumentValidationException e) {
+		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
 			fail();
-		} 
+		}
 
 		return;
 	}
@@ -301,8 +269,7 @@ public class PreprocessorTest {
 		Arguments parsedArgs = null;
 
 		try {
-			parsedArgs = CliFactory.parseArguments(Arguments.class,
-					new String[] {});
+			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] {});
 
 			if (parsedArgs != null) {
 				Preprocessor preprocessor = new Preprocessor(parsedArgs);
@@ -336,12 +303,11 @@ public class PreprocessorTest {
 				boolean fileExists = (f.exists() && !f.isDirectory());
 				assertEquals(fileExists, true);
 			}
-		}
-		catch (ArgumentValidationException e) {
+		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
 			fail();
-		} 
+		}
 
 		return;
 	}

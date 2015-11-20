@@ -214,23 +214,29 @@ public class Preprocessor {
 
 		// Set the maximum size of a vacancy cluster in the network.
 		maxV = args.getMaxVSize();
-		if (maxV < 0) {
-			throw new IllegalArgumentException(
-					"The maxium vacancy must be positive ( 0 <= maxVSize )");
-		}
 
 		// The maximum size of an interstitial cluster in the network.
 		maxI = args.getMaxISize();
-		if (maxI < 0) {
-			throw new IllegalArgumentException(
-					"The maxium interstitial must be positive ( 0 <= maxISize )");
-		}
 		
 		// Whether the phase-cut method will be used or not
 		usePhaseCut = args.isPhaseCut();
 		
 		// The number of dimension for the problem to solve
 		dim = Integer.parseInt(args.getDimensions());
+		
+		// Special case in 3D
+		if (dim == 3) {
+			// Check if the number of grid points in the Y or 
+			// Z direction is not a multiple of 3
+			if (args.getNyGrid() % 3 != 0 
+					|| args.getNzGrid() % 3 != 0) {
+				// Complain
+				throw new IllegalArgumentException(
+						"The number of grid points in the Y or Z direction "
+						+ "should be a multiple of 3 when using 3D because of "
+						+ "PETSc. ");
+			}
+		}
 
 		// Set the parameter options that will be passed to Xolotl
 		xolotlParams.setProperty("dimensions", args.getDimensions());
