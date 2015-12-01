@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Local Declarations
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
-	// Get an He cluster with compostion 1,0,0.
+	// Get an He cluster with composition 1,0,0.
 	auto cluster = (PSICluster *) network->get("He", 1);
 	// Get one that it combines with (He2)
 	auto secondCluster = (PSICluster *) network->get("He", 2);
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Get the simple reaction network
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork(3);
 
-	// Get an He cluster with compostion 1,0,0.
+	// Get an He cluster with composition 1,0,0.
 	auto cluster = (PSICluster *) network->get("He", 1);
 	// Set the diffusion factor and migration energy based on the
 	// values from the tungsten benchmark for this problem.

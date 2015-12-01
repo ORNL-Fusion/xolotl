@@ -899,35 +899,35 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			flagStatus, flagMaxClusterConc, flagInterstitial;
 
 	// Check the option -plot_perf
-	ierr = PetscOptionsHasName(NULL, "-plot_perf", &flagPerf);
+	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
 	checkPetscError(ierr, "setupPetsc1DMonitor: PetscOptionsHasName (-plot_perf) failed.");
 
 	// Check the option -plot_series
-	ierr = PetscOptionsHasName(NULL, "-plot_series", &flagSeries);
+	ierr = PetscOptionsHasName(NULL, NULL, "-plot_series", &flagSeries);
 	checkPetscError(ierr, "setupPetsc1DMonitor: PetscOptionsHasName (-plot_series) failed.");
 
 	// Check the option -plot_1d
-	ierr = PetscOptionsHasName(NULL, "-plot_1d", &flag1DPlot);
+	ierr = PetscOptionsHasName(NULL, NULL, "-plot_1d", &flag1DPlot);
 	checkPetscError(ierr, "setupPetsc1DMonitor: PetscOptionsHasName (-plot_1d) failed.");
 
 	// Check the option -plot_2d
-	ierr = PetscOptionsHasName(NULL, "-plot_2d", &flag2DPlot);
+	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d", &flag2DPlot);
 	checkPetscError(ierr, "setupPetsc1DMonitor: PetscOptionsHasName (-plot_2d) failed.");
 
 	// Check the option -helium_retention
-	ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);
+	ierr = PetscOptionsHasName(NULL, NULL, "-helium_retention", &flagRetention);
 	checkPetscError(ierr, "setupPetsc1DMonitor: PetscOptionsHasName (-helium_retention) failed.");
 
 	// Check the option -start_stop
-	ierr = PetscOptionsHasName(NULL, "-start_stop", &flagStatus);
+	ierr = PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus);
 	checkPetscError(ierr, "setupPetsc1DMonitor: PetscOptionsHasName (-start_stop) failed.");
 
 	// Check the option -max_cluster_conc
-	ierr = PetscOptionsHasName(NULL, "-max_cluster_conc", &flagMaxClusterConc);
+	ierr = PetscOptionsHasName(NULL, NULL, "-max_cluster_conc", &flagMaxClusterConc);
 	checkPetscError(ierr, "setupPetsc1DMonitor: PetscOptionsHasName (-max_cluster_conc) failed.");
 
 	// Check the option -interstitial_diff
-	ierr = PetscOptionsHasName(NULL, "-interstitial_diff", &flagInterstitial);
+	ierr = PetscOptionsHasName(NULL, NULL, "-interstitial_diff", &flagInterstitial);
 	checkPetscError(ierr, "setupPetsc1DMonitor: PetscOptionsHasName (-interstitial_diff) failed.");
 
 	// Get the solver handler
@@ -1121,7 +1121,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetInt(NULL, "-start_stop", &hdf5Stride1D, &flag);
+		ierr = PetscOptionsGetInt(NULL, NULL, "-start_stop", &hdf5Stride1D, &flag);
 		checkPetscError(ierr, "setupPetsc1DMonitor: PetscOptionsGetInt (-start_stop) failed.");
 		if (!flag)
 			hdf5Stride1D = 1;

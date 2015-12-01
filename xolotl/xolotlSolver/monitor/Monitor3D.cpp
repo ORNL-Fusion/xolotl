@@ -566,23 +566,23 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	PetscBool flagPerf, flagRetention, flagStatus, flag2DXYPlot, flag2DXZPlot;
 
 	// Check the option -plot_perf
-	ierr = PetscOptionsHasName(NULL, "-plot_perf", &flagPerf);
+	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
 	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-plot_perf) failed.");
 
 	// Check the option -plot_2d_xy
-	ierr = PetscOptionsHasName(NULL, "-plot_2d_xy", &flag2DXYPlot);
+	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xy", &flag2DXYPlot);
 	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xy) failed.");
 
 	// Check the option -plot_2d_xz
-	ierr = PetscOptionsHasName(NULL, "-plot_2d_xz", &flag2DXZPlot);
+	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xz", &flag2DXZPlot);
 	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xz) failed.");
 
 	// Check the option -helium_retention
-	ierr = PetscOptionsHasName(NULL, "-helium_retention", &flagRetention);
+	ierr = PetscOptionsHasName(NULL, NULL, "-helium_retention", &flagRetention);
 	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-helium_retention) failed.");
 
 	// Check the option -start_stop
-	ierr = PetscOptionsHasName(NULL, "-start_stop", &flagStatus);
+	ierr = PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus);
 	checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-start_stop) failed.");
 
 	// Get the solver handler
@@ -674,7 +674,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetInt(NULL, "-start_stop", &hdf5Stride3D, &flag);
+		ierr = PetscOptionsGetInt(NULL, NULL, "-start_stop", &hdf5Stride3D, &flag);
 		checkPetscError(ierr, "setupPetsc3DMonitor: PetscOptionsGetInt (-start_stop) failed.");
 		if (!flag)
 			hdf5Stride3D = 1;

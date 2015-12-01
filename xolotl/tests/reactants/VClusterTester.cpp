@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  	// Local Declarations
  	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
- 	// Get an V cluster with compostion 0,1,0.
+ 	// Get an V cluster with composition 0,1,0.
  	auto cluster = (PSICluster *) network->get("V", 1);
  	// Get one that it combines with (V2)
  	auto secondCluster = (PSICluster *) network->get("V", 2);
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  	// Get the simple reaction network
  	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork(3);
 
- 	// Get an V cluster with compostion 0,1,0.
+ 	// Get an V cluster with composition 0,1,0.
  	auto cluster = (PSICluster *) network->get("V", 1);
  	// Set the diffusion factor and migration energy based on the
  	// values from the tungsten benchmark for this problem.

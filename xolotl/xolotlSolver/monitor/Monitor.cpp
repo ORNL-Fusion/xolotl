@@ -73,9 +73,9 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the number of processes
 	int cwSize;
-    int cwRank;
+	int cwRank;
 	MPI_Comm_size(PETSC_COMM_WORLD, &cwSize);
-    MPI_Comm_rank(PETSC_COMM_WORLD, &cwRank);
+	MPI_Comm_rank(PETSC_COMM_WORLD, &cwRank);
 
 	// Print a warning if only one process
 	if (cwSize == 1) {
@@ -85,56 +85,54 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 		PetscFunctionReturn(0);
 	}
 
-    // Obtain the current value of the solve timer.
-    //
-    // Note that the solve timer keeps a cumulative time,
-    // not a per-timestep time.   If you need a per-timestep
-    // time, you will want to keep a static or global variable
-    // with the last known timer value, and subtract it from
-    // the current timer value each time this monitor function is called.
-    //
-    // Note also that we restart the timer immediately after sampling
-    // its value.  If you feel it is "unfair" to charge the time
-    // required for the rank 0 process to produce the output plot
-    // against the solve timer, then you should move the start()
-    // call after the code that produces the plot (and probably also
-    // put in an MPI_Barrier before starting the timer so that
-    // all processes avoid including the time required for rank 0
-    // to produce the plot).  We probably don't want to reset the
-    // timer here since the main function is using it to get an
-    // overall elapsed time measurement of the solve.
-    //
-    auto solverTimer = xolotlPerf::getHandlerRegistry()->getTimer("solve");
-    solverTimer->stop();
-    double solverTimerValue = solverTimer->getValue();
-    solverTimer->start();
+	// Obtain the current value of the solve timer.
+	//
+	// Note that the solve timer keeps a cumulative time,
+	// not a per-timestep time.   If you need a per-timestep
+	// time, you will want to keep a static or global variable
+	// with the last known timer value, and subtract it from
+	// the current timer value each time this monitor function is called.
+	//
+	// Note also that we restart the timer immediately after sampling
+	// its value.  If you feel it is "unfair" to charge the time
+	// required for the rank 0 process to produce the output plot
+	// against the solve timer, then you should move the start()
+	// call after the code that produces the plot (and probably also
+	// put in an MPI_Barrier before starting the timer so that
+	// all processes avoid including the time required for rank 0
+	// to produce the plot).  We probably don't want to reset the
+	// timer here since the main function is using it to get an
+	// overall elapsed time measurement of the solve.
+	//
+	auto solverTimer = xolotlPerf::getHandlerRegistry()->getTimer("solve");
+	solverTimer->stop();
+	double solverTimerValue = solverTimer->getValue();
+	solverTimer->start();
 
-    // Collect all sampled timer values to rank 0.
-    double* allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
-    MPI_Gather( &solverTimerValue,  // send buffer
-                1,                  // number of values to send
-                MPI_DOUBLE,         // type of items in send buffer
-                allTimerValues,     // receive buffer (only valid at root)
-                1,                  // number of values to receive from each process
-                MPI_DOUBLE,         // type of items in receive buffer
-                0,                  // root of MPI collective operation
-                PETSC_COMM_WORLD ); // communicator defining processes involved in the operation
+	// Collect all sampled timer values to rank 0.
+	double* allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
+	MPI_Gather( &solverTimerValue,	// send buffer
+							1,									// number of values to send
+							MPI_DOUBLE,					// type of items in send buffer
+							allTimerValues,			// receive buffer (only valid at root)
+							1,									// number of values to receive from each process
+							MPI_DOUBLE,					// type of items in receive buffer
+							0,									// root of MPI collective operation
+							PETSC_COMM_WORLD );	// communicator defining processes involved in the operation
 
-    if( cwRank == 0 )
-    {
-        auto allPoints = std::make_shared<std::vector<xolotlViz::Point> >();
+	if (cwRank == 0) {
+		auto allPoints = std::make_shared<std::vector<xolotlViz::Point> >();
 
-        for( unsigned int i = 0; i < cwSize; ++i )
-        {
-            xolotlViz::Point aPoint;
-            aPoint.value = allTimerValues[i];
-            aPoint.x = i;
-            aPoint.t = time;
-            allPoints->push_back(aPoint);
-        }
+		for (unsigned int i = 0; i < cwSize; ++i) {
+			xolotlViz::Point aPoint;
+			aPoint.value = allTimerValues[i];
+			aPoint.x = i;
+			aPoint.t = time;
+			allPoints->push_back(aPoint);
+		}
 
-        // Provide the data provider the points.
-        perfPlot->getDataProvider()->setPoints(allPoints);
+		// Provide the data provider the points.
+		perfPlot->getDataProvider()->setPoints(allPoints);
 		perfPlot->getDataProvider()->setDataName("SolverTimer");
 
 		// Change the title of the plot
@@ -158,12 +156,12 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 		std::ostringstream fileName;
 		fileName << "timer_TS" << timestep << ".pnm";
 		perfPlot->write(fileName.str());
-    }
+	}
 
-    // clean up
-    delete[] allTimerValues;
+	// Clean up
+	delete[] allTimerValues;
 
-    PetscFunctionReturn(0);
+	PetscFunctionReturn(0);
 }
 
 }

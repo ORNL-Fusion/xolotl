@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	// Local Declarations
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
 
-	// Get an HeI cluster with compostion 1,0,1.
+	// Get an HeI cluster with composition 1,0,1.
 	vector<int> composition = { 1, 0, 1 };
 	auto cluster = (PSICluster *) network->getCompound("HeI", composition);
 	// Get one that it combines with (I)
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Get the simple reaction network
 	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork(3);
 
-	// Get an HeI cluster with compostion 2,0,1.
+	// Get an HeI cluster with composition 2,0,1.
 	vector<int> composition = { 2, 0, 1 };
 	auto cluster = (PSICluster *) network->getCompound("HeI", composition);
 	// Set the diffusion factor and migration energy to arbitrary values
