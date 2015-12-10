@@ -253,8 +253,10 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 			++marker;
 		else if (compoundNames[i] == "HeI")
 			++marker;
+		else if (compoundNames[i] == "Super")
+			++marker;
 	}
-	BOOST_REQUIRE_EQUAL(2, marker);
+	BOOST_REQUIRE_EQUAL(3, marker);
 	BOOST_REQUIRE_EQUAL(marker, compoundNames.size());
 
 	return;

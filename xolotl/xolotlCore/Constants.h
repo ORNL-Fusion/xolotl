@@ -36,6 +36,7 @@ static const std::string vType = "V";
 static const std::string iType = "I";
 static const std::string heVType = "HeV";
 static const std::string heIType = "HeI";
+static const std::string superType = "Super";
 
 } /* end namespace xolotlCore */
 #endif /* CONSTANTS_H_ */

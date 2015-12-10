@@ -10,7 +10,7 @@ using namespace xolotlCore;
 
 void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 	// Shared pointers for the cluster type map
-	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>>heVector =
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> heVector =
 			std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
 	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> vVector
 		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
@@ -19,6 +19,8 @@ void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> heVVector
 		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
 	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> heIVector
+		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
+	std::shared_ptr < std::vector<std::shared_ptr<Reactant>>> superVector
 		= std::make_shared<std::vector<std::shared_ptr<Reactant>>>();
 
 	// Initialize default properties
@@ -29,6 +31,7 @@ void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 	(*properties)["numIClusters"] = "0";
 	(*properties)["numHeVClusters"] = "0";
 	(*properties)["numHeIClusters"] = "0";
+	(*properties)["numSuperClusters"] = "0";
 	(*properties)["maxHeClusterSize"] = "0";
 	(*properties)["maxVClusterSize"] = "0";
 	(*properties)["maxIClusterSize"] = "0";
@@ -42,15 +45,17 @@ void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 	names.push_back(vType);
 	names.push_back(iType);
 	// Set the compound reactant names
-	compoundNames.push_back("HeV");
-	compoundNames.push_back("HeI");
+	compoundNames.push_back(heVType);
+	compoundNames.push_back(heIType);
+	compoundNames.push_back(superType);
 
 	// Setup the cluster type map
 	clusterTypeMap[heType] = heVector;
 	clusterTypeMap[vType] = vVector;
 	clusterTypeMap[iType] = iVector;
-	clusterTypeMap["HeV"] = heVVector;
-	clusterTypeMap["HeI"] = heIVector;
+	clusterTypeMap[heVType] = heVVector;
+	clusterTypeMap[heIType] = heIVector;
+	clusterTypeMap[superType] = superVector;
 
 	// Setup the vector to hold all of the reactants
 	allReactants = make_shared<std::vector<Reactant *>>();
@@ -97,6 +102,11 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 	// Load the mixed-species clusters
 	for (auto it = other.mixedSpeciesMap.begin();
 			it != other.mixedSpeciesMap.end(); ++it) {
+		reactants.push_back(it->second);
+	}
+	// Load the super-species clusters
+	for (auto it = other.superSpeciesMap.begin();
+			it != other.superSpeciesMap.end(); ++it) {
 		reactants.push_back(it->second);
 	}
 	for (int i = 0; i < reactants.size(); i++) {
@@ -171,13 +181,40 @@ Reactant * PSIClusterReactionNetwork::getCompound(const std::string& type,
 
 	// Only pull the reactant if the name is valid and there are enough sizes
 	// to fill the composition.
-	if ((type == "HeV" || type == "HeI") && sizes.size() == 3) {
+	if ((type == heVType || type == heIType) && sizes.size() == 3) {
 		composition[heType] = sizes[0];
 		composition[vType] = sizes[1];
 		composition[iType] = sizes[2];
 		// Make sure the reactant is in the map
 		if (mixedSpeciesMap.count(composition)) {
 			retReactant = mixedSpeciesMap.at(composition);
+		}
+	}
+
+	return (Reactant *) retReactant.get();
+}
+
+Reactant * PSIClusterReactionNetwork::getSuper(const std::string& type,
+		const std::vector<int>& sizes) const {
+	// Local Declarations
+	static std::map<std::string, int> composition = { { heType, 0 },
+			{ vType, 0 }, { iType, 0 } };
+	std::shared_ptr<PSICluster> retReactant;
+
+	// Setup the composition map to default values
+	composition[heType] = 0;
+	composition[vType] = 0;
+	composition[iType] = 0;
+
+	// Only pull the reactant if the name is valid and there are enough sizes
+	// to fill the composition.
+	if (type == superType && sizes.size() == 3) {
+		composition[heType] = sizes[0];
+		composition[vType] = sizes[1];
+		composition[iType] = sizes[2];
+		// Make sure the reactant is in the map
+		if (superSpeciesMap.count(composition)) {
+			retReactant = superSpeciesMap.at(composition);
 		}
 	}
 
@@ -194,8 +231,8 @@ std::vector<Reactant *> PSIClusterReactionNetwork::getAll(
 	std::vector<Reactant *> reactants;
 
 	// Only pull the reactants if the name is valid
-	if (name == heType || name == vType || name == iType || name == "HeV"
-			|| name == "HeI") {
+	if (name == heType || name == vType || name == iType || name == heVType
+			|| name == heIType || name == superType) {
 		std::shared_ptr < std::vector<std::shared_ptr<Reactant>>
 				> storedReactants = clusterTypeMap.at(name);
 		int vecSize = storedReactants->size();
@@ -287,6 +324,70 @@ void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 	return;
 }
 
+void PSIClusterReactionNetwork::addSuper(std::shared_ptr<Reactant> reactant) {
+	// Local Declarations
+	int numHe = 0, numV = 0, numI = 0;
+	bool isMixed = false;
+	std::string numClusterKey;
+
+	// Only add a complete reactant
+	if (reactant != NULL) {
+		// Get the composition
+		auto composition = reactant->getComposition();
+		// Get the species sizes
+		numHe = composition.at(heType);
+		numV = composition.at(vType);
+		numI = composition.at(iType);
+		// Determine if the cluster is a compound. If there is more than one
+		// type, then the check below will sum to greater than one and we know
+		// that we have a mixed cluster.
+		isMixed = ((numHe > 0) + (numV > 0) + (numI > 0)) > 1;
+		// Only add the element if we don't already have it
+		// Add the compound or regular reactant.
+		if (isMixed && superSpeciesMap.count(composition) == 0) {
+			// Put the compound in its map
+			superSpeciesMap[composition] = std::dynamic_pointer_cast
+					< PSICluster > (reactant);
+			// Set the key
+			numClusterKey = "numSuperClusters";
+		}
+		else {
+			std::stringstream errStream;
+			errStream << "PSIClusterReactionNetwork Message: "
+					<< "Duplicate Super Reactant (He=" << numHe << ",V=" << numV
+					<< ",I=" << numI << ") not added!" << std::endl;
+			throw errStream.str();
+		}
+
+		// Increment the number of total clusters of this type
+		int numClusters = std::stoi(properties->at(numClusterKey));
+		numClusters++;
+		(*properties)[numClusterKey] = std::to_string((long long) numClusters);
+		// Update the size
+		++networkSize;
+		// Set the id for this cluster
+		reactant->setId(networkSize);
+		// Get the vector for this reactant from the type map
+		auto clusters = clusterTypeMap[reactant->getType()];
+		clusters->push_back(reactant);
+		// Add the pointer to the list of all clusters
+		allReactants->push_back(reactant.get());
+	}
+
+	return;
+}
+
+void PSIClusterReactionNetwork::reinitializeNetwork() {
+	// Now loop on all the reactants to reset their connectivities
+	PSICluster * cluster;
+	for (auto it = allReactants->begin(); it != allReactants->end(); ++it) {
+		cluster = (PSICluster *) *it;
+		cluster->resetConnectivities();
+	}
+
+	return;
+}
+
 const std::vector<std::string> & PSIClusterReactionNetwork::getNames() const {
 	return names;
 }
@@ -302,11 +403,13 @@ const std::map<std::string, std::string> & PSIClusterReactionNetwork::getPropert
 void PSIClusterReactionNetwork::setProperty(const std::string& key,
 		const std::string& value) {
 	// Check the keys and value before trying to set the property
-	if (!key.empty() && !value.empty() && key != "numHeClusters"
+	if (!key.empty() && !value.empty() && key != "reactionsEnabled"
+			&& key != "dissociationsEnabled" && key != "numHeClusters"
 			&& key != "numVClusters" && key != "numIClusters"
-			&& key != "maxHeClusterSize" && key != "maxVClusterSize"
-			&& key != "maxIClusterSize" && key != "maxHeVClusterSize"
-			&& key != "maxHeIClusterSize") {
+			&& key != "numHeVClusters" && key != "numHeIClusters"
+			&& key != "numSuperClusters" && key != "maxHeClusterSize"
+			&& key != "maxVClusterSize" && key != "maxIClusterSize"
+			&& key != "maxHeVClusterSize" && key != "maxHeIClusterSize") {
 		// Add the property if it made it through that!
 		(*properties)[key] = value;
 	}
@@ -317,5 +420,3 @@ void PSIClusterReactionNetwork::setProperty(const std::string& key,
 int PSIClusterReactionNetwork::size() {
 	return networkSize;
 }
-
-
