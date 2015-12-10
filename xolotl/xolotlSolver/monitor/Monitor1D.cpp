@@ -227,7 +227,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt timestep, PetscReal time
 		for (int i = 0; i < heIndices1D.size(); i++) {
 			// Add the current concentration times the number of helium in the cluster
 			// (from the weight vector)
-			heConcentration += gridPointSolution[heIndices1D[i]] * (double) heWeights1D[i] * hx;
+			heConcentration += gridPointSolution[heIndices1D[i]] * heWeights1D[i] * hx;
 		}
 	}
 
@@ -252,12 +252,12 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt timestep, PetscReal time
 		std::cout << "Helium concentration = " << totalHeConcentration << std::endl;
 		std::cout << "Helium fluence = " << heliumFluence << "\n" << std::endl;
 
-		// Uncomment to write the retention and the fluence in a file
-		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << heliumFluence << " "
-				<< 100.0 * (totalHeConcentration / heliumFluence) << std::endl;
-		outputFile.close();
+//		// Uncomment to write the retention and the fluence in a file
+//		std::ofstream outputFile;
+//		outputFile.open("retentionOut.txt", ios::app);
+//		outputFile << heliumFluence << " "
+//				<< 100.0 * (totalHeConcentration / heliumFluence) << std::endl;
+//		outputFile.close();
 	}
 
 	// Restore the solutionArray
@@ -308,7 +308,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 	double hx = solverHandler->getStepSizeX();
 
 	// Choice of the cluster to be plotted
-	int iCluster = 630;
+	int iCluster = 6;
 
 	if (procId == 0) {
 		// Create a Point vector to store the data to give to the data provider
@@ -1076,9 +1076,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		// Get all the helium-vacancy clusters
 		auto heVClusters = network->getAll(heVType);
 
-		// Get all the superclusters
-		auto superClusters = network->getAll(superType);
-
 		// Loop on the helium clusters
 		for (int i = 0; i < heClusters.size(); i++) {
 			auto cluster = (PSICluster *) heClusters[i];
@@ -1092,17 +1089,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		// Loop on the helium-vacancy clusters
 		for (int i = 0; i < heVClusters.size(); i++) {
 			auto cluster = (PSICluster *) heVClusters[i];
-			int id = cluster->getId() - 1;
-			// Add the Id to the vector
-			heIndices1D.push_back(id);
-			// Add the number of heliums of this cluster to the weight
-			auto comp = cluster->getComposition();
-			heWeights1D.push_back(comp[heType]);
-		}
-
-		// Loop on the helium-vacancy clusters
-		for (int i = 0; i < superClusters.size(); i++) {
-			auto cluster = (PSICluster *) superClusters[i];
 			int id = cluster->getId() - 1;
 			// Add the Id to the vector
 			heIndices1D.push_back(id);
@@ -1125,10 +1111,10 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		ierr = TSMonitorSet(ts, computeHeliumRetention1D, NULL, NULL);
 		checkPetscError(ierr, "setupPetsc1DMonitor: TSMonitorSet (computeHeliumRetention1D) failed.");
 
-		// Uncomment to clear the file where the retention will be written
-		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt");
-		outputFile.close();
+//		// Uncomment to clear the file where the retention will be written
+//		std::ofstream outputFile;
+//		outputFile.open("retentionOut.txt");
+//		outputFile.close();
 	}
 
 	// Set the monitor to save the status of the simulation in hdf5 file

@@ -137,11 +137,27 @@ protected:
 	double reactionRadius;
 
 	/**
+	 * A vector of ClusterPairs that represents reacting pairs of clusters
+	 * that produce this cluster. This vector should be populated early in the
+	 * cluster's lifecycle by subclasses. In the standard Xolotl clusters,
+	 * this vector is filled in createReactionConnectivity.
+	 */
+	std::vector<ClusterPair> reactingPairs;
+
+	/**
 	 * A vector of pointers to ClusterPairs that represents the effective reacting
 	 * pairs, i.e. those for which the reaction rate is not 0.0. Should be filled
 	 * every time the temperature changes.
 	 */
 	std::vector<ClusterPair *> effReactingPairs;
+
+	/**
+	 * A vector of clusters that combine with this cluster to produce other
+	 * clusters. This vector should be populated early in the cluster's
+	 * lifecycle by subclasses. In the standard Xolotl clusters, this vector is
+	 * filled in createReactionConnectivity.
+	 */
+	std::vector<CombiningCluster> combiningReactants;
 
 	/**
 	 * A vector of pointers to CombiningCluster that represents the effective
@@ -151,11 +167,30 @@ protected:
 	std::vector<CombiningCluster *> effCombiningReactants;
 
 	/**
+	 * A vector of pairs of clusters: the first one is the one dissociation into
+	 * this cluster, the second one is the one that is emitted at the same time
+	 * during the dissociation. This vector should be populated early in the
+	 * cluster's lifecycle by subclasses. In the standard Xolotl clusters, this
+	 * vector is filled in dissociateCluster that is called by
+	 * createDissociationConnectivity.
+	 */
+	std::vector<ClusterPair> dissociatingPairs;
+
+	/**
 	 * A vector of pointers to ClusterPairs that represents the effective dissociating
 	 * pairs, i.e. those for which the dissociation rate is not 0.0. Should be filled
 	 * every time the temperature changes.
 	 */
 	std::vector<ClusterPair *> effDissociatingPairs;
+
+	/**
+	 * A vector of ClusterPairs that represent pairs of clusters that are emitted
+	 * from the dissociation of this cluster. This vector should be populated early
+	 * in the cluster's lifecycle by subclasses. In the standard Xolotl clusters,
+	 * this vector is filled in emitClusters that is called by
+	 * createDissociationConnectivity.
+	 */
+	std::vector<ClusterPair> emissionPairs;
 
 	/**
 	 * A vector of pointers to ClusterPairs that represents the effective emission
@@ -447,41 +482,6 @@ private:
 public:
 
 	/**
-	 * A vector of ClusterPairs that represents reacting pairs of clusters
-	 * that produce this cluster. This vector should be populated early in the
-	 * cluster's lifecycle by subclasses. In the standard Xolotl clusters,
-	 * this vector is filled in createReactionConnectivity.
-	 */
-	std::vector<ClusterPair> reactingPairs;
-
-	/**
-	 * A vector of clusters that combine with this cluster to produce other
-	 * clusters. This vector should be populated early in the cluster's
-	 * lifecycle by subclasses. In the standard Xolotl clusters, this vector is
-	 * filled in createReactionConnectivity.
-	 */
-	std::vector<CombiningCluster> combiningReactants;
-
-	/**
-	 * A vector of pairs of clusters: the first one is the one dissociating into
-	 * this cluster, the second one is the one that is emitted at the same time
-	 * during the dissociation. This vector should be populated early in the
-	 * cluster's lifecycle by subclasses. In the standard Xolotl clusters, this
-	 * vector is filled in dissociateCluster that is called by
-	 * createDissociationConnectivity.
-	 */
-	std::vector<ClusterPair> dissociatingPairs;
-
-	/**
-	 * A vector of ClusterPairs that represent pairs of clusters that are emitted
-	 * from the dissociation of this cluster. This vector should be populated early
-	 * in the cluster's lifecycle by subclasses. In the standard Xolotl clusters,
-	 * this vector is filled in emitClusters that is called by
-	 * createDissociationConnectivity.
-	 */
-	std::vector<ClusterPair> emissionPairs;
-
-	/**
 	 * The default constructor
 	 *
 	 * @param clusterSize The cluster size
@@ -517,11 +517,6 @@ public:
 	virtual std::shared_ptr<Reactant> clone();
 
 	/**
-	 * Reset method
-	 */
-	void reset();
-
-	/**
 	 * Sets the collection of other clusters that make up
 	 * the reaction network in which this cluster exists.
 	 *
@@ -529,12 +524,6 @@ public:
 	 */
 	void setReactionNetwork(
 			const std::shared_ptr<ReactionNetwork> reactionNetwork);
-
-	/**
-	 * This operation reset the connectivity sets based on the information
-	 * in the production and dissociation vectors.
-	 */
-	void resetConnectivities();
 
 	/**
 	 * This operation returns the total flux of this cluster in the
@@ -732,7 +721,7 @@ public:
 	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
 	 * or CombiningCluster. Need to be called only when the temperature changes.
 	 */
-	virtual void computeRateConstants();
+	void computeRateConstants();
 
 	/**
 	 * This operation overrides Reactant's setTemperature operation to

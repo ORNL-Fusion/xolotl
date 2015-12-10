@@ -84,22 +84,6 @@ std::shared_ptr<Reactant> PSICluster::clone() {
 	return reactant;
 }
 
-void PSICluster::reset() {
-	// Reset everything
-	reactingPairs.clear();
-	combiningReactants.clear();
-	dissociatingPairs.clear();
-	emissionPairs.clear();
-	effReactingPairs.clear();
-	effCombiningReactants.clear();
-	effDissociatingPairs.clear();
-	effEmissionPairs.clear();
-	reactionConnectivitySet.clear();
-	dissociationConnectivitySet.clear();
-
-	return;
-}
-
 void PSICluster::createReactionConnectivity() {
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(id);
@@ -493,40 +477,6 @@ std::vector<int> PSICluster::getDissociationConnectivity() const {
 			network->size());
 }
 
-void PSICluster::resetConnectivities() {
-	// Clear both sets
-	reactionConnectivitySet.clear();
-	dissociationConnectivitySet.clear();
-
-	// Connect this cluster to itself since any reaction will affect it
-	setReactionConnectivity(id);
-	setDissociationConnectivity(id);
-
-	// Loop on the reacting pairs
-	for (auto it = reactingPairs.begin(); it != reactingPairs.end(); ++it) {
-		// The cluster is connecting to both clusters in the pair
-		setReactionConnectivity((*it).first->id);
-		setReactionConnectivity((*it).second->id);
-	}
-
-	// Loop on the combining reactants
-	for (auto it = combiningReactants.begin(); it != combiningReactants.end(); ++it) {
-		// The cluster is connecting to the combining cluster
-		setReactionConnectivity((*it).combining->id);
-	}
-
-	// Loop on the dissociating pairs
-	for (auto it = dissociatingPairs.begin(); it != dissociatingPairs.end(); ++it) {
-		// The cluster is connecting to the dissociating cluster which
-		// is the first one by definition
-		setDissociationConnectivity((*it).first->id);
-	}
-
-	// Don't loop on the emission pairs because this cluster is not connected to them
-
-	return;
-}
-
 int PSICluster::getSize() const {
 	// Return this cluster's size
 	return size;
@@ -635,7 +585,7 @@ double PSICluster::getProductionFlux() const {
 	double flux = 0.0;
 	int nPairs = 0;
 	PSICluster *firstReactant, *secondReactant;
-
+	
 	// Set the total number of reacting pairs
 	nPairs = effReactingPairs.size();
 	// Loop over all the reacting pairs
@@ -716,7 +666,6 @@ void PSICluster::getProductionPartialDerivatives(std::vector<double> & partials)
 		index = effReactingPairs[i]->second->id - 1;
 		partials[index] += effReactingPairs[i]->kConstant
 				* effReactingPairs[i]->first->concentration;
-
 	}
 
 	return;

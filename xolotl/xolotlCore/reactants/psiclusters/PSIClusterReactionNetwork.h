@@ -63,14 +63,6 @@ private:
 		std::shared_ptr<PSICluster> > mixedSpeciesMap;
 
 	/**
-	 * The map of super species clusters, indexed by a map that
-	 * contains the name of the constituents of the compound reactant and their
-	 * sizes.
-	 */
-	std::unordered_map< std::map< std::string, int >,
-		std::shared_ptr<PSICluster> > superSpeciesMap;
-
-	/**
 	 * This map stores all of the clusters in the network by type.
 	 */
 	std::map<std::string, std::shared_ptr<
@@ -174,20 +166,6 @@ public:
 			const std::vector<int>& sizes) const;
 
 	/**
-	 * This operation returns a super reactant with the given type and size
-	 * if it exists in the network or null if not.
-	 *
-	 * @param type the type of the compound reactant
-	 * @param sizes an array containing the sizes of each piece of the reactant.
-	 * For PSIClusters, this array must be ordered in size by He, V and I. This
-	 * array must contain an entry for He, V and I, even if only He and V or He
-	 * and I are contained in the mixed-species cluster.
-	 * @return A pointer to the compound reactant
-	 */
-	Reactant * getSuper(const std::string& type,
-			const std::vector<int>& sizes) const;
-
-	/**
 	 * This operation returns all reactants in the network without regard for
 	 * their composition or whether they are compound reactants. The list may
 	 * or may not be ordered and the decision is left to implementers.
@@ -227,36 +205,6 @@ public:
 	 * @param reactant The reactant that should be added to the network.
 	 */
 	void add(std::shared_ptr<Reactant> reactant);
-
-	/**
-	 * This operation adds a super reactant to the network.
-	 * Adding a reactant to the network does not set the network as the
-	 * reaction network for the reactant. This step must be performed
-	 * separately to allow for the scenario where the network is generated
-	 * entirely before running.
-	 *
-	 * This operation sets the id of the reactant to one that is specific
-	 * to this network. Do not share Reactants across networks! This id is
-	 * guaranteed to be between 1 and n, including both, for n reactants in
-	 * the network.
-	 *
-	 * The reactant will not be added to the network if the PSICluster does
-	 * not recognize it as a type of reactant that it cares about (including
-	 * adding null). This operation throws an exception of type std::string
-	 * if the reactant is  already in the network.
-	 *
-	 * @param reactant The reactant that should be added to the network.
-	 */
-	void addSuper(std::shared_ptr<Reactant> reactant);
-
-	/**
-	 * This operation reinitializes the network.
-	 *
-	 * It computes the cluster Ids and network size from the cluster type maps.
-	 *
-	 * It redefines the connectivities for each cluster.
-	 */
-	void reinitializeNetwork();
 
 	/**
 	 * This operation returns the names of the reactants in the network. For a
