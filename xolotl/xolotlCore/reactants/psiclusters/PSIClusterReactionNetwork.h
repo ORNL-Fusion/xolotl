@@ -207,6 +207,12 @@ public:
 	void add(std::shared_ptr<Reactant> reactant);
 
 	/**
+	 * This method redefines the connectivities for each cluster in the
+	 * allReactans vector.
+	 */
+	void reinitializeConnectivities();
+
+	/**
 	 * This operation returns the names of the reactants in the network. For a
 	 * PSIClusterReactionNetwork, these are He, V, I, HeV, HeI.
 	 *

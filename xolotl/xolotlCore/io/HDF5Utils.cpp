@@ -500,7 +500,7 @@ std::vector< std::vector<double> > HDF5Utils::readGridPoint(const std::string& f
 
 		// Get the dimensions of the dataset
 		hsize_t dims[2];
-		status = H5Sget_simple_extent_dims(dataspaceId, dims, H5P_DEFAULT);
+		status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
 
 		// Create the array that will receive the concentrations
 		double conc[dims[0]][dims[1]];

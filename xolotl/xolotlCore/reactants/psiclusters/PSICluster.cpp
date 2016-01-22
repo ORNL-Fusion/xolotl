@@ -477,6 +477,41 @@ std::vector<int> PSICluster::getDissociationConnectivity() const {
 			network->size());
 }
 
+void PSICluster::resetConnectivities() {
+	// Clear both sets
+	reactionConnectivitySet.clear();
+	dissociationConnectivitySet.clear();
+
+	// Connect this cluster to itself since any reaction will affect it
+	setReactionConnectivity(id);
+	setDissociationConnectivity(id);
+
+	// Loop on the effective reacting pairs
+	for (auto it = effReactingPairs.begin(); it != effReactingPairs.end(); ++it) {
+		// The cluster is connecting to both clusters in the pair
+		setReactionConnectivity((*it)->first->id);
+		setReactionConnectivity((*it)->second->id);
+	}
+
+	// Loop on the effective combining reactants
+	for (auto it = effCombiningReactants.begin(); it != effCombiningReactants.end(); ++it) {
+		// The cluster is connecting to the combining cluster
+		setReactionConnectivity((*it)->combining->id);
+	}
+
+	// Loop on the effective dissociating pairs
+	for (auto it = effDissociatingPairs.begin(); it != effDissociatingPairs.end(); ++it) {
+		// The cluster is connecting to the dissociating cluster which
+		// is the first one by definition
+		setDissociationConnectivity((*it)->first->id);
+	}
+
+	// Don't loop on the effective emission pairs because
+	// this cluster is not connected to them
+
+	return;
+}
+
 int PSICluster::getSize() const {
 	// Return this cluster's size
 	return size;

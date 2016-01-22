@@ -287,6 +287,17 @@ void PSIClusterReactionNetwork::add(std::shared_ptr<Reactant> reactant) {
 	return;
 }
 
+void PSIClusterReactionNetwork::reinitializeConnectivities() {
+	// Loop on all the reactants to reset their connectivities
+	PSICluster * cluster;
+	for (auto it = allReactants->begin(); it != allReactants->end(); ++it) {
+		cluster = (PSICluster *) *it;
+		cluster->resetConnectivities();
+	}
+
+	return;
+}
+
 const std::vector<std::string> & PSIClusterReactionNetwork::getNames() const {
 	return names;
 }
