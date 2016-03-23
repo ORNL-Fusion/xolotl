@@ -296,6 +296,9 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	ierr = DMRestoreLocalVector(da, &localC);
 	checkPetscError(ierr, "PetscSolver1DHandler::updateConcentration: DMRestoreLocalVector failed.");
 
+	// Clear memory
+	delete [] concVector;
+
 	return;
 }
 
@@ -403,6 +406,12 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC, Mat &
 			checkPetscError(ierr, "PetscSolver1DHandler::computeOffDiagonalJacobian: MatSetValuesStencil (advection) failed.");
 		}
 	}
+
+	/*
+	 Restore vectors
+	 */
+	ierr = DMDAVecRestoreArrayDOF(da, localC, &concs);
+	checkPetscError(ierr, "PetscSolver1DHandler::computeOffDiagonalJacobian: DMDAVecRestoreArrayDOF failed.");
 
 	return;
 }
