@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 			// HeV
 			0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0,
+			1, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0,
@@ -131,8 +131,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
  	// Local Declarations
  	// The vector of partial derivatives to compare with
- 	double knownPartials[] = {-2850.42, -3005.08, 0.0, -14316.7, 896815.0, 257925.0,
- 			0.0, -2188.27, -2373.78, -1789.59, 0.0, 224717.0, 0.0, 0.0, -2054.05};
+	 	double knownPartials[] = {-2850.42, -3005.08, 0.0, -14316.7, 896815.0, 257925.0,
+	 			0.0, -2188.27, -2373.78, 356134.7, 0.0, 224717.0, 0.0, 0.0, -2054.05};
  	// Get the simple reaction network
  	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork(3);
 

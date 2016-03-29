@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	BOOST_REQUIRE_SMALL(concs[0], 1.0e-24);
 	BOOST_REQUIRE_SMALL(concs[1], 1.0e-46);
 	BOOST_REQUIRE_SMALL(concs[6], 1.0e-4);
-	BOOST_REQUIRE_CLOSE(concs[14], 0.0, 0.01);
+	BOOST_REQUIRE_SMALL(concs[14], 1.0e-120);
 	BOOST_REQUIRE_SMALL(concs[23], 1.0e-21);
 
 	// Remove the created file
@@ -346,7 +346,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 	// Check some concentrations
 	BOOST_REQUIRE_SMALL(concs[0], 1.0e-27);
 	BOOST_REQUIRE_SMALL(concs[6], 1.0e-4);
-	BOOST_REQUIRE_CLOSE(concs[14], 0.0, 0.01);
+	BOOST_REQUIRE_SMALL(concs[14], 1.0e-120);
 	BOOST_REQUIRE_SMALL(concs[15], 1.0e-106);
 	BOOST_REQUIRE_SMALL(concs[16], 1.0e-92);
 

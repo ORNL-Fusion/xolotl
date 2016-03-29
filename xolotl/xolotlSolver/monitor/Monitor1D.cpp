@@ -276,7 +276,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
 	PetscInt xs, xm, xi;
-	double x;
+	double x = 0.0;
 
 	PetscFunctionBeginUser;
 
@@ -426,7 +426,7 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
 	PetscInt xs, xm, xi;
-	double x;
+	double x = 0.0;
 
 	PetscFunctionBeginUser;
 
@@ -497,7 +497,7 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 
 				for (int j = 0; j < loopSize; j++) {
 					// and the concentrations
-					double conc;
+					double conc = 0.0;
 					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 22, MPI_COMM_WORLD,
 							MPI_STATUS_IGNORE);
 

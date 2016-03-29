@@ -59,7 +59,7 @@ void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 }
 
 PSIClusterReactionNetwork::PSIClusterReactionNetwork() :
-		ReactionNetwork() {
+		ReactionNetwork(), temperature(0.0) {
 	// Setup the properties map and the name lists
 	setDefaultPropsAndNames();
 
@@ -68,7 +68,7 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork() :
 
 PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		ReactionNetwork(registry) {
+		ReactionNetwork(registry), temperature(0.0) {
 	// Setup the properties map and the name lists
 	setDefaultPropsAndNames();
 
@@ -79,7 +79,8 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 		const PSIClusterReactionNetwork &other) :
 		ReactionNetwork(other),
 		names(other.getNames()),
-		compoundNames(other.getCompoundNames()) {
+		compoundNames(other.getCompoundNames()),
+		temperature(other.getTemperature()) {
 	// The size and ids do not need to be copied. They will be fixed when the
 	// reactants are added.
 

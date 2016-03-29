@@ -382,6 +382,10 @@ void HeVCluster::createDissociationConnectivity() {
 	// Get the cluster with one less helium
 	std::vector<int> compositionVec = { numHe - 1, numV, 0 };
 	auto heVClusterLessHe = (PSICluster *) network->getCompound(typeName, compositionVec);
+	// Special case for numHe = 1
+	if (numHe == 1) {
+		heVClusterLessHe = (PSICluster *) network->get(vType, numV);
+	}
 	// Get the single helium cluster
 	auto singleCluster = (PSICluster *) network->get(heType, 1);
 	emitClusters(singleCluster, heVClusterLessHe);

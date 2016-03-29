@@ -3,7 +3,8 @@
 
 using namespace xolotlViz;
 
-Plot::Plot(const std::string& name) : xolotlCore::Identifiable(name) {
+Plot::Plot(const std::string& name) : xolotlCore::Identifiable(name),
+		plotStyle(PlottingStyle::LINE) {
 }
 
 Plot::~Plot() {

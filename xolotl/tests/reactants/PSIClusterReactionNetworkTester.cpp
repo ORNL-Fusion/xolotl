@@ -330,6 +330,9 @@ BOOST_AUTO_TEST_CASE(checkArrayOperations) {
 		BOOST_REQUIRE_CLOSE(1.0, reactants->at(0)->getConcentration(), 1.0e-15);
 	}
 
+	// Clear memory
+	delete [] concentrations;
+
 	return;
 }
 

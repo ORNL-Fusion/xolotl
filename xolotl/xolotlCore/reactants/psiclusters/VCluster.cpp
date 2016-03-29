@@ -110,6 +110,17 @@ void VCluster::createDissociationConnectivity() {
 
 	// This cluster is always V_a
 
+	// He Dissociation
+	// (He_1)(V_a) --> V_a + He
+	// Get the cluster with one more helium
+	std::vector<int> compositionVec = { 1, size, 0 };
+	auto heVClusterMoreHe = (PSICluster *) network->getCompound(heVType, compositionVec);
+	// Get the single helium cluster
+	auto singleCluster = (PSICluster *) network->get(heType, 1);
+	// Here it is important that heVClusterMoreHe is the first cluster
+	// because it is the dissociating one.
+	dissociateCluster(heVClusterMoreHe, singleCluster);
+
 	// Specific case for the single species cluster
 	if (size == 1) {
 		// V dissociation of HeV cluster is handled here

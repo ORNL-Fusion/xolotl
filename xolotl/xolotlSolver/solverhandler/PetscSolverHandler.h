@@ -76,7 +76,7 @@ protected:
 public:
 
 	//! The Constructor
-	PetscSolverHandler() {}
+	PetscSolverHandler() : lastTemperature(0.0) {}
 
 	//! The Destructor
 	~PetscSolverHandler() {}
