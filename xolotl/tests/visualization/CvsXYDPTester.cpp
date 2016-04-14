@@ -56,12 +56,12 @@ BOOST_AUTO_TEST_CASE(checkGetVector) {
 	auto axis3Vector = myCvsXYDataProvider->getAxis3Vector();
 
 	// First check the size of the vectors
-	BOOST_REQUIRE_EQUAL(axis1Vector.size(), 4);
-	BOOST_REQUIRE_EQUAL(axis2Vector.size(), 3);
+	BOOST_REQUIRE_EQUAL(axis1Vector.size(), 4U);
+	BOOST_REQUIRE_EQUAL(axis2Vector.size(), 3U);
 	BOOST_REQUIRE_EQUAL(axis3Vector.size(), myPoints->size());
 
 	// Loop on all the points in myPoints
-	for (int i = 0; i < myPoints->size() - 2; i++) {
+	for (unsigned int i = 0; i < myPoints->size() - 2; i++) {
 		BOOST_REQUIRE_EQUAL(axis3Vector.at(i), myPoints->at(i).value);
 	}
 

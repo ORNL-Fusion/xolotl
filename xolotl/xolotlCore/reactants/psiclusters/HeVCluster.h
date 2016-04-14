@@ -44,11 +44,9 @@ private:
 	 * cluster of the form C_z.
 	 * @param oldComponentName The name of the component that will be partially
 	 * replaced.
-	 * @param newComponentName The name of the component that will replace the old
-	 * component.
 	 */
 	void replaceInCompound(std::vector<Reactant *> & clusters,
-			const std::string& oldComponentName, const std::string& newComponentName);
+			const std::string& oldComponentName);
 
 	/**
 	 * This operation "combines" clusters in the sense that it handles all of

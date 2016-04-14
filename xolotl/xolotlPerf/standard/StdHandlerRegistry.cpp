@@ -104,7 +104,7 @@ StdHandlerRegistry::CollectAllObjectNames( int myRank,
     if( myRank == 0 )
     {
         allNameDispls[0] = 0;
-        for( unsigned int i = 1; i < cwSize; ++i )
+        for( int i = 1; i < cwSize; ++i )
         {
             allNameDispls[i] = allNameDispls[i-1] + allNameCounts[i-1];
         }
@@ -190,7 +190,7 @@ StdHandlerRegistry::GetObjValue( const std::map<std::string, std::shared_ptr<T> 
 {
     auto currObjIter = myObjs.find(objName);
     bool found = currObjIter != myObjs.end();
-    V val;
+    V val = V();
     if( found )
     {
         val = currObjIter->second->getValue();
@@ -218,7 +218,7 @@ StdHandlerRegistry::GetObjValue( const std::map<std::string, std::shared_ptr<IHa
 
     auto objIter = myObjs.find(objNameOnly);
     bool found = objIter != myObjs.end();
-    IHardwareCounter::CounterType val;
+    IHardwareCounter::CounterType val = 0;
     if( found )
     {
         const std::shared_ptr<IHardwareCounter>& currObj = objIter->second;
@@ -273,7 +273,7 @@ StdHandlerRegistry::AggregateStatistics( int myRank,
 
     // Collect and compute statistics for each object.
     auto tsiter = stats.begin();
-    for( unsigned int idx = 0; idx < nObjs; ++idx )
+    for( int idx = 0; idx < nObjs; ++idx )
     {
         // broadcast the current object's name
         int nameLen = (myRank == 0) ? tsiter->second.name.length() : -1;

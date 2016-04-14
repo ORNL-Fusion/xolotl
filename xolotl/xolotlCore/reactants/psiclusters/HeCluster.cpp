@@ -42,7 +42,7 @@ void HeCluster::combineClusters(std::vector<Reactant *> & clusters,
 	std::map<std::string, int> secondComposition;
 
 	// Loop on the potential combining reactants
-	for (int i = 0; i < clusters.size(); i++) {
+	for (unsigned int i = 0; i < clusters.size(); i++) {
 		// Get the second reactant, its composition and its index
 		auto secondCluster = (PSICluster *) clusters[i];
 		secondComposition = secondCluster->getComposition();
@@ -169,7 +169,7 @@ void HeCluster::createDissociationConnectivity() {
 		// for a = 1
 		// Get all the HeV clusters of the network
 		auto allHeVReactants = network->getAll(heVType);
-		for (int i = 0; i < allHeVReactants.size(); i++) {
+		for (unsigned int i = 0; i < allHeVReactants.size(); i++) {
 			auto cluster = (PSICluster *) allHeVReactants[i];
 
 			// (He_b)(V_c) is the dissociating one, [He_(b-a)](V_c) is the one
@@ -190,7 +190,7 @@ void HeCluster::createDissociationConnectivity() {
 		// for a = 1
 		// Get all the HeI clusters of the network
 		auto allHeIReactants = network->getAll(heIType);
-		for (int i = 0; i < allHeIReactants.size(); i++) {
+		for (unsigned int i = 0; i < allHeIReactants.size(); i++) {
 			auto cluster = (PSICluster *) allHeIReactants[i];
 
 			// (He_b)(I_c) is the dissociating one, [He_(b-a)](I_c) is the one

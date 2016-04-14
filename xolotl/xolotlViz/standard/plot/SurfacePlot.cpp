@@ -54,7 +54,7 @@ void SurfacePlot::render(const std::string& fileName) {
 	// Give the zVector to the axisValues
 	eavlArray *axisValues = new eavlFloatArray(plotDataProvider->getDataName(), 1);
 	axisValues->SetNumberOfTuples(data->GetNumPoints());
-	for (int i = 0; i < zVector.size(); i++){
+	for (unsigned int i = 0; i < zVector.size(); i++){
 		axisValues->SetComponentFromDouble(i, 0, zVector.at(i));
 	}
 

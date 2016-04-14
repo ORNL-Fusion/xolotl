@@ -10,80 +10,6 @@
 namespace xolotlCore {
 
 /**
- * This operation load the subline into the data when the dataType is a string.
- * This function is different from the other ones that overriding it for it to work
- * when the data delimiter is different than the space but some of the strings
- * are still separated by a space. For instance, loadData("one two", data);
- * will load "one two" in data and not just "one".
- *
- * See the last test of the TokenizedLineReaderTester to see the use of this function.
- *
- * @param subline the subline to load in the data.
- * @param data the reference to the data to be loaded.
- */
-static void loadData(const std::string& subline, std::string &data) {
-	data = subline;
-
-	return;
-}
-
-/**
- * This operation load the subline into the data when the dataType is a char.
- *
- * @param subline the subline to load in the data.
- * @param data the reference to the data to be loaded.
- */
-static void loadData(const std::string& subline, char &data) {
-	std::istringstream dataStream;
-	dataStream.str(subline);
-	dataStream >> data;
-
-	return;
-}
-
-/**
- * This operation load the subline into the data when the dataType is a bool.
- *
- * @param subline the subline to load in the data.
- * @param data the reference to the data to be loaded.
- */
-static void loadData(const std::string& subline, bool &data) {
-	std::istringstream dataStream;
-	dataStream.str(subline);
-	dataStream >> data;
-
-	return;
-}
-
-/**
- * This operation load the subline into the data when the dataType is a double.
- *
- * @param subline the subline to load in the data.
- * @param data the reference to the data to be loaded.
- */
-static void loadData(const std::string& subline, double &data) {
-	std::istringstream dataStream;
-	dataStream.str(subline);
-	dataStream >> data;
-
-	return;
-}
-
-/**
- * This operation load the subline into the data when the dataType is a int.
- *
- * @param subline the subline to load in the data.
- * @param data the reference to the data to be loaded.
- */
-static void loadData(const std::string& subline, int &data) {
-	std::istringstream dataStream;
-	dataStream.str(subline);
-	dataStream >> data;
-
-	return;
-}
-
-/**
  * This is a simple class for parsing lines from an input stream and
  * splitting that line to retrieve delimiters. A line in this case is defined as any
  * sequence of characters that terminates with an end-of-line character such
@@ -111,6 +37,80 @@ private:
 
 	//!The inputstream from which data should be read.
 	std::shared_ptr<std::istream> inputstream;
+
+	/**
+	 * This operation load the subline into the data when the dataType is a string.
+	 * This function is different from the other ones that overriding it for it to work
+	 * when the data delimiter is different than the space but some of the strings
+	 * are still separated by a space. For instance, loadData("one two", data);
+	 * will load "one two" in data and not just "one".
+	 *
+	 * See the last test of the TokenizedLineReaderTester to see the use of this function.
+	 *
+	 * @param subline the subline to load in the data.
+	 * @param data the reference to the data to be loaded.
+	 */
+	static void loadData(const std::string& subline, std::string &data) {
+		data = subline;
+
+		return;
+	}
+
+	/**
+	 * This operation load the subline into the data when the dataType is a char.
+	 *
+	 * @param subline the subline to load in the data.
+	 * @param data the reference to the data to be loaded.
+	 */
+	static void loadData(const std::string& subline, char &data) {
+		std::istringstream dataStream;
+		dataStream.str(subline);
+		dataStream >> data;
+
+		return;
+	}
+
+	/**
+	 * This operation load the subline into the data when the dataType is a bool.
+	 *
+	 * @param subline the subline to load in the data.
+	 * @param data the reference to the data to be loaded.
+	 */
+	static void loadData(const std::string& subline, bool &data) {
+		std::istringstream dataStream;
+		dataStream.str(subline);
+		dataStream >> data;
+
+		return;
+	}
+
+	/**
+	 * This operation load the subline into the data when the dataType is a double.
+	 *
+	 * @param subline the subline to load in the data.
+	 * @param data the reference to the data to be loaded.
+	 */
+	static void loadData(const std::string& subline, double &data) {
+		std::istringstream dataStream;
+		dataStream.str(subline);
+		dataStream >> data;
+
+		return;
+	}
+
+	/**
+	 * This operation load the subline into the data when the dataType is a int.
+	 *
+	 * @param subline the subline to load in the data.
+	 * @param data the reference to the data to be loaded.
+	 */
+	static void loadData(const std::string& subline, int &data) {
+		std::istringstream dataStream;
+		dataStream.str(subline);
+		dataStream >> data;
+
+		return;
+	}
 
 public:
 

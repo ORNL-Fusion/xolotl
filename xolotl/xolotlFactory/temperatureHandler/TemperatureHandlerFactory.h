@@ -22,6 +22,6 @@ bool initializeTempHandler(xolotlCore::Options &options);
  */
 std::shared_ptr<xolotlCore::ITemperatureHandler> getTemperatureHandler();
 
-}; // end namespace xolotlPerf
+} // end namespace xolotlPerf
 
 #endif /* TEMPERATUREHANDLERFACTORY_H */

@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(checkInitialValue) {
 
 	DummyEventCounter tester("test");
 
-	BOOST_REQUIRE_EQUAL(0, tester.getValue());
+	BOOST_REQUIRE_EQUAL(0U, tester.getValue());
 
 }
 
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(checkCounting) {
 		tester.increment();
 	}
 
-	BOOST_REQUIRE_EQUAL(0, tester.getValue());
+	BOOST_REQUIRE_EQUAL(0U, tester.getValue());
 
 }
 

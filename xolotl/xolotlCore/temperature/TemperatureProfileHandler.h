@@ -86,7 +86,7 @@ public:
 	 * @param currentTime The time
 	 * @return The temperature
 	 */
-	virtual double getTemperature(std::vector<double> position, double currentTime) const {
+	virtual double getTemperature(const std::vector<double>& position, double currentTime) const {
 		// Initialize the value to return
 		double f = 0.0;
 
@@ -100,7 +100,7 @@ public:
 
 		// Else loop to determine the interval the time falls in
 		// i.e. time[k] < time < time[k + 1]
-		for (int k = 0; k < time.size() - 1; k++) {
+		for (unsigned int k = 0; k < time.size() - 1; k++) {
 			if (currentTime < time[k]) continue;
 			if (currentTime > time[k + 1]) continue;
 

@@ -10,10 +10,9 @@
 #include <iostream>
 
 namespace xolotlPerf {
-class IHandlerRegistry;
-class IEventCounter;
+	class IHandlerRegistry;
+	class IEventCounter;
 }
-;
 
 namespace xolotlCore {
 

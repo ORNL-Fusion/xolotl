@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(checkGetVector) {
 	BOOST_REQUIRE_EQUAL(axis2Vector.size(), myPoints->size());
 
 	// Loop on all the points in myPoints
-	for (int i = 0; i < myPoints->size() - 2; i++) {
+	for (unsigned int i = 0; i < myPoints->size() - 2; i++) {
 		BOOST_REQUIRE_EQUAL(axis1Vector.at(i), myPoints->at(i).x);
 		BOOST_REQUIRE_EQUAL(axis2Vector.at(i), myPoints->at(i).value);
 	}

@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(check_getValues) {
 	BOOST_TEST_MESSAGE("\n" << "DummyHardwareCounter Message: \n"
 							<< "tester.getValues().size() = " << tester.getValues().size());
 
-	BOOST_REQUIRE_EQUAL(0, tester.getValues().size());
+	BOOST_REQUIRE_EQUAL(0U, tester.getValues().size());
 
 }
 
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(check_getSpecification) {
 	BOOST_TEST_MESSAGE("\n" << "DummyHardwareCounter Message: \n"
 							<< "tester.getSpecification().size() = " << tester.getSpecification().size());
 
-	BOOST_REQUIRE_EQUAL(0, tester.getSpecification().size());
+	BOOST_REQUIRE_EQUAL(0U, tester.getSpecification().size());
 
 }
 

@@ -70,7 +70,7 @@ protected:
 	 * @param x The position where to evaluate the fit
 	 * @return The evaluated value
 	 */
-	virtual double FitFunction(double x) {return 0.0;}
+	virtual double FitFunction(double) {return 0.0;}
 
 	/**
 	 * This method returns the value of the helium incident flux amplitude at the

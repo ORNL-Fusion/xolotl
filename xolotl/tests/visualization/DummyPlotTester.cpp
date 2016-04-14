@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(checkDataProvider) {
 	auto dataPoints = myDummyPlot->getDataProvider()->getDataPoints();
 
 	// Loop on all the points in dataPoints
-	for (int i = 0; i < dataPoints->size(); i++) {
+	for (unsigned int i = 0; i < dataPoints->size(); i++) {
 
 		// Check that all the fields are the same
 		BOOST_REQUIRE_EQUAL(dataPoints->at(i).value, myPoints->at(i).value);

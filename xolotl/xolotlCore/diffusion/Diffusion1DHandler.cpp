@@ -5,7 +5,7 @@ namespace xolotlCore {
 
 void Diffusion1DHandler::computeDiffusion(PSIClusterReactionNetwork *network,
 		double **concVector, double *updatedConcOffset,
-		double sx, double sy, double sz) {
+		double sx, double, double) {
 	// Get all the reactants
 	auto reactants = network->getAll();
 	// Get the number of diffusing clusters
@@ -36,7 +36,7 @@ void Diffusion1DHandler::computeDiffusion(PSIClusterReactionNetwork *network,
 void Diffusion1DHandler::computePartialsForDiffusion(
 		PSIClusterReactionNetwork *network,
 		double *val, int *indices,
-		double sx, double sy, double sz) {
+		double sx, double, double) {
 	// Get all the reactants
 	auto reactants = network->getAll();
 	// Get the number of diffusing clusters

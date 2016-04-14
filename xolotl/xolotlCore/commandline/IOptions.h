@@ -27,10 +27,9 @@ public:
      * Read the parameters from the given file to set the different
      * Xolotl options.
      *
-     * @param argc The number of arguments in the argv vector
      * @param argv Vector of argument strings
      */
-    virtual void readParams(int argc, char* argv[]) = 0;
+    virtual void readParams(char* argv[]) = 0;
 
     /**
      * Show our help message.

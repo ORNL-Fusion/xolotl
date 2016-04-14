@@ -13,8 +13,8 @@ shared_ptr<std::istream> MPIUtils::broadcastStream(
 	int rank;
 	int tasks;
 	auto bufferSS = std::make_shared<std::stringstream>();
-	int bufferSize;
-	char *buffer;
+	int bufferSize = 0;
+	char *buffer = NULL;
 
 	// Get the rank and number of tasks
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);

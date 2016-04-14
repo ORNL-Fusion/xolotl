@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	// Get the first line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
-	BOOST_REQUIRE_EQUAL(3,dLine.size());
+	BOOST_REQUIRE_EQUAL(3U,dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.0,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(1.0,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(5.0,dLine.at(2),0.001);
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	// Get the second line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
-	BOOST_REQUIRE_EQUAL(4,dLine.size());
+	BOOST_REQUIRE_EQUAL(4U,dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.11,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(0.55,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(22.86,dLine.at(2),0.001);
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	// line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
-	BOOST_REQUIRE_EQUAL(3,dLine.size());
+	BOOST_REQUIRE_EQUAL(3U,dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.000382,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(883.33,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(74.832,dLine.at(2),0.0001);
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	// Get the first line and check it
 	iLine = intReader.loadLine();
 	BOOST_REQUIRE(!iLine.empty());
-	BOOST_REQUIRE_EQUAL(5,iLine.size());
+	BOOST_REQUIRE_EQUAL(5U,iLine.size());
 	BOOST_REQUIRE_EQUAL(1,iLine.at(0));
 	BOOST_REQUIRE_EQUAL(3,iLine.at(1));
 	BOOST_REQUIRE_EQUAL(5,iLine.at(2));
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	// line and check it
 	iLine = intReader.loadLine();
 	BOOST_REQUIRE(!iLine.empty());
-	BOOST_REQUIRE_EQUAL(4,iLine.size());
+	BOOST_REQUIRE_EQUAL(4U,iLine.size());
 	BOOST_REQUIRE_EQUAL(0,iLine.at(0));
 	BOOST_REQUIRE_EQUAL(2,iLine.at(1));
 	BOOST_REQUIRE_EQUAL(4,iLine.at(2));
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing) {
 	// Get the first line and check it
 	iLine = intReader.loadLine();
 	BOOST_REQUIRE(!iLine.empty());
-	BOOST_REQUIRE_EQUAL(5,iLine.size());
+	BOOST_REQUIRE_EQUAL(5U,iLine.size());
 	BOOST_REQUIRE_EQUAL(1,iLine.at(0));
 	BOOST_REQUIRE_EQUAL(3,iLine.at(1));
 	BOOST_REQUIRE_EQUAL(5,iLine.at(2));
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing) {
 	// line and check it
 	iLine = intReader.loadLine();
 	BOOST_REQUIRE(!iLine.empty());
-	BOOST_REQUIRE_EQUAL(4,iLine.size());
+	BOOST_REQUIRE_EQUAL(4U,iLine.size());
 	BOOST_REQUIRE_EQUAL(0,iLine.at(0));
 	BOOST_REQUIRE_EQUAL(2,iLine.at(1));
 	BOOST_REQUIRE_EQUAL(4,iLine.at(2));
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	// Get the first line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
-	BOOST_REQUIRE_EQUAL(3,dLine.size());
+	BOOST_REQUIRE_EQUAL(3U,dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.0,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(1.0,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(5.0,dLine.at(2),0.001);
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	// Get the second line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
-	BOOST_REQUIRE_EQUAL(4,dLine.size());
+	BOOST_REQUIRE_EQUAL(4U,dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.11,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(0.55,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(22.86,dLine.at(2),0.001);
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	// line and check it
 	dLine = doubleReader.loadLine();
 	BOOST_REQUIRE(!dLine.empty());
-	BOOST_REQUIRE_EQUAL(3,dLine.size());
+	BOOST_REQUIRE_EQUAL(3U,dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.000382,dLine.at(0),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(883.33,dLine.at(1),0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(74.832,dLine.at(2),0.0001);
@@ -199,13 +199,13 @@ BOOST_AUTO_TEST_CASE(checkDelimiterParsing) {
 	// Get the first line and check it
 	iLine = stringReader.loadLine();
 	BOOST_REQUIRE(!iLine.empty());
-	BOOST_REQUIRE_EQUAL(2,iLine.size());
+	BOOST_REQUIRE_EQUAL(2U,iLine.size());
 	BOOST_REQUIRE_EQUAL("arg",iLine.at(0));
 	BOOST_REQUIRE_EQUAL("many different strings",iLine.at(1));
 
 	// Get the second line and check it
 	iLine = stringReader.loadLine();
-	BOOST_REQUIRE_EQUAL(1,iLine.size());
+	BOOST_REQUIRE_EQUAL(1U,iLine.size());
 	BOOST_REQUIRE_EQUAL("no equal sign here",iLine.at(0));
 
 	return;

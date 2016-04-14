@@ -39,7 +39,14 @@ struct MPIFixture
     }
 };
 
+#if BOOST_VERSION >= 105900
+// In Boost 1.59, the semicolon at the end of the definition of BOOST_GLOBAL_FIXTURE is removed
 BOOST_GLOBAL_FIXTURE( MPIFixture );
+#else
+// With earlier Boost versions, naively adding a semicolon to our code will generate compiler
+// warnings about redundant semicolons
+BOOST_GLOBAL_FIXTURE( MPIFixture )
+#endif
 
 BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 {
@@ -63,7 +70,7 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
         BOOST_TEST_MESSAGE("DummyHandlerRegistry creation failed: " << e.what());
     }
 
-    BOOST_REQUIRE_EQUAL( nGoodInits, 2 );
+    BOOST_REQUIRE_EQUAL( nGoodInits, 2U );
 }
 
 BOOST_AUTO_TEST_CASE(createStdHandlerReg)
@@ -88,7 +95,7 @@ BOOST_AUTO_TEST_CASE(createStdHandlerReg)
         BOOST_TEST_MESSAGE("StdHandlerRegistry creation failed: " << e.what());
     }
 
-    BOOST_REQUIRE_EQUAL( nGoodInits, 2 );
+    BOOST_REQUIRE_EQUAL( nGoodInits, 2U );
 }
 
 BOOST_AUTO_TEST_CASE(createOSHandlerReg)
@@ -113,7 +120,7 @@ BOOST_AUTO_TEST_CASE(createOSHandlerReg)
         BOOST_TEST_MESSAGE("OSHandlerRegistry creation failed: " << e.what());
     }
 
-    BOOST_REQUIRE_EQUAL( nGoodInits, 2 );
+    BOOST_REQUIRE_EQUAL( nGoodInits, 2U );
 }
 
 
@@ -165,7 +172,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
         {
             // First check times.  Should be very close to the nTimedSeconds
             // with little spread.
-            BOOST_REQUIRE_EQUAL( timerStats.size(), 1 );
+            BOOST_REQUIRE_EQUAL( timerStats.size(), 1U );
             xperf::PerfObjStatistics<xperf::ITimer::ValType>& timerStatsObj = timerStats.begin()->second;
 
             BOOST_TEST_MESSAGE( "timer name: " << timerStatsObj.name );
@@ -176,7 +183,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
             BOOST_TEST_MESSAGE( "timer stdev: " << timerStatsObj.stdev );
 
             BOOST_REQUIRE_EQUAL( timerStatsObj.name, "testTimer" );
-            BOOST_REQUIRE_EQUAL( timerStatsObj.processCount, cwSize );
+            BOOST_REQUIRE_EQUAL( timerStatsObj.processCount, (unsigned int)cwSize );
             BOOST_REQUIRE_CLOSE( timerStatsObj.average, nTimedSeconds, 0.03);
             BOOST_REQUIRE_CLOSE( timerStatsObj.min, nTimedSeconds, 0.03);
             BOOST_REQUIRE_CLOSE( timerStatsObj.max, nTimedSeconds, 0.03);
@@ -186,7 +193,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
             // should be.
             double countSum = 0;
             double squaredCountSum = 0;
-            for( unsigned int i = 0; i < cwSize; ++i )
+            for( int i = 0; i < cwSize; ++i )
             {
                 countSum += i;
                 squaredCountSum += (i*i);
@@ -196,7 +203,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
             unsigned int expMax = cwSize-1;
             double expStdev = sqrt( (squaredCountSum / cwSize) - expAverage*expAverage);
 
-            BOOST_REQUIRE_EQUAL( ctrStats.size(), 1 );
+            BOOST_REQUIRE_EQUAL( ctrStats.size(), 1U );
             xperf::PerfObjStatistics<xperf::IEventCounter::ValType>& ctrStatsObj = ctrStats.begin()->second;
 
             BOOST_TEST_MESSAGE( "ctr name: " << ctrStatsObj.name );
@@ -207,7 +214,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
             BOOST_TEST_MESSAGE( "ctr stdev: " << ctrStatsObj.stdev );
 
             BOOST_REQUIRE_EQUAL( ctrStatsObj.name, "testCounter" );
-            BOOST_REQUIRE_EQUAL( ctrStatsObj.processCount, cwSize );
+            BOOST_REQUIRE_EQUAL( ctrStatsObj.processCount, (unsigned int)cwSize );
             BOOST_REQUIRE_EQUAL( ctrStatsObj.min, expMin );
             BOOST_REQUIRE_EQUAL( ctrStatsObj.max, expMax );
             BOOST_REQUIRE_CLOSE( ctrStatsObj.average, expAverage, 0.01 );

@@ -10,8 +10,8 @@
 #include <sstream>
 
 namespace xolotlPerf {
-    class ITimer;
-};
+	class ITimer;
+}
 
 namespace xolotlCore {
 
@@ -340,11 +340,9 @@ protected:
 	 * cluster of the form (A_x)(B_y).
 	 * @param oldComponentName The name of the component that will be partially
 	 * replaced
-	 * @param newComponentName The name of the component that will replace the old
-	 * component
 	 */
 	virtual void replaceInCompound(std::vector<Reactant *> & clusters,
-			const std::string& oldComponentName, const std::string& newComponentName);
+			const std::string& oldComponentName);
 
 	/** This operation handles reactions where interstitials fill vacancies,
 	 * sometimes referred to vacancy-interstitial annihilation. The reaction
@@ -369,13 +367,10 @@ protected:
 	 * operation on the child since it has to search all of the possible
 	 * parents.
 	 *
-	 * @param secondClusterName The name of the second cluster in the reaction,
-	 * either "V" or "I" and always the opposite or alternative of
-	 * this->getName()
 	 * @param clusters The set of clusters of the second type that interact
 	 * with this cluster
 	 **/
-	void fillVWithI(const std::string& secondClusterName, std::vector<Reactant *> & clusters);
+	void fillVWithI(std::vector<Reactant *> & clusters);
 
 	/**
 	 * This operation prints a forward reaction given the three reactants in

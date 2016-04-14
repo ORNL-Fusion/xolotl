@@ -171,8 +171,8 @@ void HDF5Utils::fillNetwork(PSIClusterReactionNetwork *network) {
 	return;
 }
 
-void HDF5Utils::addConcentrationSubGroup(int timeStep, int networkSize,
-		double time, double deltaTime) {
+void HDF5Utils::addConcentrationSubGroup(int timeStep, double time,
+		double deltaTime) {
 	// Set the name of the sub group
 	std::stringstream subGroupName;
 	subGroupName << "concentration_" << timeStep;
@@ -249,9 +249,9 @@ void HDF5Utils::fillConcentrations(const std::vector<std::vector<double> >& conc
 	double concArray[concVector.size()][2];
 
 	// Fill it with the concentration vector
-	for (int i = 0; i < concVector.size(); i++) {
-		concArray[i][0] = concVector.at(i).at(0);
-		concArray[i][1] = concVector.at(i).at(1);
+	for (unsigned int n = 0; n < concVector.size(); n++) {
+		concArray[n][0] = concVector.at(n).at(0);
+		concArray[n][1] = concVector.at(n).at(1);
 	}
 
 	// Set the dataset name
@@ -510,11 +510,11 @@ std::vector< std::vector<double> > HDF5Utils::readGridPoint(const std::string& f
 				H5P_DEFAULT, &conc);
 
 		// Loop on the length
-		for (int i = 0; i < dims[0]; i++) {
+		for (unsigned int n = 0; n < dims[0]; n++) {
 			// Create the concentration vector for this cluster
 			std::vector<double> tmp;
-			tmp.push_back(conc[i][0]);
-			tmp.push_back(conc[i][1]);
+			tmp.push_back(conc[n][0]);
+			tmp.push_back(conc[n][1]);
 
 			// Add it to the main vector
 			toReturn.push_back(tmp);

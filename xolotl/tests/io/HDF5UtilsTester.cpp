@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 	HDF5Utils::openFile("test.h5");
 
 	// Add the concentration sub group
-	HDF5Utils::addConcentrationSubGroup(timeStep, networkSize, currentTime, currentTimeStep);
+	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, currentTimeStep);
 
 	// Add the concentration dataset
 	int length = 5;
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 		// Check the size of the vector
 		BOOST_REQUIRE_EQUAL(returnedVector.size(), concVector.size());
 		// Check the values
-		for (int i = 0; i < returnedVector.size(); i++) {
+		for (unsigned int i = 0; i < returnedVector.size(); i++) {
 			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(0), concVector.at(i).at(0), 0.0001);
 			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1), concVector.at(i).at(1), 0.0001);
 		}

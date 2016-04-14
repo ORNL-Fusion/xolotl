@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 
 	// Check the getter for all reactants
 	auto clusters = psiNetwork->getAll();
-	BOOST_REQUIRE_EQUAL(3, clusters->size());
+	BOOST_REQUIRE_EQUAL(3U, clusters->size());
 	// Check the size of the network
 	BOOST_REQUIRE_EQUAL(3, psiNetwork->size());
 
@@ -121,26 +121,26 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 
 	// Make sure that everything was added
 	auto reactants = psiNetwork->getAll();
-	BOOST_REQUIRE_EQUAL(84, reactants->size());
+	BOOST_REQUIRE_EQUAL(84U, reactants->size());
 	// Get the clusters by type and check them. Start with He.
 	auto heReactants = psiNetwork->getAll("He");
-	BOOST_REQUIRE_EQUAL(1, heReactants.size());
+	BOOST_REQUIRE_EQUAL(1U, heReactants.size());
 	BOOST_REQUIRE_EQUAL("He_10", heReactants[0]->getName());
 	// V
 	auto vReactants = psiNetwork->getAll("V");
-	BOOST_REQUIRE_EQUAL(1, vReactants.size());
+	BOOST_REQUIRE_EQUAL(1U, vReactants.size());
 	BOOST_REQUIRE_EQUAL("V_4", vReactants[0]->getName());
 	// I
 	auto iReactants = psiNetwork->getAll("I");
-	BOOST_REQUIRE_EQUAL(1, iReactants.size());
+	BOOST_REQUIRE_EQUAL(1U, iReactants.size());
 	BOOST_REQUIRE_EQUAL("I_48", iReactants[0]->getName());
 	// HeV
 	auto heVReactants = psiNetwork->getAll("HeV");
-	BOOST_REQUIRE_EQUAL(45, heVReactants.size());
+	BOOST_REQUIRE_EQUAL(45U, heVReactants.size());
 
 	// HeI
 	auto heIReactants = psiNetwork->getAll("HeI");
-	BOOST_REQUIRE_EQUAL(36, heIReactants.size());
+	BOOST_REQUIRE_EQUAL(36U, heIReactants.size());
 
 	// Add the required He_1, V_1, I_1 clusters to the network.
 	psiNetwork->add(make_shared<HeCluster>(1,registry));
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	psiNetwork->add(make_shared<InterstitialCluster>(1,registry));
 
 	// Set the reaction networks for all of the clusters
-	for (int i = 0; i < reactants->size(); i++) {
+	for (unsigned int i = 0; i < reactants->size(); i++) {
 		reactants->at(i)->setReactionNetwork(psiNetwork);
 	}
 
@@ -232,8 +232,8 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 	// system to look over the list since there is no way to check exact
 	// containment with a vector.
 	auto names = psiNetwork->getNames();
-	int marker = 0;
-	for (int i = 0; i < names.size(); i++) {
+	unsigned int marker = 0;
+	for (unsigned int i = 0; i < names.size(); i++) {
 		if (names[i] == "He")
 			++marker;
 		else if (names[i] == "V")
@@ -241,20 +241,20 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 		else if (names[i] == "I")
 			++marker;
 	}
-	BOOST_REQUIRE_EQUAL(3, marker);
+	BOOST_REQUIRE_EQUAL(3U, marker);
 	BOOST_REQUIRE_EQUAL(marker, names.size());
 
 	// Check the names of the compound cluster types. Use the same counting
 	// system as above.
 	auto compoundNames = psiNetwork->getCompoundNames();
 	marker = 0;
-	for (int i = 0; i < compoundNames.size(); i++) {
+	for (unsigned int i = 0; i < compoundNames.size(); i++) {
 		if (compoundNames[i] == "HeV")
 			++marker;
 		else if (compoundNames[i] == "HeI")
 			++marker;
 	}
-	BOOST_REQUIRE_EQUAL(2, marker);
+	BOOST_REQUIRE_EQUAL(2U, marker);
 	BOOST_REQUIRE_EQUAL(marker, compoundNames.size());
 
 	return;

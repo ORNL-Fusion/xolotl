@@ -22,6 +22,6 @@ bool initializeDimension(xolotlCore::Options &options);
  */
 std::shared_ptr<xolotlSolver::ISolverHandler> getSolverHandler();
 
-};
+}
 
 #endif /* SOLVERHANDLERFACTORY_H */

@@ -27,8 +27,8 @@ double previousTime = 0.0;
  * because multiple monitors need the previous time value from the previous timestep.
  * This monitor must be called last when needed.
  */
-PetscErrorCode monitorTime(TS ts, PetscInt timestep, PetscReal time, Vec solution,
-		void *ictx) {
+PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec,
+		void *) {
 	PetscFunctionBeginUser;
 
 	// Set the previous time to the current time for the next timestep
@@ -42,8 +42,8 @@ PetscErrorCode monitorTime(TS ts, PetscInt timestep, PetscReal time, Vec solutio
 /**
  * This is a monitoring method that will compute the total helium fluence
  */
-PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *ictx) {
+PetscErrorCode computeHeliumFluence(TS, PetscInt, PetscReal time,
+		Vec, void *) {
 	PetscFunctionBeginUser;
 
 	// Get the solver handler and the flux handler
@@ -65,7 +65,7 @@ PetscErrorCode computeHeliumFluence(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will save 1D plots of one performance timer
  */
 PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *ictx) {
+		Vec, void *) {
 	// To check PETSc errors
 	PetscInt ierr;
 
@@ -123,13 +123,16 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 	if (cwRank == 0) {
 		auto allPoints = std::make_shared<std::vector<xolotlViz::Point> >();
 
-		for (unsigned int i = 0; i < cwSize; ++i) {
+		for (int i = 0; i < cwSize; ++i) {
 			xolotlViz::Point aPoint;
 			aPoint.value = allTimerValues[i];
 			aPoint.x = i;
 			aPoint.t = time;
 			allPoints->push_back(aPoint);
 		}
+
+	  // Clean up the receive buffer (only valid at root)
+	  delete[] allTimerValues;
 
 		// Provide the data provider the points.
 		perfPlot->getDataProvider()->setPoints(allPoints);
@@ -157,9 +160,6 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 		fileName << "timer_TS" << timestep << ".pnm";
 		perfPlot->write(fileName.str());
 	}
-
-	// Clean up
-	delete[] allTimerValues;
 
 	PetscFunctionReturn(0);
 }

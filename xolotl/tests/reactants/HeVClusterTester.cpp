@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		0
 	};
 		
-	for (int i = 0; i < reactionConnectivity.size(); i++) {
+	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
 	}
 
@@ -183,10 +183,10 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	auto partials = cluster->getPartialDerivatives();
 
 	// Check the size of the partials
-	BOOST_REQUIRE_EQUAL(partials.size(), 15);
+	BOOST_REQUIRE_EQUAL(partials.size(), 15U);
 
 	// Check all the values
-	for (int i = 0; i < partials.size(); i++) {
+	for (unsigned int i = 0; i < partials.size(); i++) {
 		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
 	}
 

@@ -9,8 +9,8 @@
 
 namespace xolotlPerf {
 	class IHandlerRegistry;
-    class IEventCounter;
-};
+	class IEventCounter;
+}
 
 namespace xolotlCore {
 

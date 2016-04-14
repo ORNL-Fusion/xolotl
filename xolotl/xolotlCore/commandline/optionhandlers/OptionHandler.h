@@ -10,14 +10,13 @@ namespace xolotlCore {
  * OptionHandler realizes the IOptionHandler interface.
  * There will be an implementation for each different option.
  */
-class OptionHandler : public IOptionHandler {
+class OptionHandler: public IOptionHandler {
 protected:
 
 	/**
 	 * The default constructor
 	 */
-    OptionHandler();
-
+	OptionHandler();
 
 public:
 
@@ -26,26 +25,30 @@ public:
 	 * @param keyName The name for the key.
 	 * @param msg The help message.
 	 */
-    OptionHandler(const std::string& keyName, const std::string& msg) {
-    	key = keyName;
-    	helpMessage = msg;
-    }
+	OptionHandler(const std::string& keyName, const std::string& msg) {
+		key = keyName;
+		helpMessage = msg;
+	}
 
 	/**
 	 * The destructor
 	 */
-    ~OptionHandler() {}
+	~OptionHandler() {
+	}
 
-    /**
-     * The function that will handle the specific option.
-     * Every subclass will have to implement this function.
-     *
-     * @param opt The pointer to the option that will be modified.
-     * @param arg The argument for the option.
-     */
-    virtual bool handler(IOptions *opt, const std::string& arg) {return false;}
+	/**
+	 * The function that will handle the specific option.
+	 * Every subclass will have to implement this function.
+	 *
+	 * @param opt The pointer to the option that will be modified.
+	 * @param arg The argument for the option.
+	 */
+	virtual bool handler(IOptions * opt, const std::string& arg) {
+		return false;
+	}
 
-};//end class OptionHandler
+};
+//end class OptionHandler
 
 } /* namespace xolotlCore */
 

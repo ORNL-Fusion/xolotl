@@ -3,21 +3,21 @@
 
 using namespace xolotlViz;
 
-DummyPlot::DummyPlot(const std::string& name) : xolotlCore::Identifiable("unused") {
+DummyPlot::DummyPlot(const std::string&) : xolotlCore::Identifiable("unused") {
 }
 
 DummyPlot::~DummyPlot() {
 }
 
-void DummyPlot::render(const std::string& fileName) {
+void DummyPlot::render(const std::string&) {
 	return;
 }
 
-void DummyPlot::write(const std::string& fileName) {
+void DummyPlot::write(const std::string&) {
 	return;
 }
 
-void DummyPlot::setPlottingStyle(PlottingStyle style) {
+void DummyPlot::setPlottingStyle(PlottingStyle) {
 	return;
 }
 
@@ -43,7 +43,7 @@ std::shared_ptr<LabelProvider> DummyPlot::getLabelProvider() const {
 	return plotLabelProvider;
 }
 
-void DummyPlot::showLegend(bool legendShow) {
+void DummyPlot::showLegend(bool) {
 	return;
 }
 
@@ -51,7 +51,7 @@ std::string DummyPlot::getLegend() const {
 	return " ";
 }
 
-void DummyPlot::setLogScale(bool logScale) {
+void DummyPlot::setLogScale(bool) {
 	return;
 }
 
@@ -59,7 +59,7 @@ void DummyPlot::addDataProvider(std::shared_ptr<IDataProvider> dataProvider){
 	plotDataProvider = dataProvider;
 }
 
-std::shared_ptr<IDataProvider> DummyPlot::getDataProvider(int i) const {
+std::shared_ptr<IDataProvider> DummyPlot::getDataProvider(int) const {
 	return plotDataProvider;
 }
 

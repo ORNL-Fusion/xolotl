@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
 	Reactant reactant(registry);
 
 	// Check its default composition
-	BOOST_REQUIRE_EQUAL(0, reactant.getComposition().size());
+	BOOST_REQUIRE_EQUAL(0U, reactant.getComposition().size());
 
 	return;
 }
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	reactant.setReactionNetwork(network);
 
 	// Check its default connectivity
-	BOOST_REQUIRE_EQUAL(0, reactant.getConnectivity().size());
+	BOOST_REQUIRE_EQUAL(0U, reactant.getConnectivity().size());
 
 	return;
 }
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	reactant.setReactionNetwork(network);
 
 	// Check its default partial derivatives
-	BOOST_REQUIRE_EQUAL(0, reactant.getPartialDerivatives().size());
+	BOOST_REQUIRE_EQUAL(0U, reactant.getPartialDerivatives().size());
 
 	// Create a reference and temp partial derivative vector
 	std::vector<double> refPartials = std::vector<double>(3, 0.0);

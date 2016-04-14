@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(checkInitialValue) {
 						<< tester.getValue() << "\n" );
 
 	// Require that the value of this EventCounter is 0
-	BOOST_REQUIRE_EQUAL(0, tester.getValue());
+	BOOST_REQUIRE_EQUAL(0U, tester.getValue());
 
 }
 
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(checkCounting) {
 							 << tester.getValue() << "\n" );
 
 	// Require that the value of this EventCounter is 3
-	BOOST_REQUIRE_EQUAL(3, tester.getValue());
+	BOOST_REQUIRE_EQUAL(3U, tester.getValue());
 
 }
 

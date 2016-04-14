@@ -132,7 +132,7 @@ double FluxHandler::getProfileAmplitude(double currentTime) const {
 
 	// Else loop to determine the interval the time falls in
 	// i.e. time[k] < time < time[k + 1]
-	for (int k = 0; k < time.size() - 1; k++) {
+	for (unsigned int k = 0; k < time.size() - 1; k++) {
 		if (currentTime < time[k]) continue;
 		if (currentTime > time[k + 1]) continue;
 

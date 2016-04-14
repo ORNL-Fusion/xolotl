@@ -24,4 +24,4 @@ std::shared_ptr<IMaterialFactory> IMaterialFactory::createMaterialFactory(const 
 	return theMaterialFactory;
 }
 
-};  // end namespace xolotlFactory
+} // end namespace xolotlFactory

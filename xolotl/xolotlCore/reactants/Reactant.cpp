@@ -103,7 +103,7 @@ std::vector<double> Reactant::getPartialDerivatives() const {
 	return partial_derivatives;
 }
 
-void Reactant::getPartialDerivatives(std::vector<double> & partials) const {
+void Reactant::getPartialDerivatives(std::vector<double> &) const {
 	// Do nothing.
 	return;
 }
@@ -129,4 +129,4 @@ std::ostream& operator<< (std::ostream& out, const Reactant& reactant) {
 	return out;
 }
 
-};
+}

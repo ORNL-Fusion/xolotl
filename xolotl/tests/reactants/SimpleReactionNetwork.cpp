@@ -84,7 +84,7 @@ shared_ptr<xolotlCore::ReactionNetwork> testUtils::getSimpleReactionNetwork(cons
 			<< "Created network with size " << network->size() << endl;
 	// Register the reaction network with its clusters
 	auto reactants = network->getAll();
-	for (int i = 0; i < reactants->size(); i++) {
+	for (unsigned int i = 0; i < reactants->size(); i++) {
 		reactants->at(i)->setReactionNetwork(network);
 	}
 

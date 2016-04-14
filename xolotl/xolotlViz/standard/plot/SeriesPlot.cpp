@@ -102,7 +102,7 @@ void SeriesPlot::render(const std::string& fileName) {
     	// Give the yVector to the axisValues
     	eavlArray *axisValues = new eavlFloatArray(plotDataProviders->at(i)->getDataName(), 1);
     	axisValues->SetNumberOfTuples(data->GetNumPoints());
-    	for (int j = 0; j < yVector.size(); j++){
+    	for (unsigned int j = 0; j < yVector.size(); j++){
     		axisValues->SetComponentFromDouble(j, 0, yVector.at(j));
     	}
 

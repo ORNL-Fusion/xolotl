@@ -51,7 +51,7 @@ void ScatterPlot::render(const std::string& fileName) {
 	// Give the yVector to the axisValues
 	eavlArray *axisValues = new eavlFloatArray(plotDataProvider->getDataName(), 1);
 	axisValues->SetNumberOfTuples(data->GetNumPoints());
-	for (int i = 0; i < yVector.size(); i++){
+	for (unsigned int i = 0; i < yVector.size(); i++){
 		axisValues->SetComponentFromDouble(i, 0, yVector.at(i));
 	}
 

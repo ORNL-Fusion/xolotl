@@ -76,6 +76,6 @@ void initialize( IHandlerRegistry::RegistryType rtype );
  */
 std::shared_ptr<IHandlerRegistry> getHandlerRegistry( void );
 
-}; // end namespace xolotlPerf
+} // end namespace xolotlPerf
 
 #endif // XOLOTLPERF_H

@@ -64,7 +64,7 @@ void PetscSolver::setupInitialConditions(DM da, Vec C) {
  .  F - function values
  */
 /* ------------------------------------------------------------------- */
-PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
+PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 	// Start the RHSFunction Timer
 	RHSFunctionTimer->start();
 
@@ -102,8 +102,8 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *ptr) {
 /*
  Compute the Jacobian entries based on IFunction() and insert them into the matrix
  */
-PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
-		void *ptr) {
+PetscErrorCode RHSJacobian(TS ts, PetscReal, Vec C, Mat A, Mat J,
+		void *) {
 	// Start the RHSJacobian timer
 	RHSJacobianTimer->start();
 
@@ -156,7 +156,7 @@ PetscSolver::PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry)
 PetscSolver::~PetscSolver() {
 }
 
-void PetscSolver::setOptions(const std::map<std::string, std::string>& options) {
+void PetscSolver::setOptions(const std::map<std::string, std::string>&) {
 }
 
 void PetscSolver::setupMesh() {

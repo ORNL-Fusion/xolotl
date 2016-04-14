@@ -48,11 +48,10 @@ namespace HDF5Utils {
 	 * Add a concentration subgroup for the given time step to the HDF5 file.
 	 *
 	 * @param timeStep The number of the time step
-	 * @param networkSize The total number of cluster in the network
 	 * @param time The physical time at this time step
 	 * @param deltaTime The physical length of the time step
 	 */
-	void addConcentrationSubGroup(int timeStep, int networkSize, double time,
+	void addConcentrationSubGroup(int timeStep, double time,
 			double deltaTime);
 
 	/**
@@ -140,7 +139,7 @@ namespace HDF5Utils {
 	std::vector< std::vector<double> > readGridPoint(const std::string& fileName,
 			int lastTimeStep, int i, int j = -1, int k = -1);
 
-};
+}
 
 } /* namespace xolotlCore */
 #endif
