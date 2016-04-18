@@ -135,7 +135,8 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 
 	// Remove the created file
 	std::string tempFile = "params.txt";
-	std::remove(tempFile.c_str());
+	if (std::remove(tempFile.c_str()) != 0)
+		throw std::string("Error deleting " + tempFile);
 }
 
 /**
@@ -242,7 +243,8 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 
 	// Remove the created file
 	std::string tempFile = "params.txt";
-	std::remove(tempFile.c_str());
+	if (std::remove(tempFile.c_str()) != 0)
+		throw std::string("Error deleting " + tempFile);
 }
 
 /**
@@ -349,7 +351,8 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 
 	// Remove the created file
 	std::string tempFile = "params.txt";
-	std::remove(tempFile.c_str());
+	if (std::remove(tempFile.c_str()) != 0)
+		throw std::string("Error deleting " + tempFile);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

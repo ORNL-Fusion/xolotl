@@ -41,11 +41,11 @@ BOOST_AUTO_TEST_CASE(checkGetIncidentFlux) {
 	double step = 1.25;
 
 	// Create the flux handler
-    auto testFitFlux = make_shared<W100FitFluxHandler>();
-    // Set the factor to change the helium flux
-    testFitFlux->setFluxAmplitude(1.0);
-    // Initialize the flux handler
-    testFitFlux->initializeFluxHandler(network, nGridpts, step);
+	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	// Set the factor to change the helium flux
+	testFitFlux->setFluxAmplitude(1.0);
+	// Initialize the flux handler
+	testFitFlux->initializeFluxHandler(network, nGridpts, step);
 
 	// Create a time
 	double currTime = 1.0;
@@ -81,14 +81,14 @@ BOOST_AUTO_TEST_CASE(checkFluxIndex) {
 	double step = 1.25;
 
 	// Create the flux handler
-    auto testFitFlux = make_shared<W100FitFluxHandler>();
-    // Set the factor to change the helium flux
-    testFitFlux->setFluxAmplitude(1.0);
-    // Initialize the flux handler
-    testFitFlux->initializeFluxHandler(network, nGridpts, step);
+	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	// Set the factor to change the helium flux
+	testFitFlux->setFluxAmplitude(1.0);
+	// Initialize the flux handler
+	testFitFlux->initializeFluxHandler(network, nGridpts, step);
 
-    // Check the value of the index of the cluster for the flux
-    BOOST_REQUIRE_EQUAL(testFitFlux->getIncidentFluxClusterIndex(), 0);
+	// Check the value of the index of the cluster for the flux
+	BOOST_REQUIRE_EQUAL(testFitFlux->getIncidentFluxClusterIndex(), 0);
 
 	return;
 }
@@ -113,11 +113,11 @@ BOOST_AUTO_TEST_CASE(checkFluence) {
 	double step = 1.25;
 
 	// Create the flux handler
-    auto testFitFlux = make_shared<W100FitFluxHandler>();
-    // Set the factor to change the helium flux
-    testFitFlux->setFluxAmplitude(1.0);
-    // Initialize the flux handler
-    testFitFlux->initializeFluxHandler(network, nGridpts, step);
+	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	// Set the factor to change the helium flux
+	testFitFlux->setFluxAmplitude(1.0);
+	// Initialize the flux handler
+	testFitFlux->initializeFluxHandler(network, nGridpts, step);
 
 	// Check that the fluence is 0.0 at the beginning
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluence(), 0.0);
@@ -151,16 +151,16 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 	double step = 1.25;
 
 	// Create the flux handler
-    auto testFitFlux = make_shared<W100FitFluxHandler>();
-    // Set the factor to change the helium flux
-    testFitFlux->setFluxAmplitude(1.0);
-    // Set the factor to change the helium flux
-    testFitFlux->setFluxAmplitude(2.5);
-    // Initialize the flux handler
-    testFitFlux->initializeFluxHandler(network, nGridpts, step);
+	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	// Set the factor to change the helium flux
+	testFitFlux->setFluxAmplitude(1.0);
+	// Set the factor to change the helium flux
+	testFitFlux->setFluxAmplitude(2.5);
+	// Initialize the flux handler
+	testFitFlux->initializeFluxHandler(network, nGridpts, step);
 
-    // Check the value of the helium flux
-    BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2.5);
+	// Check the value of the helium flux
+	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2.5);
 
 	// Create a time
 	double currTime = 1.0;
@@ -207,11 +207,11 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	writeFluxFile.close();
 
 	// Create the flux handler
-    auto testFitFlux = make_shared<W100FitFluxHandler>();
-    // Initialize the time profile for the flux handler
-    testFitFlux->initializeTimeProfile("fluxFile.dat");
-    // Initialize the flux handler
-    testFitFlux->initializeFluxHandler(network, nGridpts, step);
+	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	// Initialize the time profile for the flux handler
+	testFitFlux->initializeTimeProfile("fluxFile.dat");
+	// Initialize the flux handler
+	testFitFlux->initializeFluxHandler(network, nGridpts, step);
 
 	// Create a time
 	double currTime = 0.5;
@@ -224,10 +224,10 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	BOOST_REQUIRE_CLOSE(testFluxVec[2], 564.902, 0.01);
 	BOOST_REQUIRE_CLOSE(testFluxVec[3], 243.050, 0.01);
 	// Check the value of the helium flux
-    BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2500.0);
+	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2500.0);
 
-    // Change the current time
-    currTime = 3.5;
+	// Change the current time
+	currTime = 3.5;
 
 	// Get the flux vector
 	testFluxVec = testFitFlux->getIncidentFluxVec(currTime);
@@ -237,11 +237,12 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	BOOST_REQUIRE_CLOSE(testFluxVec[2], 338.941, 0.01);
 	BOOST_REQUIRE_CLOSE(testFluxVec[3], 145.830, 0.01);
 	// Check the value of the helium flux
-    BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 1500.0);
+	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 1500.0);
 
-    // Remove the created file
-    std::string tempFile = "fluxFile.dat";
-    std::remove(tempFile.c_str());
+	// Remove the created file
+	std::string tempFile = "fluxFile.dat";
+	if (std::remove(tempFile.c_str()) != 0)
+		throw std::string("Error deleting " + tempFile);
 
 	// Finalize MPI
 	MPI_Finalize();
