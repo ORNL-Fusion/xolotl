@@ -187,7 +187,7 @@ public class Preprocessor {
 		// in order to set the petsc parameter
 		StringBuilder petscString = new StringBuilder();
 		for (String key : petscOptions.keySet()) {
-			if (petscOptions.get(key) == "")
+			if (petscOptions.get(key).equals(""))
 				petscString.append(key + petscOptions.get(key) + " ");
 			else
 				petscString.append(key + " " + petscOptions.get(key) + " ");
@@ -510,16 +510,13 @@ public class Preprocessor {
 	 *            The name of the HDF5 file
 	 */
 	public void createHDF5(String name) {
-		// The status of the previous HDF5 operation
-		int status;
-
 		try {
 			// Create the HDF5 file
 			int fileId = H5.H5Fcreate(name, HDF5Constants.H5F_ACC_TRUNC,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 
 			// Close the HDF5 file
-			status = H5.H5Fclose(fileId);
+			int status = H5.H5Fclose(fileId);
 		} catch (Exception e) {
 			// Complain
 			e.printStackTrace();
@@ -538,9 +535,6 @@ public class Preprocessor {
 	 *            interface.
 	 */
 	public void writeHeader(String name, Arguments args) {
-		// The status of the previous HDF5 operation
-		int status;
-		
 		// Get the grid size
 		int[] nxGrid = { args.getNxGrid() };
 		int[] nyGrid = { args.getNyGrid() };
@@ -565,7 +559,7 @@ public class Preprocessor {
 			int attributeId = H5.H5Acreate(headerGroupId, "nx",
 					HDF5Constants.H5T_STD_I32LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
+			int status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
 					nxGrid);
 			status = H5.H5Aclose(attributeId);
 			// Create, write, and close the hx attribute (h)
@@ -628,8 +622,6 @@ public class Preprocessor {
 	 * @return The array of sizes of the grid
 	 */
 	public int[] copyHeader(String fromName, String toName) {
-		// The status of the previous HDF5 operation
-		int status;
 		// The number of grid points and the step size
 		int[] n = { 0 };
 		double[] h = { 0 };
@@ -658,7 +650,7 @@ public class Preprocessor {
 			// Open, read, and close the nx attribute
 			int attributeId = H5.H5Aopen(headerFromGroupId, "nx",
 					HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE,
+			int status = H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE,
 					n);
 			status = H5.H5Aclose(attributeId);
 			// Create, write, and close the nx attribute
@@ -754,6 +746,9 @@ public class Preprocessor {
 			status = H5.H5Fclose(fileFromId);
 			status = H5.H5Gclose(headerToGroupId);
 			status = H5.H5Fclose(fileToId);
+		} catch (RuntimeException e) {
+			// Complain
+			e.printStackTrace();
 		} catch (Exception e) {
 			// Complain
 			e.printStackTrace();
@@ -772,8 +767,6 @@ public class Preprocessor {
 	 * @return The value of the last time step saved in the HDF5 file
 	 */
 	public int readLastTimeStep(String fromName) {
-		// The status of the previous HDF5 operation
-		int status;
 		// The indice of the last time step saved in the given HDF5 file
 		int[] lastTimeStep = { -1 };
 
@@ -789,7 +782,7 @@ public class Preprocessor {
 			// Open and read the lastTimeStep attribute
 			int lastAttributeId = H5.H5Aopen(concentrationGroupId,
 					"lastTimeStep", HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(lastAttributeId, HDF5Constants.H5T_STD_I32LE,
+			int status = H5.H5Aread(lastAttributeId, HDF5Constants.H5T_STD_I32LE,
 					lastTimeStep);
 			status = H5.H5Aclose(lastAttributeId);
 
@@ -812,9 +805,6 @@ public class Preprocessor {
 	 *            The name of the created HDF5 file
 	 */
 	public void createInitialConcentrationGroup(String toName) {
-		// The status of the previous HDF5 operation
-		int status;
-		
 		try {
 			// Open the created HDF5 file to start writing the new
 			// concentration group in it
@@ -833,7 +823,7 @@ public class Preprocessor {
 			int lastAttributeId = H5.H5Acreate(newConcGroupId, "lastTimeStep",
 					HDF5Constants.H5T_STD_I32LE, lastDataspaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(lastAttributeId,
+			int status = H5.H5Awrite(lastAttributeId,
 					HDF5Constants.H5T_STD_I32LE, newTimeStep);
 			status = H5.H5Aclose(lastAttributeId);
 			
@@ -861,8 +851,6 @@ public class Preprocessor {
 	 * @return An array containing the absolute time and the timestep
 	 */
 	public double[] readTimes(String fromName, int lastTimeStep) {
-		// The status of the previous HDF5 operation
-		int status;
 		// The array for the times
 		double[] times = {0.0, 0.0};
 		
@@ -887,7 +875,7 @@ public class Preprocessor {
 			// Open and read the absoluteTime attribute
 			int timeAttributeId = H5.H5Aopen(concentrationGroupId,
 					"absoluteTime", HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(timeAttributeId,
+			int status = H5.H5Aread(timeAttributeId,
 					HDF5Constants.H5T_IEEE_F64LE, time);
 			status = H5.H5Aclose(timeAttributeId);
 
@@ -924,9 +912,6 @@ public class Preprocessor {
 	 * 		      An array containing the absolute time and the timestep
 	 */
 	public void createConcentrationSubGroup(String toName, double[] times) {
-		// The status of the previous HDF5 operation
-		int status;
-		
 		try {
 			// Open the created HDF5 file 
 			int fileId = H5.H5Fopen(toName, HDF5Constants.H5F_ACC_RDWR,
@@ -945,7 +930,7 @@ public class Preprocessor {
 					"absoluteTime", HDF5Constants.H5T_IEEE_F64LE,
 					timeDataspaceId, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(timeAttributeId,
+			int status = H5.H5Awrite(timeAttributeId,
 					HDF5Constants.H5T_IEEE_F64LE, time);
 			status = H5.H5Sclose(timeDataspaceId);
 			status = H5.H5Aclose(timeAttributeId);
@@ -982,8 +967,6 @@ public class Preprocessor {
 	 * @return A map of the index and composition
 	 */
 	public int[][] readNetwork(String fromName) {
-		// The status of the previous HDF5 operation
-		int status;
 		// The array for the times
 		int[][] map = new int[0][0];
 		
@@ -1000,7 +983,7 @@ public class Preprocessor {
 			int networkSizeAttributeId = H5.H5Aopen(datasetId, "networkSize", 
 					HDF5Constants.H5P_DEFAULT);
 			int[] networkSize = { 0 };
-			status = H5.H5Aread(networkSizeAttributeId, HDF5Constants.H5T_STD_I32LE, networkSize);
+			int status = H5.H5Aread(networkSizeAttributeId, HDF5Constants.H5T_STD_I32LE, networkSize);
 			status = H5.H5Aclose(networkSizeAttributeId);
 
 			// Create the array that will receive the network
@@ -1050,8 +1033,6 @@ public class Preprocessor {
 	 * @return True if there is a dataset at this position
 	 */
 	public boolean hasConcentrationDataset(String fromName, int lastTimeStep, int i, int j, int k) {
-		// The status of the previous HDF5 operation
-		int status;
 		// Initializing the boolean
 		boolean hasData = false;
 		
@@ -1068,7 +1049,7 @@ public class Preprocessor {
 					HDF5Constants.H5P_DEFAULT);
 
 			// Close everything
-			status = H5.H5Fclose(fileId);
+			int status = H5.H5Fclose(fileId);
 			
 		} catch (Exception e) {
 			// Complain
@@ -1097,8 +1078,6 @@ public class Preprocessor {
 	 * @return A two dimensional array containing the concentrations
 	 */
 	public double[][] readConcentration(String fromName, int lastTimeStep, int i, int j, int k) {
-		// The status of the previous HDF5 operation
-		int status;
 		// The array for the concentrations
 		double[][] concentration = new double[0][0];
 		
@@ -1120,7 +1099,7 @@ public class Preprocessor {
 
 			// Get the dimensions of the dataset
 			long[] dims = new long[2];
-			status = H5.H5Sget_simple_extent_dims(dataspaceId, dims, 
+			int status = H5.H5Sget_simple_extent_dims(dataspaceId, dims, 
 					null);
 
 			// Create the array that will receive the concentrations
@@ -1165,8 +1144,6 @@ public class Preprocessor {
 	 */
 	public void writeConcentration(String toName, int i, int j, int k, 
 			double[][] concentration, int[][] map, ArrayList<Cluster> clusters) {
-		// The status of the previous HDF5 operation
-		int status;
 		// The list storing the new index and concentrations
 		ArrayList<double[]> newConc = new ArrayList<double[]>();
 		
@@ -1238,7 +1215,7 @@ public class Preprocessor {
 					HDF5Constants.H5P_DEFAULT);
 
 			// Write the concentration array in the dataset
-			status = H5.H5Dwrite(datasetId,
+			int status = H5.H5Dwrite(datasetId,
 					HDF5Constants.H5T_IEEE_F64LE,
 					HDF5Constants.H5S_ALL, HDF5Constants.H5S_ALL,
 					HDF5Constants.H5P_DEFAULT, concentration);
@@ -1271,9 +1248,6 @@ public class Preprocessor {
 	 */
 	public void copyConcentration(String fromName, String toName, int[] gridSize, 
 			ArrayList<Cluster> clusters) {
-		// The status of the previous HDF5 operation
-		int status;
-
 		try {
 			// Read the concentration group from the given file to get the value
 			// of the last timestep
@@ -1282,11 +1256,9 @@ public class Preprocessor {
 			if (lastTimeStep >= 0) {
 				// Create the concentration group in the new HDF5 file
 				createInitialConcentrationGroup(toName);
-
-				double[] times = new double[2];
 				
 				// Read the times from the given HDF5 file
-				times = readTimes(fromName, lastTimeStep);
+				double[] times = readTimes(fromName, lastTimeStep);
 				
 				// Create the concentration subgroup in the new file and store
 				// the times
@@ -1321,6 +1293,9 @@ public class Preprocessor {
 				return;
 			}
 
+		} catch (RuntimeException e) {
+			// Complain
+			e.printStackTrace();
 		} catch (Exception e) {
 			// Complain
 			e.printStackTrace();
@@ -1338,9 +1313,6 @@ public class Preprocessor {
 	 *            The list of clusters representing the network
 	 */
 	public void writeNetwork(String name, ArrayList<Cluster> clusters) {
-		// The status of the previous HDF5 operation
-		int status;
-
 		try {
 			// Open the HDF5 file
 			int fileId = H5.H5Fopen(name, HDF5Constants.H5F_ACC_RDWR,
@@ -1389,7 +1361,7 @@ public class Preprocessor {
 					HDF5Constants.H5P_DEFAULT);
 
 			// Write networkArray in the dataset
-			status = H5.H5Dwrite(datasetId, HDF5Constants.H5T_IEEE_F64LE,
+			int status = H5.H5Dwrite(datasetId, HDF5Constants.H5T_IEEE_F64LE,
 					HDF5Constants.H5S_ALL, HDF5Constants.H5S_ALL,
 					HDF5Constants.H5P_DEFAULT, networkArray);
 
@@ -1409,6 +1381,9 @@ public class Preprocessor {
 			status = H5.H5Dclose(datasetId);
 			status = H5.H5Gclose(networkGroupId);
 			status = H5.H5Fclose(fileId);
+		} catch (RuntimeException e) {
+			// Complain
+			e.printStackTrace();
 		} catch (Exception e) {
 			// Complain
 			e.printStackTrace();

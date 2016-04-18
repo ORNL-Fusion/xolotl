@@ -6,7 +6,8 @@ package gov.ornl.xolotl.preprocessor;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 /**
@@ -100,8 +101,8 @@ public class FormationEnergyEngine {
 		if (fitFile.exists()) {
 			try {
 				// Create the readers
-				FileReader fitFileReader = new FileReader(fitFile);
-				BufferedReader fitReader = new BufferedReader(fitFileReader);
+				InputStreamReader fitStreamReader = new InputStreamReader(new FileInputStream(fitFile), "UTF-8");
+				BufferedReader fitReader = new BufferedReader(fitStreamReader);
 
 				// Read from the Legendre fit file
 				String[] c0Strings = fitReader.readLine().split(",");
@@ -170,8 +171,9 @@ public class FormationEnergyEngine {
 				c3CoefficientsHigh[4] = Double.valueOf(c7Strings[4]);
 				c3CoefficientsHigh[5] = Double.valueOf(c7Strings[5]);
 
-				// Close the reader
+				// Close the readers
 				fitReader.close();
+				fitStreamReader.close();
 			} catch (FileNotFoundException e) {
 				// Complain
 				System.err.println("FormationEnergyEngine Message:"
