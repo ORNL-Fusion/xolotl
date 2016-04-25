@@ -31,7 +31,7 @@ public:
 	 * DummyEventCounter constructor that takes the argument name but
 	 * doesn't do anything with it
 	 */
-	DummyEventCounter(const std::string& name) :
+	DummyEventCounter(const std::string&) :
 			xolotlCore::Identifiable("unused") {
 	}
 

@@ -458,20 +458,23 @@ public class Preprocessor {
 	 */
 	public void writeParameterFile(String parameterFile, Properties parameters) {
 
+		FileOutputStream paramsFile = null;
 		try {
 			// Create the file containing the parameters
-			FileOutputStream paramsFile = new FileOutputStream(parameterFile);
+			paramsFile = new FileOutputStream(parameterFile);
 
 			// Write the parameters to the output file and save
 			// the file to the project root folder
 			parameters.store(paramsFile, null);
 			// Flush the parameters to the intended stream
 			paramsFile.flush();
-			// Close the parameter file
-			paramsFile.close();
-
 		} catch (IOException io) {
 			io.printStackTrace();
+		} finally {
+			// Close the parameter file
+			try {
+				paramsFile.close();
+			} catch (Exception ex) {ex.printStackTrace();}
 		}
 
 		return;
@@ -487,18 +490,22 @@ public class Preprocessor {
 
 		// Local declarations
 		Properties inProperties = new Properties();
+		
+		FileInputStream inParamsFile = null;
 
 		try {
-
-			FileInputStream inParamsFile = new FileInputStream(parameterFile);
+			inParamsFile = new FileInputStream(parameterFile);
 			// Load the properties from the file
 			inProperties.load(inParamsFile);
-			// Close the parameter file
-			inParamsFile.close();
 
 		} catch (IOException io) {
 			System.err.println("Error loading parameter file.");
 			io.printStackTrace();
+		} finally {
+			// Close the parameter file
+			try {
+				inParamsFile.close();
+			} catch (Exception ex) {ex.printStackTrace();}
 		}
 		return inProperties;
 	}
@@ -516,7 +523,7 @@ public class Preprocessor {
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 
 			// Close the HDF5 file
-			int status = H5.H5Fclose(fileId);
+			H5.H5Fclose(fileId);
 		} catch (Exception e) {
 			// Complain
 			e.printStackTrace();
@@ -559,50 +566,50 @@ public class Preprocessor {
 			int attributeId = H5.H5Acreate(headerGroupId, "nx",
 					HDF5Constants.H5T_STD_I32LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
 					nxGrid);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			// Create, write, and close the hx attribute (h)
 			attributeId = H5.H5Acreate(headerGroupId, "hx",
 					HDF5Constants.H5T_IEEE_F64LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
 					hx);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			
 			// Create, write, and close the ny attribute (nyGrid)
 			attributeId = H5.H5Acreate(headerGroupId, "ny",
 					HDF5Constants.H5T_STD_I32LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
 					nyGrid);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			// Create, write, and close the hy attribute (h)
 			attributeId = H5.H5Acreate(headerGroupId, "hy",
 					HDF5Constants.H5T_IEEE_F64LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
 					hy);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			
 			// Create, write, and close the nz attribute (nzGrid)
 			attributeId = H5.H5Acreate(headerGroupId, "nz",
 					HDF5Constants.H5T_STD_I32LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
 					nzGrid);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			// Create, write, and close the hz attribute (h)
 			attributeId = H5.H5Acreate(headerGroupId, "hz",
 					HDF5Constants.H5T_IEEE_F64LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
 					hz);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 
 			// Close everything
-			status = H5.H5Gclose(headerGroupId);
-			status = H5.H5Fclose(fileId);
+			H5.H5Gclose(headerGroupId);
+			H5.H5Fclose(fileId);
 		} catch (Exception e) {
 			// Complain
 			e.printStackTrace();
@@ -650,17 +657,17 @@ public class Preprocessor {
 			// Open, read, and close the nx attribute
 			int attributeId = H5.H5Aopen(headerFromGroupId, "nx",
 					HDF5Constants.H5P_DEFAULT);
-			int status = H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE,
 					n);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			// Create, write, and close the nx attribute
 			int dataSpaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
 			attributeId = H5.H5Acreate(headerToGroupId, "nx",
 					HDF5Constants.H5T_STD_I32LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
 					n);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			
 			// Store the size of the grid in the x direction
 			gridSize[0] = n[0];
@@ -668,30 +675,30 @@ public class Preprocessor {
 			// Open, read, and close the hx attribute
 			attributeId = H5.H5Aopen(headerFromGroupId, "hx",
 					HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE,
 					h);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			// Create, write, and close the nx attribute
 			attributeId = H5.H5Acreate(headerToGroupId, "hx",
 					HDF5Constants.H5T_IEEE_F64LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
 					h);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 
 			// Open, read, and close the ny attribute
 			attributeId = H5.H5Aopen(headerFromGroupId, "ny",
 					HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE,
 					n);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			// Create, write, and close the ny attribute
 			attributeId = H5.H5Acreate(headerToGroupId, "ny",
 					HDF5Constants.H5T_STD_I32LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
 					n);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			
 			// Store the size of the grid in the y direction
 			gridSize[1] = n[0];
@@ -699,30 +706,30 @@ public class Preprocessor {
 			// Open, read, and close the hy attribute
 			attributeId = H5.H5Aopen(headerFromGroupId, "hy",
 					HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE,
 					h);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			// Create, write, and close the ny attribute
 			attributeId = H5.H5Acreate(headerToGroupId, "hy",
 					HDF5Constants.H5T_IEEE_F64LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
 					h);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 
 			// Open, read, and close the nz attribute
 			attributeId = H5.H5Aopen(headerFromGroupId, "nz",
 					HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE,
 					n);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			// Create, write, and close the nz attribute
 			attributeId = H5.H5Acreate(headerToGroupId, "nz",
 					HDF5Constants.H5T_STD_I32LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE,
 					n);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			
 			// Store the size of the grid in the y direction
 			gridSize[2] = n[0];
@@ -730,22 +737,22 @@ public class Preprocessor {
 			// Open, read, and close the hz attribute
 			attributeId = H5.H5Aopen(headerFromGroupId, "hz",
 					HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE,
 					h);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 			// Create, write, and close the nz attribute
 			attributeId = H5.H5Acreate(headerToGroupId, "hz",
 					HDF5Constants.H5T_IEEE_F64LE, dataSpaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE,
 					h);
-			status = H5.H5Aclose(attributeId);
+			H5.H5Aclose(attributeId);
 
 			// Close everything
-			status = H5.H5Gclose(headerFromGroupId);
-			status = H5.H5Fclose(fileFromId);
-			status = H5.H5Gclose(headerToGroupId);
-			status = H5.H5Fclose(fileToId);
+			H5.H5Gclose(headerFromGroupId);
+			H5.H5Fclose(fileFromId);
+			H5.H5Gclose(headerToGroupId);
+			H5.H5Fclose(fileToId);
 		} catch (RuntimeException e) {
 			// Complain
 			e.printStackTrace();
@@ -782,13 +789,13 @@ public class Preprocessor {
 			// Open and read the lastTimeStep attribute
 			int lastAttributeId = H5.H5Aopen(concentrationGroupId,
 					"lastTimeStep", HDF5Constants.H5P_DEFAULT);
-			int status = H5.H5Aread(lastAttributeId, HDF5Constants.H5T_STD_I32LE,
+			H5.H5Aread(lastAttributeId, HDF5Constants.H5T_STD_I32LE,
 					lastTimeStep);
-			status = H5.H5Aclose(lastAttributeId);
+			H5.H5Aclose(lastAttributeId);
 
 			// Close everything
-			status = H5.H5Gclose(concentrationGroupId);
-			status = H5.H5Fclose(fileId);
+			H5.H5Gclose(concentrationGroupId);
+			H5.H5Fclose(fileId);
 		} catch (Exception e) {
 			// Complain
 			e.printStackTrace();
@@ -823,13 +830,13 @@ public class Preprocessor {
 			int lastAttributeId = H5.H5Acreate(newConcGroupId, "lastTimeStep",
 					HDF5Constants.H5T_STD_I32LE, lastDataspaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int status = H5.H5Awrite(lastAttributeId,
+			H5.H5Awrite(lastAttributeId,
 					HDF5Constants.H5T_STD_I32LE, newTimeStep);
-			status = H5.H5Aclose(lastAttributeId);
+			H5.H5Aclose(lastAttributeId);
 			
 			// Close everything
-			status = H5.H5Gclose(newConcGroupId);
-			status = H5.H5Fclose(fileId);
+			H5.H5Gclose(newConcGroupId);
+			H5.H5Fclose(fileId);
 			
 		} catch (Exception e) {
 			// Complain
@@ -875,20 +882,20 @@ public class Preprocessor {
 			// Open and read the absoluteTime attribute
 			int timeAttributeId = H5.H5Aopen(concentrationGroupId,
 					"absoluteTime", HDF5Constants.H5P_DEFAULT);
-			int status = H5.H5Aread(timeAttributeId,
+			H5.H5Aread(timeAttributeId,
 					HDF5Constants.H5T_IEEE_F64LE, time);
-			status = H5.H5Aclose(timeAttributeId);
+			H5.H5Aclose(timeAttributeId);
 
 			// Open and read the deltaTime attribute
 			int deltaAttributeId = H5.H5Aopen(concentrationGroupId,
 					"deltaTime", HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(deltaAttributeId,
+			H5.H5Aread(deltaAttributeId,
 					HDF5Constants.H5T_IEEE_F64LE, deltaTime);
-			status = H5.H5Aclose(deltaAttributeId);
+			H5.H5Aclose(deltaAttributeId);
 
 			// Close everything
-			status = H5.H5Gclose(concentrationGroupId);
-			status = H5.H5Fclose(fileId);
+			H5.H5Gclose(concentrationGroupId);
+			H5.H5Fclose(fileId);
 			
 			// Set the times in the array
 			times[0] = time[0];
@@ -930,10 +937,10 @@ public class Preprocessor {
 					"absoluteTime", HDF5Constants.H5T_IEEE_F64LE,
 					timeDataspaceId, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			int status = H5.H5Awrite(timeAttributeId,
+			H5.H5Awrite(timeAttributeId,
 					HDF5Constants.H5T_IEEE_F64LE, time);
-			status = H5.H5Sclose(timeDataspaceId);
-			status = H5.H5Aclose(timeAttributeId);
+			H5.H5Sclose(timeDataspaceId);
+			H5.H5Aclose(timeAttributeId);
 
 			// Create, write, and close the timestep time attribute
 			double[] deltaTime = { times[1] };
@@ -941,14 +948,14 @@ public class Preprocessor {
 			int deltaAttributeId = H5.H5Acreate(newConcSubGroupId, "deltaTime",
 					HDF5Constants.H5T_IEEE_F64LE, deltaDataspaceId,
 					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(deltaAttributeId,
+			H5.H5Awrite(deltaAttributeId,
 					HDF5Constants.H5T_IEEE_F64LE, deltaTime);
-			status = H5.H5Sclose(deltaDataspaceId);
-			status = H5.H5Aclose(deltaAttributeId);
+			H5.H5Sclose(deltaDataspaceId);
+			H5.H5Aclose(deltaAttributeId);
 
 			// Close everything
-			status = H5.H5Gclose(newConcSubGroupId);
-			status = H5.H5Fclose(fileId);
+			H5.H5Gclose(newConcSubGroupId);
+			H5.H5Fclose(fileId);
 			
 		} catch (Exception e) {
 			// Complain
@@ -983,19 +990,19 @@ public class Preprocessor {
 			int networkSizeAttributeId = H5.H5Aopen(datasetId, "networkSize", 
 					HDF5Constants.H5P_DEFAULT);
 			int[] networkSize = { 0 };
-			int status = H5.H5Aread(networkSizeAttributeId, HDF5Constants.H5T_STD_I32LE, networkSize);
-			status = H5.H5Aclose(networkSizeAttributeId);
+			H5.H5Aread(networkSizeAttributeId, HDF5Constants.H5T_STD_I32LE, networkSize);
+			H5.H5Aclose(networkSizeAttributeId);
 
 			// Create the array that will receive the network
 			double[][] networkArray = new double[networkSize[0]][6];
 
 			// Read the data set
-			status = H5.H5Dread(datasetId, HDF5Constants.H5T_IEEE_F64LE, HDF5Constants.H5S_ALL, 
+			H5.H5Dread(datasetId, HDF5Constants.H5T_IEEE_F64LE, HDF5Constants.H5S_ALL, 
 					HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, networkArray);
 
 			// Close everything
-			status = H5.H5Dclose(datasetId);
-			status = H5.H5Fclose(fileId);
+			H5.H5Dclose(datasetId);
+			H5.H5Fclose(fileId);
 			
 			// Recreate the map at the size of the network array
 			map = new int[networkSize[0]][3];
@@ -1049,7 +1056,7 @@ public class Preprocessor {
 					HDF5Constants.H5P_DEFAULT);
 
 			// Close everything
-			int status = H5.H5Fclose(fileId);
+			H5.H5Fclose(fileId);
 			
 		} catch (Exception e) {
 			// Complain
@@ -1099,21 +1106,21 @@ public class Preprocessor {
 
 			// Get the dimensions of the dataset
 			long[] dims = new long[2];
-			int status = H5.H5Sget_simple_extent_dims(dataspaceId, dims, 
+			H5.H5Sget_simple_extent_dims(dataspaceId, dims, 
 					null);
 
 			// Create the array that will receive the concentrations
 			concentration = new double[(int) dims[0]][(int) dims[1]];
 
 			// Read the data set
-			status = H5.H5Dread(datasetId,
+			H5.H5Dread(datasetId,
 					HDF5Constants.H5T_IEEE_F64LE,
 					HDF5Constants.H5S_ALL, HDF5Constants.H5S_ALL,
 					HDF5Constants.H5P_DEFAULT, concentration);
 
 			// Close everything
-			status = H5.H5Dclose(datasetId);
-			status = H5.H5Fclose(fileId);
+			H5.H5Dclose(datasetId);
+			H5.H5Fclose(fileId);
 			
 		} catch (Exception e) {
 			// Complain
@@ -1215,16 +1222,19 @@ public class Preprocessor {
 					HDF5Constants.H5P_DEFAULT);
 
 			// Write the concentration array in the dataset
-			int status = H5.H5Dwrite(datasetId,
+			H5.H5Dwrite(datasetId,
 					HDF5Constants.H5T_IEEE_F64LE,
 					HDF5Constants.H5S_ALL, HDF5Constants.H5S_ALL,
 					HDF5Constants.H5P_DEFAULT, concentration);
 
 			// Close everything
-			status = H5.H5Sclose(concDataspaceId);
-			status = H5.H5Dclose(datasetId);
-			status = H5.H5Fclose(fileId);
+			H5.H5Sclose(concDataspaceId);
+			H5.H5Dclose(datasetId);
+			H5.H5Fclose(fileId);
 			
+		} catch (RuntimeException e) {
+			// Complain
+			e.printStackTrace();
 		} catch (Exception e) {
 			// Complain
 			e.printStackTrace();
@@ -1361,7 +1371,7 @@ public class Preprocessor {
 					HDF5Constants.H5P_DEFAULT);
 
 			// Write networkArray in the dataset
-			int status = H5.H5Dwrite(datasetId, HDF5Constants.H5T_IEEE_F64LE,
+			H5.H5Dwrite(datasetId, HDF5Constants.H5T_IEEE_F64LE,
 					HDF5Constants.H5S_ALL, HDF5Constants.H5S_ALL,
 					HDF5Constants.H5P_DEFAULT, networkArray);
 
@@ -1373,14 +1383,14 @@ public class Preprocessor {
 
 			// Write it
 			int[] tempNetworkSize = { networkSize };
-			status = H5.H5Awrite(networkSizeAttributeId,
+			H5.H5Awrite(networkSizeAttributeId,
 					HDF5Constants.H5T_STD_I32LE, tempNetworkSize);
 
 			// Close everything
-			status = H5.H5Aclose(networkSizeAttributeId);
-			status = H5.H5Dclose(datasetId);
-			status = H5.H5Gclose(networkGroupId);
-			status = H5.H5Fclose(fileId);
+			H5.H5Aclose(networkSizeAttributeId);
+			H5.H5Dclose(datasetId);
+			H5.H5Gclose(networkGroupId);
+			H5.H5Fclose(fileId);
 		} catch (RuntimeException e) {
 			// Complain
 			e.printStackTrace();

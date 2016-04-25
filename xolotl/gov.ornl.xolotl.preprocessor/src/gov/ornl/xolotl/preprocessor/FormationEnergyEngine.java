@@ -96,23 +96,41 @@ public class FormationEnergyEngine {
 
 		// Get the fit file
 		File fitFile = new File("fit.csv");
+		
+		InputStreamReader fitStreamReader = null;
 
 		// Load the file if it exists
 		if (fitFile.exists()) {
 			try {
 				// Create the readers
-				InputStreamReader fitStreamReader = new InputStreamReader(new FileInputStream(fitFile), "UTF-8");
+				fitStreamReader = new InputStreamReader(new FileInputStream(fitFile), "UTF-8");
 				BufferedReader fitReader = new BufferedReader(fitStreamReader);
 
 				// Read from the Legendre fit file
-				String[] c0Strings = fitReader.readLine().split(",");
-				String[] c1Strings = fitReader.readLine().split(",");
-				String[] c2Strings = fitReader.readLine().split(",");
-				String[] c3Strings = fitReader.readLine().split(",");
-				String[] c4Strings = fitReader.readLine().split(",");
-				String[] c5Strings = fitReader.readLine().split(",");
-				String[] c6Strings = fitReader.readLine().split(",");
-				String[] c7Strings = fitReader.readLine().split(",");
+				String c0String = fitReader.readLine();
+				if (c0String == null) throw new IOException("fit.csv has the wrong format!");
+				String[] c0Strings = c0String.split(",");
+				String c1String = fitReader.readLine();
+				if (c1String == null) throw new IOException("fit.csv has the wrong format!");
+				String[] c1Strings = c1String.split(",");
+				String c2String = fitReader.readLine();
+				if (c2String == null) throw new IOException("fit.csv has the wrong format!");
+				String[] c2Strings = c2String.split(",");
+				String c3String = fitReader.readLine();
+				if (c3String == null) throw new IOException("fit.csv has the wrong format!");
+				String[] c3Strings = c3String.split(",");
+				String c4String = fitReader.readLine();
+				if (c4String == null) throw new IOException("fit.csv has the wrong format!");
+				String[] c4Strings = c4String.split(",");
+				String c5String = fitReader.readLine();
+				if (c5String == null) throw new IOException("fit.csv has the wrong format!");
+				String[] c5Strings = c5String.split(",");
+				String c6String = fitReader.readLine();
+				if (c6String == null) throw new IOException("fit.csv has the wrong format!");
+				String[] c6Strings = c6String.split(",");
+				String c7String = fitReader.readLine();
+				if (c7String == null) throw new IOException("fit.csv has the wrong format!");
+				String[] c7Strings = c7String.split(",");
 
 				// Convert the c0 coefficients
 				c0CoefficientsLow[0] = Double.valueOf(c0Strings[0]);
@@ -173,7 +191,6 @@ public class FormationEnergyEngine {
 
 				// Close the readers
 				fitReader.close();
-				fitStreamReader.close();
 			} catch (FileNotFoundException e) {
 				// Complain
 				System.err.println("FormationEnergyEngine Message:"
@@ -186,6 +203,11 @@ public class FormationEnergyEngine {
 						+ " There is something wrong with your fit.csv file! "
 						+ " It cannot be read. Aborting.");
 				e.printStackTrace();
+			} finally {
+				// Close the file
+				try {
+					fitStreamReader.close();
+				} catch (Exception ex) {ex.printStackTrace();}
 			}
 		}
 

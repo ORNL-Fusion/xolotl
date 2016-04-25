@@ -39,11 +39,8 @@ public:
 	/**
 	 * The function that will handle the specific option.
 	 * Every subclass will have to implement this function.
-	 *
-	 * @param opt The pointer to the option that will be modified.
-	 * @param arg The argument for the option.
 	 */
-	virtual bool handler(IOptions * opt, const std::string& arg) {
+	virtual bool handler(IOptions *, const std::string&) {
 		return false;
 	}
 
