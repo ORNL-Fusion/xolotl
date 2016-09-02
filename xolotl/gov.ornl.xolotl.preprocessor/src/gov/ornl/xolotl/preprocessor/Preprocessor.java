@@ -128,6 +128,7 @@ public class Preprocessor {
 		// arguments, if any, where the key is the option and the value is
 		// the argument
 		petscOptions.put("-ts_final_time", "1.0");
+		petscOptions.put("-ts_exact_final_time", "stepover");
 		petscOptions.put("-ts_dt", "1.0e-12");
 		petscOptions.put("-ts_max_steps", "100");
 		petscOptions.put("-ts_adapt_dt_max", "1.0e-6");
