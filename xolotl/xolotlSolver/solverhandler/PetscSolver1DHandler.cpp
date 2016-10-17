@@ -38,6 +38,10 @@ void PetscSolver1DHandler::createSolverContext(DM &da, int nx, double hx, int,
 	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, nx, dof, 1,
 	NULL, &da);
 	checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: DMDACreate1d failed.");
+	ierr = DMSetFromOptions(da);
+	checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: DMSetFromOptions failed.");
+	ierr = DMSetUp(da);
+	checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: DMSetUp failed.");
 
 	// Set the step size
 	hX = hx;

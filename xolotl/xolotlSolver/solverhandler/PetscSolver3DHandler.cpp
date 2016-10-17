@@ -39,6 +39,10 @@ void PetscSolver3DHandler::createSolverContext(DM &da, int nx, double hx, int ny
 			DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nx, ny, nz, PETSC_DECIDE,
 			PETSC_DECIDE, PETSC_DECIDE, dof, 1, NULL, NULL, NULL, &da);
 	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: DMDACreate3d failed.");
+	ierr = DMSetFromOptions(da);
+	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: DMSetFromOptions failed.");
+	ierr = DMSetUp(da);
+	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: DMSetUp failed.");
 
 	// Set the step size
 	hX = hx;
