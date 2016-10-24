@@ -32,8 +32,11 @@ sigma_m_MAP_plot = sigma_m_MAP
 # # Uncomment if posterior predictive is inferred as log(sigma)
 # sigma_PostPred = math.exp(sigma_inf[5])
 
-# Uncomment if posterior predictive is inferred as sigma
-sigma_PostPred = sigma_inf[5]
+# # Uncomment if posterior predictive is inferred as sigma
+# sigma_PostPred = sigma_inf[5]
+
+# Uncomment if posterior predictive is not inferred
+sigma_PostPred = 0
 
 PFP1 = np.sqrt(sigma_p_plot)
 PFP2 = np.sqrt(sigma_p_plot+sigma_m_plot)

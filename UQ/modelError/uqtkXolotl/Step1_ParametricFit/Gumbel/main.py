@@ -32,8 +32,11 @@ sigma_m_MAP_plot = sigma_m_MAP
 # # Uncomment if posterior predictive is inferred as log(sigma)
 # sigma_PostPred = math.exp(sigma_inf[5])
 
-# Uncomment if posterior predictive is inferred as sigma
-sigma_PostPred = sigma_inf[5]
+# # Uncomment if posterior predictive is inferred as sigma
+# sigma_PostPred = sigma_inf[5]
+
+# Uncomment if posterior predictive is not inferred
+sigma_PostPred = 0
 
 PFP1 = np.sqrt(sigma_p_plot)
 PFP2 = np.sqrt(sigma_p_plot+sigma_m_plot)
@@ -56,7 +59,7 @@ plt.plot(x_plot, mu_mean_plot, color='red', linewidth=2, label='Mean prediction'
 plt.plot(x,y,'o', color='red',label='Data')
 ax.set_xlabel("Depth (nm)",fontsize=22)
 ax.set_ylabel("PDF",fontsize=22)
-plt.ylim((0,0.25))
+# plt.ylim((0,0.25))
 plt.legend(loc='best')
 plt.savefig('Gumbel_UQ.jpg')
 plt.clf()
