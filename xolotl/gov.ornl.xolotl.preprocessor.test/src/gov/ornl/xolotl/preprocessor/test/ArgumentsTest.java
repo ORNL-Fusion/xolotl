@@ -85,7 +85,7 @@ public class ArgumentsTest {
 			assertEquals("W100", args.getMaterial());
 
 			// Check the default physical process argumen
-			assertEquals("reaction diff advec movingSurface", args.getProcess());
+			assertEquals("reaction diff advec", args.getProcess());
 
 			// Check the default flux argument
 			assertEquals("4.0e7", args.getFlux());
