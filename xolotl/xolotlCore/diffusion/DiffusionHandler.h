@@ -36,16 +36,17 @@ public:
 	 * @param ofill The pointer to the array that will contain the value 1 at the indices
 	 * of the diffusing clusters
 	 */
-	void initializeOFill(PSIClusterReactionNetwork *network, int *ofill) {
+	virtual void initializeOFill(IReactionNetwork *network, int *ofill) {
 		// Get all the reactants
 		auto reactants = network->getAll();
-		int size = reactants->size();
+		int networkSize = reactants->size();
+		int dof = network->getDOF();
 
 		// Clear the index vector
 		indexVector.clear();
 
 		// Loop on the reactants
-		for (int i = 0; i < size; i++) {
+		for (int i = 0; i < networkSize; i++) {
 			// Get the i-th cluster
 			auto cluster = (PSICluster *) reactants->at(i);
 			// Get its diffusion coefficient
@@ -60,7 +61,7 @@ public:
 			// Get its id
 			int index = cluster->getId() - 1;
 			// Set the ofill value to 1 for this cluster
-			ofill[index * size + index] = 1;
+			ofill[index * dof + index] = 1;
 		}
 
 		return;

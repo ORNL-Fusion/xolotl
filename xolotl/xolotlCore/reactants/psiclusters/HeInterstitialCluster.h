@@ -26,8 +26,8 @@ private:
 	 * initialized with a size.
 	 */
 	HeInterstitialCluster() :
-		PSICluster(1)
-	{ numHe = 1; numI = 1; }
+		PSICluster()
+	{ numHe = 0; numI = 0; }
 
 	/**
 	 * This operation handles partial replacement reactions of the form
@@ -45,7 +45,7 @@ private:
 	 * @param oldComponentName The name of the component that will be partially
 	 * replaced.
 	 */
-	void replaceInCompound(std::vector<Reactant *> & clusters,
+	void replaceInCompound(std::vector<IReactant *> & clusters,
 			const std::string& oldComponentName);
 
 public:
@@ -69,18 +69,17 @@ public:
 	 *
 	 * @param other the reactant to be copied
 	 */
-	HeInterstitialCluster(const HeInterstitialCluster &other);
+	HeInterstitialCluster(HeInterstitialCluster &other);
 
 	//! Destructor
 	~HeInterstitialCluster() {}
 
 	/**
-	 * This operation returns a Reactant that is created using the copy
-	 * constructor of HeInterstitialCluster.
-	 *
-	 * @return A copy of this reactant
+	 * Returns a reactant created using the copy constructor
 	 */
-	virtual std::shared_ptr<Reactant> clone();
+	virtual std::shared_ptr<IReactant> clone() {
+		return std::shared_ptr<IReactant> (new HeInterstitialCluster(*this));
+	}
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of

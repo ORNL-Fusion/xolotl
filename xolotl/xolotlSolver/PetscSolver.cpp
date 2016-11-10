@@ -102,7 +102,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 /*
  Compute the Jacobian entries based on IFunction() and insert them into the matrix
  */
-PetscErrorCode RHSJacobian(TS ts, PetscReal, Vec C, Mat A, Mat J,
+PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 		void *) {
 	// Start the RHSJacobian timer
 	RHSJacobianTimer->start();
@@ -125,13 +125,13 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal, Vec C, Mat A, Mat J,
 	auto solverHandler = PetscSolver::getSolverHandler();
 
 	/* ----- Compute the off-diagonal part of the Jacobian ----- */
-	solverHandler->computeOffDiagonalJacobian(ts, localC, J);
+	solverHandler->computeOffDiagonalJacobian(ts, localC, J, ftime);
 
 	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 
 	/* ----- Compute the partial derivatives for the reaction term ----- */
-	solverHandler->computeDiagonalJacobian(ts, localC, J);
+	solverHandler->computeDiagonalJacobian(ts, localC, J, ftime);
 
 	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
@@ -177,23 +177,9 @@ void PetscSolver::initialize(std::shared_ptr<ISolverHandler> solverHandler) {
 void PetscSolver::solve() {
 	PetscErrorCode ierr;
 
-	// Check the network before getting busy.
-	if (!network) {
-		throw std::string("PetscSolver Exception: Network not set!");
-	}
-
-	// Get the name of the HDF5 file to read the concentrations from
-	auto HDF5Loader = (HDF5NetworkLoader *) networkLoader;
-	auto fileName = HDF5Loader->getFilename();
-
-	// Get starting conditions from HDF5 file
-	int nx = 0, ny = 0, nz = 0;
-	double hx = 0.0, hy = 0.0, hz = 0.0;
-	HDF5Utils::readHeader(fileName, nx, hx, ny, hy, nz, hz);
-
 	// Create the solver context
 	DM da;
-	Solver::solverHandler->createSolverContext(da, nx, hx, ny, hy, nz, hz);
+	Solver::solverHandler->createSolverContext(da);
 
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Extract global vector from DMDA to hold solution
@@ -228,6 +214,7 @@ void PetscSolver::solve() {
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 	// Read the times if the information is in the HDF5 file
+	auto fileName = Solver::solverHandler->getNetworkName();
 	double time = 0.0, deltaTime = 1.0e-12;
 	int tempTimeStep = -2;
 	if (HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep)) {

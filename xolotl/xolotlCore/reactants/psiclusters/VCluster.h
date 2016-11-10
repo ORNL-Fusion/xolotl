@@ -19,7 +19,7 @@ private:
 	 * initialized with a size.
 	 */
 	VCluster() :
-		PSICluster(1)
+		PSICluster()
 	{ }
 
 public:
@@ -36,12 +36,11 @@ public:
 	~VCluster() {}
 
 	/**
-	 * This operation returns a Reactant that is created using the copy
-	 * constructor of VCluster.
-	 *
-	 * @return A copy of this reactant
+	 * Returns a reactant created using the copy constructor
 	 */
-	virtual std::shared_ptr<Reactant> clone();
+	virtual std::shared_ptr<IReactant> clone() {
+		return std::shared_ptr<IReactant> (new VCluster(*this));
+	}
 
 protected:
 

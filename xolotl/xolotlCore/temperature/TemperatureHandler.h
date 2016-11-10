@@ -53,7 +53,7 @@ public:
 	 *
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const std::vector<double>&,
+	virtual double getTemperature(const std::vector<double>& position,
 			double) const {return temperature;}
 
 }; //end class TemperatureHandler

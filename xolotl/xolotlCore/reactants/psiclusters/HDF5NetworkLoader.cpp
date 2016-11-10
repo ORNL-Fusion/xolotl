@@ -3,18 +3,13 @@
 #include <limits>
 #include <algorithm>
 #include <vector>
-#include "HeCluster.h"
-#include "VCluster.h"
-#include "InterstitialCluster.h"
-#include "HeVCluster.h"
-// #include "HeInterstitialCluster.h"
 #include "PSIClusterReactionNetwork.h"
 #include <xolotlPerf.h>
 #include <HDF5Utils.h>
 
 using namespace xolotlCore;
 
-std::shared_ptr<PSIClusterReactionNetwork> HDF5NetworkLoader::load() {
+std::shared_ptr<IReactionNetwork> HDF5NetworkLoader::load() {
 	// Get the dataset from the HDF5 files
 	auto networkVector = xolotlCore::HDF5Utils::readNetwork(fileName);
 
@@ -36,7 +31,7 @@ std::shared_ptr<PSIClusterReactionNetwork> HDF5NetworkLoader::load() {
 		numV = (int) (*lineIt)[1];
 		numI = (int) (*lineIt)[2];
 		// Create the cluster
-		auto nextCluster = createCluster(numHe, numV, numI);
+		auto nextCluster = createPSICluster(numHe, numV, numI);
 
 		// Energies
 		formationEnergy = (*lineIt)[3];
@@ -48,10 +43,22 @@ std::shared_ptr<PSIClusterReactionNetwork> HDF5NetworkLoader::load() {
 		// Set the diffusion factor and migration energy
 		nextCluster->setMigrationEnergy(migrationEnergy);
 		nextCluster->setDiffusionFactor(diffusionFactor);
-		// Add the cluster to the network
-		network->add(nextCluster);
-		// Add it to the list so that we can set the network later
-		reactants.push_back(nextCluster);
+
+		// Check if we want dummy reactions
+		if (dummyReactions) {
+			// Create a dummy cluster (Reactant) from the existing cluster
+			auto dummyCluster = std::static_pointer_cast<Reactant> (nextCluster->Reactant::clone());
+			// Add the cluster to the network
+			network->add(dummyCluster);
+			// Add it to the list so that we can set the network later
+			reactants.push_back(dummyCluster);
+		}
+		else {
+			// Add the cluster to the network
+			network->add(nextCluster);
+			// Add it to the list so that we can set the network later
+			reactants.push_back(nextCluster);
+		}
 	}
 
 	// Set the reaction network for each reactant
@@ -60,16 +67,12 @@ std::shared_ptr<PSIClusterReactionNetwork> HDF5NetworkLoader::load() {
 		(*reactantsIt)->setReactionNetwork(network);
 	}
 
+	// Check if we want dummy reactions
+	if (!dummyReactions) {
+		// Apply sectional grouping
+		applySectionalGrouping(network);
+	}
+
 	return network;
-}
-
-void HDF5NetworkLoader::setFilename (const std::string& name) {
-	fileName = name;
-
-	return;
-}
-
-std::string HDF5NetworkLoader::getFilename () const {
-	return fileName;
 }
 

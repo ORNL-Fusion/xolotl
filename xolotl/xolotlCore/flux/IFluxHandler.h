@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include <PSIClusterReactionNetwork.h>
+#include <IReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -21,11 +21,12 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 *
 	 * @param network The reaction network
-	 * @param nx The total number of grid points that will be used on the x axis
-	 * @param hx The step size between grid points on the x axis
+	 * @param surfacePos The current position of the surface
+	 * @param grid The grid on the x axis
 	 */
-	virtual void initializeFluxHandler(PSIClusterReactionNetwork *network,
-			int nx, double hx) = 0;
+	virtual void initializeFluxHandler(IReactionNetwork *network,
+		int surfacePos, std::vector<double> grid) = 0;
+		
 	/**
 	 * This method reads the values on the time profile file and store them in the
 	 * time and amplitude vectors.
@@ -38,9 +39,10 @@ public:
 	 * This operation returns the incident flux vector.
 	 *
 	 * @param currentTime The time
+	 * @param surfacePos The current position of the surface
 	 * @return The incident flux vector
 	 */
-	virtual std::vector<double> getIncidentFluxVec(double currentTime) = 0;
+	virtual std::vector<double> getIncidentFluxVec(double currentTime, int surfacePos) = 0;
 
 	/**
 	 * This operation returns the index of the cluster that is irradiating

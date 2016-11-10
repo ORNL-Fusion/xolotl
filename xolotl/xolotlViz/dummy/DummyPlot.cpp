@@ -3,7 +3,8 @@
 
 using namespace xolotlViz;
 
-DummyPlot::DummyPlot(const std::string&) : xolotlCore::Identifiable("unused") {
+DummyPlot::DummyPlot(const std::string&) :
+		xolotlCore::Identifiable("unused") {
 }
 
 DummyPlot::~DummyPlot() {
@@ -55,7 +56,7 @@ void DummyPlot::setLogScale(bool) {
 	return;
 }
 
-void DummyPlot::addDataProvider(std::shared_ptr<IDataProvider> dataProvider){
+void DummyPlot::addDataProvider(std::shared_ptr<IDataProvider> dataProvider) {
 	plotDataProvider = dataProvider;
 }
 

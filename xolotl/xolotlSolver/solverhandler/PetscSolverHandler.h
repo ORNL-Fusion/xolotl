@@ -38,18 +38,10 @@ protected:
 	double lastTemperature;
 
 	/**
-	 * A map for storing the dfill configuration and accelerating the formation of
-	 * the Jacobian. Its keys are reactant/cluster ids and its values are integer
-	 * vectors of the column ids that are marked as connected for that cluster in
-	 * the dfill array.
-	 */
-	std::unordered_map<int, std::vector<int> > dFillMap;
-
-	/**
 	 * A pointer to all of the reactants in the network. It is retrieved from the
 	 * network after it is set.
 	 */
-	std::shared_ptr<std::vector<xolotlCore::Reactant *>> allReactants;
+	std::shared_ptr<std::vector<xolotlCore::IReactant *>> allReactants;
 
 	/**
 	 * A vector for holding the partial derivatives of one cluster. It is sized in
@@ -80,12 +72,6 @@ public:
 
 	//! The Destructor
 	~PetscSolverHandler() {}
-
-	/**
-	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.
-	 * \see ISolverHandler.h
-	 */
-	void getDiagonalFill(PetscInt *diagFill, int diagFillSize);
 
 }; //end class PetscSolverHandler
 

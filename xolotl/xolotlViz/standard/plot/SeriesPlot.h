@@ -17,16 +17,18 @@ class SeriesPlot: public Plot {
 private:
 
 	/**
-     * Declare the constructor as private to force the use of a name
+	 * Declare the constructor as private to force the use of a name
 	 */
-    SeriesPlot() : Plot() {}
+	SeriesPlot() :
+			Plot() {
+	}
 
 private:
 
 	/**
 	 * Container of data providers used for the plot.
 	 */
-	std::shared_ptr< std::vector< std::shared_ptr<IDataProvider> > > plotDataProviders;
+	std::shared_ptr<std::vector<std::shared_ptr<IDataProvider> > > plotDataProviders;
 
 public:
 

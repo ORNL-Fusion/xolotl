@@ -6,8 +6,6 @@
 #include <memory>
 #include <typeinfo>
 #include <limits>
-#include <PSIClusterNetworkLoader.h>
-#include <PSIClusterReactionNetwork.h>
 #include <XolotlConfig.h>
 #include <DummyHandlerRegistry.h>
 
@@ -33,100 +31,125 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 			"TungstenIntegrationTester Message: Network filename is: " << networkFilename);
 
 	// Load the input file from the master task
-	shared_ptr<istream> networkStream = make_shared < ifstream
-			> (networkFilename);
+	shared_ptr<istream> networkStream = make_shared<ifstream>(networkFilename);
 
 	// Create a network loader and set the istream on every MPI task
-	shared_ptr<PSIClusterNetworkLoader> networkLoader = make_shared
-			< PSIClusterNetworkLoader
-			> (std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+	shared_ptr<PSIClusterNetworkLoader> networkLoader = make_shared<
+			PSIClusterNetworkLoader>(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 	networkLoader->setInputstream(networkStream);
 	// Load the network
-	shared_ptr<ReactionNetwork> network = networkLoader->load();
+	auto network = networkLoader->load();
 
 	BOOST_TEST_MESSAGE("TungstenIntegrationTester Message: Network loaded");
 
-	// Get everything from the network and set the temperature
+	// Get all the reactants
+	auto allReactants = network->getAll();
+	// Get the network size
+	const int size = network->size();
+	// Set the temperature
 	double temperature = 1000.0;
-	int nReactants = network->size();
-	auto reactants = network->getAll();
-	network->setTemperature(temperature);
+	// Initialize the rate constants
+	for (int i = 0; i < size; i++) {
+		// This part will set the temperature in each reactant
+		// and recompute the diffusion coefficient
+		allReactants->at(i)->setTemperature(temperature);
+	}
+	for (int i = 0; i < size; i++) {
+		// Now that the diffusion coefficients of all the reactants
+		// are updated, the reaction and dissociation rates can be
+		// recomputed
+		auto cluster = (xolotlCore::PSICluster *) allReactants->at(i);
+		cluster->computeRateConstants();
+	}
 
 	// Initialize all the concentrations to 0.001;
-	for (int i = 0; i < nReactants; ++i) {
-		auto reactant = (PSICluster *) reactants->at(i);
+	for (int i = 0; i < size; ++i) {
+		auto reactant = (PSICluster *) allReactants->at(i);
 		reactant->setConcentration(0.001);
 	}
 
-	BOOST_TEST_MESSAGE("TungstenIntegrationTester Message: "
-			<< "Size of the network is: "
-			<< nReactants);
+	BOOST_TEST_MESSAGE(
+			"TungstenIntegrationTester Message: " << "Size of the network is: " << size);
 
 	// Create an array to test the second partial derivative routine.
-	auto secondPartials = std::vector<double>(nReactants, 0.0);
+	auto secondPartials = std::vector<double>(size, 0.0);
 
 	BOOST_TEST_MESSAGE("Check partial derivatives.");
-	for (int i = 0; i < nReactants; ++i) {
-		auto reactant = (PSICluster *) reactants->at(i);
+	for (int i = 0; i < size; ++i) {
+		auto reactant = (PSICluster *) allReactants->at(i);
 		// Get the partials using method 1
 		auto partials = reactant->getPartialDerivatives();
 		// Get the partials using method 2
 		reactant->getPartialDerivatives(secondPartials);
 		// Compare the two arrays of partial derivatives
-		for (int j = 0; j < nReactants; ++j) {
-			BOOST_REQUIRE_CLOSE(partials[j],secondPartials[j],1.0);
+		for (int j = 0; j < size; ++j) {
+			BOOST_REQUIRE_CLOSE(partials[j], secondPartials[j], 1.0);
 		}
 		// Zero the partials array
-		std::fill(secondPartials.begin(),secondPartials.end(),0.0);
+		std::fill(secondPartials.begin(), secondPartials.end(), 0.0);
 	}
 
 	return;
 }
 
- /**
-  * This operation checks the partial derivatives for the production
-  * He_1 + He_1 --> He_2
-  * and the dissociation
-  * He_2 --> He_1 + He_1
-  */
- BOOST_AUTO_TEST_CASE(checkSingleReaction) {
- 	// Local Declarations
- 	string sourceDir(XolotlSourceDirectory);
- 	// This file contains specific values to obtain round numbers for the partial derivatives
- 	string pathToFile("/tests/testfiles/single_reaction.txt");
- 	string networkFilename = sourceDir + pathToFile;
+/**
+ * This operation checks the partial derivatives for the production
+ * He_1 + He_1 --> He_2
+ * and the dissociation
+ * He_2 --> He_1 + He_1
+ */
+BOOST_AUTO_TEST_CASE(checkSingleReaction) {
+	// Local Declarations
+	string sourceDir(XolotlSourceDirectory);
+	// This file contains specific values to obtain round numbers for the partial derivatives
+	string pathToFile("/tests/testfiles/single_reaction.txt");
+	string networkFilename = sourceDir + pathToFile;
 
- 	BOOST_TEST_MESSAGE(
- 			"TungstenIntegrationTester Message: Network filename is: " << networkFilename);
+	BOOST_TEST_MESSAGE(
+			"TungstenIntegrationTester Message: Network filename is: " << networkFilename);
 
 	// Load the input file from the master task
-	shared_ptr<istream> networkStream = make_shared < ifstream
-			> (networkFilename);
+	shared_ptr<istream> networkStream = make_shared<ifstream>(networkFilename);
 
 	// Create a network loader and set the istream on every MPI task
-	shared_ptr<PSIClusterNetworkLoader> networkLoader = make_shared
-			< PSIClusterNetworkLoader
-			> (std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+	shared_ptr<PSIClusterNetworkLoader> networkLoader = make_shared<
+			PSIClusterNetworkLoader>(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 	networkLoader->setInputstream(networkStream);
 	// Load the network
-	shared_ptr<ReactionNetwork> network = networkLoader->load();
+	auto network = networkLoader->load();
 
 	BOOST_TEST_MESSAGE("TungstenIntegrationTester Message: Network loaded");
 
-	// Get everything from the network and set the temperature
+	// Get all the reactants
+	auto allReactants = network->getAll();
+	// Get the network size
+	const int size = network->size();
+	// Set the temperature
 	double temperature = 1000.0;
-	int nReactants = network->size();
-	auto reactants = network->getAll();
-	network->setTemperature(temperature);
+	// Initialize the rate constants
+	for (int i = 0; i < size; i++) {
+		// This part will set the temperature in each reactant
+		// and recompute the diffusion coefficient
+		allReactants->at(i)->setTemperature(temperature);
+	}
+	for (int i = 0; i < size; i++) {
+		// Now that the diffusion coefficients of all the reactants
+		// are updated, the reaction and dissociation rates can be
+		// recomputed
+		auto cluster = (xolotlCore::PSICluster *) allReactants->at(i);
+		cluster->computeRateConstants();
+	}
 
 	// Initialize all the concentrations to 0.001;
-	for (int i = 0; i < nReactants; ++i) {
-		auto reactant = (PSICluster *) reactants->at(i);
+	for (int i = 0; i < size; ++i) {
+		auto reactant = (PSICluster *) allReactants->at(i);
 		reactant->setConcentration(0.001);
 	}
 
 	// Get He_1
-	auto reactant = (PSICluster *) reactants->at(0);
+	auto reactant = (PSICluster *) allReactants->at(0);
 	// Its partial derivatives
 	auto partials = reactant->getPartialDerivatives();
 
@@ -135,7 +158,7 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 	BOOST_REQUIRE_CLOSE(partials[1], 1.0, 0.1);
 
 	// Get He_2
-	reactant = (PSICluster *) reactants->at(1);
+	reactant = (PSICluster *) allReactants->at(1);
 	// Its partial derivatives
 	partials = reactant->getPartialDerivatives();
 

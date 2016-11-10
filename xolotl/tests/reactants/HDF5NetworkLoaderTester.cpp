@@ -28,8 +28,8 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 	MPI_Init(&argc, &argv);
 
 	// Create the network loader
-	HDF5NetworkLoader loader =
-			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	HDF5NetworkLoader loader = HDF5NetworkLoader(
+			make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Define the filename to load the network from
 	string sourceDir(XolotlSourceDirectory);
 	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
@@ -45,17 +45,18 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 	// Check the value
 	BOOST_REQUIRE_EQUAL(networkSize, 9);
 
-	// Get the properties
-	auto props = network->getProperties();
-
 	// Check the properties
-	BOOST_REQUIRE_EQUAL(strtol(props["maxHeClusterSize"].c_str(),NULL,10), 8);
-	BOOST_REQUIRE_EQUAL(strtol(props["maxVClusterSize"].c_str(),NULL,10), 1);
-	BOOST_REQUIRE_EQUAL(strtol(props["maxIClusterSize"].c_str(),NULL,10), 0);
-	BOOST_REQUIRE_EQUAL(strtol(props["maxHeVClusterSize"].c_str(),NULL,10), 0);
-	BOOST_REQUIRE_EQUAL(strtol(props["numHeClusters"].c_str(),NULL,10), 8);
-	BOOST_REQUIRE_EQUAL(strtol(props["numVClusters"].c_str(),NULL,10), 1);
-	BOOST_REQUIRE_EQUAL(strtol(props["numIClusters"].c_str(),NULL,10), 0);
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeClusterSize(), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxVClusterSize(), 1);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxIClusterSize(), 0);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeVClusterSize(), 0);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeClusters(), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumVClusters(), 1);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumIClusters(), 0);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeVClusters(), 0);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumSuperClusters(), 0);
 
 	// Get all the reactants
 	auto reactants = network->getAll();
@@ -93,6 +94,55 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 	// Check the diffusion factor
 	diffusionFactor = reactant->getDiffusionFactor();
 	BOOST_REQUIRE_EQUAL(diffusionFactor, 1.8e+12);
+
+	return;
+}
+
+/**
+ * Method checking the loading of the network from the HDF5 file and
+ * the apply sectional method.
+ */
+BOOST_AUTO_TEST_CASE(checkApplySectional) {
+
+	// Create the network loader
+	HDF5NetworkLoader loader = HDF5NetworkLoader(
+			make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Define the filename to load the network from
+	string sourceDir(XolotlSourceDirectory);
+	string pathToFile("/tests/testfiles/tungsten.h5");
+	string filename = sourceDir + pathToFile;
+	// Give the filename to the network loader
+	loader.setFilename(filename);
+	// Set grouping parameters
+	loader.setVMin(28);
+	loader.setHeWidth(4);
+	loader.setVWidth(2);
+
+	// Load the network
+	auto network = loader.load();
+
+	// Get the size of the network
+	int networkSize = network->size();
+	// Check the value
+	BOOST_REQUIRE_EQUAL(networkSize, 1869);
+
+	// Get the dof of the network
+	int dof = network->getDOF();
+	// Check the value
+	BOOST_REQUIRE_EQUAL(dof, 1929);
+
+	// Check the properties
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeClusterSize(), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxVClusterSize(), 29);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxIClusterSize(), 6);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeVClusterSize(), 145);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeClusters(), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumVClusters(), 29);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumIClusters(), 6);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeVClusters(), 1796);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumSuperClusters(), 30);
 
 	// Finalize MPI
 	MPI_Finalize();

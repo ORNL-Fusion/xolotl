@@ -6,9 +6,7 @@
 #include "IHandlerRegistry.h"
 #include "RuntimeError.h"
 
-
-namespace xolotlPerf
-{
+namespace xolotlPerf {
 
 /**
  * Detect the type of performance handlers registry to create based
@@ -23,39 +21,25 @@ namespace xolotlPerf
  * @param arg String description of performance handler registry to create.
  * @return The performance handler registry type to create.
  */
-inline
-IHandlerRegistry::RegistryType
-toPerfRegistryType(const std::string& arg)
-{
-    IHandlerRegistry::RegistryType ret;
+inline IHandlerRegistry::RegistryType toPerfRegistryType(
+		const std::string& arg) {
+	IHandlerRegistry::RegistryType ret;
 
-    if( arg == "dummy" )
-    {
-        ret = IHandlerRegistry::dummy;
-    }
-    else if( arg == "std" )
-    {
-        ret = IHandlerRegistry::std;
-    }
-    else if( arg == "os" )
-    {
-        ret = IHandlerRegistry::os;
-    }
-    else if( arg == "papi" )
-    {
-        ret = IHandlerRegistry::papi;
-    }
-    else
-    {
-        std::ostringstream estr;
-        estr << "Invalid performance handler argument \"" << arg << "\" seen.";
-        throw std::invalid_argument(estr.str());
-    }
-    return ret;
+	if (arg == "dummy") {
+		ret = IHandlerRegistry::dummy;
+	} else if (arg == "std") {
+		ret = IHandlerRegistry::std;
+	} else if (arg == "os") {
+		ret = IHandlerRegistry::os;
+	} else if (arg == "papi") {
+		ret = IHandlerRegistry::papi;
+	} else {
+		std::ostringstream estr;
+		estr << "Invalid performance handler argument \"" << arg << "\" seen.";
+		throw std::invalid_argument(estr.str());
+	}
+	return ret;
 }
-
-
-
 
 /**
  * Initialize the performance library for using the desired type of handlers.
@@ -64,8 +48,7 @@ toPerfRegistryType(const std::string& arg)
  *
  * @param rtype Type of handlerRegistry to create.
  */
-void initialize( IHandlerRegistry::RegistryType rtype );
-
+void initialize(IHandlerRegistry::RegistryType rtype);
 
 /**
  * Access the handler registry.
@@ -74,7 +57,7 @@ void initialize( IHandlerRegistry::RegistryType rtype );
  *
  *  @return The handler registry object.
  */
-std::shared_ptr<IHandlerRegistry> getHandlerRegistry( void );
+std::shared_ptr<IHandlerRegistry> getHandlerRegistry(void);
 
 } // end namespace xolotlPerf
 

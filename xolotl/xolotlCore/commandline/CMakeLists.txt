@@ -5,7 +5,7 @@ SET(PACKAGE_DESCRIPTION "Xolotl Command Line Option Handling")
 #Set the library name
 SET(LIBRARY_NAME "xolotlCL")
 
-#Collect all header filenames in this project 
+#Collect all header filenames in this project
 #and glob them in HEADERS
 file(GLOB HEADERS *.h optionhandlers/*.h)
 

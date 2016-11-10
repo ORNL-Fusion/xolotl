@@ -16,7 +16,7 @@ import java.io.IOException;
  * 
  * This class looks in the user directory during construction and will override
  * the fit coefficients if it finds a csv file with one set of coefficients per
- * row and named fit.csv. There should be three rows with three coefficients per
+ * row and named fit.csv. There should be eight rows with six coefficients per
  * row.
  * 
  * @author Jay Jay Billings
@@ -29,24 +29,31 @@ public class FormationEnergyEngine {
 	 * E_(f,He_1) = heFormationEnergies[1]. The value at index zero is just
 	 * padding to make the indexing easy.
 	 */
-	private static double[] heFormationEnergies = { Double.POSITIVE_INFINITY,
-			6.15, 11.44, 16.35, 21.0, 26.1, 30.24, 34.93, 38.80 };
+	private static double[] heFormationEnergies = { Double.POSITIVE_INFINITY, 6.15, 11.44, 16.35, 21.0, 26.1, 30.24,
+			34.93, 38.80 };
+
+	/**
+	 * The set of xenon formation energies up to Xe_29 indexed by size. That is
+	 * E_(f,Xe_1) = xeFormationEnergies[1]. The value at index zero is just
+	 * padding to make the indexing easy.
+	 */
+	private static double[] xeFormationEnergies = { Double.POSITIVE_INFINITY, 7.0, 12.15, 17.15, 21.90, 26.50, 31.05,
+			35.30, 39.45, 43.00, 46.90, 50.65, 53.90, 56.90, 59.80, 62.55, 65.05, 67.45, 69.45, 71.20, 72.75, 74.15,
+			75.35, 76.40, 77.25, 77.95, 78.45, 78.80, 78.95, 79.0 };
 
 	/**
 	 * The set of vacancy formation energies up to V_2 indexed by size. That is
 	 * E_(f,V_1) = vFormationEnergies[1]. The value at index zero is just
 	 * padding to make the indexing easy.
 	 */
-	private static double[] vFormationEnergies = { Double.POSITIVE_INFINITY,
-			3.6, 7.25 };
+	private static double[] vFormationEnergies = { Double.POSITIVE_INFINITY, 3.6, 7.25 };
 
 	/**
 	 * The set of interstitial formation energies up to I_6 indexed by size.
 	 * That is E_(f,V_1) = iFormationEnergies[1]. The value at index zero is
 	 * just padding to make the indexing easy.
 	 */
-	private static double[] iFormationEnergies = { Double.POSITIVE_INFINITY,
-			10.0, 18.5, 27.0, 35.0, 42.5, 48.0 };
+	private static double[] iFormationEnergies = { Double.POSITIVE_INFINITY, 10.0, 18.5, 27.0, 35.0, 42.5, 48.0 };
 
 	// Coefficients for the Legendre polynomial fit
 	// Low means V <= 27
@@ -73,19 +80,17 @@ public class FormationEnergyEngine {
 	 * vacancy (He_0V_1) and is there as a buffer. Like the formation energies,
 	 * i = heSize.
 	 */
-	private double[] heV1FormationEnergies = { vFormationEnergies[1], 5.14166,
-			8.20919, 11.5304, 14.8829, 18.6971, 22.2847, 26.3631, 30.1049,
-			34.0081, 38.2069, 42.4217, 46.7378, 51.1551, 55.6738 };
+	private double[] heV1FormationEnergies = { vFormationEnergies[1], 5.14166, 8.20919, 11.5304, 14.8829, 18.6971,
+			22.2847, 26.3631, 30.1049, 34.0081, 38.2069, 42.4217, 46.7378, 51.1551, 55.6738 };
 
 	/**
 	 * The formation energies for He_xV_2. The entry at i = 0 is for a
 	 * di-vacancy (He_0V_2) and is there as a buffer. Like the formation
 	 * energies, i = heSize.
 	 */
-	private double[] heV2FormationEnergies = { vFormationEnergies[2], 7.10098,
-			8.39913, 9.41133, 11.8748, 14.8296, 17.7259, 20.7747, 23.7993,
-			26.7984, 30.0626, 33.0385, 36.5173, 39.9406, 43.48, 46.8537,
-			50.4484, 54.0879, 57.7939 };
+	private double[] heV2FormationEnergies = { vFormationEnergies[2], 7.10098, 8.39913, 9.41133, 11.8748, 14.8296,
+			17.7259, 20.7747, 23.7993, 26.7984, 30.0626, 33.0385, 36.5173, 39.9406, 43.48, 46.8537, 50.4484, 54.0879,
+			57.7939 };
 
 	/**
 	 * The constructor. If the file fit.csv exists in user.dir, this operation
@@ -93,44 +98,25 @@ public class FormationEnergyEngine {
 	 * finished.
 	 */
 	public FormationEnergyEngine() {
-
 		// Get the fit file
 		File fitFile = new File("fit.csv");
-		
-		InputStreamReader fitStreamReader = null;
 
 		// Load the file if it exists
 		if (fitFile.exists()) {
 			try {
 				// Create the readers
-				fitStreamReader = new InputStreamReader(new FileInputStream(fitFile), "UTF-8");
+				InputStreamReader fitStreamReader = new InputStreamReader(new FileInputStream(fitFile), "UTF-8");
 				BufferedReader fitReader = new BufferedReader(fitStreamReader);
 
 				// Read from the Legendre fit file
-				String c0String = fitReader.readLine();
-				if (c0String == null) throw new IOException("fit.csv has the wrong format!");
-				String[] c0Strings = c0String.split(",");
-				String c1String = fitReader.readLine();
-				if (c1String == null) throw new IOException("fit.csv has the wrong format!");
-				String[] c1Strings = c1String.split(",");
-				String c2String = fitReader.readLine();
-				if (c2String == null) throw new IOException("fit.csv has the wrong format!");
-				String[] c2Strings = c2String.split(",");
-				String c3String = fitReader.readLine();
-				if (c3String == null) throw new IOException("fit.csv has the wrong format!");
-				String[] c3Strings = c3String.split(",");
-				String c4String = fitReader.readLine();
-				if (c4String == null) throw new IOException("fit.csv has the wrong format!");
-				String[] c4Strings = c4String.split(",");
-				String c5String = fitReader.readLine();
-				if (c5String == null) throw new IOException("fit.csv has the wrong format!");
-				String[] c5Strings = c5String.split(",");
-				String c6String = fitReader.readLine();
-				if (c6String == null) throw new IOException("fit.csv has the wrong format!");
-				String[] c6Strings = c6String.split(",");
-				String c7String = fitReader.readLine();
-				if (c7String == null) throw new IOException("fit.csv has the wrong format!");
-				String[] c7Strings = c7String.split(",");
+				String[] c0Strings = fitReader.readLine().split(",");
+				String[] c1Strings = fitReader.readLine().split(",");
+				String[] c2Strings = fitReader.readLine().split(",");
+				String[] c3Strings = fitReader.readLine().split(",");
+				String[] c4Strings = fitReader.readLine().split(",");
+				String[] c5Strings = fitReader.readLine().split(",");
+				String[] c6Strings = fitReader.readLine().split(",");
+				String[] c7Strings = fitReader.readLine().split(",");
 
 				// Convert the c0 coefficients
 				c0CoefficientsLow[0] = Double.valueOf(c0Strings[0]);
@@ -191,23 +177,17 @@ public class FormationEnergyEngine {
 
 				// Close the readers
 				fitReader.close();
+				fitStreamReader.close();
 			} catch (FileNotFoundException e) {
 				// Complain
 				System.err.println("FormationEnergyEngine Message:"
-						+ " There is something wrong with your fit.csv file! "
-						+ " It does not exist. Aborting.");
+						+ " There is something wrong with your fit.csv file! " + " It does not exist. Aborting.");
 				e.printStackTrace();
 			} catch (IOException e) {
 				// Complain
 				System.err.println("FormationEnergyEngine Message:"
-						+ " There is something wrong with your fit.csv file! "
-						+ " It cannot be read. Aborting.");
+						+ " There is something wrong with your fit.csv file! " + " It cannot be read. Aborting.");
 				e.printStackTrace();
-			} finally {
-				// Close the file
-				try {
-					fitStreamReader.close();
-				} catch (Exception ex) {ex.printStackTrace();}
 			}
 		}
 
@@ -223,11 +203,31 @@ public class FormationEnergyEngine {
 	 * @return The formation energy.
 	 */
 	public double getHeFormationEnergy(int size) {
-
+		// Initialize the formation energy to infinity
 		double energy = Double.POSITIVE_INFINITY;
 
 		if (size < 9 && size > 0)
 			energy = heFormationEnergies[size];
+
+		return energy;
+	}
+
+	/**
+	 * This operation computes and returns the formation energy of a xenon
+	 * cluster of the specified size.
+	 * 
+	 * @param size
+	 *            The size of the xenon cluster.
+	 * @return The formation energy.
+	 */
+	public double getXeFormationEnergy(int size) {
+		// Initialize the formation energy to infinity
+		double energy = Double.POSITIVE_INFINITY;
+
+		if (size < 30 && size > 0)
+			energy = xeFormationEnergies[size];
+		else
+			energy = 79.0;
 
 		return energy;
 	}
@@ -241,7 +241,7 @@ public class FormationEnergyEngine {
 	 * @return The formation energy.
 	 */
 	public double getVFormationEnergy(int size) {
-
+		// Initialize the formation energy to infinity
 		double energy = Double.POSITIVE_INFINITY;
 
 		if (size < 3 && size > 0)
@@ -255,12 +255,11 @@ public class FormationEnergyEngine {
 	}
 
 	/**
-	 * This operation returns the formation energy for a cluster composed of only
-	 * interstitial defects.
+	 * This operation returns the formation energy for a cluster composed of
+	 * only interstitial defects.
 	 * 
-	 * The values are taken from the iFormationEnergies array for a size smaller 
-	 * or equal to 5, and computed with the formula
-	 * 		E_f = 48 + 6 * (size - 6) eV
+	 * The values are taken from the iFormationEnergies array for a size smaller
+	 * or equal to 5, and computed with the formula E_f = 48 + 6 * (size - 6) eV
 	 * starting at size = 6.
 	 * 
 	 * @param size
@@ -285,8 +284,8 @@ public class FormationEnergyEngine {
 	 * 
 	 * The Legendre polynomials of degree 0 and 1 are P_0(x)=1.0 and P_1(x)=x,
 	 * respectively. With these conditions, the Legendre polynomials satisfy the
-	 * following recurrence relation: 
-	 * (n+1)*P_(n+1)(x) = (2n+1)*x*P_n(x) - n*P_(n-1)(x)
+	 * following recurrence relation: (n+1)*P_(n+1)(x) = (2n+1)*x*P_n(x) -
+	 * n*P_(n-1)(x)
 	 * 
 	 * @param x
 	 *            The x value of the function
@@ -294,17 +293,20 @@ public class FormationEnergyEngine {
 	 *            The order of the polynomial
 	 */
 	private double legendrePolynomial(double x, int degree) {
-
+		// For degree 0 the return value is 1.0
 		if (degree == 0)
 			return 1.0;
-		else if (degree == 1)
+		// For degree1 the return value i x
+		if (degree == 1)
 			return x;
 
+		// Initialize the polynomials orders for the loop
 		double Pn2 = 1.0, Pn1 = x, Pn = 0.0;
-
+		// Loop on the wanted degree
 		for (int n = 1; n < degree; n++) {
-			Pn = (((2.0 * (double) n + 1.0) * x * Pn1) - ((double) n * Pn2))
-					/ ((double) n + 1.0);
+			// Compute the polynomial at the current order
+			Pn = (((2.0 * (double) n + 1.0) * x * Pn1) - ((double) n * Pn2)) / ((double) n + 1.0);
+			// Update the polynomials orders
 			Pn2 = Pn1;
 			Pn1 = Pn;
 		}
@@ -315,8 +317,8 @@ public class FormationEnergyEngine {
 	/**
 	 * This operation computes the 3rd order Legendre polynomials
 	 * 
-	 * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x)  + c3*P_3(x)
-	 * 		= c0 + c1 * x + c2*P_2(x)  + c3*P_3(x)
+	 * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x) + c3*P_3(x) = c0 + c1 * x +
+	 * c2*P_2(x) + c3*P_3(x)
 	 * 
 	 * for a coefficient set {c0,c1,c2,c3}.
 	 * 
@@ -326,13 +328,13 @@ public class FormationEnergyEngine {
 	 *            The coefficients array.
 	 */
 	private double compute3rdOrderLegendre(double x, double[] coeffs) {
-
+		// Initialize the value
 		double value = 0.0;
 
 		// Compute the value
-		value = coeffs[0] + coeffs[1] * x 
-				+ coeffs[2] * legendrePolynomial(x, 2) 
-				+ coeffs[3] * legendrePolynomial(x, 3);
+		for (int i = 0; i < 4; i++) {
+			value = value + coeffs[i] * legendrePolynomial(x, i);
+		}
 
 		return value;
 	}
@@ -340,8 +342,8 @@ public class FormationEnergyEngine {
 	/**
 	 * This operation computes the 5th order Legendre polynomials
 	 * 
-	 * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x)  + c3*P_3(x) + c4*P_4(x)  + c5*P_5(x)
-	 * 		= c0 + c1 * x + c2*P_2(x)  + c3*P_3(x) + c4*P_4(x)  + c5*P_5(x)
+	 * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x) + c3*P_3(x) + c4*P_4(x) +
+	 * c5*P_5(x) = c0 + c1 * x + c2*P_2(x) + c3*P_3(x) + c4*P_4(x) + c5*P_5(x)
 	 * 
 	 * for a coefficient set {c0,c1,c2,c3,c4,c5}.
 	 * 
@@ -351,15 +353,13 @@ public class FormationEnergyEngine {
 	 *            The coefficients array.
 	 */
 	private double compute5thOrderLegendre(double x, double[] coeffs) {
-
+		// Initialize the value
 		double value = 0.0;
 
 		// Compute the value
-		value = coeffs[0] + coeffs[1] * x 
-				+ coeffs[2] * legendrePolynomial(x, 2) 
-				+ coeffs[3] * legendrePolynomial(x, 3)
-				+ coeffs[4] * legendrePolynomial(x, 4)
-				+ coeffs[5] * legendrePolynomial(x, 5);
+		for (int i = 0; i < 6; i++) {
+			value = value + coeffs[i] * legendrePolynomial(x, i);
+		}
 
 		return value;
 	}
@@ -371,7 +371,7 @@ public class FormationEnergyEngine {
 	 * f(x/y,y) where y = vSize and x/y = heSize/vSize.
 	 * 
 	 * @param heSize
-	 *            The number of Helium atoms in the cluster
+	 *            The number of helium atoms in the cluster
 	 * @param vSize
 	 *            The number of vacancies in the cluster
 	 * @return The formation energy
@@ -391,7 +391,7 @@ public class FormationEnergyEngine {
 			double x = 2.0 * (((double) heSize / (double) vSize) / 9.0) - 1.0;
 			// Initialize the vacancy number
 			double y = 0.0;
-			
+
 			// We have 2 fits, one for low V and one for high V
 			if (vSize <= 27) {
 				// Compute the vacancy number
@@ -401,8 +401,7 @@ public class FormationEnergyEngine {
 				coefficients[1] = compute5thOrderLegendre(x, c1CoefficientsLow);
 				coefficients[2] = compute5thOrderLegendre(x, c2CoefficientsLow);
 				coefficients[3] = compute5thOrderLegendre(x, c3CoefficientsLow);
-			}
-			else {
+			} else {
 				// Compute the vacancy number
 				y = 2.0 * (((double) vSize - 1.0) / 451.0) - 1.0;
 				// Get the coefficients
@@ -411,15 +410,14 @@ public class FormationEnergyEngine {
 				coefficients[2] = compute5thOrderLegendre(x, c2CoefficientsHigh);
 				coefficients[3] = compute5thOrderLegendre(x, c3CoefficientsHigh);
 			}
-			// Get the energy 
+			// Get the energy
 			energy = compute3rdOrderLegendre(y, coefficients);
 
 		} else if ((vSize == 1 && heSize < heV1FormationEnergies.length)
 				|| (vSize == 2 && heSize < heV2FormationEnergies.length)) {
 			// Get the exact energy
-			energy = (vSize == 1) ? heV1FormationEnergies[heSize]
-					: heV2FormationEnergies[heSize];
-		} 
+			energy = (vSize == 1) ? heV1FormationEnergies[heSize] : heV2FormationEnergies[heSize];
+		}
 
 		return energy;
 	}

@@ -5,7 +5,7 @@
 #include <HDF5Utils.h>
 #include <PSIClusterReactionNetwork.h>
 #include <DummyHandlerRegistry.h>
-#include <PSIClusterNetworkLoader.h>
+#include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
 #include <mpi.h>
 #include <memory>
@@ -21,28 +21,21 @@ BOOST_AUTO_TEST_SUITE(HDF5Utils_testSuite)
 /**
  * Method checking the writing and reading of the HDF5 file.
  */
-BOOST_AUTO_TEST_CASE(checkOI) {
-
+BOOST_AUTO_TEST_CASE(checkIO) {
 	// Initialize MPI for HDF5
 	int argc = 0;
 	char **argv;
 	MPI_Init(&argc, &argv);
 
 	// Create the network loader
-	PSIClusterNetworkLoader loader =
-			PSIClusterNetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	HDF5NetworkLoader loader =
+			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Define the filename to load the network from
 	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten.txt");
+	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
 	string filename = sourceDir + pathToFile;
-	// Create the network stream
-	shared_ptr<istream> networkStream;
-	networkStream = make_shared<ifstream>(filename);
-	// Read the buffer of the stream
-	auto bufferSS = make_shared<stringstream>();
-	(*bufferSS) << networkStream->rdbuf();
-	// Give the network stream to the network loader
-	loader.setInputstream(bufferSS);
+	// Give the filename to the network loader
+	loader.setFilename(filename);
 
 	// Load the network
 	auto network = (PSIClusterReactionNetwork *) loader.load().get();
@@ -52,19 +45,23 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 	// Set the time step number
 	int timeStep = 0;
 	// Initialize the HDF5 file
-	HDF5Utils::initializeFile("test.h5", networkSize);
+	HDF5Utils::initializeFile("test.h5");
 
 	// Set the number of grid points and step size
 	int nGrid = 5;
 	double stepSize = 0.5;
 	// Set the time information
 	double currentTime = 0.0001;
+	double previousTime = 0.00001;
 	double currentTimeStep = 0.000001;
+	// Set the surface information
+	int iSurface = 3;
+	double nInter = 1.0, previousFlux = 0.1;
 	// Write the header in the HDF5 file
 	HDF5Utils::fillHeader(nGrid, stepSize);
 
 	// Write the network in the HDF5 file
-	HDF5Utils::fillNetwork(network);
+	HDF5Utils::fillNetwork(filename);
 
 	// Finalize the HDF5 file
 	HDF5Utils::finalizeFile();
@@ -73,7 +70,10 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 	HDF5Utils::openFile("test.h5");
 
 	// Add the concentration sub group
-	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, currentTimeStep);
+	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, previousTime, currentTimeStep);
+
+	// Write the surface position
+	HDF5Utils::writeSurface1D(timeStep, iSurface, nInter, previousFlux);
 
 	// Add the concentration dataset
 	int length = 5;
@@ -114,8 +114,18 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 	// Read the times
 	double t = 0.0, dt = 0.0;
 	HDF5Utils::readTimes("test.h5", 0, t, dt);
-	BOOST_REQUIRE_EQUAL(t, currentTime);
-	BOOST_REQUIRE_EQUAL(dt, currentTimeStep);
+	BOOST_REQUIRE_CLOSE(t, currentTime, 0.0001);
+	BOOST_REQUIRE_CLOSE(dt, currentTimeStep, 0.0001);
+	double previousReadTime = HDF5Utils::readPreviousTime("test.h5", 0);
+	BOOST_REQUIRE_CLOSE(previousReadTime, previousTime, 0.0001);
+
+	// Read the surface position
+	int surfacePos = HDF5Utils::readSurface1D("test.h5", timeStep);
+	BOOST_REQUIRE_EQUAL(surfacePos, iSurface);
+	double nInterstitial = HDF5Utils::readNInterstitial1D("test.h5", timeStep);
+	BOOST_REQUIRE_CLOSE(nInterstitial, nInter, 0.0001);
+	double previousIFlux = HDF5Utils::readPreviousIFlux1D("test.h5", timeStep);
+	BOOST_REQUIRE_CLOSE(previousIFlux, previousFlux, 0.0001);
 
 	// Read the network of the written file
 	auto networkVector = HDF5Utils::readNetwork("test.h5");
@@ -162,9 +172,136 @@ BOOST_AUTO_TEST_CASE(checkOI) {
 			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1), concVector.at(i).at(1), 0.0001);
 		}
 	}
+}
 
-	// Finalize MPI
-	MPI_Finalize();
+/**
+ * Method checking the writing and reading of the surface position specifically
+ * in the case of a 2D grid.
+ */
+BOOST_AUTO_TEST_CASE(checkSurface2D) {
+	// Initialize the HDF5 file
+	HDF5Utils::initializeFile("test.h5");
+
+	// Set the number of grid points and step size
+	int nGrid = 5;
+	double stepSize = 0.5;
+	// Set the time information
+	double currentTime = 0.0001;
+	double previousTime = 0.00001;
+	double currentTimeStep = 0.000001;
+	// Write the header in the HDF5 file
+	HDF5Utils::fillHeader(nGrid, stepSize);
+
+	// Finalize the HDF5 file
+	HDF5Utils::finalizeFile();
+
+	// Open it again to add the concentrations
+	HDF5Utils::openFile("test.h5");
+
+	// Set the time step number
+	int timeStep = 0;
+
+	// Add the concentration sub group
+	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, previousTime, currentTimeStep);
+
+	// Set the surface information in 2D
+	std::vector<int> iSurface = {2, 3, 2, 0, 5};
+	std::vector<double> nInter = {0.0, 0.0, 0.5, 0.6, 0.5};
+	std::vector<double> previousFlux = {0.0, 0.1, 3.0, -1.0, 5.0};
+
+	// Write the surface position
+	HDF5Utils::writeSurface2D(timeStep, iSurface, nInter, previousFlux);
+
+	// Close the HDF5 file
+	xolotlCore::HDF5Utils::closeFile();
+
+	// Read the surface position
+	auto surfacePos = HDF5Utils::readSurface2D("test.h5", timeStep);
+	// Check all the values
+	for (int i = 0; i < surfacePos.size(); i++) {
+		BOOST_REQUIRE_EQUAL(surfacePos[i], iSurface[i]);
+	}
+
+	// Read the interstitial quantity
+	auto nInterstitial = HDF5Utils::readNInterstitial2D("test.h5", timeStep);
+	// Check all the values
+	for (int i = 0; i < nInterstitial.size(); i++) {
+		BOOST_REQUIRE_CLOSE(nInterstitial[i], nInter[i], 0.0001);
+	}
+
+	// Read the interstitial flux
+	auto previousIFlux = HDF5Utils::readPreviousIFlux2D("test.h5", timeStep);
+	// Check all the values
+	for (int i = 0; i < previousIFlux.size(); i++) {
+		BOOST_REQUIRE_CLOSE(previousIFlux[i], previousFlux[i], 0.0001);
+	}
+}
+
+/**
+ * Method checking the writing and reading of the surface position specifically
+ * in the case of a 3D grid.
+ */
+BOOST_AUTO_TEST_CASE(checkSurface3D) {
+	// Initialize the HDF5 file
+	HDF5Utils::initializeFile("test.h5");
+
+	// Set the number of grid points and step size
+	int nGrid = 5;
+	double stepSize = 0.5;
+	// Set the time information
+	double currentTime = 0.0001;
+	double previousTime = 0.00001;
+	double currentTimeStep = 0.000001;
+	// Write the header in the HDF5 file
+	HDF5Utils::fillHeader(nGrid, stepSize);
+
+	// Finalize the HDF5 file
+	HDF5Utils::finalizeFile();
+
+	// Open it again to add the concentrations
+	HDF5Utils::openFile("test.h5");
+
+	// Set the time step number
+	int timeStep = 0;
+
+	// Add the concentration sub group
+	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, previousTime, currentTimeStep);
+
+	// Set the surface information in 2D
+	std::vector< std::vector<int> > iSurface = {{2, 4, 1, 0, 5}, {2, 3, 2, 0, 5}, {6, 1, 2, 3, 2}};
+	std::vector< std::vector<double> > nInter = {{0.0, 0.0, 0.0, 0.0, 0.0},
+			{2.0, 3.0, 2.0, 0.0, 0.5}, {0.0, 0.0, 0.0, 0.0, 0.0}};
+	std::vector< std::vector<double> > previousFlux = {{0.0, 0.0, 0.0, 0.0, 0.0},
+			{-2.0, 3.0, 2.0, 0.0, -0.5}, {0.0, 0.0, 0.0, 0.0, 0.0}};
+
+	// Write the surface position
+	HDF5Utils::writeSurface3D(timeStep, iSurface, nInter, previousFlux);
+
+	// Close the HDF5 file
+	xolotlCore::HDF5Utils::closeFile();
+
+	// Read the surface position
+	auto surfacePos = HDF5Utils::readSurface3D("test.h5", timeStep);
+	// Check all the values
+	for (int i = 0; i < surfacePos.size(); i++) {
+		for (int j = 0; j < surfacePos[0].size(); j++) {
+			BOOST_REQUIRE_EQUAL(surfacePos[i][j], iSurface[i][j]);
+		}
+	}
+	auto nInterstitial = HDF5Utils::readNInterstitial3D("test.h5", timeStep);
+	// Check all the values
+	for (int i = 0; i < nInterstitial.size(); i++) {
+		for (int j = 0; j < nInterstitial[0].size(); j++) {
+			BOOST_REQUIRE_CLOSE(nInterstitial[i][j], nInter[i][j], 0.0001);
+		}
+	}
+	auto previousIFlux = HDF5Utils::readPreviousIFlux3D("test.h5", timeStep);
+	// Check all the values
+	for (int i = 0; i < previousIFlux.size(); i++) {
+		for (int j = 0; j < previousIFlux[0].size(); j++) {
+			BOOST_REQUIRE_CLOSE(previousIFlux[i][j], previousFlux[i][j], 0.0001);
+		}
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()

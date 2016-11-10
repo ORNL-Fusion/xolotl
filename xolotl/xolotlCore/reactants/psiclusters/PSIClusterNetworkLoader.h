@@ -9,12 +9,8 @@
 #define PSICLUSTERNETWORKLOADER_H_
 
 //Includes
-#include <map>
-#include <memory>
 #include <PSICluster.h>
-#include <PSIClusterReactionNetwork.h>
-#include "xolotlPerf/IHandlerRegistry.h"
-#include <string>
+#include <NetworkLoader.h>
 
 namespace xolotlCore {
 
@@ -59,25 +55,24 @@ namespace xolotlCore {
  * > numMixedClusters - The number of mixed-species clusters of all sizes in the
  * network.
  */
-class PSIClusterNetworkLoader {
+class PSIClusterNetworkLoader : public NetworkLoader {
 
 protected:
 
 	/**
-	 * The istream from which the network of clusters will be read.
+	 * The vacancy size at which the grouping scheme starts
 	 */
-	std::shared_ptr<std::istream> networkStream;
+	int vMin;
 
 	/**
-	 * The list of clusters that will be added to the network.
+	 * The width of the group in the helium direction.
 	 */
-	std::vector<std::shared_ptr<PSICluster>> clusters;
+	int heSectionWidth;
 
 	/**
-	 * The performance handler registry used to measure runtime performance
-	 * during loads.
+	 * The width of the group in the vacancy direction.
 	 */
-	std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
+	int vSectionWidth;
 
 	/**
 	 * Private nullary constructor.
@@ -94,7 +89,7 @@ protected:
 	 * @param numI The number of interstitial defects
 	 * @return The new cluster
 	 */
-	std::shared_ptr<PSICluster> createCluster(int numHe, int numV, int numI);
+	std::shared_ptr<PSICluster> createPSICluster(int numHe, int numV, int numI);
 
 public:
 
@@ -104,8 +99,7 @@ public:
 	 *
 	 * @param registry The performance handler registry
 	 */
-	PSIClusterNetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		handlerRegistry(registry) {}
+	PSIClusterNetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * An alternative constructor provided for convenience.
@@ -123,22 +117,41 @@ public:
 	virtual ~PSIClusterNetworkLoader() {}
 
 	/**
-	 * This operation specifies the inputstream from which cluster data should
-	 * be loaded.
-	 *
-	 * @param stream The inputstream from which the cluster data should be
-	 * loaded
-	 */
-	void setInputstream(const std::shared_ptr<std::istream> stream);
-
-	/**
 	 * This operation will load the reaction network from the inputstream in
 	 * the format specified previously. The network will be empty if it can not
 	 * be loaded.
 	 *
 	 * @return network The reaction network
 	 */
-	virtual std::shared_ptr<PSIClusterReactionNetwork> load();
+	virtual std::shared_ptr<IReactionNetwork> load();
+
+	/**
+	 * This operation will apply a sectional grouping method to the network.
+	 *
+	 * @param The network to be modified.
+	 */
+	void applySectionalGrouping(std::shared_ptr<IReactionNetwork> network);
+
+	/**
+	 * This operation will set the helium size at which the grouping scheme starts.
+	 *
+	 * @param min The value for the size
+	 */
+	void setVMin (int min) {vMin = min;}
+
+	/**
+	 * This operation will set the helium width for the grouping scheme.
+	 *
+	 * @param w The value of the width
+	 */
+	void setHeWidth (int w) {heSectionWidth = w;}
+
+	/**
+	 * This operation will set the vacancy width for the grouping scheme.
+	 *
+	 * @param w The value of the width
+	 */
+	void setVWidth (int w) {vSectionWidth = w;}
 };
 
 } /* namespace xolotlCore */

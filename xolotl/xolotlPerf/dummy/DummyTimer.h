@@ -28,8 +28,10 @@ public:
 	/**
 	 * DummyTimer constructor that takes the argument timerName
 	 * to distinguish specific DummyTimer.
+	 *
+	 * @param name The DummyTimer's name
 	 */
-	DummyTimer(const std::string&) :
+	DummyTimer(const std::string& name) :
 			xolotlCore::Identifiable("unused") {
 	}
 

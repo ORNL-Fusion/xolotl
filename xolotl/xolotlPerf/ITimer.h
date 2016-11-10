@@ -14,65 +14,60 @@ namespace xolotlPerf {
  * Realizations of this interface are responsible for the collection
  * of performance timing statistics.
  */
-class ITimer : public virtual xolotlCore::IIdentifiable {
+class ITimer: public virtual xolotlCore::IIdentifiable {
 
 public:
-    
-    /**
-     * The type of a timer value.
-     */
-    typedef double ValType;
 
+	/**
+	 * The type of a timer value.
+	 */
+	typedef double ValType;
 
-    /**
-     * The MPI type to use when transferring a ValType.
-     */
-    static constexpr MPI_Datatype MPIValType = MPI_DOUBLE;
+	/**
+	 * The MPI type to use when transferring a ValType.
+	 */
+	static constexpr MPI_Datatype MPIValType = MPI_DOUBLE;
 
+	/**
+	 * The minimum value possible.
+	 */
+	static constexpr ValType MinValue = 0.0;
 
-    /**
-     * The minimum value possible.
-     */
-    static constexpr ValType MinValue = 0.0;
-
-
-    /**
-     * The maximum value possible.
-     */
-    static constexpr ValType MaxValue = DBL_MAX;
-
+	/**
+	 * The maximum value possible.
+	 */
+	static constexpr ValType MaxValue = DBL_MAX;
 
 	/**
 	 * Destroy the timer.
 	 */
-	virtual ~ITimer(void) { }
+	virtual ~ITimer(void) {
+	}
 
+	/**
+	 * Start the timer.
+	 */
+	virtual void start(void) = 0;
 
-    /**
-     * Start the timer.
-     */
-    virtual void start(void) = 0;
+	/**
+	 * Stop the timer.
+	 */
+	virtual void stop(void) = 0;
 
-    /**
-     * Stop the timer.
-     */
-    virtual void stop(void) = 0;
+	/**
+	 * Access the timer's value.  (Only valid if timer is not running.)
+	 */
+	virtual ValType getValue(void) const = 0;
 
-    /**
-     * Access the timer's value.  (Only valid if timer is not running.)
-     */
-    virtual ValType getValue(void) const = 0;
+	/**
+	 * Reset the timer's value.  Only valid if timer is not running.
+	 */
+	virtual void reset(void) = 0;
 
-
-    /**
-     * Reset the timer's value.  Only valid if timer is not running.
-     */
-    virtual void reset(void) = 0;
-
-    /**
-     * Obtain a string describing the units of the timer's value.
-     */
-    virtual std::string getUnits(void) const = 0;
+	/**
+	 * Obtain a string describing the units of the timer's value.
+	 */
+	virtual std::string getUnits(void) const = 0;
 
 };
 //end class ITimer

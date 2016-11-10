@@ -1,6 +1,8 @@
 #include <TemperatureHandlerFactory.h>
 #include <TemperatureHandler.h>
 #include <TemperatureProfileHandler.h>
+#include <TemperatureGradientHandler.h>
+#include <MathUtils.h>
 #include <fstream>
 #include <iostream>
 #include <mpi.h>
@@ -27,8 +29,16 @@ bool initializeTempHandler(xolotlCore::Options &options) {
 		}
 	} else if (options.useConstTemperatureHandlers()) {
 		auto temp = options.getConstTemperature();
-		// we are to use a constant temperature handler
-		theTemperatureHandler = std::make_shared<xolotlCore::TemperatureHandler>(temp);
+		// Check if we want a temperature gradient
+		double gradient = options.getTemperatureGradient();
+		if (xolotlCore::equal(gradient, 0.0)) {
+			// we are to use a constant temperature handler
+			theTemperatureHandler = std::make_shared<xolotlCore::TemperatureHandler>(temp);
+		}
+		else {
+			// Use a temperature gradient
+			theTemperatureHandler = std::make_shared<xolotlCore::TemperatureGradientHandler>(temp, gradient);
+		}
 	} else if (options.useTemperatureProfileHandlers()) {
 		auto tempFileName = options.getTempProfileFilename();
 //		std::cout << "\nHandler Temperature file = " << tempFileName << std::endl;

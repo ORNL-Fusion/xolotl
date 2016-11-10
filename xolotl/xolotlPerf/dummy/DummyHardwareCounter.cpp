@@ -1,7 +1,6 @@
 #include "DummyHardwareCounter.h"
 
-namespace xolotlPerf
-{
+namespace xolotlPerf {
 
 IHardwareCounter::ValType DummyHardwareCounter::dummyVals;
 IHardwareCounter::SpecType DummyHardwareCounter::dummySpec;

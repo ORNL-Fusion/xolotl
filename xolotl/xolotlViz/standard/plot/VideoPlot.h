@@ -19,9 +19,11 @@ class VideoPlot: public Plot {
 private:
 
 	/**
-     * Declare the constructor as private to force the use of a name
+	 * Declare the constructor as private to force the use of a name
 	 */
-    VideoPlot() : Plot() {}
+	VideoPlot() :
+			Plot() {
+	}
 
 private:
 

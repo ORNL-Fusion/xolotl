@@ -14,11 +14,6 @@ class HDF5NetworkLoader: public PSIClusterNetworkLoader {
 private:
 
 	/**
-	 * Name of the file to load the network from.
-	 */
-	std::string fileName;
-
-	/**
 	 * Private nullary constructor.
 	 */
 	HDF5NetworkLoader() {}
@@ -26,12 +21,10 @@ private:
 public:
 
 	/**
-	 * The default constructor. The setInputstream() operation must be called
-	 * if this constructor is used.
+	 * The default constructor.
 	 */
-	HDF5NetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
-		handlerRegistry = registry;
-	}
+	HDF5NetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		PSIClusterNetworkLoader(registry) {}
 
 	/**
 	 * The destructor.
@@ -46,21 +39,8 @@ public:
 	 *
 	 * @return The reaction network.
 	 */
-	std::shared_ptr<PSIClusterReactionNetwork> load();
+	std::shared_ptr<IReactionNetwork> load();
 
-	/**
-	 * This operation will set the name of the file where to take the network from.
-	 *
-	 * @param name The name of the file
-	 */
-	void setFilename (const std::string& name);
-
-	/**
-	 * This operation will get the name of the file where to take the network from.
-	 *
-	 * @return The name of the file
-	 */
-	std::string getFilename () const;
 };
 
 } /* namespace xolotlCore */

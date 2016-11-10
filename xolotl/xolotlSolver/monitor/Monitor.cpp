@@ -9,6 +9,7 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <memory>
 
@@ -27,8 +28,7 @@ double previousTime = 0.0;
  * because multiple monitors need the previous time value from the previous timestep.
  * This monitor must be called last when needed.
  */
-PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec,
-		void *) {
+PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec, void *) {
 	PetscFunctionBeginUser;
 
 	// Set the previous time to the current time for the next timestep
@@ -42,8 +42,7 @@ PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec,
 /**
  * This is a monitoring method that will compute the total helium fluence
  */
-PetscErrorCode computeHeliumFluence(TS, PetscInt, PetscReal time,
-		Vec, void *) {
+PetscErrorCode computeFluence(TS, PetscInt, PetscReal time, Vec, void *) {
 	PetscFunctionBeginUser;
 
 	// Get the solver handler and the flux handler
@@ -64,8 +63,8 @@ PetscErrorCode computeHeliumFluence(TS, PetscInt, PetscReal time,
 /**
  * This is a monitoring method that will save 1D plots of one performance timer
  */
-PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
-		Vec, void *) {
+PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
+		void *) {
 	// To check PETSc errors
 	PetscInt ierr;
 
@@ -111,14 +110,14 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 	// Collect all sampled timer values to rank 0.
 	double* allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
-	MPI_Gather( &solverTimerValue,	// send buffer
-							1,									// number of values to send
-							MPI_DOUBLE,					// type of items in send buffer
-							allTimerValues,			// receive buffer (only valid at root)
-							1,									// number of values to receive from each process
-							MPI_DOUBLE,					// type of items in receive buffer
-							0,									// root of MPI collective operation
-							PETSC_COMM_WORLD );	// communicator defining processes involved in the operation
+	MPI_Gather(&solverTimerValue,  // send buffer
+			1,                  // number of values to send
+			MPI_DOUBLE,         // type of items in send buffer
+			allTimerValues,     // receive buffer (only valid at root)
+			1,                  // number of values to receive from each process
+			MPI_DOUBLE,         // type of items in receive buffer
+			0,                  // root of MPI collective operation
+			PETSC_COMM_WORLD); // communicator defining processes involved in the operation
 
 	if (cwRank == 0) {
 		auto allPoints = std::make_shared<std::vector<xolotlViz::Point> >();
@@ -131,8 +130,8 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 			allPoints->push_back(aPoint);
 		}
 
-	  // Clean up the receive buffer (only valid at root)
-	  delete[] allTimerValues;
+		// Clean up the receive buffer (only valid at root)
+		delete[] allTimerValues;
 
 		// Provide the data provider the points.
 		perfPlot->getDataProvider()->setPoints(allPoints);
@@ -148,7 +147,8 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 		perfPlot->plotLabelProvider->timeLabel = timeLabel.str();
 		// Get the current time step
 		PetscReal currentTimeStep;
-		ierr = TSGetTimeStep(ts, &currentTimeStep);CHKERRQ(ierr);
+		ierr = TSGetTimeStep(ts, &currentTimeStep);
+		CHKERRQ(ierr);
 		// Give the timestep to the label provider
 		std::ostringstream timeStepLabel;
 		timeStepLabel << "dt: " << std::setprecision(4) << currentTimeStep
@@ -165,5 +165,4 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 }
 
 }
-
 /* end namespace xolotlSolver */

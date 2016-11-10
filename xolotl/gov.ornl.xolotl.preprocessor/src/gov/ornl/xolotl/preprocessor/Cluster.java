@@ -12,8 +12,11 @@ package gov.ornl.xolotl.preprocessor;
  */
 public class Cluster {
 
-	// The number of Helium atoms in the cluster. Default value is 0.
+	// The number of helium atoms in the cluster. Default value is 0.
 	public int nHe = 0;
+
+	// The number of xenon atoms in the cluster. Default value is 0.
+	public int nXe = 0;
 
 	// The number of vacancies in the cluster. Default value is 0.
 	public int nV = 0;
@@ -32,21 +35,5 @@ public class Cluster {
 	// is infinity so that the cluster is immobile.
 	// is 0.
 	public double D_0 = 0.0;
-
-	/**
-	 * This operation returns the cluster as a string of the form
-	 * 
-	 * nHe nV nI E_f E_migration D_0
-	 */
-	public String toString() {
-
-		// Convert infinite energies
-		String EfAsString = (!Double.isInfinite(E_f)) ? String.valueOf(E_f)
-				: "Infinity";
-		String EMAsString = (!Double.isInfinite(E_m)) ? String.valueOf(E_m)
-				: "Infinity";
-
-		return nHe + " " + nV + " " + nI + " " + EfAsString + " " + EMAsString + " " + D_0;
-	}
 
 }

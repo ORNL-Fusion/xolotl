@@ -109,7 +109,7 @@ void PAPIHardwareCounter::InitCounterSpecMap(void) {
 }
 
 IHardwareCounter&
-PAPIHardwareCounter::operator+=(const IHardwareCounter&) {
+PAPIHardwareCounter::operator+=(const IHardwareCounter& c) {
 #if READY
 #else
 	std::cerr << "PAPIHardwareCounter::NIY" << std::endl;

@@ -18,7 +18,7 @@ private:
 	 * initialized with a size.
 	 */
 	InterstitialCluster() :
-		PSICluster(1) {}
+		PSICluster() {}
 
 public:
 
@@ -37,12 +37,11 @@ public:
 	~InterstitialCluster() {}
 
 	/**
-	 * This operation returns a Reactant that is created using the copy
-	 * constructor of InterstitialCluster.
-	 *
-	 * @return A copy of this reactant
+	 * Returns a reactant created using the copy constructor
 	 */
-	virtual std::shared_ptr<Reactant> clone();
+	virtual std::shared_ptr<IReactant> clone() {
+		return std::shared_ptr<IReactant> (new InterstitialCluster(*this));
+	}
 
 protected:
 

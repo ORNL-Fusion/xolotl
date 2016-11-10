@@ -19,12 +19,6 @@ protected:
 	//! The command line arguments
 	char **CLIArgs;
 
-	//! The network loader that can load the reaction network data.
-	PSIClusterNetworkLoader *networkLoader;
-
-	//! The original network created from the network loader.
-	PSIClusterReactionNetwork *network;
-
 	//! The original solver handler.
 	static ISolverHandler *solverHandler;
 
@@ -34,7 +28,7 @@ public:
 	Solver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! The Destructor
-	virtual ~Solver();
+	virtual ~Solver() {};
 
 	/**
 	 * This operation transfers the input arguments passed to the program on
@@ -45,15 +39,6 @@ public:
 	 * @param argv The array of command line arguments
 	 */
 	void setCommandLineOptions(int argc, char **argv);
-
-	/**
-	 * This operation sets the PSIClusterNetworkLoader that should be used by
-	 * the ISolver to load the ReactionNetwork.
-	 * @param networkLoader The PSIClusterNetworkLoader that will load the
-	 * network.
-	 */
-	void setNetworkLoader(
-			std::shared_ptr<PSIClusterNetworkLoader> networkLoader);
 
 	/**
 	 * This operation returns the solver handler for this solver. This
@@ -67,13 +52,14 @@ public:
 
 protected:
 
-    /**
-     * The performance handler registry that will be used
-     * for this class.
-     */
-    std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
+	/**
+	 * The performance handler registry that will be used
+	 * for this class.
+	 */
+	std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
 
-}; //end class Solver
+};
+//end class Solver
 
 } /* end namespace xolotlSolver */
 #endif

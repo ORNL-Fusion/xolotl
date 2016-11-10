@@ -27,8 +27,8 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	MPI_Init(&argc, &argv);
 
 	// Create the network loader
-	HDF5NetworkLoader loader =
-			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	HDF5NetworkLoader loader = HDF5NetworkLoader(
+			make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Define the filename to load the network from
 	string sourceDir(XolotlSourceDirectory);
 	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
@@ -37,43 +37,54 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	loader.setFilename(filename);
 
 	// Load the network
-	auto network = (PSIClusterReactionNetwork *) loader.load().get();
+	auto network = loader.load().get();
 	// Get its size
-	const int size = network->getAll()->size();
+	const int dof = network->getDOF();
+
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 3; l++) {
+		grid.push_back((double) l);
+	}
 
 	// Create the diffusion handler
 	Diffusion3DHandler diffusionHandler;
 
+	// Create a collection of advection handlers
+	std::vector<IAdvectionHandler *> advectionHandlers;
+
 	// Create ofill
-	int mat[size*size];
+	int mat[dof * dof];
 	int *ofill = &mat[0];
 
 	// Initialize it
 	diffusionHandler.initializeOFill(network, ofill);
+	diffusionHandler.initializeDiffusionGrid(advectionHandlers, grid, 3, 1.0, 3,
+			1.0);
 
 	// Check the total number of diffusing clusters
 	BOOST_REQUIRE_EQUAL(diffusionHandler.getNumberOfDiffusing(), 7);
 
-	// The size parameter in the x direction
-	double sx = 1.0;
+	// The step size in the x direction
+	double hx = 1.0;
 	// The size parameter in the y direction
 	double sy = 1.0;
 	// The size parameter in the z direction
 	double sz = 1.0;
 
 	// The arrays of concentration
-	double concentration[27*size];
-	double newConcentration[27*size];
+	double concentration[27 * dof];
+	double newConcentration[27 * dof];
 
 	// Initialize their values
-	for (int i = 0; i < 27*size; i++) {
+	for (int i = 0; i < 27 * dof; i++) {
 		concentration[i] = (double) i * i / 10.0;
 		newConcentration[i] = 0.0;
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	auto reactants = network->getAll();
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < dof; i++) {
 		auto cluster = (PSICluster *) reactants->at(i);
 		cluster->setTemperature(1000.0);
 	}
@@ -88,22 +99,22 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// 3 | 4 | 5    12 | 13 | 14    21 | 22 | 23
 	// 0 | 1 | 2    9  | 10 | 11    18 | 19 | 20
 	//   front         middle           back
-	double *concOffset = conc + 13 * size;
-	double *updatedConcOffset = updatedConc + 13 * size;
+	double *concOffset = conc + 13 * dof;
+	double *updatedConcOffset = updatedConc + 13 * dof;
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom, top, front, and back grid points
 	double **concVector = new double*[7];
 	concVector[0] = concOffset; // middle
-	concVector[1] = conc + 12 * size; // left
-	concVector[2] = conc + 14 * size; // right
-	concVector[3] = conc + 10 * size; // bottom
-	concVector[4] = conc + 16 * size; // top
-	concVector[5] = conc + 4 * size; // front
-	concVector[6] = conc + 22 * size; // back
+	concVector[1] = conc + 12 * dof; // left
+	concVector[2] = conc + 14 * dof; // right
+	concVector[3] = conc + 10 * dof; // bottom
+	concVector[4] = conc + 16 * dof; // top
+	concVector[5] = conc + 4 * dof; // front
+	concVector[6] = conc + 22 * dof; // back
 
 	// Compute the diffusion at this grid point
-	diffusionHandler.computeDiffusion(network, concVector,
-			updatedConcOffset, sx, sy, sz);
+	diffusionHandler.computeDiffusion(network, concVector, updatedConcOffset,
+			hx, hx, 1, sy, 1, sz, 1);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 9.45765e+12, 0.01);
@@ -119,14 +130,14 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();
 	int indices[nDiff];
-	double val[7*nDiff];
+	double val[7 * nDiff];
 	// Get the pointer on them for the compute diffusion method
 	int *indicesPointer = &indices[0];
 	double *valPointer = &val[0];
 
 	// Compute the partial derivatives for the diffusion a the grid point 1
 	diffusionHandler.computePartialsForDiffusion(network, valPointer,
-			indicesPointer, sx, sy, sz);
+			indicesPointer, hx, hx, 1, sy, 1, sz, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 0);

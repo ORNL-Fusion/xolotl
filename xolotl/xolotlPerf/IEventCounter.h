@@ -11,38 +11,34 @@ namespace xolotlPerf {
  * Realizations of this interface are responsible for the collection
  * of event performance counter data.
  */
-class IEventCounter : public virtual xolotlCore::IIdentifiable {
+class IEventCounter: public virtual xolotlCore::IIdentifiable {
 
 public:
-    /**
-     * Type of the counter.
-     */
-    typedef unsigned long   ValType;
+	/**
+	 * Type of the counter.
+	 */
+	typedef unsigned long ValType;
 
+	/**
+	 * MPI type used when transmitting a ValType.
+	 */
+	static constexpr MPI_Datatype MPIValType = MPI_UNSIGNED_LONG;
 
-    /**
-     * MPI type used when transmitting a ValType.
-     */
-    static constexpr MPI_Datatype MPIValType = MPI_UNSIGNED_LONG;
+	/**
+	 * The minimum value possible.
+	 */
+	static const ValType MinValue = 0;
 
-
-    /**
-     * The minimum value possible.
-     */
-    static const ValType MinValue = 0;
-
-
-    /**
-     * The maximum value possible.
-     */
-    static const ValType MaxValue = ULONG_MAX;
-
-
+	/**
+	 * The maximum value possible.
+	 */
+	static const ValType MaxValue = ULONG_MAX;
 
 	/**
 	 * The destructor
 	 */
-	virtual ~IEventCounter(){}
+	virtual ~IEventCounter() {
+	}
 
 	/**
 	 * This operation returns the value of the IEventCounter, the frequency
@@ -55,8 +51,9 @@ public:
 	 */
 	virtual void increment() = 0;
 
-}; //end class IEventCounter
+};
+//end class IEventCounter
 
-} //end namespace xolotlPerf
+}//end namespace xolotlPerf
 
 #endif

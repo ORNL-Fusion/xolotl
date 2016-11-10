@@ -86,7 +86,7 @@ public:
 	 * @param currentTime The time
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const std::vector<double>& /*position*/, double currentTime) const {
+	virtual double getTemperature(const std::vector<double>& position, double currentTime) const {
 		// Initialize the value to return
 		double f = 0.0;
 

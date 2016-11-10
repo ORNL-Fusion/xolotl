@@ -32,14 +32,13 @@ BOOST_AUTO_TEST_CASE(checkCounting) {
 
 	DummyEventCounter tester("test");
 
-	for(int i = 0; i < 3; i++){
+	for (int i = 0; i < 3; i++) {
 		tester.increment();
 	}
 
 	BOOST_REQUIRE_EQUAL(0U, tester.getValue());
 
 }
-
 
 BOOST_AUTO_TEST_SUITE_END()
 

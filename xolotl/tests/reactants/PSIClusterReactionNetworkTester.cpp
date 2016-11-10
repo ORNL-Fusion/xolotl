@@ -3,11 +3,6 @@
 
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
-#include <map>
-#include <memory>
-#include <typeinfo>
-#include <limits>
-#include <math.h>
 #include "SimpleReactionNetwork.h"
 #include <HeVCluster.h>
 #include <HeCluster.h>
@@ -41,20 +36,17 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	psiNetwork->add(interstitialCluster);
 
 	// Check the network, He first
-	auto retHeCluster = (PSICluster *)
-			psiNetwork->get("He", 10);
+	auto retHeCluster = (PSICluster *) psiNetwork->get("He", 10);
 	BOOST_REQUIRE(retHeCluster);
 	BOOST_REQUIRE_EQUAL("He_10", retHeCluster->getName());
 	BOOST_REQUIRE_EQUAL(10, retHeCluster->getSize());
 	// V
-	auto retVCluster = (PSICluster *)
-			psiNetwork->get("V", 4);
+	auto retVCluster = (PSICluster *) psiNetwork->get("V", 4);
 	BOOST_REQUIRE(retVCluster);
 	BOOST_REQUIRE_EQUAL(4, retVCluster->getSize());
 	BOOST_REQUIRE_EQUAL("V_4", retVCluster->getName());
 	// I
-	auto retICluster = (PSICluster *)
-			psiNetwork->get("I", 48);
+	auto retICluster = (PSICluster *) psiNetwork->get("I", 48);
 	BOOST_REQUIRE(retICluster);
 	BOOST_REQUIRE_EQUAL(48, retICluster->getSize());
 	BOOST_REQUIRE_EQUAL("I_48", retICluster->getName());
@@ -108,13 +100,12 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_TEST_MESSAGE("Added " << counter << " HeI clusters");
 
 	// Try adding a duplicate HeV and catch the exception
-	shared_ptr<HeVCluster> duplicateCluster = std::make_shared<HeVCluster>(5,
-			3, registry);
+	shared_ptr<HeVCluster> duplicateCluster = std::make_shared<HeVCluster>(5, 3,
+			registry);
 	try {
 		psiNetwork->add(duplicateCluster);
 		BOOST_FAIL(
-				"Test failed because adding a duplicate"
-						<< " to the network was allowed.");
+				"Test failed because adding a duplicate" << " to the network was allowed.");
 	} catch (const std::string& /* e */) {
 		// Do nothing. It was supposed to fail.
 	}
@@ -143,9 +134,9 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_REQUIRE_EQUAL(36U, heIReactants.size());
 
 	// Add the required He_1, V_1, I_1 clusters to the network.
-	psiNetwork->add(make_shared<HeCluster>(1,registry));
-	psiNetwork->add(make_shared<VCluster>(1,registry));
-	psiNetwork->add(make_shared<InterstitialCluster>(1,registry));
+	psiNetwork->add(make_shared<HeCluster>(1, registry));
+	psiNetwork->add(make_shared<VCluster>(1, registry));
+	psiNetwork->add(make_shared<InterstitialCluster>(1, registry));
 
 	// Set the reaction networks for all of the clusters
 	for (unsigned int i = 0; i < reactants->size(); i++) {
@@ -154,7 +145,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 
 	// Try changing the temperature and make sure it works
 	psiNetwork->setTemperature(1000.0);
-	BOOST_REQUIRE_CLOSE(1000.0,reactants->at(0)->getTemperature(),0.0001);
+	BOOST_REQUIRE_CLOSE(1000.0, reactants->at(0)->getTemperature(), 0.0001);
 
 	return;
 }
@@ -163,19 +154,17 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 	// Create the network
 	auto psiNetwork = make_shared<PSIClusterReactionNetwork>(registry);
 
-	// Grab the map of properties from the network
-	auto props = psiNetwork->getProperties();
-	// Convert the property strings so we can use them
-	int numHeClusters = stoi(props["numHeClusters"]);
-	int numVClusters = stoi(props["numVClusters"]);
-	int numIClusters = stoi(props["numIClusters"]);
-	int numHeVClusters = stoi(props["numHeVClusters"]);
-	int numHeIClusters = stoi(props["numHeIClusters"]);
-	int maxHeVClusterSize = stoi(props["maxHeVClusterSize"]);
-	int maxHeIClusterSize = stoi(props["maxHeIClusterSize"]);
-	int maxHeClusterSize = stoi(props["maxHeClusterSize"]);
-	int maxVClusterSize = stoi(props["maxVClusterSize"]);
-	int maxIClusterSize = stoi(props["maxIClusterSize"]);
+	// Access the network "properties."
+	auto numHeClusters = psiNetwork->getNumHeClusters();
+	auto numVClusters = psiNetwork->getNumVClusters();
+	auto numIClusters = psiNetwork->getNumIClusters();
+	auto numHeVClusters = psiNetwork->getNumHeVClusters();
+	auto numHeIClusters = psiNetwork->getNumHeIClusters();
+	auto maxHeVClusterSize = psiNetwork->getMaxHeVClusterSize();
+	auto maxHeIClusterSize = psiNetwork->getMaxHeIClusterSize();
+	auto maxHeClusterSize = psiNetwork->getMaxHeClusterSize();
+	auto maxVClusterSize = psiNetwork->getMaxVClusterSize();
+	auto maxIClusterSize = psiNetwork->getMaxIClusterSize();
 
 	// Check the properties
 	BOOST_REQUIRE_EQUAL(0, numHeClusters);
@@ -189,19 +178,6 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 	BOOST_REQUIRE_EQUAL(0, maxVClusterSize);
 	BOOST_REQUIRE_EQUAL(0, maxIClusterSize);
 
-	// Set a couple of properties
-	psiNetwork->setProperty("rangePenalty", "5");
-	psiNetwork->setProperty("agility", "d8");
-
-	// Grab the properties afresh
-	auto modifiedProps = psiNetwork->getProperties();
-
-	// Check for the new properties
-	auto rangePenalty = modifiedProps["rangePenalty"];
-	auto agility = modifiedProps["agility"];
-	BOOST_REQUIRE_EQUAL("5", rangePenalty);
-	BOOST_REQUIRE_EQUAL("d8", agility);
-
 	// Add a couple of clusters
 	auto heCluster = make_shared<HeCluster>(5, registry);
 	psiNetwork->add(heCluster);
@@ -209,11 +185,10 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 	psiNetwork->add(heVCluster);
 
 	// Grab the properties afresh
-	auto propsWithClusters = psiNetwork->getProperties();
-	numHeClusters = stoi(propsWithClusters["numHeClusters"]);
-	maxHeClusterSize = stoi(propsWithClusters["maxHeClusterSize"]);
-	numHeVClusters = stoi(propsWithClusters["numHeVClusters"]);
-	maxHeVClusterSize = stoi(propsWithClusters["maxHeVClusterSize"]);
+	numHeClusters = psiNetwork->getNumHeClusters();
+	maxHeClusterSize = psiNetwork->getMaxHeClusterSize();
+	numHeVClusters = psiNetwork->getNumHeVClusters();
+	maxHeVClusterSize = psiNetwork->getMaxHeVClusterSize();
 
 	// Check the properties again
 	BOOST_REQUIRE_EQUAL(1, numHeClusters);
@@ -253,8 +228,10 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 			++marker;
 		else if (compoundNames[i] == "HeI")
 			++marker;
+		else if (compoundNames[i] == "PSISuper")
+			++marker;
 	}
-	BOOST_REQUIRE_EQUAL(2U, marker);
+	BOOST_REQUIRE_EQUAL(3U, marker);
 	BOOST_REQUIRE_EQUAL(marker, compoundNames.size());
 
 	return;
@@ -276,11 +253,8 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	PSIClusterReactionNetwork networkCopy = network;
 
 	// Check that the ReactionNetwork fields are copied
-	auto properties = network.getProperties();
-	auto copiedProperties = networkCopy.getProperties();
-	BOOST_REQUIRE_EQUAL(properties.size(), copiedProperties.size());
-	BOOST_REQUIRE_EQUAL(properties["numHeClusters"],
-			copiedProperties["numHeClusters"]);
+	BOOST_REQUIRE_EQUAL(network.getNumHeClusters(),
+			networkCopy.getNumHeClusters());
 
 	// Check that changing the concentration of a copy does not update the
 	// original. Start by updating the copy.
@@ -302,7 +276,7 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
  */
 BOOST_AUTO_TEST_CASE(checkArrayOperations) {
 	// Local Declarations
-	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
+	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();
 	int size = network->size();
 	double * concentrations = new double[size];
 
@@ -331,43 +305,45 @@ BOOST_AUTO_TEST_CASE(checkArrayOperations) {
 	}
 
 	// Clear memory
-	delete [] concentrations;
+	delete[] concentrations;
 
 	return;
 }
 
-
 BOOST_AUTO_TEST_CASE(checkRefCounts) {
-    // Obtain a network to work with.
-    // This network was built programmatically.
-	shared_ptr<ReactionNetwork> network = getSimpleReactionNetwork();
-    
-    // Because each Reactant in the network is given a pointer
-    // (a shared_ptr) to the network, and we have one shared_ptr to it,
-    // its reference count should be network's size + 1.
+	// Obtain a network to work with.
+	// This network was built programmatically.
+	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();
+
+	// Because each Reactant in the network is given a pointer
+	// (a shared_ptr) to the network, and we have one shared_ptr to it,
+	// its reference count should be network's size + 1.
 	BOOST_TEST_MESSAGE("After creation, network size: " << network->size());
-	BOOST_TEST_MESSAGE("After creation, network ref count: " << network.use_count());
-    BOOST_REQUIRE_EQUAL(network.use_count(), network->size() + 1);
-    
-    // Tell the network to break dependency cycles between 
-    // the Reactants in the network and the network itself.
-    // In a "real" use, this allows the network and Reactants
-    // to be destroyed gracefully when the shared_ptr pointing
-    // to the network goes out of scope, because it allows
-    // the network's reference count to reach zero.
-    network->askReactantsToReleaseNetwork();
+	BOOST_TEST_MESSAGE(
+			"After creation, network ref count: " << network.use_count());
+	BOOST_REQUIRE_EQUAL(network.use_count(), network->size() + 1);
 
-    // All objects from within the network should have released their
-    // shared_ptr to the network, so our shared_ptr should be the
-    // only remaining shared_ptr.  Thus, the network's reference
-    // count should be 1 at this point.
-    // If it is, when our shared_ptr goes out of scope the network will 
-    // be destroyed.  We can't easily test that it is destroyed.
-	BOOST_TEST_MESSAGE("After releasing network refs, network size: " << network->size());
-	BOOST_TEST_MESSAGE("After releasing network refs, network ref count: " << network.use_count());
-    BOOST_REQUIRE_EQUAL(network.use_count(), 1);
+	// Tell the network to break dependency cycles between
+	// the Reactants in the network and the network itself.
+	// In a "real" use, this allows the network and Reactants
+	// to be destroyed gracefully when the shared_ptr pointing
+	// to the network goes out of scope, because it allows
+	// the network's reference count to reach zero.
+	network->askReactantsToReleaseNetwork();
 
-    return;
+	// All objects from within the network should have released their
+	// shared_ptr to the network, so our shared_ptr should be the
+	// only remaining shared_ptr.  Thus, the network's reference
+	// count should be 1 at this point.
+	// If it is, when our shared_ptr goes out of scope the network will
+	// be destroyed.  We can't easily test that it is destroyed.
+	BOOST_TEST_MESSAGE(
+			"After releasing network refs, network size: " << network->size());
+	BOOST_TEST_MESSAGE(
+			"After releasing network refs, network ref count: " << network.use_count());
+	BOOST_REQUIRE_EQUAL(network.use_count(), 1);
+
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

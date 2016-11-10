@@ -3,15 +3,15 @@
 using namespace xolotlPerf;
 
 void DummyTimer::start(void) {
-    // nothing to do in this stub routine
+	// nothing to do in this stub routine
 }
 
 void DummyTimer::stop(void) {
-    // nothing to do in this stub routine
+	// nothing to do in this stub routine
 }
 
 void DummyTimer::reset(void) {
-    // nothing to do in this stub routine
+	// nothing to do in this stub routine
 }
 
 double DummyTimer::getValue(void) const {

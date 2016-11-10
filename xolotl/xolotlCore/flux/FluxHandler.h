@@ -4,6 +4,7 @@
 #include "IFluxHandler.h"
 #include <vector>
 #include <memory>
+#include <Constants.h>
 
 namespace xolotlCore {
 
@@ -22,9 +23,10 @@ protected:
 	std::vector<double> incidentFluxVec;
 
 	/**
-	 * Step size between each grid point in the x direction.
+	 * Vector to hold the position at each grid
+	 * point (x position).
 	 */
-	double stepSize;
+	std::vector<double> xGrid;
 
 	/**
 	 *  Fluence.
@@ -70,7 +72,9 @@ protected:
 	 * @param x The position where to evaluate the fit
 	 * @return The evaluated value
 	 */
-	virtual double FitFunction(double) {return 0.0;}
+	virtual double FitFunction(double) {
+		return 0.0;
+	}
 
 	/**
 	 * This method returns the value of the helium incident flux amplitude at the
@@ -84,8 +88,10 @@ protected:
 	/**
 	 * This method recomputes the values of the incident flux vector when
 	 * a time profile is given.
+	 *
+	 * @param surfacePos The current position of the surface
 	 */
-	void recomputeFluxHandler();
+	void recomputeFluxHandler(int surfacePos);
 
 public:
 
@@ -96,52 +102,53 @@ public:
 
 	/**
 	 * Compute and store the incident flux values at each grid point.
-     * \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
-	virtual void initializeFluxHandler(PSIClusterReactionNetwork *network,
-			int nx, double hx);
+	virtual void initializeFluxHandler(IReactionNetwork *network,
+			int surfacePos, std::vector<double> grid);
 
 	/**
 	 * This method reads the values on the time profile file and store them in the
 	 * time and amplitude vectors.
-     * \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
-	void initializeTimeProfile(const std::string& fileName);
+	virtual void initializeTimeProfile(const std::string& fileName);
 
 	/**
 	 * This operation returns the incident flux vector.
-     * \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<double> getIncidentFluxVec(double currentTime);
+	virtual std::vector<double> getIncidentFluxVec(double currentTime,
+			int surfacePos);
 
 	/**
 	 * This operation returns the index of the cluster that is irradiating
 	 * the material.
-     * \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	virtual int getIncidentFluxClusterIndex();
 
 	/**
 	 * This operation increments the fluence at the current time step.
-     * \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	virtual void incrementFluence(double dt);
 
 	/**
 	 * This operation returns the fluence.
-     * \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	virtual double getFluence() const;
 
 	/**
 	 * This operation sets the factor to change the intensity of the flux.
-     * \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	virtual void setFluxAmplitude(double flux);
 
 	/**
 	 * This operation gets the factor that changes the flux intensity/amplitude.
-     * \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	virtual double getFluxAmplitude() const;
 

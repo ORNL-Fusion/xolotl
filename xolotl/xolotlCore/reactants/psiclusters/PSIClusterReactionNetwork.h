@@ -9,25 +9,9 @@
 #include <map>
 #include <unordered_map>
 #include <ReactionNetwork.h>
-#include <PSICluster.h>
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
-#include <Constants.h>
-
-// Override the hash operation for the composition maps used by the
-// PSIClusterReactionNetwork to store reactants.
-namespace std {
-template<>
-class hash<std::map<std::string, int>> {
-public:
-	long operator()(const std::map<std::string, int>& composition) const {
-		int bigNumber = 1e9;
-		return (composition.at(xolotlCore::heType) * 10 + composition.at(xolotlCore::vType) * 200
-				+ composition.at(xolotlCore::iType) * 3000) * bigNumber;
-	}
-};
-}
 
 namespace xolotlCore {
 
@@ -48,52 +32,59 @@ class PSIClusterReactionNetwork: public ReactionNetwork {
 private:
 
 	/**
-	 * The map of single-species clusters, indexed by a map that contains the
-	 * name of the reactant and its size.
+	 * The map of single-species clusters, indexed by a string representation
+	 * of a map that contains the name of the reactant and its size.
 	 */
-	std::unordered_map< std::map< std::string, int >,
-		std::shared_ptr<PSICluster> > singleSpeciesMap;
+	std::unordered_map<std::string, std::shared_ptr<IReactant> > singleSpeciesMap;
 
 	/**
-	 * The map of mixed or compound species clusters, indexed by a map that
+	 * The map of mixed or compound species clusters, indexed by a string
+	 * representation of a map that contains the name of the constituents
+	 * of the compound reactant and their sizes.
+	 */
+	std::unordered_map<std::string, std::shared_ptr<IReactant> > mixedSpeciesMap;
+
+	/**
+	 * The map of super species clusters, indexed by a map that
 	 * contains the name of the constituents of the compound reactant and their
 	 * sizes.
 	 */
-	std::unordered_map< std::map< std::string, int >,
-		std::shared_ptr<PSICluster> > mixedSpeciesMap;
+	std::unordered_map<std::string, std::shared_ptr<IReactant> > superSpeciesMap;
 
 	/**
 	 * This map stores all of the clusters in the network by type.
 	 */
-	std::map<std::string, std::shared_ptr<
-		std::vector< std::shared_ptr<Reactant> > > > clusterTypeMap;
+	std::map<std::string,
+			std::shared_ptr<std::vector<std::shared_ptr<IReactant> > > > clusterTypeMap;
+	/**
+	 * Number of He clusters in our network.
+	 */
+	int numHeClusters;
 
 	/**
-	 * The names of the reactants supported by this network.
+	 * Number of HeV clusters in our network.
 	 */
-	std::vector<std::string> names;
+	int numHeVClusters;
 
 	/**
-	 * The names of the compound reactants supported by this network.
+	 * Number of HeI clusters in our network.
 	 */
-	std::vector<std::string> compoundNames;
+	int numHeIClusters;
 
 	/**
-	 * The size of the network. It is also used to set the id of new Reactants
-	 * that are added to the network.
+	 * Maximum size of He clusters in our network.
 	 */
-	int networkSize;
+	int maxHeClusterSize;
 
 	/**
-	 * The current temperature at which the network's clusters exist.
+	 * Maximum size of HeV clusters in our network.
 	 */
-	double temperature;
+	int maxHeVClusterSize;
 
 	/**
-	 * The list of all of the reactants in the network. This list is filled and
-	 * maintained by the getAll() operation.
+	 * Maximum size of HeI clusters in our network.
 	 */
-	std::shared_ptr< std::vector<Reactant *> > allReactants;
+	int maxHeIClusterSize;
 
 	/**
 	 * This operation sets the default values of the properties table and names
@@ -113,7 +104,8 @@ public:
 	 *
 	 * @param registry The performance handler registry
 	 */
-	PSIClusterReactionNetwork(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	PSIClusterReactionNetwork(
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * The copy constructor.
@@ -148,8 +140,7 @@ public:
 	 * @param size the size of the reactant
 	 * @return A pointer to the reactant
 	 */
-	Reactant * get(const std::string& type,
-			const int size) const;
+	IReactant * get(const std::string& type, const int size) const;
 
 	/**
 	 * This operation returns a compound reactant with the given type and size
@@ -162,7 +153,21 @@ public:
 	 * and I are contained in the mixed-species cluster.
 	 * @return A pointer to the compound reactant
 	 */
-	Reactant * getCompound(const std::string& type,
+	IReactant * getCompound(const std::string& type,
+			const std::vector<int>& sizes) const;
+
+	/**
+	 * This operation returns a super reactant with the given type and size
+	 * if it exists in the network or null if not.
+	 *
+	 * @param type the type of the compound reactant
+	 * @param sizes an array containing the sizes of each piece of the reactant.
+	 * For PSIClusters, this array must be ordered in size by He, V and I. This
+	 * array must contain an entry for He, V and I, even if only He and V or He
+	 * and I are contained in the mixed-species cluster.
+	 * @return A pointer to the compound reactant
+	 */
+	IReactant * getSuper(const std::string& type,
 			const std::vector<int>& sizes) const;
 
 	/**
@@ -172,7 +177,7 @@ public:
 	 *
 	 * @return The list of all of the reactants in the network
 	 */
-	const std::shared_ptr<std::vector<Reactant *>> & getAll() const;
+	const std::shared_ptr<std::vector<IReactant *>> & getAll() const;
 
 	/**
 	 * This operation returns all reactants in the network with the given name.
@@ -183,10 +188,31 @@ public:
 	 * @return The list of all of the reactants in the network or null if the
 	 * name is invalid.
 	 */
-	std::vector<Reactant *> getAll(const std::string& name) const;
+	std::vector<IReactant *> getAll(const std::string& name) const;
 
 	/**
 	 * This operation adds a reactant or a compound reactant to the network.
+	 * Adding a reactant to the network does not set the network as the
+	 * reaction network for the reactant. This step must be performed
+	 * separately to allow for the scenario where the network is generated
+	 * entirely before running.
+	 *
+	 * This operation sets the id of the reactant to one that is specific
+	 * to this network. Do not share reactants across networks! This id is
+	 * guaranteed to be between 1 and n, including both, for n reactants in
+	 * the network.
+	 *
+	 * The reactant will not be added to the network if the PSICluster does
+	 * not recognize it as a type of reactant that it cares about (including
+	 * adding null). This operation throws an exception of type std::string
+	 * if the reactant is  already in the network.
+	 *
+	 * @param reactant The reactant that should be added to the network.
+	 */
+	void add(std::shared_ptr<IReactant> reactant);
+
+	/**
+	 * This operation adds a super reactant to the network.
 	 * Adding a reactant to the network does not set the network as the
 	 * reaction network for the reactant. This step must be performed
 	 * separately to allow for the scenario where the network is generated
@@ -204,7 +230,21 @@ public:
 	 *
 	 * @param reactant The reactant that should be added to the network.
 	 */
-	void add(std::shared_ptr<Reactant> reactant);
+	void addSuper(std::shared_ptr<IReactant> reactant);
+
+	/**
+	 * This operation removes a group of reactants from the network.
+	 *
+	 * @param reactants The reactants that should be removed.
+	 */
+	void removeReactants(const std::vector<IReactant*>& reactants);
+
+	/**
+	 * This operation reinitializes the network.
+	 *
+	 * It computes the cluster Ids and network size from the allReactants vector.
+	 */
+	void reinitializeNetwork();
 
 	/**
 	 * This method redefines the connectivities for each cluster in the
@@ -213,74 +253,104 @@ public:
 	void reinitializeConnectivities();
 
 	/**
-	 * This operation returns the names of the reactants in the network. For a
-	 * PSIClusterReactionNetwork, these are He, V, I, HeV, HeI.
+	 * This operation updates the concentrations for all reactants in the
+	 * network from an array.
 	 *
-	 * @return A vector with one entry for each of the distinct reactant types
-	 * in the network
+	 * @param concentrations The array of doubles that will be for the
+	 * concentrations. This operation does NOT create, destroy or resize the
+	 * array. Properly aligning the array in memory so that this operation
+	 * does not overrun is up to the caller.
 	 */
-	const std::vector<std::string> & getNames() const;
+	void updateConcentrationsFromArray(double * concentrations);
 
 	/**
-	 * This operation returns the names of the compound reactants in the
-	 * network.
+	 * This operation returns the size or number of reactants and momentums in the network.
 	 *
-	 * @return A vector with one each for each of the distinct compound
-	 * reactant types in the network
+	 * @return The number of degrees of freedom
 	 */
-	const std::vector<std::string> & getCompoundNames() const;
+	virtual int getDOF() {
+		return networkSize + 2 * numSuperClusters;
+	}
 
 	/**
-	 * This operation returns a map of the properties of this reaction network.
+	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.
 	 *
-	 * @return The map of properties that has been configured for this
-	 * ReactionNetwork.
-	 *
-	 * The PSIClusterReactionNetwork always has the following properties:
-	 * > maxHeClusterSize - The number of He atoms in the largest single-species
-	 *  He cluster.
-	 * > maxVClusterSize - The number of atomic vacancies in the largest
-	 * single-species V cluster.
-	 * > maxIClusterSize - The number of interstitials in the largest
-	 * single-species I cluster.
-	 * > maxHeVClusterSize - The number of species of all types in the largest
-	 * mixed species in the network. It is equal to the sum of the max single
-	 * species helium and vacancy cluster sizes by default.
-	 * > maxHeIClusterSize - The number of species of all types in the largest
-	 * mixed species in the network. It is equal to the sum of the max single
-	 * species helium and vacancy cluster sizes by default.
-	 * > numHeClusters - The number of single-species He clusters of all sizes in
-	 * the network.
-	 * > numVClusters - The number of single-species V clusters of all sizes in the
-	 * network.
-	 * > numIClusters - The number of single-species I clusters of all sizes in the
-	 * network.
-	 * > numHeVClusters - The number of HeV clusters of all sizes in the
-	 * network.
-	 * > numHeIClusters - The number of HeI clusters of all sizes in the
-	 * network.
-	 *
-	 * These properties are always updated when a cluster is added.
+	 * @param diagFill The pointer to the vector where the connectivity information is kept
 	 */
-	const std::map<std::string, std::string> & getProperties();
+	void getDiagonalFill(int *diagFill);
 
 	/**
-	 * This operation sets a property with the given key to the specified value
-	 * for the network. ReactionNetworks may reserve the right to ignore this
-	 * operation for special key types, most especially those that they manage
-	 * on their own.
+	 * Get the total concentration of atoms contained in bubbles in the network.
 	 *
-	 * @param key The key for the property
-	 * @param value The value to which the key should be set
+	 * Here the atoms that are considered are helium atoms.
+	 *
+	 * @return The total concentration
 	 */
-	void setProperty(const std::string& key, const std::string& value);
+	double getTotalAtomConcentration();
 
 	/**
-	 * This operation returns the size or number of reactants in the network.
+	 * Compute the fluxes generated by all the reactions
+	 * for all the clusters and their momentums.
 	 *
-	 * @return The number of reactants in the network
+	 * @param updatedConcOffset The pointer to the array of the concentration at the grid
+	 * point where the fluxes are computed used to find the next solution
 	 */
-	int size();
+	void computeAllFluxes(double *updatedConcOffset);
+
+	/**
+	 * Compute the partial derivatives generated by all the reactions
+	 * for all the clusters and their momentum.
+	 *
+	 * @param vals The pointer to the array that will contain the values of
+	 * partials for the reactions
+	 * @param indices The pointer to the array that will contain the indices
+	 * of the clusters
+	 * @param size The pointer to the array that will contain the number of reactions for
+	 * this cluster
+	 */
+	virtual void computeAllPartials(double *vals, int *indices, int *size);
+
+	/**
+	 * Number of He clusters in our network.
+	 */
+	int getNumHeClusters() const {
+		return numHeClusters;
+	}
+
+	/**
+	 * Number of HeV clusters in our network.
+	 */
+	int getNumHeVClusters() const {
+		return numHeVClusters;
+	}
+
+	/**
+	 * Number of HeI clusters in our network.
+	 */
+	int getNumHeIClusters() const {
+		return numHeIClusters;
+	}
+
+	/**
+	 * Maximum size of He clusters in our network.
+	 */
+	int getMaxHeClusterSize() const {
+		return maxHeClusterSize;
+	}
+
+	/**
+	 * Maximum size of HeV clusters in our network.
+	 */
+	int getMaxHeVClusterSize() const {
+		return maxHeVClusterSize;
+	}
+
+	/**
+	 * Maximum size of HeI clusters in our network.
+	 */
+	int getMaxHeIClusterSize() const {
+		return maxHeIClusterSize;
+	}
 
 };
 

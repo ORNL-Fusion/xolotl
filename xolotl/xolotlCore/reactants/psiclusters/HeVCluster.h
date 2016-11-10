@@ -26,8 +26,8 @@ private:
 	 * initialized with a size.
 	 */
 	HeVCluster() :
-		PSICluster(1)
-	{ numHe = 1; numV = 1; }
+		PSICluster()
+	{ numHe = 0; numV = 0; }
 
 	/**
 	 * This operation handles partial replacement reactions of the form
@@ -45,7 +45,7 @@ private:
 	 * @param oldComponentName The name of the component that will be partially
 	 * replaced.
 	 */
-	void replaceInCompound(std::vector<Reactant *> & clusters,
+	void replaceInCompound(std::vector<IReactant *> & clusters,
 			const std::string& oldComponentName);
 
 	/**
@@ -63,7 +63,7 @@ private:
 	 * (Here it will be He clusters)
 	 * @param productName The name of the product produced in the reaction.
 	 */
-	void combineClusters(std::vector<Reactant *> & clusters,
+	void combineClusters(std::vector<IReactant *> & clusters,
 			const std::string& productName);
 
 public:
@@ -87,18 +87,17 @@ public:
 	 *
 	 * @param other the reactant to be copied
 	 */
-	HeVCluster(const HeVCluster &other);
+	HeVCluster(HeVCluster &other);
 
 	//! Destructor
 	~HeVCluster() {}
 
 	/**
-	 * This operation returns a Reactant that is created using the copy
-	 * constructor of HeVCluster.
-	 *
-	 * @return A copy of this reactant
+	 * Returns a reactant created using the copy constructor
 	 */
-	virtual std::shared_ptr<Reactant> clone();
+	virtual std::shared_ptr<IReactant> clone() {
+		return std::shared_ptr<IReactant> (new HeVCluster(*this));
+	}
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of

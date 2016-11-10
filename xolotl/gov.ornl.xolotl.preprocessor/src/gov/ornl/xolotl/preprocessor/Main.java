@@ -42,10 +42,9 @@ public class Main {
 				Preprocessor preprocessor = new Preprocessor(myArgs);
 
 				// Generate the network of clusters
-				ArrayList<Cluster> clusters = preprocessor
-						.generateNetwork();
+				ArrayList<Cluster> clusters = preprocessor.generateNetwork();
 				System.out.println("Network generated.");
-				
+
 				// Get the name of the networkFile from xolotlParams
 				String networkFileName = preprocessor.xolotlParams.getProperty("networkFile");
 
@@ -57,14 +56,13 @@ public class Main {
 
 				if (myArgs.isCheckpoint()) {
 					String HDF5FileName = myArgs.getCheckpoint();
-					// Read the header and the concentration from this file 
+					// Read the header and the concentration from this file
 					// and copy them to the network file
 					int[] gridSize = preprocessor.copyHeader(HDF5FileName, networkFileName);
-					preprocessor.copyConcentration(HDF5FileName, networkFileName, 
-							gridSize, clusters);
-				}
-				else {
-					// Write the header in it with the size options from the preprocessor
+					preprocessor.copyConcentration(HDF5FileName, networkFileName, gridSize, clusters);
+				} else {
+					// Write the header in it with the size options from the
+					// preprocessor
 					preprocessor.writeHeader(networkFileName, myArgs);
 				}
 
@@ -72,8 +70,7 @@ public class Main {
 
 				// Write the file containing the parameters that are needed
 				// to run Xolotl
-				preprocessor.writeParameterFile("params.txt",
-						preprocessor.xolotlParams);
+				preprocessor.writeParameterFile("params.txt", preprocessor.xolotlParams);
 				System.out.println("Parameters written.");
 			}
 		} catch (ArgumentValidationException e1) {
@@ -81,8 +78,7 @@ public class Main {
 			e1.printStackTrace();
 			return;
 		} catch (Exception e) {
-			System.err.println("Exception caught while generating input. "
-					+ "Aborting.");
+			System.err.println("Exception caught while generating input. " + "Aborting.");
 			e.printStackTrace();
 			return;
 		}

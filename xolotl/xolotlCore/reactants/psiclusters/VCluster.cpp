@@ -6,32 +6,30 @@
 
 using namespace xolotlCore;
 
-VCluster::VCluster(int nV, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		PSICluster(nV, registry) {
+VCluster::VCluster(int nV,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		PSICluster(registry) {
+	// Set the size
+	size = nV;
 	// Set the reactant name appropriately
 	std::stringstream nameStream;
 	nameStream << "V_" << size;
 	name = nameStream.str();
 	// Set the typename appropriately
-	typeName = "V";
+	typeName = vType;
 
 	// Update the composition map
-	compositionMap["V"] = size;
+	compositionMap[vType] = size;
 
 	// Compute the reaction radius
 	// It is the same formula for HeV clusters
-	reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::latticeConstant
+	reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
 			+ pow(
-					(3.0 * pow(xolotlCore::latticeConstant, 3.0) * size)
+					(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0) * size)
 							/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
 			- pow(
-					(3.0 * pow(xolotlCore::latticeConstant, 3.0))
+					(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
 							/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
-}
-
-std::shared_ptr<Reactant> VCluster::clone() {
-	std::shared_ptr<Reactant> reactant(new VCluster(*this));
-	return reactant;
 }
 
 void VCluster::createReactionConnectivity() {
@@ -77,7 +75,8 @@ void VCluster::createReactionConnectivity() {
 		auto firstReactant = (PSICluster *) reactants[i];
 		// Get the vacancy cluster that is bigger than the interstitial
 		// and can form this cluster.
-		auto secondReactant = (PSICluster *) network->get(typeName, firstReactant->getSize() + size);
+		auto secondReactant = (PSICluster *) network->get(typeName,
+				firstReactant->getSize() + size);
 		// Add to the reacting pairs if the second reactant exists
 		if (secondReactant) {
 			// Create the pair
@@ -114,7 +113,8 @@ void VCluster::createDissociationConnectivity() {
 	// (He_1)(V_a) --> V_a + He
 	// Get the cluster with one more helium
 	std::vector<int> compositionVec = { 1, size, 0 };
-	auto heVClusterMoreHe = (PSICluster *) network->getCompound(heVType, compositionVec);
+	auto heVClusterMoreHe = (PSICluster *) network->getCompound(heVType,
+			compositionVec);
 	// Get the single helium cluster
 	auto singleCluster = (PSICluster *) network->get(heType, 1);
 	// Here it is important that heVClusterMoreHe is the first cluster
@@ -134,9 +134,20 @@ void VCluster::createDissociationConnectivity() {
 			// (He_c)(V_b) is the dissociating one, (He_c)[V_(b-a)] is the one
 			// that is also emitted during the dissociation
 			auto comp = cluster->getComposition();
-			std::vector<int> compositionVec = { comp[heType], comp[vType] - size,
-					0 };
-			auto smallerReactant = (PSICluster *) network->getCompound(heVType, compositionVec);
+
+			// Skip He_1V_1 because it was counted in the He dissociation
+			if (comp[heType] == 1 && comp[vType] == 1)
+				continue;
+
+			std::vector<int> compositionVec = { comp[heType], comp[vType]
+					- size, 0 };
+			auto smallerReactant = (PSICluster *) network->getCompound(heVType,
+					compositionVec);
+			// Special case for numV = 1
+			if (comp[vType] == 1) {
+				smallerReactant = (PSICluster *) network->get(heType,
+						comp[heType]);
+			}
 			dissociateCluster(cluster, smallerReactant);
 		}
 	}

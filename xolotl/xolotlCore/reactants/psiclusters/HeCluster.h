@@ -19,7 +19,7 @@ private:
 	 * initialized with a size and performance handler registry
 	 */
 	HeCluster() :
-		PSICluster(1) {}
+		PSICluster() {}
 
 	/**
 	 * This operation "combines" clusters in the sense that it handles all of
@@ -36,7 +36,7 @@ private:
 	 * (Here it will be HeV clusters and He clusters)
 	 * @param productName The name of the product produced in the reaction
 	 */
-	void combineClusters(std::vector<Reactant *> & clusters,
+	void combineClusters(std::vector<IReactant *> & clusters,
 			const std::string& productName);
 
 public:
@@ -55,12 +55,11 @@ public:
 	~HeCluster() {}
 
 	/**
-	 * This operation returns a Reactant that is created using the copy
-	 * constructor of HeCluster.
-	 *
-	 * @return A copy of this HeCluster
+	 * Returns a reactant created using the copy constructor
 	 */
-	virtual std::shared_ptr<Reactant> clone();
+	virtual std::shared_ptr<IReactant> clone() {
+		return std::shared_ptr<IReactant> (new HeCluster(*this));
+	}
 
 protected:
 

@@ -8,22 +8,26 @@ SET(LIBRARY_NAME "xolotlFactory")
 #Collect all header filenames in this project 
 #and glob them in HEADERS
 file(GLOB HEADERS material/*.h vizHandler/*.h temperatureHandler/*.h
-solverHandler/*.h)
+solverHandler/*.h reactionHandler/*.h)
 
 #Grab all of the source files
 file(GLOB SRC material/*.cpp vizHandler/*.cpp temperatureHandler/*.cpp
-solverHandler/*.cpp)
+solverHandler/*.cpp reactionHandler/*.cpp)
 
 #Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/material)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/flux)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/diffusion)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/bubblebursting)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/vizHandler)
 include_directories(${CMAKE_BINARY_DIR}/xolotlFactory)

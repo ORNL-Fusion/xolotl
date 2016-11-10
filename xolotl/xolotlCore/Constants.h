@@ -23,7 +23,11 @@ static const double pi = 3.1415926535897932;
 
 //! Lattice Parameter. Equal to 3.17 Angstroms, taken from Becquart et. al.
 //! Journal of Nuclear Materials 403 (2010) 75–88. Given in units here of nm.
-static const double latticeConstant = 0.31700000000000000;
+static const double tungstenLatticeConstant = 0.31700000000000000;
+
+//! Lattice Parameter. Equal to 3.17 Angstroms, taken from Becquart et. al.
+//! Journal of Nuclear Materials 403 (2010) 75–88. Given in units here of nm.
+static const double uraniumDioxydeLatticeConstant = 0.57400000000000000;
 
 /**
  * Statically defined type names. This are used to optimize the lookup
@@ -36,6 +40,11 @@ static const std::string vType = "V";
 static const std::string iType = "I";
 static const std::string heVType = "HeV";
 static const std::string heIType = "HeI";
+static const std::string xeType = "Xe";
+static const std::string xeVType = "XeV";
+static const std::string xeIType = "XeI";
+static const std::string NESuperType = "NESuper";
+static const std::string PSISuperType = "PSISuper";
 
 } /* end namespace xolotlCore */
 #endif /* CONSTANTS_H_ */
