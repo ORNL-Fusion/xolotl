@@ -45,15 +45,14 @@ p0, p1 = np.loadtxt('ptrain.dat', usecols = (0,1), unpack=True)
 for i in range(len(p0)):
     cmd = "echo " + str(p0[i]) + " " + str(p1[i]) + " > FitParameters.dat"
     os.system(cmd) 
-    cmd = "time mpiexec -n 2 /home/ocekmer/Workspaces/UQTk_Xolotl/Xolotl-build/xolotl /home/ocekmer/Workspaces/UQTk_Xolotl/Xolotl-build/param.txt"
+    cmd = "mpiexec -n 4 /home/ocekmer/Workspaces/Sourceforge/uq-build/xolotl /home/ocekmer/Workspaces/Sourceforge/uq-build/params.txt"
     os.system(cmd)
-#     conTEMP = np.loadtxt('TrainOut.dat', usecols = (0,), unpack=True)
-#     conTEMP = conTEMP / max(conTEMP)
-#     np.savetxt('TrainOut.dat',conTEMP)
 
-    W_Depth, CumulHe = np.loadtxt('heliumCumul_7.dat', usecols = (0,1), unpack=True)
-    CumulHe = CumulHe / max(CumulHe)
-    np.savetxt('TrainOut.dat',CumulHe)
+#     W_Depth, CumulHe = np.loadtxt('heliumCumul_92.dat', usecols = (0,1), unpack=True)
+    Fluence, Reten = np.loadtxt('retentionOut.txt', usecols = (0,1,), skiprows=1, unpack=True)
+#     CumulHe = CumulHe / max(CumulHe)
+#     np.savetxt('TrainOut.dat',CumulHe)
+    np.savetxt('TrainOut.dat',Reten)
     if i==0:
         cmd = "./transpose_file.x TrainOut.dat > ytrain.dat"
         os.system(cmd)
@@ -61,7 +60,8 @@ for i in range(len(p0)):
         cmd = "./transpose_file.x TrainOut.dat >> ytrain.dat"
         os.system(cmd)
 
-np.savetxt('Depth.dat',W_Depth)
+# np.savetxt('Depth.dat',W_Depth)
+np.savetxt('Depth.dat',Fluence)
 
 # Run Xolotl at validation points
 p0val, p1val = np.loadtxt('pval.dat', usecols = (0,1), unpack=True)
@@ -69,15 +69,14 @@ p0val, p1val = np.loadtxt('pval.dat', usecols = (0,1), unpack=True)
 for i in range(len(p0val)):
     cmd = "echo " + str(p0val[i]) + " " + str(p1val[i]) + " > FitParameters.dat"
     os.system(cmd) 
-    cmd = "time mpiexec -n 2 /home/ocekmer/Workspaces/UQTk_Xolotl/Xolotl-build/xolotl /home/ocekmer/Workspaces/UQTk_Xolotl/Xolotl-build/param.txt"
+    cmd = "mpiexec -n 4 /home/ocekmer/Workspaces/Sourceforge/uq-build/xolotl /home/ocekmer/Workspaces/Sourceforge/uq-build/params.txt"
     os.system(cmd)
-#     conTEMP = np.loadtxt('TrainOut.dat', usecols = (0,), unpack=True)
-#     conTEMP = conTEMP / max(conTEMP)
-#     np.savetxt('TrainOut.dat',conTEMP)
 
-    W_DepthVal, CumulHeVal = np.loadtxt('heliumCumul_7.dat', usecols = (0,1), unpack=True)
-    CumulHeVal = CumulHeVal / max(CumulHeVal)
-    np.savetxt('TrainOut.dat',CumulHeVal)
+#     W_DepthVal, CumulHeVal = np.loadtxt('heliumCumul_92.dat', usecols = (0,1), unpack=True)
+    FluenceVal, RetenVal = np.loadtxt('retentionOut.txt', usecols = (0,1,), skiprows=1, unpack=True)
+#     CumulHeVal = CumulHeVal / max(CumulHeVal)
+#     np.savetxt('TrainOut.dat',CumulHeVal)
+    np.savetxt('TrainOut.dat',RetenVal)
     if i==0:
         cmd = "./transpose_file.x TrainOut.dat > yval.dat"
         os.system(cmd)
@@ -95,7 +94,8 @@ os.system(cmd)
  
 results=pick.load(open('results.pk', 'rb'))
 
-ndgrid=100
+# ndgrid=len(W_Depth)
+ndgrid=len(Fluence)
 
 mi=np.loadtxt('mindex.dat')
 npc=mi.shape[0]
