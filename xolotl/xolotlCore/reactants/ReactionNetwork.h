@@ -363,13 +363,24 @@ public:
 	}
 
 	/**
-	 * Get the total concentration of atoms contained in bubbles in the network.
+	 * Get the total concentration of atoms contained in the network.
 	 *
 	 * Returns 0.0 here and needs to be implemented by the daughter classes.
 	 *
 	 * @return The total concentration
 	 */
 	virtual double getTotalAtomConcentration() {
+		return 0.0;
+	}
+
+	/**
+	 * Get the total concentration of atoms contained in bubbles in the network.
+	 *
+	 * Returns 0.0 here and needs to be implemented by the daughter classes.
+	 *
+	 * @return The total concentration
+	 */
+	virtual double getTotalTrappedAtomConcentration() {
 		return 0.0;
 	}
 

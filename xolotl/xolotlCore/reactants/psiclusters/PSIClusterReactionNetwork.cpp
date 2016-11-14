@@ -594,6 +594,36 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration() {
 	return heliumConc;
 }
 
+double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration() {
+	// Initial declarations
+	double heliumConc = 0.0;
+
+	// Get all the HeV clusters
+	auto heVClusters = getAll(heVType);
+	// Loop on them
+	for (int i = 0; i < heVClusters.size(); i++) {
+		// Get the cluster and its composition
+		auto cluster = heVClusters[i];
+		auto comp = cluster->getComposition();
+
+		// Add the concentration times the He content to the total helium concentration
+		heliumConc += cluster->getConcentration() * comp[heType];
+	}
+
+	// Get all the super clusters
+	auto superClusters = getAll(PSISuperType);
+	// Loop on them
+	for (int i = 0; i < superClusters.size(); i++) {
+		// Get the cluster
+		auto cluster = (PSISuperCluster *) superClusters[i];
+
+		// Add its total helium concentration helium concentration
+		heliumConc += cluster->getTotalHeliumConcentration();
+	}
+
+	return heliumConc;
+}
+
 void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 	// Initial declarations
 	IReactant * cluster;

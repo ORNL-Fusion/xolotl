@@ -392,7 +392,7 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "W100", description = "{W100, W110, W111, W211} "
+	@Option(defaultValue = "W100", description = "{W100, W110, W111, W211, Fuel} "
 			+ "The option declaring which material will be used "
 			+ "(W is for tungsten and the numbers correspond to the surface orientation)")
 	/**
@@ -418,7 +418,7 @@ public interface Arguments {
 	@Option(defaultValue = "reaction diff advec", description = "List of physical processes for the simulation "
 			+ "(reaction, diff, advec, modifiedTM, movingSurface, bursting, attenuation)")
 	/**
-	 * This operation produces the required command line option '--petscArgs'
+	 * This operation produces the required command line option '--process'
 	 * which takes a single string value and is defined by the previous Option
 	 * annotation
 	 * 
@@ -586,7 +586,7 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "If the user wants to use a regular grid in the " + "x direction or not.")
+	@Option(description = "If the user wants to use a regular grid in the x direction or not.")
 
 	/**
 	 * This operation produces the optional command line option '--regularGrid'
@@ -612,7 +612,8 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(description = "List of arguments for the grain boundaries.")
+	@Option(description = "List of arguments for the grain boundaries. "
+			+ "For instance Y 3.0 means that there will a GB in the Y direction at 3.0 nm.")
 
 	/**
 	 * This operation produces the optional command line option '--grain' which

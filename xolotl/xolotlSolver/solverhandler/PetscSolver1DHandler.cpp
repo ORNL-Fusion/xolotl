@@ -291,7 +291,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		network->updateConcentrationsFromArray(concOffset);
 
 		// Sum the total atom concentration
-		atomConc += network->getTotalAtomConcentration()
+		atomConc += network->getTotalTrappedAtomConcentration()
 					* (grid[xi] - grid[xi - 1]);
 	}
 
@@ -590,7 +590,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
 		network->updateConcentrationsFromArray(concOffset);
 
 		// Sum the total atom concentration
-		atomConc += network->getTotalAtomConcentration()
+		atomConc += network->getTotalTrappedAtomConcentration()
 					* (grid[xi] - grid[xi - 1]);
 	}
 
