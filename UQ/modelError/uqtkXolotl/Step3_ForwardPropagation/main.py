@@ -1,7 +1,9 @@
 import numpy as np
 import os
 import matplotlib.pyplot
+import time
 
+time0 = time.time()
  
 # # Append mapparam to pchain
 # cmd='cp ../Step1_ParametricFit/Gumbel/pchain.dat .'
@@ -62,3 +64,7 @@ os.system(cmd)
 # Clean the rest
 cmd = "rm -rf *.dat *.txt"
 os.system(cmd)
+
+time1 = time.time()
+
+print "Time elapsed = ", time1 - time0, " sec"
