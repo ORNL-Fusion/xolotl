@@ -3,6 +3,9 @@ import os
 import matplotlib.pyplot
 
 import cPickle as pick
+import time
+
+time0 = time.time()
 
 # Build the domain file for Weibull/Gumbel parameters
 # Need to pick a and b range around the region where the MCMC is concentrated
@@ -40,19 +43,27 @@ os.system(cmd)
  
 # Run Xolotl at training points
 p0, p1 = np.loadtxt('ptrain.dat', usecols = (0,1), unpack=True)
+trnN = len(p0)
+
   
 # for i in range(1):
-for i in range(len(p0)):
+for i in range(trnN):
+    cmd = "echo 'Training points " + str(i+1) + "/" + str(trnN)  + "'"
+    os.system(cmd)
     cmd = "echo " + str(p0[i]) + " " + str(p1[i]) + " > FitParameters.dat"
     os.system(cmd) 
     cmd = "mpiexec -n 4 /home/ocekmer/Workspaces/Sourceforge/uq-build/xolotl /home/ocekmer/Workspaces/Sourceforge/uq-build/params.txt"
     os.system(cmd)
 
-#     W_Depth, CumulHe = np.loadtxt('heliumCumul_92.dat', usecols = (0,1), unpack=True)
-    Fluence, Reten = np.loadtxt('retentionOut.txt', usecols = (0,1,), skiprows=1, unpack=True)
-#     CumulHe = CumulHe / max(CumulHe)
-#     np.savetxt('TrainOut.dat',CumulHe)
-    np.savetxt('TrainOut.dat',Reten)
+#   # Comment out for cumulative helium fraction 
+    W_Depth, CumulHe = np.loadtxt('heliumCumul_91.dat', usecols = (0,1), unpack=True)
+    CumulHe = CumulHe / max(CumulHe)
+    np.savetxt('TrainOut.dat',CumulHe)
+    
+#     # Comment out for helium retention
+#     Fluence, Reten = np.loadtxt('retentionOut.txt', usecols = (0,1,), skiprows=1, unpack=True)
+#     np.savetxt('TrainOut.dat',Reten)
+
     if i==0:
         cmd = "./transpose_file.x TrainOut.dat > ytrain.dat"
         os.system(cmd)
@@ -60,23 +71,30 @@ for i in range(len(p0)):
         cmd = "./transpose_file.x TrainOut.dat >> ytrain.dat"
         os.system(cmd)
 
-# np.savetxt('Depth.dat',W_Depth)
-np.savetxt('Depth.dat',Fluence)
+np.savetxt('Depth.dat',W_Depth)
+# np.savetxt('Depth.dat',Fluence)
 
 # Run Xolotl at validation points
 p0val, p1val = np.loadtxt('pval.dat', usecols = (0,1), unpack=True)
+valN = len(p0val)
  
-for i in range(len(p0val)):
+for i in range(valN):
+    cmd = "echo 'Validation points " + str(i+1) + "/" + str(valN) + "'" 
+    os.system(cmd)
     cmd = "echo " + str(p0val[i]) + " " + str(p1val[i]) + " > FitParameters.dat"
     os.system(cmd) 
     cmd = "mpiexec -n 4 /home/ocekmer/Workspaces/Sourceforge/uq-build/xolotl /home/ocekmer/Workspaces/Sourceforge/uq-build/params.txt"
     os.system(cmd)
 
-#     W_DepthVal, CumulHeVal = np.loadtxt('heliumCumul_92.dat', usecols = (0,1), unpack=True)
-    FluenceVal, RetenVal = np.loadtxt('retentionOut.txt', usecols = (0,1,), skiprows=1, unpack=True)
-#     CumulHeVal = CumulHeVal / max(CumulHeVal)
-#     np.savetxt('TrainOut.dat',CumulHeVal)
-    np.savetxt('TrainOut.dat',RetenVal)
+    # Comment out for cumulative helium fraction
+    W_DepthVal, CumulHeVal = np.loadtxt('heliumCumul_91.dat', usecols = (0,1), unpack=True)
+    CumulHeVal = CumulHeVal / max(CumulHeVal)
+    np.savetxt('TrainOut.dat',CumulHeVal)
+    
+#     # Comment out for helium retention
+#     FluenceVal, RetenVal = np.loadtxt('retentionOut.txt', usecols = (0,1,), skiprows=1, unpack=True)
+#     np.savetxt('TrainOut.dat',RetenVal)
+
     if i==0:
         cmd = "./transpose_file.x TrainOut.dat > yval.dat"
         os.system(cmd)
@@ -94,8 +112,8 @@ os.system(cmd)
  
 results=pick.load(open('results.pk', 'rb'))
 
-# ndgrid=len(W_Depth)
-ndgrid=len(Fluence)
+ndgrid=len(W_Depth)
+# ndgrid=len(Fluence)
 
 mi=np.loadtxt('mindex.dat')
 npc=mi.shape[0]
@@ -118,3 +136,7 @@ os.system(cmd)
 # Clean the rest
 cmd = "rm -rf *.dat *.log *.png pcf *.pk"
 os.system(cmd)
+
+time1 = time.time()
+
+print "Time elapsed = ", time1 - time0, " sec"
