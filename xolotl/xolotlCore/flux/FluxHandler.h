@@ -115,18 +115,10 @@ public:
 	virtual void initializeTimeProfile(const std::string& fileName);
 
 	/**
-	 * This operation returns the incident flux vector.
+	 * This operation computes the flux due to incoming particles at a given grid point.
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<double> getIncidentFluxVec(double currentTime,
-			int surfacePos);
-
-	/**
-	 * This operation returns the index of the cluster that is irradiating
-	 * the material.
-	 * \see IFluxHandler.h
-	 */
-	virtual int getIncidentFluxClusterIndex();
+	virtual void computeIncidentFlux(double currentTime, double *updatedConcOffset, int xi, int surfacePos);
 
 	/**
 	 * This operation increments the fluence at the current time step.

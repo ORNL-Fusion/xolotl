@@ -303,12 +303,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// Set the disappearing rate in the modified TM handler
 	mutationHandler->updateDisappearingRate(totalAtomConc);
 
-	// Get the incident flux vector
-	auto incidentFluxVector = fluxHandler->getIncidentFluxVec(ftime,
-			surfacePosition);
-
 	// Declarations for variables used in the loop
-	int fluxIndex = fluxHandler->getIncidentFluxClusterIndex();
 	double **concVector = new double*[3];
 	std::vector<double> gridPosition = { 0.0, 0.0, 0.0 };
 
@@ -356,9 +351,8 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// grid point) at the expense of being a little tricky to comprehend.
 		network->updateConcentrationsFromArray(concOffset);
 
-		// ----- Account for flux of incoming He of cluster size 1 -----
-		updatedConcOffset[fluxIndex] +=
-				incidentFluxVector[xi - surfacePosition];
+		// ----- Account for flux of incoming particles -----
+		fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, xi, surfacePosition);
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
 		diffusionHandler->computeDiffusion(network, concVector,

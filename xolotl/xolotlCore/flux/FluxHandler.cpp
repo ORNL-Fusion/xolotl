@@ -130,18 +130,17 @@ double FluxHandler::getProfileAmplitude(double currentTime) const {
 	return f;
 }
 
-std::vector<double> FluxHandler::getIncidentFluxVec(double currentTime, int surfacePos) {
+void FluxHandler::computeIncidentFlux(double currentTime, double *updatedConcOffset, int xi, int surfacePos) {
 	// Recompute the flux vector if a time profile is used
 	if (useTimeProfile) {
 		fluxAmplitude = getProfileAmplitude(currentTime);
 		recomputeFluxHandler(surfacePos);
 	}
 
-	return incidentFluxVec;
-}
+	// Update the concentration array
+	updatedConcOffset[fluxIndex] += incidentFluxVec[xi - surfacePos];
 
-int FluxHandler::getIncidentFluxClusterIndex() {
-	return fluxIndex;
+	return;
 }
 
 void FluxHandler::incrementFluence(double dt) {

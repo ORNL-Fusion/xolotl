@@ -34,6 +34,8 @@ BOOST_AUTO_TEST_CASE(checkGetIncidentFlux) {
 
 	// Load the network
 	auto network = loader.load().get();
+	// Get its size
+	const int dof = network->getDOF();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -53,48 +55,29 @@ BOOST_AUTO_TEST_CASE(checkGetIncidentFlux) {
 	// Create a time
 	double currTime = 1.0;
 
-	// Get the flux vector
-	auto testFluxVec = testFitFlux->getIncidentFluxVec(currTime, surfacePos);
+	// The array of concentration
+	double newConcentration[5 * dof];
+
+	// Initialize their values
+	for (int i = 0; i < 5 * dof; i++) {
+		newConcentration[i] = 0.0;
+	}
+
+	// The pointer to the grid point we want
+	double *updatedConc = &newConcentration[0];
+	double *updatedConcOffset = updatedConc + dof;
+
+	// Update the concentrations at some grid points
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	updatedConcOffset = updatedConc + 2 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2, surfacePos);
+	updatedConcOffset = updatedConc + 3 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(testFluxVec[1], 0.476819, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[2], 0.225961, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[3], 0.097220, 0.01);
-
-	return;
-}
-
-BOOST_AUTO_TEST_CASE(checkFluxIndex) {
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-
-	// Load the network
-	auto network = loader.load().get();
-
-	// Create a grid
-	std::vector<double> grid;
-	for (int l = 0; l < 5; l++) {
-		grid.push_back((double) l * 1.25);
-	}
-	// Specify the surface position
-	int surfacePos = 0;
-
-	// Create the flux handler
-	auto testFitFlux = make_shared<W100FitFluxHandler>();
-	// Set the amplitude
-	testFitFlux->setFluxAmplitude(1.0);
-	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
-
-	// Check the value of the index of the cluster for the flux
-	BOOST_REQUIRE_EQUAL(testFitFlux->getIncidentFluxClusterIndex(), 0);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.476819, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.225961, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.097220, 0.01);
 
 	return;
 }
@@ -112,6 +95,8 @@ BOOST_AUTO_TEST_CASE(checkFluence) {
 
 	// Load the network
 	auto network = loader.load().get();
+	// Get its size
+	const int dof = network->getDOF();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -153,6 +138,8 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 
 	// Load the network
 	auto network = loader.load().get();
+	// Get its size
+	const int dof = network->getDOF();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -176,13 +163,29 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 	// Create a time
 	double currTime = 1.0;
 
-	// Get the flux vector
-	auto testFluxVec = testFitFlux->getIncidentFluxVec(currTime, surfacePos);
+	// The array of concentration
+	double newConcentration[5 * dof];
+
+	// Initialize their values
+	for (int i = 0; i < 5 * dof; i++) {
+		newConcentration[i] = 0.0;
+	}
+
+	// The pointer to the grid point we want
+	double *updatedConc = &newConcentration[0];
+	double *updatedConcOffset = updatedConc + dof;
+
+	// Update the concentrations at some grid points
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	updatedConcOffset = updatedConc + 2 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2, surfacePos);
+	updatedConcOffset = updatedConc + 3 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(testFluxVec[1], 1.192047, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[2], 0.564902, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[3], 0.243050, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 1.192047, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.564902, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.243050, 0.01);
 
 	return;
 }
@@ -200,6 +203,8 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 
 	// Load the network
 	auto network = loader.load().get();
+	// Get its size
+	const int dof = network->getDOF();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -229,26 +234,52 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	// Create a time
 	double currTime = 0.5;
 
-	// Get the flux vector
-	auto testFluxVec = testFitFlux->getIncidentFluxVec(currTime, surfacePos);
+	// The array of concentration
+	double newConcentration[5 * dof];
+
+	// Initialize their values
+	for (int i = 0; i < 5 * dof; i++) {
+		newConcentration[i] = 0.0;
+	}
+
+	// The pointer to the grid point we want
+	double *updatedConc = &newConcentration[0];
+	double *updatedConcOffset = updatedConc + dof;
+
+	// Update the concentrations at some grid points
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	updatedConcOffset = updatedConc + 2 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2, surfacePos);
+	updatedConcOffset = updatedConc + 3 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(testFluxVec[1], 1192.047, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[2], 564.902, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[3], 243.050, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 1192.047, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 564.902, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 243.050, 0.01);
 	// Check the value of the flux amplitude
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2500.0);
 
 	// Change the current time
 	currTime = 3.5;
 
-	// Get the flux vector
-	testFluxVec = testFitFlux->getIncidentFluxVec(currTime, surfacePos);
+	// Reinitialize their values
+	for (int i = 0; i < 5 * dof; i++) {
+		newConcentration[i] = 0.0;
+	}
+
+	// Update the concentrations at some grid points
+	updatedConcOffset = updatedConc + dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	updatedConcOffset = updatedConc + 2 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2, surfacePos);
+	updatedConcOffset = updatedConc + 3 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(testFluxVec[1], 715.228, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[2], 338.941, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[3], 145.830, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 715.228, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 338.941, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 145.830, 0.01);
 	// Check the value of the flux amplitude
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 1500.0);
 

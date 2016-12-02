@@ -36,21 +36,15 @@ public:
 	virtual void initializeTimeProfile(const std::string& fileName) = 0;
 
 	/**
-	 * This operation returns the incident flux vector.
+	 * This operation computes the flux due to incoming particles at a given grid point.
 	 *
 	 * @param currentTime The time
+	 * @param updatedConcOffset The pointer to the array of the concentration at the grid
+	 * point where the diffusion is computed used to find the next solution
+	 * @param ix The position on the x grid
 	 * @param surfacePos The current position of the surface
-	 * @return The incident flux vector
 	 */
-	virtual std::vector<double> getIncidentFluxVec(double currentTime, int surfacePos) = 0;
-
-	/**
-	 * This operation returns the index of the cluster that is irradiating
-	 * the material.
-	 *
-	 * @return The index of the incident flux cluster
-	 */
-	virtual int getIncidentFluxClusterIndex() = 0;
+	virtual void computeIncidentFlux(double currentTime, double *updatedConcOffset, int xi, int surfacePos) = 0;
 
 	/**
 	 * This operation increments the fluence at the current time step.

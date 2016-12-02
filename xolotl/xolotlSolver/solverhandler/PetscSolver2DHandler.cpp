@@ -303,7 +303,6 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	double sy = 1.0 / (hY * hY);
 
 	// Declarations for variables used in the loop
-	int fluxIndex = fluxHandler->getIncidentFluxClusterIndex();
 	double **concVector = new double*[5];
 	std::vector<double> gridPosition = { 0.0, 0.0, 0.0 }, incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
@@ -356,10 +355,6 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		fluxHandler->initializeFluxHandler(network, surfacePosition[yj], grid);
 		advectionHandlers[0]->setLocation(grid[surfacePosition[yj]]);
 
-		// Get the flux vector which can be different at each Y position
-		incidentFluxVector = fluxHandler->getIncidentFluxVec(ftime,
-				surfacePosition[yj]);
-
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
 			// Compute the old and new array offsets
 			concOffset = concs[yj][xi];
@@ -405,9 +400,8 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// grid point) at the expense of being a little tricky to comprehend.
 			network->updateConcentrationsFromArray(concOffset);
 
-			// ----- Account for flux -----
-			updatedConcOffset[fluxIndex] += incidentFluxVector[xi
-					- surfacePosition[yj]];
+			// ----- Account for flux of incoming particles -----
+			fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, xi, surfacePosition[yj]);
 
 			// ---- Compute diffusion over the locally owned part of the grid -----
 			diffusionHandler->computeDiffusion(network, concVector,

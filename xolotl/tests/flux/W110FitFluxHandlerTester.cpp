@@ -34,6 +34,8 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 
 	// Load the network
 	auto network = loader.load().get();
+	// Get its size
+	const int dof = network->getDOF();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -53,13 +55,29 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 	// Create a time
 	double currTime = 1.0;
 
-	// Get the flux vector
-	auto testFluxVec = testFitFlux->getIncidentFluxVec(currTime, surfacePos);
+	// The array of concentration
+	double newConcentration[5 * dof];
+
+	// Initialize their values
+	for (int i = 0; i < 5 * dof; i++) {
+		newConcentration[i] = 0.0;
+	}
+
+	// The pointer to the grid point we want
+	double *updatedConc = &newConcentration[0];
+	double *updatedConcOffset = updatedConc + dof;
+
+	// Update the concentrations at some grid points
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	updatedConcOffset = updatedConc + 2 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2, surfacePos);
+	updatedConcOffset = updatedConc + 3 * dof;
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(testFluxVec[1], 0.524627, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[2], 0.211160, 0.01);
-	BOOST_REQUIRE_CLOSE(testFluxVec[3], 0.064213, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.524627, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.211160, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.064213, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();
