@@ -8,7 +8,7 @@ static std::shared_ptr<IReactionHandlerFactory> theReactionFactory;
 
 std::shared_ptr<IReactionHandlerFactory> IReactionHandlerFactory::createNetworkFactory(const std::string& problemType) {
 	// PSI case
-	if (problemType == "W100" || problemType == "W110" || problemType == "W111" || problemType == "W211")
+	if (problemType == "W100" || problemType == "W110" || problemType == "W111" || problemType == "W211" || problemType == "TRIDYN")
 		theReactionFactory = std::make_shared<PSIReactionHandlerFactory>();
 	// NE case
 	else if (problemType == "Fuel") theReactionFactory = std::make_shared<NEReactionHandlerFactory>();
