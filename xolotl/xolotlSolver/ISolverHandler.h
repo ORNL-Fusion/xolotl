@@ -143,6 +143,13 @@ public:
 	virtual double getInitialVConc() const = 0;
 
 	/**
+	 * Get the sputtering yield.
+	 *
+	 * @return The sputtering yield
+	 */
+	virtual double getSputteringYield() const = 0;
+
+	/**
 	 * To know if the surface should be able to move.
 	 *
 	 * @return True if the surface should be able to move.

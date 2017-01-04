@@ -45,6 +45,8 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlot1D;
 double previousIFlux1D = 0.0;
 //! The variable to store the total number of interstitials going through the surface.
 double nInterstitial1D = 0.0;
+//! The variable to store the sputtering yield at the surface.
+double sputteringYield1D = 0.0;
 //! How often HDF5 file is written
 PetscInt hdf5Stride1D = 0;
 //! HDF5 output file name
@@ -1509,6 +1511,7 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
 	PetscInt xs, xm, xi;
+	bool surfaceHasMoved = false;
 
 	PetscFunctionBeginUser;
 
@@ -1538,9 +1541,14 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 
 	// Get the network
 	auto network = solverHandler->getNetwork();
+	int dof = network->getDOF();
 
 	// Get the physical grid
 	auto grid = solverHandler->getXGrid();
+
+	// Get the flux handler to know the flux amplitude.
+	auto fluxHandler = solverHandler->getFluxHandler();
+	double heliumFluxAmplitude = fluxHandler->getFluxAmplitude();
 
 	// Value to now on which processor is the location of the surface,
 	// for MPI usage
@@ -1558,11 +1566,8 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 		// surface since last timestep using the stored flux
 		nInterstitial1D += previousIFlux1D * dt;
 
-//		// Uncomment to write the interstitial and the fluence in a file
-//		std::ofstream outputFile;
-//		outputFile.open("interstitialOut.txt", ios::app);
-//		outputFile << time << " " << previousIFlux1D * dt << std::endl;
-//		outputFile.close();
+		// Remove the sputtering yield since last timestep
+		nInterstitial1D -= sputteringYield1D * heliumFluxAmplitude * dt;
 
 		// Initialize the value for the flux
 		double newFlux = 0.0;
@@ -1614,6 +1619,8 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 	// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 	double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
 	if (nInterstitial1D > threshold) {
+		// The surface is moving
+		surfaceHasMoved = true;
 		// Compute the number of grid points to move the surface of
 		int nGridPoints = (int) (nInterstitial1D / threshold);
 		// Remove the number of interstitials we just transformed in new material
@@ -1639,20 +1646,6 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 		// Set it in the solver
 		solverHandler->setSurfacePosition(surfacePos);
 
-		// Set the new surface location in the surface advection handler
-		auto advecHandler = solverHandler->getAdvectionHandler();
-		advecHandler->setLocation(grid[surfacePos]);
-
-		// Get the flux handler to reinitialize it
-		auto fluxHandler = solverHandler->getFluxHandler();
-		fluxHandler->initializeFluxHandler(network, surfacePos, grid);
-
-		// Get the modified trap-mutation handler to reinitialize it
-		auto mutationHandler = solverHandler->getMutationHandler();
-		auto advecHandlers = solverHandler->getAdvectionHandlers();
-		mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers,
-				grid);
-
 		// Initialize the vacancy concentration on the new grid points
 		// Get the single vacancy ID
 		auto singleVacancyCluster = network->get(xolotlCore::vType, 1);
@@ -1675,6 +1668,60 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 			// Decrease the number of grid points
 			--nGridPoints;
 		}
+	}
+
+	// Moving the surface back
+	else if (nInterstitial1D < -threshold / 10.0) {
+		// The surface is moving
+		surfaceHasMoved = true;
+
+		// Move it back as long as the number of interstitials in negative
+		while (nInterstitial1D < 0.0) {
+			// Compute the threshold to a deeper grid point
+			threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
+			// Set all the concentrations to 0.0 at xi = surfacePos + 1
+			// if xi is on this process
+			if (xi >= xs && xi < xs + xm) {
+				// Get the concentrations at xi = surfacePos + 1
+				gridPointSolution = solutionArray[xi];
+				// Loop on DOF
+				for (int i = 0; i < dof; i++) {
+					gridPointSolution[i] = 0.0;
+				}
+			}
+
+			// Move the surface deeper
+			surfacePos++;
+			xi = surfacePos + 1;
+			// Update the number of interstitials
+			nInterstitial1D += threshold;
+		}
+
+		// Printing information about the extension of the material
+		if (procId == 0) {
+			std::cout << "Removing grid points to the grid at time: "
+					<< time << " s." << std::endl;
+		}
+
+		// Set it in the solver
+		solverHandler->setSurfacePosition(surfacePos);
+	}
+
+	// Reinitialize the physics handlers if the surface has moved
+	if (surfaceHasMoved) {
+		// Set the new surface location in the surface advection handler
+		auto advecHandler = solverHandler->getAdvectionHandler();
+		advecHandler->setLocation(grid[surfacePos]);
+
+		// Get the flux handler to reinitialize it
+		auto fluxHandler = solverHandler->getFluxHandler();
+		fluxHandler->initializeFluxHandler(network, surfacePos, grid);
+
+		// Get the modified trap-mutation handler to reinitialize it
+		auto mutationHandler = solverHandler->getMutationHandler();
+		auto advecHandlers = solverHandler->getAdvectionHandlers();
+		mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers,
+				grid);
 	}
 
 	// Restore the solutionArray
@@ -1992,6 +2039,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
 					tempTimeStep);
 		}
+
+		// Compute the sputtering yield
+		sputteringYield1D = solverHandler->getSputteringYield();
 
 		// Set the monitor on moving surface
 		// monitorMovingSurface1D will be called at each timestep

@@ -61,6 +61,9 @@ protected:
 	//! If the user wants to burst bubbles.
 	bool bubbleBursting;
 
+	//! The sputtering yield for the problem.
+	double sputteringYield;
+
 	//! Method generating the grid in the x direction
 	void generateGrid(int nx, double hx, int surfacePos) {
 		// Clear the grid
@@ -167,6 +170,9 @@ public:
 		// Set the void portion
 		portion = options.getVoidPortion();
 
+		// Set the sputtering yield
+		sputteringYield = options.getSputteringYield();
+
 		// Look at if the user wants to use a regular grid in the x direction
 		useRegularGrid = options.useRegularXGrid();
 
@@ -217,6 +223,14 @@ public:
 	 */
 	double getInitialVConc() const {
 		return initialVConc;
+	}
+
+	/**
+	 * Get the sputtering yield.
+	 * \see ISolverHandler.h
+	 */
+	double getSputteringYield() const {
+		return sputteringYield;
 	}
 
 	/**

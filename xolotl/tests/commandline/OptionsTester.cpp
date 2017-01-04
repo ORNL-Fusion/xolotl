@@ -108,7 +108,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 			<< std::endl << "flux=1.5" << std::endl << "material=W100"
 			<< std::endl << "initialV=0.05" << std::endl << "dimensions=1"
 			<< std::endl << "voidPortion=60.0" << std::endl << "regularGrid=no"
-			<< std::endl << "process=diff" << std::endl;
+			<< std::endl << "process=diff" << std::endl << "grouping=11 2 4"
+			<< std::endl << "sputtering=0.5" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -163,6 +164,14 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 
 	// Check the regular grid option
 	BOOST_REQUIRE_EQUAL(opts.useRegularXGrid(), false);
+
+	// Check the grouping option
+	BOOST_REQUIRE_EQUAL(opts.getGroupingMin(), 11);
+	BOOST_REQUIRE_EQUAL(opts.getGroupingWidthA(), 2);
+	BOOST_REQUIRE_EQUAL(opts.getGroupingWidthB(), 4);
+
+	// Check the sputtering option
+	BOOST_REQUIRE_EQUAL(opts.getSputteringYield(), 0.5);
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();

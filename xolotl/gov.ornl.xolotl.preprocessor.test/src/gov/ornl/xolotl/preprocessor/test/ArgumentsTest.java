@@ -107,6 +107,9 @@ public class ArgumentsTest {
 
 			// Check if there is a grain boundary argument
 			assertEquals(false, args.isGrain());
+
+			// Check if there is a sputtering yield argument
+			assertEquals(false, args.isSputter());
 		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
@@ -135,7 +138,7 @@ public class ArgumentsTest {
 							"--nzGrid", "30", "--xStepSize", "0.2", "--yStepSize", "1.5", "--zStepSize", "10.0",
 							"--material", "W111", "--process", "diff", "--tempFile", "temp.dat", "--flux", "5.0e5",
 							"--fluxFile", "flux.dat", "--checkpoint", "xolotlStop.h5", "--initialV", "0.05",
-							"--regularGrid", "yes", "--voidPortion", "60.0", "--grain=Y 3.0" });
+							"--regularGrid", "yes", "--voidPortion", "60.0", "--grain=Y 3.0", "--sputter", "0.05" });
 
 			// Check that the maximum Helium cluster size is 7
 			assertEquals(7, args.getMaxHeSize());
@@ -235,6 +238,12 @@ public class ArgumentsTest {
 
 			// Check if there is a grain boundary argument
 			assertEquals(true, args.isGrain());
+
+			// Check if there is a sputtering yield argument
+			assertEquals(true, args.issputter());
+
+			// Check its value
+			assertEquals("0.05", args.getSputter());
 		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();

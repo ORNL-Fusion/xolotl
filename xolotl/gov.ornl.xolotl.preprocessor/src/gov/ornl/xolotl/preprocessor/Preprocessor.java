@@ -276,6 +276,8 @@ public class Preprocessor {
 			xolotlParams.setProperty("regularGrid", args.getRegularGrid());
 		if (args.isGrain())
 			xolotlParams.setProperty("grain", args.getGrain());
+		if (args.isSputter())
+			xolotlParams.setProperty("sputtering", args.getSputter());
 
 	}
 

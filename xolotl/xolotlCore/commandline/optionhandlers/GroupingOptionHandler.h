@@ -48,7 +48,7 @@ public:
 		// Set the grouping width in the first direction
 		opt->setGroupingWidthA(strtol(tokens[1].c_str(), NULL, 10));
 		// Set the grouping width in the second direction
-		opt->setGroupingWidthB(strtol(tokens[1].c_str(), NULL, 10));
+		opt->setGroupingWidthB(strtol(tokens[2].c_str(), NULL, 10));
 
 		return true;
 	}

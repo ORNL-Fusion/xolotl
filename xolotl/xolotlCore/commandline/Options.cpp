@@ -18,6 +18,7 @@
 #include <ProcessOptionHandler.h>
 #include <GrainBoundariesOptionHandler.h>
 #include <GroupingOptionHandler.h>
+#include <SputteringOptionHandler.h>
 #include "Options.h"
 
 namespace xolotlCore {
@@ -44,7 +45,8 @@ Options::Options() :
 		gbList(""),
 		groupingMin(std::numeric_limits<int>::max()),
 		groupingWidthA(1),
-		groupingWidthB(1) {
+		groupingWidthB(1),
+		sputteringYield(0.0) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();
@@ -78,6 +80,8 @@ Options::Options() :
 	auto gbHandler = new GrainBoundariesOptionHandler();
 	// Create the grouping option handler
 	auto groupingHandler = new GroupingOptionHandler();
+	// Create the grouping option handler
+	auto sputteringHandler = new SputteringOptionHandler();
 
 	// Add our notion of which options we support.
 	optionsMap[networkHandler->key] = networkHandler;
@@ -96,6 +100,7 @@ Options::Options() :
 	optionsMap[procHandler->key] = procHandler;
 	optionsMap[gbHandler->key] = gbHandler;
 	optionsMap[groupingHandler->key] = groupingHandler;
+	optionsMap[sputteringHandler->key] = sputteringHandler;
 }
 
 Options::~Options(void) {

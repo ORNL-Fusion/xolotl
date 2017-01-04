@@ -633,6 +633,32 @@ public interface Arguments {
 	boolean isGrain();
 
 	/**
+	 * This Option annotation corresponds to the optional '--sputter' option
+	 * and provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "The sputtering yield (in atoms/ion) that will be used.")
+
+	/**
+	 * This operation produces the optional command line option '--sputter'
+	 * which takes a single string value and is defined by the previous Option
+	 * annotation
+	 * 
+	 * @return The sputtering yield of the material
+	 */
+	String getSputter();
+
+	/**
+	 * This operation makes the command line option '--sputter' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isSputter();
+
+	/**
 	 * This produces the command line arguments '--help' or '-h' either of which
 	 * can be used to print usage help
 	 * 

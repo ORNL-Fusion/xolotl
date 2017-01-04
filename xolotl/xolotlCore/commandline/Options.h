@@ -149,6 +149,11 @@ protected:
 	 */
 	int groupingWidthB;
 
+	/**
+	 * Value of the sputtering yield.
+	 */
+	double sputteringYield;
+
 public:
 
 	/**
@@ -593,6 +598,22 @@ public:
 	 */
 	void setGroupingWidthB(int width) {
 		groupingWidthB = width;
+	}
+
+	/**
+	 * Obtain the value of the intensity of the sputtering yield to be used.
+	 * \see IOptions.h
+	 */
+	double getSputteringYield() const {
+		return sputteringYield;
+	}
+
+	/**
+	 * Set the value for the sputtering yield to use.
+	 * \see IOptions.h
+	 */
+	virtual void setSputteringYield(double yield) {
+		sputteringYield = yield;
 	}
 
 };

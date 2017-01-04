@@ -406,6 +406,20 @@ public:
 	 */
 	virtual void setGroupingWidthB(int width) = 0;
 
+	/**
+	 * Obtain the value of the intensity of the sputtering yield to be used.
+	 *
+	 * @return The value of the sputtering yield
+	 */
+	virtual double getSputteringYield() const = 0;
+
+	/**
+	 * Set the value for the sputtering yield to use.
+	 *
+	 * @param yield The value for the sputtering yield
+	 */
+	virtual void setSputteringYield(double yield) = 0;
+
 };
 //end class IOptions
 
