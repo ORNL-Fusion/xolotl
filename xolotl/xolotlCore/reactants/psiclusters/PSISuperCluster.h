@@ -337,6 +337,13 @@ public:
 	double getTotalHeliumConcentration() const;
 
 	/**
+	 * This operation returns the current total concentration of vacancies in the group.
+
+	 * @return The concentration
+	 */
+	double getTotalVacancyConcentration() const;
+
+	/**
 	 * This operation returns the distance to the mean.
 	 *
 	 * @param he The number of helium

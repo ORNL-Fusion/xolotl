@@ -164,6 +164,38 @@ double PSISuperCluster::getTotalHeliumConcentration() const {
 	return conc;
 }
 
+double PSISuperCluster::getTotalVacancyConcentration() const {
+	// Initial declarations
+	int heIndex = 0, vIndex = 0;
+	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
+
+	// Loop on the vacancy width
+	for (int k = 0; k < sectionVWidth; k++) {
+		// Compute the vacancy index
+		vIndex = (int) (numV - (double) sectionVWidth / 2.0) + k + 1;
+
+		// Loop on the helium width
+		for (int j = 0; j < sectionHeWidth; j++) {
+			// Compute the helium index
+			heIndex = (int) (numHe - (double) sectionHeWidth / 2.0) + j + 1;
+
+			// Check if this cluster exists
+			if (effReactingMap.find(std::make_pair(heIndex, vIndex))
+					== effReactingMap.end())
+				continue;
+
+			// Compute the distances
+			heDistance = getHeDistance(heIndex);
+			vDistance = getVDistance(vIndex);
+
+			// Add the concentration of each cluster in the group times its number of helium
+			conc += getConcentration(heDistance, vDistance) * (double) vIndex;
+		}
+	}
+
+	return conc;
+}
+
 double PSISuperCluster::getHeDistance(int he) const {
 	if (sectionHeWidth == 1)
 		return 0.0;

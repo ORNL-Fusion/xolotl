@@ -617,11 +617,72 @@ double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration() {
 		// Get the cluster
 		auto cluster = (PSISuperCluster *) superClusters[i];
 
-		// Add its total helium concentration helium concentration
+		// Add its total helium concentration
 		heliumConc += cluster->getTotalHeliumConcentration();
 	}
 
 	return heliumConc;
+}
+
+double PSIClusterReactionNetwork::getTotalVConcentration() {
+	// Initial declarations
+	double vConc = 0.0;
+
+	// Get all the V clusters
+	auto vClusters = getAll(vType);
+	// Loop on them
+	for (int i = 0; i < vClusters.size(); i++) {
+		// Get the cluster and its composition
+		auto cluster = vClusters[i];
+		double size = cluster->getSize();
+
+		// Add the concentration times the V content to the total vacancy concentration
+		vConc += cluster->getConcentration() * size;
+	}
+
+	// Get all the HeV clusters
+	auto heVClusters = getAll(heVType);
+	// Loop on them
+	for (int i = 0; i < heVClusters.size(); i++) {
+		// Get the cluster and its composition
+		auto cluster = heVClusters[i];
+		auto comp = cluster->getComposition();
+
+		// Add the concentration times the V content to the total vacancy concentration
+		vConc += cluster->getConcentration() * comp[vType];
+	}
+
+	// Get all the super clusters
+	auto superClusters = getAll(PSISuperType);
+	// Loop on them
+	for (int i = 0; i < superClusters.size(); i++) {
+		// Get the cluster
+		auto cluster = (PSISuperCluster *) superClusters[i];
+
+		// Add its total vacancy concentration
+		vConc += cluster->getTotalVacancyConcentration();
+	}
+
+	return vConc;
+}
+
+double PSIClusterReactionNetwork::getTotalIConcentration() {
+	// Initial declarations
+	double iConc = 0.0;
+
+	// Get all the V clusters
+	auto iClusters = getAll(iType);
+	// Loop on them
+	for (int i = 0; i < iClusters.size(); i++) {
+		// Get the cluster and its composition
+		auto cluster = iClusters[i];
+		double size = cluster->getSize();
+
+		// Add the concentration times the I content to the total interstitial concentration
+		iConc += cluster->getConcentration() * size;
+	}
+
+	return iConc;
 }
 
 void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
