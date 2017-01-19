@@ -86,6 +86,25 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	// Generate the grid in the x direction
 	generateGrid(nx, hx, surfacePosition[0][0]);
 
+	// Now that the grid was generated, we can update the surface position
+	// if we are using a restart file
+	int tempTimeStep = -2;
+	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+			networkName, tempTimeStep);
+
+	// Get the actual surface position if concentrations were stored
+	if (hasConcentrations) {
+		auto surfaceIndices = xolotlCore::HDF5Utils::readSurface3D(networkName,
+				tempTimeStep);
+
+		// Set the actual surface positions
+		for (int i = 0; i < surfaceIndices.size(); i++) {
+			for (int j = 0; j < surfaceIndices[0].size(); j++) {
+				surfacePosition[i][j] = surfaceIndices[i][j];
+			}
+		}
+	}
+
 	// Initialize the surface of the first advection handler corresponding to the
 	// advection toward the surface (or a dummy one if it is deactivated)
 	advectionHandlers[0]->setLocation(grid[surfacePosition[0][0]]);
@@ -171,19 +190,6 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 	int tempTimeStep = -2;
 	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 			networkName, tempTimeStep);
-
-	// Get the actual surface position if concentrations were stored
-	if (hasConcentrations) {
-		auto surfaceIndices = xolotlCore::HDF5Utils::readSurface3D(networkName,
-				tempTimeStep);
-
-		// Set the actual surface positions
-		for (int i = 0; i < surfaceIndices.size(); i++) {
-			for (int j = 0; j < surfaceIndices[0].size(); j++) {
-				surfacePosition[i][j] = surfaceIndices[i][j];
-			}
-		}
-	}
 
 	// Get the total size of the grid for the boundary conditions
 	PetscInt Mx, My, Mz;

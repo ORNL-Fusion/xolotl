@@ -18,7 +18,7 @@ public:
 	 */
     VoidPortionOptionHandler() :
     	OptionHandler("voidPortion",
-    			"voidPortion <value>                 "
+    			"voidPortion <value>               "
     			"The value (in %) of the void portion at the start of the simulation.") {}
 
 	/**

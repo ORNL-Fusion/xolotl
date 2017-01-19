@@ -74,6 +74,23 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	// Generate the grid in the x direction
 	generateGrid(nx, hx, surfacePosition[0]);
 
+	// Now that the grid was generated, we can update the surface position
+	// if we are using a restart file
+	int tempTimeStep = -2;
+	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+			networkName, tempTimeStep);
+
+	// Get the actual surface position if concentrations were stored
+	if (hasConcentrations) {
+		auto surfaceIndices = xolotlCore::HDF5Utils::readSurface2D(networkName,
+				tempTimeStep);
+
+		// Set the actual surface positions
+		for (int i = 0; i < surfaceIndices.size(); i++) {
+			surfacePosition[i] = surfaceIndices[i];
+		}
+	}
+
 //	for (int i = 0; i < grid.size(); i++) {
 //		std::cout << grid[i] << " ";
 //	}
@@ -163,17 +180,6 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	int tempTimeStep = -2;
 	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 			networkName, tempTimeStep);
-
-	// Get the actual surface position if concentrations were stored
-	if (hasConcentrations) {
-		auto surfaceIndices = xolotlCore::HDF5Utils::readSurface2D(networkName,
-				tempTimeStep);
-
-		// Set the actual surface positions
-		for (int i = 0; i < surfaceIndices.size(); i++) {
-			surfacePosition[i] = surfaceIndices[i];
-		}
-	}
 
 	// Get the total size of the grid for the boundary conditions
 	PetscInt Mx, My;

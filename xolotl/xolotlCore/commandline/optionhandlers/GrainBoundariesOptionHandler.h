@@ -19,7 +19,7 @@ public:
 	 */
 	GrainBoundariesOptionHandler() :
 		OptionHandler("grain",
-				"grain                         "
+				"grain                             "
 				"This option allows the user to add GB in the X, Y, or Z directions.\n"
 				"                                    To do so, simply write the direction followed "
 				"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .\n") {}

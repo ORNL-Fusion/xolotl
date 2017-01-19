@@ -17,7 +17,7 @@ public:
 	 */
 	GroupingOptionHandler() :
 			OptionHandler("grouping",
-					"grouping <min> <width> <width>           "
+					"grouping <min> <width> <width>    "
 					"This option allows the use a grouping scheme starting at the cluster "
 					"with 'min' size and with the given width.  \n") {
 	}

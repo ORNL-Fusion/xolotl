@@ -20,7 +20,7 @@ public:
 	 */
 	ProcessOptionHandler() :
 		OptionHandler("process",
-				"process                         "
+				"process                           "
 				"List of all the processes to use in the simulation (diff, advec, "
 				"modifiedTM, movingSurface, bursting, attenuation).\n") {}
 

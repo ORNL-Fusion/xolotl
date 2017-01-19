@@ -155,7 +155,16 @@ void Options::readParams(char* argv[]) {
 		if (iter != optionsMap.end()) {
 			// Call the option's handler
 			auto currOpt = iter->second;
-			assert(currOpt != NULL);
+			if (currOpt == nullptr) {
+				// Something went wrong.
+				std::cerr
+						<< "\nOption: No handler associated to the option: "
+						<< line[0] << " !"
+						<< std::endl;
+				shouldRunFlag = false;
+				exitCode = EXIT_FAILURE;
+				break;
+			}
 			// Continue to read if everything went well with the current option
 			bool continueReading = currOpt->handler(this, line[1]);
 

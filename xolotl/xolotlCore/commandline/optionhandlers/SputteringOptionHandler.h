@@ -17,7 +17,7 @@ public:
 	 */
 	SputteringOptionHandler() :
 			OptionHandler("sputtering",
-					"sputtering <yield>            "
+					"sputtering <yield>                "
 							"This option allows the user to add a sputtering yield (atoms/ion)") {
 	}
 

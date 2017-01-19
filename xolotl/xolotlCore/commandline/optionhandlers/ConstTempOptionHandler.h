@@ -21,7 +21,8 @@ public:
 			OptionHandler("startTemp",
 					"startTemp <value>                 "
 							"The temperature (in Kelvin) will be the constant floating point value specified. "
-							"(default = 1000). If two values are given, the second one is interpreted as a gradient."
+							"(default = 1000). "
+							"\n	                            If two values are given, the second one is interpreted as a gradient."
 							"\n	                            (NOTE: Use only ONE temperature option)\n") {
 	}
 
