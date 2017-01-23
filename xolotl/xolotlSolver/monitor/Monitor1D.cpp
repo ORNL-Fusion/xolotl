@@ -48,7 +48,9 @@ double nInterstitial1D = 0.0;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield1D = 0.0;
 //! How often HDF5 file is written
-PetscInt hdf5Stride1D = 0;
+PetscReal hdf5Stride1D = 0.0;
+//! Previous time for HDF5
+PetscInt hdf5Previous1D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName1D = "xolotlStop.h5";
 // Declare the vector that will store the Id of the helium clusters
@@ -78,8 +80,11 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Don't do anything if it is not on the stride
-	if (timestep % hdf5Stride1D != 0)
+	if ((int) (time / hdf5Stride1D) == hdf5Previous1D)
 		PetscFunctionReturn(0);
+
+	// Update the previous time
+	hdf5Previous1D++;
 
 	// Get the number of processes
 	int worldSize;
@@ -2096,12 +2101,12 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetInt(NULL, NULL, "-start_stop", &hdf5Stride1D,
+		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop", &hdf5Stride1D,
 				&flag);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: PetscOptionsGetInt (-start_stop) failed.");
 		if (!flag)
-			hdf5Stride1D = 1;
+			hdf5Stride1D = 1.0;
 
 		PetscInt Mx;
 		PetscErrorCode ierr;

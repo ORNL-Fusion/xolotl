@@ -34,7 +34,9 @@ extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
 extern double previousTime;
 
 //! How often HDF5 file is written
-PetscInt hdf5Stride2D = 0;
+PetscReal hdf5Stride2D = 0.0;
+//! Previous time for HDF5
+PetscInt hdf5Previous2D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName2D = "xolotlStop.h5";
 //! The pointer to the 2D plot used in MonitorSurface.
@@ -59,8 +61,11 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Don't do anything if it is not on the stride
-	if (timestep % hdf5Stride2D != 0)
+	if ((int) (time / hdf5Stride2D) == hdf5Previous2D)
 		PetscFunctionReturn(0);
+
+	// Update the previous time
+	hdf5Previous2D++;
 
 	// Get the number of processes
 	int worldSize;
@@ -900,12 +905,12 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetInt(NULL, NULL, "-start_stop", &hdf5Stride2D,
+		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop", &hdf5Stride2D,
 				&flag);
 		checkPetscError(ierr,
 				"setupPetsc2DMonitor: PetscOptionsGetInt (-start_stop) failed.");
 		if (!flag)
-			hdf5Stride2D = 1;
+			hdf5Stride2D = 1.0;
 
 		// Initialize the HDF5 file for all the processes
 		xolotlCore::HDF5Utils::initializeFile(hdf5OutputName2D);
