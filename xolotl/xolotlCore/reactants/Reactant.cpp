@@ -114,7 +114,7 @@ void Reactant::setDissociationConnectivity(int id) {
 std::vector<int> Reactant::getConnectivity() const {
 	// The connectivity array by default is filled with
 	// zeros.
-	int connectivityLength = 0;
+	int connectivityLength = network->getDOF();
 	std::vector<int> connectivity = std::vector<int>(connectivityLength, 0);
 
 	// This reactant should be connected to itself
@@ -126,7 +126,7 @@ std::vector<int> Reactant::getConnectivity() const {
 std::vector<double> Reactant::getPartialDerivatives() const {
 	// The partial derivatives array by default is filled with
 	// zeros.
-	int length = network->size();
+	int length = network->getDOF();
 	std::vector<double> partial_derivatives = std::vector<double>(length, 0.0);
 
 	return partial_derivatives;
