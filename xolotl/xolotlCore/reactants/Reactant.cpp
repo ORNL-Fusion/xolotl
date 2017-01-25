@@ -55,6 +55,33 @@ Reactant::Reactant(Reactant &other) :
 	compositionMap[iType] = other.compositionMap[iType];
 }
 
+double Reactant::calculateReactionRateConstant(const Reactant & firstReactant,
+		const Reactant & secondReactant) const {
+	// Get the reaction radii
+	double r_first = firstReactant.reactionRadius;
+	double r_second = secondReactant.reactionRadius;
+
+	// Get the diffusion coefficients
+	double firstDiffusion = firstReactant.diffusionCoefficient;
+	double secondDiffusion = secondReactant.diffusionCoefficient;
+
+	// Calculate and return
+	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
+			* (firstDiffusion + secondDiffusion);
+	return k_plus;
+}
+
+double Reactant::computeBindingEnergy(const Reactant & dissociatingCluster,
+		const Reactant & singleCluster,
+		const Reactant & secondCluster) const {
+	// for the dissociation A --> B + C we need A binding energy
+	// E_b(A) = E_f(B) + E_f(C) - E_f(A) where E_f is the formation energy
+	double bindingEnergy = singleCluster.formationEnergy
+			+ secondCluster.formationEnergy
+			- dissociatingCluster.formationEnergy;
+	return bindingEnergy;
+}
+
 void Reactant::recomputeDiffusionCoefficient(double temp) {
 	// Return zero if the diffusion factor is zero.
 	if (xolotlCore::equal(diffusionFactor, 0.0)) {

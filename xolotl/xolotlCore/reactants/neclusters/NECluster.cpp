@@ -115,22 +115,6 @@ void NECluster::createDissociationConnectivity() {
 	return;
 }
 
-double NECluster::calculateReactionRateConstant(const NECluster & firstReactant,
-		const NECluster & secondReactant) const {
-	// Get the reaction radii
-	double r_first = firstReactant.reactionRadius;
-	double r_second = secondReactant.reactionRadius;
-
-	// Get the diffusion coefficients
-	double firstDiffusion = firstReactant.diffusionCoefficient;
-	double secondDiffusion = secondReactant.diffusionCoefficient;
-
-	// Calculate and return
-	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
-			* (firstDiffusion + secondDiffusion);
-	return k_plus;
-}
-
 double NECluster::calculateDissociationConstant(
 		const NECluster & dissociatingCluster, const NECluster & singleCluster,
 		const NECluster & secondCluster) const {
@@ -150,17 +134,6 @@ double NECluster::calculateDissociationConstant(
 	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
 
 	return k_minus;
-}
-
-double NECluster::computeBindingEnergy(const NECluster & dissociatingCluster,
-		const NECluster & singleCluster,
-		const NECluster & secondCluster) const {
-	// for the dissociation A --> B + C we need A binding energy
-	// E_b(A) = E_f(B) + E_f(C) - E_f(A) where E_f is the formation energy
-	double bindingEnergy = singleCluster.formationEnergy
-			+ secondCluster.formationEnergy
-			- dissociatingCluster.formationEnergy;
-	return bindingEnergy;
 }
 
 void NECluster::dissociateCluster(NECluster * dissociatingCluster,

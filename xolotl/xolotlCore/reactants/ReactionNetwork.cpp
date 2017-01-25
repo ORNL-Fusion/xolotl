@@ -67,15 +67,15 @@ void ReactionNetwork::fillConcentrationsArray(double * concentrations) {
 
 void ReactionNetwork::updateConcentrationsFromArray(double * concentrations) {
 	// Local Declarations
-	auto reactants = getAll();
-	int size = reactants->size();
+	auto allReactants = this->getAll();
 	int id = -1;
 
 	// Set the concentrations
 	concUpdateCounter->increment();	// increment the update concentration counter
-	for (int i = 0; i < size; i++) {
-		id = reactants->at(i)->getId() - 1;
-		reactants->at(i)->setConcentration(concentrations[id]);
+	for (auto iter = allReactants->begin(); iter != allReactants->end();
+			++iter) {
+		id = (*iter)->getId() - 1;
+		(*iter)->setConcentration(concentrations[id]);
 	}
 
 	return;

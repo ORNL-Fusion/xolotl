@@ -131,21 +131,46 @@ protected:
 
 	/**
 	 * The row of the reaction connectivity matrix corresponding to
-	 * this PSICluster stored as a set.
+	 * this Reactant stored as a set.
 	 *
-	 * If a cluster is involved in a reaction with this PSICluster,
+	 * If a cluster is involved in a reaction with this Reactant,
 	 * the cluster id is an element of this set.
 	 */
 	std::set<int> reactionConnectivitySet;
 
 	/**
 	 * The row of the dissociation connectivity matrix corresponding to
-	 * this PSICluster stored as a set.
+	 * this Reactant stored as a set.
 	 *
-	 * If this PSICluster can dissociate into a particular cluster,
+	 * If this Reactant can dissociate into a particular cluster,
 	 * the cluster id is an element of this set.
 	 */
 	std::set<int> dissociationConnectivitySet;
+
+	/**
+	 * Calculate the reaction constant dependent on the
+	 * reaction radii and the diffusion coefficients for the
+	 * ith and jth clusters, which itself depends on the current
+	 * temperature.
+	 *
+	 * @param The first cluster interacting
+	 * @param The second cluster interacting
+	 * @return The rate
+	 */
+	double calculateReactionRateConstant(const Reactant & firstcluster,
+			const Reactant & secondcluster) const;
+
+	/**
+	 * Calculate the binding energy for the dissociation cluster to emit the single
+	 * and second cluster.
+	 *
+	 * @param dissociatingCluster The cluster that is dissociating
+	 * @param singleCluster One of the clusters that dissociated from the parent
+	 * @param secondCluster The second cluster that dissociated from the parent
+	 * @return The binding energy corresponding to this dissociation
+	 */
+	double computeBindingEnergy(const Reactant & dissociatingCluster,
+			const Reactant & singleCluster, const Reactant & secondCluster) const;
 
 	/**
 	 * This operation recomputes the diffusion coefficient. It is called

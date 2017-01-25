@@ -140,19 +140,6 @@ protected:
 	virtual void createDissociationConnectivity();
 
 	/**
-	 * Calculate the reaction constant dependent on the
-	 * reaction radii and the diffusion coefficients for the
-	 * ith and jth clusters, which itself depends on the current
-	 * temperature.
-	 *
-	 * @param The first cluster interacting
-	 * @param The second cluster interacting
-	 * @return The rate
-	 */
-	double calculateReactionRateConstant(const NECluster & firstcluster,
-			const NECluster & secondcluster) const;
-
-	/**
 	 * Calculate the dissociation constant of the first cluster with respect to
 	 * the single-species cluster of the same type based on the current clusters
 	 * atomic volume, reaction rate constant, and binding energies.
@@ -165,18 +152,6 @@ protected:
 	 * @return The dissociation constant
 	 */
 	double calculateDissociationConstant(const NECluster & dissociatingCluster,
-			const NECluster & singleCluster, const NECluster & secondCluster) const;
-
-	/**
-	 * Calculate the binding energy for the dissociation cluster to emit the single
-	 * and second cluster.
-	 *
-	 * @param dissociatingCluster The cluster that is dissociating
-	 * @param singleCluster One of the clusters that dissociated from the parent
-	 * @param secondCluster The second cluster that dissociated from the parent
-	 * @return The binding energy corresponding to this dissociation
-	 */
-	double computeBindingEnergy(const NECluster & dissociatingCluster,
 			const NECluster & singleCluster, const NECluster & secondCluster) const;
 
 	/**
