@@ -22,7 +22,8 @@ InterstitialCluster::InterstitialCluster(int nI,
 	// Compute the reaction radius
 	double EightPi = 8.0 * xolotlCore::pi;
 	double aCubed = pow(xolotlCore::tungstenLatticeConstant, 3.0);
-	double termOne = 1.15 * (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant;
+	double termOne = 1.15 * (sqrt(3.0) / 4.0)
+			* xolotlCore::tungstenLatticeConstant;
 	double termTwo = pow((3.0 / EightPi) * aCubed * size, (1.0 / 3.0));
 	double termThree = pow((3.0 / EightPi) * aCubed, (1.0 / 3.0));
 	reactionRadius = termOne + termTwo - termThree;
@@ -101,48 +102,45 @@ void InterstitialCluster::createReactionConnectivity() {
 	// Helium absorption by HeV clusters leading to trap mutation producing
 	// a single interstitial
 	// (He_b)(V_c) + He_d --> [He_(b+d)][V_(c+a)] + I_a
-	// for a < 3
 	// Happens only if [He_(b+d)][V_(c+a-1)] is not present in the network
-	// Only if the size of this cluster is < 3
-	if (size < 3) {
-		// Get all the HeV clusters from the network
-		auto heVReactants = network->getAll(heVType);
-		// Get all the He clusters from the network
-		auto heReactants = network->getAll(heType);
-		// Loop on the HeV clusters
-		for (unsigned int i = 0; i < heVReactants.size(); i++) {
-			// Get the HeV cluster and its composition (He_b)(V_c)
-			auto heVCluster = (PSICluster *) heVReactants[i];
-			auto heVComp = heVCluster->getComposition();
-			// Loop on the He clusters
-			for (unsigned int j = 0; j < heReactants.size(); j++) {
-				// Get the He cluster and its composition He_d
-				auto heCluster = (PSICluster *) heReactants[j];
-				auto heComp = heCluster->getComposition();
-				// Check that the smaller product [He_(b+d)][V_(c+a-1)] doesn't exist
-				std::vector<int> comp = {heVComp[heType] + heComp[heType],
-					heVComp[vType] + size - 1, 0};
-				auto smallerProduct = network->getCompound(heVType, comp);
-				if (smallerProduct) continue;
-				// The smaller product doesn't exist so the reaction producing
-				// a interstitial is allowed if the second product is
-				// present in the network [He_(b+d)][V_(c+a)]
-				comp = {heVComp[heType] + heComp[heType],
-						heVComp[vType] + size, 0};
-				auto otherProduct = network->getCompound(heVType, comp);
-				if (otherProduct) {
-					// The reaction is really allowed
-					// Create the pair
-					// The reaction constant will be computed later, it is set to 0.0 for now
-					ClusterPair pair(heVCluster, heCluster, 0.0);
-					// Add the pair to the list
-					reactingPairs.push_back(pair);
-					// Setup the connectivity array
-					int Id = heVCluster->getId();
-					setReactionConnectivity(Id);
-					Id = heCluster->getId();
-					setReactionConnectivity(Id);
-				}
+	// Get all the HeV clusters from the network
+	auto heVReactants = network->getAll(heVType);
+	// Get all the He clusters from the network
+	auto heReactants = network->getAll(heType);
+	// Loop on the HeV clusters
+	for (unsigned int i = 0; i < heVReactants.size(); i++) {
+		// Get the HeV cluster and its composition (He_b)(V_c)
+		auto heVCluster = (PSICluster *) heVReactants[i];
+		auto heVComp = heVCluster->getComposition();
+		// Loop on the He clusters
+		for (unsigned int j = 0; j < heReactants.size(); j++) {
+			// Get the He cluster and its composition He_d
+			auto heCluster = (PSICluster *) heReactants[j];
+			auto heComp = heCluster->getComposition();
+			// Check that the smaller product [He_(b+d)][V_(c+a-1)] doesn't exist
+			std::vector<int> comp = { heVComp[heType] + heComp[heType],
+					heVComp[vType] + size - 1, 0 };
+			auto smallerProduct = network->getCompound(heVType, comp);
+			if (smallerProduct)
+				continue;
+			// The smaller product doesn't exist so the reaction producing
+			// a interstitial is allowed if the second product is
+			// present in the network [He_(b+d)][V_(c+a)]
+			comp = {heVComp[heType] + heComp[heType],
+				heVComp[vType] + size, 0};
+			auto otherProduct = network->getCompound(heVType, comp);
+			if (otherProduct) {
+				// The reaction is really allowed
+				// Create the pair
+				// The reaction constant will be computed later, it is set to 0.0 for now
+				ClusterPair pair(heVCluster, heCluster, 0.0);
+				// Add the pair to the list
+				reactingPairs.push_back(pair);
+				// Setup the connectivity array
+				int Id = heVCluster->getId();
+				setReactionConnectivity(Id);
+				Id = heCluster->getId();
+				setReactionConnectivity(Id);
 			}
 		}
 	}
@@ -150,52 +148,48 @@ void InterstitialCluster::createReactionConnectivity() {
 	// Helium clustering leading to trap mutation producing
 	// a single interstitial
 	// He_b + He_c --> [He_(b+c)](V_a) + I_a
-	// for a < 3
 	// Happens only if [He_(b+c)][V_(a-1)] is not present in the network
-	// Only if the size of this cluster is < 3
-	if (size < 3) {
-		// Get all the He clusters from the network
-		auto heReactants = network->getAll(heType);
-		// Loop on the first He clusters
-		for (unsigned int i = 0; i < heReactants.size(); i++) {
-			// Get the He cluster and its size b
-			auto firstCluster = (PSICluster *) heReactants[i];
-			int firstSize = firstCluster->getSize();
-			// Loop on the second He clusters starting at firstSize - 1 to avoid double counting
-			// This works only if the He clusters are ordered
-			for (unsigned int j = firstSize - 1; j < heReactants.size(); j++) {
-				// Get the He cluster and its size He_d
-				auto secondCluster = (PSICluster *) heReactants[j];
-				auto secondSize = secondCluster->getSize();
-				// Check that the smaller product [He_(b+c)][V_(a-1)] doesn't exist
-				// It can be a He or a HeV cluster
-				PSICluster * smallerProduct;
-				if (size == 1) {
-					smallerProduct = (PSICluster *) network->get(heType, firstSize + secondSize);
-				}
-				else {
-					std::vector<int> comp = {firstSize + secondSize, 1, 0};
-					smallerProduct = (PSICluster *) network->getCompound(heVType, comp);
-				}
-				if (smallerProduct) continue;
-				// The smaller product doesn't exist so the reaction producing
-				// a single interstitial is allowed if the second product is
-				// present in the network [He_(b+c)](V_a)
-				std::vector<int> comp = {firstSize + secondSize, size, 0};
-				auto otherProduct = network->getCompound(heVType, comp);
-				if (otherProduct) {
-					// The reaction is really allowed
-					// Create the pair
-					// The reaction constant will be computed later, it is set to 0.0 for now
-					ClusterPair pair(firstCluster, secondCluster, 0.0);
-					// Add the pair to the list
-					reactingPairs.push_back(pair);
-					// Setup the connectivity array
-					int Id = firstCluster->getId();
-					setReactionConnectivity(Id);
-					Id = secondCluster->getId();
-					setReactionConnectivity(Id);
-				}
+	// Loop on the first He clusters
+	for (unsigned int i = 0; i < heReactants.size(); i++) {
+		// Get the He cluster and its size b
+		auto firstCluster = (PSICluster *) heReactants[i];
+		int firstSize = firstCluster->getSize();
+		// Loop on the second He clusters starting at firstSize - 1 to avoid double counting
+		// This works only if the He clusters are ordered
+		for (unsigned int j = firstSize - 1; j < heReactants.size(); j++) {
+			// Get the He cluster and its size He_d
+			auto secondCluster = (PSICluster *) heReactants[j];
+			auto secondSize = secondCluster->getSize();
+			// Check that the smaller product [He_(b+c)][V_(a-1)] doesn't exist
+			// It can be a He or a HeV cluster
+			PSICluster * smallerProduct;
+			if (size == 1) {
+				smallerProduct = (PSICluster *) network->get(heType,
+						firstSize + secondSize);
+			} else {
+				std::vector<int> comp = { firstSize + secondSize, size - 1, 0 };
+				smallerProduct = (PSICluster *) network->getCompound(heVType,
+						comp);
+			}
+			if (smallerProduct)
+				continue;
+			// The smaller product doesn't exist so the reaction producing
+			// a single interstitial is allowed if the second product is
+			// present in the network [He_(b+c)](V_a)
+			std::vector<int> comp = { firstSize + secondSize, size, 0 };
+			auto otherProduct = network->getCompound(heVType, comp);
+			if (otherProduct) {
+				// The reaction is really allowed
+				// Create the pair
+				// The reaction constant will be computed later, it is set to 0.0 for now
+				ClusterPair pair(firstCluster, secondCluster, 0.0);
+				// Add the pair to the list
+				reactingPairs.push_back(pair);
+				// Setup the connectivity array
+				int Id = firstCluster->getId();
+				setReactionConnectivity(Id);
+				Id = secondCluster->getId();
+				setReactionConnectivity(Id);
 			}
 		}
 	}

@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
 	double knownPartials[] = { -2850.42, -3005.08, 0.0, -14316.7, 896815.0,
-			257925.0, 0.0, -2188.27, -2373.78, 356134.7, 377344.4, 224717.0,
+			257925.0, -1923.81, -2188.27, -2373.78, 356134.7, 377344.4, 224717.0,
 			0.0, 0.0, -2054.05 };
 	// Get the simple reaction network
 	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork(3);
