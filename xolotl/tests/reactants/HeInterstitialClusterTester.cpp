@@ -157,6 +157,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Compute the rate constants that are needed for the partial derivatives
 	cluster->computeRateConstants();
+	// Reinitialize the network for Ids for the partial derivatives
+	network->reinitializeNetwork();
 	// Get the vector of partial derivatives
 	auto partials = cluster->getPartialDerivatives();
 
