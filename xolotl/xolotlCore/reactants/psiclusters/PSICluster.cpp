@@ -374,8 +374,6 @@ void PSICluster::resetConnectivities() {
 	setReactionConnectivity(vMomId);
 	setDissociationConnectivity(vMomId);
 
-	std::cout << name << " : " << std::endl;
-
 	// Loop on the effective reacting pairs
 	for (auto it = effReactingPairs.begin(); it != effReactingPairs.end();
 			++it) {
@@ -386,8 +384,6 @@ void PSICluster::resetConnectivities() {
 		setReactionConnectivity((*it)->second->heMomId);
 		setReactionConnectivity((*it)->first->vMomId);
 		setReactionConnectivity((*it)->second->vMomId);
-
-		std::cout << (*it)->first->name << " + " << (*it)->second->name << std::endl;
 	}
 
 	// Loop on the effective combining reactants
@@ -397,8 +393,6 @@ void PSICluster::resetConnectivities() {
 		setReactionConnectivity((*it)->combining->id);
 		setReactionConnectivity((*it)->combining->heMomId);
 		setReactionConnectivity((*it)->combining->vMomId);
-
-		std::cout << (*it)->combining->name << std::endl;
 	}
 
 	// Loop on the effective dissociating pairs
