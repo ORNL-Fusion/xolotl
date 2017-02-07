@@ -1,0 +1,9 @@
+#Good list of parameters for 2D
+vizHandler=dummy
+petscArgs=-fieldsplit_0_pc_type redundant -ts_max_snes_failures 200 -pc_fieldsplit_detect_coupling -ts_adapt_dt_max 10 -pc_type fieldsplit -fieldsplit_1_pc_type sor -ts_final_time 1000 -ts_max_steps 3
+networkFile=tungsten.txt
+startTemp=900
+perfHandler=dummy
+heFlux=1.5
+material=W110
+dimensions=2
