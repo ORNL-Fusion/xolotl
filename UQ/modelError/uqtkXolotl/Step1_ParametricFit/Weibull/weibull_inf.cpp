@@ -47,7 +47,7 @@
 #include "arrayio.h"
 #include "arraytools.h"
 
-#include "cmath"
+
 
 using namespace std;
 
@@ -55,40 +55,69 @@ Array2D<double> forwardFunc(Array2D<double>& p, Array2D<double>& x, void* funcin
 
 
 
-///  Main program: Bayesian inference of a few standard function types
+//  Main program: Bayesian inference of model parameters
 int main (int argc, char *argv[]) 
 {
     // Input arguments
+    // Any auxiliary information for model can be passed via void*
     int power=2;
     void* funcinfo=(void*) &power;
+    // Likelihood type
     string liktype="gausmarg";
+    // Prior type  
     string priortype="uniform";
+    // Prior bounds
     double priora=0.0;
     double priorb=DBL_MAX;
+    // Read data
     Array2D<double> xdata,ydata;
     const char* xfile="xdata.txt";
     const char* yfile="Normalized_ydata.txt";
     read_datafileVS(xdata,xfile);
     read_datafileVS(ydata,yfile);
-    Array2D<double> xgrid=xdata; int nxgr=xgrid.XSize();
-    int dataNoiseInference=1;
-    Array1D<double> datanoise(xdata.XSize(),0.01);
-    int pdim=2;
-    int order=1;
-    Array1D<int> rndInd(pdim,0); rndInd(1)=1;
-    string pdftype="pct";
-    int nmcmc=500000;
-    double mcmcgamma=0.0001;
-    bool optimflag=true;
-    int chdim=6;
-    Array1D<double> chstart(chdim,1.0);
-    Array1D<double> chsig(chdim,1.0);
-    double likParam=0.000001;
-    double likParam_int=0;
-    Array2D<double> pgrid,pchain;
-    int nburn=100000;
-    int nstep=100;
+   // Prediction points
+    Array2D<double> xgrid=xdata; 
+    int nxgr=xgrid.XSize();
 
+    // Indicates whether data noise is inferred or not
+    int dataNoiseInference=1;
+    // Data noise standard deviation, either fixed, or initial position 	(if inferred)
+    Array1D<double> datanoise(xdata.XSize(),0.01);
+    // Number of parameters of the model
+    int pdim=2;
+    // Order for prediction PC
+    int order=1;
+    // Indices of parameters to be 'randomized'
+    Array1D<int> rndInd(pdim,0); rndInd(1)=1;
+    // PDF type of parameters
+    string pdftype="pct";
+    // PC type of parameters
+    string pctype="HG";
+    // MCMC seed
+    int seed=13;
+    // MCMC starting point
+    int nmcmc=500000;
+    // Gamma factor for AMCMC
+    double mcmcgamma=0.0001;
+    // Flag whether to prepend optimization or not
+    bool optimflag=true;
+    // Chain dimensionality
+    int chdim=6;
+    // Number of burnin steps
+    int nburn=100000;
+    // For good statistics, pick every nstep state
+    int nstep=100;
+    // Chain start 
+    Array1D<double> chstart(chdim,1.0);
+    // Standard deviation per dimension for initial non-adaptive part
+    Array1D<double> chsig(chdim,0.1);
+    // Likelihood parameter (double)
+    double likParam=0.000001;
+    // Likelihood parameter (int)
+    double likParam_int=0;
+    // Arrays for parameter values, and clean chain
+    Array2D<double> pgrid,pchain;
+ 
     // Output containers
     Array1D<double> mapparam,pmean_map,pvar_map, fmean_map,fvar_map;
     Array1D<double> datavar_map;
@@ -104,8 +133,8 @@ int main (int argc, char *argv[])
         priortype,priora,priorb,
         xdata,ydata, xgrid,
         dataNoiseInference,datanoise,
-        pdim,order,rndInd,pdftype,
-        nmcmc,mcmcgamma,optimflag,chstart,chsig,
+        pdim,order,rndInd,pdftype,pctype,
+        seed, nmcmc,mcmcgamma,optimflag,chstart,chsig,
         likParam,likParam_int,
         pgrid, pchain, nburn, nstep,
         mapparam, datavar_map,
