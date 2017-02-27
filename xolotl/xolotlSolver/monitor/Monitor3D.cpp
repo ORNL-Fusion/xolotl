@@ -1182,7 +1182,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		// monitorBursting3D will be called at each timestep
 		ierr = TSMonitorSet(ts, monitorBursting3D, NULL, NULL);
 		checkPetscError(ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorBursting3D) failed.");
-		std::srand (time(NULL));
+		std::srand (time(NULL) + procId);
 	}
 
 	// Set the monitor to save performance plots (has to be in parallel)

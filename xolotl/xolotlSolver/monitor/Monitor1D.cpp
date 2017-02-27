@@ -2191,7 +2191,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		ierr = TSMonitorSet(ts, monitorBursting1D, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: TSMonitorSet (monitorBursting1D) failed.");
-		std::srand(time(NULL));
+		std::srand(time(NULL) + procId);
 	}
 
 	// Set the monitor to save 1D plot of xenon distribution

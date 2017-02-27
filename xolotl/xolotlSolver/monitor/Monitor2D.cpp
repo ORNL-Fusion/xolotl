@@ -980,7 +980,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		// monitorBursting2D will be called at each timestep
 		ierr = TSMonitorSet(ts, monitorBursting2D, NULL, NULL);
 		checkPetscError(ierr, "setupPetsc2DMonitor: TSMonitorSet (monitorBursting2D) failed.");
-		std::srand (time(NULL));
+		std::srand (time(NULL) + procId);
 	}
 
 	// Set the monitor to save performance plots (has to be in parallel)
