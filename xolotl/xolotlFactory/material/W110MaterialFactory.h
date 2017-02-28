@@ -15,13 +15,14 @@ namespace xolotlFactory {
 /**
  * Subclass of MaterialFactory for a (110) oriented tungsten material.
  */
-class W110MaterialFactory : public MaterialFactory {
+class W110MaterialFactory: public MaterialFactory {
 private:
 
 	/**
 	 * The default constructor is private.
 	 */
-	W110MaterialFactory() {}
+	W110MaterialFactory() {
+	}
 
 public:
 
@@ -32,23 +33,33 @@ public:
 	 */
 	W110MaterialFactory(int dim) {
 		theFluxHandler = std::make_shared<xolotlCore::W110FitFluxHandler>();
-		theAdvectionHandler.push_back(std::make_shared<xolotlCore::W110AdvectionHandler>());
-		theTrapMutationHandler = std::make_shared<xolotlCore::W110TrapMutationHandler>();
+		theAdvectionHandler.push_back(
+				std::make_shared<xolotlCore::W110AdvectionHandler>());
+		theTrapMutationHandler = std::make_shared<
+				xolotlCore::W110TrapMutationHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {
-			case 1:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion1DHandler>();
-				break;
-			case 2:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion2DHandler>();
-				break;
-			case 3:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion3DHandler>();
-				break;
-			default:
-				// The asked dimension is not good (e.g. -1, 0, 4)
-				throw std::string("\nxolotlFactory: Bad dimension for the W110 material factory.");
+		case 0:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::DummyDiffusionHandler>();
+			break;
+		case 1:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion1DHandler>();
+			break;
+		case 2:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion2DHandler>();
+			break;
+		case 3:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion3DHandler>();
+			break;
+		default:
+			// The asked dimension is not good (e.g. -1, 4)
+			throw std::string(
+					"\nxolotlFactory: Bad dimension for the W110 material factory.");
 		}
 
 		return;
@@ -57,7 +68,8 @@ public:
 	/**
 	 * The destructor
 	 */
-	~W110MaterialFactory() {}
+	~W110MaterialFactory() {
+	}
 };
 
 } // end namespace xolotlFactory

@@ -2,7 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include "W211FitFluxHandler.h"
+#include "TRIDYNFitFluxHandler.h"
 #include <mpi.h>
 #include <HDF5NetworkLoader.h>
 #include <DummyHandlerRegistry.h>
@@ -12,9 +12,9 @@ using namespace std;
 using namespace xolotlCore;
 
 /**
- * The test suite is responsible for testing the W211FitFluxHandler.
+ * The test suite is responsible for testing the TRIDYNFitFluxHandler.
  */
-BOOST_AUTO_TEST_SUITE (W211FitFluxHandlerTester_testSuite)
+BOOST_AUTO_TEST_SUITE (TRIDYNFitFluxHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI for HDF5
@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Specify the surface position
 	int surfacePos = 0;
 
-	// Create the W211 flux handler
-	auto testFitFlux = make_shared<W211FitFluxHandler>();
+	// Create the TRIDYN flux handler
+	auto testFitFlux = make_shared<TRIDYNFitFluxHandler>();
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
@@ -75,9 +75,9 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.454047, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.249781, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.096172, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.0, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

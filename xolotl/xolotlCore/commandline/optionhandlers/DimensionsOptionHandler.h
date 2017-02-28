@@ -18,7 +18,7 @@ public:
 	DimensionsOptionHandler() :
 			OptionHandler("dimensions",
 					"dimensions <dimNumber>            "
-							"This option allows the user to switch between a 1, 2, or 3 "
+							"This option allows the user to switch between a 0, 1, 2, or 3 "
 							"dimensions simulation.  \n") {
 	}
 

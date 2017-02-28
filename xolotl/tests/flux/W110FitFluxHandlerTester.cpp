@@ -16,7 +16,7 @@ using namespace xolotlCore;
  */
 BOOST_AUTO_TEST_SUITE (W110FitFluxHandlerTester_testSuite)
 
-BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
+BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI for HDF5
 	int argc = 0;
 	char **argv;
