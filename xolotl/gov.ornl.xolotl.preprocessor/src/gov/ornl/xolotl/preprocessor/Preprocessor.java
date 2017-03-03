@@ -93,6 +93,9 @@ public class Preprocessor {
 	// Whether the phase-cut method is used for the network of not
 	private boolean usePhaseCut = false;
 
+	// The difference in x in the grid size when using checkpoint
+	private int xGridDiff = 0;
+
 	/**
 	 * The maximum number of helium atoms that can be combined with a vacancy
 	 * cluster with size equal to the index i in the array plus one. For
@@ -652,9 +655,12 @@ public class Preprocessor {
 	 *            The name of the HDF5 file from which the header will be copied
 	 * @param toName
 	 *            The name of the created HDF5 file
+	 * @param args
+	 *            The command line arguments as specified by the Arguments
+	 *            interface.
 	 * @return The array of sizes of the grid
 	 */
-	public int[] copyHeader(String fromName, String toName) {
+	public int[] copyHeader(String fromName, String toName, Arguments args) {
 		// The number of grid points and the step size
 		int[] n = { 0 };
 		double[] h = { 0 };
@@ -680,6 +686,10 @@ public class Preprocessor {
 			int attributeId = H5.H5Aopen(headerFromGroupId, "nx", HDF5Constants.H5P_DEFAULT);
 			int status = H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE, n);
 			status = H5.H5Aclose(attributeId);
+			// Compute the difference in grid size
+			xGridDiff = args.getNxGrid() - n[0];
+			// Get nx from the arguments
+			n[0] = args.getNxGrid();
 			// Create, write, and close the nx attribute
 			int dataSpaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
 			attributeId = H5.H5Acreate(headerToGroupId, "nx", HDF5Constants.H5T_STD_I32LE, dataSpaceId,
@@ -849,7 +859,7 @@ public class Preprocessor {
 	 */
 	public double[] readTimes(String fromName, int lastTimeStep) {
 		// The array for the times
-		double[] times = { 0.0, 0.0 };
+		double[] times = { 0.0, 0.0, 0.0 };
 
 		try {
 			// Open the file
@@ -864,17 +874,23 @@ public class Preprocessor {
 
 			// Initialize the times
 			double[] time = { 0.0 };
+			double[] previousTime = { 0.0 };
 			double[] deltaTime = { 0.0 };
 
 			// Open and read the absoluteTime attribute
-			int timeAttributeId = H5.H5Aopen(concentrationGroupId, "absoluteTime", HDF5Constants.H5P_DEFAULT);
-			int status = H5.H5Aread(timeAttributeId, HDF5Constants.H5T_IEEE_F64LE, time);
-			status = H5.H5Aclose(timeAttributeId);
+			int attributeId = H5.H5Aopen(concentrationGroupId, "absoluteTime", HDF5Constants.H5P_DEFAULT);
+			int status = H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE, time);
+			status = H5.H5Aclose(attributeId);
+
+			// Open and read the previousTime attribute
+			attributeId = H5.H5Aopen(concentrationGroupId, "previousTime", HDF5Constants.H5P_DEFAULT);
+			status = H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousTime);
+			status = H5.H5Aclose(attributeId);
 
 			// Open and read the deltaTime attribute
-			int deltaAttributeId = H5.H5Aopen(concentrationGroupId, "deltaTime", HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Aread(deltaAttributeId, HDF5Constants.H5T_IEEE_F64LE, deltaTime);
-			status = H5.H5Aclose(deltaAttributeId);
+			attributeId = H5.H5Aopen(concentrationGroupId, "deltaTime", HDF5Constants.H5P_DEFAULT);
+			status = H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE, deltaTime);
+			status = H5.H5Aclose(attributeId);
 
 			// Close everything
 			status = H5.H5Gclose(concentrationGroupId);
@@ -882,7 +898,8 @@ public class Preprocessor {
 
 			// Set the times in the array
 			times[0] = time[0];
-			times[1] = deltaTime[0];
+			times[1] = previousTime[0];
+			times[2] = deltaTime[0];
 
 		} catch (Exception e) {
 			// Complain
@@ -913,23 +930,28 @@ public class Preprocessor {
 
 			// Create, write, and close the absolute time attribute
 			double[] time = { times[0] };
-			int timeDataspaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int timeAttributeId = H5.H5Acreate(newConcSubGroupId, "absoluteTime", HDF5Constants.H5T_IEEE_F64LE,
-					timeDataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int status = H5.H5Awrite(timeAttributeId, HDF5Constants.H5T_IEEE_F64LE, time);
-			status = H5.H5Sclose(timeDataspaceId);
-			status = H5.H5Aclose(timeAttributeId);
+			int dataspaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
+			int attributeId = H5.H5Acreate(newConcSubGroupId, "absoluteTime", HDF5Constants.H5T_IEEE_F64LE,
+					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			int status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, time);
+			status = H5.H5Aclose(attributeId);
+
+			// Create, write, and close the previous time attribute
+			double[] previousTime = { times[1] };
+			attributeId = H5.H5Acreate(newConcSubGroupId, "previousTime", HDF5Constants.H5T_IEEE_F64LE,
+					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousTime);
+			status = H5.H5Aclose(attributeId);
 
 			// Create, write, and close the timestep time attribute
-			double[] deltaTime = { times[1] };
-			int deltaDataspaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int deltaAttributeId = H5.H5Acreate(newConcSubGroupId, "deltaTime", HDF5Constants.H5T_IEEE_F64LE,
-					deltaDataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			status = H5.H5Awrite(deltaAttributeId, HDF5Constants.H5T_IEEE_F64LE, deltaTime);
-			status = H5.H5Sclose(deltaDataspaceId);
-			status = H5.H5Aclose(deltaAttributeId);
+			double[] deltaTime = { times[2] };
+			attributeId = H5.H5Acreate(newConcSubGroupId, "deltaTime", HDF5Constants.H5T_IEEE_F64LE,
+					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, deltaTime);
+			status = H5.H5Aclose(attributeId);
 
 			// Close everything
+			status = H5.H5Sclose(dataspaceId);
 			status = H5.H5Gclose(newConcSubGroupId);
 			status = H5.H5Fclose(fileId);
 
@@ -972,13 +994,23 @@ public class Preprocessor {
 			// Check if the surface position is an attribute
 			// (thus the Xolotl was ran in 1D)
 			if (H5.H5Aexists(concentrationGroupId, "iSurface")) {
-				// Read the attribute
+				// Read the attributes
 				int[] iSurface = { -1 };
 				int attributeId = H5.H5Aopen(concentrationGroupId, "iSurface", HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Aread(attributeId, HDF5Constants.H5T_STD_I32LE, iSurface);
+				status = H5.H5Aclose(attributeId);
+				double[] nInter = { 0.0 };
+				attributeId = H5.H5Aopen(concentrationGroupId, "nInterstitial", HDF5Constants.H5P_DEFAULT);
+				status = H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE, nInter);
+				status = H5.H5Aclose(attributeId);
+				double[] previousFlux = { 0.0 };
+				attributeId = H5.H5Aopen(concentrationGroupId, "previousIFlux", HDF5Constants.H5P_DEFAULT);
+				status = H5.H5Aread(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousFlux);
+				status = H5.H5Aclose(attributeId);
+				// Update the surface position
+				iSurface[0] = iSurface[0] + xGridDiff;
 
 				// Close everything from the old file
-				status = H5.H5Aclose(attributeId);
 				status = H5.H5Gclose(concentrationGroupId);
 				status = H5.H5Fclose(fileId);
 
@@ -988,14 +1020,22 @@ public class Preprocessor {
 				// Open the new concentration subgroup
 				concentrationGroupId = H5.H5Gopen(fileId, "concentrationsGroup/concentration_0",
 						HDF5Constants.H5P_DEFAULT);
-				// Create and write the surface position attribute
+				// Create and write all the attributes
 				int dataspaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
 				attributeId = H5.H5Acreate(concentrationGroupId, "iSurface", HDF5Constants.H5T_STD_I32LE, dataspaceId,
 						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE, iSurface);
+				status = H5.H5Aclose(attributeId);
+				attributeId = H5.H5Acreate(concentrationGroupId, "nInterstitial", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, nInter);
+				status = H5.H5Aclose(attributeId);
+				attributeId = H5.H5Acreate(concentrationGroupId, "previousIFlux", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousFlux);
+				status = H5.H5Aclose(attributeId);
 
 				// Close everything from the new file
-				status = H5.H5Aclose(attributeId);
 				status = H5.H5Sclose(dataspaceId);
 				status = H5.H5Gclose(concentrationGroupId);
 				status = H5.H5Fclose(fileId);
@@ -1028,6 +1068,11 @@ public class Preprocessor {
 					// Read the dataset
 					status = H5.H5Dread(datasetId, HDF5Constants.H5T_STD_I32LE, HDF5Constants.H5S_ALL,
 							HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, surfaceArray);
+					
+					// Update the surface indices
+					for (int i = 0; i < (int) dims[0]; i++) {
+						surfaceArray[i] = surfaceArray[i] + xGridDiff;
+					}
 
 					// Close everything from the old file
 					status = H5.H5Dclose(datasetId);
@@ -1054,7 +1099,6 @@ public class Preprocessor {
 					status = H5.H5Dclose(datasetId);
 					status = H5.H5Sclose(dataspaceId);
 					status = H5.H5Gclose(concentrationGroupId);
-					status = H5.H5Fclose(fileId);
 				} else if (n == 2) {
 					// We are in the Xolotl 3D case
 					// Initialize the dimensions of the dataset
@@ -1068,6 +1112,13 @@ public class Preprocessor {
 					// Read the dataset
 					status = H5.H5Dread(datasetId, HDF5Constants.H5T_STD_I32LE, HDF5Constants.H5S_ALL,
 							HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, surfaceArray);
+					
+					// Update the surface indices
+					for (int i = 0; i < (int) dims[0]; i++) {
+						for (int j = 0; j < (int) dims[1]; j++) {
+							surfaceArray[i][j] = surfaceArray[i][j] + xGridDiff;
+						}
+					}
 
 					// Close everything from the old file
 					status = H5.H5Dclose(datasetId);
@@ -1094,8 +1145,25 @@ public class Preprocessor {
 					status = H5.H5Dclose(datasetId);
 					status = H5.H5Sclose(dataspaceId);
 					status = H5.H5Gclose(concentrationGroupId);
-					status = H5.H5Fclose(fileId);
 				}
+				
+				// Copy the nInterstitial and previousIFlux datasets
+				// Open the file to copy from
+				int fromFileId = H5.H5Fopen(fromName, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+				// Set the name of the sub group in this file 
+				subGroupName = "concentrationsGroup/concentration_" + lastTimeStep + "/nInterstitial";
+				// Copy nInterstitial
+				H5.H5Ocopy(fromFileId, subGroupName, fileId, "concentrationsGroup/concentration_0/nInterstitial",
+						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				// Set the name of the sub group in this file 
+				subGroupName = "concentrationsGroup/concentration_" + lastTimeStep + "/previousIFlux";
+				// Copy nInterstitial
+				H5.H5Ocopy(fromFileId, subGroupName, fileId, "concentrationsGroup/concentration_0/previousIFlux",
+						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+				// Close both files
+				status = H5.H5Fclose(fromFileId);
+				status = H5.H5Fclose(fileId);
 			}
 
 		} catch (Exception e) {
@@ -1105,60 +1173,6 @@ public class Preprocessor {
 
 		return;
 
-	}
-
-	/**
-	 * This operation reads the network of an already existing file and create a
-	 * map of the index and composition of the clusters
-	 * 
-	 * @param fromName
-	 *            The name of the HDF5 file from which the network will be read
-	 * @return A map of the index and composition
-	 */
-	public int[][] readNetwork(String fromName) {
-		// The array for the times
-		int[][] map = new int[0][0];
-
-		try {
-			// Open the file
-			int fileId = H5.H5Fopen(fromName, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-
-			// Open the dataset
-			int datasetId = H5.H5Dopen(fileId, "/networkGroup/network", HDF5Constants.H5P_DEFAULT);
-
-			// Open and read the networkSize attribute
-			int networkSizeAttributeId = H5.H5Aopen(datasetId, "networkSize", HDF5Constants.H5P_DEFAULT);
-			int[] networkSize = { 0 };
-			int status = H5.H5Aread(networkSizeAttributeId, HDF5Constants.H5T_STD_I32LE, networkSize);
-			status = H5.H5Aclose(networkSizeAttributeId);
-
-			// Create the array that will receive the network
-			double[][] networkArray = new double[networkSize[0]][6];
-
-			// Read the data set
-			status = H5.H5Dread(datasetId, HDF5Constants.H5T_IEEE_F64LE, HDF5Constants.H5S_ALL, HDF5Constants.H5S_ALL,
-					HDF5Constants.H5P_DEFAULT, networkArray);
-
-			// Close everything
-			status = H5.H5Dclose(datasetId);
-			status = H5.H5Fclose(fileId);
-
-			// Recreate the map at the size of the network array
-			map = new int[networkSize[0]][3];
-
-			// Loop on the network array to fill the map
-			for (int i = 0; i < networkSize[0]; i++) {
-				map[i][0] = (int) networkArray[i][0]; // He or Xe
-				map[i][1] = (int) networkArray[i][1]; // V
-				map[i][2] = (int) networkArray[i][2]; // I
-			}
-
-		} catch (Exception e) {
-			// Complain
-			e.printStackTrace();
-		}
-
-		return map;
 	}
 
 	/**
@@ -1276,62 +1290,9 @@ public class Preprocessor {
 	 *            The index for the position on the z axis
 	 * @param concentration
 	 *            The two dimensional array containing the concentrations
-	 * @param map
-	 *            The map containing the index and composition of the clusters
-	 *            in the previous network
-	 * @param clusters
-	 *            The list of clusters composing the new network
 	 */
-	public void writeConcentration(String toName, int i, int j, int k, double[][] concentration, int[][] map,
-			ArrayList<Cluster> clusters) {
-		// The list storing the new index and concentrations
-		ArrayList<double[]> newConc = new ArrayList<double[]>();
-
+	public void writeConcentration(String toName, int i, int j, int k, double[][] concentration) {
 		try {
-			// Looping over the array on concentration to check that the
-			// clusters
-			// from the previous network still exist in the new network
-			for (int l = 0; l < concentration.length; l++) {
-				// boolean to know if the cluster is in the new network
-				boolean found = false;
-				// index in the new network
-				int index = 0;
-				// Loop on the new network
-				for (Cluster cluster : clusters) {
-					// Check the composition
-					if ((cluster.nHe == map[(int) concentration[l][0]][0] || cluster.nXe == map[(int) concentration[l][0]][0])
-							&& (cluster.nV == map[(int) concentration[l][0]][1])
-							&& (cluster.nI == map[(int) concentration[l][0]][2])) {
-						// Add the cluster to the new list, with the new index
-						// but previous concentration
-						double[] concCluster = { (double) index, concentration[l][1] };
-						newConc.add(concCluster);
-						found = true;
-					}
-					// increment the index
-					index++;
-				}
-
-				// If the cluster was not found
-				if (!found) {
-					// Inform the user
-					System.out.println("Cluster with the following composition (He/Xe, V, I): "
-							+ map[(int) concentration[l][0]][0] + ", " + map[(int) concentration[l][0]][1] + ", "
-							+ map[(int) concentration[l][0]][2]
-							+ " is not present in the new network. Its concentration was " + concentration[l][1]
-							+ " at the (" + i + ", " + j + ", " + k + ")-th grid point.");
-				}
-			}
-
-			// Recreate the concentrattion array from the new concentration list
-			concentration = new double[newConc.size()][2];
-			// Loop on it to fill it
-			for (int l = 0; l < concentration.length; l++) {
-				double[] temp = newConc.get(l);
-				concentration[l][0] = temp[0];
-				concentration[l][1] = temp[1];
-			}
-
 			// Open the created HDF5 file
 			int fileId = H5.H5Fopen(toName, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 
@@ -1374,11 +1335,8 @@ public class Preprocessor {
 	 *            be copied
 	 * @param toName
 	 *            The name of the created HDF5 file
-	 * @param clusters
-	 *            The list of clusters that compose the network that will be
-	 *            written in the created HDF5 file
 	 */
-	public void copyConcentration(String fromName, String toName, int[] gridSize, ArrayList<Cluster> clusters) {
+	public void copyConcentration(String fromName, String toName, int[] gridSize) {
 		try {
 			// Read the concentration group from the given file to get the value
 			// of the last timestep
@@ -1398,11 +1356,6 @@ public class Preprocessor {
 				// Copy the surface position information
 				copySurface(fromName, lastTimeStep, toName);
 
-				// Create a map of the index and composition of the network
-				// present
-				// in the given HDF5 file
-				int[][] networkMap = readNetwork(fromName);
-
 				// Loop on all the position to read and copy the values of the
 				// concentrations
 				for (int k = -1; k <= gridSize[2]; k++) {
@@ -1415,9 +1368,11 @@ public class Preprocessor {
 							// given HDF5 file
 							double[][] conc = readConcentration(fromName, lastTimeStep, i, j, k);
 
+							// Update the x position
+							int newI = i + xGridDiff;
 							// Write the concentrations for this position in the
 							// new HDF5 file
-							writeConcentration(toName, i, j, k, conc, networkMap, clusters);
+							writeConcentration(toName, newI, j, k, conc);
 						}
 					}
 				}

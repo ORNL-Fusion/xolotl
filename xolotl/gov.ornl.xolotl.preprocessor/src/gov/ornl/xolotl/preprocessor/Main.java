@@ -58,8 +58,8 @@ public class Main {
 					String HDF5FileName = myArgs.getCheckpoint();
 					// Read the header and the concentration from this file
 					// and copy them to the network file
-					int[] gridSize = preprocessor.copyHeader(HDF5FileName, networkFileName);
-					preprocessor.copyConcentration(HDF5FileName, networkFileName, gridSize, clusters);
+					int[] gridSize = preprocessor.copyHeader(HDF5FileName, networkFileName, myArgs);
+					preprocessor.copyConcentration(HDF5FileName, networkFileName, gridSize);
 				} else {
 					// Write the header in it with the size options from the
 					// preprocessor

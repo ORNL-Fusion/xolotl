@@ -50,7 +50,7 @@ void HDF5Utils::openFile(const std::string& fileName) {
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
 
-	// Open the given HDF5 file with read only access
+	// Open the given HDF5 file with read and write access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDWR, propertyListId);
 
 	// Close the property list
