@@ -1,0 +1,12 @@
+#Mon Mar 13 14:21:20 EDT 2017
+dimensions=1
+process=reaction diff advec modifiedTM movingSurface
+networkFile=networkMobile.h5
+vizHandler=dummy
+perfHandler=dummy
+material=W100
+startTemp=1000
+regularGrid=no
+flux=4.0e4
+voidPortion=58.5
+petscArgs=-helium_conc -fieldsplit_0_pc_type sor -ts_max_snes_failures 200 -pc_fieldsplit_detect_coupling -ts_dt 1.0e-12 -helium_retention -ts_adapt_dt_max 1.0e-4 -ts_exact_final_time stepover -ts_monitor -pc_type fieldsplit -fieldsplit_1_pc_type redundant -ts_final_time 1.0e-2 -ts_max_steps 1000 
