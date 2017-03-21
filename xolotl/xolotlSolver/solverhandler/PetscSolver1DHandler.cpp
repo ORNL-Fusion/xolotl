@@ -205,7 +205,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 		}
 
 		// Initialize the vacancy concentration
-		if (i > surfacePosition && i < xSize - 1 && singleVacancyCluster) {
+		if (i > surfacePosition && i < xSize - 1 && singleVacancyCluster && !hasConcentrations) {
 			concOffset[vacancyIndex] = initialVConc;
 		}
 	}

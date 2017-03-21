@@ -149,7 +149,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Initialize the vacancy concentration
-	if (singleVacancyCluster) {
+	if (singleVacancyCluster && !hasConcentrations) {
 		concOffset[vacancyIndex] = initialVConc;
 	}
 
