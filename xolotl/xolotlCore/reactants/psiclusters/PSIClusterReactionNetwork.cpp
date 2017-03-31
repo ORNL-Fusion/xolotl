@@ -22,7 +22,6 @@ void PSIClusterReactionNetwork::setDefaultPropsAndNames() {
 	= std::make_shared<std::vector<std::shared_ptr<IReactant>>>();
 
 	// Initialize default properties
-	reactionsEnabled = true;
 	dissociationsEnabled = true;
 	numHeClusters = 0;
 	numVClusters = 0;
@@ -109,16 +108,572 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 	return;
 }
 
+double PSIClusterReactionNetwork::calculateDissociationConstant(
+		DissociationReaction * reaction) const {
+	// If the dissociations are not allowed
+	if (!dissociationsEnabled) return 0.0;
+
+	// The atomic volume is computed by considering the BCC structure of the
+	// tungsten. In a given lattice cell in tungsten there are tungsten atoms
+	// at each corner and a tungsten atom in the center. The tungsten atoms at
+	// the corners are shared across a total of eight cells. The fraction of
+	// the volume of the lattice cell that is filled with tungsten atoms is the
+	// atomic volume and is a_0^3/(8*1/8 + 1) = 0.5*a_0^3.
+	double atomicVolume = 0.5 * xolotlCore::tungstenLatticeConstant
+			* xolotlCore::tungstenLatticeConstant
+			* xolotlCore::tungstenLatticeConstant;
+
+	// Get the rate constant from the reverse reaction
+	double kPlus = reaction->reverseReaction->kConstant;
+
+	// Calculate and return
+	double bindingEnergy = computeBindingEnergy(reaction);
+	double k_minus_exp = exp(
+			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature));
+	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
+
+	return k_minus;
+}
+
+void PSIClusterReactionNetwork::createReactionConnectivity() {
+	// Initial declarations
+	int firstSize = 0, secondSize = 0, productSize = 0;
+
+	// Single species clustering (He, V, I)
+	// We know here that only Xe_1 can cluster so we simplify the search
+	// X_(a-i) + X_i --> X_a
+	// Make a vector of types
+	std::vector<string> typeVec = { heType, vType, iType };
+	// Loop on it
+	for (int iType = 0; iType < typeVec.size(); iType++) {
+		string typeName = typeVec[iType];
+		// Get all the reactants of this type
+		auto allTypeReactants = getAll(typeName);
+		// Loop on them
+		for (auto firstIt = allTypeReactants.begin();
+				firstIt != allTypeReactants.end(); firstIt++) {
+			// Get its size
+			firstSize = (*firstIt)->getSize();
+			// Loop on the second cluster starting at the same pointer to avoid double counting
+			for (auto secondIt = firstIt; secondIt != allTypeReactants.end();
+					secondIt++) {
+				// Get its size
+				secondSize = (*secondIt)->getSize();
+				productSize = firstSize + secondSize;
+				// Get the product
+				auto product = get(typeName, productSize);
+				// Check that the reaction can occur
+				if (product
+						&& ((*firstIt)->getDiffusionFactor() > 0.0
+								|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+					// Create a production reaction
+					auto reaction = std::make_shared<ProductionReaction>(
+							(*firstIt), (*secondIt));
+					// Tell the reactants that they are in this reaction
+					(*firstIt)->createCombination(reaction);
+					(*secondIt)->createCombination(reaction);
+					product->createProduction(reaction);
+
+					// Check if the reverse reaction is allowed
+					checkDissociationConnectivity(product, reaction);
+				}
+			}
+		}
+	}
+
+	// Helium absorption by HeV clusters
+	// He_(a) + (He_b)(V_c) --> [He_(a+b)](V_c)
+	// Get all the He and HeV clusters
+	auto allHeReactants = getAll(heType);
+	auto allHeVReactants = getAll(heVType);
+	// Loop on the He clusters
+	for (auto firstIt = allHeReactants.begin(); firstIt != allHeReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the HeV clusters
+		for (auto secondIt = allHeVReactants.begin();
+				secondIt != allHeVReactants.end(); secondIt++) {
+			// Get its composition
+			auto comp = (*secondIt)->getComposition();
+			// Create the composition of the potential product
+			std::vector<int> compositionVec = { comp[heType] + firstSize,
+					comp[vType], 0 };
+			// Get the product
+			auto product = getCompound(heVType, compositionVec);
+			// Check that the reaction can occur
+			if (product
+					&& ((*firstIt)->getDiffusionFactor() > 0.0
+							|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+				// Create a production reaction
+				auto reaction = std::make_shared<ProductionReaction>((*firstIt),
+						(*secondIt));
+				// Tell the reactants that they are in this reaction
+				(*firstIt)->createCombination(reaction);
+				(*secondIt)->createCombination(reaction);
+				product->createProduction(reaction);
+
+				// Check if the reverse reaction is allowed
+				checkDissociationConnectivity(product, reaction);
+			}
+		}
+	}
+
+	// Single Vacancy absorption by HeV clusters
+	// (He_a)(V_b) + V --> (He_a)[V_(b+1)]
+	// Get the single vacancy cluster
+	auto singleVacancyCluster = get(vType, 1);
+	// Loop on the HeV clusters
+	for (auto secondIt = allHeVReactants.begin();
+			secondIt != allHeVReactants.end(); secondIt++) {
+		// Get its composition
+		auto comp = (*secondIt)->getComposition();
+		// Create the composition of the potential product
+		std::vector<int> compositionVec = { comp[heType], comp[vType] + 1, 0 };
+		// Get the product
+		auto product = getCompound(heVType, compositionVec);
+		// Check that the reaction can occur
+		if (product
+				&& (singleVacancyCluster->getDiffusionFactor() > 0.0
+						|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+			// Create a production reaction
+			auto reaction = std::make_shared<ProductionReaction>(
+					singleVacancyCluster, (*secondIt));
+			// Tell the reactants that they are in this reaction
+			singleVacancyCluster->createCombination(reaction);
+			(*secondIt)->createCombination(reaction);
+			product->createProduction(reaction);
+
+			// Check if the reverse reaction is allowed
+			checkDissociationConnectivity(product, reaction);
+		}
+	}
+
+	// Helium-Vacancy clustering
+	// He_a + V_b --> (He_a)(V_b)
+	// Get all the V clusters
+	auto allVReactants = getAll(vType);
+	// Loop on the He clusters
+	for (auto firstIt = allHeReactants.begin(); firstIt != allHeReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the HeV clusters
+		for (auto secondIt = allVReactants.begin();
+				secondIt != allVReactants.end(); secondIt++) {
+			// Get its size
+			secondSize = (*secondIt)->getSize();
+			// Create the composition of the potential product
+			std::vector<int> compositionVec = { firstSize, secondSize, 0 };
+			// Get the product
+			auto product = getCompound(heVType, compositionVec);
+			// Check that the reaction can occur
+			if (product
+					&& ((*firstIt)->getDiffusionFactor() > 0.0
+							|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+				// Create a production reaction
+				auto reaction = std::make_shared<ProductionReaction>((*firstIt),
+						(*secondIt));
+				// Tell the reactants that they are in this reaction
+				(*firstIt)->createCombination(reaction);
+				(*secondIt)->createCombination(reaction);
+				product->createProduction(reaction);
+
+				// Check if the reverse reaction is allowed
+				checkDissociationConnectivity(product, reaction);
+			}
+		}
+	}
+
+	// Vacancy reduction by Interstitial absorption in HeV clusters
+	// (He_a)(V_b) + (I_c) --> (He_a)[V_(b-c)]
+	// Get all the I clusters
+	auto allIReactants = getAll(iType);
+	// Loop on them
+	for (auto firstIt = allIReactants.begin(); firstIt != allIReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the HeV clusters
+		for (auto secondIt = allHeVReactants.begin();
+				secondIt != allHeVReactants.end(); secondIt++) {
+			// Get its composition
+			auto comp = (*secondIt)->getComposition();
+			// The product can be He or HeV
+			IReactant * product = nullptr;
+			if (comp[vType] == firstSize) {
+				// The product is He
+				product = get(heType, comp[heType]);
+			} else {
+				// The product is HeV
+				// Create the composition of the potential product
+				std::vector<int> compositionVec = { comp[heType], comp[vType]
+						- firstSize, 0 };
+				// Get the product
+				product = getCompound(heVType, compositionVec);
+			}
+			// Check that the reaction can occur
+			if (product
+					&& ((*firstIt)->getDiffusionFactor() > 0.0
+							|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+				// Create a production reaction
+				auto reaction = std::make_shared<ProductionReaction>((*firstIt),
+						(*secondIt));
+				// Tell the reactants that they are in this reaction
+				(*firstIt)->createCombination(reaction);
+				(*secondIt)->createCombination(reaction);
+				product->createProduction(reaction);
+
+				// Check if the reverse reaction is allowed
+				checkDissociationConnectivity(product, reaction);
+			}
+		}
+	}
+
+	// Helium clustering leading to trap mutation
+	// He_a + He_b --> [He_(a+b)](V_c) + I_c
+	// Loop on the He clusters
+	for (auto firstIt = allHeReactants.begin(); firstIt != allHeReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the second He cluster starting at the same pointer to avoid double counting
+		for (auto secondIt = firstIt; secondIt != allHeReactants.end();
+				secondIt++) {
+			// Get its size
+			secondSize = (*secondIt)->getSize();
+			// Get the simple product
+			productSize = firstSize + secondSize;
+			auto product = get(heType, productSize);
+			// Doesn't do anything if the product exist
+			if (product)
+				continue;
+
+			// Trap mutation is happening
+			// Loop on the possible I starting by the smallest
+			for (auto it = allIReactants.begin(); it != allIReactants.end();
+					it++) {
+				// Get the size of the I cluster
+				int iSize = (*it)->getSize();
+				// Create the composition of the potential product
+				std::vector<int> compositionVec = { firstSize + secondSize,
+						iSize, 0 };
+				product = getCompound(heVType, compositionVec);
+				// Check that the reaction can occur
+				if (product
+						&& ((*firstIt)->getDiffusionFactor() > 0.0
+								|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+					// Create a production reaction
+					auto reaction = std::make_shared<ProductionReaction>(
+							(*firstIt), (*secondIt));
+					// Tell the reactants that they are in this reaction
+					(*firstIt)->createCombination(reaction);
+					(*secondIt)->createCombination(reaction);
+					product->createProduction(reaction);
+					(*it)->createProduction(reaction);
+
+					// Stop the loop on I clusters here
+					break;
+				}
+			}
+		}
+	}
+
+	// Helium absorption by HeV leading to trap mutation
+	// (He_a)(V_b) + He_c --> [He_(a+c)][V_(b+d)] + I_d
+	// Loop on the He clusters
+	for (auto firstIt = allHeReactants.begin(); firstIt != allHeReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the HeV clusters
+		for (auto secondIt = allHeVReactants.begin();
+				secondIt != allHeVReactants.end(); secondIt++) {
+			// Get its composition
+			auto comp = (*secondIt)->getComposition();
+			// Get the simple product
+			std::vector<int> compositionVec = { firstSize + comp[heType],
+					comp[vType], 0 };
+			auto product = getCompound(heVType, compositionVec);
+			// Doesn't do anything if the product exist
+			if (product)
+				continue;
+
+			// Trap mutation is happening
+			// Loop on the possible I starting by the smallest
+			for (auto it = allIReactants.begin(); it != allIReactants.end();
+					it++) {
+				// Get the size of the I cluster
+				int iSize = (*it)->getSize();
+				// Create the composition of the potential product
+				compositionVec[1] = comp[vType] + iSize;
+				product = getCompound(heVType, compositionVec);
+				// Check that the reaction can occur
+				if (product
+						&& ((*firstIt)->getDiffusionFactor() > 0.0
+								|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+					// Create a production reaction
+					auto reaction = std::make_shared<ProductionReaction>(
+							(*firstIt), (*secondIt));
+					// Tell the reactants that they are in this reaction
+					(*firstIt)->createCombination(reaction);
+					(*secondIt)->createCombination(reaction);
+					product->createProduction(reaction);
+					(*it)->createProduction(reaction);
+
+					// Stop the loop on I clusters here
+					break;
+				}
+			}
+		}
+	}
+
+	// Vacancy-Interstitial annihilation
+	// I_a + V_b
+	//        --> I_(a-b), if a > b
+	//        --> V_(b-a), if a < b
+	//        --> 0, if a = b
+	// Loop on the I clusters
+	for (auto firstIt = allIReactants.begin(); firstIt != allIReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the V clusters
+		for (auto secondIt = allVReactants.begin();
+				secondIt != allVReactants.end(); secondIt++) {
+			// Get its size
+			secondSize = (*secondIt)->getSize();
+			// Check the possibilities
+			if (firstSize > secondSize) {
+				// Get the product
+				productSize = firstSize - secondSize;
+				auto product = get(iType, productSize);
+				// Check that the reaction can occur
+				if (product
+						&& ((*firstIt)->getDiffusionFactor() > 0.0
+								|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+					// Create a production reaction
+					auto reaction = std::make_shared<ProductionReaction>(
+							(*firstIt), (*secondIt));
+					// Tell the reactants that they are in this reaction
+					(*firstIt)->createCombination(reaction);
+					(*secondIt)->createCombination(reaction);
+					product->createProduction(reaction);
+				}
+			} else if (firstSize < secondSize) {
+				// Get the product
+				productSize = secondSize - firstSize;
+				auto product = get(vType, productSize);
+				// Check that the reaction can occur
+				if (product
+						&& ((*firstIt)->getDiffusionFactor() > 0.0
+								|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+					// Create a production reaction
+					auto reaction = std::make_shared<ProductionReaction>(
+							(*firstIt), (*secondIt));
+					// Tell the reactants that they are in this reaction
+					(*firstIt)->createCombination(reaction);
+					(*secondIt)->createCombination(reaction);
+					product->createProduction(reaction);
+				}
+
+			} else {
+				// Annihilation
+				// Check that the reaction can occur
+				if (((*firstIt)->getDiffusionFactor() > 0.0
+						|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+					// Create a production reaction
+					auto reaction = std::make_shared<ProductionReaction>(
+							(*firstIt), (*secondIt));
+					// Tell the reactants that they are in this reaction
+					(*firstIt)->createCombination(reaction);
+					(*secondIt)->createCombination(reaction);
+				}
+			}
+		}
+	}
+
+	// Helium absorption by HeI clusters
+	// He_(a) + (He_b)(I_c) --> [He_(a+b)](I_c)
+	// Get all the HeI clusters
+	auto allHeIReactants = getAll(heIType);
+	// Loop on the He clusters
+	for (auto firstIt = allHeReactants.begin(); firstIt != allHeReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the HeV clusters
+		for (auto secondIt = allHeIReactants.begin();
+				secondIt != allHeIReactants.end(); secondIt++) {
+			// Get its composition
+			auto comp = (*secondIt)->getComposition();
+			// Create the composition of the potential product
+			std::vector<int> compositionVec = { comp[heType] + firstSize, 0,
+					comp[iType] };
+			// Get the product
+			auto product = getCompound(heIType, compositionVec);
+			// Check that the reaction can occur
+			if (product
+					&& ((*firstIt)->getDiffusionFactor() > 0.0
+							|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+				// Create a production reaction
+				auto reaction = std::make_shared<ProductionReaction>((*firstIt),
+						(*secondIt));
+				// Tell the reactants that they are in this reaction
+				(*firstIt)->createCombination(reaction);
+				(*secondIt)->createCombination(reaction);
+				product->createProduction(reaction);
+
+				// Check if the reverse reaction is allowed
+				checkDissociationConnectivity(product, reaction);
+			}
+		}
+	}
+
+	// Single Interstitial absorption by HeI clusters
+	// (He_a)(I_b) + I --> (He_a)[I_(b+1)]
+	// Get the single interstitial cluster
+	auto singleInterstitialCluster = get(iType, 1);
+	// Loop on the HeI clusters
+	for (auto secondIt = allHeIReactants.begin();
+			secondIt != allHeIReactants.end(); secondIt++) {
+		// Get its composition
+		auto comp = (*secondIt)->getComposition();
+		// Create the composition of the potential product
+		std::vector<int> compositionVec = { comp[heType], 0, comp[iType] + 1 };
+		// Get the product
+		auto product = getCompound(heIType, compositionVec);
+		// Check that the reaction can occur
+		if (product
+				&& (singleInterstitialCluster->getDiffusionFactor() > 0.0
+						|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+			// Create a production reaction
+			auto reaction = std::make_shared<ProductionReaction>(
+					singleInterstitialCluster, (*secondIt));
+			// Tell the reactants that they are in this reaction
+			singleInterstitialCluster->createCombination(reaction);
+			(*secondIt)->createCombination(reaction);
+			product->createProduction(reaction);
+
+			// Check if the reverse reaction is allowed
+			checkDissociationConnectivity(product, reaction);
+		}
+	}
+
+	// Helium-Interstitial clustering
+	// He_a + I_b --> (He_a)(I_b)
+	// Loop on the He clusters
+	for (auto firstIt = allHeReactants.begin(); firstIt != allHeReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the I clusters
+		for (auto secondIt = allIReactants.begin();
+				secondIt != allIReactants.end(); secondIt++) {
+			// Get its size
+			secondSize = (*secondIt)->getSize();
+			// Create the composition of the potential product
+			std::vector<int> compositionVec = { firstSize, 0, secondSize };
+			// Get the product
+			auto product = getCompound(heIType, compositionVec);
+			// Check that the reaction can occur
+			if (product
+					&& ((*firstIt)->getDiffusionFactor() > 0.0
+							|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+				// Create a production reaction
+				auto reaction = std::make_shared<ProductionReaction>((*firstIt),
+						(*secondIt));
+				// Tell the reactants that they are in this reaction
+				(*firstIt)->createCombination(reaction);
+				(*secondIt)->createCombination(reaction);
+				product->createProduction(reaction);
+
+				// Check if the reverse reaction is allowed
+				checkDissociationConnectivity(product, reaction);
+			}
+		}
+	}
+
+	// Interstitial reduction by Vacancy absorption in HeI clusters
+	// (He_a)(I_b) + (V_c) --> (He_a)[I_(b-c)]
+	// Loop on V clusters
+	for (auto firstIt = allVReactants.begin(); firstIt != allVReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the HeI clusters
+		for (auto secondIt = allHeIReactants.begin();
+				secondIt != allHeIReactants.end(); secondIt++) {
+			// Get its composition
+			auto comp = (*secondIt)->getComposition();
+			// The product can be He or HeI
+			IReactant * product = nullptr;
+			if (comp[iType] == firstSize) {
+				// The product is He
+				product = get(heType, comp[heType]);
+			} else {
+				// The product is HeI
+				// Create the composition of the potential product
+				std::vector<int> compositionVec = { comp[heType], 0, comp[iType]
+						- firstSize };
+				// Get the product
+				product = getCompound(heIType, compositionVec);
+			}
+			// Check that the reaction can occur
+			if (product
+					&& ((*firstIt)->getDiffusionFactor() > 0.0
+							|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+				// Create a production reaction
+				auto reaction = std::make_shared<ProductionReaction>((*firstIt),
+						(*secondIt));
+				// Tell the reactants that they are in this reaction
+				(*firstIt)->createCombination(reaction);
+				(*secondIt)->createCombination(reaction);
+				product->createProduction(reaction);
+
+				// Check if the reverse reaction is allowed
+				checkDissociationConnectivity(product, reaction);
+			}
+		}
+	}
+
+	return;
+}
+
+void PSIClusterReactionNetwork::checkDissociationConnectivity(
+		IReactant * emittingReactant,
+		std::shared_ptr<ProductionReaction> reaction) {
+	// Check if at least one of the potentially emitted cluster is size one
+	if (reaction->first->getSize() != 1 && reaction->second->getSize() != 1) {
+		// Don't add the reverse reaction
+		return;
+	}
+
+	// Check for trap mutations (with XOR)
+	if ((reaction->first->getType() == iType)
+			== !(reaction->second->getType() == iType)) {
+		// Don't add the reverse reaction
+		return;
+	}
+
+	// The reaction can occur, create the dissociation
+	// Create a dissociation reaction
+	auto dissociationReaction = std::make_shared<DissociationReaction>(
+			emittingReactant, reaction->first, reaction->second);
+	// Set the reverse reaction
+	dissociationReaction->reverseReaction = reaction.get();
+	// Tell the reactants that their are in this reaction
+	reaction->first->createDissociation(dissociationReaction);
+	reaction->second->createDissociation(dissociationReaction);
+	emittingReactant->createEmission(dissociationReaction);
+
+	return;
+}
+
 void PSIClusterReactionNetwork::setTemperature(double temp) {
 	ReactionNetwork::setTemperature(temp);
 
-	for (int i = 0; i < networkSize; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		auto cluster = allReactants->at(i);
-		cluster->updateRateConstants();
-	}
+	computeRateConstants();
 
 	return;
 }
@@ -418,14 +973,18 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 		(*it)->setHeMomentumId(id);
 		(*it)->setVMomentumId(id);
 
-		if ((*it)->getType() == heVType) numHeVClusters++;
+		(*it)->optimizeReactions();
+
+		if ((*it)->getType() == heVType)
+			numHeVClusters++;
 	}
 
 	// Reset the network size
 	networkSize = id;
 
 	// Get all the super clusters and loop on them
-	for (auto it = clusterTypeMap[PSISuperType]->begin(); it != clusterTypeMap[PSISuperType]->end(); ++it) {
+	for (auto it = clusterTypeMap[PSISuperType]->begin();
+			it != clusterTypeMap[PSISuperType]->end(); ++it) {
 		id++;
 		(*it)->setHeMomentumId(id);
 		id++;
@@ -683,6 +1242,40 @@ double PSIClusterReactionNetwork::getTotalIConcentration() {
 	}
 
 	return iConc;
+}
+
+void PSIClusterReactionNetwork::computeRateConstants() {
+	// Local declarations
+	double rate = 0.0;
+	// Initialize the value for the biggest production rate
+	double biggestProductionRate = 0.0;
+
+	// Loop on all the production reactions
+	for (auto iter = allProductionReactions.begin();
+			iter != allProductionReactions.end(); iter++) {
+		// Compute the rate
+		rate = calculateReactionRateConstant(iter->get());
+		// Set it in the reaction
+        (*iter)->kConstant = rate;
+
+		// Check if the rate is the biggest one up to now
+		if (rate > biggestProductionRate)
+			biggestProductionRate = rate;
+	}
+
+	// Loop on all the dissociation reactions
+	for (auto iter = allDissociationReactions.begin();
+			iter != allDissociationReactions.end(); iter++) {
+		// Compute the rate
+		rate = calculateDissociationConstant(iter->get());
+		// Set it in the reaction
+		(*iter)->kConstant = rate;
+	}
+
+	// Set the biggest rate
+	biggestRate = biggestProductionRate;
+
+	return;
 }
 
 void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {

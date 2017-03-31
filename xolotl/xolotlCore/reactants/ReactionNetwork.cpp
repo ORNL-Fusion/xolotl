@@ -6,8 +6,9 @@
 using namespace xolotlCore;
 
 ReactionNetwork::ReactionNetwork() :
-		temperature(0.0), networkSize(0), reactionsEnabled(true), dissociationsEnabled(
-				true), numVClusters(0), numIClusters(0), numSuperClusters(0), maxVClusterSize(0), maxIClusterSize(0) {
+		temperature(0.0), networkSize(0), dissociationsEnabled(true), numVClusters(
+				0), numIClusters(0), numSuperClusters(0), maxVClusterSize(0), maxIClusterSize(
+				0) {
 //    concUpdateCounter = xolotlPerf::getHandlerRegistry()->getEventCounter("net_conc_updates");
 	// Setup the vector to hold all of the reactants
 	allReactants = make_shared<std::vector<IReactant *>>();
@@ -16,8 +17,9 @@ ReactionNetwork::ReactionNetwork() :
 
 ReactionNetwork::ReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		handlerRegistry(registry), temperature(0.0), networkSize(0), reactionsEnabled(
-				true), dissociationsEnabled(true), numVClusters(0), numIClusters(0), numSuperClusters(0), maxVClusterSize(0), maxIClusterSize(0) {
+		handlerRegistry(registry), temperature(0.0), networkSize(0), dissociationsEnabled(
+				true), numVClusters(0), numIClusters(0), numSuperClusters(0), maxVClusterSize(
+				0), maxIClusterSize(0) {
 	// Counter for the number of times the network concentration is updated.
 	concUpdateCounter = handlerRegistry->getEventCounter("net_conc_updates");
 	// Setup the vector to hold all of the reactants
@@ -33,7 +35,6 @@ ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 	networkSize = other.networkSize;
 	names = other.names;
 	compoundNames = other.compoundNames;
-	reactionsEnabled = other.reactionsEnabled;
 	dissociationsEnabled = other.dissociationsEnabled;
 	numVClusters = other.numVClusters;
 	numIClusters = other.numIClusters;
@@ -48,6 +49,32 @@ ReactionNetwork::ReactionNetwork(const ReactionNetwork &other) {
 	concUpdateCounter = handlerRegistry->getEventCounter("net_conc_updates");
 
 	return;
+}
+
+double ReactionNetwork::calculateReactionRateConstant(
+		ProductionReaction * reaction) const {
+	// Get the reaction radii
+	double r_first = reaction->first->getReactionRadius();
+	double r_second = reaction->second->getReactionRadius();
+
+	// Get the diffusion coefficients
+	double firstDiffusion = reaction->first->getDiffusionCoefficient();
+	double secondDiffusion = reaction->second->getDiffusionCoefficient();
+
+	// Calculate and return
+	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
+			* (firstDiffusion + secondDiffusion);
+	return k_plus;
+}
+
+double ReactionNetwork::computeBindingEnergy(
+		DissociationReaction * reaction) const {
+	// for the dissociation A --> B + C we need A binding energy
+	// E_b(A) = E_f(B) + E_f(C) - E_f(A) where E_f is the formation energy
+	double bindingEnergy = reaction->first->getFormationEnergy()
+			+ reaction->second->getFormationEnergy()
+			- reaction->dissociating->getFormationEnergy();
+	return bindingEnergy;
 }
 
 void ReactionNetwork::fillConcentrationsArray(double * concentrations) {
@@ -148,3 +175,57 @@ const std::vector<std::string> & ReactionNetwork::getNames() const {
 const std::vector<std::string> & ReactionNetwork::getCompoundNames() const {
 	return compoundNames;
 }
+
+std::shared_ptr<ProductionReaction> ReactionNetwork::addProductionReaction(
+		std::shared_ptr<ProductionReaction> reaction) {
+
+    // Check if the given ProductionReaction already exists.
+    auto key = reaction->descriptiveKey();
+    auto iter = productionReactionMap.find(key);
+    if(iter != productionReactionMap.end()) {
+        // We already knew about the reaction, so return the one we
+        // already had defined.
+        return iter->second;
+    }
+
+    // We did not yet know about the given reaction.
+    // Save it.
+    productionReactionMap.emplace(key, reaction);
+    allProductionReactions.emplace_back(reaction);
+
+    return reaction;
+}
+
+std::shared_ptr<DissociationReaction> ReactionNetwork::addDissociationReaction(
+		std::shared_ptr<DissociationReaction> reaction) {
+
+    // Check if we already know about this reaction.
+    auto key = reaction->descriptiveKey();
+    auto iter = dissociationReactionMap.find(key);
+    if(iter != dissociationReactionMap.end()) {
+        // We already knew about the reaction.
+        // Return the existing one.
+        return iter->second;
+    }
+
+    // We did not yet know about the given reaction.
+    // Add it, but also link it to its reverse reaction.
+    // First, create the reverse reaction to get a pointer to it.
+    auto reverseReaction = std::make_shared<ProductionReaction>(reaction->first,
+            reaction->second);
+    // Add this reverse reaction to our set of known reactions.
+    reverseReaction = addProductionReaction(reverseReaction);
+
+    // Indicate that the reverse reaction is the reverse reaction
+    // to the newly-added dissociation reaction.
+    reaction->reverseReaction = reverseReaction.get();
+
+    // Add the dissociation reaction to our set of known reactions.
+    dissociationReactionMap.emplace(key, reaction);
+    allDissociationReactions.emplace_back(reaction);
+
+    // Return the newly-added dissociation reaction.
+    return reaction;
+}
+
+

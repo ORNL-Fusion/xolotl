@@ -5,7 +5,7 @@
 #include <Reactant.h>
 
 namespace xolotlPerf {
-	class ITimer;
+class ITimer;
 }
 
 namespace xolotlCore {
@@ -74,15 +74,21 @@ protected:
 		double secondVDistance;
 
 		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
+		 * The reaction/dissociation pointer to the list
 		 */
-		double kConstant;
+		std::shared_ptr<Reaction> reaction;
+
+		/**
+		 * The number of times this reaction should be counted
+		 */
+		int multiplicity;
 
 		//! The constructor
-		ClusterPair(PSICluster * firstPtr, PSICluster * secondPtr, double k)
-		: first(firstPtr), second(secondPtr), kConstant(k), firstHeDistance(0.0), firstVDistance(0.0),
-		  secondHeDistance(0.0), secondVDistance(0.0) {}
+		ClusterPair(PSICluster * firstPtr, PSICluster * secondPtr) :
+				first(firstPtr), second(secondPtr), reaction(
+						nullptr), firstHeDistance(0.0), firstVDistance(
+						0.0), secondHeDistance(0.0), secondVDistance(0.0), multiplicity(1) {
+		}
 	};
 
 	/**
@@ -112,162 +118,21 @@ protected:
 		double vDistance;
 
 		/**
-		 * The reaction constant associated to this reaction
+		 * The reaction pointer to the list
 		 */
-		double kConstant;
+		std::shared_ptr<Reaction> reaction;
+
+		/**
+		 * The number of times this reaction should be counted
+		 */
+		int multiplicity;
 
 		//! The constructor
-		CombiningCluster(PSICluster * Ptr, double k)
-		: combining(Ptr), kConstant(k), heDistance(0.0), vDistance(0.0) {}
+		CombiningCluster(PSICluster * ptr) :
+				combining(ptr), reaction(nullptr), heDistance(
+						0.0), vDistance(0.0), multiplicity(1) {
+		}
 	};
-
-	/**
-	 * Computes a row (or column) of the reaction connectivity matrix
-	 * corresponding to this cluster.
-	 *
-	 * Connections are made between this cluster and any clusters it
-	 * affects in combination and production reactions.
-	 *
-	 * The base-class implementation handles the common part of single species clusters.
-	 *
-	 * A_(x-i) + A_i --> A_x
-	 *
-	 * Must be overridden by subclasses.
-	 */
-	virtual void createReactionConnectivity();
-
-	/**
-	 * Computes a row (or column) of the dissociation connectivity matrix
-	 * corresponding to this cluster.
-	 *
-	 * Connections are made between this cluster and any clusters it affects
-	 * in a dissociation reaction.
-	 *
-	 * The base-class implementation handles dissociation for regular clusters
-	 * by processing the reaction
-	 *
-	 * A_x --> A_(x-1) + A
-	 *
-	 * Must be overridden by subclasses.
-	 *
-	 */
-	virtual void createDissociationConnectivity();
-
-	/**
-	 * Calculate the dissociation constant of the first cluster with respect to
-	 * the single-species cluster of the same type based on the current clusters
-	 * atomic volume, reaction rate constant, and binding energies.
-	 *
-	 * @param dissociatingCluster The cluster that is dissociating, it is its binding
-	 * energy that must be used
-	 * @param singleCluster One of the clusters that dissociated from the parent,
-	 * must be the single size one in order to select the right type of binding energy
-	 * @param secondCluster The second cluster that dissociated from the parent
-	 * @return The dissociation constant
-	 */
-	double calculateDissociationConstant(const PSICluster & dissociatingCluster,
-			const PSICluster & singleCluster, const PSICluster & secondCluster) const;
-			
-	/**
-	 * This operation adds the dissociating cluster to the list of dissociatingPairs.
-	 * It is called by createDissociationConnectivity to process the reaction.
-	 *
-	 * @param dissociatingCluster The cluster that creates this cluster
-	 * by dissociation
-	 * @param emittedCluster The cluster that is also emitted during the
-	 * dissociation
-	 */
-	void dissociateCluster(PSICluster * dissociatingCluster, PSICluster * emittedCluster);
-
-	/**
-	 * This operation creates the two emitted clusters from the dissociation of
-	 * this cluster. It is called by createDissociationConnectivity to process the
-	 * reaction and handle the connectivity.
-	 *
-	 * @param firstEmittedCluster The first cluster emitted by the
-	 * dissociation. Should be the single size one to have correct
-	 * computation of the dissociation constant
-	 * @param secondEmittedCluster The second cluster emitted by the
-	 * dissociation
-	 */
-	void emitClusters(
-			PSICluster * firstEmittedCluster,
-			PSICluster * secondEmittedCluster);
-
-	/**
-	 * This operation "combines" clusters in the sense that it handles all of
-	 * the logic and caching required to correctly process the reaction
-	 *
-	 * A_x + A_y --> A_(x+y)
-	 *
-	 * or
-	 *
-	 * A_x + B_y --> (A_x)(B_y)
-	 *
-	 * or
-	 *
-	 * (A_x)(B_y) + B_z --> (A_x)[B_(z+y)]
-	 *
-	 * for each cluster in the set that interacts with this cluster.
-	 *
-	 * This operation fills the reaction connectivity array as well as the
-	 * array of combining clusters.
-	 *
-	 * @param clusters The clusters that can combine with this cluster
-	 * @param productName The name of the product produced in the reaction
-	 */
-	virtual void combineClusters(std::vector<IReactant *> & clusters,
-			const std::string& productName);
-
-	/**
-	 * This operation handles partial replacement reactions of the form
-	 *
-	 * (A_x)(B_y) + C_z --> (A_x)[B_(y-z)]
-	 *
-	 * for each compound cluster in the set.
-	 *
-	 * This operation fills the reaction connectivity array as well as the
-	 * array of combining clusters.
-	 *
-	 * Works only if "this" is not a mixed species. Needs to be overridden
-	 * for the other ones.
-	 *
-	 * @param clusters The clusters that have part of their B components
-	 * replaced. It is assumed that each element of this set represents a
-	 * cluster of the form (A_x)(B_y).
-	 * @param oldComponentName The name of the component that will be partially
-	 * replaced
-	 */
-	virtual void replaceInCompound(std::vector<IReactant *> & clusters,
-			const std::string& oldComponentName);
-
-	/** This operation handles reactions where interstitials fill vacancies,
-	 * sometimes referred to vacancy-interstitial annihilation. The reaction
-	 * is of the form
-	 *
-	 * I_a + V_b
-	 * --> I_(a-b), if a > b
-	 * --> V_(b-a), if a < b
-	 * --> 0, if a = b
-	 *
-	 * It is important to note that I_a + V_b = V_b + I_a.
-	 *
-	 * The operation assumes "this" is the first cluster in the reaction and
-	 * relies on the caller to specify the second cluster name/type.
-	 *
-	 * This operation fills the reaction connectivity array as well as the
-	 * array of combining clusters.
-	 *
-	 * This operation also I_a and V_b as a reacting pair of the product. It
-	 * is simpler and cheaper (O(C)) to do this operation here and quite
-	 * computationally difficult by comparison (O(numI*numV)) to do this
-	 * operation on the child since it has to search all of the possible
-	 * parents.
-	 *
-	 * @param clusters The set of clusters of the second type that interact
-	 * with this cluster
-	 **/
-	void fillVWithI(std::vector<IReactant *> & clusters);
 
 	/**
 
@@ -304,26 +169,12 @@ public:
 	std::vector<ClusterPair> reactingPairs;
 
 	/**
-	 * A vector of pointers to ClusterPairs that represents the effective reacting
-	 * pairs, i.e. those for which the reaction rate is not 0.0. Should be filled
-	 * every time the temperature changes.
-	 */
-	std::vector<ClusterPair *> effReactingPairs;
-
-	/**
 	 * A vector of clusters that combine with this cluster to produce other
 	 * clusters. This vector should be populated early in the cluster's
 	 * lifecycle by subclasses. In the standard Xolotl clusters, this vector is
 	 * filled in createReactionConnectivity.
 	 */
 	std::vector<CombiningCluster> combiningReactants;
-
-	/**
-	 * A vector of pointers to CombiningCluster that represents the effective
-	 * combining clusters, i.e. those for which the reaction rate is not 0.0.
-	 * Should be filled every time the temperature changes.
-	 */
-	std::vector<CombiningCluster *> effCombiningReactants;
 
 	/**
 	 * A vector of pairs of clusters: the first one is the one dissociation into
@@ -336,13 +187,6 @@ public:
 	std::vector<ClusterPair> dissociatingPairs;
 
 	/**
-	 * A vector of pointers to ClusterPairs that represents the effective dissociating
-	 * pairs, i.e. those for which the dissociation rate is not 0.0. Should be filled
-	 * every time the temperature changes.
-	 */
-	std::vector<ClusterPair *> effDissociatingPairs;
-
-	/**
 	 * A vector of ClusterPairs that represent pairs of clusters that are emitted
 	 * from the dissociation of this cluster. This vector should be populated early
 	 * in the cluster's lifecycle by subclasses. In the standard Xolotl clusters,
@@ -350,13 +194,6 @@ public:
 	 * createDissociationConnectivity.
 	 */
 	std::vector<ClusterPair> emissionPairs;
-
-	/**
-	 * A vector of pointers to ClusterPairs that represents the effective emission
-	 * pairs, i.e. those for which the dissociation rate is not 0.0. Should be filled
-	 * every time the temperature changes.
-	 */
-	std::vector<ClusterPair *> effEmissionPairs;
 
 	/**
 	 * The default constructor
@@ -375,13 +212,14 @@ public:
 	/**
 	 * The destructor
 	 */
-	virtual ~PSICluster() {}
+	virtual ~PSICluster() {
+	}
 
 	/**
 	 * Returns a reactant created using the copy constructor
 	 */
 	virtual std::shared_ptr<IReactant> clone() {
-		return std::shared_ptr<IReactant> (new PSICluster(*this));
+		return std::shared_ptr<IReactant>(new PSICluster(*this));
 	}
 
 	/**
@@ -390,8 +228,45 @@ public:
 	 *
 	 * @param network The reaction network of which this cluster is a part
 	 */
-	void setReactionNetwork(
+	virtual void setReactionNetwork(
 			const std::shared_ptr<IReactionNetwork> reactionNetwork);
+
+	/**
+	 * Create a production pair associated with the given reaction.
+	 * Create the connectivity.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 */
+	void createProduction(std::shared_ptr<ProductionReaction> reaction);
+
+	/**
+	 * Create a combination associated with the given reaction.
+	 * Create the connectivity.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 */
+	void createCombination(std::shared_ptr<ProductionReaction> reaction);
+
+	/**
+	 * Create a dissociation pair associated with the given reaction.
+	 * Create the connectivity.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 */
+	void createDissociation(std::shared_ptr<DissociationReaction> reaction);
+
+	/**
+	 * Create an emission pair associated with the given reaction.
+	 * Create the connectivity.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 */
+	void createEmission(std::shared_ptr<DissociationReaction> reaction);
+
+	/**
+	 * Add the reactions to the network lists.
+	 */
+	virtual void optimizeReactions();
 
 	/**
 	 * This operation returns the connectivity array for this cluster for
@@ -503,7 +378,8 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
-	virtual void getProductionPartialDerivatives(std::vector<double> & partials) const;
+	virtual void getProductionPartialDerivatives(
+			std::vector<double> & partials) const;
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -513,7 +389,8 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
-	virtual void getCombinationPartialDerivatives(std::vector<double> & partials) const;
+	virtual void getCombinationPartialDerivatives(
+			std::vector<double> & partials) const;
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -523,7 +400,8 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
-	virtual void getDissociationPartialDerivatives(std::vector<double> & partials) const;
+	virtual void getDissociationPartialDerivatives(
+			std::vector<double> & partials) const;
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -533,7 +411,8 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
-	virtual void getEmissionPartialDerivatives(std::vector<double> & partials) const;
+	virtual void getEmissionPartialDerivatives(
+			std::vector<double> & partials) const;
 
 	/**
 	 * This operation reset the connectivity sets based on the information
@@ -581,20 +460,6 @@ public:
 	 * that it does not.
 	 */
 	std::vector<int> getConnectivity() const;
-
-	/**
-	 * Calculate all the rate constants for the reactions and dissociations in which this
-	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
-	 * or CombiningCluster. Need to be called only at the beginning of the simulation.
-	 */
-	virtual void computeRateConstants();
-
-	/**
-	 * Update all the rate constants for the reactions and dissociations in which this
-	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
-	 * or CombiningCluster. Need to be called when the temperature changes.
-	 */
-	virtual void updateRateConstants();
 
 };
 

@@ -23,6 +23,16 @@ private:
 	double A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15;
 
 	/**
+	 * The index of the V cluster.
+	 */
+	int vDefectIndex;
+
+	/**
+	 * The index of the I cluster.
+	 */
+	int iDefectIndex;
+
+	/**
 	 * Function that calculate the flux at a given position x (in nm).
 	 * This function is not normalized. The surface is supposed to be (100).
 	 *
@@ -48,10 +58,9 @@ public:
 	/**
 	 * The constructor
 	 */
-	TRIDYNFitFluxHandler() :
-			A0(0.0), A1(0.0), A2(0.0), A3(0.0), A4(0.0), A5(0.0), A6(0.0), A7(
-					0.0), A8(0.0), A9(0.0), A10(0.0), A11(0.0), A12(0.0), A13(
-					0.0), A14(0.0), A15(0.0) {
+	TRIDYNFitFluxHandler() : A0(0.0), A1(0.0), A2(0.0), A3(0.0), A4(0.0), A5(0.0), A6(0.0),
+	A7(0.0), A8(0.0), A9(0.0), A10(0.0), A11(0.0), A12(0.0), A13(0.0), A14(0.0), A15(0.0),
+	vDefectIndex(-1), iDefectIndex(-1) {
 	}
 
 	/**
@@ -120,6 +129,45 @@ public:
 							"cannot use the flux option!");
 		}
 		fluxIndex = fluxCluster->getId() - 1;
+
+//		// Set the V index corresponding the the single vacancy cluster here
+//		auto vCluster = network->get(vType, 1);
+//		// Check that the V cluster is present in the network
+//		if (!vCluster) {
+//			throw std::string(
+//					"\nThe single vacancy cluster is not present in the network, "
+//							"cannot use the flux option!");
+//		}
+//		vDefectIndex = vCluster->getId() - 1;
+//
+//		// Set the I index corresponding the the single interstitial cluster here
+//		auto iCluster = network->get(iType, 1);
+//		// Check that the V cluster is present in the network
+//		if (!iCluster) {
+//			throw std::string(
+//					"\nThe single interstitial cluster is not present in the network, "
+//							"cannot use the flux option!");
+//		}
+//		iDefectIndex = iCluster->getId() - 1;
+
+		return;
+	}
+
+	/**
+	 * This operation computes the flux due to incoming particles at a given grid point.
+	 * \see IFluxHandler.h
+	 */
+	void computeIncidentFlux(double currentTime, double *updatedConcOffset, int xi, int surfacePos) {
+		// Recompute the flux vector if a time profile is used
+		if (useTimeProfile) {
+			fluxAmplitude = getProfileAmplitude(currentTime);
+			recomputeFluxHandler(surfacePos);
+		}
+
+		// Update the concentration array
+		updatedConcOffset[fluxIndex] += incidentFluxVec[xi - surfacePos];
+//		updatedConcOffset[vDefectIndex] += incidentFluxVec[xi - surfacePos] * 4.25e-7;
+//		updatedConcOffset[iDefectIndex] += incidentFluxVec[xi - surfacePos] * 4.25e-7;
 
 		return;
 	}

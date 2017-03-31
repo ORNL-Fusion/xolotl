@@ -39,7 +39,7 @@ protected:
 		 * The reaction/dissociation constant associated to this
 		 * reaction or dissociation
 		 */
-		double kConstant;
+		const double * kConstant;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -82,14 +82,14 @@ protected:
 
 		//! The constructor
 		SuperClusterProductionPair(PSICluster * firstPtr,
-				PSICluster * secondPtr, double k) :
-				first(firstPtr), second(secondPtr), kConstant(k), a000(0.0), a001(
-						0.0), a002(0.0), a100(0.0), a101(0.0), a102(0.0), a200(
-						0.0), a201(0.0), a202(0.0), a010(0.0), a011(0.0), a012(
-						0.0), a020(0.0), a021(0.0), a022(0.0), a110(0.0), a111(
-						0.0), a112(0.0), a120(0.0), a121(0.0), a122(0.0), a210(
-						0.0), a211(0.0), a212(0.0), a220(0.0), a221(0.0), a222(
-						0.0) {
+				PSICluster * secondPtr, Reaction * reaction) :
+				first(firstPtr), second(secondPtr), kConstant(
+						&(reaction->kConstant)), a000(0.0), a001(0.0), a002(
+						0.0), a100(0.0), a101(0.0), a102(0.0), a200(0.0), a201(
+						0.0), a202(0.0), a010(0.0), a011(0.0), a012(0.0), a020(
+						0.0), a021(0.0), a022(0.0), a110(0.0), a111(0.0), a112(
+						0.0), a120(0.0), a121(0.0), a122(0.0), a210(0.0), a211(
+						0.0), a212(0.0), a220(0.0), a221(0.0), a222(0.0) {
 		}
 	};
 
@@ -118,7 +118,7 @@ protected:
 		 * The reaction/dissociation constant associated to this
 		 * reaction or dissociation
 		 */
-		double kConstant;
+		const double * kConstant;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -143,10 +143,10 @@ protected:
 
 		//! The constructor
 		SuperClusterDissociationPair(PSICluster * firstPtr,
-				PSICluster * secondPtr, double k) :
-				first(firstPtr), second(secondPtr), kConstant(k), a00(0.0), a01(
-						0.0), a02(0.0), a10(0.0), a11(0.0), a12(0.0), a20(0.0), a21(
-						0.0), a22(0.0) {
+				PSICluster * secondPtr, Reaction * reaction) :
+				first(firstPtr), second(secondPtr), kConstant(
+						&(reaction->kConstant)), a00(0.0), a01(0.0), a02(0.0), a10(
+						0.0), a11(0.0), a12(0.0), a20(0.0), a21(0.0), a22(0.0) {
 		}
 	};
 
@@ -193,18 +193,6 @@ private:
 
 	//! The map containing all the emission pairs separated by original composition.
 	std::map<std::pair<int, int>, std::vector<ClusterPair> > emissionMap;
-
-	//! The map containing all the effective reacting pairs separated by original composition.
-	std::map<std::pair<int, int>, std::vector<ClusterPair *> > effReactingMap;
-
-	//! The map containing all the effective combining clusters separated by original composition.
-	std::map<std::pair<int, int>, std::vector<CombiningCluster *> > effCombiningMap;
-
-	//! The map containing all the effective dissociating pairs separated by original composition.
-	std::map<std::pair<int, int>, std::vector<ClusterPair *> > effDissociatingMap;
-
-	//! The map containing all the effective emission pairs separated by original composition.
-	std::map<std::pair<int, int>, std::vector<ClusterPair *> > effEmissionMap;
 
 	//! The list of optimized effective reacting pairs.
 	std::forward_list<SuperClusterProductionPair> effReactingList;
@@ -259,8 +247,8 @@ public:
 	 * @param energy The mean formation energy
 	 * @param registry The performance handler registry
 	 */
-	PSISuperCluster(double numHe, double numV, int nTot, int heWidth, int vWidth,
-			double radius, double energy,
+	PSISuperCluster(double numHe, double numV, int nTot, int heWidth,
+			int vWidth, double radius, double energy,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
@@ -281,6 +269,15 @@ public:
 	 * @return A copy of this reactant
 	 */
 	virtual std::shared_ptr<IReactant> clone();
+
+	/**
+	 * Sets the collection of other clusters that make up
+	 * the reaction network in which this cluster exists.
+	 *
+	 * @param network The reaction network of which this cluster is a part
+	 */
+	void setReactionNetwork(
+			const std::shared_ptr<IReactionNetwork> reactionNetwork);
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of
@@ -360,36 +357,9 @@ public:
 	double getVDistance(int v) const;
 
 	/**
-	 * Computes a row of the reaction connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants alone can form a reaction, the element at the position
-	 * of the second reactant is 1, otherwise 0.
+	 * Calculate the dispersion of the group.
 	 */
-	void createReactionConnectivity();
-
-	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
-	 */
-	void createDissociationConnectivity();
-
-	/**
-	 * Calculate all the rate constants for the reactions and dissociations in which this
-	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
-	 * or CombiningCluster. Need to be called only the first time.
-	 */
-	void computeRateConstants();
-
-	/**
-	 * Calculate all the rate constants for the reactions and dissociations in which this
-	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
-	 * or CombiningCluster. Need to be called only when the temperature changes.
-	 */
-	void updateRateConstants();
+	void computeDispersion();
 
 	/**
 	 * This operation sets the zeroth order momentum.
@@ -474,14 +444,18 @@ public:
 	 *
 	 * @return The momentum flux
 	 */
-	double getHeMomentumFlux() {return heMomentumFlux;}
+	double getHeMomentumFlux() {
+		return heMomentumFlux;
+	}
 
 	/**
 	 * This operation returns the total change for its vacancy momentum.
 	 *
 	 * @return The momentum flux
 	 */
-	double getVMomentumFlux() {return vMomentumFlux;}
+	double getVMomentumFlux() {
+		return vMomentumFlux;
+	}
 
 	/**
 	 * This operation works as getPartialDerivatives above, but instead of

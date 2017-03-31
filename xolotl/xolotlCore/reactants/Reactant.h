@@ -30,6 +30,15 @@ namespace xolotlCore {
  */
 class Reactant: public IReactant {
 
+private:
+    /**
+     * A string description of our type/composition map that can
+     * be used for quick comparisons.
+     * Computed on demand by getCompositionString() and cached.
+     * Note: must be kept consistent with contents of compositionMap.
+     */
+    mutable std::string compString;
+
 protected:
 
 	/**
@@ -125,11 +134,6 @@ protected:
 	double reactionRadius;
 
 	/**
-	 * The biggest rate for this cluster
-	 */
-	double biggestRate;
-
-	/**
 	 * The row of the reaction connectivity matrix corresponding to
 	 * this Reactant stored as a set.
 	 *
@@ -148,31 +152,6 @@ protected:
 	std::set<int> dissociationConnectivitySet;
 
 	/**
-	 * Calculate the reaction constant dependent on the
-	 * reaction radii and the diffusion coefficients for the
-	 * ith and jth clusters, which itself depends on the current
-	 * temperature.
-	 *
-	 * @param The first cluster interacting
-	 * @param The second cluster interacting
-	 * @return The rate
-	 */
-	double calculateReactionRateConstant(const Reactant & firstcluster,
-			const Reactant & secondcluster) const;
-
-	/**
-	 * Calculate the binding energy for the dissociation cluster to emit the single
-	 * and second cluster.
-	 *
-	 * @param dissociatingCluster The cluster that is dissociating
-	 * @param singleCluster One of the clusters that dissociated from the parent
-	 * @param secondCluster The second cluster that dissociated from the parent
-	 * @return The binding energy corresponding to this dissociation
-	 */
-	double computeBindingEnergy(const Reactant & dissociatingCluster,
-			const Reactant & singleCluster, const Reactant & secondCluster) const;
-
-	/**
 	 * This operation recomputes the diffusion coefficient. It is called
 	 * whenever the diffusion factor, migration energy or temperature change.
 	 *
@@ -180,6 +159,7 @@ protected:
 	 */
 	void recomputeDiffusionCoefficient(double temp);
 
+    
 	/**
 	 * The constructor.
 	 */
@@ -212,6 +192,57 @@ public:
 	 */
 	virtual std::shared_ptr<IReactant> clone() {
 		return std::shared_ptr<IReactant>(new Reactant(*this));
+	}
+
+	/**
+	 * Create a production pair associated with the given reaction.
+	 * Create the connectivity.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 */
+	virtual void createProduction(
+			std::shared_ptr<ProductionReaction> reaction) {
+		return;
+	}
+
+	/**
+	 * Create a combination associated with the given reaction.
+	 * Create the connectivity.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 */
+	virtual void createCombination(
+			std::shared_ptr<ProductionReaction> reaction) {
+		return;
+	}
+
+	/**
+	 * Create a dissociation pair associated with the given reaction.
+	 * Create the connectivity.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 */
+	virtual void createDissociation(
+			std::shared_ptr<DissociationReaction> reaction) {
+		return;
+	}
+
+	/**
+	 * Create an emission pair associated with the given reaction.
+	 * Create the connectivity.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 */
+	virtual void createEmission(
+			std::shared_ptr<DissociationReaction> reaction) {
+		return;
+	}
+
+	/**
+	 * Add the reactions to the network lists.
+	 */
+	virtual void optimizeReactions() {
+		return;
 	}
 
 	/**
@@ -514,14 +545,6 @@ public:
 	double getReactionRadius() const;
 
 	/**
-	 * This operation returns the biggest rate for this
-	 * particular reactant.
-	 *
-	 * @return The biggest rate
-	 */
-	double getBiggestRate() const;
-
-	/**
 	 * This operation returns the sum of combination rate and emission rate
 	 * (where this reactant is on the left side of the reaction) for this
 	 * particular reactant.
@@ -533,20 +556,6 @@ public:
 	virtual double getLeftSideRate() const {
 		return 0.0;
 	}
-
-	/**
-	 * Calculate all the rate constants for the reactions and dissociations in which this
-	 * reactant is taking part.
-	 */
-	virtual void computeRateConstants() {
-		return;
-	}
-
-	/**
-	 * Update all the rate constants for the reactions and dissociations in which this
-	 * reactant is taking part when the temperature changes.
-	 */
-	virtual void updateRateConstants();
 
 	/**
 	 * This operation returns true if the cluster is a mixed-species or compound

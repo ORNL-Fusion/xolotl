@@ -144,6 +144,9 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::load() {
 		}
 	}
 
+	// Create the reactions
+	network->createReactionConnectivity();
+
 	// Check if we want dummy reactions
 	if (!dummyReactions) {
 		// Apply sectional grouping

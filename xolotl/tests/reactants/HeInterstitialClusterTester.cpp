@@ -53,9 +53,6 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();
 
-	// Prevent dissociation from being added to the connectivity array
-	network->disableDissociations();
-
 	// Check the reaction connectivity of the HeI cluster
 	// with 5He and 3I
 	// Get the connectivity array from the reactant
@@ -74,7 +71,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
 
 			// V
-			1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+			1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
 			// I
 			1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
@@ -85,7 +82,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 			// HeI
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1,
-			0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
@@ -103,7 +100,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 			"HeInterstitialClusterTester Message: \n" << "BOOST_AUTO_TEST_CASE(checkTotalFlux): " << "Arbitrary values used because of lack of data!" << "\n");
 
 	// Local Declarations
-	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();
+	auto network = getSimplePSIReactionNetwork();
 
 	// Get an HeI cluster with compostion 1,0,1.
 	vector<int> composition = { 1, 0, 1 };
@@ -112,7 +109,6 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	auto secondCluster = (PSICluster *) network->get("I", 1);
 	// Set the diffusion factor and migration energy to arbitrary values
 	cluster->setDiffusionFactor(1.5E+10);
-	cluster->setTemperature(1000.0);
 	cluster->setMigrationEnergy(numeric_limits<double>::infinity());
 	cluster->setConcentration(0.5);
 
@@ -121,10 +117,11 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	secondCluster->setDiffusionFactor(2.13E+10);
 	secondCluster->setMigrationEnergy(0.013);
 	secondCluster->setConcentration(0.5);
-	secondCluster->setTemperature(1000.0);
 
 	// Compute the rate constants that are needed for the flux
-	cluster->computeRateConstants();
+	network->setTemperature(1000.0);
+	network->reinitializeNetwork();
+	network->computeRateConstants();
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux();
 	BOOST_TEST_MESSAGE(
@@ -142,23 +139,23 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-			0.0, 0.0, 0.0, 0.0, 0.0 };
+	double knownPartials[] = { 0.0, 3248951483086.9521, 0.0,
+			-25873847932.526035, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			-344.9902456, 0.0 };
 	// Get the simple reaction network
-	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork(3);
+	auto network = getSimplePSIReactionNetwork(3);
 
 	// Get an HeI cluster with compostion 2,0,1.
 	vector<int> composition = { 2, 0, 1 };
 	auto cluster = (PSICluster *) network->getCompound("HeI", composition);
 	// Set the diffusion factor and migration energy to arbitrary values
 	cluster->setDiffusionFactor(1.5E+10);
-	cluster->setTemperature(1000.0);
 	cluster->setConcentration(0.5);
 
-	// Compute the rate constants that are needed for the partial derivatives
-	cluster->computeRateConstants();
-	// Reinitialize the network for Ids for the partial derivatives
+	// Compute the rate constants that are needed for the partials
+	network->setTemperature(1000.0);
 	network->reinitializeNetwork();
+	network->computeRateConstants();
 	// Get the vector of partial derivatives
 	auto partials = cluster->getPartialDerivatives();
 

@@ -32,205 +32,113 @@ NECluster::NECluster(NECluster &other) :
 	return;
 }
 
-void NECluster::createReactionConnectivity() {
-	// Connect this cluster to itself since any reaction will affect it
+void NECluster::createProduction(std::shared_ptr<ProductionReaction> reaction) {
+	// Create a cluster pair from the given reaction
+	ClusterPair pair((NECluster *) reaction->first,
+			(NECluster *) reaction->second);
+	// Add the pair to the list
+	reactingPairs.push_back(pair);
+	// Setup the connectivity array
+	setReactionConnectivity(reaction->first->getId());
+	setReactionConnectivity(reaction->second->getId());
+
+	return;
+}
+
+void NECluster::createCombination(
+		std::shared_ptr<ProductionReaction> reaction) {
+	setReactionConnectivity(id);
+	// Look for the other cluster
+	IReactant * secondCluster;
+	if (reaction->first->getId() == id)
+		secondCluster = reaction->second;
+	else
+		secondCluster = reaction->first;
+
+	// Creates the combining cluster
+	CombiningCluster combCluster((NECluster *) secondCluster);
+	// Push the product into the list of clusters that combine with this one
+	combiningReactants.push_back(combCluster);
+
+	// Setup the connectivity array
+	setReactionConnectivity(id);
+	setReactionConnectivity(secondCluster->getId());
+
+	return;
+}
+
+void NECluster::createDissociation(
+		std::shared_ptr<DissociationReaction> reaction) {
+	// Look for the other cluster
+	IReactant * emittedCluster;
+	if (reaction->first->getId() == id)
+		emittedCluster = reaction->second;
+	else
+		emittedCluster = reaction->first;
+
+	// Create the pair of them where it is important that the
+	// dissociating cluster is the first one
+	ClusterPair pair((NECluster *) reaction->dissociating,
+			(NECluster *) emittedCluster);
+	// Add the pair to the dissociating pair vector
+	dissociatingPairs.push_back(pair);
+
+	// Setup the connectivity array
+	setDissociationConnectivity(reaction->dissociating->getId());
+
+	return;
+}
+
+void NECluster::createEmission(std::shared_ptr<DissociationReaction> reaction) {
+	// Create the pair of emitted clusters
+	ClusterPair pair((NECluster *) reaction->first,
+			(NECluster *) reaction->second);
+	// Add the pair to the emission pair vector
+	emissionPairs.push_back(pair);
+
+	// Setup the connectivity array to itself
 	setReactionConnectivity(id);
 
-	// This cluster is always X_a
-
-	// Initial declarations
-	int firstSize = 0, secondSize = 0;
-
-	// Single species clustering producing this cluster
-	// X_(a-i) + X_i --> X_a
-	for (firstSize = 1; firstSize <= 1; firstSize++) {
-		// Set the size of the second reactant
-		secondSize = size - firstSize;
-		// Get the first and second reactants for the reaction
-		auto firstReactant = (NECluster *) network->get(typeName, firstSize);
-		auto secondReactant = (NECluster *) network->get(typeName, secondSize);
-		// Create a ReactingPair with the two reactants
-		if (firstReactant && secondReactant
-				&& (firstReactant->diffusionFactor > 0.0
-						|| secondReactant->diffusionFactor > 0.0)) {
-			// The reaction constant will be computed later, it is set to 0.0 for now
-			ClusterPair pair(firstReactant, secondReactant, 0.0);
-			// Add the pair to the list
-			reactingPairs.push_back(pair);
-			// Setup the connectivity array
-			setReactionConnectivity(firstReactant->id);
-			setReactionConnectivity(secondReactant->id);
-		}
-	}
-
-	// Single species clustering
-	// X_a + X_b --> X_(a+b)
-	if (size == 1) {
-		auto reactants = network->getAll(typeName);
-		// combineClusters handles everything for this type of reaction
-		NECluster::combineClusters(reactants, typeName);
-	} else {
-		std::vector<IReactant *> reactants;
-		reactants.push_back(network->get(typeName, 1));
-		// combineClusters handles everything for this type of reaction
-		NECluster::combineClusters(reactants, typeName);
-	}
-
 	return;
 }
 
-void NECluster::createDissociationConnectivity() {
-	// This cluster is always X_a
-
-	// Single species dissociation
-	// X_a --> X_(a-1) + X
-	auto smallerReactant = (NECluster *) network->get(typeName, size - 1);
-	auto singleCluster = (NECluster *) network->get(typeName, 1);
-	emitClusters(singleCluster, smallerReactant);
-
-	// Single species dissociation producing this cluster
-	// X_(a+1) --> X_a + X
-	auto biggerReactant = (NECluster *) network->get(typeName, size + 1);
-	dissociateCluster(biggerReactant, singleCluster);
-
-	// Specific case for the single size cluster
-	// for a = 1
-	if (size == 1) {
-		// all the cluster of the same type dissociate into it
-		auto allSameTypeReactants = network->getAll(typeName);
-		for (unsigned int i = 0; i < allSameTypeReactants.size(); i++) {
-			auto cluster = (NECluster *) allSameTypeReactants[i];
-			// X_1 cannot dissociate and X_2 --> X + X was already
-			// counted in the previous step
-			if (cluster->size < 3)
-				continue;
-			// X_b is the dissociating one, X_(b-a) is the one
-			// that is also emitted during the dissociation
-			smallerReactant = (NECluster *) network->get(typeName,
-					cluster->size - 1);
-			dissociateCluster(cluster, smallerReactant);
-		}
+void NECluster::optimizeReactions() {
+	// Loop on the pairs to add reactions to the network
+	for (auto it = reactingPairs.begin(); it != reactingPairs.end(); it++) {
+		// Create the corresponding production reaction
+		auto newReaction = std::make_shared<ProductionReaction>((*it).first,
+				(*it).second);
+		// Add it to the network
+		newReaction = network->addProductionReaction(newReaction);
+		// Link it to the pair
+		(*it).reaction = newReaction;
 	}
-
-	return;
-}
-
-double NECluster::calculateDissociationConstant(
-		const NECluster & dissociatingCluster, const NECluster & singleCluster,
-		const NECluster & secondCluster) const {
-	//! NEEDS TO BE UPDATED
-	double atomicVolume = 0.5 * xolotlCore::uraniumDioxydeLatticeConstant
-			* xolotlCore::uraniumDioxydeLatticeConstant
-			* xolotlCore::uraniumDioxydeLatticeConstant;
-
-	// Calculate the Reaction Rate Constant
-	double kPlus = calculateReactionRateConstant(singleCluster, secondCluster);
-
-	// Calculate and return
-	double bindingEnergy = computeBindingEnergy(dissociatingCluster,
-			singleCluster, secondCluster);
-	double k_minus_exp = exp(
-			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature));
-	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
-
-	return k_minus;
-}
-
-void NECluster::dissociateCluster(NECluster * dissociatingCluster,
-		NECluster * emittedCluster) {
-	// Test if the dissociatingCluster and the emittedCluster exist
-	if (dissociatingCluster && emittedCluster) {
-		// Create the pair of them where it is important that the
-		// dissociating cluster is the first one
-		// The dissociating constant will be computed later, it is set to 0.0 for now
-		ClusterPair pair(dissociatingCluster, emittedCluster, 0.0);
-		// Add the pair to the dissociating pair vector
-		// The connectivity is handled in emitCluster
-		dissociatingPairs.push_back(pair);
-
-		// Take care of the connectivity
-		setDissociationConnectivity(dissociatingCluster->id);
-
-		// Add it to the list again if it the same as the other emitted cluster
-		if (id == emittedCluster->id)
-			dissociatingPairs.push_back(pair);
+	for (auto it = combiningReactants.begin(); it != combiningReactants.end(); it++) {
+		// Create the corresponding production reaction
+		auto newReaction = std::make_shared<ProductionReaction>((*it).combining,
+				this);
+		// Add it to the network
+		newReaction = network->addProductionReaction(newReaction);
+		// Link it to the pair
+		(*it).reaction = newReaction;
 	}
-
-	return;
-}
-
-void NECluster::emitClusters(NECluster * firstEmittedCluster,
-		NECluster * secondEmittedCluster) {
-	// Test if the emitted clusters exist
-	if (firstEmittedCluster && secondEmittedCluster) {
-		// Connect this cluster to itself since any reaction will affect it
-		setDissociationConnectivity(id);
-
-		// Add the pair of emitted clusters to the vector of emissionPairs
-		// The first cluster is the size one one
-		// The dissociating constant will be computed later, it is set to 0.0 for now
-		ClusterPair pair(firstEmittedCluster, secondEmittedCluster, 0.0);
-		emissionPairs.push_back(pair);
+	for (auto it = dissociatingPairs.begin(); it != dissociatingPairs.end(); it++) {
+		// Create the corresponding dissociation reaction
+		auto newReaction = std::make_shared<DissociationReaction>((*it).first,
+				(*it).second, this);
+		// Add it to the network
+		newReaction = network->addDissociationReaction(newReaction);
+		// Link it to the pair
+		(*it).reaction = newReaction;
 	}
-
-	return;
-}
-
-void NECluster::combineClusters(std::vector<IReactant *> & reactants,
-		const std::string& productName) {
-	// Initial declarations
-	std::map<std::string, int> myComposition = getComposition(),
-			secondComposition;
-	int numXe = 0, numV = 0, numI = 0, secondNumXe = 0, secondNumV = 0,
-			secondNumI = 0, productSize = 0;
-	std::vector<int> compositionSizes { 0, 0, 0 };
-	NECluster *productCluster = nullptr, *secondCluster = nullptr;
-	// Setup the composition variables for this cluster
-	numXe = myComposition[xeType];
-	numV = myComposition[vType];
-	numI = myComposition[iType];
-
-	int reactantVecSize = reactants.size();
-	for (int i = 0; i < reactantVecSize; i++) {
-		// Get the second reactant, its composition and its index
-		secondCluster = (NECluster *) reactants[i];
-		secondComposition = secondCluster->getComposition();
-		secondNumXe = secondComposition[xeType];
-		secondNumV = secondComposition[vType];
-		secondNumI = secondComposition[iType];
-		// Compute the product size
-		productSize = size + secondCluster->size;
-		// Get and handle product for compounds
-		if (productName == heVType || productName == heIType) {
-			// Modify the composition vector
-			compositionSizes[0] = numXe + secondNumXe;
-			compositionSizes[1] = numV + secondNumV;
-			compositionSizes[2] = numI + secondNumI;
-			// Get the product
-			productCluster = (NECluster *) network->getCompound(productName,
-					compositionSizes);
-		} else {
-			// Just get the product if it is a single-species
-			productCluster = (NECluster *) network->get(productName,
-					productSize);
-		}
-
-		// React if the product exists in the network
-		if (productCluster
-				&& (diffusionFactor > 0.0
-						|| secondCluster->diffusionFactor > 0.0)) {
-			// Setup the connectivity array for the second reactant
-			setReactionConnectivity(secondCluster->id);
-			// Creates the combining cluster
-			// The reaction constant will be computed later and is set to 0.0 for now
-			CombiningCluster combCluster(secondCluster, 0.0);
-			// Push the product into the list of clusters that combine with this one
-			combiningReactants.push_back(combCluster);
-
-			// Add it again if it is combining with itself
-			if (secondCluster->id == id)
-				combiningReactants.push_back(combCluster);
-		}
+	for (auto it = emissionPairs.begin(); it != emissionPairs.end(); it++) {
+		// Create the corresponding dissociation reaction
+		auto newReaction = std::make_shared<DissociationReaction>(this, (*it).first,
+				(*it).second);
+		// Add it to the network
+		newReaction = network->addDissociationReaction(newReaction);
+		// Link it to the pair
+		(*it).reaction = newReaction;
 	}
 
 	return;
@@ -262,6 +170,12 @@ std::vector<int> NECluster::getDissociationConnectivity() const {
 }
 
 void NECluster::resetConnectivities() {
+	// Shrink the arrays to save some space. (About 10% or so.)
+	reactingPairs.shrink_to_fit();
+	combiningReactants.shrink_to_fit();
+	dissociatingPairs.shrink_to_fit();
+	emissionPairs.shrink_to_fit();
+
 	// Clear both sets
 	reactionConnectivitySet.clear();
 	dissociationConnectivitySet.clear();
@@ -309,34 +223,11 @@ void NECluster::setReactionNetwork(
 	// Call the superclass's method to actually set the reference
 	Reactant::setReactionNetwork(reactionNetwork);
 
-	// Get the enabled reaction type flags
-	bool reactionsEnabled = reactionNetwork->getReactionsEnabled();
-	bool dissociationsEnabled = reactionNetwork->getDissociationsEnabled();
-
 	// Clear the flux-related arrays
 	reactingPairs.clear();
 	combiningReactants.clear();
 	dissociatingPairs.clear();
 	emissionPairs.clear();
-
-	// ----- Handle the connectivity for NEClusters -----
-
-	// Generate the reactant and dissociation connectivity arrays.
-	// This only must be done once since the arrays are stored as
-	// member attributes. Only perform these tasks if the reaction
-	// types are enabled.
-	if (reactionsEnabled) {
-		createReactionConnectivity();
-	}
-	if (dissociationsEnabled) {
-		createDissociationConnectivity();
-	}
-
-	// Shrink the arrays to save some space. (About 10% or so.)
-	reactingPairs.shrink_to_fit();
-	combiningReactants.shrink_to_fit();
-	dissociatingPairs.shrink_to_fit();
-	emissionPairs.shrink_to_fit();
 
 	return;
 }
@@ -368,7 +259,7 @@ double NECluster::getDissociationFlux() const {
 		// Get the dissociating cluster
 		dissociatingCluster = dissociatingPairs[j].first;
 		// Calculate the Dissociation flux
-		flux += dissociatingPairs[j].kConstant
+		flux += dissociatingPairs[j].reaction->kConstant
 				* dissociatingCluster->getConcentration(
 						dissociatingPairs[j].firstDistance);
 	}
@@ -387,7 +278,7 @@ double NECluster::getEmissionFlux() const {
 	// Loop over all the pairs
 	for (int i = 0; i < nPairs; i++) {
 		// Update the flux
-		flux += emissionPairs[i].kConstant;
+		flux += emissionPairs[i].reaction->kConstant;
 	}
 
 	return flux * concentration;
@@ -407,7 +298,7 @@ double NECluster::getProductionFlux() const {
 		firstReactant = reactingPairs[i].first;
 		secondReactant = reactingPairs[i].second;
 		// Update the flux
-		flux += reactingPairs[i].kConstant
+		flux += reactingPairs[i].reaction->kConstant
 				* firstReactant->getConcentration(
 						reactingPairs[i].firstDistance)
 				* secondReactant->getConcentration(
@@ -431,7 +322,7 @@ double NECluster::getCombinationFlux() const {
 		// Get the cluster that combines with this one
 		combiningCluster = combiningReactants[j].combining;
 		// Calculate Second term of production flux
-		flux += combiningReactants[j].kConstant
+		flux += combiningReactants[j].reaction->kConstant
 				* combiningCluster->getConcentration(
 						combiningReactants[j].distance);
 	}
@@ -478,7 +369,7 @@ void NECluster::getProductionPartialDerivatives(
 	numReactants = reactingPairs.size();
 	for (int i = 0; i < numReactants; i++) {
 		// Compute the contribution from the first part of the reacting pair
-		value = reactingPairs[i].kConstant
+		value = reactingPairs[i].reaction->kConstant
 				* reactingPairs[i].second->getConcentration(
 						reactingPairs[i].secondDistance);
 		index = reactingPairs[i].first->id - 1;
@@ -486,7 +377,7 @@ void NECluster::getProductionPartialDerivatives(
 		index = reactingPairs[i].first->xeMomId - 1;
 		partials[index] += value * reactingPairs[i].firstDistance;
 		// Compute the contribution from the second part of the reacting pair
-		value = reactingPairs[i].kConstant
+		value = reactingPairs[i].reaction->kConstant
 				* reactingPairs[i].first->getConcentration(
 						reactingPairs[i].firstDistance);
 		index = reactingPairs[i].second->id - 1;
@@ -517,10 +408,10 @@ void NECluster::getCombinationPartialDerivatives(
 		cluster = (NECluster *) combiningReactants[i].combining;
 		// Remember that the flux due to combinations is OUTGOING (-=)!
 		// Compute the contribution from this cluster
-		partials[id - 1] -= combiningReactants[i].kConstant
+		partials[id - 1] -= combiningReactants[i].reaction->kConstant
 				* cluster->getConcentration(combiningReactants[i].distance);
 		// Compute the contribution from the combining cluster
-		value = combiningReactants[i].kConstant * concentration;
+		value = combiningReactants[i].reaction->kConstant * concentration;
 		// Get the index of cluster
 		otherIndex = cluster->id - 1;
 		partials[otherIndex] -= value;
@@ -548,9 +439,9 @@ void NECluster::getDissociationPartialDerivatives(
 		// Get the dissociating cluster
 		cluster = dissociatingPairs[i].first;
 		index = cluster->id - 1;
-		partials[index] += dissociatingPairs[i].kConstant;
+		partials[index] += dissociatingPairs[i].reaction->kConstant;
 		index = cluster->xeMomId - 1;
-		partials[index] += dissociatingPairs[i].kConstant
+		partials[index] += dissociatingPairs[i].reaction->kConstant
 				* dissociatingPairs[i].firstDistance;
 	}
 
@@ -573,7 +464,7 @@ void NECluster::getEmissionPartialDerivatives(
 		// Modify the partial derivative. Remember that the flux
 		// due to emission is OUTGOING (-=)!
 		index = id - 1;
-		partials[index] -= emissionPairs[i].kConstant;
+		partials[index] -= emissionPairs[i].reaction->kConstant;
 	}
 
 	return;
@@ -606,13 +497,14 @@ double NECluster::getLeftSideRate() const {
 	for (int i = 0; i < combiningReactants.size(); i++) {
 		cluster = (NECluster *) combiningReactants[i].combining;
 		// Add the rate to the total rate
-		totalRate += combiningReactants[i].kConstant * cluster->concentration;
+		totalRate += combiningReactants[i].reaction->kConstant
+				* cluster->concentration;
 	}
 
 	// Loop on the emission pairs
 	for (int i = 0; i < emissionPairs.size(); i++) {
 		// Add the rate to the total rate
-		totalRate += emissionPairs[i].kConstant;
+		totalRate += emissionPairs[i].reaction->kConstant;
 	}
 
 	return totalRate;
@@ -642,98 +534,4 @@ std::vector<int> NECluster::getConnectivity() const {
 	}
 
 	return connectivity;
-}
-
-void NECluster::computeRateConstants() {
-	// Local declarations
-	NECluster *firstReactant = nullptr, *secondReactant = nullptr,
-			*combiningReactant = nullptr, *dissociatingCluster = nullptr,
-			*otherEmittedCluster = nullptr, *firstCluster = nullptr,
-			*secondCluster = nullptr;
-	double rate = 0.0;
-	// Initialize the value for the biggest production rate
-	double biggestProductionRate = 0.0;
-
-	// Compute the reaction constant associated to the reacting pairs
-	// Set the total number of reacting pairs
-	int nPairs = reactingPairs.size();
-	// Loop on them
-	for (int i = 0; i < nPairs; i++) {
-		// Get the reactants
-		firstReactant = reactingPairs[i].first;
-		secondReactant = reactingPairs[i].second;
-		// Compute the reaction constant
-		rate = calculateReactionRateConstant(*firstReactant, *secondReactant);
-		// Set it in the pair
-		reactingPairs[i].kConstant = rate;
-
-		// Check if the rate is the biggest one up to now
-		if (rate > biggestProductionRate)
-			biggestProductionRate = rate;
-	}
-
-	// Compute the reaction constant associated to the combining reactants
-	// Set the total number of combining reactants
-	int nReactants = combiningReactants.size();
-	// Loop on them
-	for (int i = 0; i < nReactants; i++) {
-		// Get the reactants
-		combiningReactant = combiningReactants[i].combining;
-		// Compute the reaction constant
-		rate = calculateReactionRateConstant(*this, *combiningReactant);
-		// Set it in the combining cluster
-		combiningReactants[i].kConstant = rate;
-	}
-
-	// Compute the dissociation constant associated to the dissociating clusters
-	// Set the total number of dissociating clusters
-	nPairs = dissociatingPairs.size();
-	// Loop on them
-	for (int i = 0; i < nPairs; i++) {
-		dissociatingCluster = dissociatingPairs[i].first;
-		// The second element of the pair is the cluster that is also
-		// emitted by the dissociation
-		otherEmittedCluster = dissociatingPairs[i].second;
-		// Compute the dissociation constant
-		// The order of the cluster is important here because of the binding
-		// energy used in the computation. It is taken from the type of the first cluster
-		// which must be the single one
-		if (size == 1) {
-			// "this" is the single size one
-			rate = calculateDissociationConstant(*dissociatingCluster, *this,
-					*otherEmittedCluster);
-		} else {
-			// otherEmittedCluster is the single size one
-			rate = calculateDissociationConstant(*dissociatingCluster,
-					*otherEmittedCluster, *this);
-
-		}
-		// Set it in the pair
-		dissociatingPairs[i].kConstant = rate;
-	}
-
-	// Compute the dissociation constant associated to the emission of pairs of clusters
-	// Set the total number of emission pairs
-	nPairs = emissionPairs.size();
-	// Loop on them
-	for (int i = 0; i < nPairs; i++) {
-		firstCluster = emissionPairs[i].first;
-		secondCluster = emissionPairs[i].second;
-		// Compute the dissociation rate
-		rate = calculateDissociationConstant(*this, *firstCluster,
-				*secondCluster);
-		// Set it in the pair
-		emissionPairs[i].kConstant = rate;
-	}
-
-	// Shrink the arrays to save some space
-	reactingPairs.shrink_to_fit();
-	combiningReactants.shrink_to_fit();
-	dissociatingPairs.shrink_to_fit();
-	emissionPairs.shrink_to_fit();
-
-	// Set the biggest rate to the biggest production rate
-	biggestRate = biggestProductionRate;
-
-	return;
 }

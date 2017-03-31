@@ -390,22 +390,9 @@ void TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int> > surfa
 }
 
 void TrapMutationHandler::updateTrapMutationRate(IReactionNetwork *network) {
-	// Get all the He clusters from the network
-	auto heClusters = network->getAll(heType);
-
-	// Update the rate by finding the biggest rate in all the He clusters
-	kMutation = 0.0;
-	// Loop on the helium
-	for (int j = 0; j < heClusters.size(); j++) {
-		// Get the bubble and its rate
-		auto cluster =  (PSICluster *) heClusters[j];
-		double rate = cluster->getBiggestRate();
-
-		// Compare it to the bursting rate
-		if (kMutation < rate) kMutation = rate;
-	}
-	// Multiply it by 1000.0 so that trap-mutation overcomes any other reaction
-	kMutation = 1000.0 * kMutation;
+	// Multiply the biggest rate in the network by 1000.0
+	// so that trap-mutation overcomes any other reaction
+	kMutation = 1000.0 * network->getBiggestRate();
 
 	return;
 }

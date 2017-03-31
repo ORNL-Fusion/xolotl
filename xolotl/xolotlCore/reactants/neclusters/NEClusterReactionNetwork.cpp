@@ -25,7 +25,6 @@ void NEClusterReactionNetwork::setDefaultPropsAndNames() {
 	= std::make_shared<std::vector<std::shared_ptr<IReactant>>>();
 
 	// Initialize default properties
-	reactionsEnabled = true;
 	dissociationsEnabled = true;
 	numXeClusters = 0;
 	numVClusters = 0;
@@ -112,16 +111,93 @@ NEClusterReactionNetwork::NEClusterReactionNetwork(
 	return;
 }
 
+double NEClusterReactionNetwork::calculateDissociationConstant(
+		DissociationReaction * reaction) const {
+	// If the dissociations are not allowed
+	if (!dissociationsEnabled) return 0.0;
+
+	// Compute the atomic volume
+	double atomicVolume = 0.5 * xolotlCore::uraniumDioxydeLatticeConstant
+			* xolotlCore::uraniumDioxydeLatticeConstant
+			* xolotlCore::uraniumDioxydeLatticeConstant;
+
+	// Get the rate constant from the reverse reaction
+	double kPlus = reaction->reverseReaction->kConstant;
+
+	// Calculate and return
+	double bindingEnergy = computeBindingEnergy(reaction);
+	double k_minus_exp = exp(
+			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature));
+	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
+
+	return k_minus;
+}
+
+void NEClusterReactionNetwork::createReactionConnectivity() {
+	// Initial declarations
+	int firstSize = 0, secondSize = 0, productSize = 0;
+
+	// Single species clustering (Xe)
+	// We know here that only Xe_1 can cluster so we simplify the search
+	// Xe_(a-i) + Xe_i --> Xe_a
+	firstSize = 1;
+	auto singleXeCluster = get(xeType, firstSize);
+	// Get all the Xe clusters
+	auto xeClusters = getAll(xeType);
+	// Loop on them
+	for (auto it = xeClusters.begin(); it != xeClusters.end(); it++) {
+		// Get the size of the second reactant and product
+		secondSize = (*it)->getSize();
+		productSize = firstSize + secondSize;
+		// Get the product cluster for the reaction
+		auto product = get(xeType, productSize);
+		// Check that the reaction can occur
+		if (product
+				&& (singleXeCluster->getDiffusionFactor() > 0.0
+						|| (*it)->getDiffusionFactor() > 0.0)) {
+			// Create a production reaction
+			auto reaction = std::make_shared<ProductionReaction>(
+					singleXeCluster, (*it));
+			// Tell the reactants that they are in this reaction
+			singleXeCluster->createCombination(reaction);
+			(*it)->createCombination(reaction);
+			product->createProduction(reaction);
+
+			// Check if the reverse reaction is allowed
+			checkDissociationConnectivity(product, reaction);
+		}
+	}
+
+	return;
+}
+
+void NEClusterReactionNetwork::checkDissociationConnectivity(
+		IReactant * emittingReactant,
+		std::shared_ptr<ProductionReaction> reaction) {
+	// Check if at least one of the potentially emitted cluster is size one
+	if (reaction->first->getSize() != 1 && reaction->second->getSize() != 1) {
+		// Don't add the reverse reaction
+		return;
+	}
+
+	// The reaction can occur, create the dissociation
+	// Create a dissociation reaction
+	auto dissociationReaction = std::make_shared<DissociationReaction>(
+			emittingReactant, reaction->first, reaction->second);
+	// Set the reverse reaction
+	dissociationReaction->reverseReaction = reaction.get();
+	// Tell the reactants that their are in this reaction
+	reaction->first->createDissociation(dissociationReaction);
+	reaction->second->createDissociation(dissociationReaction);
+	emittingReactant->createEmission(dissociationReaction);
+
+	return;
+}
+
 void NEClusterReactionNetwork::setTemperature(double temp) {
 	ReactionNetwork::setTemperature(temp);
 
-	for (int i = 0; i < networkSize; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		auto cluster = allReactants->at(i);
-		cluster->updateRateConstants();
-	}
+	computeRateConstants();
 
 	return;
 }
@@ -417,14 +493,18 @@ void NEClusterReactionNetwork::reinitializeNetwork() {
 		(*it)->setId(id);
 		(*it)->setXeMomentumId(id);
 
-		if ((*it)->getType() == xeType) numXeClusters++;
+		(*it)->optimizeReactions();
+
+		if ((*it)->getType() == xeType)
+			numXeClusters++;
 	}
 
 	// Reset the network size
 	networkSize = id;
 
 	// Get all the super clusters and loop on them
-	for (auto it = clusterTypeMap[NESuperType]->begin(); it != clusterTypeMap[NESuperType]->end(); ++it) {
+	for (auto it = clusterTypeMap[NESuperType]->begin();
+			it != clusterTypeMap[NESuperType]->end(); ++it) {
 		id++;
 		(*it)->setXeMomentumId(id);
 	}
@@ -530,6 +610,42 @@ void NEClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		// Update the map
 		dFillMap[id] = columnIds;
 	}
+
+	return;
+}
+
+void NEClusterReactionNetwork::computeRateConstants() {
+	// Local declarations
+	double rate = 0.0;
+	// Initialize the value for the biggest production rate
+	double biggestProductionRate = 0.0;
+
+	// Loop on all the production reactions
+	for (auto iter = allProductionReactions.begin();
+			iter != allProductionReactions.end(); iter++) {
+		// Compute the rate
+		rate = calculateReactionRateConstant(iter->get());
+		// Set it in the reaction
+		(*iter)->kConstant = rate;
+
+//		std::cout << (*iter)->first->getName() << " + " << (*iter)->second->getName() << std::endl;
+
+		// Check if the rate is the biggest one up to now
+		if (rate > biggestProductionRate)
+			biggestProductionRate = rate;
+	}
+
+	// Loop on all the dissociation reactions
+	for (auto iter = allDissociationReactions.begin();
+			iter != allDissociationReactions.end(); iter++) {
+		// Compute the rate
+		rate = calculateDissociationConstant(iter->get());
+		// Set it in the reaction
+		(*iter)->kConstant = rate;
+	}
+
+	// Set the biggest rate
+	biggestRate = biggestProductionRate;
 
 	return;
 }

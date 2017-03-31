@@ -22,19 +22,9 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 
 	// Set the temperature to compute all the rate constants
 	if (!xolotlCore::equal(temperature, lastTemperature)) {
-		// Update the temperature for all of the clusters
-		int networkSize = network->size();
-		for (int i = 0; i < networkSize; i++) {
-			// This part will set the temperature in each reactant
-			// and recompute the diffusion coefficient
-			allReactants->at(i)->setTemperature(temperature);
-		}
-		for (int i = 0; i < networkSize; i++) {
-			// Now that the diffusion coefficients of all the reactants
-			// are updated, the reaction and dissociation rates can be
-			// recomputed
-			allReactants->at(i)->computeRateConstants();
-		}
+		// Update the temperature and rate constants in the network
+		// SetTemperature() does both
+		network->setTemperature(temperature);
 		lastTemperature = temperature;
 	}
 
@@ -157,6 +147,10 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	ierr = PetscFree(dfill);
 	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
 			"PetscFree (dfill) failed.");
+
+	// Initialize the arrays for the reaction partial derivatives
+	reactionVals = new PetscScalar[dof * dof];
+	reactionIndices = new PetscInt[dof * dof];
 
 	return;
 }
@@ -661,10 +655,6 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	MatStencil rowId;
 	MatStencil colIds[dof];
 	int pdColIdsVectorSize = 0;
-	PetscScalar *reactionVals;
-	reactionVals = new PetscScalar[dof * dof];
-	PetscInt *reactionIndices;
-	reactionIndices = new PetscInt[dof * dof];
 	PetscInt reactionSize[dof];
 
 	// Store the total number of He clusters in the network for the
@@ -835,10 +825,6 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	ierr = DMRestoreLocalVector(da, &localC);
 	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
 			"DMRestoreLocalVector failed.");
-
-	// Delete arrays
-	delete[] reactionVals;
-	delete[] reactionIndices;
 
 	return;
 }

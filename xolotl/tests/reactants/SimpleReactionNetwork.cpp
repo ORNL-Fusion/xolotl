@@ -32,6 +32,8 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 	for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
 		// Create a He cluster with cluster size numHe
 		shared_ptr<HeCluster> cluster = make_shared<HeCluster>(numHe, registry);
+		// Set the diffusion factor for some of them to 1.0 so that they can react
+		if (numHe < 8) cluster->setDiffusionFactor(1.0);
 		// Add it to the network
 		add(cluster);
 	}
@@ -40,6 +42,8 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		// Create a V cluster with cluster size numV
 		shared_ptr<VCluster> cluster = make_shared<VCluster>(numV, registry);
+		// Set the diffusion factor for the first one so that it can react
+		if (numV == 1) cluster->setDiffusionFactor(1.0);
 		// Add it to the network
 		add(cluster);
 	}
@@ -49,6 +53,8 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 		// Create a He cluster with cluster size numI
 		shared_ptr<InterstitialCluster> cluster = make_shared<
 				InterstitialCluster>(numI, registry);
+		// Set the diffusion factor for all of them to 1.0 so that they can react
+		cluster->setDiffusionFactor(1.0);
 		// Add it to the network
 		add(cluster);
 	}
@@ -87,6 +93,8 @@ SimpleNEReactionNetwork::SimpleNEReactionNetwork(const int maxClusterSize,
 	for (int numXe = 1; numXe <= maxClusterSize; numXe++) {
 		// Create a He cluster with cluster size numHe
 		shared_ptr<XeCluster> cluster = make_shared<XeCluster>(numXe, registry);
+		// Set the diffusion factor for the first one so that it can react
+		if (numXe == 1) cluster->setDiffusionFactor(1.0);
 		// Add it to the network
 		add(cluster);
 	}
@@ -107,6 +115,8 @@ shared_ptr<xolotlCore::PSIClusterReactionNetwork> testUtils::getSimplePSIReactio
 	for (unsigned int i = 0; i < reactants->size(); i++) {
 		reactants->at(i)->setReactionNetwork(network);
 	}
+	// Create the reactions
+	network->createReactionConnectivity();
 
 	// ----- TEMPORARY DEBUG OUTPUT!!!!! -----
 	// Print the reaction connectivity matrix
@@ -137,6 +147,8 @@ shared_ptr<xolotlCore::NEClusterReactionNetwork> testUtils::getSimpleNEReactionN
 	for (unsigned int i = 0; i < reactants->size(); i++) {
 		reactants->at(i)->setReactionNetwork(network);
 	}
+	// Create the reactions
+	network->createReactionConnectivity();
 
 	// ----- TEMPORARY DEBUG OUTPUT!!!!! -----
 	// Print the reaction connectivity matrix

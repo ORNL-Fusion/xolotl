@@ -49,13 +49,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 		// and recompute the diffusion coefficient
 		allReactants->at(i)->setTemperature(1000.0);
 	}
-	for (int i = 0; i < size; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		auto cluster = (xolotlCore::PSICluster *) allReactants->at(i);
-		cluster->computeRateConstants();
-	}
+	network->computeRateConstants();
 
 	// Suppose we have a grid with 13 grip points and distance of
 	// 0.1 nm between grid points

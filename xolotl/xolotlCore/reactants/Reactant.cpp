@@ -15,7 +15,7 @@ Reactant::Reactant() :
 				0.0), typeName(""), network(nullptr), handlerRegistry(nullptr), size(
 				0), formationEnergy(0.0), diffusionFactor(0.0), diffusionCoefficient(
 				0.0), migrationEnergy(0.0), name("Reactant"), reactionRadius(
-				0.0), biggestRate(0.0) {
+				0.0) {
 	// Setup the composition map.
 	compositionMap[xeType] = 0;
 	compositionMap[heType] = 0;
@@ -28,7 +28,7 @@ Reactant::Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 				0.0), typeName(""), network(nullptr), handlerRegistry(registry), size(
 				0), formationEnergy(0.0), diffusionFactor(0.0), diffusionCoefficient(
 				0.0), migrationEnergy(0.0), name("Reactant"), reactionRadius(
-				0.0), biggestRate(0.0) {
+				0.0) {
 	// Setup the composition map.
 	compositionMap[xeType] = 0;
 	compositionMap[heType] = 0;
@@ -44,8 +44,7 @@ Reactant::Reactant(Reactant &other) :
 				other.handlerRegistry), size(other.size), formationEnergy(
 				other.formationEnergy), diffusionFactor(other.diffusionFactor), diffusionCoefficient(
 				other.diffusionCoefficient), migrationEnergy(
-				other.migrationEnergy), reactionRadius(other.reactionRadius), biggestRate(
-				other.biggestRate), reactionConnectivitySet(
+				other.migrationEnergy), reactionRadius(other.reactionRadius), reactionConnectivitySet(
 				other.reactionConnectivitySet), dissociationConnectivitySet(
 				other.dissociationConnectivitySet) {
 	// Setup the composition map.
@@ -53,33 +52,6 @@ Reactant::Reactant(Reactant &other) :
 	compositionMap[heType] = other.compositionMap[heType];
 	compositionMap[vType] = other.compositionMap[vType];
 	compositionMap[iType] = other.compositionMap[iType];
-}
-
-double Reactant::calculateReactionRateConstant(const Reactant & firstReactant,
-		const Reactant & secondReactant) const {
-	// Get the reaction radii
-	double r_first = firstReactant.reactionRadius;
-	double r_second = secondReactant.reactionRadius;
-
-	// Get the diffusion coefficients
-	double firstDiffusion = firstReactant.diffusionCoefficient;
-	double secondDiffusion = secondReactant.diffusionCoefficient;
-
-	// Calculate and return
-	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
-			* (firstDiffusion + secondDiffusion);
-	return k_plus;
-}
-
-double Reactant::computeBindingEnergy(const Reactant & dissociatingCluster,
-		const Reactant & singleCluster,
-		const Reactant & secondCluster) const {
-	// for the dissociation A --> B + C we need A binding energy
-	// E_b(A) = E_f(B) + E_f(C) - E_f(A) where E_f is the formation energy
-	double bindingEnergy = singleCluster.formationEnergy
-			+ secondCluster.formationEnergy
-			- dissociatingCluster.formationEnergy;
-	return bindingEnergy;
 }
 
 void Reactant::recomputeDiffusionCoefficient(double temp) {
@@ -198,16 +170,17 @@ std::string Reactant::toCanonicalString(std::string type,
 	return ostr.str();
 }
 
+
 std::string Reactant::getCompositionString() const {
 
 	// Return the canonical string representation of our composition.
-	//
-	// TODO Would it be better to cache the composition string as a member
-	// variable?  It would require us to have control over the composition map,
-	// so that no changes to it could be made without us knowing about it.
-	// (I.e., need a protected function for derived classes to make changes,
-	// and the map itself becomes private to us.)
-	return toCanonicalString(getType(), compositionMap);
+    if(compString.empty()) {
+
+        // We have not found our descriptive string yet.
+        // So determine it and cache it.
+        compString = toCanonicalString(getType(), compositionMap);
+    }
+    return compString;
 }
 
 void Reactant::setId(int nId) {
@@ -310,15 +283,4 @@ void Reactant::setMigrationEnergy(const double energy) {
 
 double Reactant::getReactionRadius() const {
 	return reactionRadius; // Computed by subclasses in constructors.
-}
-
-double Reactant::getBiggestRate() const {
-	return biggestRate; // Computed by computeRateConstants
-}
-
-void Reactant::updateRateConstants() {
-	// Call compute rate constants by default
-	computeRateConstants();
-
-	return;
 }

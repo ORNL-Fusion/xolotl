@@ -119,6 +119,9 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::load() {
 		currCluster->setReactionNetwork(network);
 	}
 
+	// Create the reactions
+	network->createReactionConnectivity();
+
 	// Check if we want dummy reactions
 	if (!dummyReactions) {
 		// Apply grouping

@@ -49,13 +49,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 		// and recompute the diffusion coefficient
 		allReactants->at(i)->setTemperature(1000.0);
 	}
-	for (int i = 0; i < size; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		auto cluster = (xolotlCore::PSICluster *) allReactants->at(i);
-		cluster->computeRateConstants();
-	}
+	network->computeRateConstants();
 
 	// Suppose we have a grid with 13 grip points and distance of
 	// 0.1 nm between grid points
@@ -105,9 +99,9 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			updatedConcOffset, 7);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 6.25071e+30, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], -6.25071e+30, 0.01); // He2
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 6.25071e+30, 0.01); // Create He2V
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 6.26006e+30, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], -6.26006e+30, 0.01); // He2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 6.26006e+30, 0.01); // Create He2V
 
 	// Get the offset for the tenth grid point
 	concOffset = conc + 9 * dof;
@@ -122,11 +116,11 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			updatedConcOffset, 9);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.00537e+23, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 6.5970096e+23, 0.01); // Create I
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // He2
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 0.0, 0.01); // Doesn't create He2V
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[10], -3.35159e+22, 0.01); // He5
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[19], 3.35159e+22, 0.01); // Create He5V
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[10], -2.19924e+23, 0.01); // He5
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[19], 2.19924e+23, 0.01); // Create He5V
 
 	// Initialize the indices and values to set in the Jacobian
 	int nHelium = network->getAll(heType).size();
@@ -150,12 +144,12 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	BOOST_REQUIRE_EQUAL(indices[5], 0); // I
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], -9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 9.67426e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -6.34804e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 6.34804e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 6.34804e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[3], -6.34804e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 6.34804e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[5], 6.34804e+14, 0.01);
 
 	// Change the temperature of the network
 	network->setTemperature(500.0);
@@ -169,12 +163,12 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Check values
 	BOOST_REQUIRE_EQUAL(nMutating, 3);
-	BOOST_REQUIRE_CLOSE(val[0], -2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], -2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 2.14016e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[3], -5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[5], 5.53624e+14, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();
