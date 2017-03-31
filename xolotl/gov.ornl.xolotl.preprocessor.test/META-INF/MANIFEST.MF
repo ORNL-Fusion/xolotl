@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Test
+Bundle-SymbolicName: gov.ornl.xolotl.preprocessor.test
+Bundle-Version: 1.0.0.qualifier
+Export-Package: gov.ornl.xolotl.preprocessor.test
+Import-Package: gov.ornl.xolotl.preprocessor
+Require-Bundle: org.junit;bundle-version="4.10.0"
