@@ -931,22 +931,22 @@ public class Preprocessor {
 			// Create, write, and close the absolute time attribute
 			double[] time = { times[0] };
 			int dataspaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int attributeId = H5.H5Acreate(newConcSubGroupId, "absoluteTime", HDF5Constants.H5T_IEEE_F64LE,
-					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			int attributeId = H5.H5Acreate(newConcSubGroupId, "absoluteTime", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			int status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, time);
 			status = H5.H5Aclose(attributeId);
 
 			// Create, write, and close the previous time attribute
 			double[] previousTime = { times[1] };
-			attributeId = H5.H5Acreate(newConcSubGroupId, "previousTime", HDF5Constants.H5T_IEEE_F64LE,
-					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			attributeId = H5.H5Acreate(newConcSubGroupId, "previousTime", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousTime);
 			status = H5.H5Aclose(attributeId);
 
 			// Create, write, and close the timestep time attribute
 			double[] deltaTime = { times[2] };
-			attributeId = H5.H5Acreate(newConcSubGroupId, "deltaTime", HDF5Constants.H5T_IEEE_F64LE,
-					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			attributeId = H5.H5Acreate(newConcSubGroupId, "deltaTime", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, deltaTime);
 			status = H5.H5Aclose(attributeId);
 
@@ -1026,12 +1026,12 @@ public class Preprocessor {
 						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE, iSurface);
 				status = H5.H5Aclose(attributeId);
-				attributeId = H5.H5Acreate(concentrationGroupId, "nInterstitial", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
-						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				attributeId = H5.H5Acreate(concentrationGroupId, "nInterstitial", HDF5Constants.H5T_IEEE_F64LE,
+						dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, nInter);
 				status = H5.H5Aclose(attributeId);
-				attributeId = H5.H5Acreate(concentrationGroupId, "previousIFlux", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
-						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				attributeId = H5.H5Acreate(concentrationGroupId, "previousIFlux", HDF5Constants.H5T_IEEE_F64LE,
+						dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousFlux);
 				status = H5.H5Aclose(attributeId);
 
@@ -1068,7 +1068,7 @@ public class Preprocessor {
 					// Read the dataset
 					status = H5.H5Dread(datasetId, HDF5Constants.H5T_STD_I32LE, HDF5Constants.H5S_ALL,
 							HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, surfaceArray);
-					
+
 					// Update the surface indices
 					for (int i = 0; i < (int) dims[0]; i++) {
 						surfaceArray[i] = surfaceArray[i] + xGridDiff;
@@ -1112,7 +1112,7 @@ public class Preprocessor {
 					// Read the dataset
 					status = H5.H5Dread(datasetId, HDF5Constants.H5T_STD_I32LE, HDF5Constants.H5S_ALL,
 							HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, surfaceArray);
-					
+
 					// Update the surface indices
 					for (int i = 0; i < (int) dims[0]; i++) {
 						for (int j = 0; j < (int) dims[1]; j++) {
@@ -1146,16 +1146,16 @@ public class Preprocessor {
 					status = H5.H5Sclose(dataspaceId);
 					status = H5.H5Gclose(concentrationGroupId);
 				}
-				
+
 				// Copy the nInterstitial and previousIFlux datasets
 				// Open the file to copy from
 				int fromFileId = H5.H5Fopen(fromName, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-				// Set the name of the sub group in this file 
+				// Set the name of the sub group in this file
 				subGroupName = "concentrationsGroup/concentration_" + lastTimeStep + "/nInterstitial";
 				// Copy nInterstitial
 				H5.H5Ocopy(fromFileId, subGroupName, fileId, "concentrationsGroup/concentration_0/nInterstitial",
 						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-				// Set the name of the sub group in this file 
+				// Set the name of the sub group in this file
 				subGroupName = "concentrationsGroup/concentration_" + lastTimeStep + "/previousIFlux";
 				// Copy nInterstitial
 				H5.H5Ocopy(fromFileId, subGroupName, fileId, "concentrationsGroup/concentration_0/previousIFlux",
@@ -1414,35 +1414,63 @@ public class Preprocessor {
 
 			// Create the array that will store the network
 			int networkSize = clusters.size();
-			double[][] networkArray = new double[networkSize][6];
-
-			int id = 0;
-			// Loop on the clusters
-			for (Cluster cluster : clusters) {
-				// Store the composition
-				networkArray[id][0] = cluster.nHe;
-				if (maxXe > 0)
+			int width = 0;
+			double[][] networkArray;
+			if (maxXe > 0) {
+				// Set the width of the network (number of parameters per
+				// cluster)
+				width = 4;
+				networkArray = new double[networkSize][width];
+				int id = 0;
+				// Loop on the clusters
+				for (Cluster cluster : clusters) {
+					// Store the composition
 					networkArray[id][0] = cluster.nXe;
-				networkArray[id][1] = cluster.nV;
-				networkArray[id][2] = cluster.nI;
 
-				// Store the formation energy
-				networkArray[id][3] = cluster.E_f;
+					// Store the formation energy
+					networkArray[id][1] = cluster.E_f;
 
-				// Store the migration energy
-				networkArray[id][4] = cluster.E_m;
+					// Store the migration energy
+					networkArray[id][2] = cluster.E_m;
 
-				// Store the diffusion factor
-				networkArray[id][5] = cluster.D_0;
+					// Store the diffusion factor
+					networkArray[id][3] = cluster.D_0;
 
-				// increment the id number
-				id++;
+					// increment the id number
+					id++;
+				}
+			} else {
+				// Set the width of the network (number of parameters per
+				// cluster)
+				width = 7;
+				networkArray = new double[networkSize][width];
+				int id = 0;
+				// Loop on the clusters
+				for (Cluster cluster : clusters) {
+					// Store the composition
+					networkArray[id][0] = cluster.nHe;
+					networkArray[id][1] = cluster.nI - cluster.nV;
+					networkArray[id][2] = cluster.nD;
+					networkArray[id][3] = cluster.nT;
+
+					// Store the formation energy
+					networkArray[id][4] = cluster.E_f;
+
+					// Store the migration energy
+					networkArray[id][5] = cluster.E_m;
+
+					// Store the diffusion factor
+					networkArray[id][6] = cluster.D_0;
+
+					// increment the id number
+					id++;
+				}
 			}
 
 			// Create the dataspace for the network with dimension dims
 			long[] dims = new long[2];
 			dims[0] = networkSize;
-			dims[1] = 6;
+			dims[1] = width;
 			int networkDataSpaceId = H5.H5Screate_simple(2, dims, null);
 
 			// Create the dataset for the network
@@ -1453,17 +1481,7 @@ public class Preprocessor {
 			int status = H5.H5Dwrite(datasetId, HDF5Constants.H5T_IEEE_F64LE, HDF5Constants.H5S_ALL,
 					HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, networkArray);
 
-			// Create the attribute for the network size
-			int networkSizeDataSpaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int networkSizeAttributeId = H5.H5Acreate(datasetId, "networkSize", HDF5Constants.H5T_STD_I32LE,
-					networkSizeDataSpaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-
-			// Write it
-			int[] tempNetworkSize = { networkSize };
-			status = H5.H5Awrite(networkSizeAttributeId, HDF5Constants.H5T_STD_I32LE, tempNetworkSize);
-
 			// Close everything
-			status = H5.H5Aclose(networkSizeAttributeId);
 			status = H5.H5Dclose(datasetId);
 			status = H5.H5Gclose(networkGroupId);
 			status = H5.H5Fclose(fileId);

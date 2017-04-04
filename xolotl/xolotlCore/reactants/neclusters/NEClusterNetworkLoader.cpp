@@ -20,8 +20,7 @@ using namespace xolotlCore;
 //			strtod(inString.c_str(), NULL);
 //}
 
-std::shared_ptr<NECluster> NEClusterNetworkLoader::createNECluster(int numXe,
-		int numV, int numI) {
+std::shared_ptr<NECluster> NEClusterNetworkLoader::createNECluster(int numXe) {
 	// Local Declarations
 	std::shared_ptr<NECluster> cluster;
 
@@ -66,7 +65,7 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::load() {
 	auto networkVector = xolotlCore::HDF5Utils::readNetwork(fileName);
 
 	// Initialization
-	int numXe = 0, numV = 0, numI = 0;
+	int numXe = 0;
 	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
 	std::vector<std::shared_ptr<Reactant> > reactants;
@@ -81,15 +80,13 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::load() {
 
 		// Composition of the cluster
 		numXe = (int) (*lineIt)[0];
-		numV = (int) (*lineIt)[1];
-		numI = (int) (*lineIt)[2];
 		// Create the cluster
-		auto nextCluster = createNECluster(numXe, numV, numI);
+		auto nextCluster = createNECluster(numXe);
 
 		// Energies
-		formationEnergy = (*lineIt)[3];
-		migrationEnergy = (*lineIt)[4];
-		diffusionFactor = (*lineIt)[5];
+		formationEnergy = (*lineIt)[1];
+		migrationEnergy = (*lineIt)[2];
+		diffusionFactor = (*lineIt)[3];
 
 		// Set the formation energy
 		nextCluster->setFormationEnergy(formationEnergy);

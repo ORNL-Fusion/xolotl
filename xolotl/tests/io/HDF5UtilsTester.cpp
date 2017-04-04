@@ -142,20 +142,21 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		// Check the composition
 		auto composition = reactant->getComposition();
 		BOOST_REQUIRE_EQUAL((int) line[0], composition["He"]);
-		BOOST_REQUIRE_EQUAL((int) line[1], composition["V"]);
-		BOOST_REQUIRE_EQUAL((int) line[2], composition["I"]);
+		BOOST_REQUIRE_EQUAL((int) line[1], composition["I"] - composition["V"]);
+		BOOST_REQUIRE_EQUAL((int) line[2], 0);
+		BOOST_REQUIRE_EQUAL((int) line[3], 0);
 
 		// Check the formation energy
 		auto formationEnergy = reactant->getFormationEnergy();
-		BOOST_REQUIRE_EQUAL(line[3], formationEnergy);
+		BOOST_REQUIRE_EQUAL(line[4], formationEnergy);
 
 		// Check the migration energy
 		double migrationEnergy = reactant->getMigrationEnergy();
-		BOOST_REQUIRE_EQUAL(line[4], migrationEnergy);
+		BOOST_REQUIRE_EQUAL(line[5], migrationEnergy);
 
 		// Check the diffusion factor
 		double diffusionFactor = reactant->getDiffusionFactor();
-		BOOST_REQUIRE_EQUAL(line[5], diffusionFactor);
+		BOOST_REQUIRE_EQUAL(line[6], diffusionFactor);
 	}
 
 	// If the HDF5 file contains initial concentrations

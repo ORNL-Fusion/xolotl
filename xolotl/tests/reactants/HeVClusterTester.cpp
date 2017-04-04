@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the reaction connectivity of the HeV cluster
 	// with 3He and 2V
 	// Get the connectivity array from the reactant
-	vector<int> composition = { 3, 2, 0 };
+	vector<int> composition = { 3, -2 };
 	auto reactant = (PSICluster *) network->getCompound("HeV", composition);
 
 	// Check the type name
@@ -95,8 +95,8 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	// Local Declarations
 	auto network = getSimplePSIReactionNetwork();
 
-	// Get an HeV cluster with compostion 2,1,0.
-	vector<int> composition = { 2, 1, 0 };
+	// Get an HeV cluster with compostion 2,-1.
+	vector<int> composition = { 2, -1 };
 	auto cluster = (PSICluster *) network->getCompound("HeV", composition);
 	// Get one that it combines with (He)
 	auto secondCluster = (PSICluster *) network->get("He", 1);
@@ -137,8 +137,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(3);
 
-	// Get an HeV cluster with compostion 2,1,0.
-	vector<int> composition = { 2, 1, 0 };
+	// Get an HeV cluster with compostion 2,-1.
+	vector<int> composition = { 2,-1 };
 	auto cluster = (PSICluster *) network->getCompound("HeV", composition);
 	// Set the diffusion factor and migration energy based on the
 	// values from the tungsten benchmark for this problem.

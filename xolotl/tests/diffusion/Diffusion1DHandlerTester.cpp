@@ -61,17 +61,18 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	diffusionHandler.initializeOFill(network, ofill);
 	diffusionHandler.initializeDiffusionGrid(advectionHandlers, grid);
 
-	// All the clusters diffuse except the 7-th and 8-th one
+	// All the clusters diffuse except the 8-th one
 	BOOST_REQUIRE_EQUAL(ofill[0], 1);
 	BOOST_REQUIRE_EQUAL(ofill[10], 1);
 	BOOST_REQUIRE_EQUAL(ofill[20], 1);
 	BOOST_REQUIRE_EQUAL(ofill[30], 1);
 	BOOST_REQUIRE_EQUAL(ofill[40], 1);
 	BOOST_REQUIRE_EQUAL(ofill[50], 1);
+	BOOST_REQUIRE_EQUAL(ofill[60], 1);
 	BOOST_REQUIRE_EQUAL(ofill[80], 1);
 
 	// Check the total number of diffusing clusters
-	BOOST_REQUIRE_EQUAL(diffusionHandler.getNumberOfDiffusing(), 7);
+	BOOST_REQUIRE_EQUAL(diffusionHandler.getNumberOfDiffusing(), 8);
 
 	// The size parameter in the x direction
 	double hx = 1.0;
@@ -120,7 +121,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 2.70401e+11, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 2.01239e+11, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 4.98404e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 0.0, 0.01); // Does not diffuse
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 7.80861e+08, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not diffuse
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 8.18607e+07, 0.01);
 
@@ -143,7 +144,8 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	BOOST_REQUIRE_EQUAL(indices[3], 3);
 	BOOST_REQUIRE_EQUAL(indices[4], 4);
 	BOOST_REQUIRE_EQUAL(indices[5], 5);
-	BOOST_REQUIRE_EQUAL(indices[6], 8);
+	BOOST_REQUIRE_EQUAL(indices[6], 6);
+	BOOST_REQUIRE_EQUAL(indices[7], 8);
 
 	// Check some values
 	BOOST_REQUIRE_CLOSE(val[1], 6.41544e+09, 0.01);

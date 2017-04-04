@@ -111,7 +111,8 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 double PSIClusterReactionNetwork::calculateDissociationConstant(
 		DissociationReaction * reaction) const {
 	// If the dissociations are not allowed
-	if (!dissociationsEnabled) return 0.0;
+	if (!dissociationsEnabled)
+		return 0.0;
 
 	// The atomic volume is computed by considering the BCC structure of the
 	// tungsten. In a given lattice cell in tungsten there are tungsten atoms
@@ -198,7 +199,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			auto comp = (*secondIt)->getComposition();
 			// Create the composition of the potential product
 			std::vector<int> compositionVec = { comp[heType] + firstSize,
-					comp[vType], 0 };
+					-comp[vType] };
 			// Get the product
 			auto product = getCompound(heVType, compositionVec);
 			// Check that the reaction can occur
@@ -229,7 +230,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		// Get its composition
 		auto comp = (*secondIt)->getComposition();
 		// Create the composition of the potential product
-		std::vector<int> compositionVec = { comp[heType], comp[vType] + 1, 0 };
+		std::vector<int> compositionVec = { comp[heType], -(comp[vType] + 1) };
 		// Get the product
 		auto product = getCompound(heVType, compositionVec);
 		// Check that the reaction can occur
@@ -264,7 +265,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its size
 			secondSize = (*secondIt)->getSize();
 			// Create the composition of the potential product
-			std::vector<int> compositionVec = { firstSize, secondSize, 0 };
+			std::vector<int> compositionVec = { firstSize, -secondSize };
 			// Get the product
 			auto product = getCompound(heVType, compositionVec);
 			// Check that the reaction can occur
@@ -307,8 +308,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			} else {
 				// The product is HeV
 				// Create the composition of the potential product
-				std::vector<int> compositionVec = { comp[heType], comp[vType]
-						- firstSize, 0 };
+				std::vector<int> compositionVec = { comp[heType], -(comp[vType]
+						- firstSize) };
 				// Get the product
 				product = getCompound(heVType, compositionVec);
 			}
@@ -357,7 +358,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 				int iSize = (*it)->getSize();
 				// Create the composition of the potential product
 				std::vector<int> compositionVec = { firstSize + secondSize,
-						iSize, 0 };
+						-iSize };
 				product = getCompound(heVType, compositionVec);
 				// Check that the reaction can occur
 				if (product
@@ -393,7 +394,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			auto comp = (*secondIt)->getComposition();
 			// Get the simple product
 			std::vector<int> compositionVec = { firstSize + comp[heType],
-					comp[vType], 0 };
+					-comp[vType] };
 			auto product = getCompound(heVType, compositionVec);
 			// Doesn't do anything if the product exist
 			if (product)
@@ -406,7 +407,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 				// Get the size of the I cluster
 				int iSize = (*it)->getSize();
 				// Create the composition of the potential product
-				compositionVec[1] = comp[vType] + iSize;
+				compositionVec[1] = -(comp[vType] + iSize);
 				product = getCompound(heVType, compositionVec);
 				// Check that the reaction can occur
 				if (product
@@ -508,7 +509,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto comp = (*secondIt)->getComposition();
 			// Create the composition of the potential product
-			std::vector<int> compositionVec = { comp[heType] + firstSize, 0,
+			std::vector<int> compositionVec = { comp[heType] + firstSize,
 					comp[iType] };
 			// Get the product
 			auto product = getCompound(heIType, compositionVec);
@@ -540,7 +541,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		// Get its composition
 		auto comp = (*secondIt)->getComposition();
 		// Create the composition of the potential product
-		std::vector<int> compositionVec = { comp[heType], 0, comp[iType] + 1 };
+		std::vector<int> compositionVec = { comp[heType], comp[iType] + 1 };
 		// Get the product
 		auto product = getCompound(heIType, compositionVec);
 		// Check that the reaction can occur
@@ -573,7 +574,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its size
 			secondSize = (*secondIt)->getSize();
 			// Create the composition of the potential product
-			std::vector<int> compositionVec = { firstSize, 0, secondSize };
+			std::vector<int> compositionVec = { firstSize, secondSize };
 			// Get the product
 			auto product = getCompound(heIType, compositionVec);
 			// Check that the reaction can occur
@@ -614,7 +615,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			} else {
 				// The product is HeI
 				// Create the composition of the potential product
-				std::vector<int> compositionVec = { comp[heType], 0, comp[iType]
+				std::vector<int> compositionVec = { comp[heType], comp[iType]
 						- firstSize };
 				// Get the product
 				product = getCompound(heIType, compositionVec);
@@ -722,10 +723,10 @@ IReactant * PSIClusterReactionNetwork::getCompound(const std::string& type,
 
 	// Only pull the reactant if the name is valid and there are enough sizes
 	// to fill the composition.
-	if ((type == heVType || type == heIType) && sizes.size() == 3) {
+	if ((type == heVType || type == heIType) && sizes.size() == 2) {
 		composition[heType] = sizes[0];
-		composition[vType] = sizes[1];
-		composition[iType] = sizes[2];
+		composition[vType] = -sizes[1] * (sizes[1] < 0);
+		composition[iType] = sizes[1] * (sizes[1] > 0);
 
 		// Make sure the reactant is in the map
 		std::string compStr = Reactant::toCanonicalString(type, composition);
@@ -751,10 +752,10 @@ IReactant * PSIClusterReactionNetwork::getSuper(const std::string& type,
 
 	// Only pull the reactant if the name is valid and there are enough sizes
 	// to fill the composition.
-	if (type == PSISuperType && sizes.size() == 3) {
+	if (type == PSISuperType && sizes.size() == 2) {
 		composition[heType] = sizes[0];
-		composition[vType] = sizes[1];
-		composition[iType] = sizes[2];
+		composition[vType] = -sizes[1] * (sizes[1] < 0);
+		composition[iType] = sizes[1] * (sizes[1] > 0);
 		// Make sure the reactant is in the map
 		std::string compStr = Reactant::toCanonicalString(type, composition);
 		if (superSpeciesMap.count(compStr)) {
@@ -1119,7 +1120,7 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration() {
 	auto heClusters = getAll(heType);
 	// Loop on them
 	for (int i = 0; i < heClusters.size(); i++) {
-		// Get the cluster and its composition
+		// Get the cluster and its size
 		auto cluster = heClusters[i];
 		double size = cluster->getSize();
 
@@ -1191,7 +1192,7 @@ double PSIClusterReactionNetwork::getTotalVConcentration() {
 	auto vClusters = getAll(vType);
 	// Loop on them
 	for (int i = 0; i < vClusters.size(); i++) {
-		// Get the cluster and its composition
+		// Get the cluster and its size
 		auto cluster = vClusters[i];
 		double size = cluster->getSize();
 
@@ -1256,7 +1257,7 @@ void PSIClusterReactionNetwork::computeRateConstants() {
 		// Compute the rate
 		rate = calculateReactionRateConstant(iter->get());
 		// Set it in the reaction
-        (*iter)->kConstant = rate;
+		(*iter)->kConstant = rate;
 
 		// Check if the rate is the biggest one up to now
 		if (rate > biggestProductionRate)

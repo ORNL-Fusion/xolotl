@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	advectionHandler.initializeAdvectionGrid(advectionHandlers, grid);
 
 	// Check the total number of advecting clusters
-	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 6);
+	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 7);
 
 	// Check the clusters in ofill
 	BOOST_REQUIRE_EQUAL(ofill[0], 1);
@@ -68,6 +68,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	BOOST_REQUIRE_EQUAL(ofill[30], 1);
 	BOOST_REQUIRE_EQUAL(ofill[40], 1);
 	BOOST_REQUIRE_EQUAL(ofill[50], 1);
+	BOOST_REQUIRE_EQUAL(ofill[60], 1);
 
 	// Set the size parameter in the x direction
 	double hx = 1.0;
@@ -117,7 +118,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -1.07377e+11, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -1.01706e+11, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -4.73986e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -1.12780e+09, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not advect
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // Does not advect
 
@@ -140,6 +141,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	BOOST_REQUIRE_EQUAL(indices[3], 3);
 	BOOST_REQUIRE_EQUAL(indices[4], 4);
 	BOOST_REQUIRE_EQUAL(indices[5], 5);
+	BOOST_REQUIRE_EQUAL(indices[6], 6);
 
 	// Check values
 	BOOST_REQUIRE_CLOSE(val[0], -509225360.0, 0.01);

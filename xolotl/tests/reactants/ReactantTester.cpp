@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(checkIsConnected) {
 	}
 
 	// Check HeV
-	std::vector<int> compositionVector = { 1, 1, 0 };
+	std::vector<int> compositionVector = { 1, -1 };
 	reactantConnectivity =
 			network->getCompound("HeV", compositionVector)->getConnectivity();
 	for (int j = 0; j < 8; j++) {
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(checkIsConnected) {
 	}
 
 	// Check HeI
-	compositionVector = {1,0,1};
+	compositionVector = {1, 1};
 	reactantConnectivity =
 			network->getCompound("HeI", compositionVector)->getConnectivity();
 	for (int j = 0; j < 8; j++) {

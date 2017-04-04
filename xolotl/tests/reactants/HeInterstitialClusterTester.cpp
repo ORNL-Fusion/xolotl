@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the reaction connectivity of the HeI cluster
 	// with 5He and 3I
 	// Get the connectivity array from the reactant
-	vector<int> composition = { 5, 0, 3 };
+	vector<int> composition = { 5, 3 };
 	auto reactant = (PSICluster *) (network->getCompound("HeI", composition));
 	// Check the type name
 	BOOST_REQUIRE_EQUAL("HeI", reactant->getType());
@@ -102,8 +102,8 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	// Local Declarations
 	auto network = getSimplePSIReactionNetwork();
 
-	// Get an HeI cluster with compostion 1,0,1.
-	vector<int> composition = { 1, 0, 1 };
+	// Get an HeI cluster with compostion 1,1.
+	vector<int> composition = { 1, 1 };
 	auto cluster = (PSICluster *) network->getCompound("HeI", composition);
 	// Get one that it combines with (I)
 	auto secondCluster = (PSICluster *) network->get("I", 1);
@@ -145,8 +145,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(3);
 
-	// Get an HeI cluster with compostion 2,0,1.
-	vector<int> composition = { 2, 0, 1 };
+	// Get an HeI cluster with compostion 2,1.
+	vector<int> composition = { 2, 1 };
 	auto cluster = (PSICluster *) network->getCompound("HeI", composition);
 	// Set the diffusion factor and migration energy to arbitrary values
 	cluster->setDiffusionFactor(1.5E+10);
