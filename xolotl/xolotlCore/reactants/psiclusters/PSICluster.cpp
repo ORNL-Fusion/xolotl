@@ -333,23 +333,6 @@ void PSICluster::setReactionNetwork(
 	return;
 }
 
-double PSICluster::getHeMomentum() const {
-	return 0.0;
-}
-
-double PSICluster::getVMomentum() const {
-	return 0.0;
-}
-
-double PSICluster::getTotalFlux() {
-	// Get the fluxes
-	double prodFlux = getProductionFlux();
-	double dissFlux = getDissociationFlux();
-	double combFlux = getCombinationFlux();
-	double emissFlux = getEmissionFlux();
-
-	return prodFlux - combFlux + dissFlux - emissFlux;
-}
 
 double PSICluster::getDissociationFlux() const {
 	// Initial declarations

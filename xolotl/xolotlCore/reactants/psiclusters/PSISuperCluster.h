@@ -268,7 +268,10 @@ public:
 	 *
 	 * @return A copy of this reactant
 	 */
-	virtual std::shared_ptr<IReactant> clone();
+	virtual std::shared_ptr<IReactant> clone() {
+        return std::make_shared<PSISuperCluster>(*this);
+    }
+
 
 	/**
 	 * Sets the collection of other clusters that make up
@@ -303,21 +306,29 @@ public:
 	 * @param distV The vacancy distance in the group
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distHe, double distV) const;
+	double getConcentration(double distHe, double distV) const {
+        return l0 + (distHe * l1He) + (distV * l1V);
+    }
+
 
 	/**
 	 * This operation returns the first helium momentum.
 	 *
 	 * @return The momentum
 	 */
-	double getHeMomentum() const;
+	double getHeMomentum() const {
+        return l1He;
+    }
 
 	/**
 	 * This operation returns the first vacancy momentum.
 	 *
 	 * @return The momentum
 	 */
-	double getVMomentum() const;
+	double getVMomentum() const {
+        return l1V;
+    }
+
 
 	/**
 	 * This operation returns the current total concentration of clusters in the group.
@@ -346,7 +357,10 @@ public:
 	 * @param he The number of helium
 	 * @return The distance to the mean number of helium in the group
 	 */
-	double getHeDistance(int he) const;
+	double getHeDistance(int he) const {
+        return (sectionHeWidth == 1) ? 0.0
+            : 2.0 * (he - numHe) / (sectionHeWidth - 1.0);
+    }
 
 	/**
 	 * This operation returns the distance to the mean.
@@ -354,7 +368,12 @@ public:
 	 * @param he The number of vacancy
 	 * @return The distance to the mean number of vacancy in the group
 	 */
-	double getVDistance(int v) const;
+	double getVDistance(int v) const {
+        return (sectionVWidth == 1) ? 0.0
+            : 2.0 * (v - numV) / (sectionVWidth - 1.0);
+    }
+
+
 
 	/**
 	 * Calculate the dispersion of the group.
@@ -401,7 +420,18 @@ public:
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	double getTotalFlux();
+	double getTotalFlux() {
+
+        // Initialize the fluxes
+        heMomentumFlux = 0.0;
+        vMomentumFlux = 0.0;
+
+        // Compute the fluxes.
+        return getProductionFlux() 
+                - getCombinationFlux() 
+                + getDissociationFlux() 
+                - getEmissionFlux();
+    }
 
 	/**
 	 * This operation returns the total change in this cluster due to
