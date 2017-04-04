@@ -2229,23 +2229,26 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		PETSC_IGNORE);
 		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
-		// Initialize the HDF5 file for all the processes
-		xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
+		// Don't do anything if both files have the same name
+		if (hdf5OutputName1D != solverHandler->getNetworkName()) {
+			// Initialize the HDF5 file for all the processes
+			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
 
-		// Get the solver handler
-		auto solverHandler = PetscSolver::getSolverHandler();
+			// Get the solver handler
+			auto solverHandler = PetscSolver::getSolverHandler();
 
-		// Get the physical grid
-		auto grid = solverHandler->getXGrid();
+			// Get the physical grid
+			auto grid = solverHandler->getXGrid();
 
-		// Save the header in the HDF5 file
-		xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0]);
+			// Save the header in the HDF5 file
+			xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0]);
 
-		// Save the network in the HDF5 file
-		xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
+			// Save the network in the HDF5 file
+			xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
 
-		// Finalize the HDF5 file
-		xolotlCore::HDF5Utils::finalizeFile();
+			// Finalize the HDF5 file
+			xolotlCore::HDF5Utils::finalizeFile();
+		}
 
 		// startStop1D will be called at each timestep
 		ierr = TSMonitorSet(ts, startStop1D, NULL, NULL);
