@@ -146,8 +146,9 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 	// Make a vector of types
 	std::vector<string> typeVec = { heType, vType, iType };
 	// Loop on it
-	for (int iType = 0; iType < typeVec.size(); iType++) {
-		string typeName = typeVec[iType];
+	for(auto tvIter = typeVec.begin(); tvIter != typeVec.end(); ++tvIter) {
+		string typeName = *tvIter;
+
 		// Get all the reactants of this type
 		auto allTypeReactants = getAll(typeName);
 		// Loop on them

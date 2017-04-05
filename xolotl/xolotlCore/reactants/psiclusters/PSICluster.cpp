@@ -129,10 +129,10 @@ void PSICluster::optimizeReactions() {
 
 				// Remove the reaction from the vector
 				itBis = reactingPairs.erase(itBis);
-			}
-			else {
+			} else {
 				// Check the distance
-				if (std::distance(it, itBis) > 1) break;
+				if (std::distance(it, itBis) > 1)
+					break;
 				itBis++;
 			}
 		}
@@ -162,10 +162,10 @@ void PSICluster::optimizeReactions() {
 
 				// Remove the reaction from the vector
 				itBis = combiningReactants.erase(itBis);
-			}
-			else {
+			} else {
 				// Check the distance
-				if (std::distance(it, itBis) > 1) break;
+				if (std::distance(it, itBis) > 1)
+					break;
 				itBis++;
 			}
 		}
@@ -195,10 +195,10 @@ void PSICluster::optimizeReactions() {
 
 				// Remove the reaction from the vector
 				itBis = dissociatingPairs.erase(itBis);
-			}
-			else {
+			} else {
 				// Check the distance
-				if (std::distance(it, itBis) > 1) break;
+				if (std::distance(it, itBis) > 1)
+					break;
 				itBis++;
 			}
 		}
@@ -227,10 +227,10 @@ void PSICluster::optimizeReactions() {
 
 				// Remove the reaction from the vector
 				itBis = emissionPairs.erase(itBis);
-			}
-			else {
+			} else {
 				// Check the distance
-				if (std::distance(it, itBis) > 1) break;
+				if (std::distance(it, itBis) > 1)
+					break;
 				itBis++;
 			}
 		}
@@ -331,24 +331,6 @@ void PSICluster::setReactionNetwork(
 	emissionPairs.clear();
 
 	return;
-}
-
-double PSICluster::getHeMomentum() const {
-	return 0.0;
-}
-
-double PSICluster::getVMomentum() const {
-	return 0.0;
-}
-
-double PSICluster::getTotalFlux() {
-	// Get the fluxes
-	double prodFlux = getProductionFlux();
-	double dissFlux = getDissociationFlux();
-	double combFlux = getCombinationFlux();
-	double emissFlux = getEmissionFlux();
-
-	return prodFlux - combFlux + dissFlux - emissFlux;
 }
 
 double PSICluster::getDissociationFlux() const {

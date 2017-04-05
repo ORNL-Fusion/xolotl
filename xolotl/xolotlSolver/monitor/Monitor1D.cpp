@@ -1911,9 +1911,7 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 	// Compute the prefactor for the probability (arbitrary)
 	double prefactor = fluxAmplitude * dt * 0.05;
 
-	// Keep count of how many vacancies are transformed to craters
-	// and other variables
-	double nCraters = 0.0;
+	// Variables associated to the craters
 	int depthPosition = 0;
 	bool doingCrater = false;
 
@@ -2047,8 +2045,6 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 				// Update the concentration in the network
 				network->updateConcentrationsFromArray(gridPointSolution);
 
-				// Compute the total V quantity and set the concentrations to 0.0
-				double vConc = 0.0;
 				// Get all the helium clusters
 				auto clusters = network->getAll(heType);
 				// Loop on them to reset their concentration at this grid point
@@ -2065,14 +2061,12 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 					auto cluster = clusters[i];
 					auto comp = cluster->getComposition();
 					int id = cluster->getId() - 1;
-					vConc += gridPointSolution[id] * comp[vType];
 					gridPointSolution[id] = 0.0;
 				}
 
 				// Loop on the super clusters to reset their concentration at this grid point
 				for (int i = 0; i < superClusters.size(); i++) {
 					auto cluster = (PSISuperCluster *) superClusters[i];
-					vConc += cluster->getTotalVacancyConcentration();
 					int id = cluster->getId() - 1;
 					gridPointSolution[id] = 0.0;
 					id = cluster->getHeMomentumId() - 1;
@@ -2080,18 +2074,35 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 					id = cluster->getVMomentumId() - 1;
 					gridPointSolution[id] = 0.0;
 				}
-
-				// Transfer the vacancy concentration to the count of interstitials for the moving surface
-				nCraters += (62.8 - vConc) * (grid[xi] - grid[xi - 1]);
 			}
 		}
 
-		// Get the total number of vacancies for craters
-		double totalCraters = 0.0;
-		MPI_Allreduce(&nCraters, &totalCraters, 1, MPI_DOUBLE, MPI_SUM,
-				PETSC_COMM_WORLD);
-		// Remove it from the count of interstitials for the moving surface
-		nInterstitial1D -= totalCraters;
+		// Printing information about the bursting of the material
+		if (procId == 0) {
+			std::cout << "Removing grid points from the grid at time: " << time
+					<< " s." << std::endl;
+		}
+
+		// Set the new surface position and set it in the solver
+		surfacePos = finalDepth;
+		solverHandler->setSurfacePosition(surfacePos);
+
+		// Set the new surface location in the surface advection handler
+		auto advecHandler = solverHandler->getAdvectionHandler();
+		advecHandler->setLocation(grid[surfacePos]);
+
+		// Get the flux handler to reinitialize it
+		auto fluxHandler = solverHandler->getFluxHandler();
+		fluxHandler->initializeFluxHandler(network, surfacePos, grid);
+
+		// Get the modified trap-mutation handler to reinitialize it
+		auto mutationHandler = solverHandler->getMutationHandler();
+		auto advecHandlers = solverHandler->getAdvectionHandlers();
+		mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers,
+				grid);
+
+		// Reset moving surface quantities
+		nInterstitial1D = 0.0, previousIFlux1D = 0.0;
 	}
 
 	// Restore the solutionArray
@@ -2218,23 +2229,26 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		PETSC_IGNORE);
 		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
-		// Initialize the HDF5 file for all the processes
-		xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
+		// Don't do anything if both files have the same name
+		if (hdf5OutputName1D != solverHandler->getNetworkName()) {
+			// Initialize the HDF5 file for all the processes
+			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
 
-		// Get the solver handler
-		auto solverHandler = PetscSolver::getSolverHandler();
+			// Get the solver handler
+			auto solverHandler = PetscSolver::getSolverHandler();
 
-		// Get the physical grid
-		auto grid = solverHandler->getXGrid();
+			// Get the physical grid
+			auto grid = solverHandler->getXGrid();
 
-		// Save the header in the HDF5 file
-		xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0]);
+			// Save the header in the HDF5 file
+			xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0]);
 
-		// Save the network in the HDF5 file
-		xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
+			// Save the network in the HDF5 file
+			xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
 
-		// Finalize the HDF5 file
-		xolotlCore::HDF5Utils::finalizeFile();
+			// Finalize the HDF5 file
+			xolotlCore::HDF5Utils::finalizeFile();
+		}
 
 		// startStop1D will be called at each timestep
 		ierr = TSMonitorSet(ts, startStop1D, NULL, NULL);

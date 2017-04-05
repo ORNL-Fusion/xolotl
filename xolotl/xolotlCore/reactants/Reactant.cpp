@@ -69,47 +69,6 @@ void Reactant::recomputeDiffusionCoefficient(double temp) {
 	return;
 }
 
-double Reactant::getConcentration(double distA, double distB) const {
-	return concentration;
-}
-
-void Reactant::setConcentration(double conc) {
-	concentration = conc;
-
-	return;
-}
-
-double Reactant::getTotalFlux() {
-	return 0.0;
-}
-
-void Reactant::setReactionNetwork(
-		std::shared_ptr<IReactionNetwork> reactionNetwork) {
-	network = reactionNetwork;
-
-	return;
-}
-
-void Reactant::releaseReactionNetwork() {
-	network.reset();
-
-	return;
-}
-
-void Reactant::setReactionConnectivity(int id) {
-	// Add the cluster to the set.
-	reactionConnectivitySet.insert(id);
-
-	return;
-}
-
-void Reactant::setDissociationConnectivity(int id) {
-	// Add the cluster to the set.
-	dissociationConnectivitySet.insert(id);
-
-	return;
-}
-
 std::vector<int> Reactant::getConnectivity() const {
 	// The connectivity array by default is filled with
 	// zeros.
@@ -120,33 +79,6 @@ std::vector<int> Reactant::getConnectivity() const {
 	connectivity[id - 1] = 1;
 
 	return connectivity;
-}
-
-std::vector<double> Reactant::getPartialDerivatives() const {
-	// The partial derivatives array by default is filled with
-	// zeros.
-	int length = network->getDOF();
-	std::vector<double> partial_derivatives = std::vector<double>(length, 0.0);
-
-	return partial_derivatives;
-}
-
-void Reactant::getPartialDerivatives(std::vector<double> &) const {
-	// Do nothing.
-	return;
-}
-
-const std::string Reactant::getName() const {
-	return name;
-}
-
-std::string Reactant::getType() const {
-	return typeName;
-}
-
-const std::map<std::string, int> & Reactant::getComposition() const {
-	// Return the composition map
-	return compositionMap;
 }
 
 std::string Reactant::toCanonicalString(std::string type,
@@ -170,88 +102,11 @@ std::string Reactant::toCanonicalString(std::string type,
 	return ostr.str();
 }
 
-
-std::string Reactant::getCompositionString() const {
-
-	// Return the canonical string representation of our composition.
-    if(compString.empty()) {
-
-        // We have not found our descriptive string yet.
-        // So determine it and cache it.
-        compString = toCanonicalString(getType(), compositionMap);
-    }
-    return compString;
-}
-
-void Reactant::setId(int nId) {
-	id = nId;
-
-	return;
-}
-
-int Reactant::getId() const {
-	return id;
-}
-
-void Reactant::setXeMomentumId(int nId) {
-	xeMomId = nId;
-
-	return;
-}
-
-int Reactant::getXeMomentumId() const {
-	return xeMomId;
-}
-
-void Reactant::setHeMomentumId(int nId) {
-	heMomId = nId;
-
-	return;
-}
-
-int Reactant::getHeMomentumId() const {
-	return heMomId;
-}
-
-void Reactant::setVMomentumId(int nId) {
-	vMomId = nId;
-
-	return;
-}
-
-int Reactant::getVMomentumId() const {
-	return vMomId;
-}
-
 void Reactant::setTemperature(double temp) {
 	temperature = temp;
 
 	// Recompute the diffusion coefficient
 	recomputeDiffusionCoefficient(temp);
-}
-
-double Reactant::getTemperature() const {
-	return temperature;
-}
-
-int Reactant::getSize() const {
-	// Return this cluster's size
-	return size;
-}
-
-double Reactant::getFormationEnergy() const {
-	return formationEnergy;
-}
-
-void Reactant::setFormationEnergy(double energy) {
-	// Set the formation energy
-	formationEnergy = energy;
-	return;
-}
-
-double Reactant::getDiffusionFactor() const {
-	// Return the diffusion factor
-	return diffusionFactor;
 }
 
 void Reactant::setDiffusionFactor(const double factor) {
@@ -263,15 +118,6 @@ void Reactant::setDiffusionFactor(const double factor) {
 	return;
 }
 
-double Reactant::getDiffusionCoefficient() const {
-	return diffusionCoefficient;
-}
-
-double Reactant::getMigrationEnergy() const {
-	// Return the migration energy
-	return migrationEnergy;
-}
-
 void Reactant::setMigrationEnergy(const double energy) {
 	// Set the migration energy
 	migrationEnergy = energy;
@@ -281,6 +127,3 @@ void Reactant::setMigrationEnergy(const double energy) {
 	return;
 }
 
-double Reactant::getReactionRadius() const {
-	return reactionRadius; // Computed by subclasses in constructors.
-}
