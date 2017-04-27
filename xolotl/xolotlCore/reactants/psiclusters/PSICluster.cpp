@@ -114,28 +114,6 @@ void PSICluster::optimizeReactions() {
 		newReaction = network->addProductionReaction(newReaction);
 		// Link it to the pair
 		(*it).reaction = newReaction;
-
-		// Loop on all the reactions to see if the same reaction appears again
-		for (auto itBis = it; itBis != reactingPairs.end();) {
-			if (itBis == it) {
-				itBis++;
-				continue;
-			}
-			// Check if it is the same reaction
-			if ((*it).first == (*itBis).first
-					&& (*it).second == (*itBis).second) {
-				// Increase the multiplicity of the reaction
-				((*it).multiplicity)++;
-
-				// Remove the reaction from the vector
-				itBis = reactingPairs.erase(itBis);
-			}
-			else {
-				// Check the distance
-				if (std::distance(it, itBis) > 1) break;
-				itBis++;
-			}
-		}
 	}
 
 	for (auto it = combiningReactants.begin(); it != combiningReactants.end();
@@ -147,28 +125,6 @@ void PSICluster::optimizeReactions() {
 		newReaction = network->addProductionReaction(newReaction);
 		// Link it to the pair
 		(*it).reaction = newReaction;
-
-		// Loop on all the reactions to see if the same reaction appears again
-		for (auto itBis = it; itBis != combiningReactants.end();) {
-			if (itBis == it) {
-				itBis++;
-				continue;
-			}
-
-			// Check if it is the same reaction
-			if ((*it).combining == (*itBis).combining) {
-				// Increase the multiplicity of the reaction
-				((*it).multiplicity)++;
-
-				// Remove the reaction from the vector
-				itBis = combiningReactants.erase(itBis);
-			}
-			else {
-				// Check the distance
-				if (std::distance(it, itBis) > 1) break;
-				itBis++;
-			}
-		}
 	}
 
 	for (auto it = dissociatingPairs.begin(); it != dissociatingPairs.end();
@@ -180,28 +136,6 @@ void PSICluster::optimizeReactions() {
 		newReaction = network->addDissociationReaction(newReaction);
 		// Link it to the pair
 		(*it).reaction = newReaction;
-
-		// Loop on all the reactions to see if the same reaction appears again
-		for (auto itBis = it; itBis != dissociatingPairs.end();) {
-			if (itBis == it) {
-				itBis++;
-				continue;
-			}
-			// Check if it is the same reaction
-			if ((*it).first == (*itBis).first
-					&& (*it).second == (*itBis).second) {
-				// Increase the multiplicity of the reaction
-				((*it).multiplicity)++;
-
-				// Remove the reaction from the vector
-				itBis = dissociatingPairs.erase(itBis);
-			}
-			else {
-				// Check the distance
-				if (std::distance(it, itBis) > 1) break;
-				itBis++;
-			}
-		}
 	}
 
 	for (auto it = emissionPairs.begin(); it != emissionPairs.end(); it++) {
@@ -212,28 +146,6 @@ void PSICluster::optimizeReactions() {
 		newReaction = network->addDissociationReaction(newReaction);
 		// Link it to the pair
 		(*it).reaction = newReaction;
-
-		// Loop on all the reactions to see if the same reaction appears again
-		for (auto itBis = it; itBis != emissionPairs.end();) {
-			if (itBis == it) {
-				itBis++;
-				continue;
-			}
-			// Check if it is the same reaction
-			if ((*it).first == (*itBis).first
-					&& (*it).second == (*itBis).second) {
-				// Increase the multiplicity of the reaction
-				((*it).multiplicity)++;
-
-				// Remove the reaction from the vector
-				itBis = emissionPairs.erase(itBis);
-			}
-			else {
-				// Check the distance
-				if (std::distance(it, itBis) > 1) break;
-				itBis++;
-			}
-		}
 	}
 
 	return;
