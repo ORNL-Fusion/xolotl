@@ -226,7 +226,7 @@ public class FormationEnergyEngine {
 
 		if (size < 30 && size > 0)
 			energy = xeFormationEnergies[size];
-		else
+		else if (size > 0)
 			energy = 79.0;
 
 		return energy;

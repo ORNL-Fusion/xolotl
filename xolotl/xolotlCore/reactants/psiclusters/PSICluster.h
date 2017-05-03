@@ -85,9 +85,9 @@ protected:
 
 		//! The constructor
 		ClusterPair(PSICluster * firstPtr, PSICluster * secondPtr) :
-				first(firstPtr), second(secondPtr), reaction(
-						nullptr), firstHeDistance(0.0), firstVDistance(
-						0.0), secondHeDistance(0.0), secondVDistance(0.0), multiplicity(1) {
+				first(firstPtr), second(secondPtr), reaction(nullptr), firstHeDistance(
+						0.0), firstVDistance(0.0), secondHeDistance(0.0), secondVDistance(
+						0.0), multiplicity(1) {
 		}
 	};
 
@@ -129,8 +129,8 @@ protected:
 
 		//! The constructor
 		CombiningCluster(PSICluster * ptr) :
-				combining(ptr), reaction(nullptr), heDistance(
-						0.0), vDistance(0.0), multiplicity(1) {
+				combining(ptr), reaction(nullptr), heDistance(0.0), vDistance(
+						0.0), multiplicity(1) {
 		}
 	};
 
@@ -294,8 +294,8 @@ public:
 	 * @return The momentum
 	 */
 	virtual double getHeMomentum() const {
-	    return 0.0;
-    }
+		return 0.0;
+	}
 
 	/**
 	 * This operation returns the first vacancy momentum.
@@ -303,8 +303,8 @@ public:
 	 * @return The momentum
 	 */
 	virtual double getVMomentum() const {
-	    return 0.0;
-    }
+		return 0.0;
+	}
 
 	/**
 	 * This operation returns the total flux of this cluster in the
@@ -314,11 +314,9 @@ public:
 	 * reactions
 	 */
 	virtual double getTotalFlux() {
-        return getProductionFlux() 
-                - getCombinationFlux() 
-                + getDissociationFlux() 
-                - getEmissionFlux();
-    }
+		return getProductionFlux() - getCombinationFlux()
+				+ getDissociationFlux() - getEmissionFlux();
+	}
 
 	/**
 	 * This operation returns the total change in this cluster due to

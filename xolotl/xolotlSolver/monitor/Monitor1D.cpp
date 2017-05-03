@@ -2244,7 +2244,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0]);
 
 			// Save the network in the HDF5 file
-			xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
+			if (!solverHandler->getNetworkName().empty())
+				xolotlCore::HDF5Utils::fillNetwork(
+						solverHandler->getNetworkName());
 
 			// Finalize the HDF5 file
 			xolotlCore::HDF5Utils::finalizeFile();
@@ -2262,7 +2264,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
 		// Get the interstitial information at the surface if concentrations were stored
@@ -2481,7 +2485,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
 		// Get the previous time if concentrations were stored and initialize the fluence
@@ -2537,7 +2543,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
 		// Get the previous time if concentrations were stored and initialize the fluence

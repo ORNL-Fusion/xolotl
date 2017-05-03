@@ -1,6 +1,5 @@
 // Includes
 #include <PetscSolver.h>
-#include <HDF5NetworkLoader.h>
 #include <HDF5Utils.h>
 
 using namespace xolotlCore;
@@ -235,8 +234,10 @@ void PetscSolver::solve() {
 	auto fileName = Solver::solverHandler->getNetworkName();
 	double time = 0.0, deltaTime = 1.0e-12;
 	int tempTimeStep = -2;
-	if (HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep)) {
-		HDF5Utils::readTimes(fileName, tempTimeStep, time, deltaTime);
+	if (!fileName.empty()) {
+		if (HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep)) {
+			HDF5Utils::readTimes(fileName, tempTimeStep, time, deltaTime);
+		}
 	}
 
 	ierr = TSSetInitialTimeStep(ts, time, deltaTime);

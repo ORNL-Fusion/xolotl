@@ -2,6 +2,7 @@
 #define INETWORKLOADER_H
 
 #include "IReactionNetwork.h"
+#include <IOptions.h>
 
 namespace xolotlCore {
 
@@ -28,13 +29,22 @@ public:
 	virtual void setInputstream(const std::shared_ptr<std::istream> stream) = 0;
 
 	/**
-	 * This operation will load the reaction network from the inputstream in
+	 * This operation will load the reaction network from the input file in
 	 * the format specified previously. The network will be empty if it can not
 	 * be loaded.
 	 *
 	 * @return network The reaction network
 	 */
 	virtual std::shared_ptr<IReactionNetwork> load() = 0;
+
+	/**
+	 * This operation will generate the reaction network from options.
+	 * The network will be empty if it can not be loaded.
+	 *
+	 * @param options The command line options
+	 * @return network The reaction network
+	 */
+	virtual std::shared_ptr<IReactionNetwork> generate(IOptions &options) = 0;
 
 	/**
 	 * This operation will set the name of the file where to take the network from.

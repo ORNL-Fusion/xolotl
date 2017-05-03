@@ -270,7 +270,7 @@ public class Preprocessor {
 		if (args.isTempFile())
 			xolotlParams.setProperty("tempFile", args.getTempFile());
 		if (args.isFluxFile())
-			xolotlParams.setProperty("fluxFile", args.getTempFile());
+			xolotlParams.setProperty("fluxFile", args.getFluxFile());
 		if (args.isInitialV())
 			xolotlParams.setProperty("initialV", args.getInitialV());
 		if (args.isVoidPortion())
@@ -281,6 +281,22 @@ public class Preprocessor {
 			xolotlParams.setProperty("grain", args.getGrain());
 		if (args.isSputter())
 			xolotlParams.setProperty("sputtering", args.getSputter());
+		if (args.isNetParam()) {
+			// Build the network argument
+			String netString;
+			if (args.getMaxXeSize() > 0)
+				netString = Integer.toString(args.getMaxXeSize());
+			else
+				netString = Integer.toString(args.getMaxHeSize()) + " " + Integer.toString(args.getMaxVSize()) + " "
+						+ Integer.toString(args.getMaxISize()) + " " + Boolean.toString(args.isPhaseCut());
+			xolotlParams.setProperty("netParam", netString);
+
+			// Build the grid argument
+			String gridString = Integer.toString(args.getNxGrid()) + " " + Double.toString(args.getXStepSize()) + " " + Integer.toString(args.getNyGrid()) + " "
+					+ Double.toString(args.getYStepSize()) + " " + Integer.toString(args.getNzGrid()) + " " + Double.toString(args.getZStepSize());
+			xolotlParams.setProperty("grid", gridString);
+			xolotlParams.setProperty("networkFile", "");
+		}
 
 	}
 
@@ -931,22 +947,22 @@ public class Preprocessor {
 			// Create, write, and close the absolute time attribute
 			double[] time = { times[0] };
 			int dataspaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int attributeId = H5.H5Acreate(newConcSubGroupId, "absoluteTime", HDF5Constants.H5T_IEEE_F64LE,
-					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			int attributeId = H5.H5Acreate(newConcSubGroupId, "absoluteTime", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			int status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, time);
 			status = H5.H5Aclose(attributeId);
 
 			// Create, write, and close the previous time attribute
 			double[] previousTime = { times[1] };
-			attributeId = H5.H5Acreate(newConcSubGroupId, "previousTime", HDF5Constants.H5T_IEEE_F64LE,
-					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			attributeId = H5.H5Acreate(newConcSubGroupId, "previousTime", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousTime);
 			status = H5.H5Aclose(attributeId);
 
 			// Create, write, and close the timestep time attribute
 			double[] deltaTime = { times[2] };
-			attributeId = H5.H5Acreate(newConcSubGroupId, "deltaTime", HDF5Constants.H5T_IEEE_F64LE,
-					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			attributeId = H5.H5Acreate(newConcSubGroupId, "deltaTime", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, deltaTime);
 			status = H5.H5Aclose(attributeId);
 
@@ -1026,12 +1042,12 @@ public class Preprocessor {
 						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE, iSurface);
 				status = H5.H5Aclose(attributeId);
-				attributeId = H5.H5Acreate(concentrationGroupId, "nInterstitial", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
-						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				attributeId = H5.H5Acreate(concentrationGroupId, "nInterstitial", HDF5Constants.H5T_IEEE_F64LE,
+						dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, nInter);
 				status = H5.H5Aclose(attributeId);
-				attributeId = H5.H5Acreate(concentrationGroupId, "previousIFlux", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
-						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				attributeId = H5.H5Acreate(concentrationGroupId, "previousIFlux", HDF5Constants.H5T_IEEE_F64LE,
+						dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousFlux);
 				status = H5.H5Aclose(attributeId);
 
@@ -1068,7 +1084,7 @@ public class Preprocessor {
 					// Read the dataset
 					status = H5.H5Dread(datasetId, HDF5Constants.H5T_STD_I32LE, HDF5Constants.H5S_ALL,
 							HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, surfaceArray);
-					
+
 					// Update the surface indices
 					for (int i = 0; i < (int) dims[0]; i++) {
 						surfaceArray[i] = surfaceArray[i] + xGridDiff;
@@ -1112,7 +1128,7 @@ public class Preprocessor {
 					// Read the dataset
 					status = H5.H5Dread(datasetId, HDF5Constants.H5T_STD_I32LE, HDF5Constants.H5S_ALL,
 							HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, surfaceArray);
-					
+
 					// Update the surface indices
 					for (int i = 0; i < (int) dims[0]; i++) {
 						for (int j = 0; j < (int) dims[1]; j++) {
@@ -1146,16 +1162,16 @@ public class Preprocessor {
 					status = H5.H5Sclose(dataspaceId);
 					status = H5.H5Gclose(concentrationGroupId);
 				}
-				
+
 				// Copy the nInterstitial and previousIFlux datasets
 				// Open the file to copy from
 				int fromFileId = H5.H5Fopen(fromName, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-				// Set the name of the sub group in this file 
+				// Set the name of the sub group in this file
 				subGroupName = "concentrationsGroup/concentration_" + lastTimeStep + "/nInterstitial";
 				// Copy nInterstitial
 				H5.H5Ocopy(fromFileId, subGroupName, fileId, "concentrationsGroup/concentration_0/nInterstitial",
 						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-				// Set the name of the sub group in this file 
+				// Set the name of the sub group in this file
 				subGroupName = "concentrationsGroup/concentration_" + lastTimeStep + "/previousIFlux";
 				// Copy nInterstitial
 				H5.H5Ocopy(fromFileId, subGroupName, fileId, "concentrationsGroup/concentration_0/previousIFlux",

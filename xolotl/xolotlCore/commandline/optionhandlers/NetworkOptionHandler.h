@@ -9,37 +9,39 @@ namespace xolotlCore {
 /**
  * NetworkOptionHandler handles the name of the network file.
  */
-class NetworkOptionHandler : public OptionHandler {
+class NetworkOptionHandler: public OptionHandler {
 public:
 
 	/**
 	 * The default constructor
 	 */
-    NetworkOptionHandler() :
-    	OptionHandler("networkFile",
-    			"networkFile <filename>            "
-    			"The network will be loaded from this HDF5 file.\n") {}
+	NetworkOptionHandler() :
+			OptionHandler("networkFile", "networkFile <filename>            "
+					"The network will be loaded from this HDF5 file.\n") {
+	}
 
 	/**
 	 * The destructor
 	 */
-    ~NetworkOptionHandler() {}
+	~NetworkOptionHandler() {
+	}
 
-    /**
-     * This method will set the IOptions networkFilename
-     * to the value given as the argument.
-     *
-     * @param opt The pointer to the option that will be modified.
-     * @param arg The argument for the networkFilename.
-     */
-    bool handler(IOptions *opt, const std::string& arg) {
-    	// Set the name of the network file
-    	opt->setNetworkFilename(arg);
+	/**
+	 * This method will set the IOptions networkFilename
+	 * to the value given as the argument.
+	 *
+	 * @param opt The pointer to the option that will be modified.
+	 * @param arg The argument for the networkFilename.
+	 */
+	bool handler(IOptions *opt, const std::string& arg) {
+		// Set the name of the network file
+		opt->setNetworkFilename(arg);
 
-    	return true;
-    }
+		return true;
+	}
 
-};//end class NetworkOptionHandler
+};
+//end class NetworkOptionHandler
 
 } /* namespace xolotlCore */
 

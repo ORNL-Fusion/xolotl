@@ -420,6 +420,160 @@ public:
 	 */
 	virtual void setSputteringYield(double yield) = 0;
 
+	/**
+	 * To know if we should use the HDF5 file.
+	 *
+	 * @return useHDF5Flag
+	 */
+	virtual bool useHDF5() const = 0;
+
+	/**
+	 * Set the useHDF5Flag.
+	 *
+	 * @param flag The value for the useHDF5Flag
+	 */
+	virtual void setHDF5Flag(bool flag) = 0;
+
+	/**
+	 * To know if we should use the phase cut.
+	 *
+	 * @return usePhaseCutFlag
+	 */
+	virtual bool usePhaseCut() const = 0;
+
+	/**
+	 * Set the usePhaseCutFlag.
+	 *
+	 * @param flag The value for the usePhaseCutFlag
+	 */
+	virtual void setPhaseCutFlag(bool flag) = 0;
+
+	/**
+	 * Obtain the maximum value of impurities (He or Xe) to be used.
+	 *
+	 * @return The maximum value
+	 */
+	virtual int getMaxImpurity() const = 0;
+
+	/**
+	 * Set the maximum value of impurities to use.
+	 *
+	 * @param max The maximum
+	 */
+	virtual void setMaxImpurity(int max) = 0;
+
+	/**
+	 * Obtain the maximum value of vacancies to be used.
+	 *
+	 * @return The maximum value
+	 */
+	virtual int getMaxV() const = 0;
+
+	/**
+	 * Set the maximum value of vacancies to use.
+	 *
+	 * @param max The maximum
+	 */
+	virtual void setMaxV(int max) = 0;
+
+	/**
+	 * Obtain the maximum value of interstitials to be used.
+	 *
+	 * @return The maximum value
+	 */
+	virtual int getMaxI() const = 0;
+
+	/**
+	 * Set the maximum value of interstitials to use.
+	 *
+	 * @param max The maximum
+	 */
+	virtual void setMaxI(int max) = 0;
+
+	/**
+	 * Obtain the number of grid points in the depth direction to be used.
+	 *
+	 * @return The number of grid points
+	 */
+	virtual int getNX() const = 0;
+
+	/**
+	 * Set the number of grid points in the depth direction to use.
+	 *
+	 * @param n The number
+	 */
+	virtual void setNX(int n) = 0;
+
+	/**
+	 * Obtain the value of the step size in the depth direction to be used.
+	 *
+	 * @return The value of the step size
+	 */
+	virtual double getXStepSize() const = 0;
+
+	/**
+	 * Set the value for the step size in the depth direction to use.
+	 *
+	 * @param stepSize The value for the step size
+	 */
+	virtual void setXStepSize(double stepSize) = 0;
+
+	/**
+	 * Obtain the number of grid points in the Y direction to be used.
+	 *
+	 * @return The number of grid points
+	 */
+	virtual int getNY() const = 0;
+
+	/**
+	 * Set the number of grid points in the Y direction to use.
+	 *
+	 * @param n The number
+	 */
+	virtual void setNY(int n) = 0;
+
+	/**
+	 * Obtain the value of the step size in the Y direction to be used.
+	 *
+	 * @return The value of the step size
+	 */
+	virtual double getYStepSize() const = 0;
+
+	/**
+	 * Set the value for the step size in the Y direction to use.
+	 *
+	 * @param stepSize The value for the step size
+	 */
+	virtual void setYStepSize(double stepSize) = 0;
+
+	/**
+	 * Obtain the number of grid points in the Z direction to be used.
+	 *
+	 * @return The number of grid points
+	 */
+	virtual int getNZ() const = 0;
+
+	/**
+	 * Set the number of grid points in the Z direction to use.
+	 *
+	 * @param n The number
+	 */
+	virtual void setNZ(int n) = 0;
+
+	/**
+	 * Obtain the value of the step size in the Z direction to be used.
+	 *
+	 * @return The value of the step size
+	 */
+	virtual double getZStepSize() const = 0;
+
+	/**
+	 * Set the value for the step size in the Z direction to use.
+	 *
+	 * @param stepSize The value for the step size
+	 */
+	virtual void setZStepSize(double stepSize) = 0;
+
 };
 //end class IOptions
 

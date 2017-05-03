@@ -111,7 +111,8 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 double PSIClusterReactionNetwork::calculateDissociationConstant(
 		DissociationReaction * reaction) const {
 	// If the dissociations are not allowed
-	if (!dissociationsEnabled) return 0.0;
+	if (!dissociationsEnabled)
+		return 0.0;
 
 	// The atomic volume is computed by considering the BCC structure of the
 	// tungsten. In a given lattice cell in tungsten there are tungsten atoms
@@ -145,8 +146,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 	// Make a vector of types
 	std::vector<string> typeVec = { heType, vType, iType };
 	// Loop on it
-    for(auto tvIter = typeVec.begin(); tvIter != typeVec.end(); ++tvIter) {
-        string typeName = *tvIter;
+	for (auto tvIter = typeVec.begin(); tvIter != typeVec.end(); ++tvIter) {
+		string typeName = *tvIter;
 
 		// Get all the reactants of this type
 		auto allTypeReactants = getAll(typeName);
@@ -1257,7 +1258,7 @@ void PSIClusterReactionNetwork::computeRateConstants() {
 		// Compute the rate
 		rate = calculateReactionRateConstant(iter->get());
 		// Set it in the reaction
-        (*iter)->kConstant = rate;
+		(*iter)->kConstant = rate;
 
 		// Check if the rate is the biggest one up to now
 		if (rate > biggestProductionRate)

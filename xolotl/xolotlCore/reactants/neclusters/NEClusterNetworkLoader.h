@@ -114,6 +114,15 @@ public:
 	virtual std::shared_ptr<IReactionNetwork> load();
 
 	/**
+	 * This operation will generate the reaction network from options.
+	 * The network will be empty if it can not be loaded.
+	 *
+	 * @param options The command line options
+	 * @return network The reaction network
+	 */
+	virtual std::shared_ptr<IReactionNetwork> generate(IOptions &options);
+
+	/**
 	 * This operation will apply a grouping method to the network.
 	 *
 	 * @param The network to be modified.

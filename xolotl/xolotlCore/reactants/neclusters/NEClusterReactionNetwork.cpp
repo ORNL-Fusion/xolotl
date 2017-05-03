@@ -114,7 +114,8 @@ NEClusterReactionNetwork::NEClusterReactionNetwork(
 double NEClusterReactionNetwork::calculateDissociationConstant(
 		DissociationReaction * reaction) const {
 	// If the dissociations are not allowed
-	if (!dissociationsEnabled) return 0.0;
+	if (!dissociationsEnabled)
+		return 0.0;
 
 	// Compute the atomic volume
 	double atomicVolume = 0.5 * xolotlCore::uraniumDioxydeLatticeConstant
@@ -627,8 +628,6 @@ void NEClusterReactionNetwork::computeRateConstants() {
 		rate = calculateReactionRateConstant(iter->get());
 		// Set it in the reaction
 		(*iter)->kConstant = rate;
-
-//		std::cout << (*iter)->first->getName() << " + " << (*iter)->second->getName() << std::endl;
 
 		// Check if the rate is the biggest one up to now
 		if (rate > biggestProductionRate)

@@ -1,6 +1,5 @@
 // Includes
 #include <PetscSolver2DHandler.h>
-#include <HDF5Utils.h>
 #include <MathUtils.h>
 #include <Constants.h>
 
@@ -37,13 +36,9 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	// Get starting conditions from HDF5 file
-	int nx = 0, ny = 0, nz = 0;
-	double hx = 0.0, hy = 0.0, hz = 0.0;
-	xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz, hz);
 
 	ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED,
-			DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nx, ny, PETSC_DECIDE,
+			DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE,
 			PETSC_DECIDE, dof, 1, NULL, NULL, &da);
 	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
 			"DMDACreate2d failed.");
@@ -55,19 +50,21 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 			"PetscSolver2DHandler::createSolverContext: DMSetUp failed.");
 
 	// Set the position of the surface
-	for (int j = 0; j < ny; j++) {
+	for (int j = 0; j < nY; j++) {
 		surfacePosition.push_back(0);
 		if (movingSurface)
-			surfacePosition[j] = (int) (nx * portion / 100.0);
+			surfacePosition[j] = (int) (nX * portion / 100.0);
 	}
 
 	// Generate the grid in the x direction
-	generateGrid(nx, hx, surfacePosition[0]);
+	generateGrid(nX, hX, surfacePosition[0]);
 
 	// Now that the grid was generated, we can update the surface position
 	// if we are using a restart file
 	int tempTimeStep = -2;
-	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+	bool hasConcentrations = false;
+	if (!networkName.empty())
+		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 			networkName, tempTimeStep);
 
 	// Get the actual surface position if concentrations were stored
@@ -89,9 +86,6 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	// Initialize the surface of the first advection handler corresponding to the
 	// advection toward the surface (or a dummy one if it is deactivated)
 	advectionHandlers[0]->setLocation(grid[surfacePosition[0]]);
-
-	// Set the step size
-	hY = hy;
 
 	// Set the size of the partial derivatives vectors
 	clusterPartials.resize(dof, 0.0);
@@ -128,9 +122,9 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	}
 
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, grid, ny, hy);
+	mutationHandler->initialize(network, grid, nY, hY);
 	mutationHandler->initializeIndex2D(surfacePosition, network,
-			advectionHandlers, grid, ny, hy);
+			advectionHandlers, grid, nY, hY);
 
 	// Get the diagonal fill
 	network->getDiagonalFill(dfill);
@@ -172,7 +166,9 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Get the last time step written in the HDF5 file
 	int tempTimeStep = -2;
-	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+	bool hasConcentrations = false;
+	if (!networkName.empty())
+		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 			networkName, tempTimeStep);
 
 	// Get the total size of the grid for the boundary conditions
