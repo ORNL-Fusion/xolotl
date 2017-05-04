@@ -1,6 +1,5 @@
 // Includes
 #include <PetscSolver.h>
-#include <HDF5NetworkLoader.h>
 #include <HDF5Utils.h>
 
 using namespace xolotlCore;
@@ -35,6 +34,7 @@ static char help[] =
 		"Solves C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.\n";
 
 // ----- GLOBAL VARIABLES ----- //
+extern PetscErrorCode setupPetsc0DMonitor(TS);
 extern PetscErrorCode setupPetsc1DMonitor(TS);
 extern PetscErrorCode setupPetsc2DMonitor(TS);
 extern PetscErrorCode setupPetsc3DMonitor(TS);
@@ -73,19 +73,24 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 	// Get the local data vector from PETSc
 	PetscFunctionBeginUser;
 	DM da;
-	ierr = TSGetDM(ts, &da);CHKERRQ(ierr);
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
 	Vec localC;
-	ierr = DMGetLocalVector(da, &localC);CHKERRQ(ierr);
+	ierr = DMGetLocalVector(da, &localC);
+	CHKERRQ(ierr);
 
 	// Scatter ghost points to local vector, using the 2-step process
 	// DMGlobalToLocalBegin(),DMGlobalToLocalEnd().
 	// By placing code between these two statements, computations can be
 	// done while messages are in transition.
-	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
+	CHKERRQ(ierr);
 
 	// Set the initial values of F
-	ierr = VecSet(F, 0.0);CHKERRQ(ierr);
+	ierr = VecSet(F, 0.0);
+	CHKERRQ(ierr);
 
 	// Compute the new concentrations
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -111,15 +116,20 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 
 	// Get the matrix from PETSc
 	PetscFunctionBeginUser;
-	ierr = MatZeroEntries(J);CHKERRQ(ierr);
+	ierr = MatZeroEntries(J);
+	CHKERRQ(ierr);
 	DM da;
-	ierr = TSGetDM(ts, &da);CHKERRQ(ierr);
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
 	Vec localC;
-	ierr = DMGetLocalVector(da, &localC);CHKERRQ(ierr);
+	ierr = DMGetLocalVector(da, &localC);
+	CHKERRQ(ierr);
 
 	// Get the complete data array
-	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
+	CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -127,18 +137,24 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	/* ----- Compute the off-diagonal part of the Jacobian ----- */
 	solverHandler->computeOffDiagonalJacobian(ts, localC, J, ftime);
 
-	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
+	CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
+	CHKERRQ(ierr);
 
 	/* ----- Compute the partial derivatives for the reaction term ----- */
 	solverHandler->computeDiagonalJacobian(ts, localC, J, ftime);
 
-	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
+	CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
+	CHKERRQ(ierr);
 
 	if (A != J) {
-		ierr = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
+		ierr = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
+		CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
+		CHKERRQ(ierr);
 	}
 
 	// Stop the RHSJacobian timer
@@ -148,7 +164,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 }
 
 PetscSolver::PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-	Solver(registry) {
+		Solver(registry) {
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
 	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
 }
@@ -197,7 +213,8 @@ void PetscSolver::solve() {
 	ierr = TSSetType(ts, TSARKIMEX);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetType failed.");
 	ierr = TSARKIMEXSetFullyImplicit(ts, PETSC_TRUE);
-	checkPetscError(ierr, "PetscSolver::solve: TSARKIMEXSetFullyImplicit failed.");
+	checkPetscError(ierr,
+			"PetscSolver::solve: TSARKIMEXSetFullyImplicit failed.");
 	ierr = TSSetDM(ts, da);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetDM failed.");
 	ierr = TSSetProblemType(ts, TS_NONLINEAR);
@@ -217,8 +234,10 @@ void PetscSolver::solve() {
 	auto fileName = Solver::solverHandler->getNetworkName();
 	double time = 0.0, deltaTime = 1.0e-12;
 	int tempTimeStep = -2;
-	if (HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep)) {
-		HDF5Utils::readTimes(fileName, tempTimeStep, time, deltaTime);
+	if (!fileName.empty()) {
+		if (HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep)) {
+			HDF5Utils::readTimes(fileName, tempTimeStep, time, deltaTime);
+		}
 	}
 
 	ierr = TSSetInitialTimeStep(ts, time, deltaTime);
@@ -229,25 +248,33 @@ void PetscSolver::solve() {
 	// Switch on the number of dimensions to set the monitors
 	int dim = Solver::solverHandler->getDimension();
 	switch (dim) {
-		case 1:
-			// One dimension
-			ierr = setupPetsc1DMonitor(ts);
-			checkPetscError(ierr, "PetscSolver::solve: setupPetsc1DMonitor failed.");
-			break;
-		case 2:
-			// Two dimensions
-			ierr = setupPetsc2DMonitor(ts);
-			checkPetscError(ierr, "PetscSolver::solve: setupPetsc2DMonitor failed.");
-			break;
-		case 3:
-			// Three dimensions
-			ierr = setupPetsc3DMonitor(ts);
-			checkPetscError(ierr, "PetscSolver::solve: setupPetsc3DMonitor failed.");
-			break;
-		default:
-			throw std::string(
-							"PetscSolver Exception: Wrong number of dimensions "
-							"to set the monitors.");
+	case 0:
+		// One dimension
+		ierr = setupPetsc0DMonitor(ts);
+		checkPetscError(ierr,
+				"PetscSolver::solve: setupPetsc0DMonitor failed.");
+		break;
+	case 1:
+		// One dimension
+		ierr = setupPetsc1DMonitor(ts);
+		checkPetscError(ierr,
+				"PetscSolver::solve: setupPetsc1DMonitor failed.");
+		break;
+	case 2:
+		// Two dimensions
+		ierr = setupPetsc2DMonitor(ts);
+		checkPetscError(ierr,
+				"PetscSolver::solve: setupPetsc2DMonitor failed.");
+		break;
+	case 3:
+		// Three dimensions
+		ierr = setupPetsc3DMonitor(ts);
+		checkPetscError(ierr,
+				"PetscSolver::solve: setupPetsc3DMonitor failed.");
+		break;
+	default:
+		throw std::string("PetscSolver Exception: Wrong number of dimensions "
+				"to set the monitors.");
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

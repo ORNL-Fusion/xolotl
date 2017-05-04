@@ -23,6 +23,8 @@ void FluxHandler::initializeFluxHandler(IReactionNetwork *network,
 	// Set the grid
 	xGrid = grid;
 
+	if (xGrid.size() == 0) return;
+
 	// Compute the norm factor because the fit function has an
 	// arbitrary amplitude
 	normFactor = 0.0;
@@ -38,7 +40,8 @@ void FluxHandler::initializeFluxHandler(IReactionNetwork *network,
 
 	// Factor the incident flux will be multiplied by to get
 	// the wanted intensity
-	double fluxNormalized = fluxAmplitude / normFactor;
+	double fluxNormalized = 0.0;
+	if (normFactor > 0.0) fluxNormalized = fluxAmplitude / normFactor;
 
 	// Clear the flux vector
 	incidentFluxVec.clear();
@@ -64,7 +67,8 @@ void FluxHandler::initializeFluxHandler(IReactionNetwork *network,
 
 void FluxHandler::recomputeFluxHandler(int surfacePos) {
 	// Factor the incident flux will be multiplied by
-	double fluxNormalized = fluxAmplitude / normFactor;
+	double fluxNormalized = 0.0;
+	if (normFactor > 0.0) fluxNormalized = fluxAmplitude / normFactor;
 
 	// Starts a i = surfacePos + 1 because the first values were already put in the vector
 	for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
@@ -135,6 +139,11 @@ void FluxHandler::computeIncidentFlux(double currentTime, double *updatedConcOff
 	if (useTimeProfile) {
 		fluxAmplitude = getProfileAmplitude(currentTime);
 		recomputeFluxHandler(surfacePos);
+	}
+
+	if (incidentFluxVec.size() == 0) {
+		updatedConcOffset[fluxIndex] += fluxAmplitude;
+		return;
 	}
 
 	// Update the concentration array

@@ -40,7 +40,7 @@ protected:
 		 * The reaction/dissociation constant associated to this
 		 * reaction or dissociation
 		 */
-		double kConstant;
+		const double * kConstant;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -55,9 +55,13 @@ protected:
 		double a111;
 
 		//! The constructor
-		SuperClusterProductionPair(NECluster * firstPtr, NECluster * secondPtr, double k)
-		: first(firstPtr), second(secondPtr), kConstant(k), a000(0.0), a001(0.0), a010(0.0),
-		  a011(0.0), a100(0.0), a101(0.0), a110(0.0), a111(0.0) {}
+		SuperClusterProductionPair(NECluster * firstPtr, NECluster * secondPtr,
+				Reaction * reaction) :
+				first(firstPtr), second(secondPtr), kConstant(
+						&(reaction->kConstant)), a000(0.0), a001(0.0), a010(
+						0.0), a011(0.0), a100(0.0), a101(0.0), a110(0.0), a111(
+						0.0) {
+		}
 	};
 
 	/**
@@ -85,7 +89,7 @@ protected:
 		 * The reaction/dissociation constant associated to this
 		 * reaction or dissociation
 		 */
-		double kConstant;
+		const double * kConstant;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -96,9 +100,12 @@ protected:
 		double a11;
 
 		//! The constructor
-		SuperClusterDissociationPair(NECluster * firstPtr, NECluster * secondPtr, double k)
-		: first(firstPtr), second(secondPtr), kConstant(k), a00(0.0), a01(0.0), a10(0.0),
-		  a11(0.0) {}
+		SuperClusterDissociationPair(NECluster * firstPtr,
+				NECluster * secondPtr, Reaction * reaction) :
+				first(firstPtr), second(secondPtr), kConstant(
+						&(reaction->kConstant)), a00(0.0), a01(0.0), a10(0.0), a11(
+						0.0) {
+		}
 	};
 
 private:
@@ -122,28 +129,28 @@ private:
 	double dispersion;
 
 	//! The map containing all the reacting pairs separated by original composition.
-	std::map <int, std::vector<ClusterPair> > reactingMap;
+	std::map<int, std::vector<ClusterPair> > reactingMap;
 
 	//! The map containing all the combining clusters separated by original composition.
-	std::map <int, std::vector<CombiningCluster> > combiningMap;
+	std::map<int, std::vector<CombiningCluster> > combiningMap;
 
 	//! The map containing all the dissociating pairs separated by original composition.
-	std::map <int, std::vector<ClusterPair> > dissociatingMap;
+	std::map<int, std::vector<ClusterPair> > dissociatingMap;
 
 	//! The map containing all the emission pairs separated by original composition.
-	std::map <int, std::vector<ClusterPair> > emissionMap;
+	std::map<int, std::vector<ClusterPair> > emissionMap;
 
 	//! The list of optimized effective reacting pairs.
-	std::forward_list <SuperClusterProductionPair> effReactingList;
+	std::forward_list<SuperClusterProductionPair> effReactingList;
 
 	//! The list of optimized effective combining pairs.
-	std::forward_list <SuperClusterProductionPair> effCombiningList;
+	std::forward_list<SuperClusterProductionPair> effCombiningList;
 
 	//! The list of optimized effective dissociating pairs.
-	std::forward_list <SuperClusterDissociationPair> effDissociatingList;
+	std::forward_list<SuperClusterDissociationPair> effDissociatingList;
 
 	//! The list of optimized effective emission pairs.
-	std::forward_list <SuperClusterDissociationPair> effEmissionList;
+	std::forward_list<SuperClusterDissociationPair> effEmissionList;
 
 	/**
 	 * The xenon momentum flux.
@@ -155,12 +162,8 @@ private:
 	 * initialized with a size.
 	 */
 	NESuperCluster() :
-		NECluster() {}
-
-	/**
-	 * Group the same reactions together.
-	 */
-	void optimizeReactions();
+			NECluster() {
+	}
 
 public:
 
@@ -178,7 +181,8 @@ public:
 	 * @param energy The formation energy
 	 * @param registry The performance handler registry
 	 */
-	NESuperCluster(double numXe, int nTot, int width, double radius, double energy,
+	NESuperCluster(double numXe, int nTot, int width, double radius,
+			double energy,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
@@ -189,7 +193,8 @@ public:
 	NESuperCluster(NESuperCluster &other);
 
 	//! Destructor
-	~NESuperCluster() {}
+	~NESuperCluster() {
+	}
 
 	/**
 	 * This operation returns a Reactant that is created using the copy
@@ -200,17 +205,34 @@ public:
 	virtual std::shared_ptr<IReactant> clone();
 
 	/**
+	 * Sets the collection of other clusters that make up
+	 * the reaction network in which this cluster exists.
+	 *
+	 * @param network The reaction network of which this cluster is a part
+	 */
+	void setReactionNetwork(
+			const std::shared_ptr<IReactionNetwork> reactionNetwork);
+
+	/**
+	 * Group the same reactions together and add the reactions to the network lists.
+	 */
+	void optimizeReactions();
+
+	/**
 	 * This operation returns false.
 	 *
 	 * @return True if mixed
 	 */
-	virtual bool isMixed() const {return false;}
+	virtual bool isMixed() const {
+		return false;
+	}
 
 	/**
 	 * Set the Xe vector
 	 */
-	void setXeVector(std::vector<NECluster *> vec)
-		{xeVector = vec;}
+	void setXeVector(std::vector<NECluster *> vec) {
+		xeVector = vec;
+	}
 
 	/**
 	 * This operation returns the current concentration.
@@ -251,50 +273,27 @@ public:
 	double getDistance(int xe) const;
 
 	/**
-	 * Computes a row of the reaction connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants alone can form a reaction, the element at the position
-	 * of the second reactant is 1, otherwise 0.
+	 * Calculate the dispersion of the group.
 	 */
-	void createReactionConnectivity();
-
-	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
-	 */
-	void createDissociationConnectivity();
-
-	/**
-	 * Calculate all the rate constants for the reactions and dissociations in which this
-	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
-	 * or CombiningCluster. Need to be called only the first time.
-	 */
-	void computeRateConstants();
-
-	/**
-	 * Calculate all the rate constants for the reactions and dissociations in which this
-	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
-	 * or CombiningCluster. Need to be called only when the temperature changes.
-	 */
-	void updateRateConstants();
+	void computeDispersion();
 
 	/**
 	 * This operation sets the zeroth order momentum.
 	 *
 	 * @param mom The momentum
 	 */
-	void setZerothMomentum(double mom) {l0 = mom;}
+	void setZerothMomentum(double mom) {
+		l0 = mom;
+	}
 
 	/**
 	 * This operation sets the first order momentum in the xenon direction.
 	 *
 	 * @param mom The momentum
 	 */
-	void setMomentum(double mom) {l1 = mom;}
+	void setMomentum(double mom) {
+		l1 = mom;
+	}
 
 	/**
 	 * This operation reset the connectivity sets based on the information
@@ -352,7 +351,9 @@ public:
 	 *
 	 * @return The momentum flux
 	 */
-	double getMomentumFlux() {return momentumFlux;}
+	double getMomentumFlux() {
+		return momentumFlux;
+	}
 
 	/**
 	 * This operation works as getPartialDerivatives above, but instead of
@@ -397,7 +398,8 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
-	void getDissociationPartialDerivatives(std::vector<double> & partials) const;
+	void getDissociationPartialDerivatives(
+			std::vector<double> & partials) const;
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -422,7 +424,9 @@ public:
 	 *
 	 * @return The width of the section
 	 */
-	int getSectionWidth() const {return sectionWidth;}
+	int getSectionWidth() const {
+		return sectionWidth;
+	}
 
 };
 //end class NESuperCluster

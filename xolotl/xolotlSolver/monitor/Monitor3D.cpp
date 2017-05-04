@@ -280,7 +280,8 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 				network->updateConcentrationsFromArray(gridPointSolution);
 
 				// Get the total helium concentration at this grid point
-				heConcentration += network->getTotalAtomConcentration() * (grid[xi] - grid[xi - 1]) * hy * hz;
+				heConcentration += network->getTotalAtomConcentration()
+						* (grid[xi] - grid[xi - 1]) * hy * hz;
 			}
 		}
 	}
@@ -881,8 +882,8 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that bursts bubbles
  */
-PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time,
-		Vec solution, void *) {
+PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time, Vec solution,
+		void *) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
@@ -896,13 +897,16 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time,
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);CHKERRQ(ierr);
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
 
 	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
+	CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -939,7 +943,8 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time,
 
 			for (xi = xs; xi < xs + xm; xi++) {
 				// Skip everything before the surface
-				if (xi <= surfacePos) continue;
+				if (xi <= surfacePos)
+					continue;
 
 				// Get the pointer to the beginning of the solution data for this grid point
 				gridPointSolution = solutionArray[zk][yj][xi];
@@ -953,28 +958,43 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time,
 				double heDensity = network->getTotalAtomConcentration();
 
 				// Compute the radius of the bubble from the number of helium
-				double nV = heDensity * (grid[xi] - grid[xi-1]) * hy * hz / 4.0;
-				double radius = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
-						+ pow(
-								(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0) * nV)
-										/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
-						- pow(
-								(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
-										/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+				double nV = heDensity * (grid[xi] - grid[xi - 1]) * hy * hz
+						/ 4.0;
+				double radius =
+						(sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
+								+ pow(
+										(3.0
+												* pow(
+														xolotlCore::tungstenLatticeConstant,
+														3.0) * nV)
+												/ (8.0 * xolotlCore::pi),
+										(1.0 / 3.0))
+								- pow(
+										(3.0
+												* pow(
+														xolotlCore::tungstenLatticeConstant,
+														3.0))
+												/ (8.0 * xolotlCore::pi),
+										(1.0 / 3.0));
 
 				// Check if it should burst
 				bool burst = false;
 				// If the radius is larger than the distance to the surface, burst
-				if (radius > distance) burst = true;
+				if (radius > distance)
+					burst = true;
 				// Add randomness
-				double prob = prefactor * (1.0 - (distance - radius) / distance);
+				double prob = prefactor
+						* (1.0 - (distance - radius) / distance);
 				double test = (double) rand() / (double) RAND_MAX;
-				if (prob > test) burst = true;
+				if (prob > test)
+					burst = true;
 
 				// Burst
 				if (burst) {
 
-					std::cout << "bursting at: " << zk << " " << yj << " " << distance << " " << prob << " " << test << std::endl;
+					std::cout << "bursting at: " << zk << " " << yj << " "
+							<< distance << " " << prob << " " << test
+							<< std::endl;
 
 					// Get all the helium clusters
 					auto clusters = network->getAll(heType);
@@ -1024,7 +1044,8 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time,
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
 }
@@ -1123,7 +1144,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				hz);
 
 		// Save the network in the HDF5 file
-		xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
+		if (!solverHandler->getNetworkName().empty())
+			xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
 
 		// Finalize the HDF5 file
 		xolotlCore::HDF5Utils::finalizeFile();
@@ -1153,7 +1175,9 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
 		// Get the interstitial information at the surface if concentrations were stored
@@ -1181,8 +1205,9 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		// Set the monitor on the bubble bursting
 		// monitorBursting3D will be called at each timestep
 		ierr = TSMonitorSet(ts, monitorBursting3D, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorBursting3D) failed.");
-		std::srand (time(NULL));
+		checkPetscError(ierr,
+				"setupPetsc3DMonitor: TSMonitorSet (monitorBursting3D) failed.");
+		std::srand(time(NULL) + procId);
 	}
 
 	// Set the monitor to save performance plots (has to be in parallel)
@@ -1222,7 +1247,9 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
 		// Get the previous time if concentrations were stored and initialize the fluence

@@ -29,43 +29,6 @@ private:
 		PSICluster()
 	{ numHe = 0; numV = 0; }
 
-	/**
-	 * This operation handles partial replacement reactions of the form
-	 *
-	 * (A_x)(B_y) + C_z --> (A_x)[B_(y-z)]
-	 *
-	 * for each compound cluster in the set.
-	 *
-	 * This operation fills the reaction connectivity array as well as the
-	 * array of combining clusters.
-	 *
-	 * @param clusters The clusters that have part of their B components
-	 * replaced. It is assumed that each element of this set represents a
-	 * cluster of the form C_z.
-	 * @param oldComponentName The name of the component that will be partially
-	 * replaced.
-	 */
-	void replaceInCompound(std::vector<IReactant *> & clusters,
-			const std::string& oldComponentName);
-
-	/**
-	 * This operation "combines" clusters in the sense that it handles all of
-	 * the logic and caching required to correctly process the reaction
-	 *
-	 * (He_a)(V_b) + He_c --> [He_(a+c)][V_(b+1)] + I
-	 *
-	 * in the case of [He_(a+c)](V_b) not in the network
-	 *
-	 * This operation fills the reaction connectivity array as well as the
-	 * array of combining clusters.
-	 *
-	 * @param clusters The clusters that can combine with this cluster.
-	 * (Here it will be He clusters)
-	 * @param productName The name of the product produced in the reaction.
-	 */
-	void combineClusters(std::vector<IReactant *> & clusters,
-			const std::string& productName);
-
 public:
 
 	/**
@@ -106,24 +69,6 @@ public:
 	 * @return True if mixed
 	 */
 	virtual bool isMixed() const {return true;}
-
-	/**
-	 * Computes a row of the reaction connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants alone can form a reaction, the element at the position
-	 * of the second reactant is 1, otherwise 0.
-	 */
-	void createReactionConnectivity();
-
-	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
-	 */
-	void createDissociationConnectivity();
 
 };
 //end class HeVCluster

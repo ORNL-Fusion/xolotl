@@ -43,30 +43,6 @@ public:
 		return std::shared_ptr<IReactant> (new InterstitialCluster(*this));
 	}
 
-protected:
-
-	/**
-	 * Computes a row of the reaction connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants alone can form a reaction, the element at the position
-	 * of the second reactant is 1, otherwise 0.
-	 */
-	void createReactionConnectivity();
-
-	/**
-	 * Computes a row of the dissociation connectivity matrix
-	 * corresponding to this cluster.
-	 *
-	 * Connections are made between this cluster and any clusters it affects
-	 * in a dissociation reaction.
-	 *
-	 * The base-class implementation handles dissociation for regular clusters
-	 * by processing the reaction.
-	 *
-	 */
-	void createDissociationConnectivity();
-
 };
 //end class InterstitialCluster
 

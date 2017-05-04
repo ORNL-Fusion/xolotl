@@ -28,23 +28,3 @@ XeCluster::XeCluster(int nXe,
 
 	return;
 }
-
-void XeCluster::createReactionConnectivity() {
-	// Call the function from the NECluster class to take care of the single
-	// species reactions
-	NECluster::createReactionConnectivity();
-
-	// This cluster is always Xe_a
-
-	return;
-}
-
-void XeCluster::createDissociationConnectivity() {
-	// Call the function from the NECluster class to take care of the single
-	// species dissociation
-	NECluster::createDissociationConnectivity();
-
-	// This cluster is always Xe_a
-
-	return;
-}

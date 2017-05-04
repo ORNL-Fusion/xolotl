@@ -65,15 +65,38 @@ protected:
 	 */
 	std::vector<double> reactingPartialsForCluster;
 
+	/**
+	 * A pointer to an array of the size dof * dof keeping the partial
+	 * derivatives for all the reactions at one grid point.
+	 *
+	 * Its size must be initialized.
+	 */
+	PetscScalar *reactionVals;
+
+	/**
+	 * A pointer to an array of the size dof * dof keeping the indices for partial
+	 * derivatives for all the reactions at one grid point.
+	 *
+	 * Its size must be initialized.
+	 */
+	PetscInt *reactionIndices;
+
 public:
 
 	//! The Constructor
-	PetscSolverHandler() : lastTemperature(0.0) {}
+	PetscSolverHandler() :
+			lastTemperature(0.0) {
+	}
 
 	//! The Destructor
-	~PetscSolverHandler() {}
+	~PetscSolverHandler() {
+		// Delete arrays
+		delete[] reactionVals;
+		delete[] reactionIndices;
+	}
 
-}; //end class PetscSolverHandler
+};
+//end class PetscSolverHandler
 
 } /* end namespace xolotlSolver */
 #endif

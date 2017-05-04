@@ -15,13 +15,14 @@ namespace xolotlFactory {
 /**
  * Subclass of MaterialFactory for a (211) oriented tungsten material.
  */
-class W211MaterialFactory : public MaterialFactory {
+class W211MaterialFactory: public MaterialFactory {
 private:
 
 	/**
 	 * The default constructor is private.
 	 */
-	W211MaterialFactory() {}
+	W211MaterialFactory() {
+	}
 
 public:
 
@@ -32,23 +33,33 @@ public:
 	 */
 	W211MaterialFactory(int dim) {
 		theFluxHandler = std::make_shared<xolotlCore::W211FitFluxHandler>();
-		theAdvectionHandler.push_back(std::make_shared<xolotlCore::W211AdvectionHandler>());
-		theTrapMutationHandler = std::make_shared<xolotlCore::W211TrapMutationHandler>();
+		theAdvectionHandler.push_back(
+				std::make_shared<xolotlCore::W211AdvectionHandler>());
+		theTrapMutationHandler = std::make_shared<
+				xolotlCore::W211TrapMutationHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {
-			case 1:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion1DHandler>();
-				break;
-			case 2:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion2DHandler>();
-				break;
-			case 3:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion3DHandler>();
-				break;
-			default:
-				// The asked dimension is not good (e.g. -1, 0, 4)
-				throw std::string("\nxolotlFactory: Bad dimension for the W211 material factory.");
+		case 0:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::DummyDiffusionHandler>();
+			break;
+		case 1:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion1DHandler>();
+			break;
+		case 2:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion2DHandler>();
+			break;
+		case 3:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion3DHandler>();
+			break;
+		default:
+			// The asked dimension is not good (e.g. -1, 4)
+			throw std::string(
+					"\nxolotlFactory: Bad dimension for the W211 material factory.");
 		}
 
 		return;
@@ -57,7 +68,8 @@ public:
 	/**
 	 * The destructor
 	 */
-	~W211MaterialFactory() {}
+	~W211MaterialFactory() {
+	}
 };
 
 } // end namespace xolotlFactory

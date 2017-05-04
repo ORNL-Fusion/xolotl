@@ -49,19 +49,8 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 	const int size = network->size();
 	// Set the temperature
 	double temperature = 1000.0;
-	// Initialize the rate constants
-	for (int i = 0; i < size; i++) {
-		// This part will set the temperature in each reactant
-		// and recompute the diffusion coefficient
-		allReactants->at(i)->setTemperature(temperature);
-	}
-	for (int i = 0; i < size; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		auto cluster = (xolotlCore::PSICluster *) allReactants->at(i);
-		cluster->computeRateConstants();
-	}
+	network->setTemperature(temperature);
+	network->computeRateConstants();
 
 	// Initialize all the concentrations to 0.001;
 	for (int i = 0; i < size; ++i) {
@@ -129,18 +118,8 @@ BOOST_AUTO_TEST_CASE(checkSingleReaction) {
 	// Set the temperature
 	double temperature = 1000.0;
 	// Initialize the rate constants
-	for (int i = 0; i < size; i++) {
-		// This part will set the temperature in each reactant
-		// and recompute the diffusion coefficient
-		allReactants->at(i)->setTemperature(temperature);
-	}
-	for (int i = 0; i < size; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		auto cluster = (xolotlCore::PSICluster *) allReactants->at(i);
-		cluster->computeRateConstants();
-	}
+	network->setTemperature(temperature);
+	network->computeRateConstants();
 
 	// Initialize all the concentrations to 0.001;
 	for (int i = 0; i < size; ++i) {

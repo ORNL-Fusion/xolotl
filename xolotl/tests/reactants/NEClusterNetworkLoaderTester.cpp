@@ -10,6 +10,7 @@
 #include <XolotlConfig.h>
 #include <mpi.h>
 #include <memory>
+#include <Options.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -91,6 +92,60 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 	// Check the diffusion factor
 	diffusionFactor = reactant->getDiffusionFactor();
 	BOOST_REQUIRE_CLOSE(diffusionFactor, 0.0, 1.0e-16);
+
+	return;
+}
+
+/**
+ * Method checking the generation of the network.
+ */
+BOOST_AUTO_TEST_CASE(checkGenerate) {
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=100" << std::endl << "grid=100 0.5" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	int argc = 0;
+	char **argv;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+
+	// Read the options
+	Options opts;
+	opts.readParams(argv);
+
+	// Create the loader
+	NEClusterNetworkLoader loader = NEClusterNetworkLoader(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+
+	// Generate the network from the options
+	auto network = loader.generate(opts);
+
+	// Get the size of the network
+	int networkSize = network->size();
+	// Check the value
+	BOOST_REQUIRE_EQUAL(networkSize, 100);
+
+	// Check the properties
+	auto neNetwork = std::dynamic_pointer_cast<NEClusterReactionNetwork>(
+			network);
+	// Check the properties
+	BOOST_REQUIRE_EQUAL(neNetwork->getMaxXeClusterSize(), 100);
+	BOOST_REQUIRE_EQUAL(neNetwork->getMaxVClusterSize(), 0);
+	BOOST_REQUIRE_EQUAL(neNetwork->getMaxIClusterSize(), 0);
+	BOOST_REQUIRE_EQUAL(neNetwork->getMaxXeVClusterSize(), 0);
+	BOOST_REQUIRE_EQUAL(neNetwork->getNumXeClusters(), 100);
+	BOOST_REQUIRE_EQUAL(neNetwork->getNumVClusters(), 0);
+	BOOST_REQUIRE_EQUAL(neNetwork->getNumIClusters(), 0);
+	BOOST_REQUIRE_EQUAL(neNetwork->getNumSuperClusters(), 0);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 
 	return;
 }

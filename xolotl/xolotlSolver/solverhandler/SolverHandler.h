@@ -3,6 +3,7 @@
 
 // Includes
 #include "ISolverHandler.h"
+#include <HDF5Utils.h>
 
 namespace xolotlSolver {
 
@@ -21,6 +22,18 @@ protected:
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
+
+	//! The number of grid points in the depth direction.
+	int nX;
+
+	//! The number of grid points in the Y direction.
+	int nY;
+
+	//! The number of grid points in the Z direction.
+	int nZ;
+
+	//! The grid step size in the depth direction.
+	double hX;
 
 	//! The grid step size in the y direction.
 	double hY;
@@ -134,6 +147,20 @@ public:
 			xolotlCore::Options &options) {
 		// Set the network loader
 		networkName = options.getNetworkFilename();
+
+		// Set the grid options
+		if (options.useHDF5()) {
+			// Get starting conditions from HDF5 file
+			int nx = 0, ny = 0, nz = 0;
+			double hx = 0.0, hy = 0.0, hz = 0.0;
+			xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz, hz);
+			nX = nx, nY = ny, nZ = nz;
+			hX = hx, hY = hy, hZ = hz;
+		}
+		else {
+			nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
+			hX = options.getXStepSize(), hY = options.getYStepSize(), hZ = options.getZStepSize();
+		}
 
 		// Set the network
 		network = (xolotlCore::IReactionNetwork *) networkHandler.get();

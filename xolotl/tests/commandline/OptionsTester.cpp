@@ -210,6 +210,53 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	std::remove(tempFile.c_str());
 }
 
+BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5) {
+	xolotlCore::Options opts;
+
+	// Create a good parameter file
+	std::ofstream goodParamFile("param_good.txt");
+	goodParamFile << "netParam=8 5 3" << std::endl << "grid=100 0.5" << std::endl;
+	goodParamFile.close();
+
+	string pathToFile("param_good.txt");
+	string filename = pathToFile;
+	const char* fname = filename.c_str();
+
+	// Build a command line with a parameter file containing good options
+	char* args[3];
+	args[0] = const_cast<char*>("./xolotl");
+	args[1] = const_cast<char*>(fname);
+	args[2] = NULL;
+	char** fargv = args;
+
+	// Attempt to read the parameter file
+	fargv += 1;
+	opts.readParams(fargv);
+
+	// Xolotl should run with good parameters
+	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
+	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+
+	// Check if we use the HDF5 file
+	BOOST_REQUIRE_EQUAL(opts.useHDF5(), false);
+
+	// Check the network parameters
+	BOOST_REQUIRE_EQUAL(opts.getMaxImpurity(), 8);
+	BOOST_REQUIRE_EQUAL(opts.getMaxV(), 5);
+	BOOST_REQUIRE_EQUAL(opts.getMaxI(), 3);
+	BOOST_REQUIRE_EQUAL(opts.usePhaseCut(), false);
+
+	// Check the grid parameters
+	BOOST_REQUIRE_EQUAL(opts.getNX(), 100);
+	BOOST_REQUIRE_EQUAL(opts.getXStepSize(), 0.5);
+	BOOST_REQUIRE_EQUAL(opts.getNY(), 0);
+	BOOST_REQUIRE_EQUAL(opts.getYStepSize(), 0.0);
+
+	// Remove the created file
+	std::string tempFile = "param_good.txt";
+	std::remove(tempFile.c_str());
+}
+
 BOOST_AUTO_TEST_CASE(wrongPerfHandler) {
 	xolotlCore::Options opts;
 

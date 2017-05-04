@@ -699,7 +699,8 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 			network->updateConcentrationsFromArray(gridPointSolution);
 
 			// Get the total helium concentration at this grid point
-			heLocalConc += network->getTotalAtomConcentration() * (grid[xi] - grid[xi - 1]);
+			heLocalConc += network->getTotalAtomConcentration()
+					* (grid[xi] - grid[xi - 1]);
 
 			// If this is not the master process, send the value
 			if (procId != 0) {
@@ -737,8 +738,8 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 /**
  * This is a monitoring method that will compute the data to send to TRIDYN
  */
-PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep,
-		PetscReal time, Vec solution, void *ictx) {
+PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void *ictx) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm;
@@ -834,8 +835,8 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep,
 
 		// The master process writes computes the cumulative value and writes in the file
 		if (procId == 0) {
-			outputFile << x - grid[surfacePos] << " " << heLocalConc << " " << vLocalConc << " " << iLocalConc
-					<< std::endl;
+			outputFile << x - grid[surfacePos] << " " << heLocalConc << " "
+					<< vLocalConc << " " << iLocalConc << std::endl;
 		}
 	}
 
@@ -1823,8 +1824,8 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 
 		// Printing information about the extension of the material
 		if (procId == 0) {
-			std::cout << "Removing grid points to the grid at time: "
-					<< time << " s." << std::endl;
+			std::cout << "Removing grid points to the grid at time: " << time
+					<< " s." << std::endl;
 		}
 
 		// Set it in the solver
@@ -1910,6 +1911,10 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 	// Compute the prefactor for the probability (arbitrary)
 	double prefactor = fluxAmplitude * dt * 0.05;
 
+	// Variables associated to the craters
+	int depthPosition = 0;
+	bool doingCrater = false;
+
 	// Loop on the grid
 	for (xi = xs; xi < xs + xm; xi++) {
 		// Skip everything before the surface
@@ -1929,6 +1934,7 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 
 		// Compute the radius of the bubble from the number of helium
 		double nV = heDensity * (grid[xi] - grid[xi - 1]) / 4.0;
+//		double nV = pow(heDensity / 5.0, 1.163) * (grid[xi] - grid[xi - 1]);
 		double radius = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
 				+ pow(
 						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0)
@@ -1954,49 +1960,149 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 			std::cout << "bursting at: " << distance << " " << prob << " "
 					<< test << std::endl;
 
-			// Get all the helium clusters
-			auto clusters = network->getAll(heType);
-			// Loop on them to reset their concentration at this grid point
-			for (int i = 0; i < clusters.size(); i++) {
-				auto cluster = clusters[i];
-				int id = cluster->getId() - 1;
-				gridPointSolution[id] = 0.0;
-			}
+			// Two outcomes: crater or pinhole
+			test = (double) rand() / (double) RAND_MAX;
+			// Might want to replace distance by ligament = distance - radius
+			double threshold = exp(-distance) * std::log10(fluxAmplitude)
+					/ 20.0;
 
-			// Get all the HeV clusters
-			clusters = network->getAll(heVType);
-			// Loop on them to transfer their concentration to the V cluster of the
-			// same size at this grid point
-			for (int i = 0; i < clusters.size(); i++) {
-				auto cluster = clusters[i];
-				// Get the V cluster of the same size
-				auto comp = cluster->getComposition();
-				auto vCluster = network->get(vType, comp[vType]);
-				int vId = vCluster->getId() - 1;
-				int id = cluster->getId() - 1;
-				gridPointSolution[vId] = gridPointSolution[id];
-				gridPointSolution[id] = 0.0;
-			}
+			// To deactivate the craters
+			threshold = -1.0;
 
-			// Loop on the super clusters to transfer their concentration to the V cluster of the
-			// same size at this grid point
-			for (int i = 0; i < superClusters.size(); i++) {
-				auto cluster = (PSISuperCluster *) superClusters[i];
-				// Get the V cluster of the same size
-				double numV = cluster->getNumV();
-				int truncV = (int) numV;
-				auto vCluster = network->get(vType, truncV);
-				int vId = vCluster->getId() - 1;
-				int id = cluster->getId() - 1;
-				double conc = cluster->getTotalConcentration();
-				gridPointSolution[vId] = conc * numV / (double) truncV;
-				gridPointSolution[id] = 0.0;
-				id = cluster->getHeMomentumId() - 1;
-				gridPointSolution[id] = 0.0;
-				id = cluster->getVMomentumId() - 1;
-				gridPointSolution[id] = 0.0;
+			if (test < threshold) {
+				// Crater case
+				std::cout << "Doing Craters! " << std::endl;
+
+				// We have to get out of the x loop to do the actual crater
+				depthPosition = xi;
+				doingCrater = true;
+			} else {
+				// Pinhole case
+				// Get all the helium clusters
+				auto clusters = network->getAll(heType);
+				// Loop on them to reset their concentration at this grid point
+				for (int i = 0; i < clusters.size(); i++) {
+					auto cluster = clusters[i];
+					int id = cluster->getId() - 1;
+					gridPointSolution[id] = 0.0;
+				}
+
+				// Get all the HeV clusters
+				clusters = network->getAll(heVType);
+				// Loop on them to transfer their concentration to the V cluster of the
+				// same size at this grid point
+				for (int i = 0; i < clusters.size(); i++) {
+					auto cluster = clusters[i];
+					// Get the V cluster of the same size
+					auto comp = cluster->getComposition();
+					auto vCluster = network->get(vType, comp[vType]);
+					int vId = vCluster->getId() - 1;
+					int id = cluster->getId() - 1;
+					gridPointSolution[vId] = gridPointSolution[id];
+					gridPointSolution[id] = 0.0;
+				}
+
+				// Loop on the super clusters to transfer their concentration to the V cluster of the
+				// same size at this grid point
+				for (int i = 0; i < superClusters.size(); i++) {
+					auto cluster = (PSISuperCluster *) superClusters[i];
+					// Get the V cluster of the same size
+					double numV = cluster->getNumV();
+					int truncV = (int) numV;
+					auto vCluster = network->get(vType, truncV);
+					int vId = vCluster->getId() - 1;
+					int id = cluster->getId() - 1;
+					double conc = cluster->getTotalConcentration();
+					gridPointSolution[vId] = conc * numV / (double) truncV;
+					gridPointSolution[id] = 0.0;
+					id = cluster->getHeMomentumId() - 1;
+					gridPointSolution[id] = 0.0;
+					id = cluster->getVMomentumId() - 1;
+					gridPointSolution[id] = 0.0;
+				}
 			}
 		}
+	}
+
+	// Get the information about craters
+	bool doingCraterAll = false;
+	MPI_Allreduce(&doingCrater, &doingCraterAll, 1, MPI_C_BOOL, MPI_LOR,
+			PETSC_COMM_WORLD);
+
+	// Check if a crater happened
+	if (doingCraterAll) {
+		// Share the depth of it with all the processors
+		int finalDepth = 0;
+		MPI_Allreduce(&depthPosition, &finalDepth, 1, MPI_INT, MPI_MAX,
+				PETSC_COMM_WORLD);
+
+		// Loop on all the x grid points from the surface to the depth
+		for (xi = surfacePos; xi <= finalDepth; xi++) {
+			// Check that we are on the right process
+			if (xi >= xs && xi < xs + xm) {
+				// Get the pointer to the beginning of the solution data for this grid point
+				gridPointSolution = solutionArray[xi];
+				// Update the concentration in the network
+				network->updateConcentrationsFromArray(gridPointSolution);
+
+				// Get all the helium clusters
+				auto clusters = network->getAll(heType);
+				// Loop on them to reset their concentration at this grid point
+				for (int i = 0; i < clusters.size(); i++) {
+					auto cluster = clusters[i];
+					int id = cluster->getId() - 1;
+					gridPointSolution[id] = 0.0;
+				}
+
+				// Get all the HeV clusters
+				clusters = network->getAll(heVType);
+				// Loop on them to reset their concentration at this grid point
+				for (int i = 0; i < clusters.size(); i++) {
+					auto cluster = clusters[i];
+					auto comp = cluster->getComposition();
+					int id = cluster->getId() - 1;
+					gridPointSolution[id] = 0.0;
+				}
+
+				// Loop on the super clusters to reset their concentration at this grid point
+				for (int i = 0; i < superClusters.size(); i++) {
+					auto cluster = (PSISuperCluster *) superClusters[i];
+					int id = cluster->getId() - 1;
+					gridPointSolution[id] = 0.0;
+					id = cluster->getHeMomentumId() - 1;
+					gridPointSolution[id] = 0.0;
+					id = cluster->getVMomentumId() - 1;
+					gridPointSolution[id] = 0.0;
+				}
+			}
+		}
+
+		// Printing information about the bursting of the material
+		if (procId == 0) {
+			std::cout << "Removing grid points from the grid at time: " << time
+					<< " s." << std::endl;
+		}
+
+		// Set the new surface position and set it in the solver
+		surfacePos = finalDepth;
+		solverHandler->setSurfacePosition(surfacePos);
+
+		// Set the new surface location in the surface advection handler
+		auto advecHandler = solverHandler->getAdvectionHandler();
+		advecHandler->setLocation(grid[surfacePos]);
+
+		// Get the flux handler to reinitialize it
+		auto fluxHandler = solverHandler->getFluxHandler();
+		fluxHandler->initializeFluxHandler(network, surfacePos, grid);
+
+		// Get the modified trap-mutation handler to reinitialize it
+		auto mutationHandler = solverHandler->getMutationHandler();
+		auto advecHandlers = solverHandler->getAdvectionHandlers();
+		mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers,
+				grid);
+
+		// Reset moving surface quantities
+		nInterstitial1D = 0.0, previousIFlux1D = 0.0;
 	}
 
 	// Restore the solutionArray
@@ -2123,23 +2229,28 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		PETSC_IGNORE);
 		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
-		// Initialize the HDF5 file for all the processes
-		xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
+		// Don't do anything if both files have the same name
+		if (hdf5OutputName1D != solverHandler->getNetworkName()) {
+			// Initialize the HDF5 file for all the processes
+			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
 
-		// Get the solver handler
-		auto solverHandler = PetscSolver::getSolverHandler();
+			// Get the solver handler
+			auto solverHandler = PetscSolver::getSolverHandler();
 
-		// Get the physical grid
-		auto grid = solverHandler->getXGrid();
+			// Get the physical grid
+			auto grid = solverHandler->getXGrid();
 
-		// Save the header in the HDF5 file
-		xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0]);
+			// Save the header in the HDF5 file
+			xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0]);
 
-		// Save the network in the HDF5 file
-		xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
+			// Save the network in the HDF5 file
+			if (!solverHandler->getNetworkName().empty())
+				xolotlCore::HDF5Utils::fillNetwork(
+						solverHandler->getNetworkName());
 
-		// Finalize the HDF5 file
-		xolotlCore::HDF5Utils::finalizeFile();
+			// Finalize the HDF5 file
+			xolotlCore::HDF5Utils::finalizeFile();
+		}
 
 		// startStop1D will be called at each timestep
 		ierr = TSMonitorSet(ts, startStop1D, NULL, NULL);
@@ -2153,7 +2264,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
 		// Get the interstitial information at the surface if concentrations were stored
@@ -2191,7 +2304,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		ierr = TSMonitorSet(ts, monitorBursting1D, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: TSMonitorSet (monitorBursting1D) failed.");
-		std::srand(time(NULL));
+		std::srand(time(NULL) + procId);
 	}
 
 	// Set the monitor to save 1D plot of xenon distribution
@@ -2372,7 +2485,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
 		// Get the previous time if concentrations were stored and initialize the fluence
@@ -2428,7 +2543,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
 		// Get the previous time if concentrations were stored and initialize the fluence

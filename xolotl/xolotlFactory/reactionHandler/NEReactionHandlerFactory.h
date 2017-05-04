@@ -59,7 +59,9 @@ public:
 		auto map = options.getProcesses();
 		if (!map["reaction"]) theNetworkLoaderHandler->setDummyReactions();
 		// Load the network
-		theNetworkHandler = theNetworkLoaderHandler->load();
+		if (options.useHDF5())
+			theNetworkHandler = theNetworkLoaderHandler->load();
+		else theNetworkHandler = theNetworkLoaderHandler->generate(options);
 
 		if (procId == 0) {
 			std::cout << "\nFactory Message: " << "Master loaded network of size "

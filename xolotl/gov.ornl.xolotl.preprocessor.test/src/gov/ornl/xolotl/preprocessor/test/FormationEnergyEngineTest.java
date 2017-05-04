@@ -51,11 +51,11 @@ public class FormationEnergyEngineTest {
 		// Local Declarations
 		FormationEnergyEngine engine = new FormationEnergyEngine();
 
-		// Check the code for He_2.
-		assertEquals(11.44, engine.getXeFormationEnergy(2), 1.0e-2);
+		// Check the code for Xe_2.
+		assertEquals(12.15, engine.getXeFormationEnergy(2), 1.0e-2);
 
-		// Check the code for He_8.
-		assertEquals(38.80, engine.getXeFormationEnergy(8), 1.0e-2);
+		// Check the code for Xe_8.
+		assertEquals(39.45, engine.getXeFormationEnergy(8), 1.0e-2);
 
 		// Check the code for the invalid case with size = 0.
 		assertEquals(Double.POSITIVE_INFINITY, engine.getXeFormationEnergy(0), 1.0e-16);
