@@ -16,8 +16,10 @@ private:
 	/**
 	 * Method initializing the depth vector, the size vector,
 	 * and desorption information.
+	 *
+	 * @param temp The temperature of the system
 	 */
-	void initializeDepthSize() {
+	void initializeDepthSize(double temp) {
 		// Initialize the vectors
 		depthVec = {-0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1};
 		sizeVec = {0, 0, 0, 0, 0, 0, 0};

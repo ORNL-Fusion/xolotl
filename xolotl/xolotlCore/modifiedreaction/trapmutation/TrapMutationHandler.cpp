@@ -99,7 +99,7 @@ void TrapMutationHandler::initialize(IReactionNetwork *network,
 	// (if the value is negative it means that it doesn't TM), the second value correspond
 	// to He2, etc.; the second vector gives the size of the vacancies into which He
 	// trap-mutates. Information about desorption is also initialized here.
-	initializeDepthSize();
+	initializeDepthSize(network->getTemperature());
 
 	// Update the bubble bursting rate
 	updateTrapMutationRate(network);
