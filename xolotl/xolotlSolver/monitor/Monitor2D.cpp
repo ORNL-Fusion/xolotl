@@ -843,9 +843,9 @@ PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time, Vec solution,
 					double conc = cluster->getTotalConcentration();
 					gridPointSolution[vId] = conc * numV / (double) truncV;
 					gridPointSolution[id] = 0.0;
-					id = cluster->getHeMomentumId() - 1;
+					id = cluster->getHeMomentId() - 1;
 					gridPointSolution[id] = 0.0;
-					id = cluster->getVMomentumId() - 1;
+					id = cluster->getVMomentId() - 1;
 					gridPointSolution[id] = 0.0;
 				}
 			}

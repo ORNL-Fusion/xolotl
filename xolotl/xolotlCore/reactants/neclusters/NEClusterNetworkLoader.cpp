@@ -136,8 +136,6 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 	// Initial declarations
 	int maxXe = options.getMaxImpurity();
 	int numXe = 0;
-	double formationEnergy = 0.0, migrationEnergy = 0.0;
-	double diffusionFactor = 0.0;
 	std::shared_ptr<NEClusterReactionNetwork> network = std::make_shared<
 			NEClusterReactionNetwork>(handlerRegistry);
 	std::vector<std::shared_ptr<Reactant> > reactants;

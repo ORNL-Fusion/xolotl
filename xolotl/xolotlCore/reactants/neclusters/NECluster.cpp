@@ -10,6 +10,9 @@ NECluster::NECluster() :
 	// Set the reactant name appropriately
 	name = "NECluster";
 
+	// Setup the composition map.
+	compositionMap[xeType] = 0;
+
 	return;
 }
 
@@ -17,6 +20,9 @@ NECluster::NECluster(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		Reactant(registry) {
 	// Set the reactant name appropriately
 	name = "NECluster";
+
+	// Setup the composition map.
+	compositionMap[xeType] = 0;
 
 	return;
 }
@@ -26,6 +32,8 @@ NECluster::NECluster(NECluster &other) :
 		Reactant(other), reactingPairs(other.reactingPairs), combiningReactants(
 				other.combiningReactants), dissociatingPairs(
 				other.dissociatingPairs), emissionPairs(other.emissionPairs) {
+	compositionMap[xeType] = other.compositionMap[xeType];
+
 	// Recompute all of the temperature-dependent quantities
 	setTemperature(other.getTemperature());
 
@@ -183,16 +191,16 @@ void NECluster::resetConnectivities() {
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(id);
 	setDissociationConnectivity(id);
-	setReactionConnectivity(xeMomId);
-	setDissociationConnectivity(xeMomId);
+	setReactionConnectivity(momId);
+	setDissociationConnectivity(momId);
 
 	// Loop on the reacting pairs
 	for (auto it = reactingPairs.begin(); it != reactingPairs.end(); ++it) {
 		// The cluster is connecting to both clusters in the pair
 		setReactionConnectivity((*it).first->id);
-		setReactionConnectivity((*it).first->xeMomId);
+		setReactionConnectivity((*it).first->momId);
 		setReactionConnectivity((*it).second->id);
-		setReactionConnectivity((*it).second->xeMomId);
+		setReactionConnectivity((*it).second->momId);
 	}
 
 	// Loop on the combining reactants
@@ -200,7 +208,7 @@ void NECluster::resetConnectivities() {
 			++it) {
 		// The cluster is connecting to the combining cluster
 		setReactionConnectivity((*it).combining->id);
-		setReactionConnectivity((*it).combining->xeMomId);
+		setReactionConnectivity((*it).combining->momId);
 	}
 
 	// Loop on the effective dissociating pairs
@@ -209,7 +217,7 @@ void NECluster::resetConnectivities() {
 		// The cluster is connecting to the dissociating cluster which
 		// is the first one by definition
 		setDissociationConnectivity((*it).first->id);
-		setDissociationConnectivity((*it).first->xeMomId);
+		setDissociationConnectivity((*it).first->momId);
 	}
 
 	// Don't loop on the emission pairs because
@@ -232,7 +240,7 @@ void NECluster::setReactionNetwork(
 	return;
 }
 
-double NECluster::getMomentum() const {
+double NECluster::getMoment() const {
 	return 0.0;
 }
 
@@ -374,7 +382,7 @@ void NECluster::getProductionPartialDerivatives(
 						reactingPairs[i].secondDistance);
 		index = reactingPairs[i].first->id - 1;
 		partials[index] += value;
-		index = reactingPairs[i].first->xeMomId - 1;
+		index = reactingPairs[i].first->momId - 1;
 		partials[index] += value * reactingPairs[i].firstDistance;
 		// Compute the contribution from the second part of the reacting pair
 		value = reactingPairs[i].reaction->kConstant
@@ -382,7 +390,7 @@ void NECluster::getProductionPartialDerivatives(
 						reactingPairs[i].firstDistance);
 		index = reactingPairs[i].second->id - 1;
 		partials[index] += value;
-		index = reactingPairs[i].second->xeMomId - 1;
+		index = reactingPairs[i].second->momId - 1;
 		partials[index] += value * reactingPairs[i].secondDistance;
 	}
 
@@ -415,7 +423,7 @@ void NECluster::getCombinationPartialDerivatives(
 		// Get the index of cluster
 		otherIndex = cluster->id - 1;
 		partials[otherIndex] -= value;
-		otherIndex = cluster->xeMomId - 1;
+		otherIndex = cluster->momId - 1;
 		partials[otherIndex] -= value * combiningReactants[i].distance;
 	}
 
@@ -440,7 +448,7 @@ void NECluster::getDissociationPartialDerivatives(
 		cluster = dissociatingPairs[i].first;
 		index = cluster->id - 1;
 		partials[index] += dissociatingPairs[i].reaction->kConstant;
-		index = cluster->xeMomId - 1;
+		index = cluster->momId - 1;
 		partials[index] += dissociatingPairs[i].reaction->kConstant
 				* dissociatingPairs[i].firstDistance;
 	}

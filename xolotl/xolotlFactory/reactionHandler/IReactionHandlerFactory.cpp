@@ -1,6 +1,7 @@
 #include "IReactionHandlerFactory.h"
 #include "PSIReactionHandlerFactory.h"
 #include "NEReactionHandlerFactory.h"
+#include "AlloyReactionHandlerFactory.h"
 
 namespace xolotlFactory {
 
@@ -12,6 +13,8 @@ std::shared_ptr<IReactionHandlerFactory> IReactionHandlerFactory::createNetworkF
 		theReactionFactory = std::make_shared<PSIReactionHandlerFactory>();
 	// NE case
 	else if (problemType == "Fuel") theReactionFactory = std::make_shared<NEReactionHandlerFactory>();
+	// Alloy case
+	else if (problemType == "800H") theReactionFactory = std::make_shared<AlloyReactionHandlerFactory>();
 	// The type is not supported
 	else {
 		throw std::string(

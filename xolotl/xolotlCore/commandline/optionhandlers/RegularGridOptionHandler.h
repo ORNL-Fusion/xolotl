@@ -42,6 +42,9 @@ public:
 		else if (arg == "no") {
 			opt->setRegularXGrid(false);
 		}
+		else if (arg == "cheby") {
+			opt->setChebyshevGrid(true);
+		}
 		else {
 			std::cerr << "Options: unrecognized argument in the regular grid option handler: "
 					<< arg << std::endl;

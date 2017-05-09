@@ -16,13 +16,25 @@ private:
 	/**
 	 * Method initializing the depth vector, the size vector,
 	 * and desorption information.
+	 *
+	 * @param temp The temperature of the system
 	 */
-	void initializeDepthSize() {
-		depthVec = {-0.1, 0.5, 0.6, 0.8, 0.6, 0.8, 0.8};
-		sizeVec = {0, 1, 1, 1, 2, 2, 2};
+	void initializeDepthSize(double temp) {
+		// Switch values depending on the temperature
+		if (temp < 1066.5) {
+			depthVec = {-0.1, 0.5, 0.6, 0.6, 0.8, 0.8, 0.8};
+			sizeVec = {0, 1, 1, 1, 1, 2, 2};
 
-		// He2 desorpts with 19%
-		desorp = Desorption(2, 0.19);
+			// He2 desorpts with 4%
+			desorp = Desorption(2, 0.04);
+		}
+		else {
+			depthVec = {-0.1, 0.5, 0.6, 0.8, 0.6, 0.8, 0.8};
+			sizeVec = {0, 1, 1, 1, 2, 2, 2};
+
+			// He2 desorpts with 19%
+			desorp = Desorption(2, 0.19);
+		}
 
 		return;
 	}

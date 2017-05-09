@@ -45,6 +45,7 @@ Options::Options() :
 		voidPortion(50.0),
 		dimensionNumber(1),
 		useRegularGridFlag(true), 
+		useChebyshevGridFlag(false),
 		gbList(""),
 		groupingMin(std::numeric_limits<int>::max()),
 		groupingWidthA(1),

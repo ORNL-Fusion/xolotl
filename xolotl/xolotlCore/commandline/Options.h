@@ -125,6 +125,11 @@ protected:
 	bool useRegularGridFlag;
 
 	/**
+	 * Use a Chebyshev grid on the x direction?
+	 */
+	bool useChebyshevGridFlag;
+
+	/**
 	 * The map of physical processes to use in the simulation.
 	 */
 	std::map<std::string, bool> processMap;
@@ -571,6 +576,22 @@ public:
 	 */
 	void setRegularXGrid(bool flag) {
 		useRegularGridFlag = flag;
+	}
+
+	/**
+	 * Should we use a Chebyshev grid on the x direction?
+	 * \see IOptions.h
+	 */
+	bool useChebyshevGrid() const {
+		return useChebyshevGridFlag;
+	}
+
+	/**
+	 * Set the useChebyshevGridFlag.
+	 * \see IOptions.h
+	 */
+	void setChebyshevGrid(bool flag) {
+		useChebyshevGridFlag = flag;
 	}
 
 	/**

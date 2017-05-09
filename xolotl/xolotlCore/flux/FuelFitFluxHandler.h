@@ -15,7 +15,7 @@ private:
 
 	/**
 	 * Function that calculate the flux at a given position x (in nm).
-	 * This function is not normalized. The surface is supposed to be (100).
+	 * This function is not normalized.
 	 *
 	 * @param x The position where to evaluate he fit
 	 * @return The evaluated value

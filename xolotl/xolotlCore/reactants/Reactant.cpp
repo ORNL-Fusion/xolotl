@@ -11,34 +11,24 @@
 using namespace xolotlCore;
 
 Reactant::Reactant() :
-		concentration(0.0), id(0), xeMomId(0), heMomId(0), vMomId(0), temperature(
+		concentration(0.0), id(0), momId(0), heMomId(0), vMomId(0), temperature(
 				0.0), typeName(""), network(nullptr), handlerRegistry(nullptr), size(
 				0), formationEnergy(0.0), diffusionFactor(0.0), diffusionCoefficient(
 				0.0), migrationEnergy(0.0), name("Reactant"), reactionRadius(
 				0.0) {
-	// Setup the composition map.
-	compositionMap[xeType] = 0;
-	compositionMap[heType] = 0;
-	compositionMap[vType] = 0;
-	compositionMap[iType] = 0;
 }
 
 Reactant::Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		concentration(0.0), id(0), xeMomId(0), heMomId(0), vMomId(0), temperature(
+		concentration(0.0), id(0), momId(0), heMomId(0), vMomId(0), temperature(
 				0.0), typeName(""), network(nullptr), handlerRegistry(registry), size(
 				0), formationEnergy(0.0), diffusionFactor(0.0), diffusionCoefficient(
 				0.0), migrationEnergy(0.0), name("Reactant"), reactionRadius(
 				0.0) {
-	// Setup the composition map.
-	compositionMap[xeType] = 0;
-	compositionMap[heType] = 0;
-	compositionMap[vType] = 0;
-	compositionMap[iType] = 0;
 }
 
 Reactant::Reactant(Reactant &other) :
 		concentration(other.concentration), name(other.name), typeName(
-				other.typeName), id(other.id), xeMomId(other.xeMomId), heMomId(
+				other.typeName), id(other.id), momId(other.momId), heMomId(
 				other.heMomId), vMomId(other.vMomId), temperature(
 				other.temperature), network(other.network), handlerRegistry(
 				other.handlerRegistry), size(other.size), formationEnergy(
@@ -47,11 +37,6 @@ Reactant::Reactant(Reactant &other) :
 				other.migrationEnergy), reactionRadius(other.reactionRadius), reactionConnectivitySet(
 				other.reactionConnectivitySet), dissociationConnectivitySet(
 				other.dissociationConnectivitySet) {
-	// Setup the composition map.
-	compositionMap[xeType] = other.compositionMap[xeType];
-	compositionMap[heType] = other.compositionMap[heType];
-	compositionMap[vType] = other.compositionMap[vType];
-	compositionMap[iType] = other.compositionMap[iType];
 }
 
 void Reactant::recomputeDiffusionCoefficient(double temp) {

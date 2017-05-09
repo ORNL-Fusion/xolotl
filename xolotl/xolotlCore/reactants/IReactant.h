@@ -245,46 +245,46 @@ public:
 	virtual int getId() const = 0;
 
 	/**
-	 * This operation sets the id of the xenon momentum of the reactant.
+	 * This operation sets the id of the moment of the reactant.
 	 *
-	 * @param nId The new id for this momentum
+	 * @param nId The new id for this moment
 	 */
-	virtual void setXeMomentumId(int nId) = 0;
+	virtual void setMomentId(int nId) = 0;
 
 	/**
-	 * This operation returns the id for this reactant xenon momentum.
+	 * This operation returns the id for this reactant moment.
 	 *
 	 * @return The id
 	 */
-	virtual int getXeMomentumId() const = 0;
+	virtual int getMomentId() const = 0;
 
 	/**
-	 * This operation sets the id of the helium momentum of the reactant.
+	 * This operation sets the id of the helium moment of the reactant.
 	 *
-	 * @param nId The new id for this momentum
+	 * @param nId The new id for this moment
 	 */
-	virtual void setHeMomentumId(int nId) = 0;
+	virtual void setHeMomentId(int nId) = 0;
 
 	/**
-	 * This operation returns the id for this reactant helium momentum.
-	 *
-	 * @return The id
-	 */
-	virtual int getHeMomentumId() const = 0;
-
-	/**
-	 * This operation sets the id of the vacancy momentum of the reactant.
-	 *
-	 * @param nId The new id for this momentum
-	 */
-	virtual void setVMomentumId(int nId) = 0;
-
-	/**
-	 * This operation returns the id for this reactant vacancy momentum.
+	 * This operation returns the id for this reactant helium moment.
 	 *
 	 * @return The id
 	 */
-	virtual int getVMomentumId() const = 0;
+	virtual int getHeMomentId() const = 0;
+
+	/**
+	 * This operation sets the id of the vacancy moment of the reactant.
+	 *
+	 * @param nId The new id for this moment
+	 */
+	virtual void setVMomentId(int nId) = 0;
+
+	/**
+	 * This operation returns the id for this reactant vacancy moment.
+	 *
+	 * @return The id
+	 */
+	virtual int getVMomentId() const = 0;
 
 	/**
 	 * This operation sets the temperature at which the reactant currently

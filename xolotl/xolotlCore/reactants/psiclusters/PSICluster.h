@@ -289,20 +289,20 @@ public:
 	virtual std::vector<int> getDissociationConnectivity() const;
 
 	/**
-	 * This operation returns the first helium momentum.
+	 * This operation returns the first helium moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	virtual double getHeMomentum() const {
+	virtual double getHeMoment() const {
 		return 0.0;
 	}
 
 	/**
-	 * This operation returns the first vacancy momentum.
+	 * This operation returns the first vacancy moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	virtual double getVMomentum() const {
+	virtual double getVMoment() const {
 		return 0.0;
 	}
 

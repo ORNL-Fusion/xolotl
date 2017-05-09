@@ -7,21 +7,21 @@
 using namespace xolotlCore;
 
 /**
- * The helium momentum partials.
+ * The helium moment partials.
  */
-std::vector<double> heMomentumPartials;
+std::vector<double> heMomentPartials;
 
 /**
- * The vacancy momentum partials.
+ * The vacancy moment partials.
  */
-std::vector<double> vMomentumPartials;
+std::vector<double> vMomentPartials;
 
 PSISuperCluster::PSISuperCluster(double numHe, double numV, int nTot,
 		int heWidth, int vWidth, double radius, double energy,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(registry), numHe(numHe), numV(numV), nTot(nTot), l0(0.0), l1He(
-				0.0), l1V(0.0), dispersionHe(0.0), dispersionV(0.0), heMomentumFlux(
-				0.0), vMomentumFlux(0.0) {
+				0.0), l1V(0.0), dispersionHe(0.0), dispersionV(0.0), heMomentFlux(
+				0.0), vMomentFlux(0.0) {
 	// Set the cluster size as the sum of
 	// the number of Helium and Vacancies
 	size = (int) (numHe + numV);
@@ -72,8 +72,8 @@ PSISuperCluster::PSISuperCluster(PSISuperCluster &other) :
 	effCombiningList = other.effCombiningList;
 	effDissociatingList = other.effDissociatingList;
 	effEmissionList = other.effEmissionList;
-	heMomentumFlux = other.heMomentumFlux;
-	vMomentumFlux = other.vMomentumFlux;
+	heMomentFlux = other.heMomentFlux;
+	vMomentFlux = other.vMomentFlux;
 
 	return;
 }
@@ -678,11 +678,11 @@ void PSISuperCluster::resetConnectivities() {
 	for (auto it = effReactingList.begin(); it != effReactingList.end(); ++it) {
 		// The cluster is connecting to both clusters in the pair
 		setReactionConnectivity((*it).first->getId());
-		setReactionConnectivity((*it).first->getHeMomentumId());
-		setReactionConnectivity((*it).first->getVMomentumId());
+		setReactionConnectivity((*it).first->getHeMomentId());
+		setReactionConnectivity((*it).first->getVMomentId());
 		setReactionConnectivity((*it).second->getId());
-		setReactionConnectivity((*it).second->getHeMomentumId());
-		setReactionConnectivity((*it).second->getVMomentumId());
+		setReactionConnectivity((*it).second->getHeMomentId());
+		setReactionConnectivity((*it).second->getVMomentId());
 	}
 
 	// Loop over all the combining pairs
@@ -690,8 +690,8 @@ void PSISuperCluster::resetConnectivities() {
 			++it) {
 		// The cluster is connecting to the combining cluster
 		setReactionConnectivity((*it).first->getId());
-		setReactionConnectivity((*it).first->getHeMomentumId());
-		setReactionConnectivity((*it).first->getVMomentumId());
+		setReactionConnectivity((*it).first->getHeMomentId());
+		setReactionConnectivity((*it).first->getVMomentId());
 	}
 
 	// Loop over all the dissociating pairs
@@ -699,17 +699,17 @@ void PSISuperCluster::resetConnectivities() {
 			++it) {
 		// The cluster is connecting to the combining cluster
 		setDissociationConnectivity((*it).first->getId());
-		setDissociationConnectivity((*it).first->getHeMomentumId());
-		setDissociationConnectivity((*it).first->getVMomentumId());
+		setDissociationConnectivity((*it).first->getHeMomentId());
+		setDissociationConnectivity((*it).first->getVMomentId());
 	}
 
 	// Don't loop on the effective emission pairs because
 	// this cluster is not connected to them
 
-	// Initialize the partial vector for the momentum
+	// Initialize the partial vector for the moment
 	int dof = network->getDOF();
-	heMomentumPartials.resize(dof, 0.0);
-	vMomentumPartials.resize(dof, 0.0);
+	heMomentPartials.resize(dof, 0.0);
+	vMomentPartials.resize(dof, 0.0);
 
 	return;
 }
@@ -725,15 +725,15 @@ double PSISuperCluster::getDissociationFlux() {
 		// Get the dissociating clusters
 		dissociatingCluster = (*it).first;
 		double l0A = dissociatingCluster->getConcentration(0.0, 0.0);
-		double lHeA = dissociatingCluster->getHeMomentum();
-		double lVA = dissociatingCluster->getVMomentum();
+		double lHeA = dissociatingCluster->getHeMoment();
+		double lVA = dissociatingCluster->getVMoment();
 		// Update the flux
 		value = *((*it).kConstant) / (double) nTot;
 		flux += value * ((*it).a00 * l0A + (*it).a10 * lHeA + (*it).a20 * lVA);
-		// Compute the momentum fluxes
-		heMomentumFlux += value
+		// Compute the moment fluxes
+		heMomentFlux += value
 				* ((*it).a01 * l0A + (*it).a11 * lHeA + (*it).a21 * lVA);
-		vMomentumFlux += value
+		vMomentFlux += value
 				* ((*it).a02 * l0A + (*it).a12 * lHeA + (*it).a22 * lVA);
 	}
 
@@ -750,10 +750,10 @@ double PSISuperCluster::getEmissionFlux() {
 		// Update the flux
 		value = *((*it).kConstant) / (double) nTot;
 		flux += value * ((*it).a00 * l0 + (*it).a10 * l1He + (*it).a20 * l1V);
-		// Compute the momentum fluxes
-		heMomentumFlux -= value
+		// Compute the moment fluxes
+		heMomentFlux -= value
 				* ((*it).a01 * l0 + (*it).a11 * l1He + (*it).a21 * l1V);
-		vMomentumFlux -= value
+		vMomentFlux -= value
 				* ((*it).a02 * l0 + (*it).a12 * l1He + (*it).a22 * l1V);
 	}
 
@@ -772,10 +772,10 @@ double PSISuperCluster::getProductionFlux() {
 		secondReactant = (*it).second;
 		double l0A = firstReactant->getConcentration(0.0, 0.0);
 		double l0B = secondReactant->getConcentration(0.0, 0.0);
-		double lHeA = firstReactant->getHeMomentum();
-		double lHeB = secondReactant->getHeMomentum();
-		double lVA = firstReactant->getVMomentum();
-		double lVB = secondReactant->getVMomentum();
+		double lHeA = firstReactant->getHeMoment();
+		double lHeB = secondReactant->getHeMoment();
+		double lVA = firstReactant->getVMoment();
+		double lVB = secondReactant->getVMoment();
 		// Update the flux
 		value = *((*it).kConstant) / (double) nTot;
 		flux += value
@@ -784,14 +784,14 @@ double PSISuperCluster::getProductionFlux() {
 						+ (*it).a110 * lHeA * lHeB + (*it).a120 * lHeA * lVB
 						+ (*it).a200 * lVA * l0B + (*it).a210 * lVA * lHeB
 						+ (*it).a220 * lVA * lVB);
-		// Compute the momentum fluxes
-		heMomentumFlux += value
+		// Compute the moment fluxes
+		heMomentFlux += value
 				* ((*it).a001 * l0A * l0B + (*it).a011 * l0A * lHeB
 						+ (*it).a021 * l0A * lVB + (*it).a101 * lHeA * l0B
 						+ (*it).a111 * lHeA * lHeB + (*it).a121 * lHeA * lVB
 						+ (*it).a201 * lVA * l0B + (*it).a211 * lVA * lHeB
 						+ (*it).a221 * lVA * lVB);
-		vMomentumFlux += value
+		vMomentFlux += value
 				* ((*it).a002 * l0A * l0B + (*it).a012 * l0A * lHeB
 						+ (*it).a022 * l0A * lVB + (*it).a102 * lHeA * l0B
 						+ (*it).a112 * lHeA * lHeB + (*it).a122 * lHeA * lVB
@@ -814,8 +814,8 @@ double PSISuperCluster::getCombinationFlux() {
 		// Get the two reacting clusters
 		combiningCluster = (*it).first;
 		double l0B = combiningCluster->getConcentration(0.0, 0.0);
-		double lHeB = combiningCluster->getHeMomentum();
-		double lVB = combiningCluster->getVMomentum();
+		double lHeB = combiningCluster->getHeMoment();
+		double lVB = combiningCluster->getVMoment();
 		// Update the flux
 		value = *((*it).kConstant) / (double) nTot;
 		flux += value
@@ -824,14 +824,14 @@ double PSISuperCluster::getCombinationFlux() {
 						+ (*it).a110 * lHeB * l1He + (*it).a210 * lHeB * l1V
 						+ (*it).a020 * lVB * l0 + (*it).a120 * lVB * l1He
 						+ (*it).a220 * lVB * l1V);
-		// Compute the momentum fluxes
-		heMomentumFlux -= value
+		// Compute the moment fluxes
+		heMomentFlux -= value
 				* ((*it).a001 * l0B * l0 + (*it).a101 * l0B * l1He
 						+ (*it).a201 * l0B * l1V + (*it).a011 * lHeB * l0
 						+ (*it).a111 * lHeB * l1He + (*it).a211 * lHeB * l1V
 						+ (*it).a021 * lVB * l0 + (*it).a121 * lVB * l1He
 						+ (*it).a221 * lVB * l1V);
-		vMomentumFlux -= value
+		vMomentFlux -= value
 				* ((*it).a002 * l0B * l0 + (*it).a102 * l0B * l1He
 						+ (*it).a202 * l0B * l1V + (*it).a012 * lHeB * l0
 						+ (*it).a112 * lHeB * l1He + (*it).a212 * lHeB * l1V
@@ -844,9 +844,9 @@ double PSISuperCluster::getCombinationFlux() {
 
 void PSISuperCluster::getPartialDerivatives(
 		std::vector<double> & partials) const {
-	// Reinitialize the momentum partial derivatives vector
-	std::fill(heMomentumPartials.begin(), heMomentumPartials.end(), 0.0);
-	std::fill(vMomentumPartials.begin(), vMomentumPartials.end(), 0.0);
+	// Reinitialize the moment partial derivatives vector
+	std::fill(heMomentPartials.begin(), heMomentPartials.end(), 0.0);
+	std::fill(vMomentPartials.begin(), vMomentPartials.end(), 0.0);
 
 	// Get the partial derivatives for each reaction type
 	getProductionPartialDerivatives(partials);
@@ -879,55 +879,55 @@ void PSISuperCluster::getProductionPartialDerivatives(
 		secondReactant = (*it).second;
 		double l0A = firstReactant->getConcentration(0.0, 0.0);
 		double l0B = secondReactant->getConcentration(0.0, 0.0);
-		double lHeA = firstReactant->getHeMomentum();
-		double lHeB = secondReactant->getHeMomentum();
-		double lVA = firstReactant->getVMomentum();
-		double lVB = secondReactant->getVMomentum();
+		double lHeA = firstReactant->getHeMoment();
+		double lHeB = secondReactant->getHeMoment();
+		double lVA = firstReactant->getVMoment();
+		double lVB = secondReactant->getVMoment();
 
 		// Compute the contribution from the first part of the reacting pair
 		value = *((*it).kConstant) / (double) nTot;
 		index = firstReactant->getId() - 1;
 		partials[index] += value
 				* ((*it).a000 * l0B + (*it).a010 * lHeB + (*it).a020 * lVB);
-		heMomentumPartials[index] += value
+		heMomentPartials[index] += value
 				* ((*it).a001 * l0B + (*it).a011 * lHeB + (*it).a021 * lVB);
-		vMomentumPartials[index] += value
+		vMomentPartials[index] += value
 				* ((*it).a002 * l0B + (*it).a012 * lHeB + (*it).a022 * lVB);
-		index = firstReactant->getHeMomentumId() - 1;
+		index = firstReactant->getHeMomentId() - 1;
 		partials[index] += value
 				* ((*it).a100 * l0B + (*it).a110 * lHeB + (*it).a120 * lVB);
-		heMomentumPartials[index] += value
+		heMomentPartials[index] += value
 				* ((*it).a101 * l0B + (*it).a111 * lHeB + (*it).a121 * lVB);
-		vMomentumPartials[index] += value
+		vMomentPartials[index] += value
 				* ((*it).a102 * l0B + (*it).a112 * lHeB + (*it).a122 * lVB);
-		index = firstReactant->getVMomentumId() - 1;
+		index = firstReactant->getVMomentId() - 1;
 		partials[index] += value
 				* ((*it).a200 * l0B + (*it).a210 * lHeB + (*it).a220 * lVB);
-		heMomentumPartials[index] += value
+		heMomentPartials[index] += value
 				* ((*it).a201 * l0B + (*it).a211 * lHeB + (*it).a221 * lVB);
-		vMomentumPartials[index] += value
+		vMomentPartials[index] += value
 				* ((*it).a202 * l0B + (*it).a212 * lHeB + (*it).a222 * lVB);
 		// Compute the contribution from the second part of the reacting pair
 		index = secondReactant->getId() - 1;
 		partials[index] += value
 				* ((*it).a000 * l0A + (*it).a100 * lHeA + (*it).a200 * lVA);
-		heMomentumPartials[index] += value
+		heMomentPartials[index] += value
 				* ((*it).a001 * l0A + (*it).a101 * lHeA + (*it).a201 * lVA);
-		vMomentumPartials[index] += value
+		vMomentPartials[index] += value
 				* ((*it).a002 * l0A + (*it).a102 * lHeA + (*it).a202 * lVA);
-		index = secondReactant->getHeMomentumId() - 1;
+		index = secondReactant->getHeMomentId() - 1;
 		partials[index] += value
 				* ((*it).a010 * l0A + (*it).a110 * lHeA + (*it).a210 * lVA);
-		heMomentumPartials[index] += value
+		heMomentPartials[index] += value
 				* ((*it).a011 * l0A + (*it).a111 * lHeA + (*it).a211 * lVA);
-		vMomentumPartials[index] += value
+		vMomentPartials[index] += value
 				* ((*it).a012 * l0A + (*it).a112 * lHeA + (*it).a212 * lVA);
-		index = secondReactant->getVMomentumId() - 1;
+		index = secondReactant->getVMomentId() - 1;
 		partials[index] += value
 				* ((*it).a020 * l0A + (*it).a120 * lHeA + (*it).a220 * lVA);
-		heMomentumPartials[index] += value
+		heMomentPartials[index] += value
 				* ((*it).a021 * l0A + (*it).a121 * lHeA + (*it).a221 * lVA);
-		vMomentumPartials[index] += value
+		vMomentPartials[index] += value
 				* ((*it).a022 * l0A + (*it).a122 * lHeA + (*it).a222 * lVA);
 	}
 
@@ -955,53 +955,53 @@ void PSISuperCluster::getCombinationPartialDerivatives(
 		// Get the two reacting clusters
 		cluster = (*it).first;
 		double l0B = cluster->getConcentration(0.0, 0.0);
-		double lHeB = cluster->getHeMomentum();
-		double lVB = cluster->getVMomentum();
+		double lHeB = cluster->getHeMoment();
+		double lVB = cluster->getVMoment();
 
 		// Compute the contribution from the combining cluster
 		value = *((*it).kConstant) / (double) nTot;
 		index = cluster->getId() - 1;
 		partials[index] -= value
 				* ((*it).a000 * l0 + (*it).a100 * l1He + (*it).a200 * l1V);
-		heMomentumPartials[index] -= value
+		heMomentPartials[index] -= value
 				* ((*it).a001 * l0 + (*it).a101 * l1He + (*it).a201 * l1V);
-		vMomentumPartials[index] -= value
+		vMomentPartials[index] -= value
 				* ((*it).a002 * l0 + (*it).a102 * l1He + (*it).a202 * l1V);
-		index = cluster->getHeMomentumId() - 1;
+		index = cluster->getHeMomentId() - 1;
 		partials[index] -= value
 				* ((*it).a010 * l0 + (*it).a110 * l1He + (*it).a210 * l1V);
-		heMomentumPartials[index] -= value
+		heMomentPartials[index] -= value
 				* ((*it).a011 * l0 + (*it).a111 * l1He + (*it).a211 * l1V);
-		vMomentumPartials[index] -= value
+		vMomentPartials[index] -= value
 				* ((*it).a012 * l0 + (*it).a112 * l1He + (*it).a212 * l1V);
-		index = cluster->getVMomentumId() - 1;
+		index = cluster->getVMomentId() - 1;
 		partials[index] -= value
 				* ((*it).a020 * l0 + (*it).a120 * l1He + (*it).a220 * l1V);
-		heMomentumPartials[index] -= value
+		heMomentPartials[index] -= value
 				* ((*it).a021 * l0 + (*it).a121 * l1He + (*it).a221 * l1V);
-		vMomentumPartials[index] -= value
+		vMomentPartials[index] -= value
 				* ((*it).a022 * l0 + (*it).a122 * l1He + (*it).a222 * l1V);
 		// Compute the contribution from this cluster
 		index = id - 1;
 		partials[index] -= value
 				* ((*it).a000 * l0B + (*it).a010 * lHeB + (*it).a020 * lVB);
-		heMomentumPartials[index] -= value
+		heMomentPartials[index] -= value
 				* ((*it).a001 * l0B + (*it).a011 * lHeB + (*it).a021 * lVB);
-		vMomentumPartials[index] -= value
+		vMomentPartials[index] -= value
 				* ((*it).a002 * l0B + (*it).a012 * lHeB + (*it).a022 * lVB);
 		index = heMomId - 1;
 		partials[index] -= value
 				* ((*it).a100 * l0B + (*it).a110 * lHeB + (*it).a120 * lVB);
-		heMomentumPartials[index] -= value
+		heMomentPartials[index] -= value
 				* ((*it).a101 * l0B + (*it).a111 * lHeB + (*it).a121 * lVB);
-		vMomentumPartials[index] -= value
+		vMomentPartials[index] -= value
 				* ((*it).a102 * l0B + (*it).a112 * lHeB + (*it).a122 * lVB);
 		index = vMomId - 1;
 		partials[index] -= value
 				* ((*it).a200 * l0B + (*it).a210 * lHeB + (*it).a220 * lVB);
-		heMomentumPartials[index] -= value
+		heMomentPartials[index] -= value
 				* ((*it).a201 * l0B + (*it).a211 * lHeB + (*it).a221 * lVB);
-		vMomentumPartials[index] -= value
+		vMomentPartials[index] -= value
 				* ((*it).a202 * l0B + (*it).a212 * lHeB + (*it).a222 * lVB);
 	}
 
@@ -1031,16 +1031,16 @@ void PSISuperCluster::getDissociationPartialDerivatives(
 		value = *((*it).kConstant) / (double) nTot;
 		index = cluster->getId() - 1;
 		partials[index] += value * ((*it).a00);
-		heMomentumPartials[index] += value * ((*it).a01);
-		vMomentumPartials[index] += value * ((*it).a02);
-		index = cluster->getHeMomentumId() - 1;
+		heMomentPartials[index] += value * ((*it).a01);
+		vMomentPartials[index] += value * ((*it).a02);
+		index = cluster->getHeMomentId() - 1;
 		partials[index] += value * ((*it).a10);
-		heMomentumPartials[index] += value * ((*it).a11);
-		vMomentumPartials[index] += value * ((*it).a12);
-		index = cluster->getVMomentumId() - 1;
+		heMomentPartials[index] += value * ((*it).a11);
+		vMomentPartials[index] += value * ((*it).a12);
+		index = cluster->getVMomentId() - 1;
 		partials[index] += value * ((*it).a20);
-		heMomentumPartials[index] += value * ((*it).a21);
-		vMomentumPartials[index] += value * ((*it).a22);
+		heMomentPartials[index] += value * ((*it).a21);
+		vMomentPartials[index] += value * ((*it).a22);
 	}
 
 	return;
@@ -1065,16 +1065,16 @@ void PSISuperCluster::getEmissionPartialDerivatives(
 		value = *((*it).kConstant) / (double) nTot;
 		index = id - 1;
 		partials[index] -= value * ((*it).a00);
-		heMomentumPartials[index] -= value * ((*it).a01);
-		vMomentumPartials[index] -= value * ((*it).a02);
+		heMomentPartials[index] -= value * ((*it).a01);
+		vMomentPartials[index] -= value * ((*it).a02);
 		index = heMomId - 1;
 		partials[index] -= value * ((*it).a10);
-		heMomentumPartials[index] -= value * ((*it).a11);
-		vMomentumPartials[index] -= value * ((*it).a12);
+		heMomentPartials[index] -= value * ((*it).a11);
+		vMomentPartials[index] -= value * ((*it).a12);
 		index = vMomId - 1;
 		partials[index] -= value * ((*it).a20);
-		heMomentumPartials[index] -= value * ((*it).a21);
-		vMomentumPartials[index] -= value * ((*it).a22);
+		heMomentPartials[index] -= value * ((*it).a21);
+		vMomentPartials[index] -= value * ((*it).a22);
 	}
 
 	return;
@@ -1085,7 +1085,7 @@ void PSISuperCluster::getHeMomentPartialDerivatives(
 	// Loop on the size of the vector
 	for (int i = 0; i < partials.size(); i++) {
 		// Set to the values that were already computed
-		partials[i] = heMomentumPartials[i];
+		partials[i] = heMomentPartials[i];
 	}
 
 	return;
@@ -1096,7 +1096,7 @@ void PSISuperCluster::getVMomentPartialDerivatives(
 	// Loop on the size of the vector
 	for (int i = 0; i < partials.size(); i++) {
 		// Set to the values that were already computed
-		partials[i] = vMomentumPartials[i];
+		partials[i] = vMomentPartials[i];
 	}
 
 	return;

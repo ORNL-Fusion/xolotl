@@ -8,7 +8,7 @@
 namespace xolotlCore {
 
 /**
- * This class represents a cluster composed entirely of helium.
+ * This class represents a cluster composed entirely of xenon.
  */
 class XeCluster: public NECluster {
 
@@ -26,7 +26,7 @@ public:
 	/**
 	 * The constructor. All XeClusters must be initialized with a size.
 	 *
-	 * @param nXe the number of helium atoms in the cluster
+	 * @param nXe the number of xenon atoms in the cluster
 	 * @param registry The performance handler registry
 	 */
 	XeCluster(int nXe, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);

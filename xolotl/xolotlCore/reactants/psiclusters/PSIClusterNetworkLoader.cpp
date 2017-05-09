@@ -164,8 +164,6 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 			options.getMaxV();
 	bool usePhaseCut = options.usePhaseCut();
 	int numHe = 0, numV = 0, numI = 0;
-	double formationEnergy = 0.0, migrationEnergy = 0.0;
-	double diffusionFactor = 0.0;
 	std::shared_ptr<PSIClusterReactionNetwork> network = std::make_shared<
 			PSIClusterReactionNetwork>(handlerRegistry);
 	std::vector<std::shared_ptr<Reactant> > reactants;

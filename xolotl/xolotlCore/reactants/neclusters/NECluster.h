@@ -264,11 +264,11 @@ public:
 	virtual std::vector<int> getDissociationConnectivity() const;
 
 	/**
-	 * This operation returns the first xenon momentum.
+	 * This operation returns the first xenon moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	virtual double getMomentum() const;
+	virtual double getMoment() const;
 
 	/**
 	 * This operation returns the total flux of this cluster in the

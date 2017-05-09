@@ -9,6 +9,10 @@ PSICluster::PSICluster() :
 		Reactant() {
 	// Set the reactant name appropriately
 	name = "PSICluster";
+	// Setup the composition map.
+	compositionMap[heType] = 0;
+	compositionMap[vType] = 0;
+	compositionMap[iType] = 0;
 
 	return;
 }
@@ -17,6 +21,10 @@ PSICluster::PSICluster(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		Reactant(registry) {
 	// Set the reactant name appropriately
 	name = "PSICluster";
+	// Setup the composition map.
+	compositionMap[heType] = 0;
+	compositionMap[vType] = 0;
+	compositionMap[iType] = 0;
 
 	return;
 }
@@ -26,6 +34,10 @@ PSICluster::PSICluster(PSICluster &other) :
 		Reactant(other), reactingPairs(other.reactingPairs), combiningReactants(
 				other.combiningReactants), dissociatingPairs(
 				other.dissociatingPairs), emissionPairs(other.emissionPairs) {
+	compositionMap[heType] = other.compositionMap[heType];
+	compositionMap[vType] = other.compositionMap[vType];
+	compositionMap[iType] = other.compositionMap[iType];
+
 	// Recompute all of the temperature-dependent quantities
 	setTemperature(other.getTemperature());
 

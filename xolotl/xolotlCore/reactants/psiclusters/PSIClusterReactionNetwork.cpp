@@ -141,8 +141,6 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 	int firstSize = 0, secondSize = 0, productSize = 0;
 
 	// Single species clustering (He, V, I)
-	// We know here that only Xe_1 can cluster so we simplify the search
-	// X_(a-i) + X_i --> X_a
 	// Make a vector of types
 	std::vector<string> typeVec = { heType, vType, iType };
 	// Loop on it
@@ -688,7 +686,7 @@ IReactant * PSIClusterReactionNetwork::get(const std::string& type,
 		const int size) const {
 	// Local Declarations
 	static std::map<std::string, int> composition = { { heType, 0 },
-			{ vType, 0 }, { iType, 0 }, { xeType, 0 } };
+			{ vType, 0 }, { iType, 0 } };
 	std::shared_ptr<IReactant> retReactant;
 
 	// Initialize the values because it's static
@@ -714,7 +712,7 @@ IReactant * PSIClusterReactionNetwork::getCompound(const std::string& type,
 		const std::vector<int>& sizes) const {
 	// Local Declarations
 	static std::map<std::string, int> composition = { { heType, 0 },
-			{ vType, 0 }, { iType, 0 }, { xeType, 0 } };
+			{ vType, 0 }, { iType, 0 } };
 	std::shared_ptr<IReactant> retReactant;
 
 	// Initialize the values because it's static
@@ -743,7 +741,7 @@ IReactant * PSIClusterReactionNetwork::getSuper(const std::string& type,
 		const std::vector<int>& sizes) const {
 	// Local Declarations
 	static std::map<std::string, int> composition = { { heType, 0 },
-			{ vType, 0 }, { iType, 0 }, { xeType, 0 } };
+			{ vType, 0 }, { iType, 0 } };
 	std::shared_ptr<IReactant> retReactant;
 
 	// Setup the composition map to default values
@@ -972,8 +970,8 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 	for (auto it = allReactants->begin(); it != allReactants->end(); ++it) {
 		id++;
 		(*it)->setId(id);
-		(*it)->setHeMomentumId(id);
-		(*it)->setVMomentumId(id);
+		(*it)->setHeMomentId(id);
+		(*it)->setVMomentId(id);
 
 		(*it)->optimizeReactions();
 
@@ -988,9 +986,9 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 	for (auto it = clusterTypeMap[PSISuperType]->begin();
 			it != clusterTypeMap[PSISuperType]->end(); ++it) {
 		id++;
-		(*it)->setHeMomentumId(id);
+		(*it)->setHeMomentId(id);
 		id++;
-		(*it)->setVMomentumId(id);
+		(*it)->setVMomentId(id);
 	}
 
 	return;
@@ -1023,11 +1021,11 @@ void PSIClusterReactionNetwork::updateConcentrationsFromArray(
 	for (int i = size - numSuperClusters; i < size; i++) {
 		auto cluster = (PSISuperCluster *) reactants->at(i);
 		id = cluster->getId() - 1;
-		cluster->setZerothMomentum(concentrations[id]);
-		id = cluster->getHeMomentumId() - 1;
-		cluster->setHeMomentum(concentrations[id]);
-		id = cluster->getVMomentumId() - 1;
-		cluster->setVMomentum(concentrations[id]);
+		cluster->setZerothMoment(concentrations[id]);
+		id = cluster->getHeMomentId() - 1;
+		cluster->setHeMoment(concentrations[id]);
+		id = cluster->getVMomentId() - 1;
+		cluster->setVMoment(concentrations[id]);
 	}
 
 	return;
@@ -1075,9 +1073,9 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		auto reactant = superClusters[i];
 		connectivity = reactant->getConnectivity();
 		connectivityLength = connectivity.size();
-		// Get the helium momentum id so that the connectivity can be lined up in
+		// Get the helium moment id so that the connectivity can be lined up in
 		// the proper column
-		id = reactant->getHeMomentumId() - 1;
+		id = reactant->getHeMomentId() - 1;
 
 		// Create the vector that will be inserted into the dFill map
 		std::vector<int> columnIds;
@@ -1095,9 +1093,9 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		// Update the map
 		dFillMap[id] = columnIds;
 
-		// Get the vacancy momentum id so that the connectivity can be lined up in
+		// Get the vacancy moment id so that the connectivity can be lined up in
 		// the proper column
-		id = reactant->getVMomentumId() - 1;
+		id = reactant->getVMomentId() - 1;
 
 		// Add it to the diagonal fill block
 		for (int j = 0; j < connectivityLength; j++) {
@@ -1302,16 +1300,16 @@ void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 	for (int i = 0; i < superClusters.size(); i++) {
 		superCluster = (xolotlCore::PSISuperCluster *) superClusters[i];
 
-		// Compute the helium momentum flux
-		flux = superCluster->getHeMomentumFlux();
+		// Compute the helium moment flux
+		flux = superCluster->getHeMomentFlux();
 		// Update the concentration of the cluster
-		reactantIndex = superCluster->getHeMomentumId() - 1;
+		reactantIndex = superCluster->getHeMomentId() - 1;
 		updatedConcOffset[reactantIndex] += flux;
 
-		// Compute the vacancy momentum flux
-		flux = superCluster->getVMomentumFlux();
+		// Compute the vacancy moment flux
+		flux = superCluster->getVMomentFlux();
 		// Update the concentration of the cluster
-		reactantIndex = superCluster->getVMomentumId() - 1;
+		reactantIndex = superCluster->getVMomentId() - 1;
 		updatedConcOffset[reactantIndex] += flux;
 	}
 
@@ -1383,8 +1381,8 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 			clusterPartials[pdColIdsVector[j]] = 0.0;
 		}
 
-		// Get the helium momentum index
-		reactantIndex = reactant->getHeMomentumId() - 1;
+		// Get the helium moment index
+		reactantIndex = reactant->getHeMomentId() - 1;
 
 		// Get the partial derivatives
 		reactant->getHeMomentPartialDerivatives(clusterPartials);
@@ -1406,8 +1404,8 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 			clusterPartials[pdColIdsVector[j]] = 0.0;
 		}
 
-		// Get the vacancy momentum index
-		reactantIndex = reactant->getVMomentumId() - 1;
+		// Get the vacancy moment index
+		reactantIndex = reactant->getVMomentId() - 1;
 
 		// Get the partial derivatives
 		reactant->getVMomentPartialDerivatives(clusterPartials);

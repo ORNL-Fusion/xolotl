@@ -11,17 +11,6 @@ namespace xolotlCore {
  * This class will load a reaction network composed of NEClusters from an
  * HDF5 file.
  *
- * The data in the stream should contain the information for a single cluster on
- * each line with the following quantities specified and separated by a single
- * space each:
- * > The number of Xe in the cluster
- * > The number of V in the cluster
- * > The number of I in the cluster
- * > The formation energy
- *
- * Lines of comments starting with a "#" will be ignored as will lines that do
- * not clearly provide the information above.
- *
  * The network will be returned as a ReactionNetwork of NEClusters ordered with
  * single-species Xe, V and I clusters first and all mixed clusters coming
  * last. Each species is ordered from the smallest cluster size, (1), to the
@@ -68,7 +57,7 @@ protected:
 	NEClusterNetworkLoader() {}
 
 	/**
-	 * This operation creates a singles-species cluster of helium, vacancies or
+	 * This operation creates a cluster of helium, vacancies and/or
 	 * interstitials. It adds the cluster to the appropriate internal list of
 	 * clusters for that type.
 	 *

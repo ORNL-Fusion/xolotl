@@ -80,7 +80,7 @@ protected:
 	PSIClusterNetworkLoader() {}
 
 	/**
-	 * This operation creates a singles-species cluster of helium, vacancies or
+	 * This operation creates a cluster of helium, vacancies and/or
 	 * interstitials. It adds the cluster to the appropriate internal list of
 	 * clusters for that type.
 	 *

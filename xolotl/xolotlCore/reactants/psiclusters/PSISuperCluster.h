@@ -43,10 +43,10 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A, the second of B
+		 * The first number represent the moment of A, the second of B
 		 * in A + B -> C
 		 *
-		 * The third number represent which momentum we are computing.
+		 * The third number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
@@ -122,10 +122,10 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A
+		 * The first number represent the moment of A
 		 * in A -> B + C
 		 *
-		 * The second number represent which momentum we are computing.
+		 * The second number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
@@ -167,13 +167,13 @@ private:
 	//! The width in the vacancy direction.
 	int sectionVWidth;
 
-	//! The 0th order momentum (mean).
+	//! The 0th order moment (mean).
 	double l0;
 
-	//! The first order momentum in the helium direction.
+	//! The first order moment in the helium direction.
 	double l1He;
 
-	//! The first order momentum in the vacancy direction.
+	//! The first order moment in the vacancy direction.
 	double l1V;
 
 	//! The dispersion in the group in the helium direction.
@@ -207,14 +207,14 @@ private:
 	std::forward_list<SuperClusterDissociationPair> effEmissionList;
 
 	/**
-	 * The helium momentum flux.
+	 * The helium moment flux.
 	 */
-	double heMomentumFlux;
+	double heMomentFlux;
 
 	/**
-	 * The vacancy momentum flux.
+	 * The vacancy moment flux.
 	 */
-	double vMomentumFlux;
+	double vMomentFlux;
 
 	/**
 	 * The default constructor is private because PSIClusters must always be
@@ -269,9 +269,8 @@ public:
 	 * @return A copy of this reactant
 	 */
 	virtual std::shared_ptr<IReactant> clone() {
-        return std::make_shared<PSISuperCluster>(*this);
-    }
-
+		return std::make_shared<PSISuperCluster>(*this);
+	}
 
 	/**
 	 * Sets the collection of other clusters that make up
@@ -307,28 +306,26 @@ public:
 	 * @return The concentration of this reactant
 	 */
 	double getConcentration(double distHe, double distV) const {
-        return l0 + (distHe * l1He) + (distV * l1V);
-    }
-
-
-	/**
-	 * This operation returns the first helium momentum.
-	 *
-	 * @return The momentum
-	 */
-	double getHeMomentum() const {
-        return l1He;
-    }
+		return l0 + (distHe * l1He) + (distV * l1V);
+	}
 
 	/**
-	 * This operation returns the first vacancy momentum.
+	 * This operation returns the first helium moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	double getVMomentum() const {
-        return l1V;
-    }
+	double getHeMoment() const {
+		return l1He;
+	}
 
+	/**
+	 * This operation returns the first vacancy moment.
+	 *
+	 * @return The moment
+	 */
+	double getVMoment() const {
+		return l1V;
+	}
 
 	/**
 	 * This operation returns the current total concentration of clusters in the group.
@@ -358,9 +355,9 @@ public:
 	 * @return The distance to the mean number of helium in the group
 	 */
 	double getHeDistance(int he) const {
-        return (sectionHeWidth == 1) ? 0.0
-            : 2.0 * (he - numHe) / (sectionHeWidth - 1.0);
-    }
+		return (sectionHeWidth == 1) ?
+				0.0 : 2.0 * (he - numHe) / (sectionHeWidth - 1.0);
+	}
 
 	/**
 	 * This operation returns the distance to the mean.
@@ -369,11 +366,9 @@ public:
 	 * @return The distance to the mean number of vacancy in the group
 	 */
 	double getVDistance(int v) const {
-        return (sectionVWidth == 1) ? 0.0
-            : 2.0 * (v - numV) / (sectionVWidth - 1.0);
-    }
-
-
+		return (sectionVWidth == 1) ?
+				0.0 : 2.0 * (v - numV) / (sectionVWidth - 1.0);
+	}
 
 	/**
 	 * Calculate the dispersion of the group.
@@ -381,29 +376,29 @@ public:
 	void computeDispersion();
 
 	/**
-	 * This operation sets the zeroth order momentum.
+	 * This operation sets the zeroth order moment.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setZerothMomentum(double mom) {
+	void setZerothMoment(double mom) {
 		l0 = mom;
 	}
 
 	/**
-	 * This operation sets the first order momentum in the helium direction.
+	 * This operation sets the first order moment in the helium direction.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setHeMomentum(double mom) {
+	void setHeMoment(double mom) {
 		l1He = mom;
 	}
 
 	/**
-	 * This operation sets the first order momentum in the vacancy direction.
+	 * This operation sets the first order moment in the vacancy direction.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setVMomentum(double mom) {
+	void setVMoment(double mom) {
 		l1V = mom;
 	}
 
@@ -422,21 +417,19 @@ public:
 	 */
 	double getTotalFlux() {
 
-        // Initialize the fluxes
-        heMomentumFlux = 0.0;
-        vMomentumFlux = 0.0;
+		// Initialize the fluxes
+		heMomentFlux = 0.0;
+		vMomentFlux = 0.0;
 
-        // Compute the fluxes.
-        return getProductionFlux() 
-                - getCombinationFlux() 
-                + getDissociationFlux() 
-                - getEmissionFlux();
-    }
+		// Compute the fluxes.
+		return getProductionFlux() - getCombinationFlux()
+				+ getDissociationFlux() - getEmissionFlux();
+	}
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to dissociation of other clusters
 	 */
@@ -445,7 +438,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to its dissociation
 	 */
@@ -454,7 +447,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster being produced
 	 */
@@ -463,28 +456,28 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster combining with other clusters
 	 */
 	double getCombinationFlux();
 
 	/**
-	 * This operation returns the total change for its helium momentum.
+	 * This operation returns the total change for its helium moment.
 	 *
-	 * @return The momentum flux
+	 * @return The moment flux
 	 */
-	double getHeMomentumFlux() {
-		return heMomentumFlux;
+	double getHeMomentFlux() {
+		return heMomentFlux;
 	}
 
 	/**
-	 * This operation returns the total change for its vacancy momentum.
+	 * This operation returns the total change for its vacancy moment.
 	 *
-	 * @return The momentum flux
+	 * @return The moment flux
 	 */
-	double getVMomentumFlux() {
-		return vMomentumFlux;
+	double getVMomentFlux() {
+		return vMomentFlux;
 	}
 
 	/**
@@ -544,7 +537,7 @@ public:
 	void getEmissionPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
-	 * This operation computes the partial derivatives for the helium momentum.
+	 * This operation computes the partial derivatives for the helium moment.
 	 *
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted.
@@ -552,7 +545,7 @@ public:
 	void getHeMomentPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
-	 * This operation computes the partial derivatives for the vacancy momentum.
+	 * This operation computes the partial derivatives for the vacancy moment.
 	 *
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted.

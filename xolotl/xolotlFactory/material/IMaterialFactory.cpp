@@ -5,6 +5,7 @@
 #include <W211MaterialFactory.h>
 #include <FuelMaterialFactory.h>
 #include <TRIDYNMaterialFactory.h>
+#include <AlloyMaterialFactory.h>
 
 namespace xolotlFactory {
 
@@ -24,6 +25,8 @@ std::shared_ptr<IMaterialFactory> IMaterialFactory::createMaterialFactory(const 
 	else if (materialType == "Fuel") theMaterialFactory = std::make_shared<FuelMaterialFactory>(dimension);
 	// TRIDYN case
 	else if (materialType == "TRIDYN") theMaterialFactory = std::make_shared<TRIDYNMaterialFactory>(dimension);
+	// Alloy case
+	else if (materialType == "800H") theMaterialFactory = std::make_shared<AlloyMaterialFactory>(dimension);
 	// The type is not supported
 	else {
 		throw std::string(

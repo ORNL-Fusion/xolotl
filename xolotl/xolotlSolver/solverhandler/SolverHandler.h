@@ -4,6 +4,7 @@
 // Includes
 #include "ISolverHandler.h"
 #include <HDF5Utils.h>
+#include <Constants.h>
 
 namespace xolotlSolver {
 
@@ -68,6 +69,9 @@ protected:
 	//! If the user wants to use a regular grid.
 	bool useRegularGrid;
 
+	//! If the user wants to use a Chebyshev grid.
+	bool useChebyshevGrid;
+
 	//! If the user wants to move the surface.
 	bool movingSurface;
 
@@ -82,8 +86,28 @@ protected:
 		// Clear the grid
 		grid.clear();
 
+		// Maybe the user wants a Chebyshev grid
+		if (useChebyshevGrid) {
+			// The first grid point will be at x = 0.0
+			grid.push_back(0.0);
+
+			// In that case hx correspond to the full length of the grid
+			for (int l = 1; l < nx - 1; l++) {
+				grid.push_back(
+						hx
+								* (0.5
+										- cos(
+												(double) (2 * l - 1)
+														* xolotlCore::pi
+														/ ((double) (2
+																* (nx - 2))))
+												* 0.5));
+			}
+			// The last grid point will be at x = hx
+			grid.push_back(hx);
+		}
 		// Check if the user wants a regular grid
-		if (useRegularGrid) {
+		else if (useRegularGrid) {
 			// The grid will me made of nx points separated by hx nm
 			for (int l = 0; l < nx; l++) {
 				grid.push_back((double) l * hx);
@@ -153,13 +177,14 @@ public:
 			// Get starting conditions from HDF5 file
 			int nx = 0, ny = 0, nz = 0;
 			double hx = 0.0, hy = 0.0, hz = 0.0;
-			xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz, hz);
+			xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz,
+					hz);
 			nX = nx, nY = ny, nZ = nz;
 			hX = hx, hY = hy, hZ = hz;
-		}
-		else {
+		} else {
 			nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
-			hX = options.getXStepSize(), hY = options.getYStepSize(), hZ = options.getZStepSize();
+			hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
+					options.getZStepSize();
 		}
 
 		// Set the network
@@ -202,6 +227,9 @@ public:
 
 		// Look at if the user wants to use a regular grid in the x direction
 		useRegularGrid = options.useRegularXGrid();
+
+		// Look at if the user wants to use a Chebyshev grid in the x direction
+		useChebyshevGrid = options.useChebyshevGrid();
 
 		// Should we be able to move the surface?
 		auto map = options.getProcesses();
