@@ -120,8 +120,14 @@ void HDF5Utils::fillNetwork(const std::string& fileName) {
 	// Close the property list
 	status = H5Pclose(propertyListId);
 
-	status = H5Ocopy(fromFileId, "/networkGroup", fileId, "/networkGroup",
-			H5P_DEFAULT, H5P_DEFAULT);
+	// Check the group
+	bool groupExist = H5Lexists(fromFileId, "/networkGroup", H5P_DEFAULT);
+	// If the group exist
+	if (groupExist) {
+		// Copy it
+		status = H5Ocopy(fromFileId, "/networkGroup", fileId, "/networkGroup",
+		H5P_DEFAULT, H5P_DEFAULT);
+	}
 
 	// Close the from file
 	status = H5Fclose(fromFileId);
