@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	// Get the dof of the network
 	int dof = network->getDOF();
 	// Check the value
-	BOOST_REQUIRE_EQUAL(dof, 3);
+	BOOST_REQUIRE_EQUAL(dof, 4);
 
 	// Check the properties
 	auto neNetwork = std::dynamic_pointer_cast<NEClusterReactionNetwork>(

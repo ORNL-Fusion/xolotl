@@ -171,6 +171,13 @@ public:
 	virtual xolotlCore::IFluxHandler *getFluxHandler() const = 0;
 
 	/**
+	 * Get the temperature handler.
+	 *
+	 * @return The temperature handler
+	 */
+	virtual xolotlCore::ITemperatureHandler *getTemperatureHandler() const = 0;
+
+	/**
 	 * Get the advection handler.
 	 *
 	 * @return The first advection handler

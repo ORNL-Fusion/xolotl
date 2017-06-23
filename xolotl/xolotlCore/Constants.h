@@ -25,9 +25,14 @@ static const double pi = 3.1415926535897932;
 //! Journal of Nuclear Materials 403 (2010) 75–88. Given in units here of nm.
 static const double tungstenLatticeConstant = 0.31700000000000000;
 
-//! Lattice Parameter. Equal to 3.17 Angstroms, taken from Becquart et. al.
-//! Journal of Nuclear Materials 403 (2010) 75–88. Given in units here of nm.
+//! Lattice Parameter. Given in units here of nm.
 static const double uraniumDioxydeLatticeConstant = 0.57400000000000000;
+
+// Tungsten heat coefficient = lambda / (rho * C) in nm2 s-1
+static const double tungstenHeatCoefficient = 6.835e13;
+
+// UO2 heat coefficient = lambda / (rho * C) in nm2 s-1
+static const double uo2HeatCoefficient = 0.0;
 
 /**
  * Statically defined type names. This are used to optimize the lookup

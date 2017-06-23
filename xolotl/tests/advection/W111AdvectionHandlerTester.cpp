@@ -63,11 +63,11 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Check the clusters in ofill
 	BOOST_REQUIRE_EQUAL(ofill[0], 1);
-	BOOST_REQUIRE_EQUAL(ofill[10], 1);
-	BOOST_REQUIRE_EQUAL(ofill[20], 1);
-	BOOST_REQUIRE_EQUAL(ofill[30], 1);
-	BOOST_REQUIRE_EQUAL(ofill[40], 1);
-	BOOST_REQUIRE_EQUAL(ofill[50], 1);
+	BOOST_REQUIRE_EQUAL(ofill[11], 1);
+	BOOST_REQUIRE_EQUAL(ofill[22], 1);
+	BOOST_REQUIRE_EQUAL(ofill[33], 1);
+	BOOST_REQUIRE_EQUAL(ofill[44], 1);
+	BOOST_REQUIRE_EQUAL(ofill[55], 1);
 
 	// Set the size parameter in the x direction
 	double hx = 1.0;
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	auto reactants = network->getAll();
-	for (int i = 0; i < dof; i++) {
+	for (int i = 0; i < dof - 1; i++) {
 		auto cluster = (PSICluster *) reactants->at(i);
 		cluster->setTemperature(1000.0);
 	}
@@ -111,12 +111,12 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 			updatedConcOffset, hx, hx, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -4.95238e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -5.42093e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -6.92017e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -6.65778e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -2.66416e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -9.09579e+09, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -6.11405e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -6.54099e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -8.19967e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -7.77277e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -3.07219e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -1.03797e+10, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 0.0, 0.01); // Does not advect
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not advect
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // Does not advect

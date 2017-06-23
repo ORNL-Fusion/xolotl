@@ -75,9 +75,9 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.476819, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.225961, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.097220, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.476819, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.225961, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.097220, 0.01);
 
 	return;
 }
@@ -235,9 +235,9 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[9], 1.192047, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.564902, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.243050, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 1.192047, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.564902, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.243050, 0.01);
 
 	return;
 }
@@ -306,9 +306,9 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[9], 1192.047, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 564.902, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[27], 243.050, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 1192.047, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 564.902, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 243.050, 0.01);
 	// Check the value of the flux amplitude
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2500.0);
 
@@ -329,9 +329,9 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[9], 715.228, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 338.941, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[27], 145.830, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 715.228, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 338.941, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 145.830, 0.01);
 	// Check the value of the flux amplitude
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 1500.0);
 

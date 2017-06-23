@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	reactant.setReactionNetwork(network);
 
 	// Check its default partial derivatives
-	BOOST_REQUIRE_EQUAL(0U, reactant.getPartialDerivatives().size());
+	BOOST_REQUIRE_EQUAL(1U, reactant.getPartialDerivatives().size());
 
 	// Create a reference and temp partial derivative vector
 	std::vector<double> refPartials = std::vector<double>(3, 0.0);

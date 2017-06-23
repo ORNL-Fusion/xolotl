@@ -473,6 +473,33 @@ public interface Arguments {
 	boolean isTempFile();
 
 	/**
+	 * This Option annotation corresponds to the optional '--heat' option
+	 * and provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "<surfaceTemp> <bulkTemp> Two temperatures are given "
+			+ "to then solve the heat equation")
+	/**
+	 * This operation produces the optional command line option '--heat'
+	 * which takes a single string value and is defined by the previous Option
+	 * annotation. NOTE: This option should only be used when the user wishes to
+	 * use heat equation in Xolotl.
+	 * 
+	 * @return The string of temperatures
+	 */
+	String getHeat();
+
+	/**
+	 * This operation makes the command line option '--heat' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isHeat();
+
+	/**
 	 * This Option annotation corresponds to the optional '--fluxFile' option
 	 * and provides a brief description of the option.
 	 * 

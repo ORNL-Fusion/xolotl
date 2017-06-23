@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	auto reactants = network->getAll();
-	for (int i = 0; i < dof; i++) {
+	for (int i = 0; i < dof - 1; i++) {
 		auto cluster = (PSICluster *) reactants->at(i);
 		cluster->setTemperature(1000.0);
 	}
@@ -109,12 +109,12 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 			updatedConcOffset, hx, hx, 1, hy, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -1.50810e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -1.45827e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -1.85540e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -3.34501e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -4.82155e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -1.87392e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -1.86186e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -1.79073e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -2.2668e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -4.06708e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -5.83541e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -2.25802e+10, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 0.0, 0.01); // Does not advect
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not advect
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // Does not advect

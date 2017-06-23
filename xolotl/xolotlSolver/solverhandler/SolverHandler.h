@@ -153,13 +153,14 @@ public:
 			// Get starting conditions from HDF5 file
 			int nx = 0, ny = 0, nz = 0;
 			double hx = 0.0, hy = 0.0, hz = 0.0;
-			xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz, hz);
+			xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz,
+					hz);
 			nX = nx, nY = ny, nZ = nz;
 			hX = hx, hY = hy, hZ = hz;
-		}
-		else {
+		} else {
 			nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
-			hX = options.getXStepSize(), hY = options.getYStepSize(), hZ = options.getZStepSize();
+			hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
+					options.getZStepSize();
 		}
 
 		// Set the network
@@ -282,6 +283,14 @@ public:
 	 */
 	xolotlCore::IFluxHandler *getFluxHandler() const {
 		return fluxHandler;
+	}
+
+	/**
+	 * Get the temperature handler.
+	 * \see ISolverHandler.h
+	 */
+	virtual xolotlCore::ITemperatureHandler *getTemperatureHandler() const {
+		return temperatureHandler;
 	}
 
 	/**

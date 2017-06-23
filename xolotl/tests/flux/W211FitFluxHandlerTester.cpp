@@ -75,9 +75,9 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.454047, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.249781, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.096172, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.454047, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.249781, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.096172, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

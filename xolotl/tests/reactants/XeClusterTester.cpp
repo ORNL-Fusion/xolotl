@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the connectivity for Xe
 	int connectivityExpected[] = {
 	// Xe
-			1, 0, 0, 0, 1, 1, 1, 0, 0, 0 };
+			1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
 	double knownPartials[] = { -196821207586.07611, 2054353911079.95,
-			573123759757.52136 };
+			573123759757.52136, 0.0 };
 	// Get the simple reaction network
 	auto network = getSimpleNEReactionNetwork(3);
 
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	auto partials = cluster->getPartialDerivatives();
 
 	// Check the size of the partials
-	BOOST_REQUIRE_EQUAL(partials.size(), 3U);
+	BOOST_REQUIRE_EQUAL(partials.size(), 4U);
 
 	// Check all the values
 	for (unsigned int i = 0; i < partials.size(); i++) {

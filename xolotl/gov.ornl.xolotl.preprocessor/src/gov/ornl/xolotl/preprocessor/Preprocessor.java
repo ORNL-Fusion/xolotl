@@ -269,6 +269,8 @@ public class Preprocessor {
 		// be set if they are specified via the command line
 		if (args.isTempFile())
 			xolotlParams.setProperty("tempFile", args.getTempFile());
+		if (args.isHeat())
+			xolotlParams.setProperty("heat", args.getHeat());
 		if (args.isFluxFile())
 			xolotlParams.setProperty("fluxFile", args.getFluxFile());
 		if (args.isInitialV())

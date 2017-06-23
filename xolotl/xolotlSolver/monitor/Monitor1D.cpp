@@ -1838,6 +1838,10 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 		auto advecHandler = solverHandler->getAdvectionHandler();
 		advecHandler->setLocation(grid[surfacePos]);
 
+		// Set the new surface in the temperature handler
+		auto tempHandler = solverHandler->getTemperatureHandler();
+		tempHandler->updateSurfacePosition(grid[surfacePos]);
+
 		// Get the flux handler to reinitialize it
 		auto fluxHandler = solverHandler->getFluxHandler();
 		fluxHandler->initializeFluxHandler(network, surfacePos, grid);

@@ -105,9 +105,9 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			updatedConcOffset, 5, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.51699e+24, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], -8.79176e+23, 0.01); // He4
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[18], 8.79176e+23, 0.01); // Create He4V
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.52039e+24, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], -8.800266e+23, 0.01); // He4
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[18], 8.800266e+23, 0.01); // Create He4V
 
 	// Get the offset for the ninth grid point on the fourth row
 	concOffset = conc + (13 * 3 + 8) * dof;
@@ -122,11 +122,11 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			updatedConcOffset, 8, 3);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 2.397013e+25, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 2.39933217e+25, 0.01); // Create I
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // He3
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[17], 0.0, 0.01); // Doesn't create He3V
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -5.992716e+24, 0.01); // He7
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[21], 5.992716e+24, 0.01); // Create He7V2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -5.9985155e+24, 0.01); // He7
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[21], 5.9985155e+24, 0.01); // Create He7V2
 
 	// Initialize the indices and values to set in the Jacobian
 	int nHelium = network->getAll(heType).size();

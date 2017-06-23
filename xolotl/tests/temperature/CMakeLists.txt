@@ -7,9 +7,12 @@ SET(PACKAGE_DESCRIPTION "Xolotl Temperature tests")
 #include directories from the source and boost binaries
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/temperature)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
 include_directories(${Boost_BINARY_DIRS})
 
 #link the directories

@@ -179,6 +179,34 @@ public:
 	virtual void setTempProfileFilename(const std::string& name) = 0;
 
 	/**
+	 * Should we use heat equation handlers?
+	 *
+	 * @return true if Xolotl must use the heat equation
+	 */
+	virtual bool useHeatEquationHandlers() const = 0;
+
+	/**
+	 * Set the heatFlag.
+	 *
+	 * @param flag The value for the heatFlag
+	 */
+	virtual void setHeatFlag(bool flag) = 0;
+
+	/**
+	 * Obtain the value of the temperature to be used in the bulk.
+	 *
+	 * @return The value for the temperature
+	 */
+	virtual double getBulkTemperature() const = 0;
+
+	/**
+	 * Set the bulk temperature.
+	 *
+	 * @param temp The value for the bulk temperature
+	 */
+	virtual void setBulkTemperature(double temp) = 0;
+
+	/**
 	 * Should we use the flux amplitude option?
 	 * If false, it will not be used.
 	 *

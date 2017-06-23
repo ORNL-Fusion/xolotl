@@ -245,7 +245,6 @@ void PSICluster::setReactionNetwork(
 	return;
 }
 
-
 double PSICluster::getDissociationFlux() const {
 	// Initial declarations
 	int nPairs = 0;

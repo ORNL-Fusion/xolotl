@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	auto reactants = network->getAll();
-	for (int i = 0; i < dof; i++) {
+	for (int i = 0; i < dof - 1; i++) {
 		auto cluster = (PSICluster *) reactants->at(i);
 		cluster->setTemperature(1000.0);
 	}
@@ -117,15 +117,15 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 			hx, hx, 1, sy, 1, sz, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 9.45765e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 4.63181e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], 1.86354e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 2.46065e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 1.83127e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 4.53548e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.1676e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 5.7183e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], 2.3007e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 3.0378e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 2.2608e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 5.5994e+10, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 0.0, 0.01); // Does not diffuse
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not diffuse
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 7.44932e+08, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 9.1967e+08, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();

@@ -70,6 +70,16 @@ protected:
 	std::string tempProfileFilename;
 
 	/**
+	 * Use the heat equation set of handlers?
+	 */
+	bool heatFlag;
+
+	/**
+	 * Value for the bulk temperature.
+	 */
+	double bulkTemperature;
+
+	/**
 	 * Use the flux amplitude option?
 	 */
 	bool fluxFlag;
@@ -392,6 +402,38 @@ public:
 	 */
 	void setTempProfileFilename(const std::string& name) {
 		tempProfileFilename = name;
+	}
+
+	/**
+	 * Should we use heat equation handlers?
+	 * \see IOptions.h
+	 */
+	bool useHeatEquationHandlers() const {
+		return heatFlag;
+	}
+
+	/**
+	 * Set the heatFlag.
+	 * \see IOptions.h
+	 */
+	void setHeatFlag(bool flag) {
+		heatFlag = flag;
+	}
+
+	/**
+	 * Obtain the value of the temperature to be used in the bulk.
+	 * \see IOptions.h
+	 */
+	double getBulkTemperature() const {
+		return bulkTemperature;
+	}
+
+	/**
+	 * Set the bulk temperature.
+	 * \see IOptions.h
+	 */
+	void setBulkTemperature(double temp) {
+		bulkTemperature = temp;
 	}
 
 	/**
