@@ -71,8 +71,7 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	// advection toward the surface (or a dummy one if it is deactivated)
 	advectionHandlers[0]->setLocation(grid[surfacePosition[0]]);
 
-	// Set the size of the partial derivatives vectors
-	clusterPartials.resize(dof, 0.0);
+	// Set the size of the partial derivatives vector
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	/*  The only spatial coupling in the Jacobian is due to diffusion.

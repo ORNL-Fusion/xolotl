@@ -64,8 +64,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 //	}
 //	std::cout << std::endl;
 
-	// Set the size of the partial derivatives vectors
-	clusterPartials.resize(dof, 0.0);
+	// Set the size of the partial derivatives vector
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	/*  The only spatial coupling in the Jacobian is due to diffusion.
