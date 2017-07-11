@@ -90,21 +90,21 @@ endif()
 
 # try to find the HDF5 wrapper compilers
 find_program( HDF5_C_COMPILER_EXECUTABLE
-    NAMES h5cc h5pcc
+    NAMES h5pcc h5cc
     HINTS ENV HDF5_ROOT
     PATH_SUFFIXES bin Bin
     DOC "HDF5 Wrapper compiler.  Used only to detect HDF5 compile flags." )
 mark_as_advanced( HDF5_C_COMPILER_EXECUTABLE )
 
 find_program( HDF5_CXX_COMPILER_EXECUTABLE
-    NAMES h5c++ h5pc++
+    NAMES h5pc++ h5c++
     HINTS ENV HDF5_ROOT
     PATH_SUFFIXES bin Bin
     DOC "HDF5 C++ Wrapper compiler.  Used only to detect HDF5 compile flags." )
 mark_as_advanced( HDF5_CXX_COMPILER_EXECUTABLE )
 
 find_program( HDF5_Fortran_COMPILER_EXECUTABLE
-    NAMES h5fc h5pfc
+    NAMES h5pfc h5fc
     HINTS ENV HDF5_ROOT
     PATH_SUFFIXES bin Bin
     DOC "HDF5 Fortran Wrapper compiler.  Used only to detect HDF5 compile flags." )
@@ -348,4 +348,3 @@ find_package_handle_standard_args( HDF5 DEFAULT_MSG
     HDF5_LIBRARIES
     HDF5_INCLUDE_DIRS
 )
-

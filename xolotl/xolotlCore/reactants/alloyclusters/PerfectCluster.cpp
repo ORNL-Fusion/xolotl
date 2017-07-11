@@ -21,11 +21,33 @@ PerfectCluster::PerfectCluster(int n,
 	// Set the typename appropriately
 	typeName = perfectType;
 
-	// Compute the reaction radius
-	double FourPi = 4.0 * xolotlCore::pi;
+	// Define the diffusion pre-factor
+	if (size < 70) {
+	  double jumpDistance = xolotlCore::alloyLatticeConstant / sqrt(2.0);
+	  double phononFrequency = 1.0e13;
+	  double jumpsPerPhonon = 1.0;
+	  double prefactorExponent = -1.0;
+	  diffusionFactor = phononFrequency * jumpsPerPhonon * jumpDistance
+	      * jumpDistance * pow(double(size),prefactorExponent) / (6.0);
+	}
+	else {
+		diffusionFactor = 0.0;
+	}
 
-	// DEFINE THE RADIUS HERE
-	reactionRadius = 0.0;
+	// Define the formation energy
+	{
+		// USING PLACEHOLDER VALUES => UPDATE WITH CORRECT VALUES
+		double A = 4.0;
+		double B = 2.0;
+		formationEnergy = A + B * ( pow(double(size),2.0/3.0) - 1.0 );
+	}
+
+	// Define the migration energy
+	migrationEnergy = 0.5;
+
+	// Define the reaction radius
+	reactionRadius = 0.5 * xolotlCore::alloyLatticeConstant
+	    * sqrt( double(size) * sqrt(2.0) / xolotlCore::pi );
 
 	return;
 }
