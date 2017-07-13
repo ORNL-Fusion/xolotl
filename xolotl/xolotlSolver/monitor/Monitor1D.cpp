@@ -1630,7 +1630,7 @@ PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will move the surface depending on the
  * interstitial flux
  */
-PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
+PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -1670,6 +1670,14 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 
 	// Get the physical grid
 	auto grid = solverHandler->getXGrid();
+
+	// Write the initial surface position
+	if (procId == 0 && timestep == 0) {
+		std::ofstream outputFile;
+		outputFile.open("surface.txt", ios::app);
+		outputFile << time << " " << grid[surfacePos] << std::endl;
+		outputFile.close();
+	}
 
 	// Get the flux handler to know the flux amplitude.
 	auto fluxHandler = solverHandler->getFluxHandler();
@@ -1851,6 +1859,14 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt, PetscReal time,
 		auto advecHandlers = solverHandler->getAdvectionHandlers();
 		mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers,
 				grid);
+
+		// Write the updated surface position
+		if (procId == 0) {
+			std::ofstream outputFile;
+			outputFile.open("surface.txt", ios::app);
+			outputFile << time << " " << grid[surfacePos] << std::endl;
+			outputFile.close();
+		}
 	}
 
 	// Restore the solutionArray
@@ -2271,7 +2287,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		bool hasConcentrations = false;
 		if (!networkName.empty())
 			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-				networkName, tempTimeStep);
+					networkName, tempTimeStep);
 
 		// Get the interstitial information at the surface if concentrations were stored
 		if (hasConcentrations) {
@@ -2295,10 +2311,10 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: TSMonitorSet (monitorMovingSurface1D) failed.");
 
-//		// Uncomment to clear the file where the interstitial will be written
-//		std::ofstream outputFile;
-//		outputFile.open("interstitialOut.txt");
-//		outputFile.close();
+		// Clear the file where the surface will be written
+		std::ofstream outputFile;
+		outputFile.open("surface.txt");
+		outputFile.close();
 	}
 
 	// If the user wants bubble bursting
@@ -2492,7 +2508,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		bool hasConcentrations = false;
 		if (!networkName.empty())
 			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-				networkName, tempTimeStep);
+					networkName, tempTimeStep);
 
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
@@ -2550,7 +2566,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		bool hasConcentrations = false;
 		if (!networkName.empty())
 			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-				networkName, tempTimeStep);
+					networkName, tempTimeStep);
 
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
