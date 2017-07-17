@@ -198,6 +198,11 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 						firstIt != allReactants1.end(); firstIt++) {
 					// Get its size
 					firstSize = (*firstIt)->getSize();
+					// Check if type 1 is vacancy type
+					if (typeName1 == vType || typeName1 == faultedType
+							|| typeName1 == voidType) {
+						firstSize = -firstSize;
+					}
 					// Loop on the clusters starting at iterator so no repeat
 					for (auto secondIt = firstIt;
 							secondIt != allReactants1.end(); secondIt++) {
@@ -206,15 +211,10 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 						// Only proceed if at least one reactant is mobile
 						if ((*firstIt)->getDiffusionFactor() > 0.0
 								|| (*secondIt)->getDiffusionFactor() > 0.0) {
-							// Check if type 1 is vacancy type
-					    if (typeName1 == vType || typeName1 == faultedType ||
-								  typeName1 == voidType) {
-							  firstSize = -firstSize;
-							}
 							// Check if type 2 is vacancy type
-							if (typeName2 == vType || typeName2 == faultedType ||
-								  typeName2 == voidType) {
-							  secondSize = -secondSize;
+							if (typeName2 == vType || typeName2 == faultedType
+									|| typeName2 == voidType) {
+								secondSize = -secondSize;
 							}
 							// Find product size
 							productSize = firstSize + secondSize;
@@ -222,93 +222,101 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 							if (productSize > 0) {
 								// Get the products
 								IReactant * product = nullptr;
-							  auto product1 = get(iType, productSize);
+								auto product1 = get(iType, productSize);
 								IReactant * product2 = nullptr;
 								if (typeName1 == perfectType) {
 									product2 = get(perfectType, productSize);
 								}
-							  auto product3 = get(frankType, productSize);
-							  // Check which product if any is produced
+								auto product3 = get(frankType, productSize);
+								// Check which product if any is produced
 								bool isReaction = true;
 								if (product1) {
 									product = get(iType, productSize);
-								}
-								else if (product2) {
+								} else if (product2) {
 									product = get(perfectType, productSize);
-								}
-								else if (product3) {
+								} else if (product3) {
 									product = get(frankType, productSize);
-								}
-								else {
+								} else {
 									isReaction = false;
 									// Throw a warning?
 								}
 								// Create reaction and connectivity if there is a reaction
 								if (isReaction) {
-								  // Create a production reaction
-								  auto reaction =
-											std::make_shared<ProductionReaction>((*firstIt),
-								  		(*secondIt));
-								  // Tell the reactants that they are in this reaction
-								  (*firstIt)->createCombination(reaction);
-								  (*secondIt)->createCombination(reaction);
-								  product->createProduction(reaction);
+									// Create a production reaction
+									auto reaction = std::make_shared<
+											ProductionReaction>((*firstIt),
+											(*secondIt));
+									// Tell the reactants that they are in this reaction
+									(*firstIt)->createCombination(reaction);
+									(*secondIt)->createCombination(reaction);
+									product->createProduction(reaction);
 
-								  // Check if the reverse reaction is allowed
-								  checkDissociationConnectivity(product, reaction);
-							  }
+									std::cout << (*firstIt)->getName() << " + "
+											<< (*secondIt)->getName() << " -> "
+											<< product->getName() << std::endl;
+
+									// Check if the reverse reaction is allowed
+									checkDissociationConnectivity(product,
+											reaction);
+								}
 							}
 							// Vacancy type product
 							else if (productSize < 0) {
 								productSize = -productSize;
 								// Get the products
 								IReactant * product = nullptr;
-							  auto product1 = get(vType, productSize);
+								auto product1 = get(vType, productSize);
 								IReactant * product2 = nullptr;
-								if (typeName1 != voidType) {
+								if (typeName1 == faultedType) {
 									product2 = get(faultedType, productSize);
 								}
-							  auto product3 = get(voidType, productSize);
-							  // Check which product if any is produced
+								auto product3 = get(voidType, productSize);
+								// Check which product if any is produced
 								bool isReaction = true;
 								if (product1) {
 									product = get(vType, productSize);
-								}
-								else if (product2) {
+								} else if (product2) {
 									product = get(faultedType, productSize);
-								}
-								else if (product3) {
+								} else if (product3) {
 									product = get(voidType, productSize);
-								}
-								else {
+								} else {
 									isReaction = false;
 									// Throw a warning?
 								}
 								// Create reaction and connectivity if there is a reaction
 								if (isReaction) {
-								  // Create a production reaction
-								  auto reaction =
-											std::make_shared<ProductionReaction>((*firstIt),
-								  		(*secondIt));
-								  // Tell the reactants that they are in this reaction
-								  (*firstIt)->createCombination(reaction);
-								  (*secondIt)->createCombination(reaction);
-								  product->createProduction(reaction);
+									// Create a production reaction
+									auto reaction = std::make_shared<
+											ProductionReaction>((*firstIt),
+											(*secondIt));
+									// Tell the reactants that they are in this reaction
+									(*firstIt)->createCombination(reaction);
+									(*secondIt)->createCombination(reaction);
+									product->createProduction(reaction);
 
-								  // Check if the reverse reaction is allowed
-								  checkDissociationConnectivity(product, reaction);
-							  }
+									std::cout << (*firstIt)->getName() << " + "
+											<< (*secondIt)->getName() << " -> "
+											<< product->getName() << std::endl;
+
+									// Check if the reverse reaction is allowed
+									checkDissociationConnectivity(product,
+											reaction);
+								}
 							}
-							// Recombination
-							else {
-								// Shouldn't happen, throw warning?
-								// Create a production reaction
-								auto reaction = std::make_shared<ProductionReaction>(
-										(*firstIt), (*secondIt));
-								// Tell the reactants that they are in this reaction
-								(*firstIt)->createCombination(reaction);
-								(*secondIt)->createCombination(reaction);
-							}
+//							// Recombination
+//							else {
+//								// Shouldn't happen, throw warning?
+//								// Create a production reaction
+//								auto reaction = std::make_shared<
+//										ProductionReaction>((*firstIt),
+//										(*secondIt));
+//								// Tell the reactants that they are in this reaction
+//								(*firstIt)->createCombination(reaction);
+//								(*secondIt)->createCombination(reaction);
+//
+//								std::cout << (*firstIt)->getName() << " + "
+//										<< (*secondIt)->getName() << std::endl;
+//							}
 						}
 					}
 				}
@@ -324,6 +332,11 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 						firstIt != allReactants1.end(); firstIt++) {
 					// Get its size
 					firstSize = (*firstIt)->getSize();
+					// Check if type 1 is vacancy type
+					if (typeName1 == vType || typeName1 == faultedType
+							|| typeName1 == voidType) {
+						firstSize = -firstSize;
+					}
 					// Loop on the type 2 clusters
 					for (auto secondIt = allReactants2.begin();
 							secondIt != allReactants2.end(); secondIt++) {
@@ -332,15 +345,10 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 						// Only proceed if at least one reactant is mobile
 						if ((*firstIt)->getDiffusionFactor() > 0.0
 								|| (*secondIt)->getDiffusionFactor() > 0.0) {
-							// Check if type 1 is vacancy type
-					    if (typeName1 == vType || typeName1 == faultedType ||
-								  typeName1 == voidType) {
-							  firstSize = -firstSize;
-							}
 							// Check if type 2 is vacancy type
-							if (typeName2 == vType || typeName2 == faultedType ||
-								  typeName2 == voidType) {
-							  secondSize = -secondSize;
+							if (typeName2 == vType || typeName2 == faultedType
+									|| typeName2 == voidType) {
+								secondSize = -secondSize;
 							}
 							// Find product size
 							productSize = firstSize + secondSize;
@@ -348,97 +356,136 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 							if (productSize > 0) {
 								// Get the products
 								IReactant * product = nullptr;
-							  auto product1 = get(iType, productSize);
+								auto product1 = get(iType, productSize);
 								IReactant * product2 = nullptr;
-								if (typeName1 == perfectType || typeName2 == perfectType) {
+								if (typeName1 == perfectType
+										|| typeName2 == perfectType) {
 									product2 = get(perfectType, productSize);
 								}
-							  auto product3 = get(frankType, productSize);
-							  // Check which product if any is produced
+								auto product3 = get(frankType, productSize);
+								// Check which product if any is produced
 								bool isReaction = true;
 								if (product1) {
 									product = get(iType, productSize);
-								}
-								else if (product2) {
+								} else if (product2) {
 									product = get(perfectType, productSize);
-								}
-								else if (product3) {
+								} else if (product3) {
 									product = get(frankType, productSize);
-								}
-								else {
+								} else {
 									isReaction = false;
 									// Throw an warning?
 								}
 								// Create reaction and connectivity if there is a reaction
 								if (isReaction) {
-								  // Create a production reaction
-								  auto reaction =
-											std::make_shared<ProductionReaction>((*firstIt),
-								  		(*secondIt));
-								  // Tell the reactants that they are in this reaction
-								  (*firstIt)->createCombination(reaction);
-								  (*secondIt)->createCombination(reaction);
-								  product->createProduction(reaction);
+									// Create a production reaction
+									auto reaction = std::make_shared<
+											ProductionReaction>((*firstIt),
+											(*secondIt));
+									// Tell the reactants that they are in this reaction
+									(*firstIt)->createCombination(reaction);
+									(*secondIt)->createCombination(reaction);
+									product->createProduction(reaction);
 
-								  // Check if the reverse reaction is allowed
-								  checkDissociationConnectivity(product, reaction);
-							  }
+									std::cout << (*firstIt)->getName() << " + "
+											<< (*secondIt)->getName() << " -> "
+											<< product->getName() << std::endl;
+
+									// Check if the reverse reaction is allowed
+									checkDissociationConnectivity(product,
+											reaction);
+								}
 							}
 							// Vacancy type product
 							else if (productSize < 0) {
 								productSize = -productSize;
 								// Get the products
 								IReactant * product = nullptr;
-							  auto product1 = get(vType, productSize);
+								auto product1 = get(vType, productSize);
 								IReactant * product2 = nullptr;
-								if ((typeName1 != voidType && typeName2 != voidType) &&
-								    (typeName1 != vType || typeName2 != vType)){
+								if ((typeName1 != voidType
+										&& typeName2 != voidType)
+										&& (typeName1 != vType
+												|| typeName2 != vType)) {
 									product2 = get(faultedType, productSize);
 								}
-							  auto product3 = get(voidType, productSize);
-							  // Check which product if any is produced
+								auto product3 = get(voidType, productSize);
+								// Check which product if any is produced
 								bool isReaction = true;
 								if (product1) {
 									product = get(vType, productSize);
-								}
-								else if (product2) {
+								} else if (product2) {
 									product = get(faultedType, productSize);
-								}
-								else if (product3) {
+								} else if (product3) {
 									product = get(voidType, productSize);
-								}
-								else {
+								} else {
 									isReaction = false;
 									// Throw a warning?
 								}
 								// Create reaction and connectivity if there is a reaction
 								if (isReaction) {
-								  // Create a production reaction
-								  auto reaction =
-											std::make_shared<ProductionReaction>((*firstIt),
-								  		(*secondIt));
-								  // Tell the reactants that they are in this reaction
-								  (*firstIt)->createCombination(reaction);
-								  (*secondIt)->createCombination(reaction);
-								  product->createProduction(reaction);
+									// Create a production reaction
+									auto reaction = std::make_shared<
+											ProductionReaction>((*firstIt),
+											(*secondIt));
+									// Tell the reactants that they are in this reaction
+									(*firstIt)->createCombination(reaction);
+									(*secondIt)->createCombination(reaction);
+									product->createProduction(reaction);
 
-								  // Check if the reverse reaction is allowed
-								  checkDissociationConnectivity(product, reaction);
-							  }
+									std::cout << (*firstIt)->getName() << " + "
+											<< (*secondIt)->getName() << " -> "
+											<< product->getName() << std::endl;
+
+									// Check if the reverse reaction is allowed
+									checkDissociationConnectivity(product,
+											reaction);
+								}
 							}
 							// Recombination
 							else {
 								// Create a production reaction
-								auto reaction = std::make_shared<ProductionReaction>(
-										(*firstIt), (*secondIt));
+								auto reaction = std::make_shared<
+										ProductionReaction>((*firstIt),
+										(*secondIt));
 								// Tell the reactants that they are in this reaction
 								(*firstIt)->createCombination(reaction);
 								(*secondIt)->createCombination(reaction);
+
+								std::cout << (*firstIt)->getName() << " + "
+										<< (*secondIt)->getName() << std::endl;
 							}
 						}
 					}
 				}
 
+			}
+		}
+	}
+
+	// One way reaction faulted loop to vacancy and vacancy cluster
+	{
+		auto allFaulted = getAll(faultedType);
+		int minSize = 0;
+		for (auto it = allFaulted.begin(); it != allFaulted.end(); ++it) {
+			int faultedSize = (*it)->getSize();
+			if (minSize == 0) {
+				minSize = faultedSize;
+			}
+			else if (faultedSize < minSize) {
+				minSize = faultedSize;
+			}
+		}
+		auto product = get(faultedType, minSize);
+		auto reactant1 = get(vType, 1);
+		auto reactant2 = get(vType, (minSize - 1));
+		if (product && reactant1 && reactant2) {
+			  if (reactant1->getDiffusionFactor() > 0.0
+				  	|| reactant2->getDiffusionFactor() > 0.0) {
+			    auto reaction = std::make_shared<
+					    ProductionReaction>((reactant1),
+					    (reactant2));
+			    checkDissociationConnectivity(product,
+					    reaction);
 			}
 		}
 	}
@@ -461,9 +508,9 @@ void AlloyClusterReactionNetwork::checkDissociationConnectivity(
 		return;
 	}
 	// Only allow vacancy type reactions to be reversible
-	else if (firstName == iType || firstName == frankType ||
-		  firstName == perfectType || secondName == iType || secondName == frankType
-		  || secondName == perfectType) {
+	else if (firstName == iType || firstName == frankType
+			|| firstName == perfectType || secondName == iType
+			|| secondName == frankType || secondName == perfectType) {
 		return;
 	}
 
@@ -477,6 +524,10 @@ void AlloyClusterReactionNetwork::checkDissociationConnectivity(
 	reaction->first->createDissociation(dissociationReaction);
 	reaction->second->createDissociation(dissociationReaction);
 	emittingReactant->createEmission(dissociationReaction);
+
+	std::cout << (emittingReactant)->getName() << " -> "
+			<< reaction->first->getName() << " + "
+			<< reaction->second->getName() << std::endl;
 
 	return;
 }
