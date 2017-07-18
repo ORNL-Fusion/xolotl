@@ -21,7 +21,8 @@ AlloyCluster::AlloyCluster() :
 	return;
 }
 
-AlloyCluster::AlloyCluster(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+AlloyCluster::AlloyCluster(
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		Reactant(registry) {
 	// Set the reactant name appropriately
 	name = "AlloyCluster";
@@ -55,22 +56,19 @@ AlloyCluster::AlloyCluster(AlloyCluster &other) :
 	return;
 }
 
-void AlloyCluster::createProduction(std::shared_ptr<ProductionReaction> reaction) {
+void AlloyCluster::createProduction(
+		std::shared_ptr<ProductionReaction> reaction) {
 	// Create a cluster pair from the given reaction
 	ClusterPair pair((AlloyCluster *) reaction->first,
 			(AlloyCluster *) reaction->second);
 	// Add the pair to the list
 	reactingPairs.push_back(pair);
-	// Setup the connectivity array
-	setReactionConnectivity(reaction->first->getId());
-	setReactionConnectivity(reaction->second->getId());
 
 	return;
 }
 
 void AlloyCluster::createCombination(
 		std::shared_ptr<ProductionReaction> reaction) {
-	setReactionConnectivity(id);
 	// Look for the other cluster
 	IReactant * secondCluster;
 	if (reaction->first->getId() == id)
@@ -82,10 +80,6 @@ void AlloyCluster::createCombination(
 	CombiningCluster combCluster((AlloyCluster *) secondCluster);
 	// Push the product into the list of clusters that combine with this one
 	combiningReactants.push_back(combCluster);
-
-	// Setup the connectivity array
-	setReactionConnectivity(id);
-	setReactionConnectivity(secondCluster->getId());
 
 	return;
 }
@@ -106,21 +100,16 @@ void AlloyCluster::createDissociation(
 	// Add the pair to the dissociating pair vector
 	dissociatingPairs.push_back(pair);
 
-	// Setup the connectivity array
-	setDissociationConnectivity(reaction->dissociating->getId());
-
 	return;
 }
 
-void AlloyCluster::createEmission(std::shared_ptr<DissociationReaction> reaction) {
+void AlloyCluster::createEmission(
+		std::shared_ptr<DissociationReaction> reaction) {
 	// Create the pair of emitted clusters
 	ClusterPair pair((AlloyCluster *) reaction->first,
 			(AlloyCluster *) reaction->second);
 	// Add the pair to the emission pair vector
 	emissionPairs.push_back(pair);
-
-	// Setup the connectivity array to itself
-	setReactionConnectivity(id);
 
 	return;
 }
@@ -136,7 +125,8 @@ void AlloyCluster::optimizeReactions() {
 		// Link it to the pair
 		(*it).reaction = newReaction;
 	}
-	for (auto it = combiningReactants.begin(); it != combiningReactants.end(); it++) {
+	for (auto it = combiningReactants.begin(); it != combiningReactants.end();
+			it++) {
 		// Create the corresponding production reaction
 		auto newReaction = std::make_shared<ProductionReaction>((*it).combining,
 				this);
@@ -145,7 +135,8 @@ void AlloyCluster::optimizeReactions() {
 		// Link it to the pair
 		(*it).reaction = newReaction;
 	}
-	for (auto it = dissociatingPairs.begin(); it != dissociatingPairs.end(); it++) {
+	for (auto it = dissociatingPairs.begin(); it != dissociatingPairs.end();
+			it++) {
 		// Create the corresponding dissociation reaction
 		auto newReaction = std::make_shared<DissociationReaction>((*it).first,
 				(*it).second, this);
@@ -156,8 +147,8 @@ void AlloyCluster::optimizeReactions() {
 	}
 	for (auto it = emissionPairs.begin(); it != emissionPairs.end(); it++) {
 		// Create the corresponding dissociation reaction
-		auto newReaction = std::make_shared<DissociationReaction>(this, (*it).first,
-				(*it).second);
+		auto newReaction = std::make_shared<DissociationReaction>(this,
+				(*it).first, (*it).second);
 		// Add it to the network
 		newReaction = network->addDissociationReaction(newReaction);
 		// Link it to the pair

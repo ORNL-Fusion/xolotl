@@ -831,6 +831,7 @@ void AlloyClusterReactionNetwork::reinitializeNetwork() {
 	for (auto it = allReactants->begin(); it != allReactants->end(); ++it) {
 		id++;
 		(*it)->setId(id);
+		(*it)->setMomentId(id);
 
 		(*it)->optimizeReactions();
 	}

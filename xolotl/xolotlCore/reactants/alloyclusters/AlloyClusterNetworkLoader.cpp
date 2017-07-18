@@ -206,6 +206,8 @@ void AlloyClusterNetworkLoader::applyGrouping(
 
 		// Get all the reactants of this type
 		auto allTypeReactants = network->getAll(typeName);
+		// Get the biggest size
+		int sizeMax = allTypeReactants[allTypeReactants.size()-1]->getSize();
 
 		// Create a temporary vector for the loop
 		std::vector<AlloyCluster *> tempVector;
@@ -222,7 +224,7 @@ void AlloyClusterNetworkLoader::applyGrouping(
 		std::map<int, AlloySuperCluster *> superGroupMap;
 
 		// Loop on the xenon groups
-		for (int k = sizeMin; k <= allTypeReactants.size(); k++) {
+		for (int k = sizeMin; k <= sizeMax; k++) {
 			// Get the corresponding cluster
 			cluster = (AlloyCluster *) network->get(typeName, k);
 
@@ -243,7 +245,7 @@ void AlloyClusterNetworkLoader::applyGrouping(
 			clusterGroupMap[k] = superCount;
 
 			// Check if there were clusters in this group
-			if (count < width && k < allTypeReactants.size())
+			if (count < width && k < sizeMax)
 				continue;
 
 			// Average all values
@@ -268,7 +270,7 @@ void AlloyClusterNetworkLoader::applyGrouping(
 			count = 0;
 			tempVector.clear();
 			superCount++;
-			width = std::max((int) std::pow((double) superCount, 3.0),
+			width = std::max((int) (std::pow((double) superCount, 3.0) / 10.0),
 					sectionWidth);
 			width -= width % sectionWidth;
 		}

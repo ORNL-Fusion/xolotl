@@ -163,10 +163,10 @@ double AlloySuperCluster::getTotalAtomConcentration() const {
 	return conc;
 }
 
-double AlloySuperCluster::getDistance(int xe) const {
+double AlloySuperCluster::getDistance(int atom) const {
 	if (sectionWidth == 1)
 		return 0.0;
-	return 2.0 * (double) (xe - numAtom) / ((double) sectionWidth - 1.0);
+	return 2.0 * (double) (atom - numAtom) / ((double) sectionWidth - 1.0);
 }
 
 void AlloySuperCluster::computeDispersion() {
