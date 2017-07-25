@@ -63,7 +63,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Don't do anything if it is not on the stride
-	if ((int) (time / hdf5Stride3D) == hdf5Previous3D)
+	if ((int) ((time + time / 1000.0) / hdf5Stride3D) == hdf5Previous3D)
 		PetscFunctionReturn(0);
 
 	// Update the previous time

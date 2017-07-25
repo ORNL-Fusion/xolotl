@@ -80,7 +80,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Don't do anything if it is not on the stride
-	if ((int) (time / hdf5Stride1D) == hdf5Previous1D)
+	if ((int) ((time + time / 1000.0) / hdf5Stride1D) == hdf5Previous1D)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
