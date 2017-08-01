@@ -88,10 +88,9 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
 	CHKERRQ(ierr);
 	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -179,14 +178,42 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 			if (concSize == 0)
 				continue;
 
-			// All processes must create the dataset
-			xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i, j);
-
-			// If it is the locally owned part of the grid
+			// Transfer the data everywhere from the local grid
 			if (i >= xs && i < xs + xm && j >= ys && j < ys + ym) {
-				// Fill the dataset
-				xolotlCore::HDF5Utils::fillConcentrations(concVector, i, j);
+				// Loop on all the processes
+				for (int l = 0; l < worldSize; l++) {
+					// Skip its own
+					if (l == procId)
+						continue;
+					// Loop on the size of the vector
+					for (int k = 0; k < concSize; k++) {
+						// Send both information
+						MPI_Send(&concVector[k][0], 1, MPI_DOUBLE, l, 1,
+								PETSC_COMM_WORLD);
+						MPI_Send(&concVector[k][1], 1, MPI_DOUBLE, l, 2,
+								PETSC_COMM_WORLD);
+					}
+				}
+			} else {
+				// Receive the data from the local grid so that all processes have the same data
+				double index = 0, conc = 0;
+				for (int k = 0; k < concSize; k++) {
+					std::vector<double> vec;
+					MPI_Recv(&index, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 1,
+							PETSC_COMM_WORLD,
+							MPI_STATUS_IGNORE);
+					MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
+							PETSC_COMM_WORLD,
+							MPI_STATUS_IGNORE);
+					vec.push_back(index);
+					vec.push_back(conc);
+					concVector.push_back(vec);
+				}
 			}
+
+			// All processes create the dataset and fill it
+			xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i, j);
+			xolotlCore::HDF5Utils::fillConcentrations(concVector, i, j);
 		}
 	}
 
@@ -282,9 +309,9 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 		// Get the total size of the grid rescale the concentrations
 		PetscInt Mx, My;
 		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE);
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE);
 		CHKERRQ(ierr);
 
 		// Compute the total surface irradiated by the helium flux
@@ -358,10 +385,9 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the total size of the grid rescale the concentrations
 	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid and its length
@@ -480,10 +506,9 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
 	CHKERRQ(ierr);
 	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -644,10 +669,9 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1072,10 +1096,9 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 
 	// Get the total size of the grid
 	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 	checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetInfo failed.");
 
@@ -1090,27 +1113,32 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		if (!flag)
 			hdf5Stride2D = 1.0;
 
-		// Initialize the HDF5 file for all the processes
-		xolotlCore::HDF5Utils::initializeFile(hdf5OutputName2D);
+		// Don't do anything if both files have the same name
+		if (hdf5OutputName2D != solverHandler->getNetworkName()) {
 
-		// Get the solver handler
-		auto solverHandler = PetscSolver::getSolverHandler();
+			// Initialize the HDF5 file for all the processes
+			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName2D);
 
-		// Get the physical grid in the x direction
-		auto grid = solverHandler->getXGrid();
+			// Get the solver handler
+			auto solverHandler = PetscSolver::getSolverHandler();
 
-		// Setup step size variables
-		double hy = solverHandler->getStepSizeY();
+			// Get the physical grid in the x direction
+			auto grid = solverHandler->getXGrid();
 
-		// Save the header in the HDF5 file
-		xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0], My, hy);
+			// Setup step size variables
+			double hy = solverHandler->getStepSizeY();
 
-		// Save the network in the HDF5 file
-		if (!solverHandler->getNetworkName().empty())
-			xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
+			// Save the header in the HDF5 file
+			xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0], My, hy);
 
-		// Finalize the HDF5 file
-		xolotlCore::HDF5Utils::finalizeFile();
+			// Save the network in the HDF5 file
+			if (!solverHandler->getNetworkName().empty())
+				xolotlCore::HDF5Utils::fillNetwork(
+						solverHandler->getNetworkName());
+
+			// Finalize the HDF5 file
+			xolotlCore::HDF5Utils::finalizeFile();
+		}
 
 		// startStop2D will be called at each timestep
 		ierr = TSMonitorSet(ts, startStop2D, NULL, NULL);

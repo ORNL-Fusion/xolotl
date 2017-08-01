@@ -108,9 +108,9 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -155,7 +155,6 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 			gridPointSolution = solutionArray[i];
 
 			// Loop on the concentrations
-			concVector.clear();
 			for (int l = 0; l < dof; l++) {
 				if (gridPointSolution[l] > 1.0e-16
 						|| gridPointSolution[l] < -1.0e-16) {
@@ -185,21 +184,49 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 		// Else: only receive the conc size
 		else {
 			MPI_Recv(&concSize, 1, MPI_INT, MPI_ANY_SOURCE, 0, PETSC_COMM_WORLD,
-					MPI_STATUS_IGNORE);
+			MPI_STATUS_IGNORE);
 		}
 
 		// Skip the grid point if the size is 0
 		if (concSize == 0)
 			continue;
 
-		// All processes must create the dataset
-		xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i);
-
-		// If it is the locally owned part of the grid
+		// Transfer the data everywhere from the local grid
 		if (i >= xs && i < xs + xm) {
-			// Fill the dataset
-			xolotlCore::HDF5Utils::fillConcentrations(concVector, i);
+			// Loop on all the processes
+			for (int l = 0; l < worldSize; l++) {
+				// Skip its own
+				if (l == procId)
+					continue;
+				// Loop on the size of the vector
+				for (int k = 0; k < concSize; k++) {
+					// Send both information
+					MPI_Send(&concVector[k][0], 1, MPI_DOUBLE, l, 1,
+							PETSC_COMM_WORLD);
+					MPI_Send(&concVector[k][1], 1, MPI_DOUBLE, l, 2,
+							PETSC_COMM_WORLD);
+				}
+			}
+		} else {
+			// Receive the data from the local grid so that all processes have the same data
+			double index = 0, conc = 0;
+			for (int k = 0; k < concSize; k++) {
+				std::vector<double> vec;
+				MPI_Recv(&index, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 1,
+						PETSC_COMM_WORLD,
+						MPI_STATUS_IGNORE);
+				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
+						PETSC_COMM_WORLD,
+						MPI_STATUS_IGNORE);
+				vec.push_back(index);
+				vec.push_back(conc);
+				concVector.push_back(vec);
+			}
 		}
+
+		// All processes create the dataset and fill it
+		xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i);
+		xolotlCore::HDF5Utils::fillConcentrations(concVector, i);
 	}
 
 	// Finalize the HDF5 file
@@ -514,9 +541,9 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the array of concentration
@@ -894,9 +921,9 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 	// Get the solver handler
@@ -961,7 +988,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 			for (int i = 0; i < networkSize - superClusters.size(); i++) {
 				double conc = 0.0;
 				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10,
-						MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				// Create a Point with conc as the value
 				// and add it to myPoints
 				xolotlViz::Point aPoint;
@@ -980,7 +1007,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 				for (int k = 0; k < width; k++) {
 					double conc = 0.0;
 					MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10,
-							MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+					MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					// Create a Point with conc as the value
 					// and add it to myPoints
 					xolotlViz::Point aPoint;
@@ -1032,7 +1059,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 			for (int i = 0; i < networkSize - superClusters.size(); i++) {
 				// Send the value of each concentration to the master process
 				MPI_Send(&gridPointSolution[i], 1, MPI_DOUBLE, 0, 10,
-						MPI_COMM_WORLD);
+				MPI_COMM_WORLD);
 			}
 			int nXe = networkSize - superClusters.size() + 1;
 			for (int i = 0; i < superClusters.size(); i++) {
@@ -1141,19 +1168,19 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 			// Get the size of the local grid of that process
 			int localSize = 0;
 			MPI_Recv(&localSize, 1, MPI_INT, i, 20, PETSC_COMM_WORLD,
-					MPI_STATUS_IGNORE);
+			MPI_STATUS_IGNORE);
 
 			// Loop on their grid
 			for (int k = 0; k < localSize; k++) {
 				// Get the position
 				MPI_Recv(&x, 1, MPI_DOUBLE, i, 21, PETSC_COMM_WORLD,
-						MPI_STATUS_IGNORE);
+				MPI_STATUS_IGNORE);
 
 				for (int j = 0; j < loopSize; j++) {
 					// and the concentrations
 					double conc = 0.0;
 					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 22, PETSC_COMM_WORLD,
-							MPI_STATUS_IGNORE);
+					MPI_STATUS_IGNORE);
 
 					// Create a Point with the concentration[i] as the value
 					// and add it to myPoints
@@ -2233,24 +2260,24 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 				"setupPetsc1DMonitor: PetscOptionsGetInt (-start_stop) failed.");
 		if (!flag)
 			hdf5Stride1D = 1.0;
-
-		PetscInt Mx;
-		PetscErrorCode ierr;
-
-		// Get the da from ts
-		DM da;
-		ierr = TSGetDM(ts, &da);
-		checkPetscError(ierr, "setupPetsc1DMonitor: TSGetDM failed.");
-
-		// Get the size of the total grid
-		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE);
 		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 		// Don't do anything if both files have the same name
 		if (hdf5OutputName1D != solverHandler->getNetworkName()) {
+
+			PetscInt Mx;
+			PetscErrorCode ierr;
+
+			// Get the da from ts
+			DM da;
+			ierr = TSGetDM(ts, &da);
+			checkPetscError(ierr, "setupPetsc1DMonitor: TSGetDM failed.");
+
+			// Get the size of the total grid
+			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE);
 			// Initialize the HDF5 file for all the processes
 			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
 

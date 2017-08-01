@@ -173,12 +173,6 @@ void HDF5Utils::addConcentrationSubGroup(int timeStep, double time,
 	status = H5Awrite(attributeId, H5T_STD_I32LE, &timeStep);
 	status = H5Aclose(attributeId);
 
-	// Create property list for independent dataset write
-	// (needed to be able to write the datasets without having
-	// HDF5 screaming).
-	propertyListId = H5Pcreate(H5P_DATASET_XFER);
-	status = H5Pset_dxpl_mpio(propertyListId, H5FD_MPIO_INDEPENDENT);
-
 	return;
 }
 
@@ -355,10 +349,6 @@ void HDF5Utils::addConcentrationDataset(int size, int i, int j, int k) {
 	H5T_IEEE_F64LE, concDataspaceId,
 	H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-	// Create property list for independent dataset write.
-	propertyListId = H5Pcreate(H5P_DATASET_XFER);
-	status = H5Pset_dxpl_mpio(propertyListId, H5FD_MPIO_INDEPENDENT);
-
 	// Close everything
 	status = H5Sclose(concDataspaceId);
 	status = H5Dclose(datasetId);
@@ -388,7 +378,7 @@ void HDF5Utils::fillConcentrations(
 
 	// Write concArray in the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			propertyListId, &concArray);
+			H5P_DEFAULT, &concArray);
 
 	// Close everything
 	status = H5Dclose(datasetId);
@@ -407,7 +397,6 @@ void HDF5Utils::finalizeFile() {
 
 void HDF5Utils::closeFile() {
 	// Close everything
-	status = H5Pclose(propertyListId);
 	status = H5Gclose(subConcGroupId);
 	status = H5Gclose(concentrationGroupId);
 	status = H5Fclose(fileId);
