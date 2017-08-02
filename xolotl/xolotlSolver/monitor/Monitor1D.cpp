@@ -731,12 +731,12 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 
 			// If this is not the master process, send the value
 			if (procId != 0) {
-				MPI_Send(&heLocalConc, 1, MPI_DOUBLE, 0, 2, PETSC_COMM_WORLD);
+				MPI_Send(&heLocalConc, 1, MPI_DOUBLE, 0, 3, PETSC_COMM_WORLD);
 			}
 		}
 		// If this process is not in charge of xi but is the master one, receive the value
 		else if (procId == 0) {
-			MPI_Recv(&heLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
+			MPI_Recv(&heLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 3,
 					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 
@@ -845,18 +845,18 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 
 			// If this is not the master process, send the values
 			if (procId != 0) {
-				MPI_Send(&heLocalConc, 1, MPI_DOUBLE, 0, 2, PETSC_COMM_WORLD);
-				MPI_Send(&vLocalConc, 1, MPI_DOUBLE, 0, 3, PETSC_COMM_WORLD);
-				MPI_Send(&iLocalConc, 1, MPI_DOUBLE, 0, 4, PETSC_COMM_WORLD);
+				MPI_Send(&heLocalConc, 1, MPI_DOUBLE, 0, 4, PETSC_COMM_WORLD);
+				MPI_Send(&vLocalConc, 1, MPI_DOUBLE, 0, 5, PETSC_COMM_WORLD);
+				MPI_Send(&iLocalConc, 1, MPI_DOUBLE, 0, 6, PETSC_COMM_WORLD);
 			}
 		}
 		// If this process is not in charge of xi but is the master one, receive the values
 		else if (procId == 0) {
-			MPI_Recv(&heLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
+			MPI_Recv(&heLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 4,
 					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-			MPI_Recv(&vLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 3,
+			MPI_Recv(&vLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 5,
 					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-			MPI_Recv(&vLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 4,
+			MPI_Recv(&vLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 6,
 					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 
@@ -1519,12 +1519,12 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 
 			// If this is not the master process, send the values
 			if (procId != 0) {
-				MPI_Send(&heliumMean, 1, MPI_DOUBLE, 0, 5, PETSC_COMM_WORLD);
+				MPI_Send(&heliumMean, 1, MPI_DOUBLE, 0, 7, PETSC_COMM_WORLD);
 			}
 		}
 		// If this process is not in charge of xi but is the master one, receive the value
 		else if (procId == 0) {
-			MPI_Recv(&heliumMean, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 5,
+			MPI_Recv(&heliumMean, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 7,
 					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 
