@@ -295,7 +295,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 			for (PetscInt xi = xs; xi < xs + xm; xi++) {
 
 				// Boundary conditions
-				if (xi <= surfacePos || xi == grid.size() - 1)
+				if (xi <= surfacePos)
 					continue;
 
 				// Get the pointer to the beginning of the solution data for
@@ -955,7 +955,7 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time, Vec solution,
 	double dt = time - previousTime;
 
 	// Compute the prefactor for the probability (arbitrary)
-	double prefactor = fluxAmplitude * dt * 0.05;
+	double prefactor = fluxAmplitude * dt * 0.1;
 
 	// Loop on the grid
 	for (zk = zs; zk < zs + zm; zk++) {

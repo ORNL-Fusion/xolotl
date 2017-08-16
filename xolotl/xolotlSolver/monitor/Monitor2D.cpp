@@ -280,7 +280,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
 
 			// Boundary conditions
-			if (xi <= surfacePos || xi == grid.size() - 1)
+			if (xi <= surfacePos)
 				continue;
 
 			// Get the pointer to the beginning of the solution data for this grid point
@@ -390,9 +390,8 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
-	// Get the physical grid and its length
+	// Get the physical grid
 	auto grid = solverHandler->getXGrid();
-	int xSize = grid.size();
 
 	// Get the array of concentration
 	double ***solutionArray, *gridPointSolution;
@@ -408,7 +407,7 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Loop on the entire grid
-	for (int xi = 0; xi < xSize; xi++) {
+	for (int xi = 0; xi < Mx; xi++) {
 		// Wait for everybody at each grid point
 		MPI_Barrier(PETSC_COMM_WORLD);
 
@@ -423,7 +422,7 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 			// Get the surface position
 			int surfacePos = solverHandler->getSurfacePosition(yj);
 			// Boundary conditions
-			if (xi <= surfacePos || xi == grid.size() - 1)
+			if (xi <= surfacePos)
 				continue;
 
 			// If it is the locally owned part of the grid
@@ -926,7 +925,7 @@ PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time, Vec solution,
 	double dt = time - previousTime;
 
 	// Compute the prefactor for the probability (arbitrary)
-	double prefactor = fluxAmplitude * dt * 0.05;
+	double prefactor = fluxAmplitude * dt * 0.1;
 
 	// Loop on the grid
 	for (yj = ys; yj < ys + ym; yj++) {

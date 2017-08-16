@@ -84,8 +84,8 @@ protected:
 
 		// Check if the user wants a regular grid
 		if (useRegularGrid) {
-			// The grid will me made of nx points separated by hx nm
-			for (int l = 0; l < nx; l++) {
+			// The grid will me made of nx + 1 points separated by hx nm
+			for (int l = 0; l <= nx; l++) {
 				grid.push_back((double) l * hx);
 			}
 		}
@@ -94,31 +94,26 @@ protected:
 		else {
 			// Initialize the value of the previous point
 			double previousPoint = 0.0;
-			// The first grid point will be at x = 0.0
-			grid.push_back(0.0);
 
-			// The loop starts at 1 because the first grid point was
-			// already added to the grid vector
-			for (int l = 1; l < nx; l++) {
+			// Loop on all the grid points
+			for (int l = 0; l <= nx; l++) {
+				// Add the previous point
+				grid.push_back(previousPoint);
 				// 0.1nm step near the surface (x < 2.5nm)
-				if (l < surfacePos + 26) {
-					grid.push_back(previousPoint + 0.1);
+				if (l < surfacePos + 25) {
 					previousPoint += 0.1;
 				}
 				// Then 0.25nm (2.5nm < x < 5.0nm)
-				else if (l < surfacePos + 36) {
-					grid.push_back(previousPoint + 0.25);
+				else if (l < surfacePos + 35) {
 					previousPoint += 0.25;
 				}
 				// Then 0.5nm (5.0nm < x < 7.5nm)
-				else if (l < surfacePos + 41) {
-					grid.push_back(previousPoint + 0.5);
+				else if (l < surfacePos + 40) {
 					previousPoint += 0.5;
 				}
 				// 1.0nm step size for all the other ones
 				// (7.5nm < x)
 				else {
-					grid.push_back(previousPoint + 1.0);
 					previousPoint += 1.0;
 				}
 			}

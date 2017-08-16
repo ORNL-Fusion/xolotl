@@ -24,7 +24,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, nX, dof, 1,
+	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR, nX, dof, 1,
 	NULL, &da);
 	checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: "
 			"DMDACreate1d failed.");
@@ -151,9 +151,6 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
-	// Get the total size of the grid for the boundary conditions
-	int xSize = grid.size();
-
 	// Give the surface position to the temperature handler
 	temperatureHandler->updateSurfacePosition(grid[surfacePosition]);
 
@@ -194,7 +191,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 				0.0);
 
 		// Initialize the vacancy concentration
-		if (i > surfacePosition && i < xSize - 1 && singleVacancyCluster
+		if (i > surfacePosition && singleVacancyCluster
 				&& !hasConcentrations) {
 			concOffset[vacancyIndex] = initialVConc;
 		}
@@ -203,7 +200,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
 		// Loop on the full grid
-		for (int i = 0; i < xSize; i++) {
+		for (int i = 0; i < nX; i++) {
 			// Read the concentrations from the HDF5 file
 			auto concVector = xolotlCore::HDF5Utils::readGridPoint(networkName,
 					tempTimeStep, i);
@@ -240,9 +237,6 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	checkPetscError(ierr, "PetscSolver1DHandler::updateConcentration: "
 			"TSGetDM failed.");
 
-	// Get the total size of the grid for the boundary conditions
-	int xSize = grid.size();
-
 	// Pointers to the PETSc arrays that start at the beginning (xs) of the
 	// local array!
 	PetscScalar **concs = nullptr, **updatedConcs = nullptr;
@@ -275,7 +269,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// near the surface
 	for (int xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
-		if (xi <= surfacePosition || xi == xSize - 1)
+		if (xi <= surfacePosition)
 			continue;
 
 		// We are only interested in the helium near the surface
@@ -312,7 +306,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 		// Boundary conditions
 		// Everything to the left of the surface is empty
-		if (xi <= surfacePosition || xi == xSize - 1) {
+		if (xi <= surfacePosition) {
 			for (int i = 0; i < dof; i++) {
 				updatedConcOffset[i] = 1.0 * concOffset[i];
 			}
@@ -406,9 +400,6 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	checkPetscError(ierr, "PetscSolver1DHandler::computeOffDiagonalJacobian: "
 			"TSGetDM failed.");
 
-	// Get the total size of the grid for the boundary conditions
-	int xSize = grid.size();
-
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = network->getDOF();
 
@@ -455,7 +446,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
 		// Everything to the left of the surface is empty
-		if (xi <= surfacePosition || xi == xSize - 1)
+		if (xi <= surfacePosition)
 			continue;
 
 		// Set the grid position
@@ -583,9 +574,6 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	checkPetscError(ierr, "PetscSolver1DHandler::computeDiagonalJacobian: "
 			"TSGetDM failed.");
 
-	// Get the total size of the grid for the boundary conditions
-	int xSize = grid.size();
-
 	// Get pointers to vector data
 	PetscScalar **concs = nullptr;
 	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
@@ -614,7 +602,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	// near the surface
 	for (int xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
-		if (xi <= surfacePosition || xi == xSize - 1)
+		if (xi <= surfacePosition)
 			continue;
 
 		// We are only interested in the helium near the surface
@@ -659,7 +647,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
 		// Everything to the left of the surface is empty
-		if (xi <= surfacePosition || xi == xSize - 1)
+		if (xi <= surfacePosition)
 			continue;
 
 		// Set the grid position
