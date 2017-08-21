@@ -903,6 +903,7 @@ PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
 	if (procId == 0) {
 		if (timestep == 0) {
 			gridFile.open("grid.dat",std::fstream::out);
+			gridFile << std::setprecision(14);
 			for (int i = 0; i < xSize; i++)
 				gridFile << grid[i] << std::endl;
 			gridFile.close();
@@ -938,6 +939,12 @@ PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
 			voidTypeOut.open("voidType.dat",
 			    std::fstream::out|std::fstream::app);
 		}
+		iTypeOut << std::setprecision(14);
+		frankTypeOut << std::setprecision(14);
+		perfectTypeOut << std::setprecision(14);
+		vTypeOut << std::setprecision(14);
+		faultedTypeOut << std::setprecision(14);
+		voidTypeOut << std::setprecision(14);
 	}
 
 	// Get degrees of freedom

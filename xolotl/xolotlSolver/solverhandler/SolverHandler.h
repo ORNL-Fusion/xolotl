@@ -94,14 +94,17 @@ protected:
 			// In that case hx correspond to the full length of the grid
 			for (int l = 1; l < nx - 1; l++) {
 				grid.push_back(
+					(hx/2.0) * (1.0 - cos(xolotlCore::pi * double(l) / double(nx-1)))
+				);
+				/*grid.push_back(
 						hx
 								* (0.5
 										- cos(
 												(double) (2 * l - 1)
 														* xolotlCore::pi
 														/ ((double) (2
-																* (nx - 2))))
-												* 0.5));
+															  * (nx - 2))))
+												* 0.5));*/
 			}
 			// The last grid point will be at x = hx
 			grid.push_back(hx);
