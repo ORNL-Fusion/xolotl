@@ -20,6 +20,8 @@
 #include <PSISuperCluster.h>
 #include <NEClusterReactionNetwork.h>
 #include <PSIClusterReactionNetwork.h>
+#include <../../xolotlCore/reactants/alloyclusters/AlloyClusterReactionNetwork.h>
+#include <../../xolotlCore/reactants/alloyclusters/AlloySuperCluster.h>
 
 namespace xolotlSolver {
 
@@ -850,6 +852,293 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeAlloy")
+/**
+ * This is a monitoring method that will compute the spatial averaged data
+ */
+PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void *ictx) {
+
+	// Initial declarations
+	PetscErrorCode ierr;
+	PetscInt xs, xm;
+
+	PetscFunctionBeginUser;
+
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+
+	// Gets the process ID
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Get the solver handler
+	auto solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the network
+	auto network = solverHandler->getNetwork();
+
+	// Get the position of the surface
+	int surfacePos = solverHandler->getSurfacePosition();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+	CHKERRQ(ierr);
+
+	// Get the physical grid and its length
+	auto grid = solverHandler->getXGrid();
+	int xSize = grid.size();
+
+  // output xGrid for reference
+	std::fstream gridFile;
+	if (procId == 0) {
+		if (timestep == 0) {
+			gridFile.open("grid.dat",std::fstream::out);
+			for (int i = 0; i < xSize; i++)
+				gridFile << grid[i] << std::endl;
+			gridFile.close();
+		}
+	}
+
+	// Get the array of concentration
+	PetscReal **solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Create/open the output files
+	std::fstream iTypeOut, vTypeOut, frankTypeOut, perfectTypeOut,
+	    faultedTypeOut, voidTypeOut;
+	if (procId == 0) {
+    if (timestep == 0) {
+		  iTypeOut.open("iType.dat",std::fstream::out);
+			vTypeOut.open("vType.dat",std::fstream::out);
+			frankTypeOut.open("frankType.dat",std::fstream::out);
+			perfectTypeOut.open("perfectType.dat",std::fstream::out);
+			faultedTypeOut.open("faultedType.dat",std::fstream::out);
+			voidTypeOut.open("voidType.dat",std::fstream::out);
+		}
+		else {
+			iTypeOut.open("iType.dat",std::fstream::out|std::fstream::app);
+			vTypeOut.open("vType.dat",std::fstream::out|std::fstream::app);
+			frankTypeOut.open("frankType.dat",
+			    std::fstream::out|std::fstream::app);
+			perfectTypeOut.open("perfectType.dat",
+			    std::fstream::out|std::fstream::app);
+			faultedTypeOut.open("faultedType.dat",
+			    std::fstream::out|std::fstream::app);
+			voidTypeOut.open("voidType.dat",
+			    std::fstream::out|std::fstream::app);
+		}
+	}
+
+	// Get degrees of freedom
+	auto networkDOF = network->getDOF();
+
+  // variable to hold thickness averaged values
+	std::vector<double> dataAvg(networkDOF,0.0);
+
+	// calculate thickness averaged values
+	for (int j = 0; j < networkDOF; ++j) {
+		for (int i = 0; i < (xSize - 1); ++i) {
+		  dataAvg[j] += 0.5 * (grid[i+1] - grid[i])
+			    * (solutionArray[i][j] + solutionArray[i+1][j]);
+		}
+		dataAvg[j] = dataAvg[j] / (grid[xSize-1]);
+	}
+
+	// Output iType concentration
+	if (procId == 0) {
+		auto reactants = network->getAll(iType);
+		iTypeOut << timestep << " " << time;
+    for (auto it = reactants.begin(); it != reactants.end(); ++it) {
+			iTypeOut << " " << dataAvg[(*it)->getId() - 1];
+		}
+		iTypeOut << std::endl;
+	}
+
+	// Output frankType concentration
+	if (procId == 0) {
+		auto reactants = network->getAll(frankType);
+		frankTypeOut << timestep << " " << time;
+    for (auto it = reactants.begin(); it != reactants.end(); ++it) {
+			frankTypeOut << " " << dataAvg[(*it)->getId() - 1];
+		}
+
+		auto supers = network->getAll(AlloyFrankSuperType);
+		for (auto it = supers.begin(); it != supers.end(); ++it) {
+			double conc = dataAvg[(*it)->getId()-1];
+			double mom = dataAvg[(*it)->getMomentId()-1];
+			int width = ((AlloySuperCluster *)(*it))->getSectionWidth();
+			if (width == 1) {
+				frankTypeOut << " " << conc;
+			}
+			else {
+				int minSize, maxSize;
+				int avgSize = (*it)->getSize();
+				if (width%2 == 0) {
+					minSize = avgSize - (width-2)/2;
+					maxSize = avgSize + width/2;
+				}
+				else {
+					minSize = avgSize - (width-1)/2;
+					maxSize = avgSize + (width-1)/2;
+				}
+				for (int i = minSize; i <= maxSize; ++i) {
+					double dist = 2.0 * double(i-minSize) / double(maxSize-minSize) - 1.0;
+					frankTypeOut << " " << (conc + dist * mom);
+				}
+			}
+		}
+
+		frankTypeOut << std::endl;
+	}
+
+	// Output perfectType concentration
+	if (procId == 0) {
+		auto reactants = network->getAll(perfectType);
+		perfectTypeOut << timestep << " " << time;
+    for (auto it = reactants.begin(); it != reactants.end(); ++it) {
+			perfectTypeOut << " " << dataAvg[(*it)->getId() - 1];
+		}
+
+		auto supers = network->getAll(AlloyPerfectSuperType);
+		for (auto it = supers.begin(); it != supers.end(); ++it) {
+			double conc = dataAvg[(*it)->getId()-1];
+			double mom = dataAvg[(*it)->getMomentId()-1];
+			int width = ((AlloySuperCluster *)(*it))->getSectionWidth();
+			if (width == 1) {
+				perfectTypeOut << " " << conc;
+			}
+			else {
+				int minSize, maxSize;
+				int avgSize = (*it)->getSize();
+				if (width%2 == 0) {
+					minSize = avgSize - (width-2)/2;
+					maxSize = avgSize + width/2;
+				}
+				else {
+					minSize = avgSize - (width-1)/2;
+					maxSize = avgSize + (width-1)/2;
+				}
+				for (int i = minSize; i <= maxSize; ++i) {
+					double dist = 2.0 * double(i-minSize) / double(maxSize-minSize) - 1.0;
+					perfectTypeOut << " " << (conc + dist * mom);
+				}
+			}
+		}
+
+		perfectTypeOut << std::endl;
+	}
+
+	// Output vType concentration
+	if (procId == 0) {
+		auto reactants = network->getAll(vType);
+		vTypeOut << timestep << " " << time;
+    for (auto it = reactants.begin(); it != reactants.end(); ++it) {
+			vTypeOut << " " << dataAvg[(*it)->getId() - 1];
+		}
+		vTypeOut << std::endl;
+	}
+
+	// Output faultedType concentration
+	if (procId == 0) {
+		auto reactants = network->getAll(faultedType);
+		faultedTypeOut << timestep << " " << time;
+    for (auto it = reactants.begin(); it != reactants.end(); ++it) {
+			faultedTypeOut << " " << dataAvg[(*it)->getId() - 1];
+		}
+
+		auto supers = network->getAll(AlloyFaultedSuperType);
+		for (auto it = supers.begin(); it != supers.end(); ++it) {
+			double conc = dataAvg[(*it)->getId()-1];
+			double mom = dataAvg[(*it)->getMomentId()-1];
+			int width = ((AlloySuperCluster *)(*it))->getSectionWidth();
+			if (width == 1) {
+				faultedTypeOut << " " << conc;
+			}
+			else {
+				int minSize, maxSize;
+				int avgSize = (*it)->getSize();
+				if (width%2 == 0) {
+					minSize = avgSize - (width-2)/2;
+					maxSize = avgSize + width/2;
+				}
+				else {
+					minSize = avgSize - (width-1)/2;
+					maxSize = avgSize + (width-1)/2;
+				}
+				for (int i = minSize; i <= maxSize; ++i) {
+					double dist = 2.0 * double(i-minSize) / double(maxSize-minSize) - 1.0;
+					faultedTypeOut << " " << (conc + dist * mom);
+				}
+			}
+		}
+
+		faultedTypeOut << std::endl;
+	}
+
+	// Output voidType concentration
+	if (procId == 0) {
+		auto reactants = network->getAll(voidType);
+		voidTypeOut << timestep << " " << time;
+    for (auto it = reactants.begin(); it != reactants.end(); ++it) {
+			voidTypeOut << " " << dataAvg[(*it)->getId() - 1];
+		}
+
+		auto supers = network->getAll(AlloyVoidSuperType);
+		for (auto it = supers.begin(); it != supers.end(); ++it) {
+			double conc = dataAvg[(*it)->getId()-1];
+			double mom = dataAvg[(*it)->getMomentId()-1];
+			int width = ((AlloySuperCluster *)(*it))->getSectionWidth();
+			if (width == 1) {
+				voidTypeOut << " " << conc;
+			}
+			else {
+				int minSize, maxSize;
+				int avgSize = (*it)->getSize();
+				if (width%2 == 0) {
+					minSize = avgSize - (width-2)/2;
+					maxSize = avgSize + width/2;
+				}
+				else {
+					minSize = avgSize - (width-1)/2;
+					maxSize = avgSize + (width-1)/2;
+				}
+				for (int i = minSize; i <= maxSize; ++i) {
+					double dist = 2.0 * double(i-minSize) / double(maxSize-minSize) - 1.0;
+					voidTypeOut << " " << (conc + dist * mom);
+				}
+			}
+		}
+
+		voidTypeOut << std::endl;
+	}
+
+  // close the output files
+  if (procId == 0) {
+		iTypeOut.close();
+		vTypeOut.close();
+		frankTypeOut.close();
+		perfectTypeOut.close();
+		faultedTypeOut.close();
+		voidTypeOut.close();
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+
 }
 
 #undef __FUNCT__
@@ -2131,7 +2420,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	// Flags to launch the monitors or not
 	PetscBool flag2DPlot, flag1DPlot, flagSeries, flagPerf, flagHeRetention,
 			flagStatus, flagMaxClusterConc, flagCumul, flagMeanSize, flagConc,
-			flagXeRetention, flagTRIDYN;
+			flagXeRetention, flagTRIDYN, flagAlloy;
 
 	// Check the option -plot_perf
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
@@ -2195,6 +2484,11 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	ierr = PetscOptionsHasName(NULL, NULL, "-tridyn", &flagTRIDYN);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-tridyn) failed.");
+
+	// Check the option -alloy
+	ierr = PetscOptionsHasName(NULL, NULL, "-alloy", &flagAlloy);
+	checkPetscError(ierr,
+			"setupPetsc1DMonitor: PetscOptionsHasName (-alloy) failed.");
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -2620,6 +2914,14 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		ierr = TSMonitorSet(ts, computeTRIDYN1D, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: TSMonitorSet (computeTRIDYN1D) failed.");
+	}
+
+  // Set the monitor to output data for Alloy
+	if (flagAlloy) {
+		// computeAlloy will be called at each timestep
+		ierr = TSMonitorSet(ts, computeAlloy, NULL, NULL);
+		checkPetscError(ierr,
+		    "setupPetsc1DMonitor: TSMonitorSet (computeAlloy) failed.");
 	}
 
 	// Set the monitor to simply change the previous time to the new time

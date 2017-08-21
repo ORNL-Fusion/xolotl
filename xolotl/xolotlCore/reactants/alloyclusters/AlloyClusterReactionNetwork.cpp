@@ -251,9 +251,9 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 									(*secondIt)->createCombination(reaction);
 									product->createProduction(reaction);
 
-									std::cout << (*firstIt)->getName() << " + "
-											<< (*secondIt)->getName() << " -> "
-											<< product->getName() << std::endl;
+									//std::cout << (*firstIt)->getName() << " + "
+									//		<< (*secondIt)->getName() << " -> "
+									//		<< product->getName() << std::endl;
 
 									// Check if the reverse reaction is allowed
 									checkDissociationConnectivity(product,
@@ -294,9 +294,9 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 									(*secondIt)->createCombination(reaction);
 									product->createProduction(reaction);
 
-									std::cout << (*firstIt)->getName() << " + "
-											<< (*secondIt)->getName() << " -> "
-											<< product->getName() << std::endl;
+									//std::cout << (*firstIt)->getName() << " + "
+									//		<< (*secondIt)->getName() << " -> "
+									//		<< product->getName() << std::endl;
 
 									// Check if the reverse reaction is allowed
 									checkDissociationConnectivity(product,
@@ -386,9 +386,9 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 									(*secondIt)->createCombination(reaction);
 									product->createProduction(reaction);
 
-									std::cout << (*firstIt)->getName() << " + "
-											<< (*secondIt)->getName() << " -> "
-											<< product->getName() << std::endl;
+									//std::cout << (*firstIt)->getName() << " + "
+									//		<< (*secondIt)->getName() << " -> "
+									//		<< product->getName() << std::endl;
 
 									// Check if the reverse reaction is allowed
 									checkDissociationConnectivity(product,
@@ -432,9 +432,9 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 									(*secondIt)->createCombination(reaction);
 									product->createProduction(reaction);
 
-									std::cout << (*firstIt)->getName() << " + "
-											<< (*secondIt)->getName() << " -> "
-											<< product->getName() << std::endl;
+									//std::cout << (*firstIt)->getName() << " + "
+									//		<< (*secondIt)->getName() << " -> "
+									//		<< product->getName() << std::endl;
 
 									// Check if the reverse reaction is allowed
 									checkDissociationConnectivity(product,
@@ -451,8 +451,8 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 								(*firstIt)->createCombination(reaction);
 								(*secondIt)->createCombination(reaction);
 
-								std::cout << (*firstIt)->getName() << " + "
-										<< (*secondIt)->getName() << std::endl;
+								//std::cout << (*firstIt)->getName() << " + "
+								//		<< (*secondIt)->getName() << std::endl;
 							}
 						}
 					}
@@ -525,9 +525,9 @@ void AlloyClusterReactionNetwork::checkDissociationConnectivity(
 	reaction->second->createDissociation(dissociationReaction);
 	emittingReactant->createEmission(dissociationReaction);
 
-	std::cout << (emittingReactant)->getName() << " -> "
-			<< reaction->first->getName() << " + "
-			<< reaction->second->getName() << std::endl;
+	//std::cout << (emittingReactant)->getName() << " -> "
+	//		<< reaction->first->getName() << " + "
+	//		<< reaction->second->getName() << std::endl;
 
 	return;
 }

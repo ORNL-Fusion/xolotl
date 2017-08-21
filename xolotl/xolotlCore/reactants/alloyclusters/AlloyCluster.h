@@ -133,6 +133,11 @@ protected:
 	 */
 	AlloyCluster();
 
+  /*
+	  Variable to hold spatially resolved concentration values
+	*/
+	std::vector<double> concentration1D;
+
 public:
 
 	/**
