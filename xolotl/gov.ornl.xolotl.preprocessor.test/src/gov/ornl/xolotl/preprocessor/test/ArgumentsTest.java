@@ -101,6 +101,9 @@ public class ArgumentsTest {
 			// Check if there is a tempFile argument
 			assertEquals(false, args.isTempFile());
 
+			// Check if there is a heat equation argument
+			assertEquals(false, args.isHeat());
+
 			// Check if there is an fluxFile argument
 			assertEquals(false, args.isFluxFile());
 
@@ -118,6 +121,10 @@ public class ArgumentsTest {
 
 			// Check if there is a sputtering yield argument
 			assertEquals(false, args.isSputter());
+
+			// Check if there is a network param argument
+			assertEquals(false, args.isNetParam());
+
 		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
@@ -140,14 +147,14 @@ public class ArgumentsTest {
 		try {
 			// Parse the specified string of arguments
 			args = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--maxHeSize", "7", "--maxXeSize", "4", "--maxDSize", "15", "--maxTSize", "10",
-							"--maxVSize", "30", "--maxISize", "5", "--phaseCut", "--startTemp", "900", "--perfHandler",
-							"dummy", "--vizHandler", "std", "--petscArgs=-plot", "--networkFile", "net.h5",
-							"--dimensions", "2", "--nxGrid", "50", "--nyGrid", "10", "--nzGrid", "30", "--xStepSize",
-							"0.2", "--yStepSize", "1.5", "--zStepSize", "10.0", "--material", "W111", "--process",
-							"diff", "--tempFile", "temp.dat", "--flux", "5.0e5", "--fluxFile", "flux.dat",
-							"--checkpoint", "xolotlStop.h5", "--initialV", "0.05", "--regularGrid", "yes",
-							"--voidPortion", "60.0", "--grain=Y 3.0", "--sputter", "0.05" });
+					new String[] { "--maxHeSize", "7", "--maxXeSize", "4", "--maxDSize", "15", "--maxTSize", "10", "--maxVSize", "30", "--maxISize", "5",
+							"--phaseCut", "--startTemp", "900", "--perfHandler", "dummy", "--vizHandler", "std",
+							"--petscArgs=-plot", "--networkFile", "net.h5", "--dimensions", "2", "--nxGrid", "50",
+							"--nyGrid", "10", "--nzGrid", "30", "--xStepSize", "0.2", "--yStepSize", "1.5",
+							"--zStepSize", "10.0", "--material", "W111", "--process", "diff", "--tempFile", "temp.dat",
+							"--heat=1200.0 1000.0", "--flux", "5.0e5", "--fluxFile", "flux.dat", "--checkpoint",
+							"xolotlStop.h5", "--initialV", "0.05", "--regularGrid", "yes", "--voidPortion", "60.0",
+							"--grain=Y 3.0", "--sputter", "0.05" });
 
 			// Check that the maximum Helium cluster size is 7
 			assertEquals(7, args.getMaxHeSize());
@@ -221,6 +228,12 @@ public class ArgumentsTest {
 			// Check that the tempFile argument is temp.dat
 			assertEquals("temp.dat", args.getTempFile());
 
+			// Check if there is a heat argument
+			assertEquals(true, args.isHeat());
+
+			// Check that the heat argument is 1200.0 1000.0
+			assertEquals("1200.0 1000.0", args.getTempFile());
+
 			// Check if there is an fluxFile argument
 			assertEquals(true, args.isFluxFile());
 
@@ -255,10 +268,11 @@ public class ArgumentsTest {
 			assertEquals(true, args.isGrain());
 
 			// Check if there is a sputtering yield argument
-			assertEquals(true, args.issputter());
+			assertEquals(true, args.isSputter());
 
 			// Check its value
 			assertEquals("0.05", args.getSputter());
+
 		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
