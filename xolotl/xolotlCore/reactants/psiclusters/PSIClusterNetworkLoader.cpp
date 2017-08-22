@@ -8,6 +8,8 @@
 #include "PSIClusterNetworkLoader.h"
 #include <TokenizedLineReader.h>
 #include <HeCluster.h>
+#include <DCluster.h>
+#include <TCluster.h>
 #include <VCluster.h>
 #include <InterstitialCluster.h>
 #include <HeVCluster.h>
@@ -39,9 +41,9 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createPSICluster(int numHe,
 	// Determine the type of the cluster given the number of each species.
 	// Create a new cluster by that type and specify the names of the
 	// property keys.
-	if (numHe > 0 && numV > 0) {
+	if ((numHe > 0 || numT > 0 || numD > 0) && numV > 0) {
 		// Create a new HeVCluster
-		cluster = std::make_shared<HeVCluster>(numHe, numV, handlerRegistry);
+		cluster = std::make_shared<HeVCluster>(numT, numD, numHe, numV, handlerRegistry);
 	} else if (numHe > 0 && numI > 0) {
 		throw std::string("HeliumInterstitialCluster is not yet implemented.");
 		// FIXME! Add code to add it to the list
@@ -54,6 +56,12 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createPSICluster(int numHe,
 	} else if (numI > 0) {
 		// Create a new ICluster
 		cluster = std::make_shared<InterstitialCluster>(numI, handlerRegistry);
+	} else if (numD > 0) {
+		// Create a new DCluster
+		cluster = std::make_shared<DCluster>(numD, handlerRegistry);
+	} else if (numT > 0) {
+		// Create a new TCluster
+		cluster = std::make_shared<TCluster>(numT, handlerRegistry);
 	}
 
 	return cluster;

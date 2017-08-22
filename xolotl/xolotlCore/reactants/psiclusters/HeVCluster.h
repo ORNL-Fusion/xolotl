@@ -15,6 +15,12 @@ class HeVCluster: public PSICluster {
 
 private:
 
+	//! The number of tritium atoms in this cluster.
+	int numT;
+
+	//! The number of deuterium atoms in this cluster.
+	int numD;
+
 	//! The number of helium atoms in this cluster.
 	int numHe;
 
@@ -27,7 +33,7 @@ private:
 	 */
 	HeVCluster() :
 		PSICluster()
-	{ numHe = 0; numV = 0; }
+	{ numT = 0; numD = 0; numHe = 0; numV = 0; }
 
 public:
 
@@ -38,11 +44,13 @@ public:
 	 * species as its values. The names of the species must be one of
 	 * {He,V}.
 	 *
+	 * @param numT The number of tritium atoms in this cluster
+	 * @param numD The number of deuterium atoms in this cluster
 	 * @param numHe The number of helium atoms in this cluster
 	 * @param numV The number of vacancies in this cluster
 	 * @param registry The performance handler registry
 	 */
-	HeVCluster(int numHe, int numV,
+	HeVCluster(int numT, int numD, int numHe, int numV,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**

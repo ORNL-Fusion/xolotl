@@ -28,6 +28,10 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
  * 
  * nXe - The number of xenon atoms in the cluster.
  * 
+ * nD - The number of deuterium in the cluster.
+ * 
+ * nT - The number of tritium in the cluster.
+ * 
  * nV - The number of vacancies in the cluster.
  * 
  * nI - The number of interstitials in the cluster.
@@ -68,6 +72,24 @@ public class Preprocessor {
 
 	// The migration energy for a single xenon.
 	private double xeOneMigrationEnergy = 0.0;
+
+	// The maximum size of a deuterium cluster in the network.
+	private int maxD;
+
+	// The diffusion factor for a single vacancy.
+	private double dOneDiffusionFactor = 1.0e+11;
+
+	// The migration energy for a single vacancy.
+	private double dOneMigrationEnergy = 0.35;
+
+	// The maximum size of a tritium cluster in the network.
+	private int maxT;
+
+	// The diffusion factor for a single vacancy.
+	private double tOneDiffusionFactor = 1.0e+10;
+
+	// The migration energy for a single vacancy.
+	private double tOneMigrationEnergy = 0.35;
 
 	// The maximum size of a vacancy cluster in the network.
 	private int maxV;
@@ -230,10 +252,22 @@ public class Preprocessor {
 			throw new IllegalArgumentException("The maxium helium size must be less than 9 ( 0 <= maxHeSize < 9 )");
 		}
 
-		// Set the maximum size of a vacancy cluster in the network.
+		// Set the maximum size of a xenon cluster in the network.
 		maxXe = args.getMaxXeSize();
 		if (maxXe < 0) {
 			throw new IllegalArgumentException("The maxium xenon size must be positive ( 0 <= maxXeSize )");
+		}
+
+		// Set the maximum size of a deuterium cluster in the network.
+		maxD = args.getMaxDSize();
+		if (maxD < 0) {
+			throw new IllegalArgumentException("The maxium deuterium size must be positive ( 0 <= maxDSize )");
+		}
+
+		// Set the maximum size of a tritium cluster in the network.
+		maxT = args.getMaxTSize();
+		if (maxT < 0) {
+			throw new IllegalArgumentException("The maxium tritium size must be positive ( 0 <= maxDSize )");
 		}
 
 		// Set the maximum size of a vacancy cluster in the network.
@@ -346,25 +380,93 @@ public class Preprocessor {
 	}
 
 	/**
+	 * This operation generates all deuterium clusters in the network.
+	 * 
+	 * @return A list of clusters configured to satisfy the bounds and composed
+	 *         solely of deuterium.
+	 */
+	private ArrayList<Cluster> generateD() {
+		// Local Declarations
+		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
+
+		// Create the He clusters
+		for (int i = 0; i < maxD; i++) {
+			// Create the cluster
+			Cluster tmpCluster = new Cluster();
+			tmpCluster.nD = i + 1;
+			// Add the cluster to the list
+			clusterList.add(tmpCluster);
+		}
+
+		// Set D_1 diffusion parameters. D_1 is the first in the list, so it
+		// is
+		// straightforward to set it.
+		if (maxD > 0) {
+			clusterList.get(0).D_0 = dOneDiffusionFactor;
+			clusterList.get(0).E_m = dOneMigrationEnergy;
+		}
+
+		return clusterList;
+	}
+
+	/**
+	 * This operation generates all tritium clusters in the network.
+	 * 
+	 * @return A list of clusters configured to satisfy the bounds and composed
+	 *         solely of tritium.
+	 */
+	private ArrayList<Cluster> generateT() {
+		// Local Declarations
+		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
+
+		// Create the He clusters
+		for (int i = 0; i < maxT; i++) {
+			// Create the cluster
+			Cluster tmpCluster = new Cluster();
+			tmpCluster.nT = i + 1;
+			// Add the cluster to the list
+			clusterList.add(tmpCluster);
+		}
+
+		// Set T_1 diffusion parameters. T_1 is the first in the list, so it
+		// is
+		// straightforward to set it.
+		if (maxT > 0) {
+			clusterList.get(0).D_0 = tOneDiffusionFactor;
+			clusterList.get(0).E_m = tOneMigrationEnergy;
+		}
+
+		return clusterList;
+	}
+
+	/**
 	 * This operation creates an HeV cluster with the specified size. It
 	 * configures the formation energies on its own.
 	 * 
+	 * @param tSize
+	 *            The number of tritium atoms in the cluster
+	 * @param dSize
+	 *            The number of deuterium atoms in the cluster
 	 * @param heSize
 	 *            The number of helium atoms in the cluster
 	 * @param vSize
 	 *            The number of vacancies in the cluster
 	 * @return The cluster.
 	 */
-	private Cluster makeHeVCluster(int heSize, int vSize) {
+	private Cluster makeHeVCluster(int tSize, int dSize, int heSize, int vSize) {
 		// Create the cluster
 		Cluster cluster = new Cluster();
+		cluster.nT = tSize;
+		cluster.nD = dSize;
 		cluster.nHe = heSize;
 		cluster.nV = vSize;
 		// Separate the case where it is simply a V cluster
-		if (heSize == 0) {
-			cluster.E_f = formationEnergyEngine.getVFormationEnergy(vSize);
-		} else {
-			cluster.E_f = formationEnergyEngine.getHeVFormationEnergy(heSize, vSize);
+		if (dSize == 0 && tSize ==0) {
+			if (heSize == 0) {
+				cluster.E_f = formationEnergyEngine.getVFormationEnergy(vSize);
+			} else {
+				cluster.E_f = formationEnergyEngine.getHeVFormationEnergy(heSize, vSize);
+			}
 		}
 
 		return cluster;
@@ -390,16 +492,16 @@ public class Preprocessor {
 				if (i < 12) {
 					for (int j = 0; j <= maxHePerV[i - 1]; j++) {
 						// Add the cluster to the list
-						clusterList.add(makeHeVCluster(j, i));
+						clusterList.add(makeHeVCluster(0, 0, j, i));
 					}
 				}
 				// For bigger V only add the needed helium sizes
 				else {
 					// Add the vacancy cluster
-					clusterList.add(makeHeVCluster(0, i));
+					clusterList.add(makeHeVCluster(0, 0, 0, i));
 					for (int j = maxHePerV[i - 2] + 1; j <= maxHePerV[i - 1]; j++) {
 						// Add the cluster to the list
-						clusterList.add(makeHeVCluster(j, i));
+						clusterList.add(makeHeVCluster(0, 0, j, i));
 					}
 				}
 			}
@@ -409,10 +511,10 @@ public class Preprocessor {
 			// Keeping only the last four ones
 			for (int i = maxHePerV.length + 1; i <= maxV; i++) {
 				// Add the vacancy cluster
-				clusterList.add(makeHeVCluster(0, i));
+				clusterList.add(makeHeVCluster(0, 0, 0, i));
 				for (int j = (i * 4) - 3; j <= i * 4; j++) {
 					// Add the cluster to the list
-					clusterList.add(makeHeVCluster(j, i));
+					clusterList.add(makeHeVCluster(0, 0, j, i));
 				}
 			}
 		}
@@ -424,8 +526,14 @@ public class Preprocessor {
 			for (int i = 1; i <= maxV && i <= maxHePerV.length; ++i) {
 				// Loop on the helium number
 				for (int j = 0; j <= maxHePerV[i - 1]; j++) {
-					// Add the cluster to the list
-					clusterList.add(makeHeVCluster(j, i));
+					// Loop on the deuterium number
+					for (int k = 0; k <= i * 2; k++) {
+						// Loop on the tritium number
+						for (int l = 0; l <= i; l++) {
+							// Add the cluster to the list
+							clusterList.add(makeHeVCluster(l, k, j, i));
+						}
+					}
 				}
 			}
 
@@ -434,8 +542,14 @@ public class Preprocessor {
 			for (int i = maxHePerV.length + 1; i <= maxV; i++) {
 				// Loop on the helium number
 				for (int j = 0; j <= i * 4; j++) {
-					// Add the cluster to the list
-					clusterList.add(makeHeVCluster(j, i));
+					// Loop on the deuterium number
+					for (int k = 0; k <= i * 2; k++) {
+						// Loop on the tritium number
+						for (int l = 0; l <= i; l++) {
+							// Add the cluster to the list
+							clusterList.add(makeHeVCluster(l, k, j, i));
+						}
+					}
 				}
 			}
 		}
@@ -494,6 +608,8 @@ public class Preprocessor {
 		// Add all of the clusters to the list
 		clusterList.addAll(generateInterstitials());
 		clusterList.addAll(generateHe());
+		clusterList.addAll(generateD());
+		clusterList.addAll(generateT());
 		clusterList.addAll(generateHeV());
 		clusterList.addAll(generateXe());
 

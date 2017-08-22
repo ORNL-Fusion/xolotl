@@ -26,7 +26,7 @@ static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
 BOOST_AUTO_TEST_SUITE(HeVCluster_testSuite)
 
 BOOST_AUTO_TEST_CASE(getSpeciesSize) {
-	HeVCluster cluster(4, 5, registry);
+	HeVCluster cluster(0, 0, 4, 5, registry);
 
 	// Get the composition back
 	auto composition = cluster.getComposition();
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
 	// Check all the values
 	for (int i = 1; i <= 5; i++) {
-		cluster = shared_ptr<HeVCluster>(new HeVCluster(1, i, registry));
+		cluster = shared_ptr<HeVCluster>(new HeVCluster(0, 0, 1, i, registry));
 		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
 				0.000001);
 	}

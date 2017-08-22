@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
 	Reactant reactant(registry);
 
 	// Check its default composition
-	BOOST_REQUIRE_EQUAL(4U, reactant.getComposition().size());
+	BOOST_REQUIRE_EQUAL(6U, reactant.getComposition().size());
 
 	return;
 }

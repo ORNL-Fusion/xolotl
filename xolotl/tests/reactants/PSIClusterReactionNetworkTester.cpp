@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	int maxClusterSize = 10;
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
-			shared_ptr<HeVCluster> cluster = std::make_shared<HeVCluster>(numHe,
+			shared_ptr<HeVCluster> cluster = std::make_shared<HeVCluster>(0, 0, numHe,
 					numV, registry);
 			psiNetwork->add(cluster);
 			counter++;
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_TEST_MESSAGE("Added " << counter << " HeI clusters");
 
 	// Try adding a duplicate HeV and catch the exception
-	shared_ptr<HeVCluster> duplicateCluster = std::make_shared<HeVCluster>(5, 3,
+	shared_ptr<HeVCluster> duplicateCluster = std::make_shared<HeVCluster>(0, 0, 5, 3,
 			registry);
 	try {
 		psiNetwork->add(duplicateCluster);
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 	// Add a couple of clusters
 	auto heCluster = make_shared<HeCluster>(5, registry);
 	psiNetwork->add(heCluster);
-	auto heVCluster = make_shared<HeVCluster>(5, 3, registry);
+	auto heVCluster = make_shared<HeVCluster>(0, 0, 5, 3, registry);
 	psiNetwork->add(heVCluster);
 
 	// Grab the properties afresh

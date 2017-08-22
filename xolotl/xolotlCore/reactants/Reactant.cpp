@@ -21,6 +21,8 @@ Reactant::Reactant() :
 	compositionMap[heType] = 0;
 	compositionMap[vType] = 0;
 	compositionMap[iType] = 0;
+	compositionMap[dType] = 0;
+	compositionMap[tType] = 0;
 }
 
 Reactant::Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
@@ -34,6 +36,8 @@ Reactant::Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 	compositionMap[heType] = 0;
 	compositionMap[vType] = 0;
 	compositionMap[iType] = 0;
+	compositionMap[dType] = 0;
+	compositionMap[tType] = 0;
 }
 
 Reactant::Reactant(Reactant &other) :
@@ -52,6 +56,8 @@ Reactant::Reactant(Reactant &other) :
 	compositionMap[heType] = other.compositionMap[heType];
 	compositionMap[vType] = other.compositionMap[vType];
 	compositionMap[iType] = other.compositionMap[iType];
+	compositionMap[dType] = other.compositionMap[dType];
+	compositionMap[tType] = other.compositionMap[tType];
 }
 
 void Reactant::recomputeDiffusionCoefficient(double temp) {
@@ -126,4 +132,3 @@ void Reactant::setMigrationEnergy(const double energy) {
 
 	return;
 }
-
