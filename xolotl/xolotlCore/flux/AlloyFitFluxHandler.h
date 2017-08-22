@@ -4,6 +4,7 @@
 #include "FluxHandler.h"
 #include <cmath>
 #include <iostream>
+#include <fstream>
 
 namespace xolotlCore {
 
@@ -132,6 +133,7 @@ public:
 					auto fluxCluster2 = network->get(perfectType, size);
 					if (!fluxCluster1 || !fluxCluster2) {
 						// Throw error -> missing type
+						std::cout << "Error: no flux cluster of size " << size << std::endl;
 					}
 					else {
 						// Frank loop
@@ -162,6 +164,7 @@ public:
 					fluxCluster = network->get(faultedType, size);
 					if (!fluxCluster) {
 						// Throw error -> no available type
+						std::cout << "Error: no flux cluster of size " << -size << std::endl;
 					}
 					else {
 						// Faulted loop
@@ -178,12 +181,24 @@ public:
 
 		}
 
-		// Check that the helium cluster is present in the network
-		//if (!fluxCluster) {
-		//	throw std::string(
-		//			"\nThe single interstitial cluster is not present in the network, "
-		//			"cannot use the flux option!");
-		//}
+		// record the results in a files
+		std::ofstream outfile;
+		outfile.open("alloyFlux.dat");
+    auto clusters = network->getAll();
+		for (int i = 0; i < ionDamage.fluxIndex.size(); ++i) {
+			outfile << ionDamage.fluxIndex[i];
+			for (int j = 0; j < ionDamage.damageRate[i].size(); ++j) {
+			  outfile << " " << ionDamage.damageRate[i][j];
+			}
+			// find the corresponding flux clusters
+			for (auto it = clusters->begin(); it != clusters->end(); ++it) {
+				if ((*it)->getId()-1 == ionDamage.fluxIndex[i]) {
+					outfile << " " << (*it)->getName();
+				}
+			}
+			outfile << std::endl;
+		}
+		outfile.close();
 
 		return;
 	}
@@ -195,7 +210,7 @@ public:
 	void computeIncidentFlux(double currentTime, double *updatedConcOffset, int xi, int surfacePos) {
 		// Update the concentration array
 		for (int it = 0; it < ionDamage.fluxIndex.size(); ++it) {
-			updatedConcOffset[it] += ionDamage.damageRate[it][xi - surfacePos];
+			updatedConcOffset[ionDamage.fluxIndex[it]] += ionDamage.damageRate[it][xi - surfacePos];
 		}
 
 		// There will be errors long before this check!
