@@ -2066,7 +2066,7 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 					auto vCluster = network->get(vType, comp[vType]);
 					int vId = vCluster->getId() - 1;
 					int id = cluster->getId() - 1;
-					gridPointSolution[vId] = gridPointSolution[id];
+					gridPointSolution[vId] += gridPointSolution[id];
 					gridPointSolution[id] = 0.0;
 				}
 
@@ -2074,14 +2074,22 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 				// same size at this grid point
 				for (int i = 0; i < superClusters.size(); i++) {
 					auto cluster = (PSISuperCluster *) superClusters[i];
-					// Get the V cluster of the same size
-					double numV = cluster->getNumV();
-					int truncV = (int) numV;
-					auto vCluster = network->get(vType, truncV);
-					int vId = vCluster->getId() - 1;
+
+					// Get its boundaries
+					auto boundaries = cluster->getBoundaries();
+					// Loop on the V boundaries
+					for (int j = boundaries[2]; j <= boundaries[3]; j++) {
+						// Get the total concentration at this v
+						double conc = cluster->getIntegratedVConcentration(j);
+						// Get the corresponding V cluster and its Id
+						auto vCluster = network->get(vType, j);
+						int vId = vCluster->getId() - 1;
+						// Add the concentration
+						gridPointSolution[vId] += conc;
+					}
+
+					// Reset the super cluster concentration
 					int id = cluster->getId() - 1;
-					double conc = cluster->getTotalConcentration();
-					gridPointSolution[vId] = conc * numV / (double) truncV;
 					gridPointSolution[id] = 0.0;
 					id = cluster->getHeMomentumId() - 1;
 					gridPointSolution[id] = 0.0;
@@ -2295,10 +2303,10 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			checkPetscError(ierr, "setupPetsc1DMonitor: TSGetDM failed.");
 
 			// Get the size of the total grid
-			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
 					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-					PETSC_IGNORE);
+					PETSC_IGNORE, PETSC_IGNORE);
 			// Initialize the HDF5 file for all the processes
 			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
 

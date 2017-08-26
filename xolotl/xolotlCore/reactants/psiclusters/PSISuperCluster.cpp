@@ -211,6 +211,32 @@ double PSISuperCluster::getTotalVacancyConcentration() const {
 	return conc;
 }
 
+double PSISuperCluster::getIntegratedVConcentration(int v) const {
+	// Initial declarations
+	int heIndex = 0;
+	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
+
+	// Loop on the helium width
+	for (int j = 0; j < sectionHeWidth; j++) {
+		// Compute the helium index
+		heIndex = (int) (numHe - (double) sectionHeWidth / 2.0) + j + 1;
+
+		// Check if this cluster exists
+		if (reactingMap.find(std::make_pair(heIndex, v))
+				== reactingMap.end())
+			continue;
+
+		// Compute the distances
+		heDistance = getHeDistance(heIndex);
+		vDistance = getVDistance(v);
+
+		// Add the concentration of each cluster in the group times its number of helium
+		conc += getConcentration(heDistance, vDistance);
+	}
+
+	return conc;
+}
+
 void PSISuperCluster::computeDispersion() {
 	// Local declarations
 	int heIndex = 0, vIndex = 0;
@@ -491,8 +517,8 @@ void PSISuperCluster::optimizeReactions() {
 	}
 
 	// Loop on the effective dissociating map
-	for (auto mapIt = dissociatingMap.begin();
-			mapIt != dissociatingMap.end(); ++mapIt) {
+	for (auto mapIt = dissociatingMap.begin(); mapIt != dissociatingMap.end();
+			++mapIt) {
 		// Get the pairs
 		auto pairs = mapIt->second;
 		// Loop over all the reacting pairs
@@ -582,8 +608,8 @@ void PSISuperCluster::optimizeReactions() {
 			secondCluster = (*it).second;
 
 			// Create a dissociation reaction
-			auto reaction = std::make_shared<DissociationReaction>(
-					this, firstCluster, secondCluster);
+			auto reaction = std::make_shared<DissociationReaction>(this,
+					firstCluster, secondCluster);
 			// Add it to the network
 			reaction = network->addDissociationReaction(reaction);
 
