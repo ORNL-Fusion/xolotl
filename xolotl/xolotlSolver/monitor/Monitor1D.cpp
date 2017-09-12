@@ -1925,12 +1925,11 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorBursting1D")
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "bursting1D")
 /**
- * This is a monitoring method that bursts bubbles.
+ * This is a method that bursts bubbles.
  */
-PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
-		void *) {
+PetscErrorCode bursting1D(TS ts) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
@@ -1948,6 +1947,8 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 	CHKERRQ(ierr);
 
 	// Get the solutionArray
+	Vec solution;
+	ierr = TSGetSolution(ts, &solution);
 	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
@@ -1974,6 +1975,8 @@ PetscErrorCode monitorBursting1D(TS ts, PetscInt, PetscReal time, Vec solution,
 	double fluxAmplitude = fluxHandler->getFluxAmplitude();
 
 	// Get the delta time from the previous timestep to this timestep
+	double time = 0.0;
+	ierr = TSGetTime(ts, &time);
 	double dt = time - previousTime;
 
 	// Compute the prefactor for the probability (arbitrary)
@@ -2377,9 +2380,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	if (solverHandler->burstBubbles()) {
 		// Set the monitor on the bubble bursting
 		// monitorBursting1D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorBursting1D, NULL, NULL);
+		ierr = TSSetPostStep(ts, bursting1D);
 		checkPetscError(ierr,
-				"setupPetsc1DMonitor: TSMonitorSet (monitorBursting1D) failed.");
+				"setupPetsc1DMonitor: TSSetPostStep (bursting1D) failed.");
 		std::srand(time(NULL) + procId);
 	}
 
