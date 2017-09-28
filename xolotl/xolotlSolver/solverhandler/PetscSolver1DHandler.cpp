@@ -421,7 +421,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			"DMDAGetCorners failed.");
 
 	// Get the total number of diffusing clusters
-	const int nDiff = diffusionHandler->getNumberOfDiffusing();
+	const int nDiff = max(diffusionHandler->getNumberOfDiffusing(), 1);
 
 	// Get the total number of advecting clusters
 	int nAdvec = 0;

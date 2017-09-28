@@ -171,12 +171,9 @@ public:
 	 */
 	virtual void computePartialsForTemperature(double *val, int *indices,
 			double hxLeft, double hxRight) {
-		// Initial declaration
-		int index = dof - 1;
-
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
-		indices[0] = index;
+		indices[0] = dof - 1;
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, and right grid point
