@@ -76,20 +76,20 @@ public class Preprocessor {
 	// The maximum size of a deuterium cluster in the network.
 	private int maxD;
 
-	// The diffusion factor for a single vacancy.
-	private double dOneDiffusionFactor = 1.0e+11;
+	// The diffusion factor for a single deuterium.
+	private double dOneDiffusionFactor = 2.83e+11;
 
-	// The migration energy for a single vacancy.
-	private double dOneMigrationEnergy = 0.35;
+	// The migration energy for a single deuterium.
+	private double dOneMigrationEnergy = 0.38;
 
 	// The maximum size of a tritium cluster in the network.
 	private int maxT;
 
-	// The diffusion factor for a single vacancy.
-	private double tOneDiffusionFactor = 1.0e+10;
+	// The diffusion factor for a single tritium.
+	private double tOneDiffusionFactor = 2.31e+11;
 
-	// The migration energy for a single vacancy.
-	private double tOneMigrationEnergy = 0.35;
+	// The migration energy for a single tritium.
+	private double tOneMigrationEnergy = 0.38;
 
 	// The maximum size of a vacancy cluster in the network.
 	private int maxV;
@@ -267,7 +267,7 @@ public class Preprocessor {
 		// Set the maximum size of a tritium cluster in the network.
 		maxT = args.getMaxTSize();
 		if (maxT < 0) {
-			throw new IllegalArgumentException("The maxium tritium size must be positive ( 0 <= maxDSize )");
+			throw new IllegalArgumentException("The maxium tritium size must be positive ( 0 <= maxTSize )");
 		}
 
 		// Set the maximum size of a vacancy cluster in the network.
@@ -303,8 +303,10 @@ public class Preprocessor {
 		// be set if they are specified via the command line
 		if (args.isTempFile())
 			xolotlParams.setProperty("tempFile", args.getTempFile());
+		if (args.isHeat())
+			xolotlParams.setProperty("heat", args.getHeat());
 		if (args.isFluxFile())
-			xolotlParams.setProperty("fluxFile", args.getTempFile());
+			xolotlParams.setProperty("fluxFile", args.getFluxFile());
 		if (args.isInitialV())
 			xolotlParams.setProperty("initialV", args.getInitialV());
 		if (args.isVoidPortion())
@@ -315,6 +317,22 @@ public class Preprocessor {
 			xolotlParams.setProperty("grain", args.getGrain());
 		if (args.isSputter())
 			xolotlParams.setProperty("sputtering", args.getSputter());
+		if (args.isNetParam()) {
+			// Build the network argument
+			String netString;
+			if (args.getMaxXeSize() > 0)
+				netString = Integer.toString(args.getMaxXeSize());
+			else
+				netString = Integer.toString(args.getMaxHeSize()) + " " + Integer.toString(args.getMaxVSize()) + " "
+						+ Integer.toString(args.getMaxISize()) + " " + Boolean.toString(args.isPhaseCut());
+			xolotlParams.setProperty("netParam", netString);
+
+			// Build the grid argument
+			String gridString = Integer.toString(args.getNxGrid()) + " " + Double.toString(args.getXStepSize()) + " " + Integer.toString(args.getNyGrid()) + " "
+					+ Double.toString(args.getYStepSize()) + " " + Integer.toString(args.getNzGrid()) + " " + Double.toString(args.getZStepSize());
+			xolotlParams.setProperty("grid", gridString);
+			xolotlParams.setProperty("networkFile", "");
+		}
 
 	}
 
@@ -527,9 +545,10 @@ public class Preprocessor {
 				// Loop on the helium number
 				for (int j = 0; j <= maxHePerV[i - 1]; j++) {
 					// Loop on the deuterium number
-					for (int k = 0; k <= i * 2; k++) {
+					for (int k = 0; k <= (int) ((2.0/3.0) * (double) maxHePerV[i - 1]); k++) {
 						// Loop on the tritium number
-						for (int l = 0; l <= i; l++) {
+						for (int l = 0; l <= (int) ((2.0/3.0) * (double) maxHePerV[i - 1]); l++) {
+							if (k + l > (int) ((2.0/3.0) * (double) maxHePerV[i - 1])) break;
 							// Add the cluster to the list
 							clusterList.add(makeHeVCluster(l, k, j, i));
 						}
@@ -543,9 +562,10 @@ public class Preprocessor {
 				// Loop on the helium number
 				for (int j = 0; j <= i * 4; j++) {
 					// Loop on the deuterium number
-					for (int k = 0; k <= i * 2; k++) {
+					for (int k = 0; k <= (int) ((2.0/3.0) * (double) maxHePerV[i - 1]); k++) {
 						// Loop on the tritium number
-						for (int l = 0; l <= i; l++) {
+						for (int l = 0; l <= (int) ((2.0/3.0) * (double) maxHePerV[i - 1]); l++) {
+							if (k + l > (int) ((2.0/3.0) * (double) maxHePerV[i - 1])) break;
 							// Add the cluster to the list
 							clusterList.add(makeHeVCluster(l, k, j, i));
 						}

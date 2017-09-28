@@ -19,9 +19,7 @@ DCluster::DCluster(int nD,
 	typeName = dType;
 
 	// Compute the reaction radius
-	double a0 = 0.02;
-	double FourPi = 4.0 * xolotlCore::pi;
-	reactionRadius = a0 * pow((3.0 / FourPi) * size, (1.0 / 3.0));
+	reactionRadius = 0.3;
 
 	return;
 }

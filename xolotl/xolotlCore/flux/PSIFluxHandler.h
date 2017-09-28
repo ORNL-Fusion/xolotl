@@ -90,13 +90,15 @@ public:
 
 		if (incidentFluxVec.size() == 0) {
 			updatedConcOffset[fluxIndex] += fluxAmplitude;
+			updatedConcOffset[dFluxIndex] += fluxAmplitude * 0.55;
+			updatedConcOffset[tFluxIndex] += fluxAmplitude * 0.45;
 			return;
 		}
 
 		// Update the concentration array
 		updatedConcOffset[fluxIndex] += incidentFluxVec[xi - surfacePos];
-		updatedConcOffset[dFluxIndex] += incidentFluxVec[xi - surfacePos] * 2.0;
-		updatedConcOffset[tFluxIndex] += incidentFluxVec[xi - surfacePos] * 2.0;
+		updatedConcOffset[dFluxIndex] += incidentFluxVec[xi - surfacePos] * 0.55;
+		updatedConcOffset[tFluxIndex] += incidentFluxVec[xi - surfacePos] * 0.45;
 
 		return;
 	}

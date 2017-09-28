@@ -341,7 +341,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 	// He_a + V_b --> (He_a)(V_b)
 	// Get all the V clusters
 	auto allVReactants = getAll(vType);
-	// Loop on the He clusters
+	// Loop on the V clusters
 	for (auto firstIt = allHeReactants.begin(); firstIt != allHeReactants.end();
 			firstIt++) {
 		// Get its size
@@ -353,6 +353,74 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			secondSize = (*secondIt)->getSize();
 			// Create the composition of the potential product
 			std::vector<int> compositionVec = { 0, 0, firstSize, -secondSize };
+			// Get the product
+			auto product = getCompound(heVType, compositionVec);
+			// Check that the reaction can occur
+			if (product
+					&& ((*firstIt)->getDiffusionFactor() > 0.0
+							|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+				// Create a production reaction
+				auto reaction = std::make_shared<ProductionReaction>((*firstIt),
+						(*secondIt));
+				// Tell the reactants that they are in this reaction
+				(*firstIt)->createCombination(reaction);
+				(*secondIt)->createCombination(reaction);
+				product->createProduction(reaction);
+
+				// Check if the reverse reaction is allowed
+				checkDissociationConnectivity(product, reaction);
+			}
+		}
+	}
+
+	// Deuterium-Vacancy clustering
+	// D_a + V_b --> (D_a)(V_b)
+	// Loop on the D clusters
+	for (auto firstIt = allDReactants.begin(); firstIt != allDReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the V clusters
+		for (auto secondIt = allVReactants.begin();
+				secondIt != allVReactants.end(); secondIt++) {
+			// Get its size
+			secondSize = (*secondIt)->getSize();
+			// Create the composition of the potential product
+			std::vector<int> compositionVec = { 0, firstSize, 0, -secondSize };
+			// Get the product
+			auto product = getCompound(heVType, compositionVec);
+			// Check that the reaction can occur
+			if (product
+					&& ((*firstIt)->getDiffusionFactor() > 0.0
+							|| (*secondIt)->getDiffusionFactor() > 0.0)) {
+				// Create a production reaction
+				auto reaction = std::make_shared<ProductionReaction>((*firstIt),
+						(*secondIt));
+				// Tell the reactants that they are in this reaction
+				(*firstIt)->createCombination(reaction);
+				(*secondIt)->createCombination(reaction);
+				product->createProduction(reaction);
+
+				// Check if the reverse reaction is allowed
+				checkDissociationConnectivity(product, reaction);
+			}
+		}
+	}
+
+	// Tritium-Vacancy clustering
+	// T_a + V_b --> (T_a)(V_b)
+	// Loop on the D clusters
+	for (auto firstIt = allTReactants.begin(); firstIt != allTReactants.end();
+			firstIt++) {
+		// Get its size
+		firstSize = (*firstIt)->getSize();
+		// Loop on the V clusters
+		for (auto secondIt = allVReactants.begin();
+				secondIt != allVReactants.end(); secondIt++) {
+			// Get its size
+			secondSize = (*secondIt)->getSize();
+			// Create the composition of the potential product
+			std::vector<int> compositionVec = { firstSize, 0, 0, -secondSize };
 			// Get the product
 			auto product = getCompound(heVType, compositionVec);
 			// Check that the reaction can occur
@@ -1168,7 +1236,7 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		for (int j = 0; j < connectivityLength; j++) {
 			// The id starts at j*connectivity length and is always offset
 			// by the id, which denotes the exact column.
-			index = id * dof + j;
+			index =  (id *  dof) + j;
 			diagFill[index] = connectivity[j];
 			// Add a column id if the connectivity is equal to 1.
 			if (connectivity[j] == 1) {
@@ -1194,7 +1262,7 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		for (int j = 0; j < connectivityLength; j++) {
 			// The id starts at j*connectivity length and is always offset
 			// by the id, which denotes the exact column.
-			index = (id) * dof + j;
+			index = (id *  dof) + j;
 			diagFill[index] = connectivity[j];
 			// Add a column id if the connectivity is equal to 1.
 			if (connectivity[j] == 1) {
