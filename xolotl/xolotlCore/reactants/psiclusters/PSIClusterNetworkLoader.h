@@ -11,6 +11,7 @@
 //Includes
 #include <PSICluster.h>
 #include <NetworkLoader.h>
+#include <PSIClusterReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -55,7 +56,7 @@ namespace xolotlCore {
  * > numMixedClusters - The number of mixed-species clusters of all sizes in the
  * network.
  */
-class PSIClusterNetworkLoader : public NetworkLoader {
+class PSIClusterNetworkLoader: public NetworkLoader {
 
 protected:
 
@@ -77,7 +78,9 @@ protected:
 	/**
 	 * Private nullary constructor.
 	 */
-	PSIClusterNetworkLoader() {}
+	PSIClusterNetworkLoader() :
+			vMin(1000000), heSectionWidth(1), vSectionWidth(1) {
+	}
 
 	/**
 	 * This operation creates a singles-species cluster of helium, vacancies or
@@ -90,6 +93,19 @@ protected:
 	 * @return The new cluster
 	 */
 	std::shared_ptr<PSICluster> createPSICluster(int numHe, int numV, int numI);
+
+	/**
+	 * This operation will add the given cluster to the network and reactants vector
+	 * as a standard cluster or a dummy one if we do not want the reactions to happen.
+	 *
+	 * @param network The network
+	 * @param reactants The vector of reactants kept by the loader
+	 * @param cluster The cluster to add to them
+	 */
+	virtual void pushPSICluster(
+			std::shared_ptr<PSIClusterReactionNetwork> & network,
+			std::vector<std::shared_ptr<Reactant> > & reactants,
+			std::shared_ptr<PSICluster> & cluster);
 
 	/**
 	 * This operation computes the formation energy associated to the
@@ -109,7 +125,8 @@ public:
 	 *
 	 * @param registry The performance handler registry
 	 */
-	PSIClusterNetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	PSIClusterNetworkLoader(
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * An alternative constructor provided for convenience.
@@ -124,7 +141,8 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~PSIClusterNetworkLoader() {}
+	virtual ~PSIClusterNetworkLoader() {
+	}
 
 	/**
 	 * This operation will load the reaction network from the inputstream in
@@ -156,21 +174,27 @@ public:
 	 *
 	 * @param min The value for the size
 	 */
-	void setVMin (int min) {vMin = min;}
+	void setVMin(int min) {
+		vMin = min;
+	}
 
 	/**
 	 * This operation will set the helium width for the grouping scheme.
 	 *
 	 * @param w The value of the width
 	 */
-	void setHeWidth (int w) {heSectionWidth = w;}
+	void setHeWidth(int w) {
+		heSectionWidth = w;
+	}
 
 	/**
 	 * This operation will set the vacancy width for the grouping scheme.
 	 *
 	 * @param w The value of the width
 	 */
-	void setVWidth (int w) {vSectionWidth = w;}
+	void setVWidth(int w) {
+		vSectionWidth = w;
+	}
 };
 
 } /* namespace xolotlCore */

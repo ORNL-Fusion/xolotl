@@ -13,7 +13,6 @@
 #include <HeVCluster.h>
 #include <PSISuperCluster.h>
 // #include <HeInterstitialCluster.h>
-#include <PSIClusterReactionNetwork.h>
 #include <xolotlPerf.h>
 #include <MathUtils.h>
 
@@ -58,6 +57,29 @@ std::shared_ptr<PSICluster> PSIClusterNetworkLoader::createPSICluster(int numHe,
 	}
 
 	return cluster;
+}
+
+void PSIClusterNetworkLoader::pushPSICluster(
+		std::shared_ptr<PSIClusterReactionNetwork> & network,
+		std::vector<std::shared_ptr<Reactant> > & reactants,
+		std::shared_ptr<PSICluster> & cluster) {
+	// Check if we want dummy reactions
+	if (dummyReactions) {
+		// Create a dummy cluster (Reactant) from the existing cluster
+		auto dummyCluster = std::static_pointer_cast<Reactant>(
+				cluster->Reactant::clone());
+		// Add the cluster to the network
+		network->add(dummyCluster);
+		// Add it to the list so that we can set the network later
+		reactants.push_back(dummyCluster);
+	} else {
+		// Add the cluster to the network
+		network->add(cluster);
+		// Add it to the list so that we can set the network later
+		reactants.push_back(cluster);
+	}
+
+	return;
 }
 
 PSIClusterNetworkLoader::PSIClusterNetworkLoader(
@@ -129,10 +151,9 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::load() {
 				// Set the diffusion factor and migration energy
 				nextCluster->setMigrationEnergy(migrationEnergy);
 				nextCluster->setDiffusionFactor(diffusionFactor);
-				// Add the cluster to the network
-				network->add(nextCluster);
-				// Add it to the list so that we can set the network later
-				reactants.push_back(nextCluster);
+
+				// Push the cluster
+				pushPSICluster(network, reactants, nextCluster);
 			}
 
 			// Load the next line
@@ -227,10 +248,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 					std::numeric_limits<double>::infinity());
 		}
 
-		// Add the cluster to the network
-		network->add(nextCluster);
-		// Add it to the list so that we can set the network later
-		reactants.push_back(nextCluster);
+		// Push the cluster
+		pushPSICluster(network, reactants, nextCluster);
 	}
 
 	// Reset the I composition
@@ -258,10 +277,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 					std::numeric_limits<double>::infinity());
 		}
 
-		// Add the cluster to the network
-		network->add(nextCluster);
-		// Add it to the list so that we can set the network later
-		reactants.push_back(nextCluster);
+		// Push the cluster
+		pushPSICluster(network, reactants, nextCluster);
 	}
 
 	// Reset the He composition
@@ -290,10 +307,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 						std::numeric_limits<double>::infinity());
 			}
 
-			// Add the cluster to the network
-			network->add(nextCluster);
-			// Add it to the list so that we can set the network later
-			reactants.push_back(nextCluster);
+			// Push the cluster
+			pushPSICluster(network, reactants, nextCluster);
 
 			// For V < 12 loop on all the possible helium numbers up to
 			// the maximum size in the maxHePerV array
@@ -309,10 +324,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 					nextCluster->setMigrationEnergy(
 							std::numeric_limits<double>::infinity());
 
-					// Add the cluster to the network
-					network->add(nextCluster);
-					// Add it to the list so that we can set the network later
-					reactants.push_back(nextCluster);
+					// Push the cluster
+					pushPSICluster(network, reactants, nextCluster);
 				}
 			}
 			// For bigger V only add the needed helium sizes
@@ -328,10 +341,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 					nextCluster->setMigrationEnergy(
 							std::numeric_limits<double>::infinity());
 
-					// Add the cluster to the network
-					network->add(nextCluster);
-					// Add it to the list so that we can set the network later
-					reactants.push_back(nextCluster);
+					// Push the cluster
+					pushPSICluster(network, reactants, nextCluster);
 				}
 			}
 
@@ -361,10 +372,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 						std::numeric_limits<double>::infinity());
 			}
 
-			// Add the cluster to the network
-			network->add(nextCluster);
-			// Add it to the list so that we can set the network later
-			reactants.push_back(nextCluster);
+			// Push the cluster
+			pushPSICluster(network, reactants, nextCluster);
 
 			// Loop on the helium number
 			for (int j = (i * 4) - 3; j <= i * 4; j++) {
@@ -377,10 +386,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 				nextCluster->setMigrationEnergy(
 						std::numeric_limits<double>::infinity());
 
-				// Add the cluster to the network
-				network->add(nextCluster);
-				// Add it to the list so that we can set the network later
-				reactants.push_back(nextCluster);
+				// Push the cluster
+				pushPSICluster(network, reactants, nextCluster);
 			}
 
 			// Reset the helium composition
@@ -411,10 +418,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 						std::numeric_limits<double>::infinity());
 			}
 
-			// Add the cluster to the network
-			network->add(nextCluster);
-			// Add it to the list so that we can set the network later
-			reactants.push_back(nextCluster);
+			// Push the cluster
+			pushPSICluster(network, reactants, nextCluster);
 
 			// Loop on the helium number
 			for (int j = 1; j <= maxHePerV[i - 1]; j++) {
@@ -427,10 +432,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 				nextCluster->setMigrationEnergy(
 						std::numeric_limits<double>::infinity());
 
-				// Add the cluster to the network
-				network->add(nextCluster);
-				// Add it to the list so that we can set the network later
-				reactants.push_back(nextCluster);
+				// Push the cluster
+				pushPSICluster(network, reactants, nextCluster);
 			}
 
 			// Reset the helium composition
@@ -458,10 +461,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 						std::numeric_limits<double>::infinity());
 			}
 
-			// Add the cluster to the network
-			network->add(nextCluster);
-			// Add it to the list so that we can set the network later
-			reactants.push_back(nextCluster);
+			// Push the cluster
+			pushPSICluster(network, reactants, nextCluster);
 
 			// Loop on the helium number
 			for (int j = 1; j <= i * 4; j++) {
@@ -474,10 +475,8 @@ std::shared_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 				nextCluster->setMigrationEnergy(
 						std::numeric_limits<double>::infinity());
 
-				// Add the cluster to the network
-				network->add(nextCluster);
-				// Add it to the list so that we can set the network later
-				reactants.push_back(nextCluster);
+				// Push the cluster
+				pushPSICluster(network, reactants, nextCluster);
 			}
 
 			// Reset the helium composition

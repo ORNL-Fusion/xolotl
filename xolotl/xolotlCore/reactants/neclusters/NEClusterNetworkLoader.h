@@ -4,6 +4,7 @@
 //Includes
 #include <NECluster.h>
 #include <NetworkLoader.h>
+#include <NEClusterReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -48,7 +49,7 @@ namespace xolotlCore {
  * > numMixedClusters - The number of mixed-species clusters of all sizes in the
  * network.
  */
-class NEClusterNetworkLoader : public NetworkLoader {
+class NEClusterNetworkLoader: public NetworkLoader {
 
 protected:
 
@@ -65,7 +66,9 @@ protected:
 	/**
 	 * Private nullary constructor.
 	 */
-	NEClusterNetworkLoader() {}
+	NEClusterNetworkLoader() :
+			xeMin(1000000), sectionWidth(1) {
+	}
 
 	/**
 	 * This operation creates a singles-species cluster of helium, vacancies or
@@ -79,6 +82,19 @@ protected:
 	 */
 	std::shared_ptr<NECluster> createNECluster(int numXe, int numV, int numI);
 
+	/**
+	 * This operation will add the given cluster to the network and reactants vector
+	 * as a standard cluster or a dummy one if we do not want the reactions to happen.
+	 *
+	 * @param network The network
+	 * @param reactants The vector of reactants kept by the loader
+	 * @param cluster The cluster to add to them
+	 */
+	virtual void pushNECluster(
+			std::shared_ptr<NEClusterReactionNetwork> & network,
+			std::vector<std::shared_ptr<Reactant> > & reactants,
+			std::shared_ptr<NECluster> & cluster);
+
 public:
 
 	/**
@@ -87,7 +103,8 @@ public:
 	 *
 	 * @param registry The performance handler registry
 	 */
-	NEClusterNetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	NEClusterNetworkLoader(
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * An alternative constructor provided for convenience.
@@ -102,7 +119,8 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~NEClusterNetworkLoader() {}
+	virtual ~NEClusterNetworkLoader() {
+	}
 
 	/**
 	 * This operation will load the reaction network from the inputstream in
@@ -134,14 +152,18 @@ public:
 	 *
 	 * @param min The value for the size
 	 */
-	void setXeMin (int min) {xeMin = min;}
+	void setXeMin(int min) {
+		xeMin = min;
+	}
 
 	/**
 	 * This operation will set the xenon width for the grouping scheme.
 	 *
 	 * @param w The value of the width
 	 */
-	void setWidth (int w) {sectionWidth = w;}
+	void setWidth(int w) {
+		sectionWidth = w;
+	}
 };
 
 } /* namespace xolotlCore */

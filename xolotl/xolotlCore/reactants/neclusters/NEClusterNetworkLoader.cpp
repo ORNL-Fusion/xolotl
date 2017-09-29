@@ -1,5 +1,4 @@
 #include "NEClusterNetworkLoader.h"
-#include <NEClusterReactionNetwork.h>
 #include <XeCluster.h>
 #include <NESuperCluster.h>
 #include <HDF5Utils.h>
@@ -34,6 +33,29 @@ std::shared_ptr<NECluster> NEClusterNetworkLoader::createNECluster(int numXe,
 	}
 
 	return cluster;
+}
+
+void NEClusterNetworkLoader::pushNECluster(
+		std::shared_ptr<NEClusterReactionNetwork> & network,
+		std::vector<std::shared_ptr<Reactant> > & reactants,
+		std::shared_ptr<NECluster> & cluster) {
+	// Check if we want dummy reactions
+	if (dummyReactions) {
+		// Create a dummy cluster (Reactant) from the existing cluster
+		auto dummyCluster = std::static_pointer_cast<Reactant>(
+				cluster->Reactant::clone());
+		// Add the cluster to the network
+		network->add(dummyCluster);
+		// Add it to the list so that we can set the network later
+		reactants.push_back(dummyCluster);
+	} else {
+		// Add the cluster to the network
+		network->add(cluster);
+		// Add it to the list so that we can set the network later
+		reactants.push_back(cluster);
+	}
+
+	return;
 }
 
 NEClusterNetworkLoader::NEClusterNetworkLoader(
@@ -97,21 +119,8 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::load() {
 		nextCluster->setMigrationEnergy(migrationEnergy);
 		nextCluster->setDiffusionFactor(diffusionFactor);
 
-		// Check if we want dummy reactions
-		if (dummyReactions) {
-			// Create a dummy cluster (Reactant) from the existing cluster
-			auto dummyCluster = std::static_pointer_cast<Reactant>(
-					nextCluster->Reactant::clone());
-			// Add the cluster to the network
-			network->add(dummyCluster);
-			// Add it to the list so that we can set the network later
-			reactants.push_back(dummyCluster);
-		} else {
-			// Add the cluster to the network
-			network->add(nextCluster);
-			// Add it to the list so that we can set the network later
-			reactants.push_back(nextCluster);
-		}
+		// Push the cluster to the network
+		pushNECluster(network, reactants, nextCluster);
 	}
 
 	// Set the reaction network for each reactant
@@ -179,11 +188,11 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 					std::numeric_limits<double>::infinity());
 		}
 
-		// Add the cluster to the network
-		network->add(nextCluster);
-		// Add it to the list so that we can set the network later
-		reactants.push_back(nextCluster);
+		// Push the cluster to the network
+		pushNECluster(network, reactants, nextCluster);
 	}
+
+	std::cout << reactants.size() << std::endl;
 
 	// Set the network for all of the reactants. This MUST be done manually.
 	for (auto currCluster : reactants) {
