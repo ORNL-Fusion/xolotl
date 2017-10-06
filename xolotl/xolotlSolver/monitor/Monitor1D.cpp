@@ -879,8 +879,9 @@ PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the network
-	auto network = solverHandler->getNetwork();
+	// Get the physical grid and its length
+	auto grid = solverHandler->getXGrid();
+	int xSize = grid.size();
 
 	// Get the position of the surface
 	int surfacePos = solverHandler->getSurfacePosition();
@@ -894,26 +895,88 @@ PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	CHKERRQ(ierr);
 
-	// Get the physical grid and its length
-	auto grid = solverHandler->getXGrid();
-	int xSize = grid.size();
+	// Get the array of concentration
+	PetscReal **brokenArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &brokenArray);
+	CHKERRQ(ierr);
+
+	// Get the network
+	auto network = solverHandler->getNetwork();
+
+	// Get degrees of freedom
+	auto networkDOF = network->getDOF();
+
+	// Create full solution array
+	std::vector<std::vector<double> > solutionArray(0);
+	if (procId == 0) {
+		solutionArray.resize(xSize);
+		for (int i = 0; i < xSize; i++) {
+			solutionArray[i].resize(networkDOF);
+		}
+		//std::cout << procId << " solution size " << solutionArray.size() << " " << solutionArray[0].size() << std::endl;
+	}
+
+	//std::cout << procId << " solution size " << solutionArray.size() <<  std::endl;
+
+	// Populate full solution array
+	for (int xi = surfacePos; xi < xSize; ++xi) {
+
+		//std::cout << procId << " Position Loop " << xi << std::endl;
+
+		for (int dof = 0; dof < networkDOF; ++dof) {
+			// Wait for everybody at each solution point
+			MPI_Barrier(PETSC_COMM_WORLD);
+
+			//std::cout << procId << " Cluster Loop " << dof << std::endl;
+
+			double value;
+			if (xi >= xs && xi < (xs + xm) ) {
+				//std::cout << procId << " Owner " << xi << " " << dof << std::endl;
+				value = brokenArray[xi][dof];
+				if (procId != 0) {
+					//std::cout << procId << " Sending " << value << std::endl;
+					MPI_Send(&value, 1, MPI_DOUBLE, 0, 2, PETSC_COMM_WORLD);
+				}
+			}
+			else if (procId == 0) {
+				//std::cout << procId << " Receiving " << value << std::endl;
+				MPI_Recv(&value, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
+						PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
+			}
+
+			if (procId == 0) {
+				//std::cout << procId << " Assigning " << xi << " " << dof << " " << value << std::endl;
+				solutionArray[xi][dof] = value;
+				//std::cout << procId << " Assigned " << xi << " " << dof << " " << value << std::endl;
+			}
+
+			//std::cout << procId << " End of loop" << std::endl;
+		}
+
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &brokenArray);
+	CHKERRQ(ierr);
+
+	//if (procId ==0)
+	//	std::cout << "Finished generating solution array!" << std::endl;
+
+	////////////////////////////////////////////
+
+	const int outputPrecision = 5;
 
   // output xGrid for reference
 	std::fstream gridFile;
 	if (procId == 0) {
 		if (timestep == 0) {
 			gridFile.open("grid.dat",std::fstream::out);
-			gridFile << std::setprecision(14);
+			gridFile << std::setprecision(outputPrecision);
 			for (int i = 0; i < xSize; i++)
 				gridFile << grid[i] << std::endl;
 			gridFile.close();
 		}
 	}
-
-	// Get the array of concentration
-	PetscReal **solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
 
 	// Create/open the output files
 	std::fstream iTypeOut, vTypeOut, frankTypeOut, perfectTypeOut,
@@ -939,19 +1002,18 @@ PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
 			voidTypeOut.open("voidType.dat",
 			    std::fstream::out|std::fstream::app);
 		}
-		iTypeOut << std::setprecision(14);
-		frankTypeOut << std::setprecision(14);
-		perfectTypeOut << std::setprecision(14);
-		vTypeOut << std::setprecision(14);
-		faultedTypeOut << std::setprecision(14);
-		voidTypeOut << std::setprecision(14);
+		iTypeOut << std::setprecision(outputPrecision);
+		frankTypeOut << std::setprecision(outputPrecision);
+		perfectTypeOut << std::setprecision(outputPrecision);
+		vTypeOut << std::setprecision(outputPrecision);
+		faultedTypeOut << std::setprecision(outputPrecision);
+		voidTypeOut << std::setprecision(outputPrecision);
 	}
-
-	// Get degrees of freedom
-	auto networkDOF = network->getDOF();
 
   // variable to hold thickness averaged values
 	std::vector<double> dataAvg(networkDOF,0.0);
+
+	if (procId == 0) {
 
 	// calculate thickness averaged values
 	for (int j = 0; j < networkDOF; ++j) {
@@ -961,6 +1023,11 @@ PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
 		}
 		dataAvg[j] = dataAvg[j] / (grid[xSize-1]);
 	}
+
+	}
+
+	//if (procId ==0)
+	//	std::cout << "Finished calculating average values!" << std::endl;
 
 	// Output iType concentration
 	if (procId == 0) {
@@ -978,12 +1045,21 @@ PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
 		frankTypeOut << timestep << " " << time;
     for (auto it = reactants.begin(); it != reactants.end(); ++it) {
 			frankTypeOut << " " << dataAvg[(*it)->getId() - 1];
+			/*if (dataAvg[(*it)->getId() - 1] < 0.0) {
+			  std::cout << (*it)->getName();
+				for (int i = 0; i < xSize; ++i){
+					std::cout << " " << solutionArray[i][(*it)->getId() - 1];
+				}
+				std::cout << std::endl;
+			}*/
 		}
 
 		auto supers = network->getAll(AlloyFrankSuperType);
 		for (auto it = supers.begin(); it != supers.end(); ++it) {
 			double conc = dataAvg[(*it)->getId()-1];
 			double mom = dataAvg[(*it)->getMomentId()-1];
+			//if (mom > conc)
+				//std::cout << (*it)->getName() << std::endl;
 			int width = ((AlloySuperCluster *)(*it))->getSectionWidth();
 			if (width == 1) {
 				frankTypeOut << " " << conc;
@@ -1139,10 +1215,6 @@ PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
 		faultedTypeOut.close();
 		voidTypeOut.close();
 	}
-
-	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
 

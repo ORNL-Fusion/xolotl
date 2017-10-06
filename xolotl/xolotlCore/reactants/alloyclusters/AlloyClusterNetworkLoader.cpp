@@ -270,7 +270,7 @@ void AlloyClusterNetworkLoader::applyGrouping(
 			count = 0;
 			tempVector.clear();
 			superCount++;
-			width = std::max((int) (std::pow((double) superCount, 3.0) / 10.0),
+			width = std::max((int) (std::pow((double) superCount, 1.0) / 1.0),
 					sectionWidth);
 			width -= width % sectionWidth;
 		}

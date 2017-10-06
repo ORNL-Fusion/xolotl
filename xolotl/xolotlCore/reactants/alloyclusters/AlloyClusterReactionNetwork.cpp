@@ -358,8 +358,9 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 								IReactant * product = nullptr;
 								auto product1 = get(iType, productSize);
 								IReactant * product2 = nullptr;
-								if (typeName1 == perfectType
-										|| typeName2 == perfectType) {
+								if ( (typeName1 == perfectType
+										|| typeName2 == perfectType) &&
+									  (typeName1 != frankType && typeName2 != frankType) ) {
 									product2 = get(perfectType, productSize);
 								}
 								auto product3 = get(frankType, productSize);
