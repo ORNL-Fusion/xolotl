@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 
 	// Create a grid
 	std::vector<double> grid;
-	for (int l = 0; l < 5; l++) {
+	for (int l = 0; l < 7; l++) {
 		grid.push_back((double) l * 1.25);
 	}
 	// Specify the surface position

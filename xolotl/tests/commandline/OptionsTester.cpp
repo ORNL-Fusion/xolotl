@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 			<< std::endl << "initialV=0.05" << std::endl << "dimensions=1"
 			<< std::endl << "voidPortion=60.0" << std::endl << "regularGrid=no"
 			<< std::endl << "process=diff" << std::endl << "grouping=11 2 4"
-			<< std::endl << "sputtering=0.5" << std::endl;
+			<< std::endl << "sputtering=0.5" << std::endl << "boundary=1 1" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -172,6 +172,10 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 
 	// Check the sputtering option
 	BOOST_REQUIRE_EQUAL(opts.getSputteringYield(), 0.5);
+
+	// Check the boundary conditions
+	BOOST_REQUIRE_EQUAL(opts.getLeftBoundary(), 1);
+	BOOST_REQUIRE_EQUAL(opts.getRightBoundary(), 1);
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();

@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Create a grid
 	std::vector<double> grid;
-	for (int l = 0; l < 3; l++) {
+	for (int l = 0; l < 5; l++) {
 		grid.push_back((double) l);
 	}
 

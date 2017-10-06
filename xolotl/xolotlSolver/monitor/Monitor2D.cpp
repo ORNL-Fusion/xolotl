@@ -89,8 +89,8 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -200,11 +200,9 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 				for (int k = 0; k < concSize; k++) {
 					std::vector<double> vec;
 					MPI_Recv(&index, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 1,
-							PETSC_COMM_WORLD,
-							MPI_STATUS_IGNORE);
+							PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
 					MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
-							PETSC_COMM_WORLD,
-							MPI_STATUS_IGNORE);
+							PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
 					vec.push_back(index);
 					vec.push_back(conc);
 					concVector.push_back(vec);
@@ -236,7 +234,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 		Vec solution, void *) {
 	// Initial declarations
 	PetscErrorCode ierr;
-	PetscInt xs, xm, ys, ym;
+	PetscInt xs, xm, ys, ym, Mx, My;
 
 	PetscFunctionBeginUser;
 
@@ -253,6 +251,11 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
+	CHKERRQ(ierr);
+	// Get the size of the total grid
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid in the x direction
@@ -280,7 +283,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
 
 			// Boundary conditions
-			if (xi <= surfacePos)
+			if (xi < surfacePos || xi == Mx - 1)
 				continue;
 
 			// Get the pointer to the beginning of the solution data for this grid point
@@ -291,7 +294,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 
 			// Get the total helium concentration at this grid point
 			heConcentration += network->getTotalAtomConcentration()
-					* (grid[xi] - grid[xi - 1]) * hy;
+					* (grid[xi + 1] - grid[xi]) * hy;
 		}
 	}
 
@@ -309,9 +312,9 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 		// Get the total size of the grid rescale the concentrations
 		PetscInt Mx, My;
 		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE);
+		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+		PETSC_IGNORE);
 		CHKERRQ(ierr);
 
 		// Compute the total surface irradiated by the helium flux
@@ -386,8 +389,8 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid rescale the concentrations
 	PetscInt Mx, My;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -412,7 +415,7 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 		MPI_Barrier(PETSC_COMM_WORLD);
 
 		// Set x
-		double x = grid[xi];
+		double x = grid[xi + 1] - grid[1];
 
 		// Initialize the concentrations at this grid point
 		double heLocalConc = 0.0, vLocalConc = 0.0, iLocalConc = 0.0;
@@ -422,7 +425,7 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 			// Get the surface position
 			int surfacePos = solverHandler->getSurfacePosition(yj);
 			// Boundary conditions
-			if (xi <= surfacePos)
+			if (xi < surfacePos)
 				continue;
 
 			// If it is the locally owned part of the grid
@@ -450,9 +453,11 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 
 		// The master process writes computes the cumulative value and writes in the file
 		if (procId == 0) {
-			outputFile << x - grid[solverHandler->getSurfacePosition(0)] << " "
-					<< heConc / My << " " << vConc / My << " " << iConc / My
-					<< std::endl;
+			outputFile
+					<< x
+							- (grid[solverHandler->getSurfacePosition(0) + 1]
+									- grid[1]) << " " << heConc / My << " "
+					<< vConc / My << " " << iConc / My << std::endl;
 		}
 	}
 
@@ -506,8 +511,8 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -539,7 +544,7 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 				// Get the pointer to the beginning of the solution data for this grid point
 				gridPointSolution = solutionArray[j][i];
 				// Compute x and y
-				x = grid[i];
+				x = grid[i + 1] - grid[1];
 				y = (double) j * hy;
 
 				// If it is procId 0 just store the value in the myPoints vector
@@ -669,8 +674,8 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -700,7 +705,7 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 		for (yj = 0; yj < My; yj++) {
 			// Get the position of the surface at yj
 			int surfacePos = solverHandler->getSurfacePosition(yj);
-			outputFile << grid[surfacePos] << " ";
+			outputFile << grid[surfacePos + 1] - grid[1] << " ";
 		}
 		outputFile << std::endl;
 		outputFile.close();
@@ -749,8 +754,8 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 				double coef = cluster->getDiffusionCoefficient();
 
 				// Factor for finite difference
-				double hxLeft = grid[xi] - grid[xi - 1];
-				double hxRight = grid[xi + 1] - grid[xi];
+				double hxLeft = grid[xi + 1] - grid[xi];
+				double hxRight = grid[xi + 2] - grid[xi + 1];
 				double factor = 2.0 / (hxLeft * (hxLeft + hxRight));
 				// Compute the flux going to the left
 				newFlux += (double) size * factor * coef * conc * hxLeft;
@@ -779,7 +784,7 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 		// it to the threshold to now if we should move the surface
 
 		// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
-		double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
+		double threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
 		if (nInterstitial2D[yj] > threshold) {
 			// The surface is moving
 			surfaceHasMoved = true;
@@ -856,7 +861,7 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 			for (yj = 0; yj < My; yj++) {
 				// Get the position of the surface at yj
 				int surfacePos = solverHandler->getSurfacePosition(yj);
-				outputFile << grid[surfacePos] << " ";
+				outputFile << grid[surfacePos + 1] - grid[1] << " ";
 			}
 			outputFile << std::endl;
 			outputFile.close();
@@ -934,7 +939,7 @@ PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time, Vec solution,
 
 		for (xi = xs; xi < xs + xm; xi++) {
 			// Skip everything before the surface
-			if (xi <= surfacePos)
+			if (xi < surfacePos)
 				continue;
 
 			// Get the pointer to the beginning of the solution data for this grid point
@@ -943,13 +948,13 @@ PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time, Vec solution,
 			network->updateConcentrationsFromArray(gridPointSolution);
 
 			// Get the distance from the surface
-			double distance = grid[xi] - grid[surfacePos];
+			double distance = grid[xi + 1] - grid[surfacePos + 1];
 
 			// Compute the helium density at this grid point
 			double heDensity = network->getTotalAtomConcentration();
 
 			// Compute the radius of the bubble from the number of helium
-			double nV = heDensity * (grid[xi] - grid[xi - 1]) * hy / 4.0;
+			double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy / 4.0;
 			double radius =
 					(sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
 							+ pow(
@@ -1104,8 +1109,8 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	// Get the total size of the grid
 	PetscInt Mx, My;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 	checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetInfo failed.");
 

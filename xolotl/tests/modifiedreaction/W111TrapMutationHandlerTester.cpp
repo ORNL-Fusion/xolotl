@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	// Suppose we have a grid with 13 grip points and distance of
 	// 0.1 nm between grid points
 	std::vector<double> grid;
-	for (int l = 0; l < 13; l++) {
+	for (int l = 0; l < 15; l++) {
 		grid.push_back((double) l * 0.1);
 	}
 	// Set the surface position

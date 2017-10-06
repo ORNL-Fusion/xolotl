@@ -91,8 +91,8 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -210,11 +210,9 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 					for (int k = 0; k < concSize; k++) {
 						std::vector<double> vec;
 						MPI_Recv(&index, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 1,
-								PETSC_COMM_WORLD,
-								MPI_STATUS_IGNORE);
+								PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
 						MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
-								PETSC_COMM_WORLD,
-								MPI_STATUS_IGNORE);
+								PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
 						vec.push_back(index);
 						vec.push_back(conc);
 						concVector.push_back(vec);
@@ -248,7 +246,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 		Vec solution, void *) {
 	// Initial declarations
 	PetscErrorCode ierr;
-	PetscInt xs, xm, ys, ym, zs, zm;
+	PetscInt xs, xm, ys, ym, zs, zm, Mx, My, Mz;
 
 	PetscFunctionBeginUser;
 
@@ -265,6 +263,11 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
+	CHKERRQ(ierr);
+	// Get the size of the total grid
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid in the x direction
@@ -295,7 +298,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 			for (PetscInt xi = xs; xi < xs + xm; xi++) {
 
 				// Boundary conditions
-				if (xi <= surfacePos)
+				if (xi < surfacePos || xi == Mx - 1)
 					continue;
 
 				// Get the pointer to the beginning of the solution data for
@@ -307,7 +310,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 
 				// Get the total helium concentration at this grid point
 				heConcentration += network->getTotalAtomConcentration()
-						* (grid[xi] - grid[xi - 1]) * hy * hz;
+						* (grid[xi + 1] - grid[xi]) * hy * hz;
 			}
 		}
 	}
@@ -327,8 +330,8 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 		// Get the total size of the grid rescale the concentrations
 		PetscInt Mx, My, Mz;
 		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 		CHKERRQ(ierr);
 
 		// Compute the total surface irradiated by the helium flux
@@ -402,8 +405,8 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -434,7 +437,7 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 
 		for (PetscInt i = 0; i < Mx; i++) {
 			// Compute x
-			x = grid[i];
+			x = grid[i + 1] - grid[1];
 
 			// Initialize the value of the concentration to integrate over Z
 			double conc = 0.0;
@@ -547,8 +550,8 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -579,7 +582,7 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 
 		for (PetscInt i = 0; i < Mx; i++) {
 			// Compute x
-			x = grid[i];
+			x = grid[i + 1] - grid[1];
 
 			// Initialize the value of the concentration to integrate over Y
 			double conc = 0.0;
@@ -690,8 +693,8 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -757,8 +760,8 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 					double coef = cluster->getDiffusionCoefficient();
 
 					// Factor for finite difference
-					double hxLeft = grid[xi] - grid[xi - 1];
-					double hxRight = grid[xi + 1] - grid[xi];
+					double hxLeft = grid[xi + 1] - grid[xi];
+					double hxRight = grid[xi + 2] - grid[xi + 1];
 					double factor = 2.0 / (hxLeft * (hxLeft + hxRight));
 					// Compute the flux going to the left
 					newFlux += (double) size * factor * coef * conc * hxLeft;
@@ -788,7 +791,7 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold = (62.8 - initialVConc)
-					* (grid[xi] - grid[xi - 1]);
+					* (grid[xi + 1] - grid[xi]);
 			if (nInterstitial3D[yj][zk] > threshold) {
 				// The surface is moving
 				surfaceHasMoved = true;
@@ -884,7 +887,7 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 				int surfacePos = solverHandler->getSurfacePosition(yj, zk);
 				// Write it in the file
 				outputFile << (double) yj * hy << " " << (double) zk * hz << " "
-						<< grid[surfacePos] << std::endl;
+						<< grid[surfacePos + 1] - grid[1] << std::endl;
 			}
 		}
 
@@ -965,7 +968,7 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time, Vec solution,
 
 			for (xi = xs; xi < xs + xm; xi++) {
 				// Skip everything before the surface
-				if (xi <= surfacePos)
+				if (xi < surfacePos)
 					continue;
 
 				// Get the pointer to the beginning of the solution data for this grid point
@@ -974,13 +977,13 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time, Vec solution,
 				network->updateConcentrationsFromArray(gridPointSolution);
 
 				// Get the distance from the surface
-				double distance = grid[xi] - grid[surfacePos];
+				double distance = grid[xi + 1] - grid[surfacePos + 1];
 
 				// Compute the helium density at this grid point
 				double heDensity = network->getTotalAtomConcentration();
 
 				// Compute the radius of the bubble from the number of helium
-				double nV = heDensity * (grid[xi] - grid[xi - 1]) * hy * hz
+				double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy * hz
 						/ 4.0;
 				double radius =
 						(sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
@@ -1052,7 +1055,8 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time, Vec solution,
 						// Loop on the V boundaries
 						for (int j = boundaries[2]; j <= boundaries[3]; j++) {
 							// Get the total concentration at this v
-							double conc = cluster->getIntegratedVConcentration(j);
+							double conc = cluster->getIntegratedVConcentration(
+									j);
 							// Get the corresponding V cluster and its Id
 							auto vCluster = network->get(vType, j);
 							int vId = vCluster->getId() - 1;
@@ -1139,8 +1143,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	// Get the total size of the grid
 	PetscInt Mx, My, Mz;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 	checkPetscError(ierr, "setupPetsc3DMonitor: DMDAGetInfo failed.");
 

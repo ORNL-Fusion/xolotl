@@ -286,7 +286,7 @@ public class Preprocessor {
 		if (args.isNetParam()) {
 			// Build the network argument
 			String netString;
-			if (args.getMaxXeSize() > 0)
+			if (maxXe > 0)
 				netString = Integer.toString(args.getMaxXeSize());
 			else
 				netString = Integer.toString(args.getMaxHeSize()) + " " + Integer.toString(args.getMaxVSize()) + " "
@@ -299,6 +299,11 @@ public class Preprocessor {
 			xolotlParams.setProperty("grid", gridString);
 			xolotlParams.setProperty("networkFile", "");
 		}
+		// Set the default boundary conditions
+		String boundaryString;
+		if (maxXe > 0) boundaryString = "0 0";
+		else boundaryString = "1 0";
+		xolotlParams.setProperty("boundary", boundaryString);
 
 	}
 

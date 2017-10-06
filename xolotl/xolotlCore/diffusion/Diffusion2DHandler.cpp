@@ -17,7 +17,7 @@ void Diffusion2DHandler::initializeDiffusionGrid(std::vector<IAdvectionHandler *
 	// Initialize it to True
 	for (int j = 0; j < ny + 2; j++) {
 		std::vector < std::vector<bool> > tempGridBis;
-		for (int i = 0; i < nx + 2; i++) {
+		for (int i = 0; i < nx; i++) {
 			std::vector<bool> tempGrid;
 			for (int n = 0; n < nDiff; n++) {
 				tempGrid.push_back(true);
@@ -39,11 +39,9 @@ void Diffusion2DHandler::initializeDiffusionGrid(std::vector<IAdvectionHandler *
 		for (int j = -1; j < ny + 1; j++) {
 			// Set the grid position
 			gridPosition[1] = hy * (double) j;
-			for (int i = -1; i < nx + 1; i++) {
+			for (int i = 0; i < nx; i++) {
 				// Set the grid position
-				if (i == -1) gridPosition[0] = - 1.0;
-				else if (i == nx) gridPosition[0] = grid[i-1] + 1.0;
-				else gridPosition[0] = grid[i];
+				gridPosition[0] = grid[i] - grid[1];
 
 				// Check if we are on a sink
 				if (advectionHandlers[l]->isPointOnSink(gridPosition)) {
@@ -57,7 +55,7 @@ void Diffusion2DHandler::initializeDiffusionGrid(std::vector<IAdvectionHandler *
 							n++;
 						}
 						// Set this diffusion grid value to false
-						diffusionGrid[j+1][i+1][n] = false;
+						diffusionGrid[j+1][i][n] = false;
 					}
 				}
 			}

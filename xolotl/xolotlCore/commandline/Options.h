@@ -219,6 +219,16 @@ protected:
 	 */
 	double zStepSize;
 
+	/**
+	 * The boundary condition on the left side of the X direction.
+	 */
+	int leftBoundary;
+
+	/**
+	 * The boundary condition on the right side of the X direction.
+	 */
+	int rightBoundary;
+
 public:
 
 	/**
@@ -887,6 +897,38 @@ public:
 	 */
 	void setZStepSize(double stepSize) {
 		zStepSize = stepSize;
+	}
+
+	/**
+	 * Obtain the boundary condition on the left side of the grid.
+	 * \see IOptions.h
+	 */
+	int getLeftBoundary() const {
+		return leftBoundary;
+	}
+
+	/**
+	 * Set the boundary condition on the left side of the grid.
+	 * \see IOptions.h
+	 */
+	void setLeftBoundary(int n) {
+		leftBoundary = n;
+	}
+
+	/**
+	 * Obtain the boundary condition on the right side of the grid.
+	 * \see IOptions.h
+	 */
+	int getRightBoundary() const {
+		return rightBoundary;
+	}
+
+	/**
+	 * Set the boundary condition on the right side of the grid.
+	 * \see IOptions.h
+	 */
+	void setRightBoundary(int n) {
+		rightBoundary = n;
 	}
 
 };

@@ -45,7 +45,7 @@ void TrapMutationHandler::initialize(IReactionNetwork *network,
 				// Create the temporary 1D vector
 				std::vector<std::vector<int> > temp1DVector;
 				// Loop on the grid points in the depth direction
-				for (int i = 0; i < grid.size(); i++) {
+				for (int i = 0; i < grid.size() - 2; i++) {
 					// Create the list (vector) of indices at this grid point
 					std::vector<int> indices;
 					// And give it empty to the 1D vector
@@ -130,7 +130,7 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 	std::vector<std::vector<int> > temp1DVector;
 
 	// Loop on the grid points in the depth direction
-	for (int i = 0; i < grid.size(); i++) {
+	for (int i = 0; i < grid.size() - 2; i++) {
 		// Create the list (vector) of indices at this grid point
 		std::vector<int> indices;
 
@@ -142,8 +142,8 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 		}
 
 		// Get the depth
-		double depth = grid[i] - grid[surfacePos];
-		double previousDepth = grid[i - 1] - grid[surfacePos];
+		double depth = grid[i+1] - grid[surfacePos+1];
+		double previousDepth = grid[i] - grid[surfacePos+1];
 
 		// Loop on the depth vector
 		for (int l = 0; l < depthVec.size(); l++) {
@@ -204,7 +204,7 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 		// Create the temporary 1D vector
 		std::vector<std::vector<int> > temp1DVector;
 		// Loop on the grid points in the depth direction
-		for (int i = 0; i < grid.size(); i++) {
+		for (int i = 0; i < grid.size() - 2; i++) {
 			// Create the list (vector) of indices at this grid point
 			std::vector<int> indices;
 
@@ -216,8 +216,8 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 			}
 
 			// Get the depth
-			double depth = grid[i] - grid[surfacePos[j]];
-			double previousDepth = grid[i - 1] - grid[surfacePos[j]];
+			double depth = grid[i+1] - grid[surfacePos[j]+1];
+			double previousDepth = grid[i] - grid[surfacePos[j]+1];
 
 			// Loop on the depth vector
 			for (int l = 0; l < depthVec.size(); l++) {
@@ -318,7 +318,7 @@ void TrapMutationHandler::initializeIndex3D(
 			// Create the temporary 1D vector
 			std::vector<std::vector<int> > temp1DVector;
 			// Loop on the grid points in the depth direction
-			for (int i = 0; i < grid.size(); i++) {
+			for (int i = 0; i < grid.size() - 2; i++) {
 				// Create the list (vector) of indices at this grid point
 				std::vector<int> indices;
 
@@ -330,8 +330,8 @@ void TrapMutationHandler::initializeIndex3D(
 				}
 
 				// Get the depth
-				double depth = grid[i] - grid[surfacePos[j][k]];
-				double previousDepth = grid[i - 1] - grid[surfacePos[j][k]];
+				double depth = grid[i+1] - grid[surfacePos[j][k]+1];
+				double previousDepth = grid[i] - grid[surfacePos[j][k]+1];
 
 				// Loop on the depth vector
 				for (int l = 0; l < depthVec.size(); l++) {

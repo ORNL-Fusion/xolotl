@@ -19,7 +19,7 @@ public:
 	 */
 	HeatOptionHandler() :
 			OptionHandler("heat",
-					"heat <value1> <value2>        "
+					"heat <value1> <value2>            "
 							"The temperature (in Kelvin) at the surface and in the bulk.\n") {
 	}
 

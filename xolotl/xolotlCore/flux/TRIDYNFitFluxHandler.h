@@ -190,18 +190,17 @@ public:
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
-
 		// Compute the norm factor because the fit function has an
 		// arbitrary amplitude
 		wNormFactor = 0.0;
 		// Loop on the x grid points skipping the first after the surface position
 		// and last because of the boundary conditions
-		for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
+		for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 			// Get the x position
-			double x = xGrid[i] - xGrid[surfacePos];
+			double x = xGrid[i+1] - xGrid[surfacePos+1];
 
 			// Add the the value of the function times the step size
-			wNormFactor += WFitFunction(x) * (xGrid[i] - xGrid[i-1]);
+			wNormFactor += WFitFunction(x) * (xGrid[i+1] - xGrid[i]);
 		}
 
 		// Factor the incident flux will be multiplied by to get
@@ -215,9 +214,9 @@ public:
 		incidentWFluxVec.push_back(0.0);
 
 		// Starts a i = surfacePos + 1 because the first value was already put in the vector
-		for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
+		for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 			// Get the x position
-			auto x = xGrid[i] - xGrid[surfacePos];
+			auto x = xGrid[i+1] - xGrid[surfacePos+1];
 
 			// Compute the flux value
 			double incidentFlux = fluxNormalized * WFitFunction(x);

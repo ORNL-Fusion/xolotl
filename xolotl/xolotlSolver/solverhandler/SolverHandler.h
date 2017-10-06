@@ -41,6 +41,12 @@ protected:
 	//! The grid step size in the z direction.
 	double hZ;
 
+	//! The number of grid points by which the boundary condition should be shifted at the left side.
+	int leftOffset;
+
+	//! The number of grid points by which the boundary condition should be shifted at the right side.
+	int rightOffset;
+
 	//! The initial vacancy concentration.
 	double initialVConc;
 
@@ -85,7 +91,7 @@ protected:
 		// Check if the user wants a regular grid
 		if (useRegularGrid) {
 			// The grid will me made of nx + 1 points separated by hx nm
-			for (int l = 0; l <= nx; l++) {
+			for (int l = 0; l <= nx + 1; l++) {
 				grid.push_back((double) l * hx);
 			}
 		}
@@ -96,19 +102,19 @@ protected:
 			double previousPoint = 0.0;
 
 			// Loop on all the grid points
-			for (int l = 0; l <= nx; l++) {
+			for (int l = 0; l <= nx + 1; l++) {
 				// Add the previous point
 				grid.push_back(previousPoint);
 				// 0.1nm step near the surface (x < 2.5nm)
-				if (l < surfacePos + 25) {
+				if (l < surfacePos + 26) {
 					previousPoint += 0.1;
 				}
 				// Then 0.25nm (2.5nm < x < 5.0nm)
-				else if (l < surfacePos + 35) {
+				else if (l < surfacePos + 36) {
 					previousPoint += 0.25;
 				}
 				// Then 0.5nm (5.0nm < x < 7.5nm)
-				else if (l < surfacePos + 40) {
+				else if (l < surfacePos + 41) {
 					previousPoint += 0.5;
 				}
 				// 1.0nm step size for all the other ones
@@ -199,11 +205,37 @@ public:
 		// Look at if the user wants to use a regular grid in the x direction
 		useRegularGrid = options.useRegularXGrid();
 
+		// Set the boundary conditions (= 1: free surface; = 0: mirror)
+		leftOffset = options.getLeftBoundary();
+		rightOffset = options.getRightBoundary();
+
 		// Should we be able to move the surface?
 		auto map = options.getProcesses();
 		movingSurface = map["movingSurface"];
 		// Should we be able to burst bubble?
 		bubbleBursting = map["bursting"];
+
+		// Some safeguards about what to use with what
+		if (leftOffset == 0
+				&& (map["advec"] || map["modifiedTM"] || map["movingSurface"]
+						|| map["bursting"])) {
+			throw std::string(
+					"\nThe left side of the grid is set to use a reflective boundary condition "
+							"but you want to use processes that are intrinsically related to "
+							"a free surface (advection, modified trap mutation, moving surface, bubble bursting).");
+		}
+
+		// Complains if processes that should not be used together are used
+		if (map["attenuation"] && !map["modifiedTM"]) {
+			throw std::string(
+					"\nYou want to use the attenuation on the modified trap mutation "
+							"but you are not using the modifiedTM process, it doesn't make any sense.");
+		}
+		if (map["modifiedTM"] && !map["reaction"]) {
+			throw std::string(
+					"\nYou want to use the modified trap mutation but the reaction process is not set,"
+							" it doesn't make any sense.");
+		}
 
 		return;
 	}
@@ -328,7 +360,8 @@ public:
 		return networkName;
 	}
 
-};
+}
+;
 //end class SolverHandler
 
 } /* end namespace xolotlSolver */
