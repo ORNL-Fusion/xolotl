@@ -20,8 +20,8 @@
 #include <PSISuperCluster.h>
 #include <NEClusterReactionNetwork.h>
 #include <PSIClusterReactionNetwork.h>
-#include <../../xolotlCore/reactants/alloyclusters/AlloyClusterReactionNetwork.h>
-#include <../../xolotlCore/reactants/alloyclusters/AlloySuperCluster.h>
+#include <AlloyClusterReactionNetwork.h>
+#include <AlloySuperCluster.h>
 
 namespace xolotlSolver {
 
@@ -913,54 +913,43 @@ PetscErrorCode computeAlloy(TS ts, PetscInt timestep, PetscReal time,
 		for (int i = 0; i < xSize; i++) {
 			solutionArray[i].resize(networkDOF);
 		}
-		//std::cout << procId << " solution size " << solutionArray.size() << " " << solutionArray[0].size() << std::endl;
 	}
-
-	//std::cout << procId << " solution size " << solutionArray.size() <<  std::endl;
 
 	// Populate full solution array
 	for (int xi = surfacePos; xi < xSize; ++xi) {
-
-		//std::cout << procId << " Position Loop " << xi << std::endl;
 
 		for (int dof = 0; dof < networkDOF; ++dof) {
 			// Wait for everybody at each solution point
 			MPI_Barrier(PETSC_COMM_WORLD);
 
-			//std::cout << procId << " Cluster Loop " << dof << std::endl;
-
 			double value;
+			// If it belongs to this proccess...
 			if (xi >= xs && xi < (xs + xm) ) {
-				//std::cout << procId << " Owner " << xi << " " << dof << std::endl;
+
 				value = brokenArray[xi][dof];
+
+				// Send to main process for output to file
 				if (procId != 0) {
-					//std::cout << procId << " Sending " << value << std::endl;
 					MPI_Send(&value, 1, MPI_DOUBLE, 0, 2, PETSC_COMM_WORLD);
 				}
 			}
 			else if (procId == 0) {
-				//std::cout << procId << " Receiving " << value << std::endl;
 				MPI_Recv(&value, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
 						PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
 			}
 
+			// Record value to solution array
 			if (procId == 0) {
-				//std::cout << procId << " Assigning " << xi << " " << dof << " " << value << std::endl;
 				solutionArray[xi][dof] = value;
-				//std::cout << procId << " Assigned " << xi << " " << dof << " " << value << std::endl;
 			}
 
-			//std::cout << procId << " End of loop" << std::endl;
 		}
 
 	}
 
-	// Restore the solutionArray
+	// Restore the PETSC solution array
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &brokenArray);
 	CHKERRQ(ierr);
-
-	//if (procId ==0)
-	//	std::cout << "Finished generating solution array!" << std::endl;
 
 	////////////////////////////////////////////
 
