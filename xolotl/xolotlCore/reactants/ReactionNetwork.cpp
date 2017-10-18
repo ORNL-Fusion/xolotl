@@ -74,6 +74,7 @@ double ReactionNetwork::computeBindingEnergy(
 	double bindingEnergy = reaction->first->getFormationEnergy()
 			+ reaction->second->getFormationEnergy()
 			- reaction->dissociating->getFormationEnergy();
+
 	return bindingEnergy;
 }
 
@@ -227,4 +228,3 @@ std::shared_ptr<DissociationReaction> ReactionNetwork::addDissociationReaction(
 	// Return the newly-added dissociation reaction.
 	return reaction;
 }
-

@@ -163,8 +163,21 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 	// Get the rate constant from the reverse reaction
 	double kPlus = reaction->reverseReaction->kConstant;
 
-	// Calculate and return
+	// Calculate Binding Energy
 	double bindingEnergy = computeBindingEnergy(reaction);
+
+	// Correct smallest faulted loop binding energy
+	if (reaction->dissociating->getType() == faultedType &&
+			reaction->dissociating->getSize() == 6) {
+		bindingEnergy = 1.5 - 2.05211 * ( pow(6.0,2.0/3.0) - pow(5.0,2.0/3.0) );
+	}
+
+	// Output reactions and binding enegy to Check
+	//std::cout << reaction->dissociating->getName() << " -> "
+	//		<< reaction->first->getName() << " + "
+	//		<< reaction->second->getName() << "     "
+	//		<< bindingEnergy << std::endl;
+
 	double k_minus_exp = exp(
 			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature));
 	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
