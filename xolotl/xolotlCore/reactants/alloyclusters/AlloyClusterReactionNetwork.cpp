@@ -167,9 +167,11 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 	double bindingEnergy = computeBindingEnergy(reaction);
 
 	// Correct smallest faulted loop binding energy
+	int minFaultedSize = maxFaultedClusterSize + 1 - numFaultedClusters;
 	if (reaction->dissociating->getType() == faultedType &&
-			reaction->dissociating->getSize() == 6) {
-		bindingEnergy = 1.5 - 2.05211 * ( pow(6.0,2.0/3.0) - pow(5.0,2.0/3.0) );
+			reaction->dissociating->getSize() == minFaultedSize) {
+		bindingEnergy = 1.5 - 2.05211 * ( pow(double(minFaultedSize),2.0/3.0) -
+				pow(double(minFaultedSize-1),2.0/3.0) );
 	}
 
 	// Output reactions and binding enegy to Check
