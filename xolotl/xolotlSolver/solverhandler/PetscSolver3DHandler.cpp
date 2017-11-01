@@ -209,8 +209,8 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 						0.0);
 
 				// Initialize the vacancy concentration
-				if (i > surfacePosition[j][k]
-						&& vacancyIndex > 0 && !hasConcentrations) {
+				if (i >= surfacePosition[j][k] + leftOffset
+						&& vacancyIndex > 0 && !hasConcentrations && i < nX - rightOffset) {
 					concOffset[vacancyIndex] = initialVConc;
 				}
 			}
@@ -305,7 +305,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			atomConc = 0.0;
 
 			// Loop over grid points
-			for (int xi = surfacePosition[yj][zk] + 1; xi < nX; xi++) {
+			for (int xi = surfacePosition[yj][zk] + leftOffset; xi < nX - rightOffset; xi++) {
 				// We are only interested in the helium near the surface
 				if (grid[xi+1] - grid[surfacePosition[yj][zk]+1] > 2.0)
 					continue;
@@ -354,13 +354,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 				// Boundary conditions
 				// Everything to the left of the surface is empty
-				if (xi <= surfacePosition[yj][zk]) {
-					for (int i = 0; i < dof; i++) {
-						updatedConcOffset[i] = 1.0 * concOffset[i];
-					}
-
-					continue;
-				}
+				if (xi < surfacePosition[yj][zk] + leftOffset || xi > nX - 1 - rightOffset) continue;
 
 				// Set the grid position
 				gridPosition[0] = grid[xi+1] - grid[1];
@@ -517,7 +511,7 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			for (PetscInt xi = xs; xi < xs + xm; xi++) {
 				// Boundary conditions
 				// Everything to the left of the surface is empty
-				if (xi <= surfacePosition[yj][zk])
+				if (xi < surfacePosition[yj][zk] + leftOffset || xi > nX - 1 - rightOffset)
 					continue;
 
 				// Set the grid position
@@ -732,7 +726,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			atomConc = 0.0;
 
 			// Loop over grid points
-			for (int xi = surfacePosition[yj][zk] + 1; xi < nX; xi++) {
+			for (int xi = surfacePosition[yj][zk] + leftOffset; xi < nX - rightOffset; xi++) {
 				// We are only interested in the helium near the surface
 				if (grid[xi+1] - grid[surfacePosition[yj][zk]+1] > 2.0)
 					continue;
@@ -770,7 +764,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			for (PetscInt xi = xs; xi < xs + xm; xi++) {
 				// Boundary conditions
 				// Everything to the left of the surface is empty
-				if (xi <= surfacePosition[yj][zk])
+				if (xi < surfacePosition[yj][zk] + leftOffset || xi > nX - 1 - rightOffset)
 					continue;
 
 				// Set the grid position
