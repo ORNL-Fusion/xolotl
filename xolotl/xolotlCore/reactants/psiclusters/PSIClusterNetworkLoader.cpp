@@ -610,7 +610,7 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 	std::shared_ptr<PSISuperCluster> superCluster;
 	static std::map<std::string, int> composition;
 	int count = 0, heIndex = 1, vIndex = vMin, heWidth = heSectionWidth,
-			vWidth = vSectionWidth, previousBiggestHe = 1;
+			vWidth = vSectionWidth, previousBiggestHe = 1, vMax = network->getAll(vType).size();
 	double heSize = 0.0, vSize = 0.0, radius = 0.0, energy = 0.0;
 
 	// Map to know which cluster is in which group
@@ -629,7 +629,7 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 				compositionVector);
 	}
 	// Loop on the vacancy groups
-	for (int k = vMin; k <= network->getAll(vType).size(); k++) {
+	for (int k = vMin; k <= vMax; k++) {
 		// Update the composition vector
 		compositionVector[0] = previousBiggestHe;
 		compositionVector[1] = k;
@@ -654,6 +654,9 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 			compositionVector[0] = previousBiggestHe;
 			cluster = (PSICluster *) network->getCompound(heVType,
 					compositionVector);
+
+			// Skip the last one
+			if (previousBiggestHe == vMax * 4) cluster = nullptr;
 		}
 
 		// Check if there were clusters in this group
@@ -699,6 +702,9 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 			// Loop within the group
 			for (int n = vIndex; n < vIndex + vWidth; n++) {
 				for (int m = heIndex; m < heIndex + heWidth; m++) {
+//					// Skip the biggest one
+//					if (n == vMax && m == vMax * 4) continue;
+
 					// Get the corresponding cluster
 					std::vector<int> compositionVector = { m, n, 0 };
 					// Get the product of the same type as the second reactant

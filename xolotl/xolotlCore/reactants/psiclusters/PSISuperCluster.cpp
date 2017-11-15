@@ -27,8 +27,8 @@ PSISuperCluster::PSISuperCluster(double numHe, double numV, int nTot,
 	size = (int) (numHe + numV);
 
 	// Update the composition map
-	compositionMap[heType] = (int) (numHe * (double) nTot);
-	compositionMap[vType] = (int) (numV * (double) nTot);
+	compositionMap[heType] = (int) numHe;
+	compositionMap[vType] = (int) numV;
 
 	// Set the width
 	sectionHeWidth = heWidth;
@@ -222,8 +222,7 @@ double PSISuperCluster::getIntegratedVConcentration(int v) const {
 		heIndex = (int) (numHe - (double) sectionHeWidth / 2.0) + j + 1;
 
 		// Check if this cluster exists
-		if (reactingMap.find(std::make_pair(heIndex, v))
-				== reactingMap.end())
+		if (reactingMap.find(std::make_pair(heIndex, v)) == reactingMap.end())
 			continue;
 
 		// Compute the distances
@@ -270,22 +269,14 @@ void PSISuperCluster::computeDispersion() {
 	if (sectionHeWidth == 1)
 		dispersionHe = 1.0;
 	else
-		dispersionHe = 2.0
-				* (nHeSquare
-						- ((double) compositionMap[heType]
-								* ((double) compositionMap[heType]
-										/ (double) nTot)))
-				/ ((double) (nTot * (sectionHeWidth - 1)));
+		dispersionHe = 2.0 * (nHeSquare - (numHe * (double) nTot * numHe))
+				/ ((double) nTot * (double) (sectionHeWidth - 1));
 
 	if (sectionVWidth == 1)
 		dispersionV = 1.0;
 	else
-		dispersionV = 2.0
-				* (nVSquare
-						- ((double) compositionMap[vType]
-								* ((double) compositionMap[vType]
-										/ (double) nTot)))
-				/ ((double) (nTot * (sectionVWidth - 1)));
+		dispersionV = 2.0 * (nVSquare - (numV * (double) nTot * numV))
+				/ ((double) nTot * (double) (sectionVWidth - 1));
 
 	return;
 }

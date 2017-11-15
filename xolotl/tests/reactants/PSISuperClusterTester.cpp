@@ -67,10 +67,11 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	auto reactionConnectivity = reactant->getConnectivity();
 
 	// Check the connectivity for He, V, and I
-	int connectivityExpected[] = { 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 1, 0 };
+	int connectivityExpected[] = { 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1,
+			1, 1, 0, 1, 1, 1, 1, 0, 0, 0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
+		std::cout << reactionConnectivity[i] << std::endl;
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
 	}
 
@@ -167,9 +168,9 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] =
-			{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-					0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+	double knownPartials[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			0.0, 0.0 };
 	// Set the concentration
 	cluster->setConcentration(0.5);
 
@@ -177,7 +178,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	auto partials = cluster->getPartialDerivatives();
 
 	// Check the size of the partials
-	BOOST_REQUIRE_EQUAL(partials.size(), 19U);
+	BOOST_REQUIRE_EQUAL(partials.size(), 25U);
 
 	// Check all the values
 	for (unsigned int i = 0; i < partials.size(); i++) {

@@ -124,12 +124,12 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	// Get the size of the network
 	int networkSize = network->size();
 	// Check the value
-	BOOST_REQUIRE_EQUAL(networkSize, 1869);
+	BOOST_REQUIRE_EQUAL(networkSize, 1870);
 
 	// Get the dof of the network
 	int dof = network->getDOF();
 	// Check the value
-	BOOST_REQUIRE_EQUAL(dof, 1930);
+	BOOST_REQUIRE_EQUAL(dof, 1933);
 
 	// Check the properties
 	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	BOOST_REQUIRE_EQUAL(psiNetwork->getNumVClusters(), 29);
 	BOOST_REQUIRE_EQUAL(psiNetwork->getNumIClusters(), 6);
 	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeVClusters(), 1796);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getNumSuperClusters(), 30);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumSuperClusters(), 31);
 
 	// Finalize MPI
 	MPI_Finalize();
