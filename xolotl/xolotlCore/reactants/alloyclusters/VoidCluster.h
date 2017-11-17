@@ -43,7 +43,6 @@ public:
 		return std::shared_ptr<IReactant> (new VoidCluster(*this));
 	}
 
-
 }; //end class VoidCluster
 
 } /* namespace xolotlCore */

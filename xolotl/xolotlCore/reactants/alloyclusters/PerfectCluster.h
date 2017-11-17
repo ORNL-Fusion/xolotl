@@ -43,7 +43,6 @@ public:
 		return std::shared_ptr<IReactant> (new PerfectCluster(*this));
 	}
 
-
 }; //end class PerfectCluster
 
 } /* namespace xolotlCore */

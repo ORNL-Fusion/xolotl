@@ -43,7 +43,6 @@ public:
 		return std::shared_ptr<IReactant> (new FrankCluster(*this));
 	}
 
-
 }; //end class FrankCluster
 
 } /* namespace xolotlCore */

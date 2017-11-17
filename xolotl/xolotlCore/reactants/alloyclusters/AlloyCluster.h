@@ -6,6 +6,8 @@
 #include <math.h>
 #include <sstream>
 
+#include <iostream>
+
 namespace xolotlPerf {
 class ITimer;
 }

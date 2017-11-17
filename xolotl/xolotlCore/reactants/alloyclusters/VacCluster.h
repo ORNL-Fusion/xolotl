@@ -43,7 +43,6 @@ public:
 		return std::shared_ptr<IReactant> (new VacCluster(*this));
 	}
 
-
 }; //end class VacCluster
 
 } /* namespace xolotlCore */

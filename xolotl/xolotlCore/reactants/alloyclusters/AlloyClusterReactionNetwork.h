@@ -146,6 +146,8 @@ public:
 	 */
 	AlloyClusterReactionNetwork(const AlloyClusterReactionNetwork &other);
 
+	int typeSwitch(std::string const) const;
+
 	/**
 	 * Computes the full reaction connectivity matrix for this network.
 	 */

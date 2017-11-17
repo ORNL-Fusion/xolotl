@@ -43,7 +43,6 @@ public:
 		return std::shared_ptr<IReactant> (new FaultedCluster(*this));
 	}
 
-
 }; //end class FaultedCluster
 
 } /* namespace xolotlCore */

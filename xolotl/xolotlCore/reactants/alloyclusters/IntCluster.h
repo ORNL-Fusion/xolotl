@@ -43,7 +43,6 @@ public:
 		return std::shared_ptr<IReactant> (new IntCluster(*this));
 	}
 
-
 }; //end class IntCluster
 
 } /* namespace xolotlCore */
