@@ -59,10 +59,15 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	// advection toward the surface (or a dummy one if it is deactivated)
 	advectionHandlers[0]->setLocation(grid[surfacePosition + 1] - grid[1]);
 
-//	for (int i = 0; i < grid.size(); i++) {
-//		std::cout << grid[i+1] - grid[surfacePosition+1] << " ";
-//	}
-//	std::cout << std::endl;
+	// Prints the grid on one process
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	if (procId == 0) {
+		for (int i = 0; i < grid.size() - 1; i++) {
+			std::cout << grid[i + 1] - grid[surfacePosition + 1] << " ";
+		}
+		std::cout << std::endl;
+	}
 
 	// Set the size of the partial derivatives vector
 	reactingPartialsForCluster.resize(dof, 0.0);

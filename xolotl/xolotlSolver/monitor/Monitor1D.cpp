@@ -20,6 +20,7 @@
 #include <PSISuperCluster.h>
 #include <NEClusterReactionNetwork.h>
 #include <PSIClusterReactionNetwork.h>
+#include <MathUtils.h>
 
 namespace xolotlSolver {
 
@@ -1735,7 +1736,7 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 	auto grid = solverHandler->getXGrid();
 
 	// Write the initial surface position
-	if (procId == 0 && timestep == 0) {
+	if (procId == 0 && xolotlCore::equal(time, 0.0)) {
 		std::ofstream outputFile;
 		outputFile.open("surface.txt", ios::app);
 		outputFile << time << " " << grid[surfacePos + 1] - grid[1]
@@ -1928,7 +1929,7 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 		if (procId == 0) {
 			std::ofstream outputFile;
 			outputFile.open("surface.txt", ios::app);
-			outputFile << time << " " << grid[surfacePos] - grid[1]
+			outputFile << time << " " << grid[surfacePos + 1] - grid[1]
 					<< std::endl;
 			outputFile.close();
 		}

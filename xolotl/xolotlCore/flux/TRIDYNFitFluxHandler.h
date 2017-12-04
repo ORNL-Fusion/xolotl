@@ -7,6 +7,7 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
+#include <mpi.h>
 
 namespace xolotlCore {
 
@@ -82,6 +83,9 @@ private:
 	 * @return The evaluated value
 	 */
 	double WFitFunction(double x) {
+		if (x > 11.5)
+			return 0.0;
+
 		// Compute the polynomial fit
 		double value = B0 + B1 * x + B2 * pow(x, 2.0) + B3 * pow(x, 3.0)
 				+ B4 * pow(x, 4.0) + B5 * pow(x, 5.0) + B6 * pow(x, 6.0)
@@ -97,10 +101,14 @@ public:
 	/**
 	 * The constructor
 	 */
-	TRIDYNFitFluxHandler() : A0(0.0), A1(0.0), A2(0.0), A3(0.0), A4(0.0), A5(0.0), A6(0.0),
-	A7(0.0), A8(0.0), A9(0.0), A10(0.0), A11(0.0), A12(0.0), A13(0.0), A14(0.0), A15(0.0), B0(0.0), B1(0.0), B2(0.0), B3(0.0), B4(0.0), B5(0.0), B6(0.0),
-	B7(0.0), B8(0.0), B9(0.0), B10(0.0), B11(0.0), B12(0.0), B13(0.0), B14(0.0), B15(0.0),
-	vDefectIndex(-1), iDefectIndex(-1), reductionFactor(0.0), wNormFactor(0.0) {
+	TRIDYNFitFluxHandler() :
+			A0(0.0), A1(0.0), A2(0.0), A3(0.0), A4(0.0), A5(0.0), A6(0.0), A7(
+					0.0), A8(0.0), A9(0.0), A10(0.0), A11(0.0), A12(0.0), A13(
+					0.0), A14(0.0), A15(0.0), B0(0.0), B1(0.0), B2(0.0), B3(
+					0.0), B4(0.0), B5(0.0), B6(0.0), B7(0.0), B8(0.0), B9(0.0), B10(
+					0.0), B11(0.0), B12(0.0), B13(0.0), B14(0.0), B15(0.0), vDefectIndex(
+					-1), iDefectIndex(-1), reductionFactor(0.0), wNormFactor(
+					0.0) {
 	}
 
 	/**
@@ -197,16 +205,17 @@ public:
 		// and last because of the boundary conditions
 		for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 			// Get the x position
-			double x = xGrid[i+1] - xGrid[surfacePos+1];
+			double x = xGrid[i + 1] - xGrid[surfacePos + 1];
 
 			// Add the the value of the function times the step size
-			wNormFactor += WFitFunction(x) * (xGrid[i+1] - xGrid[i]);
+			wNormFactor += WFitFunction(x) * (xGrid[i + 1] - xGrid[i]);
 		}
 
 		// Factor the incident flux will be multiplied by to get
 		// the wanted intensity
 		double fluxNormalized = 0.0;
-		if (wNormFactor > 0.0) fluxNormalized = fluxAmplitude * reductionFactor / wNormFactor;
+		if (wNormFactor > 0.0)
+			fluxNormalized = fluxAmplitude * reductionFactor / wNormFactor;
 
 		// Clear the flux vector
 		incidentWFluxVec.clear();
@@ -216,7 +225,7 @@ public:
 		// Starts a i = surfacePos + 1 because the first value was already put in the vector
 		for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 			// Get the x position
-			auto x = xGrid[i+1] - xGrid[surfacePos+1];
+			auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
 
 			// Compute the flux value
 			double incidentFlux = fluxNormalized * WFitFunction(x);
@@ -257,6 +266,20 @@ public:
 		}
 		iDefectIndex = iCluster->getId() - 1;
 
+		// Prints both incident vectors in a file
+		int procId;
+		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+		if (procId == 0) {
+			std::ofstream outputFile;
+			outputFile.open("incidentVectors.txt");
+			for (int i = 0; i < incidentFluxVec.size(); i++) {
+				outputFile << grid[surfacePos + i + 1] - grid[surfacePos + 1] << " "
+						<< incidentFluxVec[i] << " " << incidentWFluxVec[i]
+						<< std::endl;
+			}
+			outputFile.close();
+		}
+
 		return;
 	}
 
@@ -264,7 +287,8 @@ public:
 	 * This operation computes the flux due to incoming particles at a given grid point.
 	 * \see IFluxHandler.h
 	 */
-	void computeIncidentFlux(double currentTime, double *updatedConcOffset, int xi, int surfacePos) {
+	void computeIncidentFlux(double currentTime, double *updatedConcOffset,
+			int xi, int surfacePos) {
 		// Recompute the flux vector if a time profile is used
 		if (useTimeProfile) {
 			fluxAmplitude = getProfileAmplitude(currentTime);

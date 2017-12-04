@@ -18,6 +18,7 @@
 #include <HDF5Utils.h>
 #include <PSISuperCluster.h>
 #include <NESuperCluster.h>
+#include <MathUtils.h>
 
 namespace xolotlSolver {
 
@@ -696,7 +697,7 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	auto grid = solverHandler->getXGrid();
 
 	// Write the initial surface positions
-	if (procId == 0 && timestep == 0) {
+	if (procId == 0 && xolotlCore::equal(time, 0.0)) {
 		std::ofstream outputFile;
 		outputFile.open("surface.txt", ios::app);
 		outputFile << time << " ";
@@ -852,7 +853,7 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 				advecHandlers, grid, My, hy);
 
 		// Write the updated surface positions
-		if (procId == 0 && timestep == 0) {
+		if (procId == 0) {
 			std::ofstream outputFile;
 			outputFile.open("surface.txt", ios::app);
 			outputFile << time << " ";
