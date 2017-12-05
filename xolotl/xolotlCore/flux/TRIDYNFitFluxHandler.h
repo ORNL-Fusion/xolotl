@@ -29,6 +29,16 @@ private:
 	double B0, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B11, B12, B13, B14, B15;
 
 	/**
+	 * The total depth on which the flux for incoming He is defined.
+	 */
+	double heTotalDepth;
+
+	/**
+	 * The total depth on which the flux for incoming W is defined.
+	 */
+	double wTotalDepth;
+
+	/**
 	 * The index of the V cluster.
 	 */
 	int vDefectIndex;
@@ -62,7 +72,7 @@ private:
 	 * @return The evaluated value
 	 */
 	double FitFunction(double x) {
-		if (x > 11.5)
+		if (x > heTotalDepth)
 			return 0.0;
 
 		// Compute the polynomial fit
@@ -83,7 +93,7 @@ private:
 	 * @return The evaluated value
 	 */
 	double WFitFunction(double x) {
-		if (x > 11.5)
+		if (x > wTotalDepth)
 			return 0.0;
 
 		// Compute the polynomial fit
@@ -106,9 +116,9 @@ public:
 					0.0), A8(0.0), A9(0.0), A10(0.0), A11(0.0), A12(0.0), A13(
 					0.0), A14(0.0), A15(0.0), B0(0.0), B1(0.0), B2(0.0), B3(
 					0.0), B4(0.0), B5(0.0), B6(0.0), B7(0.0), B8(0.0), B9(0.0), B10(
-					0.0), B11(0.0), B12(0.0), B13(0.0), B14(0.0), B15(0.0), vDefectIndex(
-					-1), iDefectIndex(-1), reductionFactor(0.0), wNormFactor(
-					0.0) {
+					0.0), B11(0.0), B12(0.0), B13(0.0), B14(0.0), B15(0.0), heTotalDepth(
+					0.0), wTotalDepth(0.0), vDefectIndex(-1), iDefectIndex(-1), reductionFactor(
+					0.0), wNormFactor(0.0) {
 	}
 
 	/**
@@ -160,6 +170,8 @@ public:
 			A13 = tokens[13];
 			A14 = tokens[14];
 			A15 = tokens[15];
+			// Set the total depth where the fit is defined
+			heTotalDepth = tokens[16] + 0.1;
 
 			// Break the line into tokens for reduction factor
 			getline(paramFile, line);
@@ -190,6 +202,8 @@ public:
 			B13 = tokens[13];
 			B14 = tokens[14];
 			B15 = tokens[15];
+			// Set the total depth where the fit is defined
+			wTotalDepth = tokens[16] + 0.1;
 		}
 
 		// Close the file
@@ -273,9 +287,9 @@ public:
 			std::ofstream outputFile;
 			outputFile.open("incidentVectors.txt");
 			for (int i = 0; i < incidentFluxVec.size(); i++) {
-				outputFile << grid[surfacePos + i + 1] - grid[surfacePos + 1] << " "
-						<< incidentFluxVec[i] << " " << incidentWFluxVec[i]
-						<< std::endl;
+				outputFile << grid[surfacePos + i + 1] - grid[surfacePos + 1]
+						<< " " << incidentFluxVec[i] << " "
+						<< incidentWFluxVec[i] << std::endl;
 			}
 			outputFile.close();
 		}
