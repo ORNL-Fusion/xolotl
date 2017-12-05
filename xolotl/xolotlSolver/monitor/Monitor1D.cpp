@@ -25,6 +25,7 @@
 namespace xolotlSolver {
 
 // Declaration of the functions defined in Monitor.cpp
+extern PetscErrorCode checkTimeStep(TS ts);
 extern PetscErrorCode monitorTime(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx);
 extern PetscErrorCode computeFluence(TS ts, PetscInt timestep, PetscReal time,
@@ -35,6 +36,7 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
 extern double previousTime;
+extern double timeStepThreshold;
 
 //! The pointer to the plot used in monitorScatter1D.
 std::shared_ptr<xolotlViz::IPlot> scatterPlot1D;
@@ -2226,9 +2228,14 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
-	PetscBool flag2DPlot, flag1DPlot, flagSeries, flagPerf, flagHeRetention,
-			flagStatus, flagMaxClusterConc, flagCumul, flagMeanSize, flagConc,
-			flagXeRetention, flagTRIDYN;
+	PetscBool flagCheck, flag2DPlot, flag1DPlot, flagSeries, flagPerf,
+			flagHeRetention, flagStatus, flagMaxClusterConc, flagCumul,
+			flagMeanSize, flagConc, flagXeRetention, flagTRIDYN;
+
+	// Check the option -check_collapse
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
+	checkPetscError(ierr,
+			"setupPetsc1DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
 	// Check the option -plot_perf
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
@@ -2300,6 +2307,23 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	auto network = solverHandler->getNetwork();
 	const int networkSize = network->size();
 
+	// Set the post step processing to stop the solver if the time step collapses
+	if (flagCheck) {
+		// Find the threshold
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(NULL, NULL, "-check_collapse",
+				&timeStepThreshold, &flag);
+		checkPetscError(ierr,
+				"setupPetsc1DMonitor: PetscOptionsGetInt (-check_collapse) failed.");
+		if (!flag)
+			timeStepThreshold = 1.0e-16;
+
+		// Set the post step process that tells the solver when to stop if the time step collapse
+		ierr = TSSetPostStep(ts, checkTimeStep);
+		checkPetscError(ierr,
+				"setupPetsc1DMonitor: TSSetPostStep (checkTimeStep) failed.");
+	}
+
 	// Set the monitor to save the status of the simulation in hdf5 file
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
@@ -2310,7 +2334,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 				"setupPetsc1DMonitor: PetscOptionsGetInt (-start_stop) failed.");
 		if (!flag)
 			hdf5Stride1D = 1.0;
-		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 		// Don't do anything if both files have the same name
 		if (hdf5OutputName1D != solverHandler->getNetworkName()) {
@@ -2328,6 +2351,8 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 			PETSC_IGNORE, PETSC_IGNORE);
+			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
+
 			// Initialize the HDF5 file for all the processes
 			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
 

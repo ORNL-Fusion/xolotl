@@ -24,6 +24,7 @@
 namespace xolotlSolver {
 
 // Declaration of the functions defined in Monitor.cpp
+extern PetscErrorCode checkTimeStep(TS ts);
 extern PetscErrorCode monitorTime(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx);
 extern PetscErrorCode computeFluence(TS ts, PetscInt timestep, PetscReal time,
@@ -34,6 +35,7 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
 extern double previousTime;
+extern double timeStepThreshold;
 
 //! The pointer to the plot used in monitorScatter0D.
 std::shared_ptr<xolotlViz::IPlot> scatterPlot0D;
@@ -354,7 +356,12 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
-	PetscBool flag1DPlot, flagMeanSize, flagPerf, flagStatus;
+	PetscBool flagCheck, flag1DPlot, flagMeanSize, flagPerf, flagStatus;
+
+	// Check the option -check_collapse
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
+	checkPetscError(ierr,
+			"setupPetsc0DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
 	// Check the option -plot_perf
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
@@ -382,6 +389,23 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	// Get the network and its size
 	auto network = solverHandler->getNetwork();
 	const int networkSize = network->size();
+
+	// Set the post step processing to stop the solver if the time step collapses
+	if (flagCheck) {
+		// Find the threshold
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(NULL, NULL, "-check_collapse",
+				&timeStepThreshold, &flag);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: PetscOptionsGetInt (-check_collapse) failed.");
+		if (!flag)
+			timeStepThreshold = 1.0e-16;
+
+		// Set the post step process that tells the solver when to stop if the time step collapse
+		ierr = TSSetPostStep(ts, checkTimeStep);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: TSSetPostStep (checkTimeStep) failed.");
+	}
 
 	// Set the monitor to save the status of the simulation in hdf5 file
 	if (flagStatus) {
