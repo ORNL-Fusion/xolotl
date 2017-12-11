@@ -1,5 +1,5 @@
 # Set a name for this project.
-PROJECT ( xolotl C CXX Java )
+PROJECT ( xolotl C CXX )
 # Set the minimum required version of cmake for this project.
 cmake_minimum_required(VERSION 2.8)
 
@@ -39,7 +39,12 @@ INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
 enable_testing()
 
 # Add the preprocessor first, it is independent of the other parts of the code
-add_subdirectory(gov.ornl.xolotl.preprocessor)
+# But only if Java is present
+FIND_PACKAGE(Java)
+IF (Java_FOUND)
+    message(STATUS "The preprocessor will be built since Java was found.")
+    add_subdirectory(gov.ornl.xolotl.preprocessor)
+ENDIF()
 
 # Build the performance library first, so it can be used by other libraries.
 add_subdirectory(xolotlPerf)

@@ -242,8 +242,10 @@ void PetscSolver::solve() {
 		}
 	}
 
-	ierr = TSSetInitialTimeStep(ts, time, deltaTime);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetInitialTimeStep failed.");
+	ierr = TSSetTime(ts, time);
+	checkPetscError(ierr, "PetscSolver::solve: TSSetTime failed.");
+	ierr = TSSetTimeStep(ts, deltaTime);
+	checkPetscError(ierr, "PetscSolver::solve: TSSetTimeStep failed.");
 	ierr = TSSetFromOptions(ts);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
 
