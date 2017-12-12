@@ -152,10 +152,10 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 	std::vector<std::shared_ptr<Reactant> > reactants;
 
 	// The diffusion factor for a single xenon in nm^2/s
-	double xeOneDiffusion = 5.0e-3;
+	double xeOneDiffusion = 7.6e8;
 
 	// The migration energy for a single xenon in eV
-	double xeOneMigration = 0.0;
+	double xeOneMigration = 3.04;
 
 	/**
 	 * The set of xenon formation energies up to Xe_29 indexed by size. That is
@@ -277,7 +277,7 @@ void NEClusterNetworkLoader::applyGrouping(
 		count = 0;
 		tempVector.clear();
 		superCount++;
-		width = max(sectionWidth * (int) (superCount / 10), sectionWidth);
+//		width = max(sectionWidth * (int) (superCount / 10), sectionWidth);
 	}
 
 	// Initialize variables for the loop
