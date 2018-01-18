@@ -1,28 +1,45 @@
+# Fix cmake beahvior for CMAKE_CXX_STANDARD with clang on Mac OS X.
+# See cmake documentation on CMP0025 policy for details.
+# Must be done before doing project() command.
+if(POLICY CMP0025)
+    cmake_policy(SET CMP0025 NEW)
+endif()
+
+# Set policy so we can use some of the recent Jed Brown Find*.cmake files.
+if(POLICY CMP0057)
+    cmake_policy(SET CMP0057 NEW)
+endif()
+
 # Set a name for this project.
 PROJECT ( xolotl C CXX )
 # Set the minimum required version of cmake for this project.
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.4)
 
 # Include the modules to find PETSC, ITAPS, etc. from Jed Brown
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
 
-# Xolotl requires C++11 to use shared pointers
-INCLUDE (CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" CXX_SUPPORTS_CXX11_FLAG)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" CXX_SUPPORTS_CXX0X_FLAG)
-IF (CXX_SUPPORTS_CXX11_FLAG)
-    SET( CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-ELSEIF (CXX_SUPPORTS_CXX0X_FLAG)
-    SET( CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
-ELSE()
-    MESSAGE(FATAL_ERROR "XOLOTL requires C++11 support from C++ compiler")
-ENDIF()
+# xolotl requires some C++11 features.
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Tell CMake to look for static libraries
-SET(BUILD_SHARED_LIBS OFF)
+# SET(BUILD_SHARED_LIBS OFF)
 
 # Find PETSc
+# We need to save and restore CMAKE_REQUIRED_{INCLUDES,LIBRARIES}
+# because the FindPETSc.cmake module sets during its operation
+# but does not reset them, and the leftover state then messes with 
+# our subsequent configuration checks.
+set(SAVED_CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES})
+set(SAVED_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
 FIND_PACKAGE(PETSc REQUIRED)
+if (PETSC_FOUND)
+    include_directories(${PETSC_INCLUDES})
+    set(CMAKE_REQUIRED_INCLUDES ${SAVED_CMAKE_REQUIRED_INCLUDES})
+    set(CMAKE_REQUIRED_LIBRARIES ${SAVED_CMAKE_REQUIRED_LIBRARIES})
+endif()
+
 
 # Make sure that we only pull the static HDF5
 #set(HDF5_USE_STATIC_LIBRARIES yes)
@@ -102,7 +119,6 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/reactionHandler)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlViz)
-include_directories(${PETSC_INCLUDES})
 
 configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_SOURCE_DIR}/XolotlConfig.h")
 

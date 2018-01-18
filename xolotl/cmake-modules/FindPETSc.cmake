@@ -27,7 +27,12 @@ set(PETSC_VALID_COMPONENTS
   CXX)
 
 if(NOT PETSc_FIND_COMPONENTS)
-  set(PETSC_LANGUAGE_BINDINGS "C")
+  get_property (_enabled_langs GLOBAL PROPERTY ENABLED_LANGUAGES)
+  if ("C" IN_LIST _enabled_langs)
+    set(PETSC_LANGUAGE_BINDINGS "C")
+  else ()
+    set(PETSC_LANGUAGE_BINDINGS "CXX")
+  endif ()
 else()
   # Right now, this is designed for compatability with the --with-clanguage option, so
   # only allow one item in the components list.
@@ -58,7 +63,11 @@ function (petsc_get_version)
       set (${var} ${val})         # Also in local scope so we have access below
     endforeach ()
     if (PETSC_VERSION_RELEASE)
-      set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}p${PETSC_VERSION_PATCH}" PARENT_SCOPE)
+      if ($(PETSC_VERSION_PATCH) GREATER 0)
+        set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}p${PETSC_VERSION_PATCH}" PARENT_SCOPE)
+      else ()
+        set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}" PARENT_SCOPE)
+      endif ()
     else ()
       # make dev version compare higher than any patch level of a released version
       set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}.99" PARENT_SCOPE)
@@ -115,9 +124,6 @@ find_package_multipass (PETSc petsc_config_current
 if (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/lib/petsc/conf/petscvariables") # > 3.5
   set (petsc_conf_rules "${PETSC_DIR}/lib/petsc/conf/rules")
   set (petsc_conf_variables "${PETSC_DIR}/lib/petsc/conf/variables")
-elseif (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/lib/petsc-conf/petscvariables") # > 3.5
-  set (petsc_conf_rules "${PETSC_DIR}/lib/petsc-conf/rules")
-  set (petsc_conf_variables "${PETSC_DIR}/lib/petsc-conf/variables")
 elseif (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/include/petscconf.h")   # > 2.3.3
   set (petsc_conf_rules "${PETSC_DIR}/conf/rules")
   set (petsc_conf_variables "${PETSC_DIR}/conf/variables")
@@ -161,7 +167,6 @@ show :
   petsc_get_variable (PCC                      petsc_cc)
   petsc_get_variable (PCC_FLAGS                petsc_cc_flags)
   petsc_get_variable (MPIEXEC                  petsc_mpiexec)
-
   # We are done with the temporary Makefile, calling PETSC_GET_VARIABLE after this point is invalid!
   file (REMOVE ${petsc_config_makefile})
 
@@ -240,11 +245,6 @@ show :
 
   include(Check${PETSC_LANGUAGE_BINDINGS}SourceRuns)
   macro (PETSC_TEST_RUNS includes libraries runs)
-    if(${PETSC_LANGUAGE_BINDINGS} STREQUAL "C")
-      set(_PETSC_ERR_FUNC "CHKERRQ(ierr)")
-    elseif(${PETSC_LANGUAGE_BINDINGS} STREQUAL "CXX")
-      set(_PETSC_ERR_FUNC "CHKERRXX(ierr)")
-    endif()
     if (PETSC_VERSION VERSION_GREATER 3.1)
       set (_PETSC_TSDestroy "TSDestroy(&ts)")
     else ()
@@ -258,11 +258,11 @@ int main(int argc,char *argv[]) {
   PetscErrorCode ierr;
   TS ts;
 
-  ierr = PetscInitialize(&argc,&argv,0,help);${_PETSC_ERR_FUNC};
-  ierr = TSCreate(PETSC_COMM_WORLD,&ts);${_PETSC_ERR_FUNC};
-  ierr = TSSetFromOptions(ts);${_PETSC_ERR_FUNC};
-  ierr = ${_PETSC_TSDestroy};${_PETSC_ERR_FUNC};
-  ierr = PetscFinalize();${_PETSC_ERR_FUNC};
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = ${_PETSC_TSDestroy};CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }
 ")
@@ -329,6 +329,6 @@ endif ()
 
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (PETSc
-  "PETSc could not be found.  Be sure to set PETSC_DIR and PETSC_ARCH."
-  PETSC_INCLUDES PETSC_LIBRARIES PETSC_EXECUTABLE_RUNS)
-
+  REQUIRED_VARS PETSC_INCLUDES PETSC_LIBRARIES PETSC_EXECUTABLE_RUNS
+  VERSION_VAR PETSC_VERSION
+  FAIL_MESSAGE "PETSc could not be found.  Be sure to set PETSC_DIR and PETSC_ARCH.")
