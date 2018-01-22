@@ -39,16 +39,6 @@ private:
 	double wTotalDepth;
 
 	/**
-	 * The index of the V cluster.
-	 */
-	int vDefectIndex;
-
-	/**
-	 * The index of the I cluster.
-	 */
-	int iDefectIndex;
-
-	/**
 	 * The reduction factor between He and W redeposition.
 	 */
 	double reductionFactor;
@@ -117,7 +107,7 @@ public:
 					0.0), A14(0.0), A15(0.0), B0(0.0), B1(0.0), B2(0.0), B3(
 					0.0), B4(0.0), B5(0.0), B6(0.0), B7(0.0), B8(0.0), B9(0.0), B10(
 					0.0), B11(0.0), B12(0.0), B13(0.0), B14(0.0), B15(0.0), heTotalDepth(
-					0.0), wTotalDepth(0.0), vDefectIndex(-1), iDefectIndex(-1), reductionFactor(
+					0.0), wTotalDepth(0.0), reductionFactor(
 					0.0), wNormFactor(0.0) {
 	}
 
@@ -258,7 +248,7 @@ public:
 					"\nThe single helium cluster is not present in the network, "
 							"cannot use the flux option!");
 		}
-		fluxIndex = fluxCluster->getId() - 1;
+		fluxIndices.push_back(fluxCluster->getId() - 1);
 
 //		// Set the V index corresponding the the single vacancy cluster here
 //		auto vCluster = network->get(vType, 1);
@@ -278,7 +268,7 @@ public:
 					"\nThe single interstitial cluster is not present in the network, "
 							"cannot use the flux option!");
 		}
-		iDefectIndex = iCluster->getId() - 1;
+		fluxIndices.push_back(iCluster->getId() - 1);
 
 		// Prints both incident vectors in a file
 		int procId;
@@ -310,9 +300,9 @@ public:
 		}
 
 		// Update the concentration array
-		updatedConcOffset[fluxIndex] += incidentFluxVec[xi - surfacePos];
+		updatedConcOffset[fluxIndices[0]] += incidentFluxVec[xi - surfacePos]; // He
 //		updatedConcOffset[vDefectIndex] += incidentFluxVec[xi - surfacePos] * 4.25e-7;
-		updatedConcOffset[iDefectIndex] += incidentWFluxVec[xi - surfacePos];
+		updatedConcOffset[fluxIndices[1]] += incidentWFluxVec[xi - surfacePos]; // I
 
 		return;
 	}

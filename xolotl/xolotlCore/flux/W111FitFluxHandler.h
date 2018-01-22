@@ -24,12 +24,14 @@ private:
 		// Value at which the flux goes to 0
 		double x1 = 10.0;
 
-		if (x > x1) return 0.0;
+		if (x > x1)
+			return 0.0;
 
 		// Compute the fit
 		double value = 1.563416 + 7.2071044 * x - 5.4632628 * pow(x, 2)
-		+ 1.727342 * pow(x, 3) - 0.3014105 * pow(x, 4) + 0.0311738 * pow(x, 5)
-		- 0.0019016 * pow(x, 6) + 0.00006318 * pow(x, 7) - 0.0000008813 * pow(x, 8);
+				+ 1.727342 * pow(x, 3) - 0.3014105 * pow(x, 4)
+				+ 0.0311738 * pow(x, 5) - 0.0019016 * pow(x, 6)
+				+ 0.00006318 * pow(x, 7) - 0.0000008813 * pow(x, 8);
 
 		return value;
 	}
@@ -39,19 +41,21 @@ public:
 	/**
 	 * The constructor
 	 */
-	W111FitFluxHandler() {}
+	W111FitFluxHandler() {
+	}
 
 	/**
 	 * The Destructor
 	 */
-	~W111FitFluxHandler() {}
+	~W111FitFluxHandler() {
+	}
 
 	/**
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(IReactionNetwork *network,
-			int surfacePos, std::vector<double> grid) {
+	void initializeFluxHandler(IReactionNetwork *network, int surfacePos,
+			std::vector<double> grid) {
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
@@ -61,9 +65,9 @@ public:
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe single helium cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
-		fluxIndex = fluxCluster->getId() - 1;
+		fluxIndices.push_back(fluxCluster->getId() - 1);
 
 		return;
 	}
