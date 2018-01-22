@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Preprocessor
+Bundle-SymbolicName: gov.ornl.xolotl.preprocessor
+Bundle-Version: 1.0.0.qualifier
+Export-Package: gov.ornl.xolotl.preprocessor
