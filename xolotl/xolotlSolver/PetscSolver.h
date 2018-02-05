@@ -38,8 +38,14 @@ private:
 
 public:
 
+	/**
+	 * Default constructor, deleted because we must construct using arguments.
+	 */
+	PetscSolver() = delete;
+
 	//! The Constructor
-	PetscSolver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	PetscSolver(ISolverHandler& _solverHandler,
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! The Destructor
 	~PetscSolver();
@@ -53,29 +59,28 @@ public:
 	 * for keys and associated values mapped to those keys. A relevant example
 	 * is "startTime" and "0.01" where both are of type std::string.
 	 */
-	void setOptions(const std::map<std::string, std::string>& options);
+	void setOptions(const std::map<std::string, std::string>& options) override;
 
 	/**
 	 * This operation sets up the mesh that will be used by the solver and
 	 * initializes the data on that mesh. This operation will throw an exception
 	 * of type std::string if the mesh can not be setup.
 	 */
-	void setupMesh();
+	void setupMesh() override;
 
 	/**
 	 * This operation performs all necessary initialization for the solver
 	 * possibly including but not limited to setting up MPI and loading initial
 	 * conditions. If the solver can not be initialized, this operation will
 	 * throw an exception of type std::string.
-	 * @param solverHandler The solver handler
 	 */
-	void initialize(std::shared_ptr<ISolverHandler> solverHandler);
+	void initialize() override;
 
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */
-	void solve();
+	void solve() override;
 
 	/**
 	 * This operation performs all necessary finalization for the solver
@@ -83,9 +88,10 @@ public:
 	 * printing diagnostic information. If the solver can not be finalized,
 	 * this operation will throw an exception of type std::string.
 	 */
-	void finalize();
-	
-}; //end class PetscSolver
+	void finalize() override;
+
+};
+//end class PetscSolver
 
 } /* end namespace xolotlSolver */
 

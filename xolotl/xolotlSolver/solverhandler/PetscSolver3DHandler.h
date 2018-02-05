@@ -17,8 +17,18 @@ private:
 
 public:
 
-	//! The Constructor
-	PetscSolver3DHandler() {
+	/**
+	 * Construct a PetscSolver3DHandler.
+	 */
+	PetscSolver3DHandler() = delete;
+
+	/**
+	 * Construct a PetscSolver3DHandler.
+	 *
+	 * @param _network The reaction network to use.
+	 */
+	PetscSolver3DHandler(xolotlCore::IReactionNetwork& _network) :
+			PetscSolverHandler(_network) {
 	}
 
 	//! The Destructor
@@ -48,7 +58,8 @@ public:
 	 * Compute the off-diagonal part of the Jacobian which is related to cluster's motion.
 	 * \see ISolverHandler.h
 	 */
-	void computeOffDiagonalJacobian(TS &ts, Vec &localC, Mat &J, PetscReal ftime);
+	void computeOffDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
+			PetscReal ftime);
 
 	/**
 	 * Compute the diagonal part of the Jacobian which is related to cluster reactions.

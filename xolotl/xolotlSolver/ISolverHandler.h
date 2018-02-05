@@ -35,12 +35,10 @@ public:
 	 *
 	 * @param material The material factory
 	 * @param tempHandler The temperature handler
-	 * @param networkHandler The network handler
 	 * @param options The Xolotl options
 	 */
 	virtual void initializeHandlers(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-			std::shared_ptr<xolotlCore::IReactionNetwork> networkHandler,
 			xolotlCore::Options &options) = 0;
 
 	/**
@@ -203,7 +201,7 @@ public:
 	 *
 	 * @return The network
 	 */
-	virtual xolotlCore::IReactionNetwork *getNetwork() const = 0;
+	virtual xolotlCore::IReactionNetwork& getNetwork() const = 0;
 
 	/**
 	 * Get the network name.
