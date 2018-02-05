@@ -2,15 +2,49 @@
 #define REACTANT_H
 
 // Includes
-#include "IReactant.h"
 #include <math.h>
 #include <sstream>
 #include <set>
+#include "IReactant.h"
+#include "IReactionNetwork.h"
+#include "ProductionReaction.h"
+#include "DissociationReaction.h"
 
 namespace xolotlPerf {
 class IHandlerRegistry;
 class IEventCounter;
 }
+
+// We use std::unordered_map for quick lookup of info about
+// reactions we participate in.
+// The C++ standard library defines a std::hash for keys
+// that are a single pointer, but not for pairs of pointers,
+// so we define our own here.  To improve readability,
+// we define a concise name for type of a pair of IReactant pointers
+// that we use as keys.
+// TODO should this be moved "upward," e.g., into IReactant.h?
+namespace xolotlCore {
+using ReactantAddrPair = std::pair<IReactant*, IReactant*>;
+} // namespace xolotlCore
+
+namespace std {
+
+template<>
+struct hash<xolotlCore::ReactantAddrPair> {
+	size_t operator()(const xolotlCore::ReactantAddrPair& pr) const {
+		// Idea for implementation taken from
+		// https://www.sultanik.com/blog/HashingPointers.
+		auto sum = reinterpret_cast<uintptr_t>(pr.first)
+				+ reinterpret_cast<uintptr_t>(pr.second);
+		// Ensure result will fit in size_t
+#if SIZE_MAX < UINTPTR_MAX
+		sum %= SIZE_MAX;
+#endif // SIZE_MAX < UINTPTR_MAX
+		return sum;
+	}
+};
+
+} // namespace std
 
 namespace xolotlCore {
 
@@ -20,7 +54,7 @@ namespace xolotlCore {
  *
  * Reactants inherently know the other reactants with which they interact. They
  * declare their interactions with other reactants in the network after it is
- * set (setReactionNetwork) via the getConnectivity() operation. "Connectivity"
+ * set (updateFromNetwork) via the getConnectivity() operation. "Connectivity"
  * indicates whether two Reacants interact, via any mechanism, in an abstract
  * sense (as if they were nodes connected by an edge on a network graph).
  *
@@ -29,15 +63,6 @@ namespace xolotlCore {
  * functionality for calculate fluxes and computing connectivity.
  */
 class Reactant: public IReactant {
-
-private:
-	/**
-	 * A string description of our type/composition map that can
-	 * be used for quick comparisons.
-	 * Computed on demand by getCompositionString() and cached.
-	 * Note: must be kept consistent with contents of compositionMap.
-	 */
-	mutable std::string compString;
 
 protected:
 
@@ -54,7 +79,7 @@ protected:
 	/**
 	 * The type name of the reactant.
 	 */
-	std::string typeName;
+	ReactantType type;
 
 	/**
 	 * An integer identification number for this reactant.
@@ -85,12 +110,12 @@ protected:
 	/**
 	 * The reaction network that includes this reactant.
 	 */
-	std::shared_ptr<IReactionNetwork> network;
+	IReactionNetwork& network;
 
 	/**
 	 * The map that contains the composition of this cluster.
 	 */
-	std::map<std::string, int> compositionMap;
+	IReactant::Composition composition;
 
 	/**
 	 * The performance handler registry that will be used with
@@ -102,7 +127,7 @@ protected:
 	 * The total size of this cluster including the contributions from all
 	 * species.
 	 */
-	int size;
+	IReactant::SizeType size;
 
 	/**
 	 * The diffusion factor, D_0, that is used to calculate the diffusion
@@ -159,26 +184,49 @@ protected:
 	 */
 	void recomputeDiffusionCoefficient(double temp);
 
-	/**
-	 * The constructor.
-	 */
-	Reactant();
-
 public:
 
 	/**
-	 * The constructor.
-	 *
-	 * @param registry The performance handler registry to use
+	 * Default constructor, deleted because we require info to construct.
 	 */
-	Reactant(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	Reactant() = delete;
 
 	/**
-	 * The copy constructor. All reactants MUST be deep copied.
+	 * The constructor.
+	 *
+	 * @param _network The network we will belong to.
+	 * @param _name Our human-readable name.
+	 * @param _registry The performance handler registry to use
+	 */
+	Reactant(IReactionNetwork& _network,
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> _registry,
+			const std::string& _name = "Reactant");
+
+	/**
+	 * Copy constructor.
+	 * Only used to construct dummy cluster objects of Reactant type
+	 * as a copy of the Reactant part of objects of a more derived type.
+	 * The more derived types initialize their base class' data, and
+	 * we don't have a ctor that lets them specify all of our data,
+	 * so we use this ctor to copy the Reactant data.
 	 *
 	 * @param other The reactant to copy
 	 */
-	Reactant(Reactant &other);
+	Reactant(Reactant &other) :
+			concentration(other.concentration), name(other.name), type(
+					other.type), id(other.id), xeMomId(other.xeMomId), heMomId(
+					other.heMomId), vMomId(other.vMomId), temperature(
+					other.temperature), network(other.network), handlerRegistry(
+					other.handlerRegistry), size(other.size), composition(
+					other.composition), formationEnergy(other.formationEnergy), diffusionFactor(
+					other.diffusionFactor), diffusionCoefficient(
+					other.diffusionCoefficient), migrationEnergy(
+					other.migrationEnergy), reactionRadius(
+					other.reactionRadius), reactionConnectivitySet(
+					other.reactionConnectivitySet), dissociationConnectivitySet(
+					other.dissociationConnectivitySet) {
+		return;
+	}
 
 	/**
 	 * The destructor
@@ -187,60 +235,187 @@ public:
 	}
 
 	/**
-	 * Returns a reactant created using the copy constructor
-	 */
-	virtual std::shared_ptr<IReactant> clone() {
-		return std::shared_ptr<IReactant>(new Reactant(*this));
-	}
-
-	/**
-	 * Create a production pair associated with the given reaction.
-	 * Create the connectivity.
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
 	 *
 	 * @param reaction The reaction creating this cluster.
+	 * @param a Number that can be used by daughter classes.
+	 * @param b Number that can be used by daughter classes.
+	 * @param c Number that can be used by daughter classes.
+	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void createProduction(
-			std::shared_ptr<ProductionReaction> reaction) {
+	virtual void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0,
+			int c = 0, int d = 0) override {
 		return;
 	}
 
 	/**
-	 * Create a combination associated with the given reaction.
-	 * Create the connectivity.
+	 * Note that we result from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in the network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param prInfos Production reaction parameters used by derived classes.
+	 */
+	virtual void resultFrom(ProductionReaction& reaction,
+			const std::vector<PendingProductionReactionInfo>& prInfos)
+					override {
+		// Must be defined because we use stock Reactants with dummy
+		// Reactions, so we need to be able to create Reactant objects.
+		return;
+	}
+
+	/**
+	 * Note that we result from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in the network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param product The cluster created by the reaction.
+	 */
+	virtual void resultFrom(ProductionReaction& reaction, IReactant& product)
+			override {
+		// Must be defined because we use stock Reactants with dummy
+		// Reactions, so we need to be able to create Reactant objects.
+		return;
+	}
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster takes part.
+	 * @param a Number that can be used by daughter classes.
+	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void createCombination(
-			std::shared_ptr<ProductionReaction> reaction) {
+	virtual void participateIn(ProductionReaction& reaction, int a = 0, int b =
+			0) override {
 		return;
 	}
 
 	/**
-	 * Create a dissociation pair associated with the given reaction.
-	 * Create the connectivity.
+	 * Note that we combine with another cluster in a production reaction
+	 * involving a super cluster.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param prInfos Production reaction parameters.
+	 */
+	virtual void participateIn(ProductionReaction& reaction,
+			const std::vector<PendingProductionReactionInfo>& prInfos)
+					override {
+		// Must be defined because we use stock Reactants with dummy
+		// Reactions, so we need to be able to create Reactant objects.
+		return;
+	}
+
+	/**
+	 * Note that we combine with another cluster in a production reaction
+	 * involving a super cluster.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param product The cluster created by the reaction.
+	 */
+	virtual void participateIn(ProductionReaction& reaction, IReactant& product)
+			override {
+		// Must be defined because we use stock Reactants with dummy
+		// Reactions, so we need to be able to create Reactant objects.
+		return;
+	}
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
 	 *
 	 * @param reaction The reaction creating this cluster.
+	 * @param a Number that can be used by daughter classes.
+	 * @param b Number that can be used by daughter classes.
+	 * @param c Number that can be used by daughter classes.
+	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void createDissociation(
-			std::shared_ptr<DissociationReaction> reaction) {
+	virtual void participateIn(DissociationReaction& reaction, int a = 0,
+			int b = 0, int c = 0, int d = 0) override {
 		return;
 	}
 
 	/**
-	 * Create an emission pair associated with the given reaction.
-	 * Create the connectivity.
+	 * Note that we combine with another cluster in a dissociation reaction
+	 * involving a super cluster.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param prInfos Production reaction parameters.
+	 */
+	virtual void participateIn(DissociationReaction& reaction,
+			const std::vector<PendingProductionReactionInfo>& prInfos)
+					override {
+		// Must be defined because we use stock Reactants with dummy
+		// Reactions, so we need to be able to create Reactant objects.
+		return;
+	}
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction
+	 * involving a super cluster.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param disso The dissociating cluster.
+	 */
+	virtual void participateIn(DissociationReaction& reaction, IReactant& disso)
+			override {
+		// Must be defined because we use stock Reactants with dummy
+		// Reactions, so we need to be able to create Reactant objects.
+		return;
+	}
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster emits.
+	 * @param a Number that can be used by daughter classes.
+	 * @param b Number that can be used by daughter classes.
+	 * @param c Number that can be used by daughter classes.
+	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void createEmission(
-			std::shared_ptr<DissociationReaction> reaction) {
+	virtual void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0,
+			int c = 0, int d = 0) override {
+		return;
+	}
+
+	/**
+	 * Note that we emit from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param prInfos Production reaction parameters.
+	 */
+	virtual void emitFrom(DissociationReaction& reaction,
+			const std::vector<PendingProductionReactionInfo>& prInfos)
+					override {
+		// Must be defined because we use stock Reactants with dummy
+		// Reactions, so we need to be able to create Reactant objects.
+		return;
+	}
+
+	/**
+	 * Note that we emit from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param disso The dissociating cluster.
+	 */
+	virtual void emitFrom(DissociationReaction& reaction, IReactant& disso)
+			override {
+		// Must be defined because we use stock Reactants with dummy
+		// Reactions, so we need to be able to create Reactant objects.
 		return;
 	}
 
 	/**
 	 * Add the reactions to the network lists.
 	 */
-	virtual void optimizeReactions() {
+	virtual void optimizeReactions() override {
 		return;
 	}
 
@@ -252,7 +427,7 @@ public:
 	 * @return The concentration of this reactant
 	 */
 	virtual double getConcentration(double distA = 0.0,
-			double distB = 0.0) const {
+			double distB = 0.0) const override {
 
 		return concentration;
 	}
@@ -263,7 +438,7 @@ public:
 	 *
 	 * @param conc The new concentation
 	 */
-	void setConcentration(double conc) {
+	void setConcentration(double conc) override {
 		concentration = conc;
 	}
 
@@ -274,30 +449,17 @@ public:
 	 * @return The total change in flux for this reactant due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux() {
+	virtual double getTotalFlux() override {
 		return 0.0;
 	}
 
 	/**
-	 * This operation sets the collection of other reactants that make up
-	 * the reaction network in which this reactant exists.
-	 *
-	 * @param network The reaction network of which this reactant is a part
+	 * Update reactant using other reactants in its network.
 	 */
-	virtual void setReactionNetwork(
-			std::shared_ptr<IReactionNetwork> reactionNetwork) {
-		network = reactionNetwork;
-	}
-
-	/**
-	 * Release the reaction network object.
-	 *
-	 * This should only be done when the reaction network is no longer needed
-	 * by the program, and is done to break dependence cycles that would
-	 * otherwise keep the network and reactant objects from being destroyed.
-	 */
-	void releaseReactionNetwork() {
-		network.reset();
+	virtual void updateFromNetwork() override {
+		// Nothing to do - derived classes do any meaningful work.
+		// Required to be defined because we create explicit Reactant objects,
+		// e.g. as dummy objects.
 	}
 
 	/**
@@ -307,7 +469,7 @@ public:
 	 * @param id The integer id of the reactant that is connected
 	 * to this reactant
 	 */
-	void setReactionConnectivity(int id) {
+	void setReactionConnectivity(int id) override {
 		reactionConnectivitySet.insert(id);
 	}
 
@@ -318,7 +480,7 @@ public:
 	 * @param id The integer id of the reactant that is connected
 	 * to this reactant
 	 */
-	void setDissociationConnectivity(int id) {
+	void setDissociationConnectivity(int id) override {
 		dissociationConnectivitySet.insert(id);
 	}
 
@@ -326,7 +488,7 @@ public:
 	 * This operation reset the connectivity sets based on the information
 	 * in the effective production and dissociation vectors.
 	 */
-	virtual void resetConnectivities() {
+	virtual void resetConnectivities() override {
 		return;
 	}
 
@@ -343,7 +505,7 @@ public:
 	 * with the i-th reactant in the ReactionNetwork and a "0" indicates
 	 * that it does not.
 	 */
-	virtual std::vector<int> getConnectivity() const;
+	virtual std::vector<int> getConnectivity() const override;
 
 	/**
 	 * This operation returns the list of partial derivatives of this reactant
@@ -355,8 +517,8 @@ public:
 	 * corresponds to the first reactant in the list returned by the
 	 * ReactionNetwork::getAll() operation.
 	 */
-	virtual std::vector<double> getPartialDerivatives() const {
-		return std::vector<double>(network->getDOF(), 0.0);
+	virtual std::vector<double> getPartialDerivatives() const override {
+		return std::vector<double>(network.getDOF(), 0.0);
 	}
 
 	/**
@@ -373,7 +535,8 @@ public:
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
 	 */
-	virtual void getPartialDerivatives(std::vector<double> & partials) const {
+	virtual void getPartialDerivatives(std::vector<double> & partials) const
+			override {
 		// nothing to do.
 	}
 
@@ -382,7 +545,7 @@ public:
 	 *
 	 * @return The name
 	 */
-	const std::string getName() const {
+	const std::string getName() const override {
 		return name;
 	}
 
@@ -390,10 +553,10 @@ public:
 	 * This operation returns the reactant's type. It is up to subclasses to
 	 * define exactly what the allowed types may be.
 	 *
-	 * @return The type of this reactant as a string
+	 * @return The type of this reactant.
 	 */
-	std::string getType() const {
-		return typeName;
+	ReactantType getType() const override {
+		return type;
 	}
 
 	/**
@@ -403,25 +566,8 @@ public:
 	 * @return The composition returned as a map with keys naming distinct
 	 * elements and values indicating the amount of the element present.
 	 */
-	virtual const std::map<std::string, int> & getComposition() const {
-		return compositionMap;
-	}
-
-	/**
-	 * Get a string containing the canonical representation of the
-	 * composition of this reactant.  The string is not intended to
-	 * be human-readable, but rather is useful for keys in reactant maps
-	 * and for composition match tests (as opposed to comparisons of
-	 * the composition maps themselves).
-	 *
-	 * @return A string containing the canonical representation of our
-	 * composition.
-	 */
-	virtual std::string getCompositionString() const {
-		if (compString.empty()) {
-			compString = toCanonicalString(getType(), compositionMap);
-		}
-		return compString;
+	virtual const IReactant::Composition & getComposition() const override {
+		return composition;
 	}
 
 	/**
@@ -431,7 +577,7 @@ public:
 	 *
 	 * @param nId The new id for this reactant
 	 */
-	void setId(int nId) {
+	void setId(int nId) override {
 		id = nId;
 	}
 
@@ -440,7 +586,7 @@ public:
 	 *
 	 * @return The id
 	 */
-	int getId() const {
+	int getId() const override {
 		return id;
 	}
 
@@ -449,7 +595,7 @@ public:
 	 *
 	 * @param nId The new id for this momentum
 	 */
-	void setXeMomentumId(int nId) {
+	void setXeMomentumId(int nId) override {
 		xeMomId = nId;
 	}
 
@@ -458,7 +604,7 @@ public:
 	 *
 	 * @return The id
 	 */
-	int getXeMomentumId() const {
+	int getXeMomentumId() const override {
 		return xeMomId;
 	}
 
@@ -467,7 +613,7 @@ public:
 	 *
 	 * @param nId The new id for this momentum
 	 */
-	void setHeMomentumId(int nId) {
+	void setHeMomentumId(int nId) override {
 		heMomId = nId;
 	}
 
@@ -476,7 +622,7 @@ public:
 	 *
 	 * @return The id
 	 */
-	int getHeMomentumId() const {
+	int getHeMomentumId() const override {
 		return heMomId;
 	}
 
@@ -485,7 +631,7 @@ public:
 	 *
 	 * @param nId The new id for this momentum
 	 */
-	void setVMomentumId(int nId) {
+	void setVMomentumId(int nId) override {
 		vMomId = nId;
 	}
 
@@ -494,7 +640,7 @@ public:
 	 *
 	 * @return The id
 	 */
-	int getVMomentumId() const {
+	int getVMomentumId() const override {
 		return vMomId;
 	}
 
@@ -512,14 +658,14 @@ public:
 	 *
 	 * @param temp The new cluster temperature
 	 */
-	void setTemperature(double temp);
+	void setTemperature(double temp) override;
 
 	/**
 	 * This operation returns the temperature at which the reactant currently exists.
 	 *
 	 * @return The temperature.
 	 */
-	double getTemperature() const {
+	double getTemperature() const override {
 		return temperature;
 	}
 
@@ -529,7 +675,7 @@ public:
 	 * @return The total size of this reactant including the contributions
 	 * from all species types
 	 */
-	int getSize() const {
+	IReactant::SizeType getSize() const override {
 		return size;
 	}
 
@@ -538,7 +684,7 @@ public:
 	 *
 	 * @return The value of the formation energy
 	 */
-	double getFormationEnergy() const {
+	double getFormationEnergy() const override {
 		return formationEnergy;
 	}
 
@@ -547,7 +693,7 @@ public:
 	 *
 	 * @param energy The formation energy
 	 */
-	void setFormationEnergy(double energy) {
+	void setFormationEnergy(double energy) override {
 		formationEnergy = energy;
 	}
 
@@ -557,7 +703,7 @@ public:
 	 *
 	 * @return The diffusion factor of this reactant
 	 */
-	double getDiffusionFactor() const {
+	double getDiffusionFactor() const override {
 		return diffusionFactor;
 	}
 
@@ -567,7 +713,7 @@ public:
 	 *
 	 * @param factor The diffusion factor
 	 */
-	virtual void setDiffusionFactor(const double factor);
+	virtual void setDiffusionFactor(const double factor) override;
 
 	/**
 	 * This operation returns the diffusion coefficient for this reactant and is
@@ -575,7 +721,7 @@ public:
 	 *
 	 * @return The diffusion coefficient
 	 */
-	double getDiffusionCoefficient() const {
+	double getDiffusionCoefficient() const override {
 		return diffusionCoefficient;
 	}
 
@@ -584,14 +730,14 @@ public:
 	 *
 	 * @param energy The migration energy
 	 */
-	virtual void setMigrationEnergy(const double energy);
+	virtual void setMigrationEnergy(const double energy) override;
 
 	/**
 	 * This operation retrieves the migration energy for this reactant.
 	 *
 	 * @return the migration energy
 	 */
-	double getMigrationEnergy() const {
+	double getMigrationEnergy() const override {
 		return migrationEnergy;
 	}
 
@@ -601,7 +747,7 @@ public:
 	 *
 	 * @return The reaction radius
 	 */
-	double getReactionRadius() const {
+	double getReactionRadius() const override {
 		return reactionRadius;
 	}
 
@@ -614,7 +760,7 @@ public:
 	 *
 	 * @return The rate
 	 */
-	virtual double getLeftSideRate() const {
+	virtual double getLeftSideRate() const override {
 		return 0.0;
 	}
 
@@ -622,26 +768,22 @@ public:
 	 * This operation returns true if the cluster is a mixed-species or compound
 	 * cluster and false if it is a single species cluster.
 	 */
-	virtual bool isMixed() const {
+	virtual bool isMixed() const override {
 		return false;
 	}
 
 	/**
-	 * Get a string containing the canonical representation of the
-	 * given composition.  The string is not intended to
-	 * be human-readable, but rather is useful for keys in reactant maps
-	 * and for composition match tests (as opposed to comparisons of
-	 * the composition maps themselves).
+	 * Tell reactant to output a representation of its reaction coefficients
+	 * to the given output stream.
 	 *
-	 * @param type The type that will be used with the given composition.
-	 * @param composition A map containing the names and amounts of each
-	 * part of the reactant.
-	 * @return A string containing the canonical representation of our
-	 * composition.
+	 * @param os Output stream on which to output coefficients.
 	 */
-	static std::string toCanonicalString(std::string type,
-			const std::map<std::string, int>& composition);
-
+	// We must define this because the code may use a stock Reactant
+	// when using dummy reactions, and thus we have to define all
+	// pure virtual functions from our base class(es).
+	virtual void outputCoefficientsTo(std::ostream& os) const override {
+		// Nothing to do.
+	}
 };
 
 } // end namespace xolotlCore

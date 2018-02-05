@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 0.0, -0.228226, 0.228226, 0.0 };
+	double knownPartials[] = { 0.0, -752.45682, 752.45682, 0.0 };
 
 	// Create the network loader
 	NEClusterNetworkLoader loader = NEClusterNetworkLoader(
