@@ -1,17 +1,17 @@
-#ifndef PSIREACTIONHANDLERFACTORY_H
-#define PSIREACTIONHANDLERFACTORY_H
+#ifndef FEREACTIONHANDLERFACTORY_H
+#define FEREACTIONHANDLERFACTORY_H
 
 #include <memory>
 #include "IReactionHandlerFactory.h"
-#include <HDF5NetworkLoader.h>
-#include <PSIClusterReactionNetwork.h>
+#include <FeClusterNetworkLoader.h>
+#include <FeClusterReactionNetwork.h>
 
 namespace xolotlFactory {
 
 /**
- * Realizes the IReactionHandlerFactory interface. Handles the network for a PSI problem.
+ * Realizes the IReactionHandlerFactory interface. Handles the network for an iron problem.
  */
-class PSIReactionHandlerFactory: public IReactionHandlerFactory {
+class FeReactionHandlerFactory: public IReactionHandlerFactory {
 protected:
 
 	//! The network loader handler
@@ -25,13 +25,13 @@ public:
 	/**
 	 * The constructor creates the handlers.
 	 */
-	PSIReactionHandlerFactory() {
+	FeReactionHandlerFactory() {
 	}
 
 	/**
 	 * The destructor
 	 */
-	~PSIReactionHandlerFactory() {
+	~FeReactionHandlerFactory() {
 	}
 
 	/**
@@ -47,8 +47,8 @@ public:
 		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
 		// Create a HDF5NetworkLoader
-		auto tempNetworkLoader =
-				std::make_shared<xolotlCore::HDF5NetworkLoader>(registry);
+		auto tempNetworkLoader = std::make_shared<
+				xolotlCore::FeClusterNetworkLoader>(registry);
 		// Give the networkFilename to the network loader
 		tempNetworkLoader->setFilename(options.getNetworkFilename());
 		// Set the options for the grouping scheme
@@ -96,4 +96,4 @@ public:
 
 } // end namespace xolotlFactory
 
-#endif // PSIREACTIONHANDLERFACTORY_H
+#endif // FEREACTIONHANDLERFACTORY_H

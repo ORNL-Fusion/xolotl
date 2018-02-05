@@ -18,7 +18,7 @@ protected:
 	std::shared_ptr<xolotlCore::INetworkLoader> theNetworkLoaderHandler;
 
 	//! The network handler
-	std::shared_ptr<xolotlCore::IReactionNetwork> theNetworkHandler;
+	std::unique_ptr<xolotlCore::IReactionNetwork> theNetworkHandler;
 
 public:
 
@@ -47,7 +47,8 @@ public:
 		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
 		// Create a NEClusterNetworkLoader
-		auto tempNetworkLoader = std::make_shared<xolotlCore::NEClusterNetworkLoader>(registry);
+		auto tempNetworkLoader = std::make_shared<
+				xolotlCore::NEClusterNetworkLoader>(registry);
 		// Give the networkFilename to the network loader
 		tempNetworkLoader->setFilename(options.getNetworkFilename());
 		// Set the options for the grouping scheme
@@ -57,14 +58,17 @@ public:
 
 		// Check if we want dummy reactions
 		auto map = options.getProcesses();
-		if (!map["reaction"]) theNetworkLoaderHandler->setDummyReactions();
+		if (!map["reaction"])
+			theNetworkLoaderHandler->setDummyReactions();
 		// Load the network
 		if (options.useHDF5())
-			theNetworkHandler = theNetworkLoaderHandler->load();
-		else theNetworkHandler = theNetworkLoaderHandler->generate(options);
+			theNetworkHandler = theNetworkLoaderHandler->load(options);
+		else
+			theNetworkHandler = theNetworkLoaderHandler->generate(options);
 
 		if (procId == 0) {
-			std::cout << "\nFactory Message: " << "Master loaded network of size "
+			std::cout << "\nFactory Message: "
+					<< "Master loaded network of size "
 					<< theNetworkHandler->size() << "." << std::endl;
 		}
 	}
@@ -83,8 +87,8 @@ public:
 	 *
 	 * @return The network.
 	 */
-	std::shared_ptr<xolotlCore::IReactionNetwork> getNetworkHandler() const {
-		return theNetworkHandler;
+	xolotlCore::IReactionNetwork& getNetworkHandler() const {
+		return *theNetworkHandler;
 	}
 
 };
