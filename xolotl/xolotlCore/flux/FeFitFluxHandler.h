@@ -29,82 +29,84 @@ public:
 	/**
 	 * The constructor
 	 */
-	FeFitFluxHandler() {}
+	FeFitFluxHandler() {
+	}
 
 	/**
 	 * The Destructor
 	 */
-	~FeFitFluxHandler() {}
+	~FeFitFluxHandler() {
+	}
 
 	/**
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(IReactionNetwork *network,
-			int surfacePos, std::vector<double> grid) {
+	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
+			std::vector<double> grid) {
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
 		// Set the flux index corresponding the the single helium cluster here
-		auto fluxCluster = network->get(heType, 1);
+		auto fluxCluster = network.get(Species::He, 1);
 		// Check that the helium cluster is present in the network
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe single helium cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
 		fluxIndices.push_back(fluxCluster->getId() - 1);
 
 		// Look for interstitial now
-		fluxCluster = network->get(iType, 1);
+		fluxCluster = network.get(Species::I, 1);
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe single interstitial cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
 		fluxIndices.push_back(fluxCluster->getId() - 1);
 
 		// Look for vacancies now
-		fluxCluster = network->get(vType, 1);
+		fluxCluster = network.get(Species::V, 1);
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe single vacancy cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
 		fluxIndices.push_back(fluxCluster->getId() - 1);
-		fluxCluster = network->get(vType, 2);
+		fluxCluster = network.get(Species::V, 2);
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe double vacancy cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
 		fluxIndices.push_back(fluxCluster->getId() - 1);
-		fluxCluster = network->get(vType, 3);
+		fluxCluster = network.get(Species::V, 3);
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe triple vacancy cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
 		fluxIndices.push_back(fluxCluster->getId() - 1);
-		fluxCluster = network->get(vType, 4);
+		fluxCluster = network.get(Species::V, 4);
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe quadruple vacancy cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
 		fluxIndices.push_back(fluxCluster->getId() - 1);
-		fluxCluster = network->get(vType, 5);
+		fluxCluster = network.get(Species::V, 5);
 		if (!fluxCluster) {
 			throw std::string(
 					"\nVacancy 5 cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
 		fluxIndices.push_back(fluxCluster->getId() - 1);
-		fluxCluster = network->get(vType, 9);
+		fluxCluster = network.get(Species::V, 9);
 		if (!fluxCluster) {
 			throw std::string(
 					"\nVacancy 9 cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
 		fluxIndices.push_back(fluxCluster->getId() - 1);
 
@@ -115,7 +117,8 @@ public:
 	 * This operation computes the flux due to incoming particles at a given grid point.
 	 * \see IFluxHandler.h
 	 */
-	void computeIncidentFlux(double currentTime, double *updatedConcOffset, int xi, int surfacePos) {
+	void computeIncidentFlux(double currentTime, double *updatedConcOffset,
+			int xi, int surfacePos) {
 		// Define only for a 0D case
 		if (incidentFluxVec.size() == 0) {
 			updatedConcOffset[fluxIndices[0]] += 2.11e-11; // He1

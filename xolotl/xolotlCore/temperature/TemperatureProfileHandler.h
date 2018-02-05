@@ -71,10 +71,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature(IReactionNetwork *network, int *ofill,
-			int *dfill) {
+	virtual void initializeTemperature(const IReactionNetwork& network,
+			int *ofill, int *dfill) {
 		// Set dof
-		dof = network->getDOF();
+		dof = network.getDOF();
 
 		// Add the temperature to ofill
 		ofill[(dof - 1) * dof + (dof - 1)] = 1;
@@ -107,7 +107,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const std::vector<double>& position,
+	virtual double getTemperature(const Point3D& position,
 			double currentTime) const {
 		// Initialize the value to return
 		double f = 0.0;

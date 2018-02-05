@@ -104,7 +104,7 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	virtual void initializeFluxHandler(IReactionNetwork *network,
+	virtual void initializeFluxHandler(const IReactionNetwork& network,
 			int surfacePos, std::vector<double> grid);
 
 	/**
@@ -118,7 +118,8 @@ public:
 	 * This operation computes the flux due to incoming particles at a given grid point.
 	 * \see IFluxHandler.h
 	 */
-	virtual void computeIncidentFlux(double currentTime, double *updatedConcOffset, int xi, int surfacePos);
+	virtual void computeIncidentFlux(double currentTime,
+			double *updatedConcOffset, int xi, int surfacePos);
 
 	/**
 	 * This operation increments the fluence at the current time step.

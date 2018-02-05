@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <IReactionNetwork.h>
+#include "Point3D.h"
 
 namespace xolotlCore {
 
@@ -30,8 +31,8 @@ public:
 	 * @param dfill The pointer to the array that will contain the value 1 at the indices
 	 * of the reacting variables.
 	 */
-	virtual void initializeTemperature(IReactionNetwork *network, int *ofill,
-			int *dfill) = 0;
+	virtual void initializeTemperature(const IReactionNetwork& network,
+			int *ofill, int *dfill) = 0;
 
 	/**
 	 * This operation returns the temperature at the given position
@@ -41,7 +42,7 @@ public:
 	 * @param currentTime The time
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const std::vector<double>& position,
+	virtual double getTemperature(const Point3D& position,
 			double currentTime) const = 0;
 
 	/**
