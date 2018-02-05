@@ -7,6 +7,7 @@
 #include <HDF5NetworkLoader.h>
 #include <DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
+#include <Options.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -32,8 +33,10 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Give the filename to the network loader
 	loader.setFilename(filename);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load().get();
+	auto network = loader.load(opts);
 	// Get its size
 	const int dof = network->getDOF();
 
@@ -47,7 +50,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
 
 	// Create a time
 	double currTime = 1.0;
@@ -65,7 +68,8 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	double *updatedConcOffset = updatedConc;
 
 	// Update the concentrations
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 0, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 0,
+			surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 1.49e-05, 0.01); // I

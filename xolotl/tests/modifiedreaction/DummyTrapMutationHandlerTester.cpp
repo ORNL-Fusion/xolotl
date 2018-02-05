@@ -5,6 +5,7 @@
 #include <DummyTrapMutationHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
+#include <Options.h>
 #include <DummyHandlerRegistry.h>
 #include <DummyAdvectionHandler.h>
 #include <mpi.h>
@@ -36,19 +37,14 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	// Give the filename to the network loader
 	loader.setFilename(filename);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load().get();
-	// Get all the reactants
-	auto allReactants = network->getAll();
+	auto network = loader.load(opts);
 	// Get its size
-	const int size = network->size();
 	const int dof = network->getDOF();
 	// Initialize the rate constants
-	for (int i = 0; i < size; i++) {
-		// This part will set the temperature in each reactant
-		// and recompute the diffusion coefficient
-		allReactants->at(i)->setTemperature(1000.0);
-	}
+	network->setTemperature(1000.0);
 	network->computeRateConstants();
 
 	// Suppose we have a grid with 13 grip points and distance of
@@ -68,8 +64,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	advectionHandlers.push_back(new DummyAdvectionHandler());
 
 	// Initialize it
-	trapMutationHandler.initialize(network, grid);
-	trapMutationHandler.initializeIndex1D(surfacePos, network,
+	trapMutationHandler.initialize(*network, grid);
+	trapMutationHandler.initializeIndex1D(surfacePos, *network,
 			advectionHandlers, grid);
 
 	// The arrays of concentration
@@ -91,7 +87,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	double *updatedConcOffset = updatedConc + dof;
 
 	// Compute the modified trap mutation at the second grid point
-	trapMutationHandler.computeTrapMutation(network, concOffset,
+	trapMutationHandler.computeTrapMutation(*network, concOffset,
 			updatedConcOffset, 1);
 
 	// Check the new values of updatedConcOffset
@@ -102,7 +98,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[19], 0.0, 0.01); // Create He5V
 
 	// Initialize the indices and values to set in the Jacobian
-	int nHelium = network->getAll(heType).size();
+	int nHelium = network->getAll(ReactantType::He).size();
 	int indices[3 * nHelium];
 	double val[3 * nHelium];
 	// Get the pointer on them for the compute modified trap-mutation method
@@ -110,7 +106,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	double *valPointer = &val[0];
 
 	// Compute the partial derivatives for the modified trap-mutation at the grid point 1
-	int nMutating = trapMutationHandler.computePartialsForTrapMutation(network,
+	int nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
 			valPointer, indicesPointer, 1);
 
 	// Verify that no cluster is undergoing modified trap-mutation

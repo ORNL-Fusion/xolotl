@@ -29,7 +29,7 @@ if(Boost_FOUND)
         message(STATUS "Making test ${test}")
         get_filename_component(testName ${test} NAME_WE)
         add_executable(${testName} ${test})
-        target_link_libraries(${testName} xolotlDiffusion xolotlPerf
+        target_link_libraries(${testName} xolotlDiffusion xolotlCL xolotlPerf
         xolotlReactants)
         add_test(${testName} ${testName}) 
         #add a label so the tests can be run separately
