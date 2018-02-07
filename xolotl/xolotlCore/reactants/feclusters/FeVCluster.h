@@ -4,6 +4,7 @@
 // Includes
 #include "FeCluster.h"
 #include <xolotlPerf.h>
+#include <Constants.h>
 
 namespace xolotlCore {
 
