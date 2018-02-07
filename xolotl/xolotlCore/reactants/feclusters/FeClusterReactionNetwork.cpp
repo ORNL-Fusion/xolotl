@@ -12,7 +12,7 @@ namespace xolotlCore {
 FeClusterReactionNetwork::FeClusterReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		ReactionNetwork( { ReactantType::V, ReactantType::I, ReactantType::He,
-				ReactantType::HeV, ReactantType::HeI, ReactantType::FeSuper },
+				ReactantType::HeV, ReactantType::FeSuper },
 				ReactantType::FeSuper, registry) {
 
 	// Initialize default properties
