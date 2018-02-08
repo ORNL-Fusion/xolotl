@@ -26,7 +26,7 @@ public:
 	/**
 	 * The MPI type to use when transferring a ValType.
 	 */
-	static constexpr MPI_Datatype MPIValType = MPI_DOUBLE;
+	static const MPI_Datatype MPIValType;
 
 	/**
 	 * The minimum value possible.

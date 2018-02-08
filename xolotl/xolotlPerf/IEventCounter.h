@@ -22,7 +22,7 @@ public:
 	/**
 	 * MPI type used when transmitting a ValType.
 	 */
-	static constexpr MPI_Datatype MPIValType = MPI_UNSIGNED_LONG;
+	static const MPI_Datatype MPIValType;
 
 	/**
 	 * The minimum value possible.

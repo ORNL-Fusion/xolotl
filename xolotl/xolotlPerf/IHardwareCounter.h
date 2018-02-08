@@ -42,7 +42,7 @@ public:
 	 * The MPI type to use when transferring a component of the ValType
 	 * when aggregating values.
 	 */
-	static constexpr MPI_Datatype MPIValType = MPI_LONG_LONG_INT;
+	static const MPI_Datatype MPIValType;
 
 	/**
 	 * The minimum value possible for an individual counter.
