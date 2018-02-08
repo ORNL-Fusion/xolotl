@@ -100,27 +100,28 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
 include(UseDoxygen OPTIONAL)
 
 # Include directories for the main program
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/diffusion)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/temperature)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/flux)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/material)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/vizHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/temperatureHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/solverHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/reactionHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlViz)
+include_directories(${CMAKE_SOURCE_DIR}
+                    ${CMAKE_SOURCE_DIR}/xolotlCore
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/diffusion
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/advection
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/temperature
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/flux
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/material
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/vizHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/temperatureHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/solverHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/reactionHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlSolver
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf
+                    ${CMAKE_SOURCE_DIR}/xolotlViz
+                    ${CMAKE_BINARY_DIR})
 
-configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_SOURCE_DIR}/XolotlConfig.h")
+configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_BINARY_DIR}/XolotlConfig.h")
 
 # Setup the library list
 set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
