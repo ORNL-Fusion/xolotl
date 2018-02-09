@@ -18,7 +18,7 @@ protected:
 	std::string networkName;
 
 	//! The original network created from the network loader.
-	xolotlCore::IReactionNetwork *network;
+	xolotlCore::IReactionNetwork& network;
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
@@ -128,13 +128,26 @@ protected:
 		return;
 	}
 
+	/**
+	 * Constructor.
+	 *
+	 * @param _network The reaction network to use.
+	 */
+	SolverHandler(xolotlCore::IReactionNetwork& _network) :
+			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
+					0.0), hZ(0.0), leftOffset(0), rightOffset(0), initialVConc(
+					0.0), dimension(-1), portion(0.0), useRegularGrid(true), movingSurface(
+					false), bubbleBursting(false), sputteringYield(0.0), fluxHandler(
+					nullptr), temperatureHandler(nullptr), diffusionHandler(
+					nullptr), mutationHandler(nullptr) {
+	}
+
 public:
 
+	//! The Constructor
+	SolverHandler() = delete;
+
 	~SolverHandler() {
-		// Break "pointer" cycles so that network, clusters, reactants
-		// will deallocate when the std::shared_ptrs owning them
-		// are destroyed.
-		network->askReactantsToReleaseNetwork();
 	}
 
 	/**
@@ -144,7 +157,6 @@ public:
 	void initializeHandlers(
 			std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-			std::shared_ptr<xolotlCore::IReactionNetwork> networkHandler,
 			xolotlCore::Options &options) {
 		// Set the network loader
 		networkName = options.getNetworkFilename();
@@ -164,9 +176,6 @@ public:
 					options.getZStepSize();
 		}
 
-		// Set the network
-		network = (xolotlCore::IReactionNetwork *) networkHandler.get();
-
 		// Set the flux handler
 		fluxHandler =
 				(xolotlCore::IFluxHandler *) material->getFluxHandler().get();
@@ -181,9 +190,8 @@ public:
 
 		// Set the advection handlers
 		auto handlers = material->getAdvectionHandler();
-		for (int i = 0; i < handlers.size(); i++) {
-			advectionHandlers.push_back(
-					(xolotlCore::IAdvectionHandler *) handlers[i].get());
+		for (auto handler : handlers) {
+			advectionHandlers.push_back(handler.get());
 		}
 
 		// Set the modified trap-mutation handler
@@ -348,7 +356,7 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IReactionNetwork *getNetwork() const {
+	xolotlCore::IReactionNetwork& getNetwork() const {
 		return network;
 	}
 

@@ -15,7 +15,8 @@ class IFluxHandler {
 
 public:
 
-	virtual ~IFluxHandler() { }
+	virtual ~IFluxHandler() {
+	}
 
 	/**
 	 * Compute and store the incident flux values at each grid point.
@@ -24,9 +25,9 @@ public:
 	 * @param surfacePos The current position of the surface
 	 * @param grid The grid on the x axis
 	 */
-	virtual void initializeFluxHandler(IReactionNetwork *network,
-		int surfacePos, std::vector<double> grid) = 0;
-		
+	virtual void initializeFluxHandler(const IReactionNetwork& network,
+			int surfacePos, std::vector<double> grid) = 0;
+
 	/**
 	 * This method reads the values on the time profile file and store them in the
 	 * time and amplitude vectors.
@@ -44,7 +45,8 @@ public:
 	 * @param ix The position on the x grid
 	 * @param surfacePos The current position of the surface
 	 */
-	virtual void computeIncidentFlux(double currentTime, double *updatedConcOffset, int xi, int surfacePos) = 0;
+	virtual void computeIncidentFlux(double currentTime,
+			double *updatedConcOffset, int xi, int surfacePos) = 0;
 
 	/**
 	 * This operation increments the fluence at the current time step.
@@ -75,7 +77,8 @@ public:
 	 */
 	virtual double getFluxAmplitude() const = 0;
 
-}; //end class IFluxHandler
+};
+//end class IFluxHandler
 
 }
 

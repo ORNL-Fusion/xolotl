@@ -5,6 +5,7 @@
 #include <W211AdvectionHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
+#include <Options.h>
 #include <DummyHandlerRegistry.h>
 #include <mpi.h>
 
@@ -35,8 +36,10 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	// Give the filename to the network loader
 	loader.setFilename(filename);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load().get();
+	auto network = loader.load(opts);
 	// Get its size
 	const int dof = network->getDOF();
 
@@ -55,7 +58,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Create the advection handler and initialize it
 	W211AdvectionHandler advectionHandler;
-	advectionHandler.initialize(network, ofill);
+	advectionHandler.initialize(*network, ofill);
 	advectionHandler.initializeAdvectionGrid(advectionHandlers, grid);
 
 	// Check the total number of advecting clusters
@@ -83,11 +86,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	auto reactants = network->getAll();
-	for (int i = 0; i < dof - 1; i++) {
-		auto cluster = (PSICluster *) reactants->at(i);
-		cluster->setTemperature(1000.0);
-	}
+	network->setTemperature(1000.0);
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -104,10 +103,10 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	concVector[2] = conc + 2 * dof; // right
 
 	// Set the grid position
-	std::vector<double> gridPosition = { hx, 0.0, 0.0 };
+	Point3D gridPosition { hx, 0.0, 0.0 };
 
 	// Compute the advection at this grid point
-	advectionHandler.computeAdvection(network, gridPosition, concVector,
+	advectionHandler.computeAdvection(*network, gridPosition, concVector,
 			updatedConcOffset, hx, hx, 1);
 
 	// Check the new values of updatedConcOffset
@@ -130,7 +129,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	double *valPointer = &val[0];
 
 	// Compute the partial derivatives for the advection a the grid point 1
-	advectionHandler.computePartialsForAdvection(network, valPointer,
+	advectionHandler.computePartialsForAdvection(*network, valPointer,
 			indicesPointer, gridPosition, hx, hx, 1);
 
 	// Check the values for the indices

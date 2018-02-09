@@ -5,11 +5,13 @@ using namespace xolotlCore;
 
 namespace xolotlSolver {
 
-// Allocate the static solver handler
-ISolverHandler *Solver::solverHandler;
+ISolverHandler* Solver::solverHandler = nullptr;
 
-Solver::Solver(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-	numCLIArgs(0), CLIArgs(NULL), handlerRegistry(registry) {
+Solver::Solver(ISolverHandler& _solverHandler,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		numCLIArgs(0), CLIArgs(NULL), handlerRegistry(registry) {
+
+	solverHandler = &_solverHandler;
 }
 
 void Solver::setCommandLineOptions(int argc, char **argv) {

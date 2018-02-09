@@ -6,6 +6,7 @@
 #include <TemperatureProfileHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
+#include <Options.h>
 #include <DummyHandlerRegistry.h>
 #include <mpi.h>
 
@@ -33,24 +34,26 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	// Give the filename to the network loader
 	loader.setFilename(filename);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load().get();
+	auto network = loader.load(opts);
 
 	// Create a file with temperature profile data
 	// First column with the time and the second with
 	// the temperature at that time.
 	std::ofstream writeTempFile("tempFile.dat");
 	writeTempFile << "0.0 2.0 \n"
-	"1.0 1.99219766723 \n"
-	"2.0 1.87758256189 \n"
-	"3.0 1.4311765168 \n"
-	"4.0 0.583853163453 \n"
-	"5.0 0.000137654918313 \n"
-	"6.0 0.789204200569 \n"
-	"7.0 1.9875147713 \n"
-	"8.0 0.854499966191 \n"
-	"9.0 0.235300873168 \n"
-	"10.0 1.99779827918";
+			"1.0 1.99219766723 \n"
+			"2.0 1.87758256189 \n"
+			"3.0 1.4311765168 \n"
+			"4.0 0.583853163453 \n"
+			"5.0 0.000137654918313 \n"
+			"6.0 0.789204200569 \n"
+			"7.0 1.9875147713 \n"
+			"8.0 0.854499966191 \n"
+			"9.0 0.235300873168 \n"
+			"10.0 1.99779827918";
 	writeTempFile.close();
 
 	// Create ofill and dfill
@@ -62,8 +65,8 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 
 	// Create and initialize the temperature profile handler
 	auto testTemp = make_shared<TemperatureProfileHandler>("tempFile.dat");
-	testTemp->initializeTemperature(network, ofill, dfill);
-	std::vector<double> pos = { 1.142857142857143, 0.0, 0.0 };
+	testTemp->initializeTemperature(*network, ofill, dfill);
+	Point3D pos { 1.142857142857143, 0.0, 0.0 };
 
 	// Vector to hold the user defined time values
 	std::vector<double> t;
@@ -90,8 +93,8 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	}
 
 	// Verify the values
-	for(unsigned int j = 0; j < t.size(); j++)
-	BOOST_REQUIRE_CLOSE(tempInterp[j], trueInterp[j], 10e-8);
+	for (unsigned int j = 0; j < t.size(); j++)
+		BOOST_REQUIRE_CLOSE(tempInterp[j], trueInterp[j], 10e-8);
 
 	// Remove the created file
 	std::string tempFile = "tempFile.dat";
