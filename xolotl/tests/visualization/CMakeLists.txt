@@ -11,12 +11,13 @@ FIND_PACKAGE(EAVL)
 FIND_PACKAGE(MESA)
 
 #Include directories from the source and boost binaries
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlViz)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlViz/dummy)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlViz/labelprovider)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlViz/dataprovider)
-include_directories(${Boost_BINARY_DIRS}) 
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore
+                    ${CMAKE_SOURCE_DIR}/xolotlViz
+                    ${CMAKE_SOURCE_DIR}/xolotlViz/dummy
+                    ${CMAKE_SOURCE_DIR}/xolotlViz/labelprovider
+                    ${CMAKE_SOURCE_DIR}/xolotlViz/dataprovider
+                    ${Boost_BINARY_DIRS} 
+                    ${CMAKE_BINARY_DIR})
 
 #Link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlViz)

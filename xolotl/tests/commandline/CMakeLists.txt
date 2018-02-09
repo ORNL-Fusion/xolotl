@@ -6,10 +6,11 @@ SET(PACKAGE_DESCRIPTION "Tests for the Xolotl commandline package")
 
     
 # Where to look for include files.
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-include_directories(${Boost_BINARY_DIRS}) 
+include_directories(${CMAKE_SOURCE_DIR}
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf
+                    ${Boost_BINARY_DIRS}
+                    ${CMAKE_BINARY_DIR}) 
 
 # Figure out which tests to build
 file(GLOB tests *Tester.cpp)
