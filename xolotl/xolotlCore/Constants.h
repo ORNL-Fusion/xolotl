@@ -45,10 +45,10 @@ static const double feHeatCoefficient = 0.0;
 static const double reactionRadius = ironLatticeConstant
 		* pow((3.0) / pi, (1.0 / 3.0)) * 0.5;
 static const double r0 = ironLatticeConstant * 0.75 * sqrt(3.0);
-static const double rho = 0.00025;
+static const double rho = 0.0003;
 static const double sinkStrength = -4.0 * pi * rho
 		/ log(pi * rho * pow(reactionRadius + r0, 2.0));
-static const double sinkBias = 1.01;
+static const double sinkBias = 1.05;
 
 } /* end namespace xolotlCore */
 #endif /* CONSTANTS_H_ */
