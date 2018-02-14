@@ -49,6 +49,7 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlotXZ3D;
 std::vector<std::vector<double> > previousIFlux3D;
 //! The variable to store the total number of interstitials going through the surface.
 std::vector<std::vector<double> > nInterstitial3D;
+std::vector<std::tuple<int, int, int> > depthPositions3D;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop3D")
@@ -905,22 +906,19 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorBursting3D")
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "burstingEventFunction3D")
 /**
- * This is a monitoring method that bursts bubbles
+ * This is a method that checks if bubbles should burst
  */
-PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time, Vec solution,
-		void *) {
+PetscErrorCode burstingEventFunction3D(TS ts, PetscReal time, Vec solution,
+		PetscScalar *fvalue, void *) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
-	int xs, xm, xi, ys, ym, yj, zs, zm, zk;
+	PetscInt xs, xm, xi, Mx, ys, ym, yj, My, zs, zm, zk, Mz;
+	depthPositions3D.clear();
 
 	PetscFunctionBeginUser;
-
-	// Gets the process ID
-	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -928,26 +926,31 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time, Vec solution,
 	CHKERRQ(ierr);
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
 	CHKERRQ(ierr);
 
+	// Get the size of the total grid
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
+	CHKERRQ(ierr);
+
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the position of the surface
+	// Initialize the surface position
 	int surfacePos = 0;
-	// Setup step size variables
+	// Get the step sizes
 	double hy = solverHandler->getStepSizeY();
 	double hz = solverHandler->getStepSizeZ();
 
 	// Get the network
 	auto network = solverHandler->getNetwork();
-	// Get all the super clusters
-	auto superClusters = network->getAll(PSISuperType);
 
 	// Get the physical grid
 	auto grid = solverHandler->getXGrid();
@@ -962,120 +965,208 @@ PetscErrorCode monitorBursting3D(TS ts, PetscInt, PetscReal time, Vec solution,
 	// Compute the prefactor for the probability (arbitrary)
 	double prefactor = fluxAmplitude * dt * 0.1;
 
-	// Loop on the grid
-	for (zk = zs; zk < zs + zm; zk++) {
-		for (yj = ys; yj < ys + ym; yj++) {
+	// For now we are not bursting
+	bool burst = false;
+
+	// Loop on the full grid
+	for (zk = 0; zk < Mz; zk++) {
+		for (yj = 0; yj < My; yj++) {
 			// Get the surface position
 			surfacePos = solverHandler->getSurfacePosition(yj, zk);
-
-			for (xi = xs; xi < xs + xm; xi++) {
+			for (xi = 0; xi < Mx; xi++) {
 				// Skip everything before the surface
 				if (xi < surfacePos)
 					continue;
 
-				// Get the pointer to the beginning of the solution data for this grid point
-				gridPointSolution = solutionArray[zk][yj][xi];
-				// Update the concentration in the network
-				network->updateConcentrationsFromArray(gridPointSolution);
+				// If this is the locally owned part of the grid
+				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
+						&& zk >= zs && zk < zs + zm) {
 
-				// Get the distance from the surface
-				double distance = grid[xi + 1] - grid[surfacePos + 1];
+					// Get the pointer to the beginning of the solution data for this grid point
+					gridPointSolution = solutionArray[zk][yj][xi];
+					// Update the concentration in the network
+					network->updateConcentrationsFromArray(gridPointSolution);
 
-				// Compute the helium density at this grid point
-				double heDensity = network->getTotalAtomConcentration();
+					// Get the distance from the surface
+					double distance = grid[xi + 1] - grid[surfacePos + 1];
 
-				// Compute the radius of the bubble from the number of helium
-				double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy * hz
-						/ 4.0;
-				double radius =
-						(sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
-								+ pow(
-										(3.0
-												* pow(
-														xolotlCore::tungstenLatticeConstant,
-														3.0) * nV)
-												/ (8.0 * xolotlCore::pi),
-										(1.0 / 3.0))
-								- pow(
-										(3.0
-												* pow(
-														xolotlCore::tungstenLatticeConstant,
-														3.0))
-												/ (8.0 * xolotlCore::pi),
-										(1.0 / 3.0));
+					// Compute the helium density at this grid point
+					double heDensity = network->getTotalAtomConcentration();
 
-				// Check if it should burst
-				bool burst = false;
-				// If the radius is larger than the distance to the surface, burst
-				if (radius > distance)
-					burst = true;
-				// Add randomness
-				double prob = prefactor
-						* (1.0 - (distance - radius) / distance);
-				double test = (double) rand() / (double) RAND_MAX;
-				if (prob > test)
-					burst = true;
+					// Compute the radius of the bubble from the number of helium
+					double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy * hz
+							/ 4.0;
+//			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]) * hy * hz;
+					double radius =
+							(sqrt(3.0) / 4.0)
+									* xolotlCore::tungstenLatticeConstant
+									+ pow(
+											(3.0
+													* pow(
+															xolotlCore::tungstenLatticeConstant,
+															3.0) * nV)
+													/ (8.0 * xolotlCore::pi),
+											(1.0 / 3.0))
+									- pow(
+											(3.0
+													* pow(
+															xolotlCore::tungstenLatticeConstant,
+															3.0))
+													/ (8.0 * xolotlCore::pi),
+											(1.0 / 3.0));
 
-				// Burst
-				if (burst) {
-
-					std::cout << "bursting at: " << zk << " " << yj << " "
-							<< distance << " " << prob << " " << test
-							<< std::endl;
-
-					// Get all the helium clusters
-					auto clusters = network->getAll(heType);
-					// Loop on them to reset their concentration at this grid point
-					for (int i = 0; i < clusters.size(); i++) {
-						auto cluster = clusters[i];
-						int id = cluster->getId() - 1;
-						gridPointSolution[id] = 0.0;
+					// If the radius is larger than the distance to the surface, burst
+					if (radius > distance) {
+						burst = true;
+						depthPositions3D.push_back(std::make_tuple(zk, yj, xi));
+						// Exit the loop
+						continue;
 					}
+					// Add randomness
+					double depthParam = 10.0; // nm
+					double prob = prefactor
+							* (1.0 - (distance - radius) / distance)
+							* min(1.0,
+									exp(
+											-(distance - depthParam)
+													/ (depthParam * 2.0)));
+					double test = (double) rand() / (double) RAND_MAX;
 
-					// Get all the HeV clusters
-					clusters = network->getAll(heVType);
-					// Loop on them to transfer their concentration to the V cluster of the
-					// same size at this grid point
-					for (int i = 0; i < clusters.size(); i++) {
-						auto cluster = clusters[i];
-						// Get the V cluster of the same size
-						auto comp = cluster->getComposition();
-						auto vCluster = network->get(vType, comp[vType]);
-						int vId = vCluster->getId() - 1;
-						int id = cluster->getId() - 1;
-						gridPointSolution[vId] += gridPointSolution[id];
-						gridPointSolution[id] = 0.0;
-					}
-
-					// Loop on the superClusters to transfer their concentration to the V cluster of the
-					// same size at this grid point
-					for (int i = 0; i < superClusters.size(); i++) {
-						auto cluster = (PSISuperCluster *) superClusters[i];
-
-						// Get its boundaries
-						auto boundaries = cluster->getBoundaries();
-						// Loop on the V boundaries
-						for (int j = boundaries[2]; j <= boundaries[3]; j++) {
-							// Get the total concentration at this v
-							double conc = cluster->getIntegratedVConcentration(
-									j);
-							// Get the corresponding V cluster and its Id
-							auto vCluster = network->get(vType, j);
-							int vId = vCluster->getId() - 1;
-							// Add the concentration
-							gridPointSolution[vId] += conc;
-						}
-
-						// Reset the super cluster concentration
-						int id = cluster->getId() - 1;
-						gridPointSolution[id] = 0.0;
-						id = cluster->getHeMomentumId() - 1;
-						gridPointSolution[id] = 0.0;
-						id = cluster->getVMomentumId() - 1;
-						gridPointSolution[id] = 0.0;
+					if (prob > test) {
+						burst = true;
+						depthPositions3D.push_back(std::make_tuple(zk, yj, xi));
 					}
 				}
 			}
+		}
+	}
+
+	// If at least one grid point is bursting
+	if (burst) {
+		// The event is happening
+		fvalue[0] = 0.0;
+	} else
+		fvalue[0] = 1.0;
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postBurstingEventFunction3D")
+/**
+ * This is a monitoring method that bursts bubbles
+ */
+PetscErrorCode postBurstingEventFunction3D(TS ts, PetscInt nevents,
+		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
+
+	// Initial declarations
+	PetscErrorCode ierr;
+	double ****solutionArray, *gridPointSolution;
+
+	PetscFunctionBeginUser;
+
+	// Check if the bursting event happened
+	if (nevents == 0)
+		PetscFunctionReturn(0);
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Get the solver handler
+	auto solverHandler = PetscSolver::getSolverHandler();
+
+	// Initialize the surface position
+	int surfacePos = 0;
+	// Get the step sizes
+	double hy = solverHandler->getStepSizeY();
+	double hz = solverHandler->getStepSizeZ();
+
+	// Get the physical grid
+	auto grid = solverHandler->getXGrid();
+
+	// Get the network
+	auto network = solverHandler->getNetwork();
+	// Get all the super clusters
+	auto superClusters = network->getAll(PSISuperType);
+
+	// Loop on each bursting depth
+	for (int i = 0; i < depthPositions3D.size(); i++) {
+		// Get the coordinates of the point
+		int xi = std::get<2>(depthPositions3D[i]), yj = std::get<1>(
+				depthPositions3D[i]), zk = std::get<0>(depthPositions3D[i]);
+		// Get the pointer to the beginning of the solution data for this grid point
+		gridPointSolution = solutionArray[zk][yj][xi];
+		// Update the concentration in the network
+		network->updateConcentrationsFromArray(gridPointSolution);
+
+		// Get the surface position
+		surfacePos = solverHandler->getSurfacePosition(yj, zk);
+		// Get the distance from the surface
+		double distance = grid[xi + 1] - grid[surfacePos + 1];
+
+		std::cout << "bursting at: " << zk * hz << " " << yj * hy << " "
+				<< distance << std::endl;
+
+		// Pinhole case
+		// Get all the helium clusters
+		auto clusters = network->getAll(heType);
+		// Loop on them to reset their concentration at this grid point
+		for (int i = 0; i < clusters.size(); i++) {
+			auto cluster = clusters[i];
+			int id = cluster->getId() - 1;
+			gridPointSolution[id] = 0.0;
+		}
+
+		// Get all the HeV clusters
+		clusters = network->getAll(heVType);
+		// Loop on them to transfer their concentration to the V cluster of the
+		// same size at this grid point
+		for (int i = 0; i < clusters.size(); i++) {
+			auto cluster = clusters[i];
+			// Get the V cluster of the same size
+			auto comp = cluster->getComposition();
+			auto vCluster = network->get(vType, comp[vType]);
+			int vId = vCluster->getId() - 1;
+			int id = cluster->getId() - 1;
+			gridPointSolution[vId] += gridPointSolution[id];
+			gridPointSolution[id] = 0.0;
+		}
+
+		// Loop on the super clusters to transfer their concentration to the V cluster of the
+		// same size at this grid point
+		for (int i = 0; i < superClusters.size(); i++) {
+			auto cluster = (PSISuperCluster *) superClusters[i];
+
+			// Get its boundaries
+			auto boundaries = cluster->getBoundaries();
+			// Loop on the V boundaries
+			for (int j = boundaries[2]; j <= boundaries[3]; j++) {
+				// Get the total concentration at this v
+				double conc = cluster->getIntegratedVConcentration(j);
+				// Get the corresponding V cluster and its Id
+				auto vCluster = network->get(vType, j);
+				int vId = vCluster->getId() - 1;
+				// Add the concentration
+				gridPointSolution[vId] += conc;
+			}
+
+			// Reset the super cluster concentration
+			int id = cluster->getId() - 1;
+			gridPointSolution[id] = 0.0;
+			id = cluster->getHeMomentumId() - 1;
+			gridPointSolution[id] = 0.0;
+			id = cluster->getVMomentumId() - 1;
+			gridPointSolution[id] = 0.0;
 		}
 	}
 
@@ -1103,7 +1194,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
-	PetscBool flagCheck, flagPerf, flagRetention, flagStatus, flag2DXYPlot, flag2DXZPlot;
+	PetscBool flagCheck, flagPerf, flagRetention, flagStatus, flag2DXYPlot,
+			flag2DXZPlot;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -1264,12 +1356,22 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 
 	// If the user wants bubble bursting
 	if (solverHandler->burstBubbles()) {
-		// Set the monitor on the bubble bursting
-		// monitorBursting3D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorBursting3D, NULL, NULL);
+		// Set directions and terminate flags for the bursting event
+		PetscInt direction[1];
+		PetscBool terminate[1];
+		direction[0] = 0;
+		terminate[0] = PETSC_FALSE;
+		// Set the TSEvent
+		ierr = TSSetEventHandler(ts, 1, direction, terminate,
+				burstingEventFunction3D, postBurstingEventFunction3D, NULL);
 		checkPetscError(ierr,
-				"setupPetsc3DMonitor: TSMonitorSet (monitorBursting3D) failed.");
-		std::srand(time(NULL) + procId);
+				"setupPetsc3DMonitor: TSSetEventHandler (burstingEventFunction3D) failed.");
+
+		// Initialize the RNG
+		int seed = time(NULL);
+		if (procId == 0)
+			std::cout << "RNG seed for bubble bursting: " << seed << std::endl;
+		std::srand(seed + procId);
 	}
 
 	// Set the monitor to save performance plots (has to be in parallel)

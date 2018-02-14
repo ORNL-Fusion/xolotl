@@ -68,7 +68,7 @@ std::vector<double> radii1D;
 // Becomes false once it is printed.
 bool printMaxClusterConc1D = true;
 // The vector of depths at which bursting happens
-std::vector<int> depthPositions;
+std::vector<int> depthPositions1D;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop1D")
@@ -1956,8 +1956,8 @@ PetscErrorCode burstingEventFunction1D(TS ts, PetscReal time, Vec solution,
 	// Initial declarations
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
-	int xs, xm, xi, Mx;
-	depthPositions.clear();
+	PetscInt xs, xm, xi, Mx;
+	depthPositions1D.clear();
 
 	PetscFunctionBeginUser;
 
@@ -2049,7 +2049,7 @@ PetscErrorCode burstingEventFunction1D(TS ts, PetscReal time, Vec solution,
 			// If the radius is larger than the distance to the surface, burst
 			if (radius > distance) {
 				burst = true;
-				depthPositions.push_back(xi);
+				depthPositions1D.push_back(xi);
 				// Exit the loop
 				continue;
 			}
@@ -2062,7 +2062,7 @@ PetscErrorCode burstingEventFunction1D(TS ts, PetscReal time, Vec solution,
 
 			if (prob > test) {
 				burst = true;
-				depthPositions.push_back(xi);
+				depthPositions1D.push_back(xi);
 			}
 		}
 	}
@@ -2092,17 +2092,12 @@ PetscErrorCode postBurstingEventFunction1D(TS ts, PetscInt nevents,
 	// Initial declarations
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
-	int xs, xm, xi;
 
 	PetscFunctionBeginUser;
 
 	// Check if the bursting event happened
 	if (nevents == 0)
 		PetscFunctionReturn(0);
-
-	// Gets the process ID
-	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -2128,14 +2123,14 @@ PetscErrorCode postBurstingEventFunction1D(TS ts, PetscInt nevents,
 	auto superClusters = network->getAll(PSISuperType);
 
 	// Loop on each bursting depth
-	for (int i = 0; i < depthPositions.size(); i++) {
+	for (int i = 0; i < depthPositions1D.size(); i++) {
 		// Get the pointer to the beginning of the solution data for this grid point
-		gridPointSolution = solutionArray[depthPositions[i]];
+		gridPointSolution = solutionArray[depthPositions1D[i]];
 		// Update the concentration in the network
 		network->updateConcentrationsFromArray(gridPointSolution);
 
 		// Get the distance from the surface
-		double distance = grid[depthPositions[i] + 1] - grid[surfacePos + 1];
+		double distance = grid[depthPositions1D[i] + 1] - grid[surfacePos + 1];
 
 		std::cout << "bursting at: " << distance << std::endl;
 
