@@ -49,6 +49,9 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlotXZ3D;
 std::vector<std::vector<double> > previousIFlux3D;
 //! The variable to store the total number of interstitials going through the surface.
 std::vector<std::vector<double> > nInterstitial3D;
+//! The variable to store the sputtering yield at the surface.
+double sputteringYield3D = 0.0;
+// The vector of depths at which bursting happens
 std::vector<std::tuple<int, int, int> > depthPositions3D;
 
 #undef __FUNCT__
@@ -660,23 +663,21 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "surfaceEventFunction3D")
 /**
- * This is a monitoring method that will compute the flux of interstitials
- * at the surface and move the position of the surface if necessary.
+ * This is a method that checks if the surface should move
  */
-PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *ictx) {
-	// Initial declarations
+PetscErrorCode surfaceEventFunction3D(TS ts, PetscReal time, Vec solution,
+		PetscScalar *fvalue, void *) {
+	// Initial declaration
 	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
-	PetscInt xs, xm, xi, ys, ym, yj, zs, zm, zk, Mx, My, Mz;
-	bool surfaceHasMoved = false;
+	PetscInt xs, xm, xi, Mx, ys, ym, yj, My, zs, zm, zk, Mz;
+	fvalue[0] = 1.0;
 
 	PetscFunctionBeginUser;
 
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
 	// Gets the process ID
 	int procId;
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
@@ -706,39 +707,30 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the network
 	auto network = solverHandler->getNetwork();
 
-	// Get all the interstitial clusters
-	auto interstitials = network->getAll("I");
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network->get(xolotlCore::vType, 1);
-	int vacancyIndex = -1;
-	if (singleVacancyCluster)
-		vacancyIndex = singleVacancyCluster->getId() - 1;
-
-	// Setup step size variables
-	double hy = solverHandler->getStepSizeY();
-	double hz = solverHandler->getStepSizeZ();
-
-	// Get the initial vacancy concentration
-	double initialVConc = solverHandler->getInitialVConc();
-
 	// Get the physical grid
 	auto grid = solverHandler->getXGrid();
+
+	// Get the flux handler to know the flux amplitude.
+	auto fluxHandler = solverHandler->getFluxHandler();
+	double heliumFluxAmplitude = fluxHandler->getFluxAmplitude();
 
 	// Get the delta time from the previous timestep to this timestep
 	double dt = time - previousTime;
 
-	// Loop on the possible yj and zk
-	for (yj = 0; yj < My; yj++) {
-		for (zk = 0; zk < Mz; zk++) {
-			// Get the position of the surface at yj, zk
+	// Get the initial vacancy concentration
+	double initialVConc = solverHandler->getInitialVConc();
+
+	// Value to now on which processor is the location of the surface,
+	// for MPI usage
+	int surfaceProc = 0;
+
+	// Loop on the possible zk and yj
+	for (zk = 0; zk < Mz; zk++) {
+		for (yj = 0; yj < My; yj++) {
+			// Get the position of the surface at yj
 			int surfacePos = solverHandler->getSurfacePosition(yj, zk);
 			xi = surfacePos + 1;
-
-			// Value to now on which processor is the location of the surface,
-			// for MPI usage
-			int surfaceProc = 0;
-
-			// if xi, yj, zk are on this process
+			// if xi is on this process
 			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 					&& zk < zs + zm) {
 				// Get the concentrations at xi = surfacePos + 1
@@ -748,11 +740,17 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 				// surface since last timestep using the stored flux
 				nInterstitial3D[yj][zk] += previousIFlux3D[yj][zk] * dt;
 
+				// Remove the sputtering yield since last timestep
+				nInterstitial3D[yj][zk] -= sputteringYield3D
+						* heliumFluxAmplitude * dt;
+
 				// Initialize the value for the flux
 				double newFlux = 0.0;
 
-				// Loop on all the interstitial clusters
-				for (int i = 0; i < interstitials.size(); i++) {
+				// Get all the interstitial clusters
+				auto interstitials = network->getAll("I");
+				// Loop on them
+				for (unsigned int i = 0; i < interstitials.size(); i++) {
 					// Get the cluster
 					auto cluster = interstitials.at(i);
 					// Get its id and concentration
@@ -770,7 +768,7 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 					newFlux += (double) size * factor * coef * conc * hxLeft;
 				}
 
-				// Update the previous flux at this position
+				// Update the previous flux
 				previousIFlux3D[yj][zk] = newFlux;
 
 				// Set the surface processor
@@ -782,7 +780,7 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 			MPI_Allreduce(&surfaceProc, &surfaceId, 1, MPI_INT, MPI_SUM,
 					PETSC_COMM_WORLD);
 
-			// Send the information about nInterstitial2D and previousFlux2D
+			// Send the information about nInterstitial3D and previousFlux3D
 			// to the other processes
 			MPI_Bcast(&nInterstitial3D[yj][zk], 1, MPI_DOUBLE, surfaceId,
 					PETSC_COMM_WORLD);
@@ -797,18 +795,108 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 					* (grid[xi + 1] - grid[xi]);
 			if (nInterstitial3D[yj][zk] > threshold) {
 				// The surface is moving
-				surfaceHasMoved = true;
+				fvalue[0] = 0.0;
+			}
 
-				// Compute the number of grid points to move the surface of
-				int nGridPoints = (int) (nInterstitial3D[yj][zk] / threshold);
+			// Moving the surface back
+			else if (nInterstitial3D[yj][zk] < -threshold / 10.0) {
+				// The surface is moving
+				fvalue[0] = 0.0;
+			}
+		}
+	}
 
-				// Remove the number of interstitials we just transformed in new material
-				// from nInterstitial3D
-				nInterstitial3D[yj][zk] = nInterstitial3D[yj][zk]
-						- threshold * (double) nGridPoints;
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
 
-				// Compute the new surface position
-				surfacePos -= nGridPoints;
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postSurfaceEventFunction3D")
+/**
+ * This is a method that moves the surface
+ */
+PetscErrorCode postSurfaceEventFunction3D(TS ts, PetscInt nevents,
+		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
+
+	// Initial declaration
+	PetscErrorCode ierr;
+	double ****solutionArray, *gridPointSolution;
+	PetscInt xs, xm, xi, Mx, ys, ym, yj, My, zs, zm, zk, Mz;
+
+	PetscFunctionBeginUser;
+
+	// Check if the surface has moved
+	if (nevents == 0)
+		PetscFunctionReturn(0);
+
+	// Gets the process ID
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
+	CHKERRQ(ierr);
+
+	// Get the size of the total grid
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	CHKERRQ(ierr);
+
+	// Get the solver handler
+	auto solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the network
+	auto network = solverHandler->getNetwork();
+	int dof = network->getDOF();
+
+	// Get the physical grid
+	auto grid = solverHandler->getXGrid();
+	// Get the step sizes
+	double hy = solverHandler->getStepSizeY();
+	double hz = solverHandler->getStepSizeZ();
+
+	// Get the initial vacancy concentration
+	double initialVConc = solverHandler->getInitialVConc();
+
+	// Loop on the possible zk and yj
+	for (zk = 0; zk < Mz; zk++) {
+		for (yj = 0; yj < My; yj++) {
+			// Get the position of the surface at yj
+			int surfacePos = solverHandler->getSurfacePosition(yj, zk);
+			xi = surfacePos + 1;
+
+			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
+			double threshold = (62.8 - initialVConc)
+					* (grid[xi + 1] - grid[xi]);
+
+			// Move the surface up
+			if (nInterstitial3D[yj][zk] > threshold) {
+				int nGridPoints = 0;
+				// Move the surface up until it is smaller than the next threshold
+				while (nInterstitial3D[yj][zk] > threshold) {
+					// Move the surface higher
+					surfacePos--;
+					xi = surfacePos + 1;
+					nGridPoints++;
+					// Update the number of interstitials
+					nInterstitial3D[yj][zk] -= threshold;
+					// Update the thresold
+					double threshold = (62.8 - initialVConc)
+							* (grid[xi + 1] - grid[xi]);
+				}
 
 				// Throw an exception if the position is negative
 				if (surfacePos < 0) {
@@ -819,21 +907,26 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 				// Printing information about the extension of the material
 				if (procId == 0) {
 					std::cout << "Adding " << nGridPoints
-							<< " points to the grid on yj = " << yj
-							<< " and zk = " << zk << " at time: " << time
-							<< " s." << std::endl;
+							<< " points to the grid on " << yj * hy << " and "
+							<< zk * hz << " at time: " << time << " s."
+							<< std::endl;
 				}
 
 				// Set it in the solver
 				solverHandler->setSurfacePosition(surfacePos, yj, zk);
 
 				// Initialize the vacancy concentration on the new grid points
+				// Get the single vacancy ID
+				auto singleVacancyCluster = network->get(xolotlCore::vType, 1);
+				int vacancyIndex = -1;
+				if (singleVacancyCluster)
+					vacancyIndex = singleVacancyCluster->getId() - 1;
 				// Loop on the new grid points
 				while (nGridPoints > 0) {
 					// Position of the newly created grid point
 					xi = surfacePos + nGridPoints;
 
-					// If xi, yj, and zk are on this process
+					// If xi is on this process
 					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
 							&& zk >= zs && zk < zs + zm && vacancyIndex > 0) {
 						// Get the concentrations
@@ -846,60 +939,66 @@ PetscErrorCode monitorMovingSurface3D(TS ts, PetscInt timestep, PetscReal time,
 					--nGridPoints;
 				}
 			}
-		}
-	}
 
-	// Reinitialize the modified trap-mutation handler if the surface has moved
-	if (surfaceHasMoved) {
-		// Get the modified trap-mutation handler to reinitialize it
-		auto mutationHandler = solverHandler->getMutationHandler();
-		auto advecHandlers = solverHandler->getAdvectionHandlers();
+			// Moving the surface back
+			else if (nInterstitial3D[yj][zk] < -threshold / 10.0) {
+				// Move it back as long as the number of interstitials in negative
+				while (nInterstitial3D[yj][zk] < 0.0) {
+					// Compute the threshold to a deeper grid point
+					threshold = (62.8 - initialVConc)
+							* (grid[xi + 2] - grid[xi + 1]);
+					// Set all the concentrations to 0.0 at xi = surfacePos + 1
+					// if xi is on this process
+					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
+							&& zk >= zs && zk < zs + zm) {
+						// Get the concentrations at xi = surfacePos + 1
+						gridPointSolution = solutionArray[zk][yj][xi];
+						// Loop on DOF
+						for (int i = 0; i < dof - 1; i++) {
+							gridPointSolution[i] = 0.0;
+						}
+					}
 
-		// Get the vector of positions of the surface
-		std::vector<std::vector<int> > surfaceIndices;
-		for (PetscInt i = 0; i < My; i++) {
-			// Create a temporary vector
-			std::vector<int> temp;
-			for (PetscInt j = 0; j < Mz; j++) {
-				temp.push_back(solverHandler->getSurfacePosition(i, j));
-			}
-			// Add the temporary vector to the vector of surface indices
-			surfaceIndices.push_back(temp);
-		}
+					// Move the surface deeper
+					surfacePos++;
+					xi = surfacePos + 1;
+					// Update the number of interstitials
+					nInterstitial3D[yj][zk] += threshold;
+				}
 
-		mutationHandler->initializeIndex3D(surfaceIndices, network,
-				advecHandlers, grid, My, hy, Mz, hz);
-	}
+				// Printing information about the extension of the material
+				if (procId == 0) {
+					std::cout << "Removing grid points to the grid on "
+							<< yj * hy << " and " << zk * hz << " at time: "
+							<< time << " s." << std::endl;
+				}
 
-	// Write the surface position in a file
-	// Open the file
-	std::ofstream outputFile;
-	if (procId == 0) {
-		std::stringstream name;
-		name << "surfacePosition_" << timestep << ".dat";
-		outputFile.open(name.str());
-
-		// Setup step size variables
-		double hy = solverHandler->getStepSizeY();
-		double hz = solverHandler->getStepSizeZ();
-
-		// Loop on the grid
-		for (yj = 0; yj < My; yj++) {
-			for (zk = 0; zk < Mz; zk++) {
-				// Get the surface position
-				int surfacePos = solverHandler->getSurfacePosition(yj, zk);
-				// Write it in the file
-				outputFile << (double) yj * hy << " " << (double) zk * hz << " "
-						<< grid[surfacePos + 1] - grid[1] << std::endl;
+				// Set it in the solver
+				solverHandler->setSurfacePosition(surfacePos, yj, zk);
 			}
 		}
-
-		// Close the file
-		outputFile.close();
 	}
+	// Get the modified trap-mutation handler to reinitialize it
+	auto mutationHandler = solverHandler->getMutationHandler();
+	auto advecHandlers = solverHandler->getAdvectionHandlers();
+
+	// Get the vector of positions of the surface
+	std::vector<std::vector<int> > surfaceIndices;
+	for (PetscInt i = 0; i < My; i++) {
+		// Create a temporary vector
+		std::vector<int> temp;
+		for (PetscInt j = 0; j < Mz; j++) {
+			temp.push_back(solverHandler->getSurfacePosition(i, j));
+		}
+		// Add the temporary vector to the vector of surface indices
+		surfaceIndices.push_back(temp);
+	}
+
+	mutationHandler->initializeIndex3D(surfaceIndices, network, advecHandlers,
+			grid, My, hy, Mz, hz);
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
@@ -1058,7 +1157,7 @@ PetscErrorCode burstingEventFunction3D(TS ts, PetscReal time, Vec solution,
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postBurstingEventFunction3D")
 /**
- * This is a monitoring method that bursts bubbles
+ * This is a method that bursts bubbles
  */
 PetscErrorCode postBurstingEventFunction3D(TS ts, PetscInt nevents,
 		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
@@ -1347,11 +1446,19 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 					tempTimeStep);
 		}
 
-		// Set the monitor on the outgoing flux of interstitials at the surface
-		// monitorMovingSurface3D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorMovingSurface3D, NULL, NULL);
+		// Get the sputtering yield
+		sputteringYield3D = solverHandler->getSputteringYield();
+
+		// Set directions and terminate flags for the surface event
+		PetscInt direction[1];
+		PetscBool terminate[1];
+		direction[0] = 0;
+		terminate[0] = PETSC_FALSE;
+		// Set the TSEvent
+		ierr = TSSetEventHandler(ts, 1, direction, terminate,
+				surfaceEventFunction3D, postSurfaceEventFunction3D, NULL);
 		checkPetscError(ierr,
-				"setupPetsc3DMonitor: TSMonitorSet (monitorMovingSurface3D) failed.");
+				"setupPetsc3DMonitor: TSSetEventHandler (surfaceEventFunction3D) failed.");
 	}
 
 	// If the user wants bubble bursting

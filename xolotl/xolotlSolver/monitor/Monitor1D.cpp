@@ -1693,18 +1693,17 @@ PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorMovingSurface1D")
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "surfaceEventFunction1D")
 /**
- * This is a monitoring method that will move the surface depending on the
- * interstitial flux
+ * This is a method that checks if the surface should move
  */
-PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+PetscErrorCode surfaceEventFunction1D(TS ts, PetscReal time, Vec solution,
+		PetscScalar *fvalue, void *) {
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
 	PetscInt xs, xm, xi;
-	bool surfaceHasMoved = false;
+	fvalue[0] = 1.0, fvalue[1] = 1.0;
 
 	PetscFunctionBeginUser;
 
@@ -1718,7 +1717,7 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Get the corners of the grid
@@ -1734,7 +1733,6 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the network
 	auto network = solverHandler->getNetwork();
-	int dof = network->getDOF();
 
 	// Get the physical grid
 	auto grid = solverHandler->getXGrid();
@@ -1822,15 +1820,98 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 	double threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
 	if (nInterstitial1D > threshold) {
 		// The surface is moving
-		surfaceHasMoved = true;
-		// Compute the number of grid points to move the surface of
-		int nGridPoints = (int) (nInterstitial1D / threshold);
-		// Remove the number of interstitials we just transformed in new material
-		// from nInterstitial1D
-		nInterstitial1D = nInterstitial1D - threshold * (double) nGridPoints;
+		fvalue[0] = 0.0;
+	}
 
-		// Compute the new surface position
-		surfacePos -= nGridPoints;
+	// Moving the surface back
+	else if (nInterstitial1D < -threshold / 10.0) {
+		// The surface is moving
+		fvalue[1] = 0.0;
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postSurfaceEventFunction1D")
+/**
+ * This is a method that moves the surface
+ */
+PetscErrorCode postSurfaceEventFunction1D(TS ts, PetscInt nevents,
+		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
+
+	// Initial declaration
+	PetscErrorCode ierr;
+	double **solutionArray, *gridPointSolution;
+	PetscInt xs, xm, xi;
+
+	PetscFunctionBeginUser;
+
+	// Check if the surface has moved
+	if (nevents == 0)
+		PetscFunctionReturn(0);
+
+	// Check if both events happened
+	if (nevents == 2)
+		throw std::string(
+				"\nxolotlSolver::Monitor1D: This is not supposed to happen, the surface cannot "
+						"move in both directions at the same time!!");
+
+	// Gets the process ID
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+	CHKERRQ(ierr);
+
+	// Get the solver handler
+	auto solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the position of the surface
+	int surfacePos = solverHandler->getSurfacePosition();
+	xi = surfacePos + 1;
+
+	// Get the network
+	auto network = solverHandler->getNetwork();
+	int dof = network->getDOF();
+
+	// Get the physical grid
+	auto grid = solverHandler->getXGrid();
+
+	// Get the initial vacancy concentration
+	double initialVConc = solverHandler->getInitialVConc();
+
+	// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
+	double threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
+
+	if (eventList[0] == 0) {
+		int nGridPoints = 0;
+		// Move the surface up until it is smaller than the next threshold
+		while (nInterstitial1D > threshold) {
+			// Move the surface higher
+			surfacePos--;
+			xi = surfacePos + 1;
+			nGridPoints++;
+			// Update the number of interstitials
+			nInterstitial1D -= threshold;
+			// Update the thresold
+			double threshold = (62.8 - initialVConc)
+					* (grid[xi + 1] - grid[xi]);
+		}
 
 		// Throw an exception if the position is negative
 		if (surfacePos < 0) {
@@ -1873,10 +1954,7 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Moving the surface back
-	else if (nInterstitial1D < -threshold / 10.0) {
-		// The surface is moving
-		surfaceHasMoved = true;
-
+	if (eventList[0] == 1) {
 		// Move it back as long as the number of interstitials in negative
 		while (nInterstitial1D < 0.0) {
 			// Compute the threshold to a deeper grid point
@@ -1887,7 +1965,7 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 				// Get the concentrations at xi = surfacePos + 1
 				gridPointSolution = solutionArray[xi];
 				// Loop on DOF
-				for (int i = 0; i < dof; i++) {
+				for (int i = 0; i < dof - 1; i++) {
 					gridPointSolution[i] = 0.0;
 				}
 			}
@@ -1909,34 +1987,31 @@ PetscErrorCode monitorMovingSurface1D(TS ts, PetscInt timestep, PetscReal time,
 		solverHandler->setSurfacePosition(surfacePos);
 	}
 
-	// Reinitialize the physics handlers if the surface has moved
-	if (surfaceHasMoved) {
-		// Set the new surface location in the surface advection handler
-		auto advecHandler = solverHandler->getAdvectionHandler();
-		advecHandler->setLocation(grid[surfacePos + 1] - grid[1]);
+	// Set the new surface location in the surface advection handler
+	auto advecHandler = solverHandler->getAdvectionHandler();
+	advecHandler->setLocation(grid[surfacePos + 1] - grid[1]);
 
-		// Set the new surface in the temperature handler
-		auto tempHandler = solverHandler->getTemperatureHandler();
-		tempHandler->updateSurfacePosition(grid[surfacePos + 1] - grid[1]);
+	// Set the new surface in the temperature handler
+	auto tempHandler = solverHandler->getTemperatureHandler();
+	tempHandler->updateSurfacePosition(grid[surfacePos + 1] - grid[1]);
 
-		// Get the flux handler to reinitialize it
-		auto fluxHandler = solverHandler->getFluxHandler();
-		fluxHandler->initializeFluxHandler(network, surfacePos, grid);
+	// Get the flux handler to reinitialize it
+	auto fluxHandler = solverHandler->getFluxHandler();
+	fluxHandler->initializeFluxHandler(network, surfacePos, grid);
 
-		// Get the modified trap-mutation handler to reinitialize it
-		auto mutationHandler = solverHandler->getMutationHandler();
-		auto advecHandlers = solverHandler->getAdvectionHandlers();
-		mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers,
-				grid);
+	// Get the modified trap-mutation handler to reinitialize it
+	auto mutationHandler = solverHandler->getMutationHandler();
+	auto advecHandlers = solverHandler->getAdvectionHandlers();
+	mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers,
+			grid);
 
-		// Write the updated surface position
-		if (procId == 0) {
-			std::ofstream outputFile;
-			outputFile.open("surface.txt", ios::app);
-			outputFile << time << " " << grid[surfacePos + 1] - grid[1]
-					<< std::endl;
-			outputFile.close();
-		}
+	// Write the updated surface position
+	if (procId == 0) {
+		std::ofstream outputFile;
+		outputFile.open("surface.txt", ios::app);
+		outputFile << time << " " << grid[surfacePos + 1] - grid[1]
+				<< std::endl;
+		outputFile.close();
 	}
 
 	// Restore the solutionArray
@@ -2084,7 +2159,7 @@ PetscErrorCode burstingEventFunction1D(TS ts, PetscReal time, Vec solution,
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postBurstingEventFunction1D")
 /**
- * This is a monitoring method that bursts bubbles
+ * This is a method that burst bubbles
  */
 PetscErrorCode postBurstingEventFunction1D(TS ts, PetscInt nevents,
 		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
@@ -2387,14 +2462,20 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 					tempTimeStep);
 		}
 
-		// Compute the sputtering yield
+		// Get the sputtering yield
 		sputteringYield1D = solverHandler->getSputteringYield();
 
-		// Set the monitor on moving surface
-		// monitorMovingSurface1D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorMovingSurface1D, NULL, NULL);
+		// Set directions and terminate flags for the surface event
+		PetscInt direction[2];
+		PetscBool terminate[2];
+		direction[0] = 0, direction[1] = 0;
+		terminate[0] = PETSC_FALSE, terminate[1] = PETSC_FALSE;
+		// Set the TSEvent
+		ierr = TSSetEventHandler(ts, 2, direction, terminate,
+				surfaceEventFunction1D, postSurfaceEventFunction1D, NULL);
 		checkPetscError(ierr,
-				"setupPetsc1DMonitor: TSMonitorSet (monitorMovingSurface1D) failed.");
+				"setupPetsc1DMonitor: TSSetEventHandler (surfaceEventFunction1D) failed.");
+
 
 		// Clear the file where the surface will be written
 		std::ofstream outputFile;

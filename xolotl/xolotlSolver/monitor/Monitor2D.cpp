@@ -48,6 +48,8 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlot2D;
 std::vector<double> previousIFlux2D;
 //! The variable to store the total number of interstitials going through the surface.
 std::vector<double> nInterstitial2D;
+//! The variable to store the sputtering yield at the surface.
+double sputteringYield2D = 0.0;
 // The vector of depths at which bursting happens
 std::vector<std::pair<int, int> > depthPositions2D;
 
@@ -643,23 +645,21 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionReturn(0);
 }
 
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "surfaceEventFunction2D")
 /**
- * This is a monitoring method that will compute the flux of interstitials
- * at the surface and move the position of the surface if necessary.
+ * This is a method that checks if the surface should move
  */
-PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *ictx) {
-	// Initial declarations
+PetscErrorCode surfaceEventFunction2D(TS ts, PetscReal time, Vec solution,
+		PetscScalar *fvalue, void *) {
+	// Initial declaration
 	PetscErrorCode ierr;
 	double ***solutionArray, *gridPointSolution;
-	PetscInt xs, xm, xi, ys, ym, yj, Mx, My;
-	bool surfaceHasMoved = false;
+	PetscInt xs, xm, xi, Mx, ys, ym, yj, My;
+	fvalue[0] = 1.0;
 
 	PetscFunctionBeginUser;
 
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
 	// Gets the process ID
 	int procId;
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
@@ -689,53 +689,29 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the network
 	auto network = solverHandler->getNetwork();
 
-	// Get all the interstitial clusters
-	auto interstitials = network->getAll("I");
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network->get(xolotlCore::vType, 1);
-	int vacancyIndex = -1;
-	if (singleVacancyCluster)
-		vacancyIndex = singleVacancyCluster->getId() - 1;
-
 	// Get the physical grid
 	auto grid = solverHandler->getXGrid();
 
-	// Write the initial surface positions
-	if (procId == 0 && xolotlCore::equal(time, 0.0)) {
-		std::ofstream outputFile;
-		outputFile.open("surface.txt", ios::app);
-		outputFile << time << " ";
+	// Get the flux handler to know the flux amplitude.
+	auto fluxHandler = solverHandler->getFluxHandler();
+	double heliumFluxAmplitude = fluxHandler->getFluxAmplitude();
 
-		// Loop on the possible yj
-		for (yj = 0; yj < My; yj++) {
-			// Get the position of the surface at yj
-			int surfacePos = solverHandler->getSurfacePosition(yj);
-			outputFile << grid[surfacePos + 1] - grid[1] << " ";
-		}
-		outputFile << std::endl;
-		outputFile.close();
-	}
-
-	// Setup step size variables
-	double hy = solverHandler->getStepSizeY();
+	// Get the delta time from the previous timestep to this timestep
+	double dt = time - previousTime;
 
 	// Get the initial vacancy concentration
 	double initialVConc = solverHandler->getInitialVConc();
 
-	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
+	// Value to now on which processor is the location of the surface,
+	// for MPI usage
+	int surfaceProc = 0;
 
 	// Loop on the possible yj
 	for (yj = 0; yj < My; yj++) {
 		// Get the position of the surface at yj
 		int surfacePos = solverHandler->getSurfacePosition(yj);
 		xi = surfacePos + 1;
-
-		// Value to now on which processor is the location of the surface,
-		// for MPI usage
-		int surfaceProc = 0;
-
-		// if xi, yj are on this process
+		// if xi is on this process
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
 			// Get the concentrations at xi = surfacePos + 1
 			gridPointSolution = solutionArray[yj][xi];
@@ -744,11 +720,16 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 			// surface since last timestep using the stored flux
 			nInterstitial2D[yj] += previousIFlux2D[yj] * dt;
 
+			// Remove the sputtering yield since last timestep
+			nInterstitial2D[yj] -= sputteringYield2D * heliumFluxAmplitude * dt;
+
 			// Initialize the value for the flux
 			double newFlux = 0.0;
 
-			// Loop on all the interstitial clusters
-			for (int i = 0; i < interstitials.size(); i++) {
+			// Get all the interstitial clusters
+			auto interstitials = network->getAll("I");
+			// Loop on them
+			for (unsigned int i = 0; i < interstitials.size(); i++) {
 				// Get the cluster
 				auto cluster = interstitials.at(i);
 				// Get its id and concentration
@@ -766,7 +747,7 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 				newFlux += (double) size * factor * coef * conc * hxLeft;
 			}
 
-			// Update the previous flux at this position
+			// Update the previous flux
 			previousIFlux2D[yj] = newFlux;
 
 			// Set the surface processor
@@ -792,17 +773,104 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 		double threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
 		if (nInterstitial2D[yj] > threshold) {
 			// The surface is moving
-			surfaceHasMoved = true;
-			// Compute the number of grid points to move the surface of
-			int nGridPoints = (int) (nInterstitial2D[yj] / threshold);
+			fvalue[0] = 0.0;
+		}
 
-			// Remove the number of interstitials we just transformed in new material
-			// from nInterstitial2D
-			nInterstitial2D[yj] = nInterstitial2D[yj]
-					- threshold * (double) nGridPoints;
+		// Moving the surface back
+		else if (nInterstitial2D[yj] < -threshold / 10.0) {
+			// The surface is moving
+			fvalue[0] = 0.0;
+		}
+	}
 
-			// Compute the new surface position
-			surfacePos -= nGridPoints;
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postSurfaceEventFunction2D")
+/**
+ * This is a method that moves the surface
+ */
+PetscErrorCode postSurfaceEventFunction2D(TS ts, PetscInt nevents,
+		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
+
+	// Initial declaration
+	PetscErrorCode ierr;
+	double ***solutionArray, *gridPointSolution;
+	PetscInt xs, xm, xi, Mx, ys, ym, yj, My;
+
+	PetscFunctionBeginUser;
+
+	// Check if the surface has moved
+	if (nevents == 0)
+		PetscFunctionReturn(0);
+
+	// Gets the process ID
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
+	CHKERRQ(ierr);
+
+	// Get the size of the total grid
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	CHKERRQ(ierr);
+
+	// Get the solver handler
+	auto solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the network
+	auto network = solverHandler->getNetwork();
+	int dof = network->getDOF();
+
+	// Get the physical grid
+	auto grid = solverHandler->getXGrid();
+	// Get the step size in Y
+	double hy = solverHandler->getStepSizeY();
+
+	// Get the initial vacancy concentration
+	double initialVConc = solverHandler->getInitialVConc();
+
+	// Loop on the possible yj
+	for (yj = 0; yj < My; yj++) {
+		// Get the position of the surface at yj
+		int surfacePos = solverHandler->getSurfacePosition(yj);
+		xi = surfacePos + 1;
+
+		// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
+		double threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
+
+		// Move the surface up
+		if (nInterstitial2D[yj] > threshold) {
+			int nGridPoints = 0;
+			// Move the surface up until it is smaller than the next threshold
+			while (nInterstitial2D[yj] > threshold) {
+				// Move the surface higher
+				surfacePos--;
+				xi = surfacePos + 1;
+				nGridPoints++;
+				// Update the number of interstitials
+				nInterstitial2D[yj] -= threshold;
+				// Update the thresold
+				double threshold = (62.8 - initialVConc)
+						* (grid[xi + 1] - grid[xi]);
+			}
 
 			// Throw an exception if the position is negative
 			if (surfacePos < 0) {
@@ -813,7 +881,7 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 			// Printing information about the extension of the material
 			if (procId == 0) {
 				std::cout << "Adding " << nGridPoints
-						<< " points to the grid on yj = " << yj << " at time: "
+						<< " points to the grid on " << yj * hy << " at time: "
 						<< time << " s." << std::endl;
 			}
 
@@ -821,12 +889,17 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 			solverHandler->setSurfacePosition(surfacePos, yj);
 
 			// Initialize the vacancy concentration on the new grid points
+			// Get the single vacancy ID
+			auto singleVacancyCluster = network->get(xolotlCore::vType, 1);
+			int vacancyIndex = -1;
+			if (singleVacancyCluster)
+				vacancyIndex = singleVacancyCluster->getId() - 1;
 			// Loop on the new grid points
 			while (nGridPoints > 0) {
 				// Position of the newly created grid point
 				xi = surfacePos + nGridPoints;
 
-				// If xi and yj are on this process
+				// If xi is on this process
 				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
 						&& vacancyIndex > 0) {
 					// Get the concentrations
@@ -839,42 +912,58 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 				--nGridPoints;
 			}
 		}
-	}
 
-	// Reinitialize the modified trap-mutation handler if the surface has moved
-	if (surfaceHasMoved) {
-		// Get the modified trap-mutation handler to reinitialize it
-		auto mutationHandler = solverHandler->getMutationHandler();
-		auto advecHandlers = solverHandler->getAdvectionHandlers();
+		// Moving the surface back
+		else if (nInterstitial2D[yj] < -threshold / 10.0) {
+			// Move it back as long as the number of interstitials in negative
+			while (nInterstitial2D[yj] < 0.0) {
+				// Compute the threshold to a deeper grid point
+				threshold = (62.8 - initialVConc)
+						* (grid[xi + 2] - grid[xi + 1]);
+				// Set all the concentrations to 0.0 at xi = surfacePos + 1
+				// if xi is on this process
+				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+					// Get the concentrations at xi = surfacePos + 1
+					gridPointSolution = solutionArray[yj][xi];
+					// Loop on DOF
+					for (int i = 0; i < dof - 1; i++) {
+						gridPointSolution[i] = 0.0;
+					}
+				}
 
-		// Get the vector of positions of the surface
-		std::vector<int> surfaceIndices;
-		for (PetscInt i = 0; i < My; i++) {
-			surfaceIndices.push_back(solverHandler->getSurfacePosition(i));
-		}
-
-		mutationHandler->initializeIndex2D(surfaceIndices, network,
-				advecHandlers, grid, My, hy);
-
-		// Write the updated surface positions
-		if (procId == 0) {
-			std::ofstream outputFile;
-			outputFile.open("surface.txt", ios::app);
-			outputFile << time << " ";
-
-			// Loop on the possible yj
-			for (yj = 0; yj < My; yj++) {
-				// Get the position of the surface at yj
-				int surfacePos = solverHandler->getSurfacePosition(yj);
-				outputFile << grid[surfacePos + 1] - grid[1] << " ";
+				// Move the surface deeper
+				surfacePos++;
+				xi = surfacePos + 1;
+				// Update the number of interstitials
+				nInterstitial2D[yj] += threshold;
 			}
-			outputFile << std::endl;
-			outputFile.close();
+
+			// Printing information about the extension of the material
+			if (procId == 0) {
+				std::cout << "Removing grid points to the grid on " << yj * hy
+						<< " at time: " << time << " s." << std::endl;
+			}
+
+			// Set it in the solver
+			solverHandler->setSurfacePosition(surfacePos, yj);
 		}
 	}
+
+	// Get the modified trap-mutation handler to reinitialize it
+	auto mutationHandler = solverHandler->getMutationHandler();
+	auto advecHandlers = solverHandler->getAdvectionHandlers();
+
+	// Get the vector of positions of the surface
+	std::vector<int> surfaceIndices;
+	for (PetscInt i = 0; i < My; i++) {
+		surfaceIndices.push_back(solverHandler->getSurfacePosition(i));
+	}
+
+	mutationHandler->initializeIndex2D(surfaceIndices, network, advecHandlers,
+			grid, My, hy);
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
@@ -1026,7 +1115,7 @@ PetscErrorCode burstingEventFunction2D(TS ts, PetscReal time, Vec solution,
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postBurstingEventFunction2D")
 /**
- * This is a monitoring method that bursts bubbles
+ * This is a method that bursts bubbles
  */
 PetscErrorCode postBurstingEventFunction2D(TS ts, PetscInt nevents,
 		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
@@ -1303,16 +1392,19 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 					tempTimeStep);
 		}
 
-		// Set the monitor on the outgoing flux of interstitials at the surface
-		// monitorMovingSurface2D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorMovingSurface2D, NULL, NULL);
-		checkPetscError(ierr,
-				"setupPetsc2DMonitor: TSMonitorSet (monitorMovingSurface2D) failed.");
+		// Get the sputtering yield
+		sputteringYield2D = solverHandler->getSputteringYield();
 
-		// Clear the file where the surface will be written
-		std::ofstream outputFile;
-		outputFile.open("surface.txt");
-		outputFile.close();
+		// Set directions and terminate flags for the surface event
+		PetscInt direction[1];
+		PetscBool terminate[1];
+		direction[0] = 0;
+		terminate[0] = PETSC_FALSE;
+		// Set the TSEvent
+		ierr = TSSetEventHandler(ts, 1, direction, terminate,
+				surfaceEventFunction2D, postSurfaceEventFunction2D, NULL);
+		checkPetscError(ierr,
+				"setupPetsc2DMonitor: TSSetEventHandler (surfaceEventFunction2D) failed.");
 	}
 
 	// If the user wants bubble bursting
@@ -1443,7 +1535,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 
 	// Set the monitor to output data for TRIDYN
 	if (flagTRIDYN) {
-		// computeTRIDYN1D will be called at each timestep
+		// computeTRIDYN2D will be called at each timestep
 		ierr = TSMonitorSet(ts, computeTRIDYN2D, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc2DMonitor: TSMonitorSet (computeTRIDYN2D) failed.");
