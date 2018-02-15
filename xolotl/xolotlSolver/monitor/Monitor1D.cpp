@@ -84,8 +84,11 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Compute the dt
+	double dt = time - previousTime;
+
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + time / 1000.0) / hdf5Stride1D) == hdf5Previous1D)
+	if ((int) ((time + dt / 10.0) / hdf5Stride1D) == hdf5Previous1D)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
@@ -2475,7 +2478,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 				surfaceEventFunction1D, postSurfaceEventFunction1D, NULL);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: TSSetEventHandler (surfaceEventFunction1D) failed.");
-
 
 		// Clear the file where the surface will be written
 		std::ofstream outputFile;

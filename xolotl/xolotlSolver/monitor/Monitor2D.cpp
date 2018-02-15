@@ -67,8 +67,11 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Compute the dt
+	double dt = time - previousTime;
+
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + time / 1000.0) / hdf5Stride2D) == hdf5Previous2D)
+	if ((int) ((time + dt / 10.0) / hdf5Stride2D) == hdf5Previous2D)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
