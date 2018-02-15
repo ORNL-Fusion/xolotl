@@ -5,15 +5,16 @@ SET(PACKAGE_NAME "xolotl.tests.advection")
 SET(PACKAGE_DESCRIPTION "Xolotl Advection tests")
 
 #include directories from the source and boost binaries
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
-include_directories(${Boost_BINARY_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}
+                    ${CMAKE_SOURCE_DIR}/xolotlCore
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/advection
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf/dummy
+                    ${Boost_BINARY_DIRS}
+                    ${CMAKE_BINARY_DIR})
 
 #link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlCore/advection)

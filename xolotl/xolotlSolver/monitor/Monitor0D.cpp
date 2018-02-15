@@ -61,8 +61,11 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Compute the dt
+	double dt = time - previousTime;
+
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + time / 1000.0) / hdf5Stride0D) == hdf5Previous0D)
+	if ((int) ((time + dt / 10.0) / hdf5Stride0D) == hdf5Previous0D)
 		PetscFunctionReturn(0);
 
 	// Update the previous time

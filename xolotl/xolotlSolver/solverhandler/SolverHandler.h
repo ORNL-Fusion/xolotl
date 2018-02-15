@@ -117,10 +117,33 @@ protected:
 				else if (l < surfacePos + 41) {
 					previousPoint += 0.5;
 				}
-				// 1.0nm step size for all the other ones
-				// (7.5nm < x)
-				else {
+				// Then 1.0nm step size (7.5nm < x < 50.5)
+				else if (l < surfacePos + 84) {
 					previousPoint += 1.0;
+				}
+				// Then 2.0nm step size (50.5nm < x < 100.5)
+				else if (l < surfacePos + 109) {
+					previousPoint += 2.0;
+				}
+				// Then 5.0nm step size (100.5nm < x < 150.5)
+				else if (l < surfacePos + 119) {
+					previousPoint += 5.0;
+				}
+				// Then 10.0nm step size (150.5nm < x < 300.5)
+				else if (l < surfacePos + 134) {
+					previousPoint += 10.0;
+				}
+				// Then 20.0nm step size (300.5nm < x < 500.5)
+				else if (l < surfacePos + 144) {
+					previousPoint += 20.0;
+				}
+				// Then 50.0nm step size (500.5nm < x < 1000.5)
+				else if (l < surfacePos + 154) {
+					previousPoint += 50.0;
+				}
+				// Then 100.0nm step size (1000.5nm < x)
+				else {
+					previousPoint += 100.0;
 				}
 			}
 		}

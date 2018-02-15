@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	double knownPartials[] = { 1.04524e-09, 0.0133446, 0.0, 0.0, 0.0, 0.0, 0.0,
 			0.0, -3.25273e+10, -3.67546e+10, -3.97199e+10, -4.20806e+10,
 			-4.40741e+10, -4.58167e+10, -4.73749e+10, -4.8791e+10, -5.00934e+10,
-			-6.85402e+06, -3.25273e+10, -3.25273e+10, -3.67546e+10,
+			-8.738435e+06, -3.25273e+10, -3.25273e+10, -3.67546e+10,
 			-3.67546e+10, 0.0 };
 	// Get the simple reaction network
 	auto network = getSimpleFeReactionNetwork(2);
