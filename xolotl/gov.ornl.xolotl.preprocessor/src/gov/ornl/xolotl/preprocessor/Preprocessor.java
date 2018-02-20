@@ -149,6 +149,7 @@ public class Preprocessor {
 		petscOptions.put("-fieldsplit_1_pc_type", "redundant");
 		petscOptions.put("-ts_monitor", "");
 		petscOptions.put("-ts_exact_final_time", "stepover");
+		petscOptions.put("-ts_adapt_wnormtype", "INFINITY");
 
 		// Get the string of PETSc arguments from the command line
 		// and split the string around the blank spaces
@@ -294,15 +295,18 @@ public class Preprocessor {
 			xolotlParams.setProperty("netParam", netString);
 
 			// Build the grid argument
-			String gridString = Integer.toString(args.getNxGrid()) + " " + Double.toString(args.getXStepSize()) + " " + Integer.toString(args.getNyGrid()) + " "
-					+ Double.toString(args.getYStepSize()) + " " + Integer.toString(args.getNzGrid()) + " " + Double.toString(args.getZStepSize());
+			String gridString = Integer.toString(args.getNxGrid()) + " " + Double.toString(args.getXStepSize()) + " "
+					+ Integer.toString(args.getNyGrid()) + " " + Double.toString(args.getYStepSize()) + " "
+					+ Integer.toString(args.getNzGrid()) + " " + Double.toString(args.getZStepSize());
 			xolotlParams.setProperty("grid", gridString);
 			xolotlParams.setProperty("networkFile", "");
 		}
 		// Set the default boundary conditions
 		String boundaryString;
-		if (maxXe > 0) boundaryString = "0 0";
-		else boundaryString = "1 0";
+		if (maxXe > 0)
+			boundaryString = "0 0";
+		else
+			boundaryString = "1 0";
 		xolotlParams.setProperty("boundary", boundaryString);
 
 	}

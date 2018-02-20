@@ -41,66 +41,47 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	*networkStream << singleVString << mixedString << singleHeString
 			<< singleIString;
 
-	// Diagnostic information
-	// @formatter:off
-	BOOST_TEST_MESSAGE(
-			"CLUSTER DATA" << "\nHe: " << singleHeString << "\nV: " << singleVString << "\nI: " << singleIString << "\n Mixed: " << mixedString << "\nFull Network data: \n" << (*networkStream).str());
-	// @formatter:off
-
 	// Setup the Loader
 	loader.setInputstream(networkStream);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load();
-	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
-			network);
+	auto network = loader.load(opts);
+	auto psiNetwork = (PSIClusterReactionNetwork*) network.get();
 
 	// Check the properties
-	BOOST_TEST_MESSAGE(
-			"Maximum He Cluster Size = " << psiNetwork->getMaxHeClusterSize());
-	BOOST_REQUIRE(psiNetwork->getMaxHeClusterSize() == 1);
-	BOOST_TEST_MESSAGE(
-			"Maximum V Cluster Size = " << psiNetwork->getMaxVClusterSize());
-	BOOST_REQUIRE(psiNetwork->getMaxVClusterSize() == 50);
-	BOOST_TEST_MESSAGE(
-			"Maximum Interstitial Cluster Size = " << psiNetwork->getMaxIClusterSize());
-	BOOST_REQUIRE(psiNetwork->getMaxIClusterSize() == 1);
-	BOOST_REQUIRE(psiNetwork->getMaxHeVClusterSize() == 51);
-	BOOST_TEST_MESSAGE(
-			"Number of He clusters = " << psiNetwork->getNumHeClusters());
-	BOOST_REQUIRE(psiNetwork->getNumHeClusters() == 1);
-	BOOST_TEST_MESSAGE(
-			"Number of V clusters = " << psiNetwork->getNumVClusters());
-	BOOST_REQUIRE(psiNetwork->getNumVClusters() == 1);
-	BOOST_TEST_MESSAGE(
-			"Number of I clusters = " << psiNetwork->getNumIClusters());
-	BOOST_REQUIRE(psiNetwork->getNumIClusters() == 1);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::He) == 1);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::V) == 50);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::I) == 1);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::HeV) == 51);
 
 	// Check the reactants - He first
-	auto heCluster = (PSICluster *) network->get("He", 1);
+	auto heCluster = (PSICluster *) network->get(Species::He, 1);
 	BOOST_REQUIRE(heCluster->getSize() == 1);
 	double formationEnergy = heCluster->getFormationEnergy();
 	BOOST_REQUIRE_CLOSE(formationEnergy, 6.15, 0.001);
 	// V
-	auto vCluster = (PSICluster *) network->get("V", 50);
+	auto vCluster = (PSICluster *) network->get(Species::V, 50);
 	BOOST_REQUIRE(vCluster->getSize() == 50);
 	formationEnergy = vCluster->getFormationEnergy();
 	BOOST_REQUIRE_CLOSE(formationEnergy, 3.6, 0.001);
 	BOOST_REQUIRE_CLOSE(vCluster->getMigrationEnergy(), 0.888, 0.001);
 	BOOST_REQUIRE_CLOSE(vCluster->getDiffusionFactor(), 2.345, 0.001);
 	// I
-	auto iCluster = (PSICluster *) network->get("I", 1);
+	auto iCluster = (PSICluster *) network->get(Species::I, 1);
 	BOOST_REQUIRE(iCluster->getSize() == 1);
 	formationEnergy = iCluster->getFormationEnergy();
 	BOOST_REQUIRE_CLOSE(formationEnergy, 5.0, 0.001);
 	BOOST_REQUIRE_CLOSE(iCluster->getMigrationEnergy(), 0.7777, 0.0001);
 	BOOST_REQUIRE_CLOSE(iCluster->getDiffusionFactor(), 3.456, 0.001);
 	// HeV
-	vector<int> composition;
-	composition.push_back(1);
-	composition.push_back(50);
-	composition.push_back(0);
-	auto heVCluster = (PSICluster *) network->getCompound("HeV", composition);
+	IReactant::Composition composition;
+	composition[toCompIdx(Species::He)] = 1;
+	composition[toCompIdx(Species::V)] = 50;
+	composition[toCompIdx(Species::I)] = 0;
+	auto heVCluster = (PSICluster *) network->get(ReactantType::HeV,
+			composition);
 	BOOST_REQUIRE(heVCluster->getSize() == 51);
 	formationEnergy = heVCluster->getFormationEnergy();
 	BOOST_REQUIRE_CLOSE(formationEnergy, 2.49, 0.001);
@@ -112,7 +93,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	*networkStream << badString;
 	// Make sure the exception is caught when loading the bad string
 	try {
-		loader.load();
+		loader.load(opts);
 	} catch (const string& /* error */) {
 		// Do nothing but flip the flag
 		caughtFlag = true;
@@ -155,17 +136,11 @@ BOOST_AUTO_TEST_CASE(checkGenerate) {
 	BOOST_REQUIRE_EQUAL(networkSize, 104);
 
 	// Check the properties
-	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
-			network);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeClusterSize(), 8);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxVClusterSize(), 5);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxIClusterSize(), 3);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeVClusterSize(), 32);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeClusters(), 8);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getNumVClusters(), 5);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getNumIClusters(), 3);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeVClusters(), 88);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getNumSuperClusters(), 0);
+	auto psiNetwork = (PSIClusterReactionNetwork*) network.get();
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::He) == 8);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::V) == 5);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::I) == 3);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::HeV) == 32);
 
 	// Remove the created file
 	std::string tempFile = "param.txt";

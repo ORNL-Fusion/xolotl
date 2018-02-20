@@ -17,7 +17,8 @@ public:
 	/**
 	 * The destructor
 	 */
-	~IReactionHandlerFactory() {}
+	~IReactionHandlerFactory() {
+	}
 
 	/**
 	 * Initialize the reaction network.
@@ -40,15 +41,16 @@ public:
 	 *
 	 * @return The network.
 	 */
-	virtual std::shared_ptr<xolotlCore::IReactionNetwork> getNetworkHandler() const = 0;
+	virtual xolotlCore::IReactionNetwork& getNetworkHandler() const = 0;
 
 	/**
 	 * Function that create the wanted reaction handler factory depending on the given type.
 	 *
-	 * @param problemType The type of wanted problem (PSI or NE).
+	 * @param problemType The type of wanted problem (PSI, NE, or Fe).
 	 * @return The reaction factory.
 	 */
-	static std::shared_ptr<IReactionHandlerFactory> createNetworkFactory(const std::string& problemType);
+	static std::shared_ptr<IReactionHandlerFactory> createNetworkFactory(
+			const std::string& problemType);
 
 };
 

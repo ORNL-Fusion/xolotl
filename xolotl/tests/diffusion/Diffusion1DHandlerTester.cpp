@@ -5,6 +5,7 @@
 #include <Diffusion1DHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
+#include <Options.h>
 #include <DummyHandlerRegistry.h>
 #include <mpi.h>
 
@@ -36,8 +37,10 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Give the filename to the network loader
 	loader.setFilename(filename);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load().get();
+	auto network = loader.load(opts);
 	// Get its size
 	const int dof = network->getDOF();
 
@@ -58,7 +61,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	int *ofill = &mat[0];
 
 	// Initialize it
-	diffusionHandler.initializeOFill(network, ofill);
+	diffusionHandler.initializeOFill(*network, ofill);
 	diffusionHandler.initializeDiffusionGrid(advectionHandlers, grid);
 
 	// All the clusters diffuse except the 7-th and 8-th one
@@ -87,11 +90,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	auto reactants = network->getAll();
-	for (int i = 0; i < dof - 1; i++) {
-		auto cluster = (PSICluster *) reactants->at(i);
-		cluster->setTemperature(1000.0);
-	}
+	network->setTemperature(1000.0);
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -110,7 +109,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	concVector[2] = conc + 2 * dof; // right
 
 	// Compute the diffusion at this grid point
-	diffusionHandler.computeDiffusion(network, concVector, updatedConcOffset,
+	diffusionHandler.computeDiffusion(*network, concVector, updatedConcOffset,
 			hx, hx, 1);
 
 	// Check the new values of updatedConcOffset
@@ -133,7 +132,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	double *valPointer = &val[0];
 
 	// Compute the partial derivatives for the diffusion a the grid point 1
-	diffusionHandler.computePartialsForDiffusion(network, valPointer,
+	diffusionHandler.computePartialsForDiffusion(*network, valPointer,
 			indicesPointer, hx, hx, 1);
 
 	// Check the values for the indices

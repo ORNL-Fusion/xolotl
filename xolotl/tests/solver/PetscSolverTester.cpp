@@ -64,9 +64,8 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 					"-ts_exact_final_time stepover" << std::endl
 			<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
 			<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
-			<< "dimensions=0" << std::endl << "process=reaction"
-			<< std::endl << "networkFile="
-			<< networkFilename << std::endl;
+			<< "dimensions=0" << std::endl << "process=reaction" << std::endl
+			<< "networkFile=" << networkFilename << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -94,11 +93,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	// Give the filename to the network loader
 	loader->setFilename(networkFilename);
 
-	// Create the solver
-	std::shared_ptr<xolotlSolver::PetscSolver> solver = std::make_shared<
-			xolotlSolver::PetscSolver>(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-
 	// Create the material factory
 	auto materialFactory =
 			xolotlFactory::IMaterialFactory::createMaterialFactory(
@@ -108,36 +102,41 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
-
 	// Create the network handler factory
 	auto networkFactory =
 			xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
 					opts.getMaterial());
 	networkFactory->initializeReactionNetwork(opts,
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Get the network handler
-	auto networkHandler = networkFactory->getNetworkHandler();
+	// Get the network
+	auto& network = networkFactory->getNetworkHandler();
 
 	// Create a solver handler and initialize it
-	auto solvHandler = std::make_shared<xolotlSolver::PetscSolver0DHandler>();
-	solvHandler->initializeHandlers(materialFactory, tempHandler,
-			networkHandler, opts);
+	auto rawSolverHandler = new xolotlSolver::PetscSolver0DHandler(network);
+	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
+				rawSolverHandler);
+	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
+
+	// Create the solver
+	std::unique_ptr<xolotlSolver::PetscSolver> solver(
+			new xolotlSolver::PetscSolver(*theSolverHandler,
+					make_shared<xolotlPerf::DummyHandlerRegistry>()));
+
+	// Set up our dummy performance and visualization infrastructures
+	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
+	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
-	solver->initialize(solvHandler);
+	solver->initialize();
 
 	// Solve and finalize
 	solver->solve();
 	solver->finalize();
 
 	// Check the concentrations left in the network
-	auto network = solvHandler->getNetwork();
-	double concs[network->getAll()->size()];
-	network->fillConcentrationsArray(concs);
+	double concs[network.getAll().size()];
+	network.fillConcentrationsArray(concs);
 
 	// Check some concentrations
 	BOOST_REQUIRE_SMALL(concs[0], 1.0e-10);
@@ -156,11 +155,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
  * in 1D.
  */
 BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
-	// Initialize MPI for HDF5
-	int argc = 0;
-	char **argv;
-	MPI_Init(&argc, &argv);
-
 	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
 
@@ -188,6 +182,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
+	char **argv;
 	argv = new char*[2];
 	std::string parameterFile = "param.txt";
 	argv[0] = new char[parameterFile.length() + 1];
@@ -212,11 +207,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	// Give the filename to the network loader
 	loader->setFilename(networkFilename);
 
-	// Create the solver
-	std::shared_ptr<xolotlSolver::PetscSolver> solver = std::make_shared<
-			xolotlSolver::PetscSolver>(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-
 	// Create the material factory
 	auto materialFactory =
 			xolotlFactory::IMaterialFactory::createMaterialFactory(
@@ -226,36 +216,41 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
-
 	// Create the network handler factory
 	auto networkFactory =
 			xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
 					opts.getMaterial());
 	networkFactory->initializeReactionNetwork(opts,
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Get the network handler
-	auto networkHandler = networkFactory->getNetworkHandler();
+	// Get the network
+	auto& network = networkFactory->getNetworkHandler();
 
 	// Create a solver handler and initialize it
-	auto solvHandler = std::make_shared<xolotlSolver::PetscSolver1DHandler>();
-	solvHandler->initializeHandlers(materialFactory, tempHandler,
-			networkHandler, opts);
+	auto rawSolverHandler = new xolotlSolver::PetscSolver1DHandler(network);
+	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
+				rawSolverHandler);
+	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
+
+	// Create the solver
+	std::unique_ptr<xolotlSolver::PetscSolver> solver(
+			new xolotlSolver::PetscSolver(*theSolverHandler,
+					make_shared<xolotlPerf::DummyHandlerRegistry>()));
+
+	// Set up our dummy performance and visualization infrastructures
+	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
+	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
-	solver->initialize(solvHandler);
+	solver->initialize();
 
 	// Solve and finalize
 	solver->solve();
 	solver->finalize();
 
 	// Check the concentrations left in the network
-	auto network = solvHandler->getNetwork();
-	double concs[network->getAll()->size()];
-	network->fillConcentrationsArray(concs);
+	double concs[network.getAll().size()];
+	network.fillConcentrationsArray(concs);
 
 	// Check some concentrations
 	BOOST_REQUIRE_SMALL(concs[0], 1.0e-10);
@@ -274,11 +269,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
  * in 1D with an irregular grid spacing in the x direction.
  */
 BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
-	// Initialize MPI for HDF5
-	int argc = 0;
-	char **argv;
-	MPI_Init(&argc, &argv);
-
 	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
 
@@ -307,7 +297,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	argc = 1;
+	char **argv;
 	argv = new char*[2];
 	std::string parameterFile = "param.txt";
 	argv[0] = new char[parameterFile.length() + 1];
@@ -328,11 +318,6 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 	// Give the filename to the network loader
 	loader->setFilename(networkFilename);
 
-	// Create the solver
-	std::shared_ptr<xolotlSolver::PetscSolver> solver = std::make_shared<
-			xolotlSolver::PetscSolver>(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-
 	// Create the material factory
 	auto materialFactory =
 			xolotlFactory::IMaterialFactory::createMaterialFactory(
@@ -340,12 +325,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 
 	// Initialize and get the temperature handler
 	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
-	BOOST_REQUIRE_EQUAL(tempInitOK, true);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Create the network handler factory
 	auto networkFactory =
@@ -353,26 +333,35 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 					opts.getMaterial());
 	networkFactory->initializeReactionNetwork(opts,
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Get the network handler
-	auto networkHandler = networkFactory->getNetworkHandler();
+	// Get the network
+	auto& network = networkFactory->getNetworkHandler();
 
 	// Create a solver handler and initialize it
-	auto solvHandler = std::make_shared<xolotlSolver::PetscSolver1DHandler>();
-	solvHandler->initializeHandlers(materialFactory, tempHandler,
-			networkHandler, opts);
+	auto rawSolverHandler = new xolotlSolver::PetscSolver1DHandler(network);
+	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
+				rawSolverHandler);
+	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
+
+	// Create the solver
+	std::unique_ptr<xolotlSolver::PetscSolver> solver(
+			new xolotlSolver::PetscSolver(*theSolverHandler,
+					make_shared<xolotlPerf::DummyHandlerRegistry>()));
+
+	// Set up our dummy performance and visualization infrastructures
+	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
+	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
-	solver->initialize(solvHandler);
+	solver->initialize();
 
 	// Solve and finalize
 	solver->solve();
 	solver->finalize();
 
 	// Check the concentrations left in the network
-	auto network = solvHandler->getNetwork();
-	double concs[network->getAll()->size()];
-	network->fillConcentrationsArray(concs);
+	double concs[network.getAll().size()];
+	network.fillConcentrationsArray(concs);
 
 	// Check some concentrations
 	BOOST_REQUIRE_SMALL(concs[0], 1.0e-11);
@@ -391,11 +380,6 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
  * in 2D.
  */
 BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
-	// Initialize MPI for HDF5
-	int argc = 0;
-	char **argv;
-	MPI_Init(&argc, &argv);
-
 	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
 
@@ -423,6 +407,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
+	char **argv;
 	argv = new char*[2];
 	std::string parameterFile = "param.txt";
 	argv[0] = new char[parameterFile.length() + 1];
@@ -443,11 +428,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	// Give the filename to the network loader
 	loader->setFilename(networkFilename);
 
-	// Create the solver
-	std::shared_ptr<xolotlSolver::PetscSolver> solver = std::make_shared<
-			xolotlSolver::PetscSolver>(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-
 	// Create the material factory
 	auto materialFactory =
 			xolotlFactory::IMaterialFactory::createMaterialFactory(
@@ -455,12 +435,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 
 	// Initialize and get the temperature handler
 	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
-	BOOST_REQUIRE_EQUAL(tempInitOK, true);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Create the network handler factory
 	auto networkFactory =
@@ -468,26 +443,35 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 					opts.getMaterial());
 	networkFactory->initializeReactionNetwork(opts,
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Get the network handler
-	auto networkHandler = networkFactory->getNetworkHandler();
+	// Get the network
+	auto& network = networkFactory->getNetworkHandler();
 
 	// Create a solver handler and initialize it
-	auto solvHandler = std::make_shared<xolotlSolver::PetscSolver2DHandler>();
-	solvHandler->initializeHandlers(materialFactory, tempHandler,
-			networkHandler, opts);
+	auto rawSolverHandler = new xolotlSolver::PetscSolver2DHandler(network);
+	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
+				rawSolverHandler);
+	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
+
+	// Create the solver
+	std::unique_ptr<xolotlSolver::PetscSolver> solver(
+			new xolotlSolver::PetscSolver(*theSolverHandler,
+					make_shared<xolotlPerf::DummyHandlerRegistry>()));
+
+	// Set up our dummy performance and visualization infrastructures
+	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
+	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
-	solver->initialize(solvHandler);
+	solver->initialize();
 
 	// Solve and finalize
 	solver->solve();
 	solver->finalize();
 
 	// Check the concentrations left in the network
-	auto network = solvHandler->getNetwork();
-	double concs[network->getAll()->size()];
-	network->fillConcentrationsArray(concs);
+	double concs[network.getAll().size()];
+	network.fillConcentrationsArray(concs);
 
 	// Check some concentrations
 	BOOST_REQUIRE_SMALL(concs[0], 1.0e-24);
@@ -506,11 +490,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 // * in 3D.
 // */
 //BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
-//	// Initialize MPI for HDF5
-//	int argc = 0;
-//	char **argv;
-//	MPI_Init(&argc, &argv);
-//
 //	// Local Declarations
 //	string sourceDir(XolotlSourceDirectory);
 //
@@ -538,6 +517,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 //	paramFile.close();
 //
 //	// Create a fake command line to read the options
+//	char **argv;
 //	argv = new char*[2];
 //	std::string parameterFile = "param.txt";
 //	argv[0] = new char[parameterFile.length() + 1];

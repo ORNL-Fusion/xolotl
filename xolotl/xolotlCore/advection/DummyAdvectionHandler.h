@@ -16,10 +16,13 @@ class DummyAdvectionHandler: public SurfaceAdvectionHandler {
 public:
 
 	//! The Constructor
-	DummyAdvectionHandler() {}
+	DummyAdvectionHandler() :
+			SurfaceAdvectionHandler() {
+	}
 
 	//! The Destructor
-	~DummyAdvectionHandler() {}
+	~DummyAdvectionHandler() {
+	}
 
 	/**
 	 * This function initialize the list of clusters that will move through advection. For the
@@ -30,9 +33,9 @@ public:
 	 * @param ofill The pointer to the array that will contain the value 1 at the indices
 	 * of the advecting clusters
 	 */
-	void initialize(IReactionNetwork *network, int *ofill) {
+	void initialize(const IReactionNetwork& network, int *ofill) override {
 		// Clear the index and sink strength vectors
-		indexVector.clear();
+		advectingClusters.clear();
 		sinkStrengthVector.clear();
 
 		// Return now to leave them empty

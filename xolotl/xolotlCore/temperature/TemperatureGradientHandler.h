@@ -50,7 +50,8 @@ public:
 	 * @param grad The temperature gradient
 	 */
 	TemperatureGradientHandler(double temp, double grad) :
-			surfaceTemperature(temp), gradient(grad), surfacePosition(0.0), dof(0) {
+			surfaceTemperature(temp), gradient(grad), surfacePosition(0.0), dof(
+					0) {
 	}
 
 	/**
@@ -65,10 +66,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature(IReactionNetwork *network, int *ofill,
-			int *dfill) {
+	virtual void initializeTemperature(const IReactionNetwork& network,
+			int *ofill, int *dfill) {
 		// Set dof
-		dof = network->getDOF();
+		dof = network.getDOF();
 
 		// Add the temperature to ofill
 		ofill[(dof - 1) * dof + (dof - 1)] = 1;
@@ -85,8 +86,7 @@ public:
 	 *
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const std::vector<double>& position,
-			double) const {
+	virtual double getTemperature(const Point3D& position, double) const {
 		return surfaceTemperature - (position[0] - surfacePosition) * gradient;
 	}
 

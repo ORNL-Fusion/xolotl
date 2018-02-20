@@ -14,15 +14,17 @@ class Diffusion3DHandler: public DiffusionHandler {
 private:
 
 	//! The vector to know which clusters are diffusing where
-	std::vector < std::vector < std::vector < std::vector <bool> > > > diffusionGrid;
+	std::vector<std::vector<std::vector<std::vector<bool> > > > diffusionGrid;
 
 public:
 
 	//! The Constructor
-	Diffusion3DHandler() {}
+	Diffusion3DHandler() {
+	}
 
 	//! The Destructor
-	~Diffusion3DHandler() {}
+	~Diffusion3DHandler() {
+	}
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the number of diffusion
@@ -35,9 +37,10 @@ public:
 	 * @param nz The number of grid points in the Z direction
 	 * @param hz The step size in the Z direction
 	 */
-	void initializeDiffusionGrid(std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid,
-			int ny = 0, double hy = 0.0, int nz = 0, double hz = 0.0);
+	void initializeDiffusionGrid(
+			std::vector<IAdvectionHandler *> advectionHandlers,
+			std::vector<double> grid, int ny = 0, double hy = 0.0, int nz = 0,
+			double hz = 0.0) override;
 
 	/**
 	 * Compute the flux due to the diffusion for all the clusters that are diffusing,
@@ -65,10 +68,10 @@ public:
 	 * @param sz The space parameter, depending on the grid step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	void computeDiffusion(IReactionNetwork *network,
-			double **concVector, double *updatedConcOffset,
-			double hxLeft, double hxRight, int ix,
-			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0);
+	void computeDiffusion(const IReactionNetwork& network, double **concVector,
+			double *updatedConcOffset, double hxLeft, double hxRight, int ix,
+			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const
+					override;
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters given
@@ -109,9 +112,10 @@ public:
 	 * @param sz The space parameter, depending on the grid step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	void computePartialsForDiffusion(IReactionNetwork *network,
+	void computePartialsForDiffusion(const IReactionNetwork& network,
 			double *val, int *indices, double hxLeft, double hxRight, int ix,
-			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0);
+			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const
+					override;
 
 };
 //end class Diffusion3DHandler

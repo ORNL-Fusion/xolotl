@@ -29,31 +29,33 @@ public:
 	/**
 	 * The constructor
 	 */
-	FuelFitFluxHandler() {}
+	FuelFitFluxHandler() {
+	}
 
 	/**
 	 * The Destructor
 	 */
-	~FuelFitFluxHandler() {}
+	~FuelFitFluxHandler() {
+	}
 
 	/**
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(IReactionNetwork *network,
-			int surfacePos, std::vector<double> grid) {
+	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
+			std::vector<double> grid) {
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
 		// Set the flux index corresponding the the single xenon cluster here
-		auto fluxCluster = network->get(xeType, 1);
+		auto fluxCluster = network.get(Species::Xe, 1);
 		// Check that the helium cluster is present in the network
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe single xenon cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
-		fluxIndex = fluxCluster->getId() - 1;
+		fluxIndices.push_back(fluxCluster->getId() - 1);
 
 		return;
 	}
