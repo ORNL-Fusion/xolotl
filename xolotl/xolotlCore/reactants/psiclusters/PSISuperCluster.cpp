@@ -873,7 +873,6 @@ void PSISuperCluster::getProductionPartialDerivatives(
 			[this,&partials](ProductionPairMap::value_type const& currMapItem) {
 
 				auto const& currPair = currMapItem.second;
-
 				// Get the two reacting clusters
 				auto const& firstReactant = currPair.first;
 				auto const& secondReactant = currPair.second;

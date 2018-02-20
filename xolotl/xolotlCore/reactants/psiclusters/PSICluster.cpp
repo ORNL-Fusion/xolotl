@@ -627,19 +627,20 @@ void PSICluster::setMigrationEnergy(const double energy) {
 double PSICluster::getLeftSideRate() const {
 
 	// Sum rate constant-concentration product over combining reactants.
-	double combiningRateTotal = std::accumulate(combiningReactants.begin(),
-			combiningReactants.end(), 0.0,
-			[](double running, const CombiningCluster& cc) {
-				return running +
-				(cc.reaction.kConstant * cc.combining.concentration);
-			});
+	double combiningRateTotal =
+			std::accumulate(combiningReactants.begin(),
+					combiningReactants.end(), 0.0,
+					[](double running, const CombiningCluster& cc) {
+						return running +
+						(cc.reaction.kConstant * cc.combining.concentration * cc.a0);
+					});
 
 	// Sum rate constants over all emission pair reactions.
-	double emissionRateTotal = std::accumulate(emissionPairs.begin(),
-			emissionPairs.end(), 0.0,
-			[](double running, const ClusterPair& currPair) {
-				return running + currPair.reaction.kConstant;
-			});
+	double emissionRateTotal =
+			std::accumulate(emissionPairs.begin(), emissionPairs.end(), 0.0,
+					[](double running, const ClusterPair& currPair) {
+						return running + (currPair.reaction.kConstant);
+					});
 
 	return combiningRateTotal + emissionRateTotal;
 }

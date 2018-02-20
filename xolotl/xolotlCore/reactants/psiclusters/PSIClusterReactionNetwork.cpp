@@ -125,7 +125,8 @@ void PSIClusterReactionNetwork::defineDissociationReactions(
 
 void PSIClusterReactionNetwork::createReactionConnectivity() {
 	// Initial declarations
-	IReactant::SizeType firstSize = 0, secondSize = 0, productSize = 0;
+	IReactant::SizeType firstSize = 0, secondSize = 0, productSize = 0, maxI =
+			getAll(ReactantType::I).size();
 
 	// Single species clustering (He, V, I)
 	// We know here that only Xe_1 can cluster so we simplify the search
@@ -227,6 +228,10 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Loop on them
 			for (auto const& i : superCluster.getHeBounds()) {
 				for (auto const& j : superCluster.getVBounds()) {
+					// Check these coordinates are actually contained by the super cluster
+					if (!superCluster.isIn(i, j))
+						continue;
+
 					// Assume the product can only be a super cluster here
 					auto newNumHe = i + firstSize;
 					auto newNumV = j;
@@ -247,7 +252,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Now that we know how current reactant reacts with
 			// current superCluster, create the production
 			// reaction(s) for them.
-			defineProductionReactions(heReactant, superCluster, prInfos);
+			if (prInfos.size() > 0)
+				defineProductionReactions(heReactant, superCluster, prInfos);
 		}
 	}
 
@@ -307,6 +313,9 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Loop on them
 			for (auto const& i : superCluster.getHeBounds()) {
 				for (auto const& j : superCluster.getVBounds()) {
+					// Check these coordinates are actually contained by the super cluster
+					if (!superCluster.isIn(i, j))
+						continue;
 
 					// Assume the product can only be a super cluster here
 					auto newNumHe = i;
@@ -323,7 +332,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 			// Now that we know how current reactant interacts with
 			// current supercluster, define the production reactions.
-			defineProductionReactions(vReactant, superCluster, prInfos);
+			if (prInfos.size() > 0)
+				defineProductionReactions(vReactant, superCluster, prInfos);
 		}
 	}
 
@@ -374,6 +384,9 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 	for (auto const& iMapItem : getAll(ReactantType::I)) {
 
 		auto& iReactant = *(iMapItem.second);
+		// Skip if it can't diffuse
+		if (xolotlCore::equal(iReactant.getDiffusionFactor(), 0.0))
+			continue;
 
 		// Get its size
 		firstSize = iReactant.getSize();
@@ -420,6 +433,10 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Loop on them
 			for (auto const& i : superCluster.getHeBounds()) {
 				for (auto const& j : superCluster.getVBounds()) {
+					// Check these coordinates are actually contained by the super cluster
+					if (!superCluster.isIn(i, j))
+						continue;
+
 					// The product might be HeV or He
 					auto newNumHe = i;
 					auto newNumV = j - firstSize;
@@ -445,7 +462,6 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					if (product
 							&& (iReactant.getDiffusionFactor() > 0.0
 									|| superCluster.getDiffusionFactor() > 0.0)) {
-
 						prInfos.emplace_back(*product, newNumHe, newNumV, i, j);
 					}
 				}
@@ -454,7 +470,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Now that we know how current reactant interacts with
 			// current supercluster, define its production reactions
 			// according to given parameters.
-			defineProductionReactions(iReactant, superCluster, prInfos);
+			if (prInfos.size() > 0)
+				defineProductionReactions(iReactant, superCluster, prInfos);
 		}
 	}
 
@@ -483,10 +500,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 			// Trap mutation is happening
 			// Loop on the possible I starting by the smallest
-			for (auto const& iMapItem : getAll(ReactantType::I)) {
-				auto& iReactant = *(iMapItem.second);
-				// Get the size of the I cluster
-				int iSize = iReactant.getSize();
+			for (auto iSize = 1; iSize <= maxI; iSize++) {
+				auto iReactant = get(toSpecies(ReactantType::I), iSize);
 				// Create the composition of the potential product
 				IReactant::Composition newComp;
 				int newNumHe = firstSize + secondSize;
@@ -511,7 +526,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					// This is a reaction with two products so we need to tell the other product
 					// it is participating too
 					defineProductionReaction(firstReactant, secondReactant,
-							iReactant, newNumHe, newNumV, 0, 0, true);
+							*iReactant, newNumHe, newNumV, 0, 0, true);
 
 					// Stop the loop on I clusters here
 					break;
@@ -554,19 +569,16 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 			// Trap mutation is happening
 			// Loop on the possible I starting by the smallest
-			for (auto const& iMapItem : getAll(ReactantType::I)) {
-				auto& iReactant = *(iMapItem.second);
-				// Get the size of the I cluster
-				int iSize = iReactant.getSize();
+			for (auto iSize = 1; iSize <= maxI; iSize++) {
+				auto iReactant = get(toSpecies(ReactantType::I), iSize);
 				// Create the composition of the potential product
-				newNumV += iSize;
-				newComp[toCompIdx(Species::V)] = newNumV;
+				newComp[toCompIdx(Species::V)] = newNumV + iSize;
 				product = get(ReactantType::HeV, newComp);
 
 				// Check if the product can be a super cluster
 				if (!product) {
 					// Check if it is a super cluster from the map
-					product = getSuperFromComp(newNumHe, newNumV);
+					product = getSuperFromComp(newNumHe, newNumV + iSize);
 				}
 
 				// Check that the reaction can occur
@@ -575,13 +587,11 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 								|| heVReactant.getDiffusionFactor() > 0.0)) {
 
 					defineProductionReaction(heReactant, heVReactant, *product,
-							newNumHe, newNumV);
+							newNumHe, newNumV + iSize);
 					// This is a reaction with two products so we need to tell the other product
 					// it is participating too
-					// Define the basic production reaction.
-					auto& reaction = defineReactionBase(heReactant,
-							heVReactant);
-					iReactant.resultFrom(reaction, newNumHe, newNumV);
+					defineProductionReaction(heReactant, heVReactant,
+							*iReactant, newNumHe, newNumV + iSize, 0, 0, true);
 
 					// Stop the loop on I clusters here
 					break;
@@ -618,21 +628,19 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 					// Trap mutation is happening
 					// Loop on the possible I starting by the smallest
-					for (auto const& iMapItem : getAll(ReactantType::I)) {
-						auto& iReactant = *(iMapItem.second);
-						// Get the size of the I cluster
-						int iSize = iReactant.getSize();
+					for (auto iSize = 1; iSize <= maxI; iSize++) {
+						auto iReactant = get(toSpecies(ReactantType::I), iSize);
 						// Update the composition of the potential product
-						newNumV += iSize;
-						product = getSuperFromComp(newNumHe, newNumV);
+						product = getSuperFromComp(newNumHe, newNumV + iSize);
 
 						// Check that the reaction can occur
 						if (product && heReactant.getDiffusionFactor() > 0.0) {
+							prInfos1.emplace_back(*product, newNumHe,
+									newNumV + iSize, i, j);
+							prInfos2.emplace_back(*iReactant, 0, 0, i, j);
 
-							prInfos1.emplace_back(*product, newNumHe, newNumV,
-									i, j);
-
-							prInfos2.emplace_back(iReactant, 0, 0, i, j);
+							// Stop the loop on I clusters here
+							break;
 						}
 					}
 				}
@@ -641,8 +649,11 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Now that we know how current reactant interacts with
 			// current supercluster, define its production reactions
 			// according to given parameters.
-			defineProductionReactions(heReactant, superCluster, prInfos1);
-			defineProductionReactions(heReactant, superCluster, prInfos2, true);
+			if (prInfos1.size() > 0 || prInfos2.size() > 0) {
+				defineProductionReactions(heReactant, superCluster, prInfos1);
+				defineProductionReactions(heReactant, superCluster, prInfos2,
+						true);
+			}
 		}
 	}
 
@@ -1420,8 +1431,9 @@ IReactant * PSIClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nHe,
 
 		auto const& reactant =
 				static_cast<PSISuperCluster&>(*(superMapItem.second));
-		if (reactant.isIn(nHe, nV))
+		if (reactant.isIn(nHe, nV)) {
 			return superMapItem.second.get();
+		}
 	}
 
 	return ret;
