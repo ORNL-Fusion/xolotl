@@ -95,9 +95,9 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			updatedConcOffset, 5);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.4284496e+30, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -1.4284496e+30, 0.01); // He
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[15], 1.4284496e+30, 0.01); // Create HeV
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.4336152e+30, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -1.4336152e+30, 0.01); // He
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[15], 1.4336152e+30, 0.01); // Create HeV
 
 	// Get the offset for the eleventh grid point
 	concOffset = conc + 10 * dof;
