@@ -58,6 +58,54 @@ public interface Arguments {
 	int getMaxXeSize();
 
 	/**
+	 * This Option annotation corresponds to the '--maxDSize' option which
+	 * defines a default value of 0 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maximum size of a deuterium cluster in
+	 *            the network if this option is not specified via the command
+	 *            line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "0", description = "The maximum size of a deterium cluster in the network "
+			+ "satisfying the condition 0 <= maxDSize. (default = 0)")
+	/**
+	 * This operation produces the required command line option '--maxDSize'
+	 * which takes a single integer value and is defined by the previous Option
+	 * annotation
+	 * 
+	 * @return The maximum size of a helium cluster in the network satisfying
+	 *         the condition 0 <= maxDSize
+	 */
+	int getMaxDSize();
+
+	/**
+	 * This Option annotation corresponds to the '--maxTSize' option which
+	 * defines a default value of 0 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maximum size of a tritium cluster in
+	 *            the network if this option is not specified via the command
+	 *            line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "0", description = "The maximum size of a tritium cluster in the network "
+			+ "satisfying the condition 0 <= maxTSize. (default = 0)")
+	/**
+	 * This operation produces the required command line option '--maxTSize'
+	 * which takes a single integer value and is defined by the previous Option
+	 * annotation
+	 * 
+	 * @return The maximum size of a tritium cluster in the network satisfying
+	 *         the condition 0 <= maxTSize
+	 */
+	int getMaxTSize();
+
+	/**
 	 * This Option annotation corresponds to the '--maxVSize' option which
 	 * defines a default value of 29 and additionally provides a brief
 	 * description of this option.
@@ -473,6 +521,33 @@ public interface Arguments {
 	boolean isTempFile();
 
 	/**
+	 * This Option annotation corresponds to the optional '--heat' option
+	 * and provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "<surfaceTemp> <bulkTemp> Two temperatures are given "
+			+ "to then solve the heat equation")
+	/**
+	 * This operation produces the optional command line option '--heat'
+	 * which takes a single string value and is defined by the previous Option
+	 * annotation. NOTE: This option should only be used when the user wishes to
+	 * use heat equation in Xolotl.
+	 * 
+	 * @return The string of temperatures
+	 */
+	String getHeat();
+
+	/**
+	 * This operation makes the command line option '--heat' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isHeat();
+
+	/**
 	 * This Option annotation corresponds to the optional '--fluxFile' option
 	 * and provides a brief description of the option.
 	 * 
@@ -657,6 +732,23 @@ public interface Arguments {
 	 *         not
 	 */
 	boolean isSputter();
+
+	/**
+	 * This Option annotation corresponds to the optional '--netParam' option
+	 * and provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "The network parameters will be written instead of creating the HDF5 file.")
+
+	/**
+	 * This operation makes the command line option '--netParam' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isNetParam();
 
 	/**
 	 * This produces the command line arguments '--help' or '-h' either of which

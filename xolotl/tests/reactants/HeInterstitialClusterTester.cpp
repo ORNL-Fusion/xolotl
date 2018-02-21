@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the reaction connectivity of the HeI cluster
 	// with 5He and 3I
 	// Get the connectivity array from the reactant
-	vector<int> composition = { 5, 0, 3 };
+	vector<int> composition = { 5, 3 };
 	auto reactant = (PSICluster *) (network->getCompound("HeI", composition));
 	// Check the type name
 	BOOST_REQUIRE_EQUAL("HeI", reactant->getType());
@@ -82,7 +82,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 			// HeI
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1,
-			0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+			// temperature
+			0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
@@ -102,8 +105,8 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	// Local Declarations
 	auto network = getSimplePSIReactionNetwork();
 
-	// Get an HeI cluster with compostion 1,0,1.
-	vector<int> composition = { 1, 0, 1 };
+	// Get an HeI cluster with compostion 1,1.
+	vector<int> composition = { 1, 1 };
 	auto cluster = (PSICluster *) network->getCompound("HeI", composition);
 	// Get one that it combines with (I)
 	auto secondCluster = (PSICluster *) network->get("I", 1);
@@ -141,12 +144,12 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// The vector of partial derivatives to compare with
 	double knownPartials[] = { 0.0, 3248951483086.9521, 0.0,
 			-25873847932.526035, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-			-344.9902456, 0.0 };
+			-344.9902456, 0.0, 0.0 };
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(3);
 
-	// Get an HeI cluster with compostion 2,0,1.
-	vector<int> composition = { 2, 0, 1 };
+	// Get an HeI cluster with compostion 2,1.
+	vector<int> composition = { 2, 1 };
 	auto cluster = (PSICluster *) network->getCompound("HeI", composition);
 	// Set the diffusion factor and migration energy to arbitrary values
 	cluster->setDiffusionFactor(1.5E+10);
@@ -160,7 +163,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	auto partials = cluster->getPartialDerivatives();
 
 	// Check the size of the partials
-	BOOST_REQUIRE_EQUAL(partials.size(), 15U);
+	BOOST_REQUIRE_EQUAL(partials.size(), 16U);
 
 	// Check all the values
 	for (unsigned int i = 0; i < partials.size(); i++) {

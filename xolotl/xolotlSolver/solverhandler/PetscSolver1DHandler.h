@@ -18,7 +18,7 @@ private:
 public:
 
 	//! The Constructor
-	PetscSolver1DHandler() {
+	PetscSolver1DHandler() : surfacePosition(0) {
 	}
 
 	//! The Destructor

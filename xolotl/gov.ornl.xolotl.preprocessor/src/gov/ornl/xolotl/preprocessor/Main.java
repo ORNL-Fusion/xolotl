@@ -41,32 +41,34 @@ public class Main {
 				// Create the Preprocessor
 				Preprocessor preprocessor = new Preprocessor(myArgs);
 
-				// Generate the network of clusters
-				ArrayList<Cluster> clusters = preprocessor.generateNetwork();
-				System.out.println("Network generated.");
+				if (!myArgs.isNetParam()) {
+					// Generate the network of clusters
+					ArrayList<Cluster> clusters = preprocessor.generateNetwork();
+					System.out.println("Network generated.");
 
-				// Get the name of the networkFile from xolotlParams
-				String networkFileName = preprocessor.xolotlParams.getProperty("networkFile");
+					// Get the name of the networkFile from xolotlParams
+					String networkFileName = preprocessor.xolotlParams.getProperty("networkFile");
 
-				// Create the HDF5 file
-				preprocessor.createHDF5(networkFileName);
+					// Create the HDF5 file
+					preprocessor.createHDF5(networkFileName);
 
-				// Write the network in it
-				preprocessor.writeNetwork(networkFileName, clusters);
+					// Write the network in it
+					preprocessor.writeNetwork(networkFileName, clusters);
 
-				if (myArgs.isCheckpoint()) {
-					String HDF5FileName = myArgs.getCheckpoint();
-					// Read the header and the concentration from this file
-					// and copy them to the network file
-					int[] gridSize = preprocessor.copyHeader(HDF5FileName, networkFileName, myArgs);
-					preprocessor.copyConcentration(HDF5FileName, networkFileName, gridSize);
-				} else {
-					// Write the header in it with the size options from the
-					// preprocessor
-					preprocessor.writeHeader(networkFileName, myArgs);
+					if (myArgs.isCheckpoint()) {
+						String HDF5FileName = myArgs.getCheckpoint();
+						// Read the header and the concentration from this file
+						// and copy them to the network file
+						int[] gridSize = preprocessor.copyHeader(HDF5FileName, networkFileName, myArgs);
+						preprocessor.copyConcentration(HDF5FileName, networkFileName, gridSize);
+					} else {
+						// Write the header in it with the size options from the
+						// preprocessor
+						preprocessor.writeHeader(networkFileName, myArgs);
+					}
+
+					System.out.println("HDF5 file generated.");
 				}
-
-				System.out.println("HDF5 file generated.");
 
 				// Write the file containing the parameters that are needed
 				// to run Xolotl

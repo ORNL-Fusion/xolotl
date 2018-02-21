@@ -20,8 +20,7 @@ using namespace xolotlCore;
 //			strtod(inString.c_str(), NULL);
 //}
 
-std::shared_ptr<NECluster> NEClusterNetworkLoader::createNECluster(int numXe,
-		int numV, int numI) {
+std::shared_ptr<NECluster> NEClusterNetworkLoader::createNECluster(int numXe) {
 	// Local Declarations
 	std::shared_ptr<NECluster> cluster;
 
@@ -66,7 +65,7 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::load() {
 	auto networkVector = xolotlCore::HDF5Utils::readNetwork(fileName);
 
 	// Initialization
-	int numXe = 0, numV = 0, numI = 0;
+	int numXe = 0;
 	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
 	std::vector<std::shared_ptr<Reactant> > reactants;
@@ -81,15 +80,13 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::load() {
 
 		// Composition of the cluster
 		numXe = (int) (*lineIt)[0];
-		numV = (int) (*lineIt)[1];
-		numI = (int) (*lineIt)[2];
 		// Create the cluster
-		auto nextCluster = createNECluster(numXe, numV, numI);
+		auto nextCluster = createNECluster(numXe);
 
 		// Energies
-		formationEnergy = (*lineIt)[3];
-		migrationEnergy = (*lineIt)[4];
-		diffusionFactor = (*lineIt)[5];
+		formationEnergy = (*lineIt)[1];
+		migrationEnergy = (*lineIt)[2];
+		diffusionFactor = (*lineIt)[3];
 
 		// Set the formation energy
 		nextCluster->setFormationEnergy(formationEnergy);
@@ -125,6 +122,77 @@ std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::load() {
 	// Check if we want dummy reactions
 	if (!dummyReactions) {
 		// Apply grouping
+		applyGrouping(network);
+	}
+
+	return network;
+}
+
+std::shared_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
+		IOptions &options) {
+	// Initial declarations
+	int maxXe = options.getMaxImpurity();
+	int numXe = 0;
+	double formationEnergy = 0.0, migrationEnergy = 0.0;
+	double diffusionFactor = 0.0;
+	std::shared_ptr<NEClusterReactionNetwork> network = std::make_shared<
+			NEClusterReactionNetwork>(handlerRegistry);
+	std::vector<std::shared_ptr<Reactant> > reactants;
+
+	// The diffusion factor for a single xenon in nm^2/s
+	double xeOneDiffusion = 5.0e-3;
+
+	// The migration energy for a single xenon in eV
+	double xeOneMigration = 0.0;
+
+	/**
+	 * The set of xenon formation energies up to Xe_29 indexed by size. That is
+	 * E_(f,Xe_1) = xeFormationEnergies[1]. The value at index zero is just
+	 * padding to make the indexing easy.
+	 */
+	std::vector<double> xeFormationEnergies = { 7.0, 12.15, 17.15, 21.90, 26.50,
+			31.05, 35.30, 39.45, 43.00, 46.90, 50.65, 53.90, 56.90, 59.80,
+			62.55, 65.05, 67.45, 69.45, 71.20, 72.75, 74.15, 75.35, 76.40,
+			77.25, 77.95, 78.45, 78.80, 78.95, 79.0 };
+
+	// Generate the I clusters
+	for (int i = 1; i <= maxXe; ++i) {
+		// Set the composition
+		numXe = i;
+		// Create the cluster
+		auto nextCluster = createNECluster(numXe);
+
+		// Set the other attributes
+		if (i <= xeFormationEnergies.size())
+			nextCluster->setFormationEnergy(xeFormationEnergies[i - 1]);
+		else
+			nextCluster->setFormationEnergy(79.0);
+		if (i <= 1) {
+			nextCluster->setDiffusionFactor(xeOneDiffusion);
+			nextCluster->setMigrationEnergy(xeOneMigration);
+		} else {
+			nextCluster->setDiffusionFactor(0.0);
+			nextCluster->setMigrationEnergy(
+					std::numeric_limits<double>::infinity());
+		}
+
+		// Add the cluster to the network
+		network->add(nextCluster);
+		// Add it to the list so that we can set the network later
+		reactants.push_back(nextCluster);
+	}
+
+	// Set the network for all of the reactants. This MUST be done manually.
+	for (auto currCluster : reactants) {
+		currCluster->setReactionNetwork(network);
+	}
+
+	// Create the reactions
+	network->createReactionConnectivity();
+
+	// Check if we want dummy reactions
+	if (!dummyReactions) {
+		// Apply sectional grouping
 		applyGrouping(network);
 	}
 

@@ -3,6 +3,7 @@
 
 // Includes
 #include "ISolverHandler.h"
+#include <HDF5Utils.h>
 
 namespace xolotlSolver {
 
@@ -21,6 +22,18 @@ protected:
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
+
+	//! The number of grid points in the depth direction.
+	int nX;
+
+	//! The number of grid points in the Y direction.
+	int nY;
+
+	//! The number of grid points in the Z direction.
+	int nZ;
+
+	//! The grid step size in the depth direction.
+	double hX;
 
 	//! The grid step size in the y direction.
 	double hY;
@@ -71,8 +84,8 @@ protected:
 
 		// Check if the user wants a regular grid
 		if (useRegularGrid) {
-			// The grid will me made of nx points separated by hx nm
-			for (int l = 0; l < nx; l++) {
+			// The grid will me made of nx + 1 points separated by hx nm
+			for (int l = 0; l <= nx; l++) {
 				grid.push_back((double) l * hx);
 			}
 		}
@@ -81,31 +94,26 @@ protected:
 		else {
 			// Initialize the value of the previous point
 			double previousPoint = 0.0;
-			// The first grid point will be at x = 0.0
-			grid.push_back(0.0);
 
-			// The loop starts at 1 because the first grid point was
-			// already added to the grid vector
-			for (int l = 1; l < nx; l++) {
+			// Loop on all the grid points
+			for (int l = 0; l <= nx; l++) {
+				// Add the previous point
+				grid.push_back(previousPoint);
 				// 0.1nm step near the surface (x < 2.5nm)
-				if (l < surfacePos + 26) {
-					grid.push_back(previousPoint + 0.1);
+				if (l < surfacePos + 25) {
 					previousPoint += 0.1;
 				}
 				// Then 0.25nm (2.5nm < x < 5.0nm)
-				else if (l < surfacePos + 36) {
-					grid.push_back(previousPoint + 0.25);
+				else if (l < surfacePos + 35) {
 					previousPoint += 0.25;
 				}
 				// Then 0.5nm (5.0nm < x < 7.5nm)
-				else if (l < surfacePos + 41) {
-					grid.push_back(previousPoint + 0.5);
+				else if (l < surfacePos + 40) {
 					previousPoint += 0.5;
 				}
 				// 1.0nm step size for all the other ones
 				// (7.5nm < x)
 				else {
-					grid.push_back(previousPoint + 1.0);
 					previousPoint += 1.0;
 				}
 			}
@@ -134,6 +142,21 @@ public:
 			xolotlCore::Options &options) {
 		// Set the network loader
 		networkName = options.getNetworkFilename();
+
+		// Set the grid options
+		if (options.useHDF5()) {
+			// Get starting conditions from HDF5 file
+			int nx = 0, ny = 0, nz = 0;
+			double hx = 0.0, hy = 0.0, hz = 0.0;
+			xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz,
+					hz);
+			nX = nx, nY = ny, nZ = nz;
+			hX = hx, hY = hy, hZ = hz;
+		} else {
+			nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
+			hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
+					options.getZStepSize();
+		}
 
 		// Set the network
 		network = (xolotlCore::IReactionNetwork *) networkHandler.get();
@@ -255,6 +278,14 @@ public:
 	 */
 	xolotlCore::IFluxHandler *getFluxHandler() const {
 		return fluxHandler;
+	}
+
+	/**
+	 * Get the temperature handler.
+	 * \see ISolverHandler.h
+	 */
+	virtual xolotlCore::ITemperatureHandler *getTemperatureHandler() const {
+		return temperatureHandler;
 	}
 
 	/**

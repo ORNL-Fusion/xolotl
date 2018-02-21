@@ -59,15 +59,16 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	advectionHandler.initializeAdvectionGrid(advectionHandlers, grid);
 
 	// Check the total number of advecting clusters
-	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 6);
+	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 7);
 
 	// Check the clusters in ofill
 	BOOST_REQUIRE_EQUAL(ofill[0], 1);
-	BOOST_REQUIRE_EQUAL(ofill[10], 1);
-	BOOST_REQUIRE_EQUAL(ofill[20], 1);
-	BOOST_REQUIRE_EQUAL(ofill[30], 1);
-	BOOST_REQUIRE_EQUAL(ofill[40], 1);
-	BOOST_REQUIRE_EQUAL(ofill[50], 1);
+	BOOST_REQUIRE_EQUAL(ofill[11], 1);
+	BOOST_REQUIRE_EQUAL(ofill[22], 1);
+	BOOST_REQUIRE_EQUAL(ofill[33], 1);
+	BOOST_REQUIRE_EQUAL(ofill[44], 1);
+	BOOST_REQUIRE_EQUAL(ofill[55], 1);
+	BOOST_REQUIRE_EQUAL(ofill[60], 1);
 
 	// Set the size parameter in the x direction
 	double hx = 1.0;
@@ -84,7 +85,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	auto reactants = network->getAll();
-	for (int i = 0; i < dof; i++) {
+	for (int i = 0; i < dof - 1; i++) {
 		auto cluster = (PSICluster *) reactants->at(i);
 		cluster->setTemperature(1000.0);
 	}
@@ -111,13 +112,13 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 			updatedConcOffset, hx, hx, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -3.09354e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -4.28592e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -3.06718e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -1.07377e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -1.01706e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -4.73986e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -3.81919e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -5.17147e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -3.63429e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -1.25359e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -1.17283e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -5.40893e+09, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -1.12780e+09, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not advect
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // Does not advect
 
@@ -140,6 +141,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	BOOST_REQUIRE_EQUAL(indices[3], 3);
 	BOOST_REQUIRE_EQUAL(indices[4], 4);
 	BOOST_REQUIRE_EQUAL(indices[5], 5);
+	BOOST_REQUIRE_EQUAL(indices[6], 6);
 
 	// Check values
 	BOOST_REQUIRE_CLOSE(val[0], -509225360.0, 0.01);

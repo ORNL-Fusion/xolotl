@@ -8,6 +8,7 @@
 #include <limits>
 #include <DummyHandlerRegistry.h>
 #include <PSIClusterReactionNetwork.h>
+#include <Options.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -24,10 +25,10 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Local Declarations
 	shared_ptr<stringstream> networkStream(
 			new stringstream(stringstream::in | stringstream::out));
-	string singleHeString = "1 0 0 6.15 0.999 1.34\n";
-	string singleVString = "0 50 0 3.6 0.888 2.345\n";
-	string singleIString = "0 0 1 5.0 0.7777 3.456\n";
-	string mixedString = "1 50 0 2.49 6.789 4.5678\n";
+	string singleHeString = "1 0 0 0 6.15 0.999 1.34\n";
+	string singleVString = "0 -50 0 0 3.6 0.888 2.345\n";
+	string singleIString = "0 1 0 0 5.0 0.7777 3.456\n";
+	string mixedString = "1 -50 0 0 2.49 6.789 4.5678\n";
 	// This string is bad because it is one value short
 	string badString = "1 2 3\n";
 	bool caughtFlag = false;
@@ -95,10 +96,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE_CLOSE(iCluster->getMigrationEnergy(), 0.7777, 0.0001);
 	BOOST_REQUIRE_CLOSE(iCluster->getDiffusionFactor(), 3.456, 0.001);
 	// HeV
-	vector<int> composition;
-	composition.push_back(1);
-	composition.push_back(50);
-	composition.push_back(0);
+	vector<int> composition = {1, -50};
 	auto heVCluster = (PSICluster *) network->getCompound("HeV", composition);
 	BOOST_REQUIRE(heVCluster->getSize() == 51);
 	formationEnergy = heVCluster->getFormationEnergy();
@@ -117,6 +115,60 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 		caughtFlag = true;
 	}
 	BOOST_REQUIRE(caughtFlag);
+}
+
+/**
+ * Method checking the generation of the network.
+ */
+BOOST_AUTO_TEST_CASE(checkGenerate) {
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 5 3" << std::endl << "grid=100 0.5" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	int argc = 0;
+	char **argv;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+
+	// Read the options
+	Options opts;
+	opts.readParams(argv);
+
+	// Create the loader
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+
+	// Generate the network from the options
+	auto network = loader.generate(opts);
+
+	// Get the size of the network
+	int networkSize = network->size();
+	// Check the value
+	BOOST_REQUIRE_EQUAL(networkSize, 104);
+
+	// Check the properties
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeClusterSize(), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxVClusterSize(), 5);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxIClusterSize(), 3);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeVClusterSize(), 32);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeClusters(), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumVClusters(), 5);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumIClusters(), 3);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeVClusters(), 88);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumSuperClusters(), 0);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
+
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

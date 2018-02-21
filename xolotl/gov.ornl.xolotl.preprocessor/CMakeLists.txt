@@ -77,7 +77,7 @@ if ( ( DEFINED ENV{JUNIT_JAR} ) AND (DEFINED ENV{HAMCREST_JAR} ) )
        ${CMAKE_JAVA_INCLUDE_PATH_FINAL}
     )
    
-    # Compile the preprocessor tests
+    # Compile the formation energy engine tests
     message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/FormationEnergyEngineTest.java")
     add_jar(FormationEnergyEngineTest ${PREPROCESSOR_TEST_SRC}/FormationEnergyEngineTest.java ${PREPROCESSOR_SRC}/FormationEnergyEngine.java 
         OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
@@ -113,7 +113,7 @@ if ( ( DEFINED ENV{JUNIT_JAR} ) AND (DEFINED ENV{HAMCREST_JAR} ) )
             gov.ornl.xolotl.preprocessor.test.PreprocessorTest
     )
 
-    # Compile the preprocessor tests
+    # Compile the arguments tests
     message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/ArgumentsTest.java")
     add_jar(ArgumentsTest ${PREPROCESSOR_TEST_SRC}/ArgumentsTest.java ${PREPROCESSOR_SRC}/Arguments.java 
         OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
@@ -128,23 +128,6 @@ if ( ( DEFINED ENV{JUNIT_JAR} ) AND (DEFINED ENV{HAMCREST_JAR} ) )
             ${_classDir}
         TESTS 
             gov.ornl.xolotl.preprocessor.test.ArgumentsTest
-    )
-
-    # Compile the preprocessor tests
-    message(STATUS "Making preprocessor test ${PREPROCESSOR_TEST_SRC}/ClusterTest.java")
-    add_jar(ClusterTest ${PREPROCESSOR_TEST_SRC}/ClusterTest.java ${PREPROCESSOR_SRC}/Cluster.java 
-        OUTPUT_DIR ${CMAKE_JAVA_TARGET_OUTPUT_DIR})
-    get_target_property(_jarFile ClusterTest JAR_FILE)
-    # The preprocessor .class files will be written to preprocessor/test/CMakeFiles/ClusterTest.dir
-    get_target_property(_classDir ClusterTest CLASSDIR)
-    message(STATUS "ClusterTest class compiled to ${_classDir}")
-    # Define the preprocessor JUnit test target
-    add_junit_test(ClusterTest 
-        CLASSPATH 
-            ${CMAKE_JAVA_INCLUDE_PATH} 
-            ${_classDir}
-        TESTS 
-            gov.ornl.xolotl.preprocessor.test.ClusterTest
     )
 
 else ()

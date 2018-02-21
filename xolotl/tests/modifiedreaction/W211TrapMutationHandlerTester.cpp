@@ -47,9 +47,10 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	for (int i = 0; i < size; i++) {
 		// This part will set the temperature in each reactant
 		// and recompute the diffusion coefficient
-		allReactants->at(i)->setTemperature(1000.0);
+		allReactants->at(i)->setTemperature(1200.0);
 	}
 	network->computeRateConstants();
+	network->setTemperature(1200.0);
 
 	// Suppose we have a grid with 13 grip points and distance of
 	// 0.1 nm between grid points
@@ -99,9 +100,9 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			updatedConcOffset, 5);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.11279e+30, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -1.11279e+30, 0.01); // He
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[15], 1.11279e+30, 0.01); // Create HeV
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.433615221e+30, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -1.433615221e+30, 0.01); // He
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[15], 1.433615221e+30, 0.01); // Create HeV
 
 	// Get the offset for the eleventh grid point
 	concOffset = conc + 10 * dof;
@@ -116,11 +117,11 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			updatedConcOffset, 10);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 2.714294e+23, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 2.814454997e+23, 0.01); // Create I
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // He2
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 0.0, 0.01); // Doesn't create He2V
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], -2.714294e+23, 0.01); // He4
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[28], 2.714294e+23, 0.01); // Create He4V2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], -2.814454997e+23, 0.01); // He4
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[28], 2.814454997e+23, 0.01); // Create He4V2
 
 	// Initialize the indices and values to set in the Jacobian
 	int nHelium = network->getAll(heType).size();
@@ -144,16 +145,18 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	BOOST_REQUIRE_EQUAL(indices[5], 1); // I2
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -6.3480417e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 6.3480417e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 6.3480417e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], -6.3480417e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 6.3480417e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 6.3480417e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[3], -6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[5], 6.575931697e+14, 0.01);
 
 	// Change the temperature of the network
 	network->setTemperature(500.0);
 
+	// Reinitialize the handler
+	trapMutationHandler.initialize(network, grid);
 	// Update the bursting rate
 	trapMutationHandler.updateTrapMutationRate(network);
 

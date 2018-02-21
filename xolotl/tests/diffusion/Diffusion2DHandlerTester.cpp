@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	diffusionHandler.initializeDiffusionGrid(advectionHandlers, grid, 3, 1.0);
 
 	// Check the total number of diffusing clusters
-	BOOST_REQUIRE_EQUAL(diffusionHandler.getNumberOfDiffusing(), 7);
+	BOOST_REQUIRE_EQUAL(diffusionHandler.getNumberOfDiffusing(), 8);
 
 	// The step size in the x direction
 	double hx = 1.0;
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	auto reactants = network->getAll();
-	for (int i = 0; i < dof; i++) {
+	for (int i = 0; i < dof - 1; i++) {
 		auto cluster = (PSICluster *) reactants->at(i);
 		cluster->setTemperature(1000.0);
 	}
@@ -111,15 +111,15 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 			hx, hx, 1, sy, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.0393e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 5.0899e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], 2.04785e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 2.70401e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 2.01239e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 4.98404e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 0.0, 0.01); // Does not diffuse
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.283e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 6.284e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], 2.528e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 3.338e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 2.4844e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 6.1531e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 7.80861e+09, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not diffuse
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 8.18607e+08, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 1.0106e+09, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();
@@ -140,7 +140,8 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	BOOST_REQUIRE_EQUAL(indices[3], 3);
 	BOOST_REQUIRE_EQUAL(indices[4], 4);
 	BOOST_REQUIRE_EQUAL(indices[5], 5);
-	BOOST_REQUIRE_EQUAL(indices[6], 8);
+	BOOST_REQUIRE_EQUAL(indices[6], 6);
+	BOOST_REQUIRE_EQUAL(indices[7], 8);
 
 	// Check some values
 	BOOST_REQUIRE_CLOSE(val[0], -2.56618e+10, 0.01);

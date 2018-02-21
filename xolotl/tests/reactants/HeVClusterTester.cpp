@@ -26,7 +26,7 @@ static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
 BOOST_AUTO_TEST_SUITE(HeVCluster_testSuite)
 
 BOOST_AUTO_TEST_CASE(getSpeciesSize) {
-	HeVCluster cluster(4, 5, registry);
+	HeVCluster cluster(0, 0, 4, 5, registry);
 
 	// Get the composition back
 	auto composition = cluster.getComposition();
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the reaction connectivity of the HeV cluster
 	// with 3He and 2V
 	// Get the connectivity array from the reactant
-	vector<int> composition = { 3, 2, 0 };
+	vector<int> composition = { 3, -2 };
 	auto reactant = (PSICluster *) network->getCompound("HeV", composition);
 
 	// Check the type name
@@ -79,7 +79,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 			// HeI
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+			// temperature
+			0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
@@ -95,8 +98,8 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	// Local Declarations
 	auto network = getSimplePSIReactionNetwork();
 
-	// Get an HeV cluster with compostion 2,1,0.
-	vector<int> composition = { 2, 1, 0 };
+	// Get an HeV cluster with compostion 2,-1.
+	vector<int> composition = { 2, -1 };
 	auto cluster = (PSICluster *) network->getCompound("HeV", composition);
 	// Get one that it combines with (He)
 	auto secondCluster = (PSICluster *) network->get("He", 1);
@@ -133,12 +136,12 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
 	double knownPartials[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.854292435040,
-			0.0, 0.0, 0.0, -1072.407352511, 0.0, 0.0, 0.0, 0.0 };
+			0.0, 0.0, 0.0, -1072.407352511, 0.0, 0.0, 0.0, 0.0, 0.0 };
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(3);
 
-	// Get an HeV cluster with compostion 2,1,0.
-	vector<int> composition = { 2, 1, 0 };
+	// Get an HeV cluster with compostion 2,-1.
+	vector<int> composition = { 2,-1 };
 	auto cluster = (PSICluster *) network->getCompound("HeV", composition);
 	// Set the diffusion factor and migration energy based on the
 	// values from the tungsten benchmark for this problem.
@@ -154,7 +157,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	auto partials = cluster->getPartialDerivatives();
 
 	// Check the size of the partials
-	BOOST_REQUIRE_EQUAL(partials.size(), 15U);
+	BOOST_REQUIRE_EQUAL(partials.size(), 16U);
 
 	// Check all the values
 	for (unsigned int i = 0; i < partials.size(); i++) {
@@ -177,7 +180,7 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
 	// Check all the values
 	for (int i = 1; i <= 5; i++) {
-		cluster = shared_ptr<HeVCluster>(new HeVCluster(1, i, registry));
+		cluster = shared_ptr<HeVCluster>(new HeVCluster(0, 0, 1, i, registry));
 		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
 				0.000001);
 	}

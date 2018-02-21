@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	// Get the dof of the network
 	int dof = network->getDOF();
 	// Check the value
-	BOOST_REQUIRE_EQUAL(dof, 1929);
+	BOOST_REQUIRE_EQUAL(dof, 1930);
 
 	// Check the properties
 	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(

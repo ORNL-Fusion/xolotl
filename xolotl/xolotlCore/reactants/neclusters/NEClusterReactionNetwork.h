@@ -291,7 +291,7 @@ public:
 	 * @return The number of degrees of freedom
 	 */
 	virtual int getDOF() {
-		return networkSize + numSuperClusters;
+		return networkSize + numSuperClusters + 1;
 	}
 
 	/**

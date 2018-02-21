@@ -4,6 +4,10 @@
 #include <boost/test/included/unit_test.hpp>
 #include <fstream>
 #include <TemperatureProfileHandler.h>
+#include <HDF5NetworkLoader.h>
+#include <XolotlConfig.h>
+#include <DummyHandlerRegistry.h>
+#include <mpi.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -14,6 +18,24 @@ using namespace xolotlCore;
 BOOST_AUTO_TEST_SUITE (TemperatureProfileHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(check_getTemperature) {
+	// Initialize MPI for HDF5
+	int argc = 0;
+	char **argv;
+	MPI_Init(&argc, &argv);
+
+	// Create the network loader
+	HDF5NetworkLoader loader = HDF5NetworkLoader(
+			make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Define the filename to load the network from
+	string sourceDir(XolotlSourceDirectory);
+	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
+	string filename = sourceDir + pathToFile;
+	// Give the filename to the network loader
+	loader.setFilename(filename);
+
+	// Load the network
+	auto network = loader.load().get();
+
 	// Create a file with temperature profile data
 	// First column with the time and the second with
 	// the temperature at that time.
@@ -31,9 +53,16 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	"10.0 1.99779827918";
 	writeTempFile.close();
 
+	// Create ofill and dfill
+	// Get its size
+	const int dof = network->getDOF();
+	int mat[dof * dof];
+	int *ofill = &mat[0];
+	int *dfill = &mat[0];
+
 	// Create and initialize the temperature profile handler
 	auto testTemp = make_shared<TemperatureProfileHandler>("tempFile.dat");
-	testTemp->initializeTemperature();
+	testTemp->initializeTemperature(network, ofill, dfill);
 	std::vector<double> pos = { 1.142857142857143, 0.0, 0.0 };
 
 	// Vector to hold the user defined time values
@@ -67,6 +96,9 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	// Remove the created file
 	std::string tempFile = "tempFile.dat";
 	std::remove(tempFile.c_str());
+
+	// Finalize MPI
+	MPI_Finalize();
 
 	return;
 }

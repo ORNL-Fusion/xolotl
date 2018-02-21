@@ -79,7 +79,8 @@ std::shared_ptr<xolotlSolver::PetscSolver> setUpSolver(
 		std::shared_ptr<xolotlSolver::ISolverHandler> solvHandler,
 		Options &options) {
 	// Initialize the solver handler
-	solvHandler->initializeHandlers(material, tempHandler, networkHandler, options);
+	solvHandler->initializeHandlers(material, tempHandler, networkHandler,
+			options);
 
 	// Setup the solver
 	auto solverInitTimer = handlerRegistry->getTimer("initSolver");
@@ -117,6 +118,7 @@ int main(int argc, char **argv) {
 
 	// Local Declarations
 	int rank;
+	int ret = EXIT_SUCCESS;
 
 	// Check the command line arguments.
 	// Skip the executable name before parsing
@@ -132,10 +134,6 @@ int main(int argc, char **argv) {
 	// The arguments should be empty now.
 	argc -= 1;
 	argv += 1;
-
-	// Extract the argument for the file name
-	std::string networkFilename = opts.getNetworkFilename();
-	assert(!networkFilename.empty());
 
 	try {
 		// Set up our performance data infrastructure.
@@ -158,12 +156,15 @@ int main(int argc, char **argv) {
 		auto material = initMaterial(opts);
 		// Set up the temperature infrastructure
 		bool tempInitOK = initTemp(opts);
-		if (!tempInitOK)
-			return EXIT_FAILURE;
+		if (!tempInitOK) {
+			throw std::runtime_error("Unable to initialize temperature.");
+		}
 		// Set up the visualization infrastructure.
 		bool vizInitOK = initViz(opts.useVizStandardHandlers());
-		if (!vizInitOK)
-			return EXIT_FAILURE;
+		if (!vizInitOK) {
+			throw std::runtime_error(
+					"Unable to initialize visualization infrastructure.");
+		}
 
 		// Access the temperature handler registry to get the temperature
 		auto tempHandler = xolotlFactory::getTemperatureHandler();
@@ -176,13 +177,16 @@ int main(int argc, char **argv) {
 
 		// Initialize and get the solver handler
 		bool dimOK = xolotlFactory::initializeDimension(opts);
-		if (!dimOK)
-			return EXIT_FAILURE;
+		if (!dimOK) {
+			throw std::runtime_error(
+					"Unable to initialize dimension from inputs.");
+		}
 		auto solvHandler = xolotlFactory::getSolverHandler();
 
 		// Create the network handler factory
 		auto networkFactory =
-					xolotlFactory::IReactionHandlerFactory::createNetworkFactory(opts.getMaterial());
+				xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
+						opts.getMaterial());
 
 		// Setup and load the network
 		auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
@@ -194,8 +198,8 @@ int main(int argc, char **argv) {
 		auto networkHandler = networkFactory->getNetworkHandler();
 
 		// Setup the solver
-		auto solver = setUpSolver(handlerRegistry, material, tempHandler, networkHandler,
-				solvHandler, opts);
+		auto solver = setUpSolver(handlerRegistry, material, tempHandler,
+				networkHandler, solvHandler, opts);
 
 		// Launch the PetscSolver
 		launchPetscSolver(solver, handlerRegistry);
@@ -222,15 +226,15 @@ int main(int argc, char **argv) {
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-		return EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 	} catch (const std::string& error) {
 		std::cout << error << std::endl;
 		std::cout << "Aborting." << std::endl;
-		return EXIT_FAILURE;
+		ret = EXIT_FAILURE;
 	}
 
 	// finalize our use of MPI
 	MPI_Finalize();
 
-	return EXIT_SUCCESS;
+	return ret;
 }

@@ -57,7 +57,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 			// HeI
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+			// temperature
+			0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
@@ -111,7 +114,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// The vector of partial derivatives to compare with
 	double knownPartials[] = { 221864.07, 221709.26, 0.0, -14316.7, 896815.0,
 			257925.0, -1925.666, -2188.27, -2373.78, 356134.7, 377344.4,
-			224717.0, 256135.51, -1789.5926, -2054.05 };
+			224717.0, 256135.51, -1789.5926, -2054.05, 0.0 };
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(3);
 
@@ -131,7 +134,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	auto partials = cluster->getPartialDerivatives();
 
 	// Check the size of the partials
-	BOOST_REQUIRE_EQUAL(partials.size(), 15U);
+	BOOST_REQUIRE_EQUAL(partials.size(), 16U);
 
 	// Check all the values
 	for (unsigned int i = 0; i < partials.size(); i++) {

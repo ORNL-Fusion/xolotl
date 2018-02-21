@@ -6,6 +6,7 @@
 #include <PetscOptionHandler.h>
 #include <ConstTempOptionHandler.h>
 #include <TempProfileOptionHandler.h>
+#include <HeatOptionHandler.h>
 #include <FluxOptionHandler.h>
 #include <FluxProfileOptionHandler.h>
 #include <PerfOptionHandler.h>
@@ -19,6 +20,8 @@
 #include <GrainBoundariesOptionHandler.h>
 #include <GroupingOptionHandler.h>
 #include <SputteringOptionHandler.h>
+#include <NetworkParamOptionHandler.h>
+#include <GridParamOptionHandler.h>
 #include "Options.h"
 
 namespace xolotlCore {
@@ -28,10 +31,14 @@ Options::Options() :
 		exitCode(EXIT_SUCCESS),
 		petscArgc(0),
 		petscArgv(NULL),
+		networkFilename(""),
 		constTempFlag(false),
 		constTemperature(1000.0),
 		temperatureGradient(0.0),
 		tempProfileFlag(false),
+		tempProfileFilename(""),
+		heatFlag(false),
+		bulkTemperature(0.0),
 		fluxFlag(false),
 		fluxAmplitude(0.0),
 		fluxProfileFlag(false),
@@ -46,7 +53,12 @@ Options::Options() :
 		groupingMin(std::numeric_limits<int>::max()),
 		groupingWidthA(1),
 		groupingWidthB(1),
-		sputteringYield(0.0) {
+		sputteringYield(0.0),
+		useHDF5Flag(true),
+		usePhaseCutFlag(false),
+		maxImpurity(8), maxV(20), maxI(6),
+		nX(10), nY(0), nZ(0),
+		xStepSize(0.5), yStepSize(0.0), zStepSize(0.0) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();
@@ -56,6 +68,8 @@ Options::Options() :
 	auto constTempHandler = new ConstTempOptionHandler();
 	// Create the temperature profile option handler
 	auto tempProfileHandler = new TempProfileOptionHandler();
+	// Create the heat equation option handler
+	auto heatHandler = new HeatOptionHandler();
 	// Create the flux option handler
 	auto fluxHandler = new FluxOptionHandler();
 	// Create the flux time profile option handler
@@ -80,14 +94,19 @@ Options::Options() :
 	auto gbHandler = new GrainBoundariesOptionHandler();
 	// Create the grouping option handler
 	auto groupingHandler = new GroupingOptionHandler();
-	// Create the grouping option handler
+	// Create the sputtering option handler
 	auto sputteringHandler = new SputteringOptionHandler();
+	// Create the network param option handler
+	auto netParamHandler = new NetworkParamOptionHandler();
+	// Create the grid option handler
+	auto gridParamHandler = new GridParamOptionHandler();
 
 	// Add our notion of which options we support.
 	optionsMap[networkHandler->key] = networkHandler;
 	optionsMap[petscHandler->key] = petscHandler;
 	optionsMap[constTempHandler->key] = constTempHandler;
 	optionsMap[tempProfileHandler->key] = tempProfileHandler;
+	optionsMap[heatHandler->key] = heatHandler;
 	optionsMap[fluxHandler->key] = fluxHandler;
 	optionsMap[fluxProfileHandler->key] = fluxProfileHandler;
 	optionsMap[perfHandler->key] = perfHandler;
@@ -101,6 +120,8 @@ Options::Options() :
 	optionsMap[gbHandler->key] = gbHandler;
 	optionsMap[groupingHandler->key] = groupingHandler;
 	optionsMap[sputteringHandler->key] = sputteringHandler;
+	optionsMap[netParamHandler->key] = netParamHandler;
+	optionsMap[gridParamHandler->key] = gridParamHandler;
 }
 
 Options::~Options(void) {

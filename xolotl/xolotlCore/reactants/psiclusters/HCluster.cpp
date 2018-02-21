@@ -3,12 +3,9 @@
 
 using namespace xolotlCore;
 
-HCluster::HCluster(int nH, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+HCluster::HCluster(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(registry) {
-	// Set the size appropriately
-	size = nH;
-	// Set the reactant name appropriately
-	name = "Hydrogen";
-}
+	// Don't do anything
 
-HCluster::~HCluster() { }
+	return;
+}

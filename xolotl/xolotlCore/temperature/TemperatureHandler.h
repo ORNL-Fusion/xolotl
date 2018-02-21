@@ -3,7 +3,7 @@
 
 #include "ITemperatureHandler.h"
 
-namespace xolotlCore{
+namespace xolotlCore {
 
 /**
  * This class realizes the ITemperatureHandler, it is responsible for the
@@ -23,7 +23,8 @@ private:
 	 * must be initialized with a temperature
 	 */
 	TemperatureHandler() :
-		temperature(0.0) {}
+			temperature(0.0) {
+	}
 
 public:
 
@@ -33,30 +34,112 @@ public:
 	 * @param constTemperature the temperature
 	 */
 	TemperatureHandler(double constTemperature) :
-		temperature(constTemperature) {}
+			temperature(constTemperature) {
+	}
 
 	/**
 	 * The destructor.
 	 */
-	virtual ~TemperatureHandler() {}
+	virtual ~TemperatureHandler() {
+	}
 
 	/**
-	 * This operation reads in the time and temperature data from the input
-	 * temperature file that was specified by the command line if the profile
-	 * option is used;
+	 * This operation initializes the ofill and dfill arrays so that the
+	 * temperature is connected correctly in the solver.
+	 *
+	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature() {}
+	virtual void initializeTemperature(IReactionNetwork *network, int *ofill,
+			int *dfill) {
+		// Set dof
+		int dof = network->getDOF();
+
+		// Add the temperature to ofill
+		ofill[(dof - 1) * dof + (dof - 1)] = 1;
+
+		// Add the temperature to dfill
+		dfill[(dof - 1) * dof + (dof - 1)] = 1;
+
+		return;
+	}
 
 	/**
 	 * This operation returns the temperature at the given position
 	 * and time.
+	 * Here it is a constant temperature.
 	 *
-	 * @return The temperature
+	 * \see ITemperatureHandler.h
 	 */
 	virtual double getTemperature(const std::vector<double>& position,
-			double) const {return temperature;}
+			double) const {
+		return temperature;
+	}
 
-}; //end class TemperatureHandler
+	/**
+	 * This operation sets the temperature given by the solver.
+	 * Don't do anything.
+	 *
+	 * \see ITemperatureHandler.h
+	 */
+	virtual void setTemperature(double * solution) {
+		return;
+	}
+
+	/**
+	 * This operation sets the heat coefficient to use in the equation.
+	 *
+	 * \see ITemperatureHandler.h
+	 */
+	virtual void setHeatCoefficient(double coef) {
+		return;
+	}
+
+	/**
+	 * This operation sets the surface position.
+	 * Don't do anything.
+	 *
+	 * \see ITemperatureHandler.h
+	 */
+	virtual void updateSurfacePosition(double surfacePos) {
+		return;
+	}
+
+	/**
+	 * Compute the flux due to the heat equation.
+	 * This method is called by the RHSFunction from the PetscSolver.
+	 * Don't do anything.
+	 *
+	 * \see ITemperatureHandler.h
+	 */
+	virtual void computeTemperature(double **concVector,
+			double *updatedConcOffset, double hxLeft, double hxRight) {
+		return;
+	}
+
+	/**
+	 * Compute the partials due to the heat equation.
+	 * This method is called by the RHSJacobian from the PetscSolver.
+	 * Don't do anything.
+	 *
+	 * \see ITemperatureHandler.h
+	 */
+	virtual void computePartialsForTemperature(double *val, int *indices,
+			double hxLeft, double hxRight) {
+		// Set the cluster index, the PetscSolver will use it to compute
+		// the row and column indices for the Jacobian
+		indices[0] = 0;
+
+		// Compute the partial derivatives for diffusion of this cluster
+		// for the middle, left, and right grid point
+		val[0] = 0.0; // middle
+		val[1] = 0.0; // left
+		val[2] = 0.0; // right
+
+		return;
+	}
+
+};
+//end class TemperatureHandler
 
 }
 

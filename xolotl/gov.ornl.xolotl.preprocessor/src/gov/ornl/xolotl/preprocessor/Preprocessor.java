@@ -28,6 +28,10 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
  * 
  * nXe - The number of xenon atoms in the cluster.
  * 
+ * nD - The number of deuterium in the cluster.
+ * 
+ * nT - The number of tritium in the cluster.
+ * 
  * nV - The number of vacancies in the cluster.
  * 
  * nI - The number of interstitials in the cluster.
@@ -68,6 +72,24 @@ public class Preprocessor {
 
 	// The migration energy for a single xenon.
 	private double xeOneMigrationEnergy = 0.0;
+
+	// The maximum size of a deuterium cluster in the network.
+	private int maxD;
+
+	// The diffusion factor for a single deuterium.
+	private double dOneDiffusionFactor = 2.83e+11;
+
+	// The migration energy for a single deuterium.
+	private double dOneMigrationEnergy = 0.38;
+
+	// The maximum size of a tritium cluster in the network.
+	private int maxT;
+
+	// The diffusion factor for a single tritium.
+	private double tOneDiffusionFactor = 2.31e+11;
+
+	// The migration energy for a single tritium.
+	private double tOneMigrationEnergy = 0.38;
 
 	// The maximum size of a vacancy cluster in the network.
 	private int maxV;
@@ -230,10 +252,22 @@ public class Preprocessor {
 			throw new IllegalArgumentException("The maxium helium size must be less than 9 ( 0 <= maxHeSize < 9 )");
 		}
 
-		// Set the maximum size of a vacancy cluster in the network.
+		// Set the maximum size of a xenon cluster in the network.
 		maxXe = args.getMaxXeSize();
 		if (maxXe < 0) {
 			throw new IllegalArgumentException("The maxium xenon size must be positive ( 0 <= maxXeSize )");
+		}
+
+		// Set the maximum size of a deuterium cluster in the network.
+		maxD = args.getMaxDSize();
+		if (maxD < 0) {
+			throw new IllegalArgumentException("The maxium deuterium size must be positive ( 0 <= maxDSize )");
+		}
+
+		// Set the maximum size of a tritium cluster in the network.
+		maxT = args.getMaxTSize();
+		if (maxT < 0) {
+			throw new IllegalArgumentException("The maxium tritium size must be positive ( 0 <= maxTSize )");
 		}
 
 		// Set the maximum size of a vacancy cluster in the network.
@@ -269,8 +303,10 @@ public class Preprocessor {
 		// be set if they are specified via the command line
 		if (args.isTempFile())
 			xolotlParams.setProperty("tempFile", args.getTempFile());
+		if (args.isHeat())
+			xolotlParams.setProperty("heat", args.getHeat());
 		if (args.isFluxFile())
-			xolotlParams.setProperty("fluxFile", args.getTempFile());
+			xolotlParams.setProperty("fluxFile", args.getFluxFile());
 		if (args.isInitialV())
 			xolotlParams.setProperty("initialV", args.getInitialV());
 		if (args.isVoidPortion())
@@ -281,6 +317,23 @@ public class Preprocessor {
 			xolotlParams.setProperty("grain", args.getGrain());
 		if (args.isSputter())
 			xolotlParams.setProperty("sputtering", args.getSputter());
+		if (args.isNetParam()) {
+			// Build the network argument
+			String netString;
+			if (args.getMaxXeSize() > 0)
+				netString = Integer.toString(args.getMaxXeSize());
+			else
+				netString = Integer.toString(args.getMaxHeSize()) + " " + Integer.toString(args.getMaxVSize()) + " "
+						+ Integer.toString(args.getMaxISize()) + " " + Boolean.toString(args.isPhaseCut());
+			xolotlParams.setProperty("netParam", netString);
+
+			// Build the grid argument
+			String gridString = Integer.toString(args.getNxGrid()) + " " + Double.toString(args.getXStepSize()) + " "
+					+ Integer.toString(args.getNyGrid()) + " " + Double.toString(args.getYStepSize()) + " "
+					+ Integer.toString(args.getNzGrid()) + " " + Double.toString(args.getZStepSize());
+			xolotlParams.setProperty("grid", gridString);
+			xolotlParams.setProperty("networkFile", "");
+		}
 
 	}
 
@@ -346,22 +399,88 @@ public class Preprocessor {
 	}
 
 	/**
+	 * This operation generates all deuterium clusters in the network.
+	 * 
+	 * @return A list of clusters configured to satisfy the bounds and composed
+	 *         solely of deuterium.
+	 */
+	private ArrayList<Cluster> generateD() {
+		// Local Declarations
+		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
+
+		// Create the He clusters
+		for (int i = 0; i < maxD; i++) {
+			// Create the cluster
+			Cluster tmpCluster = new Cluster();
+			tmpCluster.nD = i + 1;
+			// Add the cluster to the list
+			clusterList.add(tmpCluster);
+		}
+
+		// Set D_1 diffusion parameters. D_1 is the first in the list, so it
+		// is
+		// straightforward to set it.
+		if (maxD > 0) {
+			clusterList.get(0).D_0 = dOneDiffusionFactor;
+			clusterList.get(0).E_m = dOneMigrationEnergy;
+		}
+
+		return clusterList;
+	}
+
+	/**
+	 * This operation generates all tritium clusters in the network.
+	 * 
+	 * @return A list of clusters configured to satisfy the bounds and composed
+	 *         solely of tritium.
+	 */
+	private ArrayList<Cluster> generateT() {
+		// Local Declarations
+		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
+
+		// Create the He clusters
+		for (int i = 0; i < maxT; i++) {
+			// Create the cluster
+			Cluster tmpCluster = new Cluster();
+			tmpCluster.nT = i + 1;
+			// Add the cluster to the list
+			clusterList.add(tmpCluster);
+		}
+
+		// Set T_1 diffusion parameters. T_1 is the first in the list, so it
+		// is
+		// straightforward to set it.
+		if (maxT > 0) {
+			clusterList.get(0).D_0 = tOneDiffusionFactor;
+			clusterList.get(0).E_m = tOneMigrationEnergy;
+		}
+
+		return clusterList;
+	}
+
+	/**
 	 * This operation creates an HeV cluster with the specified size. It
 	 * configures the formation energies on its own.
 	 * 
+	 * @param tSize
+	 *            The number of tritium atoms in the cluster
+	 * @param dSize
+	 *            The number of deuterium atoms in the cluster
 	 * @param heSize
 	 *            The number of helium atoms in the cluster
 	 * @param vSize
 	 *            The number of vacancies in the cluster
 	 * @return The cluster.
 	 */
-	private Cluster makeHeVCluster(int heSize, int vSize) {
+	private Cluster makeHeVCluster(int tSize, int dSize, int heSize, int vSize) {
 		// Create the cluster
 		Cluster cluster = new Cluster();
+		cluster.nT = tSize;
+		cluster.nD = dSize;
 		cluster.nHe = heSize;
 		cluster.nV = vSize;
 		// Separate the case where it is simply a V cluster
-		if (heSize == 0) {
+		if (dSize == 0 && tSize == 0 && heSize == 0) {
 			cluster.E_f = formationEnergyEngine.getVFormationEnergy(vSize);
 		} else {
 			cluster.E_f = formationEnergyEngine.getHeVFormationEnergy(heSize, vSize);
@@ -390,16 +509,16 @@ public class Preprocessor {
 				if (i < 12) {
 					for (int j = 0; j <= maxHePerV[i - 1]; j++) {
 						// Add the cluster to the list
-						clusterList.add(makeHeVCluster(j, i));
+						clusterList.add(makeHeVCluster(0, 0, j, i));
 					}
 				}
 				// For bigger V only add the needed helium sizes
 				else {
 					// Add the vacancy cluster
-					clusterList.add(makeHeVCluster(0, i));
+					clusterList.add(makeHeVCluster(0, 0, 0, i));
 					for (int j = maxHePerV[i - 2] + 1; j <= maxHePerV[i - 1]; j++) {
 						// Add the cluster to the list
-						clusterList.add(makeHeVCluster(j, i));
+						clusterList.add(makeHeVCluster(0, 0, j, i));
 					}
 				}
 			}
@@ -409,10 +528,10 @@ public class Preprocessor {
 			// Keeping only the last four ones
 			for (int i = maxHePerV.length + 1; i <= maxV; i++) {
 				// Add the vacancy cluster
-				clusterList.add(makeHeVCluster(0, i));
+				clusterList.add(makeHeVCluster(0, 0, 0, i));
 				for (int j = (i * 4) - 3; j <= i * 4; j++) {
 					// Add the cluster to the list
-					clusterList.add(makeHeVCluster(j, i));
+					clusterList.add(makeHeVCluster(0, 0, j, i));
 				}
 			}
 		}
@@ -424,8 +543,16 @@ public class Preprocessor {
 			for (int i = 1; i <= maxV && i <= maxHePerV.length; ++i) {
 				// Loop on the helium number
 				for (int j = 0; j <= maxHePerV[i - 1]; j++) {
-					// Add the cluster to the list
-					clusterList.add(makeHeVCluster(j, i));
+					// Loop on the deuterium number
+					for (int k = 0; k <= (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]); k++) {
+						// Loop on the tritium number
+						for (int l = 0; l <= (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]); l++) {
+							if (k + l > (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]))
+								break;
+							// Add the cluster to the list
+							clusterList.add(makeHeVCluster(l, k, j, i));
+						}
+					}
 				}
 			}
 
@@ -434,8 +561,16 @@ public class Preprocessor {
 			for (int i = maxHePerV.length + 1; i <= maxV; i++) {
 				// Loop on the helium number
 				for (int j = 0; j <= i * 4; j++) {
-					// Add the cluster to the list
-					clusterList.add(makeHeVCluster(j, i));
+					// Loop on the deuterium number
+					for (int k = 0; k <= (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]); k++) {
+						// Loop on the tritium number
+						for (int l = 0; l <= (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]); l++) {
+							if (k + l > (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]))
+								break;
+							// Add the cluster to the list
+							clusterList.add(makeHeVCluster(l, k, j, i));
+						}
+					}
 				}
 			}
 		}
@@ -494,6 +629,8 @@ public class Preprocessor {
 		// Add all of the clusters to the list
 		clusterList.addAll(generateInterstitials());
 		clusterList.addAll(generateHe());
+		clusterList.addAll(generateD());
+		clusterList.addAll(generateT());
 		clusterList.addAll(generateHeV());
 		clusterList.addAll(generateXe());
 
@@ -931,22 +1068,22 @@ public class Preprocessor {
 			// Create, write, and close the absolute time attribute
 			double[] time = { times[0] };
 			int dataspaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int attributeId = H5.H5Acreate(newConcSubGroupId, "absoluteTime", HDF5Constants.H5T_IEEE_F64LE,
-					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			int attributeId = H5.H5Acreate(newConcSubGroupId, "absoluteTime", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			int status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, time);
 			status = H5.H5Aclose(attributeId);
 
 			// Create, write, and close the previous time attribute
 			double[] previousTime = { times[1] };
-			attributeId = H5.H5Acreate(newConcSubGroupId, "previousTime", HDF5Constants.H5T_IEEE_F64LE,
-					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			attributeId = H5.H5Acreate(newConcSubGroupId, "previousTime", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousTime);
 			status = H5.H5Aclose(attributeId);
 
 			// Create, write, and close the timestep time attribute
 			double[] deltaTime = { times[2] };
-			attributeId = H5.H5Acreate(newConcSubGroupId, "deltaTime", HDF5Constants.H5T_IEEE_F64LE,
-					dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			attributeId = H5.H5Acreate(newConcSubGroupId, "deltaTime", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
+					HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, deltaTime);
 			status = H5.H5Aclose(attributeId);
 
@@ -1026,12 +1163,12 @@ public class Preprocessor {
 						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_STD_I32LE, iSurface);
 				status = H5.H5Aclose(attributeId);
-				attributeId = H5.H5Acreate(concentrationGroupId, "nInterstitial", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
-						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				attributeId = H5.H5Acreate(concentrationGroupId, "nInterstitial", HDF5Constants.H5T_IEEE_F64LE,
+						dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, nInter);
 				status = H5.H5Aclose(attributeId);
-				attributeId = H5.H5Acreate(concentrationGroupId, "previousIFlux", HDF5Constants.H5T_IEEE_F64LE, dataspaceId,
-						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				attributeId = H5.H5Acreate(concentrationGroupId, "previousIFlux", HDF5Constants.H5T_IEEE_F64LE,
+						dataspaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				status = H5.H5Awrite(attributeId, HDF5Constants.H5T_IEEE_F64LE, previousFlux);
 				status = H5.H5Aclose(attributeId);
 
@@ -1068,7 +1205,7 @@ public class Preprocessor {
 					// Read the dataset
 					status = H5.H5Dread(datasetId, HDF5Constants.H5T_STD_I32LE, HDF5Constants.H5S_ALL,
 							HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, surfaceArray);
-					
+
 					// Update the surface indices
 					for (int i = 0; i < (int) dims[0]; i++) {
 						surfaceArray[i] = surfaceArray[i] + xGridDiff;
@@ -1112,7 +1249,7 @@ public class Preprocessor {
 					// Read the dataset
 					status = H5.H5Dread(datasetId, HDF5Constants.H5T_STD_I32LE, HDF5Constants.H5S_ALL,
 							HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, surfaceArray);
-					
+
 					// Update the surface indices
 					for (int i = 0; i < (int) dims[0]; i++) {
 						for (int j = 0; j < (int) dims[1]; j++) {
@@ -1146,16 +1283,16 @@ public class Preprocessor {
 					status = H5.H5Sclose(dataspaceId);
 					status = H5.H5Gclose(concentrationGroupId);
 				}
-				
+
 				// Copy the nInterstitial and previousIFlux datasets
 				// Open the file to copy from
 				int fromFileId = H5.H5Fopen(fromName, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-				// Set the name of the sub group in this file 
+				// Set the name of the sub group in this file
 				subGroupName = "concentrationsGroup/concentration_" + lastTimeStep + "/nInterstitial";
 				// Copy nInterstitial
 				H5.H5Ocopy(fromFileId, subGroupName, fileId, "concentrationsGroup/concentration_0/nInterstitial",
 						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-				// Set the name of the sub group in this file 
+				// Set the name of the sub group in this file
 				subGroupName = "concentrationsGroup/concentration_" + lastTimeStep + "/previousIFlux";
 				// Copy nInterstitial
 				H5.H5Ocopy(fromFileId, subGroupName, fileId, "concentrationsGroup/concentration_0/previousIFlux",
@@ -1414,35 +1551,63 @@ public class Preprocessor {
 
 			// Create the array that will store the network
 			int networkSize = clusters.size();
-			double[][] networkArray = new double[networkSize][6];
-
-			int id = 0;
-			// Loop on the clusters
-			for (Cluster cluster : clusters) {
-				// Store the composition
-				networkArray[id][0] = cluster.nHe;
-				if (maxXe > 0)
+			int width = 0;
+			double[][] networkArray;
+			if (maxXe > 0) {
+				// Set the width of the network (number of parameters per
+				// cluster)
+				width = 4;
+				networkArray = new double[networkSize][width];
+				int id = 0;
+				// Loop on the clusters
+				for (Cluster cluster : clusters) {
+					// Store the composition
 					networkArray[id][0] = cluster.nXe;
-				networkArray[id][1] = cluster.nV;
-				networkArray[id][2] = cluster.nI;
 
-				// Store the formation energy
-				networkArray[id][3] = cluster.E_f;
+					// Store the formation energy
+					networkArray[id][1] = cluster.E_f;
 
-				// Store the migration energy
-				networkArray[id][4] = cluster.E_m;
+					// Store the migration energy
+					networkArray[id][2] = cluster.E_m;
 
-				// Store the diffusion factor
-				networkArray[id][5] = cluster.D_0;
+					// Store the diffusion factor
+					networkArray[id][3] = cluster.D_0;
 
-				// increment the id number
-				id++;
+					// increment the id number
+					id++;
+				}
+			} else {
+				// Set the width of the network (number of parameters per
+				// cluster)
+				width = 7;
+				networkArray = new double[networkSize][width];
+				int id = 0;
+				// Loop on the clusters
+				for (Cluster cluster : clusters) {
+					// Store the composition
+					networkArray[id][0] = cluster.nHe;
+					networkArray[id][1] = cluster.nI - cluster.nV;
+					networkArray[id][2] = cluster.nD;
+					networkArray[id][3] = cluster.nT;
+
+					// Store the formation energy
+					networkArray[id][4] = cluster.E_f;
+
+					// Store the migration energy
+					networkArray[id][5] = cluster.E_m;
+
+					// Store the diffusion factor
+					networkArray[id][6] = cluster.D_0;
+
+					// increment the id number
+					id++;
+				}
 			}
 
 			// Create the dataspace for the network with dimension dims
 			long[] dims = new long[2];
 			dims[0] = networkSize;
-			dims[1] = 6;
+			dims[1] = width;
 			int networkDataSpaceId = H5.H5Screate_simple(2, dims, null);
 
 			// Create the dataset for the network
@@ -1453,17 +1618,7 @@ public class Preprocessor {
 			int status = H5.H5Dwrite(datasetId, HDF5Constants.H5T_IEEE_F64LE, HDF5Constants.H5S_ALL,
 					HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT, networkArray);
 
-			// Create the attribute for the network size
-			int networkSizeDataSpaceId = H5.H5Screate(HDF5Constants.H5S_SCALAR);
-			int networkSizeAttributeId = H5.H5Acreate(datasetId, "networkSize", HDF5Constants.H5T_STD_I32LE,
-					networkSizeDataSpaceId, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-
-			// Write it
-			int[] tempNetworkSize = { networkSize };
-			status = H5.H5Awrite(networkSizeAttributeId, HDF5Constants.H5T_STD_I32LE, tempNetworkSize);
-
 			// Close everything
-			status = H5.H5Aclose(networkSizeAttributeId);
 			status = H5.H5Dclose(datasetId);
 			status = H5.H5Gclose(networkGroupId);
 			status = H5.H5Fclose(fileId);

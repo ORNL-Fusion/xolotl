@@ -1,6 +1,5 @@
 // Includes
 #include <PetscSolver2DHandler.h>
-#include <HDF5Utils.h>
 #include <MathUtils.h>
 #include <Constants.h>
 
@@ -12,22 +11,6 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	// Initialize the all reactants pointer
 	allReactants = network->getAll();
 
-	// Set the last temperature to 0
-	lastTemperature = 0.0;
-
-	// Reinitialize the connectivities in the network after updating the temperature
-	// Get the temperature from the temperature handler
-	auto temperature = temperatureHandler->getTemperature( { 0.0, 0.0, 0.0 },
-			0.0);
-
-	// Set the temperature to compute all the rate constants
-	if (!xolotlCore::equal(temperature, lastTemperature)) {
-		// Update the temperature and rate constants in the network
-		// SetTemperature() does both
-		network->setTemperature(temperature);
-		lastTemperature = temperature;
-	}
-
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -37,13 +20,9 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	// Get starting conditions from HDF5 file
-	int nx = 0, ny = 0, nz = 0;
-	double hx = 0.0, hy = 0.0, hz = 0.0;
-	xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz, hz);
 
-	ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED,
-			DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nx, ny, PETSC_DECIDE,
+	ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR,
+			DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE,
 			PETSC_DECIDE, dof, 1, NULL, NULL, &da);
 	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
 			"DMDACreate2d failed.");
@@ -55,19 +34,21 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 			"PetscSolver2DHandler::createSolverContext: DMSetUp failed.");
 
 	// Set the position of the surface
-	for (int j = 0; j < ny; j++) {
+	for (int j = 0; j < nY; j++) {
 		surfacePosition.push_back(0);
 		if (movingSurface)
-			surfacePosition[j] = (int) (nx * portion / 100.0);
+			surfacePosition[j] = (int) (nX * portion / 100.0);
 	}
 
 	// Generate the grid in the x direction
-	generateGrid(nx, hx, surfacePosition[0]);
+	generateGrid(nX, hX, surfacePosition[0]);
 
 	// Now that the grid was generated, we can update the surface position
 	// if we are using a restart file
 	int tempTimeStep = -2;
-	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+	bool hasConcentrations = false;
+	if (!networkName.empty())
+		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 			networkName, tempTimeStep);
 
 	// Get the actual surface position if concentrations were stored
@@ -90,11 +71,7 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	// advection toward the surface (or a dummy one if it is deactivated)
 	advectionHandlers[0]->setLocation(grid[surfacePosition[0]]);
 
-	// Set the step size
-	hY = hy;
-
-	// Set the size of the partial derivatives vectors
-	clusterPartials.resize(dof, 0.0);
+	// Set the size of the partial derivatives vector
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	/*  The only spatial coupling in the Jacobian is due to diffusion.
@@ -120,6 +97,9 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
 			"PetscMemzero (dfill) failed.");
 
+	// Initialize the temperature handler
+	temperatureHandler->initializeTemperature(network, ofill, dfill);
+
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion
 	diffusionHandler->initializeOFill(network, ofill);
 	// Loop on the advection handlers to account the other "off-diagonal" elements
@@ -128,9 +108,9 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	}
 
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, grid, ny, hy);
+	mutationHandler->initialize(network, grid, nY, hY);
 	mutationHandler->initializeIndex2D(surfacePosition, network,
-			advectionHandlers, grid, ny, hy);
+			advectionHandlers, grid, nY, hY);
 
 	// Get the diagonal fill
 	network->getDiagonalFill(dfill);
@@ -172,26 +152,22 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Get the last time step written in the HDF5 file
 	int tempTimeStep = -2;
-	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+	bool hasConcentrations = false;
+	if (!networkName.empty())
+		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 			networkName, tempTimeStep);
 
-	// Get the total size of the grid for the boundary conditions
-	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	checkPetscError(ierr, "PetscSolver2DHandler::initializeConcentration: "
-			"DMDAGetInfo failed.");
+	// Give the surface position to the temperature handler
+	temperatureHandler->updateSurfacePosition(grid[surfacePosition[0]]);
 
 	// Initialize the flux handler
 	fluxHandler->initializeFluxHandler(network, surfacePosition[0], grid);
 
 	// Initialize the grid for the diffusion
-	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, My, hY);
+	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, nY, hY);
 
 	// Initialize the grid for the advection
-	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, My,
+	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, nY,
 			hY);
 
 	// Pointer for the concentration vector at a specific grid point
@@ -212,12 +188,17 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 			concOffset = concentrations[j][i];
 
 			// Loop on all the clusters to initialize at 0.0
-			for (int n = 0; n < dof; n++) {
+			for (int n = 0; n < dof - 1; n++) {
 				concOffset[n] = 0.0;
 			}
 
+			// Temperature
+			std::vector<double> gridPosition = { grid[i], 0.0, 0.0 };
+			concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition,
+					0.0);
+
 			// Initialize the vacancy concentration
-			if (i > surfacePosition[j] && i < Mx - 1 && vacancyIndex > 0 && !hasConcentrations) {
+			if (i > surfacePosition[j] && vacancyIndex > 0 && !hasConcentrations) {
 				concOffset[vacancyIndex] = initialVConc;
 			}
 		}
@@ -226,8 +207,8 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
 		// Loop on the full grid
-		for (PetscInt j = 0; j < My; j++) {
-			for (PetscInt i = 0; i < Mx; i++) {
+		for (PetscInt j = 0; j < nY; j++) {
+			for (PetscInt i = 0; i < nX; i++) {
 				// Read the concentrations from the HDF5 file
 				auto concVector = xolotlCore::HDF5Utils::readGridPoint(
 						networkName, tempTimeStep, i, j);
@@ -265,9 +246,6 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	checkPetscError(ierr,
 			"PetscSolver2DHandler::updateConcentration: TSGetDM failed.");
 
-	// Get the total size of the grid in the x direction for the boundary conditions
-	int xSize = grid.size();
-
 	// Pointers to the PETSc arrays that start at the beginning (xs, ys) of the
 	// local array!
 	PetscScalar ***concs = nullptr, ***updatedConcs = nullptr;
@@ -284,15 +262,6 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
 	checkPetscError(ierr, "PetscSolver2DHandler::updateConcentration: "
 			"DMDAGetCorners failed.");
-
-	// Get the total size of the grid
-	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	checkPetscError(ierr, "PetscSolver2DHandler::updateConcentration: "
-			"DMDAGetInfo failed.");
 
 	// The following pointers are set to the first position in the conc or
 	// updatedConc arrays that correspond to the beginning of the data for the
@@ -311,13 +280,13 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	const int dof = network->getDOF();
 
 	// Loop over grid points
-	for (PetscInt yj = 0; yj < My; yj++) {
+	for (PetscInt yj = 0; yj < nY; yj++) {
 
 		// Compute the total concentration of atoms contained in bubbles
 		atomConc = 0.0;
 
 		// Loop over grid points
-		for (int xi = surfacePosition[yj]; xi < Mx - 1; xi++) {
+		for (int xi = surfacePosition[yj] + 1; xi < nX; xi++) {
 			// We are only interested in the helium near the surface
 			if (grid[xi] - grid[surfacePosition[yj]] > 2.0)
 				continue;
@@ -350,10 +319,11 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// Set the grid position
 		gridPosition[1] = yj * hY;
 
-		// Initialize the flux, advection, and trap-mutation handlers which depend
+		// Initialize the flux, advection, and temperature handlers which depend
 		// on the surface position at Y
 		fluxHandler->initializeFluxHandler(network, surfacePosition[yj], grid);
 		advectionHandlers[0]->setLocation(grid[surfacePosition[yj]]);
+		temperatureHandler->updateSurfacePosition(grid[surfacePosition[yj]]);
 
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
 			// Compute the old and new array offsets
@@ -362,7 +332,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 			// Boundary conditions
 			// Everything to the left of the surface is empty
-			if (xi <= surfacePosition[yj] || xi == xSize - 1) {
+			if (xi <= surfacePosition[yj]) {
 				for (int i = 0; i < dof; i++) {
 					updatedConcOffset[i] = 1.0 * concOffset[i];
 				}
@@ -381,7 +351,8 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			concVector[4] = concs[yj + 1][xi]; // top
 
 			// Get the temperature from the temperature handler
-			auto temperature = temperatureHandler->getTemperature(gridPosition,
+			temperatureHandler->setTemperature(concOffset);
+			double temperature = temperatureHandler->getTemperature(gridPosition,
 					ftime);
 
 			// Update the network if the temperature changed
@@ -402,6 +373,10 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 			// ----- Account for flux of incoming particles -----
 			fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, xi, surfacePosition[yj]);
+
+			// ---- Compute the temperature over the locally owned part of the grid -----
+			temperatureHandler->computeTemperature(concVector, updatedConcOffset,
+					grid[xi] - grid[xi - 1], grid[xi + 1] - grid[xi]);
 
 			// ---- Compute diffusion over the locally owned part of the grid -----
 			diffusionHandler->computeDiffusion(network, concVector,
@@ -453,11 +428,22 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	checkPetscError(ierr, "PetscSolver2DHandler::computeOffDiagonalJacobian: "
 			"TSGetDM failed.");
 
-	// Get the total size of the grid in the x direction for the boundary conditions
-	int xSize = grid.size();
-
 	// Setup some step size variables
 	double sy = 1.0 / (hY * hY);
+
+	// Degrees of freedom is the total number of clusters in the network
+	const int dof = network->getDOF();
+
+	// Pointers to the PETSc arrays that start at the beginning (xs) of the
+	// local array!
+	PetscScalar ***concs = nullptr;
+	// Get pointers to vector data
+	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
+	checkPetscError(ierr, "PetscSolver2DHandler::computeOffDiagonalJacobian: "
+			"DMDAVecGetArrayDOFRead (localC) failed.");
+
+	// Pointer to the concentrations at a given grid point
+	PetscScalar *concOffset = nullptr;
 
 	// Get local grid boundaries
 	PetscInt xs, xm, ys, ym;
@@ -492,21 +478,24 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		// Set the grid position
 		gridPosition[1] = yj * hY;
 
-		// Initialize the advection handler which depends
+		// Initialize the advection and temperature handlers which depend
 		// on the surface position at Y
 		advectionHandlers[0]->setLocation(grid[surfacePosition[yj]]);
+		temperatureHandler->updateSurfacePosition(grid[surfacePosition[yj]]);
 
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
 			// Boundary conditions
 			// Everything to the left of the surface is empty
-			if (xi <= surfacePosition[yj] || xi == xSize - 1)
+			if (xi <= surfacePosition[yj])
 				continue;
 
 			// Set the grid position
 			gridPosition[0] = grid[xi];
 
 			// Get the temperature from the temperature handler
-			auto temperature = temperatureHandler->getTemperature(gridPosition,
+			concOffset = concs[yj][xi];
+			temperatureHandler->setTemperature(concOffset);
+			double temperature = temperatureHandler->getTemperature(gridPosition,
 					ftime);
 
 			// Update the network if the temperature changed
@@ -517,6 +506,32 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				mutationHandler->updateTrapMutationRate(network);
 				lastTemperature = temperature;
 			}
+
+			// Get the partial derivatives for the temperature
+			temperatureHandler->computePartialsForTemperature(diffVals, diffIndices,
+					grid[xi] - grid[xi - 1], grid[xi + 1] - grid[xi]);
+
+			// Set grid coordinate and component number for the row
+			row.i = xi;
+			row.j = yj;
+			row.c = diffIndices[0];
+
+			// Set grid coordinates and component numbers for the columns
+			// corresponding to the middle, left, and right grid points
+			cols[0].i = xi; // middle
+			cols[0].j = yj;
+			cols[0].c = diffIndices[0];
+			cols[1].i = xi - 1; // left
+			cols[1].j = yj;
+			cols[1].c = diffIndices[0];
+			cols[2].i = xi + 1; // right
+			cols[2].j = yj;
+			cols[2].c = diffIndices[0];
+
+			ierr = MatSetValuesStencil(J, 1, &row, 3, cols, diffVals, ADD_VALUES);
+			checkPetscError(ierr,
+					"PetscSolver2DHandler::computeOffDiagonalJacobian: "
+							"MatSetValuesStencil (temperature) failed.");
 
 			// Get the partial derivatives for the diffusion
 			diffusionHandler->computePartialsForDiffusion(network, diffVals,
@@ -621,9 +636,6 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
 			"TSGetDM failed.");
 
-	// Get the total size of the grid in the x direction for the boundary conditions
-	int xSize = grid.size();
-
 	// Get pointers to vector data
 	PetscScalar ***concs = nullptr;
 	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
@@ -635,15 +647,6 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
 	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
 			"DMDAGetCorners failed.");
-
-	// Get the total size of the grid
-	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
-			"DMDAGetInfo failed.");
 
 	// The degree of freedom is the size of the network
 	const int dof = network->getDOF();
@@ -666,13 +669,13 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	std::vector<double> gridPosition = { 0.0, 0.0, 0.0 };
 
 	// Loop over the grid points
-	for (PetscInt yj = 0; yj < My; yj++) {
+	for (PetscInt yj = 0; yj < nY; yj++) {
 
 		// Compute the total concentration of atoms contained in bubbles
 		atomConc = 0.0;
 
 		// Loop over grid points
-		for (int xi = surfacePosition[yj]; xi < Mx -1; xi++) {
+		for (int xi = surfacePosition[yj] + 1; xi < nX; xi++) {
 			// We are only interested in the helium near the surface
 			if (grid[xi] - grid[surfacePosition[yj]] > 2.0)
 				continue;
@@ -708,14 +711,16 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
 			// Boundary conditions
 			// Everything to the left of the surface is empty
-			if (xi <= surfacePosition[yj] || xi == xSize - 1)
+			if (xi <= surfacePosition[yj])
 				continue;
 
 			// Set the grid position
 			gridPosition[0] = grid[xi];
 
 			// Get the temperature from the temperature handler
-			auto temperature = temperatureHandler->getTemperature(gridPosition,
+			concOffset = concs[yj][xi];
+			temperatureHandler->setTemperature(concOffset);
+			double temperature = temperatureHandler->getTemperature(gridPosition,
 					ftime);
 
 			// Update the network if the temperature changed
@@ -729,7 +734,6 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Copy data into the ReactionNetwork so that it can
 			// compute the new concentrations.
-			concOffset = concs[yj][xi];
 			network->updateConcentrationsFromArray(concOffset);
 
 			// ----- Take care of the reactions for all the reactants -----
@@ -739,7 +743,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					reactionSize);
 
 			// Update the column in the Jacobian that represents each DOF
-			for (int i = 0; i < dof; i++) {
+			for (int i = 0; i < dof - 1; i++) {
 				// Set grid coordinate and component number for the row
 				rowId.i = xi;
 				rowId.j = yj;

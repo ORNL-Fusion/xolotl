@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
 	Reactant reactant(registry);
 
 	// Check its default composition
-	BOOST_REQUIRE_EQUAL(4U, reactant.getComposition().size());
+	BOOST_REQUIRE_EQUAL(6U, reactant.getComposition().size());
 
 	return;
 }
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	reactant.setReactionNetwork(network);
 
 	// Check its default partial derivatives
-	BOOST_REQUIRE_EQUAL(0U, reactant.getPartialDerivatives().size());
+	BOOST_REQUIRE_EQUAL(1U, reactant.getPartialDerivatives().size());
 
 	// Create a reference and temp partial derivative vector
 	std::vector<double> refPartials = std::vector<double>(3, 0.0);
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(checkIsConnected) {
 	}
 
 	// Check HeV
-	std::vector<int> compositionVector = { 1, 1, 0 };
+	std::vector<int> compositionVector = { 1, -1 };
 	reactantConnectivity =
 			network->getCompound("HeV", compositionVector)->getConnectivity();
 	for (int j = 0; j < 8; j++) {
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(checkIsConnected) {
 	}
 
 	// Check HeI
-	compositionVector = {1,0,1};
+	compositionVector = {1, 1};
 	reactantConnectivity =
 			network->getCompound("HeI", compositionVector)->getConnectivity();
 	for (int j = 0; j < 8; j++) {

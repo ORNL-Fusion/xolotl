@@ -78,12 +78,6 @@ PSISuperCluster::PSISuperCluster(PSISuperCluster &other) :
 	return;
 }
 
-std::shared_ptr<IReactant> PSISuperCluster::clone() {
-	std::shared_ptr<IReactant> reactant(new PSISuperCluster(*this));
-
-	return reactant;
-}
-
 void PSISuperCluster::setReactionNetwork(
 		const std::shared_ptr<IReactionNetwork> reactionNetwork) {
 	// Call the superclass's method to actually set the reference
@@ -119,18 +113,6 @@ void PSISuperCluster::setReactionNetwork(
 	computeDispersion();
 
 	return;
-}
-
-double PSISuperCluster::getConcentration(double distHe, double distV) const {
-	return l0 + (distHe * l1He) + (distV * l1V);
-}
-
-double PSISuperCluster::getHeMomentum() const {
-	return l1He;
-}
-
-double PSISuperCluster::getVMomentum() const {
-	return l1V;
 }
 
 double PSISuperCluster::getTotalConcentration() const {
@@ -227,18 +209,6 @@ double PSISuperCluster::getTotalVacancyConcentration() const {
 	}
 
 	return conc;
-}
-
-double PSISuperCluster::getHeDistance(int he) const {
-	if (sectionHeWidth == 1)
-		return 0.0;
-	return 2.0 * (double) (he - numHe) / ((double) sectionHeWidth - 1.0);
-}
-
-double PSISuperCluster::getVDistance(int v) const {
-	if (sectionVWidth == 1)
-		return 0.0;
-	return 2.0 * (double) (v - numV) / ((double) sectionVWidth - 1.0);
 }
 
 void PSISuperCluster::computeDispersion() {
@@ -521,8 +491,8 @@ void PSISuperCluster::optimizeReactions() {
 	}
 
 	// Loop on the effective dissociating map
-	for (auto mapIt = dissociatingMap.begin();
-			mapIt != dissociatingMap.end(); ++mapIt) {
+	for (auto mapIt = dissociatingMap.begin(); mapIt != dissociatingMap.end();
+			++mapIt) {
 		// Get the pairs
 		auto pairs = mapIt->second;
 		// Loop over all the reacting pairs
@@ -612,8 +582,8 @@ void PSISuperCluster::optimizeReactions() {
 			secondCluster = (*it).second;
 
 			// Create a dissociation reaction
-			auto reaction = std::make_shared<DissociationReaction>(
-					this, firstCluster, secondCluster);
+			auto reaction = std::make_shared<DissociationReaction>(this,
+					firstCluster, secondCluster);
 			// Add it to the network
 			reaction = network->addDissociationReaction(reaction);
 
@@ -742,20 +712,6 @@ void PSISuperCluster::resetConnectivities() {
 	vMomentumPartials.resize(dof, 0.0);
 
 	return;
-}
-
-double PSISuperCluster::getTotalFlux() {
-	// Initialize the fluxes
-	heMomentumFlux = 0.0;
-	vMomentumFlux = 0.0;
-
-	// Get the fluxes
-	double prodFlux = getProductionFlux();
-	double dissFlux = getDissociationFlux();
-	double combFlux = getCombinationFlux();
-	double emissFlux = getEmissionFlux();
-
-	return prodFlux - combFlux + dissFlux - emissFlux;
 }
 
 double PSISuperCluster::getDissociationFlux() {

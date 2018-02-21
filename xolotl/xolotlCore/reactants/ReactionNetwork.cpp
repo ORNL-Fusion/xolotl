@@ -74,6 +74,854 @@ double ReactionNetwork::computeBindingEnergy(
 	double bindingEnergy = reaction->first->getFormationEnergy()
 			+ reaction->second->getFormationEnergy()
 			- reaction->dissociating->getFormationEnergy();
+
+	// hydrogen cases
+	if (reaction->dissociating->getType() == heVType
+			&& (reaction->first->getType() == dType
+					|| reaction->first->getType() == tType
+					|| reaction->second->getType() == dType
+					|| reaction->second->getType() == tType)) {
+		auto comp = reaction->dissociating->getComposition();
+		int heSize = comp[heType];
+		int vSize = comp[vType];
+		int hSize = comp[dType] + comp[tType];
+
+		if (vSize == 1) {
+			switch (heSize) {
+			case 0:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.21;
+					break;
+				case 2:
+					bindingEnergy = 1.17;
+					break;
+				case 3:
+					bindingEnergy = 1.05;
+					break;
+				case 4:
+					bindingEnergy = 0.93;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 1:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.00;
+					break;
+				case 2:
+					bindingEnergy = 0.95;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.88;
+					break;
+				case 5:
+					bindingEnergy = 0.80;
+					break;
+				case 6:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 2:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.96;
+					break;
+				case 2:
+					bindingEnergy = 0.92;
+					break;
+				case 3:
+					bindingEnergy = 0.85;
+					break;
+				case 4:
+					bindingEnergy = 0.84;
+					break;
+				case 5:
+					bindingEnergy = 0.83;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 3:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.86;
+					break;
+				case 2:
+					bindingEnergy = 0.81;
+					break;
+				case 3:
+					bindingEnergy = 0.69;
+					break;
+				case 4:
+					bindingEnergy = 0.64;
+					break;
+				case 5:
+					bindingEnergy = 0.65;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 4:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.83;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.65;
+					break;
+				case 4:
+					bindingEnergy = 0.60;
+					break;
+				case 5:
+					bindingEnergy = 0.60;
+					break;
+				case 6:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 5:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.83;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.60;
+					break;
+				case 4:
+					bindingEnergy = 0.50;
+					break;
+				case 5:
+					bindingEnergy = 0.50;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 6:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.70;
+					break;
+				case 3:
+					bindingEnergy = 0.60;
+					break;
+				case 4:
+					bindingEnergy = 0.50;
+					break;
+				case 5:
+					bindingEnergy = 0.50;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 7:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.75;
+					break;
+				case 3:
+					bindingEnergy = 0.65;
+					break;
+				case 4:
+					bindingEnergy = 0.55;
+					break;
+				case 5:
+					bindingEnergy = 0.55;
+					break;
+				case 6:
+					bindingEnergy = 0.45;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 8:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.70;
+					break;
+				case 4:
+					bindingEnergy = 0.65;
+					break;
+				case 5:
+					bindingEnergy = 0.60;
+					break;
+				case 6:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 9:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.75;
+					break;
+				case 4:
+					bindingEnergy = 0.70;
+					break;
+				case 5:
+					bindingEnergy = 0.65;
+					break;
+				case 6:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			default:
+				break;
+			}
+		} else if (vSize == 2) {
+			switch (heSize) {
+			case 0:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.63;
+					break;
+				case 2:
+					bindingEnergy = 1.31;
+					break;
+				case 3:
+					bindingEnergy = 1.25;
+					break;
+				case 4:
+					bindingEnergy = 1.16;
+					break;
+				case 5:
+					bindingEnergy = 1.00;
+					break;
+				case 6:
+					bindingEnergy = 1.00;
+					break;
+				case 7:
+					bindingEnergy = 0.95;
+					break;
+				case 8:
+					bindingEnergy = 0.95;
+					break;
+				case 9:
+					bindingEnergy = 0.75;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 1:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.30;
+					break;
+				case 2:
+					bindingEnergy = 1.30;
+					break;
+				case 3:
+					bindingEnergy = 1.24;
+					break;
+				case 4:
+					bindingEnergy = 1.08;
+					break;
+				case 5:
+					bindingEnergy = 0.95;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.95;
+					break;
+				case 8:
+					bindingEnergy = 0.95;
+					break;
+				case 9:
+					bindingEnergy = 0.75;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 2:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.15;
+					break;
+				case 2:
+					bindingEnergy = 1.14;
+					break;
+				case 3:
+					bindingEnergy = 1.11;
+					break;
+				case 4:
+					bindingEnergy = 1.14;
+					break;
+				case 5:
+					bindingEnergy = 0.95;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.95;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.75;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 3:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.12;
+					break;
+				case 2:
+					bindingEnergy = 1.06;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 4:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.10;
+					break;
+				case 2:
+					bindingEnergy = 1.06;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 5:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.10;
+					break;
+				case 2:
+					bindingEnergy = 1.05;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 6:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.10;
+					break;
+				case 2:
+					bindingEnergy = 1.05;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 7:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.05;
+					break;
+				case 2:
+					bindingEnergy = 1.00;
+					break;
+				case 3:
+					bindingEnergy = 0.95;
+					break;
+				case 4:
+					bindingEnergy = 0.95;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 8:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.05;
+					break;
+				case 2:
+					bindingEnergy = 1.00;
+					break;
+				case 3:
+					bindingEnergy = 0.95;
+					break;
+				case 4:
+					bindingEnergy = 0.95;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 9:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.05;
+					break;
+				case 2:
+					bindingEnergy = 1.00;
+					break;
+				case 3:
+					bindingEnergy = 0.95;
+					break;
+				case 4:
+					bindingEnergy = 0.95;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 10:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.00;
+					break;
+				case 2:
+					bindingEnergy = 0.95;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.90;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 11:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.95;
+					break;
+				case 2:
+					bindingEnergy = 0.95;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.90;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 12:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.95;
+					break;
+				case 2:
+					bindingEnergy = 0.90;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.85;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.80;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.60;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 13:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.90;
+					break;
+				case 2:
+					bindingEnergy = 0.90;
+					break;
+				case 3:
+					bindingEnergy = 0.85;
+					break;
+				case 4:
+					bindingEnergy = 0.85;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.80;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.60;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 14:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.90;
+					break;
+				case 2:
+					bindingEnergy = 0.90;
+					break;
+				case 3:
+					bindingEnergy = 0.85;
+					break;
+				case 4:
+					bindingEnergy = 0.85;
+					break;
+				case 5:
+					bindingEnergy = 0.80;
+					break;
+				case 6:
+					bindingEnergy = 0.80;
+					break;
+				case 7:
+					bindingEnergy = 0.80;
+					break;
+				case 8:
+					bindingEnergy = 0.70;
+					break;
+				case 9:
+					bindingEnergy = 0.60;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			}
+		}
+	}
+
 	return bindingEnergy;
 }
 
@@ -179,53 +1027,52 @@ const std::vector<std::string> & ReactionNetwork::getCompoundNames() const {
 std::shared_ptr<ProductionReaction> ReactionNetwork::addProductionReaction(
 		std::shared_ptr<ProductionReaction> reaction) {
 
-    // Check if the given ProductionReaction already exists.
-    auto key = reaction->descriptiveKey();
-    auto iter = productionReactionMap.find(key);
-    if(iter != productionReactionMap.end()) {
-        // We already knew about the reaction, so return the one we
-        // already had defined.
-        return iter->second;
-    }
+	// Check if the given ProductionReaction already exists.
+	auto key = reaction->descriptiveKey();
+	auto iter = productionReactionMap.find(key);
+	if (iter != productionReactionMap.end()) {
+		// We already knew about the reaction, so return the one we
+		// already had defined.
+		return iter->second;
+	}
 
-    // We did not yet know about the given reaction.
-    // Save it.
-    productionReactionMap.emplace(key, reaction);
-    allProductionReactions.emplace_back(reaction);
+	// We did not yet know about the given reaction.
+	// Save it.
+	productionReactionMap.emplace(key, reaction);
+	allProductionReactions.emplace_back(reaction);
 
-    return reaction;
+	return reaction;
 }
 
 std::shared_ptr<DissociationReaction> ReactionNetwork::addDissociationReaction(
 		std::shared_ptr<DissociationReaction> reaction) {
 
-    // Check if we already know about this reaction.
-    auto key = reaction->descriptiveKey();
-    auto iter = dissociationReactionMap.find(key);
-    if(iter != dissociationReactionMap.end()) {
-        // We already knew about the reaction.
-        // Return the existing one.
-        return iter->second;
-    }
+	// Check if we already know about this reaction.
+	auto key = reaction->descriptiveKey();
+	auto iter = dissociationReactionMap.find(key);
+	if (iter != dissociationReactionMap.end()) {
+		// We already knew about the reaction.
+		// Return the existing one.
+		return iter->second;
+	}
 
-    // We did not yet know about the given reaction.
-    // Add it, but also link it to its reverse reaction.
-    // First, create the reverse reaction to get a pointer to it.
-    auto reverseReaction = std::make_shared<ProductionReaction>(reaction->first,
-            reaction->second);
-    // Add this reverse reaction to our set of known reactions.
-    reverseReaction = addProductionReaction(reverseReaction);
+	// We did not yet know about the given reaction.
+	// Add it, but also link it to its reverse reaction.
+	// First, create the reverse reaction to get a pointer to it.
+	auto reverseReaction = std::make_shared<ProductionReaction>(reaction->first,
+			reaction->second);
+	// Add this reverse reaction to our set of known reactions.
+	reverseReaction = addProductionReaction(reverseReaction);
 
-    // Indicate that the reverse reaction is the reverse reaction
-    // to the newly-added dissociation reaction.
-    reaction->reverseReaction = reverseReaction.get();
+	// Indicate that the reverse reaction is the reverse reaction
+	// to the newly-added dissociation reaction.
+	reaction->reverseReaction = reverseReaction.get();
 
-    // Add the dissociation reaction to our set of known reactions.
-    dissociationReactionMap.emplace(key, reaction);
-    allDissociationReactions.emplace_back(reaction);
+	// Add the dissociation reaction to our set of known reactions.
+	dissociationReactionMap.emplace(key, reaction);
+	allDissociationReactions.emplace_back(reaction);
 
-    // Return the newly-added dissociation reaction.
-    return reaction;
+	// Return the newly-added dissociation reaction.
+	return reaction;
 }
-
 
