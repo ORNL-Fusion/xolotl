@@ -702,6 +702,32 @@ public interface Arguments {
 	boolean isNetParam();
 
 	/**
+	 * This Option annotation corresponds to the optional '--burstingDepth' option and
+	 * provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "The bursting depth parameter (in nm) that will be used.")
+
+	/**
+	 * This operation produces the optional command line option '--burstingDepth'
+	 * which takes a single string value and is defined by the previous Option
+	 * annotation
+	 * 
+	 * @return The bursting depth parameter
+	 */
+	String getBurstingDepth();
+
+	/**
+	 * This operation makes the command line option '--burstingDepth' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isBurstingDepth();
+
+	/**
 	 * This produces the command line arguments '--help' or '-h' either of which
 	 * can be used to print usage help
 	 * 

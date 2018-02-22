@@ -229,6 +229,11 @@ protected:
 	 */
 	int rightBoundary;
 
+	/**
+	 * Depth for the bubble bursting in nm.
+	 */
+	double burstingDepth;
+
 public:
 
 	/**
@@ -929,6 +934,22 @@ public:
 	 */
 	void setRightBoundary(int n) {
 		rightBoundary = n;
+	}
+
+	/**
+	 * Obtain the value of the depth above which the bursting is happening.
+	 * \see IOptions.h
+	 */
+	double getBurstingDepth() const {
+		return burstingDepth;
+	}
+
+	/**
+	 * Set the value for the depth above which the bursting is happening.
+	 * \see IOptions.h
+	 */
+	void setBurstingDepth(double depth) {
+		burstingDepth = depth;
 	}
 
 };

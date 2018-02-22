@@ -284,6 +284,8 @@ public class Preprocessor {
 			xolotlParams.setProperty("grain", args.getGrain());
 		if (args.isSputter())
 			xolotlParams.setProperty("sputtering", args.getSputter());
+		if (args.isBurstingDepth())
+			xolotlParams.setProperty("burstingDepth", args.getBurstingDepth());
 		if (args.isNetParam()) {
 			// Build the network argument
 			String netString;

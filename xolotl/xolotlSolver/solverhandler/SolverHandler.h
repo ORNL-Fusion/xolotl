@@ -83,6 +83,9 @@ protected:
 	//! The sputtering yield for the problem.
 	double sputteringYield;
 
+	//! The depth parameter for the bubble bursting.
+	double tauBursting;
+
 	//! Method generating the grid in the x direction
 	void generateGrid(int nx, double hx, int surfacePos) {
 		// Clear the grid
@@ -162,7 +165,7 @@ protected:
 					0.0), dimension(-1), portion(0.0), useRegularGrid(true), movingSurface(
 					false), bubbleBursting(false), sputteringYield(0.0), fluxHandler(
 					nullptr), temperatureHandler(nullptr), diffusionHandler(
-					nullptr), mutationHandler(nullptr) {
+					nullptr), mutationHandler(nullptr), tauBursting(10.0) {
 	}
 
 public:
@@ -232,6 +235,9 @@ public:
 
 		// Set the sputtering yield
 		sputteringYield = options.getSputteringYield();
+
+		// Set the sputtering yield
+		tauBursting = options.getBurstingDepth();
 
 		// Look at if the user wants to use a regular grid in the x direction
 		useRegularGrid = options.useRegularXGrid();
@@ -317,6 +323,14 @@ public:
 	 */
 	double getSputteringYield() const {
 		return sputteringYield;
+	}
+
+	/**
+	 * Get the depth parameter for bursting.
+	 * \see ISolverHandler.h
+	 */
+	double getTauBursting() const {
+		return tauBursting;
 	}
 
 	/**

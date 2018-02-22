@@ -630,6 +630,20 @@ public:
 	 */
 	virtual void setRightBoundary(int n) = 0;
 
+	/**
+	 * Obtain the value of the depth above which the bursting is happening.
+	 *
+	 * @return The depth
+	 */
+	virtual double getBurstingDepth() const = 0;
+
+	/**
+	 * Set the value for the depth above which the bursting is happening.
+	 *
+	 * @param stepSize The depth
+	 */
+	virtual void setBurstingDepth(double depth) = 0;
+
 };
 //end class IOptions
 

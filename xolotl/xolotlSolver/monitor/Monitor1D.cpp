@@ -2095,6 +2095,9 @@ PetscErrorCode burstingEventFunction1D(TS ts, PetscReal time, Vec solution,
 	// Compute the prefactor for the probability (arbitrary)
 	double prefactor = fluxAmplitude * dt * 0.1;
 
+	// The depth parameter to know where the bursting should happen
+	double depthParam = solverHandler.getTauBursting(); // nm
+
 	// For now we are not bursting
 	bool burst = false;
 
@@ -2146,7 +2149,6 @@ PetscErrorCode burstingEventFunction1D(TS ts, PetscReal time, Vec solution,
 				continue;
 			}
 			// Add randomness
-			double depthParam = 10.0;			// nm
 			double prob = prefactor * (1.0 - (distance - radius) / distance)
 					* min(1.0,
 							exp(-(distance - depthParam) / (depthParam * 2.0)));

@@ -1028,6 +1028,9 @@ PetscErrorCode burstingEventFunction2D(TS ts, PetscReal time, Vec solution,
 	// Compute the prefactor for the probability (arbitrary)
 	double prefactor = fluxAmplitude * dt * 0.1;
 
+	// The depth parameter to know where the bursting should happen
+	double depthParam = solverHandler.getTauBursting(); // nm
+
 	// For now we are not bursting
 	bool burst = false;
 
@@ -1056,7 +1059,7 @@ PetscErrorCode burstingEventFunction2D(TS ts, PetscReal time, Vec solution,
 
 				// Compute the radius of the bubble from the number of helium
 				double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy / 4.0;
-//			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]) * hy;
+//				double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]) * hy;
 				double radius =
 						(sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
 								+ pow(
@@ -1082,7 +1085,6 @@ PetscErrorCode burstingEventFunction2D(TS ts, PetscReal time, Vec solution,
 					continue;
 				}
 				// Add randomness
-				double depthParam = 10.0; // nm
 				double prob = prefactor * (1.0 - (distance - radius) / distance)
 						* min(1.0,
 								exp(

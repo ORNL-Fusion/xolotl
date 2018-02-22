@@ -148,6 +148,13 @@ public:
 	virtual double getSputteringYield() const = 0;
 
 	/**
+	 * Get the bursting depth parameter.
+	 *
+	 * @return The depth parameter
+	 */
+	virtual double getTauBursting() const = 0;
+
+	/**
 	 * To know if the surface should be able to move.
 	 *
 	 * @return True if the surface should be able to move.
