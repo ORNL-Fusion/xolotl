@@ -39,9 +39,9 @@ protected:
 	double fluxAmplitude;
 
 	/**
-	 * The index of the cluster.
+	 * The indices of the incoming clusters.
 	 */
-	int fluxIndex;
+	std::vector<int> fluxIndices;
 
 	/**
 	 * Are we using a time profile for the amplitude of the helium incoming flux?
@@ -104,7 +104,7 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	virtual void initializeFluxHandler(IReactionNetwork *network,
+	virtual void initializeFluxHandler(const IReactionNetwork& network,
 			int surfacePos, std::vector<double> grid);
 
 	/**

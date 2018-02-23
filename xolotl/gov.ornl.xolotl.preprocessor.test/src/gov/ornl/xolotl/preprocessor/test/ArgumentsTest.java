@@ -122,6 +122,9 @@ public class ArgumentsTest {
 			// Check if there is a sputtering yield argument
 			assertEquals(false, args.isSputter());
 
+			// Check if there is a bursting depth argument
+			assertEquals(false, args.isBurstingDepth());
+
 			// Check if there is a network param argument
 			assertEquals(false, args.isNetParam());
 
@@ -154,7 +157,7 @@ public class ArgumentsTest {
 							"--zStepSize", "10.0", "--material", "W111", "--process", "diff", "--tempFile", "temp.dat",
 							"--heat=1200.0 1000.0", "--flux", "5.0e5", "--fluxFile", "flux.dat", "--checkpoint",
 							"xolotlStop.h5", "--initialV", "0.05", "--regularGrid", "yes", "--voidPortion", "60.0",
-							"--grain=Y 3.0", "--sputter", "0.05" });
+							"--grain=Y 3.0", "--sputter", "0.05", "--burstingDepth", "5.0" });
 
 			// Check that the maximum Helium cluster size is 7
 			assertEquals(7, args.getMaxHeSize());
@@ -272,6 +275,12 @@ public class ArgumentsTest {
 
 			// Check its value
 			assertEquals("0.05", args.getSputter());
+
+			// Check if there is a bursting depth argument
+			assertEquals(true, args.isBurstingDepth());
+
+			// Check its value
+			assertEquals("5.0", args.getBurstingDepth());
 
 		} catch (ArgumentValidationException e) {
 			// Complain and fail

@@ -112,6 +112,57 @@ inline double compute5thOrderLegendre(double x, std::vector<double> coeffs) {
 	return value;
 }
 
+/**
+ * Computes
+ *
+ * sum (n - mean) from alpha to beta
+ */
+inline double firstOrderSum(double alpha, double beta, double mean) {
+	double toReturn = ((beta * (beta + 1.0)) / 2.0)
+			- ((alpha * (alpha - 1.0)) / 2.0) - ((beta - alpha + 1.0) * mean);
+
+	return toReturn;
+}
+
+/**
+ * Computes
+ *
+ * sum (n - mean)^2 from alpha to beta
+ */
+inline double secondOrderSum(double alpha, double beta, double mean) {
+	double toReturn = (beta * (beta + 1.0) * ((2.0 * beta) + 1.0)) / 6.0;
+
+	toReturn -= (alpha * (alpha - 1.0) * ((2.0 * alpha) - 1.0)) / 6.0;
+
+	toReturn -= 2.0 * mean
+			* ((((beta * (beta + 1.0))) / 2.0)
+					- (((alpha * (alpha - 1.0))) / 2.0));
+
+	toReturn += mean * mean * (beta - alpha + 1.0);
+
+	return toReturn;
+}
+
+/**
+ * Computes
+ *
+ * sum (n - mean1) * (n + offset - mean2) from alpha to beta
+ */
+inline double secondOrderOffsetSum(double alpha, double beta, double mean1,
+		double mean2, double offset) {
+	double toReturn = (beta * (beta + 1.0) * (2.0 * beta + 1.0)) / 6.0;
+
+	toReturn -= (alpha * (alpha - 1.0) * (2.0 * alpha - 1.0)) / 6.0;
+
+	toReturn += (offset - mean1 - mean2)
+			* ((((beta * (beta + 1.0))) / 2.0)
+					- (((alpha * (alpha - 1.0))) / 2.0));
+
+	toReturn += mean1 * (mean2 - offset) * (beta - alpha + 1.0);
+
+	return toReturn;
+}
+
 }
 
 #endif /* MATHUTILS_H_ */

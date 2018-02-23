@@ -24,12 +24,14 @@ private:
 		// Value at which the flux goes to 0
 		double x1 = 10.0;
 
-		if (x > x1) return 0.0;
+		if (x > x1)
+			return 0.0;
 
 		// Compute the fit
 		double value = 7.93260868 + 1.49429886 * x - 4.48320209 * pow(x, 2)
-		+ 1.97014869 * pow(x, 3) - 0.407986353 * pow(x, 4) + 0.0454535058 * pow(x, 5)
-		- 0.0026618556 * pow(x, 6) + 0.0000678768532 * pow(x, 7) - 0.000000271171991 * pow(x, 8);
+				+ 1.97014869 * pow(x, 3) - 0.407986353 * pow(x, 4)
+				+ 0.0454535058 * pow(x, 5) - 0.0026618556 * pow(x, 6)
+				+ 0.0000678768532 * pow(x, 7) - 0.000000271171991 * pow(x, 8);
 
 		return value;
 	}
@@ -39,12 +41,14 @@ public:
 	/**
 	 * The constructor
 	 */
-	W110FitFluxHandler() {}
+	W110FitFluxHandler() {
+	}
 
 	/**
 	 * The Destructor
 	 */
-	~W110FitFluxHandler() {}
+	~W110FitFluxHandler() {
+	}
 
 };
 //end class W110FitFluxHandler

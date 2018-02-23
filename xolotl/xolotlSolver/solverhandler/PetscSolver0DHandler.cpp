@@ -7,15 +7,11 @@ namespace xolotlSolver {
 
 void PetscSolver0DHandler::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
-
-	// Initialize the all reactants pointer
-	allReactants = network->getAll();
-
 	// Recompute Ids and network size and redefine the connectivities
-	network->reinitializeConnectivities();
+	network.reinitializeConnectivities();
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network->getDOF();
+	const int dof = network.getDOF();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create distributed array (DMDA) to manage parallel grid and vectors
@@ -62,7 +58,7 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
 
 	// Get the diagonal fill
-	network->getDiagonalFill(dfill);
+	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
 	ierr = DMDASetBlockFills(da, dfill, ofill);
@@ -98,7 +94,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	bool hasConcentrations = false;
 	if (!networkName.empty())
 		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-			networkName, tempTimeStep);
+				networkName, tempTimeStep);
 
 	// Initialize the flux handler
 	fluxHandler->initializeFluxHandler(network, 0, grid);
@@ -108,10 +104,10 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + the super clusters
-	const int dof = network->getDOF();
+	const int dof = network.getDOF();
 
 	// Get the single vacancy ID
-	auto singleVacancyCluster = network->get(xolotlCore::vType, 1);
+	auto singleVacancyCluster = network.get(xolotlCore::Species::V, 1);
 	int vacancyIndex = -1;
 	if (singleVacancyCluster)
 		vacancyIndex = singleVacancyCluster->getId() - 1;
@@ -125,9 +121,8 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Temperature
-	std::vector<double> gridPosition = { 0.0, 0.0, 0.0 };
-	concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition,
-			0.0);
+	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
+	concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition, 0.0);
 
 	// Initialize the vacancy concentration
 	if (singleVacancyCluster && !hasConcentrations) {
@@ -184,10 +179,10 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network->getDOF();
+	const int dof = network.getDOF();
 
 	// Set the grid position
-	std::vector<double> gridPosition = { 0.0, 0.0, 0.0 };
+	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the old and new array offsets
 	concOffset = concs[0];
@@ -200,7 +195,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	// Update the network if the temperature changed
 	if (!xolotlCore::equal(temperature, lastTemperature)) {
-		network->setTemperature(temperature);
+		network.setTemperature(temperature);
 		lastTemperature = temperature;
 	}
 
@@ -209,13 +204,13 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// fluxes and hold the state data from the last time step. I'm reusing
 	// it because it cuts down on memory significantly (about 400MB per
 	// grid point) at the expense of being a little tricky to comprehend.
-	network->updateConcentrationsFromArray(concOffset);
+	network.updateConcentrationsFromArray(concOffset);
 
 	// ----- Account for flux of incoming particles -----
 	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
-	network->computeAllFluxes(updatedConcOffset);
+	network.computeAllFluxes(updatedConcOffset);
 
 	/*
 	 Restore vectors
@@ -260,7 +255,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	PetscScalar *concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network->getDOF();
+	const int dof = network.getDOF();
 
 	// Arguments for MatSetValuesStencil called below
 	MatStencil rowId;
@@ -269,7 +264,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	PetscInt reactionSize[dof];
 
 	// Set the grid position
-	std::vector<double> gridPosition = { 0.0, 0.0, 0.0 };
+	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];
@@ -279,18 +274,18 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 	// Update the network if the temperature changed
 	if (!xolotlCore::equal(temperature, lastTemperature)) {
-		network->setTemperature(temperature);
+		network.setTemperature(temperature);
 		lastTemperature = temperature;
 	}
 
 	// Copy data into the ReactionNetwork so that it can
 	// compute the new concentrations.
-	network->updateConcentrationsFromArray(concOffset);
+	network.updateConcentrationsFromArray(concOffset);
 
 	// ----- Take care of the reactions for all the reactants -----
 
 	// Compute all the partial derivatives for the reactions
-	network->computeAllPartials(reactionVals, reactionIndices, reactionSize);
+	network.computeAllPartials(reactionVals, reactionIndices, reactionSize);
 
 	// Update the column in the Jacobian that represents each DOF
 	for (int i = 0; i < dof - 1; i++) {

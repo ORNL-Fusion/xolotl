@@ -10,12 +10,11 @@
 namespace xolotlCore {
 
 FluxHandler::FluxHandler() :
-		fluence(0.0), fluxAmplitude(0.0), fluxIndex(-1), useTimeProfile(false), normFactor(
-				0.0) {
+		fluence(0.0), fluxAmplitude(0.0), useTimeProfile(false), normFactor(0.0) {
 	return;
 }
 
-void FluxHandler::initializeFluxHandler(IReactionNetwork *network,
+void FluxHandler::initializeFluxHandler(const IReactionNetwork& network,
 		int surfacePos, std::vector<double> grid) {
 	// Set the grid
 	xGrid = grid;
@@ -28,12 +27,12 @@ void FluxHandler::initializeFluxHandler(IReactionNetwork *network,
 	normFactor = 0.0;
 	// Loop on the x grid points skipping the first after the surface position
 	// and last because of the boundary conditions
-	for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
+	for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 		// Get the x position
-		double x = xGrid[i] - xGrid[surfacePos];
+		double x = xGrid[i + 1] - xGrid[surfacePos + 1];
 
 		// Add the the value of the function times the step size
-		normFactor += FitFunction(x) * (xGrid[i] - xGrid[i - 1]);
+		normFactor += FitFunction(x) * (xGrid[i + 1] - xGrid[i]);
 	}
 
 	// Factor the incident flux will be multiplied by to get
@@ -48,9 +47,9 @@ void FluxHandler::initializeFluxHandler(IReactionNetwork *network,
 	incidentFluxVec.push_back(0.0);
 
 	// Starts a i = surfacePos + 1 because the first value was already put in the vector
-	for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
+	for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 		// Get the x position
-		auto x = xGrid[i] - xGrid[surfacePos];
+		auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
 
 		// Compute the flux value
 		double incidentFlux = fluxNormalized * FitFunction(x);
@@ -71,9 +70,9 @@ void FluxHandler::recomputeFluxHandler(int surfacePos) {
 		fluxNormalized = fluxAmplitude / normFactor;
 
 	// Starts a i = surfacePos + 1 because the first values were already put in the vector
-	for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
+	for (int i = surfacePos + 1; i < xGrid.size() - 2; i++) {
 		// Get the x position
-		auto x = xGrid[i] - xGrid[surfacePos];
+		auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
 
 		// Compute the flux value
 		double incidentFlux = fluxNormalized * FitFunction(x);
@@ -145,12 +144,12 @@ void FluxHandler::computeIncidentFlux(double currentTime,
 	}
 
 	if (incidentFluxVec.size() == 0) {
-		updatedConcOffset[fluxIndex] += fluxAmplitude;
+		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
 		return;
 	}
 
 	// Update the concentration array
-	updatedConcOffset[fluxIndex] += incidentFluxVec[xi - surfacePos];
+	updatedConcOffset[fluxIndices[0]] += incidentFluxVec[xi - surfacePos];
 
 	return;
 }

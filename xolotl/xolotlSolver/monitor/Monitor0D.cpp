@@ -18,12 +18,15 @@
 #include <HDF5Utils.h>
 #include <NESuperCluster.h>
 #include <PSISuperCluster.h>
+#include <FeSuperCluster.h>
 #include <NEClusterReactionNetwork.h>
 #include <PSIClusterReactionNetwork.h>
+#include <FeClusterReactionNetwork.h>
 
 namespace xolotlSolver {
 
 // Declaration of the functions defined in Monitor.cpp
+extern PetscErrorCode checkTimeStep(TS ts);
 extern PetscErrorCode monitorTime(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx);
 extern PetscErrorCode computeFluence(TS ts, PetscInt timestep, PetscReal time,
@@ -34,6 +37,7 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
 extern double previousTime;
+extern double timeStepThreshold;
 
 //! The pointer to the plot used in monitorScatter0D.
 std::shared_ptr<xolotlViz::IPlot> scatterPlot0D;
@@ -43,13 +47,6 @@ PetscReal hdf5Stride0D = 0.0;
 PetscInt hdf5Previous0D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName0D = "xolotlStop.h5";
-// Declare the vector that will store the Id of the vacancy clusters
-std::vector<int> indices0D;
-// Declare the vector that will store the weight of the vacancy clusters
-// (their V composition)
-std::vector<int> weights0D;
-// Declare the vector that will store the radii of bubbles
-std::vector<double> radii0D;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop0D")
@@ -64,8 +61,11 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Compute the dt
+	double dt = time - previousTime;
+
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + time / 1000.0) / hdf5Stride0D) == hdf5Previous0D)
+	if ((int) ((time + dt / 10.0) / hdf5Stride0D) == hdf5Previous0D)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
@@ -81,11 +81,11 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto solverHandler = PetscSolver::getSolverHandler();
+	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
-	auto network = solverHandler->getNetwork();
-	const int dof = network->getDOF();
+	auto& network = solverHandler.getNetwork();
+	const int dof = network.getDOF();
 
 	// Open the already created HDF5 file
 	xolotlCore::HDF5Utils::openFile(hdf5OutputName0D);
@@ -170,12 +170,12 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto solverHandler = PetscSolver::getSolverHandler();
+	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto network = solverHandler->getNetwork();
-	int networkSize = network->size();
-	auto superClusters = network->getAll(NESuperType);
+	auto& network = solverHandler.getNetwork();
+	int networkSize = network.size();
+	auto& superClusters = network.getAll(ReactantType::NESuper);
 
 	// Create a Point vector to store the data to give to the data provider
 	// for the visualization
@@ -185,7 +185,7 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 	gridPointSolution = solutionArray[0];
 
 	// Update the concentration in the network
-	network->updateConcentrationsFromArray(gridPointSolution);
+	network.updateConcentrationsFromArray(gridPointSolution);
 
 	for (int i = 0; i < networkSize - superClusters.size(); i++) {
 		// Create a Point with the concentration[i] as the value
@@ -197,19 +197,21 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 		myPoints->push_back(aPoint);
 	}
 	int nXe = networkSize - superClusters.size() + 1;
-	for (int i = 0; i < superClusters.size(); i++) {
+	// Loop on the super clusters
+	for (auto const& superMapItem : superClusters) {
 		// Get the cluster
-		auto cluster = (NESuperCluster *) superClusters[i];
+		auto const& cluster =
+				static_cast<NESuperCluster&>(*(superMapItem.second));
 		// Get the width
-		int width = cluster->getSectionWidth();
+		int width = cluster.getSectionWidth();
 		// Loop on the width
 		for (int k = 0; k < width; k++) {
 			// Compute the distance
-			double dist = cluster->getDistance(nXe + k);
+			double dist = cluster.getDistance(nXe + k);
 			// Create a Point with the concentration[i] as the value
 			// and add it to myPoints
 			xolotlViz::Point aPoint;
-			aPoint.value = cluster->getConcentration(dist);
+			aPoint.value = cluster.getConcentration(dist);
 			aPoint.t = time;
 			aPoint.x = (double) nXe + k;
 			myPoints->push_back(aPoint);
@@ -253,12 +255,12 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorMeanSize0D")
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorBubble0D")
 /**
  * This is a monitoring method that will create files with the mean
- * vacancy size at each time step.
+ * concentration of each bubble at each time step.
  */
-PetscErrorCode monitorMeanSize0D(TS ts, PetscInt timestep, PetscReal time,
+PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -280,60 +282,46 @@ PetscErrorCode monitorMeanSize0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto solverHandler = PetscSolver::getSolverHandler();
+	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto network = solverHandler->getNetwork();
-	int dof = network->getDOF();
-	auto reactants = network->getAll();
-
-	// Get all the super clusters
-	auto superClusters = network->getAll(PSISuperType);
+	auto& network = solverHandler.getNetwork();
+	int dof = network.getDOF();
 
 	// Create the output file
 	std::ofstream outputFile;
 	std::stringstream name;
-	name << "hydrogen_" << timestep << ".dat";
+	name << "bubble_" << timestep << ".dat";
 	outputFile.open(name.str());
-
-	double constantMulti = xolotlCore::pi
-			/ std::pow(xolotlCore::tungstenLatticeConstant, 3.0);
 
 	// Get the pointer to the beginning of the solution data for this grid point
 	gridPointSolution = solutionArray[0];
 
-	for (int i = 0; i < dof - 1; i++) {
-		auto cluster = reactants->at(i);
-		auto comp = cluster->getComposition();
-		outputFile << comp[tType] << " " << comp[dType] << " " << comp[heType] << " " << comp[vType] << " "
-				<< gridPointSolution[i] << std::endl;
+	// Update the concentration in the network
+	network.updateConcentrationsFromArray(gridPointSolution);
+
+	// Initialize the total helium and concentration before looping
+	double concTot = 0.0, heliumTot = 0.0;
+
+	// Consider each super cluster.
+	for (auto const& superMapItem : network.getAll(ReactantType::FeSuper)) {
+		// Get the super cluster
+		auto const& superCluster =
+				static_cast<FeSuperCluster&>(*(superMapItem.second));
+		// Get its boundaries
+		auto const& heBounds = superCluster.getHeBounds();
+		auto const& vBounds = superCluster.getVBounds();
+		// Get its diameter
+		double diam = 2.0 * superCluster.getReactionRadius();
+		// Get its concentration
+		double conc = superCluster.getConcentration(0.0, 0.0);
+
+		// For compatibility with previous versions, we output
+		// the value of a closed upper bound of the He and V intervals.
+		outputFile << *(heBounds.begin()) << " " << *(heBounds.end()) - 1 << " "
+				<< *(vBounds.begin()) << " " << *(vBounds.end()) - 1 << " "
+				<< conc << std::endl;
 	}
-
-//	// Update the concentration in the network
-//	network->updateConcentrationsFromArray(gridPointSolution);
-//
-//	// Initialize the total helium and concentration before looping
-//	double concTot = 0.0, heliumTot = 0.0;
-//
-//	// Loop on all the indices to compute the mean
-//	for (int i = 0; i < indices0D.size(); i++) {
-//		outputFile << 2.0 * radii0D[i] << " "
-//				<< gridPointSolution[indices0D[i]] * constantMulti * 4.0
-//						* radii0D[i] * radii0D[i] << std::endl;
-//	}
-
-//	// Loop on the super clusters
-//	for (int l = 0; l < superClusters.size(); l++) {
-//		// Get the super cluster
-//		auto superCluster = (PSISuperCluster *) superClusters[l];
-//		// Get its diameter
-//		double diam = 2.0 * superCluster->getReactionRadius();
-//		// Get its concentration
-//		double conc = superCluster->getTotalConcentration()
-//				/ (double) superCluster->getNTot();
-//		outputFile << diam << " " << conc * constantMulti * diam * diam
-//				<< std::endl;
-//	}
 
 	// Close the file
 	outputFile.close();
@@ -358,7 +346,12 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
-	PetscBool flag1DPlot, flagMeanSize, flagPerf, flagStatus;
+	PetscBool flagCheck, flag1DPlot, flagBubble, flagPerf, flagStatus;
+
+	// Check the option -check_collapse
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
+	checkPetscError(ierr,
+			"setupPetsc0DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
 	// Check the option -plot_perf
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
@@ -375,17 +368,34 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-start_stop) failed.");
 
-	// Check the option -mean_size
-	ierr = PetscOptionsHasName(NULL, NULL, "-mean_size", &flagMeanSize);
+	// Check the option -bubble
+	ierr = PetscOptionsHasName(NULL, NULL, "-bubble", &flagBubble);
 	checkPetscError(ierr,
-			"setupPetsc0DMonitor: PetscOptionsHasName (-mean_size) failed.");
+			"setupPetsc0DMonitor: PetscOptionsHasName (-bubble) failed.");
 
 	// Get the solver handler
-	auto solverHandler = PetscSolver::getSolverHandler();
+	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto network = solverHandler->getNetwork();
-	const int networkSize = network->size();
+	auto& network = solverHandler.getNetwork();
+	const int networkSize = network.size();
+
+	// Set the post step processing to stop the solver if the time step collapses
+	if (flagCheck) {
+		// Find the threshold
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(NULL, NULL, "-check_collapse",
+				&timeStepThreshold, &flag);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: PetscOptionsGetInt (-check_collapse) failed.");
+		if (!flag)
+			timeStepThreshold = 1.0e-16;
+
+		// Set the post step process that tells the solver when to stop if the time step collapse
+		ierr = TSSetPostStep(ts, checkTimeStep);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: TSSetPostStep (checkTimeStep) failed.");
+	}
 
 	// Set the monitor to save the status of the simulation in hdf5 file
 	if (flagStatus) {
@@ -417,14 +427,14 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		xolotlCore::HDF5Utils::initializeFile(hdf5OutputName0D);
 
 		// Get the solver handler
-		auto solverHandler = PetscSolver::getSolverHandler();
+		auto& solverHandler = PetscSolver::getSolverHandler();
 
 		// Save the header in the HDF5 file
 		xolotlCore::HDF5Utils::fillHeader(Mx, 0.0);
 
 		// Save the network in the HDF5 file
-		if (!solverHandler->getNetworkName().empty())
-			xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
+		if (!solverHandler.getNetworkName().empty())
+			xolotlCore::HDF5Utils::fillNetwork(solverHandler.getNetworkName());
 
 		// Finalize the HDF5 file
 		xolotlCore::HDF5Utils::finalizeFile();
@@ -493,30 +503,12 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 				"setupPetsc0DMonitor: TSMonitorSet (monitorPerf) failed.");
 	}
 
-	// Initialize indices0D and weights0D if we want to compute the
-	// retention or the cumulative value and others
-	if (flagMeanSize) {
-		// Get all the vacancy clusters
-		auto vClusters = network->getAll(vType);
-
-		// Loop on the helium clusters
-		for (unsigned int i = 0; i < vClusters.size(); i++) {
-			auto cluster = vClusters[i];
-			int id = cluster->getId() - 1;
-			// Add the Id to the vector
-			indices0D.push_back(id);
-			// Add the number of heliums of this cluster to the weight
-			weights0D.push_back(cluster->getSize());
-			radii0D.push_back(cluster->getReactionRadius());
-		}
-	}
-
-	// Set the monitor to save text file of the mean helium size
-	if (flagMeanSize) {
-		// monitorMeanSize0D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorMeanSize0D, NULL, NULL);
+	// Set the monitor to save text file of the mean concentration of bubbles
+	if (flagBubble) {
+		// monitorBubble0D will be called at each timestep
+		ierr = TSMonitorSet(ts, monitorBubble0D, NULL, NULL);
 		checkPetscError(ierr,
-				"setupPetsc0DMonitor: TSMonitorSet (monitorMeanSize0D) failed.");
+				"setupPetsc0DMonitor: TSMonitorSet (monitorBubble0D) failed.");
 	}
 
 	// Set the monitor to simply change the previous time to the new time

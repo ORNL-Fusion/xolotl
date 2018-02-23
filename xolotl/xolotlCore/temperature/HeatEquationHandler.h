@@ -79,10 +79,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature(IReactionNetwork *network, int *ofill,
-			int *dfill) {
+	virtual void initializeTemperature(const IReactionNetwork& network,
+			int *ofill, int *dfill) {
 		// Set dof
-		dof = network->getDOF();
+		dof = network.getDOF();
 
 		// Add the temperature to ofill
 		ofill[(dof - 1) * dof + (dof - 1)] = 1;
@@ -99,8 +99,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const std::vector<double>& position,
-			double time) const {
+	virtual double getTemperature(const Point3D& position, double time) const {
 		return xolotlCore::equal(time, 0.0)
 				* ((position[0] - surfacePosition < 0.001) * surfaceTemperature
 						+ (position[0] - surfacePosition > 0.001)
@@ -171,12 +170,9 @@ public:
 	 */
 	virtual void computePartialsForTemperature(double *val, int *indices,
 			double hxLeft, double hxRight) {
-		// Initial declaration
-		int index = dof - 1;
-
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
-		indices[0] = index;
+		indices[0] = dof - 1;
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, and right grid point

@@ -71,31 +71,29 @@ bool initViz(bool opts) {
 		return vizInitOK;
 }
 
-std::shared_ptr<xolotlSolver::PetscSolver> setUpSolver(
+std::unique_ptr<xolotlSolver::PetscSolver> setUpSolver(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry,
 		std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 		std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-		std::shared_ptr<xolotlCore::IReactionNetwork> networkHandler,
-		std::shared_ptr<xolotlSolver::ISolverHandler> solvHandler,
-		Options &options) {
+		xolotlSolver::ISolverHandler& solvHandler, Options &options) {
 	// Initialize the solver handler
-	solvHandler->initializeHandlers(material, tempHandler, networkHandler,
-			options);
+	solvHandler.initializeHandlers(material, tempHandler, options);
 
 	// Setup the solver
 	auto solverInitTimer = handlerRegistry->getTimer("initSolver");
 	solverInitTimer->start();
-	std::shared_ptr<xolotlSolver::PetscSolver> solver = std::make_shared<
-			xolotlSolver::PetscSolver>(handlerRegistry);
+	// Once we have widespread C++14 support, use std::make_unique.
+	std::unique_ptr<xolotlSolver::PetscSolver> solver(
+			new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
 	solver->setCommandLineOptions(options.getPetscArgc(),
 			options.getPetscArgv());
-	solver->initialize(solvHandler);
+	solver->initialize();
 	solverInitTimer->stop();
 
 	return solver;
 }
 
-void launchPetscSolver(std::shared_ptr<xolotlSolver::PetscSolver> solver,
+void launchPetscSolver(xolotlSolver::PetscSolver& solver,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry) {
 
 	xperf::IHardwareCounter::SpecType hwctrSpec;
@@ -108,7 +106,7 @@ void launchPetscSolver(std::shared_ptr<xolotlSolver::PetscSolver> solver,
 	auto solverHwctr = handlerRegistry->getHardwareCounter("solve", hwctrSpec);
 	solverTimer->start();
 	solverHwctr->start();
-	solver->solve();
+	solver.solve();
 	solverHwctr->stop();
 	solverTimer->stop();
 }
@@ -175,34 +173,36 @@ int main(int argc, char **argv) {
 		auto totalTimer = handlerRegistry->getTimer("total");
 		totalTimer->start();
 
-		// Initialize and get the solver handler
-		bool dimOK = xolotlFactory::initializeDimension(opts);
-		if (!dimOK) {
-			throw std::runtime_error(
-					"Unable to initialize dimension from inputs.");
-		}
-		auto solvHandler = xolotlFactory::getSolverHandler();
-
 		// Create the network handler factory
 		auto networkFactory =
 				xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
 						opts.getMaterial());
 
-		// Setup and load the network
+		// Build a reaction network
 		auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
 		networkLoadTimer->start();
 		networkFactory->initializeReactionNetwork(opts, handlerRegistry);
 		networkLoadTimer->stop();
+		if (rank == 0) {
+			std::time_t currentTime = std::time(NULL);
+			std::cout << std::asctime(std::localtime(&currentTime));
+		}
+		auto& network = networkFactory->getNetworkHandler();
 
-		// Get the network handler
-		auto networkHandler = networkFactory->getNetworkHandler();
+		// Initialize and get the solver handler
+		bool dimOK = xolotlFactory::initializeDimension(opts, network);
+		if (!dimOK) {
+			throw std::runtime_error(
+					"Unable to initialize dimension from inputs.");
+		}
+		auto& solvHandler = xolotlFactory::getSolverHandler();
 
 		// Setup the solver
 		auto solver = setUpSolver(handlerRegistry, material, tempHandler,
-				networkHandler, solvHandler, opts);
+				solvHandler, opts);
 
 		// Launch the PetscSolver
-		launchPetscSolver(solver, handlerRegistry);
+		launchPetscSolver(*solver, handlerRegistry);
 
 		// Finalize our use of the solver.
 		auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");

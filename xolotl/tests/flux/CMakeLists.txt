@@ -5,17 +5,18 @@ SET(PACKAGE_NAME "xolotl.tests.flux")
 SET(PACKAGE_DESCRIPTION "Xolotl Flux tests")
 
 #include directories from the source and boost binaries
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/flux)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
-include_directories(${Boost_BINARY_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}
+                    ${CMAKE_SOURCE_DIR}/xolotlCore
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/flux
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf/dummy
+                    ${Boost_BINARY_DIRS}
+                    ${CMAKE_BINARY_DIR})
 
 #link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlCore/flux)
@@ -30,7 +31,7 @@ if(Boost_FOUND)
         message(STATUS "Making test ${test}")
         get_filename_component(testName ${test} NAME_WE)
         add_executable(${testName} ${test})
-        target_link_libraries(${testName} xolotlFlux xolotlReactants xolotlPerf)
+        target_link_libraries(${testName} xolotlFlux xolotlCL xolotlReactants xolotlPerf)
         add_test(${testName} ${testName}) 
         #add a label so the tests can be run separately
         set_property(TEST ${testName} PROPERTY LABELS ${PACKAGE_NAME})   

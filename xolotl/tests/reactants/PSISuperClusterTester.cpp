@@ -5,11 +5,12 @@
 #include <PSICluster.h>
 #include <PSISuperCluster.h>
 #include <HDF5NetworkLoader.h>
-#include <HeCluster.h>
-#include <HeVCluster.h>
+#include <PSIHeCluster.h>
+#include <PSIHeVCluster.h>
 #include <XolotlConfig.h>
 #include <DummyHandlerRegistry.h>
 #include <Constants.h>
+#include <Options.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -43,32 +44,29 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	loader.setHeWidth(4);
 	loader.setVWidth(1);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load();
+	auto network = loader.load(opts);
 
 	// Set the temperature in the network
 	int networkSize = network->size();
-	auto allReactants = network->getAll();
 	double temperature = 1000.0;
-	for (int i = 0; i < networkSize; i++) {
-		// This part will set the temperature in each reactant
-		// and recompute the diffusion coefficient
-		allReactants->at(i)->setTemperature(temperature);
-	}
+	network->setTemperature(temperature);
 	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
 	// Check the reaction connectivity of the super cluster
-	auto reactant = network->getAll(PSISuperType).at(0);
+	auto& reactant = network->getAll(ReactantType::PSISuper).begin()->second;
 
 	// Check the type name
-	BOOST_REQUIRE_EQUAL(PSISuperType, reactant->getType());
+	BOOST_REQUIRE(ReactantType::PSISuper == reactant->getType());
 	auto reactionConnectivity = reactant->getConnectivity();
 
 	// Check the connectivity for He, V, and I
-	int connectivityExpected[] = { 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 1, 0 };
+	int connectivityExpected[] = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+			1, 1, 1, 1, 1, 1, 0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
@@ -96,26 +94,23 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	loader.setHeWidth(4);
 	loader.setVWidth(1);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load();
+	auto network = loader.load(opts);
 
 	// Set the temperature in the network
 	int networkSize = network->size();
-	auto allReactants = network->getAll();
 	double temperature = 1000.0;
-	for (int i = 0; i < networkSize; i++) {
-		// This part will set the temperature in each reactant
-		// and recompute the diffusion coefficient
-		allReactants->at(i)->setTemperature(temperature);
-	}
+	network->setTemperature(temperature);
 	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
 	// Check the reaction connectivity of the super cluster
-	auto cluster = network->getAll(PSISuperType).at(0);
+	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
 	// Get one that it combines with (He)
-	auto secondCluster = (PSICluster *) network->get(heType, 1);
+	auto secondCluster = (PSICluster *) network->get(Species::He, 1);
 	// Set the concentrations
 	cluster->setConcentration(0.5);
 	secondCluster->setConcentration(0.5);
@@ -146,30 +141,27 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	loader.setHeWidth(4);
 	loader.setVWidth(1);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load();
+	auto network = loader.load(opts);
 
 	// Set the temperature in the network
 	int networkSize = network->size();
-	auto allReactants = network->getAll();
 	double temperature = 1000.0;
-	for (int i = 0; i < networkSize; i++) {
-		// This part will set the temperature in each reactant
-		// and recompute the diffusion coefficient
-		allReactants->at(i)->setTemperature(temperature);
-	}
+	network->setTemperature(temperature);
 	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
 	// Check the reaction connectivity of the super cluster
-	auto cluster = network->getAll(PSISuperType).at(0);
+	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
 
 	// Local Declarations
 	// The vector of partial derivatives to compare with
 	double knownPartials[] =
 			{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-					0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+					0.0, 0.0, 0.0, -2.33718e-19, 0.0, 0.0, 0.0, 0.0, 0.0 };
 	// Set the concentration
 	cluster->setConcentration(0.5);
 
@@ -177,7 +169,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	auto partials = cluster->getPartialDerivatives();
 
 	// Check the size of the partials
-	BOOST_REQUIRE_EQUAL(partials.size(), 19U);
+	BOOST_REQUIRE_EQUAL(partials.size(), 22U);
 
 	// Check all the values
 	for (unsigned int i = 0; i < partials.size(); i++) {
@@ -206,14 +198,16 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	loader.setHeWidth(4);
 	loader.setVWidth(1);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load();
+	auto network = loader.load(opts);
 
 	// Check the reaction connectivity of the super cluster
-	auto cluster = network->getAll(PSISuperType).at(0);
+	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
 
 	// Check the radius
-	BOOST_REQUIRE_CLOSE(0.137265, cluster->getReactionRadius(), 0.001);
+	BOOST_REQUIRE_CLOSE(0.156082, cluster->getReactionRadius(), 0.001);
 
 	// Finalize MPI
 	MPI_Finalize();

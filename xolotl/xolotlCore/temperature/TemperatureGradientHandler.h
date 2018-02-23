@@ -29,11 +29,16 @@ private:
 	double surfacePosition;
 
 	/**
+	 * The number of degrees of freedom in the network
+	 */
+	int dof;
+
+	/**
 	 * The default constructor is private because the TemperatureHandler
 	 * must be initialized with a temperature
 	 */
 	TemperatureGradientHandler() :
-			surfaceTemperature(0.0), gradient(0.0), surfacePosition(0.0) {
+			surfaceTemperature(0.0), gradient(0.0), surfacePosition(0.0), dof(0) {
 	}
 
 public:
@@ -45,7 +50,8 @@ public:
 	 * @param grad The temperature gradient
 	 */
 	TemperatureGradientHandler(double temp, double grad) :
-			surfaceTemperature(temp), gradient(grad), surfacePosition(0.0) {
+			surfaceTemperature(temp), gradient(grad), surfacePosition(0.0), dof(
+					0) {
 	}
 
 	/**
@@ -60,10 +66,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature(IReactionNetwork *network, int *ofill,
-			int *dfill) {
+	virtual void initializeTemperature(const IReactionNetwork& network,
+			int *ofill, int *dfill) {
 		// Set dof
-		int dof = network->getDOF();
+		dof = network.getDOF();
 
 		// Add the temperature to ofill
 		ofill[(dof - 1) * dof + (dof - 1)] = 1;
@@ -80,8 +86,7 @@ public:
 	 *
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const std::vector<double>& position,
-			double) const {
+	virtual double getTemperature(const Point3D& position, double) const {
 		return surfaceTemperature - (position[0] - surfacePosition) * gradient;
 	}
 
@@ -136,7 +141,7 @@ public:
 			double hxLeft, double hxRight) {
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
-		indices[0] = 0;
+		indices[0] = dof - 1;
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, and right grid point

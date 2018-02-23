@@ -9,6 +9,7 @@
 #include <XolotlConfig.h>
 #include <mpi.h>
 #include <memory>
+#include <Options.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -28,8 +29,8 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	MPI_Init(&argc, &argv);
 
 	// Create the network loader
-	HDF5NetworkLoader loader =
-			HDF5NetworkLoader(make_shared<xolotlPerf::DummyHandlerRegistry>());
+	HDF5NetworkLoader loader = HDF5NetworkLoader(
+			make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Define the filename to load the network from
 	string sourceDir(XolotlSourceDirectory);
 	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
@@ -37,8 +38,10 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	// Give the filename to the network loader
 	loader.setFilename(filename);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = (PSIClusterReactionNetwork *) loader.load().get();
+	auto network = loader.load(opts);
 
 	// Get the size of the network
 	int networkSize = network->size();
@@ -70,7 +73,8 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	HDF5Utils::openFile("test.h5");
 
 	// Add the concentration sub group
-	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, previousTime, currentTimeStep);
+	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, previousTime,
+			currentTimeStep);
 
 	// Write the surface position
 	HDF5Utils::writeSurface1D(timeStep, iSurface, nInter, previousFlux);
@@ -81,7 +85,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	HDF5Utils::addConcentrationDataset(length, gridPoint);
 
 	// Create a vector of concentration for one grid point
-	std::vector< std::vector<double> > concVector;
+	std::vector<std::vector<double> > concVector;
 	// Fill it
 	for (int i = 0; i < length; i++) {
 		// Create the concentration vector for this cluster
@@ -130,47 +134,52 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	// Read the network of the written file
 	auto networkVector = HDF5Utils::readNetwork("test.h5");
 	// Get all the reactants
-	auto reactants = network->getAll();
+	auto const& reactants = network->getAll();
 	// Check the network vector
-	for (int i = 0; i < networkSize; i++) {
+	for (IReactant& it : reactants) {
 		// Get the i-th reactant in the network
-		auto reactant = (PSICluster *) reactants->at(i);
-		int id = reactant->getId() - 1;
+		auto& reactant = (PSICluster&) it;
+		int id = reactant.getId() - 1;
 		// Get the corresponding line from the HDF5 file
 		auto line = networkVector.at(id);
 
 		// Check the composition
-		auto composition = reactant->getComposition();
-		BOOST_REQUIRE_EQUAL((int) line[0], composition["He"]);
-		BOOST_REQUIRE_EQUAL((int) line[1], composition["I"] - composition["V"]);
-		BOOST_REQUIRE_EQUAL((int) line[2], 0);
-		BOOST_REQUIRE_EQUAL((int) line[3], 0);
+		auto& composition = reactant.getComposition();
+		BOOST_REQUIRE_EQUAL((int ) line[0],
+				composition[toCompIdx(Species::He)]);
+		BOOST_REQUIRE_EQUAL((int ) line[1], composition[toCompIdx(Species::D)]);
+		BOOST_REQUIRE_EQUAL((int ) line[2], composition[toCompIdx(Species::T)]);
+		BOOST_REQUIRE_EQUAL((int ) line[3], composition[toCompIdx(Species::V)]);
+		BOOST_REQUIRE_EQUAL((int ) line[4], composition[toCompIdx(Species::I)]);
 
 		// Check the formation energy
-		auto formationEnergy = reactant->getFormationEnergy();
-		BOOST_REQUIRE_EQUAL(line[4], formationEnergy);
+		auto formationEnergy = reactant.getFormationEnergy();
+		BOOST_REQUIRE_EQUAL(line[5], formationEnergy);
 
 		// Check the migration energy
-		double migrationEnergy = reactant->getMigrationEnergy();
-		BOOST_REQUIRE_EQUAL(line[5], migrationEnergy);
+		double migrationEnergy = reactant.getMigrationEnergy();
+		BOOST_REQUIRE_EQUAL(line[6], migrationEnergy);
 
 		// Check the diffusion factor
-		double diffusionFactor = reactant->getDiffusionFactor();
-		BOOST_REQUIRE_EQUAL(line[6], diffusionFactor);
+		double diffusionFactor = reactant.getDiffusionFactor();
+		BOOST_REQUIRE_EQUAL(line[7], diffusionFactor);
 	}
 
 	// If the HDF5 file contains initial concentrations
 	int tempTimeStep = -2;
 	if (HDF5Utils::hasConcentrationGroup("test.h5", tempTimeStep)) {
 		// Read the concentrations at the given grid point
-		auto returnedVector = HDF5Utils::readGridPoint("test.h5", tempTimeStep, gridPoint);
+		auto returnedVector = HDF5Utils::readGridPoint("test.h5", tempTimeStep,
+				gridPoint);
 
 		// Check the size of the vector
 		BOOST_REQUIRE_EQUAL(returnedVector.size(), concVector.size());
 		// Check the values
 		for (unsigned int i = 0; i < returnedVector.size(); i++) {
-			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(0), concVector.at(i).at(0), 0.0001);
-			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1), concVector.at(i).at(1), 0.0001);
+			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(0),
+					concVector.at(i).at(0), 0.0001);
+			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1),
+					concVector.at(i).at(1), 0.0001);
 		}
 	}
 }
@@ -203,12 +212,13 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 	int timeStep = 0;
 
 	// Add the concentration sub group
-	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, previousTime, currentTimeStep);
+	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, previousTime,
+			currentTimeStep);
 
 	// Set the surface information in 2D
-	std::vector<int> iSurface = {2, 3, 2, 0, 5};
-	std::vector<double> nInter = {0.0, 0.0, 0.5, 0.6, 0.5};
-	std::vector<double> previousFlux = {0.0, 0.1, 3.0, -1.0, 5.0};
+	std::vector<int> iSurface = { 2, 3, 2, 0, 5 };
+	std::vector<double> nInter = { 0.0, 0.0, 0.5, 0.6, 0.5 };
+	std::vector<double> previousFlux = { 0.0, 0.1, 3.0, -1.0, 5.0 };
 
 	// Write the surface position
 	HDF5Utils::writeSurface2D(timeStep, iSurface, nInter, previousFlux);
@@ -266,14 +276,17 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 	int timeStep = 0;
 
 	// Add the concentration sub group
-	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, previousTime, currentTimeStep);
+	HDF5Utils::addConcentrationSubGroup(timeStep, currentTime, previousTime,
+			currentTimeStep);
 
 	// Set the surface information in 2D
-	std::vector< std::vector<int> > iSurface = {{2, 4, 1, 0, 5}, {2, 3, 2, 0, 5}, {6, 1, 2, 3, 2}};
-	std::vector< std::vector<double> > nInter = {{0.0, 0.0, 0.0, 0.0, 0.0},
-			{2.0, 3.0, 2.0, 0.0, 0.5}, {0.0, 0.0, 0.0, 0.0, 0.0}};
-	std::vector< std::vector<double> > previousFlux = {{0.0, 0.0, 0.0, 0.0, 0.0},
-			{-2.0, 3.0, 2.0, 0.0, -0.5}, {0.0, 0.0, 0.0, 0.0, 0.0}};
+	std::vector<std::vector<int> > iSurface = { { 2, 4, 1, 0, 5 }, { 2, 3, 2, 0,
+			5 }, { 6, 1, 2, 3, 2 } };
+	std::vector<std::vector<double> > nInter = { { 0.0, 0.0, 0.0, 0.0, 0.0 }, {
+			2.0, 3.0, 2.0, 0.0, 0.5 }, { 0.0, 0.0, 0.0, 0.0, 0.0 } };
+	std::vector<std::vector<double> > previousFlux = {
+			{ 0.0, 0.0, 0.0, 0.0, 0.0 }, { -2.0, 3.0, 2.0, 0.0, -0.5 }, { 0.0,
+					0.0, 0.0, 0.0, 0.0 } };
 
 	// Write the surface position
 	HDF5Utils::writeSurface3D(timeStep, iSurface, nInter, previousFlux);
@@ -300,7 +313,8 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 	// Check all the values
 	for (int i = 0; i < previousIFlux.size(); i++) {
 		for (int j = 0; j < previousIFlux[0].size(); j++) {
-			BOOST_REQUIRE_CLOSE(previousIFlux[i][j], previousFlux[i][j], 0.0001);
+			BOOST_REQUIRE_CLOSE(previousIFlux[i][j], previousFlux[i][j],
+					0.0001);
 		}
 	}
 }

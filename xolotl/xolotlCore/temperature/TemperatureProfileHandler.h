@@ -22,11 +22,16 @@ private:
 	std::string tempFile;
 
 	/**
+	 * The number of degrees of freedom in the network
+	 */
+	int dof;
+
+	/**
 	 * The default constructor is private because the TemperatureProfileHandler
 	 * must be initialized with an input file.
 	 */
 	TemperatureProfileHandler() :
-			tempFile("") {
+			tempFile(""), dof(0) {
 	}
 
 	/**
@@ -49,7 +54,7 @@ public:
 	 * @param profileFileName The name of the profile file
 	 */
 	TemperatureProfileHandler(const std::string& profileFileName) :
-			tempFile(profileFileName) {
+			tempFile(profileFileName), dof(0) {
 	}
 
 	/**
@@ -66,10 +71,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature(IReactionNetwork *network, int *ofill,
-			int *dfill) {
+	virtual void initializeTemperature(const IReactionNetwork& network,
+			int *ofill, int *dfill) {
 		// Set dof
-		int dof = network->getDOF();
+		dof = network.getDOF();
 
 		// Add the temperature to ofill
 		ofill[(dof - 1) * dof + (dof - 1)] = 1;
@@ -102,7 +107,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const std::vector<double>& position,
+	virtual double getTemperature(const Point3D& position,
 			double currentTime) const {
 		// Initialize the value to return
 		double f = 0.0;
@@ -186,7 +191,7 @@ public:
 			double hxLeft, double hxRight) {
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
-		indices[0] = 0;
+		indices[0] = dof - 1;
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, and right grid point

@@ -602,6 +602,48 @@ public:
 	 */
 	virtual void setZStepSize(double stepSize) = 0;
 
+	/**
+	 * Obtain the boundary condition on the left side of the grid.
+	 *
+	 * @return The boundary condition
+	 */
+	virtual int getLeftBoundary() const = 0;
+
+	/**
+	 * Set the boundary condition on the left side of the grid.
+	 *
+	 * @param n The condition
+	 */
+	virtual void setLeftBoundary(int n) = 0;
+
+	/**
+	 * Obtain the boundary condition on the right side of the grid.
+	 *
+	 * @return The boundary condition
+	 */
+	virtual int getRightBoundary() const = 0;
+
+	/**
+	 * Set the boundary condition on the right side of the grid.
+	 *
+	 * @param n The condition
+	 */
+	virtual void setRightBoundary(int n) = 0;
+
+	/**
+	 * Obtain the value of the depth above which the bursting is happening.
+	 *
+	 * @return The depth
+	 */
+	virtual double getBurstingDepth() const = 0;
+
+	/**
+	 * Set the value for the depth above which the bursting is happening.
+	 *
+	 * @param stepSize The depth
+	 */
+	virtual void setBurstingDepth(double depth) = 0;
+
 };
 //end class IOptions
 

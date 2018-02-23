@@ -1,3 +1,4 @@
+#include <cassert>
 #include <SolverHandlerFactory.h>
 #include <PetscSolver0DHandler.h>
 #include <PetscSolver1DHandler.h>
@@ -9,10 +10,11 @@
 
 namespace xolotlFactory {
 
-static std::shared_ptr<xolotlSolver::ISolverHandler> theSolverHandler;
+static std::unique_ptr<xolotlSolver::ISolverHandler> theSolverHandler;
 
 // Create the desired type of handler registry.
-bool initializeDimension(xolotlCore::Options &options) {
+bool initializeDimension(xolotlCore::Options &options,
+		xolotlCore::IReactionNetwork& network) {
 
 	bool ret = true;
 
@@ -20,41 +22,43 @@ bool initializeDimension(xolotlCore::Options &options) {
 	int dim = options.getDimensionNumber();
 
 	// Switch on the dimension
+	// TODO Once we have widespread C++14 support, use std::make_unique
+	// instead of this two-step construction.
+	xolotlSolver::ISolverHandler* rawSolverHandler = nullptr;
 	switch (dim) {
 	case 0:
-		theSolverHandler =
-				std::make_shared<xolotlSolver::PetscSolver0DHandler>();
+		rawSolverHandler = new xolotlSolver::PetscSolver0DHandler(network);
 		break;
 	case 1:
-		theSolverHandler =
-				std::make_shared<xolotlSolver::PetscSolver1DHandler>();
+		rawSolverHandler = new xolotlSolver::PetscSolver1DHandler(network);
 		break;
 	case 2:
-		theSolverHandler =
-				std::make_shared<xolotlSolver::PetscSolver2DHandler>();
+		rawSolverHandler = new xolotlSolver::PetscSolver2DHandler(network);
 		break;
 	case 3:
-		theSolverHandler =
-				std::make_shared<xolotlSolver::PetscSolver3DHandler>();
+		rawSolverHandler = new xolotlSolver::PetscSolver3DHandler(network);
 		break;
 	default:
 		// The asked dimension is not good (e.g. -1, 4)
 		throw std::string(
 				"\nxolotlFactory: Bad dimension for the solver handler.");
 	}
+	assert(rawSolverHandler != nullptr);
+	theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
+			rawSolverHandler);
 
 	return ret;
 }
 
 // Provide access to our handler registry.
-std::shared_ptr<xolotlSolver::ISolverHandler> getSolverHandler() {
+xolotlSolver::ISolverHandler& getSolverHandler() {
 	if (!theSolverHandler) {
 		// We have not yet been initialized.
 		throw std::string("\nxolotlFactory: solver requested but "
 				"it has not been initialized.");
 	}
 
-	return theSolverHandler;
+	return *theSolverHandler;
 }
 
 } // end namespace xolotlFactory

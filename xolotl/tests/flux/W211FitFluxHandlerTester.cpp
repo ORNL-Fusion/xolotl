@@ -7,6 +7,7 @@
 #include <HDF5NetworkLoader.h>
 #include <DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
+#include <Options.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -32,14 +33,16 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Give the filename to the network loader
 	loader.setFilename(filename);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load().get();
+	auto network = loader.load(opts);
 	// Get its size
 	const int dof = network->getDOF();
 
 	// Create a grid
 	std::vector<double> grid;
-	for (int l = 0; l < 5; l++) {
+	for (int l = 0; l < 7; l++) {
 		grid.push_back((double) l * 1.25);
 	}
 	// Specify the surface position
@@ -50,7 +53,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
 
 	// Create a time
 	double currTime = 1.0;
@@ -68,11 +71,14 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	double *updatedConcOffset = updatedConc + dof;
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1,
+			surfacePos);
 	updatedConcOffset = updatedConc + 2 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2,
+			surfacePos);
 	updatedConcOffset = updatedConc + 3 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3,
+			surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.454047, 0.01);

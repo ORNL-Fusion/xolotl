@@ -171,6 +171,7 @@ public class Preprocessor {
 		petscOptions.put("-fieldsplit_1_pc_type", "redundant");
 		petscOptions.put("-ts_monitor", "");
 		petscOptions.put("-ts_exact_final_time", "stepover");
+		petscOptions.put("-ts_adapt_wnormtype", "INFINITY");
 
 		// Get the string of PETSc arguments from the command line
 		// and split the string around the blank spaces
@@ -317,10 +318,13 @@ public class Preprocessor {
 			xolotlParams.setProperty("grain", args.getGrain());
 		if (args.isSputter())
 			xolotlParams.setProperty("sputtering", args.getSputter());
+		if (args.isBurstingDepth())
+			xolotlParams.setProperty("burstingDepth", args.getBurstingDepth());
+
 		if (args.isNetParam()) {
 			// Build the network argument
 			String netString;
-			if (args.getMaxXeSize() > 0)
+			if (maxXe > 0)
 				netString = Integer.toString(args.getMaxXeSize());
 			else
 				netString = Integer.toString(args.getMaxHeSize()) + " " + Integer.toString(args.getMaxVSize()) + " "
@@ -334,6 +338,14 @@ public class Preprocessor {
 			xolotlParams.setProperty("grid", gridString);
 			xolotlParams.setProperty("networkFile", "");
 		}
+
+		// Set the default boundary conditions
+		String boundaryString;
+		if (maxXe > 0)
+			boundaryString = "0 0";
+		else
+			boundaryString = "1 0";
+		xolotlParams.setProperty("boundary", boundaryString);
 
 	}
 
@@ -408,7 +420,7 @@ public class Preprocessor {
 		// Local Declarations
 		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
 
-		// Create the He clusters
+		// Create the deuterium clusters
 		for (int i = 0; i < maxD; i++) {
 			// Create the cluster
 			Cluster tmpCluster = new Cluster();
@@ -438,7 +450,7 @@ public class Preprocessor {
 		// Local Declarations
 		ArrayList<Cluster> clusterList = new ArrayList<Cluster>();
 
-		// Create the He clusters
+		// Create the tritium clusters
 		for (int i = 0; i < maxT; i++) {
 			// Create the cluster
 			Cluster tmpCluster = new Cluster();
@@ -544,9 +556,15 @@ public class Preprocessor {
 				// Loop on the helium number
 				for (int j = 0; j <= maxHePerV[i - 1]; j++) {
 					// Loop on the deuterium number
-					for (int k = 0; k <= (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]); k++) {
+					int upperD = (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]);
+					if (maxD <= 0)
+						upperD = 0;
+					for (int k = 0; k <= upperD; k++) {
 						// Loop on the tritium number
-						for (int l = 0; l <= (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]); l++) {
+						int upperT = (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]);
+						if (maxT <= 0)
+							upperT = 0;
+						for (int l = 0; l <= upperT; l++) {
 							if (k + l > (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]))
 								break;
 							// Add the cluster to the list
@@ -562,10 +580,16 @@ public class Preprocessor {
 				// Loop on the helium number
 				for (int j = 0; j <= i * 4; j++) {
 					// Loop on the deuterium number
-					for (int k = 0; k <= (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]); k++) {
+					int upperD = (int) ((2.0 / 3.0) * (double) i * 4.0);
+					if (maxD <= 0)
+						upperD = 0;
+					for (int k = 0; k <= upperD; k++) {
 						// Loop on the tritium number
-						for (int l = 0; l <= (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]); l++) {
-							if (k + l > (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]))
+						int upperT = (int) ((2.0 / 3.0) * (double) i * 4.0);
+						if (maxT <= 0)
+							upperT = 0;
+						for (int l = 0; l <= upperT; l++) {
+							if (k + l > (int) ((2.0 / 3.0) * (double) i * 4.0))
 								break;
 							// Add the cluster to the list
 							clusterList.add(makeHeVCluster(l, k, j, i));
@@ -1579,25 +1603,26 @@ public class Preprocessor {
 			} else {
 				// Set the width of the network (number of parameters per
 				// cluster)
-				width = 7;
+				width = 8;
 				networkArray = new double[networkSize][width];
 				int id = 0;
 				// Loop on the clusters
 				for (Cluster cluster : clusters) {
 					// Store the composition
 					networkArray[id][0] = cluster.nHe;
-					networkArray[id][1] = cluster.nI - cluster.nV;
-					networkArray[id][2] = cluster.nD;
-					networkArray[id][3] = cluster.nT;
+					networkArray[id][1] = cluster.nD;
+					networkArray[id][2] = cluster.nT;
+					networkArray[id][3] = cluster.nV;
+					networkArray[id][4] = cluster.nI;
 
 					// Store the formation energy
-					networkArray[id][4] = cluster.E_f;
+					networkArray[id][5] = cluster.E_f;
 
 					// Store the migration energy
-					networkArray[id][5] = cluster.E_m;
+					networkArray[id][6] = cluster.E_m;
 
 					// Store the diffusion factor
-					networkArray[id][6] = cluster.D_0;
+					networkArray[id][7] = cluster.D_0;
 
 					// increment the id number
 					id++;

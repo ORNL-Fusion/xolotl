@@ -5,6 +5,7 @@
 #include <HeatEquationHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
+#include <Options.h>
 #include <DummyHandlerRegistry.h>
 #include <mpi.h>
 
@@ -36,8 +37,10 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 	// Give the filename to the network loader
 	loader.setFilename(filename);
 
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = loader.load().get();
+	auto network = loader.load(opts);
 	// Get its size
 	const int dof = network->getDOF();
 
@@ -52,9 +55,10 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 	heatHandler.setHeatCoefficient(xolotlCore::tungstenHeatCoefficient);
 
 	// Check the initial temperatures
-	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature({ 0.0, 0.0, 0.0 }, 0.0), 1200.0, 0.01);
-	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature({ 1.0, 0.0, 0.0 }, 0.0), 1000.0, 0.01);
-
+	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature( { 0.0, 0.0, 0.0 }, 0.0),
+			1200.0, 0.01);
+	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature( { 1.0, 0.0, 0.0 }, 0.0),
+			1000.0, 0.01);
 
 	// Create ofill
 	int matO[dof * dof];
@@ -64,7 +68,7 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 	int *dfill = &matD[0];
 
 	// Initialize it
-	heatHandler.initializeTemperature(network, ofill, dfill);
+	heatHandler.initializeTemperature(*network, ofill, dfill);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[99], 1);
@@ -100,8 +104,7 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 	concVector[2] = conc + 2 * dof; // right
 
 	// Compute the heat equation at this grid point
-	heatHandler.computeTemperature(concVector, updatedConcOffset,
-			hx, hx);
+	heatHandler.computeTemperature(concVector, updatedConcOffset, hx, hx);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.367e+16, 0.01);
@@ -109,7 +112,8 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
 	// Check the updated temperature
-	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature({ 1.0, 0.0, 0.0 }, 1.0), 361.0, 0.01);
+	Point3D pos { 1.0, 0.0, 0.0 };
+	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature(pos, 1.0), 361.0, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int indices[1];
@@ -119,8 +123,8 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 	double *valPointer = &val[0];
 
 	// Compute the partial derivatives for the heat equation a the grid point
-	heatHandler.computePartialsForTemperature(valPointer,
-			indicesPointer, hx, hx);
+	heatHandler.computePartialsForTemperature(valPointer, indicesPointer, hx,
+			hx);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
