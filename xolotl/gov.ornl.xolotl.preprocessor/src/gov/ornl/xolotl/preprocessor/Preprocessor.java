@@ -492,7 +492,7 @@ public class Preprocessor {
 		cluster.nHe = heSize;
 		cluster.nV = vSize;
 		// Separate the case where it is simply a V cluster
-		if (dSize == 0 && tSize == 0 && heSize == 0) {
+		if (heSize == 0) {
 			cluster.E_f = formationEnergyEngine.getVFormationEnergy(vSize);
 		} else {
 			cluster.E_f = formationEnergyEngine.getHeVFormationEnergy(heSize, vSize);
@@ -554,7 +554,10 @@ public class Preprocessor {
 			// maxHePerV array.
 			for (int i = 1; i <= maxV && i <= maxHePerV.length; ++i) {
 				// Loop on the helium number
-				for (int j = 0; j <= maxHePerV[i - 1]; j++) {
+				int upperHe = maxHePerV[i - 1];
+				if (maxHe <= 0)
+					upperHe = 0;
+				for (int j = 0; j <= upperHe; j++) {
 					// Loop on the deuterium number
 					int upperD = (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]);
 					if (maxD <= 0)
@@ -578,7 +581,10 @@ public class Preprocessor {
 			// = 4.
 			for (int i = maxHePerV.length + 1; i <= maxV; i++) {
 				// Loop on the helium number
-				for (int j = 0; j <= i * 4; j++) {
+				int upperHe = i * 4;
+				if (maxHe <= 0)
+					upperHe = 0;
+				for (int j = 0; j <= upperHe; j++) {
 					// Loop on the deuterium number
 					int upperD = (int) ((2.0 / 3.0) * (double) i * 4.0);
 					if (maxD <= 0)

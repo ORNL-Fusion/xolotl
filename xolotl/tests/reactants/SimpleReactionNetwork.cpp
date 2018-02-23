@@ -8,9 +8,11 @@
 #include "SimpleReactionNetwork.h"
 #include <PSICluster.h>
 #include <PSIHeCluster.h>
+#include <PSIDCluster.h>
+#include <PSITCluster.h>
 #include <PSIVCluster.h>
 #include <PSIInterstitialCluster.h>
-#include <PSIHeVCluster.h>
+#include <PSIMixedCluster.h>
 #include <PSIHeInterstitialCluster.h>
 #include <NECluster.h>
 #include <NEXeCluster.h>
@@ -44,6 +46,28 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 		add(std::unique_ptr<PSICluster>(cluster));
 	}
 
+	// Add deuterium clusters
+	for (int numD = 1; numD <= maxClusterSize; numD++) {
+		// Create a D cluster with cluster size numD
+		auto cluster = new PSIDCluster(numD, *this, registry);
+		// Set the diffusion factor for the first one so that it can react
+		if (numD == 1)
+			cluster->setDiffusionFactor(1.0);
+		// Add it to the network
+		add(std::unique_ptr<PSICluster>(cluster));
+	}
+
+	// Add tritium clusters
+	for (int numT = 1; numT <= maxClusterSize; numT++) {
+		// Create a T cluster with cluster size numT
+		auto cluster = new PSITCluster(numT, *this, registry);
+		// Set the diffusion factor for the first one so that it can react
+		if (numT == 1)
+			cluster->setDiffusionFactor(1.0);
+		// Add it to the network
+		add(std::unique_ptr<PSICluster>(cluster));
+	}
+
 	// Add vacancy clusters
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		// Create a V cluster with cluster size numV
@@ -69,9 +93,14 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 	// numHe + numV <= maxMixedClusterSize
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
-			// Create a HeVCluster with the current amount of He and V
-			auto cluster = new PSIHeVCluster(numHe, numV, *this, registry);
-			add(std::unique_ptr<PSICluster>(cluster));
+			for (int numD = 0; numD <= 1; numD++) {
+				for (int numT = 0; numT <= 1; numT++) {
+					// Create a MixedCluster with the current amount of He and V
+					auto cluster = new PSIMixedCluster(numHe, numD, numT, numV,
+							*this, registry);
+					add(std::unique_ptr<PSICluster>(cluster));
+				}
+			}
 		}
 	}
 
@@ -177,17 +206,6 @@ shared_ptr<xolotlCore::PSIClusterReactionNetwork> testUtils::getSimplePSIReactio
 	network->reinitializeNetwork();
 	// Redefine the connectivities
 	network->reinitializeConnectivities();
-
-	// ----- TEMPORARY DEBUG OUTPUT!!!!! -----
-	// Print the reaction connectivity matrix
-	for (IReactant& currCluster : reactants) {
-		vector<int> conn = currCluster.getConnectivity();
-
-		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++) {
-			printf("%s", *connIt ? "* " : "' ");
-		}
-		printf("\n");
-	}
 
 	return network;
 }

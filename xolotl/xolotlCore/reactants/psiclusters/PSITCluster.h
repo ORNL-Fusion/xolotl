@@ -2,12 +2,12 @@
 #define PSITCLUSTER_H
 
 // Includes
-#include "PSIHCluster.h"
+#include "PSICluster.h"
 
 namespace xolotlCore {
 
 //! This class represents a cluster composed entirely of tritium.
-class PSITCluster: public PSIHCluster {
+class PSITCluster: public PSICluster {
 
 private:
 	static std::string buildName(IReactant::SizeType size) {
@@ -32,7 +32,7 @@ public:
 	 */
 	PSITCluster(int nT, IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-			PSIHCluster(nT, _network, registry) {
+			PSICluster(_network, registry, buildName(nT)) {
 		// Set the size
 		size = nT;
 		// Update the composition map

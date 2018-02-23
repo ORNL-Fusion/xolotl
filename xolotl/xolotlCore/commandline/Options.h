@@ -180,6 +180,16 @@ protected:
 	int maxImpurity;
 
 	/**
+	 * Maximum number of D
+	 */
+	int maxD;
+
+	/**
+	 * Maximum number of T
+	 */
+	int maxT;
+
+	/**
 	 * Maximum number of V
 	 */
 	int maxV;
@@ -774,6 +784,38 @@ public:
 	 */
 	void setMaxImpurity(int max) {
 		maxImpurity = max;
+	}
+
+	/**
+	 * Obtain the maximum value of deuterium to be used.
+	 * \see IOptions.h
+	 */
+	int getMaxD() const {
+		return maxD;
+	}
+
+	/**
+	 * Set the maximum value of deuterium to use.
+	 * \see IOptions.h
+	 */
+	void setMaxD(int max) {
+		maxD = max;
+	}
+
+	/**
+	 * Obtain the maximum value of tritium to be used.
+	 * \see IOptions.h
+	 */
+	int getMaxT() const {
+		return maxT;
+	}
+
+	/**
+	 * Set the maximum value of tritium to use.
+	 * \see IOptions.h
+	 */
+	void setMaxT(int max) {
+		maxT = max;
 	}
 
 	/**

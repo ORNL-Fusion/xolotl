@@ -39,9 +39,9 @@ Options::Options() :
 				50.0), dimensionNumber(1), useRegularGridFlag(true), gbList(""), groupingMin(
 				std::numeric_limits<int>::max()), groupingWidthA(1), groupingWidthB(
 				1), sputteringYield(0.0), useHDF5Flag(true), usePhaseCutFlag(
-				false), maxImpurity(8), maxV(20), maxI(6), nX(10), nY(0), nZ(0), xStepSize(
-				0.5), yStepSize(0.0), zStepSize(0.0), leftBoundary(1), rightBoundary(
-				1), burstingDepth(10.0) {
+				false), maxImpurity(8), maxD(0), maxT(0), maxV(20), maxI(6), nX(
+				10), nY(0), nZ(0), xStepSize(0.5), yStepSize(0.0), zStepSize(
+				0.0), leftBoundary(1), rightBoundary(1), burstingDepth(10.0) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();

@@ -6,7 +6,7 @@
 #include <PSISuperCluster.h>
 #include <HDF5NetworkLoader.h>
 #include <PSIHeCluster.h>
-#include <PSIHeVCluster.h>
+#include <PSIMixedCluster.h>
 #include <XolotlConfig.h>
 #include <DummyHandlerRegistry.h>
 #include <Constants.h>

@@ -83,7 +83,7 @@ void TrapMutationHandler::initialize(const IReactionNetwork& network,
 		tripleInterstitial->setDissociationConnectivity(cluster.getId());
 
 		// Loop on the bubbles
-		for (const auto& hevMapItem : network.getAll(ReactantType::HeV)) {
+		for (const auto& hevMapItem : network.getAll(ReactantType::PSIMixed)) {
 
 			// Get the bubble and its composition
 			auto& bubble = static_cast<PSICluster&>(*(hevMapItem.second));
@@ -150,7 +150,7 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 							&& depthVec[l] - 0.01 > previousDepth)) {
 				// Add the bubble of size l+1 to the indices
 				// Loop on the bubbles
-				for (auto const& heVMapItem : network.getAll(ReactantType::HeV)) {
+				for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
 					// Get the bubble and its composition
 					auto& bubble =
 							static_cast<PSICluster&>(*(heVMapItem.second));
@@ -227,7 +227,7 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 					// Add the bubble of size l+1 to the indices
 					// Loop on the bubbles
 					for (auto const& heVMapItem : network.getAll(
-							ReactantType::HeV)) {
+							ReactantType::PSIMixed)) {
 						// Get the bubble and its composition
 						auto& bubble =
 								static_cast<PSICluster&>(*(heVMapItem.second));
@@ -257,7 +257,7 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 						// Add the bubble of size l+1 to the indices
 						// Loop on the bubbles
 						for (auto const& heVMapItem : network.getAll(
-								ReactantType::HeV)) {
+								ReactantType::PSIMixed)) {
 							// Get the bubble and its composition
 							auto& bubble =
 									static_cast<PSICluster&>(*(heVMapItem.second));
@@ -354,7 +354,7 @@ void TrapMutationHandler::initializeIndex3D(
 						// Add the bubble of size l+1 to the indices
 						// Loop on the bubbles
 						for (auto const& heVMapItem : network.getAll(
-								ReactantType::HeV)) {
+								ReactantType::PSIMixed)) {
 							// Get the bubble and its composition
 							auto& bubble =
 									static_cast<PSICluster&>(*(heVMapItem.second));
@@ -386,7 +386,7 @@ void TrapMutationHandler::initializeIndex3D(
 							// Add the bubble of size l+1 to the indices
 							// Loop on the bubbles
 							for (auto const& heVMapItem : network.getAll(
-									ReactantType::HeV)) {
+									ReactantType::PSIMixed)) {
 								// Get the bubble and its composition
 								auto& bubble =
 										static_cast<PSICluster&>(*(heVMapItem.second));

@@ -2,12 +2,12 @@
 #define PSIDCLUSTER_H
 
 // Includes
-#include "PSIHCluster.h"
+#include "PSICluster.h"
 
 namespace xolotlCore {
 
 //! This class represents a cluster composed entirely of deuterium.
-class PSIDCluster: public PSIHCluster {
+class PSIDCluster: public PSICluster {
 
 private:
 	static std::string buildName(IReactant::SizeType size) {
@@ -32,7 +32,7 @@ public:
 	 */
 	PSIDCluster(int nD, IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-			PSIHCluster(nD, _network, registry) {
+			PSICluster(_network, registry, buildName(nD)) {
 		// Set the size
 		size = nD;
 		// Update the composition map

@@ -45,15 +45,27 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			// He
 			1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
 
+			// D
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+			// T
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
 			// V
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 
 			// I
 			1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 
-			// HeV
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			// Mixed
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
 			// HeI
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -98,9 +110,6 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	network->computeRateConstants();
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux();
-	BOOST_TEST_MESSAGE(
-			"InterstitialClusterTester Message: \n" << "Total Flux is " << flux << "\n" << "   -Production Flux: " << cluster->getProductionFlux() << "\n" << "   -Combination Flux: " << cluster->getCombinationFlux() << "\n" << "   -Dissociation Flux: " << cluster->getDissociationFlux() << "\n" << "   -Emission Flux: " << cluster->getEmissionFlux() << "\n");
-
 	BOOST_REQUIRE_CLOSE(444828.3, flux, 0.1);
 
 	return;
@@ -112,11 +121,10 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 221864.07, 221709.26, 0.0, -14316.7, 896815.0,
-			257925.0, -1925.666, -2188.27, -2373.78, 356134.7, 377344.4,
-			224717.0, 256135.51, -1789.5926, -2054.05, 0.0 };
+	double knownPartials[] = { 221864, 0, 0, 0, 0, 0, -14316.7, 898869,
+			-1925.67, -2190.38, 358269, 0, 0, 0, -1789.59, 0 };
 	// Get the simple reaction network
-	auto network = getSimplePSIReactionNetwork(3);
+	auto network = getSimplePSIReactionNetwork(2);
 
 	// Get an V cluster with compostion 0,1,0.
 	auto cluster = (PSICluster *) network->get(Species::V, 1);
