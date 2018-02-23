@@ -1350,7 +1350,7 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the maximum size of HeV clusters
 	auto const& psiNetwork =
 			dynamic_cast<PSIClusterReactionNetwork const&>(network);
-	auto maxHeVClusterSize = psiNetwork.getMaxClusterSize(ReactantType::HeV);
+	auto maxHeVClusterSize = psiNetwork.getMaxClusterSize(ReactantType::PSIMixed);
 	auto maxVClusterSize = psiNetwork.getMaxClusterSize(ReactantType::V);
 
 	// Loop on the grid points
@@ -1397,7 +1397,7 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 					IReactant::Composition testComp;
 					testComp[toCompIdx(Species::He)] = j;
 					testComp[toCompIdx(Species::V)] = i;
-					cluster = network.get(ReactantType::HeV, testComp);
+					cluster = network.get(ReactantType::PSIMixed, testComp);
 					if (cluster) {
 						// Get the ID of the cluster
 						int id = cluster->getId() - 1;
@@ -1642,7 +1642,7 @@ PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
 	auto const& psiNetwork =
 			dynamic_cast<PSIClusterReactionNetwork const&>(network);
 	IReactant::SizeType maxHeVClusterSize = psiNetwork.getMaxClusterSize(
-			ReactantType::HeV);
+			ReactantType::PSIMixed);
 	// Get the maximum size of V clusters
 	IReactant::SizeType maxVClusterSize = psiNetwork.getMaxClusterSize(
 			ReactantType::V);
@@ -1653,7 +1653,7 @@ PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
 	IReactant::Composition testComp;
 	testComp[toCompIdx(Species::He)] = maxHeSize;
 	testComp[toCompIdx(Species::V)] = maxVClusterSize;
-	maxCluster = network.get(ReactantType::HeV, testComp);
+	maxCluster = network.get(ReactantType::PSIMixed, testComp);
 	if (!maxCluster) {
 		// Get the maximum size of Xe clusters
 		auto const& neNetwork =
@@ -2237,7 +2237,7 @@ PetscErrorCode postBurstingEventFunction1D(TS ts, PetscInt nevents,
 
 		// Consider each HeV cluster to transfer their concentration to the V cluster of the
 		// same size at this grid point
-		for (auto const& heVMapItem : network.getAll(ReactantType::HeV)) {
+		for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
 			auto const& cluster = *(heVMapItem.second);
 
 			// Get the V cluster of the same size
@@ -2672,7 +2672,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		}
 
 		// Loop on the helium-vacancy clusters
-		for (auto const& heVMapItem : network.getAll(ReactantType::HeV)) {
+		for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
 			auto const& cluster = *(heVMapItem.second);
 
 			int id = cluster.getId() - 1;

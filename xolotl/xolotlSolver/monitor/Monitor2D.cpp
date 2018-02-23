@@ -1182,7 +1182,7 @@ PetscErrorCode postBurstingEventFunction2D(TS ts, PetscInt nevents,
 
 		// Consider each HeV cluster to transfer their concentration to the V cluster of the
 		// same size at this grid point
-		for (auto const& heVMapItem : network.getAll(ReactantType::HeV)) {
+		for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
 			auto const& cluster = *(heVMapItem.second);
 
 			// Get the V cluster of the same size
