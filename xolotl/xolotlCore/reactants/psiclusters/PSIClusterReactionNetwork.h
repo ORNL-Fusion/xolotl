@@ -189,10 +189,11 @@ private:
 	 * Check whether dissociation reaction is allowed for
 	 * given production reaction.
 	 *
+	 * @param emittingReactant The reactant that would emit the pair
 	 * @param reaction The reaction to test.
 	 * @return true iff dissociation for the given reaction is allowed.
 	 */
-	bool canDissociate(ProductionReaction& reaction) const;
+	bool canDissociate(IReactant& emittingReactant, ProductionReaction& reaction) const;
 
 	/**
 	 * Add the dissociation connectivity for the reverse reaction if it is allowed.

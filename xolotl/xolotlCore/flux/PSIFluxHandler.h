@@ -14,21 +14,9 @@ namespace xolotlCore {
  */
 class PSIFluxHandler: public FluxHandler {
 
-protected:
-
-	/**
-	 * The index of the deuterium cluster.
-	 */
-	int dFluxIndex;
-
-	/**
-	 * The index of the tritium cluster.
-	 */
-	int tFluxIndex;
-
 public:
 
-	PSIFluxHandler() : dFluxIndex(-1), tFluxIndex(-1) {
+	PSIFluxHandler() : FluxHandler() {
 	}
 
 	~PSIFluxHandler() {

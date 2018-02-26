@@ -1,9 +1,0 @@
-#Fri Feb 06 12:01:52 EST 2015
-petscArgs=-fieldsplit_0_pc_type redundant -ts_max_snes_failures 200 -pc_fieldsplit_detect_coupling -ts_adapt_dt_max 1.0e-7 -ts_monitor -pc_type fieldsplit -fieldsplit_1_pc_type sor -ts_final_time 50 -ts_max_steps 50
-vizHandler=dummy
-networkFile=tungsten_1D.h5
-material=W100
-perfHandler=dummy
-heFlux=4.0e7
-startTemp=1000
-dimensions=1

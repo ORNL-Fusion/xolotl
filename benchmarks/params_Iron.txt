@@ -1,6 +1,6 @@
 dimensions=0
 process=reaction
-netParam=5000 5000 1
+netParam=5000 0 0 5000 1
 vizHandler=dummy
 perfHandler=dummy
 material=Fe

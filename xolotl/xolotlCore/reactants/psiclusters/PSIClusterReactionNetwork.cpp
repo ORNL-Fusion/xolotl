@@ -64,7 +64,7 @@ void PSIClusterReactionNetwork::defineProductionReactions(IReactant& r1,
 	auto& prref = add(std::move(reaction));
 
 	// Determine if reverse reaction is allowed.
-	auto dissociationAllowed = canDissociate(prref);
+	auto dissociationAllowed = canDissociate(pendingPRInfos[0].product, prref);
 
 	// Build the product-to-production map that we will
 	// use for batched resultsFrom() and defineDissociationReactions() calls.
@@ -542,11 +542,11 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 								|| secondReactant.getDiffusionFactor() > 0.0)) {
 
 					defineProductionReaction(firstReactant, secondReactant,
-							*product, newNumHe, newNumV);
+							*iReactant, newNumHe, newNumV);
 					// This is a reaction with two products so we need to tell the other product
 					// it is participating too
 					defineProductionReaction(firstReactant, secondReactant,
-							*iReactant, newNumHe, newNumV, 0, 0, true);
+							*product, newNumHe, newNumV, 0, 0, true);
 
 					// Stop the loop on I clusters here
 					break;
@@ -610,12 +610,12 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 						&& (heReactant.getDiffusionFactor() > 0.0
 								|| heVReactant.getDiffusionFactor() > 0.0)) {
 
-					defineProductionReaction(heReactant, heVReactant, *product,
-							newNumHe, newNumV + iSize);
+					defineProductionReaction(heReactant, heVReactant,
+							*iReactant, newNumHe, newNumV + iSize);
 					// This is a reaction with two products so we need to tell the other product
 					// it is participating too
-					defineProductionReaction(heReactant, heVReactant,
-							*iReactant, newNumHe, newNumV + iSize, 0, 0, true);
+					defineProductionReaction(heReactant, heVReactant, *product,
+							newNumHe, newNumV + iSize, 0, 0, true);
 
 					// Stop the loop on I clusters here
 					break;
@@ -674,8 +674,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// current supercluster, define its production reactions
 			// according to given parameters.
 			if (prInfos1.size() > 0 || prInfos2.size() > 0) {
-				defineProductionReactions(heReactant, superCluster, prInfos1);
-				defineProductionReactions(heReactant, superCluster, prInfos2,
+				defineProductionReactions(heReactant, superCluster, prInfos2);
+				defineProductionReactions(heReactant, superCluster, prInfos1,
 						true);
 			}
 		}
@@ -1063,7 +1063,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 	return;
 }
 
-bool PSIClusterReactionNetwork::canDissociate(
+bool PSIClusterReactionNetwork::canDissociate(IReactant& emittingReactant,
 		ProductionReaction& reaction) const {
 	// Assume reaction can dissociate by default.
 	bool ret = true;
@@ -1074,8 +1074,14 @@ bool PSIClusterReactionNetwork::canDissociate(
 		ret = false;
 	}
 
-	// Check for trap mutations (with XOR)
-	else if ((reaction.first.getType() == ReactantType::I)
+	// Check for trap mutations
+	if (emittingReactant.getType() == ReactantType::I
+			&& reaction.first.getType() != ReactantType::I) {
+		// Don't add the reverse reaction
+		ret = false;
+	}
+	// (with XOR)
+	if ((reaction.first.getType() == ReactantType::I)
 			== !(reaction.second.getType() == ReactantType::I)) {
 		// Don't add the reverse reaction
 		ret = false;
@@ -1089,7 +1095,7 @@ void PSIClusterReactionNetwork::checkForDissociation(
 		int c, int d) {
 
 	// Check if reaction can dissociate.
-	if (canDissociate(reaction)) {
+	if (canDissociate(emittingReactant, reaction)) {
 		// The dissociation can occur, so create a reaction for it.
 		defineDissociationReaction(reaction, emittingReactant, a, b, c, d);
 	}
@@ -1597,6 +1603,856 @@ double PSIClusterReactionNetwork::computeBindingEnergy(
 	double bindingEnergy = reaction.first.getFormationEnergy()
 			+ reaction.second.getFormationEnergy()
 			- reaction.dissociating.getFormationEnergy();
+
+	// hydrogen cases
+	if (reaction.dissociating.getType() == ReactantType::PSIMixed
+			&& (reaction.first.getType() == ReactantType::D
+					|| reaction.first.getType() == ReactantType::T
+					|| reaction.second.getType() == ReactantType::D
+					|| reaction.second.getType() == ReactantType::T)) {
+		auto comp = reaction.dissociating.getComposition();
+		int heSize = comp[toCompIdx(Species::He)];
+		int vSize = comp[toCompIdx(Species::V)];
+		int hSize = comp[toCompIdx(Species::D)] + comp[toCompIdx(Species::T)];
+
+		if (vSize == 1) {
+			switch (heSize) {
+			case 0:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.21;
+					break;
+				case 2:
+					bindingEnergy = 1.17;
+					break;
+				case 3:
+					bindingEnergy = 1.05;
+					break;
+				case 4:
+					bindingEnergy = 0.93;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 1:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.00;
+					break;
+				case 2:
+					bindingEnergy = 0.95;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.88;
+					break;
+				case 5:
+					bindingEnergy = 0.80;
+					break;
+				case 6:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 2:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.96;
+					break;
+				case 2:
+					bindingEnergy = 0.92;
+					break;
+				case 3:
+					bindingEnergy = 0.85;
+					break;
+				case 4:
+					bindingEnergy = 0.84;
+					break;
+				case 5:
+					bindingEnergy = 0.83;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 3:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.86;
+					break;
+				case 2:
+					bindingEnergy = 0.81;
+					break;
+				case 3:
+					bindingEnergy = 0.69;
+					break;
+				case 4:
+					bindingEnergy = 0.64;
+					break;
+				case 5:
+					bindingEnergy = 0.65;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 4:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.83;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.65;
+					break;
+				case 4:
+					bindingEnergy = 0.60;
+					break;
+				case 5:
+					bindingEnergy = 0.60;
+					break;
+				case 6:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 5:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.83;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.60;
+					break;
+				case 4:
+					bindingEnergy = 0.50;
+					break;
+				case 5:
+					bindingEnergy = 0.50;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 6:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.70;
+					break;
+				case 3:
+					bindingEnergy = 0.60;
+					break;
+				case 4:
+					bindingEnergy = 0.50;
+					break;
+				case 5:
+					bindingEnergy = 0.50;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 7:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.75;
+					break;
+				case 3:
+					bindingEnergy = 0.65;
+					break;
+				case 4:
+					bindingEnergy = 0.55;
+					break;
+				case 5:
+					bindingEnergy = 0.55;
+					break;
+				case 6:
+					bindingEnergy = 0.45;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 8:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.70;
+					break;
+				case 4:
+					bindingEnergy = 0.65;
+					break;
+				case 5:
+					bindingEnergy = 0.60;
+					break;
+				case 6:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 9:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.75;
+					break;
+				case 4:
+					bindingEnergy = 0.70;
+					break;
+				case 5:
+					bindingEnergy = 0.65;
+					break;
+				case 6:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			default:
+				break;
+			}
+		} else if (vSize == 2) {
+			switch (heSize) {
+			case 0:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.63;
+					break;
+				case 2:
+					bindingEnergy = 1.31;
+					break;
+				case 3:
+					bindingEnergy = 1.25;
+					break;
+				case 4:
+					bindingEnergy = 1.16;
+					break;
+				case 5:
+					bindingEnergy = 1.00;
+					break;
+				case 6:
+					bindingEnergy = 1.00;
+					break;
+				case 7:
+					bindingEnergy = 0.95;
+					break;
+				case 8:
+					bindingEnergy = 0.95;
+					break;
+				case 9:
+					bindingEnergy = 0.75;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 1:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.30;
+					break;
+				case 2:
+					bindingEnergy = 1.30;
+					break;
+				case 3:
+					bindingEnergy = 1.24;
+					break;
+				case 4:
+					bindingEnergy = 1.08;
+					break;
+				case 5:
+					bindingEnergy = 0.95;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.95;
+					break;
+				case 8:
+					bindingEnergy = 0.95;
+					break;
+				case 9:
+					bindingEnergy = 0.75;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 2:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.15;
+					break;
+				case 2:
+					bindingEnergy = 1.14;
+					break;
+				case 3:
+					bindingEnergy = 1.11;
+					break;
+				case 4:
+					bindingEnergy = 1.14;
+					break;
+				case 5:
+					bindingEnergy = 0.95;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.95;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.75;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 3:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.12;
+					break;
+				case 2:
+					bindingEnergy = 1.06;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 4:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.10;
+					break;
+				case 2:
+					bindingEnergy = 1.06;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 5:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.10;
+					break;
+				case 2:
+					bindingEnergy = 1.05;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 6:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.10;
+					break;
+				case 2:
+					bindingEnergy = 1.05;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 7:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.05;
+					break;
+				case 2:
+					bindingEnergy = 1.00;
+					break;
+				case 3:
+					bindingEnergy = 0.95;
+					break;
+				case 4:
+					bindingEnergy = 0.95;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 8:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.05;
+					break;
+				case 2:
+					bindingEnergy = 1.00;
+					break;
+				case 3:
+					bindingEnergy = 0.95;
+					break;
+				case 4:
+					bindingEnergy = 0.95;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 9:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.05;
+					break;
+				case 2:
+					bindingEnergy = 1.00;
+					break;
+				case 3:
+					bindingEnergy = 0.95;
+					break;
+				case 4:
+					bindingEnergy = 0.95;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 10:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.00;
+					break;
+				case 2:
+					bindingEnergy = 0.95;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.90;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 11:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.95;
+					break;
+				case 2:
+					bindingEnergy = 0.95;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.90;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 12:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.95;
+					break;
+				case 2:
+					bindingEnergy = 0.90;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.85;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.80;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.60;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 13:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.90;
+					break;
+				case 2:
+					bindingEnergy = 0.90;
+					break;
+				case 3:
+					bindingEnergy = 0.85;
+					break;
+				case 4:
+					bindingEnergy = 0.85;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.80;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.60;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 14:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.90;
+					break;
+				case 2:
+					bindingEnergy = 0.90;
+					break;
+				case 3:
+					bindingEnergy = 0.85;
+					break;
+				case 4:
+					bindingEnergy = 0.85;
+					break;
+				case 5:
+					bindingEnergy = 0.80;
+					break;
+				case 6:
+					bindingEnergy = 0.80;
+					break;
+				case 7:
+					bindingEnergy = 0.80;
+					break;
+				case 8:
+					bindingEnergy = 0.70;
+					break;
+				case 9:
+					bindingEnergy = 0.60;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			}
+		}
+	}
+
+//	std::cout << reaction.first.getName() << " + " << reaction.second.getName()
+//			<< " <- " << reaction.dissociating.getName() << " : " << max(bindingEnergy, -5.0) << std::endl;
 
 	return max(bindingEnergy, -5.0);
 }

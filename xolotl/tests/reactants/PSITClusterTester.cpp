@@ -33,8 +33,8 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	auto network = getSimplePSIReactionNetwork(0);
 
 	// The vector of radii to compare with
-	double expectedRadii[] = { 0.3, 0.3, 0.3, 0.3,
-			0.3 };
+	double expectedRadii[] =
+			{ 0.075, 0.0809312, 0.0850918, 0.0884041, 0.0912012 };
 
 	// Check all the values
 	for (int i = 1; i <= 5; i++) {
