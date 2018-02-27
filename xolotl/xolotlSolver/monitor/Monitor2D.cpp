@@ -283,7 +283,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
-	double heConcentration = 0.0;
+	double heConcentration = 0.0, dConcentration = 0.0, tConcentration = 0.0;
 
 	// Loop on the grid
 	for (PetscInt yj = ys; yj < ys + ym; yj++) {
@@ -302,8 +302,12 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 			// Update the concentration in the network
 			network.updateConcentrationsFromArray(gridPointSolution);
 
-			// Get the total helium concentration at this grid point
-			heConcentration += network.getTotalAtomConcentration()
+			// Get the total atom concentrations at this grid point
+			heConcentration += network.getTotalAtomConcentration(0)
+					* (grid[xi + 1] - grid[xi]) * hy;
+			dConcentration += network.getTotalAtomConcentration(1)
+					* (grid[xi + 1] - grid[xi]) * hy;
+			tConcentration += network.getTotalAtomConcentration(2)
 					* (grid[xi + 1] - grid[xi]) * hy;
 		}
 	}
@@ -315,6 +319,12 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	// Sum all the concentrations through MPI reduce
 	double totalHeConcentration = 0.0;
 	MPI_Reduce(&heConcentration, &totalHeConcentration, 1, MPI_DOUBLE, MPI_SUM,
+			0, PETSC_COMM_WORLD);
+	double totalDConcentration = 0.0;
+	MPI_Reduce(&dConcentration, &totalDConcentration, 1, MPI_DOUBLE, MPI_SUM,
+			0, PETSC_COMM_WORLD);
+	double totalTConcentration = 0.0;
+	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM,
 			0, PETSC_COMM_WORLD);
 
 	// Master process
@@ -332,24 +342,26 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 
 		// Rescale the concentration
 		totalHeConcentration = totalHeConcentration / surface;
+		totalDConcentration = totalDConcentration / surface;
+		totalTConcentration = totalTConcentration / surface;
 
 		// Get the fluence
-		double heliumFluence = fluxHandler->getFluence();
+		double fluence = fluxHandler->getFluence();
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Helium retention = "
-				<< 100.0 * (totalHeConcentration / heliumFluence) << " %"
+		std::cout << "Helium content = " << totalHeConcentration << std::endl;
+		std::cout << "Deuterium content = " << totalDConcentration
 				<< std::endl;
-		std::cout << "Helium mean concentration = " << totalHeConcentration
-				<< std::endl;
-		std::cout << "Helium fluence = " << heliumFluence << "\n" << std::endl;
+		std::cout << "Tritium content = " << totalTConcentration << std::endl;
+		std::cout << "Fluence = " << fluence << "\n" << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << heliumFluence << " "
-				<< 100.0 * (totalHeConcentration / heliumFluence) << std::endl;
+		outputFile << fluence << " " << totalHeConcentration << " "
+				<< totalDConcentration << " " << totalTConcentration
+				<< std::endl;
 		outputFile.close();
 	}
 
@@ -428,7 +440,8 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 		double x = grid[xi + 1] - grid[1];
 
 		// Initialize the concentrations at this grid point
-		double heLocalConc = 0.0, vLocalConc = 0.0, iLocalConc = 0.0;
+		double heLocalConc = 0.0, dLocalConc = 0.0, tLocalConc = 0.0,
+				vLocalConc = 0.0, iLocalConc = 0.0;
 
 		// Loop on the y
 		for (PetscInt yj = ys; yj < ys + ym; yj++) {
@@ -447,14 +460,20 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 				network.updateConcentrationsFromArray(gridPointSolution);
 
 				// Get the total helium concentration at this grid point
-				heLocalConc += network.getTotalAtomConcentration();
+				heLocalConc += network.getTotalAtomConcentration(0);
+				dLocalConc += network.getTotalAtomConcentration(1);
+				tLocalConc += network.getTotalAtomConcentration(2);
 				vLocalConc += network.getTotalVConcentration();
 				iLocalConc += network.getTotalIConcentration();
 			}
 		}
 
-		double heConc = 0.0, vConc = 0.0, iConc = 0.0;
+		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
 		MPI_Allreduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM,
+				PETSC_COMM_WORLD);
+		MPI_Allreduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM,
+				PETSC_COMM_WORLD);
+		MPI_Allreduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM,
 				PETSC_COMM_WORLD);
 		MPI_Allreduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM,
 				PETSC_COMM_WORLD);
@@ -467,7 +486,8 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 					<< x
 							- (grid[solverHandler.getSurfacePosition(0) + 1]
 									- grid[1]) << " " << heConc / My << " "
-					<< vConc / My << " " << iConc / My << std::endl;
+					<< dConc / My << " " << tConc / My << " " << vConc / My
+					<< " " << iConc / My << std::endl;
 		}
 	}
 
@@ -1175,6 +1195,20 @@ PetscErrorCode postBurstingEventFunction2D(TS ts, PetscInt nevents,
 		// Consider each He to reset their concentration at this grid point
 		for (auto const& heMapItem : network.getAll(ReactantType::He)) {
 			auto const& cluster = *(heMapItem.second);
+
+			int id = cluster.getId() - 1;
+			gridPointSolution[id] = 0.0;
+		}
+		// Consider each D to reset their concentration at this grid point
+		for (auto const& dMapItem : network.getAll(ReactantType::D)) {
+			auto const& cluster = *(dMapItem.second);
+
+			int id = cluster.getId() - 1;
+			gridPointSolution[id] = 0.0;
+		}
+		// Consider each T to reset their concentration at this grid point
+		for (auto const& tMapItem : network.getAll(ReactantType::T)) {
+			auto const& cluster = *(tMapItem.second);
 
 			int id = cluster.getId() - 1;
 			gridPointSolution[id] = 0.0;

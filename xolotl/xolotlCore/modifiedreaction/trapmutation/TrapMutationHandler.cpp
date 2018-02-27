@@ -77,7 +77,7 @@ void TrapMutationHandler::initialize(const IReactionNetwork& network,
 		// The helium cluster is connected to itself
 		cluster.setDissociationConnectivity(cluster.getId());
 
-		// The single and double interstitial clusters are connected to He
+		// The single, double and triple interstitial clusters are connected to He
 		singleInterstitial->setDissociationConnectivity(cluster.getId());
 		doubleInterstitial->setDissociationConnectivity(cluster.getId());
 		tripleInterstitial->setDissociationConnectivity(cluster.getId());
@@ -94,7 +94,9 @@ void TrapMutationHandler::initialize(const IReactionNetwork& network,
 				continue;
 
 			// Connect with He if the number of helium in the bubble is the same
-			if (comp[toCompIdx(Species::He)] == heSize) {
+			if (comp[toCompIdx(Species::He)] == heSize
+					&& comp[toCompIdx(Species::D)] == 0
+					&& comp[toCompIdx(Species::T)] == 0) {
 				bubble.setDissociationConnectivity(cluster.getId());
 			}
 		}
@@ -150,14 +152,17 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 							&& depthVec[l] - 0.01 > previousDepth)) {
 				// Add the bubble of size l+1 to the indices
 				// Loop on the bubbles
-				for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
+				for (auto const& heVMapItem : network.getAll(
+						ReactantType::PSIMixed)) {
 					// Get the bubble and its composition
 					auto& bubble =
 							static_cast<PSICluster&>(*(heVMapItem.second));
 					auto const& comp = bubble.getComposition();
 					// Get the correct bubble
 					if (comp[toCompIdx(Species::He)] == l + 1
-							&& comp[toCompIdx(Species::V)] == sizeVec[l]) {
+							&& comp[toCompIdx(Species::V)] == sizeVec[l]
+							&& comp[toCompIdx(Species::D)] == 0
+							&& comp[toCompIdx(Species::T)] == 0) {
 						// Add this bubble to the indices
 						indices.emplace_back(bubble);
 					}
@@ -234,7 +239,9 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 						auto const& comp = bubble.getComposition();
 						// Get the correct bubble
 						if (comp[toCompIdx(Species::He)] == l + 1
-								&& comp[toCompIdx(Species::V)] == sizeVec[l]) {
+								&& comp[toCompIdx(Species::V)] == sizeVec[l]
+								&& comp[toCompIdx(Species::D)] == 0
+								&& comp[toCompIdx(Species::T)] == 0) {
 							// Add this bubble to the indices
 							indices.emplace_back(bubble);
 						}
@@ -265,7 +272,9 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 							// Get the correct bubble
 							if (comp[toCompIdx(Species::He)] == l + 1
 									&& comp[toCompIdx(Species::V)]
-											== sigma3SizeVec[l]) {
+											== sigma3SizeVec[l]
+									&& comp[toCompIdx(Species::D)] == 0
+									&& comp[toCompIdx(Species::T)] == 0) {
 								// Check if this bubble is already 
 								// associated with this grid point.
 								auto biter =
@@ -361,8 +370,9 @@ void TrapMutationHandler::initializeIndex3D(
 							auto const& comp = bubble.getComposition();
 							// Get the correct bubble
 							if (comp[toCompIdx(Species::He)] == l + 1
-									&& comp[toCompIdx(Species::V)]
-											== sizeVec[l]) {
+									&& comp[toCompIdx(Species::V)] == sizeVec[l]
+									&& comp[toCompIdx(Species::D)] == 0
+									&& comp[toCompIdx(Species::T)] == 0) {
 								// Add this bubble to the indices
 								indices.emplace_back(bubble);
 							}
@@ -394,7 +404,9 @@ void TrapMutationHandler::initializeIndex3D(
 								// Get the correct bubble
 								if (comp[toCompIdx(Species::He)] == l + 1
 										&& comp[toCompIdx(Species::V)]
-												== sigma3SizeVec[l]) {
+												== sigma3SizeVec[l]
+										&& comp[toCompIdx(Species::D)] == 0
+										&& comp[toCompIdx(Species::T)] == 0) {
 									// Check if this bubble is already
 									// associated with this grid point.
 									auto biter =

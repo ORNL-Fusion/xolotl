@@ -242,8 +242,6 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 			options.getMaxT();
 	bool usePhaseCut = options.usePhaseCut();
 	int numHe = 0, numD = 0, numT = 0, numV = 0, numI = 0;
-	double formationEnergy = 0.0, migrationEnergy = 0.0;
-	double diffusionFactor = 0.0;
 
 	// Once we have C++14, use std::make_unique.
 	std::unique_ptr<PSIClusterReactionNetwork> network(

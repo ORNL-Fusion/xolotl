@@ -278,18 +278,20 @@ public:
 	 *
 	 * Here the atoms that are considered are helium atoms.
 	 *
+	 * @param i Index to switch between the different types of atoms
 	 * @return The total concentration
 	 */
-	double getTotalAtomConcentration() override;
+	double getTotalAtomConcentration(int i = 0) override;
 
 	/**
 	 * Get the total concentration of atoms contained in bubbles in the network.
 	 *
 	 * Here the atoms that are considered are helium atoms.
 	 *
+	 * @param i Index to switch between the different types of atoms
 	 * @return The total concentration
 	 */
-	double getTotalTrappedAtomConcentration() override;
+	double getTotalTrappedAtomConcentration(int i = 0) override;
 
 	/**
 	 * Get the total concentration of vacancies contained in the network.

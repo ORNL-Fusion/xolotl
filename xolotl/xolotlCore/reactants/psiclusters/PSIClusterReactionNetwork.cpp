@@ -1259,22 +1259,39 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 	return;
 }
 
-double PSIClusterReactionNetwork::getTotalAtomConcentration() {
+double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 	// Initial declarations
-	double heliumConc = 0.0;
+	double atomConc = 0.0;
+	ReactantType type;
+
+	// Switch on the index
+	switch (i) {
+	case 0:
+		type = ReactantType::He;
+		break;
+	case 1:
+		type = ReactantType::D;
+		break;
+	case 2:
+		type = ReactantType::T;
+		break;
+	default:
+		throw std::string("\nType not defined for getTotalAtomConcentration()");
+		break;
+	}
 
 	// Sum over all He clusters.
-	for (auto const& currMapItem : getAll(ReactantType::He)) {
+	for (auto const& currMapItem : getAll(type)) {
 
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		double size = cluster.getSize();
 
 		// Add the concentration times the He content to the total helium concentration
-		heliumConc += cluster.getConcentration() * size;
+		atomConc += cluster.getConcentration() * size;
 	}
 
-	// Sum over all HeV clusters.
+	// Sum over all Mixed clusters.
 	for (auto const& currMapItem : getAll(ReactantType::PSIMixed)) {
 
 		// Get the cluster and its composition
@@ -1282,8 +1299,13 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration() {
 		auto& comp = cluster.getComposition();
 
 		// Add the concentration times the He content to the total helium concentration
-		heliumConc += cluster.getConcentration() * comp[toCompIdx(Species::He)];
+		atomConc += cluster.getConcentration()
+				* comp[toCompIdx(toSpecies(type))];
 	}
+
+	// No super clusters for now for D and T
+	if (i > 0)
+		return atomConc;
 
 	// Sum over all super clusters.
 	for (auto const& currMapItem : getAll(ReactantType::PSISuper)) {
@@ -1293,37 +1315,61 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration() {
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		// Add its total helium concentration helium concentration
-		heliumConc += cluster.getTotalHeliumConcentration();
+		atomConc += cluster.getTotalHeliumConcentration();
 	}
 
-	return heliumConc;
+	return atomConc;
 }
 
-double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration() {
+double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 	// Initial declarations
-	double heliumConc = 0.0;
+	double atomConc = 0.0;
+	ReactantType type;
 
-	// Sum over all HeV clusters.
+	// Switch on the index
+	switch (i) {
+	case 0:
+		type = ReactantType::He;
+		break;
+	case 1:
+		type = ReactantType::D;
+		break;
+	case 2:
+		type = ReactantType::T;
+		break;
+	default:
+		throw std::string("\nType not defined for getTotalAtomConcentration()");
+		break;
+	}
+
+	// Sum over all Mixed clusters.
 	for (auto const& currMapItem : getAll(ReactantType::PSIMixed)) {
+
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
 
 		// Add the concentration times the He content to the total helium concentration
-		heliumConc += cluster.getConcentration() * comp[toCompIdx(Species::He)];
+		atomConc += cluster.getConcentration()
+				* comp[toCompIdx(toSpecies(type))];
 	}
+
+	// No super clusters for now for D and T
+	if (i > 0)
+		return atomConc;
 
 	// Sum over all super clusters.
 	for (auto const& currMapItem : getAll(ReactantType::PSISuper)) {
+
 		// Get the cluster
 		auto const& cluster =
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
-		// Add its total helium concentration
-		heliumConc += cluster.getTotalHeliumConcentration();
+		// Add its total helium concentration helium concentration
+		atomConc += cluster.getTotalHeliumConcentration();
 	}
 
-	return heliumConc;
+	return atomConc;
 }
 
 double PSIClusterReactionNetwork::getTotalVConcentration() {
@@ -1464,8 +1510,9 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 	auto const& superClusters = getAll(ReactantType::PSISuper);
 
 	// Make a vector of types for the non super clusters
-	std::vector<ReactantType> typeVec { ReactantType::He, ReactantType::V,
-			ReactantType::I, ReactantType::PSIMixed };
+	std::vector<ReactantType> typeVec { ReactantType::He, ReactantType::D,
+			ReactantType::T, ReactantType::V, ReactantType::I,
+			ReactantType::PSIMixed };
 	// Loop on it
 	for (auto tvIter = typeVec.begin(); tvIter != typeVec.end(); ++tvIter) {
 

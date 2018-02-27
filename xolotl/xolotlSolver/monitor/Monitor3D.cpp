@@ -295,7 +295,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
-	double heConcentration = 0;
+	double heConcentration = 0.0, dConcentration = 0.0, tConcentration = 0.0;
 
 	// Loop on the grid
 	for (PetscInt zk = zs; zk < zs + zm; zk++) {
@@ -318,7 +318,11 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 				network.updateConcentrationsFromArray(gridPointSolution);
 
 				// Get the total helium concentration at this grid point
-				heConcentration += network.getTotalAtomConcentration()
+				heConcentration += network.getTotalAtomConcentration(0)
+						* (grid[xi + 1] - grid[xi]) * hy * hz;
+				dConcentration += network.getTotalAtomConcentration(1)
+						* (grid[xi + 1] - grid[xi]) * hy * hz;
+				tConcentration += network.getTotalAtomConcentration(2)
 						* (grid[xi + 1] - grid[xi]) * hy * hz;
 			}
 		}
@@ -331,6 +335,12 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	// Sum all the concentrations through MPI reduce
 	double totalHeConcentration = 0.0;
 	MPI_Reduce(&heConcentration, &totalHeConcentration, 1, MPI_DOUBLE, MPI_SUM,
+			0, PETSC_COMM_WORLD);
+	double totalDConcentration = 0.0;
+	MPI_Reduce(&dConcentration, &totalDConcentration, 1, MPI_DOUBLE, MPI_SUM,
+			0, PETSC_COMM_WORLD);
+	double totalTConcentration = 0.0;
+	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM,
 			0, PETSC_COMM_WORLD);
 
 	// Master process
@@ -348,24 +358,26 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 
 		// Rescale the concentration
 		totalHeConcentration = totalHeConcentration / surface;
+		totalDConcentration = totalDConcentration / surface;
+		totalTConcentration = totalTConcentration / surface;
 
 		// Get the fluence
-		double heliumFluence = fluxHandler->getFluence();
+		double fluence = fluxHandler->getFluence();
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Helium retention = "
-				<< 100.0 * (totalHeConcentration / heliumFluence) << " %"
+		std::cout << "Helium content = " << totalHeConcentration << std::endl;
+		std::cout << "Deuterium content = " << totalDConcentration
 				<< std::endl;
-		std::cout << "Helium mean concentration = " << totalHeConcentration
-				<< std::endl;
-		std::cout << "Helium fluence = " << heliumFluence << "\n" << std::endl;
+		std::cout << "Tritium content = " << totalTConcentration << std::endl;
+		std::cout << "Fluence = " << fluence << "\n" << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << heliumFluence << " "
-				<< 100.0 * (totalHeConcentration / heliumFluence) << std::endl;
+		outputFile << fluence << " " << totalHeConcentration << " "
+				<< totalDConcentration << " " << totalTConcentration
+				<< std::endl;
 		outputFile.close();
 	}
 
@@ -1219,6 +1231,20 @@ PetscErrorCode postBurstingEventFunction3D(TS ts, PetscInt nevents,
 		// Consider each He to reset their concentration at this grid point
 		for (auto const& heMapItem : network.getAll(ReactantType::He)) {
 			auto const& cluster = *(heMapItem.second);
+
+			int id = cluster.getId() - 1;
+			gridPointSolution[id] = 0.0;
+		}
+		// Consider each D to reset their concentration at this grid point
+		for (auto const& dMapItem : network.getAll(ReactantType::D)) {
+			auto const& cluster = *(dMapItem.second);
+
+			int id = cluster.getId() - 1;
+			gridPointSolution[id] = 0.0;
+		}
+		// Consider each T to reset their concentration at this grid point
+		for (auto const& tMapItem : network.getAll(ReactantType::T)) {
+			auto const& cluster = *(tMapItem.second);
 
 			int id = cluster.getId() - 1;
 			gridPointSolution[id] = 0.0;
