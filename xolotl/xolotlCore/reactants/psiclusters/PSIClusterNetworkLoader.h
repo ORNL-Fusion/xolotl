@@ -51,6 +51,16 @@ protected:
 	int maxHe;
 
 	/**
+	 * The maximum size for deuterium clusters
+	 */
+	int maxD;
+
+	/**
+	 * The maximum size for tritium clusters
+	 */
+	int maxT;
+
+	/**
 	 * The maximum size for interstitial clusters
 	 */
 	int maxI;
@@ -89,11 +99,13 @@ protected:
 	 * clusters for that type.
 	 *
 	 * @param numHe The number of helium atoms
+	 * @param numD The number of deuterium atoms
+	 * @param numT The number of tritium atoms
 	 * @param numV The number of atomic vacancies
 	 * @param numI The number of interstitial defects
 	 * @return The new cluster
 	 */
-	std::unique_ptr<PSICluster> createPSICluster(int numHe, int numV, int numI,
+	std::unique_ptr<PSICluster> createPSICluster(int numHe, int numD, int numT, int numV, int numI,
 			IReactionNetwork& network) const;
 
 	/**

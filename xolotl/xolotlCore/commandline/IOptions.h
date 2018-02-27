@@ -491,6 +491,34 @@ public:
 	virtual void setMaxImpurity(int max) = 0;
 
 	/**
+	 * Obtain the maximum value of deuterium to be used.
+	 *
+	 * @return The maximum value
+	 */
+	virtual int getMaxD() const = 0;
+
+	/**
+	 * Set the maximum value of deuterium to use.
+	 *
+	 * @param max The maximum
+	 */
+	virtual void setMaxD(int max) = 0;
+
+	/**
+	 * Obtain the maximum value of tritium to be used.
+	 *
+	 * @return The maximum value
+	 */
+	virtual int getMaxT() const = 0;
+
+	/**
+	 * Set the maximum value of tritium to use.
+	 *
+	 * @param max The maximum
+	 */
+	virtual void setMaxT(int max) = 0;
+
+	/**
 	 * Obtain the maximum value of vacancies to be used.
 	 *
 	 * @return The maximum value

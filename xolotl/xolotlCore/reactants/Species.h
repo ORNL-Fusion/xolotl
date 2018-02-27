@@ -20,7 +20,7 @@ namespace xolotlCore {
  * it is specific to the type of reaction network used.
  */
 enum class Species {
-	Invalid = -1, V = 0, I, He, Xe, last = Xe
+	Invalid = -1, V = 0, I, He, D, T, Xe, last = Xe
 };
 
 /**

@@ -118,9 +118,9 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -153,7 +153,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	// Loop on the full grid
 	for (PetscInt i = 0; i < Mx; i++) {
 		// Wait for all the processes
-		MPI_Barrier (PETSC_COMM_WORLD);
+		MPI_Barrier(PETSC_COMM_WORLD);
 		// Size of the concentration that will be stored
 		int concSize = -1;
 		// Vector for the concentrations
@@ -278,9 +278,9 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -297,7 +297,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
-	double heConcentration = 0.0, bubbleConcentration = 0.0;
+	double heConcentration = 0.0, dConcentration = 0.0, tConcentration = 0.0;
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
@@ -315,25 +315,13 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		// Update the concentration in the network
 		network.updateConcentrationsFromArray(gridPointSolution);
 
-		// Loop on all the indices
-		for (unsigned int l = 0; l < indices1D.size(); l++) {
-			// Add the current concentration times the number of helium in the cluster
-			// (from the weight vector)
-			heConcentration += gridPointSolution[indices1D[l]] * weights1D[l]
-					* (grid[xi + 1] - grid[xi]);
-			bubbleConcentration += gridPointSolution[indices1D[l]]
-					* (grid[xi + 1] - grid[xi]);
-		}
-
-		// Loop on all the super clusters
-		for (auto const& superMapItem : network.getAll(ReactantType::PSISuper)) {
-			auto const& cluster =
-					static_cast<PSISuperCluster&>(*(superMapItem.second));
-			heConcentration += cluster.getTotalHeliumConcentration()
-					* (grid[xi + 1] - grid[xi]);
-			bubbleConcentration += cluster.getTotalConcentration()
-					* (grid[xi + 1] - grid[xi]);
-		}
+		// Get the total atoms concentration at this grid point
+		heConcentration += network.getTotalAtomConcentration(0)
+				* (grid[xi + 1] - grid[xi]);
+		dConcentration += network.getTotalAtomConcentration(1)
+				* (grid[xi + 1] - grid[xi]);
+		tConcentration += network.getTotalAtomConcentration(2)
+				* (grid[xi + 1] - grid[xi]);
 	}
 
 	// Get the current process ID
@@ -344,31 +332,32 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	double totalHeConcentration = 0.0;
 	MPI_Reduce(&heConcentration, &totalHeConcentration, 1, MPI_DOUBLE, MPI_SUM,
 			0, PETSC_COMM_WORLD);
-	double totalBubbleConcentration = 0.0;
-	MPI_Reduce(&bubbleConcentration, &totalBubbleConcentration, 1, MPI_DOUBLE,
-			MPI_SUM, 0, MPI_COMM_WORLD);
+	double totalDConcentration = 0.0;
+	MPI_Reduce(&dConcentration, &totalDConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
+	MPI_COMM_WORLD);
+	double totalTConcentration = 0.0;
+	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
+	MPI_COMM_WORLD);
 
 	// Master process
 	if (procId == 0) {
 		// Get the fluence
-		double heliumFluence = fluxHandler->getFluence();
+		double fluence = fluxHandler->getFluence();
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Helium retention = "
-				<< 100.0 * (totalHeConcentration / heliumFluence) << " %"
+		std::cout << "Helium content = " << totalHeConcentration << std::endl;
+		std::cout << "Deuterium content = " << totalDConcentration
 				<< std::endl;
-		std::cout << "Helium concentration = " << totalHeConcentration
-				<< std::endl;
-		std::cout << "Helium fluence = " << heliumFluence << "\n" << std::endl;
+		std::cout << "Tritium content = " << totalTConcentration << std::endl;
+		std::cout << "Fluence = " << fluence << "\n" << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << heliumFluence << " "
-				<< 100.0 * (totalHeConcentration / heliumFluence) << " "
-				<< totalHeConcentration << " "
-				<< totalHeConcentration / totalBubbleConcentration << std::endl;
+		outputFile << fluence << " " << totalHeConcentration << " "
+				<< totalDConcentration << " " << totalTConcentration
+				<< std::endl;
 		outputFile.close();
 	}
 
@@ -410,9 +399,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -482,7 +471,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 			0, PETSC_COMM_WORLD);
 	double totalBubbleConcentration = 0.0;
 	MPI_Reduce(&bubbleConcentration, &totalBubbleConcentration, 1, MPI_DOUBLE,
-			MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_SUM, 0, MPI_COMM_WORLD);
 	double totalRadii = 0.0;
 	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
@@ -561,9 +550,9 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the array of concentration
@@ -593,7 +582,7 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 	// Loop on the full grid
 	for (PetscInt xi = surfacePos + 1; xi < Mx; xi++) {
 		// Wait for everybody at each grid point
-		MPI_Barrier (PETSC_COMM_WORLD);
+		MPI_Barrier(PETSC_COMM_WORLD);
 
 		// Set x
 		double x = grid[xi + 1] - grid[1];
@@ -637,7 +626,7 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 		// Gather all the data
 		for (int i = 0; i < maxSize; i++) {
 			MPI_Reduce(&heConcLocal[i], &heConcentrations[i], 1, MPI_DOUBLE,
-					MPI_SUM, 0, PETSC_COMM_WORLD);
+			MPI_SUM, 0, PETSC_COMM_WORLD);
 		}
 
 		// Print it from the main proc
@@ -709,9 +698,9 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -739,7 +728,7 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 	// Loop on the entire grid
 	for (int xi = surfacePos + 1; xi < Mx; xi++) {
 		// Wait for everybody at each grid point
-		MPI_Barrier (PETSC_COMM_WORLD);
+		MPI_Barrier(PETSC_COMM_WORLD);
 
 		// Set x
 		double x = grid[xi + 1] - grid[1];
@@ -832,9 +821,9 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -859,13 +848,14 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	// Loop on the entire grid
 	for (int xi = surfacePos + 1; xi < Mx; xi++) {
 		// Wait for everybody at each grid point
-		MPI_Barrier (PETSC_COMM_WORLD);
+		MPI_Barrier(PETSC_COMM_WORLD);
 
 		// Set x
 		double x = grid[xi + 1] - grid[1];
 
 		// Initialize the concentrations at this grid point
-		double heLocalConc = 0.0, vLocalConc = 0.0, iLocalConc = 0.0;
+		double heLocalConc = 0.0, dLocalConc = 0.0, tLocalConc = 0.0,
+				vLocalConc = 0.0, iLocalConc = 0.0;
 
 		// Check if this process is in charge of xi
 		if (xi >= xs && xi < xs + xm) {
@@ -876,32 +866,30 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 			network.updateConcentrationsFromArray(gridPointSolution);
 
 			// Get the total helium concentration at this grid point
-			heLocalConc += network.getTotalAtomConcentration();
+			heLocalConc += network.getTotalAtomConcentration(0);
+			dLocalConc += network.getTotalAtomConcentration(1);
+			tLocalConc += network.getTotalAtomConcentration(2);
 			vLocalConc += network.getTotalVConcentration();
 			iLocalConc += network.getTotalIConcentration();
+		}
 
-			// If this is not the master process, send the values
-			if (procId != 0) {
-				MPI_Send(&heLocalConc, 1, MPI_DOUBLE, 0, 4, PETSC_COMM_WORLD);
-				MPI_Send(&vLocalConc, 1, MPI_DOUBLE, 0, 5, PETSC_COMM_WORLD);
-				MPI_Send(&iLocalConc, 1, MPI_DOUBLE, 0, 6, PETSC_COMM_WORLD);
-			}
-		}
-		// If this process is not in charge of xi but is the master one, receive the values
-		else if (procId == 0) {
-			MPI_Recv(&heLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 4,
-					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-			MPI_Recv(&vLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 5,
-					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-			MPI_Recv(&vLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 6,
-					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-		}
+		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
+		MPI_Allreduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM,
+				PETSC_COMM_WORLD);
+		MPI_Allreduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM,
+				PETSC_COMM_WORLD);
+		MPI_Allreduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM,
+				PETSC_COMM_WORLD);
+		MPI_Allreduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM,
+				PETSC_COMM_WORLD);
+		MPI_Allreduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM,
+				PETSC_COMM_WORLD);
 
 		// The master process writes computes the cumulative value and writes in the file
 		if (procId == 0) {
 			outputFile << x - (grid[surfacePos + 1] - grid[1]) << " "
-					<< heLocalConc << " " << vLocalConc << " " << iLocalConc
-					<< std::endl;
+					<< heConc << " " << dConc << " " << tConc
+					<< " " << vConc << " " << iConc << std::endl;
 		}
 	}
 
@@ -959,9 +947,9 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1350,7 +1338,8 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the maximum size of HeV clusters
 	auto const& psiNetwork =
 			dynamic_cast<PSIClusterReactionNetwork const&>(network);
-	auto maxHeVClusterSize = psiNetwork.getMaxClusterSize(ReactantType::HeV);
+	auto maxHeVClusterSize = psiNetwork.getMaxClusterSize(
+			ReactantType::PSIMixed);
 	auto maxVClusterSize = psiNetwork.getMaxClusterSize(ReactantType::V);
 
 	// Loop on the grid points
@@ -1397,7 +1386,7 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 					IReactant::Composition testComp;
 					testComp[toCompIdx(Species::He)] = j;
 					testComp[toCompIdx(Species::V)] = i;
-					cluster = network.get(ReactantType::HeV, testComp);
+					cluster = network.get(ReactantType::PSIMixed, testComp);
 					if (cluster) {
 						// Get the ID of the cluster
 						int id = cluster->getId() - 1;
@@ -1510,9 +1499,9 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1535,7 +1524,7 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 	// Loop on the full grid
 	for (xi = 0; xi < Mx; xi++) {
 		// Wait for everybody at each grid point
-		MPI_Barrier (PETSC_COMM_WORLD);
+		MPI_Barrier(PETSC_COMM_WORLD);
 
 		// Get the x position
 		x = grid[xi + 1] - grid[1];
@@ -1642,7 +1631,7 @@ PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
 	auto const& psiNetwork =
 			dynamic_cast<PSIClusterReactionNetwork const&>(network);
 	IReactant::SizeType maxHeVClusterSize = psiNetwork.getMaxClusterSize(
-			ReactantType::HeV);
+			ReactantType::PSIMixed);
 	// Get the maximum size of V clusters
 	IReactant::SizeType maxVClusterSize = psiNetwork.getMaxClusterSize(
 			ReactantType::V);
@@ -1653,7 +1642,7 @@ PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
 	IReactant::Composition testComp;
 	testComp[toCompIdx(Species::He)] = maxHeSize;
 	testComp[toCompIdx(Species::V)] = maxVClusterSize;
-	maxCluster = network.get(ReactantType::HeV, testComp);
+	maxCluster = network.get(ReactantType::PSIMixed, testComp);
 	if (!maxCluster) {
 		// Get the maximum size of Xe clusters
 		auto const& neNetwork =
@@ -2068,9 +2057,9 @@ PetscErrorCode burstingEventFunction1D(TS ts, PetscReal time, Vec solution,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -2234,10 +2223,24 @@ PetscErrorCode postBurstingEventFunction1D(TS ts, PetscInt nevents,
 			int id = cluster.getId() - 1;
 			gridPointSolution[id] = 0.0;
 		}
+		// Consider each D to reset their concentration at this grid point
+		for (auto const& dMapItem : network.getAll(ReactantType::D)) {
+			auto const& cluster = *(dMapItem.second);
+
+			int id = cluster.getId() - 1;
+			gridPointSolution[id] = 0.0;
+		}
+		// Consider each T to reset their concentration at this grid point
+		for (auto const& tMapItem : network.getAll(ReactantType::T)) {
+			auto const& cluster = *(tMapItem.second);
+
+			int id = cluster.getId() - 1;
+			gridPointSolution[id] = 0.0;
+		}
 
 		// Consider each HeV cluster to transfer their concentration to the V cluster of the
 		// same size at this grid point
-		for (auto const& heVMapItem : network.getAll(ReactantType::HeV)) {
+		for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
 			auto const& cluster = *(heVMapItem.second);
 
 			// Get the V cluster of the same size
@@ -2407,6 +2410,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 				"setupPetsc1DMonitor: PetscOptionsGetInt (-start_stop) failed.");
 		if (!flag)
 			hdf5Stride1D = 1.0;
+		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 		// Don't do anything if both files have the same name
 		if (hdf5OutputName1D != solverHandler.getNetworkName()) {
@@ -2421,9 +2425,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 
 			// Get the size of the total grid
 			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 			// Initialize the HDF5 file for all the processes
@@ -2671,7 +2675,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		}
 
 		// Loop on the helium-vacancy clusters
-		for (auto const& heVMapItem : network.getAll(ReactantType::HeV)) {
+		for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
 			auto const& cluster = *(heVMapItem.second);
 
 			int id = cluster.getId() - 1;

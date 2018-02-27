@@ -22,7 +22,7 @@ public:
 					"netParam                          "
 							"This option allows the user to define the boundaries of the network.\n"
 							"                                    To do so, simply write the values in order "
-							"maxImp maxV maxI bool .\n") {
+							"maxHe/Xe maxD maxT maxV maxI bool .\n") {
 	}
 
 	/**
@@ -56,17 +56,23 @@ public:
 
 		// Check if we have other values
 		if (tokens.size() > 1) {
-			// Set the vacancy size
+			// Set the deuterium size
 			max = strtol(tokens[1].c_str(), NULL, 10);
+			opt->setMaxD(max);
+			// Set the tritium size
+			max = strtol(tokens[2].c_str(), NULL, 10);
+			opt->setMaxT(max);
+			// Set the vacancy size
+			max = strtol(tokens[3].c_str(), NULL, 10);
 			opt->setMaxV(max);
 			// Set the interstitial size
-			max = strtol(tokens[2].c_str(), NULL, 10);
+			max = strtol(tokens[4].c_str(), NULL, 10);
 			opt->setMaxI(max);
 
 			// Check if there are other values
-			if (tokens.size() > 3) {
+			if (tokens.size() > 5) {
 				// Set the phase cut
-				opt->setPhaseCutFlag(tokens[3] == "true");
+				opt->setPhaseCutFlag(tokens[5] == "true");
 			}
 		}
 

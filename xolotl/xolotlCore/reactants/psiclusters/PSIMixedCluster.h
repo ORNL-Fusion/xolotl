@@ -1,5 +1,5 @@
-#ifndef PSIHEVCLUSTER_H
-#define PSIHEVCLUSTER_H
+#ifndef PSIMIXEDCLUSTER_H
+#define PSIMIXEDCLUSTER_H
 
 // Includes
 #include "PSICluster.h"
@@ -9,9 +9,9 @@
 namespace xolotlCore {
 
 /**
- *  A cluster composed of helium and vacancies
+ *  A cluster composed of impurities and vacancies
  */
-class PSIHeVCluster: public PSICluster {
+class PSIMixedCluster: public PSICluster {
 
 private:
 	// TODO do we need to keep these species counts here,
@@ -20,13 +20,19 @@ private:
 	//! The number of helium atoms in this cluster.
 	int numHe;
 
+	//! The number of deuterium atoms in this cluster.
+	int numD;
+
+	//! The number of tritium atoms in this cluster.
+	int numT;
+
 	//! The number of atomic vacancies in this cluster.
 	int numV;
 
-	static std::string buildName(IReactant::SizeType nHe,
+	static std::string buildName(IReactant::SizeType nHe,IReactant::SizeType nD,IReactant::SizeType nT,
 			IReactant::SizeType nV) {
 		std::stringstream nameStream;
-		nameStream << "He_" << nHe << "V_" << nV;
+		nameStream << "He_" << nHe << "D_" << nD << "T_" << nT << "V_" << nV;
 		return nameStream.str();
 	}
 
@@ -35,34 +41,38 @@ public:
 	/**
 	 * Default constructor, deleted because we require info to construct.
 	 */
-	PSIHeVCluster() = delete;
+	PSIMixedCluster() = delete;
 
 	/**
-	 * The constructor. All PSIHeVClusters must be initialized with a map
+	 * The constructor. All PSIMixedClusters must be initialized with a map
 	 * that describes the species of which the cluster is composed. The map
 	 * should contain as its keys the names of the species and the sizes of the
 	 * species as its values. The names of the species must be one of
 	 * {He,V}.
 	 *
 	 * @param numHe The number of helium atoms in this cluster
+	 * @param numD The number of deuterium in this cluster
+	 * @param numT The number of tritium in this cluster
 	 * @param numV The number of vacancies in this cluster
 	 * @param _network The network the cluster will belong to.
 	 * @param registry The performance handler registry
 	 */
-	PSIHeVCluster(int numHe, int numV, IReactionNetwork& _network,
+	PSIMixedCluster(int numHe, int numD, int numT, int numV, IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-			PSICluster(_network, registry, buildName(numHe, numV)), numHe(
-					numHe), numV(numV) {
+			PSICluster(_network, registry, buildName(numHe, numD, numT, numV)), numHe(
+					numHe), numD(numD), numT(numT), numV(numV) {
 		// Set the cluster size as the sum of
-		// the number of Helium and Vacancies
-		size = numHe + numV;
+		// the number of Helium, Hydrogen, Vacancies
+		size = numHe + numD + numT + numV;
 
 		// Update the composition map
 		composition[toCompIdx(Species::He)] = numHe;
+		composition[toCompIdx(Species::D)] = numD;
+		composition[toCompIdx(Species::T)] = numT;
 		composition[toCompIdx(Species::V)] = numV;
 
 		// Set the typename appropriately
-		type = ReactantType::HeV;
+		type = ReactantType::PSIMixed;
 
 		// Compute the reaction radius
 		reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
@@ -87,10 +97,10 @@ public:
 	/**
 	 * Copy constructor, deleted to prevent use.
 	 */
-	PSIHeVCluster(PSIHeVCluster &other) = delete;
+	PSIMixedCluster(PSIMixedCluster &other) = delete;
 
 	//! Destructor
-	~PSIHeVCluster() {
+	~PSIMixedCluster() {
 	}
 
 	/**
@@ -104,7 +114,7 @@ public:
 	}
 
 };
-//end class PSIHeVCluster
+//end class PSIMixedCluster
 
 } /* end namespace xolotlCore */
 #endif

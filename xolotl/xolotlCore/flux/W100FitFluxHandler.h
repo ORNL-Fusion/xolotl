@@ -1,7 +1,7 @@
 #ifndef W100FITFLUXHANDLER_H
 #define W100FITFLUXHANDLER_H
 
-#include "FluxHandler.h"
+#include "PSIFluxHandler.h"
 #include <cmath>
 
 namespace xolotlCore {
@@ -10,7 +10,7 @@ namespace xolotlCore {
  * This class realizes the IFluxHandler interface to calculate the incident helium flux
  * for a (100) oriented tungsten material.
  */
-class W100FitFluxHandler: public FluxHandler {
+class W100FitFluxHandler: public PSIFluxHandler {
 private:
 
 	/**
@@ -48,28 +48,6 @@ public:
 	 * The Destructor
 	 */
 	~W100FitFluxHandler() {
-	}
-
-	/**
-	 * Compute and store the incident flux values at each grid point.
-	 * \see IFluxHandler.h
-	 */
-	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
-			std::vector<double> grid) {
-		// Call the general method
-		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
-
-		// Set the flux index corresponding the the single helium cluster here
-		auto fluxCluster = network.get(Species::He, 1);
-		// Check that the helium cluster is present in the network
-		if (!fluxCluster) {
-			throw std::string(
-					"\nThe single helium cluster is not present in the network, "
-							"cannot use the flux option!");
-		}
-		fluxIndices.push_back(fluxCluster->getId() - 1);
-
-		return;
 	}
 
 };

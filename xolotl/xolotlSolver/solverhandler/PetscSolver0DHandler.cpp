@@ -7,7 +7,6 @@ namespace xolotlSolver {
 
 void PetscSolver0DHandler::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
-
 	// Recompute Ids and network size and redefine the connectivities
 	network.reinitializeConnectivities();
 
@@ -30,7 +29,6 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 			"PetscSolver0DHandler::createSolverContext: DMSetUp failed.");
 
 	// Set the size of the partial derivatives vectors
-	clusterPartials.resize(dof, 0.0);
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	/*  The only spatial coupling in the Jacobian is due to diffusion.

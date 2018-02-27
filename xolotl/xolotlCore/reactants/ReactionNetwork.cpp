@@ -235,7 +235,6 @@ void ReactionNetwork::removeReactants(
 }
 
 void ReactionNetwork::dumpTo(std::ostream& os) const {
-
 	// Dump flat view of reactants.
 	os << size() << " reactants:\n";
 	for (auto const& currReactant : allReactants) {

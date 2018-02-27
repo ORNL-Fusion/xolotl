@@ -428,7 +428,6 @@ public:
 	 */
 	virtual double getConcentration(double distA = 0.0,
 			double distB = 0.0) const override {
-
 		return concentration;
 	}
 

@@ -636,11 +636,11 @@ double PSICluster::getLeftSideRate() const {
 					});
 
 	// Sum rate constants over all emission pair reactions.
-	double emissionRateTotal =
-			std::accumulate(emissionPairs.begin(), emissionPairs.end(), 0.0,
-					[](double running, const ClusterPair& currPair) {
-						return running + (currPair.reaction.kConstant);
-					});
+	double emissionRateTotal = std::accumulate(emissionPairs.begin(),
+			emissionPairs.end(), 0.0,
+			[](double running, const ClusterPair& currPair) {
+				return running + (currPair.reaction.kConstant);
+			});
 
 	return combiningRateTotal + emissionRateTotal;
 }

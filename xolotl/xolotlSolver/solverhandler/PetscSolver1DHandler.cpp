@@ -7,7 +7,6 @@ namespace xolotlSolver {
 
 void PetscSolver1DHandler::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
-
 	// Recompute Ids and network size and redefine the connectivities
 	network.reinitializeConnectivities();
 
@@ -63,8 +62,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 		std::cout << std::endl;
 	}
 
-	// Set the size of the partial derivatives vectors
-	clusterPartials.resize(dof, 0.0);
+	// Set the size of the partial derivatives vector
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	/*  The only spatial coupling in the Jacobian is due to diffusion.
@@ -92,6 +90,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
+
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion
 	diffusionHandler->initializeOFill(network, ofill);
 	// Loop on the advection handlers to account the other "off-diagonal" elements
@@ -150,8 +149,8 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
-	// Get the total size of the grid for the boundary conditions
-	int xSize = grid.size();
+	// Give the surface position to the temperature handler
+	temperatureHandler->updateSurfacePosition(grid[surfacePosition]);
 
 	// Give the surface position to the temperature handler
 	temperatureHandler->updateSurfacePosition(
@@ -194,8 +193,8 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 				0.0);
 
 		// Initialize the vacancy concentration
-		if (i > surfacePosition && i < xSize - 1 && singleVacancyCluster
-				&& !hasConcentrations) {
+		if (i >= surfacePosition + leftOffset && singleVacancyCluster
+				&& !hasConcentrations && i < nX - rightOffset) {
 			concOffset[vacancyIndex] = initialVConc;
 		}
 	}
@@ -203,7 +202,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
 		// Loop on the full grid
-		for (int i = 0; i < xSize; i++) {
+		for (int i = 0; i < nX; i++) {
 			// Read the concentrations from the HDF5 file
 			auto concVector = xolotlCore::HDF5Utils::readGridPoint(networkName,
 					tempTimeStep, i);
@@ -239,9 +238,6 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr, "PetscSolver1DHandler::updateConcentration: "
 			"TSGetDM failed.");
-
-	// Get the total size of the grid for the boundary conditions
-	int xSize = grid.size();
 
 	// Pointers to the PETSc arrays that start at the beginning (xs) of the
 	// local array!
@@ -401,9 +397,6 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr, "PetscSolver1DHandler::computeOffDiagonalJacobian: "
 			"TSGetDM failed.");
-
-	// Get the total size of the grid for the boundary conditions
-	int xSize = grid.size();
 
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = network.getDOF();
@@ -578,9 +571,6 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr, "PetscSolver1DHandler::computeDiagonalJacobian: "
 			"TSGetDM failed.");
-
-	// Get the total size of the grid for the boundary conditions
-	int xSize = grid.size();
 
 	// Get pointers to vector data
 	PetscScalar **concs = nullptr;

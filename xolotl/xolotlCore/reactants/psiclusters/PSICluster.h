@@ -383,6 +383,7 @@ public:
 	virtual double getVMomentum() const {
 		return 0.0;
 	}
+
 	/**
 	 * This operation returns the distance to the mean.
 	 *

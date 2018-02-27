@@ -700,7 +700,7 @@ void FeClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 	return;
 }
 
-double FeClusterReactionNetwork::getTotalAtomConcentration() {
+double FeClusterReactionNetwork::getTotalAtomConcentration(int i) {
 	// Initial declarations
 	double heliumConc = 0.0;
 
@@ -740,7 +740,7 @@ double FeClusterReactionNetwork::getTotalAtomConcentration() {
 	return heliumConc;
 }
 
-double FeClusterReactionNetwork::getTotalTrappedAtomConcentration() {
+double FeClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 	// Initial declarations
 	double heliumConc = 0.0;
 

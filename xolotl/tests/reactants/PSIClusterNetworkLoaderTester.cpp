@@ -25,10 +25,10 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	// Local Declarations
 	shared_ptr<stringstream> networkStream(
 			new stringstream(stringstream::in | stringstream::out));
-	string singleHeString = "1 0 0 6.15 0.999 1.34\n";
-	string singleVString = "0 50 0 3.6 0.888 2.345\n";
-	string singleIString = "0 0 1 5.0 0.7777 3.456\n";
-	string mixedString = "1 50 0 2.49 6.789 4.5678\n";
+	string singleHeString = "1 0 0 0 0 6.15 0.999 1.34\n";
+	string singleVString = "0 0 0 50 0 3.6 0.888 2.345\n";
+	string singleIString = "0 0 0 0 1 5.0 0.7777 3.456\n";
+	string mixedString = "1 0 0 50 0 2.49 6.789 4.5678\n";
 	// This string is bad because it is one value short
 	string badString = "1 2 3\n";
 	bool caughtFlag = false;
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::He) == 1);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::V) == 50);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::I) == 1);
-	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::HeV) == 51);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed) == 51);
 
 	// Check the reactants - He first
 	auto heCluster = (PSICluster *) network->get(Species::He, 1);
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 	composition[toCompIdx(Species::He)] = 1;
 	composition[toCompIdx(Species::V)] = 50;
 	composition[toCompIdx(Species::I)] = 0;
-	auto heVCluster = (PSICluster *) network->get(ReactantType::HeV,
+	auto heVCluster = (PSICluster *) network->get(ReactantType::PSIMixed,
 			composition);
 	BOOST_REQUIRE(heVCluster->getSize() == 51);
 	formationEnergy = heVCluster->getFormationEnergy();
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 BOOST_AUTO_TEST_CASE(checkGenerate) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=8 5 3" << std::endl << "grid=100 0.5" << std::endl;
+	paramFile << "netParam=8 0 0 5 3" << std::endl << "grid=100 0.5" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(checkGenerate) {
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::He) == 8);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::V) == 5);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::I) == 3);
-	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::HeV) == 32);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed) == 32);
 
 	// Remove the created file
 	std::string tempFile = "param.txt";

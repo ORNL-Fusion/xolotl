@@ -48,15 +48,27 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 			// He
 			1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
 
+			// D
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+			// T
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
 			// V
 			1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
 
 			// I
 			1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
 
-			// HeV
-			1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1,
-			0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			// Mixed
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
 			// HeI
 			1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
@@ -101,9 +113,6 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	network->computeRateConstants();
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux();
-	BOOST_TEST_MESSAGE(
-			"HeClusterTester Message: \n" << "Total Flux is " << flux << "\n" << "   -Production Flux: " << cluster->getProductionFlux() << "\n" << "   -Combination Flux: " << cluster->getCombinationFlux() << "\n" << "   -Dissociation Flux: " << cluster->getDissociationFlux() << "\n" << "   -Emission Flux: " << cluster->getEmissionFlux() << "\n");
-
 	BOOST_REQUIRE_CLOSE(6110430723517.8, flux, 0.1);
 
 	return;
@@ -115,12 +124,10 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { -1.96821e+11, 1.23317e+13, 3.21149e+12,
-			-1.79298e+10, -1.95933e+10, 0.0, -1.87741e+10, -2.04376e+10, 0.0,
-			2.23350e+12, 2.25143e+12, 2.46031e+12, -1.79298e+10, 2.25143e+12,
-			0.0, 0.0 };
+	double knownPartials[] = { -1.96821e+11, 1.23573e+13, 0, 0, 0, 0,
+			-1.79298e+10, 0, -1.87741e+10, 0, 2.25143e+12, 0, 0, 0, 0, 0 };
 	// Get the simple reaction network
-	auto network = getSimplePSIReactionNetwork(3);
+	auto network = getSimplePSIReactionNetwork(2);
 
 	// Get an He cluster with compostion 1,0,0.
 	auto cluster = (PSICluster *) network->get(Species::He, 1);
@@ -165,7 +172,8 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 
 	// Check all the values
 	for (int i = 1; i <= 10; i++) {
-		cluster = shared_ptr<PSIHeCluster>(new PSIHeCluster(i, *(network.get()), registry));
+		cluster = shared_ptr<PSIHeCluster>(
+				new PSIHeCluster(i, *(network.get()), registry));
 		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
 				0.000001);
 	}

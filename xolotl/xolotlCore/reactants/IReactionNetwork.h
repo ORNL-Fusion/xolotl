@@ -190,16 +190,18 @@ public:
 	/**
 	 * Get the total concentration of atoms in the network.
 	 *
+	 * @param i Index to switch between the different types of atoms
 	 * @return The total concentration
 	 */
-	virtual double getTotalAtomConcentration() = 0;
+	virtual double getTotalAtomConcentration(int i = 0) = 0;
 
 	/**
 	 * Get the total concentration of atoms contained in bubbles in the network.
 	 *
+	 * @param i Index to switch between the different types of atoms
 	 * @return The total concentration
 	 */
-	virtual double getTotalTrappedAtomConcentration() = 0;
+	virtual double getTotalTrappedAtomConcentration(int i = 0) = 0;
 
 	/**
 	 * Get the total concentration of vacancies in the network.

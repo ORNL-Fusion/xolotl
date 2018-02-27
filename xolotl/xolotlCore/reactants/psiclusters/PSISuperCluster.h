@@ -600,7 +600,6 @@ public:
 	 * reactions
 	 */
 	double getTotalFlux() override {
-
 		// Initialize the fluxes
 		heMomentumFlux = 0.0;
 		vMomentumFlux = 0.0;

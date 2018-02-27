@@ -7,7 +7,6 @@ namespace xolotlSolver {
 
 void PetscSolver2DHandler::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
-
 	// Recompute Ids and network size and redefine the connectivities
 	network.reinitializeConnectivities();
 
@@ -102,6 +101,7 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
+
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion
 	diffusionHandler->initializeOFill(network, ofill);
 	// Loop on the advection handlers to account the other "off-diagonal" elements
@@ -159,14 +159,8 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
 				networkName, tempTimeStep);
 
-	// Get the total size of the grid for the boundary conditions
-	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	checkPetscError(ierr, "PetscSolver2DHandler::initializeConcentration: "
-			"DMDAGetInfo failed.");
+	// Give the surface position to the temperature handler
+	temperatureHandler->updateSurfacePosition(grid[surfacePosition[0]]);
 
 	// Give the surface position to the temperature handler
 	temperatureHandler->updateSurfacePosition(
@@ -176,10 +170,10 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	fluxHandler->initializeFluxHandler(network, surfacePosition[0], grid);
 
 	// Initialize the grid for the diffusion
-	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, My, hY);
+	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, nY, hY);
 
 	// Initialize the grid for the advection
-	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, My,
+	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, nY,
 			hY);
 
 	// Pointer for the concentration vector at a specific grid point
@@ -220,8 +214,8 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
 		// Loop on the full grid
-		for (PetscInt j = 0; j < My; j++) {
-			for (PetscInt i = 0; i < Mx; i++) {
+		for (PetscInt j = 0; j < nY; j++) {
+			for (PetscInt i = 0; i < nX; i++) {
 				// Read the concentrations from the HDF5 file
 				auto concVector = xolotlCore::HDF5Utils::readGridPoint(
 						networkName, tempTimeStep, i, j);
@@ -259,9 +253,6 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	checkPetscError(ierr,
 			"PetscSolver2DHandler::updateConcentration: TSGetDM failed.");
 
-	// Get the total size of the grid in the x direction for the boundary conditions
-	int xSize = grid.size();
-
 	// Pointers to the PETSc arrays that start at the beginning (xs, ys) of the
 	// local array!
 	PetscScalar ***concs = nullptr, ***updatedConcs = nullptr;
@@ -278,15 +269,6 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
 	checkPetscError(ierr, "PetscSolver2DHandler::updateConcentration: "
 			"DMDAGetCorners failed.");
-
-	// Get the total size of the grid
-	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	checkPetscError(ierr, "PetscSolver2DHandler::updateConcentration: "
-			"DMDAGetInfo failed.");
 
 	// The following pointers are set to the first position in the conc or
 	// updatedConc arrays that correspond to the beginning of the data for the
@@ -306,7 +288,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	const int dof = network.getDOF();
 
 	// Loop over grid points
-	for (PetscInt yj = 0; yj < My; yj++) {
+	for (PetscInt yj = 0; yj < nY; yj++) {
 
 		// Compute the total concentration of atoms contained in bubbles
 		atomConc = 0.0;
@@ -406,6 +388,11 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					updatedConcOffset, grid[xi + 1] - grid[xi],
 					grid[xi + 2] - grid[xi + 1]);
 
+			// ---- Compute the temperature over the locally owned part of the grid -----
+			temperatureHandler->computeTemperature(concVector,
+					updatedConcOffset, grid[xi] - grid[xi - 1],
+					grid[xi + 1] - grid[xi]);
+
 			// ---- Compute diffusion over the locally owned part of the grid -----
 			diffusionHandler->computeDiffusion(network, concVector,
 					updatedConcOffset, grid[xi + 1] - grid[xi],
@@ -455,9 +442,6 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr, "PetscSolver2DHandler::computeOffDiagonalJacobian: "
 			"TSGetDM failed.");
-
-	// Get the total size of the grid in the x direction for the boundary conditions
-	int xSize = grid.size();
 
 	// Setup some step size variables
 	double sy = 1.0 / (hY * hY);
@@ -672,9 +656,6 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
 			"TSGetDM failed.");
 
-	// Get the total size of the grid in the x direction for the boundary conditions
-	int xSize = grid.size();
-
 	// Get pointers to vector data
 	PetscScalar ***concs = nullptr;
 	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
@@ -686,15 +667,6 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
 	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
 			"DMDAGetCorners failed.");
-
-	// Get the total size of the grid
-	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
-			"DMDAGetInfo failed.");
 
 	// The degree of freedom is the size of the network
 	const int dof = network.getDOF();
@@ -713,7 +685,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
 
 	// Loop over the grid points
-	for (PetscInt yj = 0; yj < My; yj++) {
+	for (PetscInt yj = 0; yj < nY; yj++) {
 
 		// Compute the total concentration of atoms contained in bubbles
 		atomConc = 0.0;

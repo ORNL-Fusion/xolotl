@@ -37,6 +37,8 @@ enum class ReactantType {
 	V,
 	I,
 	He,
+	D,
+	T,
 	HeV,
 	HeI,
 	Xe,
@@ -44,6 +46,7 @@ enum class ReactantType {
 	XeI,
 
 	// Reactant types for PSI networks
+	PSIMixed,
 	PSISuper,
 
 	// Reactant types for NE networks

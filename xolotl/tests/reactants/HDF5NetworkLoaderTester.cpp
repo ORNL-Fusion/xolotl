@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::He) == 8);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::V) == 1);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::I) == 0);
-	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::HeV) == 0);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed) == 0);
 
 	// Get all the reactants
 	auto& reactants = network->getAll();
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::He) == 8);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::V) == 29);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::I) == 6);
-	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::HeV) == 137);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed) == 137);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::PSISuper) == 145);
 
 	// Finalize MPI

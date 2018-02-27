@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5) {
 
 	// Create a good parameter file
 	std::ofstream goodParamFile("param_good.txt");
-	goodParamFile << "netParam=8 5 3" << std::endl << "grid=100 0.5"
+	goodParamFile << "netParam=8 1 0 5 3" << std::endl << "grid=100 0.5"
 			<< std::endl;
 	goodParamFile.close();
 
@@ -251,6 +251,8 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5) {
 
 	// Check the network parameters
 	BOOST_REQUIRE_EQUAL(opts.getMaxImpurity(), 8);
+	BOOST_REQUIRE_EQUAL(opts.getMaxD(), 1);
+	BOOST_REQUIRE_EQUAL(opts.getMaxT(), 0);
 	BOOST_REQUIRE_EQUAL(opts.getMaxV(), 5);
 	BOOST_REQUIRE_EQUAL(opts.getMaxI(), 3);
 	BOOST_REQUIRE_EQUAL(opts.usePhaseCut(), false);

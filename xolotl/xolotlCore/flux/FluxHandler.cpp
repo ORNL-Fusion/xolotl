@@ -70,7 +70,7 @@ void FluxHandler::recomputeFluxHandler(int surfacePos) {
 		fluxNormalized = fluxAmplitude / normFactor;
 
 	// Starts a i = surfacePos + 1 because the first values were already put in the vector
-	for (int i = surfacePos + 1; i < xGrid.size() - 2; i++) {
+	for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 		// Get the x position
 		auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
 

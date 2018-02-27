@@ -12,7 +12,8 @@ namespace xolotlCore {
 PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		ReactionNetwork( { ReactantType::V, ReactantType::I, ReactantType::He,
-				ReactantType::HeV, ReactantType::HeI, ReactantType::PSISuper },
+				ReactantType::D, ReactantType::T, ReactantType::HeI,
+				ReactantType::PSIMixed, ReactantType::PSISuper },
 				ReactantType::PSISuper, registry) {
 
 	// Initialize default properties
@@ -63,7 +64,7 @@ void PSIClusterReactionNetwork::defineProductionReactions(IReactant& r1,
 	auto& prref = add(std::move(reaction));
 
 	// Determine if reverse reaction is allowed.
-	auto dissociationAllowed = canDissociate(prref);
+	auto dissociationAllowed = canDissociate(pendingPRInfos[0].product, prref);
 
 	// Build the product-to-production map that we will
 	// use for batched resultsFrom() and defineDissociationReactions() calls.
@@ -128,12 +129,11 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 	IReactant::SizeType firstSize = 0, secondSize = 0, productSize = 0, maxI =
 			getAll(ReactantType::I).size();
 
-	// Single species clustering (He, V, I)
-	// We know here that only Xe_1 can cluster so we simplify the search
+	// Single species clustering (He, D, T, V, I)
 	// X_(a-i) + X_i --> X_a
 	// Make a vector of types
 	std::vector<ReactantType> typeVec { ReactantType::He, ReactantType::V,
-			ReactantType::I };
+			ReactantType::I, ReactantType::D, ReactantType::T };
 	// Loop on it
 	for (auto tvIter = typeVec.begin(); tvIter != typeVec.end(); ++tvIter) {
 
@@ -171,8 +171,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		}
 	}
 
-	// Helium absorption by HeV clusters
-	// He_(a) + (He_b)(V_c) --> [He_(a+b)](V_c)
+	// Helium absorption by Mixed clusters
+	// He_(a) + (He_b)()(V_c) --> [He_(a+b)]()(V_c)
 	// Consider each He reactant.
 	for (auto const& heMapItem : getAll(ReactantType::He)) {
 
@@ -185,7 +185,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		firstSize = heReactant.getSize();
 
 		// Consider product with each HeV cluster
-		for (auto const& heVMapItem : getAll(ReactantType::HeV)) {
+		for (auto const& heVMapItem : getAll(ReactantType::PSIMixed)) {
 
 			auto& heVReactant = *(heVMapItem.second);
 
@@ -193,13 +193,17 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
 			auto newNumHe = comp[toCompIdx(Species::He)] + firstSize;
+			auto newNumD = comp[toCompIdx(Species::D)];
+			auto newNumT = comp[toCompIdx(Species::T)];
 			auto newNumV = comp[toCompIdx(Species::V)];
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
 			newComp[toCompIdx(Species::He)] = newNumHe;
+			newComp[toCompIdx(Species::D)] = newNumD;
+			newComp[toCompIdx(Species::T)] = newNumT;
 			newComp[toCompIdx(Species::V)] = newNumV;
-			auto product = get(ReactantType::HeV, newComp);
+			auto product = get(ReactantType::PSIMixed, newComp);
 
 			// Check if the product can be a super cluster
 			if (!product) {
@@ -257,8 +261,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		}
 	}
 
-	// Vacancy absorption by HeV clusters
-	// (He_a)(V_b) + V_c --> (He_a)[V_(b+c)]
+	// Vacancy absorption by Mixed clusters
+	// (He_a)()(V_b) + V_c --> (He_a)()[V_(b+c)]
 	// Consider each V cluster.
 	for (auto const& vMapItem : getAll(ReactantType::V)) {
 
@@ -270,7 +274,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		// Get the V size
 		firstSize = vReactant.getSize();
 		// Consider product with every HeV cluster.
-		for (auto const& heVMapItem : getAll(ReactantType::HeV)) {
+		for (auto const& heVMapItem : getAll(ReactantType::PSIMixed)) {
 
 			auto& heVReactant = *(heVMapItem.second);
 
@@ -278,13 +282,17 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
 			auto newNumHe = comp[toCompIdx(Species::He)];
+			auto newNumD = comp[toCompIdx(Species::D)];
+			auto newNumT = comp[toCompIdx(Species::T)];
 			auto newNumV = comp[toCompIdx(Species::V)] + firstSize;
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
 			newComp[toCompIdx(Species::He)] = newNumHe;
+			newComp[toCompIdx(Species::D)] = newNumD;
+			newComp[toCompIdx(Species::T)] = newNumT;
 			newComp[toCompIdx(Species::V)] = newNumV;
-			auto product = get(ReactantType::HeV, newComp);
+			auto product = get(ReactantType::PSIMixed, newComp);
 
 			// Check if the product can be a super cluster
 			if (!product) {
@@ -361,7 +369,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			IReactant::Composition newComp;
 			newComp[toCompIdx(Species::He)] = newNumHe;
 			newComp[toCompIdx(Species::V)] = newNumV;
-			auto product = get(ReactantType::HeV, newComp);
+			auto product = get(ReactantType::PSIMixed, newComp);
 
 			// Check if the product can be a super cluster
 			if (!product) {
@@ -378,8 +386,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		}
 	}
 
-	// Vacancy reduction by Interstitial absorption in HeV clusters
-	// (He_a)(V_b) + (I_c) --> (He_a)[V_(b-c)]
+	// Vacancy reduction by Interstitial absorption in Mixed clusters
+	// (He_a)()(V_b) + (I_c) --> (He_a)()[V_(b-c)]
 	// Consider each I cluster
 	for (auto const& iMapItem : getAll(ReactantType::I)) {
 
@@ -391,7 +399,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		// Get its size
 		firstSize = iReactant.getSize();
 		// Consider product with each HeV cluster.
-		for (auto const& heVMapItem : getAll(ReactantType::HeV)) {
+		for (auto const& heVMapItem : getAll(ReactantType::PSIMixed)) {
 
 			auto& heVReactant = *(heVMapItem.second);
 
@@ -400,17 +408,29 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// The product can be He or HeV
 			IReactant * product = nullptr;
 			if (comp[toCompIdx(Species::V)] == firstSize) {
-				// The product is He
-				product = get(Species::He, comp[toCompIdx(Species::He)]);
+				// The product can be He
+				if (comp[toCompIdx(Species::D)] == 0
+						&& comp[toCompIdx(Species::T)] == 0)
+					product = get(Species::He, comp[toCompIdx(Species::He)]);
+				// The product can be D
+				if (comp[toCompIdx(Species::He)] == 0
+						&& comp[toCompIdx(Species::T)] == 0)
+					product = get(Species::D, comp[toCompIdx(Species::D)]);
+				// The product can be T
+				if (comp[toCompIdx(Species::D)] == 0
+						&& comp[toCompIdx(Species::He)] == 0)
+					product = get(Species::T, comp[toCompIdx(Species::T)]);
 			} else {
 				// The product is HeV
 				// Create the composition of the potential product
 				IReactant::Composition newComp;
 				newComp[toCompIdx(Species::He)] = comp[toCompIdx(Species::He)];
+				newComp[toCompIdx(Species::D)] = comp[toCompIdx(Species::D)];
+				newComp[toCompIdx(Species::T)] = comp[toCompIdx(Species::T)];
 				newComp[toCompIdx(Species::V)] = comp[toCompIdx(Species::V)]
 						- firstSize;
 				// Get the product
-				product = get(ReactantType::HeV, newComp);
+				product = get(ReactantType::PSIMixed, newComp);
 			}
 			// Check that the reaction can occur
 			if (product
@@ -451,7 +471,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 						IReactant::Composition newComp;
 						newComp[toCompIdx(Species::He)] = newNumHe;
 						newComp[toCompIdx(Species::V)] = newNumV;
-						product = get(ReactantType::HeV, newComp);
+						product = get(ReactantType::PSIMixed, newComp);
 
 						// If the product doesn't exist check for super clusters
 						if (!product) {
@@ -508,7 +528,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 				int newNumV = iSize;
 				newComp[toCompIdx(Species::He)] = newNumHe;
 				newComp[toCompIdx(Species::V)] = newNumV;
-				product = get(ReactantType::HeV, newComp);
+				product = get(ReactantType::PSIMixed, newComp);
 
 				// Check if the product can be a super cluster
 				if (!product) {
@@ -522,11 +542,11 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 								|| secondReactant.getDiffusionFactor() > 0.0)) {
 
 					defineProductionReaction(firstReactant, secondReactant,
-							*product, newNumHe, newNumV);
+							*iReactant, newNumHe, newNumV);
 					// This is a reaction with two products so we need to tell the other product
 					// it is participating too
 					defineProductionReaction(firstReactant, secondReactant,
-							*iReactant, newNumHe, newNumV, 0, 0, true);
+							*product, newNumHe, newNumV, 0, 0, true);
 
 					// Stop the loop on I clusters here
 					break;
@@ -535,8 +555,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		}
 	}
 
-	// Helium absorption by HeV leading to trap mutation
-	// (He_a)(V_b) + He_c --> [He_(a+c)][V_(b+d)] + I_d
+	// Helium absorption by Mixed leading to trap mutation
+	// (He_a)()(V_b) + He_c --> [He_(a+c)]()[V_(b+d)] + I_d
 	// Loop on the He clusters
 	for (auto const& heMapItem : getAll(ReactantType::He)) {
 		auto& heReactant = *(heMapItem.second);
@@ -548,7 +568,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		firstSize = heReactant.getSize();
 
 		// Loop on the HeV clusters
-		for (auto const& heVMapItem : getAll(ReactantType::HeV)) {
+		for (auto const& heVMapItem : getAll(ReactantType::PSIMixed)) {
 
 			auto& heVReactant = *(heVMapItem.second);
 
@@ -556,13 +576,17 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
 			auto newNumHe = comp[toCompIdx(Species::He)] + firstSize;
+			auto newNumD = comp[toCompIdx(Species::D)];
+			auto newNumT = comp[toCompIdx(Species::T)];
 			auto newNumV = comp[toCompIdx(Species::V)];
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
 			newComp[toCompIdx(Species::He)] = newNumHe;
+			newComp[toCompIdx(Species::D)] = newNumD;
+			newComp[toCompIdx(Species::T)] = newNumT;
 			newComp[toCompIdx(Species::V)] = newNumV;
-			auto product = get(ReactantType::HeV, newComp);
+			auto product = get(ReactantType::PSIMixed, newComp);
 			// Doesn't do anything if the product exist
 			if (product)
 				continue;
@@ -573,7 +597,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 				auto iReactant = get(toSpecies(ReactantType::I), iSize);
 				// Create the composition of the potential product
 				newComp[toCompIdx(Species::V)] = newNumV + iSize;
-				product = get(ReactantType::HeV, newComp);
+				product = get(ReactantType::PSIMixed, newComp);
 
 				// Check if the product can be a super cluster
 				if (!product) {
@@ -586,12 +610,12 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 						&& (heReactant.getDiffusionFactor() > 0.0
 								|| heVReactant.getDiffusionFactor() > 0.0)) {
 
-					defineProductionReaction(heReactant, heVReactant, *product,
-							newNumHe, newNumV + iSize);
+					defineProductionReaction(heReactant, heVReactant,
+							*iReactant, newNumHe, newNumV + iSize);
 					// This is a reaction with two products so we need to tell the other product
 					// it is participating too
-					defineProductionReaction(heReactant, heVReactant,
-							*iReactant, newNumHe, newNumV + iSize, 0, 0, true);
+					defineProductionReaction(heReactant, heVReactant, *product,
+							newNumHe, newNumV + iSize, 0, 0, true);
 
 					// Stop the loop on I clusters here
 					break;
@@ -650,8 +674,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// current supercluster, define its production reactions
 			// according to given parameters.
 			if (prInfos1.size() > 0 || prInfos2.size() > 0) {
-				defineProductionReactions(heReactant, superCluster, prInfos1);
-				defineProductionReactions(heReactant, superCluster, prInfos2,
+				defineProductionReactions(heReactant, superCluster, prInfos2);
+				defineProductionReactions(heReactant, superCluster, prInfos1,
 						true);
 			}
 		}
@@ -709,6 +733,170 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 					defineCompleteAnnihilationReaction(iReactant, vReactant);
 				}
+			}
+		}
+	}
+
+	// Deuterium absorption by Mixed clusters
+	// D_(a) + (D_b)()(V_c) --> [D_(a+b)]()(V_c)
+	// Consider each D reactant.
+	for (auto const& dMapItem : getAll(ReactantType::D)) {
+
+		auto& dReactant = *(dMapItem.second);
+
+		// Skip if it can't diffuse
+		if (xolotlCore::equal(dReactant.getDiffusionFactor(), 0.0))
+			continue;
+		// Get its size
+		firstSize = dReactant.getSize();
+
+		// Consider product with each HeV cluster
+		for (auto const& heVMapItem : getAll(ReactantType::PSIMixed)) {
+
+			auto& heVReactant = *(heVMapItem.second);
+
+			// Get its composition
+			auto& comp = heVReactant.getComposition();
+			// Create the composition of the potential product
+			auto newNumHe = comp[toCompIdx(Species::He)];
+			auto newNumD = comp[toCompIdx(Species::D)] + firstSize;
+			auto newNumT = comp[toCompIdx(Species::T)];
+			auto newNumV = comp[toCompIdx(Species::V)];
+
+			// Check if product already exists.
+			IReactant::Composition newComp;
+			newComp[toCompIdx(Species::He)] = newNumHe;
+			newComp[toCompIdx(Species::D)] = newNumD;
+			newComp[toCompIdx(Species::T)] = newNumT;
+			newComp[toCompIdx(Species::V)] = newNumV;
+			auto product = get(ReactantType::PSIMixed, newComp);
+
+			// Check that the reaction can occur
+			if (product
+					&& (dReactant.getDiffusionFactor() > 0.0
+							|| heVReactant.getDiffusionFactor() > 0.0)) {
+
+				defineProductionReaction(dReactant, heVReactant, *product,
+						newNumHe, newNumV);
+			}
+		}
+	}
+
+	// Tritium absorption by Mixed clusters
+	// T_(a) + (T_b)()(V_c) --> [T_(a+b)]()(V_c)
+	// Consider each T reactant.
+	for (auto const& tMapItem : getAll(ReactantType::T)) {
+
+		auto& tReactant = *(tMapItem.second);
+
+		// Skip if it can't diffuse
+		if (xolotlCore::equal(tReactant.getDiffusionFactor(), 0.0))
+			continue;
+		// Get its size
+		firstSize = tReactant.getSize();
+
+		// Consider product with each Mixed cluster
+		for (auto const& heVMapItem : getAll(ReactantType::PSIMixed)) {
+
+			auto& heVReactant = *(heVMapItem.second);
+
+			// Get its composition
+			auto& comp = heVReactant.getComposition();
+			// Create the composition of the potential product
+			auto newNumHe = comp[toCompIdx(Species::He)];
+			auto newNumD = comp[toCompIdx(Species::D)];
+			auto newNumT = comp[toCompIdx(Species::T)] + firstSize;
+			auto newNumV = comp[toCompIdx(Species::V)];
+
+			// Check if product already exists.
+			IReactant::Composition newComp;
+			newComp[toCompIdx(Species::He)] = newNumHe;
+			newComp[toCompIdx(Species::D)] = newNumD;
+			newComp[toCompIdx(Species::T)] = newNumT;
+			newComp[toCompIdx(Species::V)] = newNumV;
+			auto product = get(ReactantType::PSIMixed, newComp);
+
+			// Check that the reaction can occur
+			if (product
+					&& (tReactant.getDiffusionFactor() > 0.0
+							|| heVReactant.getDiffusionFactor() > 0.0)) {
+
+				defineProductionReaction(tReactant, heVReactant, *product,
+						newNumHe, newNumV);
+			}
+		}
+	}
+
+	// Deuterium-Vacancy clustering
+	// D_a + V_b --> (D_a)(V_b)
+	// Consider each D cluster.
+	for (auto const& dMapItem : getAll(ReactantType::D)) {
+
+		auto& dReactant = *(dMapItem.second);
+
+		// Get its size
+		firstSize = dReactant.getSize();
+		// Consider product with each V cluster.
+		for (auto const& vMapItem : getAll(ReactantType::V)) {
+
+			auto& vReactant = *(vMapItem.second);
+
+			// Get its size
+			secondSize = vReactant.getSize();
+			// Create the composition of the potential product
+			auto newNumD = firstSize;
+			auto newNumV = secondSize;
+
+			// Get the product
+			IReactant::Composition newComp;
+			newComp[toCompIdx(Species::D)] = newNumD;
+			newComp[toCompIdx(Species::V)] = newNumV;
+			auto product = get(ReactantType::PSIMixed, newComp);
+
+			// Check that the reaction can occur
+			if (product
+					&& (dReactant.getDiffusionFactor() > 0.0
+							|| vReactant.getDiffusionFactor() > 0.0)) {
+
+				defineProductionReaction(dReactant, vReactant, *product, 0,
+						newNumV);
+			}
+		}
+	}
+
+	// Tritium-Vacancy clustering
+	// T_a + V_b --> (T_a)(V_b)
+	// Consider each T cluster.
+	for (auto const& tMapItem : getAll(ReactantType::T)) {
+
+		auto& tReactant = *(tMapItem.second);
+
+		// Get its size
+		firstSize = tReactant.getSize();
+		// Consider product with each V cluster.
+		for (auto const& vMapItem : getAll(ReactantType::V)) {
+
+			auto& vReactant = *(vMapItem.second);
+
+			// Get its size
+			secondSize = vReactant.getSize();
+			// Create the composition of the potential product
+			auto newNumT = firstSize;
+			auto newNumV = secondSize;
+
+			// Get the product
+			IReactant::Composition newComp;
+			newComp[toCompIdx(Species::T)] = newNumT;
+			newComp[toCompIdx(Species::V)] = newNumV;
+			auto product = get(ReactantType::PSIMixed, newComp);
+
+			// Check that the reaction can occur
+			if (product
+					&& (tReactant.getDiffusionFactor() > 0.0
+							|| vReactant.getDiffusionFactor() > 0.0)) {
+
+				defineProductionReaction(tReactant, vReactant, *product, 0,
+						newNumV);
 			}
 		}
 	}
@@ -875,7 +1063,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 	return;
 }
 
-bool PSIClusterReactionNetwork::canDissociate(
+bool PSIClusterReactionNetwork::canDissociate(IReactant& emittingReactant,
 		ProductionReaction& reaction) const {
 	// Assume reaction can dissociate by default.
 	bool ret = true;
@@ -886,8 +1074,14 @@ bool PSIClusterReactionNetwork::canDissociate(
 		ret = false;
 	}
 
-	// Check for trap mutations (with XOR)
-	else if ((reaction.first.getType() == ReactantType::I)
+	// Check for trap mutations
+	if (emittingReactant.getType() == ReactantType::I
+			&& reaction.first.getType() != ReactantType::I) {
+		// Don't add the reverse reaction
+		ret = false;
+	}
+	// (with XOR)
+	if ((reaction.first.getType() == ReactantType::I)
 			== !(reaction.second.getType() == ReactantType::I)) {
 		// Don't add the reverse reaction
 		ret = false;
@@ -901,7 +1095,7 @@ void PSIClusterReactionNetwork::checkForDissociation(
 		int c, int d) {
 
 	// Check if reaction can dissociate.
-	if (canDissociate(reaction)) {
+	if (canDissociate(emittingReactant, reaction)) {
 		// The dissociation can occur, so create a reaction for it.
 		defineDissociationReaction(reaction, emittingReactant, a, b, c, d);
 	}
@@ -940,11 +1134,11 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 		id++;
 		currCluster.setVMomentumId(id);
 
-		// Update the HeV size
+		// Update the PSIMixed size
 		IReactant::SizeType clusterSize = currCluster.getHeBounds().second
 				+ currCluster.getVBounds().second;
-		if (clusterSize > maxClusterSizeMap[ReactantType::HeV]) {
-			maxClusterSizeMap[ReactantType::HeV] = clusterSize;
+		if (clusterSize > maxClusterSizeMap[ReactantType::PSIMixed]) {
+			maxClusterSizeMap[ReactantType::PSIMixed] = clusterSize;
 		}
 	}
 
@@ -1065,31 +1259,53 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 	return;
 }
 
-double PSIClusterReactionNetwork::getTotalAtomConcentration() {
+double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 	// Initial declarations
-	double heliumConc = 0.0;
+	double atomConc = 0.0;
+	ReactantType type;
+
+	// Switch on the index
+	switch (i) {
+	case 0:
+		type = ReactantType::He;
+		break;
+	case 1:
+		type = ReactantType::D;
+		break;
+	case 2:
+		type = ReactantType::T;
+		break;
+	default:
+		throw std::string("\nType not defined for getTotalAtomConcentration()");
+		break;
+	}
 
 	// Sum over all He clusters.
-	for (auto const& currMapItem : getAll(ReactantType::He)) {
+	for (auto const& currMapItem : getAll(type)) {
 
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		double size = cluster.getSize();
 
 		// Add the concentration times the He content to the total helium concentration
-		heliumConc += cluster.getConcentration() * size;
+		atomConc += cluster.getConcentration() * size;
 	}
 
-	// Sum over all HeV clusters.
-	for (auto const& currMapItem : getAll(ReactantType::HeV)) {
+	// Sum over all Mixed clusters.
+	for (auto const& currMapItem : getAll(ReactantType::PSIMixed)) {
 
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
 
 		// Add the concentration times the He content to the total helium concentration
-		heliumConc += cluster.getConcentration() * comp[toCompIdx(Species::He)];
+		atomConc += cluster.getConcentration()
+				* comp[toCompIdx(toSpecies(type))];
 	}
+
+	// No super clusters for now for D and T
+	if (i > 0)
+		return atomConc;
 
 	// Sum over all super clusters.
 	for (auto const& currMapItem : getAll(ReactantType::PSISuper)) {
@@ -1099,37 +1315,61 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration() {
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		// Add its total helium concentration helium concentration
-		heliumConc += cluster.getTotalHeliumConcentration();
+		atomConc += cluster.getTotalHeliumConcentration();
 	}
 
-	return heliumConc;
+	return atomConc;
 }
 
-double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration() {
+double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 	// Initial declarations
-	double heliumConc = 0.0;
+	double atomConc = 0.0;
+	ReactantType type;
 
-	// Sum over all HeV clusters.
-	for (auto const& currMapItem : getAll(ReactantType::HeV)) {
+	// Switch on the index
+	switch (i) {
+	case 0:
+		type = ReactantType::He;
+		break;
+	case 1:
+		type = ReactantType::D;
+		break;
+	case 2:
+		type = ReactantType::T;
+		break;
+	default:
+		throw std::string("\nType not defined for getTotalAtomConcentration()");
+		break;
+	}
+
+	// Sum over all Mixed clusters.
+	for (auto const& currMapItem : getAll(ReactantType::PSIMixed)) {
+
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
 
 		// Add the concentration times the He content to the total helium concentration
-		heliumConc += cluster.getConcentration() * comp[toCompIdx(Species::He)];
+		atomConc += cluster.getConcentration()
+				* comp[toCompIdx(toSpecies(type))];
 	}
+
+	// No super clusters for now for D and T
+	if (i > 0)
+		return atomConc;
 
 	// Sum over all super clusters.
 	for (auto const& currMapItem : getAll(ReactantType::PSISuper)) {
+
 		// Get the cluster
 		auto const& cluster =
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
-		// Add its total helium concentration
-		heliumConc += cluster.getTotalHeliumConcentration();
+		// Add its total helium concentration helium concentration
+		atomConc += cluster.getTotalHeliumConcentration();
 	}
 
-	return heliumConc;
+	return atomConc;
 }
 
 double PSIClusterReactionNetwork::getTotalVConcentration() {
@@ -1147,7 +1387,7 @@ double PSIClusterReactionNetwork::getTotalVConcentration() {
 	}
 
 	// Sum over all HeV clusters
-	for (auto const& currMapItem : getAll(ReactantType::HeV)) {
+	for (auto const& currMapItem : getAll(ReactantType::PSIMixed)) {
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
@@ -1270,8 +1510,9 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 	auto const& superClusters = getAll(ReactantType::PSISuper);
 
 	// Make a vector of types for the non super clusters
-	std::vector<ReactantType> typeVec { ReactantType::He, ReactantType::V,
-			ReactantType::I, ReactantType::HeV };
+	std::vector<ReactantType> typeVec { ReactantType::He, ReactantType::D,
+			ReactantType::T, ReactantType::V, ReactantType::I,
+			ReactantType::PSIMixed };
 	// Loop on it
 	for (auto tvIter = typeVec.begin(); tvIter != typeVec.end(); ++tvIter) {
 
@@ -1410,6 +1651,856 @@ double PSIClusterReactionNetwork::computeBindingEnergy(
 			+ reaction.second.getFormationEnergy()
 			- reaction.dissociating.getFormationEnergy();
 
+	// hydrogen cases
+	if (reaction.dissociating.getType() == ReactantType::PSIMixed
+			&& (reaction.first.getType() == ReactantType::D
+					|| reaction.first.getType() == ReactantType::T
+					|| reaction.second.getType() == ReactantType::D
+					|| reaction.second.getType() == ReactantType::T)) {
+		auto comp = reaction.dissociating.getComposition();
+		int heSize = comp[toCompIdx(Species::He)];
+		int vSize = comp[toCompIdx(Species::V)];
+		int hSize = comp[toCompIdx(Species::D)] + comp[toCompIdx(Species::T)];
+
+		if (vSize == 1) {
+			switch (heSize) {
+			case 0:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.21;
+					break;
+				case 2:
+					bindingEnergy = 1.17;
+					break;
+				case 3:
+					bindingEnergy = 1.05;
+					break;
+				case 4:
+					bindingEnergy = 0.93;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 1:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.00;
+					break;
+				case 2:
+					bindingEnergy = 0.95;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.88;
+					break;
+				case 5:
+					bindingEnergy = 0.80;
+					break;
+				case 6:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 2:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.96;
+					break;
+				case 2:
+					bindingEnergy = 0.92;
+					break;
+				case 3:
+					bindingEnergy = 0.85;
+					break;
+				case 4:
+					bindingEnergy = 0.84;
+					break;
+				case 5:
+					bindingEnergy = 0.83;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 3:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.86;
+					break;
+				case 2:
+					bindingEnergy = 0.81;
+					break;
+				case 3:
+					bindingEnergy = 0.69;
+					break;
+				case 4:
+					bindingEnergy = 0.64;
+					break;
+				case 5:
+					bindingEnergy = 0.65;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 4:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.83;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.65;
+					break;
+				case 4:
+					bindingEnergy = 0.60;
+					break;
+				case 5:
+					bindingEnergy = 0.60;
+					break;
+				case 6:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 5:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.83;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.60;
+					break;
+				case 4:
+					bindingEnergy = 0.50;
+					break;
+				case 5:
+					bindingEnergy = 0.50;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 6:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.70;
+					break;
+				case 3:
+					bindingEnergy = 0.60;
+					break;
+				case 4:
+					bindingEnergy = 0.50;
+					break;
+				case 5:
+					bindingEnergy = 0.50;
+					break;
+				case 6:
+					bindingEnergy = 0.50;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 7:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.75;
+					break;
+				case 3:
+					bindingEnergy = 0.65;
+					break;
+				case 4:
+					bindingEnergy = 0.55;
+					break;
+				case 5:
+					bindingEnergy = 0.55;
+					break;
+				case 6:
+					bindingEnergy = 0.45;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 8:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.70;
+					break;
+				case 4:
+					bindingEnergy = 0.65;
+					break;
+				case 5:
+					bindingEnergy = 0.60;
+					break;
+				case 6:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 9:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.80;
+					break;
+				case 2:
+					bindingEnergy = 0.80;
+					break;
+				case 3:
+					bindingEnergy = 0.75;
+					break;
+				case 4:
+					bindingEnergy = 0.70;
+					break;
+				case 5:
+					bindingEnergy = 0.65;
+					break;
+				case 6:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			default:
+				break;
+			}
+		} else if (vSize == 2) {
+			switch (heSize) {
+			case 0:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.63;
+					break;
+				case 2:
+					bindingEnergy = 1.31;
+					break;
+				case 3:
+					bindingEnergy = 1.25;
+					break;
+				case 4:
+					bindingEnergy = 1.16;
+					break;
+				case 5:
+					bindingEnergy = 1.00;
+					break;
+				case 6:
+					bindingEnergy = 1.00;
+					break;
+				case 7:
+					bindingEnergy = 0.95;
+					break;
+				case 8:
+					bindingEnergy = 0.95;
+					break;
+				case 9:
+					bindingEnergy = 0.75;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 1:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.30;
+					break;
+				case 2:
+					bindingEnergy = 1.30;
+					break;
+				case 3:
+					bindingEnergy = 1.24;
+					break;
+				case 4:
+					bindingEnergy = 1.08;
+					break;
+				case 5:
+					bindingEnergy = 0.95;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.95;
+					break;
+				case 8:
+					bindingEnergy = 0.95;
+					break;
+				case 9:
+					bindingEnergy = 0.75;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 2:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.15;
+					break;
+				case 2:
+					bindingEnergy = 1.14;
+					break;
+				case 3:
+					bindingEnergy = 1.11;
+					break;
+				case 4:
+					bindingEnergy = 1.14;
+					break;
+				case 5:
+					bindingEnergy = 0.95;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.95;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.75;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 3:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.12;
+					break;
+				case 2:
+					bindingEnergy = 1.06;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.70;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 4:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.10;
+					break;
+				case 2:
+					bindingEnergy = 1.06;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.95;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 5:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.10;
+					break;
+				case 2:
+					bindingEnergy = 1.05;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.90;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.65;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 6:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.10;
+					break;
+				case 2:
+					bindingEnergy = 1.05;
+					break;
+				case 3:
+					bindingEnergy = 0.99;
+					break;
+				case 4:
+					bindingEnergy = 0.99;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.70;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 7:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.05;
+					break;
+				case 2:
+					bindingEnergy = 1.00;
+					break;
+				case 3:
+					bindingEnergy = 0.95;
+					break;
+				case 4:
+					bindingEnergy = 0.95;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.90;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 8:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.05;
+					break;
+				case 2:
+					bindingEnergy = 1.00;
+					break;
+				case 3:
+					bindingEnergy = 0.95;
+					break;
+				case 4:
+					bindingEnergy = 0.95;
+					break;
+				case 5:
+					bindingEnergy = 0.90;
+					break;
+				case 6:
+					bindingEnergy = 0.90;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 9:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.05;
+					break;
+				case 2:
+					bindingEnergy = 1.00;
+					break;
+				case 3:
+					bindingEnergy = 0.95;
+					break;
+				case 4:
+					bindingEnergy = 0.95;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.85;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.65;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 10:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 1.00;
+					break;
+				case 2:
+					bindingEnergy = 0.95;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.90;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 11:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.95;
+					break;
+				case 2:
+					bindingEnergy = 0.95;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.90;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.85;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.65;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.60;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 12:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.95;
+					break;
+				case 2:
+					bindingEnergy = 0.90;
+					break;
+				case 3:
+					bindingEnergy = 0.90;
+					break;
+				case 4:
+					bindingEnergy = 0.85;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.80;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.60;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 13:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.90;
+					break;
+				case 2:
+					bindingEnergy = 0.90;
+					break;
+				case 3:
+					bindingEnergy = 0.85;
+					break;
+				case 4:
+					bindingEnergy = 0.85;
+					break;
+				case 5:
+					bindingEnergy = 0.85;
+					break;
+				case 6:
+					bindingEnergy = 0.85;
+					break;
+				case 7:
+					bindingEnergy = 0.80;
+					break;
+				case 8:
+					bindingEnergy = 0.80;
+					break;
+				case 9:
+					bindingEnergy = 0.60;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			case 14:
+				switch (hSize) {
+				case 1:
+					bindingEnergy = 0.90;
+					break;
+				case 2:
+					bindingEnergy = 0.90;
+					break;
+				case 3:
+					bindingEnergy = 0.85;
+					break;
+				case 4:
+					bindingEnergy = 0.85;
+					break;
+				case 5:
+					bindingEnergy = 0.80;
+					break;
+				case 6:
+					bindingEnergy = 0.80;
+					break;
+				case 7:
+					bindingEnergy = 0.80;
+					break;
+				case 8:
+					bindingEnergy = 0.70;
+					break;
+				case 9:
+					bindingEnergy = 0.60;
+					break;
+				case 10:
+					bindingEnergy = 0.60;
+					break;
+				case 11:
+					bindingEnergy = 0.55;
+					break;
+				default:
+					break;
+				}
+				break;
+			}
+		}
+	}
+
+//	std::cout << reaction.first.getName() << " + " << reaction.second.getName()
+//			<< " <- " << reaction.dissociating.getName() << " : " << max(bindingEnergy, -5.0) << std::endl;
+
 	return max(bindingEnergy, -5.0);
 }
 
@@ -1440,4 +2531,3 @@ IReactant * PSIClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nHe,
 }
 
 } // namespace xolotlCore
-

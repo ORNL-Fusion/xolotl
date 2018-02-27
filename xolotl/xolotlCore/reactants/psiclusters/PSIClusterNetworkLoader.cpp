@@ -11,11 +11,9 @@
 #include <PSIHeCluster.h>
 #include <PSIVCluster.h>
 #include <PSIInterstitialCluster.h>
-#include <PSIHeVCluster.h>
-#include <PSISuperCluster.h>
-// #include <PSIHeInterstitialCluster.h>
-#include <PSIClusterReactionNetwork.h>
-#include <xolotlPerf.h>
+#include <PSIMixedCluster.h>
+#include <PSIDCluster.h>
+#include <PSITCluster.h>
 #include <MathUtils.h>
 #include <cassert>
 
@@ -35,7 +33,8 @@ static inline double convertStrToDouble(const std::string& inString) {
 }
 
 std::unique_ptr<PSICluster> PSIClusterNetworkLoader::createPSICluster(int numHe,
-		int numV, int numI, IReactionNetwork& network) const {
+		int numD, int numT, int numV, int numI,
+		IReactionNetwork& network) const {
 
 	// Local Declarations
 	PSICluster* cluster = nullptr;
@@ -43,9 +42,10 @@ std::unique_ptr<PSICluster> PSIClusterNetworkLoader::createPSICluster(int numHe,
 	// Determine the type of the cluster given the number of each species.
 	// Create a new cluster by that type and specify the names of the
 	// property keys.
-	if (numHe > 0 && numV > 0) {
-		// Create a new HeVCluster
-		cluster = new PSIHeVCluster(numHe, numV, network, handlerRegistry);
+	if ((numHe > 0 || numT > 0 || numD > 0) && numV > 0) {
+		// Create a new MixedCluster
+		cluster = new PSIMixedCluster(numHe, numD, numT, numV, network,
+				handlerRegistry);
 	} else if (numHe > 0 && numI > 0) {
 		throw std::string("HeliumInterstitialCluster is not yet implemented.");
 		// FIXME! Add code to add it to the list
@@ -58,6 +58,12 @@ std::unique_ptr<PSICluster> PSIClusterNetworkLoader::createPSICluster(int numHe,
 	} else if (numI > 0) {
 		// Create a new ICluster
 		cluster = new PSIInterstitialCluster(numI, network, handlerRegistry);
+	} else if (numD > 0) {
+		// Create a new DCluster
+		cluster = new PSIDCluster(numD, network, handlerRegistry);
+	} else if (numT > 0) {
+		// Create a new TCluster
+		cluster = new PSITCluster(numT, network, handlerRegistry);
 	}
 	assert(cluster != nullptr);
 
@@ -104,6 +110,8 @@ PSIClusterNetworkLoader::PSIClusterNetworkLoader(
 	maxHe = -1;
 	maxI = -1;
 	maxV = -1;
+	maxD = -1;
+	maxT = -1;
 
 	return;
 }
@@ -121,6 +129,8 @@ PSIClusterNetworkLoader::PSIClusterNetworkLoader(
 	maxHe = -1;
 	maxI = -1;
 	maxV = -1;
+	maxD = -1;
+	maxT = -1;
 
 	return;
 }
@@ -137,7 +147,7 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::load(
 
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
-	int numHe = 0, numV = 0, numI = 0;
+	int numHe = 0, numV = 0, numI = 0, numW = 0, numD = 0, numT = 0;
 	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
 	std::vector<std::reference_wrapper<Reactant> > reactants;
@@ -151,14 +161,16 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::load(
 		loadedLine = reader.loadLine();
 		while (loadedLine.size() > 0) {
 			// Check the size of the loaded line
-			if (loadedLine.size() < 6)
+			if (loadedLine.size() != 8)
 				// And notify the calling function if the size is insufficient
 				throw error;
 			// Load the sizes
 			if (loadedLine[0][0] != '#') {
 				numHe = std::stoi(loadedLine[0]);
-				numV = std::stoi(loadedLine[1]);
-				numI = std::stoi(loadedLine[2]);
+				numD = std::stoi(loadedLine[1]);
+				numT = std::stoi(loadedLine[2]);
+				numV = std::stoi(loadedLine[3]);
+				numI = std::stoi(loadedLine[4]);
 
 				// If the cluster is big enough to be grouped
 				if (numV >= vMin && numHe > 0) {
@@ -167,12 +179,12 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::load(
 					heVList.emplace(pair);
 				} else {
 					// Create the cluster
-					auto nextCluster = createPSICluster(numHe, numV, numI,
-							*network);
+					auto nextCluster = createPSICluster(numHe, numD, numT, numV,
+							numI, *network);
 					// Load the energies
-					formationEnergy = convertStrToDouble(loadedLine[3]);
-					migrationEnergy = convertStrToDouble(loadedLine[4]);
-					diffusionFactor = convertStrToDouble(loadedLine[5]);
+					formationEnergy = convertStrToDouble(loadedLine[5]);
+					migrationEnergy = convertStrToDouble(loadedLine[6]);
+					diffusionFactor = convertStrToDouble(loadedLine[7]);
 					// Set the formation energy
 					nextCluster->setFormationEnergy(formationEnergy);
 					// Set the diffusion factor and migration energy
@@ -226,11 +238,10 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 		const IOptions &options) {
 	// Initial declarations
 	maxI = options.getMaxI(), maxHe = options.getMaxImpurity(), maxV =
-			options.getMaxV();
+			options.getMaxV(), maxD = options.getMaxD(), maxT =
+			options.getMaxT();
 	bool usePhaseCut = options.usePhaseCut();
-	int numHe = 0, numV = 0, numI = 0;
-	double formationEnergy = 0.0, migrationEnergy = 0.0;
-	double diffusionFactor = 0.0;
+	int numHe = 0, numD = 0, numT = 0, numV = 0, numI = 0;
 
 	// Once we have C++14, use std::make_unique.
 	std::unique_ptr<PSIClusterReactionNetwork> network(
@@ -255,8 +266,16 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 	// He migration energies in eV
 	std::vector<double> heMigration = { 0.13, 0.20, 0.25, 0.20, 0.12, 0.3, 0.4 };
 
-	// V formation energies in eV
-	std::vector<double> vFormationEnergies = { 3.6, 7.25 };
+	// The diffusion factor for a single deuterium.
+	double dOneDiffusionFactor = 2.83e+11;
+	// The migration energy for a single deuterium.
+	double dOneMigrationEnergy = 0.38;
+
+	// The diffusion factor for a single tritium.
+	double tOneDiffusionFactor = 2.31e+11;
+	// The migration energy for a single tritium.
+	double tOneMigrationEnergy = 0.38;
+
 	// The diffusion factor for a single vacancy in nm^2/s
 	double vOneDiffusion = 1.8e+12;
 	// The migration energy for a single vacancy in eV
@@ -278,7 +297,8 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 		// Set the composition
 		numI = i;
 		// Create the cluster
-		auto nextCluster = createPSICluster(numHe, numV, numI, *network);
+		auto nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+				*network);
 
 		// Set the other attributes
 		if (i <= iFormationEnergies.size())
@@ -306,7 +326,8 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 		// Set the composition
 		numHe = i;
 		// Create the cluster
-		auto nextCluster = createPSICluster(numHe, numV, numI, *network);
+		auto nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+				*network);
 
 		// Set the other attributes
 		if (i <= heFormationEnergies.size())
@@ -330,6 +351,60 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 	// Reset the He composition
 	numHe = 0;
 
+	// Generate the D clusters
+	for (int i = 1; i <= maxD; ++i) {
+		// Set the composition
+		numD = i;
+		// Create the cluster
+		auto nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+				*network);
+
+		// Set the other attributes
+		nextCluster->setFormationEnergy(
+				std::numeric_limits<double>::infinity());
+		if (i == 1) {
+			nextCluster->setDiffusionFactor(dOneDiffusionFactor);
+			nextCluster->setMigrationEnergy(dOneMigrationEnergy);
+		} else {
+			nextCluster->setDiffusionFactor(0.0);
+			nextCluster->setMigrationEnergy(
+					std::numeric_limits<double>::infinity());
+		}
+
+		// Save it in the network
+		pushPSICluster(network, reactants, nextCluster);
+	}
+
+	// Reset the D composition
+	numD = 0;
+
+	// Generate the T clusters
+	for (int i = 1; i <= maxT; ++i) {
+		// Set the composition
+		numT = i;
+		// Create the cluster
+		auto nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+				*network);
+
+		// Set the other attributes
+		nextCluster->setFormationEnergy(
+				std::numeric_limits<double>::infinity());
+		if (i == 1) {
+			nextCluster->setDiffusionFactor(tOneDiffusionFactor);
+			nextCluster->setMigrationEnergy(tOneMigrationEnergy);
+		} else {
+			nextCluster->setDiffusionFactor(0.0);
+			nextCluster->setMigrationEnergy(
+					std::numeric_limits<double>::infinity());
+		}
+
+		// Save it in the network
+		pushPSICluster(network, reactants, nextCluster);
+	}
+
+	// Reset the T composition
+	numT = 0;
+
 	// Check if the phase-cut method need to be applied
 	if (usePhaseCut) {
 		// Loop over vacancies in the outer loop.
@@ -337,13 +412,11 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 		for (int i = 1; i <= maxV && i <= maxHePerV.size(); ++i) {
 			// Create the V cluster
 			numV = i;
-			auto nextCluster = createPSICluster(numHe, numV, numI, *network);
+			auto nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+					*network);
 
 			// Set its other attributes
-			if (i <= vFormationEnergies.size())
-				nextCluster->setFormationEnergy(vFormationEnergies[i - 1]);
-			else
-				nextCluster->setFormationEnergy(getHeVFormationEnergy(0, i));
+			nextCluster->setFormationEnergy(getHeVFormationEnergy(numHe, numV));
 			if (i <= 1) {
 				nextCluster->setDiffusionFactor(vOneDiffusion);
 				nextCluster->setMigrationEnergy(vOneMigration);
@@ -362,10 +435,11 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 				for (int j = 1; j <= maxHePerV[i - 1]; j++) {
 					numHe = j;
 					// Create the cluster
-					nextCluster = createPSICluster(numHe, numV, numI, *network);
+					nextCluster = createPSICluster(numHe, numD, numT, numV,
+							numI, *network);
 					// Set its attributes
 					nextCluster->setFormationEnergy(
-							getHeVFormationEnergy(j, i));
+							getHeVFormationEnergy(numHe, numV));
 					nextCluster->setDiffusionFactor(0.0);
 					nextCluster->setMigrationEnergy(
 							std::numeric_limits<double>::infinity());
@@ -379,10 +453,11 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 				for (int j = maxHePerV[i - 2] + 1; j <= maxHePerV[i - 1]; j++) {
 					numHe = j;
 					// Create the cluster
-					nextCluster = createPSICluster(numHe, numV, numI, *network);
+					nextCluster = createPSICluster(numHe, numD, numT, numV,
+							numI, *network);
 					// Set its attributes
 					nextCluster->setFormationEnergy(
-							getHeVFormationEnergy(j, i));
+							getHeVFormationEnergy(numHe, numV));
 					nextCluster->setDiffusionFactor(0.0);
 					nextCluster->setMigrationEnergy(
 							std::numeric_limits<double>::infinity());
@@ -402,13 +477,11 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 		for (int i = maxHePerV.size() + 1; i <= maxV; i++) {
 			// Create the V cluster
 			numV = i;
-			auto nextCluster = createPSICluster(numHe, numV, numI, *network);
+			auto nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+					*network);
 
 			// Set its other attributes
-			if (i <= vFormationEnergies.size())
-				nextCluster->setFormationEnergy(vFormationEnergies[i - 1]);
-			else
-				nextCluster->setFormationEnergy(getHeVFormationEnergy(0, i));
+			nextCluster->setFormationEnergy(getHeVFormationEnergy(numHe, numV));
 			if (i <= 1) {
 				nextCluster->setDiffusionFactor(vOneDiffusion);
 				nextCluster->setMigrationEnergy(vOneMigration);
@@ -425,9 +498,11 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 			for (int j = (i * 4) - 3; j <= i * 4; j++) {
 				numHe = j;
 				// Create the cluster
-				nextCluster = createPSICluster(numHe, numV, numI, *network);
+				nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+						*network);
 				// Set its attributes
-				nextCluster->setFormationEnergy(getHeVFormationEnergy(j, i));
+				nextCluster->setFormationEnergy(
+						getHeVFormationEnergy(numHe, numV));
 				nextCluster->setDiffusionFactor(0.0);
 				nextCluster->setMigrationEnergy(
 						std::numeric_limits<double>::infinity());
@@ -443,18 +518,16 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 	// Else use the full network
 	else {
 		// Loop over vacancies in the outer loop.
-		// This creates V and HeV up to the maximum size in the
+		// This creates V and mixed clusters up to the maximum size in the
 		// maxHePerV array.
 		for (int i = 1; i <= maxV && i <= maxHePerV.size(); ++i) {
 			// Create the V cluster
 			numV = i;
-			auto nextCluster = createPSICluster(numHe, numV, numI, *network);
+			auto nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+					*network);
 
 			// Set its other attributes
-			if (i <= vFormationEnergies.size())
-				nextCluster->setFormationEnergy(vFormationEnergies[i - 1]);
-			else
-				nextCluster->setFormationEnergy(getHeVFormationEnergy(0, i));
+			nextCluster->setFormationEnergy(getHeVFormationEnergy(numHe, numV));
 			if (i <= 1) {
 				nextCluster->setDiffusionFactor(vOneDiffusion);
 				nextCluster->setMigrationEnergy(vOneMigration);
@@ -468,27 +541,52 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 			pushPSICluster(network, reactants, nextCluster);
 
 			// Loop on the helium number
-			for (int j = 1; j <= maxHePerV[i - 1]; j++) {
+			int upperHe = maxHePerV[i - 1];
+			if (maxHe <= 0)
+				upperHe = 0;
+			for (int j = 0; j <= upperHe; j++) {
 				numHe = j;
+				// Loop on the deuterium number
+				int upperD = (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]);
+				if (maxD <= 0)
+					upperD = 0;
+				for (int k = 0; k <= upperD; k++) {
+					numD = k;
+					// Loop on the tritium number
+					int upperT = (int) ((2.0 / 3.0) * (double) maxHePerV[i - 1]);
+					if (maxT <= 0)
+						upperT = 0;
+					for (int l = 0; l <= upperT; l++) {
+						numT = l;
 
-				// If the cluster is big enough to be grouped
-				if (numV >= vMin) {
-					// Created the coordinates and store them
-					auto pair = std::make_pair(numHe, numV);
-					heVList.emplace(pair);
-				} else {
-					// Create the cluster
-					nextCluster = createPSICluster(numHe, numV, numI, *network);
-					// Set its attributes
-					nextCluster->setFormationEnergy(
-							getHeVFormationEnergy(j, i));
-					nextCluster->setDiffusionFactor(0.0);
-					nextCluster->setMigrationEnergy(
-							std::numeric_limits<double>::infinity());
+						if (numHe + numD + numT == 0)
+							continue;
 
-					// Save it in the network
-					pushPSICluster(network, reactants, nextCluster);
+						// If the cluster is big enough to be grouped
+						if (numV >= vMin) {
+							// Created the coordinates and store them
+							auto pair = std::make_pair(numHe, numV);
+							heVList.emplace(pair);
+						} else {
+							// Create the cluster
+							nextCluster = createPSICluster(numHe, numD, numT,
+									numV, numI, *network);
+							// Set its attributes
+							nextCluster->setFormationEnergy(
+									getHeVFormationEnergy(numHe, numV));
+							nextCluster->setDiffusionFactor(0.0);
+							nextCluster->setMigrationEnergy(
+									std::numeric_limits<double>::infinity());
+
+							// Save it in the network
+							pushPSICluster(network, reactants, nextCluster);
+						}
+					}
+					// Reset the tritium composition
+					numT = 0;
 				}
+				// Reset the deuterium composition
+				numD = 0;
 			}
 
 			// Reset the helium composition
@@ -500,13 +598,11 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 		for (int i = maxHePerV.size() + 1; i <= maxV; i++) {
 			// Create the V cluster
 			numV = i;
-			auto nextCluster = createPSICluster(numHe, numV, numI, *network);
+			auto nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+					*network);
 
 			// Set its other attributes
-			if (i <= vFormationEnergies.size())
-				nextCluster->setFormationEnergy(vFormationEnergies[i - 1]);
-			else
-				nextCluster->setFormationEnergy(getHeVFormationEnergy(0, i));
+			nextCluster->setFormationEnergy(getHeVFormationEnergy(numHe, numV));
 			if (i <= 1) {
 				nextCluster->setDiffusionFactor(vOneDiffusion);
 				nextCluster->setMigrationEnergy(vOneMigration);
@@ -520,27 +616,52 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 			pushPSICluster(network, reactants, nextCluster);
 
 			// Loop on the helium number
-			for (int j = 1; j <= i * 4; j++) {
+			int upperHe = i * 4;
+			if (maxHe <= 0)
+				upperHe = 0;
+			for (int j = 0; j <= upperHe; j++) {
 				numHe = j;
+				// Loop on the deuterium number
+				int upperD = (int) ((2.0 / 3.0) * (double) i * 4.0);
+				if (maxD <= 0)
+					upperD = 0;
+				for (int k = 0; k <= upperD; k++) {
+					numD = k;
+					// Loop on the tritium number
+					int upperT = (int) ((2.0 / 3.0) * (double) i * 4.0);
+					if (maxT <= 0)
+						upperT = 0;
+					for (int l = 0; l <= upperT; l++) {
+						numT = l;
 
-				// If the cluster is big enough to be grouped
-				if (numV >= vMin) {
-					// Created the coordinates and store them
-					auto pair = std::make_pair(numHe, numV);
-					heVList.emplace(pair);
-				} else {
-					// Create the cluster
-					nextCluster = createPSICluster(numHe, numV, numI, *network);
-					// Set its attributes
-					nextCluster->setFormationEnergy(
-							getHeVFormationEnergy(j, i));
-					nextCluster->setDiffusionFactor(0.0);
-					nextCluster->setMigrationEnergy(
-							std::numeric_limits<double>::infinity());
+						if (numHe + numD + numT == 0)
+							continue;
 
-					// Save it in the network
-					pushPSICluster(network, reactants, nextCluster);
+						// If the cluster is big enough to be grouped
+						if (numV >= vMin) {
+							// Created the coordinates and store them
+							auto pair = std::make_pair(numHe, numV);
+							heVList.emplace(pair);
+						} else {
+							// Create the cluster
+							nextCluster = createPSICluster(numHe, numD, numT,
+									numV, numI, *network);
+							// Set its attributes
+							nextCluster->setFormationEnergy(
+									getHeVFormationEnergy(numHe, numV));
+							nextCluster->setDiffusionFactor(0.0);
+							nextCluster->setMigrationEnergy(
+									std::numeric_limits<double>::infinity());
+
+							// Save it in the network
+							pushPSICluster(network, reactants, nextCluster);
+						}
+					}
+					// Reset the tritium composition
+					numT = 0;
 				}
+				// Reset the deuterium composition
+				numD = 0;
 			}
 
 			// Reset the helium composition
@@ -582,6 +703,9 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 }
 
 double PSIClusterNetworkLoader::getHeVFormationEnergy(int numHe, int numV) {
+	// V formation energies in eV
+	std::vector<double> vFormationEnergies = { 3.6, 7.25 };
+
 	// Coefficients for the Legendre polynomial fit
 	// Low means V <= 27
 	// Coefficients for c_0 in the 2D E_f,HeV fit
@@ -673,6 +797,11 @@ double PSIClusterNetworkLoader::getHeVFormationEnergy(int numHe, int numV) {
 						heV1FormationEnergies[numHe - 1] :
 						heV2FormationEnergies[numHe - 1];
 	}
+	// V Case
+	if (numHe == 0 && numV < 3) {
+		energy = (numV == 1) ? vFormationEnergies[0] : vFormationEnergies[1];
+
+	}
 
 	return energy;
 }
@@ -698,11 +827,11 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 	IReactant::Composition comp;
 	comp[toCompIdx(Species::He)] = previousBiggestHe;
 	comp[toCompIdx(Species::V)] = vMin - 1;
-	auto cluster = network.get(ReactantType::HeV, comp);
+	auto cluster = network.get(ReactantType::PSIMixed, comp);
 	while (cluster) {
 		previousBiggestHe++;
 		comp[toCompIdx(Species::He)] = previousBiggestHe;
-		cluster = network.get(ReactantType::HeV, comp);
+		cluster = network.get(ReactantType::PSIMixed, comp);
 	}
 
 	// Loop on the vacancy groups

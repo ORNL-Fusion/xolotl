@@ -4,7 +4,7 @@
 #include <boost/test/included/unit_test.hpp>
 #include <PSICluster.h>
 #include "SimpleReactionNetwork.h"
-#include <PSIHeVCluster.h>
+#include <PSIMixedCluster.h>
 #include <PSIHeCluster.h>
 #include <PSIVCluster.h>
 #include <PSIInterstitialCluster.h>
@@ -71,21 +71,19 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	id = retICluster->getId();
 	BOOST_REQUIRE(id > 0 && id <= 5);
 
-	// Add a whole bunch of HeV clusters to make sure that the network can
+	// Add a whole bunch of Mixed clusters to make sure that the network can
 	// handle large numbers of them properly.
 	int counter = 0;
 	int maxClusterSize = 10;
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
-			auto cluster = std::unique_ptr<PSIHeVCluster>(
-					new PSIHeVCluster(numHe, numV, *(psiNetwork.get()),
+			auto cluster = std::unique_ptr<PSIMixedCluster>(
+					new PSIMixedCluster(numHe, 0, 0, numV, *(psiNetwork.get()),
 							registry));
 			psiNetwork->add(std::move(cluster));
 			counter++;
 		}
 	}
-
-	BOOST_TEST_MESSAGE("Added " << counter << " HeV clusters");
 
 	// Add a whole bunch of HeI clusters to make sure that the network can
 	// handle large numbers of them properly too. Use a different max cluster
@@ -102,11 +100,9 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 		}
 	}
 
-	BOOST_TEST_MESSAGE("Added " << counter << " HeI clusters");
-
-	// Try adding a duplicate HeV and catch the exception
-	auto duplicateCluster = std::unique_ptr<PSIHeVCluster>(
-			new PSIHeVCluster(5, 3, *(psiNetwork.get()), registry));
+	// Try adding a duplicate Mixed and catch the exception
+	auto duplicateCluster = std::unique_ptr<PSIMixedCluster>(
+			new PSIMixedCluster(5, 0, 0, 3, *(psiNetwork.get()), registry));
 	try {
 		psiNetwork->add(std::move(duplicateCluster));
 		BOOST_FAIL(
@@ -135,8 +131,8 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_REQUIRE_EQUAL(1U, iReactants.size());
 	BOOST_REQUIRE_EQUAL("I_48", iReactant->getName());
 
-	// HeV
-	auto& heVReactants = psiNetwork->getAll(ReactantType::HeV);
+	// Mixed
+	auto& heVReactants = psiNetwork->getAll(ReactantType::PSIMixed);
 	BOOST_REQUIRE_EQUAL(45U, heVReactants.size());
 	// HeI
 	auto& heIReactants = psiNetwork->getAll(ReactantType::HeI);
@@ -169,20 +165,20 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::He), 0);
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::V), 0);
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::I), 0);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::HeV), 0);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed), 0);
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::HeI), 0);
 
 	// Add a couple of clusters
 	auto heCluster = std::unique_ptr<PSIHeCluster>(
 			new PSIHeCluster(5, *(psiNetwork.get()), registry));
 	psiNetwork->add(std::move(heCluster));
-	auto heVCluster = std::unique_ptr<PSIHeVCluster>(
-			new PSIHeVCluster(5, 3, *(psiNetwork.get()), registry));
+	auto heVCluster = std::unique_ptr<PSIMixedCluster>(
+			new PSIMixedCluster(5, 0, 0, 3, *(psiNetwork.get()), registry));
 	psiNetwork->add(std::move(heVCluster));
 
 	// Check the properties again
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::He), 5);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::HeV), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed), 8);
 
 	return;
 }
@@ -198,18 +194,22 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 	for (auto name : names) {
 		if (name == ReactantType::He)
 			++marker;
+		else if (name == ReactantType::D)
+			++marker;
+		else if (name == ReactantType::T)
+			++marker;
 		else if (name == ReactantType::V)
 			++marker;
 		else if (name == ReactantType::I)
 			++marker;
 		else if (name == ReactantType::PSISuper)
 			++marker;
-		else if (name == ReactantType::HeV)
+		else if (name == ReactantType::PSIMixed)
 			++marker;
 		else if (name == ReactantType::HeI)
 			++marker;
 	}
-	BOOST_REQUIRE_EQUAL(6U, marker);
+	BOOST_REQUIRE_EQUAL(8U, marker);
 	BOOST_REQUIRE_EQUAL(marker, names.size());
 
 	return;

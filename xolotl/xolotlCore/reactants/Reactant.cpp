@@ -85,16 +85,9 @@ operator<<(std::ostream& os, const IReactant::Composition& comp) {
 std::ostream&
 operator<<(std::ostream& os, const IReactant& reactant) {
 	os << "id: " << reactant.getId() << "; " << "type: "
-			<< toString(reactant.getType()) << "; "
-#if defined(USE_ORIG_REACTANT_COMP_STRING)
-			// Output a string in format used by previous implementations,
-			// to support comparisons.
-			<< "comp: " << getCompString(reactant);
-#else
-			<< "comp: " << reactant.getComposition();
-#endif // defined(USE_ORIG_REACTANT_COMP_STRING)
+			<< toString(reactant.getType()) << "; " << "comp: "
+			<< reactant.getComposition();
 	return os;
 }
 
 } // namespace xolotlCore
-

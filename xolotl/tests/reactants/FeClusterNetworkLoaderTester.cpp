@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(checkGenerate) {
 
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=5 5 1" << std::endl << "grid=100 0.5" << std::endl;
+	paramFile << "netParam=5 0 0 5 1" << std::endl << "grid=100 0.5" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options

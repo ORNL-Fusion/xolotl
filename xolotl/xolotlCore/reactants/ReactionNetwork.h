@@ -450,9 +450,10 @@ public:
 	 *
 	 * Returns 0.0 here and needs to be implemented by the daughter classes.
 	 *
+	 * @param i Index to switch between the different types of atoms
 	 * @return The total concentration
 	 */
-	virtual double getTotalAtomConcentration() override {
+	virtual double getTotalAtomConcentration(int i = 0) override {
 		return 0.0;
 	}
 
@@ -461,9 +462,10 @@ public:
 	 *
 	 * Returns 0.0 here and needs to be implemented by the daughter classes.
 	 *
+	 * @param i Index to switch between the different types of atoms
 	 * @return The total concentration
 	 */
-	virtual double getTotalTrappedAtomConcentration() override {
+	virtual double getTotalTrappedAtomConcentration(int i = 0) override {
 		return 0.0;
 	}
 
