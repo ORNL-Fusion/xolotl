@@ -2,6 +2,8 @@
 #include <cassert>
 #include <PetscSolver.h>
 #include <HDF5Utils.h>
+#include <fstream>
+#include <iostream>
 
 using namespace xolotlCore;
 
@@ -294,6 +296,37 @@ void PetscSolver::solve() {
 	if (ts != NULL && C != NULL) {
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr, "PetscSolver::solve: TSSolve failed.");
+
+		/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		 Write in a file if everything went well or not.
+		 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+		// Check the option -check_collapse
+		PetscBool flagCheck;
+		ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
+		checkPetscError(ierr,
+				"PetscSolver::solve: PetscOptionsHasName (-check_collapse) failed.");
+		if (flagCheck) {
+			// Open the output file
+			std::ofstream outputFile;
+			outputFile.open("solverStatus.txt");
+
+			// Get the converged reason from PETSc
+			TSConvergedReason reason;
+			ierr = TSGetConvergedReason(ts, &reason);
+			checkPetscError(ierr,
+					"PetscSolver::solve: TSGetConvergedReason failed.");
+
+			// Write it
+			if (reason == TS_CONVERGED_EVENT)
+				outputFile << "collapsed" << std::endl;
+			else if (reason == TS_DIVERGED_NONLINEAR_SOLVE
+					|| reason == TS_DIVERGED_STEP_REJECTED)
+				outputFile << "diverged" << std::endl;
+			else
+				outputFile << "good" << std::endl;
+
+			outputFile.close();
+		}
 	} else {
 		throw std::string(
 				"PetscSolver Exception: Unable to solve! Data not configured properly.");
