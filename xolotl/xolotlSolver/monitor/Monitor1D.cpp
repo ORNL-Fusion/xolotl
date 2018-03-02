@@ -130,6 +130,9 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	auto& network = solverHandler.getNetwork();
 	const int dof = network.getDOF();
 
+	// Create an array for the concentration
+	double concArray[dof][2];
+
 	// Get the position of the surface
 	int surfacePos = solverHandler.getSurfacePosition();
 
@@ -152,12 +155,10 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Loop on the full grid
 	for (PetscInt i = 0; i < Mx; i++) {
-		// Wait for all the processes
-		MPI_Barrier(PETSC_COMM_WORLD);
 		// Size of the concentration that will be stored
 		int concSize = -1;
-		// Vector for the concentrations
-		std::vector<std::vector<double> > concVector;
+		// To save which proc has the information
+		int concId = 0;
 
 		// If it is the locally owned part of the grid
 		if (i >= xs && i < xs + xm) {
@@ -168,73 +169,40 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 			for (int l = 0; l < dof; l++) {
 				if (gridPointSolution[l] > 1.0e-16
 						|| gridPointSolution[l] < -1.0e-16) {
-					// Create the concentration vector for this cluster
-					std::vector<double> conc;
-					conc.push_back((double) l);
-					conc.push_back(gridPointSolution[l]);
-
-					// Add it to the main vector
-					concVector.push_back(conc);
+					// Increase concSize
+					concSize++;
+					// Fill the concArray
+					concArray[concSize][0] = (double) l;
+					concArray[concSize][1] = gridPointSolution[l];
 				}
 			}
 
-			// Send the size of the vector to the other processes
-			concSize = concVector.size();
-			// Loop on all the processes
-			for (int l = 0; l < worldSize; l++) {
-				// Skip its own
-				if (l == procId)
-					continue;
+			// Increase concSize one last time
+			concSize++;
 
-				// Send the size
-				MPI_Send(&concSize, 1, MPI_INT, l, 0, PETSC_COMM_WORLD);
-			}
+			// Save the procId
+			concId = procId;
 		}
 
-		// Else: only receive the conc size
-		else {
-			MPI_Recv(&concSize, 1, MPI_INT, MPI_ANY_SOURCE, 0, PETSC_COMM_WORLD,
-					MPI_STATUS_IGNORE);
-		}
+		// Get which processor will send the information
+		int concProc = 0;
+		MPI_Allreduce(&concId, &concProc, 1, MPI_INT, MPI_SUM,
+				PETSC_COMM_WORLD);
+
+		// Broadcast the size
+		MPI_Bcast(&concSize, 1, MPI_DOUBLE, concProc, PETSC_COMM_WORLD);
 
 		// Skip the grid point if the size is 0
 		if (concSize == 0)
 			continue;
 
 		// Transfer the data everywhere from the local grid
-		if (i >= xs && i < xs + xm) {
-			// Loop on all the processes
-			for (int l = 0; l < worldSize; l++) {
-				// Skip its own
-				if (l == procId)
-					continue;
-				// Loop on the size of the vector
-				for (int k = 0; k < concSize; k++) {
-					// Send both information
-					MPI_Send(&concVector[k][0], 1, MPI_DOUBLE, l, 1,
-							PETSC_COMM_WORLD);
-					MPI_Send(&concVector[k][1], 1, MPI_DOUBLE, l, 2,
-							PETSC_COMM_WORLD);
-				}
-			}
-		} else {
-			// Receive the data from the local grid so that all processes have the same data
-			double index = 0, conc = 0;
-			for (int k = 0; k < concSize; k++) {
-				std::vector<double> vec;
-				MPI_Recv(&index, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 1,
-						PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
-						PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-				vec.push_back(index);
-				vec.push_back(conc);
-				concVector.push_back(vec);
-			}
-		}
+		MPI_Bcast(&(concArray[0][0]), 2 * concSize, MPI_DOUBLE, concProc,
+				PETSC_COMM_WORLD);
 
 		// All processes create the dataset and fill it
 		xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i);
-		xolotlCore::HDF5Utils::fillConcentrations(concVector, i);
+		xolotlCore::HDF5Utils::fillConcentrations(concArray, i);
 	}
 
 	// Finalize the HDF5 file
@@ -347,8 +315,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Helium content = " << totalHeConcentration << std::endl;
-		std::cout << "Deuterium content = " << totalDConcentration
-				<< std::endl;
+		std::cout << "Deuterium content = " << totalDConcentration << std::endl;
 		std::cout << "Tritium content = " << totalTConcentration << std::endl;
 		std::cout << "Fluence = " << fluence << "\n" << std::endl;
 
@@ -581,9 +548,6 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Loop on the full grid
 	for (PetscInt xi = surfacePos + 1; xi < Mx; xi++) {
-		// Wait for everybody at each grid point
-		MPI_Barrier(PETSC_COMM_WORLD);
-
 		// Set x
 		double x = grid[xi + 1] - grid[1];
 
@@ -624,10 +588,8 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 		}
 
 		// Gather all the data
-		for (int i = 0; i < maxSize; i++) {
-			MPI_Reduce(&heConcLocal[i], &heConcentrations[i], 1, MPI_DOUBLE,
-			MPI_SUM, 0, PETSC_COMM_WORLD);
-		}
+		MPI_Reduce(&heConcLocal[0], &heConcentrations[0], maxSize, MPI_DOUBLE,
+		MPI_SUM, 0, PETSC_COMM_WORLD);
 
 		// Print it from the main proc
 		if (procId == 0) {
@@ -727,9 +689,6 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 
 	// Loop on the entire grid
 	for (int xi = surfacePos + 1; xi < Mx; xi++) {
-		// Wait for everybody at each grid point
-		MPI_Barrier(PETSC_COMM_WORLD);
-
 		// Set x
 		double x = grid[xi + 1] - grid[1];
 
@@ -747,21 +706,16 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 			// Get the total helium concentration at this grid point
 			heLocalConc += network.getTotalAtomConcentration()
 					* (grid[xi + 1] - grid[xi]);
-
-			// If this is not the master process, send the value
-			if (procId != 0) {
-				MPI_Send(&heLocalConc, 1, MPI_DOUBLE, 0, 3, PETSC_COMM_WORLD);
-			}
-		}
-		// If this process is not in charge of xi but is the master one, receive the value
-		else if (procId == 0) {
-			MPI_Recv(&heLocalConc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 3,
-					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
 		}
 
-		// The master process writes computes the cumulative value and writes in the file
+		// Get the value on procId = 0
+		double heConc = 0.0;
+		MPI_Reduce(&heLocalConc, &heConc, 1, MPI_DOUBLE,
+		MPI_SUM, 0, PETSC_COMM_WORLD);
+
+		// The master process computes the cumulative value and writes in the file
 		if (procId == 0) {
-			heConcentration += heLocalConc;
+			heConcentration += heConc;
 			outputFile << x - (grid[surfacePos + 1] - grid[1]) << " "
 					<< heConcentration << std::endl;
 		}
@@ -847,9 +801,6 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Loop on the entire grid
 	for (int xi = surfacePos + 1; xi < Mx; xi++) {
-		// Wait for everybody at each grid point
-		MPI_Barrier(PETSC_COMM_WORLD);
-
 		// Set x
 		double x = grid[xi + 1] - grid[1];
 
@@ -874,22 +825,22 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 		}
 
 		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
-		MPI_Allreduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM,
+		MPI_Reduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM, 0,
 				PETSC_COMM_WORLD);
-		MPI_Allreduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM,
+		MPI_Reduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM, 0,
 				PETSC_COMM_WORLD);
-		MPI_Allreduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM,
+		MPI_Reduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM, 0,
 				PETSC_COMM_WORLD);
-		MPI_Allreduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM,
+		MPI_Reduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM, 0,
 				PETSC_COMM_WORLD);
-		MPI_Allreduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM,
+		MPI_Reduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM, 0,
 				PETSC_COMM_WORLD);
 
-		// The master process writes computes the cumulative value and writes in the file
+		// The master process writes in the file
 		if (procId == 0) {
-			outputFile << x - (grid[surfacePos + 1] - grid[1]) << " "
-					<< heConc << " " << dConc << " " << tConc
-					<< " " << vConc << " " << iConc << std::endl;
+			outputFile << x - (grid[surfacePos + 1] - grid[1]) << " " << heConc
+					<< " " << dConc << " " << tConc << " " << vConc << " "
+					<< iConc << std::endl;
 		}
 	}
 
@@ -1038,7 +989,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 				// Loop on the width
 				for (int k = 0; k < width; k++) {
 					double conc = 0.0;
-					MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10,
+					MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11,
 							MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					// Create a Point with conc as the value
 					// and add it to myPoints
@@ -1108,7 +1059,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 					double dist = cluster.getDistance(nXe + k);
 					double conc = cluster.getConcentration(dist);
 					// Send the value of each concentration to the master process
-					MPI_Send(&conc, 1, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
+					MPI_Send(&conc, 1, MPI_DOUBLE, 0, 11, MPI_COMM_WORLD);
 				}
 
 				// update nXe
@@ -1523,9 +1474,6 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Loop on the full grid
 	for (xi = 0; xi < Mx; xi++) {
-		// Wait for everybody at each grid point
-		MPI_Barrier(PETSC_COMM_WORLD);
-
 		// Get the x position
 		x = grid[xi + 1] - grid[1];
 
@@ -1559,21 +1507,16 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 
 			// Compute the mean size of helium at this depth
 			heliumMean = heliumTot / concTot;
+		}
 
-			// If this is not the master process, send the values
-			if (procId != 0) {
-				MPI_Send(&heliumMean, 1, MPI_DOUBLE, 0, 7, PETSC_COMM_WORLD);
-			}
-		}
-		// If this process is not in charge of xi but is the master one, receive the value
-		else if (procId == 0) {
-			MPI_Recv(&heliumMean, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 7,
-					PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-		}
+		// Get the mean on procId = 0 through MPI reduce
+		double heliumMeanTot = 0.0;
+		MPI_Reduce(&heliumMean, &heliumMeanTot, 1, MPI_DOUBLE, MPI_SUM, 0,
+				PETSC_COMM_WORLD);
 
 		// The master process writes in the file
 		if (procId == 0) {
-			outputFile << x << " " << heliumMean << std::endl;
+			outputFile << x << " " << heliumMeanTot << std::endl;
 		}
 	}
 

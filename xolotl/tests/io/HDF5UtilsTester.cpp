@@ -85,20 +85,16 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	HDF5Utils::addConcentrationDataset(length, gridPoint);
 
 	// Create a vector of concentration for one grid point
-	std::vector<std::vector<double> > concVector;
+	double concArray[length][2];
 	// Fill it
 	for (int i = 0; i < length; i++) {
-		// Create the concentration vector for this cluster
-		std::vector<double> conc;
-		conc.push_back((double) i);
-		conc.push_back((double) i * 10.0 - 5.0);
-
-		// Add it to the main vector
-		concVector.push_back(conc);
+		// Fill the concArray
+		concArray[i][0] = (double) i;
+		concArray[i][1] = (double) i * 10.0 - 5.0;
 	}
 
 	// Write the concentrations in the HDF5 file
-	HDF5Utils::fillConcentrations(concVector, gridPoint);
+	HDF5Utils::fillConcentrations(concArray, gridPoint);
 
 	// Close the HDF5 file
 	xolotlCore::HDF5Utils::closeFile();
@@ -173,13 +169,13 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 				gridPoint);
 
 		// Check the size of the vector
-		BOOST_REQUIRE_EQUAL(returnedVector.size(), concVector.size());
+		BOOST_REQUIRE_EQUAL(returnedVector.size(), length);
 		// Check the values
 		for (unsigned int i = 0; i < returnedVector.size(); i++) {
 			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(0),
-					concVector.at(i).at(0), 0.0001);
+					concArray[i][0], 0.0001);
 			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1),
-					concVector.at(i).at(1), 0.0001);
+					concArray[i][1], 0.0001);
 		}
 	}
 }

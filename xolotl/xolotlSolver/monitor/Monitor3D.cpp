@@ -113,6 +113,9 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	// Network size
 	const int dof = network.getDOF();
 
+	// Create an array for the concentration
+	double concArray[dof][2];
+
 	// Get the vector of positions of the surface
 	std::vector<std::vector<int> > surfaceIndices;
 	for (PetscInt i = 0; i < My; i++) {
@@ -145,12 +148,10 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	for (PetscInt k = 0; k < Mz; k++) {
 		for (PetscInt j = 0; j < My; j++) {
 			for (PetscInt i = 0; i < Mx; i++) {
-				// Wait for all the processes
-				MPI_Barrier(PETSC_COMM_WORLD);
 				// Size of the concentration that will be stored
 				int concSize = -1;
-				// Vector for the concentrations
-				std::vector<std::vector<double> > concVector;
+				// To save which proc has the information
+				int concId = 0;
 
 				// If it is the locally owned part of the grid
 				if (i >= xs && i < xs + xm && j >= ys && j < ys + ym && k >= zs
@@ -159,79 +160,44 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 					gridPointSolution = solutionArray[k][j][i];
 
 					// Loop on the concentrations
-					concVector.clear();
 					for (int l = 0; l < dof; l++) {
 						if (gridPointSolution[l] > 1.0e-16
 								|| gridPointSolution[l] < -1.0e-16) {
-							// Create the concentration vector for this cluster
-							std::vector<double> conc;
-							conc.push_back((double) l);
-							conc.push_back(gridPointSolution[l]);
-
-							// Add it to the main vector
-							concVector.push_back(conc);
+							// Increase concSize
+							concSize++;
+							// Fill the concArray
+							concArray[concSize][0] = (double) l;
+							concArray[concSize][1] = gridPointSolution[l];
 						}
 					}
 
-					// Send the size of the vector to the other processes
-					concSize = concVector.size();
-					// Loop on all the processes
-					for (int l = 0; l < worldSize; l++) {
-						// Skip its own
-						if (l == procId)
-							continue;
+					// Increase concSize one last time
+					concSize++;
 
-						// Send the size
-						MPI_Send(&concSize, 1, MPI_INT, l, 0, PETSC_COMM_WORLD);
-					}
+					// Save the procId
+					concId = procId;
 				}
 
-				// Else: only receive the conc size
-				else {
-					MPI_Recv(&concSize, 1, MPI_INT, MPI_ANY_SOURCE, 0,
-							PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-				}
+				// Get which processor will send the information
+				int concProc = 0;
+				MPI_Allreduce(&concId, &concProc, 1, MPI_INT, MPI_SUM,
+						PETSC_COMM_WORLD);
+
+				// Broadcast the size
+				MPI_Bcast(&concSize, 1, MPI_DOUBLE, concProc, PETSC_COMM_WORLD);
 
 				// Skip the grid point if the size is 0
 				if (concSize == 0)
 					continue;
 
 				// Transfer the data everywhere from the local grid
-				if (i >= xs && i < xs + xm && j >= ys && j < ys + ym && k >= zs
-						&& k < zs + zm) {
-					// Loop on all the processes
-					for (int l = 0; l < worldSize; l++) {
-						// Skip its own
-						if (l == procId)
-							continue;
-						// Loop on the size of the vector
-						for (int k = 0; k < concSize; k++) {
-							// Send both information
-							MPI_Send(&concVector[k][0], 1, MPI_DOUBLE, l, 1,
-									PETSC_COMM_WORLD);
-							MPI_Send(&concVector[k][1], 1, MPI_DOUBLE, l, 2,
-									PETSC_COMM_WORLD);
-						}
-					}
-				} else {
-					// Receive the data from the local grid so that all processes have the same data
-					double index = 0, conc = 0;
-					for (int k = 0; k < concSize; k++) {
-						std::vector<double> vec;
-						MPI_Recv(&index, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 1,
-								PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-						MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 2,
-								PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-						vec.push_back(index);
-						vec.push_back(conc);
-						concVector.push_back(vec);
-					}
-				}
+				MPI_Bcast(&(concArray[0][0]), 2 * concSize, MPI_DOUBLE,
+						concProc, PETSC_COMM_WORLD);
 
 				// All processes create the dataset and fill it
 				xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i, j,
 						k);
-				xolotlCore::HDF5Utils::fillConcentrations(concVector, i, j, k);
+				xolotlCore::HDF5Utils::fillConcentrations(concArray, i, j, k);
 			}
 		}
 	}
@@ -337,11 +303,11 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	MPI_Reduce(&heConcentration, &totalHeConcentration, 1, MPI_DOUBLE, MPI_SUM,
 			0, PETSC_COMM_WORLD);
 	double totalDConcentration = 0.0;
-	MPI_Reduce(&dConcentration, &totalDConcentration, 1, MPI_DOUBLE, MPI_SUM,
-			0, PETSC_COMM_WORLD);
+	MPI_Reduce(&dConcentration, &totalDConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
+			PETSC_COMM_WORLD);
 	double totalTConcentration = 0.0;
-	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM,
-			0, PETSC_COMM_WORLD);
+	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
+			PETSC_COMM_WORLD);
 
 	// Master process
 	if (procId == 0) {
@@ -367,8 +333,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Helium content = " << totalHeConcentration << std::endl;
-		std::cout << "Deuterium content = " << totalDConcentration
-				<< std::endl;
+		std::cout << "Deuterium content = " << totalDConcentration << std::endl;
 		std::cout << "Tritium content = " << totalTConcentration << std::endl;
 		std::cout << "Fluence = " << fluence << "\n" << std::endl;
 

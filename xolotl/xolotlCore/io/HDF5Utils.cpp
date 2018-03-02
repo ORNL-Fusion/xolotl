@@ -29,15 +29,15 @@ void HDF5Utils::initializeFile(const std::string& fileName) {
 
 	// Create the group where the concentrations will be stored
 	concentrationGroupId = H5Gcreate2(fileId, "concentrationsGroup",
-			H5P_DEFAULT,
-			H5P_DEFAULT, H5P_DEFAULT);
+	H5P_DEFAULT,
+	H5P_DEFAULT, H5P_DEFAULT);
 
 	// Create, write, and close the last written time step attribute
 	int lastTimeStep = -1;
 	hid_t lastDataspaceId = H5Screate(H5S_SCALAR);
 	hid_t lastAttributeId = H5Acreate2(concentrationGroupId, "lastTimeStep",
-			H5T_STD_I32LE, lastDataspaceId,
-			H5P_DEFAULT, H5P_DEFAULT);
+	H5T_STD_I32LE, lastDataspaceId,
+	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(lastAttributeId, H5T_STD_I32LE, &lastTimeStep);
 
 	// Close everything
@@ -148,8 +148,8 @@ void HDF5Utils::addConcentrationSubGroup(int timeStep, double time,
 	// Create, write, and close the absolute time attribute
 	hid_t dataspaceId = H5Screate(H5S_SCALAR);
 	hid_t attributeId = H5Acreate2(subConcGroupId, "absoluteTime",
-			H5T_IEEE_F64LE, dataspaceId,
-			H5P_DEFAULT, H5P_DEFAULT);
+	H5T_IEEE_F64LE, dataspaceId,
+	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &time);
 	status = H5Aclose(attributeId);
 
@@ -356,18 +356,7 @@ void HDF5Utils::addConcentrationDataset(int size, int i, int j, int k) {
 	return;
 }
 
-void HDF5Utils::fillConcentrations(
-		const std::vector<std::vector<double> >& concVector, int i, int j,
-		int k) {
-	// Create the concentration array
-	double concArray[concVector.size()][2];
-
-	// Fill it with the concentration vector
-	for (unsigned int n = 0; n < concVector.size(); n++) {
-		concArray[n][0] = concVector.at(n).at(0);
-		concArray[n][1] = concVector.at(n).at(1);
-	}
-
+void HDF5Utils::fillConcentrations(double concArray[][2], int i, int j, int k) {
 	// Set the dataset name
 	std::stringstream datasetName;
 	datasetName << "position_" << i << "_" << j << "_" << k;
@@ -378,7 +367,7 @@ void HDF5Utils::fillConcentrations(
 
 	// Write concArray in the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &concArray);
+	H5P_DEFAULT, concArray);
 
 	// Close everything
 	status = H5Dclose(datasetId);
@@ -474,11 +463,11 @@ bool HDF5Utils::hasConcentrationGroup(const std::string& fileName,
 	if (groupExist) {
 		// Open the concentration group
 		concentrationGroupId = H5Gopen(fileId, "/concentrationsGroup",
-				H5P_DEFAULT);
+		H5P_DEFAULT);
 
 		// Open and read the lastTimeStep attribute
 		hid_t lastAttributeId = H5Aopen(concentrationGroupId, "lastTimeStep",
-				H5P_DEFAULT);
+		H5P_DEFAULT);
 		status = H5Aread(lastAttributeId, H5T_STD_I32LE, &lastTimeStep);
 		status = H5Aclose(lastAttributeId);
 
@@ -1025,7 +1014,7 @@ std::vector<std::vector<double> > HDF5Utils::readNetwork(
 	status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
 
 	// Create the array that will receive the network
-	double *networkArray = new double[dims[0]*dims[1]];
+	double *networkArray = new double[dims[0] * dims[1]];
 
 	// Read the data set
 	status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
@@ -1074,6 +1063,7 @@ std::vector<std::vector<double> > HDF5Utils::readGridPoint(
 	// Check the dataset
 	bool datasetExist = H5Lexists(fileId, datasetName.str().c_str(),
 	H5P_DEFAULT);
+
 	// If the dataset exists
 	if (datasetExist) {
 		// Open the dataset

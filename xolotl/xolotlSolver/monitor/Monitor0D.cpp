@@ -87,6 +87,9 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	auto& network = solverHandler.getNetwork();
 	const int dof = network.getDOF();
 
+	// Create an array for the concentration
+	double concArray[dof][2];
+
 	// Open the already created HDF5 file
 	xolotlCore::HDF5Utils::openFile(hdf5OutputName0D);
 
@@ -101,35 +104,30 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Size of the concentration that will be stored
 	int concSize = -1;
-	// Vector for the concentrations
-	std::vector<std::vector<double> > concVector;
 
 	// Get the pointer to the beginning of the solution data for this grid point
 	gridPointSolution = solutionArray[0];
 
 	// Loop on the concentrations
-	concVector.clear();
 	for (int l = 0; l < dof; l++) {
 		if (gridPointSolution[l] > 1.0e-16 || gridPointSolution[l] < -1.0e-16) {
-			// Create the concentration vector for this cluster
-			std::vector<double> conc;
-			conc.push_back((double) l);
-			conc.push_back(gridPointSolution[l]);
-
-			// Add it to the main vector
-			concVector.push_back(conc);
+			// Increase concSize
+			concSize++;
+			// Fill the concArray
+			concArray[concSize][0] = (double) l;
+			concArray[concSize][1] = gridPointSolution[l];
 		}
 	}
 
-	// Send the size of the vector to the other processes
-	concSize = concVector.size();
+	// Increase concSize one last time
+	concSize++;
 
 	if (concSize > 0) {
 		// All processes must create the dataset
 		xolotlCore::HDF5Utils::addConcentrationDataset(concSize, 0);
 
 		// Fill the dataset
-		xolotlCore::HDF5Utils::fillConcentrations(concVector, 0);
+		xolotlCore::HDF5Utils::fillConcentrations(concArray, 0);
 	}
 
 	// Finalize the HDF5 file

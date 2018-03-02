@@ -105,12 +105,12 @@ namespace HDF5Utils {
 	/**
 	 * Fill the concentration dataset at a specific grid point.
 	 *
-	 * @param concVector The vector of concentration at a grid point
+	 * @param concArray The array of concentration at a grid point
 	 * @param i The index of the position on the grid on the x direction
 	 * @param j The index of the position on the grid on the y direction
 	 * @param k The index of the position on the grid on the z direction
 	 */
-	void fillConcentrations(const std::vector< std::vector<double> >& concVector,
+	void fillConcentrations(double concArray[][2],
 			int i, int j = -1, int k = -1);
 
 	/**
