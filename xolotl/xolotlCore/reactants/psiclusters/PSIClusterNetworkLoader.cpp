@@ -865,7 +865,7 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 			previousBiggestHe++;
 			pair.first = previousBiggestHe;
 
-			// Skip the last one (only works assuming the clusters follow He/V = 4)
+			// Skip the last one
 			if (previousBiggestHe == heMax)
 				break;
 		}
@@ -919,6 +919,10 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 					// Check if the corresponding coordinates are in the heVList set
 					auto pair = std::make_pair(m, n);
 					if (heVList.find(pair) == heVList.end())
+						continue;
+
+					// Skip the last one
+					if (m == heMax)
 						continue;
 
 					// Will be used to know if the group was full
@@ -1002,6 +1006,33 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 //		vWidth -= vWidth % vSectionWidth;
 //		heWidth = heSectionWidth;
 		heIndex = 1;
+	}
+
+	// Create the super cluster corresponding to the biggest mixed one alone
+	if (heVList.size() == 1) {
+		// Get the pair
+		auto pair = heVList.begin();
+		// Add this cluster coordinates to the temporary vector
+		tempVector.emplace(*pair);
+		// Remove the pair from the set because we don't need it anymore
+		heVList.erase(pair);
+
+		auto rawSuperCluster = new PSISuperCluster(pair->first, pair->second, 1,
+				1, 1, network, handlerRegistry);
+
+//		std::cout << "last: " << rawSuperCluster->getName() << std::endl;
+
+		auto superCluster = std::unique_ptr<PSISuperCluster>(
+				rawSuperCluster);
+		// Save access to the cluster so we can trigger updates
+		// after we give it to the network.
+		auto& scref = *superCluster;
+		// Give the cluster to the network.
+		network.add(std::move(superCluster));
+		// Trigger cluster updates now it is in the network.
+		scref.updateFromNetwork();
+		// Set the HeV vector
+		scref.setHeVVector(tempVector);
 	}
 
 	return;
