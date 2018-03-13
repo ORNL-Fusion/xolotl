@@ -1340,7 +1340,11 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			double hy = solverHandler.getStepSizeY();
 
 			// Save the header in the HDF5 file
-			xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0], My, hy);
+			xolotlCore::HDF5Utils::fillHeader(grid, My, hy);
+
+			// Get the compostion list and save it
+			auto compList = network.getCompositionList();
+			xolotlCore::HDF5Utils::fillNetworkComp(compList);
 
 			// Save the network in the HDF5 file
 			if (!solverHandler.getNetworkName().empty())

@@ -427,8 +427,15 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		// Get the solver handler
 		auto& solverHandler = PetscSolver::getSolverHandler();
 
+		// Get the physical grid (which is empty)
+		auto grid = solverHandler.getXGrid();
+
 		// Save the header in the HDF5 file
-		xolotlCore::HDF5Utils::fillHeader(Mx, 0.0);
+		xolotlCore::HDF5Utils::fillHeader(grid);
+
+		// Get the compostion list and save it
+		auto compList = network.getCompositionList();
+		xolotlCore::HDF5Utils::fillNetworkComp(compList);
 
 		// Save the network in the HDF5 file
 		if (!solverHandler.getNetworkName().empty())

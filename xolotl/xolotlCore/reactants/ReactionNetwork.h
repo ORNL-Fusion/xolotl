@@ -393,6 +393,16 @@ public:
 	}
 
 	/**
+	 * This operation returns the list (vector) of each reactant in the network.
+	 * Need to be implemented by the daughter classes,
+	 *
+	 * @return The list of compositions
+	 */
+	virtual std::vector< std::vector <int> > getCompositionList() const override {
+		return std::vector< std::vector <int> > ();
+	}
+
+	/**
 	 * Add a production reaction to the network.
 	 *
 	 * @param reaction The reaction that should be added to the network

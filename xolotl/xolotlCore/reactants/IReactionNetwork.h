@@ -141,6 +141,13 @@ public:
 	virtual int getDOF() const = 0;
 
 	/**
+	 * This operation returns the list (vector) of each reactant in the network.
+	 *
+	 * @return The list of compositions
+	 */
+	virtual std::vector< std::vector <int> > getCompositionList() const = 0;
+
+	/**
 	 * Add a production reaction to the network.
 	 *
 	 * @param reaction The reaction that should be added to the network

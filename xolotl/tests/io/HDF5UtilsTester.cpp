@@ -53,6 +53,9 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	// Set the number of grid points and step size
 	int nGrid = 5;
 	double stepSize = 0.5;
+	std::vector<double> grid;
+	for (int i = 0; i < nGrid + 2; i++)
+		grid.push_back((double) i * stepSize);
 	// Set the time information
 	double currentTime = 0.0001;
 	double previousTime = 0.00001;
@@ -61,7 +64,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	int iSurface = 3;
 	double nInter = 1.0, previousFlux = 0.1;
 	// Write the header in the HDF5 file
-	HDF5Utils::fillHeader(nGrid, stepSize);
+	HDF5Utils::fillHeader(grid);
 
 	// Write the network in the HDF5 file
 	HDF5Utils::fillNetwork(filename);
@@ -172,10 +175,10 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		BOOST_REQUIRE_EQUAL(returnedVector.size(), length);
 		// Check the values
 		for (unsigned int i = 0; i < returnedVector.size(); i++) {
-			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(0),
-					concArray[i][0], 0.0001);
-			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1),
-					concArray[i][1], 0.0001);
+			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(0), concArray[i][0],
+					0.0001);
+			BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1), concArray[i][1],
+					0.0001);
 		}
 	}
 }
@@ -191,12 +194,15 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 	// Set the number of grid points and step size
 	int nGrid = 5;
 	double stepSize = 0.5;
+	std::vector<double> grid;
+	for (int i = 0; i < nGrid + 2; i++)
+		grid.push_back((double) i * stepSize);
 	// Set the time information
 	double currentTime = 0.0001;
 	double previousTime = 0.00001;
 	double currentTimeStep = 0.000001;
 	// Write the header in the HDF5 file
-	HDF5Utils::fillHeader(nGrid, stepSize);
+	HDF5Utils::fillHeader(grid);
 
 	// Finalize the HDF5 file
 	HDF5Utils::finalizeFile();
@@ -255,12 +261,15 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 	// Set the number of grid points and step size
 	int nGrid = 5;
 	double stepSize = 0.5;
+	std::vector<double> grid;
+	for (int i = 0; i < nGrid + 2; i++)
+		grid.push_back((double) i * stepSize);
 	// Set the time information
 	double currentTime = 0.0001;
 	double previousTime = 0.00001;
 	double currentTimeStep = 0.000001;
 	// Write the header in the HDF5 file
-	HDF5Utils::fillHeader(nGrid, stepSize);
+	HDF5Utils::fillHeader(grid);
 
 	// Finalize the HDF5 file
 	HDF5Utils::finalizeFile();

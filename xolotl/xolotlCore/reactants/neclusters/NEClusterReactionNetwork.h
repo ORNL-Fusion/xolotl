@@ -138,6 +138,13 @@ public:
 	}
 
 	/**
+	 * This operation returns the list (vector) of each reactant in the network.
+	 *
+	 * @return The list of compositions
+	 */
+	virtual std::vector< std::vector <int> > getCompositionList() const override;
+
+	/**
 	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.
 	 *
 	 * @param diagFill The pointer to the vector where the connectivity information is kept

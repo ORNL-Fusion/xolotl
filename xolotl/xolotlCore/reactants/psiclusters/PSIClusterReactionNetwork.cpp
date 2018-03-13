@@ -1181,6 +1181,29 @@ void PSIClusterReactionNetwork::updateConcentrationsFromArray(
 	return;
 }
 
+std::vector<std::vector<int> > PSIClusterReactionNetwork::getCompositionList() const {
+	// Create the list that will be returned
+	std::vector<std::vector<int> > compList;
+
+	// Loop on all the reactants
+	std::for_each(allReactants.begin(), allReactants.end(),
+			[&compList](IReactant& currReactant) {
+				// Get the composition
+				auto comp = currReactant.getComposition();
+				std::vector <int> compVec;
+				compVec.push_back(comp[toCompIdx(Species::He)]);
+				compVec.push_back(comp[toCompIdx(Species::D)]);
+				compVec.push_back(comp[toCompIdx(Species::T)]);
+				compVec.push_back(comp[toCompIdx(Species::V)]);
+				compVec.push_back(comp[toCompIdx(Species::I)]);
+
+				// Save the composition in the list
+				compList.push_back(compVec);
+			});
+
+	return compList;
+}
+
 void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = getDOF();

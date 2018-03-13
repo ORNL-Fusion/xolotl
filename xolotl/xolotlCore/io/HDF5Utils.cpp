@@ -63,9 +63,10 @@ void HDF5Utils::openFile(const std::string& fileName) {
 	return;
 }
 
-void HDF5Utils::fillHeader(int nx, double hx, int ny, double hy, int nz,
+void HDF5Utils::fillHeader(std::vector<double>& grid, int ny, double hy, int nz,
 		double hz) {
 	// Create, write, and close the nx attribute
+	int nx = grid.size() - 2;
 	hid_t dataspaceId = H5Screate(H5S_SCALAR);
 	hid_t attributeId = H5Acreate2(headerGroupId, "nx", H5T_STD_I32LE,
 			dataspaceId,
@@ -73,6 +74,8 @@ void HDF5Utils::fillHeader(int nx, double hx, int ny, double hy, int nz,
 	status = H5Awrite(attributeId, H5T_STD_I32LE, &nx);
 	status = H5Aclose(attributeId);
 	// Create, write, and close the hx attribute
+	double hx = 0.0;
+	if (grid.size() > 0) hx = grid[1] - grid[0];
 	attributeId = H5Acreate2(headerGroupId, "hx", H5T_IEEE_F64LE, dataspaceId,
 	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &hx);
@@ -99,8 +102,51 @@ void HDF5Utils::fillHeader(int nx, double hx, int ny, double hy, int nz,
 	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &hz);
 
+	// Create, write, and close the grid dataset
+	double gridArray[nx];
+	for (int i = 0; i < nx; i++) {
+		gridArray[i] = grid[i+1] - grid[1];
+	}
+	hsize_t dims[1];
+	dims[0] = nx;
+	dataspaceId = H5Screate_simple(1, dims, NULL);
+	hid_t datasetId = H5Dcreate2(headerGroupId, "grid", H5T_IEEE_F64LE,
+			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+	H5P_DEFAULT, &gridArray);
+	status = H5Dclose(datasetId);
+
 	// Close everything
 	status = H5Aclose(attributeId);
+	status = H5Sclose(dataspaceId);
+
+	return;
+}
+void HDF5Utils::fillNetworkComp(std::vector< std::vector <int> > compVec) {
+	// Create the array that will store the compositions and fill it
+	int dof = compVec.size();
+	int compSize = compVec[0].size();
+	int compArray[dof][compSize];
+	for (int i = 0; i < dof; i++) {
+		for (int j = 0; j < compSize; j++) {
+			compArray[i][j] = compVec[i][j];
+		}
+	}
+
+	// Create the dataspace for the dataset with dimension dims
+	hsize_t dims[2];
+	dims[0] = dof;
+	dims[1] = compSize;
+	hid_t dataspaceId = H5Screate_simple(2, dims, NULL);
+
+	// Create the dataset for the surface indices
+	hid_t datasetId = H5Dcreate2(headerGroupId, "composition", H5T_STD_I32LE,
+			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	// Write in the dataset
+	status = H5Dwrite(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
+	H5P_DEFAULT, &compArray);
+	// Close everything
+	status = H5Dclose(datasetId);
 	status = H5Sclose(dataspaceId);
 
 	return;

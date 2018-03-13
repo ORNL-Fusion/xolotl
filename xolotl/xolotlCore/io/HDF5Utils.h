@@ -26,15 +26,21 @@ namespace HDF5Utils {
 	 * Fill the header with the number of points and step size in
 	 * each direction.
 	 *
-	 * @param nx The number of grid points in the x direction (depth)
-	 * @param hx The step size in the x direction
+	 * @param grid The grid points in the x direction (depth)
 	 * @param ny The number of grid points in the y direction
 	 * @param hy The step size in the y direction
 	 * @param nz The number of grid points in the z direction
 	 * @param hz The step size in the z direction
 	 */
-	void fillHeader(int nx, double hx, int ny = 0,
+	void fillHeader(std::vector<double>& grid, int ny = 0,
 			double hy = 0.0, int nz = 0, double hz = 0.0);
+
+	/**
+	 * Fill the list of cluster compositions.
+	 *
+	 * @param compVec The vector of composition
+	 */
+	void fillNetworkComp(std::vector< std::vector <int> > compVec);
 
 	/**
 	 * Fill the network dataset.
