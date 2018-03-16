@@ -579,8 +579,8 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 						if (!superCluster.isIn(i, j))
 							continue;
 						heConcLocal[i] += superCluster.getConcentration(
-								superCluster.getHeDistance(i),
-								superCluster.getVDistance(j))
+								superCluster.getDistance(i, 0),
+								superCluster.getDistance(j, 1))
 								* (grid[xi + 1] - grid[xi]);
 					}
 				}
@@ -1357,8 +1357,8 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 							// Is it the right one?
 							if (heBounds.contains(j) and vBounds.contains(i)) {
 								conc = superCluster.getConcentration(
-										superCluster.getHeDistance(j),
-										superCluster.getVDistance(i));
+										superCluster.getDistance(j, 0),
+										superCluster.getDistance(i, 1));
 								break;
 							}
 						}

@@ -91,42 +91,10 @@ protected:
 		 * 1 -> He
 		 * 2 -> V
 		 */
-		double a000;
-		double a001;
-		double a002;
-		double a100;
-		double a101;
-		double a102;
-		double a200;
-		double a201;
-		double a202;
-		double a010;
-		double a011;
-		double a012;
-		double a020;
-		double a021;
-		double a022;
-		double a110;
-		double a111;
-		double a112;
-		double a120;
-		double a121;
-		double a122;
-		double a210;
-		double a211;
-		double a212;
-		double a220;
-		double a221;
-		double a222;
+		double coefs[3][3][3] = {};
 
 		//! The constructor
-		ProductionCoefficientBase() :
-				a000(0.0), a001(0.0), a002(0.0), a100(0.0), a101(0.0), a102(
-						0.0), a200(0.0), a201(0.0), a202(0.0), a010(0.0), a011(
-						0.0), a012(0.0), a020(0.0), a021(0.0), a022(0.0), a110(
-						0.0), a111(0.0), a112(0.0), a120(0.0), a121(0.0), a122(
-						0.0), a210(0.0), a211(0.0), a212(0.0), a220(0.0), a221(
-						0.0), a222(0.0) {
+		ProductionCoefficientBase() {
 		}
 
 		/**
@@ -228,22 +196,12 @@ protected:
 		 * 1 -> He
 		 * 2 -> V
 		 */
-		double a00;
-		double a01;
-		double a02;
-		double a10;
-		double a11;
-		double a12;
-		double a20;
-		double a21;
-		double a22;
+		double coefs[3][3] = {};
 
 		//! The constructor
 		SuperClusterDissociationPair(Reaction& _reaction, PSICluster& _first,
 				PSICluster& _second) :
-				ReactingPairBase(_reaction, _first, _second), a00(0.0), a01(
-						0.0), a02(0.0), a10(0.0), a11(0.0), a12(0.0), a20(0.0), a21(
-						0.0), a22(0.0) {
+				ReactingPairBase(_reaction, _first, _second) {
 
 		}
 
@@ -261,20 +219,17 @@ protected:
 
 private:
 
-	//! The mean number of helium atoms in this cluster.
-	double numHe;
-
-	//! The mean number of atomic vacancies in this cluster.
-	double numV;
+	//! The mean number of atoms in this cluster.
+	double numAtom[2] = {};
 
 	//! The total number of clusters gathered in this super cluster.
 	int nTot;
 
-	//! The width in the helium direction.
-	int sectionHeWidth;
+	//! The width of the group.
+	int sectionWidth[2] = {};
 
-	//! The width in the vacancy direction.
-	int sectionVWidth;
+	//! The dispersion in the group.
+	double dispersion[2] = {};
 
 	/**
 	 * Bounds on number of He atoms represented by this cluster.
@@ -294,12 +249,6 @@ private:
 
 	//! The first order momentum in the vacancy direction.
 	double l1V;
-
-	//! The dispersion in the group in the helium direction.
-	double dispersionHe;
-
-	//! The dispersion in the group in the vacancy direction.
-	double dispersionV;
 
 	/**
 	 * The list of clusters gathered in this.
@@ -540,23 +489,24 @@ public:
 	/**
 	 * This operation returns the distance to the mean.
 	 *
-	 * @param he The number of helium
-	 * @return The distance to the mean number of helium in the group
+	 * @param atom The number of atoms
+	 * @param axis The axis we are intersted in
+	 * @return The distance to the mean number of atoms in the group
 	 */
-	double getHeDistance(int he) const override {
-		return (sectionHeWidth == 1) ?
-				0.0 : 2.0 * (he - numHe) / (sectionHeWidth - 1.0);
+	double getDistance(int atom, int axis) const override {
+		return (sectionWidth[axis] == 1) ?
+				0.0 : 2.0 * (atom - numAtom[axis]) / (sectionWidth[axis] - 1.0);
 	}
 
 	/**
-	 * This operation returns the distance to the mean.
+	 * This operation returns the factor used for the moments.
 	 *
-	 * @param he The number of vacancy
-	 * @return The distance to the mean number of vacancy in the group
+	 * @param atom The number of atoms
+	 * @param axis The axis we are intersted in
+	 * @return The factor
 	 */
-	double getVDistance(int v) const override {
-		return (sectionVWidth == 1) ?
-				0.0 : 2.0 * (v - numV) / (sectionVWidth - 1.0);
+	double getFactor(int atom, int axis) const override {
+		return (double) (atom - numAtom[axis]) / dispersion[axis];
 	}
 
 	/**
@@ -744,7 +694,7 @@ public:
 	 * @return The average number of vacancies
 	 */
 	double getNumV() const {
-		return numV;
+		return numAtom[1];
 	}
 
 	/**

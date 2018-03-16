@@ -68,22 +68,12 @@ protected:
 		 * 1 -> He
 		 * 2 -> V
 		 */
-		double a00;
-		double a10;
-		double a20;
-		double a01;
-		double a02;
-		double a11;
-		double a12;
-		double a21;
-		double a22;
+		double coefs[3][3] = {};
 
 		//! The constructor
 		ClusterPair(Reaction& _reaction, PSICluster& _first,
 				PSICluster& _second) :
-				first(_first), second(_second), reaction(_reaction), a00(0.0), a10(
-						0.0), a20(0.0), a01(0.0), a02(0.0), a11(0.0), a12(0.0), a21(
-						0.0), a22(0.0) {
+				first(_first), second(_second), reaction(_reaction) {
 		}
 
 		/**
@@ -126,13 +116,11 @@ protected:
 		 * 1 -> He
 		 * 2 -> V
 		 */
-		double a0;
-		double a1;
-		double a2;
+		double coefs[3] = {};
 
 		//! The constructor
 		CombiningCluster(Reaction& _reaction, PSICluster& _comb) :
-				combining(_comb), reaction(_reaction), a0(0.0), a1(0.0), a2(0.0) {
+				combining(_comb), reaction(_reaction) {
 		}
 
 		/**
@@ -387,20 +375,22 @@ public:
 	/**
 	 * This operation returns the distance to the mean.
 	 *
-	 * @param he The number of helium
-	 * @return The distance to the mean number of helium in the group
+	 * @param atom The number of atoms
+	 * @param axis The axis we are intersted in
+	 * @return The distance to the mean number of atoms in the group
 	 */
-	virtual double getHeDistance(int he) const {
+	virtual double getDistance(int atom, int axis) const {
 		return 0.0;
 	}
 
 	/**
-	 * This operation returns the distance to the mean.
+	 * This operation returns the factor used for the moments.
 	 *
-	 * @param he The number of vacancy
-	 * @return The distance to the mean number of vacancy in the group
+	 * @param atom The number of atoms
+	 * @param axis The axis we are intersted in
+	 * @return The factor
 	 */
-	virtual double getVDistance(int v) const {
+	virtual double getFactor(int atom, int axis) const {
 		return 0.0;
 	}
 
