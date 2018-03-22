@@ -87,8 +87,8 @@ private:
 	IReactant * getSuperFromComp(IReactant::SizeType nHe,
 			IReactant::SizeType nV);
 
-	ProductionReaction& defineReactionBase(IReactant& r1, IReactant& r2, int a =
-			0, int b = 0) __attribute__((always_inline)) {
+	ProductionReaction& defineReactionBase(IReactant& r1, IReactant& r2,
+			int a[4] = { }) __attribute__((always_inline)) {
 
 		// Add a production reaction to our network.
 		std::unique_ptr<ProductionReaction> reaction(
@@ -96,8 +96,8 @@ private:
 		auto& prref = add(std::move(reaction));
 
 		// Tell the reactants that they are involved in this reaction
-		r1.participateIn(prref, a, b);
-		r2.participateIn(prref, a, b);
+		r1.participateIn(prref, a);
+		r2.participateIn(prref, a);
 
 		return prref;
 	}
@@ -121,16 +121,16 @@ private:
 	}
 
 	void defineProductionReaction(IReactant& r1, IReactant& super,
-			IReactant& product, int a = 0, int b = 0, int c = 0, int d = 0) {
+			IReactant& product, int a[4] = { }, int b[4] = { }) {
 
 		// Define the basic production reaction.
-		auto& reaction = defineReactionBase(r1, super, c, d);
+		auto& reaction = defineReactionBase(r1, super, b);
 
 		// Tell product it is a product of this reaction.
-		product.resultFrom(reaction, a, b, c, d);
+		product.resultFrom(reaction, a, b);
 
 		// Check if reverse reaction is allowed.
-		checkForDissociation(product, reaction, a, b, c, d);
+		checkForDissociation(product, reaction, a, b);
 	}
 
 	/**
@@ -146,7 +146,7 @@ private:
 
 	// TODO should we default a, b, c, d to 0?
 	void defineDissociationReaction(ProductionReaction& forwardReaction,
-			IReactant& emitting, int a, int b, int c, int d) {
+			IReactant& emitting, int a[4] = { }, int b[4] = { }) {
 
 		std::unique_ptr<DissociationReaction> dissociationReaction(
 				new DissociationReaction(emitting, forwardReaction.first,
@@ -154,9 +154,9 @@ private:
 		auto& drref = add(std::move(dissociationReaction));
 
 		// Tell the reactants that they are in this reaction
-		forwardReaction.first.participateIn(drref, a, b, c, d);
-		forwardReaction.second.participateIn(drref, a, b, c, d);
-		emitting.emitFrom(drref, a, b, c, d);
+		forwardReaction.first.participateIn(drref, a, b);
+		forwardReaction.second.participateIn(drref, a, b);
+		emitting.emitFrom(drref, a);
 	}
 
 	/**
@@ -194,8 +194,7 @@ private:
 	 *
 	 */
 	void checkForDissociation(IReactant& emittingReactant,
-			ProductionReaction& reaction, int a = 0, int b = 0, int c = 0,
-			int d = 0);
+			ProductionReaction& reaction, int a[4] = { }, int b[4] = { });
 
 public:
 
@@ -271,7 +270,7 @@ public:
 	 *
 	 * @return The list of compositions
 	 */
-	virtual std::vector< std::vector <int> > getCompositionList() const override;
+	virtual std::vector<std::vector<int> > getCompositionList() const override;
 
 	/**
 	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.

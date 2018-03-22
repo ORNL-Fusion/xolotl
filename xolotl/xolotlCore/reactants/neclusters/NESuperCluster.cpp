@@ -7,15 +7,15 @@
 using namespace xolotlCore;
 
 /**
- * The xenon momentum partials.
+ * The xenon moment partials.
  */
-std::vector<double> momentumPartials;
+std::vector<double> momentPartials;
 
 NESuperCluster::NESuperCluster(double num, int nTot, int width, double radius,
 		double energy, IReactionNetwork& _network,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		NECluster(_network, registry, buildName(num)), numXe(num), nTot(nTot), l0(
-				0.0), l1(0.0), dispersion(0.0), momentumFlux(0.0) {
+				0.0), l1(0.0), dispersion(0.0), momentFlux(0.0) {
 	// Set the cluster size
 	size = (int) numXe;
 
@@ -71,11 +71,11 @@ void NESuperCluster::updateFromNetwork() {
 	return;
 }
 
-double NESuperCluster::getConcentration(double distXe, double distB) const {
+double NESuperCluster::getConcentration(double distXe, double, double, double) const {
 	return l0 + (distXe * l1);
 }
 
-double NESuperCluster::getMomentum() const {
+double NESuperCluster::getMoment() const {
 	return l1;
 }
 
@@ -515,16 +515,16 @@ void NESuperCluster::resetConnectivities() {
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(id);
 	setDissociationConnectivity(id);
-	setReactionConnectivity(xeMomId);
-	setDissociationConnectivity(xeMomId);
+	setReactionConnectivity(momId[0]);
+	setDissociationConnectivity(momId[0]);
 
 	// Loop over all the reacting pairs
 	for (auto it = effReactingList.begin(); it != effReactingList.end(); ++it) {
 		// The cluster is connecting to both clusters in the pair
 		setReactionConnectivity((*it).first->getId());
-		setReactionConnectivity((*it).first->getXeMomentumId());
+		setReactionConnectivity((*it).first->getMomentId());
 		setReactionConnectivity((*it).second->getId());
-		setReactionConnectivity((*it).second->getXeMomentumId());
+		setReactionConnectivity((*it).second->getMomentId());
 	}
 
 	// Loop over all the combining pairs
@@ -532,7 +532,7 @@ void NESuperCluster::resetConnectivities() {
 			++it) {
 		// The cluster is connecting to the combining cluster
 		setReactionConnectivity((*it).first->getId());
-		setReactionConnectivity((*it).first->getXeMomentumId());
+		setReactionConnectivity((*it).first->getMomentId());
 	}
 
 	// Loop over all the dissociating pairs
@@ -540,22 +540,22 @@ void NESuperCluster::resetConnectivities() {
 			++it) {
 		// The cluster is connecting to the combining cluster
 		setDissociationConnectivity((*it).first->getId());
-		setDissociationConnectivity((*it).first->getXeMomentumId());
+		setDissociationConnectivity((*it).first->getMomentId());
 	}
 
 	// Don't loop on the effective emission pairs because
 	// this cluster is not connected to them
 
-	// Initialize the partial vector for the momentum
+	// Initialize the partial vector for the moment
 	int dof = network.getDOF();
-	momentumPartials.resize(dof, 0.0);
+	momentPartials.resize(dof, 0.0);
 
 	return;
 }
 
 double NESuperCluster::getTotalFlux() {
-	// Initialize the momentum flux
-	momentumFlux = 0.0;
+	// Initialize the moment flux
+	momentFlux = 0.0;
 
 	// Get the fluxes
 	double prodFlux = getProductionFlux();
@@ -577,12 +577,12 @@ double NESuperCluster::getDissociationFlux() {
 		// Get the dissociating clusters
 		dissociatingCluster = (*it).first;
 		double l0A = dissociatingCluster->getConcentration(0.0);
-		double l1A = dissociatingCluster->getMomentum();
+		double l1A = dissociatingCluster->getMoment();
 		// Update the flux
 		value = *((*it).kConstant) / (double) nTot;
 		flux += value * ((*it).a00 * l0A + (*it).a10 * l1A);
-		// Compute the momentum fluxes
-		momentumFlux += value * ((*it).a01 * l0A + (*it).a11 * l1A);
+		// Compute the moment fluxes
+		momentFlux += value * ((*it).a01 * l0A + (*it).a11 * l1A);
 	}
 
 	// Return the flux
@@ -598,8 +598,8 @@ double NESuperCluster::getEmissionFlux() {
 		// Update the flux
 		value = *((*it).kConstant) / (double) nTot;
 		flux += value * ((*it).a00 * l0 + (*it).a10 * l1);
-		// Compute the momentum fluxes
-		momentumFlux -= value * ((*it).a01 * l0 + (*it).a11 * l1);
+		// Compute the moment fluxes
+		momentFlux -= value * ((*it).a01 * l0 + (*it).a11 * l1);
 	}
 
 	return flux;
@@ -617,15 +617,15 @@ double NESuperCluster::getProductionFlux() {
 		secondReactant = (*it).second;
 		double l0A = firstReactant->getConcentration();
 		double l0B = secondReactant->getConcentration();
-		double l1A = firstReactant->getMomentum();
-		double l1B = secondReactant->getMomentum();
+		double l1A = firstReactant->getMoment();
+		double l1B = secondReactant->getMoment();
 		// Update the flux
 		value = *((*it).kConstant) / (double) nTot;
 		flux += value
 				* ((*it).a000 * l0A * l0B + (*it).a010 * l0A * l1B
 						+ (*it).a100 * l1A * l0B + (*it).a110 * l1A);
-		// Compute the momentum flux
-		momentumFlux += value
+		// Compute the moment flux
+		momentFlux += value
 				* ((*it).a001 * l0A * l0B + (*it).a011 * l0A * l1B
 						+ (*it).a101 * l1A * l0B + (*it).a111 * l1A);
 	}
@@ -645,14 +645,14 @@ double NESuperCluster::getCombinationFlux() {
 		// Get the two reacting clusters
 		combiningCluster = (*it).first;
 		double l0A = combiningCluster->getConcentration();
-		double l1A = combiningCluster->getMomentum();
+		double l1A = combiningCluster->getMoment();
 		// Update the flux
 		value = *((*it).kConstant) / (double) nTot;
 		flux += value
 				* ((*it).a000 * l0A * l0 + (*it).a100 * l0A * l1
 						+ (*it).a010 * l1A * l0 + (*it).a110 * l1A * l1);
-		// Compute the momentum flux
-		momentumFlux -= value
+		// Compute the moment flux
+		momentFlux -= value
 				* ((*it).a001 * l0A * l0 + (*it).a101 * l0A * l1
 						+ (*it).a011 * l1A * l0 + (*it).a111 * l1A * l1);
 	}
@@ -662,8 +662,8 @@ double NESuperCluster::getCombinationFlux() {
 
 void NESuperCluster::getPartialDerivatives(
 		std::vector<double> & partials) const {
-	// Reinitialize the momentum partial derivatives vector
-	std::fill(momentumPartials.begin(), momentumPartials.end(), 0.0);
+	// Reinitialize the moment partial derivatives vector
+	std::fill(momentPartials.begin(), momentPartials.end(), 0.0);
 
 	// Get the partial derivatives for each reaction type
 	getProductionPartialDerivatives(partials);
@@ -696,27 +696,27 @@ void NESuperCluster::getProductionPartialDerivatives(
 		secondReactant = (*it).second;
 		double l0A = firstReactant->getConcentration();
 		double l0B = secondReactant->getConcentration();
-		double l1A = firstReactant->getMomentum();
-		double l1B = secondReactant->getMomentum();
+		double l1A = firstReactant->getMoment();
+		double l1B = secondReactant->getMoment();
 
 		// Compute the contribution from the first part of the reacting pair
 		value = *((*it).kConstant) / (double) nTot;
 		index = firstReactant->getId() - 1;
 		partials[index] += value * ((*it).a000 * l0B + (*it).a010 * l1B);
-		momentumPartials[index] += value
+		momentPartials[index] += value
 				* ((*it).a001 * l0B + (*it).a011 * l1B);
-		index = firstReactant->getXeMomentumId() - 1;
+		index = firstReactant->getMomentId() - 1;
 		partials[index] += value * ((*it).a100 * l0B + (*it).a110 * l1B);
-		momentumPartials[index] += value
+		momentPartials[index] += value
 				* ((*it).a101 * l0B + (*it).a111 * l1B);
 		// Compute the contribution from the second part of the reacting pair
 		index = secondReactant->getId() - 1;
 		partials[index] += value * ((*it).a000 * l0A + (*it).a100 * l1A);
-		momentumPartials[index] += value
+		momentPartials[index] += value
 				* ((*it).a001 * l0A + (*it).a101 * l1A);
-		index = secondReactant->getXeMomentumId() - 1;
+		index = secondReactant->getMomentId() - 1;
 		partials[index] += value * ((*it).a010 * l0A + (*it).a110 * l1A);
-		momentumPartials[index] += value
+		momentPartials[index] += value
 				* ((*it).a011 * l0A + (*it).a111 * l1A);
 	}
 
@@ -744,24 +744,24 @@ void NESuperCluster::getCombinationPartialDerivatives(
 		// Get the two reacting clusters
 		cluster = (*it).first;
 		double l0A = cluster->getConcentration();
-		double l1A = cluster->getMomentum();
+		double l1A = cluster->getMoment();
 
 		// Compute the contribution from the combining cluster
 		value = *((*it).kConstant) / (double) nTot;
 		index = cluster->getId() - 1;
 		partials[index] -= value * ((*it).a000 * l0 + (*it).a100 * l1);
-		momentumPartials[index] -= value * ((*it).a001 * l0 + (*it).a101 * l1);
-		index = cluster->getXeMomentumId() - 1;
+		momentPartials[index] -= value * ((*it).a001 * l0 + (*it).a101 * l1);
+		index = cluster->getMomentId() - 1;
 		partials[index] -= value * ((*it).a010 * l0 + (*it).a110 * l1);
-		momentumPartials[index] -= value * ((*it).a011 * l0 + (*it).a111 * l1);
+		momentPartials[index] -= value * ((*it).a011 * l0 + (*it).a111 * l1);
 		// Compute the contribution from this cluster
 		index = id - 1;
 		partials[index] -= value * ((*it).a000 * l0A + (*it).a010 * l1A);
-		momentumPartials[index] -= value
+		momentPartials[index] -= value
 				* ((*it).a001 * l0A + (*it).a011 * l1A);
-		index = xeMomId - 1;
+		index = momId[0] - 1;
 		partials[index] -= value * ((*it).a100 * l0A + (*it).a110 * l1A);
-		momentumPartials[index] -= value
+		momentPartials[index] -= value
 				* ((*it).a101 * l0A + (*it).a111 * l1A);
 	}
 
@@ -792,10 +792,10 @@ void NESuperCluster::getDissociationPartialDerivatives(
 		value = *((*it).kConstant) / (double) nTot;
 		index = cluster->getId() - 1;
 		partials[index] += value * ((*it).a00);
-		momentumPartials[index] += value * ((*it).a01);
-		index = cluster->getXeMomentumId() - 1;
+		momentPartials[index] += value * ((*it).a01);
+		index = cluster->getMomentId() - 1;
 		partials[index] += value * ((*it).a10);
-		momentumPartials[index] += value * ((*it).a11);
+		momentPartials[index] += value * ((*it).a11);
 	}
 
 	return;
@@ -820,10 +820,10 @@ void NESuperCluster::getEmissionPartialDerivatives(
 		value = *((*it).kConstant) / (double) nTot;
 		index = id - 1;
 		partials[index] -= value * ((*it).a00);
-		momentumPartials[index] -= value * ((*it).a01);
-		index = xeMomId - 1;
+		momentPartials[index] -= value * ((*it).a01);
+		index = momId[0] - 1;
 		partials[index] -= value * ((*it).a10);
-		momentumPartials[index] -= value * ((*it).a11);
+		momentPartials[index] -= value * ((*it).a11);
 	}
 
 	return;
@@ -834,7 +834,7 @@ void NESuperCluster::getMomentPartialDerivatives(
 	// Loop on the size of the vector
 	for (int i = 0; i < partials.size(); i++) {
 		// Set to the values that were already computed
-		partials[i] = momentumPartials[i];
+		partials[i] = momentPartials[i];
 	}
 
 	return;

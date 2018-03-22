@@ -574,9 +574,9 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 				auto const& superCluster =
 						static_cast<PSISuperCluster&>(*(currMapItem.second));
 				// Loop on its boundaries
-				for (auto const& i : superCluster.getHeBounds()) {
-					for (auto const& j : superCluster.getVBounds()) {
-						if (!superCluster.isIn(i, j))
+				for (auto const& i : superCluster.getBounds(0)) {
+					for (auto const& j : superCluster.getBounds(3)) {
+						if (!superCluster.isIn(i, 0, 0, j))
 							continue;
 						heConcLocal[i] += superCluster.getConcentration(
 								superCluster.getDistance(i, 0),
@@ -1352,8 +1352,8 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 							auto const& superCluster =
 									static_cast<PSISuperCluster&>(*(superMapItem.second));
 							// Get its boundaries
-							auto const& heBounds = superCluster.getHeBounds();
-							auto const& vBounds = superCluster.getVBounds();
+							auto const& heBounds = superCluster.getBounds(0);
+							auto const& vBounds = superCluster.getBounds(3);
 							// Is it the right one?
 							if (heBounds.contains(j) and vBounds.contains(i)) {
 								conc = superCluster.getConcentration(
@@ -2203,7 +2203,7 @@ PetscErrorCode postBurstingEventFunction1D(TS ts, PetscInt nevents,
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
 
 			// Loop on the V boundaries
-			for (auto const& j : cluster.getVBounds()) {
+			for (auto const& j : cluster.getBounds(3)) {
 				// Get the total concentration at this v
 				double conc = cluster.getIntegratedVConcentration(j);
 				// Get the corresponding V cluster and its Id
@@ -2216,9 +2216,9 @@ PetscErrorCode postBurstingEventFunction1D(TS ts, PetscInt nevents,
 			// Reset the super cluster concentration
 			int id = cluster.getId() - 1;
 			gridPointSolution[id] = 0.0;
-			id = cluster.getHeMomentumId() - 1;
+			id = cluster.getMomentId(0) - 1;
 			gridPointSolution[id] = 0.0;
-			id = cluster.getVMomentumId() - 1;
+			id = cluster.getMomentId(3) - 1;
 			gridPointSolution[id] = 0.0;
 		}
 	}

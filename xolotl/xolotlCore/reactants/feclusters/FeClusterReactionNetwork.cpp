@@ -209,8 +209,8 @@ void FeClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
-			auto newNumHe = comp[toCompIdx(Species::He)] + firstSize;
-			auto newNumV = comp[toCompIdx(Species::V)];
+			int newNumHe = comp[toCompIdx(Species::He)] + firstSize;
+			int newNumV = comp[toCompIdx(Species::V)];
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
@@ -228,8 +228,9 @@ void FeClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| heVReactant.getDiffusionFactor() > 0.0)) {
 
+				int a[4] = {newNumHe, newNumV, 0, 0};
 				defineProductionReaction(heReactant, heVReactant, *product,
-						newNumHe, newNumV);
+						a);
 			}
 		}
 
@@ -265,8 +266,8 @@ void FeClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
-			auto newNumHe = comp[toCompIdx(Species::He)];
-			auto newNumV = comp[toCompIdx(Species::V)] + firstSize;
+			int newNumHe = comp[toCompIdx(Species::He)];
+			int newNumV = comp[toCompIdx(Species::V)] + firstSize;
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
@@ -283,8 +284,9 @@ void FeClusterReactionNetwork::createReactionConnectivity() {
 					&& (vReactant.getDiffusionFactor() > 0.0
 							|| heVReactant.getDiffusionFactor() > 0.0)) {
 
+				int a[4] = {newNumHe, newNumV, 0, 0};
 				defineProductionReaction(vReactant, heVReactant, *product,
-						newNumHe, newNumV);
+						a);
 			}
 		}
 
@@ -317,8 +319,8 @@ void FeClusterReactionNetwork::createReactionConnectivity() {
 			// Get its size
 			secondSize = vReactant.getSize();
 			// Create the composition of the potential product
-			auto newNumHe = firstSize;
-			auto newNumV = secondSize;
+			int newNumHe = firstSize;
+			int newNumV = secondSize;
 
 			// Get the product
 			IReactant::Composition newComp;
@@ -335,8 +337,9 @@ void FeClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| vReactant.getDiffusionFactor() > 0.0)) {
 
+				int a[4] = {newNumHe, newNumV, 0, 0};
 				defineProductionReaction(heReactant, vReactant, *product,
-						newNumHe, newNumV);
+						a);
 			}
 		}
 	}
@@ -495,12 +498,12 @@ bool FeClusterReactionNetwork::canDissociate(
 }
 
 void FeClusterReactionNetwork::checkForDissociation(IReactant& emittingReactant,
-		ProductionReaction& reaction, int a, int b, int c, int d) {
+		ProductionReaction& reaction, int a[4], int b[4]) {
 
 	// Check if reaction can dissociate.
 	if (canDissociate(reaction)) {
 		// The dissociation can occur, so create a reaction for it.
-		defineDissociationReaction(reaction, emittingReactant, a, b, c, d);
+		defineDissociationReaction(reaction, emittingReactant, a, b);
 	}
 
 	return;
@@ -559,8 +562,8 @@ void FeClusterReactionNetwork::reinitializeNetwork() {
 			[&id](IReactant& currReactant) {
 				id++;
 				currReactant.setId(id);
-				currReactant.setHeMomentumId(id);
-				currReactant.setVMomentumId(id);
+				currReactant.setMomentId(id, 0);
+				currReactant.setMomentId(id, 1);
 			});
 
 	// Get all the super clusters and loop on them
@@ -569,9 +572,9 @@ void FeClusterReactionNetwork::reinitializeNetwork() {
 		auto& currCluster = static_cast<FeSuperCluster&>(*(currMapItem.second));
 
 		id++;
-		currCluster.setHeMomentumId(id);
+		currCluster.setMomentId(id, 0);
 		id++;
-		currCluster.setVMomentumId(id);
+		currCluster.setMomentId(id, 1);
 
 		// Update the HeV size
 		auto const& heBounds = currCluster.getHeBounds();
@@ -614,9 +617,9 @@ void FeClusterReactionNetwork::updateConcentrationsFromArray(
 
 				auto& cluster = static_cast<FeSuperCluster&>(*(currMapItem.second));
 
-				cluster.setZerothMomentum(concentrations[cluster.getId() - 1]);
-				cluster.setHeMomentum(concentrations[cluster.getHeMomentumId() - 1]);
-				cluster.setVMomentum(concentrations[cluster.getVMomentumId() - 1]);
+				cluster.setZerothMoment(concentrations[cluster.getId() - 1]);
+				cluster.setHeMoment(concentrations[cluster.getMomentId(0) - 1]);
+				cluster.setVMoment(concentrations[cluster.getMomentId(1) - 1]);
 			});
 
 	return;
@@ -683,9 +686,9 @@ void FeClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		// Get the reactant and its connectivity
 		auto const& connectivity = reactant.getConnectivity();
 		auto connectivityLength = connectivity.size();
-		// Get the helium momentum id so that the connectivity can be lined up in
+		// Get the helium moment id so that the connectivity can be lined up in
 		// the proper column
-		auto id = reactant.getHeMomentumId() - 1;
+		auto id = reactant.getMomentId(0) - 1;
 
 		// Create the vector that will be inserted into the dFill map
 		std::vector<int> columnIds;
@@ -703,9 +706,9 @@ void FeClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		// Update the map
 		dFillMap[id] = columnIds;
 
-		// Get the vacancy momentum id so that the connectivity can be lined up in
+		// Get the vacancy moment id so that the connectivity can be lined up in
 		// the proper column
-		id = reactant.getVMomentumId() - 1;
+		id = reactant.getMomentId(1) - 1;
 
 		// Add it to the diagonal fill block
 		for (int j = 0; j < connectivityLength; j++) {
@@ -899,16 +902,16 @@ void FeClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 		auto const& superCluster =
 				static_cast<FeSuperCluster&>(*(currMapItem.second));
 
-		// Compute the helium momentum flux
-		auto flux = superCluster.getHeMomentumFlux();
+		// Compute the helium moment flux
+		auto flux = superCluster.getHeMomentFlux();
 		// Update the concentration of the cluster
-		auto reactantIndex = superCluster.getHeMomentumId() - 1;
+		auto reactantIndex = superCluster.getMomentId(0) - 1;
 		updatedConcOffset[reactantIndex] += flux;
 
-		// Compute the vacancy momentum flux
-		flux = superCluster.getVMomentumFlux();
+		// Compute the vacancy moment flux
+		flux = superCluster.getVMomentFlux();
 		// Update the concentration of the cluster
-		reactantIndex = superCluster.getVMomentumId() - 1;
+		reactantIndex = superCluster.getMomentId(1) - 1;
 		updatedConcOffset[reactantIndex] += flux;
 	}
 
@@ -1003,8 +1006,8 @@ void FeClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		}
 
 		{
-			// Get the helium momentum index
-			auto reactantIndex = reactant.getHeMomentumId() - 1;
+			// Get the helium moment index
+			auto reactantIndex = reactant.getMomentId(0) - 1;
 
 			// Get the partial derivatives
 			reactant.getHeMomentPartialDerivatives(clusterPartials);
@@ -1029,8 +1032,8 @@ void FeClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		}
 
 		{
-			// Get the vacancy momentum index
-			auto reactantIndex = reactant.getVMomentumId() - 1;
+			// Get the vacancy moment index
+			auto reactantIndex = reactant.getMomentId(1) - 1;
 
 			// Get the partial derivatives
 			reactant.getVMomentPartialDerivatives(clusterPartials);

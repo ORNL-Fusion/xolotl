@@ -54,11 +54,17 @@ public:
 		double termThree = pow((3.0 / EightPi) * aCubed, (1.0 / 3.0));
 		reactionRadius = termOne + termTwo - termThree;
 
-		// Bounds on He and V
-		heBounds = IntegerRange<IReactant::SizeType>(
+		// Bounds on He, D, T, and V
+		bounds[0] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(0),
 				static_cast<IReactant::SizeType>(1));
-		vBounds = IntegerRange<IReactant::SizeType>(
+		bounds[1] = IntegerRange<IReactant::SizeType>(
+				static_cast<IReactant::SizeType>(0),
+				static_cast<IReactant::SizeType>(1));
+		bounds[2] = IntegerRange<IReactant::SizeType>(
+				static_cast<IReactant::SizeType>(0),
+				static_cast<IReactant::SizeType>(1));
+		bounds[3] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(0),
 				static_cast<IReactant::SizeType>(1));
 

@@ -87,8 +87,8 @@ private:
 	IReactant * getSuperFromComp(IReactant::SizeType nHe,
 			IReactant::SizeType nV);
 
-	ProductionReaction& defineReactionBase(IReactant& r1, IReactant& r2, int a =
-			0, int b = 0, bool secondProduct = false)
+	ProductionReaction& defineReactionBase(IReactant& r1, IReactant& r2, int a[4] =
+			{}, bool secondProduct = false)
 			__attribute__((always_inline)) {
 
 		// Add a production reaction to our network.
@@ -101,8 +101,8 @@ private:
 		if (secondProduct)
 			return prref;
 
-		r1.participateIn(prref, a, b);
-		r2.participateIn(prref, a, b);
+		r1.participateIn(prref, a);
+		r2.participateIn(prref, a);
 
 		return prref;
 	}
@@ -126,20 +126,20 @@ private:
 	}
 
 	void defineProductionReaction(IReactant& r1, IReactant& super,
-			IReactant& product, int a = 0, int b = 0, int c = 0, int d = 0,
+			IReactant& product, int a[4] = {}, int b[4] = {},
 			bool secondProduct = false) {
 
 		// Define the basic production reaction.
-		auto& reaction = defineReactionBase(r1, super, c, d, secondProduct);
+		auto& reaction = defineReactionBase(r1, super, b, secondProduct);
 
 		// Tell product it is a product of this reaction.
-		product.resultFrom(reaction, a, b, c, d);
+		product.resultFrom(reaction, a, b);
 
 		if (secondProduct)
 			return;
 
 		// Check if reverse reaction is allowed.
-		checkForDissociation(product, reaction, a, b, c, d);
+		checkForDissociation(product, reaction, a, b);
 	}
 
 	/**
@@ -157,7 +157,7 @@ private:
 
 	// TODO should we default a, b, c, d to 0?
 	void defineDissociationReaction(ProductionReaction& forwardReaction,
-			IReactant& emitting, int a, int b, int c, int d) {
+			IReactant& emitting, int a[4] = {}, int b[4] = {}) {
 
 		std::unique_ptr<DissociationReaction> dissociationReaction(
 				new DissociationReaction(emitting, forwardReaction.first,
@@ -165,9 +165,9 @@ private:
 		auto& drref = add(std::move(dissociationReaction));
 
 		// Tell the reactants that they are in this reaction
-		forwardReaction.first.participateIn(drref, a, b, c, d);
-		forwardReaction.second.participateIn(drref, a, b, c, d);
-		emitting.emitFrom(drref, a, b, c, d);
+		forwardReaction.first.participateIn(drref, a, b);
+		forwardReaction.second.participateIn(drref, a, b);
+		emitting.emitFrom(drref, a);
 	}
 
 	/**
@@ -202,13 +202,10 @@ private:
 	 * @param reaction The reaction we want to reverse
 	 * @param a The helium number for the emitting superCluster
 	 * @param b The vacancy number for the emitting superCluster
-	 * @param c The helium number for the emitted superCluster
-	 * @param d The vacancy number for the emitted superCluster
 	 *
 	 */
 	void checkForDissociation(IReactant& emittingReactant,
-			ProductionReaction& reaction, int a = 0, int b = 0, int c = 0,
-			int d = 0);
+			ProductionReaction& reaction, int a[4] = {}, int b[4] = {});
 
 public:
 
@@ -244,7 +241,7 @@ public:
 	 *
 	 * @param temp The new temperature
 	 */
-	virtual void setTemperature(double temp) override;
+	void setTemperature(double temp) override;
 
 	/**
 	 * This operation reinitializes the network.

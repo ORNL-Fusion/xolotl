@@ -83,13 +83,19 @@ public:
 						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
 								/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
 
-		// Bounds on He and V
-		heBounds = IntegerRange<IReactant::SizeType>(
+		// Bounds on He, D, T, and V
+		bounds[0] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(numHe),
-				static_cast<IReactant::SizeType>(numHe + 1));
-		vBounds = IntegerRange<IReactant::SizeType>(
+				static_cast<IReactant::SizeType>(numHe+1));
+		bounds[1] = IntegerRange<IReactant::SizeType>(
+				static_cast<IReactant::SizeType>(numD),
+				static_cast<IReactant::SizeType>(numD+1));
+		bounds[2] = IntegerRange<IReactant::SizeType>(
+				static_cast<IReactant::SizeType>(numT),
+				static_cast<IReactant::SizeType>(numT+1));
+		bounds[3] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(numV),
-				static_cast<IReactant::SizeType>(numV + 1));
+				static_cast<IReactant::SizeType>(numV+1));
 
 		return;
 	}

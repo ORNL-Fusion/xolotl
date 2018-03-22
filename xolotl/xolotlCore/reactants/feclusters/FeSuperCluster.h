@@ -73,10 +73,10 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A, the second of B
+		 * The first number represent the moment of A, the second of B
 		 * in A + B -> C
 		 *
-		 * The third number represent which momentum we are computing.
+		 * The third number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
@@ -210,10 +210,10 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A
+		 * The first number represent the moment of A
 		 * in A -> B + C
 		 *
-		 * The second number represent which momentum we are computing.
+		 * The second number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
@@ -267,13 +267,13 @@ private:
 	//! The width in the vacancy direction.
 	int sectionVWidth;
 
-	//! The 0th order momentum (mean).
+	//! The 0th order moment (mean).
 	double l0;
 
-	//! The first order momentum in the helium direction.
+	//! The first order moment in the helium direction.
 	double l1He;
 
-	//! The first order momentum in the vacancy direction.
+	//! The first order moment in the vacancy direction.
 	double l1V;
 
 	//! The dispersion in the group in the helium direction.
@@ -295,14 +295,14 @@ private:
 	DissociationPairMap effEmissionList;
 
 	/**
-	 * The helium momentum flux.
+	 * The helium moment flux.
 	 */
-	double heMomentumFlux;
+	double heMomentFlux;
 
 	/**
-	 * The vacancy momentum flux.
+	 * The vacancy moment flux.
 	 */
-	double vMomentumFlux;
+	double vMomentFlux;
 
 	/**
 	 * Output coefficients for a given reaction to the given output stream.
@@ -355,11 +355,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void resultFrom(ProductionReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -386,10 +384,8 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, int a = 0, int b = 0)
-			override;
+	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -420,11 +416,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void participateIn(DissociationReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override;
+	void participateIn(DissociationReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -454,12 +448,8 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -500,27 +490,29 @@ public:
 	 *
 	 * @param distHe The helium distance in the group
 	 * @param distV The vacancy distance in the group
+	 * @param distC Not used here
+	 * @param distD Not used here
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distHe, double distV) const override {
+	double getConcentration(double distHe = 0.0, double distV = 0.0, double distC = 0.0, double distD = 0.0) const override {
 		return l0 + (distHe * l1He) + (distV * l1V);
 	}
 
 	/**
-	 * This operation returns the first helium momentum.
+	 * This operation returns the first helium moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	double getHeMomentum() const override {
+	double getHeMoment() const override {
 		return l1He;
 	}
 
 	/**
-	 * This operation returns the first vacancy momentum.
+	 * This operation returns the first vacancy moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	double getVMomentum() const override {
+	double getVMoment() const override {
 		return l1V;
 	}
 
@@ -568,29 +560,29 @@ public:
 	}
 
 	/**
-	 * This operation sets the zeroth order momentum.
+	 * This operation sets the zeroth order moment.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setZerothMomentum(double mom) {
+	void setZerothMoment(double mom) {
 		l0 = mom;
 	}
 
 	/**
-	 * This operation sets the first order momentum in the helium direction.
+	 * This operation sets the first order moment in the helium direction.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setHeMomentum(double mom) {
+	void setHeMoment(double mom) {
 		l1He = mom;
 	}
 
 	/**
-	 * This operation sets the first order momentum in the vacancy direction.
+	 * This operation sets the first order moment in the vacancy direction.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setVMomentum(double mom) {
+	void setVMoment(double mom) {
 		l1V = mom;
 	}
 
@@ -610,8 +602,8 @@ public:
 	double getTotalFlux() override {
 
 		// Initialize the fluxes
-		heMomentumFlux = 0.0;
-		vMomentumFlux = 0.0;
+		heMomentFlux = 0.0;
+		vMomentFlux = 0.0;
 
 		// Compute the fluxes.
 		return getProductionFlux() - getCombinationFlux()
@@ -621,7 +613,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to dissociation of other clusters
 	 */
@@ -630,7 +622,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to its dissociation
 	 */
@@ -639,7 +631,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster being produced
 	 */
@@ -648,28 +640,28 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster combining with other clusters
 	 */
 	double getCombinationFlux();
 
 	/**
-	 * This operation returns the total change for its helium momentum.
+	 * This operation returns the total change for its helium moment.
 	 *
-	 * @return The momentum flux
+	 * @return The moment flux
 	 */
-	double getHeMomentumFlux() const {
-		return heMomentumFlux;
+	double getHeMomentFlux() const {
+		return heMomentFlux;
 	}
 
 	/**
-	 * This operation returns the total change for its vacancy momentum.
+	 * This operation returns the total change for its vacancy moment.
 	 *
-	 * @return The momentum flux
+	 * @return The moment flux
 	 */
-	double getVMomentumFlux() const {
-		return vMomentumFlux;
+	double getVMomentFlux() const {
+		return vMomentFlux;
 	}
 
 	/**
@@ -732,7 +724,7 @@ public:
 			override;
 
 	/**
-	 * This operation computes the partial derivatives for the helium momentum.
+	 * This operation computes the partial derivatives for the helium moment.
 	 *
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted.
@@ -740,7 +732,7 @@ public:
 	void getHeMomentPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
-	 * This operation computes the partial derivatives for the vacancy momentum.
+	 * This operation computes the partial derivatives for the vacancy moment.
 	 *
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted.

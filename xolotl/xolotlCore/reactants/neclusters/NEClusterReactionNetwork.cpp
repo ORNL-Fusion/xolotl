@@ -126,7 +126,7 @@ void NEClusterReactionNetwork::reinitializeNetwork() {
 			[&id](IReactant& currReactant) {
 				id++;
 				currReactant.setId(id);
-				currReactant.setXeMomentumId(id);
+				currReactant.setMomentId(id);
 
 				currReactant.optimizeReactions();
 			});
@@ -136,7 +136,7 @@ void NEClusterReactionNetwork::reinitializeNetwork() {
 
 		auto& currCluster = static_cast<NESuperCluster&>(*(currMapItem.second));
 		id++;
-		currCluster.setXeMomentumId(id);
+		currCluster.setMomentId(id);
 
 		currCluster.optimizeReactions();
 	}
@@ -169,8 +169,8 @@ void NEClusterReactionNetwork::updateConcentrationsFromArray(
 	std::for_each(superTypeMap.begin(), superTypeMap.end(),
 			[&concentrations](const ReactantMap::value_type& currMapItem) {
 				auto& cluster = static_cast<NESuperCluster&>(*(currMapItem.second));
-				cluster.setZerothMomentum(concentrations[cluster.getId() - 1]);
-				cluster.setMomentum(concentrations[cluster.getXeMomentumId() - 1]);
+				cluster.setZerothMoment(concentrations[cluster.getId() - 1]);
+				cluster.setMoment(concentrations[cluster.getMomentId() - 1]);
 			});
 
 	return;
@@ -235,9 +235,9 @@ void NEClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 
 		auto const& connectivity = reactant.getConnectivity();
 		auto connectivityLength = connectivity.size();
-		// Get the xenon momentum id so that the connectivity can be lined up in
+		// Get the xenon moment id so that the connectivity can be lined up in
 		// the proper column
-		auto id = reactant.getXeMomentumId() - 1;
+		auto id = reactant.getMomentId() - 1;
 
 		// Create the vector that will be inserted into the dFill map
 		std::vector<int> columnIds;
@@ -315,10 +315,10 @@ void NEClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 
 		auto& superCluster = static_cast<NESuperCluster&>(*(currMapItem.second));
 
-		// Compute the xenon momentum flux
-		auto flux = superCluster.getMomentumFlux();
+		// Compute the xenon moment flux
+		auto flux = superCluster.getMomentFlux();
 		// Update the concentration of the cluster
-		auto reactantIndex = superCluster.getXeMomentumId() - 1;
+		auto reactantIndex = superCluster.getMomentId() - 1;
 		updatedConcOffset[reactantIndex] += flux;
 	}
 
@@ -393,8 +393,8 @@ void NEClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 			clusterPartials[pdColIdsVector[j]] = 0.0;
 		}
 
-		// Get the helium momentum index
-		reactantIndex = reactant.getXeMomentumId() - 1;
+		// Get the helium moment index
+		reactantIndex = reactant.getMomentId() - 1;
 
 		// Get the partial derivatives
 		reactant.getMomentPartialDerivatives(clusterPartials);

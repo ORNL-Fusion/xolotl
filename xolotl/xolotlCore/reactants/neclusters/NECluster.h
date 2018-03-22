@@ -217,8 +217,8 @@ public:
 	 *
 	 * \see Reactant.h
 	 */
-	void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void resultFrom(ProductionReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -252,8 +252,7 @@ public:
 	 *
 	 * \see Reactant.h
 	 */
-	void participateIn(ProductionReaction& reaction, int a = 0, int b = 0)
-			override;
+	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -290,8 +289,8 @@ public:
 	 *
 	 * \see Reactant.h
 	 */
-	void participateIn(DissociationReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override;
+	void participateIn(DissociationReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -328,8 +327,7 @@ public:
 	 *
 	 * \see Reactant.h
 	 */
-	void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -383,11 +381,11 @@ public:
 	virtual std::vector<int> getDissociationConnectivity() const;
 
 	/**
-	 * This operation returns the first xenon momentum.
+	 * This operation returns the first xenon moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	virtual double getMomentum() const;
+	virtual double getMoment() const;
 
 	/**
 	 * This operation returns the total flux of this cluster in the

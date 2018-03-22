@@ -1237,7 +1237,7 @@ PetscErrorCode postBurstingEventFunction3D(TS ts, PetscInt nevents,
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
 
 			// Loop on the V boundaries
-			for (auto const& j : cluster.getVBounds()) {
+			for (auto const& j : cluster.getBounds(3)) {
 				// Get the total concentration at this v
 				double conc = cluster.getIntegratedVConcentration(j);
 				// Get the corresponding V cluster and its Id
@@ -1250,9 +1250,9 @@ PetscErrorCode postBurstingEventFunction3D(TS ts, PetscInt nevents,
 			// Reset the super cluster concentration
 			int id = cluster.getId() - 1;
 			gridPointSolution[id] = 0.0;
-			id = cluster.getHeMomentumId() - 1;
+			id = cluster.getMomentId(0) - 1;
 			gridPointSolution[id] = 0.0;
-			id = cluster.getVMomentumId() - 1;
+			id = cluster.getMomentId(3) - 1;
 			gridPointSolution[id] = 0.0;
 		}
 	}

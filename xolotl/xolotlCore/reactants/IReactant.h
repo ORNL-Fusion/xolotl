@@ -76,11 +76,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) = 0;
+	virtual void resultFrom(ProductionReaction& reaction, int a[4] = { },
+			int b[4] = { }) = 0;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -108,10 +106,9 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(ProductionReaction& reaction, int a = 0, int b =
-			0) = 0;
+	virtual void participateIn(ProductionReaction& reaction,
+			int a[4] = { }) = 0;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -142,11 +139,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(DissociationReaction& reaction, int a = 0,
-			int b = 0, int c = 0, int d = 0) = 0;
+	virtual void participateIn(DissociationReaction& reaction, int a[4] = { },
+			int b[4] = { }) = 0;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -176,12 +171,8 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) = 0;
+	virtual void emitFrom(DissociationReaction& reaction, int a[4] = { }) = 0;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -212,10 +203,12 @@ public:
 	 *
 	 * @param distA The first distance for super clusters
 	 * @param distB The second distance for super clusters
+	 * @param distC The third distance for super clusters
+	 * @param distD The fourth distance for super clusters
 	 * @return The concentration of this reactant
 	 */
-	virtual double getConcentration(double distA = 0.0,
-			double distB = 0.0) const = 0;
+	virtual double getConcentration(double distA = 0.0, double distB = 0.0,
+			double distC = 0.0, double distD = 0.0) const = 0;
 
 	/**
 	 * This operation sets the concentration of the reactant to the
@@ -348,46 +341,20 @@ public:
 	virtual int getId() const = 0;
 
 	/**
-	 * This operation sets the id of the xenon momentum of the reactant.
+	 * This operation sets the id of the first moment of the reactant at the axis of interest.
 	 *
-	 * @param nId The new id for this momentum
+	 * @param nId The new id for this moment
+	 * @param axis The direction
 	 */
-	virtual void setXeMomentumId(int nId) = 0;
+	virtual void setMomentId(int nId, int axis = 0) = 0;
 
 	/**
-	 * This operation returns the id for this reactant xenon momentum.
+	 * This operation returns the id for the first moment.
 	 *
+	 * @param axis The direction
 	 * @return The id
 	 */
-	virtual int getXeMomentumId() const = 0;
-
-	/**
-	 * This operation sets the id of the helium momentum of the reactant.
-	 *
-	 * @param nId The new id for this momentum
-	 */
-	virtual void setHeMomentumId(int nId) = 0;
-
-	/**
-	 * This operation returns the id for this reactant helium momentum.
-	 *
-	 * @return The id
-	 */
-	virtual int getHeMomentumId() const = 0;
-
-	/**
-	 * This operation sets the id of the vacancy momentum of the reactant.
-	 *
-	 * @param nId The new id for this momentum
-	 */
-	virtual void setVMomentumId(int nId) = 0;
-
-	/**
-	 * This operation returns the id for this reactant vacancy momentum.
-	 *
-	 * @return The id
-	 */
-	virtual int getVMomentumId() const = 0;
+	virtual int getMomentId(int axis = 0) const = 0;
 
 	/**
 	 * This operation sets the temperature at which the reactant currently
@@ -526,7 +493,7 @@ std::ostream& operator<<(std::ostream& os, const IReactant::Composition& comp);
 std::ostream& operator<<(std::ostream& os, const IReactant& r);
 
 }
- // end namespace xolotlCore
+// end namespace xolotlCore
 
 // For an IReactant::Composition to be used as a key in an std::unordered_map,
 // we need to define a hash function for it.
@@ -537,11 +504,11 @@ namespace std {
 template<>
 struct hash<xolotlCore::IReactant::Composition> {
 
-size_t operator()(const xolotlCore::IReactant::Composition& comp) const {
-	// This may not be a good hash function - needs to be evaluated
-	// for the compositions Xolotl uses.
-	return std::accumulate(comp.begin(), comp.end(), 0);
-}
+	size_t operator()(const xolotlCore::IReactant::Composition& comp) const {
+		// This may not be a good hash function - needs to be evaluated
+		// for the compositions Xolotl uses.
+		return std::accumulate(comp.begin(), comp.end(), 0);
+	}
 };
 }
 

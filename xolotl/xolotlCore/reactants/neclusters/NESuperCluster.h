@@ -126,10 +126,10 @@ private:
 	//! The width in the xenon direction.
 	int sectionWidth;
 
-	//! The 0th order momentum (mean).
+	//! The 0th order moment (mean).
 	double l0;
 
-	//! The first order momentum in the xenon direction.
+	//! The first order moment in the xenon direction.
 	double l1;
 
 	//! The dispersion in the group in the xenon direction.
@@ -160,9 +160,9 @@ private:
 	std::forward_list<SuperClusterDissociationPair> effEmissionList;
 
 	/**
-	 * The xenon momentum flux.
+	 * The xenon moment flux.
 	 */
-	double momentumFlux;
+	double momentFlux;
 
 public:
 
@@ -230,16 +230,18 @@ public:
 	 *
 	 * @param distXe The xenon distance in the group
 	 * @param distB Unused here
+	 * @param distC Unused here
+	 * @param distD Unused here
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distXe, double distB = 0.0) const override;
+	double getConcentration(double distXe, double distB = 0.0, double distC = 0.0, double distD = 0.0) const override;
 
 	/**
-	 * This operation returns the first xenon momentum.
+	 * This operation returns the first xenon moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	double getMomentum() const override;
+	double getMoment() const override;
 
 	/**
 	 * This operation returns the current total concentration of clusters in the group.
@@ -269,20 +271,20 @@ public:
 	void computeDispersion();
 
 	/**
-	 * This operation sets the zeroth order momentum.
+	 * This operation sets the zeroth order moment.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setZerothMomentum(double mom) {
+	void setZerothMoment(double mom) {
 		l0 = mom;
 	}
 
 	/**
-	 * This operation sets the first order momentum in the xenon direction.
+	 * This operation sets the first order moment in the xenon direction.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setMomentum(double mom) {
+	void setMoment(double mom) {
 		l1 = mom;
 	}
 
@@ -304,7 +306,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to dissociation of other clusters
 	 */
@@ -313,7 +315,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to its dissociation
 	 */
@@ -322,7 +324,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster being produced
 	 */
@@ -331,19 +333,19 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster combining with other clusters
 	 */
 	double getCombinationFlux();
 
 	/**
-	 * This operation returns the total change for its momentum.
+	 * This operation returns the total change for its moment.
 	 *
-	 * @return The momentum flux
+	 * @return The moment flux
 	 */
-	double getMomentumFlux() {
-		return momentumFlux;
+	double getMomentFlux() {
+		return momentFlux;
 	}
 
 	/**
@@ -406,7 +408,7 @@ public:
 			override;
 
 	/**
-	 * This operation computes the partial derivatives for the xenon momentum.
+	 * This operation computes the partial derivatives for the xenon moment.
 	 *
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted.

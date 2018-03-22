@@ -82,16 +82,18 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A, the second of B
+		 * The first number represent the moment of A, the second of B
 		 * in A + B -> C
 		 *
-		 * The third number represent which momentum we are computing.
+		 * The third number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
-		 * 2 -> V
+		 * 2 -> D
+		 * 3 -> T
+		 * 4 -> V
 		 */
-		double coefs[3][3][3] = {};
+		double coefs[5][5][5] = { };
 
 		//! The constructor
 		ProductionCoefficientBase() {
@@ -187,16 +189,18 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A
+		 * The first number represent the moment of A
 		 * in A -> B + C
 		 *
-		 * The second number represent which momentum we are computing.
+		 * The second number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
-		 * 2 -> V
+		 * 2 -> D
+		 * 3 -> T
+		 * 4 -> V
 		 */
-		double coefs[3][3] = {};
+		double coefs[5][5] = { };
 
 		//! The constructor
 		SuperClusterDissociationPair(Reaction& _reaction, PSICluster& _first,
@@ -220,35 +224,22 @@ protected:
 private:
 
 	//! The mean number of atoms in this cluster.
-	double numAtom[2] = {};
+	double numAtom[4] = { };
 
 	//! The total number of clusters gathered in this super cluster.
 	int nTot;
 
 	//! The width of the group.
-	int sectionWidth[2] = {};
+	int sectionWidth[4] = { };
 
 	//! The dispersion in the group.
-	double dispersion[2] = {};
+	double dispersion[4] = { };
 
-	/**
-	 * Bounds on number of He atoms represented by this cluster.
-	 */
-	IntegerRange<IReactant::SizeType> heBounds;
-
-	/**
-	 * Bounds on number of vacancies represented by this cluster.
-	 */
-	IntegerRange<IReactant::SizeType> vBounds;
-
-	//! The 0th order momentum (mean).
+	//! The 0th order moment (mean).
 	double l0;
 
-	//! The first order momentum in the helium direction.
-	double l1He;
-
-	//! The first order momentum in the vacancy direction.
-	double l1V;
+	//! The first order moment.
+	double l1[4] = { };
 
 	/**
 	 * The list of clusters gathered in this.
@@ -268,14 +259,9 @@ private:
 	DissociationPairMap effEmissionList;
 
 	/**
-	 * The helium momentum flux.
+	 * The first moment flux.
 	 */
-	double heMomentumFlux;
-
-	/**
-	 * The vacancy momentum flux.
-	 */
-	double vMomentumFlux;
+	double momentFlux[4] = { };
 
 	/**
 	 * Output coefficients for a given reaction to the given output stream.
@@ -328,11 +314,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void resultFrom(ProductionReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -350,10 +334,8 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, int a = 0, int b = 0)
-			override;
+	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -373,11 +355,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void participateIn(DissociationReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override;
+	void participateIn(DissociationReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -396,12 +376,8 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -432,29 +408,25 @@ public:
 	 * This operation returns the current concentration.
 	 *
 	 * @param distHe The helium distance in the group
+	 * @param distD The deuterium distance in the group
+	 * @param distT The tritium distance in the group
 	 * @param distV The vacancy distance in the group
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distHe, double distV) const override {
-		return l0 + (distHe * l1He) + (distV * l1V);
+	double getConcentration(double distHe = 0.0, double distD = 0.0,
+			double distT = 0.0, double distV = 0.0) const override {
+		return l0 + (distHe * l1[0]) + (distD * l1[1]) + (distT * l1[2])
+				+ (distV * l1[3]);
 	}
 
 	/**
-	 * This operation returns the first helium momentum.
+	 * This operation returns the first moment of the given axis.
 	 *
-	 * @return The momentum
+	 * @param axis The axis we are intersted in
+	 * @return The moment
 	 */
-	double getHeMomentum() const override {
-		return l1He;
-	}
-
-	/**
-	 * This operation returns the first vacancy momentum.
-	 *
-	 * @return The momentum
-	 */
-	double getVMomentum() const override {
-		return l1V;
+	double getMoment(int axis) const override {
+		return l1[axis];
 	}
 
 	/**
@@ -489,6 +461,11 @@ public:
 	/**
 	 * This operation returns the distance to the mean.
 	 *
+	 * 0 -> He
+	 * 1 -> D
+	 * 2 -> T
+	 * 3 -> V
+	 *
 	 * @param atom The number of atoms
 	 * @param axis The axis we are intersted in
 	 * @return The distance to the mean number of atoms in the group
@@ -510,30 +487,22 @@ public:
 	}
 
 	/**
-	 * This operation sets the zeroth order momentum.
+	 * This operation sets the zeroth order moment.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setZerothMomentum(double mom) {
+	void setZerothMoment(double mom) {
 		l0 = mom;
 	}
 
 	/**
-	 * This operation sets the first order momentum in the helium direction.
+	 * This operation sets the first order moment.
 	 *
-	 * @param mom The momentum
+	 * @param axis The axis we are intersted in
+	 * @param mom The moment
 	 */
-	void setHeMomentum(double mom) {
-		l1He = mom;
-	}
-
-	/**
-	 * This operation sets the first order momentum in the vacancy direction.
-	 *
-	 * @param mom The momentum
-	 */
-	void setVMomentum(double mom) {
-		l1V = mom;
+	void setMoment(double mom, int axis) {
+		l1[axis] = mom;
 	}
 
 	/**
@@ -551,8 +520,8 @@ public:
 	 */
 	double getTotalFlux() override {
 		// Initialize the fluxes
-		heMomentumFlux = 0.0;
-		vMomentumFlux = 0.0;
+		momentFlux[0] = 0.0, momentFlux[1] = 0.0, momentFlux[2] = 0.0, momentFlux[3] =
+				0.0;
 
 		// Compute the fluxes.
 		return getProductionFlux() - getCombinationFlux()
@@ -562,7 +531,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to dissociation of other clusters
 	 */
@@ -571,7 +540,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to its dissociation
 	 */
@@ -580,7 +549,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster being produced
 	 */
@@ -589,28 +558,20 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster combining with other clusters
 	 */
 	double getCombinationFlux();
 
 	/**
-	 * This operation returns the total change for its helium momentum.
+	 * This operation returns the total change for its first moment.
 	 *
-	 * @return The momentum flux
+	 * @param axis The direction we are interested in
+	 * @return The moment flux
 	 */
-	double getHeMomentumFlux() const {
-		return heMomentumFlux;
-	}
-
-	/**
-	 * This operation returns the total change for its vacancy momentum.
-	 *
-	 * @return The momentum flux
-	 */
-	double getVMomentumFlux() const {
-		return vMomentumFlux;
+	double getMomentFlux(int axis) const {
+		return momentFlux[axis];
 	}
 
 	/**
@@ -673,20 +634,14 @@ public:
 			override;
 
 	/**
-	 * This operation computes the partial derivatives for the helium momentum.
+	 * This operation computes the partial derivatives for the helium moment.
 	 *
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted.
+	 * @ param axis The direction
 	 */
-	void getHeMomentPartialDerivatives(std::vector<double> & partials) const;
-
-	/**
-	 * This operation computes the partial derivatives for the vacancy momentum.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted.
-	 */
-	void getVMomentPartialDerivatives(std::vector<double> & partials) const;
+	void getMomentPartialDerivatives(std::vector<double> & partials, int axis =
+			0) const;
 
 	/**
 	 * Returns the average number of vacancies.
@@ -694,7 +649,7 @@ public:
 	 * @return The average number of vacancies
 	 */
 	double getNumV() const {
-		return numAtom[1];
+		return numAtom[3];
 	}
 
 	/**
@@ -707,18 +662,13 @@ public:
 	}
 
 	/**
-	 * Access bounds on number of He atoms represented by this cluster.
+	 * Access bounds on number of given atoms represented by this cluster.
+	 *
+	 * @ param axis The direction
 	 */
 	// TODO do we want to make this generic by taking a type parameter?
-	const IntegerRange<IReactant::SizeType>& getHeBounds() const {
-		return heBounds;
-	}
-
-	/**
-	 * Access bounds on number of vacancies represented by this cluster.
-	 */
-	const IntegerRange<IReactant::SizeType>& getVBounds() const {
-		return vBounds;
+	const IntegerRange<IReactant::SizeType>& getBounds(int axis) const {
+		return bounds[axis];
 	}
 
 	/**
@@ -728,13 +678,18 @@ public:
 	 * @param _nV number of V of interest
 	 * @return True if _nHe and _nV is contained in our super cluster.
 	 */
-	bool isIn(IReactant::SizeType _nHe, IReactant::SizeType _nV) const {
-		if (!heBounds.contains(_nHe))
+	bool isIn(IReactant::SizeType nHe, IReactant::SizeType nD,
+			IReactant::SizeType nT, IReactant::SizeType nV) const {
+		if (!bounds[0].contains(nHe))
 			return false;
-		if (!vBounds.contains(_nV))
+		if (!bounds[1].contains(nD))
+			return false;
+		if (!bounds[2].contains(nT))
+			return false;
+		if (!bounds[3].contains(nV))
 			return false;
 
-		return (heVList.find(std::make_pair(_nHe, _nV)) != heVList.end());
+		return (heVList.find(std::make_pair(nHe, nV)) != heVList.end());
 	}
 
 	/**
@@ -747,5 +702,6 @@ public:
 };
 //end class PSISuperCluster
 
-} /* end namespace xolotlCore */
+}
+/* end namespace xolotlCore */
 #endif

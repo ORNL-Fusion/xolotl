@@ -87,19 +87,9 @@ protected:
 	int id;
 
 	/**
-	 * An integer identification number for the xenon momentum.
+	 * An integer identification number for the first moments.
 	 */
-	int xeMomId;
-
-	/**
-	 * An integer identification number for the helium momentum.
-	 */
-	int heMomId;
-
-	/**
-	 * An integer identification number for the vacancy momentum.
-	 */
-	int vMomId;
+	int momId[4] = { };
 
 	/**
 	 * The temperature at which the cluster currently exists. The diffusion
@@ -214,11 +204,10 @@ public:
 	 */
 	Reactant(Reactant &other) :
 			concentration(other.concentration), name(other.name), type(
-					other.type), id(other.id), xeMomId(other.xeMomId), heMomId(
-					other.heMomId), vMomId(other.vMomId), temperature(
-					other.temperature), network(other.network), handlerRegistry(
-					other.handlerRegistry), size(other.size), composition(
-					other.composition), formationEnergy(other.formationEnergy), diffusionFactor(
+					other.type), id(other.id), temperature(other.temperature), network(
+					other.network), handlerRegistry(other.handlerRegistry), size(
+					other.size), composition(other.composition), formationEnergy(
+					other.formationEnergy), diffusionFactor(
 					other.diffusionFactor), diffusionCoefficient(
 					other.diffusionCoefficient), migrationEnergy(
 					other.migrationEnergy), reactionRadius(
@@ -241,11 +230,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override {
+	virtual void resultFrom(ProductionReaction& reaction, int a[4] = { },
+			int b[4] = { }) override {
 		return;
 	}
 
@@ -284,10 +271,9 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(ProductionReaction& reaction, int a = 0, int b =
-			0) override {
+	virtual void participateIn(ProductionReaction& reaction, int a[4] = { })
+			override {
 		return;
 	}
 
@@ -329,11 +315,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(DissociationReaction& reaction, int a = 0,
-			int b = 0, int c = 0, int d = 0) override {
+	virtual void participateIn(DissociationReaction& reaction, int a[4] = { },
+			int b[4] = { }) override {
 		return;
 	}
 
@@ -374,12 +358,8 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override {
+	virtual void emitFrom(DissociationReaction& reaction, int a[4] = { }) override {
 		return;
 	}
 
@@ -424,10 +404,12 @@ public:
 	 *
 	 * @param distA The first distance for super clusters
 	 * @param distB The second distance for super clusters
+	 * @param distC The third distance for super clusters
+	 * @param distD The fourth distance for super clusters
 	 * @return The concentration of this reactant
 	 */
-	virtual double getConcentration(double distA = 0.0,
-			double distB = 0.0) const override {
+	virtual double getConcentration(double distA = 0.0, double distB = 0.0,
+			double distC = 0.0, double distD = 0.0) const override {
 		return concentration;
 	}
 
@@ -590,57 +572,23 @@ public:
 	}
 
 	/**
-	 * This operation sets the id of the xenon momentum of the reactant.
+	 * This operation sets the id of the first moment of the reactant.
 	 *
-	 * @param nId The new id for this momentum
+	 * @param nId The new id for this moment
+	 * @param axis The direction
 	 */
-	void setXeMomentumId(int nId) override {
-		xeMomId = nId;
+	void setMomentId(int nId, int axis = 0) override {
+		momId[axis] = nId;
 	}
 
 	/**
-	 * This operation returns the id for this reactant xenon momentum.
+	 * This operation returns the id for this reactant first moment.
 	 *
+	 * @param axis The direction
 	 * @return The id
 	 */
-	int getXeMomentumId() const override {
-		return xeMomId;
-	}
-
-	/**
-	 * This operation sets the id of the helium momentum of the reactant.
-	 *
-	 * @param nId The new id for this momentum
-	 */
-	void setHeMomentumId(int nId) override {
-		heMomId = nId;
-	}
-
-	/**
-	 * This operation returns the id for this reactant helium momentum.
-	 *
-	 * @return The id
-	 */
-	int getHeMomentumId() const override {
-		return heMomId;
-	}
-
-	/**
-	 * This operation sets the id of the vacancy momentum of the reactant.
-	 *
-	 * @param nId The new id for this momentum
-	 */
-	void setVMomentumId(int nId) override {
-		vMomId = nId;
-	}
-
-	/**
-	 * This operation returns the id for this reactant vacancy momentum.
-	 *
-	 * @return The id
-	 */
-	int getVMomentumId() const override {
-		return vMomId;
+	int getMomentId(int axis = 0) const override {
+		return momId[axis];
 	}
 
 	/**

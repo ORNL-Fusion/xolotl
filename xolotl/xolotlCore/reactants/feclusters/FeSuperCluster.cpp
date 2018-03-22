@@ -7,12 +7,12 @@
 using namespace xolotlCore;
 
 /**
- * The helium momentum partials.
+ * The helium moment partials.
  */
 std::vector<double> feHeMomentPartials;
 
 /**
- * The vacancy momentum partials.
+ * The vacancy moment partials.
  */
 std::vector<double> feVMomentPartials;
 
@@ -21,7 +21,7 @@ FeSuperCluster::FeSuperCluster(double _numHe, double _numV, int _nTot,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		FeCluster(_network, registry, buildName(_numHe, _numV)), numHe(_numHe), numV(
 				_numV), nTot(_nTot), l0(0.0), l1He(0.0), l1V(0.0), dispersionHe(
-				0.0), dispersionV(0.0), heMomentumFlux(0.0), vMomentumFlux(0.0) {
+				0.0), dispersionV(0.0), heMomentFlux(0.0), vMomentFlux(0.0) {
 	// Set the cluster size as the sum of
 	// the number of Helium and Vacancies
 	size = (int) (numHe + numV);
@@ -47,8 +47,8 @@ FeSuperCluster::FeSuperCluster(double _numHe, double _numV, int _nTot,
 	return;
 }
 
-void FeSuperCluster::resultFrom(ProductionReaction& reaction, int a, int b,
-		int c, int d) {
+void FeSuperCluster::resultFrom(ProductionReaction& reaction, int a[4],
+		int b[4]) {
 
 	// Check if we already know about the reaction.
 	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
@@ -79,16 +79,16 @@ void FeSuperCluster::resultFrom(ProductionReaction& reaction, int a, int b,
 			secondVDistance = 0.0;
 	if (prodPair.first.getType() == ReactantType::FeSuper) {
 		auto const& super = static_cast<FeCluster const&>(prodPair.first);
-		firstHeDistance = super.getHeDistance(c);
-		firstVDistance = super.getVDistance(d);
+		firstHeDistance = super.getHeDistance(b[0]);
+		firstVDistance = super.getVDistance(b[1]);
 	}
 	if (prodPair.second.getType() == ReactantType::FeSuper) {
 		auto const& super = static_cast<FeCluster const&>(prodPair.second);
-		secondHeDistance = super.getHeDistance(c);
-		secondVDistance = super.getVDistance(d);
+		secondHeDistance = super.getHeDistance(b[0]);
+		secondVDistance = super.getVDistance(b[1]);
 	}
-	double heFactor = (double) (a - numHe) / dispersionHe;
-	double vFactor = (double) (b - numV) / dispersionV;
+	double heFactor = (double) (a[0] - numHe) / dispersionHe;
+	double vFactor = (double) (a[1] - numV) / dispersionV;
 	// First is A, second is B, in A + B -> this
 	prodPair.a000 += 1.0;
 	prodPair.a001 += heFactor;
@@ -153,10 +153,10 @@ void FeSuperCluster::resultFrom(ProductionReaction& reaction,
 			[this,&prodPair](const PendingProductionReactionInfo& currPRI) {
 
 				// Use names corresponding to those in single version.
-				int a = currPRI.numHe;
-				int b = currPRI.numV;
-				int c = currPRI.i;
-				int d = currPRI.j;
+				int a = currPRI.a[0];
+				int b = currPRI.a[1];
+				int c = currPRI.b[0];
+				int d = currPRI.b[1];
 
 				double firstHeDistance = 0.0, firstVDistance = 0.0, secondHeDistance = 0.0,
 				secondVDistance = 0.0;
@@ -330,7 +330,7 @@ void FeSuperCluster::resultFrom(ProductionReaction& reaction,
 	return;
 }
 
-void FeSuperCluster::participateIn(ProductionReaction& reaction, int a, int b) {
+void FeSuperCluster::participateIn(ProductionReaction& reaction, int a[4]) {
 
 	setReactionConnectivity(id);
 	// Look for the other cluster
@@ -357,10 +357,10 @@ void FeSuperCluster::participateIn(ProductionReaction& reaction, int a, int b) {
 	auto& combCluster = it->second;
 
 	// Update the coefficients
-	double heDistance = getHeDistance(a);
-	double heFactor = (double) (a - numHe) / dispersionHe;
-	double vDistance = getVDistance(b);
-	double vFactor = (double) (b - numV) / dispersionV;
+	double heDistance = getHeDistance(a[0]);
+	double heFactor = (double) (a[0] - numHe) / dispersionHe;
+	double vDistance = getVDistance(a[1]);
+	double vFactor = (double) (a[1] - numV) / dispersionV;
 	// This is A, itBis is B, in A + B -> C
 	combCluster.a000 += 1.0;
 	combCluster.a001 += heFactor;
@@ -407,8 +407,8 @@ void FeSuperCluster::participateIn(ProductionReaction& reaction,
 			[this,&combCluster,&otherCluster](const PendingProductionReactionInfo& currPRInfo) {
 
 				// Use names corresponding to the single-item version.
-				int a = currPRInfo.i;
-				int b = currPRInfo.j;
+				int a = currPRInfo.b[0];
+				int b = currPRInfo.b[1];
 
 				double heDistance = getHeDistance(a);
 				double heFactor = (double) (a - numHe) / dispersionHe;
@@ -532,8 +532,8 @@ void FeSuperCluster::participateIn(ProductionReaction& reaction,
 	return;
 }
 
-void FeSuperCluster::participateIn(DissociationReaction& reaction, int a, int b,
-		int c, int d) {
+void FeSuperCluster::participateIn(DissociationReaction& reaction, int a[4],
+		int b[4]) {
 
 	// Determine which is the other cluster.
 	auto& emittedCluster = static_cast<FeCluster&>(
@@ -564,11 +564,11 @@ void FeSuperCluster::participateIn(DissociationReaction& reaction, int a, int b,
 	double firstHeDistance = 0.0, firstVDistance = 0.0;
 	if (reaction.dissociating.getType() == ReactantType::FeSuper) {
 		auto const& super = static_cast<FeCluster const&>(reaction.dissociating);
-		firstHeDistance = super.getHeDistance(a);
-		firstVDistance = super.getVDistance(b);
+		firstHeDistance = super.getHeDistance(a[0]);
+		firstVDistance = super.getVDistance(a[1]);
 	}
-	double heFactor = (double) (c - numHe) / dispersionHe;
-	double vFactor = (double) (d - numV) / dispersionV;
+	double heFactor = (double) (b[0] - numHe) / dispersionHe;
+	double vFactor = (double) (b[1] - numV) / dispersionV;
 
 	// A is the dissociating cluster
 	dissPair.a00 += 1.0;
@@ -617,10 +617,10 @@ void FeSuperCluster::participateIn(DissociationReaction& reaction,
 			[this,&dissPair,&reaction](const PendingProductionReactionInfo& currPRI) {
 
 				// Use names corresponding to the single-item version.
-				int a = currPRI.numHe;
-				int b = currPRI.numV;
-				int c = currPRI.i;
-				int d = currPRI.j;
+				int a = currPRI.a[0];
+				int b = currPRI.a[1];
+				int c = currPRI.b[0];
+				int d = currPRI.b[1];
 
 				double firstHeDistance = 0.0, firstVDistance = 0.0;
 				if (reaction.dissociating.getType() == ReactantType::FeSuper) {
@@ -759,8 +759,7 @@ void FeSuperCluster::participateIn(DissociationReaction& reaction,
 	return;
 }
 
-void FeSuperCluster::emitFrom(DissociationReaction& reaction, int a, int b,
-		int c, int d) {
+void FeSuperCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 
 	// Check if we already know about the reaction.
 	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
@@ -785,10 +784,10 @@ void FeSuperCluster::emitFrom(DissociationReaction& reaction, int a, int b,
 	auto& dissPair = it->second;
 
 	// Update the coeeficients
-	double heDistance = getHeDistance(a);
-	double heFactor = (double) (a - numHe) / dispersionHe;
-	double vDistance = getVDistance(b);
-	double vFactor = (double) (b - numV) / dispersionV;
+	double heDistance = getHeDistance(a[0]);
+	double heFactor = (double) (a[0] - numHe) / dispersionHe;
+	double vDistance = getVDistance(a[1]);
+	double vFactor = (double) (a[1] - numV) / dispersionV;
 	// A is the dissociating cluster
 	dissPair.a00 += 1.0;
 	dissPair.a01 += heFactor;
@@ -833,8 +832,8 @@ void FeSuperCluster::emitFrom(DissociationReaction& reaction,
 			[this,&dissPair](const PendingProductionReactionInfo& currPRI) {
 
 				// Use same names as used in single version.
-				int a = currPRI.numHe;
-				int b = currPRI.numV;
+				int a = currPRI.a[0];
+				int b = currPRI.a[1];
 
 				double heDistance = getHeDistance(a);
 				double heFactor = (double) (a - numHe) / dispersionHe;
@@ -1070,10 +1069,10 @@ void FeSuperCluster::resetConnectivities() {
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(id);
 	setDissociationConnectivity(id);
-	setReactionConnectivity(heMomId);
-	setDissociationConnectivity(heMomId);
-	setReactionConnectivity(vMomId);
-	setDissociationConnectivity(vMomId);
+	setReactionConnectivity(momId[0]);
+	setDissociationConnectivity(momId[0]);
+	setReactionConnectivity(momId[1]);
+	setDissociationConnectivity(momId[1]);
 
 	// Visit all the reacting pairs
 	std::for_each(effReactingList.begin(), effReactingList.end(),
@@ -1081,11 +1080,11 @@ void FeSuperCluster::resetConnectivities() {
 				// The cluster is connecting to both clusters in the pair
 				auto const& currPair = currMapItem.second;
 				setReactionConnectivity(currPair.first.getId());
-				setReactionConnectivity(currPair.first.getHeMomentumId());
-				setReactionConnectivity(currPair.first.getVMomentumId());
+				setReactionConnectivity(currPair.first.getMomentId(0));
+				setReactionConnectivity(currPair.first.getMomentId(1));
 				setReactionConnectivity(currPair.second.getId());
-				setReactionConnectivity(currPair.second.getHeMomentumId());
-				setReactionConnectivity(currPair.second.getVMomentumId());
+				setReactionConnectivity(currPair.second.getMomentId(0));
+				setReactionConnectivity(currPair.second.getMomentId(1));
 			});
 
 	// Visit all the combining pairs
@@ -1094,8 +1093,8 @@ void FeSuperCluster::resetConnectivities() {
 				// The cluster is connecting to the combining cluster
 				auto const& currComb = currMapItem.second;
 				setReactionConnectivity(currComb.first.getId());
-				setReactionConnectivity(currComb.first.getHeMomentumId());
-				setReactionConnectivity(currComb.first.getVMomentumId());
+				setReactionConnectivity(currComb.first.getMomentId(0));
+				setReactionConnectivity(currComb.first.getMomentId(1));
 			});
 
 	// Loop over all the dissociating pairs
@@ -1104,14 +1103,14 @@ void FeSuperCluster::resetConnectivities() {
 				// The cluster is connecting to the combining cluster
 				auto const& currPair = currMapItem.second;
 				setDissociationConnectivity(currPair.first.getId());
-				setDissociationConnectivity(currPair.first.getHeMomentumId());
-				setDissociationConnectivity(currPair.first.getVMomentumId());
+				setDissociationConnectivity(currPair.first.getMomentId(0));
+				setDissociationConnectivity(currPair.first.getMomentId(1));
 			});
 
 	// Don't loop on the effective emission pairs because
 	// this cluster is not connected to them
 
-	// Initialize the partial vector for the momentum
+	// Initialize the partial vector for the moment
 	int dof = network.getDOF();
 	feHeMomentPartials.resize(dof, 0.0);
 	feVMomentPartials.resize(dof, 0.0);
@@ -1125,24 +1124,24 @@ double FeSuperCluster::getDissociationFlux() {
 
 	// Sum over all the dissociating pairs
 	// TODO consider using std::accumulate.  May also want to change side
-	// effect of updating member variables heMomentumFlux and
-	// vMomentumFlux here.
+	// effect of updating member variables heMomentFlux and
+	// vMomentFlux here.
 	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
 			[this,&flux](DissociationPairMap::value_type const& currMapItem) {
 				auto const& currPair = currMapItem.second;
 
 				// Get the dissociating clusters
 				auto const& dissociatingCluster = currPair.first;
-				double l0A = dissociatingCluster.getConcentration(0.0, 0.0);
-				double lHeA = dissociatingCluster.getHeMomentum();
-				double lVA = dissociatingCluster.getVMomentum();
+				double l0A = dissociatingCluster.getConcentration();
+				double lHeA = dissociatingCluster.getHeMoment();
+				double lVA = dissociatingCluster.getVMoment();
 				// Update the flux
 				auto value = currPair.kConstant / (double) nTot;
 				flux += value * (currPair.a00 * l0A + currPair.a10 * lHeA + currPair.a20 * lVA);
-				// Compute the momentum fluxes
-				heMomentumFlux += value
+				// Compute the moment fluxes
+				heMomentFlux += value
 				* (currPair.a01 * l0A + currPair.a11 * lHeA + currPair.a21 * lVA);
-				vMomentumFlux += value
+				vMomentFlux += value
 				* (currPair.a02 * l0A + currPair.a12 * lHeA + currPair.a22 * lVA);
 			});
 
@@ -1156,8 +1155,8 @@ double FeSuperCluster::getEmissionFlux() {
 
 	// Loop over all the emission pairs
 	// TODO consider using std::accumulate.  May also want to change side
-	// effect of updating member variables heMomentumFlux and
-	// vMomentumFlux here.
+	// effect of updating member variables heMomentFlux and
+	// vMomentFlux here.
 	std::for_each(effEmissionList.begin(), effEmissionList.end(),
 			[this,&flux](DissociationPairMap::value_type const& currMapItem) {
 				auto const& currPair = currMapItem.second;
@@ -1165,10 +1164,10 @@ double FeSuperCluster::getEmissionFlux() {
 				// Update the flux
 				auto value = currPair.kConstant / (double) nTot;
 				flux += value * (currPair.a00 * l0 + currPair.a10 * l1He + currPair.a20 * l1V);
-				// Compute the momentum fluxes
-				heMomentumFlux -= value
+				// Compute the moment fluxes
+				heMomentFlux -= value
 				* (currPair.a01 * l0 + currPair.a11 * l1He + currPair.a21 * l1V);
-				vMomentumFlux -= value
+				vMomentFlux -= value
 				* (currPair.a02 * l0 + currPair.a12 * l1He + currPair.a22 * l1V);
 			});
 
@@ -1181,8 +1180,8 @@ double FeSuperCluster::getProductionFlux() {
 
 	// Sum over all the reacting pairs
 	// TODO consider using std::accumulate.  May also want to change side
-	// effect of updating member variables heMomentumFlux and
-	// vMomentumFlux here.
+	// effect of updating member variables heMomentFlux and
+	// vMomentFlux here.
 	std::for_each(effReactingList.begin(), effReactingList.end(),
 			[this,&flux](ProductionPairMap::value_type const& currMapItem) {
 
@@ -1191,12 +1190,12 @@ double FeSuperCluster::getProductionFlux() {
 				// Get the two reacting clusters
 				auto const& firstReactant = currPair.first;
 				auto const& secondReactant = currPair.second;
-				double l0A = firstReactant.getConcentration(0.0, 0.0);
-				double l0B = secondReactant.getConcentration(0.0, 0.0);
-				double lHeA = firstReactant.getHeMomentum();
-				double lHeB = secondReactant.getHeMomentum();
-				double lVA = firstReactant.getVMomentum();
-				double lVB = secondReactant.getVMomentum();
+				double l0A = firstReactant.getConcentration();
+				double l0B = secondReactant.getConcentration();
+				double lHeA = firstReactant.getHeMoment();
+				double lHeB = secondReactant.getHeMoment();
+				double lVA = firstReactant.getVMoment();
+				double lVB = secondReactant.getVMoment();
 				// Update the flux
 				auto value = currPair.kConstant / (double) nTot;
 				flux += value
@@ -1205,14 +1204,14 @@ double FeSuperCluster::getProductionFlux() {
 						+ currPair.a110 * lHeA * lHeB + currPair.a120 * lHeA * lVB
 						+ currPair.a200 * lVA * l0B + currPair.a210 * lVA * lHeB
 						+ currPair.a220 * lVA * lVB);
-				// Compute the momentum fluxes
-				heMomentumFlux += value
+				// Compute the moment fluxes
+				heMomentFlux += value
 				* (currPair.a001 * l0A * l0B + currPair.a011 * l0A * lHeB
 						+ currPair.a021 * l0A * lVB + currPair.a101 * lHeA * l0B
 						+ currPair.a111 * lHeA * lHeB + currPair.a121 * lHeA * lVB
 						+ currPair.a201 * lVA * l0B + currPair.a211 * lVA * lHeB
 						+ currPair.a221 * lVA * lVB);
-				vMomentumFlux += value
+				vMomentFlux += value
 				* (currPair.a002 * l0A * l0B + currPair.a012 * l0A * lHeB
 						+ currPair.a022 * l0A * lVB + currPair.a102 * lHeA * l0B
 						+ currPair.a112 * lHeA * lHeB + currPair.a122 * lHeA * lVB
@@ -1230,16 +1229,16 @@ double FeSuperCluster::getCombinationFlux() {
 
 	// Sum over all the combining clusters
 	// TODO consider using std::accumulate.  May also want to change side
-	// effect of updating member variables heMomentumFlux and
-	// vMomentumFlux here.
+	// effect of updating member variables heMomentFlux and
+	// vMomentFlux here.
 	std::for_each(effCombiningList.begin(), effCombiningList.end(),
 			[this,&flux](CombiningClusterMap::value_type const& currMapItem) {
 				// Get the combining cluster
 				auto const& currComb = currMapItem.second;
 				auto const& combiningCluster = currComb.first;
-				double l0B = combiningCluster.getConcentration(0.0, 0.0);
-				double lHeB = combiningCluster.getHeMomentum();
-				double lVB = combiningCluster.getVMomentum();
+				double l0B = combiningCluster.getConcentration();
+				double lHeB = combiningCluster.getHeMoment();
+				double lVB = combiningCluster.getVMoment();
 				// Update the flux
 				auto value = currComb.kConstant / (double) nTot;
 				flux += value
@@ -1248,14 +1247,14 @@ double FeSuperCluster::getCombinationFlux() {
 						+ currComb.a110 * lHeB * l1He + currComb.a210 * lHeB * l1V
 						+ currComb.a020 * lVB * l0 + currComb.a120 * lVB * l1He
 						+ currComb.a220 * lVB * l1V);
-				// Compute the momentum fluxes
-				heMomentumFlux -= value
+				// Compute the moment fluxes
+				heMomentFlux -= value
 				* (currComb.a001 * l0B * l0 + currComb.a101 * l0B * l1He
 						+ currComb.a201 * l0B * l1V + currComb.a011 * lHeB * l0
 						+ currComb.a111 * lHeB * l1He + currComb.a211 * lHeB * l1V
 						+ currComb.a021 * lVB * l0 + currComb.a121 * lVB * l1He
 						+ currComb.a221 * lVB * l1V);
-				vMomentumFlux -= value
+				vMomentFlux -= value
 				* (currComb.a002 * l0B * l0 + currComb.a102 * l0B * l1He
 						+ currComb.a202 * l0B * l1V + currComb.a012 * lHeB * l0
 						+ currComb.a112 * lHeB * l1He + currComb.a212 * lHeB * l1V
@@ -1268,7 +1267,7 @@ double FeSuperCluster::getCombinationFlux() {
 
 void FeSuperCluster::getPartialDerivatives(
 		std::vector<double> & partials) const {
-	// Reinitialize the momentum partial derivatives vector
+	// Reinitialize the moment partial derivatives vector
 	std::fill(feHeMomentPartials.begin(), feHeMomentPartials.end(), 0.0);
 	std::fill(feVMomentPartials.begin(), feVMomentPartials.end(), 0.0);
 
@@ -1301,12 +1300,12 @@ void FeSuperCluster::getProductionPartialDerivatives(
 				// Get the two reacting clusters
 				auto const& firstReactant = currPair.first;
 				auto const& secondReactant = currPair.second;
-				double l0A = firstReactant.getConcentration(0.0, 0.0);
-				double l0B = secondReactant.getConcentration(0.0, 0.0);
-				double lHeA = firstReactant.getHeMomentum();
-				double lHeB = secondReactant.getHeMomentum();
-				double lVA = firstReactant.getVMomentum();
-				double lVB = secondReactant.getVMomentum();
+				double l0A = firstReactant.getConcentration();
+				double l0B = secondReactant.getConcentration();
+				double lHeA = firstReactant.getHeMoment();
+				double lHeB = secondReactant.getHeMoment();
+				double lVA = firstReactant.getVMoment();
+				double lVB = secondReactant.getVMoment();
 
 				// Compute the contribution from the first part of the reacting pair
 				auto value = currPair.kConstant / (double) nTot;
@@ -1317,14 +1316,14 @@ void FeSuperCluster::getProductionPartialDerivatives(
 				* (currPair.a001 * l0B + currPair.a011 * lHeB + currPair.a021 * lVB);
 				feVMomentPartials[index] += value
 				* (currPair.a002 * l0B + currPair.a012 * lHeB + currPair.a022 * lVB);
-				index = firstReactant.getHeMomentumId() - 1;
+				index = firstReactant.getMomentId(0) - 1;
 				partials[index] += value
 				* (currPair.a100 * l0B + currPair.a110 * lHeB + currPair.a120 * lVB);
 				feHeMomentPartials[index] += value
 				* (currPair.a101 * l0B + currPair.a111 * lHeB + currPair.a121 * lVB);
 				feVMomentPartials[index] += value
 				* (currPair.a102 * l0B + currPair.a112 * lHeB + currPair.a122 * lVB);
-				index = firstReactant.getVMomentumId() - 1;
+				index = firstReactant.getMomentId(1) - 1;
 				partials[index] += value
 				* (currPair.a200 * l0B + currPair.a210 * lHeB + currPair.a220 * lVB);
 				feHeMomentPartials[index] += value
@@ -1339,14 +1338,14 @@ void FeSuperCluster::getProductionPartialDerivatives(
 				* (currPair.a001 * l0A + currPair.a101 * lHeA + currPair.a201 * lVA);
 				feVMomentPartials[index] += value
 				* (currPair.a002 * l0A + currPair.a102 * lHeA + currPair.a202 * lVA);
-				index = secondReactant.getHeMomentumId() - 1;
+				index = secondReactant.getMomentId(0) - 1;
 				partials[index] += value
 				* (currPair.a010 * l0A + currPair.a110 * lHeA + currPair.a210 * lVA);
 				feHeMomentPartials[index] += value
 				* (currPair.a011 * l0A + currPair.a111 * lHeA + currPair.a211 * lVA);
 				feVMomentPartials[index] += value
 				* (currPair.a012 * l0A + currPair.a112 * lHeA + currPair.a212 * lVA);
-				index = secondReactant.getVMomentumId() - 1;
+				index = secondReactant.getMomentId(1) - 1;
 				partials[index] += value
 				* (currPair.a020 * l0A + currPair.a120 * lHeA + currPair.a220 * lVA);
 				feHeMomentPartials[index] += value
@@ -1375,9 +1374,9 @@ void FeSuperCluster::getCombinationPartialDerivatives(
 				// Get the combining clusters
 				auto const& currComb = currMapItem.second;
 				auto const& cluster = currComb.first;
-				double l0B = cluster.getConcentration(0.0, 0.0);
-				double lHeB = cluster.getHeMomentum();
-				double lVB = cluster.getVMomentum();
+				double l0B = cluster.getConcentration();
+				double lHeB = cluster.getHeMoment();
+				double lVB = cluster.getVMoment();
 
 				// Compute the contribution from the combining cluster
 				auto value = currComb.kConstant / (double) nTot;
@@ -1388,14 +1387,14 @@ void FeSuperCluster::getCombinationPartialDerivatives(
 				* (currComb.a001 * l0 + currComb.a101 * l1He + currComb.a201 * l1V);
 				feVMomentPartials[index] -= value
 				* (currComb.a002 * l0 + currComb.a102 * l1He + currComb.a202 * l1V);
-				index = cluster.getHeMomentumId() - 1;
+				index = cluster.getMomentId(0) - 1;
 				partials[index] -= value
 				* (currComb.a010 * l0 + currComb.a110 * l1He + currComb.a210 * l1V);
 				feHeMomentPartials[index] -= value
 				* (currComb.a011 * l0 + currComb.a111 * l1He + currComb.a211 * l1V);
 				feVMomentPartials[index] -= value
 				* (currComb.a012 * l0 + currComb.a112 * l1He + currComb.a212 * l1V);
-				index = cluster.getVMomentumId() - 1;
+				index = cluster.getMomentId(1) - 1;
 				partials[index] -= value
 				* (currComb.a020 * l0 + currComb.a120 * l1He + currComb.a220 * l1V);
 				feHeMomentPartials[index] -= value
@@ -1410,14 +1409,14 @@ void FeSuperCluster::getCombinationPartialDerivatives(
 				* (currComb.a001 * l0B + currComb.a011 * lHeB + currComb.a021 * lVB);
 				feVMomentPartials[index] -= value
 				* (currComb.a002 * l0B + currComb.a012 * lHeB + currComb.a022 * lVB);
-				index = heMomId - 1;
+				index = momId[0] - 1;
 				partials[index] -= value
 				* (currComb.a100 * l0B + currComb.a110 * lHeB + currComb.a120 * lVB);
 				feHeMomentPartials[index] -= value
 				* (currComb.a101 * l0B + currComb.a111 * lHeB + currComb.a121 * lVB);
 				feVMomentPartials[index] -= value
 				* (currComb.a102 * l0B + currComb.a112 * lHeB + currComb.a122 * lVB);
-				index = vMomId - 1;
+				index = momId[1] - 1;
 				partials[index] -= value
 				* (currComb.a200 * l0B + currComb.a210 * lHeB + currComb.a220 * lVB);
 				feHeMomentPartials[index] -= value
@@ -1452,11 +1451,11 @@ void FeSuperCluster::getDissociationPartialDerivatives(
 				partials[index] += value * (currPair.a00);
 				feHeMomentPartials[index] += value * (currPair.a01);
 				feVMomentPartials[index] += value * (currPair.a02);
-				index = cluster.getHeMomentumId() - 1;
+				index = cluster.getMomentId(0) - 1;
 				partials[index] += value * (currPair.a10);
 				feHeMomentPartials[index] += value * (currPair.a11);
 				feVMomentPartials[index] += value * (currPair.a12);
-				index = cluster.getVMomentumId() - 1;
+				index = cluster.getMomentId(1) - 1;
 				partials[index] += value * (currPair.a20);
 				feHeMomentPartials[index] += value * (currPair.a21);
 				feVMomentPartials[index] += value * (currPair.a22);
@@ -1486,11 +1485,11 @@ void FeSuperCluster::getEmissionPartialDerivatives(
 				partials[index] -= value * (currPair.a00);
 				feHeMomentPartials[index] -= value * (currPair.a01);
 				feVMomentPartials[index] -= value * (currPair.a02);
-				index = heMomId - 1;
+				index = momId[0] - 1;
 				partials[index] -= value * (currPair.a10);
 				feHeMomentPartials[index] -= value * (currPair.a11);
 				feVMomentPartials[index] -= value * (currPair.a12);
-				index = vMomId - 1;
+				index = momId[1] - 1;
 				partials[index] -= value * (currPair.a20);
 				feHeMomentPartials[index] -= value * (currPair.a21);
 				feVMomentPartials[index] -= value * (currPair.a22);

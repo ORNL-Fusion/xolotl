@@ -61,14 +61,16 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A, the second of B
+		 * The first number represent the moment of A, the second of B
 		 * in A + B -> C
 		 *
 		 * 0 -> l0
 		 * 1 -> He
-		 * 2 -> V
+		 * 2 -> D
+		 * 3 -> T
+		 * 4 -> V
 		 */
-		double coefs[3][3] = {};
+		double coefs[5][5] = { };
 
 		//! The constructor
 		ClusterPair(Reaction& _reaction, PSICluster& _first,
@@ -109,14 +111,16 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A
+		 * The first number represent the moment of A
 		 * in A + this -> C
 		 *
 		 * 0 -> l0
 		 * 1 -> He
-		 * 2 -> V
+		 * 2 -> D
+		 * 3 -> T
+		 * 4 -> V
 		 */
-		double coefs[3] = {};
+		double coefs[5] = { };
 
 		//! The constructor
 		CombiningCluster(Reaction& _reaction, PSICluster& _comb) :
@@ -136,12 +140,10 @@ protected:
 	/**
 	 * Bounds on number of He atoms represented by this cluster.
 	 */
-	IntegerRange<IReactant::SizeType> heBounds;
-
-	/**
-	 * Bounds on number of vacancies represented by this cluster.
-	 */
-	IntegerRange<IReactant::SizeType> vBounds;
+	IntegerRange<IReactant::SizeType> bounds[4] = { IntegerRange<
+			IReactant::SizeType>(0, 0), IntegerRange<IReactant::SizeType>(0, 0),
+			IntegerRange<IReactant::SizeType>(0, 0), IntegerRange<
+					IReactant::SizeType>(0, 0) };
 
 	/**
 	 * This operation returns a set that contains only the entries of the
@@ -220,7 +222,7 @@ public:
 	PSICluster(IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry,
 			const std::string& _name = "PSICluster") :
-			Reactant(_network, registry, _name), heBounds(0, 0), vBounds(0, 0) {
+			Reactant(_network, registry, _name) {
 
 	}
 
@@ -228,7 +230,7 @@ public:
 	 * Copy constructor, deleted to prevent use.
 	 */
 	PSICluster(PSICluster &other) :
-			Reactant(other), heBounds(0, 0), vBounds(0, 0) {
+			Reactant(other) {
 	}
 
 	/**
@@ -249,11 +251,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void resultFrom(ProductionReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -271,10 +271,8 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, int a = 0, int b = 0)
-			override;
+	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -289,16 +287,14 @@ public:
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
-	 * Assumes the reaction is already inour network.
+	 * Assumes the reaction is already in our network.
 	 *
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void participateIn(DissociationReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override;
+	void participateIn(DissociationReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -317,12 +313,8 @@ public:
 	 *
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -355,20 +347,12 @@ public:
 	virtual std::vector<int> getDissociationConnectivity() const;
 
 	/**
-	 * This operation returns the first helium momentum.
+	 * This operation returns the first moment.
 	 *
-	 * @return The momentum
+	 * @param axis The axis we are intersted in
+	 * @return The moment
 	 */
-	virtual double getHeMomentum() const {
-		return 0.0;
-	}
-
-	/**
-	 * This operation returns the first vacancy momentum.
-	 *
-	 * @return The momentum
-	 */
-	virtual double getVMomentum() const {
+	virtual double getMoment(int axis) const {
 		return 0.0;
 	}
 

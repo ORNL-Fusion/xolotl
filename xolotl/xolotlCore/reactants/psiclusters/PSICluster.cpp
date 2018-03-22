@@ -7,8 +7,7 @@
 
 using namespace xolotlCore;
 
-void PSICluster::resultFrom(ProductionReaction& reaction, int a, int b, int c,
-		int d) {
+void PSICluster::resultFrom(ProductionReaction& reaction, int a[4], int b[4]) {
 
 	// Add a cluster pair for the given reaction.
 	reactingPairs.emplace_back(reaction,
@@ -21,20 +20,22 @@ void PSICluster::resultFrom(ProductionReaction& reaction, int a, int b, int c,
 	// TODO Any way to enforce this beyond splitting it into two functions?
 
 	// Update the coefficients
-	double firstDistance[3] = { 1.0, 0.0, 0.0 }, secondDistance[3] = { 1.0, 0.0,
-			0.0 };
+	double firstDistance[5] = { }, secondDistance[5] = { };
+	firstDistance[0] = 1.0, secondDistance[0] = 1.0;
 	if (newPair.first.getType() == ReactantType::PSISuper) {
 		auto const& super = static_cast<PSICluster const&>(newPair.first);
-		firstDistance[1] = super.getDistance(c, 0);
-		firstDistance[2] = super.getDistance(d, 1);
+		for (int i = 0; i < 4; i++) {
+			firstDistance[i + 1] = super.getDistance(b[i], i);
+		}
 	}
 	if (newPair.second.getType() == ReactantType::PSISuper) {
 		auto const& super = static_cast<PSICluster const&>(newPair.second);
-		secondDistance[1] = super.getDistance(c, 0);
-		secondDistance[2] = super.getDistance(d, 1);
+		for (int i = 0; i < 4; i++) {
+			secondDistance[i + 1] = super.getDistance(b[i], i);
+		}
 	}
-	for (int j = 0; j < 3; j++) {
-		for (int i = 0; i < 3; i++) {
+	for (int j = 0; j < 5; j++) {
+		for (int i = 0; i < 5; i++) {
 			newPair.coefs[i][j] += firstDistance[i] * secondDistance[j];
 		}
 	}
@@ -58,26 +59,22 @@ void PSICluster::resultFrom(ProductionReaction& reaction,
 	// Update the coefficients
 	std::for_each(prInfos.begin(), prInfos.end(),
 			[&newPair](const PendingProductionReactionInfo& currPRI) {
-
-				// Use names that correspond to single version.
-				int a = currPRI.numHe;
-				int b = currPRI.numV;
-				int c = currPRI.i;
-				int d = currPRI.j;
-
-				double firstDistance[3] = {1.0, 0.0, 0.0}, secondDistance[3] = {1.0, 0.0, 0.0};
+				double firstDistance[5] = {}, secondDistance[5] = {};
+				firstDistance[0] = 1.0, secondDistance[0] = 1.0;
 				if (newPair.first.getType() == ReactantType::PSISuper) {
 					auto const& super = static_cast<PSICluster const&>(newPair.first);
-					firstDistance[1] = super.getDistance(c, 0);
-					firstDistance[2] = super.getDistance(d, 1);
+					for (int i = 0; i < 4; i++) {
+						firstDistance[i + 1] = super.getDistance(currPRI.b[i], i);
+					}
 				}
 				if (newPair.second.getType() == ReactantType::PSISuper) {
 					auto const& super = static_cast<PSICluster const&>(newPair.second);
-					secondDistance[1] = super.getDistance(c, 0);
-					secondDistance[2] = super.getDistance(d, 1);
+					for (int i = 0; i < 4; i++) {
+						secondDistance[i + 1] = super.getDistance(currPRI.b[i], i);
+					}
 				}
-				for (int j = 0; j < 3; j++) {
-					for (int i = 0; i < 3; i++) {
+				for (int j = 0; j < 5; j++) {
+					for (int i = 0; i < 5; i++) {
 						newPair.coefs[i][j] += firstDistance[i] * secondDistance[j];
 					}
 				}
@@ -86,7 +83,7 @@ void PSICluster::resultFrom(ProductionReaction& reaction,
 	return;
 }
 
-void PSICluster::participateIn(ProductionReaction& reaction, int a, int b) {
+void PSICluster::participateIn(ProductionReaction& reaction, int a[4]) {
 	// Look for the other cluster
 	auto& otherCluster = static_cast<PSICluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
@@ -107,14 +104,12 @@ void PSICluster::participateIn(ProductionReaction& reaction, int a, int b) {
 	}
 
 	// Update the coefficients
-	double heDistance = 0.0, vDistance = 0.0;
-	if (otherCluster.getType() == ReactantType::PSISuper) {
-		heDistance = otherCluster.getDistance(a, 0);
-		vDistance = otherCluster.getDistance(b, 1);
-	}
 	(*it).coefs[0] += 1.0;
-	(*it).coefs[1] += heDistance;
-	(*it).coefs[2] += vDistance;
+	if (otherCluster.getType() == ReactantType::PSISuper) {
+		for (int i = 0; i < 4; i++) {
+			(*it).coefs[i + 1] += otherCluster.getDistance(a[i], i);
+		}
+	}
 
 	return;
 }
@@ -145,26 +140,20 @@ void PSICluster::participateIn(ProductionReaction& reaction,
 	// Update the coefficients
 	std::for_each(prInfos.begin(), prInfos.end(),
 			[&otherCluster,&combCluster](const PendingProductionReactionInfo& currPRInfo) {
-
-				// Use names corresponding to the single-item version.
-				int a = currPRInfo.i;
-				int b = currPRInfo.j;
-
-				double heDistance = 0.0, vDistance = 0.0;
-				if (otherCluster.getType() == ReactantType::PSISuper) {
-					heDistance = otherCluster.getDistance(a, 0);
-					vDistance = otherCluster.getDistance(b, 1);
-				}
+				// Update the coefficients
 				combCluster.coefs[0] += 1.0;
-				combCluster.coefs[1] += heDistance;
-				combCluster.coefs[2] += vDistance;
+				if (otherCluster.getType() == ReactantType::PSISuper) {
+					for (int i = 0; i < 4; i++) {
+						combCluster.coefs[i+1] += otherCluster.getDistance(currPRInfo.b[i], i);
+					}
+				}
 			});
 
 	return;
 }
 
-void PSICluster::participateIn(DissociationReaction& reaction, int a, int b,
-		int c, int d) {
+void PSICluster::participateIn(DissociationReaction& reaction, int a[4],
+		int b[4]) {
 	// Look for the other cluster
 	auto& emittedCluster = static_cast<PSICluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
@@ -189,15 +178,13 @@ void PSICluster::participateIn(DissociationReaction& reaction, int a, int b,
 	}
 
 	// Update the coefficients
-	double firstHeDistance = 0.0, firstVDistance = 0.0;
+	(*it).coefs[0][0] += 1.0;
 	if (reaction.dissociating.getType() == ReactantType::PSISuper) {
 		auto const& super = static_cast<PSICluster&>(reaction.dissociating);
-		firstHeDistance = super.getDistance(a, 0);
-		firstVDistance = super.getDistance(b, 1);
+		for (int i = 0; i < 4; i++) {
+			(*it).coefs[i + 1][0] += super.getDistance(a[i], i);
+		}
 	}
-	(*it).coefs[0][0] += 1.0;
-	(*it).coefs[1][0] += firstHeDistance;
-	(*it).coefs[2][0] += firstVDistance;
 
 	return;
 }
@@ -232,27 +219,20 @@ void PSICluster::participateIn(DissociationReaction& reaction,
 	// Update the coefficients
 	std::for_each(prInfos.begin(), prInfos.end(),
 			[&currPair,&reaction](const PendingProductionReactionInfo& currPRI) {
-
-				// Use names corresponding to the single-item version.
-				int a = currPRI.numHe;
-				int b = currPRI.numV;
-
-				double firstHeDistance = 0.0, firstVDistance = 0.0;
+				// Update the coefficients
+				currPair.coefs[0][0] += 1.0;
 				if (reaction.dissociating.getType() == ReactantType::PSISuper) {
 					auto const& super = static_cast<PSICluster&>(reaction.dissociating);
-					firstHeDistance = super.getDistance(a, 0);
-					firstVDistance = super.getDistance(b, 1);
+					for (int i = 0; i < 4; i++) {
+						currPair.coefs[i+1][0] += super.getDistance(currPRI.a[i], i);
+					}
 				}
-				currPair.coefs[0][0] += 1.0;
-				currPair.coefs[1][0] += firstHeDistance;
-				currPair.coefs[2][0] += firstVDistance;
 			});
 
 	return;
 }
 
-void PSICluster::emitFrom(DissociationReaction& reaction, int a, int b, int c,
-		int d) {
+void PSICluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 
 	// Note that we emit from the reaction's reactants according to
 	// the given reaction.
@@ -318,10 +298,6 @@ void PSICluster::resetConnectivities() {
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(id);
 	setDissociationConnectivity(id);
-	setReactionConnectivity(heMomId);
-	setDissociationConnectivity(heMomId);
-	setReactionConnectivity(vMomId);
-	setDissociationConnectivity(vMomId);
 
 	// Loop on the effective reacting pairs
 	std::for_each(reactingPairs.begin(), reactingPairs.end(),
@@ -329,10 +305,10 @@ void PSICluster::resetConnectivities() {
 				// The cluster is connecting to both clusters in the pair
 				setReactionConnectivity(currPair.first.id);
 				setReactionConnectivity(currPair.second.id);
-				setReactionConnectivity(currPair.first.heMomId);
-				setReactionConnectivity(currPair.second.heMomId);
-				setReactionConnectivity(currPair.first.vMomId);
-				setReactionConnectivity(currPair.second.vMomId);
+				for (int i = 0; i < 4; i++) {
+					setReactionConnectivity(currPair.first.momId[i]);
+					setReactionConnectivity(currPair.second.momId[i]);
+				}
 			});
 
 	// Loop on the effective combining reactants
@@ -340,8 +316,9 @@ void PSICluster::resetConnectivities() {
 			[this](const CombiningCluster& cc) {
 				// The cluster is connecting to the combining cluster
 				setReactionConnectivity(cc.combining.id);
-				setReactionConnectivity(cc.combining.heMomId);
-				setReactionConnectivity(cc.combining.vMomId);
+				for (int i = 0; i < 4; i++) {
+					setReactionConnectivity(cc.combining.momId[i]);
+				}
 			});
 
 	// Loop on the effective dissociating pairs
@@ -350,8 +327,9 @@ void PSICluster::resetConnectivities() {
 				// The cluster is connecting to the dissociating cluster which
 				// is the first one by definition
 				setDissociationConnectivity(currPair.first.id);
-				setDissociationConnectivity(currPair.first.heMomId);
-				setDissociationConnectivity(currPair.first.vMomId);
+				for (int i = 0; i < 4; i++) {
+					setDissociationConnectivity(currPair.first.momId[i]);
+				}
 			});
 
 	// Don't loop on the effective emission pairs because
@@ -378,13 +356,14 @@ double PSICluster::getDissociationFlux() const {
 			dissociatingPairs.end(), 0.0,
 			[](double running, const ClusterPair& currPair) {
 				auto const& dissCluster = currPair.first;
-				double lA[3] = {};
-				lA[0] = dissCluster.getConcentration(0.0, 0.0);
-				lA[1] = dissCluster.getHeMomentum();
-				lA[2] = dissCluster.getVMomentum();
+				double lA[5] = {};
+				lA[0] = dissCluster.getConcentration();
+				for (int i = 0; i < 4; i++) {
+					lA[i+1] = dissCluster.getMoment(i);
+				}
 
 				double sum = 0.0;
-				for (int i = 0; i < 3; i++) {
+				for (int i = 0; i < 5; i++) {
 					sum += currPair.coefs[i][0] * lA[i];
 				}
 
@@ -417,17 +396,17 @@ double PSICluster::getProductionFlux() const {
 				// Get the two reacting clusters
 			auto const& firstReactant = currPair.first;
 			auto const& secondReactant = currPair.second;
-			double lA[3] = {}, lB[3] = {};
-			lA[0] = firstReactant.getConcentration(0.0, 0.0);
-			lB[0] = secondReactant.getConcentration(0.0, 0.0);
-			lA[1] = firstReactant.getHeMomentum();
-			lB[1] = secondReactant.getHeMomentum();
-			lA[2] = firstReactant.getVMomentum();
-			lB[2] = secondReactant.getVMomentum();
+			double lA[5] = {}, lB[5] = {};
+			lA[0] = firstReactant.getConcentration();
+			lB[0] = secondReactant.getConcentration();
+			for (int i = 0; i < 4; i++) {
+				lA[i+1] = firstReactant.getMoment(i);
+				lB[i+1] = secondReactant.getMoment(i);
+			}
 
 			double sum = 0.0;
-			for (int j = 0; j < 3; j++) {
-				for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 5; j++) {
+				for (int i = 0; i < 5; i++) {
 					sum += currPair.coefs[i][j] * lA[i] * lB[j];
 				}
 			}
@@ -449,13 +428,14 @@ double PSICluster::getCombinationFlux() const {
 
 				// Get the cluster that combines with this one
 				auto const& combiningCluster = cc.combining;
-				double lB[3] = {};
-				lB[0] = combiningCluster.getConcentration(0.0, 0.0);
-				lB[1] = combiningCluster.getHeMomentum();
-				lB[2] = combiningCluster.getVMomentum();
+				double lB[5] = {};
+				lB[0] = combiningCluster.getConcentration();
+				for (int i = 0; i < 4; i++) {
+					lB[i+1] = combiningCluster.getMoment(i);
+				}
 
 				double sum = 0.0;
-				for (int i = 0; i < 3; i++) {
+				for (int i = 0; i < 5; i++) {
 					sum += cc.coefs[i] * lB[i];
 				}
 				// Calculate the combination flux
@@ -505,33 +485,31 @@ void PSICluster::getProductionPartialDerivatives(
 				// Get the two reacting clusters
 				auto const& firstReactant = currPair.first;
 				auto const& secondReactant = currPair.second;
-				double lA[3] = {}, lB[3] = {};
-				lA[0] = firstReactant.getConcentration(0.0, 0.0);
-				lB[0] = secondReactant.getConcentration(0.0, 0.0);
-				lA[1] = firstReactant.getHeMomentum();
-				lB[1] = secondReactant.getHeMomentum();
-				lA[2] = firstReactant.getVMomentum();
-				lB[2] = secondReactant.getVMomentum();
+				double lA[5] = {}, lB[5] = {};
+				lA[0] = firstReactant.getConcentration();
+				lB[0] = secondReactant.getConcentration();
+				for (int i = 0; i < 4; i++) {
+					lA[i+1] = firstReactant.getMoment(i);
+					lB[i+1] = secondReactant.getMoment(i);
+				}
 
 				// Compute contribution from the first part of the reacting pair
 				double value = currPair.reaction.kConstant;
 
-				double sum[3][2] = {};
-				for (int j = 0; j < 3; j++) {
-					for (int i = 0; i < 3; i++) {
+				double sum[5][2] = {};
+				for (int j = 0; j < 5; j++) {
+					for (int i = 0; i < 5; i++) {
 						sum[j][0] += currPair.coefs[j][i] * lB[i];
 						sum[j][1] += currPair.coefs[i][j] * lA[i];
 					}
 				}
 
 				partials[firstReactant.id - 1] += value * sum[0][0];
-				partials[firstReactant.heMomId - 1] += value * sum[1][0];
-				partials[firstReactant.vMomId - 1] += value * sum[2][0];
-
-				// Compute contribution from the second part of the reacting pair
 				partials[secondReactant.id - 1] += value * sum[0][1];
-				partials[secondReactant.heMomId - 1] += value * sum[1][1];
-				partials[secondReactant.vMomId - 1] += value * sum[2][1];
+				for (int i = 0; i < 4; i++) {
+					partials[firstReactant.momId[i] - 1] += value * sum[i+1][0];
+					partials[secondReactant.momId[i] - 1] += value * sum[i+1][1];
+				}
 			});
 
 	return;
@@ -550,19 +528,28 @@ void PSICluster::getCombinationPartialDerivatives(
 	std::for_each(combiningReactants.begin(), combiningReactants.end(),
 			[this,&partials](const CombiningCluster& cc) {
 				auto const& cluster = cc.combining;
-				double l0B = cluster.getConcentration(0.0, 0.0);
-				double lHeB = cluster.getHeMomentum();
-				double lVB = cluster.getVMomentum();
+				double lB[5] = {};
+				lB[0] = cluster.getConcentration();
+				for (int i = 0; i < 4; i++) {
+					lB[i+1] = cluster.getMoment(i);
+				}
+
+				double sum = 0.0;
+				for (int i = 0; i < 5; i++) {
+					sum += cc.coefs[i] * lB[i];
+				}
 
 				// Remember that the flux due to combinations is OUTGOING (-=)!
 				// Compute the contribution from this cluster
 				partials[id - 1] -= cc.reaction.kConstant
-				* (cc.coefs[0] * l0B + cc.coefs[1] * lHeB + cc.coefs[2] * lVB);
+				* sum;
 				// Compute the contribution from the combining cluster
 				double value = cc.reaction.kConstant * concentration;
 				partials[cluster.id - 1] -= value * cc.coefs[0];
-				partials[cluster.heMomId - 1] -= value * cc.coefs[1];
-				partials[cluster.vMomId - 1] -= value * cc.coefs[2];
+
+				for (int i = 0; i < 4; i++) {
+					partials[cluster.momId[i] - 1] -= value * cc.coefs[i+1];
+				}
 			});
 
 	return;
@@ -583,8 +570,9 @@ void PSICluster::getDissociationPartialDerivatives(
 				auto const& cluster = currPair.first;
 				double value = currPair.reaction.kConstant;
 				partials[cluster.id - 1] += value * currPair.coefs[0][0];
-				partials[cluster.heMomId - 1] += value * currPair.coefs[1][0];
-				partials[cluster.vMomId - 1] += value * currPair.coefs[2][0];
+				for (int i = 0; i < 4; i++) {
+					partials[cluster.momId[i] - 1] += value * currPair.coefs[i+1][0];
+				}
 			});
 
 	return;
@@ -677,18 +665,23 @@ std::vector<int> PSICluster::getConnectivity() const {
 void PSICluster::dumpCoefficients(std::ostream& os,
 		PSICluster::ClusterPair const& curr) const {
 
-	os << "a[0-2][0-2]: " << ' ' << curr.coefs[0][0] << ' ' << curr.coefs[0][1]
-			<< ' ' << curr.coefs[0][2] << ' ' << curr.coefs[1][0] << ' '
-			<< curr.coefs[1][1] << ' ' << curr.coefs[1][2] << ' '
-			<< curr.coefs[2][0] << ' ' << curr.coefs[2][1] << ' '
-			<< curr.coefs[2][2];
+	os << "a[0-4][0-4]: ";
+
+	for (int j = 0; j < 5; j++) {
+		for (int i = 0; i < 5; i++) {
+			os << curr.coefs[j][i] << ' ';
+		}
+	}
 }
 
 void PSICluster::dumpCoefficients(std::ostream& os,
 		PSICluster::CombiningCluster const& curr) const {
 
-	os << "a[0-2]: " << curr.coefs[0] << ' ' << curr.coefs[1] << ' '
-			<< curr.coefs[2];
+	os << "a[0-4]: ";
+
+	for (int i = 0; i < 5; i++) {
+		os << curr.coefs[i] << ' ';
+	}
 }
 
 void PSICluster::outputCoefficientsTo(std::ostream& os) const {

@@ -192,10 +192,10 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
-			auto newNumHe = comp[toCompIdx(Species::He)] + firstSize;
-			auto newNumD = comp[toCompIdx(Species::D)];
-			auto newNumT = comp[toCompIdx(Species::T)];
-			auto newNumV = comp[toCompIdx(Species::V)];
+			int newNumHe = comp[toCompIdx(Species::He)] + firstSize;
+			int newNumD = comp[toCompIdx(Species::D)];
+			int newNumT = comp[toCompIdx(Species::T)];
+			int newNumV = comp[toCompIdx(Species::V)];
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
@@ -215,8 +215,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| heVReactant.getDiffusionFactor() > 0.0)) {
 
-				defineProductionReaction(heReactant, heVReactant, *product,
-						newNumHe, newNumV);
+				int a[4] = { newNumHe, 0, 0, newNumV };
+				defineProductionReaction(heReactant, heVReactant, *product, a);
 			}
 		}
 
@@ -227,18 +227,16 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
 			std::vector<PendingProductionReactionInfo> prInfos;
 
-			// Get its boundaries
-			auto const& vBounds = superCluster.getVBounds();
-			// Loop on them
-			for (auto const& i : superCluster.getHeBounds()) {
-				for (auto const& j : superCluster.getVBounds()) {
+			// Loop on the boundaries
+			for (int const& i : superCluster.getBounds(0)) {
+				for (int const& j : superCluster.getBounds(3)) {
 					// Check these coordinates are actually contained by the super cluster
-					if (!superCluster.isIn(i, j))
+					if (!superCluster.isIn(i, 0, 0, j))
 						continue;
 
 					// Assume the product can only be a super cluster here
-					auto newNumHe = i + firstSize;
-					auto newNumV = j;
+					int newNumHe = i + firstSize;
+					int newNumV = j;
 					IReactant* product = getSuperFromComp(newNumHe, newNumV);
 					// Check that the reaction can occur
 					if (product
@@ -248,7 +246,9 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 						// Note that current reactant reacts with
 						// current superCluster to produce product,
 						// according to current parameters.
-						prInfos.emplace_back(*product, newNumHe, newNumV, i, j);
+						int a[4] = { newNumHe, 0, 0, newNumV };
+						int b[4] = { i, 0, 0, j };
+						prInfos.emplace_back(*product, a, b);
 					}
 				}
 			}
@@ -281,10 +281,10 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
-			auto newNumHe = comp[toCompIdx(Species::He)];
-			auto newNumD = comp[toCompIdx(Species::D)];
-			auto newNumT = comp[toCompIdx(Species::T)];
-			auto newNumV = comp[toCompIdx(Species::V)] + firstSize;
+			int newNumHe = comp[toCompIdx(Species::He)];
+			int newNumD = comp[toCompIdx(Species::D)];
+			int newNumT = comp[toCompIdx(Species::T)];
+			int newNumV = comp[toCompIdx(Species::V)] + firstSize;
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
@@ -303,8 +303,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (vReactant.getDiffusionFactor() > 0.0
 							|| heVReactant.getDiffusionFactor() > 0.0)) {
 
-				defineProductionReaction(vReactant, heVReactant, *product,
-						newNumHe, newNumV);
+				int a[4] = { newNumHe, newNumD, newNumT, newNumV };
+				defineProductionReaction(vReactant, heVReactant, *product, a);
 			}
 		}
 
@@ -315,25 +315,24 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
 			std::vector<PendingProductionReactionInfo> prInfos;
 
-			// Get its boundaries
-			auto const& heBounds = superCluster.getHeBounds();
-			auto const& vBounds = superCluster.getVBounds();
-			// Loop on them
-			for (auto const& i : superCluster.getHeBounds()) {
-				for (auto const& j : superCluster.getVBounds()) {
+			// Loop on the boundaries
+			for (int const& i : superCluster.getBounds(0)) {
+				for (int const& j : superCluster.getBounds(3)) {
 					// Check these coordinates are actually contained by the super cluster
-					if (!superCluster.isIn(i, j))
+					if (!superCluster.isIn(i, 0, 0, j))
 						continue;
 
 					// Assume the product can only be a super cluster here
-					auto newNumHe = i;
-					auto newNumV = j + firstSize;
+					int newNumHe = i;
+					int newNumV = j + firstSize;
 					IReactant* product = getSuperFromComp(newNumHe, newNumV);
 					// Check that the reaction can occur
 					if (product
 							&& (vReactant.getDiffusionFactor() > 0.0
 									|| superCluster.getDiffusionFactor() > 0.0)) {
-						prInfos.emplace_back(*product, newNumHe, newNumV, i, j);
+						int a[4] = { newNumHe, 0, 0, newNumV };
+						int b[4] = { i, 0, 0, j };
+						prInfos.emplace_back(*product, a, b);
 					}
 				}
 			}
@@ -362,8 +361,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its size
 			secondSize = vReactant.getSize();
 			// Create the composition of the potential product
-			auto newNumHe = firstSize;
-			auto newNumV = secondSize;
+			int newNumHe = firstSize;
+			int newNumV = secondSize;
 
 			// Get the product
 			IReactant::Composition newComp;
@@ -380,8 +379,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| vReactant.getDiffusionFactor() > 0.0)) {
 
-				defineProductionReaction(heReactant, vReactant, *product,
-						newNumHe, newNumV);
+				int a[4] = { newNumHe, 0, 0, newNumV };
+				defineProductionReaction(heReactant, vReactant, *product, a);
 			}
 		}
 	}
@@ -447,19 +446,16 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
 			std::vector<PendingProductionReactionInfo> prInfos;
 
-			// Get its boundaries
-			auto const& heBounds = superCluster.getHeBounds();
-			auto const& vBounds = superCluster.getVBounds();
-			// Loop on them
-			for (auto const& i : superCluster.getHeBounds()) {
-				for (auto const& j : superCluster.getVBounds()) {
+			// Loop on the boundaries
+			for (int const& i : superCluster.getBounds(0)) {
+				for (int const& j : superCluster.getBounds(3)) {
 					// Check these coordinates are actually contained by the super cluster
-					if (!superCluster.isIn(i, j))
+					if (!superCluster.isIn(i, 0, 0, j))
 						continue;
 
 					// The product might be HeV or He
-					auto newNumHe = i;
-					auto newNumV = j - firstSize;
+					int newNumHe = i;
+					int newNumV = j - firstSize;
 
 					// Get the product
 					IReactant* product = nullptr;
@@ -482,7 +478,9 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					if (product
 							&& (iReactant.getDiffusionFactor() > 0.0
 									|| superCluster.getDiffusionFactor() > 0.0)) {
-						prInfos.emplace_back(*product, newNumHe, newNumV, i, j);
+						int a[4] = { newNumHe, 0, 0, newNumV };
+						int b[4] = { i, 0, 0, j };
+						prInfos.emplace_back(*product, a, b);
 					}
 				}
 			}
@@ -541,12 +539,14 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 						&& (firstReactant.getDiffusionFactor() > 0.0
 								|| secondReactant.getDiffusionFactor() > 0.0)) {
 
+					int a[4] = { newNumHe, 0, 0, newNumV };
 					defineProductionReaction(firstReactant, secondReactant,
-							*iReactant, newNumHe, newNumV);
+							*iReactant, a);
 					// This is a reaction with two products so we need to tell the other product
 					// it is participating too
+					int b[4] = { };
 					defineProductionReaction(firstReactant, secondReactant,
-							*product, newNumHe, newNumV, 0, 0, true);
+							*product, a, b, true);
 
 					// Stop the loop on I clusters here
 					break;
@@ -575,10 +575,10 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
-			auto newNumHe = comp[toCompIdx(Species::He)] + firstSize;
-			auto newNumD = comp[toCompIdx(Species::D)];
-			auto newNumT = comp[toCompIdx(Species::T)];
-			auto newNumV = comp[toCompIdx(Species::V)];
+			int newNumHe = comp[toCompIdx(Species::He)] + firstSize;
+			int newNumD = comp[toCompIdx(Species::D)];
+			int newNumT = comp[toCompIdx(Species::T)];
+			int newNumV = comp[toCompIdx(Species::V)];
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
@@ -610,12 +610,14 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 						&& (heReactant.getDiffusionFactor() > 0.0
 								|| heVReactant.getDiffusionFactor() > 0.0)) {
 
+					int a[4] = { newNumHe, newNumD, newNumT, newNumV + iSize };
 					defineProductionReaction(heReactant, heVReactant,
-							*iReactant, newNumHe, newNumV + iSize);
+							*iReactant, a);
 					// This is a reaction with two products so we need to tell the other product
 					// it is participating too
+					int b[4] = { };
 					defineProductionReaction(heReactant, heVReactant, *product,
-							newNumHe, newNumV + iSize, 0, 0, true);
+							a, b, true);
 
 					// Stop the loop on I clusters here
 					break;
@@ -630,19 +632,16 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			std::vector<PendingProductionReactionInfo> prInfos1;
 			std::vector<PendingProductionReactionInfo> prInfos2;
 
-			// Get its boundaries
-			auto const& heBounds = superCluster.getHeBounds();
-			auto const& vBounds = superCluster.getVBounds();
-			// Loop on them
-			for (auto const& i : superCluster.getHeBounds()) {
-				for (auto const& j : superCluster.getVBounds()) {
+			// Loop on the boundaries
+			for (int const& i : superCluster.getBounds(0)) {
+				for (int const& j : superCluster.getBounds(3)) {
 					// Check these coordinates are actually contained by the super cluster
-					if (!superCluster.isIn(i, j))
+					if (!superCluster.isIn(i, 0, 0, j))
 						continue;
 
 					// The product might be HeV or He
-					auto newNumHe = i + firstSize;
-					auto newNumV = j;
+					int newNumHe = i + firstSize;
+					int newNumV = j;
 
 					// Get the product
 					IReactant* product = getSuperFromComp(newNumHe, newNumV);
@@ -659,9 +658,11 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 						// Check that the reaction can occur
 						if (product && heReactant.getDiffusionFactor() > 0.0) {
-							prInfos1.emplace_back(*product, newNumHe,
-									newNumV + iSize, i, j);
-							prInfos2.emplace_back(*iReactant, 0, 0, i, j);
+							int a[4] = { newNumHe, 0, 0, newNumV + iSize };
+							int b[4] = { i, 0, 0, j };
+							prInfos1.emplace_back(*product, a, b);
+							a[0] = 0, a[3] = 0;
+							prInfos2.emplace_back(*iReactant, a, b);
 
 							// Stop the loop on I clusters here
 							break;
@@ -758,10 +759,10 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
-			auto newNumHe = comp[toCompIdx(Species::He)];
-			auto newNumD = comp[toCompIdx(Species::D)] + firstSize;
-			auto newNumT = comp[toCompIdx(Species::T)];
-			auto newNumV = comp[toCompIdx(Species::V)];
+			int newNumHe = comp[toCompIdx(Species::He)];
+			int newNumD = comp[toCompIdx(Species::D)] + firstSize;
+			int newNumT = comp[toCompIdx(Species::T)];
+			int newNumV = comp[toCompIdx(Species::V)];
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
@@ -776,8 +777,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (dReactant.getDiffusionFactor() > 0.0
 							|| heVReactant.getDiffusionFactor() > 0.0)) {
 
-				defineProductionReaction(dReactant, heVReactant, *product,
-						newNumHe, newNumV);
+				int a[4] = { newNumHe, newNumD, newNumT, newNumV };
+				defineProductionReaction(dReactant, heVReactant, *product, a);
 			}
 		}
 	}
@@ -803,10 +804,10 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto& comp = heVReactant.getComposition();
 			// Create the composition of the potential product
-			auto newNumHe = comp[toCompIdx(Species::He)];
-			auto newNumD = comp[toCompIdx(Species::D)];
-			auto newNumT = comp[toCompIdx(Species::T)] + firstSize;
-			auto newNumV = comp[toCompIdx(Species::V)];
+			int newNumHe = comp[toCompIdx(Species::He)];
+			int newNumD = comp[toCompIdx(Species::D)];
+			int newNumT = comp[toCompIdx(Species::T)] + firstSize;
+			int newNumV = comp[toCompIdx(Species::V)];
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
@@ -821,8 +822,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (tReactant.getDiffusionFactor() > 0.0
 							|| heVReactant.getDiffusionFactor() > 0.0)) {
 
-				defineProductionReaction(tReactant, heVReactant, *product,
-						newNumHe, newNumV);
+				int a[4] = { newNumHe, newNumD, newNumT, newNumV };
+				defineProductionReaction(tReactant, heVReactant, *product, a);
 			}
 		}
 	}
@@ -844,8 +845,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its size
 			secondSize = vReactant.getSize();
 			// Create the composition of the potential product
-			auto newNumD = firstSize;
-			auto newNumV = secondSize;
+			int newNumD = firstSize;
+			int newNumV = secondSize;
 
 			// Get the product
 			IReactant::Composition newComp;
@@ -858,8 +859,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (dReactant.getDiffusionFactor() > 0.0
 							|| vReactant.getDiffusionFactor() > 0.0)) {
 
-				defineProductionReaction(dReactant, vReactant, *product, 0,
-						newNumV);
+				int a[4] = { 0, newNumD, 0, newNumV };
+				defineProductionReaction(dReactant, vReactant, *product, a);
 			}
 		}
 	}
@@ -881,8 +882,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its size
 			secondSize = vReactant.getSize();
 			// Create the composition of the potential product
-			auto newNumT = firstSize;
-			auto newNumV = secondSize;
+			int newNumT = firstSize;
+			int newNumV = secondSize;
 
 			// Get the product
 			IReactant::Composition newComp;
@@ -895,8 +896,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (tReactant.getDiffusionFactor() > 0.0
 							|| vReactant.getDiffusionFactor() > 0.0)) {
 
-				defineProductionReaction(tReactant, vReactant, *product, 0,
-						newNumV);
+				int a[4] = { 0, 0, newNumT, newNumV };
+				defineProductionReaction(tReactant, vReactant, *product, a);
 			}
 		}
 	}
@@ -922,8 +923,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto& comp = heIReactant.getComposition();
 			// Create the composition of the potential product
-			auto newNumHe = comp[toCompIdx(Species::He)] + firstSize;
-			auto newNumI = comp[toCompIdx(Species::I)];
+			int newNumHe = comp[toCompIdx(Species::He)] + firstSize;
+			int newNumI = comp[toCompIdx(Species::I)];
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
@@ -936,8 +937,9 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| heIReactant.getDiffusionFactor() > 0.0)) {
 
+				int a[4] = {newNumHe, 0, 0, newNumI};
 				defineProductionReaction(heReactant, heIReactant, *product,
-						newNumHe, newNumI);
+						a);
 			}
 		}
 	}
@@ -962,8 +964,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its composition
 			auto& comp = heIReactant.getComposition();
 			// Create the composition of the potential product
-			auto newNumHe = comp[toCompIdx(Species::He)];
-			auto newNumI = comp[toCompIdx(Species::I)] + firstSize;
+			int newNumHe = comp[toCompIdx(Species::He)];
+			int newNumI = comp[toCompIdx(Species::I)] + firstSize;
 
 			// Check if product already exists.
 			IReactant::Composition newComp;
@@ -976,8 +978,9 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (iReactant.getDiffusionFactor() > 0.0
 							|| heIReactant.getDiffusionFactor() > 0.0)) {
 
+				int a[4] = {newNumHe, 0, 0, newNumI};
 				defineProductionReaction(iReactant, heIReactant, *product,
-						newNumHe, newNumI);
+						a);
 			}
 		}
 	}
@@ -999,8 +1002,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Get its size
 			secondSize = iReactant.getSize();
 			// Create the composition of the potential product
-			auto newNumHe = firstSize;
-			auto newNumI = secondSize;
+			int newNumHe = firstSize;
+			int newNumI = secondSize;
 
 			// Get the product
 			IReactant::Composition newComp;
@@ -1013,8 +1016,9 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| iReactant.getDiffusionFactor() > 0.0)) {
 
+				int a[4] = {newNumHe, 0, 0, newNumI};
 				defineProductionReaction(heReactant, iReactant, *product,
-						newNumHe, newNumI);
+						a);
 			}
 		}
 	}
@@ -1091,13 +1095,13 @@ bool PSIClusterReactionNetwork::canDissociate(IReactant& emittingReactant,
 }
 
 void PSIClusterReactionNetwork::checkForDissociation(
-		IReactant& emittingReactant, ProductionReaction& reaction, int a, int b,
-		int c, int d) {
+		IReactant& emittingReactant, ProductionReaction& reaction, int a[4],
+		int b[4]) {
 
 	// Check if reaction can dissociate.
 	if (canDissociate(emittingReactant, reaction)) {
 		// The dissociation can occur, so create a reaction for it.
-		defineDissociationReaction(reaction, emittingReactant, a, b, c, d);
+		defineDissociationReaction(reaction, emittingReactant, a, b);
 	}
 
 	return;
@@ -1120,8 +1124,10 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 			[&id](IReactant& currReactant) {
 				id++;
 				currReactant.setId(id);
-				currReactant.setHeMomentumId(id);
-				currReactant.setVMomentumId(id);
+				currReactant.setMomentId(id, 0);
+				currReactant.setMomentId(id, 1);
+				currReactant.setMomentId(id, 2);
+				currReactant.setMomentId(id, 3);
 			});
 
 	// Get all the super clusters and loop on them
@@ -1130,13 +1136,15 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 		auto& currCluster = static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		id++;
-		currCluster.setHeMomentumId(id);
+		currCluster.setMomentId(id, 0);
+		currCluster.setMomentId(currCluster.getId(), 1);
+		currCluster.setMomentId(currCluster.getId(), 2);
 		id++;
-		currCluster.setVMomentumId(id);
+		currCluster.setMomentId(id, 3);
 
 		// Update the PSIMixed size
-		IReactant::SizeType clusterSize = currCluster.getHeBounds().second
-				+ currCluster.getVBounds().second;
+		IReactant::SizeType clusterSize = currCluster.getBounds(0).second
+				+ currCluster.getBounds(3).second;
 		if (clusterSize > maxClusterSizeMap[ReactantType::PSIMixed]) {
 			maxClusterSizeMap[ReactantType::PSIMixed] = clusterSize;
 		}
@@ -1173,9 +1181,9 @@ void PSIClusterReactionNetwork::updateConcentrationsFromArray(
 
 				auto& cluster = static_cast<PSISuperCluster&>(*(currMapItem.second));
 
-				cluster.setZerothMomentum(concentrations[cluster.getId() - 1]);
-				cluster.setHeMomentum(concentrations[cluster.getHeMomentumId() - 1]);
-				cluster.setVMomentum(concentrations[cluster.getVMomentumId() - 1]);
+				cluster.setZerothMoment(concentrations[cluster.getId() - 1]);
+				cluster.setMoment(concentrations[cluster.getMomentId(0) - 1], 0);
+				cluster.setMoment(concentrations[cluster.getMomentId(3) - 1], 3);
 			});
 
 	return;
@@ -1244,9 +1252,9 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		// Get the reactant and its connectivity
 		auto const& connectivity = reactant.getConnectivity();
 		auto connectivityLength = connectivity.size();
-		// Get the helium momentum id so that the connectivity can be lined up in
+		// Get the helium moment id so that the connectivity can be lined up in
 		// the proper column
-		auto id = reactant.getHeMomentumId() - 1;
+		auto id = reactant.getMomentId(0) - 1;
 
 		// Create the vector that will be inserted into the dFill map
 		std::vector<int> columnIds;
@@ -1264,9 +1272,9 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		// Update the map
 		dFillMap[id] = columnIds;
 
-		// Get the vacancy momentum id so that the connectivity can be lined up in
+		// Get the vacancy moment id so that the connectivity can be lined up in
 		// the proper column
-		id = reactant.getVMomentumId() - 1;
+		id = reactant.getMomentId(3) - 1;
 
 		// Add it to the diagonal fill block
 		for (int j = 0; j < connectivityLength; j++) {
@@ -1506,16 +1514,16 @@ void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 		auto const& superCluster =
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
-		// Compute the helium momentum flux
-		auto flux = superCluster.getHeMomentumFlux();
+		// Compute the helium moment flux
+		auto flux = superCluster.getMomentFlux(0);
 		// Update the concentration of the cluster
-		auto reactantIndex = superCluster.getHeMomentumId() - 1;
+		auto reactantIndex = superCluster.getMomentId(0) - 1;
 		updatedConcOffset[reactantIndex] += flux;
 
-		// Compute the vacancy momentum flux
-		flux = superCluster.getVMomentumFlux();
+		// Compute the vacancy moment flux
+		flux = superCluster.getMomentFlux(3);
 		// Update the concentration of the cluster
-		reactantIndex = superCluster.getVMomentumId() - 1;
+		reactantIndex = superCluster.getMomentId(3) - 1;
 		updatedConcOffset[reactantIndex] += flux;
 	}
 
@@ -1611,11 +1619,11 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		}
 
 		{
-			// Get the helium momentum index
-			auto reactantIndex = reactant.getHeMomentumId() - 1;
+			// Get the helium moment index
+			auto reactantIndex = reactant.getMomentId(0) - 1;
 
 			// Get the partial derivatives
-			reactant.getHeMomentPartialDerivatives(clusterPartials);
+			reactant.getMomentPartialDerivatives(clusterPartials, 0);
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 			// Number of partial derivatives
@@ -1637,11 +1645,11 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		}
 
 		{
-			// Get the vacancy momentum index
-			auto reactantIndex = reactant.getVMomentumId() - 1;
+			// Get the vacancy moment index
+			auto reactantIndex = reactant.getMomentId(3) - 1;
 
 			// Get the partial derivatives
-			reactant.getVMomentPartialDerivatives(clusterPartials);
+			reactant.getMomentPartialDerivatives(clusterPartials, 3);
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 			// Number of partial derivatives
@@ -2534,7 +2542,7 @@ IReactant * PSIClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nHe,
 	// See if the last supercluster we were asked to find is the right
 	// one for this request.
 	static IReactant* lastRet = nullptr;
-	if (lastRet and static_cast<PSISuperCluster*>(lastRet)->isIn(nHe, nV)) {
+	if (lastRet and static_cast<PSISuperCluster*>(lastRet)->isIn(nHe, 0, 0, nV)) {
 		return lastRet;
 	}
 
@@ -2545,7 +2553,7 @@ IReactant * PSIClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nHe,
 
 		auto const& reactant =
 				static_cast<PSISuperCluster&>(*(superMapItem.second));
-		if (reactant.isIn(nHe, nV)) {
+		if (reactant.isIn(nHe, 0, 0, nV)) {
 			return superMapItem.second.get();
 		}
 	}

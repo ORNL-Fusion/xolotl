@@ -7,7 +7,7 @@
 
 using namespace xolotlCore;
 
-void NECluster::resultFrom(ProductionReaction& reaction, int, int, int, int) {
+void NECluster::resultFrom(ProductionReaction& reaction, int[4], int[4]) {
 
 	// Add a cluster pair for given reaction 
 	reactingPairs.emplace_back(
@@ -21,7 +21,7 @@ void NECluster::resultFrom(ProductionReaction& reaction, int, int, int, int) {
 	return;
 }
 
-void NECluster::participateIn(ProductionReaction& reaction, int a, int b) {
+void NECluster::participateIn(ProductionReaction& reaction, int[4]) {
 	setReactionConnectivity(id);
 	// Look for the other cluster
 	auto& otherCluster = static_cast<NECluster&>(
@@ -42,8 +42,7 @@ void NECluster::participateIn(ProductionReaction& reaction, int a, int b) {
 	return;
 }
 
-void NECluster::participateIn(DissociationReaction& reaction, int a, int b,
-		int c, int d) {
+void NECluster::participateIn(DissociationReaction& reaction, int[4], int[4]) {
 	// Look for the other cluster
 	auto& emittedCluster = static_cast<NECluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
@@ -61,8 +60,7 @@ void NECluster::participateIn(DissociationReaction& reaction, int a, int b,
 	return;
 }
 
-void NECluster::emitFrom(DissociationReaction& reaction, int a, int b, int c,
-		int d) {
+void NECluster::emitFrom(DissociationReaction& reaction, int[4]) {
 
 	// Add the pair of emitted clusters.
 	emissionPairs.emplace_back(
@@ -172,17 +170,17 @@ void NECluster::resetConnectivities() {
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(id);
 	setDissociationConnectivity(id);
-	setReactionConnectivity(xeMomId);
-	setDissociationConnectivity(xeMomId);
+	setReactionConnectivity(momId[0]);
+	setDissociationConnectivity(momId[0]);
 
 	// Apply to each reacting pair.
 	std::for_each(reactingPairs.begin(), reactingPairs.end(),
 			[this](const ClusterPair& currPair) {
 				// The cluster is connecting to both clusters in the pair
 				setReactionConnectivity(currPair.first->id);
-				setReactionConnectivity(currPair.first->xeMomId);
+				setReactionConnectivity(currPair.first->momId[0]);
 				setReactionConnectivity(currPair.second->id);
-				setReactionConnectivity(currPair.second->xeMomId);
+				setReactionConnectivity(currPair.second->momId[0]);
 			});
 
 	// Apply to each combining cluster.
@@ -191,7 +189,7 @@ void NECluster::resetConnectivities() {
 				// The cluster is connecting to the combining cluster
 				NECluster const& combCluster = cc.combining;
 				setReactionConnectivity(combCluster.id);
-				setReactionConnectivity(combCluster.xeMomId);
+				setReactionConnectivity(combCluster.momId[0]);
 			});
 
 	// Apply to each effective dissociating pair
@@ -200,7 +198,7 @@ void NECluster::resetConnectivities() {
 				// The cluster is connecting to the dissociating cluster which
 				// is the first one by definition
 				setDissociationConnectivity(currPair.first->id);
-				setDissociationConnectivity(currPair.first->xeMomId);
+				setDissociationConnectivity(currPair.first->momId[0]);
 			});
 
 	// Don't apply to the emission pairs because
@@ -220,7 +218,7 @@ void NECluster::updateFromNetwork() {
 	return;
 }
 
-double NECluster::getMomentum() const {
+double NECluster::getMoment() const {
 	return 0.0;
 }
 
@@ -350,7 +348,7 @@ void NECluster::getProductionPartialDerivatives(
 						currPair.secondDistance);
 				auto index = currPair.first->id - 1;
 				partials[index] += value;
-				index = currPair.first->xeMomId - 1;
+				index = currPair.first->momId[0] - 1;
 				partials[index] += value * currPair.firstDistance;
 				// Compute the contribution from the second part of the reacting pair
 				value = currReaction.kConstant
@@ -358,7 +356,7 @@ void NECluster::getProductionPartialDerivatives(
 						currPair.firstDistance);
 				index = currPair.second->id - 1;
 				partials[index] += value;
-				index = currPair.second->xeMomId - 1;
+				index = currPair.second->momId[0] - 1;
 				partials[index] += value * currPair.secondDistance;
 			});
 
@@ -389,7 +387,7 @@ void NECluster::getCombinationPartialDerivatives(
 				double value = currReaction.kConstant * concentration;
 
 				partials[cluster.id - 1] -= value;
-				partials[cluster.xeMomId - 1] -= value * cc.distance;
+				partials[cluster.momId[0] - 1] -= value * cc.distance;
 			});
 
 	return;
@@ -410,7 +408,7 @@ void NECluster::getDissociationPartialDerivatives(
 				NECluster* cluster = currPair.first;
 				Reaction const& currReaction = currPair.reaction;
 				partials[cluster->id - 1] += currReaction.kConstant;
-				partials[cluster->xeMomId - 1] += currReaction.kConstant *
+				partials[cluster->momId[0] - 1] += currReaction.kConstant *
 				currPair.firstDistance;
 			});
 
