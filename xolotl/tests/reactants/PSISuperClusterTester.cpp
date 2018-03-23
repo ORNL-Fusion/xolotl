@@ -41,8 +41,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	loader.setFilename(filename);
 	// Set grouping parameters
 	loader.setVMin(1);
-	loader.setHeWidth(4);
-	loader.setVWidth(1);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
 
 	// Create the options needed to load the network
 	Options opts;
@@ -91,8 +91,8 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	loader.setFilename(filename);
 	// Set grouping parameters
 	loader.setVMin(1);
-	loader.setHeWidth(4);
-	loader.setVWidth(1);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
 
 	// Create the options needed to load the network
 	Options opts;
@@ -138,8 +138,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	loader.setFilename(filename);
 	// Set grouping parameters
 	loader.setVMin(1);
-	loader.setHeWidth(4);
-	loader.setVWidth(1);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
 
 	// Create the options needed to load the network
 	Options opts;
@@ -195,8 +195,8 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	loader.setFilename(filename);
 	// Set grouping parameters
 	loader.setVMin(1);
-	loader.setHeWidth(4);
-	loader.setVWidth(1);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
 
 	// Create the options needed to load the network
 	Options opts;

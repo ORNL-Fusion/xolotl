@@ -105,8 +105,10 @@ PSIClusterNetworkLoader::PSIClusterNetworkLoader(
 	fileName = "";
 	dummyReactions = false;
 	vMin = 1000000;
-	heSectionWidth = 1;
-	vSectionWidth = 1;
+	sectionWidth[0] = 1;
+	sectionWidth[1] = 1;
+	sectionWidth[2] = 1;
+	sectionWidth[3] = 1;
 	maxHe = -1;
 	maxI = -1;
 	maxV = -1;
@@ -124,8 +126,10 @@ PSIClusterNetworkLoader::PSIClusterNetworkLoader(
 	fileName = "";
 	dummyReactions = false;
 	vMin = 1000000;
-	heSectionWidth = 1;
-	vSectionWidth = 1;
+	sectionWidth[0] = 1;
+	sectionWidth[1] = 1;
+	sectionWidth[2] = 1;
+	sectionWidth[3] = 1;
 	maxHe = -1;
 	maxI = -1;
 	maxV = -1;
@@ -175,7 +179,7 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::load(
 				// If the cluster is big enough to be grouped
 				if (numV >= vMin && numHe > 0) {
 					// Created the coordinates and store them
-					auto pair = std::make_pair(numHe, numV);
+					auto pair = std::make_tuple(numHe, numD, numT, numV);
 					heVList.emplace(pair);
 				} else {
 					// Create the cluster
@@ -565,7 +569,8 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 						// If the cluster is big enough to be grouped
 						if (numV >= vMin) {
 							// Created the coordinates and store them
-							auto pair = std::make_pair(numHe, numV);
+							auto pair = std::make_tuple(numHe, numD, numT,
+									numV);
 							heVList.emplace(pair);
 						} else {
 							// Create the cluster
@@ -640,7 +645,8 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 						// If the cluster is big enough to be grouped
 						if (numV >= vMin) {
 							// Created the coordinates and store them
-							auto pair = std::make_pair(numHe, numV);
+							auto pair = std::make_tuple(numHe, numD, numT,
+									numV);
 							heVList.emplace(pair);
 						} else {
 							// Create the cluster
@@ -809,17 +815,24 @@ double PSIClusterNetworkLoader::getHeVFormationEnergy(int numHe, int numV) {
 void PSIClusterNetworkLoader::applySectionalGrouping(
 		PSIClusterReactionNetwork& network) {
 	// Initialize variables for the loop
-	int count = 0, heIndex = 1, vIndex = vMin, heWidth = heSectionWidth,
-			vWidth = vSectionWidth, previousBiggestHe = 1, vMax =
-					network.getMaxClusterSize(ReactantType::V), heMax = -1;
-	double heSize = 0.0, vSize = 0.0;
+	int count = 0, heIndex = ((maxHe > 0) && (maxD == 0) && (maxT == 0)),
+			dIndex = ((maxD > 0) && (maxHe == 0) && (maxT == 0)), tIndex = ((maxT > 0) && (maxHe == 0) && (maxD == 0)),
+			vIndex = vMin, heWidth = sectionWidth[0], dWidth = sectionWidth[1],
+			tWidth = sectionWidth[2], vWidth = sectionWidth[3],
+			previousBiggestHe = 1, vMax = network.getMaxClusterSize(
+					ReactantType::V), heMax = -1, dMax = -1, tMax = -1;
+	double heSize = 0.0, dSize = 0.0, tSize = 0.0, vSize = 0.0;
 	// Create a temporary vector for the loop to store which clusters go in which super cluster
-	std::set<std::pair<int, int> > tempVector;
+	std::set<std::tuple<int, int, int, int> > tempVector;
 
 	// Find the biggest helium in the pairs
 	for (auto pair : heVList) {
-		if (pair.first > heMax)
-			heMax = pair.first;
+		if (std::get<0>(pair) > heMax)
+			heMax = std::get<0>(pair);
+		if (std::get<1>(pair) > dMax)
+			dMax = std::get<1>(pair);
+		if (std::get<2>(pair) > tMax)
+			tMax = std::get<2>(pair);
 	}
 
 	// Take care of the clusters near the stability line
@@ -836,9 +849,10 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 	// Loop on the vacancy groups
 	for (int k = vMin; k <= vMax; k++) {
-		int heLow = previousBiggestHe, heHigh = -1, vLow = vMax, vHigh = -1;
+		int heLow = previousBiggestHe, heHigh = -1, dLow = dMax, dHigh = -1,
+				tLow = tMax, tHigh = -1;
 		// Update the composition vector
-		auto pair = std::make_pair(previousBiggestHe, k);
+		auto pair = std::make_tuple(previousBiggestHe, 0, 0, k);
 		// While loop on the helium content because we don't know the upper bound
 		while (heVList.find(pair) != heVList.end()) {
 			// Will be used to know the actual widths of the group
@@ -846,10 +860,6 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 				heLow = previousBiggestHe;
 			if (previousBiggestHe > heHigh)
 				heHigh = previousBiggestHe;
-			if (k < vLow)
-				vLow = k;
-			if (k > vHigh)
-				vHigh = k;
 
 			// Increment the counter
 			count++;
@@ -863,7 +873,7 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 			// Get the next cluster
 			previousBiggestHe++;
-			pair.first = previousBiggestHe;
+			std::get<0>(pair) = previousBiggestHe;
 
 			// Skip the last one
 			if (previousBiggestHe == heMax)
@@ -879,9 +889,10 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 		vSize = vSize / (double) count;
 
 		// Create the cluster
-		PSISuperCluster* rawSuperCluster = new PSISuperCluster(heSize, vSize,
-				count, heHigh - heLow + 1, vHigh - vLow + 1, network,
-				handlerRegistry);
+		double size[4] = { heSize, 0.0, 0.0, vSize };
+		int width[4] = { heHigh - heLow + 1, 1, 1, 1 };
+		PSISuperCluster* rawSuperCluster = new PSISuperCluster(size, count,
+				width, network, handlerRegistry);
 		auto superCluster = std::unique_ptr<PSISuperCluster>(rawSuperCluster);
 		// Save access to the cluster so we can trigger updates
 		// after we give it to the network.
@@ -900,84 +911,232 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 		heSize = 0.0, vSize = 0.0;
 		count = 0;
 		tempVector.clear();
-	}
 
-	// Get the number of groups in the helium and vacancy directions
-	int nVGroup = (vMax - vMin) / vSectionWidth + 1;
-	int nHeGroup = previousBiggestHe / heSectionWidth + 1;
+		// Only the HeV clusters where grouped here, now group the corresponding HeDTV clusters in one big group
+		// Loop on He
+		for (int l = heLow; l <= heHigh; l++) {
+			// Loop on D
+			for (int i = 0; i <= heHigh; i++) {
+				// Loop on T
+				for (int j = 0; j <= heHigh; j++) {
+					// Skip HeV
+					if (i + j == 0)
+						continue;
 
-	// Loop on the vacancy groups
-	for (int k = 0; k < nVGroup; k++) {
-		// Loop on the helium groups
-		for (int j = 0; j < nHeGroup; j++) {
-			// To check if the group is full
-			int heLow = previousBiggestHe, heHigh = -1, vLow = vMax, vHigh = -1;
-
-			// Loop within the group
-			for (int n = vIndex; n < vIndex + vWidth; n++) {
-				for (int m = heIndex; m < heIndex + heWidth; m++) {
-					// Check if the corresponding coordinates are in the heVList set
-					auto pair = std::make_pair(m, n);
+					// Check if the cluster exists
+					auto pair = std::make_tuple(l, i, j, k);
+					// While loop on the helium content because we don't know the upper bound
 					if (heVList.find(pair) == heVList.end())
-						continue;
-
-					// Skip the last one
-					if (m == heMax)
-						continue;
+						break;
 
 					// Will be used to know if the group was full
-					if (m < heLow)
-						heLow = m;
-					if (m > heHigh)
-						heHigh = m;
-					if (n < vLow)
-						vLow = n;
-					if (n > vHigh)
-						vHigh = n;
+					if (i < dLow)
+						dLow = i;
+					if (i > dHigh)
+						dHigh = i;
+					if (j < tLow)
+						tLow = j;
+					if (j > tHigh)
+						tHigh = j;
 
 					// Increment the counter
 					count++;
 
 					// Add this cluster coordinates to the temporary vector
 					tempVector.emplace(pair);
-					heSize += (double) m;
-					vSize += (double) n;
+					heSize += (double) l;
+					dSize += (double) i;
+					tSize += (double) j;
+					vSize += (double) k;
 					// Remove the pair from the set because we don't need it anymore
 					heVList.erase(pair);
 				}
 			}
+		}
 
-			// Check if there were clusters in this group
-			if (count == 0) {
-				// Reinitialize the group indices for the helium direction
-				heIndex += heWidth;
-//				heWidth = std::max((int) std::pow((double) (j * heSectionWidth), 3.0) / 400000, heSectionWidth);
-//				heWidth -= heWidth % heSectionWidth;
-				continue;
+		// Check if there were clusters in this group
+		if (count == 0)
+			continue;
+
+		// Average all values
+		heSize = heSize / (double) count;
+		dSize = dSize / (double) count;
+		tSize = tSize / (double) count;
+		vSize = vSize / (double) count;
+
+		// Create the cluster
+		size[0] = heSize, size[1] = dSize, size[2] = tSize, size[3] = vSize;
+		width[0] = heHigh - heLow + 1, width[1] = dHigh - dLow + 1, width[2] =
+				tHigh - tLow + 1, width[3] = 1;
+		PSISuperCluster* rawSuperClusterBis = new PSISuperCluster(size, count,
+				width, network, handlerRegistry);
+		auto superClusterBis = std::unique_ptr<PSISuperCluster>(
+				rawSuperClusterBis);
+		// Save access to the cluster so we can trigger updates
+		// after we give it to the network.
+		auto& screfBis = *superClusterBis;
+		// Give the cluster to the network.
+		network.add(std::move(superClusterBis));
+		// Trigger cluster updates now it is in the network.
+		screfBis.updateFromNetwork();
+		// Set the HeV vector
+		screfBis.setHeVVector(tempVector);
+
+//		std::cout << "super: " << rawSuperClusterBis->getName() << " " << count
+//				<< " " << width[0] << " " << width[1] << " " << width[2] << " 1"
+//				<< std::endl;
+
+		// Reinitialize everything
+		heSize = 0.0, dSize = 0.0, tSize = 0.0, vSize = 0.0;
+		count = 0;
+		tempVector.clear();
+	}
+
+	// Get the number of groups in the helium and vacancy directions
+	int nVGroup = (vMax - vMin) / sectionWidth[3] + 1;
+	int nHeGroup = previousBiggestHe / sectionWidth[0] + 1;
+	int nDGroup = dMax / sectionWidth[1] + 1;
+	int nTGroup = tMax / sectionWidth[2] + 1;
+
+	// Loop on the vacancy groups
+	for (int k = 0; k < nVGroup; k++) {
+		// Loop on the tritium groups
+		for (int l = 0; l < nTGroup; l++) {
+			// Loop on the deuterium groups
+			for (int i = 0; i < nDGroup; i++) {
+				// Loop on the helium groups
+				for (int j = 0; j < nHeGroup; j++) {
+					// To compute the width
+					int heLow = previousBiggestHe, heHigh = -1, dLow = dMax,
+							dHigh = -1, tLow = tMax, tHigh = -1, vLow = vMax,
+							vHigh = -1;
+
+					// Loop within the group
+					for (int p = vIndex; p < vIndex + vWidth; p++) {
+						for (int o = tIndex; o < tIndex + tWidth; o++) {
+							for (int n = dIndex; n < dIndex + dWidth; n++) {
+								for (int m = heIndex; m < heIndex + heWidth;
+										m++) {
+									// Check if the corresponding coordinates are in the heVList set
+									auto pair = std::make_tuple(m, n, o, p);
+									if (heVList.find(pair) == heVList.end())
+										continue;
+
+									// Skip the last one
+									if (m == heMax)
+										continue;
+
+									// Will be used to know the section width
+									if (m < heLow)
+										heLow = m;
+									if (m > heHigh)
+										heHigh = m;
+									if (n < dLow)
+										dLow = n;
+									if (n > dHigh)
+										dHigh = n;
+									if (o < tLow)
+										tLow = o;
+									if (o > tHigh)
+										tHigh = o;
+									if (p < vLow)
+										vLow = p;
+									if (p > vHigh)
+										vHigh = p;
+
+									// Increment the counter
+									count++;
+
+									// Add this cluster coordinates to the temporary vector
+									tempVector.emplace(pair);
+									heSize += (double) m;
+									dSize += (double) n;
+									tSize += (double) o;
+									vSize += (double) p;
+									// Remove the pair from the set because we don't need it anymore
+									heVList.erase(pair);
+								}
+							}
+						}
+					}
+
+					// Check if there were clusters in this group
+					if (count == 0) {
+						// Reinitialize the group indices for the helium direction
+						heIndex += heWidth;
+						continue;
+					}
+
+					// Average all values
+					heSize = heSize / (double) count;
+					dSize = dSize / (double) count;
+					tSize = tSize / (double) count;
+					vSize = vSize / (double) count;
+					// Create the super cluster
+					double size[4] = { heSize, dSize, tSize, vSize };
+					int width[4] = { heHigh - heLow + 1, dHigh - dLow + 1, tHigh
+							- tLow + 1, vHigh - vLow + 1 };
+					PSISuperCluster* rawSuperCluster = new PSISuperCluster(size,
+							count, width, network, handlerRegistry);
+
+//					std::cout << "big: " << rawSuperCluster->getName() << " "
+//							<< count << " " << width[0] << " " << width[1]
+//							<< " " << width[2] << " " << width[3] << std::endl;
+
+					auto superCluster = std::unique_ptr<PSISuperCluster>(
+							rawSuperCluster);
+					// Save access to the cluster so we can trigger updates
+					// after we give it to the network.
+					auto& scref = *superCluster;
+					// Give the cluster to the network.
+					network.add(std::move(superCluster));
+					// Trigger cluster updates now it is in the network.
+					scref.updateFromNetwork();
+					// Set the HeV vector
+					scref.setHeVVector(tempVector);
+
+					// Reinitialize everything
+					heSize = 0.0, dSize = 0.0, tSize = 0.0, vSize = 0.0;
+					count = 0;
+					tempVector.clear();
+					// Reinitialize the group indices for the helium direction
+					heIndex += heWidth;
+				}
+
+				// Reinitialize the group indices for the deuterium direction
+				dIndex += dWidth;
+				heIndex = (maxHe > 0) && (maxD == 0) && (maxT == 0);
 			}
 
-			// Average all values
-			heSize = heSize / (double) count;
-			vSize = vSize / (double) count;
-			// Create the super cluster
-			PSISuperCluster* rawSuperCluster = nullptr;
-			if (count == heWidth * vWidth) {
-				// Everything is fine, the cluster is full
-				rawSuperCluster = new PSISuperCluster(heSize, vSize, count,
-						heWidth, vWidth, network, handlerRegistry);
+			// Reinitialize the group indices for the tritium direction
+			tIndex += tWidth;
+			dIndex = ((maxD > 0) && (maxHe == 0) && (maxT == 0));
+		}
 
-//				std::cout << "normal: " << rawSuperCluster->getName() << " "
-//						<< heWidth << " " << vWidth << std::endl;
-			} else {
-				// The cluster is smaller than we thought because we are at the edge
-				rawSuperCluster = new PSISuperCluster(heSize, vSize, count,
-						heHigh - heLow + 1, vHigh - vLow + 1, network,
-						handlerRegistry);
+		// Reinitialize the group indices for the vacancy direction
+		vIndex += vWidth;
+		tIndex = ((maxT > 0) && (maxHe == 0) && (maxD == 0));
+	}
 
-//				std::cout << "irregular: " << rawSuperCluster->getName() << " "
-//						<< heHigh - heLow + 1 << " " << vHigh - vLow + 1
-//						<< std::endl;
-			}
+	// Create the super cluster corresponding to the biggest mixed ones
+	// To compute the width
+	int heLow = heMax, heHigh = -1, dLow = dMax, dHigh = -1, tLow = tMax,
+			tHigh = -1, vLow = vMax, vHigh = -1;
+	// Loop on the list of left over clusters
+	for (auto const& pair : heVList) {
+		// Have the one HeV one alone
+		if (std::get<1>(pair) == 0 && std::get<2>(pair) == 0) {
+			// Add this cluster coordinates to the temporary vector
+			tempVector.emplace(pair);
+
+			double size[4] = { (double) std::get<0>(pair), 0.0, 0.0,
+					(double) std::get<3>(pair) };
+			int width[4] = { 1, 1, 1, 1 };
+			auto rawSuperCluster = new PSISuperCluster(size, 1, width, network,
+					handlerRegistry);
+
+//			std::cout << "last: " << rawSuperCluster->getName() << std::endl;
+
 			auto superCluster = std::unique_ptr<PSISuperCluster>(
 					rawSuperCluster);
 			// Save access to the cluster so we can trigger updates
@@ -990,40 +1149,59 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 			// Set the HeV vector
 			scref.setHeVVector(tempVector);
 
-			// Reinitialize everything
-			heSize = 0.0, vSize = 0.0;
-			count = 0;
-			tempVector.clear();
-			// Reinitialize the group indices for the helium direction
-			heIndex += heWidth;
-//			heWidth = std::max((int) std::pow((double) (j * heSectionWidth), 3.0) / 400000, heSectionWidth);
-//			heWidth -= heWidth % heSectionWidth;
+			// Remove what needs to be removed for the other last cluster
+			tempVector.erase(pair);
+
+			continue;
 		}
 
-		// Reinitialize the group indices for the vacancy direction
-		vIndex += vWidth;
-//		vWidth = std::max((int) std::pow((double) (k * vSectionWidth), 3.0) / 100000, vSectionWidth);
-//		vWidth -= vWidth % vSectionWidth;
-//		heWidth = heSectionWidth;
-		heIndex = 1;
-	}
+		// Will be used to know the section width
+		if (std::get<0>(pair))
+			heLow = std::get<0>(pair);
+		if (std::get<0>(pair))
+			heHigh = std::get<0>(pair);
+		if (std::get<1>(pair))
+			dLow = std::get<1>(pair);
+		if (std::get<1>(pair) > dHigh)
+			dHigh = std::get<1>(pair);
+		if (std::get<2>(pair))
+			tLow = std::get<2>(pair);
+		if (std::get<2>(pair))
+			tHigh = std::get<2>(pair);
+		if (std::get<3>(pair) < vLow)
+			vLow = std::get<3>(pair);
+		if (std::get<3>(pair) > vHigh)
+			vHigh = std::get<3>(pair);
 
-	// Create the super cluster corresponding to the biggest mixed one alone
-	if (heVList.size() == 1) {
-		// Get the pair
-		auto pair = heVList.begin();
+		// Increment the counter
+		count++;
+
 		// Add this cluster coordinates to the temporary vector
-		tempVector.emplace(*pair);
-		// Remove the pair from the set because we don't need it anymore
-		heVList.erase(pair);
+		tempVector.emplace(pair);
+		heSize += (double) std::get<0>(pair);
+		dSize += (double) std::get<1>(pair);
+		tSize += (double) std::get<2>(pair);
+		vSize += (double) std::get<3>(pair);
+	}
+	// Check if there were clusters in this group
+	if (count > 0) {
+		// Average all values
+		heSize = heSize / (double) count;
+		dSize = dSize / (double) count;
+		tSize = tSize / (double) count;
+		vSize = vSize / (double) count;
+		// Create the super cluster
+		double size[4] = { heSize, dSize, tSize, vSize };
+		int width[4] = { heHigh - heLow + 1, dHigh - dLow + 1, tHigh - tLow + 1,
+				vHigh - vLow + 1 };
+		PSISuperCluster* rawSuperCluster = new PSISuperCluster(size, count,
+				width, network, handlerRegistry);
 
-		auto rawSuperCluster = new PSISuperCluster(pair->first, pair->second, 1,
-				1, 1, network, handlerRegistry);
+//		std::cout << "last: " << rawSuperCluster->getName() << " " << count
+//				<< " " << width[0] << " " << width[1] << " " << width[2] << " "
+//				<< width[3] << std::endl;
 
-//		std::cout << "last: " << rawSuperCluster->getName() << std::endl;
-
-		auto superCluster = std::unique_ptr<PSISuperCluster>(
-				rawSuperCluster);
+		auto superCluster = std::unique_ptr<PSISuperCluster>(rawSuperCluster);
 		// Save access to the cluster so we can trigger updates
 		// after we give it to the network.
 		auto& scref = *superCluster;

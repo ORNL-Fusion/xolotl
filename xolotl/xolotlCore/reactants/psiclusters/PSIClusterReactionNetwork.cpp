@@ -208,14 +208,14 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// Check if the product can be a super cluster
 			if (!product) {
 				// Check if it is a super cluster from the map
-				product = getSuperFromComp(newNumHe, newNumV);
+				product = getSuperFromComp(newNumHe, newNumD, newNumT, newNumV);
 			}
 			// Check that the reaction can occur
 			if (product
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| heVReactant.getDiffusionFactor() > 0.0)) {
 
-				int a[4] = { newNumHe, 0, 0, newNumV };
+				int a[4] = { newNumHe, newNumD, newNumT, newNumV };
 				defineProductionReaction(heReactant, heVReactant, *product, a);
 			}
 		}
@@ -229,26 +229,35 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 			// Loop on the boundaries
 			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(3)) {
-					// Check these coordinates are actually contained by the super cluster
-					if (!superCluster.isIn(i, 0, 0, j))
-						continue;
+				for (int const& j : superCluster.getBounds(1)) {
+					for (int const& k : superCluster.getBounds(2)) {
+						for (int const& l : superCluster.getBounds(3)) {
+							// Check these coordinates are actually contained by the super cluster
+							if (!superCluster.isIn(i, j, k, l))
+								continue;
 
-					// Assume the product can only be a super cluster here
-					int newNumHe = i + firstSize;
-					int newNumV = j;
-					IReactant* product = getSuperFromComp(newNumHe, newNumV);
-					// Check that the reaction can occur
-					if (product
-							&& (heReactant.getDiffusionFactor() > 0.0
-									|| superCluster.getDiffusionFactor() > 0.0)) {
+							// Assume the product can only be a super cluster here
+							int newNumHe = i + firstSize;
+							int newNumD = j;
+							int newNumT = k;
+							int newNumV = l;
+							IReactant* product = getSuperFromComp(newNumHe,
+									newNumD, newNumT, newNumV);
+							// Check that the reaction can occur
+							if (product
+									&& (heReactant.getDiffusionFactor() > 0.0
+											|| superCluster.getDiffusionFactor()
+													> 0.0)) {
 
-						// Note that current reactant reacts with
-						// current superCluster to produce product,
-						// according to current parameters.
-						int a[4] = { newNumHe, 0, 0, newNumV };
-						int b[4] = { i, 0, 0, j };
-						prInfos.emplace_back(*product, a, b);
+								// Note that current reactant reacts with
+								// current superCluster to produce product,
+								// according to current parameters.
+								int a[4] =
+										{ newNumHe, newNumD, newNumT, newNumV };
+								int b[4] = { i, j, k, l };
+								prInfos.emplace_back(*product, a, b);
+							}
+						}
 					}
 				}
 			}
@@ -296,7 +305,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 			// Check if the product can be a super cluster
 			if (!product) {
-				product = getSuperFromComp(newNumHe, newNumV);
+				product = getSuperFromComp(newNumHe, newNumD, newNumT, newNumV);
 			}
 			// Check that the reaction can occur
 			if (product
@@ -317,22 +326,31 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 			// Loop on the boundaries
 			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(3)) {
-					// Check these coordinates are actually contained by the super cluster
-					if (!superCluster.isIn(i, 0, 0, j))
-						continue;
+				for (int const& j : superCluster.getBounds(1)) {
+					for (int const& k : superCluster.getBounds(2)) {
+						for (int const& l : superCluster.getBounds(3)) {
+							// Check these coordinates are actually contained by the super cluster
+							if (!superCluster.isIn(i, j, k, l))
+								continue;
 
-					// Assume the product can only be a super cluster here
-					int newNumHe = i;
-					int newNumV = j + firstSize;
-					IReactant* product = getSuperFromComp(newNumHe, newNumV);
-					// Check that the reaction can occur
-					if (product
-							&& (vReactant.getDiffusionFactor() > 0.0
-									|| superCluster.getDiffusionFactor() > 0.0)) {
-						int a[4] = { newNumHe, 0, 0, newNumV };
-						int b[4] = { i, 0, 0, j };
-						prInfos.emplace_back(*product, a, b);
+							// Assume the product can only be a super cluster here
+							int newNumHe = i;
+							int newNumD = j;
+							int newNumT = k;
+							int newNumV = l + firstSize;
+							IReactant* product = getSuperFromComp(newNumHe,
+									newNumD, newNumT, newNumV);
+							// Check that the reaction can occur
+							if (product
+									&& (vReactant.getDiffusionFactor() > 0.0
+											|| superCluster.getDiffusionFactor()
+													> 0.0)) {
+								int a[4] =
+										{ newNumHe, newNumD, newNumT, newNumV };
+								int b[4] = { i, j, k, l };
+								prInfos.emplace_back(*product, a, b);
+							}
+						}
 					}
 				}
 			}
@@ -372,7 +390,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 			// Check if the product can be a super cluster
 			if (!product) {
-				product = getSuperFromComp(newNumHe, newNumV);
+				product = getSuperFromComp(newNumHe, 0, 0, newNumV);
 			}
 			// Check that the reaction can occur
 			if (product
@@ -448,39 +466,64 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 			// Loop on the boundaries
 			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(3)) {
-					// Check these coordinates are actually contained by the super cluster
-					if (!superCluster.isIn(i, 0, 0, j))
-						continue;
+				for (int const& j : superCluster.getBounds(1)) {
+					for (int const& k : superCluster.getBounds(2)) {
+						for (int const& l : superCluster.getBounds(3)) {
+							// Check these coordinates are actually contained by the super cluster
+							if (!superCluster.isIn(i, j, k, l))
+								continue;
 
-					// The product might be HeV or He
-					int newNumHe = i;
-					int newNumV = j - firstSize;
+							// The product might be mixed or He or D or T
+							int newNumHe = i;
+							int newNumD = j;
+							int newNumT = k;
+							int newNumV = l - firstSize;
 
-					// Get the product
-					IReactant* product = nullptr;
-					if (newNumV == 0) {
-						// The product is He
-						product = get(Species::He, i);
-					} else {
-						// Create the composition of the potential product
-						IReactant::Composition newComp;
-						newComp[toCompIdx(Species::He)] = newNumHe;
-						newComp[toCompIdx(Species::V)] = newNumV;
-						product = get(ReactantType::PSIMixed, newComp);
+							// Get the product
+							IReactant* product = nullptr;
+							if (newNumV == 0) {
+								// Check if it is a single product
+								if ((newNumHe > 0) + (newNumD > 0)
+										+ (newNumT > 0) > 1) {
+									// Nothing happens, no reaction
+									continue;
+								} else {
+									if (newNumHe > 0)
+										// The product is He
+										product = get(Species::He, newNumHe);
+									if (newNumD > 0)
+										// The product is D
+										product = get(Species::D, newNumD);
+									if (newNumT > 0)
+										// The product is T
+										product = get(Species::T, newNumT);
+								}
+							} else {
+								// Create the composition of the potential product
+								IReactant::Composition newComp;
+								newComp[toCompIdx(Species::He)] = newNumHe;
+								newComp[toCompIdx(Species::D)] = newNumD;
+								newComp[toCompIdx(Species::T)] = newNumT;
+								newComp[toCompIdx(Species::V)] = newNumV;
+								product = get(ReactantType::PSIMixed, newComp);
 
-						// If the product doesn't exist check for super clusters
-						if (!product) {
-							product = getSuperFromComp(newNumHe, newNumV);
+								// If the product doesn't exist check for super clusters
+								if (!product) {
+									product = getSuperFromComp(newNumHe,
+											newNumD, newNumT, newNumV);
+								}
+							}
+							// Check that the reaction can occur
+							if (product
+									&& (iReactant.getDiffusionFactor() > 0.0
+											|| superCluster.getDiffusionFactor()
+													> 0.0)) {
+								int a[4] =
+										{ newNumHe, newNumD, newNumT, newNumV };
+								int b[4] = { i, j, k, l };
+								prInfos.emplace_back(*product, a, b);
+							}
 						}
-					}
-					// Check that the reaction can occur
-					if (product
-							&& (iReactant.getDiffusionFactor() > 0.0
-									|| superCluster.getDiffusionFactor() > 0.0)) {
-						int a[4] = { newNumHe, 0, 0, newNumV };
-						int b[4] = { i, 0, 0, j };
-						prInfos.emplace_back(*product, a, b);
 					}
 				}
 			}
@@ -531,7 +574,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 				// Check if the product can be a super cluster
 				if (!product) {
 					// Check if it is a super cluster from the map
-					product = getSuperFromComp(newNumHe, newNumV);
+					product = getSuperFromComp(newNumHe, 0, 0, newNumV);
 				}
 
 				// Check that the reaction can occur
@@ -602,7 +645,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 				// Check if the product can be a super cluster
 				if (!product) {
 					// Check if it is a super cluster from the map
-					product = getSuperFromComp(newNumHe, newNumV + iSize);
+					product = getSuperFromComp(newNumHe, newNumD, newNumT,
+							newNumV + iSize);
 				}
 
 				// Check that the reaction can occur
@@ -634,38 +678,48 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 			// Loop on the boundaries
 			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(3)) {
-					// Check these coordinates are actually contained by the super cluster
-					if (!superCluster.isIn(i, 0, 0, j))
-						continue;
+				for (int const& j : superCluster.getBounds(1)) {
+					for (int const& k : superCluster.getBounds(2)) {
+						for (int const& l : superCluster.getBounds(3)) {
+							// Check these coordinates are actually contained by the super cluster
+							if (!superCluster.isIn(i, j, k, l))
+								continue;
+							int newNumHe = i + firstSize;
+							int newNumD = j;
+							int newNumT = k;
+							int newNumV = l;
 
-					// The product might be HeV or He
-					int newNumHe = i + firstSize;
-					int newNumV = j;
+							// Get the product
+							IReactant* product = getSuperFromComp(newNumHe,
+									newNumD, newNumT, newNumV);
+							// Skip if the product exists because we want trap mutation
+							if (product)
+								continue;
 
-					// Get the product
-					IReactant* product = getSuperFromComp(newNumHe, newNumV);
-					// Skip if the product exists because we want trap mutation
-					if (product)
-						continue;
+							// Trap mutation is happening
+							// Loop on the possible I starting by the smallest
+							for (auto iSize = 1; iSize <= maxI; iSize++) {
+								auto iReactant = get(toSpecies(ReactantType::I),
+										iSize);
+								// Update the composition of the potential product
+								product = getSuperFromComp(newNumHe, newNumD,
+										newNumT, newNumV + iSize);
 
-					// Trap mutation is happening
-					// Loop on the possible I starting by the smallest
-					for (auto iSize = 1; iSize <= maxI; iSize++) {
-						auto iReactant = get(toSpecies(ReactantType::I), iSize);
-						// Update the composition of the potential product
-						product = getSuperFromComp(newNumHe, newNumV + iSize);
+								// Check that the reaction can occur
+								if (product
+										&& heReactant.getDiffusionFactor()
+												> 0.0) {
+									int a[4] = { newNumHe, newNumD, newNumT,
+											newNumV + iSize };
+									int b[4] = { i, j, k, l };
+									prInfos1.emplace_back(*product, a, b);
+									a[0] = 0, a[1] = 0, a[2] = 0, a[3] = 0;
+									prInfos2.emplace_back(*iReactant, a, b);
 
-						// Check that the reaction can occur
-						if (product && heReactant.getDiffusionFactor() > 0.0) {
-							int a[4] = { newNumHe, 0, 0, newNumV + iSize };
-							int b[4] = { i, 0, 0, j };
-							prInfos1.emplace_back(*product, a, b);
-							a[0] = 0, a[3] = 0;
-							prInfos2.emplace_back(*iReactant, a, b);
-
-							// Stop the loop on I clusters here
-							break;
+									// Stop the loop on I clusters here
+									break;
+								}
+							}
 						}
 					}
 				}
@@ -781,6 +835,55 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 				defineProductionReaction(dReactant, heVReactant, *product, a);
 			}
 		}
+
+		// Consider product with each super cluster
+		for (auto const& superMapItem : getAll(ReactantType::PSISuper)) {
+
+			auto& superCluster =
+					static_cast<PSISuperCluster&>(*(superMapItem.second));
+			std::vector<PendingProductionReactionInfo> prInfos;
+
+			// Loop on the boundaries
+			for (int const& i : superCluster.getBounds(0)) {
+				for (int const& j : superCluster.getBounds(1)) {
+					for (int const& k : superCluster.getBounds(2)) {
+						for (int const& l : superCluster.getBounds(3)) {
+							// Check these coordinates are actually contained by the super cluster
+							if (!superCluster.isIn(i, j, k, l))
+								continue;
+
+							// Assume the product can only be a super cluster here
+							int newNumHe = i;
+							int newNumD = j + firstSize;
+							int newNumT = k;
+							int newNumV = l;
+							IReactant* product = getSuperFromComp(newNumHe,
+									newNumD, newNumT, newNumV);
+							// Check that the reaction can occur
+							if (product
+									&& (dReactant.getDiffusionFactor() > 0.0
+											|| superCluster.getDiffusionFactor()
+													> 0.0)) {
+
+								// Note that current reactant reacts with
+								// current superCluster to produce product,
+								// according to current parameters.
+								int a[4] =
+										{ newNumHe, newNumD, newNumT, newNumV };
+								int b[4] = { i, j, k, l };
+								prInfos.emplace_back(*product, a, b);
+							}
+						}
+					}
+				}
+			}
+
+			// Now that we know how current reactant reacts with
+			// current superCluster, create the production
+			// reaction(s) for them.
+			if (prInfos.size() > 0)
+				defineProductionReactions(dReactant, superCluster, prInfos);
+		}
 	}
 
 	// Tritium absorption by Mixed clusters
@@ -826,6 +929,55 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 				defineProductionReaction(tReactant, heVReactant, *product, a);
 			}
 		}
+
+		// Consider product with each super cluster
+		for (auto const& superMapItem : getAll(ReactantType::PSISuper)) {
+
+			auto& superCluster =
+					static_cast<PSISuperCluster&>(*(superMapItem.second));
+			std::vector<PendingProductionReactionInfo> prInfos;
+
+			// Loop on the boundaries
+			for (int const& i : superCluster.getBounds(0)) {
+				for (int const& j : superCluster.getBounds(1)) {
+					for (int const& k : superCluster.getBounds(2)) {
+						for (int const& l : superCluster.getBounds(3)) {
+							// Check these coordinates are actually contained by the super cluster
+							if (!superCluster.isIn(i, j, k, l))
+								continue;
+
+							// Assume the product can only be a super cluster here
+							int newNumHe = i;
+							int newNumD = j;
+							int newNumT = k + firstSize;
+							int newNumV = l;
+							IReactant* product = getSuperFromComp(newNumHe,
+									newNumD, newNumT, newNumV);
+							// Check that the reaction can occur
+							if (product
+									&& (tReactant.getDiffusionFactor() > 0.0
+											|| superCluster.getDiffusionFactor()
+													> 0.0)) {
+
+								// Note that current reactant reacts with
+								// current superCluster to produce product,
+								// according to current parameters.
+								int a[4] =
+										{ newNumHe, newNumD, newNumT, newNumV };
+								int b[4] = { i, j, k, l };
+								prInfos.emplace_back(*product, a, b);
+							}
+						}
+					}
+				}
+			}
+
+			// Now that we know how current reactant reacts with
+			// current superCluster, create the production
+			// reaction(s) for them.
+			if (prInfos.size() > 0)
+				defineProductionReactions(tReactant, superCluster, prInfos);
+		}
 	}
 
 	// Deuterium-Vacancy clustering
@@ -853,6 +1005,11 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			newComp[toCompIdx(Species::D)] = newNumD;
 			newComp[toCompIdx(Species::V)] = newNumV;
 			auto product = get(ReactantType::PSIMixed, newComp);
+
+			// Check if the product can be a super cluster
+			if (!product) {
+				product = getSuperFromComp(0, newNumD, 0, newNumV);
+			}
 
 			// Check that the reaction can occur
 			if (product
@@ -890,6 +1047,11 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			newComp[toCompIdx(Species::T)] = newNumT;
 			newComp[toCompIdx(Species::V)] = newNumV;
 			auto product = get(ReactantType::PSIMixed, newComp);
+
+			// Check if the product can be a super cluster
+			if (!product) {
+				product = getSuperFromComp(0, 0, newNumT, newNumV);
+			}
 
 			// Check that the reaction can occur
 			if (product
@@ -937,9 +1099,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| heIReactant.getDiffusionFactor() > 0.0)) {
 
-				int a[4] = {newNumHe, 0, 0, newNumI};
-				defineProductionReaction(heReactant, heIReactant, *product,
-						a);
+				int a[4] = { newNumHe, 0, 0, newNumI };
+				defineProductionReaction(heReactant, heIReactant, *product, a);
 			}
 		}
 	}
@@ -978,9 +1139,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (iReactant.getDiffusionFactor() > 0.0
 							|| heIReactant.getDiffusionFactor() > 0.0)) {
 
-				int a[4] = {newNumHe, 0, 0, newNumI};
-				defineProductionReaction(iReactant, heIReactant, *product,
-						a);
+				int a[4] = { newNumHe, 0, 0, newNumI };
+				defineProductionReaction(iReactant, heIReactant, *product, a);
 			}
 		}
 	}
@@ -1016,9 +1176,8 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| iReactant.getDiffusionFactor() > 0.0)) {
 
-				int a[4] = {newNumHe, 0, 0, newNumI};
-				defineProductionReaction(heReactant, iReactant, *product,
-						a);
+				int a[4] = { newNumHe, 0, 0, newNumI };
+				defineProductionReaction(heReactant, iReactant, *product, a);
 			}
 		}
 	}
@@ -2536,13 +2695,15 @@ double PSIClusterReactionNetwork::computeBindingEnergy(
 }
 
 IReactant * PSIClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nHe,
+		IReactant::SizeType nD, IReactant::SizeType nT,
 		IReactant::SizeType nV) {
 
 	// Requests for finding a particular supercluster have high locality.
 	// See if the last supercluster we were asked to find is the right
 	// one for this request.
 	static IReactant* lastRet = nullptr;
-	if (lastRet and static_cast<PSISuperCluster*>(lastRet)->isIn(nHe, 0, 0, nV)) {
+	if (lastRet
+			and static_cast<PSISuperCluster*>(lastRet)->isIn(nHe, nD, nT, nV)) {
 		return lastRet;
 	}
 
@@ -2553,7 +2714,7 @@ IReactant * PSIClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nHe,
 
 		auto const& reactant =
 				static_cast<PSISuperCluster&>(*(superMapItem.second));
-		if (reactant.isIn(nHe, 0, 0, nV)) {
+		if (reactant.isIn(nHe, nD, nT, nV)) {
 			return superMapItem.second.get();
 		}
 	}

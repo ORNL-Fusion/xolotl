@@ -23,9 +23,9 @@ namespace xolotlCore {
 class PSISuperCluster: public PSICluster {
 
 private:
-	static std::string buildName(double nHe, double nV) {
+	static std::string buildName(double nHe, double nD, double nT, double nV) {
 		std::stringstream nameStream;
-		nameStream << "He_" << nHe << "V_" << nV;
+		nameStream << "He_" << nHe << "D_" << nD << "T_" << nT << "V_" << nV;
 		return nameStream.str();
 	}
 
@@ -244,7 +244,7 @@ private:
 	/**
 	 * The list of clusters gathered in this.
 	 */
-	std::set<std::pair<int, int> > heVList;
+	std::set<std::tuple<int, int, int, int> > heVList;
 
 	//! The list of optimized effective reacting pairs.
 	ProductionPairMap effReactingList;
@@ -285,17 +285,13 @@ public:
 	 * The constructor. All SuperClusters must be initialized with its
 	 * composition.
 	 *
-	 * @param numHe The mean number of helium atoms in this cluster
-	 * @param numV The mean number of vacancies in this cluster
+	 * @param num The mean number of atoms in this cluster
 	 * @param nTot The total number of clusters in this cluster
-	 * @param heWidth The width of this super cluster in the helium direction
-	 * @param vWidth The width of this super cluster in the vacancy direction
-	 * @param radius The mean radius
-	 * @param energy The mean formation energy
+	 * @param width The width of this super clusteron
+	 * @param _network The network
 	 * @param registry The performance handler registry
 	 */
-	PSISuperCluster(double numHe, double numV, int nTot, int heWidth,
-			int vWidth, IReactionNetwork& _network,
+	PSISuperCluster(double num[4], int nTot, int width[4], IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
@@ -315,8 +311,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	void resultFrom(ProductionReaction& reaction, int a[4] = { },
-			int b[4] = { }) override;
+	void resultFrom(ProductionReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -335,7 +331,7 @@ public:
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
+	void participateIn(ProductionReaction& reaction, int a[4] = defaultInit) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -356,8 +352,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	void participateIn(DissociationReaction& reaction, int a[4] = { },
-			int b[4] = { }) override;
+	void participateIn(DissociationReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -377,7 +373,7 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit) override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -402,7 +398,7 @@ public:
 	/**
 	 * Set the HeV vector and compute different parameters
 	 */
-	void setHeVVector(std::set<std::pair<int, int> > vec);
+	void setHeVVector(std::set<std::tuple<int, int, int, int> > vec);
 
 	/**
 	 * This operation returns the current concentration.
@@ -689,7 +685,7 @@ public:
 		if (!bounds[3].contains(nV))
 			return false;
 
-		return (heVList.find(std::make_pair(nHe, nV)) != heVList.end());
+		return (heVList.find(std::make_tuple(nHe, nD, nT, nV)) != heVList.end());
 	}
 
 	/**

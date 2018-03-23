@@ -252,8 +252,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	void resultFrom(ProductionReaction& reaction, int a[4] = { },
-			int b[4] = { }) override;
+	void resultFrom(ProductionReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -272,7 +272,7 @@ public:
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
+	void participateIn(ProductionReaction& reaction, int a[4] = defaultInit) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -293,8 +293,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	void participateIn(DissociationReaction& reaction, int a[4] = { },
-			int b[4] = { }) override;
+	void participateIn(DissociationReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -314,7 +314,7 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit) override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.

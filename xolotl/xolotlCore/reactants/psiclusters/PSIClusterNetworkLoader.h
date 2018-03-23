@@ -19,22 +19,8 @@ namespace xolotlCore {
  * This class will load a reaction network composed of PSIClusters from an
  * inputstream.
  *
- * The data in the stream should contain the information for a single cluster on
- * each line with the following quantities specified and separated by a single
- * space each:
- * > The number of He in the cluster
- * > The number of V in the cluster
- * > The number of I in the cluster
- * > The formation energy
- *
  * Lines of comments starting with a "#" will be ignored as will lines that do
  * not clearly provide the information above.
- *
- * The network will be returned as a ReactionNetwork of PSIClusters ordered with
- * single-species He, V and I clusters first and all mixed clusters coming
- * last. Each species is ordered from the smallest cluster size, (1), to the
- * maximum size for that cluster. Instances of the appropriate cluster type are
- * instantiated during the loading process, but returned as PSIClusters.
  */
 class PSIClusterNetworkLoader: public NetworkLoader {
 
@@ -71,26 +57,20 @@ protected:
 	int maxV;
 
 	/**
-	 * The width of the group in the helium direction.
+	 * The width of the group.
 	 */
-	int heSectionWidth;
-
-	/**
-	 * The width of the group in the vacancy direction.
-	 */
-	int vSectionWidth;
+	int sectionWidth[4] = {};
 
 	/**
 	 * The list of clusters that will be grouped.
 	 */
-	std::set<std::pair<int, int> > heVList;
+	std::set<std::tuple<int, int, int, int> > heVList;
 
 	/**
 	 * Private nullary constructor.
 	 */
 	PSIClusterNetworkLoader() :
-			NetworkLoader(), vMin(1000000), maxHe(0), maxI(0), maxV(0), heSectionWidth(
-					1), vSectionWidth(1) {
+			NetworkLoader(), vMin(1000000), maxHe(0), maxI(0), maxV(0), maxD(0), maxT(0) {
 	}
 
 	/**
@@ -198,18 +178,10 @@ public:
 	 * This operation will set the helium width for the grouping scheme.
 	 *
 	 * @param w The value of the width
+	 * @param axis The direction for the width
 	 */
-	void setHeWidth(int w) {
-		heSectionWidth = w;
-	}
-
-	/**
-	 * This operation will set the vacancy width for the grouping scheme.
-	 *
-	 * @param w The value of the width
-	 */
-	void setVWidth(int w) {
-		vSectionWidth = w;
+	void setWidth(int w, int axis) {
+		sectionWidth[axis] = w;
 	}
 };
 

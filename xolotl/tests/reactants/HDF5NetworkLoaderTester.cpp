@@ -112,8 +112,8 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	loader.setFilename(filename);
 	// Set grouping parameters
 	loader.setVMin(28);
-	loader.setHeWidth(4);
-	loader.setVWidth(2);
+	loader.setWidth(4, 0);
+	loader.setWidth(2, 3);
 
 	// Create default options
 	Options opts;

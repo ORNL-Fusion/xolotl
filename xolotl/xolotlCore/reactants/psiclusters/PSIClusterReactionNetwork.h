@@ -79,17 +79,20 @@ private:
 	 * Find the super cluster that contains the original cluster with nHe
 	 * helium atoms and nV vacancies.
 	 *
-	 * @param nHe the type of the compound reactant
-	 * @param nV an array containing the sizes of each piece of the reactant.
+	 * @param nHe The number of helium atoms
+	 * @param nD The number of deuterium atoms
+	 * @param nT The number of tritium atoms
+	 * @param nV The number of vacancies
 	 * @return The super cluster representing the cluster with nHe helium
 	 * and nV vacancies, or nullptr if no such cluster exists.
 	 */
 	IReactant * getSuperFromComp(IReactant::SizeType nHe,
+			IReactant::SizeType nD, IReactant::SizeType nT,
 			IReactant::SizeType nV);
 
-	ProductionReaction& defineReactionBase(IReactant& r1, IReactant& r2, int a[4] =
-			{}, bool secondProduct = false)
-			__attribute__((always_inline)) {
+	ProductionReaction& defineReactionBase(IReactant& r1, IReactant& r2,
+			int a[4] = defaultInit, bool secondProduct = false)
+					__attribute__((always_inline)) {
 
 		// Add a production reaction to our network.
 		std::unique_ptr<ProductionReaction> reaction(
@@ -126,9 +129,8 @@ private:
 	}
 
 	void defineProductionReaction(IReactant& r1, IReactant& super,
-			IReactant& product, int a[4] = {}, int b[4] = {},
+			IReactant& product, int a[4] = defaultInit, int b[4] = defaultInit,
 			bool secondProduct = false) {
-
 		// Define the basic production reaction.
 		auto& reaction = defineReactionBase(r1, super, b, secondProduct);
 
@@ -157,7 +159,8 @@ private:
 
 	// TODO should we default a, b, c, d to 0?
 	void defineDissociationReaction(ProductionReaction& forwardReaction,
-			IReactant& emitting, int a[4] = {}, int b[4] = {}) {
+			IReactant& emitting, int a[4] = defaultInit,
+			int b[4] = defaultInit) {
 
 		std::unique_ptr<DissociationReaction> dissociationReaction(
 				new DissociationReaction(emitting, forwardReaction.first,
@@ -193,7 +196,8 @@ private:
 	 * @param reaction The reaction to test.
 	 * @return true iff dissociation for the given reaction is allowed.
 	 */
-	bool canDissociate(IReactant& emittingReactant, ProductionReaction& reaction) const;
+	bool canDissociate(IReactant& emittingReactant,
+			ProductionReaction& reaction) const;
 
 	/**
 	 * Add the dissociation connectivity for the reverse reaction if it is allowed.
@@ -205,7 +209,8 @@ private:
 	 *
 	 */
 	void checkForDissociation(IReactant& emittingReactant,
-			ProductionReaction& reaction, int a[4] = {}, int b[4] = {});
+			ProductionReaction& reaction, int a[4] = defaultInit, int b[4] =
+					defaultInit);
 
 public:
 
@@ -281,7 +286,7 @@ public:
 	 *
 	 * @return The list of compositions
 	 */
-	virtual std::vector< std::vector <int> > getCompositionList() const override;
+	virtual std::vector<std::vector<int> > getCompositionList() const override;
 
 	/**
 	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.

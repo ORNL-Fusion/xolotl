@@ -11,26 +11,26 @@ using namespace xolotlCore;
  */
 std::vector<double> psiMomentPartials[4];
 
-PSISuperCluster::PSISuperCluster(double numHe, double numV, int _nTot,
-		int heWidth, int vWidth, IReactionNetwork& _network,
+PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4],
+		IReactionNetwork& _network,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		PSICluster(_network, registry, buildName(numHe, numV)), nTot(_nTot), l0(
-				0.0) {
-	// Set the cluster size as the sum of
-	// the number of Helium and Vacancies
-	numAtom[0] = numHe;
-	numAtom[3] = numV;
-	size = (int) (numHe + numV);
+		PSICluster(_network, registry,
+				buildName(num[0], num[1], num[2], num[3])), nTot(_nTot), l0(0.0) {
+	// Loop on the axis
+	for (int i = 0; i < 4; i++) {
+		// Set the cluster size as the sum of
+		// the number of Helium and Vacancies
+		numAtom[i] = num[i];
+		size += (int) num[i];
+		// Set the width
+		sectionWidth[i] = width[i];
+	}
 
 	// Update the composition map
-	composition[toCompIdx(Species::He)] = (int) numHe;
-	composition[toCompIdx(Species::V)] = (int) numV;
-
-	// Set the width
-	sectionWidth[0] = heWidth;
-	sectionWidth[1] = 1;
-	sectionWidth[2] = 1;
-	sectionWidth[3] = vWidth;
+	composition[toCompIdx(Species::He)] = (int) num[0];
+	composition[toCompIdx(Species::D)] = (int) num[1];
+	composition[toCompIdx(Species::T)] = (int) num[2];
+	composition[toCompIdx(Species::V)] = (int) num[3];
 
 	// Set the formation energy
 	formationEnergy = 0.0; // It is set to 0.0 because we do not want the super clusters to undergo dissociation
@@ -454,21 +454,24 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 	return;
 }
 
-void PSISuperCluster::setHeVVector(std::set<std::pair<int, int> > vec) {
+void PSISuperCluster::setHeVVector(
+		std::set<std::tuple<int, int, int, int> > vec) {
 	// Copy the list of coordinates
 	heVList = vec;
 
 	// Initialize the dispersion sum
 	double nSquare[4] = { };
 	// Update the network map, compute the radius and dispersions
-	for (auto it = heVList.begin(); it != heVList.end(); it++) {
+	for (auto const& pair : heVList) {
 		reactionRadius += xolotlCore::tungstenLatticeConstant
-				* pow((3.0 * (double) ((*it).second)) / xolotlCore::pi,
+				* pow((3.0 * (double) (std::get<3>(pair))) / xolotlCore::pi,
 						(1.0 / 3.0)) * 0.5 / (double) nTot;
 
 		// Compute nSquare for the dispersion
-		nSquare[0] += (double) (*it).first * (*it).first;
-		nSquare[3] += (double) (*it).second * (*it).second;
+		nSquare[0] += (double) (std::get<0>(pair) * std::get<0>(pair));
+		nSquare[1] += (double) (std::get<1>(pair) * std::get<1>(pair));
+		nSquare[2] += (double) (std::get<2>(pair) * std::get<2>(pair));
+		nSquare[3] += (double) (std::get<3>(pair) * std::get<3>(pair));
 	}
 
 	// Loop on the different type of clusters in grouping
@@ -495,16 +498,19 @@ void PSISuperCluster::setHeVVector(std::set<std::pair<int, int> > vec) {
 
 double PSISuperCluster::getTotalConcentration() const {
 	// Initial declarations
-	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
+	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
+			conc = 0.0;
 
 	// Loop on the indices
 	for (auto const& pair : heVList) {
 		// Compute the distances
-		heDistance = getDistance(pair.first, 0);
-		vDistance = getDistance(pair.second, 3);
+		heDistance = getDistance(std::get<0>(pair), 0);
+		dDistance = getDistance(std::get<1>(pair), 1);
+		tDistance = getDistance(std::get<2>(pair), 2);
+		vDistance = getDistance(std::get<3>(pair), 3);
 
 		// Add the concentration of each cluster in the group times its number of helium
-		conc += getConcentration(heDistance, vDistance);
+		conc += getConcentration(heDistance, dDistance, tDistance, vDistance);
 	}
 
 	return conc;
@@ -512,16 +518,20 @@ double PSISuperCluster::getTotalConcentration() const {
 
 double PSISuperCluster::getTotalHeliumConcentration() const {
 	// Initial declarations
-	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
+	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
+			conc = 0.0;
 
 	// Loop on the indices
 	for (auto const& pair : heVList) {
 		// Compute the distances
-		heDistance = getDistance(pair.first, 0);
-		vDistance = getDistance(pair.second, 3);
+		heDistance = getDistance(std::get<0>(pair), 0);
+		dDistance = getDistance(std::get<1>(pair), 1);
+		tDistance = getDistance(std::get<2>(pair), 2);
+		vDistance = getDistance(std::get<3>(pair), 3);
 
 		// Add the concentration of each cluster in the group times its number of helium
-		conc += getConcentration(heDistance, vDistance) * (double) pair.first;
+		conc += getConcentration(heDistance, dDistance, tDistance, vDistance)
+				* (double) std::get<0>(pair);
 	}
 
 	return conc;
@@ -529,16 +539,20 @@ double PSISuperCluster::getTotalHeliumConcentration() const {
 
 double PSISuperCluster::getTotalVacancyConcentration() const {
 	// Initial declarations
-	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
+	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
+			conc = 0.0;
 
 	// Loop on the indices
 	for (auto const& pair : heVList) {
 		// Compute the distances
-		heDistance = getDistance(pair.first, 0);
-		vDistance = getDistance(pair.second, 3);
+		heDistance = getDistance(std::get<0>(pair), 0);
+		dDistance = getDistance(std::get<1>(pair), 1);
+		tDistance = getDistance(std::get<2>(pair), 2);
+		vDistance = getDistance(std::get<3>(pair), 3);
 
-		// Add the concentration of each cluster in the group times its number of vacancies
-		conc += getConcentration(heDistance, vDistance) * (double) pair.second;
+		// Add the concentration of each cluster in the group times its number of helium
+		conc += getConcentration(heDistance, dDistance, tDistance, vDistance)
+				* (double) std::get<3>(pair);
 	}
 
 	return conc;
@@ -546,24 +560,39 @@ double PSISuperCluster::getTotalVacancyConcentration() const {
 
 double PSISuperCluster::getIntegratedVConcentration(int v) const {
 	// Initial declarations
-	int heIndex = 0;
-	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
+	int heIndex = 0, dIndex = 0, tIndex = 0;
+	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
+			conc = 0.0;
 
-	// Loop on the helium width
-	for (int j = 0; j < sectionWidth[0]; j++) {
-		// Compute the helium index
-		heIndex = (int) (numAtom[0] - (double) sectionWidth[0] / 2.0) + j + 1;
+	// Loop on the widths
+	for (int l = 0; l < sectionWidth[2]; l++) {
+		// Compute the tritium index
+		tIndex = (int) (numAtom[2] - (double) sectionWidth[2] / 2.0) + l + 1;
+		for (int k = 0; k < sectionWidth[1]; k++) {
+			// Compute the deuterium index
+			dIndex = (int) (numAtom[1] - (double) sectionWidth[1] / 2.0) + k
+					+ 1;
+			for (int j = 0; j < sectionWidth[0]; j++) {
+				// Compute the helium index
+				heIndex = (int) (numAtom[0] - (double) sectionWidth[0] / 2.0)
+						+ j + 1;
 
-		// Check if this cluster exists
-		if (heVList.find(std::make_pair(heIndex, v)) == heVList.end())
-			continue;
+				// Check if this cluster exists
+				if (heVList.find(std::make_tuple(heIndex, dIndex, tIndex, v))
+						== heVList.end())
+					continue;
 
-		// Compute the distances
-		heDistance = getDistance(heIndex, 0);
-		vDistance = getDistance(v, 3);
+				// Compute the distances
+				heDistance = getDistance(heIndex, 0);
+				dDistance = getDistance(dIndex, 1);
+				tDistance = getDistance(tIndex, 2);
+				vDistance = getDistance(v, 3);
 
-		// Add the concentration of each cluster in the group times its number of helium
-		conc += getConcentration(heDistance, vDistance);
+				// Add the concentration of each cluster in the group times its number of helium
+				conc += getConcentration(heDistance, dDistance, tDistance,
+						vDistance);
+			}
+		}
 	}
 
 	return conc;

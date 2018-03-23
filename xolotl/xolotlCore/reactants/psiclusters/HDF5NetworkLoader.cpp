@@ -34,10 +34,17 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 		numV = (int) (*lineIt)[3];
 		numI = (int) (*lineIt)[4];
 
+		// Check the maxHe, maxD, maxT, needed for the grouping
+		if (numV == 0) {
+			if (numHe > maxHe) maxHe = numHe;
+			if (numD > maxD) maxD = numD;
+			if (numT > maxT) maxT = numT;
+		}
+
 		// If the cluster is big enough to be grouped
-		if (numV >= vMin && numHe > 0) {
+		if (numV >= vMin && (numHe > 0 || numD > 0 || numT > 0)) {
 			// Created the coordinates and store them
-			auto pair = std::make_pair(numHe, numV);
+			auto pair = std::make_tuple(numHe, numD, numT, numV);
 			heVList.emplace(pair);
 		} else {
 			// Create the cluster

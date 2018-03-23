@@ -19,6 +19,8 @@ class IReactionNetwork;
 class ProductionReaction;
 class DissociationReaction;
 
+static int defaultInit[4] = { 0, 0, 0, 0 };
+
 /**
  * A reactant is a general reacting body in a reaction network. It represents
  * any body whose population can change with time due to reactions of any type.
@@ -77,8 +79,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void resultFrom(ProductionReaction& reaction, int a[4] = { },
-			int b[4] = { }) = 0;
+	virtual void resultFrom(ProductionReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) = 0;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -108,7 +110,7 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 */
 	virtual void participateIn(ProductionReaction& reaction,
-			int a[4] = { }) = 0;
+			int a[4] = defaultInit) = 0;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -140,8 +142,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(DissociationReaction& reaction, int a[4] = { },
-			int b[4] = { }) = 0;
+	virtual void participateIn(DissociationReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) = 0;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -172,7 +174,7 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	virtual void emitFrom(DissociationReaction& reaction, int a[4] = { }) = 0;
+	virtual void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit) = 0;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.

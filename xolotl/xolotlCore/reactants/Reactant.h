@@ -231,8 +231,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void resultFrom(ProductionReaction& reaction, int a[4] = { },
-			int b[4] = { }) override {
+	virtual void resultFrom(ProductionReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override {
 		return;
 	}
 
@@ -272,7 +272,7 @@ public:
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(ProductionReaction& reaction, int a[4] = { })
+	virtual void participateIn(ProductionReaction& reaction, int a[4] = defaultInit)
 			override {
 		return;
 	}
@@ -316,8 +316,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(DissociationReaction& reaction, int a[4] = { },
-			int b[4] = { }) override {
+	virtual void participateIn(DissociationReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override {
 		return;
 	}
 
@@ -359,7 +359,7 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	virtual void emitFrom(DissociationReaction& reaction, int a[4] = { }) override {
+	virtual void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit) override {
 		return;
 	}
 
