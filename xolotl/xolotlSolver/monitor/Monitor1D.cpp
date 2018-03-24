@@ -90,7 +90,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / hdf5Stride1D) == hdf5Previous1D)
+	if ((int) ((time + dt / 10.0) / hdf5Stride1D) <= hdf5Previous1D)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
@@ -2354,6 +2354,21 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		if (!flag)
 			hdf5Stride1D = 1.0;
 		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
+
+		// Compute the correct hdf5Previous1D for a restart
+		// Get the last time step written in the HDF5 file
+		int tempTimeStep = -2;
+		std::string networkName = solverHandler.getNetworkName();
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+					networkName, tempTimeStep);
+		if (hasConcentrations) {
+			// Get the previous time from the HDF5 file
+			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
+					tempTimeStep);
+			hdf5Previous1D = (int) (previousTime / hdf5Stride1D);
+		}
 
 		// Don't do anything if both files have the same name
 		if (hdf5OutputName1D != solverHandler.getNetworkName()) {

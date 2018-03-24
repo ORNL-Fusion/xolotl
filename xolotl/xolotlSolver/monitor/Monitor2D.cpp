@@ -1324,6 +1324,21 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		if (!flag)
 			hdf5Stride2D = 1.0;
 
+		// Compute the correct hdf5Previous2D for a restart
+		// Get the last time step written in the HDF5 file
+		int tempTimeStep = -2;
+		std::string networkName = solverHandler.getNetworkName();
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+					networkName, tempTimeStep);
+		if (hasConcentrations) {
+			// Get the previous time from the HDF5 file
+			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
+					tempTimeStep);
+			hdf5Previous2D = (int) (previousTime / hdf5Stride2D);
+		}
+
 		// Don't do anything if both files have the same name
 		if (hdf5OutputName2D != solverHandler.getNetworkName()) {
 
