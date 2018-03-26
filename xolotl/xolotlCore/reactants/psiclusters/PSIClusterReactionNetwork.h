@@ -278,7 +278,7 @@ public:
 	 * @return The number of degrees of freedom
 	 */
 	virtual int getDOF() const override {
-		return size() + 2 * getAll(ReactantType::PSISuper).size() + 1;
+		return size() + 3 * getAll(ReactantType::PSISuper).size() + 1;
 	}
 
 	/**

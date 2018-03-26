@@ -1296,7 +1296,8 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 
 		id++;
 		currCluster.setMomentId(id, 0);
-		currCluster.setMomentId(currCluster.getId(), 1);
+		id++;
+		currCluster.setMomentId(id, 1);
 		currCluster.setMomentId(currCluster.getId(), 2);
 		id++;
 		currCluster.setMomentId(id, 3);
