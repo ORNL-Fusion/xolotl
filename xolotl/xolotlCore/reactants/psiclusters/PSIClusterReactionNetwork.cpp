@@ -1343,6 +1343,7 @@ void PSIClusterReactionNetwork::updateConcentrationsFromArray(
 
 				cluster.setZerothMoment(concentrations[cluster.getId() - 1]);
 				cluster.setMoment(concentrations[cluster.getMomentId(0) - 1], 0);
+				cluster.setMoment(concentrations[cluster.getMomentId(1) - 1], 1);
 				cluster.setMoment(concentrations[cluster.getMomentId(3) - 1], 3);
 			});
 
@@ -1409,42 +1410,35 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		auto const& reactant =
 				static_cast<PSISuperCluster&>(*(superMapItem.second));
 
-		// Get the reactant and its connectivity
-		auto const& connectivity = reactant.getConnectivity();
-		auto connectivityLength = connectivity.size();
-		// Get the helium moment id so that the connectivity can be lined up in
-		// the proper column
-		auto id = reactant.getMomentId(0) - 1;
+		// Loop on the axis
+		for (int i = 0; i < 4; i++) {
+			// T
+			if (i == 2)
+				continue;
 
-		// Create the vector that will be inserted into the dFill map
-		std::vector<int> columnIds;
-		// Add it to the diagonal fill block
-		for (int j = 0; j < connectivityLength; j++) {
-			// The id starts at j*connectivity length and is always offset
-			// by the id, which denotes the exact column.
-			auto index = (id) * dof + j;
-			diagFill[index] = connectivity[j];
-			// Add a column id if the connectivity is equal to 1.
-			if (connectivity[j] == 1) {
-				columnIds.push_back(j);
+			// Get the reactant and its connectivity
+			auto const& connectivity = reactant.getConnectivity();
+			auto connectivityLength = connectivity.size();
+			// Get the helium moment id so that the connectivity can be lined up in
+			// the proper column
+			auto id = reactant.getMomentId(i) - 1;
+
+			// Create the vector that will be inserted into the dFill map
+			std::vector<int> columnIds;
+			// Add it to the diagonal fill block
+			for (int j = 0; j < connectivityLength; j++) {
+				// The id starts at j*connectivity length and is always offset
+				// by the id, which denotes the exact column.
+				auto index = (id) * dof + j;
+				diagFill[index] = connectivity[j];
+				// Add a column id if the connectivity is equal to 1.
+				if (connectivity[j] == 1) {
+					columnIds.push_back(j);
+				}
 			}
+			// Update the map
+			dFillMap[id] = columnIds;
 		}
-		// Update the map
-		dFillMap[id] = columnIds;
-
-		// Get the vacancy moment id so that the connectivity can be lined up in
-		// the proper column
-		id = reactant.getMomentId(3) - 1;
-
-		// Add it to the diagonal fill block
-		for (int j = 0; j < connectivityLength; j++) {
-			// The id starts at j*connectivity length and is always offset
-			// by the id, which denotes the exact column.
-			auto index = (id) * dof + j;
-			diagFill[index] = connectivity[j];
-		}
-		// Update the map
-		dFillMap[id] = columnIds;
 	}
 
 	return;
@@ -1674,17 +1668,18 @@ void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 		auto const& superCluster =
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
-		// Compute the helium moment flux
-		auto flux = superCluster.getMomentFlux(0);
-		// Update the concentration of the cluster
-		auto reactantIndex = superCluster.getMomentId(0) - 1;
-		updatedConcOffset[reactantIndex] += flux;
+		// Loop on the axis
+		for (int i = 0; i < 4; i++) {
+			// T
+			if (i == 2)
+				continue;
 
-		// Compute the vacancy moment flux
-		flux = superCluster.getMomentFlux(3);
-		// Update the concentration of the cluster
-		reactantIndex = superCluster.getMomentId(3) - 1;
-		updatedConcOffset[reactantIndex] += flux;
+			// Compute the moment flux
+			auto flux = superCluster.getMomentFlux(i);
+			// Update the concentration of the cluster
+			auto reactantIndex = superCluster.getMomentId(i) - 1;
+			updatedConcOffset[reactantIndex] += flux;
+		}
 	}
 
 	return;
@@ -1751,65 +1746,41 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		auto const& reactant =
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
-		{
-			// Get the super cluster index
-			auto reactantIndex = reactant.getId() - 1;
+		// Get the super cluster index
+		auto reactantIndex = reactant.getId() - 1;
 
-			// Get the partial derivatives
-			reactant.getPartialDerivatives(clusterPartials);
+		// Get the partial derivatives
+		reactant.getPartialDerivatives(clusterPartials);
 
-			// Get the list of column ids from the map
-			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
+		// Get the list of column ids from the map
+		auto const& pdColIdsVector = dFillMap.at(reactantIndex);
+		// Number of partial derivatives
+		auto pdColIdsVectorSize = pdColIdsVector.size();
+		size[reactantIndex] = pdColIdsVectorSize;
 
-			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
-				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
-				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
+		// Loop over the list of column ids
+		for (int j = 0; j < pdColIdsVectorSize; j++) {
+			// Set the index
+			indices[reactantIndex * dof + j] = pdColIdsVector[j];
+			// Get the partial derivative from the array of all of the partials
+			vals[reactantIndex * dof + j] = clusterPartials[pdColIdsVector[j]];
 
-				// Reset the cluster partial value to zero. This is much faster
-				// than using memset.
-				clusterPartials[pdColIdsVector[j]] = 0.0;
-			}
+			// Reset the cluster partial value to zero. This is much faster
+			// than using memset.
+			clusterPartials[pdColIdsVector[j]] = 0.0;
 		}
 
-		{
-			// Get the helium moment index
-			auto reactantIndex = reactant.getMomentId(0) - 1;
+		// Loop on the axis for the moments
+		for (int i = 0; i < 4; i++) {
+			// T
+			if (i == 2)
+				continue;
+
+			// Get the moment index
+			auto reactantIndex = reactant.getMomentId(i) - 1;
 
 			// Get the partial derivatives
-			reactant.getMomentPartialDerivatives(clusterPartials, 0);
-			// Get the list of column ids from the map
-			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
-
-			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
-				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
-				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
-
-				// Reset the cluster partial value to zero. This is much faster
-				// than using memset.
-				clusterPartials[pdColIdsVector[j]] = 0.0;
-			}
-		}
-
-		{
-			// Get the vacancy moment index
-			auto reactantIndex = reactant.getMomentId(3) - 1;
-
-			// Get the partial derivatives
-			reactant.getMomentPartialDerivatives(clusterPartials, 3);
+			reactant.getMomentPartialDerivatives(clusterPartials, i);
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 			// Number of partial derivatives
