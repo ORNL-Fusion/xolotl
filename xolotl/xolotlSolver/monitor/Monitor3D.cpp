@@ -1045,6 +1045,10 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 			gridPointSolution[id] = 0.0;
 			id = cluster.getMomentId(0) - 1;
 			gridPointSolution[id] = 0.0;
+			id = cluster.getMomentId(1) - 1;
+			gridPointSolution[id] = 0.0;
+			id = cluster.getMomentId(2) - 1;
+			gridPointSolution[id] = 0.0;
 			id = cluster.getMomentId(3) - 1;
 			gridPointSolution[id] = 0.0;
 		}
