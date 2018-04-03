@@ -65,7 +65,7 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / hdf5Stride0D) == hdf5Previous0D)
+	if ((int) ((time + dt / 10.0) / hdf5Stride0D) <= hdf5Previous0D)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
@@ -406,43 +406,64 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		if (!flag)
 			hdf5Stride0D = 1.0;
 
-		PetscInt Mx;
-		PetscErrorCode ierr;
+		// Compute the correct hdf5Previous0D for a restart
+		// Get the last time step written in the HDF5 file
+		int tempTimeStep = -2;
+		std::string networkName = solverHandler.getNetworkName();
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+					networkName, tempTimeStep);
+		if (hasConcentrations) {
+			// Get the previous time from the HDF5 file
+			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
+					tempTimeStep);
+			hdf5Previous0D = (int) (previousTime / hdf5Stride0D);
+		}
 
-		// Get the da from ts
-		DM da;
-		ierr = TSGetDM(ts, &da);
-		checkPetscError(ierr, "setupPetsc0DMonitor: TSGetDM failed.");
+		// Don't do anything if both files have the same name
+		if (hdf5OutputName0D != solverHandler.getNetworkName()) {
 
-		// Get the size of the total grid
-		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE);
-		checkPetscError(ierr, "setupPetsc0DMonitor: DMDAGetInfo failed.");
+			PetscInt Mx;
+			PetscErrorCode ierr;
 
-		// Initialize the HDF5 file for all the processes
-		xolotlCore::HDF5Utils::initializeFile(hdf5OutputName0D);
+			// Get the da from ts
+			DM da;
+			ierr = TSGetDM(ts, &da);
+			checkPetscError(ierr, "setupPetsc0DMonitor: TSGetDM failed.");
 
-		// Get the solver handler
-		auto& solverHandler = PetscSolver::getSolverHandler();
+			// Get the size of the total grid
+			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
+					PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE);
+			checkPetscError(ierr, "setupPetsc0DMonitor: DMDAGetInfo failed.");
 
-		// Get the physical grid (which is empty)
-		auto grid = solverHandler.getXGrid();
+			// Initialize the HDF5 file for all the processes
+			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName0D);
 
-		// Save the header in the HDF5 file
-		xolotlCore::HDF5Utils::fillHeader(grid);
+			// Get the solver handler
+			auto& solverHandler = PetscSolver::getSolverHandler();
 
-		// Get the compostion list and save it
-		auto compList = network.getCompositionList();
-		xolotlCore::HDF5Utils::fillNetworkComp(compList);
+			// Get the physical grid (which is empty)
+			auto grid = solverHandler.getXGrid();
 
-		// Save the network in the HDF5 file
-		if (!solverHandler.getNetworkName().empty())
-			xolotlCore::HDF5Utils::fillNetwork(solverHandler.getNetworkName());
+			// Save the header in the HDF5 file
+			xolotlCore::HDF5Utils::fillHeader(grid);
 
-		// Finalize the HDF5 file
-		xolotlCore::HDF5Utils::finalizeFile();
+			// Get the compostion list and save it
+			auto compList = network.getCompositionList();
+			xolotlCore::HDF5Utils::fillNetworkComp(compList);
+
+			// Save the network in the HDF5 file
+			if (!solverHandler.getNetworkName().empty())
+				xolotlCore::HDF5Utils::fillNetwork(
+						solverHandler.getNetworkName());
+
+			// Finalize the HDF5 file
+			xolotlCore::HDF5Utils::finalizeFile();
+		}
 
 		// startStop0D will be called at each timestep
 		ierr = TSMonitorSet(ts, startStop0D, NULL, NULL);

@@ -159,9 +159,9 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] =
-			{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-					0.0, 0.0, 0.0, -2.33718e-19, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+	double knownPartials[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -2.24076e-19, 0.0, 0.0, 0.0, 0.0, 0.0,
+			0.0, 0.0 };
 	// Set the concentration
 	cluster->setConcentration(0.5);
 
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
 
 	// Check the radius
-	BOOST_REQUIRE_CLOSE(0.156082, cluster->getReactionRadius(), 0.001);
+	BOOST_REQUIRE_CLOSE(0.137265, cluster->getReactionRadius(), 0.001);
 
 	// Finalize MPI
 	MPI_Finalize();

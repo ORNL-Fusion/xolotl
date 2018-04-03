@@ -463,9 +463,15 @@ void PSISuperCluster::setHeVVector(
 	double nSquare[4] = { };
 	// Update the network map, compute the radius and dispersions
 	for (auto const& pair : heVList) {
-		reactionRadius += xolotlCore::tungstenLatticeConstant
-				* pow((3.0 * (double) (std::get<3>(pair))) / xolotlCore::pi,
-						(1.0 / 3.0)) * 0.5 / (double) nTot;
+		double rad = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
+				+ pow(
+						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0)
+								* std::get<3>(pair)) / (8.0 * xolotlCore::pi),
+						(1.0 / 3.0))
+				- pow(
+						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
+								/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+		reactionRadius += rad / (double) nTot;
 
 		// Compute nSquare for the dispersion
 		nSquare[0] += (double) (std::get<0>(pair) * std::get<0>(pair));
