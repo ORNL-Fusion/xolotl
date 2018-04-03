@@ -1488,10 +1488,6 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 				* comp[toCompIdx(toSpecies(type))];
 	}
 
-	// No super clusters for now for D and T
-	if (i > 0)
-		return atomConc;
-
 	// Sum over all super clusters.
 	for (auto const& currMapItem : getAll(ReactantType::PSISuper)) {
 
@@ -1499,8 +1495,8 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 		auto const& cluster =
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
-		// Add its total helium concentration helium concentration
-		atomConc += cluster.getTotalHeliumConcentration();
+		// Add its total atom concentration
+		atomConc += cluster.getTotalAtomConcentration(i);
 	}
 
 	return atomConc;
@@ -1539,10 +1535,6 @@ double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 				* comp[toCompIdx(toSpecies(type))];
 	}
 
-	// No super clusters for now for D and T
-	if (i > 0)
-		return atomConc;
-
 	// Sum over all super clusters.
 	for (auto const& currMapItem : getAll(ReactantType::PSISuper)) {
 
@@ -1551,7 +1543,7 @@ double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		// Add its total helium concentration helium concentration
-		atomConc += cluster.getTotalHeliumConcentration();
+		atomConc += cluster.getTotalAtomConcentration(i);
 	}
 
 	return atomConc;

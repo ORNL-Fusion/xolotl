@@ -1502,7 +1502,7 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 				auto const& cluster =
 						static_cast<PSISuperCluster&>(*(superMapItem.second));
 				concTot += cluster.getTotalConcentration();
-				heliumTot += cluster.getTotalHeliumConcentration();
+				heliumTot += cluster.getTotalAtomConcentration();
 			}
 
 			// Compute the mean size of helium at this depth

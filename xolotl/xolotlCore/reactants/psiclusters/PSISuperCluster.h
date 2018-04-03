@@ -291,7 +291,8 @@ public:
 	 * @param _network The network
 	 * @param registry The performance handler registry
 	 */
-	PSISuperCluster(double num[4], int nTot, int width[4], IReactionNetwork& _network,
+	PSISuperCluster(double num[4], int nTot, int width[4],
+			IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
@@ -331,7 +332,8 @@ public:
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, int a[4] = defaultInit) override;
+	void participateIn(ProductionReaction& reaction, int a[4] = defaultInit)
+			override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -373,7 +375,8 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit)
+			override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -433,11 +436,12 @@ public:
 	double getTotalConcentration() const;
 
 	/**
-	 * This operation returns the current total concentration of helium in the group.
-
+	 * This operation returns the current total concentration of given atom in the group.
+	 *
+	 * @param axis The given atom
 	 * @return The concentration
 	 */
-	double getTotalHeliumConcentration() const;
+	double getTotalAtomConcentration(int axis = 0) const;
 
 	/**
 	 * This operation returns the current total concentration of vacancies in the group.

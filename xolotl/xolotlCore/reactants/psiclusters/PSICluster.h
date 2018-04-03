@@ -4,6 +4,7 @@
 // Includes
 #include <Reactant.h>
 #include "IntegerRange.h"
+#include <MathUtils.h>
 
 namespace xolotlPerf {
 class ITimer;
