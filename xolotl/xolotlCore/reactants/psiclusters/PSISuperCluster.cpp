@@ -601,15 +601,15 @@ double PSISuperCluster::getIntegratedVConcentration(int v) const {
 	// Loop on the widths
 	for (int l = 0; l < sectionWidth[2]; l++) {
 		// Compute the tritium index
-		tIndex = (int) (numAtom[2] - (double) sectionWidth[2] / 2.0) + l + 1;
+		tIndex = (int) (numAtom[2] + 0.5 - (double) sectionWidth[2] / 2.0) + l;
 		for (int k = 0; k < sectionWidth[1]; k++) {
 			// Compute the deuterium index
-			dIndex = (int) (numAtom[1] - (double) sectionWidth[1] / 2.0) + k
-					+ 1;
+			dIndex = (int) (numAtom[1] + 0.5 - (double) sectionWidth[1] / 2.0)
+					+ k;
 			for (int j = 0; j < sectionWidth[0]; j++) {
 				// Compute the helium index
-				heIndex = (int) (numAtom[0] - (double) sectionWidth[0] / 2.0)
-						+ j + 1;
+				heIndex = (int) (numAtom[0] + 0.5
+						- (double) sectionWidth[0] / 2.0) + j;
 
 				// Check if this cluster exists
 				if (heVList.find(std::make_tuple(heIndex, dIndex, tIndex, v))
