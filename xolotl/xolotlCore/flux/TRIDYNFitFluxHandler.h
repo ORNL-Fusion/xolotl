@@ -185,7 +185,10 @@ public:
 		if (xGrid.size() == 0)
 			return;
 
-		// Loop on the different types of clusters, He, W, D, t
+		// Clear the norm factors
+		normFactors.clear();
+
+		// Loop on the different types of clusters, He, W, D, T
 		for (int index = 0; index < 4; index++) {
 			// Compute the norm factor because the fit function has an
 			// arbitrary amplitude
@@ -204,9 +207,10 @@ public:
 			// Factor the incident flux will be multiplied by to get
 			// the wanted intensity
 			double fluxNormalized = 0.0;
-			if (normFactors[index] > 0.0)
+			if (normFactors[index] > 0.0) {
 				fluxNormalized = fluxAmplitude * reductionFactors[index]
 						/ normFactors[index];
+			}
 
 			// Select the right vector
 			std::vector<double> *fluxVec = nullptr;
