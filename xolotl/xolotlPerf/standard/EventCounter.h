@@ -48,14 +48,14 @@ public:
 	 * This operation returns the value of the EventCounter,
 	 * the frequency of the specified event.
 	 */
-	virtual IEventCounter::ValType getValue() const {
+	IEventCounter::ValType getValue() const override {
 		return value;
 	}
 
 	/**
 	 * This operation increments the EventCounter.
 	 */
-	virtual void increment() {
+	void increment() override {
 		++value;
 	}
 

@@ -28,7 +28,7 @@ public:
 	 * @param name The object's name.
 	 * @return The object with the given name.
 	 */
-	virtual std::shared_ptr<ITimer> getTimer(const std::string& name);
+	std::shared_ptr<ITimer> getTimer(const std::string& name) override;
 
 	/**
 	 * Look up and return a hardware counter set in the current scope.
@@ -37,8 +37,9 @@ public:
 	 * @param name The object's name.
 	 * @return The object with the given name.
 	 */
-	virtual std::shared_ptr<IHardwareCounter> getHardwareCounter(
-			const std::string& name, const IHardwareCounter::SpecType& ctrSpec);
+	std::shared_ptr<IHardwareCounter> getHardwareCounter(
+			const std::string& name,
+            const IHardwareCounter::SpecType& ctrSpec) override;
 };
 
 } // namespace xolotlPerf

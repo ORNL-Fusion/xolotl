@@ -3,8 +3,6 @@
 
 namespace xolotlPerf {
 
-OSRTimestamp OSRTimestamp::invalidValue;
-
 void OSTimer::start(void) {
 	if (isRunning()) {
 		throw std::runtime_error(
@@ -12,7 +10,7 @@ void OSTimer::start(void) {
 	}
 
 	// Start the timer by sampling the current time.
-	startTime.SetToCurrentTime();
+    startTime = Clock::now();
 }
 
 void OSTimer::stop(void) {
@@ -22,15 +20,14 @@ void OSTimer::stop(void) {
 	}
 
 	// Stop the timer by sampling the ending time.
-	OSRTimestamp endTimestamp;
-	endTimestamp.SetToCurrentTime();
+    auto endTime = Clock::now();
 
 	// Form the difference between the end timestamp and
 	// our saved start timestamp.
-	val += (endTimestamp - startTime).ToSeconds();
+    val += static_cast<Duration>(endTime - startTime).count();
 
 	// Indicate the timer is no longer running.
-	startTime = OSRTimestamp::invalidValue;
+	startTime = invalidTimestamp;
 }
 
 void OSTimer::reset(void) {
