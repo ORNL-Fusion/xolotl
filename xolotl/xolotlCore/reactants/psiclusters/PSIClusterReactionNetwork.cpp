@@ -1585,32 +1585,41 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		{
-			// Get the super cluster index
+			// Determine cluster's item or slice in the 
+            // size/indices/vals arrays.
 			auto reactantIndex = reactant.getId() - 1;
 
-			// Get the partial derivatives
-			reactant.getPartialDerivatives(clusterPartials);
-
-			// Get the list of column ids from the map
+            // Determine column ids of needed partial derivatives.
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
 
-			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
+            // Note number of valid partial derivatives for this reactant.
+            size[reactantIndex] = pdColIdsVector.size();
+
+            // Save column ids of valid partials in indices array,
+            // and build mapping of dense to sparse representations.
+            std::unordered_map<size_t, size_t> partialsIdxMap;
+            for (int j = 0; j < pdColIdsVector.size(); ++j) {
 
                 auto colId = pdColIdsVector[j];
+                
+                // Save the current valid partial derivative index
+                // to location 'j' in reactant's slide of indices array.
+                indices[reactantIndex * dof + j] = colId;
 
-				// Set the index
-				indices[reactantIndex * dof + j] = colId;
-				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] = clusterPartials[colId];
+                // Note mapping of colId to its location in the reactant's
+                // slice of the vals array.
+                partialsIdxMap[colId] = j;
+            }
 
-				// Reset the cluster partial value to zero. This is much faster
-				// than using memset.
-				clusterPartials[colId] = 0.0;
-			}
+			// Have reactant compute its partial derivatives
+            // to its correct locations within the vals array.
+            // TODO do we want to wrap a vector around this?
+            double* currVals = &(vals[reactantIndex * dof]);
+            for(auto j = 0; j < pdColIdsVector.size(); ++j)
+            {
+                currVals[j] = 0.0;
+            }
+            reactant.computePartialDerivatives(currVals, partialsIdxMap);
 		}
 
 		{

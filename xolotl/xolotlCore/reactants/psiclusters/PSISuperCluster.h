@@ -4,6 +4,7 @@
 // Includes
 #include <string>
 #include <unordered_map>
+#include <cassert>
 #include <Constants.h>
 #include "PSICluster.h"
 #include "IntegerRange.h"
@@ -676,7 +677,13 @@ public:
 	 * the vector should be equal to ReactionNetwork::size().
 	 *
 	 */
-	void getPartialDerivatives(std::vector<double> & partials) const override;
+    void computePartialDerivatives(double* vals,
+            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
+
+	void getPartialDerivatives(std::vector<double> & partials) const override
+    {
+        assert(false);
+    }
 
 	/**
 	 * This operation computes the partial derivatives due to production
@@ -686,8 +693,13 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
+	void computeProductionPartialDerivatives(double* vals,
+            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
 	void getProductionPartialDerivatives(std::vector<double> & partials) const
-			override;
+			override
+    {
+        assert(false);
+    }
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -697,8 +709,13 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
+	void computeCombinationPartialDerivatives(double* vals,
+            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
 	void getCombinationPartialDerivatives(std::vector<double> & partials) const
-			override;
+			override
+    {
+        assert(false);
+    }
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -708,8 +725,13 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
+	void computeDissociationPartialDerivatives(double* vals,
+            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
 	void getDissociationPartialDerivatives(std::vector<double> & partials) const
-			override;
+			override
+    {
+        assert(false);
+    }
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -719,8 +741,13 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
+	void computeEmissionPartialDerivatives(double* vals,
+            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
 	void getEmissionPartialDerivatives(std::vector<double> & partials) const
-			override;
+			override
+    {
+        assert(false);
+    }
 
 	/**
 	 * This operation computes the partial derivatives for the helium momentum.

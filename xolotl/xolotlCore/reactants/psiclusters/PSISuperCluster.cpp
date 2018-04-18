@@ -847,23 +847,24 @@ double PSISuperCluster::getCombinationFlux() {
 	return flux;
 }
 
-void PSISuperCluster::getPartialDerivatives(
-		std::vector<double> & partials) const {
+void PSISuperCluster::computePartialDerivatives(double* partials,
+        const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
+
 	// Reinitialize the momentum partial derivatives vector
 	std::fill(psiHeMomentPartials.begin(), psiHeMomentPartials.end(), 0.0);
 	std::fill(psiVMomentPartials.begin(), psiVMomentPartials.end(), 0.0);
 
 	// Get the partial derivatives for each reaction type
-	getProductionPartialDerivatives(partials);
-	getCombinationPartialDerivatives(partials);
-	getDissociationPartialDerivatives(partials);
-	getEmissionPartialDerivatives(partials);
+	computeProductionPartialDerivatives(partials, partialsIdxMap);
+	computeCombinationPartialDerivatives(partials, partialsIdxMap);
+	computeDissociationPartialDerivatives(partials, partialsIdxMap);
+	computeEmissionPartialDerivatives(partials, partialsIdxMap);
 
 	return;
 }
 
-void PSISuperCluster::getProductionPartialDerivatives(
-		std::vector<double> & partials) const {
+void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
+        const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
 
 	// Production
 	// A + B --> D, D being this cluster
@@ -875,7 +876,7 @@ void PSISuperCluster::getProductionPartialDerivatives(
 
 	// Loop over all the reacting pairs
 	std::for_each(effReactingList.begin(), effReactingList.end(),
-			[this,&partials](ProductionPairMap::value_type const& currMapItem) {
+			[this,&partials,&partialsIdxMap](ProductionPairMap::value_type const& currMapItem) {
 
 				auto const& currPair = currMapItem.second;
 				// Get the two reacting clusters
@@ -888,58 +889,77 @@ void PSISuperCluster::getProductionPartialDerivatives(
 				double lVA = firstReactant.getVMomentum();
 				double lVB = secondReactant.getVMomentum();
 
+
 				// Compute the contribution from the first part of the reacting pair
 				auto value = currPair.kConstant / (double) nTot;
-				auto index = firstReactant.getId() - 1;
-				partials[index] += value
-				* (currPair.a000 * l0B + currPair.a010 * lHeB + currPair.a020 * lVB);
-				psiHeMomentPartials[index] += value
-				* (currPair.a001 * l0B + currPair.a011 * lHeB + currPair.a021 * lVB);
-				psiVMomentPartials[index] += value
-				* (currPair.a002 * l0B + currPair.a012 * lHeB + currPair.a022 * lVB);
-				index = firstReactant.getHeMomentumId() - 1;
-				partials[index] += value
-				* (currPair.a100 * l0B + currPair.a110 * lHeB + currPair.a120 * lVB);
-				psiHeMomentPartials[index] += value
-				* (currPair.a101 * l0B + currPair.a111 * lHeB + currPair.a121 * lVB);
-				psiVMomentPartials[index] += value
-				* (currPair.a102 * l0B + currPair.a112 * lHeB + currPair.a122 * lVB);
-				index = firstReactant.getVMomentumId() - 1;
-				partials[index] += value
-				* (currPair.a200 * l0B + currPair.a210 * lHeB + currPair.a220 * lVB);
-				psiHeMomentPartials[index] += value
-				* (currPair.a201 * l0B + currPair.a211 * lHeB + currPair.a221 * lVB);
-				psiVMomentPartials[index] += value
-				* (currPair.a202 * l0B + currPair.a212 * lHeB + currPair.a222 * lVB);
-				// Compute the contribution from the second part of the reacting pair
-				index = secondReactant.getId() - 1;
-				partials[index] += value
-				* (currPair.a000 * l0A + currPair.a100 * lHeA + currPair.a200 * lVA);
-				psiHeMomentPartials[index] += value
-				* (currPair.a001 * l0A + currPair.a101 * lHeA + currPair.a201 * lVA);
-				psiVMomentPartials[index] += value
-				* (currPair.a002 * l0A + currPair.a102 * lHeA + currPair.a202 * lVA);
-				index = secondReactant.getHeMomentumId() - 1;
-				partials[index] += value
-				* (currPair.a010 * l0A + currPair.a110 * lHeA + currPair.a210 * lVA);
-				psiHeMomentPartials[index] += value
-				* (currPair.a011 * l0A + currPair.a111 * lHeA + currPair.a211 * lVA);
-				psiVMomentPartials[index] += value
-				* (currPair.a012 * l0A + currPair.a112 * lHeA + currPair.a212 * lVA);
-				index = secondReactant.getVMomentumId() - 1;
-				partials[index] += value
-				* (currPair.a020 * l0A + currPair.a120 * lHeA + currPair.a220 * lVA);
-				psiHeMomentPartials[index] += value
-				* (currPair.a021 * l0A + currPair.a121 * lHeA + currPair.a221 * lVA);
-				psiVMomentPartials[index] += value
-				* (currPair.a022 * l0A + currPair.a122 * lHeA + currPair.a222 * lVA);
+                {
+                    auto index = firstReactant.getId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] += value
+                    * (currPair.a000 * l0B + currPair.a010 * lHeB + currPair.a020 * lVB);
+                    psiHeMomentPartials[index] += value
+                    * (currPair.a001 * l0B + currPair.a011 * lHeB + currPair.a021 * lVB);
+                    psiVMomentPartials[index] += value
+                    * (currPair.a002 * l0B + currPair.a012 * lHeB + currPair.a022 * lVB);
+                }
+                {
+                    auto index = firstReactant.getHeMomentumId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] += value
+                    * (currPair.a100 * l0B + currPair.a110 * lHeB + currPair.a120 * lVB);
+                    psiHeMomentPartials[index] += value
+                    * (currPair.a101 * l0B + currPair.a111 * lHeB + currPair.a121 * lVB);
+                    psiVMomentPartials[index] += value
+                    * (currPair.a102 * l0B + currPair.a112 * lHeB + currPair.a122 * lVB);
+                }
+                {
+                    auto index = firstReactant.getVMomentumId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] += value
+                    * (currPair.a200 * l0B + currPair.a210 * lHeB + currPair.a220 * lVB);
+                    psiHeMomentPartials[index] += value
+                    * (currPair.a201 * l0B + currPair.a211 * lHeB + currPair.a221 * lVB);
+                    psiVMomentPartials[index] += value
+                    * (currPair.a202 * l0B + currPair.a212 * lHeB + currPair.a222 * lVB);
+                }
+                {
+                    // Compute the contribution from the second part of the reacting pair
+                    auto index = secondReactant.getId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] += value
+                    * (currPair.a000 * l0A + currPair.a100 * lHeA + currPair.a200 * lVA);
+                    psiHeMomentPartials[index] += value
+                    * (currPair.a001 * l0A + currPair.a101 * lHeA + currPair.a201 * lVA);
+                    psiVMomentPartials[index] += value
+                    * (currPair.a002 * l0A + currPair.a102 * lHeA + currPair.a202 * lVA);
+                }
+                {
+                    auto index = secondReactant.getHeMomentumId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] += value
+                    * (currPair.a010 * l0A + currPair.a110 * lHeA + currPair.a210 * lVA);
+                    psiHeMomentPartials[index] += value
+                    * (currPair.a011 * l0A + currPair.a111 * lHeA + currPair.a211 * lVA);
+                    psiVMomentPartials[index] += value
+                    * (currPair.a012 * l0A + currPair.a112 * lHeA + currPair.a212 * lVA);
+                }
+                {
+                    auto index = secondReactant.getVMomentumId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] += value
+                    * (currPair.a020 * l0A + currPair.a120 * lHeA + currPair.a220 * lVA);
+                    psiHeMomentPartials[index] += value
+                    * (currPair.a021 * l0A + currPair.a121 * lHeA + currPair.a221 * lVA);
+                    psiVMomentPartials[index] += value
+                    * (currPair.a022 * l0A + currPair.a122 * lHeA + currPair.a222 * lVA);
+                }
 			});
 
 	return;
 }
 
-void PSISuperCluster::getCombinationPartialDerivatives(
-		std::vector<double> & partials) const {
+void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
+        const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
 
 	// Combination
 	// A + B --> D, A being this cluster
@@ -951,7 +971,7 @@ void PSISuperCluster::getCombinationPartialDerivatives(
 
 	// Visit all the combining clusters
 	std::for_each(effCombiningList.begin(), effCombiningList.end(),
-			[this,&partials](CombiningClusterMap::value_type const& currMapItem) {
+			[this,&partials,&partialsIdxMap](CombiningClusterMap::value_type const& currMapItem) {
 				// Get the combining clusters
 				auto const& currComb = currMapItem.second;
 				auto const& cluster = currComb.first;
@@ -961,56 +981,74 @@ void PSISuperCluster::getCombinationPartialDerivatives(
 
 				// Compute the contribution from the combining cluster
 				auto value = currComb.kConstant / (double) nTot;
-				auto index = cluster.getId() - 1;
-				partials[index] -= value
-				* (currComb.a000 * l0 + currComb.a100 * l1He + currComb.a200 * l1V);
-				psiHeMomentPartials[index] -= value
-				* (currComb.a001 * l0 + currComb.a101 * l1He + currComb.a201 * l1V);
-				psiVMomentPartials[index] -= value
-				* (currComb.a002 * l0 + currComb.a102 * l1He + currComb.a202 * l1V);
-				index = cluster.getHeMomentumId() - 1;
-				partials[index] -= value
-				* (currComb.a010 * l0 + currComb.a110 * l1He + currComb.a210 * l1V);
-				psiHeMomentPartials[index] -= value
-				* (currComb.a011 * l0 + currComb.a111 * l1He + currComb.a211 * l1V);
-				psiVMomentPartials[index] -= value
-				* (currComb.a012 * l0 + currComb.a112 * l1He + currComb.a212 * l1V);
-				index = cluster.getVMomentumId() - 1;
-				partials[index] -= value
-				* (currComb.a020 * l0 + currComb.a120 * l1He + currComb.a220 * l1V);
-				psiHeMomentPartials[index] -= value
-				* (currComb.a021 * l0 + currComb.a121 * l1He + currComb.a221 * l1V);
-				psiVMomentPartials[index] -= value
-				* (currComb.a022 * l0 + currComb.a122 * l1He + currComb.a222 * l1V);
-				// Compute the contribution from this cluster
-				index = id - 1;
-				partials[index] -= value
-				* (currComb.a000 * l0B + currComb.a010 * lHeB + currComb.a020 * lVB);
-				psiHeMomentPartials[index] -= value
-				* (currComb.a001 * l0B + currComb.a011 * lHeB + currComb.a021 * lVB);
-				psiVMomentPartials[index] -= value
-				* (currComb.a002 * l0B + currComb.a012 * lHeB + currComb.a022 * lVB);
-				index = heMomId - 1;
-				partials[index] -= value
-				* (currComb.a100 * l0B + currComb.a110 * lHeB + currComb.a120 * lVB);
-				psiHeMomentPartials[index] -= value
-				* (currComb.a101 * l0B + currComb.a111 * lHeB + currComb.a121 * lVB);
-				psiVMomentPartials[index] -= value
-				* (currComb.a102 * l0B + currComb.a112 * lHeB + currComb.a122 * lVB);
-				index = vMomId - 1;
-				partials[index] -= value
-				* (currComb.a200 * l0B + currComb.a210 * lHeB + currComb.a220 * lVB);
-				psiHeMomentPartials[index] -= value
-				* (currComb.a201 * l0B + currComb.a211 * lHeB + currComb.a221 * lVB);
-				psiVMomentPartials[index] -= value
-				* (currComb.a202 * l0B + currComb.a212 * lHeB + currComb.a222 * lVB);
+                {
+                    auto index = cluster.getId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] -= value
+                    * (currComb.a000 * l0 + currComb.a100 * l1He + currComb.a200 * l1V);
+                    psiHeMomentPartials[index] -= value
+                    * (currComb.a001 * l0 + currComb.a101 * l1He + currComb.a201 * l1V);
+                    psiVMomentPartials[index] -= value
+                    * (currComb.a002 * l0 + currComb.a102 * l1He + currComb.a202 * l1V);
+                }
+                {
+                    auto index = cluster.getHeMomentumId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] -= value
+                    * (currComb.a010 * l0 + currComb.a110 * l1He + currComb.a210 * l1V);
+                    psiHeMomentPartials[index] -= value
+                    * (currComb.a011 * l0 + currComb.a111 * l1He + currComb.a211 * l1V);
+                    psiVMomentPartials[index] -= value
+                    * (currComb.a012 * l0 + currComb.a112 * l1He + currComb.a212 * l1V);
+                }
+                {
+                    auto index = cluster.getVMomentumId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] -= value
+                    * (currComb.a020 * l0 + currComb.a120 * l1He + currComb.a220 * l1V);
+                    psiHeMomentPartials[index] -= value
+                    * (currComb.a021 * l0 + currComb.a121 * l1He + currComb.a221 * l1V);
+                    psiVMomentPartials[index] -= value
+                    * (currComb.a022 * l0 + currComb.a122 * l1He + currComb.a222 * l1V);
+                }
+                {
+                    // Compute the contribution from this cluster
+                    auto index = id - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] -= value
+                    * (currComb.a000 * l0B + currComb.a010 * lHeB + currComb.a020 * lVB);
+                    psiHeMomentPartials[index] -= value
+                    * (currComb.a001 * l0B + currComb.a011 * lHeB + currComb.a021 * lVB);
+                    psiVMomentPartials[index] -= value
+                    * (currComb.a002 * l0B + currComb.a012 * lHeB + currComb.a022 * lVB);
+                }
+                {
+                    auto index = heMomId - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] -= value
+                    * (currComb.a100 * l0B + currComb.a110 * lHeB + currComb.a120 * lVB);
+                    psiHeMomentPartials[index] -= value
+                    * (currComb.a101 * l0B + currComb.a111 * lHeB + currComb.a121 * lVB);
+                    psiVMomentPartials[index] -= value
+                    * (currComb.a102 * l0B + currComb.a112 * lHeB + currComb.a122 * lVB);
+                }
+                {
+                    auto index = vMomId - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] -= value
+                    * (currComb.a200 * l0B + currComb.a210 * lHeB + currComb.a220 * lVB);
+                    psiHeMomentPartials[index] -= value
+                    * (currComb.a201 * l0B + currComb.a211 * lHeB + currComb.a221 * lVB);
+                    psiVMomentPartials[index] -= value
+                    * (currComb.a202 * l0B + currComb.a212 * lHeB + currComb.a222 * lVB);
+                }
 			});
 
 	return;
 }
 
-void PSISuperCluster::getDissociationPartialDerivatives(
-		std::vector<double> & partials) const {
+void PSISuperCluster::computeDissociationPartialDerivatives(double* partials,
+        const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
 
 	// Dissociation
 	// A --> B + D, B being this cluster
@@ -1021,32 +1059,41 @@ void PSISuperCluster::getDissociationPartialDerivatives(
 
 	// Visit all the dissociating pairs
 	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
-			[this,&partials](DissociationPairMap::value_type const& currMapItem) {
+			[this,&partials,&partialsIdxMap](DissociationPairMap::value_type const& currMapItem) {
 				auto& currPair = currMapItem.second;
 
 				// Get the dissociating clusters
 				auto const& cluster = currPair.first;
 				// Compute the contribution from the dissociating cluster
 				auto value = currPair.kConstant / (double) nTot;
-				auto index = cluster.getId() - 1;
-				partials[index] += value * (currPair.a00);
-				psiHeMomentPartials[index] += value * (currPair.a01);
-				psiVMomentPartials[index] += value * (currPair.a02);
-				index = cluster.getHeMomentumId() - 1;
-				partials[index] += value * (currPair.a10);
-				psiHeMomentPartials[index] += value * (currPair.a11);
-				psiVMomentPartials[index] += value * (currPair.a12);
-				index = cluster.getVMomentumId() - 1;
-				partials[index] += value * (currPair.a20);
-				psiHeMomentPartials[index] += value * (currPair.a21);
-				psiVMomentPartials[index] += value * (currPair.a22);
+                {
+                    auto index = cluster.getId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] += value * (currPair.a00);
+                    psiHeMomentPartials[index] += value * (currPair.a01);
+                    psiVMomentPartials[index] += value * (currPair.a02);
+                }
+                {
+                    auto index = cluster.getHeMomentumId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] += value * (currPair.a10);
+                    psiHeMomentPartials[index] += value * (currPair.a11);
+                    psiVMomentPartials[index] += value * (currPair.a12);
+                }
+                {
+                    auto index = cluster.getVMomentumId() - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] += value * (currPair.a20);
+                    psiHeMomentPartials[index] += value * (currPair.a21);
+                    psiVMomentPartials[index] += value * (currPair.a22);
+                }
 			});
 
 	return;
 }
 
-void PSISuperCluster::getEmissionPartialDerivatives(
-		std::vector<double> & partials) const {
+void PSISuperCluster::computeEmissionPartialDerivatives(double* partials,
+		const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
 
 	// Emission
 	// A --> B + D, A being this cluster
@@ -1057,23 +1104,32 @@ void PSISuperCluster::getEmissionPartialDerivatives(
 
 	// Visit all the emission pairs
 	std::for_each(effEmissionList.begin(), effEmissionList.end(),
-			[this,&partials](DissociationPairMap::value_type const& currMapItem) {
+			[this,&partials,&partialsIdxMap](DissociationPairMap::value_type const& currMapItem) {
 				auto& currPair = currMapItem.second;
 
 				// Compute the contribution from the dissociating cluster
 				auto value = currPair.kConstant / (double) nTot;
-				auto index = id - 1;
-				partials[index] -= value * (currPair.a00);
-				psiHeMomentPartials[index] -= value * (currPair.a01);
-				psiVMomentPartials[index] -= value * (currPair.a02);
-				index = heMomId - 1;
-				partials[index] -= value * (currPair.a10);
-				psiHeMomentPartials[index] -= value * (currPair.a11);
-				psiVMomentPartials[index] -= value * (currPair.a12);
-				index = vMomId - 1;
-				partials[index] -= value * (currPair.a20);
-				psiHeMomentPartials[index] -= value * (currPair.a21);
-				psiVMomentPartials[index] -= value * (currPair.a22);
+                {
+                    auto index = id - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] -= value * (currPair.a00);
+                    psiHeMomentPartials[index] -= value * (currPair.a01);
+                    psiVMomentPartials[index] -= value * (currPair.a02);
+                }
+                {
+                    auto index = heMomId - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] -= value * (currPair.a10);
+                    psiHeMomentPartials[index] -= value * (currPair.a11);
+                    psiVMomentPartials[index] -= value * (currPair.a12);
+                }
+                {
+                    auto index = vMomId - 1;
+                    auto partialsIdx = partialsIdxMap.at(index);
+                    partials[partialsIdx] -= value * (currPair.a20);
+                    psiHeMomentPartials[index] -= value * (currPair.a21);
+                    psiVMomentPartials[index] -= value * (currPair.a22);
+                }
 			});
 
 	return;
