@@ -1526,8 +1526,7 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		int *size) {
 	// Initial declarations
 	const int dof = getDOF();
-	std::vector<double> clusterPartials;
-	clusterPartials.resize(dof, 0.0);
+	std::vector<double> clusterPartials(dof, 0.0);
 
 	// Get the super clusters
 	auto const& superClusters = getAll(ReactantType::PSISuper);
@@ -1563,16 +1562,18 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 
 			// Loop over the list of column ids
 			for (int j = 0; j < pdColIdsVectorSize; j++) {
+
+                auto colId = pdColIdsVector[j];
+
 				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
+				indices[reactantIndex * dof + j] = colId;
 
 				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
+				vals[reactantIndex * dof + j] = clusterPartials[colId];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
-				clusterPartials[pdColIdsVector[j]] = 0.0;
+				clusterPartials[colId] = 0.0;
 			}
 		}
 	}
@@ -1598,15 +1599,17 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 
 			// Loop over the list of column ids
 			for (int j = 0; j < pdColIdsVectorSize; j++) {
+
+                auto colId = pdColIdsVector[j];
+
 				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
+				indices[reactantIndex * dof + j] = colId;
 				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
+				vals[reactantIndex * dof + j] = clusterPartials[colId];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
-				clusterPartials[pdColIdsVector[j]] = 0.0;
+				clusterPartials[colId] = 0.0;
 			}
 		}
 
@@ -1624,15 +1627,17 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 
 			// Loop over the list of column ids
 			for (int j = 0; j < pdColIdsVectorSize; j++) {
+
+                auto colId = pdColIdsVector[j];
+
 				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
+				indices[reactantIndex * dof + j] = colId;
 				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
+				vals[reactantIndex * dof + j] = clusterPartials[colId];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
-				clusterPartials[pdColIdsVector[j]] = 0.0;
+				clusterPartials[colId] = 0.0;
 			}
 		}
 
@@ -1650,15 +1655,17 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 
 			// Loop over the list of column ids
 			for (int j = 0; j < pdColIdsVectorSize; j++) {
+
+                auto colId = pdColIdsVector[j];
+
 				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
+				indices[reactantIndex * dof + j] = colId;
 				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
+				vals[reactantIndex * dof + j] = clusterPartials[colId];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
-				clusterPartials[pdColIdsVector[j]] = 0.0;
+				clusterPartials[colId] = 0.0;
 			}
 		}
 	}
