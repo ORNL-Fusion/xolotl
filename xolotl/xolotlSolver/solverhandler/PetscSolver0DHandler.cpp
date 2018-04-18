@@ -74,6 +74,11 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 			"PetscFree (dfill) failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
+    reactionSize = new PetscInt[dof];
+    for(auto i = 0; i < dof; ++i)
+    {
+        reactionSize[i] = -1;
+    }
 	reactionVals = new PetscScalar[dof * dof];
 	reactionIndices = new PetscInt[dof * dof];
 
@@ -261,7 +266,6 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	MatStencil rowId;
 	MatStencil colIds[dof];
 	int pdColIdsVectorSize = 0;
-	PetscInt reactionSize[dof];
 
 	// Set the grid position
 	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };

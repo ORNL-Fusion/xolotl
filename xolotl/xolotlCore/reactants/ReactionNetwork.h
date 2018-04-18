@@ -40,6 +40,9 @@ namespace xolotlCore {
  */
 class ReactionNetwork: public IReactionNetwork {
 
+public:
+    using PartialsIdxMap = std::unordered_map<int, int>;
+
 private:
 	/**
 	 * Types of reactants that we support.
@@ -144,6 +147,13 @@ protected:
 	 * the dfill array.
 	 */
 	std::unordered_map<int, std::vector<int> > dFillMap;
+
+    /**
+     * Map of reactant/cluster ids to another map of ids in the DOF space
+     * to its location within the sparse partials arrays.
+     */
+    std::unordered_map<int, PartialsIdxMap> dFillInvMap;
+
 
 	/**
 	 * The current temperature at which the network's clusters exist.

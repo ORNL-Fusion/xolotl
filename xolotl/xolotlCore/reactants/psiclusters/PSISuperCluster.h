@@ -7,6 +7,7 @@
 #include <cassert>
 #include <Constants.h>
 #include "PSICluster.h"
+#include "ReactionNetwork.h"
 #include "IntegerRange.h"
 
 // We use std::unordered_map for quick lookup of info about 
@@ -677,8 +678,13 @@ public:
 	 * the vector should be equal to ReactionNetwork::size().
 	 *
 	 */
-    void computePartialDerivatives(double* vals,
-            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
+    void computePartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
 
 	void getPartialDerivatives(std::vector<double> & partials) const override
     {
@@ -693,8 +699,13 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
-	void computeProductionPartialDerivatives(double* vals,
-            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
+	void computeProductionPartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
 	void getProductionPartialDerivatives(std::vector<double> & partials) const
 			override
     {
@@ -709,8 +720,13 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
-	void computeCombinationPartialDerivatives(double* vals,
-            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
+	void computeCombinationPartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
 	void getCombinationPartialDerivatives(std::vector<double> & partials) const
 			override
     {
@@ -725,8 +741,13 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
-	void computeDissociationPartialDerivatives(double* vals,
-            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
+	void computeDissociationPartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
 	void getDissociationPartialDerivatives(std::vector<double> & partials) const
 			override
     {
@@ -741,29 +762,18 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
-	void computeEmissionPartialDerivatives(double* vals,
-            const std::unordered_map<size_t, size_t>& partialsIdxMap) const;
+	void computeEmissionPartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
 	void getEmissionPartialDerivatives(std::vector<double> & partials) const
 			override
     {
         assert(false);
     }
-
-	/**
-	 * This operation computes the partial derivatives for the helium momentum.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted.
-	 */
-	void getHeMomentPartialDerivatives(std::vector<double> & partials) const;
-
-	/**
-	 * This operation computes the partial derivatives for the vacancy momentum.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted.
-	 */
-	void getVMomentPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
 	 * Returns the average number of vacancies.

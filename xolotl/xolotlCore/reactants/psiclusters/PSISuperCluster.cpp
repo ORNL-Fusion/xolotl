@@ -6,15 +6,6 @@
 
 using namespace xolotlCore;
 
-/**
- * The helium momentum partials.
- */
-std::vector<double> psiHeMomentPartials;
-
-/**
- * The vacancy momentum partials.
- */
-std::vector<double> psiVMomentPartials;
 
 PSISuperCluster::PSISuperCluster(double _numHe, double _numV, int _nTot,
 		int heWidth, int vWidth, IReactionNetwork& _network,
@@ -692,11 +683,6 @@ void PSISuperCluster::resetConnectivities() {
 	// Don't loop on the effective emission pairs because
 	// this cluster is not connected to them
 
-	// Initialize the partial vector for the momentum
-	int dof = network.getDOF();
-	psiHeMomentPartials.resize(dof, 0.0);
-	psiVMomentPartials.resize(dof, 0.0);
-
 	return;
 }
 
@@ -847,24 +833,38 @@ double PSISuperCluster::getCombinationFlux() {
 	return flux;
 }
 
-void PSISuperCluster::computePartialDerivatives(double* partials,
-        const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
-
-	// Reinitialize the momentum partial derivatives vector
-	std::fill(psiHeMomentPartials.begin(), psiHeMomentPartials.end(), 0.0);
-	std::fill(psiVMomentPartials.begin(), psiVMomentPartials.end(), 0.0);
+void PSISuperCluster::computePartialDerivatives(
+        double* partials,
+        const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+        double* hePartials,
+        const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+        double* vPartials,
+        const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const {
 
 	// Get the partial derivatives for each reaction type
-	computeProductionPartialDerivatives(partials, partialsIdxMap);
-	computeCombinationPartialDerivatives(partials, partialsIdxMap);
-	computeDissociationPartialDerivatives(partials, partialsIdxMap);
-	computeEmissionPartialDerivatives(partials, partialsIdxMap);
+	computeProductionPartialDerivatives(partials, partialsIdxMap,
+                                        hePartials, hePartialsIdxMap,
+                                        vPartials, vPartialsIdxMap);
+	computeCombinationPartialDerivatives(partials, partialsIdxMap,
+                                        hePartials, hePartialsIdxMap,
+                                        vPartials, vPartialsIdxMap);
+	computeDissociationPartialDerivatives(partials, partialsIdxMap,
+                                        hePartials, hePartialsIdxMap,
+                                        vPartials, vPartialsIdxMap);
+	computeEmissionPartialDerivatives(partials, partialsIdxMap,
+                                        hePartials, hePartialsIdxMap,
+                                        vPartials, vPartialsIdxMap);
 
 	return;
 }
 
-void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
-        const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
+void PSISuperCluster::computeProductionPartialDerivatives(
+        double* partials,
+        const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+        double* hePartials,
+        const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+        double* vPartials,
+        const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const {
 
 	// Production
 	// A + B --> D, D being this cluster
@@ -876,7 +876,10 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
 
 	// Loop over all the reacting pairs
 	std::for_each(effReactingList.begin(), effReactingList.end(),
-			[this,&partials,&partialsIdxMap](ProductionPairMap::value_type const& currMapItem) {
+			[this,
+                &partials, &partialsIdxMap,
+                &hePartials, &hePartialsIdxMap,
+                &vPartials, &vPartialsIdxMap](ProductionPairMap::value_type const& currMapItem) {
 
 				auto const& currPair = currMapItem.second;
 				// Get the two reacting clusters
@@ -897,9 +900,11 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] += value
                     * (currPair.a000 * l0B + currPair.a010 * lHeB + currPair.a020 * lVB);
-                    psiHeMomentPartials[index] += value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] += value
                     * (currPair.a001 * l0B + currPair.a011 * lHeB + currPair.a021 * lVB);
-                    psiVMomentPartials[index] += value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] += value
                     * (currPair.a002 * l0B + currPair.a012 * lHeB + currPair.a022 * lVB);
                 }
                 {
@@ -907,9 +912,11 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] += value
                     * (currPair.a100 * l0B + currPair.a110 * lHeB + currPair.a120 * lVB);
-                    psiHeMomentPartials[index] += value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] += value
                     * (currPair.a101 * l0B + currPair.a111 * lHeB + currPair.a121 * lVB);
-                    psiVMomentPartials[index] += value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] += value
                     * (currPair.a102 * l0B + currPair.a112 * lHeB + currPair.a122 * lVB);
                 }
                 {
@@ -917,9 +924,11 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] += value
                     * (currPair.a200 * l0B + currPair.a210 * lHeB + currPair.a220 * lVB);
-                    psiHeMomentPartials[index] += value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] += value
                     * (currPair.a201 * l0B + currPair.a211 * lHeB + currPair.a221 * lVB);
-                    psiVMomentPartials[index] += value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] += value
                     * (currPair.a202 * l0B + currPair.a212 * lHeB + currPair.a222 * lVB);
                 }
                 {
@@ -928,9 +937,11 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] += value
                     * (currPair.a000 * l0A + currPair.a100 * lHeA + currPair.a200 * lVA);
-                    psiHeMomentPartials[index] += value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] += value
                     * (currPair.a001 * l0A + currPair.a101 * lHeA + currPair.a201 * lVA);
-                    psiVMomentPartials[index] += value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] += value
                     * (currPair.a002 * l0A + currPair.a102 * lHeA + currPair.a202 * lVA);
                 }
                 {
@@ -938,9 +949,11 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] += value
                     * (currPair.a010 * l0A + currPair.a110 * lHeA + currPair.a210 * lVA);
-                    psiHeMomentPartials[index] += value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] += value
                     * (currPair.a011 * l0A + currPair.a111 * lHeA + currPair.a211 * lVA);
-                    psiVMomentPartials[index] += value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] += value
                     * (currPair.a012 * l0A + currPair.a112 * lHeA + currPair.a212 * lVA);
                 }
                 {
@@ -948,9 +961,11 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] += value
                     * (currPair.a020 * l0A + currPair.a120 * lHeA + currPair.a220 * lVA);
-                    psiHeMomentPartials[index] += value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] += value
                     * (currPair.a021 * l0A + currPair.a121 * lHeA + currPair.a221 * lVA);
-                    psiVMomentPartials[index] += value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] += value
                     * (currPair.a022 * l0A + currPair.a122 * lHeA + currPair.a222 * lVA);
                 }
 			});
@@ -958,8 +973,13 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials,
 	return;
 }
 
-void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
-        const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
+void PSISuperCluster::computeCombinationPartialDerivatives(
+        double* partials,
+        const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+        double* hePartials,
+        const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+        double* vPartials,
+        const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const {
 
 	// Combination
 	// A + B --> D, A being this cluster
@@ -971,7 +991,10 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
 
 	// Visit all the combining clusters
 	std::for_each(effCombiningList.begin(), effCombiningList.end(),
-			[this,&partials,&partialsIdxMap](CombiningClusterMap::value_type const& currMapItem) {
+			[this,
+                &partials, &partialsIdxMap,
+                &hePartials, &hePartialsIdxMap,
+                &vPartials, &vPartialsIdxMap](CombiningClusterMap::value_type const& currMapItem) {
 				// Get the combining clusters
 				auto const& currComb = currMapItem.second;
 				auto const& cluster = currComb.first;
@@ -986,9 +1009,11 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] -= value
                     * (currComb.a000 * l0 + currComb.a100 * l1He + currComb.a200 * l1V);
-                    psiHeMomentPartials[index] -= value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] -= value
                     * (currComb.a001 * l0 + currComb.a101 * l1He + currComb.a201 * l1V);
-                    psiVMomentPartials[index] -= value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] -= value
                     * (currComb.a002 * l0 + currComb.a102 * l1He + currComb.a202 * l1V);
                 }
                 {
@@ -996,9 +1021,11 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] -= value
                     * (currComb.a010 * l0 + currComb.a110 * l1He + currComb.a210 * l1V);
-                    psiHeMomentPartials[index] -= value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] -= value
                     * (currComb.a011 * l0 + currComb.a111 * l1He + currComb.a211 * l1V);
-                    psiVMomentPartials[index] -= value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] -= value
                     * (currComb.a012 * l0 + currComb.a112 * l1He + currComb.a212 * l1V);
                 }
                 {
@@ -1006,9 +1033,11 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] -= value
                     * (currComb.a020 * l0 + currComb.a120 * l1He + currComb.a220 * l1V);
-                    psiHeMomentPartials[index] -= value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] -= value
                     * (currComb.a021 * l0 + currComb.a121 * l1He + currComb.a221 * l1V);
-                    psiVMomentPartials[index] -= value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] -= value
                     * (currComb.a022 * l0 + currComb.a122 * l1He + currComb.a222 * l1V);
                 }
                 {
@@ -1017,9 +1046,11 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] -= value
                     * (currComb.a000 * l0B + currComb.a010 * lHeB + currComb.a020 * lVB);
-                    psiHeMomentPartials[index] -= value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] -= value
                     * (currComb.a001 * l0B + currComb.a011 * lHeB + currComb.a021 * lVB);
-                    psiVMomentPartials[index] -= value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] -= value
                     * (currComb.a002 * l0B + currComb.a012 * lHeB + currComb.a022 * lVB);
                 }
                 {
@@ -1027,9 +1058,11 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] -= value
                     * (currComb.a100 * l0B + currComb.a110 * lHeB + currComb.a120 * lVB);
-                    psiHeMomentPartials[index] -= value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] -= value
                     * (currComb.a101 * l0B + currComb.a111 * lHeB + currComb.a121 * lVB);
-                    psiVMomentPartials[index] -= value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] -= value
                     * (currComb.a102 * l0B + currComb.a112 * lHeB + currComb.a122 * lVB);
                 }
                 {
@@ -1037,9 +1070,11 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] -= value
                     * (currComb.a200 * l0B + currComb.a210 * lHeB + currComb.a220 * lVB);
-                    psiHeMomentPartials[index] -= value
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] -= value
                     * (currComb.a201 * l0B + currComb.a211 * lHeB + currComb.a221 * lVB);
-                    psiVMomentPartials[index] -= value
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] -= value
                     * (currComb.a202 * l0B + currComb.a212 * lHeB + currComb.a222 * lVB);
                 }
 			});
@@ -1047,8 +1082,13 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials,
 	return;
 }
 
-void PSISuperCluster::computeDissociationPartialDerivatives(double* partials,
-        const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
+void PSISuperCluster::computeDissociationPartialDerivatives(
+        double* partials,
+        const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+        double* hePartials,
+        const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+        double* vPartials,
+        const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const {
 
 	// Dissociation
 	// A --> B + D, B being this cluster
@@ -1059,7 +1099,10 @@ void PSISuperCluster::computeDissociationPartialDerivatives(double* partials,
 
 	// Visit all the dissociating pairs
 	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
-			[this,&partials,&partialsIdxMap](DissociationPairMap::value_type const& currMapItem) {
+			[this,
+                &partials, &partialsIdxMap,
+                &hePartials, &hePartialsIdxMap,
+                &vPartials, &vPartialsIdxMap](DissociationPairMap::value_type const& currMapItem) {
 				auto& currPair = currMapItem.second;
 
 				// Get the dissociating clusters
@@ -1070,30 +1113,41 @@ void PSISuperCluster::computeDissociationPartialDerivatives(double* partials,
                     auto index = cluster.getId() - 1;
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] += value * (currPair.a00);
-                    psiHeMomentPartials[index] += value * (currPair.a01);
-                    psiVMomentPartials[index] += value * (currPair.a02);
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] += value * (currPair.a01);
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] += value * (currPair.a02);
                 }
                 {
                     auto index = cluster.getHeMomentumId() - 1;
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] += value * (currPair.a10);
-                    psiHeMomentPartials[index] += value * (currPair.a11);
-                    psiVMomentPartials[index] += value * (currPair.a12);
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] += value * (currPair.a11);
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] += value * (currPair.a12);
                 }
                 {
                     auto index = cluster.getVMomentumId() - 1;
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] += value * (currPair.a20);
-                    psiHeMomentPartials[index] += value * (currPair.a21);
-                    psiVMomentPartials[index] += value * (currPair.a22);
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] += value * (currPair.a21);
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] += value * (currPair.a22);
                 }
 			});
 
 	return;
 }
 
-void PSISuperCluster::computeEmissionPartialDerivatives(double* partials,
-		const std::unordered_map<size_t, size_t>& partialsIdxMap) const {
+void PSISuperCluster::computeEmissionPartialDerivatives(
+        double* partials,
+        const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+        double* hePartials,
+        const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+        double* vPartials,
+        const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const {
 
 	// Emission
 	// A --> B + D, A being this cluster
@@ -1104,7 +1158,10 @@ void PSISuperCluster::computeEmissionPartialDerivatives(double* partials,
 
 	// Visit all the emission pairs
 	std::for_each(effEmissionList.begin(), effEmissionList.end(),
-			[this,&partials,&partialsIdxMap](DissociationPairMap::value_type const& currMapItem) {
+			[this,
+                &partials, &partialsIdxMap,
+                &hePartials, &hePartialsIdxMap,
+                &vPartials, &vPartialsIdxMap](DissociationPairMap::value_type const& currMapItem) {
 				auto& currPair = currMapItem.second;
 
 				// Compute the contribution from the dissociating cluster
@@ -1113,49 +1170,34 @@ void PSISuperCluster::computeEmissionPartialDerivatives(double* partials,
                     auto index = id - 1;
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] -= value * (currPair.a00);
-                    psiHeMomentPartials[index] -= value * (currPair.a01);
-                    psiVMomentPartials[index] -= value * (currPair.a02);
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] -= value * (currPair.a01);
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] -= value * (currPair.a02);
                 }
                 {
                     auto index = heMomId - 1;
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] -= value * (currPair.a10);
-                    psiHeMomentPartials[index] -= value * (currPair.a11);
-                    psiVMomentPartials[index] -= value * (currPair.a12);
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] -= value * (currPair.a11);
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] -= value * (currPair.a12);
                 }
                 {
                     auto index = vMomId - 1;
                     auto partialsIdx = partialsIdxMap.at(index);
                     partials[partialsIdx] -= value * (currPair.a20);
-                    psiHeMomentPartials[index] -= value * (currPair.a21);
-                    psiVMomentPartials[index] -= value * (currPair.a22);
+                    auto hePartialsIdx = hePartialsIdxMap.at(index);
+                    hePartials[hePartialsIdx] -= value * (currPair.a21);
+                    auto vPartialsIdx = vPartialsIdxMap.at(index);
+                    vPartials[vPartialsIdx] -= value * (currPair.a22);
                 }
 			});
 
 	return;
 }
 
-void PSISuperCluster::getHeMomentPartialDerivatives(
-		std::vector<double> & partials) const {
-	// Loop on the size of the vector
-	for (int i = 0; i < partials.size(); i++) {
-		// Set to the values that were already computed
-		partials[i] = psiHeMomentPartials[i];
-	}
-
-	return;
-}
-
-void PSISuperCluster::getVMomentPartialDerivatives(
-		std::vector<double> & partials) const {
-	// Loop on the size of the vector
-	for (int i = 0; i < partials.size(); i++) {
-		// Set to the values that were already computed
-		partials[i] = psiVMomentPartials[i];
-	}
-
-	return;
-}
 
 void PSISuperCluster::dumpCoefficients(std::ostream& os,
 		PSISuperCluster::ProductionCoefficientBase const& curr) const {

@@ -59,6 +59,11 @@ protected:
 	 */
 	std::vector<double> reactingPartialsForCluster;
 
+    /**
+     * Number of valid partial derivatives at each grid point.
+     */
+    PetscInt* reactionSize;
+
 	/**
 	 * A pointer to an array of the size dof * dof keeping the partial
 	 * derivatives for all the reactions at one grid point.
@@ -88,13 +93,15 @@ public:
 	 * @param _network The reaction network to use.
 	 */
 	PetscSolverHandler(xolotlCore::IReactionNetwork& _network) :
-			SolverHandler(_network), lastTemperature(0.0), reactionVals(
-					nullptr), reactionIndices(nullptr) {
+			SolverHandler(_network), lastTemperature(0.0), 
+            reactionSize(nullptr), reactionVals(nullptr), 
+            reactionIndices(nullptr) {
 	}
 
 	//! The Destructor
 	~PetscSolverHandler() {
 		// Delete arrays
+        delete[] reactionSize;
 		delete[] reactionVals;
 		delete[] reactionIndices;
 	}

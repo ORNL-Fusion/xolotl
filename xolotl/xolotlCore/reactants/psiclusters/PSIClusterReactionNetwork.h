@@ -210,6 +210,21 @@ private:
 			ProductionReaction& reaction, int a = 0, int b = 0, int c = 0,
 			int d = 0);
 
+
+    /**
+     * Determine the column indices for partials, He momentum partials,
+     * or V momentum partials.
+     *
+     * @param reactantIndex  Index within PETSc data of slice for desired 
+     *      type of partials.
+     * @param size Array containing number of valid partials for given reactant.
+     * @param indices Array containing the indices of the valid partials
+     *      for the given reactant.
+     */
+    void FindPartialsColumnIndices(size_t reactantIndex,
+                    int* size,
+                    int* indices) const;
+
 public:
 
 	/**

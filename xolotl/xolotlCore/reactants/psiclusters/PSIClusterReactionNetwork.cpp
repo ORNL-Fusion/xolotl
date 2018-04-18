@@ -1205,6 +1205,9 @@ std::vector<std::vector<int> > PSIClusterReactionNetwork::getCompositionList() c
 }
 
 void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
+
+    std::cout << "Enter getDiagonalFill" << std::endl;
+
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = getDOF();
 
@@ -1278,6 +1281,19 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		// Update the map
 		dFillMap[id] = columnIds;
 	}
+
+    // Now that the dFillMap has been built, build inverse maps for each item.
+    for(const auto& dFillMapItem : dFillMap)
+    {
+        auto rid = dFillMapItem.first;
+        dFillInvMap[rid] = PartialsIdxMap();
+
+        auto const& colIds = dFillMapItem.second;
+        for(auto j = 0; j < colIds.size(); ++j)
+        {
+            dFillInvMap[rid][colIds[j]] = j;
+        }
+    }
 
 	return;
 }
@@ -1522,8 +1538,34 @@ void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 	return;
 }
 
+void
+PSIClusterReactionNetwork::FindPartialsColumnIndices(size_t reactantIndex,
+                    int* size,
+                    int* indices) const
+{
+    // Determine column ids of needed partial derivatives.
+    auto const& pdColIdsVector = dFillMap.at(reactantIndex);
+
+    // Note number of valid partial derivatives for this reactant.
+    size[reactantIndex] = pdColIdsVector.size();
+
+    // Save column ids of valid partials in indices array,
+    // and build mapping of dense to sparse representations.
+    for (int j = 0; j < pdColIdsVector.size(); ++j) {
+
+        auto colId = pdColIdsVector[j];
+        
+        // Save the current valid partial derivative index
+        // to location 'j' in reactant's slide of indices array.
+        indices[reactantIndex * getDOF() + j] = colId;
+    }
+}
+
 void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		int *size) {
+
+    static bool firstTimeCalled = true;
+
 	// Initial declarations
 	const int dof = getDOF();
 	std::vector<double> clusterPartials(dof, 0.0);
@@ -1584,100 +1626,58 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		auto const& reactant =
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
-		{
-			// Determine cluster's item or slice in the 
-            // size/indices/vals arrays.
-			auto reactantIndex = reactant.getId() - 1;
+        // Determine cluster's index into the size/indices/vals arrays.
+        auto reactantIndex = reactant.getId() - 1;
+        auto heReactantIndex = reactant.getHeMomentumId() - 1;
+        auto vReactantIndex = reactant.getVMomentumId() - 1;
 
-            // Determine column ids of needed partial derivatives.
-			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
+        if(firstTimeCalled) {
+            FindPartialsColumnIndices(reactantIndex,
+                                        size,
+                                        indices);
+            FindPartialsColumnIndices(heReactantIndex,
+                                        size,
+                                        indices);
+            FindPartialsColumnIndices(vReactantIndex,
+                                        size,
+                                        indices);
+        }
 
-            // Note number of valid partial derivatives for this reactant.
-            size[reactantIndex] = pdColIdsVector.size();
+        // Get the inverse mappings from dense DOF space to
+        // the indices/vals arrays.
+        auto const& partialsIdxMap = dFillInvMap.at(reactantIndex);
+        auto const& hePartialsIdxMap = dFillInvMap.at(heReactantIndex);
+        auto const& vPartialsIdxMap = dFillInvMap.at(vReactantIndex);
 
-            // Save column ids of valid partials in indices array,
-            // and build mapping of dense to sparse representations.
-            std::unordered_map<size_t, size_t> partialsIdxMap;
-            for (int j = 0; j < pdColIdsVector.size(); ++j) {
+        // TODO do we want to wrap a vector around this?
+        double* partials = &(vals[reactantIndex * dof]);
+        for(auto j = 0; j < partialsIdxMap.size(); ++j)
+        {
+            partials[j] = 0.0;
+        }
 
-                auto colId = pdColIdsVector[j];
-                
-                // Save the current valid partial derivative index
-                // to location 'j' in reactant's slide of indices array.
-                indices[reactantIndex * dof + j] = colId;
+        // TODO do we want to wrap a vector around this?
+        double* hePartials = &(vals[heReactantIndex * dof]);
+        for(auto j = 0; j < hePartialsIdxMap.size(); ++j)
+        {
+            hePartials[j] = 0.0;
+        }
 
-                // Note mapping of colId to its location in the reactant's
-                // slice of the vals array.
-                partialsIdxMap[colId] = j;
-            }
+        // TODO do we want to wrap a vector around this?
+        double* vPartials = &(vals[vReactantIndex * dof]);
+        for(auto j = 0; j < vPartialsIdxMap.size(); ++j)
+        {
+            vPartials[j] = 0.0;
+        }
 
-			// Have reactant compute its partial derivatives
-            // to its correct locations within the vals array.
-            // TODO do we want to wrap a vector around this?
-            double* currVals = &(vals[reactantIndex * dof]);
-            for(auto j = 0; j < pdColIdsVector.size(); ++j)
-            {
-                currVals[j] = 0.0;
-            }
-            reactant.computePartialDerivatives(currVals, partialsIdxMap);
-		}
-
-		{
-			// Get the helium momentum index
-			auto reactantIndex = reactant.getHeMomentumId() - 1;
-
-			// Get the partial derivatives
-			reactant.getHeMomentPartialDerivatives(clusterPartials);
-			// Get the list of column ids from the map
-			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
-
-			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
-
-                auto colId = pdColIdsVector[j];
-
-				// Set the index
-				indices[reactantIndex * dof + j] = colId;
-				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] = clusterPartials[colId];
-
-				// Reset the cluster partial value to zero. This is much faster
-				// than using memset.
-				clusterPartials[colId] = 0.0;
-			}
-		}
-
-		{
-			// Get the vacancy momentum index
-			auto reactantIndex = reactant.getVMomentumId() - 1;
-
-			// Get the partial derivatives
-			reactant.getVMomentPartialDerivatives(clusterPartials);
-			// Get the list of column ids from the map
-			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
-
-			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
-
-                auto colId = pdColIdsVector[j];
-
-				// Set the index
-				indices[reactantIndex * dof + j] = colId;
-				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] = clusterPartials[colId];
-
-				// Reset the cluster partial value to zero. This is much faster
-				// than using memset.
-				clusterPartials[colId] = 0.0;
-			}
-		}
+        // Have reactant compute its partial derivatives
+        // to its correct locations within the vals array.
+        reactant.computePartialDerivatives(partials, partialsIdxMap,
+                                            hePartials, hePartialsIdxMap,
+                                            vPartials, vPartialsIdxMap);
 	}
+
+    firstTimeCalled = false;
 
 	return;
 }
