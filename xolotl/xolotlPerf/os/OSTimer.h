@@ -23,8 +23,7 @@ private:
     using Duration = std::chrono::duration<ITimer::ValType>;
 
     /// The timestamp value we use to indicate startTime is invalid.
-    static constexpr Timestamp invalidTimestamp = 
-                                std::numeric_limits<Timestamp>::max();
+    static const Timestamp invalidTimestamp;
 
 	/// The timer's value.
 	ITimer::ValType val;

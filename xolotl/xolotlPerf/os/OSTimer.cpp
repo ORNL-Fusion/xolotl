@@ -3,6 +3,10 @@
 
 namespace xolotlPerf {
 
+const OSTimer::Timestamp OSTimer::invalidTimestamp = 
+                            std::numeric_limits<Timestamp>::max();
+
+
 void OSTimer::start(void) {
 	if (isRunning()) {
 		throw std::runtime_error(
