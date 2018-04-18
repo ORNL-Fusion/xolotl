@@ -19,6 +19,7 @@
 #include <PSISuperCluster.h>
 #include <NESuperCluster.h>
 #include <MathUtils.h>
+#include "RandomNumberGenerator.h"
 
 namespace xolotlSolver {
 
@@ -884,7 +885,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 										exp(
 												-(distance - depthParam)
 														/ (depthParam * 2.0)));
-						double test = (double) rand() / (double) RAND_MAX;
+                        double test = solverHandler.getRNG().GetRandomDouble();
 
 						if (prob > test) {
 							burst = true;
@@ -1423,12 +1424,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 
 		// Bursting
 		if (solverHandler.burstBubbles()) {
-			// Initialize the RNG
-			int seed = time(NULL);
-			if (procId == 0)
-				std::cout << "RNG seed for bubble bursting: " << seed
-						<< std::endl;
-			std::srand(seed + procId);
+            // No need to seed the random number generator here.
+            // The solver handler has already done it.
 		}
 
 		// Set directions and terminate flags for the surface event

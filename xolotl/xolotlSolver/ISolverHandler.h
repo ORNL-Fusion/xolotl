@@ -15,6 +15,9 @@
 
 namespace xolotlSolver {
 
+template<typename ValueType, typename SeedType>
+class RandomNumberGenerator;
+
 /**
  * Realizations of this interface are responsible for the actual implementation of
  * each piece of the solver. It is created to handle the multiple dimensions more easily.
@@ -216,6 +219,14 @@ public:
 	 * @return The network name
 	 */
 	virtual std::string getNetworkName() const = 0;
+
+    /**
+     * Access the random number generator.
+     * The generator will have already been seeded.
+     *
+     * @return The RandomNumberGenerator object to use.
+     */
+    virtual RandomNumberGenerator<int, unsigned int>& getRNG(void) const = 0;
 
 }; //end class ISolverHandler
 
