@@ -76,11 +76,14 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	// Initialize the arrays for the reaction partial derivatives
     reactionSize.resize(dof);
     reactionStartingIdx.resize(dof);
-    reactionIndices.resize(dof * dof);
-    reactionVals.resize(dof * dof);
+    auto nPartials = network.initPartialsSizes(reactionSize,
+                                                reactionStartingIdx);
+
+    reactionIndices.resize(nPartials);
     network.initPartialsIndices(reactionSize,
                                 reactionStartingIdx, 
                                 reactionIndices);
+    reactionVals.resize(nPartials);
 
 	return;
 }
@@ -302,13 +305,15 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 		// Number of partial derivatives
 		pdColIdsVectorSize = reactionSize[i];
+        auto startingIdx = reactionStartingIdx[i];
+
 		// Loop over the list of column ids
 		for (int j = 0; j < pdColIdsVectorSize; j++) {
 			// Set grid coordinate and component number for a column in the list
 			colIds[j].i = 0;
-			colIds[j].c = reactionIndices[i * dof + j];
+			colIds[j].c = reactionIndices[startingIdx + j];
 			// Get the partial derivative from the array of all of the partials
-			reactingPartialsForCluster[j] = reactionVals[i * dof + j];
+			reactingPartialsForCluster[j] = reactionVals[startingIdx + j];
 		}
 		// Update the matrix
 		ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize, colIds,

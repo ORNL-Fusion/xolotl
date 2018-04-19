@@ -241,6 +241,19 @@ public:
 
 
     /**
+     * Determine the number of partials for each cluster
+     * and their starting locations within the vectors used
+     * when computing partials.
+     *
+	 * @param size Number of partials for each cluster.
+     * @param startingIdx Starting index of items owned by each reactant
+     *      within the partials values array and the indices array.
+     * @return Total number of partials for all clusters.
+     */
+	virtual size_t initPartialsSizes(std::vector<int>& size,
+                                    std::vector<size_t>& startingIdx) const = 0;
+
+    /**
      * Initialize the indexing used for computing partial derivatives
      * for all clusters and their momenta.
      *
@@ -249,8 +262,8 @@ public:
      *      within the partials values array and the indices array.
 	 * @param indices The indices of the clusters for the partial derivatives.
      */
-	virtual void initPartialsIndices(std::vector<int>& size,
-                                    std::vector<size_t>& startingIdx,
+	virtual void initPartialsIndices(const std::vector<int>& size,
+                                    const std::vector<size_t>& startingIdx,
                                     std::vector<int>& indices) const = 0;
 
 	/**

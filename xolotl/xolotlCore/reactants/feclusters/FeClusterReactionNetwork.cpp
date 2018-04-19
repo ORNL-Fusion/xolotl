@@ -915,9 +915,18 @@ void FeClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 	return;
 }
 
+size_t
+FeClusterReactionNetwork::initPartialsSizes(std::vector<int>& size,
+                                    std::vector<size_t>& startingIdx) const {
+
+    // NIY
+    assert(false);
+    return 0;
+}
+
 void
-FeClusterReactionNetwork::initPartialsIndices(std::vector<int>& size,
-                                    std::vector<size_t>& startingIdx,
+FeClusterReactionNetwork::initPartialsIndices(const std::vector<int>& size,
+                                    const std::vector<size_t>& startingIdx,
                                     std::vector<int>& indices) const {
 
     // NIY

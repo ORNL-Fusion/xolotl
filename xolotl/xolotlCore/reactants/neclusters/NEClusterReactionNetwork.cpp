@@ -326,9 +326,18 @@ void NEClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 }
 
 
+size_t
+NEClusterReactionNetwork::initPartialsSizes(std::vector<int>& size,
+                                    std::vector<size_t>& startingIdx) const {
+
+    // NIY
+    assert(false);
+    return 0;
+}
+
 void
-NEClusterReactionNetwork::initPartialsIndices(std::vector<int>& size,
-                                    std::vector<size_t>& startingIdx,
+NEClusterReactionNetwork::initPartialsIndices(const std::vector<int>& size,
+                                    const std::vector<size_t>& startingIdx,
                                     std::vector<int>& indices) const {
 
     // NIY
