@@ -1538,40 +1538,68 @@ void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 	return;
 }
 
+
+
 void
-PSIClusterReactionNetwork::FindPartialsColumnIndices(size_t reactantIndex,
-                    int* size,
-                    int* indices) const
+PSIClusterReactionNetwork::initPartialsIndices(std::vector<int>& size,
+                                            std::vector<size_t>& startingIdx,
+                                            std::vector<int>& indices) const
 {
-    // Determine column ids of needed partial derivatives.
-    auto const& pdColIdsVector = dFillMap.at(reactantIndex);
+    size_t currStartingIdx = 0;
 
-    // Note number of valid partial derivatives for this reactant.
-    size[reactantIndex] = pdColIdsVector.size();
+    // Determine the number of items owned by each reactant.
+    for(auto idx = 0; idx < getDOF(); ++idx)
+    {
+        // Check whether this reactant has any partials.
+        auto iter = dFillMap.find(idx);
+        if(iter != dFillMap.end())
+        {
+            // Determine column ids of needed partial derivatives.
+            auto const& pdColIdsVector = iter->second;
 
-    // Save column ids of valid partials in indices array,
-    // and build mapping of dense to sparse representations.
-    for (int j = 0; j < pdColIdsVector.size(); ++j) {
+            // Note number of valid partial derivatives for this reactant.
+            size[idx] = pdColIdsVector.size();
 
-        auto colId = pdColIdsVector[j];
-        
-        // Save the current valid partial derivative index
-        // to location 'j' in reactant's slide of indices array.
-        indices[reactantIndex * getDOF() + j] = colId;
+            // Note the starting index of items owned by this reactant.
+#if READY
+            // Sparse form.
+            startingIdx[idx] = currStartingIdx;
+            currStartingIdx += size[idx];
+#else
+            // Dense form
+            startingIdx[idx] = idx * getDOF();
+#endif // READY
+
+            // Save column ids of valid partials in indices array,
+            // and build mapping of dense to sparse representations.
+            for(auto j = 0; j < pdColIdsVector.size(); ++j)
+            {
+                // Save the current valid partial derivative index
+                // to location 'j' in reactant's slide of indices array.
+                indices[startingIdx[idx] + j] = pdColIdsVector[j];
+            }
+        }
+        else
+        {
+            size[idx] = 0;
+#if READY
+            startingIdx[idx] = currStartingIdx;
+#else
+            startingIdx[idx] = idx * getDOF();
+#endif // READY
+        }
     }
 }
 
-void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
-		int *size) {
 
-    static bool firstTimeCalled = true;
+
+void PSIClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
+                                        const std::vector<size_t>& startingIdx,
+                                        const std::vector<int>& indices,
+                                        std::vector<double>& vals) const {
 
 	// Initial declarations
-	const int dof = getDOF();
-	std::vector<double> clusterPartials(dof, 0.0);
-
-	// Get the super clusters
-	auto const& superClusters = getAll(ReactantType::PSISuper);
+	std::vector<double> clusterPartials(getDOF(), 0.0);
 
 	// Make a vector of types for the non super clusters
 	std::vector<ReactantType> typeVec { ReactantType::He, ReactantType::D,
@@ -1596,22 +1624,16 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 
 			// Get the partial derivatives
 			reactant.getPartialDerivatives(clusterPartials);
-			// Get the list of column ids from the map
-			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
 
 			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
+			for (int j = 0; j < size[reactantIndex]; ++j) {
 
-                auto colId = pdColIdsVector[j];
+                auto myStartingIdx = startingIdx[reactantIndex];
 
-				// Set the index
-				indices[reactantIndex * dof + j] = colId;
+                auto colId = indices[myStartingIdx + j];
 
 				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] = clusterPartials[colId];
+				vals[myStartingIdx + j] = clusterPartials[colId];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
@@ -1621,6 +1643,7 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 	}
 
 	// Update the column in the Jacobian that represents the moment for the super clusters
+	auto const& superClusters = getAll(ReactantType::PSISuper);
 	for (auto const& currMapItem : superClusters) {
 
 		auto const& reactant =
@@ -1631,44 +1654,37 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
         auto heReactantIndex = reactant.getHeMomentumId() - 1;
         auto vReactantIndex = reactant.getVMomentumId() - 1;
 
-        if(firstTimeCalled) {
-            FindPartialsColumnIndices(reactantIndex,
-                                        size,
-                                        indices);
-            FindPartialsColumnIndices(heReactantIndex,
-                                        size,
-                                        indices);
-            FindPartialsColumnIndices(vReactantIndex,
-                                        size,
-                                        indices);
-        }
-
         // Get the inverse mappings from dense DOF space to
         // the indices/vals arrays.
         auto const& partialsIdxMap = dFillInvMap.at(reactantIndex);
         auto const& hePartialsIdxMap = dFillInvMap.at(heReactantIndex);
         auto const& vPartialsIdxMap = dFillInvMap.at(vReactantIndex);
 
+#if READY
+        When using sparse, move zeroing out to head of this 
+        function and zero out all of vals.
+#else
         // TODO do we want to wrap a vector around this?
-        double* partials = &(vals[reactantIndex * dof]);
+        double* partials = &(vals[startingIdx[reactantIndex]]);
         for(auto j = 0; j < partialsIdxMap.size(); ++j)
         {
             partials[j] = 0.0;
         }
 
         // TODO do we want to wrap a vector around this?
-        double* hePartials = &(vals[heReactantIndex * dof]);
+        double* hePartials = &(vals[startingIdx[heReactantIndex]]);
         for(auto j = 0; j < hePartialsIdxMap.size(); ++j)
         {
             hePartials[j] = 0.0;
         }
 
         // TODO do we want to wrap a vector around this?
-        double* vPartials = &(vals[vReactantIndex * dof]);
+        double* vPartials = &(vals[startingIdx[vReactantIndex]]);
         for(auto j = 0; j < vPartialsIdxMap.size(); ++j)
         {
             vPartials[j] = 0.0;
         }
+#endif // READY
 
         // Have reactant compute its partial derivatives
         // to its correct locations within the vals array.
@@ -1676,8 +1692,6 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
                                             hePartials, hePartialsIdxMap,
                                             vPartials, vPartialsIdxMap);
 	}
-
-    firstTimeCalled = false;
 
 	return;
 }

@@ -325,9 +325,25 @@ void NEClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 	return;
 }
 
-void NEClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
-		int *size) {
 
+void
+NEClusterReactionNetwork::initPartialsIndices(std::vector<int>& size,
+                                    std::vector<size_t>& startingIdx,
+                                    std::vector<int>& indices) const {
+
+    // NIY
+    assert(false);
+
+}
+
+
+void
+NEClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
+                                    const std::vector<size_t>& startingIdx,
+                                    const std::vector<int>& indices,
+                                    std::vector<double>& vals) const {
+
+#if READY
 	// Initial declarations
 	const int dof = getDOF();
 	std::vector<double> clusterPartials;
@@ -416,6 +432,10 @@ void NEClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 			clusterPartials[pdColIdsVector[j]] = 0.0;
 		}
 	}
+#else
+    // NIY
+    assert(false);
+#endif // READY
 
 	return;
 }

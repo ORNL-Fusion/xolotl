@@ -915,8 +915,21 @@ void FeClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 	return;
 }
 
-void FeClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
-		int *size) {
+void
+FeClusterReactionNetwork::initPartialsIndices(std::vector<int>& size,
+                                    std::vector<size_t>& startingIdx,
+                                    std::vector<int>& indices) const {
+
+    // NIY
+    assert(false);
+}
+
+void
+FeClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
+                                    const std::vector<size_t>& startingIdx,
+                                    const std::vector<int>& indices,
+                                    std::vector<double>& vals) const {
+#if READY
 	// Initial declarations
 	const int dof = getDOF();
 	std::vector<double> clusterPartials;
@@ -1054,6 +1067,10 @@ void FeClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 			}
 		}
 	}
+#else
+    // NIY
+    assert(false);
+#endif // READY
 
 	return;
 }

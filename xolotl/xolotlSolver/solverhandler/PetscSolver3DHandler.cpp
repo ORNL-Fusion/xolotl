@@ -146,13 +146,13 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 			"PetscFree (dfill) failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-    reactionSize = new PetscInt[dof];
-    for(auto i = 0; i < dof; ++i)
-    {
-        reactionSize[i] = -1;
-    }
-	reactionVals = new PetscScalar[dof * dof];
-	reactionIndices = new PetscInt[dof * dof];
+    reactionSize.resize(dof);
+    reactionStartingIdx.resize(dof);
+    reactionIndices.resize(dof * dof);
+    reactionVals.resize(dof * dof);
+    network.initPartialsIndices(reactionSize,
+                                reactionStartingIdx, 
+                                reactionIndices);
 
 	return;
 }
@@ -826,8 +826,10 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				// ----- Take care of the reactions for all the reactants -----
 
 				// Compute all the partial derivatives for the reactions
-				network.computeAllPartials(reactionVals, reactionIndices,
-						reactionSize);
+				network.computeAllPartials(reactionSize,
+                                            reactionStartingIdx,
+                                            reactionIndices,
+                                            reactionVals);
 
 				// Update the column in the Jacobian that represents each DOF
 				for (int i = 0; i < dof - 1; i++) {
