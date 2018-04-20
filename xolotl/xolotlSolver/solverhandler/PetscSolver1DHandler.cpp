@@ -121,8 +121,16 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 			"PetscFree (dfill) failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	reactionVals = new PetscScalar[dof * dof];
-	reactionIndices = new PetscInt[dof * dof];
+    reactionSize.resize(dof);
+    reactionStartingIdx.resize(dof);
+    auto nPartials = network.initPartialsSizes(reactionSize,
+                                                reactionStartingIdx);
+
+    reactionIndices.resize(nPartials);
+    network.initPartialsIndices(reactionSize,
+                                reactionStartingIdx, 
+                                reactionIndices);
+    reactionVals.resize(nPartials);
 
 	return;
 }
@@ -626,7 +634,6 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	MatStencil rowId;
 	MatStencil colIds[dof];
 	int pdColIdsVectorSize = 0;
-	PetscInt reactionSize[dof];
 
 	// Declarations for variables used in the loop
 	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
@@ -663,7 +670,10 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// ----- Take care of the reactions for all the reactants -----
 
 		// Compute all the partial derivatives for the reactions
-		network.computeAllPartials(reactionVals, reactionIndices, reactionSize);
+		network.computeAllPartials(reactionSize,
+                                    reactionStartingIdx,
+                                    reactionIndices,
+                                    reactionVals);
 
 		// Update the column in the Jacobian that represents each DOF
 		for (int i = 0; i < dof - 1; i++) {
@@ -673,13 +683,15 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Number of partial derivatives
 			pdColIdsVectorSize = reactionSize[i];
+            auto startingIdx = reactionStartingIdx[i];
+
 			// Loop over the list of column ids
 			for (int j = 0; j < pdColIdsVectorSize; j++) {
 				// Set grid coordinate and component number for a column in the list
 				colIds[j].i = xi;
-				colIds[j].c = reactionIndices[i * dof + j];
+				colIds[j].c = reactionIndices[startingIdx + j];
 				// Get the partial derivative from the array of all of the partials
-				reactingPartialsForCluster[j] = reactionVals[i * dof + j];
+				reactingPartialsForCluster[j] = reactionVals[startingIdx + j];
 			}
 			// Update the matrix
 			ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize, colIds,

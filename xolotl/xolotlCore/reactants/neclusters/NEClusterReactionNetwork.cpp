@@ -325,13 +325,14 @@ void NEClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 	return;
 }
 
-void NEClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
-		int *size) {
+void NEClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
+                                const std::vector<size_t>& startingIdx,
+                                const std::vector<int>& indices,
+                                std::vector<double>& vals) const {
 
 	// Initial declarations
 	const int dof = getDOF();
-	std::vector<double> clusterPartials;
-	clusterPartials.resize(dof, 0.0);
+	std::vector<double> clusterPartials(dof, 0.0);
 
 	// Update the column in the Jacobian that represents each normal reactant
 	for (auto const& superMapItem : getAll(ReactantType::Xe)) {
@@ -343,18 +344,13 @@ void NEClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		// Get the partial derivatives
 		reactant.getPartialDerivatives(clusterPartials);
 		// Get the list of column ids from the map
-		auto pdColIdsVector = dFillMap.at(reactantIndex);
-		// Number of partial derivatives
-		auto pdColIdsVectorSize = pdColIdsVector.size();
-		size[reactantIndex] = pdColIdsVectorSize;
+		auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 
 		// Loop over the list of column ids
-		for (int j = 0; j < pdColIdsVectorSize; j++) {
-			// Set the index
-			indices[reactantIndex * dof + j] = pdColIdsVector[j];
-
+        auto myStartingIdx = startingIdx[reactantIndex];
+		for (int j = 0; j < pdColIdsVector.size(); j++) {
 			// Get the partial derivative from the array of all of the partials
-			vals[reactantIndex * dof + j] = clusterPartials[pdColIdsVector[j]];
+			vals[myStartingIdx + j] = clusterPartials[pdColIdsVector[j]];
 
 			// Reset the cluster partial value to zero. This is much faster
 			// than using memset.
@@ -375,46 +371,42 @@ void NEClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 
 		// Get the partial derivatives
 		reactant.getPartialDerivatives(clusterPartials);
-		// Get the list of column ids from the map
-		auto pdColIdsVector = dFillMap.at(reactantIndex);
-		// Number of partial derivatives
-		auto pdColIdsVectorSize = pdColIdsVector.size();
-		size[reactantIndex] = pdColIdsVectorSize;
 
-		// Loop over the list of column ids
-		for (int j = 0; j < pdColIdsVectorSize; j++) {
-			// Set the index
-			indices[reactantIndex * dof + j] = pdColIdsVector[j];
-			// Get the partial derivative from the array of all of the partials
-			vals[reactantIndex * dof + j] = clusterPartials[pdColIdsVector[j]];
+        {
+            // Get the list of column ids from the map
+            auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 
-			// Reset the cluster partial value to zero. This is much faster
-			// than using memset.
-			clusterPartials[pdColIdsVector[j]] = 0.0;
-		}
+            // Loop over the list of column ids
+            auto myStartingIdx = startingIdx[reactantIndex];
+            for (int j = 0; j < pdColIdsVector.size(); j++) {
+                // Get the partial derivative from the array of all of the partials
+                vals[myStartingIdx + j] = clusterPartials[pdColIdsVector[j]];
 
-		// Get the helium momentum index
-		reactantIndex = reactant.getXeMomentumId() - 1;
+                // Reset the cluster partial value to zero. This is much faster
+                // than using memset.
+                clusterPartials[pdColIdsVector[j]] = 0.0;
+            }
+        }
+        {
+            // Get the Xe momentum index
+            auto reactantIndex = reactant.getXeMomentumId() - 1;
 
-		// Get the partial derivatives
-		reactant.getMomentPartialDerivatives(clusterPartials);
-		// Get the list of column ids from the map
-		pdColIdsVector = dFillMap.at(reactantIndex);
-		// Number of partial derivatives
-		pdColIdsVectorSize = pdColIdsVector.size();
-		size[reactantIndex] = pdColIdsVectorSize;
+            // Get the partial derivatives
+            reactant.getMomentPartialDerivatives(clusterPartials);
+            // Get the list of column ids from the map
+            auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 
-		// Loop over the list of column ids
-		for (int j = 0; j < pdColIdsVectorSize; j++) {
-			// Set the index
-			indices[reactantIndex * dof + j] = pdColIdsVector[j];
-			// Get the partial derivative from the array of all of the partials
-			vals[reactantIndex * dof + j] = clusterPartials[pdColIdsVector[j]];
+            // Loop over the list of column ids
+            auto myStartingIdx = startingIdx[reactantIndex];
+            for (int j = 0; j < pdColIdsVector.size(); j++) {
+                // Get the partial derivative from the array of all of the partials
+                vals[myStartingIdx + j] = clusterPartials[pdColIdsVector[j]];
 
-			// Reset the cluster partial value to zero. This is much faster
-			// than using memset.
-			clusterPartials[pdColIdsVector[j]] = 0.0;
-		}
+                // Reset the cluster partial value to zero. This is much faster
+                // than using memset.
+                clusterPartials[pdColIdsVector[j]] = 0.0;
+            }
+        }
 	}
 
 	return;
