@@ -1539,68 +1539,6 @@ void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 }
 
 
-
-size_t
-PSIClusterReactionNetwork::initPartialsSizes(std::vector<int>& size,
-                                    std::vector<size_t>& startingIdx) const {
-
-    size_t currStartingIdx = 0;
-
-    // Determine the number of items owned by each reactant.
-    for(auto idx = 0; idx < getDOF(); ++idx)
-    {
-        // Note the starting index of items owned by this reactant.
-        startingIdx[idx] = currStartingIdx;
-
-        // Check whether this reactant has any partials.
-        auto iter = dFillMap.find(idx);
-        if(iter != dFillMap.end())
-        {
-            // The current reactant has some partials values to compute.
-            auto currSize = iter->second.size();
-
-            // Note number of valid partial derivatives for this reactant.
-            size[idx] = currSize;
-
-            // Advance the starting index past items owned by this reactant.
-            currStartingIdx += currSize;
-        }
-        else
-        {
-            // The current reactant has no partials.
-            size[idx] = 0;
-        }
-    }
-
-    return currStartingIdx;
-}
-
-
-void
-PSIClusterReactionNetwork::initPartialsIndices(const std::vector<int>& size,
-                                        const std::vector<size_t>& startingIdx,
-                                        std::vector<int>& indices) const
-{
-    // Determine the number of items owned by each reactant.
-    for(auto idx = 0; idx < getDOF(); ++idx)
-    {
-        if(size[idx] > 0)
-        {
-            // Determine column ids of needed partial derivatives.
-            auto const& pdColIdsVector = dFillMap.at(idx);
-
-            // Place the column ids in our location(s) in the indices array.
-            auto myStartingIdx = startingIdx[idx];
-            for(auto j = 0; j < size[idx]; ++j)
-            {
-                indices[myStartingIdx + j] = pdColIdsVector[j];            
-            }
-        }
-    }
-}
-
-
-
 void PSIClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
                                         const std::vector<size_t>& startingIdx,
                                         const std::vector<int>& indices,
@@ -1637,20 +1575,18 @@ void PSIClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
 
 			// Get the partial derivatives
 			reactant.getPartialDerivatives(clusterPartials);
+			// Get the list of column ids from the map
+			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 
 			// Loop over the list of column ids
-			for (int j = 0; j < size[reactantIndex]; ++j) {
-
-                auto myStartingIdx = startingIdx[reactantIndex];
-
-                auto colId = indices[myStartingIdx + j];
-
+            auto myStartingIdx = startingIdx[reactantIndex];
+			for (int j = 0; j < pdColIdsVector.size(); j++) {
 				// Get the partial derivative from the array of all of the partials
-				vals[myStartingIdx + j] = clusterPartials[colId];
+				vals[myStartingIdx + j] = clusterPartials[pdColIdsVector[j]];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
-				clusterPartials[colId] = 0.0;
+				clusterPartials[pdColIdsVector[j]] = 0.0;
 			}
 		}
 	}

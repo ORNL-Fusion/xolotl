@@ -915,34 +915,14 @@ void FeClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 	return;
 }
 
-size_t
-FeClusterReactionNetwork::initPartialsSizes(std::vector<int>& size,
-                                    std::vector<size_t>& startingIdx) const {
-
-    // NIY
-    assert(false);
-    return 0;
-}
-
-void
-FeClusterReactionNetwork::initPartialsIndices(const std::vector<int>& size,
-                                    const std::vector<size_t>& startingIdx,
-                                    std::vector<int>& indices) const {
-
-    // NIY
-    assert(false);
-}
-
 void
 FeClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
                                     const std::vector<size_t>& startingIdx,
                                     const std::vector<int>& indices,
                                     std::vector<double>& vals) const {
-#if READY
 	// Initial declarations
 	const int dof = getDOF();
-	std::vector<double> clusterPartials;
-	clusterPartials.resize(dof, 0.0);
+	std::vector<double> clusterPartials(dof, 0.0);
 
 	// Get the super clusters
 	auto const& superClusters = getAll(ReactantType::FeSuper);
@@ -971,18 +951,12 @@ FeClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
 			reactant.getPartialDerivatives(clusterPartials);
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
 
 			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
-				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
-
+            auto myStartingIdx = startingIdx[reactantIndex];
+			for (int j = 0; j < pdColIdsVector.size(); j++) {
 				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
+				vals[myStartingIdx + j] = clusterPartials[pdColIdsVector[j]];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
@@ -1006,17 +980,12 @@ FeClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
 
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
 
 			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
-				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
+            auto myStartingIdx = startingIdx[reactantIndex];
+			for (int j = 0; j < pdColIdsVector.size(); j++) {
 				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
+				vals[myStartingIdx + j] = clusterPartials[pdColIdsVector[j]];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
@@ -1032,17 +1001,12 @@ FeClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
 			reactant.getHeMomentPartialDerivatives(clusterPartials);
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
 
 			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
-				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
+            auto myStartingIdx = startingIdx[reactantIndex];
+			for (int j = 0; j < pdColIdsVector.size(); j++) {
 				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
+				vals[myStartingIdx + j] = clusterPartials[pdColIdsVector[j]];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
@@ -1058,17 +1022,12 @@ FeClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
 			reactant.getVMomentPartialDerivatives(clusterPartials);
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
-			// Number of partial derivatives
-			auto pdColIdsVectorSize = pdColIdsVector.size();
-			size[reactantIndex] = pdColIdsVectorSize;
 
 			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
-				// Set the index
-				indices[reactantIndex * dof + j] = pdColIdsVector[j];
+            auto myStartingIdx = startingIdx[reactantIndex];
+			for (int j = 0; j < pdColIdsVector.size(); j++) {
 				// Get the partial derivative from the array of all of the partials
-				vals[reactantIndex * dof + j] =
-						clusterPartials[pdColIdsVector[j]];
+				vals[myStartingIdx + j] = clusterPartials[pdColIdsVector[j]];
 
 				// Reset the cluster partial value to zero. This is much faster
 				// than using memset.
@@ -1076,10 +1035,6 @@ FeClusterReactionNetwork::computeAllPartials(const std::vector<int>& size,
 			}
 		}
 	}
-#else
-    // NIY
-    assert(false);
-#endif // READY
 
 	return;
 }
