@@ -334,6 +334,14 @@ public:
 	}
 
 	/**
+	 * Get the grid right offset.
+	 * \see ISolverHandler.h
+	 */
+	int getRightOffset() const {
+		return rightOffset;
+	}
+
+	/**
 	 * To know if the surface should be able to move.
 	 * \see ISolverHandler.h
 	 */

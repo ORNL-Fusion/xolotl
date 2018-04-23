@@ -155,6 +155,13 @@ public:
 	virtual double getTauBursting() const = 0;
 
 	/**
+	 * Get the grid right offset.
+	 *
+	 * @return The offset
+	 */
+	virtual int getRightOffset() const = 0;
+
+	/**
 	 * To know if the surface should be able to move.
 	 *
 	 * @return True if the surface should be able to move.
