@@ -1125,22 +1125,26 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 			});
 
 	// Get all the super clusters and loop on them
-	for (auto const& currMapItem : clusterTypeMap[ReactantType::PSISuper]) {
+	// Have to use allReactants again to be sure the ordering is the same across plateforms
+	std::for_each(allReactants.begin(), allReactants.end(),
+			[&id, this](IReactant& currReactant) {
 
-		auto& currCluster = static_cast<PSISuperCluster&>(*(currMapItem.second));
+				if (currReactant.getType() == ReactantType::PSISuper) {
+					auto& currCluster = static_cast<PSISuperCluster&>(currReactant);
 
-		id++;
-		currCluster.setHeMomentumId(id);
-		id++;
-		currCluster.setVMomentumId(id);
+					id++;
+					currCluster.setHeMomentumId(id);
+					id++;
+					currCluster.setVMomentumId(id);
 
-		// Update the PSIMixed size
-		IReactant::SizeType clusterSize = currCluster.getHeBounds().second
-				+ currCluster.getVBounds().second;
-		if (clusterSize > maxClusterSizeMap[ReactantType::PSIMixed]) {
-			maxClusterSizeMap[ReactantType::PSIMixed] = clusterSize;
-		}
-	}
+					// Update the PSIMixed size
+					IReactant::SizeType clusterSize = currCluster.getHeBounds().second
+					+ currCluster.getVBounds().second;
+					if (clusterSize > maxClusterSizeMap[ReactantType::PSIMixed]) {
+						maxClusterSizeMap[ReactantType::PSIMixed] = clusterSize;
+					}
+				}
+			});
 
 	return;
 }
