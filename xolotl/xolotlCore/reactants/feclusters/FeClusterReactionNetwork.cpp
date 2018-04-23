@@ -643,13 +643,13 @@ std::vector<std::vector<int> > FeClusterReactionNetwork::getCompositionList() co
 	return compList;
 }
 
-void FeClusterReactionNetwork::getDiagonalFill(int *diagFill) {
+void FeClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = getDOF();
 
 	// Get the connectivity for each reactant
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&diagFill,&dof,this](const IReactant& reactant) {
+			[&fillMap,&dof,this](const IReactant& reactant) {
 
 				// Get the reactant's connectivity
 				auto const& connectivity = reactant.getConnectivity();
@@ -661,12 +661,9 @@ void FeClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 				std::vector<int> columnIds;
 				// Add it to the diagonal fill block
 				for (int j = 0; j < connectivityLength; j++) {
-					// The id starts at j*connectivity length and is always offset
-					// by the id, which denotes the exact column.
-					auto index = id * dof + j;
-					diagFill[index] = connectivity[j];
 					// Add a column id if the connectivity is equal to 1.
 					if (connectivity[j] == 1) {
+                        fillMap[id].emplace_back(j);
 						columnIds.push_back(j);
 					}
 				}
@@ -691,12 +688,9 @@ void FeClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		std::vector<int> columnIds;
 		// Add it to the diagonal fill block
 		for (int j = 0; j < connectivityLength; j++) {
-			// The id starts at j*connectivity length and is always offset
-			// by the id, which denotes the exact column.
-			auto index = (id) * dof + j;
-			diagFill[index] = connectivity[j];
 			// Add a column id if the connectivity is equal to 1.
 			if (connectivity[j] == 1) {
+                fillMap[id].emplace_back(j);
 				columnIds.push_back(j);
 			}
 		}
@@ -709,10 +703,9 @@ void FeClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 
 		// Add it to the diagonal fill block
 		for (int j = 0; j < connectivityLength; j++) {
-			// The id starts at j*connectivity length and is always offset
-			// by the id, which denotes the exact column.
-			auto index = (id) * dof + j;
-			diagFill[index] = connectivity[j];
+            if(connectivity[j] == 1) {
+                fillMap[id].emplace_back(j);
+            }
 		}
 		// Update the map
 		dFillMap[id] = columnIds;

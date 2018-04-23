@@ -147,9 +147,9 @@ public:
 	/**
 	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.
 	 *
-	 * @param diagFill The pointer to the vector where the connectivity information is kept
+	 * @param diagFill Connectivity map.
 	 */
-	void getDiagonalFill(int *diagFill) override;
+	void getDiagonalFill(SparseFillMap& sfm) override;
 
 	/**
 	 * Calculate all the rate constants for the reactions and dissociations of the network.

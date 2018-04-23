@@ -85,19 +85,8 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	 *  In this case ofill has only a few diagonal entries since the only spatial
 	 *  coupling is regular diffusion.
 	 */
-	PetscInt *ofill, *dfill;
-	ierr = PetscMalloc(dof * dof * sizeof(PetscInt), &ofill);
-	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
-			"PetscMalloc (ofill) failed.");
-	ierr = PetscMalloc(dof * dof * sizeof(PetscInt), &dfill);
-	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
-			"PetscMalloc (dfill) failed.");
-	ierr = PetscMemzero(ofill, dof * dof * sizeof(PetscInt));
-	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
-			"PetscMemzero (ofill) failed.");
-	ierr = PetscMemzero(dfill, dof * dof * sizeof(PetscInt));
-	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
-			"PetscMemzero (dfill) failed.");
+    xolotlCore::IReactionNetwork::SparseFillMap ofill;
+    xolotlCore::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
@@ -118,17 +107,11 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	ierr = DMDASetBlockFills(da, dfill, ofill);
+    auto dfillsparse = ConvertToPetscSparseFillMap(dof, dfill);
+    auto ofillsparse = ConvertToPetscSparseFillMap(dof, ofill);
+	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
 	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
 			"DMDASetBlockFills failed.");
-
-	// Free the temporary fill arrays
-	ierr = PetscFree(ofill);
-	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
-			"PetscFree (ofill) failed.");
-	ierr = PetscFree(dfill);
-	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
-			"PetscFree (dfill) failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
     reactionSize.resize(dof);

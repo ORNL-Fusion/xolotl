@@ -33,7 +33,8 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void initialize(const IReactionNetwork& network, int *ofill) override;
+	void initialize(const IReactionNetwork& network,
+                    IReactionNetwork::SparseFillMap& ofillMap) override;
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the number of advecting

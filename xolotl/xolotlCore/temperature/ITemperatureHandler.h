@@ -26,13 +26,12 @@ public:
 	 * depending on the type of handler used.
 	 *
 	 * @param network The network
-	 * @param ofill The pointer to the array that will contain the value 1 at the indices
-	 * of the diffusing variables.
-	 * @param dfill The pointer to the array that will contain the value 1 at the indices
-	 * of the reacting variables.
+	 * @param ofillMap Map indicating row/column of diffusing variables in off-diagonal fill map.
+	 * @param dfillMap Map indicating row/column of diffusing variables in diagonal fill map.
 	 */
 	virtual void initializeTemperature(const IReactionNetwork& network,
-			int *ofill, int *dfill) = 0;
+            IReactionNetwork::SparseFillMap& ofillMap,
+            IReactionNetwork::SparseFillMap& dfillMap) = 0;
 
 	/**
 	 * This operation returns the temperature at the given position

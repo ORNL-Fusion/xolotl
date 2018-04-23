@@ -459,9 +459,9 @@ public:
 	 * Do nothing here, this method need to be implemented in
 	 * subclasses.
 	 *
-	 * @param diagFill The pointer to the vector where the connectivity information is kept
+	 * @param sfm Connectivity map.
 	 */
-	virtual void getDiagonalFill(int *diagFill) override {
+	virtual void getDiagonalFill(SparseFillMap& sfm) override {
 		return;
 	}
 

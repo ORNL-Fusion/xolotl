@@ -86,6 +86,18 @@ protected:
     std::vector<PetscScalar> reactionVals;
 
 
+    /**
+     * Convert a C++ sparse fill map representation to the one that
+     * PETSc's DMDASetBlockFillsSparse() expects.
+     *
+     * @param dof The network's degrees of freedom.
+     * @param fillMap The C++ sparse file map to convert.
+     * @return The information from the fill map, in the format that
+     *      PETSc's DMDASetBlockFillsSparse() expects.
+     */
+    static std::vector<PetscInt> ConvertToPetscSparseFillMap(size_t dof,
+                    const xolotlCore::IReactionNetwork::SparseFillMap& fillMap);
+
 public:
 
 	/**

@@ -29,11 +29,10 @@ public:
 	 * won't be possible to set the partial derivatives for the diffusion.
 	 *
 	 * @param network The network
-	 * @param ofill The pointer to the array that will contain the value 1 at the indices
-	 * of the diffusing clusters
+	 * @param ofill Map of connectivity for diffusing clusters.
 	 */
 	virtual void initializeOFill(const IReactionNetwork& network,
-			int *ofill) = 0;
+                            IReactionNetwork::SparseFillMap& ofillMap) = 0;
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the number of diffusion

@@ -31,6 +31,11 @@ public:
 	 */
 	using ReactantMap = std::unordered_map<IReactant::Composition, std::unique_ptr<IReactant> >;
 
+    /**
+     * Concise name for sparse connectivity map.
+     */
+    using SparseFillMap = std::unordered_map<int, std::vector<int>>;
+
 	/**
 	 * The destructor.
 	 */
@@ -190,9 +195,9 @@ public:
 	/**
 	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.
 	 *
-	 * @param diagFill The pointer to the vector where the connectivity information is kept
+	 * @param sfm Connectivity map.
 	 */
-	virtual void getDiagonalFill(int *diagFill) = 0;
+	virtual void getDiagonalFill(SparseFillMap& sfm) = 0;
 
 	/**
 	 * Get the total concentration of atoms in the network.

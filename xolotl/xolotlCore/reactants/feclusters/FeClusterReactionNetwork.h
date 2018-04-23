@@ -276,9 +276,9 @@ public:
 	/**
 	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.
 	 *
-	 * @param diagFill The pointer to the vector where the connectivity information is kept
+	 * @param sfm Connectivity map.
 	 */
-	void getDiagonalFill(int *diagFill) override;
+	void getDiagonalFill(SparseFillMap& sfm) override;
 
 	/**
 	 * Get the total concentration of atoms contained in the network.

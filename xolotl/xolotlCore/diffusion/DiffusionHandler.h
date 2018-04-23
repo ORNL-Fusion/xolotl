@@ -32,14 +32,13 @@ public:
 	 * Initialize the off-diagonal part of the Jacobian. If this step is skipped it
 	 * won't be possible to set the partial derivatives for the diffusion.
 	 *
-	 * The value 1 is set in ofill if a cluster has a non zero diffusion coefficient.
+	 * The value 1 is set in ofillMap if a cluster has a non zero diffusion coefficient.
 	 *
 	 * @param network The network
-	 * @param ofill The pointer to the array that will contain the value 1 at the indices
-	 * of the diffusing clusters
+	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	virtual void initializeOFill(const IReactionNetwork& network, int *ofill)
-			override {
+	virtual void initializeOFill(const IReactionNetwork& network, 
+                        IReactionNetwork::SparseFillMap& ofillMap) override {
 
 		int dof = network.getDOF();
 
@@ -64,7 +63,7 @@ public:
 			// Get its id
 			int index = cluster.getId() - 1;
 			// Set the ofill value to 1 for this cluster
-			ofill[index * dof + index] = 1;
+            ofillMap[index].emplace_back(index);
 		}
 
 		return;

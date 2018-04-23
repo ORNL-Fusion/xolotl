@@ -1204,16 +1204,14 @@ std::vector<std::vector<int> > PSIClusterReactionNetwork::getCompositionList() c
 	return compList;
 }
 
-void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
-
-    std::cout << "Enter getDiagonalFill" << std::endl;
+void PSIClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = getDOF();
 
 	// Get the connectivity for each reactant
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&diagFill,&dof,this](const IReactant& reactant) {
+			[&fillMap,&dof,this](const IReactant& reactant) {
 
 				// Get the reactant's connectivity
 				auto const& connectivity = reactant.getConnectivity();
@@ -1225,14 +1223,13 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 				std::vector<int> columnIds;
 				// Add it to the diagonal fill block
 				for (int j = 0; j < connectivityLength; j++) {
-					// The id starts at j*connectivity length and is always offset
-					// by the id, which denotes the exact column.
-					auto index = id * dof + j;
-					diagFill[index] = connectivity[j];
-					// Add a column id if the connectivity is equal to 1.
-					if (connectivity[j] == 1) {
-						columnIds.push_back(j);
-					}
+
+			        // Add a column id if the connectivity is equal to 1.
+                    if(connectivity[j] == 1) {
+                        // TODO are fillMap and dFillmap the same?
+                        fillMap[id].emplace_back(j);
+                        columnIds.emplace_back(j);
+                    }
 				}
 				// Update the map
 				dFillMap[id] = columnIds;
@@ -1255,13 +1252,10 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		std::vector<int> columnIds;
 		// Add it to the diagonal fill block
 		for (int j = 0; j < connectivityLength; j++) {
-			// The id starts at j*connectivity length and is always offset
-			// by the id, which denotes the exact column.
-			auto index = (id) * dof + j;
-			diagFill[index] = connectivity[j];
 			// Add a column id if the connectivity is equal to 1.
 			if (connectivity[j] == 1) {
-				columnIds.push_back(j);
+                fillMap[id].emplace_back(j);
+				columnIds.emplace_back(j);
 			}
 		}
 		// Update the map
@@ -1275,8 +1269,10 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 		for (int j = 0; j < connectivityLength; j++) {
 			// The id starts at j*connectivity length and is always offset
 			// by the id, which denotes the exact column.
-			auto index = (id) * dof + j;
-			diagFill[index] = connectivity[j];
+            if(connectivity[j] == 1) {
+                fillMap[id].emplace_back(j);
+            }
+            // TODO why don't we add columnIds here?
 		}
 		// Update the map
 		dFillMap[id] = columnIds;
