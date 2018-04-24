@@ -1,17 +1,11 @@
 #ifndef OSTIMER_H
 #define OSTIMER_H
 
+#include <chrono>
+#include <limits>
 #include "xolotlPerf/perfConfig.h"
 #include "xolotlPerf/ITimer.h"
 #include "xolotlCore/Identifiable.h"
-
-#if defined(HAVE_CLOCK_GETTIME)
-#  include "xolotlPerf/os/CGTTimestamp.h"
-#elif defined(HAVE_GETTIMEOFDAY)
-#  include "xolotlPerf/os/GTODTimestamp.h"
-#else
-#  error "No supported timing source is available."
-#endif // defined(HAVE_CLOCK_GETTIME)
 
 namespace xolotlPerf {
 
@@ -19,12 +13,24 @@ namespace xolotlPerf {
 /// Uses an operating system/runtime timer interface.
 class OSTimer: public ITimer, public xolotlCore::Identifiable {
 private:
+    /// Concise name for type of our time source.
+    using Clock = std::chrono::system_clock;
+
+    /// Concise name for type of a timestamp.
+    using Timestamp = std::chrono::time_point<Clock>;
+
+    /// Concise name for type of a difference between timestamps.
+    using Duration = std::chrono::duration<ITimer::ValType>;
+
+    /// The timestamp value we use to indicate startTime is invalid.
+    static const Timestamp invalidTimestamp;
+
 	/// The timer's value.
 	ITimer::ValType val;
 
 	/// When the timer was started.
-	/// Will be OSRTimestamp::invalidValue if timer is not running.
-	OSRTimestamp startTime;
+	/// Will be invalidTimestamp if timer is not running.
+	Timestamp startTime;
 
 	/// Construct a timer.
 	/// The default constructor is private to force callers to provide a name for the timer object.
@@ -37,8 +43,9 @@ public:
 	///
 	/// @param name The name to associate with the timer.
 	OSTimer(const std::string& name) :
-			xolotlCore::Identifiable(name), val(0), startTime(
-					OSRTimestamp::invalidValue) {
+			xolotlCore::Identifiable(name),
+            val(0),
+            startTime(invalidTimestamp) {
 	}
 
 	///
@@ -51,19 +58,19 @@ public:
 	/// Start the timer.
 	/// Throws std::runtime_error if starting a timer that was already started.
 	///
-	virtual void start(void);
+	void start(void) override;
 
 	///
 	/// Stop the timer.
 	/// Throws std::runtime_error if stopping a timer that was not running.
 	///
-	virtual void stop(void);
+	void stop(void) override;
 
 	///
 	/// Reset the timer's value.
 	/// Throws std::runtime_error if resetting a timer that was running.
 	///
-	virtual void reset(void);
+	void reset(void) override;
 
 	///
 	/// Determine if the Timer is currently running.
@@ -71,7 +78,7 @@ public:
 	/// @return true if the Timer is running, false otherwise.
 	///
 	virtual bool isRunning(void) const {
-		return (startTime != OSRTimestamp::invalidValue);
+		return (startTime != invalidTimestamp);
 	}
 	///
 	/// Retrieve the value of the timer.
@@ -79,7 +86,7 @@ public:
 	///
 	/// @return The elapsed time measured by this timer.
 	///
-	virtual ITimer::ValType getValue(void) const {
+	ITimer::ValType getValue(void) const override {
 		return val;
 	}
 
@@ -87,7 +94,7 @@ public:
 	/// Retrieve the Timer value's units.
 	/// @return The units in which the timer's value is given.
 	///
-	virtual std::string getUnits(void) const;
+	std::string getUnits(void) const override;
 
 	/// Add the given Timer's value to my value.
 	/// @param t The timer whose value should be added to my value.

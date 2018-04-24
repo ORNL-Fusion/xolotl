@@ -1290,25 +1290,29 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 			});
 
 	// Get all the super clusters and loop on them
-	for (auto const& currMapItem : clusterTypeMap[ReactantType::PSISuper]) {
+	// Have to use allReactants again to be sure the ordering is the same across plateforms
+	std::for_each(allReactants.begin(), allReactants.end(),
+			[&id, this](IReactant& currReactant) {
 
-		auto& currCluster = static_cast<PSISuperCluster&>(*(currMapItem.second));
+				if (currReactant.getType() == ReactantType::PSISuper) {
+					auto& currCluster = static_cast<PSISuperCluster&>(currReactant);
 
-		id++;
-		currCluster.setMomentId(id, 0);
-		id++;
-		currCluster.setMomentId(id, 1);
-		currCluster.setMomentId(currCluster.getId(), 2);
-		id++;
-		currCluster.setMomentId(id, 3);
+					id++;
+					currCluster.setMomentId(id, 0);
+					id++;
+					currCluster.setMomentId(id, 1);
+					currCluster.setMomentId(currCluster.getId(), 2);
+					id++;
+					currCluster.setMomentId(id, 3);
 
-		// Update the PSIMixed size
-		IReactant::SizeType clusterSize = currCluster.getBounds(0).second
-				+ currCluster.getBounds(3).second;
-		if (clusterSize > maxClusterSizeMap[ReactantType::PSIMixed]) {
-			maxClusterSizeMap[ReactantType::PSIMixed] = clusterSize;
-		}
-	}
+					// Update the PSIMixed size
+					IReactant::SizeType clusterSize = currCluster.getBounds(0).second
+					+ currCluster.getBounds(3).second;
+					if (clusterSize > maxClusterSizeMap[ReactantType::PSIMixed]) {
+						maxClusterSizeMap[ReactantType::PSIMixed] = clusterSize;
+					}
+				}
+			});
 
 	return;
 }

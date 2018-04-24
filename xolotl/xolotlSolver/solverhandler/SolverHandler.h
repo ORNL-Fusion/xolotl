@@ -144,9 +144,21 @@ protected:
 				else if (l < surfacePos + 154) {
 					previousPoint += 50.0;
 				}
-				// Then 100.0nm step size (1000.5nm < x)
-				else {
+				// Then 100.0nm step size (1000.5nm < x < 5000.5)
+				else if (l < surfacePos + 194) {
 					previousPoint += 100.0;
+				}
+				// Then 200.0nm step size (5000.5nm < x < 10000.5)
+				else if (l < surfacePos + 219) {
+					previousPoint += 200.0;
+				}
+				// Then 500.0nm step size (10000.5nm < x < 20000.5)
+				else if (l < surfacePos + 239) {
+					previousPoint += 500.0;
+				}
+				// Then 1.0um step size (20000.5nm < x)
+				else {
+					previousPoint += 1000.0;
 				}
 			}
 		}
@@ -331,6 +343,14 @@ public:
 	 */
 	double getTauBursting() const {
 		return tauBursting;
+	}
+
+	/**
+	 * Get the grid right offset.
+	 * \see ISolverHandler.h
+	 */
+	int getRightOffset() const {
+		return rightOffset;
 	}
 
 	/**

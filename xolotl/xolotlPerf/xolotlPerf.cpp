@@ -21,11 +21,7 @@ void initialize(IHandlerRegistry::RegistryType rtype) {
 		break;
 
 	case IHandlerRegistry::std:
-#if defined(HAVE_PAPI)
-		theHandlerRegistry = std::make_shared<PAPIHandlerRegistry>();
-#else
 		theHandlerRegistry = std::make_shared<OSHandlerRegistry>();
-#endif // defined(HAVE_PAPI)
 		break;
 
 	case IHandlerRegistry::os:
