@@ -190,7 +190,7 @@ public:
 	void initializeHandlers(
 			std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-			xolotlCore::Options &options) override {
+			const xolotlCore::Options &options) override {
 
         // Determine who I am.
         int myProcId = -1;

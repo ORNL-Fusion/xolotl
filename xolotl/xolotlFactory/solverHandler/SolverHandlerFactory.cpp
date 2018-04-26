@@ -13,7 +13,7 @@ namespace xolotlFactory {
 static std::unique_ptr<xolotlSolver::ISolverHandler> theSolverHandler;
 
 // Create the desired type of handler registry.
-bool initializeDimension(xolotlCore::Options &options,
+bool initializeDimension(const xolotlCore::Options &options,
 		xolotlCore::IReactionNetwork& network) {
 
 	bool ret = true;

@@ -42,7 +42,7 @@ public:
 	 */
 	virtual void initializeHandlers(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-			xolotlCore::Options &options) = 0;
+			const xolotlCore::Options &options) = 0;
 
 	/**
 	 * Create everything needed before starting to solve.

@@ -13,7 +13,7 @@ namespace xolotlFactory {
  * @param options Options for the program
  * @return True iff the handler registry was created successfully.
  */
-bool initializeTempHandler(xolotlCore::Options &options);
+bool initializeTempHandler(const xolotlCore::Options &options);
 
 /**
  * Access the handler registry.
