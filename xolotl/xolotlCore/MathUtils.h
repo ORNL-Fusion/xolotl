@@ -21,6 +21,10 @@ namespace xolotlCore {
  * @param b The second double
  * @return True if the doubles are equal to within machine precision, false
  * otherwise.
+ *
+ * TODO be careful - this test is effective only if a and b are small
+ * (e.g., less than 1).  It is not an effective test if values are large.
+ * A relative error test would be more effective.
  */
 inline bool equal(double a, double b) {
 	return std::fabs(b - a) < std::numeric_limits<double>::epsilon();
@@ -63,54 +67,27 @@ inline double legendrePolynomial(double x, int degree) {
 }
 
 /**
- * This operation computes the 3rd order Legendre polynomials
+ * This operation computes the Nth order Legendre polynomials
  *
- * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x) + c3*P_3(x) = c0 + c1 * x +
- * c2*P_2(x) + c3*P_3(x)
+ * f(x) = c0*P_0(x) + c1*P_1(x) + ... + cN*P_N(x)
  *
- * for a coefficient set {c0,c1,c2,c3}.
- *
- * @param x
- *            The x value of the function.
- * @param coeffs
- *            The coefficients array.
- */
-inline double compute3rdOrderLegendre(double x, std::vector<double> coeffs) {
-	// Initialize the value
-	double value = 0.0;
-
-	// Compute the value
-	for (int i = 0; i < 4; i++) {
-		value = value + coeffs[i] * legendrePolynomial(x, i);
-	}
-
-	return value;
-}
-
-/**
- * This operation computes the 5th order Legendre polynomials
- *
- * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x) + c3*P_3(x) + c4*P_4(x) +
- * c5*P_5(x) = c0 + c1 * x + c2*P_2(x) + c3*P_3(x) + c4*P_4(x) + c5*P_5(x)
- *
- * for a coefficient set {c0,c1,c2,c3,c4,c5}.
+ * for a coefficient set {c0,c1,...,cN}.
  *
  * @param x
  *            The x value of the function.
  * @param coeffs
  *            The coefficients array.
  */
-inline double compute5thOrderLegendre(double x, std::vector<double> coeffs) {
-	// Initialize the value
-	double value = 0.0;
-
-	// Compute the value
-	for (int i = 0; i < 6; i++) {
-		value = value + coeffs[i] * legendrePolynomial(x, i);
-	}
-
-	return value;
+template<uint32_t N>
+inline double computeNthOrderLegendre(double x, const std::array<double, N+1>& coeffs) {
+    int currDegree = 0;
+    auto valAtX = std::accumulate(coeffs.begin(), coeffs.end(), 0.0,
+        [x,&currDegree](double running, double currCoeff) {
+            return running + (currCoeff * legendrePolynomial(x, currDegree++));
+        });
+    return valAtX;
 }
+
 
 /**
  * Computes
