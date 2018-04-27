@@ -1,4 +1,5 @@
 // Includes
+#include <iterator>
 #include "PSISuperCluster.h"
 #include "PSIClusterReactionNetwork.h"
 #include <MathUtils.h>
@@ -91,33 +92,33 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction, int a, int b,
 	double heFactor = (double) (a - numHe) / dispersionHe;
 	double vFactor = (double) (b - numV) / dispersionV;
 	// First is A, second is B, in A + B -> this
-	prodPair.a000 += 1.0;
-	prodPair.a001 += heFactor;
-	prodPair.a002 += vFactor;
-	prodPair.a100 += firstHeDistance;
-	prodPair.a101 += firstHeDistance * heFactor;
-	prodPair.a102 += firstHeDistance * vFactor;
-	prodPair.a200 += firstVDistance;
-	prodPair.a201 += firstVDistance * heFactor;
-	prodPair.a202 += firstVDistance * vFactor;
-	prodPair.a010 += secondHeDistance;
-	prodPair.a011 += secondHeDistance * heFactor;
-	prodPair.a012 += secondHeDistance * vFactor;
-	prodPair.a020 += secondVDistance;
-	prodPair.a021 += secondVDistance * heFactor;
-	prodPair.a022 += secondVDistance * vFactor;
-	prodPair.a110 += firstHeDistance * secondHeDistance;
-	prodPair.a111 += firstHeDistance * secondHeDistance * heFactor;
-	prodPair.a112 += firstHeDistance * secondHeDistance * vFactor;
-	prodPair.a120 += firstHeDistance * secondVDistance;
-	prodPair.a121 += firstHeDistance * secondVDistance * heFactor;
-	prodPair.a122 += firstHeDistance * secondVDistance * vFactor;
-	prodPair.a210 += firstVDistance * secondHeDistance;
-	prodPair.a211 += firstVDistance * secondHeDistance * heFactor;
-	prodPair.a212 += firstVDistance * secondHeDistance * vFactor;
-	prodPair.a220 += firstVDistance * secondVDistance;
-	prodPair.a221 += firstVDistance * secondVDistance * heFactor;
-	prodPair.a222 += firstVDistance * secondVDistance * vFactor;
+	prodPair.a[0][0][0] += 1.0;
+	prodPair.a[0][0][1] += heFactor;
+	prodPair.a[0][0][2] += vFactor;
+	prodPair.a[1][0][0] += firstHeDistance;
+	prodPair.a[1][0][1] += firstHeDistance * heFactor;
+	prodPair.a[1][0][2] += firstHeDistance * vFactor;
+	prodPair.a[2][0][0] += firstVDistance;
+	prodPair.a[2][0][1] += firstVDistance * heFactor;
+	prodPair.a[2][0][2] += firstVDistance * vFactor;
+	prodPair.a[0][1][0] += secondHeDistance;
+	prodPair.a[0][1][1] += secondHeDistance * heFactor;
+	prodPair.a[0][1][2] += secondHeDistance * vFactor;
+	prodPair.a[0][2][0] += secondVDistance;
+	prodPair.a[0][2][1] += secondVDistance * heFactor;
+	prodPair.a[0][2][2] += secondVDistance * vFactor;
+	prodPair.a[1][1][0] += firstHeDistance * secondHeDistance;
+	prodPair.a[1][1][1] += firstHeDistance * secondHeDistance * heFactor;
+	prodPair.a[1][1][2] += firstHeDistance * secondHeDistance * vFactor;
+	prodPair.a[1][2][0] += firstHeDistance * secondVDistance;
+	prodPair.a[1][2][1] += firstHeDistance * secondVDistance * heFactor;
+	prodPair.a[1][2][2] += firstHeDistance * secondVDistance * vFactor;
+	prodPair.a[2][1][0] += firstVDistance * secondHeDistance;
+	prodPair.a[2][1][1] += firstVDistance * secondHeDistance * heFactor;
+	prodPair.a[2][1][2] += firstVDistance * secondHeDistance * vFactor;
+	prodPair.a[2][2][0] += firstVDistance * secondVDistance;
+	prodPair.a[2][2][1] += firstVDistance * secondVDistance * heFactor;
+	prodPair.a[2][2][2] += firstVDistance * secondVDistance * vFactor;
 
 	return;
 }
@@ -174,33 +175,33 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 				double heFactor = (double) (a - numHe) / dispersionHe;
 				double vFactor = (double) (b - numV) / dispersionV;
 				// First is A, second is B, in A + B -> this
-				prodPair.a000 += 1.0;
-				prodPair.a001 += heFactor;
-				prodPair.a002 += vFactor;
-				prodPair.a100 += firstHeDistance;
-				prodPair.a101 += firstHeDistance * heFactor;
-				prodPair.a102 += firstHeDistance * vFactor;
-				prodPair.a200 += firstVDistance;
-				prodPair.a201 += firstVDistance * heFactor;
-				prodPair.a202 += firstVDistance * vFactor;
-				prodPair.a010 += secondHeDistance;
-				prodPair.a011 += secondHeDistance * heFactor;
-				prodPair.a012 += secondHeDistance * vFactor;
-				prodPair.a020 += secondVDistance;
-				prodPair.a021 += secondVDistance * heFactor;
-				prodPair.a022 += secondVDistance * vFactor;
-				prodPair.a110 += firstHeDistance * secondHeDistance;
-				prodPair.a111 += firstHeDistance * secondHeDistance * heFactor;
-				prodPair.a112 += firstHeDistance * secondHeDistance * vFactor;
-				prodPair.a120 += firstHeDistance * secondVDistance;
-				prodPair.a121 += firstHeDistance * secondVDistance * heFactor;
-				prodPair.a122 += firstHeDistance * secondVDistance * vFactor;
-				prodPair.a210 += firstVDistance * secondHeDistance;
-				prodPair.a211 += firstVDistance * secondHeDistance * heFactor;
-				prodPair.a212 += firstVDistance * secondHeDistance * vFactor;
-				prodPair.a220 += firstVDistance * secondVDistance;
-				prodPair.a221 += firstVDistance * secondVDistance * heFactor;
-				prodPair.a222 += firstVDistance * secondVDistance * vFactor;
+				prodPair.a[0][0][0] += 1.0;
+				prodPair.a[0][0][1] += heFactor;
+				prodPair.a[0][0][2] += vFactor;
+				prodPair.a[1][0][0] += firstHeDistance;
+				prodPair.a[1][0][1] += firstHeDistance * heFactor;
+				prodPair.a[1][0][2] += firstHeDistance * vFactor;
+				prodPair.a[2][0][0] += firstVDistance;
+				prodPair.a[2][0][1] += firstVDistance * heFactor;
+				prodPair.a[2][0][2] += firstVDistance * vFactor;
+				prodPair.a[0][1][0] += secondHeDistance;
+				prodPair.a[0][1][1] += secondHeDistance * heFactor;
+				prodPair.a[0][1][2] += secondHeDistance * vFactor;
+				prodPair.a[0][2][0] += secondVDistance;
+				prodPair.a[0][2][1] += secondVDistance * heFactor;
+				prodPair.a[0][2][2] += secondVDistance * vFactor;
+				prodPair.a[1][1][0] += firstHeDistance * secondHeDistance;
+				prodPair.a[1][1][1] += firstHeDistance * secondHeDistance * heFactor;
+				prodPair.a[1][1][2] += firstHeDistance * secondHeDistance * vFactor;
+				prodPair.a[1][2][0] += firstHeDistance * secondVDistance;
+				prodPair.a[1][2][1] += firstHeDistance * secondVDistance * heFactor;
+				prodPair.a[1][2][2] += firstHeDistance * secondVDistance * vFactor;
+				prodPair.a[2][1][0] += firstVDistance * secondHeDistance;
+				prodPair.a[2][1][1] += firstVDistance * secondHeDistance * heFactor;
+				prodPair.a[2][1][2] += firstVDistance * secondHeDistance * vFactor;
+				prodPair.a[2][2][0] += firstVDistance * secondVDistance;
+				prodPair.a[2][2][1] += firstVDistance * secondVDistance * heFactor;
+				prodPair.a[2][2][2] += firstVDistance * secondVDistance * vFactor;
 			});
 
 	return;
@@ -239,15 +240,15 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction, int a,
 	double vDistance = getVDistance(b);
 	double vFactor = (double) (b - numV) / dispersionV;
 	// This is A, itBis is B, in A + B -> C
-	combCluster.a000 += 1.0;
-	combCluster.a001 += heFactor;
-	combCluster.a002 += vFactor;
-	combCluster.a100 += heDistance;
-	combCluster.a101 += heDistance * heFactor;
-	combCluster.a102 += heDistance * vFactor;
-	combCluster.a200 += vDistance;
-	combCluster.a201 += vDistance * heFactor;
-	combCluster.a202 += vDistance * vFactor;
+	combCluster.a[0][0][0] += 1.0;
+	combCluster.a[0][0][1] += heFactor;
+	combCluster.a[0][0][2] += vFactor;
+	combCluster.a[1][0][0] += heDistance;
+	combCluster.a[1][0][1] += heDistance * heFactor;
+	combCluster.a[1][0][2] += heDistance * vFactor;
+	combCluster.a[2][0][0] += vDistance;
+	combCluster.a[2][0][1] += vDistance * heFactor;
+	combCluster.a[2][0][2] += vDistance * vFactor;
 
 	return;
 }
@@ -292,15 +293,15 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 				double vDistance = getVDistance(b);
 				double vFactor = (double) (b - numV) / dispersionV;
 				// This is A, itBis is B, in A + B -> C
-				combCluster.a000 += 1.0;
-				combCluster.a001 += heFactor;
-				combCluster.a002 += vFactor;
-				combCluster.a100 += heDistance;
-				combCluster.a101 += heDistance * heFactor;
-				combCluster.a102 += heDistance * vFactor;
-				combCluster.a200 += vDistance;
-				combCluster.a201 += vDistance * heFactor;
-				combCluster.a202 += vDistance * vFactor;
+				combCluster.a[0][0][0] += 1.0;
+				combCluster.a[0][0][1] += heFactor;
+				combCluster.a[0][0][2] += vFactor;
+				combCluster.a[1][0][0] += heDistance;
+				combCluster.a[1][0][1] += heDistance * heFactor;
+				combCluster.a[1][0][2] += heDistance * vFactor;
+				combCluster.a[2][0][0] += vDistance;
+				combCluster.a[2][0][1] += vDistance * heFactor;
+				combCluster.a[2][0][2] += vDistance * vFactor;
 			});
 
 	return;
@@ -346,15 +347,15 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction, int a,
 	double vFactor = (double) (d - numV) / dispersionV;
 
 	// A is the dissociating cluster
-	dissPair.a00 += 1.0;
-	dissPair.a01 += heFactor;
-	dissPair.a02 += vFactor;
-	dissPair.a10 += firstHeDistance;
-	dissPair.a11 += firstHeDistance * heFactor;
-	dissPair.a12 += firstHeDistance * vFactor;
-	dissPair.a20 += firstVDistance;
-	dissPair.a21 += firstVDistance * heFactor;
-	dissPair.a22 += firstVDistance * vFactor;
+	dissPair.a[0][0] += 1.0;
+	dissPair.a[0][1] += heFactor;
+	dissPair.a[0][2] += vFactor;
+	dissPair.a[1][0] += firstHeDistance;
+	dissPair.a[1][1] += firstHeDistance * heFactor;
+	dissPair.a[1][2] += firstHeDistance * vFactor;
+	dissPair.a[2][0] += firstVDistance;
+	dissPair.a[2][1] += firstVDistance * heFactor;
+	dissPair.a[2][2] += firstVDistance * vFactor;
 
 	return;
 }
@@ -407,15 +408,15 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 				double vFactor = (double) (d - numV) / dispersionV;
 
 				// A is the dissociating cluster
-				dissPair.a00 += 1.0;
-				dissPair.a01 += heFactor;
-				dissPair.a02 += vFactor;
-				dissPair.a10 += firstHeDistance;
-				dissPair.a11 += firstHeDistance * heFactor;
-				dissPair.a12 += firstHeDistance * vFactor;
-				dissPair.a20 += firstVDistance;
-				dissPair.a21 += firstVDistance * heFactor;
-				dissPair.a22 += firstVDistance * vFactor;
+				dissPair.a[0][0] += 1.0;
+				dissPair.a[0][1] += heFactor;
+				dissPair.a[0][2] += vFactor;
+				dissPair.a[1][0] += firstHeDistance;
+				dissPair.a[1][1] += firstHeDistance * heFactor;
+				dissPair.a[1][2] += firstHeDistance * vFactor;
+				dissPair.a[2][0] += firstVDistance;
+				dissPair.a[2][1] += firstVDistance * heFactor;
+				dissPair.a[2][2] += firstVDistance * vFactor;
 			});
 
 	return;
@@ -452,15 +453,15 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction, int a, int b,
 	double vDistance = getVDistance(b);
 	double vFactor = (double) (b - numV) / dispersionV;
 	// A is the dissociating cluster
-	dissPair.a00 += 1.0;
-	dissPair.a01 += heFactor;
-	dissPair.a02 += vFactor;
-	dissPair.a10 += heDistance;
-	dissPair.a11 += heDistance * heFactor;
-	dissPair.a12 += heDistance * vFactor;
-	dissPair.a20 += vDistance;
-	dissPair.a21 += vDistance * heFactor;
-	dissPair.a22 += vDistance * vFactor;
+	dissPair.a[0][0] += 1.0;
+	dissPair.a[0][1] += heFactor;
+	dissPair.a[0][2] += vFactor;
+	dissPair.a[1][0] += heDistance;
+	dissPair.a[1][1] += heDistance * heFactor;
+	dissPair.a[1][2] += heDistance * vFactor;
+	dissPair.a[2][0] += vDistance;
+	dissPair.a[2][1] += vDistance * heFactor;
+	dissPair.a[2][2] += vDistance * vFactor;
 
 	return;
 }
@@ -503,15 +504,15 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 				double vDistance = getVDistance(b);
 				double vFactor = (double) (b - numV) / dispersionV;
 				// A is the dissociating cluster
-				dissPair.a00 += 1.0;
-				dissPair.a01 += heFactor;
-				dissPair.a02 += vFactor;
-				dissPair.a10 += heDistance;
-				dissPair.a11 += heDistance * heFactor;
-				dissPair.a12 += heDistance * vFactor;
-				dissPair.a20 += vDistance;
-				dissPair.a21 += vDistance * heFactor;
-				dissPair.a22 += vDistance * vFactor;
+				dissPair.a[0][0] += 1.0;
+				dissPair.a[0][1] += heFactor;
+				dissPair.a[0][2] += vFactor;
+				dissPair.a[1][0] += heDistance;
+				dissPair.a[1][1] += heDistance * heFactor;
+				dissPair.a[1][2] += heDistance * vFactor;
+				dissPair.a[2][0] += vDistance;
+				dissPair.a[2][1] += vDistance * heFactor;
+				dissPair.a[2][2] += vDistance * vFactor;
 			});
 
 	return;
@@ -719,12 +720,12 @@ double PSISuperCluster::getDissociationFlux() {
 				double lVA = dissociatingCluster.getVMomentum();
 				// Update the flux
 				auto value = currPair.kConstant / (double) nTot;
-				flux += value * (currPair.a00 * l0A + currPair.a10 * lHeA + currPair.a20 * lVA);
+				flux += value * (currPair.a[0][0] * l0A + currPair.a[1][0] * lHeA + currPair.a[2][0] * lVA);
 				// Compute the momentum fluxes
 				heMomentumFlux += value
-				* (currPair.a01 * l0A + currPair.a11 * lHeA + currPair.a21 * lVA);
+				* (currPair.a[0][1] * l0A + currPair.a[1][1] * lHeA + currPair.a[2][1] * lVA);
 				vMomentumFlux += value
-				* (currPair.a02 * l0A + currPair.a12 * lHeA + currPair.a22 * lVA);
+				* (currPair.a[0][2] * l0A + currPair.a[1][2] * lHeA + currPair.a[2][2] * lVA);
 			});
 
 	// Return the flux
@@ -745,12 +746,12 @@ double PSISuperCluster::getEmissionFlux() {
 
 				// Update the flux
 				auto value = currPair.kConstant / (double) nTot;
-				flux += value * (currPair.a00 * l0 + currPair.a10 * l1He + currPair.a20 * l1V);
+				flux += value * (currPair.a[0][0] * l0 + currPair.a[1][0] * l1He + currPair.a[2][0] * l1V);
 				// Compute the momentum fluxes
 				heMomentumFlux -= value
-				* (currPair.a01 * l0 + currPair.a11 * l1He + currPair.a21 * l1V);
+				* (currPair.a[0][1] * l0 + currPair.a[1][1] * l1He + currPair.a[2][1] * l1V);
 				vMomentumFlux -= value
-				* (currPair.a02 * l0 + currPair.a12 * l1He + currPair.a22 * l1V);
+				* (currPair.a[0][2] * l0 + currPair.a[1][2] * l1He + currPair.a[2][2] * l1V);
 			});
 
 	return flux;
@@ -781,24 +782,24 @@ double PSISuperCluster::getProductionFlux() {
 				// Update the flux
 				auto value = currPair.kConstant / (double) nTot;
 				flux += value
-				* (currPair.a000 * l0A * l0B + currPair.a010 * l0A * lHeB
-						+ currPair.a020 * l0A * lVB + currPair.a100 * lHeA * l0B
-						+ currPair.a110 * lHeA * lHeB + currPair.a120 * lHeA * lVB
-						+ currPair.a200 * lVA * l0B + currPair.a210 * lVA * lHeB
-						+ currPair.a220 * lVA * lVB);
+				* (currPair.a[0][0][0] * l0A * l0B + currPair.a[0][1][0] * l0A * lHeB
+						+ currPair.a[0][2][0] * l0A * lVB + currPair.a[1][0][0] * lHeA * l0B
+						+ currPair.a[1][1][0] * lHeA * lHeB + currPair.a[1][2][0] * lHeA * lVB
+						+ currPair.a[2][0][0] * lVA * l0B + currPair.a[2][1][0] * lVA * lHeB
+						+ currPair.a[2][2][0] * lVA * lVB);
 				// Compute the momentum fluxes
 				heMomentumFlux += value
-				* (currPair.a001 * l0A * l0B + currPair.a011 * l0A * lHeB
-						+ currPair.a021 * l0A * lVB + currPair.a101 * lHeA * l0B
-						+ currPair.a111 * lHeA * lHeB + currPair.a121 * lHeA * lVB
-						+ currPair.a201 * lVA * l0B + currPair.a211 * lVA * lHeB
-						+ currPair.a221 * lVA * lVB);
+				* (currPair.a[0][0][1] * l0A * l0B + currPair.a[0][1][1] * l0A * lHeB
+						+ currPair.a[0][2][1] * l0A * lVB + currPair.a[1][0][1] * lHeA * l0B
+						+ currPair.a[1][1][1] * lHeA * lHeB + currPair.a[1][2][1] * lHeA * lVB
+						+ currPair.a[2][0][1] * lVA * l0B + currPair.a[2][1][1] * lVA * lHeB
+						+ currPair.a[2][2][1] * lVA * lVB);
 				vMomentumFlux += value
-				* (currPair.a002 * l0A * l0B + currPair.a012 * l0A * lHeB
-						+ currPair.a022 * l0A * lVB + currPair.a102 * lHeA * l0B
-						+ currPair.a112 * lHeA * lHeB + currPair.a122 * lHeA * lVB
-						+ currPair.a202 * lVA * l0B + currPair.a212 * lVA * lHeB
-						+ currPair.a222 * lVA * lVB);
+				* (currPair.a[0][0][2] * l0A * l0B + currPair.a[0][1][2] * l0A * lHeB
+						+ currPair.a[0][2][2] * l0A * lVB + currPair.a[1][0][2] * lHeA * l0B
+						+ currPair.a[1][1][2] * lHeA * lHeB + currPair.a[1][2][2] * lHeA * lVB
+						+ currPair.a[2][0][2] * lVA * l0B + currPair.a[2][1][2] * lVA * lHeB
+						+ currPair.a[2][2][2] * lVA * lVB);
 			});
 
 	// Return the production flux
@@ -824,24 +825,24 @@ double PSISuperCluster::getCombinationFlux() {
 				// Update the flux
 				auto value = currComb.kConstant / (double) nTot;
 				flux += value
-				* (currComb.a000 * l0B * l0 + currComb.a100 * l0B * l1He
-						+ currComb.a200 * l0B * l1V + currComb.a010 * lHeB * l0
-						+ currComb.a110 * lHeB * l1He + currComb.a210 * lHeB * l1V
-						+ currComb.a020 * lVB * l0 + currComb.a120 * lVB * l1He
-						+ currComb.a220 * lVB * l1V);
+				* (currComb.a[0][0][0] * l0B * l0 + currComb.a[1][0][0] * l0B * l1He
+						+ currComb.a[2][0][0] * l0B * l1V + currComb.a[0][1][0] * lHeB * l0
+						+ currComb.a[1][1][0] * lHeB * l1He + currComb.a[2][1][0] * lHeB * l1V
+						+ currComb.a[0][2][0] * lVB * l0 + currComb.a[1][2][0] * lVB * l1He
+						+ currComb.a[2][2][0] * lVB * l1V);
 				// Compute the momentum fluxes
 				heMomentumFlux -= value
-				* (currComb.a001 * l0B * l0 + currComb.a101 * l0B * l1He
-						+ currComb.a201 * l0B * l1V + currComb.a011 * lHeB * l0
-						+ currComb.a111 * lHeB * l1He + currComb.a211 * lHeB * l1V
-						+ currComb.a021 * lVB * l0 + currComb.a121 * lVB * l1He
-						+ currComb.a221 * lVB * l1V);
+				* (currComb.a[0][0][1] * l0B * l0 + currComb.a[1][0][1] * l0B * l1He
+						+ currComb.a[2][0][1] * l0B * l1V + currComb.a[0][1][1] * lHeB * l0
+						+ currComb.a[1][1][1] * lHeB * l1He + currComb.a[2][1][1] * lHeB * l1V
+						+ currComb.a[0][2][1] * lVB * l0 + currComb.a[1][2][1] * lVB * l1He
+						+ currComb.a[2][2][1] * lVB * l1V);
 				vMomentumFlux -= value
-				* (currComb.a002 * l0B * l0 + currComb.a102 * l0B * l1He
-						+ currComb.a202 * l0B * l1V + currComb.a012 * lHeB * l0
-						+ currComb.a112 * lHeB * l1He + currComb.a212 * lHeB * l1V
-						+ currComb.a022 * lVB * l0 + currComb.a122 * lVB * l1He
-						+ currComb.a222 * lVB * l1V);
+				* (currComb.a[0][0][2] * l0B * l0 + currComb.a[1][0][2] * l0B * l1He
+						+ currComb.a[2][0][2] * l0B * l1V + currComb.a[0][1][2] * lHeB * l0
+						+ currComb.a[1][1][2] * lHeB * l1He + currComb.a[2][1][2] * lHeB * l1V
+						+ currComb.a[0][2][2] * lVB * l0 + currComb.a[1][2][2] * lVB * l1He
+						+ currComb.a[2][2][2] * lVB * l1V);
 			});
 
 	return flux;
@@ -892,47 +893,47 @@ void PSISuperCluster::getProductionPartialDerivatives(
 				auto value = currPair.kConstant / (double) nTot;
 				auto index = firstReactant.getId() - 1;
 				partials[index] += value
-				* (currPair.a000 * l0B + currPair.a010 * lHeB + currPair.a020 * lVB);
+				* (currPair.a[0][0][0] * l0B + currPair.a[0][1][0] * lHeB + currPair.a[0][2][0] * lVB);
 				psiHeMomentPartials[index] += value
-				* (currPair.a001 * l0B + currPair.a011 * lHeB + currPair.a021 * lVB);
+				* (currPair.a[0][0][1] * l0B + currPair.a[0][1][1] * lHeB + currPair.a[0][2][1] * lVB);
 				psiVMomentPartials[index] += value
-				* (currPair.a002 * l0B + currPair.a012 * lHeB + currPair.a022 * lVB);
+				* (currPair.a[0][0][2] * l0B + currPair.a[0][1][2] * lHeB + currPair.a[0][2][2] * lVB);
 				index = firstReactant.getHeMomentumId() - 1;
 				partials[index] += value
-				* (currPair.a100 * l0B + currPair.a110 * lHeB + currPair.a120 * lVB);
+				* (currPair.a[1][0][0] * l0B + currPair.a[1][1][0] * lHeB + currPair.a[1][2][0] * lVB);
 				psiHeMomentPartials[index] += value
-				* (currPair.a101 * l0B + currPair.a111 * lHeB + currPair.a121 * lVB);
+				* (currPair.a[1][0][1] * l0B + currPair.a[1][1][1] * lHeB + currPair.a[1][2][1] * lVB);
 				psiVMomentPartials[index] += value
-				* (currPair.a102 * l0B + currPair.a112 * lHeB + currPair.a122 * lVB);
+				* (currPair.a[1][0][2] * l0B + currPair.a[1][1][2] * lHeB + currPair.a[1][2][2] * lVB);
 				index = firstReactant.getVMomentumId() - 1;
 				partials[index] += value
-				* (currPair.a200 * l0B + currPair.a210 * lHeB + currPair.a220 * lVB);
+				* (currPair.a[2][0][0] * l0B + currPair.a[2][1][0] * lHeB + currPair.a[2][2][0] * lVB);
 				psiHeMomentPartials[index] += value
-				* (currPair.a201 * l0B + currPair.a211 * lHeB + currPair.a221 * lVB);
+				* (currPair.a[2][0][1] * l0B + currPair.a[2][1][1] * lHeB + currPair.a[2][2][1] * lVB);
 				psiVMomentPartials[index] += value
-				* (currPair.a202 * l0B + currPair.a212 * lHeB + currPair.a222 * lVB);
+				* (currPair.a[2][0][2] * l0B + currPair.a[2][1][2] * lHeB + currPair.a[2][2][2] * lVB);
 				// Compute the contribution from the second part of the reacting pair
 				index = secondReactant.getId() - 1;
 				partials[index] += value
-				* (currPair.a000 * l0A + currPair.a100 * lHeA + currPair.a200 * lVA);
+				* (currPair.a[0][0][0] * l0A + currPair.a[1][0][0] * lHeA + currPair.a[2][0][0] * lVA);
 				psiHeMomentPartials[index] += value
-				* (currPair.a001 * l0A + currPair.a101 * lHeA + currPair.a201 * lVA);
+				* (currPair.a[0][0][1] * l0A + currPair.a[1][0][1] * lHeA + currPair.a[2][0][1] * lVA);
 				psiVMomentPartials[index] += value
-				* (currPair.a002 * l0A + currPair.a102 * lHeA + currPair.a202 * lVA);
+				* (currPair.a[0][0][2] * l0A + currPair.a[1][0][2] * lHeA + currPair.a[2][0][2] * lVA);
 				index = secondReactant.getHeMomentumId() - 1;
 				partials[index] += value
-				* (currPair.a010 * l0A + currPair.a110 * lHeA + currPair.a210 * lVA);
+				* (currPair.a[0][1][0] * l0A + currPair.a[1][1][0] * lHeA + currPair.a[2][1][0] * lVA);
 				psiHeMomentPartials[index] += value
-				* (currPair.a011 * l0A + currPair.a111 * lHeA + currPair.a211 * lVA);
+				* (currPair.a[0][1][1] * l0A + currPair.a[1][1][1] * lHeA + currPair.a[2][1][1] * lVA);
 				psiVMomentPartials[index] += value
-				* (currPair.a012 * l0A + currPair.a112 * lHeA + currPair.a212 * lVA);
+				* (currPair.a[0][1][2] * l0A + currPair.a[1][1][2] * lHeA + currPair.a[2][1][2] * lVA);
 				index = secondReactant.getVMomentumId() - 1;
 				partials[index] += value
-				* (currPair.a020 * l0A + currPair.a120 * lHeA + currPair.a220 * lVA);
+				* (currPair.a[0][2][0] * l0A + currPair.a[1][2][0] * lHeA + currPair.a[2][2][0] * lVA);
 				psiHeMomentPartials[index] += value
-				* (currPair.a021 * l0A + currPair.a121 * lHeA + currPair.a221 * lVA);
+				* (currPair.a[0][2][1] * l0A + currPair.a[1][2][1] * lHeA + currPair.a[2][2][1] * lVA);
 				psiVMomentPartials[index] += value
-				* (currPair.a022 * l0A + currPair.a122 * lHeA + currPair.a222 * lVA);
+				* (currPair.a[0][2][2] * l0A + currPair.a[1][2][2] * lHeA + currPair.a[2][2][2] * lVA);
 			});
 
 	return;
@@ -963,47 +964,47 @@ void PSISuperCluster::getCombinationPartialDerivatives(
 				auto value = currComb.kConstant / (double) nTot;
 				auto index = cluster.getId() - 1;
 				partials[index] -= value
-				* (currComb.a000 * l0 + currComb.a100 * l1He + currComb.a200 * l1V);
+				* (currComb.a[0][0][0] * l0 + currComb.a[1][0][0] * l1He + currComb.a[2][0][0] * l1V);
 				psiHeMomentPartials[index] -= value
-				* (currComb.a001 * l0 + currComb.a101 * l1He + currComb.a201 * l1V);
+				* (currComb.a[0][0][1] * l0 + currComb.a[1][0][1] * l1He + currComb.a[2][0][1] * l1V);
 				psiVMomentPartials[index] -= value
-				* (currComb.a002 * l0 + currComb.a102 * l1He + currComb.a202 * l1V);
+				* (currComb.a[0][0][2] * l0 + currComb.a[1][0][2] * l1He + currComb.a[2][0][2] * l1V);
 				index = cluster.getHeMomentumId() - 1;
 				partials[index] -= value
-				* (currComb.a010 * l0 + currComb.a110 * l1He + currComb.a210 * l1V);
+				* (currComb.a[0][1][0] * l0 + currComb.a[1][1][0] * l1He + currComb.a[2][1][0] * l1V);
 				psiHeMomentPartials[index] -= value
-				* (currComb.a011 * l0 + currComb.a111 * l1He + currComb.a211 * l1V);
+				* (currComb.a[0][1][1] * l0 + currComb.a[1][1][1] * l1He + currComb.a[2][1][1] * l1V);
 				psiVMomentPartials[index] -= value
-				* (currComb.a012 * l0 + currComb.a112 * l1He + currComb.a212 * l1V);
+				* (currComb.a[0][1][2] * l0 + currComb.a[1][1][2] * l1He + currComb.a[2][1][2] * l1V);
 				index = cluster.getVMomentumId() - 1;
 				partials[index] -= value
-				* (currComb.a020 * l0 + currComb.a120 * l1He + currComb.a220 * l1V);
+				* (currComb.a[0][2][0] * l0 + currComb.a[1][2][0] * l1He + currComb.a[2][2][0] * l1V);
 				psiHeMomentPartials[index] -= value
-				* (currComb.a021 * l0 + currComb.a121 * l1He + currComb.a221 * l1V);
+				* (currComb.a[0][2][1] * l0 + currComb.a[1][2][1] * l1He + currComb.a[2][2][1] * l1V);
 				psiVMomentPartials[index] -= value
-				* (currComb.a022 * l0 + currComb.a122 * l1He + currComb.a222 * l1V);
+				* (currComb.a[0][2][2] * l0 + currComb.a[1][2][2] * l1He + currComb.a[2][2][2] * l1V);
 				// Compute the contribution from this cluster
 				index = id - 1;
 				partials[index] -= value
-				* (currComb.a000 * l0B + currComb.a010 * lHeB + currComb.a020 * lVB);
+				* (currComb.a[0][0][0] * l0B + currComb.a[0][1][0] * lHeB + currComb.a[0][2][0] * lVB);
 				psiHeMomentPartials[index] -= value
-				* (currComb.a001 * l0B + currComb.a011 * lHeB + currComb.a021 * lVB);
+				* (currComb.a[0][0][1] * l0B + currComb.a[0][1][1] * lHeB + currComb.a[0][2][1] * lVB);
 				psiVMomentPartials[index] -= value
-				* (currComb.a002 * l0B + currComb.a012 * lHeB + currComb.a022 * lVB);
+				* (currComb.a[0][0][2] * l0B + currComb.a[0][1][2] * lHeB + currComb.a[0][2][2] * lVB);
 				index = heMomId - 1;
 				partials[index] -= value
-				* (currComb.a100 * l0B + currComb.a110 * lHeB + currComb.a120 * lVB);
+				* (currComb.a[1][0][0] * l0B + currComb.a[1][1][0] * lHeB + currComb.a[1][2][0] * lVB);
 				psiHeMomentPartials[index] -= value
-				* (currComb.a101 * l0B + currComb.a111 * lHeB + currComb.a121 * lVB);
+				* (currComb.a[1][0][1] * l0B + currComb.a[1][1][1] * lHeB + currComb.a[1][2][1] * lVB);
 				psiVMomentPartials[index] -= value
-				* (currComb.a102 * l0B + currComb.a112 * lHeB + currComb.a122 * lVB);
+				* (currComb.a[1][0][2] * l0B + currComb.a[1][1][2] * lHeB + currComb.a[1][2][2] * lVB);
 				index = vMomId - 1;
 				partials[index] -= value
-				* (currComb.a200 * l0B + currComb.a210 * lHeB + currComb.a220 * lVB);
+				* (currComb.a[2][0][0] * l0B + currComb.a[2][1][0] * lHeB + currComb.a[2][2][0] * lVB);
 				psiHeMomentPartials[index] -= value
-				* (currComb.a201 * l0B + currComb.a211 * lHeB + currComb.a221 * lVB);
+				* (currComb.a[2][0][1] * l0B + currComb.a[2][1][1] * lHeB + currComb.a[2][2][1] * lVB);
 				psiVMomentPartials[index] -= value
-				* (currComb.a202 * l0B + currComb.a212 * lHeB + currComb.a222 * lVB);
+				* (currComb.a[2][0][2] * l0B + currComb.a[2][1][2] * lHeB + currComb.a[2][2][2] * lVB);
 			});
 
 	return;
@@ -1029,17 +1030,17 @@ void PSISuperCluster::getDissociationPartialDerivatives(
 				// Compute the contribution from the dissociating cluster
 				auto value = currPair.kConstant / (double) nTot;
 				auto index = cluster.getId() - 1;
-				partials[index] += value * (currPair.a00);
-				psiHeMomentPartials[index] += value * (currPair.a01);
-				psiVMomentPartials[index] += value * (currPair.a02);
+				partials[index] += value * (currPair.a[0][0]);
+				psiHeMomentPartials[index] += value * (currPair.a[0][1]);
+				psiVMomentPartials[index] += value * (currPair.a[0][2]);
 				index = cluster.getHeMomentumId() - 1;
-				partials[index] += value * (currPair.a10);
-				psiHeMomentPartials[index] += value * (currPair.a11);
-				psiVMomentPartials[index] += value * (currPair.a12);
+				partials[index] += value * (currPair.a[1][0]);
+				psiHeMomentPartials[index] += value * (currPair.a[1][1]);
+				psiVMomentPartials[index] += value * (currPair.a[1][2]);
 				index = cluster.getVMomentumId() - 1;
-				partials[index] += value * (currPair.a20);
-				psiHeMomentPartials[index] += value * (currPair.a21);
-				psiVMomentPartials[index] += value * (currPair.a22);
+				partials[index] += value * (currPair.a[2][0]);
+				psiHeMomentPartials[index] += value * (currPair.a[2][1]);
+				psiVMomentPartials[index] += value * (currPair.a[2][2]);
 			});
 
 	return;
@@ -1063,17 +1064,17 @@ void PSISuperCluster::getEmissionPartialDerivatives(
 				// Compute the contribution from the dissociating cluster
 				auto value = currPair.kConstant / (double) nTot;
 				auto index = id - 1;
-				partials[index] -= value * (currPair.a00);
-				psiHeMomentPartials[index] -= value * (currPair.a01);
-				psiVMomentPartials[index] -= value * (currPair.a02);
+				partials[index] -= value * (currPair.a[0][0]);
+				psiHeMomentPartials[index] -= value * (currPair.a[0][1]);
+				psiVMomentPartials[index] -= value * (currPair.a[0][2]);
 				index = heMomId - 1;
-				partials[index] -= value * (currPair.a10);
-				psiHeMomentPartials[index] -= value * (currPair.a11);
-				psiVMomentPartials[index] -= value * (currPair.a12);
+				partials[index] -= value * (currPair.a[1][0]);
+				psiHeMomentPartials[index] -= value * (currPair.a[1][1]);
+				psiVMomentPartials[index] -= value * (currPair.a[1][2]);
 				index = vMomId - 1;
-				partials[index] -= value * (currPair.a20);
-				psiHeMomentPartials[index] -= value * (currPair.a21);
-				psiVMomentPartials[index] -= value * (currPair.a22);
+				partials[index] -= value * (currPair.a[2][0]);
+				psiHeMomentPartials[index] -= value * (currPair.a[2][1]);
+				psiVMomentPartials[index] -= value * (currPair.a[2][2]);
 			});
 
 	return;
@@ -1104,25 +1105,23 @@ void PSISuperCluster::getVMomentPartialDerivatives(
 void PSISuperCluster::dumpCoefficients(std::ostream& os,
 		PSISuperCluster::ProductionCoefficientBase const& curr) const {
 
-	os << "a[0-2][0-2][0-2]:" << ' ' << curr.a000 << ' ' << curr.a001 << ' '
-			<< curr.a002 << ' ' << curr.a100 << ' ' << curr.a101 << ' '
-			<< curr.a102 << ' ' << curr.a200 << ' ' << curr.a201 << ' '
-			<< curr.a202 << ' ' << curr.a010 << ' ' << curr.a011 << ' '
-			<< curr.a012 << ' ' << curr.a020 << ' ' << curr.a021 << ' '
-			<< curr.a022 << ' ' << curr.a110 << ' ' << curr.a111 << ' '
-			<< curr.a112 << ' ' << curr.a120 << ' ' << curr.a121 << ' '
-			<< curr.a122 << ' ' << curr.a210 << ' ' << curr.a211 << ' '
-			<< curr.a212 << ' ' << curr.a220 << ' ' << curr.a221 << ' '
-			<< curr.a222;
+	os << "a[0-2][0-2][0-2]: ";
+    for(const auto& curr2D : curr.a) {
+        for(const auto& curr1D : curr2D) {
+            std::copy(curr1D.begin(), curr1D.end(),
+                    std::ostream_iterator<double>(os, " "));
+        }
+    }
 }
 
 void PSISuperCluster::dumpCoefficients(std::ostream& os,
 		PSISuperCluster::SuperClusterDissociationPair const& currPair) const {
 
-	os << "a[0-2][0-2]:" << ' ' << currPair.a00 << ' ' << currPair.a01 << ' '
-			<< currPair.a02 << ' ' << currPair.a10 << ' ' << currPair.a11 << ' '
-			<< currPair.a12 << ' ' << currPair.a20 << ' ' << currPair.a21 << ' '
-			<< currPair.a22;
+	os << "a[0-2][0-2]: ";
+    for(const auto& curr1D : currPair.a) {
+        std::copy(curr1D.begin(), curr1D.end(),
+                std::ostream_iterator<double>(os, " "));
+    }
 }
 
 void PSISuperCluster::outputCoefficientsTo(std::ostream& os) const {

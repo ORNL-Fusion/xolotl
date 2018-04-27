@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	advectionHandler.setDimension(3);
 
 	// Check if grid points are on the sink
-	Point3D pos0 { 0.1, 3.0, 0.0 };
-	Point3D pos1 { 2.0, 2.0, 2.0 };
+	Point<3> pos0 { 0.1, 3.0, 0.0 };
+	Point<3> pos1 { 2.0, 2.0, 2.0 };
 	BOOST_REQUIRE_EQUAL(advectionHandler.isPointOnSink(pos0), false);
 	BOOST_REQUIRE_EQUAL(advectionHandler.isPointOnSink(pos1), true);
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	concVector[6] = conc + 22 * dof; // back
 
 	// Set the grid position
-	Point3D gridPosition { hx, hy, hz };
+	Point<3> gridPosition { hx, hy, hz };
 
 	// Compute the advection at this grid point
 	advectionHandler.computeAdvection(*network, gridPosition, concVector,

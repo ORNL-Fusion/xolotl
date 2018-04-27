@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
 	// Check the updated temperature
-	Point3D pos { 1.0, 0.0, 0.0 };
+	Point<3> pos { 1.0, 0.0, 0.0 };
 	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature(pos, 1.0), 361.0, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
