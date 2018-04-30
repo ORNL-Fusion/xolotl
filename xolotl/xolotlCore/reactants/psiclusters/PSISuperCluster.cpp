@@ -621,23 +621,18 @@ double PSISuperCluster::getTotalVacancyConcentration() const {
 
 double PSISuperCluster::getIntegratedVConcentration(int v) const {
 	// Initial declarations
-	int heIndex = 0;
 	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
 
-	// Loop on the helium width
-	for (int j = 0; j < sectionHeWidth; j++) {
-		// Compute the helium index
-		heIndex = (int) (numHe - (double) sectionHeWidth / 2.0) + j + 1;
-
-		// Check if this cluster exists
-		if (heVList.find(std::make_pair(heIndex, v)) == heVList.end())
-			continue;
+	// Loop on the indices
+	for (auto const& pair : heVList) {
+		// Skip the wrong V size
+		if (pair.second != v) continue;
 
 		// Compute the distances
-		heDistance = getHeDistance(heIndex);
-		vDistance = getVDistance(v);
+		heDistance = getHeDistance(pair.first);
+		vDistance = getVDistance(pair.second);
 
-		// Add the concentration of each cluster in the group times its number of helium
+		// Add the concentration of each cluster
 		conc += getConcentration(heDistance, vDistance);
 	}
 
