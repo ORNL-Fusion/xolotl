@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 #include <IReactionNetwork.h>
-#include "Point3D.h"
+#include "NDPoint.h"
 
 namespace xolotlCore {
 
@@ -41,7 +41,7 @@ public:
 	 * @param currentTime The time
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const Point3D& position,
+	virtual double getTemperature(const Point<3>& position,
 			double currentTime) const = 0;
 
 	/**

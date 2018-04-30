@@ -101,7 +101,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const Point3D& position, double time) const {
+	virtual double getTemperature(const Point<3>& position, double time) const {
 		return xolotlCore::equal(time, 0.0)
 				* ((position[0] - surfacePosition < 0.001) * surfaceTemperature
 						+ (position[0] - surfacePosition > 0.001)

@@ -181,7 +181,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 		}
 
 		// Temperature
-		xolotlCore::Point3D gridPosition { grid[i + 1] - grid[1], 0.0, 0.0 };
+		xolotlCore::Point<3> gridPosition { grid[i + 1] - grid[1], 0.0, 0.0 };
 		concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition,
 				0.0);
 
@@ -291,7 +291,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	// Declarations for variables used in the loop
 	double **concVector = new double*[3];
-	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Loop over grid points computing ODE terms for each grid point
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
@@ -428,7 +428,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	PetscInt diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
 	PetscInt advecIndices[nAdvec];
-	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	/*
 	 Loop over grid points computing Jacobian terms for diffusion and advection
@@ -621,7 +621,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	int pdColIdsVectorSize = 0;
 
 	// Declarations for variables used in the loop
-	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Loop over the grid points
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {

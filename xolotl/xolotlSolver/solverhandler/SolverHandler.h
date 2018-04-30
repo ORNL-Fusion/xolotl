@@ -379,7 +379,7 @@ public:
 	 * Get the grid right offset.
 	 * \see ISolverHandler.h
 	 */
-	int getRightOffset() const {
+	int getRightOffset() const override {
 		return rightOffset;
 	}
 

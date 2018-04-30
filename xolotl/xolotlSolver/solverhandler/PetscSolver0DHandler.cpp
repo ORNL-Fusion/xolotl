@@ -112,7 +112,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Temperature
-	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 	concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition, 0.0);
 
 	// Initialize the vacancy concentration
@@ -173,7 +173,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	const int dof = network.getDOF();
 
 	// Set the grid position
-	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the old and new array offsets
 	concOffset = concs[0];
@@ -254,7 +254,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	int pdColIdsVectorSize = 0;
 
 	// Set the grid position
-	xolotlCore::Point3D gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];

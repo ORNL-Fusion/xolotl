@@ -88,7 +88,7 @@ public:
 	 *
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const Point3D& position, double) const {
+	virtual double getTemperature(const Point<3>& position, double) const {
 		return surfaceTemperature - (position[0] - surfacePosition) * gradient;
 	}
 
