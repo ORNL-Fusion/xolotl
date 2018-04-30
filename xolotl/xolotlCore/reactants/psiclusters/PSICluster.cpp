@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <iterator>
 #include "PSICluster.h"
 #include <xolotlPerf.h>
 #include <Constants.h>
@@ -666,11 +667,9 @@ void PSICluster::dumpCoefficients(std::ostream& os,
 		PSICluster::ClusterPair const& curr) const {
 
 	os << "a[0-4][0-4]: ";
-
-	for (int j = 0; j < 5; j++) {
-		for (int i = 0; i < 5; i++) {
-			os << curr.coefs[j][i] << ' ';
-		}
+	for (auto const& curr1D : curr.coefs) {
+		std::copy(curr1D.begin(), curr1D.end(),
+				std::ostream_iterator<double>(os, " "));
 	}
 }
 
@@ -678,10 +677,8 @@ void PSICluster::dumpCoefficients(std::ostream& os,
 		PSICluster::CombiningCluster const& curr) const {
 
 	os << "a[0-4]: ";
-
-	for (int i = 0; i < 5; i++) {
-		os << curr.coefs[i] << ' ';
-	}
+	std::copy(curr.coefs.begin(), curr.coefs.end(),
+			std::ostream_iterator<double>(os, " "));
 }
 
 void PSICluster::outputCoefficientsTo(std::ostream& os) const {

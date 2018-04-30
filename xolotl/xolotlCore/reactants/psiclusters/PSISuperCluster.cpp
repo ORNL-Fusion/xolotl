@@ -1,4 +1,5 @@
 // Includes
+#include <iterator>
 #include "PSISuperCluster.h"
 #include "PSIClusterReactionNetwork.h"
 #include <MathUtils.h>
@@ -584,7 +585,7 @@ double PSISuperCluster::getTotalVacancyConcentration() const {
 		tDistance = getDistance(std::get<2>(pair), 2);
 		vDistance = getDistance(std::get<3>(pair), 3);
 
-		// Add the concentration of each cluster in the group times its number of helium
+		// Add the concentration of each cluster in the group times its number of vacancy
 		conc += getConcentration(heDistance, dDistance, tDistance, vDistance)
 				* (double) std::get<3>(pair);
 	}
@@ -594,39 +595,24 @@ double PSISuperCluster::getTotalVacancyConcentration() const {
 
 double PSISuperCluster::getIntegratedVConcentration(int v) const {
 	// Initial declarations
-	int heIndex = 0, dIndex = 0, tIndex = 0;
 	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
 			conc = 0.0;
 
-	// Loop on the widths
-	for (int l = 0; l < sectionWidth[2]; l++) {
-		// Compute the tritium index
-		tIndex = (int) (numAtom[2] + 0.5 - (double) sectionWidth[2] / 2.0) + l;
-		for (int k = 0; k < sectionWidth[1]; k++) {
-			// Compute the deuterium index
-			dIndex = (int) (numAtom[1] + 0.5 - (double) sectionWidth[1] / 2.0)
-					+ k;
-			for (int j = 0; j < sectionWidth[0]; j++) {
-				// Compute the helium index
-				heIndex = (int) (numAtom[0] + 0.5
-						- (double) sectionWidth[0] / 2.0) + j;
+	// Loop on the indices
+	for (auto const& pair : heVList) {
+		// Skip the wrong V size
+		if (std::get<3>(pair) != v)
+			continue;
 
-				// Check if this cluster exists
-				if (heVList.find(std::make_tuple(heIndex, dIndex, tIndex, v))
-						== heVList.end())
-					continue;
+		// Compute the distances
+		heDistance = getDistance(std::get<0>(pair), 0);
+		dDistance = getDistance(std::get<1>(pair), 1);
+		tDistance = getDistance(std::get<2>(pair), 2);
+		vDistance = getDistance(std::get<3>(pair), 3);
 
-				// Compute the distances
-				heDistance = getDistance(heIndex, 0);
-				dDistance = getDistance(dIndex, 1);
-				tDistance = getDistance(tIndex, 2);
-				vDistance = getDistance(v, 3);
-
-				// Add the concentration of each cluster in the group times its number of helium
-				conc += getConcentration(heDistance, dDistance, tDistance,
-						vDistance);
-			}
-		}
+		// Add the concentration of each cluster in the group
+		conc += getConcentration(heDistance, dDistance, tDistance, vDistance)
+				* (double) std::get<3>(pair);
 	}
 
 	return conc;
@@ -1077,11 +1063,10 @@ void PSISuperCluster::dumpCoefficients(std::ostream& os,
 		PSISuperCluster::ProductionCoefficientBase const& curr) const {
 
 	os << "a[0-4][0-4][0-4]: ";
-	for (int k = 0; k < 5; k++) {
-		for (int j = 0; j < 5; j++) {
-			for (int i = 0; i < 5; i++) {
-				os << curr.coefs[k][j][i] << ' ';
-			}
+	for (const auto& curr2D : curr.coefs) {
+		for (const auto& curr1D : curr2D) {
+			std::copy(curr1D.begin(), curr1D.end(),
+					std::ostream_iterator<double>(os, " "));
 		}
 	}
 }
@@ -1090,11 +1075,9 @@ void PSISuperCluster::dumpCoefficients(std::ostream& os,
 		PSISuperCluster::SuperClusterDissociationPair const& currPair) const {
 
 	os << "a[0-4][0-4]: ";
-
-	for (int j = 0; j < 5; j++) {
-		for (int i = 0; i < 5; i++) {
-			os << currPair.coefs[j][i] << ' ';
-		}
+	for (const auto& curr1D : currPair.coefs) {
+		std::copy(curr1D.begin(), curr1D.end(),
+				std::ostream_iterator<double>(os, " "));
 	}
 }
 

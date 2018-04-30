@@ -4,7 +4,7 @@
 // Includes
 #include <Reactant.h>
 #include "IntegerRange.h"
-#include <MathUtils.h>
+#include "NDArray.h"
 
 namespace xolotlPerf {
 class ITimer;
@@ -71,12 +71,14 @@ protected:
 		 * 3 -> T
 		 * 4 -> V
 		 */
-		double coefs[5][5] = { };
+		Array<double, 5, 5> coefs;
 
 		//! The constructor
 		ClusterPair(Reaction& _reaction, PSICluster& _first,
 				PSICluster& _second) :
 				first(_first), second(_second), reaction(_reaction) {
+
+			coefs.Init(0.0);
 		}
 
 		/**
@@ -121,11 +123,13 @@ protected:
 		 * 3 -> T
 		 * 4 -> V
 		 */
-		double coefs[5] = { };
+		Array<double, 5> coefs;
 
 		//! The constructor
 		CombiningCluster(Reaction& _reaction, PSICluster& _comb) :
 				combining(_comb), reaction(_reaction) {
+
+			coefs.Init(0.0);
 		}
 
 		/**
@@ -273,7 +277,8 @@ public:
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, int a[4] = defaultInit) override;
+	void participateIn(ProductionReaction& reaction, int a[4] = defaultInit)
+			override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -315,7 +320,8 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit)
+			override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.

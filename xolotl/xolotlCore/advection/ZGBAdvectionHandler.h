@@ -58,7 +58,7 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computeAdvection(const IReactionNetwork& network, const Point3D& pos,
+	void computeAdvection(const IReactionNetwork& network, const Point<3>& pos,
 			double **concVector, double *updatedConcOffset, double hxLeft,
 			double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override;
@@ -73,7 +73,7 @@ public:
 	 * \see IAdvectionHandler.h
 	 */
 	void computePartialsForAdvection(const IReactionNetwork& network,
-			double *val, int *indices, const Point3D& pos, double hxLeft,
+			double *val, int *indices, const Point<3>& pos, double hxLeft,
 			double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override;
 
@@ -86,7 +86,7 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	std::array<int, 3> getStencilForAdvection(const Point3D& pos) const
+	std::array<int, 3> getStencilForAdvection(const Point<3>& pos) const
 			override;
 
 	/**
@@ -94,7 +94,7 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	bool isPointOnSink(const Point3D& pos) const override {
+	bool isPointOnSink(const Point<3>& pos) const override {
 		// Return true if pos[2] is equal to location
 		return fabs(location - pos[2]) < 0.001;
 	}

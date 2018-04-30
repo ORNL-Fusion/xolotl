@@ -7,6 +7,7 @@
 #include <Constants.h>
 #include "PSICluster.h"
 #include "IntegerRange.h"
+#include "NDArray.h"
 
 // We use std::unordered_map for quick lookup of info about 
 // reactions we participate in.
@@ -93,10 +94,12 @@ protected:
 		 * 3 -> T
 		 * 4 -> V
 		 */
-		double coefs[5][5][5] = { };
+		Array<double, 5, 5, 5> coefs;
 
 		//! The constructor
 		ProductionCoefficientBase() {
+
+			coefs.Init(0.0);
 		}
 
 		/**
@@ -200,13 +203,14 @@ protected:
 		 * 3 -> T
 		 * 4 -> V
 		 */
-		double coefs[5][5] = { };
+		Array<double, 5, 5> coefs;
 
 		//! The constructor
 		SuperClusterDissociationPair(Reaction& _reaction, PSICluster& _first,
 				PSICluster& _second) :
 				ReactingPairBase(_reaction, _first, _second) {
 
+			coefs.Init(0.0);
 		}
 
 		/**

@@ -29,7 +29,7 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 	}
 
 	// Initialize the grid position
-	Point3D gridPosition { 0.0, 0.0, 0.0 };
+	Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Consider each advection handler.
 	for (auto const& currAdvecHandler : advectionHandlers) {
@@ -82,7 +82,7 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 }
 
 void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
-		const Point3D& pos, double **concVector, double *updatedConcOffset,
+		const Point<3>& pos, double **concVector, double *updatedConcOffset,
 		double hxLeft, double hxRight, int ix, double hy, int iy, double hz,
 		int iz) const {
 
@@ -126,7 +126,7 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 void SurfaceAdvectionHandler::computePartialsForAdvection(
 		const IReactionNetwork& network, double *val, int *indices,
-		const Point3D& pos, double hxLeft, double hxRight, int ix, double hy,
+		const Point<3>& pos, double hxLeft, double hxRight, int ix, double hy,
 		int iy, double hz, int iz) const {
 
 	// Get the number of advecting cluster
