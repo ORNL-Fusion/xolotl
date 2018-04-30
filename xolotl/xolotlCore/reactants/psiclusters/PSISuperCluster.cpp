@@ -611,8 +611,7 @@ double PSISuperCluster::getIntegratedVConcentration(int v) const {
 		vDistance = getDistance(std::get<3>(pair), 3);
 
 		// Add the concentration of each cluster in the group
-		conc += getConcentration(heDistance, dDistance, tDistance, vDistance)
-				* (double) std::get<3>(pair);
+		conc += getConcentration(heDistance, dDistance, tDistance, vDistance);
 	}
 
 	return conc;
