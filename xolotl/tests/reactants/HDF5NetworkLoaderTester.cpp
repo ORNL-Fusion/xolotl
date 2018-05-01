@@ -129,12 +129,14 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	// Get the dof of the network
 	int dof = network->getDOF();
 	// Check the value
-	BOOST_REQUIRE_EQUAL(dof, 1964);
+	BOOST_REQUIRE_EQUAL(dof, 1902);
 
 	// Check the properties
 	auto psiNetwork = (PSIClusterReactionNetwork*) network.get();
 
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::He) == 8);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::D) == 0);
+	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::T) == 0);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::V) == 29);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::I) == 6);
 	BOOST_REQUIRE(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed) == 137);

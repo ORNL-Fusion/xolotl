@@ -1296,14 +1296,11 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 
 				if (currReactant.getType() == ReactantType::PSISuper) {
 					auto& currCluster = static_cast<PSISuperCluster&>(currReactant);
-
-					id++;
-					currCluster.setMomentId(id, 0);
-					id++;
-					currCluster.setMomentId(id, 1);
-					currCluster.setMomentId(currCluster.getId(), 2);
-					id++;
-					currCluster.setMomentId(id, 3);
+					// Loop on the axis
+					for (int i = 1; i < psDim; i++) {
+						id++;
+						currCluster.setMomentId(id, indexList[i] - 1);
+					}
 
 					// Update the PSIMixed size
 					IReactant::SizeType clusterSize = currCluster.getBounds(0).second
@@ -1341,14 +1338,15 @@ void PSIClusterReactionNetwork::updateConcentrationsFromArray(
 	// Set the moments
 	auto const& superTypeMap = getAll(ReactantType::PSISuper);
 	std::for_each(superTypeMap.begin(), superTypeMap.end(),
-			[&concentrations](const ReactantMap::value_type& currMapItem) {
+			[&concentrations,this](const ReactantMap::value_type& currMapItem) {
 
 				auto& cluster = static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 				cluster.setZerothMoment(concentrations[cluster.getId() - 1]);
-				cluster.setMoment(concentrations[cluster.getMomentId(0) - 1], 0);
-				cluster.setMoment(concentrations[cluster.getMomentId(1) - 1], 1);
-				cluster.setMoment(concentrations[cluster.getMomentId(3) - 1], 3);
+				// Loop on the used moments
+				for (int i = 1; i < psDim; i++) {
+					cluster.setMoment(concentrations[cluster.getMomentId(indexList[i] - 1) - 1], indexList[i] - 1);
+				}
 			});
 
 	return;
@@ -1415,17 +1413,14 @@ void PSIClusterReactionNetwork::getDiagonalFill(int *diagFill) {
 				static_cast<PSISuperCluster&>(*(superMapItem.second));
 
 		// Loop on the axis
-		for (int i = 0; i < 4; i++) {
-			// T
-			if (i == 2)
-				continue;
+		for (int i = 1; i < psDim; i++) {
 
 			// Get the reactant and its connectivity
 			auto const& connectivity = reactant.getConnectivity();
 			auto connectivityLength = connectivity.size();
 			// Get the helium moment id so that the connectivity can be lined up in
 			// the proper column
-			auto id = reactant.getMomentId(i) - 1;
+			auto id = reactant.getMomentId(indexList[i] - 1) - 1;
 
 			// Create the vector that will be inserted into the dFill map
 			std::vector<int> columnIds;
@@ -1665,15 +1660,12 @@ void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		// Loop on the axis
-		for (int i = 0; i < 4; i++) {
-			// T
-			if (i == 2)
-				continue;
+		for (int i = 1; i < psDim; i++) {
 
 			// Compute the moment flux
-			auto flux = superCluster.getMomentFlux(i);
+			auto flux = superCluster.getMomentFlux(indexList[i] - 1);
 			// Update the concentration of the cluster
-			auto reactantIndex = superCluster.getMomentId(i) - 1;
+			auto reactantIndex = superCluster.getMomentId(indexList[i] - 1) - 1;
 			updatedConcOffset[reactantIndex] += flux;
 		}
 	}
@@ -1767,16 +1759,14 @@ void PSIClusterReactionNetwork::computeAllPartials(double *vals, int *indices,
 		}
 
 		// Loop on the axis for the moments
-		for (int i = 0; i < 4; i++) {
-			// T
-			if (i == 2)
-				continue;
+		for (int i = 1; i < psDim; i++) {
 
 			// Get the moment index
-			auto reactantIndex = reactant.getMomentId(i) - 1;
+			auto reactantIndex = reactant.getMomentId(indexList[i] - 1) - 1;
 
 			// Get the partial derivatives
-			reactant.getMomentPartialDerivatives(clusterPartials, i);
+			reactant.getMomentPartialDerivatives(clusterPartials,
+					indexList[i] - 1);
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 			// Number of partial derivatives

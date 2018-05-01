@@ -814,6 +814,31 @@ double PSIClusterNetworkLoader::getHeVFormationEnergy(int numHe, int numV) {
 
 void PSIClusterNetworkLoader::applySectionalGrouping(
 		PSIClusterReactionNetwork& network) {
+
+	// Define the phase space for the network
+	int nDim = 1;
+	Array<int, 5> list;
+	list[0] = 0;
+	// Add additional axis
+	if (heVList.size() > 0) {
+		if (maxHe > 0) {
+			list[nDim] = 1;
+			nDim++;
+		}
+		if (maxD > 0) {
+			list[nDim] = 2;
+			nDim++;
+		}
+		if (maxT > 0) {
+			list[nDim] = 3;
+			nDim++;
+		}
+		if (maxV > 0) {
+			list[nDim] = 4;
+			nDim++;
+		}
+	}
+
 	// Initialize variables for the loop
 	int count = 0, heIndex = ((maxHe > 0) && (maxD == 0) && (maxT == 0)),
 			dIndex = ((maxD > 0) && (maxHe == 0) && (maxT == 0)), tIndex =
@@ -1251,6 +1276,10 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 		// Set the HeV vector
 		scref.setHeVVector(tempVector);
 	}
+
+	// Now that all the clusters are created
+	// Give the information on the phase space to the network
+	network.setPhaseSpace(nDim, list);
 
 	return;
 }

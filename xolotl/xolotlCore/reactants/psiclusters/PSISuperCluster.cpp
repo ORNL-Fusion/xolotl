@@ -78,25 +78,27 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction, int a[4],
 	firstDistance[0] = 1.0, secondDistance[0] = 1.0;
 	if (prodPair.first.getType() == ReactantType::PSISuper) {
 		auto const& super = static_cast<PSICluster const&>(prodPair.first);
-		for (int i = 0; i < 4; i++) {
-			firstDistance[i + 1] = super.getDistance(b[i], i);
+		for (int i = 1; i < psDim; i++) {
+			firstDistance[i] = super.getDistance(b[indexList[i] - 1],
+					indexList[i] - 1);
 		}
 	}
 	if (prodPair.second.getType() == ReactantType::PSISuper) {
 		auto const& super = static_cast<PSICluster const&>(prodPair.second);
-		for (int i = 0; i < 4; i++) {
-			secondDistance[i + 1] = super.getDistance(b[i], i);
+		for (int i = 1; i < psDim; i++) {
+			secondDistance[i] = super.getDistance(b[indexList[i] - 1],
+					indexList[i] - 1);
 		}
 	}
 	double factor[5] = { };
 	factor[0] = 1.0;
-	for (int i = 0; i < 4; i++) {
-		factor[i + 1] = getFactor(a[i], i);
+	for (int i = 1; i < psDim; i++) {
+		factor[i] = getFactor(a[indexList[i] - 1], indexList[i] - 1);
 	}
 	// First is A, second is B, in A + B -> this
-	for (int k = 0; k < 5; k++) {
-		for (int j = 0; j < 5; j++) {
-			for (int i = 0; i < 5; i++) {
+	for (int k = 0; k < psDim; k++) {
+		for (int j = 0; j < psDim; j++) {
+			for (int i = 0; i < psDim; i++) {
 				prodPair.coefs[i][j][k] += firstDistance[i] * secondDistance[j]
 						* factor[k];
 			}
@@ -141,26 +143,27 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 				firstDistance[0] = 1.0, secondDistance[0] = 1.0;
 				if (prodPair.first.getType() == ReactantType::PSISuper) {
 					auto const& super = static_cast<PSICluster const&>(prodPair.first);
-					for (int i = 0; i < 4; i++) {
-						firstDistance[i + 1] = super.getDistance(currPRI.b[i], i);
+					for (int i = 1; i < psDim; i++) {
+						firstDistance[i] = super.getDistance(currPRI.b[indexList[i]-1], indexList[i]-1);
 					}
 				}
 				if (prodPair.second.getType() == ReactantType::PSISuper) {
 					auto const& super = static_cast<PSICluster const&>(prodPair.second);
-					for (int i = 0; i < 4; i++) {
-						secondDistance[i + 1] = super.getDistance(currPRI.b[i], i);
+					for (int i = 1; i < psDim; i++) {
+						secondDistance[i] = super.getDistance(currPRI.b[indexList[i]-1], indexList[i]-1);
 					}
 				}
 				double factor[5] = {};
 				factor[0] = 1.0;
-				for (int i = 0; i < 4; i++) {
-					factor[i + 1] = getFactor(currPRI.a[i], i);
+				for (int i = 1; i < psDim; i++) {
+					factor[i] = getFactor(currPRI.a[indexList[i]-1], indexList[i]-1);
 				}
 				// First is A, second is B, in A + B -> this
-				for (int k = 0; k < 5; k++) {
-					for (int j = 0; j < 5; j++) {
-						for (int i = 0; i < 5; i++) {
-							prodPair.coefs[i][j][k] += firstDistance[i] * secondDistance[j] * factor[k];
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
+							prodPair.coefs[i][j][k] += firstDistance[i] * secondDistance[j]
+							* factor[k];
 						}
 					}
 				}
@@ -198,14 +201,14 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction, int a[4]) {
 	// Update the coefficients
 	double distance[5] = { }, factor[5] = { };
 	distance[0] = 1.0, factor[0] = 1.0;
-	for (int i = 0; i < 4; i++) {
-		distance[i + 1] = getDistance(a[i], i);
-		factor[i + 1] = getFactor(a[i], i);
+	for (int i = 1; i < psDim; i++) {
+		distance[i] = getDistance(a[indexList[i] - 1], indexList[i] - 1);
+		factor[i] = getFactor(a[indexList[i] - 1], indexList[i] - 1);
 	}
 
 	// This is A, itBis is B, in A + B -> C
-	for (int k = 0; k < 5; k++) {
-		for (int j = 0; j < 5; j++) {
+	for (int k = 0; k < psDim; k++) {
+		for (int j = 0; j < psDim; j++) {
 			combCluster.coefs[j][0][k] += distance[j] * factor[k];
 		}
 	}
@@ -246,14 +249,14 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 				// Update the coefficients
 				double distance[5] = {}, factor[5] = {};
 				distance[0] = 1.0, factor[0] = 1.0;
-				for (int i = 0; i < 4; i++) {
-					distance[i+1] = getDistance(currPRInfo.b[i], i);
-					factor[i+1] = getFactor(currPRInfo.b[i], i);
+				for (int i = 1; i < psDim; i++) {
+					distance[i] = getDistance(currPRInfo.b[indexList[i]-1], indexList[i]-1);
+					factor[i] = getFactor(currPRInfo.b[indexList[i]-1], indexList[i]-1);
 				}
 
 				// This is A, itBis is B, in A + B -> C
-				for (int k = 0; k < 5; k++) {
-					for (int j = 0; j < 5; j++) {
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
 						combCluster.coefs[j][0][k] += distance[j] * factor[k];
 					}
 				}
@@ -296,16 +299,17 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction, int a[4],
 	if (reaction.dissociating.getType() == ReactantType::PSISuper) {
 		auto const& super =
 				static_cast<PSICluster const&>(reaction.dissociating);
-		for (int i = 0; i < 4; i++) {
-			distance[i + 1] = super.getDistance(a[i], i);
+		for (int i = 1; i < psDim; i++) {
+			distance[i] = super.getDistance(a[indexList[i] - 1],
+					indexList[i] - 1);
 		}
 	}
-	for (int i = 0; i < 4; i++) {
-		factor[i + 1] = getFactor(b[i], i);
+	for (int i = 1; i < psDim; i++) {
+		factor[i] = getFactor(b[indexList[i] - 1], indexList[i] - 1);
 	}
 	// A is the dissociating cluster
-	for (int j = 0; j < 5; j++) {
-		for (int i = 0; i < 5; i++) {
+	for (int j = 0; j < psDim; j++) {
+		for (int i = 0; i < psDim; i++) {
 			dissPair.coefs[i][j] += distance[i] * factor[j];
 		}
 	}
@@ -350,16 +354,16 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 				if (reaction.dissociating.getType() == ReactantType::PSISuper) {
 					auto const& super =
 					static_cast<PSICluster const&>(reaction.dissociating);
-					for (int i = 0; i < 4; i++) {
-						distance[i + 1] = super.getDistance(currPRI.a[i], i);
+					for (int i = 1; i < psDim; i++) {
+						distance[i] = super.getDistance(currPRI.a[indexList[i]-1], indexList[i]-1);
 					}
 				}
-				for (int i = 0; i < 4; i++) {
-					factor[i + 1] = getFactor(currPRI.b[i], i);
+				for (int i = 1; i < psDim; i++) {
+					factor[i] = getFactor(currPRI.b[indexList[i]-1], indexList[i]-1);
 				}
 				// A is the dissociating cluster
-				for (int j = 0; j < 5; j++) {
-					for (int i = 0; i < 5; i++) {
+				for (int j = 0; j < psDim; j++) {
+					for (int i = 0; i < psDim; i++) {
 						dissPair.coefs[i][j] += distance[i] * factor[j];
 					}
 				}
@@ -395,13 +399,13 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 	// Update the coefficients
 	double distance[5] = { }, factor[5] = { };
 	distance[0] = 1.0, factor[0] = 1.0;
-	for (int i = 0; i < 4; i++) {
-		distance[i + 1] = getDistance(a[i], i);
-		factor[i + 1] = getFactor(a[i], i);
+	for (int i = 1; i < psDim; i++) {
+		distance[i] = getDistance(a[indexList[i] - 1], indexList[i] - 1);
+		factor[i] = getFactor(a[indexList[i] - 1], indexList[i] - 1);
 	}
 	// A is the dissociating cluster
-	for (int j = 0; j < 5; j++) {
-		for (int i = 0; i < 5; i++) {
+	for (int j = 0; j < psDim; j++) {
+		for (int i = 0; i < psDim; i++) {
 			dissPair.coefs[i][j] += distance[i] * factor[j];
 		}
 	}
@@ -440,13 +444,13 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 				// Update the coefficients
 				double distance[5] = {}, factor[5] = {};
 				distance[0] = 1.0, factor[0] = 1.0;
-				for (int i = 0; i < 4; i++) {
-					distance[i+1] = getDistance(currPRI.a[i], i);
-					factor[i+1] = getFactor(currPRI.a[i], i);
+				for (int i = 1; i < psDim; i++) {
+					distance[i] = getDistance(currPRI.a[indexList[i]-1], indexList[i]-1);
+					factor[i] = getFactor(currPRI.a[indexList[i]-1], indexList[i]-1);
 				}
 				// A is the dissociating cluster
-				for (int j = 0; j < 5; j++) {
-					for (int i = 0; i < 5; i++) {
+				for (int j = 0; j < psDim; j++) {
+					for (int i = 0; i < psDim; i++) {
 						dissPair.coefs[i][j] += distance[i] * factor[j];
 					}
 				}
@@ -636,9 +640,9 @@ void PSISuperCluster::resetConnectivities() {
 				auto const& currPair = currMapItem.second;
 				setReactionConnectivity(currPair.first.getId());
 				setReactionConnectivity(currPair.second.getId());
-				for (int i = 0; i < 4; i++) {
-					setReactionConnectivity(currPair.first.getMomentId(i));
-					setReactionConnectivity(currPair.second.getMomentId(i));
+				for (int i = 1; i < psDim; i++) {
+					setReactionConnectivity(currPair.first.getMomentId(indexList[i]-1));
+					setReactionConnectivity(currPair.second.getMomentId(indexList[i]-1));
 				}
 			});
 
@@ -648,8 +652,8 @@ void PSISuperCluster::resetConnectivities() {
 				// The cluster is connecting to the combining cluster
 				auto const& currComb = currMapItem.second;
 				setReactionConnectivity(currComb.first.getId());
-				for (int i = 0; i < 4; i++) {
-					setReactionConnectivity(currComb.first.getMomentId(i));
+				for (int i = 1; i < psDim; i++) {
+					setReactionConnectivity(currComb.first.getMomentId(indexList[i]-1));
 				}
 			});
 
@@ -659,8 +663,8 @@ void PSISuperCluster::resetConnectivities() {
 				// The cluster is connecting to the combining cluster
 				auto const& currPair = currMapItem.second;
 				setDissociationConnectivity(currPair.first.getId());
-				for (int i = 0; i < 4; i++) {
-					setDissociationConnectivity(currPair.first.getMomentId(i));
+				for (int i = 1; i < psDim; i++) {
+					setDissociationConnectivity(currPair.first.getMomentId(indexList[i]-1));
 				}
 			});
 
@@ -669,10 +673,9 @@ void PSISuperCluster::resetConnectivities() {
 
 	// Initialize the partial vector for the moment
 	int dof = network.getDOF();
-	psiMomentPartials[0].resize(dof, 0.0);
-	psiMomentPartials[1].resize(dof, 0.0);
-	psiMomentPartials[2].resize(dof, 0.0);
-	psiMomentPartials[3].resize(dof, 0.0);
+	for (int i = 1; i < psDim; i++) {
+		psiMomentPartials[indexList[i] - 1].resize(dof, 0.0);
+	}
 
 	return;
 }
@@ -693,13 +696,13 @@ double PSISuperCluster::getDissociationFlux() {
 				auto const& dissociatingCluster = currPair.first;
 				double lA[5] = {};
 				lA[0] = dissociatingCluster.getConcentration();
-				for (int i = 0; i < 4; i++) {
-					lA[i+1] = dissociatingCluster.getMoment(i);
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = dissociatingCluster.getMoment(indexList[i]-1);
 				}
 
 				double sum[5] = {};
-				for (int j = 0; j < 5; j++) {
-					for (int i = 0; i < 5; i++) {
+				for (int j = 0; j < psDim; j++) {
+					for (int i = 0; i < psDim; i++) {
 						sum[j] += currPair.coefs[i][j] * lA[i];
 					}
 				}
@@ -707,8 +710,8 @@ double PSISuperCluster::getDissociationFlux() {
 				auto value = currPair.kConstant / (double) nTot;
 				flux += value * sum[0];
 				// Compute the moment fluxes
-				for (int i = 0; i < 4; i++) {
-					momentFlux[i] += value * sum[i+1];
+				for (int i = 1; i < psDim; i++) {
+					momentFlux[indexList[i]-1] += value * sum[i];
 				}
 			});
 
@@ -729,13 +732,13 @@ double PSISuperCluster::getEmissionFlux() {
 				auto const& currPair = currMapItem.second;
 				double lA[5] = {};
 				lA[0] = l0;
-				for (int i = 0; i < 4; i++) {
-					lA[i+1] = l1[i];
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = l1[indexList[i]-1];
 				}
 
 				double sum[5] = {};
-				for (int j = 0; j < 5; j++) {
-					for (int i = 0; i < 5; i++) {
+				for (int j = 0; j < psDim; j++) {
+					for (int i = 0; i < psDim; i++) {
 						sum[j] += currPair.coefs[i][j] * lA[i];
 					}
 				}
@@ -743,8 +746,8 @@ double PSISuperCluster::getEmissionFlux() {
 				auto value = currPair.kConstant / (double) nTot;
 				flux += value * sum[0];
 				// Compute the moment fluxes
-				for (int i = 0; i < 4; i++) {
-					momentFlux[i] -= value * sum[i+1];
+				for (int i = 1; i < psDim; i++) {
+					momentFlux[indexList[i]-1] -= value * sum[i];
 				}
 			});
 
@@ -770,15 +773,15 @@ double PSISuperCluster::getProductionFlux() {
 				double lA[5] = {}, lB[5] = {};
 				lA[0] = firstReactant.getConcentration();
 				lB[0] = secondReactant.getConcentration();
-				for (int i = 0; i < 4; i++) {
-					lA[i+1] = firstReactant.getMoment(i);
-					lB[i+1] = secondReactant.getMoment(i);
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = firstReactant.getMoment(indexList[i]-1);
+					lB[i] = secondReactant.getMoment(indexList[i]-1);
 				}
 
 				double sum[5] = {};
-				for (int k = 0; k < 5; k++) {
-					for (int j = 0; j < 5; j++) {
-						for (int i = 0; i < 5; i++) {
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
 							sum[k] += currPair.coefs[j][i][k] * lA[j] * lB[i];
 						}
 					}
@@ -788,8 +791,8 @@ double PSISuperCluster::getProductionFlux() {
 				auto value = currPair.kConstant / (double) nTot;
 				flux += value * sum[0];
 				// Compute the moment fluxes
-				for (int i = 0; i < 4; i++) {
-					momentFlux[i] += value * sum[i+1];
+				for (int i = 1; i < psDim; i++) {
+					momentFlux[indexList[i]-1] += value * sum[i];
 				}
 			});
 
@@ -813,15 +816,15 @@ double PSISuperCluster::getCombinationFlux() {
 				double lA[5] = {}, lB[5] = {};
 				lA[0] = l0;
 				lB[0] = combiningCluster.getConcentration();
-				for (int i = 0; i < 4; i++) {
-					lA[i+1] = l1[i];
-					lB[i+1] = combiningCluster.getMoment(i);
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = l1[indexList[i]-1];
+					lB[i] = combiningCluster.getMoment(indexList[i]-1);
 				}
 
 				double sum[5] = {};
-				for (int k = 0; k < 5; k++) {
-					for (int j = 0; j < 5; j++) {
-						for (int i = 0; i < 5; i++) {
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
 							sum[k] += currComb.coefs[i][j][k] * lA[i] * lB[j];
 						}
 					}
@@ -830,8 +833,8 @@ double PSISuperCluster::getCombinationFlux() {
 				auto value = currComb.kConstant / (double) nTot;
 				flux += value * sum[0];
 				// Compute the moment fluxes
-				for (int i = 0; i < 4; i++) {
-					momentFlux[i] -= value * sum[i+1];
+				for (int i = 1; i < psDim; i++) {
+					momentFlux[indexList[i]-1] -= value * sum[i];
 				}
 			});
 
@@ -877,15 +880,15 @@ void PSISuperCluster::getProductionPartialDerivatives(
 				double lA[5] = {}, lB[5] = {};
 				lA[0] = firstReactant.getConcentration();
 				lB[0] = secondReactant.getConcentration();
-				for (int i = 0; i < 4; i++) {
-					lA[i+1] = firstReactant.getMoment(i);
-					lB[i+1] = secondReactant.getMoment(i);
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = firstReactant.getMoment(indexList[i]-1);
+					lB[i] = secondReactant.getMoment(indexList[i]-1);
 				}
 
 				double sum[5][5][2] = {};
-				for (int k = 0; k < 5; k++) {
-					for (int j = 0; j < 5; j++) {
-						for (int i = 0; i < 5; i++) {
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
 							sum[k][j][0] += currPair.coefs[j][i][k] * lB[i];
 							sum[k][j][1] += currPair.coefs[i][j][k] * lA[i];
 						}
@@ -894,21 +897,21 @@ void PSISuperCluster::getProductionPartialDerivatives(
 
 				// Compute the contribution from the first and second part of the reacting pair
 				auto value = currPair.kConstant / (double) nTot;
-				for (int j = 0; j < 5; j++) {
+				for (int j = 0; j < psDim; j++) {
 					int indexA = 0, indexB = 0;
 					if (j == 0) {
 						indexA = firstReactant.getId() - 1;
 						indexB = secondReactant.getId() - 1;
 					}
 					else {
-						indexA = firstReactant.getMomentId(j-1) - 1;
-						indexB = secondReactant.getMomentId(j-1) - 1;
+						indexA = firstReactant.getMomentId(indexList[j]-1) - 1;
+						indexB = secondReactant.getMomentId(indexList[j]-1) - 1;
 					}
 					partials[indexA] += value * sum[0][j][0];
 					partials[indexB] += value * sum[0][j][1];
-					for (int i = 0; i < 4; i++) {
-						psiMomentPartials[i][indexA] += value * sum[i+1][j][0];
-						psiMomentPartials[i][indexB] += value * sum[i+1][j][1];
+					for (int i = 1; i < psDim; i++) {
+						psiMomentPartials[indexList[i]-1][indexA] += value * sum[i][j][0];
+						psiMomentPartials[indexList[i]-1][indexB] += value * sum[i][j][1];
 					}
 				}
 			});
@@ -936,15 +939,15 @@ void PSISuperCluster::getCombinationPartialDerivatives(
 				double lA[5] = {}, lB[5] = {};
 				lA[0] = l0;
 				lB[0] = cluster.getConcentration();
-				for (int i = 0; i < 4; i++) {
-					lA[i+1] = l1[i];
-					lB[i+1] = cluster.getMoment(i);
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = l1[indexList[i]-1];
+					lB[i] = cluster.getMoment(indexList[i]-1);
 				}
 
 				double sum[5][5][2] = {};
-				for (int k = 0; k < 5; k++) {
-					for (int j = 0; j < 5; j++) {
-						for (int i = 0; i < 5; i++) {
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
 							sum[k][j][0] += currComb.coefs[i][j][k] * lA[i];
 							sum[k][j][1] += currComb.coefs[j][i][k] * lB[i];
 						}
@@ -953,21 +956,21 @@ void PSISuperCluster::getCombinationPartialDerivatives(
 
 				// Compute the contribution from the both clusters
 				auto value = currComb.kConstant / (double) nTot;
-				for (int j = 0; j < 5; j++) {
+				for (int j = 0; j < psDim; j++) {
 					int indexA = 0, indexB = 0;
 					if (j == 0) {
 						indexA = cluster.getId() - 1;
 						indexB = id - 1;
 					}
 					else {
-						indexA = cluster.getMomentId(j-1) - 1;
-						indexB = momId[j-1] - 1;
+						indexA = cluster.getMomentId(indexList[j]-1) - 1;
+						indexB = momId[indexList[j]-1] - 1;
 					}
 					partials[indexA] -= value * sum[0][j][0];
 					partials[indexB] -= value * sum[0][j][1];
-					for (int i = 0; i < 4; i++) {
-						psiMomentPartials[i][indexA] -= value * sum[i+1][j][0];
-						psiMomentPartials[i][indexB] -= value * sum[i+1][j][1];
+					for (int i = 1; i < psDim; i++) {
+						psiMomentPartials[indexList[i]-1][indexA] -= value * sum[i][j][0];
+						psiMomentPartials[indexList[i]-1][indexB] -= value * sum[i][j][1];
 					}
 				}
 			});
@@ -994,17 +997,17 @@ void PSISuperCluster::getDissociationPartialDerivatives(
 				auto const& cluster = currPair.first;
 				// Compute the contribution from the dissociating cluster
 				auto value = currPair.kConstant / (double) nTot;
-				for (int j = 0; j < 5; j++) {
+				for (int j = 0; j < psDim; j++) {
 					int index = 0;
 					if (j == 0) {
 						index = cluster.getId() - 1;
 					}
 					else {
-						index = cluster.getMomentId(j-1) - 1;
+						index = cluster.getMomentId(indexList[j]-1) - 1;
 					}
 					partials[index] += value * currPair.coefs[j][0];
-					for (int i = 0; i < 4; i++) {
-						psiMomentPartials[i][index] += value * currPair.coefs[j][i];
+					for (int i = 1; i < psDim; i++) {
+						psiMomentPartials[indexList[i]-1][index] += value * currPair.coefs[j][i];
 					}
 				}
 			});
@@ -1029,17 +1032,17 @@ void PSISuperCluster::getEmissionPartialDerivatives(
 
 				// Compute the contribution from the dissociating cluster
 				auto value = currPair.kConstant / (double) nTot;
-				for (int j = 0; j < 5; j++) {
+				for (int j = 0; j < psDim; j++) {
 					int index = 0;
 					if (j == 0) {
 						index = id - 1;
 					}
 					else {
-						index = momId[j-1] - 1;
+						index = momId[indexList[j]-1] - 1;
 					}
 					partials[index] -= value * currPair.coefs[j][0];
-					for (int i = 0; i < 4; i++) {
-						psiMomentPartials[i][index] -= value * currPair.coefs[j][i];
+					for (int i = 1; i < psDim; i++) {
+						psiMomentPartials[indexList[i]-1][index] -= value * currPair.coefs[j][i];
 					}
 				}
 			});

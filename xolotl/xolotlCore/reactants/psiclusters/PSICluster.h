@@ -150,6 +150,12 @@ protected:
 			IntegerRange<IReactant::SizeType>(0, 0), IntegerRange<
 					IReactant::SizeType>(0, 0) };
 
+	//! The dimension of the phase space
+	int psDim = 0;
+
+	//! The indexList.
+	Array<int, 5> indexList;
+
 	/**
 	 * This operation returns a set that contains only the entries of the
 	 * reaction connectivity array that are non-zero.
@@ -228,7 +234,6 @@ public:
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry,
 			const std::string& _name = "PSICluster") :
 			Reactant(_network, registry, _name) {
-
 	}
 
 	/**
@@ -547,6 +552,22 @@ public:
 	 * that it does not.
 	 */
 	std::vector<int> getConnectivity() const override;
+
+	/**
+	 * Set the phase space to save time and memory
+	 *
+	 * @param dim The total dimension of the phase space
+	 * @param list The list of indices that constitute the phase space
+	 */
+	void setPhaseSpace(int dim, Array<int, 5> list) {
+		// Set the dimension
+		psDim = dim;
+
+		// Loop on the dimension to set the list
+		for (int i = 0; i < psDim; i++) {
+			indexList[i] = list[i];
+		}
+	}
 
 	/**
 	 * Tell reactant to output a representation of its reaction coefficients

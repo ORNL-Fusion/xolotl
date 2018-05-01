@@ -933,11 +933,11 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 			network.updateConcentrationsFromArray(gridPointSolution);
 
 			// Get the total helium concentration at this grid point
-			heLocalConc += network.getTotalAtomConcentration(0);
-			dLocalConc += network.getTotalAtomConcentration(1);
-			tLocalConc += network.getTotalAtomConcentration(2);
-			vLocalConc += network.getTotalVConcentration();
-			iLocalConc += network.getTotalIConcentration();
+			heLocalConc = network.getTotalAtomConcentration(0);
+			dLocalConc = network.getTotalAtomConcentration(1);
+			tLocalConc = network.getTotalAtomConcentration(2);
+			vLocalConc = network.getTotalVConcentration();
+			iLocalConc = network.getTotalIConcentration();
 		}
 
 		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
@@ -1908,7 +1908,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 	// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
 		// Compute the prefactor for the probability (arbitrary)
-		double prefactor = heliumFluxAmplitude * dt * 0.1;
+		double prefactor = heliumFluxAmplitude * dt * 0.5;
 
 		// The depth parameter to know where the bursting should happen
 		double depthParam = solverHandler.getTauBursting(); // nm
@@ -2510,6 +2510,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 		if (solverHandler.burstBubbles()) {
 			// Initialize the RNG
 			int seed = time(NULL);
+			seed = 0;
 			if (procId == 0)
 				std::cout << "RNG seed for bubble bursting: " << seed
 						<< std::endl;

@@ -54,6 +54,12 @@ private:
 	 */
 	HeVToSuperClusterMap superClusterLookupMap;
 
+	//! The dimension of the phase space
+	int psDim = 0;
+
+	//! The indexList.
+	Array<int, 5> indexList;
+
 	/**
 	 * Calculate the dissociation constant of the first cluster with respect to
 	 * the single-species cluster of the same type based on the current clusters
@@ -278,7 +284,7 @@ public:
 	 * @return The number of degrees of freedom
 	 */
 	virtual int getDOF() const override {
-		return size() + 3 * getAll(ReactantType::PSISuper).size() + 1;
+		return size() + (psDim - 1) * getAll(ReactantType::PSISuper).size() + 1;
 	}
 
 	/**
@@ -363,6 +369,29 @@ public:
 	 */
 	virtual void computeAllPartials(double *vals, int *indices, int *size)
 			override;
+
+	/**
+	 * Set the phase space to save time and memory
+	 *
+	 * @param dim The total dimension of the phase space
+	 * @param list The list of indices that constitute the phase space
+	 */
+	void setPhaseSpace(int dim, Array<int, 5> list) {
+		// Set the dimension
+		psDim = dim;
+
+		// Loop on the dimension to set the list
+		for (int i = 0; i < psDim; i++) {
+			indexList[i] = list[i];
+		}
+
+		// Set the phase space in each reactant
+		std::for_each(allReactants.begin(), allReactants.end(),
+				[&dim,&list](IReactant& currReactant) {
+					auto& currCluster = static_cast<PSICluster&>(currReactant);
+					currCluster.setPhaseSpace(dim, list);
+				});
+	}
 };
 
 } // namespace xolotlCore
