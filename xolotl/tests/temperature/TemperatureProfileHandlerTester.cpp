@@ -57,11 +57,8 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	writeTempFile.close();
 
 	// Create ofill and dfill
-	// Get its size
-	const int dof = network->getDOF();
-	int mat[dof * dof];
-	int *ofill = &mat[0];
-	int *dfill = &mat[0];
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
+	xolotlCore::IReactionNetwork::SparseFillMap dfill;
 
 	// Create and initialize the temperature profile handler
 	auto testTemp = make_shared<TemperatureProfileHandler>("tempFile.dat");

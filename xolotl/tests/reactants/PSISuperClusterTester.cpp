@@ -159,21 +159,41 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] =
-			{ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-					0.0, 0.0, 0.0, -2.2407564e-19, 0.0, 0.0, 0.0, 0.0, 0.0 };
+	double knownPartials[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+			-2.2407564e-19, 0.0, 0.0, 0.0, 0.0 };
 	// Set the concentration
 	cluster->setConcentration(0.5);
 
-	// Get the vector of partial derivatives
-	auto partials = cluster->getPartialDerivatives();
+	// Set up the network to be able to compute the partial derivatives
+	xolotlCore::IReactionNetwork::SparseFillMap dfill;
+	network->getDiagonalFill(dfill);
+	// Get the dof
+	const int dof = network->getDOF();
+	// Initialize the arrays for the reaction partial derivatives
+	std::vector<int> reactionSize;
+	reactionSize.resize(dof);
+	std::vector<size_t> reactionStartingIdx;
+	reactionStartingIdx.resize(dof);
+	auto nPartials = network->initPartialsSizes(reactionSize,
+			reactionStartingIdx);
+	std::vector<int> reactionIndices;
+	reactionIndices.resize(nPartials);
+	network->initPartialsIndices(reactionSize, reactionStartingIdx,
+			reactionIndices);
+	std::vector<double> reactionVals;
+	reactionVals.resize(nPartials);
+	// Compute the partial derivatives
+	network->computeAllPartials(reactionStartingIdx,
+			reactionIndices, reactionVals);
 
 	// Check the size of the partials
-	BOOST_REQUIRE_EQUAL(partials.size(), 22U);
+	int id = cluster->getId() - 1;
+	BOOST_REQUIRE_EQUAL(reactionSize[id], 14U);
 
 	// Check all the values
-	for (unsigned int i = 0; i < partials.size(); i++) {
-		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
+	for (unsigned int i = 0; i < reactionSize[id]; i++) {
+		BOOST_REQUIRE_CLOSE(reactionVals[reactionStartingIdx[id] + i],
+				knownPartials[i], 0.1);
 	}
 
 	return;

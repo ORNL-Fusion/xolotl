@@ -4,8 +4,10 @@
 // Includes
 #include <string>
 #include <unordered_map>
+#include <cassert>
 #include <Constants.h>
 #include "PSICluster.h"
+#include "ReactionNetwork.h"
 #include "IntegerRange.h"
 #include "NDArray.h"
 
@@ -639,7 +641,18 @@ public:
 	 * the vector should be equal to ReactionNetwork::size().
 	 *
 	 */
-	void getPartialDerivatives(std::vector<double> & partials) const override;
+    void computePartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
+
+	void getPartialDerivatives(std::vector<double> & partials) const override
+    {
+        assert(false);
+    }
 
 	/**
 	 * This operation computes the partial derivatives due to production
@@ -649,8 +662,18 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
+	void computeProductionPartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
 	void getProductionPartialDerivatives(std::vector<double> & partials) const
-			override;
+			override
+    {
+        assert(false);
+    }
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -660,8 +683,18 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
+	void computeCombinationPartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
 	void getCombinationPartialDerivatives(std::vector<double> & partials) const
-			override;
+			override
+    {
+        assert(false);
+    }
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -671,8 +704,18 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
+	void computeDissociationPartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
 	void getDissociationPartialDerivatives(std::vector<double> & partials) const
-			override;
+			override
+    {
+        assert(false);
+    }
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -682,24 +725,18 @@ public:
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
 	 */
+	void computeEmissionPartialDerivatives(
+            double* partials,
+            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
+            double* hePartials,
+            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
+            double* vPartials,
+            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
 	void getEmissionPartialDerivatives(std::vector<double> & partials) const
-			override;
-
-	/**
-	 * This operation computes the partial derivatives for the helium momentum.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted.
-	 */
-	void getHeMomentPartialDerivatives(std::vector<double> & partials) const;
-
-	/**
-	 * This operation computes the partial derivatives for the vacancy momentum.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted.
-	 */
-	void getVMomentPartialDerivatives(std::vector<double> & partials) const;
+			override
+    {
+        assert(false);
+    }
 
 	/**
 	 * Returns the average number of vacancies.

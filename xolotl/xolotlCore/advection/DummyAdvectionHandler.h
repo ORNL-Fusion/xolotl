@@ -30,10 +30,10 @@ public:
 	 * and doesn't fill them.
 	 *
 	 * @param network The network
-	 * @param ofill The pointer to the array that will contain the value 1 at the indices
-	 * of the advecting clusters
+	 * @param ofillMap Map of connectivity for advecting clusters.
 	 */
-	void initialize(const IReactionNetwork& network, int *ofill) override {
+	void initialize(const IReactionNetwork& network,
+                    IReactionNetwork::SparseFillMap& ofillMap) override {
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();
 		sinkStrengthVector.clear();

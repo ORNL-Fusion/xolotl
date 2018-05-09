@@ -29,10 +29,11 @@ public:
 	 * (211) tungsten material.
 	 *
 	 * @param network The network
-	 * @param ofill The pointer to the array that will contain the value 1 at the indices
+	 * @param ofillMap Map of connectivity for advecting clusters.
 	 * of the advecting clusters
 	 */
-	void initialize(const IReactionNetwork& network, int *ofill) override {
+	void initialize(const IReactionNetwork& network,
+                    IReactionNetwork::SparseFillMap& ofillMap) override {
 
 		int dof = network.getDOF();
 
@@ -99,7 +100,7 @@ public:
 			// Get its id
 			int index = cluster.getId() - 1;
 			// Set the ofill value to 1 for this cluster
-			ofill[index * dof + index] = 1;
+            ofillMap[index].emplace_back(index);
 		}
 
 		return;

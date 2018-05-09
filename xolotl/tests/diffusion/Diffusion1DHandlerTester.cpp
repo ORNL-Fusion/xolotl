@@ -57,21 +57,20 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	std::vector<IAdvectionHandler *> advectionHandlers;
 
 	// Create ofill
-	int mat[dof * dof];
-	int *ofill = &mat[0];
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize it
 	diffusionHandler.initializeOFill(*network, ofill);
 	diffusionHandler.initializeDiffusionGrid(advectionHandlers, grid);
 
 	// All the clusters diffuse except the 7-th and 8-th one
-	BOOST_REQUIRE_EQUAL(ofill[0], 1);
-	BOOST_REQUIRE_EQUAL(ofill[11], 1);
-	BOOST_REQUIRE_EQUAL(ofill[22], 1);
-	BOOST_REQUIRE_EQUAL(ofill[33], 1);
-	BOOST_REQUIRE_EQUAL(ofill[44], 1);
-	BOOST_REQUIRE_EQUAL(ofill[55], 1);
-	BOOST_REQUIRE_EQUAL(ofill[88], 1);
+	BOOST_REQUIRE_EQUAL(ofill[0][0], 0);
+	BOOST_REQUIRE_EQUAL(ofill[1][0], 1);
+	BOOST_REQUIRE_EQUAL(ofill[2][0], 2);
+	BOOST_REQUIRE_EQUAL(ofill[3][0], 3);
+	BOOST_REQUIRE_EQUAL(ofill[4][0], 4);
+	BOOST_REQUIRE_EQUAL(ofill[5][0], 5);
+	BOOST_REQUIRE_EQUAL(ofill[8][0], 8);
 
 	// Check the total number of diffusing clusters
 	BOOST_REQUIRE_EQUAL(diffusionHandler.getNumberOfDiffusing(), 8);

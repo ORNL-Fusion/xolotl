@@ -57,8 +57,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	std::vector<IAdvectionHandler *> advectionHandlers;
 
 	// Create ofill
-	int mat[dof * dof];
-	int *ofill = &mat[0];
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize it
 	diffusionHandler.initializeOFill(*network, ofill);

@@ -50,8 +50,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	}
 
 	// Create ofill
-	int mat[dof * dof];
-	int *ofill = &mat[0];
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
 
 	// Create a collection of advection handlers
 	std::vector<IAdvectionHandler *> advectionHandlers;
@@ -65,13 +64,13 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 7);
 
 	// Check the clusters in ofill
-	BOOST_REQUIRE_EQUAL(ofill[0], 1);
-	BOOST_REQUIRE_EQUAL(ofill[11], 1);
-	BOOST_REQUIRE_EQUAL(ofill[22], 1);
-	BOOST_REQUIRE_EQUAL(ofill[33], 1);
-	BOOST_REQUIRE_EQUAL(ofill[44], 1);
-	BOOST_REQUIRE_EQUAL(ofill[55], 1);
-	BOOST_REQUIRE_EQUAL(ofill[66], 1);
+	BOOST_REQUIRE_EQUAL(ofill[0][0], 0);
+	BOOST_REQUIRE_EQUAL(ofill[1][0], 1);
+	BOOST_REQUIRE_EQUAL(ofill[2][0], 2);
+	BOOST_REQUIRE_EQUAL(ofill[3][0], 3);
+	BOOST_REQUIRE_EQUAL(ofill[4][0], 4);
+	BOOST_REQUIRE_EQUAL(ofill[5][0], 5);
+	BOOST_REQUIRE_EQUAL(ofill[6][0], 6);
 
 	// Set the size parameter in the x direction
 	double hx = 1.0;

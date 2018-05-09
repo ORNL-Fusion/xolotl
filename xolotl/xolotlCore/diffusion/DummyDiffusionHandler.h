@@ -30,10 +30,10 @@ public:
 	 * is added to the vector.
 	 *
 	 * @param network The network
-	 * @param ofill The pointer to the array that will contain the value 1 at the indices
-	 * of the diffusing clusters
+	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	void initializeOFill(const IReactionNetwork& network, int *ofill) override {
+	void initializeOFill(const IReactionNetwork& network,
+                        IReactionNetwork::SparseFillMap& ofillMap) override {
 		// Clear the index vector
 		diffusingClusters.clear();
 

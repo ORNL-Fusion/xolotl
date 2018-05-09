@@ -26,7 +26,7 @@ public:
 	 * @param options The options.
 	 * @param registry The performance registry.
 	 */
-	virtual void initializeReactionNetwork(xolotlCore::Options &options,
+	virtual void initializeReactionNetwork(const xolotlCore::Options &options,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) = 0;
 
 	/**

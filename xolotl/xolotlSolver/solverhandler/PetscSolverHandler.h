@@ -59,21 +59,44 @@ protected:
 	 */
 	std::vector<double> reactingPartialsForCluster;
 
-	/**
-	 * A pointer to an array of the size dof * dof keeping the partial
-	 * derivatives for all the reactions at one grid point.
-	 *
-	 * Its size must be initialized.
-	 */
-	PetscScalar *reactionVals;
+    /**
+     * Number of valid partial derivatives for each reactant.
+     */
+    std::vector<PetscInt> reactionSize;
+
+    /**
+     * Starting index of items for each reactant within the reactionIndices
+     * and reactionVals vectors.  E.g., the values for reactant i
+     * are located at 
+     *      reactionIndices[reactionStartingIdx[i]+0],
+     *      reactionIndices[reactionStartingIdx[i]+1]
+     *      ...
+     *      reactionIndices[reactionStartingIdx[i]+reactionSize[i]-1]
+     */
+    std::vector<size_t> reactionStartingIdx;
 
 	/**
-	 * A pointer to an array of the size dof * dof keeping the indices for partial
-	 * derivatives for all the reactions at one grid point.
-	 *
-	 * Its size must be initialized.
+     * Indices for partial derivatives for all the reactions at one grid point.
 	 */
-	PetscInt *reactionIndices;
+    std::vector<PetscInt> reactionIndices;
+
+	/**
+     * Partial derivatives for all reactions at one grid point.
+	 */
+    std::vector<PetscScalar> reactionVals;
+
+
+    /**
+     * Convert a C++ sparse fill map representation to the one that
+     * PETSc's DMDASetBlockFillsSparse() expects.
+     *
+     * @param dof The network's degrees of freedom.
+     * @param fillMap The C++ sparse file map to convert.
+     * @return The information from the fill map, in the format that
+     *      PETSc's DMDASetBlockFillsSparse() expects.
+     */
+    static std::vector<PetscInt> ConvertToPetscSparseFillMap(size_t dof,
+                    const xolotlCore::IReactionNetwork::SparseFillMap& fillMap);
 
 public:
 
@@ -88,15 +111,7 @@ public:
 	 * @param _network The reaction network to use.
 	 */
 	PetscSolverHandler(xolotlCore::IReactionNetwork& _network) :
-			SolverHandler(_network), lastTemperature(0.0), reactionVals(
-					nullptr), reactionIndices(nullptr) {
-	}
-
-	//! The Destructor
-	~PetscSolverHandler() {
-		// Delete arrays
-		delete[] reactionVals;
-		delete[] reactionIndices;
+			SolverHandler(_network), lastTemperature(0.0) {
 	}
 
 };

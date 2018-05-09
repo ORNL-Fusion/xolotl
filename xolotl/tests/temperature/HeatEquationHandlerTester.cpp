@@ -61,18 +61,16 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 			1000.0, 0.01);
 
 	// Create ofill
-	int matO[dof * dof];
-	int *ofill = &matO[0];
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
 	// Create dfill
-	int matD[dof * dof];
-	int *dfill = &matD[0];
+	xolotlCore::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize it
 	heatHandler.initializeTemperature(*network, ofill, dfill);
 
 	// Check that the temperature "diffusion" is well set
-	BOOST_REQUIRE_EQUAL(ofill[99], 1);
-	BOOST_REQUIRE_EQUAL(dfill[99], 1);
+	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
+	BOOST_REQUIRE_EQUAL(dfill[9][0], 9);
 
 	// The size parameter in the x direction
 	double hx = 1.0;
