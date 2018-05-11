@@ -4,7 +4,8 @@
 namespace xolotlCore {
 
 void XGBAdvectionHandler::initialize(const IReactionNetwork& network,
-		int *ofill) {
+                    IReactionNetwork::SparseFillMap& ofillMap) {
+
 	// Get all the reactants and their number
 	int dof = network.getDOF();
 
@@ -70,7 +71,7 @@ void XGBAdvectionHandler::initialize(const IReactionNetwork& network,
 		// Get its id
 		int index = cluster.getId() - 1;
 		// Set the ofill value to 1 for this cluster
-		ofill[index * dof + index] = 1;
+        ofillMap[index].emplace_back(index);
 	}
 
 	return;

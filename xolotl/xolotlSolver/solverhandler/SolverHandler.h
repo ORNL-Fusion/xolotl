@@ -4,6 +4,7 @@
 // Includes
 #include "ISolverHandler.h"
 #include <HDF5Utils.h>
+#include "RandomNumberGenerator.h"
 
 namespace xolotlSolver {
 
@@ -85,6 +86,12 @@ protected:
 
 	//! The depth parameter for the bubble bursting.
 	double tauBursting;
+
+	//! The value to use to seed the random number generator.
+	unsigned int rngSeed;
+
+	//! The random number generator to use.
+	std::unique_ptr<RandomNumberGenerator<int, unsigned int>> rng;
 
 	//! Method generating the grid in the x direction
 	void generateGrid(int nx, double hx, int surfacePos) {
@@ -195,7 +202,30 @@ public:
 	void initializeHandlers(
 			std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-			xolotlCore::Options &options) {
+			const xolotlCore::Options &options) override {
+
+		// Determine who I am.
+		int myProcId = -1;
+		MPI_Comm_rank(MPI_COMM_WORLD, &myProcId);
+
+		// Initialize our random number generator.
+		bool useRNGSeedFromOptions = false;
+		bool printRNGSeed = false;
+		std::tie(useRNGSeedFromOptions, rngSeed) = options.getRNGSeed();
+		if (not useRNGSeedFromOptions) {
+			// User didn't give a seed value to use, so
+			// use something based on current time and our proc id
+			// so that it is different from run to run, and should
+			// be different across all processes within a given run.
+			rngSeed = time(NULL);
+		}
+		if (options.printRNGSeed()) {
+			std::cout << "Proc " << myProcId << " using RNG seed value "
+					<< rngSeed << std::endl;
+		}
+		rng = std::unique_ptr<RandomNumberGenerator<int, unsigned int>>(
+				new RandomNumberGenerator<int, unsigned int>(rngSeed + myProcId));
+
 		// Set the network loader
 		networkName = options.getNetworkFilename();
 
@@ -293,7 +323,7 @@ public:
 	 * Get the grid in the x direction.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<double> getXGrid() const {
+	std::vector<double> getXGrid() const override {
 		return grid;
 	}
 
@@ -301,7 +331,7 @@ public:
 	 * Get the step size in the y direction.
 	 * \see ISolverHandler.h
 	 */
-	double getStepSizeY() const {
+	double getStepSizeY() const override {
 		return hY;
 	}
 
@@ -309,7 +339,7 @@ public:
 	 * Get the step size in the z direction.
 	 * \see ISolverHandler.h
 	 */
-	double getStepSizeZ() const {
+	double getStepSizeZ() const override {
 		return hZ;
 	}
 
@@ -317,7 +347,7 @@ public:
 	 * Get the number of dimensions of the problem.
 	 * \see ISolverHandler.h
 	 */
-	int getDimension() const {
+	int getDimension() const override {
 		return dimension;
 	}
 
@@ -325,7 +355,7 @@ public:
 	 * Get the initial vacancy concentration.
 	 * \see ISolverHandler.h
 	 */
-	double getInitialVConc() const {
+	double getInitialVConc() const override {
 		return initialVConc;
 	}
 
@@ -333,7 +363,7 @@ public:
 	 * Get the sputtering yield.
 	 * \see ISolverHandler.h
 	 */
-	double getSputteringYield() const {
+	double getSputteringYield() const override {
 		return sputteringYield;
 	}
 
@@ -341,7 +371,7 @@ public:
 	 * Get the depth parameter for bursting.
 	 * \see ISolverHandler.h
 	 */
-	double getTauBursting() const {
+	double getTauBursting() const override {
 		return tauBursting;
 	}
 
@@ -349,7 +379,7 @@ public:
 	 * Get the grid right offset.
 	 * \see ISolverHandler.h
 	 */
-	int getRightOffset() const {
+	int getRightOffset() const override {
 		return rightOffset;
 	}
 
@@ -357,7 +387,7 @@ public:
 	 * To know if the surface should be able to move.
 	 * \see ISolverHandler.h
 	 */
-	bool moveSurface() const {
+	bool moveSurface() const override {
 		return movingSurface;
 	}
 
@@ -365,7 +395,7 @@ public:
 	 * To know if the bubble bursting should be used.
 	 * \see ISolverHandler.h
 	 */
-	bool burstBubbles() const {
+	bool burstBubbles() const override {
 		return bubbleBursting;
 	}
 
@@ -373,7 +403,7 @@ public:
 	 * Get the flux handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IFluxHandler *getFluxHandler() const {
+	xolotlCore::IFluxHandler *getFluxHandler() const override {
 		return fluxHandler;
 	}
 
@@ -381,7 +411,7 @@ public:
 	 * Get the temperature handler.
 	 * \see ISolverHandler.h
 	 */
-	virtual xolotlCore::ITemperatureHandler *getTemperatureHandler() const {
+	xolotlCore::ITemperatureHandler *getTemperatureHandler() const override {
 		return temperatureHandler;
 	}
 
@@ -389,7 +419,7 @@ public:
 	 * Get the advection handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IAdvectionHandler *getAdvectionHandler() const {
+	xolotlCore::IAdvectionHandler *getAdvectionHandler() const override {
 		return advectionHandlers[0];
 	}
 
@@ -397,7 +427,8 @@ public:
 	 * Get the advection handlers.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<xolotlCore::IAdvectionHandler *> getAdvectionHandlers() const {
+	std::vector<xolotlCore::IAdvectionHandler *> getAdvectionHandlers() const
+			override {
 		return advectionHandlers;
 	}
 
@@ -405,7 +436,7 @@ public:
 	 * Get the modified trap-mutation handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::ITrapMutationHandler *getMutationHandler() const {
+	xolotlCore::ITrapMutationHandler *getMutationHandler() const override {
 		return mutationHandler;
 	}
 
@@ -413,7 +444,7 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IReactionNetwork& getNetwork() const {
+	xolotlCore::IReactionNetwork& getNetwork() const override {
 		return network;
 	}
 
@@ -421,10 +452,19 @@ public:
 	 * Get the network name.
 	 * \see ISolverHandler.h
 	 */
-	std::string getNetworkName() const {
+	std::string getNetworkName() const override {
 		return networkName;
 	}
 
+	/**
+	 * Access the random number generator
+	 * The generator will have already been seeded.
+	 *
+	 * @return The RandomNumberGenerator object to use.
+	 */
+	RandomNumberGenerator<int, unsigned int>& getRNG(void) const override {
+		return *rng;
+	}
 }
 ;
 //end class SolverHandler

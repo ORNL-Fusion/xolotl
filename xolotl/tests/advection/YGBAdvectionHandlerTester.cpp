@@ -44,8 +44,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	const int dof = network->getDOF();
 
 	// Create ofill
-	int mat[dof * dof];
-	int *ofill = &mat[0];
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
 
 	// Create the advection handler and initialize it with a sink at
 	// 2nm in the Y direction

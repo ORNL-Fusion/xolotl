@@ -47,8 +47,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	DummyAdvectionHandler advectionHandler;
 
 	// Create ofill
-	int mat[dof * dof];
-	int *ofill = &mat[0];
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize it
 	advectionHandler.initialize(*network, ofill);

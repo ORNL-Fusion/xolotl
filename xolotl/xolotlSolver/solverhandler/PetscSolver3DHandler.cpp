@@ -19,8 +19,8 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 
 	ierr = DMDACreate3d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR,
 			DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX,
-			nY, nZ, PETSC_DECIDE,
-			PETSC_DECIDE, PETSC_DECIDE, dof, 1, NULL, NULL, NULL, &da);
+			nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1, NULL,
+			NULL, NULL, &da);
 	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
 			"DMDACreate3d failed.");
 	ierr = DMSetFromOptions(da);
@@ -100,19 +100,8 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	 *  In this case ofill has only a few diagonal entries since the only spatial
 	 *  coupling is regular diffusion.
 	 */
-	PetscInt *ofill, *dfill;
-	ierr = PetscMalloc(dof * dof * sizeof(PetscInt), &ofill);
-	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-			"PetscMalloc (ofill) failed.");
-	ierr = PetscMalloc(dof * dof * sizeof(PetscInt), &dfill);
-	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-			"PetscMalloc (dfill) failed.");
-	ierr = PetscMemzero(ofill, dof * dof * sizeof(PetscInt));
-	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-			"PetscMemzero (ofill) failed.");
-	ierr = PetscMemzero(dfill, dof * dof * sizeof(PetscInt));
-	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-			"PetscMemzero (dfill) failed.");
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
+	xolotlCore::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
@@ -133,21 +122,22 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	ierr = DMDASetBlockFills(da, dfill, ofill);
+	auto dfillsparse = ConvertToPetscSparseFillMap(dof, dfill);
+	auto ofillsparse = ConvertToPetscSparseFillMap(dof, ofill);
+	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
 	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
 			"DMDASetBlockFills failed.");
 
-	// Free the temporary fill arrays
-	ierr = PetscFree(ofill);
-	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-			"PetscFree (ofill) failed.");
-	ierr = PetscFree(dfill);
-	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-			"PetscFree (dfill) failed.");
-
 	// Initialize the arrays for the reaction partial derivatives
-	reactionVals = new PetscScalar[dof * dof];
-	reactionIndices = new PetscInt[dof * dof];
+	reactionSize.resize(dof);
+	reactionStartingIdx.resize(dof);
+	auto nPartials = network.initPartialsSizes(reactionSize,
+			reactionStartingIdx);
+
+	reactionIndices.resize(nPartials);
+	network.initPartialsIndices(reactionSize, reactionStartingIdx,
+			reactionIndices);
+	reactionVals.resize(nPartials);
 
 	return;
 }
@@ -342,7 +332,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// Share the concentration with all the processes
 			totalAtomConc = 0.0;
 			MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-					MPI_COMM_WORLD);
+			MPI_COMM_WORLD);
 
 			// Set the disappearing rate in the modified TM handler
 			mutationHandler->updateDisappearingRate(totalAtomConc);
@@ -740,7 +730,6 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	MatStencil rowId;
 	MatStencil colIds[dof];
 	int pdColIdsVectorSize = 0;
-	PetscInt reactionSize[dof];
 
 	// Declarations for variables used in the loop
 	double atomConc = 0.0, totalAtomConc = 0.0;
@@ -777,7 +766,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			// Share the concentration with all the processes
 			totalAtomConc = 0.0;
 			MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-					MPI_COMM_WORLD);
+			MPI_COMM_WORLD);
 
 			// Set the disappearing rate in the modified TM handler
 			mutationHandler->updateDisappearingRate(totalAtomConc);
@@ -822,8 +811,8 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				// ----- Take care of the reactions for all the reactants -----
 
 				// Compute all the partial derivatives for the reactions
-				network.computeAllPartials(reactionVals, reactionIndices,
-						reactionSize);
+				network.computeAllPartials(reactionStartingIdx, reactionIndices,
+						reactionVals);
 
 				// Update the column in the Jacobian that represents each DOF
 				for (int i = 0; i < dof - 1; i++) {
@@ -835,16 +824,18 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 					// Number of partial derivatives
 					pdColIdsVectorSize = reactionSize[i];
+					auto startingIdx = reactionStartingIdx[i];
+
 					// Loop over the list of column ids
 					for (int j = 0; j < pdColIdsVectorSize; j++) {
 						// Set grid coordinate and component number for a column in the list
 						colIds[j].i = xi;
 						colIds[j].j = yj;
 						colIds[j].k = zk;
-						colIds[j].c = reactionIndices[i * dof + j];
+						colIds[j].c = reactionIndices[startingIdx + j];
 						// Get the partial derivative from the array of all of the partials
-						reactingPartialsForCluster[j] =
-								reactionVals[i * dof + j];
+						reactingPartialsForCluster[j] = reactionVals[startingIdx
+								+ j];
 					}
 					// Update the matrix
 					ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize,

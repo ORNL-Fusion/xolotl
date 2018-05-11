@@ -48,8 +48,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	DummyDiffusionHandler diffusionHandler;
 
 	// Create ofill
-	int mat[dof * dof];
-	int *ofill = &mat[0];
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize it
 	diffusionHandler.initializeOFill(*network, ofill);

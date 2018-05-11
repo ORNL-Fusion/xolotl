@@ -19,6 +19,7 @@
 #include <PSISuperCluster.h>
 #include <NESuperCluster.h>
 #include <MathUtils.h>
+#include "RandomNumberGenerator.h"
 
 namespace xolotlSolver {
 
@@ -705,35 +706,39 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 			outputFile << std::endl;
 			outputFile.close();
 		}
+
 		// Get the initial vacancy concentration
 		double initialVConc = solverHandler.getInitialVConc();
 
-		// Value to now on which processor is the location of the surface,
-		// for MPI usage
-		int surfaceProc = 0;
-
 		// Loop on the possible yj
 		for (yj = 0; yj < My; yj++) {
+
+			// Compute the total density of intersitials that escaped from the
+			// surface since last timestep using the stored flux
+			nInterstitial2D[yj] += previousIFlux2D[yj] * dt;
+
+			// Remove the sputtering yield since last timestep
+			nInterstitial2D[yj] -= sputteringYield2D * heliumFluxAmplitude
+					* dt;
+
 			// Get the position of the surface at yj
 			int surfacePos = solverHandler.getSurfacePosition(yj);
 			xi = surfacePos + 1;
+
+			// Initialize the value for the flux
+			double newFlux = 0.0;
+
 			// if xi is on this process
 			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
 				// Get the concentrations at xi = surfacePos + 1
 				gridPointSolution = solutionArray[yj][xi];
 
-				// Compute the total density of intersitials that escaped from the
-				// surface since last timestep using the stored flux
-				nInterstitial2D[yj] += previousIFlux2D[yj] * dt;
+				// Factor for finite difference
+				double hxLeft = grid[xi + 1] - grid[xi];
+				double hxRight = grid[xi + 2] - grid[xi + 1];
+				double factor = 2.0 / (hxLeft + hxRight);
 
-				// Remove the sputtering yield since last timestep
-				nInterstitial2D[yj] -= sputteringYield2D * heliumFluxAmplitude
-						* dt;
-
-				// Initialize the value for the flux
-				double newFlux = 0.0;
-
-				// Loop on all the interstitial clusters
+				// Loop on all the interstitial clusters to add the contribution from deeper
 				for (auto const& iMapItem : network.getAll(ReactantType::I)) {
 					// Get the cluster
 					auto const& cluster = *(iMapItem.second);
@@ -743,36 +748,20 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					// Get its size and diffusion coefficient
 					int size = cluster.getSize();
 					double coef = cluster.getDiffusionCoefficient();
-
-					// Factor for finite difference
-					double hxLeft = grid[xi + 1] - grid[xi];
-					double hxRight = grid[xi + 2] - grid[xi + 1];
-					double factor = 2.0 / (hxLeft * (hxLeft + hxRight));
 					// Compute the flux going to the left
-					newFlux += (double) size * factor * coef * conc * hxLeft;
+					newFlux += (double) size * factor * coef * conc;
 				}
-
-				// Update the previous flux
-				previousIFlux2D[yj] = newFlux;
-
-				// Set the surface processor
-				surfaceProc = procId;
 			}
 
-			// Get which processor will send the information
-			int surfaceId = 0;
-			MPI_Allreduce(&surfaceProc, &surfaceId, 1, MPI_INT, MPI_SUM,
+			// Gather newFlux values at this position
+			double newTotalFlux = 0.0;
+			MPI_Allreduce(&newFlux, &newTotalFlux, 1, MPI_DOUBLE, MPI_SUM,
 					PETSC_COMM_WORLD);
 
-			// Send the information about nInterstitial2D and previousFlux2D
-			// to the other processes
-			MPI_Bcast(&nInterstitial2D[yj], 1, MPI_DOUBLE, surfaceId,
-					PETSC_COMM_WORLD);
-			MPI_Bcast(&previousIFlux2D[yj], 1, MPI_DOUBLE, surfaceId,
-					PETSC_COMM_WORLD);
+			// Update the previous flux
+			previousIFlux2D[yj] = newTotalFlux;
 
-			// Now that all the processes have the same value of nInterstitials, compare
-			// it to the threshold to now if we should move the surface
+			// Compare nInterstitials to the threshold to know if we should move the surface
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold = (62.8 - initialVConc)
@@ -860,7 +849,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 									exp(
 											-(distance - depthParam)
 													/ (depthParam * 2.0)));
-					double test = (double) rand() / (double) RAND_MAX;
+                    double test = solverHandler.getRNG().GetRandomDouble();
 
 					if (prob > test) {
 						burst = true;
@@ -1376,12 +1365,8 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 
 		// Bursting
 		if (solverHandler.burstBubbles()) {
-			// Initialize the RNG
-			int seed = time(NULL);
-			if (procId == 0)
-				std::cout << "RNG seed for bubble bursting: " << seed
-						<< std::endl;
-			std::srand(seed + procId);
+            // No need to seed the random number generator here.
+            // The solver handler has already done it.
 		}
 
 		// Set directions and terminate flags for the surface event

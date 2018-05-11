@@ -40,19 +40,8 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	 *  In this case ofill has only a few diagonal entries since the only spatial
 	 *  coupling is regular diffusion.
 	 */
-	PetscInt *ofill, *dfill;
-	ierr = PetscMalloc(dof * dof * sizeof(PetscInt), &ofill);
-	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
-			"PetscMalloc (ofill) failed.");
-	ierr = PetscMalloc(dof * dof * sizeof(PetscInt), &dfill);
-	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
-			"PetscMalloc (dfill) failed.");
-	ierr = PetscMemzero(ofill, dof * dof * sizeof(PetscInt));
-	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
-			"PetscMemzero (ofill) failed.");
-	ierr = PetscMemzero(dfill, dof * dof * sizeof(PetscInt));
-	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
-			"PetscMemzero (dfill) failed.");
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
+	xolotlCore::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
@@ -61,21 +50,22 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	ierr = DMDASetBlockFills(da, dfill, ofill);
+	auto dfillsparse = ConvertToPetscSparseFillMap(dof, dfill);
+	auto ofillsparse = ConvertToPetscSparseFillMap(dof, ofill);
+	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
 	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
 			"DMDASetBlockFills failed.");
 
-	// Free the temporary fill arrays
-	ierr = PetscFree(ofill);
-	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
-			"PetscFree (ofill) failed.");
-	ierr = PetscFree(dfill);
-	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
-			"PetscFree (dfill) failed.");
-
 	// Initialize the arrays for the reaction partial derivatives
-	reactionVals = new PetscScalar[dof * dof];
-	reactionIndices = new PetscInt[dof * dof];
+	reactionSize.resize(dof);
+	reactionStartingIdx.resize(dof);
+	auto nPartials = network.initPartialsSizes(reactionSize,
+			reactionStartingIdx);
+
+	reactionIndices.resize(nPartials);
+	network.initPartialsIndices(reactionSize, reactionStartingIdx,
+			reactionIndices);
+	reactionVals.resize(nPartials);
 
 	return;
 }
@@ -261,7 +251,6 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	MatStencil rowId;
 	MatStencil colIds[dof];
 	int pdColIdsVectorSize = 0;
-	PetscInt reactionSize[dof];
 
 	// Set the grid position
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
@@ -285,7 +274,8 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	// ----- Take care of the reactions for all the reactants -----
 
 	// Compute all the partial derivatives for the reactions
-	network.computeAllPartials(reactionVals, reactionIndices, reactionSize);
+	network.computeAllPartials(reactionStartingIdx, reactionIndices,
+			reactionVals);
 
 	// Update the column in the Jacobian that represents each DOF
 	for (int i = 0; i < dof - 1; i++) {
@@ -295,13 +285,15 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 		// Number of partial derivatives
 		pdColIdsVectorSize = reactionSize[i];
+		auto startingIdx = reactionStartingIdx[i];
+
 		// Loop over the list of column ids
 		for (int j = 0; j < pdColIdsVectorSize; j++) {
 			// Set grid coordinate and component number for a column in the list
 			colIds[j].i = 0;
-			colIds[j].c = reactionIndices[i * dof + j];
+			colIds[j].c = reactionIndices[startingIdx + j];
 			// Get the partial derivative from the array of all of the partials
-			reactingPartialsForCluster[j] = reactionVals[i * dof + j];
+			reactingPartialsForCluster[j] = reactionVals[startingIdx + j];
 		}
 		// Update the matrix
 		ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize, colIds,

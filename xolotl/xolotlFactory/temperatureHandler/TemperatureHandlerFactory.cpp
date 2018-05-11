@@ -13,7 +13,7 @@ namespace xolotlFactory {
 static std::shared_ptr<xolotlCore::ITemperatureHandler> theTemperatureHandler;
 
 // Create the desired type of handler registry.
-bool initializeTempHandler(xolotlCore::Options &options) {
+bool initializeTempHandler(const xolotlCore::Options &options) {
 	// Get the current process ID
 	int procId;
 	MPI_Comm_rank(MPI_COMM_WORLD, &procId);

@@ -40,7 +40,7 @@ public:
 	 * @param options The options.
 	 * @param registry The performance registry.
 	 */
-	void initializeReactionNetwork(xolotlCore::Options &options,
+	void initializeReactionNetwork(const xolotlCore::Options &options,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
 		// Get the current process ID
 		int procId;

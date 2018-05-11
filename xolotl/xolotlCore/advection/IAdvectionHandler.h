@@ -30,10 +30,10 @@ public:
 	 * and their corresponding sink strength (or driving forces).
 	 *
 	 * @param network The network
-	 * @param ofill The pointer to the array that will contain the value 1 at the indices
-	 * of the advecting clusters
+	 * @param ofillMap Map of connectivity for advecting clusters.
 	 */
-	virtual void initialize(const IReactionNetwork& network, int *ofill) = 0;
+	virtual void initialize(const IReactionNetwork& network,
+                            IReactionNetwork::SparseFillMap& ofillMap) = 0;
 
 	/**
 	 * Set the number of dimension
