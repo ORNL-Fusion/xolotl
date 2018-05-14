@@ -96,18 +96,35 @@ protected:
 		 * 3 -> T
 		 * 4 -> V
 		 */
-		Array<double, 5, 5, 5> coefs;
+		double ***coefs;
 
-		//! The constructor
-		ProductionCoefficientBase() {
+		//! The constructor, disallowed
+		ProductionCoefficientBase() = delete;
 
-			coefs.Init(0.0);
+		//! The constructor to use
+		ProductionCoefficientBase(const int dim) {
+			// Create the array of the right dimension
+			coefs = new double**[dim];
+			for (int i = 0; i < dim; i++) {
+				coefs[i] = new double*[dim];
+				for (int j = 0; j < dim; j++) {
+					coefs[i][j] = new double[dim];
+					for (int k = 0; k < dim; k++) {
+						coefs[i][j][k] = 0.0;
+					}
+				}
+			}
 		}
 
 		/**
 		 * Copy constructor, disallowed.
 		 */
 		ProductionCoefficientBase(const ProductionCoefficientBase& other) = delete;
+
+		//! The destructor
+		~ProductionCoefficientBase() {
+			delete[] coefs;
+		}
 	};
 
 	/**
@@ -128,8 +145,8 @@ protected:
 
 		//! The constructor
 		SuperClusterProductionPair(Reaction& _reaction, PSICluster& _first,
-				PSICluster& _second) :
-				ReactingPairBase(_reaction, _first, _second), ProductionCoefficientBase() {
+				PSICluster& _second, int dim) :
+				ReactingPairBase(_reaction, _first, _second), ProductionCoefficientBase(dim) {
 
 		}
 
@@ -159,8 +176,8 @@ protected:
 		using KeyType = IReactant*;
 
 		//! The constructor
-		SuperClusterCombiningCluster(Reaction& _reaction, PSICluster& _first) :
-				ReactingInfoBase(_reaction, _first), ProductionCoefficientBase() {
+		SuperClusterCombiningCluster(Reaction& _reaction, PSICluster& _first, int dim) :
+				ReactingInfoBase(_reaction, _first), ProductionCoefficientBase(dim) {
 
 		}
 
@@ -205,14 +222,20 @@ protected:
 		 * 3 -> T
 		 * 4 -> V
 		 */
-		Array<double, 5, 5> coefs;
+		double **coefs;
 
 		//! The constructor
 		SuperClusterDissociationPair(Reaction& _reaction, PSICluster& _first,
-				PSICluster& _second) :
+				PSICluster& _second, int dim) :
 				ReactingPairBase(_reaction, _first, _second) {
-
-			coefs.Init(0.0);
+			// Create the array of the right dimension
+			coefs = new double*[dim];
+			for (int i = 0; i < dim; i++) {
+				coefs[i] = new double[dim];
+				for (int j = 0; j < dim; j++) {
+					coefs[i][j] = 0.0;
+				}
+			}
 		}
 
 		/**
@@ -220,6 +243,11 @@ protected:
 		 */
 		SuperClusterDissociationPair() = delete;
 		SuperClusterDissociationPair(const SuperClusterDissociationPair& other) = delete;
+
+		//! The destructor
+		~SuperClusterDissociationPair() {
+			delete[] coefs;
+		}
 	};
 
 	/**

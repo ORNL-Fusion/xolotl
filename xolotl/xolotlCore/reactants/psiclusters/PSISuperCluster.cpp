@@ -55,7 +55,7 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction, int a[4],
 				std::forward_as_tuple(rkey),
 				std::forward_as_tuple(reaction,
 						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second)));
+						static_cast<PSICluster&>(reaction.second), psDim));
 		// Since we already checked and didn't know about the reaction,
 		// we had better have added it with our emplace() call.
 		assert(eret.second);
@@ -117,7 +117,7 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 				std::forward_as_tuple(rkey),
 				std::forward_as_tuple(reaction,
 						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second)));
+						static_cast<PSICluster&>(reaction.second), psDim));
 		// Since we already checked and didn't know about the reaction,
 		// we had better have added it with our emplace() call.
 		assert(eret.second);
@@ -184,7 +184,7 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction, int a[4]) {
 		auto eret = effCombiningList.emplace(std::piecewise_construct,
 				std::forward_as_tuple(rkey),
 				std::forward_as_tuple(reaction,
-						static_cast<PSICluster&>(otherCluster)));
+						static_cast<PSICluster&>(otherCluster), psDim));
 		// Since we already checked and didn't know about the reaction then,
 		// we had better have added it with our emplace call.
 		assert(eret.second);
@@ -229,7 +229,7 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 		auto eret = effCombiningList.emplace(std::piecewise_construct,
 				std::forward_as_tuple(rkey),
 				std::forward_as_tuple(reaction,
-						static_cast<PSICluster&>(otherCluster)));
+						static_cast<PSICluster&>(otherCluster), psDim));
 		// Since we already checked and didn't know about the reaction then,
 		// we had better have added it with our emplace call.
 		assert(eret.second);
@@ -279,7 +279,7 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction, int a[4],
 				std::forward_as_tuple(rkey),
 				std::forward_as_tuple(reaction,
 						static_cast<PSICluster&>(reaction.dissociating),
-						static_cast<PSICluster&>(emittedCluster)));
+						static_cast<PSICluster&>(emittedCluster), psDim));
 		// Since we already checked and didn't know about the reaction then,
 		// we had better have added it with our emplace() call.
 		assert(eret.second);
@@ -331,7 +331,7 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 				std::forward_as_tuple(rkey),
 				std::forward_as_tuple(reaction,
 						static_cast<PSICluster&>(reaction.dissociating),
-						static_cast<PSICluster&>(emittedCluster)));
+						static_cast<PSICluster&>(emittedCluster), psDim));
 		// Since we already checked and didn't know about the reaction then,
 		// we had better have added it with our emplace() call.
 		assert(eret.second);
@@ -382,7 +382,7 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 				std::forward_as_tuple(rkey),
 				std::forward_as_tuple(reaction,
 						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second)));
+						static_cast<PSICluster&>(reaction.second), psDim));
 		// Since we already checked and didn't know about the reaction then,
 		// we had better have added it with our emplace() call.
 		assert(eret.second);
@@ -424,7 +424,7 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 				std::forward_as_tuple(rkey),
 				std::forward_as_tuple(reaction,
 						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second)));
+						static_cast<PSICluster&>(reaction.second), psDim));
 		// Since we already checked and didn't know about the reaction then,
 		// we had better have added it with our emplace() call.
 		assert(eret.second);
@@ -1042,10 +1042,11 @@ void PSISuperCluster::dumpCoefficients(std::ostream& os,
 		PSISuperCluster::ProductionCoefficientBase const& curr) const {
 
 	os << "a[0-4][0-4][0-4]: ";
-	for (const auto& curr2D : curr.coefs) {
-		for (const auto& curr1D : curr2D) {
-			std::copy(curr1D.begin(), curr1D.end(),
-					std::ostream_iterator<double>(os, " "));
+	for (int k = 0; k < psDim; k++) {
+		for (int j = 0; j < psDim; j++) {
+			for (int i = 0; i < psDim; i++) {
+				os << curr.coefs[k][j][i] << ' ';
+			}
 		}
 	}
 }
@@ -1054,9 +1055,10 @@ void PSISuperCluster::dumpCoefficients(std::ostream& os,
 		PSISuperCluster::SuperClusterDissociationPair const& currPair) const {
 
 	os << "a[0-4][0-4]: ";
-	for (const auto& curr1D : currPair.coefs) {
-		std::copy(curr1D.begin(), curr1D.end(),
-				std::ostream_iterator<double>(os, " "));
+	for (int j = 0; j < psDim; j++) {
+		for (int i = 0; i < psDim; i++) {
+			os << currPair.coefs[j][i] << ' ';
+		}
 	}
 }
 
