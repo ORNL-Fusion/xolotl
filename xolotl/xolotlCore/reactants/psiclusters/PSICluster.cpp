@@ -13,7 +13,7 @@ void PSICluster::resultFrom(ProductionReaction& reaction, int a[4], int b[4]) {
 	// Add a cluster pair for the given reaction.
 	reactingPairs.emplace_back(reaction,
 			static_cast<PSICluster&>(reaction.first),
-			static_cast<PSICluster&>(reaction.second));
+			static_cast<PSICluster&>(reaction.second), psDim);
 	auto& newPair = reactingPairs.back();
 
 	// NB: newPair's reactants are same as reaction's.
@@ -52,7 +52,7 @@ void PSICluster::resultFrom(ProductionReaction& reaction,
 	// Add a cluster pair for the given reaction.
 	reactingPairs.emplace_back(reaction,
 			static_cast<PSICluster&>(reaction.first),
-			static_cast<PSICluster&>(reaction.second));
+			static_cast<PSICluster&>(reaction.second), psDim);
 	auto& newPair = reactingPairs.back();
 
 	// NB: newPair's reactants are same as reaction's.
@@ -102,7 +102,7 @@ void PSICluster::participateIn(ProductionReaction& reaction, int a[4]) {
 	if (it == combiningReactants.rend()) {
 		// We did not already know about this combination.
 		// Note that we combine with the other cluster in this reaction.
-		combiningReactants.emplace_back(reaction, otherCluster);
+		combiningReactants.emplace_back(reaction, otherCluster, psDim);
 		it = combiningReactants.rbegin();
 	}
 
@@ -135,7 +135,7 @@ void PSICluster::participateIn(ProductionReaction& reaction,
 	if (it == combiningReactants.rend()) {
 		// We did not already know about this combination.
 		// Note that we combine with the other cluster in this reaction.
-		combiningReactants.emplace_back(reaction, otherCluster);
+		combiningReactants.emplace_back(reaction, otherCluster, psDim);
 		it = combiningReactants.rbegin();
 	}
 	assert(it != combiningReactants.rend());
@@ -177,7 +177,7 @@ void PSICluster::participateIn(DissociationReaction& reaction, int a[4],
 		// dissociating cluster is the first one
 		dissociatingPairs.emplace_back(reaction,
 				static_cast<PSICluster&>(reaction.dissociating),
-				static_cast<PSICluster&>(emittedCluster));
+				static_cast<PSICluster&>(emittedCluster), psDim);
 		it = dissociatingPairs.rbegin();
 	}
 
@@ -215,7 +215,7 @@ void PSICluster::participateIn(DissociationReaction& reaction,
 		// dissociating cluster is the first one
 		dissociatingPairs.emplace_back(reaction,
 				static_cast<PSICluster&>(reaction.dissociating),
-				static_cast<PSICluster&>(emittedCluster));
+				static_cast<PSICluster&>(emittedCluster), psDim);
 		it = dissociatingPairs.rbegin();
 	}
 	assert(it != dissociatingPairs.rend());
@@ -245,7 +245,7 @@ void PSICluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 	// this reaction?
 	emissionPairs.emplace_back(reaction,
 			static_cast<PSICluster&>(reaction.first),
-			static_cast<PSICluster&>(reaction.second));
+			static_cast<PSICluster&>(reaction.second), psDim);
 
 	return;
 }
@@ -259,7 +259,7 @@ void PSICluster::emitFrom(DissociationReaction& reaction,
 	// this reaction?
 	emissionPairs.emplace_back(reaction,
 			static_cast<PSICluster&>(reaction.first),
-			static_cast<PSICluster&>(reaction.second));
+			static_cast<PSICluster&>(reaction.second), psDim);
 
 	return;
 }
@@ -671,18 +671,20 @@ void PSICluster::dumpCoefficients(std::ostream& os,
 		PSICluster::ClusterPair const& curr) const {
 
 	os << "a[0-4][0-4]: ";
-	for (auto const& curr1D : curr.coefs) {
-		std::copy(curr1D.begin(), curr1D.end(),
-				std::ostream_iterator<double>(os, " "));
+	for (int j = 0; j < psDim; j++) {
+		for (int i = 0; i < psDim; i++) {
+			os << curr.coefs[j][i] << ' ';
+		}
 	}
 }
 
 void PSICluster::dumpCoefficients(std::ostream& os,
 		PSICluster::CombiningCluster const& curr) const {
 
-	os << "a[0-4]: ";
-	std::copy(curr.coefs.begin(), curr.coefs.end(),
-			std::ostream_iterator<double>(os, " "));
+	os << "a[0-4][0-4]: ";
+	for (int i = 0; i < psDim; i++) {
+		os << curr.coefs[i] << ' ';
+	}
 }
 
 void PSICluster::outputCoefficientsTo(std::ostream& os) const {

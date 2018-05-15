@@ -71,25 +71,49 @@ protected:
 		 * 3 -> T
 		 * 4 -> V
 		 */
-		Array<double, 5, 5> coefs;
+		double **coefs;
+
+		//! The dimension, needed to be able to use the copy constructor
+		int dim = 0;
 
 		//! The constructor
 		ClusterPair(Reaction& _reaction, PSICluster& _first,
-				PSICluster& _second) :
-				first(_first), second(_second), reaction(_reaction) {
-
-			coefs.Init(0.0);
+				PSICluster& _second, const int _dim) :
+				first(_first), second(_second), reaction(_reaction), dim(_dim) {
+			// Create the array of the right dimension
+			coefs = new double*[dim];
+			for (int i = 0; i < dim; i++) {
+				coefs[i] = new double[dim];
+				for (int j = 0; j < dim; j++) {
+					coefs[i][j] = 0.0;
+				}
+			}
 		}
 
 		/**
-		 * Default and copy constructors, disallowed.
+		 * Default constructor, disallowed.
 		 */
 		ClusterPair() = delete;
 
 		// NB: if PSICluster keeps these in a std::vector,
-		// copy ctor is needed.  Implicit definition is fine.
-		// CombiningCluster(const CombiningCluster& other) = delete;
-		// ClusterPair(const ClusterPair& other) = delete;
+		// copy ctor is needed.
+		ClusterPair(const ClusterPair& other) :
+				dim(other.dim), first(other.first), second(other.second), reaction(
+						other.reaction) {
+			// Create the array of the right dimension
+			coefs = new double*[dim];
+			for (int i = 0; i < dim; i++) {
+				coefs[i] = new double[dim];
+				for (int j = 0; j < dim; j++) {
+					coefs[i][j] = other.coefs[i][j];
+				}
+			}
+		}
+
+		//! The destructor
+		~ClusterPair() {
+			delete[] coefs;
+		}
 	};
 
 	/**
@@ -123,13 +147,19 @@ protected:
 		 * 3 -> T
 		 * 4 -> V
 		 */
-		Array<double, 5> coefs;
+		double *coefs;
+
+		//! The dimension, needed to be able to use the copy constructor
+		int dim = 0;
 
 		//! The constructor
-		CombiningCluster(Reaction& _reaction, PSICluster& _comb) :
-				combining(_comb), reaction(_reaction) {
-
-			coefs.Init(0.0);
+		CombiningCluster(Reaction& _reaction, PSICluster& _comb, const int _dim) :
+				combining(_comb), reaction(_reaction), dim(_dim) {
+			// Create the array of the right dimension
+			coefs = new double[dim];
+			for (int j = 0; j < dim; j++) {
+				coefs[j] = 0.0;
+			}
 		}
 
 		/**
@@ -138,8 +168,21 @@ protected:
 		CombiningCluster() = delete;
 
 		// NB: if PSICluster keeps these in a std::vector,
-		// copy ctor is needed.  Implicit definition is fine.
-		// CombiningCluster(const CombiningCluster& other) = delete;
+		// copy ctor is needed.
+		CombiningCluster(const CombiningCluster& other) :
+				dim(other.dim), combining(other.combining), reaction(
+						other.reaction) {
+			// Create the array of the right dimension
+			coefs = new double[dim];
+			for (int j = 0; j < dim; j++) {
+				coefs[j] = other.coefs[j];
+			}
+		}
+
+		//! The destructor
+		~CombiningCluster() {
+			delete[] coefs;
+		}
 	};
 
 	/**
