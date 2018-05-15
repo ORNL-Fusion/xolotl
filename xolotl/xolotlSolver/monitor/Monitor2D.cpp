@@ -49,6 +49,18 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlot2D;
 std::vector<double> previousIFlux2D;
 //! The variable to store the total number of interstitials going through the surface.
 std::vector<double> nInterstitial2D;
+//! The variable to store the helium flux at the previous time step.
+std::vector<double> previousHeFlux2D;
+//! The variable to store the total number of helium going through the bottom.
+std::vector<double> nHelium2D;
+//! The variable to store the deuterium flux at the previous time step.
+std::vector<double> previousDFlux2D;
+//! The variable to store the total number of deuterium going through the bottom.
+std::vector<double> nDeuterium2D;
+//! The variable to store the tritium flux at the previous time step.
+std::vector<double> previousTFlux2D;
+//! The variable to store the total number of tritium going through the bottom.
+std::vector<double> nTritium2D;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield2D = 0.0;
 // The vector of depths at which bursting happens
@@ -138,6 +150,11 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	// in the concentration sub group
 	xolotlCore::HDF5Utils::writeSurface2D(timestep, surfaceIndices,
 			nInterstitial2D, previousIFlux2D);
+
+	// Write the bottom impurity information if the bottom is a free surface
+	if (solverHandler.getRightOffset() == 1)
+		xolotlCore::HDF5Utils::writeBottom2D(nHelium2D, previousHeFlux2D,
+				nDeuterium2D, previousDFlux2D, nTritium2D, previousTFlux2D);
 
 	// Loop on the full grid
 	for (PetscInt j = 0; j < My; j++) {
@@ -295,16 +312,122 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
 			PETSC_COMM_WORLD);
 
+	// Get the total size of the grid
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
+	CHKERRQ(ierr);
+
+	// Look at the fluxes going in the bulk if the bottom is a free surface
+	if (solverHandler.getRightOffset() == 1) {
+		// Set the bottom surface position
+		int xi = Mx - 2;
+
+		// Loop on every Y position
+		for (PetscInt j = 0; j < My; j++) {
+
+			// Value to know on which processor is the bottom
+			int bottomProc = 0;
+
+			// Check we are on the right proc
+			if (xi >= xs && xi < xs + xm && j >= ys && j < ys + ym) {
+				// Get the delta time from the previous timestep to this timestep
+				double dt = time - previousTime;
+				// Compute the total number of impurities that went in the bulk
+				nHelium2D[j] += previousHeFlux2D[j] * dt;
+				nDeuterium2D[j] += previousDFlux2D[j] * dt;
+				nTritium2D[j] += previousTFlux2D[j] * dt;
+
+				// Get the pointer to the beginning of the solution data for this grid point
+				gridPointSolution = solutionArray[j][xi];
+
+				// Factor for finite difference
+				double hxLeft = grid[xi + 1] - grid[xi];
+				double hxRight = grid[xi + 2] - grid[xi + 1];
+				double factor = 2.0 / (hxLeft + hxRight);
+
+				// Initialize the value for the flux
+				double newFlux = 0.0;
+				// Consider each helium cluster.
+				for (auto const& heMapItem : network.getAll(ReactantType::He)) {
+					// Get the cluster
+					auto const& cluster = *(heMapItem.second);
+					// Get its id and concentration
+					int id = cluster.getId() - 1;
+					double conc = gridPointSolution[id];
+					// Get its size and diffusion coefficient
+					int size = cluster.getSize();
+					double coef = cluster.getDiffusionCoefficient();
+					// Compute the flux going to the right
+					newFlux += (double) size * factor * coef * conc;
+				}
+				// Update the helium flux
+				previousHeFlux2D[j] = newFlux;
+
+				// Initialize the value for the flux
+				newFlux = 0.0;
+				// Consider each deuterium cluster.
+				for (auto const& dMapItem : network.getAll(ReactantType::D)) {
+					// Get the cluster
+					auto const& cluster = *(dMapItem.second);
+					// Get its id and concentration
+					int id = cluster.getId() - 1;
+					double conc = gridPointSolution[id];
+					// Get its size and diffusion coefficient
+					int size = cluster.getSize();
+					double coef = cluster.getDiffusionCoefficient();
+					// Compute the flux going to the right
+					newFlux += (double) size * factor * coef * conc;
+				}
+				// Update the deuterium flux
+				previousDFlux2D[j] = newFlux;
+
+				// Initialize the value for the flux
+				newFlux = 0.0;
+				// Consider each tritium cluster.
+				for (auto const& tMapItem : network.getAll(ReactantType::T)) {
+					// Get the cluster
+					auto const& cluster = *(tMapItem.second);
+					// Get its id and concentration
+					int id = cluster.getId() - 1;
+					double conc = gridPointSolution[id];
+					// Get its size and diffusion coefficient
+					int size = cluster.getSize();
+					double coef = cluster.getDiffusionCoefficient();
+					// Compute the flux going to the right
+					newFlux += (double) size * factor * coef * conc;
+				}
+				// Update the tritium flux
+				previousTFlux2D[j] = newFlux;
+
+				// Set the bottom processor
+				bottomProc = procId;
+			}
+
+			// Get which processor will send the information
+			int bottomId = 0;
+			MPI_Allreduce(&bottomProc, &bottomId, 1, MPI_INT, MPI_SUM,
+					PETSC_COMM_WORLD);
+
+			// Send the information about impurities
+			// to the other processes
+			MPI_Bcast(&nHelium2D[j], 1, MPI_DOUBLE, bottomId, PETSC_COMM_WORLD);
+			MPI_Bcast(&previousHeFlux2D[j], 1, MPI_DOUBLE, bottomId,
+					PETSC_COMM_WORLD);
+			MPI_Bcast(&nDeuterium2D[j], 1, MPI_DOUBLE, bottomId,
+					PETSC_COMM_WORLD);
+			MPI_Bcast(&previousDFlux2D[j], 1, MPI_DOUBLE, bottomId,
+					PETSC_COMM_WORLD);
+			MPI_Bcast(&nTritium2D[j], 1, MPI_DOUBLE, bottomId,
+					PETSC_COMM_WORLD);
+			MPI_Bcast(&previousTFlux2D[j], 1, MPI_DOUBLE, bottomId,
+					PETSC_COMM_WORLD);
+		}
+	}
+
 	// Master process
 	if (procId == 0) {
-		// Get the total size of the grid rescale the concentrations
-		PetscInt Mx, My;
-		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE);
-		CHKERRQ(ierr);
-
 		// Compute the total surface irradiated by the helium flux
 		double surface = (double) My * hy;
 
@@ -312,6 +435,18 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 		totalHeConcentration = totalHeConcentration / surface;
 		totalDConcentration = totalDConcentration / surface;
 		totalTConcentration = totalTConcentration / surface;
+		double totalHeBulk = 0.0, totalDBulk = 0.0, totalTBulk = 0.0;
+		// Look if the bottom is a free surface
+		if (solverHandler.getRightOffset() == 1) {
+			for (int i = 0; i < My; i++) {
+				totalHeBulk += nHelium2D[i];
+				totalDBulk += nDeuterium2D[i];
+				totalTBulk += nTritium2D[i];
+			}
+			totalHeBulk = totalHeBulk / surface;
+			totalDBulk = totalDBulk / surface;
+			totalTBulk = totalTBulk / surface;
+		}
 
 		// Get the fluence
 		double fluence = fluxHandler->getFluence();
@@ -327,7 +462,8 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
 		outputFile << fluence << " " << totalHeConcentration << " "
-				<< totalDConcentration << " " << totalTConcentration
+				<< totalDConcentration << " " << totalTConcentration << " "
+				<< totalHeBulk << " " << totalDBulk << " " << totalTBulk
 				<< std::endl;
 		outputFile.close();
 	}
@@ -718,8 +854,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 			nInterstitial2D[yj] += previousIFlux2D[yj] * dt;
 
 			// Remove the sputtering yield since last timestep
-			nInterstitial2D[yj] -= sputteringYield2D * heliumFluxAmplitude
-					* dt;
+			nInterstitial2D[yj] -= sputteringYield2D * heliumFluxAmplitude * dt;
 
 			// Get the position of the surface at yj
 			int surfacePos = solverHandler.getSurfacePosition(yj);
@@ -750,6 +885,63 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					double coef = cluster.getDiffusionCoefficient();
 					// Compute the flux going to the left
 					newFlux += (double) size * factor * coef * conc;
+				}
+			}
+
+			// Check if the surface on the left and/or right sides are higher than at this grid point
+			int yLeft = yj - 1, yRight = yj + 1;
+			if (yLeft < 0)
+				yLeft = My - 1; // Periodicity
+			if (yRight == My)
+				yRight = 0; // Periodicity
+			// Do the left side first
+			if (solverHandler.getSurfacePosition(yLeft) > surfacePos) {
+				xi = solverHandler.getSurfacePosition(yLeft);
+
+				// if we are on the right process
+				if (xi >= xs && xi < xs + xm && yLeft >= ys
+						&& yLeft < ys + ym) {
+					// Get the concentrations at xi = surfacePos + 1
+					gridPointSolution = solutionArray[yLeft][xi];
+
+					// Loop on all the interstitial clusters to add the contribution from the left side
+					for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+						// Get the cluster
+						auto const& cluster = *(iMapItem.second);
+						// Get its id and concentration
+						int id = cluster.getId() - 1;
+						double conc = gridPointSolution[id];
+						// Get its size and diffusion coefficient
+						int size = cluster.getSize();
+						double coef = cluster.getDiffusionCoefficient();
+						// Compute the flux going to the left
+						newFlux += ((double) size * coef * conc) / hy;
+					}
+				}
+			}
+			// Now do the right side
+			if (solverHandler.getSurfacePosition(yRight) > surfacePos) {
+				xi = solverHandler.getSurfacePosition(yRight);
+
+				// if we are on the right process
+				if (xi >= xs && xi < xs + xm && yRight >= ys
+						&& yRight < ys + ym) {
+					// Get the concentrations at xi = surfacePos + 1
+					gridPointSolution = solutionArray[yRight][xi];
+
+					// Loop on all the interstitial clusters to add the contribution from the left side
+					for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+						// Get the cluster
+						auto const& cluster = *(iMapItem.second);
+						// Get its id and concentration
+						int id = cluster.getId() - 1;
+						double conc = gridPointSolution[id];
+						// Get its size and diffusion coefficient
+						int size = cluster.getSize();
+						double coef = cluster.getDiffusionCoefficient();
+						// Compute the flux going to the left
+						newFlux += ((double) size * coef * conc) / hy;
+					}
 				}
 			}
 
@@ -849,7 +1041,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 									exp(
 											-(distance - depthParam)
 													/ (depthParam * 2.0)));
-                    double test = solverHandler.getRNG().GetRandomDouble();
+					double test = solverHandler.getRNG().GetRandomDouble();
 
 					if (prob > test) {
 						burst = true;
@@ -1340,11 +1532,11 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			// Get the interstitial information at the surface if concentrations were stored
 			if (hasConcentrations) {
 				// Get the interstitial quantity from the HDF5 file
-				nInterstitial2D = xolotlCore::HDF5Utils::readNInterstitial2D(
-						networkName, tempTimeStep);
+				nInterstitial2D = xolotlCore::HDF5Utils::readData2D(networkName,
+						tempTimeStep, "nInterstitial");
 				// Get the previous I flux from the HDF5 file
-				previousIFlux2D = xolotlCore::HDF5Utils::readPreviousIFlux2D(
-						networkName, tempTimeStep);
+				previousIFlux2D = xolotlCore::HDF5Utils::readData2D(networkName,
+						tempTimeStep, "previousIFlux");
 				// Get the previous time from the HDF5 file
 				previousTime = xolotlCore::HDF5Utils::readPreviousTime(
 						networkName, tempTimeStep);
@@ -1361,8 +1553,8 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 
 		// Bursting
 		if (solverHandler.burstBubbles()) {
-            // No need to seed the random number generator here.
-            // The solver handler has already done it.
+			// No need to seed the random number generator here.
+			// The solver handler has already done it.
 		}
 
 		// Set directions and terminate flags for the surface event
@@ -1410,6 +1602,18 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 
 	// Set the monitor to compute the helium fluence for the retention calculation
 	if (flagRetention) {
+		// Check if we have a free surface at the bottom
+		if (solverHandler.getRightOffset() == 1) {
+			// Initialize n2D and previousFlux2D before monitoring the fluxes
+			for (PetscInt j = 0; j < My; j++) {
+				nHelium2D.push_back(0.0);
+				previousHeFlux2D.push_back(0.0);
+				nDeuterium2D.push_back(0.0);
+				previousDFlux2D.push_back(0.0);
+				nTritium2D.push_back(0.0);
+				previousTFlux2D.push_back(0.0);
+			}
+		}
 
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
@@ -1433,6 +1637,23 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			// Get the previous time from the HDF5 file
 			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
 					tempTimeStep);
+
+			// If the bottom is a free surface
+			if (solverHandler.getRightOffset() == 1) {
+				// Read about the impurity fluxes in the bulk
+				nHelium2D = xolotlCore::HDF5Utils::readData2D(networkName,
+						tempTimeStep, "nHelium");
+				previousHeFlux2D = xolotlCore::HDF5Utils::readData2D(
+						networkName, tempTimeStep, "previousHeFlux");
+				nDeuterium2D = xolotlCore::HDF5Utils::readData2D(networkName,
+						tempTimeStep, "nDeuterium");
+				previousDFlux2D = xolotlCore::HDF5Utils::readData2D(networkName,
+						tempTimeStep, "previousDFlux");
+				nTritium2D = xolotlCore::HDF5Utils::readData2D(networkName,
+						tempTimeStep, "nTritium");
+				previousTFlux2D = xolotlCore::HDF5Utils::readData2D(networkName,
+						tempTimeStep, "previousTFlux");
+			}
 		}
 
 		// computeFluence will be called at each timestep
