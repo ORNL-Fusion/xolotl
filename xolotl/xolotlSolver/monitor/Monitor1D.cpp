@@ -69,6 +69,10 @@ double sputteringYield1D = 0.0;
 PetscReal hdf5Stride1D = 0.0;
 //! Previous time for HDF5
 PetscInt hdf5Previous1D = 0;
+//! How often negative concentrations are checked
+PetscReal negStride1D = 0.0;
+//! Previous time for negative concentration
+PetscInt negPrevious1D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName1D = "xolotlStop.h5";
 // Declare the vector that will store the Id of the helium clusters
@@ -84,6 +88,91 @@ std::vector<double> radii1D;
 bool printMaxClusterConc1D = true;
 // The vector of depths at which bursting happens
 std::vector<int> depthPositions1D;
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "checkNegative1D")
+/**
+ * This is a monitoring method that looks at if there are negative concentrations at each time step.
+ */
+PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void *) {
+	// Initial declaration
+	PetscErrorCode ierr;
+	const double **solutionArray, *gridPointSolution;
+	PetscInt xs, xm, Mx;
+
+	PetscFunctionBeginUser;
+
+	// Compute the dt
+	double dt = time - previousTime;
+
+	// Don't do anything if it is not on the stride
+	if ((int) ((time + dt / 10.0) / negStride1D) <= negPrevious1D
+			&& negStride1D > 0.0)
+		PetscFunctionReturn(0);
+
+	// Update the previous time
+	negPrevious1D++;
+
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+
+	// Gets the process ID (important when it is running in parallel)
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+	CHKERRQ(ierr);
+	// Get the size of the total grid
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
+	CHKERRQ(ierr);
+
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the network and dof
+	auto& network = solverHandler.getNetwork();
+	const int nClusters = network.size();
+
+	// Loop on the full grid
+	for (PetscInt i = 0; i < Mx; i++) {
+
+		// If it is the locally owned part of the grid
+		if (i >= xs && i < xs + xm) {
+			// Get the pointer to the beginning of the solution data for this grid point
+			gridPointSolution = solutionArray[i];
+
+			// Loop on the concentrations
+			for (int l = 0; l < nClusters; l++) {
+				if (gridPointSolution[l] < -1.0e-14) {
+					std::cout << "Negative concentration: "
+							<< gridPointSolution[l] << " at xi: " << i
+							<< ", cluster ID: " << l + 1 << std::endl;
+				}
+			}
+		}
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop1D")
@@ -131,9 +220,9 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -264,9 +353,9 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -483,9 +572,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -634,9 +723,9 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the array of concentration
@@ -777,9 +866,9 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -892,9 +981,9 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -1015,9 +1104,9 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1085,7 +1174,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 			for (int i = 0; i < networkSize - superClusters.size(); i++) {
 				double conc = 0.0;
 				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10,
-				MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+						MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				// Create a Point with conc as the value
 				// and add it to myPoints
 				xolotlViz::Point aPoint;
@@ -1107,7 +1196,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 				for (int k = 0; k < width; k++) {
 					double conc = 0.0;
 					MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11,
-					MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+							MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 					// Create a Point with conc as the value
 					// and add it to myPoints
 					xolotlViz::Point aPoint;
@@ -1159,7 +1248,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 			for (int i = 0; i < networkSize - superClusters.size(); i++) {
 				// Send the value of each concentration to the master process
 				MPI_Send(&gridPointSolution[i], 1, MPI_DOUBLE, 0, 10,
-				MPI_COMM_WORLD);
+						MPI_COMM_WORLD);
 			}
 			int nXe = networkSize - superClusters.size() + 1;
 
@@ -1271,19 +1360,19 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 			// Get the size of the local grid of that process
 			int localSize = 0;
 			MPI_Recv(&localSize, 1, MPI_INT, i, 20, PETSC_COMM_WORLD,
-			MPI_STATUS_IGNORE);
+					MPI_STATUS_IGNORE);
 
 			// Loop on their grid
 			for (int k = 0; k < localSize; k++) {
 				// Get the position
 				MPI_Recv(&x, 1, MPI_DOUBLE, i, 21, PETSC_COMM_WORLD,
-				MPI_STATUS_IGNORE);
+						MPI_STATUS_IGNORE);
 
 				for (int j = 0; j < loopSize; j++) {
 					// and the concentrations
 					double conc = 0.0;
 					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 22, PETSC_COMM_WORLD,
-					MPI_STATUS_IGNORE);
+							MPI_STATUS_IGNORE);
 
 					// Create a Point with the concentration[i] as the value
 					// and add it to myPoints
@@ -1567,9 +1656,9 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1795,9 +1884,9 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -2299,12 +2388,17 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
-	PetscBool flagCheck, flag2DPlot, flag1DPlot, flagSeries, flagPerf,
-			flagHeRetention, flagStatus, flagMaxClusterConc, flagCumul,
-			flagMeanSize, flagConc, flagXeRetention, flagTRIDYN;
+	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
+			flagPerf, flagHeRetention, flagStatus, flagMaxClusterConc,
+			flagCumul, flagMeanSize, flagConc, flagXeRetention, flagTRIDYN;
+
+	// Check the option -check_negative
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg);
+	checkPetscError(ierr,
+			"setupPetsc1DMonitor: PetscOptionsHasName (-check_negative) failed.");
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCollapse);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
@@ -2379,7 +2473,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	const int networkSize = network.size();
 
 	// Set the post step processing to stop the solver if the time step collapses
-	if (flagCheck) {
+	if (flagCollapse) {
 		// Find the threshold
 		PetscBool flag;
 		ierr = PetscOptionsGetReal(NULL, NULL, "-check_collapse",
@@ -2395,6 +2489,38 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 				"setupPetsc1DMonitor: TSSetPostStep (checkTimeStep) failed.");
 	}
 
+	// Set the monitor to check the negative concentrations
+	if (flagNeg) {
+		// Find the stride to know how often we want to check
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(NULL, NULL, "-check_negative", &negStride1D,
+				&flag);
+		checkPetscError(ierr,
+				"setupPetsc1DMonitor: PetscOptionsGetInt (-check_negative) failed.");
+		if (!flag)
+			negStride1D = -1.0;
+
+		// Compute the correct negPrevious1D for a restart
+		// Get the last time step written in the HDF5 file
+		int tempTimeStep = -2;
+		std::string networkName = solverHandler.getNetworkName();
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+					networkName, tempTimeStep);
+		if (hasConcentrations) {
+			// Get the previous time from the HDF5 file
+			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
+					tempTimeStep);
+			negPrevious1D = (int) (previousTime / negStride1D);
+		}
+
+		// checkNegative1D will be called at each timestep
+		ierr = TSMonitorSet(ts, checkNegative1D, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc1DMonitor: TSMonitorSet (checkNegative1D) failed.");
+	}
+
 	// Set the monitor to save the status of the simulation in hdf5 file
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
@@ -2405,7 +2531,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 				"setupPetsc1DMonitor: PetscOptionsGetInt (-start_stop) failed.");
 		if (!flag)
 			hdf5Stride1D = 1.0;
-		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 		// Compute the correct hdf5Previous1D for a restart
 		// Get the last time step written in the HDF5 file
@@ -2435,9 +2560,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 
 			// Get the size of the total grid
 			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 			// Initialize the HDF5 file for all the processes

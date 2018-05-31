@@ -763,7 +763,7 @@ double PSIClusterNetworkLoader::getHeVFormationEnergy(int numHe, int numV) {
 	double energy = -std::numeric_limits<double>::infinity();
 	// The following coefficients are computed using the above and are used
 	// to evaluate the full function f(x,y).
-    std::array<double, 4> coefficients { 0.0, 0.0, 0.0, 0.0 };
+	std::array<double, 4> coefficients { 0.0, 0.0, 0.0, 0.0 };
 
 	// Check to see if the vacancy size is large enough that the energy can
 	// be computed from the fit or if it is so small that the exact values
@@ -814,7 +814,6 @@ double PSIClusterNetworkLoader::getHeVFormationEnergy(int numHe, int numV) {
 
 void PSIClusterNetworkLoader::applySectionalGrouping(
 		PSIClusterReactionNetwork& network) {
-
 	// Define the phase space for the network
 	int nDim = 1;
 	Array<int, 5> list;
@@ -986,7 +985,6 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 				if (count == 0) {
 					// Reinitialize the group indices for the deuterium direction
 					dIndex += dWidth;
-					dWidth += sectionWidth[1];
 					continue;
 				}
 
@@ -1023,13 +1021,11 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 				tempVector.clear();
 				// Reinitialize the group indices for the deuterium direction
 				dIndex += dWidth;
-				dWidth += sectionWidth[1];
 			}
 
 			// Reinitialize the group indices for the tritium direction
 			tIndex += tWidth;
 			dIndex = ((maxD > 0) && (maxHe == 0) && (maxT == 0));
-			dWidth = sectionWidth[1];
 		}
 
 		tIndex = ((maxT > 0) && (maxHe == 0) && (maxD == 0));
@@ -1050,9 +1046,8 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 				// Loop on the helium groups
 				for (int j = 0; j < nHeGroup; j++) {
 					// To compute the width
-					int heLow = heMax, heHigh = -1, dLow = dMax,
-							dHigh = -1, tLow = tMax, tHigh = -1, vLow = vMax,
-							vHigh = -1;
+					int heLow = heMax, heHigh = -1, dLow = dMax, dHigh = -1,
+							tLow = tMax, tHigh = -1, vLow = vMax, vHigh = -1;
 
 					// Loop within the group
 					for (int p = vIndex; p < vIndex + vWidth; p++) {
@@ -1148,14 +1143,12 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 				// Reinitialize the group indices for the deuterium direction
 				dIndex += dWidth;
-				dWidth += sectionWidth[1];
 				heIndex = (maxHe > 0) && (maxD == 0) && (maxT == 0);
 			}
 
 			// Reinitialize the group indices for the tritium direction
 			tIndex += tWidth;
 			dIndex = ((maxD > 0) && (maxHe == 0) && (maxT == 0));
-			dWidth = sectionWidth[1];
 		}
 
 		// Reinitialize the group indices for the vacancy direction
@@ -1209,7 +1202,6 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 			if (count == 0) {
 				// Reinitialize the group indices for the deuterium direction
 				dIndex += dWidth;
-				dWidth += sectionWidth[1];
 				continue;
 			}
 
@@ -1244,7 +1236,6 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 			tempVector.clear();
 			// Reinitialize the group indices for the deuterium direction
 			dIndex += dWidth;
-			dWidth += sectionWidth[1];
 		}
 
 		// Reinitialize the group indices for the tritium direction
@@ -1257,7 +1248,8 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 		auto pair = heVList.begin();
 		// Create the super cluster corresponding to the biggest mixed ones
 		// We know He and V already
-		double size[4] = { (double) heMax, (double) dMax, (double) tMax, (double) vMax };
+		double size[4] = { (double) heMax, (double) dMax, (double) tMax,
+				(double) vMax };
 		tempVector.emplace(std::make_tuple(heMax, dMax, tMax, vMax));
 		int width[4] = { 1, 1, 1, 1 };
 		auto rawSuperCluster = new PSISuperCluster(size, 1, width, network,
