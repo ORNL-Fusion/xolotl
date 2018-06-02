@@ -321,11 +321,13 @@ public:
 	 *
 	 * @param num The mean number of atoms in this cluster
 	 * @param nTot The total number of clusters in this cluster
-	 * @param width The width of this super clusteron
+	 * @param width The width of this super cluster
+	 * @param lower The lower bounds
+	 * @param higher The higher bounds
 	 * @param _network The network
 	 * @param registry The performance handler registry
 	 */
-	PSISuperCluster(double num[4], int nTot, int width[4],
+	PSISuperCluster(double num[4], int nTot, int width[4], int lower[4], int higher[4],
 			IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 

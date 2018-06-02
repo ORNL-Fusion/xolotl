@@ -7,7 +7,7 @@
 
 using namespace xolotlCore;
 
-PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4],
+PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4], int lower[4], int higher[4], 
 		IReactionNetwork& _network,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(_network, registry,
@@ -20,6 +20,11 @@ PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4],
 		size += (int) num[i];
 		// Set the width
 		sectionWidth[i] = width[i];
+
+		// Set the boundaries
+		bounds[i] = IntegerRange<IReactant::SizeType>(
+			static_cast<IReactant::SizeType>(lower[i]),
+			static_cast<IReactant::SizeType>(higher[i] + 1));
 	}
 
 	// Update the composition map
@@ -489,14 +494,6 @@ void PSISuperCluster::setHeVVector(
 			dispersion[i] = 2.0
 					* (nSquare[i] - (numAtom[i] * (double) nTot * numAtom[i]))
 					/ ((double) (nTot * (sectionWidth[i] - 1)));
-
-		// Set the boundaries
-		bounds[i] = IntegerRange<IReactant::SizeType>(
-				static_cast<IReactant::SizeType>((numAtom[i]
-						- (double) sectionWidth[i] / 2.0) + 1),
-				static_cast<IReactant::SizeType>((numAtom[i]
-						- (double) sectionWidth[i] / 2.0) + sectionWidth[i])
-						+ 1);
 	}
 
 	return;
