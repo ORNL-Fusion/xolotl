@@ -1121,7 +1121,8 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 					int lower[4] = { heLow, dLow, tLow, vLow };
 					int higher[4] = { heHigh, dHigh, tHigh, vHigh };
 					PSISuperCluster* rawSuperCluster = new PSISuperCluster(size,
-							count, width, lower, higher, network, handlerRegistry);
+							count, width, lower, higher, network,
+							handlerRegistry);
 
 //					std::cout << "big: " << rawSuperCluster->getName() << " "
 //							<< count << " " << width[0] << " " << width[1]
@@ -1159,8 +1160,16 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 		// Reinitialize the group indices for the vacancy direction
 		vIndex += vWidth;
+		vWidth += 1;
+		heWidth += 1;
+		dWidth += 1;
+		tWidth += 1;
 		tIndex = ((maxT > 0) && (maxHe == 0) && (maxD == 0));
 	}
+
+	// Reinitialize the widths
+	heWidth = sectionWidth[0], dWidth = sectionWidth[1], tWidth =
+			sectionWidth[2], vWidth = sectionWidth[3];
 
 	// Group the largest ones separately
 	nDGroup = dMax / sectionWidth[1] + 1;
@@ -1262,8 +1271,8 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 		int width[4] = { 1, 1, 1, 1 };
 		int lower[4] = { heMax, dMax, tMax, vMax };
 		int higher[4] = { heMax, dMax, tMax, vMax };
-		auto rawSuperCluster = new PSISuperCluster(size, 1, width, lower, higher, network,
-				handlerRegistry);
+		auto rawSuperCluster = new PSISuperCluster(size, 1, width, lower,
+				higher, network, handlerRegistry);
 
 		std::cout << "last: " << rawSuperCluster->getName() << std::endl;
 
