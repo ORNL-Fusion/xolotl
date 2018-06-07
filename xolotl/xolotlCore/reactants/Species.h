@@ -22,6 +22,7 @@ namespace xolotlCore {
 enum class Species {
 	Invalid = -1, V = 0, I, He, D, T, Xe, last = Xe
 };
+constexpr uint32_t NumSpecies = static_cast<uint32_t>(Species::last) + 1;
 
 /**
  * Obtain a human-readable string name for the given Species.
