@@ -854,11 +854,14 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 			nInterstitial2D[yj] += previousIFlux2D[yj] * dt;
 
 			// Remove the sputtering yield since last timestep
-			nInterstitial2D[yj] -= sputteringYield2D * heliumFluxAmplitude * dt;
+			nInterstitial2D[yj] -= sputteringYield2D * heliumFluxAmplitude * dt
+					* hy;
 
 			// Get the position of the surface at yj
-			int surfacePos = solverHandler.getSurfacePosition(yj);
+			const int surfacePos = solverHandler.getSurfacePosition(yj);
 			xi = surfacePos + 1;
+			const double hxLeft = grid[xi + 1] - grid[xi];
+			const double hxRight = grid[xi + 2] - grid[xi + 1];
 
 			// Initialize the value for the flux
 			double newFlux = 0.0;
@@ -869,8 +872,6 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 				gridPointSolution = solutionArray[yj][xi];
 
 				// Factor for finite difference
-				double hxLeft = grid[xi + 1] - grid[xi];
-				double hxRight = grid[xi + 2] - grid[xi + 1];
 				double factor = 2.0 / (hxLeft + hxRight);
 
 				// Loop on all the interstitial clusters to add the contribution from deeper
@@ -884,7 +885,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					int size = cluster.getSize();
 					double coef = cluster.getDiffusionCoefficient();
 					// Compute the flux going to the left
-					newFlux += (double) size * factor * coef * conc;
+					newFlux += (double) size * factor * coef * conc * hy;
 				}
 			}
 
@@ -894,14 +895,14 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 				yLeft = My - 1; // Periodicity
 			if (yRight == My)
 				yRight = 0; // Periodicity
+			// We want the position just at the surface now
+			xi = surfacePos;
 			// Do the left side first
 			if (solverHandler.getSurfacePosition(yLeft) > surfacePos) {
-				xi = solverHandler.getSurfacePosition(yLeft);
-
 				// if we are on the right process
 				if (xi >= xs && xi < xs + xm && yLeft >= ys
 						&& yLeft < ys + ym) {
-					// Get the concentrations at xi = surfacePos + 1
+					// Get the concentrations at xi = surfacePos
 					gridPointSolution = solutionArray[yLeft][xi];
 
 					// Loop on all the interstitial clusters to add the contribution from the left side
@@ -914,15 +915,13 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 						// Get its size and diffusion coefficient
 						int size = cluster.getSize();
 						double coef = cluster.getDiffusionCoefficient();
-						// Compute the flux going to the left
-						newFlux += ((double) size * coef * conc) / hy;
+						// Compute the flux
+						newFlux += ((double) size * coef * conc * hxLeft) / hy;
 					}
 				}
 			}
 			// Now do the right side
 			if (solverHandler.getSurfacePosition(yRight) > surfacePos) {
-				xi = solverHandler.getSurfacePosition(yRight);
-
 				// if we are on the right process
 				if (xi >= xs && xi < xs + xm && yRight >= ys
 						&& yRight < ys + ym) {
@@ -939,8 +938,8 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 						// Get its size and diffusion coefficient
 						int size = cluster.getSize();
 						double coef = cluster.getDiffusionCoefficient();
-						// Compute the flux going to the left
-						newFlux += ((double) size * coef * conc) / hy;
+						// Compute the flux
+						newFlux += ((double) size * coef * conc * hxLeft) / hy;
 					}
 				}
 			}
@@ -956,8 +955,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 			// Compare nInterstitials to the threshold to know if we should move the surface
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
-			double threshold = (62.8 - initialVConc)
-					* (grid[xi + 1] - grid[xi]);
+			double threshold = (62.8 - initialVConc) * hxLeft * hy;
 			if (nInterstitial2D[yj] > threshold) {
 				// The surface is moving
 				fvalue[0] = 0.0;
@@ -1228,7 +1226,8 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 		xi = surfacePos + 1;
 
 		// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
-		double threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
+		double threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi])
+				* hy;
 
 		// Move the surface up
 		if (nInterstitial2D[yj] > threshold) {
@@ -1243,7 +1242,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 				nInterstitial2D[yj] -= threshold;
 				// Update the thresold
 				double threshold = (62.8 - initialVConc)
-						* (grid[xi + 1] - grid[xi]);
+						* (grid[xi + 1] - grid[xi]) * hy;
 			}
 
 			// Throw an exception if the position is negative
@@ -1293,7 +1292,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 			while (nInterstitial2D[yj] < 0.0) {
 				// Compute the threshold to a deeper grid point
 				threshold = (62.8 - initialVConc)
-						* (grid[xi + 2] - grid[xi + 1]);
+						* (grid[xi + 2] - grid[xi + 1]) * hy;
 				// Set all the concentrations to 0.0 at xi = surfacePos + 1
 				// if xi is on this process
 				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
