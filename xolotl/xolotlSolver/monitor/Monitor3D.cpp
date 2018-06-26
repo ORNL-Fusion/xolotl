@@ -835,9 +835,8 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 						double heDensity = network.getTotalAtomConcentration();
 
 						// Compute the radius of the bubble from the number of helium
-						double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy
-								* hz / 4.0;
-						//					double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]) * hy * hz;
+						double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
+						//					double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
 						double radius =
 								(sqrt(3.0) / 4.0)
 										* xolotlCore::tungstenLatticeConstant
