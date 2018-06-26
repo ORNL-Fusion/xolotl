@@ -12,22 +12,31 @@ public:
 	/**
 	 * The default constructor
 	 */
-	XolotlInterface() {}
+	XolotlInterface() {
+	}
 
 	/**
 	 * The destructor
 	 */
-	~XolotlInterface() {}
+	~XolotlInterface() {
+	}
 
 	/**
 	 * Initialize all the options and handlers
 	 */
-	std::shared_ptr<xolotlSolver::PetscSolver> initializeXolotl();
+	std::shared_ptr<xolotlSolver::PetscSolver> initializeXolotl(int argc,
+			char **argv);
 
 	/**
 	 * Run the PETSc solve
 	 */
 	void solveXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver);
 
-}; // End class interface
+	/**
+	 * Finalize the solve
+	 */
+	void finalizeXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver);
+
+};
+// End class interface
 #endif

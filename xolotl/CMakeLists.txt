@@ -124,32 +124,43 @@ include_directories(${CMAKE_SOURCE_DIR}
 
 configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_BINARY_DIR}/XolotlConfig.h")
 
-# Setup the library list
-set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
-xolotlFactory xolotlCL ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
-
 # Decide whether to build as a library
 option(BUILD_SHARED_LIBS "Build as a shared library")
 
 if(BUILD_SHARED_LIBS)
     message(STATUS "----- Building shared libraries -----")
+
     # Set the library name
-    SET(LIBRARY_NAME "xolotlLibs")
+    SET(LIBRARY_NAME "xolotlInter")
 
     # Collect the header 
     file(GLOB HEADERS interface.h)
     # Grab all of the source files
     file(GLOB SRC interface.cpp)
-    
     # Add a library 
     add_library(${LIBRARY_NAME} SHARED ${SRC})
-    target_link_libraries(${LIBRARY_NAME} ${XOLOTL_LIBS})
+    target_link_libraries(${LIBRARY_NAME} xolotlFactory)
     
     #Install the xolotl header files
     install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)
     install(TARGETS ${LIBRARY_NAME} DESTINATION ${PROJECT_BINARY_DIR}/lib)
     
 else(BUILD_SHARED_LIBS)
+    # Set the library name
+    SET(LIBRARY_NAME "xolotlInter")
+
+    # Collect the header 
+    file(GLOB HEADERS interface.h)
+    # Grab all of the source files
+    file(GLOB SRC interface.cpp)
+    # Add a library 
+    add_library(${LIBRARY_NAME} STATIC ${SRC})
+    target_link_libraries(${LIBRARY_NAME} xolotlFactory)
+
+    # Setup the library list
+    set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
+    xolotlFactory xolotlCL xolotlInter ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
+   
     # Add an executable for the main program
     ADD_EXECUTABLE (xolotl main.cpp)
 

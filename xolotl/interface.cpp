@@ -6,90 +6,135 @@
 #include <TemperatureHandlerFactory.h>
 #include <VizHandlerRegistryFactory.h>
 #include <xolotlPerf.h>
-//#include <INetworkLoader.h>
-//#include <IReactionNetwork.h>
 #include <SolverHandlerFactory.h>
-//#include <ISolverHandler.h>
 #include <IReactionHandlerFactory.h>
+#include <ctime>
 
-std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl() {
-	// Initialize MPI with empty line
-	char* mpiArgs[1];
-	mpiArgs[0] = NULL;
-	char** mpiFargv = mpiArgs;
-	int mpiArgc = 0;
-	MPI_Init(&mpiArgc, &mpiFargv);
+std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
+		int argc, char **argv) {
+	// Local Declarations
+	std::shared_ptr<xolotlSolver::PetscSolver> solver;
 
-	// Create the options
-	xolotlCore::Options opts;
-
-	// Create the command line
-	string pathToFile("param.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
-	char* args[2];
-	args[0] = const_cast<char*>(fname);
-	args[1] = NULL;
-	char** fargv = args;
-
-	// Read the parameter file to set the options
-	opts.readParams(fargv);
-
-	// Set up our performance data infrastructure.
-	xolotlPerf::initialize(opts.getPerfHandlerType());
-	auto handlerRegistry = xolotlPerf::getHandlerRegistry();
+	// Initialize MPI
+	MPI_Init(&argc, &argv);
 
 	// Get the MPI rank
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	// Create the material factory
-	auto materialFactory =
-			xolotlFactory::IMaterialFactory::createMaterialFactory(
-					opts.getMaterial(), opts.getDimensionNumber());
-	// Initialize it with the options
-	materialFactory->initializeMaterial(opts);
+	if (rank == 0) {
+		// Print the start message
+			std::cout << "Starting Xolotl Plasma-Surface Interactions Simulator"
+					<< std::endl;
+			// TODO! Print copyright message
+			// Print date and time
+			std::time_t currentTime = std::time(NULL);
+			std::cout << std::asctime(std::localtime(&currentTime));
+	}
 
-	// Initialize the temperature
-	xolotlFactory::initializeTempHandler(opts);
-	// Get the temperature handler
-	auto tempHandler = xolotlFactory::getTemperatureHandler();
+	try {
+		// Skip the executable name before parsing
+		argc -= 1; // one for the executable name
+		argv += 1; // one for the executable name
+		Options opts;
+		opts.readParams(argv);
+		if (!opts.shouldRun()) {
+			std::cerr << "Unable to read the options.  Aborting" << std::endl;
+		}
 
-	// Initialize the visualization
-	xolotlFactory::initializeVizHandler(opts.useVizStandardHandlers());
+		// Set up our performance data infrastructure.
+		xolotlPerf::initialize(opts.getPerfHandlerType());
+		auto handlerRegistry = xolotlPerf::getHandlerRegistry();
 
-	// Create the network handler factory
-	auto networkFactory =
+		// Get the MPI rank
+		int rank;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+		// Create the material factory
+		auto materialFactory =
+				xolotlFactory::IMaterialFactory::createMaterialFactory(
+						opts.getMaterial(), opts.getDimensionNumber());
+		// Initialize it with the options
+		materialFactory->initializeMaterial(opts);
+
+		// Initialize the temperature
+		if (!xolotlFactory::initializeTempHandler(opts)) {
+			std::cerr << "Unable to initialize requested temperature.  Aborting"
+					<< std::endl;
+		}
+		// Get the temperature handler
+		auto tempHandler = xolotlFactory::getTemperatureHandler();
+
+		// Initialize the visualization
+		if (!xolotlFactory::initializeVizHandler(
+				opts.useVizStandardHandlers())) {
+			std::cerr
+					<< "Unable to initialize requested visualization infrastructure. "
+					<< "Aborting" << std::endl;
+		}
+
+		// Create the network handler factory
+		auto networkFactory =
 				xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
 						opts.getMaterial());
-	// Build a reaction network
-	networkFactory->initializeReactionNetwork(opts, handlerRegistry);
-	auto& network = networkFactory->getNetworkHandler();
+		// Build a reaction network
+		networkFactory->initializeReactionNetwork(opts, handlerRegistry);
+		auto& network = networkFactory->getNetworkHandler();
 
-	// Initialize and get the solver handler
-	xolotlFactory::initializeDimension(opts, network);
-	auto& solvHandler = xolotlFactory::getSolverHandler();
-	// Initialize the solver handler
-	solvHandler.initializeHandlers(materialFactory, tempHandler, opts);
+		// Initialize and get the solver handler
+		if (!xolotlFactory::initializeDimension(opts, network)) {
+			std::cerr << "Unable to initialize dimension from inputs. "
+					<< "Aborting" << std::endl;
+		}
+		auto& solvHandler = xolotlFactory::getSolverHandler();
+		// Initialize the solver handler
+		solvHandler.initializeHandlers(materialFactory, tempHandler, opts);
 
-	// Setup the solver
-	std::shared_ptr<xolotlSolver::PetscSolver> solver(
-			new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
-	solver->setCommandLineOptions(opts.getPetscArgc(),
-			opts.getPetscArgv());
-	solver->initialize();
+		// Setup the solver
+		solver = std::shared_ptr<xolotlSolver::PetscSolver>(
+				new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
+		solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
+		solver->initialize();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cout << error << std::endl;
+		std::cout << "Aborting." << std::endl;
+	}
 
 	return solver;
 }
 
-void XolotlInterface::solveXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver) {
-	// Launch the PetscSolver
-	solver->solve();
+void XolotlInterface::solveXolotl(
+		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+	try {
+		// Launch the PetscSolver
+		solver->solve();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cout << error << std::endl;
+		std::cout << "Aborting." << std::endl;
+	}
 
-	solver->finalize();
+	return;
+}
 
-	// Clean up
-	MPI_Finalize();
+void XolotlInterface::finalizeXolotl(
+		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+	try {
+		// Clean up
+		solver->finalize();
+		MPI_Finalize();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cout << error << std::endl;
+		std::cout << "Aborting." << std::endl;
+	}
 
 	return;
 }
