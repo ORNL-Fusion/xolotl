@@ -2,7 +2,7 @@
 #define OPTIONS_H
 
 #include "IOptions.h"
-#include "optionhandlers/IOptionHandler.h"
+#include <IOptionHandler.h>
 
 namespace xolotlCore {
 

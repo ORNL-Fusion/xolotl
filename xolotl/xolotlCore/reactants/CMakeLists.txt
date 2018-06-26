@@ -31,5 +31,4 @@ add_library(${LIBRARY_NAME} STATIC ${SRC})
 target_link_libraries(${LIBRARY_NAME} xolotlPerf xolotlIO)
 
 #Install the xolotl header files
-install(FILES ${HEADERS} DESTINATION include)
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)

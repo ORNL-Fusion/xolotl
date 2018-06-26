@@ -4,7 +4,7 @@
 #include "mpi.h"
 #include <string>
 #include <float.h>
-#include "../xolotlCore/IIdentifiable.h"
+#include <IIdentifiable.h>
 
 using namespace std;
 

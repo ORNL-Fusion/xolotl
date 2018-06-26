@@ -4,7 +4,7 @@
 #include "mpi.h"
 #include <vector>
 #include <limits.h>
-#include "../xolotlCore/IIdentifiable.h"
+#include <IIdentifiable.h>
 
 using namespace std;
 

@@ -7,6 +7,7 @@ SET(LIBRARY_NAME "xolotlPerf")
 
 #Include headers in order to build
 include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_BINARY_DIR})
 
 # Always use the sources and headers common to all registry types.
@@ -59,8 +60,7 @@ add_library(${LIBRARY_NAME} STATIC ${SRC})
 target_link_libraries(${LIBRARY_NAME} ${MAYBE_PAPI} ${MAYBE_RT})
 
 #Install the xolotl header files
-install(FILES ${HEADERS} DESTINATION include)
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)
 
 
 # Configure file for the performance library.
