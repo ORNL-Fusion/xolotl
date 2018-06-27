@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
+#include <MPIUtils.h>
 
 namespace xolotlSolver {
 
@@ -98,10 +99,11 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 	PetscFunctionBeginUser;
 
 	// Get the number of processes
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int cwSize;
 	int cwRank;
-	MPI_Comm_size(PETSC_COMM_WORLD, &cwSize);
-	MPI_Comm_rank(PETSC_COMM_WORLD, &cwRank);
+	MPI_Comm_size(xolotlComm, &cwSize);
+	MPI_Comm_rank(xolotlComm, &cwRank);
 
 	// Print a warning if only one process
 	if (cwSize == 1) {
@@ -144,7 +146,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 			1,                  // number of values to receive from each process
 			MPI_DOUBLE,         // type of items in receive buffer
 			0,                  // root of MPI collective operation
-			PETSC_COMM_WORLD); // communicator defining processes involved in the operation
+			xolotlComm); // communicator defining processes involved in the operation
 
 	if (cwRank == 0) {
 		auto allPoints = std::make_shared<std::vector<xolotlViz::Point> >();

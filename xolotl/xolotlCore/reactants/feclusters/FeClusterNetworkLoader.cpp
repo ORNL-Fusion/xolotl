@@ -11,6 +11,7 @@
 #include <FeClusterReactionNetwork.h>
 #include <xolotlPerf.h>
 #include <MathUtils.h>
+#include <MPIUtils.h>
 #include <HDF5Utils.h>
 #include <cassert>
 
@@ -328,7 +329,8 @@ std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::generate(
 
 //	// Dump the network we've created, if desired.
 //	int rank;
-//	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+//	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+//	MPI_Comm_rank(xolotlComm, &rank);
 //	if (rank == 0) {
 //		// Dump the network we've created for comparison with baseline.
 //		std::ofstream networkStream(netDebugOpts.second);

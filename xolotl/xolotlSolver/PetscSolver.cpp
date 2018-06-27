@@ -2,6 +2,7 @@
 #include <cassert>
 #include <PetscSolver.h>
 #include <HDF5Utils.h>
+#include <MPIUtils.h>
 #include <fstream>
 #include <iostream>
 
@@ -210,8 +211,10 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create timestepping solver context
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	TS ts;
-	ierr = TSCreate(PETSC_COMM_WORLD, &ts);
+	ierr = TSCreate(xolotlComm, &ts);
 	checkPetscError(ierr, "PetscSolver::solve: TSCreate failed.");
 	ierr = TSSetType(ts, TSARKIMEX);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetType failed.");

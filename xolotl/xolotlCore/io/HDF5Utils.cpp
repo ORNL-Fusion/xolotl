@@ -4,6 +4,7 @@
 #include <sstream>
 #include <hdf5.h>
 #include <mpi.h>
+#include <MPIUtils.h>
 
 using namespace xolotlCore;
 
@@ -14,7 +15,8 @@ herr_t status;
 void HDF5Utils::initializeFile(const std::string& fileName) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Create the file
 	fileId = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
@@ -50,7 +52,8 @@ void HDF5Utils::initializeFile(const std::string& fileName) {
 void HDF5Utils::openFile(const std::string& fileName) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read and write access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDWR, propertyListId);
@@ -156,7 +159,8 @@ void HDF5Utils::fillNetworkComp(std::vector<std::vector<int> > compVec) {
 void HDF5Utils::fillNetwork(const std::string& fileName) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	hid_t fromFileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY,
@@ -562,7 +566,8 @@ void HDF5Utils::readHeader(const std::string& fileName, int &nx, double &hx,
 		int &ny, double &hy, int &nz, double &hz) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -614,7 +619,8 @@ bool HDF5Utils::hasConcentrationGroup(const std::string& fileName,
 
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -656,7 +662,8 @@ void HDF5Utils::readTimes(const std::string& fileName, int lastTimeStep,
 		double &time, double &deltaTime) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -692,7 +699,8 @@ double HDF5Utils::readPreviousTime(const std::string& fileName,
 		int lastTimeStep) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -726,7 +734,8 @@ int HDF5Utils::readSurface1D(const std::string& fileName, int lastTimeStep) {
 
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -760,7 +769,8 @@ std::vector<int> HDF5Utils::readSurface2D(const std::string& fileName,
 
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -813,7 +823,8 @@ std::vector<std::vector<int> > HDF5Utils::readSurface3D(
 
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -872,7 +883,8 @@ double HDF5Utils::readData1D(const std::string& fileName, int lastTimeStep,
 
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -906,7 +918,8 @@ std::vector<double> HDF5Utils::readData2D(const std::string& fileName,
 
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -960,7 +973,8 @@ std::vector<std::vector<double> > HDF5Utils::readData3D(
 
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -1016,7 +1030,8 @@ std::vector<std::vector<double> > HDF5Utils::readNetwork(
 		const std::string& fileName) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);
@@ -1067,7 +1082,8 @@ std::vector<std::vector<double> > HDF5Utils::readGridPoint(
 
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+	auto xolotlComm = MPIUtils::getMPIComm();
+	H5Pset_fapl_mpio(propertyListId, xolotlComm, MPI_INFO_NULL);
 
 	// Open the given HDF5 file with read only access
 	fileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY, propertyListId);

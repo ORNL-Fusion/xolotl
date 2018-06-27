@@ -2,6 +2,10 @@
 
 //! Main program
 int main(int argc, char **argv) {
+
+	// Initialize MPI
+	MPI_Init(&argc, &argv);
+
 	// Create an interface to control the solver
 	XolotlInterface interface;
 
@@ -11,6 +15,9 @@ int main(int argc, char **argv) {
 	interface.solveXolotl(solver);
 	// Finalize the run
 	interface.finalizeXolotl(solver);
+
+	// Finalize MPI
+	MPI_Finalize();
 
 	return EXIT_SUCCESS;
 }

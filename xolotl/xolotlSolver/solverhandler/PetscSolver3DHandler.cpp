@@ -17,7 +17,9 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	ierr = DMDACreate3d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR,
+	// Get the MPI communicator on which to create the DMDA
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_MIRROR,
 			DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX,
 			nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1, NULL,
 			NULL, NULL, &da);
@@ -79,7 +81,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 
 	// Prints the grid on one process
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
 		for (int i = 0; i < grid.size() - 1; i++) {
 			std::cout << grid[i + 1] - grid[surfacePosition[0][0] + 1] << " ";
@@ -331,8 +333,9 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 			// Share the concentration with all the processes
 			totalAtomConc = 0.0;
+			auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 			MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-			MPI_COMM_WORLD);
+					xolotlComm);
 
 			// Set the disappearing rate in the modified TM handler
 			mutationHandler->updateDisappearingRate(totalAtomConc);
@@ -765,8 +768,9 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Share the concentration with all the processes
 			totalAtomConc = 0.0;
+			auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 			MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-			MPI_COMM_WORLD);
+					xolotlComm);
 
 			// Set the disappearing rate in the modified TM handler
 			mutationHandler->updateDisappearingRate(totalAtomConc);

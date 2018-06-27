@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <mpi.h>
+#include <MPIUtils.h>
 
 namespace xolotlCore {
 
@@ -309,7 +310,8 @@ public:
 
 		// Prints both incident vectors in a file
 		int procId;
-		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+		auto xolotlComm = MPIUtils::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &procId);
 		if (procId == 0) {
 			std::ofstream outputFile;
 			outputFile.open("incidentVectors.txt");

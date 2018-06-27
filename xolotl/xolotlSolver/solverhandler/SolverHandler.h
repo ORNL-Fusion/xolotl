@@ -4,6 +4,7 @@
 // Includes
 #include "ISolverHandler.h"
 #include <HDF5Utils.h>
+#include <MPIUtils.h>
 #include "RandomNumberGenerator.h"
 
 namespace xolotlSolver {
@@ -206,7 +207,8 @@ public:
 
 		// Determine who I am.
 		int myProcId = -1;
-		MPI_Comm_rank(MPI_COMM_WORLD, &myProcId);
+		auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &myProcId);
 
 		// Initialize our random number generator.
 		bool useRNGSeedFromOptions = false;

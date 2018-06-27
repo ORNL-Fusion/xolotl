@@ -18,7 +18,9 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR, nX, dof, 1,
+	// Get the MPI communicator on which to create the DMDA
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	ierr = DMDACreate1d(xolotlComm, DM_BOUNDARY_MIRROR, nX, dof, 1,
 	NULL, &da);
 	checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: "
 			"DMDACreate1d failed.");
@@ -55,7 +57,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	// Prints the grid on one process
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
 		for (int i = 0; i < grid.size() - 1; i++) {
 			std::cout << grid[i + 1] - grid[surfacePosition + 1] << " ";
@@ -281,8 +283,9 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	// Share the concentration with all the processes
 	double totalAtomConc = 0.0;
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-	MPI_COMM_WORLD);
+			xolotlComm);
 
 	// Set the disappearing rate in the modified TM handler
 	mutationHandler->updateDisappearingRate(totalAtomConc);
@@ -607,8 +610,9 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 	// Share the concentration with all the processes
 	double totalAtomConc = 0.0;
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-	MPI_COMM_WORLD);
+			xolotlComm);
 
 	// Set the disappearing rate in the modified TM handler
 	mutationHandler->updateDisappearingRate(totalAtomConc);

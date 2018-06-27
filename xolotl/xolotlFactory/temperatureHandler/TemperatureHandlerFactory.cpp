@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <mpi.h>
+#include <MPIUtils.h>
 
 namespace xolotlFactory {
 
@@ -16,7 +17,8 @@ static std::shared_ptr<xolotlCore::ITemperatureHandler> theTemperatureHandler;
 bool initializeTempHandler(const xolotlCore::Options &options) {
 	// Get the current process ID
 	int procId;
-	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	bool ret = true;
 

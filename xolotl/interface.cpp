@@ -9,18 +9,20 @@
 #include <SolverHandlerFactory.h>
 #include <IReactionHandlerFactory.h>
 #include <ctime>
+#include <MPIUtils.h>
 
 std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
-		int argc, char **argv) {
+		int argc, char **argv, MPI_Comm comm) {
 	// Local Declarations
 	std::shared_ptr<xolotlSolver::PetscSolver> solver;
 
-	// Initialize MPI
-	MPI_Init(&argc, &argv);
+	// Initialize the MPI communicator to use
+	xolotlCore::MPIUtils::initialize(comm);
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 
 	// Get the MPI rank
 	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_rank(xolotlComm, &rank);
 
 	if (rank == 0) {
 		// Print the start message
@@ -48,7 +50,7 @@ std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
 
 		// Get the MPI rank
 		int rank;
-		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_rank(xolotlComm, &rank);
 
 		// Create the material factory
 		auto materialFactory =
@@ -127,7 +129,6 @@ void XolotlInterface::finalizeXolotl(
 	try {
 		// Clean up
 		solver->finalize();
-		MPI_Finalize();
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;

@@ -9,6 +9,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore
                     ${CMAKE_SOURCE_DIR}/xolotlCore/io
                     ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline/optionhandlers
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
                     ${CMAKE_SOURCE_DIR}/xolotlPerf

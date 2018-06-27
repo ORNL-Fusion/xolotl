@@ -8,6 +8,8 @@ SET(LIBRARY_NAME "xolotlPerf")
 #Include headers in order to build
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/standard)
 include_directories(${CMAKE_BINARY_DIR})
 
 # Always use the sources and headers common to all registry types.

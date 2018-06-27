@@ -19,6 +19,7 @@
 #include <PSISuperCluster.h>
 #include <NESuperCluster.h>
 #include <MathUtils.h>
+#include <MPIUtils.h>
 #include "RandomNumberGenerator.h"
 
 namespace xolotlSolver {
@@ -90,13 +91,10 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	// Update the previous time
 	hdf5Previous2D++;
 
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
-
 	// Gets the process ID (important when it is running in parallel)
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -112,8 +110,8 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -190,11 +188,10 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 
 			// Get which processor will send the information
 			int concProc = 0;
-			MPI_Allreduce(&concId, &concProc, 1, MPI_INT, MPI_SUM,
-					PETSC_COMM_WORLD);
+			MPI_Allreduce(&concId, &concProc, 1, MPI_INT, MPI_SUM, xolotlComm);
 
 			// Broadcast the size
-			MPI_Bcast(&concSize, 1, MPI_DOUBLE, concProc, PETSC_COMM_WORLD);
+			MPI_Bcast(&concSize, 1, MPI_DOUBLE, concProc, xolotlComm);
 
 			// Skip the grid point if the size is 0
 			if (concSize == 0)
@@ -202,7 +199,7 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 
 			// Transfer the data everywhere from the local grid
 			MPI_Bcast(&(concArray[0][0]), 2 * concSize, MPI_DOUBLE, concProc,
-					PETSC_COMM_WORLD);
+					xolotlComm);
 
 			// All processes create the dataset and fill it
 			xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i, j);
@@ -249,8 +246,8 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid in the x direction
@@ -298,25 +295,25 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	}
 
 	// Get the current process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Sum all the concentrations through MPI reduce
 	double totalHeConcentration = 0.0;
 	MPI_Reduce(&heConcentration, &totalHeConcentration, 1, MPI_DOUBLE, MPI_SUM,
-			0, PETSC_COMM_WORLD);
+			0, xolotlComm);
 	double totalDConcentration = 0.0;
 	MPI_Reduce(&dConcentration, &totalDConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
+			xolotlComm);
 	double totalTConcentration = 0.0;
 	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
+			xolotlComm);
 
 	// Get the total size of the grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Look at the fluxes going in the bulk if the bottom is a free surface
@@ -408,21 +405,17 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 			// Get which processor will send the information
 			int bottomId = 0;
 			MPI_Allreduce(&bottomProc, &bottomId, 1, MPI_INT, MPI_SUM,
-					PETSC_COMM_WORLD);
+					xolotlComm);
 
 			// Send the information about impurities
 			// to the other processes
-			MPI_Bcast(&nHelium2D[j], 1, MPI_DOUBLE, bottomId, PETSC_COMM_WORLD);
+			MPI_Bcast(&nHelium2D[j], 1, MPI_DOUBLE, bottomId, xolotlComm);
 			MPI_Bcast(&previousHeFlux2D[j], 1, MPI_DOUBLE, bottomId,
-					PETSC_COMM_WORLD);
-			MPI_Bcast(&nDeuterium2D[j], 1, MPI_DOUBLE, bottomId,
-					PETSC_COMM_WORLD);
-			MPI_Bcast(&previousDFlux2D[j], 1, MPI_DOUBLE, bottomId,
-					PETSC_COMM_WORLD);
-			MPI_Bcast(&nTritium2D[j], 1, MPI_DOUBLE, bottomId,
-					PETSC_COMM_WORLD);
-			MPI_Bcast(&previousTFlux2D[j], 1, MPI_DOUBLE, bottomId,
-					PETSC_COMM_WORLD);
+					xolotlComm);
+			MPI_Bcast(&nDeuterium2D[j], 1, MPI_DOUBLE, bottomId, xolotlComm);
+			MPI_Bcast(&previousDFlux2D[j], 1, MPI_DOUBLE, bottomId, xolotlComm);
+			MPI_Bcast(&nTritium2D[j], 1, MPI_DOUBLE, bottomId, xolotlComm);
+			MPI_Bcast(&previousTFlux2D[j], 1, MPI_DOUBLE, bottomId, xolotlComm);
 		}
 	}
 
@@ -488,13 +481,10 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
-
-	// Gets the process ID
+	// Gets the process ID (important when it is running in parallel)
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
@@ -514,8 +504,8 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid rescale the concentrations
 	PetscInt Mx, My;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -570,15 +560,11 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 
 		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
 		MPI_Reduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
+				xolotlComm);
+		MPI_Reduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+		MPI_Reduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+		MPI_Reduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+		MPI_Reduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
 		// The master process writes computes the cumulative value and writes in the file
 		if (procId == 0) {
@@ -624,8 +610,9 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 		PetscFunctionReturn(0);
 
 	// Gets the process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -641,8 +628,8 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -690,28 +677,28 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 				// Else, the values must be sent to procId 0
 				else {
 					// Send the value of the local position to the master process
-					MPI_Send(&x, 1, MPI_DOUBLE, 0, 10, PETSC_COMM_WORLD);
+					MPI_Send(&x, 1, MPI_DOUBLE, 0, 10, xolotlComm);
 					// Send the value of the local position to the master process
-					MPI_Send(&y, 1, MPI_DOUBLE, 0, 11, PETSC_COMM_WORLD);
+					MPI_Send(&y, 1, MPI_DOUBLE, 0, 11, xolotlComm);
 
 					// Send the value of the concentration to the master process
 					MPI_Send(&gridPointSolution[iCluster], 1, MPI_DOUBLE, 0, 12,
-							PETSC_COMM_WORLD);
+							xolotlComm);
 				}
 			}
 			// Else if it is NOT the locally owned part of the grid but still procId == 0,
 			// it should receive the values for the point and add them to myPoint
 			else if (procId == 0) {
 				// Get the position
-				MPI_Recv(&x, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10,
-						PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
-				MPI_Recv(&y, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11,
-						PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
+				MPI_Recv(&x, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10, xolotlComm,
+						MPI_STATUS_IGNORE);
+				MPI_Recv(&y, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11, xolotlComm,
+						MPI_STATUS_IGNORE);
 
 				// and the concentration
 				double conc = 0.0;
-				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 12,
-						PETSC_COMM_WORLD, MPI_STATUS_IGNORE);
+				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 12, xolotlComm,
+						MPI_STATUS_IGNORE);
 
 				// Modify the Point with the received values and add it to myPoints
 				thePoint.value = conc;
@@ -722,7 +709,7 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 			}
 
 			// Wait for everybody at each grid point
-			MPI_Barrier(PETSC_COMM_WORLD);
+			MPI_Barrier(xolotlComm);
 		}
 	}
 
@@ -785,8 +772,9 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 	PetscFunctionBeginUser;
 
 	// Gets the process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -803,8 +791,8 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -947,7 +935,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 			// Gather newFlux values at this position
 			double newTotalFlux = 0.0;
 			MPI_Allreduce(&newFlux, &newTotalFlux, 1, MPI_DOUBLE, MPI_SUM,
-					PETSC_COMM_WORLD);
+					xolotlComm);
 
 			// Update the previous flux
 			previousIFlux2D[yj] = newTotalFlux;
@@ -1082,8 +1070,9 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 		PetscFunctionReturn(0);
 
 	// Gets the process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -1100,8 +1089,8 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1367,8 +1356,9 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	PetscErrorCode ierr;
 
 	// Get the process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the xolotlViz handler registry
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
@@ -1422,8 +1412,8 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	// Get the total size of the grid
 	PetscInt Mx, My;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 	checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetInfo failed.");
 

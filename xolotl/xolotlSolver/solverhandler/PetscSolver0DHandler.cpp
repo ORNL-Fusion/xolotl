@@ -17,7 +17,9 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, 1, dof, 0,
+	// Get the MPI communicator on which to create the DMDA
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	ierr = DMDACreate1d(xolotlComm, DM_BOUNDARY_NONE, 1, dof, 0,
 	NULL, &da);
 	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
 			"DMDACreate1d failed.");

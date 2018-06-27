@@ -25,7 +25,7 @@ public:
 	 * Initialize all the options and handlers
 	 */
 	std::shared_ptr<xolotlSolver::PetscSolver> initializeXolotl(int argc,
-			char **argv);
+			char **argv, MPI_Comm comm = MPI_COMM_WORLD);
 
 	/**
 	 * Run the PETSc solve
