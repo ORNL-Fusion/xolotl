@@ -319,6 +319,16 @@ public:
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
 
 	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param product The cluster created by the reaction.
+	 *
+	 */
+	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
+
+	/**
 	 * Note that we combine with another cluster in a production reaction.
 	 * Assumes that the reaction is already in our network.
 	 *
@@ -338,6 +348,17 @@ public:
 	 */
 	void participateIn(ProductionReaction& reaction,
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction
+	 * involving a super cluster.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param product The cluster created by the reaction.
+	 */
+	void participateIn(ProductionReaction& reaction, IReactant& product)
+			override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -362,6 +383,17 @@ public:
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
 
 	/**
+	 * Note that we combine with another cluster in a dissociation reaction
+	 * involving a super cluster.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param disso The dissociating cluster.
+	 */
+	void participateIn(DissociationReaction& reaction, IReactant& disso)
+			override;
+
+	/**
 	 * Note that we emit from the given reaction.
 	 * Assumes the reaction is already in our network.
 	 *
@@ -380,6 +412,15 @@ public:
 	 */
 	void emitFrom(DissociationReaction& reaction,
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
+
+	/**
+	 * Note that we emit from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param disso The dissociating cluster.
+	 */
+	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
 
 	/**
 	 * This operation returns the connectivity array for this cluster for
@@ -610,6 +651,16 @@ public:
 		for (int i = 0; i < psDim; i++) {
 			indexList[i] = list[i];
 		}
+	}
+
+	/**
+	 * Access bounds on number of given atoms represented by this cluster.
+	 *
+	 * @ param axis The direction
+	 */
+	// TODO do we want to make this generic by taking a type parameter?
+	const IntegerRange<IReactant::SizeType>& getBounds(int axis) const {
+		return bounds[axis];
 	}
 
 	/**

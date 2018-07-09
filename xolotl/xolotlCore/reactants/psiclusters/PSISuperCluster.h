@@ -146,7 +146,8 @@ protected:
 		//! The constructor
 		SuperClusterProductionPair(Reaction& _reaction, PSICluster& _first,
 				PSICluster& _second, int dim) :
-				ReactingPairBase(_reaction, _first, _second), ProductionCoefficientBase(dim) {
+				ReactingPairBase(_reaction, _first, _second), ProductionCoefficientBase(
+						dim) {
 
 		}
 
@@ -176,8 +177,10 @@ protected:
 		using KeyType = IReactant*;
 
 		//! The constructor
-		SuperClusterCombiningCluster(Reaction& _reaction, PSICluster& _first, int dim) :
-				ReactingInfoBase(_reaction, _first), ProductionCoefficientBase(dim) {
+		SuperClusterCombiningCluster(Reaction& _reaction, PSICluster& _first,
+				int dim) :
+				ReactingInfoBase(_reaction, _first), ProductionCoefficientBase(
+						dim) {
 
 		}
 
@@ -275,6 +278,9 @@ private:
 	//! The first order moment.
 	double l1[4] = { };
 
+	//! To know if the cluster has a regular shape
+	bool full;
+
 	/**
 	 * The list of clusters gathered in this.
 	 */
@@ -327,8 +333,8 @@ public:
 	 * @param _network The network
 	 * @param registry The performance handler registry
 	 */
-	PSISuperCluster(double num[4], int nTot, int width[4], int lower[4], int higher[4],
-			IReactionNetwork& _network,
+	PSISuperCluster(double num[4], int nTot, int width[4], int lower[4],
+			int higher[4], IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
@@ -362,6 +368,16 @@ public:
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
 
 	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param product The cluster created by the reaction.
+	 *
+	 */
+	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
+
+	/**
 	 * Note that we combine with another cluster in a production reaction.
 	 * Assumes that the reaction is already in our network.
 	 *
@@ -381,6 +397,17 @@ public:
 	 */
 	void participateIn(ProductionReaction& reaction,
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction
+	 * involving a super cluster.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param product The cluster created by the reaction.
+	 */
+	void participateIn(ProductionReaction& reaction, IReactant& product)
+			override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -405,6 +432,17 @@ public:
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
 
 	/**
+	 * Note that we combine with another cluster in a dissociation reaction
+	 * involving a super cluster.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param disso The dissociating cluster.
+	 */
+	void participateIn(DissociationReaction& reaction, IReactant& disso)
+			override;
+
+	/**
 	 * Note that we emit from the given reaction.
 	 * Assumes the reaction is already in our network.
 	 *
@@ -423,6 +461,15 @@ public:
 	 */
 	void emitFrom(DissociationReaction& reaction,
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
+
+	/**
+	 * Note that we emit from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param disso The dissociating cluster.
+	 */
+	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of
@@ -725,21 +772,13 @@ public:
 	}
 
 	/**
-	 * Access bounds on number of given atoms represented by this cluster.
-	 *
-	 * @ param axis The direction
-	 */
-	// TODO do we want to make this generic by taking a type parameter?
-	const IntegerRange<IReactant::SizeType>& getBounds(int axis) const {
-		return bounds[axis];
-	}
-
-	/**
-	 * Detect if given number of He and V are in this cluster's group.
+	 * Detect if given coordinates are in this cluster's group.
 	 *
 	 * @param _nHe number of He of interest.
+	 * @param _nD number of D of interest
+	 * @param _nT number of T of interest
 	 * @param _nV number of V of interest
-	 * @return True if _nHe and _nV is contained in our super cluster.
+	 * @return True if the coordinates are contained in our super cluster.
 	 */
 	bool isIn(IReactant::SizeType nHe, IReactant::SizeType nD,
 			IReactant::SizeType nT, IReactant::SizeType nV) const {
@@ -753,6 +792,24 @@ public:
 			return false;
 
 		return (heVList.find(std::make_tuple(nHe, nD, nT, nV)) != heVList.end());
+	}
+
+	/**
+	 * Determine if the cluster has a full parallelepiped shape without missing clusters.
+	 *
+	 * @return True if it is full.
+	 */
+	bool isFull() const {
+		return full;
+	}
+
+	/**
+	 * Return the heVList.
+	 *
+	 * @return The heVList
+	 */
+	const std::set<std::tuple<int, int, int, int> > & getCoordList() const {
+		return heVList;
 	}
 
 	/**

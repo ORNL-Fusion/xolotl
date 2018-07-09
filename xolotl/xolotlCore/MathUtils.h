@@ -79,15 +79,16 @@ inline double legendrePolynomial(double x, int degree) {
  *            The coefficients array.
  */
 template<uint32_t N>
-inline double computeNthOrderLegendre(double x, const std::array<double, N+1>& coeffs) {
-    int currDegree = 0;
-    auto valAtX = std::accumulate(coeffs.begin(), coeffs.end(), 0.0,
-        [x,&currDegree](double running, double currCoeff) {
-            return running + (currCoeff * legendrePolynomial(x, currDegree++));
-        });
-    return valAtX;
+inline double computeNthOrderLegendre(double x,
+		const std::array<double, N + 1>& coeffs) {
+	int currDegree = 0;
+	auto valAtX =
+			std::accumulate(coeffs.begin(), coeffs.end(), 0.0,
+					[x,&currDegree](double running, double currCoeff) {
+						return running + (currCoeff * legendrePolynomial(x, currDegree++));
+					});
+	return valAtX;
 }
-
 
 /**
  * Computes

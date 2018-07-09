@@ -163,6 +163,18 @@ private:
 			const std::vector<PendingProductionReactionInfo>& pris,
 			bool secondProduct = false);
 
+	/**
+	 * Define a batch of production reactions for the given
+	 * pair of reactants.
+	 *
+	 * @param r1 A reactant involved in a production reaction.
+	 * @param r2 The super reactant involved in a production reaction.
+	 * @param product The cluster created by the reaction.
+	 * @param secondProduct If we are setting the reaction for the second product.
+	 */
+	void defineAnaProductionReactions(IReactant& r1, IReactant& super,
+			IReactant& product, bool secondProduct = false);
+
 	// TODO should we default a, b, c, d to 0?
 	void defineDissociationReaction(ProductionReaction& forwardReaction,
 			IReactant& emitting, int a[4] = defaultInit,
@@ -193,6 +205,16 @@ private:
 
 	void defineDissociationReactions(ProductionReaction& forwardReaction,
 			const ProductToProductionMap& prodMap);
+
+	/**
+	 * Define a batch of production dissociation reactions for the given
+	 * forward reaction.
+	 *
+	 * @param forwardReaction The forward reaction in question.
+	 * @param emitting The cluster emitting.
+	 */
+	void defineAnaDissociationReactions(ProductionReaction& forwardReaction,
+			IReactant& emitting);
 
 	/**
 	 * Check whether dissociation reaction is allowed for
@@ -230,6 +252,97 @@ private:
 	 */
 	void FindPartialsColumnIndices(size_t reactantIndex, std::vector<int>& size,
 			int* indices) const;
+
+	/**
+	 * Determine if the reaction is possible given then reactants and product
+	 *
+	 * @param r1 First reactant.
+	 * @param r2 Second reactant.
+	 * @param prod Potential product.
+	 */
+	bool checkOverlap(PSICluster& r1, PSICluster& r2, PSICluster& prod) {
+		// Check if an interstitial cluster is involved
+		int iSize = 0;
+		if (r1.getType() == ReactantType::I) {
+			iSize = r1.getSize();
+		} else if (r2.getType() == ReactantType::I) {
+			iSize = r2.getSize();
+		}
+
+		// Loop on the different type of clusters in grouping
+		for (int i = 1; i < psDim; i++) {
+			// Check the boundaries in all the directions
+			auto const& bounds = prod.getBounds(indexList[i] - 1);
+			int productLo = *(bounds.begin()), productHi = *(bounds.end()) - 1;
+			auto const& r1Bounds = r1.getBounds(indexList[i] - 1);
+			int r1Lo = *(r1Bounds.begin()), r1Hi = *(r1Bounds.end()) - 1;
+			auto const& r2Bounds = r2.getBounds(indexList[i] - 1);
+			int r2Lo = *(r2Bounds.begin()), r2Hi = *(r2Bounds.end()) - 1;
+
+			// Compute the corresponding overlap width
+			int width = std::min(productHi, r1Hi + r2Hi)
+					- std::max(productLo, r1Lo + r2Lo) + 1;
+
+			// Special case for V and I
+			if (indexList[i] == 4)
+				width = std::min(productHi, r1Hi + r2Hi - iSize)
+						- std::max(productLo, r1Lo + r2Lo - iSize) + 1;
+
+			if (width <= 0)
+				return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Determine if the reaction is possible given then reactants, product,
+	 * and maximum size of I for trap mutation.
+	 *
+	 * @param r1 First reactant.
+	 * @param r2 Second reactant.
+	 * @param prod Potential product.
+	 * @param prod Potential product.
+	 */
+	int checkOverlap(PSICluster& r1, PSICluster& r2, PSICluster& prod,
+			int maxI) {
+		// Initial declaration
+		int iSizeToReturn = 0;
+
+		// Loop on the possible I starting by the smallest
+		for (int iSize = 1; iSize <= maxI; iSize++) {
+
+			// Loop on the different type of clusters in grouping
+			for (int i = 1; i < psDim; i++) {
+				// Check the boundaries in all the directions
+				auto const& bounds = prod.getBounds(indexList[i] - 1);
+				int productLo = *(bounds.begin()), productHi = *(bounds.end())
+						- 1;
+				auto const& r1Bounds = r1.getBounds(indexList[i] - 1);
+				int r1Lo = *(r1Bounds.begin()), r1Hi = *(r1Bounds.end()) - 1;
+				auto const& r2Bounds = r2.getBounds(indexList[i] - 1);
+				int r2Lo = *(r2Bounds.begin()), r2Hi = *(r2Bounds.end()) - 1;
+
+				// Compute the corresponding overlap width
+				int width = std::min(productHi, r1Hi + r2Hi)
+						- std::max(productLo, r1Lo + r2Lo) + 1;
+
+				// Special case for V and I
+				if (indexList[i] == 4)
+					width = std::min(productHi - iSize, r1Hi + r2Hi)
+							- std::max(productLo - iSize, r1Lo + r2Lo) + 1;
+
+				if (width <= 0)
+					iSizeToReturn = -1;
+			}
+
+			// Check if it overlapped at this I size
+			if (iSizeToReturn == 0)
+				return iSize;
+		}
+
+		return iSizeToReturn;
+	}
 
 public:
 

@@ -101,6 +101,34 @@ void PSIClusterReactionNetwork::defineProductionReactions(IReactant& r1,
 	}
 }
 
+void PSIClusterReactionNetwork::defineAnaProductionReactions(IReactant& r1,
+		IReactant& r2, IReactant& product, bool secondProduct) {
+	// Define the production reaction to the network.
+	// Do this *once* for the given reactants, since it doesn't
+	// depend on the product or the other parameters.
+	std::unique_ptr<ProductionReaction> reaction(
+			new ProductionReaction(r1, r2));
+	auto& prref = add(std::move(reaction));
+
+	// Determine if reverse reaction is allowed.
+	auto dissociationAllowed = canDissociate(product, prref);
+
+	// Tell both reactants they are involved in this reaction
+	// with the given parameters if this is not the second product
+	if (!secondProduct) {
+		prref.first.participateIn(prref, product);
+		prref.second.participateIn(prref, product);
+		product.resultFrom(prref, product);
+	}
+
+	// Determine if reverse reaction is allowed. Never for the second product
+	if (dissociationAllowed && !secondProduct) {
+		// Forward reaction can dissociate.
+		// Define all dissociation reactions for this forward reaction
+		defineAnaDissociationReactions(prref, product);
+	}
+}
+
 void PSIClusterReactionNetwork::defineDissociationReactions(
 		ProductionReaction& forwardReaction,
 		const ProductToProductionMap& prodMap) {
@@ -122,6 +150,20 @@ void PSIClusterReactionNetwork::defineDissociationReactions(
 				drref.second.participateIn(drref, currPRIs);
 				emitting.emitFrom(drref, currPRIs);
 			});
+}
+
+void PSIClusterReactionNetwork::defineAnaDissociationReactions(
+		ProductionReaction& forwardReaction, IReactant& emitting) {
+
+	std::unique_ptr<DissociationReaction> dissociationReaction(
+			new DissociationReaction(emitting, forwardReaction.first,
+					forwardReaction.second, &forwardReaction));
+	auto& drref = add(std::move(dissociationReaction));
+
+	// Tell the reactants that they are in this reaction
+	forwardReaction.first.participateIn(drref, emitting);
+	forwardReaction.second.participateIn(drref, emitting);
+	emitting.emitFrom(drref, emitting);
 }
 
 void PSIClusterReactionNetwork::createReactionConnectivity() {
@@ -222,51 +264,58 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 		// Consider product with each super cluster
 		for (auto const& superMapItem : getAll(ReactantType::PSISuper)) {
-
 			auto& superCluster =
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
-			std::vector<PendingProductionReactionInfo> prInfos;
+			// Loop on the potential products
+			for (auto const& superMapItemProd : getAll(ReactantType::PSISuper)) {
+				auto& superProd =
+						static_cast<PSISuperCluster&>(*(superMapItemProd.second));
 
-			// Loop on the boundaries
-			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(1)) {
-					for (int const& k : superCluster.getBounds(2)) {
-						for (int const& l : superCluster.getBounds(3)) {
-							// Check these coordinates are actually contained by the super cluster
-							if (!superCluster.isIn(i, j, k, l))
-								continue;
+				// Check if the reactions overlap
+				auto& heCluster = static_cast<PSICluster&>(heReactant);
+				bool overlap = checkOverlap(heCluster, superCluster, superProd);
 
-							// Assume the product can only be a super cluster here
-							int newNumHe = i + firstSize;
-							int newNumD = j;
-							int newNumT = k;
-							int newNumV = l;
-							IReactant* product = getSuperFromComp(newNumHe,
-									newNumD, newNumT, newNumV);
-							// Check that the reaction can occur
-							if (product
-									&& (heReactant.getDiffusionFactor() > 0.0
-											|| superCluster.getDiffusionFactor()
-													> 0.0)) {
+				// Skip if they don't overlap
+				if (!overlap)
+					continue;
 
-								// Note that current reactant reacts with
-								// current superCluster to produce product,
-								// according to current parameters.
-								int a[4] =
-										{ newNumHe, newNumD, newNumT, newNumV };
-								int b[4] = { i, j, k, l };
-								prInfos.emplace_back(*product, a, b);
-							}
+				// Check if the super clusters are full
+				if (superCluster.isFull() && superProd.isFull()) {
+					// This method will check if the reaction is possible and then add it to the list
+					defineAnaProductionReactions(heReactant, superCluster,
+							superProd);
+				} else {
+					std::vector<PendingProductionReactionInfo> prInfos;
+
+					// Get the coordinates of the reactant and loop on them
+					auto coords = superCluster.getCoordList();
+					for (auto const& pair : coords) {
+						// Assume the product can only be a super cluster here
+						int newNumHe = std::get<0>(pair) + firstSize;
+						int newNumD = std::get<1>(pair);
+						int newNumT = std::get<2>(pair);
+						int newNumV = std::get<3>(pair);
+						if (superProd.isIn(newNumHe, newNumD, newNumT, newNumV)
+								&& (heReactant.getDiffusionFactor() > 0.0
+										|| superCluster.getDiffusionFactor()
+												> 0.0)) {
+							// Note that current reactant reacts with
+							// current superCluster to produce product,
+							// according to current parameters.
+							int a[4] = { newNumHe, newNumD, newNumT, newNumV };
+							int b[4] = { std::get<0>(pair), std::get<1>(pair),
+									std::get<2>(pair), std::get<3>(pair) };
+							prInfos.emplace_back(superProd, a, b);
 						}
 					}
+					// Now that we know how current reactant reacts with
+					// current superCluster, create the production
+					// reaction(s) for them.
+					if (prInfos.size() > 0)
+						defineProductionReactions(heReactant, superCluster,
+								prInfos);
 				}
 			}
-
-			// Now that we know how current reactant reacts with
-			// current superCluster, create the production
-			// reaction(s) for them.
-			if (prInfos.size() > 0)
-				defineProductionReactions(heReactant, superCluster, prInfos);
 		}
 	}
 
@@ -317,48 +366,60 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			}
 		}
 
-		// Consider product with super clusters.
+		// Consider product with each super cluster
 		for (auto const& superMapItem : getAll(ReactantType::PSISuper)) {
-
 			auto& superCluster =
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
-			std::vector<PendingProductionReactionInfo> prInfos;
+			// Loop on the potential products
+			for (auto const& superMapItemProd : getAll(ReactantType::PSISuper)) {
+				auto& superProd =
+						static_cast<PSISuperCluster&>(*(superMapItemProd.second));
 
-			// Loop on the boundaries
-			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(1)) {
-					for (int const& k : superCluster.getBounds(2)) {
-						for (int const& l : superCluster.getBounds(3)) {
-							// Check these coordinates are actually contained by the super cluster
-							if (!superCluster.isIn(i, j, k, l))
-								continue;
+				// Check if the reactions overlap
+				auto& vCluster = static_cast<PSICluster&>(vReactant);
+				bool overlap = checkOverlap(vCluster, superCluster, superProd);
 
-							// Assume the product can only be a super cluster here
-							int newNumHe = i;
-							int newNumD = j;
-							int newNumT = k;
-							int newNumV = l + firstSize;
-							IReactant* product = getSuperFromComp(newNumHe,
-									newNumD, newNumT, newNumV);
-							// Check that the reaction can occur
-							if (product
-									&& (vReactant.getDiffusionFactor() > 0.0
-											|| superCluster.getDiffusionFactor()
-													> 0.0)) {
-								int a[4] =
-										{ newNumHe, newNumD, newNumT, newNumV };
-								int b[4] = { i, j, k, l };
-								prInfos.emplace_back(*product, a, b);
-							}
+				// Skip if they don't overlap
+				if (!overlap)
+					continue;
+
+				// Check if the super clusters are full
+				if (superCluster.isFull() && superProd.isFull()) {
+					// This method will check if the reaction is possible and then add it to the list
+					defineAnaProductionReactions(vReactant, superCluster,
+							superProd);
+				} else {
+					std::vector<PendingProductionReactionInfo> prInfos;
+
+					// Get the coordinates of the reactant and loop on them
+					auto coords = superCluster.getCoordList();
+					for (auto const& pair : coords) {
+						// Assume the product can only be a super cluster here
+						int newNumHe = std::get<0>(pair);
+						int newNumD = std::get<1>(pair);
+						int newNumT = std::get<2>(pair);
+						int newNumV = std::get<3>(pair) + firstSize;
+						if (superProd.isIn(newNumHe, newNumD, newNumT, newNumV)
+								&& (vReactant.getDiffusionFactor() > 0.0
+										|| superCluster.getDiffusionFactor()
+												> 0.0)) {
+							// Note that current reactant reacts with
+							// current superCluster to produce product,
+							// according to current parameters.
+							int a[4] = { newNumHe, newNumD, newNumT, newNumV };
+							int b[4] = { std::get<0>(pair), std::get<1>(pair),
+									std::get<2>(pair), std::get<3>(pair) };
+							prInfos.emplace_back(superProd, a, b);
 						}
 					}
+					// Now that we know how current reactant reacts with
+					// current superCluster, create the production
+					// reaction(s) for them.
+					if (prInfos.size() > 0)
+						defineProductionReactions(vReactant, superCluster,
+								prInfos);
 				}
 			}
-
-			// Now that we know how current reactant interacts with
-			// current supercluster, define the production reactions.
-			if (prInfos.size() > 0)
-				defineProductionReactions(vReactant, superCluster, prInfos);
 		}
 	}
 
@@ -463,68 +524,102 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			auto& superCluster =
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
 			std::vector<PendingProductionReactionInfo> prInfos;
+			// Loop on the potential super products
+			for (auto const& superMapItemProd : getAll(ReactantType::PSISuper)) {
+				auto& superProd =
+						static_cast<PSISuperCluster&>(*(superMapItemProd.second));
 
-			// Loop on the boundaries
-			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(1)) {
-					for (int const& k : superCluster.getBounds(2)) {
-						for (int const& l : superCluster.getBounds(3)) {
-							// Check these coordinates are actually contained by the super cluster
-							if (!superCluster.isIn(i, j, k, l))
-								continue;
+				// Check if the reactions overlap
+				auto& iCluster = static_cast<PSICluster&>(iReactant);
+				bool overlap = checkOverlap(iCluster, superCluster, superProd);
 
-							// The product might be mixed or He or D or T
-							int newNumHe = i;
-							int newNumD = j;
-							int newNumT = k;
-							int newNumV = l - firstSize;
+				// Skip if they don't overlap
+				if (!overlap)
+					continue;
 
-							// Get the product
-							IReactant* product = nullptr;
-							if (newNumV == 0) {
-								// Check if it is a single product
-								if ((newNumHe > 0) + (newNumD > 0)
-										+ (newNumT > 0) > 1) {
-									// Nothing happens, no reaction
-									continue;
-								} else {
-									if (newNumHe > 0)
-										// The product is He
-										product = get(Species::He, newNumHe);
-									if (newNumD > 0)
-										// The product is D
-										product = get(Species::D, newNumD);
-									if (newNumT > 0)
-										// The product is T
-										product = get(Species::T, newNumT);
-								}
-							} else {
-								// Create the composition of the potential product
-								IReactant::Composition newComp;
-								newComp[toCompIdx(Species::He)] = newNumHe;
-								newComp[toCompIdx(Species::D)] = newNumD;
-								newComp[toCompIdx(Species::T)] = newNumT;
-								newComp[toCompIdx(Species::V)] = newNumV;
-								product = get(ReactantType::PSIMixed, newComp);
+				// Check if the super clusters are full
+				if (superCluster.isFull() && superProd.isFull()) {
+					// This method will check if the reaction is possible and then add it to the list
+					defineAnaProductionReactions(iReactant, superCluster,
+							superProd);
+				} else {
+					std::vector<PendingProductionReactionInfo> prInfos;
 
-								// If the product doesn't exist check for super clusters
-								if (!product) {
-									product = getSuperFromComp(newNumHe,
-											newNumD, newNumT, newNumV);
-								}
-							}
-							// Check that the reaction can occur
-							if (product
-									&& (iReactant.getDiffusionFactor() > 0.0
-											|| superCluster.getDiffusionFactor()
-													> 0.0)) {
-								int a[4] =
-										{ newNumHe, newNumD, newNumT, newNumV };
-								int b[4] = { i, j, k, l };
-								prInfos.emplace_back(*product, a, b);
-							}
+					// Get the coordinates of the reactant and loop on them
+					auto coords = superCluster.getCoordList();
+					for (auto const& pair : coords) {
+						// Assume the product can only be a super cluster here
+						int newNumHe = std::get<0>(pair);
+						int newNumD = std::get<1>(pair);
+						int newNumT = std::get<2>(pair);
+						int newNumV = std::get<3>(pair) - firstSize;
+						if (superProd.isIn(newNumHe, newNumD, newNumT, newNumV)
+								&& (iReactant.getDiffusionFactor() > 0.0
+										|| superCluster.getDiffusionFactor()
+												> 0.0)) {
+							// Note that current reactant reacts with
+							// current superCluster to produce product,
+							// according to current parameters.
+							int a[4] = { newNumHe, newNumD, newNumT, newNumV };
+							int b[4] = { std::get<0>(pair), std::get<1>(pair),
+									std::get<2>(pair), std::get<3>(pair) };
+							prInfos.emplace_back(superProd, a, b);
 						}
 					}
+					// Now that we know how current reactant reacts with
+					// current superCluster, create the production
+					// reaction(s) for them.
+					if (prInfos.size() > 0)
+						defineProductionReactions(iReactant, superCluster,
+								prInfos);
+				}
+			}
+
+			// Get the coordinates of the reactant and loop on them
+			auto coords = superCluster.getCoordList();
+			for (auto const& pair : coords) {
+				// The product might be mixed or He or D or T
+				int newNumHe = std::get<0>(pair);
+				int newNumD = std::get<1>(pair);
+				int newNumT = std::get<2>(pair);
+				int newNumV = std::get<3>(pair) - firstSize;
+
+				// Get the product
+				IReactant* product = nullptr;
+				if (newNumV == 0) {
+					// Check if it is a single product
+					if ((newNumHe > 0) + (newNumD > 0) + (newNumT > 0) > 1) {
+						// Nothing happens, no reaction
+						continue;
+					} else {
+						if (newNumHe > 0)
+							// The product is He
+							product = get(Species::He, newNumHe);
+						if (newNumD > 0)
+							// The product is D
+							product = get(Species::D, newNumD);
+						if (newNumT > 0)
+							// The product is T
+							product = get(Species::T, newNumT);
+					}
+				} else {
+					// Create the composition of the potential product
+					IReactant::Composition newComp;
+					newComp[toCompIdx(Species::He)] = newNumHe;
+					newComp[toCompIdx(Species::D)] = newNumD;
+					newComp[toCompIdx(Species::T)] = newNumT;
+					newComp[toCompIdx(Species::V)] = newNumV;
+					product = get(ReactantType::PSIMixed, newComp);
+					// Don't test super product because it was already taken care of
+				}
+				// Check that the reaction can occur
+				if (product
+						&& (iReactant.getDiffusionFactor() > 0.0
+								|| superCluster.getDiffusionFactor() > 0.0)) {
+					int a[4] = { newNumHe, newNumD, newNumT, newNumV };
+					int b[4] = { std::get<0>(pair), std::get<1>(pair), std::get<
+							2>(pair), std::get<3>(pair) };
+					prInfos.emplace_back(*product, a, b);
 				}
 			}
 
@@ -533,6 +628,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			// according to given parameters.
 			if (prInfos.size() > 0)
 				defineProductionReactions(iReactant, superCluster, prInfos);
+
 		}
 	}
 
@@ -676,51 +772,42 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			std::vector<PendingProductionReactionInfo> prInfos1;
 			std::vector<PendingProductionReactionInfo> prInfos2;
 
-			// Loop on the boundaries
-			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(1)) {
-					for (int const& k : superCluster.getBounds(2)) {
-						for (int const& l : superCluster.getBounds(3)) {
-							// Check these coordinates are actually contained by the super cluster
-							if (!superCluster.isIn(i, j, k, l))
-								continue;
-							int newNumHe = i + firstSize;
-							int newNumD = j;
-							int newNumT = k;
-							int newNumV = l;
+			// Get the coordinates of the reactant and loop on them
+			auto coords = superCluster.getCoordList();
+			for (auto const& pair : coords) {
+				// The product might be mixed or He or D or T
+				int newNumHe = std::get<0>(pair) + firstSize;
+				int newNumD = std::get<1>(pair);
+				int newNumT = std::get<2>(pair);
+				int newNumV = std::get<3>(pair);
 
-							// Get the product
-							IReactant* product = getSuperFromComp(newNumHe,
-									newNumD, newNumT, newNumV);
-							// Skip if the product exists because we want trap mutation
-							if (product)
-								continue;
+				// Get the product
+				IReactant* product = getSuperFromComp(newNumHe, newNumD,
+						newNumT, newNumV);
+				// Skip if the product exists because we want trap mutation
+				if (product)
+					continue;
 
-							// Trap mutation is happening
-							// Loop on the possible I starting by the smallest
-							for (auto iSize = 1; iSize <= maxI; iSize++) {
-								auto iReactant = get(toSpecies(ReactantType::I),
-										iSize);
-								// Update the composition of the potential product
-								product = getSuperFromComp(newNumHe, newNumD,
-										newNumT, newNumV + iSize);
+				// Trap mutation is happening
+				// Loop on the possible I starting by the smallest
+				for (auto iSize = 1; iSize <= maxI; iSize++) {
+					auto iReactant = get(toSpecies(ReactantType::I), iSize);
+					// Update the composition of the potential product
+					product = getSuperFromComp(newNumHe, newNumD, newNumT,
+							newNumV + iSize);
 
-								// Check that the reaction can occur
-								if (product
-										&& heReactant.getDiffusionFactor()
-												> 0.0) {
-									int a[4] = { newNumHe, newNumD, newNumT,
-											newNumV + iSize };
-									int b[4] = { i, j, k, l };
-									prInfos1.emplace_back(*product, a, b);
-									a[0] = 0, a[1] = 0, a[2] = 0, a[3] = 0;
-									prInfos2.emplace_back(*iReactant, a, b);
+					// Check that the reaction can occur
+					if (product && heReactant.getDiffusionFactor() > 0.0) {
+						int a[4] =
+								{ newNumHe, newNumD, newNumT, newNumV + iSize };
+						int b[4] = { std::get<0>(pair), std::get<1>(pair),
+								std::get<2>(pair), std::get<3>(pair) };
+						prInfos1.emplace_back(*product, a, b);
+						a[0] = 0, a[1] = 0, a[2] = 0, a[3] = 0;
+						prInfos2.emplace_back(*iReactant, a, b);
 
-									// Stop the loop on I clusters here
-									break;
-								}
-							}
-						}
+						// Stop the loop on I clusters here
+						break;
 					}
 				}
 			}
@@ -838,51 +925,58 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 		// Consider product with each super cluster
 		for (auto const& superMapItem : getAll(ReactantType::PSISuper)) {
-
 			auto& superCluster =
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
-			std::vector<PendingProductionReactionInfo> prInfos;
+			// Loop on the potential products
+			for (auto const& superMapItemProd : getAll(ReactantType::PSISuper)) {
+				auto& superProd =
+						static_cast<PSISuperCluster&>(*(superMapItemProd.second));
 
-			// Loop on the boundaries
-			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(1)) {
-					for (int const& k : superCluster.getBounds(2)) {
-						for (int const& l : superCluster.getBounds(3)) {
-							// Check these coordinates are actually contained by the super cluster
-							if (!superCluster.isIn(i, j, k, l))
-								continue;
+				// Check if the reactions overlap
+				auto& dCluster = static_cast<PSICluster&>(dReactant);
+				bool overlap = checkOverlap(dCluster, superCluster, superProd);
 
-							// Assume the product can only be a super cluster here
-							int newNumHe = i;
-							int newNumD = j + firstSize;
-							int newNumT = k;
-							int newNumV = l;
-							IReactant* product = getSuperFromComp(newNumHe,
-									newNumD, newNumT, newNumV);
-							// Check that the reaction can occur
-							if (product
-									&& (dReactant.getDiffusionFactor() > 0.0
-											|| superCluster.getDiffusionFactor()
-													> 0.0)) {
+				// Skip if they don't overlap
+				if (!overlap)
+					continue;
 
-								// Note that current reactant reacts with
-								// current superCluster to produce product,
-								// according to current parameters.
-								int a[4] =
-										{ newNumHe, newNumD, newNumT, newNumV };
-								int b[4] = { i, j, k, l };
-								prInfos.emplace_back(*product, a, b);
-							}
+				// Check if the super clusters are full
+				if (superCluster.isFull() && superProd.isFull()) {
+					// This method will check if the reaction is possible and then add it to the list
+					defineAnaProductionReactions(dReactant, superCluster,
+							superProd);
+				} else {
+					std::vector<PendingProductionReactionInfo> prInfos;
+
+					// Get the coordinates of the reactant and loop on them
+					auto coords = superCluster.getCoordList();
+					for (auto const& pair : coords) {
+						// Assume the product can only be a super cluster here
+						int newNumHe = std::get<0>(pair);
+						int newNumD = std::get<1>(pair) + firstSize;
+						int newNumT = std::get<2>(pair);
+						int newNumV = std::get<3>(pair);
+						if (superProd.isIn(newNumHe, newNumD, newNumT, newNumV)
+								&& (dReactant.getDiffusionFactor() > 0.0
+										|| superCluster.getDiffusionFactor()
+												> 0.0)) {
+							// Note that current reactant reacts with
+							// current superCluster to produce product,
+							// according to current parameters.
+							int a[4] = { newNumHe, newNumD, newNumT, newNumV };
+							int b[4] = { std::get<0>(pair), std::get<1>(pair),
+									std::get<2>(pair), std::get<3>(pair) };
+							prInfos.emplace_back(superProd, a, b);
 						}
 					}
+					// Now that we know how current reactant reacts with
+					// current superCluster, create the production
+					// reaction(s) for them.
+					if (prInfos.size() > 0)
+						defineProductionReactions(dReactant, superCluster,
+								prInfos);
 				}
 			}
-
-			// Now that we know how current reactant reacts with
-			// current superCluster, create the production
-			// reaction(s) for them.
-			if (prInfos.size() > 0)
-				defineProductionReactions(dReactant, superCluster, prInfos);
 		}
 	}
 
@@ -932,51 +1026,58 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 
 		// Consider product with each super cluster
 		for (auto const& superMapItem : getAll(ReactantType::PSISuper)) {
-
 			auto& superCluster =
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
-			std::vector<PendingProductionReactionInfo> prInfos;
+			// Loop on the potential products
+			for (auto const& superMapItemProd : getAll(ReactantType::PSISuper)) {
+				auto& superProd =
+						static_cast<PSISuperCluster&>(*(superMapItemProd.second));
 
-			// Loop on the boundaries
-			for (int const& i : superCluster.getBounds(0)) {
-				for (int const& j : superCluster.getBounds(1)) {
-					for (int const& k : superCluster.getBounds(2)) {
-						for (int const& l : superCluster.getBounds(3)) {
-							// Check these coordinates are actually contained by the super cluster
-							if (!superCluster.isIn(i, j, k, l))
-								continue;
+				// Check if the reactions overlap
+				auto& tCluster = static_cast<PSICluster&>(tReactant);
+				bool overlap = checkOverlap(tCluster, superCluster, superProd);
 
-							// Assume the product can only be a super cluster here
-							int newNumHe = i;
-							int newNumD = j;
-							int newNumT = k + firstSize;
-							int newNumV = l;
-							IReactant* product = getSuperFromComp(newNumHe,
-									newNumD, newNumT, newNumV);
-							// Check that the reaction can occur
-							if (product
-									&& (tReactant.getDiffusionFactor() > 0.0
-											|| superCluster.getDiffusionFactor()
-													> 0.0)) {
+				// Skip if they don't overlap
+				if (!overlap)
+					continue;
 
-								// Note that current reactant reacts with
-								// current superCluster to produce product,
-								// according to current parameters.
-								int a[4] =
-										{ newNumHe, newNumD, newNumT, newNumV };
-								int b[4] = { i, j, k, l };
-								prInfos.emplace_back(*product, a, b);
-							}
+				// Check if the super clusters are full
+				if (superCluster.isFull() && superProd.isFull()) {
+					// This method will check if the reaction is possible and then add it to the list
+					defineAnaProductionReactions(tReactant, superCluster,
+							superProd);
+				} else {
+					std::vector<PendingProductionReactionInfo> prInfos;
+
+					// Get the coordinates of the reactant and loop on them
+					auto coords = superCluster.getCoordList();
+					for (auto const& pair : coords) {
+						// Assume the product can only be a super cluster here
+						int newNumHe = std::get<0>(pair);
+						int newNumD = std::get<1>(pair);
+						int newNumT = std::get<2>(pair) + firstSize;
+						int newNumV = std::get<3>(pair);
+						if (superProd.isIn(newNumHe, newNumD, newNumT, newNumV)
+								&& (tReactant.getDiffusionFactor() > 0.0
+										|| superCluster.getDiffusionFactor()
+												> 0.0)) {
+							// Note that current reactant reacts with
+							// current superCluster to produce product,
+							// according to current parameters.
+							int a[4] = { newNumHe, newNumD, newNumT, newNumV };
+							int b[4] = { std::get<0>(pair), std::get<1>(pair),
+									std::get<2>(pair), std::get<3>(pair) };
+							prInfos.emplace_back(superProd, a, b);
 						}
 					}
+					// Now that we know how current reactant reacts with
+					// current superCluster, create the production
+					// reaction(s) for them.
+					if (prInfos.size() > 0)
+						defineProductionReactions(tReactant, superCluster,
+								prInfos);
 				}
 			}
-
-			// Now that we know how current reactant reacts with
-			// current superCluster, create the production
-			// reaction(s) for them.
-			if (prInfos.size() > 0)
-				defineProductionReactions(tReactant, superCluster, prInfos);
 		}
 	}
 
@@ -2624,7 +2725,8 @@ double PSIClusterReactionNetwork::computeBindingEnergy(
 	}
 
 //	std::cout << reaction.first.getName() << " + " << reaction.second.getName()
-//			<< " <- " << reaction.dissociating.getName() << " : " << max(bindingEnergy, -5.0) << std::endl;
+//			<< " <- " << reaction.dissociating.getName() << " : "
+//			<< max(bindingEnergy, -5.0) << std::endl;
 
 	return max(bindingEnergy, -5.0);
 }
@@ -2633,16 +2735,16 @@ IReactant * PSIClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nHe,
 		IReactant::SizeType nD, IReactant::SizeType nT,
 		IReactant::SizeType nV) {
 
-// Requests for finding a particular supercluster have high locality.
-// See if the last supercluster we were asked to find is the right
-// one for this request.
-	static IReactant* lastRet = nullptr;
+	// Requests for finding a particular supercluster have high locality.
+	// See if the last supercluster we were asked to find is the right
+	// one for this request.
+	static IReactant* lastRet;
 	if (lastRet
 			and static_cast<PSISuperCluster*>(lastRet)->isIn(nHe, nD, nT, nV)) {
 		return lastRet;
 	}
 
-// We didn't find the last supercluster in our cache, so do a full lookup.
+	// We didn't find the last supercluster in our cache, so do a full lookup.
 	IReactant* ret = nullptr;
 
 	for (auto const& superMapItem : getAll(ReactantType::PSISuper)) {
@@ -2650,6 +2752,7 @@ IReactant * PSIClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nHe,
 		auto const& reactant =
 				static_cast<PSISuperCluster&>(*(superMapItem.second));
 		if (reactant.isIn(nHe, nD, nT, nV)) {
+			lastRet = superMapItem.second.get();
 			return superMapItem.second.get();
 		}
 	}

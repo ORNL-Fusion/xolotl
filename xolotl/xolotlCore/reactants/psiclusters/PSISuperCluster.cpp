@@ -7,8 +7,8 @@
 
 using namespace xolotlCore;
 
-PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4], int lower[4], int higher[4], 
-		IReactionNetwork& _network,
+PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4],
+		int lower[4], int higher[4], IReactionNetwork& _network,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSICluster(_network, registry,
 				buildName(num[0], num[1], num[2], num[3])), nTot(_nTot), l0(0.0) {
@@ -23,8 +23,8 @@ PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4], int low
 
 		// Set the boundaries
 		bounds[i] = IntegerRange<IReactant::SizeType>(
-			static_cast<IReactant::SizeType>(lower[i]),
-			static_cast<IReactant::SizeType>(higher[i] + 1));
+				static_cast<IReactant::SizeType>(lower[i]),
+				static_cast<IReactant::SizeType>(higher[i] + 1));
 	}
 
 	// Update the composition map
@@ -42,6 +42,10 @@ PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4], int low
 
 	// Set the typename appropriately
 	type = ReactantType::PSISuper;
+
+	// Check the shape of the cluster
+	full = (sectionWidth[0] * sectionWidth[1] * sectionWidth[2]
+			* sectionWidth[3] == nTot) ? true : false;
 
 	return;
 }
@@ -172,9 +176,154 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 	return;
 }
 
+void PSISuperCluster::resultFrom(ProductionReaction& reaction,
+		IReactant& product) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effReactingList.find(rkey);
+	if (it == effReactingList.end()) {
+
+		// We did not already know about this reaction.
+		// Add info about production to our list.
+		auto eret = effReactingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effReactingList.end());
+	auto& prodPair = it->second;
+
+	auto const& superR1 = static_cast<PSICluster const&>(prodPair.first);
+	auto const& superR2 = static_cast<PSICluster const&>(prodPair.second);
+	auto const& superProd = static_cast<PSICluster const&>(product);
+
+	// Check if an interstitial cluster is involved
+	int iSize = 0;
+	if (superR1.getType() == ReactantType::I) {
+		iSize = superR1.getSize();
+	} else if (superR2.getType() == ReactantType::I) {
+		iSize = superR2.getSize();
+	}
+
+	// Loop on the different type of clusters in grouping
+	int productLo[4] = { }, productHi[4] = { }, singleComp[4] = { }, r1Lo[4] =
+			{ }, r1Hi[4] = { }, width[4] = { };
+	for (int i = 1; i < psDim; i++) {
+		// Check the boundaries in all the directions
+		auto const& bounds = superProd.getBounds(indexList[i] - 1);
+		productLo[i - 1] = *(bounds.begin()), productHi[i - 1] = *(bounds.end())
+				- 1;
+
+		if (prodPair.first.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(indexList[i] - 1);
+			r1Lo[i - 1] = *(r1Bounds.begin()), r1Hi[i - 1] = *(r1Bounds.end())
+					- 1;
+			auto const& r2Bounds = superR2.getBounds(indexList[i] - 1);
+			singleComp[i - 1] = *(r2Bounds.begin());
+		}
+
+		if (prodPair.second.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(indexList[i] - 1);
+			singleComp[i - 1] = *(r1Bounds.begin());
+			auto const& r2Bounds = superR2.getBounds(indexList[i] - 1);
+			r1Lo[i - 1] = *(r2Bounds.begin()), r1Hi[i - 1] = *(r2Bounds.end())
+					- 1;
+		}
+
+		// Special case for V and I
+		if (indexList[i] == 4)
+			singleComp[i - 1] -= iSize;
+
+		width[i - 1] = std::min(productHi[i - 1],
+				r1Hi[i - 1] + singleComp[i - 1])
+				- std::max(productLo[i - 1], r1Lo[i - 1] + singleComp[i - 1])
+				+ 1;
+	}
+
+	// Compute the coefficients
+	int nOverlap = 1;
+	for (int i = 1; i < psDim; i++) {
+		nOverlap *= width[i - 1];
+	}
+	prodPair.coefs[0][0][0] += (double) nOverlap;
+	for (int i = 1; i < psDim; i++) {
+		prodPair.coefs[0][0][i] += ((double) nOverlap
+				/ (dispersion[indexList[i] - 1] * (double) width[i - 1]))
+				* firstOrderSum(
+						std::max(productLo[i - 1],
+								r1Lo[i - 1] + singleComp[i - 1]),
+						std::min(productHi[i - 1],
+								r1Hi[i - 1] + singleComp[i - 1]),
+						numAtom[indexList[i] - 1]);
+
+		double a = 0.0;
+		if (r1Hi[i - 1] != r1Lo[i - 1]) {
+			a = ((double) (nOverlap * 2)
+					/ (double) ((r1Hi[i - 1] - r1Lo[i - 1]) * width[i - 1]))
+					* firstOrderSum(
+							std::max(productLo[i - 1] - singleComp[i - 1],
+									r1Lo[i - 1]),
+							std::min(productHi[i - 1] - singleComp[i - 1],
+									r1Hi[i - 1]),
+							(double) (r1Lo[i - 1] + r1Hi[i - 1]) / 2.0);
+
+			prodPair.coefs[0][i][0] += prodPair.second.isMixed() * a;
+			prodPair.coefs[i][0][0] += prodPair.first.isMixed() * a;
+
+			a = ((double) (nOverlap * 2)
+					/ ((double) ((r1Hi[i - 1] - r1Lo[i - 1]) * width[i - 1])
+							* dispersion[indexList[i] - 1]))
+					* secondOrderOffsetSum(
+							std::max(productLo[i - 1],
+									r1Lo[i - 1] + singleComp[i - 1]),
+							std::min(productHi[i - 1],
+									r1Hi[i - 1] + singleComp[i - 1]),
+							numAtom[indexList[i] - 1],
+							(double) (r1Lo[i - 1] + r1Hi[i - 1]) / 2.0,
+							-singleComp[i - 1]);
+
+			prodPair.coefs[0][i][i] += prodPair.second.isMixed() * a;
+			prodPair.coefs[i][0][i] += prodPair.first.isMixed() * a;
+		}
+
+		for (int j = 1; j < psDim; j++) {
+			if (i == j)
+				continue;
+
+			if (r1Hi[i - 1] != r1Lo[i - 1]) {
+				a = ((double) (nOverlap * 2)
+						/ ((double) ((r1Hi[i - 1] - r1Lo[i - 1]) * width[i - 1]
+								* width[j - 1]) * dispersion[indexList[j] - 1]))
+						* firstOrderSum(
+								std::max(productLo[i - 1] - singleComp[i - 1],
+										r1Lo[i - 1]),
+								std::min(productHi[i - 1] - singleComp[i - 1],
+										r1Hi[i - 1]),
+								(double) (r1Lo[i - 1] + r1Hi[i - 1]) / 2.0)
+						* firstOrderSum(
+								std::max(productLo[j - 1],
+										r1Lo[j - 1] + singleComp[j - 1]),
+								std::min(productHi[j - 1],
+										r1Hi[j - 1] + singleComp[j - 1]),
+								numAtom[indexList[j] - 1]);
+
+				prodPair.coefs[0][i][j] += prodPair.second.isMixed() * a;
+				prodPair.coefs[i][0][j] += prodPair.first.isMixed() * a;
+			}
+		}
+	}
+
+	return;
+}
+
 void PSISuperCluster::participateIn(ProductionReaction& reaction, int a[4]) {
 
-	setReactionConnectivity(id);
 	// Look for the other cluster
 	auto& otherCluster = static_cast<PSICluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
@@ -219,7 +368,6 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction, int a[4]) {
 void PSISuperCluster::participateIn(ProductionReaction& reaction,
 		const std::vector<PendingProductionReactionInfo>& pendingPRInfos) {
 
-	setReactionConnectivity(id);
 	// Look for the other cluster
 	auto& otherCluster = static_cast<PSICluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
@@ -261,6 +409,123 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 					}
 				}
 			});
+
+	return;
+}
+
+void PSISuperCluster::participateIn(ProductionReaction& reaction,
+		IReactant& product) {
+
+	// Look for the other cluster
+	auto& otherCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = &otherCluster;
+	auto it = effCombiningList.find(rkey);
+	if (it == effCombiningList.end()) {
+
+		// We did not already know about the reaction.
+		// Note that we combine with the other cluster in this reaction.
+		auto eret = effCombiningList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(otherCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effCombiningList.end());
+	auto& combCluster = it->second;
+
+	auto const& superProd = static_cast<PSICluster const&>(product);
+
+	// Check if an interstitial cluster is involved
+	int iSize = 0;
+	if (otherCluster.getType() == ReactantType::I) {
+		iSize = otherCluster.getSize();
+	}
+
+	// Loop on the different type of clusters in grouping
+	int productLo[4] = { }, productHi[4] = { }, singleComp[4] = { }, r1Lo[4] =
+			{ }, r1Hi[4] = { }, width[4] = { };
+	for (int i = 1; i < psDim; i++) {
+		auto const& bounds = superProd.getBounds(indexList[i] - 1);
+		productLo[i - 1] = *(bounds.begin()), productHi[i - 1] = *(bounds.end())
+				- 1;
+		auto const& r1Bounds = getBounds(indexList[i] - 1);
+		r1Lo[i - 1] = *(r1Bounds.begin()), r1Hi[i - 1] = *(r1Bounds.end()) - 1;
+		auto const& r2Bounds = otherCluster.getBounds(indexList[i] - 1);
+		singleComp[i - 1] = *(r2Bounds.begin());
+
+		// Special case for V and I
+		if (indexList[i] == 4)
+			singleComp[i - 1] -= iSize;
+
+		width[i - 1] = std::min(productHi[i - 1],
+				r1Hi[i - 1] + singleComp[i - 1])
+				- std::max(productLo[i - 1], r1Lo[i - 1] + singleComp[i - 1])
+				+ 1;
+	}
+
+	// Compute the coefficients
+	int nOverlap = 1;
+	for (int i = 1; i < psDim; i++) {
+		nOverlap *= width[i - 1];
+	}
+	combCluster.coefs[0][0][0] += nOverlap;
+	for (int i = 1; i < psDim; i++) {
+		combCluster.coefs[0][0][i] += ((double) nOverlap
+				/ (dispersion[indexList[i] - 1] * (double) width[i - 1]))
+				* firstOrderSum(
+						std::max(productLo[i - 1] - singleComp[i - 1],
+								r1Lo[i - 1]),
+						std::min(productHi[i - 1] - singleComp[i - 1],
+								r1Hi[i - 1]), numAtom[indexList[i] - 1]);
+
+		if (sectionWidth[indexList[i] - 1] != 1)
+			combCluster.coefs[i][0][0] += ((double) (nOverlap * 2)
+					/ (double) ((sectionWidth[indexList[i] - 1] - 1)
+							* width[i - 1]))
+					* firstOrderSum(
+							std::max(productLo[i - 1] - singleComp[i - 1],
+									r1Lo[i - 1]),
+							std::min(productHi[i - 1] - singleComp[i - 1],
+									r1Hi[i - 1]), numAtom[indexList[i] - 1]);
+
+		if (sectionWidth[indexList[i] - 1] != 1)
+			combCluster.coefs[i][0][i] += ((double) (nOverlap * 2)
+					/ ((double) ((sectionWidth[indexList[i] - 1] - 1)
+							* width[i - 1]) * dispersion[indexList[i] - 1]))
+					* secondOrderSum(
+							std::max(productLo[i - 1] - singleComp[i - 1],
+									r1Lo[i - 1]),
+							std::min(productHi[i - 1] - singleComp[i - 1],
+									r1Hi[i - 1]), numAtom[indexList[i] - 1]);
+
+		for (int j = 1; j < psDim; j++) {
+			if (i == j)
+				continue;
+
+			if (sectionWidth[indexList[i] - 1] != 1)
+				combCluster.coefs[i][0][j] += ((double) (nOverlap * 2)
+						/ ((double) ((sectionWidth[indexList[i] - 1] - 1)
+								* width[i - 1] * width[j - 1])
+								* dispersion[indexList[j] - 1]))
+						* firstOrderSum(
+								std::max(productLo[i - 1] - singleComp[i - 1],
+										r1Lo[i - 1]),
+								std::min(productHi[i - 1] - singleComp[i - 1],
+										r1Hi[i - 1]), numAtom[indexList[i] - 1])
+						* firstOrderSum(
+								std::max(productLo[j - 1] - singleComp[j - 1],
+										r1Lo[j - 1]),
+								std::min(productHi[j - 1] - singleComp[j - 1],
+										r1Hi[j - 1]),
+								numAtom[indexList[j] - 1]);
+		}
+	}
 
 	return;
 }
@@ -372,6 +637,129 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 	return;
 }
 
+void PSISuperCluster::participateIn(DissociationReaction& reaction,
+		IReactant& disso) {
+
+	// Determine which is the other cluster.
+	auto& emittedCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.dissociating), &emittedCluster);
+	auto it = effDissociatingList.find(rkey);
+	if (it == effDissociatingList.end()) {
+
+		// We did not already know about it.
+
+		// Add it to the network
+		auto eret = effDissociatingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.dissociating),
+						static_cast<PSICluster&>(emittedCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effDissociatingList.end());
+	auto& dissPair = it->second;
+
+	auto const& superDisso = static_cast<PSICluster const&>(disso);
+
+	// Check if an interstitial cluster is involved
+	int iSize = 0;
+	if (emittedCluster.getType() == ReactantType::I) {
+		iSize = emittedCluster.getSize();
+	}
+
+	// Loop on the different type of clusters in grouping
+	int dissoLo[4] = { }, dissoHi[4] = { }, singleComp[4] = { }, r1Lo[4] = { },
+			r1Hi[4] = { }, width[4] = { };
+	for (int i = 1; i < psDim; i++) {
+		auto const& bounds = superDisso.getBounds(indexList[i] - 1);
+		dissoLo[i - 1] = *(bounds.begin()), dissoHi[i - 1] = *(bounds.end()) - 1;
+		auto const& r1Bounds = getBounds(indexList[i] - 1);
+		r1Lo[i - 1] = *(r1Bounds.begin()), r1Hi[i - 1] = *(r1Bounds.end()) - 1;
+		auto const& r2Bounds = emittedCluster.getBounds(indexList[i] - 1);
+		singleComp[i - 1] = *(r2Bounds.begin());
+
+		// Special case for V and I
+		if (indexList[i] == 4)
+			singleComp[i - 1] -= iSize;
+
+		width[i - 1] = std::min(dissoHi[i - 1], r1Hi[i - 1] + singleComp[i - 1])
+				- std::max(dissoLo[i - 1], r1Lo[i - 1] + singleComp[i - 1]) + 1;
+	}
+
+	// Compute the coefficients
+	int nOverlap = 1;
+	for (int i = 1; i < psDim; i++) {
+		nOverlap *= width[i - 1];
+	}
+	dissPair.coefs[0][0] += nOverlap;
+	for (int i = 1; i < psDim; i++) {
+		dissPair.coefs[0][i] += ((double) nOverlap
+				/ (dispersion[indexList[i] - 1] * (double) width[i - 1]))
+				* firstOrderSum(
+						std::max(dissoLo[i - 1] - singleComp[i - 1],
+								r1Lo[i - 1]),
+						std::min(dissoHi[i - 1] - singleComp[i - 1],
+								r1Hi[i - 1]), numAtom[indexList[i] - 1]);
+
+		if (dissoHi[i - 1] != dissoLo[i - 1]) {
+			dissPair.coefs[i][0] +=
+					((double) (2 * nOverlap)
+							/ (double) ((dissoHi[i - 1] - dissoLo[i - 1])
+									* width[i - 1]))
+							* firstOrderSum(
+									std::max(dissoLo[i - 1],
+											r1Lo[i - 1] + singleComp[i - 1]),
+									std::min(dissoHi[i - 1],
+											r1Hi[i - 1] + singleComp[i - 1]),
+									(double) (dissoLo[i - 1] + dissoHi[i - 1])
+											/ 2.0);
+
+			dissPair.coefs[i][i] += ((double) (2 * nOverlap)
+					/ ((double) ((dissoHi[i - 1] - dissoLo[i - 1])
+							* width[i - 1]) * dispersion[indexList[i] - 1]))
+					* secondOrderOffsetSum(
+							std::max(dissoLo[i - 1],
+									r1Lo[i - 1] + singleComp[i - 1]),
+							std::min(dissoHi[i - 1],
+									r1Hi[i - 1] + singleComp[i - 1]),
+							(double) (dissoLo[i - 1] + dissoHi[i - 1]) / 2.0,
+							numAtom[indexList[i] - 1], -singleComp[i - 1]);
+		}
+
+		for (int j = 1; j < psDim; j++) {
+			if (i == j)
+				continue;
+
+			if (dissoHi[i - 1] != dissoLo[i - 1])
+				dissPair.coefs[i][j] += ((double) (nOverlap * 2)
+						/ ((double) ((dissoHi[i - 1] - dissoLo[i - 1])
+								* width[i - 1] * width[j - 1])
+								* dispersion[indexList[j] - 1]))
+						* firstOrderSum(
+								std::max(dissoLo[i - 1],
+										singleComp[i - 1] + r1Lo[i - 1]),
+								std::min(dissoHi[i - 1],
+										singleComp[i - 1] + r1Hi[i - 1]),
+								(double) (dissoLo[i - 1] + dissoHi[i - 1])
+										/ 2.0)
+						* firstOrderSum(
+								std::max(dissoLo[j - 1] - singleComp[j - 1],
+										r1Lo[j - 1]),
+								std::min(dissoHi[j - 1] - singleComp[j - 1],
+										r1Hi[j - 1]),
+								numAtom[indexList[j] - 1]);
+		}
+	}
+
+	return;
+}
+
 void PSISuperCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 
 	// Check if we already know about the reaction.
@@ -455,6 +843,140 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 					}
 				}
 			});
+
+	return;
+}
+
+void PSISuperCluster::emitFrom(DissociationReaction& reaction,
+		IReactant& disso) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effEmissionList.find(rkey);
+	if (it == effEmissionList.end()) {
+
+		// We did not already know about it.
+
+		// Note that we emit from the two rectants according to the given
+		// reaction.
+		auto eret = effEmissionList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effEmissionList.end());
+	auto& dissPair = it->second;
+
+	auto const& superR1 = static_cast<PSICluster const&>(dissPair.first);
+	auto const& superR2 = static_cast<PSICluster const&>(dissPair.second);
+	auto const& superDisso = static_cast<PSICluster const&>(disso);
+
+	// Check if an interstitial cluster is involved
+	int iSize = 0;
+	if (superR1.getType() == ReactantType::I) {
+		iSize = superR1.getSize();
+	} else if (superR2.getType() == ReactantType::I) {
+		iSize = superR2.getSize();
+	}
+
+	// Loop on the different type of clusters in grouping
+	int dissoLo[4] = { }, dissoHi[4] = { }, singleComp[4] = { }, r1Lo[4] = { },
+			r1Hi[4] = { }, width[4] = { };
+	for (int i = 1; i < psDim; i++) {
+		// Check the boundaries in all the directions
+		auto const& bounds = superDisso.getBounds(indexList[i] - 1);
+		dissoLo[i - 1] = *(bounds.begin()), dissoHi[i - 1] = *(bounds.end()) - 1;
+
+		if (dissPair.first.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(indexList[i] - 1);
+			r1Lo[i - 1] = *(r1Bounds.begin()), r1Hi[i - 1] = *(r1Bounds.end())
+					- 1;
+			auto const& r2Bounds = superR2.getBounds(indexList[i] - 1);
+			singleComp[i - 1] = *(r2Bounds.begin());
+		}
+
+		if (dissPair.second.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(indexList[i] - 1);
+			singleComp[i - 1] = *(r1Bounds.begin());
+			auto const& r2Bounds = superR2.getBounds(indexList[i] - 1);
+			r1Lo[i - 1] = *(r2Bounds.begin()), r1Hi[i - 1] = *(r2Bounds.end())
+					- 1;
+		}
+
+		// Special case for V and I
+		if (indexList[i] == 4)
+			singleComp[i - 1] -= iSize;
+
+		width[i - 1] = std::min(dissoHi[i - 1], r1Hi[i - 1] + singleComp[i - 1])
+				- std::max(dissoLo[i - 1], r1Lo[i - 1] + singleComp[i - 1]) + 1;
+	}
+
+	// Compute the coefficients
+	int nOverlap = 1;
+	for (int i = 1; i < psDim; i++) {
+		nOverlap *= width[i - 1];
+	}
+	dissPair.coefs[0][0] += (double) nOverlap;
+	for (int i = 1; i < psDim; i++) {
+		dissPair.coefs[0][i] += ((double) nOverlap
+				/ (dispersion[indexList[i] - 1] * (double) width[i - 1]))
+				* firstOrderSum(
+						std::max(dissoLo[i - 1],
+								r1Lo[i - 1] + singleComp[i - 1]),
+						std::min(dissoHi[i - 1],
+								r1Hi[i - 1] + singleComp[i - 1]),
+						numAtom[indexList[i] - 1]);
+
+		if (sectionWidth[indexList[i] - 1] != 1) {
+			dissPair.coefs[i][0] += ((double) (2 * nOverlap)
+					/ (double) ((sectionWidth[indexList[i] - 1] - 1)
+							* width[i - 1]))
+					* firstOrderSum(
+							std::max(dissoLo[i - 1],
+									r1Lo[i - 1] + singleComp[i - 1]),
+							std::min(dissoHi[i - 1],
+									r1Hi[i - 1] + singleComp[i - 1]),
+							numAtom[indexList[i] - 1]);
+
+			dissPair.coefs[i][i] += ((double) (2 * nOverlap)
+					/ ((double) ((sectionWidth[indexList[i] - 1] - 1)
+							* width[i - 1]) * dispersion[indexList[i] - 1]))
+					* secondOrderSum(
+							std::max(dissoLo[i - 1],
+									r1Lo[i - 1] + singleComp[i - 1]),
+							std::min(dissoHi[i - 1],
+									r1Hi[i - 1] + singleComp[i - 1]),
+							numAtom[indexList[i] - 1]);
+		}
+
+		for (int j = 1; j < psDim; j++) {
+			if (i == j)
+				continue;
+
+			if (sectionWidth[indexList[i] - 1] != 1)
+				dissPair.coefs[i][j] += ((double) (2 * nOverlap)
+						/ ((double) (width[i - 1] * width[j - 1]
+								* (sectionWidth[indexList[i] - 1] - 1))
+								* dispersion[indexList[j] - 1]))
+						* firstOrderSum(
+								std::max(dissoLo[i - 1],
+										r1Lo[i - 1] + singleComp[i - 1]),
+								std::min(dissoHi[i - 1],
+										r1Hi[i - 1] + singleComp[i - 1]),
+								numAtom[indexList[i] - 1])
+						* firstOrderSum(
+								std::max(dissoLo[j - 1],
+										r1Lo[j - 1] + singleComp[j - 1]),
+								std::min(dissoHi[j - 1],
+										r1Hi[j - 1] + singleComp[j - 1]),
+								numAtom[indexList[j] - 1]);
+		}
+	}
 
 	return;
 }
@@ -981,6 +1503,7 @@ void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
 				auto const& cluster = currPair.first;
 				// Compute the contribution from the dissociating cluster
 				auto value = currPair.kConstant / (double) nTot;
+
 				for (int j = 0; j < psDim; j++) {
 					int index = 0;
 					if (j == 0) {
@@ -1061,14 +1584,13 @@ void PSISuperCluster::dumpCoefficients(std::ostream& os,
 
 void PSISuperCluster::outputCoefficientsTo(std::ostream& os) const {
 
-	os << "id: " << id << '\n';
+	os << "name: " << name << '\n';
 	os << "reacting: " << effReactingList.size() << '\n';
 	std::for_each(effReactingList.begin(), effReactingList.end(),
 			[this,&os](ProductionPairMap::value_type const& currMapItem) {
 				auto const& currPair = currMapItem.second;
-				os << "first: " << currPair.first.getId()
-				<< "; second: " << currPair.second.getId()
-				<< "; ";
+				os << "first: " << currPair.first.getName()
+				<< "; second: " << currPair.second.getName() << ";";
 				dumpCoefficients(os, currPair);
 				os << '\n';
 			});
@@ -1077,8 +1599,7 @@ void PSISuperCluster::outputCoefficientsTo(std::ostream& os) const {
 	std::for_each(effCombiningList.begin(), effCombiningList.end(),
 			[this,&os](CombiningClusterMap::value_type const& currMapItem) {
 				auto const& currComb = currMapItem.second;
-				os << "other: " << currComb.first.getId()
-				<< "; ";
+				os << "other: " << currComb.first.getName() << ";";
 				dumpCoefficients(os, currComb);
 				os << '\n';
 			});
@@ -1087,8 +1608,8 @@ void PSISuperCluster::outputCoefficientsTo(std::ostream& os) const {
 	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
 			[this,&os](DissociationPairMap::value_type const& currMapItem) {
 				auto const& currPair = currMapItem.second;
-				os << "first: " << currPair.first.getId()
-				<< "; second: " << currPair.second.getId()
+				os << "first: " << currPair.first.getName()
+				<< "; second: " << currPair.second.getName()
 				<< "; ";
 				dumpCoefficients(os, currPair);
 				os << '\n';
@@ -1098,8 +1619,8 @@ void PSISuperCluster::outputCoefficientsTo(std::ostream& os) const {
 	std::for_each(effEmissionList.begin(), effEmissionList.end(),
 			[this,&os](DissociationPairMap::value_type const& currMapItem) {
 				auto const& currPair = currMapItem.second;
-				os << "first: " << currPair.first.getId()
-				<< "; second: " << currPair.second.getId()
+				os << "first: " << currPair.first.getName()
+				<< "; second: " << currPair.second.getName()
 				<< "; ";
 				dumpCoefficients(os, currPair);
 				os << '\n';
