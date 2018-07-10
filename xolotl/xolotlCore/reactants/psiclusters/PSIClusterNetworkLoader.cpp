@@ -687,7 +687,7 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 	}
 
 	// Create the reactions
-	network->createReactionConnectivity();
+//	network->createReactionConnectivity();
 
 	// Recompute Ids and network size
 	network->reinitializeNetwork();
@@ -983,12 +983,9 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 					}
 				}
 
-				// Check if there were clusters in this group
-				if (count == 0) {
-					// Reinitialize the group indices for the deuterium direction
-					dIndex += dWidth;
-					continue;
-				}
+				// Skip the loop if there were no clusters in this group
+				if (count == 0)
+					break;
 
 				// Average all values
 				heSize = heSize / (double) count;
@@ -1102,12 +1099,9 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 						}
 					}
 
-					// Check if there were clusters in this group
-					if (count == 0) {
-						// Reinitialize the group indices for the helium direction
-						heIndex += heWidth;
-						continue;
-					}
+					// Skip the loop if there were no clusters in this group
+					if (count == 0)
+						break;
 
 					// Average all values
 					heSize = heSize / (double) count;
@@ -1213,12 +1207,9 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 				}
 			}
 
-			// Check if there were clusters in this group
-			if (count == 0) {
-				// Reinitialize the group indices for the deuterium direction
-				dIndex += dWidth;
-				continue;
-			}
+			// Skip the loop if there were no clusters in this group
+			if (count == 0)
+				break;
 
 			// Average all values
 			dSize = dSize / (double) count;
