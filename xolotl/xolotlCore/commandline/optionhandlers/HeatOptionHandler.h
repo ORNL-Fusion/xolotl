@@ -20,7 +20,7 @@ public:
 	HeatOptionHandler() :
 			OptionHandler("heat",
 					"heat <value1> <value2>            "
-							"The temperature (in Kelvin) at the surface and in the bulk.\n") {
+							"The heat flux (in W nm-2) at the surface and the temperature in the bulk (Kelvin).\n") {
 	}
 
 	/**
@@ -49,7 +49,7 @@ public:
 		// Break the argument into tokens.
 		auto tokens = reader.loadLine();
 
-		// Set the value for the temperature at the surface
+		// Set the value for the heat flux at the surface
 		double temp = strtod(tokens[0].c_str(), NULL);
 		opt->setConstTemperature(temp);
 

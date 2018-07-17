@@ -41,6 +41,15 @@ static const double uo2HeatCoefficient = 0.0;
 // Iron heat coefficient = lambda / (rho * C) in nm2 s-1
 static const double feHeatCoefficient = 0.0;
 
+// Tungsten heat conductivity = lambda in W K-1 nm-1
+static const double tungstenHeatConductivity = 173 * 1.0e-9;
+
+// UO2 heat conductivity = lambda in W K-1 m-1
+static const double uo2HeatConductivity = 0.0;
+
+// Iron heat conductivity = lambda in W K-1 m-1
+static const double feHeatConductivity = 0.0;
+
 //! Parameters for biased sink in the iron case
 static const double reactionRadius = ironLatticeConstant
 		* pow((3.0) / pi, (1.0 / 3.0)) * 0.5;

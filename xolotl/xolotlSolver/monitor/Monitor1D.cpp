@@ -2186,23 +2186,38 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		// Set it in the solver
 		solverHandler.setSurfacePosition(surfacePos);
 
-		// Initialize the vacancy concentration on the new grid points
+		// Initialize the vacancy concentration and the temperature on the new grid points
 		// Get the single vacancy ID
 		auto singleVacancyCluster = network.get(Species::V, 1);
 		int vacancyIndex = -1;
 		if (singleVacancyCluster)
 			vacancyIndex = singleVacancyCluster->getId() - 1;
+		// Get the surface temperature
+		double temp = 0.0;
+		if (xi >= xs && xi < xs + xm) {
+			temp = solutionArray[xi][dof - 1];
+		}
+		double surfTemp = 0.0;
+		MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
+				PETSC_COMM_WORLD);
+
 		// Loop on the new grid points
-		while (nGridPoints > 0) {
+		while (nGridPoints >= 0) {
 			// Position of the newly created grid point
 			xi = surfacePos + nGridPoints;
 
 			// If xi is on this process
-			if (xi >= xs && xi < xs + xm && vacancyIndex > 0) {
+			if (xi >= xs && xi < xs + xm) {
 				// Get the concentrations
 				gridPointSolution = solutionArray[xi];
-				// Initialize the vacancy concentration
-				gridPointSolution[vacancyIndex] = initialVConc;
+
+				// Set the new surface temperature
+				gridPointSolution[dof - 1] = surfTemp;
+
+				if (vacancyIndex > 0 && nGridPoints > 0) {
+					// Initialize the vacancy concentration
+					gridPointSolution[vacancyIndex] = initialVConc;
+				}
 			}
 
 			// Decrease the number of grid points
@@ -2250,7 +2265,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 	// Set the new surface in the temperature handler
 	auto tempHandler = solverHandler.getTemperatureHandler();
-	tempHandler->updateSurfacePosition(grid[surfacePos + 1] - grid[1]);
+	tempHandler->updateSurfacePosition(surfacePos);
 
 	// Get the flux handler to reinitialize it
 	auto fluxHandler = solverHandler.getFluxHandler();
