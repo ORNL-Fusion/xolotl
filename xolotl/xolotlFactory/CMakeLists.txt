@@ -15,31 +15,33 @@ file(GLOB SRC material/*.cpp vizHandler/*.cpp temperatureHandler/*.cpp
 solverHandler/*.cpp reactionHandler/*.cpp)
 
 #Include directories
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/material)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/flux)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/diffusion)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/vizHandler)
-include_directories(${CMAKE_BINARY_DIR}/xolotlFactory)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlViz)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlViz/dummy)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/temperatureHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/temperature)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/solverHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver/solverhandler)
-
-include_directories(${PETSC_INCLUDES})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/material
+                    ${CMAKE_SOURCE_DIR}/xolotlCore
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/advection
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/flux
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/diffusion
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf
+                    ${CMAKE_CURRENT_SOURCE_DIR}/vizHandler
+                    ${CMAKE_BINARY_DIR}/xolotlFactory
+                    ${CMAKE_SOURCE_DIR}/xolotlViz
+                    ${CMAKE_SOURCE_DIR}/xolotlViz/dummy
+                    ${CMAKE_CURRENT_SOURCE_DIR}/temperatureHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/temperature
+                    ${CMAKE_CURRENT_SOURCE_DIR}/solverHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlSolver
+                    ${CMAKE_SOURCE_DIR}/xolotlSolver/solverhandler
+                    ${CMAKE_SOURCE_DIR}
+                    ${CMAKE_BINARY_DIR}
+                    ${Boost_INCLUDE_DIR}
+                    ${PETSC_INCLUDES})
 
 # Find EAVL
 FIND_PACKAGE(EAVL)

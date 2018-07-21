@@ -40,6 +40,18 @@ if (PETSC_FOUND)
     set(CMAKE_REQUIRED_LIBRARIES ${SAVED_CMAKE_REQUIRED_LIBRARIES})
 endif()
 
+# Find the Boost libraries we (potentially) use.
+# Note that we only need to list Boost component libraries that have a
+# library implementation (i.e., not header only) as required components.
+FIND_PACKAGE(Boost OPTIONAL_COMPONENTS filesystem unit_test_framework)
+IF (Boost_FOUND)
+    message(STATUS "Boost version ${Boost_VERSION} found.")
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+ENDIF()
+IF (Boost_UNIT_TEST_FRAMEWORK_FOUND)
+    message(STATUS "Tests will be built since Boost unit test framework found.")
+    add_subdirectory(tests)
+ENDIF()
 
 # Make sure that we only pull the static HDF5
 #set(HDF5_USE_STATIC_LIBRARIES yes)
@@ -73,15 +85,6 @@ add_subdirectory(xolotlCore)
 add_subdirectory(xolotlFactory)
 # Keep the solver for the end (it uses everything else)
 add_subdirectory(xolotlSolver)
-
-# Add the tests is Boost is available
-FIND_PACKAGE(Boost)
-IF (Boost_FOUND)
-    message(STATUS "Boost version ${Boost_VERSION} found.")
-    message(STATUS "Tests will be built since Boost was found.")
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-    add_subdirectory(tests)
-ENDIF()
 
 # Report package information
 message(STATUS "----- Configuration Information -----")

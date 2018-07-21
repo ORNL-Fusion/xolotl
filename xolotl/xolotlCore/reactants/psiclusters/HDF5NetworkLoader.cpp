@@ -5,14 +5,18 @@
 #include <vector>
 #include "PSIClusterReactionNetwork.h"
 #include <xolotlPerf.h>
-#include <HDF5Utils.h>
+#include "xolotlCore/io/XFile.h"
 
-using namespace xolotlCore;
+
+namespace xolotlCore {
 
 std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 		const IOptions& options) {
 	// Get the dataset from the HDF5 files
-	auto networkVector = xolotlCore::HDF5Utils::readNetwork(fileName);
+    XFile networkFile(fileName);
+    auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
+    assert(networkGroup);
+    auto networkVector = networkGroup->readNetwork();
 
 	// Initialization
 	int numHe = 0, numV = 0, numI = 0, numW = 0, numD = 0, numT = 0;
@@ -83,3 +87,6 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 	// that is not correct behavior until C++14.
 	return std::move(network);
 }
+
+} // namespace xolotlCore
+

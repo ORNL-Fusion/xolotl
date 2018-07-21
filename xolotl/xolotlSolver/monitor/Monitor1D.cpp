@@ -15,7 +15,6 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
-#include <HDF5Utils.h>
 #include <NESuperCluster.h>
 #include <PSISuperCluster.h>
 #include <FeSuperCluster.h>
@@ -24,6 +23,8 @@
 #include <FeClusterReactionNetwork.h>
 #include <MathUtils.h>
 #include "RandomNumberGenerator.h"
+#include "xolotlCore/io/XFile.h"
+
 
 namespace xolotlSolver {
 
@@ -149,26 +150,28 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the position of the surface
 	int surfacePos = solverHandler.getSurfacePosition();
 
-	// Open the already created HDF5 file
-	xolotlCore::HDF5Utils::openFile(hdf5OutputName1D);
+	// Open the existing HDF5 file
+    xolotlCore::XFile checkpointFile(hdf5OutputName1D,
+            xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
 	double currentTimeStep;
 	ierr = TSGetTimeStep(ts, &currentTimeStep);
 	CHKERRQ(ierr);
 
-	// Add a concentration sub group
-	xolotlCore::HDF5Utils::addConcentrationSubGroup(timestep, time,
-			previousTime, currentTimeStep);
+	// Add a concentration time step group for the current time step.
+    auto concGroup = checkpointFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+    assert(concGroup);
+    auto tsGroup = concGroup->addTimestepGroup(timestep, time,
+                                                previousTime, currentTimeStep);
 
 	// Write the surface positions and the associated interstitial quantities
 	// in the concentration sub group
-	xolotlCore::HDF5Utils::writeSurface1D(timestep, surfacePos, nInterstitial1D,
-			previousIFlux1D);
+	tsGroup->writeSurface1D(surfacePos, nInterstitial1D, previousIFlux1D);
 
 	// Write the bottom impurity information if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1)
-		xolotlCore::HDF5Utils::writeBottom1D(nHelium1D, previousHeFlux1D,
+		tsGroup->writeBottom1D(nHelium1D, previousHeFlux1D,
 				nDeuterium1D, previousDFlux1D, nTritium1D, previousTFlux1D);
 
 	// Loop on the full grid
@@ -219,12 +222,8 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 				PETSC_COMM_WORLD);
 
 		// All processes create the dataset and fill it
-		xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i);
-		xolotlCore::HDF5Utils::fillConcentrations(concArray, i);
+        tsGroup->writeConcentrationDataset(concSize, concArray, i);
 	}
-
-	// Finalize the HDF5 file
-	xolotlCore::HDF5Utils::closeFile();
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -2389,6 +2388,21 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	auto& network = solverHandler.getNetwork();
 	const int networkSize = network.size();
 
+    // Determine if we have an existing restart file,
+    // and if so, it it has had timesteps written to it.
+    std::unique_ptr<xolotlCore::XFile> networkFile;
+    std::unique_ptr<xolotlCore::XFile::TimestepGroup> lastTsGroup;
+    std::string networkName = solverHandler.getNetworkName();
+    bool hasConcentrations = false;
+    if (not networkName.empty()) {
+        networkFile.reset(new xolotlCore::XFile(networkName));
+        auto concGroup = networkFile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
+        hasConcentrations = (concGroup and concGroup->hasTimesteps());
+        if(hasConcentrations) {
+            lastTsGroup = concGroup->getLastTimestepGroup();
+        }
+    }
+
 	// Set the post step processing to stop the solver if the time step collapses
 	if (flagCheck) {
 		// Find the threshold
@@ -2420,16 +2434,12 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 
 		// Compute the correct hdf5Previous1D for a restart
 		// Get the last time step written in the HDF5 file
-		int tempTimeStep = -2;
-		std::string networkName = solverHandler.getNetworkName();
-		bool hasConcentrations = false;
-		if (!networkName.empty())
-			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-					networkName, tempTimeStep);
 		if (hasConcentrations) {
+
+            assert(lastTsGroup);
+
 			// Get the previous time from the HDF5 file
-			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			previousTime = lastTsGroup->readPreviousTime();
 			hdf5Previous1D = (int) (previousTime / hdf5Stride1D);
 		}
 
@@ -2451,29 +2461,20 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			PETSC_IGNORE, PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
-			// Initialize the HDF5 file for all the processes
-			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName1D);
-
 			// Get the solver handler
 			auto& solverHandler = PetscSolver::getSolverHandler();
 
 			// Get the physical grid
 			auto grid = solverHandler.getXGrid();
 
-			// Save the header in the HDF5 file
-			xolotlCore::HDF5Utils::fillHeader(grid);
-
 			// Get the compostion list and save it
 			auto compList = network.getCompositionList();
-			xolotlCore::HDF5Utils::fillNetworkComp(compList);
 
-			// Save the network in the HDF5 file
-			if (!solverHandler.getNetworkName().empty())
-				xolotlCore::HDF5Utils::fillNetwork(
-						solverHandler.getNetworkName());
-
-			// Finalize the HDF5 file
-			xolotlCore::HDF5Utils::finalizeFile();
+			// Create and initialize a checkpoint file.
+            xolotlCore::XFile checkpointFile(hdf5OutputName1D,
+                                                grid,
+                                                compList,
+						                        solverHandler.getNetworkName());
 		}
 
 		// startStop1D will be called at each timestep
@@ -2487,26 +2488,18 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 
 		// Surface
 		if (solverHandler.moveSurface()) {
-			// Get the last time step written in the HDF5 file
-			int tempTimeStep = -2;
-			std::string networkName = solverHandler.getNetworkName();
-			bool hasConcentrations = false;
-			if (!networkName.empty())
-				hasConcentrations =
-						xolotlCore::HDF5Utils::hasConcentrationGroup(
-								networkName, tempTimeStep);
 
 			// Get the interstitial information at the surface if concentrations were stored
 			if (hasConcentrations) {
+
+                assert(lastTsGroup);
+
 				// Get the interstitial quantity from the HDF5 file
-				nInterstitial1D = xolotlCore::HDF5Utils::readData1D(networkName,
-						tempTimeStep, "nInterstitial");
+				nInterstitial1D = lastTsGroup->readData1D("nInterstitial");
 				// Get the previous I flux from the HDF5 file
-				previousIFlux1D = xolotlCore::HDF5Utils::readData1D(networkName,
-						tempTimeStep, "previousIFlux");
+				previousIFlux1D = lastTsGroup->readData1D("previousIFlux");
 				// Get the previous time from the HDF5 file
-				previousTime = xolotlCore::HDF5Utils::readPreviousTime(
-						networkName, tempTimeStep);
+				previousTime = lastTsGroup->readPreviousTime();
 			}
 
 			// Get the sputtering yield
@@ -2708,19 +2701,13 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	// for the retention calculation
 	if (flagHeRetention) {
 
-		// Get the last time step written in the HDF5 file
-		int tempTimeStep = -2;
-		std::string networkName = solverHandler.getNetworkName();
-		bool hasConcentrations = false;
-		if (!networkName.empty())
-			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-					networkName, tempTimeStep);
-
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
+
+            assert(lastTsGroup);
+
 			// Get the previous time from the HDF5 file
-			double time = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			double time = lastTsGroup->readPreviousTime();
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
 			// The length of the time step
@@ -2728,24 +2715,18 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			// Increment the fluence with the value at this current timestep
 			fluxHandler->incrementFluence(dt);
 			// Get the previous time from the HDF5 file
-			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+            // TODO isn't this the same as 'time' above?
+			previousTime = lastTsGroup->readPreviousTime();
 
 			// If the bottom is a free surface
 			if (solverHandler.getRightOffset() == 1) {
 				// Read about the impurity fluxes in the bulk
-				nHelium1D = xolotlCore::HDF5Utils::readData1D(networkName,
-						tempTimeStep, "nHelium");
-				previousHeFlux1D = xolotlCore::HDF5Utils::readData1D(
-						networkName, tempTimeStep, "previousHeFlux");
-				nDeuterium1D = xolotlCore::HDF5Utils::readData1D(networkName,
-						tempTimeStep, "nDeuterium");
-				previousDFlux1D = xolotlCore::HDF5Utils::readData1D(networkName,
-						tempTimeStep, "previousDFlux");
-				nTritium1D = xolotlCore::HDF5Utils::readData1D(networkName,
-						tempTimeStep, "nTritium");
-				previousTFlux1D = xolotlCore::HDF5Utils::readData1D(networkName,
-						tempTimeStep, "previousTFlux");
+				nHelium1D = lastTsGroup->readData1D("nHelium");
+				previousHeFlux1D = lastTsGroup->readData1D("previousHeFlux");
+				nDeuterium1D = lastTsGroup->readData1D("nDeuterium");
+				previousDFlux1D = lastTsGroup->readData1D("previousDFlux");
+				nTritium1D = lastTsGroup->readData1D("nTritium");
+				previousTFlux1D = lastTsGroup->readData1D("previousTFlux");
 			}
 		}
 
@@ -2780,19 +2761,13 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			radii1D.push_back(cluster.getReactionRadius());
 		}
 
-		// Get the last time step written in the HDF5 file
-		int tempTimeStep = -2;
-		std::string networkName = solverHandler.getNetworkName();
-		bool hasConcentrations = false;
-		if (!networkName.empty())
-			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-					networkName, tempTimeStep);
-
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
+
+            assert(lastTsGroup);
+
 			// Get the previous time from the HDF5 file
-			double time = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			double time = lastTsGroup->readPreviousTime();
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
 			// The length of the time step
@@ -2800,8 +2775,8 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			// Increment the fluence with the value at this current timestep
 			fluxHandler->incrementFluence(dt);
 			// Get the previous time from the HDF5 file
-			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+            // TODO isn't this the same as 'time' above?
+			previousTime = lastTsGroup->readPreviousTime();
 		}
 
 		// computeFluence will be called at each timestep

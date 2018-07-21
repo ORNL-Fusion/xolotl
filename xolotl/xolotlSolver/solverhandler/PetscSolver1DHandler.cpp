@@ -3,6 +3,9 @@
 #include <MathUtils.h>
 #include <Constants.h>
 
+namespace xcore = xolotlCore;
+
+
 namespace xolotlSolver {
 
 void PetscSolver1DHandler::createSolverContext(DM &da) {
@@ -39,15 +42,16 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	// Now that the grid was generated, we can update the surface position
 	// if we are using a restart file
-	int tempTimeStep = -2;
-	bool hasConcentrations = false;
-	if (!networkName.empty())
-		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-				networkName, tempTimeStep);
-	if (hasConcentrations) {
-		surfacePosition = xolotlCore::HDF5Utils::readSurface1D(networkName,
-				tempTimeStep);
-	}
+    if (not networkName.empty()) {
+
+        xolotlCore::XFile xfile(networkName);
+        auto concGroup = xfile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+        if(concGroup and concGroup->hasTimesteps()) {
+            auto tsGroup = concGroup->getLastTimestepGroup();
+            assert(tsGroup);
+		    surfacePosition = tsGroup->readSurface1D();
+        }
+    }
 
 	// Initialize the surface of the first advection handler corresponding to the
 	// advection toward the surface (or a dummy one if it is deactivated)
@@ -134,11 +138,15 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 			"DMDAGetCorners failed.");
 
 	// Get the last time step written in the HDF5 file
-	int tempTimeStep = -2;
 	bool hasConcentrations = false;
-	if (!networkName.empty())
-		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-				networkName, tempTimeStep);
+    std::unique_ptr<xolotlCore::XFile> xfile;
+    std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
+    if (not networkName.empty()) {
+
+        xfile.reset(new xolotlCore::XFile(networkName));
+        concGroup = xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
+        hasConcentrations = (concGroup and concGroup->hasTimesteps());
+    }
 
 	// Give the surface position to the temperature handler
 	temperatureHandler->updateSurfacePosition(surfacePosition);
@@ -188,11 +196,15 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
+
+        assert(concGroup);
+        auto tsGroup = concGroup->getLastTimestepGroup();
+        assert(tsGroup);
+
 		// Loop on the full grid
 		for (int i = 0; i < nX; i++) {
 			// Read the concentrations from the HDF5 file
-			auto concVector = xolotlCore::HDF5Utils::readGridPoint(networkName,
-					tempTimeStep, i);
+			auto concVector = tsGroup->readGridPoint(i);
 
 			// Change the concentration only if we are on the locally owned part of the grid
 			if (i >= xs && i < xs + xm) {

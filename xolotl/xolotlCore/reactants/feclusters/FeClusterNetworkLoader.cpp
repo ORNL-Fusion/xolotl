@@ -11,10 +11,11 @@
 #include <FeClusterReactionNetwork.h>
 #include <xolotlPerf.h>
 #include <MathUtils.h>
-#include <HDF5Utils.h>
 #include <cassert>
+#include "xolotlCore/io/XFile.h"
 
-using namespace xolotlCore;
+
+namespace xolotlCore {
 
 std::unique_ptr<FeCluster> FeClusterNetworkLoader::createFeCluster(int numHe,
 		int numV, int numI, IReactionNetwork& network) const {
@@ -82,7 +83,10 @@ std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::load(
 		const IOptions& options) {
 
 	// Get the dataset from the HDF5 files
-	auto networkVector = xolotlCore::HDF5Utils::readNetwork(fileName);
+    XFile networkFile(fileName);
+    auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
+    assert(networkGroup);
+    auto networkVector = networkGroup->readNetwork();
 
 	// Initialization
 	int numHe = 0, numV = 0, numI = 0;
@@ -487,3 +491,6 @@ void FeClusterNetworkLoader::applySectionalGrouping(
 
 	return;
 }
+
+} // namespace xolotlCore
+

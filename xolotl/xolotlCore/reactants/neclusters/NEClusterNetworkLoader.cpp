@@ -5,10 +5,11 @@
 #include <NEClusterReactionNetwork.h>
 #include <NEXeCluster.h>
 #include <NESuperCluster.h>
-#include <HDF5Utils.h>
 #include <xolotlPerf.h>
+#include "xolotlCore/io/XFile.h"
 
-using namespace xolotlCore;
+
+namespace xolotlCore {
 
 ///**
 // * This operation converts a string to a double, taking in to account the fact
@@ -96,8 +97,12 @@ NEClusterNetworkLoader::NEClusterNetworkLoader(
 
 std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 		const IOptions& options) {
+
 	// Get the dataset from the HDF5 files
-	auto networkVector = xolotlCore::HDF5Utils::readNetwork(fileName);
+    XFile networkFile(fileName);
+    auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
+    assert(networkGroup);
+    auto networkVector = networkGroup->readNetwork();
 
 	// Initialization
 	int numXe = 0, numV = 0, numI = 0;
@@ -476,3 +481,6 @@ void NEClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 
 	return;
 }
+
+} // namespace xolotlCore
+

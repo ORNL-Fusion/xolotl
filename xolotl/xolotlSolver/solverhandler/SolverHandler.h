@@ -3,8 +3,9 @@
 
 // Includes
 #include "ISolverHandler.h"
-#include <HDF5Utils.h>
 #include "RandomNumberGenerator.h"
+#include "xolotlCore/io/XFile.h"
+
 
 namespace xolotlSolver {
 
@@ -234,8 +235,12 @@ public:
 			// Get starting conditions from HDF5 file
 			int nx = 0, ny = 0, nz = 0;
 			double hx = 0.0, hy = 0.0, hz = 0.0;
-			xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz,
-					hz);
+
+            xolotlCore::XFile xfile(networkName);
+            auto headerGroup = xfile.getGroup<xolotlCore::XFile::HeaderGroup>();
+            assert(headerGroup);
+            headerGroup->read(nx, hx, ny, hy, nz, hz);
+
 			nX = nx, nY = ny, nZ = nz;
 			hX = hx, hY = hy, hZ = hz;
 		} else {
