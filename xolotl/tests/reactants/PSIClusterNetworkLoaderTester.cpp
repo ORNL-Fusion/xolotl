@@ -9,9 +9,13 @@
 #include <DummyHandlerRegistry.h>
 #include <PSIClusterReactionNetwork.h>
 #include <Options.h>
+#include "tests/utils/MPIFixture.h"
 
 using namespace std;
 using namespace xolotlCore;
+
+// Initialize MPI before running any tests; finalize it running all tests.
+BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 /**
  * This suite is responsible for testing the PSIClusterNetworkLoader. It

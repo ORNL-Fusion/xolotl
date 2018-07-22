@@ -11,24 +11,12 @@
 #include <memory>
 #include <Options.h>
 #include "xolotlCore/io/XFile.h"
+#include "tests/utils/MPIFixture.h"
 
 using namespace std;
 using namespace xolotlCore;
 
-struct MPIFixture {
-    MPIFixture(void) {
-        BOOST_TEST_MESSAGE("Initializing MPI");
-        auto& mts = boost::unit_test::framework::master_test_suite();
-        MPI_Init(&mts.argc, &mts.argv);
-        BOOST_TEST_MESSAGE("Done initializing MPI");
-    }
-
-    ~MPIFixture(void) {
-        BOOST_TEST_MESSAGE("Finalizing MPI");
-        MPI_Finalize();
-        BOOST_TEST_MESSAGE("Done finalizing MPI");
-    }
-};
+// Initialize MPI before running any tests; finalize it running all tests.
 BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 /**
