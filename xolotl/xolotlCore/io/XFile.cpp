@@ -1,5 +1,7 @@
 #include <iostream>
 #include <sstream>
+#include <iterator>
+#include <array>
 #include "hdf5.h"
 #include "mpi.h"
 #include "xolotlCore/io/XFile.h"
@@ -34,7 +36,7 @@ HDF5File::AccessMode XFile::EnsureOpenAccessMode(HDF5File::AccessMode mode) {
 
 XFile::XFile(fs::path _path,
         const std::vector<double>& grid,
-        const std::vector<std::vector<int> >& compVec,
+        const XFile::HeaderGroup::NetworkCompsType& compVec,
         fs::path networkFilePath,
         int ny,
         double hy,
@@ -76,12 +78,14 @@ XFile::XFile(fs::path _path, AccessMode _mode)
 // HeaderGroup
 //
 const fs::path XFile::HeaderGroup::path = "/headerGroup";
+const std::string XFile::HeaderGroup::netCompsDatasetName = "composition";
+
 
 XFile::HeaderGroup::HeaderGroup(const XFile& file,
         const std::vector<double>& grid,
         int ny, double hy, 
         int nz, double hz,
-        const std::vector<std::vector<int> >& compVec) 
+        const NetworkCompsType& compVec) 
   : HDF5File::Group(file, HeaderGroup::path, true) {
 
     // Base class created the group.
@@ -129,9 +133,8 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file,
 	for (int i = 0; i < nx; i++) {
 		gridArray[i] = grid[i + 1] - grid[1];
 	}
-	hsize_t dims[1];
-	dims[0] = nx;
-	dataspaceId = H5Screate_simple(1, dims, NULL);
+    std::array<hsize_t, 1> dims{ (hsize_t)nx };
+	dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
 	hid_t datasetId = H5Dcreate2(getId(), "grid", H5T_IEEE_F64LE,
 			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
@@ -140,7 +143,7 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file,
 
     // Initialize the network composition list.  Done here because
     // it is a dataset in the header group.
-    initNetworkComp(compVec);
+    initNetworkComps(compVec);
 
 	// Close everything
 	status = H5Aclose(attributeId);
@@ -153,8 +156,7 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file)
     // Base class opened the group, so nothing else to do.
 }
 
-void XFile::HeaderGroup::initNetworkComp(
-                const std::vector<std::vector<int> >& compVec) {
+void XFile::HeaderGroup::initNetworkComps(const NetworkCompsType& compVec) const {
 
 	// Create the array that will store the compositions and fill it
 	int dof = compVec.size();
@@ -167,13 +169,11 @@ void XFile::HeaderGroup::initNetworkComp(
 	}
 
 	// Create the dataspace for the dataset with dimension dims
-	hsize_t dims[2];
-	dims[0] = dof;
-	dims[1] = compSize;
-	hid_t dataspaceId = H5Screate_simple(2, dims, NULL);
+    std::array<hsize_t, 2> dims{ (hsize_t)dof, (hsize_t)compSize };
+	hid_t dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
 
 	// Create the dataset for the surface indices
-	hid_t datasetId = H5Dcreate2(getId(), "composition", H5T_STD_I32LE,
+	hid_t datasetId = H5Dcreate2(getId(), netCompsDatasetName.c_str(), H5T_STD_I32LE,
 			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write in the dataset
 	auto  status = H5Dwrite(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
@@ -214,11 +214,46 @@ void XFile::HeaderGroup::read(int &nx, double &hx,
 	status = H5Aclose(attributeId);
 }
 
+XFile::HeaderGroup::NetworkCompsType
+XFile::HeaderGroup::readNetworkComps(void) const {
+
+	// Open the dataset
+	hid_t datasetId = H5Dopen(getId(), netCompsDatasetName.c_str(), H5P_DEFAULT);
+
+	// Get the dimensions of the dataset
+    std::array<hsize_t, 2> dims;
+	// Get the dataspace object
+	hid_t dataspaceId = H5Dget_space(datasetId);
+	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
+
+
+	// Read the data set
+    NetworkCompsType::value_type networkComps1D(dims[0] * dims[1]);
+	status = H5Dread(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			networkComps1D.data());
+
+    // Convert the 1D dataset into 2D representation.
+    NetworkCompsType networkComps(dims[0]);
+    for(auto i = 0; i < dims[0]; ++i) {
+        networkComps[i].reserve(dims[1]);
+        std::copy(networkComps1D.begin() + i*dims[1],
+                    networkComps1D.begin() + (i+1)*dims[1],
+                    std::back_inserter(networkComps[i]));
+    }
+
+	// Close everything
+	status = H5Dclose(datasetId);
+
+	return networkComps;
+}
+
 
 //----------------------------------------------------------------------------
 // NetworkGroup
 //
 const fs::path XFile::NetworkGroup::path = "/networkGroup";
+const std::string XFile::NetworkGroup::netDatasetName = "network";
+
 
 XFile::NetworkGroup::NetworkGroup(const XFile& file)
   : HDF5File::Group(file, NetworkGroup::path, false) {
@@ -227,42 +262,37 @@ XFile::NetworkGroup::NetworkGroup(const XFile& file)
 }
 
 
-std::vector<std::vector<double> > XFile::NetworkGroup::readNetwork(void) const {
+XFile::NetworkGroup::NetworkType XFile::NetworkGroup::readNetwork(void) const {
 
 	// Open the dataset
-	hid_t datasetId = H5Dopen(getId(), "network", H5P_DEFAULT);
+	hid_t datasetId = H5Dopen(getId(), netDatasetName.c_str(), H5P_DEFAULT);
 
 	// Get the dimensions of the dataset
-	hsize_t dims[2];
+    std::array<hsize_t, 2> dims;
+
 	// Get the dataspace object
 	hid_t dataspaceId = H5Dget_space(datasetId);
-	auto status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
-
-	// Create the array that will receive the network
-	double *networkArray = new double[dims[0] * dims[1]];
+	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 	// Read the data set
+    NetworkType::value_type network1D(dims[0] * dims[1]);
 	status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-			networkArray);
+			network1D.data());
 
 	// Fill the vector to return with the dataset
-	std::vector<std::vector<double> > networkVector;
+    NetworkType network(dims[0]);
 	// Loop on the size of the network
-	for (int i = 0; i < dims[0]; i++) {
-		// Create the line to give to the vector
-		std::vector<double> line;
-		for (int j = 0; j < dims[1]; j++) {
-			line.push_back(networkArray[i * dims[1] + j]);
-		}
-		networkVector.push_back(line);
+	for (auto i = 0; i < dims[0]; ++i) {
+        network[i].reserve(dims[1]);
+        std::copy(network1D.begin() + i*dims[1],
+                    network1D.begin() + (i+1)*dims[1],
+                    std::back_inserter(network[i]));
 	}
 
 	// Close everything
 	status = H5Dclose(datasetId);
 
-	delete[] networkArray;
-
-	return networkVector;
+	return network;
 }
 
 void XFile::NetworkGroup::copyTo(const XFile& target) const {
@@ -471,9 +501,8 @@ void XFile::TimestepGroup::writeSurface2D(std::vector<int> iSurface,
 	}
 
 	// Create the dataspace for the dataset with dimension dims
-	hsize_t dims[1];
-	dims[0] = size;
-	hid_t dataspaceId = H5Screate_simple(1, dims, NULL);
+    std::array<hsize_t, 1> dims{ (hsize_t)size };
+	hid_t dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
 
 	// Create the dataset for the surface indices
 	hid_t datasetId = H5Dcreate2(getId(), "iSurface", H5T_STD_I32LE,
@@ -538,10 +567,8 @@ void XFile::TimestepGroup::writeSurface3D(
 	}
 
 	// Create the dataspace for the dataset with dimension dims
-	hsize_t dims[2];
-	dims[0] = xSize;
-	dims[1] = ySize;
-	hid_t dataspaceId = H5Screate_simple(2, dims, NULL);
+    std::array<hsize_t, 2> dims{ (hsize_t)xSize, (hsize_t)ySize };
+	hid_t dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
 
 	// Create the dataset for the surface indices
 	hid_t datasetId = H5Dcreate2(getId(), "iSurface", H5T_STD_I32LE,
@@ -642,9 +669,8 @@ void XFile::TimestepGroup::writeBottom2D(std::vector<double> nHe,
 	const int size = nHe.size();
 
 	// Create the dataspace for the dataset with dimension dims
-	hsize_t dims[1];
-	dims[0] = size;
-	hid_t dataspaceId = H5Screate_simple(1, dims, NULL);
+    std::array<hsize_t, 1> dims{ (hsize_t)size };
+	hid_t dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
 
 	// Create the dataset for helium
 	hid_t datasetId = H5Dcreate2(getId(), "nHelium", H5T_IEEE_F64LE,
@@ -718,10 +744,8 @@ void XFile::TimestepGroup::writeConcentrationDataset(int size,
 	datasetName << "position_" << i << "_" << j << "_" << k;
 
 	// Create the dataspace for the dataset with dimension dims
-	hsize_t dims[2];
-	dims[0] = size;
-	dims[1] = 2;
-	auto concDataspaceId = H5Screate_simple(2, dims, NULL);
+    std::array<hsize_t, 2> dims{ (hsize_t)size, (hsize_t)2 };
+	auto concDataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
 
 	// Create the dataset of concentrations for this position
 	hid_t datasetId = H5Dcreate2(getId(), datasetName.str().c_str(),
@@ -800,8 +824,8 @@ std::vector<int> XFile::TimestepGroup::readSurface2D(void) const {
 	hid_t dataspaceId = H5Dget_space(datasetId);
 
 	// Get the dimensions of the dataset
-	hsize_t dims[1];
-	auto status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+    std::array<hsize_t, 1> dims;
+	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 	// Create the array that will receive the indices
 	int index[dims[0]];
@@ -834,8 +858,8 @@ std::vector<std::vector<int> > XFile::TimestepGroup::readSurface3D(void) const {
 	hid_t dataspaceId = H5Dget_space(datasetId);
 
 	// Get the dimensions of the dataset
-	hsize_t dims[2];
-	auto status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+    std::array<hsize_t, 2> dims;
+	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 	// Create the array that will receive the indices
 	int index[dims[0]][dims[1]];
@@ -889,8 +913,8 @@ std::vector<double> XFile::TimestepGroup::readData2D(
 	hid_t dataspaceId = H5Dget_space(datasetId);
 
 	// Get the dimensions of the dataset
-	hsize_t dims[1];
-	auto status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+    std::array<hsize_t, 1> dims;
+	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 	// Create the array that will receive the indices
 	double flux[dims[0]];
@@ -924,8 +948,8 @@ std::vector<std::vector<double> > XFile::TimestepGroup::readData3D(
 	hid_t dataspaceId = H5Dget_space(datasetId);
 
 	// Get the dimensions of the dataset
-	hsize_t dims[2];
-	auto status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+    std::array<hsize_t, 2> dims;
+	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 	// Create the array that will receive the indices
 	double quantity[dims[0]][dims[1]];
@@ -961,7 +985,7 @@ std::vector<std::vector<double> > XFile::TimestepGroup::readGridPoint(
 
 	// Set the dataset name
 	std::stringstream datasetName;
-	datasetName << "/position_" << i << "_" << j << "_" << k;
+	datasetName << "position_" << i << "_" << j << "_" << k;
 
 	// Check the dataset
 	bool datasetExist = H5Lexists(getId(), datasetName.str().c_str(),
@@ -977,8 +1001,8 @@ std::vector<std::vector<double> > XFile::TimestepGroup::readGridPoint(
 		hid_t dataspaceId = H5Dget_space(datasetId);
 
 		// Get the dimensions of the dataset
-		hsize_t dims[2];
-		auto status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+        std::array<hsize_t, 2> dims;
+		auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 		// Create the array that will receive the concentrations
 		double conc[dims[0]][dims[1]];

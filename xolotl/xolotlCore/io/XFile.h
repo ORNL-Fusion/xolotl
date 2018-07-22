@@ -275,17 +275,24 @@ public:
 
     // Our header group.
     class HeaderGroup : public HDF5File::Group {
+    public:
+        // Concise name for type of network compositions 
+        // in HDF5 class method parameters.
+        using NetworkCompsType = std::vector<std::vector<int>>;
+
     private:
         // Path of the header group within the file.
         static const fs::path path;
 
+        // Name of network composition dataset within our group.
+        static const std::string netCompsDatasetName;
+
         /**
          * Initialize the list of cluster compositions.
          *
-         * @param headerGroup Group representing our file's header.
          * @param compVec The vector of composition
          */
-        void initNetworkComp(const std::vector<std::vector<int>>& compVec);
+        void initNetworkComps(const NetworkCompsType& compVec) const;
 
     public:
         /**
@@ -310,7 +317,7 @@ public:
                 const std::vector<double>& grid,
                 int ny, double hy,
                 int nz, double hz,
-                const std::vector<std::vector<int> >& compVec);
+                const NetworkCompsType& compVec);
 
         /**
          * Open an existing header group.
@@ -329,14 +336,29 @@ public:
          */
         void read(int &nx, double &hx, int &ny,
                 double &hy, int &nz, double &hz) const;
+
+        /**
+         * Read our network compositions.
+         *
+         * @return The compositions of our network.
+         */
+        NetworkCompsType readNetworkComps(void) const;
     };
 
 
     // A group describing a network within our HDF5 file.
     class NetworkGroup : public HDF5File::Group {
     public:
+        // Concise name for type of network
+        // in HDF5 class method parameters.
+        using NetworkType = std::vector<std::vector<double>>;
+
         // Path to the network group within our HDF5 file.
         static const fs::path path;
+
+        // Name of network dataset.
+        static const std::string netDatasetName;
+
 
         NetworkGroup(void) = delete;
         NetworkGroup(const NetworkGroup& other) = delete;
@@ -354,7 +376,7 @@ public:
          * 
          * @return The vector of vector which contain the network dataset.
          */
-        std::vector<std::vector<double> > readNetwork(void) const;
+        NetworkType readNetwork(void) const;
 
         
         /**
@@ -406,7 +428,7 @@ public:
      */
     XFile(fs::path path,
             const std::vector<double>& grid,
-            const std::vector<std::vector<int> >& compVec,
+            const HeaderGroup::NetworkCompsType& compVec,
             fs::path networkFilePath,
             int ny = 0,
             double hy = 0.0,
