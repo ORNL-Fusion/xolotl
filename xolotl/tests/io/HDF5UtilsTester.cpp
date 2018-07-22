@@ -88,8 +88,9 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	double currentTimeStep = 0.000001;
 
 	// Set the surface information
-	int iSurface = 3;
-	double nInter = 1.0, previousFlux = 0.1;
+    xolotlCore::XFile::TimestepGroup::Surface1DType iSurface = 3;
+    xolotlCore::XFile::TimestepGroup::Data1DType nInter = 1.0;
+    xolotlCore::XFile::TimestepGroup::Data1DType previousFlux = 0.1;
 
     // Define a faux network composition vector.
     BOOST_TEST_MESSAGE("Creating faux comp vec.");
@@ -186,11 +187,11 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 
         // Read the surface position
         BOOST_TEST_MESSAGE("Checking test file last time step surface position.");
-        int surfacePos = tsGroup->readSurface1D();
+        auto surfacePos = tsGroup->readSurface1D();
         BOOST_REQUIRE_EQUAL(surfacePos, iSurface);
-        double nInterstitial = tsGroup->readData1D("nInterstitial");
+        auto nInterstitial = tsGroup->readData1D("nInterstitial");
         BOOST_REQUIRE_CLOSE(nInterstitial, nInter, 0.0001);
-        double previousIFlux = tsGroup->readData1D("previousIFlux");
+        auto previousIFlux = tsGroup->readData1D("previousIFlux");
         BOOST_REQUIRE_CLOSE(previousIFlux, previousFlux, 0.0001);
 
         // Read the network of the written file
@@ -300,9 +301,9 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
     double currentTimeStep = 0.000001;
 
     // Define the 2D surface information.
-    std::vector<int> iSurface = { 2, 3, 2, 0, 5 };
-    std::vector<double> nInter = { 0.0, 0.0, 0.5, 0.6, 0.5 };
-    std::vector<double> previousFlux = { 0.0, 0.1, 3.0, -1.0, 5.0 };
+    xolotlCore::XFile::TimestepGroup::Surface2DType iSurface = { 2, 3, 2, 0, 5 };
+    xolotlCore::XFile::TimestepGroup::Data2DType nInter = { 0.0, 0.0, 0.5, 0.6, 0.5 };
+    xolotlCore::XFile::TimestepGroup::Data2DType previousFlux = { 0.0, 0.1, 3.0, -1.0, 5.0 };
 
     // Open the file to add concentrations.
     // Done in its own scope so that it closes when the
@@ -396,13 +397,21 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
     double currentTimeStep = 0.000001;
 
 	// Set the 3D surface information.
-	std::vector<std::vector<int> > iSurface = { { 2, 4, 1, 0, 5 }, { 2, 3, 2, 0,
-			5 }, { 6, 1, 2, 3, 2 } };
-	std::vector<std::vector<double> > nInter = { { 0.0, 0.0, 0.0, 0.0, 0.0 }, {
-			2.0, 3.0, 2.0, 0.0, 0.5 }, { 0.0, 0.0, 0.0, 0.0, 0.0 } };
-	std::vector<std::vector<double> > previousFlux = {
-			{ 0.0, 0.0, 0.0, 0.0, 0.0 }, { -2.0, 3.0, 2.0, 0.0, -0.5 }, { 0.0,
-					0.0, 0.0, 0.0, 0.0 } };
+    xolotlCore::XFile::TimestepGroup::Surface3DType iSurface = {
+        { 2, 4, 1, 0, 5 },
+        { 2, 3, 2, 0, 5 },
+        { 6, 1, 2, 3, 2 }
+    };
+    xolotlCore::XFile::TimestepGroup::Data3DType nInter = {
+        { 0.0, 0.0, 0.0, 0.0, 0.0 },
+        {2.0, 3.0, 2.0, 0.0, 0.5 },
+        { 0.0, 0.0, 0.0, 0.0, 0.0 }
+    };
+    xolotlCore::XFile::TimestepGroup::Data3DType previousFlux = {
+        { 0.0, 0.0, 0.0, 0.0, 0.0 },
+        { -2.0, 3.0, 2.0, 0.0, -0.5 },
+        { 0.0, 0.0, 0.0, 0.0, 0.0 }
+    };
 
     // Open test file to add timestep group with concentrations.
     // Done in its own scope so that it closes when the

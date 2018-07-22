@@ -2,7 +2,6 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include <HDF5Utils.h>
 #include <PSIClusterReactionNetwork.h>
 #include <DummyHandlerRegistry.h>
 #include <HDF5NetworkLoader.h>

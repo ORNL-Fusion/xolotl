@@ -33,6 +33,20 @@ public:
                                             int timeStep);
 
     public:
+        // Concise name for surface representations.
+        using Surface1DType = int;
+        using Surface2DType = std::vector<Surface1DType>;
+        using Surface3DType = std::vector<Surface2DType>;
+
+        // Concise name for data representations.
+        using Data1DType = double;
+        using Data2DType = std::vector<Data1DType>;
+        using Data3DType = std::vector<Data2DType>;
+
+        /**
+         * Construct a TimestepGroup.
+         * Default and copy constructors explicitly disallowed.
+         */
         TimestepGroup(void) = delete;
         TimestepGroup(const TimestepGroup& other) = delete;
 
@@ -66,7 +80,9 @@ public:
          * @param nInter The quantity of interstitial at each surface position
          * @param previousFlux The previous I flux at each surface position
          */
-        void writeSurface1D(int iSurface, double nInter, double previousFlux);
+        void writeSurface1D(Surface1DType iSurface,
+                            Data1DType nInter,
+                            Data1DType previousFlux) const;
 
         /**
          * Save the surface positions to our timestep group.
@@ -75,8 +91,9 @@ public:
          * @param nInter The quantity of interstitial at each surface position
          * @param previousFlux The previous I flux at each surface position
          */
-        void writeSurface2D(std::vector<int> iSurface,
-                std::vector<double> nInter, std::vector<double> previousFlux);
+        void writeSurface2D(const Surface2DType& iSurface,
+                            const Data2DType& nInter,
+                            const Data2DType& previousFlux) const;
 
         /**
          * Save the surface positions to our timestep group.
@@ -85,9 +102,9 @@ public:
          * @param nInter The quantity of interstitial at each surface position
          * @param previousFlux The previous I flux at each surface position
          */
-        void writeSurface3D(std::vector<std::vector<int> > iSurface,
-                std::vector<std::vector<double> > nInter,
-                std::vector<std::vector<double> > previousFlux);
+        void writeSurface3D(const Surface3DType& iSurface,
+                            const Data3DType& nInter,
+                            const Data3DType& previousFlux) const;
 
         /**
          * Save the bottom informations to our timestep group.
@@ -99,8 +116,9 @@ public:
          * @param nT The quantity of tritium at the bottom
          * @param previousTFlux The previous T flux
          */
-        void writeBottom1D(double nHe, double previousHeFlux, double nD,
-                double previousDFlux, double nT, double previousTFlux);
+        void writeBottom1D(Data1DType nHe, Data1DType previousHeFlux,
+                Data1DType nD, Data1DType previousDFlux,
+                Data1DType nT, Data1DType previousTFlux);
 
         /**
          * Save the bottom informations to our timestep group.
@@ -112,10 +130,12 @@ public:
          * @param nT The quantity of tritium at the bottom
          * @param previousTFlux The previous T flux
          */
-        void writeBottom2D(std::vector<double> nHe,
-                std::vector<double> previousHeFlux,
-                std::vector<double> nD, std::vector<double> previousDFlux,
-                std::vector<double> nT, std::vector<double> previousTFlux);
+        void writeBottom2D(const Data2DType& nHe,
+                            const Data2DType& previousHeFlux,
+                            const Data2DType& nD,
+                            const Data2DType& previousDFlux,
+                            const Data2DType& nT,
+                            const Data2DType& previousTFlux);
 
 
         /**
@@ -153,7 +173,7 @@ public:
          *
          * @return The index of the surface position
          */
-        int readSurface1D(void) const;
+        Surface1DType readSurface1D(void) const;
 
         /**
          * Read the surface position from our concentration group in
@@ -161,7 +181,7 @@ public:
          *
          * @return The vector of indices of the surface position
          */
-        std::vector<int> readSurface2D(void) const;
+        Surface2DType readSurface2D(void) const;
 
         /**
          * Read the surface position from our concentration group in
@@ -169,7 +189,7 @@ public:
          *
          * @return The vector of vector of indices of the surface position
          */
-        std::vector<std::vector<int> > readSurface3D(void) const;
+        Surface3DType readSurface3D(void) const;
 
         /**
          * Read some data from our concentration
@@ -178,7 +198,7 @@ public:
          * @param dataName The name of the data we want
          * @return The value of the data
          */
-        double readData1D(const std::string& dataName) const;
+        Data1DType readData1D(const std::string& dataName) const;
 
         /**
          * Read some data from our concentration group in
@@ -187,7 +207,7 @@ public:
          * @param dataName The name of the data we want
          * @return The vector of the data
          */
-        std::vector<double> readData2D(const std::string& dataName) const;
+        Data2DType readData2D(const std::string& dataName) const;
 
         /**
          * Read some data from our concentration group file in
@@ -196,8 +216,7 @@ public:
          * @param dataName The name of the data we want
          * @return The vector of vector of data
          */
-        std::vector<std::vector<double> > readData3D(
-                const std::string& dataName) const;
+        Data3DType readData3D(const std::string& dataName) const;
 
         /**
          * Read our (i,j,k)-th grid point concentrations.
@@ -207,9 +226,7 @@ public:
          * @param k The index of the grid point on the z axis
          * @return The vector of concentrations
          */
-        std::vector<std::vector<double> > readGridPoint(
-                int i, int j = -1, int k = -1) const;
-
+        Data3DType readGridPoint(int i, int j = -1, int k = -1) const;
     };
 
 

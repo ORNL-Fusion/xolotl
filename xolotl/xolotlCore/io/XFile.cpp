@@ -460,9 +460,9 @@ XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
 }
 
 
-void XFile::TimestepGroup::writeSurface1D(int iSurface,
-                                            double nInter,
-                                            double previousFlux) {
+void XFile::TimestepGroup::writeSurface1D(Surface1DType iSurface,
+                                            Data1DType nInter,
+                                            Data1DType previousFlux) const {
 
 	// Create, write, and close the surface position attribute
 	hid_t dataspaceId = H5Screate(H5S_SCALAR);
@@ -490,8 +490,9 @@ void XFile::TimestepGroup::writeSurface1D(int iSurface,
 }
 
 
-void XFile::TimestepGroup::writeSurface2D(std::vector<int> iSurface,
-		std::vector<double> nInter, std::vector<double> previousFlux) {
+void XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
+                                        const Data2DType& nInter,
+                                        const Data2DType& previousFlux) const {
 
 	// Create the array that will store the indices and fill it
 	int size = iSurface.size();
@@ -551,10 +552,9 @@ void XFile::TimestepGroup::writeSurface2D(std::vector<int> iSurface,
 }
 
 
-void XFile::TimestepGroup::writeSurface3D(
-		std::vector<std::vector<int> > iSurface,
-		std::vector<std::vector<double> > nInter,
-		std::vector<std::vector<double> > previousFlux) {
+void XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
+                                        const Data3DType& nInter,
+                                        const Data3DType& previousFlux) const {
 
 	// Create the array that will store the indices and fill it
 	int xSize = iSurface.size();
@@ -617,9 +617,10 @@ void XFile::TimestepGroup::writeSurface3D(
 }
 
 
-void XFile::TimestepGroup::writeBottom1D(double nHe, 
-        double previousHeFlux, double nD,
-		double previousDFlux, double nT, double previousTFlux) {
+void XFile::TimestepGroup::writeBottom1D(
+                            Data1DType nHe, Data1DType previousHeFlux,
+                            Data1DType nD, Data1DType previousDFlux,
+                            Data1DType nT, Data1DType previousTFlux) {
 
 	// Create, write, and close the quantity of helium attribute
 	hid_t dataspaceId = H5Screate(H5S_SCALAR);
@@ -660,10 +661,10 @@ void XFile::TimestepGroup::writeBottom1D(double nHe,
 }
 
 
-void XFile::TimestepGroup::writeBottom2D(std::vector<double> nHe,
-		std::vector<double> previousHeFlux, std::vector<double> nD,
-		std::vector<double> previousDFlux, std::vector<double> nT,
-		std::vector<double> previousTFlux) {
+void XFile::TimestepGroup::writeBottom2D(
+        const Data2DType& nHe, const Data2DType& previousHeFlux,
+        const Data2DType& nD, const Data2DType& previousDFlux,
+        const Data2DType& nT, const Data2DType& previousTFlux) {
 
 	// Find out the size of the arrays
 	const int size = nHe.size();
@@ -799,7 +800,7 @@ double XFile::TimestepGroup::readPreviousTime(void) const {
 }
 
 
-int XFile::TimestepGroup::readSurface1D(void) const {
+auto XFile::TimestepGroup::readSurface1D(void) const -> Surface1DType {
 
 	// Initialize the surface position
 	int iSurface = 0;
@@ -812,10 +813,7 @@ int XFile::TimestepGroup::readSurface1D(void) const {
 	return iSurface;
 }
 
-std::vector<int> XFile::TimestepGroup::readSurface2D(void) const {
-
-	// Create the vector to return
-	std::vector<int> toReturn;
+auto XFile::TimestepGroup::readSurface2D(void) const -> Surface2DType {
 
 	// Open the dataset
 	hid_t datasetId = H5Dopen(getId(), "iSurface", H5P_DEFAULT);
@@ -828,16 +826,11 @@ std::vector<int> XFile::TimestepGroup::readSurface2D(void) const {
 	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 	// Create the array that will receive the indices
-	int index[dims[0]];
+    Surface2DType toReturn(dims[0]);
 
 	// Read the data set
 	status = H5Dread(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
-	H5P_DEFAULT, &index);
-
-	// Loop on the length and fill the vector to return
-	for (int i = 0; i < dims[0]; i++) {
-		toReturn.push_back(index[i]);
-	}
+	H5P_DEFAULT, toReturn.data());
 
 	// Close everything
 	status = H5Dclose(datasetId);
@@ -846,10 +839,7 @@ std::vector<int> XFile::TimestepGroup::readSurface2D(void) const {
 	return toReturn;
 }
 
-std::vector<std::vector<int> > XFile::TimestepGroup::readSurface3D(void) const {
-
-	// Create the vector to return
-	std::vector<std::vector<int> > toReturn;
+auto XFile::TimestepGroup::readSurface3D(void) const -> Surface3DType {
 
 	// Open the dataset
 	hid_t datasetId = H5Dopen(getId(), "iSurface", H5P_DEFAULT);
@@ -862,21 +852,19 @@ std::vector<std::vector<int> > XFile::TimestepGroup::readSurface3D(void) const {
 	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 	// Create the array that will receive the indices
-	int index[dims[0]][dims[1]];
+    Surface3DType::value_type index(dims[0]*dims[1]);    
 
 	// Read the data set
 	status = H5Dread(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
-	H5P_DEFAULT, &index);
+	H5P_DEFAULT, index.data());
 
 	// Loop on the length and fill the vector to return
-	for (int i = 0; i < dims[0]; i++) {
-		// Create a temporary vector
-		std::vector<int> temp;
-		for (int j = 0; j < dims[1]; j++) {
-			temp.push_back(index[i][j]);
-		}
-		// Add the temporary vector to the one to return
-		toReturn.push_back(temp);
+    Surface3DType toReturn(dims[0]);
+	for (int i = 0; i < dims[0]; ++i) {
+
+        toReturn[i].reserve(dims[1]);
+        std::copy(index.begin() + i*dims[1], index.begin() + (i+1)*dims[1],
+                    std::back_inserter(toReturn[i]));
 	}
 
 	// Close everything
@@ -887,10 +875,10 @@ std::vector<std::vector<int> > XFile::TimestepGroup::readSurface3D(void) const {
 }
 
 
-double XFile::TimestepGroup::readData1D(const std::string& dataName) const {
+auto XFile::TimestepGroup::readData1D(const std::string& dataName) const -> Data1DType {
 
 	// Initialize the surface position
-	double data = 0.0;
+	Data1DType data = 0.0;
 
 	// Open and read the iSurface attribute
 	hid_t attributeId = H5Aopen(getId(), dataName.c_str(), H5P_DEFAULT);
@@ -900,11 +888,8 @@ double XFile::TimestepGroup::readData1D(const std::string& dataName) const {
 	return data;
 }
 
-std::vector<double> XFile::TimestepGroup::readData2D(
-                                const std::string& dataName) const {
+auto XFile::TimestepGroup::readData2D(const std::string& dataName) const -> Data2DType {
 
-	// Create the vector to return
-	std::vector<double> toReturn;
 
 	// Open the dataset
 	hid_t datasetId = H5Dopen(getId(), dataName.c_str(), H5P_DEFAULT);
@@ -917,16 +902,11 @@ std::vector<double> XFile::TimestepGroup::readData2D(
 	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 	// Create the array that will receive the indices
-	double flux[dims[0]];
+    Data2DType toReturn(dims[0]);
 
 	// Read the data set
 	status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-	H5P_DEFAULT, &flux);
-
-	// Loop on the length and fill the vector to return
-	for (int i = 0; i < dims[0]; i++) {
-		toReturn.push_back(flux[i]);
-	}
+	H5P_DEFAULT, toReturn.data());
 
 	// Close everything
 	status = H5Dclose(datasetId);
@@ -935,11 +915,7 @@ std::vector<double> XFile::TimestepGroup::readData2D(
 	return toReturn;
 }
 
-std::vector<std::vector<double> > XFile::TimestepGroup::readData3D(
-		const std::string& dataName) const {
-
-	// Create the vector to return
-	std::vector<std::vector<double> > toReturn;
+auto XFile::TimestepGroup::readData3D(const std::string& dataName) const -> Data3DType {
 
 	// Open the dataset
 	hid_t datasetId = H5Dopen(getId(), dataName.c_str(), H5P_DEFAULT);
@@ -952,21 +928,20 @@ std::vector<std::vector<double> > XFile::TimestepGroup::readData3D(
 	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 	// Create the array that will receive the indices
-	double quantity[dims[0]][dims[1]];
+    Data3DType::value_type quantity(dims[0]*dims[1]);
 
 	// Read the data set
 	status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-	H5P_DEFAULT, &quantity);
+	H5P_DEFAULT, quantity.data());
 
 	// Loop on the length and fill the vector to return
+    Data3DType toReturn(dims[0]);
 	for (int i = 0; i < dims[0]; i++) {
-		// Create a temporary vector
-		std::vector<double> temp;
-		for (int j = 0; j < dims[1]; j++) {
-			temp.push_back(quantity[i][j]);
-		}
-		// Add the temporary vector to the one to return
-		toReturn.push_back(temp);
+
+        toReturn[i].reserve(dims[1]);
+        std::copy(quantity.begin() + i*dims[1],
+                    quantity.begin() + (i+1)*dims[1],
+                    std::back_inserter(toReturn[i]));
 	}
 
 	// Close everything
@@ -977,11 +952,7 @@ std::vector<std::vector<double> > XFile::TimestepGroup::readData3D(
 }
 
 
-std::vector<std::vector<double> > XFile::TimestepGroup::readGridPoint(
-        int i, int j, int k) const {
-
-	// Create the vector to return
-	std::vector<std::vector<double> > toReturn;
+auto XFile::TimestepGroup::readGridPoint(int i, int j, int k) const -> Data3DType {
 
 	// Set the dataset name
 	std::stringstream datasetName;
@@ -992,6 +963,7 @@ std::vector<std::vector<double> > XFile::TimestepGroup::readGridPoint(
 	H5P_DEFAULT);
 
 	// If the dataset exists
+    Data3DType toReturn;
 	if (datasetExist) {
 		// Open the dataset
 		hid_t datasetId = H5Dopen(getId(), datasetName.str().c_str(),
@@ -1005,21 +977,20 @@ std::vector<std::vector<double> > XFile::TimestepGroup::readGridPoint(
 		auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
 
 		// Create the array that will receive the concentrations
-		double conc[dims[0]][dims[1]];
+        Data3DType::value_type conc(dims[0]*dims[1]);
 
 		// Read the data set
 		status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-		H5P_DEFAULT, &conc);
+		H5P_DEFAULT, conc.data());
 
 		// Loop on the length
+        toReturn.resize(dims[0]);
 		for (unsigned int n = 0; n < dims[0]; n++) {
-			// Create the concentration vector for this cluster
-			std::vector<double> tmp;
-			tmp.push_back(conc[n][0]);
-			tmp.push_back(conc[n][1]);
 
-			// Add it to the main vector
-			toReturn.push_back(tmp);
+            toReturn[n].reserve(dims[1]);
+            std::copy(conc.begin() + n*dims[1],
+                        conc.begin() + (n+1)*dims[1],
+                        std::back_inserter(toReturn[n]));
 		}
 
 		// Close everything
