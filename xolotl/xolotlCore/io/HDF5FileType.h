@@ -58,6 +58,23 @@ HDF5File::TypeInMemory<uint64_t>::TypeInMemory(void)
 { }
 
 
+//----------------------------------------------------------------------------
+// double
+//----------------------------------------------------------------------------
+
+template<>
+inline
+HDF5File::TypeInFile<double>::TypeInFile(void)
+  : HDF5File::TypeBase("double", H5T_IEEE_F64LE, false)
+{ }
+
+template<>
+inline
+HDF5File::TypeInMemory<double>::TypeInMemory(void)
+  : HDF5File::TypeBase("double", H5T_NATIVE_DOUBLE, false)
+{ }
+
+
 #if defined(__clang__) && defined(__APPLE__)
 //----------------------------------------------------------------------------
 // size_t
@@ -99,7 +116,7 @@ template<typename T>
 inline
 HDF5File::TypeInFile<std::vector<T> >::TypeInFile(void)
   : HDF5File::TypeBase("std::vector<T>",
-                            H5Tvlen_create(TypeInFile<T>().GetId()),
+                            H5Tvlen_create(TypeInFile<T>().getId()),
                             true)
 {
     if(id < 0)
@@ -112,7 +129,7 @@ template<typename T>
 inline
 HDF5File::TypeInMemory<std::vector<T> >::TypeInMemory(void)
   : HDF5File::TypeBase("std::vector<T>",
-                            H5Tvlen_create(TypeInMemory<T>().GetId()),
+                            H5Tvlen_create(TypeInMemory<T>().getId()),
                             true)
 {
     if(id < 0)

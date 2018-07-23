@@ -10,6 +10,13 @@
 
 namespace xolotlCore {
 
+
+// Class for reading and writing an HDF5 file with Xolotl data.
+// Note: the class stores 1D data as an attribute on a group instead
+// of as a dataset.
+// TODO Why?  because it is an attribute, every process must have same
+// data to write.  As opposed to dataset, where can use independent file 
+// access to let one process write. (?)
 class XFile : public HDF5File {
 public:
 
@@ -19,7 +26,32 @@ public:
     private:
 
         // Prefix to use when constructing group names.
-        static std::string groupNamePrefix;
+        static const std::string groupNamePrefix;
+
+        // Names of time-related attributes.
+        static const std::string absTimeAttrName;
+        static const std::string prevTimeAttrName;
+        static const std::string deltaTimeAttrName;
+
+        // Names of surface position attributes.
+        static const std::string surfacePosDataName;
+
+        // Names of interstitial attributes.
+        static const std::string nIntersAttrName;
+        static const std::string prevIFluxAttrName;
+
+        // Names of Helium attributes.
+        static const std::string nHeAttrName;
+        static const std::string prevHeFluxAttrName;
+
+        // Names of Deuterium attributes.
+        static const std::string nDAttrName;
+        static const std::string prevDFluxAttrName;
+
+        // Names of Tritium attributes.
+        static const std::string nTAttrName;
+        static const std::string prevTFluxAttrName;
+
 
         /**
          * Construct the group name for the given time step.
@@ -306,6 +338,14 @@ public:
 
         // Name of network composition dataset within our group.
         static const std::string netCompsDatasetName;
+
+        // Names of grid-specification attributes.
+        static const std::string nxAttrName;
+        static const std::string hxAttrName;
+        static const std::string nyAttrName;
+        static const std::string hyAttrName;
+        static const std::string nzAttrName;
+        static const std::string hzAttrName;
 
         /**
          * Initialize the list of cluster compositions.

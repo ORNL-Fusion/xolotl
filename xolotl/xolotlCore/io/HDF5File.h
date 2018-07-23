@@ -202,22 +202,75 @@ public:
         }
     };
 
+    // Templatized base class.
+    // We do this so that we can implement the create and open 
+    // constructors once rather than in each of the derived classes.
     template<typename T>
-    class DataSet : public DataSetBase
+    class DataSetTBase : public DataSetBase
     {
+    public:
+        DataSetTBase(void) = delete;
+        DataSetTBase(const DataSetTBase<T>& other) = delete;
+
+        // Create data set.
+        DataSetTBase(const HDF5File::Group& group,
+                        std::string dsetName,
+                        const DataSpace& dspace);
+
+        // Open existing data set.
+        DataSetTBase(const HDF5File::Group& group, std::string dsetName);
+    };
+
+    template<typename T>
+    class DataSet : public DataSetTBase<T> {
     public:
         DataSet(void) = delete;
         DataSet(const DataSet& other) = delete;
 
         // Create data set.
         DataSet(const HDF5File::Group& group,
-                const DataSpace& dspace,
-                std::string dsetName);
+                std::string dsetName,
+                const DataSpace& dspace)
+          : DataSetTBase<T>(group, dspace, dsetName)
+        { }
 
         // Open existing data set.
-        DataSet(const HDF5File::Group& group, std::string dsetName);
+        DataSet(const HDF5File::Group& group, std::string dsetName)
+          : DataSetTBase<T>(group, dsetName)
+        { }
+
+        void write(const T& data) const;
+        T read(void) const;
     };
 
+    // Partial specialization for vector of T.
+    // At least as of C++11, we cannot do partial specialization of
+    // a member function so we have to declare a whole class.
+    template<typename T>
+    class DataSet<std::vector<T>> : public DataSetTBase<std::vector<T>> {
+    public:
+        DataSet(void) = delete;
+        DataSet(const DataSet& other) = delete;
+
+        // Create data set.
+        DataSet(const HDF5File::Group& group,
+                std::string dsetName,
+                const DataSpace& dspace)
+          : DataSetTBase<std::vector<T>>(group, dsetName, dspace)
+        { }
+
+        // Open existing data set.
+        DataSet(const HDF5File::Group& group, std::string dsetName)
+          : DataSetTBase<std::vector<T>>(group, dsetName)
+        { }
+
+        void write(const std::vector<T>& data) const;
+        std::vector<T> read(void) const;
+    };
+
+
+
+#if READY
     // Specialization of DataSet for writing vector of vectors.
     template<typename T>
     class VectorsDataSet : public DataSet<std::vector<T>>
@@ -241,6 +294,7 @@ public:
         void write(const std::vector<std::vector<T>>& data) const;
         std::vector<std::vector<T>> read(void) const;
     };
+#endif // READY
 
     // A group in the HDF5 file.
     class Group : public HDF5Object {

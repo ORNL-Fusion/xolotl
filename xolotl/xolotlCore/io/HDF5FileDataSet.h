@@ -19,9 +19,9 @@ HDF5File::DataSetBase::createName(const HDF5File::Group& group,
 
 
 template<typename T>
-HDF5File::DataSet<T>::DataSet(const HDF5File::Group& group,
-                                    const DataSpace& dspace,
-                                    std::string dsetName)
+HDF5File::DataSetTBase<T>::DataSetTBase(const HDF5File::Group& group,
+                                    std::string dsetName,
+                                    const DataSpace& dspace)
   : DataSetBase(createName(group, dsetName))
 {
     id = H5Dcreate(group.getId(),
@@ -40,7 +40,8 @@ HDF5File::DataSet<T>::DataSet(const HDF5File::Group& group,
 }
 
 template<typename T>
-HDF5File::DataSet<T>::DataSet(const HDF5File::Group& group, std::string dsetName)
+HDF5File::DataSetTBase<T>::DataSetTBase(const HDF5File::Group& group,
+                                        std::string dsetName)
   : DataSetBase(createName(group, dsetName))
 {
     id = H5Dopen(group.getId(),
@@ -50,6 +51,59 @@ HDF5File::DataSet<T>::DataSet(const HDF5File::Group& group, std::string dsetName
     {
         std::ostringstream estr;
         estr << "Failed to open dataset " << getName();
+        throw HDF5Exception(estr.str());
+    }
+}
+
+
+// Partial specialization for vector of scalars.  Should not be used for
+// vector of vectors - need a different specialization for those.
+template<typename T>
+std::vector<T>
+HDF5File::DataSet<std::vector<T>>::read(void) const {
+
+    // Ensure we have space for the data.
+    SimpleDataSpace<1> dspace(*this);
+    auto nItems = dspace.getDims()[0];
+    std::vector<T> ret(nItems);
+
+    // Read data from the file.
+    TypeInMemory<T> memType;
+    auto status = H5Dread(id, memType.getId(), H5S_ALL, H5S_ALL, H5P_DEFAULT, ret.data());
+    if(status < 0) {
+        std::ostringstream estr;
+        estr << "Unable to read value of vector dataset " << name;
+        throw HDF5Exception(estr.str());
+    }
+    return ret;
+}
+
+
+#if READY
+template<typename T>
+void
+HDF5File::DataSet<std::vector<T>>::write(const std::vector<T>& data) const {
+
+    // Verify the dimensionality of the attribute.
+    SimpleDataSpace<1> dspace(*this);
+    auto nItems = dspace.getDims()[0];
+    if(nItems != data.size())
+    {
+        throw HDF5Exception("Size mismatch when setting vector-valued dataset");
+    }
+
+    // Write the data.
+    TypeInMemory<T> memType;
+	auto status = H5Dwrite(id,
+                            memType.getId(),
+                            H5S_ALL,
+                            H5S_ALL,
+	                        H5P_DEFAULT,
+                            data.data());
+    if(status < 0)
+    {
+        std::ostringstream estr;
+        estr << "Failed to write variable length vector data to dataset " << name;
         throw HDF5Exception(estr.str());
     }
 }
@@ -131,6 +185,7 @@ HDF5File::VectorsDataSet<T>::read(void) const
 
     return ret;
 }
+#endif // READY
 
 } // namespace xolotlCore
 
