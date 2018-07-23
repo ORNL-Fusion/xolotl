@@ -8,7 +8,10 @@ SET(LIBRARY_NAME "xolotlIO")
 # Define our library and specify the sources needed to build it.
 add_library(${LIBRARY_NAME} STATIC
             HDF5File.cpp
+            HDF5FileType.cpp
+            HDF5FileAttribute.cpp
             HDF5FileGroup.cpp
+            HDF5FileDataSpace.cpp
             XFile.cpp
             MPIUtils.cpp)
 

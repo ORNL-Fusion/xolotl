@@ -92,9 +92,9 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file,
 
 	// Create, write, and close the nx attribute
 	int nx = grid.size() - 2;
-	hid_t dataspaceId = H5Screate(H5S_SCALAR);
+    XFile::ScalarDataSpace scalarDSpace;
 	hid_t attributeId = H5Acreate2(getId(), "nx", H5T_STD_I32LE,
-			dataspaceId,
+			scalarDSpace.getId(),
 			H5P_DEFAULT, H5P_DEFAULT);
 	auto status = H5Awrite(attributeId, H5T_STD_I32LE, &nx);
 	status = H5Aclose(attributeId);
@@ -102,29 +102,29 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file,
 	double hx = 0.0;
 	if (grid.size() > 0)
 		hx = grid[1] - grid[0];
-	attributeId = H5Acreate2(getId(), "hx", H5T_IEEE_F64LE, dataspaceId,
+	attributeId = H5Acreate2(getId(), "hx", H5T_IEEE_F64LE, scalarDSpace.getId(),
 	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &hx);
 	status = H5Aclose(attributeId);
 
 	// Create, write, and close the ny attribute
-	attributeId = H5Acreate2(getId(), "ny", H5T_STD_I32LE, dataspaceId,
+	attributeId = H5Acreate2(getId(), "ny", H5T_STD_I32LE, scalarDSpace.getId(),
 	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_STD_I32LE, &ny);
 	status = H5Aclose(attributeId);
 	// Create, write, and close the hy attribute
-	attributeId = H5Acreate2(getId(), "hy", H5T_IEEE_F64LE, dataspaceId,
+	attributeId = H5Acreate2(getId(), "hy", H5T_IEEE_F64LE, scalarDSpace.getId(),
 	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &hy);
 	status = H5Aclose(attributeId);
 
 	// Create, write, and close the nz attribute
-	attributeId = H5Acreate2(getId(), "nz", H5T_STD_I32LE, dataspaceId,
+	attributeId = H5Acreate2(getId(), "nz", H5T_STD_I32LE, scalarDSpace.getId(),
 	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_STD_I32LE, &nz);
 	status = H5Aclose(attributeId);
 	// Create, write, and close the hz attribute
-	attributeId = H5Acreate2(getId(), "hz", H5T_IEEE_F64LE, dataspaceId,
+	attributeId = H5Acreate2(getId(), "hz", H5T_IEEE_F64LE, scalarDSpace.getId(),
 	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &hz);
 
@@ -134,9 +134,9 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file,
 		gridArray[i] = grid[i + 1] - grid[1];
 	}
     std::array<hsize_t, 1> dims{ (hsize_t)nx };
-	dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
+    XFile::SimpleDataSpace<1> gridDSpace(dims);
 	hid_t datasetId = H5Dcreate2(getId(), "grid", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			gridDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, &gridArray);
 	status = H5Dclose(datasetId);
@@ -147,7 +147,6 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file,
 
 	// Close everything
 	status = H5Aclose(attributeId);
-	status = H5Sclose(dataspaceId);
 }
 
 XFile::HeaderGroup::HeaderGroup(const XFile& file)
@@ -170,17 +169,16 @@ void XFile::HeaderGroup::initNetworkComps(const NetworkCompsType& compVec) const
 
 	// Create the dataspace for the dataset with dimension dims
     std::array<hsize_t, 2> dims{ (hsize_t)dof, (hsize_t)compSize };
-	hid_t dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
+    XFile::SimpleDataSpace<2> surfaceDSpace(dims);
 
 	// Create the dataset for the surface indices
 	hid_t datasetId = H5Dcreate2(getId(), netCompsDatasetName.c_str(), H5T_STD_I32LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			surfaceDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write in the dataset
 	auto  status = H5Dwrite(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, &compArray);
 	// Close everything
 	status = H5Dclose(datasetId);
-	status = H5Sclose(dataspaceId);
 }
 
 void XFile::HeaderGroup::read(int &nx, double &hx,
@@ -309,6 +307,7 @@ void XFile::NetworkGroup::copyTo(const XFile& target) const {
 // ConcentrationGroup
 //
 const fs::path XFile::ConcentrationGroup::path = "/concentrationsGroup";
+const std::string XFile::ConcentrationGroup::lastTimestepAttrName = "lastTimeStep";
 
 
 XFile::ConcentrationGroup::ConcentrationGroup(const XFile& file, bool create)
@@ -320,15 +319,11 @@ XFile::ConcentrationGroup::ConcentrationGroup(const XFile& file, bool create)
         //
         // Create, write, and close the last written time step attribute
         int lastTimeStep = -1;
-        hid_t lastDataspaceId = H5Screate(H5S_SCALAR);
-        hid_t lastAttributeId = H5Acreate2(getId(), "lastTimeStep",
-        H5T_STD_I32LE, lastDataspaceId,
-        H5P_DEFAULT, H5P_DEFAULT);
-        auto status = H5Awrite(lastAttributeId, H5T_STD_I32LE, &lastTimeStep);
-
-        // Close everything
-        status = H5Aclose(lastAttributeId);
-        status = H5Sclose(lastDataspaceId);
+        XFile::ScalarDataSpace lastDSpace;
+        Attribute<int> lastTimestepAttr(*this,
+                                        lastTimestepAttrName,
+                                        lastDSpace);
+        lastTimestepAttr.setTo(lastTimeStep);
     }
 }
 
@@ -344,9 +339,8 @@ XFile::ConcentrationGroup::addTimestepGroup(int timeStep,
             new TimestepGroup(*this, timeStep, time, previousTime, deltaTime));
 
     // Update our last known timestep.
-	auto attributeId = H5Aopen(getId(), "lastTimeStep", H5P_DEFAULT);
-	auto status = H5Awrite(attributeId, H5T_STD_I32LE, &timeStep);
-	status = H5Aclose(attributeId);
+    Attribute<int> lastTimestepAttr(*this, lastTimestepAttrName);
+    lastTimestepAttr.setTo(timeStep);
 
     return std::move(tsGroup);
 }
@@ -354,13 +348,8 @@ XFile::ConcentrationGroup::addTimestepGroup(int timeStep,
 
 int XFile::ConcentrationGroup::getLastTimeStep(void) const {
 
-    int lastTimeStep;
-
-    hid_t lastAttributeId = H5Aopen(getId(), "lastTimeStep", H5P_DEFAULT);
-    auto status = H5Aread(lastAttributeId, H5T_STD_I32LE, &lastTimeStep);
-    status = H5Aclose(lastAttributeId);
-
-    return lastTimeStep;
+    Attribute<int> lastTimestepAttr(*this, lastTimestepAttrName);
+    return lastTimestepAttr.get();
 }
 
 
@@ -428,27 +417,26 @@ XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
   : HDF5File::Group(concGroup, makeGroupName(concGroup, timeStep), true) {
 
 	// Create, write, and close the absolute time attribute
-	hid_t dataspaceId = H5Screate(H5S_SCALAR);
+    XFile::ScalarDataSpace scalarDSpace;
 	hid_t attributeId = H5Acreate2(getId(), "absoluteTime",
-	H5T_IEEE_F64LE, dataspaceId,
+	H5T_IEEE_F64LE, scalarDSpace.getId(),
 	H5P_DEFAULT, H5P_DEFAULT);
 	auto status = H5Awrite(attributeId, H5T_IEEE_F64LE, &time);
 	status = H5Aclose(attributeId);
 
 	// Create, write, and close the previous time attribute
 	attributeId = H5Acreate2(getId(), "previousTime", H5T_IEEE_F64LE,
-			dataspaceId,
+			scalarDSpace.getId(),
 			H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &previousTime);
 	status = H5Aclose(attributeId);
 
 	// Create, write, and close the timestep time attribute
 	attributeId = H5Acreate2(getId(), "deltaTime", H5T_IEEE_F64LE,
-			dataspaceId,
+			scalarDSpace.getId(),
 			H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &deltaTime);
 	status = H5Aclose(attributeId);
-	status = H5Sclose(dataspaceId);
 }
 
 
@@ -465,26 +453,23 @@ void XFile::TimestepGroup::writeSurface1D(Surface1DType iSurface,
                                             Data1DType previousFlux) const {
 
 	// Create, write, and close the surface position attribute
-	hid_t dataspaceId = H5Screate(H5S_SCALAR);
+    XFile::ScalarDataSpace scalarDSpace;
 	hid_t attributeId = H5Acreate2(getId(), "iSurface", H5T_STD_I32LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+			scalarDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
 	auto status = H5Awrite(attributeId, H5T_STD_I32LE, &iSurface);
 	status = H5Aclose(attributeId);
 
 	// Create, write, and close the quantity of interstitial attribute
 	attributeId = H5Acreate2(getId(), "nInterstitial", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+			scalarDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &nInter);
 	status = H5Aclose(attributeId);
 
 	// Create, write, and close the flux of interstitial attribute
 	attributeId = H5Acreate2(getId(), "previousIFlux", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+			scalarDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &previousFlux);
 	status = H5Aclose(attributeId);
-
-	// Close the dataspace
-	status = H5Sclose(dataspaceId);
 
 	return;
 }
@@ -503,11 +488,11 @@ void XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
 
 	// Create the dataspace for the dataset with dimension dims
     std::array<hsize_t, 1> dims{ (hsize_t)size };
-	hid_t dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
+    XFile::SimpleDataSpace<1> indexDSpace(dims);
 
 	// Create the dataset for the surface indices
 	hid_t datasetId = H5Dcreate2(getId(), "iSurface", H5T_STD_I32LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 	// Write surface array in the dataset
 	auto status = H5Dwrite(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
@@ -524,7 +509,7 @@ void XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
 
 	// Create the dataset for the surface indices
 	datasetId = H5Dcreate2(getId(), "nInterstitial", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 	// Write quantityArray in the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
@@ -540,7 +525,7 @@ void XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
 
 	// Create the dataset for the surface indices
 	datasetId = H5Dcreate2(getId(), "previousIFlux", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 	// Write quantityArray in the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
@@ -548,7 +533,6 @@ void XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
 
 	// Close everything
 	status = H5Dclose(datasetId);
-	status = H5Sclose(dataspaceId);
 }
 
 
@@ -568,11 +552,11 @@ void XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
 
 	// Create the dataspace for the dataset with dimension dims
     std::array<hsize_t, 2> dims{ (hsize_t)xSize, (hsize_t)ySize };
-	hid_t dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
+    XFile::SimpleDataSpace<2> indexDSpace(dims);
 
 	// Create the dataset for the surface indices
 	hid_t datasetId = H5Dcreate2(getId(), "iSurface", H5T_STD_I32LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write in the dataset
 	auto status = H5Dwrite(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, &indexArray);
@@ -589,7 +573,7 @@ void XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
 
 	// Create the dataset for the interstitial quantities
 	datasetId = H5Dcreate2(getId(), "nInterstitial", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write in the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, &quantityArray);
@@ -605,15 +589,12 @@ void XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
 
 	// Create the dataset for the interstitial quantities
 	datasetId = H5Dcreate2(getId(), "previousIFlux", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write in the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, &quantityArray);
 	// Close the dataset
 	status = H5Dclose(datasetId);
-
-	// Close the dataspace
-	status = H5Sclose(dataspaceId);
 }
 
 
@@ -623,41 +604,38 @@ void XFile::TimestepGroup::writeBottom1D(
                             Data1DType nT, Data1DType previousTFlux) {
 
 	// Create, write, and close the quantity of helium attribute
-	hid_t dataspaceId = H5Screate(H5S_SCALAR);
+    XFile::ScalarDataSpace scalarDSpace;
 	hid_t attributeId = H5Acreate2(getId(), "nHelium", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+			scalarDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
 	auto status = H5Awrite(attributeId, H5T_IEEE_F64LE, &nHe);
 	status = H5Aclose(attributeId);
 	// Create, write, and close the flux of helium attribute
 	attributeId = H5Acreate2(getId(), "previousHeFlux", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+			scalarDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &previousHeFlux);
 	status = H5Aclose(attributeId);
 
 	// Create, write, and close the quantity of deuterium attribute
 	attributeId = H5Acreate2(getId(), "nDeuterium", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+			scalarDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &nD);
 	status = H5Aclose(attributeId);
 	// Create, write, and close the flux of deuterium attribute
 	attributeId = H5Acreate2(getId(), "previousDFlux", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+			scalarDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &previousDFlux);
 	status = H5Aclose(attributeId);
 
 	// Create, write, and close the quantity of tritium attribute
 	attributeId = H5Acreate2(getId(), "nTritium", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+			scalarDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &nT);
 	status = H5Aclose(attributeId);
 	// Create, write, and close the flux of tritium attribute
 	attributeId = H5Acreate2(getId(), "previousTFlux", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+			scalarDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &previousTFlux);
 	status = H5Aclose(attributeId);
-
-	// Close the dataspace
-	status = H5Sclose(dataspaceId);
 }
 
 
@@ -671,11 +649,11 @@ void XFile::TimestepGroup::writeBottom2D(
 
 	// Create the dataspace for the dataset with dimension dims
     std::array<hsize_t, 1> dims{ (hsize_t)size };
-	hid_t dataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
+    XFile::SimpleDataSpace<1> dspace(dims);
 
 	// Create the dataset for helium
 	hid_t datasetId = H5Dcreate2(getId(), "nHelium", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 //	// Create the array that will store the quantities and fill it
 //	double quantityArray[size];
 //	for (int i = 0; i < size; i++) {
@@ -689,7 +667,7 @@ void XFile::TimestepGroup::writeBottom2D(
 
 	// Create the dataset for the helium flux
 	datasetId = H5Dcreate2(getId(), "previousHeFlux", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write  the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, previousHeFlux.data());
@@ -698,7 +676,7 @@ void XFile::TimestepGroup::writeBottom2D(
 
 	// Create the dataset for the deuterium
 	datasetId = H5Dcreate2(getId(), "nDeuterium", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, nD.data());
@@ -707,7 +685,7 @@ void XFile::TimestepGroup::writeBottom2D(
 
 	// Create the dataset for the deuterium flux
 	datasetId = H5Dcreate2(getId(), "previousDFlux", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write  the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, previousDFlux.data());
@@ -716,7 +694,7 @@ void XFile::TimestepGroup::writeBottom2D(
 
 	// Create the dataset for the tritium
 	datasetId = H5Dcreate2(getId(), "nTritium", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, nT.data());
@@ -725,14 +703,13 @@ void XFile::TimestepGroup::writeBottom2D(
 
 	// Create the dataset for the tritium flux
 	datasetId = H5Dcreate2(getId(), "previousTFlux", H5T_IEEE_F64LE,
-			dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write  the dataset
 	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, previousTFlux.data());
 
 	// Close everything
 	status = H5Dclose(datasetId);
-	status = H5Sclose(dataspaceId);
 }
 
 
@@ -746,18 +723,15 @@ void XFile::TimestepGroup::writeConcentrationDataset(int size,
 
 	// Create the dataspace for the dataset with dimension dims
     std::array<hsize_t, 2> dims{ (hsize_t)size, (hsize_t)2 };
-	auto concDataspaceId = H5Screate_simple(dims.size(), dims.data(), nullptr);
+    XFile::SimpleDataSpace<2> concDSpace(dims);
 
 	// Create the dataset of concentrations for this position
 	hid_t datasetId = H5Dcreate2(getId(), datasetName.str().c_str(),
-	H5T_IEEE_F64LE, concDataspaceId,
+	H5T_IEEE_F64LE, concDSpace.getId(),
 	H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-	// Close dataspace
-	auto status = H5Sclose(concDataspaceId);
-
 	// Write concArray in the dataset
-	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+	auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
 	H5P_DEFAULT, concArray);
 
 	// Close dataset

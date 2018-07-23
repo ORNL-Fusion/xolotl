@@ -236,6 +236,9 @@ public:
         // Path of the concentrations group within the file.
         static const fs::path path;
 
+        // Name of our last timestep attribute.
+        static const std::string lastTimestepAttrName;
+
     public:
         // Create or open the concentrationsGroup.
         ConcentrationGroup(void) = delete;

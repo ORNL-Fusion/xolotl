@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 #include "xolotlCore/io/Filesystem.h"
 #include "xolotlCore/io/HDF5Object.h"
 
@@ -46,6 +47,200 @@ public:
         }
     };
 
+    // A class to manage lifetime of a dataspace in the underlying file.
+    class DataSpace : public HDF5Object
+    {
+    protected:
+        /**
+         * Create a dataspace.
+         *
+         * @param _id The HDF5 id of the dataspace.
+         */
+        DataSpace(hid_t _id)
+          : HDF5Object("DataSpace", _id)
+        { }
+
+    public:
+        /**
+         * Create a dataspace.
+         * Default and copy constructor explicitly disallowed.
+         */
+        DataSpace(void) = delete;
+        DataSpace(const DataSpace& other) = delete;
+
+        /**
+         * Release an open DataSpace.
+         */
+        ~DataSpace(void)
+        {
+            H5Sclose(getId());
+        }
+    };
+
+    // A scalar DataSpace.
+    class ScalarDataSpace : public DataSpace
+    {
+    public:
+        /**
+         * Construct a DataSpace for a scalar value.
+         */
+        ScalarDataSpace(void);
+    };
+
+    // A "simple" DataSpace.  I.e., one that can be created using
+    // HDF5's H5Ssimple* functions.
+    class AttributeBase;
+    class DataSetBase;
+    template<uint32_t Rank>
+    class SimpleDataSpace : public DataSpace
+    {
+    public:
+        // Concise type for dimensions of a SimpleDataSpace.
+        using Dimensions = std::array<hsize_t, Rank>;
+
+    private:
+        // Dimensions of the dataspace.
+        Dimensions dims;
+
+    public:
+        SimpleDataSpace(const Dimensions& _dims);
+        SimpleDataSpace(const Dimensions& _dims, const Dimensions& _maxDims);
+        SimpleDataSpace(const AttributeBase& _attr);
+        SimpleDataSpace(const DataSetBase& _dset);
+
+        /**
+         * Obtain our dimensions.
+         *
+         * @return Dimensions of our SimpleDataSpace.
+         */
+        const Dimensions& getDims(void) const { return dims; }
+
+        /**
+         * Change our dimensions to the given dimensions.
+         *
+         * @param _dims The dimensions we should use.
+         */
+        void setDims(const Dimensions& _dims);
+    };
+
+    class TypeBase : public HDF5Object
+    {
+    private:
+        bool shouldClose;
+
+    public:
+        TypeBase(void) = delete;
+        TypeBase(std::string _name, hid_t _hid, bool _shouldClose)
+          : HDF5Object(_name, _hid),
+            shouldClose(_shouldClose)
+        { }
+        TypeBase(const TypeBase& other) = delete;
+
+        ~TypeBase(void)
+        {
+            if(shouldClose)
+            {
+                H5Tclose(id);
+            }
+            id = H5I_INVALID_HID;
+        }
+    };
+
+    template<typename T>
+    class TypeInFile : public TypeBase
+    {
+    public:
+        TypeInFile(void);
+        TypeInFile(const TypeInFile& other) = delete;
+    };
+
+    // Partial specialization of TypeInFile for vectors.
+    template<typename T>
+    class TypeInFile<std::vector<T>> : public TypeBase
+    {
+    public:
+        TypeInFile(void);
+        TypeInFile(const TypeInFile& other) = delete;
+    };
+
+    template<typename T>
+    class TypeInMemory : public TypeBase
+    {
+    public:
+        TypeInMemory(void);
+        TypeInMemory(const TypeInMemory& other) = delete;
+    };
+
+    // Partial specialization of TypeInMemory for vectors.
+    template<typename T>
+    class TypeInMemory<std::vector<T>> : public TypeBase
+    {
+    public:
+        TypeInMemory(void);
+        TypeInMemory(const TypeInMemory& other) = delete;
+    };
+
+
+    class Group;
+    class DataSetBase : public HDF5Object
+    {
+    protected:
+        DataSetBase(std::string name)
+          : HDF5Object(name)
+        { }
+
+        static std::string createName(const HDF5File::Group& group,
+                                        std::string dsetName);
+
+    public:
+        DataSetBase(void) = delete;
+        DataSetBase(const DataSetBase& other) = delete;
+
+        ~DataSetBase(void)
+        {
+            H5Dclose(getId());
+        }
+    };
+
+    template<typename T>
+    class DataSet : public DataSetBase
+    {
+    public:
+        DataSet(void) = delete;
+        DataSet(const DataSet& other) = delete;
+
+        // Create data set.
+        DataSet(const HDF5File::Group& group,
+                const DataSpace& dspace,
+                std::string dsetName);
+
+        // Open existing data set.
+        DataSet(const HDF5File::Group& group, std::string dsetName);
+    };
+
+    // Specialization of DataSet for writing vector of vectors.
+    template<typename T>
+    class VectorsDataSet : public DataSet<std::vector<T>>
+    {
+    public:
+        VectorsDataSet(void) = delete;
+        VectorsDataSet(const VectorsDataSet& other) = delete;
+
+        // Create data set.
+        VectorsDataSet(const HDF5File::Group& group,
+                const DataSpace& dspace,
+                std::string name)
+          : DataSet<std::vector<T>>(group, dspace, name)
+        { }
+
+        // Open existing data set.
+        VectorsDataSet(const HDF5File::Group& group, std::string name)
+          : DataSet<std::vector<T>>(group, name)
+        { }
+
+        void write(const std::vector<std::vector<T>>& data) const;
+        std::vector<std::vector<T>> read(void) const;
+    };
 
     // A group in the HDF5 file.
     class Group : public HDF5Object {
@@ -88,6 +283,123 @@ public:
     };
 
 
+    class AttributeBase : public HDF5Object
+    {
+    private:
+        const HDF5Object& target;
+
+    protected:
+        // Construct an AttributeBase without creating/opening an attribute.
+        AttributeBase(const HDF5Object& _target, std::string attrName)
+          : HDF5Object(attrName),
+            target(_target)
+        { }
+
+        // Construct an AttributeBase by opening an existing attribute.
+        AttributeBase(const HDF5Object& _target,
+                        std::string attrName,
+                        bool /* junk to change signature */);
+
+    public:
+        // Create an AttributeBase.
+        AttributeBase(void) = delete;
+        AttributeBase(const AttributeBase& other) = delete;
+
+        ~AttributeBase(void)
+        {
+            if(id != H5I_INVALID_HID)
+            {
+                H5Aclose(id);
+            }
+        }
+
+        void Delete(void)
+        {
+            H5Adelete(target.getId(), getName().c_str());
+            id = H5I_INVALID_HID;
+        }
+    };
+
+    template<typename T>
+    class Attribute : public AttributeBase
+    {
+    public:
+        Attribute(void) = delete;
+        Attribute(const Attribute& other) = delete;
+
+        // Create an Attribute of the given HDF5 object (group or file).
+        Attribute(const HDF5Object& target,
+                    std::string attrName,
+                    const DataSpace& ds);
+
+        // Open an Attribute of the given HDF5 object (group or file).
+        Attribute(const HDF5Object& target, std::string attrName)
+          : AttributeBase(target, attrName, true)
+        { }
+
+        // Set the attribute's value to the given value.
+        void setTo(const T& value) const;
+
+        // Get the attribute's current value.
+        T get(void) const;
+    };
+
+    // Partial specialization of Attribute to support vectors.
+    // TODO Is there a way to do this without duplicating so much of the
+    // class declaration?
+    template<typename T>
+    class Attribute<std::vector<T>> : public AttributeBase
+    {
+    public:
+        Attribute(void) = delete;
+        Attribute(const Attribute& other) = delete;
+
+        // Create an attribute on the given object.
+        Attribute(const HDF5Object& target,
+                    std::string attrName,
+                    const DataSpace& ds);
+
+        // Open an attribute of the given object.
+        Attribute(const HDF5Object& target, std::string attrName)
+          : AttributeBase(target, attrName, true)
+        { }
+
+        // Set the attribute's value to the given value.
+        void setTo(const std::vector<T>& value) const;
+
+
+        // Get the attribute's current value.
+        std::vector<T> get(void) const;
+    };
+
+    // Partial specialization of Attribute to support vectors of vectors.
+    // TODO Is there a way to do this without duplicating so much of the
+    // class declaration?
+    template<typename T>
+    class Attribute<std::vector<std::vector<T>>> : public AttributeBase
+    {
+    public:
+        Attribute(void) = delete;
+        Attribute(const Attribute& other) = delete;
+
+        // Create an attribute on the given object.
+        Attribute(const HDF5Object& target,
+                    std::string attrName,
+                    const DataSpace& ds);
+
+        // Open an attribute of the given object.
+        Attribute(const HDF5Object& target, std::string attrName)
+          : AttributeBase(target, attrName, true)
+        { }
+
+        // Set the attribute's value to the given value.
+        void setTo(const std::vector<std::vector<T>>& value) const;
+
+        // Get the attribute's current value.
+        std::vector<std::vector<T>> get(void) const;
+    };
+
+
 private:
     /**
      * Determine HDF5 flag value that corresponds to given access mode.
@@ -98,19 +410,19 @@ private:
     static unsigned int toHDF5AccessMode(AccessMode mode);
 
 
-	/**
-	 * Callback for H5Ewalk that constructs an error string for a 
+    /**
+     * Callback for H5Ewalk that constructs an error string for a 
      * specific level of the HDF5 context.
- 	 *
-	 * @param n Level number within the HDF5 error context.
+      *
+     * @param n Level number within the HDF5 error context.
      * @param eptr The HDF5 error context for level n.
      * @param client_data Data given by application to H5Ewalk.
      * @return Error code indicating whether string was constructed 
      *          successfully.
      */
-	static herr_t BuildCurrStackLevelErrorString(uint32_t n,
-											const H5E_error2_t* eptr,
-											void* client_data);
+    static herr_t BuildCurrStackLevelErrorString(uint32_t n,
+                                            const H5E_error2_t* eptr,
+                                            void* client_data);
 
     /**
      * Construct an error string using the HDF5 context.
@@ -137,6 +449,12 @@ public:
 };
 
 } /* namespace xolotlCore */
+
+// Ensure we have implementations of template classes.
+#include "xolotlCore/io/HDF5FileType.h"
+#include "xolotlCore/io/HDF5FileAttribute.h"
+#include "xolotlCore/io/HDF5FileDataSpace.h"
+#include "xolotlCore/io/HDF5FileDataSet.h"
 
 #endif // XCORE_HDF5FILE_H
 
