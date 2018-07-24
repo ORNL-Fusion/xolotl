@@ -86,6 +86,22 @@ bool printMaxClusterConc1D = true;
 // The vector of depths at which bursting happens
 std::vector<int> depthPositions1D;
 
+/// Timer capturing time spent in various types of monitors.
+std::shared_ptr<xolotlPerf::ITimer> startStopTimer;
+std::shared_ptr<xolotlPerf::ITimer> heRetTimer;
+std::shared_ptr<xolotlPerf::ITimer> heConcTimer;
+std::shared_ptr<xolotlPerf::ITimer> cumHeTimer;
+std::shared_ptr<xolotlPerf::ITimer> xeRetTimer;
+std::shared_ptr<xolotlPerf::ITimer> tridynTimer;
+std::shared_ptr<xolotlPerf::ITimer> scatterTimer;
+std::shared_ptr<xolotlPerf::ITimer> seriesTimer;
+std::shared_ptr<xolotlPerf::ITimer> surfaceTimer;
+std::shared_ptr<xolotlPerf::ITimer> meanSizeTimer;
+std::shared_ptr<xolotlPerf::ITimer> maxClusterConcTimer;
+std::shared_ptr<xolotlPerf::ITimer> eventTimer;
+std::shared_ptr<xolotlPerf::ITimer> postEventTimer;
+
+
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop1D")
 /**
@@ -93,6 +109,9 @@ std::vector<int> depthPositions1D;
  */
 PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
+
+    xolotlPerf::ScopedTimer stimer(startStopTimer);
+
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -239,6 +258,9 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		Vec solution, void *) {
+
+    xolotlPerf::ScopedTimer stimer(heRetTimer);
+
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm;
@@ -458,6 +480,9 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
  */
 PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		Vec solution, void *) {
+
+    xolotlPerf::ScopedTimer stimer(xeRetTimer);
+
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm;
@@ -595,6 +620,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
  */
 PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
+
+    xolotlPerf::ScopedTimer stimer(heConcTimer);
+
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm;
@@ -741,6 +769,9 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 		PetscReal time, Vec solution, void *ictx) {
+
+    xolotlPerf::ScopedTimer stimer(cumHeTimer);
+
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm;
@@ -856,6 +887,9 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
  */
 PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
+
+    xolotlPerf::ScopedTimer stimer(tridynTimer);
+
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm;
@@ -980,6 +1014,9 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
+
+    xolotlPerf::ScopedTimer stimer(scatterTimer);
+
 	// Initial declarations
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
@@ -1198,6 +1235,9 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
+
+    xolotlPerf::ScopedTimer stimer(seriesTimer);
+
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -1369,6 +1409,9 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
+
+    xolotlPerf::ScopedTimer stimer(surfaceTimer);
+
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -1535,6 +1578,9 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
+
+    xolotlPerf::ScopedTimer stimer(meanSizeTimer);
+
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -1656,6 +1702,9 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
+
+    xolotlPerf::ScopedTimer stimer(maxClusterConcTimer);
+
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -1766,6 +1815,9 @@ PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 		PetscScalar *fvalue, void *) {
+
+    xolotlPerf::ScopedTimer stimer(eventTimer);
+
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
@@ -1999,6 +2051,8 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
  */
 PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
+
+    xolotlPerf::ScopedTimer stimer(postEventTimer);
 
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -2298,7 +2352,9 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
-PetscErrorCode setupPetsc1DMonitor(TS ts) {
+PetscErrorCode setupPetsc1DMonitor(TS ts,
+        std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry) {
+
 	PetscErrorCode ierr;
 
 	// Get the process ID
@@ -2842,6 +2898,21 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 	ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: TSMonitorSet (monitorTime) failed.");
+
+    // Obtain a timer for capturing time spent in monitors.
+    startStopTimer = handlerRegistry->getTimer("monitor1D:startStop");
+    heRetTimer = handlerRegistry->getTimer("monitor1D:heRet");
+    heConcTimer = handlerRegistry->getTimer("monitor1D:heConc");
+    cumHeTimer = handlerRegistry->getTimer("monitor1D:cumHe");
+    xeRetTimer = handlerRegistry->getTimer("monitor1D:xeRet");
+    tridynTimer = handlerRegistry->getTimer("monitor1D:tridyn");
+    scatterTimer = handlerRegistry->getTimer("monitor1D:scatter");
+    seriesTimer = handlerRegistry->getTimer("monitor1D:series");
+    surfaceTimer = handlerRegistry->getTimer("monitor1D:surface");
+    meanSizeTimer = handlerRegistry->getTimer("monitor1D:meanSize");
+    maxClusterConcTimer = handlerRegistry->getTimer("monitor1D:maxClusterConc");
+    eventTimer = handlerRegistry->getTimer("monitor1D:event");
+    postEventTimer = handlerRegistry->getTimer("monitor1D:postEvent");
 
 	PetscFunctionReturn(0);
 }

@@ -38,7 +38,7 @@ static char help[] =
 
 // ----- GLOBAL VARIABLES ----- //
 extern PetscErrorCode setupPetsc0DMonitor(TS);
-extern PetscErrorCode setupPetsc1DMonitor(TS);
+extern PetscErrorCode setupPetsc1DMonitor(TS, std::shared_ptr<xolotlPerf::IHandlerRegistry>);
 extern PetscErrorCode setupPetsc2DMonitor(TS);
 extern PetscErrorCode setupPetsc3DMonitor(TS);
 
@@ -265,7 +265,7 @@ void PetscSolver::solve() {
 		break;
 	case 1:
 		// One dimension
-		ierr = setupPetsc1DMonitor(ts);
+		ierr = setupPetsc1DMonitor(ts, handlerRegistry);
 		checkPetscError(ierr,
 				"PetscSolver::solve: setupPetsc1DMonitor failed.");
 		break;
