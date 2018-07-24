@@ -1,3 +1,8 @@
+
+#if not defined (__APPLE__)
+// TODO handle this using virtual functions with configure-time checks
+// instead of an #ifdef.
+
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -59,4 +64,15 @@ xthi(void)
             rank, thread, hnbuf, clbuf);
   }
 }
+
+#else // not defined(__APPLE__)
+
+#include "xthi.h"
+
+void
+xthi(void)
+{
+    // TODO any support for process affinity?
+}
+#endif // not defined(__APPLE__)
 
