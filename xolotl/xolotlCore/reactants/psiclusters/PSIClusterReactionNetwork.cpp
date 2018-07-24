@@ -17,7 +17,7 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 				ReactantType::PSISuper, registry) {
 
 	// Initialize default properties
-	dissociationsEnabled = true;
+	dissociationsEnabled = false;
 
 	return;
 }
@@ -2724,9 +2724,12 @@ double PSIClusterReactionNetwork::computeBindingEnergy(
 		}
 	}
 
-//	std::cout << reaction.first.getName() << " + " << reaction.second.getName()
-//			<< " <- " << reaction.dissociating.getName() << " : "
-//			<< max(bindingEnergy, -5.0) << std::endl;
+//		std::cout << reaction.first.getName() << " + "
+//				<< reaction.second.getName() << " <- "
+//				<< reaction.dissociating.getName() << " : "
+//				<< max(bindingEnergy, -5.0) << " = " << reaction.first.getFormationEnergy() << " + "
+//				<< reaction.second.getFormationEnergy() << " - "
+//				<< reaction.dissociating.getFormationEnergy() << std::endl;
 
 	return max(bindingEnergy, -5.0);
 }

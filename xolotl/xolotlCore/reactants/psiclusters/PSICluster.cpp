@@ -109,6 +109,7 @@ void PSICluster::resultFrom(ProductionReaction& reaction, IReactant& product) {
 	// Loop on the different type of clusters in grouping
 	int productComp[4] = { }, singleComp[4] = { }, r1Lo[4] = { }, r1Hi[4] = { },
 			width[4] = { };
+	int nOverlap = 1;
 	for (int i = 1; i < psDim; i++) {
 		// Check the boundaries in all the directions
 		auto const& bounds = superProd.getBounds(indexList[i] - 1);
@@ -138,13 +139,11 @@ void PSICluster::resultFrom(ProductionReaction& reaction, IReactant& product) {
 				r1Hi[i - 1] + singleComp[i - 1])
 				- std::max(productComp[i - 1], r1Lo[i - 1] + singleComp[i - 1])
 				+ 1;
+
+		nOverlap *= width[i - 1];
 	}
 
 	// Compute the coefficients
-	int nOverlap = 1;
-	for (int i = 1; i < psDim; i++) {
-		nOverlap *= width[i - 1];
-	}
 	newPair.coefs[0][0] += (double) nOverlap;
 	for (int i = 1; i < psDim; i++) {
 		if (r1Hi[i - 1] != r1Lo[i - 1])
@@ -263,6 +262,7 @@ void PSICluster::participateIn(ProductionReaction& reaction,
 	// Loop on the different type of clusters in grouping
 	int productLo[4] = { }, productHi[4] = { }, singleComp[4] = { }, r1Lo[4] =
 			{ }, r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
 	for (int i = 1; i < psDim; i++) {
 		auto const& bounds = superProd.getBounds(indexList[i] - 1);
 		productLo[i - 1] = *(bounds.begin()), productHi[i - 1] = *(bounds.end())
@@ -280,13 +280,11 @@ void PSICluster::participateIn(ProductionReaction& reaction,
 				r1Hi[i - 1] + singleComp[i - 1])
 				- std::max(productLo[i - 1], r1Lo[i - 1] + singleComp[i - 1])
 				+ 1;
+
+		nOverlap *= width[i - 1];
 	}
 
 	// Compute the coefficients
-	int nOverlap = 1;
-	for (int i = 1; i < psDim; i++) {
-		nOverlap *= width[i - 1];
-	}
 	(*it).coefs[0] += nOverlap;
 	for (int i = 1; i < psDim; i++) {
 		if (r1Hi[i - 1] != r1Lo[i - 1])
@@ -420,6 +418,7 @@ void PSICluster::participateIn(DissociationReaction& reaction,
 	// Loop on the different type of clusters in grouping
 	int dissoLo[4] = { }, dissoHi[4] = { }, singleComp[4] = { }, r1Lo[4] = { },
 			r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
 	for (int i = 1; i < psDim; i++) {
 		auto const& bounds = superDisso.getBounds(indexList[i] - 1);
 		dissoLo[i - 1] = *(bounds.begin()), dissoHi[i - 1] = *(bounds.end()) - 1;
@@ -434,13 +433,11 @@ void PSICluster::participateIn(DissociationReaction& reaction,
 
 		width[i - 1] = std::min(dissoHi[i - 1], r1Hi[i - 1] + singleComp[i - 1])
 				- std::max(dissoLo[i - 1], r1Lo[i - 1] + singleComp[i - 1]) + 1;
+
+		nOverlap *= width[i - 1];
 	}
 
 	// Compute the coefficients
-	int nOverlap = 1;
-	for (int i = 1; i < psDim; i++) {
-		nOverlap *= width[i - 1];
-	}
 	(*it).coefs[0][0] += nOverlap;
 	for (int i = 1; i < psDim; i++) {
 		if (dissoHi[i - 1] != dissoLo[i - 1])
@@ -469,6 +466,10 @@ void PSICluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 	emissionPairs.emplace_back(reaction,
 			static_cast<PSICluster&>(reaction.first),
 			static_cast<PSICluster&>(reaction.second), psDim);
+	auto& dissPair = emissionPairs.back();
+
+	// Count the number of reactions
+	dissPair.coefs[0][0] += 1.0;
 
 	return;
 }
@@ -483,6 +484,14 @@ void PSICluster::emitFrom(DissociationReaction& reaction,
 	emissionPairs.emplace_back(reaction,
 			static_cast<PSICluster&>(reaction.first),
 			static_cast<PSICluster&>(reaction.second), psDim);
+	auto& dissPair = emissionPairs.back();
+
+	// Update the coefficients
+	std::for_each(prInfos.begin(), prInfos.end(),
+			[&dissPair](const PendingProductionReactionInfo& currPRI) {
+				// Update the coefficients
+				dissPair.coefs[0][0] += 1.0;
+			});
 
 	return;
 }
@@ -496,6 +505,57 @@ void PSICluster::emitFrom(DissociationReaction& reaction, IReactant& disso) {
 	emissionPairs.emplace_back(reaction,
 			static_cast<PSICluster&>(reaction.first),
 			static_cast<PSICluster&>(reaction.second), psDim);
+	auto& dissPair = emissionPairs.back();
+
+	auto const& superR1 = static_cast<PSICluster const&>(dissPair.first);
+	auto const& superR2 = static_cast<PSICluster const&>(dissPair.second);
+	auto const& superDisso = static_cast<PSICluster const&>(disso);
+
+	// Check if an interstitial cluster is involved
+	int iSize = 0;
+	if (superR1.getType() == ReactantType::I) {
+		iSize = superR1.getSize();
+	} else if (superR2.getType() == ReactantType::I) {
+		iSize = superR2.getSize();
+	}
+
+	// Loop on the different type of clusters in grouping
+	int dissoLo[4] = { }, dissoHi[4] = { }, singleComp[4] = { }, r1Lo[4] = { },
+			r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
+	for (int i = 1; i < psDim; i++) {
+		// Check the boundaries in all the directions
+		auto const& bounds = superDisso.getBounds(indexList[i] - 1);
+		dissoLo[i - 1] = *(bounds.begin()), dissoHi[i - 1] = *(bounds.end()) - 1;
+
+		if (dissPair.first.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(indexList[i] - 1);
+			r1Lo[i - 1] = *(r1Bounds.begin()), r1Hi[i - 1] = *(r1Bounds.end())
+					- 1;
+			auto const& r2Bounds = superR2.getBounds(indexList[i] - 1);
+			singleComp[i - 1] = *(r2Bounds.begin());
+		}
+
+		if (dissPair.second.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(indexList[i] - 1);
+			singleComp[i - 1] = *(r1Bounds.begin());
+			auto const& r2Bounds = superR2.getBounds(indexList[i] - 1);
+			r1Lo[i - 1] = *(r2Bounds.begin()), r1Hi[i - 1] = *(r2Bounds.end())
+					- 1;
+		}
+
+		// Special case for V and I
+		if (indexList[i] == 4)
+			singleComp[i - 1] -= iSize;
+
+		width[i - 1] = std::min(dissoHi[i - 1], r1Hi[i - 1] + singleComp[i - 1])
+				- std::max(dissoLo[i - 1], r1Lo[i - 1] + singleComp[i - 1]) + 1;
+
+		nOverlap *= width[i - 1];
+	}
+
+	// Compute the coefficients
+	dissPair.coefs[0][0] += (double) nOverlap;
 
 	return;
 }
@@ -620,10 +680,11 @@ double PSICluster::getDissociationFlux() const {
 double PSICluster::getEmissionFlux() const {
 
 	// Sum rate constants from all emission pair reactions.
-	double flux = std::accumulate(emissionPairs.begin(), emissionPairs.end(),
-			0.0, [](double running, const ClusterPair& currPair) {
-				return running + currPair.reaction.kConstant;
-			});
+	double flux =
+			std::accumulate(emissionPairs.begin(), emissionPairs.end(), 0.0,
+					[](double running, const ClusterPair& currPair) {
+						return running + (currPair.reaction.kConstant * currPair.coefs[0][0]);
+					});
 
 	return flux * concentration;
 }
@@ -828,11 +889,11 @@ void PSICluster::getEmissionPartialDerivatives(
 	// F(C_A) = - k-_(B,D)*C_A
 	// Thus, the partial derivatives
 	// dF(C_A)/dC_A = - k-_(B,D)
-	double outgoingFlux = std::accumulate(emissionPairs.begin(),
-			emissionPairs.end(), 0.0,
-			[](double running, const ClusterPair& currPair) {
-				return running + currPair.reaction.kConstant;
-			});
+	double outgoingFlux =
+			std::accumulate(emissionPairs.begin(), emissionPairs.end(), 0.0,
+					[](double running, const ClusterPair& currPair) {
+						return running + (currPair.reaction.kConstant * currPair.coefs[0][0]);
+					});
 	partials[id - 1] -= outgoingFlux;
 
 	return;

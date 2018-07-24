@@ -32,6 +32,7 @@ PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4],
 	composition[toCompIdx(Species::D)] = (int) num[1];
 	composition[toCompIdx(Species::T)] = (int) num[2];
 	composition[toCompIdx(Species::V)] = (int) num[3];
+	composition[toCompIdx(Species::I)] = _nTot;
 
 	// Set the formation energy
 	formationEnergy = 0.0; // It is set to 0.0 because we do not want the super clusters to undergo dissociation
@@ -214,6 +215,7 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 	// Loop on the different type of clusters in grouping
 	int productLo[4] = { }, productHi[4] = { }, singleComp[4] = { }, r1Lo[4] =
 			{ }, r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
 	for (int i = 1; i < psDim; i++) {
 		// Check the boundaries in all the directions
 		auto const& bounds = superProd.getBounds(indexList[i] - 1);
@@ -244,13 +246,11 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 				r1Hi[i - 1] + singleComp[i - 1])
 				- std::max(productLo[i - 1], r1Lo[i - 1] + singleComp[i - 1])
 				+ 1;
+
+		nOverlap *= width[i - 1];
 	}
 
 	// Compute the coefficients
-	int nOverlap = 1;
-	for (int i = 1; i < psDim; i++) {
-		nOverlap *= width[i - 1];
-	}
 	prodPair.coefs[0][0][0] += (double) nOverlap;
 	for (int i = 1; i < psDim; i++) {
 		prodPair.coefs[0][0][i] += ((double) nOverlap
@@ -450,6 +450,7 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 	// Loop on the different type of clusters in grouping
 	int productLo[4] = { }, productHi[4] = { }, singleComp[4] = { }, r1Lo[4] =
 			{ }, r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
 	for (int i = 1; i < psDim; i++) {
 		auto const& bounds = superProd.getBounds(indexList[i] - 1);
 		productLo[i - 1] = *(bounds.begin()), productHi[i - 1] = *(bounds.end())
@@ -467,13 +468,11 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 				r1Hi[i - 1] + singleComp[i - 1])
 				- std::max(productLo[i - 1], r1Lo[i - 1] + singleComp[i - 1])
 				+ 1;
+
+		nOverlap *= width[i - 1];
 	}
 
 	// Compute the coefficients
-	int nOverlap = 1;
-	for (int i = 1; i < psDim; i++) {
-		nOverlap *= width[i - 1];
-	}
 	combCluster.coefs[0][0][0] += nOverlap;
 	for (int i = 1; i < psDim; i++) {
 		combCluster.coefs[0][0][i] += ((double) nOverlap
@@ -676,6 +675,7 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 	// Loop on the different type of clusters in grouping
 	int dissoLo[4] = { }, dissoHi[4] = { }, singleComp[4] = { }, r1Lo[4] = { },
 			r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
 	for (int i = 1; i < psDim; i++) {
 		auto const& bounds = superDisso.getBounds(indexList[i] - 1);
 		dissoLo[i - 1] = *(bounds.begin()), dissoHi[i - 1] = *(bounds.end()) - 1;
@@ -690,13 +690,11 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 
 		width[i - 1] = std::min(dissoHi[i - 1], r1Hi[i - 1] + singleComp[i - 1])
 				- std::max(dissoLo[i - 1], r1Lo[i - 1] + singleComp[i - 1]) + 1;
+
+		nOverlap *= width[i - 1];
 	}
 
 	// Compute the coefficients
-	int nOverlap = 1;
-	for (int i = 1; i < psDim; i++) {
-		nOverlap *= width[i - 1];
-	}
 	dissPair.coefs[0][0] += nOverlap;
 	for (int i = 1; i < psDim; i++) {
 		dissPair.coefs[0][i] += ((double) nOverlap
@@ -887,6 +885,7 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 	// Loop on the different type of clusters in grouping
 	int dissoLo[4] = { }, dissoHi[4] = { }, singleComp[4] = { }, r1Lo[4] = { },
 			r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
 	for (int i = 1; i < psDim; i++) {
 		// Check the boundaries in all the directions
 		auto const& bounds = superDisso.getBounds(indexList[i] - 1);
@@ -914,13 +913,11 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 
 		width[i - 1] = std::min(dissoHi[i - 1], r1Hi[i - 1] + singleComp[i - 1])
 				- std::max(dissoLo[i - 1], r1Lo[i - 1] + singleComp[i - 1]) + 1;
+
+		nOverlap *= width[i - 1];
 	}
 
 	// Compute the coefficients
-	int nOverlap = 1;
-	for (int i = 1; i < psDim; i++) {
-		nOverlap *= width[i - 1];
-	}
 	dissPair.coefs[0][0] += (double) nOverlap;
 	for (int i = 1; i < psDim; i++) {
 		dissPair.coefs[0][i] += ((double) nOverlap
@@ -1025,6 +1022,26 @@ double PSISuperCluster::getTotalConcentration() const {
 	// Initial declarations
 	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
 			conc = 0.0;
+
+//	std::string del = "";
+//	std::cout << "[[ ";
+//	for (auto const& pair : heVList) {
+//		std::cout << del << std::get<0>(pair);
+//		del = ", ";
+//	}
+//	del = "";
+//	std::cout << "], [ ";
+//	for (auto const& pair : heVList) {
+//		std::cout << del << std::get<1>(pair);
+//		del = ", ";
+//	}
+//	del = "";
+//	std::cout << "], [ ";
+//	for (auto const& pair : heVList) {
+//		std::cout << del << std::get<3>(pair);
+//		del = ", ";
+//	}
+//	std::cout << "]], ";
 
 	// Loop on the indices
 	for (auto const& pair : heVList) {

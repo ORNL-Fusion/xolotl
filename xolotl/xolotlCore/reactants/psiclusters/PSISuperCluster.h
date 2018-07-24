@@ -790,6 +790,7 @@ public:
 			return false;
 		if (!bounds[3].contains(nV))
 			return false;
+		if (isFull()) return true;
 
 		return (heVList.find(std::make_tuple(nHe, nD, nT, nV)) != heVList.end());
 	}

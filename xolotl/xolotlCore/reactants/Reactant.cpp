@@ -74,8 +74,8 @@ void Reactant::setMigrationEnergy(const double energy) {
 
 std::ostream&
 operator<<(std::ostream& os, const IReactant::Composition& comp) {
-	std::vector<Species> compSpecies { Species::He, Species::I, Species::V,
-			Species::Xe };
+	std::vector<Species> compSpecies { Species::He, Species::D, Species::T,
+			Species::I, Species::V, Species::Xe };
 	for (auto const& currSpecies : compSpecies) {
 		os << toString(currSpecies) << comp[toCompIdx(currSpecies)];
 	}
