@@ -69,10 +69,10 @@ HDF5File::DataSet<std::vector<T>>::read(void) const {
 
     // Read data from the file.
     TypeInMemory<T> memType;
-    auto status = H5Dread(id, memType.getId(), H5S_ALL, H5S_ALL, H5P_DEFAULT, ret.data());
+    auto status = H5Dread(this->getId(), memType.getId(), H5S_ALL, H5S_ALL, H5P_DEFAULT, ret.data());
     if(status < 0) {
         std::ostringstream estr;
-        estr << "Unable to read value of vector dataset " << name;
+        estr << "Unable to read value of vector dataset " << this->getName();
         throw HDF5Exception(estr.str());
     }
     return ret;
