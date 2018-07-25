@@ -486,6 +486,15 @@ private:
     static std::string BuildHDF5ErrorString(void);
 
 
+protected:
+    /**
+     * Determine whether we have a group at the named path in our file.
+     *
+     * @param path The path to check within our file.
+     * @return True iff we have a group at the requested path.
+     */
+    bool hasGroup(fs::path path) const;
+
 public:
     /**
      * Create or open an HDF5 file.

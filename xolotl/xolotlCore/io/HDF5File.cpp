@@ -123,5 +123,15 @@ HDF5File::~HDF5File(void) {
 }
 
 
+bool
+HDF5File::hasGroup(fs::path path) const {
+
+    auto cret = H5Lexists(getId(), path.string().c_str(), H5P_DEFAULT);
+    if(cret < 0) {
+        throw HDF5Exception(BuildHDF5ErrorString());
+    }
+    return (cret != 0);
+}
+
 } // namespace xolotlCore
 

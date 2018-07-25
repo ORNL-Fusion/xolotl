@@ -265,13 +265,13 @@ public:
     // Our concentrations group.
     class ConcentrationGroup : public HDF5File::Group {
     private:
-        // Path of the concentrations group within the file.
-        static const fs::path path;
-
         // Name of our last timestep attribute.
         static const std::string lastTimestepAttrName;
 
     public:
+        // Path of the concentrations group within the file.
+        static const fs::path path;
+
         // Create or open the concentrationsGroup.
         ConcentrationGroup(void) = delete;
         ConcentrationGroup(const ConcentrationGroup& other) = delete;
@@ -333,9 +333,6 @@ public:
         using NetworkCompsType = std::vector<std::vector<int>>;
 
     private:
-        // Path of the header group within the file.
-        static const fs::path path;
-
         // Name of network composition dataset within our group.
         static const std::string netCompsDatasetName;
 
@@ -355,6 +352,9 @@ public:
         void initNetworkComps(const NetworkCompsType& compVec) const;
 
     public:
+        // Path of the header group within the file.
+        static const fs::path path;
+
         /**
          * Create the header group.
          * Default and copy constructors explicitly disallowed.
@@ -508,6 +508,18 @@ public:
 
 
     /**
+     * Check whether we have one of our top-level Groups.
+     *
+     * @return True iff we have the desired group.
+     */
+    template<typename T>
+    bool hasGroup(void) const {
+
+        return HDF5File::hasGroup(T::path);
+    }
+
+
+    /**
      * Access one of our top-level Groups within our file.
      *
      * @return The group object if we can open the group, else an empty pointer.
@@ -517,15 +529,13 @@ public:
         
         std::unique_ptr<T> group;
 
-        try {
+        std::cout << "checking for group" << std::endl;
+        if(hasGroup<T>()) {
+            std::cout << "opening group" << std::endl;
             // Open the group within our file.
             group.reset(new T(*this));
         }
-        catch(HDF5Exception& e) {
-            // We were not able to open the desired group.
-            // Ensure that the return pointer is empty.
-            assert(not group);
-        }
+        std::cout << "returning group" << std::endl;
         return std::move(group);
     }
 };
