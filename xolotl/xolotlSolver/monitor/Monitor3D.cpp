@@ -189,7 +189,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 						PETSC_COMM_WORLD);
 
 				// Broadcast the size
-				MPI_Bcast(&concSize, 1, MPI_DOUBLE, concProc, PETSC_COMM_WORLD);
+				MPI_Bcast(&concSize, 1, MPI_INT, concProc, PETSC_COMM_WORLD);
 
 				// Skip the grid point if the size is 0
 				if (concSize == 0)
