@@ -133,6 +133,9 @@ configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_BINARY_DIR}/Xol
 # Setup the library list
 set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
 xolotlFactory xolotlCL ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
+if(Boost_FOUND)
+    set(XOLOTL_LIBS ${XOLOTL_LIBS} ${Boost_LIBRARIES})
+endif()
 
 # Add an executable for the main program
 ADD_EXECUTABLE (xolotl main.cpp xthi.cpp)
