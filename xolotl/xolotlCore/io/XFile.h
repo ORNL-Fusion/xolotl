@@ -529,13 +529,10 @@ public:
         
         std::unique_ptr<T> group;
 
-        std::cout << "checking for group" << std::endl;
         if(hasGroup<T>()) {
-            std::cout << "opening group" << std::endl;
             // Open the group within our file.
             group.reset(new T(*this));
         }
-        std::cout << "returning group" << std::endl;
         return std::move(group);
     }
 };
