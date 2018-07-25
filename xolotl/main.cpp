@@ -245,10 +245,14 @@ int main(int argc, char **argv) {
 		std::cerr << "Aborting." << std::endl;
 		ret = EXIT_FAILURE;
 	} catch (const std::string& error) {
-		std::cout << error << std::endl;
-		std::cout << "Aborting." << std::endl;
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
 		ret = EXIT_FAILURE;
-	}
+    } catch (...) {
+        std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+        ret = EXIT_FAILURE;
+    }
 
 	// Clean up.
 	MPI_Finalize();
