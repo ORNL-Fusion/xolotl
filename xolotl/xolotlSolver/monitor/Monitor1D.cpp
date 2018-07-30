@@ -194,9 +194,10 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 		tsGroup->writeBottom1D(nHelium1D, previousHeFlux1D,
 				nDeuterium1D, previousDFlux1D, nTritium1D, previousTFlux1D);
 
-#ifndef READY
     // Determine the concentration values we will write.
     // We only examine and collect the grid points we own.
+    // TODO measure impact of us building the flattened representation
+    // rather than a ragged 2D representation.
     XFile::TimestepGroup::Concs1DType concs(xm);
     for(auto i = 0; i < xm; ++i) {
 
@@ -213,41 +214,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
     // Write our concentration data to the current timestep group 
     // in the HDF5 file.
     // We only write the data for the grid points we own.
-    tsGroup->writeConcentrationDataset(checkpointFile, xs, concs);
-
-#else
-    // Determine the concentration values we will write.
-    // We only examine and collect the grid points we own.
-    std::vector<int> dofs;
-    std::vector<double> concs;
-    std::vector<int> startingIndices;
-    for(auto i = 0; i < xm; ++i) {
-
-        // Access the solution data for the current grid point.
-        auto gridPointSolution = solutionArray[xs+i];
-
-        // Note the starting index for this grid point.
-        startingIndices.emplace_back(concs.size());
-
-        for(auto l = 0; l < dof; ++l) {
-            if(std::fabs(gridPointSolution[l]) > 1.0e-16) {
-                // Add the (dof_number, conc) pair to the 
-                // collection to be saved.
-                dofs.emplace_back(l);
-                concs.emplace_back(gridPointSolution[l]);
-            }
-        }
-    }
-    assert(dofs.size() == concs.size());
-
-    // Write our concentration data to the current timestep group 
-    // in the HDF5 file.
-    // We only write the data for the grid points we own.
-    tsGroup->writeConcentrationDataset(xs,
-                                        dofs,
-                                        concs,
-                                        startingIndices);
-#endif // READY
+    tsGroup->writeConcentrations(checkpointFile, xs, concs);
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);

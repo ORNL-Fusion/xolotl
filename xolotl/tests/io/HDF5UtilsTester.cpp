@@ -112,10 +112,11 @@ BOOST_AUTO_TEST_CASE(checkIO) {
     int length = 5;
     int gridPoint = 0;
 
+#if READY
     // Create a vector of concentration for one grid point
     double concArray[length][2];
+#endif // READY
 
-    // PCR
     // Define our part of the concentration dataset.
     uint32_t baseX = commRank * nGridPointsPerRank;
     XFile::TimestepGroup::Concs1DType myConcs(nGridPointsPerRank);
@@ -132,7 +133,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
     // Again, we do this in its own scope so that the file
     // is closed once the object goes out of scope.
     {
-        std::cout << "Opening file" << std::endl;
+        BOOST_TEST_MESSAGE("Opening test file to add a timestep");
         xolotlCore::XFile testFile(testFileName,
                 MPI_COMM_WORLD,
                 xolotlCore::XFile::AccessMode::OpenReadWrite);
@@ -146,20 +147,20 @@ BOOST_AUTO_TEST_CASE(checkIO) {
         // Write the surface position
         tsGroup->writeSurface1D(iSurface, nInter, previousFlux);
 
+#if READY
         // Fill it
         for (int i = 0; i < length; i++) {
             // Fill the concArray
             concArray[i][0] = (double) i;
             concArray[i][1] = (double) i * 10.0 - 5.0;
         }
+#endif // READY
 
         // Write the concentrations in the HDF5 file
+#if READY
         tsGroup->writeConcentrationDataset(length, concArray, gridPoint);
-        std::cout << "Done writing concentrations with original API" << std::endl;
-
-        tsGroup->writeConcentrations(testFile,
-                                        baseX,
-                                        myConcs);
+#endif // READY
+        tsGroup->writeConcentrations(testFile, baseX, myConcs);
     }
 
     // Now check the test file's contents.
@@ -268,6 +269,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 
             BOOST_TEST_MESSAGE("Testing grid point concentrations.");
 
+#if READY
             // Read the concentrations at the given grid point
             auto returnedVector = tsGroup->readGridPoint(gridPoint);
 
@@ -280,15 +282,14 @@ BOOST_AUTO_TEST_CASE(checkIO) {
                 BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1), concArray[i][1],
                         0.0001);
             }
+#endif // READY
 
-#if READY
-            BOOST_TEST_MESSAGE("Testing new style grid point concentrations.");
+            BOOST_TEST_MESSAGE("Testing grid point concentrations.");
 
-            // Read our part of the concentrations.
+            // Read and check our part of the concentrations.
             auto readConcs = tsGroup->readConcentrations(testFile,
                                                             baseX,
                                                             nGridPointsPerRank);
-
             BOOST_REQUIRE_EQUAL(readConcs.size(), myConcs.size());
             for(auto ptIdx = 0; ptIdx < nGridPointsPerRank; ++ptIdx) {
 
@@ -302,12 +303,10 @@ BOOST_AUTO_TEST_CASE(checkIO) {
                                         0.0001);
                 }
             }
-#endif // READY
         }
     }
 }
 
-#if READY
 /**
  * Method checking the writing and reading of the surface position specifically
  * in the case of a 2D grid.
@@ -520,6 +519,5 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
         }
     }
 }
-#endif // READY
 
 BOOST_AUTO_TEST_SUITE_END()

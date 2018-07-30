@@ -197,25 +197,21 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
 
+        // Read the concentrations from the HDF5 file for
+        // each of our grid points.
         assert(concGroup);
         auto tsGroup = concGroup->getLastTimestepGroup();
         assert(tsGroup);
+        auto myConcs = tsGroup->readConcentrations(*xfile, xs, xm);
 
-		// Loop on the full grid
-		for (int i = 0; i < nX; i++) {
-			// Read the concentrations from the HDF5 file
-			auto concVector = tsGroup->readGridPoint(i);
+        // Apply the concentrations we just read.
+        for(auto i = 0; i < xm; ++i) {
+            concOffset = concentrations[xs+i];
 
-			// Change the concentration only if we are on the locally owned part of the grid
-			if (i >= xs && i < xs + xm) {
-				concOffset = concentrations[i];
-				// Loop on the concVector size
-				for (unsigned int l = 0; l < concVector.size(); l++) {
-					concOffset[(int) concVector.at(l).at(0)] =
-							concVector.at(l).at(1);
-				}
-			}
-		}
+            for(auto const& currConcData : myConcs[i]) {
+                concOffset[currConcData.first] = currConcData.second;
+            }
+        }
 	}
 
 	/*

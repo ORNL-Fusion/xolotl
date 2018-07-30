@@ -195,7 +195,6 @@ public:
                                         double concArray[][2],
                                         int i, int j = -1, int k = -1);
 
-#ifndef READY
         /**
          * Add a concentration dataset for all grid points in a 1D problem.
          * Caller gives us a 2D ragged representation, and we flatten
@@ -209,21 +208,31 @@ public:
          * @param concs Concentrations associated with grid points we own.  
          *              Must have size equal to number of grid points we own.
          *              Element i contains concentration data for 
-         *              (baseGridPoint + i)
+         *              (baseX + i)
          */
+        // TODO measure performance gain when caller gives us
+        // flattened array instead of having us convert to/from flat 
+        // representation.
         void writeConcentrations(const XFile& file,
                                     int baseX,
                                     const Concs1DType& concs) const;
 
+        /**
+         * Read concentration dataset for our grid points in a 1D problem.
+         * Assumes that grid point slabs are assigned to processes in
+         * MPI rank order.
+         *
+         * @param file The HDF5 file that owns our group.  Needed to support
+         *              parallel file access.
+         * @param baseX Index of first grid point we own.
+         * @param numX Number of grid points we own.
+         * @return Concentrations associated with grid points we own.  
+         *              Element i contains concentration data for 
+         *              (baseX + i)
+         */
         Concs1DType readConcentrations(const XFile& file,
                                         int baseX,
                                         int numX) const;
-#else
-        void writeConcentrations(int baseX,
-                                    const std::vector<int>& dofs,
-                                    const std::vector<double>& concs,
-                                    const std::vector<int>& startingIndices) const;
-#endif // READY
 
         /**
          * Read the times from our timestep group.
@@ -300,6 +309,8 @@ public:
          * @param k The index of the grid point on the z axis
          * @return The vector of concentrations
          */
+        // TODO remove once have added support for 0D, 2D, and 3D
+        // parallel reads of concentrations.
         Data3DType readGridPoint(int i, int j = -1, int k = -1) const;
     };
 

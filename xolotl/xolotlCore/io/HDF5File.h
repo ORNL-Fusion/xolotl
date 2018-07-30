@@ -335,13 +335,55 @@ public:
                                             const Ragged2DType& data);
 
         /**
-         * Write our part of the ragged data set as part of
-         * the overall data set.
+         * Read our part of the indexing metadata describing our
+         * part of the flattened data set.
          *
          * @param baseX Index of the first X point we own.
-         * @param data Our part of the data to write.
+         * @param numX Number of X points we own.
+         * @return A vector containing the starting indices for 
+         *              grid points we own
          */
-        void write(int baseX, const Ragged2DType& data) const;
+        std::vector<uint32_t> readStartingIndices(int baseX, int numX) const;
+
+
+        /**
+         * Write our part of the indexing metadata describing our
+         * part of the flattened data set.
+         *
+         * @param baseIdx Index of the first X point we own.
+         * @param data Our part of the data to write.
+         * @return Pair (globalBaseIdx, myNumItems) where 
+         *              globalBaseIdx is index of our first item
+         *              within the global flattened data set, and
+         *              myNumItems is the number of items we own (and
+         *              will write) from the flattened data set.
+         */
+        std::pair<uint32_t, uint32_t>
+        writeStartingIndices(int baseX, const Ragged2DType& data) const;
+
+
+        /**
+         * Read our part of the ragged data set.
+         *
+         * @param globalStartingIndices Starting indices for each of
+         * the grid points we own, plus one past so that we can compute
+         * the total number of values we will read.
+         * @return the part of the ragged data set that we own.
+         */
+        Ragged2DType readData(const std::vector<uint32_t>& globalStartingIndices) const ;
+
+        /**
+         * Write our part of the ragged data set.
+         *
+         * @param globalBaseIdx Index of first data item we own within
+         *              the flattened data set.
+         * @param myNumItems Number of items we own (and thus will write)
+         *              within the flattened data set.
+         * @param data The data to write.  (I.e., our part of the data. 
+         */
+        void writeData(uint32_t globalBaseIdx,
+                        uint32_t myNumItems,
+                        const Ragged2DType& data) const;
 
     public:
         RaggedDataSet2D(void) = delete;

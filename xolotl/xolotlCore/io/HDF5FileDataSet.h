@@ -185,13 +185,30 @@ HDF5File::RaggedDataSet2D<T>::RaggedDataSet2D(MPI_Comm _comm,
   : RaggedDataSetBase(_comm),
     DataSetTBase<T>(loc, dsetName, *(buildDataSpace(_comm, data))) {
 
-    std::cout << "dsetName=" << dsetName 
-        << ", getName=" << getName()
-        << std::endl;
+    // We assume the gridpoint values are indices into the gridpoint array,
+    // so non-negative and base 0.
+    assert(baseX >= 0);
+    
+    // Write the indexing metadata describing our part of the flattened dataset.
+    uint32_t globalBaseIdx;
+    uint32_t myNumItems;
+    std::tie(globalBaseIdx, myNumItems) = writeStartingIndices(baseX, data);
 
-    // Write the data and its indexing metadata to our newly-created dataset.
-    write(baseX, data);
+    // Finally, write our part of the data itself.
+    writeData(globalBaseIdx, myNumItems, data);
 }
+
+
+template<typename T>
+HDF5File::RaggedDataSet2D<T>::RaggedDataSet2D(MPI_Comm _comm,
+                                    const HDF5Object& loc,
+                                    std::string dsetName)
+  : RaggedDataSetBase(_comm),
+    DataSetTBase<T>(loc, dsetName) {
+
+    // Nothing else to do.
+}
+
 
 
 template<typename T>
@@ -278,13 +295,10 @@ operator<<(std::ostream& os, const std::pair<int, double>& p) {
 
 
 template<typename T>
-void
-HDF5File::RaggedDataSet2D<T>::write(int baseX, const Ragged2DType& data) const {
+std::pair<uint32_t, uint32_t>
+HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX, 
+                                            const Ragged2DType& data) const {
 
-    // We assume the gridpoint values are indices into the gridpoint array,
-    // so non-negative and base 0.
-    assert(baseX >= 0);
-    
     // Determine our position within the MPI communicator used to
     // access the file.
     int commRank;
@@ -293,7 +307,6 @@ HDF5File::RaggedDataSet2D<T>::write(int baseX, const Ragged2DType& data) const {
     MPI_Comm_size(comm, &commSize);
 
 #if READY
-#else
     DoInOrder("Data", commRank, commSize,
         [baseX, &data]() {
             for(auto i = 0; i < data.size(); ++i) {
@@ -313,7 +326,6 @@ HDF5File::RaggedDataSet2D<T>::write(int baseX, const Ragged2DType& data) const {
     assert(myNumItemsByPoint.size() == myNumPoints);
 
 #if READY
-#else
     MPI_Barrier(MPI_COMM_WORLD);
     DoInOrder("NumItemsByPoint", commRank, commSize,
         [commRank, &myNumItemsByPoint]() {
@@ -337,7 +349,6 @@ HDF5File::RaggedDataSet2D<T>::write(int baseX, const Ragged2DType& data) const {
     myStartingIndices.resize(myNumPoints);
 
 #if READY
-#else
     MPI_Barrier(MPI_COMM_WORLD);
     DoInOrder("Local starting indices", commRank, commSize,
         [commRank, &myStartingIndices]() {
@@ -403,7 +414,6 @@ HDF5File::RaggedDataSet2D<T>::write(int baseX, const Ragged2DType& data) const {
     // Create the global index dataset.
     std::ostringstream indexDatasetNameStr;
     indexDatasetNameStr << getName() << startIndicesDatasetNameSuffix;
-    std::cout << "creating index dataset with name " << indexDatasetNameStr.str() << std::endl;
     DataSet<uint32_t> indexDataset(this->getLocation(),
                                     indexDatasetNameStr.str(),
                                     indexDataSpace);
@@ -424,7 +434,6 @@ HDF5File::RaggedDataSet2D<T>::write(int baseX, const Ragged2DType& data) const {
     }
     SimpleDataSpace<1> indexMemspace(indexCounts);
 #if READY
-#else
     MPI_Barrier(MPI_COMM_WORLD);
     DoInOrder("Global starting indices", commRank, commSize,
         [commRank, &globalStartingIndices]() {
@@ -437,7 +446,6 @@ HDF5File::RaggedDataSet2D<T>::write(int baseX, const Ragged2DType& data) const {
 #endif // READY
 
 #if READY
-#else
     MPI_Barrier(MPI_COMM_WORLD);
     DoInOrder("Index array parts", commRank, commSize,
         [commRank, baseX, &indexCounts]() {
@@ -468,9 +476,14 @@ HDF5File::RaggedDataSet2D<T>::write(int baseX, const Ragged2DType& data) const {
                 plist.getId(),
                 globalStartingIndices.data());
 
-    //
-    // Write the data itself.
-    //
+    return std::make_pair(globalBaseIdx, myNumItems);
+}
+
+template<typename T>
+void
+HDF5File::RaggedDataSet2D<T>::writeData(uint32_t globalBaseIdx, 
+                                        uint32_t myNumItems,
+                                        const Ragged2DType& data) const {
 
     // Describe our data within the global dataspace.
     SimpleDataSpace<1>::Dimensions dataCounts {myNumItems};
@@ -505,10 +518,8 @@ HDF5File::RaggedDataSet2D<T>::write(int baseX, const Ragged2DType& data) const {
     assert(flatData.size() == myNumItems);
 
     // Write the flat data using a collective write.
-#if READY
     PropertyList plist(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(plist.getId(), H5FD_MPIO_COLLECTIVE);
-#endif // READY
     TypeInMemory<T> memType;
     status = H5Dwrite(getId(),
                 memType.getId(),
@@ -533,6 +544,39 @@ HDF5File::RaggedDataSet2D<T>::read(int baseX, int numX) const {
     // so non-negative and base 0.
     assert(baseX >= 0);
     
+    // Read our part of the indexing metadata.
+    auto globalStartingIndices = readStartingIndices(baseX, numX);
+
+    // Read our part of the actual data.
+    auto ret = readData(globalStartingIndices);
+#if READY
+    int commRank;
+    int commSize;
+    MPI_Comm_rank(comm, &commRank);
+    MPI_Comm_size(comm, &commSize);
+
+    MPI_Barrier(comm);
+    DoInOrder("Read ragged data", commRank, commSize,
+            [baseX, numX, &ret]() {
+                for(auto i = 0; i < numX; ++i ) {
+                    std::cout << baseX + i << ':';
+                    for(const auto& currData : ret[i]) {
+                        std::cout << ' ' << currData;
+                    }
+                    std::cout << std::endl;
+                }
+            });
+#endif // READY
+
+    return ret;
+}
+
+
+
+template<typename T>
+std::vector<uint32_t>
+HDF5File::RaggedDataSet2D<T>::readStartingIndices(int baseX, int numX) const {
+
     // Determine our position within the MPI communicator used to
     // access the file.
     int commRank;
@@ -540,17 +584,147 @@ HDF5File::RaggedDataSet2D<T>::read(int baseX, int numX) const {
     int commSize;
     MPI_Comm_size(comm, &commSize);
 
-#if READY
-    // Read our part of the starting index data.
+    // Open our index dataset.
+    std::ostringstream indexDatasetNameStr;
+    indexDatasetNameStr << getName() << startIndicesDatasetNameSuffix;
+    DataSet<uint32_t> indexDataset(this->getLocation(),
+                                    indexDatasetNameStr.str());
 
-    // Read our part of the actual data.
+    // Determine how many index values we are going to read.
+    // and how many of those that we own.
+    // Unlike during a write where only one rank extends the number
+    // of index values it writes, when we read *each* rank reads
+    // one extra so that it can easily compute how many data items
+    // it owns.
+    auto myNumIndexValues = numX + 1;
+    SimpleDataSpace<1>::Dimensions indexCounts { (uint32_t)myNumIndexValues };
+    SimpleDataSpace<1>::Dimensions indexOffsets { (uint32_t)baseX };
+    SimpleDataSpace<1> indexMemspace(indexCounts);
+
+
+    // Select our hyperslab within the file.
+    SimpleDataSpace<1> indexFilespace(indexDataset);
+    H5Sselect_hyperslab(indexFilespace.getId(),
+                        H5S_SELECT_SET,
+                        indexOffsets.data(),
+                        nullptr,
+                        indexCounts.data(),
+                        nullptr);
+
+    // Read the index metadata we need using a collective operation.
+    std::vector<uint32_t> globalStartingIndices(myNumIndexValues);
+    PropertyList plist(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(plist.getId(), H5FD_MPIO_COLLECTIVE);
+    TypeInMemory<uint32_t> indexMemType;
+    H5Dread(indexDataset.getId(),
+                indexMemType.getId(),
+                indexMemspace.getId(),
+                indexFilespace.getId(),
+                plist.getId(),
+                globalStartingIndices.data());
+
+#if READY
+    MPI_Barrier(comm);
+    DoInOrder("global starting indices", commRank, commSize,
+            [commRank, &globalStartingIndices]() {
+                std::cout << commRank << ": ";
+                for(auto const& p : globalStartingIndices) {
+                    std::cout << ' ' << p;
+                }
+                std::cout << '\n';
+            });
 #endif // READY
 
-    // Convert from flattened form into the ragged 2D representation.
-    HDF5File::RaggedDataSet2D<T>::Ragged2DType ret;
+    return globalStartingIndices;
+}
+
+
+template<typename T>
+typename HDF5File::RaggedDataSet2D<T>::Ragged2DType
+HDF5File::RaggedDataSet2D<T>::readData(
+                    const std::vector<uint32_t>& globalStartingIndices) const {
+
+#if READY
+    // Determine our position within the MPI communicator used to
+    // access the file.
+    int commRank;
+    MPI_Comm_rank(comm, &commRank);
+    int commSize;
+    MPI_Comm_size(comm, &commSize);
+#endif // READY
+
+    // Determine the total number of values we own.
+    auto myNumItems = globalStartingIndices.back() - globalStartingIndices[0];
+    
+    // Specify our part of the dataset to read.
+    SimpleDataSpace<1>::Dimensions dataCounts { (uint32_t)myNumItems };
+    SimpleDataSpace<1>::Dimensions dataOffsets { (uint32_t)globalStartingIndices[0] };
+    SimpleDataSpace<1> dataMemspace(dataCounts);
+
+    // Select our hyperslab within the file.
+    SimpleDataSpace<1> dataFilespace(*this);
+    H5Sselect_hyperslab(dataFilespace.getId(),
+                        H5S_SELECT_SET,
+                        dataOffsets.data(),
+                        nullptr,
+                        dataCounts.data(),
+                        nullptr);
+
+    // Read the index metadata we need using a collective operation.
+    FlatType flatData(myNumItems);
+    PropertyList plist(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(plist.getId(), H5FD_MPIO_COLLECTIVE);
+    TypeInMemory<T> dataMemType;
+    H5Dread(getId(),
+                dataMemType.getId(),
+                dataMemspace.getId(),
+                dataFilespace.getId(),
+                plist.getId(),
+                flatData.data());
+#if READY
+    MPI_Barrier(comm);
+    DoInOrder("flatData", commRank, commSize,
+            [commRank, &flatData]() {
+                std::cout << commRank << ": ";
+                for(auto const& d : flatData){
+                    std::cout << ' ' << d;
+                }
+                std::cout << '\n';
+            });
+#endif // READY
+
+    // Convert from flat representation to ragged 2D representation.
+    //
+    // First, determine number of points we own.
+    // Our number of points owned is same as number of starting indices,
+    // except we reduce by 1 to remove the one extra that we read
+    // to help us compute the number of values we own.
+    auto myNumPoints = globalStartingIndices.size() - 1;
+
+    // Next, compute local starting indices from the global starting
+    // indices we have.
+    std::vector<uint32_t> localStartingIndices(globalStartingIndices.size());
+    uint32_t globalBaseIdx = globalStartingIndices[0];
+    std::transform(globalStartingIndices.begin(),
+                    globalStartingIndices.end(),
+                    localStartingIndices.begin(),
+                    [globalBaseIdx](uint32_t v) -> uint32_t {
+                        return v - globalBaseIdx;
+                    });
+
+    Ragged2DType ret(myNumPoints);
+    for(auto ptIdx = 0; ptIdx < myNumPoints; ++ptIdx) {
+        auto localBaseIdx = localStartingIndices[ptIdx];
+        auto numValues = localStartingIndices[ptIdx + 1] - localBaseIdx;
+        ret[ptIdx].reserve(numValues);
+        for(auto valIdx = 0; valIdx < numValues; ++valIdx) {
+            ret[ptIdx].emplace_back(flatData[localBaseIdx + valIdx]);
+        }
+    }
 
     return ret;
 }
+
 
 } // namespace xolotlCore
 

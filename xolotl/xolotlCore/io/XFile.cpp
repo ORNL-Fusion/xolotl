@@ -729,8 +729,6 @@ void XFile::TimestepGroup::writeConcentrationDataset(int size,
 }
 
 
-#ifndef READY
-
 // Caller gives us 2D ragged representation, and we flatten it into
 // a 1D dataset and add a 1D "starting index" array.
 // Assumes that grid point slabs are assigned to processes in 
@@ -752,7 +750,6 @@ void XFile::TimestepGroup::writeConcentrations(const XFile& file,
 }
 
 
-#if READY
 XFile::TimestepGroup::Concs1DType
 XFile::TimestepGroup::readConcentrations(const XFile& file,
                                         int baseX,
@@ -764,13 +761,6 @@ XFile::TimestepGroup::readConcentrations(const XFile& file,
                                         concDatasetName);
     return dataset.read(baseX, numX);
 }
-#endif // READY
-
-
-#else
-// Implementation where caller gives us the flattened representation.
-
-#endif // READY
 
 
 std::pair<double, double> XFile::TimestepGroup::readTimes(void) const {
