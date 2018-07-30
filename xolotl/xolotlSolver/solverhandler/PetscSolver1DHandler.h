@@ -15,6 +15,12 @@ private:
 	//! The position of the surface
 	int surfacePosition;
 
+	/**
+	 * The last temperature on the grid. It is a vector to keep the temperature at each
+	 * grid point but we know the temperature changes with depth only.
+	 */
+	std::vector<double> lastTemperature;
+
 public:
 
 	/**
@@ -80,7 +86,21 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void setSurfacePosition(int pos, int j = -1, int k = -1) {
-		surfacePosition = pos;
+		// Update the size of the last temperature vector
+		if (pos > surfacePosition) {
+			// Removing grid points
+			while (pos > surfacePosition) {
+				lastTemperature.erase(lastTemperature.begin(),
+						lastTemperature.begin() + 1);
+				surfacePosition++;
+			}
+		} else {
+			// Add grid point
+			while (pos < surfacePosition) {
+				lastTemperature.emplace(lastTemperature.begin(), 0.0);
+				surfacePosition--;
+			}
+		}
 	}
 
 };
