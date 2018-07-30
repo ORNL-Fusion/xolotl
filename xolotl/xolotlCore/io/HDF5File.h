@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include "mpi.h"
 #include "xolotlCore/io/Filesystem.h"
 #include "xolotlCore/io/HDF5Object.h"
 
@@ -33,17 +34,15 @@ public:
         PropertyList(void) = delete;
         PropertyList(const PropertyList& other) = delete;
         PropertyList(hid_t cls_id)
-          : HDF5Object("PropertyList")
-        {
-            id = H5Pcreate(cls_id);
-        }
+          : HDF5Object("PropertyList", H5Pcreate(cls_id))
+        { }
 
         /**
          * Release an open property list.
          */
         ~PropertyList(void)
         {
-            H5Pclose(id);
+            H5Pclose(getId());
         }
     };
 
@@ -140,15 +139,17 @@ public:
         {
             if(shouldClose)
             {
-                H5Tclose(id);
+                H5Tclose(getId());
             }
-            id = H5I_INVALID_HID;
         }
     };
 
     template<typename T>
     class TypeInFile : public TypeBase
     {
+    private:
+        hid_t BuildCompoundType(void) const;
+
     public:
         TypeInFile(void);
         TypeInFile(const TypeInFile& other) = delete;
@@ -166,6 +167,9 @@ public:
     template<typename T>
     class TypeInMemory : public TypeBase
     {
+    private:
+        hid_t BuildCompoundType(void) const;
+
     public:
         TypeInMemory(void);
         TypeInMemory(const TypeInMemory& other) = delete;
@@ -181,16 +185,12 @@ public:
     };
 
 
-    class Group;
-    class DataSetBase : public HDF5Object
+    class DataSetBase : public LocatedHDF5Object
     {
     protected:
-        DataSetBase(std::string name)
-          : HDF5Object(name)
+        DataSetBase(const HDF5Object& loc, std::string name)
+          : LocatedHDF5Object(loc, name)
         { }
-
-        static std::string createName(const HDF5File::Group& group,
-                                        std::string dsetName);
 
     public:
         DataSetBase(void) = delete;
@@ -213,12 +213,12 @@ public:
         DataSetTBase(const DataSetTBase<T>& other) = delete;
 
         // Create data set.
-        DataSetTBase(const HDF5File::Group& group,
+        DataSetTBase(const HDF5Object& loc,
                         std::string dsetName,
                         const DataSpace& dspace);
 
         // Open existing data set.
-        DataSetTBase(const HDF5File::Group& group, std::string dsetName);
+        DataSetTBase(const HDF5Object& loc, std::string dsetName);
     };
 
     template<typename T>
@@ -228,15 +228,15 @@ public:
         DataSet(const DataSet& other) = delete;
 
         // Create data set.
-        DataSet(const HDF5File::Group& group,
+        DataSet(const HDF5Object& loc,
                 std::string dsetName,
                 const DataSpace& dspace)
-          : DataSetTBase<T>(group, dspace, dsetName)
+          : DataSetTBase<T>(loc, dsetName, dspace)
         { }
 
         // Open existing data set.
-        DataSet(const HDF5File::Group& group, std::string dsetName)
-          : DataSetTBase<T>(group, dsetName)
+        DataSet(const HDF5Object& loc, std::string dsetName)
+          : DataSetTBase<T>(loc, dsetName)
         { }
 
         void write(const T& data) const;
@@ -253,21 +253,141 @@ public:
         DataSet(const DataSet& other) = delete;
 
         // Create data set.
-        DataSet(const HDF5File::Group& group,
+        DataSet(const HDF5Object& loc,
                 std::string dsetName,
                 const DataSpace& dspace)
-          : DataSetTBase<std::vector<T>>(group, dsetName, dspace)
+          : DataSetTBase<std::vector<T>>(loc, dsetName, dspace)
         { }
 
         // Open existing data set.
-        DataSet(const HDF5File::Group& group, std::string dsetName)
-          : DataSetTBase<std::vector<T>>(group, dsetName)
+        DataSet(const HDF5Object& loc, std::string dsetName)
+          : DataSetTBase<std::vector<T>>(loc, dsetName)
         { }
 
         void write(const std::vector<T>& data) const;
         std::vector<T> read(void) const;
     };
 
+
+    // Common base for all ragged data set classes.
+    class RaggedDataSetBase {
+    protected:    
+        /// Concise name for type of flattened index metadata.
+        using FlatStartingIndicesType = std::vector<uint32_t>;
+
+        /// Suffix to add to data set names for starting indices dataset.
+        static const std::string startIndicesDatasetNameSuffix;
+
+        /// The MPI communicator used to access the file.
+        MPI_Comm comm;
+
+
+        /**
+         * Create the data set.
+         * Default and copy constructor explicitly disallowed.
+         */
+        RaggedDataSetBase(void) = delete;
+        RaggedDataSetBase(const RaggedDataSetBase& other) = delete;
+
+        /**
+         * Create the data set.
+         *
+         * @param comm The MPI communicator used to access the file.
+         */
+        RaggedDataSetBase(MPI_Comm _comm)
+          : comm(_comm)
+        { }
+    };
+
+
+    // A DataSet for "Ragged" 2D data.  (I.e., 2D data where the 
+    // number of items in dim 1 may vary).
+    // Note that we do not inherit from DataSetTBase<std::vector<T>> because
+    // we don't want to make our dataset have a variable-length type.
+    template<typename T>
+    class RaggedDataSet2D : public RaggedDataSetBase, public DataSetTBase<T> {
+    public:
+        /// Concise name for Ragged data type.
+        using Ragged2DType = std::vector<std::vector<T>>;
+
+    private:
+        /// Concise name for type of flattened data.
+        using FlatType = std::vector<T>;
+
+        /**
+         * Determine the number of values per grid point.
+         *
+         * @param data The ragged data set to be written.
+         * @return Collection containing number of items per grid point.
+         */
+        static std::vector<uint32_t> findNumItemsByPoint(const Ragged2DType& data);
+
+        /**
+         * Build a dataspace for the flattened data representing the given
+         * ragged data.
+         *
+         * @param _comm The MPI communicator used to access the file.
+         * @param data The ragged data to be written.
+         * @return A DataSpace describing the shape of the flattened dataset.
+         */
+        static std::unique_ptr<SimpleDataSpace<1>> buildDataSpace(
+                                            MPI_Comm _comm,
+                                            const Ragged2DType& data);
+
+        /**
+         * Write our part of the ragged data set as part of
+         * the overall data set.
+         *
+         * @param baseX Index of the first X point we own.
+         * @param data Our part of the data to write.
+         */
+        void write(int baseX, const Ragged2DType& data) const;
+
+    public:
+        RaggedDataSet2D(void) = delete;
+        RaggedDataSet2D(const RaggedDataSet2D& other) = delete;
+
+        /**
+         * Create and write the data set.
+         * Unlike the other DataSet classes that take a dataspace, 
+         * this constructor takes the data itself so that it can
+         * define the dataspaces for the flattened data and for
+         * the indexing metadata that points into the flattened data.
+         * Note that this constructor does *not* write the data, it
+         * just defines the dataspaces for the data.
+         *
+         * @param comm The MPI communicator used to access the file.
+         * @param loc The location (e.g., group) that contains our dataset.
+         * @param dsetName The name of the dataset.
+         * @param baseX Index of the first X point we own.
+         * @param data The data to be written.
+         */
+        RaggedDataSet2D(MPI_Comm comm,
+                        const HDF5Object& loc,
+                        std::string dsetName,
+                        int baseX,
+                        const Ragged2DType& data);
+
+        /**
+         * Open an existing data set.
+         *
+         * @param comm The MPI communicator used to access the file.
+         * @param loc The location (e.g., group) that contains our dataset.
+         * @param dsetName The name of the dataset.
+         */
+        RaggedDataSet2D(MPI_Comm comm,
+                        const HDF5Object& loc,
+                        std::string dsetName);
+
+        /**
+         * Read data from an existing data set.
+         *
+         * @param baseX Index of the first X point we own.
+         * @param numX Number of X points we own.
+         * @return The data associated with X points in [baseX,baseX+numXs).
+         */
+        Ragged2DType read(int baseX, int numX) const;
+    };
 
 
 #if READY
@@ -292,17 +412,54 @@ public:
         { }
 
         void write(const std::vector<std::vector<T>>& data) const;
-        std::vector<std::vector<T>> read(void) const;
+        std::vector<std::vector<T>> read() const;
     };
 #endif // READY
 
     // A group in the HDF5 file.
-    class Group : public HDF5Object {
+    class Group : public LocatedHDF5Object {
+    public:                
+        // Concise name for "ragged" 2D data.  (I.e., data where
+        // number of items in dim 1 can vary.)
+        template<typename T>
+        using Ragged2DType = std::vector<std::vector<T>>;
+
+        // Concise name for flattened starting index type used when
+        // writing ragged n-D data.
+        using FlatStartingIndicesType = std::vector<uint32_t>;
+
     private:
-        // "Location" of our group.
-        // Often, it is our parent object, but needn't be if our path
-        // has more than one component.
-        const HDF5Object& location;
+        /**
+         * Write the starting indices for a 2D ragged dataset.
+         *
+         * @param comm The MPI communicator of our file.
+         * @param commRank Our rank within the MPI communicator.
+         * @param commSize The number of ranks in the MPI communicator.
+         * @param baseX My rank's offset into dim 0 of the overall dataset.
+         * @param data My part of the data to be written.
+         */
+        template<typename T>
+        void writeStartingIndexDataset(MPI_Comm comm,
+                                        int commRank,
+                                        int commSize,
+                                        int baseX,
+                                        const Ragged2DType<T>& data) const;
+
+        /**
+         * Determine the starting indices of my items within
+         * the flattened overall data set.
+         *
+         * @param comm The MPI communicator of our file.
+         * @param commRank Our rank within the MPI communicator.
+         * @param commSize The number of ranks in the MPI communicator.
+         * @param The number of items associated with each of the points 
+         *          that I own.
+         */
+        FlatStartingIndicesType
+        findGlobalStartingIndices(MPI_Comm comm,
+                            int commRank,
+                            int commSize,
+                            const FlatStartingIndicesType& localNumItems) const;
 
     public:                
         /**
@@ -324,29 +481,17 @@ public:
          */
         ~Group(void)
         {
-            H5Gclose(id);
+            H5Gclose(getId());
         }
-
-        /**
-         * Access "location" we were created/opened from.
-         *
-         * @return The HDF5 object used as "location" when we were 
-         * created/opened.
-         */
-        const HDF5Object& getLocation(void) const   { return location; }
     };
 
 
-    class AttributeBase : public HDF5Object
+    class AttributeBase : public LocatedHDF5Object
     {
-    private:
-        const HDF5Object& target;
-
     protected:
         // Construct an AttributeBase without creating/opening an attribute.
         AttributeBase(const HDF5Object& _target, std::string attrName)
-          : HDF5Object(attrName),
-            target(_target)
+          : LocatedHDF5Object(_target, attrName)
         { }
 
         // Construct an AttributeBase by opening an existing attribute.
@@ -361,16 +506,15 @@ public:
 
         ~AttributeBase(void)
         {
-            if(id != H5I_INVALID_HID)
+            if(getId() != H5I_INVALID_HID)
             {
-                H5Aclose(id);
+                H5Aclose(getId());
             }
         }
 
         void Delete(void)
         {
-            H5Adelete(target.getId(), getName().c_str());
-            id = H5I_INVALID_HID;
+            H5Adelete(getLocation().getId(), getName().c_str());
         }
     };
 
@@ -486,6 +630,12 @@ private:
     static std::string BuildHDF5ErrorString(void);
 
 
+    /**
+     * The MPI communicator we are using.
+     */
+    MPI_Comm comm;
+
+
 protected:
     /**
      * Determine whether we have a group at the named path in our file.
@@ -495,6 +645,13 @@ protected:
      */
     bool hasGroup(fs::path path) const;
 
+    /**
+     * Access the MPI communicator we are using.
+     *
+     * @return The MPI communicator we are using.
+     */
+    MPI_Comm getComm(void) const  { return comm; }
+
 public:
     /**
      * Create or open an HDF5 file.
@@ -503,7 +660,10 @@ public:
      * @param mode Access mode for creating/opening the file.
      * @param par Whether to access the file with parallel I/O.
      */
-    HDF5File(fs::path path, AccessMode mode, bool par = true );
+    HDF5File(fs::path path,
+                AccessMode mode,
+                MPI_Comm _comm = MPI_COMM_WORLD,
+                bool par = true );
 
     /**
      * Close the file if open and destroy the in-memory object.
@@ -518,6 +678,7 @@ public:
 #include "xolotlCore/io/HDF5FileAttribute.h"
 #include "xolotlCore/io/HDF5FileDataSpace.h"
 #include "xolotlCore/io/HDF5FileDataSet.h"
+#include "xolotlCore/io/HDF5FileGroup.h"
 
 #endif // XCORE_HDF5FILE_H
 

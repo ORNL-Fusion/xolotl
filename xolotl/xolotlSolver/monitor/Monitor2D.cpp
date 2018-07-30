@@ -137,6 +137,7 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Open the existing checkpoint file.
     xolotlCore::XFile checkpointFile(hdf5OutputName2D,
+            PETSC_COMM_WORLD,
             xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -1508,6 +1509,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
                                                 grid,
                                                 compList,
                                                 solverHandler.getNetworkName(),
+                                                PETSC_COMM_WORLD,
                                                 My, hy);
 		}
 

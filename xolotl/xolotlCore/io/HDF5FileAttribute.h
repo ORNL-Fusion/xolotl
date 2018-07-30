@@ -16,16 +16,17 @@ HDF5File::Attribute<T>::Attribute(const HDF5Object& target,
                         const DataSpace& ds)
   : AttributeBase(target, attrName)
 {
-    id = H5Acreate(target.getId(),
-                        name.c_str(),
+    setId(H5Acreate(target.getId(),
+                        getName().c_str(),
                         TypeInFile<T>().getId(),
                         ds.getId(),
                         H5P_DEFAULT,
-                        H5P_DEFAULT);
-    if(id < 0)
+                        H5P_DEFAULT));
+    if(getId() < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to create attribute " << name << " on group " << target.getName();
+        estr << "Unable to create attribute " << getName() 
+            << " on group " << target.getName();
         throw HDF5Exception(estr.str());
     }
 }
@@ -35,13 +36,13 @@ template<typename T>
 void
 HDF5File::Attribute<T>::setTo(const T& value) const
 {
-    auto status = H5Awrite(id,
+    auto status = H5Awrite(getId(),
                             TypeInMemory<T>().getId(),
                             &value);
     if(status < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to set value of attribute " << name;
+        estr << "Unable to set value of attribute " << getName();
         throw HDF5Exception(estr.str());
     }
 }
@@ -52,13 +53,13 @@ T
 HDF5File::Attribute<T>::get(void) const
 {
     T ret;
-    auto status = H5Aread(id,
+    auto status = H5Aread(getId(),
                             TypeInMemory<T>().getId(),
                             &ret);
     if(status < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to read value of attribute " << name;
+        estr << "Unable to read value of attribute " << getName();
         throw HDF5Exception(estr.str());
     }
     return ret;
@@ -75,16 +76,17 @@ HDF5File::Attribute<std::vector<T>>::Attribute(const HDF5Object& target,
   : AttributeBase(target, attrName)
 {
     TypeInFile<T> ftype;
-    id = H5Acreate(target.getId(),
-                        name.c_str(),
+    setTo(H5Acreate(target.getId(),
+                        getName().c_str(),
                         ftype.getId(),
                         ds.getId(),
                         H5P_DEFAULT,
-                        H5P_DEFAULT);
-    if(id < 0)
+                        H5P_DEFAULT));
+    if(getId() < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to create attribute " << name << " on group " << target.getName();
+        estr << "Unable to create attribute " << getName() 
+            << " on group " << target.getName();
         throw HDF5Exception(estr.str());
     }
 }
@@ -104,13 +106,14 @@ HDF5File::Attribute<std::vector<T>>::setTo(const std::vector<T>& value) const
 
     // Write the data to the attribute.
     TypeInMemory<T> memType;
-    auto status = H5Awrite(id,
+    auto status = H5Awrite(getId(),
                             memType.getId(),
                             value.data());
     if(status < 0)
     {
         std::ostringstream estr;
-        estr << "Failed to write variable length vector data to attribute " << name;
+        estr << "Failed to write variable length vector data to attribute " 
+                << getName();
         throw HDF5Exception(estr.str());
     }
 }
@@ -128,13 +131,13 @@ HDF5File::Attribute<std::vector<T>>::get(void) const
 
     // Read the data from the file.
     TypeInMemory<T> memType;
-    auto status = H5Aread(id,
+    auto status = H5Aread(getId(),
                             memType.getId(),
                             pdata);
     if(status < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to read value of vector attribute " << name;
+        estr << "Unable to read value of vector attribute " << getName();
         throw HDF5Exception(estr.str());
     }
 
@@ -153,16 +156,16 @@ HDF5File::Attribute<std::vector<std::vector<T>>>::Attribute(
   : AttributeBase(target, attrName)
 {
     TypeInFile<std::vector<T>> ftype;
-    id = H5Acreate(target.getId(),
-                        name.c_str(),
+    setId(H5Acreate(target.getId(),
+                        getName().c_str(),
                         ftype.getId(),
                         ds.getId(),
                         H5P_DEFAULT,
-                        H5P_DEFAULT);
-    if(id < 0)
+                        H5P_DEFAULT));
+    if(getId() < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to create attribute " << name << " on group " << target.getName();
+        estr << "Unable to create attribute " << getName() << " on group " << target.getName();
         throw HDF5Exception(estr.str());
     }
 }
@@ -184,7 +187,7 @@ HDF5File::Attribute<std::vector<std::vector<T>>>::setTo(
 
     // Write the data to the attribute in the file.
     TypeInMemory<std::vector<T>> memType;
-    auto status = H5Awrite(id,
+    auto status = H5Awrite(getId(),
                             memType.getId(),
                             vlData.data());
     if(status < 0)
@@ -207,7 +210,7 @@ HDF5File::Attribute<std::vector<std::vector<T>>>::get(void) const
     // Read the data from teh file.
     std::vector<hvl_t> vlData(nVectors);
     TypeInMemory<std::vector<T>> memType;
-    auto status = H5Aread(id,
+    auto status = H5Aread(getId(),
                             memType.getId(),
                             vlData.data());
     if(status < 0)

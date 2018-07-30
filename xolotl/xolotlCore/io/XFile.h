@@ -52,6 +52,9 @@ public:
         static const std::string nTAttrName;
         static const std::string prevTFluxAttrName;
 
+        // Name of the concentrations data set.
+        static const std::string concDatasetName;
+
 
         /**
          * Construct the group name for the given time step.
@@ -74,6 +77,14 @@ public:
         using Data1DType = double;
         using Data2DType = std::vector<Data1DType>;
         using Data3DType = std::vector<Data2DType>;
+
+        // Concise name for concentrations data type.
+        // Because the number of concentrations we write for each
+        // grid point can vary, these multidimensional data types must 
+        // support ragged edges in the last dimension.
+        using ConcType = std::pair<int, double>;
+        using Concs1DType = HDF5File::RaggedDataSet2D<ConcType>::Ragged2DType;
+
 
         /**
          * Construct a TimestepGroup.
@@ -179,9 +190,40 @@ public:
          * @param j The index of the position on the grid on the y direction
          * @param k The index of the position on the grid on the z direction
          */
+        // TODO this should go away.
         void writeConcentrationDataset(int size,
                                         double concArray[][2],
                                         int i, int j = -1, int k = -1);
+
+#ifndef READY
+        /**
+         * Add a concentration dataset for all grid points in a 1D problem.
+         * Caller gives us a 2D ragged representation, and we flatten
+         * it into a 1D dataset and add a 1D "starting index" array.
+         * Assumes that grid point slabs are assigned to processes in
+         * MPI rank order.
+         *
+         * @param file The HDF5 file that owns our group.  Needed to support
+         *              parallel file access.
+         * @param baseX Index of first grid point we own.
+         * @param concs Concentrations associated with grid points we own.  
+         *              Must have size equal to number of grid points we own.
+         *              Element i contains concentration data for 
+         *              (baseGridPoint + i)
+         */
+        void writeConcentrations(const XFile& file,
+                                    int baseX,
+                                    const Concs1DType& concs) const;
+
+        Concs1DType readConcentrations(const XFile& file,
+                                        int baseX,
+                                        int numX) const;
+#else
+        void writeConcentrations(int baseX,
+                                    const std::vector<int>& dofs,
+                                    const std::vector<double>& concs,
+                                    const std::vector<int>& startingIndices) const;
+#endif // READY
 
         /**
          * Read the times from our timestep group.
@@ -479,6 +521,7 @@ public:
      * @param networkFilePath Path to file from which the network will 
      *          be copied.  No network will be copied if networkFilePath 
      *          is empty.
+     * @param _comm The MPI communicator used to access the file.
      * @param ny The number of grid points in the y direction
      * @param hy The step size in the y direction
      * @param nz The number of grid points in the z direction
@@ -490,6 +533,7 @@ public:
             const std::vector<double>& grid,
             const HeaderGroup::NetworkCompsType& compVec,
             fs::path networkFilePath,
+            MPI_Comm _comm = MPI_COMM_WORLD,
             int ny = 0,
             double hy = 0.0,
             int nz = 0,
@@ -501,10 +545,13 @@ public:
      * Open an existing checkpoint or network file.
      *
      * @param path Path of file to open.
+     * @param _comm The MPI communicator used to access the file.
      * @param mode Access mode for file.  Only HDFFile Open* modes 
      *              are supported.
      */
-    XFile(fs::path path, AccessMode mode = AccessMode::OpenReadOnly);
+    XFile(fs::path path,
+            MPI_Comm _comm = MPI_COMM_WORLD,
+            AccessMode mode = AccessMode::OpenReadOnly);
 
 
     /**
@@ -538,6 +585,9 @@ public:
 };
 
 } /* namespace xolotlCore */
+
+// Ensure we have definitions of template classes/methods.
+#include "xolotlCore/io/XFileType.h"
 
 #endif // XCORE_XFILE_H
 

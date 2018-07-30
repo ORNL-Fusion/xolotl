@@ -38,12 +38,13 @@ XFile::XFile(fs::path _path,
         const std::vector<double>& grid,
         const XFile::HeaderGroup::NetworkCompsType& compVec,
         fs::path networkFilePath,
+        MPI_Comm _comm,
         int ny,
         double hy,
         int nz,
         double hz,
         AccessMode _mode)
-  : HDF5File(_path, EnsureCreateAccessMode(_mode), true)
+  : HDF5File(_path, EnsureCreateAccessMode(_mode), _comm, true)
 {
     // Create and initialize the header group.
     HeaderGroup headerGroup(*this, grid, ny, hy, nz, hz, compVec);
@@ -55,7 +56,7 @@ XFile::XFile(fs::path _path,
     if(not networkFilePath.empty()) {
 
         // Open the given file.
-        XFile networkFile(networkFilePath, AccessMode::OpenReadOnly);
+        XFile networkFile(networkFilePath, _comm, AccessMode::OpenReadOnly);
 
         // Check if given file has a network group.
         auto srcNetworkGroup = networkFile.getGroup<NetworkGroup>();
@@ -67,8 +68,8 @@ XFile::XFile(fs::path _path,
 }
 
 
-XFile::XFile(fs::path _path, AccessMode _mode)
-  : HDF5File(_path, EnsureOpenAccessMode(_mode), true) {
+XFile::XFile(fs::path _path, MPI_Comm _comm, AccessMode _mode)
+  : HDF5File(_path, EnsureOpenAccessMode(_mode), _comm, true) {
 
     // Nothing else to do.
 }
@@ -401,6 +402,8 @@ const std::string XFile::TimestepGroup::prevDFluxAttrName = "previousDFlux";
 const std::string XFile::TimestepGroup::nTAttrName = "nTritium";
 const std::string XFile::TimestepGroup::prevTFluxAttrName = "previousTFlux";
 
+const std::string XFile::TimestepGroup::concDatasetName = "concs";
+
 
 std::string
 XFile::TimestepGroup::makeGroupName(const XFile::ConcentrationGroup& concGroup,
@@ -724,6 +727,50 @@ void XFile::TimestepGroup::writeConcentrationDataset(int size,
 
 	return;
 }
+
+
+#ifndef READY
+
+// Caller gives us 2D ragged representation, and we flatten it into
+// a 1D dataset and add a 1D "starting index" array.
+// Assumes that grid point slabs are assigned to processes in 
+// MPI rank order.
+void XFile::TimestepGroup::writeConcentrations(const XFile& file,
+                            int baseX,
+                            const Concs1DType& raggedConcs) const {
+
+    // Create and write the ragged dataset.
+    RaggedDataSet2D<ConcType> dataset(file.getComm(),
+                                        *this,
+                                        concDatasetName,
+                                        baseX,
+                                        raggedConcs);
+
+    // Unlike our other DataSet types, there is no need to call a 
+    // 'write' on the dataset.  The constructor above
+    // defines the dataset *and* writes the given data.  
+}
+
+
+#if READY
+XFile::TimestepGroup::Concs1DType
+XFile::TimestepGroup::readConcentrations(const XFile& file,
+                                        int baseX,
+                                        int numX) const {
+
+    // Open and read the ragged dataset.
+    RaggedDataSet2D<ConcType> dataset(file.getComm(),
+                                        *this,
+                                        concDatasetName);
+    return dataset.read(baseX, numX);
+}
+#endif // READY
+
+
+#else
+// Implementation where caller gives us the flattened representation.
+
+#endif // READY
 
 
 std::pair<double, double> XFile::TimestepGroup::readTimes(void) const {

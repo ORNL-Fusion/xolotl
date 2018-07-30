@@ -14,7 +14,7 @@ HDF5File::SimpleDataSpace<Rank>::SimpleDataSpace(const Dimensions& _dims)
   : DataSpace(H5Screate_simple(Rank, _dims.data(), nullptr)),
     dims(_dims)
 {
-    if(id < 0)
+    if(getId() < 0)
     {
         std::ostringstream estr;
         estr << "Failed to create simple data space for dims: ";
@@ -31,7 +31,7 @@ HDF5File::SimpleDataSpace<Rank>::SimpleDataSpace(const Dimensions& _dims,
   : DataSpace(H5Screate_simple(Rank, _dims.data(), _maxDims.data())),
     dims(_dims)
 {
-    if(id < 0)
+    if(getId() < 0)
     {
         std::ostringstream estr;
         estr << "Failed to create simple data space for dims: ";
@@ -46,7 +46,7 @@ template<uint32_t Rank>
 HDF5File::SimpleDataSpace<Rank>::SimpleDataSpace(const AttributeBase& attr)
   : DataSpace(H5Aget_space(attr.getId()))
 {
-    if(id < 0)
+    if(getId() < 0)
     {
         std::ostringstream estr;
         estr << "Failed to create simple data space for attribute " << attr.getName();
@@ -54,7 +54,7 @@ HDF5File::SimpleDataSpace<Rank>::SimpleDataSpace(const AttributeBase& attr)
     }
 
     // Retrieve the dimensions.
-    auto nDims = H5Sget_simple_extent_dims(id,
+    auto nDims = H5Sget_simple_extent_dims(getId(),
                                         dims.data(),
                                         nullptr);
     if(nDims < 0)
@@ -71,7 +71,7 @@ template<uint32_t Rank>
 HDF5File::SimpleDataSpace<Rank>::SimpleDataSpace(const DataSetBase& dsb)
   : DataSpace(H5Dget_space(dsb.getId()))
 {
-    if(id < 0)
+    if(getId() < 0)
     {
         std::ostringstream estr;
         estr << "Failed to construct simple data space for dataset " << dsb.getName();
@@ -79,7 +79,7 @@ HDF5File::SimpleDataSpace<Rank>::SimpleDataSpace(const DataSetBase& dsb)
     }
 
     // Retrieve the dimensions.
-    auto nDims = H5Sget_simple_extent_dims(id,
+    auto nDims = H5Sget_simple_extent_dims(getId(),
                                         dims.data(),
                                         nullptr);
     if(nDims < 0)
@@ -96,7 +96,7 @@ template<uint32_t Rank>
 void
 HDF5File::SimpleDataSpace<Rank>::setDims(const Dimensions& _dims)
 {
-    auto status = H5Sset_extent_simple(id,
+    auto status = H5Sset_extent_simple(getId(),
                                         Rank,
                                         _dims.data(),
                                         nullptr);

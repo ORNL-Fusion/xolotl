@@ -93,6 +93,7 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Open the existing HDF5 file
     xolotlCore::XFile checkpointFile(hdf5OutputName0D,
+            PETSC_COMM_WORLD,
             xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -462,7 +463,8 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
             xolotlCore::XFile checkpointFile(hdf5OutputName0D,
                                     grid,
                                     compList,
-                                    solverHandler.getNetworkName());
+                                    solverHandler.getNetworkName(),
+                                    PETSC_COMM_WORLD);
 		}
 
 		// startStop0D will be called at each timestep

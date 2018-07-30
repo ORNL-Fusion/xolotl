@@ -8,16 +8,16 @@ namespace xolotlCore
 HDF5File::AttributeBase::AttributeBase(const HDF5Object& _target,
                                         std::string _attrName,
                                         bool /* ignored */)
-  : HDF5Object(_attrName),
-    target(_target)
+  : LocatedHDF5Object(_target, _attrName)
 {
-    id = H5Aopen(target.getId(),
-                    name.c_str(),
-                    H5P_DEFAULT);
-    if(id < 0)
+    setId(H5Aopen(getLocation().getId(),
+                    getName().c_str(),
+                    H5P_DEFAULT));
+    if(getId() < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to open attribute " << name << " on group " << target.getName();
+        estr << "Unable to open attribute " << getName() 
+                << " on group " << getLocation().getName();
         throw HDF5Exception(estr.str());
     }
 }
@@ -32,13 +32,13 @@ HDF5File::Attribute<std::string>::setTo(const std::string& value) const
 {
     const char* pvalue = value.c_str();
     TypeInMemory<std::string> memType;
-    auto status = H5Awrite(id,
+    auto status = H5Awrite(getId(),
                             memType.getId(),
                             &pvalue);
     if(status < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to set value of string attribute " << name;
+        estr << "Unable to set value of string attribute " << getName();
         throw HDF5Exception(estr.str());
     }
 }
@@ -51,13 +51,13 @@ HDF5File::Attribute<std::string>::get(void) const
 
     char* pvalue = nullptr;
     TypeInMemory<std::string> memType;
-    auto status = H5Aread(id,
+    auto status = H5Aread(getId(),
                             memType.getId(),
                             &pvalue);
     if(status < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to get value of string attribute " << name;
+        estr << "Unable to get value of string attribute " << getName();
         throw HDF5Exception(estr.str());
     }
     ret = pvalue;
@@ -77,16 +77,17 @@ HDF5File::Attribute<std::vector<std::string> >::Attribute(const HDF5Object& targ
   : AttributeBase(target, attrName)
 {
     TypeInFile<std::string> ftype;
-    id = H5Acreate(target.getId(),
-                        name.c_str(),
+    setId(H5Acreate(target.getId(),
+                        getName().c_str(),
                         ftype.getId(),
                         ds.getId(),
                         H5P_DEFAULT,
-                        H5P_DEFAULT);
-    if(id < 0)
+                        H5P_DEFAULT));
+    if(getId() < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to create attribute " << name << " on group " << target.getName();
+        estr << "Unable to create attribute " << getName() 
+            << " on group " << target.getName();
         throw HDF5Exception(estr.str());
     }
 }
@@ -108,13 +109,13 @@ HDF5File::Attribute<std::vector<std::string> >::get(void) const
         std::vector<char*> cdata(nItems, nullptr);
 
         TypeInMemory<std::string> memType;
-        auto status = H5Aread(id,
+        auto status = H5Aread(getId(),
                                 memType.getId(),
                                 cdata.data());
         if(status < 0)
         {
             std::ostringstream estr;
-            estr << "Failed to read vector of strings from attribute " << name;
+            estr << "Failed to read vector of strings from attribute " << getName();
             throw HDF5Exception(estr.str());
         }
 
@@ -146,13 +147,13 @@ HDF5File::Attribute<std::vector<std::string> >::setTo(const std::vector<std::str
 
     // Write the data to the attribute.
     TypeInMemory<std::string> memType;
-    auto status = H5Awrite(id,
+    auto status = H5Awrite(getId(),
                             memType.getId(),
                             cpdata.data());
     if(status < 0)
     {
         std::ostringstream estr;
-        estr << "Failed to write vector of strings to attribute " << name;
+        estr << "Failed to write vector of strings to attribute " << getName();
         throw HDF5Exception(estr.str());
     }
 }

@@ -8,28 +8,27 @@ namespace xolotlCore
 HDF5File::Group::Group(const HDF5Object& _location,
                         fs::path path,
                         bool create)
-  : HDF5Object(path.string()),
-    location(_location)
+  : LocatedHDF5Object(_location, path.string())
 {
     if(create)
     {
-        id = H5Gcreate(location.getId(),
-                        name.c_str(),
+        setId(H5Gcreate(getLocation().getId(),
+                        getName().c_str(),
                         H5P_DEFAULT,    // link creation property list
                         H5P_DEFAULT,    // group creation property list
-                        H5P_DEFAULT);   // group access property list
+                        H5P_DEFAULT));   // group access property list
     }
     else
     {
-        id = H5Gopen(location.getId(),
-                        name.c_str(),
-                        H5P_DEFAULT);   // group access property list
+        setId(H5Gopen(getLocation().getId(),
+                        getName().c_str(),
+                        H5P_DEFAULT));   // group access property list
     }
-    if(id < 0)
+    if(getId() < 0)
     {
         std::ostringstream estr;
-        estr << "Unable to create/open Group " << name
-            << " at location " << location.getName();
+        estr << "Unable to create/open Group " << getName()
+            << " at location " << getLocation().getName();
         throw HDF5Exception(estr.str());
     }
 }

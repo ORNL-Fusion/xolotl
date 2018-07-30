@@ -133,6 +133,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Open the existing HDF5 file.
     xolotlCore::XFile checkpointFile(hdf5OutputName3D,
+            PETSC_COMM_WORLD,
             xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -1363,6 +1364,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
                                                 grid,
                                                 compList,
 						                        solverHandler.getNetworkName(),
+                                                PETSC_COMM_WORLD,
                                                 My, hy,
                                                 Mz, hz);
 		}

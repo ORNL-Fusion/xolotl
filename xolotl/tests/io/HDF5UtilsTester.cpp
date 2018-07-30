@@ -42,6 +42,15 @@ xolotlCore::XFile::HeaderGroup::NetworkCompsType createTestNetworkComps(void) {
  * Method checking the writing and reading of the HDF5 file.
  */
 BOOST_AUTO_TEST_CASE(checkIO) {
+
+    // Determine where we are in the MPI world.
+    int commRank = -1;
+    int commSize = -1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &commRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &commSize);
+    const uint32_t nGridPointsPerRank = 4;
+    double const factor = 1.5;
+
     BOOST_TEST_MESSAGE("Creating network loader.");
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
@@ -68,8 +77,9 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	int nGrid = 5;
 	double stepSize = 0.5;
 	std::vector<double> grid;
-	for (int i = 0; i < nGrid + 2; i++)
+	for (int i = 0; i < nGrid + 2; i++) {
 		grid.push_back((double) i * stepSize);
+    }
 	// Set the time information
 	double currentTime = 0.0001;
 	double previousTime = 0.00001;
@@ -93,8 +103,8 @@ BOOST_AUTO_TEST_CASE(checkIO) {
         xolotlCore::XFile testFile(testFileName,
                                     grid,
                                     testCompsVec, 
-                                    filename);
-        std::cout << "Done creating file" << std::endl;
+                                    filename,
+                                    MPI_COMM_WORLD);
     }
 
 
@@ -105,6 +115,18 @@ BOOST_AUTO_TEST_CASE(checkIO) {
     // Create a vector of concentration for one grid point
     double concArray[length][2];
 
+    // PCR
+    // Define our part of the concentration dataset.
+    uint32_t baseX = commRank * nGridPointsPerRank;
+    XFile::TimestepGroup::Concs1DType myConcs(nGridPointsPerRank);
+    for(auto i = 0; i < nGridPointsPerRank; ++i) {
+        auto currNumItems = baseX + i;
+        for(auto j = 0; j < currNumItems; ++j) {
+            myConcs[i].emplace_back(baseX+j, factor*(baseX+j));
+        }
+    }
+
+
     // Open the test file again to add concentrations.
 	// Open it again to add the concentrations.
     // Again, we do this in its own scope so that the file
@@ -112,6 +134,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
     {
         std::cout << "Opening file" << std::endl;
         xolotlCore::XFile testFile(testFileName,
+                MPI_COMM_WORLD,
                 xolotlCore::XFile::AccessMode::OpenReadWrite);
 
         // Add a TimestepGroup.
@@ -132,13 +155,18 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 
         // Write the concentrations in the HDF5 file
         tsGroup->writeConcentrationDataset(length, concArray, gridPoint);
-        std::cout << "Done writing concentrations" << std::endl;
+        std::cout << "Done writing concentrations with original API" << std::endl;
+
+        tsGroup->writeConcentrations(testFile,
+                                        baseX,
+                                        myConcs);
     }
 
     // Now check the test file's contents.
     {
         BOOST_TEST_MESSAGE("Opening test file to check its contents.");
         xolotlCore::XFile testFile(testFileName,
+                MPI_COMM_WORLD,
                 xolotlCore::XFile::AccessMode::OpenReadOnly);
 
         // Read the header of the written file
@@ -252,10 +280,34 @@ BOOST_AUTO_TEST_CASE(checkIO) {
                 BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1), concArray[i][1],
                         0.0001);
             }
+
+#if READY
+            BOOST_TEST_MESSAGE("Testing new style grid point concentrations.");
+
+            // Read our part of the concentrations.
+            auto readConcs = tsGroup->readConcentrations(testFile,
+                                                            baseX,
+                                                            nGridPointsPerRank);
+
+            BOOST_REQUIRE_EQUAL(readConcs.size(), myConcs.size());
+            for(auto ptIdx = 0; ptIdx < nGridPointsPerRank; ++ptIdx) {
+
+                BOOST_REQUIRE_EQUAL(readConcs[ptIdx].size(),
+                                    myConcs[ptIdx].size());
+                for(auto i = 0; i < myConcs[ptIdx].size(); ++i) {
+                    BOOST_REQUIRE_EQUAL(readConcs[ptIdx][i].first,
+                                        myConcs[ptIdx][i].first);
+                    BOOST_REQUIRE_CLOSE(readConcs[ptIdx][i].second,
+                                        myConcs[ptIdx][i].second,
+                                        0.0001);
+                }
+            }
+#endif // READY
         }
     }
 }
 
+#if READY
 /**
  * Method checking the writing and reading of the surface position specifically
  * in the case of a 2D grid.
@@ -280,7 +332,8 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
         xolotlCore::XFile testFile(testFileName,
                                     grid,
                                     createTestNetworkComps(), 
-                                    "");        // no file to copy network from
+                                    "", // no file to copy network from
+                                    MPI_COMM_WORLD);
     }
 
     // Set the time information
@@ -300,6 +353,7 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
         BOOST_TEST_MESSAGE("Adding 2D timestep group");
 
         xolotlCore::XFile testFile(testFileName,
+                MPI_COMM_WORLD,
                 xolotlCore::XFile::AccessMode::OpenReadWrite);
 
         // Set the time step number
@@ -321,6 +375,7 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
         BOOST_TEST_MESSAGE("Opening 2D file to check its contents.");
 
         xolotlCore::XFile testFile(testFileName,
+                MPI_COMM_WORLD,
                 xolotlCore::XFile::AccessMode::OpenReadOnly);
 
         // Access the last written timestep group.
@@ -376,7 +431,8 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
         xolotlCore::XFile testFile(testFileName,
                                     grid,
                                     createTestNetworkComps(),
-                                    "");    // no network file to copy from
+                                    "", // no network file to copy from
+                                    MPI_COMM_WORLD);
     }
 
     // Set the time information
@@ -408,6 +464,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
         BOOST_TEST_MESSAGE("Adding 3D timestep group");
 
         xolotlCore::XFile testFile(testFileName,
+                MPI_COMM_WORLD,
                 xolotlCore::XFile::AccessMode::OpenReadWrite);
 
         // Set the time step number
@@ -429,6 +486,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
     {
         BOOST_TEST_MESSAGE("Opening 3D file to check its contents.");
         xolotlCore::XFile testFile(testFileName,
+                MPI_COMM_WORLD,
                 xolotlCore::XFile::AccessMode::OpenReadOnly);
 
         // Access the last written timestep group.
@@ -462,5 +520,6 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
         }
     }
 }
+#endif // READY
 
 BOOST_AUTO_TEST_SUITE_END()

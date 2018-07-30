@@ -119,7 +119,7 @@ HDF5File::TypeInFile<std::vector<T> >::TypeInFile(void)
                             H5Tvlen_create(TypeInFile<T>().getId()),
                             true)
 {
-    if(id < 0)
+    if(getId() < 0)
     {
         throw HDF5Exception("Unable to construct variable-length vector data type for template type T");
     }
@@ -132,7 +132,7 @@ HDF5File::TypeInMemory<std::vector<T> >::TypeInMemory(void)
                             H5Tvlen_create(TypeInMemory<T>().getId()),
                             true)
 {
-    if(id < 0)
+    if(getId() < 0)
     {
         throw HDF5Exception("Unable to construct variable-length vector data type for template type T");
     }

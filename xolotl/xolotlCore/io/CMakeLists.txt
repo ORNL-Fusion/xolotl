@@ -12,6 +12,7 @@ add_library(${LIBRARY_NAME} STATIC
             HDF5FileAttribute.cpp
             HDF5FileGroup.cpp
             HDF5FileDataSpace.cpp
+            HDF5FileDataSet.cpp
             XFile.cpp
             MPIUtils.cpp)
 

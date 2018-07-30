@@ -171,6 +171,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Open the existing HDF5 file
     xolotlCore::XFile checkpointFile(hdf5OutputName1D,
+            PETSC_COMM_WORLD,
             xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -193,56 +194,60 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 		tsGroup->writeBottom1D(nHelium1D, previousHeFlux1D,
 				nDeuterium1D, previousDFlux1D, nTritium1D, previousTFlux1D);
 
-	// Loop on the full grid
-	for (PetscInt i = 0; i < Mx; i++) {
-		// Size of the concentration that will be stored
-		int concSize = -1;
-		// To save which proc has the information
-		int concId = 0;
+#ifndef READY
+    // Determine the concentration values we will write.
+    // We only examine and collect the grid points we own.
+    XFile::TimestepGroup::Concs1DType concs(xm);
+    for(auto i = 0; i < xm; ++i) {
 
-		// If it is the locally owned part of the grid
-		if (i >= xs && i < xs + xm) {
-			// Get the pointer to the beginning of the solution data for this grid point
-			gridPointSolution = solutionArray[i];
+        // Access the solution data for the current grid point.
+        auto gridPointSolution = solutionArray[xs+i];
 
-			// Loop on the concentrations
-			for (int l = 0; l < dof; l++) {
-				if (gridPointSolution[l] > 1.0e-16
-						|| gridPointSolution[l] < -1.0e-16) {
-					// Increase concSize
-					concSize++;
-					// Fill the concArray
-					concArray[concSize][0] = (double) l;
-					concArray[concSize][1] = gridPointSolution[l];
-				}
-			}
+        for(auto l = 0; l < dof; ++l) {
+            if(std::fabs(gridPointSolution[l]) > 1.0e-16) {
+                concs[i].emplace_back(l, gridPointSolution[l]);
+            }
+        }
+    }
 
-			// Increase concSize one last time
-			concSize++;
+    // Write our concentration data to the current timestep group 
+    // in the HDF5 file.
+    // We only write the data for the grid points we own.
+    tsGroup->writeConcentrationDataset(checkpointFile, xs, concs);
 
-			// Save the procId
-			concId = procId;
-		}
+#else
+    // Determine the concentration values we will write.
+    // We only examine and collect the grid points we own.
+    std::vector<int> dofs;
+    std::vector<double> concs;
+    std::vector<int> startingIndices;
+    for(auto i = 0; i < xm; ++i) {
 
-		// Get which processor will send the information
-		int concProc = 0;
-		MPI_Allreduce(&concId, &concProc, 1, MPI_INT, MPI_SUM,
-				PETSC_COMM_WORLD);
+        // Access the solution data for the current grid point.
+        auto gridPointSolution = solutionArray[xs+i];
 
-		// Broadcast the size
-		MPI_Bcast(&concSize, 1, MPI_INT, concProc, PETSC_COMM_WORLD);
+        // Note the starting index for this grid point.
+        startingIndices.emplace_back(concs.size());
 
-		// Skip the grid point if the size is 0
-		if (concSize == 0)
-			continue;
+        for(auto l = 0; l < dof; ++l) {
+            if(std::fabs(gridPointSolution[l]) > 1.0e-16) {
+                // Add the (dof_number, conc) pair to the 
+                // collection to be saved.
+                dofs.emplace_back(l);
+                concs.emplace_back(gridPointSolution[l]);
+            }
+        }
+    }
+    assert(dofs.size() == concs.size());
 
-		// Transfer the data everywhere from the local grid
-		MPI_Bcast(&(concArray[0][0]), 2 * concSize, MPI_DOUBLE, concProc,
-				PETSC_COMM_WORLD);
-
-		// All processes create the dataset and fill it
-        tsGroup->writeConcentrationDataset(concSize, concArray, i);
-	}
+    // Write our concentration data to the current timestep group 
+    // in the HDF5 file.
+    // We only write the data for the grid points we own.
+    tsGroup->writeConcentrationDataset(xs,
+                                        dofs,
+                                        concs,
+                                        startingIndices);
+#endif // READY
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -2530,7 +2535,8 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
             xolotlCore::XFile checkpointFile(hdf5OutputName1D,
                                                 grid,
                                                 compList,
-						                        solverHandler.getNetworkName());
+						                        solverHandler.getNetworkName(),
+                                                PETSC_COMM_WORLD);
 		}
 
 		// startStop1D will be called at each timestep
