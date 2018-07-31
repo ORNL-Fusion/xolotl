@@ -17,7 +17,7 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 				ReactantType::PSISuper, registry) {
 
 	// Initialize default properties
-	dissociationsEnabled = false;
+	dissociationsEnabled = true;
 
 	return;
 }
@@ -266,6 +266,7 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 		for (auto const& superMapItem : getAll(ReactantType::PSISuper)) {
 			auto& superCluster =
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
+
 			// Loop on the potential products
 			for (auto const& superMapItemProd : getAll(ReactantType::PSISuper)) {
 				auto& superProd =

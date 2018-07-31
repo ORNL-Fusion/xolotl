@@ -1351,7 +1351,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			// Save the network in the HDF5 file
 			if (!solverHandler.getNetworkName().empty())
 				xolotlCore::HDF5Utils::fillNetwork(
-						solverHandler.getNetworkName());
+						solverHandler.getNetworkName(), network);
 
 			// Finalize the HDF5 file
 			xolotlCore::HDF5Utils::finalizeFile();

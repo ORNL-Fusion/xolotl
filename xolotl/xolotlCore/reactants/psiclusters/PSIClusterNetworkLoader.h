@@ -26,6 +26,50 @@ class PSIClusterNetworkLoader: public NetworkLoader {
 
 protected:
 
+	// I formation energies in eV
+	std::vector<double> iFormationEnergies = { 10.0, 18.5, 27.0, 35.0, 42.5,
+			48.0 };
+	// I diffusion factors in nm^2/s
+	std::vector<double> iDiffusion = { 8.8e+10, 8.0e+10, 3.9e+10, 2.0e+10,
+			1.0e+10 };
+	// I migration energies in eV
+	std::vector<double> iMigration = { 0.01, 0.02, 0.03, 0.04, 0.05 };
+
+	// He formation energies in eV
+	std::vector<double> heFormationEnergies = { 6.15, 11.44, 16.35, 21.0, 26.1,
+			30.24, 34.93, 38.80 };
+	// He diffusion factors in nm^2/s
+	std::vector<double> heDiffusion = { 2.9e+10, 3.2e+10, 2.3e+10, 1.7e+10,
+			5.0e+09, 1.0e+09, 5.0e+08 };
+	// He migration energies in eV
+	std::vector<double> heMigration = { 0.13, 0.20, 0.25, 0.20, 0.12, 0.3, 0.4 };
+
+	// The diffusion factor for a single deuterium.
+	double dOneDiffusionFactor = 2.83e+11;
+	// The migration energy for a single deuterium.
+	double dOneMigrationEnergy = 0.38;
+
+	// The diffusion factor for a single tritium.
+	double tOneDiffusionFactor = 2.31e+11;
+	// The migration energy for a single tritium.
+	double tOneMigrationEnergy = 0.38;
+
+	// The diffusion factor for a single vacancy in nm^2/s
+	double vOneDiffusion = 1.8e+12;
+	// The migration energy for a single vacancy in eV
+	double vOneMigration = 1.30;
+
+	/**
+	 * The maximum number of helium atoms that can be combined with a vacancy
+	 * cluster with size equal to the index i in the array plus one. For
+	 * example, an HeV size cluster with size 1 would have size = i+1 = 1 and i
+	 * = 0. It could support a mixture of up to nine helium atoms with one
+	 * vacancy.
+	 */
+	std::vector<int> maxHePerV = { 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55,
+			60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101, 103, 105, 107, 109,
+			110, 112, 116 };
+
 	/**
 	 * The vacancy size at which the grouping scheme starts
 	 */
@@ -74,9 +118,16 @@ protected:
 	}
 
 	/**
-	 * This operation creates a singles-species cluster of helium, vacancies or
-	 * interstitials. It adds the cluster to the appropriate internal list of
-	 * clusters for that type.
+	 * This operation creates a super cluster from its list of cluster coordinates.
+	 *
+	 * @param list The list of coordinates composing this cluster
+	 * @return The new cluster
+	 */
+	std::unique_ptr<PSICluster> createPSISuperCluster(std::set<std::tuple<int, int, int, int> > &list,
+			IReactionNetwork& network) const;
+
+	/**
+	 * This operation creates a cluster.
 	 *
 	 * @param numHe The number of helium atoms
 	 * @param numD The number of deuterium atoms

@@ -1,5 +1,6 @@
 #include "HDF5Utils.h"
 #include <PSICluster.h>
+#include <PSISuperCluster.h>
 #include <iostream>
 #include <sstream>
 #include <hdf5.h>
@@ -8,7 +9,7 @@
 using namespace xolotlCore;
 
 hid_t propertyListId, fileId, concentrationGroupId, subConcGroupId,
-		concDataspaceId, headerGroupId;
+		concDataspaceId, headerGroupId, networkGroupId;
 herr_t status;
 
 void HDF5Utils::initializeFile(const std::string& fileName) {
@@ -75,7 +76,8 @@ void HDF5Utils::fillHeader(std::vector<double>& grid, int ny, double hy, int nz,
 	status = H5Aclose(attributeId);
 	// Create, write, and close the hx attribute
 	double hx = 0.0;
-	if (grid.size() > 0) hx = grid[1] - grid[0];
+	if (grid.size() > 0)
+		hx = grid[1] - grid[0];
 	attributeId = H5Acreate2(headerGroupId, "hx", H5T_IEEE_F64LE, dataspaceId,
 	H5P_DEFAULT, H5P_DEFAULT);
 	status = H5Awrite(attributeId, H5T_IEEE_F64LE, &hx);
@@ -105,7 +107,7 @@ void HDF5Utils::fillHeader(std::vector<double>& grid, int ny, double hy, int nz,
 	// Create, write, and close the grid dataset
 	double gridArray[nx];
 	for (int i = 0; i < nx; i++) {
-		gridArray[i] = grid[i+1] - grid[1];
+		gridArray[i] = grid[i + 1] - grid[1];
 	}
 	hsize_t dims[1];
 	dims[0] = nx;
@@ -122,7 +124,7 @@ void HDF5Utils::fillHeader(std::vector<double>& grid, int ny, double hy, int nz,
 
 	return;
 }
-void HDF5Utils::fillNetworkComp(std::vector< std::vector <int> > compVec) {
+void HDF5Utils::fillNetworkComp(std::vector<std::vector<int> > compVec) {
 	// Create the array that will store the compositions and fill it
 	int dof = compVec.size();
 	int compSize = compVec[0].size();
@@ -152,29 +154,226 @@ void HDF5Utils::fillNetworkComp(std::vector< std::vector <int> > compVec) {
 	return;
 }
 
-void HDF5Utils::fillNetwork(const std::string& fileName) {
-	// Set up file access property list with parallel I/O access
-	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
-	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
+void HDF5Utils::fillNetwork(const std::string& fileName,
+		IReactionNetwork& network) {
+	// Initial declaration
+	bool groupExist = false;
 
-	// Open the given HDF5 file with read only access
-	hid_t fromFileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY,
-			propertyListId);
+	// Check if the group was already saved
+	if (!fileName.empty()) {
+		// Set up file access property list with parallel I/O access
+		propertyListId = H5Pcreate(H5P_FILE_ACCESS);
+		H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
 
-	// Close the property list
-	status = H5Pclose(propertyListId);
+		// Open the given HDF5 file with read only access
+		hid_t fromFileId = H5Fopen(fileName.c_str(), H5F_ACC_RDONLY,
+				propertyListId);
 
-	// Check the group
-	bool groupExist = H5Lexists(fromFileId, "/networkGroup", H5P_DEFAULT);
-	// If the group exist
-	if (groupExist) {
-		// Copy it
-		status = H5Ocopy(fromFileId, "/networkGroup", fileId, "/networkGroup",
-		H5P_DEFAULT, H5P_DEFAULT);
+		// Close the property list
+		status = H5Pclose(propertyListId);
+
+		// Check the group
+		groupExist = H5Lexists(fromFileId, "/networkGroup", H5P_DEFAULT);
+
+		// If the group exist
+		if (groupExist) {
+			// Copy it
+			status = H5Ocopy(fromFileId, "/networkGroup", fileId,
+					"/networkGroup",
+					H5P_DEFAULT, H5P_DEFAULT);
+		}
+
+		// Close the from file
+		status = H5Fclose(fromFileId);
+	} else if (!groupExist) {
+		// Write it from scratch
+		// Create the group and its size attributes
+		networkGroupId = H5Gcreate2(fileId, "networkGroup", H5P_DEFAULT,
+		H5P_DEFAULT,
+		H5P_DEFAULT);
+		int totalSize = network.size(), superSize = network.getAll(
+				ReactantType::PSISuper).size(), normalSize = totalSize
+				- superSize;
+		hid_t dataspaceId = H5Screate(H5S_SCALAR);
+		hid_t attributeId = H5Acreate2(networkGroupId, "normalSize",
+		H5T_STD_I32LE, dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+		status = H5Awrite(attributeId, H5T_STD_I32LE, &normalSize);
+		status = H5Aclose(attributeId);
+		attributeId = H5Acreate2(networkGroupId, "superSize", H5T_STD_I32LE,
+				dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+		status = H5Awrite(attributeId, H5T_STD_I32LE, &superSize);
+		status = H5Aclose(attributeId);
+
+		// Loop on all the clusters
+		auto& allReactants = network.getAll();
+		std::for_each(allReactants.begin(), allReactants.end(),
+				[](IReactant& currReactant) {
+					// Create a group named after its id
+					int id = currReactant.getId() - 1;
+					std::stringstream subGroupName;
+					subGroupName << id;
+					hid_t clusterGroupId = H5Gcreate2(networkGroupId, subGroupName.str().c_str(), H5P_DEFAULT, H5P_DEFAULT,
+							H5P_DEFAULT);
+					// Super cluster case
+					if (currReactant.getType() == ReactantType::PSISuper) {
+						// Write the dataset with the coordinate of each contained cluster
+						auto& currCluster = static_cast<PSISuperCluster&>(currReactant);
+						int nTot = currCluster.getNTot();
+						int heVArray[nTot][4];
+						auto& heVList = currCluster.getCoordList();
+						int i = 0;
+						for (auto const& pair : heVList) {
+							heVArray[i][0] = std::get<0>(pair);
+							heVArray[i][1] = std::get<1>(pair);
+							heVArray[i][2] = std::get<2>(pair);
+							heVArray[i][3] = std::get<3>(pair);
+							i++;
+						}
+						hsize_t dim[2]; dim[0] = nTot; dim[1] = 4;
+						hid_t dataspaceId = H5Screate_simple(2, dim, NULL);
+						hid_t datasetId = H5Dcreate2(clusterGroupId, "heVList", H5T_STD_I32LE,
+								dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+						status = H5Dwrite(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
+								H5P_DEFAULT, &heVArray);
+						status = H5Dclose(datasetId);
+						status = H5Sclose(dataspaceId);
+					}
+					// Normal cluster case
+					else {
+						// Write the composition attribute
+						auto& comp = currReactant.getComposition();
+						hsize_t dim[1]; dim[0] = comp.size();
+						hid_t dataspaceId = H5Screate_simple(1, dim, NULL);
+						int compArray[dim[0]];
+						for (int i = 0; i < dim[0]; i++) {
+							compArray[i] = comp[i];
+						}
+						hid_t attributeId = H5Acreate2(clusterGroupId, "composition",
+								H5T_STD_I32LE, dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+						status = H5Awrite(attributeId, H5T_STD_I32LE, &compArray);
+						status = H5Aclose(attributeId);
+						status = H5Sclose(dataspaceId);
+
+						// Write the energy and diffusion parameters
+						dataspaceId = H5Screate(H5S_SCALAR);
+						attributeId = H5Acreate2(clusterGroupId, "formationEnergy",
+								H5T_IEEE_F64LE, dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+						double formationEnergy = currReactant.getFormationEnergy();
+						status = H5Awrite(attributeId, H5T_IEEE_F64LE, &formationEnergy);
+						status = H5Aclose(attributeId);
+						attributeId = H5Acreate2(clusterGroupId, "migrationEnergy",
+								H5T_IEEE_F64LE, dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+						double migrationEnergy = currReactant.getMigrationEnergy();
+						status = H5Awrite(attributeId, H5T_IEEE_F64LE, &migrationEnergy);
+						status = H5Aclose(attributeId);
+						attributeId = H5Acreate2(clusterGroupId, "diffusionFactor",
+								H5T_IEEE_F64LE, dataspaceId, H5P_DEFAULT, H5P_DEFAULT);
+						double diffusionFactor = currReactant.getDiffusionFactor();
+						status = H5Awrite(attributeId, H5T_IEEE_F64LE, &diffusionFactor);
+						status = H5Aclose(attributeId);
+						status = H5Sclose(dataspaceId);
+					}
+
+					// Write a dataset of production reactions
+					auto prodVec = currReactant.getProdVector();
+					if (prodVec.size() > 0) {
+						int nReact = prodVec.size();
+						int dataSize = prodVec[0].size();
+						double prodArray[nReact][dataSize];
+						for (int i = 0; i < nReact; i++) {
+							for (int j = 0; j < dataSize; j++) {
+								prodArray[i][j] = prodVec[i][j];
+							}
+						}
+						hsize_t dims[2];
+						dims[0] = nReact;
+						dims[1] = dataSize;
+						hid_t dataspaceId = H5Screate_simple(2, dims, NULL);
+						hid_t datasetId = H5Dcreate2(clusterGroupId, "prod", H5T_IEEE_F64LE,
+								dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+						status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+								H5P_DEFAULT, &prodArray);
+						status = H5Dclose(datasetId);
+						status = H5Sclose(dataspaceId);
+					}
+
+					// Write a dataset of combination reactions
+					auto combVec = currReactant.getCombVector();
+					if (combVec.size() > 0) {
+						int nReact = combVec.size();
+						int dataSize = combVec[0].size();
+						double combArray[nReact][dataSize];
+						for (int i = 0; i < nReact; i++) {
+							for (int j = 0; j < dataSize; j++) {
+								combArray[i][j] = combVec[i][j];
+							}
+						}
+						hsize_t dims[2];
+						dims[0] = nReact;
+						dims[1] = dataSize;
+						hid_t dataspaceId = H5Screate_simple(2, dims, NULL);
+						hid_t datasetId = H5Dcreate2(clusterGroupId, "comb", H5T_IEEE_F64LE,
+								dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+						status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+								H5P_DEFAULT, &combArray);
+						status = H5Dclose(datasetId);
+						status = H5Sclose(dataspaceId);
+					}
+
+					// Write a dataset of dissociation reactions
+					auto dissoVec = currReactant.getDissoVector();
+					if (dissoVec.size() > 0) {
+						int nReact = dissoVec.size();
+						int dataSize = dissoVec[0].size();
+						double dissoArray[nReact][dataSize];
+						for (int i = 0; i < nReact; i++) {
+							for (int j = 0; j < dataSize; j++) {
+								dissoArray[i][j] = dissoVec[i][j];
+							}
+						}
+						hsize_t dims[2];
+						dims[0] = nReact;
+						dims[1] = dataSize;
+						hid_t dataspaceId = H5Screate_simple(2, dims, NULL);
+						hid_t datasetId = H5Dcreate2(clusterGroupId, "disso", H5T_IEEE_F64LE,
+								dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+						status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+								H5P_DEFAULT, &dissoArray);
+						status = H5Dclose(datasetId);
+						status = H5Sclose(dataspaceId);
+					}
+
+					// Write a dataset of emission reactions
+					auto emitVec = currReactant.getEmitVector();
+					if (emitVec.size() > 0) {
+						int nReact = emitVec.size();
+						int dataSize = emitVec[0].size();
+						double emitArray[nReact][dataSize];
+						for (int i = 0; i < nReact; i++) {
+							for (int j = 0; j < dataSize; j++) {
+								emitArray[i][j] = emitVec[i][j];
+							}
+						}
+						hsize_t dims[2];
+						dims[0] = nReact;
+						dims[1] = dataSize;
+						hid_t dataspaceId = H5Screate_simple(2, dims, NULL);
+						hid_t datasetId = H5Dcreate2(clusterGroupId, "emit", H5T_IEEE_F64LE,
+								dataspaceId, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+						status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+								H5P_DEFAULT, &emitArray);
+						status = H5Dclose(datasetId);
+						status = H5Sclose(dataspaceId);
+					}
+
+					// Close the group
+					status = H5Gclose(clusterGroupId);
+				});
+
+		// Close everything
+		status = H5Sclose(dataspaceId);
+		status = H5Gclose(networkGroupId);
 	}
-
-	// Close the from file
-	status = H5Fclose(fromFileId);
 
 	return;
 }
@@ -934,8 +1133,7 @@ std::vector<std::vector<double> > HDF5Utils::readNInterstitial3D(
 	return toReturn;
 }
 
-double HDF5Utils::readNHelium(const std::string& fileName,
-		int lastTimeStep) {
+double HDF5Utils::readNHelium(const std::string& fileName, int lastTimeStep) {
 	// Initialize the number of helium
 	double nHe = 0.0;
 
@@ -1002,8 +1200,7 @@ double HDF5Utils::readNDeuterium(const std::string& fileName,
 	return nD;
 }
 
-double HDF5Utils::readNTritium(const std::string& fileName,
-		int lastTimeStep) {
+double HDF5Utils::readNTritium(const std::string& fileName, int lastTimeStep) {
 	// Initialize the number of tritium
 	double nT = 0.0;
 
@@ -1284,8 +1481,8 @@ double HDF5Utils::readPreviousTFlux1D(const std::string& fileName,
 	return previousFlux;
 }
 
-std::vector<std::vector<double> > HDF5Utils::readNetwork(
-		const std::string& fileName) {
+void HDF5Utils::readNetworkSize(const std::string& fileName, int &normalSize,
+		int &superSize) {
 	// Set up file access property list with parallel I/O access
 	propertyListId = H5Pcreate(H5P_FILE_ACCESS);
 	H5Pset_fapl_mpio(propertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
@@ -1296,40 +1493,222 @@ std::vector<std::vector<double> > HDF5Utils::readNetwork(
 	// Close the property list
 	status = H5Pclose(propertyListId);
 
-	// Open the dataset
-	hid_t datasetId = H5Dopen(fileId, "/networkGroup/network", H5P_DEFAULT);
+	// Open the network group
+	networkGroupId = H5Gopen(fileId, "networkGroup", H5P_DEFAULT);
 
-	// Get the dimensions of the dataset
-	hsize_t dims[2];
-	// Get the dataspace object
-	hid_t dataspaceId = H5Dget_space(datasetId);
+	// Open and read the normalSize attribute
+	hid_t attributeId = H5Aopen(networkGroupId, "normalSize", H5P_DEFAULT);
+	status = H5Aread(attributeId, H5T_STD_I32LE, &normalSize);
+	status = H5Aclose(attributeId);
+
+	// Open and read the superSize attribute
+	attributeId = H5Aopen(networkGroupId, "superSize", H5P_DEFAULT);
+	status = H5Aread(attributeId, H5T_STD_I32LE, &superSize);
+	status = H5Aclose(attributeId);
+
+	return;
+}
+
+std::vector<int> HDF5Utils::readCluster(int id, double &formationEnergy,
+		double &migrationEnergy, double &diffusionFactor) {
+	// Open the corresponding group
+	std::stringstream idName;
+	idName << id;
+	hid_t clusterGroupId = H5Gopen(networkGroupId, idName.str().c_str(),
+	H5P_DEFAULT);
+
+	// Open and read the formation energy attribute
+	hid_t attributeId = H5Aopen(clusterGroupId, "formationEnergy", H5P_DEFAULT);
+	status = H5Aread(attributeId, H5T_IEEE_F64LE, &formationEnergy);
+	status = H5Aclose(attributeId);
+
+	// Open and read the migration energy attribute
+	attributeId = H5Aopen(clusterGroupId, "migrationEnergy", H5P_DEFAULT);
+	status = H5Aread(attributeId, H5T_IEEE_F64LE, &migrationEnergy);
+	status = H5Aclose(attributeId);
+
+	// Open and read the diffusion factor attribute
+	attributeId = H5Aopen(clusterGroupId, "diffusionFactor", H5P_DEFAULT);
+	status = H5Aread(attributeId, H5T_IEEE_F64LE, &diffusionFactor);
+	status = H5Aclose(attributeId);
+
+	// Read the composition attribute
+	attributeId = H5Aopen_name(clusterGroupId, "composition");
+	hid_t dataspaceId = H5Aget_space(attributeId);
+	hsize_t dims[1];
 	status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+	int compArray[dims[0]];
+	status = H5Aread(attributeId, H5T_STD_I32LE, &compArray);
+	status = H5Aclose(attributeId);
 
-	// Create the array that will receive the network
-	double *networkArray = new double[dims[0] * dims[1]];
-
-	// Read the data set
-	status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-			networkArray);
-
-	// Fill the vector to return with the dataset
-	std::vector<std::vector<double> > networkVector;
-	// Loop on the size of the network
+	// Fill the vector
+	std::vector<int> comp;
 	for (int i = 0; i < dims[0]; i++) {
-		// Create the line to give to the vector
-		std::vector<double> line;
-		for (int j = 0; j < dims[1]; j++) {
-			line.push_back(networkArray[i * dims[1] + j]);
-		}
-		networkVector.push_back(line);
+		comp.push_back(compArray[i]);
 	}
 
-	// Close everything
-	status = H5Dclose(datasetId);
-	status = H5Fclose(fileId);
-	delete[] networkArray;
+	return comp;
+}
 
-	return networkVector;
+std::set<std::tuple<int, int, int, int> > HDF5Utils::readSuperCluster(int id) {
+	// Open the corresponding group
+	std::stringstream idName;
+	idName << id;
+	hid_t clusterGroupId = H5Gopen(networkGroupId, idName.str().c_str(),
+	H5P_DEFAULT);
+
+	// Read the heVList dataset
+	hid_t datasetId = H5Dopen(clusterGroupId, "heVList", H5P_DEFAULT);
+	hid_t dataspaceId = H5Dget_space(datasetId);
+	hsize_t dims[2];
+	status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+	int heVArray[dims[0]][dims[1]];
+	status = H5Dread(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
+	H5P_DEFAULT, &heVArray);
+	status = H5Dclose(datasetId);
+
+	// Fill the set
+	std::set<std::tuple<int, int, int, int> > heVList;
+	for (int i = 0; i < dims[0]; i++) {
+		auto pair = std::make_tuple(heVArray[i][0], heVArray[i][1],
+				heVArray[i][2], heVArray[i][3]);
+		heVList.emplace(pair);
+	}
+
+	return heVList;
+}
+
+void HDF5Utils::readReactions(IReactionNetwork& network) {
+	// Loop on the reactants
+	auto& allReactants = network.getAll();
+	std::for_each(allReactants.begin(), allReactants.end(),
+			[&allReactants, &network](IReactant& currReactant) {
+				// Open the corresponding group
+				int id = currReactant.getId() - 1;
+				std::stringstream idName;
+				idName << id;
+				hid_t clusterGroupId = H5Gopen(networkGroupId, idName.str().c_str(),
+						H5P_DEFAULT);
+
+				// Read the production dataset
+				bool datasetExist = H5Lexists(clusterGroupId, "prod",
+						H5P_DEFAULT);
+				if (datasetExist) {
+					hid_t datasetId = H5Dopen(clusterGroupId, "prod", H5P_DEFAULT);
+					hid_t dataspaceId = H5Dget_space(datasetId);
+					hsize_t dims[2];
+					status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+					double prodVec[dims[0]][dims[1]];
+					status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+							H5P_DEFAULT, &prodVec);
+					status = H5Dclose(datasetId);
+					// Loop on the prod vector
+					for (int i = 0; i < dims[0]; i++) {
+						// Get pointers to the 2 reactants
+						auto& firstReactant = allReactants.at(prodVec[i][0]);
+						auto& secondReactant = allReactants.at(prodVec[i][1]);
+
+						// Create and add the reaction to the network
+						std::unique_ptr<ProductionReaction> reaction(
+								new ProductionReaction(firstReactant, secondReactant));
+						auto& prref = network.add(std::move(reaction));
+
+						// Add the reaction to the cluster
+						currReactant.resultFrom(prref, prodVec[i][2]);
+					}
+				}
+
+				// Read the combination dataset
+				datasetExist = H5Lexists(clusterGroupId, "comb",
+						H5P_DEFAULT);
+				if (datasetExist) {
+					hid_t datasetId = H5Dopen(clusterGroupId, "comb", H5P_DEFAULT);
+					hid_t dataspaceId = H5Dget_space(datasetId);
+					hsize_t dims[2];
+					status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+					double combVec[dims[0]][dims[1]];
+					status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+							H5P_DEFAULT, &combVec);
+					status = H5Dclose(datasetId);
+					// Loop on the prod vector
+					for (int i = 0; i < dims[0]; i++) {
+						// Get pointers to the combining reactant
+						auto& firstReactant = allReactants.at(combVec[i][0]);
+
+						// Create and add the reaction to the network
+						std::unique_ptr<ProductionReaction> reaction(
+								new ProductionReaction(firstReactant, currReactant));
+						auto& prref = network.add(std::move(reaction));
+
+						// Add the reaction to the cluster
+						currReactant.participateIn(prref, combVec[i][1]);
+					}
+				}
+
+				// Read the dissociation dataset
+				datasetExist = H5Lexists(clusterGroupId, "disso",
+						H5P_DEFAULT);
+				if (datasetExist) {
+					hid_t datasetId = H5Dopen(clusterGroupId, "disso", H5P_DEFAULT);
+					hid_t dataspaceId = H5Dget_space(datasetId);
+					hsize_t dims[2];
+					status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+					double dissoVec[dims[0]][dims[1]];
+					status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+							H5P_DEFAULT, &dissoVec);
+					status = H5Dclose(datasetId);
+					// Loop on the prod vector
+					for (int i = 0; i < dims[0]; i++) {
+						// Get pointers to the other reactants
+						auto& emittingReactant = allReactants.at(dissoVec[i][0]);
+						auto& secondReactant = allReactants.at(dissoVec[i][1]);
+
+						// Create and add the reaction to the network
+						std::unique_ptr<ProductionReaction> reaction(
+								new ProductionReaction(currReactant, secondReactant));
+						auto& prref = network.add(std::move(reaction));
+						std::unique_ptr<DissociationReaction> dissociationReaction(
+								new DissociationReaction(emittingReactant, prref.first,
+										prref.second, &prref));
+						auto& drref = network.add(std::move(dissociationReaction));
+
+						// Add the reaction to the cluster
+						currReactant.participateIn(drref, dissoVec[i][2]);
+					}
+				}
+
+				// Read the emission dataset
+				datasetExist = H5Lexists(clusterGroupId, "emit",
+						H5P_DEFAULT);
+				if (datasetExist) {
+					hid_t datasetId = H5Dopen(clusterGroupId, "emit", H5P_DEFAULT);
+					hid_t dataspaceId = H5Dget_space(datasetId);
+					hsize_t dims[2];
+					status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+					double emitVec[dims[0]][dims[1]];
+					status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+							H5P_DEFAULT, &emitVec);
+					status = H5Dclose(datasetId);
+					// Loop on the prod vector
+					for (int i = 0; i < dims[0]; i++) {
+						// Get pointers to the other reactants
+						auto& firstReactant = allReactants.at(emitVec[i][0]);
+						auto& secondReactant = allReactants.at(emitVec[i][1]);
+
+						// Create and add the reaction to the network
+						std::unique_ptr<ProductionReaction> reaction(
+								new ProductionReaction(firstReactant, secondReactant));
+						auto& prref = network.add(std::move(reaction));
+						std::unique_ptr<DissociationReaction> dissociationReaction(
+								new DissociationReaction(currReactant, prref.first,
+										prref.second, &prref));
+						auto& drref = network.add(std::move(dissociationReaction));
+
+						// Add the reaction to the cluster
+						currReactant.emitFrom(drref, emitVec[i][2]);
+					}
+				}
+			});
 }
 
 std::vector<std::vector<double> > HDF5Utils::readGridPoint(

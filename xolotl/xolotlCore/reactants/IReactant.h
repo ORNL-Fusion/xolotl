@@ -79,8 +79,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void resultFrom(ProductionReaction& reaction, int a[4] = defaultInit,
-			int b[4] = defaultInit) = 0;
+	virtual void resultFrom(ProductionReaction& reaction,
+			int a[4] = defaultInit, int b[4] = defaultInit) = 0;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -103,14 +103,23 @@ public:
 			IReactant& product) = 0;
 
 	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	virtual void resultFrom(ProductionReaction& reaction, double coef) = 0;
+
+	/**
 	 * Note that we combine with another cluster in a production reaction.
 	 * Assumes that the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(ProductionReaction& reaction,
-			int a[4] = defaultInit) = 0;
+	virtual void participateIn(ProductionReaction& reaction, int a[4] =
+			defaultInit) = 0;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -135,6 +144,15 @@ public:
 			IReactant& product) = 0;
 
 	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	virtual void participateIn(ProductionReaction& reaction, double coef) = 0;
+
+	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
 	 * Assumes the reaction is already inour network.
 	 *
@@ -142,8 +160,8 @@ public:
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(DissociationReaction& reaction, int a[4] = defaultInit,
-			int b[4] = defaultInit) = 0;
+	virtual void participateIn(DissociationReaction& reaction, int a[4] =
+			defaultInit, int b[4] = defaultInit) = 0;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -168,13 +186,23 @@ public:
 			IReactant& disso) = 0;
 
 	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	virtual void participateIn(DissociationReaction& reaction, double coef) = 0;
+
+	/**
 	 * Note that we emit from the given reaction.
 	 * Assumes the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
 	 */
-	virtual void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit) = 0;
+	virtual void emitFrom(DissociationReaction& reaction,
+			int a[4] = defaultInit) = 0;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -194,6 +222,15 @@ public:
 	 * @param disso The dissociating cluster.
 	 */
 	virtual void emitFrom(DissociationReaction& reaction, IReactant& disso) = 0;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	virtual void emitFrom(DissociationReaction& reaction, double coef) = 0;
 
 	/**
 	 * Add the reactions to the network lists.
@@ -459,6 +496,42 @@ public:
 	 * @return The rate
 	 */
 	virtual double getLeftSideRate() const = 0;
+
+	/**
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getProdVector() const = 0;
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, the rate, and
+	 * the coefs[0]
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const = 0;
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const = 0;
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved, containing the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const = 0;
 
 	/**
 	 * This operation returns true if the cluster is a mixed-species or compound

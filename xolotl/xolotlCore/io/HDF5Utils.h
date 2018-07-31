@@ -3,6 +3,7 @@
 
 #include <IReactionNetwork.h>
 #include <memory>
+#include <set>
 
 namespace xolotlCore {
 
@@ -46,8 +47,9 @@ void fillNetworkComp(std::vector<std::vector<int> > compVec);
  * Fill the network dataset.
  *
  * @param fileName The name of the file from which the network will be taken
+ * @param network The network to write
  */
-void fillNetwork(const std::string& fileName);
+void fillNetwork(const std::string& fileName, IReactionNetwork& network);
 
 /**
  * Add a concentration subgroup for the given time step to the HDF5 file.
@@ -344,11 +346,38 @@ double readPreviousDFlux1D(const std::string& fileName, int lastTimeStep);
 double readPreviousTFlux1D(const std::string& fileName, int lastTimeStep);
 
 /**
- * Read the network from a HDF5 file.
+ * Read the network sizes from a HDF5 file.
  * @param fileName The name of the file to read from.
- * @return The vector of vector which contain the network dataset.
+ * @param normalSize The number of normal clusters.
+ * @param superSize The number of super clusters.
  */
-std::vector<std::vector<double> > readNetwork(const std::string& fileName);
+void readNetworkSize(const std::string& fileName, int &normalSize,
+		int &superSize);
+
+/**
+ * Read the cluster from a HDF5 file.
+ * @param id The id of the cluster.
+ * @param formationEnergy The formation energy.
+ * @param migrationEnergy The migration energy.
+ * @param diffusionFactor The diffusion factor.
+ * @return The cluster composition.
+ */
+std::vector<int> readCluster(int id, double &formationEnergy,
+		double &migrationEnergy, double &diffusionFactor);
+
+/**
+ * Read the super cluster from a HDF5 file.
+ * @param id The id of the cluster.
+ * @return The list of clusters that it contains.
+ */
+std::set<std::tuple<int, int, int, int> > readSuperCluster(int id);
+
+/**
+ * Read and set the reactions in the network.
+ *
+ * @param network The network in which the reactions will be set
+ */
+void readReactions(IReactionNetwork& network);
 
 /**
  * Read the (i,j,k)-th grid point concentrations from a HDF5 file.

@@ -270,13 +270,13 @@ private:
 		}
 
 		// Loop on the different type of clusters in grouping
-		for (int i = 1; i < psDim; i++) {
+		for (int i = 1; i < 5; i++) {
 			// Check the boundaries in all the directions
-			auto const& bounds = prod.getBounds(indexList[i] - 1);
+			auto const& bounds = prod.getBounds(i - 1);
 			int productLo = *(bounds.begin()), productHi = *(bounds.end()) - 1;
-			auto const& r1Bounds = r1.getBounds(indexList[i] - 1);
+			auto const& r1Bounds = r1.getBounds(i - 1);
 			int r1Lo = *(r1Bounds.begin()), r1Hi = *(r1Bounds.end()) - 1;
-			auto const& r2Bounds = r2.getBounds(indexList[i] - 1);
+			auto const& r2Bounds = r2.getBounds(i - 1);
 			int r2Lo = *(r2Bounds.begin()), r2Hi = *(r2Bounds.end()) - 1;
 
 			// Compute the corresponding overlap width
@@ -284,7 +284,7 @@ private:
 					- std::max(productLo, r1Lo + r2Lo) + 1;
 
 			// Special case for V and I
-			if (indexList[i] == 4)
+			if (i == 4)
 				width = std::min(productHi, r1Hi + r2Hi - iSize)
 						- std::max(productLo, r1Lo + r2Lo - iSize) + 1;
 

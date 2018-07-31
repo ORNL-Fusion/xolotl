@@ -378,6 +378,15 @@ public:
 	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
 
 	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef The cooresponding coefficient
+	 */
+	void resultFrom(ProductionReaction& reaction, double coef) override;
+
+	/**
 	 * Note that we combine with another cluster in a production reaction.
 	 * Assumes that the reaction is already in our network.
 	 *
@@ -408,6 +417,15 @@ public:
 	 */
 	void participateIn(ProductionReaction& reaction, IReactant& product)
 			override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(ProductionReaction& reaction, double coef) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -443,6 +461,15 @@ public:
 			override;
 
 	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(DissociationReaction& reaction, double coef) override;
+
+	/**
 	 * Note that we emit from the given reaction.
 	 * Assumes the reaction is already in our network.
 	 *
@@ -470,6 +497,15 @@ public:
 	 * @param disso The dissociating cluster.
 	 */
 	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void emitFrom(DissociationReaction& reaction, double coef) override;
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of
@@ -540,6 +576,42 @@ public:
 	 * @return The concentration
 	 */
 	double getIntegratedVConcentration(int v) const;
+
+	/**
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getProdVector() const override;
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, the rate, and
+	 * the coefs[0]
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const override;
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const override;
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved, containing the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const override;
 
 	/**
 	 * This operation returns the distance to the mean.
@@ -790,7 +862,8 @@ public:
 			return false;
 		if (!bounds[3].contains(nV))
 			return false;
-		if (isFull()) return true;
+		if (isFull())
+			return true;
 
 		return (heVList.find(std::make_tuple(nHe, nD, nT, nV)) != heVList.end());
 	}

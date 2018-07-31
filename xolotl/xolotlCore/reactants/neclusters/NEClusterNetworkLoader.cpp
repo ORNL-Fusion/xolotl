@@ -96,59 +96,59 @@ NEClusterNetworkLoader::NEClusterNetworkLoader(
 
 std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 		const IOptions& options) {
-	// Get the dataset from the HDF5 files
-	auto networkVector = xolotlCore::HDF5Utils::readNetwork(fileName);
-
-	// Initialization
-	int numXe = 0, numV = 0, numI = 0;
-	double formationEnergy = 0.0, migrationEnergy = 0.0;
-	double diffusionFactor = 0.0;
-	std::vector<std::reference_wrapper<Reactant> > reactants;
+//	// Get the dataset from the HDF5 files
+//	auto networkVector = xolotlCore::HDF5Utils::readNetwork(fileName);
+//
+//	// Initialization
+//	int numXe = 0, numV = 0, numI = 0;
+//	double formationEnergy = 0.0, migrationEnergy = 0.0;
+//	double diffusionFactor = 0.0;
+//	std::vector<std::reference_wrapper<Reactant> > reactants;
 
 	// Prepare the network
 	// Once we have C++14 support, use std::make_unique.
 	std::unique_ptr<NEClusterReactionNetwork> network(
 			new NEClusterReactionNetwork(handlerRegistry));
 
-	// Loop on the networkVector
-	for (auto lineIt = networkVector.begin(); lineIt != networkVector.end();
-			lineIt++) {
-
-		// Composition of the cluster
-		numXe = (int) (*lineIt)[0];
-		numV = (int) (*lineIt)[1];
-		numI = (int) (*lineIt)[2];
-		// Create the cluster
-		auto nextCluster = createNECluster(numXe, numV, numI, *network);
-
-		// Energies
-		formationEnergy = (*lineIt)[3];
-		migrationEnergy = (*lineIt)[4];
-		diffusionFactor = (*lineIt)[5];
-
-		// Set the formation energy
-		nextCluster->setFormationEnergy(formationEnergy);
-		// Set the diffusion factor and migration energy
-		nextCluster->setMigrationEnergy(migrationEnergy);
-		nextCluster->setDiffusionFactor(diffusionFactor);
-
-		// Save it in the network
-		pushNECluster(network, reactants, nextCluster);
-	}
-
-	// Set the reaction network for each reactant
-	for (Reactant& currCluster : reactants) {
-		currCluster.updateFromNetwork();
-	}
-
-	// Create the reactions
-	network->createReactionConnectivity();
-
-	// Check if we want dummy reactions
-	if (!dummyReactions) {
-		// Apply grouping
-		applyGrouping(*network);
-	}
+//	// Loop on the networkVector
+//	for (auto lineIt = networkVector.begin(); lineIt != networkVector.end();
+//			lineIt++) {
+//
+//		// Composition of the cluster
+//		numXe = (int) (*lineIt)[0];
+//		numV = (int) (*lineIt)[1];
+//		numI = (int) (*lineIt)[2];
+//		// Create the cluster
+//		auto nextCluster = createNECluster(numXe, numV, numI, *network);
+//
+//		// Energies
+//		formationEnergy = (*lineIt)[3];
+//		migrationEnergy = (*lineIt)[4];
+//		diffusionFactor = (*lineIt)[5];
+//
+//		// Set the formation energy
+//		nextCluster->setFormationEnergy(formationEnergy);
+//		// Set the diffusion factor and migration energy
+//		nextCluster->setMigrationEnergy(migrationEnergy);
+//		nextCluster->setDiffusionFactor(diffusionFactor);
+//
+//		// Save it in the network
+//		pushNECluster(network, reactants, nextCluster);
+//	}
+//
+//	// Set the reaction network for each reactant
+//	for (Reactant& currCluster : reactants) {
+//		currCluster.updateFromNetwork();
+//	}
+//
+//	// Create the reactions
+//	network->createReactionConnectivity();
+//
+//	// Check if we want dummy reactions
+//	if (!dummyReactions) {
+//		// Apply grouping
+//		applyGrouping(*network);
+//	}
 
 //	// Dump the network we've created, if desired.
 //	int rank;
