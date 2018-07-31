@@ -61,6 +61,8 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${HDF5_INCLUDE_DIR})
 target_link_libraries(${LIBRARY_NAME} ${MPI_LIBRARIES} ${HDF5_LIBRARIES})
 
+add_subdirectory(XConvHDF5)
+
 #Install the xolotl header files
 # TODO we don't need to install anything when building this internal library?
 #install(FILES ${HEADERS} DESTINATION include)
