@@ -224,6 +224,9 @@ public:
     template<typename T>
     class DataSet : public DataSetTBase<T> {
     public:
+        template<uint32_t dim0>
+        using DataType2D = std::vector<std::array<T, dim0>>;
+
         DataSet(void) = delete;
         DataSet(const DataSet& other) = delete;
 
@@ -241,6 +244,11 @@ public:
 
         void write(const T& data) const;
         T read(void) const;
+
+        template<uint32_t dim0>
+        void parWrite2D(MPI_Comm comm,
+                        uint32_t baseIdx,
+                        const DataType2D<dim0>& data) const;
     };
 
     // Partial specialization for vector of T.
