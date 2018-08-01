@@ -3,6 +3,7 @@
 
 #include <numeric>
 #include "boost/range/counting_range.hpp"
+#include "xolotlCore/DoInOrder.h"
 
 namespace xolotlCore
 {
@@ -267,24 +268,6 @@ HDF5File::RaggedDataSet2D<T>::buildDataSpace(MPI_Comm _comm,
     return std::move(dataspace);
 }
 
-template<typename F>
-void
-DoInOrder(std::string msg, int rank, int size, F func) {
-    int token = 7;
-    int tag = 9;
-    if(rank == 0) {
-        std::cout << msg << std::endl;
-        func();
-        MPI_Send(&token, 1, MPI_INT, (rank + 1) % size, tag, MPI_COMM_WORLD);
-        MPI_Recv(&token, 1, MPI_INT, (size - 1), tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
-    else {
-        MPI_Recv(&token, 1, MPI_INT, (rank - 1), tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        func();
-        MPI_Send(&token, 1, MPI_INT, (rank + 1) % size, tag, MPI_COMM_WORLD);
-    }
-}
-
 inline
 std::ostream&
 operator<<(std::ostream& os, const std::pair<int, double>& p) {
@@ -307,16 +290,17 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
     MPI_Comm_size(comm, &commSize);
 
 #if READY
-    DoInOrder("Data", commRank, commSize,
-        [baseX, &data]() {
-            for(auto i = 0; i < data.size(); ++i) {
-                std::cout << baseX + i << ": ";
-                for(auto const& p : data[i]) {
-                    std::cout << ' ' << p;
-                }
-                std::cout << '\n';
-            }
-        });
+    DoInOrder([baseX, &data]() {
+                    for(auto i = 0; i < data.size(); ++i) {
+                        std::cout << baseX + i << ": ";
+                        for(auto const& p : data[i]) {
+                            std::cout << ' ' << p;
+                        }
+                        std::cout << '\n';
+                    }
+                },
+                comm,
+                "Data");
 #endif // READY
 
     // Determine the local starting indices of the data we own.
@@ -326,15 +310,15 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
     assert(myNumItemsByPoint.size() == myNumPoints);
 
 #if READY
-    MPI_Barrier(MPI_COMM_WORLD);
-    DoInOrder("NumItemsByPoint", commRank, commSize,
-        [commRank, &myNumItemsByPoint]() {
-            std::cout << commRank << ": ";
-            for(auto const& p : myNumItemsByPoint) {
-                std::cout << ' ' << p;
-            }
-            std::cout << '\n';
-        });
+    DoInOrder([commRank, &myNumItemsByPoint]() {
+                    std::cout << commRank << ": ";
+                    for(auto const& p : myNumItemsByPoint) {
+                        std::cout << ' ' << p;
+                    }
+                    std::cout << '\n';
+                },
+                comm,
+                "NumItemsByPoint");
 #endif // READY
 
     // ...then determine starting indices within our local flat array.
@@ -349,15 +333,15 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
     myStartingIndices.resize(myNumPoints);
 
 #if READY
-    MPI_Barrier(MPI_COMM_WORLD);
-    DoInOrder("Local starting indices", commRank, commSize,
-        [commRank, &myStartingIndices]() {
-            std::cout << commRank << ": ";
-            for(auto const& p : myStartingIndices) {
-                std::cout << ' ' << p;
-            }
-            std::cout << '\n';
-        });
+    DoInOrder([commRank, &myStartingIndices]() {
+                    std::cout << commRank << ": ";
+                    for(auto const& p : myStartingIndices) {
+                        std::cout << ' ' << p;
+                    }
+                    std::cout << '\n';
+                },
+                comm,
+                "Local starting indices");
 #endif // READY
 
     // Convert local starting indices into global starting indices
@@ -434,25 +418,25 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
     }
     SimpleDataSpace<1> indexMemspace(indexCounts);
 #if READY
-    MPI_Barrier(MPI_COMM_WORLD);
-    DoInOrder("Global starting indices", commRank, commSize,
-        [commRank, &globalStartingIndices]() {
-            std::cout << commRank << ": ";
-            for(auto const& p : globalStartingIndices) {
-                std::cout << ' ' << p;
-            }
-            std::cout << '\n';
-        });
+    DoInOrder([commRank, &globalStartingIndices]() {
+                    std::cout << commRank << ": ";
+                    for(auto const& p : globalStartingIndices) {
+                        std::cout << ' ' << p;
+                    }
+                    std::cout << '\n';
+                },
+                comm,
+                "Global starting indices");
 #endif // READY
 
 #if READY
-    MPI_Barrier(MPI_COMM_WORLD);
-    DoInOrder("Index array parts", commRank, commSize,
-        [commRank, baseX, &indexCounts]() {
-            std::cout << commRank << ": "
-                << '[' << baseX << ", " << (baseX + indexCounts[0]) << ')'
-                << std::endl;
-        });
+    DoInOrder([commRank, baseX, &indexCounts]() {
+                    std::cout << commRank << ": "
+                        << '[' << baseX << ", " << (baseX + indexCounts[0]) << ')'
+                        << std::endl;
+                },
+                comm,
+                "Index array parts");
 #endif // READY
 
 
@@ -550,22 +534,17 @@ HDF5File::RaggedDataSet2D<T>::read(int baseX, int numX) const {
     // Read our part of the actual data.
     auto ret = readData(globalStartingIndices);
 #if READY
-    int commRank;
-    int commSize;
-    MPI_Comm_rank(comm, &commRank);
-    MPI_Comm_size(comm, &commSize);
-
-    MPI_Barrier(comm);
-    DoInOrder("Read ragged data", commRank, commSize,
-            [baseX, numX, &ret]() {
-                for(auto i = 0; i < numX; ++i ) {
-                    std::cout << baseX + i << ':';
-                    for(const auto& currData : ret[i]) {
-                        std::cout << ' ' << currData;
+    DoInOrder([baseX, numX, &ret]() {
+                    for(auto i = 0; i < numX; ++i ) {
+                        std::cout << baseX + i << ':';
+                        for(const auto& currData : ret[i]) {
+                            std::cout << ' ' << currData;
+                        }
+                        std::cout << std::endl;
                     }
-                    std::cout << std::endl;
-                }
-            });
+                },
+                comm,
+                "Read ragged data");
 #endif // READY
 
     return ret;
@@ -624,15 +603,15 @@ HDF5File::RaggedDataSet2D<T>::readStartingIndices(int baseX, int numX) const {
                 globalStartingIndices.data());
 
 #if READY
-    MPI_Barrier(comm);
-    DoInOrder("global starting indices", commRank, commSize,
-            [commRank, &globalStartingIndices]() {
-                std::cout << commRank << ": ";
-                for(auto const& p : globalStartingIndices) {
-                    std::cout << ' ' << p;
-                }
-                std::cout << '\n';
-            });
+    DoInOrder([commRank, &globalStartingIndices]() {
+                        std::cout << commRank << ": ";
+                        for(auto const& p : globalStartingIndices) {
+                            std::cout << ' ' << p;
+                        }
+                        std::cout << '\n';
+                    },
+                    comm,
+                    "global starting indices");
 #endif // READY
 
     return globalStartingIndices;
@@ -643,15 +622,6 @@ template<typename T>
 typename HDF5File::RaggedDataSet2D<T>::Ragged2DType
 HDF5File::RaggedDataSet2D<T>::readData(
                     const std::vector<uint32_t>& globalStartingIndices) const {
-
-#if READY
-    // Determine our position within the MPI communicator used to
-    // access the file.
-    int commRank;
-    MPI_Comm_rank(comm, &commRank);
-    int commSize;
-    MPI_Comm_size(comm, &commSize);
-#endif // READY
 
     // Determine the total number of values we own.
     auto myNumItems = globalStartingIndices.back() - globalStartingIndices[0];
@@ -682,15 +652,15 @@ HDF5File::RaggedDataSet2D<T>::readData(
                 plist.getId(),
                 flatData.data());
 #if READY
-    MPI_Barrier(comm);
-    DoInOrder("flatData", commRank, commSize,
-            [commRank, &flatData]() {
-                std::cout << commRank << ": ";
-                for(auto const& d : flatData){
-                    std::cout << ' ' << d;
-                }
-                std::cout << '\n';
-            });
+    DoInOrder([commRank, &flatData]() {
+                    std::cout << commRank << ": ";
+                    for(auto const& d : flatData){
+                        std::cout << ' ' << d;
+                    }
+                    std::cout << '\n';
+                },
+                comm,
+                "flatData");
 #endif // READY
 
     // Convert from flat representation to ragged 2D representation.
@@ -734,12 +704,26 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
 
     // Describe our data within the global dataspace.
     auto myNumItems = data.size();
-    SimpleDataSpace<2>::Dimensions dataCounts {myNumItems};
-    SimpleDataSpace<2>::Dimensions dataOffsets {baseIdx};
+    SimpleDataSpace<2>::Dimensions dataCounts {myNumItems, dim0};
+    SimpleDataSpace<2>::Dimensions dataOffsets {baseIdx, 0};
     SimpleDataSpace<2> dataMemSpace(dataCounts);
 
     // Select our hyperslab within the file.
     SimpleDataSpace<2> dataFileSpace(*this);
+#if READY
+#else
+    DoInOrder([cwRank, &dataFileSpace,&dataOffsets,&dataCounts]() {
+                    const auto totalDims = dataFileSpace.getDims();
+                    std::cout << cwRank << ": " 
+                        << "fileDims: " << totalDims[0] << ", " << totalDims[1]
+                        << "\n  offset: " << dataOffsets[0] << ", " << dataOffsets[1]
+                        << "\n  count: " << dataCounts[0] << ", " << dataCounts[1]
+                        << std::endl;
+                },
+                comm,
+                "dataspaces");
+#endif // READY
+
     auto status = H5Sselect_hyperslab(dataFileSpace.getId(),
                                         H5S_SELECT_SET,
                                         dataOffsets.data(),
@@ -760,6 +744,19 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
             flatData.emplace_back(currDataItem);
         }
     }
+
+#if READY
+#else
+    DoInOrder([cwRank, &flatData]() {
+                    std::cout << cwRank << ": ";
+                    for(const auto& currDataItem: flatData) {
+                        std::cout << ' ' << currDataItem;
+                    }
+                    std::cout << '\n' << cwRank << ": done\n";
+                },
+                comm,
+                "parWrite data");
+#endif // READY
 
     // Write the data using a collective write.
     PropertyList plist(H5P_DATASET_XFER);
