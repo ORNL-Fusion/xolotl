@@ -413,7 +413,7 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
 
     // Create the global index dataset.
     std::ostringstream indexDatasetNameStr;
-    indexDatasetNameStr << getName() << startIndicesDatasetNameSuffix;
+    indexDatasetNameStr << this->getName() << startIndicesDatasetNameSuffix;
     DataSet<uint32_t> indexDataset(this->getLocation(),
                                     indexDatasetNameStr.str(),
                                     indexDataSpace);
@@ -500,7 +500,7 @@ HDF5File::RaggedDataSet2D<T>::writeData(uint32_t globalBaseIdx,
                                         nullptr);
     if(status < 0) {
         std::ostringstream estr;
-        estr << "Failed to select our part of dataset " << getName();
+        estr << "Failed to select our part of dataset " << this->getName();
         throw HDF5Exception(estr.str());
     }
 
@@ -521,7 +521,7 @@ HDF5File::RaggedDataSet2D<T>::writeData(uint32_t globalBaseIdx,
     PropertyList plist(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(plist.getId(), H5FD_MPIO_COLLECTIVE);
     TypeInMemory<T> memType;
-    status = H5Dwrite(getId(),
+    status = H5Dwrite(this->getId(),
                 memType.getId(),
                 dataMemSpace.getId(),
                 dataFileSpace.getId(),
@@ -530,7 +530,7 @@ HDF5File::RaggedDataSet2D<T>::writeData(uint32_t globalBaseIdx,
     if(status < 0)
     {
         std::ostringstream estr;
-        estr << "Failed to write dataset " << getName();
+        estr << "Failed to write dataset " << this->getName();
         throw HDF5Exception(estr.str());
     }
 }
@@ -586,7 +586,7 @@ HDF5File::RaggedDataSet2D<T>::readStartingIndices(int baseX, int numX) const {
 
     // Open our index dataset.
     std::ostringstream indexDatasetNameStr;
-    indexDatasetNameStr << getName() << startIndicesDatasetNameSuffix;
+    indexDatasetNameStr << this->getName() << startIndicesDatasetNameSuffix;
     DataSet<uint32_t> indexDataset(this->getLocation(),
                                     indexDatasetNameStr.str());
 
@@ -675,7 +675,7 @@ HDF5File::RaggedDataSet2D<T>::readData(
     PropertyList plist(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(plist.getId(), H5FD_MPIO_COLLECTIVE);
     TypeInMemory<T> dataMemType;
-    H5Dread(getId(),
+    H5Dread(this->getId(),
                 dataMemType.getId(),
                 dataMemspace.getId(),
                 dataFilespace.getId(),
