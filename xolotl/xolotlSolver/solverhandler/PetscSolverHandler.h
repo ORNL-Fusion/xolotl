@@ -32,12 +32,6 @@ class PetscSolverHandler: public SolverHandler {
 protected:
 
 	/**
-	 * The last temperature on the grid. In the future this will have to be an
-	 * array or map, but for now the temperature is isotropic.
-	 */
-	double lastTemperature;
-
-	/**
 	 * A vector for holding the partial derivatives of one cluster. It is sized in
 	 * the createSolverContext() operation.
 	 *
@@ -59,44 +53,43 @@ protected:
 	 */
 	std::vector<double> reactingPartialsForCluster;
 
-    /**
-     * Number of valid partial derivatives for each reactant.
-     */
-    std::vector<PetscInt> reactionSize;
-
-    /**
-     * Starting index of items for each reactant within the reactionIndices
-     * and reactionVals vectors.  E.g., the values for reactant i
-     * are located at 
-     *      reactionIndices[reactionStartingIdx[i]+0],
-     *      reactionIndices[reactionStartingIdx[i]+1]
-     *      ...
-     *      reactionIndices[reactionStartingIdx[i]+reactionSize[i]-1]
-     */
-    std::vector<size_t> reactionStartingIdx;
+	/**
+	 * Number of valid partial derivatives for each reactant.
+	 */
+	std::vector<PetscInt> reactionSize;
 
 	/**
-     * Indices for partial derivatives for all the reactions at one grid point.
+	 * Starting index of items for each reactant within the reactionIndices
+	 * and reactionVals vectors.  E.g., the values for reactant i
+	 * are located at
+	 *      reactionIndices[reactionStartingIdx[i]+0],
+	 *      reactionIndices[reactionStartingIdx[i]+1]
+	 *      ...
+	 *      reactionIndices[reactionStartingIdx[i]+reactionSize[i]-1]
 	 */
-    std::vector<PetscInt> reactionIndices;
+	std::vector<size_t> reactionStartingIdx;
 
 	/**
-     * Partial derivatives for all reactions at one grid point.
+	 * Indices for partial derivatives for all the reactions at one grid point.
 	 */
-    std::vector<PetscScalar> reactionVals;
+	std::vector<PetscInt> reactionIndices;
 
+	/**
+	 * Partial derivatives for all reactions at one grid point.
+	 */
+	std::vector<PetscScalar> reactionVals;
 
-    /**
-     * Convert a C++ sparse fill map representation to the one that
-     * PETSc's DMDASetBlockFillsSparse() expects.
-     *
-     * @param dof The network's degrees of freedom.
-     * @param fillMap The C++ sparse file map to convert.
-     * @return The information from the fill map, in the format that
-     *      PETSc's DMDASetBlockFillsSparse() expects.
-     */
-    static std::vector<PetscInt> ConvertToPetscSparseFillMap(size_t dof,
-                    const xolotlCore::IReactionNetwork::SparseFillMap& fillMap);
+	/**
+	 * Convert a C++ sparse fill map representation to the one that
+	 * PETSc's DMDASetBlockFillsSparse() expects.
+	 *
+	 * @param dof The network's degrees of freedom.
+	 * @param fillMap The C++ sparse file map to convert.
+	 * @return The information from the fill map, in the format that
+	 *      PETSc's DMDASetBlockFillsSparse() expects.
+	 */
+	static std::vector<PetscInt> ConvertToPetscSparseFillMap(size_t dof,
+			const xolotlCore::IReactionNetwork::SparseFillMap& fillMap);
 
 public:
 
@@ -111,7 +104,7 @@ public:
 	 * @param _network The reaction network to use.
 	 */
 	PetscSolverHandler(xolotlCore::IReactionNetwork& _network) :
-			SolverHandler(_network), lastTemperature(0.0) {
+			SolverHandler(_network) {
 	}
 
 };

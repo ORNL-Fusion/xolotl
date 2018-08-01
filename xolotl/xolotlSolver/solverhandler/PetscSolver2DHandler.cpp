@@ -130,6 +130,15 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
+	// Initialize the last temperature vector
+	for (int j = 0; j < nY; j++) {
+		std::vector<double> tempVec;
+		for (int i = 0; i <= nX - surfacePosition[j]; i++) {
+			tempVec.push_back(0.0);
+		}
+		lastTemperature.push_back(tempVec);
+	}
+
 	// Pointer for the concentration vector
 	PetscScalar ***concentrations = nullptr;
 	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
@@ -342,8 +351,9 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 			// Heat condition
 			if (xi == surfacePosition[yj]) {
-				temperatureHandler->computeTemperature(concVector, updatedConcOffset,
-						grid[xi + 1] - grid[xi], grid[xi + 2] - grid[xi + 1], xi);
+				temperatureHandler->computeTemperature(concVector,
+						updatedConcOffset, grid[xi + 1] - grid[xi],
+						grid[xi + 2] - grid[xi + 1], xi);
 			}
 
 			// Boundary conditions
@@ -362,12 +372,13 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (!xolotlCore::equal(temperature, lastTemperature)) {
+			if (!xolotlCore::equal(temperature,
+					lastTemperature[yj][xi - surfacePosition[yj]])) {
 				network.setTemperature(temperature);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature = temperature;
+				lastTemperature[yj][xi - surfacePosition[yj]] = temperature;
 			}
 
 			// Copy data into the ReactionNetwork so that it can
@@ -540,12 +551,13 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (!xolotlCore::equal(temperature, lastTemperature)) {
+			if (!xolotlCore::equal(temperature,
+					lastTemperature[yj][xi - surfacePosition[yj]])) {
 				network.setTemperature(temperature);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature = temperature;
+				lastTemperature[yj][xi - surfacePosition[yj]] = temperature;
 			}
 
 			// Get the partial derivatives for the temperature
@@ -764,12 +776,13 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (!xolotlCore::equal(temperature, lastTemperature)) {
+			if (!xolotlCore::equal(temperature,
+					lastTemperature[yj][xi - surfacePosition[yj]])) {
 				network.setTemperature(temperature);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature = temperature;
+				lastTemperature[yj][xi - surfacePosition[yj]] = temperature;
 			}
 
 			// Copy data into the ReactionNetwork so that it can

@@ -15,6 +15,11 @@ private:
 	//! The position of the surface
 	std::vector<std::vector<int> > surfacePosition;
 
+	/**
+	 * The last temperature on the grid.
+	 */
+	std::vector<std::vector<std::vector<double> > > lastTemperature;
+
 public:
 
 	/**
@@ -80,7 +85,22 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void setSurfacePosition(int pos, int j = -1, int k = -1) {
-		surfacePosition[j][k] = pos;
+		// Update the size of the last temperature vector
+		if (pos > surfacePosition[j][k]) {
+			// Removing grid points
+			while (pos > surfacePosition[j][k]) {
+				lastTemperature[j][k].erase(lastTemperature[j][k].begin(),
+						lastTemperature[j][k].begin() + 1);
+				surfacePosition[j][k]++;
+			}
+		} else {
+			// Add grid point
+			while (pos < surfacePosition[j][k]) {
+				lastTemperature[j][k].emplace(lastTemperature[j][k].begin(),
+						0.0);
+				surfacePosition[j][k]--;
+			}
+		}
 	}
 
 };

@@ -125,6 +125,11 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
+	// Initialize the last temperature at each grid point under the surface
+	for (int i = 0; i <= nX - surfacePosition; i++) {
+		lastTemperature.push_back(0.0);
+	}
+
 	// Pointer for the concentration vector
 	PetscScalar **concentrations = nullptr;
 	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
@@ -327,12 +332,12 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				ftime);
 
 		// Update the network if the temperature changed
-		if (!xolotlCore::equal(temperature, lastTemperature)) {
+		if (!xolotlCore::equal(temperature, lastTemperature[xi - surfacePosition])) {
 			network.setTemperature(temperature);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
-			lastTemperature = temperature;
+			lastTemperature[xi - surfacePosition] = temperature;
 		}
 
 		// Copy data into the ReactionNetwork so that it can
@@ -483,12 +488,12 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				ftime);
 
 		// Update the network if the temperature changed
-		if (!xolotlCore::equal(temperature, lastTemperature)) {
+		if (!xolotlCore::equal(temperature, lastTemperature[xi - surfacePosition])) {
 			network.setTemperature(temperature);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
-			lastTemperature = temperature;
+			lastTemperature[xi - surfacePosition] = temperature;
 		}
 
 		// Get the partial derivatives for the temperature
@@ -673,12 +678,12 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				ftime);
 
 		// Update the network if the temperature changed
-		if (!xolotlCore::equal(temperature, lastTemperature)) {
+		if (!xolotlCore::equal(temperature, lastTemperature[xi - surfacePosition])) {
 			network.setTemperature(temperature);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
-			lastTemperature = temperature;
+			lastTemperature[xi - surfacePosition] = temperature;
 		}
 
 		// Copy data into the ReactionNetwork so that it can
