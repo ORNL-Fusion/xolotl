@@ -910,63 +910,6 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Create the output file
-	std::ofstream outputFile;
-	if (procId == 0) {
-		std::stringstream name;
-		name << "TRIDYN_" << timestep << ".dat";
-		outputFile.open(name.str());
-	}
-
-	// Loop on the entire grid
-	for (int xi = surfacePos + 1; xi < Mx; xi++) {
-
-		// Set x
-		double x = grid[xi + 1] - grid[1];
-
-		// Initialize the concentrations at this grid point
-		double heLocalConc = 0.0, dLocalConc = 0.0, tLocalConc = 0.0,
-				vLocalConc = 0.0, iLocalConc = 0.0;
-
-		// Check if this process is in charge of xi
-		if (xi >= xs && xi < xs + xm) {
-
-			// Get the pointer to the beginning of the solution data for this grid point
-			auto gridPointSolution = solutionArray[xi];
-
-			// Update the concentration in the network
-			network.updateConcentrationsFromArray(gridPointSolution);
-
-			// Get the total helium concentration at this grid point
-			heLocalConc += network.getTotalAtomConcentration(0);
-			dLocalConc += network.getTotalAtomConcentration(1);
-			tLocalConc += network.getTotalAtomConcentration(2);
-			vLocalConc += network.getTotalVConcentration();
-			iLocalConc += network.getTotalIConcentration();
-		}
-
-		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
-		MPI_Reduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-
-		// The master process writes in the file
-		if (procId == 0) {
-			outputFile << x - (grid[surfacePos + 1] - grid[1]) << " " << heConc
-					<< " " << dConc << " " << tConc << " " << vConc << " "
-					<< iConc << std::endl;
-		}
-	}
-
-#if READY
-#else
     // Save current concentrations as an HDF5 file.
     //
     // First create the file for parallel file access.
@@ -1029,12 +972,6 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
     concsDset.parWrite2D<numValsPerGridpoint>(PETSC_COMM_WORLD,
                                         myFirstIdxToWrite - firstIdxToWrite,
                                         myConcs);
-#endif // READY
-
-	// Close the file
-	if (procId == 0) {
-		outputFile.close();
-	}
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
