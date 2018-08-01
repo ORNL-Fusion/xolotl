@@ -711,7 +711,8 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
     // Select our hyperslab within the file.
     SimpleDataSpace<2> dataFileSpace(*this);
 #if READY
-#else
+    int cwRank;
+    MPI_Comm_rank(comm, &cwRank);
     DoInOrder([cwRank, &dataFileSpace,&dataOffsets,&dataCounts]() {
                     const auto totalDims = dataFileSpace.getDims();
                     std::cout << cwRank << ": " 
@@ -746,7 +747,6 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
     }
 
 #if READY
-#else
     DoInOrder([cwRank, &flatData]() {
                     std::cout << cwRank << ": ";
                     for(const auto& currDataItem: flatData) {
