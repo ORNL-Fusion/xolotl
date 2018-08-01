@@ -297,7 +297,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 				PETSC_COMM_WORLD);
 
 		// Broadcast the size
-		MPI_Bcast(&concSize, 1, MPI_DOUBLE, concProc, PETSC_COMM_WORLD);
+		MPI_Bcast(&concSize, 1, MPI_INT, concProc, PETSC_COMM_WORLD);
 
 		// Skip the grid point if the size is 0
 		if (concSize == 0)
@@ -2279,23 +2279,38 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		// Set it in the solver
 		solverHandler.setSurfacePosition(surfacePos);
 
-		// Initialize the vacancy concentration on the new grid points
+		// Initialize the vacancy concentration and the temperature on the new grid points
 		// Get the single vacancy ID
 		auto singleVacancyCluster = network.get(Species::V, 1);
 		int vacancyIndex = -1;
 		if (singleVacancyCluster)
 			vacancyIndex = singleVacancyCluster->getId() - 1;
+		// Get the surface temperature
+		double temp = 0.0;
+		if (xi >= xs && xi < xs + xm) {
+			temp = solutionArray[xi][dof - 1];
+		}
+		double surfTemp = 0.0;
+		MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
+				PETSC_COMM_WORLD);
+
 		// Loop on the new grid points
-		while (nGridPoints > 0) {
+		while (nGridPoints >= 0) {
 			// Position of the newly created grid point
 			xi = surfacePos + nGridPoints;
 
 			// If xi is on this process
-			if (xi >= xs && xi < xs + xm && vacancyIndex > 0) {
+			if (xi >= xs && xi < xs + xm) {
 				// Get the concentrations
 				gridPointSolution = solutionArray[xi];
-				// Initialize the vacancy concentration
-				gridPointSolution[vacancyIndex] = initialVConc;
+
+				// Set the new surface temperature
+				gridPointSolution[dof - 1] = surfTemp;
+
+				if (vacancyIndex > 0 && nGridPoints > 0) {
+					// Initialize the vacancy concentration
+					gridPointSolution[vacancyIndex] = initialVConc;
+				}
 			}
 
 			// Decrease the number of grid points
@@ -2343,7 +2358,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 	// Set the new surface in the temperature handler
 	auto tempHandler = solverHandler.getTemperatureHandler();
-	tempHandler->updateSurfacePosition(grid[surfacePos + 1] - grid[1]);
+	tempHandler->updateSurfacePosition(surfacePos);
 
 	// Get the flux handler to reinitialize it
 	auto fluxHandler = solverHandler.getFluxHandler();
@@ -2613,11 +2628,11 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			// Get the interstitial information at the surface if concentrations were stored
 			if (hasConcentrations) {
 				// Get the interstitial quantity from the HDF5 file
-				nInterstitial1D = xolotlCore::HDF5Utils::readNInterstitial1D(
-						networkName, tempTimeStep);
+				nInterstitial1D = xolotlCore::HDF5Utils::readData1D(networkName,
+						tempTimeStep, "nInterstitial");
 				// Get the previous I flux from the HDF5 file
-				previousIFlux1D = xolotlCore::HDF5Utils::readPreviousIFlux1D(
-						networkName, tempTimeStep);
+				previousIFlux1D = xolotlCore::HDF5Utils::readData1D(networkName,
+						tempTimeStep, "previousIFlux");
 				// Get the previous time from the HDF5 file
 				previousTime = xolotlCore::HDF5Utils::readPreviousTime(
 						networkName, tempTimeStep);
@@ -2848,18 +2863,18 @@ PetscErrorCode setupPetsc1DMonitor(TS ts) {
 			// If the bottom is a free surface
 			if (solverHandler.getRightOffset() == 1) {
 				// Read about the impurity fluxes in the bulk
-				nHelium1D = xolotlCore::HDF5Utils::readNHelium(networkName,
-						tempTimeStep);
-				previousHeFlux1D = xolotlCore::HDF5Utils::readPreviousHeFlux1D(
-						networkName, tempTimeStep);
-				nDeuterium1D = xolotlCore::HDF5Utils::readNDeuterium(
-						networkName, tempTimeStep);
-				previousDFlux1D = xolotlCore::HDF5Utils::readPreviousDFlux1D(
-						networkName, tempTimeStep);
-				nTritium1D = xolotlCore::HDF5Utils::readNTritium(networkName,
-						tempTimeStep);
-				previousTFlux1D = xolotlCore::HDF5Utils::readPreviousTFlux1D(
-						networkName, tempTimeStep);
+				nHelium1D = xolotlCore::HDF5Utils::readData1D(networkName,
+						tempTimeStep, "nHelium");
+				previousHeFlux1D = xolotlCore::HDF5Utils::readData1D(
+						networkName, tempTimeStep, "previousHeFlux");
+				nDeuterium1D = xolotlCore::HDF5Utils::readData1D(networkName,
+						tempTimeStep, "nDeuterium");
+				previousDFlux1D = xolotlCore::HDF5Utils::readData1D(networkName,
+						tempTimeStep, "previousDFlux");
+				nTritium1D = xolotlCore::HDF5Utils::readData1D(networkName,
+						tempTimeStep, "nTritium");
+				previousTFlux1D = xolotlCore::HDF5Utils::readData1D(networkName,
+						tempTimeStep, "previousTFlux");
 			}
 		}
 

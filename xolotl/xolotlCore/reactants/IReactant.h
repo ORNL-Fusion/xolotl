@@ -51,8 +51,7 @@ public:
 	 * be used to index into the array to get the concentration of
 	 * that Species.
 	 */
-	struct Composition: public std::array<SizeType,
-			static_cast<int>(Species::last) + 1> {
+	struct Composition: public std::array<SizeType, NumSpecies> {
 		Composition() {
 			// By default, initialize all species concentrations to 0.
 			fill(0);

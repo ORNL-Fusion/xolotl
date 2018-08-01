@@ -20,8 +20,7 @@ namespace xolotlCore {
 // better performance, presumably because its size is known at compile time
 // instead of dynamically determined/managed.
 class ProductionReaction: public KeyedReaction<
-		std::array<IReactant::SizeType,
-				2 * (static_cast<int>(Species::last) + 1)> > {
+		std::array<IReactant::SizeType, 2 * NumSpecies>> {
 public:
 	/**
 	 * Information about a production reaction that needs to be created

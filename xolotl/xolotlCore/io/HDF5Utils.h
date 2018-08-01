@@ -114,6 +114,21 @@ void writeBottom1D(double nHe, double previousHeFlux, double nD,
 		double previousDFlux, double nT, double previousTFlux);
 
 /**
+ * Write the bottom informations in the
+ * concentration subgroup.
+ *
+ * @param nHe The quantity of helium at the bottom
+ * @param previousHeFlux The previous He flux
+ * @param nD The quantity of deuterium at the bottom
+ * @param previousDFlux The previous D flux
+ * @param nT The quantity of tritium at the bottom
+ * @param previousTFlux The previous T flux
+ */
+void writeBottom2D(std::vector<double> nHe, std::vector<double> previousHeFlux,
+		std::vector<double> nD, std::vector<double> previousDFlux,
+		std::vector<double> nT, std::vector<double> previousTFlux);
+
+/**
  * Add the concentration dataset at a specific grid point.
  *
  * @param size The size of the dataset to create
@@ -218,132 +233,40 @@ std::vector<std::vector<int> > readSurface3D(const std::string& fileName,
 		int lastTimeStep);
 
 /**
- * Read the quantity of interstitial at the surface from the concentration
- * group of a HDF5 file in the case of a 1D grid (one surface position).
+ * Read some data from the concentration
+ * group of a HDF5 file in the case of a 1D grid (one float).
  *
  * @param fileName The name of the file to read from
  * @param lastTimeStep The value of the last written time step
- * @return The number of interstitial
+ * @param dataName The name of the data we want
+ * @return The value of the data
  */
-double readNInterstitial1D(const std::string& fileName, int lastTimeStep);
+double readData1D(const std::string& fileName, int lastTimeStep,
+		const std::string& dataName);
 
 /**
- * Read the quantity of interstitial at each surface position
- * from the concentration group of a HDF5 file in
- * the case of a 2D grid (a vector of surface positions).
+ * Read some data from the concentration group of a HDF5 file in
+ * the case of a 2D grid (a vector).
  *
  * @param fileName The name of the file to read from
  * @param lastTimeStep The value of the last written time step
- * @return The vector of interstitial quantity of the surface position
+ * @param dataName The name of the data we want
+ * @return The vector of the data
  */
-std::vector<double> readNInterstitial2D(const std::string& fileName,
-		int lastTimeStep);
+std::vector<double> readData2D(const std::string& fileName, int lastTimeStep,
+		const std::string& dataName);
 
 /**
- * Read the quantity of interstitial at each surface position
- * from the concentration group of a HDF5 file in
- * the case of a 3D grid (a vector of vector of surface positions).
+ * Read some data from the concentration group of a HDF5 file in
+ * the case of a 3D grid (a vector of vector).
  *
  * @param fileName The name of the file to read from
  * @param lastTimeStep The value of the last written time step
- * @return The vector of interstitial quantity of the surface position
+ * @param dataName The name of the data we want
+ * @return The vector of vector of data
  */
-std::vector<std::vector<double> > readNInterstitial3D(
-		const std::string& fileName, int lastTimeStep);
-
-/**
- * Read the quantity of helium at the bottom from the concentration
- * group of a HDF5 file.
- *
- * @param fileName The name of the file to read from
- * @param lastTimeStep The value of the last written time step
- * @return The number of helium
- */
-double readNHelium(const std::string& fileName, int lastTimeStep);
-
-/**
- * Read the quantity of deuterium at the bottom from the concentration
- * group of a HDF5 file.
- *
- * @param fileName The name of the file to read from
- * @param lastTimeStep The value of the last written time step
- * @return The number of deuterium
- */
-double readNDeuterium(const std::string& fileName, int lastTimeStep);
-
-/**
- * Read the quantity of tritium at the bottom from the concentration
- * group of a HDF5 file.
- *
- * @param fileName The name of the file to read from
- * @param lastTimeStep The value of the last written time step
- * @return The number of tritium
- */
-double readNTritium(const std::string& fileName, int lastTimeStep);
-
-/**
- * Read the previous interstitial flux at the surface from the concentration
- * group of a HDF5 file in the case of a 1D grid (one surface position).
- *
- * @param fileName The name of the file to read from
- * @param lastTimeStep The value of the last written time step
- * @return The flux
- */
-double readPreviousIFlux1D(const std::string& fileName, int lastTimeStep);
-
-/**
- * Read the previous interstitial flux at each surface position
- *  from the concentration group of a HDF5 file in
- * the case of a 2D grid (a vector of surface positions).
- *
- * @param fileName The name of the file to read from
- * @param lastTimeStep The value of the last written time step
- * @return The vector of previous flux at each surface position
- */
-std::vector<double> readPreviousIFlux2D(const std::string& fileName,
-		int lastTimeStep);
-
-/**
- * Read the previous interstitial flux at each surface position
- * from the concentration group of a HDF5 file in
- * the case of a 3D grid (a vector of vector of surface positions).
- *
- * @param fileName The name of the file to read from
- * @param lastTimeStep The value of the last written time step
- * @return The vector of previous flux at each surface position
- */
-std::vector<std::vector<double> > readPreviousIFlux3D(
-		const std::string& fileName, int lastTimeStep);
-
-/**
- * Read the previous helium flux at the bottom from the concentration
- * group of a HDF5 file in the case of a 1D grid (one surface position).
- *
- * @param fileName The name of the file to read from
- * @param lastTimeStep The value of the last written time step
- * @return The flux
- */
-double readPreviousHeFlux1D(const std::string& fileName, int lastTimeStep);
-
-/**
- * Read the previous deuterium flux at the bottom from the concentration
- * group of a HDF5 file in the case of a 1D grid (one surface position).
- *
- * @param fileName The name of the file to read from
- * @param lastTimeStep The value of the last written time step
- * @return The flux
- */
-double readPreviousDFlux1D(const std::string& fileName, int lastTimeStep);
-
-/**
- * Read the previous tritium flux at the bottom from the concentration
- * group of a HDF5 file in the case of a 1D grid (one surface position).
- *
- * @param fileName The name of the file to read from
- * @param lastTimeStep The value of the last written time step
- * @return The flux
- */
-double readPreviousTFlux1D(const std::string& fileName, int lastTimeStep);
+std::vector<std::vector<double> > readData3D(const std::string& fileName,
+		int lastTimeStep, const std::string& dataName);
 
 /**
  * Read the network sizes from a HDF5 file.

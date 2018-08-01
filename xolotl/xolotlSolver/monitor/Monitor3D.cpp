@@ -186,7 +186,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 						PETSC_COMM_WORLD);
 
 				// Broadcast the size
-				MPI_Bcast(&concSize, 1, MPI_DOUBLE, concProc, PETSC_COMM_WORLD);
+				MPI_Bcast(&concSize, 1, MPI_INT, concProc, PETSC_COMM_WORLD);
 
 				// Skip the grid point if the size is 0
 				if (concSize == 0)
@@ -835,9 +835,8 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 						double heDensity = network.getTotalAtomConcentration();
 
 						// Compute the radius of the bubble from the number of helium
-						double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy
-								* hz / 4.0;
-						//					double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]) * hy * hz;
+						double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
+						//					double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
 						double radius =
 								(sqrt(3.0) / 4.0)
 										* xolotlCore::tungstenLatticeConstant
@@ -871,7 +870,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 										exp(
 												-(distance - depthParam)
 														/ (depthParam * 2.0)));
-                        double test = solverHandler.getRNG().GetRandomDouble();
+						double test = solverHandler.getRNG().GetRandomDouble();
 
 						if (prob > test) {
 							burst = true;
@@ -1104,24 +1103,39 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 				// Set it in the solver
 				solverHandler.setSurfacePosition(surfacePos, yj, zk);
 
-				// Initialize the vacancy concentration on the new grid points
+				// Initialize the vacancy concentration and the temperature on the new grid points
 				// Get the single vacancy ID
 				auto singleVacancyCluster = network.get(Species::V, 1);
 				int vacancyIndex = -1;
 				if (singleVacancyCluster)
 					vacancyIndex = singleVacancyCluster->getId() - 1;
+				// Get the surface temperature
+				double temp = 0.0;
+				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
+						&& zk >= zs && zk < zs + zm) {
+					temp = solutionArray[zk][yj][xi][dof - 1];
+				}
+				double surfTemp = 0.0;
+				MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
+						PETSC_COMM_WORLD);
 				// Loop on the new grid points
-				while (nGridPoints > 0) {
+				while (nGridPoints >= 0) {
 					// Position of the newly created grid point
 					xi = surfacePos + nGridPoints;
 
 					// If xi is on this process
 					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
-							&& zk >= zs && zk < zs + zm && vacancyIndex > 0) {
+							&& zk >= zs && zk < zs + zm) {
 						// Get the concentrations
 						gridPointSolution = solutionArray[zk][yj][xi];
-						// Initialize the vacancy concentration
-						gridPointSolution[vacancyIndex] = initialVConc;
+
+						// Set the new surface temperature
+						gridPointSolution[dof - 1] = surfTemp;
+
+						if (vacancyIndex > 0 && nGridPoints > 0) {
+							// Initialize the vacancy concentration
+							gridPointSolution[vacancyIndex] = initialVConc;
+						}
 					}
 
 					// Decrease the number of grid points
@@ -1393,11 +1407,11 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			// Get the interstitial information at the surface if concentrations were stored
 			if (hasConcentrations) {
 				// Get the interstitial quantity from the HDF5 file
-				nInterstitial3D = xolotlCore::HDF5Utils::readNInterstitial3D(
-						networkName, tempTimeStep);
+				nInterstitial3D = xolotlCore::HDF5Utils::readData3D(networkName,
+						tempTimeStep, "nInterstitial");
 				// Get the previous I flux from the HDF5 file
-				previousIFlux3D = xolotlCore::HDF5Utils::readPreviousIFlux3D(
-						networkName, tempTimeStep);
+				previousIFlux3D = xolotlCore::HDF5Utils::readData3D(networkName,
+						tempTimeStep, "previousIFlux");
 				// Get the previous time from the HDF5 file
 				previousTime = xolotlCore::HDF5Utils::readPreviousTime(
 						networkName, tempTimeStep);
@@ -1414,8 +1428,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 
 		// Bursting
 		if (solverHandler.burstBubbles()) {
-            // No need to seed the random number generator here.
-            // The solver handler has already done it.
+			// No need to seed the random number generator here.
+			// The solver handler has already done it.
 		}
 
 		// Set directions and terminate flags for the surface event

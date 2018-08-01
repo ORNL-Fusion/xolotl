@@ -125,9 +125,11 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	// Read the surface position
 	int surfacePos = HDF5Utils::readSurface1D("test.h5", timeStep);
 	BOOST_REQUIRE_EQUAL(surfacePos, iSurface);
-	double nInterstitial = HDF5Utils::readNInterstitial1D("test.h5", timeStep);
+	double nInterstitial = HDF5Utils::readData1D("test.h5", timeStep,
+			"nInterstitial");
 	BOOST_REQUIRE_CLOSE(nInterstitial, nInter, 0.0001);
-	double previousIFlux = HDF5Utils::readPreviousIFlux1D("test.h5", timeStep);
+	double previousIFlux = HDF5Utils::readData1D("test.h5", timeStep,
+			"previousIFlux");
 	BOOST_REQUIRE_CLOSE(previousIFlux, previousFlux, 0.0001);
 
 //	// Read the network of the written file
@@ -236,14 +238,16 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 	}
 
 	// Read the interstitial quantity
-	auto nInterstitial = HDF5Utils::readNInterstitial2D("test.h5", timeStep);
+	auto nInterstitial = HDF5Utils::readData2D("test.h5", timeStep,
+			"nInterstitial");
 	// Check all the values
 	for (int i = 0; i < nInterstitial.size(); i++) {
 		BOOST_REQUIRE_CLOSE(nInterstitial[i], nInter[i], 0.0001);
 	}
 
 	// Read the interstitial flux
-	auto previousIFlux = HDF5Utils::readPreviousIFlux2D("test.h5", timeStep);
+	auto previousIFlux = HDF5Utils::readData2D("test.h5", timeStep,
+			"previousIFlux");
 	// Check all the values
 	for (int i = 0; i < previousIFlux.size(); i++) {
 		BOOST_REQUIRE_CLOSE(previousIFlux[i], previousFlux[i], 0.0001);
@@ -307,14 +311,16 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 			BOOST_REQUIRE_EQUAL(surfacePos[i][j], iSurface[i][j]);
 		}
 	}
-	auto nInterstitial = HDF5Utils::readNInterstitial3D("test.h5", timeStep);
+	auto nInterstitial = HDF5Utils::readData3D("test.h5", timeStep,
+			"nInterstitial");
 	// Check all the values
 	for (int i = 0; i < nInterstitial.size(); i++) {
 		for (int j = 0; j < nInterstitial[0].size(); j++) {
 			BOOST_REQUIRE_CLOSE(nInterstitial[i][j], nInter[i][j], 0.0001);
 		}
 	}
-	auto previousIFlux = HDF5Utils::readPreviousIFlux3D("test.h5", timeStep);
+	auto previousIFlux = HDF5Utils::readData3D("test.h5", timeStep,
+			"previousIFlux");
 	// Check all the values
 	for (int i = 0; i < previousIFlux.size(); i++) {
 		for (int j = 0; j < previousIFlux[0].size(); j++) {

@@ -56,13 +56,26 @@ bool initializeTempHandler(const xolotlCore::Options &options) {
 		// PSI case
 		if (problemType == "W100" || problemType == "W110"
 				|| problemType == "W111" || problemType == "W211"
-				|| problemType == "TRIDYN")
+				|| problemType == "TRIDYN") {
 			theTemperatureHandler->setHeatCoefficient(
 					xolotlCore::tungstenHeatCoefficient);
+			theTemperatureHandler->setHeatConductivity(
+					xolotlCore::tungstenHeatConductivity);
+		}
 		// NE case
-		else if (problemType == "Fuel")
+		else if (problemType == "Fuel") {
 			theTemperatureHandler->setHeatCoefficient(
 					xolotlCore::uo2HeatCoefficient);
+			theTemperatureHandler->setHeatConductivity(
+					xolotlCore::uo2HeatConductivity);
+		}
+		// Fe case
+		else if (problemType == "Fe") {
+			theTemperatureHandler->setHeatCoefficient(
+					xolotlCore::feHeatCoefficient);
+			theTemperatureHandler->setHeatConductivity(
+					xolotlCore::feHeatConductivity);
+		}
 	} else {
 		// Only print the error message once when running in parallel
 		if (procId == 0) {

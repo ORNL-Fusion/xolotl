@@ -16,8 +16,7 @@ namespace xolotlCore {
 // better performance, presumably because its size is known at compile time
 // instead of dynamically determined/managed.
 class DissociationReaction: public KeyedReaction<
-		std::array<IReactant::SizeType,
-				3 * (static_cast<int>(Species::last) + 1)> > {
+		std::array<IReactant::SizeType, 3 * NumSpecies>> {
 public:
 
 	/**

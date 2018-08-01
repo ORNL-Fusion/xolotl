@@ -163,9 +163,45 @@ protected:
 				else if (l < surfacePos + 239) {
 					previousPoint += 500.0;
 				}
-				// Then 1.0um step size (20000.5nm < x)
-				else {
+				// Then 1.0um step size (20000.5nm < x < 30000.5nm )
+				else if (l < surfacePos + 249) {
 					previousPoint += 1000.0;
+				}
+				// Then 2.0um step size (30000.5nm < x < 50000.5)
+				else if (l < surfacePos + 259) {
+					previousPoint += 2000.0;
+				}
+				// Then 5.0um step size (50000.5nm < x < 100000.5)
+				else if (l < surfacePos + 269) {
+					previousPoint += 5000.0;
+				}
+				// Then 10.0um step size (100000.5nm < x < 200000.5nm )
+				else if (l < surfacePos + 279) {
+					previousPoint += 10000.0;
+				}
+				// Then 20.0um step size (200000.5nm < x < 500000.5)
+				else if (l < surfacePos + 294) {
+					previousPoint += 20000.0;
+				}
+				// Then 50.0um step size (500000.5nm < x < 1000000.5)
+				else if (l < surfacePos + 304) {
+					previousPoint += 50000.0;
+				}
+				// Then 100.0um step size (1mm < x < 2mm )
+				else if (l < surfacePos + 314) {
+					previousPoint += 100000.0;
+				}
+				// Then 200.0um step size (2mm < x < 5mm)
+				else if (l < surfacePos + 329) {
+					previousPoint += 200000.0;
+				}
+				// Then 500.0um step size (5mm < x < 10mm)
+				else if (l < surfacePos + 339) {
+					previousPoint += 500000.0;
+				}
+				// Then 1.0mm step size (10mm < x)
+				else {
+					previousPoint += 1000000.0;
 				}
 			}
 		}

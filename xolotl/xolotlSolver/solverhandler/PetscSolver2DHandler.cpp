@@ -130,6 +130,15 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
+	// Initialize the last temperature vector
+	for (int j = 0; j < nY; j++) {
+		std::vector<double> tempVec;
+		for (int i = 0; i <= nX - surfacePosition[j]; i++) {
+			tempVec.push_back(0.0);
+		}
+		lastTemperature.push_back(tempVec);
+	}
+
 	// Pointer for the concentration vector
 	PetscScalar ***concentrations = nullptr;
 	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
@@ -150,11 +159,7 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 				networkName, tempTimeStep);
 
 	// Give the surface position to the temperature handler
-	temperatureHandler->updateSurfacePosition(grid[surfacePosition[0]]);
-
-	// Give the surface position to the temperature handler
-	temperatureHandler->updateSurfacePosition(
-			grid[surfacePosition[0] + 1] - grid[1]);
+	temperatureHandler->updateSurfacePosition(surfacePosition[0]);
 
 	// Initialize the flux handler
 	fluxHandler->initializeFluxHandler(network, surfacePosition[0], grid);
@@ -306,7 +311,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// Share the concentration with all the processes
 		totalAtomConc = 0.0;
 		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-		MPI_COMM_WORLD);
+				MPI_COMM_WORLD);
 
 		// Set the disappearing rate in the modified TM handler
 		mutationHandler->updateDisappearingRate(totalAtomConc);
@@ -323,13 +328,26 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		fluxHandler->initializeFluxHandler(network, surfacePosition[yj], grid);
 		advectionHandlers[0]->setLocation(
 				grid[surfacePosition[yj] + 1] - grid[1]);
-		temperatureHandler->updateSurfacePosition(
-				grid[surfacePosition[yj] + 1] - grid[1]);
+		temperatureHandler->updateSurfacePosition(surfacePosition[yj]);
 
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
 			// Compute the old and new array offsets
 			concOffset = concs[yj][xi];
 			updatedConcOffset = updatedConcs[yj][xi];
+
+			// Fill the concVector with the pointer to the middle, left, right, bottom, and top grid points
+			concVector[0] = concOffset; // middle
+			concVector[1] = concs[yj][xi - 1]; // left
+			concVector[2] = concs[yj][xi + 1]; // right
+			concVector[3] = concs[yj - 1][xi]; // bottom
+			concVector[4] = concs[yj + 1][xi]; // top
+
+			// Heat condition
+			if (xi == surfacePosition[yj]) {
+				temperatureHandler->computeTemperature(concVector,
+						updatedConcOffset, grid[xi + 1] - grid[xi],
+						grid[xi + 2] - grid[xi + 1], xi);
+			}
 
 			// Boundary conditions
 			// Everything to the left of the surface is empty
@@ -341,25 +359,19 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// Set the grid position
 			gridPosition[0] = grid[xi + 1] - grid[1];
 
-			// Fill the concVector with the pointer to the middle, left, right, bottom, and top grid points
-			concVector[0] = concOffset; // middle
-			concVector[1] = concs[yj][xi - 1]; // left
-			concVector[2] = concs[yj][xi + 1]; // right
-			concVector[3] = concs[yj - 1][xi]; // bottom
-			concVector[4] = concs[yj + 1][xi]; // top
-
 			// Get the temperature from the temperature handler
 			temperatureHandler->setTemperature(concOffset);
 			double temperature = temperatureHandler->getTemperature(
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (!xolotlCore::equal(temperature, lastTemperature)) {
+			if (!xolotlCore::equal(temperature,
+					lastTemperature[yj][xi - surfacePosition[yj]])) {
 				network.setTemperature(temperature);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature = temperature;
+				lastTemperature[yj][xi - surfacePosition[yj]] = temperature;
 			}
 
 			// Copy data into the ReactionNetwork so that it can
@@ -376,12 +388,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// ---- Compute the temperature over the locally owned part of the grid -----
 			temperatureHandler->computeTemperature(concVector,
 					updatedConcOffset, grid[xi + 1] - grid[xi],
-					grid[xi + 2] - grid[xi + 1]);
-
-			// ---- Compute the temperature over the locally owned part of the grid -----
-			temperatureHandler->computeTemperature(concVector,
-					updatedConcOffset, grid[xi] - grid[xi - 1],
-					grid[xi + 1] - grid[xi]);
+					grid[xi + 2] - grid[xi + 1], xi);
 
 			// ---- Compute diffusion over the locally owned part of the grid -----
 			diffusionHandler->computeDiffusion(network, concVector,
@@ -487,10 +494,40 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		// on the surface position at Y
 		advectionHandlers[0]->setLocation(
 				grid[surfacePosition[yj] + 1] - grid[1]);
-		temperatureHandler->updateSurfacePosition(
-				grid[surfacePosition[yj] + 1] - grid[1]);
+		temperatureHandler->updateSurfacePosition(surfacePosition[yj]);
 
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
+			// Heat condition
+			if (xi == surfacePosition[yj]) {
+				// Get the partial derivatives for the temperature
+				temperatureHandler->computePartialsForTemperature(diffVals,
+						diffIndices, grid[xi + 1] - grid[xi],
+						grid[xi + 2] - grid[xi + 1], xi);
+
+				// Set grid coordinate and component number for the row
+				row.i = xi;
+				row.j = yj;
+				row.c = diffIndices[0];
+
+				// Set grid coordinates and component numbers for the columns
+				// corresponding to the middle, left, and right grid points
+				cols[0].i = xi; // middle
+				cols[0].j = yj;
+				cols[0].c = diffIndices[0];
+				cols[1].i = xi - 1; // left
+				cols[1].j = yj;
+				cols[1].c = diffIndices[0];
+				cols[2].i = xi + 1; // right
+				cols[2].j = yj;
+				cols[2].c = diffIndices[0];
+
+				ierr = MatSetValuesStencil(J, 1, &row, 3, cols, diffVals,
+						ADD_VALUES);
+				checkPetscError(ierr,
+						"PetscSolver2DHandler::computeOffDiagonalJacobian: "
+								"MatSetValuesStencil (temperature) failed.");
+			}
+
 			// Boundary conditions
 			// Everything to the left of the surface is empty
 			if (xi < surfacePosition[yj] + leftOffset
@@ -507,18 +544,19 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (!xolotlCore::equal(temperature, lastTemperature)) {
+			if (!xolotlCore::equal(temperature,
+					lastTemperature[yj][xi - surfacePosition[yj]])) {
 				network.setTemperature(temperature);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature = temperature;
+				lastTemperature[yj][xi - surfacePosition[yj]] = temperature;
 			}
 
 			// Get the partial derivatives for the temperature
 			temperatureHandler->computePartialsForTemperature(diffVals,
 					diffIndices, grid[xi + 1] - grid[xi],
-					grid[xi + 2] - grid[xi + 1]);
+					grid[xi + 2] - grid[xi + 1], xi);
 
 			// Set grid coordinate and component number for the row
 			row.i = xi;
@@ -702,7 +740,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// Share the concentration with all the processes
 		totalAtomConc = 0.0;
 		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-		MPI_COMM_WORLD);
+				MPI_COMM_WORLD);
 
 		// Set the disappearing rate in the modified TM handler
 		mutationHandler->updateDisappearingRate(totalAtomConc);
@@ -731,12 +769,13 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (!xolotlCore::equal(temperature, lastTemperature)) {
+			if (!xolotlCore::equal(temperature,
+					lastTemperature[yj][xi - surfacePosition[yj]])) {
 				network.setTemperature(temperature);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature = temperature;
+				lastTemperature[yj][xi - surfacePosition[yj]] = temperature;
 			}
 
 			// Copy data into the ReactionNetwork so that it can
