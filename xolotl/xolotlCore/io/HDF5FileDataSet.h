@@ -725,6 +725,59 @@ HDF5File::RaggedDataSet2D<T>::readData(
     return ret;
 }
 
+template<typename T>
+template<uint32_t dim0>
+void
+HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
+                                    uint32_t baseIdx,
+                                    const DataType2D<dim0>& data) const {
+
+    // Describe our data within the global dataspace.
+    auto myNumItems = data.size();
+    SimpleDataSpace<2>::Dimensions dataCounts {myNumItems};
+    SimpleDataSpace<2>::Dimensions dataOffsets {baseIdx};
+    SimpleDataSpace<2> dataMemSpace(dataCounts);
+
+    // Select our hyperslab within the file.
+    SimpleDataSpace<2> dataFileSpace(*this);
+    auto status = H5Sselect_hyperslab(dataFileSpace.getId(),
+                                        H5S_SELECT_SET,
+                                        dataOffsets.data(),
+                                        nullptr,
+                                        dataCounts.data(),
+                                        nullptr);
+    if(status < 0) {
+        std::ostringstream estr;
+        estr << "Failed to select our part of dataset " << getName();
+        throw HDF5Exception(estr.str());
+    }
+
+    // Convert data into a contiguous buffer
+    std::vector<T> flatData;
+    flatData.reserve(myNumItems*dim0);
+    for(const auto& currData1D : data) {
+        for(const auto& currDataItem : currData1D) {
+            flatData.emplace_back(currDataItem);
+        }
+    }
+
+    // Write the data using a collective write.
+    PropertyList plist(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(plist.getId(), H5FD_MPIO_COLLECTIVE);
+    TypeInMemory<T> memType;
+    status = H5Dwrite(getId(),
+                memType.getId(),
+                dataMemSpace.getId(),
+                dataFileSpace.getId(),
+                plist.getId(),
+                flatData.data());
+    if(status < 0)
+    {
+        std::ostringstream estr;
+        estr << "Failed to write dataset " << getName();
+        throw HDF5Exception(estr.str());
+    }
+}
 
 } // namespace xolotlCore
 

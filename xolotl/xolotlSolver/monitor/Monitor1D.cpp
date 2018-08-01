@@ -910,9 +910,6 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Declare the pointer for the concentrations at a specific grid point
-	PetscReal *gridPointSolution;
-
 	// Create the output file
 	std::ofstream outputFile;
 	if (procId == 0) {
@@ -933,7 +930,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 		// Check if this process is in charge of xi
 		if (xi >= xs && xi < xs + xm) {
 			// Get the pointer to the beginning of the solution data for this grid point
-			gridPointSolution = solutionArray[xi];
+			auto gridPointSolution = solutionArray[xi];
 
 			// Update the concentration in the network
 			network.updateConcentrationsFromArray(gridPointSolution);
@@ -965,6 +962,115 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 					<< iConc << std::endl;
 		}
 	}
+
+#if READY
+#else
+    // Save current concentrations as an HDF5 file.
+    //
+    // First create the file for parallel file access.
+    std::ostringstream tdFileStr;
+    tdFileStr << "TRIDYN_" << timestep << ".h5";
+    xolotlCore::HDF5File tdFile(tdFileStr.str(),
+                        xolotlCore::HDF5File::AccessMode::CreateOrTruncateIfExists,
+                        PETSC_COMM_WORLD,
+                        true);
+
+    // Define a dataset for concentrations.
+    // Everyone must create the dataset with the same shape.
+    constexpr auto numConcSpecies = 5;
+    const auto numGridpointsWithConcs = (Mx - (surfacePos + 1));
+    xolotlCore::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = 
+        { (hsize_t)numGridpointsWithConcs, numConcSpecies };
+    xolotlCore::HDF5File::SimpleDataSpace<2> concsDsetSpace(concsDsetDims);
+    std::string concsDsetName = "concs";
+    xolotlCore::HDF5File::DataSet<double> concsDset(tdFile,
+                                                    concsDsetName,
+                                                    concsDsetSpace);
+
+    // Specify the concentrations we will write.
+    // We only consider our own grid points.
+    xolotlCore::HDF5File::DataSet<double>::DataType2D<numConcSpecies> myConcs(xm);
+    for(auto xi = xs; xi < xs + xm; ++xi) {
+
+        if(xi >= (surfacePos + 1)) {
+
+            // Determine our gridpoint value.
+            double x = grid[xi + 1] - grid[1];
+
+            // Access the solution data for this grid point.
+			auto gridPointSolution = solutionArray[xi];
+
+			// Update the concentration in the network
+			network.updateConcentrationsFromArray(gridPointSolution);
+
+			// Get the total concentrations at this grid point
+            auto currIdx = xi-xs;
+            myConcs[currIdx][0] = network.getTotalAtomConcentration(0);
+			myConcs[currIdx][1] = network.getTotalAtomConcentration(1);
+            myConcs[currIdx][2] = network.getTotalAtomConcentration(2);
+			myConcs[currIdx][3] = network.getTotalVConcentration();
+            myConcs[currIdx][4] = network.getTotalIConcentration();
+		}
+    }
+
+    // Write the concs dataset in parallel.
+    // (We write only our part.)
+    concsDset.parWrite2D<numConcSpecies>(PETSC_COMM_WORLD,
+                                        xs - (surfacePos + 1),
+                                        myConcs);
+#endif // READY
+
+
+#if READY
+    // Saving it as a text file.
+
+    // Collect our concentration data for all grid points and all species.
+    const auto numSpecies = 5;
+    enum class ConcSpecies {
+        He,
+        D,
+        T,
+        V,
+        I
+    };
+    auto numGridPointsWithConcs = (Mx - (surfacePos + 1));
+    auto numConcs = numGridPointsWithConcs * numSpecies;
+    std::vector<double> myConcs(numConcs);
+    extract our values.
+
+    // Reduce all concentration data to rank 0.
+    std::vector<double> allConcs;
+    if(procId == 0) {
+        allConcs.resize(numConcs);
+    }
+    MPI_Reduce(myConcs.data(), 
+                allConcs.data(),
+                numConcs,
+                MPI_DOUBLE,
+                MPI_SUM,
+                0,
+                PETSC_COMM_WORLD);
+
+    // Write the concentration data to the output file.
+    if(procId == 0) {
+        std::ostringstream ostr;
+		ostr << "testTRIDYN_" << timestep << ".dat";
+        std::ofstream testOutputFile(ostr.str());
+
+        for (int xi = surfacePos + 1; xi < Mx; xi++) {
+            // Set x
+            double x = grid[xi + 1] - grid[1];
+
+			testOutputFile << x - (grid[surfacePos + 1] - grid[1]) 
+                << " " << heConc
+				<< " " << dConc 
+                << " " << tConc 
+                << " " << vConc 
+                << " " << iConc 
+                << std::endl;
+        }
+    }
+#endif // READY
 
 	// Close the file
 	if (procId == 0) {
