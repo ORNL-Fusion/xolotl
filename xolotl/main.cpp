@@ -20,7 +20,6 @@
 #include <ISolverHandler.h>
 #include <IReactionHandlerFactory.h>
 #include <ctime>
-#include "xthi.h"
 
 using namespace std;
 using std::shared_ptr;
@@ -231,8 +230,6 @@ int main(int argc, char **argv) {
             // TODO is this needed?
             argc -= 1;
             argv += 1;
-
-            xthi();
 
             // Run the simulation.
             ret = runXolotl(opts);

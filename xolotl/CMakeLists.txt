@@ -138,7 +138,7 @@ if(Boost_FOUND)
 endif()
 
 # Add an executable for the main program
-ADD_EXECUTABLE (xolotl main.cpp xthi.cpp)
+ADD_EXECUTABLE (xolotl main.cpp)
 
 # Link the reactants library
 target_link_libraries(xolotl ${XOLOTL_LIBS})
