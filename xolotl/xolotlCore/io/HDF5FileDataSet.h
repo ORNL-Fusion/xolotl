@@ -748,7 +748,7 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
                                         nullptr);
     if(status < 0) {
         std::ostringstream estr;
-        estr << "Failed to select our part of dataset " << getName();
+        estr << "Failed to select our part of dataset " << this->getName();
         throw HDF5Exception(estr.str());
     }
 
@@ -765,7 +765,7 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
     PropertyList plist(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(plist.getId(), H5FD_MPIO_COLLECTIVE);
     TypeInMemory<T> memType;
-    status = H5Dwrite(getId(),
+    status = H5Dwrite(this->getId(),
                 memType.getId(),
                 dataMemSpace.getId(),
                 dataFileSpace.getId(),
@@ -774,7 +774,7 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
     if(status < 0)
     {
         std::ostringstream estr;
-        estr << "Failed to write dataset " << getName();
+        estr << "Failed to write dataset " << this->getName();
         throw HDF5Exception(estr.str());
     }
 }
