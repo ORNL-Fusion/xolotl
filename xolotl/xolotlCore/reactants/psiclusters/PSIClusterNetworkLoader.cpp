@@ -1011,14 +1011,21 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 	// Create the super cluster corresponding to the biggest mixed one alone
 	if (heVList.size() == 1) {
 		// Get the pair
-		auto pair = heVList.begin();
+		auto pairIter = heVList.begin();
 		// Add this cluster coordinates to the temporary vector
-		tempVector.emplace(*pair);
-		// Remove the pair from the set because we don't need it anymore
-		heVList.erase(pair);
+		tempVector.emplace(*pairIter);
 
-		auto rawSuperCluster = new PSISuperCluster(pair->first, pair->second, 1,
-				1, 1, network, handlerRegistry);
+        // Build the super cluster.
+		auto rawSuperCluster = 
+            new PSISuperCluster(pairIter->first, pairIter->second,
+                1, 1, 1, network, handlerRegistry);
+
+		// Remove the pair from the set because we don't need it anymore.
+        // Note that this invalidates the pair iterator, so
+        // we have to use it to build the super cluster before we
+        // remove it from the heVList.
+		heVList.erase(pairIter);
+
 
 //		std::cout << "last: " << rawSuperCluster->getName() << std::endl;
 
