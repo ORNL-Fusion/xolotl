@@ -1312,7 +1312,7 @@ void PSISuperCluster::resetConnectivities() {
 	return;
 }
 
-double PSISuperCluster::getDissociationFlux() {
+double PSISuperCluster::getDissociationFlux(int xi) {
 	// Initial declarations
 	double flux = 0.0;
 
@@ -1321,7 +1321,7 @@ double PSISuperCluster::getDissociationFlux() {
 	// effect of updating member variables heMomentFlux and
 	// vMomentFlux here.
 	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
-			[this,&flux](DissociationPairMap::value_type const& currMapItem) {
+			[this,&flux,&xi](DissociationPairMap::value_type const& currMapItem) {
 				auto const& currPair = currMapItem.second;
 
 				// Get the dissociating clusters
@@ -1339,7 +1339,7 @@ double PSISuperCluster::getDissociationFlux() {
 					}
 				}
 				// Update the flux
-				auto value = currPair.kConstant / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				flux += value * sum[0];
 				// Compute the moment fluxes
 				for (int i = 1; i < psDim; i++) {
@@ -1351,7 +1351,7 @@ double PSISuperCluster::getDissociationFlux() {
 	return flux;
 }
 
-double PSISuperCluster::getEmissionFlux() {
+double PSISuperCluster::getEmissionFlux(int xi) {
 	// Initial declarations
 	double flux = 0.0;
 
@@ -1360,7 +1360,7 @@ double PSISuperCluster::getEmissionFlux() {
 	// effect of updating member variables heMomentFlux and
 	// vMomentFlux here.
 	std::for_each(effEmissionList.begin(), effEmissionList.end(),
-			[this,&flux](DissociationPairMap::value_type const& currMapItem) {
+			[this,&flux,&xi](DissociationPairMap::value_type const& currMapItem) {
 				auto const& currPair = currMapItem.second;
 				double lA[5] = {};
 				lA[0] = l0;
@@ -1375,7 +1375,7 @@ double PSISuperCluster::getEmissionFlux() {
 					}
 				}
 				// Update the flux
-				auto value = currPair.kConstant / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				flux += value * sum[0];
 				// Compute the moment fluxes
 				for (int i = 1; i < psDim; i++) {
@@ -1386,7 +1386,7 @@ double PSISuperCluster::getEmissionFlux() {
 	return flux;
 }
 
-double PSISuperCluster::getProductionFlux() {
+double PSISuperCluster::getProductionFlux(int xi) {
 	// Local declarations
 	double flux = 0.0;
 
@@ -1395,7 +1395,7 @@ double PSISuperCluster::getProductionFlux() {
 	// effect of updating member variables heMomentFlux and
 	// vMomentFlux here.
 	std::for_each(effReactingList.begin(), effReactingList.end(),
-			[this,&flux](ProductionPairMap::value_type const& currMapItem) {
+			[this,&flux,&xi](ProductionPairMap::value_type const& currMapItem) {
 
 				auto const& currPair = currMapItem.second;
 
@@ -1420,7 +1420,7 @@ double PSISuperCluster::getProductionFlux() {
 				}
 
 				// Update the flux
-				auto value = currPair.kConstant / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				flux += value * sum[0];
 				// Compute the moment fluxes
 				for (int i = 1; i < psDim; i++) {
@@ -1432,7 +1432,7 @@ double PSISuperCluster::getProductionFlux() {
 	return flux;
 }
 
-double PSISuperCluster::getCombinationFlux() {
+double PSISuperCluster::getCombinationFlux(int xi) {
 	// Local declarations
 	double flux = 0.0;
 
@@ -1441,7 +1441,7 @@ double PSISuperCluster::getCombinationFlux() {
 	// effect of updating member variables heMomentFlux and
 	// vMomentFlux here.
 	std::for_each(effCombiningList.begin(), effCombiningList.end(),
-			[this,&flux](CombiningClusterMap::value_type const& currMapItem) {
+			[this,&flux,&xi](CombiningClusterMap::value_type const& currMapItem) {
 				// Get the combining cluster
 				auto const& currComb = currMapItem.second;
 				auto const& combiningCluster = currComb.first;
@@ -1462,7 +1462,7 @@ double PSISuperCluster::getCombinationFlux() {
 					}
 				}
 				// Update the flux
-				auto value = currComb.kConstant / (double) nTot;
+				auto value = currComb.reaction.kConstant[xi] / (double) nTot;
 				flux += value * sum[0];
 				// Compute the moment fluxes
 				for (int i = 1; i < psDim; i++) {
@@ -1474,19 +1474,19 @@ double PSISuperCluster::getCombinationFlux() {
 }
 
 void PSISuperCluster::computePartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const {
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const {
 
 	// Get the partial derivatives for each reaction type
-	computeProductionPartialDerivatives(partials, partialsIdxMap);
-	computeCombinationPartialDerivatives(partials, partialsIdxMap);
-	computeDissociationPartialDerivatives(partials, partialsIdxMap);
-	computeEmissionPartialDerivatives(partials, partialsIdxMap);
+	computeProductionPartialDerivatives(partials, partialsIdxMap, i);
+	computeCombinationPartialDerivatives(partials, partialsIdxMap, i);
+	computeDissociationPartialDerivatives(partials, partialsIdxMap, i);
+	computeEmissionPartialDerivatives(partials, partialsIdxMap, i);
 
 	return;
 }
 
 void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const {
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
 
 	// Production
 	// A + B --> D, D being this cluster
@@ -1499,7 +1499,7 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
 	// Loop over all the reacting pairs
 	std::for_each(effReactingList.begin(), effReactingList.end(),
 			[this,
-			&partials, &partialsIdxMap](ProductionPairMap::value_type const& currMapItem) {
+			&partials, &partialsIdxMap,&xi](ProductionPairMap::value_type const& currMapItem) {
 
 				auto const& currPair = currMapItem.second;
 				// Get the two reacting clusters
@@ -1524,7 +1524,7 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
 				}
 
 				// Compute the contribution from the first and second part of the reacting pair
-				auto value = currPair.kConstant / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				for (int j = 0; j < psDim; j++) {
 					int indexA = 0, indexB = 0;
 					if (j == 0) {
@@ -1548,7 +1548,7 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const {
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
 
 	// Combination
 	// A + B --> D, A being this cluster
@@ -1561,7 +1561,7 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
 	// Visit all the combining clusters
 	std::for_each(effCombiningList.begin(), effCombiningList.end(),
 			[this,
-			&partials, &partialsIdxMap](CombiningClusterMap::value_type const& currMapItem) {
+			&partials, &partialsIdxMap,&xi](CombiningClusterMap::value_type const& currMapItem) {
 				// Get the combining clusters
 				auto const& currComb = currMapItem.second;
 				auto const& cluster = currComb.first;
@@ -1584,7 +1584,7 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
 				}
 
 				// Compute the contribution from the both clusters
-				auto value = currComb.kConstant / (double) nTot;
+				auto value = currComb.reaction.kConstant[xi] / (double) nTot;
 				for (int j = 0; j < psDim; j++) {
 					int indexA = 0, indexB = 0;
 					if (j == 0) {
@@ -1608,7 +1608,7 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const {
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
 
 	// Dissociation
 	// A --> B + D, B being this cluster
@@ -1620,13 +1620,13 @@ void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
 	// Visit all the dissociating pairs
 	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
 			[this,
-			&partials, &partialsIdxMap](DissociationPairMap::value_type const& currMapItem) {
+			&partials, &partialsIdxMap,&xi](DissociationPairMap::value_type const& currMapItem) {
 				auto& currPair = currMapItem.second;
 
 				// Get the dissociating clusters
 				auto const& cluster = currPair.first;
 				// Compute the contribution from the dissociating cluster
-				auto value = currPair.kConstant / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 
 				for (int j = 0; j < psDim; j++) {
 					int index = 0;
@@ -1647,7 +1647,7 @@ void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeEmissionPartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const {
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
 
 	// Emission
 	// A --> B + D, A being this cluster
@@ -1659,11 +1659,11 @@ void PSISuperCluster::computeEmissionPartialDerivatives(double* partials[5],
 	// Visit all the emission pairs
 	std::for_each(effEmissionList.begin(), effEmissionList.end(),
 			[this,
-			&partials, &partialsIdxMap](DissociationPairMap::value_type const& currMapItem) {
+			&partials, &partialsIdxMap,&xi](DissociationPairMap::value_type const& currMapItem) {
 				auto& currPair = currMapItem.second;
 
 				// Compute the contribution from the dissociating cluster
-				auto value = currPair.kConstant / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				for (int j = 0; j < psDim; j++) {
 					int index = 0;
 					if (j == 0) {

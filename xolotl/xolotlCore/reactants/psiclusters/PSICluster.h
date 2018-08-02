@@ -514,45 +514,50 @@ public:
 	 * This operation returns the total flux of this cluster in the
 	 * current network.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux() override {
-		return getProductionFlux() - getCombinationFlux()
-				+ getDissociationFlux() - getEmissionFlux();
+	virtual double getTotalFlux(int i) override {
+		return getProductionFlux(i) - getCombinationFlux(i)
+				+ getDissociationFlux(i) - getEmissionFlux(i);
 	}
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to dissociation of other clusters
 	 */
-	virtual double getDissociationFlux() const;
+	virtual double getDissociationFlux(int i) const;
 
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	virtual double getEmissionFlux() const;
+	virtual double getEmissionFlux(int i) const;
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster being produced
 	 */
-	virtual double getProductionFlux() const;
+	virtual double getProductionFlux(int i) const;
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster combining with other clusters
 	 */
-	virtual double getCombinationFlux() const;
+	virtual double getCombinationFlux(int i) const;
 
 	/**
 	 * This operation returns the list of partial derivatives of this cluster
@@ -560,11 +565,12 @@ public:
 	 * of partial derivatives from all of the clusters in the network can be
 	 * used to form, for example, a Jacobian.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The partial derivatives for this cluster where index zero
 	 * corresponds to the first cluster in the list returned by the
 	 * ReactionNetwork::getAll() operation.
 	 */
-	virtual std::vector<double> getPartialDerivatives() const override;
+	virtual std::vector<double> getPartialDerivatives(int i) const override;
 
 	/**
 	 * This operation works as getPartialDerivatives above, but instead of
@@ -577,9 +583,10 @@ public:
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
+	 * @param i The location on the grid in the depth direction
 	 *
 	 */
-	virtual void getPartialDerivatives(std::vector<double> & partials) const
+	virtual void getPartialDerivatives(std::vector<double> & partials, int i) const
 			override;
 
 	/**
@@ -589,9 +596,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	virtual void getProductionPartialDerivatives(
-			std::vector<double> & partials) const;
+			std::vector<double> & partials, int i) const;
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -600,9 +608,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	virtual void getCombinationPartialDerivatives(
-			std::vector<double> & partials) const;
+			std::vector<double> & partials, int i) const;
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -611,9 +620,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	virtual void getDissociationPartialDerivatives(
-			std::vector<double> & partials) const;
+			std::vector<double> & partials, int i) const;
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -622,9 +632,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	virtual void getEmissionPartialDerivatives(
-			std::vector<double> & partials) const;
+			std::vector<double> & partials, int i) const;
 
 	/**
 	 * This operation reset the connectivity sets based on the information

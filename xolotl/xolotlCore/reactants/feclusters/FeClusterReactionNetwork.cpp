@@ -22,7 +22,7 @@ FeClusterReactionNetwork::FeClusterReactionNetwork(
 }
 
 double FeClusterReactionNetwork::calculateDissociationConstant(
-		const DissociationReaction& reaction) const {
+		const DissociationReaction& reaction, int i) const {
 
 	// If the dissociations are not allowed
 	if (!dissociationsEnabled)
@@ -38,7 +38,7 @@ double FeClusterReactionNetwork::calculateDissociationConstant(
 			* xolotlCore::ironLatticeConstant * xolotlCore::ironLatticeConstant;
 
 	// Get the rate constant from the reverse reaction
-	double kPlus = reaction.reverseReaction->kConstant;
+	double kPlus = reaction.reverseReaction->kConstant[i];
 
 	// Calculate and return
 	double bindingEnergy = computeBindingEnergy(reaction);
@@ -228,9 +228,8 @@ void FeClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| heVReactant.getDiffusionFactor() > 0.0)) {
 
-				int a[4] = {newNumHe, newNumV, 0, 0};
-				defineProductionReaction(heReactant, heVReactant, *product,
-						a);
+				int a[4] = { newNumHe, newNumV, 0, 0 };
+				defineProductionReaction(heReactant, heVReactant, *product, a);
 			}
 		}
 
@@ -284,9 +283,8 @@ void FeClusterReactionNetwork::createReactionConnectivity() {
 					&& (vReactant.getDiffusionFactor() > 0.0
 							|| heVReactant.getDiffusionFactor() > 0.0)) {
 
-				int a[4] = {newNumHe, newNumV, 0, 0};
-				defineProductionReaction(vReactant, heVReactant, *product,
-						a);
+				int a[4] = { newNumHe, newNumV, 0, 0 };
+				defineProductionReaction(vReactant, heVReactant, *product, a);
 			}
 		}
 
@@ -337,9 +335,8 @@ void FeClusterReactionNetwork::createReactionConnectivity() {
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| vReactant.getDiffusionFactor() > 0.0)) {
 
-				int a[4] = {newNumHe, newNumV, 0, 0};
-				defineProductionReaction(heReactant, vReactant, *product,
-						a);
+				int a[4] = { newNumHe, newNumV, 0, 0 };
+				defineProductionReaction(heReactant, vReactant, *product, a);
 			}
 		}
 	}
@@ -509,10 +506,10 @@ void FeClusterReactionNetwork::checkForDissociation(IReactant& emittingReactant,
 	return;
 }
 
-void FeClusterReactionNetwork::setTemperature(double temp) {
-	ReactionNetwork::setTemperature(temp);
+void FeClusterReactionNetwork::setTemperature(double temp, int i) {
+	ReactionNetwork::setTemperature(temp, i);
 
-	computeRateConstants();
+	computeRateConstants(i);
 
 	return;
 }
@@ -838,52 +835,14 @@ double FeClusterReactionNetwork::getTotalIConcentration() {
 	return iConc;
 }
 
-void FeClusterReactionNetwork::computeRateConstants() {
-	// Local declarations
-	double rate = 0.0;
-	// Initialize the value for the biggest production rate
-	double biggestProductionRate = 0.0;
-
-	// Loop on all the production reactions
-	for (auto& currReactionInfo : productionReactionMap) {
-
-		auto& currReaction = currReactionInfo.second;
-
-		// Compute the rate
-		rate = calculateReactionRateConstant(*currReaction);
-		// Set it in the reaction
-		currReaction->kConstant = rate;
-
-		// Check if the rate is the biggest one up to now
-		if (rate > biggestProductionRate)
-			biggestProductionRate = rate;
-	}
-
-	// Loop on all the dissociation reactions
-	for (auto& currReactionInfo : dissociationReactionMap) {
-
-		auto& currReaction = currReactionInfo.second;
-
-		// Compute the rate
-		rate = calculateDissociationConstant(*currReaction);
-
-		// Set it in the reaction
-		currReaction->kConstant = rate;
-	}
-
-	// Set the biggest rate
-	biggestRate = biggestProductionRate;
-
-	return;
-}
-
-void FeClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
+void FeClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset,
+		int i) {
 
 	// ----- Compute all of the new fluxes -----
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&updatedConcOffset](IReactant& cluster) {
+			[&updatedConcOffset,&i](IReactant& cluster) {
 				// Compute the flux
-				auto flux = cluster.getTotalFlux();
+				auto flux = cluster.getTotalFlux(i);
 				// Update the concentration of the cluster
 				auto reactantIndex = cluster.getId() - 1;
 				updatedConcOffset[reactantIndex] += flux;
@@ -913,7 +872,7 @@ void FeClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 
 void FeClusterReactionNetwork::computeAllPartials(
 		const std::vector<size_t>& startingIdx, const std::vector<int>& indices,
-		std::vector<double>& vals) const {
+		std::vector<double>& vals, int i) const {
 	// Initial declarations
 	const int dof = getDOF();
 	std::vector<double> clusterPartials(dof, 0.0);
@@ -942,7 +901,7 @@ void FeClusterReactionNetwork::computeAllPartials(
 			auto reactantIndex = reactant.getId() - 1;
 
 			// Get the partial derivatives
-			reactant.getPartialDerivatives(clusterPartials);
+			reactant.getPartialDerivatives(clusterPartials, i);
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 
@@ -970,7 +929,7 @@ void FeClusterReactionNetwork::computeAllPartials(
 			auto reactantIndex = reactant.getId() - 1;
 
 			// Get the partial derivatives
-			reactant.getPartialDerivatives(clusterPartials);
+			reactant.getPartialDerivatives(clusterPartials, i);
 
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);

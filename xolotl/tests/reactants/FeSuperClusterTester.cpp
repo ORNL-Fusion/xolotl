@@ -46,10 +46,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Load the network
 	auto network = loader.generate(opts);
 
-	// Set the temperature in the network
-	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -95,8 +91,8 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 
 	// Set the temperature in the network
 	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
+	network->setTemperature(temperature, 0);
+	network->computeRateConstants(0);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -109,7 +105,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	secondCluster->setConcentration(0.5);
 
 	// Get and check the flux
-	double flux = cluster->getTotalFlux();
+	double flux = cluster->getTotalFlux(0);
 	BOOST_REQUIRE_CLOSE(0.0, flux, 0.1);
 
 	return;
@@ -138,8 +134,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Set the temperature in the network
 	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
+	network->setTemperature(temperature, 0);
+	network->computeRateConstants(0);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -157,7 +153,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	cluster->setConcentration(0.5);
 
 	// Get the vector of partial derivatives
-	auto partials = cluster->getPartialDerivatives();
+	auto partials = cluster->getPartialDerivatives(0);
 
 	// Check the size of the partials
 	BOOST_REQUIRE_EQUAL(partials.size(), 49U);

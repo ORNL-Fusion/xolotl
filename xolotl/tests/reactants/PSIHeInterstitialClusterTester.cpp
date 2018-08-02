@@ -141,11 +141,11 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	secondCluster->setConcentration(0.5);
 
 	// Compute the rate constants that are needed for the flux
-	network->setTemperature(1000.0);
+	network->setTemperature(1000.0, 0);
 	network->reinitializeNetwork();
-	network->computeRateConstants();
+	network->computeRateConstants(0);
 	// The flux can pretty much be anything except "not a number" (nan).
-	double flux = cluster->getTotalFlux();
+	double flux = cluster->getTotalFlux(0);
 	// Check the flux
 	BOOST_REQUIRE_CLOSE(-16982855380.0, flux, 0.1);
 
@@ -174,11 +174,11 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	cluster->setConcentration(0.5);
 
 	// Compute the rate constants that are needed for the partials
-	network->setTemperature(1000.0);
+	network->setTemperature(1000.0, 0);
 	network->reinitializeNetwork();
-	network->computeRateConstants();
+	network->computeRateConstants(0);
 	// Get the vector of partial derivatives
-	auto partials = cluster->getPartialDerivatives();
+	auto partials = cluster->getPartialDerivatives(0);
 
 	// Check the size of the partials
 	BOOST_REQUIRE_EQUAL(partials.size(), 16U);

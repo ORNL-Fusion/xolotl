@@ -42,15 +42,13 @@ protected:
 		PSICluster& first;
 
 		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
+		 * The reaction/dissociation pointer to the list
 		 */
-		const double& kConstant;
+		Reaction& reaction;
 
 		//! The constructor
 		ReactingInfoBase(Reaction& _reaction, PSICluster& _first) :
-				first(_first), kConstant(_reaction.kConstant) {
-
+				first(_first), reaction(_reaction) {
 		}
 
 		/**
@@ -670,17 +668,18 @@ public:
 	 * This operation returns the total flux of this cluster in the
 	 * current network.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	double getTotalFlux() override {
+	double getTotalFlux(int i) override {
 		// Initialize the fluxes
 		momentFlux[0] = 0.0, momentFlux[1] = 0.0, momentFlux[2] = 0.0, momentFlux[3] =
 				0.0;
 
 		// Compute the fluxes.
-		return getProductionFlux() - getCombinationFlux()
-				+ getDissociationFlux() - getEmissionFlux();
+		return getProductionFlux(i) - getCombinationFlux(i)
+				+ getDissociationFlux(i) - getEmissionFlux(i);
 	}
 
 	/**
@@ -688,36 +687,40 @@ public:
 	 * other clusters dissociating into it. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to dissociation of other clusters
 	 */
-	double getDissociationFlux();
+	double getDissociationFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux();
+	double getEmissionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster being produced
 	 */
-	double getProductionFlux();
+	double getProductionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster combining with other clusters
 	 */
-	double getCombinationFlux();
+	double getCombinationFlux(int i);
 
 	/**
 	 * This operation returns the total change for its first moment.
@@ -740,11 +743,12 @@ public:
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
+	 * @param i The location on the grid in the depth direction
 	 *
 	 */
 	void computePartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const;
-	void getPartialDerivatives(std::vector<double> & partials) const override
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getPartialDerivatives(std::vector<double> & partials, int i) const override
 	{
 		assert(false);
 	}
@@ -756,10 +760,11 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	void computeProductionPartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const;
-	void getProductionPartialDerivatives(std::vector<double> & partials) const
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getProductionPartialDerivatives(std::vector<double> & partials, int i) const
 			override
 			{
 		assert(false);
@@ -772,10 +777,11 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	void computeCombinationPartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const;
-	void getCombinationPartialDerivatives(std::vector<double> & partials) const
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getCombinationPartialDerivatives(std::vector<double> & partials, int i) const
 			override
 			{
 		assert(false);
@@ -788,10 +794,11 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	void computeDissociationPartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const;
-	void getDissociationPartialDerivatives(std::vector<double> & partials) const
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getDissociationPartialDerivatives(std::vector<double> & partials, int i) const
 			override
 			{
 		assert(false);
@@ -804,10 +811,11 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	void computeEmissionPartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5]) const;
-	void getEmissionPartialDerivatives(std::vector<double> & partials) const
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getEmissionPartialDerivatives(std::vector<double> & partials, int i) const
 			override
 			{
 		assert(false);

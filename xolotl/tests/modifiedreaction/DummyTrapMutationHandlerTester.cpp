@@ -44,8 +44,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	// Get its size
 	const int dof = network->getDOF();
 	// Initialize the rate constants
-	network->setTemperature(1000.0);
-	network->computeRateConstants();
+	network->setTemperature(1000.0, 0);
+	network->computeRateConstants(0);
 
 	// Suppose we have a grid with 13 grip points and distance of
 	// 0.1 nm between grid points

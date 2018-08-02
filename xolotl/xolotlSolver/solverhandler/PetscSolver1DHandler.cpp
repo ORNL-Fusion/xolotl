@@ -125,6 +125,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	for (int i = 0; i <= nX - surfacePosition; i++) {
 		lastTemperature.push_back(0.0);
 	}
+	network.addGridPoints(nX - surfacePosition + 1);
 
 	// Pointer for the concentration vector
 	PetscScalar **concentrations = nullptr;
@@ -324,8 +325,9 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				ftime);
 
 		// Update the network if the temperature changed
-		if (!xolotlCore::equal(temperature, lastTemperature[xi - surfacePosition])) {
-			network.setTemperature(temperature);
+		if (std::fabs(lastTemperature[xi - surfacePosition] - temperature)
+				> 1.0e-6) {
+			network.setTemperature(temperature, xi - surfacePosition);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
@@ -364,7 +366,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				updatedConcOffset, xi);
 
 		// ----- Compute the reaction fluxes over the locally owned part of the grid -----
-		network.computeAllFluxes(updatedConcOffset);
+		network.computeAllFluxes(updatedConcOffset, xi - surfacePosition);
 	}
 
 	/*
@@ -480,8 +482,8 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				ftime);
 
 		// Update the network if the temperature changed
-		if (!xolotlCore::equal(temperature, lastTemperature[xi - surfacePosition])) {
-			network.setTemperature(temperature);
+		if (std::fabs(lastTemperature[xi - surfacePosition] - temperature) > 1.0e-6) {
+			network.setTemperature(temperature, xi - surfacePosition);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
@@ -670,8 +672,8 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				ftime);
 
 		// Update the network if the temperature changed
-		if (!xolotlCore::equal(temperature, lastTemperature[xi - surfacePosition])) {
-			network.setTemperature(temperature);
+		if (std::fabs(lastTemperature[xi - surfacePosition] - temperature) > 1.0e-6) {
+			network.setTemperature(temperature, xi - surfacePosition);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
@@ -686,7 +688,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 		// Compute all the partial derivatives for the reactions
 		network.computeAllPartials(reactionStartingIdx, reactionIndices,
-				reactionVals);
+				reactionVals, xi - surfacePosition);
 
 		// Update the column in the Jacobian that represents each DOF
 		for (int i = 0; i < dof - 1; i++) {

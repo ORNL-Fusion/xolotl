@@ -54,13 +54,13 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	Reactant reactant(*(network.get()), registry);
 
 	// Check its default partial derivatives
-	BOOST_REQUIRE_EQUAL(1U, reactant.getPartialDerivatives().size());
+	BOOST_REQUIRE_EQUAL(1U, reactant.getPartialDerivatives(0).size());
 
 	// Create a reference and temp partial derivative vector
 	std::vector<double> refPartials = std::vector<double>(3, 0.0);
 	std::vector<double> tempPartials = std::vector<double>(3, 0.0);
 
-	reactant.getPartialDerivatives(tempPartials);
+	reactant.getPartialDerivatives(tempPartials, 0);
 
 	// Compare to the refence one
 	BOOST_REQUIRE_EQUAL(tempPartials[0], refPartials[0]);
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(checkConcentration) {
 	BOOST_REQUIRE_EQUAL(1.0, reactant.getConcentration());
 
 	// Make sure the base class getTotalFlux returns 0 for now
-	BOOST_REQUIRE_EQUAL(0.0, reactant.getTotalFlux());
+	BOOST_REQUIRE_EQUAL(0.0, reactant.getTotalFlux(0));
 
 	return;
 }

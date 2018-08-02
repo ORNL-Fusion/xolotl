@@ -73,6 +73,9 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
+	// Initialize the rates
+	network.addGridPoints(1);
+
 	// Pointer for the concentration vector
 	PetscScalar **concentrations = nullptr;
 	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
@@ -184,7 +187,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (!xolotlCore::equal(temperature, lastTemperature)) {
+	if (std::fabs(lastTemperature - temperature) > 1.0e-6) {
 		network.setTemperature(temperature);
 		lastTemperature = temperature;
 	}
@@ -262,7 +265,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (!xolotlCore::equal(temperature, lastTemperature)) {
+	if (std::fabs(lastTemperature - temperature) > 1.0e-6) {
 		network.setTemperature(temperature);
 		lastTemperature = temperature;
 	}

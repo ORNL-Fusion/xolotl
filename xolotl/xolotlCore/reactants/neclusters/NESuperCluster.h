@@ -47,7 +47,7 @@ protected:
 		 * The reaction/dissociation constant associated to this
 		 * reaction or dissociation
 		 */
-		const double * kConstant;
+		std::vector<double*> kConstant;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -64,10 +64,12 @@ protected:
 		//! The constructor
 		SuperClusterProductionPair(NECluster * firstPtr, NECluster * secondPtr,
 				Reaction * reaction) :
-				first(firstPtr), second(secondPtr), kConstant(
-						&(reaction->kConstant)), a000(0.0), a001(0.0), a010(
+				first(firstPtr), second(secondPtr), a000(0.0), a001(0.0), a010(
 						0.0), a011(0.0), a100(0.0), a101(0.0), a110(0.0), a111(
 						0.0) {
+			for (auto& k : reaction->kConstant) {
+				kConstant.push_back(&k);
+			}
 		}
 	};
 
@@ -96,7 +98,7 @@ protected:
 		 * The reaction/dissociation constant associated to this
 		 * reaction or dissociation
 		 */
-		const double * kConstant;
+		std::vector<double*> kConstant;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -109,9 +111,11 @@ protected:
 		//! The constructor
 		SuperClusterDissociationPair(NECluster * firstPtr,
 				NECluster * secondPtr, Reaction * reaction) :
-				first(firstPtr), second(secondPtr), kConstant(
-						&(reaction->kConstant)), a00(0.0), a01(0.0), a10(0.0), a11(
-						0.0) {
+				first(firstPtr), second(secondPtr), a00(0.0), a01(0.0), a10(
+						0.0), a11(0.0) {
+			for (auto& k : reaction->kConstant) {
+				kConstant.push_back(&k);
+			}
 		}
 	};
 
@@ -234,7 +238,8 @@ public:
 	 * @param distD Unused here
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distXe, double distB = 0.0, double distC = 0.0, double distD = 0.0) const override;
+	double getConcentration(double distXe, double distB = 0.0, double distC =
+			0.0, double distD = 0.0) const override;
 
 	/**
 	 * This operation returns the first xenon moment.
@@ -298,46 +303,51 @@ public:
 	 * This operation returns the total flux of this cluster in the
 	 * current network.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	double getTotalFlux() override;
+	double getTotalFlux(int i) override;
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to dissociation of other clusters
 	 */
-	double getDissociationFlux();
+	double getDissociationFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux();
+	double getEmissionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster being produced
 	 */
-	double getProductionFlux();
+	double getProductionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster combining with other clusters
 	 */
-	double getCombinationFlux();
+	double getCombinationFlux(int i);
 
 	/**
 	 * This operation returns the total change for its moment.
@@ -359,9 +369,11 @@ public:
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
+	 * @param i The location on the grid in the depth direction
 	 *
 	 */
-	void getPartialDerivatives(std::vector<double> & partials) const override;
+	void getPartialDerivatives(std::vector<double> & partials, int i) const
+			override;
 
 	/**
 	 * This operation computes the partial derivatives due to production
@@ -370,9 +382,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getProductionPartialDerivatives(std::vector<double> & partials) const
-			override;
+	void getProductionPartialDerivatives(std::vector<double> & partials,
+			int i) const override;
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -381,9 +394,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getCombinationPartialDerivatives(std::vector<double> & partials) const
-			override;
+	void getCombinationPartialDerivatives(std::vector<double> & partials,
+			int i) const override;
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -392,9 +406,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getDissociationPartialDerivatives(std::vector<double> & partials) const
-			override;
+	void getDissociationPartialDerivatives(std::vector<double> & partials,
+			int i) const override;
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -403,9 +418,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getEmissionPartialDerivatives(std::vector<double> & partials) const
-			override;
+	void getEmissionPartialDerivatives(std::vector<double> & partials,
+			int i) const override;
 
 	/**
 	 * This operation computes the partial derivatives for the xenon moment.

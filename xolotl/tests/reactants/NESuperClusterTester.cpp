@@ -125,12 +125,12 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Get one that it combines with (Xe1)
 	auto secondCluster = (NECluster *) network->get(Species::Xe, 1);
 	// Set the temperature and concentration
-	network->setTemperature(1000.0);
+	network->setTemperature(1000.0,0);
 	cluster->setConcentration(0.5);
 	secondCluster->setConcentration(0.5);
 
 	// The flux can pretty much be anything except "not a number" (nan).
-	double flux = cluster->getTotalFlux();
+	double flux = cluster->getTotalFlux(0);
 	BOOST_REQUIRE_CLOSE(0.0, flux, 0.000001);
 
 	// Remove the created file
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Set the temperature in the network
 	double temperature = 1000.0;
-	network->setTemperature(temperature);
+	network->setTemperature(temperature,0);
 	// Redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	cluster->setConcentration(0.5);
 
 	// Get the vector of partial derivatives
-	auto partials = cluster->getPartialDerivatives();
+	auto partials = cluster->getPartialDerivatives(0);
 
 	// Check the size of the partials
 	BOOST_REQUIRE_EQUAL(partials.size(), 102U);

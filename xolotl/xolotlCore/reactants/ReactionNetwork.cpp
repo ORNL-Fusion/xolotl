@@ -131,7 +131,7 @@ void ReactionNetwork::updateConcentrationsFromArray(double * concentrations) {
 	return;
 }
 
-void ReactionNetwork::setTemperature(double temp) {
+void ReactionNetwork::setTemperature(double temp, int i) {
 	// Set the temperature
 	temperature = temp;
 
@@ -228,6 +228,88 @@ void ReactionNetwork::removeReactants(
 			auto iter = clusters.find(currDoomedReactant.getComposition());
 			assert(iter != clusters.end());
 			clusters.erase(iter);
+		}
+	}
+
+	return;
+}
+
+void ReactionNetwork::computeRateConstants(int i) {
+	// Local declarations
+	double rate = 0.0;
+	// Initialize the value for the biggest production rate
+	double biggestProductionRate = 0.0;
+
+	// Loop on all the production reactions
+	for (auto& currReactionInfo : productionReactionMap) {
+
+		auto& currReaction = currReactionInfo.second;
+
+		// Compute the rate
+		rate = calculateReactionRateConstant(*currReaction);
+		// Set it in the reaction
+		currReaction->kConstant[i] = rate;
+
+		// Check if the rate is the biggest one up to now
+		if (rate > biggestProductionRate)
+			biggestProductionRate = rate;
+	}
+
+	// Loop on all the dissociation reactions
+	for (auto& currReactionInfo : dissociationReactionMap) {
+
+		auto& currReaction = currReactionInfo.second;
+
+		// Compute the rate
+		rate = calculateDissociationConstant(*currReaction, i);
+
+		// Set it in the reaction
+		currReaction->kConstant[i] = rate;
+	}
+
+	// Set the biggest rate
+	biggestRate = biggestProductionRate;
+
+	return;
+}
+
+void ReactionNetwork::addGridPoints(int i) {
+	// Add grid points
+	if (i > 0) {
+		while (i > 0) {
+			// Loop on all the production reactions
+			for (auto& currReactionInfo : productionReactionMap) {
+				currReactionInfo.second->kConstant.emplace(
+						currReactionInfo.second->kConstant.begin(), 0.0);
+
+			}
+
+			// Loop on all the dissociation reactions
+			for (auto& currReactionInfo : dissociationReactionMap) {
+				currReactionInfo.second->kConstant.emplace(
+						currReactionInfo.second->kConstant.begin(), 0.0);
+
+			}
+
+			// Decrease i
+			i--;
+		}
+	} else {
+		while (i < 0) {
+			// Loop on all the production reactions
+			for (auto& currReactionInfo : productionReactionMap) {
+				currReactionInfo.second->kConstant.erase(
+						currReactionInfo.second->kConstant.begin(),
+						currReactionInfo.second->kConstant.begin() + 1);
+			}
+			// Loop on all the dissociation reactions
+			for (auto& currReactionInfo : dissociationReactionMap) {
+				currReactionInfo.second->kConstant.erase(
+						currReactionInfo.second->kConstant.begin(),
+						currReactionInfo.second->kConstant.begin() + 1);
+			}
+			// Increase i
+			i++;
 		}
 	}
 

@@ -82,10 +82,10 @@ BOOST_AUTO_TEST_CASE(checkDefaultFluxes) {
 	NECluster cluster(*(network.get()), registry);
 
 	// Check the default values of the fluxes
-	BOOST_REQUIRE_CLOSE(cluster.getProductionFlux(), 0.0, 1e-5);
-	BOOST_REQUIRE_CLOSE(cluster.getCombinationFlux(), 0.0, 1e-5);
-	BOOST_REQUIRE_CLOSE(cluster.getDissociationFlux(), 0.0, 1e-5);
-	BOOST_REQUIRE_CLOSE(cluster.getTotalFlux(), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getProductionFlux(0), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getCombinationFlux(0), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getDissociationFlux(0), 0.0, 1e-5);
+	BOOST_REQUIRE_CLOSE(cluster.getTotalFlux(0), 0.0, 1e-5);
 
 	return;
 }

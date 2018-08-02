@@ -57,11 +57,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Generate the network from the options
 	auto network = loader.generate(opts);
 
-	// Set the temperature in the network
-	int networkSize = network->size();
-	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 

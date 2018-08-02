@@ -7,7 +7,7 @@ operator<<(std::ostream& os, const DissociationReaction& reaction) {
 
 	os << '[' << "diss: " << reaction.dissociating << "; " << "first: "
 			<< reaction.first << "; " << "second: " << reaction.second << "; "
-			<< "rate: " << reaction.kConstant << "; " << "reverse: [";
+			<< "rate: " << reaction.kConstant.size() << "; " << "reverse: [";
 	if (reaction.reverseReaction) {
 		os << *(reaction.reverseReaction);
 	} else {

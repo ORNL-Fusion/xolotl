@@ -476,10 +476,11 @@ public:
 	 * This operation returns the total flux of this reactant in the
 	 * current network.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The total change in flux for this reactant due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux() override {
+	virtual double getTotalFlux(int i) override {
 		return 0.0;
 	}
 
@@ -543,11 +544,12 @@ public:
 	 * of partial derivatives from all of the reactants in the network can be
 	 * used to form, for example, a Jacobian.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return the partial derivatives for this reactant where index zero
 	 * corresponds to the first reactant in the list returned by the
 	 * ReactionNetwork::getAll() operation.
 	 */
-	virtual std::vector<double> getPartialDerivatives() const override {
+	virtual std::vector<double> getPartialDerivatives(int i) const override {
 		return std::vector<double>(network.getDOF(), 0.0);
 	}
 
@@ -564,8 +566,9 @@ public:
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
+	 * @param i The location on the grid in the depth direction
 	 */
-	virtual void getPartialDerivatives(std::vector<double> & partials) const
+	virtual void getPartialDerivatives(std::vector<double> & partials, int i) const
 			override {
 		// nothing to do.
 	}

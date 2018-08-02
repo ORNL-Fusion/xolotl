@@ -85,6 +85,8 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void setSurfacePosition(int pos, int j = -1, int k = -1) {
+		// Update the network rates
+		network.addGridPoints(pos - surfacePosition[j][k]);
 		// Update the size of the last temperature vector
 		if (pos > surfacePosition[j][k]) {
 			// Removing grid points

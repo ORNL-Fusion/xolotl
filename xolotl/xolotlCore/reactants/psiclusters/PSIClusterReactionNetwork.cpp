@@ -23,7 +23,7 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 }
 
 double PSIClusterReactionNetwork::calculateDissociationConstant(
-		const DissociationReaction& reaction) const {
+		const DissociationReaction& reaction, int i) const {
 
 	// If the dissociations are not allowed
 	if (!dissociationsEnabled)
@@ -40,7 +40,7 @@ double PSIClusterReactionNetwork::calculateDissociationConstant(
 			* xolotlCore::tungstenLatticeConstant;
 
 	// Get the rate constant from the reverse reaction
-	double kPlus = reaction.reverseReaction->kConstant;
+	double kPlus = reaction.reverseReaction->kConstant[i];
 
 	// Calculate and return
 	double bindingEnergy = computeBindingEnergy(reaction);
@@ -1368,10 +1368,10 @@ void PSIClusterReactionNetwork::checkForDissociation(
 	return;
 }
 
-void PSIClusterReactionNetwork::setTemperature(double temp) {
-	ReactionNetwork::setTemperature(temp);
+void PSIClusterReactionNetwork::setTemperature(double temp, int i) {
+	ReactionNetwork::setTemperature(temp, i);
 
-	computeRateConstants();
+	computeRateConstants(i);
 
 	return;
 }
@@ -1711,52 +1711,14 @@ double PSIClusterReactionNetwork::getTotalIConcentration() {
 	return iConc;
 }
 
-void PSIClusterReactionNetwork::computeRateConstants() {
-	// Local declarations
-	double rate = 0.0;
-	// Initialize the value for the biggest production rate
-	double biggestProductionRate = 0.0;
-
-	// Loop on all the production reactions
-	for (auto& currReactionInfo : productionReactionMap) {
-
-		auto& currReaction = currReactionInfo.second;
-
-		// Compute the rate
-		rate = calculateReactionRateConstant(*currReaction);
-		// Set it in the reaction
-		currReaction->kConstant = rate;
-
-		// Check if the rate is the biggest one up to now
-		if (rate > biggestProductionRate)
-			biggestProductionRate = rate;
-	}
-
-	// Loop on all the dissociation reactions
-	for (auto& currReactionInfo : dissociationReactionMap) {
-
-		auto& currReaction = currReactionInfo.second;
-
-		// Compute the rate
-		rate = calculateDissociationConstant(*currReaction);
-
-		// Set it in the reaction
-		currReaction->kConstant = rate;
-	}
-
-	// Set the biggest rate
-	biggestRate = biggestProductionRate;
-
-	return;
-}
-
-void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
+void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset,
+		int xi) {
 
 	// ----- Compute all of the new fluxes -----
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&updatedConcOffset](IReactant& cluster) {
+			[&updatedConcOffset,&xi](IReactant& cluster) {
 				// Compute the flux
-				auto flux = cluster.getTotalFlux();
+				auto flux = cluster.getTotalFlux(xi);
 				// Update the concentration of the cluster
 				auto reactantIndex = cluster.getId() - 1;
 				updatedConcOffset[reactantIndex] += flux;
@@ -1784,7 +1746,7 @@ void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 
 void PSIClusterReactionNetwork::computeAllPartials(
 		const std::vector<size_t>& startingIdx, const std::vector<int>& indices,
-		std::vector<double>& vals) const {
+		std::vector<double>& vals, int xi) const {
 
 	// Because we accumulate partials and we don't know which
 	// of our reactants will be first to assign a value, we must start with
@@ -1816,7 +1778,7 @@ void PSIClusterReactionNetwork::computeAllPartials(
 			auto reactantIndex = reactant.getId() - 1;
 
 			// Get the partial derivatives
-			reactant.getPartialDerivatives(clusterPartials);
+			reactant.getPartialDerivatives(clusterPartials, xi);
 			// Get the list of column ids from the map
 			auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 
@@ -1861,7 +1823,7 @@ void PSIClusterReactionNetwork::computeAllPartials(
 
 		// Have reactant compute its partial derivatives
 		// to its correct locations within the vals array.
-		reactant.computePartialDerivatives(partials, partialsIdxMap);
+		reactant.computePartialDerivatives(partials, partialsIdxMap, xi);
 	}
 
 	// Clear memory

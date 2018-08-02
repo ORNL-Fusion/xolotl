@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_REQUIRE_EQUAL(1U, reactants.size());
 
 	// Try changing the temperature and make sure it works
-	neNetwork->setTemperature(1000.0);
+	neNetwork->setTemperature(1000.0,0);
 	IReactant& reactant = reactants.at(0);
 	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(), 0.0001);
 

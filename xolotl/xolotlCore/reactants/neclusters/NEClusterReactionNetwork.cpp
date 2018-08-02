@@ -22,7 +22,7 @@ NEClusterReactionNetwork::NEClusterReactionNetwork(
 }
 
 double NEClusterReactionNetwork::calculateDissociationConstant(
-		const DissociationReaction& reaction) const {
+		const DissociationReaction& reaction, int i) const {
 
 	// If the dissociations are not allowed
 	if (!dissociationsEnabled)
@@ -34,7 +34,7 @@ double NEClusterReactionNetwork::calculateDissociationConstant(
 			* xolotlCore::uraniumDioxydeLatticeConstant;
 
 	// Get the rate constant from the reverse reaction
-	double kPlus = reaction.reverseReaction->kConstant;
+	double kPlus = reaction.reverseReaction->kConstant[i];
 
 	// Calculate and return
 	double bindingEnergy = computeBindingEnergy(reaction);
@@ -111,10 +111,10 @@ void NEClusterReactionNetwork::checkForDissociation(
 	return;
 }
 
-void NEClusterReactionNetwork::setTemperature(double temp) {
-	ReactionNetwork::setTemperature(temp);
+void NEClusterReactionNetwork::setTemperature(double temp, int i) {
+	ReactionNetwork::setTemperature(temp, i);
 
-	computeRateConstants();
+	computeRateConstants(i);
 
 	return;
 }
@@ -253,52 +253,15 @@ void NEClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 	return;
 }
 
-void NEClusterReactionNetwork::computeRateConstants() {
-	// Local declarations
-	double rate = 0.0;
-	// Initialize the value for the biggest production rate
-	double biggestProductionRate = 0.0;
-
-	// Loop on all the production reactions
-	for (auto& currReactionInfo : productionReactionMap) {
-
-		auto& currReaction = currReactionInfo.second;
-
-		// Compute the rate
-		rate = calculateReactionRateConstant(*currReaction);
-		// Set it in the reaction
-		currReaction->kConstant = rate;
-
-		// Check if the rate is the biggest one up to now
-		if (rate > biggestProductionRate)
-			biggestProductionRate = rate;
-	}
-
-	// Loop on all the dissociation reactions
-	for (auto& currReactionInfo : dissociationReactionMap) {
-
-		auto& currReaction = currReactionInfo.second;
-
-		// Compute the rate
-		rate = calculateDissociationConstant(*currReaction);
-		// Set it in the reaction
-		currReaction->kConstant = rate;
-	}
-
-	// Set the biggest rate
-	biggestRate = biggestProductionRate;
-
-	return;
-}
-
-void NEClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
+void NEClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset,
+		int i) {
 
 	// ----- Compute all of the new fluxes -----
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&updatedConcOffset](IReactant& cluster) {
+			[&updatedConcOffset,&i](IReactant& cluster) {
 
 				// Compute the flux
-				auto flux = cluster.getTotalFlux();
+				auto flux = cluster.getTotalFlux(i);
 				// Update the concentration of the cluster
 				auto reactantIndex = cluster.getId() - 1;
 				updatedConcOffset[reactantIndex] += flux;
@@ -321,7 +284,7 @@ void NEClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset) {
 
 void NEClusterReactionNetwork::computeAllPartials(
 		const std::vector<size_t>& startingIdx, const std::vector<int>& indices,
-		std::vector<double>& vals) const {
+		std::vector<double>& vals, int i) const {
 
 	// Initial declarations
 	const int dof = getDOF();
@@ -335,7 +298,7 @@ void NEClusterReactionNetwork::computeAllPartials(
 		auto reactantIndex = reactant.getId() - 1;
 
 		// Get the partial derivatives
-		reactant.getPartialDerivatives(clusterPartials);
+		reactant.getPartialDerivatives(clusterPartials, i);
 		// Get the list of column ids from the map
 		auto const& pdColIdsVector = dFillMap.at(reactantIndex);
 
@@ -363,7 +326,7 @@ void NEClusterReactionNetwork::computeAllPartials(
 		auto reactantIndex = reactant.getId() - 1;
 
 		// Get the partial derivatives
-		reactant.getPartialDerivatives(clusterPartials);
+		reactant.getPartialDerivatives(clusterPartials, i);
 
 		{
 			// Get the list of column ids from the map

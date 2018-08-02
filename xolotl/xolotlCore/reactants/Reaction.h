@@ -29,7 +29,7 @@ protected:
 	Reaction(IReactant& _r1, IReactant& _r2) :
 			paramsCorrectlyOrdered(_r1.getComposition() < _r2.getComposition()), first(
 					paramsCorrectlyOrdered ? _r1 : _r2), second(
-					paramsCorrectlyOrdered ? _r2 : _r1), kConstant(0.0) {
+					paramsCorrectlyOrdered ? _r2 : _r1) {
 	}
 
 public:
@@ -37,7 +37,7 @@ public:
 	/**
 	 * The rate constant
 	 */
-	double kConstant;
+	std::vector<double> kConstant;
 
 	/**
 	 * First cluster in reaction pair.

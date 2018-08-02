@@ -138,6 +138,7 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 		}
 		lastTemperature.push_back(tempVec);
 	}
+	network.addGridPoints(nX - surfacePosition[0] + 1);
 
 	// Pointer for the concentration vector
 	PetscScalar ***concentrations = nullptr;
@@ -311,7 +312,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// Share the concentration with all the processes
 		totalAtomConc = 0.0;
 		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-				MPI_COMM_WORLD);
+		MPI_COMM_WORLD);
 
 		// Set the disappearing rate in the modified TM handler
 		mutationHandler->updateDisappearingRate(totalAtomConc);
@@ -365,9 +366,10 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (!xolotlCore::equal(temperature,
-					lastTemperature[yj][xi - surfacePosition[yj]])) {
-				network.setTemperature(temperature);
+			if (std::fabs(
+					lastTemperature[yj][xi - surfacePosition[yj]] - temperature)
+					> 1.0e-6) {
+				network.setTemperature(temperature, xi - surfacePosition[yj]);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
@@ -407,7 +409,8 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					updatedConcOffset, xi, yj);
 
 			// ----- Compute the reaction fluxes over the locally owned part of the grid -----
-			network.computeAllFluxes(updatedConcOffset);
+			network.computeAllFluxes(updatedConcOffset,
+					xi - surfacePosition[yj]);
 		}
 	}
 
@@ -544,9 +547,10 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (!xolotlCore::equal(temperature,
-					lastTemperature[yj][xi - surfacePosition[yj]])) {
-				network.setTemperature(temperature);
+			if (std::fabs(
+					lastTemperature[yj][xi - surfacePosition[yj]] - temperature)
+					> 1.0e-6) {
+				network.setTemperature(temperature, xi - surfacePosition[yj]);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
@@ -740,7 +744,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// Share the concentration with all the processes
 		totalAtomConc = 0.0;
 		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-				MPI_COMM_WORLD);
+		MPI_COMM_WORLD);
 
 		// Set the disappearing rate in the modified TM handler
 		mutationHandler->updateDisappearingRate(totalAtomConc);
@@ -769,9 +773,10 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (!xolotlCore::equal(temperature,
-					lastTemperature[yj][xi - surfacePosition[yj]])) {
-				network.setTemperature(temperature);
+			if (std::fabs(
+					lastTemperature[yj][xi - surfacePosition[yj]] - temperature)
+					> 1.0e-6) {
+				network.setTemperature(temperature, xi - surfacePosition[yj]);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
@@ -786,7 +791,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Compute all the partial derivatives for the reactions
 			network.computeAllPartials(reactionStartingIdx, reactionIndices,
-					reactionVals);
+					reactionVals, xi - surfacePosition[yj]);
 
 			// Update the column in the Jacobian that represents each DOF
 			for (int i = 0; i < dof - 1; i++) {
