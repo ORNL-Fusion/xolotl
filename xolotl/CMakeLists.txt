@@ -75,9 +75,9 @@ IF (Java_FOUND)
     add_subdirectory(gov.ornl.xolotl.preprocessor)
 ENDIF()
 
-# We use OpenMP for multithreading.
-find_package(OpenMP REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+## We use OpenMP for multithreading.
+#find_package(OpenMP REQUIRED)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 # Build the performance library first, so it can be used by other libraries.
 add_subdirectory(xolotlPerf)
