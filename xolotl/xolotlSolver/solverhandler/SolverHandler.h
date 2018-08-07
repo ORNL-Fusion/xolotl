@@ -6,7 +6,6 @@
 #include "RandomNumberGenerator.h"
 #include "xolotlCore/io/XFile.h"
 
-
 namespace xolotlSolver {
 
 /**
@@ -261,28 +260,30 @@ public:
 					<< rngSeed << std::endl;
 		}
 		rng = std::unique_ptr<RandomNumberGenerator<int, unsigned int>>(
-				new RandomNumberGenerator<int, unsigned int>(rngSeed + myProcId));
+				new RandomNumberGenerator<int, unsigned int>(
+						rngSeed + myProcId));
 
 		// Set the network loader
 		networkName = options.getNetworkFilename();
 
 		// Set the grid options
+		// Take the parameter file option by default
+		nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
+		hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
+				options.getZStepSize();
+		// Update them if we use an HDF5 file with header group
 		if (options.useHDF5()) {
-			// Get starting conditions from HDF5 file
 			int nx = 0, ny = 0, nz = 0;
 			double hx = 0.0, hy = 0.0, hz = 0.0;
 
-            xolotlCore::XFile xfile(networkName);
-            auto headerGroup = xfile.getGroup<xolotlCore::XFile::HeaderGroup>();
-            assert(headerGroup);
-            headerGroup->read(nx, hx, ny, hy, nz, hz);
+			xolotlCore::XFile xfile(networkName);
+			auto headerGroup = xfile.getGroup<xolotlCore::XFile::HeaderGroup>();
+			if (headerGroup) {
+				headerGroup->read(nx, hx, ny, hy, nz, hz);
 
-			nX = nx, nY = ny, nZ = nz;
-			hX = hx, hY = hy, hZ = hz;
-		} else {
-			nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
-			hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
-					options.getZStepSize();
+				nX = nx, nY = ny, nZ = nz;
+				hX = hx, hY = hy, hZ = hz;
+			}
 		}
 
 		// Set the flux handler
