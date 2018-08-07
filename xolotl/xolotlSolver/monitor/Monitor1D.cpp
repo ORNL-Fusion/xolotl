@@ -190,6 +190,132 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 #undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeTRIDYN1D")
+/**
+ * This is a monitoring method that will compute the data to send to TRIDYN
+ */
+PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void *ictx) {
+
+	xolotlPerf::ScopedTimer stimer(tridynTimer);
+
+	// Initial declarations
+	PetscErrorCode ierr;
+	PetscInt xs, xm;
+
+	PetscFunctionBeginUser;
+
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+
+	// Gets the process ID
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the network
+	auto& network = solverHandler.getNetwork();
+
+	// Get the position of the surface
+	int surfacePos = solverHandler.getSurfacePosition();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+	CHKERRQ(ierr);
+
+	// Get the total size of the grid
+	PetscInt Mx;
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
+	CHKERRQ(ierr);
+
+	// Get the physical grid
+	auto grid = solverHandler.getXGrid();
+
+	// Get the array of concentration
+	PetscReal **solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Save current concentrations as an HDF5 file.
+	//
+	// First create the file for parallel file access.
+	std::ostringstream tdFileStr;
+	tdFileStr << "TRIDYN_" << timestep << ".h5";
+	xolotlCore::HDF5File tdFile(tdFileStr.str(),
+			xolotlCore::HDF5File::AccessMode::CreateOrTruncateIfExists,
+			PETSC_COMM_WORLD, true);
+
+	// Define a dataset for concentrations.
+	// Everyone must create the dataset with the same shape.
+	constexpr auto numConcSpecies = 5;
+	constexpr auto numValsPerGridpoint = numConcSpecies + 1;
+	const auto firstIdxToWrite = (surfacePos + 1);
+	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
+	xolotlCore::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
+			(hsize_t) numGridpointsWithConcs, numValsPerGridpoint };
+	xolotlCore::HDF5File::SimpleDataSpace<2> concsDsetSpace(concsDsetDims);
+
+	const std::string concsDsetName = "concs";
+	xolotlCore::HDF5File::DataSet<double> concsDset(tdFile, concsDsetName,
+			concsDsetSpace);
+
+	// Specify the concentrations we will write.
+	// We only consider our own grid points.
+	const auto myFirstIdxToWrite = std::max(xs, firstIdxToWrite);
+	auto myEndIdx = (xs + xm);  // "end" in the C++ sense; i.e., one-past-last
+	auto myNumPointsToWrite =
+			(myEndIdx > myFirstIdxToWrite) ? (myEndIdx - myFirstIdxToWrite) : 0;
+	xolotlCore::HDF5File::DataSet<double>::DataType2D<numValsPerGridpoint> myConcs(
+			myNumPointsToWrite);
+
+	for (auto xi = myFirstIdxToWrite; xi < myEndIdx; ++xi) {
+
+		if (xi >= firstIdxToWrite) {
+
+			// Determine current gridpoint value.
+			double x = grid[xi + 1] - grid[1];
+
+			// Access the solution data for this grid point.
+			auto gridPointSolution = solutionArray[xi];
+
+			// Update the concentration in the network
+			network.updateConcentrationsFromArray(gridPointSolution);
+
+			// Get the total concentrations at this grid point
+			auto currIdx = xi - myFirstIdxToWrite;
+			myConcs[currIdx][0] = (x - (grid[surfacePos + 1] - grid[1]));
+			myConcs[currIdx][1] = network.getTotalAtomConcentration(0);
+			myConcs[currIdx][2] = network.getTotalAtomConcentration(1);
+			myConcs[currIdx][3] = network.getTotalAtomConcentration(2);
+			myConcs[currIdx][4] = network.getTotalVConcentration();
+			myConcs[currIdx][5] = network.getTotalIConcentration();
+		}
+	}
+
+	// Write the concs dataset in parallel.
+	// (We write only our part.)
+	concsDset.parWrite2D<numValsPerGridpoint>(PETSC_COMM_WORLD,
+			myFirstIdxToWrite - firstIdxToWrite, myConcs);
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop1D")
 /**
  * This is a monitoring method that update an hdf5 file at each time step.
@@ -305,6 +431,9 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	ierr = computeTRIDYN1D(ts, timestep, time, solution, NULL);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
@@ -931,132 +1060,6 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 	if (procId == 0) {
 		outputFile.close();
 	}
-
-	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
-
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeTRIDYN1D")
-/**
- * This is a monitoring method that will compute the data to send to TRIDYN
- */
-PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *ictx) {
-
-	xolotlPerf::ScopedTimer stimer(tridynTimer);
-
-	// Initial declarations
-	PetscErrorCode ierr;
-	PetscInt xs, xm;
-
-	PetscFunctionBeginUser;
-
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
-
-	// Gets the process ID
-	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
-
-	// Get the network
-	auto& network = solverHandler.getNetwork();
-
-	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
-
-	// Get the da from ts
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the total size of the grid
-	PetscInt Mx;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	CHKERRQ(ierr);
-
-	// Get the physical grid
-	auto grid = solverHandler.getXGrid();
-
-	// Get the array of concentration
-	PetscReal **solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
-
-	// Save current concentrations as an HDF5 file.
-	//
-	// First create the file for parallel file access.
-	std::ostringstream tdFileStr;
-	tdFileStr << "TRIDYN_" << timestep << ".h5";
-	xolotlCore::HDF5File tdFile(tdFileStr.str(),
-			xolotlCore::HDF5File::AccessMode::CreateOrTruncateIfExists,
-			PETSC_COMM_WORLD, true);
-
-	// Define a dataset for concentrations.
-	// Everyone must create the dataset with the same shape.
-	constexpr auto numConcSpecies = 5;
-	constexpr auto numValsPerGridpoint = numConcSpecies + 1;
-	const auto firstIdxToWrite = (surfacePos + 1);
-	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
-	xolotlCore::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
-			(hsize_t) numGridpointsWithConcs, numValsPerGridpoint };
-	xolotlCore::HDF5File::SimpleDataSpace<2> concsDsetSpace(concsDsetDims);
-
-	const std::string concsDsetName = "concs";
-	xolotlCore::HDF5File::DataSet<double> concsDset(tdFile, concsDsetName,
-			concsDsetSpace);
-
-	// Specify the concentrations we will write.
-	// We only consider our own grid points.
-	const auto myFirstIdxToWrite = std::max(xs, firstIdxToWrite);
-	auto myEndIdx = (xs + xm);  // "end" in the C++ sense; i.e., one-past-last
-	auto myNumPointsToWrite =
-			(myEndIdx > myFirstIdxToWrite) ? (myEndIdx - myFirstIdxToWrite) : 0;
-	xolotlCore::HDF5File::DataSet<double>::DataType2D<numValsPerGridpoint> myConcs(
-			myNumPointsToWrite);
-
-	for (auto xi = myFirstIdxToWrite; xi < myEndIdx; ++xi) {
-
-		if (xi >= firstIdxToWrite) {
-
-			// Determine current gridpoint value.
-			double x = grid[xi + 1] - grid[1];
-
-			// Access the solution data for this grid point.
-			auto gridPointSolution = solutionArray[xi];
-
-			// Update the concentration in the network
-			network.updateConcentrationsFromArray(gridPointSolution);
-
-			// Get the total concentrations at this grid point
-			auto currIdx = xi - myFirstIdxToWrite;
-			myConcs[currIdx][0] = (x - (grid[surfacePos + 1] - grid[1]));
-			myConcs[currIdx][1] = network.getTotalAtomConcentration(0);
-			myConcs[currIdx][2] = network.getTotalAtomConcentration(1);
-			myConcs[currIdx][3] = network.getTotalAtomConcentration(2);
-			myConcs[currIdx][4] = network.getTotalVConcentration();
-			myConcs[currIdx][5] = network.getTotalIConcentration();
-		}
-	}
-
-	// Write the concs dataset in parallel.
-	// (We write only our part.)
-	concsDset.parWrite2D<numValsPerGridpoint>(PETSC_COMM_WORLD,
-			myFirstIdxToWrite - firstIdxToWrite, myConcs);
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
