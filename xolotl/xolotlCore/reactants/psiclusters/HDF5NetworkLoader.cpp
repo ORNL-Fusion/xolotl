@@ -5,15 +5,18 @@
 #include <vector>
 #include "PSIClusterReactionNetwork.h"
 #include <xolotlPerf.h>
-#include <HDF5Utils.h>
+#include "xolotlCore/io/XFile.h"
 
-using namespace xolotlCore;
+namespace xolotlCore {
 
 std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 		const IOptions& options) {
 	// Get the dataset from the HDF5 files
 	int normalSize = 0, superSize = 0;
-	HDF5Utils::readNetworkSize(fileName, normalSize, superSize);
+	XFile networkFile(fileName);
+	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
+	assert(networkGroup);
+	networkGroup->readNetworkSize(normalSize, superSize);
 
 	// Initialization
 	int numHe = 0, numV = 0, numI = 0, numD = 0, numT = 0;
@@ -27,10 +30,13 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 
 	// Loop on the clusters
 	for (int i = 0; i < normalSize + superSize; i++) {
+		// Open the cluster group
+		XFile::ClusterGroup clusterGroup(*networkGroup, i);
+
 		if (i < normalSize) {
 			// Normal cluster
 			// Read the composition
-			auto comp = HDF5Utils::readCluster(i, formationEnergy,
+			auto comp = clusterGroup.readCluster(formationEnergy,
 					migrationEnergy, diffusionFactor);
 			numHe = comp[toCompIdx(Species::He)];
 			numD = comp[toCompIdx(Species::D)];
@@ -52,7 +58,7 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 			pushPSICluster(network, reactants, nextCluster);
 		} else {
 			// Super cluster
-			auto heVList = HDF5Utils::readSuperCluster(i);
+			auto heVList = clusterGroup.readSuperCluster();
 
 			// Create the cluster
 			auto nextCluster = createPSISuperCluster(heVList, *network);
@@ -76,7 +82,7 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 	network->setPhaseSpace(nDim, list);
 
 	// Set the reactions
-	HDF5Utils::readReactions(*network);
+	networkGroup->readReactions(*network);
 
 	// Recompute Ids and network size
 	network->reinitializeNetwork();
@@ -87,3 +93,6 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 	// that is not correct behavior until C++14.
 	return std::move(network);
 }
+
+} // namespace xolotlCore
+

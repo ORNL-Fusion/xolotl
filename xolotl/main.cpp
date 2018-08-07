@@ -114,95 +114,92 @@ void launchPetscSolver(xolotlSolver::PetscSolver& solver,
 //! Run the Xolotl simulation.
 int runXolotl(const Options& opts) {
 
-    // Set up our performance data infrastructure.
-    xperf::initialize(opts.getPerfHandlerType());
+	// Set up our performance data infrastructure.
+	xperf::initialize(opts.getPerfHandlerType());
 
-    // Get the MPI rank
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	// Get the MPI rank
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    if (rank == 0) {
-        // Print the start message
-        printStartMessage();
-    }
+	if (rank == 0) {
+		// Print the start message
+		printStartMessage();
+	}
 
-    // Set up the material infrastructure that is used to calculate flux
-    auto material = initMaterial(opts);
-    // Set up the temperature infrastructure
-    bool tempInitOK = initTemp(opts);
-    if (!tempInitOK) {
-        throw std::runtime_error("Unable to initialize temperature.");
-    }
-    // Set up the visualization infrastructure.
-    bool vizInitOK = initViz(opts.useVizStandardHandlers());
-    if (!vizInitOK) {
-        throw std::runtime_error(
-                "Unable to initialize visualization infrastructure.");
-    }
+	// Set up the material infrastructure that is used to calculate flux
+	auto material = initMaterial(opts);
+	// Set up the temperature infrastructure
+	bool tempInitOK = initTemp(opts);
+	if (!tempInitOK) {
+		throw std::runtime_error("Unable to initialize temperature.");
+	}
+	// Set up the visualization infrastructure.
+	bool vizInitOK = initViz(opts.useVizStandardHandlers());
+	if (!vizInitOK) {
+		throw std::runtime_error(
+				"Unable to initialize visualization infrastructure.");
+	}
 
-    // Access the temperature handler registry to get the temperature
-    auto tempHandler = xolotlFactory::getTemperatureHandler();
+	// Access the temperature handler registry to get the temperature
+	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
-    // Access our performance handler registry to obtain a Timer
-    // measuring the runtime of the entire program.
-    auto handlerRegistry = xolotlPerf::getHandlerRegistry();
-    auto totalTimer = handlerRegistry->getTimer("total");
-    totalTimer->start();
+	// Access our performance handler registry to obtain a Timer
+	// measuring the runtime of the entire program.
+	auto handlerRegistry = xolotlPerf::getHandlerRegistry();
+	auto totalTimer = handlerRegistry->getTimer("total");
+	totalTimer->start();
 
-    // Create the network handler factory
-    auto networkFactory =
-            xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
-                    opts.getMaterial());
+	// Create the network handler factory
+	auto networkFactory =
+			xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
+					opts.getMaterial());
 
-    // Build a reaction network
-    auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
-    networkLoadTimer->start();
-    networkFactory->initializeReactionNetwork(opts, handlerRegistry);
-    networkLoadTimer->stop();
-    if (rank == 0) {
-        std::time_t currentTime = std::time(NULL);
-        std::cout << std::asctime(std::localtime(&currentTime));
-    }
-    auto& network = networkFactory->getNetworkHandler();
+	// Build a reaction network
+	auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
+	networkLoadTimer->start();
+	networkFactory->initializeReactionNetwork(opts, handlerRegistry);
+	networkLoadTimer->stop();
+	if (rank == 0) {
+		std::time_t currentTime = std::time(NULL);
+		std::cout << std::asctime(std::localtime(&currentTime));
+	}
+	auto& network = networkFactory->getNetworkHandler();
 
-    // Initialize and get the solver handler
-    bool dimOK = xolotlFactory::initializeDimension(opts, network);
-    if (!dimOK) {
-        throw std::runtime_error(
-                "Unable to initialize dimension from inputs.");
-    }
-    auto& solvHandler = xolotlFactory::getSolverHandler();
+	// Initialize and get the solver handler
+	bool dimOK = xolotlFactory::initializeDimension(opts, network);
+	if (!dimOK) {
+		throw std::runtime_error("Unable to initialize dimension from inputs.");
+	}
+	auto& solvHandler = xolotlFactory::getSolverHandler();
 
-    // Setup the solver
-    auto solver = setUpSolver(handlerRegistry, material, tempHandler,
-            solvHandler, opts);
+	// Setup the solver
+	auto solver = setUpSolver(handlerRegistry, material, tempHandler,
+			solvHandler, opts);
 
-    // Launch the PetscSolver
-    launchPetscSolver(*solver, handlerRegistry);
+	// Launch the PetscSolver
+	launchPetscSolver(*solver, handlerRegistry);
 
-    // Finalize our use of the solver.
-    auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");
-    solverFinalizeTimer->start();
-    solver->finalize();
-    solverFinalizeTimer->stop();
+	// Finalize our use of the solver.
+	auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");
+	solverFinalizeTimer->start();
+	solver->finalize();
+	solverFinalizeTimer->stop();
 
-    totalTimer->stop();
+	totalTimer->stop();
 
-    // Report statistics about the performance data collected during
-    // the run we just completed.
-    xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
-    xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> counterStats;
-    xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
-    handlerRegistry->collectStatistics(timerStats, counterStats,
-            hwCtrStats);
-    if (rank == 0) {
-        handlerRegistry->reportStatistics(std::cout, timerStats,
-                counterStats, hwCtrStats);
-    }
+	// Report statistics about the performance data collected during
+	// the run we just completed.
+	xperf::PerfObjStatsMap < xperf::ITimer::ValType > timerStats;
+	xperf::PerfObjStatsMap < xperf::IEventCounter::ValType > counterStats;
+	xperf::PerfObjStatsMap < xperf::IHardwareCounter::CounterType > hwCtrStats;
+	handlerRegistry->collectStatistics(timerStats, counterStats, hwCtrStats);
+	if (rank == 0) {
+		handlerRegistry->reportStatistics(std::cout, timerStats, counterStats,
+				hwCtrStats);
+	}
 
-    return 0;
+	return 0;
 }
-
 
 //! Main program
 int main(int argc, char **argv) {
@@ -210,40 +207,43 @@ int main(int argc, char **argv) {
 	// Local Declarations
 	int ret = EXIT_SUCCESS;
 
-    // Initialize MPI. We do this instead of leaving it to some
-    // other package (e.g., PETSc), because we want to avoid problems
-    // with overlapping Timer scopes.
-    // We do this before our own parsing of the command line,
-    // because it may change the command line.
-    MPI_Init(&argc, &argv);
+	// Initialize MPI. We do this instead of leaving it to some
+	// other package (e.g., PETSc), because we want to avoid problems
+	// with overlapping Timer scopes.
+	// We do this before our own parsing of the command line,
+	// because it may change the command line.
+	MPI_Init(&argc, &argv);
 
 	try {
-        // Check the command line arguments.
-        // Skip the executable name before parsing
-        argc -= 1; // one for the executable name
-        argv += 1; // one for the executable name
-        Options opts;
-        opts.readParams(argv);
-        if (opts.shouldRun()) {
-            // Skip the name of the parameter file that was just used.
-            // The arguments should be empty now.
-            // TODO is this needed?
-            argc -= 1;
-            argv += 1;
+		// Check the command line arguments.
+		// Skip the executable name before parsing
+		argc -= 1; // one for the executable name
+		argv += 1; // one for the executable name
+		Options opts;
+		opts.readParams(argv);
+		if (opts.shouldRun()) {
+			// Skip the name of the parameter file that was just used.
+			// The arguments should be empty now.
+			// TODO is this needed?
+			argc -= 1;
+			argv += 1;
 
-            // Run the simulation.
-            ret = runXolotl(opts);
-        }
-        else {
-            ret = opts.getExitCode();
-        }
+			// Run the simulation.
+			ret = runXolotl(opts);
+		} else {
+			ret = opts.getExitCode();
+		}
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
 		ret = EXIT_FAILURE;
 	} catch (const std::string& error) {
-		std::cout << error << std::endl;
-		std::cout << "Aborting." << std::endl;
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+		ret = EXIT_FAILURE;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
 		ret = EXIT_FAILURE;
 	}
 

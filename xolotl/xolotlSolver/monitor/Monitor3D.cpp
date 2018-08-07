@@ -15,11 +15,11 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
-#include <HDF5Utils.h>
 #include <PSISuperCluster.h>
 #include <NESuperCluster.h>
 #include <MathUtils.h>
 #include "RandomNumberGenerator.h"
+#include "xolotlCore/io/XFile.h"
 
 namespace xolotlSolver {
 
@@ -130,8 +130,9 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 		surfaceIndices.push_back(temp);
 	}
 
-	// Open the already created HDF5 file
-	xolotlCore::HDF5Utils::openFile(hdf5OutputName3D);
+	// Open the existing HDF5 file.
+	xolotlCore::XFile checkpointFile(hdf5OutputName3D, PETSC_COMM_WORLD,
+			xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
 	double currentTimeStep;
@@ -139,12 +140,14 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Add a concentration sub group
-	xolotlCore::HDF5Utils::addConcentrationSubGroup(timestep, time,
-			previousTime, currentTimeStep);
+	auto concGroup = checkpointFile.getGroup<
+			xolotlCore::XFile::ConcentrationGroup>();
+	assert(concGroup);
+	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
+			currentTimeStep);
 
 	// Write the surface positions in the concentration sub group
-	xolotlCore::HDF5Utils::writeSurface3D(timestep, surfaceIndices,
-			nInterstitial3D, previousIFlux3D);
+	tsGroup->writeSurface3D(surfaceIndices, nInterstitial3D, previousIFlux3D);
 
 	// Loop on the full grid
 	for (PetscInt k = 0; k < Mz; k++) {
@@ -197,15 +200,11 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 						concProc, PETSC_COMM_WORLD);
 
 				// All processes create the dataset and fill it
-				xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i, j,
+				tsGroup->writeConcentrationDataset(concSize, concArray, i, j,
 						k);
-				xolotlCore::HDF5Utils::fillConcentrations(concArray, i, j, k);
 			}
 		}
 	}
-
-	// Finalize the HDF5 file
-	xolotlCore::HDF5Utils::closeFile();
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -1282,6 +1281,22 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	// Get the network and its size
 	auto& network = solverHandler.getNetwork();
 
+	// Determine if we have an existing restart file,
+	// and if so, it it has had timesteps written to it.
+	std::unique_ptr<xolotlCore::XFile> networkFile;
+	std::unique_ptr<xolotlCore::XFile::TimestepGroup> lastTsGroup;
+	std::string networkName = solverHandler.getNetworkName();
+	bool hasConcentrations = false;
+	if (not networkName.empty()) {
+		networkFile.reset(new xolotlCore::XFile(networkName));
+		auto concGroup = networkFile->getGroup<
+				xolotlCore::XFile::ConcentrationGroup>();
+		hasConcentrations = (concGroup and concGroup->hasTimesteps());
+		if (hasConcentrations) {
+			lastTsGroup = concGroup->getLastTimestepGroup();
+		}
+	}
+
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -1325,25 +1340,16 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			hdf5Stride3D = 1.0;
 
 		// Compute the correct hdf5Previous3D for a restart
-		// Get the last time step written in the HDF5 file
-		int tempTimeStep = -2;
-		std::string networkName = solverHandler.getNetworkName();
-		bool hasConcentrations = false;
-		if (!networkName.empty())
-			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-					networkName, tempTimeStep);
 		if (hasConcentrations) {
+			assert(lastTsGroup);
+
 			// Get the previous time from the HDF5 file
-			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			previousTime = lastTsGroup->readPreviousTime();
 			hdf5Previous3D = (int) (previousTime / hdf5Stride3D);
 		}
 
 		// Don't do anything if both files have the same name
 		if (hdf5OutputName3D != solverHandler.getNetworkName()) {
-
-			// Initialize the HDF5 file for all the processes
-			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName3D);
 
 			// Get the solver handler
 			auto& solverHandler = PetscSolver::getSolverHandler();
@@ -1355,20 +1361,13 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			double hy = solverHandler.getStepSizeY();
 			double hz = solverHandler.getStepSizeZ();
 
-			// Save the header in the HDF5 file
-			xolotlCore::HDF5Utils::fillHeader(grid, My, hy, Mz, hz);
-
 			// Get the compostion list and save it
 			auto compList = network.getCompositionList();
-			xolotlCore::HDF5Utils::fillNetworkComp(compList);
 
-			// Save the network in the HDF5 file
-			if (!solverHandler.getNetworkName().empty())
-				xolotlCore::HDF5Utils::fillNetwork(
-						solverHandler.getNetworkName(), network);
-
-			// Finalize the HDF5 file
-			xolotlCore::HDF5Utils::finalizeFile();
+			// Create a checkpoint file.
+			xolotlCore::XFile checkpointFile(hdf5OutputName3D, grid, network,
+					compList, solverHandler.getNetworkName(), PETSC_COMM_WORLD,
+					My, hy, Mz, hz);
 		}
 
 		// startStop3D will be called at each timestep
@@ -1395,26 +1394,14 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				previousIFlux3D.push_back(tempVector);
 			}
 
-			// Get the last time step written in the HDF5 file
-			int tempTimeStep = -2;
-			std::string networkName = solverHandler.getNetworkName();
-			bool hasConcentrations = false;
-			if (!networkName.empty())
-				hasConcentrations =
-						xolotlCore::HDF5Utils::hasConcentrationGroup(
-								networkName, tempTimeStep);
-
 			// Get the interstitial information at the surface if concentrations were stored
 			if (hasConcentrations) {
 				// Get the interstitial quantity from the HDF5 file
-				nInterstitial3D = xolotlCore::HDF5Utils::readData3D(networkName,
-						tempTimeStep, "nInterstitial");
+				nInterstitial3D = lastTsGroup->readData3D("nInterstitial");
 				// Get the previous I flux from the HDF5 file
-				previousIFlux3D = xolotlCore::HDF5Utils::readData3D(networkName,
-						tempTimeStep, "previousIFlux");
+				previousIFlux3D = lastTsGroup->readData3D("previousIFlux");
 				// Get the previous time from the HDF5 file
-				previousTime = xolotlCore::HDF5Utils::readPreviousTime(
-						networkName, tempTimeStep);
+				previousTime = lastTsGroup->readPreviousTime();
 			}
 
 			// Get the sputtering yield
@@ -1478,19 +1465,10 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	// Set the monitor to compute the helium fluence for the retention calculation
 	if (flagRetention) {
 
-		// Get the last time step written in the HDF5 file
-		int tempTimeStep = -2;
-		std::string networkName = solverHandler.getNetworkName();
-		bool hasConcentrations = false;
-		if (!networkName.empty())
-			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-					networkName, tempTimeStep);
-
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 			// Get the previous time from the HDF5 file
-			double time = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			double time = lastTsGroup->readPreviousTime();
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
 			// The length of the time step
@@ -1498,8 +1476,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			// Increment the fluence with the value at this current timestep
 			fluxHandler->incrementFluence(dt);
 			// Get the previous time from the HDF5 file
-			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			// TODO is this same as 'time' above?
+			previousTime = lastTsGroup->readPreviousTime();
 		}
 
 		// computeFluence will be called at each timestep

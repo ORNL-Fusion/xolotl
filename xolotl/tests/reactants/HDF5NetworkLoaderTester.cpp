@@ -2,7 +2,6 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include <HDF5Utils.h>
 #include <PSIClusterReactionNetwork.h>
 #include <DummyHandlerRegistry.h>
 #include <HDF5NetworkLoader.h>
@@ -10,9 +9,13 @@
 #include <mpi.h>
 #include <memory>
 #include <Options.h>
+#include "tests/utils/MPIFixture.h"
 
 using namespace std;
 using namespace xolotlCore;
+
+// Initialize MPI before running any tests; finalize it running all tests.
+BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 /**
  * This suite is responsible for testing the HDF5NetworkLoader.
@@ -23,10 +26,6 @@ BOOST_AUTO_TEST_SUITE(HDF5NetworkLoader_testSuite)
  * Method checking the loading of the network from the HDF5 file.
  */
 BOOST_AUTO_TEST_CASE(checkLoad) {
-	// Initialize MPI for HDF5
-	int argc = 0;
-	char **argv;
-	MPI_Init(&argc, &argv);
 
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
@@ -95,9 +94,6 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 	// Check the diffusion factor
 	diffusionFactor = reactantBis.getDiffusionFactor();
 	BOOST_REQUIRE_EQUAL(diffusionFactor, 0.0);
-
-	// Finalize MPI
-	MPI_Finalize();
 
 	return;
 }

@@ -40,6 +40,18 @@ if (PETSC_FOUND)
     set(CMAKE_REQUIRED_LIBRARIES ${SAVED_CMAKE_REQUIRED_LIBRARIES})
 endif()
 
+# Find the Boost libraries we (potentially) use.
+# Note that we only need to list Boost component libraries that have a
+# library implementation (i.e., not header only) as required components.
+FIND_PACKAGE(Boost OPTIONAL_COMPONENTS filesystem unit_test_framework)
+IF (Boost_FOUND)
+    message(STATUS "Boost version ${Boost_VERSION} found.")
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+ENDIF()
+#IF (Boost_UNIT_TEST_FRAMEWORK_FOUND)
+#    message(STATUS "Tests will be built since Boost unit test framework found.")
+#    add_subdirectory(tests)
+#ENDIF()
 
 # Make sure that we only pull the static HDF5
 #set(HDF5_USE_STATIC_LIBRARIES yes)
@@ -63,6 +75,10 @@ IF (Java_FOUND)
     add_subdirectory(gov.ornl.xolotl.preprocessor)
 ENDIF()
 
+# We use OpenMP for multithreading.
+#find_package(OpenMP REQUIRED)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+
 # Build the performance library first, so it can be used by other libraries.
 add_subdirectory(xolotlPerf)
 # Add the visualization directory
@@ -73,15 +89,6 @@ add_subdirectory(xolotlCore)
 add_subdirectory(xolotlFactory)
 # Keep the solver for the end (it uses everything else)
 add_subdirectory(xolotlSolver)
-
-# Add the tests is Boost is available
-FIND_PACKAGE(Boost)
-IF (Boost_FOUND)
-    message(STATUS "Boost version ${Boost_VERSION} found.")
-    message(STATUS "Tests will be built since Boost was found.")
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-    add_subdirectory(tests)
-ENDIF()
 
 # Report package information
 message(STATUS "----- Configuration Information -----")
@@ -126,6 +133,9 @@ configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_BINARY_DIR}/Xol
 # Setup the library list
 set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
 xolotlFactory xolotlCL ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
+if(Boost_FOUND)
+    set(XOLOTL_LIBS ${XOLOTL_LIBS} ${Boost_LIBRARIES})
+endif()
 
 # Add an executable for the main program
 ADD_EXECUTABLE (xolotl main.cpp)

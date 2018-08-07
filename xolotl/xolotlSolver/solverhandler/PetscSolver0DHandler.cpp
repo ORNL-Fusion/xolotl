@@ -82,13 +82,6 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	checkPetscError(ierr, "PetscSolver0DHandler::initializeConcentration: "
 			"DMDAVecGetArrayDOF failed.");
 
-	// Get the last time step written in the HDF5 file
-	int tempTimeStep = -2;
-	bool hasConcentrations = false;
-	if (!networkName.empty())
-		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-				networkName, tempTimeStep);
-
 	// Initialize the flux handler
 	fluxHandler->initializeFluxHandler(network, 0, grid);
 
@@ -117,16 +110,22 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 	concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition, 0.0);
 
+	// Determine if the HDF5 file has any concentrations.
+	// TODO are we assuming networkName is non-empty here?
+	xolotlCore::XFile xfile(networkName);
+	auto concGroup = xfile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+	bool hasConcentrations = (concGroup and concGroup->hasTimesteps());
+
 	// Initialize the vacancy concentration
-	if (singleVacancyCluster && !hasConcentrations) {
+	if (singleVacancyCluster and not hasConcentrations) {
 		concOffset[vacancyIndex] = initialVConc;
 	}
 
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
 		// Read the concentrations from the HDF5 file
-		auto concVector = xolotlCore::HDF5Utils::readGridPoint(networkName,
-				tempTimeStep, 0);
+		auto tsGroup = concGroup->getLastTimestepGroup();
+		auto concVector = tsGroup->readGridPoint(0);
 
 		concOffset = concentrations[0];
 		// Loop on the concVector size
@@ -187,7 +186,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature - temperature) > 1.0e-6) {
+	if (std::fabs(lastTemperature - temperature) > 1.0) {
 		network.setTemperature(temperature);
 		lastTemperature = temperature;
 	}
@@ -265,7 +264,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature - temperature) > 1.0e-6) {
+	if (std::fabs(lastTemperature - temperature) > 1.0) {
 		network.setTemperature(temperature);
 		lastTemperature = temperature;
 	}

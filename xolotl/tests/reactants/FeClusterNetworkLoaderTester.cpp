@@ -2,7 +2,6 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include <HDF5Utils.h>
 #include <FeClusterReactionNetwork.h>
 #include <FeClusterNetworkLoader.h>
 #include <FeCluster.h>
@@ -11,9 +10,13 @@
 #include <mpi.h>
 #include <memory>
 #include <Options.h>
+#include "tests/utils/MPIFixture.h"
 
 using namespace std;
 using namespace xolotlCore;
+
+// Initialize MPI before running any tests; finalize it running all tests.
+BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 /**
  * This suite is responsible for testing the FeClusterNetworkLoader.
@@ -24,10 +27,6 @@ BOOST_AUTO_TEST_SUITE(FeClusterNetworkLoader_testSuite)
 // * Method checking the loading of the network from the HDF5 file.
 // */
 //BOOST_AUTO_TEST_CASE(checkLoad) {
-//	// Initialize MPI for HDF5
-//	int argc = 0;
-//	char **argv;
-//	MPI_Init(&argc, &argv);
 //
 //	// Create the network loader
 //	FeClusterNetworkLoader loader = FeClusterNetworkLoader(
@@ -97,10 +96,6 @@ BOOST_AUTO_TEST_SUITE(FeClusterNetworkLoader_testSuite)
  * Method checking the generation of the network.
  */
 BOOST_AUTO_TEST_CASE(checkGenerate) {
-	// Initialize MPI for HDF5
-	int argc = 0;
-	char **argv;
-	MPI_Init(&argc, &argv);
 
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
@@ -108,7 +103,7 @@ BOOST_AUTO_TEST_CASE(checkGenerate) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	argv = new char*[2];
+	auto argv = new char*[2];
 	std::string parameterFile = "param.txt";
 	argv[0] = new char[parameterFile.length() + 1];
 	strcpy(argv[0], parameterFile.c_str());
@@ -203,9 +198,6 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::V), 6);
 	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::I), 1);
 	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::HeV), 12);
-
-	// Finalize MPI
-	MPI_Finalize();
 
 	return;
 }

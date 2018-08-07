@@ -4,6 +4,7 @@
 #include <memory>
 #include <sstream>
 #include "IHandlerRegistry.h"
+#include "ITimer.h"
 #include "RuntimeError.h"
 
 namespace xolotlPerf {
@@ -58,6 +59,27 @@ void initialize(IHandlerRegistry::RegistryType rtype);
  *  @return The handler registry object.
  */
 std::shared_ptr<IHandlerRegistry> getHandlerRegistry(void);
+
+/**
+ * A class for managing timer start/stop lifetime by code scope.
+ * Used to simplify a common use case for a timer (starting timer when
+ * enter a scope, and stopping timer when leave the scope regardless
+ * of how we leave the scope).
+ */
+struct ScopedTimer {
+    /// The timer that should be active in the struct's scope.
+    std::shared_ptr<ITimer> timer;
+
+    ScopedTimer(std::shared_ptr<ITimer> _timer)
+      : timer(_timer) {
+
+          timer->start();
+    }
+
+    ~ScopedTimer(void) {
+        timer->stop();
+    }
+};
 
 } // end namespace xolotlPerf
 

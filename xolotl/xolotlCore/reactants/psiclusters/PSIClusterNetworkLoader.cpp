@@ -571,7 +571,8 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 				for (int k = 0; k <= upperD; k++) {
 					numD = k;
 					// Loop on the tritium number
-					int upperT = (int) ((2.0 / 3.0) * (double) maxHePerV[numV - 1]);
+					int upperT = (int) ((2.0 / 3.0)
+							* (double) maxHePerV[numV - 1]);
 					if (maxT <= 0)
 						upperT = 0;
 					for (int l = 0; l <= upperT; l++) {

@@ -2,7 +2,6 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include <HDF5Utils.h>
 #include <NEClusterReactionNetwork.h>
 #include <NEClusterNetworkLoader.h>
 #include <NECluster.h>
@@ -11,9 +10,13 @@
 #include <mpi.h>
 #include <memory>
 #include <Options.h>
+#include "tests/utils/MPIFixture.h"
 
 using namespace std;
 using namespace xolotlCore;
+
+// Initialize MPI before running any tests; finalize it running all tests.
+BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 /**
  * This suite is responsible for testing the NEClusterNetworkLoader.
@@ -24,10 +27,6 @@ BOOST_AUTO_TEST_SUITE(NEClusterNetworkLoader_testSuite)
  * Method checking the loading of the network from the HDF5 file.
  */
 BOOST_AUTO_TEST_CASE(checkLoad) {
-	// Initialize MPI for HDF5
-	int argc = 0;
-	char **argv;
-	MPI_Init(&argc, &argv);
 
 	// Create the network loader
 	NEClusterNetworkLoader loader = NEClusterNetworkLoader(
@@ -195,9 +194,6 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	// Remove the created file
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
-
-	// Finalize MPI
-	MPI_Finalize();
 
 	return;
 }

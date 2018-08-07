@@ -1,9 +1,9 @@
 // Includes
 #include <cassert>
 #include <PetscSolver.h>
-#include <HDF5Utils.h>
 #include <fstream>
 #include <iostream>
+#include "xolotlCore/io/XFile.h"
 
 using namespace xolotlCore;
 
@@ -38,7 +38,7 @@ static char help[] =
 
 // ----- GLOBAL VARIABLES ----- //
 extern PetscErrorCode setupPetsc0DMonitor(TS);
-extern PetscErrorCode setupPetsc1DMonitor(TS);
+extern PetscErrorCode setupPetsc1DMonitor(TS, std::shared_ptr<xolotlPerf::IHandlerRegistry>);
 extern PetscErrorCode setupPetsc2DMonitor(TS);
 extern PetscErrorCode setupPetsc3DMonitor(TS);
 
@@ -236,11 +236,15 @@ void PetscSolver::solve() {
 	// Read the times if the information is in the HDF5 file
 	auto fileName = getSolverHandler().getNetworkName();
 	double time = 0.0, deltaTime = 1.0e-12;
-	int tempTimeStep = -2;
 	if (!fileName.empty()) {
-		if (HDF5Utils::hasConcentrationGroup(fileName, tempTimeStep)) {
-			HDF5Utils::readTimes(fileName, tempTimeStep, time, deltaTime);
-		}
+
+        XFile xfile(fileName);
+        auto concGroup = xfile.getGroup<XFile::ConcentrationGroup>();
+        if(concGroup and concGroup->hasTimesteps()) {
+            auto tsGroup = concGroup->getLastTimestepGroup();
+            assert(tsGroup);
+            std::tie(time, deltaTime) = tsGroup->readTimes();
+        }
 	}
 
 	ierr = TSSetTime(ts, time);
@@ -261,7 +265,7 @@ void PetscSolver::solve() {
 		break;
 	case 1:
 		// One dimension
-		ierr = setupPetsc1DMonitor(ts);
+		ierr = setupPetsc1DMonitor(ts, handlerRegistry);
 		checkPetscError(ierr,
 				"PetscSolver::solve: setupPetsc1DMonitor failed.");
 		break;
