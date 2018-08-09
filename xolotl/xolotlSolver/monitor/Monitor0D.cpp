@@ -22,6 +22,7 @@
 #include <PSIClusterReactionNetwork.h>
 #include <FeClusterReactionNetwork.h>
 #include "xolotlCore/io/XFile.h"
+#include "xolotlSolver/monitor/Monitor.h"
 
 namespace xolotlSolver {
 
@@ -460,8 +461,22 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			auto compList = network.getCompositionList();
 
 			// Create and initialize a checkpoint file.
-			xolotlCore::XFile checkpointFile(hdf5OutputName0D, grid, network, compList,
-					solverHandler.getNetworkName(), PETSC_COMM_WORLD);
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+				xolotlCore::XFile checkpointFile(hdf5OutputName0D, grid, network, compList, PETSC_COMM_WORLD);
+			}
+
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			copyNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(), hdf5OutputName0D);
 		}
 
 		// startStop0D will be called at each timestep

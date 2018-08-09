@@ -702,23 +702,53 @@ protected:
      */
     MPI_Comm getComm(void) const  { return comm; }
 
-public:
-    /**
-     * Create or open an HDF5 file.
-     *
-     * @param path Path of file to create or open.
-     * @param mode Access mode for creating/opening the file.
-     * @param par Whether to access the file with parallel I/O.
-     */
-    HDF5File(fs::path path,
-                AccessMode mode,
-                MPI_Comm _comm = MPI_COMM_WORLD,
-                bool par = true );
+	/**
+	 * Close our file.
+	 */
+	void Close(void) {
+		if(getId() != H5I_INVALID_HID) {
+			H5Fclose(getId());
+			setId(H5I_INVALID_HID);		
+		}
+	}
 
-    /**
-     * Close the file if open and destroy the in-memory object.
-     */
-    virtual ~HDF5File(void);
+	/**
+	 * Do the actual create/open of an HDF5 file.
+	 *
+	 * @param _path Path of file to create or open.
+	 * @param _mode Access mode for creating/opening the file.
+	 * @param _comm Communicator to use for accessing the file.
+	 * @param par Whether to access the file using parallel I/O.
+	 */
+	void Open(fs::path _path,
+				AccessMode _mode,
+				MPI_Comm _comm,
+				bool par);
+
+public:
+	/**
+	 * Create or open an HDF5 file.
+	 *
+	 * @param _path Path of file to create or open.
+	 * @param _mode Access mode for creating/opening the file.
+	 * @param par Whether to access the file with parallel I/O.
+	 */
+	HDF5File(fs::path _path,
+				AccessMode _mode,
+				MPI_Comm _comm = MPI_COMM_WORLD,
+				bool par = true )
+	  : HDF5Object("/"),
+		comm(_comm) {
+
+		Open(_path, _mode, _comm, par);
+	}
+
+	/**
+	 * Close the file if open and destroy the in-memory object.
+	 */
+	virtual ~HDF5File(void) {
+		Close();
+	}
 };
 
 } /* namespace xolotlCore */

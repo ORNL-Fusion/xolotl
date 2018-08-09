@@ -24,6 +24,7 @@
 #include <MathUtils.h>
 #include "RandomNumberGenerator.h"
 #include "xolotlCore/io/XFile.h"
+#include "xolotlSolver/monitor/Monitor.h"
 
 namespace xolotlSolver {
 
@@ -88,21 +89,6 @@ std::vector<double> radii1D;
 bool printMaxClusterConc1D = true;
 // The vector of depths at which bursting happens
 std::vector<int> depthPositions1D;
-
-/// Timer capturing time spent in various types of monitors.
-std::shared_ptr<xolotlPerf::ITimer> startStopTimer;
-std::shared_ptr<xolotlPerf::ITimer> heRetTimer;
-std::shared_ptr<xolotlPerf::ITimer> heConcTimer;
-std::shared_ptr<xolotlPerf::ITimer> cumHeTimer;
-std::shared_ptr<xolotlPerf::ITimer> xeRetTimer;
-std::shared_ptr<xolotlPerf::ITimer> tridynTimer;
-std::shared_ptr<xolotlPerf::ITimer> scatterTimer;
-std::shared_ptr<xolotlPerf::ITimer> seriesTimer;
-std::shared_ptr<xolotlPerf::ITimer> surfaceTimer;
-std::shared_ptr<xolotlPerf::ITimer> meanSizeTimer;
-std::shared_ptr<xolotlPerf::ITimer> maxClusterConcTimer;
-std::shared_ptr<xolotlPerf::ITimer> eventTimer;
-std::shared_ptr<xolotlPerf::ITimer> postEventTimer;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "checkNegative1D")
@@ -196,8 +182,6 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
-
-	xolotlPerf::ScopedTimer stimer(tridynTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -323,8 +307,6 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-	xolotlPerf::ScopedTimer stimer(startStopTimer);
-
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -446,8 +428,6 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		Vec solution, void *) {
-
-	xolotlPerf::ScopedTimer stimer(heRetTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -669,8 +649,6 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		Vec solution, void *) {
 
-	xolotlPerf::ScopedTimer stimer(xeRetTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm;
@@ -808,8 +786,6 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
  */
 PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
-
-	xolotlPerf::ScopedTimer stimer(heConcTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -958,8 +934,6 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 		PetscReal time, Vec solution, void *ictx) {
 
-	xolotlPerf::ScopedTimer stimer(cumHeTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm;
@@ -1076,8 +1050,6 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
  */
 PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
-
-	xolotlPerf::ScopedTimer stimer(scatterTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -1298,8 +1270,6 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-	xolotlPerf::ScopedTimer stimer(seriesTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -1472,8 +1442,6 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-	xolotlPerf::ScopedTimer stimer(surfaceTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -1641,8 +1609,6 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 
-	xolotlPerf::ScopedTimer stimer(meanSizeTimer);
-
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -1765,8 +1731,6 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-	xolotlPerf::ScopedTimer stimer(maxClusterConcTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -1877,8 +1841,6 @@ PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 		PetscScalar *fvalue, void *) {
-
-	xolotlPerf::ScopedTimer stimer(eventTimer);
 
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -2113,8 +2075,6 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
  */
 PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
-
-	xolotlPerf::ScopedTimer stimer(postEventTimer);
 
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -2626,8 +2586,24 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 			auto compList = network.getCompositionList();
 
 			// Create and initialize a checkpoint file.
-			xolotlCore::XFile checkpointFile(hdf5OutputName1D, grid, network, compList,
-					solverHandler.getNetworkName(), PETSC_COMM_WORLD);
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+				xolotlCore::XFile checkpointFile(hdf5OutputName1D, grid,
+						network, compList, PETSC_COMM_WORLD);
+			}
+
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			copyNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+					hdf5OutputName1D);
 		}
 
 		// startStop1D will be called at each timestep
@@ -2995,21 +2971,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: TSMonitorSet (monitorTime) failed.");
-
-// Obtain a timer for capturing time spent in monitors.
-	startStopTimer = handlerRegistry->getTimer("monitor1D:startStop");
-	heRetTimer = handlerRegistry->getTimer("monitor1D:heRet");
-	heConcTimer = handlerRegistry->getTimer("monitor1D:heConc");
-	cumHeTimer = handlerRegistry->getTimer("monitor1D:cumHe");
-	xeRetTimer = handlerRegistry->getTimer("monitor1D:xeRet");
-	tridynTimer = handlerRegistry->getTimer("monitor1D:tridyn");
-	scatterTimer = handlerRegistry->getTimer("monitor1D:scatter");
-	seriesTimer = handlerRegistry->getTimer("monitor1D:series");
-	surfaceTimer = handlerRegistry->getTimer("monitor1D:surface");
-	meanSizeTimer = handlerRegistry->getTimer("monitor1D:meanSize");
-	maxClusterConcTimer = handlerRegistry->getTimer("monitor1D:maxClusterConc");
-	eventTimer = handlerRegistry->getTimer("monitor1D:event");
-	postEventTimer = handlerRegistry->getTimer("monitor1D:postEvent");
 
 	PetscFunctionReturn(0);
 }

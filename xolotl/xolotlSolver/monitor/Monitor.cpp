@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
+#include "xolotlCore/io/XFile.h"
+#include "xolotlSolver/monitor/Monitor.h"
 
 namespace xolotlSolver {
 
@@ -190,6 +192,44 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 
 	PetscFunctionReturn(0);
 }
+
+
+void copyNetwork(MPI_Comm _comm,
+                    std::string srcFileName,
+                    std::string targetFileName) {
+
+    int procId;
+    MPI_Comm_rank(_comm, &procId);
+
+    // Check if we are supposed to copy the network from 
+    // another object into our new checkpoint file.
+    if((procId == 0) and not srcFileName.empty()) {
+
+        // Copy the network from the given file.
+        // Note that we do this using a single-process
+        // communicator because the HDF5 copy operation 
+        // is not parallelized and gives very poor performance
+        // if used with a file opened for parallel access.
+        xolotlCore::XFile srcFile(srcFileName,
+                        MPI_COMM_SELF,
+                        xolotlCore::XFile::AccessMode::OpenReadOnly);
+
+        // Check if given file even has a network group.
+        auto srcNetGroup = srcFile.getGroup<xolotlCore::XFile::NetworkGroup>();
+        if(srcNetGroup) {
+            // Given file has a network group.  Copy it.
+            // First open the checkpoint file using a single-process
+            // communicator...
+            xolotlCore::XFile checkpointFile(targetFileName,
+                        MPI_COMM_SELF,
+                        xolotlCore::XFile::AccessMode::OpenReadWrite);
+
+            // ...then do the copy.
+            srcNetGroup->copyTo(checkpointFile);
+        }
+    }
+}
+
 
 }
 /* end namespace xolotlSolver */

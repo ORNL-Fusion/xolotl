@@ -20,6 +20,7 @@
 #include <MathUtils.h>
 #include "RandomNumberGenerator.h"
 #include "xolotlCore/io/XFile.h"
+#include "xolotlSolver/monitor/Monitor.h"
 
 namespace xolotlSolver {
 
@@ -1365,9 +1366,24 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			auto compList = network.getCompositionList();
 
 			// Create a checkpoint file.
-			xolotlCore::XFile checkpointFile(hdf5OutputName3D, grid, network,
-					compList, solverHandler.getNetworkName(), PETSC_COMM_WORLD,
-					My, hy, Mz, hz);
+			// Create and initialize a checkpoint file.
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+			    xolotlCore::XFile checkpointFile(hdf5OutputName3D, grid, network,
+					compList, PETSC_COMM_WORLD, My, hy, Mz, hz);
+			}
+
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			copyNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(), hdf5OutputName3D);
 		}
 
 		// startStop3D will be called at each timestep

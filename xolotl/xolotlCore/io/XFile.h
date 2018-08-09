@@ -592,9 +592,6 @@ public:
 	 * @param grid The grid points in the x direction (depth)
 	 * @param network The network to write
 	 * @param compVec The composition vector.
-	 * @param networkFilePath Path to file from which the network will
-	 *          be copied.  No network will be copied if networkFilePath
-	 *          is empty.
 	 * @param _comm The MPI communicator used to access the file.
 	 * @param ny The number of grid points in the y direction
 	 * @param hy The step size in the y direction
@@ -606,7 +603,7 @@ public:
 	XFile(fs::path path, const std::vector<double>& grid,
 			IReactionNetwork& network,
 			const HeaderGroup::NetworkCompsType& compVec,
-			fs::path networkFilePath, MPI_Comm _comm = MPI_COMM_WORLD, int ny =
+			MPI_Comm _comm = MPI_COMM_WORLD, int ny =
 					0, double hy = 0.0, int nz = 0, double hz = 0.0,
 			AccessMode mode = AccessMode::CreateOrTruncateIfExists);
 

@@ -36,7 +36,7 @@ HDF5File::AccessMode XFile::EnsureOpenAccessMode(HDF5File::AccessMode mode) {
 XFile::XFile(fs::path _path, const std::vector<double>& grid,
 		IReactionNetwork& network,
 		const XFile::HeaderGroup::NetworkCompsType& compVec,
-		fs::path networkFilePath, MPI_Comm _comm, int ny, double hy, int nz,
+		MPI_Comm _comm, int ny, double hy, int nz,
 		double hz, AccessMode _mode) :
 		HDF5File(_path, EnsureCreateAccessMode(_mode), _comm, true) {
 	// Create and initialize the header group.
@@ -44,23 +44,6 @@ XFile::XFile(fs::path _path, const std::vector<double>& grid,
 
 	// Create and initialize the group where the concentrations will be stored
 	ConcentrationGroup concGroup(*this, true);
-
-	// Copy the network from another file if desired.
-	if (not networkFilePath.empty()) {
-
-		// Open the given file.
-		XFile networkFile(networkFilePath, _comm, AccessMode::OpenReadOnly);
-
-		// Check if given file has a network group.
-		auto srcNetworkGroup = networkFile.getGroup<NetworkGroup>();
-		if (srcNetworkGroup) {
-			// Given file has a network group.  Copy it.
-			srcNetworkGroup->copyTo(*this);
-		}
-	} else {
-		// Create and initialize the network group
-		NetworkGroup networkGroup(*this, network);
-	}
 }
 
 XFile::XFile(fs::path _path, MPI_Comm _comm, AccessMode _mode) :
