@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <FeCluster.h>
 #include <FeVCluster.h>
 #include "SimpleReactionNetwork.h"
@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	auto network = getSimpleFeReactionNetwork(0);
 
 	// The vector of radii to compare with
-	double expectedRadii[] = { 0.1413109, 0.17804059, 0.2038056,
-			0.224317088, 0.241638258 };
+	double expectedRadii[] = { 0.1413109, 0.17804059, 0.2038056, 0.224317088,
+			0.241638258 };
 
 	// Check all the values
 	for (int i = 1; i <= 5; i++) {

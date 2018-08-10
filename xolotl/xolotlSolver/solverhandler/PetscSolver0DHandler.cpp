@@ -73,7 +73,8 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
-	// Initialize the rates
+	// Initialize the last temperature and rates
+	lastTemperature.push_back(0.0);
 	network.addGridPoints(1);
 
 	// Pointer for the concentration vector
@@ -186,9 +187,9 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature - temperature) > 1.0) {
+	if (std::fabs(lastTemperature[0] - temperature) > 1.0) {
 		network.setTemperature(temperature);
-		lastTemperature = temperature;
+		lastTemperature[0] = temperature;
 	}
 
 	// Copy data into the ReactionNetwork so that it can
@@ -264,9 +265,9 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature - temperature) > 1.0) {
+	if (std::fabs(lastTemperature[0] - temperature) > 1.0) {
 		network.setTemperature(temperature);
-		lastTemperature = temperature;
+		lastTemperature[0] = temperature;
 	}
 
 	// Copy data into the ReactionNetwork so that it can

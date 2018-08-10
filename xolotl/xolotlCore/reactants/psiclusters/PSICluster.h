@@ -644,30 +644,16 @@ public:
 	void resetConnectivities() override;
 
 	/**
-	 * This operation sets the diffusion factor, D_0, that is used to calculate
-	 * the diffusion coefficient for this cluster.
-	 *
-	 * @param factor The diffusion factor
-	 */
-	void setDiffusionFactor(const double factor) override;
-
-	/**
-	 * This operation sets the migration energy for this reactant.
-	 *
-	 * @param energy The migration energy
-	 */
-	void setMigrationEnergy(const double energy) override;
-
-	/**
 	 * This operation returns the sum of combination rate and emission rate
 	 * (where this cluster is on the left side of the reaction) for this
 	 * particular cluster.
 	 * This is used to computed the desorption rate in the
 	 * modified trap-mutation handler.
 	 *
+	 * @param i The position on the grid
 	 * @return The rate
 	 */
-	double getLeftSideRate() const override;
+	double getLeftSideRate(int i) const override;
 
 	/**
 	 * This operation returns the vector of production reactions in which

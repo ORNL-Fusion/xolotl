@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <W110TrapMutationHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	// Get its size
 	const int dof = network->getDOF();
 	// Initialize the rate constants
-	network->setTemperature(1200.0,0);
+	network->setTemperature(1200.0, 0);
 	network->computeRateConstants(0);
 
 	// Suppose we have a grid with 13 grip points and distance of

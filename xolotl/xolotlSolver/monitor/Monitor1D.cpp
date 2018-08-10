@@ -90,6 +90,11 @@ bool printMaxClusterConc1D = true;
 // The vector of depths at which bursting happens
 std::vector<int> depthPositions1D;
 
+// Timers
+std::shared_ptr<xolotlPerf::ITimer> startStopTimer;
+std::shared_ptr<xolotlPerf::ITimer> eventTimer;
+std::shared_ptr<xolotlPerf::ITimer> postEventTimer;
+
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "checkNegative1D")
 /**
@@ -307,6 +312,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
+	startStopTimer->start();
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -318,8 +324,10 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / hdf5Stride1D) <= hdf5Previous1D)
+	if ((int) ((time + dt / 10.0) / hdf5Stride1D) <= hdf5Previous1D) {
+		startStopTimer->stop();
 		PetscFunctionReturn(0);
+	}
 
 	// Update the previous time
 	hdf5Previous1D++;
@@ -418,6 +426,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = computeTRIDYN1D(ts, timestep, time, solution, NULL);
 	CHKERRQ(ierr);
 
+	startStopTimer->stop();
 	PetscFunctionReturn(0);
 }
 
@@ -1850,6 +1859,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 	fvalue[0] = 1.0, fvalue[1] = 1.0, fvalue[2] = 1.0;
 
 	PetscFunctionBeginUser;
+	eventTimer->start();
 
 	// Gets the process ID
 	int procId;
@@ -2065,6 +2075,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
+	eventTimer->stop();
 	PetscFunctionReturn(0);
 }
 
@@ -2082,10 +2093,13 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	PetscInt xs, xm, xi;
 
 	PetscFunctionBeginUser;
+	postEventTimer->start();
 
 	// Check if the surface has moved
-	if (nevents == 0)
+	if (nevents == 0) {
+		postEventTimer->stop();
 		PetscFunctionReturn(0);
+	}
 
 	// Check if both events happened
 	if (nevents == 3)
@@ -2222,6 +2236,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
 		CHKERRQ(ierr);
 
+		postEventTimer->stop();
 		PetscFunctionReturn(0);
 	}
 
@@ -2369,6 +2384,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
+	postEventTimer->stop();
 	PetscFunctionReturn(0);
 }
 
@@ -2467,6 +2483,11 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	ierr = PetscOptionsHasName(NULL, NULL, "-tridyn", &flagTRIDYN);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-tridyn) failed.");
+
+	// Initialize the timers
+	startStopTimer = handlerRegistry->getTimer("monitor1D:startStop");
+	eventTimer = handlerRegistry->getTimer("monitor1D:event");
+	postEventTimer = handlerRegistry->getTimer("monitor1D:postEvent");
 
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();

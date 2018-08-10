@@ -9,6 +9,9 @@
 
 namespace xolotlCore {
 
+// Timer
+std::shared_ptr<xolotlPerf::ITimer> setTempTimer;
+
 PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		ReactionNetwork( { ReactantType::V, ReactantType::I, ReactantType::He,
@@ -18,6 +21,9 @@ PSIClusterReactionNetwork::PSIClusterReactionNetwork(
 
 	// Initialize default properties
 	dissociationsEnabled = true;
+
+	// Get the timer
+	setTempTimer = handlerRegistry->getTimer("setTemperature");
 
 	return;
 }
@@ -45,7 +51,11 @@ double PSIClusterReactionNetwork::calculateDissociationConstant(
 	// Calculate and return
 	double bindingEnergy = computeBindingEnergy(reaction);
 	double k_minus_exp = exp(
-			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature));
+			-1.0 * bindingEnergy
+					/ (xolotlCore::kBoltzmann
+							* temperature)); // We can use the network temperature
+											// because this method is called only
+											// when the temperature is updated
 	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
 
 	return k_minus;
@@ -1369,9 +1379,11 @@ void PSIClusterReactionNetwork::checkForDissociation(
 }
 
 void PSIClusterReactionNetwork::setTemperature(double temp, int i) {
+	setTempTimer->start();
 	ReactionNetwork::setTemperature(temp, i);
 
 	computeRateConstants(i);
+	setTempTimer->stop();
 
 	return;
 }

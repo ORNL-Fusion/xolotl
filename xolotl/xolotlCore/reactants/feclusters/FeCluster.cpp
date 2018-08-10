@@ -824,39 +824,21 @@ void FeCluster::getEmissionPartialDerivatives(std::vector<double> & partials,
 	return;
 }
 
-void FeCluster::setDiffusionFactor(const double factor) {
-	// Set the diffusion factor
-	diffusionFactor = factor;
-	// Update the diffusion coefficient
-	recomputeDiffusionCoefficient(temperature);
-
-	return;
-}
-
-void FeCluster::setMigrationEnergy(const double energy) {
-	// Set the migration energy
-	migrationEnergy = energy;
-	// Update the diffusion coefficient
-	recomputeDiffusionCoefficient(temperature);
-
-	return;
-}
-
-double FeCluster::getLeftSideRate() const {
+double FeCluster::getLeftSideRate(int i) const {
 
 	// Sum rate constant-concentration product over combining reactants.
 	double combiningRateTotal = std::accumulate(combiningReactants.begin(),
 			combiningReactants.end(), 0.0,
-			[](double running, const CombiningCluster& cc) {
+			[&i](double running, const CombiningCluster& cc) {
 				return running +
-				(cc.reaction.kConstant[1] * cc.combining.concentration);
+				(cc.reaction.kConstant[i] * cc.combining.concentration);
 			});
 
 	// Sum rate constants over all emission pair reactions.
 	double emissionRateTotal = std::accumulate(emissionPairs.begin(),
 			emissionPairs.end(), 0.0,
-			[](double running, const ClusterPair& currPair) {
-				return running + currPair.reaction.kConstant[1];
+			[&i](double running, const ClusterPair& currPair) {
+				return running + currPair.reaction.kConstant[i];
 			});
 
 	return combiningRateTotal + emissionRateTotal;

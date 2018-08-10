@@ -95,7 +95,7 @@ protected:
 	 * The temperature at which the cluster currently exists. The diffusion
 	 * coefficient is recomputed each time the temperature is changed.
 	 */
-	double temperature;
+	std::vector<double> temperature;
 
 	/**
 	 * The reaction network that includes this reactant.
@@ -130,7 +130,7 @@ protected:
 	 * Arrhenius rate equation. It is re-computed every time the temperature is
 	 * updated.
 	 */
-	double diffusionCoefficient;
+	std::vector<double> diffusionCoefficient;
 
 	/**
 	 * The formation energy of this cluster. It will be used to compute the
@@ -171,8 +171,9 @@ protected:
 	 * whenever the diffusion factor, migration energy or temperature change.
 	 *
 	 * @param temp the temperature
+	 * @param i The position on the grid
 	 */
-	void recomputeDiffusionCoefficient(double temp);
+	void recomputeDiffusionCoefficient(double temp, int i = 0);
 
 public:
 
@@ -524,6 +525,14 @@ public:
 	}
 
 	/**
+	 * Add grid points to the vector of diffusion coefficients or remove
+	 * them if the value is negative.
+	 *
+	 * @param i The number of grid point to add or remove
+	 */
+	virtual void addGridPoints(int i) override;
+
+	/**
 	 * This operation returns a list that represents the connectivity
 	 * between this reactant and other reactants in the network.
 	 * "Connectivity" indicates whether two reactants interact, via any
@@ -568,8 +577,8 @@ public:
 	 * the vector should be equal to ReactionNetwork::size().
 	 * @param i The location on the grid in the depth direction
 	 */
-	virtual void getPartialDerivatives(std::vector<double> & partials, int i) const
-			override {
+	virtual void getPartialDerivatives(std::vector<double> & partials,
+			int i) const override {
 		// nothing to do.
 	}
 
@@ -656,16 +665,18 @@ public:
 	 * calculations and for calling setTemperature() in their copy constructors.
 	 *
 	 * @param temp The new cluster temperature
+	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp) override;
+	void setTemperature(double temp, int i) override;
 
 	/**
 	 * This operation returns the temperature at which the reactant currently exists.
 	 *
+	 * @param i The location on the grid
 	 * @return The temperature.
 	 */
-	double getTemperature() const override {
-		return temperature;
+	double getTemperature(int i) const override {
+		return temperature[i];
 	}
 
 	/**
@@ -718,10 +729,11 @@ public:
 	 * This operation returns the diffusion coefficient for this reactant and is
 	 * calculated from the diffusion factor.
 	 *
+	 * @param i The position on the grid
 	 * @return The diffusion coefficient
 	 */
-	double getDiffusionCoefficient() const override {
-		return diffusionCoefficient;
+	double getDiffusionCoefficient(int i) const override {
+		return diffusionCoefficient[i];
 	}
 
 	/**
@@ -757,9 +769,10 @@ public:
 	 * This is used to computed the desorption rate in the
 	 * modified trap-mutation handler.
 	 *
+	 * @param i The position on the grid
 	 * @return The rate
 	 */
-	virtual double getLeftSideRate() const override {
+	virtual double getLeftSideRate(int i) const override {
 		return 0.0;
 	}
 

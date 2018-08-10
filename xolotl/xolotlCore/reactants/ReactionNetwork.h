@@ -202,10 +202,11 @@ protected:
 	 * temperature.
 	 *
 	 * @param reaction The reaction
+	 * @param i The location on the grid
 	 * @return The rate
 	 */
 	double calculateReactionRateConstant(
-			const ProductionReaction& reaction) const;
+			const ProductionReaction& reaction, int i) const;
 
 	/**
 	 * Calculate the dissociation constant of the first cluster with respect to

@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <DummyTrapMutationHandler.h>
 #include <Sigma3TrapMutationHandler.h>
 #include <HDF5NetworkLoader.h>

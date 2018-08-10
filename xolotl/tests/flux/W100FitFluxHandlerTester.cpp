@@ -1,13 +1,15 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include "W100FitFluxHandler.h"
 #include <mpi.h>
 #include <HDF5NetworkLoader.h>
 #include <DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
 #include <Options.h>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 using namespace xolotlCore;

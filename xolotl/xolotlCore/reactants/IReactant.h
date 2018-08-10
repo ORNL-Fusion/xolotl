@@ -296,6 +296,14 @@ public:
 	virtual void resetConnectivities() = 0;
 
 	/**
+	 * Add grid points to the vector of diffusion coefficients or remove
+	 * them if the value is negative.
+	 *
+	 * @param i The number of grid point to add or remove
+	 */
+	virtual void addGridPoints(int i) = 0;
+
+	/**
 	 * This operation returns a list that represents the connectivity
 	 * between this reactant and other reactants in the network.
 	 * "Connectivity" indicates whether two reactants interact, via any
@@ -338,8 +346,8 @@ public:
 	 * the vector should be equal to ReactionNetwork::size().
 	 * @param i The location on the grid in the depth direction
 	 */
-	virtual void getPartialDerivatives(
-			std::vector<double> & partials, int i) const = 0;
+	virtual void getPartialDerivatives(std::vector<double> & partials,
+			int i) const = 0;
 
 	/**
 	 * This operation returns the name of the reactant.
@@ -410,15 +418,17 @@ public:
 	 * calculations and for calling setTemperature() in their copy constructors.
 	 *
 	 * @param temp The new reactant temperature
+	 * @param i The location on the grid
 	 */
-	virtual void setTemperature(double temp) = 0;
+	virtual void setTemperature(double temp, int i) = 0;
 
 	/**
 	 * This operation returns the temperature at which the reactant currently exists.
 	 *
+	 * @param i The location on the grid
 	 * @return The temperature.
 	 */
-	virtual double getTemperature() const = 0;
+	virtual double getTemperature(int i) const = 0;
 
 	/**
 	 * This operation returns the total size of the reactant.
@@ -462,9 +472,10 @@ public:
 	 * This operation returns the diffusion coefficient for this reactant and is
 	 * calculated from the diffusion factor.
 	 *
+	 * @param i The position on the grid
 	 * @return The diffusion coefficient
 	 */
-	virtual double getDiffusionCoefficient() const = 0;
+	virtual double getDiffusionCoefficient(int i = 0) const = 0;
 
 	/**
 	 * This operation sets the migration energy for this reactant.
@@ -495,9 +506,10 @@ public:
 	 * This is used to computed the desorption rate in the
 	 * modified trap-mutation handler.
 	 *
+	 * @param i The position on the grid
 	 * @return The rate
 	 */
-	virtual double getLeftSideRate() const = 0;
+	virtual double getLeftSideRate(int i) const = 0;
 
 	/**
 	 * This operation returns the vector of production reactions in which

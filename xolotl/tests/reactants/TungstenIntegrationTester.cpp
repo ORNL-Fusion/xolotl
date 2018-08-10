@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSIClusterNetworkLoader.h>
 #include <memory>
 #include <typeinfo>
@@ -9,6 +9,8 @@
 #include <XolotlConfig.h>
 #include <DummyHandlerRegistry.h>
 #include <Options.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;

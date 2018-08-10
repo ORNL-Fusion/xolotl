@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <FeClusterReactionNetwork.h>
 #include <FeClusterNetworkLoader.h>
 #include <FeCluster.h>
@@ -11,6 +11,8 @@
 #include <memory>
 #include <Options.h>
 #include "tests/utils/MPIFixture.h"
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;

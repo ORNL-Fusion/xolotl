@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSIClusterNetworkLoader.h>
 #include <memory>
 #include <typeinfo>
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver0DHandler(network);
 	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
-				rawSolverHandler);
+			rawSolverHandler);
 	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
 
 	// Create the solver
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver1DHandler(network);
 	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
-				rawSolverHandler);
+			rawSolverHandler);
 	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
 
 	// Create the solver
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver1DHandler(network);
 	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
-				rawSolverHandler);
+			rawSolverHandler);
 	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
 
 	// Create the solver
@@ -449,7 +449,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver2DHandler(network);
 	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
-				rawSolverHandler);
+			rawSolverHandler);
 	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
 
 	// Create the solver

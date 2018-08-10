@@ -92,14 +92,14 @@ IReactant * ReactionNetwork::get(ReactantType type,
 }
 
 double ReactionNetwork::calculateReactionRateConstant(
-		const ProductionReaction& reaction) const {
+		const ProductionReaction& reaction, int i) const {
 	// Get the reaction radii
 	double r_first = reaction.first.getReactionRadius();
 	double r_second = reaction.second.getReactionRadius();
 
 	// Get the diffusion coefficients
-	double firstDiffusion = reaction.first.getDiffusionCoefficient();
-	double secondDiffusion = reaction.second.getDiffusionCoefficient();
+	double firstDiffusion = reaction.first.getDiffusionCoefficient(i);
+	double secondDiffusion = reaction.second.getDiffusionCoefficient(i);
 
 	// Calculate and return
 	double k_plus = 4.0 * xolotlCore::pi * (r_first + r_second)
@@ -137,11 +137,11 @@ void ReactionNetwork::setTemperature(double temp, int i) {
 
 	// Update the temperature for all of the clusters
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&temp](IReactant& currReactant) {
+			[&temp,&i](IReactant& currReactant) {
 
 				// This part will set the temperature in each reactant
 				// and recompute the diffusion coefficient
-				currReactant.setTemperature(temp);
+				currReactant.setTemperature(temp, i);
 			});
 
 	return;
@@ -246,7 +246,7 @@ void ReactionNetwork::computeRateConstants(int i) {
 		auto& currReaction = currReactionInfo.second;
 
 		// Compute the rate
-		rate = calculateReactionRateConstant(*currReaction);
+		rate = calculateReactionRateConstant(*currReaction, i);
 		// Set it in the reaction
 		currReaction->kConstant[i] = rate;
 
@@ -274,6 +274,11 @@ void ReactionNetwork::computeRateConstants(int i) {
 }
 
 void ReactionNetwork::addGridPoints(int i) {
+	// Add grid points to the diffusing clusters first
+	for (IReactant& currReactant : allReactants) {
+		currReactant.addGridPoints(i);
+	}
+
 	// Add grid points
 	if (i > 0) {
 		while (i > 0) {
@@ -295,21 +300,17 @@ void ReactionNetwork::addGridPoints(int i) {
 			i--;
 		}
 	} else {
-		while (i < 0) {
-			// Loop on all the production reactions
-			for (auto& currReactionInfo : productionReactionMap) {
-				currReactionInfo.second->kConstant.erase(
-						currReactionInfo.second->kConstant.begin(),
-						currReactionInfo.second->kConstant.begin() + 1);
-			}
-			// Loop on all the dissociation reactions
-			for (auto& currReactionInfo : dissociationReactionMap) {
-				currReactionInfo.second->kConstant.erase(
-						currReactionInfo.second->kConstant.begin(),
-						currReactionInfo.second->kConstant.begin() + 1);
-			}
-			// Increase i
-			i++;
+		// Loop on all the production reactions
+		for (auto& currReactionInfo : productionReactionMap) {
+			currReactionInfo.second->kConstant.erase(
+					currReactionInfo.second->kConstant.begin(),
+					currReactionInfo.second->kConstant.begin() - i);
+		}
+		// Loop on all the dissociation reactions
+		for (auto& currReactionInfo : dissociationReactionMap) {
+			currReactionInfo.second->kConstant.erase(
+					currReactionInfo.second->kConstant.begin(),
+					currReactionInfo.second->kConstant.begin() - i);
 		}
 	}
 

@@ -1,13 +1,15 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <W111AdvectionHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
 #include <Options.h>
 #include <DummyHandlerRegistry.h>
 #include <mpi.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -26,22 +28,30 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	char **argv;
 	MPI_Init(&argc, &argv);
 
+	// Create the option to create a network
+	xolotlCore::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 1 0" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+	opts.readParams(argv);
+
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-
-	// Create the options needed to load the network
-	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
+	// Create the network
+	auto network = loader.generate(opts);
 	// Get its size
 	const int dof = network->getDOF();
+	// Initialize the rates
+	network->addGridPoints(1);
 
 	// Create a grid
 	std::vector<double> grid;
@@ -110,13 +120,13 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 			updatedConcOffset, hx, hx, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -6.11405e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -6.54099e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -8.19967e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -7.77277e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -3.07219e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -1.03797e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -2.92579e+09, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -2.20717e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -2.13468e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -2.45810e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -2.16673e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -8.04049e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -2.57034e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -6.89871e+09, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not advect
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // Does not advect
 
@@ -154,6 +164,10 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	BOOST_REQUIRE_EQUAL(stencil[0], 1); //x
 	BOOST_REQUIRE_EQUAL(stencil[1], 0);
 	BOOST_REQUIRE_EQUAL(stencil[2], 0);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();

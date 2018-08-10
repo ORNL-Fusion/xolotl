@@ -11,12 +11,6 @@ namespace xolotlSolver {
  * to solve the ADR equations in 0D using PETSc from Argonne National Laboratory.
  */
 class PetscSolver0DHandler: public PetscSolverHandler {
-private:
-
-	/**
-	 * The last temperature on the grid.
-	 */
-	double lastTemperature;
 
 public:
 
@@ -33,7 +27,7 @@ public:
 	 * @param _network The reaction network to use.
 	 */
 	PetscSolver0DHandler(xolotlCore::IReactionNetwork& _network) :
-			lastTemperature(0.0), PetscSolverHandler(_network) {
+			PetscSolverHandler(_network) {
 	}
 
 	//! The Destructor

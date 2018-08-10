@@ -991,40 +991,22 @@ void PSICluster::getEmissionPartialDerivatives(std::vector<double> & partials,
 	return;
 }
 
-void PSICluster::setDiffusionFactor(const double factor) {
-	// Set the diffusion factor
-	diffusionFactor = factor;
-	// Update the diffusion coefficient
-	recomputeDiffusionCoefficient(temperature);
-
-	return;
-}
-
-void PSICluster::setMigrationEnergy(const double energy) {
-	// Set the migration energy
-	migrationEnergy = energy;
-	// Update the diffusion coefficient
-	recomputeDiffusionCoefficient(temperature);
-
-	return;
-}
-
-double PSICluster::getLeftSideRate() const {
+double PSICluster::getLeftSideRate(int i) const {
 
 	// Sum rate constant-concentration product over combining reactants.
 	double combiningRateTotal =
 			std::accumulate(combiningReactants.begin(),
 					combiningReactants.end(), 0.0,
-					[](double running, const CombiningCluster& cc) {
+					[&i](double running, const CombiningCluster& cc) {
 						return running +
-						(cc.reaction.kConstant[1] * cc.combining.concentration * cc.coefs[0]);
+						(cc.reaction.kConstant[i] * cc.combining.concentration * cc.coefs[0]);
 					});
 
 	// Sum rate constants over all emission pair reactions.
 	double emissionRateTotal = std::accumulate(emissionPairs.begin(),
 			emissionPairs.end(), 0.0,
-			[](double running, const ClusterPair& currPair) {
-				return running + (currPair.reaction.kConstant[1]);
+			[&i](double running, const ClusterPair& currPair) {
+				return running + (currPair.reaction.kConstant[i] * currPair.coefs[0][0]);
 			});
 
 	return combiningRateTotal + emissionRateTotal;

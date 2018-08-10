@@ -4,7 +4,7 @@
 namespace xolotlCore {
 
 void ZGBAdvectionHandler::initialize(const IReactionNetwork& network,
-                    IReactionNetwork::SparseFillMap& ofillMap) {
+		IReactionNetwork::SparseFillMap& ofillMap) {
 
 	int dof = network.getDOF();
 
@@ -70,7 +70,7 @@ void ZGBAdvectionHandler::initialize(const IReactionNetwork& network,
 		// Get its id
 		int index = cluster.getId() - 1;
 		// Set the ofill value to 1 for this cluster
-        ofillMap[index].emplace_back(index);
+		ofillMap[index].emplace_back(index);
 	}
 
 	return;
@@ -78,8 +78,8 @@ void ZGBAdvectionHandler::initialize(const IReactionNetwork& network,
 
 void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 		const Point<3>& pos, double **concVector, double *updatedConcOffset,
-		double hxLeft, double hxRight, int ix, double hy, int iy, double hz,
-		int iz) const {
+		double hxLeft, double hxRight, int ix, int xs, double hy, int iy,
+		double hz, int iz) const {
 
 	// Consider each advecting cluster.
 	// TODO Maintaining a separate index assumes that advectingClusters is
@@ -100,10 +100,12 @@ void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 			double oldFrontConc = concVector[5][index]; // front
 			double oldBackConc = concVector[6][index]; // back
 
-			double conc = (3.0 * sinkStrengthVector[advClusterIdx]
-					* cluster.getDiffusionCoefficient())
-					* ((oldFrontConc + oldBackConc) / pow(hz, 5))
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature());
+			double conc =
+					(3.0 * sinkStrengthVector[advClusterIdx]
+							* cluster.getDiffusionCoefficient(ix - xs))
+							* ((oldFrontConc + oldBackConc) / pow(hz, 5))
+							/ (xolotlCore::kBoltzmann
+									* cluster.getTemperature(ix - xs));
 
 			// Update the concentration of the cluster
 			updatedConcOffset[index] += conc;
@@ -121,9 +123,10 @@ void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 			// Compute the concentration as explained in the description of the method
 			double conc = (3.0 * sinkStrengthVector[advClusterIdx]
-					* cluster.getDiffusionCoefficient())
+					* cluster.getDiffusionCoefficient(ix - xs))
 					* ((oldRightConc / pow(b, 4)) - (oldConc / pow(a, 4)))
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature() * hz);
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+							* hz);
 
 			// Update the concentration of the cluster
 			updatedConcOffset[index] += conc;
@@ -137,8 +140,8 @@ void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 void ZGBAdvectionHandler::computePartialsForAdvection(
 		const IReactionNetwork& network, double *val, int *indices,
-		const Point<3>& pos, double hxLeft, double hxRight, int ix, double hy,
-		int iy, double hz, int iz) const {
+		const Point<3>& pos, double hxLeft, double hxRight, int ix, int xs,
+		double hy, int iy, double hz, int iz) const {
 
 	// Loop on the advecting clusters
 	// TODO Maintaining a separate index assumes that advectingClusters is
@@ -154,7 +157,7 @@ void ZGBAdvectionHandler::computePartialsForAdvection(
 
 		int index = cluster.getId() - 1;
 		// Get the diffusion coefficient of the cluster
-		double diffCoeff = cluster.getDiffusionCoefficient();
+		double diffCoeff = cluster.getDiffusionCoefficient(ix - xs);
 		// Get the sink strength value
 		double sinkStrength = sinkStrengthVector[advClusterIdx];
 
@@ -166,7 +169,7 @@ void ZGBAdvectionHandler::computePartialsForAdvection(
 		// Both sides are giving their concentrations to the center
 		if (isPointOnSink(pos)) {
 			val[advClusterIdx * 2] = (3.0 * sinkStrength * diffCoeff)
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature()
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
 							* pow(hz, 5)); // back or front
 			val[(advClusterIdx * 2) + 1] = val[advClusterIdx * 2]; // back or front
 		}
@@ -179,11 +182,11 @@ void ZGBAdvectionHandler::computePartialsForAdvection(
 			// Compute the partial derivatives for advection of this cluster as
 			// explained in the description of this method
 			val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff)
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature() * hz
-							* pow(a, 4)); // middle
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+							* hz * pow(a, 4)); // middle
 			val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff)
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature() * hz
-							* pow(b, 4)); // back or front
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+							* hz * pow(b, 4)); // back or front
 		}
 
 		++advClusterIdx;

@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <NECluster.h>
 #include "SimpleReactionNetwork.h"
 #include <NEXeCluster.h>
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	cluster->setConcentration(0.5);
 
 	// Compute the rate constants that are needed for the partial derivatives
-	network->setTemperature(1000.0,0);
+	network->setTemperature(1000.0, 0);
 	network->reinitializeNetwork();
 	network->computeRateConstants(0);
 	// Get the vector of partial derivatives

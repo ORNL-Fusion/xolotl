@@ -438,43 +438,25 @@ void NECluster::getEmissionPartialDerivatives(std::vector<double> & partials,
 	return;
 }
 
-void NECluster::setDiffusionFactor(const double factor) {
-	// Set the diffusion factor
-	diffusionFactor = factor;
-	// Update the diffusion coefficient
-	recomputeDiffusionCoefficient(temperature);
-
-	return;
-}
-
-void NECluster::setMigrationEnergy(const double energy) {
-	// Set the migration energy
-	migrationEnergy = energy;
-	// Update the diffusion coefficient
-	recomputeDiffusionCoefficient(temperature);
-
-	return;
-}
-
-double NECluster::getLeftSideRate() const {
+double NECluster::getLeftSideRate(int i) const {
 
 	// Sum reaction rate contributions over all combining clusters.
 	double combiningRateTotal = std::accumulate(combiningReactants.begin(),
 			combiningReactants.end(), 0.0,
-			[](double running, const CombiningCluster& currPair) {
+			[&i](double running, const CombiningCluster& currPair) {
 				NECluster const& cluster = currPair.combining;
 				Reaction const& currReaction = currPair.reaction;
 
-				return running + (currReaction.kConstant[1] *
+				return running + (currReaction.kConstant[i] *
 						cluster.concentration);
 			});
 
 	// Sum reaction rate constants over all emission pairs.
 	double emissionRateTotal = std::accumulate(emissionPairs.begin(),
 			emissionPairs.end(), 0.0,
-			[](double running, const ClusterPair& currPair) {
+			[&i](double running, const ClusterPair& currPair) {
 				Reaction const& currReaction = currPair.reaction;
-				return running + currReaction.kConstant[1];
+				return running + currReaction.kConstant[i];
 			});
 
 	return combiningRateTotal + emissionRateTotal;

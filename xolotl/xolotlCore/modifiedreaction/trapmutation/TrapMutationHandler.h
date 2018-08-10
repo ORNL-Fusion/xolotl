@@ -181,8 +181,9 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void computeTrapMutation(const IReactionNetwork& network, double *concOffset,
-			double *updatedConcOffset, int xi, int yj = 0, int zk = 0);
+	void computeTrapMutation(const IReactionNetwork& network,
+			double *concOffset, double *updatedConcOffset, int xi, int xs,
+			int yj = 0, int zk = 0);
 
 	/**
 	 * Compute the partials due to the modified trap-mutation for all the
@@ -197,8 +198,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	int computePartialsForTrapMutation(const IReactionNetwork& network, double *val,
-			int *indices, int xi, int yj = 0, int zk = 0);
+	int computePartialsForTrapMutation(const IReactionNetwork& network,
+			double *val, int *indices, int xi, int xs, int yj = 0, int zk = 0);
 
 	/**
 	 * Get the total number of clusters in the network that can undergo trap mutation.

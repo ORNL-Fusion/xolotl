@@ -125,12 +125,6 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
-	// Initialize the last temperature at each grid point under the surface
-	for (int i = 0; i <= nX - surfacePosition; i++) {
-		lastTemperature.push_back(0.0);
-	}
-	network.addGridPoints(nX - surfacePosition + 1);
-
 	// Pointer for the concentration vector
 	PetscScalar **concentrations = nullptr;
 	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
@@ -142,6 +136,12 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	checkPetscError(ierr, "PetscSolver1DHandler::initializeConcentration: "
 			"DMDAGetCorners failed.");
+
+	// Initialize the last temperature at each grid point on this process
+	for (int i = 0; i < xm; i++) {
+		lastTemperature.push_back(0.0);
+	}
+	network.addGridPoints(xm);
 
 	// Get the last time step written in the HDF5 file
 	bool hasConcentrations = false;
@@ -334,13 +334,12 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				ftime);
 
 		// Update the network if the temperature changed
-		if (std::fabs(lastTemperature[xi - surfacePosition] - temperature)
-				> 1.0) {
-			network.setTemperature(temperature, xi - surfacePosition);
+		if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
+			network.setTemperature(temperature, xi - xs);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
-			lastTemperature[xi - surfacePosition] = temperature;
+			lastTemperature[xi - xs] = temperature;
 		}
 
 		// Copy data into the ReactionNetwork so that it can
@@ -361,21 +360,21 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// ---- Compute diffusion over the locally owned part of the grid -----
 		diffusionHandler->computeDiffusion(network, concVector,
 				updatedConcOffset, grid[xi + 1] - grid[xi],
-				grid[xi + 2] - grid[xi + 1], xi);
+				grid[xi + 2] - grid[xi + 1], xi, xs);
 
 		// ---- Compute advection over the locally owned part of the grid -----
 		for (int i = 0; i < advectionHandlers.size(); i++) {
 			advectionHandlers[i]->computeAdvection(network, gridPosition,
 					concVector, updatedConcOffset, grid[xi + 1] - grid[xi],
-					grid[xi + 2] - grid[xi + 1], xi);
+					grid[xi + 2] - grid[xi + 1], xi, xs);
 		}
 
 		// ----- Compute the modified trap-mutation over the locally owned part of the grid -----
 		mutationHandler->computeTrapMutation(network, concOffset,
-				updatedConcOffset, xi);
+				updatedConcOffset, xi, xs);
 
 		// ----- Compute the reaction fluxes over the locally owned part of the grid -----
-		network.computeAllFluxes(updatedConcOffset, xi - surfacePosition);
+		network.computeAllFluxes(updatedConcOffset, xi - xs);
 	}
 
 	/*
@@ -493,13 +492,12 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				ftime);
 
 		// Update the network if the temperature changed
-		if (std::fabs(lastTemperature[xi - surfacePosition] - temperature)
-				> 1.0) {
-			network.setTemperature(temperature, xi - surfacePosition);
+		if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
+			network.setTemperature(temperature, xi - xs);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
-			lastTemperature[xi - surfacePosition] = temperature;
+			lastTemperature[xi - xs] = temperature;
 		}
 
 		// Get the partial derivatives for the temperature
@@ -527,7 +525,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		// Get the partial derivatives for the diffusion
 		diffusionHandler->computePartialsForDiffusion(network, diffVals,
 				diffIndices, grid[xi + 1] - grid[xi],
-				grid[xi + 2] - grid[xi + 1], xi);
+				grid[xi + 2] - grid[xi + 1], xi, xs);
 
 		// Loop on the number of diffusion cluster to set the values in the Jacobian
 		for (int i = 0; i < nDiff; i++) {
@@ -555,7 +553,8 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		for (int l = 0; l < advectionHandlers.size(); l++) {
 			advectionHandlers[l]->computePartialsForAdvection(network,
 					advecVals, advecIndices, gridPosition,
-					grid[xi + 1] - grid[xi], grid[xi + 2] - grid[xi + 1], xi);
+					grid[xi + 1] - grid[xi], grid[xi + 2] - grid[xi + 1], xi,
+					xs);
 
 			// Get the stencil indices to know where to put the partial derivatives in the Jacobian
 			auto advecStencil = advectionHandlers[l]->getStencilForAdvection(
@@ -684,13 +683,12 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				ftime);
 
 		// Update the network if the temperature changed
-		if (std::fabs(lastTemperature[xi - surfacePosition] - temperature)
-				> 1.0) {
-			network.setTemperature(temperature, xi - surfacePosition);
+		if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
+			network.setTemperature(temperature, xi - xs);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
-			lastTemperature[xi - surfacePosition] = temperature;
+			lastTemperature[xi - xs] = temperature;
 		}
 
 		// Copy data into the ReactionNetwork so that it can
@@ -701,7 +699,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 		// Compute all the partial derivatives for the reactions
 		network.computeAllPartials(reactionStartingIdx, reactionIndices,
-				reactionVals, xi - surfacePosition);
+				reactionVals, xi - xs);
 
 		// Update the column in the Jacobian that represents each DOF
 		for (int i = 0; i < dof - 1; i++) {
@@ -742,7 +740,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 		// Compute the partial derivative from modified trap-mutation at this grid point
 		int nMutating = mutationHandler->computePartialsForTrapMutation(network,
-				mutationVals, mutationIndices, xi);
+				mutationVals, mutationIndices, xi, xs);
 
 		// Loop on the number of helium undergoing trap-mutation to set the values
 		// in the Jacobian

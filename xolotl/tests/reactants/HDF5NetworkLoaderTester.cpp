@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSIClusterReactionNetwork.h>
 #include <DummyHandlerRegistry.h>
 #include <HDF5NetworkLoader.h>
@@ -90,7 +90,8 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 	BOOST_REQUIRE_EQUAL(formationEnergy, 38.8);
 	// Check the migration energy
 	migrationEnergy = reactantBis.getMigrationEnergy();
-	BOOST_REQUIRE_EQUAL(migrationEnergy, std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE_EQUAL(migrationEnergy,
+			std::numeric_limits<double>::infinity());
 	// Check the diffusion factor
 	diffusionFactor = reactantBis.getDiffusionFactor();
 	BOOST_REQUIRE_EQUAL(diffusionFactor, 0.0);

@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <NECluster.h>
 #include <NESuperCluster.h>
 #include <NEClusterNetworkLoader.h>
@@ -10,6 +10,8 @@
 #include <DummyHandlerRegistry.h>
 #include <Constants.h>
 #include <Options.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -125,7 +127,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Get one that it combines with (Xe1)
 	auto secondCluster = (NECluster *) network->get(Species::Xe, 1);
 	// Set the temperature and concentration
-	network->setTemperature(1000.0,0);
+	network->setTemperature(1000.0, 0);
 	cluster->setConcentration(0.5);
 	secondCluster->setConcentration(0.5);
 
@@ -182,7 +184,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Set the temperature in the network
 	double temperature = 1000.0;
-	network->setTemperature(temperature,0);
+	network->setTemperature(temperature, 0);
 	// Redefine the connectivities
 	network->reinitializeConnectivities();
 

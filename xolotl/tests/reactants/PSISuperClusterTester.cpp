@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSICluster.h>
 #include <PSISuperCluster.h>
 #include <HDF5NetworkLoader.h>
@@ -11,6 +11,8 @@
 #include <DummyHandlerRegistry.h>
 #include <Constants.h>
 #include <Options.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;

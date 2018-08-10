@@ -131,16 +131,6 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
-	// Initialize the last temperature vector
-	for (int j = 0; j < nY; j++) {
-		std::vector<double> tempVec;
-		for (int i = 0; i <= nX - surfacePosition[j]; i++) {
-			tempVec.push_back(0.0);
-		}
-		lastTemperature.push_back(tempVec);
-	}
-	network.addGridPoints(nX - surfacePosition[0] + 1);
-
 	// Pointer for the concentration vector
 	PetscScalar ***concentrations = nullptr;
 	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
@@ -152,6 +142,12 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
 	checkPetscError(ierr, "PetscSolver2DHandler::initializeConcentration: "
 			"DMDAGetCorners failed.");
+
+	// Initialize the last temperature at each grid point on this process
+	for (int i = 0; i < xm; i++) {
+		lastTemperature.push_back(0.0);
+	}
+	network.addGridPoints(xm);
 
 	// Get the last time step written in the HDF5 file
 	bool hasConcentrations = false;
@@ -375,14 +371,12 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (std::fabs(
-					lastTemperature[yj][xi - surfacePosition[yj]] - temperature)
-					> 1.0) {
-				network.setTemperature(temperature, xi - surfacePosition[yj]);
+			if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
+				network.setTemperature(temperature, xi - xs);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature[yj][xi - surfacePosition[yj]] = temperature;
+				lastTemperature[xi - xs] = temperature;
 			}
 
 			// Copy data into the ReactionNetwork so that it can
@@ -404,22 +398,21 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// ---- Compute diffusion over the locally owned part of the grid -----
 			diffusionHandler->computeDiffusion(network, concVector,
 					updatedConcOffset, grid[xi + 1] - grid[xi],
-					grid[xi + 2] - grid[xi + 1], xi, sy, yj);
+					grid[xi + 2] - grid[xi + 1], xi, xs, sy, yj);
 
 			// ---- Compute advection over the locally owned part of the grid -----
 			for (int i = 0; i < advectionHandlers.size(); i++) {
 				advectionHandlers[i]->computeAdvection(network, gridPosition,
 						concVector, updatedConcOffset, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi, hY, yj);
+						grid[xi + 2] - grid[xi + 1], xi, xs, hY, yj);
 			}
 
 			// ----- Compute the modified trap-mutation over the locally owned part of the grid -----
 			mutationHandler->computeTrapMutation(network, concOffset,
-					updatedConcOffset, xi, yj);
+					updatedConcOffset, xi, xs, yj);
 
 			// ----- Compute the reaction fluxes over the locally owned part of the grid -----
-			network.computeAllFluxes(updatedConcOffset,
-					xi - surfacePosition[yj]);
+			network.computeAllFluxes(updatedConcOffset, xi - xs);
 		}
 	}
 
@@ -556,14 +549,12 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (std::fabs(
-					lastTemperature[yj][xi - surfacePosition[yj]] - temperature)
-					> 1.0) {
-				network.setTemperature(temperature, xi - surfacePosition[yj]);
+			if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
+				network.setTemperature(temperature, xi - xs);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature[yj][xi - surfacePosition[yj]] = temperature;
+				lastTemperature[xi - xs] = temperature;
 			}
 
 			// Get the partial derivatives for the temperature
@@ -597,7 +588,7 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			// Get the partial derivatives for the diffusion
 			diffusionHandler->computePartialsForDiffusion(network, diffVals,
 					diffIndices, grid[xi + 1] - grid[xi],
-					grid[xi + 2] - grid[xi + 1], xi, sy, yj);
+					grid[xi + 2] - grid[xi + 1], xi, xs, sy, yj);
 
 			// Loop on the number of diffusion cluster to set the values in the Jacobian
 			for (int i = 0; i < nDiff; i++) {
@@ -636,7 +627,7 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				advectionHandlers[l]->computePartialsForAdvection(network,
 						advecVals, advecIndices, gridPosition,
 						grid[xi + 1] - grid[xi], grid[xi + 2] - grid[xi + 1],
-						xi, hY, yj);
+						xi, xs, hY, yj);
 
 				// Get the stencil indices to know where to put the partial derivatives in the Jacobian
 				auto advecStencil =
@@ -782,14 +773,12 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (std::fabs(
-					lastTemperature[yj][xi - surfacePosition[yj]] - temperature)
-					> 1.0) {
-				network.setTemperature(temperature, xi - surfacePosition[yj]);
+			if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
+				network.setTemperature(temperature, xi - xs);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature[yj][xi - surfacePosition[yj]] = temperature;
+				lastTemperature[xi - xs] = temperature;
 			}
 
 			// Copy data into the ReactionNetwork so that it can
@@ -800,7 +789,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Compute all the partial derivatives for the reactions
 			network.computeAllPartials(reactionStartingIdx, reactionIndices,
-					reactionVals, xi - surfacePosition[yj]);
+					reactionVals, xi - xs);
 
 			// Update the column in the Jacobian that represents each DOF
 			for (int i = 0; i < dof - 1; i++) {
@@ -844,7 +833,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Compute the partial derivative from modified trap-mutation at this grid point
 			int nMutating = mutationHandler->computePartialsForTrapMutation(
-					network, mutationVals, mutationIndices, xi, yj);
+					network, mutationVals, mutationIndices, xi, xs, yj);
 
 			// Loop on the number of helium undergoing trap-mutation to set the values
 			// in the Jacobian
