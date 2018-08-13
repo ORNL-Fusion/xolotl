@@ -11,6 +11,8 @@
 #include <DummyAdvectionHandler.h>
 #include <YGBAdvectionHandler.h>
 #include <mpi.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -29,31 +31,38 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	char **argv;
 	MPI_Init(&argc, &argv);
 
+	// Create the option to create a network
+	xolotlCore::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 10 6" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+	opts.readParams(argv);
+
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-
-	// Create the options needed to load the network
-	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
+	// Create the network
+	auto network = loader.generate(opts);
 	// Get its size
 	const int dof = network->getDOF();
-	// Initialize the rate constants
-	network->setTemperature(1000.0, 0);
-	network->computeRateConstants(0);
 
 	// Suppose we have a grid with 13 grip points and distance of
 	// 0.1 nm between grid points
+	int nGrid = 13;
+	// Initialize the rates
+	network->addGridPoints(nGrid);
 	std::vector<double> grid;
-	for (int l = 0; l < 13; l++) {
+	for (int l = 0; l < nGrid; l++) {
 		grid.push_back((double) l * 0.1);
+		network->setTemperature(1000.0, l);
 	}
 	// Set the surface position
 	std::vector<int> surfacePos = { 0, 0, 0, 0, 0 };
@@ -75,11 +84,11 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			advectionHandlers, grid, 5, 0.5);
 
 	// The arrays of concentration
-	double concentration[13 * 5 * dof];
-	double newConcentration[13 * 5 * dof];
+	double concentration[nGrid * 5 * dof];
+	double newConcentration[nGrid * 5 * dof];
 
 	// Initialize their values
-	for (int i = 0; i < 13 * 5 * dof; i++) {
+	for (int i = 0; i < nGrid * 5 * dof; i++) {
 		concentration[i] = (double) i * i;
 		newConcentration[i] = 0.0;
 	}
@@ -89,8 +98,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	double *updatedConc = &newConcentration[0];
 
 	// Get the offset for the sixth grid point on the second row
-	double *concOffset = conc + (13 * 1 + 5) * dof;
-	double *updatedConcOffset = updatedConc + (13 * 1 + 5) * dof;
+	double *concOffset = conc + (nGrid * 1 + 5) * dof;
+	double *updatedConcOffset = updatedConc + (nGrid * 1 + 5) * dof;
 
 	// Putting the concentrations in the network so that the rate for
 	// desorption is computed correctly
@@ -98,16 +107,16 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the sixth grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 5, 1);
+			updatedConcOffset, 5, 0, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.52039e+24, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], -8.800266e+23, 0.01); // He4
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[18], 8.800266e+23, 0.01); // Create He4V
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 8.0900e+22, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], -2.0214e+22, 0.01); // He4
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[18], 2.0214e+22, 0.01); // Create He4V
 
 	// Get the offset for the ninth grid point on the fourth row
-	concOffset = conc + (13 * 3 + 8) * dof;
-	updatedConcOffset = updatedConc + (13 * 3 + 8) * dof;
+	concOffset = conc + (nGrid * 3 + 8) * dof;
+	updatedConcOffset = updatedConc + (nGrid * 3 + 8) * dof;
 
 	// Putting the concentrations in the network so that the rate for
 	// desorption is computed correctly
@@ -115,14 +124,14 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the ninth grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 8, 3);
+			updatedConcOffset, 8, 0, 3);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 2.39933217e+25, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 5.5031e+23, 0.01); // Create I
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // He3
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[17], 0.0, 0.01); // Doesn't create He3V
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -5.9985155e+24, 0.01); // He7
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[21], 5.9985155e+24, 0.01); // Create He7V2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -1.3760e+23, 0.01); // He7
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[21], 1.3760e+23, 0.01); // Create He7V2
 
 	// Initialize the indices and values to set in the Jacobian
 	int nHelium = network->getAll(ReactantType::He).size();
@@ -134,7 +143,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
 	int nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8, 3);
+			valPointer, indicesPointer, 8, 0, 3);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(nMutating, 4);
@@ -161,7 +170,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the bursting a the grid point 8
 	nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8, 3);
+			valPointer, indicesPointer, 8, 0, 3);
 
 	// Check values
 	BOOST_REQUIRE_EQUAL(nMutating, 4);
@@ -171,6 +180,10 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	BOOST_REQUIRE_CLOSE(val[3], -5.53624e+14, 0.01);
 	BOOST_REQUIRE_CLOSE(val[4], 5.53624e+14, 0.01);
 	BOOST_REQUIRE_CLOSE(val[5], 5.53624e+14, 0.01);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();

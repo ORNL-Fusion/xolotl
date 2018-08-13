@@ -90,6 +90,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Local Declarations
 	auto network = getSimplePSIReactionNetwork();
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Get an He cluster with compostion 1,0,0.
 	auto cluster = (PSICluster *) network->get(Species::He, 1);
@@ -109,8 +111,6 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 
 	// Compute the rate constants that are needed for the flux
 	network->setTemperature(1000.0, 0);
-	network->reinitializeNetwork();
-	network->computeRateConstants(0);
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(0);
 	BOOST_REQUIRE_CLOSE(6110430723517.8, flux, 0.1);
@@ -128,6 +128,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 			-1.79298e+10, 0, -1.87741e+10, 0, 2.25143e+12, 0, 0, 0, 0, 0 };
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(2);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Get an He cluster with compostion 1,0,0.
 	auto cluster = (PSICluster *) network->get(Species::He, 1);
@@ -139,8 +141,6 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Compute the rate constants that are needed for the flux
 	network->setTemperature(1000.0, 0);
-	network->reinitializeNetwork();
-	network->computeRateConstants(0);
 	// Get the vector of partial derivatives
 	auto partials = cluster->getPartialDerivatives(0);
 

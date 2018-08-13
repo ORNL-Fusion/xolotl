@@ -128,9 +128,11 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	feNetwork->add(std::move(vCluster));
 
 	// Try changing the temperature and make sure it works
+	// Add a grid point for the temperature
+	feNetwork->addGridPoints(1);
 	feNetwork->setTemperature(1000.0, 0);
 	IReactant& reactant = reactants.at(0);
-	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(), 0.0001);
+	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(0), 0.0001);
 
 	return;
 }

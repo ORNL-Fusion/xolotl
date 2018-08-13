@@ -47,25 +47,31 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	const uint32_t nGridPointsPerRank = 4;
 	double const factor = 1.5;
 
-	BOOST_TEST_MESSAGE("Creating network loader.");
+	// Create the option to create a network
+	xolotlCore::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 1 0" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	char **argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+	opts.readParams(argv);
+
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-
-	BOOST_TEST_MESSAGE("Creating network load options.");
-	// Create the options needed to load the network
-	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
-
+	// Create the network
+	auto network = loader.generate(opts);
+	// Initialize the rates
+	network->addGridPoints(1);
 	// Get the size of the network
 	int networkSize = network->size();
+
 	// Set the time step number
 	int timeStep = 0;
 
@@ -96,8 +102,9 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	const std::string testFileName = "test_basic.h5";
 	{
 		BOOST_TEST_MESSAGE("Creating file.");
-		xolotlCore::XFile testFile(testFileName, grid, *network, testCompsVec,
-				MPI_COMM_WORLD);
+		xolotlCore::XFile testFile(testFileName, grid, testCompsVec,
+		MPI_COMM_WORLD);
+		xolotlCore::XFile::NetworkGroup netGroup(testFile, *network);
 	}
 
 	// Define the concentration dataset size.
@@ -213,38 +220,43 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		// Get all the reactants
 		auto const& reactants = network->getAll();
 		// Check the network vector
-//		for (IReactant& it : reactants) {
-//			// Get the i-th reactant in the network
-//			auto& reactant = (PSICluster&) it;
-//			int id = reactant.getId() - 1;
-//			// Get the corresponding line from the HDF5 file
-//			auto line = networkVector.at(id);
-//
-//			// Check the composition
-//			auto& composition = reactant.getComposition();
-//			BOOST_REQUIRE_EQUAL((int ) line[0],
-//					composition[toCompIdx(Species::He)]);
-//			BOOST_REQUIRE_EQUAL((int ) line[1],
-//					composition[toCompIdx(Species::D)]);
-//			BOOST_REQUIRE_EQUAL((int ) line[2],
-//					composition[toCompIdx(Species::T)]);
-//			BOOST_REQUIRE_EQUAL((int ) line[3],
-//					composition[toCompIdx(Species::V)]);
-//			BOOST_REQUIRE_EQUAL((int ) line[4],
-//					composition[toCompIdx(Species::I)]);
-//
-//			// Check the formation energy
-//			auto formationEnergy = reactant.getFormationEnergy();
-//			BOOST_REQUIRE_EQUAL(line[5], formationEnergy);
-//
-//			// Check the migration energy
-//			double migrationEnergy = reactant.getMigrationEnergy();
-//			BOOST_REQUIRE_EQUAL(line[6], migrationEnergy);
-//
-//			// Check the diffusion factor
-//			double diffusionFactor = reactant.getDiffusionFactor();
-//			BOOST_REQUIRE_EQUAL(line[7], diffusionFactor);
-//		}
+		for (IReactant& it : reactants) {
+			// Get the i-th reactant in the network
+			auto& reactant = (PSICluster&) it;
+			int id = reactant.getId() - 1;
+			// Open the cluster group
+			XFile::ClusterGroup clusterGroup(*networkGroup, id);
+
+			if (id < normalSize) {
+				// Normal cluster
+				// Read the composition
+				double formationEnergy = 0.0, migrationEnergy = 0.0,
+						diffusionFactor = 0.0;
+				auto comp = clusterGroup.readCluster(formationEnergy,
+						migrationEnergy, diffusionFactor);
+				// Check the composition
+				auto& composition = reactant.getComposition();
+				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::He)],
+						composition[toCompIdx(Species::He)]);
+				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::D)],
+						composition[toCompIdx(Species::D)]);
+				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::T)],
+						composition[toCompIdx(Species::T)]);
+				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::V)],
+						composition[toCompIdx(Species::V)]);
+				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::I)],
+						composition[toCompIdx(Species::I)]);
+				// Check the formation energy
+				BOOST_REQUIRE_EQUAL(reactant.getFormationEnergy(),
+						formationEnergy);
+				// Check the migration energy
+				BOOST_REQUIRE_EQUAL(reactant.getMigrationEnergy(),
+						migrationEnergy);
+				// Check the diffusion factor
+				BOOST_REQUIRE_EQUAL(reactant.getDiffusionFactor(),
+						diffusionFactor);
+			}
+		}
 
 		// Test the composition vector.
 		BOOST_TEST_MESSAGE(
@@ -302,6 +314,10 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 			}
 		}
 	}
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 }
 
 /**
@@ -324,26 +340,8 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 		for (int i = 0; i < nGrid + 2; i++)
 			grid.push_back((double) i * stepSize);
 
-		BOOST_TEST_MESSAGE("Creating network loader.");
-		// Create the network loader
-		HDF5NetworkLoader loader = HDF5NetworkLoader(
-				make_shared<xolotlPerf::DummyHandlerRegistry>());
-		// Define the filename to load the network from
-		string sourceDir(XolotlSourceDirectory);
-		string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
-		string filename = sourceDir + pathToFile;
-		// Give the filename to the network loader
-		loader.setFilename(filename);
-
-		BOOST_TEST_MESSAGE("Creating network load options.");
-		// Create the options needed to load the network
-		Options opts;
-		// Load the network
-		auto network = loader.load(opts);
-
-		xolotlCore::XFile testFile(testFileName, grid, *network,
-				createTestNetworkComps(),
-				MPI_COMM_WORLD);
+		xolotlCore::XFile testFile(testFileName, grid, createTestNetworkComps(),
+		MPI_COMM_WORLD);
 	}
 
 	// Set the time information
@@ -440,26 +438,8 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 		for (int i = 0; i < nGrid + 2; i++)
 			grid.push_back((double) i * stepSize);
 
-		BOOST_TEST_MESSAGE("Creating network loader.");
-		// Create the network loader
-		HDF5NetworkLoader loader = HDF5NetworkLoader(
-				make_shared<xolotlPerf::DummyHandlerRegistry>());
-		// Define the filename to load the network from
-		string sourceDir(XolotlSourceDirectory);
-		string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
-		string filename = sourceDir + pathToFile;
-		// Give the filename to the network loader
-		loader.setFilename(filename);
-
-		BOOST_TEST_MESSAGE("Creating network load options.");
-		// Create the options needed to load the network
-		Options opts;
-		// Load the network
-		auto network = loader.load(opts);
-
-		xolotlCore::XFile testFile(testFileName, grid, *network,
-				createTestNetworkComps(),
-				MPI_COMM_WORLD);
+		xolotlCore::XFile testFile(testFileName, grid, createTestNetworkComps(),
+		MPI_COMM_WORLD);
 	}
 
 	// Set the time information

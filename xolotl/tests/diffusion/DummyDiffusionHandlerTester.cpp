@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	}
 
 	// Set the temperature to 1000 K to initialize the diffusion coefficients
-	network->setTemperature(1000.0);
+	network->setTemperature(1000.0, 0);
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Compute the diffusion at this grid point
 	diffusionHandler.computeDiffusion(*network, concVector, updatedConcOffset,
-			hx, hx, 1);
+			hx, hx, 1, 1);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 0.0, 0.01); // Does not diffuse

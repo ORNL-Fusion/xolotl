@@ -88,11 +88,12 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	opts.setMaxI(1);
 	// Load the network
 	auto network = loader.generate(opts);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Set the temperature in the network
 	double temperature = 1000.0;
 	network->setTemperature(temperature, 0);
-	network->computeRateConstants(0);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -131,11 +132,12 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	opts.setMaxI(1);
 	// Load the network
 	auto network = loader.generate(opts);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Set the temperature in the network
 	double temperature = 1000.0;
 	network->setTemperature(temperature, 0);
-	network->computeRateConstants(0);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 

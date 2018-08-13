@@ -44,10 +44,9 @@ protected:
 		NECluster * second;
 
 		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
+		 * The reaction/dissociation pointer to the list
 		 */
-		std::vector<double*> kConstant;
+		Reaction& reaction;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -63,13 +62,10 @@ protected:
 
 		//! The constructor
 		SuperClusterProductionPair(NECluster * firstPtr, NECluster * secondPtr,
-				Reaction * reaction) :
-				first(firstPtr), second(secondPtr), a000(0.0), a001(0.0), a010(
-						0.0), a011(0.0), a100(0.0), a101(0.0), a110(0.0), a111(
-						0.0) {
-			for (auto& k : reaction->kConstant) {
-				kConstant.push_back(&k);
-			}
+				Reaction * _reaction) :
+				first(firstPtr), second(secondPtr), reaction(*_reaction), a000(
+						0.0), a001(0.0), a010(0.0), a011(0.0), a100(0.0), a101(
+						0.0), a110(0.0), a111(0.0) {
 		}
 	};
 
@@ -95,10 +91,9 @@ protected:
 		NECluster * second;
 
 		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
+		 * The reaction/dissociation pointer to the list
 		 */
-		std::vector<double*> kConstant;
+		Reaction& reaction;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -110,12 +105,9 @@ protected:
 
 		//! The constructor
 		SuperClusterDissociationPair(NECluster * firstPtr,
-				NECluster * secondPtr, Reaction * reaction) :
-				first(firstPtr), second(secondPtr), a00(0.0), a01(0.0), a10(
-						0.0), a11(0.0) {
-			for (auto& k : reaction->kConstant) {
-				kConstant.push_back(&k);
-			}
+				NECluster * secondPtr, Reaction * _reaction) :
+				first(firstPtr), second(secondPtr), reaction(*_reaction), a00(
+						0.0), a01(0.0), a10(0.0), a11(0.0) {
 		}
 	};
 

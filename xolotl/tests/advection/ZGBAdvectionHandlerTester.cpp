@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	network->setTemperature(1000.0);
+	network->setTemperature(1000.0, 0);
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Compute the advection at this grid point
 	advectionHandler.computeAdvection(*network, gridPosition, concVector,
-			updatedConcOffset, hx, hx, 1, hy, 1, hz, 1);
+			updatedConcOffset, hx, hx, 1, 1, hy, 1, hz, 1);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 6.80293e+11, 0.01);
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Compute the partial derivatives for the advection a the grid point 1
 	advectionHandler.computePartialsForAdvection(*network, valPointer,
-			indicesPointer, gridPosition, hx, hx, 1, hy, 1, hz, 1);
+			indicesPointer, gridPosition, hx, hx, 1, 1, hy, 1, hz, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 0);

@@ -34,7 +34,6 @@ HDF5File::AccessMode XFile::EnsureOpenAccessMode(HDF5File::AccessMode mode) {
 }
 
 XFile::XFile(fs::path _path, const std::vector<double>& grid,
-		IReactionNetwork& network,
 		const XFile::HeaderGroup::NetworkCompsType& compVec,
 		MPI_Comm _comm, int ny, double hy, int nz,
 		double hz, AccessMode _mode) :

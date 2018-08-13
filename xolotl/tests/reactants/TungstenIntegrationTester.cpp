@@ -46,6 +46,8 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 	Options opts;
 	// Load the network
 	auto network = networkLoader->load(opts);
+	// Add rates
+	network->addGridPoints(1);
 
 	BOOST_TEST_MESSAGE("TungstenIntegrationTester Message: Network loaded");
 
@@ -56,7 +58,6 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 	// Set the temperature
 	double temperature = 1000.0;
 	network->setTemperature(temperature, 0);
-	network->computeRateConstants(0);
 
 	// Initialize all the concentrations to 0.001;
 	for (int i = 0; i < size; ++i) {
@@ -117,6 +118,8 @@ BOOST_AUTO_TEST_CASE(checkSingleReaction) {
 	Options opts;
 	// Load the network
 	auto network = networkLoader->load(opts);
+	// Add rates
+	network->addGridPoints(1);
 
 	BOOST_TEST_MESSAGE("TungstenIntegrationTester Message: Network loaded");
 
@@ -128,7 +131,6 @@ BOOST_AUTO_TEST_CASE(checkSingleReaction) {
 	double temperature = 1000.0;
 	// Initialize the rate constants
 	network->setTemperature(temperature, 0);
-	network->computeRateConstants(0);
 
 	// Initialize all the concentrations to 0.001;
 	for (int i = 0; i < size; ++i) {

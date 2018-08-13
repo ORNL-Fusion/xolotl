@@ -468,7 +468,6 @@ void PSIClusterReactionNetwork::createReactionConnectivity() {
 			if (product
 					&& (heReactant.getDiffusionFactor() > 0.0
 							|| vReactant.getDiffusionFactor() > 0.0)) {
-
 				int a[4] = { newNumHe, 0, 0, newNumV };
 				defineProductionReaction(heReactant, vReactant, *product, a);
 			}

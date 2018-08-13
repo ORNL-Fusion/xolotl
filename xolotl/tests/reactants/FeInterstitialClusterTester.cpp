@@ -68,6 +68,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Local Declarations
 	auto network = getSimpleFeReactionNetwork();
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Get an I cluster with compostion 0,0,1.
 	auto cluster = (FeCluster *) network->get(Species::I, 1);
@@ -87,8 +89,6 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 
 	// Compute the rate constants that are needed for the flux
 	network->setTemperature(1000.0, 0);
-	network->reinitializeNetwork();
-	network->computeRateConstants(0);
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(0);
 	BOOST_REQUIRE_CLOSE(-1754900681, flux, 0.1);
@@ -109,6 +109,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 			-3.67546e+10, 0.0 };
 	// Get the simple reaction network
 	auto network = getSimpleFeReactionNetwork(2);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Get an I cluster with compostion 0,0,1.
 	auto cluster = (FeCluster *) network->get(Species::I, 1);
@@ -120,8 +122,6 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Compute the rate constants that are needed for the partials
 	network->setTemperature(1000.0, 0);
-	network->reinitializeNetwork();
-	network->computeRateConstants(0);
 	// Get the vector of partial derivatives
 	auto partials = cluster->getPartialDerivatives(0);
 

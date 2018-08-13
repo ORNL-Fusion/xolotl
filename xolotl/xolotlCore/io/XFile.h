@@ -590,7 +590,6 @@ public:
 	 *
 	 * @param path Path of file to create.
 	 * @param grid The grid points in the x direction (depth)
-	 * @param network The network to write
 	 * @param compVec The composition vector.
 	 * @param _comm The MPI communicator used to access the file.
 	 * @param ny The number of grid points in the y direction
@@ -601,7 +600,6 @@ public:
 	 *              are supported.
 	 */
 	XFile(fs::path path, const std::vector<double>& grid,
-			IReactionNetwork& network,
 			const HeaderGroup::NetworkCompsType& compVec,
 			MPI_Comm _comm = MPI_COMM_WORLD, int ny =
 					0, double hy = 0.0, int nz = 0, double hz = 0.0,

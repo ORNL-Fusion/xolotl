@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	network->setTemperature(1000.0);
+	network->setTemperature(1000.0, 0);
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -119,18 +119,18 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Compute the diffusion at this grid point
 	diffusionHandler.computeDiffusion(*network, concVector, updatedConcOffset,
-			hx, hx, 1);
+			hx, hx, 1, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.283e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 6.284e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], 2.528e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 3.338e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 2.4844e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 6.153e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 9.640e+08, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 4.632e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 2.2685e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], 9.1268e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 1.2051e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 8.9687e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 2.2213e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 3.4801e+09, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not diffuse
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 1.0106e+08, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 3.6483e+08, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Compute the partial derivatives for the diffusion a the grid point 1
 	diffusionHandler.computePartialsForDiffusion(*network, valPointer,
-			indicesPointer, hx, hx, 1);
+			indicesPointer, hx, hx, 1, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 0);

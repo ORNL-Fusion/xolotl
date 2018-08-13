@@ -1136,7 +1136,7 @@ double FeSuperCluster::getDissociationFlux(int xi) {
 				double lHeA = dissociatingCluster.getHeMoment();
 				double lVA = dissociatingCluster.getVMoment();
 				// Update the flux
-				auto value = *(currPair.kConstant[xi]) / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				flux += value * (currPair.a00 * l0A + currPair.a10 * lHeA + currPair.a20 * lVA);
 				// Compute the moment fluxes
 				heMomentFlux += value
@@ -1162,7 +1162,7 @@ double FeSuperCluster::getEmissionFlux(int xi) {
 				auto const& currPair = currMapItem.second;
 
 				// Update the flux
-				auto value = *(currPair.kConstant[xi]) / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				flux += value * (currPair.a00 * l0 + currPair.a10 * l1He + currPair.a20 * l1V);
 				// Compute the moment fluxes
 				heMomentFlux -= value
@@ -1197,7 +1197,7 @@ double FeSuperCluster::getProductionFlux(int xi) {
 				double lVA = firstReactant.getVMoment();
 				double lVB = secondReactant.getVMoment();
 				// Update the flux
-				auto value = *(currPair.kConstant[xi]) / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				flux += value
 				* (currPair.a000 * l0A * l0B + currPair.a010 * l0A * lHeB
 						+ currPair.a020 * l0A * lVB + currPair.a100 * lHeA * l0B
@@ -1240,7 +1240,7 @@ double FeSuperCluster::getCombinationFlux(int xi) {
 				double lHeB = combiningCluster.getHeMoment();
 				double lVB = combiningCluster.getVMoment();
 				// Update the flux
-				auto value = *(currComb.kConstant[xi]) / (double) nTot;
+				auto value = currComb.reaction.kConstant[xi] / (double) nTot;
 				flux += value
 				* (currComb.a000 * l0B * l0 + currComb.a100 * l0B * l1He
 						+ currComb.a200 * l0B * l1V + currComb.a010 * lHeB * l0
@@ -1308,7 +1308,7 @@ void FeSuperCluster::getProductionPartialDerivatives(
 				double lVB = secondReactant.getVMoment();
 
 				// Compute the contribution from the first part of the reacting pair
-				auto value = *(currPair.kConstant[xi]) / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				auto index = firstReactant.getId() - 1;
 				partials[index] += value
 				* (currPair.a000 * l0B + currPair.a010 * lHeB + currPair.a020 * lVB);
@@ -1379,7 +1379,7 @@ void FeSuperCluster::getCombinationPartialDerivatives(
 				double lVB = cluster.getVMoment();
 
 				// Compute the contribution from the combining cluster
-				auto value = *(currComb.kConstant[xi]) / (double) nTot;
+				auto value = currComb.reaction.kConstant[xi] / (double) nTot;
 				auto index = cluster.getId() - 1;
 				partials[index] -= value
 				* (currComb.a000 * l0 + currComb.a100 * l1He + currComb.a200 * l1V);
@@ -1446,7 +1446,7 @@ void FeSuperCluster::getDissociationPartialDerivatives(
 				// Get the dissociating clusters
 				auto const& cluster = currPair.first;
 				// Compute the contribution from the dissociating cluster
-				auto value = *(currPair.kConstant[xi]) / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				auto index = cluster.getId() - 1;
 				partials[index] += value * (currPair.a00);
 				feHeMomentPartials[index] += value * (currPair.a01);
@@ -1480,7 +1480,7 @@ void FeSuperCluster::getEmissionPartialDerivatives(
 				auto& currPair = currMapItem.second;
 
 				// Compute the contribution from the dissociating cluster
-				auto value = *(currPair.kConstant[xi]) / (double) nTot;
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
 				auto index = id - 1;
 				partials[index] -= value * (currPair.a00);
 				feHeMomentPartials[index] -= value * (currPair.a01);

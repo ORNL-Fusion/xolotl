@@ -30,17 +30,13 @@ protected:
 		FeCluster& first;
 
 		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
+		 * The reaction/dissociation pointer to the list
 		 */
-		std::vector<double*> kConstant;
+		Reaction& reaction;
 
 		//! The constructor
 		ReactingInfoBase(Reaction& _reaction, FeCluster& _first) :
-				first(_first) {
-			for (auto& k : _reaction.kConstant) {
-				kConstant.push_back(&k);
-			}
+				first(_first), reaction(_reaction) {
 
 		}
 

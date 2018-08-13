@@ -56,9 +56,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Generate the network from the options
 	auto network = loader.generate(opts);
 
-	// Set the temperature in the network
-	double temperature = 1000.0;
-	network->setTemperature(temperature);
 	// Redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -118,6 +115,8 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 
 	// Generate the network from the options
 	auto network = loader.generate(opts);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -181,6 +180,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Generate the network from the options
 	auto network = loader.generate(opts);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Set the temperature in the network
 	double temperature = 1000.0;

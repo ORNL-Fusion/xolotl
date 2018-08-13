@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Compute the advection at this grid point
 	advectionHandler.computeAdvection(*network, gridPosition, concVector,
-			updatedConcOffset, hx, hx, 1);
+			updatedConcOffset, hx, hx, 1, 1);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 0.0, 0.01); // Does not advect

@@ -1516,8 +1516,8 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			// the network from another file using a single-process
 			// MPI communicator.
 			{
-			    xolotlCore::XFile checkpointFile(hdf5OutputName2D, grid, network,
-					compList, PETSC_COMM_WORLD, My, hy);
+				xolotlCore::XFile checkpointFile(hdf5OutputName2D, grid,
+						compList, PETSC_COMM_WORLD, My, hy);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -1526,7 +1526,8 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			copyNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(), hdf5OutputName2D);
+			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+					hdf5OutputName2D, network);
 		}
 
 		// startStop2D will be called at each timestep
