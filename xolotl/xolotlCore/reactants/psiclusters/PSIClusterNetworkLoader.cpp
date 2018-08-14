@@ -861,6 +861,13 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 	int nDim = 1;
 	Array<int, 5> list;
 	list[0] = 0;
+	// Moments only if He only is present
+	if (heVList.size() > 0 && maxHe > 0 && maxD == 0 && maxT == 0 && maxV > 0) {
+		list[nDim] = 1; // He
+		nDim++;
+		list[nDim] = 4; // V
+		nDim++;
+	}
 //	// Add additional axis
 //	if (heVList.size() > 0) {
 //		if (maxHe > 0) {
