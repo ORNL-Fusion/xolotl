@@ -382,7 +382,7 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param coef The cooresponding coefficient
 	 */
-	void resultFrom(ProductionReaction& reaction, double coef) override;
+	void resultFrom(ProductionReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction.
@@ -423,7 +423,7 @@ public:
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, double coef) override;
+	void participateIn(ProductionReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -465,7 +465,7 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	void participateIn(DissociationReaction& reaction, double coef) override;
+	void participateIn(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we emit from the given reaction.
@@ -503,7 +503,7 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, double coef) override;
+	void emitFrom(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of

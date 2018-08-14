@@ -108,7 +108,7 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	virtual void resultFrom(ProductionReaction& reaction, double coef) = 0;
+	virtual void resultFrom(ProductionReaction& reaction, double *coef) = 0;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction.
@@ -149,7 +149,7 @@ public:
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(ProductionReaction& reaction, double coef) = 0;
+	virtual void participateIn(ProductionReaction& reaction, double *coef) = 0;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -191,7 +191,7 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(DissociationReaction& reaction, double coef) = 0;
+	virtual void participateIn(DissociationReaction& reaction, double *coef) = 0;
 
 	/**
 	 * Note that we emit from the given reaction.
@@ -229,7 +229,7 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	virtual void emitFrom(DissociationReaction& reaction, double coef) = 0;
+	virtual void emitFrom(DissociationReaction& reaction, double *coef) = 0;
 
 	/**
 	 * Add the reactions to the network lists.
@@ -475,7 +475,7 @@ public:
 	 * @param i The position on the grid
 	 * @return The diffusion coefficient
 	 */
-	virtual double getDiffusionCoefficient(int i = 0) const = 0;
+	virtual double getDiffusionCoefficient(int i) const = 0;
 
 	/**
 	 * This operation sets the migration energy for this reactant.

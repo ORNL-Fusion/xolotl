@@ -764,7 +764,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 						double conc = gridPointSolution[id];
 						// Get its size and diffusion coefficient
 						int size = cluster.getSize();
-						double coef = cluster.getDiffusionCoefficient();
+						double coef = cluster.getDiffusionCoefficient(xi);
 						// Compute the flux going to the left
 						newFlux += (double) size * factor * coef * conc;
 					}

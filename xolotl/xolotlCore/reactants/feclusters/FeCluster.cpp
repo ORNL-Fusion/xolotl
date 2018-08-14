@@ -160,6 +160,28 @@ void FeCluster::resultFrom(ProductionReaction& reaction, IReactant& product) {
 	return;
 }
 
+void FeCluster::resultFrom(ProductionReaction& reaction, double *coef) {
+
+	// Add a cluster pair for the given reaction.
+	reactingPairs.emplace_back(reaction,
+			static_cast<FeCluster&>(reaction.first),
+			static_cast<FeCluster&>(reaction.second));
+	auto& newPair = reactingPairs.back();
+
+	// Update the coefficients
+	newPair.a00 += coef[0];
+	newPair.a10 += coef[1];
+	newPair.a20 += coef[2];
+	newPair.a01 += coef[3];
+	newPair.a11 += coef[4];
+	newPair.a21 += coef[5];
+	newPair.a02 += coef[6];
+	newPair.a12 += coef[7];
+	newPair.a22 += coef[8];
+
+	return;
+}
+
 void FeCluster::participateIn(ProductionReaction& reaction, int a[4]) {
 	// Look for the other cluster
 	auto& otherCluster = static_cast<FeCluster&>(
@@ -297,6 +319,34 @@ void FeCluster::participateIn(ProductionReaction& reaction, IReactant& prod) {
 			* firstOrderSum(std::max(productLoV - singleVSize, loV),
 					std::min(productHiV - singleVSize, hiV),
 					(double) (loV + hiV) / 2.0);
+
+	return;
+}
+
+void FeCluster::participateIn(ProductionReaction& reaction, double *coef) {
+	// Look for the other cluster
+	auto& otherCluster = static_cast<FeCluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if the reaction was already added
+	std::vector<CombiningCluster>::reverse_iterator it;
+	for (it = combiningReactants.rbegin(); it != combiningReactants.rend();
+			++it) {
+		if (&otherCluster == &(it->combining)) {
+			break;
+		}
+	}
+	if (it == combiningReactants.rend()) {
+		// We did not already know about this combination.
+		// Note that we combine with the other cluster in this reaction.
+		combiningReactants.emplace_back(reaction, otherCluster);
+		it = combiningReactants.rbegin();
+	}
+
+	// Update the coefficients
+	(*it).a0 += coef[0];
+	(*it).a1 += coef[1];
+	(*it).a2 += coef[2];
 
 	return;
 }
@@ -465,6 +515,39 @@ void FeCluster::participateIn(DissociationReaction& reaction,
 	return;
 }
 
+void FeCluster::participateIn(DissociationReaction& reaction, double *coef) {
+	// Look for the other cluster
+	auto& emittedCluster = static_cast<FeCluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if the reaction was already added
+	auto it =
+			std::find_if(dissociatingPairs.rbegin(), dissociatingPairs.rend(),
+					[&reaction,&emittedCluster](const ClusterPair& currPair) {
+						return (&(reaction.dissociating) == &static_cast<FeCluster&>(currPair.first)) and
+						(&emittedCluster == &static_cast<FeCluster&>(currPair.second));
+
+					});
+	if (it == dissociatingPairs.rend()) {
+
+		// We did not already know about it.
+
+		// Add the pair of them where it is important that the
+		// dissociating cluster is the first one
+		dissociatingPairs.emplace_back(reaction,
+				static_cast<FeCluster&>(reaction.dissociating),
+				static_cast<FeCluster&>(emittedCluster));
+		it = dissociatingPairs.rbegin();
+	}
+
+	// Update the coefficients
+	(*it).a00 += coef[0];
+	(*it).a10 += coef[1];
+	(*it).a20 += coef[2];
+
+	return;
+}
+
 void FeCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 
 	// Note that we emit from the reaction's reactants according to
@@ -474,6 +557,10 @@ void FeCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 	emissionPairs.emplace_back(reaction,
 			static_cast<FeCluster&>(reaction.first),
 			static_cast<FeCluster&>(reaction.second));
+	auto& dissPair = emissionPairs.back();
+
+	// Count the number of reactions
+	dissPair.a00 += 1.0;
 
 	return;
 }
@@ -488,6 +575,14 @@ void FeCluster::emitFrom(DissociationReaction& reaction,
 	emissionPairs.emplace_back(reaction,
 			static_cast<FeCluster&>(reaction.first),
 			static_cast<FeCluster&>(reaction.second));
+	auto& dissPair = emissionPairs.back();
+
+	// Update the coefficients
+	std::for_each(prInfos.begin(), prInfos.end(),
+			[&dissPair](const PendingProductionReactionInfo& currPRI) {
+				// Update the coefficients
+				dissPair.a00 += 1.0;
+			});
 
 	return;
 }
@@ -501,6 +596,65 @@ void FeCluster::emitFrom(DissociationReaction& reaction, IReactant& disso) {
 	emissionPairs.emplace_back(reaction,
 			static_cast<FeCluster&>(reaction.first),
 			static_cast<FeCluster&>(reaction.second));
+	auto& dissPair = emissionPairs.back();
+
+	// Values for grouping parameters
+	int productLoHe = composition[toCompIdx(Species::He)], productHiHe =
+			composition[toCompIdx(Species::He)], productLoV =
+			composition[toCompIdx(Species::V)], productHiV =
+			composition[toCompIdx(Species::V)], loHe = 0, hiHe = 0, loV = 0,
+			hiV = 0, singleHeSize = 0, singleVSize = 0;
+
+	if (dissPair.first.getType() == ReactantType::FeSuper) {
+		auto const& super = static_cast<FeCluster const&>(dissPair.first);
+		auto const& heBounds = super.getHeBounds();
+		loHe = *(heBounds.begin());
+		hiHe = *(heBounds.end()) - 1;
+		auto const& vBounds = super.getVBounds();
+		loV = *(vBounds.begin());
+		hiV = *(vBounds.end()) - 1;
+		auto singleComp = dissPair.second.getComposition();
+		singleHeSize = singleComp[toCompIdx(Species::He)];
+		singleVSize = singleComp[toCompIdx(Species::V)]
+				- singleComp[toCompIdx(Species::I)]; // can be < 0
+	}
+	if (dissPair.second.getType() == ReactantType::FeSuper) {
+		auto const& super = static_cast<FeCluster const&>(dissPair.second);
+		auto const& heBounds = super.getHeBounds();
+		loHe = *(heBounds.begin());
+		hiHe = *(heBounds.end()) - 1;
+		auto const& vBounds = super.getVBounds();
+		loV = *(vBounds.begin());
+		hiV = *(vBounds.end()) - 1;
+		auto singleComp = dissPair.first.getComposition();
+		singleHeSize = singleComp[toCompIdx(Species::He)];
+		singleVSize = singleComp[toCompIdx(Species::V)]
+				- singleComp[toCompIdx(Species::I)]; // can be < 0
+	}
+
+	int heWidth = std::min(productHiHe, hiHe + singleHeSize)
+			- std::max(productLoHe, loHe + singleHeSize) + 1;
+	int vWidth = std::min(productHiV, hiV + singleVSize)
+			- std::max(productLoV, loV + singleVSize) + 1;
+
+	dissPair.a00 = heWidth * vWidth;
+
+	return;
+}
+
+void FeCluster::emitFrom(DissociationReaction& reaction, double *coef) {
+
+	// Note that we emit from the reaction's reactants according to
+	// the given reaction.
+	// TODO do we need to check to see whether we already know about
+	// this reaction?
+	emissionPairs.emplace_back(reaction,
+			static_cast<FeCluster&>(reaction.first),
+			static_cast<FeCluster&>(reaction.second));
+	auto& dissPair = emissionPairs.back();
+
+	// Count the number of reactions
+	dissPair.a00 += coef[0];
 
 	return;
 }
@@ -625,7 +779,7 @@ double FeCluster::getEmissionFlux(int xi) const {
 	// Sum rate constants from all emission pair reactions.
 	double flux = std::accumulate(emissionPairs.begin(), emissionPairs.end(),
 			0.0, [&xi](double running, const ClusterPair& currPair) {
-				return running + currPair.reaction.kConstant[xi];
+				return running + currPair.reaction.kConstant[xi] * currPair.a00;
 			});
 
 	return flux * concentration;
@@ -817,7 +971,7 @@ void FeCluster::getEmissionPartialDerivatives(std::vector<double> & partials,
 	double outgoingFlux = std::accumulate(emissionPairs.begin(),
 			emissionPairs.end(), 0.0,
 			[xi](double running, const ClusterPair& currPair) {
-				return running + currPair.reaction.kConstant[xi];
+				return running + currPair.reaction.kConstant[xi] * currPair.a00;
 			});
 	partials[id - 1] -= outgoingFlux;
 
@@ -838,10 +992,101 @@ double FeCluster::getLeftSideRate(int i) const {
 	double emissionRateTotal = std::accumulate(emissionPairs.begin(),
 			emissionPairs.end(), 0.0,
 			[&i](double running, const ClusterPair& currPair) {
-				return running + currPair.reaction.kConstant[i];
+				return running + currPair.reaction.kConstant[i] * currPair.a00;
 			});
 
 	return combiningRateTotal + emissionRateTotal;
+}
+
+std::vector<std::vector<double> > FeCluster::getProdVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the reacting pairs
+	std::for_each(reactingPairs.begin(), reactingPairs.end(),
+			[&toReturn](const ClusterPair& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first.getId() - 1);
+				tempVec.push_back(currPair.second.getId() - 1);
+				tempVec.push_back(currPair.a00);
+				tempVec.push_back(currPair.a10);
+				tempVec.push_back(currPair.a20);
+				tempVec.push_back(currPair.a01);
+				tempVec.push_back(currPair.a11);
+				tempVec.push_back(currPair.a21);
+				tempVec.push_back(currPair.a02);
+				tempVec.push_back(currPair.a12);
+				tempVec.push_back(currPair.a22);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > FeCluster::getCombVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the combining reactants
+	std::for_each(combiningReactants.begin(), combiningReactants.end(),
+			[&toReturn](const CombiningCluster& cc) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(cc.combining.getId() - 1);
+				tempVec.push_back(cc.a0);
+				tempVec.push_back(cc.a1);
+				tempVec.push_back(cc.a2);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > FeCluster::getDissoVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the dissociating pairs
+	std::for_each(dissociatingPairs.begin(), dissociatingPairs.end(),
+			[&toReturn](const ClusterPair& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first.getId() - 1);
+				tempVec.push_back(currPair.second.getId() - 1);
+				tempVec.push_back(currPair.a00);
+				tempVec.push_back(currPair.a10);
+				tempVec.push_back(currPair.a20);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > FeCluster::getEmitVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the emitting pairs
+	std::for_each(emissionPairs.begin(), emissionPairs.end(),
+			[&toReturn](const ClusterPair& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first.getId() - 1);
+				tempVec.push_back(currPair.second.getId() - 1);
+				tempVec.push_back(currPair.a00);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
 }
 
 std::vector<int> FeCluster::getConnectivity() const {

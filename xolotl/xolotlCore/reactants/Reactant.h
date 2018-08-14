@@ -173,7 +173,7 @@ protected:
 	 * @param temp the temperature
 	 * @param i The position on the grid
 	 */
-	void recomputeDiffusionCoefficient(double temp, int i = 0);
+	void recomputeDiffusionCoefficient(double temp, int i);
 
 public:
 
@@ -273,7 +273,7 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	virtual void resultFrom(ProductionReaction& reaction, double coef)
+	virtual void resultFrom(ProductionReaction& reaction, double *coef)
 			override {
 		return;
 	}
@@ -328,7 +328,7 @@ public:
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(ProductionReaction& reaction, double coef)
+	virtual void participateIn(ProductionReaction& reaction, double *coef)
 			override {
 		return;
 	}
@@ -384,7 +384,7 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(DissociationReaction& reaction, double coef)
+	virtual void participateIn(DissociationReaction& reaction, double *coef)
 			override {
 		return;
 	}
@@ -437,7 +437,7 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	virtual void emitFrom(DissociationReaction& reaction, double coef)
+	virtual void emitFrom(DissociationReaction& reaction, double *coef)
 			override {
 		return;
 	}

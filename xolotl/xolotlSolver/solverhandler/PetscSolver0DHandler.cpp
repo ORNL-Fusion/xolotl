@@ -111,11 +111,16 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 	concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition, 0.0);
 
-	// Determine if the HDF5 file has any concentrations.
-	// TODO are we assuming networkName is non-empty here?
-	xolotlCore::XFile xfile(networkName);
-	auto concGroup = xfile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
-	bool hasConcentrations = (concGroup and concGroup->hasTimesteps());
+	// Get the last time step written in the HDF5 file
+	bool hasConcentrations = false;
+	std::unique_ptr<xolotlCore::XFile> xfile;
+	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
+	if (not networkName.empty()) {
+
+		xfile.reset(new xolotlCore::XFile(networkName));
+		concGroup = xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
+		hasConcentrations = (concGroup and concGroup->hasTimesteps());
+	}
 
 	// Initialize the vacancy concentration
 	if (singleVacancyCluster and not hasConcentrations) {

@@ -61,7 +61,9 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${HDF5_INCLUDE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters/)
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters/
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters/
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters/)
 target_link_libraries(${LIBRARY_NAME} ${MPI_LIBRARIES} ${HDF5_LIBRARIES})
 
 add_subdirectory(XConvHDF5)

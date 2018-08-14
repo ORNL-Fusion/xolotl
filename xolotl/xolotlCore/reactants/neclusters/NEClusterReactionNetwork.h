@@ -131,6 +131,15 @@ public:
 	void updateConcentrationsFromArray(double * concentrations) override;
 
 	/**
+	 * This operation returns the number of super reactants in the network.
+	 *
+	 * @return The number of super reactants in the network
+	 */
+	int getSuperSize() const override {
+		return getAll(ReactantType::NESuper).size();
+	}
+
+	/**
 	 * This operation returns the size or number of reactants and momentums in the network.
 	 *
 	 * @return The number of degrees of freedom

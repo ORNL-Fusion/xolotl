@@ -58,10 +58,10 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 			pushPSICluster(network, reactants, nextCluster);
 		} else {
 			// Super cluster
-			auto heVList = clusterGroup.readSuperCluster();
+			auto list = clusterGroup.readPSISuperCluster();
 
 			// Create the cluster
-			auto nextCluster = createPSISuperCluster(heVList, *network);
+			auto nextCluster = createPSISuperCluster(list, *network);
 
 			// Save it in the network
 			pushPSICluster(network, reactants, nextCluster);

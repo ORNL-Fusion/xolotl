@@ -6,6 +6,8 @@
 #include "mpi.h"
 #include "xolotlCore/io/XFile.h"
 #include <PSISuperCluster.h>
+#include <FeSuperCluster.h>
+#include <NESuperCluster.h>
 
 namespace xolotlCore {
 
@@ -34,9 +36,8 @@ HDF5File::AccessMode XFile::EnsureOpenAccessMode(HDF5File::AccessMode mode) {
 }
 
 XFile::XFile(fs::path _path, const std::vector<double>& grid,
-		const XFile::HeaderGroup::NetworkCompsType& compVec,
-		MPI_Comm _comm, int ny, double hy, int nz,
-		double hz, AccessMode _mode) :
+		const XFile::HeaderGroup::NetworkCompsType& compVec, MPI_Comm _comm,
+		int ny, double hy, int nz, double hz, AccessMode _mode) :
 		HDF5File(_path, EnsureCreateAccessMode(_mode), _comm, true) {
 	// Create and initialize the header group.
 	HeaderGroup headerGroup(*this, grid, ny, hy, nz, hz, compVec);
@@ -99,18 +100,20 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file,
 	Attribute<decltype(hz)> hzAttr(*this, hzAttrName, scalarDSpace);
 	hzAttr.setTo(hz);
 
-	// Create, write, and close the grid dataset
-	std::vector<double> gridArray(nx);
-	for (int i = 0; i < nx; i++) {
-		gridArray[i] = grid[i + 1] - grid[1];
+	if (nx > 0) {
+		// Create, write, and close the grid dataset
+		double gridArray[nx];
+		for (int i = 0; i < nx; i++) {
+			gridArray[i] = grid[i + 1] - grid[1];
+		}
+		std::array<hsize_t, 1> dims { (hsize_t) nx };
+		XFile::SimpleDataSpace<1> gridDSpace(dims);
+		hid_t datasetId = H5Dcreate2(getId(), "grid", H5T_IEEE_F64LE,
+				gridDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+		H5P_DEFAULT, &gridArray);
+		status = H5Dclose(datasetId);
 	}
-	std::array<hsize_t, 1> dims { (hsize_t) nx };
-	XFile::SimpleDataSpace<1> gridDSpace(dims);
-	hid_t datasetId = H5Dcreate2(getId(), "grid", H5T_IEEE_F64LE,
-			gridDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-	H5P_DEFAULT, &gridArray);
-	status = H5Dclose(datasetId);
 
 	// Initialize the network composition list.  Done here because
 	// it is a dataset in the header group.
@@ -230,8 +233,8 @@ XFile::NetworkGroup::NetworkGroup(const XFile& file, IReactionNetwork& network) 
 	// Base class created the group.
 
 	// Get the sizes information
-	int totalSize = network.size(), superSize = network.getAll(
-			ReactantType::PSISuper).size(), normalSize = totalSize - superSize;
+	int totalSize = network.size(), superSize = network.getSuperSize(),
+			normalSize = totalSize - superSize;
 
 	// Build a dataspace for our scalar attributes.
 	XFile::ScalarDataSpace scalarDSpace;
@@ -303,6 +306,10 @@ const std::string XFile::ClusterGroup::diffusionFactorAttrName =
 		"diffusionFactor";
 const std::string XFile::ClusterGroup::compositionAttrName = "composition";
 const std::string XFile::ClusterGroup::heVListDataName = "heVList";
+const std::string XFile::ClusterGroup::boundsAttrName = "bounds";
+const std::string XFile::ClusterGroup::nTotAttrName = "nTot";
+const std::string XFile::ClusterGroup::numXeAttrName = "numXe";
+const std::string XFile::ClusterGroup::radiusAttrName = "radius";
 const std::string XFile::ClusterGroup::productionDataName = "prod";
 const std::string XFile::ClusterGroup::combinationDataName = "comb";
 const std::string XFile::ClusterGroup::dissociationDataName = "disso";
@@ -315,7 +322,7 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup, int id) :
 XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 		IReactant& cluster) :
 		HDF5File::Group(networkGroup, makeGroupName(cluster.getId() - 1), true) {
-	// Super cluster case
+	// Super PSI cluster case
 	if (cluster.getType() == ReactantType::PSISuper) {
 		// Write the dataset with the coordinate of each contained cluster
 		auto& currCluster = static_cast<PSISuperCluster&>(cluster);
@@ -341,6 +348,39 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 		H5P_DEFAULT, &heVArray);
 		// Close the dataset
 		status = H5Dclose(datasetId);
+	}
+	// Super Fe cluster case
+	else if (cluster.getType() == ReactantType::FeSuper) {
+		// Write the bounds
+		auto& currCluster = static_cast<FeSuperCluster&>(cluster);
+		auto bounds = currCluster.getBounds();
+		std::array<hsize_t, 1> dim { 4 };
+		XFile::SimpleDataSpace<1> boundDSpace(dim);
+		hid_t attrId = H5Acreate2(getId(), boundsAttrName.c_str(),
+		H5T_STD_I32LE, boundDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
+		auto status = H5Awrite(attrId, H5T_STD_I32LE, &bounds);
+		status = H5Aclose(attrId);
+	}
+	// Super NE cluster case
+	else if (cluster.getType() == ReactantType::NESuper) {
+		auto& currCluster = static_cast<NESuperCluster&>(cluster);
+		// Build a dataspace for our scalar attributes.
+		XFile::ScalarDataSpace scalarDSpace;
+
+		// Add a nTot attribute.
+		int nTot = currCluster.getNTot();
+		Attribute<decltype(nTot)> nTotAttr(*this, nTotAttrName, scalarDSpace);
+		nTotAttr.setTo(nTot);
+		// Add a numXe attribute.
+		double numXe = currCluster.getAverage();
+		Attribute<decltype(numXe)> numXeAttr(*this, numXeAttrName,
+				scalarDSpace);
+		numXeAttr.setTo(numXe);
+		// Add a radius attribute.
+		double radius = currCluster.getReactionRadius();
+		Attribute<decltype(radius)> radiusAttr(*this, radiusAttrName,
+				scalarDSpace);
+		radiusAttr.setTo(radius);
 	}
 	// Normal cluster case
 	else {
@@ -513,7 +553,7 @@ XFile::ClusterGroup::clusterComp XFile::ClusterGroup::readCluster(
 	return comp;
 }
 
-XFile::ClusterGroup::clusterList XFile::ClusterGroup::readSuperCluster() const {
+XFile::ClusterGroup::clusterList XFile::ClusterGroup::readPSISuperCluster() const {
 	// Open the dataset
 	hid_t datasetId = H5Dopen(getId(), heVListDataName.c_str(), H5P_DEFAULT);
 	// Get the dimensions of the dataset
@@ -537,6 +577,33 @@ XFile::ClusterGroup::clusterList XFile::ClusterGroup::readSuperCluster() const {
 	}
 
 	return heVList;
+}
+
+Array1D<int, 4> XFile::ClusterGroup::readFeSuperCluster() const {
+
+	// Read the bounds attribute
+	Array1D<int, 4> bounds;
+	hid_t attributeId = H5Aopen_name(getId(), boundsAttrName.c_str());
+	hid_t dataspaceId = H5Aget_space(attributeId);
+	herr_t status = H5Aread(attributeId, H5T_STD_I32LE, &bounds);
+	status = H5Aclose(attributeId);
+
+	return bounds;
+}
+
+void XFile::ClusterGroup::readNESuperCluster(int &nTot, double &numXe,
+		double &radius) const {
+	// Open and read the nTot attribute
+	Attribute<int> nTotAttr(*this, nTotAttrName);
+	nTot = nTotAttr.get();
+	// Open and read the numXe attribute
+	Attribute<double> numXeAttr(*this, numXeAttrName);
+	numXe = numXeAttr.get();
+	// Open and read the radius attribute
+	Attribute<double> radiusAttr(*this, radiusAttrName);
+	radius = radiusAttr.get();
+
+	return;
 }
 
 void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
@@ -570,7 +637,7 @@ void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
 			auto& prref = network.add(std::move(reaction));
 
 			// Add the reaction to the cluster
-			cluster.resultFrom(prref, prodVec[i][2]);
+			cluster.resultFrom(prref, &(prodVec[i][2]));
 		}
 	}
 
@@ -599,7 +666,7 @@ void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
 			auto& prref = network.add(std::move(reaction));
 
 			// Add the reaction to the cluster
-			cluster.participateIn(prref, combVec[i][1]);
+			cluster.participateIn(prref, &(combVec[i][1]));
 		}
 	}
 
@@ -633,7 +700,7 @@ void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
 			auto& drref = network.add(std::move(dissociationReaction));
 
 			// Add the reaction to the cluster
-			cluster.participateIn(drref, dissoVec[i][2]);
+			cluster.participateIn(drref, &(dissoVec[i][2]));
 		}
 	}
 
@@ -667,7 +734,7 @@ void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
 			auto& drref = network.add(std::move(dissociationReaction));
 
 			// Add the reaction to the cluster
-			cluster.emitFrom(drref, emitVec[i][2]);
+			cluster.emitFrom(drref, &(emitVec[i][2]));
 		}
 	}
 }

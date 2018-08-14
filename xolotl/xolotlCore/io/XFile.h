@@ -8,6 +8,7 @@
 #include "xolotlCore/io/HDF5File.h"
 #include "xolotlCore/io/HDF5Exception.h"
 #include <IReactionNetwork.h>
+#include <MathUtils.h>
 
 namespace xolotlCore {
 
@@ -503,6 +504,10 @@ public:
 		static const std::string diffusionFactorAttrName;
 		static const std::string compositionAttrName;
 		static const std::string heVListDataName;
+		static const std::string boundsAttrName;
+		static const std::string nTotAttrName;
+		static const std::string numXeAttrName;
+		static const std::string radiusAttrName;
 		static const std::string productionDataName;
 		static const std::string combinationDataName;
 		static const std::string dissociationDataName;
@@ -538,7 +543,7 @@ public:
 		static std::string makeGroupName(int id);
 
 		/**
-		 * Read the network sizes from our group.
+		 * Read the cluster properties from our group.
 		 *
 		 * @param formationEnergy The formation energy.
 		 * @param migrationEnergy The migration energy.
@@ -549,11 +554,27 @@ public:
 				double &diffusionFactor) const;
 
 		/**
-		 * Read the network sizes from our group.
+		 * Read the cluster properties from our group.
 		 *
 		 * @return The list of clusters that it contains.
 		 */
-		clusterList readSuperCluster() const;
+		clusterList readPSISuperCluster() const;
+
+		/**
+		 * Read the cluster properties from our group.
+		 *
+		 * @return The bounds on the clusters that it contains.
+		 */
+		Array1D<int, 4> readFeSuperCluster() const;
+
+		/**
+		 * Read the cluster properties from our group.
+		 *
+		 * @param nTot The total number of clusters it contains.
+		 * @param numXe The average value
+		 * @param radius The radius
+		 */
+		void readNESuperCluster(int &nTot, double &numXe, double &radius) const;
 
 		/**
 		 * Read the reactions from our group.

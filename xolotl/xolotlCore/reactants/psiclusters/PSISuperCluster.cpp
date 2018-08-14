@@ -322,7 +322,7 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 	return;
 }
 
-void PSISuperCluster::resultFrom(ProductionReaction& reaction, double coef) {
+void PSISuperCluster::resultFrom(ProductionReaction& reaction, double *coef) {
 
 	// Check if we already know about the reaction.
 	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
@@ -349,7 +349,7 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction, double coef) {
 	// TODO Any way to enforce this beyond splitting it into two functions?
 
 	// Update the coefficients
-	prodPair.coefs[0][0][0] += coef;
+	prodPair.coefs[0][0][0] += coef[0];
 
 	return;
 }
@@ -561,7 +561,7 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 	return;
 }
 
-void PSISuperCluster::participateIn(ProductionReaction& reaction, double coef) {
+void PSISuperCluster::participateIn(ProductionReaction& reaction, double *coef) {
 
 	// Look for the other cluster
 	auto& otherCluster = static_cast<PSICluster&>(
@@ -587,7 +587,7 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction, double coef) {
 	auto& combCluster = it->second;
 
 	// Update the coefficients
-	combCluster.coefs[0][0][0] += coef;
+	combCluster.coefs[0][0][0] += coef[0];
 
 	return;
 }
@@ -822,7 +822,7 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 }
 
 void PSISuperCluster::participateIn(DissociationReaction& reaction,
-		double coef) {
+		double *coef) {
 
 	// Determine which is the other cluster.
 	auto& emittedCluster = static_cast<PSICluster&>(
@@ -850,7 +850,7 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 	auto& dissPair = it->second;
 
 	// Update the coefficients
-	dissPair.coefs[0][0] += coef;
+	dissPair.coefs[0][0] += coef[0];
 
 	return;
 }
@@ -1075,7 +1075,7 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 	return;
 }
 
-void PSISuperCluster::emitFrom(DissociationReaction& reaction, double coef) {
+void PSISuperCluster::emitFrom(DissociationReaction& reaction, double *coef) {
 
 	// Check if we already know about the reaction.
 	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
@@ -1100,7 +1100,7 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction, double coef) {
 	auto& dissPair = it->second;
 
 	// Update the coefficients
-	dissPair.coefs[0][0] += coef;
+	dissPair.coefs[0][0] += coef[0];
 
 	return;
 }

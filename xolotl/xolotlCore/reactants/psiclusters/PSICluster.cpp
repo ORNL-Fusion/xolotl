@@ -160,7 +160,7 @@ void PSICluster::resultFrom(ProductionReaction& reaction, IReactant& product) {
 	return;
 }
 
-void PSICluster::resultFrom(ProductionReaction& reaction, double coef) {
+void PSICluster::resultFrom(ProductionReaction& reaction, double *coef) {
 
 	// Add a cluster pair for the given reaction.
 	reactingPairs.emplace_back(reaction,
@@ -173,7 +173,7 @@ void PSICluster::resultFrom(ProductionReaction& reaction, double coef) {
 	// TODO Any way to enforce this beyond splitting it into two functions?
 
 	// Update the coefficients
-	newPair.coefs[0][0] += coef;
+	newPair.coefs[0][0] += coef[0];
 
 	return;
 }
@@ -319,7 +319,7 @@ void PSICluster::participateIn(ProductionReaction& reaction,
 	return;
 }
 
-void PSICluster::participateIn(ProductionReaction& reaction, double coef) {
+void PSICluster::participateIn(ProductionReaction& reaction, double *coef) {
 	// Look for the other cluster
 	auto& otherCluster = static_cast<PSICluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
@@ -340,7 +340,7 @@ void PSICluster::participateIn(ProductionReaction& reaction, double coef) {
 	}
 
 	// Update the coefficients
-	(*it).coefs[0] += coef;
+	(*it).coefs[0] += coef[0];
 
 	return;
 }
@@ -501,7 +501,7 @@ void PSICluster::participateIn(DissociationReaction& reaction,
 	return;
 }
 
-void PSICluster::participateIn(DissociationReaction& reaction, double coef) {
+void PSICluster::participateIn(DissociationReaction& reaction, double *coef) {
 	// Look for the other cluster
 	auto& emittedCluster = static_cast<PSICluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
@@ -526,7 +526,7 @@ void PSICluster::participateIn(DissociationReaction& reaction, double coef) {
 	}
 
 	// Update the coefficients
-	(*it).coefs[0][0] += coef;
+	(*it).coefs[0][0] += coef[0];
 
 	return;
 }
@@ -634,7 +634,7 @@ void PSICluster::emitFrom(DissociationReaction& reaction, IReactant& disso) {
 	return;
 }
 
-void PSICluster::emitFrom(DissociationReaction& reaction, double coef) {
+void PSICluster::emitFrom(DissociationReaction& reaction, double *coef) {
 
 	// Note that we emit from the reaction's reactants according to
 	// the given reaction.
@@ -646,7 +646,7 @@ void PSICluster::emitFrom(DissociationReaction& reaction, double coef) {
 	auto& dissPair = emissionPairs.back();
 
 	// Count the number of reactions
-	dissPair.coefs[0][0] += coef;
+	dissPair.coefs[0][0] += coef[0];
 
 	return;
 }
@@ -1003,11 +1003,11 @@ double PSICluster::getLeftSideRate(int i) const {
 					});
 
 	// Sum rate constants over all emission pair reactions.
-	double emissionRateTotal = std::accumulate(emissionPairs.begin(),
-			emissionPairs.end(), 0.0,
-			[&i](double running, const ClusterPair& currPair) {
-				return running + (currPair.reaction.kConstant[i] * currPair.coefs[0][0]);
-			});
+	double emissionRateTotal =
+			std::accumulate(emissionPairs.begin(), emissionPairs.end(), 0.0,
+					[&i](double running, const ClusterPair& currPair) {
+						return running + (currPair.reaction.kConstant[i] * currPair.coefs[0][0]);
+					});
 
 	return combiningRateTotal + emissionRateTotal;
 }

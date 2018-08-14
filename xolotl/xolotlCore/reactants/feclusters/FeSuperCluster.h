@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <Constants.h>
+#include <MathUtils.h>
 #include "FeCluster.h"
 
 namespace xolotlCore {
@@ -378,6 +379,15 @@ public:
 	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
 
 	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef The corresponding coefficient
+	 */
+	void resultFrom(ProductionReaction& reaction, double *coef) override;
+
+	/**
 	 * Note that we combine with another cluster in a production reaction.
 	 * Assumes that the reaction is already in our network.
 	 *
@@ -407,6 +417,15 @@ public:
 	 */
 	void participateIn(ProductionReaction& reaction, IReactant& product)
 			override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(ProductionReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -442,6 +461,15 @@ public:
 			override;
 
 	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(DissociationReaction& reaction, double *coef) override;
+
+	/**
 	 * Note that we emit from the given reaction.
 	 * Assumes the reaction is already in our network.
 	 *
@@ -468,6 +496,15 @@ public:
 	 * @param disso The dissociating cluster.
 	 */
 	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void emitFrom(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of
@@ -769,6 +806,20 @@ public:
 	}
 
 	/**
+	 * Returns the boundaries.
+	 *
+	 * @return The boundaries
+	 */
+	Array1D<int, 4> getBounds() const {
+		Array1D<int, 4> toReturn;
+		toReturn[0] = *(heBounds.begin());
+		toReturn[1] = *(heBounds.end());
+		toReturn[2] = *(vBounds.begin());
+		toReturn[3] = *(vBounds.end());
+		return toReturn;
+	}
+
+	/**
 	 * Detect if given number of He and V are in this cluster's group.
 	 *
 	 * @param _nHe number of He of interest.
@@ -779,6 +830,42 @@ public:
 
 		return heBounds.contains(_nHe) and vBounds.contains(_nV);
 	}
+
+	/**
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getProdVector() const override;
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, the rate, and
+	 * the coefs[0]
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const override;
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const override;
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved, containing the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const override;
 
 	/**
 	 * Tell reactant to output a representation of its reaction coefficients

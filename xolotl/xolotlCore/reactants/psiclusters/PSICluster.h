@@ -335,7 +335,7 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param coef The cooresponding coefficient
 	 */
-	void resultFrom(ProductionReaction& reaction, double coef) override;
+	void resultFrom(ProductionReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction.
@@ -376,7 +376,7 @@ public:
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, double coef) override;
+	void participateIn(ProductionReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -418,7 +418,7 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	void participateIn(DissociationReaction& reaction, double coef) override;
+	void participateIn(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we emit from the given reaction.
@@ -456,7 +456,7 @@ public:
 	 * @param reaction The reaction where this cluster emits.
 	 * @param coef Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, double coef) override;
+	void emitFrom(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * This operation returns the connectivity array for this cluster for
@@ -657,7 +657,7 @@ public:
 
 	/**
 	 * This operation returns the vector of production reactions in which
-	 * this cluster is involved, containing the id of the reactants, the rate, and
+	 * this cluster is involved, containing the id of the reactants, and
 	 * the coefs[0][0]
 	 *
 	 * @return The vector of productions
@@ -666,7 +666,7 @@ public:
 
 	/**
 	 * This operation returns the vector of combination reactions in which
-	 * this cluster is involved, containing the id of the other reactants, the rate, and
+	 * this cluster is involved, containing the id of the other reactants, and
 	 * the coefs[0]
 	 *
 	 * @return The vector of combinations
@@ -675,7 +675,7 @@ public:
 
 	/**
 	 * This operation returns the vector of dissociation reactions in which
-	 * this cluster is involved, containing the id of the emitting reactants, the rate, and
+	 * this cluster is involved, containing the id of the emitting reactants, and
 	 * the coefs[0][0]
 	 *
 	 * @return The vector of dissociations
@@ -684,7 +684,7 @@ public:
 
 	/**
 	 * This operation returns the vector of emission reactions in which
-	 * this cluster is involved, containing the rate, and
+	 * this cluster is involved, containing
 	 * the coefs[0][0]
 	 *
 	 * @return The vector of productions

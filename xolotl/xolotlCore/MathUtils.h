@@ -12,6 +12,7 @@
 
 #include <limits>
 #include <cmath>
+#include <numeric>
 
 namespace xolotlCore {
 

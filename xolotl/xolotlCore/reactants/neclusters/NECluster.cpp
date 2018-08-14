@@ -21,8 +21,27 @@ void NECluster::resultFrom(ProductionReaction& reaction, int[4], int[4]) {
 	return;
 }
 
+void NECluster::resultFrom(ProductionReaction& reaction, double *coef) {
+
+	// Add a cluster pair for given reaction
+	reactingPairs.emplace_back(
+			reaction,  // TODO verify this is correct
+			&static_cast<NECluster&>(reaction.first),
+			&static_cast<NECluster&>(reaction.second));
+	auto& newPair = reactingPairs.back();
+
+	// Setup the connectivity array
+	setReactionConnectivity(reaction.first.getId());
+	setReactionConnectivity(reaction.second.getId());
+
+	// Update the distances
+	newPair.firstDistance = coef[0];
+	newPair.secondDistance = coef[1];
+
+	return;
+}
+
 void NECluster::participateIn(ProductionReaction& reaction, int[4]) {
-	setReactionConnectivity(id);
 	// Look for the other cluster
 	auto& otherCluster = static_cast<NECluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
@@ -33,11 +52,35 @@ void NECluster::participateIn(ProductionReaction& reaction, int[4]) {
 //	auto& prref = network.add(std::move(newReaction));
 
 	// Add the combining cluster to list of clusters that combine with us
-	combiningReactants.emplace_back(reaction, otherCluster);
+	combiningReactants.emplace_back(reaction, &otherCluster);
 
 	// Setup the connectivity array
 	setReactionConnectivity(id);
 	setReactionConnectivity(otherCluster.getId());
+
+	return;
+}
+
+void NECluster::participateIn(ProductionReaction& reaction, double *coef) {
+	// Look for the other cluster
+	auto& otherCluster = static_cast<NECluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+//	// Build a production reaction for it
+//	std::unique_ptr<ProductionReaction> newReaction(
+//			new ProductionReaction(otherCluster, *this));
+//	// Add it to the network
+//	auto& prref = network.add(std::move(newReaction));
+
+	// Add the combining cluster to list of clusters that combine with us
+	combiningReactants.emplace_back(reaction, &otherCluster);
+	auto& newComb = combiningReactants.back();
+
+	// Setup the connectivity array
+	setReactionConnectivity(id);
+	setReactionConnectivity(otherCluster.getId());
+
+	// Update the distances
+	newComb.distance = coef[0];
 
 	return;
 }
@@ -60,6 +103,28 @@ void NECluster::participateIn(DissociationReaction& reaction, int[4], int[4]) {
 	return;
 }
 
+void NECluster::participateIn(DissociationReaction& reaction, double *coef) {
+	// Look for the other cluster
+	auto& emittedCluster = static_cast<NECluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Add a pair where it is important that the
+	// dissociating cluster is the first one
+	dissociatingPairs.emplace_back(
+			reaction,  // TODO is this correct?
+			&static_cast<NECluster&>(reaction.dissociating),
+			&static_cast<NECluster&>(emittedCluster));
+	auto& newPair = dissociatingPairs.back();
+
+	// Setup the connectivity array
+	setDissociationConnectivity(reaction.dissociating.getId());
+
+	// Set the distance
+	newPair.firstDistance = coef[0];
+
+	return;
+}
+
 void NECluster::emitFrom(DissociationReaction& reaction, int[4]) {
 
 	// Add the pair of emitted clusters.
@@ -70,6 +135,22 @@ void NECluster::emitFrom(DissociationReaction& reaction, int[4]) {
 
 	// Setup the connectivity array to itself
 	setReactionConnectivity(id);
+
+	return;
+}
+
+void NECluster::emitFrom(DissociationReaction& reaction, double *coef) {
+
+	// Add the pair of emitted clusters.
+	emissionPairs.emplace_back(
+			reaction, // TODO is this correct?
+			&static_cast<NECluster&>(reaction.first),
+			&static_cast<NECluster&>(reaction.second));
+
+	// Setup the connectivity array to itself
+	setReactionConnectivity(id);
+
+	// Nothing more to do
 
 	return;
 }
@@ -89,7 +170,7 @@ void NECluster::optimizeReactions() {
 	std::for_each(combiningReactants.begin(), combiningReactants.end(),
 			[this](CombiningCluster& cc) {
 				// Create the corresponding production reaction
-				std::unique_ptr<ProductionReaction> newReaction(new ProductionReaction(cc.combining, *this));
+				std::unique_ptr<ProductionReaction> newReaction(new ProductionReaction(*cc.combining, *this));
 				// Add it to the network
 				auto& prref = network.add(std::move(newReaction));
 				// Link it to the pair
@@ -187,7 +268,7 @@ void NECluster::resetConnectivities() {
 	std::for_each(combiningReactants.begin(), combiningReactants.end(),
 			[this](const CombiningCluster& cc) {
 				// The cluster is connecting to the combining cluster
-				NECluster const& combCluster = cc.combining;
+				NECluster const& combCluster = *cc.combining;
 				setReactionConnectivity(combCluster.id);
 				setReactionConnectivity(combCluster.momId[0]);
 			});
@@ -291,7 +372,7 @@ double NECluster::getCombinationFlux(int xi) const {
 			combiningReactants.end(), 0.0,
 			[xi](double running, const CombiningCluster& currPair) {
 				// Get the cluster that combines with this one
-				NECluster const& combiningCluster = currPair.combining;
+				NECluster const& combiningCluster = *currPair.combining;
 				Reaction const& currReaction = currPair.reaction;
 
 				// Calculate Second term of production flux
@@ -377,7 +458,7 @@ void NECluster::getCombinationPartialDerivatives(std::vector<double> & partials,
 	std::for_each(combiningReactants.begin(), combiningReactants.end(),
 			[this,&partials,&xi](const CombiningCluster& cc) {
 
-				NECluster const& cluster = cc.combining;
+				NECluster const& cluster = *cc.combining;
 				Reaction const& currReaction = cc.reaction;
 
 				// Remember that the flux due to combinations is OUTGOING (-=)!
@@ -444,7 +525,7 @@ double NECluster::getLeftSideRate(int i) const {
 	double combiningRateTotal = std::accumulate(combiningReactants.begin(),
 			combiningReactants.end(), 0.0,
 			[&i](double running, const CombiningCluster& currPair) {
-				NECluster const& cluster = currPair.combining;
+				NECluster const& cluster = *currPair.combining;
 				Reaction const& currReaction = currPair.reaction;
 
 				return running + (currReaction.kConstant[i] *
@@ -460,6 +541,85 @@ double NECluster::getLeftSideRate(int i) const {
 			});
 
 	return combiningRateTotal + emissionRateTotal;
+}
+
+std::vector<std::vector<double> > NECluster::getProdVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the reacting pairs
+	std::for_each(reactingPairs.begin(), reactingPairs.end(),
+			[&toReturn](const ClusterPair& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first->getId() - 1);
+				tempVec.push_back(currPair.second->getId() - 1);
+				tempVec.push_back(currPair.firstDistance);
+				tempVec.push_back(currPair.secondDistance);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > NECluster::getCombVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the combining reactants
+	std::for_each(combiningReactants.begin(), combiningReactants.end(),
+			[&toReturn](const CombiningCluster& cc) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(cc.combining->getId() - 1);
+				tempVec.push_back(cc.distance);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > NECluster::getDissoVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the dissociating pairs
+	std::for_each(dissociatingPairs.begin(), dissociatingPairs.end(),
+			[&toReturn](const ClusterPair& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first->getId() - 1);
+				tempVec.push_back(currPair.second->getId() - 1);
+				tempVec.push_back(currPair.firstDistance);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > NECluster::getEmitVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the emitting pairs
+	std::for_each(emissionPairs.begin(), emissionPairs.end(),
+			[&toReturn](const ClusterPair& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first->getId() - 1);
+				tempVec.push_back(currPair.second->getId() - 1);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
 }
 
 std::vector<int> NECluster::getConnectivity() const {

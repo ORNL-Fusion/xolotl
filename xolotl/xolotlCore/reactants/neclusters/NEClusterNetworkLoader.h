@@ -51,17 +51,28 @@ protected:
 	}
 
 	/**
-	 * This operation creates a singles-species cluster of helium, vacancies or
+	 * This operation creates a singles-species cluster of xenon, vacancies or
 	 * interstitials. It adds the cluster to the appropriate internal list of
 	 * clusters for that type.
 	 *
-	 * @param numXe The number of helium atoms
+	 * @param numXe The number of xenon atoms
 	 * @param numV The number of atomic vacancies
 	 * @param numI The number of interstitial defects
 	 * @return The new cluster
 	 */
 	std::unique_ptr<NECluster> createNECluster(int numXe, int numV, int numI,
 			IReactionNetwork& network) const;
+
+	/**
+	 * This operation creates a super cluster
+	 *
+	 * @param nTot The total number of clusters
+	 * @param numXe The average number of xenon
+	 * @param radius The radius
+	 * @return The new cluster
+	 */
+	std::unique_ptr<NECluster> createNESuperCluster(int nTot, double numXe,
+			double radius, IReactionNetwork& network) const;
 
 	/**
 	 * This operation will add the given cluster to the network and reactants vector

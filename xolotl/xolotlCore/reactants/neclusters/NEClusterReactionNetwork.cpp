@@ -132,14 +132,18 @@ void NEClusterReactionNetwork::reinitializeNetwork() {
 			});
 
 	// Get all the super clusters and loop on them
-	for (auto const& currMapItem : clusterTypeMap.at(ReactantType::NESuper)) {
+	// Have to use allReactants again to be sure the ordering is the same across plateforms
+	std::for_each(allReactants.begin(), allReactants.end(),
+			[&id, this](IReactant& currReactant) {
 
-		auto& currCluster = static_cast<NESuperCluster&>(*(currMapItem.second));
-		id++;
-		currCluster.setMomentId(id);
+				if (currReactant.getType() == ReactantType::NESuper) {
+					auto& currCluster = static_cast<NESuperCluster&>(currReactant);
+					id++;
+					currCluster.setMomentId(id);
 
-		currCluster.optimizeReactions();
-	}
+					currCluster.optimizeReactions();
+				}
+			});
 
 	return;
 }

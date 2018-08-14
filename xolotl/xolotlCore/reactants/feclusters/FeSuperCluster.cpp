@@ -35,7 +35,8 @@ FeSuperCluster::FeSuperCluster(double _numHe, double _numV, int _nTot,
 	sectionVWidth = vWidth;
 
 	// Set the formation energy
-	formationEnergy = 0.0; // It is set to 0.0 because we do not want the super clusters to undergo dissociation
+	formationEnergy = 0.0; // It is set to 0.0 because we do not want
+						   // the super clusters to undergo dissociation
 
 	// Set the diffusion factor and the migration energy
 	migrationEnergy = std::numeric_limits<double>::infinity();
@@ -330,6 +331,64 @@ void FeSuperCluster::resultFrom(ProductionReaction& reaction,
 	return;
 }
 
+void FeSuperCluster::resultFrom(ProductionReaction& reaction, double *coef) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effReactingList.find(rkey);
+	if (it == effReactingList.end()) {
+
+		// We did not already know about this reaction.
+		// Add info about production to our list.
+		auto eret = effReactingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<FeCluster&>(reaction.first),
+						static_cast<FeCluster&>(reaction.second)));
+		// Since we already checked and didn't know about the reaction,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effReactingList.end());
+	auto& prodPair = it->second;
+
+	// NB: prodPair's reactants are same as reaction.
+	// So use prodPair only from here on.
+	// TODO any way to enforce this?
+
+	// Update the coefficients
+	prodPair.a000 += coef[0];
+	prodPair.a100 += coef[1];
+	prodPair.a200 += coef[2];
+	prodPair.a001 += coef[3];
+	prodPair.a101 += coef[4];
+	prodPair.a201 += coef[5];
+	prodPair.a002 += coef[6];
+	prodPair.a102 += coef[7];
+	prodPair.a202 += coef[8];
+	prodPair.a010 += coef[9];
+	prodPair.a110 += coef[10];
+	prodPair.a210 += coef[11];
+	prodPair.a020 += coef[12];
+	prodPair.a120 += coef[13];
+	prodPair.a220 += coef[14];
+	prodPair.a011 += coef[15];
+	prodPair.a111 += coef[16];
+	prodPair.a211 += coef[17];
+	prodPair.a012 += coef[18];
+	prodPair.a112 += coef[19];
+	prodPair.a212 += coef[20];
+	prodPair.a021 += coef[21];
+	prodPair.a121 += coef[22];
+	prodPair.a221 += coef[23];
+	prodPair.a022 += coef[24];
+	prodPair.a122 += coef[25];
+	prodPair.a222 += coef[26];
+
+	return;
+}
+
 void FeSuperCluster::participateIn(ProductionReaction& reaction, int a[4]) {
 
 	setReactionConnectivity(id);
@@ -528,6 +587,46 @@ void FeSuperCluster::participateIn(ProductionReaction& reaction,
 			/ ((double) (sectionVWidth - 1) * dispersionV))
 			* secondOrderSum(std::max(productLoV - singleVSize, loV),
 					std::min(productHiV - singleVSize, hiV), numV);
+
+	return;
+}
+
+void FeSuperCluster::participateIn(ProductionReaction& reaction, double *coef) {
+
+	setReactionConnectivity(id);
+	// Look for the other cluster
+	auto& otherCluster = static_cast<FeCluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = &otherCluster;
+	auto it = effCombiningList.find(rkey);
+	if (it == effCombiningList.end()) {
+
+		// We did not already know about the reaction.
+		// Note that we combine with the other cluster in this reaction.
+		auto eret = effCombiningList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<FeCluster&>(otherCluster)));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effCombiningList.end());
+	auto& combCluster = it->second;
+
+	// Update the coefficients
+	combCluster.a000 += coef[0];
+	combCluster.a100 += coef[1];
+	combCluster.a200 += coef[2];
+	combCluster.a001 += coef[3];
+	combCluster.a101 += coef[4];
+	combCluster.a201 += coef[5];
+	combCluster.a002 += coef[6];
+	combCluster.a102 += coef[7];
+	combCluster.a202 += coef[8];
 
 	return;
 }
@@ -759,6 +858,48 @@ void FeSuperCluster::participateIn(DissociationReaction& reaction,
 	return;
 }
 
+void FeSuperCluster::participateIn(DissociationReaction& reaction,
+		double *coef) {
+
+	// Determine which is the other cluster.
+	auto& emittedCluster = static_cast<FeCluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.dissociating), &emittedCluster);
+	auto it = effDissociatingList.find(rkey);
+	if (it == effDissociatingList.end()) {
+
+		// We did not already know about it.
+
+		// Add it to the network
+		auto eret = effDissociatingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<FeCluster&>(reaction.dissociating),
+						static_cast<FeCluster&>(emittedCluster)));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effDissociatingList.end());
+	auto& dissPair = it->second;
+
+	// Update the coefficients
+	dissPair.a00 += coef[0];
+	dissPair.a10 += coef[1];
+	dissPair.a20 += coef[2];
+	dissPair.a01 += coef[3];
+	dissPair.a11 += coef[4];
+	dissPair.a21 += coef[5];
+	dissPair.a02 += coef[6];
+	dissPair.a12 += coef[7];
+	dissPair.a22 += coef[8];
+
+	return;
+}
+
 void FeSuperCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 
 	// Check if we already know about the reaction.
@@ -783,7 +924,7 @@ void FeSuperCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 	assert(it != effEmissionList.end());
 	auto& dissPair = it->second;
 
-	// Update the coeeficients
+	// Update the coefficients
 	double heDistance = getHeDistance(a[0]);
 	double heFactor = (double) (a[0] - numHe) / dispersionHe;
 	double vDistance = getVDistance(a[1]);
@@ -958,6 +1099,44 @@ void FeSuperCluster::emitFrom(DissociationReaction& reaction,
 			/ ((double) (sectionVWidth - 1) * dispersionV))
 			* secondOrderSum(std::max(dissoLoV, loV + singleVSize),
 					std::min(dissoHiV, hiV + singleVSize), numV);
+
+	return;
+}
+
+void FeSuperCluster::emitFrom(DissociationReaction& reaction, double *coef) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effEmissionList.find(rkey);
+	if (it == effEmissionList.end()) {
+
+		// We did not already know about it.
+
+		// Note that we emit from the two rectants according to the given
+		// reaction.
+		auto eret = effEmissionList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<FeCluster&>(reaction.first),
+						static_cast<FeCluster&>(reaction.second)));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effEmissionList.end());
+	auto& dissPair = it->second;
+
+	// Update the coefficients
+	dissPair.a00 += coef[0];
+	dissPair.a10 += coef[1];
+	dissPair.a20 += coef[2];
+	dissPair.a01 += coef[3];
+	dissPair.a11 += coef[4];
+	dissPair.a21 += coef[5];
+	dissPair.a02 += coef[6];
+	dissPair.a12 += coef[7];
+	dissPair.a22 += coef[8];
 
 	return;
 }
@@ -1518,6 +1697,139 @@ void FeSuperCluster::getVMomentPartialDerivatives(
 	}
 
 	return;
+}
+
+std::vector<std::vector<double> > FeSuperCluster::getProdVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the reacting pairs
+	std::for_each(effReactingList.begin(), effReactingList.end(),
+			[&toReturn](ProductionPairMap::value_type const& currMapItem) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				auto& currPair = currMapItem.second;
+				tempVec.push_back(currPair.first.getId() - 1);
+				tempVec.push_back(currPair.second.getId() - 1);
+				tempVec.push_back(currPair.a000);
+				tempVec.push_back(currPair.a100);
+				tempVec.push_back(currPair.a200);
+				tempVec.push_back(currPair.a001);
+				tempVec.push_back(currPair.a101);
+				tempVec.push_back(currPair.a201);
+				tempVec.push_back(currPair.a002);
+				tempVec.push_back(currPair.a102);
+				tempVec.push_back(currPair.a202);
+				tempVec.push_back(currPair.a010);
+				tempVec.push_back(currPair.a110);
+				tempVec.push_back(currPair.a210);
+				tempVec.push_back(currPair.a020);
+				tempVec.push_back(currPair.a120);
+				tempVec.push_back(currPair.a220);
+				tempVec.push_back(currPair.a011);
+				tempVec.push_back(currPair.a111);
+				tempVec.push_back(currPair.a211);
+				tempVec.push_back(currPair.a012);
+				tempVec.push_back(currPair.a112);
+				tempVec.push_back(currPair.a212);
+				tempVec.push_back(currPair.a021);
+				tempVec.push_back(currPair.a121);
+				tempVec.push_back(currPair.a221);
+				tempVec.push_back(currPair.a022);
+				tempVec.push_back(currPair.a122);
+				tempVec.push_back(currPair.a222);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > FeSuperCluster::getCombVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the combining reactants
+	std::for_each(effCombiningList.begin(), effCombiningList.end(),
+			[&toReturn](CombiningClusterMap::value_type const& currMapItem) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				auto& cc = currMapItem.second;
+				tempVec.push_back(cc.first.getId() - 1);
+				tempVec.push_back(cc.a000);
+				tempVec.push_back(cc.a100);
+				tempVec.push_back(cc.a200);
+				tempVec.push_back(cc.a001);
+				tempVec.push_back(cc.a101);
+				tempVec.push_back(cc.a201);
+				tempVec.push_back(cc.a002);
+				tempVec.push_back(cc.a102);
+				tempVec.push_back(cc.a202);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > FeSuperCluster::getDissoVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the dissociating pairs
+	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
+			[&toReturn](DissociationPairMap::value_type const& currMapItem) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				auto& currPair = currMapItem.second;
+				tempVec.push_back(currPair.first.getId() - 1);
+				tempVec.push_back(currPair.second.getId() - 1);
+				tempVec.push_back(currPair.a00);
+				tempVec.push_back(currPair.a10);
+				tempVec.push_back(currPair.a20);
+				tempVec.push_back(currPair.a01);
+				tempVec.push_back(currPair.a11);
+				tempVec.push_back(currPair.a21);
+				tempVec.push_back(currPair.a02);
+				tempVec.push_back(currPair.a12);
+				tempVec.push_back(currPair.a22);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > FeSuperCluster::getEmitVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the emitting pairs
+	std::for_each(effEmissionList.begin(), effEmissionList.end(),
+			[&toReturn](DissociationPairMap::value_type const& currMapItem) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				auto& currPair = currMapItem.second;
+				tempVec.push_back(currPair.first.getId() - 1);
+				tempVec.push_back(currPair.second.getId() - 1);
+				tempVec.push_back(currPair.a00);
+				tempVec.push_back(currPair.a10);
+				tempVec.push_back(currPair.a20);
+				tempVec.push_back(currPair.a01);
+				tempVec.push_back(currPair.a11);
+				tempVec.push_back(currPair.a21);
+				tempVec.push_back(currPair.a02);
+				tempVec.push_back(currPair.a12);
+				tempVec.push_back(currPair.a22);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
 }
 
 void FeSuperCluster::dumpCoefficients(std::ostream& os,

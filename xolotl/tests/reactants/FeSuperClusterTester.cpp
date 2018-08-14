@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Check the connectivity for He, V, and I
 	int connectivityExpected[] = { 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0,
-			0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0 };
+			0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0,
+			0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
@@ -146,11 +146,10 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-			0.0, 0.0, 0.0, 0.0, 0.0, 8.63906e-08, 0.0, 0.0, -0.00528717,
-			9.20495e-13, 0.00528717, 0.0, 0.0, 0.0, 8.63906e-08, 0.0, 0.0, 0.0,
-			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+	double knownPartials[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.63906e-08, 0, 0, -0.00528717,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 8.63906e-08, 0, 0, 0, 0, 9.20495e-13,
+			0.00528717, 0 };
 	// Set the concentration
 	cluster->setConcentration(0.5);
 

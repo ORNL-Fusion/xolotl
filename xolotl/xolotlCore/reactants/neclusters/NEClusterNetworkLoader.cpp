@@ -10,19 +10,6 @@
 
 namespace xolotlCore {
 
-///**
-// * This operation converts a string to a double, taking in to account the fact
-// * that the input file may contain keys such as "infinite."
-// *
-// * @param inString the string to be converted
-// * @return the string as a double
-// */
-//static inline double convertStrToDouble(const std::string& inString) {
-//	return (inString.compare("infinite") == 0) ?
-//			std::numeric_limits<double>::infinity() :
-//			strtod(inString.c_str(), NULL);
-//}
-
 std::unique_ptr<NECluster> NEClusterNetworkLoader::createNECluster(int numXe,
 		int numV, int numI, IReactionNetwork& network) const {
 
@@ -41,6 +28,18 @@ std::unique_ptr<NECluster> NEClusterNetworkLoader::createNECluster(int numXe,
 	// TODO when we have widespread C++14 support, use std::make_unique
 	// and construct unique ptr and object pointed to in one memory operation.
 	return std::unique_ptr<NECluster>(cluster);
+}
+
+std::unique_ptr<NECluster> NEClusterNetworkLoader::createNESuperCluster(
+		int nTot, double numXe, double radius,
+		IReactionNetwork& network) const {
+	// Create the cluster
+	auto superCluster = new NESuperCluster(numXe, nTot, nTot, radius, 0.0,
+			network, handlerRegistry);
+
+	// TODO when we have widespread C++14 support, use std::make_unique
+	// and construct unique ptr and object pointed to in one memory operation.
+	return std::unique_ptr<NECluster>(superCluster);
 }
 
 void NEClusterNetworkLoader::pushNECluster(
@@ -96,72 +95,71 @@ NEClusterNetworkLoader::NEClusterNetworkLoader(
 
 std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 		const IOptions& options) {
-
-//	// Get the dataset from the HDF5 files
-//	XFile networkFile(fileName);
-//	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
-//	assert(networkGroup);
-//	auto networkVector = networkGroup->readNetwork();
+	// Get the dataset from the HDF5 files
+	int normalSize = 0, superSize = 0;
+	XFile networkFile(fileName);
+	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
+	assert(networkGroup);
+	networkGroup->readNetworkSize(normalSize, superSize);
 
 	// Initialization
-	int numXe = 0, numV = 0, numI = 0;
+	int numXe = 0;
 	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
 	std::vector<std::reference_wrapper<Reactant> > reactants;
 
 	// Prepare the network
-	// Once we have C++14 support, use std::make_unique.
 	std::unique_ptr<NEClusterReactionNetwork> network(
 			new NEClusterReactionNetwork(handlerRegistry));
 
-//	// Loop on the networkVector
-//	for (auto lineIt = networkVector.begin(); lineIt != networkVector.end();
-//			lineIt++) {
-//
-//		// Composition of the cluster
-//		numXe = (int) (*lineIt)[0];
-//		numV = (int) (*lineIt)[1];
-//		numI = (int) (*lineIt)[2];
-//		// Create the cluster
-//		auto nextCluster = createNECluster(numXe, numV, numI, *network);
-//
-//		// Energies
-//		formationEnergy = (*lineIt)[3];
-//		migrationEnergy = (*lineIt)[4];
-//		diffusionFactor = (*lineIt)[5];
-//
-//		// Set the formation energy
-//		nextCluster->setFormationEnergy(formationEnergy);
-//		// Set the diffusion factor and migration energy
-//		nextCluster->setMigrationEnergy(migrationEnergy);
-//		nextCluster->setDiffusionFactor(diffusionFactor);
-//
-//		// Save it in the network
-//		pushNECluster(network, reactants, nextCluster);
-//	}
-//
-//	// Set the reaction network for each reactant
-//	for (Reactant& currCluster : reactants) {
-//		currCluster.updateFromNetwork();
-//	}
-//
-//	// Create the reactions
-//	network->createReactionConnectivity();
-//
-//	// Check if we want dummy reactions
-//	if (!dummyReactions) {
-//		// Apply grouping
-//		applyGrouping(*network);
-//	}
+	// Loop on the clusters
+	for (int i = 0; i < normalSize + superSize; i++) {
+		// Open the cluster group
+		XFile::ClusterGroup clusterGroup(*networkGroup, i);
 
-//	// Dump the network we've created, if desired.
-//	int rank;
-//	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-//	if (rank == 0) {
-//		// Dump the network we've created for comparison with baseline.
-//		std::ofstream networkStream(netDebugOpts.second);
-//		network->dumpTo(networkStream);
-//	}
+		if (i < normalSize) {
+			// Normal cluster
+			// Read the composition
+			auto comp = clusterGroup.readCluster(formationEnergy,
+					migrationEnergy, diffusionFactor);
+			numXe = comp[toCompIdx(Species::Xe)];
+
+			// Create the cluster
+			auto nextCluster = createNECluster(numXe, 0, 0, *network);
+
+			// Set the formation energy
+			nextCluster->setFormationEnergy(formationEnergy);
+			// Set the diffusion factor and migration energy
+			nextCluster->setMigrationEnergy(migrationEnergy);
+			nextCluster->setDiffusionFactor(diffusionFactor);
+
+			// Save it in the network
+			pushNECluster(network, reactants, nextCluster);
+		} else {
+			// Super cluster
+			int nTot = 0;
+			double average = 0.0, radius = 0.0;
+			clusterGroup.readNESuperCluster(nTot, average, radius);
+
+			// Create the cluster
+			auto nextCluster = createNESuperCluster(nTot, average, radius,
+					*network);
+
+			// Save it in the network
+			pushNECluster(network, reactants, nextCluster);
+		}
+	}
+
+	// Ask reactants to update now that they are in network.
+	for (IReactant& currReactant : reactants) {
+		currReactant.updateFromNetwork();
+	}
+
+	// Set the reactions
+	networkGroup->readReactions(*network);
+
+	// Recompute Ids and network size
+	network->reinitializeNetwork();
 
 	// Need to use move() because return type uses smart pointer to base class,
 	// not derived class that we created.
@@ -372,7 +370,7 @@ void NEClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 		std::for_each(combi.begin(), combi.end(),
 				[this,&superGroupMap,&clusterGroupMap](NECluster::CombiningCluster& cc) {
 					// Test the combining reactant
-					NECluster& currCombining = cc.combining;
+					NECluster& currCombining = *(cc.combining);
 					if (currCombining.getType() == ReactantType::Xe) {
 						// Get its size
 						auto nXe = currCombining.getSize();
@@ -380,7 +378,7 @@ void NEClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 						if (nXe >= xeMin) {
 							// It has to be replaced by a super cluster
 							auto newCluster = superGroupMap[clusterGroupMap[nXe]];
-							cc.combining = *newCluster;
+							cc.combining = newCluster;
 							cc.distance = newCluster->getDistance(nXe);
 						}
 					}

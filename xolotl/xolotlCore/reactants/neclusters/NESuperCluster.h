@@ -206,12 +206,62 @@ public:
 	void optimizeReactions() override;
 
 	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
+	void resultFrom(ProductionReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
+	void participateIn(ProductionReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
+	void participateIn(DissociationReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
+	void emitFrom(DissociationReaction& reaction, double *coef) override;
+
+	/**
 	 * This operation returns false.
 	 *
 	 * @return True if mixed
 	 */
 	virtual bool isMixed() const override {
 		return false;
+	}
+
+	/**
+	 * This operation returns the total number of clusters it contains.
+	 *
+	 * @return The total number of clusters
+	 */
+	int getNTot() const {
+		return nTot;
+	}
+
+	/**
+	 * This operation returns the average number of clusters it contains.
+	 *
+	 * @return The average number of clusters
+	 */
+	double getAverage() const {
+		return numXe;
 	}
 
 	/**
@@ -422,6 +472,41 @@ public:
 	 * inserted.
 	 */
 	void getMomentPartialDerivatives(std::vector<double> & partials) const;
+
+	/**
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, and
+	 * the a coefs.
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getProdVector() const override;
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, and
+	 * the a coefs.
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const override;
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, and
+	 * the a coefs.
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const override;
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved, containing the a coefs.
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const override;
 
 	/**
 	 * This operation returns the section width.

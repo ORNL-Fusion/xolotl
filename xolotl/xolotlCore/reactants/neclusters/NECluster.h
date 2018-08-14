@@ -119,7 +119,7 @@ public:
 		// We use a reference wrapper because we may need to reassign
 		// the original combining reactant to a super cluster after
 		// construction.
-		std::reference_wrapper<NECluster> combining;
+		NECluster * combining;
 
 		/**
 		 * The reaction pointer to the list
@@ -137,7 +137,7 @@ public:
 		double distance;
 
 		//! The constructor
-		CombiningCluster(Reaction& _reaction, NECluster& _comb) :
+		CombiningCluster(Reaction& _reaction, NECluster * _comb) :
 				combining(_comb), reaction(_reaction), distance(0.0) {
 		}
 	};
@@ -221,30 +221,12 @@ public:
 			int b[4] = { }) override;
 
 	/**
-	 * Note that we result from the given reaction involving a super cluster.
-	 * Assumes the reaction is already in the network.
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
 	 *
 	 * \see Reactant.h
 	 */
-	void resultFrom(ProductionReaction& reaction,
-			const std::vector<PendingProductionReactionInfo>& prInfos)
-					override {
-		// TODO Should not be called for NE reaction network yet,
-		// but required to be defined.
-		assert(false);
-	}
-
-	/**
-	 * Note that we result from the given reaction involving a super cluster.
-	 * Assumes the reaction is already in the network.
-	 *
-	 * \see Reactant.h
-	 */
-	void resultFrom(ProductionReaction& reaction, IReactant& product) override {
-		// TODO Should not be called for NE reaction network yet,
-		// but required to be defined.
-		assert(false);
-	}
+	void resultFrom(ProductionReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction.
@@ -255,33 +237,12 @@ public:
 	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
 
 	/**
-	 * Note that we combine with another cluster in a production reaction
-	 * involving a super cluster.
+	 * Note that we combine with another cluster in a production reaction.
 	 * Assumes that the reaction is already in our network.
 	 *
 	 * \see Reactant.h
 	 */
-	void participateIn(ProductionReaction& reaction,
-			const std::vector<PendingProductionReactionInfo>& prInfos)
-					override {
-		// TODO Should not be called for NE reaction network yet,
-		// but required to be defined.
-		assert(false);
-	}
-
-	/**
-	 * Note that we combine with another cluster in a production reaction
-	 * involving a super cluster.
-	 * Assumes that the reaction is already in our network.
-	 *
-	 * \see Reactant.h
-	 */
-	void participateIn(ProductionReaction& reaction, IReactant& product)
-			override {
-		// TODO Should not be called for NE reaction network yet,
-		// but required to be defined.
-		assert(false);
-	}
+	void participateIn(ProductionReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -293,33 +254,12 @@ public:
 			int b[4] = { }) override;
 
 	/**
-	 * Note that we combine with another cluster in a dissociation reaction
-	 * involving a super cluster.
+	 * Note that we combine with another cluster in a dissociation reaction.
 	 * Assumes the reaction is already in our network.
 	 *
 	 * \see Reactant.h
 	 */
-	void participateIn(DissociationReaction& reaction,
-			const std::vector<PendingProductionReactionInfo>& prInfos)
-					override {
-		// TODO Should not be called for NE reaction network yet,
-		// but required to be defined.
-		assert(false);
-	}
-
-	/**
-	 * Note that we combine with another cluster in a dissociation reaction
-	 * involving a super cluster.
-	 * Assumes the reaction is already in our network.
-	 *
-	 * \see Reactant.h
-	 */
-	void participateIn(DissociationReaction& reaction, IReactant& disso)
-			override {
-		// TODO Should not be called for NE reaction network yet,
-		// but required to be defined.
-		assert(false);
-	}
+	void participateIn(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * Note that we emit from the given reaction.
@@ -330,30 +270,12 @@ public:
 	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
 
 	/**
-	 * Note that we emit from the given reaction involving a super cluster.
+	 * Note that we emit from the given reaction.
 	 * Assumes the reaction is already in our network.
 	 *
 	 * \see Reactant.h
 	 */
-	void emitFrom(DissociationReaction& reaction,
-			const std::vector<PendingProductionReactionInfo>& prInfos)
-					override {
-		// TODO Should not be called for NE reaction network yet,
-		// but required to be defined.
-		assert(false);
-	}
-
-	/**
-	 * Note that we emit from the given reaction involving a super cluster.
-	 * Assumes the reaction is already in our network.
-	 *
-	 * \see Reactant.h
-	 */
-	void emitFrom(DissociationReaction& reaction, IReactant& disso) override {
-		// TODO Should not be called for NE reaction network yet,
-		// but required to be defined.
-		assert(false);
-	}
+	void emitFrom(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * Add the reactions to the network lists.
@@ -528,6 +450,41 @@ public:
 	 * @return The rate
 	 */
 	double getLeftSideRate(int i) const override;
+
+	/**
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, and
+	 * the distance.
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getProdVector() const override;
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, and
+	 * the distance.
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const override;
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, and
+	 * the distance
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const override;
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved.
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const override;
 
 	/**
 	 * This operation returns a list that represents the connectivity

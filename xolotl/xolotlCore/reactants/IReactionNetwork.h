@@ -140,6 +140,13 @@ public:
 	virtual int size() const = 0;
 
 	/**
+	 * This operation returns the number of super reactants in the network.
+	 *
+	 * @return The number of super reactants in the network
+	 */
+	virtual int getSuperSize() const = 0;
+
+	/**
 	 * This operation returns the size or number of reactants and momentums in the network.
 	 *
 	 * @return The number of degrees of freedom

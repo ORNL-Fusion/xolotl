@@ -396,6 +396,16 @@ public:
 	}
 
 	/**
+	 * This operation returns the number of super reactants in the network.
+	 * Needs to be overridden by the daughter classes.
+	 *
+	 * @return The number of super reactants in the network
+	 */
+	int getSuperSize() const override {
+		return 0;
+	}
+
+	/**
 	 * This operation returns the size or number of reactants and momentums in the network.
 	 *
 	 * @return The number of degrees of freedom

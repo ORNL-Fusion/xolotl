@@ -49,47 +49,47 @@ BOOST_AUTO_TEST_CASE(checkLoad) {
 	// Get the size of the network
 	int networkSize = network->size();
 	// Check the value
-	BOOST_REQUIRE_EQUAL(networkSize, 0);
+	BOOST_REQUIRE_EQUAL(networkSize, 3);
 
 	// Check the properties
-	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::Xe), 0);
+	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::Xe), 3);
 	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::V), 0);
 	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::I), 0);
 	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::XeV), 0);
 
-//	// Get all the reactants
-//	auto reactants = network->getAll();
-//
-//	// Get the first one of the network
-//	IReactant& reactant = reactants.at(0);
-//	// Check the composition
-//	auto composition = reactant.getComposition();
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::Xe)], 1);
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::V)], 0);
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::I)], 0);
-//	// Check the formation energy
-//	auto formationEnergy = reactant.getFormationEnergy();
-//	BOOST_REQUIRE_EQUAL(formationEnergy, 7.0);
-//	// Check the migration energy
-//	auto migrationEnergy = reactant.getMigrationEnergy();
-//	BOOST_REQUIRE_EQUAL(migrationEnergy, 0.0);
-//	// Check the diffusion factor
-//	auto diffusionFactor = reactant.getDiffusionFactor();
-//	BOOST_REQUIRE_EQUAL(diffusionFactor, 5.0e-3);
-//
-//	// Get the last reactant of the network
-//	IReactant& reactant2 = reactants.at(2);
-//	// Check the composition
-//	composition = reactant2.getComposition();
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::Xe)], 3);
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::V)], 0);
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::I)], 0);
-//	// Check the formation energy
-//	formationEnergy = reactant2.getFormationEnergy();
-//	BOOST_REQUIRE_EQUAL(formationEnergy, 17.15);
-//	// Check the diffusion factor
-//	diffusionFactor = reactant2.getDiffusionFactor();
-//	BOOST_REQUIRE_CLOSE(diffusionFactor, 0.0, 1.0e-16);
+	// Get all the reactants
+	auto reactants = network->getAll();
+
+	// Get the first one of the network
+	IReactant& reactant = reactants.at(0);
+	// Check the composition
+	auto composition = reactant.getComposition();
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::Xe)], 1);
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::V)], 0);
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::I)], 0);
+	// Check the formation energy
+	auto formationEnergy = reactant.getFormationEnergy();
+	BOOST_REQUIRE_EQUAL(formationEnergy, 7.0);
+	// Check the migration energy
+	auto migrationEnergy = reactant.getMigrationEnergy();
+	BOOST_REQUIRE_EQUAL(migrationEnergy, 3.04);
+	// Check the diffusion factor
+	auto diffusionFactor = reactant.getDiffusionFactor();
+	BOOST_REQUIRE_EQUAL(diffusionFactor, 7.6e8);
+
+	// Get the last reactant of the network
+	IReactant& reactant2 = reactants.at(2);
+	// Check the composition
+	composition = reactant2.getComposition();
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::Xe)], 3);
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::V)], 0);
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::I)], 0);
+	// Check the formation energy
+	formationEnergy = reactant2.getFormationEnergy();
+	BOOST_REQUIRE_EQUAL(formationEnergy, 17.15);
+	// Check the diffusion factor
+	diffusionFactor = reactant2.getDiffusionFactor();
+	BOOST_REQUIRE_CLOSE(diffusionFactor, 0.0, 1.0e-16);
 
 	return;
 }
