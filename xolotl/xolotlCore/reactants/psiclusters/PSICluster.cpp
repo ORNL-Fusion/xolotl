@@ -173,7 +173,13 @@ void PSICluster::resultFrom(ProductionReaction& reaction, double *coef) {
 	// TODO Any way to enforce this beyond splitting it into two functions?
 
 	// Update the coefficients
-	newPair.coefs[0][0] += coef[0];
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			newPair.coefs[i][j] += coef[n];
+			n++;
+		}
+	}
 
 	return;
 }
@@ -340,7 +346,11 @@ void PSICluster::participateIn(ProductionReaction& reaction, double *coef) {
 	}
 
 	// Update the coefficients
-	(*it).coefs[0] += coef[0];
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		(*it).coefs[i] += coef[n];
+		n++;
+	}
 
 	return;
 }
@@ -526,7 +536,13 @@ void PSICluster::participateIn(DissociationReaction& reaction, double *coef) {
 	}
 
 	// Update the coefficients
-	(*it).coefs[0][0] += coef[0];
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			(*it).coefs[i][j] += coef[n];
+			n++;
+		}
+	}
 
 	return;
 }
@@ -646,7 +662,13 @@ void PSICluster::emitFrom(DissociationReaction& reaction, double *coef) {
 	auto& dissPair = emissionPairs.back();
 
 	// Count the number of reactions
-	dissPair.coefs[0][0] += coef[0];
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			dissPair.coefs[i][j] += coef[n];
+			n++;
+		}
+	}
 
 	return;
 }
@@ -1018,12 +1040,16 @@ std::vector<std::vector<double> > PSICluster::getProdVector() const {
 
 	// Loop on the reacting pairs
 	std::for_each(reactingPairs.begin(), reactingPairs.end(),
-			[&toReturn](const ClusterPair& currPair) {
+			[&toReturn,this](const ClusterPair& currPair) {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				tempVec.push_back(currPair.first.getId() - 1);
 				tempVec.push_back(currPair.second.getId() - 1);
-				tempVec.push_back(currPair.coefs[0][0]);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						tempVec.push_back(currPair.coefs[i][j]);
+					}
+				}
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -1038,11 +1064,13 @@ std::vector<std::vector<double> > PSICluster::getCombVector() const {
 
 	// Loop on the combining reactants
 	std::for_each(combiningReactants.begin(), combiningReactants.end(),
-			[&toReturn](const CombiningCluster& cc) {
+			[&toReturn,this](const CombiningCluster& cc) {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				tempVec.push_back(cc.combining.getId() - 1);
-				tempVec.push_back(cc.coefs[0]);
+				for (int i = 0; i < psDim; i++) {
+					tempVec.push_back(cc.coefs[i]);
+				}
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -1057,12 +1085,16 @@ std::vector<std::vector<double> > PSICluster::getDissoVector() const {
 
 	// Loop on the dissociating pairs
 	std::for_each(dissociatingPairs.begin(), dissociatingPairs.end(),
-			[&toReturn](const ClusterPair& currPair) {
+			[&toReturn,this](const ClusterPair& currPair) {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				tempVec.push_back(currPair.first.getId() - 1);
 				tempVec.push_back(currPair.second.getId() - 1);
-				tempVec.push_back(currPair.coefs[0][0]);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						tempVec.push_back(currPair.coefs[i][j]);
+					}
+				}
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -1077,12 +1109,16 @@ std::vector<std::vector<double> > PSICluster::getEmitVector() const {
 
 	// Loop on the emitting pairs
 	std::for_each(emissionPairs.begin(), emissionPairs.end(),
-			[&toReturn](const ClusterPair& currPair) {
+			[&toReturn,this](const ClusterPair& currPair) {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				tempVec.push_back(currPair.first.getId() - 1);
 				tempVec.push_back(currPair.second.getId() - 1);
-				tempVec.push_back(currPair.coefs[0][0]);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						tempVec.push_back(currPair.coefs[i][j]);
+					}
+				}
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);

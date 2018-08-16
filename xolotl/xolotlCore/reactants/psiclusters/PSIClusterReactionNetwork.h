@@ -525,6 +525,16 @@ public:
 					currCluster.setPhaseSpace(dim, list);
 				});
 	}
+
+	/**
+	 * This operation returns the phase space list needed to set up the grouping
+	 * correctly in PSI.
+	 *
+	 * @return The phase space list
+	 */
+	virtual Array<int, 5> getPhaseSpaceList() const override {
+		return indexList;
+	}
 };
 
 } // namespace xolotlCore

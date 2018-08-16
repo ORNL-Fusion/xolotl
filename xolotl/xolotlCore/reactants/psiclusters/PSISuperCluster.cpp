@@ -2,7 +2,6 @@
 #include <iterator>
 #include "PSISuperCluster.h"
 #include "PSIClusterReactionNetwork.h"
-#include <MathUtils.h>
 #include <xolotlPerf.h>
 
 using namespace xolotlCore;
@@ -349,7 +348,15 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction, double *coef) {
 	// TODO Any way to enforce this beyond splitting it into two functions?
 
 	// Update the coefficients
-	prodPair.coefs[0][0][0] += coef[0];
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			for (int k = 0; k < psDim; k++) {
+				prodPair.coefs[i][j][k] += coef[n];
+				n++;
+			}
+		}
+	}
 
 	return;
 }
@@ -561,7 +568,8 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 	return;
 }
 
-void PSISuperCluster::participateIn(ProductionReaction& reaction, double *coef) {
+void PSISuperCluster::participateIn(ProductionReaction& reaction,
+		double *coef) {
 
 	// Look for the other cluster
 	auto& otherCluster = static_cast<PSICluster&>(
@@ -587,7 +595,15 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction, double *coef) 
 	auto& combCluster = it->second;
 
 	// Update the coefficients
-	combCluster.coefs[0][0][0] += coef[0];
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			for (int k = 0; k < psDim; k++) {
+				combCluster.coefs[i][j][k] += coef[n];
+				n++;
+			}
+		}
+	}
 
 	return;
 }
@@ -850,7 +866,13 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 	auto& dissPair = it->second;
 
 	// Update the coefficients
-	dissPair.coefs[0][0] += coef[0];
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			dissPair.coefs[i][j] += coef[n];
+			n++;
+		}
+	}
 
 	return;
 }
@@ -1100,7 +1122,13 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction, double *coef) {
 	auto& dissPair = it->second;
 
 	// Update the coefficients
-	dissPair.coefs[0][0] += coef[0];
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			dissPair.coefs[i][j] += coef[n];
+			n++;
+		}
+	}
 
 	return;
 }
@@ -1688,13 +1716,19 @@ std::vector<std::vector<double> > PSISuperCluster::getProdVector() const {
 
 	// Loop on the reacting pairs
 	std::for_each(effReactingList.begin(), effReactingList.end(),
-			[&toReturn](ProductionPairMap::value_type const& currMapItem) {
+			[&toReturn,this](ProductionPairMap::value_type const& currMapItem) {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				auto& currPair = currMapItem.second;
 				tempVec.push_back(currPair.first.getId() - 1);
 				tempVec.push_back(currPair.second.getId() - 1);
-				tempVec.push_back(currPair.coefs[0][0][0]);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int k = 0; k < psDim; k++) {
+							tempVec.push_back(currPair.coefs[i][j][k]);
+						}
+					}
+				}
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -1709,12 +1743,18 @@ std::vector<std::vector<double> > PSISuperCluster::getCombVector() const {
 
 	// Loop on the combining reactants
 	std::for_each(effCombiningList.begin(), effCombiningList.end(),
-			[&toReturn](CombiningClusterMap::value_type const& currMapItem) {
+			[&toReturn,this](CombiningClusterMap::value_type const& currMapItem) {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				auto& cc = currMapItem.second;
 				tempVec.push_back(cc.first.getId() - 1);
-				tempVec.push_back(cc.coefs[0][0][0]);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int k = 0; k < psDim; k++) {
+							tempVec.push_back(cc.coefs[i][j][k]);
+						}
+					}
+				}
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -1729,13 +1769,17 @@ std::vector<std::vector<double> > PSISuperCluster::getDissoVector() const {
 
 	// Loop on the dissociating pairs
 	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
-			[&toReturn](DissociationPairMap::value_type const& currMapItem) {
+			[&toReturn,this](DissociationPairMap::value_type const& currMapItem) {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				auto& currPair = currMapItem.second;
 				tempVec.push_back(currPair.first.getId() - 1);
 				tempVec.push_back(currPair.second.getId() - 1);
-				tempVec.push_back(currPair.coefs[0][0]);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						tempVec.push_back(currPair.coefs[i][j]);
+					}
+				}
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -1750,13 +1794,17 @@ std::vector<std::vector<double> > PSISuperCluster::getEmitVector() const {
 
 	// Loop on the emitting pairs
 	std::for_each(effEmissionList.begin(), effEmissionList.end(),
-			[&toReturn](DissociationPairMap::value_type const& currMapItem) {
+			[&toReturn,this](DissociationPairMap::value_type const& currMapItem) {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				auto& currPair = currMapItem.second;
 				tempVec.push_back(currPair.first.getId() - 1);
 				tempVec.push_back(currPair.second.getId() - 1);
-				tempVec.push_back(currPair.coefs[0][0]);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						tempVec.push_back(currPair.coefs[i][j]);
+					}
+				}
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);

@@ -559,7 +559,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 				double conc = gridPointSolution[id];
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
-				double coef = cluster.getDiffusionCoefficient(xi);
+				double coef = cluster.getDiffusionCoefficient(xi - xs);
 				// Compute the flux going to the right
 				newFlux += (double) size * factor * coef * conc * hxRight;
 			}
@@ -577,7 +577,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 				double conc = gridPointSolution[id];
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
-				double coef = cluster.getDiffusionCoefficient(xi);
+				double coef = cluster.getDiffusionCoefficient(xi - xs);
 				// Compute the flux going to the right
 				newFlux += (double) size * factor * coef * conc * hxRight;
 			}
@@ -595,7 +595,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 				double conc = gridPointSolution[id];
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
-				double coef = cluster.getDiffusionCoefficient(xi);
+				double coef = cluster.getDiffusionCoefficient(xi - xs);
 				// Compute the flux going to the right
 				newFlux += (double) size * factor * coef * conc * hxRight;
 			}
@@ -1944,7 +1944,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 				double conc = gridPointSolution[id];
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
-				double coef = cluster.getDiffusionCoefficient(xi);
+				double coef = cluster.getDiffusionCoefficient(xi - xs);
 
 				// Factor for finite difference
 				double hxLeft = grid[xi + 1] - grid[xi];

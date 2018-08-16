@@ -442,6 +442,7 @@ public:
 		// Names of network attributes.
 		static const std::string normalSizeAttrName;
 		static const std::string superSizeAttrName;
+		static const std::string phaseSpaceAttrName;
 
 	public:
 
@@ -471,8 +472,9 @@ public:
 		 *
 		 * @param normalSize The number of normal clusters.
 		 * @param superSize The number of super clusters.
+		 * @return The phase space parameters
 		 */
-		void readNetworkSize(int &normalSize, int &superSize) const;
+		Array<int, 5> readNetworkSize(int &normalSize, int &superSize) const;
 
 		/**
 		 * Read the reactions for every cluster.

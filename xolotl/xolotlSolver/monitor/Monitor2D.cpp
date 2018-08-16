@@ -358,7 +358,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 					double conc = gridPointSolution[id];
 					// Get its size and diffusion coefficient
 					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient(xi);
+					double coef = cluster.getDiffusionCoefficient(xi - xs);
 					// Compute the flux going to the right
 					newFlux += (double) size * factor * coef * conc;
 				}
@@ -376,7 +376,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 					double conc = gridPointSolution[id];
 					// Get its size and diffusion coefficient
 					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient(xi);
+					double coef = cluster.getDiffusionCoefficient(xi - xs);
 					// Compute the flux going to the right
 					newFlux += (double) size * factor * coef * conc;
 				}
@@ -394,7 +394,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 					double conc = gridPointSolution[id];
 					// Get its size and diffusion coefficient
 					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient(xi);
+					double coef = cluster.getDiffusionCoefficient(xi - xs);
 					// Compute the flux going to the right
 					newFlux += (double) size * factor * coef * conc;
 				}
@@ -883,7 +883,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					double conc = gridPointSolution[id];
 					// Get its size and diffusion coefficient
 					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient(xi);
+					double coef = cluster.getDiffusionCoefficient(xi - xs);
 					// Compute the flux going to the left
 					newFlux += (double) size * factor * coef * conc * hy;
 				}
@@ -914,7 +914,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 						double conc = gridPointSolution[id];
 						// Get its size and diffusion coefficient
 						int size = cluster.getSize();
-						double coef = cluster.getDiffusionCoefficient(xi);
+						double coef = cluster.getDiffusionCoefficient(xi - xs);
 						// Compute the flux
 						newFlux += ((double) size * coef * conc * hxLeft) / hy;
 					}
@@ -937,7 +937,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 						double conc = gridPointSolution[id];
 						// Get its size and diffusion coefficient
 						int size = cluster.getSize();
-						double coef = cluster.getDiffusionCoefficient(xi);
+						double coef = cluster.getDiffusionCoefficient(xi - xs);
 						// Compute the flux
 						newFlux += ((double) size * coef * conc * hxLeft) / hy;
 					}

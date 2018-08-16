@@ -221,6 +221,7 @@ XFile::HeaderGroup::NetworkCompsType XFile::HeaderGroup::readNetworkComps(
 const fs::path XFile::NetworkGroup::path = "/networkGroup";
 const std::string XFile::NetworkGroup::normalSizeAttrName = "normalSize";
 const std::string XFile::NetworkGroup::superSizeAttrName = "superSize";
+const std::string XFile::NetworkGroup::phaseSpaceAttrName = "phaseSpace";
 
 XFile::NetworkGroup::NetworkGroup(const XFile& file) :
 		HDF5File::Group(file, NetworkGroup::path, false) {
@@ -249,6 +250,15 @@ XFile::NetworkGroup::NetworkGroup(const XFile& file, IReactionNetwork& network) 
 			scalarDSpace);
 	superSizeAttr.setTo(superSize);
 
+	// Add the phase space attribute
+	auto list = network.getPhaseSpaceList();
+	std::array<hsize_t, 1> dim { 5 };
+	XFile::SimpleDataSpace<1> phaseDSpace(dim);
+	hid_t attrId = H5Acreate2(getId(), phaseSpaceAttrName.c_str(),
+	H5T_STD_I32LE, phaseDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
+	auto status = H5Awrite(attrId, H5T_STD_I32LE, &list);
+	status = H5Aclose(attrId);
+
 	// Loop on all the clusters
 	auto& allReactants = network.getAll();
 	std::for_each(allReactants.begin(), allReactants.end(),
@@ -259,7 +269,7 @@ XFile::NetworkGroup::NetworkGroup(const XFile& file, IReactionNetwork& network) 
 			});
 }
 
-void XFile::NetworkGroup::readNetworkSize(int &normalSize,
+Array<int, 5> XFile::NetworkGroup::readNetworkSize(int &normalSize,
 		int &superSize) const {
 	// Open and read the normal size attribute
 	Attribute<int> normalSizeAttr(*this, normalSizeAttrName);
@@ -269,7 +279,14 @@ void XFile::NetworkGroup::readNetworkSize(int &normalSize,
 	Attribute<int> superSizeAttr(*this, superSizeAttrName);
 	superSize = superSizeAttr.get();
 
-	return;
+	// Read the phase space attirbute
+	Array<int, 5> list;
+	hid_t attributeId = H5Aopen_name(getId(), phaseSpaceAttrName.c_str());
+	hid_t dataspaceId = H5Aget_space(attributeId);
+	herr_t status = H5Aread(attributeId, H5T_STD_I32LE, &list);
+	status = H5Aclose(attributeId);
+
+	return list;
 }
 
 void XFile::NetworkGroup::readReactions(IReactionNetwork& network) const {

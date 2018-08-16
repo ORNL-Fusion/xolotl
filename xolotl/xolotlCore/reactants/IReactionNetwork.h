@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include "NDArray.h"
 #include "IReactant.h"
 
 namespace xolotlCore {
@@ -324,6 +325,14 @@ public:
 	 * @return Maximum size of cluster of type rtype currently in network.
 	 */
 	virtual IReactant::SizeType getMaxClusterSize(ReactantType rtype) const = 0;
+
+	/**
+	 * This operation returns the phase space list needed to set up the grouping
+	 * correctly in PSI.
+	 *
+	 * @return The phase space list
+	 */
+	virtual Array<int, 5> getPhaseSpaceList() const = 0;
 
 	/**
 	 * Dump a representation of the network to the given output stream.

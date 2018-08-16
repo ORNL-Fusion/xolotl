@@ -20,7 +20,7 @@ using namespace xolotlCore;
 /**
  * This suite is responsible for testing the PSISuperCluster.
  */
-BOOST_AUTO_TEST_SUITE(PSISuperCluster_testSuite)
+BOOST_AUTO_TEST_SUITE (PSISuperCluster_testSuite)
 
 /**
  * This operation checks the ability of the PSISuperCluster to describe
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
-			<< std::endl;
+	<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -72,8 +72,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Check the connectivity for He, V, and I
 	int connectivityExpected[] = { 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1,
-			0, 0, 1, 1, 1, 0 };
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+			1, 0, 0, 1, 1, 1, 0 };
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
 	}
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
-			<< std::endl;
+	<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
-			<< std::endl;
+	<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -187,7 +187,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
 
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 7.02156e-20, 0, 0, 0, -1.04991e-10 };
+	double knownPartials[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 7.02156e-20, 0, 0, 0,
+			-1.04991e-10 };
 
 	// Set the concentration
 	cluster->setConcentration(0.5);
@@ -234,7 +235,7 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
-			<< std::endl;
+	<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -277,7 +278,7 @@ BOOST_AUTO_TEST_CASE(checkGetConcentrations) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
-			<< std::endl;
+	<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -311,13 +312,13 @@ BOOST_AUTO_TEST_CASE(checkGetConcentrations) {
 
 	// Set the concentration in the cluster
 	superCluster.setZerothMoment(4.5);
-	superCluster.setMoment(1.0, 0); // He
-	superCluster.setMoment(1.0, 3); // V
+	superCluster.setMoment(1.0, 0);// He
+	superCluster.setMoment(1.0, 3);// V
 
 	// Check the different concentrations
 	BOOST_REQUIRE_CLOSE(18.0, superCluster.getTotalConcentration(), 0.001);
 	BOOST_REQUIRE_CLOSE(336.33, superCluster.getTotalAtomConcentration(0),
-			0.001); // He
+			0.001);// He
 	BOOST_REQUIRE_CLOSE(90.0, superCluster.getTotalVacancyConcentration(),
 			0.001);
 	BOOST_REQUIRE_CLOSE(0.0, superCluster.getIntegratedVConcentration(1),
@@ -333,7 +334,7 @@ BOOST_AUTO_TEST_CASE(checkBoundaries) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
-			<< std::endl;
+	<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -373,10 +374,10 @@ BOOST_AUTO_TEST_CASE(checkBoundaries) {
 	bounds = superCluster.getBounds(1); // D
 	BOOST_REQUIRE_EQUAL(0, *(bounds.begin()));
 	BOOST_REQUIRE_EQUAL(1, *(bounds.end()));
-	bounds = superCluster.getBounds(2); // T
+	bounds = superCluster.getBounds(2);// T
 	BOOST_REQUIRE_EQUAL(0, *(bounds.begin()));
 	BOOST_REQUIRE_EQUAL(1, *(bounds.end()));
-	bounds = superCluster.getBounds(3); // V
+	bounds = superCluster.getBounds(3);// V
 	BOOST_REQUIRE_EQUAL(5, *(bounds.begin()));
 	BOOST_REQUIRE_EQUAL(6, *(bounds.end()));
 

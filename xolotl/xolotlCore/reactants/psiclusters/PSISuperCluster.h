@@ -9,7 +9,7 @@
 #include "PSICluster.h"
 #include "ReactionNetwork.h"
 #include "IntegerRange.h"
-#include "NDArray.h"
+#include <MathUtils.h>
 
 // We use std::unordered_map for quick lookup of info about 
 // reactions we participate in.

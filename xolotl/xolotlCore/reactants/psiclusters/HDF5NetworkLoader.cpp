@@ -16,7 +16,7 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 	XFile networkFile(fileName);
 	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
 	assert(networkGroup);
-	networkGroup->readNetworkSize(normalSize, superSize);
+	auto list = networkGroup->readNetworkSize(normalSize, superSize);
 
 	// Initialization
 	int numHe = 0, numV = 0, numI = 0, numD = 0, numT = 0;
@@ -75,8 +75,11 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 
 	// Define the phase space for the network
 	int nDim = 1;
-	Array<int, 5> list;
-	list[0] = 0;
+	// Loop on the list for the phase space
+	for (int i = 1; i < 5; i++)
+		if (list[i] > 0)
+			nDim++;
+
 	// Now that all the clusters are created
 	// Give the information on the phase space to the network
 	network->setPhaseSpace(nDim, list);

@@ -860,14 +860,8 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 	// Define the phase space for the network
 	int nDim = 1;
 	Array<int, 5> list;
+	list.Init(0);
 	list[0] = 0;
-	// Moments only if He only is present
-	if (heVList.size() > 0 && maxHe > 0 && maxD == 0 && maxT == 0 && maxV > 0) {
-		list[nDim] = 1; // He
-		nDim++;
-		list[nDim] = 4; // V
-		nDim++;
-	}
 //	// Add additional axis
 //	if (heVList.size() > 0) {
 //		if (maxHe > 0) {
@@ -889,6 +883,13 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 //	}
 
 	std::cout << "Total size: " << network.size() + heVList.size() << std::endl;
+
+	// Skip grouping if there is nothing to group
+	if (heVList.size() == 0) {
+		// Give the information on the phase space to the network
+		network.setPhaseSpace(nDim, list);
+		return;
+	}
 
 	// Initialize variables for the loop
 	int count = 0, heIndex = ((maxHe > 0) && (maxD == 0) && (maxT == 0)),
@@ -965,9 +966,9 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 				if (heVList.find(pair) == heVList.end())
 					continue;
 
-//				// Skip the largest He cluster
-//				if (m == heMax)
-//					continue;
+				// Skip the largest He cluster
+				if (m == heMax && n + o == upperH)
+					continue;
 
 				if (n < dLow)
 					dLow = n;
@@ -1031,6 +1032,80 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 			tempVector.clear();
 		}
 	}
+
+	// Group the largest ones we just skipped
+	int k = vMax;
+	int m = heMax;
+	// Group the largest HeV cluster with corresponding upper H
+	int upperH = min((int) ((2.0 / 3.0) * (double) heMax), max(dMax, tMax));
+	int dLow = dMax, dHigh = -1, tLow = tMax, tHigh = -1;
+
+	// Loop on possible hydrogen (D+T)
+	for (int n = 0; n <= upperH; n++) {
+		int o = upperH - n;
+		// Check if the corresponding coordinates are in the heVList set
+		auto pair = std::make_tuple(m, n, o, k);
+		if (heVList.find(pair) == heVList.end())
+			continue;
+
+		if (n < dLow)
+			dLow = n;
+		if (n > dHigh)
+			dHigh = n;
+		if (o < tLow)
+			tLow = o;
+		if (o > tHigh)
+			tHigh = o;
+
+		// Increment the counter
+		count++;
+
+		// Add this cluster coordinates to the temporary vector
+		tempVector.emplace(pair);
+		heSize += (double) m;
+		dSize += (double) n;
+		tSize += (double) o;
+		// Remove the pair from the set because we don't need it anymore
+		heVList.erase(pair);
+	}
+
+	// Skip the loop if there were no clusters in this group
+	if (count == 0)
+		throw std::string("No largest cluster! Something is wrong in the grouping.");
+
+	// Average all values
+	heSize = heSize / (double) count;
+	dSize = dSize / (double) count;
+	tSize = tSize / (double) count;
+
+	// Create the super cluster
+	double size[4] = { heSize, dSize, tSize, (double) k };
+	int width[4] = { 1, dHigh - dLow + 1, tHigh - tLow + 1, 1 };
+	int lower[4] = { m, dLow, tLow, k };
+	int higher[4] = { m, dHigh, tHigh, k };
+	PSISuperCluster* rawSuperCluster = new PSISuperCluster(size, count, width,
+			lower, higher, network, handlerRegistry);
+
+	std::cout << "largest: " << rawSuperCluster->getName() << " " << count
+			<< " " << m << " " << upperH
+					<< std::endl;
+
+	auto superCluster = std::unique_ptr<PSISuperCluster>(rawSuperCluster);
+	// Save access to the cluster so we can trigger updates
+	// after we give it to the network.
+	auto& scref = *superCluster;
+	// Give the cluster to the network.
+	network.add(std::move(superCluster));
+	// Trigger cluster updates now it is in the network.
+	scref.updateFromNetwork();
+	// Set the HeV vector
+	scref.setHeVVector(tempVector);
+
+	// Reinitialize everything
+	heSize = 0.0, dSize = 0.0, tSize = 0.0;
+	count = 0;
+	dLow = dMax, dHigh = -1, tLow = tMax, tHigh = -1;
+	tempVector.clear();
 
 	// Get the number of groups in the helium and vacancy directions
 	int nVGroup = (vMax - vMin) / sectionWidth[3] + 1;
@@ -1179,8 +1254,6 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 //		std::cout << std::get<0>(pair) << " " << std::get<1>(pair) << " "
 //				<< std::get<2>(pair) << " " << std::get<3>(pair) << std::endl;
 //	}
-
-	std::cout << "Grouped size: " << network.size() << std::endl;
 
 	// Now that all the clusters are created
 	// Give the information on the phase space to the network

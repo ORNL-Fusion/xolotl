@@ -205,8 +205,8 @@ protected:
 	 * @param i The location on the grid
 	 * @return The rate
 	 */
-	double calculateReactionRateConstant(
-			const ProductionReaction& reaction, int i) const;
+	double calculateReactionRateConstant(const ProductionReaction& reaction,
+			int i) const;
 
 	/**
 	 * Calculate the dissociation constant of the first cluster with respect to
@@ -551,7 +551,8 @@ public:
 	 * point where the fluxes are computed used to find the next solution
 	 * @param i The location on the grid in the depth direction
 	 */
-	virtual void computeAllFluxes(double *updatedConcOffset, int i = 0) override {
+	virtual void computeAllFluxes(double *updatedConcOffset, int i = 0)
+			override {
 		return;
 	}
 
@@ -566,10 +567,22 @@ public:
 
 	/**
 	 * Are dissociations enabled?
-	 * @returns true if reactions are enabled, false otherwise.
+	 * @return true if reactions are enabled, false otherwise.
 	 */
 	bool getDissociationsEnabled() const override {
 		return dissociationsEnabled;
+	}
+
+	/**
+	 * This operation returns the phase space list needed to set up the grouping
+	 * correctly in PSI.
+	 *
+	 * @return The phase space list
+	 */
+	virtual Array<int, 5> getPhaseSpaceList() const override {
+		Array<int, 5> list;
+		list.Init(0);
+		return list;
 	}
 
 	/**
