@@ -25,6 +25,11 @@ BOOST_AUTO_TEST_SUITE (TungstenIntegrationTester_testSuite)
  * given that it requires external data.
  */
 BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
+	// Initialize MPI
+	int argc = 0;
+	char **argv;
+	MPI_Init(&argc, &argv);
+
 	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
 	string pathToFile("/tests/testfiles/tungsten.txt");
@@ -155,6 +160,9 @@ BOOST_AUTO_TEST_CASE(checkSingleReaction) {
 	// Check the values of the partial derivatives
 	BOOST_REQUIRE_CLOSE(partials[0], 1.0, 0.1);
 	BOOST_REQUIRE_CLOSE(partials[1], -0.5, 0.1);
+
+	// Finalize
+	MPI_Finalize();
 
 	return;
 }
