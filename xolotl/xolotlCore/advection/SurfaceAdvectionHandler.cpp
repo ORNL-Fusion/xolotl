@@ -83,8 +83,8 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 
 void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 		const Point<3>& pos, double **concVector, double *updatedConcOffset,
-		double hxLeft, double hxRight, int ix, double hy, int iy, double hz,
-		int iz) const {
+		double hxLeft, double hxRight, int ix, int xs, double hy, int iy,
+		double hz, int iz) const {
 
 	// Get the number of advecting cluster
 	int nAdvec = advectingClusters.size();
@@ -110,10 +110,11 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 		// Compute the concentration as explained in the description of the method
 		double conc = (3.0 * sinkStrengthVector[advClusterIdx]
-				* cluster.getDiffusionCoefficient())
+				* cluster.getDiffusionCoefficient(ix - xs))
 				* ((oldRightConc / pow(pos[0] - location + hxRight, 4))
 						- (oldConc / pow(pos[0] - location, 4)))
-				/ (xolotlCore::kBoltzmann * cluster.getTemperature() * hxRight);
+				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+						* hxRight);
 
 		// Update the concentration of the cluster
 		updatedConcOffset[index] += conc;
@@ -126,8 +127,8 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 void SurfaceAdvectionHandler::computePartialsForAdvection(
 		const IReactionNetwork& network, double *val, int *indices,
-		const Point<3>& pos, double hxLeft, double hxRight, int ix, double hy,
-		int iy, double hz, int iz) const {
+		const Point<3>& pos, double hxLeft, double hxRight, int ix, int xs,
+		double hy, int iy, double hz, int iz) const {
 
 	// Get the number of advecting cluster
 	int nAdvec = advectingClusters.size();
@@ -145,7 +146,7 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 		auto const& cluster = static_cast<PSICluster const&>(currReactant);
 		int index = cluster.getId() - 1;
 		// Get the diffusion coefficient of the cluster
-		double diffCoeff = cluster.getDiffusionCoefficient();
+		double diffCoeff = cluster.getDiffusionCoefficient(ix - xs);
 		// Get the sink strength value
 		double sinkStrength = sinkStrengthVector[advClusterIdx];
 
@@ -156,12 +157,12 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 		// Compute the partial derivatives for advection of this cluster as
 		// explained in the description of this method
 		val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff)
-				/ (xolotlCore::kBoltzmann * cluster.getTemperature() * hxRight
-						* pow(pos[0] - location, 4))
+				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+						* hxRight * pow(pos[0] - location, 4))
 				* advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
 		val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff)
-				/ (xolotlCore::kBoltzmann * cluster.getTemperature() * hxRight
-						* pow(pos[0] - location + hxRight, 4))
+				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+						* hxRight * pow(pos[0] - location + hxRight, 4))
 				* advectionGrid[iz + 1][iy + 1][ix + 2][advClusterIdx]; // right
 
 		++advClusterIdx;

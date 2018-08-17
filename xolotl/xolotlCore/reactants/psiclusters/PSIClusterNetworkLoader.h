@@ -19,26 +19,56 @@ namespace xolotlCore {
  * This class will load a reaction network composed of PSIClusters from an
  * inputstream.
  *
- * The data in the stream should contain the information for a single cluster on
- * each line with the following quantities specified and separated by a single
- * space each:
- * > The number of He in the cluster
- * > The number of V in the cluster
- * > The number of I in the cluster
- * > The formation energy
- *
  * Lines of comments starting with a "#" will be ignored as will lines that do
  * not clearly provide the information above.
- *
- * The network will be returned as a ReactionNetwork of PSIClusters ordered with
- * single-species He, V and I clusters first and all mixed clusters coming
- * last. Each species is ordered from the smallest cluster size, (1), to the
- * maximum size for that cluster. Instances of the appropriate cluster type are
- * instantiated during the loading process, but returned as PSIClusters.
  */
 class PSIClusterNetworkLoader: public NetworkLoader {
 
 protected:
+
+	// I formation energies in eV
+	std::vector<double> iFormationEnergies = { 10.0, 18.5, 27.0, 35.0, 42.5,
+			48.0 };
+	// I diffusion factors in nm^2/s
+	std::vector<double> iDiffusion = { 8.8e+10, 8.0e+10, 3.9e+10, 2.0e+10,
+			1.0e+10 };
+	// I migration energies in eV
+	std::vector<double> iMigration = { 0.01, 0.02, 0.03, 0.04, 0.05 };
+
+	// He formation energies in eV
+	std::vector<double> heFormationEnergies = { 6.15, 11.44, 16.35, 21.0, 26.1,
+			30.24, 34.93, 38.80 };
+	// He diffusion factors in nm^2/s
+	std::vector<double> heDiffusion = { 2.9e+10, 3.2e+10, 2.3e+10, 1.7e+10,
+			5.0e+09, 1.0e+09, 5.0e+08 };
+	// He migration energies in eV
+	std::vector<double> heMigration = { 0.13, 0.20, 0.25, 0.20, 0.12, 0.3, 0.4 };
+
+	// The diffusion factor for a single deuterium.
+	double dOneDiffusionFactor = 2.83e+11;
+	// The migration energy for a single deuterium.
+	double dOneMigrationEnergy = 0.38;
+
+	// The diffusion factor for a single tritium.
+	double tOneDiffusionFactor = 2.31e+11;
+	// The migration energy for a single tritium.
+	double tOneMigrationEnergy = 0.38;
+
+	// The diffusion factor for a single vacancy in nm^2/s
+	double vOneDiffusion = 1.8e+12;
+	// The migration energy for a single vacancy in eV
+	double vOneMigration = 1.30;
+
+	/**
+	 * The maximum number of helium atoms that can be combined with a vacancy
+	 * cluster with size equal to the index i in the array plus one. For
+	 * example, an HeV size cluster with size 1 would have size = i+1 = 1 and i
+	 * = 0. It could support a mixture of up to nine helium atoms with one
+	 * vacancy.
+	 */
+	std::vector<int> maxHePerV = { 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55,
+			60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101, 103, 105, 107, 109,
+			110, 112, 116 };
 
 	/**
 	 * The vacancy size at which the grouping scheme starts
@@ -71,32 +101,33 @@ protected:
 	int maxV;
 
 	/**
-	 * The width of the group in the helium direction.
+	 * The width of the group.
 	 */
-	int heSectionWidth;
-
-	/**
-	 * The width of the group in the vacancy direction.
-	 */
-	int vSectionWidth;
+	int sectionWidth[4] = {};
 
 	/**
 	 * The list of clusters that will be grouped.
 	 */
-	std::set<std::pair<int, int> > heVList;
+	std::set<std::tuple<int, int, int, int> > heVList;
 
 	/**
 	 * Private nullary constructor.
 	 */
 	PSIClusterNetworkLoader() :
-			NetworkLoader(), vMin(1000000), maxHe(0), maxI(0), maxV(0), heSectionWidth(
-					1), vSectionWidth(1) {
+			NetworkLoader(), vMin(1000000), maxHe(0), maxI(0), maxV(0), maxD(0), maxT(0) {
 	}
 
 	/**
-	 * This operation creates a singles-species cluster of helium, vacancies or
-	 * interstitials. It adds the cluster to the appropriate internal list of
-	 * clusters for that type.
+	 * This operation creates a super cluster from its list of cluster coordinates.
+	 *
+	 * @param list The list of coordinates composing this cluster
+	 * @return The new cluster
+	 */
+	std::unique_ptr<PSICluster> createPSISuperCluster(std::set<std::tuple<int, int, int, int> > &list,
+			IReactionNetwork& network) const;
+
+	/**
+	 * This operation creates a cluster.
 	 *
 	 * @param numHe The number of helium atoms
 	 * @param numD The number of deuterium atoms
@@ -198,18 +229,10 @@ public:
 	 * This operation will set the helium width for the grouping scheme.
 	 *
 	 * @param w The value of the width
+	 * @param axis The direction for the width
 	 */
-	void setHeWidth(int w) {
-		heSectionWidth = w;
-	}
-
-	/**
-	 * This operation will set the vacancy width for the grouping scheme.
-	 *
-	 * @param w The value of the width
-	 */
-	void setVWidth(int w) {
-		vSectionWidth = w;
+	void setWidth(int w, int axis) {
+		sectionWidth[axis] = w;
 	}
 };
 

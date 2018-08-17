@@ -2,7 +2,7 @@
 #define XCORE_HDF5OBJECT_H
 
 #include <string>
-#include "hdf5.h"
+#include <hdf5.h>
 
 namespace xolotlCore {
 

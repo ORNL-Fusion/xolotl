@@ -61,7 +61,7 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A, the second of B
+		 * The first number represent the moment of A, the second of B
 		 * in A + B -> C
 		 *
 		 * 0 -> l0
@@ -79,8 +79,7 @@ protected:
 		double a22;
 
 		//! The constructor
-		ClusterPair(Reaction& _reaction, FeCluster& _first,
-				FeCluster& _second) :
+		ClusterPair(Reaction& _reaction, FeCluster& _first, FeCluster& _second) :
 				first(_first), second(_second), reaction(_reaction), a00(0.0), a10(
 						0.0), a20(0.0), a01(0.0), a02(0.0), a11(0.0), a12(0.0), a21(
 						0.0), a22(0.0) {
@@ -119,7 +118,7 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A
+		 * The first number represent the moment of A
 		 * in A + this -> C
 		 *
 		 * 0 -> l0
@@ -260,11 +259,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void resultFrom(ProductionReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -286,15 +283,22 @@ public:
 	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
 
 	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef The corresponding coefficient
+	 */
+	void resultFrom(ProductionReaction& reaction, double *coef) override;
+
+	/**
 	 * Note that we combine with another cluster in a production reaction.
 	 * Assumes that the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, int a = 0, int b = 0)
-			override;
+	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a production reaction
@@ -319,17 +323,24 @@ public:
 			override;
 
 	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(ProductionReaction& reaction, double *coef) override;
+
+	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
 	 * Assumes the reaction is already inour network.
 	 *
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void participateIn(DissociationReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override;
+	void participateIn(DissociationReaction& reaction, int a[4] = { },
+			int b[4] = { }) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -354,17 +365,22 @@ public:
 			override;
 
 	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(DissociationReaction& reaction, double *coef) override;
+
+	/**
 	 * Note that we emit from the given reaction.
 	 * Assumes the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -384,6 +400,15 @@ public:
 	 * @param disso The dissociating cluster.
 	 */
 	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void emitFrom(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * This operation returns the connectivity array for this cluster for
@@ -406,20 +431,20 @@ public:
 	virtual std::vector<int> getDissociationConnectivity() const;
 
 	/**
-	 * This operation returns the first helium momentum.
+	 * This operation returns the first helium moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	virtual double getHeMomentum() const {
+	virtual double getHeMoment() const {
 		return 0.0;
 	}
 
 	/**
-	 * This operation returns the first vacancy momentum.
+	 * This operation returns the first vacancy moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	virtual double getVMomentum() const {
+	virtual double getVMoment() const {
 		return 0.0;
 	}
 	/**
@@ -446,45 +471,50 @@ public:
 	 * This operation returns the total flux of this cluster in the
 	 * current network.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux() override {
-		return getProductionFlux() - getCombinationFlux()
-				+ getDissociationFlux() - getEmissionFlux();
+	virtual double getTotalFlux(int i) override {
+		return getProductionFlux(i) - getCombinationFlux(i)
+				+ getDissociationFlux(i) - getEmissionFlux(i);
 	}
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to dissociation of other clusters
 	 */
-	virtual double getDissociationFlux() const;
+	virtual double getDissociationFlux(int i) const;
 
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	virtual double getEmissionFlux() const;
+	virtual double getEmissionFlux(int i) const;
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster being produced
 	 */
-	virtual double getProductionFlux() const;
+	virtual double getProductionFlux(int i) const;
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster combining with other clusters
 	 */
-	virtual double getCombinationFlux() const;
+	virtual double getCombinationFlux(int i) const;
 
 	/**
 	 * This operation returns the list of partial derivatives of this cluster
@@ -492,11 +522,12 @@ public:
 	 * of partial derivatives from all of the clusters in the network can be
 	 * used to form, for example, a Jacobian.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The partial derivatives for this cluster where index zero
 	 * corresponds to the first cluster in the list returned by the
 	 * ReactionNetwork::getAll() operation.
 	 */
-	virtual std::vector<double> getPartialDerivatives() const override;
+	virtual std::vector<double> getPartialDerivatives(int i) const override;
 
 	/**
 	 * This operation works as getPartialDerivatives above, but instead of
@@ -509,10 +540,11 @@ public:
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
+	 * @param i The location on the grid in the depth direction
 	 *
 	 */
-	virtual void getPartialDerivatives(std::vector<double> & partials) const
-			override;
+	virtual void getPartialDerivatives(std::vector<double> & partials,
+			int i) const override;
 
 	/**
 	 * This operation computes the partial derivatives due to production
@@ -521,9 +553,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	virtual void getProductionPartialDerivatives(
-			std::vector<double> & partials) const;
+	virtual void getProductionPartialDerivatives(std::vector<double> & partials,
+			int i) const;
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -532,9 +565,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	virtual void getCombinationPartialDerivatives(
-			std::vector<double> & partials) const;
+			std::vector<double> & partials, int i) const;
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -543,9 +577,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
 	virtual void getDissociationPartialDerivatives(
-			std::vector<double> & partials) const;
+			std::vector<double> & partials, int i) const;
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -554,9 +589,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	virtual void getEmissionPartialDerivatives(
-			std::vector<double> & partials) const;
+	virtual void getEmissionPartialDerivatives(std::vector<double> & partials,
+			int i) const;
 
 	/**
 	 * This operation reset the connectivity sets based on the information
@@ -565,30 +601,52 @@ public:
 	void resetConnectivities() override;
 
 	/**
-	 * This operation sets the diffusion factor, D_0, that is used to calculate
-	 * the diffusion coefficient for this cluster.
-	 *
-	 * @param factor The diffusion factor
-	 */
-	void setDiffusionFactor(const double factor) override;
-
-	/**
-	 * This operation sets the migration energy for this reactant.
-	 *
-	 * @param energy The migration energy
-	 */
-	void setMigrationEnergy(const double energy) override;
-
-	/**
 	 * This operation returns the sum of combination rate and emission rate
 	 * (where this cluster is on the left side of the reaction) for this
 	 * particular cluster.
 	 * This is used to computed the desorption rate in the
 	 * modified trap-mutation handler.
 	 *
+	 * @param i The position on the grid
 	 * @return The rate
 	 */
-	double getLeftSideRate() const override;
+	double getLeftSideRate(int i) const override;
+
+	/**
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getProdVector() const override;
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, the rate, and
+	 * the coefs[0]
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const override;
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const override;
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved, containing the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const override;
 
 	/**
 	 * This operation returns a list that represents the connectivity

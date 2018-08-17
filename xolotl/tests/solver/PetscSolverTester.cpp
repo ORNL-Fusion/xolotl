@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSIClusterNetworkLoader.h>
 #include <memory>
 #include <typeinfo>
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver0DHandler(network);
 	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
-				rawSolverHandler);
+			rawSolverHandler);
 	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
 
 	// Create the solver
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver1DHandler(network);
 	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
-				rawSolverHandler);
+			rawSolverHandler);
 	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
 
 	// Create the solver
@@ -339,7 +339,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver1DHandler(network);
 	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
-				rawSolverHandler);
+			rawSolverHandler);
 	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
 
 	// Create the solver
@@ -380,13 +380,6 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
  * in 2D.
  */
 BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
-	// Local Declarations
-	string sourceDir(XolotlSourceDirectory);
-
-	// Create the path to the network file
-	string pathToFile("/tests/testfiles/tungsten_diminutive_2D.h5");
-	string networkFilename = sourceDir + pathToFile;
-
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "vizHandler=dummy" << std::endl
@@ -402,8 +395,9 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 			<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
 			<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
 			<< "dimensions=2" << std::endl << "process=diff advec reaction"
-			<< std::endl << "voidPortion=0.0" << std::endl << "networkFile="
-			<< networkFilename << std::endl;
+			<< std::endl << "voidPortion=0.0" << std::endl
+			<< "netParam=8 0 0 2 6" << std::endl << "grid=10 0.5 4 1.0"
+			<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -421,12 +415,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	// Create the network loader
 	std::shared_ptr<HDF5NetworkLoader> loader = std::make_shared<
 			HDF5NetworkLoader>(make_shared<xolotlPerf::DummyHandlerRegistry>());
-
-	BOOST_TEST_MESSAGE(
-			"PetscSolverTester Message: Network filename is: " << networkFilename);
-
-	// Give the filename to the network loader
-	loader->setFilename(networkFilename);
 
 	// Create the material factory
 	auto materialFactory =
@@ -449,7 +437,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver2DHandler(network);
 	auto theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
-				rawSolverHandler);
+			rawSolverHandler);
 	theSolverHandler->initializeHandlers(materialFactory, tempHandler, opts);
 
 	// Create the solver

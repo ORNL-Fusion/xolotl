@@ -12,6 +12,7 @@
 
 #include <limits>
 #include <cmath>
+#include <numeric>
 
 namespace xolotlCore {
 
@@ -79,15 +80,16 @@ inline double legendrePolynomial(double x, int degree) {
  *            The coefficients array.
  */
 template<uint32_t N>
-inline double computeNthOrderLegendre(double x, const std::array<double, N+1>& coeffs) {
-    int currDegree = 0;
-    auto valAtX = std::accumulate(coeffs.begin(), coeffs.end(), 0.0,
-        [x,&currDegree](double running, double currCoeff) {
-            return running + (currCoeff * legendrePolynomial(x, currDegree++));
-        });
-    return valAtX;
+inline double computeNthOrderLegendre(double x,
+		const std::array<double, N + 1>& coeffs) {
+	int currDegree = 0;
+	auto valAtX =
+			std::accumulate(coeffs.begin(), coeffs.end(), 0.0,
+					[x,&currDegree](double running, double currCoeff) {
+						return running + (currCoeff * legendrePolynomial(x, currDegree++));
+					});
+	return valAtX;
 }
-
 
 /**
  * Computes
@@ -139,6 +141,18 @@ inline double secondOrderOffsetSum(double alpha, double beta, double mean1,
 
 	return toReturn;
 }
+
+// Concise names for multi-dimensional arrays.
+// For dimensions > 1, this gives C-style row-major ordering.
+// (I.e., last dimension varies fastest when indexing.)
+template<class T, uint32_t N>
+using Array1D = std::array<T, N>;
+
+template<class T, uint32_t N0, uint32_t N1>
+using Array2D = Array1D<Array1D<T, N1>, N0>;
+
+template<class T, uint32_t N0, uint32_t N1, uint32_t N2>
+using Array3D = Array1D<Array2D<T, N1, N2> , N0>;
 
 }
 

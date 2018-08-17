@@ -37,8 +37,8 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	virtual void initializeOFill(const IReactionNetwork& network, 
-                        IReactionNetwork::SparseFillMap& ofillMap) override {
+	virtual void initializeOFill(const IReactionNetwork& network,
+			IReactionNetwork::SparseFillMap& ofillMap) override {
 
 		int dof = network.getDOF();
 
@@ -63,7 +63,7 @@ public:
 			// Get its id
 			int index = cluster.getId() - 1;
 			// Set the ofill value to 1 for this cluster
-            ofillMap[index].emplace_back(index);
+			ofillMap[index].emplace_back(index);
 		}
 
 		return;

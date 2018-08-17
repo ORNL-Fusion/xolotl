@@ -33,7 +33,7 @@ public:
 	 * @param ofillMap Map of connectivity for advecting clusters.
 	 */
 	virtual void initialize(const IReactionNetwork& network,
-                            IReactionNetwork::SparseFillMap& ofillMap) = 0;
+			IReactionNetwork::SparseFillMap& ofillMap) = 0;
 
 	/**
 	 * Set the number of dimension
@@ -79,6 +79,7 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
 	 * @param ix The position on the x grid
+	 * @param xs The beginning of the grid on this process
 	 * @param hy The step size in the y direction
 	 * @param iy The position on the y grid
 	 * @param hz The step size in the z direction
@@ -86,8 +87,8 @@ public:
 	 */
 	virtual void computeAdvection(const IReactionNetwork& network,
 			const Point<3>& pos, double **concVector, double *updatedConcOffset,
-			double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
-			double hz = 0.0, int iz = 0) const = 0;
+			double hxLeft, double hxRight, int ix, int xs, double hy = 0.0,
+			int iy = 0, double hz = 0.0, int iz = 0) const = 0;
 
 	/**
 	 * Compute the partial derivatives due to the advection of all the helium clusters given
@@ -104,6 +105,7 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
 	 * @param ix The position on the x grid
+	 * @param xs The beginning of the grid on this process
 	 * @param hy The step size in the y direction
 	 * @param iy The position on the y grid
 	 * @param hz The step size in the z direction
@@ -111,7 +113,7 @@ public:
 	 */
 	virtual void computePartialsForAdvection(const IReactionNetwork& network,
 			double *val, int *indices, const Point<3>& pos, double hxLeft,
-			double hxRight, int ix, double hy = 0.0, int iy = 0,
+			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const = 0;
 
 	/**

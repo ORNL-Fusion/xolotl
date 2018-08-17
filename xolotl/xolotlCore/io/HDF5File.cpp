@@ -81,37 +81,35 @@ HDF5File::BuildHDF5ErrorString(void) {
 }
 
 
-HDF5File::HDF5File(fs::path path,
-                    AccessMode mode,
+void HDF5File::Open(fs::path _path,
+                    AccessMode _mode,
                     MPI_Comm _comm,
-                    bool par)
-  : HDF5Object("/"),
-    comm(_comm)
-{
+                    bool par) {
+
     // Obtain the HDF5 flag that corresponds to requested access mode.
-    auto hdf5Mode = toHDF5AccessMode(mode);
+    auto hdf5Mode = toHDF5AccessMode(_mode);
 
     // If requested, specify that we want to access the file using parallel I/O.
     PropertyList plist(H5P_FILE_ACCESS);
     auto plistId = plist.getId();
     if(par) {
         // Use parallel I/O for accessing this file.
-        H5Pset_fapl_mpio(plistId, comm, MPI_INFO_NULL);
+        H5Pset_fapl_mpio(plistId, _comm, MPI_INFO_NULL);
     }
     else {
         // Do not use parallel I/O when accessing this file.
         plistId = H5P_DEFAULT;
     }
 
-    if((mode == AccessMode::OpenReadOnly) or 
-            (mode == AccessMode::OpenReadWrite)) {
+    if((_mode == AccessMode::OpenReadOnly) or 
+            (_mode == AccessMode::OpenReadWrite)) {
 
         // We are opening an existing file.
-        setId(H5Fopen(path.string().c_str(), hdf5Mode, plistId));
+        setId(H5Fopen(_path.string().c_str(), hdf5Mode, plistId));
     }
     else {
         // We are creating/truncating a file.
-        setId(H5Fcreate(path.string().c_str(),
+        setId(H5Fcreate(_path.string().c_str(),
                         hdf5Mode,
                         H5P_DEFAULT,    // create plist
                         plistId));       // access mode plist
@@ -121,11 +119,6 @@ HDF5File::HDF5File(fs::path path,
         throw HDF5Exception(BuildHDF5ErrorString());
     }
 }
-
-HDF5File::~HDF5File(void) {
-    H5Fclose(getId());
-}
-
 
 bool
 HDF5File::hasGroup(fs::path path) const {
