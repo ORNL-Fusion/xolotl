@@ -36,7 +36,7 @@ public:
 	// cases.  Factor the identical parts to a base class, and only
 	// have these classes differ in the sinkStrength identification.
 	void initialize(const IReactionNetwork& network,
-                    IReactionNetwork::SparseFillMap& ofillMap) override {
+			IReactionNetwork::SparseFillMap& ofillMap) override {
 		// Get all the reactants and their number
 		int dof = network.getDOF();
 
@@ -103,7 +103,7 @@ public:
 			// Get its id
 			int index = cluster.getId() - 1;
 			// Set the ofill value to 1 for this cluster
-            ofillMap[index].emplace_back(index);
+			ofillMap[index].emplace_back(index);
 		}
 
 		return;

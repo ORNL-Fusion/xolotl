@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSIClusterNetworkLoader.h>
 #include <memory>
 #include <typeinfo>
@@ -10,6 +10,8 @@
 #include <PSIClusterReactionNetwork.h>
 #include <Options.h>
 #include "tests/utils/MPIFixture.h"
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -111,7 +113,8 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 BOOST_AUTO_TEST_CASE(checkGenerate) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=8 0 0 5 3" << std::endl << "grid=100 0.5" << std::endl;
+	paramFile << "netParam=8 0 0 5 3" << std::endl << "grid=100 0.5"
+			<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options

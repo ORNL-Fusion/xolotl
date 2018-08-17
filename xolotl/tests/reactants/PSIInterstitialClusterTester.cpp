@@ -7,7 +7,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSICluster.h>
 #include <PSIInterstitialCluster.h>
 #include "SimpleReactionNetwork.h"
@@ -90,6 +90,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Local Declarations
 	auto network = getSimplePSIReactionNetwork();
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Get an I cluster with compostion 0,0,1.
 	auto cluster = (PSICluster *) network->get(Species::I, 1);
@@ -108,11 +110,9 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	secondCluster->setConcentration(0.5);
 
 	// Compute the rate constants that are needed for the flux
-	network->setTemperature(1000.0);
-	network->reinitializeNetwork();
-	network->computeRateConstants();
+	network->setTemperature(1000.0, 0);
 	// The flux can pretty much be anything except "not a number" (nan).
-	double flux = cluster->getTotalFlux();
+	double flux = cluster->getTotalFlux(0);
 	BOOST_REQUIRE_CLOSE(9021773486621.2, flux, 0.1);
 
 	return;
@@ -129,6 +129,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 					-2.90683e+11, 1.82504e+13, -3.39657e+10, 0, 0, 0, 0, 0 };
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(2);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Get an I cluster with compostion 0,0,1.
 	auto cluster = (PSICluster *) network->get(Species::I, 1);
@@ -139,11 +141,9 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	cluster->setConcentration(0.5);
 
 	// Compute the rate constants that are needed for the partials
-	network->setTemperature(1000.0);
-	network->reinitializeNetwork();
-	network->computeRateConstants();
+	network->setTemperature(1000.0, 0);
 	// Get the vector of partial derivatives
-	auto partials = cluster->getPartialDerivatives();
+	auto partials = cluster->getPartialDerivatives(0);
 
 	// Check the size of the partials
 	BOOST_REQUIRE_EQUAL(partials.size(), 16U);

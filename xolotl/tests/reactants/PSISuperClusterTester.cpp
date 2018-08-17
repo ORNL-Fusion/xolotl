@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSICluster.h>
 #include <PSISuperCluster.h>
 #include <HDF5NetworkLoader.h>
@@ -11,6 +11,8 @@
 #include <DummyHandlerRegistry.h>
 #include <Constants.h>
 #include <Options.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -18,46 +20,49 @@ using namespace xolotlCore;
 /**
  * This suite is responsible for testing the PSISuperCluster.
  */
-BOOST_AUTO_TEST_SUITE(PSISuperCluster_testSuite)
+BOOST_AUTO_TEST_SUITE (PSISuperCluster_testSuite)
 
 /**
  * This operation checks the ability of the PSISuperCluster to describe
  * its connectivity to other clusters.
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
-	// Initialize MPI for HDF5
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
+	<< std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
 	int argc = 0;
 	char **argv;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive_2D.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-	// Set grouping parameters
-	loader.setVMin(1);
-	loader.setHeWidth(4);
-	loader.setVWidth(1);
-
-	// Create the options needed to load the network
+	// Read the options
 	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
+	opts.readParams(argv);
 
-	// Set the temperature in the network
-	int networkSize = network->size();
-	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
+	// Create the loader
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Set grouping parameters
+	loader.setVMin(4);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
+
+	// Generate the network from the options
+	auto network = loader.generate(opts);
+
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
-	// Check the reaction connectivity of the super cluster
+	// Get the super cluster
 	auto& reactant = network->getAll(ReactantType::PSISuper).begin()->second;
 
 	// Check the type name
@@ -65,9 +70,10 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	auto reactionConnectivity = reactant->getConnectivity();
 
 	// Check the connectivity for He, V, and I
-	int connectivityExpected[] = { 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-			1, 1, 1, 1, 1, 1, 0 };
-
+	int connectivityExpected[] = { 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+			1, 0, 0, 1, 1, 1, 0 };
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
 	}
@@ -79,44 +85,56 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
  * This operation checks the ability of the PSISuperCluster to compute the total flux.
  */
 BOOST_AUTO_TEST_CASE(checkTotalFlux) {
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
+	<< std::endl;
+	paramFile.close();
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive_2D.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-	// Set grouping parameters
-	loader.setVMin(1);
-	loader.setHeWidth(4);
-	loader.setVWidth(1);
+	// Create a fake command line to read the options
+	int argc = 0;
+	char **argv;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
 
-	// Create the options needed to load the network
+	// Read the options
 	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
+	opts.readParams(argv);
+
+	// Create the loader
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Set grouping parameters
+	loader.setVMin(4);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
+
+	// Generate the network from the options
+	auto network = loader.generate(opts);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Set the temperature in the network
 	int networkSize = network->size();
 	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
+	network->setTemperature(temperature, 0);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
-	// Check the reaction connectivity of the super cluster
+	// Get the super cluster
 	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
 	// Get one that it combines with (He)
 	auto secondCluster = (PSICluster *) network->get(Species::He, 1);
+
 	// Set the concentrations
 	cluster->setConcentration(0.5);
 	secondCluster->setConcentration(0.5);
 
 	// Get and check the flux
-	double flux = cluster->getTotalFlux();
+	double flux = cluster->getTotalFlux(0);
 	BOOST_REQUIRE_CLOSE(0.0, flux, 0.1);
 
 	return;
@@ -126,41 +144,52 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
  * This operation checks the PSISuperCluster get*PartialDerivatives methods.
  */
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
+	<< std::endl;
+	paramFile.close();
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive_2D.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-	// Set grouping parameters
-	loader.setVMin(1);
-	loader.setHeWidth(4);
-	loader.setVWidth(1);
+	// Create a fake command line to read the options
+	int argc = 0;
+	char **argv;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
 
-	// Create the options needed to load the network
+	// Read the options
 	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
+	opts.readParams(argv);
+
+	// Create the loader
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Set grouping parameters
+	loader.setVMin(4);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
+
+	// Generate the network from the options
+	auto network = loader.generate(opts);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Set the temperature in the network
 	int networkSize = network->size();
 	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
+	network->setTemperature(temperature, 0);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
-	// Check the reaction connectivity of the super cluster
+	// Get the super cluster
 	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
 
-	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-			-2.2407564e-19, 0.0, 0.0, 0.0, 0.0 };
+	double knownPartials[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 7.02156e-20, 0, 0, 0,
+			-1.04991e-10 };
+
 	// Set the concentration
 	cluster->setConcentration(0.5);
 
@@ -183,8 +212,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	std::vector<double> reactionVals;
 	reactionVals.resize(nPartials);
 	// Compute the partial derivatives
-	network->computeAllPartials(reactionStartingIdx,
-			reactionIndices, reactionVals);
+	network->computeAllPartials(reactionStartingIdx, reactionIndices,
+			reactionVals, 0);
 
 	// Check the size of the partials
 	int id = cluster->getId() - 1;
@@ -203,31 +232,158 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
  * This operation checks the reaction radius for PSISuperCluster.
  */
 BOOST_AUTO_TEST_CASE(checkReactionRadius) {
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
+	<< std::endl;
+	paramFile.close();
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive_2D.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-	// Set grouping parameters
-	loader.setVMin(1);
-	loader.setHeWidth(4);
-	loader.setVWidth(1);
+	// Create a fake command line to read the options
+	int argc = 0;
+	char **argv;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
 
-	// Create the options needed to load the network
+	// Read the options
 	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
+	opts.readParams(argv);
 
-	// Check the reaction connectivity of the super cluster
+	// Create the loader
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Set grouping parameters
+	loader.setVMin(4);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
+
+	// Generate the network from the options
+	auto network = loader.generate(opts);
+
+	// Get the super cluster
 	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
 
 	// Check the radius
-	BOOST_REQUIRE_CLOSE(0.137265, cluster->getReactionRadius(), 0.001);
+	BOOST_REQUIRE_CLOSE(0.248079, cluster->getReactionRadius(), 0.001);
+
+	return;
+}
+
+/**
+ * This operation checks the get concentration methods for PSISuperCluster.
+ */
+BOOST_AUTO_TEST_CASE(checkGetConcentrations) {
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
+	<< std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	char **argv;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+
+	// Read the options
+	Options opts;
+	opts.readParams(argv);
+
+	// Create the loader
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Set grouping parameters
+	loader.setVMin(4);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
+
+	// Generate the network from the options
+	auto network = loader.generate(opts);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
+
+	// Get a super cluster
+	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
+	auto& superCluster = static_cast<PSISuperCluster&>(*cluster);
+
+	// Set the concentration in the cluster
+	superCluster.setZerothMoment(4.5);
+	superCluster.setMoment(1.0, 0);// He
+	superCluster.setMoment(1.0, 3);// V
+
+	// Check the different concentrations
+	BOOST_REQUIRE_CLOSE(18.0, superCluster.getTotalConcentration(), 0.001);
+	BOOST_REQUIRE_CLOSE(336.33, superCluster.getTotalAtomConcentration(0),
+			0.001);// He
+	BOOST_REQUIRE_CLOSE(90.0, superCluster.getTotalVacancyConcentration(),
+			0.001);
+	BOOST_REQUIRE_CLOSE(0.0, superCluster.getIntegratedVConcentration(1),
+			0.001);
+
+	return;
+}
+
+/**
+ * This operation checks the boundary methods for PSISuperCluster.
+ */
+BOOST_AUTO_TEST_CASE(checkBoundaries) {
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 5 0" << std::endl << "grid=100 0.5"
+	<< std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	int argc = 0;
+	char **argv;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+
+	// Read the options
+	Options opts;
+	opts.readParams(argv);
+
+	// Create the loader
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Set grouping parameters
+	loader.setVMin(4);
+	loader.setWidth(4, 0);
+	loader.setWidth(1, 3);
+
+	// Generate the network from the options
+	auto network = loader.generate(opts);
+
+	// Get a super cluster
+	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
+	auto& superCluster = static_cast<PSISuperCluster&>(*cluster);
+
+	// Check the different numbers
+	BOOST_REQUIRE_CLOSE(5.0, superCluster.getNumV(), 0.001);
+	BOOST_REQUIRE_CLOSE(4.0, superCluster.getNTot(), 0.001);
+	auto bounds = superCluster.getBounds(0); // He
+	BOOST_REQUIRE_EQUAL(17, *(bounds.begin()));
+	BOOST_REQUIRE_EQUAL(21, *(bounds.end()));
+	bounds = superCluster.getBounds(1); // D
+	BOOST_REQUIRE_EQUAL(0, *(bounds.begin()));
+	BOOST_REQUIRE_EQUAL(1, *(bounds.end()));
+	bounds = superCluster.getBounds(2);// T
+	BOOST_REQUIRE_EQUAL(0, *(bounds.begin()));
+	BOOST_REQUIRE_EQUAL(1, *(bounds.end()));
+	bounds = superCluster.getBounds(3);// V
+	BOOST_REQUIRE_EQUAL(5, *(bounds.begin()));
+	BOOST_REQUIRE_EQUAL(6, *(bounds.end()));
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();

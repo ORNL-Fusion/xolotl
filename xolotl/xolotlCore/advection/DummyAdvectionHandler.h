@@ -33,7 +33,7 @@ public:
 	 * @param ofillMap Map of connectivity for advecting clusters.
 	 */
 	void initialize(const IReactionNetwork& network,
-                    IReactionNetwork::SparseFillMap& ofillMap) override {
+			IReactionNetwork::SparseFillMap& ofillMap) override {
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();
 		sinkStrengthVector.clear();

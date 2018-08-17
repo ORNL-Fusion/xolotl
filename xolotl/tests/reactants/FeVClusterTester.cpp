@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <FeCluster.h>
 #include <FeVCluster.h>
 #include "SimpleReactionNetwork.h"
@@ -65,6 +65,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Local Declarations
 	auto network = getSimpleFeReactionNetwork();
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Get an V cluster with compostion 0,1,0.
 	auto cluster = (FeCluster *) network->get(Species::V, 1);
@@ -83,11 +85,9 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	secondCluster->setConcentration(0.5);
 
 	// Compute the rate constants that are needed for the flux
-	network->setTemperature(1000.0);
-	network->reinitializeNetwork();
-	network->computeRateConstants();
+	network->setTemperature(1000.0, 0);
 	// The flux can pretty much be anything except "not a number" (nan).
-	double flux = cluster->getTotalFlux();
+	double flux = cluster->getTotalFlux(0);
 	BOOST_REQUIRE_CLOSE(2013449798, flux, 0.1);
 
 	return;
@@ -105,6 +105,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 			-7.45991e+07, -7.38128e+07, -7.45991e+07, 8730.85, 2.07215, 0.0 };
 	// Get the simple reaction network
 	auto network = getSimpleFeReactionNetwork(2);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Get an V cluster with compostion 0,1,0.
 	auto cluster = (FeCluster *) network->get(Species::V, 1);
@@ -115,11 +117,9 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	cluster->setConcentration(0.5);
 
 	// Compute the rate constants that are needed for the partials
-	network->setTemperature(1000.0);
-	network->reinitializeNetwork();
-	network->computeRateConstants();
+	network->setTemperature(1000.0, 0);
 	// Get the vector of partial derivatives
-	auto partials = cluster->getPartialDerivatives();
+	auto partials = cluster->getPartialDerivatives(0);
 
 	// Check the size of the partials
 	BOOST_REQUIRE_EQUAL(partials.size(), 23U);
@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	auto network = getSimpleFeReactionNetwork(0);
 
 	// The vector of radii to compare with
-	double expectedRadii[] = { 0.1413109, 0.17804059, 0.2038056,
-			0.224317088, 0.241638258 };
+	double expectedRadii[] = { 0.1413109, 0.17804059, 0.2038056, 0.224317088,
+			0.241638258 };
 
 	// Check all the values
 	for (int i = 1; i <= 5; i++) {

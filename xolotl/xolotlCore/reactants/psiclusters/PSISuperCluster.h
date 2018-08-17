@@ -9,8 +9,7 @@
 #include "PSICluster.h"
 #include "ReactionNetwork.h"
 #include "IntegerRange.h"
-#include "NDArray.h"
-
+#include <MathUtils.h>
 
 // We use std::unordered_map for quick lookup of info about 
 // reactions we participate in.
@@ -27,9 +26,9 @@ namespace xolotlCore {
 class PSISuperCluster: public PSICluster {
 
 private:
-	static std::string buildName(double nHe, double nV) {
+	static std::string buildName(double nHe, double nD, double nT, double nV) {
 		std::stringstream nameStream;
-		nameStream << "He_" << nHe << "V_" << nV;
+		nameStream << "He_" << nHe << "D_" << nD << "T_" << nT << "V_" << nV;
 		return nameStream.str();
 	}
 
@@ -43,15 +42,13 @@ protected:
 		PSICluster& first;
 
 		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
+		 * The reaction/dissociation pointer to the list
 		 */
-		const double& kConstant;
+		Reaction& reaction;
 
 		//! The constructor
 		ReactingInfoBase(Reaction& _reaction, PSICluster& _first) :
-				first(_first), kConstant(_reaction.kConstant) {
-
+				first(_first), reaction(_reaction) {
 		}
 
 		/**
@@ -86,27 +83,46 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A, the second of B
+		 * The first number represent the moment of A, the second of B
 		 * in A + B -> C
 		 *
-		 * The third number represent which momentum we are computing.
+		 * The third number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
-		 * 2 -> V
+		 * 2 -> D
+		 * 3 -> T
+		 * 4 -> V
 		 */
-        Array<double, 3, 3, 3> a;
+		double ***coefs;
 
-		//! The constructor
-		ProductionCoefficientBase() {
+		//! The constructor, disallowed
+		ProductionCoefficientBase() = delete;
 
-            a.Init(0.0);
+		//! The constructor to use
+		ProductionCoefficientBase(const int dim) {
+			// Create the array of the right dimension
+			coefs = new double**[dim];
+			for (int i = 0; i < dim; i++) {
+				coefs[i] = new double*[dim];
+				for (int j = 0; j < dim; j++) {
+					coefs[i][j] = new double[dim];
+					for (int k = 0; k < dim; k++) {
+						coefs[i][j][k] = 0.0;
+					}
+				}
+			}
 		}
 
 		/**
 		 * Copy constructor, disallowed.
 		 */
 		ProductionCoefficientBase(const ProductionCoefficientBase& other) = delete;
+
+		//! The destructor
+		~ProductionCoefficientBase() {
+			delete[] coefs;
+		}
 	};
 
 	/**
@@ -127,8 +143,9 @@ protected:
 
 		//! The constructor
 		SuperClusterProductionPair(Reaction& _reaction, PSICluster& _first,
-				PSICluster& _second) :
-				ReactingPairBase(_reaction, _first, _second), ProductionCoefficientBase() {
+				PSICluster& _second, int dim) :
+				ReactingPairBase(_reaction, _first, _second), ProductionCoefficientBase(
+						dim) {
 
 		}
 
@@ -158,8 +175,10 @@ protected:
 		using KeyType = IReactant*;
 
 		//! The constructor
-		SuperClusterCombiningCluster(Reaction& _reaction, PSICluster& _first) :
-				ReactingInfoBase(_reaction, _first), ProductionCoefficientBase() {
+		SuperClusterCombiningCluster(Reaction& _reaction, PSICluster& _first,
+				int dim) :
+				ReactingInfoBase(_reaction, _first), ProductionCoefficientBase(
+						dim) {
 
 		}
 
@@ -193,23 +212,31 @@ protected:
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A
+		 * The first number represent the moment of A
 		 * in A -> B + C
 		 *
-		 * The second number represent which momentum we are computing.
+		 * The second number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
-		 * 2 -> V
+		 * 2 -> D
+		 * 3 -> T
+		 * 4 -> V
 		 */
-        Array<double, 3, 3> a;
+		double **coefs;
 
 		//! The constructor
 		SuperClusterDissociationPair(Reaction& _reaction, PSICluster& _first,
-				PSICluster& _second) :
+				PSICluster& _second, int dim) :
 				ReactingPairBase(_reaction, _first, _second) {
-
-            a.Init(0.0);
+			// Create the array of the right dimension
+			coefs = new double*[dim];
+			for (int i = 0; i < dim; i++) {
+				coefs[i] = new double[dim];
+				for (int j = 0; j < dim; j++) {
+					coefs[i][j] = 0.0;
+				}
+			}
 		}
 
 		/**
@@ -217,6 +244,11 @@ protected:
 		 */
 		SuperClusterDissociationPair() = delete;
 		SuperClusterDissociationPair(const SuperClusterDissociationPair& other) = delete;
+
+		//! The destructor
+		~SuperClusterDissociationPair() {
+			delete[] coefs;
+		}
 	};
 
 	/**
@@ -226,50 +258,31 @@ protected:
 
 private:
 
-	//! The mean number of helium atoms in this cluster.
-	double numHe;
-
-	//! The mean number of atomic vacancies in this cluster.
-	double numV;
+	//! The mean number of atoms in this cluster.
+	double numAtom[4] = { };
 
 	//! The total number of clusters gathered in this super cluster.
 	int nTot;
 
-	//! The width in the helium direction.
-	int sectionHeWidth;
+	//! The width of the group.
+	int sectionWidth[4] = { };
 
-	//! The width in the vacancy direction.
-	int sectionVWidth;
+	//! The dispersion in the group.
+	double dispersion[4] = { };
 
-	/**
-	 * Bounds on number of He atoms represented by this cluster.
-	 */
-	IntegerRange<IReactant::SizeType> heBounds;
-
-	/**
-	 * Bounds on number of vacancies represented by this cluster.
-	 */
-	IntegerRange<IReactant::SizeType> vBounds;
-
-	//! The 0th order momentum (mean).
+	//! The 0th order moment (mean).
 	double l0;
 
-	//! The first order momentum in the helium direction.
-	double l1He;
+	//! The first order moment.
+	double l1[4] = { };
 
-	//! The first order momentum in the vacancy direction.
-	double l1V;
-
-	//! The dispersion in the group in the helium direction.
-	double dispersionHe;
-
-	//! The dispersion in the group in the vacancy direction.
-	double dispersionV;
+	//! To know if the cluster has a regular shape
+	bool full;
 
 	/**
 	 * The list of clusters gathered in this.
 	 */
-	std::set<std::pair<int, int> > heVList;
+	std::set<std::tuple<int, int, int, int> > heVList;
 
 	//! The list of optimized effective reacting pairs.
 	ProductionPairMap effReactingList;
@@ -284,14 +297,9 @@ private:
 	DissociationPairMap effEmissionList;
 
 	/**
-	 * The helium momentum flux.
+	 * The first moment flux.
 	 */
-	double heMomentumFlux;
-
-	/**
-	 * The vacancy momentum flux.
-	 */
-	double vMomentumFlux;
+	double momentFlux[4] = { };
 
 	/**
 	 * Output coefficients for a given reaction to the given output stream.
@@ -315,17 +323,16 @@ public:
 	 * The constructor. All SuperClusters must be initialized with its
 	 * composition.
 	 *
-	 * @param numHe The mean number of helium atoms in this cluster
-	 * @param numV The mean number of vacancies in this cluster
+	 * @param num The mean number of atoms in this cluster
 	 * @param nTot The total number of clusters in this cluster
-	 * @param heWidth The width of this super cluster in the helium direction
-	 * @param vWidth The width of this super cluster in the vacancy direction
-	 * @param radius The mean radius
-	 * @param energy The mean formation energy
+	 * @param width The width of this super cluster
+	 * @param lower The lower bounds
+	 * @param higher The higher bounds
+	 * @param _network The network
 	 * @param registry The performance handler registry
 	 */
-	PSISuperCluster(double numHe, double numV, int nTot, int heWidth,
-			int vWidth, IReactionNetwork& _network,
+	PSISuperCluster(double num[4], int nTot, int width[4], int lower[4],
+			int higher[4], IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
@@ -344,11 +351,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void resultFrom(ProductionReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override;
 
 	/**
 	 * Note that we result from the given reaction involving a super cluster.
@@ -361,14 +366,32 @@ public:
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
 
 	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param product The cluster created by the reaction.
+	 *
+	 */
+	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
+
+	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef The cooresponding coefficient
+	 */
+	void resultFrom(ProductionReaction& reaction, double *coef) override;
+
+	/**
 	 * Note that we combine with another cluster in a production reaction.
 	 * Assumes that the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
 	 */
-	void participateIn(ProductionReaction& reaction, int a = 0, int b = 0)
+	void participateIn(ProductionReaction& reaction, int a[4] = defaultInit)
 			override;
 
 	/**
@@ -383,17 +406,35 @@ public:
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
 
 	/**
+	 * Note that we combine with another cluster in a production reaction
+	 * involving a super cluster.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param product The cluster created by the reaction.
+	 */
+	void participateIn(ProductionReaction& reaction, IReactant& product)
+			override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(ProductionReaction& reaction, double *coef) override;
+
+	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
 	 * Assumes the reaction is already inour network.
 	 *
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void participateIn(DissociationReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override;
+	void participateIn(DissociationReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction
@@ -407,17 +448,34 @@ public:
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
 
 	/**
+	 * Note that we combine with another cluster in a dissociation reaction
+	 * involving a super cluster.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param disso The dissociating cluster.
+	 */
+	void participateIn(DissociationReaction& reaction, IReactant& disso)
+			override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(DissociationReaction& reaction, double *coef) override;
+
+	/**
 	 * Note that we emit from the given reaction.
 	 * Assumes the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0, int c =
-			0, int d = 0) override;
+	void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit)
+			override;
 
 	/**
 	 * Note that we emit from the given reaction involving a super cluster.
@@ -428,6 +486,24 @@ public:
 	 */
 	void emitFrom(DissociationReaction& reaction,
 			const std::vector<PendingProductionReactionInfo>& prInfos) override;
+
+	/**
+	 * Note that we emit from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param disso The dissociating cluster.
+	 */
+	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void emitFrom(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of
@@ -442,35 +518,31 @@ public:
 	/**
 	 * Set the HeV vector and compute different parameters
 	 */
-	void setHeVVector(std::set<std::pair<int, int> > vec);
+	void setHeVVector(std::set<std::tuple<int, int, int, int> > vec);
 
 	/**
 	 * This operation returns the current concentration.
 	 *
 	 * @param distHe The helium distance in the group
+	 * @param distD The deuterium distance in the group
+	 * @param distT The tritium distance in the group
 	 * @param distV The vacancy distance in the group
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distHe, double distV) const override {
-		return l0 + (distHe * l1He) + (distV * l1V);
+	double getConcentration(double distHe = 0.0, double distD = 0.0,
+			double distT = 0.0, double distV = 0.0) const override {
+		return l0 + (distHe * l1[0]) + (distD * l1[1]) + (distT * l1[2])
+				+ (distV * l1[3]);
 	}
 
 	/**
-	 * This operation returns the first helium momentum.
+	 * This operation returns the first moment of the given axis.
 	 *
-	 * @return The momentum
+	 * @param axis The axis we are intersted in
+	 * @return The moment
 	 */
-	double getHeMomentum() const override {
-		return l1He;
-	}
-
-	/**
-	 * This operation returns the first vacancy momentum.
-	 *
-	 * @return The momentum
-	 */
-	double getVMomentum() const override {
-		return l1V;
+	double getMoment(int axis) const override {
+		return l1[axis];
 	}
 
 	/**
@@ -481,11 +553,12 @@ public:
 	double getTotalConcentration() const;
 
 	/**
-	 * This operation returns the current total concentration of helium in the group.
-
+	 * This operation returns the current total concentration of given atom in the group.
+	 *
+	 * @param axis The given atom
 	 * @return The concentration
 	 */
-	double getTotalHeliumConcentration() const;
+	double getTotalAtomConcentration(int axis = 0) const;
 
 	/**
 	 * This operation returns the current total concentration of vacancies in the group.
@@ -503,52 +576,86 @@ public:
 	double getIntegratedVConcentration(int v) const;
 
 	/**
-	 * This operation returns the distance to the mean.
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, the rate, and
+	 * the coefs[0][0]
 	 *
-	 * @param he The number of helium
-	 * @return The distance to the mean number of helium in the group
+	 * @return The vector of productions
 	 */
-	double getHeDistance(int he) const override {
-		return (sectionHeWidth == 1) ?
-				0.0 : 2.0 * (he - numHe) / (sectionHeWidth - 1.0);
-	}
+	virtual std::vector<std::vector<double> > getProdVector() const override;
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, the rate, and
+	 * the coefs[0]
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const override;
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const override;
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved, containing the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const override;
 
 	/**
 	 * This operation returns the distance to the mean.
 	 *
-	 * @param he The number of vacancy
-	 * @return The distance to the mean number of vacancy in the group
+	 * 0 -> He
+	 * 1 -> D
+	 * 2 -> T
+	 * 3 -> V
+	 *
+	 * @param atom The number of atoms
+	 * @param axis The axis we are intersted in
+	 * @return The distance to the mean number of atoms in the group
 	 */
-	double getVDistance(int v) const override {
-		return (sectionVWidth == 1) ?
-				0.0 : 2.0 * (v - numV) / (sectionVWidth - 1.0);
+	double getDistance(int atom, int axis) const override {
+		return (sectionWidth[axis] == 1) ?
+				0.0 : 2.0 * (atom - numAtom[axis]) / (sectionWidth[axis] - 1.0);
 	}
 
 	/**
-	 * This operation sets the zeroth order momentum.
+	 * This operation returns the factor used for the moments.
 	 *
-	 * @param mom The momentum
+	 * @param atom The number of atoms
+	 * @param axis The axis we are intersted in
+	 * @return The factor
 	 */
-	void setZerothMomentum(double mom) {
+	double getFactor(int atom, int axis) const override {
+		return (double) (atom - numAtom[axis]) / dispersion[axis];
+	}
+
+	/**
+	 * This operation sets the zeroth order moment.
+	 *
+	 * @param mom The moment
+	 */
+	void setZerothMoment(double mom) {
 		l0 = mom;
 	}
 
 	/**
-	 * This operation sets the first order momentum in the helium direction.
+	 * This operation sets the first order moment.
 	 *
-	 * @param mom The momentum
+	 * @param axis The axis we are intersted in
+	 * @param mom The moment
 	 */
-	void setHeMomentum(double mom) {
-		l1He = mom;
-	}
-
-	/**
-	 * This operation sets the first order momentum in the vacancy direction.
-	 *
-	 * @param mom The momentum
-	 */
-	void setVMomentum(double mom) {
-		l1V = mom;
+	void setMoment(double mom, int axis) {
+		l1[axis] = mom;
 	}
 
 	/**
@@ -561,71 +668,68 @@ public:
 	 * This operation returns the total flux of this cluster in the
 	 * current network.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	double getTotalFlux() override {
+	double getTotalFlux(int i) override {
 		// Initialize the fluxes
-		heMomentumFlux = 0.0;
-		vMomentumFlux = 0.0;
+		momentFlux[0] = 0.0, momentFlux[1] = 0.0, momentFlux[2] = 0.0, momentFlux[3] =
+				0.0;
 
 		// Compute the fluxes.
-		return getProductionFlux() - getCombinationFlux()
-				+ getDissociationFlux() - getEmissionFlux();
+		return getProductionFlux(i) - getCombinationFlux(i)
+				+ getDissociationFlux(i) - getEmissionFlux(i);
 	}
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to dissociation of other clusters
 	 */
-	double getDissociationFlux();
+	double getDissociationFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux();
+	double getEmissionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster being produced
 	 */
-	double getProductionFlux();
+	double getProductionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster combining with other clusters
 	 */
-	double getCombinationFlux();
+	double getCombinationFlux(int i);
 
 	/**
-	 * This operation returns the total change for its helium momentum.
+	 * This operation returns the total change for its first moment.
 	 *
-	 * @return The momentum flux
+	 * @param axis The direction we are interested in
+	 * @return The moment flux
 	 */
-	double getHeMomentumFlux() const {
-		return heMomentumFlux;
-	}
-
-	/**
-	 * This operation returns the total change for its vacancy momentum.
-	 *
-	 * @return The momentum flux
-	 */
-	double getVMomentumFlux() const {
-		return vMomentumFlux;
+	double getMomentFlux(int axis) const {
+		return momentFlux[axis];
 	}
 
 	/**
@@ -639,20 +743,15 @@ public:
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
+	 * @param i The location on the grid in the depth direction
 	 *
 	 */
-    void computePartialDerivatives(
-            double* partials,
-            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
-            double* hePartials,
-            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
-            double* vPartials,
-            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
-
-	void getPartialDerivatives(std::vector<double> & partials) const override
-    {
-        assert(false);
-    }
+	void computePartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getPartialDerivatives(std::vector<double> & partials, int i) const override
+	{
+		assert(false);
+	}
 
 	/**
 	 * This operation computes the partial derivatives due to production
@@ -661,19 +760,15 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void computeProductionPartialDerivatives(
-            double* partials,
-            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
-            double* hePartials,
-            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
-            double* vPartials,
-            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
-	void getProductionPartialDerivatives(std::vector<double> & partials) const
+	void computeProductionPartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getProductionPartialDerivatives(std::vector<double> & partials, int i) const
 			override
-    {
-        assert(false);
-    }
+			{
+		assert(false);
+	}
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -682,19 +777,15 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void computeCombinationPartialDerivatives(
-            double* partials,
-            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
-            double* hePartials,
-            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
-            double* vPartials,
-            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
-	void getCombinationPartialDerivatives(std::vector<double> & partials) const
+	void computeCombinationPartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getCombinationPartialDerivatives(std::vector<double> & partials, int i) const
 			override
-    {
-        assert(false);
-    }
+			{
+		assert(false);
+	}
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -703,19 +794,15 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void computeDissociationPartialDerivatives(
-            double* partials,
-            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
-            double* hePartials,
-            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
-            double* vPartials,
-            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
-	void getDissociationPartialDerivatives(std::vector<double> & partials) const
+	void computeDissociationPartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getDissociationPartialDerivatives(std::vector<double> & partials, int i) const
 			override
-    {
-        assert(false);
-    }
+			{
+		assert(false);
+	}
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -724,19 +811,27 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void computeEmissionPartialDerivatives(
-            double* partials,
-            const ReactionNetwork::PartialsIdxMap& partialsIdxMap,
-            double* hePartials,
-            const ReactionNetwork::PartialsIdxMap& hePartialsIdxMap,
-            double* vPartials,
-            const ReactionNetwork::PartialsIdxMap& vPartialsIdxMap) const;
-	void getEmissionPartialDerivatives(std::vector<double> & partials) const
+	void computeEmissionPartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getEmissionPartialDerivatives(std::vector<double> & partials, int i) const
 			override
-    {
-        assert(false);
-    }
+			{
+		assert(false);
+	}
+
+	/**
+	 * This operation computes the partial derivatives for the given moment.
+	 *
+	 * @param partials The vector into which the partial derivatives should be
+	 * inserted.
+	 * @ param axis The direction
+	 */
+	void getMomentPartialDerivatives(std::vector<double> & partials, int axis =
+			0) const {
+		assert(false);
+	}
 
 	/**
 	 * Returns the average number of vacancies.
@@ -744,7 +839,7 @@ public:
 	 * @return The average number of vacancies
 	 */
 	double getNumV() const {
-		return numV;
+		return numAtom[3];
 	}
 
 	/**
@@ -757,34 +852,46 @@ public:
 	}
 
 	/**
-	 * Access bounds on number of He atoms represented by this cluster.
-	 */
-	// TODO do we want to make this generic by taking a type parameter?
-	const IntegerRange<IReactant::SizeType>& getHeBounds() const {
-		return heBounds;
-	}
-
-	/**
-	 * Access bounds on number of vacancies represented by this cluster.
-	 */
-	const IntegerRange<IReactant::SizeType>& getVBounds() const {
-		return vBounds;
-	}
-
-	/**
-	 * Detect if given number of He and V are in this cluster's group.
+	 * Detect if given coordinates are in this cluster's group.
 	 *
 	 * @param _nHe number of He of interest.
+	 * @param _nD number of D of interest
+	 * @param _nT number of T of interest
 	 * @param _nV number of V of interest
-	 * @return True if _nHe and _nV is contained in our super cluster.
+	 * @return True if the coordinates are contained in our super cluster.
 	 */
-	bool isIn(IReactant::SizeType _nHe, IReactant::SizeType _nV) const {
-		if (!heBounds.contains(_nHe))
+	bool isIn(IReactant::SizeType nHe, IReactant::SizeType nD,
+			IReactant::SizeType nT, IReactant::SizeType nV) const {
+		if (!bounds[0].contains(nHe))
 			return false;
-		if (!vBounds.contains(_nV))
+		if (!bounds[1].contains(nD))
 			return false;
+		if (!bounds[2].contains(nT))
+			return false;
+		if (!bounds[3].contains(nV))
+			return false;
+		if (isFull())
+			return true;
 
-		return (heVList.find(std::make_pair(_nHe, _nV)) != heVList.end());
+		return (heVList.find(std::make_tuple(nHe, nD, nT, nV)) != heVList.end());
+	}
+
+	/**
+	 * Determine if the cluster has a full parallelepiped shape without missing clusters.
+	 *
+	 * @return True if it is full.
+	 */
+	bool isFull() const {
+		return full;
+	}
+
+	/**
+	 * Return the heVList.
+	 *
+	 * @return The heVList
+	 */
+	const std::set<std::tuple<int, int, int, int> > & getCoordList() const {
+		return heVList;
 	}
 
 	/**
@@ -797,5 +904,6 @@ public:
 };
 //end class PSISuperCluster
 
-} /* end namespace xolotlCore */
+}
+/* end namespace xolotlCore */
 #endif

@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSICluster.h>
 #include "SimpleReactionNetwork.h"
 #include <PSIMixedCluster.h>
@@ -150,9 +150,11 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	psiNetwork->add(std::move(interstitialCluster));
 
 	// Try changing the temperature and make sure it works
-	psiNetwork->setTemperature(1000.0);
+	// Add a grid point for rates and temperature
+	psiNetwork->addGridPoints(1);
+	psiNetwork->setTemperature(1000.0, 0);
 	IReactant& reactant = reactants.at(0);
-	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(), 0.0001);
+	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(0), 0.0001);
 
 	return;
 }
@@ -165,7 +167,8 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::He), 0);
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::V), 0);
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::I), 0);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed), 0);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed),
+			0);
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::HeI), 0);
 
 	// Add a couple of clusters
@@ -178,7 +181,8 @@ BOOST_AUTO_TEST_CASE(checkProperties) {
 
 	// Check the properties again
 	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::He), 5);
-	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxClusterSize(ReactantType::PSIMixed),
+			8);
 
 	return;
 }

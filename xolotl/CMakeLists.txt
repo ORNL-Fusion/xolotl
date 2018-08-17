@@ -40,19 +40,6 @@ if (PETSC_FOUND)
     set(CMAKE_REQUIRED_LIBRARIES ${SAVED_CMAKE_REQUIRED_LIBRARIES})
 endif()
 
-# Find the Boost libraries we (potentially) use.
-# Note that we only need to list Boost component libraries that have a
-# library implementation (i.e., not header only) as required components.
-FIND_PACKAGE(Boost OPTIONAL_COMPONENTS filesystem unit_test_framework)
-IF (Boost_FOUND)
-    message(STATUS "Boost version ${Boost_VERSION} found.")
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-ENDIF()
-IF (Boost_UNIT_TEST_FRAMEWORK_FOUND)
-    message(STATUS "Tests will be built since Boost unit test framework found.")
-    add_subdirectory(tests)
-ENDIF()
-
 # Make sure that we only pull the static HDF5
 #set(HDF5_USE_STATIC_LIBRARIES yes)
 # Find HDF5 - Optional for now until we actually require it
@@ -64,6 +51,19 @@ ENDIF()
 # Include the headers
 INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
 
+# Find the Boost libraries we (potentially) use.
+# Note that we only need to list Boost component libraries that have a
+# library implementation (i.e., not header only) as required components.
+FIND_PACKAGE(Boost OPTIONAL_COMPONENTS timer filesystem unit_test_framework)
+IF (Boost_FOUND)
+    message(STATUS "Boost version ${Boost_VERSION} found.")
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+ENDIF()
+IF (Boost_UNIT_TEST_FRAMEWORK_FOUND)
+    message(STATUS "Tests will be built since Boost unit test framework found.")
+    add_subdirectory(tests)
+ENDIF()
+
 # Enable testing.
 enable_testing()
 
@@ -74,10 +74,6 @@ IF (Java_FOUND)
     message(STATUS "The preprocessor will be built since Java was found.")
     add_subdirectory(gov.ornl.xolotl.preprocessor)
 ENDIF()
-
-## We use OpenMP for multithreading.
-#find_package(OpenMP REQUIRED)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 # Build the performance library first, so it can be used by other libraries.
 add_subdirectory(xolotlPerf)

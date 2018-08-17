@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <FeClusterReactionNetwork.h>
 #include <FeClusterNetworkLoader.h>
 #include <FeCluster.h>
@@ -11,6 +11,8 @@
 #include <memory>
 #include <Options.h>
 #include "tests/utils/MPIFixture.h"
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -23,74 +25,77 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
  */
 BOOST_AUTO_TEST_SUITE(FeClusterNetworkLoader_testSuite)
 
-///**
-// * Method checking the loading of the network from the HDF5 file.
-// */
-//BOOST_AUTO_TEST_CASE(checkLoad) {
-//
-//	// Create the network loader
-//	FeClusterNetworkLoader loader = FeClusterNetworkLoader(
-//			make_shared<xolotlPerf::DummyHandlerRegistry>());
-//	// Define the filename to load the network from
-//	string sourceDir(XolotlSourceDirectory);
-//	string pathToFile("/tests/testfiles/fuel_diminutive.h5");
-//	string filename = sourceDir + pathToFile;
-//	// Give the filename to the network loader
-//	loader.setFilename(filename);
-//
-//	// Create the options needed to load the network
-//	Options opts;
-//	// Load the network
-//	auto network = loader.load(opts);
-//	auto neNetwork = (FeClusterReactionNetwork*) network.get();
-//
-//	// Get the size of the network
-//	int networkSize = network->size();
-//	// Check the value
-//	BOOST_REQUIRE_EQUAL(networkSize, 3);
-//
-//	// Check the properties
-//	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::He), 3);
-//	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::V), 0);
-//	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::I), 0);
-//	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::HeV), 0);
-//
-//	// Get all the reactants
-//	auto reactants = network->getAll();
-//
-//	// Get the first one of the network
-//	IReactant& reactant = reactants.at(0);
-//	// Check the composition
-//	auto composition = reactant.getComposition();
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::He)], 1);
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::V)], 0);
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::I)], 0);
-//	// Check the formation energy
-//	auto formationEnergy = reactant.getFormationEnergy();
-//	BOOST_REQUIRE_EQUAL(formationEnergy, 7.0);
-//	// Check the migration energy
-//	auto migrationEnergy = reactant.getMigrationEnergy();
-//	BOOST_REQUIRE_EQUAL(migrationEnergy, 0.0);
-//	// Check the diffusion factor
-//	auto diffusionFactor = reactant.getDiffusionFactor();
-//	BOOST_REQUIRE_EQUAL(diffusionFactor, 5.0e-3);
-//
-//	// Get the last reactant of the network
-//	IReactant& reactant2 = reactants.at(2);
-//	// Check the composition
-//	composition = reactant2.getComposition();
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::He)], 3);
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::V)], 0);
-//	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::I)], 0);
-//	// Check the formation energy
-//	formationEnergy = reactant2.getFormationEnergy();
-//	BOOST_REQUIRE_EQUAL(formationEnergy, 17.15);
-//	// Check the diffusion factor
-//	diffusionFactor = reactant2.getDiffusionFactor();
-//	BOOST_REQUIRE_CLOSE(diffusionFactor, 0.0, 1.0e-16);
-//
-//	return;
-//}
+/**
+ * Method checking the loading of the network from the HDF5 file.
+ */
+BOOST_AUTO_TEST_CASE(checkLoad) {
+
+	// Create the network loader
+	FeClusterNetworkLoader loader = FeClusterNetworkLoader(
+			make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Define the filename to load the network from
+	string sourceDir(XolotlSourceDirectory);
+	string pathToFile("/tests/testfiles/iron_diminutive.h5");
+	string filename = sourceDir + pathToFile;
+	// Give the filename to the network loader
+	loader.setFilename(filename);
+
+	// Create the options needed to load the network
+	Options opts;
+	// Load the network
+	auto network = loader.load(opts);
+	auto neNetwork = (FeClusterReactionNetwork*) network.get();
+
+	// Get the size of the network
+	int networkSize = network->size();
+	// Check the value
+	BOOST_REQUIRE_EQUAL(networkSize, 33);
+
+	// Check the properties
+	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::He), 8);
+	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::V), 5);
+	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::I), 1);
+	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::HeV), 10);
+
+	// Get all the reactants
+	auto reactants = network->getAll();
+
+	// Get the first one of the network
+	IReactant& reactant = reactants.at(0);
+	// Check the composition
+	auto composition = reactant.getComposition();
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::He)], 0);
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::V)], 0);
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::I)], 1);
+	// Check the formation energy
+	auto formationEnergy = reactant.getFormationEnergy();
+	BOOST_REQUIRE_EQUAL(formationEnergy, 0.0);
+	// Check the migration energy
+	auto migrationEnergy = reactant.getMigrationEnergy();
+	BOOST_REQUIRE_EQUAL(migrationEnergy, 0.34);
+	// Check the diffusion factor
+	auto diffusionFactor = reactant.getDiffusionFactor();
+	BOOST_REQUIRE_EQUAL(diffusionFactor, 1.0e11);
+
+	// Get another reactant
+	IReactant& reactant2 = reactants.at(2);
+	// Check the composition
+	composition = reactant2.getComposition();
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::He)], 2);
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::V)], 0);
+	BOOST_REQUIRE_EQUAL(composition[toCompIdx(Species::I)], 0);
+	// Check the formation energy
+	formationEnergy = reactant2.getFormationEnergy();
+	BOOST_REQUIRE_EQUAL(formationEnergy, 0.0);
+	// Check the migration energy
+	migrationEnergy = reactant2.getMigrationEnergy();
+	BOOST_REQUIRE_EQUAL(migrationEnergy, 0.06);
+	// Check the diffusion factor
+	diffusionFactor = reactant2.getDiffusionFactor();
+	BOOST_REQUIRE_EQUAL(diffusionFactor, 5.0e10);
+
+	return;
+}
 
 /**
  * Method checking the generation of the network.

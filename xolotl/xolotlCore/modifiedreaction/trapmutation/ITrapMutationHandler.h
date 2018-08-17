@@ -122,12 +122,13 @@ public:
 	 * at the grid point where the trap-mutation is computed used to find the
 	 * next solution
 	 * @param xi The index of the position on the grid in the depth direction
+	 * @param xs The beginning of the grid on this process
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 */
 	virtual void computeTrapMutation(const IReactionNetwork& network,
-			double *concOffset, double *updatedConcOffset, int xi, int yj = 0,
-			int zk = 0) = 0;
+			double *concOffset, double *updatedConcOffset, int xi, int xs,
+			int yj = 0, int zk = 0) = 0;
 
 	/**
 	 * Compute the partials due to the modified trap-mutation for all the
@@ -141,6 +142,7 @@ public:
 	 * @param indices The pointer to the array that will contain the indices
 	 * of the clusters
 	 * @param xi The index of the position on the grid in the depth direction
+	 * @param xs The beginning of the grid on this process
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 *
@@ -148,7 +150,8 @@ public:
 	 * at this grid point
 	 */
 	virtual int computePartialsForTrapMutation(const IReactionNetwork& network,
-			double *val, int *indices, int xi, int yj = 0, int zk = 0) = 0;
+			double *val, int *indices, int xi, int xs, int yj = 0,
+			int zk = 0) = 0;
 
 	/**
 	 * Get the total number of clusters in the network that can undergo trap mutation.

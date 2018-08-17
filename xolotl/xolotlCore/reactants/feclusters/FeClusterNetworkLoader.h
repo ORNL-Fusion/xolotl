@@ -81,9 +81,7 @@ protected:
 	}
 
 	/**
-	 * This operation creates a singles-species cluster of helium, vacancies or
-	 * interstitials. It adds the cluster to the appropriate internal list of
-	 * clusters for that type.
+	 * This operation creates a normal cluster.
 	 *
 	 * @param numHe The number of helium atoms
 	 * @param numV The number of atomic vacancies
@@ -91,6 +89,15 @@ protected:
 	 * @return The new cluster
 	 */
 	std::unique_ptr<FeCluster> createFeCluster(int numHe, int numV, int numI,
+			IReactionNetwork& network) const;
+
+	/**
+	 * This operation creates a super cluster
+	 *
+	 * @param bounds The bounds of the clusters it contains
+	 * @return The new cluster
+	 */
+	std::unique_ptr<FeCluster> createFeSuperCluster(Array1D<int, 4> &bounds,
 			IReactionNetwork& network) const;
 
 	/**

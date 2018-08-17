@@ -32,6 +32,12 @@ class PetscSolverHandler: public SolverHandler {
 protected:
 
 	/**
+	 * The last temperature on the grid. It is a vector to keep the temperature at each
+	 * grid point but we know the temperature changes with depth only.
+	 */
+	std::vector<double> lastTemperature;
+
+	/**
 	 * A vector for holding the partial derivatives of one cluster. It is sized in
 	 * the createSolverContext() operation.
 	 *

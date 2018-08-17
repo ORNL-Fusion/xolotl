@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <FeCluster.h>
 #include <FeSuperCluster.h>
 #include <FeClusterNetworkLoader.h>
@@ -46,10 +46,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	// Load the network
 	auto network = loader.generate(opts);
 
-	// Set the temperature in the network
-	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -62,8 +58,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
 	// Check the connectivity for He, V, and I
 	int connectivityExpected[] = { 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0,
-			0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0 };
+			0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0,
+			0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
@@ -92,11 +88,12 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	opts.setMaxI(1);
 	// Load the network
 	auto network = loader.generate(opts);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Set the temperature in the network
 	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
+	network->setTemperature(temperature, 0);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -109,7 +106,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	secondCluster->setConcentration(0.5);
 
 	// Get and check the flux
-	double flux = cluster->getTotalFlux();
+	double flux = cluster->getTotalFlux(0);
 	BOOST_REQUIRE_CLOSE(0.0, flux, 0.1);
 
 	return;
@@ -135,11 +132,12 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	opts.setMaxI(1);
 	// Load the network
 	auto network = loader.generate(opts);
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Set the temperature in the network
 	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
+	network->setTemperature(temperature, 0);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -148,16 +146,15 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-			0.0, 0.0, 0.0, 0.0, 0.0, 8.63906e-08, 0.0, 0.0, -0.00528717,
-			9.20495e-13, 0.00528717, 0.0, 0.0, 0.0, 8.63906e-08, 0.0, 0.0, 0.0,
-			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+	double knownPartials[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.63906e-08, 0, 0, -0.00528717,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 8.63906e-08, 0, 0, 0, 0, 9.20495e-13,
+			0.00528717, 0 };
 	// Set the concentration
 	cluster->setConcentration(0.5);
 
 	// Get the vector of partial derivatives
-	auto partials = cluster->getPartialDerivatives();
+	auto partials = cluster->getPartialDerivatives(0);
 
 	// Check the size of the partials
 	BOOST_REQUIRE_EQUAL(partials.size(), 49U);

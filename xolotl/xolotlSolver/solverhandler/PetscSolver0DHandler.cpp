@@ -73,6 +73,10 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
+	// Initialize the last temperature and rates
+	lastTemperature.push_back(0.0);
+	network.addGridPoints(1);
+
 	// Pointer for the concentration vector
 	PetscScalar **concentrations = nullptr;
 	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
@@ -107,11 +111,16 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 	concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition, 0.0);
 
-    // Determine if the HDF5 file has any concentrations.
-    // TODO are we assuming networkName is non-empty here?
-    xolotlCore::XFile xfile(networkName);
-    auto concGroup = xfile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
-    bool hasConcentrations = (concGroup and concGroup->hasTimesteps());
+	// Get the last time step written in the HDF5 file
+	bool hasConcentrations = false;
+	std::unique_ptr<xolotlCore::XFile> xfile;
+	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
+	if (not networkName.empty()) {
+
+		xfile.reset(new xolotlCore::XFile(networkName));
+		concGroup = xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
+		hasConcentrations = (concGroup and concGroup->hasTimesteps());
+	}
 
 	// Initialize the vacancy concentration
 	if (singleVacancyCluster and not hasConcentrations) {
@@ -121,8 +130,8 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
 		// Read the concentrations from the HDF5 file
-        auto tsGroup = concGroup->getLastTimestepGroup();
-        auto concVector = tsGroup->readGridPoint(0);
+		auto tsGroup = concGroup->getLastTimestepGroup();
+		auto concVector = tsGroup->readGridPoint(0);
 
 		concOffset = concentrations[0];
 		// Loop on the concVector size
@@ -183,9 +192,9 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (!xolotlCore::equal(temperature, lastTemperature)) {
+	if (std::fabs(lastTemperature[0] - temperature) > 1.0) {
 		network.setTemperature(temperature);
-		lastTemperature = temperature;
+		lastTemperature[0] = temperature;
 	}
 
 	// Copy data into the ReactionNetwork so that it can
@@ -261,9 +270,9 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (!xolotlCore::equal(temperature, lastTemperature)) {
+	if (std::fabs(lastTemperature[0] - temperature) > 1.0) {
 		network.setTemperature(temperature);
-		lastTemperature = temperature;
+		lastTemperature[0] = temperature;
 	}
 
 	// Copy data into the ReactionNetwork so that it can

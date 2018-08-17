@@ -13,25 +13,41 @@ namespace xolotlCore {
 Reactant::Reactant(IReactionNetwork& _network,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry,
 		const std::string& _name) :
-		concentration(0.0), id(0), xeMomId(0), heMomId(0), vMomId(0), temperature(
-				0.0), type(ReactantType::Invalid), network(_network), handlerRegistry(
-				registry), size(0), formationEnergy(0.0), diffusionFactor(0.0), diffusionCoefficient(
-				0.0), migrationEnergy(0.0), name(_name), reactionRadius(0.0) {
+		concentration(0.0), id(0), type(ReactantType::Invalid), network(
+				_network), handlerRegistry(registry), size(0), formationEnergy(
+				0.0), diffusionFactor(0.0), migrationEnergy(0.0), name(_name), reactionRadius(
+				0.0) {
 
 }
 
-void Reactant::recomputeDiffusionCoefficient(double temp) {
+void Reactant::recomputeDiffusionCoefficient(double temp, int i) {
 	// Return zero if the diffusion factor is zero.
-	if (xolotlCore::equal(diffusionFactor, 0.0)) {
-		diffusionCoefficient = 0.0;
-	} else {
+	if (!xolotlCore::equal(diffusionFactor, 0.0)) {
 		// Otherwise use the Arrhenius equation to compute the diffusion
 		// coefficient
 		double k_b = xolotlCore::kBoltzmann;
 		double kernel = -1.0 * migrationEnergy / (k_b * temp);
-		diffusionCoefficient = diffusionFactor * exp(kernel);
+		diffusionCoefficient[i] = diffusionFactor * exp(kernel);
 	}
 
+	return;
+}
+
+void Reactant::addGridPoints(int i) {
+	// Add grid points
+	if (i > 0) {
+		while (i > 0) {
+			diffusionCoefficient.emplace(diffusionCoefficient.begin(), 0.0);
+			temperature.emplace(temperature.begin(), 0.0);
+
+			// Decrease i
+			i--;
+		}
+	} else {
+		diffusionCoefficient.erase(diffusionCoefficient.begin(),
+				diffusionCoefficient.begin() - i);
+		temperature.erase(temperature.begin(), temperature.begin() - i);
+	}
 	return;
 }
 
@@ -47,18 +63,16 @@ std::vector<int> Reactant::getConnectivity() const {
 	return connectivity;
 }
 
-void Reactant::setTemperature(double temp) {
-	temperature = temp;
+void Reactant::setTemperature(double temp, int i) {
+	temperature[i] = temp;
 
 	// Recompute the diffusion coefficient
-	recomputeDiffusionCoefficient(temp);
+	recomputeDiffusionCoefficient(temp, i);
 }
 
 void Reactant::setDiffusionFactor(const double factor) {
 	// Set the diffusion factor
 	diffusionFactor = factor;
-	// Update the diffusion coefficient
-	recomputeDiffusionCoefficient(temperature);
 
 	return;
 }
@@ -66,16 +80,14 @@ void Reactant::setDiffusionFactor(const double factor) {
 void Reactant::setMigrationEnergy(const double energy) {
 	// Set the migration energy
 	migrationEnergy = energy;
-	// Update the diffusion coefficient
-	recomputeDiffusionCoefficient(temperature);
 
 	return;
 }
 
 std::ostream&
 operator<<(std::ostream& os, const IReactant::Composition& comp) {
-	std::vector<Species> compSpecies { Species::He, Species::I, Species::V,
-			Species::Xe };
+	std::vector<Species> compSpecies { Species::He, Species::D, Species::T,
+			Species::I, Species::V, Species::Xe };
 	for (auto const& currSpecies : compSpecies) {
 		os << toString(currSpecies) << comp[toCompIdx(currSpecies)];
 	}

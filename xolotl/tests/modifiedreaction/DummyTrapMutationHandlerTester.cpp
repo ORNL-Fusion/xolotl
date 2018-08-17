@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <DummyTrapMutationHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
@@ -9,6 +9,8 @@
 #include <DummyHandlerRegistry.h>
 #include <DummyAdvectionHandler.h>
 #include <mpi.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -27,25 +29,31 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	char **argv;
 	MPI_Init(&argc, &argv);
 
+	// Create the option to create a network
+	xolotlCore::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 10 6" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+	opts.readParams(argv);
+
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-
-	// Create the options needed to load the network
-	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
+	// Create the network
+	auto network = loader.generate(opts);
 	// Get its size
 	const int dof = network->getDOF();
-	// Initialize the rate constants
-	network->setTemperature(1000.0);
-	network->computeRateConstants();
+	// Initialize the rates
+	network->addGridPoints(1);
+	network->setTemperature(1000.0, 0);
 
 	// Suppose we have a grid with 13 grip points and distance of
 	// 0.1 nm between grid points
@@ -88,7 +96,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the second grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 1);
+			updatedConcOffset, 1, 0);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 0.0, 0.01); // Create I
@@ -107,10 +115,14 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the modified trap-mutation at the grid point 1
 	int nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 1);
+			valPointer, indicesPointer, 1, 0);
 
 	// Verify that no cluster is undergoing modified trap-mutation
 	BOOST_REQUIRE_EQUAL(nMutating, 0);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();

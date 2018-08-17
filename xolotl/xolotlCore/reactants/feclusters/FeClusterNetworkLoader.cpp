@@ -14,7 +14,6 @@
 #include <cassert>
 #include "xolotlCore/io/XFile.h"
 
-
 namespace xolotlCore {
 
 std::unique_ptr<FeCluster> FeClusterNetworkLoader::createFeCluster(int numHe,
@@ -44,6 +43,32 @@ std::unique_ptr<FeCluster> FeClusterNetworkLoader::createFeCluster(int numHe,
 	// TODO Once we have widespread C++14 support, use std::make_unique
 	// instead of two steps (and two memory allocations).
 	return std::unique_ptr<FeCluster>(cluster);
+}
+
+std::unique_ptr<FeCluster> FeClusterNetworkLoader::createFeSuperCluster(
+		Array1D<int, 4> &bounds, IReactionNetwork& network) const {
+	// Compute the values to create the cluster from the bounds
+	int count = (bounds[1] - bounds[0]) * (bounds[3] - bounds[2]);
+	double heSize = (bounds[0] + bounds[1] - 1) / 2.0, vSize = (bounds[2]
+			+ bounds[3] - 1) / 2.0;
+	// Create the cluster
+	auto superCluster = new FeSuperCluster(heSize, vSize, count,
+			bounds[1] - bounds[0], bounds[3] - bounds[2], network,
+			handlerRegistry);
+
+	// Set the HeV vector
+	std::vector<std::pair<int, int> > tempVector;
+	for (int i = bounds[0]; i < bounds[1]; i++) {
+		for (int j = bounds[2]; j < bounds[3]; j++) {
+			auto pair = std::make_pair(i, j);
+			tempVector.push_back(pair);
+		}
+	}
+	superCluster->setHeVVector(tempVector);
+
+	// TODO Once we have widespread C++14 support, use std::make_unique
+	// instead of two steps (and two memory allocations).
+	return std::unique_ptr<FeCluster>(superCluster);
 }
 
 FeClusterNetworkLoader::FeClusterNetworkLoader(
@@ -81,12 +106,12 @@ FeClusterNetworkLoader::FeClusterNetworkLoader(
 
 std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::load(
 		const IOptions& options) {
-
 	// Get the dataset from the HDF5 files
-    XFile networkFile(fileName);
-    auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
-    assert(networkGroup);
-    auto networkVector = networkGroup->readNetwork();
+	int normalSize = 0, superSize = 0;
+	XFile networkFile(fileName);
+	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
+	assert(networkGroup);
+	networkGroup->readNetworkSize(normalSize, superSize);
 
 	// Initialization
 	int numHe = 0, numV = 0, numI = 0;
@@ -98,44 +123,44 @@ std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::load(
 	std::unique_ptr<FeClusterReactionNetwork> network(
 			new FeClusterReactionNetwork(handlerRegistry));
 
-	// Loop on the networkVector
-	for (auto lineIt = networkVector.begin(); lineIt != networkVector.end();
-			lineIt++) {
-		// Composition of the cluster
-		numHe = (int) (*lineIt)[0];
-		numV = (int) (*lineIt)[1];
-		numI = (int) (*lineIt)[2];
-		// Create the cluster
-		auto nextCluster = createFeCluster(numHe, numV, numI, *network);
+	// Loop on the clusters
+	for (int i = 0; i < normalSize + superSize; i++) {
+		// Open the cluster group
+		XFile::ClusterGroup clusterGroup(*networkGroup, i);
 
-		// Energies
-		formationEnergy = (*lineIt)[3];
-		migrationEnergy = (*lineIt)[4];
-		diffusionFactor = (*lineIt)[5];
+		if (i < normalSize) {
+			// Normal cluster
+			// Read the composition
+			auto comp = clusterGroup.readCluster(formationEnergy,
+					migrationEnergy, diffusionFactor);
+			numHe = comp[toCompIdx(Species::He)];
+			numV = comp[toCompIdx(Species::V)];
+			numI = comp[toCompIdx(Species::I)];
 
-		// Set the formation energy
-		nextCluster->setFormationEnergy(formationEnergy);
-		// Set the diffusion factor and migration energy
-		nextCluster->setMigrationEnergy(migrationEnergy);
-		nextCluster->setDiffusionFactor(diffusionFactor);
+			// Create the cluster
+			auto nextCluster = createFeCluster(numHe, numV, numI, *network);
 
-		// Check if we want dummy reactions
-		if (dummyReactions) {
-			// Create a dummy cluster (just a stock Reactant)
-			// from the existing cluster
-			// TODO Once C++11 support is widespread, use std::make_unique.
-			std::unique_ptr<Reactant> dummyCluster(new Reactant(*nextCluster));
+			// Set the formation energy
+			nextCluster->setFormationEnergy(formationEnergy);
+			// Set the diffusion factor and migration energy
+			nextCluster->setMigrationEnergy(migrationEnergy);
+			nextCluster->setDiffusionFactor(diffusionFactor);
 
-			// Keep a ref to it so we can trigger its updates after
-			// we add it to the network.
-			reactants.emplace_back(*dummyCluster);
+			// Save access to it so we can trigger updates once
+			// all are added to the network.
+			reactants.emplace_back(*nextCluster);
 
 			// Give the cluster to the network
-			network->add(std::move(dummyCluster));
-
+			network->add(std::move(nextCluster));
 		} else {
-			// Keep a ref to it so we can trigger its updates after
-			// we add it to the network.
+			// Super cluster
+			auto bounds = clusterGroup.readFeSuperCluster();
+
+			// Create the cluster
+			auto nextCluster = createFeSuperCluster(bounds, *network);
+
+			// Save access to it so we can trigger updates once
+			// all are added to the network.
 			reactants.emplace_back(*nextCluster);
 
 			// Give the cluster to the network
@@ -148,16 +173,10 @@ std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::load(
 		currReactant.updateFromNetwork();
 	}
 
-	// Check if we want dummy reactions
-	if (!dummyReactions) {
-		// Apply sectional grouping
-		applySectionalGrouping(*network);
-	}
+	// Set the reactions
+	networkGroup->readReactions(*network);
 
-	// Create the reactions
-	network->createReactionConnectivity();
-
-	// Recompute Ids and network size and redefine the connectivities
+	// Recompute Ids and network size
 	network->reinitializeNetwork();
 
 	// Need to use move() because return type uses smart pointer to base class,
@@ -220,7 +239,7 @@ std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::generate(
 					std::numeric_limits<double>::infinity());
 		}
 
-		// Svae access to it so we can trigger updates once all are
+		// Save access to it so we can trigger updates once all are
 		// added to the network.
 		reactants.emplace_back(*nextCluster);
 

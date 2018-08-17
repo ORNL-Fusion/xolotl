@@ -21,7 +21,8 @@ private:
 public:
 
 	//! The Constructor
-	SurfaceAdvectionHandler() : AdvectionHandler() {
+	SurfaceAdvectionHandler() :
+			AdvectionHandler() {
 	}
 
 	//! The Destructor
@@ -54,7 +55,7 @@ public:
 	 */
 	void computeAdvection(const IReactionNetwork& network, const Point<3>& pos,
 			double **concVector, double *updatedConcOffset, double hxLeft,
-			double hxRight, int ix, double hy = 0.0, int iy = 0,
+			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override;
 
 	/**
@@ -75,7 +76,7 @@ public:
 	 */
 	void computePartialsForAdvection(const IReactionNetwork& network,
 			double *val, int *indices, const Point<3>& pos, double hxLeft,
-			double hxRight, int ix, double hy = 0.0, int iy = 0,
+			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override;
 
 	/**

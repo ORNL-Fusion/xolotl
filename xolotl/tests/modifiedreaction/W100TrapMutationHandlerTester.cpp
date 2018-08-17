@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <W100TrapMutationHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
@@ -9,6 +9,8 @@
 #include <DummyHandlerRegistry.h>
 #include <DummyAdvectionHandler.h>
 #include <mpi.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -27,31 +29,38 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	char **argv;
 	MPI_Init(&argc, &argv);
 
+	// Create the option to create a network
+	xolotlCore::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 10 6" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+	opts.readParams(argv);
+
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-
-	// Create the options needed to load the network
-	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
+	// Create the network
+	auto network = loader.generate(opts);
 	// Get its size
 	const int dof = network->getDOF();
-	// Initialize the rate constants
-	network->setTemperature(1200.0);
-	network->computeRateConstants();
 
 	// Suppose we have a grid with 13 grip points and distance of
 	// 0.1 nm between grid points
+	int nGrid = 13;
+	// Initialize the rates
+	network->addGridPoints(nGrid);
 	std::vector<double> grid;
-	for (int l = 0; l < 13; l++) {
+	for (int l = 0; l < nGrid; l++) {
 		grid.push_back((double) l * 0.1);
+		network->setTemperature(1200.0, l);
 	}
 	// Set the surface position
 	int surfacePos = 0;
@@ -69,11 +78,11 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			advectionHandlers, grid);
 
 	// The arrays of concentration
-	double concentration[13 * dof];
-	double newConcentration[13 * dof];
+	double concentration[nGrid * dof];
+	double newConcentration[nGrid * dof];
 
 	// Initialize their values
-	for (int i = 0; i < 13 * dof; i++) {
+	for (int i = 0; i < nGrid * dof; i++) {
 		concentration[i] = (double) i * i;
 		newConcentration[i] = 0.0;
 	}
@@ -92,12 +101,12 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the sixth grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 5);
+			updatedConcOffset, 5, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 5.101444997e+30, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], -5.101444997e+30, 0.01); // He2
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 5.101444997e+30, 0.01); // Create He2V
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.3757e+26, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], -3.3757e+26, 0.01); // He2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 3.3757e+26, 0.01); // Create He2V
 
 	// Get the offset for the ninth grid point
 	concOffset = conc + 8 * dof;
@@ -109,14 +118,14 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the ninth grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 8);
+			updatedConcOffset, 8, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.80181718e+23, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 4.1527e+21, 0.01); // Create I
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // He3
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[17], 0.0, 0.01); // Doesn't create He3V
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -1.80247e+23, 0.01); // He7
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[31], 1.80247e+23, 0.01); // Create He7V2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -4.1627e+21, 0.01); // He7
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[31], 4.1627e+21, 0.01); // Create He7V2
 
 	// Initialize the indices and values to set in the Jacobian
 	int nHelium = network->getAll(ReactantType::He).size();
@@ -128,7 +137,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
 	int nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8);
+			valPointer, indicesPointer, 8, 0);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(nMutating, 3);
@@ -157,7 +166,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the bursting a the grid point 8
 	nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8);
+			valPointer, indicesPointer, 8, 0);
 
 	// Check values
 	BOOST_REQUIRE_EQUAL(nMutating, 3);
@@ -167,6 +176,10 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	BOOST_REQUIRE_CLOSE(val[3], -5.53624e+14, 0.01);
 	BOOST_REQUIRE_CLOSE(val[4], 5.53624e+14, 0.01);
 	BOOST_REQUIRE_CLOSE(val[5], 5.53624e+14, 0.01);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();
