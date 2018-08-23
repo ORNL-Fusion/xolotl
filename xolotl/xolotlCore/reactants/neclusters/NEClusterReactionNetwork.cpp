@@ -199,6 +199,35 @@ std::vector<std::vector<int> > NEClusterReactionNetwork::getCompositionList() co
 	return compList;
 }
 
+IReactant * NEClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nXe,
+		IReactant::SizeType nD, IReactant::SizeType nT,
+		IReactant::SizeType nV) const {
+
+	// Requests for finding a particular supercluster have high locality.
+	// See if the last supercluster we were asked to find is the right
+	// one for this request.
+	static IReactant* lastRet;
+	if (lastRet
+			and static_cast<NESuperCluster*>(lastRet)->isIn(nXe)) {
+		return lastRet;
+	}
+
+	// We didn't find the last supercluster in our cache, so do a full lookup.
+	IReactant* ret = nullptr;
+
+	for (auto const& superMapItem : getAll(ReactantType::NESuper)) {
+
+		auto const& reactant =
+				static_cast<NESuperCluster&>(*(superMapItem.second));
+		if (reactant.isIn(nXe)) {
+			lastRet = superMapItem.second.get();
+			return superMapItem.second.get();
+		}
+	}
+
+	return ret;
+}
+
 void NEClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 
 	// Degrees of freedom is the total number of clusters in the network

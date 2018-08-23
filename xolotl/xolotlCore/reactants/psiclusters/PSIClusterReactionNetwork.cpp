@@ -2712,7 +2712,7 @@ double PSIClusterReactionNetwork::computeBindingEnergy(
 
 IReactant * PSIClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nHe,
 		IReactant::SizeType nD, IReactant::SizeType nT,
-		IReactant::SizeType nV) {
+		IReactant::SizeType nV) const {
 
 	// Requests for finding a particular supercluster have high locality.
 	// See if the last supercluster we were asked to find is the right

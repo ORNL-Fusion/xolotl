@@ -9,8 +9,10 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore
                     ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/advection
                     ${CMAKE_SOURCE_DIR}/xolotlPerf
                     ${CMAKE_SOURCE_DIR}/xolotlPerf/dummy

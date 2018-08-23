@@ -96,7 +96,7 @@ private:
 	 */
 	IReactant * getSuperFromComp(IReactant::SizeType nHe,
 			IReactant::SizeType nD, IReactant::SizeType nT,
-			IReactant::SizeType nV);
+			IReactant::SizeType nV) const override;
 
 	ProductionReaction& defineReactionBase(IReactant& r1, IReactant& r2,
 			int a[4] = defaultInit, bool secondProduct = false)

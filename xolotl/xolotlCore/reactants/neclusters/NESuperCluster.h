@@ -318,6 +318,13 @@ public:
 	void computeDispersion();
 
 	/**
+	 * Get the dispersion of the group.
+	 */
+	double getDispersion() const {
+		return dispersion;
+	}
+
+	/**
 	 * This operation sets the zeroth order moment.
 	 *
 	 * @param mom The moment
@@ -515,6 +522,17 @@ public:
 	 */
 	int getSectionWidth() const {
 		return sectionWidth;
+	}
+
+	/**
+	 * Detect if given coordinates are in this cluster's group.
+	 *
+	 * @param _nXe number of Xe of interest.
+	 * @return True if the coordinates are contained in our super cluster.
+	 */
+	bool isIn(IReactant::SizeType nXe) const {
+		return (nXe > numXe - (double) sectionWidth / 2.0
+				&& nXe < numXe + (double) sectionWidth / 2.0);
 	}
 
 };

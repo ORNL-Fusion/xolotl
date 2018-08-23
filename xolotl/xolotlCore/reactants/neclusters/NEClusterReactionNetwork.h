@@ -156,6 +156,21 @@ public:
 	virtual std::vector<std::vector<int> > getCompositionList() const override;
 
 	/**
+	 * Find the super cluster that contains the original cluster with nHe
+	 * helium atoms and nV vacancies.
+	 *
+	 * @param nHe The number of helium atoms
+	 * @param nD The number of deuterium atoms
+	 * @param nT The number of tritium atoms
+	 * @param nV The number of vacancies
+	 * @return The super cluster representing the cluster with nHe helium
+	 * and nV vacancies, or nullptr if no such cluster exists.
+	 */
+	IReactant * getSuperFromComp(IReactant::SizeType nHe,
+			IReactant::SizeType nD, IReactant::SizeType nT,
+			IReactant::SizeType nV) const override;
+
+	/**
 	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.
 	 *
 	 * @param diagFill Connectivity map.

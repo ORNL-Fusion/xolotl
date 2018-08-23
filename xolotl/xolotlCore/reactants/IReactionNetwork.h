@@ -162,6 +162,20 @@ public:
 	virtual std::vector<std::vector<int> > getCompositionList() const = 0;
 
 	/**
+	 * Find the super cluster that contains the original cluster with the given composition.
+	 *
+	 * @param nHe The number of helium/xenon atoms
+	 * @param nD The number of deuterium atoms
+	 * @param nT The number of tritium atoms
+	 * @param nV The number of vacancies
+	 * @return The super cluster representing the cluster with nHe helium
+	 * and nV vacancies, or nullptr if no such cluster exists.
+	 */
+	virtual IReactant * getSuperFromComp(IReactant::SizeType nHe,
+			IReactant::SizeType nD, IReactant::SizeType nT,
+			IReactant::SizeType nV) const = 0;
+
+	/**
 	 * Add a production reaction to the network.
 	 *
 	 * @param reaction The reaction that should be added to the network
