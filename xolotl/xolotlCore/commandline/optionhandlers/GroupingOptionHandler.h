@@ -18,8 +18,8 @@ public:
 	GroupingOptionHandler() :
 			OptionHandler("grouping",
 					"grouping <min> <width> <width>    "
-					"This option allows the use a grouping scheme starting at the cluster "
-					"with 'min' size and with the given width.  \n") {
+							"This option allows the use a grouping scheme starting at the cluster "
+							"with 'min' size and with the given width.  \n") {
 	}
 
 	/**
@@ -38,7 +38,7 @@ public:
 	bool handler(IOptions *opt, const std::string& arg) {
 		// Build an input stream from the argument
 		xolotlCore::TokenizedLineReader<std::string> reader;
-		auto argSS = std::make_shared < std::istringstream > (arg);
+		auto argSS = std::make_shared<std::istringstream>(arg);
 		reader.setInputStream(argSS);
 		// Break the string into tokens.
 		auto tokens = reader.loadLine();
@@ -48,7 +48,10 @@ public:
 		// Set the grouping width in the first direction
 		opt->setGroupingWidthA(strtol(tokens[1].c_str(), NULL, 10));
 		// Set the grouping width in the second direction
-		opt->setGroupingWidthB(strtol(tokens[2].c_str(), NULL, 10));
+		if (tokens.size() > 2)
+			opt->setGroupingWidthB(strtol(tokens[2].c_str(), NULL, 10));
+		else
+			opt->setGroupingWidthB(0);
 
 		return true;
 	}

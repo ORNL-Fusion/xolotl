@@ -47,15 +47,10 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	for (int i = 0; i < size; i++) {
 		// This part will set the temperature in each reactant
 		// and recompute the diffusion coefficient
-		allReactants->at(i)->setTemperature(1000.0);
+		allReactants->at(i)->setTemperature(1200.0);
 	}
-	for (int i = 0; i < size; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		auto cluster = (xolotlCore::PSICluster *) allReactants->at(i);
-		cluster->computeRateConstants();
-	}
+	network->computeRateConstants();
+	network->setTemperature(1200.0);
 
 	// Suppose we have a grid with 13 grip points and distance of
 	// 0.1 nm between grid points
@@ -105,9 +100,9 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			updatedConcOffset, 5);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.45379e+30, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], -3.45379e+30, 0.01); // He2
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 3.45379e+30, 0.01); // Create He2V
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 5.0920659e+30, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], -5.0920659e+30, 0.01); // He2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 5.0920659e+30, 0.01); // Create He2V
 
 	// Get the offset for the ninth grid point
 	concOffset = conc + 8 * dof;
@@ -122,11 +117,11 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 			updatedConcOffset, 8);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 2.64820e+22, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.800075979e+23, 0.01); // Create I
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // He3
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[17], 0.0, 0.01); // Doesn't create He3V
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -2.64916e+22, 0.01); // He7
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[31], 2.64916e+22, 0.01); // Create He7V2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -1.800728831e+23, 0.01); // He7
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[31], 1.800728831e+23, 0.01); // Create He7V2
 
 	// Initialize the indices and values to set in the Jacobian
 	int nHelium = network->getAll(heType).size();
@@ -150,16 +145,18 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	BOOST_REQUIRE_EQUAL(indices[5], 1); // I2
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], -9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 9.67426e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 9.67426e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[3], -6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 6.575931697e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[5], 6.575931697e+14, 0.01);
 
 	// Change the temperature of the network
 	network->setTemperature(500.0);
 
+	// Reinitialize the handler
+	trapMutationHandler.initialize(network, grid);
 	// Update the bursting rate
 	trapMutationHandler.updateTrapMutationRate(network);
 
@@ -169,12 +166,12 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Check values
 	BOOST_REQUIRE_EQUAL(nMutating, 3);
-	BOOST_REQUIRE_CLOSE(val[0], -2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], -2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 2.14016e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 2.14016e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[3], -5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 5.53624e+14, 0.01);
+	BOOST_REQUIRE_CLOSE(val[5], 5.53624e+14, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

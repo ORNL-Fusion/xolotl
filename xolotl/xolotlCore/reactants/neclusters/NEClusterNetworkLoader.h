@@ -11,17 +11,6 @@ namespace xolotlCore {
  * This class will load a reaction network composed of NEClusters from an
  * HDF5 file.
  *
- * The data in the stream should contain the information for a single cluster on
- * each line with the following quantities specified and separated by a single
- * space each:
- * > The number of Xe in the cluster
- * > The number of V in the cluster
- * > The number of I in the cluster
- * > The formation energy
- *
- * Lines of comments starting with a "#" will be ignored as will lines that do
- * not clearly provide the information above.
- *
  * The network will be returned as a ReactionNetwork of NEClusters ordered with
  * single-species Xe, V and I clusters first and all mixed clusters coming
  * last. Each species is ordered from the smallest cluster size, (1), to the
@@ -48,7 +37,7 @@ namespace xolotlCore {
  * > numMixedClusters - The number of mixed-species clusters of all sizes in the
  * network.
  */
-class NEClusterNetworkLoader : public NetworkLoader {
+class NEClusterNetworkLoader: public NetworkLoader {
 
 protected:
 
@@ -65,10 +54,11 @@ protected:
 	/**
 	 * Private nullary constructor.
 	 */
-	NEClusterNetworkLoader() {}
+	NEClusterNetworkLoader() {
+	}
 
 	/**
-	 * This operation creates a singles-species cluster of helium, vacancies or
+	 * This operation creates a cluster of helium, vacancies and/or
 	 * interstitials. It adds the cluster to the appropriate internal list of
 	 * clusters for that type.
 	 *
@@ -87,7 +77,8 @@ public:
 	 *
 	 * @param registry The performance handler registry
 	 */
-	NEClusterNetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	NEClusterNetworkLoader(
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * An alternative constructor provided for convenience.
@@ -102,7 +93,8 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~NEClusterNetworkLoader() {}
+	virtual ~NEClusterNetworkLoader() {
+	}
 
 	/**
 	 * This operation will load the reaction network from the inputstream in
@@ -112,6 +104,15 @@ public:
 	 * @return network The reaction network
 	 */
 	virtual std::shared_ptr<IReactionNetwork> load();
+
+	/**
+	 * This operation will generate the reaction network from options.
+	 * The network will be empty if it can not be loaded.
+	 *
+	 * @param options The command line options
+	 * @return network The reaction network
+	 */
+	virtual std::shared_ptr<IReactionNetwork> generate(IOptions &options);
 
 	/**
 	 * This operation will apply a grouping method to the network.
@@ -125,14 +126,18 @@ public:
 	 *
 	 * @param min The value for the size
 	 */
-	void setXeMin (int min) {xeMin = min;}
+	void setXeMin(int min) {
+		xeMin = min;
+	}
 
 	/**
 	 * This operation will set the xenon width for the grouping scheme.
 	 *
 	 * @param w The value of the width
 	 */
-	void setWidth (int w) {sectionWidth = w;}
+	void setWidth(int w) {
+		sectionWidth = w;
+	}
 };
 
 } /* namespace xolotlCore */

@@ -659,6 +659,23 @@ public interface Arguments {
 	boolean isSputter();
 
 	/**
+	 * This Option annotation corresponds to the optional '--netParam' option
+	 * and provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "The network parameters will be written instead of creating the HDF5 file.")
+
+	/**
+	 * This operation makes the command line option '--netParam' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isNetParam();
+
+	/**
 	 * This produces the command line arguments '--help' or '-h' either of which
 	 * can be used to print usage help
 	 * 

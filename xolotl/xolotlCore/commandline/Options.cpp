@@ -19,34 +19,25 @@
 #include <GrainBoundariesOptionHandler.h>
 #include <GroupingOptionHandler.h>
 #include <SputteringOptionHandler.h>
+#include <NetworkParamOptionHandler.h>
+#include <GridParamOptionHandler.h>
 #include "Options.h"
 
 namespace xolotlCore {
 
 Options::Options() :
-		shouldRunFlag(true),
-		exitCode(EXIT_SUCCESS),
-		petscArgc(0),
-		petscArgv(NULL),
-		constTempFlag(false),
-		constTemperature(1000.0),
-		temperatureGradient(0.0),
-		tempProfileFlag(false),
-		fluxFlag(false),
-		fluxAmplitude(0.0),
-		fluxProfileFlag(false),
-		perfRegistryType(xolotlPerf::IHandlerRegistry::std),
-		vizStandardHandlersFlag(false),
-		materialName(""),
-		initialVConcentration(0.0),
-		voidPortion(50.0),
-		dimensionNumber(1),
-		useRegularGridFlag(true), 
-		gbList(""),
-		groupingMin(std::numeric_limits<int>::max()),
-		groupingWidthA(1),
-		groupingWidthB(1),
-		sputteringYield(0.0) {
+		shouldRunFlag(true), exitCode(EXIT_SUCCESS), petscArgc(0), petscArgv(
+				NULL), networkFilename(""), constTempFlag(false), constTemperature(
+				1000.0), temperatureGradient(0.0), tempProfileFlag(false), fluxFlag(
+				false), fluxAmplitude(0.0), fluxProfileFlag(false), perfRegistryType(
+				xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
+				false), materialName(""), initialVConcentration(0.0), voidPortion(
+				50.0), dimensionNumber(1), useRegularGridFlag(true), useChebyshevGridFlag(
+				false), gbList(""), groupingMin(
+				std::numeric_limits<int>::max()), groupingWidthA(1), groupingWidthB(
+				1), sputteringYield(0.0), useHDF5Flag(true), usePhaseCutFlag(
+				false), maxImpurity(8), maxV(20), maxI(6), nX(10), nY(0), nZ(0), xStepSize(
+				0.5), yStepSize(0.0), zStepSize(0.0) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();
@@ -80,8 +71,12 @@ Options::Options() :
 	auto gbHandler = new GrainBoundariesOptionHandler();
 	// Create the grouping option handler
 	auto groupingHandler = new GroupingOptionHandler();
-	// Create the grouping option handler
+	// Create the sputtering option handler
 	auto sputteringHandler = new SputteringOptionHandler();
+	// Create the network param option handler
+	auto netParamHandler = new NetworkParamOptionHandler();
+	// Create the grid option handler
+	auto gridParamHandler = new GridParamOptionHandler();
 
 	// Add our notion of which options we support.
 	optionsMap[networkHandler->key] = networkHandler;
@@ -101,6 +96,8 @@ Options::Options() :
 	optionsMap[gbHandler->key] = gbHandler;
 	optionsMap[groupingHandler->key] = groupingHandler;
 	optionsMap[sputteringHandler->key] = sputteringHandler;
+	optionsMap[netParamHandler->key] = netParamHandler;
+	optionsMap[gridParamHandler->key] = gridParamHandler;
 }
 
 Options::~Options(void) {
@@ -128,7 +125,7 @@ void Options::readParams(char* argv[]) {
 	// Load the content of the file in a stream
 	// Create the param stream
 	std::shared_ptr<std::ifstream> paramStream;
-	paramStream = std::make_shared < std::ifstream > (argv[0]);
+	paramStream = std::make_shared<std::ifstream>(argv[0]);
 
 	if (!paramStream->good()) {
 		// The file is empty.
@@ -157,10 +154,8 @@ void Options::readParams(char* argv[]) {
 			auto currOpt = iter->second;
 			if (currOpt == nullptr) {
 				// Something went wrong.
-				std::cerr
-						<< "\nOption: No handler associated to the option: "
-						<< line[0] << " !"
-						<< std::endl;
+				std::cerr << "\nOption: No handler associated to the option: "
+						<< line[0] << " !" << std::endl;
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
 				break;

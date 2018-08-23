@@ -5,11 +5,11 @@ SET(PACKAGE_DESCRIPTION "Xolotl Solver")
 #Set the library name
 SET(LIBRARY_NAME "xolotlSolver")
 
-#Collect all header filenames in this project 
+#Collect all header filenames in this project
 #and glob them in HEADERS
 file(GLOB HEADERS *.h solverhandler/*.h monitor/*.h)
 
-#Collect all of the cpp files in this folder 
+#Collect all of the cpp files in this folder
 #and glob them in SRC
 file(GLOB SRC *.cpp solverhandler/*.cpp monitor/*.cpp)
 
@@ -24,6 +24,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/diffusion)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/flux)

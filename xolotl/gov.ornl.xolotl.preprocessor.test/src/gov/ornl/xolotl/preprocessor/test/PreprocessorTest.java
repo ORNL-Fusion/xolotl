@@ -257,7 +257,7 @@ public class PreprocessorTest {
 				ArrayList<Cluster> network = preprocessor.generateNetwork();
 
 				// Check the size of the network
-				assertEquals(network.size(), 476);
+				assertEquals(network.size(), 447);
 			}
 		} catch (ArgumentValidationException e) {
 			// Complain and fail

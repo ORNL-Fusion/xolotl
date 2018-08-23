@@ -33,8 +33,9 @@ protected:
 		double portion;
 
 		//! The constructor
-		Desorption(int s, double p)
-		: size(s), portion(p) {}
+		Desorption(int s, double p) :
+				size(s), portion(p) {
+		}
 	};
 
 	/** The vector containing the different depths for the modified trap-mutation
@@ -74,23 +75,27 @@ protected:
 	 * to He2, etc.; the second vector gives the size of the vacancies into which He
 	 * trap-mutates. Information about desorption is also initialized here.
 	 * It needs to be implemented by the daughter classes.
+	 *
+	 * @param temp The temperature of the system
 	 */
-	virtual void initializeDepthSize() {return;}
+	virtual void initializeDepthSize(double temp) {
+		return;
+	}
 
 public:
 
 	/**
 	 * The constructor
 	 */
-	TrapMutationHandler() : kMutation(0.0),
-		kDis(1.0),
-		attenuation(true),
-		desorp(0, 0.0) {}
+	TrapMutationHandler() :
+			kMutation(0.0), kDis(1.0), attenuation(true), desorp(0, 0.0) {
+	}
 
 	/**
 	 * The destructor
 	 */
-	~TrapMutationHandler() {}
+	~TrapMutationHandler() {
+	}
 
 	/**
 	 * The initialize method has to add connectivity between the He clusters and
@@ -100,9 +105,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initialize(IReactionNetwork *network,
-			std::vector<double> grid, int ny = 0, double hy = 0.0,
-			int nz = 0, double hz = 0.0);
+	void initialize(IReactionNetwork *network, std::vector<double> grid,
+			int ny = 0, double hy = 0.0, int nz = 0, double hz = 0.0);
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
@@ -122,7 +126,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initializeIndex2D(std::vector<int> surfacePos, IReactionNetwork *network,
+	void initializeIndex2D(std::vector<int> surfacePos,
+			IReactionNetwork *network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int ny, double hy);
 
@@ -136,8 +141,7 @@ public:
 	void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
 			IReactionNetwork *network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid, int ny, double hy,
-			int nz, double hz);
+			std::vector<double> grid, int ny, double hy, int nz, double hz);
 
 	/**
 	 * This method update the rate for the modified trap-mutation if the rates
@@ -174,9 +178,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void computeTrapMutation(IReactionNetwork *network,
-			double *concOffset, double *updatedConcOffset,
-			int xi, int yj = 0, int zk = 0);
+	void computeTrapMutation(IReactionNetwork *network, double *concOffset,
+			double *updatedConcOffset, int xi, int yj = 0, int zk = 0);
 
 	/**
 	 * Compute the partials due to the modified trap-mutation for all the
@@ -191,9 +194,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	int computePartialsForTrapMutation(IReactionNetwork *network,
-			double *val, int *indices,
-			int xi, int yj = 0, int zk = 0);
+	int computePartialsForTrapMutation(IReactionNetwork *network, double *val,
+			int *indices, int xi, int yj = 0, int zk = 0);
 
 };
 //end class TrapMutationHandler

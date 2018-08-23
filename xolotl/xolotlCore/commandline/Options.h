@@ -125,6 +125,11 @@ protected:
 	bool useRegularGridFlag;
 
 	/**
+	 * Use a Chebyshev grid on the x direction?
+	 */
+	bool useChebyshevGridFlag;
+
+	/**
 	 * The map of physical processes to use in the simulation.
 	 */
 	std::map<std::string, bool> processMap;
@@ -153,6 +158,61 @@ protected:
 	 * Value of the sputtering yield.
 	 */
 	double sputteringYield;
+
+	/**
+	 * Use a HDF5 file?
+	 */
+	bool useHDF5Flag;
+
+	/**
+	 * Use the phase cut for the network?
+	 */
+	bool usePhaseCutFlag;
+
+	/**
+	 * Maximum number of He or Xe
+	 */
+	int maxImpurity;
+
+	/**
+	 * Maximum number of V
+	 */
+	int maxV;
+
+	/**
+	 * Maximum number of I
+	 */
+	int maxI;
+
+	/**
+	 * Number of grid point in the depth direction
+	 */
+	int nX;
+
+	/**
+	 * Step size in the depth direction
+	 */
+	double xStepSize;
+
+	/**
+	 * Number of grid point in the Y direction
+	 */
+	int nY;
+
+	/**
+	 * Step size in the Y direction
+	 */
+	double yStepSize;
+
+	/**
+	 * Number of grid point in the Z direction
+	 */
+	int nZ;
+
+	/**
+	 * Step size in the Z direction
+	 */
+	double zStepSize;
 
 public:
 
@@ -519,6 +579,22 @@ public:
 	}
 
 	/**
+	 * Should we use a Chebyshev grid on the x direction?
+	 * \see IOptions.h
+	 */
+	bool useChebyshevGrid() const {
+		return useChebyshevGridFlag;
+	}
+
+	/**
+	 * Set the useChebyshevGridFlag.
+	 * \see IOptions.h
+	 */
+	void setChebyshevGrid(bool flag) {
+		useChebyshevGridFlag = flag;
+	}
+
+	/**
 	 * Obtain the physical process map.
 	 *
 	 * @return The map
@@ -612,8 +688,184 @@ public:
 	 * Set the value for the sputtering yield to use.
 	 * \see IOptions.h
 	 */
-	virtual void setSputteringYield(double yield) {
+	void setSputteringYield(double yield) {
 		sputteringYield = yield;
+	}
+
+	/**
+	 * To know if we should use the HDF5 file.
+	 * \see IOptions.h
+	 */
+	bool useHDF5() const {
+		return useHDF5Flag;
+	}
+
+	/**
+	 * Set the useHDF5Flag.
+	 * \see IOptions.h
+	 */
+	void setHDF5Flag(bool flag) {
+		useHDF5Flag = flag;
+	}
+
+	/**
+	 * To know if we should use the phase cut.
+	 * \see IOptions.h
+	 */
+	bool usePhaseCut() const {
+		return usePhaseCutFlag;
+	}
+
+	/**
+	 * Set the usePhaseCutFlag.
+	 * \see IOptions.h
+	 */
+	void setPhaseCutFlag(bool flag) {
+		usePhaseCutFlag = flag;
+	}
+
+	/**
+	 * Obtain the maximum value of impurities (He or Xe) to be used.
+	 * \see IOptions.h
+	 */
+	int getMaxImpurity() const {
+		return maxImpurity;
+	}
+
+	/**
+	 * Set the maximum value of impurities to use.
+	 * \see IOptions.h
+	 */
+	void setMaxImpurity(int max) {
+		maxImpurity = max;
+	}
+
+	/**
+	 * Obtain the maximum value of vacancies to be used.
+	 * \see IOptions.h
+	 */
+	int getMaxV() const {
+		return maxV;
+	}
+
+	/**
+	 * Set the maximum value of vacancies to use.
+	 * \see IOptions.h
+	 */
+	void setMaxV(int max) {
+		maxV = max;
+	}
+
+	/**
+	 * Obtain the maximum value of interstitials to be used.
+	 * \see IOptions.h
+	 */
+	int getMaxI() const {
+		return maxI;
+	}
+
+	/**
+	 * Set the maximum value of interstitials to use.
+	 * \see IOptions.h
+	 */
+	void setMaxI(int max) {
+		maxI = max;
+	}
+
+	/**
+	 * Obtain the number of grid points in the depth direction to be used.
+	 * \see IOptions.h
+	 */
+	int getNX() const {
+		return nX;
+	}
+
+	/**
+	 * Set the number of grid points in the depth direction to use.
+	 * \see IOptions.h
+	 */
+	void setNX(int n) {
+		nX = n;
+	}
+
+	/**
+	 * Obtain the value of the step size in the depth direction to be used.
+	 * \see IOptions.h
+	 */
+	double getXStepSize() const {
+		return xStepSize;
+	}
+
+	/**
+	 * Set the value for the step size in the depth direction to use.
+	 * \see IOptions.h
+	 */
+	void setXStepSize(double stepSize) {
+		xStepSize = stepSize;
+	}
+
+	/**
+	 * Obtain the number of grid points in the Y direction to be used.
+	 * \see IOptions.h
+	 */
+	int getNY() const {
+		return nY;
+	}
+
+	/**
+	 * Set the number of grid points in the Y direction to use.
+	 * \see IOptions.h
+	 */
+	void setNY(int n) {
+		nY = n;
+	}
+
+	/**
+	 * Obtain the value of the step size in the Y direction to be used.
+	 * \see IOptions.h
+	 */
+	double getYStepSize() const {
+		return yStepSize;
+	}
+
+	/**
+	 * Set the value for the step size in the Y direction to use.
+	 * \see IOptions.h
+	 */
+	void setYStepSize(double stepSize) {
+		yStepSize = stepSize;
+	}
+
+	/**
+	 * Obtain the number of grid points in the Z direction to be used.
+	 * \see IOptions.h
+	 */
+	int getNZ() const {
+		return nZ;
+	}
+
+	/**
+	 * Set the number of grid points in the Z direction to use.
+	 * \see IOptions.h
+	 */
+	void setNZ(int n) {
+		nZ = n;
+	}
+
+	/**
+	 * Obtain the value of the step size in the Z direction to be used.
+	 * \see IOptions.h
+	 */
+	double getZStepSize() const {
+		return zStepSize;
+	}
+
+	/**
+	 * Set the value for the step size in the Z direction to use.
+	 * \see IOptions.h
+	 */
+	void setZStepSize(double stepSize) {
+		zStepSize = stepSize;
 	}
 
 };

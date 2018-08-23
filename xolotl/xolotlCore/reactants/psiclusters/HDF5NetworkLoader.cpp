@@ -20,8 +20,8 @@ std::shared_ptr<IReactionNetwork> HDF5NetworkLoader::load() {
 	std::vector<std::shared_ptr<Reactant> > reactants;
 
 	// Prepare the network
-	std::shared_ptr<PSIClusterReactionNetwork> network = std::make_shared
-			< PSIClusterReactionNetwork > (handlerRegistry);
+	std::shared_ptr<PSIClusterReactionNetwork> network = std::make_shared<
+			PSIClusterReactionNetwork>(handlerRegistry);
 
 	// Loop on the networkVector
 	for (auto lineIt = networkVector.begin(); lineIt != networkVector.end();
@@ -47,13 +47,13 @@ std::shared_ptr<IReactionNetwork> HDF5NetworkLoader::load() {
 		// Check if we want dummy reactions
 		if (dummyReactions) {
 			// Create a dummy cluster (Reactant) from the existing cluster
-			auto dummyCluster = std::static_pointer_cast<Reactant> (nextCluster->Reactant::clone());
+			auto dummyCluster = std::static_pointer_cast<Reactant>(
+					nextCluster->Reactant::clone());
 			// Add the cluster to the network
 			network->add(dummyCluster);
 			// Add it to the list so that we can set the network later
 			reactants.push_back(dummyCluster);
-		}
-		else {
+		} else {
 			// Add the cluster to the network
 			network->add(nextCluster);
 			// Add it to the list so that we can set the network later
@@ -66,6 +66,9 @@ std::shared_ptr<IReactionNetwork> HDF5NetworkLoader::load() {
 			++reactantsIt) {
 		(*reactantsIt)->setReactionNetwork(network);
 	}
+
+	// Create the reactions
+	network->createReactionConnectivity();
 
 	// Check if we want dummy reactions
 	if (!dummyReactions) {

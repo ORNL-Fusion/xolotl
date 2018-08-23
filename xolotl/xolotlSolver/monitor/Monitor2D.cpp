@@ -263,7 +263,8 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 			network->updateConcentrationsFromArray(gridPointSolution);
 
 			// Get the total helium concentration at this grid point
-			heConcentration += network->getTotalAtomConcentration() * (grid[xi] - grid[xi - 1]) * hy;
+			heConcentration += network->getTotalAtomConcentration()
+					* (grid[xi] - grid[xi - 1]) * hy;
 		}
 	}
 
@@ -696,8 +697,8 @@ PetscErrorCode monitorMovingSurface2D(TS ts, PetscInt timestep, PetscReal time,
 /**
  * This is a monitoring method that bursts bubbles
  */
-PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time,
-		Vec solution, void *) {
+PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time, Vec solution,
+		void *) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	double ***solutionArray, *gridPointSolution;
@@ -711,13 +712,16 @@ PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time,
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);CHKERRQ(ierr);
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);CHKERRQ(ierr);
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
 
 	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);CHKERRQ(ierr);
+	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
+	CHKERRQ(ierr);
 
 	// Get the solver handler
 	auto solverHandler = PetscSolver::getSolverHandler();
@@ -752,7 +756,8 @@ PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time,
 
 		for (xi = xs; xi < xs + xm; xi++) {
 			// Skip everything before the surface
-			if (xi <= surfacePos) continue;
+			if (xi <= surfacePos)
+				continue;
 
 			// Get the pointer to the beginning of the solution data for this grid point
 			gridPointSolution = solutionArray[yj][xi];
@@ -766,28 +771,39 @@ PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time,
 			double heDensity = network->getTotalAtomConcentration();
 
 			// Compute the radius of the bubble from the number of helium
-			double nV = heDensity * (grid[xi] - grid[xi-1]) * hy / 4.0;
-			double radius = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
-					+ pow(
-							(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0) * nV)
-									/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
-					- pow(
-							(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
-									/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+			double nV = heDensity * (grid[xi] - grid[xi - 1]) * hy / 4.0;
+			double radius =
+					(sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
+							+ pow(
+									(3.0
+											* pow(
+													xolotlCore::tungstenLatticeConstant,
+													3.0) * nV)
+											/ (8.0 * xolotlCore::pi),
+									(1.0 / 3.0))
+							- pow(
+									(3.0
+											* pow(
+													xolotlCore::tungstenLatticeConstant,
+													3.0))
+											/ (8.0 * xolotlCore::pi),
+									(1.0 / 3.0));
 
 			// Check if it should burst
 			bool burst = false;
 			// If the radius is larger than the distance to the surface, burst
-			if (radius > distance) burst = true;
+			if (radius > distance)
+				burst = true;
 			// Add randomness
 			double prob = prefactor * (1.0 - (distance - radius) / distance);
 			double test = (double) rand() / (double) RAND_MAX;
-			if (prob > test) burst = true;
+			if (prob > test)
+				burst = true;
 
 			// Burst
 			if (burst) {
-
-				std::cout << "bursting at: " << yj << " " << distance << " " << prob << " " << test << std::endl;
+				std::cout << "bursting at: " << yj << " " << distance << " "
+						<< prob << " " << test << std::endl;
 
 				// Get all the helium clusters
 				auto clusters = network->getAll(heType);
@@ -826,9 +842,9 @@ PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time,
 					double conc = cluster->getTotalConcentration();
 					gridPointSolution[vId] = conc * numV / (double) truncV;
 					gridPointSolution[id] = 0.0;
-					id = cluster->getHeMomentumId() - 1;
+					id = cluster->getHeMomentId() - 1;
 					gridPointSolution[id] = 0.0;
-					id = cluster->getVMomentumId() - 1;
+					id = cluster->getVMomentId() - 1;
 					gridPointSolution[id] = 0.0;
 				}
 			}
@@ -836,7 +852,8 @@ PetscErrorCode monitorBursting2D(TS ts, PetscInt, PetscReal time,
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);CHKERRQ(ierr);
+	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
 }
@@ -928,7 +945,8 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		xolotlCore::HDF5Utils::fillHeader(Mx, grid[1] - grid[0], My, hy);
 
 		// Save the network in the HDF5 file
-		xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
+		if (!solverHandler->getNetworkName().empty())
+			xolotlCore::HDF5Utils::fillNetwork(solverHandler->getNetworkName());
 
 		// Finalize the HDF5 file
 		xolotlCore::HDF5Utils::finalizeFile();
@@ -951,8 +969,10 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-				networkName, tempTimeStep);
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+					networkName, tempTimeStep);
 
 		// Get the interstitial information at the surface if concentrations were stored
 		if (hasConcentrations) {
@@ -979,8 +999,9 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		// Set the monitor on the bubble bursting
 		// monitorBursting2D will be called at each timestep
 		ierr = TSMonitorSet(ts, monitorBursting2D, NULL, NULL);
-		checkPetscError(ierr, "setupPetsc2DMonitor: TSMonitorSet (monitorBursting2D) failed.");
-		std::srand (time(NULL));
+		checkPetscError(ierr,
+				"setupPetsc2DMonitor: TSMonitorSet (monitorBursting2D) failed.");
+		std::srand(time(NULL) + procId);
 	}
 
 	// Set the monitor to save performance plots (has to be in parallel)
@@ -1020,8 +1041,10 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		int tempTimeStep = -2;
 		std::string networkName = solverHandler->getNetworkName();
-		bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-				networkName, tempTimeStep);
+		bool hasConcentrations = false;
+		if (!networkName.empty())
+			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+					networkName, tempTimeStep);
 
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {

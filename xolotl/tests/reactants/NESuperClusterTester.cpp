@@ -54,12 +54,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		// and recompute the diffusion coefficient
 		allReactants->at(i)->setTemperature(temperature);
 	}
-	for (int i = 0; i < networkSize; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		allReactants->at(i)->computeRateConstants();
-	}
+	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -107,13 +102,10 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Get one that it combines with (Xe1)
 	auto secondCluster = (NECluster *) network->get(xeType, 1);
 	// Set the temperature and concentration
-	cluster->setTemperature(1000.0);
+	network->setTemperature(1000.0);
 	cluster->setConcentration(0.5);
 	secondCluster->setConcentration(0.5);
-	secondCluster->setTemperature(1000.0);
 
-	// Compute the rate constants that are needed for the flux
-	cluster->computeRateConstants();
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux();
 	BOOST_TEST_MESSAGE(
@@ -155,24 +147,11 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	int networkSize = network->size();
 	auto allReactants = network->getAll();
 	double temperature = 1000.0;
-	for (int i = 0; i < networkSize; i++) {
-		// This part will set the temperature in each reactant
-		// and recompute the diffusion coefficient
-		allReactants->at(i)->setTemperature(temperature);
-	}
-	for (int i = 0; i < networkSize; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		allReactants->at(i)->computeRateConstants();
-	}
+	network->setTemperature(temperature);
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 	// Set the cluster concentration
 	cluster->setConcentration(0.5);
-
-	// Compute the rate constants that are needed for the partial derivatives
-	cluster->computeRateConstants();
 	// Get the vector of partial derivatives
 	auto partials = cluster->getPartialDerivatives();
 

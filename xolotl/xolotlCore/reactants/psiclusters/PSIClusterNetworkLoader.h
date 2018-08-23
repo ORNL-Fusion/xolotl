@@ -55,7 +55,7 @@ namespace xolotlCore {
  * > numMixedClusters - The number of mixed-species clusters of all sizes in the
  * network.
  */
-class PSIClusterNetworkLoader : public NetworkLoader {
+class PSIClusterNetworkLoader: public NetworkLoader {
 
 protected:
 
@@ -77,10 +77,11 @@ protected:
 	/**
 	 * Private nullary constructor.
 	 */
-	PSIClusterNetworkLoader() {}
+	PSIClusterNetworkLoader() {
+	}
 
 	/**
-	 * This operation creates a singles-species cluster of helium, vacancies or
+	 * This operation creates a cluster of helium, vacancies and/or
 	 * interstitials. It adds the cluster to the appropriate internal list of
 	 * clusters for that type.
 	 *
@@ -91,6 +92,16 @@ protected:
 	 */
 	std::shared_ptr<PSICluster> createPSICluster(int numHe, int numV, int numI);
 
+	/**
+	 * This operation computes the formation energy associated to the
+	 * cluster of the given size.
+	 *
+	 * @param numHe The number of helium atoms
+	 * @param numV The number of atomic vacancies
+	 * @return The corresponding formation energy
+	 */
+	double getHeVFormationEnergy(int numHe, int numV);
+
 public:
 
 	/**
@@ -99,7 +110,8 @@ public:
 	 *
 	 * @param registry The performance handler registry
 	 */
-	PSIClusterNetworkLoader(std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	PSIClusterNetworkLoader(
+			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
 	 * An alternative constructor provided for convenience.
@@ -114,7 +126,8 @@ public:
 	/**
 	 * Destructor
 	 */
-	virtual ~PSIClusterNetworkLoader() {}
+	virtual ~PSIClusterNetworkLoader() {
+	}
 
 	/**
 	 * This operation will load the reaction network from the inputstream in
@@ -124,6 +137,15 @@ public:
 	 * @return network The reaction network
 	 */
 	virtual std::shared_ptr<IReactionNetwork> load();
+
+	/**
+	 * This operation will generate the reaction network from options.
+	 * The network will be empty if it can not be loaded.
+	 *
+	 * @param options The command line options
+	 * @return network The reaction network
+	 */
+	virtual std::shared_ptr<IReactionNetwork> generate(IOptions &options);
 
 	/**
 	 * This operation will apply a sectional grouping method to the network.
@@ -137,21 +159,27 @@ public:
 	 *
 	 * @param min The value for the size
 	 */
-	void setVMin (int min) {vMin = min;}
+	void setVMin(int min) {
+		vMin = min;
+	}
 
 	/**
 	 * This operation will set the helium width for the grouping scheme.
 	 *
 	 * @param w The value of the width
 	 */
-	void setHeWidth (int w) {heSectionWidth = w;}
+	void setHeWidth(int w) {
+		heSectionWidth = w;
+	}
 
 	/**
 	 * This operation will set the vacancy width for the grouping scheme.
 	 *
 	 * @param w The value of the width
 	 */
-	void setVWidth (int w) {vSectionWidth = w;}
+	void setVWidth(int w) {
+		vSectionWidth = w;
+	}
 };
 
 } /* namespace xolotlCore */

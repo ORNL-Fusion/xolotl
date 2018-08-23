@@ -31,8 +31,10 @@ void TrapMutationHandler::initialize(IReactionNetwork *network,
 
 		// Change the value of ny and nz in 1D and 2D so that the same loop
 		// works in every case
-		if (nz == 0) nz = 1;
-		if (ny == 0) ny = 1;
+		if (nz == 0)
+			nz = 1;
+		if (ny == 0)
+			ny = 1;
 
 		// Loop on the grid points in the Z direction
 		for (int k = 0; k < nz; k++) {
@@ -81,11 +83,12 @@ void TrapMutationHandler::initialize(IReactionNetwork *network,
 		// Loop on the bubbles
 		for (int j = 0; j < bubbles.size(); j++) {
 			// Get the bubble and its composition
-			auto bubble =  (PSICluster *) bubbles[j];
+			auto bubble = (PSICluster *) bubbles[j];
 			auto comp = bubble->getComposition();
 
 			// We are only interested in bubbles with one, two, or three vacancies
-			if (comp[vType] > 3) continue;
+			if (comp[vType] > 3)
+				continue;
 
 			// Connect with He if the number of helium in the bubble is the same
 			if (comp[heType] == heSize) {
@@ -99,7 +102,7 @@ void TrapMutationHandler::initialize(IReactionNetwork *network,
 	// (if the value is negative it means that it doesn't TM), the second value correspond
 	// to He2, etc.; the second vector gives the size of the vacancies into which He
 	// trap-mutates. Information about desorption is also initialized here.
-	initializeDepthSize();
+	initializeDepthSize(network->getTemperature());
 
 	// Update the bubble bursting rate
 	updateTrapMutationRate(network);
@@ -140,19 +143,22 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 
 		// Get the depth
 		double depth = grid[i] - grid[surfacePos];
+		double previousDepth = grid[i - 1] - grid[surfacePos];
 
 		// Loop on the depth vector
 		for (int l = 0; l < depthVec.size(); l++) {
 			// Check if a helium cluster undergo TM at this depth
-			if (std::fabs(depth - depthVec[l])  < 0.01) {
+			if (std::fabs(depth - depthVec[l]) < 0.01
+					|| (depthVec[l] - 0.01 < depth
+							&& depthVec[l] - 0.01 > previousDepth)) {
 				// Add the bubble of size l+1 to the indices
 				// Loop on the bubbles
 				for (int m = 0; m < bubbles.size(); m++) {
 					// Get the bubble and its composition
-					auto bubble =  (PSICluster *) bubbles[m];
+					auto bubble = (PSICluster *) bubbles[m];
 					auto comp = bubble->getComposition();
 					// Get the correct bubble
-					if (comp[heType] == l+1 && comp[vType] == sizeVec[l]) {
+					if (comp[heType] == l + 1 && comp[vType] == sizeVec[l]) {
 						// Add this bubble to the indices
 						indices.push_back(m);
 					}
@@ -211,19 +217,23 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 
 			// Get the depth
 			double depth = grid[i] - grid[surfacePos[j]];
+			double previousDepth = grid[i - 1] - grid[surfacePos[j]];
 
 			// Loop on the depth vector
 			for (int l = 0; l < depthVec.size(); l++) {
 				// Check if a helium cluster undergo TM at this depth
-				if (std::fabs(depth - depthVec[l])  < 0.01) {
+				if (std::fabs(depth - depthVec[l]) < 0.01
+						|| (depthVec[l] - 0.01 < depth
+								&& depthVec[l] - 0.01 > previousDepth)) {
 					// Add the bubble of size l+1 to the indices
 					// Loop on the bubbles
 					for (int m = 0; m < bubbles.size(); m++) {
 						// Get the bubble and its composition
-						auto bubble =  (PSICluster *) bubbles[m];
+						auto bubble = (PSICluster *) bubbles[m];
 						auto comp = bubble->getComposition();
 						// Get the correct bubble
-						if (comp[heType] == l+1 && comp[vType] == sizeVec[l]) {
+						if (comp[heType] == l + 1
+								&& comp[vType] == sizeVec[l]) {
 							// Add this bubble to the indices
 							indices.push_back(m);
 						}
@@ -242,17 +252,19 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 				// Loop on the sigma 3 distance vector
 				for (int l = 0; l < sigma3DistanceVec.size(); l++) {
 					// Check if a helium cluster undergo TM at this depth
-					if (std::fabs(distance - sigma3DistanceVec[l])  < 0.01) {
+					if (std::fabs(distance - sigma3DistanceVec[l]) < 0.01) {
 						// Add the bubble of size l+1 to the indices
 						// Loop on the bubbles
 						for (int m = 0; m < bubbles.size(); m++) {
 							// Get the bubble and its composition
-							auto bubble =  (PSICluster *) bubbles[m];
+							auto bubble = (PSICluster *) bubbles[m];
 							auto comp = bubble->getComposition();
 							// Get the correct bubble
-							if (comp[heType] == l+1 && comp[vType] == sigma3SizeVec[l]) {
+							if (comp[heType] == l + 1
+									&& comp[vType] == sigma3SizeVec[l]) {
 								// Check if this bubble is already in the indices
-								if (std::find(indices.begin(), indices.end(), m) == indices.end()) {
+								if (std::find(indices.begin(), indices.end(), m)
+										== indices.end()) {
 									// Add this bubble to the indices
 									indices.push_back(m);
 								}
@@ -279,8 +291,8 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 	return;
 }
 
-void TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-		IReactionNetwork *network,
+void TrapMutationHandler::initializeIndex3D(
+		std::vector<std::vector<int> > surfacePos, IReactionNetwork *network,
 		std::vector<IAdvectionHandler *> advectionHandlers,
 		std::vector<double> grid, int ny, double hy, int nz, double hz) {
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
@@ -319,19 +331,23 @@ void TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int> > surfa
 
 				// Get the depth
 				double depth = grid[i] - grid[surfacePos[j][k]];
+				double previousDepth = grid[i - 1] - grid[surfacePos[j][k]];
 
 				// Loop on the depth vector
 				for (int l = 0; l < depthVec.size(); l++) {
 					// Check if a helium cluster undergo TM at this depth
-					if (std::fabs(depth - depthVec[l])  < 0.01) {
+					if (std::fabs(depth - depthVec[l]) < 0.01
+							|| (depthVec[l] - 0.01 < depth
+									&& depthVec[l] - 0.01 > previousDepth)) {
 						// Add the bubble of size l+1 to the indices
 						// Loop on the bubbles
 						for (int m = 0; m < bubbles.size(); m++) {
 							// Get the bubble and its composition
-							auto bubble =  (PSICluster *) bubbles[m];
+							auto bubble = (PSICluster *) bubbles[m];
 							auto comp = bubble->getComposition();
 							// Get the correct bubble
-							if (comp[heType] == l+1 && comp[vType] == sizeVec[l]) {
+							if (comp[heType] == l + 1
+									&& comp[vType] == sizeVec[l]) {
 								// Add this bubble to the indices
 								indices.push_back(m);
 							}
@@ -351,17 +367,20 @@ void TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int> > surfa
 					// Loop on the sigma 3 distance vector
 					for (int l = 0; l < sigma3DistanceVec.size(); l++) {
 						// Check if a helium cluster undergo TM at this depth
-						if (std::fabs(distance - sigma3DistanceVec[l])  < 0.01) {
+						if (std::fabs(distance - sigma3DistanceVec[l]) < 0.01) {
 							// Add the bubble of size l+1 to the indices
 							// Loop on the bubbles
 							for (int m = 0; m < bubbles.size(); m++) {
 								// Get the bubble and its composition
-								auto bubble =  (PSICluster *) bubbles[m];
+								auto bubble = (PSICluster *) bubbles[m];
 								auto comp = bubble->getComposition();
 								// Get the correct bubble
-								if (comp[heType] == l+1 && comp[vType] == sigma3SizeVec[l]) {
+								if (comp[heType] == l + 1
+										&& comp[vType] == sigma3SizeVec[l]) {
 									// Check if this bubble is already in the indices
-									if (std::find(indices.begin(), indices.end(), m) == indices.end()) {
+									if (std::find(indices.begin(),
+											indices.end(), m)
+											== indices.end()) {
 										// Add this bubble to the indices
 										indices.push_back(m);
 									}
@@ -390,22 +409,9 @@ void TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int> > surfa
 }
 
 void TrapMutationHandler::updateTrapMutationRate(IReactionNetwork *network) {
-	// Get all the He clusters from the network
-	auto heClusters = network->getAll(heType);
-
-	// Update the rate by finding the biggest rate in all the He clusters
-	kMutation = 0.0;
-	// Loop on the helium
-	for (int j = 0; j < heClusters.size(); j++) {
-		// Get the bubble and its rate
-		auto cluster =  (PSICluster *) heClusters[j];
-		double rate = cluster->getBiggestRate();
-
-		// Compare it to the bursting rate
-		if (kMutation < rate) kMutation = rate;
-	}
-	// Multiply it by 1000.0 so that trap-mutation overcomes any other reaction
-	kMutation = 1000.0 * kMutation;
+	// Multiply the biggest rate in the network by 1000.0
+	// so that trap-mutation overcomes any other reaction
+	kMutation = 1000.0 * network->getBiggestRate();
 
 	return;
 }
@@ -418,18 +424,18 @@ void TrapMutationHandler::setAttenuation(bool isAttenuation) {
 
 void TrapMutationHandler::updateDisappearingRate(double conc) {
 	// Set the rate to have an exponential decrease
-	if (attenuation) kDis = exp(-4.0 * conc);
+	if (attenuation)
+		kDis = exp(-4.0 * conc);
 
 	return;
 }
 
 void TrapMutationHandler::computeTrapMutation(IReactionNetwork *network,
-		double *concOffset, double *updatedConcOffset,
-		int xi, int yj, int zk) {
+		double *concOffset, double *updatedConcOffset, int xi, int yj, int zk) {
 	// Get all the HeV bubbles
 	auto bubbles = network->getAll(heVType);
 	// Initialyze the pointers to interstitial and helium clusters and their ID
-	PSICluster * iCluster = nullptr, * heCluster = nullptr, * bubble = nullptr;
+	PSICluster * iCluster = nullptr, *heCluster = nullptr, *bubble = nullptr;
 	int iIndex = -1, heIndex = -1, bubbleIndex = -1;
 
 	// Initialize the rate of the reaction
@@ -463,8 +469,7 @@ void TrapMutationHandler::computeTrapMutation(IReactionNetwork *network,
 			double totalRate = heCluster->getLeftSideRate();
 			// Define the trap-mutation rate taking into account the desorption
 			rate = kDis * totalRate * (1.0 - desorp.portion) / desorp.portion;
-		}
-		else {
+		} else {
 			rate = kDis * kMutation;
 		}
 
@@ -478,12 +483,12 @@ void TrapMutationHandler::computeTrapMutation(IReactionNetwork *network,
 }
 
 int TrapMutationHandler::computePartialsForTrapMutation(
-		IReactionNetwork *network, double *val,
-		int *indices, int xi, int yj, int zk) {
+		IReactionNetwork *network, double *val, int *indices, int xi, int yj,
+		int zk) {
 	// Get all the HeV bubbles
 	auto bubbles = network->getAll(heVType);
 	// Initialyze the pointers to interstitial and helium clusters and their ID
-	PSICluster * iCluster = nullptr, * heCluster = nullptr, * bubble = nullptr;
+	PSICluster * iCluster = nullptr, *heCluster = nullptr, *bubble = nullptr;
 	int iIndex = -1, heIndex = -1, bubbleIndex = -1;
 
 	// Initialize the rate of the reaction
@@ -513,8 +518,7 @@ int TrapMutationHandler::computePartialsForTrapMutation(
 			double totalRate = heCluster->getLeftSideRate();
 			// Define the trap-mutation rate taking into account the desorption
 			rate = kDis * totalRate * (1.0 - desorp.portion) / desorp.portion;
-		}
-		else {
+		} else {
 			rate = kDis * kMutation;
 		}
 

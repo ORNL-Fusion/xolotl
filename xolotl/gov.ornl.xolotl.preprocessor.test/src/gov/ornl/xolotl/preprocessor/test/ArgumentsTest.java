@@ -110,6 +110,10 @@ public class ArgumentsTest {
 
 			// Check if there is a sputtering yield argument
 			assertEquals(false, args.isSputter());
+
+			// Check if there is a network param argument
+			assertEquals(false, args.isNetParam());
+			
 		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
@@ -240,10 +244,11 @@ public class ArgumentsTest {
 			assertEquals(true, args.isGrain());
 
 			// Check if there is a sputtering yield argument
-			assertEquals(true, args.issputter());
+			assertEquals(true, args.isSputter());
 
 			// Check its value
 			assertEquals("0.05", args.getSputter());
+			
 		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();

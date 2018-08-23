@@ -15,13 +15,14 @@ namespace xolotlFactory {
 /**
  * Subclass of MaterialFactory for a nuclear fuel material.
  */
-class FuelMaterialFactory : public MaterialFactory {
+class FuelMaterialFactory: public MaterialFactory {
 private:
 
 	/**
 	 * The default constructor is private.
 	 */
-	FuelMaterialFactory() {}
+	FuelMaterialFactory() {
+	}
 
 public:
 
@@ -32,23 +33,33 @@ public:
 	 */
 	FuelMaterialFactory(int dim) {
 		theFluxHandler = std::make_shared<xolotlCore::FuelFitFluxHandler>();
-		theAdvectionHandler.push_back(std::make_shared<xolotlCore::DummyAdvectionHandler>());
-		theTrapMutationHandler = std::make_shared<xolotlCore::DummyTrapMutationHandler>();
+		theAdvectionHandler.push_back(
+				std::make_shared<xolotlCore::DummyAdvectionHandler>());
+		theTrapMutationHandler = std::make_shared<
+				xolotlCore::DummyTrapMutationHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {
-			case 1:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion1DHandler>();
-				break;
-			case 2:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion2DHandler>();
-				break;
-			case 3:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion3DHandler>();
-				break;
-			default:
-				// The asked dimension is not good (e.g. -1, 0, 4)
-				throw std::string("\nxolotlFactory: Bad dimension for the Fuel material factory.");
+		case 0:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::DummyDiffusionHandler>();
+			break;
+		case 1:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion1DHandler>();
+			break;
+		case 2:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion2DHandler>();
+			break;
+		case 3:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion3DHandler>();
+			break;
+		default:
+			// The asked dimension is not good (e.g. -1, 4)
+			throw std::string(
+					"\nxolotlFactory: Bad dimension for the Fuel material factory.");
 		}
 
 		return;
@@ -57,7 +68,8 @@ public:
 	/**
 	 * The destructor
 	 */
-	~FuelMaterialFactory() {}
+	~FuelMaterialFactory() {
+	}
 };
 
 } // end namespace xolotlFactory

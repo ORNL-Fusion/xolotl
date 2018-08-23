@@ -22,19 +22,9 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	// Set the temperature to compute all the rate constants
 	if (!xolotlCore::equal(temperature, lastTemperature)) {
-		// Update the temperature for all of the clusters
-		int networkSize = network->size();
-		for (int i = 0; i < networkSize; i++) {
-			// This part will set the temperature in each reactant
-			// and recompute the diffusion coefficient
-			allReactants->at(i)->setTemperature(temperature);
-		}
-		for (int i = 0; i < networkSize; i++) {
-			// Now that the diffusion coefficients of all the reactants
-			// are updated, the reaction and dissociation rates can be
-			// recomputed
-			allReactants->at(i)->computeRateConstants();
-		}
+		// Update the temperature and rate constants in the network
+		// SetTemperature() does both
+		network->setTemperature(temperature);
 		lastTemperature = temperature;
 	}
 
@@ -48,12 +38,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	// Get starting conditions from HDF5 file
-	int nx = 0, ny = 0, nz = 0;
-	double hx = 0.0, hy = 0.0, hz = 0.0;
-	xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz, hz);
-
-	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, nx, dof, 1,
+	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_GHOSTED, nX, dof, 1,
 	NULL, &da);
 	checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: "
 			"DMDACreate1d failed.");
@@ -67,16 +52,18 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	// Set the position of the surface
 	surfacePosition = 0;
 	if (movingSurface)
-		surfacePosition = (int) (nx * portion / 100.0);
+		surfacePosition = (int) (nX * portion / 100.0);
 
 	// Generate the grid in the x direction
-	generateGrid(nx, hx, surfacePosition);
+	generateGrid(nX, hX, surfacePosition);
 
 	// Now that the grid was generated, we can update the surface position
 	// if we are using a restart file
 	int tempTimeStep = -2;
-	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-			networkName, tempTimeStep);
+	bool hasConcentrations = false;
+	if (!networkName.empty())
+		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+				networkName, tempTimeStep);
 	if (hasConcentrations) {
 		surfacePosition = xolotlCore::HDF5Utils::readSurface1D(networkName,
 				tempTimeStep);
@@ -147,6 +134,10 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: "
 			"PetscFree (dfill) failed.");
 
+	// Initialize the arrays for the reaction partial derivatives
+	reactionVals = new PetscScalar[dof * dof];
+	reactionIndices = new PetscInt[dof * dof];
+
 	return;
 }
 
@@ -167,8 +158,10 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Get the last time step written in the HDF5 file
 	int tempTimeStep = -2;
-	bool hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-			networkName, tempTimeStep);
+	bool hasConcentrations = false;
+	if (!networkName.empty())
+		hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
+				networkName, tempTimeStep);
 
 	// Get the total size of the grid for the boundary conditions
 	int xSize = grid.size();
@@ -205,7 +198,8 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 		}
 
 		// Initialize the vacancy concentration
-		if (i > surfacePosition && i < xSize - 1 && singleVacancyCluster) {
+		if (i > surfacePosition && i < xSize - 1 && singleVacancyCluster
+				&& !hasConcentrations) {
 			concOffset[vacancyIndex] = initialVConc;
 		}
 	}
@@ -285,10 +279,12 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// near the surface
 	for (int xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
-		if (xi <= surfacePosition || xi == xSize - 1) continue;
+		if (xi <= surfacePosition || xi == xSize - 1)
+			continue;
 
 		// We are only interested in the helium near the surface
-		if (grid[xi] - grid[surfacePosition] > 2.0) continue;
+		if (grid[xi] - grid[surfacePosition] > 2.0)
+			continue;
 
 		// Get the concentrations at this grid point
 		concOffset = concs[xi];
@@ -297,7 +293,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 		// Sum the total atom concentration
 		atomConc += network->getTotalTrappedAtomConcentration()
-					* (grid[xi] - grid[xi - 1]);
+				* (grid[xi] - grid[xi - 1]);
 	}
 
 	// Share the concentration with all the processes
@@ -357,7 +353,8 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		network->updateConcentrationsFromArray(concOffset);
 
 		// ----- Account for flux of incoming particles -----
-		fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, xi, surfacePosition);
+		fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, xi,
+				surfacePosition);
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
 		diffusionHandler->computeDiffusion(network, concVector,
@@ -537,8 +534,8 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	return;
 }
 
-void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
-		Mat &J, PetscReal ftime) {
+void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
+		PetscReal ftime) {
 	PetscErrorCode ierr;
 
 	// Get the distributed array
@@ -578,10 +575,12 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
 	// near the surface
 	for (int xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
-		if (xi <= surfacePosition || xi == xSize - 1) continue;
+		if (xi <= surfacePosition || xi == xSize - 1)
+			continue;
 
 		// We are only interested in the helium near the surface
-		if (grid[xi] - grid[surfacePosition] > 2.0) continue;
+		if (grid[xi] - grid[surfacePosition] > 2.0)
+			continue;
 
 		// Get the concentrations at this grid point
 		concOffset = concs[xi];
@@ -590,7 +589,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
 
 		// Sum the total atom concentration
 		atomConc += network->getTotalTrappedAtomConcentration()
-					* (grid[xi] - grid[xi - 1]);
+				* (grid[xi] - grid[xi - 1]);
 	}
 
 	// Share the concentration with all the processes
@@ -605,10 +604,6 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
 	MatStencil rowId;
 	MatStencil colIds[dof];
 	int pdColIdsVectorSize = 0;
-	PetscScalar *reactionVals;
-	reactionVals = new PetscScalar[dof * dof];
-	PetscInt *reactionIndices;
-	reactionIndices = new PetscInt[dof * dof];
 	PetscInt reactionSize[dof];
 
 	// Store the total number of He clusters in the network for the
@@ -737,10 +732,6 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
 	ierr = DMRestoreLocalVector(da, &localC);
 	checkPetscError(ierr, "PetscSolver1DHandler::computeDiagonalJacobian: "
 			"DMRestoreLocalVector failed.");
-
-	// Delete arrays
-	delete[] reactionVals;
-	delete[] reactionIndices;
 
 	return;
 }

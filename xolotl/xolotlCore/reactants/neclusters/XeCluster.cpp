@@ -23,28 +23,10 @@ XeCluster::XeCluster(int nXe,
 
 	// Compute the reaction radius
 	double FourPi = 4.0 * xolotlCore::pi;
-	reactionRadius = 1.05 * pow((3.0 * 85.0 * (double) size) / FourPi, (1.0/3.0)) / 10.0;
-	if (size == 1) reactionRadius = 0.3;
-
-	return;
-}
-
-void XeCluster::createReactionConnectivity() {
-	// Call the function from the NECluster class to take care of the single
-	// species reactions
-	NECluster::createReactionConnectivity();
-
-	// This cluster is always Xe_a
-
-	return;
-}
-
-void XeCluster::createDissociationConnectivity() {
-	// Call the function from the NECluster class to take care of the single
-	// species dissociation
-	NECluster::createDissociationConnectivity();
-
-	// This cluster is always Xe_a
+	reactionRadius = 1.05
+			* pow((3.0 * 85.0 * (double) size) / FourPi, (1.0 / 3.0)) / 10.0;
+	if (size == 1)
+		reactionRadius = 0.3;
 
 	return;
 }

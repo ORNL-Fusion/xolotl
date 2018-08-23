@@ -16,13 +16,14 @@ namespace xolotlFactory {
  * Subclass of MaterialFactory for a (100) oriented tungsten material with
  * a TRIDYN input file.
  */
-class TRIDYNMaterialFactory : public MaterialFactory {
+class TRIDYNMaterialFactory: public MaterialFactory {
 private:
 
 	/**
 	 * The default constructor is private.
 	 */
-	TRIDYNMaterialFactory() {}
+	TRIDYNMaterialFactory() {
+	}
 
 public:
 
@@ -33,23 +34,33 @@ public:
 	 */
 	TRIDYNMaterialFactory(int dim) {
 		theFluxHandler = std::make_shared<xolotlCore::TRIDYNFitFluxHandler>();
-		theAdvectionHandler.push_back(std::make_shared<xolotlCore::W100AdvectionHandler>());
-		theTrapMutationHandler = std::make_shared<xolotlCore::W100TrapMutationHandler>();
+		theAdvectionHandler.push_back(
+				std::make_shared<xolotlCore::W100AdvectionHandler>());
+		theTrapMutationHandler = std::make_shared<
+				xolotlCore::W100TrapMutationHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {
-			case 1:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion1DHandler>();
-				break;
-			case 2:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion2DHandler>();
-				break;
-			case 3:
-				theDiffusionHandler = std::make_shared<xolotlCore::Diffusion3DHandler>();
-				break;
-			default:
-				// The asked dimension is not good (e.g. -1, 0, 4)
-				throw std::string("\nxolotlFactory: Bad dimension for the TRIDYN material factory.");
+		case 0:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::DummyDiffusionHandler>();
+			break;
+		case 1:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion1DHandler>();
+			break;
+		case 2:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion2DHandler>();
+			break;
+		case 3:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion3DHandler>();
+			break;
+		default:
+			// The asked dimension is not good (e.g. -1, 4)
+			throw std::string(
+					"\nxolotlFactory: Bad dimension for the TRIDYN material factory.");
 		}
 
 		return;
@@ -58,7 +69,8 @@ public:
 	/**
 	 * The destructor
 	 */
-	~TRIDYNMaterialFactory() {}
+	~TRIDYNMaterialFactory() {
+	}
 };
 
 } // end namespace xolotlFactory

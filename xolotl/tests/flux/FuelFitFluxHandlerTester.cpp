@@ -16,7 +16,7 @@ using namespace xolotlCore;
  */
 BOOST_AUTO_TEST_SUITE (FuelFitFluxHandlerTester_testSuite)
 
-BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
+BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI for HDF5
 	int argc = 0;
 	char **argv;
@@ -68,11 +68,14 @@ BOOST_AUTO_TEST_CASE(checkgetIncidentFlux) {
 	double *updatedConcOffset = updatedConc + dof;
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1,
+			surfacePos);
 	updatedConcOffset = updatedConc + 2 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2,
+			surfacePos);
 	updatedConcOffset = updatedConc + 3 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3,
+			surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[3], 0.26666, 0.01);

@@ -9,7 +9,7 @@ namespace xolotlCore {
 /**
  *  This class is the simplest implementation of the network loader.
  */
-class NetworkLoader : public INetworkLoader {
+class NetworkLoader: public INetworkLoader {
 
 protected:
 
@@ -75,7 +75,7 @@ public:
 	void setInputstream(const std::shared_ptr<std::istream> stream);
 
 	/**
-	 * This operation will load the reaction network from the inputstream in
+	 * This operation will load the reaction network from the input file in
 	 * the format specified previously. The network will be empty if it can not
 	 * be loaded.
 	 *
@@ -84,23 +84,32 @@ public:
 	virtual std::shared_ptr<IReactionNetwork> load() = 0;
 
 	/**
+	 * This operation will generate the reaction network from options.
+	 * The network will be empty if it can not be loaded.
+	 *
+	 * @param options The command line options
+	 * @return network The reaction network
+	 */
+	virtual std::shared_ptr<IReactionNetwork> generate(IOptions &options) = 0;
+
+	/**
 	 * This operation will set the name of the file where to take the network from.
 	 *
 	 * @param name The name of the file
 	 */
-	void setFilename (const std::string& name);
+	void setFilename(const std::string& name);
 
 	/**
 	 * This operation will get the name of the file where to take the network from.
 	 *
 	 * @return The name of the file
 	 */
-	std::string getFilename () const;
+	std::string getFilename() const;
 
 	/**
 	 * This operation will set the reactions to dummy reactions.
 	 */
-	void setDummyReactions ();
+	void setDummyReactions();
 
 };
 

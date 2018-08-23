@@ -15,7 +15,7 @@ private:
 
 	/**
 	 * Function that calculate the flux at a given position x (in nm).
-	 * This function is not normalized. The surface is supposed to be (100).
+	 * This function is not normalized.
 	 *
 	 * @param x The position where to evaluate he fit
 	 * @return The evaluated value
@@ -29,19 +29,21 @@ public:
 	/**
 	 * The constructor
 	 */
-	FuelFitFluxHandler() {}
+	FuelFitFluxHandler() {
+	}
 
 	/**
 	 * The Destructor
 	 */
-	~FuelFitFluxHandler() {}
+	~FuelFitFluxHandler() {
+	}
 
 	/**
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(IReactionNetwork *network,
-			int surfacePos, std::vector<double> grid) {
+	void initializeFluxHandler(IReactionNetwork *network, int surfacePos,
+			std::vector<double> grid) {
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
@@ -51,7 +53,7 @@ public:
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe single xenon cluster is not present in the network, "
-					"cannot use the flux option!");
+							"cannot use the flux option!");
 		}
 		fluxIndex = fluxCluster->getId() - 1;
 

@@ -39,14 +39,14 @@ protected:
 		 * The reaction/dissociation constant associated to this
 		 * reaction or dissociation
 		 */
-		double kConstant;
+		const double * kConstant;
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A, the second of B
+		 * The first number represent the moment of A, the second of B
 		 * in A + B -> C
 		 *
-		 * The third number represent which momentum we are computing.
+		 * The third number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
@@ -82,14 +82,14 @@ protected:
 
 		//! The constructor
 		SuperClusterProductionPair(PSICluster * firstPtr,
-				PSICluster * secondPtr, double k) :
-				first(firstPtr), second(secondPtr), kConstant(k), a000(0.0), a001(
-						0.0), a002(0.0), a100(0.0), a101(0.0), a102(0.0), a200(
-						0.0), a201(0.0), a202(0.0), a010(0.0), a011(0.0), a012(
-						0.0), a020(0.0), a021(0.0), a022(0.0), a110(0.0), a111(
-						0.0), a112(0.0), a120(0.0), a121(0.0), a122(0.0), a210(
-						0.0), a211(0.0), a212(0.0), a220(0.0), a221(0.0), a222(
-						0.0) {
+				PSICluster * secondPtr, Reaction * reaction) :
+				first(firstPtr), second(secondPtr), kConstant(
+						&(reaction->kConstant)), a000(0.0), a001(0.0), a002(
+						0.0), a100(0.0), a101(0.0), a102(0.0), a200(0.0), a201(
+						0.0), a202(0.0), a010(0.0), a011(0.0), a012(0.0), a020(
+						0.0), a021(0.0), a022(0.0), a110(0.0), a111(0.0), a112(
+						0.0), a120(0.0), a121(0.0), a122(0.0), a210(0.0), a211(
+						0.0), a212(0.0), a220(0.0), a221(0.0), a222(0.0) {
 		}
 	};
 
@@ -118,14 +118,14 @@ protected:
 		 * The reaction/dissociation constant associated to this
 		 * reaction or dissociation
 		 */
-		double kConstant;
+		const double * kConstant;
 
 		/**
 		 * All the coefficient needed to compute each element
-		 * The first number represent the momentum of A
+		 * The first number represent the moment of A
 		 * in A -> B + C
 		 *
-		 * The second number represent which momentum we are computing.
+		 * The second number represent which moment we are computing.
 		 *
 		 * 0 -> l0
 		 * 1 -> He
@@ -143,10 +143,10 @@ protected:
 
 		//! The constructor
 		SuperClusterDissociationPair(PSICluster * firstPtr,
-				PSICluster * secondPtr, double k) :
-				first(firstPtr), second(secondPtr), kConstant(k), a00(0.0), a01(
-						0.0), a02(0.0), a10(0.0), a11(0.0), a12(0.0), a20(0.0), a21(
-						0.0), a22(0.0) {
+				PSICluster * secondPtr, Reaction * reaction) :
+				first(firstPtr), second(secondPtr), kConstant(
+						&(reaction->kConstant)), a00(0.0), a01(0.0), a02(0.0), a10(
+						0.0), a11(0.0), a12(0.0), a20(0.0), a21(0.0), a22(0.0) {
 		}
 	};
 
@@ -167,13 +167,13 @@ private:
 	//! The width in the vacancy direction.
 	int sectionVWidth;
 
-	//! The 0th order momentum (mean).
+	//! The 0th order moment (mean).
 	double l0;
 
-	//! The first order momentum in the helium direction.
+	//! The first order moment in the helium direction.
 	double l1He;
 
-	//! The first order momentum in the vacancy direction.
+	//! The first order moment in the vacancy direction.
 	double l1V;
 
 	//! The dispersion in the group in the helium direction.
@@ -194,18 +194,6 @@ private:
 	//! The map containing all the emission pairs separated by original composition.
 	std::map<std::pair<int, int>, std::vector<ClusterPair> > emissionMap;
 
-	//! The map containing all the effective reacting pairs separated by original composition.
-	std::map<std::pair<int, int>, std::vector<ClusterPair *> > effReactingMap;
-
-	//! The map containing all the effective combining clusters separated by original composition.
-	std::map<std::pair<int, int>, std::vector<CombiningCluster *> > effCombiningMap;
-
-	//! The map containing all the effective dissociating pairs separated by original composition.
-	std::map<std::pair<int, int>, std::vector<ClusterPair *> > effDissociatingMap;
-
-	//! The map containing all the effective emission pairs separated by original composition.
-	std::map<std::pair<int, int>, std::vector<ClusterPair *> > effEmissionMap;
-
 	//! The list of optimized effective reacting pairs.
 	std::forward_list<SuperClusterProductionPair> effReactingList;
 
@@ -219,14 +207,14 @@ private:
 	std::forward_list<SuperClusterDissociationPair> effEmissionList;
 
 	/**
-	 * The helium momentum flux.
+	 * The helium moment flux.
 	 */
-	double heMomentumFlux;
+	double heMomentFlux;
 
 	/**
-	 * The vacancy momentum flux.
+	 * The vacancy moment flux.
 	 */
-	double vMomentumFlux;
+	double vMomentFlux;
 
 	/**
 	 * The default constructor is private because PSIClusters must always be
@@ -259,8 +247,8 @@ public:
 	 * @param energy The mean formation energy
 	 * @param registry The performance handler registry
 	 */
-	PSISuperCluster(double numHe, double numV, int nTot, int heWidth, int vWidth,
-			double radius, double energy,
+	PSISuperCluster(double numHe, double numV, int nTot, int heWidth,
+			int vWidth, double radius, double energy,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
@@ -280,7 +268,18 @@ public:
 	 *
 	 * @return A copy of this reactant
 	 */
-	virtual std::shared_ptr<IReactant> clone();
+	virtual std::shared_ptr<IReactant> clone() {
+		return std::make_shared<PSISuperCluster>(*this);
+	}
+
+	/**
+	 * Sets the collection of other clusters that make up
+	 * the reaction network in which this cluster exists.
+	 *
+	 * @param network The reaction network of which this cluster is a part
+	 */
+	void setReactionNetwork(
+			const std::shared_ptr<IReactionNetwork> reactionNetwork);
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of
@@ -306,21 +305,27 @@ public:
 	 * @param distV The vacancy distance in the group
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distHe, double distV) const;
+	double getConcentration(double distHe, double distV) const {
+		return l0 + (distHe * l1He) + (distV * l1V);
+	}
 
 	/**
-	 * This operation returns the first helium momentum.
+	 * This operation returns the first helium moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	double getHeMomentum() const;
+	double getHeMoment() const {
+		return l1He;
+	}
 
 	/**
-	 * This operation returns the first vacancy momentum.
+	 * This operation returns the first vacancy moment.
 	 *
-	 * @return The momentum
+	 * @return The moment
 	 */
-	double getVMomentum() const;
+	double getVMoment() const {
+		return l1V;
+	}
 
 	/**
 	 * This operation returns the current total concentration of clusters in the group.
@@ -349,7 +354,10 @@ public:
 	 * @param he The number of helium
 	 * @return The distance to the mean number of helium in the group
 	 */
-	double getHeDistance(int he) const;
+	double getHeDistance(int he) const {
+		return (sectionHeWidth == 1) ?
+				0.0 : 2.0 * (he - numHe) / (sectionHeWidth - 1.0);
+	}
 
 	/**
 	 * This operation returns the distance to the mean.
@@ -357,64 +365,40 @@ public:
 	 * @param he The number of vacancy
 	 * @return The distance to the mean number of vacancy in the group
 	 */
-	double getVDistance(int v) const;
+	double getVDistance(int v) const {
+		return (sectionVWidth == 1) ?
+				0.0 : 2.0 * (v - numV) / (sectionVWidth - 1.0);
+	}
 
 	/**
-	 * Computes a row of the reaction connectivity matrix corresponding to
-	 * this reactant.
+	 * Calculate the dispersion of the group.
+	 */
+	void computeDispersion();
+
+	/**
+	 * This operation sets the zeroth order moment.
 	 *
-	 * If two reactants alone can form a reaction, the element at the position
-	 * of the second reactant is 1, otherwise 0.
+	 * @param mom The moment
 	 */
-	void createReactionConnectivity();
-
-	/**
-	 * Computes a row of the dissociation connectivity matrix corresponding to
-	 * this reactant.
-	 *
-	 * If two reactants together can be produced by a single reaction,
-	 * the element at the position of the second reactant is 1, otherwise 0.
-	 */
-	void createDissociationConnectivity();
-
-	/**
-	 * Calculate all the rate constants for the reactions and dissociations in which this
-	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
-	 * or CombiningCluster. Need to be called only the first time.
-	 */
-	void computeRateConstants();
-
-	/**
-	 * Calculate all the rate constants for the reactions and dissociations in which this
-	 * cluster is taking part. Store these values in the kConstant field of ClusterPair
-	 * or CombiningCluster. Need to be called only when the temperature changes.
-	 */
-	void updateRateConstants();
-
-	/**
-	 * This operation sets the zeroth order momentum.
-	 *
-	 * @param mom The momentum
-	 */
-	void setZerothMomentum(double mom) {
+	void setZerothMoment(double mom) {
 		l0 = mom;
 	}
 
 	/**
-	 * This operation sets the first order momentum in the helium direction.
+	 * This operation sets the first order moment in the helium direction.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setHeMomentum(double mom) {
+	void setHeMoment(double mom) {
 		l1He = mom;
 	}
 
 	/**
-	 * This operation sets the first order momentum in the vacancy direction.
+	 * This operation sets the first order moment in the vacancy direction.
 	 *
-	 * @param mom The momentum
+	 * @param mom The moment
 	 */
-	void setVMomentum(double mom) {
+	void setVMoment(double mom) {
 		l1V = mom;
 	}
 
@@ -431,12 +415,21 @@ public:
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	double getTotalFlux();
+	double getTotalFlux() {
+
+		// Initialize the fluxes
+		heMomentFlux = 0.0;
+		vMomentFlux = 0.0;
+
+		// Compute the fluxes.
+		return getProductionFlux() - getCombinationFlux()
+				+ getDissociationFlux() - getEmissionFlux();
+	}
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to dissociation of other clusters
 	 */
@@ -445,7 +438,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to its dissociation
 	 */
@@ -454,7 +447,7 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster being produced
 	 */
@@ -463,25 +456,29 @@ public:
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
-	 * the momentum fluxes at the same time.
+	 * the moment fluxes at the same time.
 	 *
 	 * @return The flux due to this cluster combining with other clusters
 	 */
 	double getCombinationFlux();
 
 	/**
-	 * This operation returns the total change for its helium momentum.
+	 * This operation returns the total change for its helium moment.
 	 *
-	 * @return The momentum flux
+	 * @return The moment flux
 	 */
-	double getHeMomentumFlux() {return heMomentumFlux;}
+	double getHeMomentFlux() {
+		return heMomentFlux;
+	}
 
 	/**
-	 * This operation returns the total change for its vacancy momentum.
+	 * This operation returns the total change for its vacancy moment.
 	 *
-	 * @return The momentum flux
+	 * @return The moment flux
 	 */
-	double getVMomentumFlux() {return vMomentumFlux;}
+	double getVMomentFlux() {
+		return vMomentFlux;
+	}
 
 	/**
 	 * This operation works as getPartialDerivatives above, but instead of
@@ -540,7 +537,7 @@ public:
 	void getEmissionPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
-	 * This operation computes the partial derivatives for the helium momentum.
+	 * This operation computes the partial derivatives for the helium moment.
 	 *
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted.
@@ -548,7 +545,7 @@ public:
 	void getHeMomentPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
-	 * This operation computes the partial derivatives for the vacancy momentum.
+	 * This operation computes the partial derivatives for the vacancy moment.
 	 *
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted.

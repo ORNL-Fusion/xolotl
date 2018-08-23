@@ -8,6 +8,7 @@
 #include <limits>
 #include <DummyHandlerRegistry.h>
 #include <PSIClusterReactionNetwork.h>
+#include <Options.h>
 
 using namespace std;
 using namespace xolotlCore;
@@ -117,6 +118,60 @@ BOOST_AUTO_TEST_CASE(checkLoading) {
 		caughtFlag = true;
 	}
 	BOOST_REQUIRE(caughtFlag);
+}
+
+/**
+ * Method checking the generation of the network.
+ */
+BOOST_AUTO_TEST_CASE(checkGenerate) {
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 5 3" << std::endl << "grid=100 0.5" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	int argc = 0;
+	char **argv;
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+
+	// Read the options
+	Options opts;
+	opts.readParams(argv);
+
+	// Create the loader
+	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
+			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+
+	// Generate the network from the options
+	auto network = loader.generate(opts);
+
+	// Get the size of the network
+	int networkSize = network->size();
+	// Check the value
+	BOOST_REQUIRE_EQUAL(networkSize, 104);
+
+	// Check the properties
+	auto psiNetwork = std::dynamic_pointer_cast<PSIClusterReactionNetwork>(
+			network);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeClusterSize(), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxVClusterSize(), 5);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxIClusterSize(), 3);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getMaxHeVClusterSize(), 32);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeClusters(), 8);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumVClusters(), 5);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumIClusters(), 3);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumHeVClusters(), 88);
+	BOOST_REQUIRE_EQUAL(psiNetwork->getNumSuperClusters(), 0);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
+
+	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

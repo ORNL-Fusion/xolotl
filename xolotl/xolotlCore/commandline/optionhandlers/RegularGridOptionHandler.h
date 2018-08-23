@@ -17,9 +17,9 @@ public:
 	 * The default constructor
 	 */
 	RegularGridOptionHandler() :
-		OptionHandler("regularGrid",
-				"regularGrid {yes,  no}            "
-				"Will the grid be regularly spaced in the x direction?\n") {}
+			OptionHandler("regularGrid", "regularGrid {yes,  no}            "
+					"Will the grid be regularly spaced in the x direction?\n") {
+	}
 
 	/**
 	 * The destructor
@@ -38,12 +38,13 @@ public:
 		// Determine the type of handlers we are being asked to use
 		if (arg == "yes") {
 			opt->setRegularXGrid(true);
-		}
-		else if (arg == "no") {
+		} else if (arg == "no") {
 			opt->setRegularXGrid(false);
-		}
-		else {
-			std::cerr << "Options: unrecognized argument in the regular grid option handler: "
+		} else if (arg == "cheby") {
+			opt->setChebyshevGrid(true);
+		} else {
+			std::cerr
+					<< "Options: unrecognized argument in the regular grid option handler: "
 					<< arg << std::endl;
 			opt->showHelp(std::cerr);
 			opt->setShouldRunFlag(false);

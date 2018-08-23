@@ -55,12 +55,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 		// and recompute the diffusion coefficient
 		allReactants->at(i)->setTemperature(temperature);
 	}
-	for (int i = 0; i < networkSize; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		allReactants->at(i)->computeRateConstants();
-	}
+	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -72,8 +67,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	auto reactionConnectivity = reactant->getConnectivity();
 
 	// Check the connectivity for He, V, and I
-	int connectivityExpected[] = {
-			0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0 };
+	int connectivityExpected[] = { 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1, 1, 1, 1, 0, 0 };
 
 	for (unsigned int i = 0; i < reactionConnectivity.size(); i++) {
 		BOOST_REQUIRE_EQUAL(reactionConnectivity[i], connectivityExpected[i]);
@@ -113,12 +108,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 		// and recompute the diffusion coefficient
 		allReactants->at(i)->setTemperature(temperature);
 	}
-	for (int i = 0; i < networkSize; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		allReactants->at(i)->computeRateConstants();
-	}
+	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -168,12 +158,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 		// and recompute the diffusion coefficient
 		allReactants->at(i)->setTemperature(temperature);
 	}
-	for (int i = 0; i < networkSize; i++) {
-		// Now that the diffusion coefficients of all the reactants
-		// are updated, the reaction and dissociation rates can be
-		// recomputed
-		allReactants->at(i)->computeRateConstants();
-	}
+	network->computeRateConstants();
 	// Recompute Ids and network size and redefine the connectivities
 	network->reinitializeConnectivities();
 
@@ -183,7 +168,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
 	double knownPartials[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+			0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 	// Set the concentration
 	cluster->setConcentration(0.5);
 
@@ -191,7 +176,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	auto partials = cluster->getPartialDerivatives();
 
 	// Check the size of the partials
-	BOOST_REQUIRE_EQUAL(partials.size(), 24U);
+	BOOST_REQUIRE_EQUAL(partials.size(), 18U);
 
 	// Check all the values
 	for (unsigned int i = 0; i < partials.size(); i++) {

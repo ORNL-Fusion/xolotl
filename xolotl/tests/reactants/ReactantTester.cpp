@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(checkComposition) {
 	Reactant reactant(registry);
 
 	// Check its default composition
-	BOOST_REQUIRE_EQUAL(4U, reactant.getComposition().size());
+	BOOST_REQUIRE_EQUAL(0U, reactant.getComposition().size());
 
 	return;
 }
@@ -118,14 +118,14 @@ BOOST_AUTO_TEST_CASE(checkIsConnected) {
 	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork(2);
 
 	// Check the connectivity matrix (8 * 8)
-	int connectivityExpected[8][8] = { { 1, 1, 1, 0, 1, 0, 1, 0 }, // He
+	int connectivityExpected[8][8] = { { 1, 1, 1, 0, 1, 0, 1, 1 }, // He
 			{ 1, 1, 0, 0, 0, 0, 0, 0 }, // He_2
-			{ 1, 0, 1, 1, 1, 1, 1, 0 }, // V
+			{ 1, 0, 1, 1, 1, 1, 1, 1 }, // V
 			{ 0, 0, 1, 1, 1, 1, 0, 0 }, // V_2
-			{ 1, 0, 1, 1, 1, 1, 0, 0 }, // I
+			{ 1, 0, 1, 1, 1, 1, 1, 0 }, // I
 			{ 0, 0, 1, 1, 1, 1, 0, 0 }, // I_2
-			{ 1, 0, 1, 0, 0, 0, 1, 0 }, // HeV
-			{ 1, 0, 0, 0, 1, 0, 0, 1 }  // HeI
+			{ 1, 0, 1, 0, 1, 0, 1, 0 }, // HeV
+			{ 1, 0, 1, 0, 1, 0, 0, 1 }  // HeI
 	};
 
 	// Check He
