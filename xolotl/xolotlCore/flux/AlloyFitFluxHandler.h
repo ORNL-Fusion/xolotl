@@ -2,6 +2,7 @@
 #define ALLOYFITFLUXHANDLER_H
 
 #include "FluxHandler.h"
+#include "AlloySRIMData.h"
 #include <cmath>
 #include <iostream>
 #include <fstream>
@@ -25,32 +26,32 @@ private:
 		return 1.0;
 	}
 
-  /**
-   * Function that calculates the displacement rate in disp/ion/nm at a given
-	 * position x in nm and for different PKA energy ranges.
-	 */
-	std::vector<double> AlloyFitFunction (const double x) {
-		std::vector<double> damage = {0.0,0.0,0.0,0.0};
-		if (x > ionDamage.fitRange[0] && x < ionDamage.fitRange[1]) {
-			for (int it = 0; it < ionDamage.fitCoefficients.size(); ++it) {
-				damage[it] = ionDamage.fitCoefficients[it][0];
-				for (int it2 = 1; it2 < ionDamage.fitCoefficients[it].size(); ++it2) {
-					damage[it] += ionDamage.fitCoefficients[it][it2] *
-							pow(x,double(it2));
-				}
+	std::vector<double> AlloyDamageFunction(const double x)
+	{
+		// Find the correct depth region
+		for (int i = 0; i < srim.getDepth().size(); ++i) {
+			if (x <= srim.getDepth()[i]) {
+				return srim.getDamage()[i];
 			}
 		}
-		return damage;
+		return {0.0,0.0,0.0,0.0};
 	}
 
-  /**
-   * Function that calculates the displacement rate for given cluster size (size)
-	 * and identification (it) for all positions.
-	 */
-	std::vector<double> AlloySetDamage (const int size, const int it,
-			const double fraction) {
+	double AlloyImplantationFunction (const double x)
+	{
+		// Find the correct depth region
+		for (int i = 0; i < srim.getDepth().size(); ++i) {
+			if (x <= srim.getDepth()[i]) {
+				return srim.getImplantation()[i];
+			}
+		}
+		return 0.0;
+	}
 
-		// Not sure how to grab surfacePos from other files
+	std::vector<double> AlloySetGeneration(const int size, const int it,
+		  const double fraction)
+	{
+		// Change this to grab the actual surface position
 		int surfacePos = 0;
 		std::vector<double> damageRate;
 		damageRate.push_back(0.0);
@@ -58,11 +59,11 @@ private:
 			// Get the x position
 			auto x = xGrid[i] - xGrid[surfacePos];
 			// Compute the rate at that position
-			std::vector<double> fitFlux = AlloyFitFunction(x);
+			std::vector<double> fitFlux = AlloyDamageFunction(x);
 			double rate = 0;
 			for (int j = 0; j < fitFlux.size(); ++j) {
-				rate += ionDamage.cascadeEfficiency[j] * fitFlux[j] *
-						ionDamage.defectProduction[it][j];
+				rate += cascade.cascadeEfficiency[j] * fitFlux[j] *
+						cascade.clusterFraction[it][j];
 			}
 			rate = rate * fraction * fluxAmplitude / double(size);
 			// Add it to the vector
@@ -72,19 +73,28 @@ private:
 		return damageRate;
 	}
 
-	/**
-	 * Structure to hold damage dataFile
-	 */
-	struct ionDamageStruct {
-		double perfectFraction;
-		std::vector<double> fitRange;
-	  std::vector<std::vector<double> > fitCoefficients;
-		std::vector<double> cascadeEfficiency;
-		std::vector<int> clusterSize;
-		std::vector<std::vector<double> > defectProduction;
+	void AlloyAddImplantation (std::vector<double> & input)
+	{
+		// Change this to grab the actual surface position
+		int surfacePos = 0;
+
+		for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
+			// Get the x position
+			auto x = xGrid[i] - xGrid[surfacePos];
+			// Add the implantation rate to the damage rate
+			input[i] += AlloyImplantationFunction(x);
+		}
+
+		return;
+	}
+
+	struct IonDamageStruct {
 		std::vector<int> fluxIndex;
 		std::vector<std::vector<double> > damageRate;
 	} ionDamage;
+
+	Cascade cascade;
+	SRIMData srim;
 
 public:
 
@@ -105,18 +115,27 @@ public:
 	void initializeFluxHandler(IReactionNetwork *network,
 			int surfacePos, std::vector<double> grid) {
 
-		// Initialize the in-situ damage profile
-		initializeInSituDamage();
+		// Setup the ion damage and implantation depth profile
+		if (false)
+			srim.setInSitu();
+		else if (true)
+			srim.setBulk();
+
+		// Turn on/off implantation
+		bool implant = true;
 
 		// Set the grid
 		xGrid = grid;
-		if (xGrid.size() == 0) return; // Treat this an an error for in-situ?
+		if (xGrid.size() < 3) {
+			std::cout << "ERROR: xGrid too small to define damage.\n";
+			return;
+		}
 
 		// Iterate over all produced cluster species
-		for (int it = 0; it < ionDamage.clusterSize.size(); ++it) {
+		for (int it = 0; it < cascade.clusterSizes.size(); ++it) {
 
-			// Get size of cluster
-			int size = ionDamage.clusterSize[it];
+			// Get the size of the cluster
+			int size = cascade.clusterSizes[it];
 
 			// Check if cluster is interstitial type
 			if (size > 0) {
@@ -124,8 +143,11 @@ public:
 				auto fluxCluster = network->get(iType, size);
 				if (fluxCluster) {
 					fluxIndex = fluxCluster->getId() - 1;
-					ionDamage.fluxIndex.push_back(fluxIndex);
-					ionDamage.damageRate.push_back(AlloySetDamage(size,it,1.0));
+					(ionDamage.fluxIndex).push_back(fluxIndex);
+					(ionDamage.damageRate).push_back(AlloySetGeneration(size,it,1.0));
+					if (size == 1 && implant) {
+						AlloyAddImplantation(ionDamage.damageRate.back());
+					}
 				}
 				// Otherwise the clusters must be frank and perfect type
 				else {
@@ -138,14 +160,14 @@ public:
 					else {
 						// Frank loop
 						fluxIndex = fluxCluster1->getId() - 1;
-						ionDamage.fluxIndex.push_back(fluxIndex);
-						double frac = 1.0 - ionDamage.perfectFraction;
-						ionDamage.damageRate.push_back(AlloySetDamage(size,it,frac));
+						(ionDamage.fluxIndex).push_back(fluxIndex);
+						double frac = 1.0 - cascade.perfectFraction;
+						(ionDamage.damageRate).push_back(AlloySetGeneration(size,it,frac));
 						// Perfect loop
 						fluxIndex = fluxCluster2->getId() - 1;
-						ionDamage.fluxIndex.push_back(fluxIndex);
-						frac = ionDamage.perfectFraction;
-						ionDamage.damageRate.push_back(AlloySetDamage(size,it,frac));
+						(ionDamage.fluxIndex).push_back(fluxIndex);
+						frac = cascade.perfectFraction;
+						(ionDamage.damageRate).push_back(AlloySetGeneration(size,it,frac));
 					}
 				}
 			}
@@ -156,8 +178,8 @@ public:
 				auto fluxCluster = network->get(vType, size);
 				if (fluxCluster) {
 					fluxIndex = fluxCluster->getId() - 1;
-					ionDamage.fluxIndex.push_back(fluxIndex);
-					ionDamage.damageRate.push_back(AlloySetDamage(size,it,1.0));
+					(ionDamage.fluxIndex).push_back(fluxIndex);
+					(ionDamage.damageRate).push_back(AlloySetGeneration(size,it,1.0));
 				}
 				// Otherwise the clusters must be faulted type
 				else {
@@ -169,8 +191,8 @@ public:
 					else {
 						// Faulted loop
 						fluxIndex = fluxCluster->getId() - 1;
-						ionDamage.fluxIndex.push_back(fluxIndex);
-						ionDamage.damageRate.push_back(AlloySetDamage(size,it,1.0));
+						(ionDamage.fluxIndex).push_back(fluxIndex);
+						(ionDamage.damageRate).push_back(AlloySetGeneration(size,it,1.0));
 					}
 				}
 			}
@@ -213,74 +235,11 @@ public:
 			updatedConcOffset[ionDamage.fluxIndex[it]] += ionDamage.damageRate[it][xi - surfacePos];
 		}
 
-		// There will be errors long before this check!
-		//if (incidentFluxVec.size() == 0) {
-		//	updatedConcOffset[fluxIndex] += fluxAmplitude;
-		//	return;
-		//}
-
-		// Update the concentration array
-		//updatedConcOffset[fluxIndex] += incidentFluxVec[xi - surfacePos];
-
-		return;
-	}
-
-	void initializeInSituDamage() {
-		ionDamage.perfectFraction = 0.8;
-		ionDamage.fitRange = {0,	440};
-		ionDamage.fitCoefficients =
-		{
-			{1.00835,	0.00524512,	-6.22E-05,	1.01E-06,	-6.17E-09,	1.44E-11,
-					-1.14E-14},
-			{1.15141,	0.00534056,	-5.59E-05,	1.16E-06,	-7.55E-09,	1.80E-11,
-					-1.45E-14},
-			{1.06211,	0.00581535,	-5.68E-05,	1.09E-06,	-7.06E-09,	1.67E-11,
-					-1.34E-14},
-			{9.70508,	0.00541518,	0.000425784,	-1.49E-06,	-9.90E-09,	4.47E-11,
-					-4.60E-14}
-		};
-		ionDamage.cascadeEfficiency = {0.4,	0.25,	0.134,	0.12};
-		ionDamage.clusterSize =
-		{
-			45,	40, 35,	30,	25,	20,	16,	12,	9,	8,	7,	6,	5,	4,	3,	2,	1,
-			-1,	-2,	-3,	-4,	-5,	-9,	-12,	-15,	-20,	-25,	-30
-		};
-		ionDamage.defectProduction =
-		{
-			{0.000,		0.000,		0.013,		0.024},
-			{0.000,		0.000,		0.015,		0.025},
-			{0.000,		0.000,		0.016,		0.027},
-			{0.000,		0.000,		0.018,		0.029},
-			{0.000,		0.000,		0.021,		0.032},
-			{0.000,		0.021,		0.024,		0.035},
-			{0.000,		0.026,		0.029,		0.040},
-			{0.000,		0.033,		0.036,		0.046},
-			{0.000,		0.042,		0.044,		0.053},
-			{0.040,		0.047,		0.049,		0.056},
-			{0.054,		0.053,		0.054,		0.060},
-			{0.063,		0.061,		0.060,		0.065},
-			{0.076,		0.071,		0.069,		0.071},
-    	{0.094,		0.086,		0.082,		0.079},
-    	{0.124,		0.111,		0.101,		0.091},
-    	{0.185,		0.158,		0.137,		0.112},
-    	{0.364,		0.291,		0.232,		0.155},
-			{0.673,		0.611,		0.537,		0.375},
-    	{0.174,		0.181,		0.190,		0.187},
-			{0.079,		0.089,		0.103,		0.125},
-    	{0.045,		0.054,		0.067,		0.094},
-    	{0.029,		0.036,		0.048,		0.075},
-			{0.000,		0.013,		0.020,		0.042},
-			{0.000,		0.008,		0.013,		0.031},
-			{0.000,		0.005,		0.009,		0.025},
-			{0.000,		0.003,		0.006,		0.019},
-			{0.000,		0.000,		0.004,		0.015},
-			{0.000,		0.000,		0.003,		0.012}
-		};
 		return;
 	}
 
 };
-//end class AlloyFitFluxHandler
+// end class AlloyFitFluxHandler
 
 }
 
