@@ -1,6 +1,7 @@
 // Includes
 #include <ReSolutionHandler.h>
 #include <NESuperCluster.h>
+#include <algorithm>
 
 namespace xolotlCore {
 
