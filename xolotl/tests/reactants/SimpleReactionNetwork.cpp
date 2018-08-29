@@ -7,13 +7,20 @@
 
 #include "SimpleReactionNetwork.h"
 #include <PSICluster.h>
-#include <HeCluster.h>
-#include <VCluster.h>
-#include <InterstitialCluster.h>
-#include <HeVCluster.h>
-#include <HeInterstitialCluster.h>
+#include <PSIHeCluster.h>
+#include <PSIDCluster.h>
+#include <PSITCluster.h>
+#include <PSIVCluster.h>
+#include <PSIInterstitialCluster.h>
+#include <PSIMixedCluster.h>
+#include <PSIHeInterstitialCluster.h>
 #include <NECluster.h>
-#include <XeCluster.h>
+#include <NEXeCluster.h>
+#include <FeCluster.h>
+#include <FeHeCluster.h>
+#include <FeVCluster.h>
+#include <FeInterstitialCluster.h>
+#include <FeHeVCluster.h>
 #include <memory>
 #include <typeinfo>
 #include <limits>
@@ -31,44 +38,69 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 	// Add He clusters
 	for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
 		// Create a He cluster with cluster size numHe
-		shared_ptr<HeCluster> cluster = make_shared<HeCluster>(numHe, registry);
+		auto cluster = new PSIHeCluster(numHe, *this, registry);
 		// Set the diffusion factor for some of them to 1.0 so that they can react
 		if (numHe < 8)
 			cluster->setDiffusionFactor(1.0);
 		// Add it to the network
-		add(cluster);
+		add(std::unique_ptr<PSICluster>(cluster));
+	}
+
+	// Add deuterium clusters
+	for (int numD = 1; numD <= maxClusterSize; numD++) {
+		// Create a D cluster with cluster size numD
+		auto cluster = new PSIDCluster(numD, *this, registry);
+		// Set the diffusion factor for the first one so that it can react
+		if (numD == 1)
+			cluster->setDiffusionFactor(1.0);
+		// Add it to the network
+		add(std::unique_ptr<PSICluster>(cluster));
+	}
+
+	// Add tritium clusters
+	for (int numT = 1; numT <= maxClusterSize; numT++) {
+		// Create a T cluster with cluster size numT
+		auto cluster = new PSITCluster(numT, *this, registry);
+		// Set the diffusion factor for the first one so that it can react
+		if (numT == 1)
+			cluster->setDiffusionFactor(1.0);
+		// Add it to the network
+		add(std::unique_ptr<PSICluster>(cluster));
 	}
 
 	// Add vacancy clusters
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		// Create a V cluster with cluster size numV
-		shared_ptr<VCluster> cluster = make_shared<VCluster>(numV, registry);
+		auto cluster = new PSIVCluster(numV, *this, registry);
 		// Set the diffusion factor for the first one so that it can react
 		if (numV == 1)
 			cluster->setDiffusionFactor(1.0);
 		// Add it to the network
-		add(cluster);
+		add(std::unique_ptr<PSICluster>(cluster));
 	}
 
 	// Add interstitial clusters
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
 		// Create a He cluster with cluster size numI
-		shared_ptr<InterstitialCluster> cluster = make_shared<
-				InterstitialCluster>(numI, registry);
+		auto cluster = new PSIInterstitialCluster(numI, *this, registry);
 		// Set the diffusion factor for all of them to 1.0 so that they can react
 		cluster->setDiffusionFactor(1.0);
 		// Add it to the network
-		add(cluster);
+		add(std::unique_ptr<PSICluster>(cluster));
 	}
 
 	// Add HeV clusters, assuming that
 	// numHe + numV <= maxMixedClusterSize
 	for (int numV = 1; numV <= maxClusterSize; numV++) {
 		for (int numHe = 1; numHe + numV <= maxClusterSize; numHe++) {
-			// Create a HeVCluster with the current amount of He and V
-			shared_ptr<HeVCluster> cluster = make_shared<HeVCluster>(numHe,
-					numV, registry);
-			add(cluster);
+			for (int numD = 0; numD <= 1; numD++) {
+				for (int numT = 0; numT <= 1; numT++) {
+					// Create a MixedCluster with the current amount of He and V
+					auto cluster = new PSIMixedCluster(numHe, numD, numT, numV,
+							*this, registry);
+					add(std::unique_ptr<PSICluster>(cluster));
+				}
+			}
 		}
 	}
 
@@ -78,10 +110,10 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 	for (int numI = 1; numI <= maxClusterSize; numI++) {
 		for (int numHe = 1; numHe + numI <= maxClusterSize; numHe++) {
 			// Create the HeI cluster
-			shared_ptr<HeInterstitialCluster> cluster = make_shared<
-					HeInterstitialCluster>(numHe, numI, registry);
+			auto cluster = new PSIHeInterstitialCluster(numHe, numI, *this,
+					registry);
 			// Add it to the reactants vector
-			add(cluster);
+			add(std::unique_ptr<PSICluster>(cluster));
 		}
 	}
 
@@ -94,12 +126,60 @@ SimpleNEReactionNetwork::SimpleNEReactionNetwork(const int maxClusterSize,
 	// Add Xe clusters
 	for (int numXe = 1; numXe <= maxClusterSize; numXe++) {
 		// Create a He cluster with cluster size numHe
-		shared_ptr<XeCluster> cluster = make_shared<XeCluster>(numXe, registry);
+		auto cluster = new NEXeCluster(numXe, *this, registry);
 		// Set the diffusion factor for the first one so that it can react
 		if (numXe == 1)
 			cluster->setDiffusionFactor(1.0);
 		// Add it to the network
-		add(cluster);
+		add(std::unique_ptr<NECluster>(cluster));
+	}
+
+	return;
+}
+
+SimpleFeReactionNetwork::SimpleFeReactionNetwork(const int maxClusterSize,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		FeClusterReactionNetwork(registry) {
+	// Add He clusters
+	for (int numHe = 1; numHe <= 8; numHe++) {
+		// Create a He cluster with cluster size numHe
+		auto cluster = new FeHeCluster(numHe, *this, registry);
+		// Set the diffusion factor for some of them to 1.0 so that they can react
+		if (numHe < 8)
+			cluster->setDiffusionFactor(1.0);
+		// Add it to the network
+		add(std::unique_ptr<FeCluster>(cluster));
+	}
+
+	// Add vacancy clusters
+	for (int numV = 1; numV <= 9; numV++) {
+		// Create a V cluster with cluster size numV
+		auto cluster = new FeVCluster(numV, *this, registry);
+		// Set the diffusion factor for the first one so that it can react
+		if (numV == 1)
+			cluster->setDiffusionFactor(1.0);
+		// Add it to the network
+		add(std::unique_ptr<FeCluster>(cluster));
+	}
+
+	// Add interstitial clusters
+	for (int numI = 1; numI <= 1; numI++) {
+		// Create a He cluster with cluster size numI
+		auto cluster = new FeInterstitialCluster(numI, *this, registry);
+		// Set the diffusion factor for all of them to 1.0 so that they can react
+		cluster->setDiffusionFactor(1.0);
+		// Add it to the network
+		add(std::unique_ptr<FeCluster>(cluster));
+	}
+
+	// Add HeV clusters, assuming that
+	// numHe + numV <= maxMixedClusterSize
+	for (int numV = 1; numV <= maxClusterSize; numV++) {
+		for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
+			// Create a HeVCluster with the current amount of He and V
+			auto cluster = new FeHeVCluster(numHe, numV, *this, registry);
+			add(std::unique_ptr<FeCluster>(cluster));
+		}
 	}
 
 	return;
@@ -113,26 +193,27 @@ shared_ptr<xolotlCore::PSIClusterReactionNetwork> testUtils::getSimplePSIReactio
 			new SimplePSIReactionNetwork(maxClusterSize, registry));
 	cout << "SimpleReactionNetwork Message: " << "Created network with size "
 			<< network->size() << endl;
-	// Register the reaction network with its clusters
+
+	// Update reactants now that they are in network.
 	auto reactants = network->getAll();
-	for (unsigned int i = 0; i < reactants->size(); i++) {
-		reactants->at(i)->setReactionNetwork(network);
+	for (IReactant& currCluster : reactants) {
+		currCluster.updateFromNetwork();
 	}
+
+	// Define the phase space for the network
+	int nDim = 1;
+	Array<int, 5> list;
+	list[0] = 0;
+	// Now that all the clusters are created
+	// Give the information on the phase space to the network
+	network->setPhaseSpace(nDim, list);
+
 	// Create the reactions
 	network->createReactionConnectivity();
-
-	// ----- TEMPORARY DEBUG OUTPUT!!!!! -----
-	// Print the reaction connectivity matrix
-	for (auto reactantIt = reactants->begin(); reactantIt != reactants->end();
-			reactantIt++) {
-		auto cluster = (PSICluster *) (*reactantIt);
-		vector<int> conn = cluster->getConnectivity();
-
-		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++) {
-			printf("%s", *connIt ? "* " : "' ");
-		}
-		printf("\n");
-	}
+	// Recompute Ids and network size
+	network->reinitializeNetwork();
+	// Redefine the connectivities
+	network->reinitializeConnectivities();
 
 	return network;
 }
@@ -145,20 +226,60 @@ shared_ptr<xolotlCore::NEClusterReactionNetwork> testUtils::getSimpleNEReactionN
 			new SimpleNEReactionNetwork(maxClusterSize, registry));
 	cout << "SimpleReactionNetwork Message: " << "Created network with size "
 			<< network->size() << endl;
-	// Register the reaction network with its clusters
+
+	// Update reactants now that they are in network.
 	auto reactants = network->getAll();
-	for (unsigned int i = 0; i < reactants->size(); i++) {
-		reactants->at(i)->setReactionNetwork(network);
+	for (IReactant& currCluster : reactants) {
+		currCluster.updateFromNetwork();
 	}
+
 	// Create the reactions
 	network->createReactionConnectivity();
+	// Recompute Ids and network size
+	network->reinitializeNetwork();
+	// Redefine the connectivities
+	network->reinitializeConnectivities();
 
 	// ----- TEMPORARY DEBUG OUTPUT!!!!! -----
 	// Print the reaction connectivity matrix
-	for (auto reactantIt = reactants->begin(); reactantIt != reactants->end();
-			reactantIt++) {
-		auto cluster = (NECluster *) (*reactantIt);
-		vector<int> conn = cluster->getConnectivity();
+	for (IReactant& currCluster : reactants) {
+		vector<int> conn = currCluster.getConnectivity();
+
+		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++) {
+			printf("%s", *connIt ? "* " : "' ");
+		}
+		printf("\n");
+	}
+
+	return network;
+}
+
+shared_ptr<xolotlCore::FeClusterReactionNetwork> testUtils::getSimpleFeReactionNetwork(
+		const int maxClusterSize,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
+	// Create the network
+	shared_ptr<xolotlCore::FeClusterReactionNetwork> network(
+			new SimpleFeReactionNetwork(maxClusterSize, registry));
+	cout << "SimpleReactionNetwork Message: " << "Created network with size "
+			<< network->size() << endl;
+
+	// Update reactants now that they are in network.
+	auto reactants = network->getAll();
+	for (IReactant& currCluster : reactants) {
+		currCluster.updateFromNetwork();
+	}
+
+	// Create the reactions
+	network->createReactionConnectivity();
+	// Recompute Ids and network size
+	network->reinitializeNetwork();
+	// Redefine the connectivities
+	network->reinitializeConnectivities();
+
+	// ----- TEMPORARY DEBUG OUTPUT!!!!! -----
+	// Print the reaction connectivity matrix
+	for (IReactant& currCluster : reactants) {
+		vector<int> conn = currCluster.getConnectivity();
 
 		for (auto connIt = conn.begin(); connIt != conn.end(); connIt++) {
 			printf("%s", *connIt ? "* " : "' ");

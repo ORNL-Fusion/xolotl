@@ -7,24 +7,27 @@ SET(LIBRARY_NAME "xolotlReactants")
 
 #Collect all header filenames in this project 
 #and glob them in HEADERS
-file(GLOB HEADERS *.h psiclusters/*.h neclusters/*.h alloyclusters/*.h)
+file(GLOB HEADERS *.h psiclusters/*.h neclusters/*.h feclusters/*.h alloyclusters/*.h)
 
 #Collect all of the cpp files in this folder 
 #and the psiclusters folder and glob them in SRC
-file(GLOB SRC *.cpp psiclusters/*.cpp neclusters/*.cpp alloyclusters/*.cpp)
+file(GLOB SRC *.cpp psiclusters/*.cpp neclusters/*.cpp feclusters/*.cpp alloyclusters/*.cpp)
 
 #Include this directory so that the psiclusters can be built
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/standard)
+include_directories(${CMAKE_SOURCE_DIR}
+                    ${CMAKE_SOURCE_DIR}/xolotlCore
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf/dummy
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf/standard
+                    ${CMAKE_BINARY_DIR}
+                    ${Boost_INCLUDE_DIR})
 
 #Add the library
 add_library(${LIBRARY_NAME} STATIC ${SRC})

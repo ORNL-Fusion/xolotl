@@ -5,18 +5,3 @@ CMake takes static libraries and multiple active configurations
 seriously.
 
   http://www.cmake.org/Wiki/CMake:Improving_Find*_Modules
-
-These files were taken from https://github.com/jedbrown/cmake-modules/ and are included under the terms of CMake's BSD-style license, which is compatible with Xolotl's own modified BSD license. ~JJB 20130514 14:35
-
-List of reused files:
-CorrectWindowsPaths.cmake
-FindFFTW.cmake
-FindGit.cmake
-FindGSL.cmake
-FindITAPS.cmake
-FindNetCDF.cmake
-FindPackageMultipass.cmake
-FindPETSc.cmake
-LICENSE
-README
-ResolveCompilerPaths.cmake

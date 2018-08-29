@@ -4,6 +4,7 @@
 //Includes
 #include <AlloyCluster.h>
 #include <NetworkLoader.h>
+#include <AlloyClusterReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -33,7 +34,8 @@ protected:
 	/**
 	 * Private nullary constructor.
 	 */
-	AlloyClusterNetworkLoader() {
+	AlloyClusterNetworkLoader() :
+			sizeMin(-1), sectionWidth(-1) {
 	}
 
 	/**
@@ -50,8 +52,22 @@ protected:
 	 * @param numPerfect The number of perfect
 	 * @return The new cluster
 	 */
-	std::shared_ptr<AlloyCluster> createAlloyCluster(int numV, int numI,
-			int numVoid, int numFaulted, int numFrank, int numPerfect);
+	std::unique_ptr<AlloyCluster> createAlloyCluster(int numV, int numI,
+			int numVoid, int numFaulted, int numFrank, int numPerfect,
+			IReactionNetwork& network);
+
+	/**
+	 * This operation will add the given cluster to the network and reactants vector
+	 * as a standard cluster or a dummy one if we do not want the reactions to happen.
+	 *
+	 * @param network The network
+	 * @param reactants The vector of reactants kept by the loader
+	 * @param cluster The cluster to add to them
+	 */
+	virtual void pushAlloyCluster(
+			std::unique_ptr<AlloyClusterReactionNetwork> & network,
+			std::vector<std::reference_wrapper<Reactant> > & reactants,
+			std::unique_ptr<AlloyCluster> & cluster);
 
 public:
 
@@ -85,9 +101,10 @@ public:
 	 * the format specified previously. The network will be empty if it can not
 	 * be loaded.
 	 *
+	 * @param options The command line options
 	 * @return network The reaction network
 	 */
-	virtual std::shared_ptr<IReactionNetwork> load();
+	virtual std::unique_ptr<IReactionNetwork> load(const IOptions &options);
 
 	/**
 	 * This operation will generate the reaction network from options.
@@ -96,14 +113,14 @@ public:
 	 * @param options The command line options
 	 * @return network The reaction network
 	 */
-	virtual std::shared_ptr<IReactionNetwork> generate(IOptions &options);
+	virtual std::unique_ptr<IReactionNetwork> generate(const IOptions &options);
 
 	/**
 	 * This operation will apply a grouping method to the network.
 	 *
 	 * @param The network to be modified.
 	 */
-	void applyGrouping(std::shared_ptr<IReactionNetwork> network);
+	void applyGrouping(IReactionNetwork& network);
 
 	/**
 	 * This operation will set the size at which the grouping scheme starts.

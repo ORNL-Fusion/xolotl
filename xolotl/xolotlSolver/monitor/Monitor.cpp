@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
+#include "xolotlCore/io/XFile.h"
+#include "xolotlSolver/monitor/Monitor.h"
 
 namespace xolotlSolver {
 
@@ -20,6 +22,33 @@ std::shared_ptr<xolotlViz::IPlot> perfPlot;
 
 //! The variable to store the time at the previous time step.
 double previousTime = 0.0;
+//! The variable to store the threshold on time step defined by the user.
+double timeStepThreshold = 0.0;
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "checkTimeStep")
+/**
+ * This is a method that decides when to extend the network
+ */
+PetscErrorCode checkTimeStep(TS ts) {
+	// Initial declarations
+	PetscErrorCode ierr;
+
+	PetscFunctionBeginUser;
+
+	// Get the time step from ts
+	PetscReal timestep;
+	ierr = TSGetTimeStep(ts, &timestep);
+	CHKERRQ(ierr);
+
+	// Stop when the time step is lower than the user defined threshold
+	if (timestep < timeStepThreshold) {
+		ierr = TSSetConvergedReason(ts, TS_CONVERGED_EVENT);
+		CHKERRQ(ierr);
+	}
+
+	PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorTime")
@@ -46,8 +75,8 @@ PetscErrorCode computeFluence(TS, PetscInt, PetscReal time, Vec, void *) {
 	PetscFunctionBeginUser;
 
 	// Get the solver handler and the flux handler
-	auto solverHandler = PetscSolver::getSolverHandler();
-	auto fluxHandler = solverHandler->getFluxHandler();
+	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto fluxHandler = solverHandler.getFluxHandler();
 
 	// The length of the time step
 	double dt = time - previousTime;
@@ -111,13 +140,13 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 	// Collect all sampled timer values to rank 0.
 	double* allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
 	MPI_Gather(&solverTimerValue,  // send buffer
-			1,                  // number of values to send
-			MPI_DOUBLE,         // type of items in send buffer
-			allTimerValues,     // receive buffer (only valid at root)
-			1,                  // number of values to receive from each process
-			MPI_DOUBLE,         // type of items in receive buffer
-			0,                  // root of MPI collective operation
-			PETSC_COMM_WORLD); // communicator defining processes involved in the operation
+			1,// number of values to send
+			MPI_DOUBLE,// type of items in send buffer
+			allTimerValues,// receive buffer (only valid at root)
+			1,// number of values to receive from each process
+			MPI_DOUBLE,// type of items in receive buffer
+			0,// root of MPI collective operation
+			PETSC_COMM_WORLD);// communicator defining processes involved in the operation
 
 	if (cwRank == 0) {
 		auto allPoints = std::make_shared<std::vector<xolotlViz::Point> >();
@@ -162,6 +191,47 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 	}
 
 	PetscFunctionReturn(0);
+}
+
+void writeNetwork(MPI_Comm _comm, std::string srcFileName,
+		std::string targetFileName, IReactionNetwork& network) {
+
+	int procId;
+	MPI_Comm_rank(_comm, &procId);
+
+	// Check if we are supposed to copy the network from
+	// another object into our new checkpoint file.
+	if (procId == 0) {
+		if (not srcFileName.empty()) {
+
+			// Copy the network from the given file.
+			// Note that we do this using a single-process
+			// communicator because the HDF5 copy operation
+			// is not parallelized and gives very poor performance
+			// if used with a file opened for parallel access.
+			xolotlCore::XFile srcFile(srcFileName,
+			MPI_COMM_SELF, xolotlCore::XFile::AccessMode::OpenReadOnly);
+
+			// Check if given file even has a network group.
+			auto srcNetGroup =
+					srcFile.getGroup<xolotlCore::XFile::NetworkGroup>();
+			if (srcNetGroup) {
+				// Given file has a network group.  Copy it.
+				// First open the checkpoint file using a single-process
+				// communicator...
+				xolotlCore::XFile checkpointFile(targetFileName,
+				MPI_COMM_SELF, xolotlCore::XFile::AccessMode::OpenReadWrite);
+
+				// ...then do the copy.
+				srcNetGroup->copyTo(checkpointFile);
+			}
+		} else {
+			// Write from scratch
+			xolotlCore::XFile checkpointFile(targetFileName,
+			MPI_COMM_SELF, xolotlCore::XFile::AccessMode::OpenReadWrite);
+			xolotlCore::XFile::NetworkGroup netGroup(checkpointFile, network);
+		}
+	}
 }
 
 }

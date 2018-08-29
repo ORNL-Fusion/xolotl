@@ -179,6 +179,34 @@ public:
 	virtual void setTempProfileFilename(const std::string& name) = 0;
 
 	/**
+	 * Should we use heat equation handlers?
+	 *
+	 * @return true if Xolotl must use the heat equation
+	 */
+	virtual bool useHeatEquationHandlers() const = 0;
+
+	/**
+	 * Set the heatFlag.
+	 *
+	 * @param flag The value for the heatFlag
+	 */
+	virtual void setHeatFlag(bool flag) = 0;
+
+	/**
+	 * Obtain the value of the temperature to be used in the bulk.
+	 *
+	 * @return The value for the temperature
+	 */
+	virtual double getBulkTemperature() const = 0;
+
+	/**
+	 * Set the bulk temperature.
+	 *
+	 * @param temp The value for the bulk temperature
+	 */
+	virtual void setBulkTemperature(double temp) = 0;
+
+	/**
 	 * Should we use the flux amplitude option?
 	 * If false, it will not be used.
 	 *
@@ -476,6 +504,34 @@ public:
 	virtual void setMaxImpurity(int max) = 0;
 
 	/**
+	 * Obtain the maximum value of deuterium to be used.
+	 *
+	 * @return The maximum value
+	 */
+	virtual int getMaxD() const = 0;
+
+	/**
+	 * Set the maximum value of deuterium to use.
+	 *
+	 * @param max The maximum
+	 */
+	virtual void setMaxD(int max) = 0;
+
+	/**
+	 * Obtain the maximum value of tritium to be used.
+	 *
+	 * @return The maximum value
+	 */
+	virtual int getMaxT() const = 0;
+
+	/**
+	 * Set the maximum value of tritium to use.
+	 *
+	 * @param max The maximum
+	 */
+	virtual void setMaxT(int max) = 0;
+
+	/**
 	 * Obtain the maximum value of vacancies to be used.
 	 *
 	 * @return The maximum value
@@ -586,6 +642,82 @@ public:
 	 * @param stepSize The value for the step size
 	 */
 	virtual void setZStepSize(double stepSize) = 0;
+
+	/**
+	 * Obtain the boundary condition on the left side of the grid.
+	 *
+	 * @return The boundary condition
+	 */
+	virtual int getLeftBoundary() const = 0;
+
+	/**
+	 * Set the boundary condition on the left side of the grid.
+	 *
+	 * @param n The condition
+	 */
+	virtual void setLeftBoundary(int n) = 0;
+
+	/**
+	 * Obtain the boundary condition on the right side of the grid.
+	 *
+	 * @return The boundary condition
+	 */
+	virtual int getRightBoundary() const = 0;
+
+	/**
+	 * Set the boundary condition on the right side of the grid.
+	 *
+	 * @param n The condition
+	 */
+	virtual void setRightBoundary(int n) = 0;
+
+	/**
+	 * Obtain the value of the depth above which the bursting is happening.
+	 *
+	 * @return The depth
+	 */
+	virtual double getBurstingDepth() const = 0;
+
+	/**
+	 * Set the value for the depth above which the bursting is happening.
+	 *
+	 * @param stepSize The depth
+	 */
+	virtual void setBurstingDepth(double depth) = 0;
+
+	/**
+	 * Set the seed that should be used for initializing the random
+	 * number generator.
+	 *
+	 * @param s The value to use to seed the RNG.
+	 */
+	virtual void setRNGSeed(unsigned int s) = 0;
+
+	/**
+	 * Obtain the seed that should be used for initializing the random
+	 * number generator.
+	 *
+	 * @return A (bool, uint) pair.  The bool tells whether to use the int
+	 * to seed the random number generator.
+	 */
+	virtual std::tuple<bool, unsigned int> getRNGSeed(void) const = 0;
+
+	/**
+	 * Specify whether each process should print the value it uses
+	 * to seed the random number generator.
+	 *
+	 * @param b A bool indicating whether to print the RNG seed value.
+	 */
+	virtual void setPrintRNGSeed(bool b) = 0;
+
+	/**
+	 * Determine if we should print the value used to seed the random
+	 * number generator (regardless if it was given on the command line
+	 * or generated dynamically).
+	 *
+	 * @return True iff we should print the RNG seed value from each process.
+	 */
+	virtual bool printRNGSeed(void) const = 0;
 
 };
 //end class IOptions

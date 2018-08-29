@@ -51,7 +51,7 @@ public:
 	 *
 	 * @param options The Xolotl options.
 	 */
-	void initializeMaterial(xolotlCore::Options &options) {
+	void initializeMaterial(const xolotlCore::Options &options) {
 		// Wrong if both he flux and time profile options are used
 		if (options.useFluxAmplitude() && options.useFluxTimeProfile()) {
 			// A constant flux value AND a time profile cannot both be given.

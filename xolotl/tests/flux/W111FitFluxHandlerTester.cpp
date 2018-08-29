@@ -1,12 +1,15 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include "W111FitFluxHandler.h"
 #include <mpi.h>
 #include <HDF5NetworkLoader.h>
 #include <DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
+#include <Options.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -22,24 +25,32 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	char **argv;
 	MPI_Init(&argc, &argv);
 
+	// Create the option to create a network
+	xolotlCore::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=9 0 0 0 0" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+	opts.readParams(argv);
+
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-
-	// Load the network
-	auto network = loader.load().get();
+	// Create the network
+	auto network = loader.generate(opts);
 	// Get its size
 	const int dof = network->getDOF();
 
 	// Create a grid
 	std::vector<double> grid;
-	for (int l = 0; l < 5; l++) {
+	for (int l = 0; l < 7; l++) {
 		grid.push_back((double) l * 1.25);
 	}
 	// Specify the surface position
@@ -50,7 +61,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
 
 	// Create a time
 	double currTime = 1.0;
@@ -78,9 +89,13 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.391408, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.268688, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.139904, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.391408, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.268688, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.139904, 0.01);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();

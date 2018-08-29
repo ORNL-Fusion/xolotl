@@ -3,7 +3,8 @@
 
 // Includes
 #include "ISolverHandler.h"
-#include <HDF5Utils.h>
+#include "RandomNumberGenerator.h"
+#include "xolotlCore/io/XFile.h"
 #include <Constants.h>
 
 namespace xolotlSolver {
@@ -19,7 +20,7 @@ protected:
 	std::string networkName;
 
 	//! The original network created from the network loader.
-	xolotlCore::IReactionNetwork *network;
+	xolotlCore::IReactionNetwork& network;
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
@@ -41,6 +42,12 @@ protected:
 
 	//! The grid step size in the z direction.
 	double hZ;
+
+	//! The number of grid points by which the boundary condition should be shifted at the left side.
+	int leftOffset;
+
+	//! The number of grid points by which the boundary condition should be shifted at the right side.
+	int rightOffset;
 
 	//! The initial vacancy concentration.
 	double initialVConc;
@@ -81,6 +88,15 @@ protected:
 	//! The sputtering yield for the problem.
 	double sputteringYield;
 
+	//! The depth parameter for the bubble bursting.
+	double tauBursting;
+
+	//! The value to use to seed the random number generator.
+	unsigned int rngSeed;
+
+	//! The random number generator to use.
+	std::unique_ptr<RandomNumberGenerator<int, unsigned int>> rng;
+
 	//! Method generating the grid in the x direction
 	void generateGrid(int nx, double hx, int surfacePos) {
 		// Clear the grid
@@ -92,7 +108,7 @@ protected:
 			grid.push_back(0.0);
 
 			// In that case hx correspond to the full length of the grid
-			for (int l = 1; l < nx - 1; l++) {
+			for (int l = 0; l <= nx + 1; l++) {
 				grid.push_back(
 						(hx / 2.0)
 								* (1.0
@@ -106,7 +122,7 @@ protected:
 		// Check if the user wants a regular grid
 		else if (useRegularGrid) {
 			// The grid will me made of nx points separated by hx nm
-			for (int l = 0; l < nx; l++) {
+			for (int l = 0; l <= nx+1; l++) {
 				grid.push_back((double) l * hx);
 			}
 		}
@@ -115,32 +131,98 @@ protected:
 		else {
 			// Initialize the value of the previous point
 			double previousPoint = 0.0;
-			// The first grid point will be at x = 0.0
-			grid.push_back(0.0);
 
-			// The loop starts at 1 because the first grid point was
-			// already added to the grid vector
-			for (int l = 1; l < nx; l++) {
+			// Loop on all the grid points
+			for (int l = 0; l <= nx + 1; l++) {
+				// Add the previous point
+				grid.push_back(previousPoint);
 				// 0.1nm step near the surface (x < 2.5nm)
 				if (l < surfacePos + 26) {
-					grid.push_back(previousPoint + 0.1);
 					previousPoint += 0.1;
 				}
 				// Then 0.25nm (2.5nm < x < 5.0nm)
 				else if (l < surfacePos + 36) {
-					grid.push_back(previousPoint + 0.25);
 					previousPoint += 0.25;
 				}
 				// Then 0.5nm (5.0nm < x < 7.5nm)
 				else if (l < surfacePos + 41) {
-					grid.push_back(previousPoint + 0.5);
 					previousPoint += 0.5;
 				}
-				// 1.0nm step size for all the other ones
-				// (7.5nm < x)
-				else {
-					grid.push_back(previousPoint + 1.0);
+				// Then 1.0nm step size (7.5nm < x < 50.5)
+				else if (l < surfacePos + 84) {
 					previousPoint += 1.0;
+				}
+				// Then 2.0nm step size (50.5nm < x < 100.5)
+				else if (l < surfacePos + 109) {
+					previousPoint += 2.0;
+				}
+				// Then 5.0nm step size (100.5nm < x < 150.5)
+				else if (l < surfacePos + 119) {
+					previousPoint += 5.0;
+				}
+				// Then 10.0nm step size (150.5nm < x < 300.5)
+				else if (l < surfacePos + 134) {
+					previousPoint += 10.0;
+				}
+				// Then 20.0nm step size (300.5nm < x < 500.5)
+				else if (l < surfacePos + 144) {
+					previousPoint += 20.0;
+				}
+				// Then 50.0nm step size (500.5nm < x < 1000.5)
+				else if (l < surfacePos + 154) {
+					previousPoint += 50.0;
+				}
+				// Then 100.0nm step size (1000.5nm < x < 5000.5)
+				else if (l < surfacePos + 194) {
+					previousPoint += 100.0;
+				}
+				// Then 200.0nm step size (5000.5nm < x < 10000.5)
+				else if (l < surfacePos + 219) {
+					previousPoint += 200.0;
+				}
+				// Then 500.0nm step size (10000.5nm < x < 20000.5)
+				else if (l < surfacePos + 239) {
+					previousPoint += 500.0;
+				}
+				// Then 1.0um step size (20000.5nm < x < 30000.5nm )
+				else if (l < surfacePos + 249) {
+					previousPoint += 1000.0;
+				}
+				// Then 2.0um step size (30000.5nm < x < 50000.5)
+				else if (l < surfacePos + 259) {
+					previousPoint += 2000.0;
+				}
+				// Then 5.0um step size (50000.5nm < x < 100000.5)
+				else if (l < surfacePos + 269) {
+					previousPoint += 5000.0;
+				}
+				// Then 10.0um step size (100000.5nm < x < 200000.5nm )
+				else if (l < surfacePos + 279) {
+					previousPoint += 10000.0;
+				}
+				// Then 20.0um step size (200000.5nm < x < 500000.5)
+				else if (l < surfacePos + 294) {
+					previousPoint += 20000.0;
+				}
+				// Then 50.0um step size (500000.5nm < x < 1000000.5)
+				else if (l < surfacePos + 304) {
+					previousPoint += 50000.0;
+				}
+				// Then 100.0um step size (1mm < x < 2mm )
+				else if (l < surfacePos + 314) {
+					previousPoint += 100000.0;
+				}
+				// Then 200.0um step size (2mm < x < 5mm)
+				else if (l < surfacePos + 329) {
+					previousPoint += 200000.0;
+				}
+				// Then 500.0um step size (5mm < x < 10mm)
+				else if (l < surfacePos + 339) {
+					previousPoint += 500000.0;
+				}
+				// Then 1.0mm step size (10mm < x)
+				else {
+					previousPoint += 1000000.0;
 				}
 			}
 		}
@@ -148,13 +230,26 @@ protected:
 		return;
 	}
 
+	/**
+	 * Constructor.
+	 *
+	 * @param _network The reaction network to use.
+	 */
+	SolverHandler(xolotlCore::IReactionNetwork& _network) :
+			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
+					0.0), hZ(0.0), leftOffset(0), rightOffset(0), initialVConc(
+					0.0), dimension(-1), portion(0.0), useRegularGrid(true), movingSurface(
+					false), bubbleBursting(false), sputteringYield(0.0), fluxHandler(
+					nullptr), temperatureHandler(nullptr), diffusionHandler(
+					nullptr), mutationHandler(nullptr), tauBursting(10.0) {
+	}
+
 public:
 
+	//! The Constructor
+	SolverHandler() = delete;
+
 	~SolverHandler() {
-		// Break "pointer" cycles so that network, clusters, reactants
-		// will deallocate when the std::shared_ptrs owning them
-		// are destroyed.
-		network->askReactantsToReleaseNetwork();
 	}
 
 	/**
@@ -164,28 +259,53 @@ public:
 	void initializeHandlers(
 			std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-			std::shared_ptr<xolotlCore::IReactionNetwork> networkHandler,
-			xolotlCore::Options &options) {
+			const xolotlCore::Options &options) override {
+
+		// Determine who I am.
+		int myProcId = -1;
+		MPI_Comm_rank(MPI_COMM_WORLD, &myProcId);
+
+		// Initialize our random number generator.
+		bool useRNGSeedFromOptions = false;
+		bool printRNGSeed = false;
+		std::tie(useRNGSeedFromOptions, rngSeed) = options.getRNGSeed();
+		if (not useRNGSeedFromOptions) {
+			// User didn't give a seed value to use, so
+			// use something based on current time and our proc id
+			// so that it is different from run to run, and should
+			// be different across all processes within a given run.
+			rngSeed = time(NULL);
+		}
+		if (options.printRNGSeed()) {
+			std::cout << "Proc " << myProcId << " using RNG seed value "
+					<< rngSeed << std::endl;
+		}
+		rng = std::unique_ptr<RandomNumberGenerator<int, unsigned int>>(
+				new RandomNumberGenerator<int, unsigned int>(
+						rngSeed + myProcId));
+
 		// Set the network loader
 		networkName = options.getNetworkFilename();
 
 		// Set the grid options
+		// Take the parameter file option by default
+		nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
+		hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
+				options.getZStepSize();
+		// Update them if we use an HDF5 file with header group
 		if (options.useHDF5()) {
-			// Get starting conditions from HDF5 file
 			int nx = 0, ny = 0, nz = 0;
 			double hx = 0.0, hy = 0.0, hz = 0.0;
-			xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz,
-					hz);
-			nX = nx, nY = ny, nZ = nz;
-			hX = hx, hY = hy, hZ = hz;
-		} else {
-			nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
-			hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
-					options.getZStepSize();
-		}
 
-		// Set the network
-		network = (xolotlCore::IReactionNetwork *) networkHandler.get();
+			xolotlCore::XFile xfile(networkName);
+			auto headerGroup = xfile.getGroup<xolotlCore::XFile::HeaderGroup>();
+			if (headerGroup) {
+				headerGroup->read(nx, hx, ny, hy, nz, hz);
+
+				nX = nx, nY = ny, nZ = nz;
+				hX = hx, hY = hy, hZ = hz;
+			}
+		}
 
 		// Set the flux handler
 		fluxHandler =
@@ -201,9 +321,8 @@ public:
 
 		// Set the advection handlers
 		auto handlers = material->getAdvectionHandler();
-		for (int i = 0; i < handlers.size(); i++) {
-			advectionHandlers.push_back(
-					(xolotlCore::IAdvectionHandler *) handlers[i].get());
+		for (auto handler : handlers) {
+			advectionHandlers.push_back(handler.get());
 		}
 
 		// Set the modified trap-mutation handler
@@ -222,17 +341,46 @@ public:
 		// Set the sputtering yield
 		sputteringYield = options.getSputteringYield();
 
+		// Set the sputtering yield
+		tauBursting = options.getBurstingDepth();
+
 		// Look at if the user wants to use a regular grid in the x direction
 		useRegularGrid = options.useRegularXGrid();
 
 		// Look at if the user wants to use a Chebyshev grid in the x direction
 		useChebyshevGrid = options.useChebyshevGrid();
 
+		// Set the boundary conditions (= 1: free surface; = 0: mirror)
+		leftOffset = options.getLeftBoundary();
+		rightOffset = options.getRightBoundary();
+
 		// Should we be able to move the surface?
 		auto map = options.getProcesses();
 		movingSurface = map["movingSurface"];
 		// Should we be able to burst bubble?
 		bubbleBursting = map["bursting"];
+
+		// Some safeguards about what to use with what
+		if (leftOffset == 0
+				&& (map["advec"] || map["modifiedTM"] || map["movingSurface"]
+						|| map["bursting"])) {
+			throw std::string(
+					"\nThe left side of the grid is set to use a reflective boundary condition "
+							"but you want to use processes that are intrinsically related to "
+							"a free surface (advection, modified trap mutation, moving surface, bubble bursting).");
+		}
+
+		// Complains if processes that should not be used together are used
+		if (map["attenuation"] && !map["modifiedTM"]) {
+			throw std::string(
+					"\nYou want to use the attenuation on the modified trap mutation "
+							"but you are not using the modifiedTM process, it doesn't make any sense.");
+		}
+		if (map["modifiedTM"] && !map["reaction"]) {
+			throw std::string(
+					"\nYou want to use the modified trap mutation but the reaction process is not set,"
+							" it doesn't make any sense.");
+		}
 
 		return;
 	}
@@ -241,7 +389,7 @@ public:
 	 * Get the grid in the x direction.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<double> getXGrid() const {
+	std::vector<double> getXGrid() const override {
 		return grid;
 	}
 
@@ -249,7 +397,7 @@ public:
 	 * Get the step size in the y direction.
 	 * \see ISolverHandler.h
 	 */
-	double getStepSizeY() const {
+	double getStepSizeY() const override {
 		return hY;
 	}
 
@@ -257,7 +405,7 @@ public:
 	 * Get the step size in the z direction.
 	 * \see ISolverHandler.h
 	 */
-	double getStepSizeZ() const {
+	double getStepSizeZ() const override {
 		return hZ;
 	}
 
@@ -265,7 +413,7 @@ public:
 	 * Get the number of dimensions of the problem.
 	 * \see ISolverHandler.h
 	 */
-	int getDimension() const {
+	int getDimension() const override {
 		return dimension;
 	}
 
@@ -273,7 +421,7 @@ public:
 	 * Get the initial vacancy concentration.
 	 * \see ISolverHandler.h
 	 */
-	double getInitialVConc() const {
+	double getInitialVConc() const override {
 		return initialVConc;
 	}
 
@@ -281,15 +429,31 @@ public:
 	 * Get the sputtering yield.
 	 * \see ISolverHandler.h
 	 */
-	double getSputteringYield() const {
+	double getSputteringYield() const override {
 		return sputteringYield;
+	}
+
+	/**
+	 * Get the depth parameter for bursting.
+	 * \see ISolverHandler.h
+	 */
+	double getTauBursting() const override {
+		return tauBursting;
+	}
+
+	/**
+	 * Get the grid right offset.
+	 * \see ISolverHandler.h
+	 */
+	int getRightOffset() const override {
+		return rightOffset;
 	}
 
 	/**
 	 * To know if the surface should be able to move.
 	 * \see ISolverHandler.h
 	 */
-	bool moveSurface() const {
+	bool moveSurface() const override {
 		return movingSurface;
 	}
 
@@ -297,7 +461,7 @@ public:
 	 * To know if the bubble bursting should be used.
 	 * \see ISolverHandler.h
 	 */
-	bool burstBubbles() const {
+	bool burstBubbles() const override {
 		return bubbleBursting;
 	}
 
@@ -305,15 +469,23 @@ public:
 	 * Get the flux handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IFluxHandler *getFluxHandler() const {
+	xolotlCore::IFluxHandler *getFluxHandler() const override {
 		return fluxHandler;
+	}
+
+	/**
+	 * Get the temperature handler.
+	 * \see ISolverHandler.h
+	 */
+	xolotlCore::ITemperatureHandler *getTemperatureHandler() const override {
+		return temperatureHandler;
 	}
 
 	/**
 	 * Get the advection handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IAdvectionHandler *getAdvectionHandler() const {
+	xolotlCore::IAdvectionHandler *getAdvectionHandler() const override {
 		return advectionHandlers[0];
 	}
 
@@ -321,7 +493,8 @@ public:
 	 * Get the advection handlers.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<xolotlCore::IAdvectionHandler *> getAdvectionHandlers() const {
+	std::vector<xolotlCore::IAdvectionHandler *> getAdvectionHandlers() const
+			override {
 		return advectionHandlers;
 	}
 
@@ -329,7 +502,7 @@ public:
 	 * Get the modified trap-mutation handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::ITrapMutationHandler *getMutationHandler() const {
+	xolotlCore::ITrapMutationHandler *getMutationHandler() const override {
 		return mutationHandler;
 	}
 
@@ -337,7 +510,7 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IReactionNetwork *getNetwork() const {
+	xolotlCore::IReactionNetwork& getNetwork() const override {
 		return network;
 	}
 
@@ -345,11 +518,21 @@ public:
 	 * Get the network name.
 	 * \see ISolverHandler.h
 	 */
-	std::string getNetworkName() const {
+	std::string getNetworkName() const override {
 		return networkName;
 	}
 
-};
+	/**
+	 * Access the random number generator
+	 * The generator will have already been seeded.
+	 *
+	 * @return The RandomNumberGenerator object to use.
+	 */
+	RandomNumberGenerator<int, unsigned int>& getRNG(void) const override {
+		return *rng;
+	}
+}
+;
 //end class SolverHandler
 
 } /* end namespace xolotlSolver */

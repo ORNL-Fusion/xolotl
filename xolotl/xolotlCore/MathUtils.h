@@ -12,6 +12,7 @@
 
 #include <limits>
 #include <cmath>
+#include <numeric>
 
 namespace xolotlCore {
 
@@ -21,6 +22,10 @@ namespace xolotlCore {
  * @param b The second double
  * @return True if the doubles are equal to within machine precision, false
  * otherwise.
+ *
+ * TODO be careful - this test is effective only if a and b are small
+ * (e.g., less than 1).  It is not an effective test if values are large.
+ * A relative error test would be more effective.
  */
 inline bool equal(double a, double b) {
 	return std::fabs(b - a) < std::numeric_limits<double>::epsilon();
@@ -63,53 +68,78 @@ inline double legendrePolynomial(double x, int degree) {
 }
 
 /**
- * This operation computes the 3rd order Legendre polynomials
+ * This operation computes the Nth order Legendre polynomials
  *
- * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x) + c3*P_3(x) = c0 + c1 * x +
- * c2*P_2(x) + c3*P_3(x)
+ * f(x) = c0*P_0(x) + c1*P_1(x) + ... + cN*P_N(x)
  *
- * for a coefficient set {c0,c1,c2,c3}.
+ * for a coefficient set {c0,c1,...,cN}.
  *
  * @param x
  *            The x value of the function.
  * @param coeffs
  *            The coefficients array.
  */
-inline double compute3rdOrderLegendre(double x, std::vector<double> coeffs) {
-	// Initialize the value
-	double value = 0.0;
-
-	// Compute the value
-	for (int i = 0; i < 4; i++) {
-		value = value + coeffs[i] * legendrePolynomial(x, i);
-	}
-
-	return value;
+template<uint32_t N>
+inline double computeNthOrderLegendre(double x,
+		const std::array<double, N + 1>& coeffs) {
+	int currDegree = 0;
+	auto valAtX =
+			std::accumulate(coeffs.begin(), coeffs.end(), 0.0,
+					[x,&currDegree](double running, double currCoeff) {
+						return running + (currCoeff * legendrePolynomial(x, currDegree++));
+					});
+	return valAtX;
 }
 
 /**
- * This operation computes the 5th order Legendre polynomials
+ * Computes
  *
- * f(x) = c0*P_0(x) + c1*P_1(x) + c2*P_2(x) + c3*P_3(x) + c4*P_4(x) +
- * c5*P_5(x) = c0 + c1 * x + c2*P_2(x) + c3*P_3(x) + c4*P_4(x) + c5*P_5(x)
- *
- * for a coefficient set {c0,c1,c2,c3,c4,c5}.
- *
- * @param x
- *            The x value of the function.
- * @param coeffs
- *            The coefficients array.
+ * sum (n - mean) from alpha to beta
  */
-inline double compute5thOrderLegendre(double x, std::vector<double> coeffs) {
-	// Initialize the value
-	double value = 0.0;
+inline double firstOrderSum(double alpha, double beta, double mean) {
+	double toReturn = ((beta * (beta + 1.0)) / 2.0)
+			- ((alpha * (alpha - 1.0)) / 2.0) - ((beta - alpha + 1.0) * mean);
 
-	// Compute the value
-	for (int i = 0; i < 6; i++) {
-		value = value + coeffs[i] * legendrePolynomial(x, i);
-	}
+	return toReturn;
+}
 
-	return value;
+/**
+ * Computes
+ *
+ * sum (n - mean)^2 from alpha to beta
+ */
+inline double secondOrderSum(double alpha, double beta, double mean) {
+	double toReturn = (beta * (beta + 1.0) * ((2.0 * beta) + 1.0)) / 6.0;
+
+	toReturn -= (alpha * (alpha - 1.0) * ((2.0 * alpha) - 1.0)) / 6.0;
+
+	toReturn -= 2.0 * mean
+			* ((((beta * (beta + 1.0))) / 2.0)
+					- (((alpha * (alpha - 1.0))) / 2.0));
+
+	toReturn += mean * mean * (beta - alpha + 1.0);
+
+	return toReturn;
+}
+
+/**
+ * Computes
+ *
+ * sum (n - mean1) * (n + offset - mean2) from alpha to beta
+ */
+inline double secondOrderOffsetSum(double alpha, double beta, double mean1,
+		double mean2, double offset) {
+	double toReturn = (beta * (beta + 1.0) * (2.0 * beta + 1.0)) / 6.0;
+
+	toReturn -= (alpha * (alpha - 1.0) * (2.0 * alpha - 1.0)) / 6.0;
+
+	toReturn += (offset - mean1 - mean2)
+			* ((((beta * (beta + 1.0))) / 2.0)
+					- (((alpha * (alpha - 1.0))) / 2.0));
+
+	toReturn += mean1 * (mean2 - offset) * (beta - alpha + 1.0);
+
+	return toReturn;
 }
 
 }

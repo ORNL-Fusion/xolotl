@@ -15,7 +15,7 @@ private:
 
 	/**
 	 * Function that calculate the flux at a given position x (in nm).
-	 * This function is not normalized.
+	 * This function is not normalized. The surface is supposed to be (100).
 	 *
 	 * @param x The position where to evaluate he fit
 	 * @return The evaluated value
@@ -42,20 +42,20 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(IReactionNetwork *network, int surfacePos,
+	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
 			std::vector<double> grid) {
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
 		// Set the flux index corresponding the the single xenon cluster here
-		auto fluxCluster = network->get(xeType, 1);
+		auto fluxCluster = network.get(Species::Xe, 1);
 		// Check that the helium cluster is present in the network
 		if (!fluxCluster) {
 			throw std::string(
 					"\nThe single xenon cluster is not present in the network, "
 							"cannot use the flux option!");
 		}
-		fluxIndex = fluxCluster->getId() - 1;
+		fluxIndices.push_back(fluxCluster->getId() - 1);
 
 		return;
 	}

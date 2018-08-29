@@ -1,178 +1,1241 @@
 // Includes
+#include <iterator>
 #include "PSISuperCluster.h"
 #include "PSIClusterReactionNetwork.h"
-#include <Constants.h>
-#include <MathUtils.h>
+#include <xolotlPerf.h>
 
 using namespace xolotlCore;
 
-/**
- * The helium moment partials.
- */
-std::vector<double> heMomentPartials;
-
-/**
- * The vacancy moment partials.
- */
-std::vector<double> vMomentPartials;
-
-PSISuperCluster::PSISuperCluster(double numHe, double numV, int nTot,
-		int heWidth, int vWidth, double radius, double energy,
+PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4],
+		int lower[4], int higher[4], IReactionNetwork& _network,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		PSICluster(registry), numHe(numHe), numV(numV), nTot(nTot), l0(0.0), l1He(
-				0.0), l1V(0.0), dispersionHe(0.0), dispersionV(0.0), heMomentFlux(
-				0.0), vMomentFlux(0.0) {
-	// Set the cluster size as the sum of
-	// the number of Helium and Vacancies
-	size = (int) (numHe + numV);
+		PSICluster(_network, registry,
+				buildName(num[0], num[1], num[2], num[3])), nTot(_nTot), l0(0.0) {
+	// Loop on the axis
+	for (int i = 0; i < 4; i++) {
+		// Set the cluster size as the sum of
+		// the number of Helium and Vacancies
+		numAtom[i] = num[i];
+		size += (int) num[i];
+		// Set the width
+		sectionWidth[i] = width[i];
+
+		// Set the boundaries
+		bounds[i] = IntegerRange<IReactant::SizeType>(
+				static_cast<IReactant::SizeType>(lower[i]),
+				static_cast<IReactant::SizeType>(higher[i] + 1));
+	}
 
 	// Update the composition map
-	compositionMap[heType] = (int) (numHe * (double) nTot);
-	compositionMap[vType] = (int) (numV * (double) nTot);
+	composition[toCompIdx(Species::He)] = (int) num[0];
+	composition[toCompIdx(Species::D)] = (int) num[1];
+	composition[toCompIdx(Species::T)] = (int) num[2];
+	composition[toCompIdx(Species::V)] = (int) num[3];
+	composition[toCompIdx(Species::I)] = _nTot;
 
-	// Set the width
-	sectionHeWidth = heWidth;
-	sectionVWidth = vWidth;
-
-	// Set the reaction radius and formation energy
-	reactionRadius = radius;
+	// Set the formation energy
 	formationEnergy = 0.0; // It is set to 0.0 because we do not want the super clusters to undergo dissociation
 
 	// Set the diffusion factor and the migration energy
 	migrationEnergy = std::numeric_limits<double>::infinity();
 	diffusionFactor = 0.0;
 
-	// Set the reactant name appropriately
-	std::stringstream nameStream;
-	nameStream << "He_" << numHe << "V_" << numV;
-	name = nameStream.str();
 	// Set the typename appropriately
-	typeName = PSISuperType;
+	type = ReactantType::PSISuper;
+
+	// Check the shape of the cluster
+	full = (sectionWidth[0] * sectionWidth[1] * sectionWidth[2]
+			* sectionWidth[3] == nTot) ? true : false;
 
 	return;
 }
 
-PSISuperCluster::PSISuperCluster(PSISuperCluster &other) :
-		PSICluster(other) {
-	numHe = other.numHe;
-	numV = other.numV;
-	nTot = other.nTot;
-	sectionHeWidth = other.sectionHeWidth;
-	sectionVWidth = other.sectionVWidth;
-	l0 = other.l0;
-	l1He = other.l1He;
-	l1V = other.l1V;
-	dispersionHe = other.dispersionHe;
-	dispersionV = other.dispersionV;
-	reactingMap = other.reactingMap;
-	combiningMap = other.combiningMap;
-	dissociatingMap = other.dissociatingMap;
-	emissionMap = other.emissionMap;
-	effReactingList = other.effReactingList;
-	effCombiningList = other.effCombiningList;
-	effDissociatingList = other.effDissociatingList;
-	effEmissionList = other.effEmissionList;
-	heMomentFlux = other.heMomentFlux;
-	vMomentFlux = other.vMomentFlux;
+void PSISuperCluster::resultFrom(ProductionReaction& reaction, int a[4],
+		int b[4]) {
 
-	return;
-}
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effReactingList.find(rkey);
+	if (it == effReactingList.end()) {
 
-void PSISuperCluster::setReactionNetwork(
-		const std::shared_ptr<IReactionNetwork> reactionNetwork) {
-	// Call the superclass's method to actually set the reference
-	Reactant::setReactionNetwork(reactionNetwork);
+		// We did not already know about this reaction.
+		// Add info about production to our list.
+		auto eret = effReactingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effReactingList.end());
+	auto& prodPair = it->second;
 
-	// Clear the flux-related arrays
-	reactingPairs.clear();
-	combiningReactants.clear();
-	dissociatingPairs.clear();
-	emissionPairs.clear();
+	// NB: prodPair's reactants are same as reaction.
+	// So use prodPair only from here on.
+	// TODO any way to enforce this?
 
-	// Aggregate the reacting pairs and combining reactants from the xeVector
-	// Loop on the xeVector
-	for (int i = 0; i < heVVector.size(); i++) {
-		// Get the cluster composition
-		auto comp = heVVector[i]->getComposition();
-		// Create the key to the map
-		auto key = std::make_pair(comp[heType], comp[vType]);
-		// Get all vectors
-		auto react = heVVector[i]->reactingPairs;
-		auto combi = heVVector[i]->combiningReactants;
-		auto disso = heVVector[i]->dissociatingPairs;
-		auto emi = heVVector[i]->emissionPairs;
-
-		// Set them in the super cluster map
-		reactingMap[key] = react;
-		combiningMap[key] = combi;
-		dissociatingMap[key] = disso;
-		emissionMap[key] = emi;
+	// Update the coefficients
+	double firstDistance[5] = { }, secondDistance[5] = { };
+	firstDistance[0] = 1.0, secondDistance[0] = 1.0;
+	if (prodPair.first.getType() == ReactantType::PSISuper) {
+		auto const& super = static_cast<PSICluster const&>(prodPair.first);
+		for (int i = 1; i < psDim; i++) {
+			firstDistance[i] = super.getDistance(b[indexList[i] - 1],
+					indexList[i] - 1);
+		}
+	}
+	if (prodPair.second.getType() == ReactantType::PSISuper) {
+		auto const& super = static_cast<PSICluster const&>(prodPair.second);
+		for (int i = 1; i < psDim; i++) {
+			secondDistance[i] = super.getDistance(b[indexList[i] - 1],
+					indexList[i] - 1);
+		}
+	}
+	double factor[5] = { };
+	factor[0] = 1.0;
+	for (int i = 1; i < psDim; i++) {
+		factor[i] = getFactor(a[indexList[i] - 1], indexList[i] - 1);
+	}
+	// First is A, second is B, in A + B -> this
+	for (int k = 0; k < psDim; k++) {
+		for (int j = 0; j < psDim; j++) {
+			for (int i = 0; i < psDim; i++) {
+				prodPair.coefs[i][j][k] += firstDistance[i] * secondDistance[j]
+						* factor[k];
+			}
+		}
 	}
 
-	// Compute the dispersions
-	computeDispersion();
+	return;
+}
+
+void PSISuperCluster::resultFrom(ProductionReaction& reaction,
+		const std::vector<PendingProductionReactionInfo>& prInfos) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effReactingList.find(rkey);
+	if (it == effReactingList.end()) {
+
+		// We did not already know about this reaction.
+		// Add info about production to our list.
+		auto eret = effReactingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effReactingList.end());
+	auto& prodPair = it->second;
+
+	// NB: prodPair's reactants are same as reaction.
+	// So use prodPair only from here on.
+	// TODO any way to enforce this?
+
+	// Update the coefficients
+	std::for_each(prInfos.begin(), prInfos.end(),
+			[this,&prodPair](const PendingProductionReactionInfo& currPRI) {
+				// Update the coefficients
+				double firstDistance[5] = {}, secondDistance[5] = {};
+				firstDistance[0] = 1.0, secondDistance[0] = 1.0;
+				if (prodPair.first.getType() == ReactantType::PSISuper) {
+					auto const& super = static_cast<PSICluster const&>(prodPair.first);
+					for (int i = 1; i < psDim; i++) {
+						firstDistance[i] = super.getDistance(currPRI.b[indexList[i]-1], indexList[i]-1);
+					}
+				}
+				if (prodPair.second.getType() == ReactantType::PSISuper) {
+					auto const& super = static_cast<PSICluster const&>(prodPair.second);
+					for (int i = 1; i < psDim; i++) {
+						secondDistance[i] = super.getDistance(currPRI.b[indexList[i]-1], indexList[i]-1);
+					}
+				}
+				double factor[5] = {};
+				factor[0] = 1.0;
+				for (int i = 1; i < psDim; i++) {
+					factor[i] = getFactor(currPRI.a[indexList[i]-1], indexList[i]-1);
+				}
+				// First is A, second is B, in A + B -> this
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
+							prodPair.coefs[i][j][k] += firstDistance[i] * secondDistance[j]
+							* factor[k];
+						}
+					}
+				}
+			});
+
+	return;
+}
+
+void PSISuperCluster::resultFrom(ProductionReaction& reaction,
+		IReactant& product) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effReactingList.find(rkey);
+	if (it == effReactingList.end()) {
+
+		// We did not already know about this reaction.
+		// Add info about production to our list.
+		auto eret = effReactingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effReactingList.end());
+	auto& prodPair = it->second;
+
+	auto const& superR1 = static_cast<PSICluster const&>(prodPair.first);
+	auto const& superR2 = static_cast<PSICluster const&>(prodPair.second);
+	auto const& superProd = static_cast<PSICluster const&>(product);
+
+	// Check if an interstitial cluster is involved
+	int iSize = 0;
+	if (superR1.getType() == ReactantType::I) {
+		iSize = superR1.getSize();
+	} else if (superR2.getType() == ReactantType::I) {
+		iSize = superR2.getSize();
+	}
+
+	// Loop on the different type of clusters in grouping
+	int productLo[4] = { }, productHi[4] = { }, singleComp[4] = { }, r1Lo[4] =
+			{ }, r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
+	for (int i = 1; i < 5; i++) {
+		// Check the boundaries in all the directions
+		auto const& bounds = superProd.getBounds(i - 1);
+		productLo[i - 1] = *(bounds.begin()), productHi[i - 1] = *(bounds.end())
+				- 1;
+
+		if (prodPair.first.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(i - 1);
+			r1Lo[i - 1] = *(r1Bounds.begin()), r1Hi[i - 1] = *(r1Bounds.end())
+					- 1;
+			auto const& r2Bounds = superR2.getBounds(i - 1);
+			singleComp[i - 1] = *(r2Bounds.begin());
+		}
+
+		if (prodPair.second.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(i - 1);
+			singleComp[i - 1] = *(r1Bounds.begin());
+			auto const& r2Bounds = superR2.getBounds(i - 1);
+			r1Lo[i - 1] = *(r2Bounds.begin()), r1Hi[i - 1] = *(r2Bounds.end())
+					- 1;
+		}
+
+		// Special case for V and I
+		if (i == 4)
+			singleComp[i - 1] -= iSize;
+
+		width[i - 1] = std::min(productHi[i - 1],
+				r1Hi[i - 1] + singleComp[i - 1])
+				- std::max(productLo[i - 1], r1Lo[i - 1] + singleComp[i - 1])
+				+ 1;
+
+		nOverlap *= width[i - 1];
+	}
+
+	// Compute the coefficients
+	prodPair.coefs[0][0][0] += (double) nOverlap;
+	for (int i = 1; i < psDim; i++) {
+		prodPair.coefs[0][0][i] += ((double) nOverlap
+				/ (dispersion[indexList[i] - 1] * (double) width[i - 1]))
+				* firstOrderSum(
+						std::max(productLo[i - 1],
+								r1Lo[i - 1] + singleComp[i - 1]),
+						std::min(productHi[i - 1],
+								r1Hi[i - 1] + singleComp[i - 1]),
+						numAtom[indexList[i] - 1]);
+
+		double a = 0.0;
+		if (r1Hi[i - 1] != r1Lo[i - 1]) {
+			a = ((double) (nOverlap * 2)
+					/ (double) ((r1Hi[i - 1] - r1Lo[i - 1]) * width[i - 1]))
+					* firstOrderSum(
+							std::max(productLo[i - 1] - singleComp[i - 1],
+									r1Lo[i - 1]),
+							std::min(productHi[i - 1] - singleComp[i - 1],
+									r1Hi[i - 1]),
+							(double) (r1Lo[i - 1] + r1Hi[i - 1]) / 2.0);
+
+			prodPair.coefs[0][i][0] += prodPair.second.isMixed() * a;
+			prodPair.coefs[i][0][0] += prodPair.first.isMixed() * a;
+
+			a = ((double) (nOverlap * 2)
+					/ ((double) ((r1Hi[i - 1] - r1Lo[i - 1]) * width[i - 1])
+							* dispersion[indexList[i] - 1]))
+					* secondOrderOffsetSum(
+							std::max(productLo[i - 1],
+									r1Lo[i - 1] + singleComp[i - 1]),
+							std::min(productHi[i - 1],
+									r1Hi[i - 1] + singleComp[i - 1]),
+							numAtom[indexList[i] - 1],
+							(double) (r1Lo[i - 1] + r1Hi[i - 1]) / 2.0,
+							-singleComp[i - 1]);
+
+			prodPair.coefs[0][i][i] += prodPair.second.isMixed() * a;
+			prodPair.coefs[i][0][i] += prodPair.first.isMixed() * a;
+		}
+
+		for (int j = 1; j < psDim; j++) {
+			if (i == j)
+				continue;
+
+			if (r1Hi[i - 1] != r1Lo[i - 1]) {
+				a = ((double) (nOverlap * 2)
+						/ ((double) ((r1Hi[i - 1] - r1Lo[i - 1]) * width[i - 1]
+								* width[j - 1]) * dispersion[indexList[j] - 1]))
+						* firstOrderSum(
+								std::max(productLo[i - 1] - singleComp[i - 1],
+										r1Lo[i - 1]),
+								std::min(productHi[i - 1] - singleComp[i - 1],
+										r1Hi[i - 1]),
+								(double) (r1Lo[i - 1] + r1Hi[i - 1]) / 2.0)
+						* firstOrderSum(
+								std::max(productLo[j - 1],
+										r1Lo[j - 1] + singleComp[j - 1]),
+								std::min(productHi[j - 1],
+										r1Hi[j - 1] + singleComp[j - 1]),
+								numAtom[indexList[j] - 1]);
+
+				prodPair.coefs[0][i][j] += prodPair.second.isMixed() * a;
+				prodPair.coefs[i][0][j] += prodPair.first.isMixed() * a;
+			}
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::resultFrom(ProductionReaction& reaction, double *coef) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effReactingList.find(rkey);
+	if (it == effReactingList.end()) {
+
+		// We did not already know about this reaction.
+		// Add info about production to our list.
+		auto eret = effReactingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effReactingList.end());
+	auto& prodPair = it->second;
+
+	// NB: newPair's reactants are same as reaction's.
+	// So use newPair only from here on.
+	// TODO Any way to enforce this beyond splitting it into two functions?
+
+	// Update the coefficients
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			for (int k = 0; k < psDim; k++) {
+				prodPair.coefs[i][j][k] += coef[n];
+				n++;
+			}
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::participateIn(ProductionReaction& reaction, int a[4]) {
+
+	// Look for the other cluster
+	auto& otherCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = &otherCluster;
+	auto it = effCombiningList.find(rkey);
+	if (it == effCombiningList.end()) {
+
+		// We did not already know about the reaction.
+		// Note that we combine with the other cluster in this reaction.
+		auto eret = effCombiningList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(otherCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effCombiningList.end());
+	auto& combCluster = it->second;
+
+	// Update the coefficients
+	double distance[5] = { }, factor[5] = { };
+	distance[0] = 1.0, factor[0] = 1.0;
+	for (int i = 1; i < psDim; i++) {
+		distance[i] = getDistance(a[indexList[i] - 1], indexList[i] - 1);
+		factor[i] = getFactor(a[indexList[i] - 1], indexList[i] - 1);
+	}
+
+	// This is A, itBis is B, in A + B -> C
+	for (int k = 0; k < psDim; k++) {
+		for (int j = 0; j < psDim; j++) {
+			combCluster.coefs[j][0][k] += distance[j] * factor[k];
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::participateIn(ProductionReaction& reaction,
+		const std::vector<PendingProductionReactionInfo>& pendingPRInfos) {
+
+	// Look for the other cluster
+	auto& otherCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = &otherCluster;
+	auto it = effCombiningList.find(rkey);
+	if (it == effCombiningList.end()) {
+
+		// We did not already know about the reaction.
+		// Note that we combine with the other cluster in this reaction.
+		auto eret = effCombiningList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(otherCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effCombiningList.end());
+	auto& combCluster = it->second;
+
+	// Update the coefficients
+	std::for_each(pendingPRInfos.begin(), pendingPRInfos.end(),
+			[this,&combCluster,&otherCluster](const PendingProductionReactionInfo& currPRInfo) {
+				// Update the coefficients
+				double distance[5] = {}, factor[5] = {};
+				distance[0] = 1.0, factor[0] = 1.0;
+				for (int i = 1; i < psDim; i++) {
+					distance[i] = getDistance(currPRInfo.b[indexList[i]-1], indexList[i]-1);
+					factor[i] = getFactor(currPRInfo.b[indexList[i]-1], indexList[i]-1);
+				}
+
+				// This is A, itBis is B, in A + B -> C
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						combCluster.coefs[j][0][k] += distance[j] * factor[k];
+					}
+				}
+			});
+
+	return;
+}
+
+void PSISuperCluster::participateIn(ProductionReaction& reaction,
+		IReactant& product) {
+
+	// Look for the other cluster
+	auto& otherCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = &otherCluster;
+	auto it = effCombiningList.find(rkey);
+	if (it == effCombiningList.end()) {
+
+		// We did not already know about the reaction.
+		// Note that we combine with the other cluster in this reaction.
+		auto eret = effCombiningList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(otherCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effCombiningList.end());
+	auto& combCluster = it->second;
+
+	auto const& superProd = static_cast<PSICluster const&>(product);
+
+	// Check if an interstitial cluster is involved
+	int iSize = 0;
+	if (otherCluster.getType() == ReactantType::I) {
+		iSize = otherCluster.getSize();
+	}
+
+	// Loop on the different type of clusters in grouping
+	int productLo[4] = { }, productHi[4] = { }, singleComp[4] = { }, r1Lo[4] =
+			{ }, r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
+	for (int i = 1; i < 5; i++) {
+		auto const& bounds = superProd.getBounds(i - 1);
+		productLo[i - 1] = *(bounds.begin()), productHi[i - 1] = *(bounds.end())
+				- 1;
+		auto const& r1Bounds = getBounds(i - 1);
+		r1Lo[i - 1] = *(r1Bounds.begin()), r1Hi[i - 1] = *(r1Bounds.end()) - 1;
+		auto const& r2Bounds = otherCluster.getBounds(i - 1);
+		singleComp[i - 1] = *(r2Bounds.begin());
+
+		// Special case for V and I
+		if (i == 4)
+			singleComp[i - 1] -= iSize;
+
+		width[i - 1] = std::min(productHi[i - 1],
+				r1Hi[i - 1] + singleComp[i - 1])
+				- std::max(productLo[i - 1], r1Lo[i - 1] + singleComp[i - 1])
+				+ 1;
+
+		nOverlap *= width[i - 1];
+	}
+
+	// Compute the coefficients
+	combCluster.coefs[0][0][0] += nOverlap;
+	for (int i = 1; i < psDim; i++) {
+		combCluster.coefs[0][0][i] += ((double) nOverlap
+				/ (dispersion[indexList[i] - 1] * (double) width[i - 1]))
+				* firstOrderSum(
+						std::max(productLo[i - 1] - singleComp[i - 1],
+								r1Lo[i - 1]),
+						std::min(productHi[i - 1] - singleComp[i - 1],
+								r1Hi[i - 1]), numAtom[indexList[i] - 1]);
+
+		if (sectionWidth[indexList[i] - 1] != 1)
+			combCluster.coefs[i][0][0] += ((double) (nOverlap * 2)
+					/ (double) ((sectionWidth[indexList[i] - 1] - 1)
+							* width[i - 1]))
+					* firstOrderSum(
+							std::max(productLo[i - 1] - singleComp[i - 1],
+									r1Lo[i - 1]),
+							std::min(productHi[i - 1] - singleComp[i - 1],
+									r1Hi[i - 1]), numAtom[indexList[i] - 1]);
+
+		if (sectionWidth[indexList[i] - 1] != 1)
+			combCluster.coefs[i][0][i] += ((double) (nOverlap * 2)
+					/ ((double) ((sectionWidth[indexList[i] - 1] - 1)
+							* width[i - 1]) * dispersion[indexList[i] - 1]))
+					* secondOrderSum(
+							std::max(productLo[i - 1] - singleComp[i - 1],
+									r1Lo[i - 1]),
+							std::min(productHi[i - 1] - singleComp[i - 1],
+									r1Hi[i - 1]), numAtom[indexList[i] - 1]);
+
+		for (int j = 1; j < psDim; j++) {
+			if (i == j)
+				continue;
+
+			if (sectionWidth[indexList[i] - 1] != 1)
+				combCluster.coefs[i][0][j] += ((double) (nOverlap * 2)
+						/ ((double) ((sectionWidth[indexList[i] - 1] - 1)
+								* width[i - 1] * width[j - 1])
+								* dispersion[indexList[j] - 1]))
+						* firstOrderSum(
+								std::max(productLo[i - 1] - singleComp[i - 1],
+										r1Lo[i - 1]),
+								std::min(productHi[i - 1] - singleComp[i - 1],
+										r1Hi[i - 1]), numAtom[indexList[i] - 1])
+						* firstOrderSum(
+								std::max(productLo[j - 1] - singleComp[j - 1],
+										r1Lo[j - 1]),
+								std::min(productHi[j - 1] - singleComp[j - 1],
+										r1Hi[j - 1]),
+								numAtom[indexList[j] - 1]);
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::participateIn(ProductionReaction& reaction,
+		double *coef) {
+
+	// Look for the other cluster
+	auto& otherCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = &otherCluster;
+	auto it = effCombiningList.find(rkey);
+	if (it == effCombiningList.end()) {
+
+		// We did not already know about the reaction.
+		// Note that we combine with the other cluster in this reaction.
+		auto eret = effCombiningList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(otherCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effCombiningList.end());
+	auto& combCluster = it->second;
+
+	// Update the coefficients
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			for (int k = 0; k < psDim; k++) {
+				combCluster.coefs[i][j][k] += coef[n];
+				n++;
+			}
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::participateIn(DissociationReaction& reaction, int a[4],
+		int b[4]) {
+
+	// Determine which is the other cluster.
+	auto& emittedCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.dissociating), &emittedCluster);
+	auto it = effDissociatingList.find(rkey);
+	if (it == effDissociatingList.end()) {
+
+		// We did not already know about it.
+
+		// Add it to the network
+		auto eret = effDissociatingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.dissociating),
+						static_cast<PSICluster&>(emittedCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effDissociatingList.end());
+	auto& dissPair = it->second;
+
+	// Update the coefficients
+	double distance[5] = { }, factor[5] = { };
+	distance[0] = 1.0, factor[0] = 1.0;
+	if (reaction.dissociating.getType() == ReactantType::PSISuper) {
+		auto const& super =
+				static_cast<PSICluster const&>(reaction.dissociating);
+		for (int i = 1; i < psDim; i++) {
+			distance[i] = super.getDistance(a[indexList[i] - 1],
+					indexList[i] - 1);
+		}
+	}
+	for (int i = 1; i < psDim; i++) {
+		factor[i] = getFactor(b[indexList[i] - 1], indexList[i] - 1);
+	}
+	// A is the dissociating cluster
+	for (int j = 0; j < psDim; j++) {
+		for (int i = 0; i < psDim; i++) {
+			dissPair.coefs[i][j] += distance[i] * factor[j];
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::participateIn(DissociationReaction& reaction,
+		const std::vector<PendingProductionReactionInfo>& prInfos) {
+
+	// Determine which is the other cluster.
+	auto& emittedCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.dissociating), &emittedCluster);
+	auto it = effDissociatingList.find(rkey);
+	if (it == effDissociatingList.end()) {
+
+		// We did not already know about it.
+
+		// Add it to the network
+		auto eret = effDissociatingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.dissociating),
+						static_cast<PSICluster&>(emittedCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effDissociatingList.end());
+	auto& dissPair = it->second;
+
+	// Update the coefficients
+	std::for_each(prInfos.begin(), prInfos.end(),
+			[this,&dissPair,&reaction](const PendingProductionReactionInfo& currPRI) {
+				// Update the coefficients
+				double distance[5] = {}, factor[5] = {};
+				distance[0] = 1.0, factor[0] = 1.0;
+				if (reaction.dissociating.getType() == ReactantType::PSISuper) {
+					auto const& super =
+					static_cast<PSICluster const&>(reaction.dissociating);
+					for (int i = 1; i < psDim; i++) {
+						distance[i] = super.getDistance(currPRI.a[indexList[i]-1], indexList[i]-1);
+					}
+				}
+				for (int i = 1; i < psDim; i++) {
+					factor[i] = getFactor(currPRI.b[indexList[i]-1], indexList[i]-1);
+				}
+				// A is the dissociating cluster
+				for (int j = 0; j < psDim; j++) {
+					for (int i = 0; i < psDim; i++) {
+						dissPair.coefs[i][j] += distance[i] * factor[j];
+					}
+				}
+			});
+
+	return;
+}
+
+void PSISuperCluster::participateIn(DissociationReaction& reaction,
+		IReactant& disso) {
+
+	// Determine which is the other cluster.
+	auto& emittedCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.dissociating), &emittedCluster);
+	auto it = effDissociatingList.find(rkey);
+	if (it == effDissociatingList.end()) {
+
+		// We did not already know about it.
+
+		// Add it to the network
+		auto eret = effDissociatingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.dissociating),
+						static_cast<PSICluster&>(emittedCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effDissociatingList.end());
+	auto& dissPair = it->second;
+
+	auto const& superDisso = static_cast<PSICluster const&>(disso);
+
+	// Check if an interstitial cluster is involved
+	int iSize = 0;
+	if (emittedCluster.getType() == ReactantType::I) {
+		iSize = emittedCluster.getSize();
+	}
+
+	// Loop on the different type of clusters in grouping
+	int dissoLo[4] = { }, dissoHi[4] = { }, singleComp[4] = { }, r1Lo[4] = { },
+			r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
+	for (int i = 1; i < 5; i++) {
+		auto const& bounds = superDisso.getBounds(i - 1);
+		dissoLo[i - 1] = *(bounds.begin()), dissoHi[i - 1] = *(bounds.end()) - 1;
+		auto const& r1Bounds = getBounds(i - 1);
+		r1Lo[i - 1] = *(r1Bounds.begin()), r1Hi[i - 1] = *(r1Bounds.end()) - 1;
+		auto const& r2Bounds = emittedCluster.getBounds(i - 1);
+		singleComp[i - 1] = *(r2Bounds.begin());
+
+		// Special case for V and I
+		if (i == 4)
+			singleComp[i - 1] -= iSize;
+
+		width[i - 1] = std::min(dissoHi[i - 1], r1Hi[i - 1] + singleComp[i - 1])
+				- std::max(dissoLo[i - 1], r1Lo[i - 1] + singleComp[i - 1]) + 1;
+
+		nOverlap *= width[i - 1];
+	}
+
+	// Compute the coefficients
+	dissPair.coefs[0][0] += nOverlap;
+	for (int i = 1; i < psDim; i++) {
+		dissPair.coefs[0][i] += ((double) nOverlap
+				/ (dispersion[indexList[i] - 1] * (double) width[i - 1]))
+				* firstOrderSum(
+						std::max(dissoLo[i - 1] - singleComp[i - 1],
+								r1Lo[i - 1]),
+						std::min(dissoHi[i - 1] - singleComp[i - 1],
+								r1Hi[i - 1]), numAtom[indexList[i] - 1]);
+
+		if (dissoHi[i - 1] != dissoLo[i - 1]) {
+			dissPair.coefs[i][0] +=
+					((double) (2 * nOverlap)
+							/ (double) ((dissoHi[i - 1] - dissoLo[i - 1])
+									* width[i - 1]))
+							* firstOrderSum(
+									std::max(dissoLo[i - 1],
+											r1Lo[i - 1] + singleComp[i - 1]),
+									std::min(dissoHi[i - 1],
+											r1Hi[i - 1] + singleComp[i - 1]),
+									(double) (dissoLo[i - 1] + dissoHi[i - 1])
+											/ 2.0);
+
+			dissPair.coefs[i][i] += ((double) (2 * nOverlap)
+					/ ((double) ((dissoHi[i - 1] - dissoLo[i - 1])
+							* width[i - 1]) * dispersion[indexList[i] - 1]))
+					* secondOrderOffsetSum(
+							std::max(dissoLo[i - 1],
+									r1Lo[i - 1] + singleComp[i - 1]),
+							std::min(dissoHi[i - 1],
+									r1Hi[i - 1] + singleComp[i - 1]),
+							(double) (dissoLo[i - 1] + dissoHi[i - 1]) / 2.0,
+							numAtom[indexList[i] - 1], -singleComp[i - 1]);
+		}
+
+		for (int j = 1; j < psDim; j++) {
+			if (i == j)
+				continue;
+
+			if (dissoHi[i - 1] != dissoLo[i - 1])
+				dissPair.coefs[i][j] += ((double) (nOverlap * 2)
+						/ ((double) ((dissoHi[i - 1] - dissoLo[i - 1])
+								* width[i - 1] * width[j - 1])
+								* dispersion[indexList[j] - 1]))
+						* firstOrderSum(
+								std::max(dissoLo[i - 1],
+										singleComp[i - 1] + r1Lo[i - 1]),
+								std::min(dissoHi[i - 1],
+										singleComp[i - 1] + r1Hi[i - 1]),
+								(double) (dissoLo[i - 1] + dissoHi[i - 1])
+										/ 2.0)
+						* firstOrderSum(
+								std::max(dissoLo[j - 1] - singleComp[j - 1],
+										r1Lo[j - 1]),
+								std::min(dissoHi[j - 1] - singleComp[j - 1],
+										r1Hi[j - 1]),
+								numAtom[indexList[j] - 1]);
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::participateIn(DissociationReaction& reaction,
+		double *coef) {
+
+	// Determine which is the other cluster.
+	auto& emittedCluster = static_cast<PSICluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.dissociating), &emittedCluster);
+	auto it = effDissociatingList.find(rkey);
+	if (it == effDissociatingList.end()) {
+
+		// We did not already know about it.
+
+		// Add it to the network
+		auto eret = effDissociatingList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.dissociating),
+						static_cast<PSICluster&>(emittedCluster), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effDissociatingList.end());
+	auto& dissPair = it->second;
+
+	// Update the coefficients
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			dissPair.coefs[i][j] += coef[n];
+			n++;
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effEmissionList.find(rkey);
+	if (it == effEmissionList.end()) {
+
+		// We did not already know about it.
+
+		// Note that we emit from the two rectants according to the given
+		// reaction.
+		auto eret = effEmissionList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effEmissionList.end());
+	auto& dissPair = it->second;
+
+	// Update the coefficients
+	double distance[5] = { }, factor[5] = { };
+	distance[0] = 1.0, factor[0] = 1.0;
+	for (int i = 1; i < psDim; i++) {
+		distance[i] = getDistance(a[indexList[i] - 1], indexList[i] - 1);
+		factor[i] = getFactor(a[indexList[i] - 1], indexList[i] - 1);
+	}
+	// A is the dissociating cluster
+	for (int j = 0; j < psDim; j++) {
+		for (int i = 0; i < psDim; i++) {
+			dissPair.coefs[i][j] += distance[i] * factor[j];
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::emitFrom(DissociationReaction& reaction,
+		const std::vector<PendingProductionReactionInfo>& prInfos) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effEmissionList.find(rkey);
+	if (it == effEmissionList.end()) {
+
+		// We did not already know about it.
+
+		// Note that we emit from the two rectants according to the given
+		// reaction.
+		auto eret = effEmissionList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effEmissionList.end());
+	auto& dissPair = it->second;
+
+	// Update the coefficients
+	std::for_each(prInfos.begin(), prInfos.end(),
+			[this,&dissPair](const PendingProductionReactionInfo& currPRI) {
+				// Update the coefficients
+				double distance[5] = {}, factor[5] = {};
+				distance[0] = 1.0, factor[0] = 1.0;
+				for (int i = 1; i < psDim; i++) {
+					distance[i] = getDistance(currPRI.a[indexList[i]-1], indexList[i]-1);
+					factor[i] = getFactor(currPRI.a[indexList[i]-1], indexList[i]-1);
+				}
+				// A is the dissociating cluster
+				for (int j = 0; j < psDim; j++) {
+					for (int i = 0; i < psDim; i++) {
+						dissPair.coefs[i][j] += distance[i] * factor[j];
+					}
+				}
+			});
+
+	return;
+}
+
+void PSISuperCluster::emitFrom(DissociationReaction& reaction,
+		IReactant& disso) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effEmissionList.find(rkey);
+	if (it == effEmissionList.end()) {
+
+		// We did not already know about it.
+
+		// Note that we emit from the two rectants according to the given
+		// reaction.
+		auto eret = effEmissionList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effEmissionList.end());
+	auto& dissPair = it->second;
+
+	auto const& superR1 = static_cast<PSICluster const&>(dissPair.first);
+	auto const& superR2 = static_cast<PSICluster const&>(dissPair.second);
+	auto const& superDisso = static_cast<PSICluster const&>(disso);
+
+	// Check if an interstitial cluster is involved
+	int iSize = 0;
+	if (superR1.getType() == ReactantType::I) {
+		iSize = superR1.getSize();
+	} else if (superR2.getType() == ReactantType::I) {
+		iSize = superR2.getSize();
+	}
+
+	// Loop on the different type of clusters in grouping
+	int dissoLo[4] = { }, dissoHi[4] = { }, singleComp[4] = { }, r1Lo[4] = { },
+			r1Hi[4] = { }, width[4] = { };
+	int nOverlap = 1;
+	for (int i = 1; i < 5; i++) {
+		// Check the boundaries in all the directions
+		auto const& bounds = superDisso.getBounds(i - 1);
+		dissoLo[i - 1] = *(bounds.begin()), dissoHi[i - 1] = *(bounds.end()) - 1;
+
+		if (dissPair.first.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(i - 1);
+			r1Lo[i - 1] = *(r1Bounds.begin()), r1Hi[i - 1] = *(r1Bounds.end())
+					- 1;
+			auto const& r2Bounds = superR2.getBounds(i - 1);
+			singleComp[i - 1] = *(r2Bounds.begin());
+		}
+
+		if (dissPair.second.getType() == ReactantType::PSISuper) {
+			auto const& r1Bounds = superR1.getBounds(i - 1);
+			singleComp[i - 1] = *(r1Bounds.begin());
+			auto const& r2Bounds = superR2.getBounds(i - 1);
+			r1Lo[i - 1] = *(r2Bounds.begin()), r1Hi[i - 1] = *(r2Bounds.end())
+					- 1;
+		}
+
+		// Special case for V and I
+		if (i == 4)
+			singleComp[i - 1] -= iSize;
+
+		width[i - 1] = std::min(dissoHi[i - 1], r1Hi[i - 1] + singleComp[i - 1])
+				- std::max(dissoLo[i - 1], r1Lo[i - 1] + singleComp[i - 1]) + 1;
+
+		nOverlap *= width[i - 1];
+	}
+
+	// Compute the coefficients
+	dissPair.coefs[0][0] += (double) nOverlap;
+	for (int i = 1; i < psDim; i++) {
+		dissPair.coefs[0][i] += ((double) nOverlap
+				/ (dispersion[indexList[i] - 1] * (double) width[i - 1]))
+				* firstOrderSum(
+						std::max(dissoLo[i - 1],
+								r1Lo[i - 1] + singleComp[i - 1]),
+						std::min(dissoHi[i - 1],
+								r1Hi[i - 1] + singleComp[i - 1]),
+						numAtom[indexList[i] - 1]);
+
+		if (sectionWidth[indexList[i] - 1] != 1) {
+			dissPair.coefs[i][0] += ((double) (2 * nOverlap)
+					/ (double) ((sectionWidth[indexList[i] - 1] - 1)
+							* width[i - 1]))
+					* firstOrderSum(
+							std::max(dissoLo[i - 1],
+									r1Lo[i - 1] + singleComp[i - 1]),
+							std::min(dissoHi[i - 1],
+									r1Hi[i - 1] + singleComp[i - 1]),
+							numAtom[indexList[i] - 1]);
+
+			dissPair.coefs[i][i] += ((double) (2 * nOverlap)
+					/ ((double) ((sectionWidth[indexList[i] - 1] - 1)
+							* width[i - 1]) * dispersion[indexList[i] - 1]))
+					* secondOrderSum(
+							std::max(dissoLo[i - 1],
+									r1Lo[i - 1] + singleComp[i - 1]),
+							std::min(dissoHi[i - 1],
+									r1Hi[i - 1] + singleComp[i - 1]),
+							numAtom[indexList[i] - 1]);
+		}
+
+		for (int j = 1; j < psDim; j++) {
+			if (i == j)
+				continue;
+
+			if (sectionWidth[indexList[i] - 1] != 1)
+				dissPair.coefs[i][j] += ((double) (2 * nOverlap)
+						/ ((double) (width[i - 1] * width[j - 1]
+								* (sectionWidth[indexList[i] - 1] - 1))
+								* dispersion[indexList[j] - 1]))
+						* firstOrderSum(
+								std::max(dissoLo[i - 1],
+										r1Lo[i - 1] + singleComp[i - 1]),
+								std::min(dissoHi[i - 1],
+										r1Hi[i - 1] + singleComp[i - 1]),
+								numAtom[indexList[i] - 1])
+						* firstOrderSum(
+								std::max(dissoLo[j - 1],
+										r1Lo[j - 1] + singleComp[j - 1]),
+								std::min(dissoHi[j - 1],
+										r1Hi[j - 1] + singleComp[j - 1]),
+								numAtom[indexList[j] - 1]);
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::emitFrom(DissociationReaction& reaction, double *coef) {
+
+	// Check if we already know about the reaction.
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto it = effEmissionList.find(rkey);
+	if (it == effEmissionList.end()) {
+
+		// We did not already know about it.
+
+		// Note that we emit from the two rectants according to the given
+		// reaction.
+		auto eret = effEmissionList.emplace(std::piecewise_construct,
+				std::forward_as_tuple(rkey),
+				std::forward_as_tuple(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim));
+		// Since we already checked and didn't know about the reaction then,
+		// we had better have added it with our emplace() call.
+		assert(eret.second);
+		it = eret.first;
+	}
+	assert(it != effEmissionList.end());
+	auto& dissPair = it->second;
+
+	// Update the coefficients
+	int n = 0;
+	for (int i = 0; i < psDim; i++) {
+		for (int j = 0; j < psDim; j++) {
+			dissPair.coefs[i][j] += coef[n];
+			n++;
+		}
+	}
+
+	return;
+}
+
+void PSISuperCluster::setHeVVector(
+		std::set<std::tuple<int, int, int, int> > vec) {
+	// Copy the list of coordinates
+	heVList = vec;
+
+	// Initialize the dispersion sum
+	double nSquare[4] = { };
+	// Update the network map, compute the radius and dispersions
+	for (auto const& pair : heVList) {
+		double rad = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
+				+ pow(
+						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0)
+								* std::get<3>(pair)) / (8.0 * xolotlCore::pi),
+						(1.0 / 3.0))
+				- pow(
+						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
+								/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+		reactionRadius += rad / (double) nTot;
+
+		// Compute nSquare for the dispersion
+		nSquare[0] += (double) (std::get<0>(pair) * std::get<0>(pair));
+		nSquare[1] += (double) (std::get<1>(pair) * std::get<1>(pair));
+		nSquare[2] += (double) (std::get<2>(pair) * std::get<2>(pair));
+		nSquare[3] += (double) (std::get<3>(pair) * std::get<3>(pair));
+	}
+
+	// Loop on the different type of clusters in grouping
+	for (int i = 0; i < 4; i++) {
+		// Compute the dispersions
+		if (sectionWidth[i] == 1)
+			dispersion[i] = 1.0;
+		else
+			dispersion[i] = 2.0
+					* (nSquare[i] - (numAtom[i] * (double) nTot * numAtom[i]))
+					/ ((double) (nTot * (sectionWidth[i] - 1)));
+	}
 
 	return;
 }
 
 double PSISuperCluster::getTotalConcentration() const {
 	// Initial declarations
-	int heIndex = 0, vIndex = 0;
-	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
+	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
+			conc = 0.0;
 
-	// Loop on the vacancy width
-	for (int k = 0; k < sectionVWidth; k++) {
-		// Compute the vacancy index
-		vIndex = (int) (numV - (double) sectionVWidth / 2.0) + k + 1;
+	// Loop on the indices
+	for (auto const& pair : heVList) {
+		// Compute the distances
+		heDistance = getDistance(std::get<0>(pair), 0);
+		dDistance = getDistance(std::get<1>(pair), 1);
+		tDistance = getDistance(std::get<2>(pair), 2);
+		vDistance = getDistance(std::get<3>(pair), 3);
 
-		// Loop on the helium width
-		for (int j = 0; j < sectionHeWidth; j++) {
-			// Compute the helium index
-			heIndex = (int) (numHe - (double) sectionHeWidth / 2.0) + j + 1;
-
-			// Check if this cluster exists
-			if (reactingMap.find(std::make_pair(heIndex, vIndex))
-					== reactingMap.end())
-				continue;
-
-			// Compute the distances
-			heDistance = getHeDistance(heIndex);
-			vDistance = getVDistance(vIndex);
-
-			// Add the concentration of each cluster in the group times its number of helium
-			conc += getConcentration(heDistance, vDistance);
-		}
+		// Add the concentration of each cluster in the group times its number of helium
+		conc += getConcentration(heDistance, dDistance, tDistance, vDistance);
 	}
 
 	return conc;
 }
 
-double PSISuperCluster::getTotalHeliumConcentration() const {
+double PSISuperCluster::getTotalAtomConcentration(int axis) const {
 	// Initial declarations
-	int heIndex = 0, vIndex = 0;
-	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
+	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
+			conc = 0.0;
 
-	// Loop on the vacancy width
-	for (int k = 0; k < sectionVWidth; k++) {
-		// Compute the vacancy index
-		vIndex = (int) (numV - (double) sectionVWidth / 2.0) + k + 1;
-
-		// Loop on the helium width
-		for (int j = 0; j < sectionHeWidth; j++) {
-			// Compute the helium index
-			heIndex = (int) (numHe - (double) sectionHeWidth / 2.0) + j + 1;
-
-			// Check if this cluster exists
-			if (reactingMap.find(std::make_pair(heIndex, vIndex))
-					== reactingMap.end())
-				continue;
-
+	if (axis == 0) {
+		// Loop on the indices
+		for (auto const& pair : heVList) {
 			// Compute the distances
-			heDistance = getHeDistance(heIndex);
-			vDistance = getVDistance(vIndex);
+			heDistance = getDistance(std::get<0>(pair), 0);
+			dDistance = getDistance(std::get<1>(pair), 1);
+			tDistance = getDistance(std::get<2>(pair), 2);
+			vDistance = getDistance(std::get<3>(pair), 3);
 
 			// Add the concentration of each cluster in the group times its number of helium
-			conc += getConcentration(heDistance, vDistance) * (double) heIndex;
+			conc += getConcentration(heDistance, dDistance, tDistance,
+					vDistance) * (double) std::get<0>(pair);
+		}
+	} else if (axis == 1) {
+		// Loop on the indices
+		for (auto const& pair : heVList) {
+			// Compute the distances
+			heDistance = getDistance(std::get<0>(pair), 0);
+			dDistance = getDistance(std::get<1>(pair), 1);
+			tDistance = getDistance(std::get<2>(pair), 2);
+			vDistance = getDistance(std::get<3>(pair), 3);
+
+			// Add the concentration of each cluster in the group times its number of helium
+			conc += getConcentration(heDistance, dDistance, tDistance,
+					vDistance) * (double) std::get<1>(pair);
+		}
+	} else if (axis == 2) {
+		// Loop on the indices
+		for (auto const& pair : heVList) {
+			// Compute the distances
+			heDistance = getDistance(std::get<0>(pair), 0);
+			dDistance = getDistance(std::get<1>(pair), 1);
+			tDistance = getDistance(std::get<2>(pair), 2);
+			vDistance = getDistance(std::get<3>(pair), 3);
+
+			// Add the concentration of each cluster in the group times its number of helium
+			conc += getConcentration(heDistance, dDistance, tDistance,
+					vDistance) * (double) std::get<2>(pair);
 		}
 	}
 
@@ -181,484 +1244,47 @@ double PSISuperCluster::getTotalHeliumConcentration() const {
 
 double PSISuperCluster::getTotalVacancyConcentration() const {
 	// Initial declarations
-	int heIndex = 0, vIndex = 0;
-	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
+	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
+			conc = 0.0;
 
-	// Loop on the vacancy width
-	for (int k = 0; k < sectionVWidth; k++) {
-		// Compute the vacancy index
-		vIndex = (int) (numV - (double) sectionVWidth / 2.0) + k + 1;
+	// Loop on the indices
+	for (auto const& pair : heVList) {
+		// Compute the distances
+		heDistance = getDistance(std::get<0>(pair), 0);
+		dDistance = getDistance(std::get<1>(pair), 1);
+		tDistance = getDistance(std::get<2>(pair), 2);
+		vDistance = getDistance(std::get<3>(pair), 3);
 
-		// Loop on the helium width
-		for (int j = 0; j < sectionHeWidth; j++) {
-			// Compute the helium index
-			heIndex = (int) (numHe - (double) sectionHeWidth / 2.0) + j + 1;
-
-			// Check if this cluster exists
-			if (reactingMap.find(std::make_pair(heIndex, vIndex))
-					== reactingMap.end())
-				continue;
-
-			// Compute the distances
-			heDistance = getHeDistance(heIndex);
-			vDistance = getVDistance(vIndex);
-
-			// Add the concentration of each cluster in the group times its number of helium
-			conc += getConcentration(heDistance, vDistance) * (double) vIndex;
-		}
+		// Add the concentration of each cluster in the group times its number of vacancy
+		conc += getConcentration(heDistance, dDistance, tDistance, vDistance)
+				* (double) std::get<3>(pair);
 	}
 
 	return conc;
 }
 
-void PSISuperCluster::computeDispersion() {
-	// Local declarations
-	int heIndex = 0, vIndex = 0;
-	// Initialize the dispersion sum
-	double nHeSquare = 0.0, nVSquare = 0.0;
+double PSISuperCluster::getIntegratedVConcentration(int v) const {
+	// Initial declarations
+	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
+			conc = 0.0;
 
-	// Loop on the vacancy width
-	for (int k = 0; k < sectionVWidth; k++) {
-		// Compute the vacancy index
-		vIndex = (int) (numV - (double) sectionVWidth / 2.0) + k + 1;
+	// Loop on the indices
+	for (auto const& pair : heVList) {
+		// Skip the wrong V size
+		if (std::get<3>(pair) != v)
+			continue;
 
-		// Loop on the helium width
-		for (int j = 0; j < sectionHeWidth; j++) {
-			// Compute the helium index
-			heIndex = (int) (numHe - (double) sectionHeWidth / 2.0) + j + 1;
+		// Compute the distances
+		heDistance = getDistance(std::get<0>(pair), 0);
+		dDistance = getDistance(std::get<1>(pair), 1);
+		tDistance = getDistance(std::get<2>(pair), 2);
+		vDistance = getDistance(std::get<3>(pair), 3);
 
-			// Create the key for the maps
-			auto key = std::make_pair(heIndex, vIndex);
-
-			// Check if this cluster exists
-			if (reactingMap.find(key) == reactingMap.end())
-				continue;
-
-			// Compute nSquare for the dispersion
-			nHeSquare += (double) heIndex * heIndex;
-			nVSquare += (double) vIndex * vIndex;
-		}
+		// Add the concentration of each cluster in the group
+		conc += getConcentration(heDistance, dDistance, tDistance, vDistance);
 	}
 
-	// Compute the dispersions
-	if (sectionHeWidth == 1)
-		dispersionHe = 1.0;
-	else
-		dispersionHe = 2.0
-				* (nHeSquare
-						- ((double) compositionMap[heType]
-								* ((double) compositionMap[heType]
-										/ (double) nTot)))
-				/ ((double) (nTot * (sectionHeWidth - 1)));
-
-	if (sectionVWidth == 1)
-		dispersionV = 1.0;
-	else
-		dispersionV = 2.0
-				* (nVSquare
-						- ((double) compositionMap[vType]
-								* ((double) compositionMap[vType]
-										/ (double) nTot)))
-				/ ((double) (nTot * (sectionVWidth - 1)));
-
-	return;
-}
-
-void PSISuperCluster::optimizeReactions() {
-	// Local declarations
-	double heFactor = 0.0, vFactor = 0.0, heDistance = 0.0, vDistance = 0.0;
-	PSICluster *firstReactant = nullptr, *secondReactant = nullptr,
-			*combiningReactant = nullptr, *dissociatingCluster = nullptr,
-			*otherEmittedCluster = nullptr, *firstCluster = nullptr,
-			*secondCluster = nullptr;
-	int heIndex = 0, vIndex = 0;
-
-	// Loop on the effective reacting map
-	for (auto mapIt = reactingMap.begin(); mapIt != reactingMap.end();
-			++mapIt) {
-		// Get the pairs
-		auto pairs = mapIt->second;
-		// Loop over all the reacting pairs
-		for (auto it = pairs.begin(); it != pairs.end();) {
-			// Get the two reacting clusters
-			firstReactant = (*it).first;
-			secondReactant = (*it).second;
-
-			// Create the corresponding production reaction
-			auto reaction = std::make_shared<ProductionReaction>(firstReactant,
-					secondReactant);
-			// Add it to the network
-			reaction = network->addProductionReaction(reaction);
-
-			// Create a new SuperClusterProductionPair
-			SuperClusterProductionPair superPair(firstReactant, secondReactant,
-					reaction.get());
-
-			// Loop on the whole super cluster to fill this super pair
-			for (auto mapItBis = mapIt; mapItBis != reactingMap.end();
-					++mapItBis) {
-				// Compute the helium index
-				heIndex = mapItBis->first.first;
-				heFactor = (double) (heIndex - numHe) / dispersionHe;
-				// Compute the vacancy index
-				vIndex = mapItBis->first.second;
-				vFactor = (double) (vIndex - numV) / dispersionV;
-
-				// Get the pairs
-				auto pairsBis = mapItBis->second;
-				// Set the total number of reactants that produce to form this one
-				// Loop over all the reacting pairs
-				for (auto itBis = pairsBis.begin(); itBis != pairsBis.end();) {
-					// Get the two reacting clusters
-					auto firstReactantBis = (*itBis).first;
-					auto secondReactantBis = (*itBis).second;
-
-					// Check if it is the same reaction
-					if (firstReactantBis == firstReactant
-							&& secondReactantBis == secondReactant) {
-						// First is A, second is B, in A + B -> this
-						superPair.a000 += 1.0;
-						superPair.a001 += heFactor;
-						superPair.a002 += vFactor;
-						superPair.a100 += (*itBis).firstHeDistance;
-						superPair.a101 += (*itBis).firstHeDistance * heFactor;
-						superPair.a102 += (*itBis).firstHeDistance * vFactor;
-						superPair.a200 += (*itBis).firstVDistance;
-						superPair.a201 += (*itBis).firstVDistance * heFactor;
-						superPair.a202 += (*itBis).firstVDistance * vFactor;
-						superPair.a010 += (*itBis).secondHeDistance;
-						superPair.a011 += (*itBis).secondHeDistance * heFactor;
-						superPair.a012 += (*itBis).secondHeDistance * vFactor;
-						superPair.a020 += (*itBis).secondVDistance;
-						superPair.a021 += (*itBis).secondVDistance * heFactor;
-						superPair.a022 += (*itBis).secondVDistance * vFactor;
-						superPair.a110 += (*itBis).firstHeDistance
-								* (*itBis).secondHeDistance;
-						superPair.a111 += (*itBis).firstHeDistance
-								* (*itBis).secondHeDistance * heFactor;
-						superPair.a112 += (*itBis).firstHeDistance
-								* (*itBis).secondHeDistance * vFactor;
-						superPair.a120 += (*itBis).firstHeDistance
-								* (*itBis).secondVDistance;
-						superPair.a121 += (*itBis).firstHeDistance
-								* (*itBis).secondVDistance * heFactor;
-						superPair.a122 += (*itBis).firstHeDistance
-								* (*itBis).secondVDistance * vFactor;
-						superPair.a210 += (*itBis).firstVDistance
-								* (*itBis).secondHeDistance;
-						superPair.a211 += (*itBis).firstVDistance
-								* (*itBis).secondHeDistance * heFactor;
-						superPair.a212 += (*itBis).firstVDistance
-								* (*itBis).secondHeDistance * vFactor;
-						superPair.a220 += (*itBis).firstVDistance
-								* (*itBis).secondVDistance;
-						superPair.a221 += (*itBis).firstVDistance
-								* (*itBis).secondVDistance * heFactor;
-						superPair.a222 += (*itBis).firstVDistance
-								* (*itBis).secondVDistance * vFactor;
-
-						// Do not delete the element if it is the original one
-						if (itBis == it) {
-							++itBis;
-							continue;
-						}
-
-						// Remove the reaction from the vector
-						itBis = pairsBis.erase(itBis);
-					}
-					// Go to the next element
-					else
-						++itBis;
-				}
-
-				// Give back the pairs
-				mapItBis->second = pairsBis;
-			}
-
-			// Add the super pair
-			effReactingList.push_front(superPair);
-
-			// Remove the reaction from the vector
-			it = pairs.erase(it);
-		}
-	}
-
-	// Loop on the effective combining map
-	for (auto mapIt = combiningMap.begin(); mapIt != combiningMap.end();
-			++mapIt) {
-		// Get the pairs
-		auto clusters = mapIt->second;
-		// Loop over all the reacting pairs
-		for (auto it = clusters.begin(); it != clusters.end();) {
-			// Get the combining cluster
-			combiningReactant = (*it).combining;
-
-			// Create the corresponding production reaction
-			auto reaction = std::make_shared<ProductionReaction>(this,
-					combiningReactant);
-			// Add it to the network
-			reaction = network->addProductionReaction(reaction);
-
-			// Create a new SuperClusterProductionPair with NULL as the second cluster because
-			// we do not need it
-			SuperClusterProductionPair superPair(combiningReactant, NULL,
-					reaction.get());
-
-			// Loop on the whole super cluster to fill this super pair
-			for (auto mapItBis = mapIt; mapItBis != combiningMap.end();
-					++mapItBis) {
-				// Compute the helium index
-				heIndex = mapItBis->first.first;
-				heDistance = getHeDistance(heIndex);
-				heFactor = (double) (heIndex - numHe) / dispersionHe;
-				// Compute the vacancy index
-				vIndex = mapItBis->first.second;
-				vDistance = getVDistance(vIndex);
-				vFactor = (double) (vIndex - numV) / dispersionV;
-
-				// Get the pairs
-				auto clustersBis = mapItBis->second;
-				// Set the total number of reactants that produce to form this one
-				// Loop over all the reacting pairs
-				for (auto itBis = clustersBis.begin();
-						itBis != clustersBis.end();) {
-					// Get the two reacting clusters
-					auto combiningReactantBis = (*itBis).combining;
-
-					// Check if it is the same reaction
-					if (combiningReactantBis == combiningReactant) {
-						// This is A, itBis is B, in this + B -> C
-						superPair.a000 += 1.0;
-						superPair.a001 += heFactor;
-						superPair.a002 += vFactor;
-						superPair.a010 += (*itBis).heDistance;
-						superPair.a011 += (*itBis).heDistance * heFactor;
-						superPair.a012 += (*itBis).heDistance * vFactor;
-						superPair.a020 += (*itBis).vDistance;
-						superPair.a021 += (*itBis).vDistance * heFactor;
-						superPair.a022 += (*itBis).vDistance * vFactor;
-						superPair.a100 += heDistance;
-						superPair.a101 += heDistance * heFactor;
-						superPair.a102 += heDistance * vFactor;
-						superPair.a200 += vDistance;
-						superPair.a201 += vDistance * heFactor;
-						superPair.a202 += vDistance * vFactor;
-						superPair.a110 += (*itBis).heDistance * heDistance;
-						superPair.a111 += (*itBis).heDistance * heDistance
-								* heFactor;
-						superPair.a112 += (*itBis).heDistance * heDistance
-								* vFactor;
-						superPair.a210 += (*itBis).heDistance * vDistance;
-						superPair.a211 += (*itBis).heDistance * vDistance
-								* heFactor;
-						superPair.a212 += (*itBis).heDistance * vDistance
-								* vFactor;
-						superPair.a120 += (*itBis).vDistance * heDistance;
-						superPair.a121 += (*itBis).vDistance * heDistance
-								* heFactor;
-						superPair.a122 += (*itBis).vDistance * heDistance
-								* vFactor;
-						superPair.a220 += (*itBis).vDistance * vDistance;
-						superPair.a221 += (*itBis).vDistance * vDistance
-								* heFactor;
-						superPair.a222 += (*itBis).vDistance * vDistance
-								* vFactor;
-
-						// Do not delete the element if it is the original one
-						if (itBis == it) {
-							++itBis;
-							continue;
-						}
-
-						// Remove the reaction from the vector
-						itBis = clustersBis.erase(itBis);
-					}
-					// Go to the next element
-					else
-						++itBis;
-				}
-
-				// Give back the pairs
-				mapItBis->second = clustersBis;
-			}
-
-			// Add the super pair
-			effCombiningList.push_front(superPair);
-
-			// Remove the reaction from the vector
-			it = clusters.erase(it);
-		}
-	}
-
-	// Loop on the effective dissociating map
-	for (auto mapIt = dissociatingMap.begin(); mapIt != dissociatingMap.end();
-			++mapIt) {
-		// Get the pairs
-		auto pairs = mapIt->second;
-		// Loop over all the reacting pairs
-		for (auto it = pairs.begin(); it != pairs.end();) {
-			// Get the two reacting clusters
-			dissociatingCluster = (*it).first;
-			otherEmittedCluster = (*it).second;
-
-			// Create a dissociation reaction
-			auto reaction = std::make_shared<DissociationReaction>(
-					dissociatingCluster, this, otherEmittedCluster);
-			// Add it to the network
-			reaction = network->addDissociationReaction(reaction);
-
-			// Create a new SuperClusterProductionPair
-			SuperClusterDissociationPair superPair(dissociatingCluster,
-					otherEmittedCluster, reaction.get());
-
-			// Loop on the whole super cluster to fill this super pair
-			for (auto mapItBis = mapIt; mapItBis != dissociatingMap.end();
-					++mapItBis) {
-				// Compute the helium index
-				heIndex = mapItBis->first.first;
-				heFactor = (double) (heIndex - numHe) / dispersionHe;
-				// Compute the vacancy index
-				vIndex = mapItBis->first.second;
-				vFactor = (double) (vIndex - numV) / dispersionV;
-
-				// Get the pairs
-				auto pairsBis = mapItBis->second;
-				// Set the total number of reactants that produce to form this one
-				// Loop over all the reacting pairs
-				for (auto itBis = pairsBis.begin(); itBis != pairsBis.end();) {
-					// Get the two reacting clusters
-					auto dissociatingClusterBis = (*itBis).first;
-					auto otherEmittedClusterBis = (*itBis).second;
-
-					// Check if it is the same reaction
-					if (dissociatingClusterBis == dissociatingCluster
-							&& otherEmittedClusterBis == otherEmittedCluster) {
-						// A is the dissociating cluster
-						superPair.a00 += 1.0;
-						superPair.a01 += heFactor;
-						superPair.a02 += vFactor;
-						superPair.a10 += (*itBis).firstHeDistance;
-						superPair.a11 += (*itBis).firstHeDistance * heFactor;
-						superPair.a12 += (*itBis).firstHeDistance * vFactor;
-						superPair.a20 += (*itBis).firstVDistance;
-						superPair.a21 += (*itBis).firstVDistance * heFactor;
-						superPair.a22 += (*itBis).firstVDistance * vFactor;
-
-						// Do not delete the element if it is the original one
-						if (itBis == it) {
-							++itBis;
-							continue;
-						}
-
-						// Remove the reaction from the vector
-						itBis = pairsBis.erase(itBis);
-					}
-					// Go to the next element
-					else
-						++itBis;
-				}
-
-				// Give back the pairs
-				mapItBis->second = pairsBis;
-			}
-
-			// Add the super pair
-			effDissociatingList.push_front(superPair);
-
-			// Remove the reaction from the vector
-			it = pairs.erase(it);
-		}
-	}
-
-	// Loop on the effective emission map
-	for (auto mapIt = emissionMap.begin(); mapIt != emissionMap.end();
-			++mapIt) {
-		// Get the pairs
-		auto pairs = mapIt->second;
-		// Loop over all the reacting pairs
-		for (auto it = pairs.begin(); it != pairs.end();) {
-			// Get the two reacting clusters
-			firstCluster = (*it).first;
-			secondCluster = (*it).second;
-
-			// Create a dissociation reaction
-			auto reaction = std::make_shared<DissociationReaction>(this,
-					firstCluster, secondCluster);
-			// Add it to the network
-			reaction = network->addDissociationReaction(reaction);
-
-			// Create a new SuperClusterProductionPair
-			SuperClusterDissociationPair superPair(firstCluster, secondCluster,
-					reaction.get());
-
-			// Loop on the whole super cluster to fill this super pair
-			for (auto mapItBis = mapIt; mapItBis != emissionMap.end();
-					++mapItBis) {
-				// Compute the helium index
-				heIndex = mapItBis->first.first;
-				heDistance = getHeDistance(heIndex);
-				heFactor = (double) (heIndex - numHe) / dispersionHe;
-				// Compute the vacancy index
-				vIndex = mapItBis->first.second;
-				vDistance = getVDistance(vIndex);
-				vFactor = (double) (vIndex - numV) / dispersionV;
-
-				// Get the pairs
-				auto pairsBis = mapItBis->second;
-				// Set the total number of reactants that produce to form this one
-				// Loop over all the reacting pairs
-				for (auto itBis = pairsBis.begin(); itBis != pairsBis.end();) {
-					// Get the two reacting clusters
-					auto firstClusterBis = (*itBis).first;
-					auto secondClusterBis = (*itBis).second;
-
-					// Check if it is the same reaction
-					if (firstClusterBis == firstCluster
-							&& secondClusterBis == secondCluster) {
-						// A is the dissociating cluster
-						superPair.a00 += 1.0;
-						superPair.a01 += heFactor;
-						superPair.a02 += vFactor;
-						superPair.a10 += heDistance;
-						superPair.a11 += heDistance * heFactor;
-						superPair.a12 += heDistance * vFactor;
-						superPair.a20 += vDistance;
-						superPair.a21 += vDistance * heFactor;
-						superPair.a22 += vDistance * vFactor;
-
-						// Do not delete the element if it is the original one
-						if (itBis == it) {
-							++itBis;
-							continue;
-						}
-
-						// Remove the reaction from the vector
-						itBis = pairsBis.erase(itBis);
-					}
-					// Go to the next element
-					else
-						++itBis;
-				}
-
-				// Give back the pairs
-				mapItBis->second = pairsBis;
-			}
-
-			// Add the super pair
-			effEmissionList.push_front(superPair);
-
-			// Remove the reaction from the vector
-			it = pairs.erase(it);
-		}
-	}
-
-	// Clear the maps because they won't be used anymore
-	reactingPairs.clear();
-	combiningReactants.clear();
-	dissociatingPairs.clear();
-	emissionPairs.clear();
-
-	return;
+	return conc;
 }
 
 void PSISuperCluster::resetConnectivities() {
@@ -669,200 +1295,226 @@ void PSISuperCluster::resetConnectivities() {
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(id);
 	setDissociationConnectivity(id);
-	setReactionConnectivity(heMomId);
-	setDissociationConnectivity(heMomId);
-	setReactionConnectivity(vMomId);
-	setDissociationConnectivity(vMomId);
-
-	// Loop over all the reacting pairs
-	for (auto it = effReactingList.begin(); it != effReactingList.end(); ++it) {
-		// The cluster is connecting to both clusters in the pair
-		setReactionConnectivity((*it).first->getId());
-		setReactionConnectivity((*it).first->getHeMomentId());
-		setReactionConnectivity((*it).first->getVMomentId());
-		setReactionConnectivity((*it).second->getId());
-		setReactionConnectivity((*it).second->getHeMomentId());
-		setReactionConnectivity((*it).second->getVMomentId());
+	for (int i = 0; i < 4; i++) {
+		setReactionConnectivity(momId[i]);
+		setDissociationConnectivity(momId[i]);
 	}
+	// Visit all the reacting pairs
+	std::for_each(effReactingList.begin(), effReactingList.end(),
+			[this](ProductionPairMap::value_type const& currMapItem) {
+				// The cluster is connecting to both clusters in the pair
+				auto const& currPair = currMapItem.second;
+				setReactionConnectivity(currPair.first.getId());
+				setReactionConnectivity(currPair.second.getId());
+				for (int i = 1; i < psDim; i++) {
+					setReactionConnectivity(currPair.first.getMomentId(indexList[i]-1));
+					setReactionConnectivity(currPair.second.getMomentId(indexList[i]-1));
+				}
+			});
 
-	// Loop over all the combining pairs
-	for (auto it = effCombiningList.begin(); it != effCombiningList.end();
-			++it) {
-		// The cluster is connecting to the combining cluster
-		setReactionConnectivity((*it).first->getId());
-		setReactionConnectivity((*it).first->getHeMomentId());
-		setReactionConnectivity((*it).first->getVMomentId());
-	}
+	// Visit all the combining pairs
+	std::for_each(effCombiningList.begin(), effCombiningList.end(),
+			[this](CombiningClusterMap::value_type const& currMapItem) {
+				// The cluster is connecting to the combining cluster
+				auto const& currComb = currMapItem.second;
+				setReactionConnectivity(currComb.first.getId());
+				for (int i = 1; i < psDim; i++) {
+					setReactionConnectivity(currComb.first.getMomentId(indexList[i]-1));
+				}
+			});
 
 	// Loop over all the dissociating pairs
-	for (auto it = effDissociatingList.begin(); it != effDissociatingList.end();
-			++it) {
-		// The cluster is connecting to the combining cluster
-		setDissociationConnectivity((*it).first->getId());
-		setDissociationConnectivity((*it).first->getHeMomentId());
-		setDissociationConnectivity((*it).first->getVMomentId());
-	}
+	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
+			[this](DissociationPairMap::value_type const& currMapItem) {
+				// The cluster is connecting to the combining cluster
+				auto const& currPair = currMapItem.second;
+				setDissociationConnectivity(currPair.first.getId());
+				for (int i = 1; i < psDim; i++) {
+					setDissociationConnectivity(currPair.first.getMomentId(indexList[i]-1));
+				}
+			});
 
 	// Don't loop on the effective emission pairs because
 	// this cluster is not connected to them
 
-	// Initialize the partial vector for the moment
-	int dof = network->getDOF();
-	heMomentPartials.resize(dof, 0.0);
-	vMomentPartials.resize(dof, 0.0);
-
 	return;
 }
 
-double PSISuperCluster::getDissociationFlux() {
+double PSISuperCluster::getDissociationFlux(int xi) {
 	// Initial declarations
-	double flux = 0.0, value = 0.0;
-	PSICluster *dissociatingCluster = nullptr;
+	double flux = 0.0;
 
-	// Loop over all the dissociating pairs
-	for (auto it = effDissociatingList.begin(); it != effDissociatingList.end();
-			++it) {
-		// Get the dissociating clusters
-		dissociatingCluster = (*it).first;
-		double l0A = dissociatingCluster->getConcentration(0.0, 0.0);
-		double lHeA = dissociatingCluster->getHeMoment();
-		double lVA = dissociatingCluster->getVMoment();
-		// Update the flux
-		value = *((*it).kConstant) / (double) nTot;
-		flux += value * ((*it).a00 * l0A + (*it).a10 * lHeA + (*it).a20 * lVA);
-		// Compute the moment fluxes
-		heMomentFlux += value
-				* ((*it).a01 * l0A + (*it).a11 * lHeA + (*it).a21 * lVA);
-		vMomentFlux += value
-				* ((*it).a02 * l0A + (*it).a12 * lHeA + (*it).a22 * lVA);
-	}
+	// Sum over all the dissociating pairs
+	// TODO consider using std::accumulate.  May also want to change side
+	// effect of updating member variables heMomentFlux and
+	// vMomentFlux here.
+	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
+			[this,&flux,&xi](DissociationPairMap::value_type const& currMapItem) {
+				auto const& currPair = currMapItem.second;
+
+				// Get the dissociating clusters
+				auto const& dissociatingCluster = currPair.first;
+				double lA[5] = {};
+				lA[0] = dissociatingCluster.getConcentration();
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = dissociatingCluster.getMoment(indexList[i]-1);
+				}
+
+				double sum[5] = {};
+				for (int j = 0; j < psDim; j++) {
+					for (int i = 0; i < psDim; i++) {
+						sum[j] += currPair.coefs[i][j] * lA[i];
+					}
+				}
+				// Update the flux
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
+				flux += value * sum[0];
+				// Compute the moment fluxes
+				for (int i = 1; i < psDim; i++) {
+					momentFlux[indexList[i]-1] += value * sum[i];
+				}
+			});
 
 	// Return the flux
 	return flux;
 }
 
-double PSISuperCluster::getEmissionFlux() {
+double PSISuperCluster::getEmissionFlux(int xi) {
 	// Initial declarations
-	double flux = 0.0, value = 0.0;
+	double flux = 0.0;
 
 	// Loop over all the emission pairs
-	for (auto it = effEmissionList.begin(); it != effEmissionList.end(); ++it) {
-		// Update the flux
-		value = *((*it).kConstant) / (double) nTot;
-		flux += value * ((*it).a00 * l0 + (*it).a10 * l1He + (*it).a20 * l1V);
-		// Compute the moment fluxes
-		heMomentFlux -= value
-				* ((*it).a01 * l0 + (*it).a11 * l1He + (*it).a21 * l1V);
-		vMomentFlux -= value
-				* ((*it).a02 * l0 + (*it).a12 * l1He + (*it).a22 * l1V);
-	}
+	// TODO consider using std::accumulate.  May also want to change side
+	// effect of updating member variables heMomentFlux and
+	// vMomentFlux here.
+	std::for_each(effEmissionList.begin(), effEmissionList.end(),
+			[this,&flux,&xi](DissociationPairMap::value_type const& currMapItem) {
+				auto const& currPair = currMapItem.second;
+				double lA[5] = {};
+				lA[0] = l0;
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = l1[indexList[i]-1];
+				}
+
+				double sum[5] = {};
+				for (int j = 0; j < psDim; j++) {
+					for (int i = 0; i < psDim; i++) {
+						sum[j] += currPair.coefs[i][j] * lA[i];
+					}
+				}
+				// Update the flux
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
+				flux += value * sum[0];
+				// Compute the moment fluxes
+				for (int i = 1; i < psDim; i++) {
+					momentFlux[indexList[i]-1] -= value * sum[i];
+				}
+			});
 
 	return flux;
 }
 
-double PSISuperCluster::getProductionFlux() {
+double PSISuperCluster::getProductionFlux(int xi) {
 	// Local declarations
-	double flux = 0.0, value = 0.0;
-	PSICluster *firstReactant = nullptr, *secondReactant = nullptr;
+	double flux = 0.0;
 
-	// Loop over all the reacting pairs
-	for (auto it = effReactingList.begin(); it != effReactingList.end(); ++it) {
-		// Get the two reacting clusters
-		firstReactant = (*it).first;
-		secondReactant = (*it).second;
-		double l0A = firstReactant->getConcentration(0.0, 0.0);
-		double l0B = secondReactant->getConcentration(0.0, 0.0);
-		double lHeA = firstReactant->getHeMoment();
-		double lHeB = secondReactant->getHeMoment();
-		double lVA = firstReactant->getVMoment();
-		double lVB = secondReactant->getVMoment();
-		// Update the flux
-		value = *((*it).kConstant) / (double) nTot;
-		flux += value
-				* ((*it).a000 * l0A * l0B + (*it).a010 * l0A * lHeB
-						+ (*it).a020 * l0A * lVB + (*it).a100 * lHeA * l0B
-						+ (*it).a110 * lHeA * lHeB + (*it).a120 * lHeA * lVB
-						+ (*it).a200 * lVA * l0B + (*it).a210 * lVA * lHeB
-						+ (*it).a220 * lVA * lVB);
-		// Compute the moment fluxes
-		heMomentFlux += value
-				* ((*it).a001 * l0A * l0B + (*it).a011 * l0A * lHeB
-						+ (*it).a021 * l0A * lVB + (*it).a101 * lHeA * l0B
-						+ (*it).a111 * lHeA * lHeB + (*it).a121 * lHeA * lVB
-						+ (*it).a201 * lVA * l0B + (*it).a211 * lVA * lHeB
-						+ (*it).a221 * lVA * lVB);
-		vMomentFlux += value
-				* ((*it).a002 * l0A * l0B + (*it).a012 * l0A * lHeB
-						+ (*it).a022 * l0A * lVB + (*it).a102 * lHeA * l0B
-						+ (*it).a112 * lHeA * lHeB + (*it).a122 * lHeA * lVB
-						+ (*it).a202 * lVA * l0B + (*it).a212 * lVA * lHeB
-						+ (*it).a222 * lVA * lVB);
-	}
+	// Sum over all the reacting pairs
+	// TODO consider using std::accumulate.  May also want to change side
+	// effect of updating member variables heMomentFlux and
+	// vMomentFlux here.
+	std::for_each(effReactingList.begin(), effReactingList.end(),
+			[this,&flux,&xi](ProductionPairMap::value_type const& currMapItem) {
+
+				auto const& currPair = currMapItem.second;
+
+				// Get the two reacting clusters
+				auto const& firstReactant = currPair.first;
+				auto const& secondReactant = currPair.second;
+				double lA[5] = {}, lB[5] = {};
+				lA[0] = firstReactant.getConcentration();
+				lB[0] = secondReactant.getConcentration();
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = firstReactant.getMoment(indexList[i]-1);
+					lB[i] = secondReactant.getMoment(indexList[i]-1);
+				}
+
+				double sum[5] = {};
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
+							sum[k] += currPair.coefs[j][i][k] * lA[j] * lB[i];
+						}
+					}
+				}
+
+				// Update the flux
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
+				flux += value * sum[0];
+				// Compute the moment fluxes
+				for (int i = 1; i < psDim; i++) {
+					momentFlux[indexList[i]-1] += value * sum[i];
+				}
+			});
 
 	// Return the production flux
 	return flux;
 }
 
-double PSISuperCluster::getCombinationFlux() {
+double PSISuperCluster::getCombinationFlux(int xi) {
 	// Local declarations
-	double flux = 0.0, value = 0.0;
-	PSICluster *combiningCluster = nullptr;
+	double flux = 0.0;
 
-	// Loop over all the combining clusters
-	for (auto it = effCombiningList.begin(); it != effCombiningList.end();
-			++it) {
-		// Get the two reacting clusters
-		combiningCluster = (*it).first;
-		double l0B = combiningCluster->getConcentration(0.0, 0.0);
-		double lHeB = combiningCluster->getHeMoment();
-		double lVB = combiningCluster->getVMoment();
-		// Update the flux
-		value = *((*it).kConstant) / (double) nTot;
-		flux += value
-				* ((*it).a000 * l0B * l0 + (*it).a100 * l0B * l1He
-						+ (*it).a200 * l0B * l1V + (*it).a010 * lHeB * l0
-						+ (*it).a110 * lHeB * l1He + (*it).a210 * lHeB * l1V
-						+ (*it).a020 * lVB * l0 + (*it).a120 * lVB * l1He
-						+ (*it).a220 * lVB * l1V);
-		// Compute the moment fluxes
-		heMomentFlux -= value
-				* ((*it).a001 * l0B * l0 + (*it).a101 * l0B * l1He
-						+ (*it).a201 * l0B * l1V + (*it).a011 * lHeB * l0
-						+ (*it).a111 * lHeB * l1He + (*it).a211 * lHeB * l1V
-						+ (*it).a021 * lVB * l0 + (*it).a121 * lVB * l1He
-						+ (*it).a221 * lVB * l1V);
-		vMomentFlux -= value
-				* ((*it).a002 * l0B * l0 + (*it).a102 * l0B * l1He
-						+ (*it).a202 * l0B * l1V + (*it).a012 * lHeB * l0
-						+ (*it).a112 * lHeB * l1He + (*it).a212 * lHeB * l1V
-						+ (*it).a022 * lVB * l0 + (*it).a122 * lVB * l1He
-						+ (*it).a222 * lVB * l1V);
-	}
+	// Sum over all the combining clusters
+	// TODO consider using std::accumulate.  May also want to change side
+	// effect of updating member variables heMomentFlux and
+	// vMomentFlux here.
+	std::for_each(effCombiningList.begin(), effCombiningList.end(),
+			[this,&flux,&xi](CombiningClusterMap::value_type const& currMapItem) {
+				// Get the combining cluster
+				auto const& currComb = currMapItem.second;
+				auto const& combiningCluster = currComb.first;
+				double lA[5] = {}, lB[5] = {};
+				lA[0] = l0;
+				lB[0] = combiningCluster.getConcentration();
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = l1[indexList[i]-1];
+					lB[i] = combiningCluster.getMoment(indexList[i]-1);
+				}
+
+				double sum[5] = {};
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
+							sum[k] += currComb.coefs[i][j][k] * lA[i] * lB[j];
+						}
+					}
+				}
+				// Update the flux
+				auto value = currComb.reaction.kConstant[xi] / (double) nTot;
+				flux += value * sum[0];
+				// Compute the moment fluxes
+				for (int i = 1; i < psDim; i++) {
+					momentFlux[indexList[i]-1] -= value * sum[i];
+				}
+			});
 
 	return flux;
 }
 
-void PSISuperCluster::getPartialDerivatives(
-		std::vector<double> & partials) const {
-	// Reinitialize the moment partial derivatives vector
-	std::fill(heMomentPartials.begin(), heMomentPartials.end(), 0.0);
-	std::fill(vMomentPartials.begin(), vMomentPartials.end(), 0.0);
+void PSISuperCluster::computePartialDerivatives(double* partials[5],
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const {
 
 	// Get the partial derivatives for each reaction type
-	getProductionPartialDerivatives(partials);
-	getCombinationPartialDerivatives(partials);
-	getDissociationPartialDerivatives(partials);
-	getEmissionPartialDerivatives(partials);
+	computeProductionPartialDerivatives(partials, partialsIdxMap, i);
+	computeCombinationPartialDerivatives(partials, partialsIdxMap, i);
+	computeDissociationPartialDerivatives(partials, partialsIdxMap, i);
+	computeEmissionPartialDerivatives(partials, partialsIdxMap, i);
 
 	return;
 }
 
-void PSISuperCluster::getProductionPartialDerivatives(
-		std::vector<double> & partials) const {
-	// Initial declarations
-	double value = 0.0;
-	int index = 0;
-	PSICluster *firstReactant = nullptr, *secondReactant = nullptr;
+void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
 
 	// Production
 	// A + B --> D, D being this cluster
@@ -873,73 +1525,58 @@ void PSISuperCluster::getProductionPartialDerivatives(
 	// dF(C_D)/dC_B = k+_(A,B)*C_A
 
 	// Loop over all the reacting pairs
-	for (auto it = effReactingList.begin(); it != effReactingList.end(); ++it) {
-		// Get the two reacting clusters
-		firstReactant = (*it).first;
-		secondReactant = (*it).second;
-		double l0A = firstReactant->getConcentration(0.0, 0.0);
-		double l0B = secondReactant->getConcentration(0.0, 0.0);
-		double lHeA = firstReactant->getHeMoment();
-		double lHeB = secondReactant->getHeMoment();
-		double lVA = firstReactant->getVMoment();
-		double lVB = secondReactant->getVMoment();
+	std::for_each(effReactingList.begin(), effReactingList.end(),
+			[this,
+			&partials, &partialsIdxMap,&xi](ProductionPairMap::value_type const& currMapItem) {
 
-		// Compute the contribution from the first part of the reacting pair
-		value = *((*it).kConstant) / (double) nTot;
-		index = firstReactant->getId() - 1;
-		partials[index] += value
-				* ((*it).a000 * l0B + (*it).a010 * lHeB + (*it).a020 * lVB);
-		heMomentPartials[index] += value
-				* ((*it).a001 * l0B + (*it).a011 * lHeB + (*it).a021 * lVB);
-		vMomentPartials[index] += value
-				* ((*it).a002 * l0B + (*it).a012 * lHeB + (*it).a022 * lVB);
-		index = firstReactant->getHeMomentId() - 1;
-		partials[index] += value
-				* ((*it).a100 * l0B + (*it).a110 * lHeB + (*it).a120 * lVB);
-		heMomentPartials[index] += value
-				* ((*it).a101 * l0B + (*it).a111 * lHeB + (*it).a121 * lVB);
-		vMomentPartials[index] += value
-				* ((*it).a102 * l0B + (*it).a112 * lHeB + (*it).a122 * lVB);
-		index = firstReactant->getVMomentId() - 1;
-		partials[index] += value
-				* ((*it).a200 * l0B + (*it).a210 * lHeB + (*it).a220 * lVB);
-		heMomentPartials[index] += value
-				* ((*it).a201 * l0B + (*it).a211 * lHeB + (*it).a221 * lVB);
-		vMomentPartials[index] += value
-				* ((*it).a202 * l0B + (*it).a212 * lHeB + (*it).a222 * lVB);
-		// Compute the contribution from the second part of the reacting pair
-		index = secondReactant->getId() - 1;
-		partials[index] += value
-				* ((*it).a000 * l0A + (*it).a100 * lHeA + (*it).a200 * lVA);
-		heMomentPartials[index] += value
-				* ((*it).a001 * l0A + (*it).a101 * lHeA + (*it).a201 * lVA);
-		vMomentPartials[index] += value
-				* ((*it).a002 * l0A + (*it).a102 * lHeA + (*it).a202 * lVA);
-		index = secondReactant->getHeMomentId() - 1;
-		partials[index] += value
-				* ((*it).a010 * l0A + (*it).a110 * lHeA + (*it).a210 * lVA);
-		heMomentPartials[index] += value
-				* ((*it).a011 * l0A + (*it).a111 * lHeA + (*it).a211 * lVA);
-		vMomentPartials[index] += value
-				* ((*it).a012 * l0A + (*it).a112 * lHeA + (*it).a212 * lVA);
-		index = secondReactant->getVMomentId() - 1;
-		partials[index] += value
-				* ((*it).a020 * l0A + (*it).a120 * lHeA + (*it).a220 * lVA);
-		heMomentPartials[index] += value
-				* ((*it).a021 * l0A + (*it).a121 * lHeA + (*it).a221 * lVA);
-		vMomentPartials[index] += value
-				* ((*it).a022 * l0A + (*it).a122 * lHeA + (*it).a222 * lVA);
-	}
+				auto const& currPair = currMapItem.second;
+				// Get the two reacting clusters
+				auto const& firstReactant = currPair.first;
+				auto const& secondReactant = currPair.second;
+				double lA[5] = {}, lB[5] = {};
+				lA[0] = firstReactant.getConcentration();
+				lB[0] = secondReactant.getConcentration();
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = firstReactant.getMoment(indexList[i]-1);
+					lB[i] = secondReactant.getMoment(indexList[i]-1);
+				}
+
+				double sum[5][5][2] = {};
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
+							sum[k][j][0] += currPair.coefs[j][i][k] * lB[i];
+							sum[k][j][1] += currPair.coefs[i][j][k] * lA[i];
+						}
+					}
+				}
+
+				// Compute the contribution from the first and second part of the reacting pair
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
+				for (int j = 0; j < psDim; j++) {
+					int indexA = 0, indexB = 0;
+					if (j == 0) {
+						indexA = firstReactant.getId() - 1;
+						indexB = secondReactant.getId() - 1;
+					}
+					else {
+						indexA = firstReactant.getMomentId(indexList[j]-1) - 1;
+						indexB = secondReactant.getMomentId(indexList[j]-1) - 1;
+					}
+					auto partialsIdxA = partialsIdxMap[j].at(indexA);
+					auto partialsIdxB = partialsIdxMap[j].at(indexB);
+					for (int i = 0; i < psDim; i++) {
+						partials[i][partialsIdxA] += value * sum[i][j][0];
+						partials[i][partialsIdxB] += value * sum[i][j][1];
+					}
+				}
+			});
 
 	return;
 }
 
-void PSISuperCluster::getCombinationPartialDerivatives(
-		std::vector<double> & partials) const {
-	// Initial declarations
-	int index = 0;
-	PSICluster *cluster = nullptr;
-	double value = 0.0;
+void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
 
 	// Combination
 	// A + B --> D, A being this cluster
@@ -949,71 +1586,57 @@ void PSISuperCluster::getCombinationPartialDerivatives(
 	// dF(C_A)/dC_A = - k+_(A,B)*C_B
 	// dF(C_A)/dC_B = - k+_(A,B)*C_A
 
-	// Loop over all the combining clusters
-	for (auto it = effCombiningList.begin(); it != effCombiningList.end();
-			++it) {
-		// Get the two reacting clusters
-		cluster = (*it).first;
-		double l0B = cluster->getConcentration(0.0, 0.0);
-		double lHeB = cluster->getHeMoment();
-		double lVB = cluster->getVMoment();
+	// Visit all the combining clusters
+	std::for_each(effCombiningList.begin(), effCombiningList.end(),
+			[this,
+			&partials, &partialsIdxMap,&xi](CombiningClusterMap::value_type const& currMapItem) {
+				// Get the combining clusters
+				auto const& currComb = currMapItem.second;
+				auto const& cluster = currComb.first;
+				double lA[5] = {}, lB[5] = {};
+				lA[0] = l0;
+				lB[0] = cluster.getConcentration();
+				for (int i = 1; i < psDim; i++) {
+					lA[i] = l1[indexList[i]-1];
+					lB[i] = cluster.getMoment(indexList[i]-1);
+				}
 
-		// Compute the contribution from the combining cluster
-		value = *((*it).kConstant) / (double) nTot;
-		index = cluster->getId() - 1;
-		partials[index] -= value
-				* ((*it).a000 * l0 + (*it).a100 * l1He + (*it).a200 * l1V);
-		heMomentPartials[index] -= value
-				* ((*it).a001 * l0 + (*it).a101 * l1He + (*it).a201 * l1V);
-		vMomentPartials[index] -= value
-				* ((*it).a002 * l0 + (*it).a102 * l1He + (*it).a202 * l1V);
-		index = cluster->getHeMomentId() - 1;
-		partials[index] -= value
-				* ((*it).a010 * l0 + (*it).a110 * l1He + (*it).a210 * l1V);
-		heMomentPartials[index] -= value
-				* ((*it).a011 * l0 + (*it).a111 * l1He + (*it).a211 * l1V);
-		vMomentPartials[index] -= value
-				* ((*it).a012 * l0 + (*it).a112 * l1He + (*it).a212 * l1V);
-		index = cluster->getVMomentId() - 1;
-		partials[index] -= value
-				* ((*it).a020 * l0 + (*it).a120 * l1He + (*it).a220 * l1V);
-		heMomentPartials[index] -= value
-				* ((*it).a021 * l0 + (*it).a121 * l1He + (*it).a221 * l1V);
-		vMomentPartials[index] -= value
-				* ((*it).a022 * l0 + (*it).a122 * l1He + (*it).a222 * l1V);
-		// Compute the contribution from this cluster
-		index = id - 1;
-		partials[index] -= value
-				* ((*it).a000 * l0B + (*it).a010 * lHeB + (*it).a020 * lVB);
-		heMomentPartials[index] -= value
-				* ((*it).a001 * l0B + (*it).a011 * lHeB + (*it).a021 * lVB);
-		vMomentPartials[index] -= value
-				* ((*it).a002 * l0B + (*it).a012 * lHeB + (*it).a022 * lVB);
-		index = heMomId - 1;
-		partials[index] -= value
-				* ((*it).a100 * l0B + (*it).a110 * lHeB + (*it).a120 * lVB);
-		heMomentPartials[index] -= value
-				* ((*it).a101 * l0B + (*it).a111 * lHeB + (*it).a121 * lVB);
-		vMomentPartials[index] -= value
-				* ((*it).a102 * l0B + (*it).a112 * lHeB + (*it).a122 * lVB);
-		index = vMomId - 1;
-		partials[index] -= value
-				* ((*it).a200 * l0B + (*it).a210 * lHeB + (*it).a220 * lVB);
-		heMomentPartials[index] -= value
-				* ((*it).a201 * l0B + (*it).a211 * lHeB + (*it).a221 * lVB);
-		vMomentPartials[index] -= value
-				* ((*it).a202 * l0B + (*it).a212 * lHeB + (*it).a222 * lVB);
-	}
+				double sum[5][5][2] = {};
+				for (int k = 0; k < psDim; k++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int i = 0; i < psDim; i++) {
+							sum[k][j][0] += currComb.coefs[i][j][k] * lA[i];
+							sum[k][j][1] += currComb.coefs[j][i][k] * lB[i];
+						}
+					}
+				}
+
+				// Compute the contribution from the both clusters
+				auto value = currComb.reaction.kConstant[xi] / (double) nTot;
+				for (int j = 0; j < psDim; j++) {
+					int indexA = 0, indexB = 0;
+					if (j == 0) {
+						indexA = cluster.getId() - 1;
+						indexB = id - 1;
+					}
+					else {
+						indexA = cluster.getMomentId(indexList[j]-1) - 1;
+						indexB = momId[indexList[j]-1] - 1;
+					}
+					auto partialsIdxA = partialsIdxMap[j].at(indexA);
+					auto partialsIdxB = partialsIdxMap[j].at(indexB);
+					for (int i = 0; i < psDim; i++) {
+						partials[i][partialsIdxA] -= value * sum[i][j][0];
+						partials[i][partialsIdxB] -= value * sum[i][j][1];
+					}
+				}
+			});
 
 	return;
 }
 
-void PSISuperCluster::getDissociationPartialDerivatives(
-		std::vector<double> & partials) const {
-	// Initial declarations
-	int index = 0;
-	PSICluster *cluster = nullptr;
-	double value = 0.0;
+void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
 
 	// Dissociation
 	// A --> B + D, B being this cluster
@@ -1022,35 +1645,37 @@ void PSISuperCluster::getDissociationPartialDerivatives(
 	// Thus, the partial derivatives
 	// dF(C_B)/dC_A = k-_(B,D)
 
-	// Loop over all the dissociating pairs
-	for (auto it = effDissociatingList.begin(); it != effDissociatingList.end();
-			++it) {
-		// Get the dissociating clusters
-		cluster = (*it).first;
-		// Compute the contribution from the dissociating cluster
-		value = *((*it).kConstant) / (double) nTot;
-		index = cluster->getId() - 1;
-		partials[index] += value * ((*it).a00);
-		heMomentPartials[index] += value * ((*it).a01);
-		vMomentPartials[index] += value * ((*it).a02);
-		index = cluster->getHeMomentId() - 1;
-		partials[index] += value * ((*it).a10);
-		heMomentPartials[index] += value * ((*it).a11);
-		vMomentPartials[index] += value * ((*it).a12);
-		index = cluster->getVMomentId() - 1;
-		partials[index] += value * ((*it).a20);
-		heMomentPartials[index] += value * ((*it).a21);
-		vMomentPartials[index] += value * ((*it).a22);
-	}
+	// Visit all the dissociating pairs
+	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
+			[this,
+			&partials, &partialsIdxMap,&xi](DissociationPairMap::value_type const& currMapItem) {
+				auto& currPair = currMapItem.second;
+
+				// Get the dissociating clusters
+				auto const& cluster = currPair.first;
+				// Compute the contribution from the dissociating cluster
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
+
+				for (int j = 0; j < psDim; j++) {
+					int index = 0;
+					if (j == 0) {
+						index = cluster.getId() - 1;
+					}
+					else {
+						index = cluster.getMomentId(indexList[j]-1) - 1;
+					}
+					auto partialsIdx = partialsIdxMap[j].at(index);
+					for (int i = 0; i < psDim; i++) {
+						partials[i][partialsIdx] += value * currPair.coefs[j][i];
+					}
+				}
+			});
 
 	return;
 }
 
-void PSISuperCluster::getEmissionPartialDerivatives(
-		std::vector<double> & partials) const {
-	// Initial declarations
-	int index = 0;
-	double value = 0.0;
+void PSISuperCluster::computeEmissionPartialDerivatives(double* partials[5],
+		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
 
 	// Emission
 	// A --> B + D, A being this cluster
@@ -1059,45 +1684,201 @@ void PSISuperCluster::getEmissionPartialDerivatives(
 	// Thus, the partial derivatives
 	// dF(C_A)/dC_A = - k-_(B,D)
 
-	// Loop over all the emission pairs
-	for (auto it = effEmissionList.begin(); it != effEmissionList.end(); ++it) {
-		// Compute the contribution from the dissociating cluster
-		value = *((*it).kConstant) / (double) nTot;
-		index = id - 1;
-		partials[index] -= value * ((*it).a00);
-		heMomentPartials[index] -= value * ((*it).a01);
-		vMomentPartials[index] -= value * ((*it).a02);
-		index = heMomId - 1;
-		partials[index] -= value * ((*it).a10);
-		heMomentPartials[index] -= value * ((*it).a11);
-		vMomentPartials[index] -= value * ((*it).a12);
-		index = vMomId - 1;
-		partials[index] -= value * ((*it).a20);
-		heMomentPartials[index] -= value * ((*it).a21);
-		vMomentPartials[index] -= value * ((*it).a22);
-	}
+	// Visit all the emission pairs
+	std::for_each(effEmissionList.begin(), effEmissionList.end(),
+			[this,
+			&partials, &partialsIdxMap,&xi](DissociationPairMap::value_type const& currMapItem) {
+				auto& currPair = currMapItem.second;
+
+				// Compute the contribution from the dissociating cluster
+				auto value = currPair.reaction.kConstant[xi] / (double) nTot;
+				for (int j = 0; j < psDim; j++) {
+					int index = 0;
+					if (j == 0) {
+						index = id - 1;
+					}
+					else {
+						index = momId[indexList[j]-1] - 1;
+					}
+					auto partialsIdx = partialsIdxMap[j].at(index);
+					for (int i = 0; i < psDim; i++) {
+						partials[i][partialsIdx] -= value * currPair.coefs[j][i];
+					}
+				}
+			});
 
 	return;
 }
 
-void PSISuperCluster::getHeMomentPartialDerivatives(
-		std::vector<double> & partials) const {
-	// Loop on the size of the vector
-	for (int i = 0; i < partials.size(); i++) {
-		// Set to the values that were already computed
-		partials[i] = heMomentPartials[i];
-	}
+std::vector<std::vector<double> > PSISuperCluster::getProdVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
 
-	return;
+	// Loop on the reacting pairs
+	std::for_each(effReactingList.begin(), effReactingList.end(),
+			[&toReturn,this](ProductionPairMap::value_type const& currMapItem) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				auto& currPair = currMapItem.second;
+				tempVec.push_back(currPair.first.getId() - 1);
+				tempVec.push_back(currPair.second.getId() - 1);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int k = 0; k < psDim; k++) {
+							tempVec.push_back(currPair.coefs[i][j][k]);
+						}
+					}
+				}
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
 }
 
-void PSISuperCluster::getVMomentPartialDerivatives(
-		std::vector<double> & partials) const {
-	// Loop on the size of the vector
-	for (int i = 0; i < partials.size(); i++) {
-		// Set to the values that were already computed
-		partials[i] = vMomentPartials[i];
-	}
+std::vector<std::vector<double> > PSISuperCluster::getCombVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
 
-	return;
+	// Loop on the combining reactants
+	std::for_each(effCombiningList.begin(), effCombiningList.end(),
+			[&toReturn,this](CombiningClusterMap::value_type const& currMapItem) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				auto& cc = currMapItem.second;
+				tempVec.push_back(cc.first.getId() - 1);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						for (int k = 0; k < psDim; k++) {
+							tempVec.push_back(cc.coefs[i][j][k]);
+						}
+					}
+				}
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
 }
+
+std::vector<std::vector<double> > PSISuperCluster::getDissoVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the dissociating pairs
+	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
+			[&toReturn,this](DissociationPairMap::value_type const& currMapItem) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				auto& currPair = currMapItem.second;
+				tempVec.push_back(currPair.first.getId() - 1);
+				tempVec.push_back(currPair.second.getId() - 1);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						tempVec.push_back(currPair.coefs[i][j]);
+					}
+				}
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > PSISuperCluster::getEmitVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the emitting pairs
+	std::for_each(effEmissionList.begin(), effEmissionList.end(),
+			[&toReturn,this](DissociationPairMap::value_type const& currMapItem) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				auto& currPair = currMapItem.second;
+				tempVec.push_back(currPair.first.getId() - 1);
+				tempVec.push_back(currPair.second.getId() - 1);
+				for (int i = 0; i < psDim; i++) {
+					for (int j = 0; j < psDim; j++) {
+						tempVec.push_back(currPair.coefs[i][j]);
+					}
+				}
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+void PSISuperCluster::dumpCoefficients(std::ostream& os,
+		PSISuperCluster::ProductionCoefficientBase const& curr) const {
+
+	os << "a[0-4][0-4][0-4]: ";
+	for (int k = 0; k < psDim; k++) {
+		for (int j = 0; j < psDim; j++) {
+			for (int i = 0; i < psDim; i++) {
+				os << curr.coefs[k][j][i] << ' ';
+			}
+		}
+	}
+}
+
+void PSISuperCluster::dumpCoefficients(std::ostream& os,
+		PSISuperCluster::SuperClusterDissociationPair const& currPair) const {
+
+	os << "a[0-4][0-4]: ";
+	for (int j = 0; j < psDim; j++) {
+		for (int i = 0; i < psDim; i++) {
+			os << currPair.coefs[j][i] << ' ';
+		}
+	}
+}
+
+void PSISuperCluster::outputCoefficientsTo(std::ostream& os) const {
+
+	os << "name: " << name << '\n';
+	os << "reacting: " << effReactingList.size() << '\n';
+	std::for_each(effReactingList.begin(), effReactingList.end(),
+			[this,&os](ProductionPairMap::value_type const& currMapItem) {
+				auto const& currPair = currMapItem.second;
+				os << "first: " << currPair.first.getName()
+				<< "; second: " << currPair.second.getName() << ";";
+				dumpCoefficients(os, currPair);
+				os << '\n';
+			});
+
+	os << "combining: " << effCombiningList.size() << '\n';
+	std::for_each(effCombiningList.begin(), effCombiningList.end(),
+			[this,&os](CombiningClusterMap::value_type const& currMapItem) {
+				auto const& currComb = currMapItem.second;
+				os << "other: " << currComb.first.getName() << ";";
+				dumpCoefficients(os, currComb);
+				os << '\n';
+			});
+
+	os << "dissociating: " << effDissociatingList.size() << '\n';
+	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
+			[this,&os](DissociationPairMap::value_type const& currMapItem) {
+				auto const& currPair = currMapItem.second;
+				os << "first: " << currPair.first.getName()
+				<< "; second: " << currPair.second.getName()
+				<< "; ";
+				dumpCoefficients(os, currPair);
+				os << '\n';
+			});
+
+	os << "emitting: " << effEmissionList.size() << '\n';
+	std::for_each(effEmissionList.begin(), effEmissionList.end(),
+			[this,&os](DissociationPairMap::value_type const& currMapItem) {
+				auto const& currPair = currMapItem.second;
+				os << "first: " << currPair.first.getName()
+				<< "; second: " << currPair.second.getName()
+				<< "; ";
+				dumpCoefficients(os, currPair);
+				os << '\n';
+			});
+}
+

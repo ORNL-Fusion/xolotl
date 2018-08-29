@@ -11,6 +11,7 @@
 //Includes
 #include <PSICluster.h>
 #include <NetworkLoader.h>
+#include "PSIClusterReactionNetwork.h"
 
 namespace xolotlCore {
 
@@ -18,46 +19,56 @@ namespace xolotlCore {
  * This class will load a reaction network composed of PSIClusters from an
  * inputstream.
  *
- * The data in the stream should contain the information for a single cluster on
- * each line with the following quantities specified and separated by a single
- * space each:
- * > The number of He in the cluster
- * > The number of V in the cluster
- * > The number of I in the cluster
- * > The formation energy
- *
  * Lines of comments starting with a "#" will be ignored as will lines that do
  * not clearly provide the information above.
- *
- * The network will be returned as a ReactionNetwork of PSIClusters ordered with
- * single-species He, V and I clusters first and all mixed clusters coming
- * last. Each species is ordered from the smallest cluster size, (1), to the
- * maximum size for that cluster. Instances of the appropriate cluster type are
- * instantiated during the loading process, but returned as PSIClusters.
- *
- * The ReactionNetwork's map of properties will contains the following
- * information about the network with the following keys:
- * > maxHeClusterSize - The number of He atoms in the largest single-species
- *  He cluster.
- * > maxVClusterSize - The number of atomic vacancies in the largest
- * single-species V cluster.
- * > maxIClusterSize - The number of interstitials in the largest
- * single-species I cluster.
- * > maxMixedClusterSize - The number of species of all types in the largest
- * mixed species in the network. It is equal to the sum of the max single
- * species helium and vacancy cluster sizes by default.
- * > numHeClusters - The number of single-species He clusters of all sizes in
- * the network.
- * > numVClusters - The number of single-species V clusters of all sizes in the
- * network.
- * > numIClusters - The number of single-species I clusters of all sizes in the
- * network.
- * > numMixedClusters - The number of mixed-species clusters of all sizes in the
- * network.
  */
 class PSIClusterNetworkLoader: public NetworkLoader {
 
 protected:
+
+	// I formation energies in eV
+	std::vector<double> iFormationEnergies = { 10.0, 18.5, 27.0, 35.0, 42.5,
+			48.0 };
+	// I diffusion factors in nm^2/s
+	std::vector<double> iDiffusion = { 8.8e+10, 8.0e+10, 3.9e+10, 2.0e+10,
+			1.0e+10 };
+	// I migration energies in eV
+	std::vector<double> iMigration = { 0.01, 0.02, 0.03, 0.04, 0.05 };
+
+	// He formation energies in eV
+	std::vector<double> heFormationEnergies = { 6.15, 11.44, 16.35, 21.0, 26.1,
+			30.24, 34.93, 38.80 };
+	// He diffusion factors in nm^2/s
+	std::vector<double> heDiffusion = { 2.9e+10, 3.2e+10, 2.3e+10, 1.7e+10,
+			5.0e+09, 1.0e+09, 5.0e+08 };
+	// He migration energies in eV
+	std::vector<double> heMigration = { 0.13, 0.20, 0.25, 0.20, 0.12, 0.3, 0.4 };
+
+	// The diffusion factor for a single deuterium.
+	double dOneDiffusionFactor = 2.83e+11;
+	// The migration energy for a single deuterium.
+	double dOneMigrationEnergy = 0.38;
+
+	// The diffusion factor for a single tritium.
+	double tOneDiffusionFactor = 2.31e+11;
+	// The migration energy for a single tritium.
+	double tOneMigrationEnergy = 0.38;
+
+	// The diffusion factor for a single vacancy in nm^2/s
+	double vOneDiffusion = 1.8e+12;
+	// The migration energy for a single vacancy in eV
+	double vOneMigration = 1.30;
+
+	/**
+	 * The maximum number of helium atoms that can be combined with a vacancy
+	 * cluster with size equal to the index i in the array plus one. For
+	 * example, an HeV size cluster with size 1 would have size = i+1 = 1 and i
+	 * = 0. It could support a mixture of up to nine helium atoms with one
+	 * vacancy.
+	 */
+	std::vector<int> maxHePerV = { 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55,
+			60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101, 103, 105, 107, 109,
+			110, 112, 116 };
 
 	/**
 	 * The vacancy size at which the grouping scheme starts
@@ -65,32 +76,81 @@ protected:
 	int vMin;
 
 	/**
-	 * The width of the group in the helium direction.
+	 * The maximum size for helium clusters
 	 */
-	int heSectionWidth;
+	int maxHe;
 
 	/**
-	 * The width of the group in the vacancy direction.
+	 * The maximum size for deuterium clusters
 	 */
-	int vSectionWidth;
+	int maxD;
+
+	/**
+	 * The maximum size for tritium clusters
+	 */
+	int maxT;
+
+	/**
+	 * The maximum size for interstitial clusters
+	 */
+	int maxI;
+
+	/**
+	 * The maximum size for vacancy clusters
+	 */
+	int maxV;
+
+	/**
+	 * The width of the group.
+	 */
+	int sectionWidth[4] = {};
+
+	/**
+	 * The list of clusters that will be grouped.
+	 */
+	std::set<std::tuple<int, int, int, int> > heVList;
 
 	/**
 	 * Private nullary constructor.
 	 */
-	PSIClusterNetworkLoader() {
+	PSIClusterNetworkLoader() :
+			NetworkLoader(), vMin(1000000), maxHe(0), maxI(0), maxV(0), maxD(0), maxT(0) {
 	}
 
 	/**
-	 * This operation creates a cluster of helium, vacancies and/or
-	 * interstitials. It adds the cluster to the appropriate internal list of
-	 * clusters for that type.
+	 * This operation creates a super cluster from its list of cluster coordinates.
+	 *
+	 * @param list The list of coordinates composing this cluster
+	 * @return The new cluster
+	 */
+	std::unique_ptr<PSICluster> createPSISuperCluster(std::set<std::tuple<int, int, int, int> > &list,
+			IReactionNetwork& network) const;
+
+	/**
+	 * This operation creates a cluster.
 	 *
 	 * @param numHe The number of helium atoms
+	 * @param numD The number of deuterium atoms
+	 * @param numT The number of tritium atoms
 	 * @param numV The number of atomic vacancies
 	 * @param numI The number of interstitial defects
 	 * @return The new cluster
 	 */
-	std::shared_ptr<PSICluster> createPSICluster(int numHe, int numV, int numI);
+	std::unique_ptr<PSICluster> createPSICluster(int numHe, int numD, int numT, int numV, int numI,
+			IReactionNetwork& network) const;
+
+	/**
+	 * This operation will add the given cluster to the network and reactants vector
+	 * as a standard cluster or a dummy one if we do not want the reactions to happen.
+	 *
+	 * @param network The network
+	 * @param reactants The vector of reactants kept by the loader
+	 * @param cluster The cluster to add to them
+	 */
+	virtual void pushPSICluster(
+			std::unique_ptr<PSIClusterReactionNetwork> & network,
+			std::vector<std::reference_wrapper<Reactant> > & reactants,
+			std::unique_ptr<PSICluster> & cluster);
 
 	/**
 	 * This operation computes the formation energy associated to the
@@ -136,7 +196,8 @@ public:
 	 *
 	 * @return network The reaction network
 	 */
-	virtual std::shared_ptr<IReactionNetwork> load();
+	virtual std::unique_ptr<IReactionNetwork> load(const IOptions& options)
+			override;
 
 	/**
 	 * This operation will generate the reaction network from options.
@@ -145,14 +206,15 @@ public:
 	 * @param options The command line options
 	 * @return network The reaction network
 	 */
-	virtual std::shared_ptr<IReactionNetwork> generate(IOptions &options);
+	virtual std::unique_ptr<IReactionNetwork> generate(const IOptions &options)
+			override;
 
 	/**
 	 * This operation will apply a sectional grouping method to the network.
 	 *
 	 * @param The network to be modified.
 	 */
-	void applySectionalGrouping(std::shared_ptr<IReactionNetwork> network);
+	void applySectionalGrouping(PSIClusterReactionNetwork& network);
 
 	/**
 	 * This operation will set the helium size at which the grouping scheme starts.
@@ -167,18 +229,10 @@ public:
 	 * This operation will set the helium width for the grouping scheme.
 	 *
 	 * @param w The value of the width
+	 * @param axis The direction for the width
 	 */
-	void setHeWidth(int w) {
-		heSectionWidth = w;
-	}
-
-	/**
-	 * This operation will set the vacancy width for the grouping scheme.
-	 *
-	 * @param w The value of the width
-	 */
-	void setVWidth(int w) {
-		vSectionWidth = w;
+	void setWidth(int w, int axis) {
+		sectionWidth[axis] = w;
 	}
 };
 

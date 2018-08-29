@@ -6,20 +6,18 @@
 
 using namespace xolotlCore;
 
-/**
- * The xenon moment partials.
- */
 std::vector<double> xeMomentPartials;
 
 NESuperCluster::NESuperCluster(double num, int nTot, int width, double radius,
-		double energy, std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		NECluster(registry), numXe(num), nTot(nTot), l0(0.0), l1(0.0), dispersion(
-				0.0), momentFlux(0.0) {
+		double energy, IReactionNetwork& _network,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		NECluster(_network, registry, buildName(num)), numXe(num), nTot(nTot), l0(
+				0.0), l1(0.0), dispersion(0.0), momentFlux(0.0) {
 	// Set the cluster size
 	size = (int) numXe;
 
 	// Update the composition map
-	compositionMap[xeType] = (int) (numXe * (double) nTot);
+	composition[toCompIdx(Species::Xe)] = (int) (numXe * (double) nTot);
 
 	// Set the width
 	sectionWidth = width;
@@ -32,47 +30,99 @@ NESuperCluster::NESuperCluster(double num, int nTot, int width, double radius,
 	migrationEnergy = std::numeric_limits<double>::infinity();
 	diffusionFactor = 0.0;
 
-	// Set the reactant name appropriately
-	std::stringstream nameStream;
-	nameStream << "Xe_" << numXe;
-	name = nameStream.str();
 	// Set the typename appropriately
-	typeName = "NESuper";
+	type = ReactantType::NESuper;
 
 	return;
 }
 
-NESuperCluster::NESuperCluster(NESuperCluster &other) :
-		NECluster(other) {
-	numXe = other.numXe;
-	nTot = other.nTot;
-	sectionWidth = other.sectionWidth;
-	l0 = other.l0;
-	l1 = other.l1;
-	dispersion = other.dispersion;
-	reactingMap = other.reactingMap;
-	combiningMap = other.combiningMap;
-	dissociatingMap = other.dissociatingMap;
-	emissionMap = other.emissionMap;
-	effReactingList = other.effReactingList;
-	effCombiningList = other.effCombiningList;
-	effDissociatingList = other.effDissociatingList;
-	effEmissionList = other.effEmissionList;
-	momentFlux = other.momentFlux;
+void NESuperCluster::resultFrom(ProductionReaction& reaction, double *coef) {
+
+	// Create a new SuperClusterProductionPair
+	SuperClusterProductionPair superPair(
+			&static_cast<NECluster&>(reaction.first),
+			&static_cast<NECluster&>(reaction.second), &reaction);
+	// Update the coeficients
+	superPair.a000 = coef[0];
+	superPair.a001 = coef[1];
+	superPair.a100 = coef[2];
+	superPair.a101 = coef[3];
+	superPair.a010 = coef[4];
+	superPair.a011 = coef[5];
+	superPair.a110 = coef[6];
+	superPair.a111 = coef[7];
+
+	// Add it to the list
+	effReactingList.push_front(superPair);
 
 	return;
 }
 
-std::shared_ptr<IReactant> NESuperCluster::clone() {
-	std::shared_ptr<IReactant> reactant(new NESuperCluster(*this));
+void NESuperCluster::participateIn(ProductionReaction& reaction, double *coef) {
+	// Look for the other cluster
+	auto& otherCluster = static_cast<NECluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
 
-	return reactant;
+	// Create a new SuperClusterProductionPair with NULL as the second cluster because
+	// we do not need it
+	SuperClusterProductionPair superPair(&otherCluster, nullptr, &reaction);
+	// Update the coeficients
+	superPair.a000 = coef[0];
+	superPair.a001 = coef[1];
+	superPair.a100 = coef[2];
+	superPair.a101 = coef[3];
+	superPair.a010 = coef[4];
+	superPair.a011 = coef[5];
+	superPair.a110 = coef[6];
+	superPair.a111 = coef[7];
+
+	// Add it to the list
+	effCombiningList.push_front(superPair);
+
+	return;
 }
 
-void NESuperCluster::setReactionNetwork(
-		const std::shared_ptr<IReactionNetwork> reactionNetwork) {
-	// Call the superclass's method to actually set the reference
-	Reactant::setReactionNetwork(reactionNetwork);
+void NESuperCluster::participateIn(DissociationReaction& reaction,
+		double *coef) {
+	// Look for the other cluster
+	auto& emittedCluster = static_cast<NECluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+
+	// Create a new SuperClusterDissociationPair
+	SuperClusterDissociationPair superPair(
+			&static_cast<NECluster&>(reaction.dissociating), &emittedCluster,
+			&reaction);
+	// Update the coeficients
+	superPair.a00 = coef[0];
+	superPair.a01 = coef[1];
+	superPair.a10 = coef[2];
+	superPair.a11 = coef[3];
+
+	// Add it to the list
+	effDissociatingList.push_front(superPair);
+
+	return;
+}
+
+void NESuperCluster::emitFrom(DissociationReaction& reaction, double *coef) {
+
+	// Create a new SuperClusterDissociationPair
+	SuperClusterDissociationPair superPair(
+			&static_cast<NECluster&>(reaction.first),
+			&static_cast<NECluster&>(reaction.second), &reaction);
+	// Update the coeficients
+	superPair.a00 = coef[0];
+	superPair.a01 = coef[1];
+	superPair.a10 = coef[2];
+	superPair.a11 = coef[3];
+
+	// Add it to the list
+	effEmissionList.push_front(superPair);
+
+	return;
+}
+
+void NESuperCluster::updateFromNetwork() {
 
 	// Clear the flux-related arrays
 	reactingPairs.clear();
@@ -104,7 +154,8 @@ void NESuperCluster::setReactionNetwork(
 	return;
 }
 
-double NESuperCluster::getConcentration(double distXe, double distB) const {
+double NESuperCluster::getConcentration(double distXe, double, double,
+		double) const {
 	return l0 + (distXe * l1);
 }
 
@@ -195,8 +246,8 @@ void NESuperCluster::computeDispersion() {
 	else {
 		dispersion = 2.0
 				* (nXeSquare
-						- ((double) compositionMap[xeType]
-								* ((double) compositionMap[xeType]
+						- ((double) composition[toCompIdx(Species::Xe)]
+								* ((double) composition[toCompIdx(Species::Xe)]
 										/ (double) sectionWidth)))
 				/ ((double) (sectionWidth * (sectionWidth - 1)));
 	}
@@ -207,9 +258,8 @@ void NESuperCluster::computeDispersion() {
 void NESuperCluster::optimizeReactions() {
 	// Local declarations
 	double factor = 0.0, distance = 0.0;
-	NECluster *firstReactant, *secondReactant, *combiningReactant,
-			*dissociatingCluster, *otherEmittedCluster, *firstCluster,
-			*secondCluster;
+	NECluster *firstReactant, *secondReactant, *dissociatingCluster,
+			*otherEmittedCluster, *firstCluster, *secondCluster;
 	int index = 0;
 
 	// Loop on the reacting map
@@ -224,14 +274,14 @@ void NESuperCluster::optimizeReactions() {
 			secondReactant = (*it).second;
 
 			// Create the corresponding production reaction
-			auto reaction = std::make_shared<ProductionReaction>(firstReactant,
-					secondReactant);
+			std::unique_ptr<ProductionReaction> reaction(
+					new ProductionReaction(*firstReactant, *secondReactant));
 			// Add it to the network
-			reaction = network->addProductionReaction(reaction);
+			auto& prref = network.add(std::move(reaction));
 
 			// Create a new SuperClusterProductionPair
 			SuperClusterProductionPair superPair(firstReactant, secondReactant,
-					reaction.get());
+					&prref);
 
 			// Loop on the whole super cluster to fill this super pair
 			for (auto mapItBis = mapIt; mapItBis != reactingMap.end();
@@ -294,21 +344,22 @@ void NESuperCluster::optimizeReactions() {
 			++mapIt) {
 		// Get the pairs
 		auto clusters = mapIt->second;
+
 		// Loop over all the reacting pairs
 		for (auto it = clusters.begin(); it != clusters.end();) {
 			// Get the combining cluster
-			combiningReactant = (*it).combining;
+			NECluster& combiningReactant = *((*it).combining);
 
 			// Create the corresponding production reaction
-			auto reaction = std::make_shared<ProductionReaction>(this,
-					combiningReactant);
+			std::unique_ptr<ProductionReaction> reaction(
+					new ProductionReaction(*this, combiningReactant));
 			// Add it to the network
-			reaction = network->addProductionReaction(reaction);
+			auto& prref = network.add(std::move(reaction));
 
 			// Create a new SuperClusterProductionPair with NULL as the second cluster because
 			// we do not need it
-			SuperClusterProductionPair superPair(combiningReactant, NULL,
-					reaction.get());
+			SuperClusterProductionPair superPair(&combiningReactant, nullptr,
+					&prref);
 
 			// Loop on the whole super cluster to fill this super pair
 			for (auto mapItBis = mapIt; mapItBis != combiningMap.end();
@@ -318,17 +369,26 @@ void NESuperCluster::optimizeReactions() {
 				distance = getDistance(index);
 				factor = (double) (index - numXe) / dispersion;
 
-				// Get the pairs
-				auto clustersBis = mapItBis->second;
-				// Set the total number of reactants that produce to form this one
-				// Loop over all the reacting pairs
+				// Access the combining pairs
+				auto& clustersBis = mapItBis->second;
+
+				// Set the total number of reactants that produce to 
+				// form this one.
+				// May involve removing items from the vector of
+				// combining cluster objects (clusersBis).
+				// To avoid invalidating iterators into this vector,
+				// we use the idiom of noting which need to get deleted,
+				// a std::remove_if to move the doomed ones to the end
+				// of the vector, and then erase to remove them.
+				std::set<CombiningCluster*> doomedCombining;
 				for (auto itBis = clustersBis.begin();
-						itBis != clustersBis.end();) {
-					// Get the two reacting clusters
-					auto combiningReactantBis = (*itBis).combining;
+						itBis != clustersBis.end(); ++itBis) {
+
+					// Access the current combining cluster
+					NECluster& combiningReactantBis = *((*itBis).combining);
 
 					// Check if it is the same reaction
-					if (combiningReactantBis == combiningReactant) {
+					if (&combiningReactantBis == &combiningReactant) {
 						superPair.a000 += 1.0;
 						superPair.a001 += factor;
 						superPair.a010 += (*itBis).distance;
@@ -338,22 +398,35 @@ void NESuperCluster::optimizeReactions() {
 						superPair.a110 += (*itBis).distance * distance;
 						superPair.a111 += (*itBis).distance * distance * factor;
 
-						// Do not delete the element if it is the original one
-						if (itBis == it) {
-							++itBis;
-							continue;
+						// Determine if we need to delete this item.
+						// Do not delete if it is the original one.
+						if (itBis != it) {
+							// It is not the original one, so indicate it
+							// needs to be removed.
+							// NB: The expression with &(*iter) seems odd -
+							// why not just use itBis?  We want the
+							// address of the object, and itBis is an
+							// iterator, not the address of the object itself.
+							// So we dereference the iterator to access
+							// the object, then take its address.
+							doomedCombining.emplace(&(*itBis));
 						}
-
-						// Remove the reaction from the vector
-						itBis = clustersBis.erase(itBis);
 					}
-					// Go to the next element
-					else
-						++itBis;
 				}
 
-				// Give back the pairs
-				mapItBis->second = clustersBis;
+				// Now that we know which combining clusters to delete,
+				// Move them all to the end of the vector.
+				auto firstToRemoveIter = std::remove_if(clustersBis.begin(),
+						clustersBis.end(),
+						[&doomedCombining](CombiningCluster& currCombining) {
+							// See if currCombiningPair is in our set
+							// of doomed items.
+							auto diter = doomedCombining.find(&currCombining);
+							return (diter != doomedCombining.end());
+						});
+				// Now that the doomed are all moved to be contiguous
+				// and at the end of the vector, erase them.
+				clustersBis.erase(firstToRemoveIter, clustersBis.end());
 			}
 
 			// Add the super pair
@@ -376,14 +449,15 @@ void NESuperCluster::optimizeReactions() {
 			otherEmittedCluster = (*it).second;
 
 			// Create a dissociation reaction
-			auto reaction = std::make_shared<DissociationReaction>(
-					dissociatingCluster, this, otherEmittedCluster);
+			std::unique_ptr<DissociationReaction> reaction(
+					new DissociationReaction(*dissociatingCluster, *this,
+							*otherEmittedCluster));
 			// Add it to the network
-			reaction = network->addDissociationReaction(reaction);
+			auto& drref = network.add(std::move(reaction));
 
-			// Create a new SuperClusterProductionPair
+			// Create a new SuperClusterDissociationPair
 			SuperClusterDissociationPair superPair(dissociatingCluster,
-					otherEmittedCluster, reaction.get());
+					otherEmittedCluster, &drref);
 
 			// Loop on the whole super cluster to fill this super pair
 			for (auto mapItBis = mapIt; mapItBis != dissociatingMap.end();
@@ -447,14 +521,15 @@ void NESuperCluster::optimizeReactions() {
 			secondCluster = (*it).second;
 
 			// Create a dissociation reaction
-			auto reaction = std::make_shared<DissociationReaction>(this,
-					firstCluster, secondCluster);
+			std::unique_ptr<DissociationReaction> reaction(
+					new DissociationReaction(*this, *firstCluster,
+							*secondCluster));
 			// Add it to the network
-			reaction = network->addDissociationReaction(reaction);
+			auto& drref = network.add(std::move(reaction));
 
-			// Create a new SuperClusterProductionPair
+			// Create a new SuperClusterDissociationPair
 			SuperClusterDissociationPair superPair(firstCluster, secondCluster,
-					reaction.get());
+					&drref);
 
 			// Loop on the whole super cluster to fill this super pair
 			for (auto mapItBis = mapIt; mapItBis != emissionMap.end();
@@ -524,8 +599,8 @@ void NESuperCluster::resetConnectivities() {
 	// Connect this cluster to itself since any reaction will affect it
 	setReactionConnectivity(id);
 	setDissociationConnectivity(id);
-	setReactionConnectivity(momId);
-	setDissociationConnectivity(momId);
+	setReactionConnectivity(momId[0]);
+	setDissociationConnectivity(momId[0]);
 
 	// Loop over all the reacting pairs
 	for (auto it = effReactingList.begin(); it != effReactingList.end(); ++it) {
@@ -556,26 +631,26 @@ void NESuperCluster::resetConnectivities() {
 	// this cluster is not connected to them
 
 	// Initialize the partial vector for the moment
-	int dof = network->getDOF();
+	int dof = network.getDOF();
 	xeMomentPartials.resize(dof, 0.0);
 
 	return;
 }
 
-double NESuperCluster::getTotalFlux() {
+double NESuperCluster::getTotalFlux(int i) {
 	// Initialize the moment flux
 	momentFlux = 0.0;
 
 	// Get the fluxes
-	double prodFlux = getProductionFlux();
-	double dissFlux = getDissociationFlux();
-	double combFlux = getCombinationFlux();
-	double emissFlux = getEmissionFlux();
+	double prodFlux = getProductionFlux(i);
+	double dissFlux = getDissociationFlux(i);
+	double combFlux = getCombinationFlux(i);
+	double emissFlux = getEmissionFlux(i);
 
 	return prodFlux - combFlux + dissFlux - emissFlux;
 }
 
-double NESuperCluster::getDissociationFlux() {
+double NESuperCluster::getDissociationFlux(int xi) {
 	// Initial declarations
 	double flux = 0.0, value = 0.0;
 	NECluster *dissociatingCluster = nullptr;
@@ -588,7 +663,7 @@ double NESuperCluster::getDissociationFlux() {
 		double l0A = dissociatingCluster->getConcentration(0.0);
 		double l1A = dissociatingCluster->getMoment();
 		// Update the flux
-		value = *((*it).kConstant) / (double) nTot;
+		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		flux += value * ((*it).a00 * l0A + (*it).a10 * l1A);
 		// Compute the moment fluxes
 		momentFlux += value * ((*it).a01 * l0A + (*it).a11 * l1A);
@@ -598,14 +673,14 @@ double NESuperCluster::getDissociationFlux() {
 	return flux;
 }
 
-double NESuperCluster::getEmissionFlux() {
+double NESuperCluster::getEmissionFlux(int xi) {
 	// Initial declarations
 	double flux = 0.0, value = 0.0;
 
 	// Loop over all the emission pairs
 	for (auto it = effEmissionList.begin(); it != effEmissionList.end(); ++it) {
 		// Update the flux
-		value = *((*it).kConstant) / (double) nTot;
+		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		flux += value * ((*it).a00 * l0 + (*it).a10 * l1);
 		// Compute the moment fluxes
 		momentFlux -= value * ((*it).a01 * l0 + (*it).a11 * l1);
@@ -614,7 +689,7 @@ double NESuperCluster::getEmissionFlux() {
 	return flux;
 }
 
-double NESuperCluster::getProductionFlux() {
+double NESuperCluster::getProductionFlux(int xi) {
 	// Local declarations
 	double flux = 0.0, value = 0.0;
 	NECluster *firstReactant = nullptr, *secondReactant = nullptr;
@@ -629,7 +704,7 @@ double NESuperCluster::getProductionFlux() {
 		double l1A = firstReactant->getMoment();
 		double l1B = secondReactant->getMoment();
 		// Update the flux
-		value = *((*it).kConstant) / (double) nTot;
+		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		flux += value
 				* ((*it).a000 * l0A * l0B + (*it).a010 * l0A * l1B
 						+ (*it).a100 * l1A * l0B + (*it).a110 * l1A);
@@ -643,7 +718,7 @@ double NESuperCluster::getProductionFlux() {
 	return flux;
 }
 
-double NESuperCluster::getCombinationFlux() {
+double NESuperCluster::getCombinationFlux(int xi) {
 	// Local declarations
 	double flux = 0.0, value = 0.0;
 	NECluster *combiningCluster = nullptr;
@@ -656,7 +731,7 @@ double NESuperCluster::getCombinationFlux() {
 		double l0A = combiningCluster->getConcentration();
 		double l1A = combiningCluster->getMoment();
 		// Update the flux
-		value = *((*it).kConstant) / (double) nTot;
+		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		flux += value
 				* ((*it).a000 * l0A * l0 + (*it).a100 * l0A * l1
 						+ (*it).a010 * l1A * l0 + (*it).a110 * l1A * l1);
@@ -669,22 +744,22 @@ double NESuperCluster::getCombinationFlux() {
 	return flux;
 }
 
-void NESuperCluster::getPartialDerivatives(
-		std::vector<double> & partials) const {
+void NESuperCluster::getPartialDerivatives(std::vector<double> & partials,
+		int i) const {
 	// Reinitialize the moment partial derivatives vector
 	std::fill(xeMomentPartials.begin(), xeMomentPartials.end(), 0.0);
 
 	// Get the partial derivatives for each reaction type
-	getProductionPartialDerivatives(partials);
-	getCombinationPartialDerivatives(partials);
-	getDissociationPartialDerivatives(partials);
-	getEmissionPartialDerivatives(partials);
+	getProductionPartialDerivatives(partials, i);
+	getCombinationPartialDerivatives(partials, i);
+	getDissociationPartialDerivatives(partials, i);
+	getEmissionPartialDerivatives(partials, i);
 
 	return;
 }
 
 void NESuperCluster::getProductionPartialDerivatives(
-		std::vector<double> & partials) const {
+		std::vector<double> & partials, int xi) const {
 	// Initial declarations
 	double value = 0.0;
 	int index = 0;
@@ -709,32 +784,27 @@ void NESuperCluster::getProductionPartialDerivatives(
 		double l1B = secondReactant->getMoment();
 
 		// Compute the contribution from the first part of the reacting pair
-		value = *((*it).kConstant) / (double) nTot;
-
+		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		index = firstReactant->getId() - 1;
 		partials[index] += value * ((*it).a000 * l0B + (*it).a010 * l1B);
-		xeMomentPartials[index] += value
-				* ((*it).a001 * l0B + (*it).a011 * l1B);
+		xeMomentPartials[index] += value * ((*it).a001 * l0B + (*it).a011 * l1B);
 		index = firstReactant->getMomentId() - 1;
 		partials[index] += value * ((*it).a100 * l0B + (*it).a110 * l1B);
-		xeMomentPartials[index] += value
-				* ((*it).a101 * l0B + (*it).a111 * l1B);
+		xeMomentPartials[index] += value * ((*it).a101 * l0B + (*it).a111 * l1B);
 		// Compute the contribution from the second part of the reacting pair
 		index = secondReactant->getId() - 1;
 		partials[index] += value * ((*it).a000 * l0A + (*it).a100 * l1A);
-		xeMomentPartials[index] += value
-				* ((*it).a001 * l0A + (*it).a101 * l1A);
+		xeMomentPartials[index] += value * ((*it).a001 * l0A + (*it).a101 * l1A);
 		index = secondReactant->getMomentId() - 1;
 		partials[index] += value * ((*it).a010 * l0A + (*it).a110 * l1A);
-		xeMomentPartials[index] += value
-				* ((*it).a011 * l0A + (*it).a111 * l1A);
+		xeMomentPartials[index] += value * ((*it).a011 * l0A + (*it).a111 * l1A);
 	}
 
 	return;
 }
 
 void NESuperCluster::getCombinationPartialDerivatives(
-		std::vector<double> & partials) const {
+		std::vector<double> & partials, int xi) const {
 	// Initial declarations
 	int index = 0;
 	NECluster *cluster = nullptr;
@@ -757,7 +827,7 @@ void NESuperCluster::getCombinationPartialDerivatives(
 		double l1A = cluster->getMoment();
 
 		// Compute the contribution from the combining cluster
-		value = *((*it).kConstant) / (double) nTot;
+		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		index = cluster->getId() - 1;
 		partials[index] -= value * ((*it).a000 * l0 + (*it).a100 * l1);
 		xeMomentPartials[index] -= value * ((*it).a001 * l0 + (*it).a101 * l1);
@@ -767,19 +837,17 @@ void NESuperCluster::getCombinationPartialDerivatives(
 		// Compute the contribution from this cluster
 		index = id - 1;
 		partials[index] -= value * ((*it).a000 * l0A + (*it).a010 * l1A);
-		xeMomentPartials[index] -= value
-				* ((*it).a001 * l0A + (*it).a011 * l1A);
-		index = momId - 1;
+		xeMomentPartials[index] -= value * ((*it).a001 * l0A + (*it).a011 * l1A);
+		index = momId[0] - 1;
 		partials[index] -= value * ((*it).a100 * l0A + (*it).a110 * l1A);
-		xeMomentPartials[index] -= value
-				* ((*it).a101 * l0A + (*it).a111 * l1A);
+		xeMomentPartials[index] -= value * ((*it).a101 * l0A + (*it).a111 * l1A);
 	}
 
 	return;
 }
 
 void NESuperCluster::getDissociationPartialDerivatives(
-		std::vector<double> & partials) const {
+		std::vector<double> & partials, int xi) const {
 	// Initial declarations
 	int index = 0;
 	NECluster *cluster = nullptr;
@@ -799,7 +867,7 @@ void NESuperCluster::getDissociationPartialDerivatives(
 		cluster = (*it).first;
 
 		// Compute the contribution from the dissociating cluster
-		value = *((*it).kConstant) / (double) nTot;
+		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		index = cluster->getId() - 1;
 		partials[index] += value * ((*it).a00);
 		xeMomentPartials[index] += value * ((*it).a01);
@@ -812,7 +880,7 @@ void NESuperCluster::getDissociationPartialDerivatives(
 }
 
 void NESuperCluster::getEmissionPartialDerivatives(
-		std::vector<double> & partials) const {
+		std::vector<double> & partials, int xi) const {
 	// Initial declarations
 	int index = 0;
 	double value = 0.0;
@@ -827,11 +895,11 @@ void NESuperCluster::getEmissionPartialDerivatives(
 	// Loop over all the emission pairs
 	for (auto it = effEmissionList.begin(); it != effEmissionList.end(); ++it) {
 		// Compute the contribution from the dissociating cluster
-		value = *((*it).kConstant) / (double) nTot;
+		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		index = id - 1;
 		partials[index] -= value * ((*it).a00);
 		xeMomentPartials[index] -= value * ((*it).a01);
-		index = momId - 1;
+		index = momId[0] - 1;
 		partials[index] -= value * ((*it).a10);
 		xeMomentPartials[index] -= value * ((*it).a11);
 	}
@@ -848,4 +916,103 @@ void NESuperCluster::getMomentPartialDerivatives(
 	}
 
 	return;
+}
+
+std::vector<std::vector<double> > NESuperCluster::getProdVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the reacting pairs
+	std::for_each(effReactingList.begin(), effReactingList.end(),
+			[&toReturn](SuperClusterProductionPair const& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first->getId() - 1);
+				tempVec.push_back(currPair.second->getId() - 1);
+				tempVec.push_back(currPair.a000);
+				tempVec.push_back(currPair.a001);
+				tempVec.push_back(currPair.a100);
+				tempVec.push_back(currPair.a101);
+				tempVec.push_back(currPair.a010);
+				tempVec.push_back(currPair.a011);
+				tempVec.push_back(currPair.a110);
+				tempVec.push_back(currPair.a111);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > NESuperCluster::getCombVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the combining reactants
+	std::for_each(effCombiningList.begin(), effCombiningList.end(),
+			[&toReturn](SuperClusterProductionPair const& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first->getId() - 1);
+				tempVec.push_back(currPair.a000);
+				tempVec.push_back(currPair.a001);
+				tempVec.push_back(currPair.a100);
+				tempVec.push_back(currPair.a101);
+				tempVec.push_back(currPair.a010);
+				tempVec.push_back(currPair.a011);
+				tempVec.push_back(currPair.a110);
+				tempVec.push_back(currPair.a111);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > NESuperCluster::getDissoVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the dissociating pairs
+	std::for_each(effDissociatingList.begin(), effDissociatingList.end(),
+			[&toReturn](SuperClusterDissociationPair const& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first->getId() - 1);
+				tempVec.push_back(currPair.second->getId() - 1);
+				tempVec.push_back(currPair.a00);
+				tempVec.push_back(currPair.a01);
+				tempVec.push_back(currPair.a10);
+				tempVec.push_back(currPair.a11);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
+}
+
+std::vector<std::vector<double> > NESuperCluster::getEmitVector() const {
+	// Initial declarations
+	std::vector<std::vector<double> > toReturn;
+
+	// Loop on the emitting pairs
+	std::for_each(effEmissionList.begin(), effEmissionList.end(),
+			[&toReturn](SuperClusterDissociationPair const& currPair) {
+				// Build the vector containing ids and rates
+				std::vector<double> tempVec;
+				tempVec.push_back(currPair.first->getId() - 1);
+				tempVec.push_back(currPair.second->getId() - 1);
+				tempVec.push_back(currPair.a00);
+				tempVec.push_back(currPair.a01);
+				tempVec.push_back(currPair.a10);
+				tempVec.push_back(currPair.a11);
+
+				// Add it to the main vector
+				toReturn.push_back(tempVec);
+			});
+
+	return toReturn;
 }

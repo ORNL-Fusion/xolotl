@@ -13,14 +13,15 @@ namespace xolotlFactory {
  * @param options Options for the program
  * @return True if the solver handler was created successfully.
  */
-bool initializeDimension(xolotlCore::Options &options);
+bool initializeDimension(const xolotlCore::Options &options,
+		xolotlCore::IReactionNetwork& network);
 
 /**
  * Access the created solver handler.
  *
- *  @return A pointer to the solver handler.
+ *  @return The solver handler.
  */
-std::shared_ptr<xolotlSolver::ISolverHandler> getSolverHandler();
+xolotlSolver::ISolverHandler& getSolverHandler();
 
 }
 

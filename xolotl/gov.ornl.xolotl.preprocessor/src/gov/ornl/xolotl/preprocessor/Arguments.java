@@ -58,6 +58,54 @@ public interface Arguments {
 	int getMaxXeSize();
 
 	/**
+	 * This Option annotation corresponds to the '--maxDSize' option which
+	 * defines a default value of 0 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maximum size of a deuterium cluster in
+	 *            the network if this option is not specified via the command
+	 *            line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "0", description = "The maximum size of a deterium cluster in the network "
+			+ "satisfying the condition 0 <= maxDSize. (default = 0)")
+	/**
+	 * This operation produces the required command line option '--maxDSize'
+	 * which takes a single integer value and is defined by the previous Option
+	 * annotation
+	 * 
+	 * @return The maximum size of a helium cluster in the network satisfying
+	 *         the condition 0 <= maxDSize
+	 */
+	int getMaxDSize();
+
+	/**
+	 * This Option annotation corresponds to the '--maxTSize' option which
+	 * defines a default value of 0 and additionally provides a brief
+	 * description of this option.
+	 * 
+	 * @param defaultValue
+	 *            The default value for the maximum size of a tritium cluster in
+	 *            the network if this option is not specified via the command
+	 *            line
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(defaultValue = "0", description = "The maximum size of a tritium cluster in the network "
+			+ "satisfying the condition 0 <= maxTSize. (default = 0)")
+	/**
+	 * This operation produces the required command line option '--maxTSize'
+	 * which takes a single integer value and is defined by the previous Option
+	 * annotation
+	 * 
+	 * @return The maximum size of a tritium cluster in the network satisfying
+	 *         the condition 0 <= maxTSize
+	 */
+	int getMaxTSize();
+
+	/**
 	 * This Option annotation corresponds to the '--maxVSize' option which
 	 * defines a default value of 29 and additionally provides a brief
 	 * description of this option.
@@ -199,7 +247,7 @@ public interface Arguments {
 	 *            Brief description of this option
 	 */
 	@Option(defaultValue = "-ts_final_time 1.0 -ts_dt 1.0e-12 "
-			+ "-ts_max_steps 100 -ts_adapt_dt_max 1.0e-6 -ts_max_snes_failures 200 "
+			+ "-ts_max_steps 100 -ts_adapt_dt_max 1.0e-6 -ts_adapt_wnormtype INFINITY -ts_max_snes_failures 200 "
 			+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type sor "
 			+ "-fieldsplit_1_pc_type redundant -ts_monitor -ts_exact_final_time stepover", description = "List of arguments to be passed to PETSc")
 	/**
@@ -392,7 +440,7 @@ public interface Arguments {
 	 * @param description
 	 *            Brief description of this option
 	 */
-	@Option(defaultValue = "W100", description = "{W100, W110, W111, W211, Fuel} "
+	@Option(defaultValue = "W100", description = "{W100, W110, W111, W211, Fuel, TRIDYN, Fe} "
 			+ "The option declaring which material will be used "
 			+ "(W is for tungsten and the numbers correspond to the surface orientation)")
 	/**
@@ -471,6 +519,32 @@ public interface Arguments {
 	 *         not
 	 */
 	boolean isTempFile();
+
+	/**
+	 * This Option annotation corresponds to the optional '--heat' option and
+	 * provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "<surfaceTemp> <bulkTemp> Two temperatures are given " + "to then solve the heat equation")
+	/**
+	 * This operation produces the optional command line option '--heat' which
+	 * takes a single string value and is defined by the previous Option
+	 * annotation. NOTE: This option should only be used when the user wishes to
+	 * use heat equation in Xolotl.
+	 * 
+	 * @return The string of temperatures
+	 */
+	String getHeat();
+
+	/**
+	 * This operation makes the command line option '--heat' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isHeat();
 
 	/**
 	 * This Option annotation corresponds to the optional '--fluxFile' option
@@ -633,8 +707,8 @@ public interface Arguments {
 	boolean isGrain();
 
 	/**
-	 * This Option annotation corresponds to the optional '--sputter' option
-	 * and provides a brief description of the option.
+	 * This Option annotation corresponds to the optional '--sputter' option and
+	 * provides a brief description of the option.
 	 * 
 	 * @param description
 	 *            Brief description of this option
@@ -674,6 +748,32 @@ public interface Arguments {
 	 *         not
 	 */
 	boolean isNetParam();
+
+	/**
+	 * This Option annotation corresponds to the optional '--burstingDepth' option and
+	 * provides a brief description of the option.
+	 * 
+	 * @param description
+	 *            Brief description of this option
+	 */
+	@Option(description = "The bursting depth parameter (in nm) that will be used.")
+
+	/**
+	 * This operation produces the optional command line option '--burstingDepth'
+	 * which takes a single string value and is defined by the previous Option
+	 * annotation
+	 * 
+	 * @return The bursting depth parameter
+	 */
+	String getBurstingDepth();
+
+	/**
+	 * This operation makes the command line option '--burstingDepth' optional.
+	 * 
+	 * @return Returns true if the option has been specified and false if it has
+	 *         not
+	 */
+	boolean isBurstingDepth();
 
 	/**
 	 * This produces the command line arguments '--help' or '-h' either of which

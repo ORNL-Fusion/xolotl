@@ -40,7 +40,7 @@ public:
 	 * @param options The options.
 	 * @param registry The performance registry.
 	 */
-	void initializeReactionNetwork(xolotlCore::Options &options,
+	void initializeReactionNetwork(const xolotlCore::Options &options,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
 		// Get the current process ID
 		int procId;
@@ -61,7 +61,10 @@ public:
 		if (!map["reaction"])
 			theNetworkLoaderHandler->setDummyReactions();
 		// Load the network
-		theNetworkHandler = theNetworkLoaderHandler->generate(options);
+		if (options.useHDF5())
+			theNetworkHandler = theNetworkLoaderHandler->load(options);
+		else
+			theNetworkHandler = theNetworkLoaderHandler->generate(options);
 
 		if (procId == 0) {
 			std::cout << "\nFactory Message: "
@@ -84,8 +87,8 @@ public:
 	 *
 	 * @return The network.
 	 */
-	std::shared_ptr<xolotlCore::IReactionNetwork> getNetworkHandler() const {
-		return theNetworkHandler;
+	xolotlCore::IReactionNetwork& getNetworkHandler() const {
+		return *theNetworkHandler;
 	}
 
 };

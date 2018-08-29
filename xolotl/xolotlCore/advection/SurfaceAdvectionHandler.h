@@ -16,15 +16,18 @@ class SurfaceAdvectionHandler: public AdvectionHandler {
 private:
 
 	//! The vector to know which clusters are moving where
-	std::vector < std::vector < std::vector < std::vector <bool> > > > advectionGrid;
+	std::vector<std::vector<std::vector<std::vector<bool> > > > advectionGrid;
 
 public:
 
 	//! The Constructor
-	SurfaceAdvectionHandler() {}
+	SurfaceAdvectionHandler() :
+			AdvectionHandler() {
+	}
 
 	//! The Destructor
-	~SurfaceAdvectionHandler() {}
+	~SurfaceAdvectionHandler() {
+	}
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the number of advecting
@@ -32,9 +35,10 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void initializeAdvectionGrid(std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid,
-			int ny = 1, double hy = 0.0, int nz = 1, double hz = 0.0);
+	void initializeAdvectionGrid(
+			std::vector<IAdvectionHandler *> advectionHandlers,
+			std::vector<double> grid, int ny = 1, double hy = 0.0, int nz = 1,
+			double hz = 0.0) override;
 
 	/**
 	 * Compute the flux due to the advection for all the helium clusters,
@@ -49,10 +53,10 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computeAdvection(IReactionNetwork *network,
-			std::vector<double> &pos, double **concVector, double *updatedConcOffset,
-			double hxLeft, double hxRight, int ix,
-			double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0);
+	void computeAdvection(const IReactionNetwork& network, const Point<3>& pos,
+			double **concVector, double *updatedConcOffset, double hxLeft,
+			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
+			double hz = 0.0, int iz = 0) const override;
 
 	/**
 	 * Compute the partials due to the advection of all the helium clusters given
@@ -70,10 +74,10 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computePartialsForAdvection(IReactionNetwork *network,
-			double *val, int *indices, std::vector<double> &pos,
-			double hxLeft, double hxRight, int ix,
-			double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0);
+	void computePartialsForAdvection(const IReactionNetwork& network,
+			double *val, int *indices, const Point<3>& pos, double hxLeft,
+			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
+			double hz = 0.0, int iz = 0) const override;
 
 	/**
 	 * Compute the indices that will determine where the partial derivatives will
@@ -88,14 +92,21 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	std::vector<int> getStencilForAdvection(std::vector<double> &pos);
+	std::array<int, 3> getStencilForAdvection(const Point<3>& pos) const
+			override {
+		// Always return (1, 0, 0)
+		return {1, 0, 0};
+	}
 
 	/**
 	 * Check whether the grid point is located on the sink surface or not.
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	bool isPointOnSink(std::vector<double> &pos);
+	bool isPointOnSink(const Point<3>& pos) const override {
+		// Always return false
+		return false;
+	}
 
 };
 //end class SurfaceAdvectionHandler

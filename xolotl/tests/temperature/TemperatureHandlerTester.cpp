@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <TemperatureHandler.h>
 
 using namespace std;
@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	// Create a time
 	double currTime = 1.0;
 
-	std::vector<double> x = {1.0, 0.0, 0.0};
+	Point<3> x { 1.0, 0.0, 0.0 };
 
 	// Check the temperature
 	double temp = testTemp->getTemperature(x, currTime);

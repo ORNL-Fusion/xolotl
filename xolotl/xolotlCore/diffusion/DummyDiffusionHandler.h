@@ -15,10 +15,12 @@ class DummyDiffusionHandler: public DiffusionHandler {
 public:
 
 	//! The Constructor
-	DummyDiffusionHandler() {}
+	DummyDiffusionHandler() {
+	}
 
 	//! The Destructor
-	~DummyDiffusionHandler() {}
+	~DummyDiffusionHandler() {
+	}
 
 	/**
 	 * Initialize the off-diagonal part of the Jacobian. If this step is skipped it
@@ -28,12 +30,12 @@ public:
 	 * is added to the vector.
 	 *
 	 * @param network The network
-	 * @param ofill The pointer to the array that will contain the value 1 at the indices
-	 * of the diffusing clusters
+	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	void initializeOFill(IReactionNetwork *network, int *ofill) {
+	void initializeOFill(const IReactionNetwork& network,
+			IReactionNetwork::SparseFillMap& ofillMap) override {
 		// Clear the index vector
-		indexVector.clear();
+		diffusingClusters.clear();
 
 		// And don't do anything else
 		return;
@@ -50,9 +52,10 @@ public:
 	 * @param nz The number of grid points in the Z direction
 	 * @param hz The step size in the Z direction
 	 */
-	void initializeDiffusionGrid(std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid,
-			int ny = 0, double hy = 0.0, int nz = 0, double hz = 0.0) {
+	void initializeDiffusionGrid(
+			std::vector<IAdvectionHandler *> advectionHandlers,
+			std::vector<double> grid, int ny = 0, double hy = 0.0, int nz = 0,
+			double hz = 0.0) override {
 		// Don't do anything
 		return;
 	}
@@ -72,15 +75,18 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction (a)
 	 * @param hxRight The step size on the right side of the point in the x direction (b)
 	 * @param ix The position on the x grid
+	 * @param xs The beginning of the grid on this process
 	 * @param sy The space parameter, depending on the grid step size in the y direction
 	 * @param iy The position on the y grid
 	 * @param sz The space parameter, depending on the grid step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	void computeDiffusion(IReactionNetwork *network,
-			double **concVector, double *updatedConcOffset,
-			double hxLeft, double hxRight, int ix,
-			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) {return;}
+	void computeDiffusion(const IReactionNetwork& network, double **concVector,
+			double *updatedConcOffset, double hxLeft, double hxRight, int ix,
+			int xs, double sy = 0.0, int iy = 0, double sz = 0.0,
+			int iz = 0) const override {
+		return;
+	}
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters given
@@ -97,14 +103,18 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction (a)
 	 * @param hxRight The step size on the right side of the point in the x direction (b)
 	 * @param ix The position on the x grid
+	 * @param xs The beginning of the grid on this process
 	 * @param sy The space parameter, depending on the grid step size in the y direction
 	 * @param iy The position on the y grid
 	 * @param sz The space parameter, depending on the grid step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	void computePartialsForDiffusion(IReactionNetwork *network,
+	void computePartialsForDiffusion(const IReactionNetwork& network,
 			double *val, int *indices, double hxLeft, double hxRight, int ix,
-			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) {return;}
+			int xs, double sy = 0.0, int iy = 0, double sz = 0.0,
+			int iz = 0) const override {
+		return;
+	}
 
 };
 //end class DummyDiffusionHandler

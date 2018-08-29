@@ -27,7 +27,7 @@ public:
 	 *
 	 * @param options The Xolotl options.
 	 */
-	virtual void initializeMaterial(xolotlCore::Options &options) = 0;
+	virtual void initializeMaterial(const xolotlCore::Options &options) = 0;
 
 	/**
 	 * Return the flux handler.

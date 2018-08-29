@@ -4,37 +4,32 @@
 // Includes
 #include <vector>
 #include <string>
+#include <ReactantType.h>
 
 namespace xolotlCore {
 
 class forwardReaction {
 private:
-  std::string
-    reactant1,
-    reactant2;
-  std::vector<std::string>
-    products;
+	ReactantType reactant1, reactant2;
+	std::vector<ReactantType> products;
 public:
-  forwardReaction (std::string, std::string);
-  void addProduct (std::string);
-  std::string getFirstReactant () const;
-  std::string getSecondReactant () const;
-  std::vector<std::string> getProducts () const;
+	forwardReaction(ReactantType, ReactantType);
+	void addProduct(ReactantType);
+	ReactantType getFirstReactant() const;
+	ReactantType getSecondReactant() const;
+	std::vector<ReactantType> getProducts() const;
 };
 
 class backwardReaction {
 private:
-  std::string
-    parent,
-    monomer;
-  std::vector<std::string>
-    products;
+	ReactantType parent, monomer;
+	std::vector<ReactantType> products;
 public:
-  backwardReaction (std::string, std::string);
-  void addProduct (std::string);
-  std::string getParent () const;
-  std::string getMonomer () const;
-  std::vector<std::string> getProducts () const;
+	backwardReaction(ReactantType, ReactantType);
+	void addProduct(ReactantType);
+	ReactantType getParent() const;
+	ReactantType getMonomer() const;
+	std::vector<ReactantType> getProducts() const;
 };
 
 } /* end namespace xolotlCore */

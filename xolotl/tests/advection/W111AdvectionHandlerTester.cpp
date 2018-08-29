@@ -1,12 +1,15 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <W111AdvectionHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
+#include <Options.h>
 #include <DummyHandlerRegistry.h>
 #include <mpi.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -25,49 +28,59 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	char **argv;
 	MPI_Init(&argc, &argv);
 
+	// Create the option to create a network
+	xolotlCore::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 1 0" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	argv = new char*[2];
+	std::string parameterFile = "param.txt";
+	argv[0] = new char[parameterFile.length() + 1];
+	strcpy(argv[0], parameterFile.c_str());
+	argv[1] = 0; // null-terminate the array
+	opts.readParams(argv);
+
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-
-	// Load the network
-	auto network = loader.load().get();
+	// Create the network
+	auto network = loader.generate(opts);
 	// Get its size
 	const int dof = network->getDOF();
+	// Initialize the rates
+	network->addGridPoints(1);
 
 	// Create a grid
 	std::vector<double> grid;
-	for (int l = 0; l < 3; l++) {
+	for (int l = 0; l < 5; l++) {
 		grid.push_back((double) l);
 	}
 
 	// Create ofill
-	int mat[dof * dof];
-	int *ofill = &mat[0];
+	xolotlCore::IReactionNetwork::SparseFillMap ofill;
 
 	// Create a collection of advection handlers
 	std::vector<IAdvectionHandler *> advectionHandlers;
 
 	// Create the advection handler and initialize it
 	W111AdvectionHandler advectionHandler;
-	advectionHandler.initialize(network, ofill);
+	advectionHandler.initialize(*network, ofill);
 	advectionHandler.initializeAdvectionGrid(advectionHandlers, grid);
 
 	// Check the total number of advecting clusters
-	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 6);
+	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 7);
 
 	// Check the clusters in ofill
-	BOOST_REQUIRE_EQUAL(ofill[0], 1);
-	BOOST_REQUIRE_EQUAL(ofill[10], 1);
-	BOOST_REQUIRE_EQUAL(ofill[20], 1);
-	BOOST_REQUIRE_EQUAL(ofill[30], 1);
-	BOOST_REQUIRE_EQUAL(ofill[40], 1);
-	BOOST_REQUIRE_EQUAL(ofill[50], 1);
+	BOOST_REQUIRE_EQUAL(ofill[0][0], 0);
+	BOOST_REQUIRE_EQUAL(ofill[1][0], 1);
+	BOOST_REQUIRE_EQUAL(ofill[2][0], 2);
+	BOOST_REQUIRE_EQUAL(ofill[3][0], 3);
+	BOOST_REQUIRE_EQUAL(ofill[4][0], 4);
+	BOOST_REQUIRE_EQUAL(ofill[5][0], 5);
+	BOOST_REQUIRE_EQUAL(ofill[6][0], 6);
 
 	// Set the size parameter in the x direction
 	double hx = 1.0;
@@ -83,11 +96,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	auto reactants = network->getAll();
-	for (int i = 0; i < dof; i++) {
-		auto cluster = (PSICluster *) reactants->at(i);
-		cluster->setTemperature(1000.0);
-	}
+	network->setTemperature(1000.0, 0);
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -104,20 +113,20 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	concVector[2] = conc + 2 * dof; // right
 
 	// Set the grid position
-	std::vector<double> gridPosition = { hx, 0.0, 0.0 };
+	Point<3> gridPosition { hx, 0.0, 0.0 };
 
 	// Compute the advection at this grid point
-	advectionHandler.computeAdvection(network, gridPosition, concVector,
-			updatedConcOffset, hx, hx, 1);
+	advectionHandler.computeAdvection(*network, gridPosition, concVector,
+			updatedConcOffset, hx, hx, 1, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -4.95238e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -5.42093e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -6.92017e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -6.65778e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -2.66416e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -9.09579e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -2.20717e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -2.13468e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -2.45810e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -2.16673e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -8.04049e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -2.57034e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -6.89871e+09, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not advect
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // Does not advect
 
@@ -130,8 +139,8 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	double *valPointer = &val[0];
 
 	// Compute the partial derivatives for the advection a the grid point 1
-	advectionHandler.computePartialsForAdvection(network, valPointer,
-			indicesPointer, gridPosition, hx, hx, 1);
+	advectionHandler.computePartialsForAdvection(*network, valPointer,
+			indicesPointer, gridPosition, hx, hx, 1, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 0);
@@ -140,6 +149,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	BOOST_REQUIRE_EQUAL(indices[3], 3);
 	BOOST_REQUIRE_EQUAL(indices[4], 4);
 	BOOST_REQUIRE_EQUAL(indices[5], 5);
+	BOOST_REQUIRE_EQUAL(indices[6], 6);
 
 	// Check values
 	BOOST_REQUIRE_CLOSE(val[0], -815207266.0, 0.01);
@@ -154,6 +164,10 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	BOOST_REQUIRE_EQUAL(stencil[0], 1); //x
 	BOOST_REQUIRE_EQUAL(stencil[1], 0);
 	BOOST_REQUIRE_EQUAL(stencil[2], 0);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();

@@ -5,77 +5,97 @@
 #include <vector>
 #include "PSIClusterReactionNetwork.h"
 #include <xolotlPerf.h>
-#include <HDF5Utils.h>
+#include "xolotlCore/io/XFile.h"
 
-using namespace xolotlCore;
+namespace xolotlCore {
 
-std::shared_ptr<IReactionNetwork> HDF5NetworkLoader::load() {
+std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
+		const IOptions& options) {
 	// Get the dataset from the HDF5 files
-	auto networkVector = xolotlCore::HDF5Utils::readNetwork(fileName);
+	int normalSize = 0, superSize = 0;
+	XFile networkFile(fileName);
+	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
+	assert(networkGroup);
+	auto list = networkGroup->readNetworkSize(normalSize, superSize);
 
 	// Initialization
-	int numHe = 0, numV = 0, numI = 0;
+	int numHe = 0, numV = 0, numI = 0, numD = 0, numT = 0;
 	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
-	std::vector<std::shared_ptr<Reactant> > reactants;
+	std::vector < std::reference_wrapper<Reactant> > reactants;
 
 	// Prepare the network
-	std::shared_ptr<PSIClusterReactionNetwork> network = std::make_shared<
-			PSIClusterReactionNetwork>(handlerRegistry);
+	std::unique_ptr < PSIClusterReactionNetwork
+			> network(new PSIClusterReactionNetwork(handlerRegistry));
 
-	// Loop on the networkVector
-	for (auto lineIt = networkVector.begin(); lineIt != networkVector.end();
-			lineIt++) {
-		// Composition of the cluster
-		numHe = (int) (*lineIt)[0];
-		numV = (int) (*lineIt)[1];
-		numI = (int) (*lineIt)[2];
-		// Create the cluster
-		auto nextCluster = createPSICluster(numHe, numV, numI);
+	// Loop on the clusters
+	for (int i = 0; i < normalSize + superSize; i++) {
+		// Open the cluster group
+		XFile::ClusterGroup clusterGroup(*networkGroup, i);
 
-		// Energies
-		formationEnergy = (*lineIt)[3];
-		migrationEnergy = (*lineIt)[4];
-		diffusionFactor = (*lineIt)[5];
+		if (i < normalSize) {
+			// Normal cluster
+			// Read the composition
+			auto comp = clusterGroup.readCluster(formationEnergy,
+					migrationEnergy, diffusionFactor);
+			numHe = comp[toCompIdx(Species::He)];
+			numD = comp[toCompIdx(Species::D)];
+			numT = comp[toCompIdx(Species::T)];
+			numV = comp[toCompIdx(Species::V)];
+			numI = comp[toCompIdx(Species::I)];
 
-		// Set the formation energy
-		nextCluster->setFormationEnergy(formationEnergy);
-		// Set the diffusion factor and migration energy
-		nextCluster->setMigrationEnergy(migrationEnergy);
-		nextCluster->setDiffusionFactor(diffusionFactor);
+			// Create the cluster
+			auto nextCluster = createPSICluster(numHe, numD, numT, numV, numI,
+					*network);
 
-		// Check if we want dummy reactions
-		if (dummyReactions) {
-			// Create a dummy cluster (Reactant) from the existing cluster
-			auto dummyCluster = std::static_pointer_cast<Reactant>(
-					nextCluster->Reactant::clone());
-			// Add the cluster to the network
-			network->add(dummyCluster);
-			// Add it to the list so that we can set the network later
-			reactants.push_back(dummyCluster);
+			// Set the formation energy
+			nextCluster->setFormationEnergy(formationEnergy);
+			// Set the diffusion factor and migration energy
+			nextCluster->setMigrationEnergy(migrationEnergy);
+			nextCluster->setDiffusionFactor(diffusionFactor);
+
+			// Save it in the network
+			pushPSICluster(network, reactants, nextCluster);
 		} else {
-			// Add the cluster to the network
-			network->add(nextCluster);
-			// Add it to the list so that we can set the network later
-			reactants.push_back(nextCluster);
+			// Super cluster
+			auto list = clusterGroup.readPSISuperCluster();
+
+			// Create the cluster
+			auto nextCluster = createPSISuperCluster(list, *network);
+
+			// Save it in the network
+			pushPSICluster(network, reactants, nextCluster);
 		}
 	}
 
-	// Set the reaction network for each reactant
-	for (auto reactantsIt = reactants.begin(); reactantsIt != reactants.end();
-			++reactantsIt) {
-		(*reactantsIt)->setReactionNetwork(network);
+	// Ask reactants to update now that they are in network.
+	for (IReactant& currReactant : reactants) {
+		currReactant.updateFromNetwork();
 	}
 
-	// Create the reactions
-	network->createReactionConnectivity();
+	// Define the phase space for the network
+	int nDim = 1;
+	// Loop on the list for the phase space
+	for (int i = 1; i < 5; i++)
+		if (list[i] > 0)
+			nDim++;
 
-	// Check if we want dummy reactions
-	if (!dummyReactions) {
-		// Apply sectional grouping
-		applySectionalGrouping(network);
-	}
+	// Now that all the clusters are created
+	// Give the information on the phase space to the network
+	network->setPhaseSpace(nDim, list);
 
-	return network;
+	// Set the reactions
+	networkGroup->readReactions(*network);
+
+	// Recompute Ids and network size
+	network->reinitializeNetwork();
+
+	// Need to use move() because return type uses smart pointer to base class,
+	// not derived class that we created.
+	// Some C++11 compilers accept it without the move, but apparently
+	// that is not correct behavior until C++14.
+	return std::move(network);
 }
+
+} // namespace xolotlCore
 

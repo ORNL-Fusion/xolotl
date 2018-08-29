@@ -59,9 +59,12 @@ protected:
 	 * The vector containing the indices of the bubbles created through modified
 	 * trap-mutation for each grid point. The difference between this vector and depthVec
 	 * is that this one is used for the actual computation whereas the other one is
-	 * defined by the user. indexVector is created with the depthVec information.
+	 * defined by the user. tmBubbles is created with the depthVec information.
 	 */
-	std::vector<std::vector<std::vector<std::vector<int> > > > indexVector;
+	using ReactantRefVector1D = std::vector<IReactant::RefVector>;
+	using ReactantRefVector2D = std::vector<ReactantRefVector1D>;
+	using ReactantRefVector3D = std::vector<ReactantRefVector2D>;
+	ReactantRefVector3D tmBubbles;
 
 	/**
 	 * The desorption information
@@ -105,7 +108,7 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initialize(IReactionNetwork *network, std::vector<double> grid,
+	void initialize(const IReactionNetwork& network, std::vector<double> grid,
 			int ny = 0, double hy = 0.0, int nz = 0, double hz = 0.0);
 
 	/**
@@ -115,7 +118,7 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initializeIndex1D(int surfacePos, IReactionNetwork *network,
+	void initializeIndex1D(int surfacePos, const IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid);
 
@@ -127,7 +130,7 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	void initializeIndex2D(std::vector<int> surfacePos,
-			IReactionNetwork *network,
+			const IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int ny, double hy);
 
@@ -139,7 +142,7 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-			IReactionNetwork *network,
+			const IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int ny, double hy, int nz, double hz);
 
@@ -150,7 +153,7 @@ public:
 	 *
 	 * @param network The network
 	 */
-	void updateTrapMutationRate(IReactionNetwork *network);
+	void updateTrapMutationRate(const IReactionNetwork& network);
 
 	/**
 	 * This method set the boolean to remember if we want attenuation or not.
@@ -178,8 +181,9 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void computeTrapMutation(IReactionNetwork *network, double *concOffset,
-			double *updatedConcOffset, int xi, int yj = 0, int zk = 0);
+	void computeTrapMutation(const IReactionNetwork& network,
+			double *concOffset, double *updatedConcOffset, int xi, int xs,
+			int yj = 0, int zk = 0);
 
 	/**
 	 * Compute the partials due to the modified trap-mutation for all the
@@ -194,8 +198,17 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	int computePartialsForTrapMutation(IReactionNetwork *network, double *val,
-			int *indices, int xi, int yj = 0, int zk = 0);
+	int computePartialsForTrapMutation(const IReactionNetwork& network,
+			double *val, int *indices, int xi, int xs, int yj = 0, int zk = 0);
+
+	/**
+	 * Get the total number of clusters in the network that can undergo trap mutation.
+	 *
+	 * @return The number of clusters
+	 */
+	virtual int getNumberOfMutating() const {
+		return sizeVec.size();
+	}
 
 };
 //end class TrapMutationHandler

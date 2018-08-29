@@ -1,28 +1,44 @@
+# Fix cmake beahvior for CMAKE_CXX_STANDARD with clang on Mac OS X.
+# See cmake documentation on CMP0025 policy for details.
+# Must be done before doing project() command.
+if(POLICY CMP0025)
+    cmake_policy(SET CMP0025 NEW)
+endif()
+
+# Set policy so we can use some of the recent Jed Brown Find*.cmake files.
+if(POLICY CMP0057)
+    cmake_policy(SET CMP0057 NEW)
+endif()
+
 # Set a name for this project.
-PROJECT ( xolotl C CXX Java )
+PROJECT ( xolotl C CXX )
 # Set the minimum required version of cmake for this project.
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.4)
 
 # Include the modules to find PETSC, ITAPS, etc. from Jed Brown
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
 
-# Xolotl requires C++11 to use shared pointers
-INCLUDE (CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" CXX_SUPPORTS_CXX11_FLAG)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" CXX_SUPPORTS_CXX0X_FLAG)
-IF (CXX_SUPPORTS_CXX11_FLAG)
-    SET( CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-ELSEIF (CXX_SUPPORTS_CXX0X_FLAG)
-    SET( CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
-ELSE()
-    MESSAGE(FATAL_ERROR "XOLOTL requires C++11 support from C++ compiler")
-ENDIF()
+# xolotl requires some C++11 features.
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Tell CMake to look for static libraries
-SET(BUILD_SHARED_LIBS OFF)
+# SET(BUILD_SHARED_LIBS OFF)
 
 # Find PETSc
+# We need to save and restore CMAKE_REQUIRED_{INCLUDES,LIBRARIES}
+# because the FindPETSc.cmake module sets during its operation
+# but does not reset them, and the leftover state then messes with 
+# our subsequent configuration checks.
+set(SAVED_CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES})
+set(SAVED_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
 FIND_PACKAGE(PETSc REQUIRED)
+if (PETSC_FOUND)
+    include_directories(${PETSC_INCLUDES})
+    set(CMAKE_REQUIRED_INCLUDES ${SAVED_CMAKE_REQUIRED_INCLUDES})
+    set(CMAKE_REQUIRED_LIBRARIES ${SAVED_CMAKE_REQUIRED_LIBRARIES})
+endif()
 
 # Make sure that we only pull the static HDF5
 #set(HDF5_USE_STATIC_LIBRARIES yes)
@@ -38,8 +54,26 @@ INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
 # Enable testing.
 enable_testing()
 
+# Find the Boost libraries we (potentially) use.
+# Note that we only need to list Boost component libraries that have a
+# library implementation (i.e., not header only) as required components.
+FIND_PACKAGE(Boost OPTIONAL_COMPONENTS chrono timer filesystem unit_test_framework)
+IF (Boost_FOUND)
+    message(STATUS "Boost version ${Boost_VERSION} found.")
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+ENDIF()
+IF (Boost_UNIT_TEST_FRAMEWORK_FOUND)
+    message(STATUS "Tests will be built since Boost unit test framework found.")
+    add_subdirectory(tests)
+ENDIF()
+
 # Add the preprocessor first, it is independent of the other parts of the code
-add_subdirectory(gov.ornl.xolotl.preprocessor)
+# But only if Java is present
+FIND_PACKAGE(Java)
+IF (Java_FOUND)
+    message(STATUS "The preprocessor will be built since Java was found.")
+    add_subdirectory(gov.ornl.xolotl.preprocessor)
+ENDIF()
 
 # Build the performance library first, so it can be used by other libraries.
 add_subdirectory(xolotlPerf)
@@ -51,15 +85,6 @@ add_subdirectory(xolotlCore)
 add_subdirectory(xolotlFactory)
 # Keep the solver for the end (it uses everything else)
 add_subdirectory(xolotlSolver)
-
-# Add the tests is Boost is available
-FIND_PACKAGE(Boost)
-IF (Boost_FOUND)
-    message(STATUS "Boost version ${Boost_VERSION} found.")
-    message(STATUS "Tests will be built since Boost was found.")
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-    add_subdirectory(tests)
-ENDIF()
 
 # Report package information
 message(STATUS "----- Configuration Information -----")
@@ -78,32 +103,34 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}")
 include(UseDoxygen OPTIONAL)
 
 # Include directories for the main program
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/diffusion)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/temperature)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/flux)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/material)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/vizHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/temperatureHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/solverHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlFactory/reactionHandler)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlSolver)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlViz)
-include_directories(${PETSC_INCLUDES})
+include_directories(${CMAKE_SOURCE_DIR}
+                    ${CMAKE_SOURCE_DIR}/xolotlCore
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/diffusion
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/advection
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/temperature
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/flux
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/material
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/vizHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/temperatureHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/solverHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlFactory/reactionHandler
+                    ${CMAKE_SOURCE_DIR}/xolotlSolver
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf
+                    ${CMAKE_SOURCE_DIR}/xolotlViz
+                    ${CMAKE_BINARY_DIR})
 
-configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_SOURCE_DIR}/XolotlConfig.h")
+configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_BINARY_DIR}/XolotlConfig.h")
 
 # Setup the library list
 set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
 xolotlFactory xolotlCL ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
+if(Boost_FOUND)
+    set(XOLOTL_LIBS ${XOLOTL_LIBS} ${Boost_LIBRARIES})
+endif()
 
 # Add an executable for the main program
 ADD_EXECUTABLE (xolotl main.cpp)

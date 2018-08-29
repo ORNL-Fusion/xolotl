@@ -116,8 +116,8 @@ public:
 	 * @param name The object's name.
 	 * @return The object with the given name.
 	 */
-	virtual std::shared_ptr<IEventCounter> getEventCounter(
-			const std::string& name);
+	std::shared_ptr<IEventCounter> getEventCounter(
+			const std::string& name) override;
 
 	/**
 	 * Collect statistics about any performance data collected by
@@ -128,9 +128,9 @@ public:
 	 * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
 	 *
 	 */
-	virtual void collectStatistics(PerfObjStatsMap<ITimer::ValType>& timerStats,
-			PerfObjStatsMap<IEventCounter::ValType>& counterStats,
-			PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats);
+	void collectStatistics(PerfObjStatsMap<ITimer::ValType>& timerStats,
+            PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+            PerfObjStatsMap<IHardwareCounter::CounterType>& hwStats) override;
 
 	/**
 	 * Report performance data statistics to the given stream.
@@ -140,10 +140,10 @@ public:
 	 * @param counterStats Map of counter statistics, keyed by counter name.
 	 * @param hwCounterStats Map of hardware counter statistics, keyed by IHardwareCounter name + ':' + hardware counter name.
 	 */
-	virtual void reportStatistics(std::ostream& os,
-			const PerfObjStatsMap<ITimer::ValType>& timerStats,
-			const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
-			const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) const;
+	void reportStatistics(std::ostream& os,
+        const PerfObjStatsMap<ITimer::ValType>& timerStats,
+        const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+        const PerfObjStatsMap<IHardwareCounter::CounterType>& hwStats) const override;
 
 };
 

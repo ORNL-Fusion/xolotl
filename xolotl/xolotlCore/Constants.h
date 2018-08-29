@@ -6,6 +6,7 @@
  */
 
 #include <memory>
+#include <cmath>
 
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
@@ -26,39 +27,49 @@ static const double pi = 3.1415926535897932;
 static const double tungstenLatticeConstant = 0.31700000000000000;
 
 //! Lattice Parameter. Given in units here of nm.
+static const double alloyLatticeConstant = 0.36000000000000000;
+
+//! Lattice Parameter for UO2
 static const double uraniumDioxydeLatticeConstant = 0.57400000000000000;
 
-//! Lattice Parameter. Given in units here of nm.
-static const double alloyLatticeConstant = 0.36000000000000000;
+//! Lattice Parameter for Iron
+static const double ironLatticeConstant = 0.28700000000000000;
 
 //! Core radius. Given in units here of nm.
 static const double alloyCoreRadius = 0.36000000000000000;
 
-/**
- * Statically defined type names. This are used to optimize the lookup
- * calls in the maps so that new strings are not constantly created
- * dynamically. It accounts for a small but significant amount of
- * performance.
- */
-static const std::string heType = "He";
-static const std::string vType = "V";
-static const std::string iType = "I";
-static const std::string heVType = "HeV";
-static const std::string heIType = "HeI";
-static const std::string xeType = "Xe";
-static const std::string xeVType = "XeV";
-static const std::string xeIType = "XeI";
-static const std::string voidType = "Void";
-static const std::string faultedType = "Faulted";
-static const std::string frankType = "Frank";
-static const std::string perfectType = "Perfect";
-static const std::string NESuperType = "NESuper";
-static const std::string PSISuperType = "PSISuper";
-static const std::string AlloySuperType = "AlloySuper";
-static const std::string AlloyVoidSuperType = "AlloyVoidSuper";
-static const std::string AlloyFaultedSuperType = "AlloyFaultedSuper";
-static const std::string AlloyFrankSuperType = "AlloyFrankSuper";
-static const std::string AlloyPerfectSuperType = "AlloyPerfectSuper";
+// Tungsten heat coefficient = lambda / (rho * C) in nm2 s-1
+static const double tungstenHeatCoefficient = 6.835e13;
+
+// UO2 heat coefficient = lambda / (rho * C) in nm2 s-1
+static const double uo2HeatCoefficient = 0.0;
+
+// Iron heat coefficient = lambda / (rho * C) in nm2 s-1
+static const double feHeatCoefficient = 0.0;
+
+// Alloy heat coefficient = lambda / (rho * C) in nm2 s-1
+static const double alloyHeatCoefficient = 0.0;
+
+// Tungsten heat conductivity = lambda in W K-1 nm-1
+static const double tungstenHeatConductivity = 173 * 1.0e-9;
+
+// UO2 heat conductivity = lambda in W K-1 m-1
+static const double uo2HeatConductivity = 0.0;
+
+// Iron heat conductivity = lambda in W K-1 m-1
+static const double feHeatConductivity = 0.0;
+
+// Alloy heat conductivity = lambda in W K-1 m-1
+static const double alloyHeatConductivity = 0.0;
+
+//! Parameters for biased sink in the iron case
+static const double reactionRadius = ironLatticeConstant
+		* pow((3.0) / pi, (1.0 / 3.0)) * 0.5;
+static const double r0 = ironLatticeConstant * 0.75 * sqrt(3.0);
+static const double rho = 0.0003;
+static const double sinkStrength = -4.0 * pi * rho
+		/ log(pi * rho * pow(reactionRadius + r0, 2.0));
+static const double sinkBias = 1.05;
 
 } /* end namespace xolotlCore */
 #endif /* CONSTANTS_H_ */

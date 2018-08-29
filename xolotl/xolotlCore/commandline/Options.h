@@ -70,6 +70,16 @@ protected:
 	std::string tempProfileFilename;
 
 	/**
+	 * Use the heat equation set of handlers?
+	 */
+	bool heatFlag;
+
+	/**
+	 * Value for the bulk temperature.
+	 */
+	double bulkTemperature;
+
+	/**
 	 * Use the flux amplitude option?
 	 */
 	bool fluxFlag;
@@ -175,6 +185,16 @@ protected:
 	int maxImpurity;
 
 	/**
+	 * Maximum number of D
+	 */
+	int maxD;
+
+	/**
+	 * Maximum number of T
+	 */
+	int maxT;
+
+	/**
 	 * Maximum number of V
 	 */
 	int maxV;
@@ -214,6 +234,37 @@ protected:
 	 */
 	double zStepSize;
 
+	/**
+	 * The boundary condition on the left side of the X direction.
+	 */
+	int leftBoundary;
+
+	/**
+	 * The boundary condition on the right side of the X direction.
+	 */
+	int rightBoundary;
+
+	/**
+	 * Depth for the bubble bursting in nm.
+	 */
+	double burstingDepth;
+
+	/**
+	 * An explicitly-given value to use to seed the random number generator.
+	 * Only used if rngUseSeed is true.
+	 */
+	unsigned int rngSeed;
+
+	/**
+	 * Whether to use the rngSeed value to seed the random number generator.
+	 */
+	bool rngUseSeed;
+
+	/**
+	 * Whether to print the value used to seed the random number generator.
+	 */
+	bool rngPrintSeed;
+
 public:
 
 	/**
@@ -231,19 +282,19 @@ public:
 	 * xolotl options.
 	 * \see IOptions.h
 	 */
-	void readParams(char* argv[]);
+	void readParams(char* argv[]) override;
 
 	/**
 	 * Show our help message.
 	 * \see IOptions.h
 	 */
-	void showHelp(std::ostream& os) const;
+	void showHelp(std::ostream& os) const override;
 
 	/**
 	 * Should the program run after parsing the parameter file?
 	 * \see IOptions.h
 	 */
-	bool shouldRun() const {
+	bool shouldRun() const override {
 		return shouldRunFlag;
 	}
 
@@ -251,7 +302,7 @@ public:
 	 * Set the shouldRunFlag.
 	 * \see IOptions.h
 	 */
-	void setShouldRunFlag(bool flag) {
+	void setShouldRunFlag(bool flag) override {
 		shouldRunFlag = flag;
 	}
 
@@ -259,7 +310,7 @@ public:
 	 * If program shouldn't run, what should its exit code be?
 	 * \see IOptions.h
 	 */
-	int getExitCode() const {
+	int getExitCode() const override {
 		return exitCode;
 	}
 
@@ -267,7 +318,7 @@ public:
 	 * Set the value for the exit code.
 	 * \see IOptions.h
 	 */
-	void setExitCode(int code) {
+	void setExitCode(int code) override {
 		exitCode = code;
 	}
 
@@ -275,7 +326,7 @@ public:
 	 * Get the name of the network file.
 	 * \see IOptions.h
 	 */
-	std::string getNetworkFilename() const {
+	std::string getNetworkFilename() const override {
 		return networkFilename;
 	}
 
@@ -283,7 +334,7 @@ public:
 	 * Set the name of the network file.
 	 * \see IOptions.h
 	 */
-	void setNetworkFilename(const std::string& name) {
+	void setNetworkFilename(const std::string& name) override {
 		networkFilename = name;
 	}
 
@@ -291,7 +342,7 @@ public:
 	 * Get the Argc for PETSc.
 	 * \see IOptions.h
 	 */
-	int getPetscArgc() const {
+	int getPetscArgc() const override {
 		return petscArgc;
 	}
 
@@ -299,7 +350,7 @@ public:
 	 * Set the Argc for PETSc.
 	 * \see IOptions.h
 	 */
-	void setPetscArgc(int argc) {
+	void setPetscArgc(int argc) override {
 		petscArgc = argc;
 	}
 
@@ -307,7 +358,7 @@ public:
 	 * Get the Argv for PETSc.
 	 * \see IOptions.h
 	 */
-	char** getPetscArgv() const {
+	char** getPetscArgv() const override {
 		return petscArgv;
 	}
 
@@ -315,7 +366,7 @@ public:
 	 * Set the Argv for PETSc.
 	 * \see IOptions.h
 	 */
-	void setPetscArgv(char** argv) {
+	void setPetscArgv(char** argv) override {
 		petscArgv = argv;
 	}
 
@@ -323,7 +374,7 @@ public:
 	 * Should we use const temperature handlers?
 	 * \see IOptions.h
 	 */
-	bool useConstTemperatureHandlers() const {
+	bool useConstTemperatureHandlers() const override {
 		return constTempFlag;
 	}
 
@@ -331,7 +382,7 @@ public:
 	 * Set the constTempFlag.
 	 * \see IOptions.h
 	 */
-	void setConstTempFlag(bool flag) {
+	void setConstTempFlag(bool flag) override {
 		constTempFlag = flag;
 	}
 
@@ -339,7 +390,7 @@ public:
 	 * Obtain the value of the constant temperature to be used.
 	 * \see IOptions.h
 	 */
-	double getConstTemperature() const {
+	double getConstTemperature() const override {
 		return constTemperature;
 	}
 
@@ -347,7 +398,7 @@ public:
 	 * Set the constant temperature.
 	 * \see IOptions.h
 	 */
-	void setConstTemperature(double temp) {
+	void setConstTemperature(double temp) override {
 		constTemperature = temp;
 	}
 
@@ -355,7 +406,7 @@ public:
 	 * Obtain the value of the temperature gradient to be used.
 	 * \see IOptions.h
 	 */
-	double getTemperatureGradient() const {
+	double getTemperatureGradient() const override {
 		return temperatureGradient;
 	}
 
@@ -363,7 +414,7 @@ public:
 	 * Set the temperature gradient.
 	 * \see IOptions.h
 	 */
-	void setTemperatureGradient(double grad) {
+	void setTemperatureGradient(double grad) override {
 		temperatureGradient = grad;
 	}
 
@@ -371,7 +422,7 @@ public:
 	 * Should we use temperature profile handlers?
 	 * \see IOptions.h
 	 */
-	bool useTemperatureProfileHandlers() const {
+	bool useTemperatureProfileHandlers() const override {
 		return tempProfileFlag;
 	}
 
@@ -379,7 +430,7 @@ public:
 	 * Set the tempProfileFlag.
 	 * \see IOptions.h
 	 */
-	void setTempProfileFlag(bool flag) {
+	void setTempProfileFlag(bool flag) override {
 		tempProfileFlag = flag;
 	}
 
@@ -387,7 +438,7 @@ public:
 	 * Obtain the name of the file containing the temperature profile data.
 	 * \see IOptions.h
 	 */
-	std::string getTempProfileFilename() const {
+	std::string getTempProfileFilename() const override {
 		return tempProfileFilename;
 	}
 
@@ -395,15 +446,47 @@ public:
 	 * Set the name of the profile file to use.
 	 * \see IOptions.h
 	 */
-	void setTempProfileFilename(const std::string& name) {
+	void setTempProfileFilename(const std::string& name) override {
 		tempProfileFilename = name;
+	}
+
+	/**
+	 * Should we use heat equation handlers?
+	 * \see IOptions.h
+	 */
+	bool useHeatEquationHandlers() const override {
+		return heatFlag;
+	}
+
+	/**
+	 * Set the heatFlag.
+	 * \see IOptions.h
+	 */
+	void setHeatFlag(bool flag) override {
+		heatFlag = flag;
+	}
+
+	/**
+	 * Obtain the value of the temperature to be used in the bulk.
+	 * \see IOptions.h
+	 */
+	double getBulkTemperature() const override {
+		return bulkTemperature;
+	}
+
+	/**
+	 * Set the bulk temperature.
+	 * \see IOptions.h
+	 */
+	void setBulkTemperature(double temp) override {
+		bulkTemperature = temp;
 	}
 
 	/**
 	 * Should we use the flux option?
 	 * \see IOptions.h
 	 */
-	bool useFluxAmplitude() const {
+	bool useFluxAmplitude() const override {
 		return fluxFlag;
 	}
 	;
@@ -412,7 +495,7 @@ public:
 	 * Set the fluxFlag.
 	 * \see IOptions.h
 	 */
-	void setFluxFlag(bool flag) {
+	void setFluxFlag(bool flag) override {
 		fluxFlag = flag;
 	}
 
@@ -420,7 +503,7 @@ public:
 	 * Obtain the value of the flux intensity to be used.
 	 * \see IOptions.h
 	 */
-	double getFluxAmplitude() const {
+	double getFluxAmplitude() const override {
 		return fluxAmplitude;
 	}
 
@@ -428,7 +511,7 @@ public:
 	 * Set the value for the flux intensity to use.
 	 * \see IOptions.h
 	 */
-	void setFluxAmplitude(double flux) {
+	void setFluxAmplitude(double flux) override {
 		fluxAmplitude = flux;
 	}
 
@@ -436,7 +519,7 @@ public:
 	 * Should we use a time profile for the flux?
 	 * \see IOptions.h
 	 */
-	bool useFluxTimeProfile() const {
+	bool useFluxTimeProfile() const override {
 		return fluxProfileFlag;
 	}
 
@@ -444,7 +527,7 @@ public:
 	 * Set the fluxProfileFlag.
 	 * \see IOptions.h
 	 */
-	void setFluxProfileFlag(bool flag) {
+	void setFluxProfileFlag(bool flag) override {
 		fluxProfileFlag = flag;
 	}
 
@@ -453,7 +536,7 @@ public:
 	 * flux.
 	 * \see IOptions.h
 	 */
-	std::string getFluxProfileName() const {
+	std::string getFluxProfileName() const override {
 		return fluxProfileFilename;
 	}
 
@@ -461,7 +544,7 @@ public:
 	 * Set the name of the time profile file to use.
 	 * \see IOptions.h
 	 */
-	void setFluxProfileName(const std::string& name) {
+	void setFluxProfileName(const std::string& name) override {
 		fluxProfileFilename = name;
 	}
 
@@ -469,7 +552,8 @@ public:
 	 * Which type of performance handlers should we use?
 	 * \see IOptions.h
 	 */
-	xolotlPerf::IHandlerRegistry::RegistryType getPerfHandlerType(void) const {
+	xolotlPerf::IHandlerRegistry::RegistryType getPerfHandlerType(void) const
+			override {
 		return perfRegistryType;
 	}
 
@@ -477,7 +561,8 @@ public:
 	 * Set the type of performance handlers to use.
 	 * \see IOptions.h
 	 */
-	void setPerfHandlerType(xolotlPerf::IHandlerRegistry::RegistryType rtype) {
+	void setPerfHandlerType(xolotlPerf::IHandlerRegistry::RegistryType rtype)
+			override {
 		perfRegistryType = rtype;
 	}
 
@@ -486,7 +571,7 @@ public:
 	 * If false, use dummy (stub) handlers.
 	 * \see IOptions.h
 	 */
-	bool useVizStandardHandlers() const {
+	bool useVizStandardHandlers() const override {
 		return vizStandardHandlersFlag;
 	}
 
@@ -494,7 +579,7 @@ public:
 	 * Set the vizStandardHandlersFlag.
 	 * \see IOptions.h
 	 */
-	void setVizStandardHandlers(bool flag) {
+	void setVizStandardHandlers(bool flag) override {
 		vizStandardHandlersFlag = flag;
 	}
 
@@ -502,7 +587,7 @@ public:
 	 * Obtain the name of the material to be used for simulation.
 	 * \see IOptions.h
 	 */
-	std::string getMaterial() const {
+	std::string getMaterial() const override {
 		return materialName;
 	}
 
@@ -510,7 +595,7 @@ public:
 	 * Set the name of the material to be used for the simulation.
 	 * \see IOptions.h
 	 */
-	void setMaterial(const std::string& material) {
+	void setMaterial(const std::string& material) override {
 		materialName = material;
 	}
 
@@ -518,7 +603,7 @@ public:
 	 * Obtain the value of the concentration for the vacancies.
 	 * \see IOptions.h
 	 */
-	double getInitialVConcentration() const {
+	double getInitialVConcentration() const override {
 		return initialVConcentration;
 	}
 
@@ -526,7 +611,7 @@ public:
 	 * Set the value of the concentration for the vacancies.
 	 * \see IOptions.h
 	 */
-	void setInitialVConcentration(double conc) {
+	void setInitialVConcentration(double conc) override {
 		initialVConcentration = conc;
 	}
 
@@ -534,7 +619,7 @@ public:
 	 * Obtain the number of dimensions for the simulation.
 	 * \see IOptions.h
 	 */
-	int getDimensionNumber() const {
+	int getDimensionNumber() const override {
 		return dimensionNumber;
 	}
 
@@ -542,7 +627,7 @@ public:
 	 * Set the number of dimensions for the simulation.
 	 * \see IOptions.h
 	 */
-	void setDimensionNumber(int number) {
+	void setDimensionNumber(int number) override {
 		dimensionNumber = number;
 	}
 
@@ -550,7 +635,7 @@ public:
 	 * Obtain the value of the void portion for the simulation.
 	 * \see IOptions.h
 	 */
-	double getVoidPortion() const {
+	double getVoidPortion() const override {
 		return voidPortion;
 	}
 
@@ -558,7 +643,7 @@ public:
 	 * Set the value of the void portion for the surface to grow.
 	 * \see IOptions.h
 	 */
-	void setVoidPortion(double portion) {
+	void setVoidPortion(double portion) override {
 		voidPortion = portion;
 	}
 
@@ -566,7 +651,7 @@ public:
 	 * Should we use a regular grid on the x direction?
 	 * \see IOptions.h
 	 */
-	bool useRegularXGrid() const {
+	bool useRegularXGrid() const override {
 		return useRegularGridFlag;
 	}
 
@@ -574,7 +659,7 @@ public:
 	 * Set the useRegularGridFlag.
 	 * \see IOptions.h
 	 */
-	void setRegularXGrid(bool flag) {
+	void setRegularXGrid(bool flag) override {
 		useRegularGridFlag = flag;
 	}
 
@@ -582,7 +667,7 @@ public:
 	 * Should we use a Chebyshev grid on the x direction?
 	 * \see IOptions.h
 	 */
-	bool useChebyshevGrid() const {
+	bool useChebyshevGrid() const override {
 		return useChebyshevGridFlag;
 	}
 
@@ -590,7 +675,7 @@ public:
 	 * Set the useChebyshevGridFlag.
 	 * \see IOptions.h
 	 */
-	void setChebyshevGrid(bool flag) {
+	void setChebyshevGrid(bool flag) override {
 		useChebyshevGridFlag = flag;
 	}
 
@@ -599,7 +684,7 @@ public:
 	 *
 	 * @return The map
 	 */
-	std::map<std::string, bool> getProcesses() const {
+	std::map<std::string, bool> getProcesses() const override {
 		return processMap;
 	}
 
@@ -608,7 +693,7 @@ public:
 	 *
 	 * @param map The map
 	 */
-	void setProcesses(std::map<std::string, bool> map) {
+	void setProcesses(std::map<std::string, bool> map) override {
 		processMap = map;
 	}
 
@@ -616,7 +701,7 @@ public:
 	 * Obtain the string listing the wanted GB.
 	 * \see IOptions.h
 	 */
-	std::string getGbString() const {
+	std::string getGbString() const override {
 		return gbList;
 	}
 
@@ -624,7 +709,7 @@ public:
 	 * Set the string listing the wanted GB.
 	 * \see IOptions.h
 	 */
-	void setGbString(const std::string& gbString) {
+	void setGbString(const std::string& gbString) override {
 		gbList = gbString;
 	}
 
@@ -632,7 +717,7 @@ public:
 	 * Obtain the minimum size for the grouping.
 	 * \see IOptions.h
 	 */
-	int getGroupingMin() const {
+	int getGroupingMin() const override {
 		return groupingMin;
 	}
 
@@ -640,7 +725,7 @@ public:
 	 * Set the minimum size for the grouping.
 	 * \see IOptions.h
 	 */
-	void setGroupingMin(int size) {
+	void setGroupingMin(int size) override {
 		groupingMin = size;
 	}
 
@@ -648,7 +733,7 @@ public:
 	 * Obtain the first width for the grouping.
 	 * \see IOptions.h
 	 */
-	int getGroupingWidthA() const {
+	int getGroupingWidthA() const override {
 		return groupingWidthA;
 	}
 
@@ -656,7 +741,7 @@ public:
 	 * Set the first width for the grouping.
 	 * \see IOptions.h
 	 */
-	void setGroupingWidthA(int width) {
+	void setGroupingWidthA(int width) override {
 		groupingWidthA = width;
 	}
 
@@ -664,7 +749,7 @@ public:
 	 * Obtain the second width for the grouping.
 	 * \see IOptions.h
 	 */
-	int getGroupingWidthB() const {
+	int getGroupingWidthB() const override {
 		return groupingWidthB;
 	}
 
@@ -672,7 +757,7 @@ public:
 	 * Set the second width for the grouping.
 	 * \see IOptions.h
 	 */
-	void setGroupingWidthB(int width) {
+	void setGroupingWidthB(int width) override {
 		groupingWidthB = width;
 	}
 
@@ -680,7 +765,7 @@ public:
 	 * Obtain the value of the intensity of the sputtering yield to be used.
 	 * \see IOptions.h
 	 */
-	double getSputteringYield() const {
+	double getSputteringYield() const override {
 		return sputteringYield;
 	}
 
@@ -688,7 +773,7 @@ public:
 	 * Set the value for the sputtering yield to use.
 	 * \see IOptions.h
 	 */
-	void setSputteringYield(double yield) {
+	void setSputteringYield(double yield) override {
 		sputteringYield = yield;
 	}
 
@@ -696,7 +781,7 @@ public:
 	 * To know if we should use the HDF5 file.
 	 * \see IOptions.h
 	 */
-	bool useHDF5() const {
+	bool useHDF5() const override {
 		return useHDF5Flag;
 	}
 
@@ -704,7 +789,7 @@ public:
 	 * Set the useHDF5Flag.
 	 * \see IOptions.h
 	 */
-	void setHDF5Flag(bool flag) {
+	void setHDF5Flag(bool flag) override {
 		useHDF5Flag = flag;
 	}
 
@@ -712,7 +797,7 @@ public:
 	 * To know if we should use the phase cut.
 	 * \see IOptions.h
 	 */
-	bool usePhaseCut() const {
+	bool usePhaseCut() const override {
 		return usePhaseCutFlag;
 	}
 
@@ -720,7 +805,7 @@ public:
 	 * Set the usePhaseCutFlag.
 	 * \see IOptions.h
 	 */
-	void setPhaseCutFlag(bool flag) {
+	void setPhaseCutFlag(bool flag) override {
 		usePhaseCutFlag = flag;
 	}
 
@@ -728,7 +813,7 @@ public:
 	 * Obtain the maximum value of impurities (He or Xe) to be used.
 	 * \see IOptions.h
 	 */
-	int getMaxImpurity() const {
+	int getMaxImpurity() const override {
 		return maxImpurity;
 	}
 
@@ -736,15 +821,47 @@ public:
 	 * Set the maximum value of impurities to use.
 	 * \see IOptions.h
 	 */
-	void setMaxImpurity(int max) {
+	void setMaxImpurity(int max) override {
 		maxImpurity = max;
+	}
+
+	/**
+	 * Obtain the maximum value of deuterium to be used.
+	 * \see IOptions.h
+	 */
+	int getMaxD() const override {
+		return maxD;
+	}
+
+	/**
+	 * Set the maximum value of deuterium to use.
+	 * \see IOptions.h
+	 */
+	void setMaxD(int max) override {
+		maxD = max;
+	}
+
+	/**
+	 * Obtain the maximum value of tritium to be used.
+	 * \see IOptions.h
+	 */
+	int getMaxT() const override {
+		return maxT;
+	}
+
+	/**
+	 * Set the maximum value of tritium to use.
+	 * \see IOptions.h
+	 */
+	void setMaxT(int max) override {
+		maxT = max;
 	}
 
 	/**
 	 * Obtain the maximum value of vacancies to be used.
 	 * \see IOptions.h
 	 */
-	int getMaxV() const {
+	int getMaxV() const override {
 		return maxV;
 	}
 
@@ -752,7 +869,7 @@ public:
 	 * Set the maximum value of vacancies to use.
 	 * \see IOptions.h
 	 */
-	void setMaxV(int max) {
+	void setMaxV(int max) override {
 		maxV = max;
 	}
 
@@ -760,7 +877,7 @@ public:
 	 * Obtain the maximum value of interstitials to be used.
 	 * \see IOptions.h
 	 */
-	int getMaxI() const {
+	int getMaxI() const override {
 		return maxI;
 	}
 
@@ -768,7 +885,7 @@ public:
 	 * Set the maximum value of interstitials to use.
 	 * \see IOptions.h
 	 */
-	void setMaxI(int max) {
+	void setMaxI(int max) override {
 		maxI = max;
 	}
 
@@ -776,7 +893,7 @@ public:
 	 * Obtain the number of grid points in the depth direction to be used.
 	 * \see IOptions.h
 	 */
-	int getNX() const {
+	int getNX() const override {
 		return nX;
 	}
 
@@ -784,7 +901,7 @@ public:
 	 * Set the number of grid points in the depth direction to use.
 	 * \see IOptions.h
 	 */
-	void setNX(int n) {
+	void setNX(int n) override {
 		nX = n;
 	}
 
@@ -792,7 +909,7 @@ public:
 	 * Obtain the value of the step size in the depth direction to be used.
 	 * \see IOptions.h
 	 */
-	double getXStepSize() const {
+	double getXStepSize() const override {
 		return xStepSize;
 	}
 
@@ -800,7 +917,7 @@ public:
 	 * Set the value for the step size in the depth direction to use.
 	 * \see IOptions.h
 	 */
-	void setXStepSize(double stepSize) {
+	void setXStepSize(double stepSize) override {
 		xStepSize = stepSize;
 	}
 
@@ -808,7 +925,7 @@ public:
 	 * Obtain the number of grid points in the Y direction to be used.
 	 * \see IOptions.h
 	 */
-	int getNY() const {
+	int getNY() const override {
 		return nY;
 	}
 
@@ -816,7 +933,7 @@ public:
 	 * Set the number of grid points in the Y direction to use.
 	 * \see IOptions.h
 	 */
-	void setNY(int n) {
+	void setNY(int n) override {
 		nY = n;
 	}
 
@@ -824,7 +941,7 @@ public:
 	 * Obtain the value of the step size in the Y direction to be used.
 	 * \see IOptions.h
 	 */
-	double getYStepSize() const {
+	double getYStepSize() const override {
 		return yStepSize;
 	}
 
@@ -832,7 +949,7 @@ public:
 	 * Set the value for the step size in the Y direction to use.
 	 * \see IOptions.h
 	 */
-	void setYStepSize(double stepSize) {
+	void setYStepSize(double stepSize) override {
 		yStepSize = stepSize;
 	}
 
@@ -840,7 +957,7 @@ public:
 	 * Obtain the number of grid points in the Z direction to be used.
 	 * \see IOptions.h
 	 */
-	int getNZ() const {
+	int getNZ() const override {
 		return nZ;
 	}
 
@@ -848,7 +965,7 @@ public:
 	 * Set the number of grid points in the Z direction to use.
 	 * \see IOptions.h
 	 */
-	void setNZ(int n) {
+	void setNZ(int n) override {
 		nZ = n;
 	}
 
@@ -856,7 +973,7 @@ public:
 	 * Obtain the value of the step size in the Z direction to be used.
 	 * \see IOptions.h
 	 */
-	double getZStepSize() const {
+	double getZStepSize() const override {
 		return zStepSize;
 	}
 
@@ -864,8 +981,95 @@ public:
 	 * Set the value for the step size in the Z direction to use.
 	 * \see IOptions.h
 	 */
-	void setZStepSize(double stepSize) {
+	void setZStepSize(double stepSize) override {
 		zStepSize = stepSize;
+	}
+
+	/**
+	 * Obtain the boundary condition on the left side of the grid.
+	 * \see IOptions.h
+	 */
+	int getLeftBoundary() const override {
+		return leftBoundary;
+	}
+
+	/**
+	 * Set the boundary condition on the left side of the grid.
+	 * \see IOptions.h
+	 */
+	void setLeftBoundary(int n) override {
+		leftBoundary = n;
+	}
+
+	/**
+	 * Obtain the boundary condition on the right side of the grid.
+	 * \see IOptions.h
+	 */
+	int getRightBoundary() const override {
+		return rightBoundary;
+	}
+
+	/**
+	 * Set the boundary condition on the right side of the grid.
+	 * \see IOptions.h
+	 */
+	void setRightBoundary(int n) override {
+		rightBoundary = n;
+	}
+
+	/**
+	 * Obtain the value of the depth above which the bursting is happening.
+	 * \see IOptions.h
+	 */
+	double getBurstingDepth() const override {
+		return burstingDepth;
+	}
+
+	/**
+	 * Set the value for the depth above which the bursting is happening.
+	 * \see IOptions.h
+	 */
+	void setBurstingDepth(double depth) override {
+		burstingDepth = depth;
+	}
+
+	/**
+	 * Set the seed that should be used for initializing the random
+	 * number generator.
+	 * \see IOptions.h
+	 */
+	void setRNGSeed(unsigned int s) override {
+		rngSeed = s;
+		rngUseSeed = true;
+	}
+
+	/**
+	 * Obtain the seed that should be used for initializing the random
+	 * number generator.
+	 * \see IOptions.h
+	 */
+	std::tuple<bool, unsigned int> getRNGSeed(void) const override {
+		return std::make_tuple(rngUseSeed, rngSeed);
+	}
+
+	/**
+	 * Specify whether each process should print the value it uses
+	 * to seed the random number generator.
+	 *
+	 * @param b A bool indicating whether to print the RNG seed value.
+	 */
+	void setPrintRNGSeed(bool b) override {
+		rngPrintSeed = b;
+	}
+
+	/**
+	 * Determine if we should print the value used to seed the random
+	 * number generator (regardless if it was given on the command line
+	 * or generated dynamically).
+	 * \see IOptions.h
+	 */
+	bool printRNGSeed(void) const override {
+		return rngPrintSeed;
 	}
 
 };

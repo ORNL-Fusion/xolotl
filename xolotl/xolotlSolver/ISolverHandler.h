@@ -15,6 +15,9 @@
 
 namespace xolotlSolver {
 
+template<typename ValueType, typename SeedType>
+class RandomNumberGenerator;
+
 /**
  * Realizations of this interface are responsible for the actual implementation of
  * each piece of the solver. It is created to handle the multiple dimensions more easily.
@@ -35,13 +38,11 @@ public:
 	 *
 	 * @param material The material factory
 	 * @param tempHandler The temperature handler
-	 * @param networkHandler The network handler
 	 * @param options The Xolotl options
 	 */
 	virtual void initializeHandlers(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-			std::shared_ptr<xolotlCore::IReactionNetwork> networkHandler,
-			xolotlCore::Options &options) = 0;
+			const xolotlCore::Options &options) = 0;
 
 	/**
 	 * Create everything needed before starting to solve.
@@ -150,6 +151,20 @@ public:
 	virtual double getSputteringYield() const = 0;
 
 	/**
+	 * Get the bursting depth parameter.
+	 *
+	 * @return The depth parameter
+	 */
+	virtual double getTauBursting() const = 0;
+
+	/**
+	 * Get the grid right offset.
+	 *
+	 * @return The offset
+	 */
+	virtual int getRightOffset() const = 0;
+
+	/**
 	 * To know if the surface should be able to move.
 	 *
 	 * @return True if the surface should be able to move.
@@ -169,6 +184,13 @@ public:
 	 * @return The flux handler
 	 */
 	virtual xolotlCore::IFluxHandler *getFluxHandler() const = 0;
+
+	/**
+	 * Get the temperature handler.
+	 *
+	 * @return The temperature handler
+	 */
+	virtual xolotlCore::ITemperatureHandler *getTemperatureHandler() const = 0;
 
 	/**
 	 * Get the advection handler.
@@ -196,7 +218,7 @@ public:
 	 *
 	 * @return The network
 	 */
-	virtual xolotlCore::IReactionNetwork *getNetwork() const = 0;
+	virtual xolotlCore::IReactionNetwork& getNetwork() const = 0;
 
 	/**
 	 * Get the network name.
@@ -204,6 +226,14 @@ public:
 	 * @return The network name
 	 */
 	virtual std::string getNetworkName() const = 0;
+
+    /**
+     * Access the random number generator.
+     * The generator will have already been seeded.
+     *
+     * @return The RandomNumberGenerator object to use.
+     */
+    virtual RandomNumberGenerator<int, unsigned int>& getRNG(void) const = 0;
 
 }; //end class ISolverHandler
 

@@ -19,10 +19,13 @@ class ZGBAdvectionHandler: public AdvectionHandler {
 public:
 
 	//! The Constructor
-	ZGBAdvectionHandler() {}
+	ZGBAdvectionHandler() :
+			AdvectionHandler() {
+	}
 
 	//! The Destructor
-	~ZGBAdvectionHandler() {}
+	~ZGBAdvectionHandler() {
+	}
 
 	/**
 	 * This function initialize the list of clusters that will move through advection for
@@ -30,7 +33,8 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void initialize(IReactionNetwork *network, int *ofill);
+	void initialize(const IReactionNetwork& network,
+			IReactionNetwork::SparseFillMap& ofillMap) override;
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the number of advecting
@@ -39,9 +43,12 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void initializeAdvectionGrid(std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid,
-			int ny = 1, double hy = 0.0, int nz = 1, double hz = 0.0) {return;}
+	void initializeAdvectionGrid(
+			std::vector<IAdvectionHandler *> advectionHandlers,
+			std::vector<double> grid, int ny = 1, double hy = 0.0, int nz = 1,
+			double hz = 0.0) override {
+		return;
+	}
 
 	/**
 	 * Compute the flux due to the advection for all the helium clusters,
@@ -52,10 +59,10 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computeAdvection(IReactionNetwork *network,
-			std::vector<double> &pos, double **concVector, double *updatedConcOffset,
-			double hxLeft, double hxRight, int ix,
-			double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0);
+	void computeAdvection(const IReactionNetwork& network, const Point<3>& pos,
+			double **concVector, double *updatedConcOffset, double hxLeft,
+			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
+			double hz = 0.0, int iz = 0) const override;
 
 	/**
 	 * Compute the partials due to the advection of all the helium clusters given
@@ -66,10 +73,10 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computePartialsForAdvection(IReactionNetwork *network,
-			double *val, int *indices, std::vector<double> &pos,
-			double hxLeft, double hxRight, int ix,
-			double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0);
+	void computePartialsForAdvection(const IReactionNetwork& network,
+			double *val, int *indices, const Point<3>& pos, double hxLeft,
+			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
+			double hz = 0.0, int iz = 0) const override;
 
 	/**
 	 * Compute the indices that will determine where the partial derivatives will
@@ -80,14 +87,18 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	std::vector<int> getStencilForAdvection(std::vector<double> &pos);
+	std::array<int, 3> getStencilForAdvection(const Point<3>& pos) const
+			override;
 
 	/**
 	 * Check whether the grid point is located on the sink surface or not.
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	bool isPointOnSink(std::vector<double> &pos);
+	bool isPointOnSink(const Point<3>& pos) const override {
+		// Return true if pos[2] is equal to location
+		return fabs(location - pos[2]) < 0.001;
+	}
 
 };
 //end class ZGBAdvectionHandler

@@ -19,10 +19,11 @@ public:
 	 * The default constructor
 	 */
 	ProcessOptionHandler() :
-		OptionHandler("process",
-				"process                           "
-				"List of all the processes to use in the simulation (diff, advec, "
-				"modifiedTM, movingSurface, bursting, attenuation).\n") {}
+			OptionHandler("process",
+					"process                           "
+							"List of all the processes to use in the simulation (reaction, diff, advec, "
+							"modifiedTM, movingSurface, bursting, attenuation).\n") {
+	}
 
 	/**
 	 * The destructor
@@ -49,7 +50,7 @@ public:
 
 		// Build an input stream from the argument string.
 		xolotlCore::TokenizedLineReader<std::string> reader;
-		auto argSS = std::make_shared < std::istringstream > (arg);
+		auto argSS = std::make_shared<std::istringstream>(arg);
 		reader.setInputStream(argSS);
 
 		// Break the argument into tokens.

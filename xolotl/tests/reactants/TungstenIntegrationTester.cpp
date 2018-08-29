@@ -1,13 +1,16 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <PSIClusterNetworkLoader.h>
 #include <memory>
 #include <typeinfo>
 #include <limits>
 #include <XolotlConfig.h>
 #include <DummyHandlerRegistry.h>
+#include <Options.h>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
@@ -22,6 +25,11 @@ BOOST_AUTO_TEST_SUITE (TungstenIntegrationTester_testSuite)
  * given that it requires external data.
  */
 BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
+	// Initialize MPI
+	int argc = 0;
+	char **argv;
+	MPI_Init(&argc, &argv);
+
 	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
 	string pathToFile("/tests/testfiles/tungsten.txt");
@@ -38,24 +46,28 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 			PSIClusterNetworkLoader>(
 			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 	networkLoader->setInputstream(networkStream);
+
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = networkLoader->load();
+	auto network = networkLoader->load(opts);
+	// Add rates
+	network->addGridPoints(1);
 
 	BOOST_TEST_MESSAGE("TungstenIntegrationTester Message: Network loaded");
 
 	// Get all the reactants
-	auto allReactants = network->getAll();
+	auto& allReactants = network->getAll();
 	// Get the network size
 	const int size = network->size();
 	// Set the temperature
 	double temperature = 1000.0;
-	network->setTemperature(temperature);
-	network->computeRateConstants();
+	network->setTemperature(temperature, 0);
 
 	// Initialize all the concentrations to 0.001;
 	for (int i = 0; i < size; ++i) {
-		auto reactant = (PSICluster *) allReactants->at(i);
-		reactant->setConcentration(0.001);
+		IReactant& reactant = allReactants.at(i);
+		reactant.setConcentration(0.001);
 	}
 
 	BOOST_TEST_MESSAGE(
@@ -66,11 +78,11 @@ BOOST_AUTO_TEST_CASE(checkGetReactantFluxesAndParials) {
 
 	BOOST_TEST_MESSAGE("Check partial derivatives.");
 	for (int i = 0; i < size; ++i) {
-		auto reactant = (PSICluster *) allReactants->at(i);
+		IReactant& reactant = allReactants.at(i);
 		// Get the partials using method 1
-		auto partials = reactant->getPartialDerivatives();
+		auto partials = reactant.getPartialDerivatives(0);
 		// Get the partials using method 2
-		reactant->getPartialDerivatives(secondPartials);
+		reactant.getPartialDerivatives(secondPartials, 0);
 		// Compare the two arrays of partial derivatives
 		for (int j = 0; j < size; ++j) {
 			BOOST_REQUIRE_CLOSE(partials[j], secondPartials[j], 1.0);
@@ -106,44 +118,51 @@ BOOST_AUTO_TEST_CASE(checkSingleReaction) {
 			PSIClusterNetworkLoader>(
 			std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 	networkLoader->setInputstream(networkStream);
+
+	// Create the options needed to load the network
+	Options opts;
 	// Load the network
-	auto network = networkLoader->load();
+	auto network = networkLoader->load(opts);
+	// Add rates
+	network->addGridPoints(1);
 
 	BOOST_TEST_MESSAGE("TungstenIntegrationTester Message: Network loaded");
 
 	// Get all the reactants
-	auto allReactants = network->getAll();
+	auto& allReactants = network->getAll();
 	// Get the network size
 	const int size = network->size();
 	// Set the temperature
 	double temperature = 1000.0;
 	// Initialize the rate constants
-	network->setTemperature(temperature);
-	network->computeRateConstants();
+	network->setTemperature(temperature, 0);
 
 	// Initialize all the concentrations to 0.001;
 	for (int i = 0; i < size; ++i) {
-		auto reactant = (PSICluster *) allReactants->at(i);
-		reactant->setConcentration(0.001);
+		IReactant& reactant = allReactants.at(i);
+		reactant.setConcentration(0.001);
 	}
 
 	// Get He_1
-	auto reactant = (PSICluster *) allReactants->at(0);
+	IReactant& reactant = allReactants.at(0);
 	// Its partial derivatives
-	auto partials = reactant->getPartialDerivatives();
+	auto partials = reactant.getPartialDerivatives(0);
 
 	// Check the values of the partial derivatives
 	BOOST_REQUIRE_CLOSE(partials[0], -2.0, 0.1);
 	BOOST_REQUIRE_CLOSE(partials[1], 1.0, 0.1);
 
 	// Get He_2
-	reactant = (PSICluster *) allReactants->at(1);
+	IReactant& reactantBis = allReactants.at(1);
 	// Its partial derivatives
-	partials = reactant->getPartialDerivatives();
+	partials = reactantBis.getPartialDerivatives(0);
 
 	// Check the values of the partial derivatives
 	BOOST_REQUIRE_CLOSE(partials[0], 1.0, 0.1);
 	BOOST_REQUIRE_CLOSE(partials[1], -0.5, 0.1);
+
+	// Finalize
+	MPI_Finalize();
 
 	return;
 }

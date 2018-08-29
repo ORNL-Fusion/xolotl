@@ -5,16 +5,18 @@ SET(PACKAGE_NAME "xolotl.tests.reactants")
 SET(PACKAGE_DESCRIPTION "Tests for the Xolotl reactants package")
 
 #Include directories from the source and boost binaries
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
-include_directories(${Boost_BINARY_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf/dummy
+                    ${Boost_BINARY_DIRS}
+                    ${CMAKE_BINARY_DIR})
 
 #Link the directories
 link_directories(${CMAKE_SOURCE_DIR}/src/xolotlCore/reactants)
@@ -34,7 +36,7 @@ if(Boost_FOUND)
         message(STATUS "Making test ${test}")
         get_filename_component(testName ${test} NAME_WE)
         add_executable(${testName} ${test})
-        target_link_libraries(${testName} xolotlReactants xolotlCL xolotlPerf testUtils)
+        target_link_libraries(${testName} xolotlReactants xolotlCL xolotlPerf testUtils ${Boost_LIBRARIES})
         add_test(${testName} ${testName}) 
         #add a label so the tests can be run separately
         set_property(TEST ${testName} PROPERTY LABELS ${PACKAGE_NAME})   

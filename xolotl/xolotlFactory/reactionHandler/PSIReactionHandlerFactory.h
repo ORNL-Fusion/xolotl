@@ -18,7 +18,7 @@ protected:
 	std::shared_ptr<xolotlCore::INetworkLoader> theNetworkLoaderHandler;
 
 	//! The network handler
-	std::shared_ptr<xolotlCore::IReactionNetwork> theNetworkHandler;
+	std::unique_ptr<xolotlCore::IReactionNetwork> theNetworkHandler;
 
 public:
 
@@ -40,7 +40,7 @@ public:
 	 * @param options The options.
 	 * @param registry The performance registry.
 	 */
-	void initializeReactionNetwork(xolotlCore::Options &options,
+	void initializeReactionNetwork(const xolotlCore::Options &options,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
 		// Get the current process ID
 		int procId;
@@ -53,8 +53,10 @@ public:
 		tempNetworkLoader->setFilename(options.getNetworkFilename());
 		// Set the options for the grouping scheme
 		tempNetworkLoader->setVMin(options.getGroupingMin());
-		tempNetworkLoader->setHeWidth(options.getGroupingWidthA());
-		tempNetworkLoader->setVWidth(options.getGroupingWidthB());
+		tempNetworkLoader->setWidth(options.getGroupingWidthA(), 0);
+		tempNetworkLoader->setWidth(options.getGroupingWidthA(), 1);
+		tempNetworkLoader->setWidth(options.getGroupingWidthA(), 2);
+		tempNetworkLoader->setWidth(options.getGroupingWidthB(), 3);
 		theNetworkLoaderHandler = tempNetworkLoader;
 
 		// Check if we want dummy reactions
@@ -63,7 +65,7 @@ public:
 			theNetworkLoaderHandler->setDummyReactions();
 		// Load the network
 		if (options.useHDF5())
-			theNetworkHandler = theNetworkLoaderHandler->load();
+			theNetworkHandler = theNetworkLoaderHandler->load(options);
 		else
 			theNetworkHandler = theNetworkLoaderHandler->generate(options);
 
@@ -88,8 +90,8 @@ public:
 	 *
 	 * @return The network.
 	 */
-	std::shared_ptr<xolotlCore::IReactionNetwork> getNetworkHandler() const {
-		return theNetworkHandler;
+	xolotlCore::IReactionNetwork& getNetworkHandler() const {
+		return *theNetworkHandler;
 	}
 
 };

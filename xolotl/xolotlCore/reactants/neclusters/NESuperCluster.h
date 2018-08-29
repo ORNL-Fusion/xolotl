@@ -13,6 +13,13 @@ namespace xolotlCore {
  */
 class NESuperCluster: public NECluster {
 
+private:
+	static std::string buildName(IReactant::SizeType nXe) {
+		std::stringstream nameStream;
+		nameStream << "Xe_" << nXe;
+		return nameStream.str();
+	}
+
 protected:
 
 	/**
@@ -37,10 +44,9 @@ protected:
 		NECluster * second;
 
 		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
+		 * The reaction/dissociation pointer to the list
 		 */
-		const double * kConstant;
+		Reaction& reaction;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -56,11 +62,10 @@ protected:
 
 		//! The constructor
 		SuperClusterProductionPair(NECluster * firstPtr, NECluster * secondPtr,
-				Reaction * reaction) :
-				first(firstPtr), second(secondPtr), kConstant(
-						&(reaction->kConstant)), a000(0.0), a001(0.0), a010(
-						0.0), a011(0.0), a100(0.0), a101(0.0), a110(0.0), a111(
-						0.0) {
+				Reaction * _reaction) :
+				first(firstPtr), second(secondPtr), reaction(*_reaction), a000(
+						0.0), a001(0.0), a010(0.0), a011(0.0), a100(0.0), a101(
+						0.0), a110(0.0), a111(0.0) {
 		}
 	};
 
@@ -86,10 +91,9 @@ protected:
 		NECluster * second;
 
 		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
+		 * The reaction/dissociation pointer to the list
 		 */
-		const double * kConstant;
+		Reaction& reaction;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -101,10 +105,9 @@ protected:
 
 		//! The constructor
 		SuperClusterDissociationPair(NECluster * firstPtr,
-				NECluster * secondPtr, Reaction * reaction) :
-				first(firstPtr), second(secondPtr), kConstant(
-						&(reaction->kConstant)), a00(0.0), a01(0.0), a10(0.0), a11(
-						0.0) {
+				NECluster * secondPtr, Reaction * _reaction) :
+				first(firstPtr), second(secondPtr), reaction(*_reaction), a00(
+						0.0), a01(0.0), a10(0.0), a11(0.0) {
 		}
 	};
 
@@ -157,18 +160,15 @@ private:
 	 */
 	double momentFlux;
 
-	/**
-	 * The default constructor is private because NEClusters must always be
-	 * initialized with a size.
-	 */
-	NESuperCluster() :
-			NECluster() {
-	}
-
 public:
 
 	//! The vector of Xe clusters it will replace
 	std::vector<NECluster *> xeVector;
+
+	/**
+	 * Default constructor, deleted because we require info to construct.
+	 */
+	NESuperCluster() = delete;
 
 	/**
 	 * The constructor. All NESuperClusters must be initialized with its
@@ -179,52 +179,89 @@ public:
 	 * @param width The width of this super cluster in the xenon direction
 	 * @param radius The mean radius
 	 * @param energy The formation energy
+	 * @param _network The network this cluster will belong to.
 	 * @param registry The performance handler registry
 	 */
 	NESuperCluster(double numXe, int nTot, int width, double radius,
-			double energy,
+			double energy, IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
-	 * Copy constructor.
-	 *
-	 * @param other the reactant to be copied
+	 * Copy constructor, deleted to prevent use.
 	 */
-	NESuperCluster(NESuperCluster &other);
+	NESuperCluster(NESuperCluster &other) = delete;
 
 	//! Destructor
 	~NESuperCluster() {
 	}
 
 	/**
-	 * This operation returns a Reactant that is created using the copy
-	 * constructor of NESuperCluster.
-	 *
-	 * @return A copy of this reactant
+	 * Update reactant using other reactants in its network.
 	 */
-	virtual std::shared_ptr<IReactant> clone();
-
-	/**
-	 * Sets the collection of other clusters that make up
-	 * the reaction network in which this cluster exists.
-	 *
-	 * @param network The reaction network of which this cluster is a part
-	 */
-	void setReactionNetwork(
-			const std::shared_ptr<IReactionNetwork> reactionNetwork);
+	void updateFromNetwork() override;
 
 	/**
 	 * Group the same reactions together and add the reactions to the network lists.
 	 */
-	void optimizeReactions();
+	void optimizeReactions() override;
+
+	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
+	void resultFrom(ProductionReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
+	void participateIn(ProductionReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
+	void participateIn(DissociationReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
+	void emitFrom(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * This operation returns false.
 	 *
 	 * @return True if mixed
 	 */
-	virtual bool isMixed() const {
+	virtual bool isMixed() const override {
 		return false;
+	}
+
+	/**
+	 * This operation returns the total number of clusters it contains.
+	 *
+	 * @return The total number of clusters
+	 */
+	int getNTot() const {
+		return nTot;
+	}
+
+	/**
+	 * This operation returns the average number of clusters it contains.
+	 *
+	 * @return The average number of clusters
+	 */
+	double getAverage() const {
+		return numXe;
 	}
 
 	/**
@@ -239,16 +276,19 @@ public:
 	 *
 	 * @param distXe The xenon distance in the group
 	 * @param distB Unused here
+	 * @param distC Unused here
+	 * @param distD Unused here
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distXe, double distB = 0.0) const;
+	double getConcentration(double distXe, double distB = 0.0, double distC =
+			0.0, double distD = 0.0) const override;
 
 	/**
 	 * This operation returns the first xenon moment.
 	 *
 	 * @return The moment
 	 */
-	double getMoment() const;
+	double getMoment() const override;
 
 	/**
 	 * This operation returns the current total concentration of clusters in the group.
@@ -278,6 +318,13 @@ public:
 	void computeDispersion();
 
 	/**
+	 * Get the dispersion of the group.
+	 */
+	double getDispersion() const {
+		return dispersion;
+	}
+
+	/**
 	 * This operation sets the zeroth order moment.
 	 *
 	 * @param mom The moment
@@ -299,52 +346,57 @@ public:
 	 * This operation reset the connectivity sets based on the information
 	 * in the production and dissociation vectors.
 	 */
-	void resetConnectivities();
+	void resetConnectivities() override;
 
 	/**
 	 * This operation returns the total flux of this cluster in the
 	 * current network.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	double getTotalFlux();
+	double getTotalFlux(int i) override;
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * other clusters dissociating into it. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to dissociation of other clusters
 	 */
-	double getDissociationFlux();
+	double getDissociationFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux();
+	double getEmissionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster being produced
 	 */
-	double getProductionFlux();
+	double getProductionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster combining with other clusters
 	 */
-	double getCombinationFlux();
+	double getCombinationFlux(int i);
 
 	/**
 	 * This operation returns the total change for its moment.
@@ -366,9 +418,11 @@ public:
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
+	 * @param i The location on the grid in the depth direction
 	 *
 	 */
-	void getPartialDerivatives(std::vector<double> & partials) const;
+	void getPartialDerivatives(std::vector<double> & partials, int i) const
+			override;
 
 	/**
 	 * This operation computes the partial derivatives due to production
@@ -377,8 +431,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getProductionPartialDerivatives(std::vector<double> & partials) const;
+	void getProductionPartialDerivatives(std::vector<double> & partials,
+			int i) const override;
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -387,8 +443,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getCombinationPartialDerivatives(std::vector<double> & partials) const;
+	void getCombinationPartialDerivatives(std::vector<double> & partials,
+			int i) const override;
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -397,9 +455,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getDissociationPartialDerivatives(
-			std::vector<double> & partials) const;
+	void getDissociationPartialDerivatives(std::vector<double> & partials,
+			int i) const override;
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -408,8 +467,10 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getEmissionPartialDerivatives(std::vector<double> & partials) const;
+	void getEmissionPartialDerivatives(std::vector<double> & partials,
+			int i) const override;
 
 	/**
 	 * This operation computes the partial derivatives for the xenon moment.
@@ -420,12 +481,58 @@ public:
 	void getMomentPartialDerivatives(std::vector<double> & partials) const;
 
 	/**
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, and
+	 * the a coefs.
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getProdVector() const override;
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, and
+	 * the a coefs.
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const override;
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, and
+	 * the a coefs.
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const override;
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved, containing the a coefs.
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const override;
+
+	/**
 	 * This operation returns the section width.
 	 *
 	 * @return The width of the section
 	 */
 	int getSectionWidth() const {
 		return sectionWidth;
+	}
+
+	/**
+	 * Detect if given coordinates are in this cluster's group.
+	 *
+	 * @param _nXe number of Xe of interest.
+	 * @return True if the coordinates are contained in our super cluster.
+	 */
+	bool isIn(IReactant::SizeType nXe) const {
+		return (nXe > numXe - (double) sectionWidth / 2.0
+				&& nXe < numXe + (double) sectionWidth / 2.0);
 	}
 
 };

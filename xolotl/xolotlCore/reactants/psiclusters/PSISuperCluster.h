@@ -2,9 +2,22 @@
 #define PSISUPERCLUSTER_H
 
 // Includes
-#include "PSICluster.h"
 #include <string>
-#include <forward_list>
+#include <unordered_map>
+#include <cassert>
+#include <Constants.h>
+#include "PSICluster.h"
+#include "ReactionNetwork.h"
+#include "IntegerRange.h"
+#include <MathUtils.h>
+
+// We use std::unordered_map for quick lookup of info about 
+// reactions we participate in.
+// The C++ standard library defines a std::hash for keys
+// that are a single pointer, but not for pairs of pointers,
+// so we define our own here.  To improve readability,
+// we define a concise name for type of a pair of IReactant pointers
+// that we use as keys.
 
 namespace xolotlCore {
 /**
@@ -12,34 +25,61 @@ namespace xolotlCore {
  */
 class PSISuperCluster: public PSICluster {
 
+private:
+	static std::string buildName(double nHe, double nD, double nT, double nV) {
+		std::stringstream nameStream;
+		nameStream << "He_" << nHe << "D_" << nD << "T_" << nT << "V_" << nV;
+		return nameStream.str();
+	}
+
 protected:
 
-	/**
-	 * This is a protected class that is used to implement the flux calculations
-	 * for two body production reactions.
-	 *
-	 * The constants are stored along the clusters taking part in the
-	 * reaction or dissociation for faster computation because they only change
-	 * when the temperature change. k is computed when setTemperature() is called.
-	 */
-	class SuperClusterProductionPair {
-	public:
+	struct ReactingInfoBase {
 
 		/**
 		 * The first cluster in the pair
 		 */
-		PSICluster * first;
+		PSICluster& first;
+
+		/**
+		 * The reaction/dissociation pointer to the list
+		 */
+		Reaction& reaction;
+
+		//! The constructor
+		ReactingInfoBase(Reaction& _reaction, PSICluster& _first) :
+				first(_first), reaction(_reaction) {
+		}
+
+		/**
+		 * Default and copy constructors, disallowed.
+		 */
+		ReactingInfoBase() = delete;
+		ReactingInfoBase(const ReactingInfoBase& other) = delete;
+	};
+
+	struct ReactingPairBase: public ReactingInfoBase {
 
 		/**
 		 * The second cluster in the pair
 		 */
-		PSICluster * second;
+		PSICluster& second;
+
+		//! The constructor
+		ReactingPairBase(Reaction& _reaction, PSICluster& _first,
+				PSICluster& _second) :
+				ReactingInfoBase(_reaction, _first), second(_second) {
+
+		}
 
 		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
+		 * Default and copy constructors, disallowed.
 		 */
-		const double * kConstant;
+		ReactingPairBase() = delete;
+		ReactingPairBase(const ReactingPairBase& other) = delete;
+	};
+
+	struct ProductionCoefficientBase {
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -50,48 +90,110 @@ protected:
 		 *
 		 * 0 -> l0
 		 * 1 -> He
-		 * 2 -> V
+		 * 2 -> D
+		 * 3 -> T
+		 * 4 -> V
 		 */
-		double a000;
-		double a001;
-		double a002;
-		double a100;
-		double a101;
-		double a102;
-		double a200;
-		double a201;
-		double a202;
-		double a010;
-		double a011;
-		double a012;
-		double a020;
-		double a021;
-		double a022;
-		double a110;
-		double a111;
-		double a112;
-		double a120;
-		double a121;
-		double a122;
-		double a210;
-		double a211;
-		double a212;
-		double a220;
-		double a221;
-		double a222;
+		double ***coefs;
 
-		//! The constructor
-		SuperClusterProductionPair(PSICluster * firstPtr,
-				PSICluster * secondPtr, Reaction * reaction) :
-				first(firstPtr), second(secondPtr), kConstant(
-						&(reaction->kConstant)), a000(0.0), a001(0.0), a002(
-						0.0), a100(0.0), a101(0.0), a102(0.0), a200(0.0), a201(
-						0.0), a202(0.0), a010(0.0), a011(0.0), a012(0.0), a020(
-						0.0), a021(0.0), a022(0.0), a110(0.0), a111(0.0), a112(
-						0.0), a120(0.0), a121(0.0), a122(0.0), a210(0.0), a211(
-						0.0), a212(0.0), a220(0.0), a221(0.0), a222(0.0) {
+		//! The constructor, disallowed
+		ProductionCoefficientBase() = delete;
+
+		//! The constructor to use
+		ProductionCoefficientBase(const int dim) {
+			// Create the array of the right dimension
+			coefs = new double**[dim];
+			for (int i = 0; i < dim; i++) {
+				coefs[i] = new double*[dim];
+				for (int j = 0; j < dim; j++) {
+					coefs[i][j] = new double[dim];
+					for (int k = 0; k < dim; k++) {
+						coefs[i][j][k] = 0.0;
+					}
+				}
+			}
+		}
+
+		/**
+		 * Copy constructor, disallowed.
+		 */
+		ProductionCoefficientBase(const ProductionCoefficientBase& other) = delete;
+
+		//! The destructor
+		~ProductionCoefficientBase() {
+			delete[] coefs;
 		}
 	};
+
+	/**
+	 * This is a protected class that is used to implement the flux calculations
+	 * for two body production reactions.
+	 *
+	 * The constants are stored along the clusters taking part in the
+	 * reaction or dissociation for faster computation because they only change
+	 * when the temperature change. k is computed when setTemperature() is called.
+	 */
+	struct SuperClusterProductionPair: public ReactingPairBase,
+			public ProductionCoefficientBase {
+
+		/**
+		 * Nice name for key type in map of key to production pair.
+		 */
+		using KeyType = ReactantAddrPair;
+
+		//! The constructor
+		SuperClusterProductionPair(Reaction& _reaction, PSICluster& _first,
+				PSICluster& _second, int dim) :
+				ReactingPairBase(_reaction, _first, _second), ProductionCoefficientBase(
+						dim) {
+
+		}
+
+		/**
+		 * Default and copy constructors, deleted to enforce constructing
+		 * using reactants.
+		 */
+		SuperClusterProductionPair() = delete;
+		SuperClusterProductionPair(const SuperClusterProductionPair& other) = delete;
+	};
+
+	/**
+	 * Concise name for type of map of SuperClusterProductionPairs.
+	 */
+	using ProductionPairMap = std::unordered_map<SuperClusterProductionPair::KeyType, SuperClusterProductionPair>;
+
+	/**
+	 * Info about a cluster we combine with.
+	 */
+	struct SuperClusterCombiningCluster: public ReactingInfoBase,
+			public ProductionCoefficientBase {
+
+		/**
+		 * Concise name for type of keys in map of keys to
+		 * combining cluster info.
+		 */
+		using KeyType = IReactant*;
+
+		//! The constructor
+		SuperClusterCombiningCluster(Reaction& _reaction, PSICluster& _first,
+				int dim) :
+				ReactingInfoBase(_reaction, _first), ProductionCoefficientBase(
+						dim) {
+
+		}
+
+		/**
+		 * Default and copy construtors, deleted to enforce constructing
+		 * using reactants.
+		 */
+		SuperClusterCombiningCluster() = delete;
+		SuperClusterCombiningCluster(const SuperClusterCombiningCluster& other) = delete;
+	};
+
+	/**
+	 * Concise name for type of map of SuperClusterCombiningClusters.
+	 */
+	using CombiningClusterMap = std::unordered_map<SuperClusterCombiningCluster::KeyType, SuperClusterCombiningCluster>;
 
 	/**
 	 * This is a protected class that is used to implement the flux calculations
@@ -101,24 +203,12 @@ protected:
 	 * reaction or dissociation for faster computation because they only change
 	 * when the temperature change. k is computed when setTemperature() is called.
 	 */
-	class SuperClusterDissociationPair {
-	public:
+	struct SuperClusterDissociationPair: public ReactingPairBase {
 
 		/**
-		 * The first cluster in the pair
+		 * Concise name for type of key into map of dissociation pairs.
 		 */
-		PSICluster * first;
-
-		/**
-		 * The second cluster in the pair
-		 */
-		PSICluster * second;
-
-		/**
-		 * The reaction/dissociation constant associated to this
-		 * reaction or dissociation
-		 */
-		const double * kConstant;
+		using KeyType = ReactantAddrPair;
 
 		/**
 		 * All the coefficient needed to compute each element
@@ -129,157 +219,291 @@ protected:
 		 *
 		 * 0 -> l0
 		 * 1 -> He
-		 * 2 -> V
+		 * 2 -> D
+		 * 3 -> T
+		 * 4 -> V
 		 */
-		double a00;
-		double a01;
-		double a02;
-		double a10;
-		double a11;
-		double a12;
-		double a20;
-		double a21;
-		double a22;
+		double **coefs;
 
 		//! The constructor
-		SuperClusterDissociationPair(PSICluster * firstPtr,
-				PSICluster * secondPtr, Reaction * reaction) :
-				first(firstPtr), second(secondPtr), kConstant(
-						&(reaction->kConstant)), a00(0.0), a01(0.0), a02(0.0), a10(
-						0.0), a11(0.0), a12(0.0), a20(0.0), a21(0.0), a22(0.0) {
+		SuperClusterDissociationPair(Reaction& _reaction, PSICluster& _first,
+				PSICluster& _second, int dim) :
+				ReactingPairBase(_reaction, _first, _second) {
+			// Create the array of the right dimension
+			coefs = new double*[dim];
+			for (int i = 0; i < dim; i++) {
+				coefs[i] = new double[dim];
+				for (int j = 0; j < dim; j++) {
+					coefs[i][j] = 0.0;
+				}
+			}
+		}
+
+		/**
+		 * Default and copy constructors, disallowed.
+		 */
+		SuperClusterDissociationPair() = delete;
+		SuperClusterDissociationPair(const SuperClusterDissociationPair& other) = delete;
+
+		//! The destructor
+		~SuperClusterDissociationPair() {
+			delete[] coefs;
 		}
 	};
 
+	/**
+	 * Concise name for type of map of SuperClusterDissociationPairs.
+	 */
+	using DissociationPairMap = std::unordered_map<SuperClusterDissociationPair::KeyType, SuperClusterDissociationPair>;
+
 private:
 
-	//! The mean number of helium atoms in this cluster.
-	double numHe;
-
-	//! The mean number of atomic vacancies in this cluster.
-	double numV;
+	//! The mean number of atoms in this cluster.
+	double numAtom[4] = { };
 
 	//! The total number of clusters gathered in this super cluster.
 	int nTot;
 
-	//! The width in the helium direction.
-	int sectionHeWidth;
+	//! The width of the group.
+	int sectionWidth[4] = { };
 
-	//! The width in the vacancy direction.
-	int sectionVWidth;
+	//! The dispersion in the group.
+	double dispersion[4] = { };
 
 	//! The 0th order moment (mean).
 	double l0;
 
-	//! The first order moment in the helium direction.
-	double l1He;
+	//! The first order moment.
+	double l1[4] = { };
 
-	//! The first order moment in the vacancy direction.
-	double l1V;
+	//! To know if the cluster has a regular shape
+	bool full;
 
-	//! The dispersion in the group in the helium direction.
-	double dispersionHe;
-
-	//! The dispersion in the group in the vacancy direction.
-	double dispersionV;
-
-	//! The map containing all the reacting pairs separated by original composition.
-	std::map<std::pair<int, int>, std::vector<ClusterPair> > reactingMap;
-
-	//! The map containing all the combining clusters separated by original composition.
-	std::map<std::pair<int, int>, std::vector<CombiningCluster> > combiningMap;
-
-	//! The map containing all the dissociating pairs separated by original composition.
-	std::map<std::pair<int, int>, std::vector<ClusterPair> > dissociatingMap;
-
-	//! The map containing all the emission pairs separated by original composition.
-	std::map<std::pair<int, int>, std::vector<ClusterPair> > emissionMap;
+	/**
+	 * The list of clusters gathered in this.
+	 */
+	std::set<std::tuple<int, int, int, int> > heVList;
 
 	//! The list of optimized effective reacting pairs.
-	std::forward_list<SuperClusterProductionPair> effReactingList;
+	ProductionPairMap effReactingList;
 
 	//! The list of optimized effective combining pairs.
-	std::forward_list<SuperClusterProductionPair> effCombiningList;
+	CombiningClusterMap effCombiningList;
 
 	//! The list of optimized effective dissociating pairs.
-	std::forward_list<SuperClusterDissociationPair> effDissociatingList;
+	DissociationPairMap effDissociatingList;
 
 	//! The list of optimized effective emission pairs.
-	std::forward_list<SuperClusterDissociationPair> effEmissionList;
+	DissociationPairMap effEmissionList;
 
 	/**
-	 * The helium moment flux.
+	 * The first moment flux.
 	 */
-	double heMomentFlux;
+	double momentFlux[4] = { };
 
 	/**
-	 * The vacancy moment flux.
+	 * Output coefficients for a given reaction to the given output stream.
+	 *
+	 * @param os The output stream on which to write the coefficients.
+	 * @param curr Information about our participation in a reaction.
 	 */
-	double vMomentFlux;
-
-	/**
-	 * The default constructor is private because PSIClusters must always be
-	 * initialized with a size.
-	 */
-	PSISuperCluster() :
-			PSICluster() {
-	}
-
-	/**
-	 * Group the same reactions together.
-	 */
-	void optimizeReactions();
+	void dumpCoefficients(std::ostream& os,
+			ProductionCoefficientBase const& curr) const;
+	void dumpCoefficients(std::ostream& os,
+			SuperClusterDissociationPair const& curr) const;
 
 public:
 
-	//! The vector of HeV clusters it will replace
-	std::vector<PSICluster *> heVVector;
+	/**
+	 * Default constructor, deleted because we require info to construct.
+	 */
+	PSISuperCluster() = delete;
 
 	/**
 	 * The constructor. All SuperClusters must be initialized with its
 	 * composition.
 	 *
-	 * @param numHe The mean number of helium atoms in this cluster
-	 * @param numV The mean number of vacancies in this cluster
+	 * @param num The mean number of atoms in this cluster
 	 * @param nTot The total number of clusters in this cluster
-	 * @param heWidth The width of this super cluster in the helium direction
-	 * @param vWidth The width of this super cluster in the vacancy direction
-	 * @param radius The mean radius
-	 * @param energy The mean formation energy
+	 * @param width The width of this super cluster
+	 * @param lower The lower bounds
+	 * @param higher The higher bounds
+	 * @param _network The network
 	 * @param registry The performance handler registry
 	 */
-	PSISuperCluster(double numHe, double numV, int nTot, int heWidth,
-			int vWidth, double radius, double energy,
+	PSISuperCluster(double num[4], int nTot, int width[4], int lower[4],
+			int higher[4], IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
-	 * Copy constructor.
-	 *
-	 * @param other the reactant to be copied
+	 * Copy constructor, deleted to prevent use.
 	 */
-	PSISuperCluster(PSISuperCluster &other);
+	PSISuperCluster(PSISuperCluster &other) = delete;
 
 	//! Destructor
 	~PSISuperCluster() {
 	}
 
 	/**
-	 * This operation returns a Reactant that is created using the copy
-	 * constructor of PSISuperCluster.
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
 	 *
-	 * @return A copy of this reactant
+	 * @param reaction The reaction creating this cluster.
+	 * @param a Number that can be used by daughter classes.
+	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual std::shared_ptr<IReactant> clone() {
-		return std::make_shared<PSISuperCluster>(*this);
-	}
+	void resultFrom(ProductionReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override;
 
 	/**
-	 * Sets the collection of other clusters that make up
-	 * the reaction network in which this cluster exists.
+	 * Note that we result from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in the network.
 	 *
-	 * @param network The reaction network of which this cluster is a part
+	 * @param reaction The reaction creating this cluster.
+	 * @param prInfos Production reaction parameters.
 	 */
-	void setReactionNetwork(
-			const std::shared_ptr<IReactionNetwork> reactionNetwork);
+	void resultFrom(ProductionReaction& reaction,
+			const std::vector<PendingProductionReactionInfo>& prInfos) override;
+
+	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param product The cluster created by the reaction.
+	 *
+	 */
+	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
+
+	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef The cooresponding coefficient
+	 */
+	void resultFrom(ProductionReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param a Number that can be used by daughter classes.
+	 */
+	void participateIn(ProductionReaction& reaction, int a[4] = defaultInit)
+			override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction
+	 * involving a super cluster.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param prInfos Production reaction parameters.
+	 */
+	void participateIn(ProductionReaction& reaction,
+			const std::vector<PendingProductionReactionInfo>& prInfos) override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction
+	 * involving a super cluster.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param product The cluster created by the reaction.
+	 */
+	void participateIn(ProductionReaction& reaction, IReactant& product)
+			override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(ProductionReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param a Number that can be used by daughter classes.
+	 * @param b Number that can be used by daughter classes.
+	 */
+	void participateIn(DissociationReaction& reaction, int a[4] = defaultInit,
+			int b[4] = defaultInit) override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction
+	 * involving a super cluster.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param prInfos Production reaction parameters.
+	 */
+	void participateIn(DissociationReaction& reaction,
+			const std::vector<PendingProductionReactionInfo>& prInfos) override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction
+	 * involving a super cluster.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param disso The dissociating cluster.
+	 */
+	void participateIn(DissociationReaction& reaction, IReactant& disso)
+			override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void participateIn(DissociationReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param a Number that can be used by daughter classes.
+	 */
+	void emitFrom(DissociationReaction& reaction, int a[4] = defaultInit)
+			override;
+
+	/**
+	 * Note that we emit from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param prInfos Production reaction parameters.
+	 */
+	void emitFrom(DissociationReaction& reaction,
+			const std::vector<PendingProductionReactionInfo>& prInfos) override;
+
+	/**
+	 * Note that we emit from the given reaction involving a super cluster.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param disso The dissociating cluster.
+	 */
+	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	void emitFrom(DissociationReaction& reaction, double *coef) override;
 
 	/**
 	 * This operation returns true to signify that this cluster is a mixture of
@@ -287,44 +511,38 @@ public:
 	 *
 	 * @return True if mixed
 	 */
-	virtual bool isMixed() const {
+	virtual bool isMixed() const override {
 		return true;
 	}
 
 	/**
-	 * Set the HeV vector
+	 * Set the HeV vector and compute different parameters
 	 */
-	void setHeVVector(std::vector<PSICluster *> vec) {
-		heVVector = vec;
-	}
+	void setHeVVector(std::set<std::tuple<int, int, int, int> > vec);
 
 	/**
 	 * This operation returns the current concentration.
 	 *
 	 * @param distHe The helium distance in the group
+	 * @param distD The deuterium distance in the group
+	 * @param distT The tritium distance in the group
 	 * @param distV The vacancy distance in the group
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distHe, double distV) const {
-		return l0 + (distHe * l1He) + (distV * l1V);
+	double getConcentration(double distHe = 0.0, double distD = 0.0,
+			double distT = 0.0, double distV = 0.0) const override {
+		return l0 + (distHe * l1[0]) + (distD * l1[1]) + (distT * l1[2])
+				+ (distV * l1[3]);
 	}
 
 	/**
-	 * This operation returns the first helium moment.
+	 * This operation returns the first moment of the given axis.
 	 *
+	 * @param axis The axis we are intersted in
 	 * @return The moment
 	 */
-	double getHeMoment() const {
-		return l1He;
-	}
-
-	/**
-	 * This operation returns the first vacancy moment.
-	 *
-	 * @return The moment
-	 */
-	double getVMoment() const {
-		return l1V;
+	double getMoment(int axis) const override {
+		return l1[axis];
 	}
 
 	/**
@@ -335,11 +553,12 @@ public:
 	double getTotalConcentration() const;
 
 	/**
-	 * This operation returns the current total concentration of helium in the group.
-
+	 * This operation returns the current total concentration of given atom in the group.
+	 *
+	 * @param axis The given atom
 	 * @return The concentration
 	 */
-	double getTotalHeliumConcentration() const;
+	double getTotalAtomConcentration(int axis = 0) const;
 
 	/**
 	 * This operation returns the current total concentration of vacancies in the group.
@@ -349,31 +568,76 @@ public:
 	double getTotalVacancyConcentration() const;
 
 	/**
-	 * This operation returns the distance to the mean.
+	 * This operation returns the current concentration for a vacancy number.
 	 *
-	 * @param he The number of helium
-	 * @return The distance to the mean number of helium in the group
+	 * @param v The vacancy number
+	 * @return The concentration
 	 */
-	double getHeDistance(int he) const {
-		return (sectionHeWidth == 1) ?
-				0.0 : 2.0 * (he - numHe) / (sectionHeWidth - 1.0);
-	}
+	double getIntegratedVConcentration(int v) const;
+
+	/**
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getProdVector() const override;
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, the rate, and
+	 * the coefs[0]
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const override;
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const override;
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved, containing the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const override;
 
 	/**
 	 * This operation returns the distance to the mean.
 	 *
-	 * @param he The number of vacancy
-	 * @return The distance to the mean number of vacancy in the group
+	 * 0 -> He
+	 * 1 -> D
+	 * 2 -> T
+	 * 3 -> V
+	 *
+	 * @param atom The number of atoms
+	 * @param axis The axis we are intersted in
+	 * @return The distance to the mean number of atoms in the group
 	 */
-	double getVDistance(int v) const {
-		return (sectionVWidth == 1) ?
-				0.0 : 2.0 * (v - numV) / (sectionVWidth - 1.0);
+	double getDistance(int atom, int axis) const override {
+		return (sectionWidth[axis] == 1) ?
+				0.0 : 2.0 * (atom - numAtom[axis]) / (sectionWidth[axis] - 1.0);
 	}
 
 	/**
-	 * Calculate the dispersion of the group.
+	 * This operation returns the factor used for the moments.
+	 *
+	 * @param atom The number of atoms
+	 * @param axis The axis we are intersted in
+	 * @return The factor
 	 */
-	void computeDispersion();
+	double getFactor(int atom, int axis) const override {
+		return (double) (atom - numAtom[axis]) / dispersion[axis];
+	}
 
 	/**
 	 * This operation sets the zeroth order moment.
@@ -385,45 +649,37 @@ public:
 	}
 
 	/**
-	 * This operation sets the first order moment in the helium direction.
+	 * This operation sets the first order moment.
 	 *
+	 * @param axis The axis we are intersted in
 	 * @param mom The moment
 	 */
-	void setHeMoment(double mom) {
-		l1He = mom;
-	}
-
-	/**
-	 * This operation sets the first order moment in the vacancy direction.
-	 *
-	 * @param mom The moment
-	 */
-	void setVMoment(double mom) {
-		l1V = mom;
+	void setMoment(double mom, int axis) {
+		l1[axis] = mom;
 	}
 
 	/**
 	 * This operation reset the connectivity sets based on the information
 	 * in the production and dissociation vectors.
 	 */
-	void resetConnectivities();
+	void resetConnectivities() override;
 
 	/**
 	 * This operation returns the total flux of this cluster in the
 	 * current network.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The total change in flux for this cluster due to all
 	 * reactions
 	 */
-	double getTotalFlux() {
-
+	double getTotalFlux(int i) override {
 		// Initialize the fluxes
-		heMomentFlux = 0.0;
-		vMomentFlux = 0.0;
+		momentFlux[0] = 0.0, momentFlux[1] = 0.0, momentFlux[2] = 0.0, momentFlux[3] =
+				0.0;
 
 		// Compute the fluxes.
-		return getProductionFlux() - getCombinationFlux()
-				+ getDissociationFlux() - getEmissionFlux();
+		return getProductionFlux(i) - getCombinationFlux(i)
+				+ getDissociationFlux(i) - getEmissionFlux(i);
 	}
 
 	/**
@@ -431,53 +687,49 @@ public:
 	 * other clusters dissociating into it. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to dissociation of other clusters
 	 */
-	double getDissociationFlux();
+	double getDissociationFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux();
+	double getEmissionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the production of this cluster by other clusters. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster being produced
 	 */
-	double getProductionFlux();
+	double getProductionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
 	 * the combination of this cluster with others. Compute the contributions to
 	 * the moment fluxes at the same time.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster combining with other clusters
 	 */
-	double getCombinationFlux();
+	double getCombinationFlux(int i);
 
 	/**
-	 * This operation returns the total change for its helium moment.
+	 * This operation returns the total change for its first moment.
 	 *
+	 * @param axis The direction we are interested in
 	 * @return The moment flux
 	 */
-	double getHeMomentFlux() {
-		return heMomentFlux;
-	}
-
-	/**
-	 * This operation returns the total change for its vacancy moment.
-	 *
-	 * @return The moment flux
-	 */
-	double getVMomentFlux() {
-		return vMomentFlux;
+	double getMomentFlux(int axis) const {
+		return momentFlux[axis];
 	}
 
 	/**
@@ -491,9 +743,15 @@ public:
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
+	 * @param i The location on the grid in the depth direction
 	 *
 	 */
-	void getPartialDerivatives(std::vector<double> & partials) const;
+	void computePartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getPartialDerivatives(std::vector<double> & partials, int i) const override
+	{
+		assert(false);
+	}
 
 	/**
 	 * This operation computes the partial derivatives due to production
@@ -502,8 +760,15 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getProductionPartialDerivatives(std::vector<double> & partials) const;
+	void computeProductionPartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getProductionPartialDerivatives(std::vector<double> & partials, int i) const
+			override
+			{
+		assert(false);
+	}
 
 	/**
 	 * This operation computes the partial derivatives due to combination
@@ -512,8 +777,15 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getCombinationPartialDerivatives(std::vector<double> & partials) const;
+	void computeCombinationPartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getCombinationPartialDerivatives(std::vector<double> & partials, int i) const
+			override
+			{
+		assert(false);
+	}
 
 	/**
 	 * This operation computes the partial derivatives due to dissociation of
@@ -522,9 +794,15 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getDissociationPartialDerivatives(
-			std::vector<double> & partials) const;
+	void computeDissociationPartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getDissociationPartialDerivatives(std::vector<double> & partials, int i) const
+			override
+			{
+		assert(false);
+	}
 
 	/**
 	 * This operation computes the partial derivatives due to emission
@@ -533,53 +811,99 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getEmissionPartialDerivatives(std::vector<double> & partials) const;
+	void computeEmissionPartialDerivatives(double* partials[5],
+			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+	void getEmissionPartialDerivatives(std::vector<double> & partials, int i) const
+			override
+			{
+		assert(false);
+	}
 
 	/**
-	 * This operation computes the partial derivatives for the helium moment.
+	 * This operation computes the partial derivatives for the given moment.
 	 *
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted.
+	 * @ param axis The direction
 	 */
-	void getHeMomentPartialDerivatives(std::vector<double> & partials) const;
-
-	/**
-	 * This operation computes the partial derivatives for the vacancy moment.
-	 *
-	 * @param partials The vector into which the partial derivatives should be
-	 * inserted.
-	 */
-	void getVMomentPartialDerivatives(std::vector<double> & partials) const;
+	void getMomentPartialDerivatives(std::vector<double> & partials, int axis =
+			0) const {
+		assert(false);
+	}
 
 	/**
 	 * Returns the average number of vacancies.
 	 *
 	 * @return The average number of vacancies
 	 */
-	double getNumV() {
-		return numV;
+	double getNumV() const {
+		return numAtom[3];
 	}
 
 	/**
-	 * Returns a vector containing the information about the group's bounderies
-	 * in the helium and vacancy directions.
+	 * Returns the number of clusters contained.
 	 *
-	 * @return The boundaries
+	 * @return The number of clusters
 	 */
-	std::vector<int> getBoundaries() const {
-		std::vector<int> boundaries;
-		boundaries.push_back((int) (numHe - (double) sectionHeWidth / 2.0) + 1);
-		boundaries.push_back(
-				(int) (numHe - (double) sectionHeWidth / 2.0) + sectionHeWidth);
-		boundaries.push_back((int) (numV - (double) sectionVWidth / 2.0) + 1);
-		boundaries.push_back(
-				(int) (numV - (double) sectionVWidth / 2.0) + sectionVWidth);
-		return boundaries;
+	double getNTot() const {
+		return nTot;
 	}
 
+	/**
+	 * Detect if given coordinates are in this cluster's group.
+	 *
+	 * @param _nHe number of He of interest.
+	 * @param _nD number of D of interest
+	 * @param _nT number of T of interest
+	 * @param _nV number of V of interest
+	 * @return True if the coordinates are contained in our super cluster.
+	 */
+	bool isIn(IReactant::SizeType nHe, IReactant::SizeType nD,
+			IReactant::SizeType nT, IReactant::SizeType nV) const {
+		if (!bounds[0].contains(nHe))
+			return false;
+		if (!bounds[1].contains(nD))
+			return false;
+		if (!bounds[2].contains(nT))
+			return false;
+		if (!bounds[3].contains(nV))
+			return false;
+		if (isFull())
+			return true;
+
+		return (heVList.find(std::make_tuple(nHe, nD, nT, nV)) != heVList.end());
+	}
+
+	/**
+	 * Determine if the cluster has a full parallelepiped shape without missing clusters.
+	 *
+	 * @return True if it is full.
+	 */
+	bool isFull() const {
+		return full;
+	}
+
+	/**
+	 * Return the heVList.
+	 *
+	 * @return The heVList
+	 */
+	const std::set<std::tuple<int, int, int, int> > & getCoordList() const {
+		return heVList;
+	}
+
+	/**
+	 * Tell reactant to output a representation of its reaction coefficients
+	 * to the given output stream.
+	 *
+	 * @param os Output stream on which to output coefficients.
+	 */
+	virtual void outputCoefficientsTo(std::ostream& os) const override;
 };
 //end class PSISuperCluster
 
-} /* end namespace xolotlCore */
+}
+/* end namespace xolotlCore */
 #endif

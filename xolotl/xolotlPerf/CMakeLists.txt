@@ -22,33 +22,9 @@ file(GLOB DUMMYSRC *.cpp dummy/*.cpp)
 set(STD_HEADERS standard/StdHandlerRegistry.h standard/EventCounter.h)
 set(STD_SRC standard/StdHandlerRegistry.cpp)
 
-# Check for OS timer support...
-include(CheckIncludeFiles)
-include(CheckSymbolExists)
-
-# ...first, check for gettimeofday...
-check_include_files(sys/time.h HAVE_SYS_TIME_H)
-if(HAVE_SYS_TIME_H)
-    check_symbol_exists(gettimeofday sys/time.h HAVE_GETTIMEOFDAY)
-    if(HAVE_GETTIMEOFDAY)
-        set(OS_TIMESTAMP_HDRS ${OS_TIMESTAMP_HDRS} "os/GTODTimestamp.h")
-    endif(HAVE_GETTIMEOFDAY)
-endif(HAVE_SYS_TIME_H)
-
-# ...next, check for clock_gettime.
-check_include_files(time.h HAVE_TIME_H)
-if(HAVE_TIME_H)
-    set(SAVED_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
-    set(CMAKE_REQUIRED_LIBRARIES ${SAVED_CMAKE_REQUIRED_LIBRARIES} -lrt)
-    check_symbol_exists(clock_gettime time.h HAVE_CLOCK_GETTIME)
-    if(HAVE_CLOCK_GETTIME)
-        set(MAYBE_RT -lrt)
-        set(OS_TIMESTAMP_HDRS ${OS_TIMESTAMP_HDRS} "os/CGTTimstamp.h")
-    endif(HAVE_CLOCK_GETTIME)
-    set(CMAKE_REQUIRED_LIBRARIES ${SAVED_CMAKE_REQUIRED_LIBRARIES})
-endif(HAVE_TIME_H)
-
-set(OS_HEADERS os/OSHandlerRegistry.h os/OSTimer.h ${OS_TIMESTAMP_HDRS})
+# Include OS timer support.
+# We use the Standard C++ Library interface in <chrono>.
+set(OS_HEADERS os/OSHandlerRegistry.h os/OSTimer.h)
 set(OS_SRC os/OSHandlerRegistry.cpp os/OSTimer.cpp)
 
 # Check whether PAPI is available.
