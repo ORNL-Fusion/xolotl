@@ -1342,7 +1342,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Don't do anything if it is not on the stride
-	if (timestep % 10 != 0)
+	if (timestep % 200 != 0)
 		PetscFunctionReturn(0);
 
 	// Get the number of processes
@@ -1406,31 +1406,32 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 				aPoint.x = (double) i + 1.0;
 				myPoints->push_back(aPoint);
 			}
-			int nXe = networkSize - superClusters.size() + 1;
 
 			// Loop on the super clusters
-			for (auto const& superMapItem : superClusters) {
-				// Get the cluster
-				auto const& cluster =
-						static_cast<NESuperCluster&>(*(superMapItem.second));
-				// Get the width
-				int width = cluster.getSectionWidth();
-				// Loop on the width
-				for (int k = 0; k < width; k++) {
-					// Compute the distance
-					double dist = cluster.getDistance(nXe + k);
-					// Create a Point with the concentration[i] as the value
-					// and add it to myPoints
-					xolotlViz::Point aPoint;
-					aPoint.value = cluster.getConcentration(dist);
-					aPoint.t = time;
-					aPoint.x = (double) nXe + k;
-					myPoints->push_back(aPoint);
-				}
+			auto& allReactants = network.getAll();
+			std::for_each(allReactants.begin(), allReactants.end(),
+					[&time,&myPoints](IReactant& currReactant) {
 
-				// update nXe
-				nXe += width;
-			}
+						if (currReactant.getType() == ReactantType::NESuper) {
+							auto& cluster = static_cast<NESuperCluster&>(currReactant);
+							// Get the width and average
+							int width = cluster.getSectionWidth();
+							double nXe = cluster.getAverage();
+							// Loop on the width
+							for (int k = nXe + 1.0 - (double) width / 2.0;
+									k < nXe + (double) width / 2.0; k++) {
+								// Compute the distance
+								double dist = cluster.getDistance(k);
+								// Create a Point with the concentration[i] as the value
+								// and add it to myPoints
+								xolotlViz::Point aPoint;
+								aPoint.value = cluster.getConcentration(dist);
+								aPoint.t = time;
+								aPoint.x = (double) k;
+								myPoints->push_back(aPoint);
+							}
+						}
+					});
 		}
 
 		// else receive the values from another process
@@ -1447,32 +1448,33 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 				aPoint.x = (double) i + 1.0;
 				myPoints->push_back(aPoint);
 			}
-			int nXe = networkSize - superClusters.size() + 1;
 
 			// Loop on the super clusters
-			for (auto const& superMapItem : superClusters) {
-				// Get the cluster
-				auto const& cluster =
-						static_cast<NESuperCluster&>(*(superMapItem.second));
-				// Get the width
-				int width = cluster.getSectionWidth();
-				// Loop on the width
-				for (int k = 0; k < width; k++) {
-					double conc = 0.0;
-					MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11,
-							MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-					// Create a Point with conc as the value
-					// and add it to myPoints
-					xolotlViz::Point aPoint;
-					aPoint.value = conc;
-					aPoint.t = time;
-					aPoint.x = (double) nXe + k;
-					myPoints->push_back(aPoint);
-				}
+			auto& allReactants = network.getAll();
+			std::for_each(allReactants.begin(), allReactants.end(),
+					[&time,&myPoints](IReactant& currReactant) {
 
-				// update nXe
-				nXe += width;
-			}
+						if (currReactant.getType() == ReactantType::NESuper) {
+							auto& cluster = static_cast<NESuperCluster&>(currReactant);
+							// Get the width and average
+							int width = cluster.getSectionWidth();
+							double nXe = cluster.getAverage();
+							// Loop on the width
+							for (int k = nXe + 1.0 - (double) width / 2.0;
+									k < nXe + (double) width / 2.0; k++) {
+								double conc = 0.0;
+								MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11,
+										MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+								// Create a Point with conc as the value
+								// and add it to myPoints
+								xolotlViz::Point aPoint;
+								aPoint.value = conc;
+								aPoint.t = time;
+								aPoint.x = (double) k;
+								myPoints->push_back(aPoint);
+							}
+						}
+					});
 		}
 
 		// Get the data provider and give it the points
@@ -1514,27 +1516,27 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 				MPI_Send(&gridPointSolution[i], 1, MPI_DOUBLE, 0, 10,
 						MPI_COMM_WORLD);
 			}
-			int nXe = networkSize - superClusters.size() + 1;
 
 			// Loop on the super clusters
-			for (auto const& superMapItem : superClusters) {
-				// Get the cluster
-				auto const& cluster =
-						static_cast<NESuperCluster&>(*(superMapItem.second));
-				// Get the width
-				int width = cluster.getSectionWidth();
-				// Loop on the width
-				for (int k = 0; k < width; k++) {
-					// Compute the distance
-					double dist = cluster.getDistance(nXe + k);
-					double conc = cluster.getConcentration(dist);
-					// Send the value of each concentration to the master process
-					MPI_Send(&conc, 1, MPI_DOUBLE, 0, 11, MPI_COMM_WORLD);
-				}
+			auto& allReactants = network.getAll();
+			std::for_each(allReactants.begin(), allReactants.end(),
+					[](IReactant& currReactant) {
 
-				// update nXe
-				nXe += width;
-			}
+						if (currReactant.getType() == ReactantType::NESuper) {
+							auto& cluster = static_cast<NESuperCluster&>(currReactant);
+							// Get the width and average
+							int width = cluster.getSectionWidth();
+							double nXe = cluster.getAverage();
+							// Loop on the width
+							for (int k = nXe + 1.0 - (double) width / 2.0; k < nXe + (double) width / 2.0; k++) {
+								// Compute the distance
+								double dist = cluster.getDistance(k);
+								double conc = cluster.getConcentration(dist);
+								// Send the value of each concentration to the master process
+								MPI_Send(&conc, 1, MPI_DOUBLE, 0, 11, MPI_COMM_WORLD);
+							}
+						}
+					});
 		}
 	}
 

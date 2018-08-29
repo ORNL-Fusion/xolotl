@@ -22,7 +22,7 @@ public:
 			OptionHandler("process",
 					"process                           "
 							"List of all the processes to use in the simulation (reaction, diff, advec, "
-							"modifiedTM, movingSurface, bursting, attenuation).\n") {
+							"modifiedTM, movingSurface, bursting, attenuation, resolution).\n") {
 	}
 
 	/**
@@ -47,6 +47,7 @@ public:
 		processMap["movingSurface"] = false;
 		processMap["bursting"] = false;
 		processMap["attenuation"] = false;
+		processMap["resolution"] = false;
 
 		// Build an input stream from the argument string.
 		xolotlCore::TokenizedLineReader<std::string> reader;

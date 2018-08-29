@@ -31,6 +31,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters)
                     ${CMAKE_SOURCE_DIR}/xolotlCore/flux
                     ${CMAKE_SOURCE_DIR}/xolotlCore/temperature
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
                     ${CMAKE_SOURCE_DIR}/xolotlViz
                     ${CMAKE_SOURCE_DIR}/xolotlViz/dataprovider
                     ${CMAKE_SOURCE_DIR}/xolotlPerf

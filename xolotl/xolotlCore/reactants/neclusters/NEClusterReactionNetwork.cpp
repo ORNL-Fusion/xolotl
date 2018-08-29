@@ -209,7 +209,8 @@ IReactant * NEClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nXe,
 	// See if the last supercluster we were asked to find is the right
 	// one for this request.
 	static IReactant* lastRet;
-	if (lastRet and static_cast<NESuperCluster*>(lastRet)->isIn(nXe)) {
+	if (lastRet
+			and static_cast<NESuperCluster*>(lastRet)->isIn(nXe)) {
 		return lastRet;
 	}
 

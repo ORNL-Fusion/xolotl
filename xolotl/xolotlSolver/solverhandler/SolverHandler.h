@@ -67,6 +67,9 @@ protected:
 	//! The original modified trap-mutation handler created.
 	xolotlCore::ITrapMutationHandler *mutationHandler;
 
+	//! The original re-solution handler created.
+	xolotlCore::IReSolutionHandler *resolutionHandler;
+
 	//! The number of dimensions for the problem.
 	int dimension;
 
@@ -328,6 +331,10 @@ public:
 		// Set the modified trap-mutation handler
 		mutationHandler =
 				(xolotlCore::ITrapMutationHandler *) material->getTrapMutationHandler().get();
+
+		// Set the re-solution handler
+		resolutionHandler =
+				(xolotlCore::IReSolutionHandler *) material->getReSolutionHandler().get();
 
 		// Set the initial vacancy concentration
 		initialVConc = options.getInitialVConcentration();

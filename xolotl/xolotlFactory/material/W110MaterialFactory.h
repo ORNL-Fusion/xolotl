@@ -37,6 +37,7 @@ public:
 				std::make_shared<xolotlCore::W110AdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				xolotlCore::W110TrapMutationHandler>();
+		theReSolutionHandler = std::make_shared<xolotlCore::DummyReSolutionHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {

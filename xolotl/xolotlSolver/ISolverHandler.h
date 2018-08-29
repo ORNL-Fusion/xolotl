@@ -10,6 +10,7 @@
 #include <IDiffusionHandler.h>
 #include <IAdvectionHandler.h>
 #include <ITrapMutationHandler.h>
+#include <IReSolutionHandler.h>
 #include <IMaterialFactory.h>
 #include <IReactionNetwork.h>
 
@@ -31,7 +32,8 @@ public:
 	/**
 	 * The destructor.
 	 */
-	virtual ~ISolverHandler(){}
+	virtual ~ISolverHandler() {
+	}
 
 	/**
 	 * Initialize all the physics handlers that are needed to solve the ADR equations.
@@ -40,7 +42,8 @@ public:
 	 * @param tempHandler The temperature handler
 	 * @param options The Xolotl options
 	 */
-	virtual void initializeHandlers(std::shared_ptr<xolotlFactory::IMaterialFactory> material,
+	virtual void initializeHandlers(
+			std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
 			const xolotlCore::Options &options) = 0;
 
@@ -68,7 +71,8 @@ public:
 	 * @param F The updated PETSc solution vector
 	 * @param ftime The real time
 	 */
-	virtual void updateConcentration(TS &ts, Vec &localC, Vec &F, PetscReal ftime) = 0;
+	virtual void updateConcentration(TS &ts, Vec &localC, Vec &F,
+			PetscReal ftime) = 0;
 
 	/**
 	 * Compute the off-diagonal part of the Jacobian which is related to cluster's motion.
@@ -78,7 +82,8 @@ public:
 	 * @param J The Jacobian
 	 * @param ftime The real time
 	 */
-	virtual void computeOffDiagonalJacobian(TS &ts, Vec &localC, Mat &J, PetscReal ftime) = 0;
+	virtual void computeOffDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
+			PetscReal ftime) = 0;
 
 	/**
 	 * Compute the diagonal part of the Jacobian which is related to cluster reactions.
@@ -88,7 +93,8 @@ public:
 	 * @param J The Jacobian
 	 * @param ftime The real time
 	 */
-	virtual void computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J, PetscReal ftime) = 0;
+	virtual void computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
+			PetscReal ftime) = 0;
 
 	/**
 	 * Get the grid in the x direction.
@@ -227,15 +233,16 @@ public:
 	 */
 	virtual std::string getNetworkName() const = 0;
 
-    /**
-     * Access the random number generator.
-     * The generator will have already been seeded.
-     *
-     * @return The RandomNumberGenerator object to use.
-     */
-    virtual RandomNumberGenerator<int, unsigned int>& getRNG(void) const = 0;
+	/**
+	 * Access the random number generator.
+	 * The generator will have already been seeded.
+	 *
+	 * @return The RandomNumberGenerator object to use.
+	 */
+	virtual RandomNumberGenerator<int, unsigned int>& getRNG(void) const = 0;
 
-}; //end class ISolverHandler
+};
+//end class ISolverHandler
 
 } /* namespace xolotlSolver */
 #endif
