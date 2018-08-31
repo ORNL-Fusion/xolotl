@@ -106,11 +106,16 @@ public:
 		std::ifstream paramFile;
 		paramFile.open("tridyn.dat");
 
+		// Gets the process ID
+		int procId;
+		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+
 		if (!paramFile.good()) {
 			// Print a message
-			std::cout
-					<< "No parameter files for TRIDYN flux, the flux will be 0"
-					<< std::endl;
+			if (procId == 0)
+				std::cout
+						<< "No parameter files for TRIDYN flux, the flux will be 0"
+						<< std::endl;
 
 			// Set the depths to 0.0
 			totalDepths.push_back(0.0);
@@ -139,6 +144,16 @@ public:
 			while (i < 4) {
 				// Get the fraction
 				reductionFactors.push_back(tokens[0]);
+
+				// Check if the reduction factor is positive
+				if (tokens[0] < 0.0) {
+					// Print a message
+					if (procId == 0)
+						std::cout
+								<< "One of the reduction factors for the TRIDYN flux is negative, "
+										"check if this is really what you want to do."
+								<< std::endl;
+				}
 
 				// Set the parameters for the fit
 				getline(paramFile, line);
@@ -308,8 +323,6 @@ public:
 			fluxIndices.push_back(fluxCluster->getId() - 1);
 
 		// Prints both incident vectors in a file
-		int procId;
-		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 		if (procId == 0) {
 			std::ofstream outputFile;
 			outputFile.open("incidentVectors.txt");
