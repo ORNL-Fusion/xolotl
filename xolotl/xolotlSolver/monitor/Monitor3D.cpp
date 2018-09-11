@@ -147,8 +147,11 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
 			currentTimeStep);
 
-	// Write the surface positions in the concentration sub group
-	tsGroup->writeSurface3D(surfaceIndices, nInterstitial3D, previousIFlux3D);
+	if (solverHandler.moveSurface()) {
+		// Write the surface positions in the concentration sub group
+		tsGroup->writeSurface3D(surfaceIndices, nInterstitial3D,
+				previousIFlux3D);
+	}
 
 	// Loop on the full grid
 	for (PetscInt k = 0; k < Mz; k++) {

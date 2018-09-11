@@ -41,7 +41,7 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 
 	// Now that the grid was generated, we can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty()) {
+	if (not networkName.empty() and movingSurface) {
 
 		xolotlCore::XFile xfile(networkName);
 		auto concGroup =
@@ -155,7 +155,7 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
 	if (not networkName.empty()) {
 		xfile.reset(new xolotlCore::XFile(networkName));
-		auto concGroup =
+		concGroup =
 				xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}

@@ -117,7 +117,7 @@ std::shared_ptr<xperf::ITimer> postEventFuncTimer;
 PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-    xperf::ScopedTimer myTimer(checkNegativeTimer);
+	xperf::ScopedTimer myTimer(checkNegativeTimer);
 
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -205,7 +205,7 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 
-    xperf::ScopedTimer myTimer(tridynTimer);
+	xperf::ScopedTimer myTimer(tridynTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -331,7 +331,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-    xperf::ScopedTimer myTimer(startStopTimer);
+	xperf::ScopedTimer myTimer(startStopTimer);
 
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -407,9 +407,11 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
 			currentTimeStep);
 
-	// Write the surface positions and the associated interstitial quantities
-	// in the concentration sub group
-	tsGroup->writeSurface1D(surfacePos, nInterstitial1D, previousIFlux1D);
+	if (solverHandler.moveSurface()) {
+		// Write the surface positions and the associated interstitial quantities
+		// in the concentration sub group
+		tsGroup->writeSurface1D(surfacePos, nInterstitial1D, previousIFlux1D);
+	}
 
 	// Write the bottom impurity information if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1)
@@ -456,7 +458,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		Vec solution, void *) {
 
-    xperf::ScopedTimer myTimer(heRetentionTimer);
+	xperf::ScopedTimer myTimer(heRetentionTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -533,18 +535,15 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Determine total concentrations for He, D, T.
-    std::array<double, 3> myConcData {heConcentration, dConcentration, tConcentration };
-    std::array<double, 3> totalConcData;
+	std::array<double, 3> myConcData { heConcentration, dConcentration,
+			tConcentration };
+	std::array<double, 3> totalConcData;
 
-    MPI_Reduce(myConcData.data(),
-                totalConcData.data(),
-                myConcData.size(),
-                MPI_DOUBLE,
-                MPI_SUM,
-                0,
-                PETSC_COMM_WORLD);
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE,
+	MPI_SUM, 0, PETSC_COMM_WORLD);
 
-    // Extract total He, D, T concentrations.  Values are valid only on rank 0.
+	// Extract total He, D, T concentrations.  Values are valid only on rank 0.
 	double totalHeConcentration = totalConcData[0];
 	double totalDConcentration = totalConcData[1];
 	double totalTConcentration = totalConcData[2];
@@ -633,34 +632,27 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		}
 
 		// Get which processor will send the information
-        // TODO do we need to do this allreduce just to figure out
-        // who owns the data?
-        // And is it supposed to be a sum?   Why not a min?
+		// TODO do we need to do this allreduce just to figure out
+		// who owns the data?
+		// And is it supposed to be a sum?   Why not a min?
 		int bottomId = 0;
 		MPI_Allreduce(&bottomProc, &bottomId, 1, MPI_INT, MPI_SUM,
 				PETSC_COMM_WORLD);
 
 		// Send the information about impurities
 		// to the other processes
-        std::array<double, 6> countFluxData { nHelium1D,
-                                                previousHeFlux1D,
-                                                nDeuterium1D,
-                                                previousDFlux1D,
-                                                nTritium1D,
-                                                previousTFlux1D };
-        MPI_Bcast(countFluxData.data(),
-                    countFluxData.size(),
-                    MPI_DOUBLE,
-                    bottomId,
-                    PETSC_COMM_WORLD);
+		std::array<double, 6> countFluxData { nHelium1D, previousHeFlux1D,
+				nDeuterium1D, previousDFlux1D, nTritium1D, previousTFlux1D };
+		MPI_Bcast(countFluxData.data(), countFluxData.size(), MPI_DOUBLE,
+				bottomId, PETSC_COMM_WORLD);
 
-        // Extract inpurity data from broadcast buffer.
-        nHelium1D = countFluxData[0];
-        previousHeFlux1D = countFluxData[1];
-        nDeuterium1D = countFluxData[2];
-        previousDFlux1D = countFluxData[3];
-        nTritium1D = countFluxData[4];
-        previousTFlux1D = countFluxData[5];
+		// Extract inpurity data from broadcast buffer.
+		nHelium1D = countFluxData[0];
+		previousHeFlux1D = countFluxData[1];
+		nDeuterium1D = countFluxData[2];
+		previousDFlux1D = countFluxData[3];
+		nTritium1D = countFluxData[4];
+		previousTFlux1D = countFluxData[5];
 	}
 
 	// Master process
@@ -700,7 +692,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		Vec solution, void *) {
 
-    xperf::ScopedTimer myTimer(xeRetentionTimer);
+	xperf::ScopedTimer myTimer(xeRetentionTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -840,7 +832,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 
-    xperf::ScopedTimer myTimer(heConcTimer);
+	xperf::ScopedTimer myTimer(heConcTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -989,7 +981,7 @@ PetscErrorCode computeHeliumConc1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 		PetscReal time, Vec solution, void *ictx) {
 
-    xperf::ScopedTimer myTimer(cumHeTimer);
+	xperf::ScopedTimer myTimer(cumHeTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -1108,7 +1100,7 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-    xperf::ScopedTimer myTimer(scatterTimer);
+	xperf::ScopedTimer myTimer(scatterTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -1331,7 +1323,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-    xperf::ScopedTimer myTimer(seriesTimer);
+	xperf::ScopedTimer myTimer(seriesTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -1505,7 +1497,7 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-    xperf::ScopedTimer myTimer(surfaceTimer);
+	xperf::ScopedTimer myTimer(surfaceTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -1550,7 +1542,7 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 	// Loop on the grid points
 	for (xi = xs; xi < xs + xm; xi++) {
 
-		if (xi != 5)
+		if (xi != 20)
 			continue;
 
 		// Create a Point vector to store the data to give to the data provider
@@ -1674,7 +1666,7 @@ PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
 
-    xperf::ScopedTimer myTimer(meanSizeTimer);
+	xperf::ScopedTimer myTimer(meanSizeTimer);
 
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -1798,7 +1790,7 @@ PetscErrorCode monitorMeanSize1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
 
-    xperf::ScopedTimer myTimer(maxClusterConcTimer);
+	xperf::ScopedTimer myTimer(maxClusterConcTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -1911,7 +1903,7 @@ PetscErrorCode monitorMaxClusterConc1D(TS ts, PetscInt timestep, PetscReal time,
 PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 		PetscScalar *fvalue, void *) {
 
-    xperf::ScopedTimer myTimer(eventFuncTimer);
+	xperf::ScopedTimer myTimer(eventFuncTimer);
 
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -2086,13 +2078,13 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 				// Compute the radius of the bubble from the number of helium
 				double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
 //			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
-                constexpr double tlcCubed = xolotlCore::tungstenLatticeConstant *
-                                            xolotlCore::tungstenLatticeConstant *
-                                            xolotlCore::tungstenLatticeConstant;
-				double radius =
-						(sqrt(3.0) / 4) * xolotlCore::tungstenLatticeConstant
-								+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
-								- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
+				constexpr double tlcCubed = xolotlCore::tungstenLatticeConstant
+						* xolotlCore::tungstenLatticeConstant
+						* xolotlCore::tungstenLatticeConstant;
+				double radius = (sqrt(3.0) / 4)
+						* xolotlCore::tungstenLatticeConstant
+						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
+						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
 
 				// If the radius is larger than the distance to the surface, burst
 				if (radius > distance) {
@@ -2138,7 +2130,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
 
-    xperf::ScopedTimer myTimer(postEventFuncTimer);
+	xperf::ScopedTimer myTimer(postEventFuncTimer);
 
 	// Initial declaration
 	PetscErrorCode ierr;
@@ -2449,22 +2441,22 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	PetscErrorCode ierr;
 
 	// Initialize the timers, including the one for this function.
-    initTimer = handlerRegistry->getTimer("monitor1D:init");
-    xperf::ScopedTimer myTimer(initTimer);
-    checkNegativeTimer = handlerRegistry->getTimer("monitor1D:checkNeg");
-    tridynTimer = handlerRegistry->getTimer("monitor1D:tridyn");
-    startStopTimer = handlerRegistry->getTimer("monitor1D:startStop");
-    heRetentionTimer = handlerRegistry->getTimer("monitor1D:heRet");
-    xeRetentionTimer = handlerRegistry->getTimer("monitor1D:xeRet");
-    heConcTimer = handlerRegistry->getTimer("monitor1D:heConc");
-    cumHeTimer = handlerRegistry->getTimer("monitor1D:cumHe");
-    scatterTimer = handlerRegistry->getTimer("monitor1D:scatter");
-    seriesTimer = handlerRegistry->getTimer("monitor1D:series");
-    surfaceTimer = handlerRegistry->getTimer("monitor1D:surface");
-    meanSizeTimer = handlerRegistry->getTimer("monitor1D:meanSize");
-    maxClusterConcTimer = handlerRegistry->getTimer("monitor1D:maxClusterConc");
-    eventFuncTimer = handlerRegistry->getTimer("monitor1D:event");
-    postEventFuncTimer = handlerRegistry->getTimer("monitor1D:postEvent");
+	initTimer = handlerRegistry->getTimer("monitor1D:init");
+	xperf::ScopedTimer myTimer(initTimer);
+	checkNegativeTimer = handlerRegistry->getTimer("monitor1D:checkNeg");
+	tridynTimer = handlerRegistry->getTimer("monitor1D:tridyn");
+	startStopTimer = handlerRegistry->getTimer("monitor1D:startStop");
+	heRetentionTimer = handlerRegistry->getTimer("monitor1D:heRet");
+	xeRetentionTimer = handlerRegistry->getTimer("monitor1D:xeRet");
+	heConcTimer = handlerRegistry->getTimer("monitor1D:heConc");
+	cumHeTimer = handlerRegistry->getTimer("monitor1D:cumHe");
+	scatterTimer = handlerRegistry->getTimer("monitor1D:scatter");
+	seriesTimer = handlerRegistry->getTimer("monitor1D:series");
+	surfaceTimer = handlerRegistry->getTimer("monitor1D:surface");
+	meanSizeTimer = handlerRegistry->getTimer("monitor1D:meanSize");
+	maxClusterConcTimer = handlerRegistry->getTimer("monitor1D:maxClusterConc");
+	eventFuncTimer = handlerRegistry->getTimer("monitor1D:event");
+	postEventFuncTimer = handlerRegistry->getTimer("monitor1D:postEvent");
 
 	// Get the process ID
 	int procId;

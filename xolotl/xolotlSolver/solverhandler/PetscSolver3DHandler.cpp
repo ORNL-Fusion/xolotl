@@ -53,7 +53,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 
 	// Now that the grid was generated, we can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty()) {
+	if (not networkName.empty() and movingSurface) {
 		xolotlCore::XFile xfile(networkName);
 		auto concGroup =
 				xfile.getGroup<xolotlCore::XFile::ConcentrationGroup>();

@@ -151,9 +151,12 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
 			currentTimeStep);
 
-	// Write the surface positions and the associated interstitial quantities
-	// in the concentration sub group
-	tsGroup->writeSurface2D(surfaceIndices, nInterstitial2D, previousIFlux2D);
+	if (solverHandler.moveSurface()) {
+		// Write the surface positions and the associated interstitial quantities
+		// in the concentration sub group
+		tsGroup->writeSurface2D(surfaceIndices, nInterstitial2D,
+				previousIFlux2D);
+	}
 
 	// Write the bottom impurity information if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1)
