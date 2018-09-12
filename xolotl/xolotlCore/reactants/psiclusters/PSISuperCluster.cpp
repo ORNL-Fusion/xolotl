@@ -1154,6 +1154,15 @@ void PSISuperCluster::resetConnectivities() {
 	// Don't loop on the effective emission pairs because
 	// this cluster is not connected to them
 
+    // We're done with the maps used to construct our effective reaction lists.
+    // Release them to reclaim the memory.
+    // TODO is this true going forward?  Any desire to add
+    // more reactions?
+    effReactingListMap.clear();
+    effCombiningListMap.clear();
+    effDissociatingListMap.clear();
+    effEmissionListMap.clear();
+
 	return;
 }
 
