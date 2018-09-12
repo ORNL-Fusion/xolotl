@@ -526,12 +526,9 @@ public:
 	 *
 	 * @param distHe The helium distance in the group
 	 * @param distV The vacancy distance in the group
-	 * @param distC Not used here
-	 * @param distD Not used here
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distHe = 0.0, double distV = 0.0,
-			double distC = 0.0, double distD = 0.0) const override {
+	double getConcentration(double distHe, double distV) const override {
 		return l0 + (distHe * l1He) + (distV * l1V);
 	}
 

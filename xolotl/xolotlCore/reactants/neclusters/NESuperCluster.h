@@ -275,13 +275,12 @@ public:
 	 * This operation returns the current concentration.
 	 *
 	 * @param distXe The xenon distance in the group
-	 * @param distB Unused here
-	 * @param distC Unused here
-	 * @param distD Unused here
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distXe, double distB = 0.0, double distC =
-			0.0, double distD = 0.0) const override;
+	double getConcentration(double distXe) const override {
+	    return l0 + (distXe * l1);
+    }
+
 
 	/**
 	 * This operation returns the first xenon moment.

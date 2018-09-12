@@ -239,14 +239,9 @@ public:
 	/**
 	 * This operation returns the current concentration.
 	 *
-	 * @param distA The first distance for super clusters
-	 * @param distB The second distance for super clusters
-	 * @param distC The third distance for super clusters
-	 * @param distD The fourth distance for super clusters
 	 * @return The concentration of this reactant
 	 */
-	virtual double getConcentration(double distA = 0.0, double distB = 0.0,
-			double distC = 0.0, double distD = 0.0) const = 0;
+	virtual double getConcentration(void) const = 0;
 
 	/**
 	 * This operation sets the concentration of the reactant to the

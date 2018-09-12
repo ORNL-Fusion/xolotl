@@ -525,12 +525,25 @@ public:
 	 *
 	 * @param distHe The helium distance in the group
 	 * @param distD The deuterium distance in the group
+	 * @return The concentration of this reactant
+     *
+     * TODO why does Monitor1D use this two-argument version?
+	 */
+	virtual double getConcentration(double distHe, double distD) const {
+		return l0 + (distHe * l1[0]) + (distD * l1[1]);
+	}
+
+	/**
+	 * This operation returns the current concentration.
+	 *
+	 * @param distHe The helium distance in the group
+	 * @param distD The deuterium distance in the group
 	 * @param distT The tritium distance in the group
 	 * @param distV The vacancy distance in the group
 	 * @return The concentration of this reactant
 	 */
-	double getConcentration(double distHe = 0.0, double distD = 0.0,
-			double distT = 0.0, double distV = 0.0) const override {
+	virtual double getConcentration(double distHe, double distD,
+			double distT, double distV) const {
 		return l0 + (distHe * l1[0]) + (distD * l1[1]) + (distT * l1[2])
 				+ (distV * l1[3]);
 	}

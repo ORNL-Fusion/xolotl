@@ -452,14 +452,9 @@ public:
 	/**
 	 * This operation returns the current concentration.
 	 *
-	 * @param distA The first distance for super clusters
-	 * @param distB The second distance for super clusters
-	 * @param distC The third distance for super clusters
-	 * @param distD The fourth distance for super clusters
 	 * @return The concentration of this reactant
 	 */
-	virtual double getConcentration(double distA = 0.0, double distB = 0.0,
-			double distC = 0.0, double distD = 0.0) const override {
+	double getConcentration(void) const override {
 		return concentration;
 	}
 

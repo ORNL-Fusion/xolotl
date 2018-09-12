@@ -431,6 +431,31 @@ public:
 	virtual std::vector<int> getDissociationConnectivity() const;
 
 	/**
+	 * This operation returns the current concentration.
+	 *
+	 * @param distHe The helium distance in the group
+	 * @param distV The vacancy distance in the group
+	 * @return The concentration of this reactant
+	 */
+	virtual double getConcentration(double distHe, double distV) const {
+        // TODO should this version ever be called?  It ignores
+        // its arguments.
+		return concentration;
+	}
+
+    /**
+     * Obtain current concentration.
+     *
+     * We hid the base class' zero-argument getConcentration when
+     * we defined the two-argument version here.  This tells the compiler
+     * to allow us to use the base class' zero-argument version also
+     * without having to explicitly specify the class scope when calling it.
+     *
+     * @return The concentration of the reactant.
+     */
+    using Reactant::getConcentration;
+
+	/**
 	 * This operation returns the first helium moment.
 	 *
 	 * @return The moment
