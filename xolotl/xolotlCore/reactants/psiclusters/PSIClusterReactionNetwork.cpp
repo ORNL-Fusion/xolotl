@@ -1828,9 +1828,13 @@ void PSIClusterReactionNetwork::computeAllPartials(
 
 		// Get the inverse mappings from dense DOF space to
 		// the indices/vals arrays.
-		PartialsIdxMap partialsIdxMap[5];
+        // We use a pointer to the maps to avoid copying them into
+        // our array.
+        // TODO can we use references here, without having to
+        // change PartialsIdxMap type from unordered_map?
+        std::array<const PartialsIdxMap*, 5> partialsIdxMap;
 		for (int i = 0; i < psDim; i++) {
-			partialsIdxMap[i] = dFillInvMap.at(reactantIndices[i]);
+			partialsIdxMap[i] = &(dFillInvMap.at(reactantIndices[i]));
 			partials[i] = &(vals[startingIdx[reactantIndices[i]]]);
 		}
 

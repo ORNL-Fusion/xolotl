@@ -881,7 +881,7 @@ public:
 	 *
 	 */
 	void computePartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+            const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
 	void getPartialDerivatives(std::vector<double> & partials, int i) const override
 	{
 		assert(false);
@@ -897,7 +897,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void computeProductionPartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
 	void getProductionPartialDerivatives(std::vector<double> & partials, int i) const
 			override
 			{
@@ -914,7 +914,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void computeCombinationPartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
 	void getCombinationPartialDerivatives(std::vector<double> & partials, int i) const
 			override
 			{
@@ -931,7 +931,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void computeDissociationPartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
 	void getDissociationPartialDerivatives(std::vector<double> & partials, int i) const
 			override
 			{
@@ -948,7 +948,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void computeEmissionPartialDerivatives(double* partials[5],
-			const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const;
+			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
 	void getEmissionPartialDerivatives(std::vector<double> & partials, int i) const
 			override
 			{

@@ -1321,7 +1321,7 @@ double PSISuperCluster::getCombinationFlux(int xi) {
 }
 
 void PSISuperCluster::computePartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int i) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const {
 
 	// Get the partial derivatives for each reaction type
 	computeProductionPartialDerivatives(partials, partialsIdxMap, i);
@@ -1333,7 +1333,7 @@ void PSISuperCluster::computePartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int xi) const {
 
 	// Production
 	// A + B --> D, D being this cluster
@@ -1381,8 +1381,8 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
 						indexA = firstReactant.getMomentId(indexList[j]-1) - 1;
 						indexB = secondReactant.getMomentId(indexList[j]-1) - 1;
 					}
-					auto partialsIdxA = partialsIdxMap[j].at(indexA);
-					auto partialsIdxB = partialsIdxMap[j].at(indexB);
+					auto partialsIdxA = partialsIdxMap[j]->at(indexA);
+					auto partialsIdxB = partialsIdxMap[j]->at(indexB);
 					for (int i = 0; i < psDim; i++) {
 						partials[i][partialsIdxA] += value * sum[i][j][0];
 						partials[i][partialsIdxB] += value * sum[i][j][1];
@@ -1394,7 +1394,7 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int xi) const {
 
 	// Combination
 	// A + B --> D, A being this cluster
@@ -1440,8 +1440,8 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
 						indexA = cluster.getMomentId(indexList[j]-1) - 1;
 						indexB = momId[indexList[j]-1] - 1;
 					}
-					auto partialsIdxA = partialsIdxMap[j].at(indexA);
-					auto partialsIdxB = partialsIdxMap[j].at(indexB);
+					auto partialsIdxA = partialsIdxMap[j]->at(indexA);
+					auto partialsIdxB = partialsIdxMap[j]->at(indexB);
 					for (int i = 0; i < psDim; i++) {
 						partials[i][partialsIdxA] -= value * sum[i][j][0];
 						partials[i][partialsIdxB] -= value * sum[i][j][1];
@@ -1453,7 +1453,7 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int xi) const {
 
 	// Dissociation
 	// A --> B + D, B being this cluster
@@ -1480,7 +1480,7 @@ void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
 					else {
 						index = cluster.getMomentId(indexList[j]-1) - 1;
 					}
-					auto partialsIdx = partialsIdxMap[j].at(index);
+					auto partialsIdx = partialsIdxMap[j]->at(index);
 					for (int i = 0; i < psDim; i++) {
 						partials[i][partialsIdx] += value * currPair.coefs[j][i];
 					}
@@ -1491,7 +1491,7 @@ void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeEmissionPartialDerivatives(double* partials[5],
-		const ReactionNetwork::PartialsIdxMap partialsIdxMap[5], int xi) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int xi) const {
 
 	// Emission
 	// A --> B + D, A being this cluster
@@ -1515,7 +1515,7 @@ void PSISuperCluster::computeEmissionPartialDerivatives(double* partials[5],
 					else {
 						index = momId[indexList[j]-1] - 1;
 					}
-					auto partialsIdx = partialsIdxMap[j].at(index);
+					auto partialsIdx = partialsIdxMap[j]->at(index);
 					for (int i = 0; i < psDim; i++) {
 						partials[i][partialsIdx] -= value * currPair.coefs[j][i];
 					}
