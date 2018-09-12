@@ -25,6 +25,10 @@ namespace xolotlCore {
  */
 class PSISuperCluster: public PSICluster {
 
+public:
+    // Concise name for type of our HeVList.
+    using HeVListType = std::set<std::tuple<int, int, int, int>>;
+
 private:
 	static std::string buildName(double nHe, double nD, double nT, double nV) {
 		std::stringstream nameStream;
@@ -333,7 +337,7 @@ private:
 	/**
 	 * The list of clusters gathered in this.
 	 */
-	std::set<std::tuple<int, int, int, int> > heVList;
+    HeVListType heVList;
 
 	//! The list of optimized effective reacting pairs.
     ProductionPairList effReactingList;
@@ -635,7 +639,7 @@ public:
 	/**
 	 * Set the HeV vector and compute different parameters
 	 */
-	void setHeVVector(std::set<std::tuple<int, int, int, int> > vec);
+    void setHeVVector(const HeVListType& vec);
 
 	/**
 	 * This operation returns the current concentration.
@@ -1020,7 +1024,7 @@ public:
 	 *
 	 * @return The heVList
 	 */
-	const std::set<std::tuple<int, int, int, int> > & getCoordList() const {
+    const HeVListType& getCoordList() const {
 		return heVList;
 	}
 
