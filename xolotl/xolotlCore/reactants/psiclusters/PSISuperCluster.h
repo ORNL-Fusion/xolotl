@@ -55,7 +55,7 @@ protected:
 		 * Default and copy constructors, disallowed.
 		 */
 		ReactingInfoBase() = delete;
-		ReactingInfoBase(const ReactingInfoBase& other) = delete;
+		ReactingInfoBase(const ReactingInfoBase& other) = default;
 	};
 
 	struct ReactingPairBase: public ReactingInfoBase {
@@ -76,7 +76,7 @@ protected:
 		 * Default and copy constructors, disallowed.
 		 */
 		ReactingPairBase() = delete;
-		ReactingPairBase(const ReactingPairBase& other) = delete;
+		ReactingPairBase(const ReactingPairBase& other) = default;
 	};
 
 	struct ProductionCoefficientBase {
@@ -95,12 +95,15 @@ protected:
 		 * 4 -> V
 		 */
 		double ***coefs;
+        const int dim;
 
 		//! The constructor, disallowed
 		ProductionCoefficientBase() = delete;
 
 		//! The constructor to use
-		ProductionCoefficientBase(const int dim) {
+		ProductionCoefficientBase(const int _dim) 
+          : dim(_dim) {
+
 			// Create the array of the right dimension
 			coefs = new double**[dim];
 			for (int i = 0; i < dim; i++) {
@@ -115,12 +118,33 @@ protected:
 		}
 
 		/**
-		 * Copy constructor, disallowed.
+		 * Copy constructor.
 		 */
-		ProductionCoefficientBase(const ProductionCoefficientBase& other) = delete;
+		ProductionCoefficientBase(const ProductionCoefficientBase& other) 
+          : dim(other.dim) {
+
+			// Create a deep copy of other's coeffs array.
+			coefs = new double**[dim];
+			for (int i = 0; i < dim; i++) {
+				coefs[i] = new double*[dim];
+				for (int j = 0; j < dim; j++) {
+					coefs[i][j] = new double[dim];
+					for (int k = 0; k < dim; k++) {
+						coefs[i][j][k] = other.coefs[i][j][k];
+					}
+				}
+			}
+        }
+
 
 		//! The destructor
 		~ProductionCoefficientBase() {
+			for (int i = 0; i < dim; i++) {
+				for (int j = 0; j < dim; j++) {
+					delete[] coefs[i][j];
+				}
+				delete[] coefs[i];
+			}
 			delete[] coefs;
 		}
 	};
@@ -154,13 +178,14 @@ protected:
 		 * using reactants.
 		 */
 		SuperClusterProductionPair() = delete;
-		SuperClusterProductionPair(const SuperClusterProductionPair& other) = delete;
+		SuperClusterProductionPair(const SuperClusterProductionPair& other) = default;
 	};
 
 	/**
 	 * Concise name for type of map of SuperClusterProductionPairs.
 	 */
-	using ProductionPairMap = std::unordered_map<SuperClusterProductionPair::KeyType, SuperClusterProductionPair>;
+    using ProductionPairList = std::vector<SuperClusterProductionPair>;
+    using ProductionPairListMap = std::unordered_map<SuperClusterProductionPair::KeyType, ProductionPairList::iterator>;
 
 	/**
 	 * Info about a cluster we combine with.
@@ -285,7 +310,10 @@ private:
 	std::set<std::tuple<int, int, int, int> > heVList;
 
 	//! The list of optimized effective reacting pairs.
-	ProductionPairMap effReactingList;
+    ProductionPairList effReactingList;
+
+    //! Map into effective reacting pair list, used to speed construction.
+	ProductionPairListMap effReactingListMap;
 
 	//! The list of optimized effective combining pairs.
 	CombiningClusterMap effCombiningList;
@@ -311,6 +339,15 @@ private:
 			ProductionCoefficientBase const& curr) const;
 	void dumpCoefficients(std::ostream& os,
 			SuperClusterDissociationPair const& curr) const;
+
+    /**
+     * Ensure we know about the given reaction in our effReactingList.
+     *
+     * @param reaction The reaction we need to know about.
+     * @return Iterator to effReactingList item describing reaction.
+     */
+    ProductionPairList::iterator addToEffReactingList(ProductionReaction& reaction);
+
 
 public:
 

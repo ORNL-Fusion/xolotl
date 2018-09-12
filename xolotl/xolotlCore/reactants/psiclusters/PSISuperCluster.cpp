@@ -50,28 +50,36 @@ PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4],
 	return;
 }
 
+auto PSISuperCluster::addToEffReactingList(ProductionReaction& reaction) 
+    -> ProductionPairList::iterator {
+
+	// Check if we already know about the reaction.
+    auto listit = effReactingList.end();
+	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
+	auto mapit = effReactingListMap.find(rkey);
+    if (mapit != effReactingListMap.end()) {
+        // We already knew about this reaction.
+        listit = mapit->second;
+    }
+    else {
+        // We did not already know about this reaction.
+        // Add info about reaction to our list.
+        effReactingList.emplace_back(reaction,
+						static_cast<PSICluster&>(reaction.first),
+						static_cast<PSICluster&>(reaction.second), psDim);
+        listit = effReactingList.end();
+        --listit;
+    }
+	assert(listit != effReactingList.end());
+    return listit;
+}
+
 void PSISuperCluster::resultFrom(ProductionReaction& reaction, int a[4],
 		int b[4]) {
 
-	// Check if we already know about the reaction.
-	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
-	auto it = effReactingList.find(rkey);
-	if (it == effReactingList.end()) {
-
-		// We did not already know about this reaction.
-		// Add info about production to our list.
-		auto eret = effReactingList.emplace(std::piecewise_construct,
-				std::forward_as_tuple(rkey),
-				std::forward_as_tuple(reaction,
-						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second), psDim));
-		// Since we already checked and didn't know about the reaction,
-		// we had better have added it with our emplace() call.
-		assert(eret.second);
-		it = eret.first;
-	}
-	assert(it != effReactingList.end());
-	auto& prodPair = it->second;
+    // Ensure we know about the reaction.
+    auto listit = addToEffReactingList(reaction);
+	auto& prodPair = *listit;
 
 	// NB: prodPair's reactants are same as reaction.
 	// So use prodPair only from here on.
@@ -116,24 +124,8 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 		const std::vector<PendingProductionReactionInfo>& prInfos) {
 
 	// Check if we already know about the reaction.
-	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
-	auto it = effReactingList.find(rkey);
-	if (it == effReactingList.end()) {
-
-		// We did not already know about this reaction.
-		// Add info about production to our list.
-		auto eret = effReactingList.emplace(std::piecewise_construct,
-				std::forward_as_tuple(rkey),
-				std::forward_as_tuple(reaction,
-						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second), psDim));
-		// Since we already checked and didn't know about the reaction,
-		// we had better have added it with our emplace() call.
-		assert(eret.second);
-		it = eret.first;
-	}
-	assert(it != effReactingList.end());
-	auto& prodPair = it->second;
+    auto listit = addToEffReactingList(reaction);
+	auto& prodPair = *(listit);
 
 	// NB: prodPair's reactants are same as reaction.
 	// So use prodPair only from here on.
@@ -180,24 +172,8 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 		IReactant& product) {
 
 	// Check if we already know about the reaction.
-	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
-	auto it = effReactingList.find(rkey);
-	if (it == effReactingList.end()) {
-
-		// We did not already know about this reaction.
-		// Add info about production to our list.
-		auto eret = effReactingList.emplace(std::piecewise_construct,
-				std::forward_as_tuple(rkey),
-				std::forward_as_tuple(reaction,
-						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second), psDim));
-		// Since we already checked and didn't know about the reaction,
-		// we had better have added it with our emplace() call.
-		assert(eret.second);
-		it = eret.first;
-	}
-	assert(it != effReactingList.end());
-	auto& prodPair = it->second;
+    auto listit = addToEffReactingList(reaction);
+	auto& prodPair = *(listit);
 
 	auto const& superR1 = static_cast<PSICluster const&>(prodPair.first);
 	auto const& superR2 = static_cast<PSICluster const&>(prodPair.second);
@@ -324,24 +300,8 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 void PSISuperCluster::resultFrom(ProductionReaction& reaction, double *coef) {
 
 	// Check if we already know about the reaction.
-	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
-	auto it = effReactingList.find(rkey);
-	if (it == effReactingList.end()) {
-
-		// We did not already know about this reaction.
-		// Add info about production to our list.
-		auto eret = effReactingList.emplace(std::piecewise_construct,
-				std::forward_as_tuple(rkey),
-				std::forward_as_tuple(reaction,
-						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second), psDim));
-		// Since we already checked and didn't know about the reaction,
-		// we had better have added it with our emplace() call.
-		assert(eret.second);
-		it = eret.first;
-	}
-	assert(it != effReactingList.end());
-	auto& prodPair = it->second;
+    auto listit = addToEffReactingList(reaction);
+	auto& prodPair = *(listit);
 
 	// NB: newPair's reactants are same as reaction's.
 	// So use newPair only from here on.
@@ -1301,9 +1261,8 @@ void PSISuperCluster::resetConnectivities() {
 	}
 	// Visit all the reacting pairs
 	std::for_each(effReactingList.begin(), effReactingList.end(),
-			[this](ProductionPairMap::value_type const& currMapItem) {
+			[this](ProductionPairList::value_type const& currPair) {
 				// The cluster is connecting to both clusters in the pair
-				auto const& currPair = currMapItem.second;
 				setReactionConnectivity(currPair.first.getId());
 				setReactionConnectivity(currPair.second.getId());
 				for (int i = 1; i < psDim; i++) {
@@ -1423,9 +1382,7 @@ double PSISuperCluster::getProductionFlux(int xi) {
 	// effect of updating member variables heMomentFlux and
 	// vMomentFlux here.
 	std::for_each(effReactingList.begin(), effReactingList.end(),
-			[this,&flux,&xi](ProductionPairMap::value_type const& currMapItem) {
-
-				auto const& currPair = currMapItem.second;
+			[this,&flux,&xi](ProductionPairList::value_type const& currPair) {
 
 				// Get the two reacting clusters
 				auto const& firstReactant = currPair.first;
@@ -1527,9 +1484,8 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
 	// Loop over all the reacting pairs
 	std::for_each(effReactingList.begin(), effReactingList.end(),
 			[this,
-			&partials, &partialsIdxMap,&xi](ProductionPairMap::value_type const& currMapItem) {
+			&partials, &partialsIdxMap,&xi](ProductionPairList::value_type const& currPair) {
 
-				auto const& currPair = currMapItem.second;
 				// Get the two reacting clusters
 				auto const& firstReactant = currPair.first;
 				auto const& secondReactant = currPair.second;
@@ -1716,10 +1672,9 @@ std::vector<std::vector<double> > PSISuperCluster::getProdVector() const {
 
 	// Loop on the reacting pairs
 	std::for_each(effReactingList.begin(), effReactingList.end(),
-			[&toReturn,this](ProductionPairMap::value_type const& currMapItem) {
+			[&toReturn,this](ProductionPairList::value_type const& currPair) {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
-				auto& currPair = currMapItem.second;
 				tempVec.push_back(currPair.first.getId() - 1);
 				tempVec.push_back(currPair.second.getId() - 1);
 				for (int i = 0; i < psDim; i++) {
@@ -1842,8 +1797,7 @@ void PSISuperCluster::outputCoefficientsTo(std::ostream& os) const {
 	os << "name: " << name << '\n';
 	os << "reacting: " << effReactingList.size() << '\n';
 	std::for_each(effReactingList.begin(), effReactingList.end(),
-			[this,&os](ProductionPairMap::value_type const& currMapItem) {
-				auto const& currPair = currMapItem.second;
+			[this,&os](ProductionPairList::value_type const& currPair) {
 				os << "first: " << currPair.first.getName()
 				<< "; second: " << currPair.second.getName() << ";";
 				dumpCoefficients(os, currPair);
