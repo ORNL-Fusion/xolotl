@@ -7,6 +7,7 @@
 #include <sstream>
 #include <Constants.h>
 #include <iostream>
+#include <cassert>
 
 namespace xolotlPerf {
 class ITimer;
