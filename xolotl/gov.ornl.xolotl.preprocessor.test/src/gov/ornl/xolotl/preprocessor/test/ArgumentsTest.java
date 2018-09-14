@@ -15,8 +15,8 @@ import uk.co.flamingpenguin.jewel.cli.CliFactory;
 public class ArgumentsTest {
 
 	/**
-	 * This operation checks that the default argument values are used if no
-	 * command line options are specified.
+	 * This operation checks that the default argument values are used if no command
+	 * line options are specified.
 	 */
 	@Test
 	public void testDefaultArguments() {
@@ -39,8 +39,8 @@ public class ArgumentsTest {
 			// Check that the default maximum tritium cluster size is 0
 			assertEquals(0, args.getMaxTSize());
 
-			// Check that the default maximum vacancy cluster size is 29
-			assertEquals(29, args.getMaxVSize());
+			// Check that the default maximum vacancy cluster size is 50
+			assertEquals(50, args.getMaxVSize());
 
 			// Check that the default maximum interstitial cluster size is 6
 			assertEquals(6, args.getMaxISize());
@@ -60,13 +60,10 @@ public class ArgumentsTest {
 			// Check the default petscArgs
 			assertEquals(
 					"-ts_final_time 1.0 -ts_dt 1.0e-12 "
-							+ "-ts_max_steps 100 -ts_adapt_dt_max 1.0e-6 -ts_max_snes_failures 200 "
+							+ "-ts_max_steps 100 -ts_adapt_dt_max 1.0e-6 -ts_adapt_wnormtype INFINITY -ts_max_snes_failures 200 "
 							+ "-pc_type fieldsplit -pc_fieldsplit_detect_coupling -fieldsplit_0_pc_type sor "
 							+ "-fieldsplit_1_pc_type redundant -ts_monitor -ts_exact_final_time stepover",
 					args.getPetscArgs());
-
-			// Check that the default networkFile is networkInit.h5
-			assertEquals("networkInit.h5", args.getNetworkFile());
 
 			// Check the default number of dimensions
 			assertEquals("1", args.getDimensions());
@@ -107,9 +104,6 @@ public class ArgumentsTest {
 			// Check if there is an fluxFile argument
 			assertEquals(false, args.isFluxFile());
 
-			// Check if there is a checkpoint argument
-			assertEquals(false, args.isCheckpoint());
-
 			// Check if there is a initial vacancy concentration argument
 			assertEquals(false, args.isInitialV());
 
@@ -125,9 +119,6 @@ public class ArgumentsTest {
 			// Check if there is a bursting depth argument
 			assertEquals(false, args.isBurstingDepth());
 
-			// Check if there is a network param argument
-			assertEquals(false, args.isNetParam());
-
 		} catch (ArgumentValidationException e) {
 			// Complain and fail
 			e.printStackTrace();
@@ -139,8 +130,8 @@ public class ArgumentsTest {
 
 	/**
 	 * This operation tests that default parameter values are only overridden if
-	 * they are specified via the command line and that the optional arguments
-	 * are only set if they are also specified
+	 * they are specified via the command line and that the optional arguments are
+	 * only set if they are also specified
 	 */
 	@Test
 	public void testSpecifiedArguments() {
@@ -150,14 +141,14 @@ public class ArgumentsTest {
 		try {
 			// Parse the specified string of arguments
 			args = CliFactory.parseArguments(Arguments.class,
-					new String[] { "--maxHeSize", "7", "--maxXeSize", "4", "--maxDSize", "15", "--maxTSize", "10", "--maxVSize", "30", "--maxISize", "5",
-							"--phaseCut", "--startTemp", "900", "--perfHandler", "dummy", "--vizHandler", "std",
-							"--petscArgs=-plot", "--networkFile", "net.h5", "--dimensions", "2", "--nxGrid", "50",
+					new String[] { "--maxHeSize", "7", "--maxXeSize", "4", "--maxDSize", "15", "--maxTSize", "10",
+							"--maxVSize", "30", "--maxISize", "5", "--phaseCut", "--startTemp", "900", "--perfHandler",
+							"dummy", "--vizHandler", "std", "--petscArgs=-plot", "--dimensions", "2", "--nxGrid", "50",
 							"--nyGrid", "10", "--nzGrid", "30", "--xStepSize", "0.2", "--yStepSize", "1.5",
 							"--zStepSize", "10.0", "--material", "W111", "--process", "diff", "--tempFile", "temp.dat",
-							"--heat=1200.0 1000.0", "--flux", "5.0e5", "--fluxFile", "flux.dat", "--checkpoint",
-							"xolotlStop.h5", "--initialV", "0.05", "--regularGrid", "yes", "--voidPortion", "60.0",
-							"--grain=Y 3.0", "--sputter", "0.05", "--burstingDepth", "5.0" });
+							"--heat=0.1 1000.0", "--flux", "5.0e5", "--fluxFile", "flux.dat", "--initialV", "0.05",
+							"--regularGrid", "yes", "--voidPortion", "60.0", "--grain=Y 3.0", "--sputter", "0.05",
+							"--burstingDepth", "5.0" });
 
 			// Check that the maximum Helium cluster size is 7
 			assertEquals(7, args.getMaxHeSize());
@@ -166,10 +157,10 @@ public class ArgumentsTest {
 			assertEquals(4, args.getMaxXeSize());
 
 			// Check that the maximum deuterium cluster size is 15
-			assertEquals(4, args.getMaxDSize());
+			assertEquals(15, args.getMaxDSize());
 
 			// Check that the maximum tritium cluster size is 10
-			assertEquals(4, args.getMaxTSize());
+			assertEquals(10, args.getMaxTSize());
 
 			// Check that the maximum vacancy cluster size is 30
 			assertEquals(30, args.getMaxVSize());
@@ -191,9 +182,6 @@ public class ArgumentsTest {
 
 			// Check the petscArgs
 			assertEquals("-plot", args.getPetscArgs());
-
-			// Check that the networkFile is net.h5
-			assertEquals("net.h5", args.getNetworkFile());
 
 			// Check that the number of dimensions is 2
 			assertEquals("2", args.getDimensions());
@@ -235,19 +223,13 @@ public class ArgumentsTest {
 			assertEquals(true, args.isHeat());
 
 			// Check that the heat argument is 1200.0 1000.0
-			assertEquals("1200.0 1000.0", args.getTempFile());
+			assertEquals("0.1 1000.0", args.getHeat());
 
 			// Check if there is an fluxFile argument
 			assertEquals(true, args.isFluxFile());
 
 			// Check that the fluxFile argument is flux.dat
 			assertEquals("flux.dat", args.getFluxFile());
-
-			// Check if there is a checkpoint argument
-			assertEquals(true, args.isCheckpoint());
-
-			// Check the name of the file for the checkpoint
-			assertEquals("xolotlStop.h5", args.getCheckpoint());
 
 			// Check if there is an initial vacancy concentration argument
 			assertEquals(true, args.isInitialV());

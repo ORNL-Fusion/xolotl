@@ -278,9 +278,8 @@ public:
 	 * @return The concentration of this reactant
 	 */
 	double getConcentration(double distXe) const override {
-	    return l0 + (distXe * l1);
-    }
-
+		return l0 + (distXe * l1);
+	}
 
 	/**
 	 * This operation returns the first xenon moment.

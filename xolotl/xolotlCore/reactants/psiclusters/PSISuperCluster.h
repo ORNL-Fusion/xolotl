@@ -26,8 +26,8 @@ namespace xolotlCore {
 class PSISuperCluster: public PSICluster {
 
 public:
-    // Concise name for type of our HeVList.
-    using HeVListType = std::set<std::tuple<int, int, int, int>>;
+	// Concise name for type of our HeVList.
+	using HeVListType = std::set<std::tuple<int, int, int, int>>;
 
 private:
 	static std::string buildName(double nHe, double nD, double nT, double nV) {
@@ -99,14 +99,14 @@ protected:
 		 * 4 -> V
 		 */
 		double ***coefs;
-        const int dim;
+		const int dim;
 
 		//! The constructor, disallowed
 		ProductionCoefficientBase() = delete;
 
 		//! The constructor to use
-		ProductionCoefficientBase(const int _dim) 
-          : dim(_dim) {
+		ProductionCoefficientBase(const int _dim) :
+				dim(_dim) {
 
 			// Create the array of the right dimension
 			coefs = new double**[dim];
@@ -124,8 +124,8 @@ protected:
 		/**
 		 * Copy constructor.
 		 */
-		ProductionCoefficientBase(const ProductionCoefficientBase& other) 
-          : dim(other.dim) {
+		ProductionCoefficientBase(const ProductionCoefficientBase& other) :
+				dim(other.dim) {
 
 			// Create a deep copy of other's coeffs array.
 			coefs = new double**[dim];
@@ -138,8 +138,7 @@ protected:
 					}
 				}
 			}
-        }
-
+		}
 
 		//! The destructor
 		~ProductionCoefficientBase() {
@@ -187,10 +186,10 @@ protected:
 
 	/**
 	 * Concise name for type of collection of SuperClusterProductionPairs,
-     * and map into that list for quick lookup.
+	 * and map into that list for quick lookup.
 	 */
-    using ProductionPairList = std::vector<SuperClusterProductionPair>;
-    using ProductionPairListMap = std::unordered_map<SuperClusterProductionPair::KeyType, ProductionPairList::iterator>;
+	using ProductionPairList = std::vector<SuperClusterProductionPair>;
+	using ProductionPairListMap = std::unordered_map<SuperClusterProductionPair::KeyType, ProductionPairList::iterator>;
 
 	/**
 	 * Info about a cluster we combine with.
@@ -222,9 +221,9 @@ protected:
 
 	/**
 	 * Concise name for type of collection of SuperClusterCombiningClusters,
-     * and map into that list for quick lookup.
+	 * and map into that list for quick lookup.
 	 */
-    using CombiningClusterList = std::vector<SuperClusterCombiningCluster>;
+	using CombiningClusterList = std::vector<SuperClusterCombiningCluster>;
 	using CombiningClusterListMap = std::unordered_map<SuperClusterCombiningCluster::KeyType, CombiningClusterList::iterator>;
 
 	/**
@@ -256,13 +255,12 @@ protected:
 		 * 4 -> V
 		 */
 		double **coefs;
-        const int dim;
+		const int dim;
 
 		//! The constructor
 		SuperClusterDissociationPair(Reaction& _reaction, PSICluster& _first,
 				PSICluster& _second, int _dim) :
-				ReactingPairBase(_reaction, _first, _second),
-                dim(_dim) {
+				ReactingPairBase(_reaction, _first, _second), dim(_dim) {
 			// Create the array of the right dimension
 			coefs = new double*[dim];
 			for (int i = 0; i < dim; i++) {
@@ -278,12 +276,11 @@ protected:
 		 */
 		SuperClusterDissociationPair() = delete;
 
-        /**
-         * Copy constructor, needed to be element in a std::vector.
-         */
-		SuperClusterDissociationPair(const SuperClusterDissociationPair& other)
-          : ReactingPairBase(other),
-            dim(other.dim) {
+		/**
+		 * Copy constructor, needed to be element in a std::vector.
+		 */
+		SuperClusterDissociationPair(const SuperClusterDissociationPair& other) :
+				ReactingPairBase(other), dim(other.dim) {
 
 			// Create the array of the right dimension
 			coefs = new double*[dim];
@@ -293,7 +290,7 @@ protected:
 					coefs[i][j] = other.coefs[i][j];
 				}
 			}
-        }
+		}
 
 		//! The destructor
 		~SuperClusterDissociationPair() {
@@ -306,7 +303,7 @@ protected:
 
 	/**
 	 * Concise name for type of collection of SuperClusterDissociationPairs,
-     * and map into that list for quick lookup.
+	 * and map into that list for quick lookup.
 	 */
 	using DissociationPairList = std::vector<SuperClusterDissociationPair>;
 	using DissociationPairListMap = std::unordered_map<SuperClusterDissociationPair::KeyType, DissociationPairList::iterator>;
@@ -337,31 +334,31 @@ private:
 	/**
 	 * The list of clusters gathered in this.
 	 */
-    HeVListType heVList;
+	HeVListType heVList;
 
 	//! The list of optimized effective reacting pairs.
-    ProductionPairList effReactingList;
+	ProductionPairList effReactingList;
 
-    //! Map into effective reacting pair list, used to speed construction.
+	//! Map into effective reacting pair list, used to speed construction.
 	ProductionPairListMap effReactingListMap;
 
 	//! The list of optimized effective combining pairs.
 	CombiningClusterList effCombiningList;
 
-    //! Map into effective combining pairs, used to speed constrution.
-    CombiningClusterListMap effCombiningListMap;
+	//! Map into effective combining pairs, used to speed constrution.
+	CombiningClusterListMap effCombiningListMap;
 
 	//! The list of optimized effective dissociating pairs.
 	DissociationPairList effDissociatingList;
 
-    //! Map into effective dissociating pairs list, used to speed construction.
-    DissociationPairListMap effDissociatingListMap;
+	//! Map into effective dissociating pairs list, used to speed construction.
+	DissociationPairListMap effDissociatingListMap;
 
 	//! The list of optimized effective emission pairs.
 	DissociationPairList effEmissionList;
 
-    //! Map into effective dissociating pairs list, used to speed construction.
-    DissociationPairListMap effEmissionListMap;
+	//! Map into effective dissociating pairs list, used to speed construction.
+	DissociationPairListMap effEmissionListMap;
 
 	/**
 	 * The first moment flux.
@@ -379,59 +376,58 @@ private:
 	void dumpCoefficients(std::ostream& os,
 			SuperClusterDissociationPair const& curr) const;
 
+	/**
+	 * Determine which is the "other" reactant in a reaction that
+	 * we participate in.
+	 *
+	 * @param reaction The reaction in question.
+	 * @return Reference to the "other" cluster (the one that is not us).
+	 */
+	PSICluster& findOtherCluster(Reaction& reaction) const {
+		auto& otherCluster = static_cast<PSICluster&>(
+				(reaction.first.getId() == id) ?
+						reaction.second : reaction.first);
+		return otherCluster;
+	}
 
-    /**
-     * Determine which is the "other" reactant in a reaction that
-     * we participate in.
-     *
-     * @param reaction The reaction in question.
-     * @return Reference to the "other" cluster (the one that is not us).
-     */
-    PSICluster& findOtherCluster(Reaction& reaction) const {
-        auto& otherCluster = 
-            static_cast<PSICluster&>((reaction.first.getId() == id) ? 
-                                        reaction.second : reaction.first);
-        return otherCluster;
-    }
+	/**
+	 * Ensure we know about the given reaction in our effReactingList.
+	 *
+	 * @param reaction The reaction we need to know about.
+	 * @return Iterator to list item describing reaction.
+	 */
+	ProductionPairList::iterator addToEffReactingList(
+			ProductionReaction& reaction);
 
+	/**
+	 * Ensure we know about the given reaction in our list
+	 * of effective combining pairs.
+	 *
+	 * @param reaction The reaction we need to know about.
+	 * @return Iterator to list item describing reaction.
+	 */
+	CombiningClusterList::iterator addToEffCombiningList(
+			ProductionReaction& reaction);
 
-    /**
-     * Ensure we know about the given reaction in our effReactingList.
-     *
-     * @param reaction The reaction we need to know about.
-     * @return Iterator to list item describing reaction.
-     */
-    ProductionPairList::iterator addToEffReactingList(ProductionReaction& reaction);
+	/**
+	 * Ensure we know about the given reaction in our list
+	 * of effective dissociating pairs.
+	 *
+	 * @param reaction The reaction we need to know about.
+	 * @return Iterator to list item describing reaction.
+	 */
+	DissociationPairList::iterator addToEffDissociatingList(
+			DissociationReaction& reaction);
 
-    /**
-     * Ensure we know about the given reaction in our list
-     * of effective combining pairs.
-     *
-     * @param reaction The reaction we need to know about.
-     * @return Iterator to list item describing reaction.
-     */
-    CombiningClusterList::iterator addToEffCombiningList(ProductionReaction& reaction);
-
-
-    /**
-     * Ensure we know about the given reaction in our list
-     * of effective dissociating pairs.
-     *
-     * @param reaction The reaction we need to know about.
-     * @return Iterator to list item describing reaction.
-     */
-    DissociationPairList::iterator addToEffDissociatingList(DissociationReaction& reaction);
-
-
-    /**
-     * Ensure we know about the given reaction in our list
-     * of effective emission pairs.
-     *
-     * @param reaction The reaction we need to know about.
-     * @return Iterator to list item describing reaction.
-     */
-    DissociationPairList::iterator addToEffEmissionList(DissociationReaction& reaction);
-
+	/**
+	 * Ensure we know about the given reaction in our list
+	 * of effective emission pairs.
+	 *
+	 * @param reaction The reaction we need to know about.
+	 * @return Iterator to list item describing reaction.
+	 */
+	DissociationPairList::iterator addToEffEmissionList(
+			DissociationReaction& reaction);
 
 public:
 
@@ -639,20 +635,7 @@ public:
 	/**
 	 * Set the HeV vector and compute different parameters
 	 */
-    void setHeVVector(const HeVListType& vec);
-
-	/**
-	 * This operation returns the current concentration.
-	 *
-	 * @param distHe The helium distance in the group
-	 * @param distD The deuterium distance in the group
-	 * @return The concentration of this reactant
-     *
-     * TODO why does Monitor1D use this two-argument version?
-	 */
-	virtual double getConcentration(double distHe, double distD) const {
-		return l0 + (distHe * l1[0]) + (distD * l1[1]);
-	}
+	void setHeVVector(const HeVListType& vec);
 
 	/**
 	 * This operation returns the current concentration.
@@ -663,8 +646,8 @@ public:
 	 * @param distV The vacancy distance in the group
 	 * @return The concentration of this reactant
 	 */
-	virtual double getConcentration(double distHe, double distD,
-			double distT, double distV) const {
+	virtual double getConcentration(double distHe, double distD, double distT,
+			double distV) const {
 		return l0 + (distHe * l1[0]) + (distD * l1[1]) + (distT * l1[2])
 				+ (distV * l1[3]);
 	}
@@ -881,9 +864,11 @@ public:
 	 *
 	 */
 	void computePartialDerivatives(double* partials[5],
-            const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
-	void getPartialDerivatives(std::vector<double> & partials, int i) const override
-	{
+			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+			int i) const;
+	void getPartialDerivatives(std::vector<double> & partials, int i) const
+			override
+			{
 		assert(false);
 	}
 
@@ -897,9 +882,10 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void computeProductionPartialDerivatives(double* partials[5],
-			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
-	void getProductionPartialDerivatives(std::vector<double> & partials, int i) const
-			override
+			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+			int i) const;
+	void getProductionPartialDerivatives(std::vector<double> & partials,
+			int i) const override
 			{
 		assert(false);
 	}
@@ -914,9 +900,10 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void computeCombinationPartialDerivatives(double* partials[5],
-			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
-	void getCombinationPartialDerivatives(std::vector<double> & partials, int i) const
-			override
+			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+			int i) const;
+	void getCombinationPartialDerivatives(std::vector<double> & partials,
+			int i) const override
 			{
 		assert(false);
 	}
@@ -931,9 +918,10 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void computeDissociationPartialDerivatives(double* partials[5],
-			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
-	void getDissociationPartialDerivatives(std::vector<double> & partials, int i) const
-			override
+			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+			int i) const;
+	void getDissociationPartialDerivatives(std::vector<double> & partials,
+			int i) const override
 			{
 		assert(false);
 	}
@@ -948,9 +936,10 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void computeEmissionPartialDerivatives(double* partials[5],
-			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const;
-	void getEmissionPartialDerivatives(std::vector<double> & partials, int i) const
-			override
+			const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+			int i) const;
+	void getEmissionPartialDerivatives(std::vector<double> & partials,
+			int i) const override
 			{
 		assert(false);
 	}
@@ -1024,7 +1013,7 @@ public:
 	 *
 	 * @return The heVList
 	 */
-    const HeVListType& getCoordList() const {
+	const HeVListType& getCoordList() const {
 		return heVList;
 	}
 
