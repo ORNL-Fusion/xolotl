@@ -95,7 +95,7 @@ public interface Arguments {
 
 	/**
 	 * This Option annotation corresponds to the '--maxVSize' option which defines a
-	 * default value of 29 and additionally provides a brief description of this
+	 * default value of 50 and additionally provides a brief description of this
 	 * option.
 	 * 
 	 * @param defaultValue The default value for the maximum size of a vacancy

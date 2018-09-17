@@ -85,11 +85,13 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / hdf5Stride2D) <= hdf5Previous2D)
+	if (((int) ((time + dt / 10.0) / hdf5Stride2D) <= hdf5Previous2D)
+			&& timestep > 0)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
-	hdf5Previous2D++;
+	if ((int) ((time + dt / 10.0) / hdf5Stride2D) > hdf5Previous2D)
+		hdf5Previous2D++;
 
 	// Get the number of processes
 	int worldSize;

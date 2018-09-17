@@ -514,7 +514,7 @@ public:
 		psDim = dim;
 
 		// Loop on the dimension to set the list
-		for (int i = 0; i < psDim; i++) {
+		for (int i = 0; i < 5; i++) {
 			indexList[i] = list[i];
 		}
 

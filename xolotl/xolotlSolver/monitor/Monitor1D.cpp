@@ -344,12 +344,15 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / hdf5Stride1D) <= hdf5Previous1D) {
+	if (((int) ((time + dt / 10.0) / hdf5Stride1D) <= hdf5Previous1D)
+			&& timestep > 0) {
 		PetscFunctionReturn(0);
 	}
 
 	// Update the previous time
-	hdf5Previous1D++;
+	if ((int) ((time + dt / 10.0) / hdf5Stride1D) > hdf5Previous1D)
+		hdf5Previous1D++;
+
 
 	// Get the number of processes
 	int worldSize;
