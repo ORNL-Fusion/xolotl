@@ -11,6 +11,12 @@
 #include <ctime>
 #include <MPIUtils.h>
 
+
+void XolotlInterface::printSomething() {
+	std::cout << "I'm in Xolotl !!!" << std::endl;
+	return;
+}
+
 std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
 		int argc, char **argv, MPI_Comm comm) {
 	// Local Declarations

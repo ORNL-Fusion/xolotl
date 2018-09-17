@@ -22,6 +22,11 @@ public:
 	}
 
 	/**
+	 * Print something
+	 */
+	void printSomething();
+
+	/**
 	 * Initialize all the options and handlers
 	 */
 	std::shared_ptr<xolotlSolver::PetscSolver> initializeXolotl(int argc,
