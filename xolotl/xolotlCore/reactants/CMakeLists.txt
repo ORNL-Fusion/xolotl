@@ -14,17 +14,19 @@ file(GLOB HEADERS *.h psiclusters/*.h neclusters/*.h feclusters/*.h)
 file(GLOB SRC *.cpp psiclusters/*.cpp neclusters/*.cpp feclusters/*.cpp)
 
 #Include this directory so that the psiclusters can be built
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/dummy)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/standard)
+include_directories(${CMAKE_SOURCE_DIR}
+                    ${CMAKE_SOURCE_DIR}/xolotlCore
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf/dummy
+                    ${CMAKE_SOURCE_DIR}/xolotlPerf/standard
+                    ${CMAKE_BINARY_DIR}
+                    ${Boost_INCLUDE_DIR})
 
 #Add the library
 add_library(${LIBRARY_NAME} STATIC ${SRC})

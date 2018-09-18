@@ -63,7 +63,7 @@ void Diffusion1DHandler::initializeDiffusionGrid(
 
 void Diffusion1DHandler::computeDiffusion(const IReactionNetwork& network,
 		double **concVector, double *updatedConcOffset, double hxLeft,
-		double hxRight, int ix, double, int, double, int) const {
+		double hxRight, int ix, int xs, double, int, double, int) const {
 
 	// Consider each diffusing cluster.
 	// TODO Maintaining a separate index assumes that diffusingClusters is
@@ -86,7 +86,7 @@ void Diffusion1DHandler::computeDiffusion(const IReactionNetwork& network,
 				* diffusionGrid[ix + 2][diffClusterIdx];
 
 		// Use a simple midpoint stencil to compute the concentration
-		double conc = cluster.getDiffusionCoefficient() * 2.0
+		double conc = cluster.getDiffusionCoefficient(ix - xs) * 2.0
 				* (oldLeftConc + (hxLeft / hxRight) * oldRightConc
 						- (1.0 + (hxLeft / hxRight)) * oldConc)
 				/ (hxLeft * (hxLeft + hxRight));
@@ -100,7 +100,8 @@ void Diffusion1DHandler::computeDiffusion(const IReactionNetwork& network,
 
 void Diffusion1DHandler::computePartialsForDiffusion(
 		const IReactionNetwork& network, double *val, int *indices,
-		double hxLeft, double hxRight, int ix, double, int, double, int) const {
+		double hxLeft, double hxRight, int ix, int xs, double, int, double,
+		int) const {
 
 	// Loop on them
 	// TODO Maintaining a separate index assumes that diffusingClusters is
@@ -115,7 +116,7 @@ void Diffusion1DHandler::computePartialsForDiffusion(
 
 		int index = cluster.getId() - 1;
 		// Get the diffusion coefficient of the cluster
-		double diffCoeff = cluster.getDiffusionCoefficient();
+		double diffCoeff = cluster.getDiffusionCoefficient(ix - xs);
 
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian

@@ -11,7 +11,6 @@
 #include <ctime>
 #include <MPIUtils.h>
 
-
 void XolotlInterface::printSomething() {
 	std::cout << "I'm in Xolotl !!!" << std::endl;
 	return;
@@ -32,12 +31,12 @@ std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
 
 	if (rank == 0) {
 		// Print the start message
-			std::cout << "Starting Xolotl Plasma-Surface Interactions Simulator"
-					<< std::endl;
-			// TODO! Print copyright message
-			// Print date and time
-			std::time_t currentTime = std::time(NULL);
-			std::cout << std::asctime(std::localtime(&currentTime));
+		std::cout << "Starting Xolotl Plasma-Surface Interactions Simulator"
+				<< std::endl;
+		// TODO! Print copyright message
+		// Print date and time
+		std::time_t currentTime = std::time(NULL);
+		std::cout << std::asctime(std::localtime(&currentTime));
 	}
 
 	try {
@@ -107,8 +106,11 @@ std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (const std::string& error) {
-		std::cout << error << std::endl;
-		std::cout << "Aborting." << std::endl;
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
 	}
 
 	return solver;
@@ -123,8 +125,11 @@ void XolotlInterface::solveXolotl(
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (const std::string& error) {
-		std::cout << error << std::endl;
-		std::cout << "Aborting." << std::endl;
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
 	}
 
 	return;
@@ -139,8 +144,11 @@ void XolotlInterface::finalizeXolotl(
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (const std::string& error) {
-		std::cout << error << std::endl;
-		std::cout << "Aborting." << std::endl;
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
 	}
 
 	return;

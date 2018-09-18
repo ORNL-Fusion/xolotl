@@ -49,11 +49,17 @@ public:
 				(1.0 / 3.0));
 		reactionRadius = (0.3 + termOne - termTwo) * 0.25;
 
-		// Bounds on He and V
-		heBounds = IntegerRange<IReactant::SizeType>(
+		// Bounds on He, D, T, and V
+		bounds[0] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(0),
 				static_cast<IReactant::SizeType>(1));
-		vBounds = IntegerRange<IReactant::SizeType>(
+		bounds[1] = IntegerRange<IReactant::SizeType>(
+				static_cast<IReactant::SizeType>(0),
+				static_cast<IReactant::SizeType>(1));
+		bounds[2] = IntegerRange<IReactant::SizeType>(
+				static_cast<IReactant::SizeType>(size),
+				static_cast<IReactant::SizeType>(size+1));
+		bounds[3] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(0),
 				static_cast<IReactant::SizeType>(1));
 

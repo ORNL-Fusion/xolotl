@@ -200,6 +200,14 @@ shared_ptr<xolotlCore::PSIClusterReactionNetwork> testUtils::getSimplePSIReactio
 		currCluster.updateFromNetwork();
 	}
 
+	// Define the phase space for the network
+	int nDim = 1;
+	Array<int, 5> list;
+	list[0] = 0;
+	// Now that all the clusters are created
+	// Give the information on the phase space to the network
+	network->setPhaseSpace(nDim, list);
+
 	// Create the reactions
 	network->createReactionConnectivity();
 	// Recompute Ids and network size

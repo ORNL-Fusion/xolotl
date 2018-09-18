@@ -12,6 +12,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/flux
                     ${CMAKE_SOURCE_DIR}/xolotlCore/io
                     ${CMAKE_SOURCE_DIR}/xolotlPerf
@@ -32,7 +33,7 @@ if(Boost_FOUND)
         message(STATUS "Making test ${test}")
         get_filename_component(testName ${test} NAME_WE)
         add_executable(${testName} ${test})
-        target_link_libraries(${testName} xolotlFlux xolotlCL xolotlReactants xolotlPerf)
+        target_link_libraries(${testName} xolotlFlux xolotlCL xolotlReactants xolotlPerf ${Boost_LIBRARIES})
         add_test(${testName} ${testName}) 
         #add a label so the tests can be run separately
         set_property(TEST ${testName} PROPERTY LABELS ${PACKAGE_NAME})   

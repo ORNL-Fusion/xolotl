@@ -15,12 +15,13 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
-#include <HDF5Utils.h>
 #include <PSISuperCluster.h>
 #include <NESuperCluster.h>
 #include <MathUtils.h>
 #include <MPIUtils.h>
 #include "RandomNumberGenerator.h"
+#include "xolotlCore/io/XFile.h"
+#include "xolotlSolver/monitor/Monitor.h"
 
 namespace xolotlSolver {
 
@@ -85,11 +86,13 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / hdf5Stride2D) <= hdf5Previous2D)
+	if (((int) ((time + dt / 10.0) / hdf5Stride2D) <= hdf5Previous2D)
+			&& timestep > 0)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
-	hdf5Previous2D++;
+	if ((int) ((time + dt / 10.0) / hdf5Stride2D) > hdf5Previous2D)
+		hdf5Previous2D++;
 
 	// Gets the process ID (important when it is running in parallel)
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
@@ -132,8 +135,9 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 		surfaceIndices.push_back(solverHandler.getSurfacePosition(i));
 	}
 
-	// Open the already created HDF5 file
-	xolotlCore::HDF5Utils::openFile(hdf5OutputName2D);
+	// Open the existing checkpoint file.
+	xolotlCore::XFile checkpointFile(hdf5OutputName2D, PETSC_COMM_WORLD,
+			xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
 	double currentTimeStep;
@@ -141,18 +145,23 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Add a concentration sub group
-	xolotlCore::HDF5Utils::addConcentrationSubGroup(timestep, time,
-			previousTime, currentTimeStep);
+	auto concGroup = checkpointFile.getGroup<
+			xolotlCore::XFile::ConcentrationGroup>();
+	assert(concGroup);
+	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
+			currentTimeStep);
 
-	// Write the surface positions and the associated interstitial quantities
-	// in the concentration sub group
-	xolotlCore::HDF5Utils::writeSurface2D(timestep, surfaceIndices,
-			nInterstitial2D, previousIFlux2D);
+	if (solverHandler.moveSurface()) {
+		// Write the surface positions and the associated interstitial quantities
+		// in the concentration sub group
+		tsGroup->writeSurface2D(surfaceIndices, nInterstitial2D,
+				previousIFlux2D);
+	}
 
 	// Write the bottom impurity information if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1)
-		xolotlCore::HDF5Utils::writeBottom2D(nHelium2D, previousHeFlux2D,
-				nDeuterium2D, previousDFlux2D, nTritium2D, previousTFlux2D);
+		tsGroup->writeBottom2D(nHelium2D, previousHeFlux2D, nDeuterium2D,
+				previousDFlux2D, nTritium2D, previousTFlux2D);
 
 	// Loop on the full grid
 	for (PetscInt j = 0; j < My; j++) {
@@ -191,7 +200,7 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 			MPI_Allreduce(&concId, &concProc, 1, MPI_INT, MPI_SUM, xolotlComm);
 
 			// Broadcast the size
-			MPI_Bcast(&concSize, 1, MPI_DOUBLE, concProc, xolotlComm);
+			MPI_Bcast(&concSize, 1, MPI_INT, concProc, PETSC_COMM_WORLD);
 
 			// Skip the grid point if the size is 0
 			if (concSize == 0)
@@ -202,13 +211,9 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 					xolotlComm);
 
 			// All processes create the dataset and fill it
-			xolotlCore::HDF5Utils::addConcentrationDataset(concSize, i, j);
-			xolotlCore::HDF5Utils::fillConcentrations(concArray, i, j);
+			tsGroup->writeConcentrationDataset(concSize, concArray, i, j);
 		}
 	}
-
-	// Finalize the HDF5 file
-	xolotlCore::HDF5Utils::closeFile();
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -355,7 +360,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 					double conc = gridPointSolution[id];
 					// Get its size and diffusion coefficient
 					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient();
+					double coef = cluster.getDiffusionCoefficient(xi - xs);
 					// Compute the flux going to the right
 					newFlux += (double) size * factor * coef * conc;
 				}
@@ -373,7 +378,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 					double conc = gridPointSolution[id];
 					// Get its size and diffusion coefficient
 					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient();
+					double coef = cluster.getDiffusionCoefficient(xi - xs);
 					// Compute the flux going to the right
 					newFlux += (double) size * factor * coef * conc;
 				}
@@ -391,7 +396,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 					double conc = gridPointSolution[id];
 					// Get its size and diffusion coefficient
 					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient();
+					double coef = cluster.getDiffusionCoefficient(xi - xs);
 					// Compute the flux going to the right
 					newFlux += (double) size * factor * coef * conc;
 				}
@@ -871,7 +876,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					double conc = gridPointSolution[id];
 					// Get its size and diffusion coefficient
 					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient();
+					double coef = cluster.getDiffusionCoefficient(xi - xs);
 					// Compute the flux going to the left
 					newFlux += (double) size * factor * coef * conc * hy;
 				}
@@ -902,7 +907,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 						double conc = gridPointSolution[id];
 						// Get its size and diffusion coefficient
 						int size = cluster.getSize();
-						double coef = cluster.getDiffusionCoefficient();
+						double coef = cluster.getDiffusionCoefficient(xi - xs);
 						// Compute the flux
 						newFlux += ((double) size * coef * conc * hxLeft) / hy;
 					}
@@ -925,7 +930,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 						double conc = gridPointSolution[id];
 						// Get its size and diffusion coefficient
 						int size = cluster.getSize();
-						double coef = cluster.getDiffusionCoefficient();
+						double coef = cluster.getDiffusionCoefficient(xi - xs);
 						// Compute the flux
 						newFlux += ((double) size * coef * conc * hxLeft) / hy;
 					}
@@ -1168,7 +1173,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
 
 			// Loop on the V boundaries
-			for (auto const& j : cluster.getVBounds()) {
+			for (auto const& j : cluster.getBounds(3)) {
 				// Get the total concentration at this v
 				double conc = cluster.getIntegratedVConcentration(j);
 				// Get the corresponding V cluster and its Id
@@ -1181,9 +1186,13 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 			// Reset the super cluster concentration
 			int id = cluster.getId() - 1;
 			gridPointSolution[id] = 0.0;
-			id = cluster.getHeMomentumId() - 1;
+			id = cluster.getMomentId(0) - 1;
 			gridPointSolution[id] = 0.0;
-			id = cluster.getVMomentumId() - 1;
+			id = cluster.getMomentId(1) - 1;
+			gridPointSolution[id] = 0.0;
+			id = cluster.getMomentId(2) - 1;
+			gridPointSolution[id] = 0.0;
+			id = cluster.getMomentId(3) - 1;
 			gridPointSolution[id] = 0.0;
 		}
 	}
@@ -1249,24 +1258,37 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 			// Set it in the solver
 			solverHandler.setSurfacePosition(surfacePos, yj);
 
-			// Initialize the vacancy concentration on the new grid points
+			// Initialize the vacancy concentration and the temperature on the new grid points
 			// Get the single vacancy ID
 			auto singleVacancyCluster = network.get(Species::V, 1);
 			int vacancyIndex = -1;
 			if (singleVacancyCluster)
 				vacancyIndex = singleVacancyCluster->getId() - 1;
+			// Get the surface temperature
+			double temp = 0.0;
+			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+				temp = solutionArray[yj][xi][dof - 1];
+			}
+			double surfTemp = 0.0;
+			MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
+					PETSC_COMM_WORLD);
 			// Loop on the new grid points
-			while (nGridPoints > 0) {
+			while (nGridPoints >= 0) {
 				// Position of the newly created grid point
 				xi = surfacePos + nGridPoints;
 
 				// If xi is on this process
-				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
-						&& vacancyIndex > 0) {
+				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
 					// Get the concentrations
 					gridPointSolution = solutionArray[yj][xi];
-					// Initialize the vacancy concentration
-					gridPointSolution[vacancyIndex] = initialVConc;
+
+					// Set the new surface temperature
+					gridPointSolution[dof - 1] = surfTemp;
+
+					if (vacancyIndex > 0 && nGridPoints > 0) {
+						// Initialize the vacancy concentration
+						gridPointSolution[vacancyIndex] = initialVConc;
+					}
 				}
 
 				// Decrease the number of grid points
@@ -1403,6 +1425,22 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	// Get the network and its size
 	auto& network = solverHandler.getNetwork();
 
+	// Determine if we have an existing restart file,
+	// and if so, it it has had timesteps written to it.
+	std::unique_ptr<xolotlCore::XFile> networkFile;
+	std::unique_ptr<xolotlCore::XFile::TimestepGroup> lastTsGroup;
+	std::string networkName = solverHandler.getNetworkName();
+	bool hasConcentrations = false;
+	if (not networkName.empty()) {
+		networkFile.reset(new xolotlCore::XFile(networkName));
+		auto concGroup = networkFile->getGroup<
+				xolotlCore::XFile::ConcentrationGroup>();
+		hasConcentrations = (concGroup and concGroup->hasTimesteps());
+		if (hasConcentrations) {
+			lastTsGroup = concGroup->getLastTimestepGroup();
+		}
+	}
+
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -1445,26 +1483,14 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		if (!flag)
 			hdf5Stride2D = 1.0;
 
-		// Compute the correct hdf5Previous2D for a restart
-		// Get the last time step written in the HDF5 file
-		int tempTimeStep = -2;
-		std::string networkName = solverHandler.getNetworkName();
-		bool hasConcentrations = false;
-		if (!networkName.empty())
-			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-					networkName, tempTimeStep);
 		if (hasConcentrations) {
 			// Get the previous time from the HDF5 file
-			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			previousTime = lastTsGroup->readPreviousTime();
 			hdf5Previous2D = (int) (previousTime / hdf5Stride2D);
 		}
 
 		// Don't do anything if both files have the same name
 		if (hdf5OutputName2D != solverHandler.getNetworkName()) {
-
-			// Initialize the HDF5 file for all the processes
-			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName2D);
 
 			// Get the solver handler
 			auto& solverHandler = PetscSolver::getSolverHandler();
@@ -1475,20 +1501,28 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			// Setup step size variables
 			double hy = solverHandler.getStepSizeY();
 
-			// Save the header in the HDF5 file
-			xolotlCore::HDF5Utils::fillHeader(grid, My, hy);
-
 			// Get the compostion list and save it
 			auto compList = network.getCompositionList();
-			xolotlCore::HDF5Utils::fillNetworkComp(compList);
 
-			// Save the network in the HDF5 file
-			if (!solverHandler.getNetworkName().empty())
-				xolotlCore::HDF5Utils::fillNetwork(
-						solverHandler.getNetworkName());
+			// Create and initialize a checkpoint file.
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+				xolotlCore::XFile checkpointFile(hdf5OutputName2D, grid,
+						compList, PETSC_COMM_WORLD, My, hy);
+			}
 
-			// Finalize the HDF5 file
-			xolotlCore::HDF5Utils::finalizeFile();
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+					hdf5OutputName2D, network);
 		}
 
 		// startStop2D will be called at each timestep
@@ -1508,26 +1542,17 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 				previousIFlux2D.push_back(0.0);
 			}
 
-			// Get the last time step written in the HDF5 file
-			int tempTimeStep = -2;
-			std::string networkName = solverHandler.getNetworkName();
-			bool hasConcentrations = false;
-			if (!networkName.empty())
-				hasConcentrations =
-						xolotlCore::HDF5Utils::hasConcentrationGroup(
-								networkName, tempTimeStep);
-
 			// Get the interstitial information at the surface if concentrations were stored
 			if (hasConcentrations) {
+
+				assert(lastTsGroup);
+
 				// Get the interstitial quantity from the HDF5 file
-				nInterstitial2D = xolotlCore::HDF5Utils::readData2D(networkName,
-						tempTimeStep, "nInterstitial");
+				nInterstitial2D = lastTsGroup->readData2D("nInterstitial");
 				// Get the previous I flux from the HDF5 file
-				previousIFlux2D = xolotlCore::HDF5Utils::readData2D(networkName,
-						tempTimeStep, "previousIFlux");
+				previousIFlux2D = lastTsGroup->readData2D("previousIFlux");
 				// Get the previous time from the HDF5 file
-				previousTime = xolotlCore::HDF5Utils::readPreviousTime(
-						networkName, tempTimeStep);
+				previousTime = lastTsGroup->readPreviousTime();
 			}
 
 			// Get the sputtering yield
@@ -1603,19 +1628,13 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			}
 		}
 
-		// Get the last time step written in the HDF5 file
-		int tempTimeStep = -2;
-		std::string networkName = solverHandler.getNetworkName();
-		bool hasConcentrations = false;
-		if (!networkName.empty())
-			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-					networkName, tempTimeStep);
-
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
+
+			assert(lastTsGroup);
+
 			// Get the previous time from the HDF5 file
-			double time = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			double time = lastTsGroup->readPreviousTime();
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
 			// The length of the time step
@@ -1623,24 +1642,18 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			// Increment the fluence with the value at this current timestep
 			fluxHandler->incrementFluence(dt);
 			// Get the previous time from the HDF5 file
-			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			// TODO is this the same as 'time' above?
+			previousTime = lastTsGroup->readPreviousTime();
 
 			// If the bottom is a free surface
 			if (solverHandler.getRightOffset() == 1) {
 				// Read about the impurity fluxes in the bulk
-				nHelium2D = xolotlCore::HDF5Utils::readData2D(networkName,
-						tempTimeStep, "nHelium");
-				previousHeFlux2D = xolotlCore::HDF5Utils::readData2D(
-						networkName, tempTimeStep, "previousHeFlux");
-				nDeuterium2D = xolotlCore::HDF5Utils::readData2D(networkName,
-						tempTimeStep, "nDeuterium");
-				previousDFlux2D = xolotlCore::HDF5Utils::readData2D(networkName,
-						tempTimeStep, "previousDFlux");
-				nTritium2D = xolotlCore::HDF5Utils::readData2D(networkName,
-						tempTimeStep, "nTritium");
-				previousTFlux2D = xolotlCore::HDF5Utils::readData2D(networkName,
-						tempTimeStep, "previousTFlux");
+				nHelium2D = lastTsGroup->readData2D("nHelium");
+				previousHeFlux2D = lastTsGroup->readData2D("previousHeFlux");
+				nDeuterium2D = lastTsGroup->readData2D("nDeuterium");
+				previousDFlux2D = lastTsGroup->readData2D("previousDFlux");
+				nTritium2D = lastTsGroup->readData2D("nTritium");
+				previousTFlux2D = lastTsGroup->readData2D("previousTFlux");
 			}
 		}
 

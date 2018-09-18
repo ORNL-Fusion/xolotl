@@ -161,12 +161,21 @@ public:
 	}
 
 	/**
+	 * This operation sets the heat conductivity to use in the equation.
+	 *
+	 * \see ITemperatureHandler.h
+	 */
+	virtual void setHeatConductivity(double cond) {
+		return;
+	}
+
+	/**
 	 * This operation sets the surface position.
 	 * Don't do anything.
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void updateSurfacePosition(double surfacePos) {
+	virtual void updateSurfacePosition(int surfacePos) {
 		return;
 	}
 
@@ -178,7 +187,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void computeTemperature(double **concVector,
-			double *updatedConcOffset, double hxLeft, double hxRight) {
+			double *updatedConcOffset, double hxLeft, double hxRight, int xi) {
 		return;
 	}
 
@@ -190,7 +199,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void computePartialsForTemperature(double *val, int *indices,
-			double hxLeft, double hxRight) {
+			double hxLeft, double hxRight, int xi) {
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
 		indices[0] = dof - 1;

@@ -15,13 +15,14 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
-#include <HDF5Utils.h>
 #include <NESuperCluster.h>
 #include <PSISuperCluster.h>
 #include <FeSuperCluster.h>
 #include <NEClusterReactionNetwork.h>
 #include <PSIClusterReactionNetwork.h>
 #include <FeClusterReactionNetwork.h>
+#include "xolotlCore/io/XFile.h"
+#include "xolotlSolver/monitor/Monitor.h"
 
 namespace xolotlSolver {
 
@@ -65,11 +66,13 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / hdf5Stride0D) <= hdf5Previous0D)
+	if (((int) ((time + dt / 10.0) / hdf5Stride0D) <= hdf5Previous0D)
+			&& timestep > 0)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
-	hdf5Previous0D++;
+	if ((int) ((time + dt / 10.0) / hdf5Stride0D) > hdf5Previous0D)
+		hdf5Previous0D++;
 
 	// Get the da from ts
 	DM da;
@@ -90,17 +93,21 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	// Create an array for the concentration
 	double concArray[dof][2];
 
-	// Open the already created HDF5 file
-	xolotlCore::HDF5Utils::openFile(hdf5OutputName0D);
+	// Open the existing HDF5 file
+	xolotlCore::XFile checkpointFile(hdf5OutputName0D, PETSC_COMM_WORLD,
+			xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
 	double currentTimeStep;
 	ierr = TSGetTimeStep(ts, &currentTimeStep);
 	CHKERRQ(ierr);
 
-	// Add a concentration sub group
-	xolotlCore::HDF5Utils::addConcentrationSubGroup(timestep, time,
-			previousTime, currentTimeStep);
+	// Add a concentration time step group for the current time step.
+	auto concGroup = checkpointFile.getGroup<
+			xolotlCore::XFile::ConcentrationGroup>();
+	assert(concGroup);
+	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
+			currentTimeStep);
 
 	// Size of the concentration that will be stored
 	int concSize = -1;
@@ -123,15 +130,10 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	concSize++;
 
 	if (concSize > 0) {
+
 		// All processes must create the dataset
-		xolotlCore::HDF5Utils::addConcentrationDataset(concSize, 0);
-
-		// Fill the dataset
-		xolotlCore::HDF5Utils::fillConcentrations(concArray, 0);
+		tsGroup->writeConcentrationDataset(concSize, concArray, 0);
 	}
-
-	// Finalize the HDF5 file
-	xolotlCore::HDF5Utils::closeFile();
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -378,6 +380,19 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	auto& network = solverHandler.getNetwork();
 	const int networkSize = network.size();
 
+	// Determine if we have an existing restart file,
+	// and if so, it it has had timesteps written to it.
+	std::unique_ptr<xolotlCore::XFile> networkFile;
+	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
+	std::string networkName = solverHandler.getNetworkName();
+	bool hasConcentrations = false;
+	if (not networkName.empty()) {
+		networkFile.reset(new xolotlCore::XFile(networkName));
+		auto concGroup = networkFile->getGroup<
+				xolotlCore::XFile::ConcentrationGroup>();
+		hasConcentrations = (concGroup and concGroup->hasTimesteps());
+	}
+
 	// Set the post step processing to stop the solver if the time step collapses
 	if (flagCheck) {
 		// Find the threshold
@@ -408,16 +423,14 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 
 		// Compute the correct hdf5Previous0D for a restart
 		// Get the last time step written in the HDF5 file
-		int tempTimeStep = -2;
-		std::string networkName = solverHandler.getNetworkName();
-		bool hasConcentrations = false;
-		if (!networkName.empty())
-			hasConcentrations = xolotlCore::HDF5Utils::hasConcentrationGroup(
-					networkName, tempTimeStep);
 		if (hasConcentrations) {
+
+			assert(concGroup);
+			auto tsGroup = concGroup->getLastTimestepGroup();
+			assert(tsGroup);
+
 			// Get the previous time from the HDF5 file
-			previousTime = xolotlCore::HDF5Utils::readPreviousTime(networkName,
-					tempTimeStep);
+			previousTime = tsGroup->readPreviousTime();
 			hdf5Previous0D = (int) (previousTime / hdf5Stride0D);
 		}
 
@@ -434,14 +447,11 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 
 			// Get the size of the total grid
 			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-					PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-					PETSC_IGNORE);
+			PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc0DMonitor: DMDAGetInfo failed.");
-
-			// Initialize the HDF5 file for all the processes
-			xolotlCore::HDF5Utils::initializeFile(hdf5OutputName0D);
 
 			// Get the solver handler
 			auto& solverHandler = PetscSolver::getSolverHandler();
@@ -449,20 +459,28 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// Get the physical grid (which is empty)
 			auto grid = solverHandler.getXGrid();
 
-			// Save the header in the HDF5 file
-			xolotlCore::HDF5Utils::fillHeader(grid);
-
 			// Get the compostion list and save it
 			auto compList = network.getCompositionList();
-			xolotlCore::HDF5Utils::fillNetworkComp(compList);
 
-			// Save the network in the HDF5 file
-			if (!solverHandler.getNetworkName().empty())
-				xolotlCore::HDF5Utils::fillNetwork(
-						solverHandler.getNetworkName());
+			// Create and initialize a checkpoint file.
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+				xolotlCore::XFile checkpointFile(hdf5OutputName0D, grid,
+						compList, PETSC_COMM_WORLD);
+			}
 
-			// Finalize the HDF5 file
-			xolotlCore::HDF5Utils::finalizeFile();
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+					hdf5OutputName0D, network);
 		}
 
 		// startStop0D will be called at each timestep

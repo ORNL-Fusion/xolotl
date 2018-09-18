@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <NECluster.h>
 #include "SimpleReactionNetwork.h"
 #include <NEXeCluster.h>
@@ -60,9 +60,11 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_REQUIRE_EQUAL(1U, reactants.size());
 
 	// Try changing the temperature and make sure it works
-	neNetwork->setTemperature(1000.0);
+	// Add a grid point for the temperature
+	neNetwork->addGridPoints(1);
+	neNetwork->setTemperature(1000.0, 0);
 	IReactant& reactant = reactants.at(0);
-	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(), 0.0001);
+	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(0), 0.0001);
 
 	return;
 }

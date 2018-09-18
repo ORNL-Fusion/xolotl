@@ -81,6 +81,8 @@ public:
 	 */
 	void setSurfacePosition(int pos, int j = -1, int k = -1) {
 		surfacePosition[j] = pos;
+
+		return;
 	}
 
 };

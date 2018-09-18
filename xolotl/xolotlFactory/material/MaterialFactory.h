@@ -6,6 +6,7 @@
 #include <DummyDiffusionHandler.h>
 #include <DummyAdvectionHandler.h>
 #include <DummyTrapMutationHandler.h>
+#include <DummyReSolutionHandler.h>
 #include <TokenizedLineReader.h>
 #include <XGBAdvectionHandler.h>
 #include <YGBAdvectionHandler.h>
@@ -31,6 +32,9 @@ protected:
 
 	//! The modified trap-mutation handler
 	std::shared_ptr<xolotlCore::ITrapMutationHandler> theTrapMutationHandler;
+
+	//! The re-solution handler
+	std::shared_ptr<xolotlCore::IReSolutionHandler> theReSolutionHandler;
 
 public:
 
@@ -82,6 +86,8 @@ public:
 			theTrapMutationHandler = std::make_shared<xolotlCore::DummyTrapMutationHandler>();
 		if (!map["attenuation"])
 			theTrapMutationHandler->setAttenuation(false);
+		if (!map["resolution"])
+			theReSolutionHandler = std::make_shared<xolotlCore::DummyReSolutionHandler>();
 
 		// Get the number of dimensions
 		int dim = options.getDimensionNumber();
@@ -172,6 +178,15 @@ public:
 	 */
 	std::shared_ptr<xolotlCore::ITrapMutationHandler> getTrapMutationHandler() const {
 		return theTrapMutationHandler;
+	}
+
+	/**
+	 * Return the Re-solution handler.
+	 *
+	 *  @return The re-solution handler.
+	 */
+	std::shared_ptr<xolotlCore::IReSolutionHandler> getReSolutionHandler() const {
+		return theReSolutionHandler;
 	}
 };
 

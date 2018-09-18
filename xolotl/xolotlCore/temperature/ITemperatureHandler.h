@@ -59,11 +59,18 @@ public:
 	virtual void setHeatCoefficient(double coef) = 0;
 
 	/**
+	 * This operation sets the heat conductivity to use in the equation.
+	 *
+	 * @param coef The heat conductivity
+	 */
+	virtual void setHeatConductivity(double cond) = 0;
+
+	/**
 	 * This operation sets the surface position.
 	 *
 	 * @param surfacePos The surface location
 	 */
-	virtual void updateSurfacePosition(double surfacePos) = 0;
+	virtual void updateSurfacePosition(int surfacePos) = 0;
 
 	/**
 	 * Compute the flux due to the heat equation.
@@ -75,9 +82,10 @@ public:
 	 * point where the heat equation is computed used to find the next solution
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
+	 * @param ix The position on the x grid
 	 */
 	virtual void computeTemperature(double **concVector,
-			double *updatedConcOffset, double hxLeft, double hxRight) = 0;
+			double *updatedConcOffset, double hxLeft, double hxRight, int xi) = 0;
 
 	/**
 	 * Compute the partials due to the heat equation.
@@ -89,9 +97,10 @@ public:
 	 * temperature in the network
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
+	 * @param ix The position on the x grid
 	 */
 	virtual void computePartialsForTemperature(double *val, int *indices,
-			double hxLeft, double hxRight) = 0;
+			double hxLeft, double hxRight, int xi) = 0;
 
 };
 //end class ITemperatureHandler

@@ -173,4 +173,8 @@ double FluxHandler::getFluxAmplitude() const {
 	return fluxAmplitude;
 }
 
+double FluxHandler::getFluxRate() const {
+	return fluxAmplitude / normFactor;
+}
+
 } // end namespace xolotlCore

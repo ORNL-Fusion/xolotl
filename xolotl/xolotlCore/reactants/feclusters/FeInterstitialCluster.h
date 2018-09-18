@@ -77,16 +77,17 @@ public:
 	 * This operation returns the total change in this cluster due its
 	 * own dissociation.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux() const {
+	double getEmissionFlux(int i) const {
 		// Initial declarations
-		double flux = FeCluster::getEmissionFlux();
+		double flux = FeCluster::getEmissionFlux(i);
 
 		// Compute the loss to dislocation sinks
 		if (size < 2) {
 			// bias * k^2 * D * C
-			flux += sinkBias * sinkStrength * diffusionCoefficient
+			flux += sinkBias * sinkStrength * diffusionCoefficient[i]
 					* concentration;
 		}
 
@@ -100,15 +101,17 @@ public:
 	 * @param partials The vector into which the partial derivatives should be
 	 * inserted. This vector should have a length equal to the size of the
 	 * network.
+	 * @param i The location on the grid in the depth direction
 	 */
-	void getEmissionPartialDerivatives(std::vector<double> & partials) const {
+	void getEmissionPartialDerivatives(std::vector<double> & partials,
+			int i) const {
 		// Initial declarations
-		FeCluster::getEmissionPartialDerivatives(partials);
+		FeCluster::getEmissionPartialDerivatives(partials, i);
 
 		// Compute the loss to dislocation sinks
 		if (size < 2) {
 			// bias * k^2 * D * C
-			partials[id - 1] -= sinkBias * sinkStrength * diffusionCoefficient;
+			partials[id - 1] -= sinkBias * sinkStrength * diffusionCoefficient[i];
 		}
 
 		return;

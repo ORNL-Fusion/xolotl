@@ -16,9 +16,9 @@ class HeatEquationHandler: public ITemperatureHandler {
 private:
 
 	/**
-	 * The surface temperature in Kelvin
+	 * The heat flux in W.m-2
 	 */
-	double surfaceTemperature;
+	double heatFlux;
 
 	/**
 	 * The bulk temperature in Kelvin
@@ -38,7 +38,7 @@ private:
 	/**
 	 * The surface position
 	 */
-	double surfacePosition;
+	int surfacePosition;
 
 	/**
 	 * The heat coefficient
@@ -46,12 +46,17 @@ private:
 	double heatCoef;
 
 	/**
+	 * The heat conductivity
+	 */
+	double heatConductivity;
+
+	/**
 	 * The default constructor is private because the TemperatureHandler
 	 * must be initialized with a temperature
 	 */
 	HeatEquationHandler() :
-			surfaceTemperature(0.0), bulkTemperature(0.0), localTemperature(
-					0.0), dof(0), surfacePosition(0.0), heatCoef(0.0) {
+			heatFlux(0.0), bulkTemperature(0.0), localTemperature(0.0), dof(0), surfacePosition(
+					0.0), heatCoef(0.0), heatConductivity(0.0) {
 	}
 
 public:
@@ -59,12 +64,13 @@ public:
 	/**
 	 * The constructor
 	 *
-	 * @param surfTemp the temperature at the surface
-	 * @param bulkTemp the temperature in the bulk
+	 * @param flux The heat flux
+	 * @param bulkTemp The temperature in the bulk
 	 */
-	HeatEquationHandler(double surfTemp, double bulkTemp) :
-			surfaceTemperature(surfTemp), bulkTemperature(bulkTemp), localTemperature(
-					0.0), dof(0), surfacePosition(0.0), heatCoef(0.0) {
+	HeatEquationHandler(double flux, double bulkTemp) :
+			heatFlux(flux), bulkTemperature(bulkTemp), localTemperature(0.0), dof(
+					0), surfacePosition(0.0), heatCoef(0.0), heatConductivity(
+					0.0) {
 	}
 
 	/**
@@ -80,17 +86,17 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void initializeTemperature(const IReactionNetwork& network,
-            IReactionNetwork::SparseFillMap& ofillMap,
-            IReactionNetwork::SparseFillMap& dfillMap) {
+			IReactionNetwork::SparseFillMap& ofillMap,
+			IReactionNetwork::SparseFillMap& dfillMap) {
 
 		// Set dof
 		dof = network.getDOF();
 
 		// Add the temperature to ofill
-        ofillMap[(dof - 1)].emplace_back(dof - 1);
+		ofillMap[(dof - 1)].emplace_back(dof - 1);
 
 		// Add the temperature to dfill
-        dfillMap[(dof - 1)].emplace_back(dof - 1);
+		dfillMap[(dof - 1)].emplace_back(dof - 1);
 
 		return;
 	}
@@ -102,10 +108,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual double getTemperature(const Point<3>& position, double time) const {
-		return xolotlCore::equal(time, 0.0)
-				* ((position[0] - surfacePosition < 0.001) * surfaceTemperature
-						+ (position[0] - surfacePosition > 0.001)
-								* bulkTemperature)
+		return xolotlCore::equal(time, 0.0) * bulkTemperature
 				+ !xolotlCore::equal(time, 0.0) * localTemperature;
 	}
 
@@ -128,11 +131,20 @@ public:
 	}
 
 	/**
+	 * This operation sets the heat conductivity to use in the equation.
+	 *
+	 * \see ITemperatureHandler.h
+	 */
+	virtual void setHeatConductivity(double cond) {
+		heatConductivity = cond;
+	}
+
+	/**
 	 * This operation sets the surface position.
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void updateSurfacePosition(double surfacePos) {
+	virtual void updateSurfacePosition(int surfacePos) {
 		surfacePosition = surfacePos;
 	}
 
@@ -143,7 +155,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void computeTemperature(double **concVector,
-			double *updatedConcOffset, double hxLeft, double hxRight) {
+			double *updatedConcOffset, double hxLeft, double hxRight, int xi) {
 		// Initial declaration
 		int index = dof - 1;
 
@@ -152,14 +164,21 @@ public:
 		double oldLeftConc = concVector[1][index];
 		double oldRightConc = concVector[2][index];
 
+		// Boundary condition with heat flux
+		if (xi == surfacePosition) {
+			// Include the flux boundary condition
+			updatedConcOffset[index] += (2.0 * heatCoef / hxLeft)
+					* ((heatFlux / heatConductivity)
+							+ (oldRightConc - oldConc) / hxRight);
+
+			return;
+		}
+
 		// Use a simple midpoint stencil to compute the concentration
-		double conc = heatCoef * 2.0
+		updatedConcOffset[index] += heatCoef * 2.0
 				* (oldLeftConc + (hxLeft / hxRight) * oldRightConc
 						- (1.0 + (hxLeft / hxRight)) * oldConc)
 				/ (hxLeft * (hxLeft + hxRight));
-
-		// Update the concentration of the cluster
-		updatedConcOffset[index] += conc;
 
 		return;
 	}
@@ -171,7 +190,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void computePartialsForTemperature(double *val, int *indices,
-			double hxLeft, double hxRight) {
+			double hxLeft, double hxRight, int xi) {
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
 		indices[0] = dof - 1;
@@ -181,6 +200,11 @@ public:
 		val[0] = -2.0 * heatCoef / (hxLeft * hxRight); // middle
 		val[1] = heatCoef * 2.0 / (hxLeft * (hxLeft + hxRight)); // left
 		val[2] = heatCoef * 2.0 / (hxRight * (hxLeft + hxRight)); // right
+
+		if (xi == surfacePosition) {
+			val[1] = 0.0;
+			val[2] = 2.0 * heatCoef / (hxLeft * hxRight);
+		}
 
 		return;
 	}

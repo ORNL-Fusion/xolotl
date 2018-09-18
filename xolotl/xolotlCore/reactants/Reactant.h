@@ -87,25 +87,15 @@ protected:
 	int id;
 
 	/**
-	 * An integer identification number for the xenon momentum.
+	 * An integer identification number for the first moments.
 	 */
-	int xeMomId;
-
-	/**
-	 * An integer identification number for the helium momentum.
-	 */
-	int heMomId;
-
-	/**
-	 * An integer identification number for the vacancy momentum.
-	 */
-	int vMomId;
+	int momId[4] = { };
 
 	/**
 	 * The temperature at which the cluster currently exists. The diffusion
 	 * coefficient is recomputed each time the temperature is changed.
 	 */
-	double temperature;
+	std::vector<double> temperature;
 
 	/**
 	 * The reaction network that includes this reactant.
@@ -140,7 +130,7 @@ protected:
 	 * Arrhenius rate equation. It is re-computed every time the temperature is
 	 * updated.
 	 */
-	double diffusionCoefficient;
+	std::vector<double> diffusionCoefficient;
 
 	/**
 	 * The formation energy of this cluster. It will be used to compute the
@@ -181,8 +171,9 @@ protected:
 	 * whenever the diffusion factor, migration energy or temperature change.
 	 *
 	 * @param temp the temperature
+	 * @param i The position on the grid
 	 */
-	void recomputeDiffusionCoefficient(double temp);
+	void recomputeDiffusionCoefficient(double temp, int i);
 
 public:
 
@@ -214,11 +205,10 @@ public:
 	 */
 	Reactant(Reactant &other) :
 			concentration(other.concentration), name(other.name), type(
-					other.type), id(other.id), xeMomId(other.xeMomId), heMomId(
-					other.heMomId), vMomId(other.vMomId), temperature(
-					other.temperature), network(other.network), handlerRegistry(
-					other.handlerRegistry), size(other.size), composition(
-					other.composition), formationEnergy(other.formationEnergy), diffusionFactor(
+					other.type), id(other.id), temperature(other.temperature), network(
+					other.network), handlerRegistry(other.handlerRegistry), size(
+					other.size), composition(other.composition), formationEnergy(
+					other.formationEnergy), diffusionFactor(
 					other.diffusionFactor), diffusionCoefficient(
 					other.diffusionCoefficient), migrationEnergy(
 					other.migrationEnergy), reactionRadius(
@@ -241,11 +231,9 @@ public:
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void resultFrom(ProductionReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override {
+	virtual void resultFrom(ProductionReaction& reaction,
+			int a[4] = defaultInit, int b[4] = defaultInit) override {
 		return;
 	}
 
@@ -279,15 +267,26 @@ public:
 	}
 
 	/**
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	virtual void resultFrom(ProductionReaction& reaction, double *coef)
+			override {
+		return;
+	}
+
+	/**
 	 * Note that we combine with another cluster in a production reaction.
 	 * Assumes that the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster takes part.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(ProductionReaction& reaction, int a = 0, int b =
-			0) override {
+	virtual void participateIn(ProductionReaction& reaction, int a[4] =
+			defaultInit) override {
 		return;
 	}
 
@@ -323,17 +322,27 @@ public:
 	}
 
 	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster takes part.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	virtual void participateIn(ProductionReaction& reaction, double *coef)
+			override {
+		return;
+	}
+
+	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
 	 * Assumes the reaction is already inour network.
 	 *
 	 * @param reaction The reaction creating this cluster.
 	 * @param a Number that can be used by daughter classes.
 	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void participateIn(DissociationReaction& reaction, int a = 0,
-			int b = 0, int c = 0, int d = 0) override {
+	virtual void participateIn(DissociationReaction& reaction, int a[4] =
+			defaultInit, int b[4] = defaultInit) override {
 		return;
 	}
 
@@ -369,17 +378,26 @@ public:
 	}
 
 	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * @param reaction The reaction creating this cluster.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	virtual void participateIn(DissociationReaction& reaction, double *coef)
+			override {
+		return;
+	}
+
+	/**
 	 * Note that we emit from the given reaction.
 	 * Assumes the reaction is already in our network.
 	 *
 	 * @param reaction The reaction where this cluster emits.
 	 * @param a Number that can be used by daughter classes.
-	 * @param b Number that can be used by daughter classes.
-	 * @param c Number that can be used by daughter classes.
-	 * @param d Number that can be used by daughter classes.
 	 */
-	virtual void emitFrom(DissociationReaction& reaction, int a = 0, int b = 0,
-			int c = 0, int d = 0) override {
+	virtual void emitFrom(DissociationReaction& reaction,
+			int a[4] = defaultInit) override {
 		return;
 	}
 
@@ -413,6 +431,18 @@ public:
 	}
 
 	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * @param reaction The reaction where this cluster emits.
+	 * @param coef Number that can be used by daughter classes.
+	 */
+	virtual void emitFrom(DissociationReaction& reaction, double *coef)
+			override {
+		return;
+	}
+
+	/**
 	 * Add the reactions to the network lists.
 	 */
 	virtual void optimizeReactions() override {
@@ -422,12 +452,9 @@ public:
 	/**
 	 * This operation returns the current concentration.
 	 *
-	 * @param distA The first distance for super clusters
-	 * @param distB The second distance for super clusters
 	 * @return The concentration of this reactant
 	 */
-	virtual double getConcentration(double distA = 0.0,
-			double distB = 0.0) const override {
+	double getConcentration(void) const override {
 		return concentration;
 	}
 
@@ -445,10 +472,11 @@ public:
 	 * This operation returns the total flux of this reactant in the
 	 * current network.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return The total change in flux for this reactant due to all
 	 * reactions
 	 */
-	virtual double getTotalFlux() override {
+	virtual double getTotalFlux(int i) override {
 		return 0.0;
 	}
 
@@ -492,6 +520,14 @@ public:
 	}
 
 	/**
+	 * Add grid points to the vector of diffusion coefficients or remove
+	 * them if the value is negative.
+	 *
+	 * @param i The number of grid point to add or remove
+	 */
+	virtual void addGridPoints(int i) override;
+
+	/**
 	 * This operation returns a list that represents the connectivity
 	 * between this reactant and other reactants in the network.
 	 * "Connectivity" indicates whether two reactants interact, via any
@@ -512,11 +548,12 @@ public:
 	 * of partial derivatives from all of the reactants in the network can be
 	 * used to form, for example, a Jacobian.
 	 *
+	 * @param i The location on the grid in the depth direction
 	 * @return the partial derivatives for this reactant where index zero
 	 * corresponds to the first reactant in the list returned by the
 	 * ReactionNetwork::getAll() operation.
 	 */
-	virtual std::vector<double> getPartialDerivatives() const override {
+	virtual std::vector<double> getPartialDerivatives(int i) const override {
 		return std::vector<double>(network.getDOF(), 0.0);
 	}
 
@@ -533,9 +570,10 @@ public:
 	 * for this reactant where index zero corresponds to the first reactant in
 	 * the list returned by the ReactionNetwork::getAll() operation. The size of
 	 * the vector should be equal to ReactionNetwork::size().
+	 * @param i The location on the grid in the depth direction
 	 */
-	virtual void getPartialDerivatives(std::vector<double> & partials) const
-			override {
+	virtual void getPartialDerivatives(std::vector<double> & partials,
+			int i) const override {
 		// nothing to do.
 	}
 
@@ -590,57 +628,23 @@ public:
 	}
 
 	/**
-	 * This operation sets the id of the xenon momentum of the reactant.
+	 * This operation sets the id of the first moment of the reactant.
 	 *
-	 * @param nId The new id for this momentum
+	 * @param nId The new id for this moment
+	 * @param axis The direction
 	 */
-	void setXeMomentumId(int nId) override {
-		xeMomId = nId;
+	void setMomentId(int nId, int axis = 0) override {
+		momId[axis] = nId;
 	}
 
 	/**
-	 * This operation returns the id for this reactant xenon momentum.
+	 * This operation returns the id for this reactant first moment.
 	 *
+	 * @param axis The direction
 	 * @return The id
 	 */
-	int getXeMomentumId() const override {
-		return xeMomId;
-	}
-
-	/**
-	 * This operation sets the id of the helium momentum of the reactant.
-	 *
-	 * @param nId The new id for this momentum
-	 */
-	void setHeMomentumId(int nId) override {
-		heMomId = nId;
-	}
-
-	/**
-	 * This operation returns the id for this reactant helium momentum.
-	 *
-	 * @return The id
-	 */
-	int getHeMomentumId() const override {
-		return heMomId;
-	}
-
-	/**
-	 * This operation sets the id of the vacancy momentum of the reactant.
-	 *
-	 * @param nId The new id for this momentum
-	 */
-	void setVMomentumId(int nId) override {
-		vMomId = nId;
-	}
-
-	/**
-	 * This operation returns the id for this reactant vacancy momentum.
-	 *
-	 * @return The id
-	 */
-	int getVMomentumId() const override {
-		return vMomId;
+	int getMomentId(int axis = 0) const override {
+		return momId[axis];
 	}
 
 	/**
@@ -656,16 +660,18 @@ public:
 	 * calculations and for calling setTemperature() in their copy constructors.
 	 *
 	 * @param temp The new cluster temperature
+	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp) override;
+	void setTemperature(double temp, int i) override;
 
 	/**
 	 * This operation returns the temperature at which the reactant currently exists.
 	 *
+	 * @param i The location on the grid
 	 * @return The temperature.
 	 */
-	double getTemperature() const override {
-		return temperature;
+	double getTemperature(int i) const override {
+		return temperature[i];
 	}
 
 	/**
@@ -718,10 +724,11 @@ public:
 	 * This operation returns the diffusion coefficient for this reactant and is
 	 * calculated from the diffusion factor.
 	 *
+	 * @param i The position on the grid
 	 * @return The diffusion coefficient
 	 */
-	double getDiffusionCoefficient() const override {
-		return diffusionCoefficient;
+	double getDiffusionCoefficient(int i) const override {
+		return diffusionCoefficient[i];
 	}
 
 	/**
@@ -757,10 +764,55 @@ public:
 	 * This is used to computed the desorption rate in the
 	 * modified trap-mutation handler.
 	 *
+	 * @param i The position on the grid
 	 * @return The rate
 	 */
-	virtual double getLeftSideRate() const override {
+	virtual double getLeftSideRate(int i) const override {
 		return 0.0;
+	}
+
+	/**
+	 * This operation returns the vector of production reactions in which
+	 * this cluster is involved, containing the id of the reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getProdVector() const override {
+		return std::vector<std::vector<double> >();
+	}
+
+	/**
+	 * This operation returns the vector of combination reactions in which
+	 * this cluster is involved, containing the id of the other reactants, the rate, and
+	 * the coefs[0]
+	 *
+	 * @return The vector of combinations
+	 */
+	virtual std::vector<std::vector<double> > getCombVector() const override {
+		return std::vector<std::vector<double> >();
+	}
+
+	/**
+	 * This operation returns the vector of dissociation reactions in which
+	 * this cluster is involved, containing the id of the emitting reactants, the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of dissociations
+	 */
+	virtual std::vector<std::vector<double> > getDissoVector() const override {
+		return std::vector<std::vector<double> >();
+	}
+
+	/**
+	 * This operation returns the vector of emission reactions in which
+	 * this cluster is involved, containing the rate, and
+	 * the coefs[0][0]
+	 *
+	 * @return The vector of productions
+	 */
+	virtual std::vector<std::vector<double> > getEmitVector() const override {
+		return std::vector<std::vector<double> >();
 	}
 
 	/**

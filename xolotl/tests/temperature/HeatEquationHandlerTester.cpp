@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <HeatEquationHandler.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
@@ -51,12 +51,13 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 	}
 
 	// Create the heat handler
-	HeatEquationHandler heatHandler = HeatEquationHandler(1200.0, 1000.0);
+	HeatEquationHandler heatHandler = HeatEquationHandler(5.0e-12, 1000.0);
 	heatHandler.setHeatCoefficient(xolotlCore::tungstenHeatCoefficient);
+	heatHandler.setHeatConductivity(xolotlCore::tungstenHeatConductivity);
 
 	// Check the initial temperatures
 	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature( { 0.0, 0.0, 0.0 }, 0.0),
-			1200.0, 0.01);
+			1000.0, 0.01);
 	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature( { 1.0, 0.0, 0.0 }, 0.0),
 			1000.0, 0.01);
 
@@ -102,7 +103,7 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 	concVector[2] = conc + 2 * dof; // right
 
 	// Compute the heat equation at this grid point
-	heatHandler.computeTemperature(concVector, updatedConcOffset, hx, hx);
+	heatHandler.computeTemperature(concVector, updatedConcOffset, hx, hx, hx);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.367e+16, 0.01);
@@ -122,7 +123,7 @@ BOOST_AUTO_TEST_CASE(checkHeat) {
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(valPointer, indicesPointer, hx,
-			hx);
+			hx, hx);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);

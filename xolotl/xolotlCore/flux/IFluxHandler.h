@@ -77,6 +77,13 @@ public:
 	 */
 	virtual double getFluxAmplitude() const = 0;
 
+	/**
+	 * This operation gets the flux rate used for re-solution.
+	 *
+	 * @return The flux rate.
+	 */
+	virtual double getFluxRate() const = 0;
+
 };
 //end class IFluxHandler
 

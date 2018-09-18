@@ -145,6 +145,12 @@ public:
 	 */
 	virtual double getFluxAmplitude() const;
 
+	/**
+	 * This operation gets the flux rate used for re-solution.
+	 * \see IFluxHandler.h
+	 */
+	virtual double getFluxRate() const;
+
 };
 //end class FluxHandler
 

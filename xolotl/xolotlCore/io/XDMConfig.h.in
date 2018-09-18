@@ -1,0 +1,14 @@
+#ifndef XCORE_XDM_CONFIG_H
+#define XCORE_XDM_CONFIG_H
+// Configuration file for the xolotlCore/io library.
+
+// Do we have std::filesystem available?
+#cmakedefine HAVE_STD_FILESYSTEM
+
+// Do we have std::experimental::filesystem available?
+#cmakedefine HAVE_STD_EXPERIMENTAL_FILESYSTEM
+
+// Do we have boost::filesystem available?
+#cmakedefine HAVE_BOOST_FILESYSTEM
+
+#endif // XCORE_XDM_CONFIG_H

@@ -2,10 +2,10 @@
 #define SOLVERHANDLER_H
 
 // Includes
-#include "ISolverHandler.h"
-#include <HDF5Utils.h>
+#include <ISolverHandler.h>
+#include <RandomNumberGenerator.h>
+#include <XFile.h>
 #include <MPIUtils.h>
-#include "RandomNumberGenerator.h"
 
 namespace xolotlSolver {
 
@@ -66,6 +66,9 @@ protected:
 
 	//! The original modified trap-mutation handler created.
 	xolotlCore::ITrapMutationHandler *mutationHandler;
+
+	//! The original re-solution handler created.
+	xolotlCore::IReSolutionHandler *resolutionHandler;
 
 	//! The number of dimensions for the problem.
 	int dimension;
@@ -164,9 +167,45 @@ protected:
 				else if (l < surfacePos + 239) {
 					previousPoint += 500.0;
 				}
-				// Then 1.0um step size (20000.5nm < x)
-				else {
+				// Then 1.0um step size (20000.5nm < x < 30000.5nm )
+				else if (l < surfacePos + 249) {
 					previousPoint += 1000.0;
+				}
+				// Then 2.0um step size (30000.5nm < x < 50000.5)
+				else if (l < surfacePos + 259) {
+					previousPoint += 2000.0;
+				}
+				// Then 5.0um step size (50000.5nm < x < 100000.5)
+				else if (l < surfacePos + 269) {
+					previousPoint += 5000.0;
+				}
+				// Then 10.0um step size (100000.5nm < x < 200000.5nm )
+				else if (l < surfacePos + 279) {
+					previousPoint += 10000.0;
+				}
+				// Then 20.0um step size (200000.5nm < x < 500000.5)
+				else if (l < surfacePos + 294) {
+					previousPoint += 20000.0;
+				}
+				// Then 50.0um step size (500000.5nm < x < 1000000.5)
+				else if (l < surfacePos + 304) {
+					previousPoint += 50000.0;
+				}
+				// Then 100.0um step size (1mm < x < 2mm )
+				else if (l < surfacePos + 314) {
+					previousPoint += 100000.0;
+				}
+				// Then 200.0um step size (2mm < x < 5mm)
+				else if (l < surfacePos + 329) {
+					previousPoint += 200000.0;
+				}
+				// Then 500.0um step size (5mm < x < 10mm)
+				else if (l < surfacePos + 339) {
+					previousPoint += 500000.0;
+				}
+				// Then 1.0mm step size (10mm < x)
+				else {
+					previousPoint += 1000000.0;
 				}
 			}
 		}
@@ -219,31 +258,37 @@ public:
 			// use something based on current time and our proc id
 			// so that it is different from run to run, and should
 			// be different across all processes within a given run.
-			rngSeed = time(NULL) + myProcId;
+			rngSeed = time(NULL);
 		}
 		if (options.printRNGSeed()) {
 			std::cout << "Proc " << myProcId << " using RNG seed value "
 					<< rngSeed << std::endl;
 		}
 		rng = std::unique_ptr<RandomNumberGenerator<int, unsigned int>>(
-				new RandomNumberGenerator<int, unsigned int>(rngSeed));
+				new RandomNumberGenerator<int, unsigned int>(
+						rngSeed + myProcId));
 
 		// Set the network loader
 		networkName = options.getNetworkFilename();
 
 		// Set the grid options
+		// Take the parameter file option by default
+		nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
+		hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
+				options.getZStepSize();
+		// Update them if we use an HDF5 file with header group
 		if (options.useHDF5()) {
-			// Get starting conditions from HDF5 file
 			int nx = 0, ny = 0, nz = 0;
 			double hx = 0.0, hy = 0.0, hz = 0.0;
-			xolotlCore::HDF5Utils::readHeader(networkName, nx, hx, ny, hy, nz,
-					hz);
-			nX = nx, nY = ny, nZ = nz;
-			hX = hx, hY = hy, hZ = hz;
-		} else {
-			nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
-			hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
-					options.getZStepSize();
+
+			xolotlCore::XFile xfile(networkName);
+			auto headerGroup = xfile.getGroup<xolotlCore::XFile::HeaderGroup>();
+			if (headerGroup) {
+				headerGroup->read(nx, hx, ny, hy, nz, hz);
+
+				nX = nx, nY = ny, nZ = nz;
+				hX = hx, hY = hy, hZ = hz;
+			}
 		}
 
 		// Set the flux handler
@@ -267,6 +312,10 @@ public:
 		// Set the modified trap-mutation handler
 		mutationHandler =
 				(xolotlCore::ITrapMutationHandler *) material->getTrapMutationHandler().get();
+
+		// Set the re-solution handler
+		resolutionHandler =
+				(xolotlCore::IReSolutionHandler *) material->getReSolutionHandler().get();
 
 		// Set the initial vacancy concentration
 		initialVConc = options.getInitialVConcentration();

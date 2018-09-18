@@ -1,7 +1,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <Reactant.h>
 #include "SimpleReactionNetwork.h"
 #include <memory>
@@ -25,11 +25,13 @@ BOOST_AUTO_TEST_CASE(checkTemperature) {
 	auto network = getSimplePSIReactionNetwork(0);
 	// Create a reactant
 	Reactant reactant(*(network.get()), registry);
+	// Add rates
+	reactant.addGridPoints(1);
 	// Set its temperature
-	reactant.setTemperature(1000.0);
+	reactant.setTemperature(1000.0, 0);
 
 	// Check its temperature
-	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(), 0.0001);
+	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(0), 0.0001);
 
 	return;
 }
@@ -37,6 +39,8 @@ BOOST_AUTO_TEST_CASE(checkTemperature) {
 BOOST_AUTO_TEST_CASE(checkComposition) {
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(0);
+	// Add rates
+	network->addGridPoints(1);
 	// Create a reactant
 	Reactant reactant(*(network.get()), registry);
 
@@ -50,17 +54,19 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Create a network
 	auto network = make_shared<PSIClusterReactionNetwork>(
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Add rates
+	network->addGridPoints(1);
 	// Create a reactant
 	Reactant reactant(*(network.get()), registry);
 
 	// Check its default partial derivatives
-	BOOST_REQUIRE_EQUAL(1U, reactant.getPartialDerivatives().size());
+	BOOST_REQUIRE_EQUAL(1U, reactant.getPartialDerivatives(0).size());
 
 	// Create a reference and temp partial derivative vector
 	std::vector<double> refPartials = std::vector<double>(3, 0.0);
 	std::vector<double> tempPartials = std::vector<double>(3, 0.0);
 
-	reactant.getPartialDerivatives(tempPartials);
+	reactant.getPartialDerivatives(tempPartials, 0);
 
 	// Compare to the refence one
 	BOOST_REQUIRE_EQUAL(tempPartials[0], refPartials[0]);
@@ -75,9 +81,11 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	auto network = getSimplePSIReactionNetwork(0);
 	// Create a reference reactant
 	Reactant reactant(*(network.get()), registry);
+	// Add rates
+	reactant.addGridPoints(1);
 	reactant.setId(5);
 	reactant.setConcentration(10.0);
-	reactant.setTemperature(5.0);
+	reactant.setTemperature(5.0, 0);
 
 	// Copy the Reactant
 	Reactant reactantCopy(reactant);
@@ -85,7 +93,7 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 	// Check the ids and names
 	BOOST_REQUIRE_EQUAL(reactant.getId(), reactantCopy.getId());
 	BOOST_REQUIRE_EQUAL(reactant.getName(), reactantCopy.getName());
-	BOOST_REQUIRE_CLOSE(5.0, reactant.getTemperature(), 0.0001);
+	BOOST_REQUIRE_CLOSE(5.0, reactant.getTemperature(0), 0.0001);
 
 	// Increase the concentration
 	reactantCopy.setConcentration(15.0);
@@ -101,6 +109,8 @@ BOOST_AUTO_TEST_CASE(checkCopying) {
 BOOST_AUTO_TEST_CASE(checkConcentration) {
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(0);
+	// Add rates
+	network->addGridPoints(1);
 	// Create a reactant
 	Reactant reactant(*(network.get()), registry);
 	reactant.setConcentration(1.0);
@@ -109,7 +119,7 @@ BOOST_AUTO_TEST_CASE(checkConcentration) {
 	BOOST_REQUIRE_EQUAL(1.0, reactant.getConcentration());
 
 	// Make sure the base class getTotalFlux returns 0 for now
-	BOOST_REQUIRE_EQUAL(0.0, reactant.getTotalFlux());
+	BOOST_REQUIRE_EQUAL(0.0, reactant.getTotalFlux(0));
 
 	return;
 }

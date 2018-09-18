@@ -4,6 +4,7 @@
 #include <memory>
 #include <MaterialFactory.h>
 #include <FuelFitFluxHandler.h>
+#include <ReSolutionHandler.h>
 #include <DummyAdvectionHandler.h>
 #include <DummyTrapMutationHandler.h>
 #include <Diffusion1DHandler.h>
@@ -37,6 +38,7 @@ public:
 				std::make_shared<xolotlCore::DummyAdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				xolotlCore::DummyTrapMutationHandler>();
+		theReSolutionHandler = std::make_shared<xolotlCore::ReSolutionHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {

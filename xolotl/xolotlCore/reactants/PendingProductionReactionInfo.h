@@ -14,14 +14,14 @@ class IReactant;
 struct PendingProductionReactionInfo {
 
 	IReactant& product;
-	int numHe;
-	int numV;
-	int i;
-	int j;
+	int a[4] = { };
+	int b[4] = { };
 
-	PendingProductionReactionInfo(IReactant& _product, int _numHe, int _numV,
-			int _i, int _j) :
-			product(_product), numHe(_numHe), numV(_numV), i(_i), j(_j) {
+	PendingProductionReactionInfo(IReactant& _product, int _numA[4] = { },
+			int _numB[4] = { }) :
+			product(_product) {
+		a[0] = _numA[0], a[1] = _numA[1], a[2] = _numA[2], a[3] = _numA[3];
+		b[0] = _numB[0], b[1] = _numB[1], b[2] = _numB[2], b[3] = _numB[3];
 	}
 
 	/**
