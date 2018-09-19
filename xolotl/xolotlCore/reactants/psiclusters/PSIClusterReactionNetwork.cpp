@@ -1492,12 +1492,9 @@ std::vector<std::vector<int> > PSIClusterReactionNetwork::getCompositionList() c
 
 void PSIClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = getDOF();
-
 	// Get the connectivity for each reactant
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&fillMap,&dof,this](const IReactant& reactant) {
+			[&fillMap,this](const IReactant& reactant) {
 
 				// Get the reactant's connectivity
 				auto const& connectivity = reactant.getConnectivity();

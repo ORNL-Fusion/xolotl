@@ -40,8 +40,6 @@ public:
 	virtual void initializeOFill(const IReactionNetwork& network,
 			IReactionNetwork::SparseFillMap& ofillMap) override {
 
-		int dof = network.getDOF();
-
 		// Clear the index vector
 		diffusingClusters.clear();
 

@@ -5,9 +5,6 @@ namespace xolotlCore {
 
 void YGBAdvectionHandler::initialize(const IReactionNetwork& network,
 		IReactionNetwork::SparseFillMap& ofillMap) {
-
-	int dof = network.getDOF();
-
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
 	sinkStrengthVector.clear();

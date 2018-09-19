@@ -672,39 +672,39 @@ public:
 	 */
 	virtual void setBurstingDepth(double depth) = 0;
 
-    /**
-     * Set the seed that should be used for initializing the random
-     * number generator.
-     *
-     * @param s The value to use to seed the RNG.
-     */
-    virtual void setRNGSeed(unsigned int s) = 0;
+	/**
+	 * Set the seed that should be used for initializing the random
+	 * number generator.
+	 *
+	 * @param s The value to use to seed the RNG.
+	 */
+	virtual void setRNGSeed(unsigned int s) = 0;
 
-    /**
-     * Obtain the seed that should be used for initializing the random
-     * number generator.
-     *
-     * @return A (bool, uint) pair.  The bool tells whether to use the int
-     * to seed the random number generator.
-     */
-    virtual std::tuple<bool, unsigned int> getRNGSeed(void) const = 0;
+	/**
+	 * Obtain the seed that should be used for initializing the random
+	 * number generator.
+	 *
+	 * @return A (bool, uint) pair.  The bool tells whether to use the int
+	 * to seed the random number generator.
+	 */
+	virtual std::tuple<bool, unsigned int> getRNGSeed(void) const = 0;
 
-    /**
-     * Specify whether each process should print the value it uses
-     * to seed the random number generator.
-     *
-     * @param b A bool indicating whether to print the RNG seed value.
-     */
-    virtual void setPrintRNGSeed(bool b) = 0;
+	/**
+	 * Specify whether each process should print the value it uses
+	 * to seed the random number generator.
+	 *
+	 * @param b A bool indicating whether to print the RNG seed value.
+	 */
+	virtual void setPrintRNGSeed(bool b) = 0;
 
-    /**
-     * Determine if we should print the value used to seed the random
-     * number generator (regardless if it was given on the command line
-     * or generated dynamically).
-     *
-     * @return True iff we should print the RNG seed value from each process.
-     */
-    virtual bool printRNGSeed(void) const = 0;
+	/**
+	 * Determine if we should print the value used to seed the random
+	 * number generator (regardless if it was given on the command line
+	 * or generated dynamically).
+	 *
+	 * @return True iff we should print the RNG seed value from each process.
+	 */
+	virtual bool printRNGSeed(void) const = 0;
 
 };
 //end class IOptions

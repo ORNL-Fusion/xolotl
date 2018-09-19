@@ -9,9 +9,9 @@ ReactionNetwork::ReactionNetwork(
 		const std::set<ReactantType>& _knownReactantTypes,
 		ReactantType _superClusterType,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> _registry) :
-		knownReactantTypes(_knownReactantTypes), superClusterType(
-				_superClusterType), handlerRegistry(_registry), temperature(
-				0.0), dissociationsEnabled(true) {
+		knownReactantTypes(_knownReactantTypes), handlerRegistry(_registry), temperature(
+				0.0), biggestRate(0.0), dissociationsEnabled(true), superClusterType(
+				_superClusterType) {
 
 	// Ensure our per-type cluster map can store Reactants of the types
 	// we support.

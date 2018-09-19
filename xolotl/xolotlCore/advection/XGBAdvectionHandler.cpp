@@ -5,10 +5,6 @@ namespace xolotlCore {
 
 void XGBAdvectionHandler::initialize(const IReactionNetwork& network,
 		IReactionNetwork::SparseFillMap& ofillMap) {
-
-	// Get all the reactants and their number
-	int dof = network.getDOF();
-
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
 	sinkStrengthVector.clear();

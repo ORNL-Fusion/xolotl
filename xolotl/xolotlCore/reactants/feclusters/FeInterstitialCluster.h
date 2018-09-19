@@ -80,7 +80,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux(int i) const {
+	double getEmissionFlux(int i) override {
 		// Initial declarations
 		double flux = FeCluster::getEmissionFlux(i);
 
@@ -104,7 +104,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void getEmissionPartialDerivatives(std::vector<double> & partials,
-			int i) const {
+			int i) const override {
 		// Initial declarations
 		FeCluster::getEmissionPartialDerivatives(partials, i);
 

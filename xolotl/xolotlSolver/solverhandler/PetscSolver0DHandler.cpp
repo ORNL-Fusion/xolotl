@@ -178,9 +178,6 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// current grid point. They are accessed just like regular arrays.
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
-
 	// Set the grid position
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 

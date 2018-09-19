@@ -15,14 +15,6 @@ namespace xolotlCore {
 class FeHeVCluster: public FeCluster {
 
 private:
-	// TODO do we need to keep these species counts here,
-	// since they are in the composition?
-
-	//! The number of helium atoms in this cluster.
-	int numHe;
-
-	//! The number of atomic vacancies in this cluster.
-	int numV;
 
 	static std::string buildName(IReactant::SizeType nHe,
 			IReactant::SizeType nV) {
@@ -52,8 +44,7 @@ public:
 	 */
 	FeHeVCluster(int numHe, int numV, IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-			FeCluster(_network, registry, buildName(numHe, numV)), numHe(
-					numHe), numV(numV) {
+			FeCluster(_network, registry, buildName(numHe, numV)) {
 		// Set the cluster size as the sum of
 		// the number of Helium and Vacancies
 		size = numHe + numV;

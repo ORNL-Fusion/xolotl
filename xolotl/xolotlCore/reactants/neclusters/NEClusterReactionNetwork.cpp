@@ -54,8 +54,6 @@ void NEClusterReactionNetwork::createReactionConnectivity() {
 	// Xe_(a-i) + Xe_i --> Xe_a
 	firstSize = 1;
 	auto singleXeCluster = get(Species::Xe, firstSize);
-	// Get all the Xe clusters
-	auto const& xeClusters = getAll(ReactantType::Xe);
 	// Consider each Xe cluster.
 	for (auto const& currMapItem : getAll(ReactantType::Xe)) {
 
@@ -134,7 +132,7 @@ void NEClusterReactionNetwork::reinitializeNetwork() {
 	// Get all the super clusters and loop on them
 	// Have to use allReactants again to be sure the ordering is the same across plateforms
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&id, this](IReactant& currReactant) {
+			[&id](IReactant& currReactant) {
 
 				if (currReactant.getType() == ReactantType::NESuper) {
 					auto& currCluster = static_cast<NESuperCluster&>(currReactant);
@@ -230,12 +228,9 @@ IReactant * NEClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nXe,
 
 void NEClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = getDOF();
-
 	// Get the connectivity for each reactant
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&fillMap, &dof, this](const IReactant& reactant) {
+			[&fillMap, this](const IReactant& reactant) {
 				// Get the reactant and its connectivity
 				auto const& connectivity = reactant.getConnectivity();
 				auto connectivityLength = connectivity.size();

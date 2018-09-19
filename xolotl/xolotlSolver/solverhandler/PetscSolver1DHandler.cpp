@@ -271,9 +271,6 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// current grid point. They are accessed just like regular arrays.
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
-
 	// Compute the total concentration of atoms contained in bubbles
 	double atomConc = 0.0;
 
@@ -419,9 +416,6 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	ierr = TSGetDM(ts, &da);
 	checkPetscError(ierr, "PetscSolver1DHandler::computeOffDiagonalJacobian: "
 			"TSGetDM failed.");
-
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
 
 	// Pointers to the PETSc arrays that start at the beginning (xs) of the
 	// local array!

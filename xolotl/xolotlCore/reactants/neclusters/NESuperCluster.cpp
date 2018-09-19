@@ -217,10 +217,6 @@ double NESuperCluster::getDistance(int xe) const {
 
 void NESuperCluster::computeDispersion() {
 	// Local declarations
-	NECluster *firstReactant, *secondReactant, *combiningReactant,
-			*dissociatingCluster, *otherEmittedCluster, *firstCluster,
-			*secondCluster;
-	double rate = 0.0;
 	int index = 0;
 	// Initialize the dispersion sum
 	double nXeSquare = 0.0;

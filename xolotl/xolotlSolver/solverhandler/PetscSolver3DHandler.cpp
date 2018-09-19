@@ -312,9 +312,6 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	std::vector<double> incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
-
 	// Loop over grid points
 	for (PetscInt zk = 0; zk < nZ; zk++) {
 		for (PetscInt yj = 0; yj < nY; yj++) {
@@ -486,9 +483,6 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	// Setup some step size variables
 	double sy = 1.0 / (hY * hY);
 	double sz = 1.0 / (hZ * hZ);
-
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
 
 	// Pointers to the PETSc arrays that start at the beginning (xs) of the
 	// local array!

@@ -210,7 +210,7 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::load(
 
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
-	int numHe = 0, numV = 0, numI = 0, numW = 0, numD = 0, numT = 0;
+	int numHe = 0, numV = 0, numI = 0, numD = 0, numT = 0;
 	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
 	std::vector<std::reference_wrapper<Reactant> > reactants;

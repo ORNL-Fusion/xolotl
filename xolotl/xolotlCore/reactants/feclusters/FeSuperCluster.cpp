@@ -463,7 +463,7 @@ void FeSuperCluster::participateIn(ProductionReaction& reaction,
 
 	// Update the coefficients
 	std::for_each(pendingPRInfos.begin(), pendingPRInfos.end(),
-			[this,&combCluster,&otherCluster](const PendingProductionReactionInfo& currPRInfo) {
+			[this,&combCluster](const PendingProductionReactionInfo& currPRInfo) {
 
 				// Use names corresponding to the single-item version.
 				int a = currPRInfo.b[0];

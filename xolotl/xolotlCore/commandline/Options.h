@@ -244,21 +244,21 @@ protected:
 	 */
 	double burstingDepth;
 
-    /**
-     * An explicitly-given value to use to seed the random number generator.
-     * Only used if rngUseSeed is true.
-     */
-    unsigned int rngSeed;
+	/**
+	 * An explicitly-given value to use to seed the random number generator.
+	 * Only used if rngUseSeed is true.
+	 */
+	unsigned int rngSeed;
 
-    /**
-     * Whether to use the rngSeed value to seed the random number generator.
-     */
-    bool rngUseSeed;
+	/**
+	 * Whether to use the rngSeed value to seed the random number generator.
+	 */
+	bool rngUseSeed;
 
-    /**
-     * Whether to print the value used to seed the random number generator.
-     */
-    bool rngPrintSeed;
+	/**
+	 * Whether to print the value used to seed the random number generator.
+	 */
+	bool rngPrintSeed;
 
 public:
 
@@ -547,7 +547,8 @@ public:
 	 * Which type of performance handlers should we use?
 	 * \see IOptions.h
 	 */
-	xolotlPerf::IHandlerRegistry::RegistryType getPerfHandlerType(void) const override {
+	xolotlPerf::IHandlerRegistry::RegistryType getPerfHandlerType(void) const
+			override {
 		return perfRegistryType;
 	}
 
@@ -555,7 +556,8 @@ public:
 	 * Set the type of performance handlers to use.
 	 * \see IOptions.h
 	 */
-	void setPerfHandlerType(xolotlPerf::IHandlerRegistry::RegistryType rtype) override {
+	void setPerfHandlerType(xolotlPerf::IHandlerRegistry::RegistryType rtype)
+			override {
 		perfRegistryType = rtype;
 	}
 
@@ -1010,44 +1012,44 @@ public:
 		burstingDepth = depth;
 	}
 
-    /**
-     * Set the seed that should be used for initializing the random
-     * number generator.
-     * \see IOptions.h
-     */
-    void setRNGSeed(unsigned int s) override {
-        rngSeed = s;
-        rngUseSeed = true;
-    }
+	/**
+	 * Set the seed that should be used for initializing the random
+	 * number generator.
+	 * \see IOptions.h
+	 */
+	void setRNGSeed(unsigned int s) override {
+		rngSeed = s;
+		rngUseSeed = true;
+	}
 
-    /**
-     * Obtain the seed that should be used for initializing the random
-     * number generator.
-     * \see IOptions.h
-     */
-    std::tuple<bool, unsigned int> getRNGSeed(void) const override {
-        return std::make_tuple(rngUseSeed, rngSeed);
-    }
+	/**
+	 * Obtain the seed that should be used for initializing the random
+	 * number generator.
+	 * \see IOptions.h
+	 */
+	std::tuple<bool, unsigned int> getRNGSeed(void) const override {
+		return std::make_tuple(rngUseSeed, rngSeed);
+	}
 
-    /**
-     * Specify whether each process should print the value it uses
-     * to seed the random number generator.
-     *
-     * @param b A bool indicating whether to print the RNG seed value.
-     */
-    void setPrintRNGSeed(bool b) override {
-        rngPrintSeed = b;
-    }
+	/**
+	 * Specify whether each process should print the value it uses
+	 * to seed the random number generator.
+	 *
+	 * @param b A bool indicating whether to print the RNG seed value.
+	 */
+	void setPrintRNGSeed(bool b) override {
+		rngPrintSeed = b;
+	}
 
-    /**
-     * Determine if we should print the value used to seed the random
-     * number generator (regardless if it was given on the command line
-     * or generated dynamically).
-     * \see IOptions.h
-     */
-    bool printRNGSeed(void) const override {
-        return rngPrintSeed;
-    }
+	/**
+	 * Determine if we should print the value used to seed the random
+	 * number generator (regardless if it was given on the command line
+	 * or generated dynamically).
+	 * \see IOptions.h
+	 */
+	bool printRNGSeed(void) const override {
+		return rngPrintSeed;
+	}
 
 };
 //end class Options

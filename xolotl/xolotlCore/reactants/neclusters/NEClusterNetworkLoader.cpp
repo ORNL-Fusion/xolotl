@@ -174,8 +174,6 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 	// Initial declarations
 	int maxXe = options.getMaxImpurity();
 	int numXe = 0;
-	double formationEnergy = 0.0, migrationEnergy = 0.0;
-	double diffusionFactor = 0.0;
 	// Once we have C++14 support, use std::make_unique.
 	std::unique_ptr<NEClusterReactionNetwork> network(
 			new NEClusterReactionNetwork(handlerRegistry));

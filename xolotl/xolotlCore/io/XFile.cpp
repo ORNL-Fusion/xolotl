@@ -264,7 +264,6 @@ XFile::NetworkGroup::NetworkGroup(const XFile& file, IReactionNetwork& network) 
 	std::for_each(allReactants.begin(), allReactants.end(),
 			[this](IReactant& currReactant) {
 				// Create and initialize the cluster group
-				int id = currReactant.getId() - 1;
 				ClusterGroup clusterGroup(*this, currReactant);
 			});
 }
@@ -282,7 +281,6 @@ Array<int, 5> XFile::NetworkGroup::readNetworkSize(int &normalSize,
 	// Read the phase space attirbute
 	Array<int, 5> list;
 	hid_t attributeId = H5Aopen_name(getId(), phaseSpaceAttrName.c_str());
-	hid_t dataspaceId = H5Aget_space(attributeId);
 	herr_t status = H5Aread(attributeId, H5T_STD_I32LE, &list);
 	status = H5Aclose(attributeId);
 
@@ -293,7 +291,7 @@ void XFile::NetworkGroup::readReactions(IReactionNetwork& network) const {
 	// Loop on the reactants
 	auto& allReactants = network.getAll();
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&allReactants, &network, this](IReactant& currReactant) {
+			[&network, this](IReactant& currReactant) {
 				// Open the corresponding group
 				int id = currReactant.getId() - 1;
 				ClusterGroup clusterGroup(*this, id);
@@ -601,7 +599,6 @@ Array1D<int, 4> XFile::ClusterGroup::readFeSuperCluster() const {
 	// Read the bounds attribute
 	Array1D<int, 4> bounds;
 	hid_t attributeId = H5Aopen_name(getId(), boundsAttrName.c_str());
-	hid_t dataspaceId = H5Aget_space(attributeId);
 	herr_t status = H5Aread(attributeId, H5T_STD_I32LE, &bounds);
 	status = H5Aclose(attributeId);
 

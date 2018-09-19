@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 					opts.getMaterial(), opts.getDimensionNumber());
 
 	// Initialize and get the temperature handler
-	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
+	xolotlFactory::initializeTempHandler(opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Create the network handler factory
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 					opts.getMaterial(), opts.getDimensionNumber());
 
 	// Initialize and get the temperature handler
-	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
+	xolotlFactory::initializeTempHandler(opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Create the network handler factory
@@ -324,7 +324,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 					opts.getMaterial(), opts.getDimensionNumber());
 
 	// Initialize and get the temperature handler
-	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
+	xolotlFactory::initializeTempHandler(opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Create the network handler factory
@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 					opts.getMaterial(), opts.getDimensionNumber());
 
 	// Initialize and get the temperature handler
-	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
+	xolotlFactory::initializeTempHandler(opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Create the network handler factory
@@ -537,7 +537,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 //					opts.getMaterial(), opts.getDimensionNumber());
 //
 //	// Initialize and get the temperature handler
-//	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
+//	xolotlFactory::initializeTempHandler(opts);
 //	BOOST_REQUIRE_EQUAL(tempInitOK, true);
 //	auto tempHandler = xolotlFactory::getTemperatureHandler();
 //

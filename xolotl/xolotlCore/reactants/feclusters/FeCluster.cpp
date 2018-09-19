@@ -63,8 +63,6 @@ void FeCluster::resultFrom(ProductionReaction& reaction,
 			[&newPair](const PendingProductionReactionInfo& currPRI) {
 
 				// Use names that correspond to single version.
-				int a = currPRI.a[0];
-				int b = currPRI.a[1];
 				int c = currPRI.b[0];
 				int d = currPRI.b[1];
 
@@ -240,7 +238,7 @@ void FeCluster::participateIn(ProductionReaction& reaction,
 
 	// Update the coefficients
 	std::for_each(prInfos.begin(), prInfos.end(),
-			[this,&otherCluster,&combCluster](const PendingProductionReactionInfo& currPRInfo) {
+			[&otherCluster,&combCluster](const PendingProductionReactionInfo& currPRInfo) {
 
 				// Use names corresponding to the single-item version.
 				int a = currPRInfo.b[0];
@@ -751,7 +749,7 @@ void FeCluster::updateFromNetwork() {
 	return;
 }
 
-double FeCluster::getDissociationFlux(int xi) const {
+double FeCluster::getDissociationFlux(int xi) {
 
 	// Sum dissociation flux over all our dissociating clusters.
 	double flux = std::accumulate(dissociatingPairs.begin(),
@@ -774,7 +772,7 @@ double FeCluster::getDissociationFlux(int xi) const {
 	return flux;
 }
 
-double FeCluster::getEmissionFlux(int xi) const {
+double FeCluster::getEmissionFlux(int xi) {
 
 	// Sum rate constants from all emission pair reactions.
 	double flux = std::accumulate(emissionPairs.begin(), emissionPairs.end(),
@@ -785,7 +783,7 @@ double FeCluster::getEmissionFlux(int xi) const {
 	return flux * concentration;
 }
 
-double FeCluster::getProductionFlux(int xi) const {
+double FeCluster::getProductionFlux(int xi) {
 
 	// Sum production flux over all reacting pairs.
 	double flux = std::accumulate(reactingPairs.begin(), reactingPairs.end(),
@@ -813,7 +811,7 @@ double FeCluster::getProductionFlux(int xi) const {
 	return flux;
 }
 
-double FeCluster::getCombinationFlux(int xi) const {
+double FeCluster::getCombinationFlux(int xi) {
 
 	// Sum combination flux over all clusters that combine with us.
 	double flux = std::accumulate(combiningReactants.begin(),

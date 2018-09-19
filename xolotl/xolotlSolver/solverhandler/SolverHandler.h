@@ -219,12 +219,13 @@ protected:
 	 * @param _network The reaction network to use.
 	 */
 	SolverHandler(xolotlCore::IReactionNetwork& _network) :
-			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
+			networkName(""), network(_network), nX(0), nY(0), nZ(0), hX(0.0), hY(
 					0.0), hZ(0.0), leftOffset(0), rightOffset(0), initialVConc(
-					0.0), dimension(-1), portion(0.0), useRegularGrid(true), movingSurface(
-					false), bubbleBursting(false), sputteringYield(0.0), fluxHandler(
-					nullptr), temperatureHandler(nullptr), diffusionHandler(
-					nullptr), mutationHandler(nullptr), tauBursting(10.0) {
+					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
+					nullptr), mutationHandler(nullptr), resolutionHandler(
+					nullptr), dimension(-1), portion(0.0), useRegularGrid(true), movingSurface(
+					false), bubbleBursting(false), sputteringYield(0.0), tauBursting(
+					10.0), rngSeed(0) {
 	}
 
 public:
@@ -251,7 +252,6 @@ public:
 
 		// Initialize our random number generator.
 		bool useRNGSeedFromOptions = false;
-		bool printRNGSeed = false;
 		std::tie(useRNGSeedFromOptions, rngSeed) = options.getRNGSeed();
 		if (not useRNGSeedFromOptions) {
 			// User didn't give a seed value to use, so

@@ -193,8 +193,6 @@ std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::generate(
 	maxI = options.getMaxI(), maxHe = options.getMaxImpurity(), maxV =
 			options.getMaxV();
 	int numHe = 0, numV = 0, numI = 0;
-	double formationEnergy = 0.0, migrationEnergy = 0.0;
-	double diffusionFactor = 0.0;
 
 	// Once we have C++14, use std::make_unique.
 	std::unique_ptr<FeClusterReactionNetwork> network(
