@@ -7,6 +7,7 @@ IF (Boost_FOUND)
     message(STATUS "Boost version ${Boost_VERSION} found.")
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 ENDIF()
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io/)
 
 # Define the executable and the sources needed to build it.
 add_executable(xconv main.cpp)

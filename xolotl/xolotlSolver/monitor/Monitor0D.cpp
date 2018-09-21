@@ -94,7 +94,8 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	double concArray[dof][2];
 
 	// Open the existing HDF5 file
-	xolotlCore::XFile checkpointFile(hdf5OutputName0D, PETSC_COMM_WORLD,
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	xolotlCore::XFile checkpointFile(hdf5OutputName0D, xolotlComm,
 			xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -462,6 +463,9 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// Get the compostion list and save it
 			auto compList = network.getCompositionList();
 
+			// Get the MPI communicator
+			auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+
 			// Create and initialize a checkpoint file.
 			// We do this in its own scope so that the file
 			// is closed when the file object goes out of scope.
@@ -470,7 +474,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// MPI communicator.
 			{
 				xolotlCore::XFile checkpointFile(hdf5OutputName0D, grid,
-						compList, PETSC_COMM_WORLD);
+						compList, xolotlComm);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -479,7 +483,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
 					hdf5OutputName0D, network);
 		}
 

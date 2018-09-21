@@ -138,13 +138,16 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 	// Update the previous time
 	negPrevious1D++;
 
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+
 	// Get the number of processes
 	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+	MPI_Comm_size(xolotlComm, &worldSize);
 
 	// Gets the process ID (important when it is running in parallel)
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -214,13 +217,16 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+
 	// Get the number of processes
 	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+	MPI_Comm_size(xolotlComm, &worldSize);
 
 	// Gets the process ID
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
@@ -263,7 +269,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	tdFileStr << "TRIDYN_" << timestep << ".h5";
 	xolotlCore::HDF5File tdFile(tdFileStr.str(),
 			xolotlCore::HDF5File::AccessMode::CreateOrTruncateIfExists,
-			PETSC_COMM_WORLD, true);
+			xolotlComm, true);
 
 	// Define a dataset for concentrations.
 	// Everyone must create the dataset with the same shape.
@@ -314,7 +320,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Write the concs dataset in parallel.
 	// (We write only our part.)
-	concsDset.parWrite2D<numValsPerGridpoint>(PETSC_COMM_WORLD,
+	concsDset.parWrite2D<numValsPerGridpoint>(xolotlComm,
 			myFirstIdxToWrite - firstIdxToWrite, myConcs);
 
 	// Restore the solutionArray
@@ -392,7 +398,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	int surfacePos = solverHandler.getSurfacePosition();
 
 	// Open the existing HDF5 file
-	xolotlCore::XFile checkpointFile(hdf5OutputName1D, PETSC_COMM_WORLD,
+	xolotlCore::XFile checkpointFile(hdf5OutputName1D, xolotlComm,
 			xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -541,7 +547,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	std::array<double, 3> totalConcData;
 
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
-			MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+			MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
 	// Extract total He, D, T concentrations.  Values are valid only on rank 0.
 	double totalHeConcentration = totalConcData[0];
@@ -643,7 +649,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		std::array<double, 6> countFluxData { nHelium1D, previousHeFlux1D,
 				nDeuterium1D, previousDFlux1D, nTritium1D, previousTFlux1D };
 		MPI_Bcast(countFluxData.data(), countFluxData.size(), MPI_DOUBLE,
-				bottomId, PETSC_COMM_WORLD);
+				bottomId, xolotlComm);
 
 		// Extract inpurity data from broadcast buffer.
 		nHelium1D = countFluxData[0];
@@ -1211,7 +1217,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 			// Loop on the super clusters
 			auto& allReactants = network.getAll();
 			std::for_each(allReactants.begin(), allReactants.end(),
-					[&time,&myPoints](IReactant& currReactant) {
+					[&time,&myPoints,&xolotlComm](IReactant& currReactant) {
 
 						if (currReactant.getType() == ReactantType::NESuper) {
 							auto& cluster = static_cast<NESuperCluster&>(currReactant);
@@ -1223,7 +1229,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 									k < nXe + (double) width / 2.0; k++) {
 								double conc = 0.0;
 								MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11,
-										MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+										xolotlComm, MPI_STATUS_IGNORE);
 								// Create a Point with conc as the value
 								// and add it to myPoints
 								xolotlViz::Point aPoint;
@@ -1279,7 +1285,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 			// Loop on the super clusters
 			auto& allReactants = network.getAll();
 			std::for_each(allReactants.begin(), allReactants.end(),
-					[](IReactant& currReactant) {
+					[&xolotlComm](IReactant& currReactant) {
 
 						if (currReactant.getType() == ReactantType::NESuper) {
 							auto& cluster = static_cast<NESuperCluster&>(currReactant);
@@ -1292,7 +1298,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 								double dist = cluster.getDistance(k);
 								double conc = cluster.getConcentration(dist);
 								// Send the value of each concentration to the master process
-								MPI_Send(&conc, 1, MPI_DOUBLE, 0, 11, MPI_COMM_WORLD);
+								MPI_Send(&conc, 1, MPI_DOUBLE, 0, 11, xolotlComm);
 							}
 						}
 					});
@@ -2326,7 +2332,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		}
 		double surfTemp = 0.0;
 		MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
-				PETSC_COMM_WORLD);
+				xolotlComm);
 
 		// Loop on the new grid points
 		while (nGridPoints >= 0) {
@@ -2660,7 +2666,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 			// MPI communicator.
 			{
 				xolotlCore::XFile checkpointFile(hdf5OutputName1D, grid,
-						compList, PETSC_COMM_WORLD);
+						compList, xolotlComm);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -2669,7 +2675,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
 					hdf5OutputName1D, network);
 		}
 

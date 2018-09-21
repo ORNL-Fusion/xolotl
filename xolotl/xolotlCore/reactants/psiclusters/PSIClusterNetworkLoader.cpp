@@ -887,7 +887,9 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 	// Print the total size before grouping
 	int procId;
-	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0)
 		std::cout << "Total size: " << network.size() + heVList.size()
 				<< std::endl;

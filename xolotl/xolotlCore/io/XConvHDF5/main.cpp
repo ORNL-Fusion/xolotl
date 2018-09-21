@@ -1,7 +1,8 @@
 #include <iostream>
 #include <string>
 #include "boost/program_options.hpp"
-#include "xolotlCore/io/XFile.h"
+#include <XFile.h>
+#include <MPIUtils.h>
 
 
 namespace bpo = boost::program_options;
@@ -19,11 +20,14 @@ main(int argc, char* argv[]) {
 
         MPI_Init(&argc, &argv);
 
+
+    	// Get the MPI communicator
+    	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
         // Determine our place in the MPI world.
         int cwRank;
         int cwSize;
-        MPI_Comm_rank(MPI_COMM_WORLD, &cwRank);
-        MPI_Comm_size(MPI_COMM_WORLD, &cwSize);
+        MPI_Comm_rank(xolotlComm, &cwRank);
+        MPI_Comm_size(xolotlComm, &cwSize);
 
         // We have to be an MPI program,
         // but for now we only support a single process.
@@ -61,7 +65,7 @@ main(int argc, char* argv[]) {
 
             // Open the file.
             xcore::XFile xfile(fname,
-                    MPI_COMM_WORLD,
+            		xolotlComm,
                     xolotlCore::XFile::AccessMode::OpenReadWrite);
 
             // Determine the number of grid points.

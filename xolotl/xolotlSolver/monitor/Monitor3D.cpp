@@ -132,7 +132,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Open the existing HDF5 file.
-	xolotlCore::XFile checkpointFile(hdf5OutputName3D, PETSC_COMM_WORLD,
+	xolotlCore::XFile checkpointFile(hdf5OutputName3D, xolotlComm,
 			xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -193,7 +193,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 						xolotlComm);
 
 				// Broadcast the size
-				MPI_Bcast(&concSize, 1, MPI_INT, concProc, PETSC_COMM_WORLD);
+				MPI_Bcast(&concSize, 1, MPI_INT, concProc, xolotlComm);
 
 				// Skip the grid point if the size is 0
 				if (concSize == 0)
@@ -1125,7 +1125,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 				}
 				double surfTemp = 0.0;
 				MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
-						PETSC_COMM_WORLD);
+						xolotlComm);
 				// Loop on the new grid points
 				while (nGridPoints >= 0) {
 					// Position of the newly created grid point
@@ -1383,7 +1383,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			// MPI communicator.
 			{
 				xolotlCore::XFile checkpointFile(hdf5OutputName3D, grid,
-						compList, PETSC_COMM_WORLD, My, hy, Mz, hz);
+						compList, xolotlComm, My, hy, Mz, hz);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -1392,7 +1392,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
 					hdf5OutputName3D, network);
 		}
 
