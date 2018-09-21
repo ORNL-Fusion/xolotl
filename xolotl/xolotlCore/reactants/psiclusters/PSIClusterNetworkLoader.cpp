@@ -964,7 +964,7 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 		// Loop on possible hydrogen (D+T)
 		for (int n = 0; n <= upperH; n++) {
-			int o = upperH - n;
+			int o = (upperH - n) * maxT;
 			for (int m = heLow; m <= heHigh; m++) {
 				// Check if the corresponding coordinates are in the heVList set
 				auto pair = std::make_tuple(m, n, o, k);
@@ -1047,7 +1047,7 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 	// Loop on possible hydrogen (D+T)
 	for (int n = 0; n <= upperH; n++) {
-		int o = upperH - n;
+		int o = (upperH - n) * maxT;
 		// Check if the corresponding coordinates are in the heVList set
 		auto pair = std::make_tuple(m, n, o, k);
 		if (heVList.find(pair) == heVList.end())
