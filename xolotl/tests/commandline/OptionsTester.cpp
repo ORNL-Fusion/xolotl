@@ -180,6 +180,10 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	// Check the boundary conditions
 	BOOST_REQUIRE_EQUAL(opts.getLeftBoundary(), 1);
 	BOOST_REQUIRE_EQUAL(opts.getRightBoundary(), 1);
+	BOOST_REQUIRE_EQUAL(opts.getBottomBoundary(), 1);
+	BOOST_REQUIRE_EQUAL(opts.getTopBoundary(), 1);
+	BOOST_REQUIRE_EQUAL(opts.getFrontBoundary(), 1);
+	BOOST_REQUIRE_EQUAL(opts.getBackBoundary(), 1);
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();

@@ -226,6 +226,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
+	int dof = network.getDOF();
 
 	// Get the position of the surface
 	int surfacePos = solverHandler.getSurfacePosition();
@@ -267,7 +268,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	// Define a dataset for concentrations.
 	// Everyone must create the dataset with the same shape.
 	constexpr auto numConcSpecies = 5;
-	constexpr auto numValsPerGridpoint = numConcSpecies + 1;
+	constexpr auto numValsPerGridpoint = numConcSpecies + 2;
 	const auto firstIdxToWrite = (surfacePos + 1);
 	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
 	xolotlCore::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
@@ -308,6 +309,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 			myConcs[currIdx][3] = network.getTotalAtomConcentration(2);
 			myConcs[currIdx][4] = network.getTotalVConcentration();
 			myConcs[currIdx][5] = network.getTotalIConcentration();
+			myConcs[currIdx][6] = gridPointSolution[dof-1];
 		}
 	}
 

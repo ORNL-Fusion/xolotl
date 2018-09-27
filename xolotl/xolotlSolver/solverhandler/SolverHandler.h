@@ -42,11 +42,9 @@ protected:
 	//! The grid step size in the z direction.
 	double hZ;
 
-	//! The number of grid points by which the boundary condition should be shifted at the left side.
-	int leftOffset;
-
-	//! The number of grid points by which the boundary condition should be shifted at the right side.
-	int rightOffset;
+	//! The number of grid points by which the boundary condition should be shifted at this side.
+	int leftOffset, rightOffset, bottomOffset, topOffset, frontOffset,
+			backOffset;
 
 	//! The initial vacancy concentration.
 	double initialVConc;
@@ -219,7 +217,8 @@ protected:
 	 */
 	SolverHandler(xolotlCore::IReactionNetwork& _network) :
 			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
-					0.0), hZ(0.0), leftOffset(0), rightOffset(0), initialVConc(
+					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
+					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
 					0.0), dimension(-1), portion(0.0), useRegularGrid(true), movingSurface(
 					false), bubbleBursting(false), sputteringYield(0.0), fluxHandler(
 					nullptr), temperatureHandler(nullptr), diffusionHandler(
@@ -333,9 +332,13 @@ public:
 		// Look at if the user wants to use a regular grid in the x direction
 		useRegularGrid = options.useRegularXGrid();
 
-		// Set the boundary conditions (= 1: free surface; = 0: mirror)
+		// Set the boundary conditions (= 1: free surface; = 0: mirror or periodic)
 		leftOffset = options.getLeftBoundary();
 		rightOffset = options.getRightBoundary();
+		bottomOffset = options.getBottomBoundary();
+		topOffset = options.getTopBoundary();
+		frontOffset = options.getFrontBoundary();
+		backOffset = options.getBackBoundary();
 
 		// Should we be able to move the surface?
 		auto map = options.getProcesses();
