@@ -1011,75 +1011,54 @@ double PSISuperCluster::getTotalConcentration() const {
 	return conc;
 }
 
-double PSISuperCluster::getTotalAtomConcentration(int axis) const {
-	// Initial declarations
-	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
-			conc = 0.0;
 
-	if (axis == 0) {
-		// Loop on the indices
-		for (auto const& pair : heVList) {
-			// Compute the distances
-			heDistance = getDistance(std::get<0>(pair), 0);
-			dDistance = getDistance(std::get<1>(pair), 1);
-			tDistance = getDistance(std::get<2>(pair), 2);
-			vDistance = getDistance(std::get<3>(pair), 3);
+template<uint32_t Axis>
+double PSISuperCluster::getTotalAtomConcHelper() const {
 
-			// Add the concentration of each cluster in the group times its number of helium
-			conc += getConcentration(heDistance, dDistance, tDistance,
-					vDistance) * (double) std::get<0>(pair);
-		}
-	} else if (axis == 1) {
-		// Loop on the indices
-		for (auto const& pair : heVList) {
-			// Compute the distances
-			heDistance = getDistance(std::get<0>(pair), 0);
-			dDistance = getDistance(std::get<1>(pair), 1);
-			tDistance = getDistance(std::get<2>(pair), 2);
-			vDistance = getDistance(std::get<3>(pair), 3);
+    double conc = 0;
+    for (auto const& pair : heVList) {
+        // Compute the distances
+        auto heDistance = getDistance(std::get<0>(pair), 0);
+        auto dDistance = getDistance(std::get<1>(pair), 1);
+        auto tDistance = getDistance(std::get<2>(pair), 2);
+        auto vDistance = getDistance(std::get<3>(pair), 3);
 
-			// Add the concentration of each cluster in the group times its number of helium
-			conc += getConcentration(heDistance, dDistance, tDistance,
-					vDistance) * (double) std::get<1>(pair);
-		}
-	} else if (axis == 2) {
-		// Loop on the indices
-		for (auto const& pair : heVList) {
-			// Compute the distances
-			heDistance = getDistance(std::get<0>(pair), 0);
-			dDistance = getDistance(std::get<1>(pair), 1);
-			tDistance = getDistance(std::get<2>(pair), 2);
-			vDistance = getDistance(std::get<3>(pair), 3);
-
-			// Add the concentration of each cluster in the group times its number of helium
-			conc += getConcentration(heDistance, dDistance, tDistance,
-					vDistance) * (double) std::get<2>(pair);
-		}
-	}
-
-	return conc;
+        // Add the concentration of each cluster in the group times its number of helium
+        conc += getConcentration(heDistance, dDistance, tDistance,
+                vDistance) * (double) std::get<Axis>(pair);
+    }
+    return conc;
 }
+
+
+
+double PSISuperCluster::getTotalAtomConcentration(int axis) const {
+
+    assert(axis <= 2);
+
+    // TODO remove implicit mapping of species type to integers
+    // TODO do mapping in some base class (?)
+    double conc = 0;
+    switch(axis) {
+    case 0:
+        conc = getTotalAtomConcHelper<0>();
+        break;
+    case 1:
+        conc = getTotalAtomConcHelper<1>();
+        break;
+    case 2:
+        conc = getTotalAtomConcHelper<2>();
+        break;
+    }
+    return conc;
+}
+
 
 double PSISuperCluster::getTotalVacancyConcentration() const {
-	// Initial declarations
-	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
-			conc = 0.0;
 
-	// Loop on the indices
-	for (auto const& pair : heVList) {
-		// Compute the distances
-		heDistance = getDistance(std::get<0>(pair), 0);
-		dDistance = getDistance(std::get<1>(pair), 1);
-		tDistance = getDistance(std::get<2>(pair), 2);
-		vDistance = getDistance(std::get<3>(pair), 3);
-
-		// Add the concentration of each cluster in the group times its number of vacancy
-		conc += getConcentration(heDistance, dDistance, tDistance, vDistance)
-				* (double) std::get<3>(pair);
-	}
-
-	return conc;
+    return getTotalAtomConcHelper<3>();
 }
+
 
 double PSISuperCluster::getIntegratedVConcentration(int v) const {
 	// Initial declarations
