@@ -123,7 +123,8 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Initialize the vacancy concentration
-	if (singleVacancyCluster and not hasConcentrations) {
+	if (singleVacancyCluster and not hasConcentrations
+			and singleVacancyCluster) {
 		concOffset[vacancyIndex] = initialVConc;
 	}
 
@@ -138,6 +139,10 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 		for (unsigned int l = 0; l < concVector.size(); l++) {
 			concOffset[(int) concVector.at(l).at(0)] = concVector.at(l).at(1);
 		}
+		// Set the temperature in the network
+		double temp = concVector.at(concVector.size() - 1).at(1);
+		network.setTemperature(temp, 0);
+		lastTemperature[0] = temp;
 	}
 
 	/*

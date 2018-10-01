@@ -221,6 +221,13 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 			for (auto const& currConcData : myConcs[i]) {
 				concOffset[currConcData.first] = currConcData.second;
 			}
+			// Set the temperature in the network
+			double temp = myConcs[i][myConcs[i].size()-1].second;
+			network.setTemperature(temp, i);
+			// Update the modified trap-mutation rate
+			// that depends on the network reaction rates
+			mutationHandler->updateTrapMutationRate(network);
+			lastTemperature[i] = temp;
 		}
 	}
 
