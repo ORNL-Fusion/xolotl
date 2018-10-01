@@ -429,6 +429,16 @@ private:
 	DissociationPairList::iterator addToEffEmissionList(
 			DissociationReaction& reaction);
 
+
+    /**
+     * Obtain total concentration for desired species type.
+     *
+     * @return Total concentration of species indicated by Axis 
+     * template parameter.
+     */
+    template<uint32_t Axis>
+    double getTotalAtomConcHelper() const;
+
 public:
 
 	/**
