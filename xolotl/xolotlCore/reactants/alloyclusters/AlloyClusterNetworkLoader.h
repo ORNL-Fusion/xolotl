@@ -104,7 +104,8 @@ public:
 	 * @param options The command line options
 	 * @return network The reaction network
 	 */
-	virtual std::unique_ptr<IReactionNetwork> load(const IOptions &options);
+	virtual std::unique_ptr<IReactionNetwork> load(const IOptions& options)
+			override;
 
 	/**
 	 * This operation will generate the reaction network from options.
@@ -113,14 +114,15 @@ public:
 	 * @param options The command line options
 	 * @return network The reaction network
 	 */
-	virtual std::unique_ptr<IReactionNetwork> generate(const IOptions &options);
+	virtual std::unique_ptr<IReactionNetwork> generate(const IOptions &options)
+			override;
 
 	/**
 	 * This operation will apply a grouping method to the network.
 	 *
 	 * @param The network to be modified.
 	 */
-	void applyGrouping(IReactionNetwork& network);
+	void applyGrouping(IReactionNetwork& network) const;
 
 	/**
 	 * This operation will set the size at which the grouping scheme starts.

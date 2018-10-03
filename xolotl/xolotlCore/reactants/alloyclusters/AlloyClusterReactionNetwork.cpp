@@ -82,6 +82,10 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 	// when the temperature is updated
 	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
 
+//	std::cout << reaction.first.getName() << " + " << reaction.second.getName()
+//			<< " <- " << reaction.dissociating.getName() << " : "
+//			<< k_minus << " " << bindingEnergy << std::endl;
+
 	return k_minus;
 }
 
@@ -199,9 +203,9 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 						auto reaction = std::make_shared<ProductionReaction>(
 								*(monomer), *product);
 						dissociationReaction->reverseReaction = reaction.get();
-						//std::cout << parent.getName() << " -> "
-						//		<< product.getName() << " + "
-						//		<< monomer.getName() << std::endl;
+//						std::cout << parentCluster.getName() << " -> "
+//								<< product->getName() << " + "
+//								<< monomer->getName() << std::endl;
 						break;
 					}
 				}

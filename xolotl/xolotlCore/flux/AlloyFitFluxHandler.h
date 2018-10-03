@@ -48,9 +48,25 @@ private:
 
 	std::vector<double> AlloySetGeneration(const int size, const int it,
 			const double fraction) {
+		std::vector<double> damageRate;
+		// 0D case
+		if (xGrid.size() == 0) {
+			// Compute the rate at that position
+			std::vector<double> fitFlux = AlloyDamageFunction(0);
+			double rate = 0;
+			for (int j = 0; j < fitFlux.size(); ++j) {
+				rate += cascade.cascadeEfficiency[j] * fitFlux[j]
+						* cascade.clusterFraction[it][j];
+			}
+			rate = rate * fraction * fluxAmplitude / double(size);
+			// Add it to the vector
+			damageRate.push_back(rate);
+			return damageRate;
+		}
+
+		// 1D case
 		// Change this to grab the actual surface position
 		int surfacePos = 0;
-		std::vector<double> damageRate;
 		damageRate.push_back(0.0);
 		for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
 			// Get the x position
@@ -125,17 +141,7 @@ public:
 		// Set the grid
 		xGrid = grid;
 
-		if (xGrid.size() == 0) {
-			// Add I and V to the list
-			fluxIndices.push_back(network.get(toSpecies(ReactantType::I), 1)->getId() - 1);
-			fluxIndices.push_back(network.get(toSpecies(ReactantType::V), 1)->getId() - 1);
-			return;
-		}
-
-		if (xGrid.size() < 3) {
-			std::cout << "ERROR: xGrid too small to define damage.\n";
-			return;
-		}
+		if (xGrid.size() == 0) srim.setOverlap();
 
 		// Iterate over all produced cluster species
 		for (int it = 0; it < cascade.clusterSizes.size(); ++it) {
@@ -152,9 +158,9 @@ public:
 					(ionDamage.fluxIndex).push_back(fluxCluster->getId() - 1);
 					(ionDamage.damageRate).push_back(
 							AlloySetGeneration(size, it, 1.0));
-					if (size == 1 && implant) {
-						AlloyAddImplantation(ionDamage.damageRate.back());
-					}
+//					if (size == 1 && implant) {
+//						AlloyAddImplantation(ionDamage.damageRate.back());
+//					}
 				}
 				// Otherwise the clusters must be frank and perfect type
 				else {
@@ -247,11 +253,6 @@ public:
 	void computeIncidentFlux(double currentTime, double *updatedConcOffset,
 			int xi, int surfacePos) {
 
-		if (xGrid.size() == 0) {
-			updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
-			updatedConcOffset[fluxIndices[1]] += fluxAmplitude;
-			return;
-		}
 		// Update the concentration array
 		for (int it = 0; it < ionDamage.fluxIndex.size(); ++it) {
 			updatedConcOffset[ionDamage.fluxIndex[it]] +=

@@ -12,7 +12,8 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 
 	//if (caseName == "insitu") {
 	// vac + vac = vac | void
-	forwardReaction reaction = forwardReaction(ReactantType::V, ReactantType::V);
+	forwardReaction reaction = forwardReaction(ReactantType::V,
+			ReactantType::V);
 	reaction.addProduct(ReactantType::V);
 	reaction.addProduct(ReactantType::Void);
 	reactions.push_back(reaction);
@@ -115,25 +116,45 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 std::vector<backwardReaction> getBackwardReactions(std::string caseName) {
 	std::vector<backwardReaction> reactions;
 
-	//if (caseName == "insitu") {
-	// void = vac + (void | vac)
-	backwardReaction reaction = backwardReaction(ReactantType::Void, ReactantType::V);
+//	// void = vac + (void | vac)
+//	backwardReaction reaction = backwardReaction(ReactantType::Void, ReactantType::V);
+//	reaction.addProduct(ReactantType::Void);
+//	reaction.addProduct(ReactantType::V);
+//	reactions.push_back(reaction);
+//
+//	// vac = vac + (vac)
+//	reaction = backwardReaction(ReactantType::V, ReactantType::V);
+//	reaction.addProduct(ReactantType::V);
+//	reactions.push_back(reaction);
+//
+//	// faulted = vac + (faulted | vac)
+//	reaction = backwardReaction(ReactantType::Faulted, ReactantType::V);
+//	reaction.addProduct(ReactantType::Faulted);
+//	reaction.addProduct(ReactantType::V);
+//	reactions.push_back(reaction);
+
+	// bubble -> int
+	backwardReaction reaction = backwardReaction(ReactantType::Void,
+			ReactantType::I);
+	reaction.addProduct(ReactantType::Void);
+	reactions.push_back(reaction);
+
+	// bubble -> vac
+	reaction = backwardReaction(ReactantType::Void, ReactantType::V);
 	reaction.addProduct(ReactantType::Void);
 	reaction.addProduct(ReactantType::V);
 	reactions.push_back(reaction);
 
-	// vac = vac + (vac)
-	reaction = backwardReaction(ReactantType::V, ReactantType::V);
-	reaction.addProduct(ReactantType::V);
-	reactions.push_back(reaction);
-
-	// faulted = vac + (faulted | vac)
+	// faulted -> vac
 	reaction = backwardReaction(ReactantType::Faulted, ReactantType::V);
 	reaction.addProduct(ReactantType::Faulted);
 	reaction.addProduct(ReactantType::V);
 	reactions.push_back(reaction);
 
-	//}
+	// int -> int
+	reaction = backwardReaction(ReactantType::I, ReactantType::I);
+	reaction.addProduct(ReactantType::I);
+	reactions.push_back(reaction);
 
 	return reactions;
 }

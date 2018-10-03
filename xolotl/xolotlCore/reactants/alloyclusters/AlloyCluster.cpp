@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cassert>
 #include "AlloyCluster.h"
 #include <xolotlPerf.h>
 #include <Constants.h>

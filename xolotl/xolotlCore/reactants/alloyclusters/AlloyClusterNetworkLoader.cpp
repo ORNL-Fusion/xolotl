@@ -93,11 +93,10 @@ AlloyClusterNetworkLoader::AlloyClusterNetworkLoader(
 std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::load(
 		const IOptions& options) {
 	// Prepare the network
-	// Once we have C++14 support, use std::make_unique.
 	std::unique_ptr<AlloyClusterReactionNetwork> network(
 			new AlloyClusterReactionNetwork(handlerRegistry));
 
-	return network;
+	return std::move(network);
 }
 
 std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
@@ -195,10 +194,10 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
 		applyGrouping(*network);
 	}
 
-	return network;
+	return std::move(network);
 }
 
-void AlloyClusterNetworkLoader::applyGrouping(IReactionNetwork& network) {
+void AlloyClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 
 	// Decide here which types will undergo grouping
 	std::vector<ReactantType> typeVec { ReactantType::Void,
