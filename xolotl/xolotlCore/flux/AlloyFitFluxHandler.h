@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 namespace xolotlCore {
 
