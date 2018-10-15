@@ -348,7 +348,7 @@ void NEClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 					// It has to be replaced by a super cluster
 					auto newCluster = superGroupMap[clusterGroupMap[nXe]];
 					react[l].first = newCluster;
-					react[l].firstDistance = newCluster->getDistance(size);
+					react[l].firstDistance = newCluster->getDistance(nXe);
 				}
 			}
 

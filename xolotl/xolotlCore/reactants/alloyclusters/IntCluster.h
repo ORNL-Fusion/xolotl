@@ -52,19 +52,13 @@ public:
 		}
 
 		// Define the formation energy
-		{
-			// USING PLACEHOLDER VALUES => UPDATE WITH CORRECT VALUES
-			double A = 4.0;
-			double B = 3.5;
-			formationEnergy = A + B * (pow(double(size), 2.0 / 3.0) - 1.0);
-		}
+		formationEnergy = _network.getFormationEnergy(type, size);
 
 		// Define the migration energy
 		migrationEnergy = 0.5;
 
 		// Define the reaction radius (using spherical)
-		reactionRadius = 0.5 * xolotlCore::alloyLatticeConstant
-				* pow(1.5 * double(size) / xolotlCore::pi, 1.0 / 3.0);
+		reactionRadius = _network.getReactionRadius(type, size);
 
 		return;
 	}

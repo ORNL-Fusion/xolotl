@@ -70,12 +70,6 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 								- pow(double(minFaultedSize - 1), 2.0 / 3.0));
 	}
 
-	// Output reactions and binding enegy to Check
-	//std::cout << reaction.dissociating.getName() << " -> "
-	//		<< reaction.first.getName() << " + "
-	//		<< reaction.second.getName() << "     "
-	//		<< bindingEnergy << std::endl;
-
 	double k_minus_exp = exp(
 			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature));	// We can use the network temperature
 	// because this method is called only
@@ -91,10 +85,42 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 
 int AlloyClusterReactionNetwork::typeSwitch(ReactantType const typeName) const {
 	if (typeName == ReactantType::V || typeName == ReactantType::Void
-			|| typeName == ReactantType::Faulted)
+			|| typeName == ReactantType::Faulted
+			|| typeName == ReactantType::VoidSuper
+			|| typeName == ReactantType::FaultedSuper)
 		return -1;
 	else
 		return 1;
+}
+
+double AlloyClusterReactionNetwork::getReactionRadius(
+		ReactantType const typeName, int size) const {
+	if (typeName == ReactantType::Faulted || typeName == ReactantType::Frank)
+		return 0.5 * xolotlCore::alloyLatticeConstant
+				* sqrt(double(size) * sqrt(3.0) / xolotlCore::pi);
+	if (typeName == ReactantType::V || typeName == ReactantType::Void
+			|| typeName == ReactantType::I)
+		return 0.5 * xolotlCore::alloyLatticeConstant
+				* pow(1.5 * double(size) / xolotlCore::pi, 1.0 / 3.0);
+	if (typeName == ReactantType::Perfect)
+		return 0.5 * xolotlCore::alloyLatticeConstant
+				* sqrt(double(size) * sqrt(2.0) / xolotlCore::pi);
+	return 0.0;
+}
+
+double AlloyClusterReactionNetwork::getFormationEnergy(
+		ReactantType const typeName, int size) const {
+	if (typeName == ReactantType::Perfect || typeName == ReactantType::Frank)
+		return 4.0 + 2.0 * (pow(double(size), 2.0 / 3.0) - 1.0);
+	if (typeName == ReactantType::Faulted)
+		return 1.5 + 2.05211 * (pow(double(size), 2.0 / 3.0) - 1.0);
+	if (typeName == ReactantType::Void)
+		return 1.5 + 3.41649 * (pow(double(size), 2.0 / 3.0) - 1.0);
+	if (typeName == ReactantType::V)
+		return 1.5 + 3.41649 * (pow(double(size), 2.0 / 3.0) - 1.0);
+	if (typeName == ReactantType::I)
+		return 4.0 + 3.5 * (pow(double(size), 2.0 / 3.0) - 1.0);
+	return 0.0;
 }
 
 void AlloyClusterReactionNetwork::createReactionConnectivity() {
@@ -118,55 +144,52 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 				if ((cluster1.getType() == cluster2.getType())
 						&& (cluster2.getSize() > cluster1.getSize()))
 					continue;
-				// Skip if both are imobile
+				// Skip if both are immobile
 				if ((cluster1.getDiffusionFactor() == 0.0)
 						&& (cluster2.getDiffusionFactor() == 0.0))
 					continue;
-				// Get size of product
-				auto size1 = cluster1.getSize()
-						* typeSwitch(cluster1.getType());
-				auto size2 = cluster2.getSize()
-						* typeSwitch(cluster2.getType());
-				auto productSize = size1 + size2;
+
+				// If both clusters are not super
+				if (!cluster1.isSuper() && !cluster2.isSuper()) {
+					// Look for recombination
+					int size1 = cluster1.getSize()
+							* typeSwitch(cluster1.getType());
+					int size2 = cluster2.getSize()
+							* typeSwitch(cluster2.getType());
+					int productSize = size1 + size2;
+					if (productSize == 0) {
+						// Create the reaction
+						std::unique_ptr<ProductionReaction> reaction(
+								new ProductionReaction(cluster1, cluster2));
+						auto& prref = add(std::move(reaction));
+						// Tell the reactants that they are in this reaction
+						(cluster1).participateIn(prref);
+						(cluster2).participateIn(prref);
+
+//								std::cout << cluster1.getName() << " + "
+//										<< cluster2.getName() << " -> "
+//										<< "recombined" << std::endl;
+					}
+				}
+
 				// Get list of accepted products
 				auto products = forwardReaction.getProducts();
 				// Loop over all accepted products
 				for (auto & productName : products) {
-					// Check if recombination reaction
-					if (productSize == 0) {
-						auto reaction = std::make_shared<ProductionReaction>(
-								(cluster1), (cluster2));
+					// Get all the clusters of this type
+					auto& allProducts = getAll(productName);
+					// Loop over all individual products
+					for (auto & product : allProducts) {
+						auto& prodCluster =
+								static_cast<AlloyCluster&>(*(product.second));
+						// Create the reaction
+						std::unique_ptr<ProductionReaction> reaction(
+								new ProductionReaction(cluster1, cluster2));
+						auto& prref = add(std::move(reaction));
 						// Tell the reactants that they are in this reaction
-						(cluster1).participateIn(*reaction);
-						(cluster2).participateIn(*reaction);
-
-//						std::cout << cluster1.getName() << " + "
-//								<< cluster2.getName() << " -> "
-//								<< "recombined" << std::endl;
-
-						// Product found
-						break;
-					} else {
-						auto size = productSize * typeSwitch(productName);
-						auto product = get(toSpecies(productName), size);
-
-						if (product) {
-
-							auto reaction =
-									std::make_shared<ProductionReaction>(
-											(cluster1), (cluster2));
-							// Tell the reactants that they are in this reaction
-							(cluster1).participateIn(*reaction);
-							(cluster2).participateIn(*reaction);
-							product->resultFrom(*reaction);
-
-//							std::cout << cluster1.getName() << " + "
-//									<< cluster2.getName() << " -> "
-//									<< product->getName() << std::endl;
-
-							// Product found
-							break;
-						}
+						(cluster1).participateIn(prref, prodCluster);
+						(cluster2).participateIn(prref, prodCluster);
+						prodCluster.resultFrom(prref, prodCluster);
 					}
 				}
 			}
@@ -183,30 +206,30 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 			for (auto & parent : parents) {
 				auto& parentCluster =
 						static_cast<AlloyCluster&>(*(parent.second));
-				auto parentSize = parentCluster.getSize()
-						* typeSwitch(parentCluster.getType());
-				auto monomerSize = monomer->getSize()
-						* typeSwitch(monomer->getType());
-				auto productSize = parentSize - monomerSize;
 				auto productNames = backwardReaction.getProducts();
+				// Loop over all accepted products
 				for (auto & productName : productNames) {
-					auto size = productSize * typeSwitch(productName);
-					auto product = get(toSpecies(productName), size);
-					if (product) {
-						auto dissociationReaction = std::make_shared<
-								DissociationReaction>((parentCluster),
-								*(monomer), *product);
-						(monomer)->participateIn(*dissociationReaction);
-						product->participateIn(*dissociationReaction);
-						(parentCluster).emitFrom(*dissociationReaction);
-						// Set the reverse reaction
-						auto reaction = std::make_shared<ProductionReaction>(
-								*(monomer), *product);
-						dissociationReaction->reverseReaction = reaction.get();
-//						std::cout << parentCluster.getName() << " -> "
-//								<< product->getName() << " + "
-//								<< monomer->getName() << std::endl;
-						break;
+					// Get all the clusters of this type
+					auto& allProducts = getAll(productName);
+					// Loop over all individual products
+					for (auto & product : allProducts) {
+						auto& prodCluster =
+								static_cast<AlloyCluster&>(*(product.second));
+						// Create the dissociation
+						std::unique_ptr<DissociationReaction> dissoReaction(
+								new DissociationReaction(parentCluster,
+										*monomer, prodCluster));
+						// Create the corresponding reaction
+						std::unique_ptr<ProductionReaction> reaction(
+								new ProductionReaction(*monomer, prodCluster));
+						auto& prref = add(std::move(reaction));
+						// Set it in the dissociation
+						dissoReaction->reverseReaction = &prref;
+						auto& drref = add(std::move(dissoReaction));
+						// Tell the reactants that they are in this reaction
+						(monomer)->participateIn(drref, prodCluster);
+						(prodCluster).participateIn(drref, prodCluster);
+						parentCluster.emitFrom(drref, prodCluster);
 					}
 				}
 			}
@@ -239,8 +262,6 @@ void AlloyClusterReactionNetwork::reinitializeNetwork() {
 				id++;
 				currReactant.setId(id);
 				currReactant.setMomentId(id);
-
-				currReactant.optimizeReactions();
 			});
 
 	// Get all the super clusters and loop on them
@@ -255,8 +276,6 @@ void AlloyClusterReactionNetwork::reinitializeNetwork() {
 					auto& currCluster = static_cast<AlloySuperCluster&>(currReactant);
 					id++;
 					currCluster.setMomentId(id);
-
-					currCluster.optimizeReactions();
 				}
 			});
 

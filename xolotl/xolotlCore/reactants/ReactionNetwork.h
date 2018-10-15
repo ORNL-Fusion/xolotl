@@ -358,6 +358,34 @@ public:
 	}
 
 	/**
+	 * Get the reaction radius for any type of cluster given its size.
+	 *
+	 * Daughter classes have to define it.
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The reaction radius
+	 */
+	virtual double getReactionRadius(ReactantType const typeName,
+			int size) const override {
+		return 0.0;
+	}
+
+	/**
+	 * Get the formation energy for any type of cluster given its size.
+	 *
+	 * Daughter classes have to define it.
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The formation energy
+	 */
+	virtual double getFormationEnergy(ReactantType const typeName,
+			int size) const override {
+		return 0.0;
+	}
+
+	/**
 	 * Give the reactant to the network.
 	 *
 	 * This operation sets the id of the reactant to one that is specific

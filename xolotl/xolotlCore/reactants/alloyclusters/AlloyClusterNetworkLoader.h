@@ -27,6 +27,11 @@ protected:
 	int sizeMin;
 
 	/**
+	 * The size at which the grouping scheme ends
+	 */
+	int sizeMax;
+
+	/**
 	 * The width of the group.
 	 */
 	int sectionWidth;
@@ -35,7 +40,7 @@ protected:
 	 * Private nullary constructor.
 	 */
 	AlloyClusterNetworkLoader() :
-			sizeMin(-1), sectionWidth(-1) {
+			sizeMin(-1), sizeMax(-1), sectionWidth(-1) {
 	}
 
 	/**

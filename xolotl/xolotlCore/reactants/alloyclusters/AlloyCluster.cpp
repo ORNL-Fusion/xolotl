@@ -6,6 +6,59 @@
 
 using namespace xolotlCore;
 
+void AlloyCluster::resultFrom(ProductionReaction& reaction,
+		IReactant& product) {
+	// Cast the reacting clusters
+	auto& cluster1 = static_cast<AlloyCluster&>(reaction.first);
+	auto& cluster2 = static_cast<AlloyCluster&>(reaction.second);
+	auto& prodCluster = static_cast<AlloyCluster&>(product);
+
+	// Compute the overlap
+	auto & alloyNetwork = static_cast<AlloyClusterReactionNetwork&>(network);
+	int width1 = cluster1.getSectionWidth();
+	int size1 = cluster1.getSize();
+	int width2 = cluster2.getSectionWidth();
+	int size2 = cluster2.getSize();
+	int prodWidth = prodCluster.getSectionWidth(), prodSize =
+			prodCluster.getSize();
+	int lo1 = alloyNetwork.typeSwitch(cluster1.getType())
+			* alloyNetwork.typeSwitch(prodCluster.getType())
+			* ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			alloyNetwork.typeSwitch(cluster2.getType())
+					* alloyNetwork.typeSwitch(prodCluster.getType())
+					* ((int) ((double) size2 - (double) width2 / 2.0) + 1),
+			hi1 = alloyNetwork.typeSwitch(cluster1.getType())
+					* alloyNetwork.typeSwitch(prodCluster.getType())
+					* ((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+					alloyNetwork.typeSwitch(cluster2.getType())
+							* alloyNetwork.typeSwitch(prodCluster.getType())
+							* ((int) ((double) size2 + (double) width2 / 2.0));
+	int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
+			prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
+
+	int overlap = std::min(prodHi, hi1 + hi2) - std::max(prodLo, lo1 + lo2) + 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Create the pair
+	ClusterPair pair(reaction, &cluster1, &cluster2);
+
+	// Set the distance if super clusters are involved
+	if (cluster1.isSuper()) {
+		pair.firstDistance = cluster1.getDistance(prodHi - hi2); // prod and 2 are normal
+	}
+	if (cluster2.isSuper()) {
+		pair.secondDistance = cluster2.getDistance(prodHi - hi1); // prod and 1 are normal
+	}
+
+	// Add the pair
+	reactingPairs.emplace_back(pair);
+
+	return;
+}
+
 void AlloyCluster::resultFrom(ProductionReaction& reaction, int[4], int[4]) {
 
 	// Add a cluster pair for given reaction
@@ -36,6 +89,60 @@ void AlloyCluster::resultFrom(ProductionReaction& reaction, double *coef) {
 	// Update the distances
 	newPair.firstDistance = coef[0];
 	newPair.secondDistance = coef[1];
+
+	return;
+}
+
+void AlloyCluster::participateIn(ProductionReaction& reaction,
+		IReactant& product) {
+	// Look for the other cluster
+	auto& otherCluster = static_cast<AlloyCluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+	auto& prodCluster = static_cast<AlloyCluster&>(product);
+
+	// Compute the overlap
+	auto & alloyNetwork = static_cast<AlloyClusterReactionNetwork&>(network);
+	int width1 = otherCluster.getSectionWidth();
+	int size1 = otherCluster.getSize();
+	int width2 = getSectionWidth();
+	int size2 = getSize();
+	int prodWidth = prodCluster.getSectionWidth(), prodSize =
+			prodCluster.getSize();
+	int lo1 = alloyNetwork.typeSwitch(otherCluster.getType())
+			* alloyNetwork.typeSwitch(prodCluster.getType())
+			* ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			alloyNetwork.typeSwitch(getType())
+					* alloyNetwork.typeSwitch(prodCluster.getType())
+					* ((int) ((double) size2 - (double) width2 / 2.0) + 1),
+			hi1 = alloyNetwork.typeSwitch(otherCluster.getType())
+					* alloyNetwork.typeSwitch(prodCluster.getType())
+					* ((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+					alloyNetwork.typeSwitch(getType())
+							* alloyNetwork.typeSwitch(prodCluster.getType())
+							* ((int) ((double) size2 + (double) width2 / 2.0));
+	int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
+			prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
+
+	int overlap = std::min(prodHi, hi1 + hi2) - std::max(prodLo, lo1 + lo2) + 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Loop on the overlap
+	for (int i = 0; i < overlap; i++) {
+		// Create the pair
+		CombiningCluster pair(reaction, &otherCluster);
+
+		// Set the distance if super clusters are involved
+		if (otherCluster.isSuper()) {
+			pair.distance = otherCluster.getDistance(
+					std::max(prodLo - lo2, lo1) + i);
+		}
+
+		// Add the combining cluster to list of clusters that combine with us
+		combiningReactants.emplace_back(pair);
+	}
 
 	return;
 }
@@ -79,7 +186,63 @@ void AlloyCluster::participateIn(ProductionReaction& reaction, double *coef) {
 	return;
 }
 
-void AlloyCluster::participateIn(DissociationReaction& reaction, int[4], int[4]) {
+void AlloyCluster::participateIn(DissociationReaction& reaction,
+		IReactant& disso) {
+	// Look for the other cluster
+	auto& emittedCluster = static_cast<AlloyCluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+	auto& dissoCluster = static_cast<AlloyCluster&>(disso);
+
+	// Compute the overlap
+	auto & alloyNetwork = static_cast<AlloyClusterReactionNetwork&>(network);
+	int width1 = emittedCluster.getSectionWidth();
+	int size1 = emittedCluster.getSize();
+	int width2 = getSectionWidth();
+	int size2 = getSize();
+	int dissoWidth = dissoCluster.getSectionWidth(), dissoSize =
+			dissoCluster.getSize();
+	int lo1 = alloyNetwork.typeSwitch(emittedCluster.getType())
+			* alloyNetwork.typeSwitch(dissoCluster.getType())
+			* ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			alloyNetwork.typeSwitch(getType())
+					* alloyNetwork.typeSwitch(dissoCluster.getType())
+					* ((int) ((double) size2 - (double) width2 / 2.0) + 1),
+			hi1 = alloyNetwork.typeSwitch(emittedCluster.getType())
+					* alloyNetwork.typeSwitch(dissoCluster.getType())
+					* ((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+					alloyNetwork.typeSwitch(getType())
+							* alloyNetwork.typeSwitch(dissoCluster.getType())
+							* ((int) ((double) size2 + (double) width2 / 2.0));
+	int dissoLo = ((int) ((double) dissoSize - (double) dissoWidth / 2.0) + 1),
+			dissoHi = ((int) ((double) dissoSize + (double) dissoWidth / 2.0));
+
+	int overlap = std::min(dissoHi, hi1 + hi2) - std::max(dissoLo, lo1 + lo2)
+			+ 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Loop on the overlap
+	for (int i = 0; i < overlap; i++) {
+		// Create the pair
+		ClusterPair pair(reaction, &dissoCluster, &emittedCluster);
+
+		// Set the distance if super clusters are involved
+		if (dissoCluster.isSuper()) {
+			pair.firstDistance = dissoCluster.getDistance(
+					std::max(dissoLo, lo1 + lo2) + i);
+		}
+
+		// Add the combining cluster to list of clusters that combine with us
+		dissociatingPairs.emplace_back(pair);
+	}
+
+	return;
+}
+
+void AlloyCluster::participateIn(DissociationReaction& reaction, int[4],
+		int[4]) {
 	// Look for the other cluster
 	auto& emittedCluster = static_cast<AlloyCluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
@@ -119,6 +282,54 @@ void AlloyCluster::participateIn(DissociationReaction& reaction, double *coef) {
 	return;
 }
 
+void AlloyCluster::emitFrom(DissociationReaction& reaction, IReactant& disso) {
+	// Cast the reacting clusters
+	auto& cluster1 = static_cast<AlloyCluster&>(reaction.first);
+	auto& cluster2 = static_cast<AlloyCluster&>(reaction.second);
+	auto& dissoCluster = static_cast<AlloyCluster&>(disso);
+
+	// Compute the overlap
+	auto & alloyNetwork = static_cast<AlloyClusterReactionNetwork&>(network);
+	int width1 = cluster1.getSectionWidth();
+	int size1 = cluster1.getSize();
+	int width2 = cluster2.getSectionWidth();
+	int size2 = cluster2.getSize();
+	int dissoWidth = dissoCluster.getSectionWidth(), dissoSize =
+			dissoCluster.getSize();
+	int lo1 = alloyNetwork.typeSwitch(cluster1.getType())
+			* alloyNetwork.typeSwitch(dissoCluster.getType())
+			* ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			alloyNetwork.typeSwitch(cluster2.getType())
+					* alloyNetwork.typeSwitch(dissoCluster.getType())
+					* ((int) ((double) size2 - (double) width2 / 2.0) + 1),
+			hi1 = alloyNetwork.typeSwitch(cluster1.getType())
+					* alloyNetwork.typeSwitch(dissoCluster.getType())
+					* ((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+					alloyNetwork.typeSwitch(cluster2.getType())
+							* alloyNetwork.typeSwitch(dissoCluster.getType())
+							* ((int) ((double) size2 + (double) width2 / 2.0));
+	int dissoLo = ((int) ((double) dissoSize - (double) dissoWidth / 2.0) + 1),
+			dissoHi = ((int) ((double) dissoSize + (double) dissoWidth / 2.0));
+
+	int overlap = std::min(dissoHi, hi1 + hi2) - std::max(dissoLo, lo1 + lo2)
+			+ 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Loop on the overlap
+	for (int i = 0; i < overlap; i++) {
+		// Create the pair
+		ClusterPair pair(reaction, &cluster1, &cluster2);
+
+		// Add the pair
+		emissionPairs.emplace_back(pair);
+	}
+
+	return;
+}
+
 void AlloyCluster::emitFrom(DissociationReaction& reaction, int[4]) {
 
 	// Add the pair of emitted clusters.
@@ -145,63 +356,6 @@ void AlloyCluster::emitFrom(DissociationReaction& reaction, double *coef) {
 	setReactionConnectivity(id);
 
 	// Nothing more to do
-
-	return;
-}
-
-void AlloyCluster::optimizeReactions() {
-	// Loop on the pairs to add reactions to the network
-	std::for_each(reactingPairs.begin(), reactingPairs.end(),
-			[this](ClusterPair& currPair) {
-				// Create the corresponding production reaction
-				std::unique_ptr<ProductionReaction> newReaction(new ProductionReaction(*currPair.first, *currPair.second));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReaction));
-				// Link it to the pair
-				currPair.reaction = prref;
-			});
-
-	std::for_each(combiningReactants.begin(), combiningReactants.end(),
-			[this](CombiningCluster& cc) {
-				// Create the corresponding production reaction
-				std::unique_ptr<ProductionReaction> newReaction(new ProductionReaction(*cc.combining, *this));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReaction));
-				// Link it to the pair
-				cc.reaction = prref;
-			});
-
-	std::for_each(dissociatingPairs.begin(), dissociatingPairs.end(),
-			[this](ClusterPair& currPair) {
-				// Create the corresponding dissociation reaction
-				std::unique_ptr<DissociationReaction> newReaction(new DissociationReaction(*currPair.first, *currPair.second, *this));
-				// Add it to the network
-				auto& drref = network.add(std::move(newReaction));
-				// Create the corresponding reverse reaction
-				std::unique_ptr<ProductionReaction> newReverseReaction(new ProductionReaction(*currPair.second, *this));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReverseReaction));
-				// Link it
-				drref.reverseReaction = &prref;
-				// Link it to the pair
-				currPair.reaction = drref;
-			});
-
-	std::for_each(emissionPairs.begin(), emissionPairs.end(),
-			[this](ClusterPair& currPair) {
-				// Create the corresponding dissociation reaction
-				std::unique_ptr<DissociationReaction> newReaction(new DissociationReaction(*this, *currPair.first, *currPair.second));
-				// Add it to the network
-				auto& drref = network.add(std::move(newReaction));
-				// Create the corresponding reverse reaction
-				std::unique_ptr<ProductionReaction> newReverseReaction(new ProductionReaction(*currPair.first, *currPair.second));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReverseReaction));
-				// Link it
-				drref.reverseReaction = &prref;
-				// Link it to the pair
-				currPair.reaction = drref;
-			});
 
 	return;
 }
@@ -282,17 +436,6 @@ void AlloyCluster::resetConnectivities() {
 	return;
 }
 
-void AlloyCluster::updateFromNetwork() {
-
-	// Clear the flux-related arrays
-	reactingPairs.clear();
-	combiningReactants.clear();
-	dissociatingPairs.clear();
-	emissionPairs.clear();
-
-	return;
-}
-
 double AlloyCluster::getMoment() const {
 	return 0.0;
 }
@@ -364,7 +507,7 @@ double AlloyCluster::getCombinationFlux(int xi) const {
 
 	double flux = std::accumulate(combiningReactants.begin(),
 			combiningReactants.end(), 0.0,
-			[xi](double running, const CombiningCluster& currPair) {
+			[xi, this](double running, const CombiningCluster& currPair) {
 				// Get the cluster that combines with this one
 				AlloyCluster const& combiningCluster = *currPair.combining;
 				Reaction const& currReaction = currPair.reaction;
@@ -403,8 +546,8 @@ void AlloyCluster::getPartialDerivatives(std::vector<double> & partials,
 	return;
 }
 
-void AlloyCluster::getProductionPartialDerivatives(std::vector<double> & partials,
-		int xi) const {
+void AlloyCluster::getProductionPartialDerivatives(
+		std::vector<double> & partials, int xi) const {
 
 	// Production
 	// A + B --> D, D being this cluster
@@ -439,8 +582,8 @@ void AlloyCluster::getProductionPartialDerivatives(std::vector<double> & partial
 	return;
 }
 
-void AlloyCluster::getCombinationPartialDerivatives(std::vector<double> & partials,
-		int xi) const {
+void AlloyCluster::getCombinationPartialDerivatives(
+		std::vector<double> & partials, int xi) const {
 
 	// Combination
 	// A + B --> D, A being this cluster

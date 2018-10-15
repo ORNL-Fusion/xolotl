@@ -102,8 +102,8 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::load(
 std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
 		const IOptions &options) {
 	// Initial declarations
-	int maxV = options.getMaxV(), maxI = options.getMaxI(), maxBig =
-			options.getMaxImpurity();
+	int maxV = options.getMaxV(), maxI = options.getMaxI();
+	sizeMax = options.getMaxImpurity();
 	int numV = 0, numI = 0, numVoid = 0, numFaulted = 0, numFrank = 0,
 			numPerfect = 0;
 	// Once we have C++14 support, use std::make_unique.
@@ -134,7 +134,7 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
 	}
 
 	// Generate the Void clusters
-	for (int i = maxV + 1; i <= maxBig; ++i) {
+	for (int i = maxV + 1; i <= min(sizeMin - 1, sizeMax); ++i) {
 		// Set the composition
 		numVoid = i;
 		// Create the cluster
@@ -145,7 +145,7 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
 	}
 
 	// Generate the Faulted clusters
-	for (int i = maxV + 1; i <= maxBig; ++i) {
+	for (int i = maxV + 1; i <= min(sizeMin - 1, sizeMax); ++i) {
 		// Set the composition
 		numFaulted = i;
 		// Create the cluster
@@ -157,7 +157,7 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
 	}
 
 	// Generate the Frank clusters
-	for (int i = maxI + 1; i <= maxBig; ++i) {
+	for (int i = maxI + 1; i <= min(sizeMin - 1, sizeMax); ++i) {
 		// Set the composition
 		numFrank = i;
 		// Create the cluster
@@ -169,7 +169,7 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
 	}
 
 	// Generate the Perfect clusters
-	for (int i = maxI + 1; i <= maxBig; ++i) {
+	for (int i = maxI + 1; i <= min(sizeMin - 1, sizeMax); ++i) {
 		// Set the composition
 		numPerfect = i;
 		// Create the cluster
@@ -180,19 +180,14 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
 		pushAlloyCluster(network, reactants, nextCluster);
 	}
 
-	// Ask reactants to update now that they are in network.
-	for (IReactant& currReactant : reactants) {
-		currReactant.updateFromNetwork();
-	}
-
-	// Create the reactions
-	network->createReactionConnectivity();
-
 	// Check if we want dummy reactions
 	if (!dummyReactions) {
 		// Apply sectional grouping
 		applyGrouping(*network);
 	}
+
+	// Create the reactions
+	network->createReactionConnectivity();
 
 	return std::move(network);
 }
@@ -207,255 +202,57 @@ void AlloyClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 	for (auto tvIter = typeVec.begin(); tvIter != typeVec.end(); ++tvIter) {
 		auto currType = *tvIter;
 
-		// Get the biggest size
-		int sizeMax = network.getMaxClusterSize(currType);
-
-		// Create a temporary vector for the loop
-		std::vector<AlloyCluster *> tempVector;
-
 		// Initialize variables for the loop
 		AlloyCluster * cluster;
 		std::unique_ptr<AlloySuperCluster> superCluster;
 		int count = 0, superCount = 0, width = sectionWidth;
-		double size = 0.0, radius = 0.0, energy = 0.0;
-
-		// Map to know which cluster is in which group
-		std::map<int, int> clusterGroupMap;
-		// Map to know which super cluster gathers which group
-		std::map<int, AlloySuperCluster *> superGroupMap;
+		int size = 0.0;
 
 		// Loop on the xenon groups
-		for (int k = sizeMin; k <= sizeMax; k++) {
-			// Get the corresponding cluster
-			cluster = (AlloyCluster *) network.get(toSpecies(currType), k);
-
-			// Verify if the cluster exists
-			if (!cluster)
-				continue;
+		for (int k = sizeMin; k < sizeMax; k++) {
 
 			// Increment the counter
 			count++;
 
-			// Add this cluster to the temporary vector
-			tempVector.push_back(cluster);
-			size += (double) k;
-			radius += cluster->getReactionRadius();
-			energy += cluster->getFormationEnergy();
+			// Track the size
+			size = k;
 
-			// Save in which group it is
-			clusterGroupMap[k] = superCount;
-
-			// Check if there were clusters in this group
-			if (count < width && k < sizeMax)
+			// Continue if we are not at the wanted width yet
+			if (count < width && k < sizeMax - 1)
 				continue;
 
-			// Average all values
-			size = size / (double) count;
-			radius = radius / (double) count;
-			energy = energy / (double) count;
-
 			// Create the cluster
-			auto rawSuperCluster = new AlloySuperCluster(size, count, count,
-					radius, energy, currType, network, handlerRegistry);
-			auto superCluster = std::unique_ptr<AlloySuperCluster>(
-					rawSuperCluster);
-			// Save access to the cluster so we can trigger updates
-			// after we give it to the network.
-			auto& scref = *superCluster;
-			// Set the HeV vector
-			scref.setAtomVector(tempVector);
-			// Give the cluster to the network.
-			network.add(std::move(superCluster));
-
-			// Keep the information of the group
-			superGroupMap[superCount] = rawSuperCluster;
+			auto rawSuperCluster = new AlloySuperCluster(size, count, currType,
+					network, handlerRegistry);
 
 //			std::cout << superCount << " " << count << " "
 //					<< rawSuperCluster->getName() << std::endl;
 
+			superCluster = std::unique_ptr<AlloySuperCluster>(rawSuperCluster);
+			// Give the cluster to the network.
+			network.add(std::move(superCluster));
+
 			// Reinitialize everything
-			size = 0.0, radius = 0.0, energy = 0.0;
+			size = 0;
 			count = 0;
-			tempVector.clear();
 			superCount++;
 //			width = std::max((int) (std::pow((double) superCount, 1.0) / 1.0),
 //					sectionWidth);
 //			width -= width % sectionWidth;
 		}
 
-		// Initialize variables for the loop
-		AlloySuperCluster * newCluster;
-		int clusterSize = 0;
+		if (sizeMin < sizeMax) {
+			// Group the last one alone
+			auto rawSuperCluster = new AlloySuperCluster(sizeMax, 1, currType,
+					network, handlerRegistry);
 
-		// Tell each reactant to update the pairs vector with super clusters
-		for (IReactant& currReactant : network.getAll()) {
+//		std::cout << superCount << " last " << rawSuperCluster->getName()
+//				<< std::endl;
 
-			auto& cluster = static_cast<AlloyCluster&>(currReactant);
-			// Get their production and dissociation vectors
-			auto react = cluster.reactingPairs;
-			auto combi = cluster.combiningReactants;
-			auto disso = cluster.dissociatingPairs;
-			auto emi = cluster.emissionPairs;
-
-			// Loop on its reacting pairs
-			for (int l = 0; l < react.size(); l++) {
-				// Test the first reactant
-				if (react[l].first->getType() == currType) {
-					// Get its size
-					clusterSize = react[l].first->getSize();
-					// Test its size
-					if (clusterSize >= sizeMin) {
-						// It has to be replaced by a super cluster
-						newCluster =
-								superGroupMap[clusterGroupMap[clusterSize]];
-						react[l].first = newCluster;
-						react[l].firstDistance = newCluster->getDistance(
-								clusterSize);
-					}
-				}
-
-				// Test the second reactant
-				if (react[l].second->getType() == currType) {
-					// Get its size
-					clusterSize = react[l].second->getSize();
-					// Test its size
-					if (clusterSize >= sizeMin) {
-						// It has to be replaced by a super cluster
-						newCluster =
-								superGroupMap[clusterGroupMap[clusterSize]];
-						react[l].second = newCluster;
-						react[l].secondDistance = newCluster->getDistance(
-								clusterSize);
-					}
-				}
-			}
-
-			// Loop on its combining reactants
-			for (int l = 0; l < combi.size(); l++) {
-				// Test the combining reactant
-				if (combi[l].combining->getType() == currType) {
-					// Get its size
-					clusterSize = combi[l].combining->getSize();
-					// Test its size
-					if (clusterSize >= sizeMin) {
-						// It has to be replaced by a super cluster
-						newCluster =
-								superGroupMap[clusterGroupMap[clusterSize]];
-						combi[l].combining = newCluster;
-						combi[l].distance = newCluster->getDistance(
-								clusterSize);
-					}
-				}
-			}
-
-			// Loop on its dissociating pairs
-			for (int l = 0; l < disso.size(); l++) {
-				// Test the first reactant
-				if (disso[l].first->getType() == currType) {
-					// Get its size
-					clusterSize = disso[l].first->getSize();
-					// Test its size
-					if (clusterSize >= sizeMin) {
-						// It has to be replaced by a super cluster
-						newCluster =
-								superGroupMap[clusterGroupMap[clusterSize]];
-						disso[l].first = newCluster;
-						disso[l].firstDistance = newCluster->getDistance(
-								clusterSize);
-					}
-				}
-
-				// Test the second reactant
-				if (disso[l].second->getType() == currType) {
-					// Get its size
-					clusterSize = disso[l].second->getSize();
-					// Test its size
-					if (clusterSize >= sizeMin) {
-						// It has to be replaced by a super cluster
-						newCluster =
-								superGroupMap[clusterGroupMap[clusterSize]];
-						disso[l].second = newCluster;
-						disso[l].secondDistance = newCluster->getDistance(
-								clusterSize);
-					}
-				}
-			}
-
-			// Loop on its emission pairs
-			for (int l = 0; l < emi.size(); l++) {
-				// Test the first reactant
-				if (emi[l].first->getType() == currType) {
-					// Get its size
-					clusterSize = emi[l].first->getSize();
-					// Test its size
-					if (clusterSize >= sizeMin) {
-						// It has to be replaced by a super cluster
-						newCluster =
-								superGroupMap[clusterGroupMap[clusterSize]];
-						emi[l].first = newCluster;
-						emi[l].firstDistance = newCluster->getDistance(
-								clusterSize);
-					}
-				}
-
-				// Test the second reactant
-				if (emi[l].second->getType() == currType) {
-					// Get its size
-					clusterSize = emi[l].second->getSize();
-					// Test its size
-					if (clusterSize >= sizeMin) {
-						// It has to be replaced by a super cluster
-						newCluster =
-								superGroupMap[clusterGroupMap[clusterSize]];
-						emi[l].second = newCluster;
-						emi[l].secondDistance = newCluster->getDistance(
-								clusterSize);
-					}
-				}
-			}
-
-			// Set their production and dissociation vectors
-			cluster.reactingPairs = react;
-			cluster.combiningReactants = combi;
-			cluster.dissociatingPairs = disso;
-			cluster.emissionPairs = emi;
+			superCluster = std::unique_ptr<AlloySuperCluster>(rawSuperCluster);
+			// Give the cluster to the network.
+			network.add(std::move(superCluster));
 		}
-	}
-
-	// Set the reaction network for each type of super reactant
-	std::vector<ReactantType> superTypeVec { ReactantType::VoidSuper,
-			ReactantType::FaultedSuper, ReactantType::FrankSuper,
-			ReactantType::PerfectSuper };
-
-	// Loop on them
-	for (auto tvIter = superTypeVec.begin(); tvIter != superTypeVec.end();
-			++tvIter) {
-		auto currType = *tvIter;
-		for (auto const& superMapItem : network.getAll(currType)) {
-			auto& currCluster =
-					static_cast<AlloySuperCluster&>(*(superMapItem.second));
-			currCluster.updateFromNetwork();
-		}
-	}
-
-	// Remove the clusters bigger than sizeMin from the network
-	// Loop on the simple types
-	for (auto tvIter = typeVec.begin(); tvIter != typeVec.end(); ++tvIter) {
-		auto currType = *tvIter;
-		std::vector<std::reference_wrapper<IReactant> > doomedReactants;
-		for (auto const& currMapItem : network.getAll(currType)) {
-			auto& currCluster = currMapItem.second;
-
-			// Get the cluster's size.
-			int clusterSize = currCluster->getSize();
-
-			// Check if the cluster is too large.
-			if (clusterSize >= sizeMin) {
-				// The cluster is too large.  Add it to the ones we will remove.
-				doomedReactants.push_back(*currCluster);
-			}
-		}
-		network.removeReactants(doomedReactants);
 	}
 
 	// Recompute Ids and network size

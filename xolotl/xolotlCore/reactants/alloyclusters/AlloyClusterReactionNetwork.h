@@ -136,6 +136,24 @@ public:
 	int typeSwitch(ReactantType const typeName) const;
 
 	/**
+	 * Get the reaction radius for any type of cluster given its size
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The reaction radius
+	 */
+	double getReactionRadius(ReactantType const typeName, int size) const override;
+
+	/**
+	 * Get the formation energy for any type of cluster given its size
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The formation energy
+	 */
+	double getFormationEnergy(ReactantType const typeName, int size) const override;
+
+	/**
 	 * Computes the full reaction connectivity matrix for this network.
 	 */
 	void createReactionConnectivity();

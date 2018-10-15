@@ -108,6 +108,26 @@ public:
 	virtual const ReactantMap& getAll(ReactantType type) const = 0;
 
 	/**
+	 * Get the reaction radius for any type of cluster given its size
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The reaction radius
+	 */
+	virtual double getReactionRadius(ReactantType const typeName,
+			int size) const = 0;
+
+	/**
+	 * Get the formation energy for any type of cluster given its size
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The formation energy
+	 */
+	virtual double getFormationEnergy(ReactantType const typeName,
+			int size) const = 0;
+
+	/**
 	 * Give the reactant to the network.
 	 *
 	 * @param reactant The reactant that should be added to the network
@@ -315,8 +335,8 @@ public:
 	 * @param vals The values of partials for the reactions
 	 */
 	virtual void computeAllPartials(const std::vector<size_t>& startingIdx,
-			const std::vector<int>& indices,
-			std::vector<double>& vals, int i = 0) const = 0;
+			const std::vector<int>& indices, std::vector<double>& vals, int i =
+					0) const = 0;
 
 	/**
 	 * This operation returns the biggest production rate in the network.

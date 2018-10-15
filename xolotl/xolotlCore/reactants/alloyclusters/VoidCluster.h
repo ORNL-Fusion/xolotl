@@ -52,18 +52,13 @@ public:
 		}
 
 		// Define the formation energy
-		{
-			double A = 1.5; // vacancy formation energy
-			double B = 3.41649; // fit to Zinkle formula
-			formationEnergy = A + B * (pow(double(size), 2.0 / 3.0) - 1.0);
-		}
+		formationEnergy = _network.getFormationEnergy(type, size);
 
 		// Define the migration energy
 		migrationEnergy = 1.2;
 
 		// Define the reaction radius
-		reactionRadius = 0.5 * xolotlCore::alloyLatticeConstant
-				* pow(1.5 * double(size) / xolotlCore::pi, 1.0 / 3.0);
+		reactionRadius = _network.getReactionRadius(type, size);
 
 		return;
 	}

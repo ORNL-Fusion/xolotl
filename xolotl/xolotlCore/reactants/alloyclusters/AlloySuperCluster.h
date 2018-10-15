@@ -113,9 +113,6 @@ private:
 	//! The total number of clusters gathered in this super cluster.
 	int nTot;
 
-	//! The width.
-	int sectionWidth;
-
 	//! The 0th order moment (mean).
 	double l0;
 
@@ -124,18 +121,6 @@ private:
 
 	//! The dispersion in the group.
 	double dispersion;
-
-	//! The map containing all the reacting pairs separated by original composition.
-	std::map<int, std::vector<ClusterPair> > reactingMap;
-
-	//! The map containing all the combining clusters separated by original composition.
-	std::map<int, std::vector<CombiningCluster> > combiningMap;
-
-	//! The map containing all the dissociating pairs separated by original composition.
-	std::map<int, std::vector<ClusterPair> > dissociatingMap;
-
-	//! The map containing all the emission pairs separated by original composition.
-	std::map<int, std::vector<ClusterPair> > emissionMap;
 
 	//! The list of optimized effective reacting pairs.
 	std::forward_list<SuperClusterProductionPair> effReactingList;
@@ -156,9 +141,6 @@ private:
 
 public:
 
-	//! The vector of atom clusters it will replace
-	std::vector<AlloyCluster *> atomVector;
-
 	/**
 	 * Default constructor, deleted because we require info to construct.
 	 */
@@ -168,17 +150,14 @@ public:
 	 * The constructor. All AlloySuperClusters must be initialized with its
 	 * composition.
 	 *
-	 * @param numAtom The mean number of atoms in this cluster
+	 * @param numMax The max number of atoms in this cluster
 	 * @param nTot The total number of clusters in this cluster
-	 * @param width The width of this super cluster in the xenon direction
-	 * @param radius The mean radius
-	 * @param energy The formation energy
 	 * @param type The type of cluster
 	 * @param _network The network this cluster will belong to.
 	 * @param registry The performance handler registry
 	 */
-	AlloySuperCluster(double numAtom, int nTot, int width, double radius,
-			double energy,  ReactantType type, IReactionNetwork& _network,
+	AlloySuperCluster(int numMax, int nTot, ReactantType type,
+			IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	/**
@@ -191,14 +170,12 @@ public:
 	}
 
 	/**
-	 * Update reactant using other reactants in its network.
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
 	 */
-	void updateFromNetwork() override;
-
-	/**
-	 * Group the same reactions together and add the reactions to the network lists.
-	 */
-	void optimizeReactions() override;
+	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
 
 	/**
 	 * Note that we result from the given reaction.
@@ -214,7 +191,25 @@ public:
 	 *
 	 * \see Reactant.h
 	 */
+	void participateIn(ProductionReaction& reaction, IReactant& product)
+			override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
 	void participateIn(ProductionReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * \see Reactant.h
+	 */
+	void participateIn(DissociationReaction& reaction, IReactant& disso)
+			override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -223,6 +218,14 @@ public:
 	 * \see Reactant.h
 	 */
 	void participateIn(DissociationReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
+	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
 
 	/**
 	 * Note that we emit from the given reaction.
@@ -239,13 +242,6 @@ public:
 	 */
 	virtual bool isMixed() const override {
 		return false;
-	}
-
-	/**
-	 * Set the atom vector
-	 */
-	void setAtomVector(std::vector<AlloyCluster *> vec) {
-		atomVector = vec;
 	}
 
 	/**
@@ -284,12 +280,7 @@ public:
 	 * @param atom The number of atom
 	 * @return The distance to the mean number of in the group
 	 */
-	double getDistance(int atom) const;
-
-	/**
-	 * Calculate the dispersion of the group.
-	 */
-	void computeDispersion();
+	double getDistance(int atom) const override;
 
 	/**
 	 * This operation sets the zeroth order moment.
@@ -487,8 +478,17 @@ public:
 	 *
 	 * @return The width of the section
 	 */
-	int getSectionWidth() const {
-		return sectionWidth;
+	int getSectionWidth() const override {
+		return nTot;
+	}
+
+	/**
+	 * This operation returns true if the cluster is a super cluster.
+	 *
+	 * @return True
+	 */
+	bool isSuper() const override{
+		return true;
 	}
 
 };
