@@ -62,6 +62,17 @@ protected:
 			IReactionNetwork& network);
 
 	/**
+	 * This operation creates a super cluster
+	 *
+	 * @param nTot The total number of clusters
+	 * @param maxAtom The maximum number of atoms
+	 * @param type The type of super cluster
+	 * @return The new cluster
+	 */
+	std::unique_ptr<AlloyCluster> createAlloySuperCluster(int nTot, int maxAtom,
+			ReactantType type, IReactionNetwork& network) const;
+
+	/**
 	 * This operation will add the given cluster to the network and reactants vector
 	 * as a standard cluster or a dummy one if we do not want the reactions to happen.
 	 *

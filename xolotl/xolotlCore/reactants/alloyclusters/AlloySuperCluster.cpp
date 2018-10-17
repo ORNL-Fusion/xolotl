@@ -2,6 +2,7 @@
 #include "AlloySuperCluster.h"
 #include <Constants.h>
 #include <MathUtils.h>
+#include <AlloyClusterReactionNetwork.h>
 
 using namespace xolotlCore;
 
@@ -239,14 +240,6 @@ void AlloySuperCluster::participateIn(ProductionReaction& reaction,
 
 	// Add it to the list
 	effCombiningList.push_front(superPair);
-
-//	if (name == "FrankSuper_997.5")
-//		std::cout << superPair.first->getName() << " + " << name << " -> "
-//				<< prodCluster.getName() << " : " << superPair.a000 << " "
-//				<< superPair.a001 << " " << superPair.a100 << " "
-//				<< superPair.a101 << " " << superPair.a010 << " "
-//				<< superPair.a011 << " " << superPair.a110 << " "
-//				<< superPair.a111 << " " << dispersion << std::endl;
 
 	return;
 }

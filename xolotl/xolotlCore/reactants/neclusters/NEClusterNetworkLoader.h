@@ -39,6 +39,11 @@ protected:
 	int xeMin;
 
 	/**
+	 * The xenon size at which the grouping scheme ends
+	 */
+	int xeMax;
+
+	/**
 	 * The width of the group in the xenon direction.
 	 */
 	int sectionWidth;
@@ -47,7 +52,7 @@ protected:
 	 * Private nullary constructor.
 	 */
 	NEClusterNetworkLoader() :
-			xeMin(-1), sectionWidth(-1) {
+			xeMin(-1), xeMax(-1), sectionWidth(-1) {
 	}
 
 	/**
@@ -67,12 +72,11 @@ protected:
 	 * This operation creates a super cluster
 	 *
 	 * @param nTot The total number of clusters
-	 * @param numXe The average number of xenon
-	 * @param radius The radius
+	 * @param maxXe The maximum number of xenon
 	 * @return The new cluster
 	 */
-	std::unique_ptr<NECluster> createNESuperCluster(int nTot, double numXe,
-			double radius, IReactionNetwork& network) const;
+	std::unique_ptr<NECluster> createNESuperCluster(int nTot, int maxXe,
+			IReactionNetwork& network) const;
 
 	/**
 	 * This operation will add the given cluster to the network and reactants vector

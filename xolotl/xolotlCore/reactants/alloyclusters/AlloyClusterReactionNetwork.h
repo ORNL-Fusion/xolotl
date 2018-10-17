@@ -3,6 +3,7 @@
 
 // Includes
 //#include <xolotlPerf.h>
+#include "AlloyCluster.h"
 #include <string>
 #include <vector>
 #include <memory>
@@ -105,6 +106,38 @@ private:
 		return bindingEnergy;
 	}
 
+	/**
+	 * Determine if the reaction is possible given then reactants and product
+	 *
+	 * @param r1 First reactant.
+	 * @param r2 Second reactant.
+	 * @param prod Potential product.
+	 */
+	bool checkOverlap(AlloyCluster& r1, AlloyCluster& r2, AlloyCluster& prod) {
+		int width1 = r1.getSectionWidth();
+		int size1 = r1.getSize();
+		int width2 = r2.getSectionWidth();
+		int size2 = r2.getSize();
+		int prodWidth = prod.getSectionWidth(), prodSize = prod.getSize();
+		int lo1 = typeSwitch(r1.getType()) * typeSwitch(prod.getType())
+				* ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+				typeSwitch(r2.getType()) * typeSwitch(prod.getType())
+						* ((int) ((double) size2 - (double) width2 / 2.0) + 1),
+				hi1 = typeSwitch(r1.getType()) * typeSwitch(prod.getType())
+						* ((int) ((double) size1 + (double) width1 / 2.0)),
+				hi2 = typeSwitch(r2.getType()) * typeSwitch(prod.getType())
+						* ((int) ((double) size2 + (double) width2 / 2.0));
+		int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
+				prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
+
+		int overlap = std::min(prodHi, hi1 + hi2) - std::max(prodLo, lo1 + lo2)
+				+ 1;
+
+		if (overlap < 1)
+			return false;
+		return true;
+	}
+
 public:
 
 	/**
@@ -142,7 +175,8 @@ public:
 	 * @param size The size of cluster
 	 * @return The reaction radius
 	 */
-	double getReactionRadius(ReactantType const typeName, int size) const override;
+	double getReactionRadius(ReactantType const typeName, int size) const
+			override;
 
 	/**
 	 * Get the formation energy for any type of cluster given its size
@@ -151,7 +185,8 @@ public:
 	 * @param size The size of cluster
 	 * @return The formation energy
 	 */
-	double getFormationEnergy(ReactantType const typeName, int size) const override;
+	double getFormationEnergy(ReactantType const typeName, int size) const
+			override;
 
 	/**
 	 * Computes the full reaction connectivity matrix for this network.

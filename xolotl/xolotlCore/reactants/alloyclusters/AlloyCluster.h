@@ -8,7 +8,6 @@
 #include <Constants.h>
 #include <iostream>
 #include <cassert>
-#include <AlloyClusterReactionNetwork.h>
 
 namespace xolotlPerf {
 class ITimer;
@@ -132,11 +131,6 @@ protected:
 	 * of a connected cluster for dissociation reactions
 	 */
 	const std::set<int> & getDissociationConnectivitySet() const;
-
-	/*
-	 Variable to hold spatially resolved concentration values
-	 */
-	std::vector<double> concentration1D;
 
 public:
 

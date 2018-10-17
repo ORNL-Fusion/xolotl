@@ -1,10 +1,7 @@
 #include "AlloyClusterReactionNetwork.h"
-#include "AlloyCluster.h"
 #include "AlloySuperCluster.h"
 #include <xolotlPerf.h>
-#include <iostream>
 #include <sstream>
-#include <algorithm>
 #include <Constants.h>
 #include "AlloyCases.h"
 
@@ -182,14 +179,17 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 					for (auto & product : allProducts) {
 						auto& prodCluster =
 								static_cast<AlloyCluster&>(*(product.second));
-						// Create the reaction
-						std::unique_ptr<ProductionReaction> reaction(
-								new ProductionReaction(cluster1, cluster2));
-						auto& prref = add(std::move(reaction));
-						// Tell the reactants that they are in this reaction
-						(cluster1).participateIn(prref, prodCluster);
-						(cluster2).participateIn(prref, prodCluster);
-						prodCluster.resultFrom(prref, prodCluster);
+						// Check if the reaction is possible
+						if (checkOverlap(cluster1, cluster2, prodCluster)) {
+							// Create the reaction
+							std::unique_ptr<ProductionReaction> reaction(
+									new ProductionReaction(cluster1, cluster2));
+							auto& prref = add(std::move(reaction));
+							// Tell the reactants that they are in this reaction
+							(cluster1).participateIn(prref, prodCluster);
+							(cluster2).participateIn(prref, prodCluster);
+							prodCluster.resultFrom(prref, prodCluster);
+						}
 					}
 				}
 			}
@@ -199,35 +199,35 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 	auto backwardReactions = getBackwardReactions("default");
 	for (auto & backwardReaction : backwardReactions) {
 		auto monomerName = backwardReaction.getMonomer();
-		auto monomer = get(toSpecies(monomerName), 1);
-		if (monomer) {
-			auto parentName = backwardReaction.getParent();
-			auto& parents = getAll(parentName);
-			for (auto & parent : parents) {
-				auto& parentCluster =
-						static_cast<AlloyCluster&>(*(parent.second));
-				auto productNames = backwardReaction.getProducts();
-				// Loop over all accepted products
-				for (auto & productName : productNames) {
-					// Get all the clusters of this type
-					auto& allProducts = getAll(productName);
-					// Loop over all individual products
-					for (auto & product : allProducts) {
-						auto& prodCluster =
-								static_cast<AlloyCluster&>(*(product.second));
+		auto& monomer = static_cast<AlloyCluster&>(*get(toSpecies(monomerName),
+				1));
+		auto parentName = backwardReaction.getParent();
+		auto& parents = getAll(parentName);
+		for (auto & parent : parents) {
+			auto& parentCluster = static_cast<AlloyCluster&>(*(parent.second));
+			auto productNames = backwardReaction.getProducts();
+			// Loop over all accepted products
+			for (auto & productName : productNames) {
+				// Get all the clusters of this type
+				auto& allProducts = getAll(productName);
+				// Loop over all individual products
+				for (auto & product : allProducts) {
+					auto& prodCluster =
+							static_cast<AlloyCluster&>(*(product.second));
+					if (checkOverlap(monomer, prodCluster, parentCluster)) {
 						// Create the dissociation
 						std::unique_ptr<DissociationReaction> dissoReaction(
-								new DissociationReaction(parentCluster,
-										*monomer, prodCluster));
+								new DissociationReaction(parentCluster, monomer,
+										prodCluster));
 						// Create the corresponding reaction
 						std::unique_ptr<ProductionReaction> reaction(
-								new ProductionReaction(*monomer, prodCluster));
+								new ProductionReaction(monomer, prodCluster));
 						auto& prref = add(std::move(reaction));
 						// Set it in the dissociation
 						dissoReaction->reverseReaction = &prref;
 						auto& drref = add(std::move(dissoReaction));
 						// Tell the reactants that they are in this reaction
-						(monomer)->participateIn(drref, prodCluster);
+						(monomer).participateIn(drref, prodCluster);
 						(prodCluster).participateIn(drref, prodCluster);
 						parentCluster.emitFrom(drref, prodCluster);
 					}
@@ -276,6 +276,26 @@ void AlloyClusterReactionNetwork::reinitializeNetwork() {
 					auto& currCluster = static_cast<AlloySuperCluster&>(currReactant);
 					id++;
 					currCluster.setMomentId(id);
+
+					// Update the size
+					IReactant::SizeType clusterSize = (double)currCluster.getSize()
+					+ (double)(currCluster.getSectionWidth() - 1) / 2.0;
+					if (currReactant.getType() == ReactantType::VoidSuper
+							&& clusterSize > maxClusterSizeMap[ReactantType::Void]) {
+						maxClusterSizeMap[ReactantType::Void] = clusterSize;
+					}
+					if (currReactant.getType() == ReactantType::FaultedSuper
+							&& clusterSize > maxClusterSizeMap[ReactantType::Faulted]) {
+						maxClusterSizeMap[ReactantType::Faulted] = clusterSize;
+					}
+					if (currReactant.getType() == ReactantType::PerfectSuper
+							&& clusterSize > maxClusterSizeMap[ReactantType::Perfect]) {
+						maxClusterSizeMap[ReactantType::Perfect] = clusterSize;
+					}
+					if (currReactant.getType() == ReactantType::FrankSuper
+							&& clusterSize > maxClusterSizeMap[ReactantType::Frank]) {
+						maxClusterSizeMap[ReactantType::Frank] = clusterSize;
+					}
 				}
 			});
 
@@ -326,6 +346,10 @@ std::vector<std::vector<int> > AlloyClusterReactionNetwork::getCompositionList()
 				std::vector <int> compVec;
 				compVec.push_back(comp[toCompIdx(Species::V)]);
 				compVec.push_back(comp[toCompIdx(Species::I)]);
+				compVec.push_back(comp[toCompIdx(Species::Void)]);
+				compVec.push_back(comp[toCompIdx(Species::Perfect)]);
+				compVec.push_back(comp[toCompIdx(Species::Faulted)]);
+				compVec.push_back(comp[toCompIdx(Species::Frank)]);
 
 				// Save the composition in the list
 				compList.push_back(compVec);

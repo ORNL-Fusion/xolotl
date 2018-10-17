@@ -207,9 +207,12 @@ public:
 	}
 
 	/**
-	 * Update reactant using other reactants in its network.
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
 	 */
-	virtual void updateFromNetwork() override;
+	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
 
 	/**
 	 * Note that we result from the given reaction.
@@ -234,6 +237,15 @@ public:
 	 *
 	 * \see Reactant.h
 	 */
+	void participateIn(ProductionReaction& reaction, IReactant& product)
+			override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
 	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
 
 	/**
@@ -243,6 +255,15 @@ public:
 	 * \see Reactant.h
 	 */
 	void participateIn(ProductionReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * \see Reactant.h
+	 */
+	void participateIn(DissociationReaction& reaction, IReactant& disso)
+			override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -267,6 +288,14 @@ public:
 	 *
 	 * \see Reactant.h
 	 */
+	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
 	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
 
 	/**
@@ -276,11 +305,6 @@ public:
 	 * \see Reactant.h
 	 */
 	void emitFrom(DissociationReaction& reaction, double *coef) override;
-
-	/**
-	 * Add the reactions to the network lists.
-	 */
-	virtual void optimizeReactions() override;
 
 	/**
 	 * This operation returns the connectivity array for this cluster for
@@ -500,6 +524,25 @@ public:
 	 * that it does not.
 	 */
 	std::vector<int> getConnectivity() const override;
+
+	/**
+	 * This operation returns the section width.
+	 *
+	 * @return 1
+	 */
+	virtual int getSectionWidth() const {
+		return 1;
+	}
+
+	/**
+	 * This operation returns the distance to the mean.
+	 *
+	 * @param atom The number of atom
+	 * @return The distance to the mean number of in the group
+	 */
+	virtual double getDistance(int atom) const {
+		return 0.0;
+	}
 
 	/**
 	 * Tell reactant to output a representation of its reaction coefficients

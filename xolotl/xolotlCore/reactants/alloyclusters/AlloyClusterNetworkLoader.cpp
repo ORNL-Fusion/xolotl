@@ -1,12 +1,13 @@
+#include <AlloyFaultedCluster.h>
+#include <AlloyFrankCluster.h>
+#include <AlloyIntCluster.h>
+#include <AlloyPerfectCluster.h>
 #include "AlloyClusterNetworkLoader.h"
-#include <VacCluster.h>
-#include <IntCluster.h>
-#include <VoidCluster.h>
-#include <FaultedCluster.h>
-#include <FrankCluster.h>
-#include <PerfectCluster.h>
 #include <AlloySuperCluster.h>
+#include <AlloyVacCluster.h>
+#include <AlloyVoidCluster.h>
 #include <xolotlPerf.h>
+#include "xolotlCore/io/XFile.h"
 
 using namespace xolotlCore;
 
@@ -20,23 +21,35 @@ std::unique_ptr<AlloyCluster> AlloyClusterNetworkLoader::createAlloyCluster(
 	// Create a new cluster by that type and specify the names of the
 	// property keys.
 	if (numV > 0) {
-		cluster = new VacCluster(numV, network, handlerRegistry);
+		cluster = new AlloyVacCluster(numV, network, handlerRegistry);
 	} else if (numI > 0) {
-		cluster = new IntCluster(numI, network, handlerRegistry);
+		cluster = new AlloyIntCluster(numI, network, handlerRegistry);
 	} else if (numVoid > 0) {
-		cluster = new VoidCluster(numVoid, network, handlerRegistry);
+		cluster = new AlloyVoidCluster(numVoid, network, handlerRegistry);
 	} else if (numFaulted > 0) {
-		cluster = new FaultedCluster(numFaulted, network, handlerRegistry);
+		cluster = new AlloyFaultedCluster(numFaulted, network, handlerRegistry);
 	} else if (numFrank > 0) {
-		cluster = new FrankCluster(numFrank, network, handlerRegistry);
+		cluster = new AlloyFrankCluster(numFrank, network, handlerRegistry);
 	} else if (numPerfect > 0) {
-		cluster = new PerfectCluster(numPerfect, network, handlerRegistry);
+		cluster = new AlloyPerfectCluster(numPerfect, network, handlerRegistry);
 	}
 	assert(cluster != nullptr);
 
 	// TODO when we have widespread C++14 support, use std::make_unique
 	// and construct unique ptr and object pointed to in one memory operation.
 	return std::unique_ptr<AlloyCluster>(cluster);
+}
+
+std::unique_ptr<AlloyCluster> AlloyClusterNetworkLoader::createAlloySuperCluster(
+		int nTot, int maxXe, ReactantType type,
+		IReactionNetwork& network) const {
+	// Create the cluster
+	auto superCluster = new AlloySuperCluster(maxXe, nTot, type, network,
+			handlerRegistry);
+
+	// TODO when we have widespread C++14 support, use std::make_unique
+	// and construct unique ptr and object pointed to in one memory operation.
+	return std::unique_ptr<AlloyCluster>(superCluster);
 }
 
 void AlloyClusterNetworkLoader::pushAlloyCluster(
@@ -72,6 +85,7 @@ AlloyClusterNetworkLoader::AlloyClusterNetworkLoader(
 	fileName = "";
 	dummyReactions = false;
 	sizeMin = 1000000;
+	sizeMax = -1;
 	sectionWidth = 1;
 
 	return;
@@ -85,6 +99,7 @@ AlloyClusterNetworkLoader::AlloyClusterNetworkLoader(
 	fileName = "";
 	dummyReactions = false;
 	sizeMin = 1000000;
+	sizeMax = -1;
 	sectionWidth = 1;
 
 	return;
@@ -92,10 +107,83 @@ AlloyClusterNetworkLoader::AlloyClusterNetworkLoader(
 
 std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::load(
 		const IOptions& options) {
+	// Get the dataset from the HDF5 files
+	int normalSize = 0, superSize = 0;
+	XFile networkFile(fileName);
+	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
+	assert(networkGroup);
+	networkGroup->readNetworkSize(normalSize, superSize);
+
+	// Initialization
+	int numV = 0, numI = 0, numVoid = 0, numFaulted = 0, numFrank = 0,
+			numPerfect = 0;
+	double formationEnergy = 0.0, migrationEnergy = 0.0;
+	double diffusionFactor = 0.0;
+	std::vector<std::reference_wrapper<Reactant> > reactants;
+
 	// Prepare the network
 	std::unique_ptr<AlloyClusterReactionNetwork> network(
 			new AlloyClusterReactionNetwork(handlerRegistry));
 
+	// Loop on the clusters
+	for (int i = 0; i < normalSize + superSize; i++) {
+		// Open the cluster group
+		XFile::ClusterGroup clusterGroup(*networkGroup, i);
+
+		if (i < normalSize) {
+			// Normal cluster
+			// Read the composition
+			auto comp = clusterGroup.readCluster(formationEnergy,
+					migrationEnergy, diffusionFactor);
+			numV = comp[toCompIdx(Species::V)];
+			numI = comp[toCompIdx(Species::I)];
+			numFaulted = comp[toCompIdx(Species::Faulted)];
+			numFrank = comp[toCompIdx(Species::Frank)];
+			numVoid = comp[toCompIdx(Species::Void)];
+			numPerfect = comp[toCompIdx(Species::Perfect)];
+
+			// Create the cluster
+			auto nextCluster = createAlloyCluster(numV, numI, numVoid,
+					numFaulted, numFrank, numPerfect, *network);
+
+			// Set the formation energy
+			nextCluster->setFormationEnergy(formationEnergy);
+			// Set the diffusion factor and migration energy
+			nextCluster->setMigrationEnergy(migrationEnergy);
+			nextCluster->setDiffusionFactor(diffusionFactor);
+
+			// Save it in the network
+			pushAlloyCluster(network, reactants, nextCluster);
+		} else {
+			// Super cluster
+			int nTot = 0, maxAtom = 0;
+			ReactantType type;
+			clusterGroup.readAlloySuperCluster(nTot, maxAtom, type);
+
+			// Create the cluster
+			auto nextCluster = createAlloySuperCluster(nTot, maxAtom, type,
+					*network);
+
+			// Save it in the network
+			pushAlloyCluster(network, reactants, nextCluster);
+		}
+	}
+
+	// Ask reactants to update now that they are in network.
+	for (IReactant& currReactant : reactants) {
+		currReactant.updateFromNetwork();
+	}
+
+	// Set the reactions
+	networkGroup->readReactions(*network);
+
+	// Recompute Ids and network size
+	network->reinitializeNetwork();
+
+	// Need to use move() because return type uses smart pointer to base class,
+	// not derived class that we created.
+	// Some C++11 compilers accept it without the move, but apparently
+	// that is not correct behavior until C++14.
 	return std::move(network);
 }
 
@@ -203,10 +291,9 @@ void AlloyClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 		auto currType = *tvIter;
 
 		// Initialize variables for the loop
-		AlloyCluster * cluster;
 		std::unique_ptr<AlloySuperCluster> superCluster;
 		int count = 0, superCount = 0, width = sectionWidth;
-		int size = 0.0;
+		int size = 0;
 
 		// Loop on the xenon groups
 		for (int k = sizeMin; k < sizeMax; k++) {

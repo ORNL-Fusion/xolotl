@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include "NECluster.h"
 
 namespace xolotlCore {
 
@@ -67,7 +68,34 @@ private:
 	 *
 	 */
 	void checkForDissociation(IReactant * emittingReactant,
-			std::shared_ptr<ProductionReaction> reaction);
+			ProductionReaction& reaction);
+
+	/**
+	 * Determine if the reaction is possible given then reactants and product
+	 *
+	 * @param r1 First reactant.
+	 * @param r2 Second reactant.
+	 * @param prod Potential product.
+	 */
+	bool checkOverlap(NECluster& r1, NECluster& r2, NECluster& prod) {
+		int width1 = r1.getSectionWidth();
+		int size1 = r1.getSize();
+		int width2 = r2.getSectionWidth();
+		int size2 = r2.getSize();
+		int prodWidth = prod.getSectionWidth(), prodSize = prod.getSize();
+		int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+				((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+				((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+				((int) ((double) size2 + (double) width2 / 2.0));
+		int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
+				prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
+
+		int overlap = std::min(prodHi, hi1 + hi2) - std::max(prodLo, lo1 + lo2)
+				+ 1;
+
+		if (overlap < 1) return false;
+		return true;
+	}
 
 public:
 
@@ -145,7 +173,7 @@ public:
 	 * @return The number of degrees of freedom
 	 */
 	virtual int getDOF() const override {
-		return size() + getAll(ReactantType::NESuper).size() + 1;
+		return size() + getSuperSize() + 1;
 	}
 
 	/**
@@ -159,14 +187,14 @@ public:
 	 * Find the super cluster that contains the original cluster with nHe
 	 * helium atoms and nV vacancies.
 	 *
-	 * @param nHe The number of helium atoms
+	 * @param nXe The number of xenon atoms
 	 * @param nD The number of deuterium atoms
 	 * @param nT The number of tritium atoms
 	 * @param nV The number of vacancies
 	 * @return The super cluster representing the cluster with nHe helium
 	 * and nV vacancies, or nullptr if no such cluster exists.
 	 */
-	IReactant * getSuperFromComp(IReactant::SizeType nHe,
+	IReactant * getSuperFromComp(IReactant::SizeType nXe,
 			IReactant::SizeType nD, IReactant::SizeType nT,
 			IReactant::SizeType nV) const override;
 

@@ -3,6 +3,7 @@
 #include <xolotlPerf.h>
 #include <Constants.h>
 #include <MathUtils.h>
+#include <AlloyClusterReactionNetwork.h>
 
 using namespace xolotlCore;
 

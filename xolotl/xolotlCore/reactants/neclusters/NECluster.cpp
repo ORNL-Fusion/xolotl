@@ -1,11 +1,53 @@
 #include <algorithm>
-#include <cassert>
 #include "NECluster.h"
 #include <xolotlPerf.h>
 #include <Constants.h>
 #include <MathUtils.h>
 
 using namespace xolotlCore;
+
+void NECluster::resultFrom(ProductionReaction& reaction, IReactant& product) {
+	// Cast the reacting clusters
+	auto& cluster1 = static_cast<NECluster&>(reaction.first);
+	auto& cluster2 = static_cast<NECluster&>(reaction.second);
+	auto& prodCluster = static_cast<NECluster&>(product);
+
+	// Compute the overlap
+	int width1 = cluster1.getSectionWidth();
+	int size1 = cluster1.getSize();
+	int width2 = cluster2.getSectionWidth();
+	int size2 = cluster2.getSize();
+	int prodWidth = prodCluster.getSectionWidth(), prodSize =
+			prodCluster.getSize();
+	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
+	int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
+			prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
+
+	int overlap = std::min(prodHi, hi1 + hi2) - std::max(prodLo, lo1 + lo2) + 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Create the pair
+	ClusterPair pair(reaction, &cluster1, &cluster2);
+
+	// Set the distance if super clusters are involved
+	if (cluster1.getType() == ReactantType::NESuper) {
+		pair.firstDistance = cluster1.getDistance(prodHi - hi2); // prod and 2 are normal
+	}
+	if (cluster2.getType() == ReactantType::NESuper) {
+		pair.secondDistance = cluster2.getDistance(prodHi - hi1); // prod and 1 are normal
+	}
+
+	// Add the pair
+	reactingPairs.emplace_back(pair);
+
+	return;
+}
 
 void NECluster::resultFrom(ProductionReaction& reaction, int[4], int[4]) {
 
@@ -14,9 +56,6 @@ void NECluster::resultFrom(ProductionReaction& reaction, int[4], int[4]) {
 			reaction,  // TODO verify this is correct
 			&static_cast<NECluster&>(reaction.first),
 			&static_cast<NECluster&>(reaction.second));
-	// Setup the connectivity array
-	setReactionConnectivity(reaction.first.getId());
-	setReactionConnectivity(reaction.second.getId());
 
 	return;
 }
@@ -30,13 +69,54 @@ void NECluster::resultFrom(ProductionReaction& reaction, double *coef) {
 			&static_cast<NECluster&>(reaction.second));
 	auto& newPair = reactingPairs.back();
 
-	// Setup the connectivity array
-	setReactionConnectivity(reaction.first.getId());
-	setReactionConnectivity(reaction.second.getId());
-
 	// Update the distances
 	newPair.firstDistance = coef[0];
 	newPair.secondDistance = coef[1];
+
+	return;
+}
+
+void NECluster::participateIn(ProductionReaction& reaction,
+		IReactant& product) {
+	// Look for the other cluster
+	auto& otherCluster = static_cast<NECluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+	auto& prodCluster = static_cast<NECluster&>(product);
+
+	// Compute the overlap
+	int width1 = otherCluster.getSectionWidth();
+	int size1 = otherCluster.getSize();
+	int width2 = getSectionWidth();
+	int size2 = getSize();
+	int prodWidth = prodCluster.getSectionWidth(), prodSize =
+			prodCluster.getSize();
+	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
+	int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
+			prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
+
+	int overlap = std::min(prodHi, hi1 + hi2) - std::max(prodLo, lo1 + lo2) + 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Loop on the overlap
+	for (int i = 0; i < overlap; i++) {
+		// Create the pair
+		CombiningCluster pair(reaction, &otherCluster);
+
+		// Set the distance if super clusters are involved
+		if (otherCluster.getType() == ReactantType::NESuper) {
+			pair.distance = otherCluster.getDistance(
+					std::max(prodLo - lo2, lo1) + i);
+		}
+
+		// Add the combining cluster to list of clusters that combine with us
+		combiningReactants.emplace_back(pair);
+	}
 
 	return;
 }
@@ -53,10 +133,6 @@ void NECluster::participateIn(ProductionReaction& reaction, int[4]) {
 
 	// Add the combining cluster to list of clusters that combine with us
 	combiningReactants.emplace_back(reaction, &otherCluster);
-
-	// Setup the connectivity array
-	setReactionConnectivity(id);
-	setReactionConnectivity(otherCluster.getId());
 
 	return;
 }
@@ -75,12 +151,54 @@ void NECluster::participateIn(ProductionReaction& reaction, double *coef) {
 	combiningReactants.emplace_back(reaction, &otherCluster);
 	auto& newComb = combiningReactants.back();
 
-	// Setup the connectivity array
-	setReactionConnectivity(id);
-	setReactionConnectivity(otherCluster.getId());
-
 	// Update the distances
 	newComb.distance = coef[0];
+
+	return;
+}
+
+void NECluster::participateIn(DissociationReaction& reaction,
+		IReactant& disso) {
+	// Look for the other cluster
+	auto& emittedCluster = static_cast<NECluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+	auto& dissoCluster = static_cast<NECluster&>(disso);
+
+	// Compute the overlap
+	int width1 = emittedCluster.getSectionWidth();
+	int size1 = emittedCluster.getSize();
+	int width2 = getSectionWidth();
+	int size2 = getSize();
+	int dissoWidth = dissoCluster.getSectionWidth(), dissoSize =
+			dissoCluster.getSize();
+	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
+	int dissoLo = ((int) ((double) dissoSize - (double) dissoWidth / 2.0) + 1),
+			dissoHi = ((int) ((double) dissoSize + (double) dissoWidth / 2.0));
+
+	int overlap = std::min(dissoHi, hi1 + hi2) - std::max(dissoLo, lo1 + lo2)
+			+ 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Loop on the overlap
+	for (int i = 0; i < overlap; i++) {
+		// Create the pair
+		ClusterPair pair(reaction, &dissoCluster, &emittedCluster);
+
+		// Set the distance if super clusters are involved
+		if (dissoCluster.getType() == ReactantType::NESuper) {
+			pair.firstDistance = dissoCluster.getDistance(
+					std::max(dissoLo, lo1 + lo2) + i);
+		}
+
+		// Add the combining cluster to list of clusters that combine with us
+		dissociatingPairs.emplace_back(pair);
+	}
 
 	return;
 }
@@ -96,9 +214,6 @@ void NECluster::participateIn(DissociationReaction& reaction, int[4], int[4]) {
 			reaction,  // TODO is this correct?
 			&static_cast<NECluster&>(reaction.dissociating),
 			&static_cast<NECluster&>(emittedCluster));
-
-	// Setup the connectivity array
-	setDissociationConnectivity(reaction.dissociating.getId());
 
 	return;
 }
@@ -116,11 +231,47 @@ void NECluster::participateIn(DissociationReaction& reaction, double *coef) {
 			&static_cast<NECluster&>(emittedCluster));
 	auto& newPair = dissociatingPairs.back();
 
-	// Setup the connectivity array
-	setDissociationConnectivity(reaction.dissociating.getId());
-
 	// Set the distance
 	newPair.firstDistance = coef[0];
+
+	return;
+}
+
+void NECluster::emitFrom(DissociationReaction& reaction, IReactant& disso) {
+	// Cast the reacting clusters
+	auto& cluster1 = static_cast<NECluster&>(reaction.first);
+	auto& cluster2 = static_cast<NECluster&>(reaction.second);
+	auto& dissoCluster = static_cast<NECluster&>(disso);
+
+	// Compute the overlap
+	int width1 = cluster1.getSectionWidth();
+	int size1 = cluster1.getSize();
+	int width2 = cluster2.getSectionWidth();
+	int size2 = cluster2.getSize();
+	int dissoWidth = dissoCluster.getSectionWidth(), dissoSize =
+			dissoCluster.getSize();
+	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
+	int dissoLo = ((int) ((double) dissoSize - (double) dissoWidth / 2.0) + 1),
+			dissoHi = ((int) ((double) dissoSize + (double) dissoWidth / 2.0));
+
+	int overlap = std::min(dissoHi, hi1 + hi2) - std::max(dissoLo, lo1 + lo2)
+			+ 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Loop on the overlap
+	for (int i = 0; i < overlap; i++) {
+		// Create the pair
+		ClusterPair pair(reaction, &cluster1, &cluster2);
+
+		// Add the pair
+		emissionPairs.emplace_back(pair);
+	}
 
 	return;
 }
@@ -133,9 +284,6 @@ void NECluster::emitFrom(DissociationReaction& reaction, int[4]) {
 			&static_cast<NECluster&>(reaction.first),
 			&static_cast<NECluster&>(reaction.second));
 
-	// Setup the connectivity array to itself
-	setReactionConnectivity(id);
-
 	return;
 }
 
@@ -147,67 +295,7 @@ void NECluster::emitFrom(DissociationReaction& reaction, double *coef) {
 			&static_cast<NECluster&>(reaction.first),
 			&static_cast<NECluster&>(reaction.second));
 
-	// Setup the connectivity array to itself
-	setReactionConnectivity(id);
-
 	// Nothing more to do
-
-	return;
-}
-
-void NECluster::optimizeReactions() {
-	// Loop on the pairs to add reactions to the network
-	std::for_each(reactingPairs.begin(), reactingPairs.end(),
-			[this](ClusterPair& currPair) {
-				// Create the corresponding production reaction
-				std::unique_ptr<ProductionReaction> newReaction(new ProductionReaction(*currPair.first, *currPair.second));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReaction));
-				// Link it to the pair
-				currPair.reaction = prref;
-			});
-
-	std::for_each(combiningReactants.begin(), combiningReactants.end(),
-			[this](CombiningCluster& cc) {
-				// Create the corresponding production reaction
-				std::unique_ptr<ProductionReaction> newReaction(new ProductionReaction(*cc.combining, *this));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReaction));
-				// Link it to the pair
-				cc.reaction = prref;
-			});
-
-	std::for_each(dissociatingPairs.begin(), dissociatingPairs.end(),
-			[this](ClusterPair& currPair) {
-				// Create the corresponding dissociation reaction
-				std::unique_ptr<DissociationReaction> newReaction(new DissociationReaction(*currPair.first, *currPair.second, *this));
-				// Add it to the network
-				auto& drref = network.add(std::move(newReaction));
-				// Create the corresponding reverse reaction
-				std::unique_ptr<ProductionReaction> newReverseReaction(new ProductionReaction(*currPair.second, *this));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReverseReaction));
-				// Link it
-				drref.reverseReaction = &prref;
-				// Link it to the pair
-				currPair.reaction = drref;
-			});
-
-	std::for_each(emissionPairs.begin(), emissionPairs.end(),
-			[this](ClusterPair& currPair) {
-				// Create the corresponding dissociation reaction
-				std::unique_ptr<DissociationReaction> newReaction(new DissociationReaction(*this, *currPair.first, *currPair.second));
-				// Add it to the network
-				auto& drref = network.add(std::move(newReaction));
-				// Create the corresponding reverse reaction
-				std::unique_ptr<ProductionReaction> newReverseReaction(new ProductionReaction(*currPair.first, *currPair.second));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReverseReaction));
-				// Link it
-				drref.reverseReaction = &prref;
-				// Link it to the pair
-				currPair.reaction = drref;
-			});
 
 	return;
 }
@@ -284,17 +372,6 @@ void NECluster::resetConnectivities() {
 
 	// Don't apply to the emission pairs because
 	// this cluster is not connected to them
-
-	return;
-}
-
-void NECluster::updateFromNetwork() {
-
-	// Clear the flux-related arrays
-	reactingPairs.clear();
-	combiningReactants.clear();
-	dissociatingPairs.clear();
-	emissionPairs.clear();
 
 	return;
 }
