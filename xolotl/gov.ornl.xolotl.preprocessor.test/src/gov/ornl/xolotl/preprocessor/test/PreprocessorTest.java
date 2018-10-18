@@ -9,7 +9,6 @@ import java.io.*;
 
 import gov.ornl.xolotl.preprocessor.Preprocessor;
 import gov.ornl.xolotl.preprocessor.Arguments;
-import gov.ornl.xolotl.preprocessor.Cluster;
 
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -207,114 +206,6 @@ public class PreprocessorTest {
 			}
 		} catch (ArgumentValidationException e) {
 			e.printStackTrace();
-		}
-
-		return;
-	}
-
-	/**
-	 * This operation checks the generation of the network.
-	 */
-	@Test
-	public void testNetworkGeneration() {
-		// Local Declarations
-		Arguments parsedArgs = null;
-
-		try {
-			// Keep the default arguments
-			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] {});
-
-			if (parsedArgs != null) {
-				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-
-				// Generate the network
-				ArrayList<Cluster> network = preprocessor.generateNetwork();
-
-				// Check the size of the network
-				assertEquals(network.size(), 2067);
-			}
-
-			// Change the number of V clusters
-			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] { "--maxVSize", "60" });
-
-			if (parsedArgs != null) {
-				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-
-				// Generate the network
-				ArrayList<Cluster> network = preprocessor.generateNetwork();
-
-				// Check the size of the network
-				assertEquals(network.size(), 7678);
-			}
-
-			// Use the phase-cut method
-			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] { "--phaseCut" });
-
-			if (parsedArgs != null) {
-				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-
-				// Generate the network
-				ArrayList<Cluster> network = preprocessor.generateNetwork();
-
-				// Check the size of the network
-				assertEquals(network.size(), 447);
-			}
-		} catch (ArgumentValidationException e) {
-			// Complain and fail
-			e.printStackTrace();
-			fail();
-		}
-
-		return;
-	}
-
-	/**
-	 * This operation checks the writing of the HDF5 file.
-	 */
-	@Test
-	public void testHDF5Writing() {
-		// Local Declarations
-		Arguments parsedArgs = null;
-
-		try {
-			parsedArgs = CliFactory.parseArguments(Arguments.class, new String[] {});
-
-			if (parsedArgs != null) {
-				Preprocessor preprocessor = new Preprocessor(parsedArgs);
-
-				// Create an empty cluster array
-				ArrayList<Cluster> clusters = new ArrayList<Cluster>();
-
-				// Create a cluster
-				Cluster cluster = new Cluster();
-				cluster.nXe = 1;
-				cluster.nV = 23;
-				cluster.nI = 52;
-				cluster.E_f = 12.3;
-				cluster.E_m = 0.04;
-				cluster.D_0 = 1.1;
-
-				// Add it to clusters
-				clusters.add(cluster);
-
-				// Create the HDF5 file
-				preprocessor.createHDF5("test.h5");
-
-				// Write the header in it
-				preprocessor.writeHeader("test.h5", parsedArgs);
-
-				// Write the network in it
-				preprocessor.writeNetwork("test.h5", clusters);
-
-				// Check that the file was created
-				File f = new File("test.h5");
-				boolean fileExists = (f.exists() && !f.isDirectory());
-				assertEquals(fileExists, true);
-			}
-		} catch (ArgumentValidationException e) {
-			// Complain and fail
-			e.printStackTrace();
-			fail();
 		}
 
 		return;

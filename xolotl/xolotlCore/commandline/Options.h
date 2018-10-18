@@ -235,14 +235,10 @@ protected:
 	double zStepSize;
 
 	/**
-	 * The boundary condition on the left side of the X direction.
+	 * The boundary condition on the given side of the grid.
 	 */
-	int leftBoundary;
-
-	/**
-	 * The boundary condition on the right side of the X direction.
-	 */
-	int rightBoundary;
+	int leftBoundary, rightBoundary, bottomBoundary, topBoundary, frontBoundary,
+			backBoundary;
 
 	/**
 	 * Depth for the bubble bursting in nm.
@@ -986,35 +982,49 @@ public:
 	}
 
 	/**
-	 * Obtain the boundary condition on the left side of the grid.
+	 * Obtain the boundary condition on a given side of the grid.
 	 * \see IOptions.h
 	 */
 	int getLeftBoundary() const override {
 		return leftBoundary;
 	}
+	int getRightBoundary() const override {
+		return rightBoundary;
+	}
+	int getBottomBoundary() const override {
+		return bottomBoundary;
+	}
+	int getTopBoundary() const override {
+		return topBoundary;
+	}
+	int getFrontBoundary() const override {
+		return frontBoundary;
+	}
+	int getBackBoundary() const override {
+		return backBoundary;
+	}
 
 	/**
-	 * Set the boundary condition on the left side of the grid.
+	 * Set the boundary condition on a given side of the grid.
 	 * \see IOptions.h
 	 */
 	void setLeftBoundary(int n) override {
 		leftBoundary = n;
 	}
-
-	/**
-	 * Obtain the boundary condition on the right side of the grid.
-	 * \see IOptions.h
-	 */
-	int getRightBoundary() const override {
-		return rightBoundary;
-	}
-
-	/**
-	 * Set the boundary condition on the right side of the grid.
-	 * \see IOptions.h
-	 */
 	void setRightBoundary(int n) override {
 		rightBoundary = n;
+	}
+	void setBottomBoundary(int n) override {
+		bottomBoundary = n;
+	}
+	void setTopBoundary(int n) override {
+		topBoundary = n;
+	}
+	void setFrontBoundary(int n) override {
+		frontBoundary = n;
+	}
+	void setBackBoundary(int n) override {
+		backBoundary = n;
 	}
 
 	/**

@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 
 	// Get and check the flux
 	double flux = cluster->getTotalFlux(0);
-	BOOST_REQUIRE_CLOSE(0.0, flux, 0.1);
+	BOOST_REQUIRE_CLOSE(43000201855.9, flux, 0.1);
 
 	return;
 }
@@ -146,10 +146,10 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.63906e-08, 0, 0, -0.00528717,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 8.63906e-08, 0, 0, 0, 0, 9.20495e-13,
-			0.00528717, 0 };
+	double knownPartials[] = { 2.37284e+09, 8.60004e+10, 0, 0, 0, 0, 0, 0, 0,
+			5.15396e+07, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			8.63906e-08, 0, 0, -0.00528717, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			8.63906e-08, 0, 0, 0, 0, 9.20495e-13, 0.00528717, 0 };
 	// Set the concentration
 	cluster->setConcentration(0.5);
 

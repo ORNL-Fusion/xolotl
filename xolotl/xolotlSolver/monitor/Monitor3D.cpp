@@ -75,11 +75,13 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / hdf5Stride3D) <= hdf5Previous3D)
+	if (((int) ((time + dt / 10.0) / hdf5Stride3D) <= hdf5Previous3D)
+			&& timestep > 0)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
-	hdf5Previous3D++;
+	if ((int) ((time + dt / 10.0) / hdf5Stride3D) > hdf5Previous3D)
+		hdf5Previous3D++;
 
 	// Get the number of processes
 	int worldSize;
@@ -147,8 +149,11 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
 			currentTimeStep);
 
-	// Write the surface positions in the concentration sub group
-	tsGroup->writeSurface3D(surfaceIndices, nInterstitial3D, previousIFlux3D);
+	if (solverHandler.moveSurface()) {
+		// Write the surface positions in the concentration sub group
+		tsGroup->writeSurface3D(surfaceIndices, nInterstitial3D,
+				previousIFlux3D);
+	}
 
 	// Loop on the full grid
 	for (PetscInt k = 0; k < Mz; k++) {
@@ -345,6 +350,138 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 		outputFile << fluence << " " << totalHeConcentration << " "
 				<< totalDConcentration << " " << totalTConcentration
 				<< std::endl;
+		outputFile.close();
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeTRIDYN3D")
+/**
+ * This is a monitoring method that will compute the data to send to TRIDYN
+ */
+PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void *ictx) {
+	// Initial declarations
+	PetscErrorCode ierr;
+	PetscInt xs, xm, ys, ym, zs, zm;
+
+	PetscFunctionBeginUser;
+
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+
+	// Gets the process ID
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the network
+	auto& network = solverHandler.getNetwork();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
+	CHKERRQ(ierr);
+
+	// Get the total size of the grid rescale the concentrations
+	PetscInt Mx, My, Mz;
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	CHKERRQ(ierr);
+
+	// Get the physical grid
+	auto grid = solverHandler.getXGrid();
+
+	// Get the array of concentration
+	double ****solutionArray, *gridPointSolution;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Create the output file
+	std::ofstream outputFile;
+	if (procId == 0) {
+		std::stringstream name;
+		name << "TRIDYN_" << timestep << ".dat";
+		outputFile.open(name.str());
+	}
+
+	// Loop on the entire grid
+	for (int xi = 0; xi < Mx; xi++) {
+		// Set x
+		double x = grid[xi + 1] - grid[1];
+
+		// Initialize the concentrations at this grid point
+		double heLocalConc = 0.0, dLocalConc = 0.0, tLocalConc = 0.0,
+				vLocalConc = 0.0, iLocalConc = 0.0;
+
+		// Loop on the y
+		for (PetscInt yj = ys; yj < ys + ym; yj++) {
+			// Loop on the z
+			for (PetscInt zk = zs; zk < zs + zm; zk++) {
+				// Get the surface position
+				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
+				// Boundary conditions
+				if (xi < surfacePos)
+					continue;
+
+				// If it is the locally owned part of the grid
+				if (xi >= xs && xi < xs + xm) {
+					// Get the pointer to the beginning of the solution data for this grid point
+					gridPointSolution = solutionArray[zk][yj][xi];
+
+					// Update the concentration in the network
+					network.updateConcentrationsFromArray(gridPointSolution);
+
+					// Get the total helium concentration at this grid point
+					heLocalConc += gridPointSolution[0];
+					dLocalConc += gridPointSolution[1];
+					tLocalConc += network.getTotalAtomConcentration(2);
+					vLocalConc += network.getTotalVConcentration();
+					iLocalConc += network.getTotalIConcentration();
+				}
+			}
+		}
+
+		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
+		MPI_Reduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM, 0,
+				PETSC_COMM_WORLD);
+		MPI_Reduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM, 0,
+				PETSC_COMM_WORLD);
+		MPI_Reduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM, 0,
+				PETSC_COMM_WORLD);
+		MPI_Reduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM, 0,
+				PETSC_COMM_WORLD);
+		MPI_Reduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM, 0,
+				PETSC_COMM_WORLD);
+
+		// The master process writes computes the cumulative value and writes in the file
+		if (procId == 0) {
+			outputFile
+					<< x
+							- (grid[solverHandler.getSurfacePosition(0, 0) + 1]
+									- grid[1]) << " " << heConc / (My * Mz)
+					<< " " << dConc / (My * Mz) << " " << tConc / (My * Mz)
+					<< " " << vConc / (My * Mz) << " " << iConc / (My * Mz)
+					<< std::endl;
+		}
+	}
+
+	// Close the file
+	if (procId == 0) {
 		outputFile.close();
 	}
 
@@ -1244,7 +1381,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flagPerf, flagRetention, flagStatus, flag2DXYPlot,
-			flag2DXZPlot;
+			flag2DXZPlot, flagTRIDYN;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -1275,6 +1412,11 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	ierr = PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-start_stop) failed.");
+
+	// Check the option -tridyn
+	ierr = PetscOptionsHasName(NULL, NULL, "-tridyn", &flagTRIDYN);
+	checkPetscError(ierr,
+			"setupPetsc3DMonitor: PetscOptionsHasName (-tridyn) failed.");
 
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
@@ -1575,6 +1717,14 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		ierr = TSMonitorSet(ts, monitorSurfaceXZ3D, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc3DMonitor: TSMonitorSet (monitorSurfaceXZ3D) failed.");
+	}
+
+	// Set the monitor to output data for TRIDYN
+	if (flagTRIDYN) {
+		// computeTRIDYN2D will be called at each timestep
+		ierr = TSMonitorSet(ts, computeTRIDYN3D, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc3DMonitor: TSMonitorSet (computeTRIDYN3D) failed.");
 	}
 
 	// Set the monitor to simply change the previous time to the new time

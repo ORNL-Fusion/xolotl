@@ -387,11 +387,6 @@ void NESuperCluster::emitFrom(DissociationReaction& reaction, double *coef) {
 	return;
 }
 
-double NESuperCluster::getConcentration(double distXe, double, double,
-		double) const {
-	return l0 + (distXe * l1);
-}
-
 double NESuperCluster::getMoment() const {
 	return l1;
 }

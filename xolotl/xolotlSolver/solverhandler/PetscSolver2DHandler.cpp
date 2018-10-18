@@ -41,7 +41,7 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 
 	// Now that the grid was generated, we can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty()) {
+	if (not networkName.empty() and movingSurface) {
 
 		xolotlCore::XFile xfile(networkName);
 		auto concGroup =
@@ -155,8 +155,7 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
 	if (not networkName.empty()) {
 		xfile.reset(new xolotlCore::XFile(networkName));
-		auto concGroup =
-				xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
+		concGroup = xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
 
@@ -203,7 +202,8 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 
 			// Initialize the vacancy concentration
 			if (i >= surfacePosition[j] + leftOffset && vacancyIndex > 0
-					&& !hasConcentrations && i < nX - rightOffset) {
+					&& !hasConcentrations && i < nX - rightOffset
+					&& j >= bottomOffset && j < nY - topOffset) {
 				concOffset[vacancyIndex] = initialVConc;
 			}
 		}
@@ -230,6 +230,13 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 						concOffset[(int) concVector.at(l).at(0)] =
 								concVector.at(l).at(1);
 					}
+					// Set the temperature in the network
+					double temp = concVector.at(concVector.size() - 1).at(1);
+					network.setTemperature(temp, i - xs);
+					// Update the modified trap-mutation rate
+					// that depends on the network reaction rates
+					mutationHandler->updateTrapMutationRate(network);
+					lastTemperature[i - xs] = temp;
 				}
 			}
 		}
@@ -290,7 +297,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	const int dof = network.getDOF();
 
 	// Loop over grid points
-	for (PetscInt yj = 0; yj < nY; yj++) {
+	for (PetscInt yj = bottomOffset; yj < nY - topOffset; yj++) {
 
 		// Compute the total concentration of atoms contained in bubbles
 		atomConc = 0.0;
@@ -359,7 +366,8 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// Boundary conditions
 			// Everything to the left of the surface is empty
 			if (xi < surfacePosition[yj] + leftOffset
-					|| xi > nX - 1 - rightOffset) {
+					|| xi > nX - 1 - rightOffset || yj < bottomOffset
+					|| yj > nY - 1 - topOffset) {
 				continue;
 			}
 
@@ -537,7 +545,8 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			// Boundary conditions
 			// Everything to the left of the surface is empty
 			if (xi < surfacePosition[yj] + leftOffset
-					|| xi > nX - 1 - rightOffset)
+					|| xi > nX - 1 - rightOffset || yj < bottomOffset
+					|| yj > nY - 1 - topOffset)
 				continue;
 
 			// Set the grid position
@@ -717,7 +726,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	xolotlCore::Point < 3 > gridPosition { 0.0, 0.0, 0.0 };
 
 	// Loop over the grid points
-	for (PetscInt yj = 0; yj < nY; yj++) {
+	for (PetscInt yj = bottomOffset; yj < nY - topOffset; yj++) {
 
 		// Compute the total concentration of atoms contained in bubbles
 		atomConc = 0.0;
@@ -761,7 +770,8 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			// Boundary conditions
 			// Everything to the left of the surface is empty
 			if (xi < surfacePosition[yj] + leftOffset
-					|| xi > nX - 1 - rightOffset)
+					|| xi > nX - 1 - rightOffset || yj < bottomOffset
+					|| yj > nY - 1 - topOffset)
 				continue;
 
 			// Set the grid position

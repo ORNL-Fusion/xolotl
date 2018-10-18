@@ -644,32 +644,28 @@ public:
 	virtual void setZStepSize(double stepSize) = 0;
 
 	/**
-	 * Obtain the boundary condition on the left side of the grid.
+	 * Obtain the boundary condition on a given side of the grid.
 	 *
 	 * @return The boundary condition
 	 */
 	virtual int getLeftBoundary() const = 0;
+	virtual int getRightBoundary() const = 0;
+	virtual int getBottomBoundary() const = 0;
+	virtual int getTopBoundary() const = 0;
+	virtual int getFrontBoundary() const = 0;
+	virtual int getBackBoundary() const = 0;
 
 	/**
-	 * Set the boundary condition on the left side of the grid.
+	 * Set the boundary condition on a given side of the grid.
 	 *
 	 * @param n The condition
 	 */
 	virtual void setLeftBoundary(int n) = 0;
-
-	/**
-	 * Obtain the boundary condition on the right side of the grid.
-	 *
-	 * @return The boundary condition
-	 */
-	virtual int getRightBoundary() const = 0;
-
-	/**
-	 * Set the boundary condition on the right side of the grid.
-	 *
-	 * @param n The condition
-	 */
 	virtual void setRightBoundary(int n) = 0;
+	virtual void setBottomBoundary(int n) = 0;
+	virtual void setTopBoundary(int n) = 0;
+	virtual void setFrontBoundary(int n) = 0;
+	virtual void setBackBoundary(int n) = 0;
 
 	/**
 	 * Obtain the value of the depth above which the bursting is happening.

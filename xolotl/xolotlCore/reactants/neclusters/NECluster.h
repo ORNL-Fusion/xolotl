@@ -327,6 +327,31 @@ public:
 	virtual std::vector<int> getDissociationConnectivity() const;
 
 	/**
+	 * This operation returns the current concentration.
+	 *
+	 * @param distXe The xenon distance in the group
+	 * @return The concentration of this reactant
+	 */
+	virtual double getConcentration(double distXe) const {
+		// TODO should this ever be called?  It ignores the argument.
+		// It is in order to have the same method for normal and super clusters
+		// without having to cast (I was thinking it would save time)
+		return concentration;
+	}
+
+	/**
+	 * Obtain current concentration.
+	 *
+	 * We hid the base class' zero-argument getConcentration when
+	 * we defined the two-argument version here.  This tells the compiler
+	 * to allow us to use the base class' zero-argument version also
+	 * without having to explicitly specify the class scope when calling it.
+	 *
+	 * @return The concentration of the reactant.
+	 */
+	using Reactant::getConcentration;
+
+	/**
 	 * This operation returns the first xenon moment.
 	 *
 	 * @return The moment

@@ -17,26 +17,30 @@ add_library(${LIBRARY_NAME} STATIC
             MPIUtils.cpp)
 
 # We need a filesystem library.
-# We can use one of several (because the APIs are so similar).
-# Note: in the following, we'd like to use CheckCXXSymbolExists(),
-# but as of CMake-3.10 it seems to do its test in a way that
-# is not accepted by some recent C++ compilers (e.g., clang++ 5.0).
-# So we use try_compile() instead.
-include(CheckIncludeFileCXX)
-check_include_file_cxx("filesystem" HAVE_STD_FILESYSTEM)
-check_include_file_cxx("experimental/filesystem" HAVE_STD_EXPERIMENTAL_FILESYSTEM)
-if(HAVE_STD_EXPERIMENTAL_FILESYSTEM)
-    # In some environments (e.g., OS X), the libc++ that is found
-    # by default does not have the experimental filesystem support
-    # built into it.  Instead, we have to link explicitly against
-    # libc++experimental.  See whether we can use *that* library,
-    # and if not, alter our notion of whether std::experimental::filesystem
-    # is usable.
-    find_library(HAVE_STD_EXPERIMENTAL_FILESYSTEM_LIBRARY c++experimental)
-    if(NOT HAVE_STD_EXPERIMENTAL_FILESYSTEM_LIBRARY)
-        message(STATUS "Can't find the library implementing std::experimental::filesystem.")
-        set(HAVE_STD_EXPERIMENTAL_FILESYSTEM OFF)
-    endif()
+# We can use one of several such libraries (because the APIs are so similar).
+# We would like to just check for a symbol or a header,
+# but that isn't sufficient with some recent C++ compilers,
+# either because they put the contents in an unexpected namespace
+# (e.g., clang++ 7 putting it in a filesystem other than std::filesystem
+# when compiling using the C++11 standard) or because the
+# compiler can't handle the CMake tests for symbols.
+include(CheckCXXSourceCompiles)
+message(STATUS "Looking for C++ std::filesystem")
+check_cxx_source_compiles("#include <filesystem>
+int main() { std::filesystem::path test; return 0; }
+" STD_FILESYSTEM_COMPILES)
+if(NOT STD_FILESYSTEM_COMPILES)
+    message(STATUS "Code using std::filesystem fails to compile/link.")
+    set(HAVE_STD_FILESYSTEM OFF)
+endif()
+
+message(STATUS "Looking for C++ std::experimental::filesystem")
+check_cxx_source_compiles("#include <experimental/filesystem>
+int main() { std::experimental::filesystem::path test; return 0; }
+" STD_EXPERIMENTAL_FILESYSTEM_COMPILES)
+if(NOT STD_EXPERIMENTAL_FILESYSTEM_COMPILES)
+    message(STATUS "Code using std::experimental::filesystem fails to compile/link.")
+    set(HAVE_STD_EXPERIMENTAL_FILESYSTEM OFF)
 endif()
 
 # Find the Boost libraries we (potentially) use.

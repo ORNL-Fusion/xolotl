@@ -41,7 +41,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	// Now that the grid was generated, we can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty()) {
+	if (not networkName.empty() and movingSurface) {
 
 		xolotlCore::XFile xfile(networkName);
 		auto concGroup =
@@ -222,6 +222,13 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 			for (auto const& currConcData : myConcs[i]) {
 				concOffset[currConcData.first] = currConcData.second;
 			}
+			// Set the temperature in the network
+			double temp = myConcs[i][myConcs[i].size()-1].second;
+			network.setTemperature(temp, i);
+			// Update the modified trap-mutation rate
+			// that depends on the network reaction rates
+			mutationHandler->updateTrapMutationRate(network);
+			lastTemperature[i] = temp;
 		}
 	}
 

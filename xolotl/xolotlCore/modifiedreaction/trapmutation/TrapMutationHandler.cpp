@@ -3,6 +3,7 @@
 #include <MathUtils.h>
 #include <iostream>
 #include <algorithm>
+#include <mpi.h>
 
 namespace xolotlCore {
 
@@ -65,9 +66,11 @@ void TrapMutationHandler::initialize(const IReactionNetwork& network,
 			tmBubbles.emplace_back(temp2DVector);
 		}
 		// Inform the user
-		std::cout << "The modified trap-mutation won't happen because "
-				"the interstitial clusters are missing or He type is missing."
-				<< std::endl;
+		int procId;
+		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+		if (procId == 0)
+			std::cout << "The modified trap-mutation won't happen because "
+					"the interstitial clusters are missing or He type is missing." << std::endl;
 
 		return;
 	}
