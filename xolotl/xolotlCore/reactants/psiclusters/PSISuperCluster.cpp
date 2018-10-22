@@ -50,120 +50,112 @@ PSISuperCluster::PSISuperCluster(double num[4], int _nTot, int width[4],
 	return;
 }
 
-auto PSISuperCluster::addToEffReactingList(ProductionReaction& reaction) 
-        -> ProductionPairList::iterator {
+auto PSISuperCluster::addToEffReactingList(ProductionReaction& reaction)
+-> ProductionPairList::iterator {
 
 	// Check if we already know about the reaction.
-    auto listit = effReactingList.end();
+	auto listit = effReactingList.end();
 	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
 	auto mapit = effReactingListMap.find(rkey);
-    if (mapit != effReactingListMap.end()) {
-        // We already knew about this reaction.
-        listit = mapit->second;
-    }
-    else {
-        // We did not already know about this reaction.
-        // Add info about reaction to our list.
-        effReactingList.emplace_back(reaction,
-						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second), psDim);
-        listit = effReactingList.end();
-        --listit;
-    }
+	if (mapit != effReactingListMap.end()) {
+		// We already knew about this reaction.
+		listit = mapit->second;
+	} else {
+		// We did not already know about this reaction.
+		// Add info about reaction to our list.
+		effReactingList.emplace_back(reaction,
+				static_cast<PSICluster&>(reaction.first),
+				static_cast<PSICluster&>(reaction.second), psDim);
+		listit = effReactingList.end();
+		--listit;
+	}
 	assert(listit != effReactingList.end());
-    return listit;
+	return listit;
 }
 
-auto PSISuperCluster::addToEffCombiningList(ProductionReaction& reaction) 
-        -> CombiningClusterList::iterator {
+auto PSISuperCluster::addToEffCombiningList(ProductionReaction& reaction)
+-> CombiningClusterList::iterator {
 
 	// Determine which is the "other" cluster.
-    auto& otherCluster = findOtherCluster(reaction);
+	auto& otherCluster = findOtherCluster(reaction);
 
-    // Check if we already know about the reaction.
-    auto listit = effCombiningList.end();
+	// Check if we already know about the reaction.
+	auto listit = effCombiningList.end();
 	auto rkey = &otherCluster;
 	auto mapit = effCombiningListMap.find(rkey);
-    if (mapit != effCombiningListMap.end()) {
-        // We already knew about this reaction.
-        listit = mapit->second;
-    }
-    else {
+	if (mapit != effCombiningListMap.end()) {
+		// We already knew about this reaction.
+		listit = mapit->second;
+	} else {
 		// We did not already know about the reaction.
 		// Add info about reaction to our list.
-        effCombiningList.emplace_back(reaction,
-						static_cast<PSICluster&>(otherCluster), psDim);
-        listit = effCombiningList.end();
-        --listit;
+		effCombiningList.emplace_back(reaction,
+				static_cast<PSICluster&>(otherCluster), psDim);
+		listit = effCombiningList.end();
+		--listit;
 	}
 	assert(listit != effCombiningList.end());
-    return listit;
+	return listit;
 }
 
 auto PSISuperCluster::addToEffDissociatingList(DissociationReaction& reaction)
-        -> DissociationPairList::iterator {
+-> DissociationPairList::iterator {
 
 	// Determine which is the other cluster.
-    auto& emittedCluster = findOtherCluster(reaction);
+	auto& emittedCluster = findOtherCluster(reaction);
 
 	// Check if we already know about the reaction.
-    auto listit = effDissociatingList.end();
+	auto listit = effDissociatingList.end();
 	auto rkey = std::make_pair(&(reaction.dissociating), &emittedCluster);
 	auto mapit = effDissociatingListMap.find(rkey);
-    if (mapit != effDissociatingListMap.end()) {
+	if (mapit != effDissociatingListMap.end()) {
 
-        // We already knew about this reaction.
-        listit = mapit->second;
-    }
-    else {
+		// We already knew about this reaction.
+		listit = mapit->second;
+	} else {
 
 		// We did not already know about it.
 		// Add info about reaction to our list.
-        effDissociatingList.emplace_back(reaction,
-						static_cast<PSICluster&>(reaction.dissociating),
-						static_cast<PSICluster&>(emittedCluster), psDim);
-        listit = effDissociatingList.end();
-        --listit;
+		effDissociatingList.emplace_back(reaction,
+				static_cast<PSICluster&>(reaction.dissociating),
+				static_cast<PSICluster&>(emittedCluster), psDim);
+		listit = effDissociatingList.end();
+		--listit;
 	}
 	assert(listit != effDissociatingList.end());
-    return listit;
+	return listit;
 }
 
-
 auto PSISuperCluster::addToEffEmissionList(DissociationReaction& reaction)
-        -> DissociationPairList::iterator {
+-> DissociationPairList::iterator {
 
 	// Check if we already know about the reaction.
-    auto listit = effEmissionList.end();
+	auto listit = effEmissionList.end();
 	auto rkey = std::make_pair(&(reaction.first), &(reaction.second));
 	auto mapit = effEmissionListMap.find(rkey);
 	if (mapit != effEmissionListMap.end()) {
-        // We already knew about the reaction.
-        listit = mapit->second;
-    }
-    else {
+		// We already knew about the reaction.
+		listit = mapit->second;
+	} else {
 
 		// We did not already know about it.
 		// Note that we emit from the two rectants according to the given
 		// reaction.
-        effEmissionList.emplace_back(reaction,
-						static_cast<PSICluster&>(reaction.first),
-						static_cast<PSICluster&>(reaction.second), psDim);
-        listit = effEmissionList.end();
-        --listit;
+		effEmissionList.emplace_back(reaction,
+				static_cast<PSICluster&>(reaction.first),
+				static_cast<PSICluster&>(reaction.second), psDim);
+		listit = effEmissionList.end();
+		--listit;
 	}
 	assert(listit != effEmissionList.end());
-    return listit;
+	return listit;
 }
-
-
-
 
 void PSISuperCluster::resultFrom(ProductionReaction& reaction, int a[4],
 		int b[4]) {
 
-    // Ensure we know about the reaction.
-    auto listit = addToEffReactingList(reaction);
+	// Ensure we know about the reaction.
+	auto listit = addToEffReactingList(reaction);
 	auto& prodPair = *listit;
 
 	// NB: prodPair's reactants are same as reaction.
@@ -209,7 +201,7 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 		const std::vector<PendingProductionReactionInfo>& prInfos) {
 
 	// Check if we already know about the reaction.
-    auto listit = addToEffReactingList(reaction);
+	auto listit = addToEffReactingList(reaction);
 	auto& prodPair = *(listit);
 
 	// NB: prodPair's reactants are same as reaction.
@@ -257,7 +249,7 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 		IReactant& product) {
 
 	// Check if we already know about the reaction.
-    auto listit = addToEffReactingList(reaction);
+	auto listit = addToEffReactingList(reaction);
 	auto& prodPair = *(listit);
 
 	auto const& superR1 = static_cast<PSICluster const&>(prodPair.first);
@@ -299,8 +291,9 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 		}
 
 		// Special case for V and I
-		if (i == 4)
+		if (i == 4) {
 			singleComp[i - 1] -= iSize;
+		}
 
 		width[i - 1] = std::min(productHi[i - 1],
 				r1Hi[i - 1] + singleComp[i - 1])
@@ -385,7 +378,7 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 void PSISuperCluster::resultFrom(ProductionReaction& reaction, double *coef) {
 
 	// Check if we already know about the reaction.
-    auto listit = addToEffReactingList(reaction);
+	auto listit = addToEffReactingList(reaction);
 	auto& prodPair = *(listit);
 
 	// NB: newPair's reactants are same as reaction's.
@@ -406,11 +399,10 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction, double *coef) {
 	return;
 }
 
-
 void PSISuperCluster::participateIn(ProductionReaction& reaction, int a[4]) {
 
 	// Ensure we know about the reaction.
-    auto listit = addToEffCombiningList(reaction);
+	auto listit = addToEffCombiningList(reaction);
 	auto& combCluster = *listit;
 
 	// Update the coefficients
@@ -435,7 +427,7 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 		const std::vector<PendingProductionReactionInfo>& pendingPRInfos) {
 
 	// Ensure we know about the reaction.
-    auto listit = addToEffCombiningList(reaction);
+	auto listit = addToEffCombiningList(reaction);
 	auto& combCluster = *listit;
 
 	// Update the coefficients
@@ -464,13 +456,13 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 		IReactant& product) {
 
 	// Ensure we know about the reaction.
-    auto listit = addToEffCombiningList(reaction);
+	auto listit = addToEffCombiningList(reaction);
 	auto& combCluster = *listit;
 
 	auto const& superProd = static_cast<PSICluster const&>(product);
 
 	// Check if an interstitial cluster is involved
-    auto& otherCluster = findOtherCluster(reaction);
+	auto& otherCluster = findOtherCluster(reaction);
 	int iSize = 0;
 	if (otherCluster.getType() == ReactantType::I) {
 		iSize = otherCluster.getSize();
@@ -561,9 +553,8 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 void PSISuperCluster::participateIn(ProductionReaction& reaction,
 		double *coef) {
 
-
 	// Ensure we know about the reaction.
-    auto listit = addToEffCombiningList(reaction);
+	auto listit = addToEffCombiningList(reaction);
 	auto& combCluster = *listit;
 
 	// Update the coefficients
@@ -583,8 +574,8 @@ void PSISuperCluster::participateIn(ProductionReaction& reaction,
 void PSISuperCluster::participateIn(DissociationReaction& reaction, int a[4],
 		int b[4]) {
 
-    // Ensure we know about the reaction.
-    auto listit = addToEffDissociatingList(reaction);
+	// Ensure we know about the reaction.
+	auto listit = addToEffDissociatingList(reaction);
 	auto& dissPair = *listit;
 
 	// Update the coefficients
@@ -614,9 +605,9 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction, int a[4],
 void PSISuperCluster::participateIn(DissociationReaction& reaction,
 		const std::vector<PendingProductionReactionInfo>& prInfos) {
 
-    // Ensure we know about the reaction.
-    auto listit = addToEffDissociatingList(reaction);
-    auto& dissPair = *listit;
+	// Ensure we know about the reaction.
+	auto listit = addToEffDissociatingList(reaction);
+	auto& dissPair = *listit;
 
 	// Update the coefficients
 	std::for_each(prInfos.begin(), prInfos.end(),
@@ -648,14 +639,14 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 void PSISuperCluster::participateIn(DissociationReaction& reaction,
 		IReactant& disso) {
 
-    // Ensure we know about the reaction.
-    auto listit = addToEffDissociatingList(reaction);
+	// Ensure we know about the reaction.
+	auto listit = addToEffDissociatingList(reaction);
 	auto& dissPair = *listit;
 
 	auto const& superDisso = static_cast<PSICluster const&>(disso);
 
 	// Check if an interstitial cluster is involved
-    auto& emittedCluster = findOtherCluster(reaction);
+	auto& emittedCluster = findOtherCluster(reaction);
 	int iSize = 0;
 	if (emittedCluster.getType() == ReactantType::I) {
 		iSize = emittedCluster.getSize();
@@ -750,8 +741,8 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 void PSISuperCluster::participateIn(DissociationReaction& reaction,
 		double *coef) {
 
-    // Ensure we know about the reaction.
-    auto listit = addToEffDissociatingList(reaction);
+	// Ensure we know about the reaction.
+	auto listit = addToEffDissociatingList(reaction);
 	auto& dissPair = *listit;
 
 	// Update the coefficients
@@ -766,11 +757,10 @@ void PSISuperCluster::participateIn(DissociationReaction& reaction,
 	return;
 }
 
-
 void PSISuperCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 
-    // Ensure we know about the reaction.
-    auto listit = addToEffEmissionList(reaction);
+	// Ensure we know about the reaction.
+	auto listit = addToEffEmissionList(reaction);
 	auto& dissPair = *listit;
 
 	// Update the coefficients
@@ -793,10 +783,9 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction, int a[4]) {
 void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 		const std::vector<PendingProductionReactionInfo>& prInfos) {
 
-    // Ensure we know about the reaction.
-    auto listit = addToEffEmissionList(reaction);
+	// Ensure we know about the reaction.
+	auto listit = addToEffEmissionList(reaction);
 	auto& dissPair = *listit;
-
 
 	// Update the coefficients
 	std::for_each(prInfos.begin(), prInfos.end(),
@@ -822,10 +811,9 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 		IReactant& disso) {
 
-    // Ensure we know about the reaction.
-    auto listit = addToEffEmissionList(reaction);
+	// Ensure we know about the reaction.
+	auto listit = addToEffEmissionList(reaction);
 	auto& dissPair = *listit;
-
 
 	auto const& superR1 = static_cast<PSICluster const&>(dissPair.first);
 	auto const& superR2 = static_cast<PSICluster const&>(dissPair.second);
@@ -937,8 +925,8 @@ void PSISuperCluster::emitFrom(DissociationReaction& reaction,
 
 void PSISuperCluster::emitFrom(DissociationReaction& reaction, double *coef) {
 
-    // Ensure we know about the reaction.
-    auto listit = addToEffEmissionList(reaction);
+	// Ensure we know about the reaction.
+	auto listit = addToEffEmissionList(reaction);
 	auto& dissPair = *listit;
 
 	// Update the coefficients
@@ -962,11 +950,13 @@ void PSISuperCluster::setHeVVector(const HeVListType& vec) {
 	double nSquare[4] = { };
 	// Update the network map, compute the radius and dispersions
 	for (auto const& pair : heVList) {
-        constexpr auto tlcCubed = xolotlCore::tungstenLatticeConstant *
-                                    xolotlCore::tungstenLatticeConstant *
-                                    xolotlCore::tungstenLatticeConstant;
+		constexpr auto tlcCubed = xolotlCore::tungstenLatticeConstant
+				* xolotlCore::tungstenLatticeConstant
+				* xolotlCore::tungstenLatticeConstant;
 		double rad = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
-				+ cbrt((3.0 * tlcCubed * std::get<3>(pair)) / (8.0 * xolotlCore::pi))
+				+ cbrt(
+						(3.0 * tlcCubed * std::get<3>(pair))
+								/ (8.0 * xolotlCore::pi))
 				- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
 		reactionRadius += rad / (double) nTot;
 
@@ -986,6 +976,15 @@ void PSISuperCluster::setHeVVector(const HeVListType& vec) {
 			dispersion[i] = 2.0
 					* (nSquare[i] - (numAtom[i] * (double) nTot * numAtom[i]))
 					/ ((double) (nTot * (sectionWidth[i] - 1)));
+		if (dispersion[i] == 0) {
+			std::cout << name << " " << i << " " << numAtom[i] << " " << nTot << " " << sectionWidth[i] << " " << nSquare[i] << std::endl;
+
+			for (auto const& pair : heVList) {
+				std::cout << std::get<0>(pair) << std::endl;
+			}
+		}
+
+
 	}
 
 	return;
@@ -1011,54 +1010,49 @@ double PSISuperCluster::getTotalConcentration() const {
 	return conc;
 }
 
-
 template<uint32_t Axis>
 double PSISuperCluster::getTotalAtomConcHelper() const {
 
-    double conc = 0;
-    for (auto const& pair : heVList) {
-        // Compute the distances
-        auto heDistance = getDistance(std::get<0>(pair), 0);
-        auto dDistance = getDistance(std::get<1>(pair), 1);
-        auto tDistance = getDistance(std::get<2>(pair), 2);
-        auto vDistance = getDistance(std::get<3>(pair), 3);
+	double conc = 0;
+	for (auto const& pair : heVList) {
+		// Compute the distances
+		auto heDistance = getDistance(std::get<0>(pair), 0);
+		auto dDistance = getDistance(std::get<1>(pair), 1);
+		auto tDistance = getDistance(std::get<2>(pair), 2);
+		auto vDistance = getDistance(std::get<3>(pair), 3);
 
-        // Add the concentration of each cluster in the group times its number of helium
-        conc += getConcentration(heDistance, dDistance, tDistance,
-                vDistance) * (double) std::get<Axis>(pair);
-    }
-    return conc;
+		// Add the concentration of each cluster in the group times its number of helium
+		conc += getConcentration(heDistance, dDistance, tDistance, vDistance)
+				* (double) std::get<Axis>(pair);
+	}
+	return conc;
 }
-
-
 
 double PSISuperCluster::getTotalAtomConcentration(int axis) const {
 
-    assert(axis <= 2);
+	assert(axis <= 2);
 
-    // TODO remove implicit mapping of species type to integers
-    // TODO do mapping in some base class (?)
-    double conc = 0;
-    switch(axis) {
-    case 0:
-        conc = getTotalAtomConcHelper<0>();
-        break;
-    case 1:
-        conc = getTotalAtomConcHelper<1>();
-        break;
-    case 2:
-        conc = getTotalAtomConcHelper<2>();
-        break;
-    }
-    return conc;
+	// TODO remove implicit mapping of species type to integers
+	// TODO do mapping in some base class (?)
+	double conc = 0;
+	switch (axis) {
+	case 0:
+		conc = getTotalAtomConcHelper<0>();
+		break;
+	case 1:
+		conc = getTotalAtomConcHelper<1>();
+		break;
+	case 2:
+		conc = getTotalAtomConcHelper<2>();
+		break;
+	}
+	return conc;
 }
-
 
 double PSISuperCluster::getTotalVacancyConcentration() const {
 
-    return getTotalAtomConcHelper<3>();
+	return getTotalAtomConcHelper<3>();
 }
-
 
 double PSISuperCluster::getIntegratedVConcentration(int v) const {
 	// Initial declarations
@@ -1131,14 +1125,14 @@ void PSISuperCluster::resetConnectivities() {
 	// Don't loop on the effective emission pairs because
 	// this cluster is not connected to them
 
-    // We're done with the maps used to construct our effective reaction lists.
-    // Release them to reclaim the memory.
-    // TODO is this true going forward?  Any desire to add
-    // more reactions?
-    effReactingListMap.clear();
-    effCombiningListMap.clear();
-    effDissociatingListMap.clear();
-    effEmissionListMap.clear();
+	// We're done with the maps used to construct our effective reaction lists.
+	// Release them to reclaim the memory.
+	// TODO is this true going forward?  Any desire to add
+	// more reactions?
+	effReactingListMap.clear();
+	effCombiningListMap.clear();
+	effDissociatingListMap.clear();
+	effEmissionListMap.clear();
 
 	return;
 }
@@ -1300,7 +1294,8 @@ double PSISuperCluster::getCombinationFlux(int xi) {
 }
 
 void PSISuperCluster::computePartialDerivatives(double* partials[5],
-		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int i) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+		int i) const {
 
 	// Get the partial derivatives for each reaction type
 	computeProductionPartialDerivatives(partials, partialsIdxMap, i);
@@ -1312,7 +1307,8 @@ void PSISuperCluster::computePartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
-		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int xi) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+		int xi) const {
 
 	// Production
 	// A + B --> D, D being this cluster
@@ -1373,7 +1369,8 @@ void PSISuperCluster::computeProductionPartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
-		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int xi) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+		int xi) const {
 
 	// Combination
 	// A + B --> D, A being this cluster
@@ -1432,7 +1429,8 @@ void PSISuperCluster::computeCombinationPartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
-		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int xi) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+		int xi) const {
 
 	// Dissociation
 	// A --> B + D, B being this cluster
@@ -1470,7 +1468,8 @@ void PSISuperCluster::computeDissociationPartialDerivatives(double* partials[5],
 }
 
 void PSISuperCluster::computeEmissionPartialDerivatives(double* partials[5],
-		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap, int xi) const {
+		const std::array<const ReactionNetwork::PartialsIdxMap*, 5>& partialsIdxMap,
+		int xi) const {
 
 	// Emission
 	// A --> B + D, A being this cluster
