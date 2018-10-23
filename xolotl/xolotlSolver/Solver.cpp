@@ -14,10 +14,9 @@ Solver::Solver(ISolverHandler& _solverHandler,
 	solverHandler = &_solverHandler;
 }
 
-void Solver::setCommandLineOptions(int argc, char **argv) {
+void Solver::setCommandLineOptions(std::string argv) {
 	// Keep the arguments
-	numCLIArgs = argc;
-	CLIArgs = argv;
+	optionsString = argv;
 }
 
 } /* end namespace xolotlSolver */

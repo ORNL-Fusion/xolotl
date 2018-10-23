@@ -39,7 +39,8 @@ static char help[] =
 
 // ----- GLOBAL VARIABLES ----- //
 extern PetscErrorCode setupPetsc0DMonitor(TS);
-extern PetscErrorCode setupPetsc1DMonitor(TS, std::shared_ptr<xolotlPerf::IHandlerRegistry>);
+extern PetscErrorCode setupPetsc1DMonitor(TS,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry>);
 extern PetscErrorCode setupPetsc2DMonitor(TS);
 extern PetscErrorCode setupPetsc3DMonitor(TS);
 
@@ -241,21 +242,34 @@ void PetscSolver::solve() {
 	double time = 0.0, deltaTime = 1.0e-12;
 	if (!fileName.empty()) {
 
-        XFile xfile(fileName);
-        auto concGroup = xfile.getGroup<XFile::ConcentrationGroup>();
-        if(concGroup and concGroup->hasTimesteps()) {
-            auto tsGroup = concGroup->getLastTimestepGroup();
-            assert(tsGroup);
-            std::tie(time, deltaTime) = tsGroup->readTimes();
-        }
+		XFile xfile(fileName);
+		auto concGroup = xfile.getGroup<XFile::ConcentrationGroup>();
+		if (concGroup and concGroup->hasTimesteps()) {
+			auto tsGroup = concGroup->getLastTimestepGroup();
+			assert(tsGroup);
+			std::tie(time, deltaTime) = tsGroup->readTimes();
+		}
 	}
 
 	ierr = TSSetTime(ts, time);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetTime failed.");
 	ierr = TSSetTimeStep(ts, deltaTime);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetTimeStep failed.");
+
+	PetscOptions options;
+	ierr = PetscOptionsCreate(&options);
+	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
+	ierr =
+			PetscOptionsInsertString(options,
+					optionsString.c_str());
+	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsInsertString failed.");
+	ierr = PetscObjectSetOptions((PetscObject)ts, options);
+	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
 	ierr = TSSetFromOptions(ts);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+
+	ierr = PetscOptionsDestroy(&options);
+	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsDestroy failed.");
 
 	// Switch on the number of dimensions to set the monitors
 	int dim = getSolverHandler().getDimension();
@@ -360,6 +374,5 @@ void PetscSolver::finalize() {
 
 	return;
 }
-
 
 } /* end namespace xolotlSolver */

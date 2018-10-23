@@ -53,19 +53,19 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "vizHandler=dummy" << std::endl
-			<< "petscArgs=-fieldsplit_0_pc_type redundant "
-					"-ts_max_snes_failures 200 "
-					"-pc_fieldsplit_detect_coupling "
-					"-ts_adapt_dt_max 10 "
-					"-pc_type fieldsplit "
-					"-fieldsplit_1_pc_type sor "
-					"-ts_final_time 1000 "
-					"-ts_max_steps 5 "
-					"-ts_exact_final_time stepover" << std::endl
-			<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
-			<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
-			<< "dimensions=0" << std::endl << "process=reaction" << std::endl
-			<< "networkFile=" << networkFilename << std::endl;
+	<< "petscArgs=-fieldsplit_0_pc_type redundant "
+	"-ts_max_snes_failures 200 "
+	"-pc_fieldsplit_detect_coupling "
+	"-ts_adapt_dt_max 10 "
+	"-pc_type fieldsplit "
+	"-fieldsplit_1_pc_type sor "
+	"-ts_final_time 1000 "
+	"-ts_max_steps 5 "
+	"-ts_exact_final_time stepover" << std::endl
+	<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
+	<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
+	<< "dimensions=0" << std::endl << "process=reaction" << std::endl
+	<< "networkFile=" << networkFilename << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 					opts.getMaterial(), opts.getDimensionNumber());
 
 	// Initialize and get the temperature handler
-	xolotlFactory::initializeTempHandler(opts);
+	xolotlFactory::initializeTempHandler (opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Create the network handler factory
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
-	solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
+	solver->setCommandLineOptions(opts.getPetscArgv());
 	solver->initialize();
 
 	// Solve and finalize
@@ -165,20 +165,20 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "vizHandler=dummy" << std::endl
-			<< "petscArgs=-fieldsplit_0_pc_type redundant "
-					"-ts_max_snes_failures 200 "
-					"-pc_fieldsplit_detect_coupling "
-					"-ts_adapt_dt_max 10 "
-					"-pc_type fieldsplit "
-					"-fieldsplit_1_pc_type sor "
-					"-ts_final_time 1000 "
-					"-ts_max_steps 5 "
-					"-ts_exact_final_time stepover" << std::endl
-			<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
-			<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
-			<< "dimensions=1" << std::endl << "process=diff advec reaction"
-			<< std::endl << "voidPortion=0.0" << std::endl << "networkFile="
-			<< networkFilename << std::endl;
+	<< "petscArgs=-fieldsplit_0_pc_type redundant "
+	"-ts_max_snes_failures 200 "
+	"-pc_fieldsplit_detect_coupling "
+	"-ts_adapt_dt_max 10 "
+	"-pc_type fieldsplit "
+	"-fieldsplit_1_pc_type sor "
+	"-ts_final_time 1000 "
+	"-ts_max_steps 5 "
+	"-ts_exact_final_time stepover" << std::endl
+	<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
+	<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
+	<< "dimensions=1" << std::endl << "process=diff advec reaction"
+	<< std::endl << "voidPortion=0.0" << std::endl << "networkFile="
+	<< networkFilename << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 					opts.getMaterial(), opts.getDimensionNumber());
 
 	// Initialize and get the temperature handler
-	xolotlFactory::initializeTempHandler(opts);
+	xolotlFactory::initializeTempHandler (opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Create the network handler factory
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
-	solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
+	solver->setCommandLineOptions(opts.getPetscArgv());
 	solver->initialize();
 
 	// Solve and finalize
@@ -279,21 +279,21 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "vizHandler=dummy" << std::endl
-			<< "petscArgs=-fieldsplit_0_pc_type redundant "
-					"-ts_max_snes_failures 200 "
-					"-pc_fieldsplit_detect_coupling "
-					"-ts_adapt_dt_max 10 "
-					"-pc_type fieldsplit "
-					"-fieldsplit_1_pc_type sor "
-					"-ts_final_time 1000 "
-					"-ts_max_steps 5 "
-					"-ts_exact_final_time stepover" << std::endl
-			<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
-			<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
-			<< "dimensions=1" << std::endl << "regularGrid=no" << std::endl
-			<< "process=diff advec modifiedTM reaction" << std::endl
-			<< "voidPortion=0.0" << std::endl << "networkFile="
-			<< networkFilename << std::endl;
+	<< "petscArgs=-fieldsplit_0_pc_type redundant "
+	"-ts_max_snes_failures 200 "
+	"-pc_fieldsplit_detect_coupling "
+	"-ts_adapt_dt_max 10 "
+	"-pc_type fieldsplit "
+	"-fieldsplit_1_pc_type sor "
+	"-ts_final_time 1000 "
+	"-ts_max_steps 5 "
+	"-ts_exact_final_time stepover" << std::endl
+	<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
+	<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
+	<< "dimensions=1" << std::endl << "regularGrid=no" << std::endl
+	<< "process=diff advec modifiedTM reaction" << std::endl
+	<< "voidPortion=0.0" << std::endl << "networkFile="
+	<< networkFilename << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -324,7 +324,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 					opts.getMaterial(), opts.getDimensionNumber());
 
 	// Initialize and get the temperature handler
-	xolotlFactory::initializeTempHandler(opts);
+	xolotlFactory::initializeTempHandler (opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Create the network handler factory
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
-	solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
+	solver->setCommandLineOptions(opts.getPetscArgv());
 	solver->initialize();
 
 	// Solve and finalize
@@ -383,21 +383,21 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "vizHandler=dummy" << std::endl
-			<< "petscArgs=-fieldsplit_0_pc_type redundant "
-					"-ts_max_snes_failures 200 "
-					"-pc_fieldsplit_detect_coupling "
-					"-ts_adapt_dt_max 10 "
-					"-pc_type fieldsplit "
-					"-fieldsplit_1_pc_type sor "
-					"-ts_final_time 1000 "
-					"-ts_max_steps 5 "
-					"-ts_exact_final_time stepover" << std::endl
-			<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
-			<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
-			<< "dimensions=2" << std::endl << "process=diff advec reaction"
-			<< std::endl << "voidPortion=0.0" << std::endl
-			<< "netParam=8 0 0 2 6" << std::endl << "grid=10 0.5 4 1.0"
-			<< std::endl;
+	<< "petscArgs=-fieldsplit_0_pc_type redundant "
+	"-ts_max_snes_failures 200 "
+	"-pc_fieldsplit_detect_coupling "
+	"-ts_adapt_dt_max 10 "
+	"-pc_type fieldsplit "
+	"-fieldsplit_1_pc_type sor "
+	"-ts_final_time 1000 "
+	"-ts_max_steps 5 "
+	"-ts_exact_final_time stepover" << std::endl
+	<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
+	<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
+	<< "dimensions=2" << std::endl << "process=diff advec reaction"
+	<< std::endl << "voidPortion=0.0" << std::endl
+	<< "netParam=8 0 0 2 6" << std::endl << "grid=10 0.5 4 1.0"
+	<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 					opts.getMaterial(), opts.getDimensionNumber());
 
 	// Initialize and get the temperature handler
-	xolotlFactory::initializeTempHandler(opts);
+	xolotlFactory::initializeTempHandler (opts);
 	auto tempHandler = xolotlFactory::getTemperatureHandler();
 
 	// Create the network handler factory
@@ -450,7 +450,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
-	solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
+	solver->setCommandLineOptions(opts.getPetscArgv());
 	solver->initialize();
 
 	// Solve and finalize
@@ -560,7 +560,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 //			networkHandler, opts);
 //
 //	// Set the solver command line to give the PETSc options and initialize it
-//	solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
+//	solver->setCommandLineOptions(opts.getPetscArgv());
 //	solver->initialize(solvHandler);
 //
 //	// Solve and finalize

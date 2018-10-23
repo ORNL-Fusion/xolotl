@@ -34,10 +34,9 @@ public:
 	 * Const correctness is violated here because char ** is not const correct
 	 * in main().
 	 *
-	 * @param argc The number of command line arguments
-	 * @param argv The array of command line arguments
+	 * @param argv The string of command line arguments
 	 */
-	virtual void setCommandLineOptions(int argc, char **argv) = 0;
+	virtual void setCommandLineOptions(std::string argv) = 0;
 
 	/**
 	 * This operation sets the run-time options of the solver. The map is a set

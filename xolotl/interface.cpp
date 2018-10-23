@@ -100,8 +100,8 @@ std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
 		// Setup the solver
 		solver = std::shared_ptr<xolotlSolver::PetscSolver>(
 				new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
-		solver->setCommandLineOptions(opts.getPetscArgc(), opts.getPetscArgv());
 		solver->initialize();
+		solver->setCommandLineOptions(opts.getPetscArgv());
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;

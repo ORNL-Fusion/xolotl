@@ -81,32 +81,18 @@ public:
 	virtual void setNetworkFilename(const std::string& name) = 0;
 
 	/**
-	 * Get the Argc for PETSc.
-	 *
-	 * @return argc
-	 */
-	virtual int getPetscArgc() const = 0;
-
-	/**
-	 * Set the Argc for PETSc.
-	 *
-	 * @param argc The number of options for PETSc
-	 */
-	virtual void setPetscArgc(int argc) = 0;
-
-	/**
 	 * Get the Argv for PETSc.
 	 *
 	 * @return argv
 	 */
-	virtual char** getPetscArgv() const = 0;
+	virtual std::string getPetscArgv() const = 0;
 
 	/**
 	 * Set the Argv for PETSc.
 	 *
-	 * @param argv The pointer to the options for PETSc
+	 * @param argv The string of options for PETSc
 	 */
-	virtual void setPetscArgv(char** argv) = 0;
+	virtual void setPetscArgv(std::string argv) = 0;
 
 	/**
 	 * Should we use const temperature handlers?

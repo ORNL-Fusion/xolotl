@@ -35,14 +35,9 @@ protected:
 	std::string networkFilename;
 
 	/**
-	 * The number of options that will be given to PETSc.
+	 * The string of options that will be given to PETSc.
 	 */
-	int petscArgc;
-
-	/**
-	 * The pointer to the options that will be given to PETSc.
-	 */
-	char **petscArgv;
+	std::string petscArgv;
 
 	/**
 	 * Use the constant temperature set of handlers?
@@ -334,26 +329,10 @@ public:
 	}
 
 	/**
-	 * Get the Argc for PETSc.
-	 * \see IOptions.h
-	 */
-	int getPetscArgc() const override {
-		return petscArgc;
-	}
-
-	/**
-	 * Set the Argc for PETSc.
-	 * \see IOptions.h
-	 */
-	void setPetscArgc(int argc) override {
-		petscArgc = argc;
-	}
-
-	/**
 	 * Get the Argv for PETSc.
 	 * \see IOptions.h
 	 */
-	char** getPetscArgv() const override {
+	std::string getPetscArgv() const override {
 		return petscArgv;
 	}
 
@@ -361,7 +340,7 @@ public:
 	 * Set the Argv for PETSc.
 	 * \see IOptions.h
 	 */
-	void setPetscArgv(char** argv) override {
+	void setPetscArgv(std::string argv) override {
 		petscArgv = argv;
 	}
 

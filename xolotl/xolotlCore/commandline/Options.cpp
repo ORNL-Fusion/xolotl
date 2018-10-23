@@ -30,9 +30,8 @@
 namespace xolotlCore {
 
 Options::Options() :
-		shouldRunFlag(true), exitCode(EXIT_SUCCESS), networkFilename(""), petscArgc(
-				0), petscArgv(
-		NULL), constTempFlag(false), constTemperature(1000.0), temperatureGradient(
+		shouldRunFlag(true), exitCode(EXIT_SUCCESS), networkFilename(""), petscArgv(
+				""), constTempFlag(false), constTemperature(1000.0), temperatureGradient(
 				0.0), tempProfileFlag(false), tempProfileFilename(""), heatFlag(
 				false), bulkTemperature(0.0), fluxFlag(false), fluxAmplitude(
 				0.0), fluxProfileFlag(false), fluxProfileFilename(""), perfRegistryType(
@@ -126,13 +125,6 @@ Options::~Options(void) {
 		delete currOpt;
 	}
 	optionsMap.clear();
-
-	// release the dynamically-allocated PETSc arguments
-	for (int i = 0; i < petscArgc; ++i) {
-		delete[] petscArgv[i];
-	}
-	delete[] petscArgv;
-	petscArgv = NULL;
 }
 
 void Options::readParams(char* argv[]) {
