@@ -37,7 +37,8 @@ Options::Options() :
 				0.0), fluxProfileFlag(false), perfRegistryType(
 				xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
 				false), materialName(""), initialVConcentration(0.0), voidPortion(
-				50.0), dimensionNumber(1), useRegularGridFlag(true), gbList(""), groupingMin(
+				50.0), dimensionNumber(1), useRegularGridFlag(true), useChebyshevGridFlag(
+				false), gbList(""), groupingMin(
 				std::numeric_limits<int>::max()), groupingWidthA(1), groupingWidthB(
 				1), sputteringYield(0.0), useHDF5Flag(true), usePhaseCutFlag(
 				false), maxImpurity(8), maxD(0), maxT(0), maxV(20), maxI(6), nX(
