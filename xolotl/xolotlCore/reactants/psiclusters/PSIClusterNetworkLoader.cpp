@@ -862,7 +862,7 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 	Array<int, 5> list;
 	list.Init(0);
 	list[0] = 0;
-	// Add additional axis
+//	// Add additional axis
 //	if (heVList.size() > 0) {
 //		if (maxHe > 0) {
 //			list[nDim] = 1;
@@ -999,46 +999,46 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 				// Remove the pair from the set because we don't need it anymore
 				heVList.erase(pair);
 			}
+
+			// Skip the loop if there were no clusters in this group
+			if (count == 0)
+				break;
+
+			// Average all values
+			heSize = heSize / (double) count;
+			dSize = dSize / (double) count;
+			tSize = tSize / (double) count;
+
+			// Create the super cluster
+			double size[4] = { heSize, dSize, tSize, (double) k };
+			int width[4] = { heHigh - heLow + 1, dHigh - dLow + 1, tHigh - tLow + 1,
+					1 };
+			int lower[4] = { heLow, dLow, tLow, k };
+			int higher[4] = { heHigh, dHigh, tHigh, k };
+			PSISuperCluster* rawSuperCluster = new PSISuperCluster(size, count,
+					width, lower, higher, network, handlerRegistry);
+
+	//		std::cout << "super: " << rawSuperCluster->getName() << " " << count
+	//				<< " " << heLow << " " << heHigh << " " << upperH << std::endl;
+
+			auto superCluster = std::unique_ptr<PSISuperCluster>(rawSuperCluster);
+			// Save access to the cluster so we can trigger updates
+			// after we give it to the network.
+			auto& scref = *superCluster;
+			// Give the cluster to the network.
+			network.add(std::move(superCluster));
+			// Trigger cluster updates now it is in the network.
+			scref.updateFromNetwork();
+			// Set the HeV vector
+			scref.setHeVVector(tempVector);
+
+			// Reinitialize everything
+			heSize = 0.0, dSize = 0.0, tSize = 0.0;
+			count = 0;
+			heLow = heMax, heHigh = -1, dLow = dMax, dHigh = -1, tLow = tMax, tHigh =
+					-1;
+			tempVector.clear();
 		}
-
-		// Skip the loop if there were no clusters in this group
-		if (count == 0)
-			break;
-
-		// Average all values
-		heSize = heSize / (double) count;
-		dSize = dSize / (double) count;
-		tSize = tSize / (double) count;
-
-		// Create the super cluster
-		double size[4] = { heSize, dSize, tSize, (double) k };
-		int width[4] = { heHigh - heLow + 1, dHigh - dLow + 1, tHigh - tLow + 1,
-				1 };
-		int lower[4] = { heLow, dLow, tLow, k };
-		int higher[4] = { heHigh, dHigh, tHigh, k };
-		PSISuperCluster* rawSuperCluster = new PSISuperCluster(size, count,
-				width, lower, higher, network, handlerRegistry);
-
-//		std::cout << "super: " << rawSuperCluster->getName() << " " << count
-//				<< " " << heLow << " " << heHigh << " " << upperH << std::endl;
-
-		auto superCluster = std::unique_ptr<PSISuperCluster>(rawSuperCluster);
-		// Save access to the cluster so we can trigger updates
-		// after we give it to the network.
-		auto& scref = *superCluster;
-		// Give the cluster to the network.
-		network.add(std::move(superCluster));
-		// Trigger cluster updates now it is in the network.
-		scref.updateFromNetwork();
-		// Set the HeV vector
-		scref.setHeVVector(tempVector);
-
-		// Reinitialize everything
-		heSize = 0.0, dSize = 0.0, tSize = 0.0;
-		count = 0;
-		heLow = heMax, heHigh = -1, dLow = dMax, dHigh = -1, tLow = tMax, tHigh =
-				-1;
-		tempVector.clear();
 	}
 
 	// Group the largest ones we just skipped
