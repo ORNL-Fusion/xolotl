@@ -38,6 +38,11 @@ public:
 	void solveXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver);
 
 	/**
+	 * Get the retention at the end of solve
+	 */
+	double getRetention(std::shared_ptr<xolotlSolver::PetscSolver> solver);
+
+	/**
 	 * Finalize the solve
 	 */
 	void finalizeXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver);

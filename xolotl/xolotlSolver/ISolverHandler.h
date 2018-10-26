@@ -171,6 +171,20 @@ public:
 	virtual int getRightOffset() const = 0;
 
 	/**
+	 * Set the latest value of retention.
+	 *
+	 * @param ret The latest value of retention
+	 */
+	virtual void setRetention(double ret) = 0;
+
+	/**
+	 * Get the latest value of retention.
+	 *
+	 * @return The latest value of retention
+	 */
+	virtual double getRetention() const = 0;
+
+	/**
 	 * To know if the surface should be able to move.
 	 *
 	 * @return True if the surface should be able to move.

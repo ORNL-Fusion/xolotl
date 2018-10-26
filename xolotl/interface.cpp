@@ -135,6 +135,28 @@ void XolotlInterface::solveXolotl(
 	return;
 }
 
+double XolotlInterface::getRetention(
+		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+	double retention = -1.0;
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		// Get the latest retention value from it
+		retention = solverHandler.getRetention();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return retention;
+}
+
 void XolotlInterface::finalizeXolotl(
 		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
 	try {

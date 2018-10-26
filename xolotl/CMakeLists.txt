@@ -15,6 +15,9 @@ PROJECT ( xolotl C CXX )
 # Set the minimum required version of cmake for this project.
 cmake_minimum_required(VERSION 3.4)
 
+# Build the tests by default
+option(BUILD_TESTS "Build test programs" ON)
+
 # Include the modules to find PETSC, ITAPS, etc. from Jed Brown
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
 
@@ -60,12 +63,13 @@ IF (Boost_FOUND)
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 ENDIF()
 IF (Boost_UNIT_TEST_FRAMEWORK_FOUND)
-    message(STATUS "Tests will be built since Boost unit test framework found.")
-    add_subdirectory(tests)
+    IF (BUILD_TESTS)
+        # Enable testing.
+        enable_testing()
+    	message(STATUS "Tests will be built since Boost unit test framework found.")
+    	add_subdirectory(tests)
+	ENDIF()
 ENDIF()
-
-# Enable testing.
-enable_testing()
 
 # Add the preprocessor first, it is independent of the other parts of the code
 # But only if Java is present

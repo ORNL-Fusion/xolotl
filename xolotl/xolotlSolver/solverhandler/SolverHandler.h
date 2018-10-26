@@ -52,6 +52,9 @@ protected:
 	//! The initial vacancy concentration.
 	double initialVConc;
 
+	//! The current retention value.
+	double retention;
+
 	//! The original flux handler created.
 	xolotlCore::IFluxHandler *fluxHandler;
 
@@ -424,6 +427,22 @@ public:
 	 */
 	double getTauBursting() const override {
 		return tauBursting;
+	}
+
+	/**
+	 * Set the latest value of retention.
+	 * \see ISolverHandler.h
+	 */
+	virtual void setRetention(double ret) override {
+		retention = ret;
+	}
+
+	/**
+	 * Get the latest value of retention.
+	 * \see ISolverHandler.h
+	 */
+	virtual double getRetention() const override {
+		return retention;
 	}
 
 	/**

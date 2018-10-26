@@ -800,11 +800,11 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	double totalRadii = 0.0;
 	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
+	// Get the fluence
+	double fluence = fluxHandler->getFluence();
+
 	// Master process
 	if (procId == 0) {
-		// Get the fluence
-		double fluence = fluxHandler->getFluence();
-
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Xenon retention = "
@@ -822,6 +822,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				<< totalRadii / totalBubbleConcentration << std::endl;
 		outputFile.close();
 	}
+
+	// Set the retention in the solver handler for an external program to use
+	solverHandler.setRetention(100.0 * (totalXeConcentration / fluence));
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
