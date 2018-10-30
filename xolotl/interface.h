@@ -38,9 +38,23 @@ public:
 	void solveXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver);
 
 	/**
-	 * Get the retention at the end of solve
+	 * Get the retention vector copy at the end of solve
+	 *
+	 * @return The vector
 	 */
-	double getRetention(std::shared_ptr<xolotlSolver::PetscSolver> solver);
+	virtual std::vector<double> getCopyRetention(std::shared_ptr<xolotlSolver::PetscSolver> solver);
+
+	/**
+	 * Get the retention vector pointer at the end of solve
+	 *
+	 * @return The vector
+	 */
+	virtual std::vector<double>* getPointerRetention(std::shared_ptr<xolotlSolver::PetscSolver> solver);
+
+	/**
+	 * Print the retention vector copy at the end of solve
+	 */
+	virtual void printRetention(std::shared_ptr<xolotlSolver::PetscSolver> solver);
 
 	/**
 	 * Finalize the solve

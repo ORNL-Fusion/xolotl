@@ -340,7 +340,7 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
-PetscErrorCode setupPetsc0DMonitor(TS ts) {
+PetscErrorCode setupPetsc0DMonitor(TS& ts) {
 	PetscErrorCode ierr;
 
 	// Get xolotlViz handler registry
@@ -349,28 +349,34 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flag1DPlot, flagBubble, flagPerf, flagStatus;
 
+	// Get the option from the TS
+	PetscOptions petscOptions;
+	ierr = PetscObjectGetOptions((PetscObject)ts, &petscOptions);
+	checkPetscError(ierr,
+			"setupPetsc0DMonitor: PetscObjectGetOptions failed.");
+
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse", &flagCheck);
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
 	// Check the option -plot_perf
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-plot_perf", &flagPerf);
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-plot_perf) failed.");
 
 	// Check the option -plot_1d
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_1d", &flag1DPlot);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-plot_1d", &flag1DPlot);
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-plot_1d) failed.");
 
 	// Check the option -start_stop
-	ierr = PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-start_stop", &flagStatus);
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-start_stop) failed.");
 
 	// Check the option -bubble
-	ierr = PetscOptionsHasName(NULL, NULL, "-bubble", &flagBubble);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-bubble", &flagBubble);
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-bubble) failed.");
 

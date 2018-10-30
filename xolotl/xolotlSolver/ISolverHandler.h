@@ -178,11 +178,18 @@ public:
 	virtual void setRetention(double ret) = 0;
 
 	/**
-	 * Get the latest value of retention.
+	 * Get the retention vector copy.
 	 *
-	 * @return The latest value of retention
+	 * @return The vector
 	 */
-	virtual double getRetention() const = 0;
+	virtual std::vector<double> getCopyRetention() const = 0;
+
+	/**
+	 * Get the retention vector pointer.
+	 *
+	 * @return The vector
+	 */
+	virtual std::vector<double>* getPointerRetention() = 0;
 
 	/**
 	 * To know if the surface should be able to move.

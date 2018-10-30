@@ -1374,7 +1374,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
-PetscErrorCode setupPetsc2DMonitor(TS ts) {
+PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 	PetscErrorCode ierr;
 
 	// Get the process ID
@@ -1389,33 +1389,39 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	PetscBool flagCheck, flagPerf, flagRetention, flagStatus, flag2DPlot,
 			flagTRIDYN;
 
+	// Get the option from the TS
+	PetscOptions petscOptions;
+	ierr = PetscObjectGetOptions((PetscObject)ts, &petscOptions);
+	checkPetscError(ierr,
+			"setupPetsc2DMonitor: PetscObjectGetOptions failed.");
+
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse", &flagCheck);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
 	// Check the option -plot_perf
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-plot_perf", &flagPerf);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-plot_perf) failed.");
 
 	// Check the option -plot_2d
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d", &flag2DPlot);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-plot_2d", &flag2DPlot);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-plot_2d) failed.");
 
 	// Check the option -helium_retention
-	ierr = PetscOptionsHasName(NULL, NULL, "-helium_retention", &flagRetention);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-helium_retention", &flagRetention);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-helium_retention) failed.");
 
 	// Check the option -start_stop
-	ierr = PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-start_stop", &flagStatus);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-start_stop) failed.");
 
 	// Check the option -tridyn
-	ierr = PetscOptionsHasName(NULL, NULL, "-tridyn", &flagTRIDYN);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-tridyn", &flagTRIDYN);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-tridyn) failed.");
 
@@ -1459,10 +1465,10 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	if (flagCheck) {
 		// Find the threshold
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-check_collapse",
+		ierr = PetscOptionsGetReal(petscOptions, NULL, "-check_collapse",
 				&timeStepThreshold, &flag);
 		checkPetscError(ierr,
-				"setupPetsc2DMonitor: PetscOptionsGetInt (-check_collapse) failed.");
+				"setupPetsc2DMonitor: PetscOptionsGetReal (-check_collapse) failed.");
 		if (!flag)
 			timeStepThreshold = 1.0e-16;
 
@@ -1476,10 +1482,10 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop", &hdf5Stride2D,
+		ierr = PetscOptionsGetReal(petscOptions, NULL, "-start_stop", &hdf5Stride2D,
 				&flag);
 		checkPetscError(ierr,
-				"setupPetsc2DMonitor: PetscOptionsGetInt (-start_stop) failed.");
+				"setupPetsc2DMonitor: PetscOptionsGetReal (-start_stop) failed.");
 		if (!flag)
 			hdf5Stride2D = 1.0;
 

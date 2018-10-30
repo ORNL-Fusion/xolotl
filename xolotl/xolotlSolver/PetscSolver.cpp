@@ -27,10 +27,13 @@ using namespace xolotlCore;
 
 namespace xolotlSolver {
 
-//Timer for RHSFunction()
+//! PETSc options object
+PetscOptions* petscOptions = nullptr;
+
+//!Timer for RHSFunction()
 std::shared_ptr<xolotlPerf::ITimer> RHSFunctionTimer;
 
-////Timer for RHSJacobian()
+//!Timer for RHSJacobian()
 std::shared_ptr<xolotlPerf::ITimer> RHSJacobianTimer;
 
 //! Help message
@@ -38,11 +41,11 @@ static char help[] =
 		"Solves C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.\n";
 
 // ----- GLOBAL VARIABLES ----- //
-extern PetscErrorCode setupPetsc0DMonitor(TS);
-extern PetscErrorCode setupPetsc1DMonitor(TS,
+extern PetscErrorCode setupPetsc0DMonitor(TS&);
+extern PetscErrorCode setupPetsc1DMonitor(TS&,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry>);
-extern PetscErrorCode setupPetsc2DMonitor(TS);
-extern PetscErrorCode setupPetsc3DMonitor(TS);
+extern PetscErrorCode setupPetsc2DMonitor(TS&);
+extern PetscErrorCode setupPetsc3DMonitor(TS&);
 
 void PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Initialize the concentrations in the solution vector
@@ -236,6 +239,17 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	PetscOptions petscOptions;
+	ierr = PetscOptionsCreate(&petscOptions);
+	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
+	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
+	checkPetscError(ierr,
+			"PetscSolver::solve: PetscOptionsInsertString failed.");
+	ierr = PetscObjectSetOptions((PetscObject) ts, petscOptions);
+	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
+	ierr = TSSetFromOptions(ts);
+	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+	ierr = PetscOptionsView(petscOptions, PETSC_VIEWER_STDOUT_WORLD);
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = getSolverHandler().getNetworkName();
@@ -248,28 +262,14 @@ void PetscSolver::solve() {
 			auto tsGroup = concGroup->getLastTimestepGroup();
 			assert(tsGroup);
 			std::tie(time, deltaTime) = tsGroup->readTimes();
+
+			// Give the values to the solver
+			ierr = TSSetTime(ts, time);
+			checkPetscError(ierr, "PetscSolver::solve: TSSetTime failed.");
+			ierr = TSSetTimeStep(ts, deltaTime);
+			checkPetscError(ierr, "PetscSolver::solve: TSSetTimeStep failed.");
 		}
 	}
-
-	ierr = TSSetTime(ts, time);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetTime failed.");
-	ierr = TSSetTimeStep(ts, deltaTime);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetTimeStep failed.");
-
-	PetscOptions options;
-	ierr = PetscOptionsCreate(&options);
-	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
-	ierr =
-			PetscOptionsInsertString(options,
-					optionsString.c_str());
-	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsInsertString failed.");
-	ierr = PetscObjectSetOptions((PetscObject)ts, options);
-	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
-	ierr = TSSetFromOptions(ts);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
-
-	ierr = PetscOptionsDestroy(&options);
-	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsDestroy failed.");
 
 	// Switch on the number of dimensions to set the monitors
 	int dim = getSolverHandler().getDimension();
@@ -323,7 +323,8 @@ void PetscSolver::solve() {
 		 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 		// Check the option -check_collapse
 		PetscBool flagCheck;
-		ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
+		ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse",
+				&flagCheck);
 		checkPetscError(ierr,
 				"PetscSolver::solve: PetscOptionsHasName (-check_collapse) failed.");
 		if (flagCheck) {
@@ -356,6 +357,8 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Free work space.
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	ierr = PetscOptionsDestroy(&petscOptions);
+	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsDestroy failed.");
 	ierr = VecDestroy(&C);
 	checkPetscError(ierr, "PetscSolver::solve: VecDestroy failed.");
 	ierr = TSDestroy(&ts);

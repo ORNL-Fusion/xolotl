@@ -52,8 +52,8 @@ protected:
 	//! The initial vacancy concentration.
 	double initialVConc;
 
-	//! The current retention value.
-	double retention;
+	//! The vector of retention value.
+	std::vector<double> retention;
 
 	//! The original flux handler created.
 	xolotlCore::IFluxHandler *fluxHandler;
@@ -434,15 +434,23 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	virtual void setRetention(double ret) override {
-		retention = ret;
+		retention.push_back(ret);
 	}
 
 	/**
-	 * Get the latest value of retention.
+	 * Get the retention vector copy.
 	 * \see ISolverHandler.h
 	 */
-	virtual double getRetention() const override {
+	virtual std::vector<double> getCopyRetention() const override {
 		return retention;
+	}
+
+	/**
+	 * Get the retention vector pointer.
+	 * \see ISolverHandler.h
+	 */
+	virtual std::vector<double>* getPointerRetention() override {
+		return &retention;
 	}
 
 	/**

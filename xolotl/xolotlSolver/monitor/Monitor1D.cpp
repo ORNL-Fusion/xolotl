@@ -800,11 +800,11 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	double totalRadii = 0.0;
 	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
-	// Get the fluence
-	double fluence = fluxHandler->getFluence();
-
 	// Master process
 	if (procId == 0) {
+		// Get the fluence
+		double fluence = fluxHandler->getFluence();
+
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Xenon retention = "
@@ -821,10 +821,10 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				<< fluence - totalXeConcentration << " "
 				<< totalRadii / totalBubbleConcentration << std::endl;
 		outputFile.close();
-	}
 
-	// Set the retention in the solver handler for an external program to use
-	solverHandler.setRetention(100.0 * (totalXeConcentration / fluence));
+		// Set the retention in the solver handler for an external program to use
+		solverHandler.setRetention(100.0 * (totalXeConcentration / fluence));
+	}
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -2435,7 +2435,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
-PetscErrorCode setupPetsc1DMonitor(TS ts,
+PetscErrorCode setupPetsc1DMonitor(TS& ts,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry) {
 
 	PetscErrorCode ierr;
@@ -2471,76 +2471,82 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 			flagPerf, flagHeRetention, flagStatus, flagMaxClusterConc,
 			flagCumul, flagMeanSize, flagConc, flagXeRetention, flagTRIDYN;
 
+	// Get the option from the TS
+	PetscOptions petscOptions;
+	ierr = PetscObjectGetOptions((PetscObject)ts, &petscOptions);
+	checkPetscError(ierr,
+			"setupPetsc1DMonitor: PetscObjectGetOptions failed.");
+
 	// Check the option -check_negative
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_negative", &flagNeg);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-check_negative) failed.");
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCollapse);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse", &flagCollapse);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
 	// Check the option -plot_perf
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-plot_perf", &flagPerf);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-plot_perf) failed.");
 
 	// Check the option -plot_series
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_series", &flagSeries);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-plot_series", &flagSeries);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-plot_series) failed.");
 
 	// Check the option -plot_1d
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_1d", &flag1DPlot);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-plot_1d", &flag1DPlot);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-plot_1d) failed.");
 
 	// Check the option -plot_2d
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d", &flag2DPlot);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-plot_2d", &flag2DPlot);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-plot_2d) failed.");
 
 	// Check the option -helium_retention
-	ierr = PetscOptionsHasName(NULL, NULL, "-helium_retention",
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-helium_retention",
 			&flagHeRetention);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-helium_retention) failed.");
 
 	// Check the option -helium_retention
-	ierr = PetscOptionsHasName(NULL, NULL, "-xenon_retention",
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-xenon_retention",
 			&flagXeRetention);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-xenon_retention) failed.");
 
 	// Check the option -start_stop
-	ierr = PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-start_stop", &flagStatus);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-start_stop) failed.");
 
 	// Check the option -max_cluster_conc
-	ierr = PetscOptionsHasName(NULL, NULL, "-max_cluster_conc",
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-max_cluster_conc",
 			&flagMaxClusterConc);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-max_cluster_conc) failed.");
 
 	// Check the option -helium_cumul
-	ierr = PetscOptionsHasName(NULL, NULL, "-helium_cumul", &flagCumul);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-helium_cumul", &flagCumul);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-helium_cumul) failed.");
 
 	// Check the option -helium_conc
-	ierr = PetscOptionsHasName(NULL, NULL, "-helium_conc", &flagConc);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-helium_conc", &flagConc);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-helium_conc) failed.");
 
 	// Check the option -mean_size
-	ierr = PetscOptionsHasName(NULL, NULL, "-mean_size", &flagMeanSize);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-mean_size", &flagMeanSize);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-mean_size) failed.");
 
 	// Check the option -tridyn
-	ierr = PetscOptionsHasName(NULL, NULL, "-tridyn", &flagTRIDYN);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-tridyn", &flagTRIDYN);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-tridyn) failed.");
 
@@ -2571,10 +2577,10 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	if (flagCollapse) {
 		// Find the threshold
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-check_collapse",
+		ierr = PetscOptionsGetReal(petscOptions, NULL, "-check_collapse",
 				&timeStepThreshold, &flag);
 		checkPetscError(ierr,
-				"setupPetsc1DMonitor: PetscOptionsGetInt (-check_collapse) failed.");
+				"setupPetsc1DMonitor: PetscOptionsGetReal (-check_collapse) failed.");
 		if (!flag)
 			timeStepThreshold = 1.0e-16;
 
@@ -2588,10 +2594,10 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	if (flagNeg) {
 		// Find the stride to know how often we want to check
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-check_negative", &negStride1D,
+		ierr = PetscOptionsGetReal(petscOptions, NULL, "-check_negative", &negStride1D,
 				&flag);
 		checkPetscError(ierr,
-				"setupPetsc1DMonitor: PetscOptionsGetInt (-check_negative) failed.");
+				"setupPetsc1DMonitor: PetscOptionsGetReal (-check_negative) failed.");
 		if (!flag)
 			negStride1D = -1.0;
 
@@ -2616,10 +2622,10 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop", &hdf5Stride1D,
+		ierr = PetscOptionsGetReal(petscOptions, NULL, "-start_stop", &hdf5Stride1D,
 				&flag);
 		checkPetscError(ierr,
-				"setupPetsc1DMonitor: PetscOptionsGetInt (-start_stop) failed.");
+				"setupPetsc1DMonitor: PetscOptionsGetReal (-start_stop) failed.");
 		if (!flag)
 			hdf5Stride1D = 1.0;
 
