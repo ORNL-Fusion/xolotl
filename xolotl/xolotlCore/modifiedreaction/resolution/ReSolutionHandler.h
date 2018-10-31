@@ -27,11 +27,6 @@ protected:
 		IReactant* smaller;
 
 		/**
-		 * The number of Xenon difference
-		 */
-		int size;
-
-		/**
 		 * All the coefficient needed to compute the RHS methods.
 		 *
 		 * 0-1 is for Xe_1
@@ -41,9 +36,9 @@ protected:
 		Array<double, 8> coefs;
 
 		//! The constructor
-		ReSolutionBase(IReactant* _larger, IReactant* _smaller, int _size,
+		ReSolutionBase(IReactant* _larger, IReactant* _smaller,
 				Array<double, 8> _coefs) :
-				larger(_larger), smaller(_smaller), size(_size) {
+				larger(_larger), smaller(_smaller) {
 			for (int i = 0; i < 8; i++) {
 				coefs[i] = _coefs[i];
 			}
@@ -54,7 +49,7 @@ protected:
 		 */
 		ReSolutionBase() = delete;
 		ReSolutionBase(const ReSolutionBase& other) :
-				larger(other.larger), smaller(other.smaller), size(other.size) {
+				larger(other.larger), smaller(other.smaller) {
 			for (int i = 0; i < 8; i++) {
 				coefs[i] = other.coefs[i];
 			}

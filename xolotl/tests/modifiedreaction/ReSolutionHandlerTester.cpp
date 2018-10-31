@@ -99,9 +99,9 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 			updatedConcOffset, 1, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.24056e+20, 0.01); // Create Xe
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 1.44012e+13, 0.01); // Xe_7999
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 1.44012e+13, 0.01); // Xe_8000
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.73674472e+20, 0.01); // Create Xe
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 1.447976e+13, 0.01); // Xe_7999
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 1.448158e+13, 0.01); // Xe_8000
 
 	// Initialize the indices and values to set in the Jacobian
 	int nXenon = reSolutionHandler.getNumberOfReSoluting();
@@ -116,28 +116,28 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 			valPointer, indicesPointer, 1, 0);
 
 	// Check the values for the indices
-	BOOST_REQUIRE_EQUAL(nReSo, 2274);
-	BOOST_REQUIRE_EQUAL(indices[0], 7726); // Xe_7725
-	BOOST_REQUIRE_EQUAL(indices[1], 7726); // Xe_7725
-	BOOST_REQUIRE_EQUAL(indices[2], 7726); // Xe_7725
-	BOOST_REQUIRE_EQUAL(indices[3], 7726); // Xe_7725
-	BOOST_REQUIRE_EQUAL(indices[4], 7725); // Xe_7724
-	BOOST_REQUIRE_EQUAL(indices[5], 7725); // Xe_7724
-	BOOST_REQUIRE_EQUAL(indices[6], 7725); // Xe_7724
-	BOOST_REQUIRE_EQUAL(indices[7], 7725); // Xe_7724
+	BOOST_REQUIRE_EQUAL(nReSo, 9999);
+	BOOST_REQUIRE_EQUAL(indices[0], 1); // Xe_2
+	BOOST_REQUIRE_EQUAL(indices[1], 1); // Xe_2
+	BOOST_REQUIRE_EQUAL(indices[2], 1); // Xe_2
+	BOOST_REQUIRE_EQUAL(indices[3], 1); // Xe_2
+	BOOST_REQUIRE_EQUAL(indices[4], 0); // Xe_1
+	BOOST_REQUIRE_EQUAL(indices[5], 0); // Xe_1
+	BOOST_REQUIRE_EQUAL(indices[6], 0); // Xe_1
+	BOOST_REQUIRE_EQUAL(indices[7], 0); // Xe_1
 	BOOST_REQUIRE_EQUAL(indices[8], 0); // Xe_1
 	BOOST_REQUIRE_EQUAL(indices[9], 0); // Xe_1
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -4.0e8, 0.01); // Xe_7725
+	BOOST_REQUIRE_CLOSE(val[0], -3.95423e5, 0.01); // Xe_2
 	BOOST_REQUIRE_CLOSE(val[1], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[2], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[3], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[4], 4.0e8, 0.01); // Xe_7724
+	BOOST_REQUIRE_CLOSE(val[4], 3.95423e5, 0.01); // Xe_1
 	BOOST_REQUIRE_CLOSE(val[5], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[6], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[7], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[8], 4.0e8, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[8], 3.95423e5, 0.01); // Xe_1
 	BOOST_REQUIRE_CLOSE(val[9], 0.0, 0.01); // no grouping
 
 	// Remove the created file
