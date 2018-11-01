@@ -17,7 +17,7 @@ void XolotlInterface::printSomething() {
 }
 
 std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
-		int argc, char **argv, MPI_Comm comm) {
+		int argc, char **argv, MPI_Comm comm, bool isStandalone) {
 	// Local Declarations
 	std::shared_ptr<xolotlSolver::PetscSolver> solver;
 
@@ -96,7 +96,9 @@ std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
 		// Setup the solver
 		solver = std::shared_ptr<xolotlSolver::PetscSolver>(
 				new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
-		solver->initialize();
+		// Initialize only if Xolotl is used standalone
+		if (isStandalone)
+			solver->initialize();
 		solver->setCommandLineOptions(opts.getPetscArgv());
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
@@ -209,10 +211,11 @@ void XolotlInterface::printRetention(
 }
 
 void XolotlInterface::finalizeXolotl(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+		std::shared_ptr<xolotlSolver::PetscSolver> solver, bool isStandalone) {
 	try {
-		// Clean up
-		solver->finalize();
+		// Finalize only if Xolotl is used standalone
+		if (isStandalone)
+			solver->finalize();
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;

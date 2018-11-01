@@ -249,7 +249,6 @@ void PetscSolver::solve() {
 	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
 	ierr = TSSetFromOptions(ts);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
-	ierr = PetscOptionsView(petscOptions, PETSC_VIEWER_STDOUT_WORLD);
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = getSolverHandler().getNetworkName();
