@@ -76,8 +76,10 @@ public:
 	 * including but not limited to cleaning up memory, finalizing MPI and
 	 * printing diagnostic information. If the solver can not be finalized,
 	 * this operation will throw an exception of type std::string.
+	 *
+	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
 	 */
-	virtual void finalize() = 0;
+	virtual void finalize(bool isStandalone) = 0;
 
 };
 //end class ISolver

@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 
 	// Solve and finalize
 	solver->solve();
-	solver->finalize();
+	solver->finalize(true);
 
 	// Check the concentrations left in the network
 	double concs[network.getAll().size()];
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 
 	// Solve and finalize
 	solver->solve();
-	solver->finalize();
+	solver->finalize(true);
 
 	// Check the concentrations left in the network
 	double concs[network.getAll().size()];
@@ -357,7 +357,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 
 	// Solve and finalize
 	solver->solve();
-	solver->finalize();
+	solver->finalize(true);
 
 	// Check the concentrations left in the network
 	double concs[network.getAll().size()];
@@ -455,7 +455,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 
 	// Solve and finalize
 	solver->solve();
-	solver->finalize();
+	solver->finalize(true);
 
 	// Check the concentrations left in the network
 	double concs[network.getAll().size()];
@@ -565,7 +565,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 //
 //	// Solve and finalize
 //	solver->solve();
-//	solver->finalize();
+//	solver->finalize(true);
 //
 //	// Check the concentrations left in the network
 //	auto network = solvHandler->getNetwork();

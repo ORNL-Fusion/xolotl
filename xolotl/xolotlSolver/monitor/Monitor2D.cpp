@@ -1728,6 +1728,30 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 	PetscFunctionReturn(0);
 }
 
+/**
+ * This operation resets all the global variables to their original values.
+ * @return A standard PETSc error code
+ */
+PetscErrorCode reset2DMonitor() {
+	previousTime = 0.0;
+	timeStepThreshold = 0.0;
+	hdf5Stride2D = 0.0;
+	hdf5Previous2D = 0;
+	hdf5OutputName2D = "xolotlStop.h5";
+	previousIFlux2D.clear();
+	nInterstitial2D.clear();
+	previousHeFlux2D.clear();
+	nHelium2D.clear();
+	previousDFlux2D.clear();
+	nDeuterium2D.clear();
+	previousTFlux2D.clear();
+	nTritium2D.clear();
+	sputteringYield2D = 0.0;
+	depthPositions2D.clear();
+
+	PetscFunctionReturn(0);
+}
+
 }
 
 /* end namespace xolotlSolver */

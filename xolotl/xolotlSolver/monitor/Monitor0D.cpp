@@ -574,6 +574,21 @@ PetscErrorCode setupPetsc0DMonitor(TS& ts) {
 	PetscFunctionReturn(0);
 }
 
+/**
+ * This operation resets all the global variables to their original values.
+ * @return A standard PETSc error code
+ */
+PetscErrorCode reset0DMonitor() {
+	previousTime = 0.0;
+	timeStepThreshold = 0.0;
+	hdf5Stride0D = 0.0;
+	hdf5Previous0D = 0;
+	hdf5OutputName0D = "xolotlStop.h5";
+
+
+	PetscFunctionReturn(0);
+}
+
 }
 
 /* end namespace xolotlSolver */

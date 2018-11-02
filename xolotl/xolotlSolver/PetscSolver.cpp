@@ -46,6 +46,10 @@ extern PetscErrorCode setupPetsc1DMonitor(TS&,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry>);
 extern PetscErrorCode setupPetsc2DMonitor(TS&);
 extern PetscErrorCode setupPetsc3DMonitor(TS&);
+extern PetscErrorCode reset0DMonitor();
+extern PetscErrorCode reset1DMonitor();
+extern PetscErrorCode reset2DMonitor();
+extern PetscErrorCode reset3DMonitor();
 
 void PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Initialize the concentrations in the solution vector
@@ -368,11 +372,41 @@ void PetscSolver::solve() {
 	return;
 }
 
-void PetscSolver::finalize() {
+void PetscSolver::finalize(bool isStandalone) {
 	PetscErrorCode ierr;
 
-	ierr = PetscFinalize();
-	checkPetscError(ierr, "PetscSolver::finalize: PetscFinalize failed.");
+	// Switch on the number of dimensions to set the monitors
+	int dim = getSolverHandler().getDimension();
+	switch (dim) {
+	case 0:
+		// One dimension
+		ierr = reset0DMonitor();
+		checkPetscError(ierr, "PetscSolver::finalize: reset0DMonitor failed.");
+		break;
+	case 1:
+		// One dimension
+		ierr = reset1DMonitor();
+		checkPetscError(ierr, "PetscSolver::finalize: reset1DMonitor failed.");
+		break;
+	case 2:
+		// Two dimensions
+		ierr = reset2DMonitor();
+		checkPetscError(ierr, "PetscSolver::finalize: reset2DMonitor failed.");
+		break;
+	case 3:
+		// Three dimensions
+		ierr = reset3DMonitor();
+		checkPetscError(ierr, "PetscSolver::finalize: reset3DMonitor failed.");
+		break;
+	default:
+		throw std::string("PetscSolver Exception: Wrong number of dimensions "
+				"to reset the monitors.");
+	}
+
+	if (isStandalone) {
+		ierr = PetscFinalize();
+		checkPetscError(ierr, "PetscSolver::finalize: PetscFinalize failed.");
+	}
 
 	return;
 }

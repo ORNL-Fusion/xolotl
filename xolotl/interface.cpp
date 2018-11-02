@@ -213,9 +213,8 @@ void XolotlInterface::printRetention(
 void XolotlInterface::finalizeXolotl(
 		std::shared_ptr<xolotlSolver::PetscSolver> solver, bool isStandalone) {
 	try {
-		// Finalize only if Xolotl is used standalone
-		if (isStandalone)
-			solver->finalize();
+		// Call solver finalize
+		solver->finalize(isStandalone);
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
