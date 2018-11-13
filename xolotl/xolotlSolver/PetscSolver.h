@@ -29,6 +29,26 @@ class PetscSolver: public Solver {
 private:
 
 	/**
+	 * Distributed array that will contain the solution.
+	 */
+	DM da;
+
+	/**
+	 * Time stepper.
+	 */
+	TS ts;
+
+	/**
+	 * Global solution vector.
+	 */
+	Vec C;
+
+	/**
+	 * Options.
+	 */
+	PetscOptions petscOptions;
+
+	/**
 	 * This operation configures the initial conditions of the grid in Xolotl.
 	 * @param data The DM (data manager) created by PETSc
 	 * @param solutionVector The solution vector that contains the PDE
@@ -73,8 +93,10 @@ public:
 	 * possibly including but not limited to setting up MPI and loading initial
 	 * conditions. If the solver can not be initialized, this operation will
 	 * throw an exception of type std::string.
+	 *
+	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
 	 */
-	void initialize() override;
+	void initialize(bool isStandalone) override;
 
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve

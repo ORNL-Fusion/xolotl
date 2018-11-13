@@ -193,26 +193,22 @@ void PetscSolver::setOptions(const std::map<std::string, std::string>&) {
 void PetscSolver::setupMesh() {
 }
 
-void PetscSolver::initialize() {
+void PetscSolver::initialize(bool isStandalone) {
+	PetscErrorCode ierr;
+
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
-
-	return;
-}
-
-void PetscSolver::solve() {
-	PetscErrorCode ierr;
+	if (isStandalone) {
+		PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
+	}
 
 	// Create the solver context
-	DM da;
 	getSolverHandler().createSolverContext(da);
 
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Extract global vector from DMDA to hold solution
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	Vec C;
 	ierr = DMCreateGlobalVector(da, &C);
 	checkPetscError(ierr, "PetscSolver::solve: DMCreateGlobalVector failed.");
 
@@ -221,7 +217,6 @@ void PetscSolver::solve() {
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	// Get the MPI communicator
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
-	TS ts;
 	ierr = TSCreate(xolotlComm, &ts);
 	checkPetscError(ierr, "PetscSolver::solve: TSCreate failed.");
 	ierr = TSSetType(ts, TSARKIMEX);
@@ -243,7 +238,6 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	PetscOptions petscOptions;
 	ierr = PetscOptionsCreate(&petscOptions);
 	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
 	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
@@ -314,6 +308,12 @@ void PetscSolver::solve() {
 	// Set the output precision for std::out
 	std::cout.precision(16);
 
+	return;
+}
+
+void PetscSolver::solve() {
+	PetscErrorCode ierr;
+
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -357,18 +357,6 @@ void PetscSolver::solve() {
 				"PetscSolver Exception: Unable to solve! Data not configured properly.");
 	}
 
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Free work space.
-	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = PetscOptionsDestroy(&petscOptions);
-	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsDestroy failed.");
-	ierr = VecDestroy(&C);
-	checkPetscError(ierr, "PetscSolver::solve: VecDestroy failed.");
-	ierr = TSDestroy(&ts);
-	checkPetscError(ierr, "PetscSolver::solve: TSDestroy failed.");
-	ierr = DMDestroy(&da);
-	checkPetscError(ierr, "PetscSolver::solve: DMDestroy failed.");
-
 	return;
 }
 
@@ -402,6 +390,18 @@ void PetscSolver::finalize(bool isStandalone) {
 		throw std::string("PetscSolver Exception: Wrong number of dimensions "
 				"to reset the monitors.");
 	}
+
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Free work space.
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	ierr = PetscOptionsDestroy(&petscOptions);
+	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsDestroy failed.");
+	ierr = VecDestroy(&C);
+	checkPetscError(ierr, "PetscSolver::solve: VecDestroy failed.");
+	ierr = TSDestroy(&ts);
+	checkPetscError(ierr, "PetscSolver::solve: TSDestroy failed.");
+	ierr = DMDestroy(&da);
+	checkPetscError(ierr, "PetscSolver::solve: DMDestroy failed.");
 
 	if (isStandalone) {
 		ierr = PetscFinalize();
