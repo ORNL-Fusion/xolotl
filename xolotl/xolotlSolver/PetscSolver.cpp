@@ -318,6 +318,9 @@ void PetscSolver::solve() {
 	 Solve the ODE system
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	if (ts != NULL && C != NULL) {
+		// Reset the time step number
+		ierr = TSSetStepNumber(ts, 0);  
+		checkPetscError(ierr, "PetscSolver::solve: Reset Step Number failed.");
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr, "PetscSolver::solve: TSSolve failed.");
 
