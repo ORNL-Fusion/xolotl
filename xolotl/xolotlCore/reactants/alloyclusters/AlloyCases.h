@@ -10,7 +10,6 @@ namespace xolotlCore {
 std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 	std::vector<forwardReaction> reactions;
 
-	//if (caseName == "insitu") {
 	// vac + vac = vac | void
 	forwardReaction reaction = forwardReaction(ReactantType::V,
 			ReactantType::V);
@@ -217,43 +216,14 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 	reaction.addProduct(ReactantType::PerfectSuper);
 	reactions.push_back(reaction);
 
-	//}
-
 	return reactions;
 }
 
 std::vector<backwardReaction> getBackwardReactions(std::string caseName) {
 	std::vector<backwardReaction> reactions;
 
-//	// void = vac + (void | vac)
-//	backwardReaction reaction = backwardReaction(ReactantType::Void, ReactantType::V);
-//	reaction.addProduct(ReactantType::Void);
-//	reaction.addProduct(ReactantType::V);
-//	reactions.push_back(reaction);
-//
-//	// vac = vac + (vac)
-//	reaction = backwardReaction(ReactantType::V, ReactantType::V);
-//	reaction.addProduct(ReactantType::V);
-//	reactions.push_back(reaction);
-//
-//	// faulted = vac + (faulted | vac)
-//	reaction = backwardReaction(ReactantType::Faulted, ReactantType::V);
-//	reaction.addProduct(ReactantType::Faulted);
-//	reaction.addProduct(ReactantType::V);
-//	reactions.push_back(reaction);
-
-	// bubble -> int
-	backwardReaction reaction = backwardReaction(ReactantType::Void,
-			ReactantType::I);
-	reaction.addProduct(ReactantType::Void);
-	reaction.addProduct(ReactantType::VoidSuper);
-	reactions.push_back(reaction);
-	reaction = backwardReaction(ReactantType::VoidSuper, ReactantType::I);
-	reaction.addProduct(ReactantType::VoidSuper);
-	reactions.push_back(reaction);
-
-	// bubble -> vac
-	reaction = backwardReaction(ReactantType::Void, ReactantType::V);
+	// void = vac + (void | vac)
+	backwardReaction reaction = backwardReaction(ReactantType::Void, ReactantType::V);
 	reaction.addProduct(ReactantType::Void);
 	reaction.addProduct(ReactantType::V);
 	reactions.push_back(reaction);
@@ -263,7 +233,12 @@ std::vector<backwardReaction> getBackwardReactions(std::string caseName) {
 	reaction.addProduct(ReactantType::VoidSuper);
 	reactions.push_back(reaction);
 
-	// faulted -> vac
+	// vac = vac + (vac)
+	reaction = backwardReaction(ReactantType::V, ReactantType::V);
+	reaction.addProduct(ReactantType::V);
+	reactions.push_back(reaction);
+
+	// faulted = vac + (faulted | vac)
 	reaction = backwardReaction(ReactantType::Faulted, ReactantType::V);
 	reaction.addProduct(ReactantType::Faulted);
 	reaction.addProduct(ReactantType::V);
@@ -274,10 +249,42 @@ std::vector<backwardReaction> getBackwardReactions(std::string caseName) {
 	reaction.addProduct(ReactantType::FaultedSuper);
 	reactions.push_back(reaction);
 
-	// int -> int
-	reaction = backwardReaction(ReactantType::I, ReactantType::I);
-	reaction.addProduct(ReactantType::I);
-	reactions.push_back(reaction);
+//	// bubble -> int
+//	backwardReaction reaction = backwardReaction(ReactantType::Void,
+//			ReactantType::I);
+//	reaction.addProduct(ReactantType::Void);
+//	reaction.addProduct(ReactantType::VoidSuper);
+//	reactions.push_back(reaction);
+//	reaction = backwardReaction(ReactantType::VoidSuper, ReactantType::I);
+//	reaction.addProduct(ReactantType::VoidSuper);
+//	reactions.push_back(reaction);
+//
+//	// bubble -> vac
+//	reaction = backwardReaction(ReactantType::Void, ReactantType::V);
+//	reaction.addProduct(ReactantType::Void);
+//	reaction.addProduct(ReactantType::V);
+//	reactions.push_back(reaction);
+//	reaction = backwardReaction(ReactantType::VoidSuper, ReactantType::V);
+//	reaction.addProduct(ReactantType::Void);
+//	reaction.addProduct(ReactantType::V);
+//	reaction.addProduct(ReactantType::VoidSuper);
+//	reactions.push_back(reaction);
+//
+//	// faulted -> vac
+//	reaction = backwardReaction(ReactantType::Faulted, ReactantType::V);
+//	reaction.addProduct(ReactantType::Faulted);
+//	reaction.addProduct(ReactantType::V);
+//	reactions.push_back(reaction);
+//	reaction = backwardReaction(ReactantType::FaultedSuper, ReactantType::V);
+//	reaction.addProduct(ReactantType::Faulted);
+//	reaction.addProduct(ReactantType::V);
+//	reaction.addProduct(ReactantType::FaultedSuper);
+//	reactions.push_back(reaction);
+//
+//	// int -> int
+//	reaction = backwardReaction(ReactantType::I, ReactantType::I);
+//	reaction.addProduct(ReactantType::I);
+//	reactions.push_back(reaction);
 
 	return reactions;
 }

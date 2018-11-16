@@ -69,36 +69,36 @@ private:
 				+ reaction.second.getFormationEnergy()
 				- reaction.dissociating.getFormationEnergy();
 
-		if (reaction.dissociating.getType() == ReactantType::Void
-				|| reaction.dissociating.getType() == ReactantType::VoidSuper) {
-			if (reaction.first.getType() == ReactantType::I
-					|| reaction.second.getType() == ReactantType::I) {
-				double n = reaction.dissociating.getSize();
-				bindingEnergy = 3.5
-						- 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0));
-			} else if (reaction.first.getType() == ReactantType::V
-					|| reaction.second.getType() == ReactantType::V) {
-				double n = reaction.dissociating.getSize();
-				bindingEnergy = 1.9
-						- 3.45 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-			}
-		} else if (reaction.dissociating.getType() == ReactantType::Faulted
-				|| reaction.dissociating.getType()
-						== ReactantType::FaultedSuper) {
-			if (reaction.first.getType() == ReactantType::V
-					|| reaction.second.getType() == ReactantType::V) {
-				double n = reaction.dissociating.getSize();
-				bindingEnergy = 1.9
-						- 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-			}
-		} else if (reaction.dissociating.getType() == ReactantType::I) {
-			if (reaction.first.getType() == ReactantType::I
-					|| reaction.second.getType() == ReactantType::I) {
-				double n = reaction.dissociating.getSize();
-				bindingEnergy = 3.5
-						- 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-			}
-		}
+//		if (reaction.dissociating.getType() == ReactantType::Void
+//				|| reaction.dissociating.getType() == ReactantType::VoidSuper) {
+//			if (reaction.first.getType() == ReactantType::I
+//					|| reaction.second.getType() == ReactantType::I) {
+//				double n = reaction.dissociating.getSize();
+//				bindingEnergy = 3.5
+//						- 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0));
+//			} else if (reaction.first.getType() == ReactantType::V
+//					|| reaction.second.getType() == ReactantType::V) {
+//				double n = reaction.dissociating.getSize();
+//				bindingEnergy = 1.9
+//						- 3.45 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+//			}
+//		} else if (reaction.dissociating.getType() == ReactantType::Faulted
+//				|| reaction.dissociating.getType()
+//						== ReactantType::FaultedSuper) {
+//			if (reaction.first.getType() == ReactantType::V
+//					|| reaction.second.getType() == ReactantType::V) {
+//				double n = reaction.dissociating.getSize();
+//				bindingEnergy = 1.9
+//						- 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+//			}
+//		} else if (reaction.dissociating.getType() == ReactantType::I) {
+//			if (reaction.first.getType() == ReactantType::I
+//					|| reaction.second.getType() == ReactantType::I) {
+//				double n = reaction.dissociating.getSize();
+//				bindingEnergy = 3.5
+//						- 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+//			}
+//		}
 
 //		std::cout << reaction.dissociating.getName() << " -> " << reaction.first.getName()
 //				<< " + " << reaction.second.getName() << std::endl;

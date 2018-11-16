@@ -1155,9 +1155,6 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the network
 	auto& network = solverHandler.getNetwork();
 
-	// Get degrees of freedom
-	auto dof = network.getDOF();
-
 	// Initial declarations for the density and diameter
 	double iDensity = 0.0, vDensity = 0.0, voidDensity = 0.0,
 			frankDensity = 0.0, faultedDensity = 0.0, perfectDensity = 0.0,

@@ -107,9 +107,10 @@ protected:
 		if (useChebyshevGrid) {
 			// The first grid point will be at x = 0.0
 			grid.push_back(0.0);
+			grid.push_back(0.0);
 
 			// In that case hx correspond to the full length of the grid
-			for (int l = 0; l <= nx + 1; l++) {
+			for (int l = 1; l <= nx - 1; l++) {
 				grid.push_back(
 						(hx / 2.0)
 								* (1.0

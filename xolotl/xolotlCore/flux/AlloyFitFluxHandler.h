@@ -28,13 +28,15 @@ private:
 	}
 
 	std::vector<double> AlloyDamageFunction(const double x) {
-		// Find the correct depth region
-		for (int i = 0; i < srim.getDepth().size(); ++i) {
-			if (x <= srim.getDepth()[i]) {
-				return srim.getDamage()[i];
+		std::vector<double> damage = { 0.0, 0.0, 0.0, 0.0 };
+		auto srimDamage = srim.getDamage();
+		for (int it = 0; it < srimDamage.size(); ++it) {
+			damage[it] = srimDamage[it][0];
+			for (int it2 = 1; it2 < srimDamage[it].size(); ++it2) {
+				damage[it] += srimDamage[it][it2] * pow(x, double(it2));
 			}
 		}
-		return {0.0,0.0,0.0,0.0};
+		return damage;
 	}
 
 	double AlloyImplantationFunction(const double x) {
@@ -69,9 +71,9 @@ private:
 		// Change this to grab the actual surface position
 		int surfacePos = 0;
 		damageRate.push_back(0.0);
-		for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
+		for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 			// Get the x position
-			auto x = xGrid[i] - xGrid[surfacePos];
+			auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
 			// Compute the rate at that position
 			std::vector<double> fitFlux = AlloyDamageFunction(x);
 			double rate = 0;
@@ -80,6 +82,7 @@ private:
 						* cascade.clusterFraction[it][j];
 			}
 			rate = rate * fraction * fluxAmplitude / double(size);
+
 			// Add it to the vector
 			damageRate.push_back(rate);
 		}
@@ -91,7 +94,7 @@ private:
 		// Change this to grab the actual surface position
 		int surfacePos = 0;
 
-		for (int i = surfacePos + 1; i < xGrid.size() - 1; i++) {
+		for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 			// Get the x position
 			auto x = xGrid[i] - xGrid[surfacePos];
 			// Add the implantation rate to the damage rate
@@ -131,18 +134,25 @@ public:
 			std::vector<double> grid) {
 
 		// Setup the ion damage and implantation depth profile
-		if (false)
+		if (false) {
 			srim.setInSitu();
-		else if (true)
+			cascade.setBulk();
+		}
+		else if (true) {
 			srim.setBulk();
+			cascade.setBulk();
+		}
 
 		// Turn on/off implantation
-		bool implant = true;
+		bool implant = false;
 
 		// Set the grid
 		xGrid = grid;
 
-		if (xGrid.size() == 0) srim.setOverlap();
+		if (xGrid.size() == 0) {
+			srim.setOverlap();
+			cascade.setOverlap();
+		}
 
 		// Iterate over all produced cluster species
 		for (int it = 0; it < cascade.clusterSizes.size(); ++it) {
@@ -159,9 +169,9 @@ public:
 					(ionDamage.fluxIndex).push_back(fluxCluster->getId() - 1);
 					(ionDamage.damageRate).push_back(
 							AlloySetGeneration(size, it, 1.0));
-//					if (size == 1 && implant) {
-//						AlloyAddImplantation(ionDamage.damageRate.back());
-//					}
+					if (size == 1 && implant) {
+						AlloyAddImplantation(ionDamage.damageRate.back());
+					}
 				}
 				// Otherwise the clusters must be frank and perfect type
 				else {

@@ -102,6 +102,7 @@ double AlloyClusterReactionNetwork::getReactionRadius(
 	if (typeName == ReactantType::Perfect)
 		return 0.5 * xolotlCore::alloyLatticeConstant
 				* sqrt(double(size) * sqrt(2.0) / xolotlCore::pi);
+
 	return 0.0;
 }
 
@@ -227,9 +228,9 @@ void AlloyClusterReactionNetwork::createReactionConnectivity() {
 						dissoReaction->reverseReaction = &prref;
 						auto& drref = add(std::move(dissoReaction));
 						// Tell the reactants that they are in this reaction
-						(monomer).participateIn(drref, prodCluster);
-						(prodCluster).participateIn(drref, prodCluster);
-						parentCluster.emitFrom(drref, prodCluster);
+						(monomer).participateIn(drref, parentCluster);
+						(prodCluster).participateIn(drref, parentCluster);
+						parentCluster.emitFrom(drref, parentCluster);
 					}
 				}
 			}
