@@ -57,8 +57,7 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 	double bindingEnergy = computeBindingEnergy(reaction);
 
 	// Correct smallest faulted loop binding energy
-	int minFaultedSize = maxClusterSizeMap[ReactantType::Faulted] + 1
-			- clusterTypeMap[ReactantType::Faulted].size();
+	int minFaultedSize = 6;
 	if (reaction.dissociating.getType() == ReactantType::Faulted
 			&& reaction.dissociating.getSize() == minFaultedSize) {
 		bindingEnergy = 1.5
@@ -80,6 +79,65 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 	return k_minus;
 }
 
+double AlloyClusterReactionNetwork::computeBindingEnergy(
+		const DissociationReaction& reaction) const {
+	double firstEnergy = reaction.first.getFormationEnergy(), secondEnergy =
+			reaction.second.getFormationEnergy(), dissoEnergy =
+			reaction.dissociating.getFormationEnergy();
+
+	auto& dissoCluster = static_cast<AlloyCluster&>(reaction.dissociating);
+	if (dissoCluster.isSuper()) {
+		dissoEnergy = getFormationEnergy(dissoCluster.getType(),
+				dissoCluster.getSize());
+		if (reaction.first.getSize() == 1)
+			secondEnergy = getFormationEnergy(dissoCluster.getType(),
+					dissoCluster.getSize() - 1);
+		else
+			firstEnergy = getFormationEnergy(dissoCluster.getType(),
+					dissoCluster.getSize() - 1);
+	}
+
+	double bindingEnergy = firstEnergy + secondEnergy - dissoEnergy;
+
+//		if (reaction.dissociating.getType() == ReactantType::Void
+//				|| reaction.dissociating.getType() == ReactantType::VoidSuper) {
+//			if (reaction.first.getType() == ReactantType::I
+//					|| reaction.second.getType() == ReactantType::I) {
+//				double n = reaction.dissociating.getSize();
+//				bindingEnergy = 3.5
+//						- 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0));
+//			} else if (reaction.first.getType() == ReactantType::V
+//					|| reaction.second.getType() == ReactantType::V) {
+//				double n = reaction.dissociating.getSize();
+//				bindingEnergy = 1.9
+//						- 3.45 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+//			}
+//		} else if (reaction.dissociating.getType() == ReactantType::Faulted
+//				|| reaction.dissociating.getType()
+//						== ReactantType::FaultedSuper) {
+//			if (reaction.first.getType() == ReactantType::V
+//					|| reaction.second.getType() == ReactantType::V) {
+//				double n = reaction.dissociating.getSize();
+//				bindingEnergy = 1.9
+//						- 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+//			}
+//		} else if (reaction.dissociating.getType() == ReactantType::I) {
+//			if (reaction.first.getType() == ReactantType::I
+//					|| reaction.second.getType() == ReactantType::I) {
+//				double n = reaction.dissociating.getSize();
+//				bindingEnergy = 3.5
+//						- 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+//			}
+//		}
+
+//	std::cout << reaction.dissociating.getName() << " -> "
+//			<< reaction.first.getName() << " + " << reaction.second.getName()
+//			<< " : " << bindingEnergy << " " << dissoEnergy << " "
+//			<< firstEnergy << " " << secondEnergy << std::endl;
+
+	return bindingEnergy;
+}
+
 int AlloyClusterReactionNetwork::typeSwitch(ReactantType const typeName) const {
 	if (typeName == ReactantType::V || typeName == ReactantType::Void
 			|| typeName == ReactantType::Faulted
@@ -92,14 +150,18 @@ int AlloyClusterReactionNetwork::typeSwitch(ReactantType const typeName) const {
 
 double AlloyClusterReactionNetwork::getReactionRadius(
 		ReactantType const typeName, int size) const {
-	if (typeName == ReactantType::Faulted || typeName == ReactantType::Frank)
+	if (typeName == ReactantType::Faulted || typeName == ReactantType::Frank
+			|| typeName == ReactantType::FaultedSuper
+			|| typeName == ReactantType::FrankSuper)
 		return 0.5 * xolotlCore::alloyLatticeConstant
 				* sqrt(double(size) * sqrt(3.0) / xolotlCore::pi);
 	if (typeName == ReactantType::V || typeName == ReactantType::Void
-			|| typeName == ReactantType::I)
+			|| typeName == ReactantType::I
+			|| typeName == ReactantType::VoidSuper)
 		return 0.5 * xolotlCore::alloyLatticeConstant
 				* pow(1.5 * double(size) / xolotlCore::pi, 1.0 / 3.0);
-	if (typeName == ReactantType::Perfect)
+	if (typeName == ReactantType::Perfect
+			|| typeName == ReactantType::PerfectSuper)
 		return 0.5 * xolotlCore::alloyLatticeConstant
 				* sqrt(double(size) * sqrt(2.0) / xolotlCore::pi);
 
@@ -108,11 +170,14 @@ double AlloyClusterReactionNetwork::getReactionRadius(
 
 double AlloyClusterReactionNetwork::getFormationEnergy(
 		ReactantType const typeName, int size) const {
-	if (typeName == ReactantType::Perfect || typeName == ReactantType::Frank)
+	if (typeName == ReactantType::Perfect || typeName == ReactantType::Frank
+			|| typeName == ReactantType::PerfectSuper
+			|| typeName == ReactantType::FrankSuper)
 		return 4.0 + 2.0 * (pow(double(size), 2.0 / 3.0) - 1.0);
-	if (typeName == ReactantType::Faulted)
+	if (typeName == ReactantType::Faulted
+			|| typeName == ReactantType::FaultedSuper)
 		return 1.5 + 2.05211 * (pow(double(size), 2.0 / 3.0) - 1.0);
-	if (typeName == ReactantType::Void)
+	if (typeName == ReactantType::Void || typeName == ReactantType::VoidSuper)
 		return 1.5 + 3.41649 * (pow(double(size), 2.0 / 3.0) - 1.0);
 	if (typeName == ReactantType::V)
 		return 1.5 + 3.41649 * (pow(double(size), 2.0 / 3.0) - 1.0);
