@@ -103,11 +103,11 @@ void YGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 			double conc =
 					(3.0 * sinkStrengthVector[advClusterIdx]
-							* cluster.getDiffusionCoefficient(ix - xs))
+							* cluster.getDiffusionCoefficient(ix + 1 - xs))
 							* ((oldBottomConc / pow(hy, 5))
 									+ (oldTopConc / pow(hy, 5)))
 							/ (xolotlCore::kBoltzmann
-									* cluster.getTemperature(ix - xs));
+									* cluster.getTemperature(ix + 1 - xs));
 
 			// Update the concentration of the cluster
 			updatedConcOffset[index] += conc;
@@ -125,9 +125,9 @@ void YGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 			// Compute the concentration as explained in the description of the method
 			double conc = (3.0 * sinkStrengthVector[advClusterIdx]
-					* cluster.getDiffusionCoefficient(ix - xs))
+					* cluster.getDiffusionCoefficient(ix + 1 - xs))
 					* ((oldRightConc / pow(b, 4)) - (oldConc / pow(a, 4)))
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
 							* hy);
 
 			// Update the concentration of the cluster
@@ -159,7 +159,7 @@ void YGBAdvectionHandler::computePartialsForAdvection(
 
 		int index = cluster.getId() - 1;
 		// Get the diffusion coefficient of the cluster
-		double diffCoeff = cluster.getDiffusionCoefficient(ix - xs);
+		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1 - xs);
 		// Get the sink strength value
 		double sinkStrength = sinkStrengthVector[advClusterIdx];
 
@@ -171,7 +171,7 @@ void YGBAdvectionHandler::computePartialsForAdvection(
 		// Both sides are giving their concentrations to the center
 		if (isPointOnSink(pos)) {
 			val[advClusterIdx * 2] = (3.0 * sinkStrength * diffCoeff)
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
 							* pow(hy, 5)); // top or bottom
 			val[(advClusterIdx * 2) + 1] = val[advClusterIdx * 2]; // top or bottom
 		}
@@ -184,10 +184,10 @@ void YGBAdvectionHandler::computePartialsForAdvection(
 			// Compute the partial derivatives for advection of this cluster as
 			// explained in the description of this method
 			val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff)
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
 							* hy * pow(a, 4)); // middle
 			val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff)
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
 							* hy * pow(b, 4)); // top or bottom
 		}
 

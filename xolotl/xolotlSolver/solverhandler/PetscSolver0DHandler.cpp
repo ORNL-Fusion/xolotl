@@ -197,7 +197,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temperature) > 1.0) {
+	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
 		network.setTemperature(temperature);
 		lastTemperature[0] = temperature;
 	}
@@ -275,7 +275,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temperature) > 1.0) {
+	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
 		network.setTemperature(temperature);
 		lastTemperature[0] = temperature;
 	}

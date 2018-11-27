@@ -67,17 +67,17 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void initializeTemperature(const IReactionNetwork& network,
-            IReactionNetwork::SparseFillMap& ofillMap,
-            IReactionNetwork::SparseFillMap& dfillMap) {
+			IReactionNetwork::SparseFillMap& ofillMap,
+			IReactionNetwork::SparseFillMap& dfillMap) {
 
 		// Set dof
 		dof = network.getDOF();
 
 		// Add the temperature to ofill
-        ofillMap[(dof - 1)].emplace_back(dof - 1);
+		ofillMap[(dof - 1)].emplace_back(dof - 1);
 
 		// Add the temperature to dfill
-        dfillMap[(dof - 1)].emplace_back(dof - 1);
+		dfillMap[(dof - 1)].emplace_back(dof - 1);
 
 		return;
 	}
