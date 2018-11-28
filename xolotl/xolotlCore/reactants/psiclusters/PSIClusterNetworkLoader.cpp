@@ -857,6 +857,7 @@ double PSIClusterNetworkLoader::getHeVFormationEnergy(int numHe, int numV) {
 
 void PSIClusterNetworkLoader::applySectionalGrouping(
 		PSIClusterReactionNetwork& network) {
+
 	// Define the phase space for the network
 	int nDim = 1;
 	Array<int, 5> list;
@@ -932,17 +933,17 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 	// Loop on the vacancy groups
 	for (int k = vMin; k <= vMax; k++) {
-		int heLow = previousBiggestHe, heHigh = -1, dLow = dMax, dHigh = -1,
-				tLow = tMax, tHigh = -1;
+		int heLowSearch = previousBiggestHe, heHighSearch = -1, heLow = heMax,
+				heHigh = -1, dLow = dMax, dHigh = -1, tLow = tMax, tHigh = -1;
 		// Update the composition vector
 		auto pair = std::make_tuple(previousBiggestHe, 0, 0, k);
 		// While loop on the helium content because we don't know the upper bound
 		while (heVList.find(pair) != heVList.end()) {
 			// Will be used to know the actual widths of the group
-			if (previousBiggestHe < heLow)
-				heLow = previousBiggestHe;
-			if (previousBiggestHe > heHigh)
-				heHigh = previousBiggestHe;
+			if (previousBiggestHe < heLowSearch)
+				heLowSearch = previousBiggestHe;
+			if (previousBiggestHe > heHighSearch)
+				heHighSearch = previousBiggestHe;
 
 			// Increment the counter
 			count++;
@@ -958,16 +959,16 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 		count = 0;
 
 		// Group the largest HeV cluster with corresponding upper H
-		int upperH = min((int) ((2.0 / 3.0) * (double) heHigh),
+		int upperH = min((int) ((2.0 / 3.0) * (double) heHighSearch),
 				max(dMax, tMax));
-		dLow = dMax, dHigh = -1, tLow = tMax, tHigh = -1;
 
 		// Loop on possible hydrogen (D+T)
 		for (int n = 0; n <= upperH; n++) {
 			int o = (upperH - n) * maxT;
-			for (int m = heLow; m <= heHigh; m++) {
+			for (int m = heLowSearch; m <= heHighSearch; m++) {
 				// Check if the corresponding coordinates are in the heVList set
 				auto pair = std::make_tuple(m, n, o, k);
+
 				if (heVList.find(pair) == heVList.end())
 					continue;
 
@@ -975,6 +976,10 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 				if (m == heMax && n + o == upperH)
 					continue;
 
+				if (m < heLow)
+					heLow = m;
+				if (m > heHigh)
+					heHigh = m;
 				if (n < dLow)
 					dLow = n;
 				if (n > dHigh)
@@ -1007,19 +1012,17 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 			// Create the super cluster
 			double size[4] = { heSize, dSize, tSize, (double) k };
-			int width[4] = { heHigh - heLow + 1, dHigh - dLow + 1, tHigh - tLow
-					+ 1, 1 };
+			int width[4] = { heHigh - heLow + 1, dHigh - dLow + 1, tHigh - tLow + 1,
+					1 };
 			int lower[4] = { heLow, dLow, tLow, k };
 			int higher[4] = { heHigh, dHigh, tHigh, k };
 			PSISuperCluster* rawSuperCluster = new PSISuperCluster(size, count,
 					width, lower, higher, network, handlerRegistry);
 
-//			std::cout << "super: " << rawSuperCluster->getName() << " " << count
-//					<< " " << heLow << " " << heHigh << " " << upperH
-//					<< std::endl;
+	//		std::cout << "super: " << rawSuperCluster->getName() << " " << count
+	//				<< " " << heLow << " " << heHigh << " " << upperH << std::endl;
 
-			auto superCluster = std::unique_ptr<PSISuperCluster>(
-					rawSuperCluster);
+			auto superCluster = std::unique_ptr<PSISuperCluster>(rawSuperCluster);
 			// Save access to the cluster so we can trigger updates
 			// after we give it to the network.
 			auto& scref = *superCluster;
@@ -1033,7 +1036,8 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 			// Reinitialize everything
 			heSize = 0.0, dSize = 0.0, tSize = 0.0;
 			count = 0;
-			dLow = dMax, dHigh = -1, tLow = tMax, tHigh = -1;
+			heLow = heMax, heHigh = -1, dLow = dMax, dHigh = -1, tLow = tMax, tHigh =
+					-1;
 			tempVector.clear();
 		}
 	}
