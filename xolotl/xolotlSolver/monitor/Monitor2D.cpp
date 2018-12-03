@@ -1255,6 +1255,17 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 
 			// Throw an exception if the position is negative
 			if (surfacePos < 0) {
+				PetscBool flagCheck;
+				ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse",
+						&flagCheck);
+				CHKERRQ(ierr);
+				if (flagCheck) {
+					// Write the convergence reason
+					std::ofstream outputFile;
+					outputFile.open("solverStatus.txt");
+					outputFile << "overgrid" << std::endl;
+					outputFile.close();
+				}
 				throw std::string(
 						"\nxolotlSolver::Monitor2D: The surface is trying to go outside of the grid!!");
 			}

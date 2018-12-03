@@ -309,7 +309,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 			myConcs[currIdx][3] = network.getTotalAtomConcentration(2);
 			myConcs[currIdx][4] = network.getTotalVConcentration();
 			myConcs[currIdx][5] = network.getTotalIConcentration();
-			myConcs[currIdx][6] = gridPointSolution[dof-1];
+			myConcs[currIdx][6] = gridPointSolution[dof - 1];
 		}
 	}
 
@@ -354,7 +354,6 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	// Update the previous time
 	if ((int) ((time + dt / 10.0) / hdf5Stride1D) > hdf5Previous1D)
 		hdf5Previous1D++;
-
 
 	// Get the number of processes
 	int worldSize;
@@ -2313,6 +2312,17 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 		// Throw an exception if the position is negative
 		if (surfacePos < 0) {
+			PetscBool flagCheck;
+			ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse",
+					&flagCheck);
+			CHKERRQ(ierr);
+			if (flagCheck) {
+				// Write the convergence reason
+				std::ofstream outputFile;
+				outputFile.open("solverStatus.txt");
+				outputFile << "overgrid" << std::endl;
+				outputFile.close();
+			}
 			throw std::string(
 					"\nxolotlSolver::Monitor1D: The surface is trying to go outside of the grid!!");
 		}
