@@ -83,7 +83,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	int procId;
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 	if (procId == 0) {
-		for (int i = 0; i < grid.size() - 1; i++) {
+		for (int i = 1; i < grid.size() - 1; i++) {
 			std::cout << grid[i + 1] - grid[surfacePosition[0][0] + 1] << " ";
 		}
 		std::cout << std::endl;
@@ -214,8 +214,10 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 				}
 
 				// Temperature
-				xolotlCore::Point<3> gridPosition { grid[i + 1] - grid[1], 0.0,
-						0.0 };
+				xolotlCore::Point<3> gridPosition { (grid[i + 1]
+						- grid[surfacePosition[j][k] + 1])
+						/ (grid[grid.size() - 1]
+								- grid[surfacePosition[j][k] + 1]), 0.0, 0.0 };
 				concOffset[dof - 1] = temperatureHandler->getTemperature(
 						gridPosition, 0.0);
 
@@ -421,8 +423,11 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					lastTemperature[xi + 2 - xs] = temperature;
 				}
 
-				// Set the grid position
-				gridPosition[0] = grid[xi + 1] - grid[1];
+				// Set the grid fraction
+				gridPosition[0] = (grid[xi + 1]
+						- grid[surfacePosition[yj][zk] + 1])
+						/ (grid[grid.size() - 1]
+								- grid[surfacePosition[yj][zk] + 1]);
 
 				// Get the temperature from the temperature handler
 				temperatureHandler->setTemperature(concOffset);
@@ -460,6 +465,8 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 						grid[xi + 2] - grid[xi + 1], xi, xs, sy, yj, sz, zk);
 
 				// ---- Compute advection over the locally owned part of the grid -----
+				// Set the grid position
+				gridPosition[0] = grid[xi + 1] - grid[1];
 				for (int i = 0; i < advectionHandlers.size(); i++) {
 					advectionHandlers[i]->computeAdvection(network,
 							gridPosition, concVector, updatedConcOffset,
@@ -627,8 +634,11 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					lastTemperature[xi + 2 - xs] = temperature;
 				}
 
-				// Set the grid position
-				gridPosition[0] = grid[xi + 1] - grid[1];
+				// Set the grid fraction
+				gridPosition[0] = (grid[xi + 1]
+						- grid[surfacePosition[yj][zk] + 1])
+						/ (grid[grid.size() - 1]
+								- grid[surfacePosition[yj][zk] + 1]);
 
 				// Get the temperature from the temperature handler
 				concOffset = concs[zk][yj][xi];
@@ -727,6 +737,8 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				}
 
 				// Get the partial derivatives for the advection
+				// Set the grid position
+				gridPosition[0] = grid[xi + 1] - grid[1];
 				for (int l = 0; l < advectionHandlers.size(); l++) {
 					advectionHandlers[l]->computePartialsForAdvection(network,
 							advecVals, advecIndices, gridPosition,
@@ -879,8 +891,11 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 						|| zk > nZ - 1 - backOffset)
 					continue;
 
-				// Set the grid position
-				gridPosition[0] = grid[xi + 1] - grid[1];
+				// Set the grid fraction
+				gridPosition[0] = (grid[xi + 1]
+						- grid[surfacePosition[yj][zk] + 1])
+						/ (grid[grid.size() - 1]
+								- grid[surfacePosition[yj][zk] + 1]);
 
 				// Get the temperature from the temperature handler
 				concOffset = concs[zk][yj][xi];

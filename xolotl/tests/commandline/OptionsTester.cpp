@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	// Check the temperature
 	BOOST_REQUIRE_EQUAL(opts.useConstTemperatureHandlers(), true);
 	BOOST_REQUIRE_EQUAL(opts.getConstTemperature(), 900.0);
-	BOOST_REQUIRE_EQUAL(opts.getTemperatureGradient(), 0.0);
+	BOOST_REQUIRE_EQUAL(opts.getBulkTemperature(), 0.0);
 
 	// Check if the flux option is used
 	BOOST_REQUIRE_EQUAL(opts.useFluxAmplitude(), true);

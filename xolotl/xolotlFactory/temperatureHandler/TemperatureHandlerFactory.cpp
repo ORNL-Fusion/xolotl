@@ -31,15 +31,15 @@ bool initializeTempHandler(const xolotlCore::Options &options) {
 	} else if (options.useConstTemperatureHandlers()) {
 		auto temp = options.getConstTemperature();
 		// Check if we want a temperature gradient
-		double gradient = options.getTemperatureGradient();
-		if (xolotlCore::equal(gradient, 0.0)) {
+		double bulkTemp = options.getBulkTemperature();
+		if (xolotlCore::equal(bulkTemp, 0.0)) {
 			// we are to use a constant temperature handler
 			theTemperatureHandler = std::make_shared<
 					xolotlCore::TemperatureHandler>(temp);
 		} else {
 			// Use a temperature gradient
 			theTemperatureHandler = std::make_shared<
-					xolotlCore::TemperatureGradientHandler>(temp, gradient);
+					xolotlCore::TemperatureGradientHandler>(temp, bulkTemp);
 		}
 	} else if (options.useTemperatureProfileHandlers()) {
 		auto tempFileName = options.getTempProfileFilename();

@@ -32,7 +32,7 @@ namespace xolotlCore {
 Options::Options() :
 		shouldRunFlag(true), exitCode(EXIT_SUCCESS), petscArgc(0), petscArgv(
 		NULL), networkFilename(""), constTempFlag(false), constTemperature(
-				1000.0), temperatureGradient(0.0), tempProfileFlag(false), tempProfileFilename(
+				1000.0), tempProfileFlag(false), tempProfileFilename(
 				""), heatFlag(false), bulkTemperature(0.0), fluxFlag(false), fluxAmplitude(
 				0.0), fluxProfileFlag(false), perfRegistryType(
 				xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(

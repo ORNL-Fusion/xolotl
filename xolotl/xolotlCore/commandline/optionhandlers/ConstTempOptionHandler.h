@@ -22,7 +22,8 @@ public:
 					"startTemp <value>                 "
 							"The temperature (in Kelvin) will be the constant floating point value specified. "
 							"(default = 1000). "
-							"\n	                            If two values are given, the second one is interpreted as a gradient."
+							"\n	                            If two values are given, the second one is interpreted "
+							"as the bulk temperature and a gradient will be used."
 							"\n	                            (NOTE: Use only ONE temperature option)\n") {
 	}
 
@@ -46,7 +47,7 @@ public:
 
 		// Build an input stream from the argument string.
 		xolotlCore::TokenizedLineReader<std::string> reader;
-		auto argSS = std::make_shared < std::istringstream > (arg);
+		auto argSS = std::make_shared<std::istringstream>(arg);
 		reader.setInputStream(argSS);
 
 		// Break the argument into tokens.
@@ -60,7 +61,7 @@ public:
 		if (tokens.size() > 1) {
 			// Set the temperature gradient
 			double gradient = strtod(tokens[1].c_str(), NULL);
-			opt->setTemperatureGradient(gradient);
+			opt->setBulkTemperature(gradient);
 		}
 
 		return true;
