@@ -2,6 +2,8 @@
 #include <ReSolutionHandler.h>
 #include <NESuperCluster.h>
 #include <algorithm>
+#include <fstream>
+#include <iostream>
 
 namespace xolotlCore {
 
@@ -72,8 +74,15 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network) {
 								coefs[5] = coefs[5] / ((double) sectionWidth);
 								coefs[6] = coefs[6] / ((double) sectionWidth);
 								coefs[7] = coefs[7] / ((double) sectionWidth);
+								// Compute the fraction rate
+								auto radius = cluster.getReactionRadius();
+								auto size = cluster.getSize();
+								double fractionRate = (0.949 * exp(-0.0703 * radius)
+										+ (8.2326) / (1.0 + 7.982 * pow(radius, 2.0))
+										* exp(-0.0371 * pow(radius, 2.0))) * 1.0e-4
+								* (double) size;
 								// Add the size to the vector
-								sizeVec.emplace_back(&cluster, previousSmaller, coefs);
+								sizeVec.emplace_back(&cluster, previousSmaller, fractionRate, coefs);
 
 								// Reinitialize
 								coefs.Init(0.0);
@@ -105,8 +114,15 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network) {
 							coefs[5] = coefs[5] / ((double) sectionWidth);
 							coefs[6] = coefs[6] / ((double) sectionWidth);
 							coefs[7] = coefs[7] / ((double) sectionWidth);
+							// Compute the fraction rate
+							auto radius = cluster.getReactionRadius();
+							auto size = cluster.getSize();
+							double fractionRate = (0.949 * exp(-0.0703 * radius)
+									+ (8.2326) / (1.0 + 7.982 * pow(radius, 2.0))
+									* exp(-0.0371 * pow(radius, 2.0))) * 1.0e-4
+							* (double) size;
 							// Add the size to the vector
-							sizeVec.emplace_back(&cluster, previousSmaller, coefs);
+							sizeVec.emplace_back(&cluster, previousSmaller, fractionRate, coefs);
 						}
 					}
 					else {
@@ -119,11 +135,34 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network) {
 						smallerCluster->setDissociationConnectivity(cluster.getId());
 						// Add the size to the vector
 						coefs[0] = 1.0, coefs[2] = 1.0;
-						sizeVec.emplace_back(&cluster, smallerCluster, coefs);
+						// Compute the fraction rate
+						auto radius = cluster.getReactionRadius();
+						auto size = cluster.getSize();
+						double fractionRate = (0.949 * exp(-0.0703 * radius)
+								+ (8.2326) / (1.0 + 7.982 * pow(radius, 2.0))
+								* exp(-0.0371 * pow(radius, 2.0))) * 1.0e-4
+						* (double) size;
+						// Add the size to the vector
+						sizeVec.emplace_back(&cluster, smallerCluster, fractionRate, coefs);
 					}
 				}
 
 			});
+
+	// Print sizeVec
+	std::ofstream outputFile;
+	outputFile.open("resolutionRateVSradius.txt");
+	// Loop on the re-soluting clusters
+	for (const auto& currPair : sizeVec) {
+		// Get the larger cluster
+		auto cluster = currPair.larger;
+		int size = cluster->getSize();
+		double radius = cluster->getReactionRadius();
+
+		outputFile << size << " " << radius << " " << currPair.fractionRate
+				<< " " << currPair.fractionRate / (double) size << std::endl;
+	}
+	outputFile.close();
 
 	return;
 }
@@ -148,14 +187,7 @@ void ReSolutionHandler::computeReSolution(const IReactionNetwork& network,
 		auto cluster = currPair.larger;
 		int id = cluster->getId() - 1;
 		int momId = cluster->getMomentId() - 1;
-		// Compute the re-solution rate
-		auto radius = cluster->getReactionRadius();
-		auto size = cluster->getSize();
-		double fractionRate = (0.949 * exp(-0.0703 * radius)
-				+ (8.2326) / (1.0 + 7.982 * pow(radius, 2.0))
-						* exp(-0.0371 * pow(radius, 2.0))) * 1.0e-4
-				* (double) size;
-		double rate = fractionRate * resolutionRate;
+		double rate = currPair.fractionRate * resolutionRate;
 		// Get the re-solution cluster
 		auto resoCluster = currPair.smaller;
 		int resoId = resoCluster->getId() - 1;
@@ -193,14 +225,7 @@ int ReSolutionHandler::computePartialsForReSolution(
 		auto cluster = currPair.larger;
 		int id = cluster->getId() - 1;
 		int momId = cluster->getMomentId() - 1;
-		// Compute the re-solution rate
-		auto radius = cluster->getReactionRadius();
-		auto size = cluster->getSize();
-		double fractionRate = (0.949 * exp(-0.0703 * radius)
-				+ (8.2326) / (1.0 + 7.982 * pow(radius, 2.0))
-						* exp(-0.0371 * pow(radius, 2.0))) * 1.0e-4
-				* (double) size;
-		double rate = fractionRate * resolutionRate;
+		double rate = currPair.fractionRate * resolutionRate;
 		// Get the re-solution cluster
 		auto resoCluster = currPair.smaller;
 		int resoId = resoCluster->getId() - 1;
