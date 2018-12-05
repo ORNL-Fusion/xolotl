@@ -2521,7 +2521,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-helium_retention) failed.");
 
-	// Check the option -helium_retention
+	// Check the option -xenon_retention
 	ierr = PetscOptionsHasName(NULL, NULL, "-xenon_retention",
 			&flagXeRetention);
 	checkPetscError(ierr,

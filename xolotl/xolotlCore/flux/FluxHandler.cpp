@@ -174,6 +174,8 @@ double FluxHandler::getFluxAmplitude() const {
 }
 
 double FluxHandler::getFluxRate() const {
+	if (incidentFluxVec.size() == 0)
+		return fluxAmplitude;
 	return fluxAmplitude / normFactor;
 }
 

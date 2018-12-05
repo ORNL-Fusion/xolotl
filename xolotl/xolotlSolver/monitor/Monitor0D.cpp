@@ -48,6 +48,13 @@ PetscReal hdf5Stride0D = 0.0;
 PetscInt hdf5Previous0D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName0D = "xolotlStop.h5";
+// Declare the vector that will store the Id of the helium clusters
+std::vector<int> indices0D;
+// Declare the vector that will store the weight of the helium clusters
+// (their He composition)
+std::vector<int> weights0D;
+// Declare the vector that will store the radii of bubbles
+std::vector<double> radii0D;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop0D")
@@ -134,6 +141,92 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 		// All processes must create the dataset
 		tsGroup->writeConcentrationDataset(concSize, concArray, 0);
 	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeXenonRetention0D")
+/**
+ * This is a monitoring method that will compute the xenon retention
+ */
+PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
+		Vec solution, void *) {
+	// Initial declarations
+	PetscErrorCode ierr;
+
+	PetscFunctionBeginUser;
+
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the flux handler that will be used to get the fluence
+	auto fluxHandler = solverHandler.getFluxHandler();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the network
+	auto& network = solverHandler.getNetwork();
+
+	// Get the array of concentration
+	PetscReal **solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Store the concentration and other values over the grid
+	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0;
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal *gridPointSolution;
+
+	// Get the pointer to the beginning of the solution data for this grid point
+	gridPointSolution = solutionArray[0];
+
+	// Update the concentration in the network
+	network.updateConcentrationsFromArray(gridPointSolution);
+
+	// Loop on all the indices
+	for (unsigned int i = 0; i < indices0D.size(); i++) {
+		// Add the current concentration times the number of xenon in the cluster
+		// (from the weight vector)
+		xeConcentration += gridPointSolution[indices0D[i]] * weights0D[i];
+		bubbleConcentration += gridPointSolution[indices0D[i]];
+		radii += gridPointSolution[indices0D[i]] * radii0D[i];
+	}
+
+	// Loop on all the super clusters
+	for (auto const& superMapItem : network.getAll(ReactantType::NESuper)) {
+		auto const& cluster =
+				static_cast<NESuperCluster&>(*(superMapItem.second));
+		xeConcentration += cluster.getTotalXenonConcentration();
+		bubbleConcentration += cluster.getTotalConcentration();
+		radii += cluster.getTotalConcentration() * cluster.getReactionRadius();
+	}
+
+	// Get the fluence
+	double fluence = fluxHandler->getFluence();
+
+	// Print the result
+	std::cout << "\nTime: " << time << std::endl;
+	std::cout << "Xenon retention = " << 100.0 * (xeConcentration / fluence)
+			<< " %" << std::endl;
+	std::cout << "Xenon concentration = " << xeConcentration << std::endl
+			<< std::endl;
+
+	// Uncomment to write the retention and the fluence in a file
+	std::ofstream outputFile;
+	outputFile.open("retentionOut.txt", ios::app);
+	outputFile << time << " " << 100.0 * (xeConcentration / fluence) << " "
+			<< xeConcentration << " " << fluence - xeConcentration << " "
+			<< radii / bubbleConcentration << std::endl;
+	outputFile.close();
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -346,7 +439,8 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
-	PetscBool flagCheck, flag1DPlot, flagBubble, flagPerf, flagStatus;
+	PetscBool flagCheck, flag1DPlot, flagBubble, flagPerf, flagStatus,
+			flagXeRetention;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -373,6 +467,12 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-bubble) failed.");
 
+	// Check the option -xenon_retention
+	ierr = PetscOptionsHasName(NULL, NULL, "-xenon_retention",
+			&flagXeRetention);
+	checkPetscError(ierr,
+			"setupPetsc0DMonitor: PetscOptionsHasName (-xenon_retention) failed.");
+
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
@@ -383,7 +483,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	// Determine if we have an existing restart file,
 	// and if so, it it has had timesteps written to it.
 	std::unique_ptr<xolotlCore::XFile> networkFile;
-	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
+	std::unique_ptr<xolotlCore::XFile::TimestepGroup> lastTsGroup;
 	std::string networkName = solverHandler.getNetworkName();
 	bool hasConcentrations = false;
 	if (not networkName.empty()) {
@@ -391,6 +491,9 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		auto concGroup = networkFile->getGroup<
 				xolotlCore::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
+		if (hasConcentrations) {
+			lastTsGroup = concGroup->getLastTimestepGroup();
+		}
 	}
 
 	// Set the post step processing to stop the solver if the time step collapses
@@ -425,12 +528,10 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		// Get the last time step written in the HDF5 file
 		if (hasConcentrations) {
 
-			assert(concGroup);
-			auto tsGroup = concGroup->getLastTimestepGroup();
-			assert(tsGroup);
+			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			previousTime = tsGroup->readPreviousTime();
+			previousTime = lastTsGroup->readPreviousTime();
 			hdf5Previous0D = (int) (previousTime / hdf5Stride0D);
 		}
 
@@ -553,6 +654,55 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		ierr = TSMonitorSet(ts, monitorBubble0D, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc0DMonitor: TSMonitorSet (monitorBubble0D) failed.");
+	}
+
+	// Set the monitor to compute the xenon fluence and the retention
+	// for the retention calculation
+	if (flagXeRetention) {
+		// Loop on the xenon clusters
+		for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+			auto const& cluster = *(xeMapItem.second);
+
+			int id = cluster.getId() - 1;
+			// Add the Id to the vector
+			indices0D.push_back(id);
+			// Add the number of xenon of this cluster to the weight
+			weights0D.push_back(cluster.getSize());
+			radii0D.push_back(cluster.getReactionRadius());
+		}
+
+		// Get the previous time if concentrations were stored and initialize the fluence
+		if (hasConcentrations) {
+
+			assert (lastTsGroup);
+
+			// Get the previous time from the HDF5 file
+			double time = lastTsGroup->readPreviousTime();
+			// Initialize the fluence
+			auto fluxHandler = solverHandler.getFluxHandler();
+			// The length of the time step
+			double dt = time;
+			// Increment the fluence with the value at this current timestep
+			fluxHandler->incrementFluence(dt);
+			// Get the previous time from the HDF5 file
+			// TODO isn't this the same as 'time' above?
+			previousTime = lastTsGroup->readPreviousTime();
+		}
+
+		// computeFluence will be called at each timestep
+		ierr = TSMonitorSet(ts, computeFluence, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: TSMonitorSet (computeFluence) failed.");
+
+		// computeXenonRetention0D will be called at each timestep
+		ierr = TSMonitorSet(ts, computeXenonRetention0D, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: TSMonitorSet (computeXenonRetention0D) failed.");
+
+		// Uncomment to clear the file where the retention will be written
+		std::ofstream outputFile;
+		outputFile.open("retentionOut.txt");
+		outputFile.close();
 	}
 
 	// Set the monitor to simply change the previous time to the new time
