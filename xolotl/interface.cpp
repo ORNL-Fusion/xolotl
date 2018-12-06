@@ -113,6 +113,25 @@ std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
 	return solver;
 }
 
+void XolotlInterface::setTimes(
+		std::shared_ptr<xolotlSolver::PetscSolver> solver, double finalTime,
+		double dt) {
+	try {
+		// Set the time in the solver
+		solver->setTimes(finalTime, dt);
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+}
+
 void XolotlInterface::solveXolotl(
 		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
 	try {

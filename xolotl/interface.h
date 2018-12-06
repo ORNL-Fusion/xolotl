@@ -36,6 +36,15 @@ public:
 					true);
 
 	/**
+	 * Set the final time and the dt.
+	 *
+	 * @param finalTime The wanted final time.
+	 * @param dt The wanted max time step.
+	 */
+	void setTimes(std::shared_ptr<xolotlSolver::PetscSolver> solver,
+			double finalTime, double dt);
+
+	/**
 	 * Run the PETSc solve
 	 */
 	void solveXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver);
