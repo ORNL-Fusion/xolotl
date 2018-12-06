@@ -311,6 +311,27 @@ void PetscSolver::initialize(bool isStandalone) {
 	return;
 }
 
+void PetscSolver::setTimes(double finalTime, double dt) {
+	PetscErrorCode ierr;
+
+	// Get the default values for the dt
+	TSAdapt adapt;
+	ierr = TSGetAdapt(ts,&adapt);
+	checkPetscError(ierr, "PetscSolver::setTimes: TSGetAdapt failed.");
+	PetscReal hmin, hmax;
+	ierr = TSAdaptGetStepLimits(adapt, &hmin, &hmax);
+	checkPetscError(ierr, "PetscSolver::setTimes: TSAdaptGetStepLimits failed.");
+	// Set the new max value
+	ierr = TSAdaptSetStepLimits(adapt, hmin, dt);
+	checkPetscError(ierr, "PetscSolver::setTimes: TSAdaptSetStepLimits failed.");
+
+	// Give the final time value to the solver
+	ierr = TSSetMaxTime(ts, finalTime);
+	checkPetscError(ierr, "PetscSolver::setTimes: TSSetMaxTime failed.");
+
+	return;
+}
+
 void PetscSolver::solve() {
 	PetscErrorCode ierr;
 

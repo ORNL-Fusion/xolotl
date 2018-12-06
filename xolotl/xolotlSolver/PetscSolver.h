@@ -99,6 +99,14 @@ public:
 	void initialize(bool isStandalone) override;
 
 	/**
+	 * This operation sets the wanted final time and max time step allowed.
+	 *
+	 * @param finalTime The wanted final time.
+	 * @param dt The wanted max time step.
+	 */
+	void setTimes(double finalTime, double dt) override;
+
+	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */

@@ -68,6 +68,14 @@ public:
 	virtual void initialize(bool isStandalone) = 0;
 
 	/**
+	 * This operation sets the wanted final time and max time step allowed.
+	 *
+	 * @param finalTime The wanted final time.
+	 * @param dt The wanted max time step.
+	 */
+	virtual void setTimes(double finalTime, double dt) = 0;
+
+	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */
