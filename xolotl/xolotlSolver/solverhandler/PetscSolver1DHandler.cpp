@@ -241,7 +241,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 			"DMDAVecRestoreArrayDOF failed.");
 
 	// Set the rate for re-solution
-	resolutionHandler->updateReSolutionRate(fluxHandler->getFluxRate());
+	resolutionHandler->updateReSolutionRate(fluxHandler->getFluxAmplitude());
 
 	return;
 }

@@ -52,6 +52,9 @@ ENDIF()
 # Include the headers
 INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
 
+# Enable testing.
+enable_testing()
+
 # Find the Boost libraries we (potentially) use.
 # Note that we only need to list Boost component libraries that have a
 # library implementation (i.e., not header only) as required components.
@@ -64,9 +67,6 @@ IF (Boost_UNIT_TEST_FRAMEWORK_FOUND)
     message(STATUS "Tests will be built since Boost unit test framework found.")
     add_subdirectory(tests)
 ENDIF()
-
-# Enable testing.
-enable_testing()
 
 # Add the preprocessor first, it is independent of the other parts of the code
 # But only if Java is present
