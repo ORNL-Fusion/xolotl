@@ -164,6 +164,13 @@ public:
 	virtual double getTauBursting() const = 0;
 
 	/**
+	 * Get the grid left offset.
+	 *
+	 * @return The offset
+	 */
+	virtual int getLeftOffset() const = 0;
+
+	/**
 	 * Get the grid right offset.
 	 *
 	 * @return The offset

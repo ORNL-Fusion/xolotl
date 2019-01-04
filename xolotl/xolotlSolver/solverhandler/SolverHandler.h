@@ -222,7 +222,8 @@ protected:
 					0.0), dimension(-1), portion(0.0), useRegularGrid(true), movingSurface(
 					false), bubbleBursting(false), sputteringYield(0.0), fluxHandler(
 					nullptr), temperatureHandler(nullptr), diffusionHandler(
-					nullptr), mutationHandler(nullptr), tauBursting(10.0) {
+					nullptr), mutationHandler(nullptr), resolutionHandler(
+					nullptr), tauBursting(10.0), rngSeed(0) {
 	}
 
 public:
@@ -425,6 +426,14 @@ public:
 	 */
 	double getTauBursting() const override {
 		return tauBursting;
+	}
+
+	/**
+	 * Get the grid left offset.
+	 * \see ISolverHandler.h
+	 */
+	int getLeftOffset() const override {
+		return leftOffset;
 	}
 
 	/**

@@ -800,8 +800,10 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 	// Master process
 	if (procId == 0) {
-		// Get the fluence
-		double fluence = fluxHandler->getFluence();
+		// Get the fluence (Multiply by the size of the grid)
+		double fluence = fluxHandler->getFluence()
+				* (grid[Mx - 1]
+						- grid[1]);
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
