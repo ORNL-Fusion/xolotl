@@ -372,6 +372,15 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					|| yj > nY - 1 - topOffset) {
 				continue;
 			}
+			// Free surface GB
+			bool skip = false;
+			for (auto &pair : gbVector) {
+				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
+					skip = true;
+					break;
+				}
+			}
+			if (skip) continue;
 
 			// Update the network if the temperature changed
 			// left
@@ -566,6 +575,15 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					|| xi > nX - 1 - rightOffset || yj < bottomOffset
 					|| yj > nY - 1 - topOffset)
 				continue;
+			// Free surface GB
+			bool skip = false;
+			for (auto &pair : gbVector) {
+				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
+					skip = true;
+					break;
+				}
+			}
+			if (skip) continue;
 
 			// Update the network if the temperature changed
 			// left
@@ -804,6 +822,15 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					|| xi > nX - 1 - rightOffset || yj < bottomOffset
 					|| yj > nY - 1 - topOffset)
 				continue;
+			// Free surface GB
+			bool skip = false;
+			for (auto &pair : gbVector) {
+				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
+					skip = true;
+					break;
+				}
+			}
+			if (skip) continue;
 
 			// Set the grid fraction
 			gridPosition[0] = (grid[xi + 1] - grid[surfacePosition[yj] + 1])

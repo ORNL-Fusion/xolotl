@@ -407,6 +407,17 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 						|| zk > nZ - 1 - backOffset) {
 					continue;
 				}
+				// Free surface GB
+				bool skip = false;
+				for (auto &pair : gbVector) {
+					if (xi == std::get<0>(pair) && yj == std::get<1>(pair)
+							&& zk == std::get<2>(pair)) {
+						skip = true;
+						break;
+					}
+				}
+				if (skip)
+					continue;
 
 				// Update the network if the temperature changed
 				// left
@@ -617,6 +628,17 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 						|| xi > nX - 1 - rightOffset || yj < bottomOffset
 						|| yj > nY - 1 - topOffset || zk < frontOffset
 						|| zk > nZ - 1 - backOffset)
+					continue;
+				// Free surface GB
+				bool skip = false;
+				for (auto &pair : gbVector) {
+					if (xi == std::get<0>(pair) && yj == std::get<1>(pair)
+							&& zk == std::get<2>(pair)) {
+						skip = true;
+						break;
+					}
+				}
+				if (skip)
 					continue;
 
 				// Update the network if the temperature changed
@@ -889,6 +911,17 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 						|| xi > nX - 1 - rightOffset || yj < bottomOffset
 						|| yj > nY - 1 - topOffset || zk < frontOffset
 						|| zk > nZ - 1 - backOffset)
+					continue;
+				// Free surface GB
+				bool skip = false;
+				for (auto &pair : gbVector) {
+					if (xi == std::get<0>(pair) && yj == std::get<1>(pair)
+							&& zk == std::get<2>(pair)) {
+						skip = true;
+						break;
+					}
+				}
+				if (skip)
 					continue;
 
 				// Set the grid fraction

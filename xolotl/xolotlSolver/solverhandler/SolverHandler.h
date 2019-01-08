@@ -15,6 +15,13 @@ namespace xolotlSolver {
 class SolverHandler: public ISolverHandler {
 protected:
 
+	/**
+	 * The vector to know where the GB are.
+	 *
+	 * The first pair is the location of a grid point (X,Y),
+	 */
+	std::vector<std::tuple<int, int, int> > gbVector;
+
 	//! The name of the network file
 	std::string networkName;
 
@@ -549,6 +556,14 @@ public:
 	}
 
 	/**
+	 * Get the diffusion handler.
+	 * \see ISolverHandler.h
+	 */
+	xolotlCore::IDiffusionHandler *getDiffusionHandler() const override {
+		return diffusionHandler;
+	}
+
+	/**
 	 * Get the advection handler.
 	 * \see ISolverHandler.h
 	 */
@@ -597,6 +612,15 @@ public:
 	 */
 	RandomNumberGenerator<int, unsigned int>& getRNG(void) const override {
 		return *rng;
+	}
+
+	/**
+	 * Get the vector containing the location of GB.
+	 *
+	 * @return The GB vector
+	 */
+	std::vector<std::tuple<int, int, int> > getGBVector() const override {
+		return gbVector;
 	}
 }
 ;
