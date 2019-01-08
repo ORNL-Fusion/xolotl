@@ -65,7 +65,7 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
-		for (int i = 0; i < grid.size() - 1; i++) {
+		for (int i = 1; i < grid.size() - 1; i++) {
 			std::cout << grid[i + 1] - grid[surfacePosition[0] + 1] << " ";
 		}
 		std::cout << std::endl;
@@ -146,10 +146,10 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 			"DMDAGetCorners failed.");
 
 	// Initialize the last temperature at each grid point on this process
-	for (int i = 0; i < xm; i++) {
+	for (int i = 0; i < xm + 2; i++) {
 		lastTemperature.push_back(0.0);
 	}
-	network.addGridPoints(xm);
+	network.addGridPoints(xm + 2);
 
 	// Get the last time step written in the HDF5 file
 	bool hasConcentrations = false;
@@ -157,8 +157,7 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
 	if (not networkName.empty()) {
 		xfile.reset(new xolotlCore::XFile(networkName));
-		concGroup =
-				xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
+		concGroup = xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
 
@@ -198,13 +197,17 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 			}
 
 			// Temperature
-			xolotlCore::Point<3> gridPosition { grid[i + 1] - grid[1], 0.0, 0.0 };
+			xolotlCore::Point<3> gridPosition { (grid[i + 1]
+					- grid[surfacePosition[j] + 1])
+					/ (grid[grid.size() - 1] - grid[surfacePosition[j] + 1]),
+					0.0, 0.0 };
 			concOffset[dof - 1] = temperatureHandler->getTemperature(
 					gridPosition, 0.0);
 
 			// Initialize the vacancy concentration
 			if (i >= surfacePosition[j] + leftOffset && vacancyIndex > 0
-					&& !hasConcentrations && i < nX - rightOffset) {
+					&& !hasConcentrations && i < nX - rightOffset
+					&& j >= bottomOffset && j < nY - topOffset) {
 				concOffset[vacancyIndex] = initialVConc;
 			}
 		}
@@ -231,6 +234,13 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 						concOffset[(int) concVector.at(l).at(0)] =
 								concVector.at(l).at(1);
 					}
+					// Set the temperature in the network
+					double temp = concVector.at(concVector.size() - 1).at(1);
+					network.setTemperature(temp, i - xs);
+					// Update the modified trap-mutation rate
+					// that depends on the network reaction rates
+					mutationHandler->updateTrapMutationRate(network);
+					lastTemperature[i - xs] = temp;
 				}
 			}
 		}
@@ -278,6 +288,9 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// current grid point. They are accessed just like regular arrays.
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
+	// Degrees of freedom is the total number of clusters in the network
+	const int dof = network.getDOF();
+
 	// Set some step size variable
 	double sy = 1.0 / (hY * hY);
 
@@ -288,7 +301,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	double atomConc = 0.0, totalAtomConc = 0.0;
 
 	// Loop over grid points
-	for (PetscInt yj = 0; yj < nY; yj++) {
+	for (PetscInt yj = bottomOffset; yj < nY - topOffset; yj++) {
 
 		// Compute the total concentration of atoms contained in bubbles
 		atomConc = 0.0;
@@ -358,25 +371,50 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// Boundary conditions
 			// Everything to the left of the surface is empty
 			if (xi < surfacePosition[yj] + leftOffset
-					|| xi > nX - 1 - rightOffset) {
+					|| xi > nX - 1 - rightOffset || yj < bottomOffset
+					|| yj > nY - 1 - topOffset) {
 				continue;
 			}
+			// Free surface GB
+			bool skip = false;
+			for (auto &pair : gbVector) {
+				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
+					skip = true;
+					break;
+				}
+			}
+			if (skip)
+				continue;
 
-			// Set the grid position
-			gridPosition[0] = grid[xi + 1] - grid[1];
+			// Update the network if the temperature changed
+			// left
+			double temperature = concs[yj][xi - 1][dof - 1];
+			if (std::fabs(lastTemperature[xi - xs] - temperature) > 0.1) {
+				network.setTemperature(temperature, xi - xs);
+				lastTemperature[xi - xs] = temperature;
+			}
+			// right
+			temperature = concs[yj][xi + 1][dof - 1];
+			if (std::fabs(lastTemperature[xi + 2 - xs] - temperature) > 0.1) {
+				network.setTemperature(temperature, xi + 2 - xs);
+				lastTemperature[xi + 2 - xs] = temperature;
+			}
+
+			// Set the grid fraction
+			gridPosition[0] = (grid[xi + 1] - grid[surfacePosition[yj] + 1])
+					/ (grid[grid.size() - 1] - grid[surfacePosition[yj] + 1]);
 
 			// Get the temperature from the temperature handler
 			temperatureHandler->setTemperature(concOffset);
-			double temperature = temperatureHandler->getTemperature(
-					gridPosition, ftime);
-
-			// Update the network if the temperature changed
-			if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
-				network.setTemperature(temperature, xi - xs);
-				// Update the modified trap-mutation rate that depends on the
-				// network reaction rates
+			temperature = temperatureHandler->getTemperature(gridPosition,
+					ftime);
+			// middle
+			if (std::fabs(lastTemperature[xi + 1 - xs] - temperature) > 0.1) {
+				network.setTemperature(temperature, xi + 1 - xs);
+				// Update the modified trap-mutation rate
+				// that depends on the network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature[xi - xs] = temperature;
+				lastTemperature[xi + 1 - xs] = temperature;
 			}
 
 			// Copy data into the ReactionNetwork so that it can
@@ -401,6 +439,8 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					grid[xi + 2] - grid[xi + 1], xi, xs, sy, yj);
 
 			// ---- Compute advection over the locally owned part of the grid -----
+			// Set the grid position
+			gridPosition[0] = grid[xi + 1] - grid[1];
 			for (int i = 0; i < advectionHandlers.size(); i++) {
 				advectionHandlers[i]->computeAdvection(network, gridPosition,
 						concVector, updatedConcOffset, grid[xi + 1] - grid[xi],
@@ -412,7 +452,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					updatedConcOffset, xi, xs, yj);
 
 			// ----- Compute the reaction fluxes over the locally owned part of the grid -----
-			network.computeAllFluxes(updatedConcOffset, xi - xs);
+			network.computeAllFluxes(updatedConcOffset, xi + 1 - xs);
 		}
 	}
 
@@ -458,6 +498,9 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 	// Pointer to the concentrations at a given grid point
 	PetscScalar *concOffset = nullptr;
+
+	// Degrees of freedom is the total number of clusters in the network
+	const int dof = network.getDOF();
 
 	// Get local grid boundaries
 	PetscInt xs, xm, ys, ym;
@@ -533,25 +576,47 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			// Boundary conditions
 			// Everything to the left of the surface is empty
 			if (xi < surfacePosition[yj] + leftOffset
-					|| xi > nX - 1 - rightOffset)
+					|| xi > nX - 1 - rightOffset || yj < bottomOffset
+					|| yj > nY - 1 - topOffset)
+				continue;
+			// Free surface GB
+			bool skip = false;
+			for (auto &pair : gbVector) {
+				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
+					skip = true;
+					break;
+				}
+			}
+			if (skip)
 				continue;
 
-			// Set the grid position
-			gridPosition[0] = grid[xi + 1] - grid[1];
+			// Update the network if the temperature changed
+			// left
+			double temperature = concs[yj][xi - 1][dof - 1];
+			if (std::fabs(lastTemperature[xi - xs] - temperature) > 0.1) {
+				network.setTemperature(temperature, xi - xs);
+				lastTemperature[xi - xs] = temperature;
+			}
+			// right
+			temperature = concs[yj][xi + 1][dof - 1];
+			if (std::fabs(lastTemperature[xi + 2 - xs] - temperature) > 0.1) {
+				network.setTemperature(temperature, xi + 2 - xs);
+				lastTemperature[xi + 2 - xs] = temperature;
+			}
+
+			// Set the grid fraction
+			gridPosition[0] = (grid[xi + 1] - grid[surfacePosition[yj] + 1])
+					/ (grid[grid.size() - 1] - grid[surfacePosition[yj] + 1]);
 
 			// Get the temperature from the temperature handler
 			concOffset = concs[yj][xi];
 			temperatureHandler->setTemperature(concOffset);
-			double temperature = temperatureHandler->getTemperature(
-					gridPosition, ftime);
-
-			// Update the network if the temperature changed
-			if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
-				network.setTemperature(temperature, xi - xs);
-				// Update the modified trap-mutation rate that depends on the
-				// network reaction rates
-				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature[xi - xs] = temperature;
+			temperature = temperatureHandler->getTemperature(gridPosition,
+					ftime);
+			// middle
+			if (std::fabs(lastTemperature[xi + 1 - xs] - temperature) > 0.1) {
+				network.setTemperature(temperature, xi + 1 - xs);
+				lastTemperature[xi + 1 - xs] = temperature;
 			}
 
 			// Get the partial derivatives for the temperature
@@ -620,6 +685,8 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			}
 
 			// Get the partial derivatives for the advection
+			// Set the grid position
+			gridPosition[0] = grid[xi + 1] - grid[1];
 			for (int l = 0; l < advectionHandlers.size(); l++) {
 				advectionHandlers[l]->computePartialsForAdvection(network,
 						advecVals, advecIndices, gridPosition,
@@ -713,7 +780,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Loop over the grid points
-	for (PetscInt yj = 0; yj < nY; yj++) {
+	for (PetscInt yj = bottomOffset; yj < nY - topOffset; yj++) {
 
 		// Compute the total concentration of atoms contained in bubbles
 		atomConc = 0.0;
@@ -758,11 +825,23 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			// Boundary conditions
 			// Everything to the left of the surface is empty
 			if (xi < surfacePosition[yj] + leftOffset
-					|| xi > nX - 1 - rightOffset)
+					|| xi > nX - 1 - rightOffset || yj < bottomOffset
+					|| yj > nY - 1 - topOffset)
+				continue;
+			// Free surface GB
+			bool skip = false;
+			for (auto &pair : gbVector) {
+				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
+					skip = true;
+					break;
+				}
+			}
+			if (skip)
 				continue;
 
-			// Set the grid position
-			gridPosition[0] = grid[xi + 1] - grid[1];
+			// Set the grid fraction
+			gridPosition[0] = (grid[xi + 1] - grid[surfacePosition[yj] + 1])
+					/ (grid[grid.size() - 1] - grid[surfacePosition[yj] + 1]);
 
 			// Get the temperature from the temperature handler
 			concOffset = concs[yj][xi];
@@ -771,12 +850,12 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					gridPosition, ftime);
 
 			// Update the network if the temperature changed
-			if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
-				network.setTemperature(temperature, xi - xs);
+			if (std::fabs(lastTemperature[xi + 1 - xs] - temperature) > 0.1) {
+				network.setTemperature(temperature, xi + 1 - xs);
 				// Update the modified trap-mutation rate that depends on the
 				// network reaction rates
 				mutationHandler->updateTrapMutationRate(network);
-				lastTemperature[xi - xs] = temperature;
+				lastTemperature[xi + 1 - xs] = temperature;
 			}
 
 			// Copy data into the ReactionNetwork so that it can
@@ -787,7 +866,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Compute all the partial derivatives for the reactions
 			network.computeAllPartials(reactionStartingIdx, reactionIndices,
-					reactionVals, xi - xs);
+					reactionVals, xi + 1 - xs);
 
 			// Update the column in the Jacobian that represents each DOF
 			for (int i = 0; i < dof - 1; i++) {

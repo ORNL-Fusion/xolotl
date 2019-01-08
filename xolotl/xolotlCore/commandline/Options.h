@@ -50,11 +50,6 @@ protected:
 	double constTemperature;
 
 	/**
-	 * Value for the temperature gradient
-	 */
-	double temperatureGradient;
-
-	/**
 	 * Use the temperature profile set of handlers?
 	 */
 	bool tempProfileFlag;
@@ -225,14 +220,10 @@ protected:
 	double zStepSize;
 
 	/**
-	 * The boundary condition on the left side of the X direction.
+	 * The boundary condition on the given side of the grid.
 	 */
-	int leftBoundary;
-
-	/**
-	 * The boundary condition on the right side of the X direction.
-	 */
-	int rightBoundary;
+	int leftBoundary, rightBoundary, bottomBoundary, topBoundary, frontBoundary,
+			backBoundary;
 
 	/**
 	 * Depth for the bubble bursting in nm.
@@ -374,22 +365,6 @@ public:
 	 */
 	void setConstTemperature(double temp) override {
 		constTemperature = temp;
-	}
-
-	/**
-	 * Obtain the value of the temperature gradient to be used.
-	 * \see IOptions.h
-	 */
-	double getTemperatureGradient() const override {
-		return temperatureGradient;
-	}
-
-	/**
-	 * Set the temperature gradient.
-	 * \see IOptions.h
-	 */
-	void setTemperatureGradient(double grad) override {
-		temperatureGradient = grad;
 	}
 
 	/**
@@ -944,35 +919,49 @@ public:
 	}
 
 	/**
-	 * Obtain the boundary condition on the left side of the grid.
+	 * Obtain the boundary condition on a given side of the grid.
 	 * \see IOptions.h
 	 */
 	int getLeftBoundary() const override {
 		return leftBoundary;
 	}
+	int getRightBoundary() const override {
+		return rightBoundary;
+	}
+	int getBottomBoundary() const override {
+		return bottomBoundary;
+	}
+	int getTopBoundary() const override {
+		return topBoundary;
+	}
+	int getFrontBoundary() const override {
+		return frontBoundary;
+	}
+	int getBackBoundary() const override {
+		return backBoundary;
+	}
 
 	/**
-	 * Set the boundary condition on the left side of the grid.
+	 * Set the boundary condition on a given side of the grid.
 	 * \see IOptions.h
 	 */
 	void setLeftBoundary(int n) override {
 		leftBoundary = n;
 	}
-
-	/**
-	 * Obtain the boundary condition on the right side of the grid.
-	 * \see IOptions.h
-	 */
-	int getRightBoundary() const override {
-		return rightBoundary;
-	}
-
-	/**
-	 * Set the boundary condition on the right side of the grid.
-	 * \see IOptions.h
-	 */
 	void setRightBoundary(int n) override {
 		rightBoundary = n;
+	}
+	void setBottomBoundary(int n) override {
+		bottomBoundary = n;
+	}
+	void setTopBoundary(int n) override {
+		topBoundary = n;
+	}
+	void setFrontBoundary(int n) override {
+		frontBoundary = n;
+	}
+	void setBackBoundary(int n) override {
+		backBoundary = n;
 	}
 
 	/**

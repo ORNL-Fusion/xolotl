@@ -30,18 +30,18 @@ public:
 	 * @param dfillMap Map indicating row/column of diffusing variables in diagonal fill map.
 	 */
 	virtual void initializeTemperature(const IReactionNetwork& network,
-            IReactionNetwork::SparseFillMap& ofillMap,
-            IReactionNetwork::SparseFillMap& dfillMap) = 0;
+			IReactionNetwork::SparseFillMap& ofillMap,
+			IReactionNetwork::SparseFillMap& dfillMap) = 0;
 
 	/**
 	 * This operation returns the temperature at the given position
 	 * and time.
 	 *
-	 * @param position The position
+	 * @param fraction The position fraction on the grid
 	 * @param currentTime The time
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const Point<3>& position,
+	virtual double getTemperature(const Point<3>& fraction,
 			double currentTime) const = 0;
 
 	/**
@@ -85,7 +85,8 @@ public:
 	 * @param ix The position on the x grid
 	 */
 	virtual void computeTemperature(double **concVector,
-			double *updatedConcOffset, double hxLeft, double hxRight, int xi) = 0;
+			double *updatedConcOffset, double hxLeft, double hxRight,
+			int xi) = 0;
 
 	/**
 	 * Compute the partials due to the heat equation.

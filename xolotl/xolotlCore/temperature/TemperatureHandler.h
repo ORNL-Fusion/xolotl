@@ -77,7 +77,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const Point<3>& position, double) const {
+	virtual double getTemperature(const Point<3>&, double) const {
 		return temperature;
 	}
 

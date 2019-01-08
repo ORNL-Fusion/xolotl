@@ -16,6 +16,13 @@ namespace xolotlSolver {
 class SolverHandler: public ISolverHandler {
 protected:
 
+	/**
+	 * The vector to know where the GB are.
+	 *
+	 * The first pair is the location of a grid point (X,Y),
+	 */
+	std::vector<std::tuple<int, int, int> > gbVector;
+
 	//! The name of the network file
 	std::string networkName;
 
@@ -43,11 +50,9 @@ protected:
 	//! The grid step size in the z direction.
 	double hZ;
 
-	//! The number of grid points by which the boundary condition should be shifted at the left side.
-	int leftOffset;
-
-	//! The number of grid points by which the boundary condition should be shifted at the right side.
-	int rightOffset;
+	//! The number of grid points by which the boundary condition should be shifted at this side.
+	int leftOffset, rightOffset, bottomOffset, topOffset, frontOffset,
+			backOffset;
 
 	//! The initial vacancy concentration.
 	double initialVConc;
@@ -79,8 +84,8 @@ protected:
 	//! The portion of void at the beginning of the problem.
 	double portion;
 
-	//! If the user wants to use a regular grid.
-	bool useRegularGrid;
+	//! Which type of grid does the used want to use.
+	std::string useRegularGrid;
 
 	//! If the user wants to move the surface.
 	bool movingSurface;
@@ -100,13 +105,20 @@ protected:
 	//! The random number generator to use.
 	std::unique_ptr<RandomNumberGenerator<int, unsigned int>> rng;
 
-	//! Method generating the grid in the x direction
+	/**
+	 * Method generating the grid in the x direction
+	 *
+	 * @param nx The number of grid points
+	 * @param hx The step size
+	 * @param surfacePos The position of the surface on the grid
+	 * @param isPSI To know if we want a PSI grid or a NE grid
+	 */
 	void generateGrid(int nx, double hx, int surfacePos) {
 		// Clear the grid
 		grid.clear();
 
 		// Check if the user wants a regular grid
-		if (useRegularGrid) {
+		if (useRegularGrid == "regular") {
 			// The grid will me made of nx + 1 points separated by hx nm
 			for (int l = 0; l <= nx + 1; l++) {
 				grid.push_back((double) l * hx);
@@ -114,7 +126,7 @@ protected:
 		}
 		// If it is not regular do a fine mesh close to the surface and
 		// increase the step size when away from the surface
-		else {
+		else if (useRegularGrid == "PSI") {
 			// Initialize the value of the previous point
 			double previousPoint = 0.0;
 
@@ -212,6 +224,69 @@ protected:
 				}
 			}
 		}
+		// If it is not regular do a fine mesh near points of interests
+		else if (useRegularGrid == "NE") {
+			// Initialize the value of the previous point
+			double previousPoint = 0.0;
+
+			// Loop on all the grid points
+			for (int l = 0; l <= nx + 1; l++) {
+				// Add the previous point
+				grid.push_back(previousPoint);
+				// 10nm step near the surface (x < 200nm)
+				if (l < surfacePos + 21) {
+					previousPoint += 10;
+				}
+				// 100nm step size (200nm < x < 1um)
+				else if (l < surfacePos + 29) {
+					previousPoint += 100;
+				}
+				// 1um step size (1um < x < 5um)
+				else if (l < surfacePos + 33) {
+					previousPoint += 1000;
+				}
+				// 5um step size (5um < x < 45um)
+				else if (l < surfacePos + 41) {
+					previousPoint += 5000;
+				}
+				// 1um step size (45um < x < 49um)
+				else if (l < surfacePos + 45) {
+					previousPoint += 1000;
+				}
+				// 100nm step size
+				else if (l < surfacePos + 53) {
+					previousPoint += 100;
+				}
+				// 10nm step size
+				else if (l < surfacePos + 93) {
+					previousPoint += 10;
+				}
+				// 100nm step size
+				else if (l < surfacePos + 101) {
+					previousPoint += 100;
+				}
+				// 1um step size
+				else if (l < surfacePos + 105) {
+					previousPoint += 1000;
+				}
+				// 5um step size
+				else if (l < surfacePos + 113) {
+					previousPoint += 5000;
+				}
+				// 1um step size
+				else if (l < surfacePos + 117) {
+					previousPoint += 1000;
+				}
+				// 100nm step size
+				else if (l < surfacePos + 125) {
+					previousPoint += 100;
+				}
+				// 10nm step size
+				else {
+					previousPoint += 10;
+				}
+			}
+		}
 
 		return;
 	}
@@ -222,13 +297,14 @@ protected:
 	 * @param _network The reaction network to use.
 	 */
 	SolverHandler(xolotlCore::IReactionNetwork& _network) :
-			networkName(""), network(_network), nX(0), nY(0), nZ(0), hX(0.0), hY(
-					0.0), hZ(0.0), leftOffset(0), rightOffset(0), initialVConc(
-					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
+			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
+					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
+					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
+					0.0), dimension(-1), portion(0.0), useRegularGrid(""), movingSurface(
+					false), bubbleBursting(false), sputteringYield(0.0), fluxHandler(
+					nullptr), temperatureHandler(nullptr), diffusionHandler(
 					nullptr), mutationHandler(nullptr), resolutionHandler(
-					nullptr), dimension(-1), portion(0.0), useRegularGrid(true), movingSurface(
-					false), bubbleBursting(false), sputteringYield(0.0), tauBursting(
-					10.0), rngSeed(0) {
+					nullptr), tauBursting(10.0), rngSeed(0) {
 	}
 
 public:
@@ -336,11 +412,20 @@ public:
 		tauBursting = options.getBurstingDepth();
 
 		// Look at if the user wants to use a regular grid in the x direction
-		useRegularGrid = options.useRegularXGrid();
+		if (options.useRegularXGrid())
+			useRegularGrid = "regular";
+		else if (options.getMaterial() == "Fuel")
+			useRegularGrid = "NE";
+		else
+			useRegularGrid = "PSI";
 
-		// Set the boundary conditions (= 1: free surface; = 0: mirror)
+		// Set the boundary conditions (= 1: free surface; = 0: mirror or periodic)
 		leftOffset = options.getLeftBoundary();
 		rightOffset = options.getRightBoundary();
+		bottomOffset = options.getBottomBoundary();
+		topOffset = options.getTopBoundary();
+		frontOffset = options.getFrontBoundary();
+		backOffset = options.getBackBoundary();
 
 		// Should we be able to move the surface?
 		auto map = options.getProcesses();
@@ -454,6 +539,14 @@ public:
 	}
 
 	/**
+	 * Get the grid left offset.
+	 * \see ISolverHandler.h
+	 */
+	int getLeftOffset() const override {
+		return leftOffset;
+	}
+
+	/**
 	 * Get the grid right offset.
 	 * \see ISolverHandler.h
 	 */
@@ -491,6 +584,14 @@ public:
 	 */
 	xolotlCore::ITemperatureHandler *getTemperatureHandler() const override {
 		return temperatureHandler;
+	}
+
+	/**
+	 * Get the diffusion handler.
+	 * \see ISolverHandler.h
+	 */
+	xolotlCore::IDiffusionHandler *getDiffusionHandler() const override {
+		return diffusionHandler;
 	}
 
 	/**
@@ -542,6 +643,15 @@ public:
 	 */
 	RandomNumberGenerator<int, unsigned int>& getRNG(void) const override {
 		return *rng;
+	}
+
+	/**
+	 * Get the vector containing the location of GB.
+	 *
+	 * @return The GB vector
+	 */
+	std::vector<std::tuple<int, int, int> > getGBVector() const override {
+		return gbVector;
 	}
 }
 ;

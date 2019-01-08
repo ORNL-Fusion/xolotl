@@ -175,14 +175,16 @@ public:
 			std::string line;
 			std::getline(*inputstream, line);
 
-			// Handle the case where there is a carriage return (\r) before
-			// the newline (\n)
-			if (line[line.size() - 1] == '\r')
-				line.resize(line.size() - 1);
-
-			// Split it if it is not empty and does not start with the comment
-			// character
+			// Continue if the line is not empty
 			if (!line.empty()) {
+
+				// Handle the case where there is a carriage return (\r) before
+				// the newline (\n)
+				if (line[line.size() - 1] == '\r')
+					line.resize(line.size() - 1);
+
+				// Split it if it does not start with the comment character
+
 				// If this line is a comment, skip it by calling this operation
 				// again - FIXME! - Update compiler to support C++11 and use
 				// std::string.front()!

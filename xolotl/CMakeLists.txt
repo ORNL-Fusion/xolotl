@@ -1,4 +1,7 @@
-# Fix cmake beahvior for CMAKE_CXX_STANDARD with clang on Mac OS X.
+# Set the minimum required version of cmake for this project.
+cmake_minimum_required(VERSION 3.4)
+
+# Fix cmake behavior for CMAKE_CXX_STANDARD with clang on Mac OS X.
 # See cmake documentation on CMP0025 policy for details.
 # Must be done before doing project() command.
 if(POLICY CMP0025)
@@ -12,8 +15,6 @@ endif()
 
 # Set a name for this project.
 PROJECT ( xolotl C CXX )
-# Set the minimum required version of cmake for this project.
-cmake_minimum_required(VERSION 3.4)
 
 # Build the tests by default
 option(BUILD_TESTS "Build test programs" ON)
@@ -53,6 +54,9 @@ IF (NOT HDF5_IS_PARALLEL)
 ENDIF()
 # Include the headers
 INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
+
+# Enable testing.
+enable_testing()
 
 # Find the Boost libraries we (potentially) use.
 # Note that we only need to list Boost component libraries that have a

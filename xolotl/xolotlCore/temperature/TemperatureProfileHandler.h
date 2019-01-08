@@ -72,17 +72,17 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void initializeTemperature(const IReactionNetwork& network,
-            IReactionNetwork::SparseFillMap& ofillMap,
-            IReactionNetwork::SparseFillMap& dfillMap) {
+			IReactionNetwork::SparseFillMap& ofillMap,
+			IReactionNetwork::SparseFillMap& dfillMap) {
 
 		// Set dof
 		dof = network.getDOF();
 
 		// Add the temperature to ofill
-        ofillMap[(dof - 1)].emplace_back(dof - 1);
+		ofillMap[(dof - 1)].emplace_back(dof - 1);
 
 		// Add the temperature to dfill
-        dfillMap[(dof - 1)].emplace_back(dof - 1);
+		dfillMap[(dof - 1)].emplace_back(dof - 1);
 
 		// Open file dataFile.dat containing the time and temperature
 		std::ifstream inputFile(tempFile.c_str());
@@ -109,8 +109,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const Point<3>& position,
-			double currentTime) const {
+	virtual double getTemperature(const Point<3>&, double currentTime) const {
 		// Initialize the value to return
 		double f = 0.0;
 

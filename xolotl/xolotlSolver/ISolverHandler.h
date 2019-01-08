@@ -164,6 +164,13 @@ public:
 	virtual double getTauBursting() const = 0;
 
 	/**
+	 * Get the grid left offset.
+	 *
+	 * @return The offset
+	 */
+	virtual int getLeftOffset() const = 0;
+
+	/**
 	 * Get the grid right offset.
 	 *
 	 * @return The offset
@@ -220,6 +227,13 @@ public:
 	virtual xolotlCore::ITemperatureHandler *getTemperatureHandler() const = 0;
 
 	/**
+	 * Get the diffusion handler.
+	 *
+	 * @return The diffusion handler
+	 */
+	virtual xolotlCore::IDiffusionHandler *getDiffusionHandler() const = 0;
+
+	/**
 	 * Get the advection handler.
 	 *
 	 * @return The first advection handler
@@ -261,6 +275,13 @@ public:
 	 * @return The RandomNumberGenerator object to use.
 	 */
 	virtual RandomNumberGenerator<int, unsigned int>& getRNG(void) const = 0;
+
+	/**
+	 * Get the vector containing the location of GB.
+	 *
+	 * @return The GB vector
+	 */
+	virtual std::vector<std::tuple<int, int, int> > getGBVector() const = 0;
 
 };
 //end class ISolverHandler

@@ -100,11 +100,11 @@ void XGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 			double conc =
 					(3.0 * sinkStrengthVector[advClusterIdx]
-							* cluster.getDiffusionCoefficient(ix - xs))
+							* cluster.getDiffusionCoefficient(ix + 1 - xs))
 							* ((oldLeftConc / pow(hxLeft, 5))
 									+ (oldRightConc / pow(hxRight, 5)))
 							/ (xolotlCore::kBoltzmann
-									* cluster.getTemperature(ix - xs));
+									* cluster.getTemperature(ix + 1 - xs));
 
 			// Update the concentration of the cluster
 			updatedConcOffset[index] += conc;
@@ -123,9 +123,9 @@ void XGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 			// Compute the concentration as explained in the description of the method
 			double conc = (3.0 * sinkStrengthVector[advClusterIdx]
-					* cluster.getDiffusionCoefficient(ix - xs))
+					* cluster.getDiffusionCoefficient(ix + 1 - xs))
 					* ((oldRightConc / pow(b, 4)) - (oldConc / pow(a, 4)))
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
 							* (hxRight * (pos[0] > location)
 									+ hxLeft * (pos[0] < location)));
 
@@ -158,7 +158,7 @@ void XGBAdvectionHandler::computePartialsForAdvection(
 
 		int index = cluster.getId() - 1;
 		// Get the diffusion coefficient of the cluster
-		double diffCoeff = cluster.getDiffusionCoefficient(ix - xs);
+		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1 - xs);
 		// Get the sink strength value
 		double sinkStrength = sinkStrengthVector[advClusterIdx];
 
@@ -173,11 +173,11 @@ void XGBAdvectionHandler::computePartialsForAdvection(
 			if (dimension == 1) {
 				val[advClusterIdx * 2] = (3.0 * sinkStrength * diffCoeff)
 						/ (xolotlCore::kBoltzmann
-								* cluster.getTemperature(ix - xs)
+								* cluster.getTemperature(ix + 1 - xs)
 								* pow(hxLeft, 5)); // left
 				val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff)
 						/ (xolotlCore::kBoltzmann
-								* cluster.getTemperature(ix - xs)
+								* cluster.getTemperature(ix + 1 - xs)
 								* pow(hxRight, 5)); // right
 			}
 		}
@@ -191,12 +191,12 @@ void XGBAdvectionHandler::computePartialsForAdvection(
 			// Compute the partial derivatives for advection of this cluster as
 			// explained in the description of this method
 			val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff)
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
 							* pow(a, 4)
 							* (hxRight * (pos[0] > location)
 									+ hxLeft * (pos[0] < location))); // middle
 			val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff)
-					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix - xs)
+					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
 							* pow(b, 4)
 							* (hxRight * (pos[0] > location)
 									+ hxLeft * (pos[0] < location))); // left or right

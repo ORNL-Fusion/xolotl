@@ -205,8 +205,7 @@ IReactant * NEClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nXe,
 	// See if the last supercluster we were asked to find is the right
 	// one for this request.
 	static IReactant* lastRet;
-	if (lastRet
-			and static_cast<NESuperCluster*>(lastRet)->isIn(nXe)) {
+	if (lastRet and static_cast<NESuperCluster*>(lastRet)->isIn(nXe)) {
 		return lastRet;
 	}
 
@@ -279,6 +278,39 @@ void NEClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 	}
 
 	return;
+}
+
+double NEClusterReactionNetwork::getTotalAtomConcentration(int i) {
+	// Only work for 0
+	if (i > 0)
+		return 0.0;
+
+	// Initial declarations
+	double atomConc = 0.0;
+
+	// Sum over all He clusters.
+	for (auto const& currMapItem : getAll(ReactantType::Xe)) {
+
+		// Get the cluster and its composition
+		auto const& cluster = *(currMapItem.second);
+		double size = cluster.getSize();
+
+		// Add the concentration times the He content to the total helium concentration
+		atomConc += cluster.getConcentration() * size;
+	}
+
+	// Sum over all super clusters.
+	for (auto const& currMapItem : getAll(ReactantType::NESuper)) {
+
+		// Get the cluster
+		auto const& cluster =
+				static_cast<NESuperCluster&>(*(currMapItem.second));
+
+		// Add its total atom concentration
+		atomConc += cluster.getTotalXenonConcentration();
+	}
+
+	return atomConc;
 }
 
 void NEClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset,

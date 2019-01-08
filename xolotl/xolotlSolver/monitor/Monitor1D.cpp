@@ -59,6 +59,10 @@ double nInterstitial1D = 0.0;
 double previousHeFlux1D = 0.0;
 //! The variable to store the total number of helium going through the bottom.
 double nHelium1D = 0.0;
+//! The variable to store the xenon flux at the previous time step.
+double previousXeFlux1D = 0.0;
+//! The variable to store the total number of xenon going through the GB.
+double nXenon1D = 0.0;
 //! The variable to store the deuterium flux at the previous time step.
 double previousDFlux1D = 0.0;
 //! The variable to store the total number of deuterium going through the bottom.
@@ -233,6 +237,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
+	int dof = network.getDOF();
 
 	// Get the position of the surface
 	int surfacePos = solverHandler.getSurfacePosition();
@@ -274,7 +279,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	// Define a dataset for concentrations.
 	// Everyone must create the dataset with the same shape.
 	constexpr auto numConcSpecies = 5;
-	constexpr auto numValsPerGridpoint = numConcSpecies + 1;
+	constexpr auto numValsPerGridpoint = numConcSpecies + 2;
 	const auto firstIdxToWrite = (surfacePos + 1);
 	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
 	xolotlCore::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
@@ -315,6 +320,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 			myConcs[currIdx][3] = network.getTotalAtomConcentration(2);
 			myConcs[currIdx][4] = network.getTotalVConcentration();
 			myConcs[currIdx][5] = network.getTotalIConcentration();
+			myConcs[currIdx][6] = gridPointSolution[dof - 1];
 		}
 	}
 
@@ -730,8 +736,6 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
-	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
@@ -749,10 +753,6 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 	// Loop on the grid
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
-
-		// Boundary conditions
-		if (xi == Mx - 1)
-			continue;
 
 		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray[xi];
@@ -800,18 +800,81 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	double totalRadii = 0.0;
 	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
+	// GB
+	// Get the delta time from the previous timestep to this timestep
+	double dt = time - previousTime;
+	// Compute the total number of Xe that went to the GB
+	nXenon1D += previousXeFlux1D * dt;
+	// Get the vector from the solver handler
+	auto gbVector = solverHandler.getGBVector();
+	// Initialize the value for the flux
+	double newFlux = 0.0;
+	// Loop on the GB
+	for (auto const& pair : gbVector) {
+		// Left
+		int xi = std::get<0>(pair) - 1;
+
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm) {
+
+			// Factor for finite difference
+			double hxLeft = grid[xi + 2] - grid[xi + 1];
+			double hxRight = grid[xi + 3] - grid[xi + 2];
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the left
+				newFlux += (double) size * solutionArray[xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+						/ (hxLeft + hxRight);
+			}
+		}
+
+		// Right
+		xi = std::get<0>(pair) + 1;
+
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm) {
+
+			// Factor for finite difference
+			double hxLeft = grid[xi] - grid[xi - 1];
+			double hxRight = grid[xi + 1] - grid[xi];
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the left
+				newFlux += (double) size * solutionArray[xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+						/ (hxLeft + hxRight);
+			}
+		}
+	}
+	// Update the helium flux
+	previousXeFlux1D = newFlux;
+
 	// Master process
 	if (procId == 0) {
-		// Get the fluence
-		double fluence = fluxHandler->getFluence();
+		// Get the fluence (Multiply by the size of the grid)
+		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Xenon retention = "
-				<< 100.0 * (totalXeConcentration / fluence) << " %"
+				<< 100.0 * (totalXeConcentration) / fluence << " %"
 				<< std::endl;
 		std::cout << "Xenon concentration = " << totalXeConcentration
-				<< std::endl << std::endl;
+				<< std::endl;
+		std::cout << "Xenon GB = " << nXenon1D << std::endl << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
@@ -819,7 +882,8 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		outputFile << time << " " << 100.0 * (totalXeConcentration / fluence)
 				<< " " << totalXeConcentration << " "
 				<< fluence - totalXeConcentration << " "
-				<< totalRadii / totalBubbleConcentration << std::endl;
+				<< totalRadii / totalBubbleConcentration << " " << nXenon1D
+				<< std::endl;
 		outputFile.close();
 
 		// Set the retention in the solver handler for an external program to use
@@ -1414,7 +1478,7 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 					// Create a Point with the concentration[i] as the value
 					// and add it to myPoints
 					xolotlViz::Point aPoint;
-					aPoint.value = conc; // He
+					aPoint.value = conc;						// He
 					aPoint.t = time;
 					aPoint.x = x;
 					myPoints[j].push_back(aPoint);
@@ -2049,7 +2113,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 		double prefactor = heliumFluxAmplitude * dt * 0.1;
 
 		// The depth parameter to know where the bursting should happen
-		double depthParam = solverHandler.getTauBursting(); // nm
+		double depthParam = solverHandler.getTauBursting();			// nm
 
 		// For now we are not bursting
 		bool burst = false;
@@ -2308,6 +2372,21 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 		// Throw an exception if the position is negative
 		if (surfacePos < 0) {
+			// Get the option from the TS
+			PetscOptions petscOptions;
+			ierr = PetscObjectGetOptions((PetscObject) ts, &petscOptions);
+			CHKERRQ(ierr);
+			PetscBool flagCheck;
+			ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse",
+					&flagCheck);
+			CHKERRQ(ierr);
+			if (flagCheck) {
+				// Write the convergence reason
+				std::ofstream outputFile;
+				outputFile.open("solverStatus.txt");
+				outputFile << "overgrid" << std::endl;
+				outputFile.close();
+			}
 			throw std::string(
 					"\nxolotlSolver::Monitor1D: The surface is trying to go outside of the grid!!");
 		}
@@ -2334,8 +2413,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 			temp = solutionArray[xi][dof - 1];
 		}
 		double surfTemp = 0.0;
-		MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
-				xolotlComm);
+		MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
 
 		// Loop on the new grid points
 		while (nGridPoints >= 0) {
@@ -2473,9 +2551,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 
 	// Get the option from the TS
 	PetscOptions petscOptions;
-	ierr = PetscObjectGetOptions((PetscObject)ts, &petscOptions);
-	checkPetscError(ierr,
-			"setupPetsc1DMonitor: PetscObjectGetOptions failed.");
+	ierr = PetscObjectGetOptions((PetscObject) ts, &petscOptions);
+	checkPetscError(ierr, "setupPetsc1DMonitor: PetscObjectGetOptions failed.");
 
 	// Check the option -check_negative
 	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_negative", &flagNeg);
@@ -2483,7 +2560,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-check_negative) failed.");
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse", &flagCollapse);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse",
+			&flagCollapse);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
@@ -2513,7 +2591,7 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-helium_retention) failed.");
 
-	// Check the option -helium_retention
+	// Check the option -xenon_retention
 	ierr = PetscOptionsHasName(petscOptions, NULL, "-xenon_retention",
 			&flagXeRetention);
 	checkPetscError(ierr,
@@ -2594,8 +2672,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 	if (flagNeg) {
 		// Find the stride to know how often we want to check
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(petscOptions, NULL, "-check_negative", &negStride1D,
-				&flag);
+		ierr = PetscOptionsGetReal(petscOptions, NULL, "-check_negative",
+				&negStride1D, &flag);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: PetscOptionsGetReal (-check_negative) failed.");
 		if (!flag)
@@ -2622,8 +2700,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(petscOptions, NULL, "-start_stop", &hdf5Stride1D,
-				&flag);
+		ierr = PetscOptionsGetReal(petscOptions, NULL, "-start_stop",
+				&hdf5Stride1D, &flag);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: PetscOptionsGetReal (-start_stop) failed.");
 		if (!flag)
@@ -2749,7 +2827,7 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 			scatterPlot1D = vizHandlerRegistry->getPlot("scatterPlot1D",
 					xolotlViz::PlotType::SCATTER);
 
-//			scatterPlot1D->setLogScale();
+			scatterPlot1D->setLogScale();
 
 			// Create and set the label provider
 			auto labelProvider = std::make_shared<xolotlViz::LabelProvider>(
@@ -2783,7 +2861,7 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 					xolotlViz::PlotType::SERIES);
 
 			// set the log scale
-			seriesPlot1D->setLogScale();
+//			seriesPlot1D->setLogScale();
 
 			// Create and set the label provider
 			auto labelProvider = std::make_shared<xolotlViz::LabelProvider>(
@@ -3068,6 +3146,8 @@ PetscErrorCode reset1DMonitor() {
 	nInterstitial1D = 0.0;
 	previousHeFlux1D = 0.0;
 	nHelium1D = 0.0;
+	previousXeFlux1D = 0.0;
+	nXenon1D = 0.0;
 	previousDFlux1D = 0.0;
 	nDeuterium1D = 0.0;
 	previousTFlux1D = 0.0;

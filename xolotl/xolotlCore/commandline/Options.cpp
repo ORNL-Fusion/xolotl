@@ -30,20 +30,20 @@
 namespace xolotlCore {
 
 Options::Options() :
-		shouldRunFlag(true), exitCode(EXIT_SUCCESS), networkFilename(""), petscArgv(
-				""), constTempFlag(false), constTemperature(1000.0), temperatureGradient(
-				0.0), tempProfileFlag(false), tempProfileFilename(""), heatFlag(
-				false), bulkTemperature(0.0), fluxFlag(false), fluxAmplitude(
-				0.0), fluxProfileFlag(false), fluxProfileFilename(""), perfRegistryType(
-				xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
+		shouldRunFlag(true), exitCode(EXIT_SUCCESS), petscArgv(""), networkFilename(
+				""), constTempFlag(false), constTemperature(1000.0), tempProfileFlag(
+				false), tempProfileFilename(""), heatFlag(false), bulkTemperature(
+				0.0), fluxFlag(false), fluxAmplitude(0.0), fluxProfileFlag(
+				false), perfRegistryType(xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
 				false), materialName(""), initialVConcentration(0.0), voidPortion(
 				50.0), dimensionNumber(1), useRegularGridFlag(true), gbList(""), groupingMin(
 				std::numeric_limits<int>::max()), groupingWidthA(1), groupingWidthB(
 				1), sputteringYield(0.0), useHDF5Flag(true), usePhaseCutFlag(
 				false), maxImpurity(8), maxD(0), maxT(0), maxV(20), maxI(6), nX(
-				10), xStepSize(0.5), nY(0), yStepSize(0.0), nZ(0), zStepSize(
-				0.0), leftBoundary(1), rightBoundary(1), burstingDepth(10.0), rngSeed(
-				0), rngUseSeed(false), rngPrintSeed(false) {
+				10), nY(0), nZ(0), xStepSize(0.5), yStepSize(0.0), zStepSize(
+				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
+				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), rngUseSeed(
+				false), rngSeed(0), rngPrintSeed(false) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();

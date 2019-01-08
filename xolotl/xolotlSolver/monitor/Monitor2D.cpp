@@ -55,6 +55,10 @@ std::vector<double> nInterstitial2D;
 std::vector<double> previousHeFlux2D;
 //! The variable to store the total number of helium going through the bottom.
 std::vector<double> nHelium2D;
+//! The variable to store the xenon flux at the previous time step.
+double previousXeFlux2D = 0.0;
+//! The variable to store the total number of xenon going through the GB.
+double nXenon2D = 0.0;
 //! The variable to store the deuterium flux at the previous time step.
 std::vector<double> previousDFlux2D;
 //! The variable to store the total number of deuterium going through the bottom.
@@ -67,6 +71,13 @@ std::vector<double> nTritium2D;
 double sputteringYield2D = 0.0;
 // The vector of depths at which bursting happens
 std::vector<std::pair<int, int> > depthPositions2D;
+// Declare the vector that will store the Id of the clusters
+std::vector<int> indices2D;
+// Declare the vector that will store the weight of the clusters
+// (their He composition)
+std::vector<int> weights2D;
+// Declare the vector that will store the radii of bubbles
+std::vector<double> radii2D;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop2D")
@@ -347,7 +358,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 				// Factor for finite difference
 				double hxLeft = grid[xi + 1] - grid[xi];
 				double hxRight = grid[xi + 2] - grid[xi + 1];
-				double factor = 2.0 / (hxLeft + hxRight);
+				double factor = 2.0 * hy / (hxLeft + hxRight);
 
 				// Initialize the value for the flux
 				double newFlux = 0.0;
@@ -463,6 +474,273 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 				<< totalDConcentration << " " << totalTConcentration << " "
 				<< totalHeBulk << " " << totalDBulk << " " << totalTBulk
 				<< std::endl;
+		outputFile.close();
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeXenonRetention2D")
+/**
+ * This is a monitoring method that will compute the xenon retention
+ */
+PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void *) {
+
+	// Initial declarations
+	PetscErrorCode ierr;
+	PetscInt xs, xm, ys, ym;
+
+	PetscFunctionBeginUser;
+
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the flux handler that will be used to get the fluence
+	auto fluxHandler = solverHandler.getFluxHandler();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
+	CHKERRQ(ierr);
+
+	// Get the total size of the grid
+	PetscInt Mx, My;
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	CHKERRQ(ierr);
+
+	// Get the physical grid
+	auto grid = solverHandler.getXGrid();
+
+	// Setup step size variables
+	double hy = solverHandler.getStepSizeY();
+
+	// Get the network
+	auto& network = solverHandler.getNetwork();
+
+	// Get the array of concentration
+	PetscReal ***solutionArray, *gridPointSolution;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Store the concentration and other values over the grid
+	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0;
+
+	// Loop on the grid
+	for (PetscInt yj = ys; yj < ys + ym; yj++) {
+		for (PetscInt xi = xs; xi < xs + xm; xi++) {
+
+			// Get the pointer to the beginning of the solution data for this grid point
+			gridPointSolution = solutionArray[yj][xi];
+
+			// Update the concentration in the network
+			network.updateConcentrationsFromArray(gridPointSolution);
+
+			// Loop on all the indices
+			for (unsigned int i = 0; i < indices2D.size(); i++) {
+				// Add the current concentration times the number of xenon in the cluster
+				// (from the weight vector)
+				xeConcentration += gridPointSolution[indices2D[i]]
+						* weights2D[i] * (grid[xi + 1] - grid[xi]) * hy;
+				bubbleConcentration += gridPointSolution[indices2D[i]]
+						* (grid[xi + 1] - grid[xi]) * hy;
+				radii += gridPointSolution[indices2D[i]] * radii2D[i]
+						* (grid[xi + 1] - grid[xi]) * hy;
+			}
+
+			// Loop on all the super clusters
+			for (auto const& superMapItem : network.getAll(
+					ReactantType::NESuper)) {
+				auto const& cluster =
+						static_cast<NESuperCluster&>(*(superMapItem.second));
+				xeConcentration += cluster.getTotalXenonConcentration()
+						* (grid[xi + 1] - grid[xi]) * hy;
+				bubbleConcentration += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi]) * hy;
+				radii += cluster.getTotalConcentration()
+						* cluster.getReactionRadius()
+						* (grid[xi + 1] - grid[xi]) * hy;
+			}
+		}
+	}
+
+	// Get the current process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
+	// Sum all the concentrations through MPI reduce
+	double totalXeConcentration = 0.0;
+	MPI_Reduce(&xeConcentration, &totalXeConcentration, 1, MPI_DOUBLE, MPI_SUM,
+			0, xolotlComm);
+	double totalBubbleConcentration = 0.0;
+	MPI_Reduce(&bubbleConcentration, &totalBubbleConcentration, 1, MPI_DOUBLE,
+			MPI_SUM, 0, xolotlComm);
+	double totalRadii = 0.0;
+	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+
+	// GB
+	// Get the delta time from the previous timestep to this timestep
+	double dt = time - previousTime;
+	// Compute the total number of Xe that went to the GB
+	nXenon2D += previousXeFlux2D * dt;
+	// Get the vector from the solver handler
+	auto gbVector = solverHandler.getGBVector();
+	// Initialize the value for the flux
+	double newFlux = 0.0;
+	// Loop on the GB
+	for (auto const& pair : gbVector) {
+		// X segment
+		// Left
+		int xi = std::get<0>(pair) - 1;
+		int yj = std::get<1>(pair);
+
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+
+			// Factor for finite difference
+			double hxLeft = grid[xi + 2] - grid[xi + 1];
+			double hxRight = grid[xi + 3] - grid[xi + 2];
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the left
+				newFlux += (double) size * solutionArray[yj][xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+						* hy / (hxLeft + hxRight);
+
+//					if (timestep > 85)
+//						std::cout << "left: " << xi << " " << yj << " "
+//								<< cluster.getDiffusionCoefficient(xi + 1 - xs)
+//								<< " " << hxLeft + hxRight << " " << solutionArray[yj][xi][id] << std::endl;
+			}
+		}
+
+		// Right
+		xi = std::get<0>(pair) + 1;
+
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+
+			// Factor for finite difference
+			double hxLeft = grid[xi] - grid[xi - 1];
+			double hxRight = grid[xi + 1] - grid[xi];
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the right
+				newFlux += (double) size * solutionArray[yj][xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+						* hy / (hxLeft + hxRight);
+
+//					if (timestep > 85)
+//						std::cout << "right: " << xi << " " << yj << " "
+//								<< cluster.getDiffusionCoefficient(xi + 1 - xs)
+//								<< " " << hxLeft + hxRight << " " << solutionArray[yj][xi][id] << std::endl;
+			}
+		}
+//		// Y segment
+//		else if (pair.second == 1) {
+//			// Bottom
+//			int xi = pair.first.first;
+//			int yj = pair.first.second;
+//
+//			// Check we are on the right proc
+//			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+//				// Consider each xenon cluster.
+//				for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+//					// Get the cluster
+//					auto const& cluster = *(xeMapItem.second);
+//					// Get its id
+//					int id = cluster.getId() - 1;
+//					// Get its size and diffusion coefficient
+//					int size = cluster.getSize();
+//					// Compute the flux coming from the bottom
+//					newFlux += (double) size * solutionArray[yj][xi][id]
+//							* cluster.getDiffusionCoefficient(xi + 1 - xs)
+//							* (grid[xi + 1] - grid[xi]) / hy;
+////					std::cout << "bottom: " << xi << " " << yj << " "
+////							<< cluster.getDiffusionCoefficient(xi + 1 - xs)
+////							<< " " << grid[xi + 1] - grid[xi] << " " << solutionArray[yj][xi][id] << std::endl;
+//				}
+//			}
+//
+//			// Top
+//			yj = pair.first.second + 1;
+//
+//			// Check we are on the right proc
+//			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+//				// Consider each xenon cluster.
+//				for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+//					// Get the cluster
+//					auto const& cluster = *(xeMapItem.second);
+//					// Get its id
+//					int id = cluster.getId() - 1;
+//					// Get its size and diffusion coefficient
+//					int size = cluster.getSize();
+//					// Compute the flux coming from the top
+//					newFlux += (double) size * solutionArray[yj][xi][id]
+//							* cluster.getDiffusionCoefficient(xi + 1 - xs)
+//							* (grid[xi + 1] - grid[xi]) / hy;
+////					std::cout << "top: " << xi << " " << yj << " "
+////							<< cluster.getDiffusionCoefficient(xi + 1 - xs)
+////							<< " " << grid[xi + 1] - grid[xi] << " " << solutionArray[yj][xi][id] << std::endl;
+//				}
+//			}
+//
+//		}
+	}
+	// Update the xenon flux
+	previousXeFlux2D = newFlux;
+
+	// Master process
+	if (procId == 0) {
+		// Compute the total surface irradiated
+		double surface = (double) My * hy;
+		// Get the fluence
+		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
+
+		totalXeConcentration = totalXeConcentration / surface;
+
+		// Print the result
+		std::cout << "\nTime: " << time << std::endl;
+		std::cout << "Xenon retention = "
+				<< 100.0 * (totalXeConcentration) / (fluence) << " %"
+				<< std::endl;
+		std::cout << "Xenon concentration = " << totalXeConcentration
+				<< std::endl;
+		std::cout << "Xenon GB = " << nXenon2D / surface << std::endl
+				<< std::endl;
+
+		// Uncomment to write the retention and the fluence in a file
+		std::ofstream outputFile;
+		outputFile.open("retentionOut.txt", ios::app);
+		outputFile << time << " " << 100.0 * (totalXeConcentration / (fluence))
+				<< " " << totalXeConcentration << " "
+				<< fluence - totalXeConcentration << " "
+				<< totalRadii / totalBubbleConcentration << " "
+				<< nXenon2D / surface << std::endl;
 		outputFile.close();
 	}
 
@@ -650,7 +928,7 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	double hy = solverHandler.getStepSizeY();
 
 	// Choice of the cluster to be plotted
-	int iCluster = 19;
+	int iCluster = 0;
 
 	// Create a Point vector to store the data to give to the data provider
 	// for the visualization
@@ -1244,6 +1522,21 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 
 			// Throw an exception if the position is negative
 			if (surfacePos < 0) {
+				// Get the option from the TS
+				PetscOptions petscOptions;
+				ierr = PetscObjectGetOptions((PetscObject) ts, &petscOptions);
+				CHKERRQ(ierr);
+				PetscBool flagCheck;
+				ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse",
+						&flagCheck);
+				CHKERRQ(ierr);
+				if (flagCheck) {
+					// Write the convergence reason
+					std::ofstream outputFile;
+					outputFile.open("solverStatus.txt");
+					outputFile << "overgrid" << std::endl;
+					outputFile.close();
+				}
 				throw std::string(
 						"\nxolotlSolver::Monitor2D: The surface is trying to go outside of the grid!!");
 			}
@@ -1270,8 +1563,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 				temp = solutionArray[yj][xi][dof - 1];
 			}
 			double surfTemp = 0.0;
-			MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
-					xolotlComm);
+			MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
 			// Loop on the new grid points
 			while (nGridPoints >= 0) {
 				// Position of the newly created grid point
@@ -1386,17 +1678,17 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
-	PetscBool flagCheck, flagPerf, flagRetention, flagStatus, flag2DPlot,
-			flagTRIDYN;
+	PetscBool flagCheck, flagPerf, flagHeRetention, flagXeRetention, flagStatus,
+			flag2DPlot, flagTRIDYN;
 
 	// Get the option from the TS
 	PetscOptions petscOptions;
-	ierr = PetscObjectGetOptions((PetscObject)ts, &petscOptions);
-	checkPetscError(ierr,
-			"setupPetsc2DMonitor: PetscObjectGetOptions failed.");
+	ierr = PetscObjectGetOptions((PetscObject) ts, &petscOptions);
+	checkPetscError(ierr, "setupPetsc2DMonitor: PetscObjectGetOptions failed.");
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse", &flagCheck);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse",
+			&flagCheck);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
@@ -1411,9 +1703,16 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 			"setupPetsc2DMonitor: PetscOptionsHasName (-plot_2d) failed.");
 
 	// Check the option -helium_retention
-	ierr = PetscOptionsHasName(petscOptions, NULL, "-helium_retention", &flagRetention);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-helium_retention",
+			&flagHeRetention);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-helium_retention) failed.");
+
+	// Check the option -xenon_retention
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-xenon_retention",
+			&flagXeRetention);
+	checkPetscError(ierr,
+			"setupPetsc2DMonitor: PetscOptionsHasName (-xenon_retention) failed.");
 
 	// Check the option -start_stop
 	ierr = PetscOptionsHasName(petscOptions, NULL, "-start_stop", &flagStatus);
@@ -1482,8 +1781,8 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(petscOptions, NULL, "-start_stop", &hdf5Stride2D,
-				&flag);
+		ierr = PetscOptionsGetReal(petscOptions, NULL, "-start_stop",
+				&hdf5Stride2D, &flag);
 		checkPetscError(ierr,
 				"setupPetsc2DMonitor: PetscOptionsGetReal (-start_stop) failed.");
 		if (!flag)
@@ -1620,7 +1919,7 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 	}
 
 	// Set the monitor to compute the helium fluence for the retention calculation
-	if (flagRetention) {
+	if (flagHeRetention) {
 		// Check if we have a free surface at the bottom
 		if (solverHandler.getRightOffset() == 1) {
 			// Initialize n2D and previousFlux2D before monitoring the fluxes
@@ -1672,6 +1971,55 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 		ierr = TSMonitorSet(ts, computeHeliumRetention2D, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc2DMonitor: TSMonitorSet (computeHeliumRetention2D) failed.");
+
+		// Uncomment to clear the file where the retention will be written
+		std::ofstream outputFile;
+		outputFile.open("retentionOut.txt");
+		outputFile.close();
+	}
+
+	// Set the monitor to compute the xenon fluence and the retention
+	// for the retention calculation
+	if (flagXeRetention) {
+		// Loop on the xenon clusters
+		for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+			auto const& cluster = *(xeMapItem.second);
+
+			int id = cluster.getId() - 1;
+			// Add the Id to the vector
+			indices2D.push_back(id);
+			// Add the number of xenon of this cluster to the weight
+			weights2D.push_back(cluster.getSize());
+			radii2D.push_back(cluster.getReactionRadius());
+		}
+
+		// Get the previous time if concentrations were stored and initialize the fluence
+		if (hasConcentrations) {
+
+			assert(lastTsGroup);
+
+			// Get the previous time from the HDF5 file
+			double time = lastTsGroup->readPreviousTime();
+			// Initialize the fluence
+			auto fluxHandler = solverHandler.getFluxHandler();
+			// The length of the time step
+			double dt = time;
+			// Increment the fluence with the value at this current timestep
+			fluxHandler->incrementFluence(dt);
+			// Get the previous time from the HDF5 file
+			// TODO isn't this the same as 'time' above?
+			previousTime = lastTsGroup->readPreviousTime();
+		}
+
+		// computeFluence will be called at each timestep
+		ierr = TSMonitorSet(ts, computeFluence, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc2DMonitor: TSMonitorSet (computeFluence) failed.");
+
+		// computeXenonRetention2D will be called at each timestep
+		ierr = TSMonitorSet(ts, computeXenonRetention2D, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc2DMonitor: TSMonitorSet (computeXenonRetention2D) failed.");
 
 		// Uncomment to clear the file where the retention will be written
 		std::ofstream outputFile;
@@ -1742,12 +2090,17 @@ PetscErrorCode reset2DMonitor() {
 	nInterstitial2D.clear();
 	previousHeFlux2D.clear();
 	nHelium2D.clear();
+	previousXeFlux2D = 0.0;
+	nXenon2D = 0.0;
 	previousDFlux2D.clear();
 	nDeuterium2D.clear();
 	previousTFlux2D.clear();
 	nTritium2D.clear();
 	sputteringYield2D = 0.0;
 	depthPositions2D.clear();
+	indices2D.clear();
+	weights2D.clear();
+	radii2D.clear();
 
 	PetscFunctionReturn(0);
 }

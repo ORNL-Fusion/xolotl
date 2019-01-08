@@ -19,9 +19,11 @@ public:
 	BoundaryConditionsOptionHandler() :
 			OptionHandler("boundary",
 					"boundary <values>                 "
-							"This option allows the user to choose the boundary conditions in the X direction.\n"
-							"                                    The first one correspond to the left side (surface) and second one to the right (bulk), "
-							"0 means mirror, 1 means free surface.\n") {
+							"This option allows the user to choose the boundary conditions.\n"
+							"                                    The first one correspond to the left side (surface) "
+							"and second one to the right (bulk),\n"
+							"                                    then two for Y and two for Z. "
+							"0 means mirror or periodic, 1 means free surface.\n") {
 	}
 
 	/**
@@ -52,6 +54,22 @@ public:
 
 		// Set the right boundary
 		opt->setRightBoundary(strtol(tokens[1].c_str(), NULL, 10));
+
+		if (tokens.size() > 2)
+			// Set the bottom boundary
+			opt->setBottomBoundary(strtol(tokens[2].c_str(), NULL, 10));
+
+		if (tokens.size() > 3)
+			// Set the top boundary
+			opt->setTopBoundary(strtol(tokens[3].c_str(), NULL, 10));
+
+		if (tokens.size() > 4)
+			// Set the front boundary
+			opt->setFrontBoundary(strtol(tokens[4].c_str(), NULL, 10));
+
+		if (tokens.size() > 5)
+			// Set the back boundary
+			opt->setBackBoundary(strtol(tokens[5].c_str(), NULL, 10));
 
 		return true;
 	}

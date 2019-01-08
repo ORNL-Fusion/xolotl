@@ -38,7 +38,8 @@ public:
 				std::make_shared<xolotlCore::DummyAdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				xolotlCore::DummyTrapMutationHandler>();
-		theReSolutionHandler = std::make_shared<xolotlCore::ReSolutionHandler>();
+		theReSolutionHandler =
+				std::make_shared<xolotlCore::ReSolutionHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {
@@ -71,6 +72,21 @@ public:
 	 * The destructor
 	 */
 	~FuelMaterialFactory() {
+	}
+
+	/**
+	 * Initialize the material conditions with the different given options.
+	 * \see IMaterialFactory.h
+	 */
+	void initializeMaterial(const xolotlCore::Options &options) {
+		// Call the mother method
+		MaterialFactory::initializeMaterial(options);
+
+		// Change the flux amplitude because we have to take into account
+		// that there are one xenon created every 4 fissions.
+		theFluxHandler->setFluxAmplitude(options.getFluxAmplitude() / 4.0);
+
+		return;
 	}
 };
 

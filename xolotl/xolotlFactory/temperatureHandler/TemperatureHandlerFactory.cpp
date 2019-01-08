@@ -33,50 +33,57 @@ bool initializeTempHandler(const xolotlCore::Options &options) {
 	} else if (options.useConstTemperatureHandlers()) {
 		auto temp = options.getConstTemperature();
 		// Check if we want a temperature gradient
-		double gradient = options.getTemperatureGradient();
-		if (xolotlCore::equal(gradient, 0.0)) {
+		double bulkTemp = options.getBulkTemperature();
+		if (xolotlCore::equal(bulkTemp, 0.0)) {
 			// we are to use a constant temperature handler
 			theTemperatureHandler = std::make_shared<
 					xolotlCore::TemperatureHandler>(temp);
 		} else {
 			// Use a temperature gradient
 			theTemperatureHandler = std::make_shared<
-					xolotlCore::TemperatureGradientHandler>(temp, gradient);
+					xolotlCore::TemperatureGradientHandler>(temp, bulkTemp);
 		}
 	} else if (options.useTemperatureProfileHandlers()) {
 		auto tempFileName = options.getTempProfileFilename();
 		theTemperatureHandler = std::make_shared<
 				xolotlCore::TemperatureProfileHandler>(tempFileName);
 	} else if (options.useHeatEquationHandlers()) {
-		theTemperatureHandler =
-				std::make_shared<xolotlCore::HeatEquationHandler>(
-						options.getConstTemperature(),
-						options.getBulkTemperature());
+		if (xolotlCore::equal(options.getConstTemperature(), 0.0)) {
+			// We are to use a constant temperature handler because the flux is 0.0
+			theTemperatureHandler = std::make_shared<
+					xolotlCore::TemperatureHandler>(options.getBulkTemperature());
+		} else {
+			// Actually using the heat equation
+			theTemperatureHandler = std::make_shared<
+					xolotlCore::HeatEquationHandler>(
+					options.getConstTemperature(),
+					options.getBulkTemperature());
 
-		// Set the heat coefficient which depends on the material
-		auto problemType = options.getMaterial();
-		// PSI case
-		if (problemType == "W100" || problemType == "W110"
-				|| problemType == "W111" || problemType == "W211"
-				|| problemType == "TRIDYN") {
-			theTemperatureHandler->setHeatCoefficient(
-					xolotlCore::tungstenHeatCoefficient);
-			theTemperatureHandler->setHeatConductivity(
-					xolotlCore::tungstenHeatConductivity);
-		}
-		// NE case
-		else if (problemType == "Fuel") {
-			theTemperatureHandler->setHeatCoefficient(
-					xolotlCore::uo2HeatCoefficient);
-			theTemperatureHandler->setHeatConductivity(
-					xolotlCore::uo2HeatConductivity);
-		}
-		// Fe case
-		else if (problemType == "Fe") {
-			theTemperatureHandler->setHeatCoefficient(
-					xolotlCore::feHeatCoefficient);
-			theTemperatureHandler->setHeatConductivity(
-					xolotlCore::feHeatConductivity);
+			// Set the heat coefficient which depends on the material
+			auto problemType = options.getMaterial();
+			// PSI case
+			if (problemType == "W100" || problemType == "W110"
+					|| problemType == "W111" || problemType == "W211"
+					|| problemType == "TRIDYN") {
+				theTemperatureHandler->setHeatCoefficient(
+						xolotlCore::tungstenHeatCoefficient);
+				theTemperatureHandler->setHeatConductivity(
+						xolotlCore::tungstenHeatConductivity);
+			}
+			// NE case
+			else if (problemType == "Fuel") {
+				theTemperatureHandler->setHeatCoefficient(
+						xolotlCore::uo2HeatCoefficient);
+				theTemperatureHandler->setHeatConductivity(
+						xolotlCore::uo2HeatConductivity);
+			}
+			// Fe case
+			else if (problemType == "Fe") {
+				theTemperatureHandler->setHeatCoefficient(
+						xolotlCore::feHeatCoefficient);
+				theTemperatureHandler->setHeatConductivity(
+						xolotlCore::feHeatConductivity);
+			}
 		}
 	} else {
 		// Only print the error message once when running in parallel

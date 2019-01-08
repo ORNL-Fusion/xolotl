@@ -1415,8 +1415,6 @@ void PSIClusterReactionNetwork::reinitializeNetwork() {
 						currCluster.setMomentId(id, indexList[i] - 1);
 					}
 
-//					currCluster.outputCoefficientsTo(std::cout);
-
 					// Update the PSIMixed size
 					IReactant::SizeType clusterSize = currCluster.getBounds(0).second
 					+ currCluster.getBounds(3).second;

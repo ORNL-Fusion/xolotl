@@ -44,8 +44,8 @@ public:
 	 */
 	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
 			std::vector<double> grid) {
-		// Call the general method
-		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
+		// Set the grid
+		xGrid = grid;
 
 		// Set the flux index corresponding the the single xenon cluster here
 		auto fluxCluster = network.get(Species::Xe, 1);
@@ -56,6 +56,27 @@ public:
 							"cannot use the flux option!");
 		}
 		fluxIndices.push_back(fluxCluster->getId() - 1);
+
+		return;
+	}
+
+	/**
+	 * This operation computes the flux due to incoming particles at a given grid point.
+	 * \see IFluxHandler.h
+	 */
+	void computeIncidentFlux(double currentTime,
+			double *updatedConcOffset, int xi, int surfacePos) {
+		// 0D Case
+		if (xGrid.size() == 0) {
+			updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
+			return;
+		}
+
+		// Skip the boundaries
+		if (xi == surfacePos || xi == xGrid.size() - 3) return;
+
+		// Update the concentration array
+		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
 
 		return;
 	}

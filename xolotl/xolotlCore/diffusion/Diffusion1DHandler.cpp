@@ -86,10 +86,14 @@ void Diffusion1DHandler::computeDiffusion(const IReactionNetwork& network,
 				* diffusionGrid[ix + 2][diffClusterIdx];
 
 		// Use a simple midpoint stencil to compute the concentration
-		double conc = cluster.getDiffusionCoefficient(ix - xs) * 2.0
+		double conc = (cluster.getDiffusionCoefficient(ix + 1 - xs) * 2.0
 				* (oldLeftConc + (hxLeft / hxRight) * oldRightConc
 						- (1.0 + (hxLeft / hxRight)) * oldConc)
-				/ (hxLeft * (hxLeft + hxRight));
+				/ (hxLeft * (hxLeft + hxRight)))
+				+ ((cluster.getDiffusionCoefficient(ix + 2 - xs)
+						- cluster.getDiffusionCoefficient(ix - xs))
+						* (oldRightConc - oldLeftConc)
+						/ ((hxLeft + hxRight) * (hxLeft + hxRight)));
 
 		// Update the concentration of the cluster
 		updatedConcOffset[index] += conc;
@@ -115,8 +119,6 @@ void Diffusion1DHandler::computePartialsForDiffusion(
 		auto const& cluster = static_cast<PSICluster const&>(currReactant);
 
 		int index = cluster.getId() - 1;
-		// Get the diffusion coefficient of the cluster
-		double diffCoeff = cluster.getDiffusionCoefficient(ix - xs);
 
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
@@ -124,13 +126,20 @@ void Diffusion1DHandler::computePartialsForDiffusion(
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, and right grid point
-		val[diffClusterIdx * 3] = -2.0 * diffCoeff / (hxLeft * hxRight)
-				* diffusionGrid[ix + 1][diffClusterIdx]; // middle
-		val[(diffClusterIdx * 3) + 1] = diffCoeff * 2.0
-				/ (hxLeft * (hxLeft + hxRight))
+		val[diffClusterIdx * 3] = -2.0
+				* cluster.getDiffusionCoefficient(ix + 1 - xs)
+				/ (hxLeft * hxRight) * diffusionGrid[ix + 1][diffClusterIdx]; // middle
+		val[(diffClusterIdx * 3) + 1] = (cluster.getDiffusionCoefficient(
+				ix - xs) * 2.0 / (hxLeft * (hxLeft + hxRight))
+				+ (cluster.getDiffusionCoefficient(ix - xs)
+						- cluster.getDiffusionCoefficient(ix + 2 - xs))
+						/ ((hxLeft + hxRight) * (hxLeft + hxRight)))
 				* diffusionGrid[ix][diffClusterIdx]; // left
-		val[(diffClusterIdx * 3) + 2] = diffCoeff * 2.0
-				/ (hxRight * (hxLeft + hxRight))
+		val[(diffClusterIdx * 3) + 2] = (cluster.getDiffusionCoefficient(
+				ix - xs) * 2.0 / (hxRight * (hxLeft + hxRight))
+				+ (cluster.getDiffusionCoefficient(ix + 2 - xs)
+						- cluster.getDiffusionCoefficient(ix - xs))
+						/ ((hxLeft + hxRight) * (hxLeft + hxRight)))
 				* diffusionGrid[ix + 2][diffClusterIdx]; // right
 
 		// Increase the index

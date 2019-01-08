@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Get its size
 	const int dof = network->getDOF();
 	// Initialize the rates
-	network->addGridPoints(1);
+	network->addGridPoints(3);
 
 	// Create a grid
 	std::vector<double> grid;
@@ -92,7 +92,9 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	network->setTemperature(1000.0);
+	network->setTemperature(1000.0, 0);
+	network->setTemperature(1000.0, 1);
+	network->setTemperature(1000.0, 2);
 
 	// Get pointers
 	double *conc = &concentration[0];

@@ -154,6 +154,9 @@ void NESuperCluster::updateFromNetwork() {
 	// Compute the dispersion
 	computeDispersion();
 
+	// Clear the xeVector
+	xeVector.clear();
+
 	return;
 }
 
@@ -170,10 +173,6 @@ double NESuperCluster::getTotalConcentration() const {
 	for (int k = 0; k < sectionWidth; k++) {
 		// Compute the xenon index
 		index = (int) (numXe - (double) sectionWidth / 2.0) + k + 1;
-
-		// Check if this cluster exists
-		if (reactingMap.find(index) == reactingMap.end())
-			continue;
 
 		// Compute the distances
 		distance = getDistance(index);
@@ -194,10 +193,6 @@ double NESuperCluster::getTotalXenonConcentration() const {
 	for (int k = 0; k < sectionWidth; k++) {
 		// Compute the xenon index
 		index = (int) (numXe - (double) sectionWidth / 2.0) + k + 1;
-
-		// Check if this cluster exists
-		if (reactingMap.find(index) == reactingMap.end())
-			continue;
 
 		// Compute the distances
 		distance = getDistance(index);
@@ -225,10 +220,6 @@ void NESuperCluster::computeDispersion() {
 	for (int k = 0; k < sectionWidth; k++) {
 		// Compute the vacancy index
 		index = (int) (numXe - (double) sectionWidth / 2.0) + k + 1;
-
-		// Check if this cluster exists
-		if (reactingMap.find(index) == reactingMap.end())
-			continue;
 
 		// Compute nSquare for the dispersion
 		nXeSquare += (double) index * index;
@@ -581,7 +572,10 @@ void NESuperCluster::optimizeReactions() {
 	combiningReactants.clear();
 	dissociatingPairs.clear();
 	emissionPairs.clear();
-
+	reactingMap.clear();
+	combiningMap.clear();
+	dissociatingMap.clear();
+	emissionMap.clear();
 	return;
 }
 

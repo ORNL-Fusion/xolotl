@@ -19,14 +19,9 @@ private:
 	double surfaceTemperature;
 
 	/**
-	 * The temperature gradient
+	 * The bulk temperature in Kelvin
 	 */
-	double gradient;
-
-	/**
-	 * The surface position
-	 */
-	double surfacePosition;
+	double bulkTemperature;
 
 	/**
 	 * The number of degrees of freedom in the network
@@ -38,7 +33,7 @@ private:
 	 * must be initialized with a temperature
 	 */
 	TemperatureGradientHandler() :
-			surfaceTemperature(0.0), gradient(0.0), surfacePosition(0.0), dof(0) {
+			surfaceTemperature(0.0), bulkTemperature(0.0), dof(0) {
 	}
 
 public:
@@ -47,11 +42,10 @@ public:
 	 * The constructor
 	 *
 	 * @param temp The surface temperature
-	 * @param grad The temperature gradient
+	 * @param grad The bulk temperature
 	 */
-	TemperatureGradientHandler(double temp, double grad) :
-			surfaceTemperature(temp), gradient(grad), surfacePosition(0.0), dof(
-					0) {
+	TemperatureGradientHandler(double surfTemp, double bulkTemp) :
+			surfaceTemperature(surfTemp), bulkTemperature(bulkTemp), dof(0) {
 	}
 
 	/**
@@ -67,17 +61,17 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void initializeTemperature(const IReactionNetwork& network,
-            IReactionNetwork::SparseFillMap& ofillMap,
-            IReactionNetwork::SparseFillMap& dfillMap) {
+			IReactionNetwork::SparseFillMap& ofillMap,
+			IReactionNetwork::SparseFillMap& dfillMap) {
 
 		// Set dof
 		dof = network.getDOF();
 
 		// Add the temperature to ofill
-        ofillMap[(dof - 1)].emplace_back(dof - 1);
+		ofillMap[(dof - 1)].emplace_back(dof - 1);
 
 		// Add the temperature to dfill
-        dfillMap[(dof - 1)].emplace_back(dof - 1);
+		dfillMap[(dof - 1)].emplace_back(dof - 1);
 
 		return;
 	}
@@ -88,8 +82,9 @@ public:
 	 *
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const Point<3>& position, double) const {
-		return surfaceTemperature - (position[0] - surfacePosition) * gradient;
+	virtual double getTemperature(const Point<3>& fraction, double) const {
+		return surfaceTemperature
+				+ (bulkTemperature - surfaceTemperature) * fraction[0];
 	}
 
 	/**
