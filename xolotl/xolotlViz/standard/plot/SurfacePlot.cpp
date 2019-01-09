@@ -1,14 +1,38 @@
 // Includes
 #include "SurfacePlot.h"
-#include "eavl.h"
-#include "eavlDataSet.h"
-#include "eavlColor.h"
-#include "eavlRenderSurfaceOSMesa.h"
-#include "eavlScene.h"
-#include "eavl2DWindow.h"
 #include <iostream>
 
+// General VTKM includes
+#include <vtkm/cont/ArrayHandle.h>
+#include <vtkm/cont/CellSetStructured.h>
+#include <vtkm/cont/CoordinateSystem.h>
+#include <vtkm/cont/DataSet.h>
+#include <vtkm/cont/DataSetBuilderRectilinear.h>
+#include <vtkm/cont/DeviceAdapter.h>
+#include <vtkm/cont/DynamicCellSet.h>
+#include <vtkm/cont/DynamicArrayHandle.h>
+#include <vtkm/cont/ErrorBadValue.h>
+#include <vtkm/cont/Field.h>
+
+// VTKM Dataset creator includes
+#include <vtkm/cont/DeviceAdapterAlgorithm.h>
+#include <vtkm/cont/testing/MakeTestDataSet.h>
+
+// VTKM Rendering includes
+#include <vtkm/rendering/Actor.h>
+#include <vtkm/rendering/Color.h>
+#include <vtkm/cont/ColorTable.h>
+#include <vtkm/rendering/Scene.h>
+#include <vtkm/rendering/TextAnnotationScreen.h>
+#include <vtkm/rendering/TextAnnotation.h>
+#include <vtkm/rendering/View2D.h>
+#include <vtkm/rendering/CanvasRayTracer.h>
+#include <vtkm/rendering/MapperRayTracer.h>
+#include <vtkm/io/writer/VTKDataSetWriter.h>
+
+
 using namespace xolotlViz;
+using DeviceAdapter = VTKM_DEFAULT_DEVICE_ADAPTER_TAG;
 
 #define W_WIDTH 1024
 #define W_HEIGHT 1024
@@ -39,87 +63,114 @@ void SurfacePlot::render(const std::string& fileName) {
 	auto yVector = plotDataProvider->getAxis2Vector();
 	auto zVector = plotDataProvider->getAxis3Vector();
 
-	// Create the eavlDataSet
-	eavlDataSet *data = new eavlDataSet();
-	data->SetNumPoints(zVector.size());
+  for(int i = 0; i < zVector.size(); i++)
+  {
+    if(zVector[i] > 0)
+    {
+      zVector[i] = std::log10(zVector[i]);
+    }
+    else
+    {
+      zVector[i] = 0;
+    }
+  }
 
-	// Give it the xVector and yVector
-	std::vector<std::vector<double> > coords;
-	coords.push_back(xVector);
-	coords.push_back(yVector);
-	std::vector<std::string> coordNames;
-	coordNames.push_back("xcoord");
-	coordNames.push_back("ycoord");
-	AddRectilinearMesh(data, coords, coordNames, true, "RectilinearGridCells");
+  // Create the vtk-m data set
+  vtkm::cont::DataSetFieldAdd dsf;
+  vtkm::cont::DataSetBuilderRectilinear dsb;
+  vtkm::cont::DataSet dataSet = dsb.Create(xVector, yVector);
+  dsf.AddCellField(dataSet, plotDataProvider->getDataName(), zVector);
 
-	// Give the zVector to the axisValues
-	eavlArray *axisValues = new eavlFloatArray(plotDataProvider->getDataName(),
-			1);
-	axisValues->SetNumberOfTuples(data->GetNumPoints());
-	for (unsigned int i = 0; i < zVector.size(); i++) {
-		axisValues->SetComponentFromDouble(i, 0, zVector.at(i));
-	}
+  // Create the view
+  vtkm::rendering::View2D *view = nullptr;
+  vtkm::rendering::Color bg(0.5, 0.5, 0.5, 1.f);
+  vtkm::rendering::CanvasRayTracer canvas(W_WIDTH, W_HEIGHT);
+  vtkm::rendering::MapperRayTracer mapper;
 
-	// Add the axisValues to a field of the data set
-	eavlField *field = new eavlField(0, axisValues, eavlField::ASSOC_CELL_SET,
-			"RectilinearGridCells");
-	data->AddField(field);
+  // Create the scene, default to log scale color map
+  vtkm::rendering::Scene scene;
+  vtkm::rendering::Actor actor(
+    dataSet.GetCellSet(),
+    dataSet.GetCoordinateSystem(),
+    dataSet.GetField(plotDataProvider->getDataName()),
+    vtkm::cont::ColorTable::Preset::JET);
+  scene.AddActor(actor);
 
-	// Create an offscreen render surface
-	eavlRenderSurface *surface = new eavlRenderSurfaceOSMesa;
+  // Set camera position
+  vtkm::rendering::Camera camera = vtkm::rendering::Camera(vtkm::rendering::Camera::MODE_2D);
+  camera.ResetToBounds(dataSet.GetCoordinateSystem().GetBounds());
+  camera.SetClippingRange(1.f, 100.f);
+  camera.SetViewport(-0.75f, +0.75f, -0.75f, +0.75f);
+  camera.SetXScale(1.01f);
 
-	// Pick a background color
-//    eavlColor bg(0.15, 0.05, 0.1, 1.0);
-	eavlColor bg(0.5, 0.5, 0.5, 0.5);
+  // Create vtkm rendering infrastructure
+  view = new vtkm::rendering::View2D(scene, mapper, canvas, camera, bg);
 
-	// Create a 2D scene
-	eavlScene *scene = new eavl2DGLScene();
+  // Print the title
+  vtkm::rendering::TextAnnotationScreen *titleAnnotation =
+    new vtkm::rendering::TextAnnotationScreen(
+      "Log of " + plotLabelProvider->titleLabel,
+      vtkm::rendering::Color::white,
+      .07,
+      vtkm::Vec<vtkm::Float32, 2>(-.45, .93),
+       0);
+	view->AddAnnotation(titleAnnotation);
 
-	// Create the window
-	eavl2DWindow *window = new eavl2DWindow(bg, surface, scene);
-	window->Initialize();
-	window->Resize(W_WIDTH, W_HEIGHT);
+  // Print the axis labels
+  vtkm::rendering::TextAnnotationScreen *axis1Annotation =
+    new vtkm::rendering::TextAnnotationScreen(
+      plotLabelProvider->axis1Label,
+      vtkm::rendering::Color::white,
+      .065,
+      vtkm::Vec<vtkm::Float32, 2>(-.12, -.9),
+       0);
+	view->AddAnnotation(axis1Annotation);
 
-	// Print the title
-	auto titleAnnotation = new eavlScreenTextAnnotation(window,
-			plotLabelProvider->titleLabel, eavlColor::white, 0.065, 0.0, 0.96);
-	window->AddAnnotation(titleAnnotation);
+  vtkm::rendering::TextAnnotationScreen *axis2Annotation =
+    new vtkm::rendering::TextAnnotationScreen(
+      plotLabelProvider->axis2Label,
+      vtkm::rendering::Color::white,
+      .065,
+      vtkm::Vec<vtkm::Float32, 2>(-.85, -.15),
+       90);
+	view->AddAnnotation(axis2Annotation);
 
-	// Print the axis labels
-	auto axis1Annotation = new eavlScreenTextAnnotation(window,
-			plotLabelProvider->axis1Label, eavlColor::white, 0.05, 0.0, -0.9);
-	window->AddAnnotation(axis1Annotation);
-	auto axis2Annotation = new eavlScreenTextAnnotation(window,
-			plotLabelProvider->axis2Label, eavlColor::white, 0.05, -0.9, 0.0,
-			90.0);
-	window->AddAnnotation(axis2Annotation);
-	auto axis3Annotation = new eavlScreenTextAnnotation(window,
-			plotLabelProvider->axis3Label, eavlColor::white, 0.05, 0.0, 0.78);
-	window->AddAnnotation(axis3Annotation);
+  vtkm::rendering::TextAnnotationScreen *axis3Annotation =
+    new vtkm::rendering::TextAnnotationScreen(
+      plotLabelProvider->axis3Label,
+      vtkm::rendering::Color::white,
+      .065,
+      vtkm::Vec<vtkm::Float32, 2>(-.15, .73),
+       0);
+	view->AddAnnotation(axis3Annotation);
 
-	// Add the time information
-	auto timeAnnotation = new eavlScreenTextAnnotation(window,
-			plotLabelProvider->timeLabel, eavlColor::white, 0.055, 0.8, -0.85);
-	window->AddAnnotation(timeAnnotation);
-	auto timeStepAnnotation = new eavlScreenTextAnnotation(window,
-			plotLabelProvider->timeStepLabel, eavlColor::white, 0.055, 0.8,
-			-0.91);
-	window->AddAnnotation(timeStepAnnotation);
+  // Add the time information
+  vtkm::rendering::TextAnnotationScreen *timeAnnotation =
+    new vtkm::rendering::TextAnnotationScreen(
+      plotLabelProvider->timeLabel,
+      vtkm::rendering::Color::white,
+      .055,
+      vtkm::Vec<vtkm::Float32, 2>(.6, -.91),
+       0);
+	view->AddAnnotation(timeAnnotation);
 
-	// Set up a plot for the data set
-	eavlRenderer *plot;
-	plot = new eavlPseudocolorRenderer(data, NULL, "temperature", false,
-			data->GetCellSet(0)->GetName(), plotDataProvider->getDataName());
-	scene->plots.push_back(plot);
+  vtkm::rendering::TextAnnotationScreen *timeStepAnnotation =
+    new vtkm::rendering::TextAnnotationScreen(
+      plotLabelProvider->timeStepLabel,
+      vtkm::rendering::Color::white,
+      .055,
+      vtkm::Vec<vtkm::Float32, 2>(.6, -.96),
+       0);
+	view->AddAnnotation(timeStepAnnotation);
 
-	// Set the view
-	scene->ResetView(window);
+  // Set the view
+  view->Initialize();
 
-	// Paint
-	window->Paint();
+  // Paint
+  view->Paint();
 
-	// Save the final buffer as an image
-	window->SaveWindowAsPNM(fileName);
+  // Save the final buffer as an image
+  view->SaveAs(fileName);
 
 	return;
 }
