@@ -56,7 +56,7 @@ std::vector<double> previousHeFlux2D;
 //! The variable to store the total number of helium going through the bottom.
 std::vector<double> nHelium2D;
 //! The variable to store the xenon flux at the previous time step.
-double previousXeFlux2D = 0.0;
+std::vector<std::vector<double> > previousXeFlux2D;
 //! The variable to store the total number of xenon going through the GB.
 double nXenon2D = 0.0;
 //! The variable to store the deuterium flux at the previous time step.
@@ -593,14 +593,32 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	// GB
 	// Get the delta time from the previous timestep to this timestep
 	double dt = time - previousTime;
-	// Compute the total number of Xe that went to the GB
-	nXenon2D += previousXeFlux2D * dt;
+	// Sum and gather the previous flux
+	double globalXeFlux = 0.0;
+	// Loop on the grid
+	for (int i = 0; i < xm; i++) {
+		for (int j = 0; j < ym; j++) {
+			globalXeFlux += previousXeFlux2D[i][j];
+			// Set the amount in the vector we keep
+			solverHandler.setLocalXeRate(previousXeFlux2D[i][j] * dt, i, j);
+		}
+	}
+	double totalXeFlux = 0.0;
+	MPI_Reduce(&globalXeFlux, &totalXeFlux, 1, MPI_DOUBLE, MPI_SUM, 0,
+			xolotlComm);
+	// Master process
+	if (procId == 0) {
+		// Compute the total number of Xe that went to the GB
+		nXenon2D += totalXeFlux * dt;
+	}
+
 	// Get the vector from the solver handler
 	auto gbVector = solverHandler.getGBVector();
-	// Initialize the value for the flux
-	double newFlux = 0.0;
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
+		// Local rate
+		double localRate = 0.0;
+
 		// X segment
 		// Left
 		int xi = std::get<0>(pair) - 1;
@@ -621,14 +639,9 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
 				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[yj][xi][id]
+				localRate += (double) size * solutionArray[yj][xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 						* hy / (hxLeft + hxRight);
-
-//					if (timestep > 85)
-//						std::cout << "left: " << xi << " " << yj << " "
-//								<< cluster.getDiffusionCoefficient(xi + 1 - xs)
-//								<< " " << hxLeft + hxRight << " " << solutionArray[yj][xi][id] << std::endl;
 			}
 		}
 
@@ -650,14 +663,9 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
 				// Compute the flux coming from the right
-				newFlux += (double) size * solutionArray[yj][xi][id]
+				localRate += (double) size * solutionArray[yj][xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 						* hy / (hxLeft + hxRight);
-
-//					if (timestep > 85)
-//						std::cout << "right: " << xi << " " << yj << " "
-//								<< cluster.getDiffusionCoefficient(xi + 1 - xs)
-//								<< " " << hxLeft + hxRight << " " << solutionArray[yj][xi][id] << std::endl;
 			}
 		}
 //		// Y segment
@@ -680,9 +688,6 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 //					newFlux += (double) size * solutionArray[yj][xi][id]
 //							* cluster.getDiffusionCoefficient(xi + 1 - xs)
 //							* (grid[xi + 1] - grid[xi]) / hy;
-////					std::cout << "bottom: " << xi << " " << yj << " "
-////							<< cluster.getDiffusionCoefficient(xi + 1 - xs)
-////							<< " " << grid[xi + 1] - grid[xi] << " " << solutionArray[yj][xi][id] << std::endl;
 //				}
 //			}
 //
@@ -703,16 +708,29 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 //					newFlux += (double) size * solutionArray[yj][xi][id]
 //							* cluster.getDiffusionCoefficient(xi + 1 - xs)
 //							* (grid[xi + 1] - grid[xi]) / hy;
-////					std::cout << "top: " << xi << " " << yj << " "
-////							<< cluster.getDiffusionCoefficient(xi + 1 - xs)
-////							<< " " << grid[xi + 1] - grid[xi] << " " << solutionArray[yj][xi][id] << std::endl;
 //				}
 //			}
 //
 //		}
+
+		// Middle
+		xi = std::get<0>(pair);
+		// Get the corresponding proc ID
+		int localProcId = 0;
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+			localProcId = procId;
+		}
+		int globalProcId = 0;
+		MPI_Allreduce(&localProcId, &globalProcId, 1, MPI_INT, MPI_SUM,
+				xolotlComm);
+		// Pass the local rate to this proc ID
+		double totalLocalRate = 0.0;
+		MPI_Reduce(&localRate, &totalLocalRate, 1, MPI_DOUBLE, MPI_SUM,
+				globalProcId, xolotlComm);
+		// Add the local rate to the flux
+		if (procId == globalProcId)
+			previousXeFlux2D[xi - xs][yj - ys] = totalLocalRate;
 	}
-	// Update the xenon flux
-	previousXeFlux2D = newFlux;
 
 	// Master process
 	if (procId == 0) {
@@ -1527,8 +1545,8 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 				ierr = PetscObjectGetOptions((PetscObject) ts, &petscOptions);
 				CHKERRQ(ierr);
 				PetscBool flagCheck;
-				ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse",
-						&flagCheck);
+				ierr = PetscOptionsHasName(petscOptions, NULL,
+						"-check_collapse", &flagCheck);
 				CHKERRQ(ierr);
 				if (flagCheck) {
 					// Write the convergence reason
@@ -1993,6 +2011,24 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 			radii2D.push_back(cluster.getReactionRadius());
 		}
 
+		// Get the da from ts
+		DM da;
+		ierr = TSGetDM(ts, &da);
+		checkPetscError(ierr, "setupPetsc2DMonitor: TSGetDM failed.");
+		// Get the local boundaries
+		PetscInt xm, ym;
+		ierr = DMDAGetCorners(da, NULL, NULL, NULL, &xm, &ym, NULL);
+		checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetCorners failed.");
+		// Create the local Xe rate vector on each process
+		solverHandler.createLocalXeRate(xm, ym);
+		for (int i = 0; i < xm; i++) {
+			std::vector<double> tempVector;
+			for (int j = 0; j < ym; j++) {
+				tempVector.push_back(0.0);
+			}
+			previousXeFlux2D.push_back(tempVector);
+		}
+
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 
@@ -2090,7 +2126,7 @@ PetscErrorCode reset2DMonitor() {
 	nInterstitial2D.clear();
 	previousHeFlux2D.clear();
 	nHelium2D.clear();
-	previousXeFlux2D = 0.0;
+	previousXeFlux2D.clear();
 	nXenon2D = 0.0;
 	previousDFlux2D.clear();
 	nDeuterium2D.clear();

@@ -14,22 +14,8 @@ int main(int argc, char **argv) {
 	// Run the solve
 	interface.solveXolotl(solver);
 
-	// Print the retention
-	interface.printRetention(solver);
-	// Get the pointer to the vector
-	auto retention = interface.getPointerRetention(solver);
-	// Modify the vector
-	if (retention->size() > 0)
-		retention->at(3) = 1.0;
-	// Print again
-	interface.printRetention(solver);
-	// Get the copy of the vector
-	auto retentionCopy = interface.getCopyRetention(solver);
-	// Modify the vector
-	if (retentionCopy.size() > 0)
-		retentionCopy[5] = 1.0;
-	// Print again
-	interface.printRetention(solver);
+	// Check the local Xe rate at a few grid points
+	interface.getLocalXeRate(solver);
 
 	// Finalize the run
 	interface.finalizeXolotl(solver);

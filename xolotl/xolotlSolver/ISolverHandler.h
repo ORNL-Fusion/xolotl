@@ -178,25 +178,28 @@ public:
 	virtual int getRightOffset() const = 0;
 
 	/**
-	 * Set the latest value of retention.
+	 * Create the local Xe rate vector.
 	 *
-	 * @param ret The latest value of retention
+	 * @param a The size in the x direction
+	 * @param b The size in the y direction
+	 * @param c The size in the y direction
 	 */
-	virtual void setRetention(double ret) = 0;
+	virtual void createLocalXeRate(int a, int b = 1, int c = 1) = 0;
 
 	/**
-	 * Get the retention vector copy.
+	 * Set the latest value of the local Xe rate.
 	 *
-	 * @return The vector
+	 * @param rate The latest value of rate
+	 * @param i The x coordinate of the location
+	 * @param j The y coordinate of the location
+	 * @param z The z coordinate of the location
 	 */
-	virtual std::vector<double> getCopyRetention() const = 0;
+	virtual void setLocalXeRate(double rate, int i, int j = 0, int k = 0) = 0;
 
 	/**
-	 * Get the retention vector pointer.
-	 *
-	 * @return The vector
+	 * Get the value of the local Xe rate.
 	 */
-	virtual std::vector<double>* getPointerRetention() = 0;
+	virtual void getLocalXeRate() const = 0;
 
 	/**
 	 * To know if the surface should be able to move.

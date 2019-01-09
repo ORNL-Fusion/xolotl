@@ -54,7 +54,7 @@ std::vector<std::vector<double> > previousIFlux3D;
 //! The variable to store the total number of interstitials going through the surface.
 std::vector<std::vector<double> > nInterstitial3D;
 //! The variable to store the xenon flux at the previous time step.
-double previousXeFlux3D = 0.0;
+std::vector<std::vector<std::vector<double> > > previousXeFlux3D;
 //! The variable to store the total number of xenon going through the GB.
 double nXenon3D = 0.0;
 //! The variable to store the sputtering yield at the surface.
@@ -483,15 +483,35 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	// GB
 	// Get the delta time from the previous timestep to this timestep
 	double dt = time - previousTime;
-	// Compute the total number of Xe that went to the GB
-	nXenon3D += previousXeFlux3D * dt;
+	// Sum and gather the previous flux
+	double globalXeFlux = 0.0;
+	// Loop on the grid
+	for (int i = 0; i < xm; i++) {
+		for (int j = 0; j < ym; j++) {
+			for (int k = 0; k < zm; k++) {
+				globalXeFlux += previousXeFlux3D[i][j][k];
+				// Set the amount in the vector we keep
+				solverHandler.setLocalXeRate(previousXeFlux3D[i][j][k] * dt, i,
+						j, k);
+			}
+		}
+	}
+	double totalXeFlux = 0.0;
+	MPI_Reduce(&globalXeFlux, &totalXeFlux, 1, MPI_DOUBLE, MPI_SUM, 0,
+			xolotlComm);
+	// Master process
+	if (procId == 0) {
+		// Compute the total number of Xe that went to the GB
+		nXenon3D += totalXeFlux * dt;
+	}
 
 	// Get the vector from the solver handler
 	auto gbVector = solverHandler.getGBVector();
-	// Initialize the value for the flux
-	double newFlux = 0.0;
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
+		// Local rate
+		double localRate = 0.0;
+
 		// X segment
 		// Left
 		int xi = std::get<0>(pair) - 1;
@@ -514,7 +534,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
 				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[zk][yj][xi][id]
+				localRate += (double) size * solutionArray[zk][yj][xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 						* hy * hz / (hxLeft + hxRight);
 			}
@@ -539,14 +559,31 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
 				// Compute the flux coming from the right
-				newFlux += (double) size * solutionArray[zk][yj][xi][id]
+				localRate += (double) size * solutionArray[zk][yj][xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 						* hy * hz / (hxLeft + hxRight);
 			}
 		}
+
+		// Middle
+		xi = std::get<0>(pair);
+		// Get the corresponding proc ID
+		int localProcId = 0;
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
+				&& zk < zs + zm) {
+			localProcId = procId;
+		}
+		int globalProcId = 0;
+		MPI_Allreduce(&localProcId, &globalProcId, 1, MPI_INT, MPI_SUM,
+				xolotlComm);
+		// Pass the local rate to this proc ID
+		double totalLocalRate = 0.0;
+		MPI_Reduce(&localRate, &totalLocalRate, 1, MPI_DOUBLE, MPI_SUM,
+				globalProcId, xolotlComm);
+		// Add the local rate to the flux
+		if (procId == globalProcId)
+			previousXeFlux3D[xi - xs][yj - ys][zk - zs] = totalLocalRate;
 	}
-	// Update the xenon flux
-	previousXeFlux3D = newFlux;
 
 	// Master process
 	if (procId == 0) {
@@ -1453,7 +1490,8 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 				if (surfacePos < 0) {
 					// Get the option from the TS
 					PetscOptions petscOptions;
-					ierr = PetscObjectGetOptions((PetscObject) ts, &petscOptions);
+					ierr = PetscObjectGetOptions((PetscObject) ts,
+							&petscOptions);
 					CHKERRQ(ierr);
 					PetscBool flagCheck;
 					ierr = PetscOptionsHasName(petscOptions, NULL,
@@ -1927,6 +1965,28 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 			radii3D.push_back(cluster.getReactionRadius());
 		}
 
+		// Get the da from ts
+		DM da;
+		ierr = TSGetDM(ts, &da);
+		checkPetscError(ierr, "setupPetsc3DMonitor: TSGetDM failed.");
+		// Get the local boundaries
+		PetscInt xm, ym, zm;
+		ierr = DMDAGetCorners(da, NULL, NULL, NULL, &xm, &ym, &zm);
+		checkPetscError(ierr, "setupPetsc3DMonitor: DMDAGetCorners failed.");
+		// Create the local Xe rate vector on each process
+		solverHandler.createLocalXeRate(xm, ym, zm);
+		for (int i = 0; i < xm; i++) {
+			std::vector<std::vector<double> > tempTempVector;
+			for (int j = 0; j < ym; j++) {
+				std::vector<double> tempVector;
+				for (int k = 0; k < zm; k++) {
+					tempVector.push_back(0.0);
+				}
+				tempTempVector.push_back(tempVector);
+			}
+			previousXeFlux3D.push_back(tempTempVector);
+		}
+
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 
@@ -2054,7 +2114,7 @@ PetscErrorCode reset3DMonitor() {
 	hdf5OutputName3D = "xolotlStop.h5";
 	previousIFlux3D.clear();
 	nInterstitial3D.clear();
-	previousXeFlux3D = 0.0;
+	previousXeFlux3D.clear();
 	nXenon3D = 0.0;
 	sputteringYield3D = 0.0;
 	depthPositions3D.clear();

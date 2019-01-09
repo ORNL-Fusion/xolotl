@@ -151,14 +151,13 @@ void XolotlInterface::solveXolotl(
 	return;
 }
 
-std::vector<double> XolotlInterface::getCopyRetention(
+void XolotlInterface::getLocalXeRate(
 		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
-	std::vector<double> retention;
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
-		// Get the latest retention value from it
-		retention = solverHandler.getCopyRetention();
+		// Get the rate at this location
+		solverHandler.getLocalXeRate();
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
@@ -170,61 +169,6 @@ std::vector<double> XolotlInterface::getCopyRetention(
 		std::cerr << "Aborting." << std::endl;
 	}
 
-	return retention;
-}
-
-std::vector<double>* XolotlInterface::getPointerRetention(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
-	auto retention = new std::vector<double>();
-	try {
-		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
-		// Get the latest retention value from it
-		retention = solverHandler.getPointerRetention();
-	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
-		std::cerr << error << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (...) {
-		std::cerr << "Unrecognized exception seen." << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	}
-
-	return retention;
-}
-
-void XolotlInterface::printRetention(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
-	try {
-
-		// Get the MPI rank
-		auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
-		int rank;
-		MPI_Comm_rank(xolotlComm, &rank);
-
-		if (rank == 0) {
-			// Get the solver handler
-			auto& solverHandler = solver->getSolverHandler();
-			// Get the latest retention value from it
-			auto retention = solverHandler.getCopyRetention();
-			std::cout << "The retention was: " << std::endl;
-			for (int i = 0; i < retention.size(); i++) {
-				std::cout << retention[i] << " ";
-			}
-			std::cout << std::endl;
-		}
-	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
-		std::cerr << error << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (...) {
-		std::cerr << "Unrecognized exception seen." << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	}
 	return;
 }
 

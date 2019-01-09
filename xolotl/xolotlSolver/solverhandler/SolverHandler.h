@@ -6,6 +6,7 @@
 #include <RandomNumberGenerator.h>
 #include <XFile.h>
 #include <MPIUtils.h>
+#include <TokenizedLineReader.h>
 
 namespace xolotlSolver {
 
@@ -57,8 +58,8 @@ protected:
 	//! The initial vacancy concentration.
 	double initialVConc;
 
-	//! The vector of retention value.
-	std::vector<double> retention;
+	//! The vector of local Xe rate.
+	std::vector<std::vector<std::vector<double> > > localXeRate;
 
 	//! The original flux handler created.
 	xolotlCore::IFluxHandler *fluxHandler;
@@ -455,6 +456,36 @@ public:
 							" it doesn't make any sense.");
 		}
 
+		// Check for free surface boundaries
+
+		// Read the parameter file
+		std::ifstream paramFile;
+		paramFile.open("freeGB.dat");
+		if (paramFile.good()) {
+			// Build an input stream from the string
+			xolotlCore::TokenizedLineReader<int> reader;
+			// Get the line
+			std::string line;
+			getline(paramFile, line);
+			auto lineSS = std::make_shared<std::istringstream>(line);
+			reader.setInputStream(lineSS);
+
+			// Read the first line
+			auto tokens = reader.loadLine();
+			// And start looping on the lines
+			while (tokens.size() > 0) {
+				// Add the coordinates to the GB vector
+				gbVector.push_back(
+						std::make_tuple(tokens[0], tokens[1], tokens[2]));
+
+				// Read the next line
+				getline(paramFile, line);
+				lineSS = std::make_shared<std::istringstream>(line);
+				reader.setInputStream(lineSS);
+				tokens = reader.loadLine();
+			}
+		}
+
 		return;
 	}
 
@@ -515,27 +546,47 @@ public:
 	}
 
 	/**
-	 * Set the latest value of retention.
+	 * Create the local Xe rate vector.
 	 * \see ISolverHandler.h
 	 */
-	virtual void setRetention(double ret) override {
-		retention.push_back(ret);
+	void createLocalXeRate(int a, int b = 1, int c = 1) override {
+		localXeRate.clear();
+		// Create the vector of vectors and fill it with 0.0
+		for (int i = 0; i < a; i++) {
+			std::vector<std::vector<double> > tempTempVector;
+			for (int j = 0; j < b; j++) {
+				std::vector<double> tempVector;
+				for (int k = 0; k < c; k++) {
+					tempVector.push_back(0.0);
+				}
+				tempTempVector.push_back(tempVector);
+			}
+			localXeRate.push_back(tempTempVector);
+		}
 	}
 
 	/**
-	 * Get the retention vector copy.
+	 * Set the latest value of the local Xe rate.
 	 * \see ISolverHandler.h
 	 */
-	virtual std::vector<double> getCopyRetention() const override {
-		return retention;
+	void setLocalXeRate(double rate, int i, int j = 0, int k = 0) override {
+		localXeRate[i][j][k] += rate;
 	}
 
 	/**
-	 * Get the retention vector pointer.
+	 * Get the value of the local Xe rate.
 	 * \see ISolverHandler.h
 	 */
-	virtual std::vector<double>* getPointerRetention() override {
-		return &retention;
+	void getLocalXeRate() const override {
+		for (int k = 0; k < localXeRate[0][0].size(); k++) {
+			for (int j = 0; j < localXeRate[0].size(); j++) {
+				for (int i = 0; i < localXeRate.size(); i++) {
+					std::cout << localXeRate[i][j][k] << " ";
+				}
+				std::cout << std::endl;
+			}
+			std::cout << std::endl;
+		}
 	}
 
 	/**

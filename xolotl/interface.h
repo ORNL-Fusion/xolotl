@@ -29,7 +29,10 @@ public:
 	/**
 	 * Initialize all the options and handlers
 	 *
+	 * @param argc, argv The command line arguments
+	 * @param MPI_Comm The communicator to use
 	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
+	 * @return The pointer to the solver
 	 */
 	std::shared_ptr<xolotlSolver::PetscSolver> initializeXolotl(int argc,
 			char **argv, MPI_Comm comm = MPI_COMM_WORLD, bool isStandalone =
@@ -38,42 +41,31 @@ public:
 	/**
 	 * Set the final time and the dt.
 	 *
-	 * @param finalTime The wanted final time.
-	 * @param dt The wanted max time step.
+	 * @param solver The pointer to the solver
+	 * @param finalTime The wanted final time
+	 * @param dt The wanted max time step
 	 */
 	void setTimes(std::shared_ptr<xolotlSolver::PetscSolver> solver,
 			double finalTime, double dt);
 
 	/**
 	 * Run the PETSc solve
+	 *
+	 * @param solver The pointer to the solver
 	 */
 	void solveXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver);
 
 	/**
-	 * Get the retention vector copy at the end of solve
+	 * Get the local Xe rate that needs to be passed
 	 *
-	 * @return The vector
+	 * @param solver The pointer to the solver
 	 */
-	virtual std::vector<double> getCopyRetention(
-			std::shared_ptr<xolotlSolver::PetscSolver> solver);
-
-	/**
-	 * Get the retention vector pointer at the end of solve
-	 *
-	 * @return The vector
-	 */
-	virtual std::vector<double>* getPointerRetention(
-			std::shared_ptr<xolotlSolver::PetscSolver> solver);
-
-	/**
-	 * Print the retention vector copy at the end of solve
-	 */
-	virtual void printRetention(
-			std::shared_ptr<xolotlSolver::PetscSolver> solver);
+	void getLocalXeRate(std::shared_ptr<xolotlSolver::PetscSolver> solver);
 
 	/**
 	 * Finalize the solve
 	 *
+	 * @param solver The pointer to the solver
 	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
 	 */
 	void finalizeXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver,

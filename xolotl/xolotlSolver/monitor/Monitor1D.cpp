@@ -60,7 +60,7 @@ double previousHeFlux1D = 0.0;
 //! The variable to store the total number of helium going through the bottom.
 double nHelium1D = 0.0;
 //! The variable to store the xenon flux at the previous time step.
-double previousXeFlux1D = 0.0;
+std::vector<double> previousXeFlux1D;
 //! The variable to store the total number of xenon going through the GB.
 double nXenon1D = 0.0;
 //! The variable to store the deuterium flux at the previous time step.
@@ -803,14 +803,29 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// GB
 	// Get the delta time from the previous timestep to this timestep
 	double dt = time - previousTime;
-	// Compute the total number of Xe that went to the GB
-	nXenon1D += previousXeFlux1D * dt;
+	// Sum and gather the previous flux
+	double globalXeFlux = 0.0;
+	// Loop on the grid
+	for (int i = 0; i < xm; i++) {
+		globalXeFlux += previousXeFlux1D[i];
+		// Set the amount in the vector we keep
+		solverHandler.setLocalXeRate(previousXeFlux1D[i] * dt, i);
+	}
+	double totalXeFlux = 0.0;
+	MPI_Reduce(&globalXeFlux, &totalXeFlux, 1, MPI_DOUBLE, MPI_SUM,
+			0, xolotlComm);
+	// Master process
+	if (procId == 0) {
+		// Compute the total number of Xe that went to the GB
+		nXenon1D += totalXeFlux * dt;
+	}
+
 	// Get the vector from the solver handler
 	auto gbVector = solverHandler.getGBVector();
-	// Initialize the value for the flux
-	double newFlux = 0.0;
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
+		// Local rate
+		double localRate = 0.0;
 		// Left
 		int xi = std::get<0>(pair) - 1;
 
@@ -829,7 +844,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
 				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[xi][id]
+				localRate += (double) size * solutionArray[xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 						/ (hxLeft + hxRight);
 			}
@@ -853,14 +868,27 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				// Get its size and diffusion coefficient
 				int size = cluster.getSize();
 				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[xi][id]
+				localRate += (double) size * solutionArray[xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 						/ (hxLeft + hxRight);
 			}
 		}
+
+		// Middle
+		xi = std::get<0>(pair);
+		// Get the corresponding proc ID
+		int localProcId = 0;
+		if (xi >= xs && xi < xs + xm) {
+			localProcId = procId;
+		}
+		int globalProcId = 0;
+		MPI_Allreduce(&localProcId, &globalProcId, 1, MPI_INT, MPI_SUM, xolotlComm);
+		// Pass the local rate to this proc ID
+		double totalLocalRate = 0.0;
+		MPI_Reduce(&localRate, &totalLocalRate, 1, MPI_DOUBLE, MPI_SUM, globalProcId, xolotlComm);
+		// Add the local rate to the flux
+		if (procId == globalProcId) previousXeFlux1D[xi - xs] = totalLocalRate;
 	}
-	// Update the helium flux
-	previousXeFlux1D = newFlux;
 
 	// Master process
 	if (procId == 0) {
@@ -885,9 +913,6 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				<< totalRadii / totalBubbleConcentration << " " << nXenon1D
 				<< std::endl;
 		outputFile.close();
-
-		// Set the retention in the solver handler for an external program to use
-		solverHandler.setRetention(100.0 * (totalXeConcentration / fluence));
 	}
 
 	// Restore the solutionArray
@@ -3050,6 +3075,18 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 			radii1D.push_back(cluster.getReactionRadius());
 		}
 
+		// Get the da from ts
+		DM da;
+		ierr = TSGetDM(ts, &da);
+		checkPetscError(ierr, "setupPetsc1DMonitor: TSGetDM failed.");
+		// Get the local boundaries
+		PetscInt xm;
+		ierr = DMDAGetCorners(da, NULL, NULL, NULL, &xm, NULL, NULL);
+		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetCorners failed.");
+		// Create the local Xe rate vector on each process
+		solverHandler.createLocalXeRate(xm);
+		for (int i = 0; i < xm; i++) previousXeFlux1D.push_back(0.0);
+
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 
@@ -3146,7 +3183,7 @@ PetscErrorCode reset1DMonitor() {
 	nInterstitial1D = 0.0;
 	previousHeFlux1D = 0.0;
 	nHelium1D = 0.0;
-	previousXeFlux1D = 0.0;
+	previousXeFlux1D.clear();
 	nXenon1D = 0.0;
 	previousDFlux1D = 0.0;
 	nDeuterium1D = 0.0;
