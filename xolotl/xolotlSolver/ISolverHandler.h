@@ -198,8 +198,10 @@ public:
 
 	/**
 	 * Get the value of the local Xe rate.
+	 *
+	 * @return The local vector of rates
 	 */
-	virtual void getLocalXeRate() const = 0;
+	virtual std::vector<std::vector<std::vector<double> > > * getLocalXeRate() = 0;
 
 	/**
 	 * To know if the surface should be able to move.

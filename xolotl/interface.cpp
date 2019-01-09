@@ -151,13 +151,14 @@ void XolotlInterface::solveXolotl(
 	return;
 }
 
-void XolotlInterface::getLocalXeRate(
+std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeRate(
 		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+	std::vector<std::vector<std::vector<double> > > * toReturn;
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
 		// Get the rate at this location
-		solverHandler.getLocalXeRate();
+		toReturn = solverHandler.getLocalXeRate();
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
@@ -169,7 +170,7 @@ void XolotlInterface::getLocalXeRate(
 		std::cerr << "Aborting." << std::endl;
 	}
 
-	return;
+	return toReturn;
 }
 
 void XolotlInterface::finalizeXolotl(

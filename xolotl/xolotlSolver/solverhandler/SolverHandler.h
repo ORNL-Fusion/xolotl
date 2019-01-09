@@ -577,16 +577,9 @@ public:
 	 * Get the value of the local Xe rate.
 	 * \see ISolverHandler.h
 	 */
-	void getLocalXeRate() const override {
-		for (int k = 0; k < localXeRate[0][0].size(); k++) {
-			for (int j = 0; j < localXeRate[0].size(); j++) {
-				for (int i = 0; i < localXeRate.size(); i++) {
-					std::cout << localXeRate[i][j][k] << " ";
-				}
-				std::cout << std::endl;
-			}
-			std::cout << std::endl;
-		}
+	std::vector<std::vector<std::vector<double> > > * getLocalXeRate()
+			override {
+		return &localXeRate;
 	}
 
 	/**

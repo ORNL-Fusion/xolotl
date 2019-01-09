@@ -15,7 +15,17 @@ int main(int argc, char **argv) {
 	interface.solveXolotl(solver);
 
 	// Check the local Xe rate at a few grid points
-	interface.getLocalXeRate(solver);
+	auto localRate = interface.getLocalXeRate(solver);
+
+	for (auto k = 0; k < localRate->at(0)[0].size(); k++) {
+		for (int j = 0; j < localRate->at(0).size(); j++) {
+			for (int i = 0; i < localRate->size(); i++) {
+				std::cout << localRate->at(i)[j][k] << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+	}
 
 	// Finalize the run
 	interface.finalizeXolotl(solver);

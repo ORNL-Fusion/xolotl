@@ -59,8 +59,10 @@ public:
 	 * Get the local Xe rate that needs to be passed
 	 *
 	 * @param solver The pointer to the solver
+	 * @return The local vector of rates
 	 */
-	void getLocalXeRate(std::shared_ptr<xolotlSolver::PetscSolver> solver);
+	std::vector<std::vector<std::vector<double> > > * getLocalXeRate(
+			std::shared_ptr<xolotlSolver::PetscSolver> solver);
 
 	/**
 	 * Finalize the solve
