@@ -85,8 +85,6 @@ void ScatterPlot::render(const std::string& fileName) {
   vtkm::rendering::Camera camera = vtkm::rendering::Camera(vtkm::rendering::Camera::MODE_2D);
   bounds.X = dataSet.GetCoordinateSystem().GetBounds().X;
   dataSet.GetField(plotDataProvider->getDataName()).GetRange(&bounds.Y);
-  std::cerr << "Bounds " << bounds.X << " " << bounds.Y << std::endl;
-  for(int i = 0; i < 8; i++) std::cerr << yVector[i] << std::endl;
   camera.ResetToBounds(bounds, 0, .02, 0);
   camera.SetClippingRange(1.f, 100.f);
   camera.SetViewport(-0.7f, +0.7f, -0.7f, +0.7f);
