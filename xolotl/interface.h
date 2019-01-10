@@ -65,6 +65,21 @@ public:
 			std::shared_ptr<xolotlSolver::PetscSolver> solver);
 
 	/**
+	 * Get the local Xe rate that needs to be passed
+	 *
+	 * @param solver The pointer to the solver
+	 * @param xs, xm The start and width in the X direction on the local MPI process
+	 * @param Mx The total width in the X direction
+	 * @param ys, ym The start and width in the Y direction on the local MPI process
+	 * @param My The total width in the Y direction
+	 * @param zs, zm The start and width in the Z direction on the local MPI process
+	 * @param Mz The total width in the Z direction
+	 */
+	void getLocalCoordinates(std::shared_ptr<xolotlSolver::PetscSolver> solver,
+			int &xs, int &xm, int &Mx, int &ys, int &ym, int &My, int &zs,
+			int &zm, int &Mz);
+
+	/**
 	 * Finalize the solve
 	 *
 	 * @param solver The pointer to the solver

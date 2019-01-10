@@ -173,6 +173,29 @@ std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeRat
 	return toReturn;
 }
 
+void XolotlInterface::getLocalCoordinates(
+		std::shared_ptr<xolotlSolver::PetscSolver> solver, int &xs, int &xm,
+		int &Mx, int &ys, int &ym, int &My, int &zs, int &zm, int &Mz) {
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		// Get the local coordinates
+		solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs,
+				zm, Mz);
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return;
+}
+
 void XolotlInterface::finalizeXolotl(
 		std::shared_ptr<xolotlSolver::PetscSolver> solver, bool isStandalone) {
 	try {

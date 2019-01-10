@@ -204,6 +204,29 @@ public:
 	virtual std::vector<std::vector<std::vector<double> > > * getLocalXeRate() = 0;
 
 	/**
+	 * Set the coordinates covered by the local grid.
+	 *
+	 * @param xs, xm The start and width in the X direction on the local MPI process
+	 * @param ys, ym The start and width in the Y direction on the local MPI process
+	 * @param zs, zm The start and width in the Z direction on the local MPI process
+	 */
+	virtual void setLocalCoordinates(int xs, int xm, int ys = 0, int ym = 0, int zs = 0,
+			int zm = 0) = 0;
+
+	/**
+	 * Get the coordinates covered by the local grid.
+	 *
+	 * @param xs, xm The start and width in the X direction on the local MPI process
+	 * @param Mx The total width in the X direction
+	 * @param ys, ym The start and width in the Y direction on the local MPI process
+	 * @param My The total width in the Y direction
+	 * @param zs, zm The start and width in the Z direction on the local MPI process
+	 * @param Mz The total width in the Z direction
+	 */
+	virtual void getLocalCoordinates(int &xs, int &xm, int &Mx, int &ys,
+			int &ym, int &My, int &zs, int &zm, int &Mz) = 0;
+
+	/**
 	 * To know if the surface should be able to move.
 	 *
 	 * @return True if the surface should be able to move.

@@ -15,11 +15,18 @@ int main(int argc, char **argv) {
 	interface.solveXolotl(solver);
 
 	// Check the local Xe rate at a few grid points
+	int xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+	interface.getLocalCoordinates(solver, xs, xm, Mx, ys, ym, My, zs, zm, Mz);
+
+	std::cout << "The local coordinates are: " << xs << " " << xm << " "
+			<< Mx << "; " << ys << " " << ym << " "
+			<< My << "; " << zs << " " << zm << " "
+			<< Mz << std::endl;
 	auto localRate = interface.getLocalXeRate(solver);
 
-	for (auto k = 0; k < localRate->at(0)[0].size(); k++) {
-		for (int j = 0; j < localRate->at(0).size(); j++) {
-			for (int i = 0; i < localRate->size(); i++) {
+	for (auto k = 0; k < max(zm, 1); k++) {
+		for (int j = 0; j < max(ym, 1); j++) {
+			for (int i = 0; i < max(xm, 1); i++) {
 				std::cout << localRate->at(i)[j][k] << " ";
 			}
 			std::cout << std::endl;

@@ -51,6 +51,24 @@ protected:
 	//! The grid step size in the z direction.
 	double hZ;
 
+	//! The local start of grid points in the X direction.
+	int localXS;
+
+	//! The local width of grid points in the X direction.
+	int localXM;
+
+	//! The local start of grid points in the Y direction.
+	int localYS;
+
+	//! The local width of grid points in the Y direction.
+	int localYM;
+
+	//! The local start of grid points in the Z direction.
+	int localZS;
+
+	//! The local width of grid points in the Z direction.
+	int localZM;
+
 	//! The number of grid points by which the boundary condition should be shifted at this side.
 	int leftOffset, rightOffset, bottomOffset, topOffset, frontOffset,
 			backOffset;
@@ -299,7 +317,8 @@ protected:
 	 */
 	SolverHandler(xolotlCore::IReactionNetwork& _network) :
 			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
-					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
+					0.0), hZ(0.0), localXS(0), localXM(0), localYS(0), localYM(
+					0), localZS(0), localZM(0), leftOffset(1), rightOffset(1), bottomOffset(
 					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
 					0.0), dimension(-1), portion(0.0), useRegularGrid(""), movingSurface(
 					false), bubbleBursting(false), sputteringYield(0.0), fluxHandler(
@@ -580,6 +599,37 @@ public:
 	std::vector<std::vector<std::vector<double> > > * getLocalXeRate()
 			override {
 		return &localXeRate;
+	}
+
+	/**
+	 * Set the coordinates covered by the local grid.
+	 * \see ISolverHandler.h
+	 */
+	void setLocalCoordinates(int xs, int xm, int ys = 0, int ym = 0, int zs = 0,
+			int zm = 0) override {
+		localXS = xs;
+		localXM = xm;
+		localYS = ys;
+		localYM = ym;
+		localZS = zs;
+		localZM = zm;
+	}
+
+	/**
+	 * Get the coordinates covered by the local grid.
+	 * \see ISolverHandler.h
+	 */
+	void getLocalCoordinates(int &xs, int &xm, int &Mx, int &ys, int &ym,
+			int &My, int &zs, int &zm, int &Mz) override {
+		xs = localXS;
+		xm = localXM;
+		Mx = nX;
+		ys = localYS;
+		ym = localYM;
+		My = nY;
+		zs = localZS;
+		zm = localZM;
+		Mz = nZ;
 	}
 
 	/**
