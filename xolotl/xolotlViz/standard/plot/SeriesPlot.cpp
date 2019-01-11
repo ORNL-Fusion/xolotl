@@ -93,9 +93,9 @@ void SeriesPlot::render(const std::string& fileName) {
 
   // Create initial data set
   vtkm::cont::DataSetFieldAdd dsf;
-  vtkm::cont::DataSetBuilderUniform dsb;
+  vtkm::cont::DataSetBuilderRectilinear dsb;
   auto xVector = plotDataProviders->at(0)->getAxis1Vector();
-  vtkm::cont::DataSet dataSet = dsb.Create(xVector.size());
+  vtkm::cont::DataSet dataSet = dsb.Create(xVector);
 
   // Loop on all the data providers to plot the different series
 	for (int i = 0; i < getDataProviderNumber(); i++)
