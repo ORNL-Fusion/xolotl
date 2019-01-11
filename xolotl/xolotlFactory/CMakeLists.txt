@@ -5,7 +5,7 @@ SET(PACKAGE_DESCRIPTION "Xolotl Factory")
 #Set the library name
 SET(LIBRARY_NAME "xolotlFactory")
 
-#Collect all header filenames in this project 
+#Collect all header filenames in this project
 #and glob them in HEADERS
 file(GLOB HEADERS material/*.h vizHandler/*.h temperatureHandler/*.h
 solverHandler/*.h reactionHandler/*.h)
@@ -44,14 +44,18 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${Boost_INCLUDE_DIR}
                     ${PETSC_INCLUDES})
 
-# Find EAVL
-FIND_PACKAGE(EAVL)
-# Find MESA
-FIND_PACKAGE(MESA)
-# If they are present
-if(EAVL_FOUND AND MESA_FOUND)
+
+# Find VTKm
+if(VTKM_DIR)
+    include(${CMAKE_SOURCE_DIR}/cmake-modules/SetupVTKm.cmake)
+else()
+    message(STATUS "Visualization support needs explicit VTKm_DIR.")
+endif()
+
+if(VTKM_FOUND)
     include_directories(${CMAKE_SOURCE_DIR}/xolotlViz/standard)
-endif(EAVL_FOUND AND MESA_FOUND)
+endif(VTKM_FOUND)
+
 
 #Add a library to hold the factory code
 add_library(${LIBRARY_NAME} STATIC ${SRC})
