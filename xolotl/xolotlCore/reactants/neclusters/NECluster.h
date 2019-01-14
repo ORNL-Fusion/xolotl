@@ -53,6 +53,15 @@ protected:
 	 */
 	const std::set<int> & getDissociationConnectivitySet() const;
 
+	/**
+	 * This operation recomputes the diffusion coefficient. It is called
+	 * whenever the diffusion factor, migration energy or temperature change.
+	 *
+	 * @param temp the temperature
+	 * @param i The position on the grid
+	 */
+	void recomputeDiffusionCoefficient(double temp, int i) override;
+
 public:
 
 	/**

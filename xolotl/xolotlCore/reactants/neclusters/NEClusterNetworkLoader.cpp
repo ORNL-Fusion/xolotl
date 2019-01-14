@@ -180,11 +180,12 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 			new NEClusterReactionNetwork(handlerRegistry));
 	std::vector<std::reference_wrapper<Reactant> > reactants;
 
-	// The diffusion factor for a single xenon in nm^2/s
-	double xeOneDiffusion = 7.6e8;
-
+	// The diffusion factor for a single xenon in nm^2/s, 1.0 is used
+	// to trigger the computation but the exact value and formula are
+	// defined in NECluster
+	double xeOneDiffusion = 1.0;
 	// The migration energy for a single xenon in eV
-	double xeOneMigration = 3.04;
+	double xeOneMigration = 0.0;
 
 	/**
 	 * The set of xenon formation energies up to Xe_29 indexed by size. That is

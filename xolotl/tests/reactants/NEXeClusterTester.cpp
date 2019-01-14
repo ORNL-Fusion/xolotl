@@ -55,6 +55,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Local Declarations
 	auto network = getSimpleNEReactionNetwork();
+	// Set a fission rate for the diffusion to work
+	network->setFissionRate(8.0e-9);
 	// Add a grid point for the rates
 	network->addGridPoints(1);
 
@@ -79,7 +81,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	BOOST_TEST_MESSAGE(
 			"NEXeClusterTester Message: \n" << "Total Flux is " << flux << "\n" << "   -Production Flux: " << cluster->getProductionFlux(0) << "\n" << "   -Combination Flux: " << cluster->getCombinationFlux(0) << "\n" << "   -Dissociation Flux: " << cluster->getDissociationFlux(0) << "\n" << "   -Emission Flux: " << cluster->getEmissionFlux(0) << "\n");
 
-	BOOST_REQUIRE_CLOSE(971367265495.44824, flux, 0.1);
+	BOOST_REQUIRE_CLOSE(0.94579448, flux, 0.0001);
 
 	return;
 }
@@ -90,10 +92,11 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { -196821207586.07611, 2054353911079.95,
-			573123759757.52136, 0.0 };
+	double knownPartials[] = { -0.193019, 2.01467, 0.562053, 0.0 };
 	// Get the simple reaction network
 	auto network = getSimpleNEReactionNetwork(3);
+	// Set a fission rate for the diffusion to work
+	network->setFissionRate(8.0e-9);
 	// Add a grid point for the rates
 	network->addGridPoints(1);
 
@@ -114,7 +117,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Check all the values
 	for (unsigned int i = 0; i < partials.size(); i++) {
-		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.1);
+		BOOST_REQUIRE_CLOSE(partials[i], knownPartials[i], 0.001);
 	}
 
 	return;

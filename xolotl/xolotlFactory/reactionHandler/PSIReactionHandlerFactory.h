@@ -4,7 +4,6 @@
 #include <memory>
 #include "IReactionHandlerFactory.h"
 #include <HDF5NetworkLoader.h>
-#include <PSIClusterReactionNetwork.h>
 
 namespace xolotlFactory {
 

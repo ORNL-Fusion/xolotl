@@ -349,6 +349,22 @@ public:
 	virtual Array<int, 5> getPhaseSpaceList() const = 0;
 
 	/**
+	 * This operation sets the fission rate, needed to compute the diffusion coefficient
+	 * in NE.
+	 *
+	 * @param rate The fission rate
+	 */
+	virtual void setFissionRate(double rate) = 0;
+
+	/**
+	 * This operation returns the fission rate, needed to compute the diffusion coefficient
+	 * in NE.
+	 *
+	 * @return The fission rate
+	 */
+	virtual double getFissionRate() const = 0;
+
+	/**
 	 * Dump a representation of the network to the given output stream.
 	 *
 	 * @param os Output stream on which to write network description.
