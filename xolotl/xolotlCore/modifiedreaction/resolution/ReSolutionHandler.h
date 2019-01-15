@@ -89,7 +89,8 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	virtual void initialize(const IReactionNetwork& network);
+	virtual void initialize(const IReactionNetwork& network,
+			double electronicStoppingPower);
 
 	/**
 	 * This method update the rate for the re-solution if the fission rate

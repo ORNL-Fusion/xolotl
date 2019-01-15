@@ -56,6 +56,9 @@ protected:
 	//! The initial vacancy concentration.
 	double initialVConc;
 
+	//! The electronic stopping power for re-solution
+	double electronicStoppingPower;
+
 	//! The original flux handler created.
 	xolotlCore::IFluxHandler *fluxHandler;
 
@@ -296,11 +299,12 @@ protected:
 			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
 					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
 					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
-					0.0), dimension(-1), portion(0.0), useRegularGrid(""), movingSurface(
-					false), bubbleBursting(false), sputteringYield(0.0), fluxHandler(
-					nullptr), temperatureHandler(nullptr), diffusionHandler(
-					nullptr), mutationHandler(nullptr), resolutionHandler(
-					nullptr), tauBursting(10.0), rngSeed(0) {
+					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
+					0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
+					false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
+					nullptr), diffusionHandler(nullptr), mutationHandler(
+					nullptr), resolutionHandler(nullptr), tauBursting(10.0), rngSeed(
+					0) {
 	}
 
 public:
@@ -395,6 +399,9 @@ public:
 		// Set the initial vacancy concentration
 		initialVConc = options.getInitialVConcentration();
 
+		// Set the electronic stopping power
+		electronicStoppingPower = options.getZeta();
+
 		// Set the number of dimension
 		dimension = options.getDimensionNumber();
 
@@ -408,9 +415,12 @@ public:
 		tauBursting = options.getBurstingDepth();
 
 		// Look at if the user wants to use a regular grid in the x direction
-		if (options.useRegularXGrid()) useRegularGrid = "regular";
-		else if (options.getMaterial() == "Fuel") useRegularGrid = "NE";
-		else useRegularGrid = "PSI";
+		if (options.useRegularXGrid())
+			useRegularGrid = "regular";
+		else if (options.getMaterial() == "Fuel")
+			useRegularGrid = "NE";
+		else
+			useRegularGrid = "PSI";
 
 		// Set the boundary conditions (= 1: free surface; = 0: mirror or periodic)
 		leftOffset = options.getLeftBoundary();

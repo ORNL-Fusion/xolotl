@@ -24,7 +24,8 @@
 #include <GridParamOptionHandler.h>
 #include <BoundaryConditionsOptionHandler.h>
 #include <BurstingDepthOptionHandler.h>
-#include "RNGOptionHandler.h"
+#include <RNGOptionHandler.h>
+#include <EStoppingPowerOptionHandler.h>
 #include "Options.h"
 
 namespace xolotlCore {
@@ -32,8 +33,8 @@ namespace xolotlCore {
 Options::Options() :
 		shouldRunFlag(true), exitCode(EXIT_SUCCESS), petscArgc(0), petscArgv(
 		NULL), networkFilename(""), constTempFlag(false), constTemperature(
-				1000.0), tempProfileFlag(false), tempProfileFilename(
-				""), heatFlag(false), bulkTemperature(0.0), fluxFlag(false), fluxAmplitude(
+				1000.0), tempProfileFlag(false), tempProfileFilename(""), heatFlag(
+				false), bulkTemperature(0.0), fluxFlag(false), fluxAmplitude(
 				0.0), fluxProfileFlag(false), perfRegistryType(
 				xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
 				false), materialName(""), initialVConcentration(0.0), voidPortion(
@@ -44,7 +45,7 @@ Options::Options() :
 				10), nY(0), nZ(0), xStepSize(0.5), yStepSize(0.0), zStepSize(
 				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
 				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), rngUseSeed(
-				false), rngSeed(0), rngPrintSeed(false) {
+				false), rngSeed(0), rngPrintSeed(false), zeta(0.73) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();
@@ -92,6 +93,8 @@ Options::Options() :
 	auto burstingHandler = new BurstingDepthOptionHandler();
 	// Create handler for random number generator options.
 	auto rngHandler = new RNGOptionHandler();
+	// Create handler for the electronic stopping power options.
+	auto espHandler = new EStoppingPowerOptionHandler();
 
 	// Add our notion of which options we support.
 	optionsMap[networkHandler->key] = networkHandler;
@@ -117,6 +120,7 @@ Options::Options() :
 	optionsMap[boundaryHandler->key] = boundaryHandler;
 	optionsMap[burstingHandler->key] = burstingHandler;
 	optionsMap[rngHandler->key] = rngHandler;
+	optionsMap[espHandler->key] = espHandler;
 }
 
 Options::~Options(void) {

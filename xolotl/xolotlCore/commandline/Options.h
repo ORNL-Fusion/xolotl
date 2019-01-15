@@ -115,6 +115,11 @@ protected:
 	double initialVConcentration;
 
 	/**
+	 * Value of the electronic stopping power.
+	 */
+	double zeta;
+
+	/**
 	 * Value of the portion of the void on the grid at the start of the simulation.
 	 */
 	double voidPortion;
@@ -583,6 +588,22 @@ public:
 	 */
 	void setInitialVConcentration(double conc) override {
 		initialVConcentration = conc;
+	}
+
+	/**
+	 * Obtain the value of the electronic stopping power.
+	 * \see IOptions.h
+	 */
+	double getZeta() const override {
+		return zeta;
+	}
+
+	/**
+	 * Set the value of the electronic stopping power.
+	 * \see IOptions.h
+	 */
+	void setZeta(double z) override {
+		zeta = z;
 	}
 
 	/**
