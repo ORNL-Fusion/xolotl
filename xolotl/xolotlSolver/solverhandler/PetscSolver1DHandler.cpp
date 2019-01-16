@@ -348,7 +348,8 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				break;
 			}
 		}
-		if (skip) continue;
+		if (skip)
+			continue;
 
 		// Update the network if the temperature changed
 		// left
@@ -533,7 +534,8 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				break;
 			}
 		}
-		if (skip) continue;
+		if (skip)
+			continue;
 
 		// Update the network if the temperature changed
 		// left
@@ -745,7 +747,8 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				break;
 			}
 		}
-		if (skip) continue;
+		if (skip)
+			continue;
 
 		// Set the grid fraction
 		gridPosition[0] = (grid[xi + 1] - grid[surfacePosition + 1])
