@@ -11,6 +11,10 @@ int main(int argc, char **argv) {
 
 	// Initialize it
 	auto solver = interface.initializeXolotl(argc, argv);
+
+//	// Add a free GB
+//	interface.setGBLocation(solver, 73);
+
 	// Run the solve
 	interface.solveXolotl(solver);
 
@@ -22,12 +26,12 @@ int main(int argc, char **argv) {
 			<< Mx << "; " << ys << " " << ym << " "
 			<< My << "; " << zs << " " << zm << " "
 			<< Mz << std::endl;
-	auto localRate = interface.getLocalXeRate(solver);
+	auto localConc = interface.getLocalXeConc(solver);
 
 	for (auto k = 0; k < max(zm, 1); k++) {
 		for (int j = 0; j < max(ym, 1); j++) {
 			for (int i = 0; i < max(xm, 1); i++) {
-				std::cout << localRate->at(i)[j][k] << " ";
+				std::cout << localConc->at(i)[j][k] << " ";
 			}
 			std::cout << std::endl;
 		}

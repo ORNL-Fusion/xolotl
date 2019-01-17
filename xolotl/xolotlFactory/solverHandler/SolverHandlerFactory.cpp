@@ -47,6 +47,10 @@ bool initializeDimension(const xolotlCore::Options &options,
 	theSolverHandler = std::unique_ptr<xolotlSolver::ISolverHandler>(
 			rawSolverHandler);
 
+	// Take care of the free GB option for NE
+	if (options.getMaterial() == "Fuel")
+		rawSolverHandler->setGBFileName(options.getGbString());
+
 	return ret;
 }
 

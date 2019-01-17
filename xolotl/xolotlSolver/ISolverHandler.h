@@ -204,6 +204,32 @@ public:
 	virtual std::vector<std::vector<std::vector<double> > > * getLocalXeRate() = 0;
 
 	/**
+	 * Create the local Xe conc vector.
+	 *
+	 * @param a The size in the x direction
+	 * @param b The size in the y direction
+	 * @param c The size in the y direction
+	 */
+	virtual void createLocalXeConc(int a, int b = 1, int c = 1) = 0;
+
+	/**
+	 * Set the latest value of the local Xe conc.
+	 *
+	 * @param rate The latest value of conc
+	 * @param i The x coordinate of the location
+	 * @param j The y coordinate of the location
+	 * @param z The z coordinate of the location
+	 */
+	virtual void setLocalXeConc(double conc, int i, int j = 0, int k = 0) = 0;
+
+	/**
+	 * Get the value of the local Xe conc.
+	 *
+	 * @return The local vector of rates
+	 */
+	virtual std::vector<std::vector<std::vector<double> > > * getLocalXeConc() = 0;
+
+	/**
 	 * Set the coordinates covered by the local grid.
 	 *
 	 * @param xs, xm The start and width in the X direction on the local MPI process
@@ -305,11 +331,25 @@ public:
 	virtual RandomNumberGenerator<int, unsigned int>& getRNG(void) const = 0;
 
 	/**
+	 * Set the file name containing the location of GB.
+	 *
+	 * @param name The filename
+	 */
+	virtual void setGBFileName(std::string name) = 0;
+
+	/**
 	 * Get the vector containing the location of GB.
 	 *
 	 * @return The GB vector
 	 */
 	virtual std::vector<std::tuple<int, int, int> > getGBVector() const = 0;
+
+	/**
+	 * Set the location of one GB grid point.
+	 *
+	 * @param i, j, k The coordinate of the GB
+	 */
+	virtual void setGBLocation(int i, int j = 0, int k = 0) = 0;
 
 };
 //end class ISolverHandler

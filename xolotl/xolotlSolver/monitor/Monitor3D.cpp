@@ -461,6 +461,11 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 							* cluster.getReactionRadius()
 							* (grid[xi + 1] - grid[xi]) * hy * hz;
 				}
+
+				// Set the total conc in the vector we keep
+				solverHandler.setLocalXeConc(
+						xeConcentration / ((grid[xi + 1] - grid[xi]) * hy * hz),
+						xi - xs, yj - ys, zk - zs);
 			}
 		}
 	}
@@ -1973,8 +1978,9 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 		PetscInt xm, ym, zm;
 		ierr = DMDAGetCorners(da, NULL, NULL, NULL, &xm, &ym, &zm);
 		checkPetscError(ierr, "setupPetsc3DMonitor: DMDAGetCorners failed.");
-		// Create the local Xe rate vector on each process
+		// Create the local vectors on each process
 		solverHandler.createLocalXeRate(xm, ym, zm);
+		solverHandler.createLocalXeConc(xm, ym, zm);
 		for (int i = 0; i < xm; i++) {
 			std::vector<std::vector<double> > tempTempVector;
 			for (int j = 0; j < ym; j++) {

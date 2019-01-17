@@ -783,6 +783,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 			radii += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi]);
 		}
+
+		// Set the total conc in the vector we keep
+		solverHandler.setLocalXeConc(xeConcentration / (grid[xi + 1] - grid[xi]), xi - xs);
 	}
 
 	// Get the current process ID
@@ -3083,8 +3086,9 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 		PetscInt xm;
 		ierr = DMDAGetCorners(da, NULL, NULL, NULL, &xm, NULL, NULL);
 		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetCorners failed.");
-		// Create the local Xe rate vector on each process
+		// Create the local vectors on each process
 		solverHandler.createLocalXeRate(xm);
+		solverHandler.createLocalXeConc(xm);
 		for (int i = 0; i < xm; i++) previousXeFlux1D.push_back(0.0);
 
 		// Get the previous time if concentrations were stored and initialize the fluence

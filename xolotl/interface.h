@@ -65,6 +65,15 @@ public:
 			std::shared_ptr<xolotlSolver::PetscSolver> solver);
 
 	/**
+	 * Get the local Xe conc
+	 *
+	 * @param solver The pointer to the solver
+	 * @return The local vector of concs
+	 */
+	std::vector<std::vector<std::vector<double> > > * getLocalXeConc(
+			std::shared_ptr<xolotlSolver::PetscSolver> solver);
+
+	/**
 	 * Get the local Xe rate that needs to be passed
 	 *
 	 * @param solver The pointer to the solver
@@ -78,6 +87,15 @@ public:
 	void getLocalCoordinates(std::shared_ptr<xolotlSolver::PetscSolver> solver,
 			int &xs, int &xm, int &Mx, int &ys, int &ym, int &My, int &zs,
 			int &zm, int &Mz);
+
+	/**
+	 * Set the location of one GB grid point.
+	 *
+	 * @param solver The pointer to the solver
+	 * @param i, j, k The coordinate of the GB
+	 */
+	void setGBLocation(std::shared_ptr<xolotlSolver::PetscSolver> solver, int i,
+			int j = 0, int k = 0);
 
 	/**
 	 * Finalize the solve

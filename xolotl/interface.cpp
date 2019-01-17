@@ -173,6 +173,28 @@ std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeRat
 	return toReturn;
 }
 
+std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeConc(
+		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+	std::vector<std::vector<std::vector<double> > > * toReturn;
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		// Get the rate at this location
+		toReturn = solverHandler.getLocalXeConc();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return toReturn;
+}
+
 void XolotlInterface::getLocalCoordinates(
 		std::shared_ptr<xolotlSolver::PetscSolver> solver, int &xs, int &xm,
 		int &Mx, int &ys, int &ym, int &My, int &zs, int &zm, int &Mz) {
@@ -180,8 +202,7 @@ void XolotlInterface::getLocalCoordinates(
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
 		// Get the local coordinates
-		solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs,
-				zm, Mz);
+		solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
@@ -194,6 +215,29 @@ void XolotlInterface::getLocalCoordinates(
 	}
 
 	return;
+}
+
+void XolotlInterface::setGBLocation(
+		std::shared_ptr<xolotlSolver::PetscSolver> solver, int i, int j,
+		int k) {
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		// Set the coordinate of the GB
+		solverHandler.setGBLocation(i, j, k);
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return;
+
 }
 
 void XolotlInterface::finalizeXolotl(

@@ -27,6 +27,9 @@ protected:
 	//! The name of the network file
 	std::string networkName;
 
+	//! The name of the free GB file
+	std::string gbFileName;
+
 	//! The original network created from the network loader.
 	xolotlCore::IReactionNetwork& network;
 
@@ -78,6 +81,9 @@ protected:
 
 	//! The vector of local Xe rate.
 	std::vector<std::vector<std::vector<double> > > localXeRate;
+
+	//! The vector of local Xe conc.
+	std::vector<std::vector<std::vector<double> > > localXeConc;
 
 	//! The electronic stopping power for re-solution
 	double electronicStoppingPower;
@@ -319,12 +325,12 @@ protected:
 	 * @param _network The reaction network to use.
 	 */
 	SolverHandler(xolotlCore::IReactionNetwork& _network) :
-			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
-					0.0), hZ(0.0), localXS(0), localXM(0), localYS(0), localYM(
-					0), localZS(0), localZM(0), leftOffset(1), rightOffset(1), bottomOffset(
-					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
-					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
-					0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
+			network(_network), networkName(""), gbFileName(""), nX(0), nY(0), nZ(
+					0), hX(0.0), hY(0.0), hZ(0.0), localXS(0), localXM(0), localYS(
+					0), localYM(0), localZS(0), localZM(0), leftOffset(1), rightOffset(
+					1), bottomOffset(1), topOffset(1), frontOffset(1), backOffset(
+					1), initialVConc(0.0), electronicStoppingPower(0.0), dimension(
+					-1), portion(0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
 					false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
 					nullptr), diffusionHandler(nullptr), mutationHandler(
 					nullptr), resolutionHandler(nullptr), tauBursting(10.0), rngSeed(
@@ -486,7 +492,7 @@ public:
 
 		// Read the parameter file
 		std::ifstream paramFile;
-		paramFile.open("freeGB.dat");
+		paramFile.open(gbFileName);
 		if (paramFile.good()) {
 			// Build an input stream from the string
 			xolotlCore::TokenizedLineReader<int> reader;
@@ -606,6 +612,43 @@ public:
 	std::vector<std::vector<std::vector<double> > > * getLocalXeRate()
 			override {
 		return &localXeRate;
+	}
+
+	/**
+	 * Create the local Xe conc vector.
+	 * \see ISolverHandler.h
+	 */
+	void createLocalXeConc(int a, int b = 1, int c = 1) override {
+		localXeConc.clear();
+		// Create the vector of vectors and fill it with 0.0
+		for (int i = 0; i < a; i++) {
+			std::vector<std::vector<double> > tempTempVector;
+			for (int j = 0; j < b; j++) {
+				std::vector<double> tempVector;
+				for (int k = 0; k < c; k++) {
+					tempVector.push_back(0.0);
+				}
+				tempTempVector.push_back(tempVector);
+			}
+			localXeConc.push_back(tempTempVector);
+		}
+	}
+
+	/**
+	 * Set the latest value of the local Xe conc.
+	 * \see ISolverHandler.h
+	 */
+	void setLocalXeConc(double conc, int i, int j = 0, int k = 0) override {
+		localXeConc[i][j][k] = conc;
+	}
+
+	/**
+	 * Get the value of the local Xe conc.
+	 * \see ISolverHandler.h
+	 */
+	std::vector<std::vector<std::vector<double> > > * getLocalXeConc()
+			override {
+		return &localXeConc;
 	}
 
 	/**
@@ -747,12 +790,32 @@ public:
 	}
 
 	/**
+	 * Set the file name containing the location of GB.
+	 *
+	 * @param name The filename
+	 */
+	void setGBFileName(std::string name) override {
+		gbFileName = name;
+	}
+
+	/**
 	 * Get the vector containing the location of GB.
 	 *
 	 * @return The GB vector
 	 */
 	std::vector<std::tuple<int, int, int> > getGBVector() const override {
 		return gbVector;
+	}
+
+	/**
+	 * Set the location of one GB grid point.
+	 *
+	 * @param i, j, k The coordinate of the GB
+	 */
+	void setGBLocation(int i, int j = 0, int k = 0) override {
+		// Add the coordinates to the GB vector
+		gbVector.push_back(std::make_tuple(i, j, k));
+
 	}
 }
 ;
