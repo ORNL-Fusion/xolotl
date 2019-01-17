@@ -28,43 +28,23 @@ BOOST_AUTO_TEST_SUITE (NECluster_testSuite)
 BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 	// Get the simple reaction network
 	auto network = getSimpleNEReactionNetwork(0);
+	// Set a fission rate for the diffusion to work
+	network->setFissionRate(8.0e-9);
 	// Create a cluster
 	NECluster cluster(*(network.get()), registry);
 	// Add a grid point for the temperature
 	cluster.addGridPoints(1);
 
-	// Check E_m = 0.0
+	// Check 3 different temperature for each regime
 	cluster.setMigrationEnergy(0.0);
 	cluster.setDiffusionFactor(1.0);
-	cluster.setTemperature(1.0, 0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), exp(0.0), 0.00001);
-	BOOST_REQUIRE_CLOSE(1.0, cluster.getTemperature(0), 0.0001);
-
-	// Make sure the diffusion coefficient is 0.0 if E_m is infinite
-	cluster.setMigrationEnergy(numeric_limits<double>::infinity());
-	cluster.setDiffusionFactor(1.0);
-	cluster.setTemperature(1.0, 0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 0.0, 0.000001);
-
-	// Make sure the diffusion coefficient is zero if the diffusion factor is zero
-	cluster.setMigrationEnergy(5.0);
-	cluster.setDiffusionFactor(0.0);
-	cluster.setTemperature(1.0, 0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 0.0, 0.000001);
-
-	// Make sure the diffusion coefficient is equal to the diffusion factor
-	// if the temperature is infinite
-	cluster.setMigrationEnergy(5.0);
-	cluster.setDiffusionFactor(1.0);
-	cluster.setTemperature(numeric_limits<double>::infinity(), 0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 1.0, 0.000001);
-
-	// Throw something random in there to be certain
-	cluster.setMigrationEnergy(0.013);
-	cluster.setDiffusionFactor(1.08E10);
+	cluster.setTemperature(1200.0, 0);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 0.0064000, 0.00001);
+	BOOST_REQUIRE_CLOSE(1200.0, cluster.getTemperature(0), 0.0001);
 	cluster.setTemperature(1500.0, 0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 9766651101.800613,
-			0.0000001);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 0.1472007656, 0.00001);
+	cluster.setTemperature(1800.0, 0);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 2.339846465, 0.00001);
 
 	return;
 }

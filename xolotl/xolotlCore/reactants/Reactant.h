@@ -173,7 +173,7 @@ protected:
 	 * @param temp the temperature
 	 * @param i The position on the grid
 	 */
-	void recomputeDiffusionCoefficient(double temp, int i);
+	virtual void recomputeDiffusionCoefficient(double temp, int i);
 
 public:
 

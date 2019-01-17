@@ -102,7 +102,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	// Initialize the re-solution handler here
 	// because it adds connectivity
-	resolutionHandler->initialize(network);
+	resolutionHandler->initialize(network, electronicStoppingPower);
 
 	// Get the diagonal fill
 	network.getDiagonalFill(dfill);

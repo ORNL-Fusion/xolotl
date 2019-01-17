@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// The vector of partial derivatives to compare with
 	double knownPartials[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4.12253e-40, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -7.268705e-36, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -180,6 +180,8 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 
 	// Generate the network from the options
 	auto network = loader.generate(opts);
+	// Set a fission rate for the diffusion to work
+	network->setFissionRate(8.0e-9);
 	// Add a grid point for the rates
 	network->addGridPoints(1);
 

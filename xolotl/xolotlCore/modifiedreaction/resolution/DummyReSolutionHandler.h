@@ -35,7 +35,8 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	void initialize(const IReactionNetwork& network) {
+	void initialize(const IReactionNetwork& network,
+			double electronicStoppingPower) {
 		return;
 	}
 

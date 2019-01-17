@@ -24,7 +24,8 @@
 #include <GridParamOptionHandler.h>
 #include <BoundaryConditionsOptionHandler.h>
 #include <BurstingDepthOptionHandler.h>
-#include "RNGOptionHandler.h"
+#include <RNGOptionHandler.h>
+#include <EStoppingPowerOptionHandler.h>
 #include "Options.h"
 
 namespace xolotlCore {
@@ -43,7 +44,7 @@ Options::Options() :
 				10), nY(0), nZ(0), xStepSize(0.5), yStepSize(0.0), zStepSize(
 				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
 				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), rngUseSeed(
-				false), rngSeed(0), rngPrintSeed(false) {
+				false), rngSeed(0), rngPrintSeed(false), zeta(0.73) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();
@@ -91,6 +92,8 @@ Options::Options() :
 	auto burstingHandler = new BurstingDepthOptionHandler();
 	// Create handler for random number generator options.
 	auto rngHandler = new RNGOptionHandler();
+	// Create handler for the electronic stopping power options.
+	auto espHandler = new EStoppingPowerOptionHandler();
 
 	// Add our notion of which options we support.
 	optionsMap[networkHandler->key] = networkHandler;
@@ -116,6 +119,7 @@ Options::Options() :
 	optionsMap[boundaryHandler->key] = boundaryHandler;
 	optionsMap[burstingHandler->key] = burstingHandler;
 	optionsMap[rngHandler->key] = rngHandler;
+	optionsMap[espHandler->key] = espHandler;
 }
 
 Options::~Options(void) {

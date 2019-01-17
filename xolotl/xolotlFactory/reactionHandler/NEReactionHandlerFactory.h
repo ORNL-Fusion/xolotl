@@ -4,7 +4,6 @@
 #include <memory>
 #include "IReactionHandlerFactory.h"
 #include <NEClusterNetworkLoader.h>
-#include <NEClusterReactionNetwork.h>
 #include <MPIUtils.h>
 
 namespace xolotlFactory {
@@ -73,6 +72,8 @@ public:
 					<< "Master loaded network of size "
 					<< theNetworkHandler->size() << "." << std::endl;
 		}
+		// Set the fission rate in the network
+		theNetworkHandler->setFissionRate(options.getFluxAmplitude());
 	}
 
 	/**

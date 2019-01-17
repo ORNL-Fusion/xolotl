@@ -7,6 +7,34 @@
 
 using namespace xolotlCore;
 
+void NECluster::recomputeDiffusionCoefficient(double temp, int i) {
+	// Return zero if the diffusion factor is zero.
+	if (xolotlCore::equal(diffusionFactor, 0.0)) return;
+
+	// Here the formula depends on the temperature
+	if (temp > 1650) {
+		// Intrinsic diffusion
+		double kernel = -3.04 / (xolotlCore::kBoltzmann * temp);
+		diffusionCoefficient[i] = 7.6e8 * exp(kernel); // nm2/s
+	}
+	else {
+		// We need the fission rate now
+		double fissionRate = network.getFissionRate() * 1.0e27; // #/m3/s
+
+		if (temp < 1381) {
+			// Athermal diffusion
+			diffusionCoefficient[i] = (8e-40 * fissionRate) * 1.0e18; // nm2/s
+		}
+		else {
+			// Radiation-enhanced diffusion
+			double kernel = -1.2 / (xolotlCore::kBoltzmann * temp);
+			diffusionCoefficient[i] = (5.6e-25 * sqrt(fissionRate) * exp(kernel)) * 1.0e18; // nm2/s
+		}
+	}
+
+	return;
+}
+
 void NECluster::resultFrom(ProductionReaction& reaction, int[4], int[4]) {
 
 	// Add a cluster pair for given reaction 

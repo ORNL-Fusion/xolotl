@@ -627,6 +627,26 @@ public:
 	}
 
 	/**
+	 * This operation sets the fission rate, needed to compute the diffusion coefficient
+	 * in NE.
+	 *
+	 * @param rate The fission rate
+	 */
+	virtual void setFissionRate(double rate) override {
+		return;
+	}
+
+	/**
+	 * This operation returns the fission rate, needed to compute the diffusion coefficient
+	 * in NE.
+	 *
+	 * @return The fission rate
+	 */
+	virtual double getFissionRate() const override {
+		return 0.0;
+	}
+
+	/**
 	 * Remove the given reactants from the network.
 	 *
 	 * @param reactants The reactants that should be removed.

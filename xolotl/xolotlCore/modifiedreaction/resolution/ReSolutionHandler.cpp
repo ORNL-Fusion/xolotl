@@ -7,7 +7,8 @@
 
 namespace xolotlCore {
 
-void ReSolutionHandler::initialize(const IReactionNetwork& network) {
+void ReSolutionHandler::initialize(const IReactionNetwork& network,
+		double electronicStoppingPower) {
 	// Get the single xenon which connects to every cluster
 	auto singleXenon = network.get(Species::Xe, 1);
 
@@ -19,10 +20,32 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network) {
 		return;
 	}
 
+	// Set the fit variables depending on the electronic stopping power
+	double y0 = 0.0, a1 = 0.0, b1 = 0.0, b2 = 0.0, c = 0.0;
+	if (electronicStoppingPower > 0.87) {
+		y0 = 11.0851, a1 = 1.5052, b1 = 0.0362, b2 = 0.0203, c = 3.4123;
+	} else if (electronicStoppingPower > 0.82) {
+		y0 = 10.6297, a1 = 1.3479, b1 = 0.0438, b2 = 0.0241, c = 4.2214;
+	} else if (electronicStoppingPower > 0.77) {
+		y0 = 10.1521, a1 = 1.1986, b1 = 0.0546, b2 = 0.0299, c = 5.4612;
+	} else if (electronicStoppingPower > 0.71) {
+		y0 = 9.1816, a1 = 0.949, b1 = 0.0703, b2 = 0.0371, c = 7.982;
+	} else if (electronicStoppingPower > 0.67) {
+		y0 = 8.6745, a1 = 0.8401, b1 = 0.0792, b2 = 0.0407, c = 9.6585;
+	} else if (electronicStoppingPower > 0.62) {
+		y0 = 7.6984, a1 = 0.6721, b1 = 0.1028, b2 = 0.0526, c = 14.272;
+	} else if (electronicStoppingPower > 0.57) {
+		y0 = 6.3925, a1 = 0.5025, b1 = 0.1411, b2 = 0.0727, c = 23.1967;
+	} else if (electronicStoppingPower > 0.52) {
+		y0 = 4.6175, a1 = 0.3433, b1 = 0.2284, b2 = 0.1276, c = 45.6624;
+	} else {
+		y0 = 2.3061, a1 = 0.2786, b1 = 1.1008, b2 = 1.605, c = 150.6689;
+	}
+
 	// Loop on the clusters
 	auto allClusters = network.getAll();
 	std::for_each(allClusters.begin(), allClusters.end(),
-			[&network,this,&singleXenon](IReactant& cluster) {
+			[&network,this,&singleXenon,&y0,&a1,&b1,&b2,&c](IReactant& cluster) {
 				// Get its size
 				auto size = cluster.getSize();
 				// The re-soluted size is always 1
@@ -77,9 +100,9 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network) {
 								// Compute the fraction rate
 								auto radius = cluster.getReactionRadius();
 								auto size = cluster.getSize();
-								double fractionRate = (0.949 * exp(-0.0703 * radius)
-										+ (8.2326) / (1.0 + 7.982 * pow(radius, 2.0))
-										* exp(-0.0371 * pow(radius, 2.0))) * 1.0e-4
+								double fractionRate = (a1 * exp(-b1 * radius)
+										+ (y0 - a1) / (1.0 + c * pow(radius, 2.0))
+										* exp(-b2 * pow(radius, 2.0))) * 1.0e-4
 								* (double) size;
 								// Add the size to the vector
 								sizeVec.emplace_back(&cluster, previousSmaller, fractionRate, coefs);
@@ -117,9 +140,9 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network) {
 							// Compute the fraction rate
 							auto radius = cluster.getReactionRadius();
 							auto size = cluster.getSize();
-							double fractionRate = (0.949 * exp(-0.0703 * radius)
-									+ (8.2326) / (1.0 + 7.982 * pow(radius, 2.0))
-									* exp(-0.0371 * pow(radius, 2.0))) * 1.0e-4
+							double fractionRate = (a1 * exp(-b1 * radius)
+									+ (y0 - a1) / (1.0 + c * pow(radius, 2.0))
+									* exp(-b2 * pow(radius, 2.0))) * 1.0e-4
 							* (double) size;
 							// Add the size to the vector
 							sizeVec.emplace_back(&cluster, previousSmaller, fractionRate, coefs);
@@ -138,9 +161,9 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network) {
 						// Compute the fraction rate
 						auto radius = cluster.getReactionRadius();
 						auto size = cluster.getSize();
-						double fractionRate = (0.949 * exp(-0.0703 * radius)
-								+ (8.2326) / (1.0 + 7.982 * pow(radius, 2.0))
-								* exp(-0.0371 * pow(radius, 2.0))) * 1.0e-4
+						double fractionRate = (a1 * exp(-b1 * radius)
+								+ (y0 - a1) / (1.0 + c * pow(radius, 2.0))
+								* exp(-b2 * pow(radius, 2.0))) * 1.0e-4
 						* (double) size;
 						// Add the size to the vector
 						sizeVec.emplace_back(&cluster, smallerCluster, fractionRate, coefs);

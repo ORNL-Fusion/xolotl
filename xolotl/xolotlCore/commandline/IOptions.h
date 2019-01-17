@@ -310,6 +310,20 @@ public:
 	virtual void setInitialVConcentration(double conc) = 0;
 
 	/**
+	 * Obtain the value of the electronic stopping power.
+	 *
+	 * @return Zeta
+	 */
+	virtual double getZeta() const = 0;
+
+	/**
+	 * Set the value of the electronic stopping power.
+	 *
+	 * @param zeta The value for the electronic stopping power
+	 */
+	virtual void setZeta(double zeta) = 0;
+
+	/**
 	 * Obtain the number of dimensions for the simulation.
 	 *
 	 * @return The number of dimensions

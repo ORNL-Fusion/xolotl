@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(checkDummyReSolution) {
 
 
 	// Initialize it
-	reSolutionHandler.initialize(*network);
+	reSolutionHandler.initialize(*network, 0.73);
 	reSolutionHandler.updateReSolutionRate(1.0);
 
 	// The arrays of concentration
