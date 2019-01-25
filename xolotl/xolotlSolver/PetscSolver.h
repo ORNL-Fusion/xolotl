@@ -122,6 +122,13 @@ public:
 	 */
 	void finalize(bool isStandalone) override;
 
+	/**
+	 * This operation gets the TS.
+	 */
+	TS & getTS() override {
+		return ts;
+	}
+
 };
 //end class PetscSolver
 

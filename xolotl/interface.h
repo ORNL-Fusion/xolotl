@@ -98,6 +98,16 @@ public:
 			int j = 0, int k = 0);
 
 	/**
+	 * Get the TS from the solver
+	 *
+	 * @param solver The pointer to the solver
+	 * @return The TS
+	 */
+	TS & getTS(std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+		return solver->getTS();
+	}
+
+	/**
 	 * Finalize the solve
 	 *
 	 * @param solver The pointer to the solver

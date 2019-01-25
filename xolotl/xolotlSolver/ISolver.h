@@ -91,6 +91,13 @@ public:
 	 */
 	virtual void finalize(bool isStandalone) = 0;
 
+	/**
+	 * Get the TS.
+	 *
+	 * @return The TS
+	 */
+	virtual TS & getTS() = 0;
+
 };
 //end class ISolver
 
