@@ -30,7 +30,6 @@
 #include <vtkm/rendering/MapperRayTracer.h>
 #include <vtkm/io/writer/VTKDataSetWriter.h>
 
-
 using namespace xolotlViz;
 using DeviceAdapter = VTKM_DEFAULT_DEVICE_ADAPTER_TAG;
 
@@ -63,114 +62,104 @@ void SurfacePlot::render(const std::string& fileName) {
 	auto yVector = plotDataProvider->getAxis2Vector();
 	auto zVector = plotDataProvider->getAxis3Vector();
 
-  for(int i = 0; i < zVector.size(); i++)
-  {
-    if(zVector[i] > 0)
-    {
-      zVector[i] = std::log10(zVector[i]);
-    }
-    else
-    {
-      zVector[i] = 0;
-    }
-  }
+	if (enableLogScale) {
+		for (int i = 0; i < zVector.size(); i++) {
+			if (zVector[i] > 0) {
+				zVector[i] = std::log10(zVector[i]);
+			} else {
+				zVector[i] = 0;
+			}
+		}
+	}
 
-  // Create the vtk-m data set
-  vtkm::cont::DataSetFieldAdd dsf;
-  vtkm::cont::DataSetBuilderRectilinear dsb;
-  vtkm::cont::DataSet dataSet = dsb.Create(xVector, yVector);
-  dsf.AddCellField(dataSet, plotDataProvider->getDataName(), zVector);
+	// Create the vtk-m data set
+	vtkm::cont::DataSetFieldAdd dsf;
+	vtkm::cont::DataSetBuilderRectilinear dsb;
+	vtkm::cont::DataSet dataSet = dsb.Create(xVector, yVector);
+	dsf.AddCellField(dataSet, plotDataProvider->getDataName(), zVector);
 
-  // Create the view
-  vtkm::rendering::View2D *view = nullptr;
-  vtkm::rendering::Color bg(0.5, 0.5, 0.5, 1.f);
-  vtkm::rendering::CanvasRayTracer canvas(W_WIDTH, W_HEIGHT);
-  vtkm::rendering::MapperRayTracer mapper;
+	// Create the view
+	vtkm::rendering::View2D *view = nullptr;
+	vtkm::rendering::Color bg(0.5, 0.5, 0.5, 1.f);
+	vtkm::rendering::CanvasRayTracer canvas(W_WIDTH, W_HEIGHT);
+	vtkm::rendering::MapperRayTracer mapper;
 
-  // Create the scene, default to log scale color map
-  vtkm::rendering::Scene scene;
-  vtkm::rendering::Actor actor(
-    dataSet.GetCellSet(),
-    dataSet.GetCoordinateSystem(),
-    dataSet.GetField(plotDataProvider->getDataName()),
-    vtkm::cont::ColorTable::Preset::JET);
-  scene.AddActor(actor);
+	// Create the scene, default to log scale color map
+	vtkm::rendering::Scene scene;
+	vtkm::rendering::Actor actor(dataSet.GetCellSet(),
+			dataSet.GetCoordinateSystem(),
+			dataSet.GetField(plotDataProvider->getDataName()),
+			vtkm::cont::ColorTable::Preset::JET);
+	scene.AddActor(actor);
 
-  // Set camera position
-  vtkm::rendering::Camera camera = vtkm::rendering::Camera(vtkm::rendering::Camera::MODE_2D);
-  camera.ResetToBounds(dataSet.GetCoordinateSystem().GetBounds());
-  camera.SetClippingRange(1.f, 100.f);
-  camera.SetViewport(-0.75f, +0.75f, -0.75f, +0.75f);
-  camera.SetXScale(1.01f);
+	// Set camera position
+	vtkm::rendering::Camera camera = vtkm::rendering::Camera(
+			vtkm::rendering::Camera::MODE_2D);
+	camera.ResetToBounds(dataSet.GetCoordinateSystem().GetBounds());
+	camera.SetClippingRange(1.f, 100.f);
+	camera.SetViewport(-0.75f, +0.75f, -0.75f, +0.75f);
+	camera.SetXScale(1.01f);
 
-  // Create vtkm rendering infrastructure
-  view = new vtkm::rendering::View2D(scene, mapper, canvas, camera, bg);
+	// Create vtkm rendering infrastructure
+	view = new vtkm::rendering::View2D(scene, mapper, canvas, camera, bg);
 
-  // Print the title
-  vtkm::rendering::TextAnnotationScreen *titleAnnotation =
-    new vtkm::rendering::TextAnnotationScreen(
-      "Log of " + plotLabelProvider->titleLabel,
-      vtkm::rendering::Color::white,
-      .07,
-      vtkm::Vec<vtkm::Float32, 2>(-.45, .93),
-       0);
+	// Print the title
+	vtkm::rendering::TextAnnotationScreen *titleAnnotation;
+	if (enableLogScale)
+		titleAnnotation = new vtkm::rendering::TextAnnotationScreen(
+				"Log of " + plotLabelProvider->titleLabel,
+				vtkm::rendering::Color::white, .07,
+				vtkm::Vec<vtkm::Float32, 2>(-.45, .93), 0);
+	else
+		titleAnnotation = new vtkm::rendering::TextAnnotationScreen(
+				plotLabelProvider->titleLabel, vtkm::rendering::Color::white,
+				.07, vtkm::Vec<vtkm::Float32, 2>(-.45, .93), 0);
 	view->AddAnnotation(titleAnnotation);
 
-  // Print the axis labels
-  vtkm::rendering::TextAnnotationScreen *axis1Annotation =
-    new vtkm::rendering::TextAnnotationScreen(
-      plotLabelProvider->axis1Label,
-      vtkm::rendering::Color::white,
-      .065,
-      vtkm::Vec<vtkm::Float32, 2>(-.12, -.9),
-       0);
+	// Print the axis labels
+	vtkm::rendering::TextAnnotationScreen *axis1Annotation =
+			new vtkm::rendering::TextAnnotationScreen(
+					plotLabelProvider->axis1Label,
+					vtkm::rendering::Color::white, .065,
+					vtkm::Vec<vtkm::Float32, 2>(-.12, -.9), 0);
 	view->AddAnnotation(axis1Annotation);
 
-  vtkm::rendering::TextAnnotationScreen *axis2Annotation =
-    new vtkm::rendering::TextAnnotationScreen(
-      plotLabelProvider->axis2Label,
-      vtkm::rendering::Color::white,
-      .065,
-      vtkm::Vec<vtkm::Float32, 2>(-.85, -.15),
-       90);
+	vtkm::rendering::TextAnnotationScreen *axis2Annotation =
+			new vtkm::rendering::TextAnnotationScreen(
+					plotLabelProvider->axis2Label,
+					vtkm::rendering::Color::white, .065,
+					vtkm::Vec<vtkm::Float32, 2>(-.85, -.15), 90);
 	view->AddAnnotation(axis2Annotation);
 
-  vtkm::rendering::TextAnnotationScreen *axis3Annotation =
-    new vtkm::rendering::TextAnnotationScreen(
-      plotLabelProvider->axis3Label,
-      vtkm::rendering::Color::white,
-      .065,
-      vtkm::Vec<vtkm::Float32, 2>(-.15, .73),
-       0);
+	vtkm::rendering::TextAnnotationScreen *axis3Annotation =
+			new vtkm::rendering::TextAnnotationScreen(
+					plotLabelProvider->axis3Label,
+					vtkm::rendering::Color::white, .065,
+					vtkm::Vec<vtkm::Float32, 2>(-.15, .73), 0);
 	view->AddAnnotation(axis3Annotation);
 
-  // Add the time information
-  vtkm::rendering::TextAnnotationScreen *timeAnnotation =
-    new vtkm::rendering::TextAnnotationScreen(
-      plotLabelProvider->timeLabel,
-      vtkm::rendering::Color::white,
-      .055,
-      vtkm::Vec<vtkm::Float32, 2>(.6, -.91),
-       0);
+	// Add the time information
+	vtkm::rendering::TextAnnotationScreen *timeAnnotation =
+			new vtkm::rendering::TextAnnotationScreen(
+					plotLabelProvider->timeLabel, vtkm::rendering::Color::white,
+					.055, vtkm::Vec<vtkm::Float32, 2>(.6, -.91), 0);
 	view->AddAnnotation(timeAnnotation);
 
-  vtkm::rendering::TextAnnotationScreen *timeStepAnnotation =
-    new vtkm::rendering::TextAnnotationScreen(
-      plotLabelProvider->timeStepLabel,
-      vtkm::rendering::Color::white,
-      .055,
-      vtkm::Vec<vtkm::Float32, 2>(.6, -.96),
-       0);
+	vtkm::rendering::TextAnnotationScreen *timeStepAnnotation =
+			new vtkm::rendering::TextAnnotationScreen(
+					plotLabelProvider->timeStepLabel,
+					vtkm::rendering::Color::white, .055,
+					vtkm::Vec<vtkm::Float32, 2>(.6, -.96), 0);
 	view->AddAnnotation(timeStepAnnotation);
 
-  // Set the view
-  view->Initialize();
+	// Set the view
+	view->Initialize();
 
-  // Paint
-  view->Paint();
+	// Paint
+	view->Paint();
 
-  // Save the final buffer as an image
-  view->SaveAs(fileName);
+	// Save the final buffer as an image
+	view->SaveAs(fileName);
 
 	return;
 }
