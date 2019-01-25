@@ -16,11 +16,8 @@ void XolotlInterface::printSomething() {
 	return;
 }
 
-std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
+void XolotlInterface::initializeXolotl(
 		int argc, char **argv, MPI_Comm comm, bool isStandalone) {
-	// Local Declarations
-	std::shared_ptr<xolotlSolver::PetscSolver> solver;
-
 	// Initialize the MPI communicator to use
 	xolotlCore::MPIUtils::initialize(comm);
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
@@ -110,12 +107,10 @@ std::shared_ptr<xolotlSolver::PetscSolver> XolotlInterface::initializeXolotl(
 		std::cerr << "Aborting." << std::endl;
 	}
 
-	return solver;
+	return;
 }
 
-void XolotlInterface::setTimes(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver, double finalTime,
-		double dt) {
+void XolotlInterface::setTimes(double finalTime, double dt) {
 	try {
 		// Set the time in the solver
 		solver->setTimes(finalTime, dt);
@@ -132,8 +127,7 @@ void XolotlInterface::setTimes(
 
 }
 
-void XolotlInterface::solveXolotl(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+void XolotlInterface::solveXolotl() {
 	try {
 		// Launch the PetscSolver
 		solver->solve();
@@ -151,8 +145,7 @@ void XolotlInterface::solveXolotl(
 	return;
 }
 
-std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeRate(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeRate() {
 	std::vector<std::vector<std::vector<double> > > * toReturn;
 	try {
 		// Get the solver handler
@@ -173,8 +166,7 @@ std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeRat
 	return toReturn;
 }
 
-std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeConc(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeConc() {
 	std::vector<std::vector<std::vector<double> > > * toReturn;
 	try {
 		// Get the solver handler
@@ -195,9 +187,8 @@ std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeCon
 	return toReturn;
 }
 
-void XolotlInterface::getLocalCoordinates(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver, int &xs, int &xm,
-		int &Mx, int &ys, int &ym, int &My, int &zs, int &zm, int &Mz) {
+void XolotlInterface::getLocalCoordinates(int &xs, int &xm, int &Mx, int &ys,
+		int &ym, int &My, int &zs, int &zm, int &Mz) {
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
@@ -217,9 +208,7 @@ void XolotlInterface::getLocalCoordinates(
 	return;
 }
 
-void XolotlInterface::setGBLocation(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver, int i, int j,
-		int k) {
+void XolotlInterface::setGBLocation(int i, int j, int k) {
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
@@ -240,8 +229,7 @@ void XolotlInterface::setGBLocation(
 
 }
 
-void XolotlInterface::finalizeXolotl(
-		std::shared_ptr<xolotlSolver::PetscSolver> solver, bool isStandalone) {
+void XolotlInterface::finalizeXolotl(bool isStandalone) {
 	try {
 		// Call solver finalize
 		solver->finalize(isStandalone);

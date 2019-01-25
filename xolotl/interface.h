@@ -6,6 +6,11 @@
  * Class defining the method to be coupled to another code through MOOSEApps
  */
 class XolotlInterface {
+private:
+	/**
+	 * The solver
+	 */
+	std::shared_ptr<xolotlSolver::PetscSolver> solver;
 
 public:
 
@@ -34,49 +39,39 @@ public:
 	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
 	 * @return The pointer to the solver
 	 */
-	std::shared_ptr<xolotlSolver::PetscSolver> initializeXolotl(int argc,
-			char **argv, MPI_Comm comm = MPI_COMM_WORLD, bool isStandalone =
-					true);
+	void initializeXolotl(int argc, char **argv, MPI_Comm comm = MPI_COMM_WORLD,
+			bool isStandalone = true);
 
 	/**
 	 * Set the final time and the dt.
 	 *
-	 * @param solver The pointer to the solver
 	 * @param finalTime The wanted final time
 	 * @param dt The wanted max time step
 	 */
-	void setTimes(std::shared_ptr<xolotlSolver::PetscSolver> solver,
-			double finalTime, double dt);
+	void setTimes(double finalTime, double dt);
 
 	/**
 	 * Run the PETSc solve
-	 *
-	 * @param solver The pointer to the solver
 	 */
-	void solveXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver);
+	void solveXolotl();
 
 	/**
 	 * Get the local Xe rate that needs to be passed
 	 *
-	 * @param solver The pointer to the solver
 	 * @return The local vector of rates
 	 */
-	std::vector<std::vector<std::vector<double> > > * getLocalXeRate(
-			std::shared_ptr<xolotlSolver::PetscSolver> solver);
+	std::vector<std::vector<std::vector<double> > > * getLocalXeRate();
 
 	/**
 	 * Get the local Xe conc
 	 *
-	 * @param solver The pointer to the solver
 	 * @return The local vector of concs
 	 */
-	std::vector<std::vector<std::vector<double> > > * getLocalXeConc(
-			std::shared_ptr<xolotlSolver::PetscSolver> solver);
+	std::vector<std::vector<std::vector<double> > > * getLocalXeConc();
 
 	/**
 	 * Get the local Xe rate that needs to be passed
 	 *
-	 * @param solver The pointer to the solver
 	 * @param xs, xm The start and width in the X direction on the local MPI process
 	 * @param Mx The total width in the X direction
 	 * @param ys, ym The start and width in the Y direction on the local MPI process
@@ -84,37 +79,31 @@ public:
 	 * @param zs, zm The start and width in the Z direction on the local MPI process
 	 * @param Mz The total width in the Z direction
 	 */
-	void getLocalCoordinates(std::shared_ptr<xolotlSolver::PetscSolver> solver,
-			int &xs, int &xm, int &Mx, int &ys, int &ym, int &My, int &zs,
-			int &zm, int &Mz);
+	void getLocalCoordinates(int &xs, int &xm, int &Mx, int &ys, int &ym,
+			int &My, int &zs, int &zm, int &Mz);
 
 	/**
 	 * Set the location of one GB grid point.
 	 *
-	 * @param solver The pointer to the solver
 	 * @param i, j, k The coordinate of the GB
 	 */
-	void setGBLocation(std::shared_ptr<xolotlSolver::PetscSolver> solver, int i,
-			int j = 0, int k = 0);
+	void setGBLocation(int i, int j = 0, int k = 0);
 
 	/**
 	 * Get the TS from the solver
 	 *
-	 * @param solver The pointer to the solver
 	 * @return The TS
 	 */
-	TS & getTS(std::shared_ptr<xolotlSolver::PetscSolver> solver) {
+	TS & getTS() {
 		return solver->getTS();
 	}
 
 	/**
 	 * Finalize the solve
 	 *
-	 * @param solver The pointer to the solver
 	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
 	 */
-	void finalizeXolotl(std::shared_ptr<xolotlSolver::PetscSolver> solver,
-			bool isStandalone = true);
+	void finalizeXolotl(bool isStandalone = true);
 
 };
 // End class interface

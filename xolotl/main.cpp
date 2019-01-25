@@ -10,23 +10,22 @@ int main(int argc, char **argv) {
 	XolotlInterface interface;
 
 	// Initialize it
-	auto solver = interface.initializeXolotl(argc, argv);
+	interface.initializeXolotl(argc, argv);
 
 //	// Add a free GB
-//	interface.setGBLocation(solver, 73);
+//	interface.setGBLocation(73);
 
-	// Run the solve
-	interface.solveXolotl(solver);
+// Run the solve
+	interface.solveXolotl();
 
 	// Check the local Xe rate at a few grid points
 	int xs, xm, Mx, ys, ym, My, zs, zm, Mz;
-	interface.getLocalCoordinates(solver, xs, xm, Mx, ys, ym, My, zs, zm, Mz);
+	interface.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
-	std::cout << "The local coordinates are: " << xs << " " << xm << " "
-			<< Mx << "; " << ys << " " << ym << " "
-			<< My << "; " << zs << " " << zm << " "
-			<< Mz << std::endl;
-	auto localConc = interface.getLocalXeConc(solver);
+	std::cout << "The local coordinates are: " << xs << " " << xm << " " << Mx
+			<< "; " << ys << " " << ym << " " << My << "; " << zs << " " << zm
+			<< " " << Mz << std::endl;
+	auto localConc = interface.getLocalXeConc();
 
 	for (auto k = 0; k < max(zm, 1); k++) {
 		for (int j = 0; j < max(ym, 1); j++) {
@@ -39,7 +38,7 @@ int main(int argc, char **argv) {
 	}
 
 	// Finalize the run
-	interface.finalizeXolotl(solver);
+	interface.finalizeXolotl();
 
 	// Finalize MPI
 	MPI_Finalize();
