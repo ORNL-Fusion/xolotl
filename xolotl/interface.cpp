@@ -226,7 +226,31 @@ void XolotlInterface::setGBLocation(int i, int j, int k) {
 	}
 
 	return;
+}
 
+std::vector<double> XolotlInterface::getGridInfo(double &hy, double &hz) {
+	// The vector to return
+	std::vector<double> toReturn;
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		// Get the grid
+		toReturn = solverHandler.getXGrid();
+		// Get the step size
+		hy = solverHandler.getStepSizeY();
+		hz = solverHandler.getStepSizeZ();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return toReturn;
 }
 
 void XolotlInterface::finalizeXolotl(bool isStandalone) {

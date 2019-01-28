@@ -99,6 +99,15 @@ public:
 	}
 
 	/**
+	 * Get the grid information
+	 *
+	 * @param hy The spacing in the Y direction
+	 * @param hz The spacing in the Z direction
+	 * @return The grid in the X direction
+	 */
+	std::vector<double> getGridInfo(double &hy, double &hz);
+
+	/**
 	 * Finalize the solve
 	 *
 	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
