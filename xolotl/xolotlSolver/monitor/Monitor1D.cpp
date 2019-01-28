@@ -760,6 +760,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		// Update the concentration in the network
 		network.updateConcentrationsFromArray(gridPointSolution);
 
+		// Concentration on this grid point
+		double localConc = 0.0;
+
 		// Loop on all the indices
 		for (unsigned int i = 0; i < indices1D.size(); i++) {
 			// Add the current concentration times the number of xenon in the cluster
@@ -770,6 +773,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 					* (grid[xi + 1] - grid[xi]);
 			radii += gridPointSolution[indices1D[i]] * radii1D[i]
 					* (grid[xi + 1] - grid[xi]);
+			localConc += gridPointSolution[indices1D[i]] * weights1D[i];
 		}
 
 		// Loop on all the super clusters
@@ -782,10 +786,11 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 					* (grid[xi + 1] - grid[xi]);
 			radii += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi]);
+			localConc += cluster.getTotalXenonConcentration();
 		}
 
 		// Set the total conc in the vector we keep
-		solverHandler.setLocalXeConc(xeConcentration / (grid[xi + 1] - grid[xi]), xi - xs);
+		solverHandler.setLocalXeConc(localConc, xi - xs);
 	}
 
 	// Get the current process ID
