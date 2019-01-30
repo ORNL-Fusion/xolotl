@@ -116,31 +116,25 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
 			currentTimeStep);
 
-	// Size of the concentration that will be stored
-	int concSize = -1;
+	// Determine the concentration values we will write.
+	// We only examine and collect the grid points we own.
+	// TODO measure impact of us building the flattened representation
+	// rather than a ragged 2D representation.
+	XFile::TimestepGroup::Concs1DType concs(1);
 
-	// Get the pointer to the beginning of the solution data for this grid point
+	// Access the solution data for the current grid point.
 	gridPointSolution = solutionArray[0];
 
-	// Loop on the concentrations
-	for (int l = 0; l < dof; l++) {
-		if (gridPointSolution[l] > 1.0e-16 || gridPointSolution[l] < -1.0e-16) {
-			// Increase concSize
-			concSize++;
-			// Fill the concArray
-			concArray[concSize][0] = (double) l;
-			concArray[concSize][1] = gridPointSolution[l];
+	for (auto l = 0; l < dof; ++l) {
+		if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
+			concs[0].emplace_back(l, gridPointSolution[l]);
 		}
 	}
 
-	// Increase concSize one last time
-	concSize++;
-
-	if (concSize > 0) {
-
-		// All processes must create the dataset
-		tsGroup->writeConcentrationDataset(concSize, concArray, 0);
-	}
+	// Write our concentration data to the current timestep group
+	// in the HDF5 file.
+	// We only write the data for the grid points we own.
+	tsGroup->writeConcentrations(checkpointFile, 0, concs);
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -674,7 +668,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 
-			assert (lastTsGroup);
+			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
 			double time = lastTsGroup->readPreviousTime();
