@@ -83,6 +83,7 @@ void SurfacePlot::render(const std::string& fileName) {
 	vtkm::rendering::Color bg(0.5, 0.5, 0.5, 1.f);
 	vtkm::rendering::CanvasRayTracer canvas(W_WIDTH, W_HEIGHT);
 	vtkm::rendering::MapperRayTracer mapper;
+	mapper.SetShadingOn(false);
 
 	// Create the scene, default to log scale color map
 	vtkm::rendering::Scene scene;
