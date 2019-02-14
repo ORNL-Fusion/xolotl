@@ -83,10 +83,14 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
 	 * @param ix The position on the x grid
+	 * @param sy The space parameter, depending on the grid step size in the y direction
+	 * @param iy The position on the y grid
+	 * @param sz The space parameter, depending on the grid step size in the z direction
+	 * @param iz The position on the z grid
 	 */
 	virtual void computeTemperature(double **concVector,
-			double *updatedConcOffset, double hxLeft, double hxRight,
-			int xi) = 0;
+			double *updatedConcOffset, double hxLeft, double hxRight, int xi,
+			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) = 0;
 
 	/**
 	 * Compute the partials due to the heat equation.
@@ -99,9 +103,14 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
 	 * @param ix The position on the x grid
+	 * @param sy The space parameter, depending on the grid step size in the y direction
+	 * @param iy The position on the y grid
+	 * @param sz The space parameter, depending on the grid step size in the z direction
+	 * @param iz The position on the z grid
 	 */
 	virtual void computePartialsForTemperature(double *val, int *indices,
-			double hxLeft, double hxRight, int xi) = 0;
+			double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
+			double sz = 0.0, int iz = 0) = 0;
 
 };
 //end class ITemperatureHandler

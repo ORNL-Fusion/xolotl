@@ -136,17 +136,21 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
-		// Read the concentrations from the HDF5 file
+		// Read the concentrations from the HDF5 file for
+		// each of our grid points.
+		assert(concGroup);
 		auto tsGroup = concGroup->getLastTimestepGroup();
-		auto concVector = tsGroup->readGridPoint(0);
+		assert(tsGroup);
+		auto myConcs = tsGroup->readConcentrations(*xfile, 0, 1);
 
+		// Apply the concentrations we just read.
 		concOffset = concentrations[0];
-		// Loop on the concVector size
-		for (unsigned int l = 0; l < concVector.size(); l++) {
-			concOffset[(int) concVector.at(l).at(0)] = concVector.at(l).at(1);
+
+		for (auto const& currConcData : myConcs[0]) {
+			concOffset[currConcData.first] = currConcData.second;
 		}
 		// Set the temperature in the network
-		double temp = concVector.at(concVector.size() - 1).at(1);
+		double temp = myConcs[0][myConcs[0].size() - 1].second;
 		network.setTemperature(temp, 0);
 		lastTemperature[0] = temp;
 	}

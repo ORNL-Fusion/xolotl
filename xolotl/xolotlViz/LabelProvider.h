@@ -16,9 +16,12 @@ class LabelProvider: public xolotlCore::Identifiable {
 private:
 
 	/**
-     * Declare the constructor as private to force the use of a name
+	 * Declare the constructor as private to force the use of a name
 	 */
-    LabelProvider() : xolotlCore::Identifiable("unused") {};
+	LabelProvider() :
+			xolotlCore::Identifiable("unused") {
+	}
+	;
 
 public:
 
@@ -66,20 +69,16 @@ public:
 	 * The default constructor
 	 */
 	LabelProvider(const std::string& name) :
-		xolotlCore::Identifiable(name),
-		axis1Label(" "),
-		axis2Label(" "),
-		axis3Label(" "),
-		axis4Label(" "),
-		titleLabel(" "),
-		unitLabel(" "),
-		timeLabel(" "),
-		timeStepLabel(" ")	{}
+			xolotlCore::Identifiable(name), axis1Label(" "), axis2Label(" "), axis3Label(
+					" "), axis4Label(" "), titleLabel(" "), unitLabel(" "), timeLabel(
+					" "), timeStepLabel(" ") {
+	}
 
 	/**
 	 * The destructor
 	 */
-	~LabelProvider() {}
+	~LabelProvider() {
+	}
 
 };
 

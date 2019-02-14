@@ -168,21 +168,26 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	for (PetscInt k = 0; k < Mz; k++) {
 		for (PetscInt j = 0; j < My; j++) {
 			for (PetscInt i = 0; i < Mx; i++) {
+				// Wait for all the processes
+				MPI_Barrier(PETSC_COMM_WORLD);
+
 				// Size of the concentration that will be stored
 				int concSize = -1;
 				// To save which proc has the information
 				int concId = 0;
+				// To know which process should write
+				bool write = false;
 
 				// If it is the locally owned part of the grid
 				if (i >= xs && i < xs + xm && j >= ys && j < ys + ym && k >= zs
 						&& k < zs + zm) {
+					write = true;
 					// Get the pointer to the beginning of the solution data for this grid point
 					gridPointSolution = solutionArray[k][j][i];
 
 					// Loop on the concentrations
 					for (int l = 0; l < dof; l++) {
-						if (gridPointSolution[l] > 1.0e-16
-								|| gridPointSolution[l] < -1.0e-16) {
+						if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 							// Increase concSize
 							concSize++;
 							// Fill the concArray
@@ -210,12 +215,8 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 				if (concSize == 0)
 					continue;
 
-				// Transfer the data everywhere from the local grid
-				MPI_Bcast(&(concArray[0][0]), 2 * concSize, MPI_DOUBLE,
-						concProc, xolotlComm);
-
 				// All processes create the dataset and fill it
-				tsGroup->writeConcentrationDataset(concSize, concArray, i, j,
+				tsGroup->writeConcentrationDataset(concSize, concArray, write, i, j,
 						k);
 			}
 		}

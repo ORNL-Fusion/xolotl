@@ -370,7 +370,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			if (xi == surfacePosition[yj]) {
 				temperatureHandler->computeTemperature(concVector,
 						updatedConcOffset, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi);
+						grid[xi + 2] - grid[xi + 1], xi, sy, yj);
 			}
 
 			// Boundary conditions
@@ -438,7 +438,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// ---- Compute the temperature over the locally owned part of the grid -----
 			temperatureHandler->computeTemperature(concVector,
 					updatedConcOffset, grid[xi + 1] - grid[xi],
-					grid[xi + 2] - grid[xi + 1], xi);
+					grid[xi + 2] - grid[xi + 1], xi, sy, yj);
 
 			// ---- Compute diffusion over the locally owned part of the grid -----
 			diffusionHandler->computeDiffusion(network, concVector,
@@ -552,7 +552,7 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				// Get the partial derivatives for the temperature
 				temperatureHandler->computePartialsForTemperature(diffVals,
 						diffIndices, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi);
+						grid[xi + 2] - grid[xi + 1], xi, sy, yj);
 
 				// Set grid coordinate and component number for the row
 				row.i = xi;
@@ -570,8 +570,14 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				cols[2].i = xi + 1; // right
 				cols[2].j = yj;
 				cols[2].c = diffIndices[0];
+				cols[3].i = xi; // bottom
+				cols[3].j = yj - 1;
+				cols[3].c = diffIndices[0];
+				cols[4].i = xi; // top
+				cols[4].j = yj + 1;
+				cols[4].c = diffIndices[0];
 
-				ierr = MatSetValuesStencil(J, 1, &row, 3, cols, diffVals,
+				ierr = MatSetValuesStencil(J, 1, &row, 5, cols, diffVals,
 						ADD_VALUES);
 				checkPetscError(ierr,
 						"PetscSolver2DHandler::computeOffDiagonalJacobian: "
@@ -629,7 +635,7 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			// Get the partial derivatives for the temperature
 			temperatureHandler->computePartialsForTemperature(diffVals,
 					diffIndices, grid[xi + 1] - grid[xi],
-					grid[xi + 2] - grid[xi + 1], xi);
+					grid[xi + 2] - grid[xi + 1], xi, sy, yj);
 
 			// Set grid coordinate and component number for the row
 			row.i = xi;
@@ -647,8 +653,14 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			cols[2].i = xi + 1; // right
 			cols[2].j = yj;
 			cols[2].c = diffIndices[0];
+			cols[3].i = xi; // bottom
+			cols[3].j = yj - 1;
+			cols[3].c = diffIndices[0];
+			cols[4].i = xi; // top
+			cols[4].j = yj + 1;
+			cols[4].c = diffIndices[0];
 
-			ierr = MatSetValuesStencil(J, 1, &row, 3, cols, diffVals,
+			ierr = MatSetValuesStencil(J, 1, &row, 5, cols, diffVals,
 					ADD_VALUES);
 			checkPetscError(ierr,
 					"PetscSolver2DHandler::computeOffDiagonalJacobian: "
