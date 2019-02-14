@@ -498,7 +498,8 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	for (int i = 0; i < xm; i++) {
 		for (int j = 0; j < ym; j++) {
 			for (int k = 0; k < zm; k++) {
-				globalXeFlux += previousXeFlux3D[i][j][k];
+				globalXeFlux += previousXeFlux3D[i][j][k]
+						* (grid[i + xs + 1] - grid[i + xs]) * hy * hz;
 				// Set the amount in the vector we keep
 				solverHandler.setLocalXeRate(previousXeFlux3D[i][j][k] * dt, i,
 						j, k);
@@ -520,20 +521,20 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	for (auto const& pair : gbVector) {
 		// Local rate
 		double localRate = 0.0;
+		// Define left and right with reference to the middle point
+		// Middle
+		int xi = std::get<0>(pair);
+		int yj = std::get<1>(pair);
+		int zk = std::get<2>(pair);
+		double hxLeft = grid[xi + 1] - grid[xi];
+		double hxRight = grid[xi + 2] - grid[xi + 1];
 
 		// X segment
 		// Left
-		int xi = std::get<0>(pair) - 1;
-		int yj = std::get<1>(pair);
-		int zk = std::get<2>(pair);
-
+		xi = std::get<0>(pair) - 1;
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi + 2] - grid[xi + 1];
-			double hxRight = grid[xi + 3] - grid[xi + 2];
 			// Consider each xenon cluster.
 			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
 				// Get the cluster
@@ -545,20 +546,15 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				// Compute the flux coming from the left
 				localRate += (double) size * solutionArray[zk][yj][xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						* hy * hz / (hxLeft + hxRight);
+						/ ((hxLeft + hxRight) * hxLeft);
 			}
 		}
 
 		// Right
 		xi = std::get<0>(pair) + 1;
-
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi] - grid[xi - 1];
-			double hxRight = grid[xi + 1] - grid[xi];
 			// Consider each xenon cluster.
 			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
 				// Get the cluster
@@ -570,12 +566,98 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				// Compute the flux coming from the right
 				localRate += (double) size * solutionArray[zk][yj][xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						* hy * hz / (hxLeft + hxRight);
+						/ ((hxLeft + hxRight) * hxRight);
+			}
+		}
+
+		// Y segment
+		// Bottom
+		xi = std::get<0>(pair);
+		yj = std::get<1>(pair) - 1;
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
+				&& zk < zs + zm) {
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the bottom
+				localRate += (double) size * solutionArray[zk][yj][xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs)
+						/ (hy * hy);
+			}
+		}
+
+		// Top
+		yj = std::get<1>(pair) - 1;
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
+				&& zk < zs + zm) {
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the top
+				localRate += (double) size * solutionArray[zk][yj][xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs)
+						/ (hy * hy);
+			}
+		}
+
+		// Z segment
+		// Back
+		yj = std::get<1>(pair);
+		zk = std::get<2>(pair) - 1;
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
+				&& zk < zs + zm) {
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the bottom
+				localRate += (double) size * solutionArray[zk][yj][xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs)
+						/ (hz * hz);
+			}
+		}
+
+		// Front
+		zk = std::get<2>(pair) + 1;
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
+				&& zk < zs + zm) {
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the top
+				localRate += (double) size * solutionArray[zk][yj][xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs)
+						/ (hz * hz);
 			}
 		}
 
 		// Middle
 		xi = std::get<0>(pair);
+		yj = std::get<1>(pair);
+		zk = std::get<2>(pair);
 		// Get the corresponding proc ID
 		int localProcId = 0;
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
@@ -591,7 +673,8 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				globalProcId, xolotlComm);
 		// Add the local rate to the flux
 		if (procId == globalProcId)
-			previousXeFlux3D[xi - xs][yj - ys][zk - zs] = totalLocalRate;
+			previousXeFlux3D[xi - xs][yj - ys][zk - zs] = totalLocalRate
+					+ fluxHandler->getFluxAmplitude();
 	}
 
 	// Master process

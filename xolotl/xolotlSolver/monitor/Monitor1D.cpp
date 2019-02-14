@@ -815,13 +815,13 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	double globalXeFlux = 0.0;
 	// Loop on the grid
 	for (int i = 0; i < xm; i++) {
-		globalXeFlux += previousXeFlux1D[i];
+		globalXeFlux += previousXeFlux1D[i] * (grid[i + xs + 1] - grid[i + xs]);
 		// Set the amount in the vector we keep
 		solverHandler.setLocalXeRate(previousXeFlux1D[i] * dt, i);
 	}
 	double totalXeFlux = 0.0;
-	MPI_Reduce(&globalXeFlux, &totalXeFlux, 1, MPI_DOUBLE, MPI_SUM,
-			0, xolotlComm);
+	MPI_Reduce(&globalXeFlux, &totalXeFlux, 1, MPI_DOUBLE, MPI_SUM, 0,
+			xolotlComm);
 	// Master process
 	if (procId == 0) {
 		// Compute the total number of Xe that went to the GB
@@ -834,15 +834,16 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	for (auto const& pair : gbVector) {
 		// Local rate
 		double localRate = 0.0;
-		// Left
-		int xi = std::get<0>(pair) - 1;
+		// Define left and right with reference to the middle point
+		// Middle
+		int xi = std::get<0>(pair);
+		double hxLeft = grid[xi + 1] - grid[xi];
+		double hxRight = grid[xi + 2] - grid[xi + 1];
 
+		// Left
+		xi = std::get<0>(pair) - 1;
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi + 2] - grid[xi + 1];
-			double hxRight = grid[xi + 3] - grid[xi + 2];
 			// Consider each xenon cluster.
 			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
 				// Get the cluster
@@ -854,19 +855,14 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				// Compute the flux coming from the left
 				localRate += (double) size * solutionArray[xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ (hxLeft + hxRight);
+						/ ((hxLeft + hxRight) * hxLeft);
 			}
 		}
 
 		// Right
 		xi = std::get<0>(pair) + 1;
-
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi] - grid[xi - 1];
-			double hxRight = grid[xi + 1] - grid[xi];
 			// Consider each xenon cluster.
 			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
 				// Get the cluster
@@ -878,7 +874,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				// Compute the flux coming from the left
 				localRate += (double) size * solutionArray[xi][id]
 						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ (hxLeft + hxRight);
+						/ ((hxLeft + hxRight) * hxRight);
 			}
 		}
 
@@ -890,12 +886,16 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 			localProcId = procId;
 		}
 		int globalProcId = 0;
-		MPI_Allreduce(&localProcId, &globalProcId, 1, MPI_INT, MPI_SUM, xolotlComm);
+		MPI_Allreduce(&localProcId, &globalProcId, 1, MPI_INT, MPI_SUM,
+				xolotlComm);
 		// Pass the local rate to this proc ID
 		double totalLocalRate = 0.0;
-		MPI_Reduce(&localRate, &totalLocalRate, 1, MPI_DOUBLE, MPI_SUM, globalProcId, xolotlComm);
+		MPI_Reduce(&localRate, &totalLocalRate, 1, MPI_DOUBLE, MPI_SUM,
+				globalProcId, xolotlComm);
 		// Add the local rate to the flux
-		if (procId == globalProcId) previousXeFlux1D[xi - xs] = totalLocalRate;
+		if (procId == globalProcId)
+			previousXeFlux1D[xi - xs] = totalLocalRate
+					+ fluxHandler->getFluxAmplitude();
 	}
 
 	// Master process
@@ -3094,7 +3094,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 		// Create the local vectors on each process
 		solverHandler.createLocalXeRate(xm);
 		solverHandler.createLocalXeConc(xm);
-		for (int i = 0; i < xm; i++) previousXeFlux1D.push_back(0.0);
+		for (int i = 0; i < xm; i++)
+			previousXeFlux1D.push_back(0.0);
 
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
