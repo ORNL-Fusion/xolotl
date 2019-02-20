@@ -116,6 +116,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/temperature
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/desorption
                     ${CMAKE_SOURCE_DIR}/xolotlCore/flux
                     ${CMAKE_SOURCE_DIR}/xolotlFactory/material
                     ${CMAKE_SOURCE_DIR}/xolotlFactory/vizHandler

@@ -6,9 +6,7 @@
 #include <TRIDYNFitFluxHandler.h>
 #include <W100AdvectionHandler.h>
 #include <W100TrapMutationHandler.h>
-#include <Diffusion1DHandler.h>
-#include <Diffusion2DHandler.h>
-#include <Diffusion3DHandler.h>
+#include <DesorptionHandler.h>
 
 namespace xolotlFactory {
 
@@ -38,7 +36,10 @@ public:
 				std::make_shared<xolotlCore::W100AdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				xolotlCore::W100TrapMutationHandler>();
-		theReSolutionHandler = std::make_shared<xolotlCore::DummyReSolutionHandler>();
+		theReSolutionHandler = std::make_shared<
+				xolotlCore::DummyReSolutionHandler>();
+		theDesorptionHandler =
+				std::make_shared<xolotlCore::DesorptionHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {

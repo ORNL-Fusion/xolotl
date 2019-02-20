@@ -22,7 +22,7 @@ public:
 			OptionHandler("process",
 					"process                           "
 							"List of all the processes to use in the simulation (reaction, diff, advec, "
-							"modifiedTM, movingSurface, bursting, attenuation, resolution).\n") {
+							"modifiedTM, movingSurface, bursting, attenuation, resolution, desorption).\n") {
 	}
 
 	/**

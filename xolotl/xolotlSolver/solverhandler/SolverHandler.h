@@ -77,6 +77,9 @@ protected:
 	//! The original re-solution handler created.
 	xolotlCore::IReSolutionHandler *resolutionHandler;
 
+	//! The original desorption handler created.
+	xolotlCore::IDesorptionHandler *desorptionHandler;
+
 	//! The number of dimensions for the problem.
 	int dimension;
 
@@ -303,7 +306,7 @@ protected:
 					0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
 					false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
 					nullptr), diffusionHandler(nullptr), mutationHandler(
-					nullptr), resolutionHandler(nullptr), tauBursting(10.0), rngSeed(
+					nullptr), resolutionHandler(nullptr), desorptionHandler(nullptr), tauBursting(10.0), rngSeed(
 					0) {
 	}
 
@@ -395,6 +398,10 @@ public:
 		// Set the re-solution handler
 		resolutionHandler =
 				(xolotlCore::IReSolutionHandler *) material->getReSolutionHandler().get();
+
+		// Set the desorption handler
+		desorptionHandler =
+				(xolotlCore::IDesorptionHandler *) material->getDesorptionHandler().get();
 
 		// Set the initial vacancy concentration
 		initialVConc = options.getInitialVConcentration();

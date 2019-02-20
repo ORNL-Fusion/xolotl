@@ -6,9 +6,7 @@
 #include <W110FitFluxHandler.h>
 #include <W110AdvectionHandler.h>
 #include <W110TrapMutationHandler.h>
-#include <Diffusion1DHandler.h>
-#include <Diffusion2DHandler.h>
-#include <Diffusion3DHandler.h>
+#include <DesorptionHandler.h>
 
 namespace xolotlFactory {
 
@@ -37,7 +35,10 @@ public:
 				std::make_shared<xolotlCore::W110AdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				xolotlCore::W110TrapMutationHandler>();
-		theReSolutionHandler = std::make_shared<xolotlCore::DummyReSolutionHandler>();
+		theReSolutionHandler = std::make_shared<
+				xolotlCore::DummyReSolutionHandler>();
+		theDesorptionHandler =
+				std::make_shared<xolotlCore::DesorptionHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {

@@ -105,6 +105,13 @@ public:
 	 */
 	virtual int getNumberOfDiffusing() const = 0;
 
+	/**
+	 * Set if we want the hydrogen desorption.
+	 *
+	 * @param desorb True if we want to desorb
+	 */
+	virtual void setDesorption(bool desorb) = 0;
+
 };
 //end class IDiffusionHandler
 

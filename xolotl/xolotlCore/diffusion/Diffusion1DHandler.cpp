@@ -23,6 +23,35 @@ void Diffusion1DHandler::initializeDiffusionGrid(
 	// Initialize the grid position
 	Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
+	// Take care of the H desorption at the surface
+	if (advectionHandlers.size() > 0 && isDesorbing) {
+		auto const& currAdvectionHandler = *(advectionHandlers[0]);
+		double surfaceLocation = currAdvectionHandler.getLocation();
+		bool wasOnSink = false;
+
+		// Loop on the spatial grid
+		for (int i = 0; i < nx; i++) {
+			if (wasOnSink) {
+				wasOnSink = false;
+				for (int n = 0; n < nDiff; n++) {
+					IReactant const& currDiffCluster = diffusingClusters[n];
+					if (currDiffCluster.getType() == ReactantType::D
+							|| currDiffCluster.getType() == ReactantType::T) {
+						// Set this diffusion grid value to false
+						diffusionGrid[i + 1][n] = false;
+					}
+				}
+			}
+			// Set the grid position
+			gridPosition[0] = grid[i + 1] - grid[1];
+
+			// Check if we are on a sink
+			if (fabs(gridPosition[0] - surfaceLocation) < 0.001) {
+				wasOnSink = true;
+			}
+		}
+	}
+
 	// Consider each advection handler
 	for (auto const& currAdvectionHandler : advectionHandlers) {
 
@@ -33,7 +62,7 @@ void Diffusion1DHandler::initializeDiffusionGrid(
 		// Loop on the spatial grid
 		for (int i = 0; i < nx; i++) {
 			// Set the grid position
-			gridPosition[0] = grid[i] - grid[1];
+			gridPosition[0] = grid[i + 1] - grid[1];
 
 			// Check if we are on a sink
 			if (currAdvectionHandler->isPointOnSink(gridPosition)) {
@@ -52,7 +81,7 @@ void Diffusion1DHandler::initializeDiffusionGrid(
 						n++;
 					}
 					// Set this diffusion grid value to false
-					diffusionGrid[i][n] = false;
+					diffusionGrid[i + 1][n] = false;
 				}
 			}
 		}

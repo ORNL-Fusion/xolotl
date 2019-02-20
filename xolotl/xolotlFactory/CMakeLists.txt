@@ -29,6 +29,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/desorption
                     ${CMAKE_SOURCE_DIR}/xolotlPerf
                     ${CMAKE_CURRENT_SOURCE_DIR}/vizHandler
                     ${CMAKE_BINARY_DIR}/xolotlFactory

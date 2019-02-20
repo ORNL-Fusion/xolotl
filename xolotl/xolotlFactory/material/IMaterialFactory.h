@@ -8,6 +8,7 @@
 #include <IDiffusionHandler.h>
 #include <ITrapMutationHandler.h>
 #include <IReSolutionHandler.h>
+#include <IDesorptionHandler.h>
 
 namespace xolotlFactory {
 
@@ -21,7 +22,8 @@ public:
 	/**
 	 * The destructor
 	 */
-	~IMaterialFactory() {}
+	~IMaterialFactory() {
+	}
 
 	/**
 	 * Initialize the material conditions with the different given options.
@@ -66,14 +68,21 @@ public:
 	virtual std::shared_ptr<xolotlCore::IReSolutionHandler> getReSolutionHandler() const = 0;
 
 	/**
+	 * Return the desorption handler.
+	 *
+	 * @return The desorption handler.
+	 */
+	virtual std::shared_ptr<xolotlCore::IDesorptionHandler> getDesorptionHandler() const = 0;
+
+	/**
 	 * Function that create the wanted material factory depending on the given type.
 	 *
 	 * @param materialType The type of wanted material.
 	 * @param dimension The number of dimensions of the problem.
 	 * @return The material factory.
 	 */
-	static std::shared_ptr<IMaterialFactory> createMaterialFactory(const std::string& materialType,
-			int dimension);
+	static std::shared_ptr<IMaterialFactory> createMaterialFactory(
+			const std::string& materialType, int dimension);
 
 };
 

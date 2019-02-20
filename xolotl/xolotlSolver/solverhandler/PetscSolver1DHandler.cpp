@@ -170,6 +170,10 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	// Initialize the grid for the advection
 	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid);
 
+	// Initialize the desorption handler
+	desorptionHandler->initialize(grid);
+	desorptionHandler->initializeIndex1D(surfacePosition, network, grid);
+
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar *concOffset = nullptr;
 
@@ -417,6 +421,10 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// ----- Compute the re-solution over the locally owned part of the grid -----
 		resolutionHandler->computeReSolution(network, concOffset,
 				updatedConcOffset, xi, xs);
+
+		// ----- Compute the desorption over the locally owned part of the grid -----
+		desorptionHandler->computeDesorption(concOffset, updatedConcOffset, xi,
+				xs);
 
 		// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 		network.computeAllFluxes(updatedConcOffset, xi + 1 - xs);
@@ -947,6 +955,36 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			checkPetscError(ierr,
 					"PetscSolver1DHandler::computeDiagonalJacobian: "
 							"MatSetValuesStencil (Xe_1 re-solution) failed.");
+		}
+
+		// ----- Take care of the desorption for all the reactants -----
+
+		// Store the total number of H clusters in the network for the desorption
+		int nHydrogen = desorptionHandler->getNumberOfDesorbing();
+
+		// Arguments for MatSetValuesStencil called below
+		PetscScalar desorptionVals[nHydrogen];
+		PetscInt desorptionIndices[nHydrogen];
+
+		// Compute the partial derivative from desorption at this grid point
+		int nDesorbing = desorptionHandler->computePartialsForDesorption(
+				desorptionVals, desorptionIndices, xi, xs);
+
+		// Loop on the number of hydrogen undergoing desorption to set the values
+		// in the Jacobian
+		for (int i = 0; i < nDesorbing; i++) {
+			// Set grid coordinate and component number for the row and column
+			// corresponding to the helium cluster
+			row.i = xi;
+			row.c = desorptionIndices[i];
+			col.i = xi;
+			col.c = desorptionIndices[i];
+
+			ierr = MatSetValuesStencil(J, 1, &row, 1, &col, desorptionVals + i,
+					ADD_VALUES);
+			checkPetscError(ierr,
+					"PetscSolver1DHandler::computeDiagonalJacobian: "
+							"MatSetValuesStencil (H desorption) failed.");
 		}
 	}
 

@@ -11,6 +11,7 @@
 #include <IAdvectionHandler.h>
 #include <ITrapMutationHandler.h>
 #include <IReSolutionHandler.h>
+#include <IDesorptionHandler.h>
 #include <IMaterialFactory.h>
 #include <IReactionNetwork.h>
 

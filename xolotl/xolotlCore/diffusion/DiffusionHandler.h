@@ -18,10 +18,14 @@ protected:
 	//! Collection of diffusing clusters.
 	IReactant::ConstRefVector diffusingClusters;
 
+	//! If we want the hydrogen desorption
+	bool isDesorbing;
+
 public:
 
 	//! The Constructor
-	DiffusionHandler() {
+	DiffusionHandler() :
+			isDesorbing(false) {
 	}
 
 	//! The Destructor
@@ -76,6 +80,15 @@ public:
 	 */
 	int getNumberOfDiffusing() const override {
 		return diffusingClusters.size();
+	}
+
+	/**
+	 * Set if we want the hydrogen desorption.
+	 *
+	 * @param desorb True if we want to desorb
+	 */
+	void setDesorption(bool desorb) override {
+		isDesorbing = desorb;
 	}
 
 };
