@@ -863,9 +863,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// Master process
 	if (procId == 0) {
 		// Get the fluence (Multiply by the size of the grid)
-		double fluence = fluxHandler->getFluence()
-				* (grid[Mx - 1]
-						- grid[1]);
+		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
@@ -2262,7 +2260,11 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		// Get the distance from the surface
 		double distance = grid[depthPositions1D[i] + 1] - grid[surfacePos + 1];
 
-		std::cout << "bursting at: " << distance << std::endl;
+		// Write the bursting information
+		std::ofstream outputFile;
+		outputFile.open("bursting.txt", ios::app);
+		outputFile << time << " " << distance << std::endl;
+		outputFile.close();
 
 		// Pinhole case
 		// Consider each He to reset their concentration at this grid point
@@ -2813,6 +2815,11 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 				postEventFunction1D, NULL);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: TSSetEventHandler (eventFunction1D) failed.");
+
+		// Uncomment to clear the file where the bursting info will be written
+		std::ofstream outputFile;
+		outputFile.open("bursting.txt");
+		outputFile.close();
 	}
 
 // Set the monitor to save 1D plot of xenon distribution
