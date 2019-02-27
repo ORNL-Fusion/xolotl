@@ -169,7 +169,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 		for (PetscInt j = 0; j < My; j++) {
 			for (PetscInt i = 0; i < Mx; i++) {
 				// Wait for all the processes
-				MPI_Barrier(PETSC_COMM_WORLD);
+				MPI_Barrier (PETSC_COMM_WORLD);
 
 				// Size of the concentration that will be stored
 				int concSize = -1;
@@ -216,8 +216,8 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 					continue;
 
 				// All processes create the dataset and fill it
-				tsGroup->writeConcentrationDataset(concSize, concArray, write, i, j,
-						k);
+				tsGroup->writeConcentrationDataset(concSize, concArray, write,
+						i, j, k);
 			}
 		}
 	}
@@ -536,19 +536,16 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the left
-				localRate += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ ((hxLeft + hxRight) * hxLeft);
-			}
+			// Get the Xe_1 cluster
+			auto const& cluster = *(network.get(Species::Xe, 1));
+			// Get its id
+			int id = cluster.getId() - 1;
+			// Get its size and diffusion coefficient
+			int size = cluster.getSize();
+			// Compute the flux coming from the left
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+					/ ((hxLeft + hxRight) * hxLeft);
 		}
 
 		// Right
@@ -556,19 +553,16 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the right
-				localRate += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ ((hxLeft + hxRight) * hxRight);
-			}
+			// Get the Xe_1 cluster
+			auto const& cluster = *(network.get(Species::Xe, 1));
+			// Get its id
+			int id = cluster.getId() - 1;
+			// Get its size and diffusion coefficient
+			int size = cluster.getSize();
+			// Compute the flux coming from the right
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+					/ ((hxLeft + hxRight) * hxRight);
 		}
 
 		// Y segment
@@ -578,19 +572,15 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the bottom
-				localRate += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs)
-						/ (hy * hy);
-			}
+			// Get the Xe_1 cluster
+			auto const& cluster = *(network.get(Species::Xe, 1));
+			// Get its id
+			int id = cluster.getId() - 1;
+			// Get its size and diffusion coefficient
+			int size = cluster.getSize();
+			// Compute the flux coming from the bottom
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
 		}
 
 		// Top
@@ -598,19 +588,15 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the top
-				localRate += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs)
-						/ (hy * hy);
-			}
+			// Get the Xe_1 cluster
+			auto const& cluster = *(network.get(Species::Xe, 1));
+			// Get its id
+			int id = cluster.getId() - 1;
+			// Get its size and diffusion coefficient
+			int size = cluster.getSize();
+			// Compute the flux coming from the top
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
 		}
 
 		// Z segment
@@ -620,19 +606,15 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the bottom
-				localRate += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs)
-						/ (hz * hz);
-			}
+			// Get the Xe_1 cluster
+			auto const& cluster = *(network.get(Species::Xe, 1));
+			// Get its id
+			int id = cluster.getId() - 1;
+			// Get its size and diffusion coefficient
+			int size = cluster.getSize();
+			// Compute the flux coming from the bottom
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hz * hz);
 		}
 
 		// Front
@@ -640,19 +622,15 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the top
-				localRate += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs)
-						/ (hz * hz);
-			}
+			// Get the Xe_1 cluster
+			auto const& cluster = *(network.get(Species::Xe, 1));
+			// Get its id
+			int id = cluster.getId() - 1;
+			// Get its size and diffusion coefficient
+			int size = cluster.getSize();
+			// Compute the flux coming from the top
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hz * hz);
 		}
 
 		// Middle

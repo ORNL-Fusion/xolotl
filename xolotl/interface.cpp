@@ -16,8 +16,8 @@ void XolotlInterface::printSomething() {
 	return;
 }
 
-void XolotlInterface::initializeXolotl(
-		int argc, char **argv, MPI_Comm comm, bool isStandalone) {
+void XolotlInterface::initializeXolotl(int argc, char **argv, MPI_Comm comm,
+		bool isStandalone) {
 	// Initialize the MPI communicator to use
 	xolotlCore::MPIUtils::initialize(comm);
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
@@ -214,6 +214,26 @@ void XolotlInterface::setGBLocation(int i, int j, int k) {
 		auto& solverHandler = solver->getSolverHandler();
 		// Set the coordinate of the GB
 		solverHandler.setGBLocation(i, j, k);
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return;
+}
+
+void XolotlInterface::resetGBVector() {
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		// Set the coordinate of the GB
+		solverHandler.resetGBVector();
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;

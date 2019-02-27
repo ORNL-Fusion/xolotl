@@ -844,38 +844,32 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		xi = std::get<0>(pair) - 1;
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the left
-				localRate += (double) size * solutionArray[xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ ((hxLeft + hxRight) * hxLeft);
-			}
+			// Get the Xe_1 cluster
+			auto const& cluster = *(network.get(Species::Xe, 1));
+			// Get its id
+			int id = cluster.getId() - 1;
+			// Get its size and diffusion coefficient
+			int size = cluster.getSize();
+			// Compute the flux coming from the left
+			localRate += (double) size * solutionArray[xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+					/ ((hxLeft + hxRight) * hxLeft);
 		}
 
 		// Right
 		xi = std::get<0>(pair) + 1;
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the left
-				localRate += (double) size * solutionArray[xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ ((hxLeft + hxRight) * hxRight);
-			}
+			// Get the Xe_1 cluster
+			auto const& cluster = *(network.get(Species::Xe, 1));
+			// Get its id
+			int id = cluster.getId() - 1;
+			// Get its size and diffusion coefficient
+			int size = cluster.getSize();
+			// Compute the flux coming from the left
+			localRate += (double) size * solutionArray[xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+					/ ((hxLeft + hxRight) * hxRight);
 		}
 
 		// Middle

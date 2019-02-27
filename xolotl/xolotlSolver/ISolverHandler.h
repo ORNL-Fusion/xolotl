@@ -351,6 +351,11 @@ public:
 	 */
 	virtual void setGBLocation(int i, int j = 0, int k = 0) = 0;
 
+	/**
+	 * Reset the GB vector.
+	 */
+	virtual void resetGBVector() = 0;
+
 };
 //end class ISolverHandler
 

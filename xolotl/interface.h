@@ -90,6 +90,11 @@ public:
 	void setGBLocation(int i, int j = 0, int k = 0);
 
 	/**
+	 * Reset the GB vector.
+	 */
+	void resetGBVector();
+
+	/**
 	 * Get the TS from the solver
 	 *
 	 * @return The TS

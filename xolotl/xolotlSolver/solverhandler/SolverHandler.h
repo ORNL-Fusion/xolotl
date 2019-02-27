@@ -815,7 +815,13 @@ public:
 	void setGBLocation(int i, int j = 0, int k = 0) override {
 		// Add the coordinates to the GB vector
 		gbVector.push_back(std::make_tuple(i, j, k));
+	}
 
+	/**
+	 * Reset the GB vector.
+	 */
+	void resetGBVector() override {
+		gbVector.clear();
 	}
 }
 ;
