@@ -47,6 +47,15 @@ public:
 	void initializeConcentration(DM &da, Vec &C);
 
 	/**
+	 * Set the concentrations to 0.0 where the GBs are.
+	 * \see ISolverHandler.h
+	 */
+	void initGBLocation(DM &da, Vec &C) {
+		// Doesn't do anything in 0D
+		return;
+	}
+
+	/**
 	 * Compute the new concentrations for the RHS function given an initial
 	 * vector of concentrations. Apply the diffusion, advection and all the reactions.
 	 * \see ISolverHandler.h

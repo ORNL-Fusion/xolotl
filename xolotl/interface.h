@@ -95,6 +95,11 @@ public:
 	void resetGBVector();
 
 	/**
+	 * Set the concentrations to 0.0 where the GBs are.
+	 */
+	void initGBLocation();
+
+	/**
 	 * Get the TS from the solver
 	 *
 	 * @return The TS

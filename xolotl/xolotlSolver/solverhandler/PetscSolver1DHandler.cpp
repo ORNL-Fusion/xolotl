@@ -250,6 +250,48 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	return;
 }
 
+void PetscSolver1DHandler::initGBLocation(DM &da, Vec &C) {
+	PetscErrorCode ierr;
+
+	// Pointer for the concentration vector
+	PetscScalar **concentrations = nullptr;
+	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver1DHandler::initGBLocation: "
+			"DMDAVecGetArrayDOF failed.");
+
+	// Pointer for the concentration vector at a specific grid point
+	PetscScalar *concOffset = nullptr;
+
+	// Degrees of freedom is the total number of clusters in the network
+	// + the super clusters
+	const int dof = network.getDOF();
+
+	// Loop on the GB
+	for (auto const& pair : gbVector) {
+		// Get the coordinate of the point
+		int xi = std::get<0>(pair);
+		// Check if we are on the right process
+		if (xi >= localXS && xi < localXS + localXM) {
+			// Get the local concentration
+			concOffset = concentrations[xi];
+
+			// Loop on all the clusters to initialize at 0.0
+			for (int n = 0; n < dof - 1; n++) {
+				concOffset[n] = 0.0;
+			}
+		}
+	}
+
+	/*
+	 Restore vectors
+	 */
+	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver1DHandler::initGBLocation: "
+			"DMDAVecRestoreArrayDOF failed.");
+
+	return;
+}
+
 void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		PetscReal ftime) {
 	PetscErrorCode ierr;

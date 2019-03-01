@@ -63,6 +63,14 @@ public:
 	virtual void initializeConcentration(DM &da, Vec &C) = 0;
 
 	/**
+	 * Set the concentrations to 0.0 where the GBs are.
+	 *
+	 * @param da The PETSc distributed array
+	 * @param C The PETSc solution vector
+	 */
+	virtual void initGBLocation(DM &da, Vec &C) = 0;
+
+	/**
 	 * Compute the new concentrations for the RHS function given an initial
 	 * vector of concentrations.
 	 *

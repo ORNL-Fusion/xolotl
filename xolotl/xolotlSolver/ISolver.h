@@ -76,6 +76,11 @@ public:
 	virtual void setTimes(double finalTime, double dt) = 0;
 
 	/**
+	 * This operation resets the concentrations where the GB are located.
+	 */
+	virtual void initGBLocation() = 0;
+
+	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */

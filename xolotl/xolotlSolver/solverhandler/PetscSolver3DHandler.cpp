@@ -292,6 +292,52 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 	return;
 }
 
+void PetscSolver3DHandler::initGBLocation(DM &da, Vec &C) {
+	PetscErrorCode ierr;
+
+	// Pointer for the concentration vector
+	PetscScalar ****concentrations = nullptr;
+	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver3DHandler::initGBLocation: "
+			"DMDAVecGetArrayDOF failed.");
+
+	// Pointer for the concentration vector at a specific grid point
+	PetscScalar *concOffset = nullptr;
+
+	// Degrees of freedom is the total number of clusters in the network
+	// + the super clusters
+	const int dof = network.getDOF();
+
+	// Loop on the GB
+	for (auto const& pair : gbVector) {
+		// Get the coordinate of the point
+		int xi = std::get<0>(pair);
+		int yj = std::get<1>(pair);
+		int zk = std::get<2>(pair);
+		// Check if we are on the right process
+		if (xi >= localXS && xi < localXS + localXM && yj >= localYS
+				&& yj < localYS + localYM && zk >= localZS
+				&& zk < localZS + localZM) {
+			// Get the local concentration
+			concOffset = concentrations[zk][yj][xi];
+
+			// Loop on all the clusters to initialize at 0.0
+			for (int n = 0; n < dof - 1; n++) {
+				concOffset[n] = 0.0;
+			}
+		}
+	}
+
+	/*
+	 Restore vectors
+	 */
+	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver3DHandler::initGBLocation: "
+			"DMDAVecRestoreArrayDOF failed.");
+
+	return;
+}
+
 void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		PetscReal ftime) {
 	PetscErrorCode ierr;
@@ -1097,7 +1143,8 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				// Compute the partial derivative from re-solution at this grid point
 				int nResoluting =
 						resolutionHandler->computePartialsForReSolution(network,
-								resolutionVals, resolutionIndices, xi, localXS, yj, zk);
+								resolutionVals, resolutionIndices, xi, localXS,
+								yj, zk);
 
 				// Loop on the number of xenon to set the values in the Jacobian
 				for (int i = 0; i < nResoluting; i++) {

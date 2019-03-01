@@ -332,6 +332,14 @@ void PetscSolver::setTimes(double finalTime, double dt) {
 	return;
 }
 
+void PetscSolver::initGBLocation() {
+	// Initialize the concentrations in the solution vector
+	auto& solverHandler = Solver::getSolverHandler();
+	solverHandler.initGBLocation(da, C);
+
+	return;
+}
+
 void PetscSolver::solve() {
 	PetscErrorCode ierr;
 

@@ -107,6 +107,11 @@ public:
 	void setTimes(double finalTime, double dt) override;
 
 	/**
+	 * This operation resets the concentrations where the GB are located.
+	 */
+	void initGBLocation() override;
+
+	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */
