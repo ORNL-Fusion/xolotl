@@ -102,8 +102,7 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 								auto size = cluster.getSize();
 								double fractionRate = (a1 * exp(-b1 * radius)
 										+ (y0 - a1) / (1.0 + c * pow(radius, 2.0))
-										* exp(-b2 * pow(radius, 2.0))) * 1.0e-4
-								* (double) size;
+										* exp(-b2 * pow(radius, 2.0))) * 1.0e-4;
 								// Add the size to the vector
 								sizeVec.emplace_back(&cluster, previousSmaller, fractionRate, coefs);
 
@@ -142,8 +141,7 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 							auto size = cluster.getSize();
 							double fractionRate = (a1 * exp(-b1 * radius)
 									+ (y0 - a1) / (1.0 + c * pow(radius, 2.0))
-									* exp(-b2 * pow(radius, 2.0))) * 1.0e-4
-							* (double) size;
+									* exp(-b2 * pow(radius, 2.0))) * 1.0e-4;
 							// Add the size to the vector
 							sizeVec.emplace_back(&cluster, previousSmaller, fractionRate, coefs);
 						}
@@ -163,8 +161,7 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 						auto size = cluster.getSize();
 						double fractionRate = (a1 * exp(-b1 * radius)
 								+ (y0 - a1) / (1.0 + c * pow(radius, 2.0))
-								* exp(-b2 * pow(radius, 2.0))) * 1.0e-4
-						* (double) size;
+								* exp(-b2 * pow(radius, 2.0))) * 1.0e-4;
 						// Add the size to the vector
 						sizeVec.emplace_back(&cluster, smallerCluster, fractionRate, coefs);
 					}
