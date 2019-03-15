@@ -12,7 +12,7 @@ if(NOT VTKm_DIR)
 endif()
 
 find_package(VTKm REQUIRED)
-set(VTKm_LIBRARIES vtkm_cont vtkm_rendering)
+set(VTKm_LIBRARIES vtkm_worklet vtkm_cont vtkm_rendering)
 set(VTKM_FOUND TRUE)
 
 message(STATUS "VTKm includes = ${VTKm_INCLUDE_DIRS}")
