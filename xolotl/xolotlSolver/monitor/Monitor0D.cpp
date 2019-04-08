@@ -287,6 +287,14 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	// Set the output precision
 	const int outputPrecision = 5;
 
+	// Average the diameters
+	iDiameter = iDiameter / iDensity;
+	vDiameter = vDiameter / vDensity;
+	voidDiameter = voidDiameter / voidDensity;
+	perfectDiameter = perfectDiameter / perfectDensity;
+	faultedDiameter = faultedDiameter / faultedDensity;
+	frankDiameter = frankDiameter / frankDensity;
+
 	// Open the output file
 	std::fstream outputFile;
 	outputFile.open("Alloy.dat", std::fstream::out | std::fstream::app);

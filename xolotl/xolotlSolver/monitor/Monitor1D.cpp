@@ -311,7 +311,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 			myConcs[currIdx][3] = network.getTotalAtomConcentration(2);
 			myConcs[currIdx][4] = network.getTotalVConcentration();
 			myConcs[currIdx][5] = network.getTotalIConcentration();
-			myConcs[currIdx][6] = gridPointSolution[dof-1];
+			myConcs[currIdx][6] = gridPointSolution[dof - 1];
 		}
 	}
 
@@ -356,7 +356,6 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	// Update the previous time
 	if ((int) ((time + dt / 10.0) / hdf5Stride1D) > hdf5Previous1D)
 		hdf5Previous1D++;
-
 
 	// Get the number of processes
 	int worldSize;
@@ -1328,16 +1327,18 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 				/ (grid[Mx] - grid[surfacePos + 1]);
 		frankTotalDensity = frankTotalDensity
 				/ (grid[Mx] - grid[surfacePos + 1]);
-		iTotalDiameter = iTotalDiameter / (grid[Mx] - grid[surfacePos + 1]);
-		vTotalDiameter = vTotalDiameter / (grid[Mx] - grid[surfacePos + 1]);
+		iTotalDiameter = iTotalDiameter
+				/ (iTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+		vTotalDiameter = vTotalDiameter
+				/ (vTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
 		voidTotalDiameter = voidTotalDiameter
-				/ (grid[Mx] - grid[surfacePos + 1]);
+				/ (voidTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
 		perfectTotalDiameter = perfectTotalDiameter
-				/ (grid[Mx] - grid[surfacePos + 1]);
+				/ (perfectTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
 		faultedTotalDiameter = faultedTotalDiameter
-				/ (grid[Mx] - grid[surfacePos + 1]);
+				/ (faultedTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
 		frankTotalDiameter = frankTotalDiameter
-				/ (grid[Mx] - grid[surfacePos + 1]);
+				/ (frankTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
 
 		// Set the output precision
 		const int outputPrecision = 5;
