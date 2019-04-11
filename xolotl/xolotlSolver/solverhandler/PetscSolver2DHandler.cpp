@@ -19,11 +19,21 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
-	ierr = DMDACreate2d(xolotlComm, DM_BOUNDARY_MIRROR, DM_BOUNDARY_PERIODIC,
-			DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE, PETSC_DECIDE, dof, 1, NULL,
-			NULL, &da);
-	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
-			"DMDACreate2d failed.");
+	if (isMirror) {
+		ierr = DMDACreate2d(xolotlComm, DM_BOUNDARY_MIRROR,
+				DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE,
+				PETSC_DECIDE, dof, 1, NULL,
+				NULL, &da);
+		checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
+				"DMDACreate2d failed.");
+	} else {
+		ierr = DMDACreate2d(xolotlComm, DM_BOUNDARY_PERIODIC,
+				DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE,
+				PETSC_DECIDE, dof, 1, NULL,
+				NULL, &da);
+		checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
+				"DMDACreate2d failed.");
+	}
 	ierr = DMSetFromOptions(da);
 	checkPetscError(ierr,
 			"PetscSolver2DHandler::createSolverContext: DMSetFromOptions failed.");
@@ -288,7 +298,8 @@ void PetscSolver2DHandler::initGBLocation(DM &da, Vec &C) {
 		int xi = std::get<0>(pair);
 		int yj = std::get<1>(pair);
 		// Check if we are on the right process
-		if (xi >= localXS && xi < localXS + localXM && yj >= localYS && yj < localYS + localYM) {
+		if (xi >= localXS && xi < localXS + localXM && yj >= localYS
+				&& yj < localYS + localYM) {
 			// Get the local concentration
 			concOffset = concentrations[yj][xi];
 
@@ -1020,7 +1031,8 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Compute the partial derivative from re-solution at this grid point
 			int nResoluting = resolutionHandler->computePartialsForReSolution(
-					network, resolutionVals, resolutionIndices, xi, localXS, yj);
+					network, resolutionVals, resolutionIndices, xi, localXS,
+					yj);
 
 			// Loop on the number of xenon to set the values in the Jacobian
 			for (int i = 0; i < nResoluting; i++) {

@@ -19,12 +19,23 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
-	ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_MIRROR, DM_BOUNDARY_PERIODIC,
-			DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, nZ, PETSC_DECIDE,
-			PETSC_DECIDE, PETSC_DECIDE, dof, 1, NULL,
-			NULL, NULL, &da);
-	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-			"DMDACreate3d failed.");
+	if (isMirror) {
+		ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_MIRROR,
+				DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR,
+				nX, nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1,
+				NULL,
+				NULL, NULL, &da);
+		checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
+				"DMDACreate3d failed.");
+	} else {
+		ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_PERIODIC,
+				DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR,
+				nX, nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1,
+				NULL,
+				NULL, NULL, &da);
+		checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
+				"DMDACreate3d failed.");
+	}
 	ierr = DMSetFromOptions(da);
 	checkPetscError(ierr,
 			"PetscSolver3DHandler::createSolverContext: DMSetFromOptions failed.");

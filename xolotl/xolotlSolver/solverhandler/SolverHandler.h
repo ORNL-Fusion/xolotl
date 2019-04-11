@@ -121,6 +121,9 @@ protected:
 	//! If the user wants to burst bubbles.
 	bool bubbleBursting;
 
+	//! If the user wants to use x mirror boundary conditions or periodic ones.
+	bool isMirror;
+
 	//! The sputtering yield for the problem.
 	double sputteringYield;
 
@@ -331,10 +334,10 @@ protected:
 					1), bottomOffset(1), topOffset(1), frontOffset(1), backOffset(
 					1), initialVConc(0.0), electronicStoppingPower(0.0), dimension(
 					-1), portion(0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
-					false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
-					nullptr), diffusionHandler(nullptr), mutationHandler(
-					nullptr), resolutionHandler(nullptr), tauBursting(10.0), rngSeed(
-					0) {
+					false), isMirror(true), sputteringYield(0.0), fluxHandler(
+					nullptr), temperatureHandler(nullptr), diffusionHandler(
+					nullptr), mutationHandler(nullptr), resolutionHandler(
+					nullptr), tauBursting(10.0), rngSeed(0) {
 	}
 
 public:
@@ -451,6 +454,10 @@ public:
 			useRegularGrid = "NE";
 		else
 			useRegularGrid = "PSI";
+
+		// Boundary conditions in the X direction
+		if (options.getMaterial() == "Fuel")
+			isMirror = false;
 
 		// Set the boundary conditions (= 1: free surface; = 0: mirror or periodic)
 		leftOffset = options.getLeftBoundary();

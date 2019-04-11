@@ -22,10 +22,17 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
-	ierr = DMDACreate1d(xolotlComm, DM_BOUNDARY_MIRROR, nX, dof, 1,
-	NULL, &da);
-	checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: "
-			"DMDACreate1d failed.");
+	if (isMirror) {
+		ierr = DMDACreate1d(xolotlComm, DM_BOUNDARY_MIRROR, nX, dof, 1,
+		NULL, &da);
+		checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: "
+				"DMDACreate1d failed.");
+	} else {
+		ierr = DMDACreate1d(xolotlComm, DM_BOUNDARY_PERIODIC, nX, dof, 1,
+		NULL, &da);
+		checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: "
+				"DMDACreate1d failed.");
+	}
 	ierr = DMSetFromOptions(da);
 	checkPetscError(ierr,
 			"PetscSolver1DHandler::createSolverContext: DMSetFromOptions failed.");
