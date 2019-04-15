@@ -857,6 +857,7 @@ double PSIClusterNetworkLoader::getHeVFormationEnergy(int numHe, int numV) {
 
 void PSIClusterNetworkLoader::applySectionalGrouping(
 		PSIClusterReactionNetwork& network) {
+
 	// Define the phase space for the network
 	int nDim = 1;
 	Array<int, 5> list;

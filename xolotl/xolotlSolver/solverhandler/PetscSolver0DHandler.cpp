@@ -46,6 +46,10 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
 
+	// Initialize the re-solution handler here
+	// because it adds connectivity
+	resolutionHandler->initialize(network, electronicStoppingPower);
+
 	// Get the diagonal fill
 	network.getDiagonalFill(dfill);
 
@@ -130,17 +134,21 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
-		// Read the concentrations from the HDF5 file
+		// Read the concentrations from the HDF5 file for
+		// each of our grid points.
+		assert(concGroup);
 		auto tsGroup = concGroup->getLastTimestepGroup();
-		auto concVector = tsGroup->readGridPoint(0);
+		assert(tsGroup);
+		auto myConcs = tsGroup->readConcentrations(*xfile, 0, 1);
 
+		// Apply the concentrations we just read.
 		concOffset = concentrations[0];
-		// Loop on the concVector size
-		for (unsigned int l = 0; l < concVector.size(); l++) {
-			concOffset[(int) concVector.at(l).at(0)] = concVector.at(l).at(1);
+
+		for (auto const& currConcData : myConcs[0]) {
+			concOffset[currConcData.first] = currConcData.second;
 		}
 		// Set the temperature in the network
-		double temp = concVector.at(concVector.size() - 1).at(1);
+		double temp = myConcs[0][myConcs[0].size() - 1].second;
 		network.setTemperature(temp, 0);
 		lastTemperature[0] = temp;
 	}
@@ -151,6 +159,9 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
 	checkPetscError(ierr, "PetscSolver0DHandler::initializeConcentration: "
 			"DMDAVecRestoreArrayDOF failed.");
+
+	// Set the rate for re-solution
+	resolutionHandler->updateReSolutionRate(fluxHandler->getFluxAmplitude());
 
 	return;
 }
@@ -197,7 +208,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temperature) > 1.0) {
+	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
 		network.setTemperature(temperature);
 		lastTemperature[0] = temperature;
 	}
@@ -211,6 +222,10 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	// ----- Account for flux of incoming particles -----
 	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
+
+	// ----- Compute the re-solution -----
+	resolutionHandler->computeReSolution(network, concOffset, updatedConcOffset,
+			0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 	network.computeAllFluxes(updatedConcOffset);
@@ -263,6 +278,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	// Arguments for MatSetValuesStencil called below
 	MatStencil rowId;
 	MatStencil colIds[dof];
+	MatStencil colId;
 	int pdColIdsVectorSize = 0;
 
 	// Set the grid position
@@ -275,7 +291,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temperature) > 1.0) {
+	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
 		network.setTemperature(temperature);
 		lastTemperature[0] = temperature;
 	}
@@ -313,6 +329,88 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				reactingPartialsForCluster.data(), ADD_VALUES);
 		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
 				"MatSetValuesStencil (reactions) failed.");
+	}
+
+	// ----- Take care of the re-solution for all the reactants -----
+
+	// Store the total number of Xe clusters in the network
+	int nXenon = resolutionHandler->getNumberOfReSoluting();
+
+	// Arguments for MatSetValuesStencil called below
+	PetscScalar resolutionVals[10 * nXenon];
+	PetscInt resolutionIndices[10 * nXenon];
+
+	// Compute the partial derivative from re-solution at this grid point
+	int nResoluting = resolutionHandler->computePartialsForReSolution(network,
+			resolutionVals, resolutionIndices, 0, 0);
+
+	// Loop on the number of xenon to set the values in the Jacobian
+	for (int i = 0; i < nResoluting; i++) {
+		// Set grid coordinate and component number for the row and column
+		// corresponding to the  large xenon cluster
+		rowId.i = 0;
+		rowId.c = resolutionIndices[10 * i];
+		colId.i = 0;
+		colId.c = resolutionIndices[10 * i];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i), ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (large Xe re-solution) failed.");
+		colId.c = resolutionIndices[(10 * i) + 1];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i) + 1, ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (large Xe re-solution) failed.");
+		rowId.c = resolutionIndices[(10 * i) + 1];
+		colId.c = resolutionIndices[10 * i];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i) + 2, ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (large Xe re-solution) failed.");
+		colId.c = resolutionIndices[(10 * i) + 1];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i) + 3, ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (large Xe re-solution) failed.");
+
+		// Set component number for the row
+		// corresponding to the smaller xenon cluster created through re-solution
+		rowId.c = resolutionIndices[(10 * i) + 4];
+		colId.c = resolutionIndices[10 * i];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i) + 4, ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (smaller Xe re-solution) failed.");
+		colId.c = resolutionIndices[(10 * i) + 1];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i) + 5, ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (smaller Xe re-solution) failed.");
+		rowId.c = resolutionIndices[(10 * i) + 5];
+		colId.c = resolutionIndices[10 * i];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i) + 6, ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (smaller Xe re-solution) failed.");
+		colId.c = resolutionIndices[(10 * i) + 1];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i) + 7, ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (smaller Xe re-solution) failed.");
+
+		// Set component number for the row
+		// corresponding to the single xenon created through re-solution
+		rowId.c = resolutionIndices[(10 * i) + 8];
+		colId.c = resolutionIndices[10 * i];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i) + 8, ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (Xe_1 re-solution) failed.");
+		colId.c = resolutionIndices[(10 * i) + 1];
+		ierr = MatSetValuesStencil(J, 1, &rowId, 1, &colId,
+				resolutionVals + (10 * i) + 9, ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (Xe_1 re-solution) failed.");
 	}
 
 	/*

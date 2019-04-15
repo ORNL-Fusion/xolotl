@@ -30,18 +30,18 @@ public:
 	 * @param dfillMap Map indicating row/column of diffusing variables in diagonal fill map.
 	 */
 	virtual void initializeTemperature(const IReactionNetwork& network,
-            IReactionNetwork::SparseFillMap& ofillMap,
-            IReactionNetwork::SparseFillMap& dfillMap) = 0;
+			IReactionNetwork::SparseFillMap& ofillMap,
+			IReactionNetwork::SparseFillMap& dfillMap) = 0;
 
 	/**
 	 * This operation returns the temperature at the given position
 	 * and time.
 	 *
-	 * @param position The position
+	 * @param fraction The position fraction on the grid
 	 * @param currentTime The time
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const Point<3>& position,
+	virtual double getTemperature(const Point<3>& fraction,
 			double currentTime) const = 0;
 
 	/**
@@ -83,9 +83,14 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
 	 * @param ix The position on the x grid
+	 * @param sy The space parameter, depending on the grid step size in the y direction
+	 * @param iy The position on the y grid
+	 * @param sz The space parameter, depending on the grid step size in the z direction
+	 * @param iz The position on the z grid
 	 */
 	virtual void computeTemperature(double **concVector,
-			double *updatedConcOffset, double hxLeft, double hxRight, int xi) = 0;
+			double *updatedConcOffset, double hxLeft, double hxRight, int xi,
+			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) = 0;
 
 	/**
 	 * Compute the partials due to the heat equation.
@@ -98,9 +103,14 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
 	 * @param ix The position on the x grid
+	 * @param sy The space parameter, depending on the grid step size in the y direction
+	 * @param iy The position on the y grid
+	 * @param sz The space parameter, depending on the grid step size in the z direction
+	 * @param iz The position on the z grid
 	 */
 	virtual void computePartialsForTemperature(double *val, int *indices,
-			double hxLeft, double hxRight, int xi) = 0;
+			double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
+			double sz = 0.0, int iz = 0) = 0;
 
 };
 //end class ITemperatureHandler

@@ -83,7 +83,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	int procId;
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 	if (procId == 0) {
-		for (int i = 0; i < grid.size() - 1; i++) {
+		for (int i = 1; i < grid.size() - 1; i++) {
 			std::cout << grid[i + 1] - grid[surfacePosition[0][0] + 1] << " ";
 		}
 		std::cout << std::endl;
@@ -119,6 +119,10 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	mutationHandler->initialize(network, grid, nY, hY, nZ, hZ);
 	mutationHandler->initializeIndex3D(surfacePosition, network,
 			advectionHandlers, grid, nY, hY, nZ, hZ);
+
+	// Initialize the re-solution handler here
+	// because it adds connectivity
+	resolutionHandler->initialize(network, electronicStoppingPower);
 
 	// Get the diagonal fill
 	network.getDiagonalFill(dfill);
@@ -160,15 +164,15 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 			"DMDAGetCorners failed.");
 
 	// Initialize the last temperature at each grid point on this process
-	for (int i = 0; i < xm; i++) {
+	for (int i = 0; i < xm + 2; i++) {
 		lastTemperature.push_back(0.0);
 	}
-	network.addGridPoints(xm);
+	network.addGridPoints(xm + 2);
 
 	// Get the last time step written in the HDF5 file
 	bool hasConcentrations = false;
-	std::unique_ptr < xolotlCore::XFile > xfile;
-	std::unique_ptr < xolotlCore::XFile::ConcentrationGroup > concGroup;
+	std::unique_ptr<xolotlCore::XFile> xfile;
+	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
 	if (not networkName.empty()) {
 
 		xfile.reset(new xolotlCore::XFile(networkName));
@@ -214,8 +218,10 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 				}
 
 				// Temperature
-				xolotlCore::Point < 3 > gridPosition { grid[i + 1] - grid[1],
-						0.0, 0.0 };
+				xolotlCore::Point<3> gridPosition { (grid[i + 1]
+						- grid[surfacePosition[j][k] + 1])
+						/ (grid[grid.size() - 1]
+								- grid[surfacePosition[j][k] + 1]), 0.0, 0.0 };
 				concOffset[dof - 1] = temperatureHandler->getTemperature(
 						gridPosition, 0.0);
 
@@ -255,7 +261,8 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 									concVector.at(l).at(1);
 						}
 						// Set the temperature in the network
-						double temp = concVector.at(concVector.size() - 1).at(1);
+						double temp = concVector.at(concVector.size() - 1).at(
+								1);
 						network.setTemperature(temp, i - xs);
 						// Update the modified trap-mutation rate
 						// that depends on the network reaction rates
@@ -273,6 +280,9 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
 	checkPetscError(ierr, "PetscSolver3DHandler::initializeConcentration: "
 			"DMDAVecRestoreArrayDOF failed.");
+
+	// Set the rate for re-solution
+	resolutionHandler->updateReSolutionRate(fluxHandler->getFluxAmplitude());
 
 	return;
 }
@@ -315,7 +325,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	// Declarations for variables used in the loop
 	double **concVector = new double*[7];
-	xolotlCore::Point < 3 > gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 	std::vector<double> incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
 
@@ -393,7 +403,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				if (xi == surfacePosition[yj][zk]) {
 					temperatureHandler->computeTemperature(concVector,
 							updatedConcOffset, grid[xi + 1] - grid[xi],
-							grid[xi + 2] - grid[xi + 1], xi);
+							grid[xi + 2] - grid[xi + 1], xi, sy, yj, sz, zk);
 				}
 
 				// Boundary conditions
@@ -404,22 +414,51 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 						|| zk > nZ - 1 - backOffset) {
 					continue;
 				}
+				// Free surface GB
+				bool skip = false;
+				for (auto &pair : gbVector) {
+					if (xi == std::get<0>(pair) && yj == std::get<1>(pair)
+							&& zk == std::get<2>(pair)) {
+						skip = true;
+						break;
+					}
+				}
+				if (skip)
+					continue;
 
-				// Set the grid position
-				gridPosition[0] = grid[xi + 1] - grid[1];
+				// Update the network if the temperature changed
+				// left
+				double temperature = concs[zk][yj][xi - 1][dof - 1];
+				if (std::fabs(lastTemperature[xi - xs] - temperature) > 0.1) {
+					network.setTemperature(temperature, xi - xs);
+					lastTemperature[xi - xs] = temperature;
+				}
+				// right
+				temperature = concs[zk][yj][xi + 1][dof - 1];
+				if (std::fabs(lastTemperature[xi + 2 - xs] - temperature)
+						> 0.1) {
+					network.setTemperature(temperature, xi + 2 - xs);
+					lastTemperature[xi + 2 - xs] = temperature;
+				}
+
+				// Set the grid fraction
+				gridPosition[0] = (grid[xi + 1]
+						- grid[surfacePosition[yj][zk] + 1])
+						/ (grid[grid.size() - 1]
+								- grid[surfacePosition[yj][zk] + 1]);
 
 				// Get the temperature from the temperature handler
 				temperatureHandler->setTemperature(concOffset);
-				double temperature = temperatureHandler->getTemperature(
-						gridPosition, ftime);
-
-				// Update the network if the temperature changed
-				if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
-					network.setTemperature(temperature, xi - xs);
-					// Update the modified trap-mutation rate that depends on the
-					// network reaction rates
+				temperature = temperatureHandler->getTemperature(gridPosition,
+						ftime);
+				// middle
+				if (std::fabs(lastTemperature[xi + 1 - xs] - temperature)
+						> 0.1) {
+					network.setTemperature(temperature, xi + 1 - xs);
+					// Update the modified trap-mutation rate
+					// that depends on the network reaction rates
 					mutationHandler->updateTrapMutationRate(network);
-					lastTemperature[xi - xs] = temperature;
+					lastTemperature[xi + 1 - xs] = temperature;
 				}
 
 				// Copy data into the ReactionNetwork so that it can
@@ -436,7 +475,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				// ---- Compute the temperature over the locally owned part of the grid -----
 				temperatureHandler->computeTemperature(concVector,
 						updatedConcOffset, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi);
+						grid[xi + 2] - grid[xi + 1], xi, sy, yj, sz, zk);
 
 				// ---- Compute diffusion over the locally owned part of the grid -----
 				diffusionHandler->computeDiffusion(network, concVector,
@@ -444,6 +483,8 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 						grid[xi + 2] - grid[xi + 1], xi, xs, sy, yj, sz, zk);
 
 				// ---- Compute advection over the locally owned part of the grid -----
+				// Set the grid position
+				gridPosition[0] = grid[xi + 1] - grid[1];
 				for (int i = 0; i < advectionHandlers.size(); i++) {
 					advectionHandlers[i]->computeAdvection(network,
 							gridPosition, concVector, updatedConcOffset,
@@ -456,8 +497,12 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				mutationHandler->computeTrapMutation(network, concOffset,
 						updatedConcOffset, xi, xs, yj, zk);
 
+				// ----- Compute the re-solution over the locally owned part of the grid -----
+				resolutionHandler->computeReSolution(network, concOffset,
+						updatedConcOffset, xi, xs, yj, zk);
+
 				// ----- Compute the reaction fluxes over the locally owned part of the grid -----
-				network.computeAllFluxes(updatedConcOffset, xi - xs);
+				network.computeAllFluxes(updatedConcOffset, xi + 1 - xs);
 			}
 		}
 	}
@@ -532,7 +577,7 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	PetscInt diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
 	PetscInt advecIndices[nAdvec];
-	xolotlCore::Point < 3 > gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	/*
 	 Loop over grid points computing Jacobian terms for diffusion and advection
@@ -557,7 +602,7 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					// Get the partial derivatives for the temperature
 					temperatureHandler->computePartialsForTemperature(diffVals,
 							diffIndices, grid[xi + 1] - grid[xi],
-							grid[xi + 2] - grid[xi + 1], xi);
+							grid[xi + 2] - grid[xi + 1], xi, sy, yj, sz, zk);
 
 					// Set grid coordinate and component number for the row
 					row.i = xi;
@@ -579,8 +624,24 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					cols[2].j = yj;
 					cols[2].k = zk;
 					cols[2].c = diffIndices[0];
+					cols[3].i = xi; // bottom
+					cols[3].j = yj - 1;
+					cols[3].k = zk;
+					cols[3].c = diffIndices[0];
+					cols[4].i = xi; // top
+					cols[4].j = yj + 1;
+					cols[4].k = zk;
+					cols[4].c = diffIndices[0];
+					cols[5].i = xi; // front
+					cols[5].j = yj;
+					cols[5].k = zk - 1;
+					cols[5].c = diffIndices[0];
+					cols[6].i = xi; // back
+					cols[6].j = yj;
+					cols[6].k = zk + 1;
+					cols[6].c = diffIndices[0];
 
-					ierr = MatSetValuesStencil(J, 1, &row, 3, cols, diffVals,
+					ierr = MatSetValuesStencil(J, 1, &row, 7, cols, diffVals,
 							ADD_VALUES);
 					checkPetscError(ierr,
 							"PetscSolver3DHandler::computeOffDiagonalJacobian: "
@@ -595,29 +656,55 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 						|| yj > nY - 1 - topOffset || zk < frontOffset
 						|| zk > nZ - 1 - backOffset)
 					continue;
+				// Free surface GB
+				bool skip = false;
+				for (auto &pair : gbVector) {
+					if (xi == std::get<0>(pair) && yj == std::get<1>(pair)
+							&& zk == std::get<2>(pair)) {
+						skip = true;
+						break;
+					}
+				}
+				if (skip)
+					continue;
 
-				// Set the grid position
-				gridPosition[0] = grid[xi + 1] - grid[1];
+				// Update the network if the temperature changed
+				// left
+				double temperature = concs[zk][yj][xi - 1][dof - 1];
+				if (std::fabs(lastTemperature[xi - xs] - temperature) > 0.1) {
+					network.setTemperature(temperature, xi - xs);
+					lastTemperature[xi - xs] = temperature;
+				}
+				// right
+				temperature = concs[zk][yj][xi + 1][dof - 1];
+				if (std::fabs(lastTemperature[xi + 2 - xs] - temperature)
+						> 0.1) {
+					network.setTemperature(temperature, xi + 2 - xs);
+					lastTemperature[xi + 2 - xs] = temperature;
+				}
+
+				// Set the grid fraction
+				gridPosition[0] = (grid[xi + 1]
+						- grid[surfacePosition[yj][zk] + 1])
+						/ (grid[grid.size() - 1]
+								- grid[surfacePosition[yj][zk] + 1]);
 
 				// Get the temperature from the temperature handler
 				concOffset = concs[zk][yj][xi];
 				temperatureHandler->setTemperature(concOffset);
-				double temperature = temperatureHandler->getTemperature(
-						gridPosition, ftime);
-
-				// Update the network if the temperature changed
-				if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
-					network.setTemperature(temperature, xi - xs);
-					// Update the modified trap-mutation rate that depends on the
-					// network reaction rates
-					mutationHandler->updateTrapMutationRate(network);
-					lastTemperature[xi - xs] = temperature;
+				temperature = temperatureHandler->getTemperature(gridPosition,
+						ftime);
+				// middle
+				if (std::fabs(lastTemperature[xi + 1 - xs] - temperature)
+						> 0.1) {
+					network.setTemperature(temperature, xi + 1 - xs);
+					lastTemperature[xi + 1 - xs] = temperature;
 				}
 
 				// Get the partial derivatives for the temperature
 				temperatureHandler->computePartialsForTemperature(diffVals,
 						diffIndices, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi);
+						grid[xi + 2] - grid[xi + 1], xi, sy, yj, sz, zk);
 
 				// Set grid coordinate and component number for the row
 				row.i = xi;
@@ -639,8 +726,24 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				cols[2].j = yj;
 				cols[2].k = zk;
 				cols[2].c = diffIndices[0];
+				cols[3].i = xi; // bottom
+				cols[3].j = yj - 1;
+				cols[3].k = zk;
+				cols[3].c = diffIndices[0];
+				cols[4].i = xi; // top
+				cols[4].j = yj + 1;
+				cols[4].k = zk;
+				cols[4].c = diffIndices[0];
+				cols[5].i = xi; // front
+				cols[5].j = yj;
+				cols[5].k = zk - 1;
+				cols[5].c = diffIndices[0];
+				cols[6].i = xi; // back
+				cols[6].j = yj;
+				cols[6].k = zk + 1;
+				cols[6].c = diffIndices[0];
 
-				ierr = MatSetValuesStencil(J, 1, &row, 3, cols, diffVals,
+				ierr = MatSetValuesStencil(J, 1, &row, 7, cols, diffVals,
 						ADD_VALUES);
 				checkPetscError(ierr,
 						"PetscSolver3DHandler::computeOffDiagonalJacobian: "
@@ -699,6 +802,8 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				}
 
 				// Get the partial derivatives for the advection
+				// Set the grid position
+				gridPosition[0] = grid[xi + 1] - grid[1];
 				for (int l = 0; l < advectionHandlers.size(); l++) {
 					advectionHandlers[l]->computePartialsForAdvection(network,
 							advecVals, advecIndices, gridPosition,
@@ -796,7 +901,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 	// Declarations for variables used in the loop
 	double atomConc = 0.0, totalAtomConc = 0.0;
-	xolotlCore::Point < 3 > gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Loop over the grid points
 	for (PetscInt zk = frontOffset; zk < nZ - backOffset; zk++) {
@@ -850,9 +955,23 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 						|| yj > nY - 1 - topOffset || zk < frontOffset
 						|| zk > nZ - 1 - backOffset)
 					continue;
+				// Free surface GB
+				bool skip = false;
+				for (auto &pair : gbVector) {
+					if (xi == std::get<0>(pair) && yj == std::get<1>(pair)
+							&& zk == std::get<2>(pair)) {
+						skip = true;
+						break;
+					}
+				}
+				if (skip)
+					continue;
 
-				// Set the grid position
-				gridPosition[0] = grid[xi + 1] - grid[1];
+				// Set the grid fraction
+				gridPosition[0] = (grid[xi + 1]
+						- grid[surfacePosition[yj][zk] + 1])
+						/ (grid[grid.size() - 1]
+								- grid[surfacePosition[yj][zk] + 1]);
 
 				// Get the temperature from the temperature handler
 				concOffset = concs[zk][yj][xi];
@@ -861,12 +980,13 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 						gridPosition, ftime);
 
 				// Update the network if the temperature changed
-				if (std::fabs(lastTemperature[xi - xs] - temperature) > 1.0) {
-					network.setTemperature(temperature, xi - xs);
+				if (std::fabs(lastTemperature[xi + 1 - xs] - temperature)
+						> 0.1) {
+					network.setTemperature(temperature, xi + 1 - xs);
 					// Update the modified trap-mutation rate that depends on the
 					// network reaction rates
 					mutationHandler->updateTrapMutationRate(network);
-					lastTemperature[xi - xs] = temperature;
+					lastTemperature[xi + 1 - xs] = temperature;
 				}
 
 				// Copy data into the ReactionNetwork so that it can
@@ -877,7 +997,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 				// Compute all the partial derivatives for the reactions
 				network.computeAllPartials(reactionStartingIdx, reactionIndices,
-						reactionVals, xi - xs);
+						reactionVals, xi + 1 - xs);
 
 				// Update the column in the Jacobian that represents each DOF
 				for (int i = 0; i < dof - 1; i++) {
@@ -907,7 +1027,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 							colIds, reactingPartialsForCluster.data(),
 							ADD_VALUES);
 					checkPetscError(ierr,
-							"PetscSolver1DHandler::computeDiagonalJacobian: "
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
 									"MatSetValuesStencil (reactions) failed.");
 				}
 
@@ -965,6 +1085,104 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					checkPetscError(ierr,
 							"PetscSolver3DHandler::computeDiagonalJacobian: "
 									"MatSetValuesStencil (I trap-mutation) failed.");
+				}
+
+				// ----- Take care of the re-solution for all the reactants -----
+
+				// Store the total number of Xe clusters in the network
+				int nXenon = resolutionHandler->getNumberOfReSoluting();
+
+				// Arguments for MatSetValuesStencil called below
+				PetscScalar resolutionVals[10 * nXenon];
+				PetscInt resolutionIndices[10 * nXenon];
+
+				// Compute the partial derivative from re-solution at this grid point
+				int nResoluting =
+						resolutionHandler->computePartialsForReSolution(network,
+								resolutionVals, resolutionIndices, xi, xs, yj,
+								zk);
+
+				// Loop on the number of xenon to set the values in the Jacobian
+				for (int i = 0; i < nResoluting; i++) {
+					// Set grid coordinate and component number for the row and column
+					// corresponding to the  large xenon cluster
+					row.i = xi;
+					row.j = yj;
+					row.k = zk;
+					row.c = resolutionIndices[10 * i];
+					col.i = xi;
+					col.j = yj;
+					col.k = zk;
+					col.c = resolutionIndices[10 * i];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i), ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (large Xe re-solution) failed.");
+					col.c = resolutionIndices[(10 * i) + 1];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i) + 1, ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (large Xe re-solution) failed.");
+					row.c = resolutionIndices[(10 * i) + 1];
+					col.c = resolutionIndices[10 * i];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i) + 2, ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (large Xe re-solution) failed.");
+					col.c = resolutionIndices[(10 * i) + 1];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i) + 3, ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (large Xe re-solution) failed.");
+
+					// Set component number for the row
+					// corresponding to the smaller xenon cluster created through re-solution
+					row.c = resolutionIndices[(10 * i) + 4];
+					col.c = resolutionIndices[10 * i];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i) + 4, ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (smaller Xe re-solution) failed.");
+					col.c = resolutionIndices[(10 * i) + 1];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i) + 5, ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (smaller Xe re-solution) failed.");
+					row.c = resolutionIndices[(10 * i) + 5];
+					col.c = resolutionIndices[10 * i];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i) + 6, ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (smaller Xe re-solution) failed.");
+					col.c = resolutionIndices[(10 * i) + 1];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i) + 7, ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (smaller Xe re-solution) failed.");
+
+					// Set component number for the row
+					// corresponding to the single xenon created through re-solution
+					row.c = resolutionIndices[(10 * i) + 8];
+					col.c = resolutionIndices[10 * i];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i) + 8, ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (Xe_1 re-solution) failed.");
+					col.c = resolutionIndices[(10 * i) + 1];
+					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+							resolutionVals + (10 * i) + 9, ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
+									"MatSetValuesStencil (Xe_1 re-solution) failed.");
 				}
 			}
 		}

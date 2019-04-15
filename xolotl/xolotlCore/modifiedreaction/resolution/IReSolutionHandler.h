@@ -27,8 +27,10 @@ public:
 	 * It must also initialize the rates of the reactions.
 	 *
 	 * @param network The network
+	 * @param electronicStoppingPower To select which fit to use
 	 */
-	virtual void initialize(const IReactionNetwork& network) = 0;
+	virtual void initialize(const IReactionNetwork& network,
+			double electronicStoppingPower) = 0;
 
 	/**
 	 * This method update the rate for the re-solution if the fission rate

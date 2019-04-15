@@ -55,11 +55,6 @@ protected:
 	double constTemperature;
 
 	/**
-	 * Value for the temperature gradient
-	 */
-	double temperatureGradient;
-
-	/**
 	 * Use the temperature profile set of handlers?
 	 */
 	bool tempProfileFlag;
@@ -118,6 +113,11 @@ protected:
 	 * Value of the initial vacancy concentration.
 	 */
 	double initialVConcentration;
+
+	/**
+	 * Value of the electronic stopping power.
+	 */
+	double zeta;
 
 	/**
 	 * Value of the portion of the void on the grid at the start of the simulation.
@@ -399,22 +399,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the temperature gradient to be used.
-	 * \see IOptions.h
-	 */
-	double getTemperatureGradient() const override {
-		return temperatureGradient;
-	}
-
-	/**
-	 * Set the temperature gradient.
-	 * \see IOptions.h
-	 */
-	void setTemperatureGradient(double grad) override {
-		temperatureGradient = grad;
-	}
-
-	/**
 	 * Should we use temperature profile handlers?
 	 * \see IOptions.h
 	 */
@@ -609,6 +593,22 @@ public:
 	 */
 	void setInitialVConcentration(double conc) override {
 		initialVConcentration = conc;
+	}
+
+	/**
+	 * Obtain the value of the electronic stopping power.
+	 * \see IOptions.h
+	 */
+	double getZeta() const override {
+		return zeta;
+	}
+
+	/**
+	 * Set the value of the electronic stopping power.
+	 * \see IOptions.h
+	 */
+	void setZeta(double z) override {
+		zeta = z;
 	}
 
 	/**

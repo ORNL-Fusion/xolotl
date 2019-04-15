@@ -69,7 +69,7 @@ void FluxHandler::recomputeFluxHandler(int surfacePos) {
 	if (normFactor > 0.0)
 		fluxNormalized = fluxAmplitude / normFactor;
 
-	// Starts a i = surfacePos + 1 because the first values were already put in the vector
+	// Starts at i = surfacePos + 1 because the first values were already put in the vector
 	for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 		// Get the x position
 		auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
@@ -174,6 +174,8 @@ double FluxHandler::getFluxAmplitude() const {
 }
 
 double FluxHandler::getFluxRate() const {
+	if (incidentFluxVec.size() == 0)
+		return fluxAmplitude;
 	return fluxAmplitude / normFactor;
 }
 

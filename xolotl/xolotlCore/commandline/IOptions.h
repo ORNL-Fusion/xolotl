@@ -137,20 +137,6 @@ public:
 	virtual void setConstTemperature(double temp) = 0;
 
 	/**
-	 * Obtain the value of the temperature gradient to be used.
-	 *
-	 * @return The value for the gradient
-	 */
-	virtual double getTemperatureGradient() const = 0;
-
-	/**
-	 * Set the temperature gradient.
-	 *
-	 * @param temp The value for the gradient
-	 */
-	virtual void setTemperatureGradient(double grad) = 0;
-
-	/**
 	 * Should we use temperature profile handlers?
 	 *
 	 * @return true if Xolotl must use a temperature profile
@@ -336,6 +322,20 @@ public:
 	 * @param conc The value for the concentration
 	 */
 	virtual void setInitialVConcentration(double conc) = 0;
+
+	/**
+	 * Obtain the value of the electronic stopping power.
+	 *
+	 * @return Zeta
+	 */
+	virtual double getZeta() const = 0;
+
+	/**
+	 * Set the value of the electronic stopping power.
+	 *
+	 * @param zeta The value for the electronic stopping power
+	 */
+	virtual void setZeta(double zeta) = 0;
 
 	/**
 	 * Obtain the number of dimensions for the simulation.

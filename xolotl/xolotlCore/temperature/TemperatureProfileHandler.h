@@ -72,17 +72,17 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void initializeTemperature(const IReactionNetwork& network,
-            IReactionNetwork::SparseFillMap& ofillMap,
-            IReactionNetwork::SparseFillMap& dfillMap) {
+			IReactionNetwork::SparseFillMap& ofillMap,
+			IReactionNetwork::SparseFillMap& dfillMap) {
 
 		// Set dof
 		dof = network.getDOF();
 
 		// Add the temperature to ofill
-        ofillMap[(dof - 1)].emplace_back(dof - 1);
+		ofillMap[(dof - 1)].emplace_back(dof - 1);
 
 		// Add the temperature to dfill
-        dfillMap[(dof - 1)].emplace_back(dof - 1);
+		dfillMap[(dof - 1)].emplace_back(dof - 1);
 
 		// Open file dataFile.dat containing the time and temperature
 		std::ifstream inputFile(tempFile.c_str());
@@ -109,8 +109,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const Point<3>& position,
-			double currentTime) const {
+	virtual double getTemperature(const Point<3>&, double currentTime) const {
 		// Initialize the value to return
 		double f = 0.0;
 
@@ -187,7 +186,8 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void computeTemperature(double **concVector,
-			double *updatedConcOffset, double hxLeft, double hxRight, int xi) {
+			double *updatedConcOffset, double hxLeft, double hxRight, int xi,
+			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) {
 		return;
 	}
 
@@ -199,7 +199,8 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void computePartialsForTemperature(double *val, int *indices,
-			double hxLeft, double hxRight, int xi) {
+			double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
+			double sz = 0.0, int iz = 0) {
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
 		indices[0] = dof - 1;

@@ -1196,7 +1196,7 @@ void XFile::TimestepGroup::writeBottom2D(const Data2DType& nHe,
 }
 
 void XFile::TimestepGroup::writeConcentrationDataset(int size,
-		double concArray[][2], int i, int j, int k) {
+		double concArray[][2], bool write, int i, int j, int k) {
 
 	// Set the dataset name
 	std::stringstream datasetName;
@@ -1211,9 +1211,15 @@ void XFile::TimestepGroup::writeConcentrationDataset(int size,
 	H5T_IEEE_F64LE, concDSpace.getId(),
 	H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-	// Write concArray in the dataset
-	auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-	H5P_DEFAULT, concArray);
+	// Create property list for independent dataset write.
+	hid_t propertyListId = H5Pcreate(H5P_DATASET_XFER);
+	auto status = H5Pset_dxpl_mpio(propertyListId, H5FD_MPIO_INDEPENDENT);
+
+	if (write) {
+		// Write concArray in the dataset
+		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+				propertyListId, concArray);
+	}
 
 	// Close dataset
 	status = H5Dclose(datasetId);

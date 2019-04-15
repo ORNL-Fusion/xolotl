@@ -4,7 +4,6 @@
 #include <memory>
 #include "IReactionHandlerFactory.h"
 #include <FeClusterNetworkLoader.h>
-#include <FeClusterReactionNetwork.h>
 
 namespace xolotlFactory {
 

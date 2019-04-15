@@ -175,12 +175,13 @@ public:
 		 *
 		 * @param size The size of the dataset to create
 		 * @param concArray The array of concentration at a grid point
+		 * @param write To know if we own the data to write
 		 * @param i The index of the position on the grid on the x direction
 		 * @param j The index of the position on the grid on the y direction
 		 * @param k The index of the position on the grid on the z direction
 		 */
 		// TODO this should go away.
-		void writeConcentrationDataset(int size, double concArray[][2], int i,
+		void writeConcentrationDataset(int size, double concArray[][2], bool write, int i,
 				int j = -1, int k = -1);
 
 		/**
