@@ -102,8 +102,7 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 								auto size = cluster.getSize();
 								double fractionRate = (a1 * exp(-b1 * radius)
 										+ (y0 - a1) / (1.0 + c * pow(radius, 2.0))
-										* exp(-b2 * pow(radius, 2.0))) * 1.0e-4
-								* (double) size;
+										* exp(-b2 * pow(radius, 2.0))) * 1.0e-4;
 								// Add the size to the vector
 								sizeVec.emplace_back(&cluster, previousSmaller, fractionRate, coefs);
 
@@ -142,8 +141,7 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 							auto size = cluster.getSize();
 							double fractionRate = (a1 * exp(-b1 * radius)
 									+ (y0 - a1) / (1.0 + c * pow(radius, 2.0))
-									* exp(-b2 * pow(radius, 2.0))) * 1.0e-4
-							* (double) size;
+									* exp(-b2 * pow(radius, 2.0))) * 1.0e-4;
 							// Add the size to the vector
 							sizeVec.emplace_back(&cluster, previousSmaller, fractionRate, coefs);
 						}
@@ -163,8 +161,7 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 						auto size = cluster.getSize();
 						double fractionRate = (a1 * exp(-b1 * radius)
 								+ (y0 - a1) / (1.0 + c * pow(radius, 2.0))
-								* exp(-b2 * pow(radius, 2.0))) * 1.0e-4
-						* (double) size;
+								* exp(-b2 * pow(radius, 2.0))) * 1.0e-4;
 						// Add the size to the vector
 						sizeVec.emplace_back(&cluster, smallerCluster, fractionRate, coefs);
 					}
@@ -223,10 +220,15 @@ void ReSolutionHandler::computeReSolution(const IReactionNetwork& network,
 				* (currPair.coefs[2] * l0 + currPair.coefs[4] * l1);
 		updatedConcOffset[momId] -= rate
 				* (currPair.coefs[3] * l0 + currPair.coefs[5] * l1);
-		updatedConcOffset[resoId] += rate
-				* (currPair.coefs[2] * l0 + currPair.coefs[4] * l1);
-		updatedConcOffset[resoMomId] += rate
-				* (currPair.coefs[6] * l0 + currPair.coefs[7] * l1);
+		if (resoCluster->getType() == ReactantType::NESuper) {
+			updatedConcOffset[resoId] += rate
+					* (currPair.coefs[2] * l0 + currPair.coefs[4] * l1);
+			updatedConcOffset[resoMomId] += rate
+					* (currPair.coefs[6] * l0 + currPair.coefs[7] * l1);
+		} else {
+			updatedConcOffset[resoId] += rate
+					* (currPair.coefs[0] * l0 + currPair.coefs[1] * l1);
+		}
 		updatedConcOffset[xenonId] += rate
 				* (currPair.coefs[0] * l0 + currPair.coefs[1] * l1);
 	}
@@ -264,14 +266,25 @@ int ReSolutionHandler::computePartialsForReSolution(
 		val[(baseIndex) + 2] = -rate * currPair.coefs[3];
 		indices[(baseIndex) + 3] = momId;
 		val[(baseIndex) + 3] = -rate * currPair.coefs[5]; // Large cluster
-		indices[(baseIndex) + 4] = resoId;
-		val[(baseIndex) + 4] = rate * currPair.coefs[2];
-		indices[(baseIndex) + 5] = resoMomId;
-		val[(baseIndex) + 5] = rate * currPair.coefs[4];
-		indices[(baseIndex) + 6] = resoId;
-		val[(baseIndex) + 6] = rate * currPair.coefs[6];
-		indices[(baseIndex) + 7] = resoMomId;
-		val[(baseIndex) + 7] = rate * currPair.coefs[7]; // Smaller cluster
+		if (resoCluster->getType() == ReactantType::NESuper) {
+			indices[(baseIndex) + 4] = resoId;
+			val[(baseIndex) + 4] = rate * currPair.coefs[2];
+			indices[(baseIndex) + 5] = resoMomId;
+			val[(baseIndex) + 5] = rate * currPair.coefs[4];
+			indices[(baseIndex) + 6] = resoId;
+			val[(baseIndex) + 6] = rate * currPair.coefs[6];
+			indices[(baseIndex) + 7] = resoMomId;
+			val[(baseIndex) + 7] = rate * currPair.coefs[7]; // Smaller cluster
+		} else {
+			indices[(baseIndex) + 4] = resoId;
+			val[(baseIndex) + 4] = rate * currPair.coefs[0];
+			indices[(baseIndex) + 5] = resoMomId;
+			val[(baseIndex) + 5] = rate * currPair.coefs[1];
+			indices[(baseIndex) + 6] = resoId;
+			val[(baseIndex) + 6] = 0.0;
+			indices[(baseIndex) + 7] = resoMomId;
+			val[(baseIndex) + 7] = 0.0; // Smaller cluster
+		}
 		indices[(baseIndex) + 8] = xenonId;
 		val[(baseIndex) + 8] = rate * currPair.coefs[0];
 		indices[(baseIndex) + 9] = xenonId;

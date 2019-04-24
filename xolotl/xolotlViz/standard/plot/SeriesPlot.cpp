@@ -10,7 +10,6 @@
 #include <vtkm/cont/DataSetBuilderRectilinear.h>
 #include <vtkm/cont/DeviceAdapter.h>
 #include <vtkm/cont/DynamicCellSet.h>
-#include <vtkm/cont/DynamicArrayHandle.h>
 #include <vtkm/cont/ErrorBadValue.h>
 #include <vtkm/cont/Field.h>
 
@@ -134,53 +133,53 @@ void SeriesPlot::render(const std::string& fileName) {
 
 
   // Print the title
-  vtkm::rendering::TextAnnotationScreen *titleAnnotation =
+  std::unique_ptr<vtkm::rendering::TextAnnotationScreen> titleAnnotation(
     new vtkm::rendering::TextAnnotationScreen(
       plotLabelProvider->titleLabel,
       FG_COLOR,
       .1,
       vtkm::Vec<vtkm::Float32, 2>(-.05, .8),
-       0);
-	view->AddAnnotation(titleAnnotation);
+       0));
+	view->AddAnnotation(std::move(titleAnnotation));
 
   // Print x axis label
-  vtkm::rendering::TextAnnotationScreen *axis1Annotation =
+  std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis1Annotation(
     new vtkm::rendering::TextAnnotationScreen(
       plotLabelProvider->axis1Label,
       FG_COLOR,
       .065,
       vtkm::Vec<vtkm::Float32, 2>(-.1, -.87),
-       0);
-	view->AddAnnotation(axis1Annotation);
+       0));
+	view->AddAnnotation(std::move(axis1Annotation));
 
   // Print y axis label
-  vtkm::rendering::TextAnnotationScreen *axis2Annotation =
+  std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis2Annotation(
     new vtkm::rendering::TextAnnotationScreen(
       plotLabelProvider->axis2Label,
       FG_COLOR,
       .065,
       vtkm::Vec<vtkm::Float32, 2>(-.82, -.15),
-       90);
-	view->AddAnnotation(axis2Annotation);
+       90));
+	view->AddAnnotation(std::move(axis2Annotation));
 
   // Add the time information
-  vtkm::rendering::TextAnnotationScreen *timeAnnotation =
+  std::unique_ptr<vtkm::rendering::TextAnnotationScreen> timeAnnotation(
     new vtkm::rendering::TextAnnotationScreen(
       plotLabelProvider->timeLabel,
       FG_COLOR,
       .055,
       vtkm::Vec<vtkm::Float32, 2>(-.85, -.85),
-       0);
-	view->AddAnnotation(timeAnnotation);
+       0));
+	view->AddAnnotation(std::move(timeAnnotation));
 
-  vtkm::rendering::TextAnnotationScreen *timeStepAnnotation =
+  std::unique_ptr<vtkm::rendering::TextAnnotationScreen> timeStepAnnotation(
     new vtkm::rendering::TextAnnotationScreen(
       plotLabelProvider->timeStepLabel,
       FG_COLOR,
       .055,
       vtkm::Vec<vtkm::Float32, 2>(-.85, -.90),
-       0);
-	view->AddAnnotation(timeStepAnnotation);
+       0));
+	view->AddAnnotation(std::move(timeStepAnnotation));
 
   // Set the view
   view->Initialize();

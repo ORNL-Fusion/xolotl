@@ -2235,6 +2235,12 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 	PetscFunctionBeginUser;
 
+	// Call monitor time hear because it is skipped when post event is used
+	ierr = computeFluence(ts, 0, time, solution, NULL);
+	CHKERRQ(ierr);
+	ierr = monitorTime(ts, 0, time, solution, NULL);
+	CHKERRQ(ierr);
+
 	// Check if the surface has moved
 	if (nevents == 0) {
 		PetscFunctionReturn(0);
@@ -2289,7 +2295,11 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		// Get the distance from the surface
 		double distance = grid[depthPositions1D[i] + 1] - grid[surfacePos + 1];
 
-		std::cout << "bursting at: " << distance << std::endl;
+		// Write the bursting information
+		std::ofstream outputFile;
+		outputFile.open("bursting.txt", ios::app);
+		outputFile << time << " " << distance << std::endl;
+		outputFile.close();
 
 		// Pinhole case
 		// Consider each He to reset their concentration at this grid point
@@ -2850,6 +2860,11 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 				postEventFunction1D, NULL);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: TSSetEventHandler (eventFunction1D) failed.");
+
+		// Uncomment to clear the file where the bursting info will be written
+		std::ofstream outputFile;
+		outputFile.open("bursting.txt");
+		outputFile.close();
 	}
 
 // Set the monitor to save 1D plot of xenon distribution

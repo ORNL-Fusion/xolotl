@@ -1360,6 +1360,12 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 
 	PetscFunctionBeginUser;
 
+	// Call monitor time hear because it is skipped when post event is used
+	ierr = computeFluence(ts, 0, time, solution, NULL);
+	CHKERRQ(ierr);
+	ierr = monitorTime(ts, 0, time, solution, NULL);
+	CHKERRQ(ierr);
+
 	// Check if the surface has moved
 	if (nevents == 0)
 		PetscFunctionReturn(0);

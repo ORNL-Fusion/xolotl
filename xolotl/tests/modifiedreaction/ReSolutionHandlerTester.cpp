@@ -99,9 +99,9 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 			updatedConcOffset, 1, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.73674472e+20, 0.01); // Create Xe
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 1.447976e+13, 0.01); // Xe_7999
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 1.448158e+13, 0.01); // Xe_8000
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 6.5039236e+16, 0.01); // Create Xe
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 7.6687556e+8, 0.01); // Xe_7999
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 7.66911126e+8, 0.01); // Xe_8000
 
 	// Initialize the indices and values to set in the Jacobian
 	int nXenon = reSolutionHandler.getNumberOfReSoluting();
@@ -129,15 +129,15 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	BOOST_REQUIRE_EQUAL(indices[9], 0); // Xe_1
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -3.95423e5, 0.01); // Xe_2
+	BOOST_REQUIRE_CLOSE(val[0], -197711.9, 0.01); // Xe_2
 	BOOST_REQUIRE_CLOSE(val[1], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[2], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[3], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[4], 3.95423e5, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[4], 197711.9, 0.01); // Xe_1
 	BOOST_REQUIRE_CLOSE(val[5], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[6], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[7], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[8], 3.95423e5, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[8], 197711.9, 0.01); // Xe_1
 	BOOST_REQUIRE_CLOSE(val[9], 0.0, 0.01); // no grouping
 
 	// Remove the created file
@@ -222,9 +222,9 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 			updatedConcOffset, 1, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 7.3131949e+20, 0.01); // Create Xe
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 2.929990468e+13, 0.01); // Xe_7999
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 2.93037963e+13, 0.01); // Xe_8000
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.2634756e+17, 0.01); // Create Xe
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 1.609505e+9, 0.01); // Xe_7999
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 1.609589e+9, 0.01); // Xe_8000
 
 	// Initialize the indices and values to set in the Jacobian
 	int nXenon = reSolutionHandler.getNumberOfReSoluting();
@@ -239,15 +239,15 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 			valPointer, indicesPointer, 1, 0);
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -6.48088e5, 0.01); // Xe_2
+	BOOST_REQUIRE_CLOSE(val[0], -324044, 0.01); // Xe_2
 	BOOST_REQUIRE_CLOSE(val[1], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[2], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[3], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[4], 6.48088e5, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[4], 324044, 0.01); // Xe_1
 	BOOST_REQUIRE_CLOSE(val[5], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[6], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[7], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[8], 6.48088e5, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[8], 324044, 0.01); // Xe_1
 	BOOST_REQUIRE_CLOSE(val[9], 0.0, 0.01); // no grouping
 
 	// Remove the created file
