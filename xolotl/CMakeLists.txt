@@ -13,6 +13,10 @@ if(POLICY CMP0057)
     cmake_policy(SET CMP0057 NEW)
 endif()
 
+if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 NEW)
+endif()
+
 # Set a name for this project.
 PROJECT ( xolotl C CXX )
 
