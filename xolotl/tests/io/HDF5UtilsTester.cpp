@@ -91,6 +91,12 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	xolotlCore::XFile::TimestepGroup::Surface1DType iSurface = 3;
 	xolotlCore::XFile::TimestepGroup::Data1DType nInter = 1.0;
 	xolotlCore::XFile::TimestepGroup::Data1DType previousFlux = 0.1;
+	xolotlCore::XFile::TimestepGroup::Data1DType nHe = 1.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousHeFlux = 5.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType nD = 0.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousDFlux = 0.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType nT = 0.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousTFlux = 0.0;
 
 	// Define a faux network composition vector.
 	BOOST_TEST_MESSAGE("Creating faux comp vec.");
@@ -143,7 +149,8 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 				previousTime, currentTimeStep);
 
 		// Write the surface position
-		tsGroup->writeSurface1D(iSurface, nInter, previousFlux);
+		tsGroup->writeSurface1D(iSurface, nInter, previousFlux, nHe,
+				previousHeFlux, nD, previousDFlux, nT, previousTFlux);
 
 #if READY
 		// Fill it
@@ -209,6 +216,18 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		BOOST_REQUIRE_CLOSE(nInterstitial, nInter, 0.0001);
 		auto previousIFlux = tsGroup->readData1D("previousIFlux");
 		BOOST_REQUIRE_CLOSE(previousIFlux, previousFlux, 0.0001);
+		auto nHeSurf = tsGroup->readData1D("nHeliumSurf");
+		BOOST_REQUIRE_CLOSE(nHeSurf, nHe, 0.0001);
+		auto previousHeSurfFlux = tsGroup->readData1D("previousHeSurfFlux");
+		BOOST_REQUIRE_CLOSE(previousHeSurfFlux, previousHeFlux, 0.0001);
+		auto nDSurf = tsGroup->readData1D("nDeuteriumSurf");
+		BOOST_REQUIRE_CLOSE(nDSurf, nD, 0.0001);
+		auto previousDSurfFlux = tsGroup->readData1D("previousDSurfFlux");
+		BOOST_REQUIRE_CLOSE(previousDSurfFlux, previousDFlux, 0.0001);
+		auto nTSurf = tsGroup->readData1D("nTritiumSurf");
+		BOOST_REQUIRE_CLOSE(nTSurf, nT, 0.0001);
+		auto previousTSurfFlux = tsGroup->readData1D("previousTSurfFlux");
+		BOOST_REQUIRE_CLOSE(previousTSurfFlux, previousTFlux, 0.0001);
 
 		// Read the network of the written file
 		BOOST_TEST_MESSAGE("Checking test file last time step network.");

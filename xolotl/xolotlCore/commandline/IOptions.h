@@ -664,9 +664,23 @@ public:
 	/**
 	 * Set the value for the depth above which the bursting is happening.
 	 *
-	 * @param stepSize The depth
+	 * @param depth The depth
 	 */
 	virtual void setBurstingDepth(double depth) = 0;
+
+	/**
+	 * Obtain the value of the minimum size at which the bursting is happening.
+	 *
+	 * @return The size
+	 */
+	virtual int getBurstingSize() const = 0;
+
+	/**
+	 * Set the value of the minimum size at which the bursting is happening.
+	 *
+	 * @param size The minimum size
+	 */
+	virtual void setBurstingSize(int size) = 0;
 
 	/**
 	 * Set the seed that should be used for initializing the random

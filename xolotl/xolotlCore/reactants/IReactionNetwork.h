@@ -223,20 +223,24 @@ public:
 	virtual void getDiagonalFill(SparseFillMap& sfm) = 0;
 
 	/**
-	 * Get the total concentration of atoms in the network.
+	 * Get the total concentration of atoms in the network, starting at size minSize.
 	 *
 	 * @param i Index to switch between the different types of atoms
+	 * @param minSize The minimum size to take into account
 	 * @return The total concentration
 	 */
-	virtual double getTotalAtomConcentration(int i = 0) = 0;
+	virtual double getTotalAtomConcentration(int i = 0, int minSize = 0) = 0;
 
 	/**
-	 * Get the total concentration of atoms contained in bubbles in the network.
+	 * Get the total concentration of atoms contained in bubbles in the network,
+	 * starting at size minSize.
 	 *
 	 * @param i Index to switch between the different types of atoms
+	 * @param minSize The minimum size to take into account
 	 * @return The total concentration
 	 */
-	virtual double getTotalTrappedAtomConcentration(int i = 0) = 0;
+	virtual double getTotalTrappedAtomConcentration(int i = 0,
+			int minSize = 0) = 0;
 
 	/**
 	 * Get the total concentration of vacancies in the network.
@@ -314,8 +318,8 @@ public:
 	 * @param vals The values of partials for the reactions
 	 */
 	virtual void computeAllPartials(const std::vector<size_t>& startingIdx,
-			const std::vector<int>& indices,
-			std::vector<double>& vals, int i = 0) const = 0;
+			const std::vector<int>& indices, std::vector<double>& vals, int i =
+					0) const = 0;
 
 	/**
 	 * This operation returns the biggest production rate in the network.

@@ -111,8 +111,8 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 		// Compute the concentration as explained in the description of the method
 		double conc = (3.0 * sinkStrengthVector[advClusterIdx]
 				* cluster.getDiffusionCoefficient(ix + 1 - xs))
-				* ((oldRightConc / pow(pos[0] - location + hxRight, 4))
-						- (oldConc / pow(pos[0] - location, 4)))
+				* ((oldRightConc / pow(pos[0] - location + hxRight, 4.0))
+						- (oldConc / pow(pos[0] - location, 4.0)))
 				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
 						* hxRight);
 
@@ -123,7 +123,7 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 								- cluster.getDiffusionCoefficient(ix + 1 - xs)
 										/ cluster.getTemperature(ix + 1 - xs))
 						/ (xolotlCore::kBoltzmann * hxRight
-								* pow(pos[0] - location, 4));
+								* pow(pos[0] - location, 4.0));
 
 		// Update the concentration of the cluster
 		updatedConcOffset[index] += conc;
@@ -167,18 +167,18 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 		// explained in the description of this method
 		val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff)
 				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
-						* hxRight * pow(pos[0] - location, 4))
+						* hxRight * pow(pos[0] - location, 4.0))
 				* advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
 		val[advClusterIdx * 2] += (3.0 * sinkStrength)
 				* (cluster.getDiffusionCoefficient(ix + 2 - xs)
 						/ cluster.getTemperature(ix + 2 - xs)
 						- cluster.getDiffusionCoefficient(ix + 1 - xs)
 								/ cluster.getTemperature(ix + 1 - xs))
-				/ (xolotlCore::kBoltzmann * hxRight * pow(pos[0] - location, 4))
+				/ (xolotlCore::kBoltzmann * hxRight * pow(pos[0] - location, 4.0))
 				* advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
 		val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff)
 				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1 - xs)
-						* hxRight * pow(pos[0] - location + hxRight, 4))
+						* hxRight * pow(pos[0] - location + hxRight, 4.0))
 				* advectionGrid[iz + 1][iy + 1][ix + 2][advClusterIdx]; // right
 
 		++advClusterIdx;

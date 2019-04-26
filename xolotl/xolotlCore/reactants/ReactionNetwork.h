@@ -494,26 +494,31 @@ public:
 	}
 
 	/**
-	 * Get the total concentration of atoms contained in the network.
+	 * Get the total concentration of atoms contained in the network, starting at size minSize.
 	 *
 	 * Returns 0.0 here and needs to be implemented by the daughter classes.
 	 *
 	 * @param i Index to switch between the different types of atoms
+	 * @param minSize The minimum size to take into account
 	 * @return The total concentration
 	 */
-	virtual double getTotalAtomConcentration(int i = 0) override {
+	virtual double getTotalAtomConcentration(int i = 0, int minSize = 0)
+			override {
 		return 0.0;
 	}
 
 	/**
-	 * Get the total concentration of atoms contained in bubbles in the network.
+	 * Get the total concentration of atoms contained in bubbles in the network,
+	 * starting at size minSize.
 	 *
 	 * Returns 0.0 here and needs to be implemented by the daughter classes.
 	 *
 	 * @param i Index to switch between the different types of atoms
+	 * @param minSize The minimum size to take into account
 	 * @return The total concentration
 	 */
-	virtual double getTotalTrappedAtomConcentration(int i = 0) override {
+	virtual double getTotalTrappedAtomConcentration(int i = 0, int minSize = 0)
+			override {
 		return 0.0;
 	}
 

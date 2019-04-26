@@ -98,6 +98,9 @@ protected:
 	//! The depth parameter for the bubble bursting.
 	double tauBursting;
 
+	//! The minimum size for the bubble bursting.
+	int minSizeBursting;
+
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
 
@@ -303,8 +306,8 @@ protected:
 					0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
 					false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
 					nullptr), diffusionHandler(nullptr), mutationHandler(
-					nullptr), resolutionHandler(nullptr), tauBursting(10.0), rngSeed(
-					0) {
+					nullptr), resolutionHandler(nullptr), tauBursting(10.0), minSizeBursting(
+					0), rngSeed(0) {
 	}
 
 public:
@@ -411,8 +414,11 @@ public:
 		// Set the sputtering yield
 		sputteringYield = options.getSputteringYield();
 
-		// Set the sputtering yield
+		// Set the bursting depth
 		tauBursting = options.getBurstingDepth();
+
+		// Set minimum size for bursting
+		minSizeBursting = options.getBurstingSize();
 
 		// Look at if the user wants to use a regular grid in the x direction
 		if (options.useRegularXGrid())
@@ -515,6 +521,14 @@ public:
 	 */
 	double getTauBursting() const override {
 		return tauBursting;
+	}
+
+	/**
+	 * Get the bursting minimum size parameter.
+	 * \see ISolverHandler.h
+	 */
+	int getMinSizeBursting() const override {
+		return minSizeBursting;
 	}
 
 	/**

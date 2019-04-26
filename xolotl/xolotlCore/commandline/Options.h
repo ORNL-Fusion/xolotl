@@ -241,6 +241,11 @@ protected:
 	double burstingDepth;
 
 	/**
+	 * Minimum size for the bursting.
+	 */
+	int burstingMinSize;
+
+	/**
 	 * An explicitly-given value to use to seed the random number generator.
 	 * Only used if rngUseSeed is true.
 	 */
@@ -1020,6 +1025,22 @@ public:
 	 */
 	void setBurstingDepth(double depth) override {
 		burstingDepth = depth;
+	}
+
+	/**
+	 * Obtain the value of the minimum size at which the bursting is happening.
+	 * \see IOptions.h
+	 */
+	int getBurstingSize() const override {
+		return burstingMinSize;
+	}
+
+	/**
+	 * Set the value of the minimum size at which the bursting is happening.
+	 * \see IOptions.h
+	 */
+	void setBurstingSize(int size) override {
+		burstingMinSize = size;
 	}
 
 	/**

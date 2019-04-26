@@ -51,11 +51,9 @@ double PSIClusterReactionNetwork::calculateDissociationConstant(
 	// Calculate and return
 	double bindingEnergy = computeBindingEnergy(reaction);
 	double k_minus_exp = exp(
-			-1.0 * bindingEnergy
-					/ (xolotlCore::kBoltzmann
-							* temperature)); // We can use the network temperature
-											// because this method is called only
-											// when the temperature is updated
+			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature)); // We can use the network temperature
+																			// because this method is called only
+																			// when the temperature is updated
 	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
 
 	return k_minus;
@@ -1563,7 +1561,8 @@ void PSIClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 	return;
 }
 
-double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
+double PSIClusterReactionNetwork::getTotalAtomConcentration(int i,
+		int minSize) {
 	// Initial declarations
 	double atomConc = 0.0;
 	ReactantType type;
@@ -1592,7 +1591,8 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 		double size = cluster.getSize();
 
 		// Add the concentration times the He content to the total helium concentration
-		atomConc += cluster.getConcentration() * size;
+		if (size >= minSize)
+			atomConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all Mixed clusters.
@@ -1601,10 +1601,11 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
+		double size = comp[toCompIdx(toSpecies(type))];
 
 		// Add the concentration times the He content to the total helium concentration
-		atomConc += cluster.getConcentration()
-				* comp[toCompIdx(toSpecies(type))];
+		if (size >= minSize)
+			atomConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all super clusters.
@@ -1615,13 +1616,14 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		// Add its total atom concentration
-		atomConc += cluster.getTotalAtomConcentration(i);
+		atomConc += cluster.getTotalAtomConcentration(i, minSize);
 	}
 
 	return atomConc;
 }
 
-double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
+double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i,
+		int minSize) {
 	// Initial declarations
 	double atomConc = 0.0;
 	ReactantType type;
@@ -1648,10 +1650,11 @@ double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
+		double size = comp[toCompIdx(toSpecies(type))];
 
 		// Add the concentration times the He content to the total helium concentration
-		atomConc += cluster.getConcentration()
-				* comp[toCompIdx(toSpecies(type))];
+		if (size >= minSize)
+			atomConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all super clusters.
@@ -1662,7 +1665,7 @@ double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		// Add its total helium concentration helium concentration
-		atomConc += cluster.getTotalAtomConcentration(i);
+		atomConc += cluster.getTotalAtomConcentration(i, minSize);
 	}
 
 	return atomConc;
@@ -1826,11 +1829,11 @@ void PSIClusterReactionNetwork::computeAllPartials(
 
 		// Get the inverse mappings from dense DOF space to
 		// the indices/vals arrays.
-        // We use a pointer to the maps to avoid copying them into
-        // our array.
-        // TODO can we use references here, without having to
-        // change PartialsIdxMap type from unordered_map?
-        std::array<const PartialsIdxMap*, 5> partialsIdxMap;
+		// We use a pointer to the maps to avoid copying them into
+		// our array.
+		// TODO can we use references here, without having to
+		// change PartialsIdxMap type from unordered_map?
+		std::array<const PartialsIdxMap*, 5> partialsIdxMap;
 		for (int i = 0; i < psDim; i++) {
 			partialsIdxMap[i] = &(dFillInvMap.at(reactantIndices[i]));
 			partials[i] = &(vals[startingIdx[reactantIndices[i]]]);

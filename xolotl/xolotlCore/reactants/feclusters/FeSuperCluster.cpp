@@ -1202,7 +1202,7 @@ double FeSuperCluster::getTotalConcentration() const {
 	return conc;
 }
 
-double FeSuperCluster::getTotalHeliumConcentration() const {
+double FeSuperCluster::getTotalHeliumConcentration(int minSize) const {
 	// Initial declarations
 	double heDistance = 0.0, vDistance = 0.0, conc = 0.0;
 
@@ -1214,7 +1214,7 @@ double FeSuperCluster::getTotalHeliumConcentration() const {
 			vDistance = getVDistance(j);
 
 			// Add the concentration of each cluster in the group times its number of helium
-			conc += getConcentration(heDistance, vDistance) * (double) i;
+			if (i >= minSize) conc += getConcentration(heDistance, vDistance) * (double) i;
 		}
 	}
 

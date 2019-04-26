@@ -110,7 +110,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 			<< std::endl << "voidPortion=60.0" << std::endl << "regularGrid=no"
 			<< std::endl << "process=diff" << std::endl << "grouping=11 2 4"
 			<< std::endl << "sputtering=0.5" << std::endl << "boundary=1 1"
-			<< std::endl << "burstingDepth=5.0" << std::endl << "zeta=0.6" << std::endl;
+			<< std::endl << "burstingDepth=5.0" << std::endl << "burstingMin=3"
+			<< std::endl << "zeta=0.6" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -176,6 +177,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 
 	// Check the bursting depth option
 	BOOST_REQUIRE_EQUAL(opts.getBurstingDepth(), 5.0);
+
+	// Check the bursting size option
+	BOOST_REQUIRE_EQUAL(opts.getBurstingSize(), 3);
 
 	// Check the boundary conditions
 	BOOST_REQUIRE_EQUAL(opts.getLeftBoundary(), 1);

@@ -187,9 +187,10 @@ public:
 	 * 0 xenon
 	 *
 	 * @param i Index to switch between the different types of atoms
+	 * @param minSize The minimum size to take into account
 	 * @return The total concentration
 	 */
-	double getTotalAtomConcentration(int i = 0) override;
+	double getTotalAtomConcentration(int i = 0, int minSize = 0) override;
 
 	/**
 	 * This operation sets the fission rate, needed to compute the diffusion coefficient

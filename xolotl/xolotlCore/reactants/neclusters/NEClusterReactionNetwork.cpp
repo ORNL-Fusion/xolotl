@@ -285,7 +285,7 @@ void NEClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 	return;
 }
 
-double NEClusterReactionNetwork::getTotalAtomConcentration(int i) {
+double NEClusterReactionNetwork::getTotalAtomConcentration(int i, int minSize) {
 	// Only work for 0
 	if (i > 0)
 		return 0.0;
@@ -301,7 +301,8 @@ double NEClusterReactionNetwork::getTotalAtomConcentration(int i) {
 		double size = cluster.getSize();
 
 		// Add the concentration times the He content to the total helium concentration
-		atomConc += cluster.getConcentration() * size;
+		if (size >= minSize)
+			atomConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all super clusters.
@@ -312,7 +313,7 @@ double NEClusterReactionNetwork::getTotalAtomConcentration(int i) {
 				static_cast<NESuperCluster&>(*(currMapItem.second));
 
 		// Add its total atom concentration
-		atomConc += cluster.getTotalXenonConcentration();
+		atomConc += cluster.getTotalXenonConcentration(minSize);
 	}
 
 	return atomConc;

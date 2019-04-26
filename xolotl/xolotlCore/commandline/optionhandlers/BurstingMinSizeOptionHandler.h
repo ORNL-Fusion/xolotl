@@ -1,5 +1,5 @@
-#ifndef BURSTINGDEPTHOPTIONHANDLER_H
-#define BURSTINGDEPTHOPTIONHANDLER_H
+#ifndef BURSTINGMINSIZEOPTIONHANDLER_H
+#define BURSTINGMINSIZEOPTIONHANDLER_H
 
 // Includes
 #include "OptionHandler.h"
@@ -7,24 +7,24 @@
 namespace xolotlCore {
 
 /**
- * BurstingDepthOptionHandler handles the depth parameter for bubble bursting.
+ * BurstingMinSizeOptionHandler handles the minimum size for bubble bursting.
  */
-class BurstingDepthOptionHandler: public OptionHandler {
+class BurstingMinSizeOptionHandler: public OptionHandler {
 public:
 
 	/**
 	 * The default constructor
 	 */
-	BurstingDepthOptionHandler() :
-			OptionHandler("burstingDepth", "burstingDepth <depth>             "
-					"This option allows the user to set a depth in nm "
+	BurstingMinSizeOptionHandler() :
+			OptionHandler("burstingMin", "burstingMin <size>                "
+					"This option allows the user to set a minimum size "
 					"for the bubble bursting.  \n") {
 	}
 
 	/**
 	 * The destructor
 	 */
-	~BurstingDepthOptionHandler() {
+	~BurstingMinSizeOptionHandler() {
 	}
 
 	/**
@@ -36,15 +36,15 @@ public:
 	 */
 	bool handler(IOptions *opt, const std::string& arg) {
 		// Convert to double
-		double depth = strtod(arg.c_str(), NULL);
+		int size = strtol(arg.c_str(), NULL, 10);
 		// Set the number of dimensions
-		opt->setBurstingDepth(depth);
+		opt->setBurstingSize(size);
 
 		return true;
 	}
 
 };
-//end class BurstingDepthOptionHandler
+//end class BurstingMinSizeOptionHandler
 
 } /* namespace xolotlCore */
 

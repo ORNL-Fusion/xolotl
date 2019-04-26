@@ -63,8 +63,8 @@ private:
 	 * @param i The location on the grid in the depth direction
 	 * @return The dissociation constant
 	 */
-	double calculateDissociationConstant(
-			const DissociationReaction& reaction, int i) const override;
+	double calculateDissociationConstant(const DissociationReaction& reaction,
+			int i) const override;
 
 	/**
 	 * Calculate the binding energy for the dissociation cluster to emit the single
@@ -296,9 +296,10 @@ public:
 	 * Here the atoms that are considered are helium atoms.
 	 *
 	 * @param i Index to switch between the different types of atoms
+	 * @param minSize The minimum size to take into account
 	 * @return The total concentration
 	 */
-	double getTotalAtomConcentration(int i = 0) override;
+	double getTotalAtomConcentration(int i = 0, int minSize = 0) override;
 
 	/**
 	 * Get the total concentration of atoms contained in bubbles in the network.
@@ -306,9 +307,11 @@ public:
 	 * Here the atoms that are considered are helium atoms.
 	 *
 	 * @param i Index to switch between the different types of atoms
+	 * @param minSize The minimum size to take into account
 	 * @return The total concentration
 	 */
-	double getTotalTrappedAtomConcentration(int i = 0) override;
+	double getTotalTrappedAtomConcentration(int i = 0, int minSize = 0)
+			override;
 
 	/**
 	 * Get the total concentration of vacancies contained in the network.
