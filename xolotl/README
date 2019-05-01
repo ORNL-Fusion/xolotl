@@ -1,33 +1,27 @@
-README.txt for Xolotl Plasma Surface Interactions Simulator, copied directly from
-https://sourceforge.net/p/xolotl-psi/wiki/Build%20Configuration/
+README.txt for Xolotl Plasma Surface Interactions Simulator
 
 This page provides instructions on how to build Xolotl and its dependencies. All the commands were written for a bash shell, if you are using another type of shell you will have to modify the commands accordingly. CMake is required to build Xolotl, although instructions for it are not included below. We recommend that you download CMake using the package manager on your system. On Red Hat-based systems, this is as simple as running "yum install cmake" or "dnf install cmake" as root.
-Xolotl also requires GCC 4.7.2 or greater (if you prefer to use other compilers, Xolotl has been tested with Intel compilers higher than 14, and PGI linking to a GCC with a version higher than 4.7.2). Instructions to upgrade your GCC are given at the bottom of this page.
-Java is needed for the [Preprocessor], on Red Hat-based systems its installation is similar to the CMake one (using "yum install java" or "dnf install java" as root). If your CMake version is lower than 2.8.7, the preprocessor files might be built in a different directory.
 
-All of the commands are executed in bash unless stated otherwise. You should replace any reference to /home/user to the appropriate prefix for your system. All of the packages are also installed to /opt by preference, but you may adjust that prefix as you see fit too.
+ You should replace any reference to /home/user to the appropriate prefix for your system. All of the packages are also installed to /opt by preference, but you may adjust that prefix as you see fit too.
 
 Building Xolotl
 =====
 
-First things first, let's checkout the SVN repository with 
+First things first, checkout the repository with
 
-> svn co https://svn.code.sf.net/p/xolotl-psi/code/trunk/xolotl/ /home/user/xolotl-source
+> git clone git@github.com:ORNL-Fusion/xolotl.git
 
 Now, assuming you have all of the dependencies for Xolotl built and a good C++11 compiler (GCC 4.7.2 or greater), Xolotl itself is quite easy to build. If you do not have all of the dependencies, check out the next section.
 
 Create a directory in which you want to build Xolotl (for instance /home/user/xolotl-build) and change into it. It can be any directory except for the source directory (which is /home/user/xolotl-source/). From inside the build directory run the following commands:
 
->CXX=/opt/mpich/bin/mpicxx PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release ../xolotl-source/
+>CXX=/opt/mpich/bin/mpicxx PETSC_DIR=/opt/petsc-install PETSC_ARCH=arch-archvalue cmake -DHDF5_ROOT=/opt/hdf5 -DBOOST_ROOT=/usr/local/include/ -DCMAKE_BUILD_TYPE=Release ../xolotl-source/
 make
+make test
 
 with the path to your MPI compiler (here mpicxx) in CXX and the path to an installed PETSc version in PETSC_DIR (multiple PETSc versions can coexist on the same file-system).
 
 You can also run make in parallel (make -jN, where N is the number of processes) to build Xolotl faster. This is recommended if you have a big machine.
-
-If CMake fails to find HDF5, add the path to your HDF5 installation directory in the CMake command:
-
->CXX=/opt/mpich/bin/mpicxx PETSC_DIR=/opt/petsc-install HDF5_ROOT=/opt/hdf5 cmake -DCMAKE_BUILD_TYPE=Release ../xolotl-source/
 
 Never use the -DCMAKE_CXX_COMPILER=<C++ compiler> option instead of CXX=<C++ compiler> environment variable. It causes CMake to ignore all of your other options (such as -DBoost_ROOT if you have a special build of Boost).
 
@@ -57,25 +51,6 @@ If you want to only run a specific one, run the corresponding executable that is
 
 >./tests/reactants/PSIClusterTester
 
-
-MPICH 3
------
-
-[MPICH 3.0](http://www.mpich.org) or higher is required for Xolotl and its dependencies. Use the following commands:
-
->./configure --prefix=/opt/mpich --enable-shared=yes 
-make 
-make install 
-
-Your path needs to be updated to point to the new MPICH3 install, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
-
->PATH=/opt/mpich/bin:$PATH
-export PATH
-
-Your library path also needs to be updated in the same file:
-
->LD_LIBRARY_PATH=/opt/mpich/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH
 
 PETSc
 -----
