@@ -323,7 +323,7 @@ void NEClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 		count = 0;
 		tempVector.clear();
 		superCount++;
-//		width = max(sectionWidth * (int) (superCount / 10), sectionWidth);
+		width = max(sectionWidth * (int) (superCount / 10), sectionWidth);
 	}
 
 	// Tell each reactant to update the pairs vector with super clusters
