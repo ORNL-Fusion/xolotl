@@ -9,7 +9,6 @@
 #include <vtkm/cont/CoordinateSystem.h>
 #include <vtkm/cont/DataSet.h>
 #include <vtkm/cont/DataSetBuilderRectilinear.h>
-#include <vtkm/cont/DeviceAdapter.h>
 #include <vtkm/cont/DynamicCellSet.h>
 #include <vtkm/cont/ErrorBadValue.h>
 #include <vtkm/cont/Field.h>
@@ -31,7 +30,6 @@
 #include <vtkm/io/writer/VTKDataSetWriter.h>
 
 using namespace xolotlViz;
-using DeviceAdapter = VTKM_DEFAULT_DEVICE_ADAPTER_TAG;
 
 #define W_WIDTH 1024
 #define W_HEIGHT 1024
