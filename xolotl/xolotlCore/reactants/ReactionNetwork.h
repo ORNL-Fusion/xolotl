@@ -545,6 +545,16 @@ public:
 	}
 
 	/**
+	 * Get the total concentration of bubbles in the network.
+	 *
+	 * @param minSize The minimum size to take into account
+	 * @return The total concentration
+	 */
+	virtual double getTotalBubbleConcentration(int minSize = 0) override {
+		return 0.0;
+	}
+
+	/**
 	 * Calculate all the rate constants for the reactions and dissociations of the network.
 	 * Need to be called only when the temperature changes.
 	 *

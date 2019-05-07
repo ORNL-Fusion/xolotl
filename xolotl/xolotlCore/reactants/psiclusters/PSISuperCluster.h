@@ -674,10 +674,11 @@ public:
 
 	/**
 	 * This operation returns the current total concentration of clusters in the group.
-
+	 *
+	 * @param minSize The minimum size to take into account
 	 * @return The concentration
 	 */
-	double getTotalConcentration() const;
+	double getTotalConcentration(int minSize = 0) const;
 
 	/**
 	 * This operation returns the current total concentration of given atom in the group.

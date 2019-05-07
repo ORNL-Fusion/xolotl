@@ -980,7 +980,7 @@ void PSISuperCluster::setHeVVector(const HeVListType& vec) {
 	return;
 }
 
-double PSISuperCluster::getTotalConcentration() const {
+double PSISuperCluster::getTotalConcentration(int minSize) const {
 	// Initial declarations
 	double heDistance = 0.0, dDistance = 0.0, tDistance = 0.0, vDistance = 0.0,
 			conc = 0.0;
@@ -993,8 +993,10 @@ double PSISuperCluster::getTotalConcentration() const {
 		tDistance = getDistance(std::get<2>(pair), 2);
 		vDistance = getDistance(std::get<3>(pair), 3);
 
-		// Add the concentration of each cluster in the group times its number of helium
-		conc += getConcentration(heDistance, dDistance, tDistance, vDistance);
+		// Add the concentration of each cluster in the group if its helium is large enough
+		if (std::get<0>(pair) >= minSize)
+			conc += getConcentration(heDistance, dDistance, tDistance,
+					vDistance);
 	}
 
 	return conc;

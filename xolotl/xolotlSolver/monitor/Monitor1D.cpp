@@ -2309,7 +2309,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 
 				// Compute the helium density at this grid point
 				double heDensity = network.getTotalTrappedAtomConcentration(0,
-						minSizeBursting);
+						minSizeBursting) / network.getTotalBubbleConcentration(minSizeBursting);
 
 				// Compute the radius of the bubble from the number of helium
 				double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
@@ -2345,52 +2345,11 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 				}
 
 				if (localBurst) {
-					// Compute the averaged radius
-					double bubbleConcentration = 0.0, averagedRadius = 0.0;
-
-					// Consider each HeV cluster
-					for (auto const& heVMapItem : network.getAll(
-							ReactantType::PSIMixed)) {
-						auto const& cluster = *(heVMapItem.second);
-
-						// Get the composition
-						auto const & comp = cluster.getComposition();
-						int heSize = comp[toCompIdx(Species::He)];
-
-						// Check the size
-						if (heSize >= minSizeBursting) {
-							int id = cluster.getId() - 1;
-							bubbleConcentration += gridPointSolution[id]
-									* (grid[xi + 1] - grid[xi]);
-							averagedRadius += gridPointSolution[id]
-									* cluster.getReactionRadius()
-									* (grid[xi + 1] - grid[xi]);
-						}
-					}
-
-					// Loop on the super clusters
-					for (auto const& superMapItem : network.getAll(
-							ReactantType::PSISuper)) {
-						auto const& cluster =
-								static_cast<PSISuperCluster&>(*(superMapItem.second));
-
-						// Check the size
-						int heSize = *(cluster.getBounds(0).begin());
-						if (heSize >= minSizeBursting) {
-							bubbleConcentration +=
-									cluster.getTotalConcentration()
-											* (grid[xi + 1] - grid[xi]);
-							averagedRadius += cluster.getTotalConcentration()
-									* cluster.getReactionRadius()
-									* (grid[xi + 1] - grid[xi]);
-						}
-					}
-
 					// Write the bursting information
 					std::ofstream outputFile;
 					outputFile.open("bursting.txt", ios::app);
 					outputFile << time << " " << distance << " " << radius
-							<< " " << heDensity << " " << averagedRadius / bubbleConcentration << std::endl;
+							<< " " << heDensity << std::endl;
 					outputFile.close();
 				}
 			}

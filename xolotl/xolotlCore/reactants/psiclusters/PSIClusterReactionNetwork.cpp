@@ -1725,6 +1725,37 @@ double PSIClusterReactionNetwork::getTotalIConcentration() {
 	return iConc;
 }
 
+double PSIClusterReactionNetwork::getTotalBubbleConcentration(int minSize) {
+	// Initial declarations
+	double conc = 0.0;
+
+	// Sum over all Mixed clusters.
+	for (auto const& currMapItem : getAll(ReactantType::PSIMixed)) {
+
+		// Get the cluster and its composition
+		auto const& cluster = *(currMapItem.second);
+		auto& comp = cluster.getComposition();
+		double size = comp[toCompIdx(Species::He)];
+
+		// Add the concentration times the He content to the total helium concentration
+		if (size >= minSize)
+			conc += cluster.getConcentration();
+	}
+
+	// Sum over all super clusters.
+	for (auto const& currMapItem : getAll(ReactantType::PSISuper)) {
+
+		// Get the cluster
+		auto const& cluster =
+				static_cast<PSISuperCluster&>(*(currMapItem.second));
+
+		// Add its total helium concentration helium concentration
+		conc += cluster.getTotalAtomConcentration(minSize);
+	}
+
+	return conc;
+}
+
 void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset,
 		int xi) {
 
