@@ -102,6 +102,10 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 	// Stop the RHSFunction Timer
 	RHSFunctionTimer->stop();
 
+	// Return the local vector
+	ierr = DMRestoreLocalVector(da, &localC);
+	CHKERRQ(ierr);
+
 	PetscFunctionReturn(0);
 }
 
@@ -147,6 +151,10 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 
 	/* ----- Compute the partial derivatives for the reaction term ----- */
 	solverHandler.computeDiagonalJacobian(ts, localC, J, ftime);
+
+	// Return the local vector
+	ierr = DMRestoreLocalVector(da, &localC);
+	CHKERRQ(ierr);
 
 	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
 	CHKERRQ(ierr);
