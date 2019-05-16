@@ -577,9 +577,6 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	ierr = DMDAVecRestoreArrayDOF(da, F, &updatedConcs);
 	checkPetscError(ierr, "PetscSolver3DHandler::updateConcentration: "
 			"DMDAVecRestoreArrayDOF (F) failed.");
-	ierr = DMRestoreLocalVector(da, &localC);
-	checkPetscError(ierr, "PetscSolver3DHandler::updateConcentration: "
-			"DMRestoreLocalVector failed.");
 
 	// Clear memory
 	delete[] concVector;
@@ -920,6 +917,11 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		}
 	}
 
+	// Restore the array
+	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
+	checkPetscError(ierr, "PetscSolver3DHandler::computeOffDiagonalJacobian: "
+			"DMDAVecRestoreArrayDOFRead (localC) failed.");
+
 	return;
 }
 
@@ -1249,9 +1251,6 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
 	checkPetscError(ierr, "PetscSolver3DHandler::computeDiagonalJacobian: "
 			"DMDAVecRestoreArrayDOFRead failed.");
-	ierr = DMRestoreLocalVector(da, &localC);
-	checkPetscError(ierr, "PetscSolver3DHandler::computeDiagonalJacobian: "
-			"DMRestoreLocalVector failed.");
 
 	return;
 }

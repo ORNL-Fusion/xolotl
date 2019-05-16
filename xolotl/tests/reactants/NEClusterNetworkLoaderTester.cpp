@@ -179,12 +179,12 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	// Get the size of the network
 	int networkSize = network->size();
 	// Check the value
-	BOOST_REQUIRE_EQUAL(networkSize, 51);
+	BOOST_REQUIRE_EQUAL(networkSize, 35);
 
 	// Get the dof of the network
 	int dof = network->getDOF();
 	// Check the value
-	BOOST_REQUIRE_EQUAL(dof, 102);
+	BOOST_REQUIRE_EQUAL(dof, 70);
 
 	// Check the properties
 	auto neNetwork = (NEClusterReactionNetwork*) network.get();

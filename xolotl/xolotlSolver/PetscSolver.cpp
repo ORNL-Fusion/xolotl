@@ -111,6 +111,10 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 	// Stop the RHSFunction Timer
 	RHSFunctionTimer->stop();
 
+	// Return the local vector
+	ierr = DMRestoreLocalVector(da, &localC);
+	CHKERRQ(ierr);
+
 	PetscFunctionReturn(0);
 }
 
@@ -156,6 +160,10 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 
 	/* ----- Compute the partial derivatives for the reaction term ----- */
 	solverHandler.computeDiagonalJacobian(ts, localC, J, ftime);
+
+	// Return the local vector
+	ierr = DMRestoreLocalVector(da, &localC);
+	CHKERRQ(ierr);
 
 	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
 	CHKERRQ(ierr);
@@ -316,14 +324,16 @@ void PetscSolver::setTimes(double finalTime, double dt) {
 
 	// Get the default values for the dt
 	TSAdapt adapt;
-	ierr = TSGetAdapt(ts,&adapt);
+	ierr = TSGetAdapt(ts, &adapt);
 	checkPetscError(ierr, "PetscSolver::setTimes: TSGetAdapt failed.");
 	PetscReal hmin, hmax;
 	ierr = TSAdaptGetStepLimits(adapt, &hmin, &hmax);
-	checkPetscError(ierr, "PetscSolver::setTimes: TSAdaptGetStepLimits failed.");
+	checkPetscError(ierr,
+			"PetscSolver::setTimes: TSAdaptGetStepLimits failed.");
 	// Set the new max value
 	ierr = TSAdaptSetStepLimits(adapt, hmin, dt);
-	checkPetscError(ierr, "PetscSolver::setTimes: TSAdaptSetStepLimits failed.");
+	checkPetscError(ierr,
+			"PetscSolver::setTimes: TSAdaptSetStepLimits failed.");
 
 	// Give the final time value to the solver
 	ierr = TSSetMaxTime(ts, finalTime);
@@ -348,7 +358,7 @@ void PetscSolver::solve() {
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	if (ts != NULL && C != NULL) {
 		// Reset the time step number
-		ierr = TSSetStepNumber(ts, 0);  
+		ierr = TSSetStepNumber(ts, 0);
 		checkPetscError(ierr, "PetscSolver::solve: Reset Step Number failed.");
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr, "PetscSolver::solve: TSSolve failed.");
