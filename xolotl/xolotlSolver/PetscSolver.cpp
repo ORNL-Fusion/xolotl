@@ -38,7 +38,8 @@ static char help[] =
 
 // ----- GLOBAL VARIABLES ----- //
 extern PetscErrorCode setupPetsc0DMonitor(TS);
-extern PetscErrorCode setupPetsc1DMonitor(TS, std::shared_ptr<xolotlPerf::IHandlerRegistry>);
+extern PetscErrorCode setupPetsc1DMonitor(TS,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry>);
 extern PetscErrorCode setupPetsc2DMonitor(TS);
 extern PetscErrorCode setupPetsc3DMonitor(TS);
 
@@ -246,13 +247,13 @@ void PetscSolver::solve() {
 	double time = 0.0, deltaTime = 1.0e-12;
 	if (!fileName.empty()) {
 
-        XFile xfile(fileName);
-        auto concGroup = xfile.getGroup<XFile::ConcentrationGroup>();
-        if(concGroup and concGroup->hasTimesteps()) {
-            auto tsGroup = concGroup->getLastTimestepGroup();
-            assert(tsGroup);
-            std::tie(time, deltaTime) = tsGroup->readTimes();
-        }
+		XFile xfile(fileName);
+		auto concGroup = xfile.getGroup<XFile::ConcentrationGroup>();
+		if (concGroup and concGroup->hasTimesteps()) {
+			auto tsGroup = concGroup->getLastTimestepGroup();
+			assert(tsGroup);
+			std::tie(time, deltaTime) = tsGroup->readTimes();
+		}
 	}
 
 	ierr = TSSetTime(ts, time);
@@ -365,6 +366,5 @@ void PetscSolver::finalize() {
 
 	return;
 }
-
 
 } /* end namespace xolotlSolver */
