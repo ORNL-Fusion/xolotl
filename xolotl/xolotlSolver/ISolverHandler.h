@@ -205,37 +205,12 @@ public:
 	virtual void setLocalXeRate(double rate, int i, int j = 0, int k = 0) = 0;
 
 	/**
-	 * Get the value of the local Xe rate.
+	 * Get the local Xe rate that needs to be passed
 	 *
-	 * @return The local vector of rates
+	 * @param i, j, k, the local coordinate of the grid point
+	 * @return The rate
 	 */
-	virtual std::vector<std::vector<std::vector<double> > > * getLocalXeRate() = 0;
-
-	/**
-	 * Create the local Xe conc vector.
-	 *
-	 * @param a The size in the x direction
-	 * @param b The size in the y direction
-	 * @param c The size in the y direction
-	 */
-	virtual void createLocalXeConc(int a, int b = 1, int c = 1) = 0;
-
-	/**
-	 * Set the latest value of the local Xe conc.
-	 *
-	 * @param rate The latest value of conc
-	 * @param i The x coordinate of the location
-	 * @param j The y coordinate of the location
-	 * @param z The z coordinate of the location
-	 */
-	virtual void setLocalXeConc(double conc, int i, int j = 0, int k = 0) = 0;
-
-	/**
-	 * Get the value of the local Xe conc.
-	 *
-	 * @return The local vector of rates
-	 */
-	virtual std::vector<std::vector<std::vector<double> > > * getLocalXeConc() = 0;
+	virtual double getLocalXeRate(int i, int j, int k) = 0;
 
 	/**
 	 * Set the coordinates covered by the local grid.

@@ -549,9 +549,6 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 			// Update the concentration in the network
 			network.updateConcentrationsFromArray(gridPointSolution);
 
-			// Concentration on this grid point
-			double localConc = 0.0;
-
 			// Loop on all the indices
 			for (unsigned int i = 0; i < indices2D.size(); i++) {
 				// Add the current concentration times the number of xenon in the cluster
@@ -562,7 +559,6 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 						* (grid[xi + 1] - grid[xi]) * hy;
 				radii += gridPointSolution[indices2D[i]] * radii2D[i]
 						* (grid[xi + 1] - grid[xi]) * hy;
-				localConc += gridPointSolution[indices2D[i]] * weights2D[i];
 			}
 
 			// Loop on all the super clusters
@@ -577,11 +573,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 				radii += cluster.getTotalConcentration()
 						* cluster.getReactionRadius()
 						* (grid[xi + 1] - grid[xi]) * hy;
-				localConc += cluster.getTotalXenonConcentration();
 			}
-
-			// Set the total conc in the vector we keep
-			solverHandler.setLocalXeConc(localConc, xi - xs, yj - ys);
 		}
 	}
 
@@ -2021,7 +2013,6 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 		checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetCorners failed.");
 		// Create the local vectors on each process
 		solverHandler.createLocalXeRate(xm, ym);
-		solverHandler.createLocalXeConc(xm, ym);
 		for (int i = 0; i < xm; i++) {
 			std::vector<double> tempVector;
 			for (int j = 0; j < ym; j++) {

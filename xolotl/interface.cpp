@@ -145,34 +145,13 @@ void XolotlInterface::solveXolotl() {
 	return;
 }
 
-std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeRate() {
-	std::vector<std::vector<std::vector<double> > > * toReturn;
+double XolotlInterface::getLocalXeRate(int i, int j, int k) {
+	double toReturn;
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
 		// Get the rate at this location
-		toReturn = solverHandler.getLocalXeRate();
-	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
-		std::cerr << error << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (...) {
-		std::cerr << "Unrecognized exception seen." << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	}
-
-	return toReturn;
-}
-
-std::vector<std::vector<std::vector<double> > > * XolotlInterface::getLocalXeConc() {
-	std::vector<std::vector<std::vector<double> > > * toReturn;
-	try {
-		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
-		// Get the rate at this location
-		toReturn = solverHandler.getLocalXeConc();
+		toReturn = solverHandler.getLocalXeRate(i, j, k);
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;

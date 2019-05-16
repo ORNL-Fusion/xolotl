@@ -58,16 +58,10 @@ public:
 	/**
 	 * Get the local Xe rate that needs to be passed
 	 *
-	 * @return The local vector of rates
+	 * @param i, j, k, the local coordinate of the grid point
+	 * @return The rate
 	 */
-	std::vector<std::vector<std::vector<double> > > * getLocalXeRate();
-
-	/**
-	 * Get the local Xe conc
-	 *
-	 * @return The local vector of concs
-	 */
-	std::vector<std::vector<std::vector<double> > > * getLocalXeConc();
+	double getLocalXeRate(int i, int j, int k);
 
 	/**
 	 * Get the local Xe rate that needs to be passed

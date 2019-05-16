@@ -82,9 +82,6 @@ protected:
 	//! The vector of local Xe rate.
 	std::vector<std::vector<std::vector<double> > > localXeRate;
 
-	//! The vector of local Xe conc.
-	std::vector<std::vector<std::vector<double> > > localXeConc;
-
 	//! The electronic stopping power for re-solution
 	double electronicStoppingPower;
 
@@ -616,46 +613,8 @@ public:
 	 * Get the value of the local Xe rate.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<std::vector<std::vector<double> > > * getLocalXeRate()
-			override {
-		return &localXeRate;
-	}
-
-	/**
-	 * Create the local Xe conc vector.
-	 * \see ISolverHandler.h
-	 */
-	void createLocalXeConc(int a, int b = 1, int c = 1) override {
-		localXeConc.clear();
-		// Create the vector of vectors and fill it with 0.0
-		for (int i = 0; i < a; i++) {
-			std::vector<std::vector<double> > tempTempVector;
-			for (int j = 0; j < b; j++) {
-				std::vector<double> tempVector;
-				for (int k = 0; k < c; k++) {
-					tempVector.push_back(0.0);
-				}
-				tempTempVector.push_back(tempVector);
-			}
-			localXeConc.push_back(tempTempVector);
-		}
-	}
-
-	/**
-	 * Set the latest value of the local Xe conc.
-	 * \see ISolverHandler.h
-	 */
-	void setLocalXeConc(double conc, int i, int j = 0, int k = 0) override {
-		localXeConc[i][j][k] = conc;
-	}
-
-	/**
-	 * Get the value of the local Xe conc.
-	 * \see ISolverHandler.h
-	 */
-	std::vector<std::vector<std::vector<double> > > * getLocalXeConc()
-			override {
-		return &localXeConc;
+	double getLocalXeRate(int i, int j, int k) override {
+		return localXeRate[i][j][k];
 	}
 
 	/**
