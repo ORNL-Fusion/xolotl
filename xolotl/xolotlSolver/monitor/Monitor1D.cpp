@@ -740,9 +740,17 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// Get the network
 	auto& network = solverHandler.getNetwork();
 
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
 	// Get the array of concentration
 	PetscReal **solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
@@ -838,11 +846,11 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		int xi = std::get<0>(pair);
 		double hxLeft = grid[xi + 1] - grid[xi];
 		double hxRight = grid[xi + 2] - grid[xi + 1];
-
-		// Left
-		xi = std::get<0>(pair) - 1;
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
+
+			// Left
+			xi = std::get<0>(pair) - 1;
 			// Get the Xe_1 cluster
 			auto const& cluster = *(network.get(Species::Xe, 1));
 			// Get its id
@@ -853,41 +861,18 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 			localRate += (double) size * solutionArray[xi][id]
 					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 					/ ((hxLeft + hxRight) * hxLeft);
-		}
 
-		// Right
-		xi = std::get<0>(pair) + 1;
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm) {
-			// Get the Xe_1 cluster
-			auto const& cluster = *(network.get(Species::Xe, 1));
-			// Get its id
-			int id = cluster.getId() - 1;
-			// Get its size and diffusion coefficient
-			int size = cluster.getSize();
+			// Right
+			xi = std::get<0>(pair) + 1;
 			// Compute the flux coming from the left
 			localRate += (double) size * solutionArray[xi][id]
 					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 					/ ((hxLeft + hxRight) * hxRight);
-		}
 
-		// Middle
-		xi = std::get<0>(pair);
-		// Get the corresponding proc ID
-		int localProcId = 0;
-		if (xi >= xs && xi < xs + xm) {
-			localProcId = procId;
+			// Middle
+			xi = std::get<0>(pair);
+			previousXeFlux1D[xi - xs] = localRate;
 		}
-		int globalProcId = 0;
-		MPI_Allreduce(&localProcId, &globalProcId, 1, MPI_INT, MPI_SUM,
-				xolotlComm);
-		// Pass the local rate to this proc ID
-		double totalLocalRate = 0.0;
-		MPI_Reduce(&localRate, &totalLocalRate, 1, MPI_DOUBLE, MPI_SUM,
-				globalProcId, xolotlComm);
-		// Add the local rate to the flux
-		if (procId == globalProcId)
-			previousXeFlux1D[xi - xs] = totalLocalRate;
 	}
 
 	// Master process
@@ -916,7 +901,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray);
+	CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(da, &localSolution);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);

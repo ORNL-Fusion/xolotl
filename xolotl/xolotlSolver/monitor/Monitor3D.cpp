@@ -417,9 +417,17 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the network
 	auto& network = solverHandler.getNetwork();
 
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
 	// Get the array of concentration
 	PetscReal ****solutionArray, *gridPointSolution;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
@@ -526,12 +534,13 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		double hxLeft = grid[xi + 1] - grid[xi];
 		double hxRight = grid[xi + 2] - grid[xi + 1];
 
-		// X segment
-		// Left
-		xi = std::get<0>(pair) - 1;
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
+
+			// X segment
+			// Left
+			xi = std::get<0>(pair) - 1;
 			// Get the Xe_1 cluster
 			auto const& cluster = *(network.get(Species::Xe, 1));
 			// Get its id
@@ -542,113 +551,48 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 			localRate += (double) size * solutionArray[zk][yj][xi][id]
 					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 					/ ((hxLeft + hxRight) * hxLeft);
-		}
 
-		// Right
-		xi = std::get<0>(pair) + 1;
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-			// Get the Xe_1 cluster
-			auto const& cluster = *(network.get(Species::Xe, 1));
-			// Get its id
-			int id = cluster.getId() - 1;
-			// Get its size and diffusion coefficient
-			int size = cluster.getSize();
+			// Right
+			xi = std::get<0>(pair) + 1;
 			// Compute the flux coming from the right
 			localRate += (double) size * solutionArray[zk][yj][xi][id]
 					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
 					/ ((hxLeft + hxRight) * hxRight);
-		}
 
-		// Y segment
-		// Bottom
-		xi = std::get<0>(pair);
-		yj = std::get<1>(pair) - 1;
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-			// Get the Xe_1 cluster
-			auto const& cluster = *(network.get(Species::Xe, 1));
-			// Get its id
-			int id = cluster.getId() - 1;
-			// Get its size and diffusion coefficient
-			int size = cluster.getSize();
+			// Y segment
+			// Bottom
+			xi = std::get<0>(pair);
+			yj = std::get<1>(pair) - 1;
 			// Compute the flux coming from the bottom
 			localRate += (double) size * solutionArray[zk][yj][xi][id]
 					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
-		}
 
-		// Top
-		yj = std::get<1>(pair) + 1;
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-			// Get the Xe_1 cluster
-			auto const& cluster = *(network.get(Species::Xe, 1));
-			// Get its id
-			int id = cluster.getId() - 1;
-			// Get its size and diffusion coefficient
-			int size = cluster.getSize();
+			// Top
+			yj = std::get<1>(pair) + 1;
 			// Compute the flux coming from the top
 			localRate += (double) size * solutionArray[zk][yj][xi][id]
 					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
-		}
 
-		// Z segment
-		// Back
-		yj = std::get<1>(pair);
-		zk = std::get<2>(pair) - 1;
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-			// Get the Xe_1 cluster
-			auto const& cluster = *(network.get(Species::Xe, 1));
-			// Get its id
-			int id = cluster.getId() - 1;
-			// Get its size and diffusion coefficient
-			int size = cluster.getSize();
-			// Compute the flux coming from the bottom
+			// Z segment
+			// Back
+			yj = std::get<1>(pair);
+			zk = std::get<2>(pair) - 1;
+			// Compute the flux coming from the back
 			localRate += (double) size * solutionArray[zk][yj][xi][id]
 					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hz * hz);
-		}
 
-		// Front
-		zk = std::get<2>(pair) + 1;
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-			// Get the Xe_1 cluster
-			auto const& cluster = *(network.get(Species::Xe, 1));
-			// Get its id
-			int id = cluster.getId() - 1;
-			// Get its size and diffusion coefficient
-			int size = cluster.getSize();
-			// Compute the flux coming from the top
+			// Front
+			zk = std::get<2>(pair) + 1;
+			// Compute the flux coming from the front
 			localRate += (double) size * solutionArray[zk][yj][xi][id]
 					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hz * hz);
-		}
 
-		// Middle
-		xi = std::get<0>(pair);
-		yj = std::get<1>(pair);
-		zk = std::get<2>(pair);
-		// Get the corresponding proc ID
-		int localProcId = 0;
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-			localProcId = procId;
+			// Middle
+			xi = std::get<0>(pair);
+			yj = std::get<1>(pair);
+			zk = std::get<2>(pair);
+			previousXeFlux3D[xi - xs][yj - ys][zk - zs] = localRate;
 		}
-		int globalProcId = 0;
-		MPI_Allreduce(&localProcId, &globalProcId, 1, MPI_INT, MPI_SUM,
-				xolotlComm);
-		// Pass the local rate to this proc ID
-		double totalLocalRate = 0.0;
-		MPI_Reduce(&localRate, &totalLocalRate, 1, MPI_DOUBLE, MPI_SUM,
-				globalProcId, xolotlComm);
-		// Add the local rate to the flux
-		if (procId == globalProcId)
-			previousXeFlux3D[xi - xs][yj - ys][zk - zs] = totalLocalRate;
 	}
 
 	// Master process
@@ -682,7 +626,9 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray);
+	CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(da, &localSolution);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
