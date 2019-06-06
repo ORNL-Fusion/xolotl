@@ -11,6 +11,8 @@
 #include <ctime>
 #include <MPIUtils.h>
 
+namespace xperf = xolotlPerf;
+
 void XolotlInterface::printSomething() {
 	std::cout << "I'm in Xolotl !!!" << std::endl;
 	return;
@@ -273,6 +275,27 @@ void XolotlInterface::finalizeXolotl(bool isStandalone) {
 	try {
 		// Call solver finalize
 		solver->finalize(isStandalone);
+
+		// Report statistics about the performance data collected during
+		// the run we just completed.
+		auto handlerRegistry = xolotlPerf::getHandlerRegistry();
+		xperf::PerfObjStatsMap < xperf::ITimer::ValType > timerStats;
+		xperf::PerfObjStatsMap < xperf::IEventCounter::ValType > counterStats;
+		xperf::PerfObjStatsMap < xperf::IHardwareCounter::CounterType
+				> hwCtrStats;
+		handlerRegistry->collectStatistics(timerStats, counterStats,
+				hwCtrStats);
+
+		auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+
+		// Get the MPI rank
+		int rank;
+		MPI_Comm_rank(xolotlComm, &rank);
+		if (rank == 0) {
+			handlerRegistry->reportStatistics(std::cout, timerStats,
+					counterStats, hwCtrStats);
+		}
+
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;

@@ -23,6 +23,8 @@
 #include "xolotlCore/io/XFile.h"
 #include "xolotlSolver/monitor/Monitor.h"
 
+namespace xperf = xolotlPerf;
+
 namespace xolotlSolver {
 
 // Declaration of the functions defined in Monitor.cpp
@@ -78,6 +80,9 @@ std::vector<int> indices2D;
 std::vector<int> weights2D;
 // Declare the vector that will store the radii of bubbles
 std::vector<double> radii2D;
+
+// Timers
+std::shared_ptr<xperf::ITimer> gbTimer;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop2D")
@@ -493,6 +498,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
  */
 PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *) {
+	xperf::ScopedTimer myTimer(gbTimer);
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -1643,6 +1649,9 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
  */
 PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 	PetscErrorCode ierr;
+
+	auto handlerRegistry = xolotlPerf::getHandlerRegistry();
+	gbTimer = handlerRegistry->getTimer("monitor2D:GB");
 
 	// Get the process ID
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
