@@ -492,36 +492,6 @@ public:
 							" it doesn't make any sense.");
 		}
 
-		// Check for free surface boundaries
-
-		// Read the parameter file
-		std::ifstream paramFile;
-		paramFile.open(gbFileName);
-		if (paramFile.good()) {
-			// Build an input stream from the string
-			xolotlCore::TokenizedLineReader<int> reader;
-			// Get the line
-			std::string line;
-			getline(paramFile, line);
-			auto lineSS = std::make_shared<std::istringstream>(line);
-			reader.setInputStream(lineSS);
-
-			// Read the first line
-			auto tokens = reader.loadLine();
-			// And start looping on the lines
-			while (tokens.size() > 0) {
-				// Add the coordinates to the GB vector
-				gbVector.push_back(
-						std::make_tuple(tokens[0], tokens[1], tokens[2]));
-
-				// Read the next line
-				getline(paramFile, line);
-				lineSS = std::make_shared<std::istringstream>(line);
-				reader.setInputStream(lineSS);
-				tokens = reader.loadLine();
-			}
-		}
-
 		return;
 	}
 
@@ -629,6 +599,35 @@ public:
 		localYM = ym;
 		localZS = zs;
 		localZM = zm;
+
+		// Check for free surface boundaries
+
+		// Read the parameter file
+		std::ifstream paramFile;
+		paramFile.open(gbFileName);
+		if (paramFile.good()) {
+			// Build an input stream from the string
+			xolotlCore::TokenizedLineReader<int> reader;
+			// Get the line
+			std::string line;
+			getline(paramFile, line);
+			auto lineSS = std::make_shared<std::istringstream>(line);
+			reader.setInputStream(lineSS);
+
+			// Read the first line
+			auto tokens = reader.loadLine();
+			// And start looping on the lines
+			while (tokens.size() > 0) {
+				// Add the coordinates to the GB vector
+				setGBLocation(tokens[0], tokens[1], tokens[2]);
+
+				// Read the next line
+				getline(paramFile, line);
+				lineSS = std::make_shared<std::istringstream>(line);
+				reader.setInputStream(lineSS);
+				tokens = reader.loadLine();
+			}
+		}
 	}
 
 	/**
@@ -780,7 +779,11 @@ public:
 	 */
 	void setGBLocation(int i, int j = 0, int k = 0) override {
 		// Add the coordinates to the GB vector
-		gbVector.push_back(std::make_tuple(i, j, k));
+		if (i >= localXS && i < localXS + max(localXM, 1) && j >= localYS
+				&& j < localYS + max(localYM, 1) && k >= localZS
+				&& k < localZS + max(localZM, 1)) {
+			gbVector.push_back(std::make_tuple(i, j, k));
+		}
 	}
 
 	/**

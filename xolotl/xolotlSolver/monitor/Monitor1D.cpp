@@ -882,9 +882,6 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Xenon retention = "
-				<< 100.0 * (totalXeConcentration) / fluence << " %"
-				<< std::endl;
 		std::cout << "Xenon concentration = " << totalXeConcentration
 				<< std::endl;
 		std::cout << "Xenon GB = " << nXenon1D << std::endl << std::endl;
@@ -892,9 +889,8 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " " << 100.0 * (totalXeConcentration / fluence)
-				<< " " << totalXeConcentration << " "
-				<< fluence - totalXeConcentration << " "
+		outputFile << time << " " << totalXeConcentration << " "
+				<< fluence << " "
 				<< totalRadii / totalBubbleConcentration << " " << nXenon1D
 				<< std::endl;
 		outputFile.close();
