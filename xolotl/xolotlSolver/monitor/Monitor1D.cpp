@@ -754,10 +754,15 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
-	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0;
+	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
+			partialBubbleConcentration = 0.0, partialRadii = 0.0;
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
+
+	// Get the re-solution handler to get the minimum size
+	auto resoHandler = solverHandler.getReSolutionHandler();
+	int minSize = resoHandler->getMinSize();
 
 	// Loop on the grid
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
@@ -778,6 +783,12 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 					* (grid[xi + 1] - grid[xi]);
 			radii += gridPointSolution[indices1D[i]] * radii1D[i]
 					* (grid[xi + 1] - grid[xi]);
+			if (weights1D[i] >= minSize) {
+				partialBubbleConcentration += gridPointSolution[indices1D[i]]
+						* (grid[xi + 1] - grid[xi]);
+				partialRadii += gridPointSolution[indices1D[i]] * radii1D[i]
+						* (grid[xi + 1] - grid[xi]);
+			}
 		}
 
 		// Loop on all the super clusters
@@ -790,6 +801,13 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 					* (grid[xi + 1] - grid[xi]);
 			radii += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi]);
+			if (cluster.getSize() >= minSize) {
+				partialBubbleConcentration += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi]);
+				partialRadii += cluster.getTotalConcentration()
+						* cluster.getReactionRadius()
+						* (grid[xi + 1] - grid[xi]);
+			}
 		}
 	}
 
@@ -889,9 +907,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " " << totalXeConcentration << " "
-				<< fluence << " "
-				<< totalRadii / totalBubbleConcentration << " " << nXenon1D
+		outputFile << time << " " << totalXeConcentration << " " << fluence
+				<< " " << totalRadii / totalBubbleConcentration << " "
+				<< partialRadii / partialBubbleConcentration << " " << nXenon1D
 				<< std::endl;
 		outputFile.close();
 	}
@@ -1380,7 +1398,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 		}
 	}
 
-	// Restore the solutionArray
+// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
@@ -1397,7 +1415,7 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 
 	xperf::ScopedTimer myTimer(seriesTimer);
 
-	// Initial declarations
+// Initial declarations
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
 	PetscInt xs, xm, xi;
@@ -1405,42 +1423,42 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
-	// Don't do anything if it is not on the stride
+// Don't do anything if it is not on the stride
 	if (timestep % 10 != 0)
 		PetscFunctionReturn(0);
 
-	// Get the number of processes
+// Get the number of processes
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int worldSize;
 	MPI_Comm_size(xolotlComm, &worldSize);
-	// Gets the process ID (important when it is running in parallel)
+// Gets the process ID (important when it is running in parallel)
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Get the da from ts
+// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	// Get the solutionArray
+// Get the solutionArray
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
+// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
 	CHKERRQ(ierr);
 
-	// Get the solver handler
+// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the network and its size
+// Get the network and its size
 	auto& network = solverHandler.getNetwork();
 	const int networkSize = network.size();
 
-	// Get the physical grid
+// Get the physical grid
 	auto grid = solverHandler.getXGrid();
 
-	// To plot a maximum of 18 clusters of the whole benchmark
+// To plot a maximum of 18 clusters of the whole benchmark
 	const int loopSize = std::min(18, networkSize);
 
 	if (procId == 0) {
@@ -1486,7 +1504,7 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 					// Create a Point with the concentration[i] as the value
 					// and add it to myPoints
 					xolotlViz::Point aPoint;
-					aPoint.value = conc;						// He
+					aPoint.value = conc;					// He
 					aPoint.t = time;
 					aPoint.x = x;
 					myPoints[j].push_back(aPoint);

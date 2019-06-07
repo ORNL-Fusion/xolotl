@@ -292,6 +292,13 @@ public:
 	virtual xolotlCore::ITrapMutationHandler *getMutationHandler() const = 0;
 
 	/**
+	 * Get the re-solution handler.
+	 *
+	 * @return The re-solution handler
+	 */
+	virtual xolotlCore::IReSolutionHandler *getReSolutionHandler() const = 0;
+
+	/**
 	 * Get the network.
 	 *
 	 * @return The network

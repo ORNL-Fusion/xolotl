@@ -688,6 +688,20 @@ public:
 	 */
 	virtual bool printRNGSeed(void) const = 0;
 
+	/**
+	 * Obtain the minimum size for the re-solution.
+	 *
+	 * @return The size
+	 */
+	virtual int getResoMinSize() const = 0;
+
+	/**
+	 * Set the minimum size for the re-solution.
+	 *
+	 * @param size The minimum size
+	 */
+	virtual void setResoMinSize(int size) = 0;
+
 };
 //end class IOptions
 

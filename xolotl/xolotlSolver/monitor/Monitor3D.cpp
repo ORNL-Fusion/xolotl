@@ -169,7 +169,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 		for (PetscInt j = 0; j < My; j++) {
 			for (PetscInt i = 0; i < Mx; i++) {
 				// Wait for all the processes
-				MPI_Barrier(PETSC_COMM_WORLD);
+				MPI_Barrier(xolotlComm);
 
 				// Size of the concentration that will be stored
 				int concSize = -1;
@@ -431,7 +431,12 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
-	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0;
+	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
+			partialBubbleConcentration = 0.0, partialRadii = 0.0;
+
+	// Get the re-solution handler to get the minimum size
+	auto resoHandler = solverHandler.getReSolutionHandler();
+	int minSize = resoHandler->getMinSize();
 
 	// Loop on the grid
 	for (PetscInt zk = zs; zk < zs + zm; zk++) {
@@ -455,6 +460,14 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 							* (grid[xi + 1] - grid[xi]) * hy * hz;
 					radii += gridPointSolution[indices3D[i]] * radii3D[i]
 							* (grid[xi + 1] - grid[xi]) * hy * hz;
+					if (weights3D[i] >= minSize) {
+						partialBubbleConcentration +=
+								gridPointSolution[indices3D[i]]
+										* (grid[xi + 1] - grid[xi]) * hy * hz;
+						partialRadii += gridPointSolution[indices3D[i]]
+								* radii3D[i] * (grid[xi + 1] - grid[xi]) * hy
+								* hz;
+					}
 				}
 
 				// Loop on all the super clusters
@@ -469,6 +482,14 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 					radii += cluster.getTotalConcentration()
 							* cluster.getReactionRadius()
 							* (grid[xi + 1] - grid[xi]) * hy * hz;
+					if (cluster.getSize() >= minSize) {
+						partialBubbleConcentration +=
+								cluster.getTotalConcentration()
+										* (grid[xi + 1] - grid[xi]) * hy * hz;
+						partialRadii += cluster.getTotalConcentration()
+								* cluster.getReactionRadius()
+								* (grid[xi + 1] - grid[xi]) * hy * hz;
+					}
 				}
 			}
 		}
@@ -614,9 +635,9 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " " << totalXeConcentration << " "
-				<< fluence << " "
-				<< totalRadii / totalBubbleConcentration << " "
+		outputFile << time << " " << totalXeConcentration << " " << fluence
+				<< " " << totalRadii / totalBubbleConcentration << " "
+				<< partialRadii / partialBubbleConcentration << " "
 				<< nXenon3D / surface << std::endl;
 		outputFile.close();
 	}

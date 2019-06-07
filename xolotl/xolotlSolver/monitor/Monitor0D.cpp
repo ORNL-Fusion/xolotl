@@ -176,7 +176,8 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
-	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0;
+	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
+			partialBubbleConcentration = 0.0, partialRadii = 0.0;
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
@@ -187,6 +188,10 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	// Update the concentration in the network
 	network.updateConcentrationsFromArray(gridPointSolution);
 
+	// Get the re-solution handler to get the minimum size
+	auto resoHandler = solverHandler.getReSolutionHandler();
+	int minSize = resoHandler->getMinSize();
+
 	// Loop on all the indices
 	for (unsigned int i = 0; i < indices0D.size(); i++) {
 		// Add the current concentration times the number of xenon in the cluster
@@ -194,6 +199,10 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 		xeConcentration += gridPointSolution[indices0D[i]] * weights0D[i];
 		bubbleConcentration += gridPointSolution[indices0D[i]];
 		radii += gridPointSolution[indices0D[i]] * radii0D[i];
+		if (weights0D[i] >= minSize) {
+			partialBubbleConcentration += gridPointSolution[indices0D[i]];
+			partialRadii += gridPointSolution[indices0D[i]] * radii0D[i];
+		}
 	}
 
 	// Loop on all the super clusters
@@ -203,6 +212,11 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 		xeConcentration += cluster.getTotalXenonConcentration();
 		bubbleConcentration += cluster.getTotalConcentration();
 		radii += cluster.getTotalConcentration() * cluster.getReactionRadius();
+		if (cluster.getSize() >= minSize) {
+			partialBubbleConcentration += cluster.getTotalConcentration();
+			partialRadii += cluster.getTotalConcentration()
+					* cluster.getReactionRadius();
+		}
 	}
 
 	// Get the fluence
@@ -216,9 +230,9 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	// Uncomment to write the retention and the fluence in a file
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", ios::app);
-	outputFile << time << " "
-			<< xeConcentration << " " << fluence << " "
-			<< radii / bubbleConcentration << std::endl;
+	outputFile << time << " " << xeConcentration << " " << fluence << " "
+			<< radii / bubbleConcentration << " "
+			<< partialRadii / partialBubbleConcentration << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray
@@ -437,12 +451,12 @@ PetscErrorCode setupPetsc0DMonitor(TS& ts) {
 
 	// Get the option from the TS
 	PetscOptions petscOptions;
-	ierr = PetscObjectGetOptions((PetscObject)ts, &petscOptions);
-	checkPetscError(ierr,
-			"setupPetsc0DMonitor: PetscObjectGetOptions failed.");
+	ierr = PetscObjectGetOptions((PetscObject) ts, &petscOptions);
+	checkPetscError(ierr, "setupPetsc0DMonitor: PetscObjectGetOptions failed.");
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse", &flagCheck);
+	ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse",
+			&flagCheck);
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
@@ -547,10 +561,9 @@ PetscErrorCode setupPetsc0DMonitor(TS& ts) {
 
 			// Get the size of the total grid
 			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-			PETSC_IGNORE,
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc0DMonitor: DMDAGetInfo failed.");
 
 			// Get the solver handler
