@@ -126,8 +126,8 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -180,7 +180,7 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	for (PetscInt j = 0; j < My; j++) {
 		for (PetscInt i = 0; i < Mx; i++) {
 			// Wait for all the processes
-			MPI_Barrier(PETSC_COMM_WORLD);
+			MPI_Barrier (PETSC_COMM_WORLD);
 
 			// Size of the concentration that will be stored
 			int concSize = -1;
@@ -226,7 +226,8 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 				continue;
 
 			// All processes create the dataset and fill it
-			tsGroup->writeConcentrationDataset(concSize, concArray, write, i, j);
+			tsGroup->writeConcentrationDataset(concSize, concArray, write, i,
+					j);
 		}
 	}
 
@@ -266,8 +267,8 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid in the x direction
@@ -330,10 +331,9 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 			PETSC_COMM_WORLD);
 
 	// Get the total size of the grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Look at the fluxes going in the bulk if the bottom is a free surface
@@ -523,10 +523,9 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the total size of the grid
 	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -544,7 +543,12 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
-	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0;
+	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
+			partialBubbleConcentration = 0.0, partialRadii = 0.0;
+
+	// Get the re-solution handler to get the minimum size
+	auto resoHandler = solverHandler.getReSolutionHandler();
+	int minSize = resoHandler->getMinSize();
 
 	// Loop on the grid
 	for (PetscInt yj = ys; yj < ys + ym; yj++) {
@@ -566,6 +570,13 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 						* (grid[xi + 1] - grid[xi]) * hy;
 				radii += gridPointSolution[indices2D[i]] * radii2D[i]
 						* (grid[xi + 1] - grid[xi]) * hy;
+				if (weights2D[i] >= minSize) {
+					partialBubbleConcentration +=
+							gridPointSolution[indices2D[i]]
+									* (grid[xi + 1] - grid[xi]) * hy;
+					partialRadii += gridPointSolution[indices2D[i]] * radii2D[i]
+							* (grid[xi + 1] - grid[xi]) * hy;
+				}
 			}
 
 			// Loop on all the super clusters
@@ -580,6 +591,14 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 				radii += cluster.getTotalConcentration()
 						* cluster.getReactionRadius()
 						* (grid[xi + 1] - grid[xi]) * hy;
+				if (cluster.getSize() >= minSize) {
+					partialBubbleConcentration +=
+							cluster.getTotalConcentration()
+									* (grid[xi + 1] - grid[xi]) * hy;
+					partialRadii += cluster.getTotalConcentration()
+							* cluster.getReactionRadius()
+							* (grid[xi + 1] - grid[xi]) * hy;
+				}
 			}
 		}
 	}
@@ -612,114 +631,54 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// X segment
-			// Left
-			int xi = std::get<0>(pair) - 1;
-			int yj = std::get<1>(pair);
+		// Left
+		int xi = std::get<0>(pair) - 1;
+		int yj = std::get<1>(pair);
 
-			// Check we are on the right proc
-			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
 
-				// Factor for finite difference
-				double hxLeft = grid[xi + 2] - grid[xi + 1];
-				double hxRight = grid[xi + 3] - grid[xi + 2];
-				// Consider each xenon cluster.
-				for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-					// Get the cluster
-					auto const& cluster = *(xeMapItem.second);
-					// Get its id
-					int id = cluster.getId() - 1;
-					// Get its size and diffusion coefficient
-					int size = cluster.getSize();
-					// Compute the flux coming from the left
-					newFlux += (double) size * solutionArray[yj][xi][id]
-							* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-							* hy / (hxLeft + hxRight);
-
-//					if (timestep > 85)
-//						std::cout << "left: " << xi << " " << yj << " "
-//								<< cluster.getDiffusionCoefficient(xi + 1 - xs)
-//								<< " " << hxLeft + hxRight << " " << solutionArray[yj][xi][id] << std::endl;
-				}
+			// Factor for finite difference
+			double hxLeft = grid[xi + 2] - grid[xi + 1];
+			double hxRight = grid[xi + 3] - grid[xi + 2];
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the left
+				newFlux += (double) size * solutionArray[yj][xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+						* hy / (hxLeft + hxRight);
 			}
+		}
 
-			// Right
-			xi = std::get<0>(pair) + 1;
+		// Right
+		xi = std::get<0>(pair) + 1;
 
-			// Check we are on the right proc
-			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
 
-				// Factor for finite difference
-				double hxLeft = grid[xi] - grid[xi - 1];
-				double hxRight = grid[xi + 1] - grid[xi];
-				// Consider each xenon cluster.
-				for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-					// Get the cluster
-					auto const& cluster = *(xeMapItem.second);
-					// Get its id
-					int id = cluster.getId() - 1;
-					// Get its size and diffusion coefficient
-					int size = cluster.getSize();
-					// Compute the flux coming from the right
-					newFlux += (double) size * solutionArray[yj][xi][id]
-							* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-							* hy / (hxLeft + hxRight);
-
-//					if (timestep > 85)
-//						std::cout << "right: " << xi << " " << yj << " "
-//								<< cluster.getDiffusionCoefficient(xi + 1 - xs)
-//								<< " " << hxLeft + hxRight << " " << solutionArray[yj][xi][id] << std::endl;
-				}
+			// Factor for finite difference
+			double hxLeft = grid[xi] - grid[xi - 1];
+			double hxRight = grid[xi + 1] - grid[xi];
+			// Consider each xenon cluster.
+			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
+				// Get the cluster
+				auto const& cluster = *(xeMapItem.second);
+				// Get its id
+				int id = cluster.getId() - 1;
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				// Compute the flux coming from the right
+				newFlux += (double) size * solutionArray[yj][xi][id]
+						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+						* hy / (hxLeft + hxRight);
 			}
-//		// Y segment
-//		else if (pair.second == 1) {
-//			// Bottom
-//			int xi = pair.first.first;
-//			int yj = pair.first.second;
-//
-//			// Check we are on the right proc
-//			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
-//				// Consider each xenon cluster.
-//				for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-//					// Get the cluster
-//					auto const& cluster = *(xeMapItem.second);
-//					// Get its id
-//					int id = cluster.getId() - 1;
-//					// Get its size and diffusion coefficient
-//					int size = cluster.getSize();
-//					// Compute the flux coming from the bottom
-//					newFlux += (double) size * solutionArray[yj][xi][id]
-//							* cluster.getDiffusionCoefficient(xi + 1 - xs)
-//							* (grid[xi + 1] - grid[xi]) / hy;
-////					std::cout << "bottom: " << xi << " " << yj << " "
-////							<< cluster.getDiffusionCoefficient(xi + 1 - xs)
-////							<< " " << grid[xi + 1] - grid[xi] << " " << solutionArray[yj][xi][id] << std::endl;
-//				}
-//			}
-//
-//			// Top
-//			yj = pair.first.second + 1;
-//
-//			// Check we are on the right proc
-//			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
-//				// Consider each xenon cluster.
-//				for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-//					// Get the cluster
-//					auto const& cluster = *(xeMapItem.second);
-//					// Get its id
-//					int id = cluster.getId() - 1;
-//					// Get its size and diffusion coefficient
-//					int size = cluster.getSize();
-//					// Compute the flux coming from the top
-//					newFlux += (double) size * solutionArray[yj][xi][id]
-//							* cluster.getDiffusionCoefficient(xi + 1 - xs)
-//							* (grid[xi + 1] - grid[xi]) / hy;
-////					std::cout << "top: " << xi << " " << yj << " "
-////							<< cluster.getDiffusionCoefficient(xi + 1 - xs)
-////							<< " " << grid[xi + 1] - grid[xi] << " " << solutionArray[yj][xi][id] << std::endl;
-//				}
-//			}
-//
-//		}
+		}
 	}
 	// Update the xenon flux
 	previousXeFlux2D = newFlux;
@@ -740,15 +699,17 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 				<< std::endl;
 		std::cout << "Xenon concentration = " << totalXeConcentration
 				<< std::endl;
-		std::cout << "Xenon GB = " << nXenon2D / surface << std::endl << std::endl;
+		std::cout << "Xenon GB = " << nXenon2D / surface << std::endl
+				<< std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " "
-				<< 100.0 * (totalXeConcentration / (fluence)) << " "
-				<< totalXeConcentration << " " << fluence - totalXeConcentration
-				<< " " << totalRadii / totalBubbleConcentration << " "
+		outputFile << time << " " << 100.0 * (totalXeConcentration / (fluence))
+				<< " " << totalXeConcentration << " "
+				<< fluence - totalXeConcentration << " "
+				<< totalRadii / totalBubbleConcentration << " "
+				<< partialRadii / partialBubbleConcentration << " "
 				<< nXenon2D / surface << std::endl;
 		outputFile.close();
 	}
@@ -799,8 +760,8 @@ PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid rescale the concentrations
 	PetscInt Mx, My;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -926,8 +887,8 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1007,7 +968,7 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 			}
 
 			// Wait for everybody at each grid point
-			MPI_Barrier(PETSC_COMM_WORLD);
+			MPI_Barrier (PETSC_COMM_WORLD);
 		}
 	}
 
@@ -1088,8 +1049,8 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1391,8 +1352,8 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1764,8 +1725,8 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	// Get the total size of the grid
 	PetscInt Mx, My;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 	checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetInfo failed.");
 

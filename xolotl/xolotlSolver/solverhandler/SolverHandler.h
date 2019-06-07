@@ -395,6 +395,8 @@ public:
 		// Set the re-solution handler
 		resolutionHandler =
 				(xolotlCore::IReSolutionHandler *) material->getReSolutionHandler().get();
+		// Set its minimum size
+		resolutionHandler->setMinSize(options.getResoMinSize());
 
 		// Set the initial vacancy concentration
 		initialVConc = options.getInitialVConcentration();
@@ -596,6 +598,14 @@ public:
 	 */
 	xolotlCore::ITrapMutationHandler *getMutationHandler() const override {
 		return mutationHandler;
+	}
+
+	/**
+	 * Get the re-solution handler.
+	 * \see ISolverHandler.h
+	 */
+	xolotlCore::IReSolutionHandler *getReSolutionHandler() const override {
+		return resolutionHandler;
 	}
 
 	/**

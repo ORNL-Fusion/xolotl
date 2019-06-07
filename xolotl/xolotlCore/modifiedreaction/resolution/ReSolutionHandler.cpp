@@ -48,11 +48,12 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 			[&network,this,&singleXenon,&y0,&a1,&b1,&b2,&c](IReactant& cluster) {
 				// Get its size
 				auto size = cluster.getSize();
+
 				// The re-soluted size is always 1
 				int resolutedSize = 1;
 
-				// If the size is less than 1, the reaction should not happen
-				if (resolutedSize > 0 && resolutedSize < size) {
+				// If the resolutedSize is less than 1, or if the cluster is too small the reaction should not happen
+				if (resolutedSize > 0 && resolutedSize < size && size >= minSize) {
 					// Initialize the coefficients
 					Array<double, 8> coefs;
 					coefs.Init(0.0);
@@ -180,7 +181,7 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 		double radius = cluster->getReactionRadius();
 
 		outputFile << size << " " << radius << " " << currPair.fractionRate
-				<< " " << currPair.fractionRate / (double) size << std::endl;
+				<< std::endl;
 	}
 	outputFile.close();
 

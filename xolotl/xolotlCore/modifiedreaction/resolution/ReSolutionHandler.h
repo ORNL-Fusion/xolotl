@@ -68,13 +68,16 @@ protected:
 	//! The trap-mutation rate
 	double resolutionRate;
 
+	//! The minimum size at which the re-solution starts
+	int minSize;
+
 public:
 
 	/**
 	 * The constructor
 	 */
 	ReSolutionHandler() :
-			resolutionRate(0.0) {
+			resolutionRate(0.0), minSize(0) {
 	}
 
 	/**
@@ -138,6 +141,24 @@ public:
 	 */
 	virtual int getNumberOfReSoluting() const {
 		return sizeVec.size();
+	}
+
+	/**
+	 * Set the minimum size for a cluster to undergo re-solution.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	virtual void setMinSize(int size) {
+		minSize = size;
+	}
+
+	/**
+	 * Get the minimum size for a cluster to undergo re-solution.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	virtual int getMinSize() const {
+		return minSize;
 	}
 
 };

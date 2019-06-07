@@ -256,6 +256,11 @@ protected:
 	 */
 	bool rngPrintSeed;
 
+	/**
+	 * Re-solution minimum size
+	 */
+	int resoMinSize;
+
 public:
 
 	/**
@@ -1059,6 +1064,22 @@ public:
 	 */
 	bool printRNGSeed(void) const override {
 		return rngPrintSeed;
+	}
+
+	/**
+	 * Obtain the minimum size for the re-solution.
+	 * \see IOptions.h
+	 */
+	int getResoMinSize() const override {
+		return resoMinSize;
+	}
+
+	/**
+	 * Set the minimum size for the re-solution.
+	 * \see IOptions.h
+	 */
+	void setResoMinSize(int size) override {
+		resoMinSize = size;
 	}
 
 };
