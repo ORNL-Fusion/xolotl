@@ -27,6 +27,7 @@
 #include <RNGOptionHandler.h>
 #include <EStoppingPowerOptionHandler.h>
 #include <ResoMinSizeOptionHandler.h>
+#include <DensityOptionHandler.h>
 #include "Options.h"
 
 namespace xolotlCore {
@@ -46,7 +47,8 @@ Options::Options() :
 				10), nY(0), nZ(0), xStepSize(0.5), yStepSize(0.0), zStepSize(
 				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
 				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), rngUseSeed(
-				false), rngSeed(0), rngPrintSeed(false), zeta(0.73), resoMinSize(0) {
+				false), rngSeed(0), rngPrintSeed(false), zeta(0.73), resoMinSize(
+				0), density(10.162795276841) {
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();
@@ -98,6 +100,8 @@ Options::Options() :
 	auto espHandler = new EStoppingPowerOptionHandler();
 	// Create handler for the re-solution minimum size options.
 	auto resoHandler = new ResoMinSizeOptionHandler();
+	// Create handler for density options.
+	auto densityHandler = new DensityOptionHandler();
 
 	// Add our notion of which options we support.
 	optionsMap[networkHandler->key] = networkHandler;
@@ -125,6 +129,7 @@ Options::Options() :
 	optionsMap[rngHandler->key] = rngHandler;
 	optionsMap[espHandler->key] = espHandler;
 	optionsMap[resoHandler->key] = resoHandler;
+	optionsMap[densityHandler->key] = densityHandler;
 }
 
 Options::~Options(void) {

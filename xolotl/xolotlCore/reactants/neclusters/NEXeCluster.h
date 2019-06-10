@@ -47,9 +47,7 @@ public:
 
 		// Compute the reaction radius
 		double FourPi = 4.0 * xolotlCore::pi;
-		reactionRadius = 1.05
-				* pow((3.0 * 85.0 * (double) size) / FourPi, (1.0 / 3.0))
-				/ 10.0;
+		reactionRadius = pow((3.0 * (double) size) / (FourPi * network.getDensity()), (1.0 / 3.0));
 		if (size == 1)
 			reactionRadius = 0.3;
 

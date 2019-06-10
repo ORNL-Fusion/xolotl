@@ -112,6 +112,10 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 	std::unique_ptr<NEClusterReactionNetwork> network(
 			new NEClusterReactionNetwork(handlerRegistry));
 
+	// Set the density in a bubble
+	network->setDensity(options.getDensity());
+
+
 	// Loop on the clusters
 	for (int i = 0; i < normalSize + superSize; i++) {
 		// Open the cluster group
@@ -179,6 +183,9 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 	std::unique_ptr<NEClusterReactionNetwork> network(
 			new NEClusterReactionNetwork(handlerRegistry));
 	std::vector<std::reference_wrapper<Reactant> > reactants;
+
+	// Set the density in a bubble
+	network->setDensity(options.getDensity());
 
 	// The diffusion factor for a single xenon in nm^2/s, 1.0 is used
 	// to trigger the computation but the exact value and formula are

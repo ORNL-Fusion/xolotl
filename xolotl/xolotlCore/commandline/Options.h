@@ -261,6 +261,11 @@ protected:
 	 */
 	int resoMinSize;
 
+	/**
+	 * Density of atom in a bubble in nm-3.
+	 */
+	double density;
+
 public:
 
 	/**
@@ -1080,6 +1085,22 @@ public:
 	 */
 	void setResoMinSize(int size) override {
 		resoMinSize = size;
+	}
+
+	/**
+	 * Obtain the value of the density of a bubble.
+	 * \see IOptions.h
+	 */
+	double getDensity() const override {
+		return density;
+	}
+
+	/**
+	 * Set the value for the density of a bubble.
+	 * \see IOptions.h
+	 */
+	void setDensity(double rho) override {
+		density = rho;
 	}
 
 };
