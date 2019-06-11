@@ -17,7 +17,7 @@ public:
 	 */
 	DensityOptionHandler() :
 			OptionHandler("density",
-					"density <rho>             "
+					"density <rho>                     "
 							"This option allows the user to set a density in nm-3 "
 							"for the number of xenon per volume in a bubble.  \n") {
 	}

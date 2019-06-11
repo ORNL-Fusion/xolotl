@@ -717,6 +717,20 @@ public:
 	virtual void setResoMinSize(int size) = 0;
 
 	/**
+	 * Obtain the minimum size for the average radius computation.
+	 *
+	 * @return The size
+	 */
+	virtual int getRadiusMinSize() const = 0;
+
+	/**
+	 * Set the minimum size for the average radius computation.
+	 *
+	 * @param size The minimum size
+	 */
+	virtual void setRadiusMinSize(int size) = 0;
+
+	/**
 	 * Obtain the value of the density of a bubble.
 	 *
 	 * @return The density

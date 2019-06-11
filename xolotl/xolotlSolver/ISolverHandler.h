@@ -192,6 +192,13 @@ public:
 	virtual bool burstBubbles() const = 0;
 
 	/**
+	 * Get the minimum size for computing average radius.
+	 *
+	 * @return The minimum size
+	 */
+	virtual int getMinSize() const = 0;
+
+	/**
 	 * Get the flux handler.
 	 *
 	 * @return The flux handler

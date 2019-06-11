@@ -262,6 +262,11 @@ protected:
 	int resoMinSize;
 
 	/**
+	 * Average radius computation minimum size
+	 */
+	int radiusMinSize;
+
+	/**
 	 * Density of atom in a bubble in nm-3.
 	 */
 	double density;
@@ -1085,6 +1090,22 @@ public:
 	 */
 	void setResoMinSize(int size) override {
 		resoMinSize = size;
+	}
+
+	/**
+	 * Obtain the minimum size for the average radius computation.
+	 * \see IOptions.h
+	 */
+	virtual int getRadiusMinSize() const override {
+		return radiusMinSize;
+	}
+
+	/**
+	 * Set the minimum size for the average radius computation.
+	 * \see IOptions.h
+	 */
+	virtual void setRadiusMinSize(int size) override {
+		radiusMinSize = size;
 	}
 
 	/**
