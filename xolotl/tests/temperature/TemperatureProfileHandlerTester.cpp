@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	// Create and initialize the temperature profile handler
 	auto testTemp = make_shared<TemperatureProfileHandler>("tempFile.dat");
 	testTemp->initializeTemperature(*network, ofill, dfill);
-	Point<3> pos { 1.142857142857143, 0.0, 0.0 };
+	NDPoint<3> pos { 1.142857142857143, 0.0, 0.0 };
 
 	// Vector to hold the user defined time values
 	std::vector<double> t;

@@ -114,7 +114,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Temperature
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::NDPoint<3> gridPosition { 0.0, 0.0, 0.0 };
 	concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition, 0.0);
 
 	// Get the last time step written in the HDF5 file
@@ -195,7 +195,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
 	// Set the grid position
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::NDPoint<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the old and new array offsets
 	concOffset = concs[0];
@@ -278,7 +278,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	int pdColIdsVectorSize = 0;
 
 	// Set the grid position
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::NDPoint<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];

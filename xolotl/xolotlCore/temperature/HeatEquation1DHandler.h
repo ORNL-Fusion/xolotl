@@ -107,7 +107,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const Point<3>&, double time) const {
+	virtual double getTemperature(const NDPoint<3>&, double time) const {
 		return xolotlCore::equal(time, 0.0) * bulkTemperature
 				+ !xolotlCore::equal(time, 0.0) * localTemperature;
 	}

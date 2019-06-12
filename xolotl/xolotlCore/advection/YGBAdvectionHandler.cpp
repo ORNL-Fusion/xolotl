@@ -75,7 +75,7 @@ void YGBAdvectionHandler::initialize(const IReactionNetwork& network,
 }
 
 void YGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
-		const Point<3>& pos, double **concVector, double *updatedConcOffset,
+		const NDPoint<3>& pos, double **concVector, double *updatedConcOffset,
 		double hxLeft, double hxRight, int ix, int xs, double hy, int iy,
 		double hz, int iz) const {
 
@@ -139,7 +139,7 @@ void YGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 void YGBAdvectionHandler::computePartialsForAdvection(
 		const IReactionNetwork& network, double *val, int *indices,
-		const Point<3>& pos, double hxLeft, double hxRight, int ix, int xs,
+		const NDPoint<3>& pos, double hxLeft, double hxRight, int ix, int xs,
 		double hy, int iy, double hz, int iz) const {
 
 	// Consider each advecting cluster.
@@ -195,7 +195,7 @@ void YGBAdvectionHandler::computePartialsForAdvection(
 }
 
 std::array<int, 3> YGBAdvectionHandler::getStencilForAdvection(
-		const Point<3>& pos) const {
+		const NDPoint<3>& pos) const {
 
 	// The second index is positive by convention if we are on the sink
 	if (isPointOnSink(pos))

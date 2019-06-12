@@ -86,7 +86,7 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void computeAdvection(const IReactionNetwork& network,
-			const Point<3>& pos, double **concVector, double *updatedConcOffset,
+			const NDPoint<3>& pos, double **concVector, double *updatedConcOffset,
 			double hxLeft, double hxRight, int ix, int xs, double hy = 0.0,
 			int iy = 0, double hz = 0.0, int iz = 0) const = 0;
 
@@ -112,7 +112,7 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void computePartialsForAdvection(const IReactionNetwork& network,
-			double *val, int *indices, const Point<3>& pos, double hxLeft,
+			double *val, int *indices, const NDPoint<3>& pos, double hxLeft,
 			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const = 0;
 
@@ -125,7 +125,7 @@ public:
 	 * @return The indices for the position in the Jacobian
 	 */
 	virtual std::array<int, 3> getStencilForAdvection(
-			const Point<3>& pos) const = 0;
+			const NDPoint<3>& pos) const = 0;
 
 	/**
 	 * Check whether the grid point is located on the sink surface or not.
@@ -133,7 +133,7 @@ public:
 	 * @param pos The position on the grid
 	 * @return True if the point is on the sink
 	 */
-	virtual bool isPointOnSink(const Point<3>& pos) const = 0;
+	virtual bool isPointOnSink(const NDPoint<3>& pos) const = 0;
 
 	/**
 	 * Get the total number of advecting clusters in the network.

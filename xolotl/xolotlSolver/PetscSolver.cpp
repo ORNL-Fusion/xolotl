@@ -251,10 +251,42 @@ void PetscSolver::initialize(bool isStandalone) {
 	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
 	checkPetscError(ierr,
 			"PetscSolver::solve: PetscOptionsInsertString failed.");
+	ierr = PetscOptionsSetFromOptions(petscOptions);
+	checkPetscError(ierr,
+			"PetscSolver::solve: PetscOptionsSetFromOptions failed.");
 	ierr = PetscObjectSetOptions((PetscObject) ts, petscOptions);
 	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
 	ierr = TSSetFromOptions(ts);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+	// Set the options in SNES
+	SNES snes;
+	ierr = TSGetSNES(ts, &snes);
+	checkPetscError(ierr,
+			"PetscSolver::solve: TSGetSNES failed.");
+	ierr = PetscObjectSetOptions((PetscObject) snes, petscOptions);
+	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
+	ierr = SNESSetFromOptions(snes);
+	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+	// Set the options in KSP
+	KSP ksp;
+	ierr = SNESGetKSP(snes, &ksp);
+	checkPetscError(ierr,
+			"PetscSolver::solve: SNESGetKSP failed.");
+	ierr = PetscObjectSetOptions((PetscObject) ksp, petscOptions);
+	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
+	ierr = KSPSetFromOptions(ksp);
+	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+	// Set the options in PC
+	PC pc;
+	ierr = KSPGetPC(ksp, &pc);
+	checkPetscError(ierr,
+			"PetscSolver::solve: KSPGetPC failed.");
+	ierr = PetscObjectSetOptions((PetscObject) pc, petscOptions);
+	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
+	ierr = PCSetFromOptions(pc);
+	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+
+	ierr = PetscOptionsLeft(petscOptions);
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = getSolverHandler().getNetworkName();

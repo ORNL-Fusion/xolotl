@@ -9,7 +9,7 @@ namespace xolotlCore {
  * Nice name for coordinates of a 3D point.
  */
 template<uint32_t N>
-using Point = std::array<double, N>;
+using NDPoint = std::array<double, N>;
 
 } // namespace xolotlCore
 

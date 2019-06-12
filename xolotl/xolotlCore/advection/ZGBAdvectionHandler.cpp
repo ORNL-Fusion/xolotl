@@ -74,7 +74,7 @@ void ZGBAdvectionHandler::initialize(const IReactionNetwork& network,
 }
 
 void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
-		const Point<3>& pos, double **concVector, double *updatedConcOffset,
+		const NDPoint<3>& pos, double **concVector, double *updatedConcOffset,
 		double hxLeft, double hxRight, int ix, int xs, double hy, int iy,
 		double hz, int iz) const {
 
@@ -137,7 +137,7 @@ void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 void ZGBAdvectionHandler::computePartialsForAdvection(
 		const IReactionNetwork& network, double *val, int *indices,
-		const Point<3>& pos, double hxLeft, double hxRight, int ix, int xs,
+		const NDPoint<3>& pos, double hxLeft, double hxRight, int ix, int xs,
 		double hy, int iy, double hz, int iz) const {
 
 	// Loop on the advecting clusters
@@ -193,7 +193,7 @@ void ZGBAdvectionHandler::computePartialsForAdvection(
 }
 
 std::array<int, 3> ZGBAdvectionHandler::getStencilForAdvection(
-		const Point<3>& pos) const {
+		const NDPoint<3>& pos) const {
 
 	// The third index is positive by convention if we are on the sink
 	if (isPointOnSink(pos))
