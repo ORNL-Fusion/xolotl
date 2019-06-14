@@ -213,7 +213,7 @@ void XolotlInterface::resetGBVector() {
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
-		// Set the coordinate of the GB
+		// Reset the location
 		solverHandler.resetGBVector();
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
@@ -232,6 +232,45 @@ void XolotlInterface::resetGBVector() {
 void XolotlInterface::initGBLocation() {
 	try {
 		solver->initGBLocation();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return;
+}
+
+std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > XolotlInterface::getConcVector() {
+	std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > toReturn;
+	try {
+		// Get the vector
+		toReturn = solver->getConcVector();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return toReturn;
+}
+
+void XolotlInterface::setConcVector(
+		std::vector<
+				std::vector<std::vector<std::vector<std::pair<int, double> > > > > concVector) {
+	try {
+		// Set the vector
+		solver->setConcVector(concVector);
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
@@ -279,10 +318,9 @@ void XolotlInterface::finalizeXolotl(bool isStandalone) {
 		// Report statistics about the performance data collected during
 		// the run we just completed.
 		auto handlerRegistry = xolotlPerf::getHandlerRegistry();
-		xperf::PerfObjStatsMap < xperf::ITimer::ValType > timerStats;
-		xperf::PerfObjStatsMap < xperf::IEventCounter::ValType > counterStats;
-		xperf::PerfObjStatsMap < xperf::IHardwareCounter::CounterType
-				> hwCtrStats;
+		xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
+		xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> counterStats;
+		xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
 		handlerRegistry->collectStatistics(timerStats, counterStats,
 				hwCtrStats);
 

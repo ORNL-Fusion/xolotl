@@ -94,6 +94,20 @@ public:
 	void initGBLocation();
 
 	/**
+	 * Get the concentrations and their ids.
+	 *
+	 * @return The concentration vector from the current state of the simulation
+	 */
+	std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > getConcVector();
+
+	/**
+	 * Set the concentrations and their ids.
+	 *
+	 * @ param concVector A given state of the concentrations
+	 */
+	void setConcVector(std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > concVector);
+
+	/**
 	 * Get the TS from the solver
 	 *
 	 * @return The TS

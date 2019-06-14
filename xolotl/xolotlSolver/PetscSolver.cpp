@@ -211,6 +211,21 @@ void PetscSolver::initialize(bool isStandalone) {
 		PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
 	}
 
+//	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//	 Set solver options
+//	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+//	PetscInt int1;
+//	PetscBool flg1;
+//	ierr = PetscOptionsCreate(&petscOptions);
+//	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
+//	ierr = PetscOptionsInsertString(NULL, optionsString.c_str());
+//	checkPetscError(ierr,
+//			"PetscSolver::solve: PetscOptionsInsertString failed.");
+////	ierr = PetscOptionsGetInt(petscOptions,NULL,"-ts_max_steps",&int1,&flg1);
+////	if (flg1) PetscOptionsView(petscOptions,NULL);
+////	ierr = PetscOptionsPush(petscOptions);
+//	PetscOptionsView(NULL, NULL);
+
 	// Create the solver context
 	getSolverHandler().createSolverContext(da);
 
@@ -261,8 +276,7 @@ void PetscSolver::initialize(bool isStandalone) {
 	// Set the options in SNES
 	SNES snes;
 	ierr = TSGetSNES(ts, &snes);
-	checkPetscError(ierr,
-			"PetscSolver::solve: TSGetSNES failed.");
+	checkPetscError(ierr, "PetscSolver::solve: TSGetSNES failed.");
 	ierr = PetscObjectSetOptions((PetscObject) snes, petscOptions);
 	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
 	ierr = SNESSetFromOptions(snes);
@@ -270,8 +284,7 @@ void PetscSolver::initialize(bool isStandalone) {
 	// Set the options in KSP
 	KSP ksp;
 	ierr = SNESGetKSP(snes, &ksp);
-	checkPetscError(ierr,
-			"PetscSolver::solve: SNESGetKSP failed.");
+	checkPetscError(ierr, "PetscSolver::solve: SNESGetKSP failed.");
 	ierr = PetscObjectSetOptions((PetscObject) ksp, petscOptions);
 	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
 	ierr = KSPSetFromOptions(ksp);
@@ -279,14 +292,11 @@ void PetscSolver::initialize(bool isStandalone) {
 	// Set the options in PC
 	PC pc;
 	ierr = KSPGetPC(ksp, &pc);
-	checkPetscError(ierr,
-			"PetscSolver::solve: KSPGetPC failed.");
+	checkPetscError(ierr, "PetscSolver::solve: KSPGetPC failed.");
 	ierr = PetscObjectSetOptions((PetscObject) pc, petscOptions);
 	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
 	ierr = PCSetFromOptions(pc);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
-
-	ierr = PetscOptionsLeft(petscOptions);
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = getSolverHandler().getNetworkName();
@@ -348,6 +358,8 @@ void PetscSolver::initialize(bool isStandalone) {
 	// Set the output precision for std::out
 	std::cout.precision(16);
 
+	ierr = PetscOptionsLeft(NULL);
+
 	return;
 }
 
@@ -382,6 +394,20 @@ void PetscSolver::initGBLocation() {
 	return;
 }
 
+std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > PetscSolver::getConcVector() {
+	auto& solverHandler = Solver::getSolverHandler();
+
+	return solverHandler.getConcVector(da, C);
+}
+
+void PetscSolver::setConcVector(
+		std::vector<
+				std::vector<std::vector<std::vector<std::pair<int, double> > > > > & concVector) {
+	auto& solverHandler = Solver::getSolverHandler();
+
+	return solverHandler.setConcVector(da, C, concVector);
+}
+
 void PetscSolver::solve() {
 	PetscErrorCode ierr;
 
@@ -400,8 +426,7 @@ void PetscSolver::solve() {
 		 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 		// Check the option -check_collapse
 		PetscBool flagCheck;
-		ierr = PetscOptionsHasName(petscOptions, NULL, "-check_collapse",
-				&flagCheck);
+		ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
 		checkPetscError(ierr,
 				"PetscSolver::solve: PetscOptionsHasName (-check_collapse) failed.");
 		if (flagCheck) {
@@ -468,6 +493,8 @@ void PetscSolver::finalize(bool isStandalone) {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Free work space.
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+//	ierr = PetscOptionsPop();
+//	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPop failed.");
 	ierr = PetscOptionsDestroy(&petscOptions);
 	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsDestroy failed.");
 	ierr = VecDestroy(&C);

@@ -112,6 +112,26 @@ public:
 	void initGBLocation() override;
 
 	/**
+	 * This operation get the concentration vector with the ids.
+	 *
+	 * @return The concentration vector
+	 */
+	virtual std::vector<
+			std::vector<std::vector<std::vector<std::pair<int, double> > > > > getConcVector()
+			override;
+
+	/**
+	 * This operation sets the concentration vector in the current state of the simulation.
+	 *
+	 * @param The concentration vector
+	 */
+	virtual void setConcVector(
+			std::vector<
+					std::vector<
+							std::vector<std::vector<std::pair<int, double> > > > > & concVector)
+					override;
+
+	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */

@@ -349,6 +349,96 @@ void PetscSolver3DHandler::initGBLocation(DM &da, Vec &C) {
 	return;
 }
 
+std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > PetscSolver3DHandler::getConcVector(
+		DM &da, Vec &C) {
+
+	// Initial declaration
+	PetscErrorCode ierr;
+	const double *gridPointSolution = nullptr;
+
+	// Pointer for the concentration vector
+	PetscScalar ****concentrations = nullptr;
+	ierr = DMDAVecGetArrayDOFRead(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver3DHandler::getConcVector: "
+			"DMDAVecGetArrayDOFRead failed.");
+
+	// Get the network and dof
+	auto& network = getNetwork();
+	const int dof = network.getDOF();
+
+	// Create the vector for the concentrations
+	std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > toReturn;
+
+	// Loop on the grid points
+	for (auto k = 0; k < localZM; ++k) {
+		std::vector<std::vector<std::vector<std::pair<int, double> > > > tempTempTempVector;
+		for (auto j = 0; j < localYM; ++j) {
+			std::vector<std::vector<std::pair<int, double> > > tempTempVector;
+			for (auto i = 0; i < localXM; ++i) {
+				gridPointSolution =
+						concentrations[localZS + k][localYS + j][localXS + i];
+
+				// Create the temporary vector for this grid point
+				std::vector<std::pair<int, double> > tempVector;
+				for (auto l = 0; l < dof; ++l) {
+					if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
+						tempVector.push_back(
+								std::make_pair(l, gridPointSolution[l]));
+					}
+				}
+				tempTempVector.push_back(tempVector);
+			}
+			tempTempTempVector.push_back(tempTempVector);
+		}
+		toReturn.push_back(tempTempTempVector);
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver3DHandler::getConcVector: "
+			"DMDAVecRestoreArrayDOFRead failed.");
+
+	return toReturn;
+}
+
+void PetscSolver3DHandler::setConcVector(DM &da, Vec &C,
+		std::vector<
+				std::vector<std::vector<std::vector<std::pair<int, double> > > > > & concVector) {
+	PetscErrorCode ierr;
+
+	// Pointer for the concentration vector
+	PetscScalar *gridPointSolution = nullptr;
+	PetscScalar ****concentrations = nullptr;
+	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver3DHandler::setConcVector: "
+			"DMDAVecGetArrayDOF failed.");
+
+	// Loop on the grid points
+	for (auto k = 0; k < localZM; ++k) {
+		for (auto j = 0; j < localYM; ++j) {
+			for (auto i = 0; i < localXM; ++i) {
+				gridPointSolution =
+						concentrations[localZS + k][localYS + j][localXS + i];
+
+				// Loop on the given vector
+				for (int l = 0; l < concVector[k][j][i].size(); l++) {
+					gridPointSolution[concVector[k][j][i][l].first] =
+							concVector[k][j][i][l].second;
+				}
+			}
+		}
+	}
+
+	/*
+	 Restore vectors
+	 */
+	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver3DHandler::setConcVector: "
+			"DMDAVecRestoreArrayDOF failed.");
+
+	return;
+}
+
 void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		PetscReal ftime) {
 	PetscErrorCode ierr;
@@ -450,13 +540,13 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 				// Fill the concVector with the pointer to the middle, left,
 				// right, bottom, top, front, and back grid points
-				concVector[0] = concOffset; // middle
-				concVector[1] = concs[zk][yj][xi - 1]; // left
-				concVector[2] = concs[zk][yj][xi + 1]; // right
-				concVector[3] = concs[zk][yj - 1][xi]; // bottom
-				concVector[4] = concs[zk][yj + 1][xi]; // top
-				concVector[5] = concs[zk - 1][yj][xi]; // front
-				concVector[6] = concs[zk + 1][yj][xi]; // back
+				concVector[0] = concOffset;				// middle
+				concVector[1] = concs[zk][yj][xi - 1];				// left
+				concVector[2] = concs[zk][yj][xi + 1];				// right
+				concVector[3] = concs[zk][yj - 1][xi];				// bottom
+				concVector[4] = concs[zk][yj + 1][xi];				// top
+				concVector[5] = concs[zk - 1][yj][xi];				// front
+				concVector[6] = concs[zk + 1][yj][xi];				// back
 
 				// Heat condition
 				if (xi == surfacePosition[yj][zk]) {
@@ -664,31 +754,31 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 					// Set grid coordinates and component numbers for the columns
 					// corresponding to the middle, left, and right grid points
-					cols[0].i = xi; // middle
+					cols[0].i = xi;					// middle
 					cols[0].j = yj;
 					cols[0].k = zk;
 					cols[0].c = diffIndices[0];
-					cols[1].i = xi - 1; // left
+					cols[1].i = xi - 1;					// left
 					cols[1].j = yj;
 					cols[1].k = zk;
 					cols[1].c = diffIndices[0];
-					cols[2].i = xi + 1; // right
+					cols[2].i = xi + 1;					// right
 					cols[2].j = yj;
 					cols[2].k = zk;
 					cols[2].c = diffIndices[0];
-					cols[3].i = xi; // bottom
+					cols[3].i = xi;					// bottom
 					cols[3].j = yj - 1;
 					cols[3].k = zk;
 					cols[3].c = diffIndices[0];
-					cols[4].i = xi; // top
+					cols[4].i = xi;					// top
 					cols[4].j = yj + 1;
 					cols[4].k = zk;
 					cols[4].c = diffIndices[0];
-					cols[5].i = xi; // front
+					cols[5].i = xi;					// front
 					cols[5].j = yj;
 					cols[5].k = zk - 1;
 					cols[5].c = diffIndices[0];
-					cols[6].i = xi; // back
+					cols[6].i = xi;					// back
 					cols[6].j = yj;
 					cols[6].k = zk + 1;
 					cols[6].c = diffIndices[0];
@@ -767,31 +857,31 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 				// Set grid coordinates and component numbers for the columns
 				// corresponding to the middle, left, and right grid points
-				cols[0].i = xi; // middle
+				cols[0].i = xi;				// middle
 				cols[0].j = yj;
 				cols[0].k = zk;
 				cols[0].c = diffIndices[0];
-				cols[1].i = xi - 1; // left
+				cols[1].i = xi - 1;				// left
 				cols[1].j = yj;
 				cols[1].k = zk;
 				cols[1].c = diffIndices[0];
-				cols[2].i = xi + 1; // right
+				cols[2].i = xi + 1;				// right
 				cols[2].j = yj;
 				cols[2].k = zk;
 				cols[2].c = diffIndices[0];
-				cols[3].i = xi; // bottom
+				cols[3].i = xi;				// bottom
 				cols[3].j = yj - 1;
 				cols[3].k = zk;
 				cols[3].c = diffIndices[0];
-				cols[4].i = xi; // top
+				cols[4].i = xi;				// top
 				cols[4].j = yj + 1;
 				cols[4].k = zk;
 				cols[4].c = diffIndices[0];
-				cols[5].i = xi; // front
+				cols[5].i = xi;				// front
 				cols[5].j = yj;
 				cols[5].k = zk - 1;
 				cols[5].c = diffIndices[0];
-				cols[6].i = xi; // back
+				cols[6].i = xi;				// back
 				cols[6].j = yj;
 				cols[6].k = zk + 1;
 				cols[6].c = diffIndices[0];
@@ -819,31 +909,31 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					// Set grid coordinates and component numbers for the columns
 					// corresponding to the middle, left, right, bottom, top, front,
 					// and back grid points
-					cols[0].i = xi; // middle
+					cols[0].i = xi;					// middle
 					cols[0].j = yj;
 					cols[0].k = zk;
 					cols[0].c = diffIndices[i];
-					cols[1].i = xi - 1; // left
+					cols[1].i = xi - 1;					// left
 					cols[1].j = yj;
 					cols[1].k = zk;
 					cols[1].c = diffIndices[i];
-					cols[2].i = xi + 1; // right
+					cols[2].i = xi + 1;					// right
 					cols[2].j = yj;
 					cols[2].k = zk;
 					cols[2].c = diffIndices[i];
-					cols[3].i = xi; // bottom
+					cols[3].i = xi;					// bottom
 					cols[3].j = yj - 1;
 					cols[3].k = zk;
 					cols[3].c = diffIndices[i];
-					cols[4].i = xi; // top
+					cols[4].i = xi;					// top
 					cols[4].j = yj + 1;
 					cols[4].k = zk;
 					cols[4].c = diffIndices[i];
-					cols[5].i = xi; // front
+					cols[5].i = xi;					// front
 					cols[5].j = yj;
 					cols[5].k = zk - 1;
 					cols[5].c = diffIndices[i];
-					cols[6].i = xi; // back
+					cols[6].i = xi;					// back
 					cols[6].j = yj;
 					cols[6].k = zk + 1;
 					cols[6].c = diffIndices[i];
@@ -895,13 +985,13 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 						} else {
 							// Set grid coordinates and component numbers for the columns
 							// corresponding to the middle and other grid points
-							cols[0].i = xi; // middle
+							cols[0].i = xi;							// middle
 							cols[0].j = yj;
 							cols[0].k = zk;
 							cols[0].c = advecIndices[i];
-							cols[1].i = xi + advecStencil[0]; // left or right?
-							cols[1].j = yj + advecStencil[1]; // bottom or top?
-							cols[1].k = zk + advecStencil[2]; // back or front?
+							cols[1].i = xi + advecStencil[0];// left or right?
+							cols[1].j = yj + advecStencil[1];// bottom or top?
+							cols[1].k = zk + advecStencil[2];// back or front?
 							cols[1].c = advecIndices[i];
 						}
 

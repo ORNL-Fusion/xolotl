@@ -56,6 +56,22 @@ public:
 	}
 
 	/**
+	 * This operation get the concentration vector with the ids.
+	 * \see ISolverHandler.h
+	 */
+	std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > getConcVector(
+			DM &da, Vec &C);
+
+	/**
+	 * This operation sets the concentration vector in the current state of the simulation.
+	 * \see ISolverHandler.h
+	 */
+	void setConcVector(DM &da, Vec &C,
+			std::vector<
+					std::vector<
+							std::vector<std::vector<std::pair<int, double> > > > > & concVector);
+
+	/**
 	 * Compute the new concentrations for the RHS function given an initial
 	 * vector of concentrations. Apply the diffusion, advection and all the reactions.
 	 * \see ISolverHandler.h

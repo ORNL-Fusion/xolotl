@@ -71,6 +71,29 @@ public:
 	virtual void initGBLocation(DM &da, Vec &C) = 0;
 
 	/**
+	 * This operation get the concentration vector with the ids.
+	 *
+	 * @param da The PETSc distributed array
+	 * @param C The PETSc solution vector
+	 * @return The concentration vector
+	 */
+	virtual std::vector<
+			std::vector<std::vector<std::vector<std::pair<int, double> > > > > getConcVector(
+			DM &da, Vec &C) = 0;
+
+	/**
+	 * This operation sets the concentration vector in the current state of the simulation.
+	 *
+	 * @param da The PETSc distributed array
+	 * @param C The PETSc solution vector
+	 * @param The concentration vector
+	 */
+	virtual void setConcVector(DM &da, Vec &C,
+			std::vector<
+					std::vector<
+							std::vector<std::vector<std::pair<int, double> > > > > & concVector) = 0;
+
+	/**
 	 * Compute the new concentrations for the RHS function given an initial
 	 * vector of concentrations.
 	 *
@@ -219,8 +242,8 @@ public:
 	 * @param ys, ym The start and width in the Y direction on the local MPI process
 	 * @param zs, zm The start and width in the Z direction on the local MPI process
 	 */
-	virtual void setLocalCoordinates(int xs, int xm, int ys = 0, int ym = 0, int zs = 0,
-			int zm = 0) = 0;
+	virtual void setLocalCoordinates(int xs, int xm, int ys = 0, int ym = 0,
+			int zs = 0, int zm = 0) = 0;
 
 	/**
 	 * Get the coordinates covered by the local grid.
