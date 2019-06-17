@@ -211,20 +211,20 @@ void PetscSolver::initialize(bool isStandalone) {
 		PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
 	}
 
-//	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//	 Set solver options
-//	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-//	PetscInt int1;
-//	PetscBool flg1;
-//	ierr = PetscOptionsCreate(&petscOptions);
-//	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
-//	ierr = PetscOptionsInsertString(NULL, optionsString.c_str());
-//	checkPetscError(ierr,
-//			"PetscSolver::solve: PetscOptionsInsertString failed.");
-////	ierr = PetscOptionsGetInt(petscOptions,NULL,"-ts_max_steps",&int1,&flg1);
-////	if (flg1) PetscOptionsView(petscOptions,NULL);
-////	ierr = PetscOptionsPush(petscOptions);
-//	PetscOptionsView(NULL, NULL);
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Set solver options
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	PetscInt int1;
+	PetscBool flg1;
+	ierr = PetscOptionsCreate(&petscOptions);
+	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
+	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
+	checkPetscError(ierr,
+	"PetscSolver::solve: PetscOptionsInsertString failed.");
+	ierr = PetscOptionsGetInt(petscOptions,NULL,"-ts_max_steps",&int1,&flg1);
+//	if (flg1) PetscOptionsView(petscOptions,NULL);
+	ierr = PetscOptionsPush(petscOptions);
+	PetscOptionsView(petscOptions,NULL);
 
 	// Create the solver context
 	getSolverHandler().createSolverContext(da);
@@ -258,45 +258,45 @@ void PetscSolver::initialize(bool isStandalone) {
 	ierr = TSSetSolution(ts, C);
 	checkPetscError(ierr, "PetscSolver::solve: TSSetSolution failed.");
 
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Set solver options
-	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = PetscOptionsCreate(&petscOptions);
-	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
-	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
-	checkPetscError(ierr,
-			"PetscSolver::solve: PetscOptionsInsertString failed.");
-	ierr = PetscOptionsSetFromOptions(petscOptions);
-	checkPetscError(ierr,
-			"PetscSolver::solve: PetscOptionsSetFromOptions failed.");
-	ierr = PetscObjectSetOptions((PetscObject) ts, petscOptions);
-	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
-	ierr = TSSetFromOptions(ts);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
-	// Set the options in SNES
-	SNES snes;
-	ierr = TSGetSNES(ts, &snes);
-	checkPetscError(ierr, "PetscSolver::solve: TSGetSNES failed.");
-	ierr = PetscObjectSetOptions((PetscObject) snes, petscOptions);
-	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
-	ierr = SNESSetFromOptions(snes);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
-	// Set the options in KSP
-	KSP ksp;
-	ierr = SNESGetKSP(snes, &ksp);
-	checkPetscError(ierr, "PetscSolver::solve: SNESGetKSP failed.");
-	ierr = PetscObjectSetOptions((PetscObject) ksp, petscOptions);
-	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
-	ierr = KSPSetFromOptions(ksp);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
-	// Set the options in PC
-	PC pc;
-	ierr = KSPGetPC(ksp, &pc);
-	checkPetscError(ierr, "PetscSolver::solve: KSPGetPC failed.");
-	ierr = PetscObjectSetOptions((PetscObject) pc, petscOptions);
-	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
-	ierr = PCSetFromOptions(pc);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+//	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//	 Set solver options
+//	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+//	ierr = PetscOptionsCreate(&petscOptions);
+//	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
+//	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
+//	checkPetscError(ierr,
+//			"PetscSolver::solve: PetscOptionsInsertString failed.");
+//	ierr = PetscOptionsSetFromOptions(petscOptions);
+//	checkPetscError(ierr,
+//			"PetscSolver::solve: PetscOptionsSetFromOptions failed.");
+//	ierr = PetscObjectSetOptions((PetscObject) ts, petscOptions);
+//	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
+//	ierr = TSSetFromOptions(ts);
+//	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+//	// Set the options in SNES
+//	SNES snes;
+//	ierr = TSGetSNES(ts, &snes);
+//	checkPetscError(ierr, "PetscSolver::solve: TSGetSNES failed.");
+//	ierr = PetscObjectSetOptions((PetscObject) snes, petscOptions);
+//	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
+//	ierr = SNESSetFromOptions(snes);
+//	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+//	// Set the options in KSP
+//	KSP ksp;
+//	ierr = SNESGetKSP(snes, &ksp);
+//	checkPetscError(ierr, "PetscSolver::solve: SNESGetKSP failed.");
+//	ierr = PetscObjectSetOptions((PetscObject) ksp, petscOptions);
+//	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
+//	ierr = KSPSetFromOptions(ksp);
+//	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+//	// Set the options in PC
+//	PC pc;
+//	ierr = KSPGetPC(ksp, &pc);
+//	checkPetscError(ierr, "PetscSolver::solve: KSPGetPC failed.");
+//	ierr = PetscObjectSetOptions((PetscObject) pc, petscOptions);
+//	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
+//	ierr = PCSetFromOptions(pc);
+//	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = getSolverHandler().getNetworkName();
