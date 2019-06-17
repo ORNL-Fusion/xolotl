@@ -677,7 +677,7 @@ public:
 	/**
 	 * Set the value for the depth above which the bursting is happening.
 	 *
-	 * @param stepSize The depth
+	 * @param depth The depth
 	 */
 	virtual void setBurstingDepth(double depth) = 0;
 
@@ -714,6 +714,48 @@ public:
 	 * @return True iff we should print the RNG seed value from each process.
 	 */
 	virtual bool printRNGSeed(void) const = 0;
+
+	/**
+	 * Obtain the minimum size for the re-solution.
+	 *
+	 * @return The size
+	 */
+	virtual int getResoMinSize() const = 0;
+
+	/**
+	 * Set the minimum size for the re-solution.
+	 *
+	 * @param size The minimum size
+	 */
+	virtual void setResoMinSize(int size) = 0;
+
+	/**
+	 * Obtain the minimum size for the average radius computation.
+	 *
+	 * @return The size
+	 */
+	virtual int getRadiusMinSize() const = 0;
+
+	/**
+	 * Set the minimum size for the average radius computation.
+	 *
+	 * @param size The minimum size
+	 */
+	virtual void setRadiusMinSize(int size) = 0;
+
+	/**
+	 * Obtain the value of the density of a bubble.
+	 *
+	 * @return The density
+	 */
+	virtual double getDensity() const = 0;
+
+	/**
+	 * Set the value for the density of a bubble.
+	 *
+	 * @param rho The density
+	 */
+	virtual void setDensity(double rho) = 0;
 
 };
 //end class IOptions

@@ -105,6 +105,9 @@ protected:
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
 
+	//! The minimum size for average radius computation.
+	int minRadiusSize;
+
 	//! The random number generator to use.
 	std::unique_ptr<RandomNumberGenerator<int, unsigned int>> rng;
 
@@ -326,7 +329,7 @@ protected:
 					false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
 					nullptr), diffusionHandler(nullptr), mutationHandler(
 					nullptr), resolutionHandler(nullptr), tauBursting(10.0), rngSeed(
-					0) {
+					0), minRadiusSize(0) {
 	}
 
 public:
@@ -417,6 +420,11 @@ public:
 		// Set the re-solution handler
 		resolutionHandler =
 				(xolotlCore::IReSolutionHandler *) material->getReSolutionHandler().get();
+		// Set its minimum size
+		resolutionHandler->setMinSize(options.getResoMinSize());
+
+		// Set the minimum size for the average radius compuation
+		minRadiusSize = options.getRadiusMinSize();
 
 		// Set the initial vacancy concentration
 		initialVConc = options.getInitialVConcentration();
@@ -575,6 +583,12 @@ public:
 	}
 
 	/**
+	 * Get the minimum size for computing average radius.
+	 * \see ISolverHandler.h
+	 */
+	int getMinSize() const override { return minRadiusSize;}
+
+	/**
 	 * Get the flux handler.
 	 * \see ISolverHandler.h
 	 */
@@ -621,6 +635,14 @@ public:
 	 */
 	xolotlCore::ITrapMutationHandler *getMutationHandler() const override {
 		return mutationHandler;
+	}
+
+	/**
+	 * Get the re-solution handler.
+	 * \see ISolverHandler.h
+	 */
+	xolotlCore::IReSolutionHandler *getReSolutionHandler() const override {
+		return resolutionHandler;
 	}
 
 	/**

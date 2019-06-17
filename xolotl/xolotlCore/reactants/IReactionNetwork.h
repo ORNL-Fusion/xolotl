@@ -386,6 +386,22 @@ public:
 	virtual double getFissionRate() const = 0;
 
 	/**
+	 * This operation sets the density of xenon in a bubble, needed to compute all the reaction radii
+	 * in NE.
+	 *
+	 * @param density The density
+	 */
+	virtual void setDensity(double density) = 0;
+
+	/**
+	 * This operation returns the density of xenon in a bubble, needed to compute all the reaction radii
+	 * in NE.
+	 *
+	 * @return The density
+	 */
+	virtual double getDensity() const = 0;
+
+	/**
 	 * Dump a representation of the network to the given output stream.
 	 *
 	 * @param os Output stream on which to write network description.

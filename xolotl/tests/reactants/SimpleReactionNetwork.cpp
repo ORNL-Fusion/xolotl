@@ -128,8 +128,12 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 }
 
 SimpleNEReactionNetwork::SimpleNEReactionNetwork(const int maxClusterSize,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry,
+		const double rho) :
 		NEClusterReactionNetwork(registry) {
+	// Set the density
+	setDensity(rho);
+
 	// Add Xe clusters
 	for (int numXe = 1; numXe <= maxClusterSize; numXe++) {
 		// Create a He cluster with cluster size numHe
@@ -285,10 +289,11 @@ shared_ptr<xolotlCore::PSIClusterReactionNetwork> testUtils::getSimplePSIReactio
 
 shared_ptr<xolotlCore::NEClusterReactionNetwork> testUtils::getSimpleNEReactionNetwork(
 		const int maxClusterSize,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
+		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry,
+		const double rho) {
 	// Create the network
 	shared_ptr<xolotlCore::NEClusterReactionNetwork> network(
-			new SimpleNEReactionNetwork(maxClusterSize, registry));
+			new SimpleNEReactionNetwork(maxClusterSize, registry, rho));
 	cout << "SimpleReactionNetwork Message: " << "Created network with size "
 			<< network->size() << endl;
 

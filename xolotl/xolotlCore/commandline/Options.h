@@ -261,6 +261,21 @@ protected:
 	 */
 	bool rngPrintSeed;
 
+	/**
+	 * Re-solution minimum size
+	 */
+	int resoMinSize;
+
+	/**
+	 * Average radius computation minimum size
+	 */
+	int radiusMinSize;
+
+	/**
+	 * Density of atom in a bubble in nm-3.
+	 */
+	double density;
+
 public:
 
 	/**
@@ -1080,6 +1095,54 @@ public:
 	 */
 	bool printRNGSeed(void) const override {
 		return rngPrintSeed;
+	}
+
+	/**
+	 * Obtain the minimum size for the re-solution.
+	 * \see IOptions.h
+	 */
+	int getResoMinSize() const override {
+		return resoMinSize;
+	}
+
+	/**
+	 * Set the minimum size for the re-solution.
+	 * \see IOptions.h
+	 */
+	void setResoMinSize(int size) override {
+		resoMinSize = size;
+	}
+
+	/**
+	 * Obtain the minimum size for the average radius computation.
+	 * \see IOptions.h
+	 */
+	virtual int getRadiusMinSize() const override {
+		return radiusMinSize;
+	}
+
+	/**
+	 * Set the minimum size for the average radius computation.
+	 * \see IOptions.h
+	 */
+	virtual void setRadiusMinSize(int size) override {
+		radiusMinSize = size;
+	}
+
+	/**
+	 * Obtain the value of the density of a bubble.
+	 * \see IOptions.h
+	 */
+	double getDensity() const override {
+		return density;
+	}
+
+	/**
+	 * Set the value for the density of a bubble.
+	 * \see IOptions.h
+	 */
+	void setDensity(double rho) override {
+		density = rho;
 	}
 
 };

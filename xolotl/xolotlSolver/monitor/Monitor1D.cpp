@@ -745,10 +745,14 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
-	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0;
+	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
+			partialBubbleConcentration = 0.0, partialRadii = 0.0;
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
+
+	// Get the minimum size for the radius
+	int minSize = solverHandler.getMinSize();
 
 	// Loop on the grid
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
@@ -769,6 +773,12 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 					* (grid[xi + 1] - grid[xi]);
 			radii += gridPointSolution[indices1D[i]] * radii1D[i]
 					* (grid[xi + 1] - grid[xi]);
+			if (weights1D[i] >= minSize) {
+				partialBubbleConcentration += gridPointSolution[indices1D[i]]
+						* (grid[xi + 1] - grid[xi]);
+				partialRadii += gridPointSolution[indices1D[i]] * radii1D[i]
+						* (grid[xi + 1] - grid[xi]);
+			}
 		}
 
 		// Loop on all the super clusters
@@ -781,6 +791,13 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 					* (grid[xi + 1] - grid[xi]);
 			radii += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi]);
+			if (cluster.getSize() >= minSize) {
+				partialBubbleConcentration += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi]);
+				partialRadii += cluster.getTotalConcentration()
+						* cluster.getReactionRadius()
+						* (grid[xi + 1] - grid[xi]);
+			}
 		}
 	}
 
@@ -882,7 +899,8 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		outputFile << time << " " << 100.0 * (totalXeConcentration / fluence)
 				<< " " << totalXeConcentration << " "
 				<< fluence - totalXeConcentration << " "
-				<< totalRadii / totalBubbleConcentration << " " << nXenon1D
+				<< totalRadii / totalBubbleConcentration << " "
+				<< partialRadii / partialBubbleConcentration << " " << nXenon1D
 				<< std::endl;
 		outputFile.close();
 	}
@@ -1221,8 +1239,15 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 	// Initial declarations for the density and diameter
 	double iDensity = 0.0, vDensity = 0.0, voidDensity = 0.0,
 			frankDensity = 0.0, faultedDensity = 0.0, perfectDensity = 0.0,
+			voidPartialDensity = 0.0, frankPartialDensity = 0.0,
+			faultedPartialDensity = 0.0, perfectPartialDensity = 0.0,
 			iDiameter = 0.0, vDiameter = 0.0, voidDiameter = 0.0,
-			frankDiameter = 0.0, faultedDiameter = 0.0, perfectDiameter = 0.0;
+			frankDiameter = 0.0, faultedDiameter = 0.0, perfectDiameter = 0.0,
+			voidPartialDiameter = 0.0, frankPartialDiameter = 0.0,
+			faultedPartialDiameter = 0.0, perfectPartialDiameter = 0.0;
+
+	// Get the minimum size for the loop densities and diameters
+	int minSize = solverHandler.getMinSize();
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
@@ -1271,6 +1296,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			frankDiameter += gridPointSolution[cluster.getId() - 1]
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
 					* 2.0;
+			if (cluster.getSize() >= minSize) {
+				frankPartialDensity += gridPointSolution[cluster.getId() - 1]
+						* (grid[xi + 1] - grid[xi]);
+				frankPartialDiameter += gridPointSolution[cluster.getId() - 1]
+						* (grid[xi + 1] - grid[xi])
+						* cluster.getReactionRadius() * 2.0;
+			}
 		}
 		for (auto const& frankMapItem : network.getAll(ReactantType::FrankSuper)) {
 			// Get the cluster
@@ -1281,6 +1313,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			frankDiameter += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
 					* 2.0;
+			if (cluster.getSize() >= minSize) {
+				frankPartialDensity += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi]);
+				frankPartialDiameter += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi])
+						* cluster.getReactionRadius() * 2.0;
+			}
 		}
 
 		// Loop on Perfect
@@ -1292,6 +1331,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			perfectDiameter += gridPointSolution[cluster.getId() - 1]
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
 					* 2.0;
+			if (cluster.getSize() >= minSize) {
+				perfectPartialDensity += gridPointSolution[cluster.getId() - 1]
+						* (grid[xi + 1] - grid[xi]);
+				perfectPartialDiameter += gridPointSolution[cluster.getId() - 1]
+						* (grid[xi + 1] - grid[xi])
+						* cluster.getReactionRadius() * 2.0;
+			}
 		}
 		for (auto const& perfectMapItem : network.getAll(
 				ReactantType::PerfectSuper)) {
@@ -1303,6 +1349,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			perfectDiameter += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
 					* 2.0;
+			if (cluster.getSize() >= minSize) {
+				perfectPartialDensity += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi]);
+				perfectPartialDiameter += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi])
+						* cluster.getReactionRadius() * 2.0;
+			}
 		}
 
 		// Loop on Void
@@ -1314,6 +1367,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			voidDiameter += gridPointSolution[cluster.getId() - 1]
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
 					* 2.0;
+			if (cluster.getSize() >= minSize) {
+				voidPartialDensity += gridPointSolution[cluster.getId() - 1]
+						* (grid[xi + 1] - grid[xi]);
+				voidPartialDiameter += gridPointSolution[cluster.getId() - 1]
+						* (grid[xi + 1] - grid[xi])
+						* cluster.getReactionRadius() * 2.0;
+			}
 		}
 		for (auto const& voidMapItem : network.getAll(ReactantType::VoidSuper)) {
 			// Get the cluster
@@ -1324,6 +1384,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			voidDiameter += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
 					* 2.0;
+			if (cluster.getSize() >= minSize) {
+				voidPartialDensity += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi]);
+				voidPartialDiameter += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi])
+						* cluster.getReactionRadius() * 2.0;
+			}
 		}
 
 		// Loop on Faulted
@@ -1335,6 +1402,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			faultedDiameter += gridPointSolution[cluster.getId() - 1]
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
 					* 2.0;
+			if (cluster.getSize() >= minSize) {
+				faultedPartialDensity += gridPointSolution[cluster.getId() - 1]
+						* (grid[xi + 1] - grid[xi]);
+				faultedPartialDiameter += gridPointSolution[cluster.getId() - 1]
+						* (grid[xi + 1] - grid[xi])
+						* cluster.getReactionRadius() * 2.0;
+			}
 		}
 		for (auto const& faultedMapItem : network.getAll(
 				ReactantType::FaultedSuper)) {
@@ -1346,15 +1420,27 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			faultedDiameter += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
 					* 2.0;
+			if (cluster.getSize() >= minSize) {
+				faultedPartialDensity += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi]);
+				faultedPartialDiameter += cluster.getTotalConcentration()
+						* (grid[xi + 1] - grid[xi])
+						* cluster.getReactionRadius() * 2.0;
+			}
 		}
 	}
 
 	// Sum all the concentrations through MPI reduce
 	double iTotalDensity = 0.0, vTotalDensity = 0.0, voidTotalDensity = 0.0,
 			frankTotalDensity = 0.0, faultedTotalDensity = 0.0,
-			perfectTotalDensity = 0.0, iTotalDiameter = 0.0, vTotalDiameter =
-					0.0, voidTotalDiameter = 0.0, frankTotalDiameter = 0.0,
-			faultedTotalDiameter = 0.0, perfectTotalDiameter = 0.0;
+			perfectTotalDensity = 0.0, voidPartialTotalDensity = 0.0,
+			frankPartialTotalDensity = 0.0, faultedPartialTotalDensity = 0.0,
+			perfectPartialTotalDensity = 0.0, iTotalDiameter = 0.0,
+			vTotalDiameter = 0.0, voidTotalDiameter = 0.0, frankTotalDiameter =
+					0.0, faultedTotalDiameter = 0.0, perfectTotalDiameter = 0.0,
+			voidPartialTotalDiameter = 0.0, frankPartialTotalDiameter = 0.0,
+			faultedPartialTotalDiameter = 0.0,
+			perfectPartialTotalDiameter = 0.0;
 	MPI_Reduce(&iDensity, &iTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
 			PETSC_COMM_WORLD);
 	MPI_Reduce(&vDensity, &vTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
@@ -1367,6 +1453,14 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			PETSC_COMM_WORLD);
 	MPI_Reduce(&faultedDensity, &faultedTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
 			PETSC_COMM_WORLD);
+	MPI_Reduce(&voidPartialDensity, &voidPartialTotalDensity, 1, MPI_DOUBLE,
+			MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_Reduce(&perfectPartialDensity, &perfectPartialTotalDensity, 1,
+			MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_Reduce(&frankPartialDensity, &frankPartialTotalDensity, 1, MPI_DOUBLE,
+			MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_Reduce(&faultedPartialDensity, &faultedPartialTotalDensity, 1,
+			MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 	MPI_Reduce(&iDiameter, &iTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
 			PETSC_COMM_WORLD);
 	MPI_Reduce(&vDiameter, &vTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
@@ -1379,6 +1473,14 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			PETSC_COMM_WORLD);
 	MPI_Reduce(&faultedDiameter, &faultedTotalDiameter, 1, MPI_DOUBLE, MPI_SUM,
 			0, PETSC_COMM_WORLD);
+	MPI_Reduce(&voidPartialDiameter, &voidPartialTotalDiameter, 1, MPI_DOUBLE,
+			MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_Reduce(&perfectPartialDiameter, &perfectPartialTotalDiameter, 1,
+			MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_Reduce(&frankPartialDiameter, &frankPartialTotalDiameter, 1, MPI_DOUBLE,
+			MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_Reduce(&faultedPartialDiameter, &faultedPartialTotalDiameter, 1,
+			MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 
 	// Average the data
 	if (procId == 0) {
@@ -1390,6 +1492,14 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 		faultedTotalDensity = faultedTotalDensity
 				/ (grid[Mx] - grid[surfacePos + 1]);
 		frankTotalDensity = frankTotalDensity
+				/ (grid[Mx] - grid[surfacePos + 1]);
+		voidPartialTotalDensity = voidPartialTotalDensity
+				/ (grid[Mx] - grid[surfacePos + 1]);
+		perfectPartialTotalDensity = perfectPartialTotalDensity
+				/ (grid[Mx] - grid[surfacePos + 1]);
+		faultedPartialTotalDensity = faultedPartialTotalDensity
+				/ (grid[Mx] - grid[surfacePos + 1]);
+		frankPartialTotalDensity = frankPartialTotalDensity
 				/ (grid[Mx] - grid[surfacePos + 1]);
 		iTotalDiameter = iTotalDiameter
 				/ (iTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
@@ -1403,6 +1513,18 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 				/ (faultedTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
 		frankTotalDiameter = frankTotalDiameter
 				/ (frankTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+		voidPartialTotalDiameter = voidPartialTotalDiameter
+				/ (voidPartialTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+		perfectPartialTotalDiameter = perfectPartialTotalDiameter
+				/ (perfectPartialTotalDensity
+						* (grid[Mx] - grid[surfacePos + 1]));
+		faultedPartialTotalDiameter = faultedPartialTotalDiameter
+				/ (faultedPartialTotalDensity
+						* (grid[Mx] - grid[surfacePos + 1]));
+		frankPartialTotalDiameter =
+				frankPartialTotalDiameter
+						/ (frankPartialTotalDensity
+								* (grid[Mx] - grid[surfacePos + 1]));
 
 		// Set the output precision
 		const int outputPrecision = 5;
@@ -1419,7 +1541,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 				<< voidTotalDiameter << " " << faultedTotalDensity << " "
 				<< faultedTotalDiameter << " " << perfectTotalDensity << " "
 				<< perfectTotalDiameter << " " << frankTotalDensity << " "
-				<< frankTotalDiameter << std::endl;
+				<< frankTotalDiameter << " " << voidPartialTotalDensity << " "
+				<< voidPartialTotalDiameter << " " << faultedPartialTotalDensity
+				<< " " << faultedPartialTotalDiameter << " "
+				<< perfectPartialTotalDensity << " "
+				<< perfectPartialTotalDiameter << " "
+				<< frankPartialTotalDensity << " " << frankPartialTotalDiameter
+				<< std::endl;
 
 		// Close the output file
 		outputFile.close();

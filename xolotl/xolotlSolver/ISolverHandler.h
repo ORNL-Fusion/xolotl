@@ -192,6 +192,13 @@ public:
 	virtual bool burstBubbles() const = 0;
 
 	/**
+	 * Get the minimum size for computing average radius.
+	 *
+	 * @return The minimum size
+	 */
+	virtual int getMinSize() const = 0;
+
+	/**
 	 * Get the flux handler.
 	 *
 	 * @return The flux handler
@@ -232,6 +239,13 @@ public:
 	 * @return The modified trap-mutation handler
 	 */
 	virtual xolotlCore::ITrapMutationHandler *getMutationHandler() const = 0;
+
+	/**
+	 * Get the re-solution handler.
+	 *
+	 * @return The re-solution handler
+	 */
+	virtual xolotlCore::IReSolutionHandler *getReSolutionHandler() const = 0;
 
 	/**
 	 * Get the network.

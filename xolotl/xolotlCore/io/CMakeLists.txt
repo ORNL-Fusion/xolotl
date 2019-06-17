@@ -32,6 +32,8 @@ int main() { std::filesystem::path test; return 0; }
 if(NOT STD_FILESYSTEM_COMPILES)
     message(STATUS "Code using std::filesystem fails to compile/link.")
     set(HAVE_STD_FILESYSTEM OFF)
+else()
+    set(HAVE_STD_FILESYSTEM ON)
 endif()
 
 message(STATUS "Looking for C++ std::experimental::filesystem")
@@ -41,6 +43,8 @@ int main() { std::experimental::filesystem::path test; return 0; }
 if(NOT STD_EXPERIMENTAL_FILESYSTEM_COMPILES)
     message(STATUS "Code using std::experimental::filesystem fails to compile/link.")
     set(HAVE_STD_EXPERIMENTAL_FILESYSTEM OFF)
+else()
+    set(HAVE_STD_EXPERIMENTAL_FILESYSTEM ON)
 endif()
 
 # Find the Boost libraries we (potentially) use.

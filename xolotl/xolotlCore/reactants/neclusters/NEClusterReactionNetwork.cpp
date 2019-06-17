@@ -10,7 +10,7 @@ NEClusterReactionNetwork::NEClusterReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		ReactionNetwork( { ReactantType::V, ReactantType::I, ReactantType::Xe,
 				ReactantType::XeV, ReactantType::XeI, ReactantType::NESuper },
-				registry) {
+				registry), rho(0.0) {
 
 	// Initialize default properties
 	dissociationsEnabled = true;
@@ -52,7 +52,8 @@ void NEClusterReactionNetwork::createReactionConnectivity() {
 	// We know here that only Xe_1 can cluster so we simplify the search
 	// Xe_(a-i) + Xe_i --> Xe_a
 	firstSize = 1;
-	auto& singleXeCluster = static_cast<NECluster&>(*(get(Species::Xe, firstSize)));
+	auto& singleXeCluster = static_cast<NECluster&>(*(get(Species::Xe,
+			firstSize)));
 	// Consider each Xe super cluster.
 	for (auto const& currMapItem : getAll(ReactantType::Xe)) {
 

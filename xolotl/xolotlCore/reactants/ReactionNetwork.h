@@ -667,6 +667,26 @@ public:
 	}
 
 	/**
+	 * This operation sets the density of xenon in a bubble, needed to compute all the reaction radii
+	 * in NE.
+	 *
+	 * @param density The density
+	 */
+	virtual void setDensity(double density) override {
+		return;
+	}
+
+	/**
+	 * This operation returns the density of xenon in a bubble, needed to compute all the reaction radii
+	 * in NE.
+	 *
+	 * @return The density
+	 */
+	virtual double getDensity() const override {
+		return 0.0;
+	}
+
+	/**
 	 * Remove the given reactants from the network.
 	 *
 	 * @param reactants The reactants that should be removed.

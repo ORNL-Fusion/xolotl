@@ -84,6 +84,15 @@ public:
 		return 0;
 	}
 
+	/**
+	 * Get the minimum size for a cluster to undergo re-solution.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	int getMinSize() const {
+		return 0;
+	}
+
 };
 //end class DummyReSolutionHandler
 

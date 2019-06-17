@@ -20,7 +20,7 @@ public:
 			OptionHandler("fluxFile",
 					"fluxFile <filename>               "
 							"A time profile for the flux is given by the specified file, "
-							"then linear interpolation is used to fit the data."
+							"\n	                            then linear interpolation is used to fit the data."
 							"\n	                            (NOTE: If a flux profile file is given, "
 							"a constant helium flux should NOT be given)\n") {
 	}
