@@ -212,19 +212,16 @@ void PetscSolver::initialize(bool isStandalone) {
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Set solver options
+	 Create the solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	PetscInt int1;
-	PetscBool flg1;
 	ierr = PetscOptionsCreate(&petscOptions);
-	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
+	checkPetscError(ierr,
+			"PetscSolver::initialize: PetscOptionsCreate failed.");
 	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
 	checkPetscError(ierr,
-	"PetscSolver::solve: PetscOptionsInsertString failed.");
-	ierr = PetscOptionsGetInt(petscOptions,NULL,"-ts_max_steps",&int1,&flg1);
-//	if (flg1) PetscOptionsView(petscOptions,NULL);
+			"PetscSolver::initialize: PetscOptionsInsertString failed.");
 	ierr = PetscOptionsPush(petscOptions);
-	PetscOptionsView(petscOptions,NULL);
+	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPush failed.");
 
 	// Create the solver context
 	getSolverHandler().createSolverContext(da);
@@ -233,7 +230,8 @@ void PetscSolver::initialize(bool isStandalone) {
 	 Extract global vector from DMDA to hold solution
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	ierr = DMCreateGlobalVector(da, &C);
-	checkPetscError(ierr, "PetscSolver::solve: DMCreateGlobalVector failed.");
+	checkPetscError(ierr,
+			"PetscSolver::initialize: DMCreateGlobalVector failed.");
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create timestepping solver context
@@ -241,62 +239,28 @@ void PetscSolver::initialize(bool isStandalone) {
 	// Get the MPI communicator
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	ierr = TSCreate(xolotlComm, &ts);
-	checkPetscError(ierr, "PetscSolver::solve: TSCreate failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSCreate failed.");
 	ierr = TSSetType(ts, TSARKIMEX);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetType failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetType failed.");
 	ierr = TSARKIMEXSetFullyImplicit(ts, PETSC_TRUE);
 	checkPetscError(ierr,
-			"PetscSolver::solve: TSARKIMEXSetFullyImplicit failed.");
+			"PetscSolver::initialize: TSARKIMEXSetFullyImplicit failed.");
 	ierr = TSSetDM(ts, da);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetDM failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetDM failed.");
 	ierr = TSSetProblemType(ts, TS_NONLINEAR);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetProblemType failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetProblemType failed.");
 	ierr = TSSetRHSFunction(ts, NULL, RHSFunction, NULL);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetRHSFunction failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetRHSFunction failed.");
 	ierr = TSSetRHSJacobian(ts, NULL, NULL, RHSJacobian, NULL);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetRHSJacobian failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetRHSJacobian failed.");
 	ierr = TSSetSolution(ts, C);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetSolution failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetSolution failed.");
 
-//	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//	 Set solver options
-//	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-//	ierr = PetscOptionsCreate(&petscOptions);
-//	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsCreate failed.");
-//	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
-//	checkPetscError(ierr,
-//			"PetscSolver::solve: PetscOptionsInsertString failed.");
-//	ierr = PetscOptionsSetFromOptions(petscOptions);
-//	checkPetscError(ierr,
-//			"PetscSolver::solve: PetscOptionsSetFromOptions failed.");
-//	ierr = PetscObjectSetOptions((PetscObject) ts, petscOptions);
-//	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
-//	ierr = TSSetFromOptions(ts);
-//	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
-//	// Set the options in SNES
-//	SNES snes;
-//	ierr = TSGetSNES(ts, &snes);
-//	checkPetscError(ierr, "PetscSolver::solve: TSGetSNES failed.");
-//	ierr = PetscObjectSetOptions((PetscObject) snes, petscOptions);
-//	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
-//	ierr = SNESSetFromOptions(snes);
-//	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
-//	// Set the options in KSP
-//	KSP ksp;
-//	ierr = SNESGetKSP(snes, &ksp);
-//	checkPetscError(ierr, "PetscSolver::solve: SNESGetKSP failed.");
-//	ierr = PetscObjectSetOptions((PetscObject) ksp, petscOptions);
-//	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
-//	ierr = KSPSetFromOptions(ksp);
-//	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
-//	// Set the options in PC
-//	PC pc;
-//	ierr = KSPGetPC(ksp, &pc);
-//	checkPetscError(ierr, "PetscSolver::solve: KSPGetPC failed.");
-//	ierr = PetscObjectSetOptions((PetscObject) pc, petscOptions);
-//	checkPetscError(ierr, "PetscSolver::solve: PetscObjectSetOptions failed.");
-//	ierr = PCSetFromOptions(pc);
-//	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Set solver options
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	ierr = TSSetFromOptions(ts);
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetFromOptions failed.");
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = getSolverHandler().getNetworkName();
@@ -312,9 +276,10 @@ void PetscSolver::initialize(bool isStandalone) {
 
 			// Give the values to the solver
 			ierr = TSSetTime(ts, time);
-			checkPetscError(ierr, "PetscSolver::solve: TSSetTime failed.");
+			checkPetscError(ierr, "PetscSolver::initialize: TSSetTime failed.");
 			ierr = TSSetTimeStep(ts, deltaTime);
-			checkPetscError(ierr, "PetscSolver::solve: TSSetTimeStep failed.");
+			checkPetscError(ierr,
+					"PetscSolver::initialize: TSSetTimeStep failed.");
 		}
 	}
 
@@ -325,25 +290,25 @@ void PetscSolver::initialize(bool isStandalone) {
 		// One dimension
 		ierr = setupPetsc0DMonitor(ts);
 		checkPetscError(ierr,
-				"PetscSolver::solve: setupPetsc0DMonitor failed.");
+				"PetscSolver::initialize: setupPetsc0DMonitor failed.");
 		break;
 	case 1:
 		// One dimension
 		ierr = setupPetsc1DMonitor(ts, handlerRegistry);
 		checkPetscError(ierr,
-				"PetscSolver::solve: setupPetsc1DMonitor failed.");
+				"PetscSolver::initialize: setupPetsc1DMonitor failed.");
 		break;
 	case 2:
 		// Two dimensions
 		ierr = setupPetsc2DMonitor(ts);
 		checkPetscError(ierr,
-				"PetscSolver::solve: setupPetsc2DMonitor failed.");
+				"PetscSolver::initialize: setupPetsc2DMonitor failed.");
 		break;
 	case 3:
 		// Three dimensions
 		ierr = setupPetsc3DMonitor(ts);
 		checkPetscError(ierr,
-				"PetscSolver::solve: setupPetsc3DMonitor failed.");
+				"PetscSolver::initialize: setupPetsc3DMonitor failed.");
 		break;
 	default:
 		throw std::string("PetscSolver Exception: Wrong number of dimensions "
@@ -358,7 +323,9 @@ void PetscSolver::initialize(bool isStandalone) {
 	// Set the output precision for std::out
 	std::cout.precision(16);
 
-	ierr = PetscOptionsLeft(NULL);
+	// Pop the options
+	ierr = PetscOptionsPop();
+	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPop failed.");
 
 	return;
 }
@@ -415,6 +382,9 @@ void PetscSolver::solve() {
 	 Solve the ODE system
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	if (ts != NULL && C != NULL) {
+		// Push the options for the solve
+		ierr = PetscOptionsPush(petscOptions);
+		checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPush failed.");
 		// Reset the time step number
 		ierr = TSSetStepNumber(ts, 0);
 		checkPetscError(ierr, "PetscSolver::solve: Reset Step Number failed.");
@@ -451,6 +421,10 @@ void PetscSolver::solve() {
 
 			outputFile.close();
 		}
+
+		// Popping the option database
+		ierr = PetscOptionsPop();
+		checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPop failed.");
 	} else {
 		throw std::string(
 				"PetscSolver Exception: Unable to solve! Data not configured properly.");
@@ -493,8 +467,6 @@ void PetscSolver::finalize(bool isStandalone) {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Free work space.
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-//	ierr = PetscOptionsPop();
-//	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPop failed.");
 	ierr = PetscOptionsDestroy(&petscOptions);
 	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsDestroy failed.");
 	ierr = VecDestroy(&C);
