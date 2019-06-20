@@ -13,7 +13,7 @@ NEClusterReactionNetwork::NEClusterReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		ReactionNetwork( { ReactantType::V, ReactantType::I, ReactantType::Xe,
 				ReactantType::XeV, ReactantType::XeI, ReactantType::NESuper },
-				ReactantType::NESuper, registry) {
+				ReactantType::NESuper, registry), rho(0.0) {
 
 	// Initialize default properties
 	dissociationsEnabled = true;

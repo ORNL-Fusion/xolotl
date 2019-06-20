@@ -554,9 +554,8 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
 			partialBubbleConcentration = 0.0, partialRadii = 0.0;
 
-	// Get the re-solution handler to get the minimum size
-	auto resoHandler = solverHandler.getReSolutionHandler();
-	int minSize = resoHandler->getMinSize();
+	// Get the minimum size for the radius
+	int minSize = solverHandler.getMinSize();
 
 	// Loop on the grid
 	for (PetscInt yj = ys; yj < ys + ym; yj++) {

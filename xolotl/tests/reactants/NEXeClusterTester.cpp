@@ -149,4 +149,31 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	return;
 }
 
+/**
+ * This operation checks the reaction radius for NEXeCluster with a different density.
+ */
+BOOST_AUTO_TEST_CASE(checkDensity) {
+	// Create a helium cluster
+	shared_ptr<NEXeCluster> cluster;
+
+	// Get the simple reaction network with a density of 10.0 Xe nm-3
+	std::shared_ptr<xolotlPerf::IHandlerRegistry> registry = std::make_shared<
+			xolotlPerf::DummyHandlerRegistry>();
+	auto network = getSimpleNEReactionNetwork(0, registry, 10.0);
+
+	// The vector of radii to compare with
+	double expectedRadii[] = { 0.3, 0.362783, 0.415283, 0.457078, 0.492373,
+			0.523224, 0.550812, 0.575882, 0.598942, 0.62035 };
+
+	// Check all the values
+	for (int i = 1; i <= 10; i++) {
+		cluster = shared_ptr<NEXeCluster>(
+				new NEXeCluster(i, *(network.get()), registry));
+		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
+				0.0001);
+	}
+
+	return;
+}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -188,9 +188,8 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	// Update the concentration in the network
 	network.updateConcentrationsFromArray(gridPointSolution);
 
-	// Get the re-solution handler to get the minimum size
-	auto resoHandler = solverHandler.getReSolutionHandler();
-	int minSize = resoHandler->getMinSize();
+	// Get the minimum size for the radius
+	int minSize = solverHandler.getMinSize();
 
 	// Loop on all the indices
 	for (unsigned int i = 0; i < indices0D.size(); i++) {

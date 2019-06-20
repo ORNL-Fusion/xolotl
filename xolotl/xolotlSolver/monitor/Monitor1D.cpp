@@ -760,9 +760,8 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
 
-	// Get the re-solution handler to get the minimum size
-	auto resoHandler = solverHandler.getReSolutionHandler();
-	int minSize = resoHandler->getMinSize();
+	// Get the minimum size for the radius
+	int minSize = solverHandler.getMinSize();
 
 	// Loop on the grid
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {

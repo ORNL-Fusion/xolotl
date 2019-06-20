@@ -1,5 +1,5 @@
-#ifndef RESOMINSIZEOPTIONHANDLER_H
-#define RESOMINSIZEOPTIONHANDLER_H
+#ifndef RADIUSMINSIZEOPTIONHANDLER_H
+#define RADIUSMINSIZEOPTIONHANDLER_H
 
 // Includes
 #include "OptionHandler.h"
@@ -7,24 +7,24 @@
 namespace xolotlCore {
 
 /**
- * ResoMinSizeOptionHandler handles the number of dimensions option.
+ * RadiusMinSizeOptionHandler handles the number of dimensions option.
  */
-class ResoMinSizeOptionHandler: public OptionHandler {
+class RadiusMinSizeOptionHandler: public OptionHandler {
 public:
 
 	/**
 	 * The default constructor
 	 */
-	ResoMinSizeOptionHandler() :
-			OptionHandler("resoSize",
-					"resoSize <minSize>                "
-							"This option allows the user a minimum size for the re-solution (default is 0).  \n") {
+	RadiusMinSizeOptionHandler() :
+			OptionHandler("radiusSize",
+					"radiusSize <minSize>              "
+							"This option allows the user a minimum size for the computation for the average radius (default is 0).  \n") {
 	}
 
 	/**
 	 * The destructor
 	 */
-	~ResoMinSizeOptionHandler() {
+	~RadiusMinSizeOptionHandler() {
 	}
 
 	/**
@@ -38,13 +38,13 @@ public:
 		// Convert to integer
 		int size = strtol(arg.c_str(), NULL, 10);
 		// Set the number of dimensions
-		opt->setResoMinSize(size);
+		opt->setRadiusMinSize(size);
 
 		return true;
 	}
 
 };
-//end class ResoMinSizeOptionHandler
+//end class RadiusMinSizeOptionHandler
 
 } /* namespace xolotlCore */
 
