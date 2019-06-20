@@ -119,14 +119,9 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	BOOST_REQUIRE_EQUAL(nReSo, 9999);
 	BOOST_REQUIRE_EQUAL(indices[0], 1); // Xe_2
 	BOOST_REQUIRE_EQUAL(indices[1], 1); // Xe_2
-	BOOST_REQUIRE_EQUAL(indices[2], 1); // Xe_2
-	BOOST_REQUIRE_EQUAL(indices[3], 1); // Xe_2
+	BOOST_REQUIRE_EQUAL(indices[2], 0); // Xe_1
+	BOOST_REQUIRE_EQUAL(indices[3], 0); // Xe_1
 	BOOST_REQUIRE_EQUAL(indices[4], 0); // Xe_1
-	BOOST_REQUIRE_EQUAL(indices[5], 0); // Xe_1
-	BOOST_REQUIRE_EQUAL(indices[6], 0); // Xe_1
-	BOOST_REQUIRE_EQUAL(indices[7], 0); // Xe_1
-	BOOST_REQUIRE_EQUAL(indices[8], 0); // Xe_1
-	BOOST_REQUIRE_EQUAL(indices[9], 0); // Xe_1
 
 	// Check values
 	BOOST_REQUIRE_CLOSE(val[0], -197711.9, 0.01); // Xe_2

@@ -866,7 +866,8 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 		// Arguments for MatSetValuesStencil called below
 		PetscScalar resolutionVals[10 * nXenon];
-		PetscInt resolutionIndices[10 * nXenon];
+		PetscInt resolutionIndices[5 * nXenon];
+		MatStencil rowIds[5];
 
 		// Compute the partial derivative from re-solution at this grid point
 		int nResoluting = resolutionHandler->computePartialsForReSolution(
@@ -875,80 +876,26 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// Loop on the number of xenon to set the values in the Jacobian
 		for (int i = 0; i < nResoluting; i++) {
 			// Set grid coordinate and component number for the row and column
-			// corresponding to the  large xenon cluster
-			row.i = xi;
-			row.c = resolutionIndices[10 * i];
-			col.i = xi;
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+			// corresponding to the clusters involved in re-solution
+			rowIds[0].i = xi;
+			rowIds[0].c = resolutionIndices[5 * i];
+			rowIds[1].i = xi;
+			rowIds[1].c = resolutionIndices[(5 * i) + 1];
+			rowIds[2].i = xi;
+			rowIds[2].c = resolutionIndices[(5 * i) + 2];
+			rowIds[3].i = xi;
+			rowIds[3].c = resolutionIndices[(5 * i) + 3];
+			rowIds[4].i = xi;
+			rowIds[4].c = resolutionIndices[(5 * i) + 4];
+			colIds[0].i = xi;
+			colIds[0].c = resolutionIndices[5 * i];
+			colIds[1].i = xi;
+			colIds[1].c = resolutionIndices[(5 * i) + 1];
+			ierr = MatSetValuesStencil(J, 5, rowIds, 2, colIds,
 					resolutionVals + (10 * i), ADD_VALUES);
 			checkPetscError(ierr,
 					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (large Xe re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 1, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (large Xe re-solution) failed.");
-			row.c = resolutionIndices[(10 * i) + 1];
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 2, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (large Xe re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 3, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (large Xe re-solution) failed.");
-
-			// Set component number for the row
-			// corresponding to the smaller xenon cluster created through re-solution
-			row.c = resolutionIndices[(10 * i) + 4];
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 4, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (smaller Xe re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 5, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (smaller Xe re-solution) failed.");
-			row.c = resolutionIndices[(10 * i) + 5];
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 6, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (smaller Xe re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 7, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (smaller Xe re-solution) failed.");
-
-			// Set component number for the row
-			// corresponding to the single xenon created through re-solution
-			row.c = resolutionIndices[(10 * i) + 8];
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 8, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (Xe_1 re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 9, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (Xe_1 re-solution) failed.");
+							"MatSetValuesStencil (Xe re-solution) failed.");
 		}
 	}
 
