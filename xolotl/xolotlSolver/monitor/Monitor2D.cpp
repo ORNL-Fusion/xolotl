@@ -58,8 +58,6 @@ std::vector<double> previousHeFlux2D;
 std::vector<double> nHelium2D;
 //! The variable to store the xenon flux at the previous time step.
 std::vector<std::vector<double> > previousXeFlux2D;
-//! The variable to store the total number of xenon going through the GB.
-double nXenon2D = 0.0;
 //! The variable to store the deuterium flux at the previous time step.
 std::vector<double> previousDFlux2D;
 //! The variable to store the total number of deuterium going through the bottom.
@@ -651,8 +649,11 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 			xolotlComm);
 	// Master process
 	if (procId == 0) {
+		// Get the previous value of Xe that went to the GB
+		double nXenon = solverHandler.getNXeGB();
 		// Compute the total number of Xe that went to the GB
-		nXenon2D += totalXeFlux * dt;
+		nXenon += totalXeFlux * dt;
+		solverHandler.setNXeGB(nXenon);
 	}
 
 	// Loop on the GB
@@ -716,6 +717,8 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 		double surface = (double) My * hy;
 		// Get the fluence
 		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
+		// Get the number of Xe that went to the GB
+		double nXenon = solverHandler.getNXeGB();
 
 		totalXeConcentration = totalXeConcentration / surface;
 
@@ -723,7 +726,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Xenon concentration = " << totalXeConcentration
 				<< std::endl;
-		std::cout << "Xenon GB = " << nXenon2D / surface << std::endl
+		std::cout << "Xenon GB = " << nXenon / surface << std::endl
 				<< std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
@@ -732,7 +735,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 		outputFile << time << " " << totalXeConcentration << " " << fluence
 				<< " " << totalRadii / totalBubbleConcentration << " "
 				<< partialRadii / partialBubbleConcentration << " "
-				<< nXenon2D / surface << std::endl;
+				<< nXenon / surface << std::endl;
 		outputFile.close();
 	}
 
@@ -2096,7 +2099,6 @@ PetscErrorCode reset2DMonitor() {
 	previousHeFlux2D.clear();
 	nHelium2D.clear();
 	previousXeFlux2D.clear();
-	nXenon2D = 0.0;
 	previousDFlux2D.clear();
 	nDeuterium2D.clear();
 	previousTFlux2D.clear();

@@ -136,6 +136,9 @@ protected:
 	//! The previous time.
 	double previousTime;
 
+	//! The number of xenon atoms that went to the GB
+	double nXeGB;
+
 	//! The random number generator to use.
 	std::unique_ptr<RandomNumberGenerator<int, unsigned int>> rng;
 
@@ -340,7 +343,8 @@ protected:
 					false), isMirror(true), sputteringYield(0.0), fluxHandler(
 					nullptr), temperatureHandler(nullptr), diffusionHandler(
 					nullptr), mutationHandler(nullptr), resolutionHandler(
-					nullptr), tauBursting(10.0), rngSeed(0), minRadiusSize(0), previousTime(0.0) {
+					nullptr), tauBursting(10.0), rngSeed(0), minRadiusSize(0), previousTime(
+					0.0), nXeGB(0.0) {
 	}
 
 public:
@@ -712,6 +716,22 @@ public:
 	 */
 	void setPreviousTime(double time) override {
 		previousTime = time;
+	}
+
+	/**
+	 * Get the number of Xe that went to the GB.
+	 * \see ISolverHandler.h
+	 */
+	double getNXeGB() override {
+		return nXeGB;
+	}
+
+	/**
+	 * Set the number of Xe that went to the GB.
+	 * \see ISolverHandler.h
+	 */
+	void setNXeGB(double nXe) override {
+		nXeGB = nXe;
 	}
 
 	/**

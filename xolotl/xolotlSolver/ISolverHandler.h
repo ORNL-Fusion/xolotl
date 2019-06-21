@@ -108,6 +108,20 @@ public:
 	virtual void setPreviousTime(double time) = 0;
 
 	/**
+	 * Get the number of Xe that went to the GB.
+	 *
+	 * @return The number of Xenon
+	 */
+	virtual double getNXeGB() = 0;
+
+	/**
+	 * Set the number of Xe that went to the GB.
+	 *
+	 * @param nXe The number of Xenon
+	 */
+	virtual void setNXeGB(double nXe) = 0;
+
+	/**
 	 * Compute the new concentrations for the RHS function given an initial
 	 * vector of concentrations.
 	 *

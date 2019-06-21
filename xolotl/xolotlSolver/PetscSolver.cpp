@@ -375,6 +375,30 @@ void PetscSolver::setConcVector(
 	return solverHandler.setConcVector(da, C, concVector);
 }
 
+double PetscSolver::getCurrentDt() {
+	PetscErrorCode ierr;
+
+	// Get the value from the solver
+	double currentTimeStep;
+	ierr = TSGetTimeStep(ts, &currentTimeStep);
+	checkPetscError(ierr, "PetscSolver::getCurrentDt: TSGetTimeStep failed.");
+
+	return currentTimeStep;
+}
+
+void PetscSolver::setCurrentTimes(double time, double dt) {
+	PetscErrorCode ierr;
+
+	// Give the values to the solver
+	ierr = TSSetTime(ts, time);
+	checkPetscError(ierr, "PetscSolver::setCurrentTimes: TSSetTime failed.");
+	ierr = TSSetTimeStep(ts, dt);
+	checkPetscError(ierr,
+			"PetscSolver::setCurrentTimes: TSSetTimeStep failed.");
+
+	return;
+}
+
 void PetscSolver::solve() {
 	PetscErrorCode ierr;
 

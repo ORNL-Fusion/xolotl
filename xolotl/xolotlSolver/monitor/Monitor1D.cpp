@@ -60,8 +60,6 @@ double previousHeFlux1D = 0.0;
 double nHelium1D = 0.0;
 //! The variable to store the xenon flux at the previous time step.
 std::vector<double> previousXeFlux1D;
-//! The variable to store the total number of xenon going through the GB.
-double nXenon1D = 0.0;
 //! The variable to store the deuterium flux at the previous time step.
 double previousDFlux1D = 0.0;
 //! The variable to store the total number of deuterium going through the bottom.
@@ -850,8 +848,11 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 			xolotlComm);
 	// Master process
 	if (procId == 0) {
+		// Get the previous value of Xe that went to the GB
+		double nXenon = solverHandler.getNXeGB();
 		// Compute the total number of Xe that went to the GB
-		nXenon1D += totalXeFlux * dt;
+		nXenon += totalXeFlux * dt;
+		solverHandler.setNXeGB(nXenon);
 	}
 
 	// Loop on the GB
@@ -897,18 +898,21 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		// Get the fluence (Multiply by the size of the grid)
 		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
 
+		// Get the number of xenon that went to the GB
+		double nXenon = solverHandler.getNXeGB();
+
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Xenon concentration = " << totalXeConcentration
 				<< std::endl;
-		std::cout << "Xenon GB = " << nXenon1D << std::endl << std::endl;
+		std::cout << "Xenon GB = " << nXenon << std::endl << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
 		outputFile << time << " " << totalXeConcentration << " " << fluence
 				<< " " << totalRadii / totalBubbleConcentration << " "
-				<< partialRadii / partialBubbleConcentration << " " << nXenon1D
+				<< partialRadii / partialBubbleConcentration << " " << nXenon
 				<< std::endl;
 		outputFile.close();
 	}
@@ -3185,7 +3189,6 @@ PetscErrorCode reset1DMonitor() {
 	previousHeFlux1D = 0.0;
 	nHelium1D = 0.0;
 	previousXeFlux1D.clear();
-	nXenon1D = 0.0;
 	previousDFlux1D = 0.0;
 	nDeuterium1D = 0.0;
 	previousTFlux1D = 0.0;

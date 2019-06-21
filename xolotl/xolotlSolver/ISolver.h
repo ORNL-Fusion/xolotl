@@ -99,6 +99,21 @@ public:
 							std::vector<std::vector<std::pair<int, double> > > > > & concVector) = 0;
 
 	/**
+	 * Get the current dt.
+	 *
+	 * @return  The current time step
+	 */
+	virtual double getCurrentDt() = 0;
+
+	/**
+	 * Set the current time and dt.
+	 *
+	 * @param currentTime The time
+	 * @param currentDt The current time step
+	 */
+	virtual void setCurrentTimes(double currentTime, double currentDt) = 0;
+
+	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */

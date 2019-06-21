@@ -324,6 +324,80 @@ void XolotlInterface::setPreviousTime(double time) {
 	return;
 }
 
+double XolotlInterface::getCurrentDt() {
+	double toReturn = 0.0;
+	try {
+		toReturn = solver->getCurrentDt();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return toReturn;
+}
+
+void XolotlInterface::setCurrentTimes(double time, double dt) {
+	try {
+		solver->setCurrentTimes(time, dt);
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return;
+}
+
+double XolotlInterface::getNXeGB() {
+	double toReturn = 0.0;
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		toReturn = solverHandler.getNXeGB();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return toReturn;
+}
+
+void XolotlInterface::setNXeGB(double nXe) {
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		solverHandler.setNXeGB(nXe);
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return;
+}
+
 std::vector<double> XolotlInterface::getGridInfo(double &hy, double &hz) {
 	// The vector to return
 	std::vector<double> toReturn;

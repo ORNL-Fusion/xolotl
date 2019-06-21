@@ -132,6 +132,21 @@ public:
 					override;
 
 	/**
+	 * Get the current dt.
+	 *
+	 * @return  The current time step
+	 */
+	virtual double getCurrentDt() override;
+
+	/**
+	 * Set the current time and dt.
+	 *
+	 * @param currentTime The time
+	 * @param currentDt The current time step
+	 */
+	virtual void setCurrentTimes(double currentTime, double currentDt) override;
+
+	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */

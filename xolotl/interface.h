@@ -122,6 +122,35 @@ public:
 	void setPreviousTime(double time);
 
 	/**
+	 * Get the current dt.
+	 *
+	 * @return  The current time step
+	 */
+	double getCurrentDt();
+
+	/**
+	 * Set the current time and dt.
+	 *
+	 * @param currentTime The time
+	 * @param currentDt The current time step
+	 */
+	void setCurrentTimes(double currentTime, double currentDt);
+
+	/**
+	 * Get the number of Xe that went to the GB.
+	 *
+	 * @return The number of Xenon
+	 */
+	double getNXeGB();
+
+	/**
+	 * Set the number of Xe that went to the GB.
+	 *
+	 * @param nXe The number of Xenon
+	 */
+	void setNXeGB(double nXe);
+
+	/**
 	 * Get the TS from the solver
 	 *
 	 * @return The TS
