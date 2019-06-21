@@ -38,7 +38,6 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
-extern double previousTime;
 extern double timeStepThreshold;
 
 //! How often HDF5 file is written
@@ -98,7 +97,11 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
 	// Compute the dt
+	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
@@ -132,9 +135,6 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
@@ -353,7 +353,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 			// Check we are on the right proc
 			if (xi >= xs && xi < xs + xm && j >= ys && j < ys + ym) {
 				// Get the delta time from the previous timestep to this timestep
-				double dt = time - previousTime;
+				double dt = time - solverHandler.getPreviousTime();
 				// Compute the total number of impurities that went in the bulk
 				nHelium2D[j] += previousHeFlux2D[j] * dt;
 				nDeuterium2D[j] += previousDFlux2D[j] * dt;
@@ -627,7 +627,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 
 	// GB
 	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
+	double dt = time - solverHandler.getPreviousTime();
 	// Sum and gather the previous flux
 	double globalXeFlux = 0.0;
 	// Get the vector from the solver handler
@@ -1088,7 +1088,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 	double heliumFluxAmplitude = fluxHandler->getFluxAmplitude();
 
 	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
+	double dt = time - solverHandler.getPreviousTime();
 
 	// Work of the moving surface first
 	if (solverHandler.moveSurface()) {
@@ -1784,7 +1784,8 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 
 		if (hasConcentrations) {
 			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			hdf5Previous2D = (int) (previousTime / hdf5Stride2D);
 		}
 
@@ -1851,7 +1852,8 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 				// Get the previous I flux from the HDF5 file
 				previousIFlux2D = lastTsGroup->readData2D("previousIFlux");
 				// Get the previous time from the HDF5 file
-				previousTime = lastTsGroup->readPreviousTime();
+				double previousTime = lastTsGroup->readPreviousTime();
+				solverHandler.setPreviousTime(previousTime);
 			}
 
 			// Get the sputtering yield
@@ -1933,16 +1935,12 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO is this the same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->incrementFluence(previousTime);
 
 			// If the bottom is a free surface
 			if (solverHandler.getRightOffset() == 1) {
@@ -2011,16 +2009,12 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO isn't this the same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->incrementFluence(previousTime);
 		}
 
 		// computeFluence will be called at each timestep
@@ -2093,7 +2087,6 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
  * @return A standard PETSc error code
  */
 PetscErrorCode reset2DMonitor() {
-	previousTime = 0.0;
 	timeStepThreshold = 0.0;
 	hdf5Stride2D = 0.0;
 	hdf5Previous2D = 0;

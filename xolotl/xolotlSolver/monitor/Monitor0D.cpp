@@ -37,7 +37,6 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
-extern double previousTime;
 extern double timeStepThreshold;
 
 //! The pointer to the plot used in monitorScatter0D.
@@ -69,7 +68,11 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
 	// Compute the dt
+	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
@@ -89,9 +92,6 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the solutionArray
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
@@ -449,8 +449,7 @@ PetscErrorCode setupPetsc0DMonitor(TS& ts) {
 			flagXeRetention;
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse",
-			&flagCheck);
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
@@ -538,7 +537,8 @@ PetscErrorCode setupPetsc0DMonitor(TS& ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			hdf5Previous0D = (int) (previousTime / hdf5Stride0D);
 		}
 
@@ -686,16 +686,12 @@ PetscErrorCode setupPetsc0DMonitor(TS& ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO isn't this the same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->incrementFluence(previousTime);
 		}
 
 		// computeFluence will be called at each timestep
@@ -728,7 +724,6 @@ PetscErrorCode setupPetsc0DMonitor(TS& ts) {
  * @return A standard PETSc error code
  */
 PetscErrorCode reset0DMonitor() {
-	previousTime = 0.0;
 	timeStepThreshold = 0.0;
 	hdf5Stride0D = 0.0;
 	hdf5Previous0D = 0;

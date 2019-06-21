@@ -36,7 +36,6 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
-extern double previousTime;
 extern double timeStepThreshold;
 
 //! How often HDF5 file is written
@@ -83,7 +82,11 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
 	// Compute the dt
+	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
@@ -117,9 +120,6 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
@@ -511,7 +511,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 
 	// GB
 	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
+	double dt = time - solverHandler.getPreviousTime();
 	// Sum and gather the previous flux
 	double globalXeFlux = 0.0;
 	// Get the vector from the solver handler
@@ -1126,7 +1126,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 	double heliumFluxAmplitude = fluxHandler->getFluxAmplitude();
 
 	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
+	double dt = time - solverHandler.getPreviousTime();
 
 	// Work of the moving surface first
 	if (solverHandler.moveSurface()) {
@@ -1523,8 +1523,8 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 				// Throw an exception if the position is negative
 				if (surfacePos < 0) {
 					PetscBool flagCheck;
-					ierr = PetscOptionsHasName(NULL, NULL,
-							"-check_collapse", &flagCheck);
+					ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse",
+							&flagCheck);
 					CHKERRQ(ierr);
 					if (flagCheck) {
 						// Write the convergence reason
@@ -1693,8 +1693,7 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 			flag2DXYPlot, flag2DXZPlot, flagTRIDYN;
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse",
-			&flagCheck);
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
@@ -1704,14 +1703,12 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 			"setupPetsc3DMonitor: PetscOptionsHasName (-plot_perf) failed.");
 
 	// Check the option -plot_2d_xy
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xy",
-			&flag2DXYPlot);
+	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xy", &flag2DXYPlot);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xy) failed.");
 
 	// Check the option -plot_2d_xz
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xz",
-			&flag2DXZPlot);
+	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xz", &flag2DXZPlot);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xz) failed.");
 
@@ -1794,8 +1791,8 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop",
-				&hdf5Stride3D, &flag);
+		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop", &hdf5Stride3D,
+				&flag);
 		checkPetscError(ierr,
 				"setupPetsc3DMonitor: PetscOptionsGetReal (-start_stop) failed.");
 		if (!flag)
@@ -1806,7 +1803,8 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			hdf5Previous3D = (int) (previousTime / hdf5Stride3D);
 		}
 
@@ -1879,7 +1877,8 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 				// Get the previous I flux from the HDF5 file
 				previousIFlux3D = lastTsGroup->readData3D("previousIFlux");
 				// Get the previous time from the HDF5 file
-				previousTime = lastTsGroup->readPreviousTime();
+				double previousTime = lastTsGroup->readPreviousTime();
+				solverHandler.setPreviousTime(previousTime);
 			}
 
 			// Get the sputtering yield
@@ -1946,16 +1945,12 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO is this same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->incrementFluence(previousTime);
 		}
 
 		// computeFluence will be called at each timestep
@@ -2017,16 +2012,12 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO isn't this the same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->incrementFluence(previousTime);
 		}
 
 		// computeFluence will be called at each timestep
@@ -2131,7 +2122,6 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
  * @return A standard PETSc error code
  */
 PetscErrorCode reset3DMonitor() {
-	previousTime = 0.0;
 	timeStepThreshold = 0.0;
 	hdf5Stride3D = 0.0;
 	hdf5Previous3D = 0;

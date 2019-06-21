@@ -42,7 +42,6 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
-extern double previousTime;
 extern double timeStepThreshold;
 
 //! The pointer to the plot used in monitorScatter1D.
@@ -131,8 +130,11 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
 	// Compute the dt
-	double dt = time - previousTime;
+	double dt = time - solverHandler.getPreviousTime();
 
 	// Don't do anything if it is not on the stride
 	if ((int) ((time + dt / 10.0) / negStride1D) <= negPrevious1D
@@ -171,9 +173,6 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 	PETSC_IGNORE);
 	CHKERRQ(ierr);
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
@@ -353,7 +352,11 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
 	// Compute the dt
+	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
@@ -389,9 +392,6 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
 	PETSC_IGNORE);
 	CHKERRQ(ierr);
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
@@ -571,7 +571,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
 			// Get the delta time from the previous timestep to this timestep
-			double dt = time - previousTime;
+			double dt = time - solverHandler.getPreviousTime();
 			// Compute the total number of impurities that went in the bulk
 			nHelium1D += previousHeFlux1D * dt;
 			nDeuterium1D += previousDFlux1D * dt;
@@ -827,7 +827,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 	// GB
 	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
+	double dt = time - solverHandler.getPreviousTime();
 	// Sum and gather the previous flux
 	double globalXeFlux = 0.0;
 	// Get the vector from the solver handler
@@ -2044,7 +2044,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 	double heliumFluxAmplitude = fluxHandler->getFluxAmplitude();
 
 	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
+	double dt = time - solverHandler.getPreviousTime();
 
 	// Work of the moving surface first
 	if (solverHandler.moveSurface()) {
@@ -2712,7 +2712,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			negPrevious1D = (int) (previousTime / negPrevious1D);
 		}
 
@@ -2740,7 +2741,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			hdf5Previous1D = (int) (previousTime / hdf5Stride1D);
 		}
 
@@ -2814,7 +2816,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 				// Get the previous I flux from the HDF5 file
 				previousIFlux1D = lastTsGroup->readData1D("previousIFlux");
 				// Get the previous time from the HDF5 file
-				previousTime = lastTsGroup->readPreviousTime();
+				double previousTime = lastTsGroup->readPreviousTime();
+				solverHandler.setPreviousTime(previousTime);
 			}
 
 			// Get the sputtering yield
@@ -3027,16 +3030,12 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO isn't this the same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->incrementFluence(previousTime);
 
 			// If the bottom is a free surface
 			if (solverHandler.getRightOffset() == 1) {
@@ -3100,16 +3099,12 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO isn't this the same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->incrementFluence(previousTime);
 		}
 
 		// computeFluence will be called at each timestep
@@ -3184,7 +3179,6 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
  * @return A standard PETSc error code
  */
 PetscErrorCode reset1DMonitor() {
-	previousTime = 0.0;
 	timeStepThreshold = 0.0;
 	previousIFlux1D = 0.0;
 	nInterstitial1D = 0.0;

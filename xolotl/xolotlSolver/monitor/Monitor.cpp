@@ -19,9 +19,6 @@ namespace xolotlSolver {
 
 //! The pointer to the plot that will be used to visualize performance data.
 std::shared_ptr<xolotlViz::IPlot> perfPlot;
-
-//! The variable to store the time at the previous time step.
-double previousTime = 0.0;
 //! The variable to store the threshold on time step defined by the user.
 double timeStepThreshold = 0.0;
 
@@ -60,8 +57,10 @@ PetscErrorCode checkTimeStep(TS ts) {
 PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec, void *) {
 	PetscFunctionBeginUser;
 
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
 	// Set the previous time to the current time for the next timestep
-	previousTime = time;
+	solverHandler.setPreviousTime(time);
 
 	PetscFunctionReturn(0);
 }
@@ -79,7 +78,7 @@ PetscErrorCode computeFluence(TS, PetscInt, PetscReal time, Vec, void *) {
 	auto fluxHandler = solverHandler.getFluxHandler();
 
 	// The length of the time step
-	double dt = time - previousTime;
+	double dt = time - solverHandler.getPreviousTime();
 
 	// Increment the fluence with the value at this current timestep
 	fluxHandler->incrementFluence(dt);
@@ -141,13 +140,13 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 	// Collect all sampled timer values to rank 0.
 	double* allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
 	MPI_Gather(&solverTimerValue,  // send buffer
-			1,                  // number of values to send
-			MPI_DOUBLE,         // type of items in send buffer
-			allTimerValues,     // receive buffer (only valid at root)
-			1,                  // number of values to receive from each process
-			MPI_DOUBLE,         // type of items in receive buffer
-			0,                  // root of MPI collective operation
-			xolotlComm); // communicator defining processes involved in the operation
+			1,// number of values to send
+			MPI_DOUBLE,// type of items in send buffer
+			allTimerValues,// receive buffer (only valid at root)
+			1,// number of values to receive from each process
+			MPI_DOUBLE,// type of items in receive buffer
+			0,// root of MPI collective operation
+			xolotlComm);// communicator defining processes involved in the operation
 
 	if (cwRank == 0) {
 		auto allPoints = std::make_shared<std::vector<xolotlViz::Point> >();

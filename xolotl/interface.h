@@ -108,6 +108,20 @@ public:
 	void setConcVector(std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > concVector);
 
 	/**
+	 * Get the previous time.
+	 *
+	 * @return The previous time
+	 */
+	double getPreviousTime();
+
+	/**
+	 * Set the previous time.
+	 *
+	 * @param time The previous time
+	 */
+	void setPreviousTime(double time);
+
+	/**
 	 * Get the TS from the solver
 	 *
 	 * @return The TS

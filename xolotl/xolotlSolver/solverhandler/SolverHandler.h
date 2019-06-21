@@ -133,6 +133,9 @@ protected:
 	//! The minimum size for average radius computation.
 	int minRadiusSize;
 
+	//! The previous time.
+	double previousTime;
+
 	//! The random number generator to use.
 	std::unique_ptr<RandomNumberGenerator<int, unsigned int>> rng;
 
@@ -337,7 +340,7 @@ protected:
 					false), isMirror(true), sputteringYield(0.0), fluxHandler(
 					nullptr), temperatureHandler(nullptr), diffusionHandler(
 					nullptr), mutationHandler(nullptr), resolutionHandler(
-					nullptr), tauBursting(10.0), rngSeed(0), minRadiusSize(0) {
+					nullptr), tauBursting(10.0), rngSeed(0), minRadiusSize(0), previousTime(0.0) {
 	}
 
 public:
@@ -693,6 +696,22 @@ public:
 	 */
 	int getMinSize() const override {
 		return minRadiusSize;
+	}
+
+	/**
+	 * Get the previous time.
+	 * \see ISolverHandler.h
+	 */
+	double getPreviousTime() override {
+		return previousTime;
+	}
+
+	/**
+	 * Set the previous time.
+	 * \see ISolverHandler.h
+	 */
+	void setPreviousTime(double time) override {
+		previousTime = time;
 	}
 
 	/**

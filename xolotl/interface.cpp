@@ -285,6 +285,45 @@ void XolotlInterface::setConcVector(
 	return;
 }
 
+double XolotlInterface::getPreviousTime() {
+	double toReturn = 0.0;
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		toReturn = solverHandler.getPreviousTime();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return toReturn;
+}
+
+void XolotlInterface::setPreviousTime(double time) {
+	try {
+		// Get the solver handler
+		auto& solverHandler = solver->getSolverHandler();
+		solverHandler.setPreviousTime(time);
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return;
+}
+
 std::vector<double> XolotlInterface::getGridInfo(double &hy, double &hz) {
 	// The vector to return
 	std::vector<double> toReturn;

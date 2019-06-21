@@ -94,6 +94,20 @@ public:
 							std::vector<std::vector<std::pair<int, double> > > > > & concVector) = 0;
 
 	/**
+	 * Get the previous time.
+	 *
+	 * @return The previous time
+	 */
+	virtual double getPreviousTime() = 0;
+
+	/**
+	 * Set the previous time.
+	 *
+	 * @param time The previous time
+	 */
+	virtual void setPreviousTime(double time) = 0;
+
+	/**
 	 * Compute the new concentrations for the RHS function given an initial
 	 * vector of concentrations.
 	 *
