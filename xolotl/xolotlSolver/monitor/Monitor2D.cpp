@@ -56,8 +56,6 @@ std::vector<double> nInterstitial2D;
 std::vector<double> previousHeFlux2D;
 //! The variable to store the total number of helium going through the bottom.
 std::vector<double> nHelium2D;
-//! The variable to store the xenon flux at the previous time step.
-std::vector<std::vector<double> > previousXeFlux2D;
 //! The variable to store the deuterium flux at the previous time step.
 std::vector<double> previousDFlux2D;
 //! The variable to store the total number of deuterium going through the bottom.
@@ -630,6 +628,8 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	double globalXeFlux = 0.0;
 	// Get the vector from the solver handler
 	auto gbVector = solverHandler.getGBVector();
+	// Get the previous Xe flux vector
+	auto previousXeFlux = solverHandler.getPreviousXeFlux();
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Middle
@@ -637,11 +637,11 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 		int yj = std::get<1>(pair);
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
-			globalXeFlux += previousXeFlux2D[xi - xs][yj - ys]
+			globalXeFlux += previousXeFlux[xi - xs][yj - ys][0]
 					* (grid[xi + 1] - grid[xi]) * hy;
 			// Set the amount in the vector we keep
 			solverHandler.setLocalXeRate(
-					previousXeFlux2D[xi - xs][yj - ys] * dt, xi - xs, yj - ys);
+					previousXeFlux[xi - xs][yj - ys][0] * dt, xi - xs, yj - ys);
 		}
 	}
 	double totalXeFlux = 0.0;
@@ -707,7 +707,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 			// Middle
 			xi = std::get<0>(pair);
 			yj = std::get<1>(pair);
-			previousXeFlux2D[xi - xs][yj - ys] = localRate;
+			solverHandler.setPreviousXeFlux(localRate, xi - xs, yj - ys);
 		}
 	}
 
@@ -1526,8 +1526,8 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 			// Throw an exception if the position is negative
 			if (surfacePos < 0) {
 				PetscBool flagCheck;
-				ierr = PetscOptionsHasName(NULL, NULL,
-						"-check_collapse", &flagCheck);
+				ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse",
+						&flagCheck);
 				CHKERRQ(ierr);
 				if (flagCheck) {
 					// Write the convergence reason
@@ -1684,8 +1684,7 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 			flag2DPlot, flagTRIDYN;
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse",
-			&flagCheck);
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
@@ -1778,8 +1777,8 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop",
-				&hdf5Stride2D, &flag);
+		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop", &hdf5Stride2D,
+				&flag);
 		checkPetscError(ierr,
 				"setupPetsc2DMonitor: PetscOptionsGetReal (-start_stop) failed.");
 		if (!flag)
@@ -1998,13 +1997,6 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 		checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetCorners failed.");
 		// Create the local vectors on each process
 		solverHandler.createLocalXeRate(xm, ym);
-		for (int i = 0; i < xm; i++) {
-			std::vector<double> tempVector;
-			for (int j = 0; j < ym; j++) {
-				tempVector.push_back(0.0);
-			}
-			previousXeFlux2D.push_back(tempVector);
-		}
 
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
@@ -2098,7 +2090,6 @@ PetscErrorCode reset2DMonitor() {
 	nInterstitial2D.clear();
 	previousHeFlux2D.clear();
 	nHelium2D.clear();
-	previousXeFlux2D.clear();
 	previousDFlux2D.clear();
 	nDeuterium2D.clear();
 	previousTFlux2D.clear();

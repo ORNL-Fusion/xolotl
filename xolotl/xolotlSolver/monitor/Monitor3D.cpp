@@ -52,8 +52,6 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlotXZ3D;
 std::vector<std::vector<double> > previousIFlux3D;
 //! The variable to store the total number of interstitials going through the surface.
 std::vector<std::vector<double> > nInterstitial3D;
-//! The variable to store the xenon flux at the previous time step.
-std::vector<std::vector<std::vector<double> > > previousXeFlux3D;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield3D = 0.0;
 // The vector of depths at which bursting happens
@@ -514,6 +512,8 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	double globalXeFlux = 0.0;
 	// Get the vector from the solver handler
 	auto gbVector = solverHandler.getGBVector();
+	// Get the previous flux vector
+	auto previousXeFlux = solverHandler.getPreviousXeFlux();
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Middle
@@ -523,11 +523,11 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
 				&& zk < zs + zm) {
-			globalXeFlux += previousXeFlux3D[xi - xs][yj - ys][zk - zs]
+			globalXeFlux += previousXeFlux[xi - xs][yj - ys][zk - zs]
 					* (grid[xi + 1] - grid[xi]) * hy * hz;
 			// Set the amount in the vector we keep
 			solverHandler.setLocalXeRate(
-					previousXeFlux3D[xi - xs][yj - ys][zk - zs] * dt, xi - xs,
+					previousXeFlux[xi - xs][yj - ys][zk - zs] * dt, xi - xs,
 					yj - ys, zk - zs);
 		}
 	}
@@ -612,7 +612,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 			xi = std::get<0>(pair);
 			yj = std::get<1>(pair);
 			zk = std::get<2>(pair);
-			previousXeFlux3D[xi - xs][yj - ys][zk - zs] = localRate;
+			solverHandler.setPreviousXeFlux(localRate, xi - xs, yj - ys, zk - zs);
 		}
 	}
 
@@ -1997,17 +1997,6 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 		checkPetscError(ierr, "setupPetsc3DMonitor: DMDAGetCorners failed.");
 		// Create the local vectors on each process
 		solverHandler.createLocalXeRate(xm, ym, zm);
-		for (int i = 0; i < xm; i++) {
-			std::vector<std::vector<double> > tempTempVector;
-			for (int j = 0; j < ym; j++) {
-				std::vector<double> tempVector;
-				for (int k = 0; k < zm; k++) {
-					tempVector.push_back(0.0);
-				}
-				tempTempVector.push_back(tempVector);
-			}
-			previousXeFlux3D.push_back(tempTempVector);
-		}
 
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
@@ -2131,7 +2120,6 @@ PetscErrorCode reset3DMonitor() {
 	hdf5OutputName3D = "xolotlStop.h5";
 	previousIFlux3D.clear();
 	nInterstitial3D.clear();
-	previousXeFlux3D.clear();
 	sputteringYield3D = 0.0;
 	depthPositions3D.clear();
 	indices3D.clear();

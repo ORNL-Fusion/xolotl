@@ -82,6 +82,9 @@ protected:
 	//! The vector of local Xe rate.
 	std::vector<std::vector<std::vector<double> > > localXeRate;
 
+	//! The vector of previous Xe flux.
+	std::vector<std::vector<std::vector<double> > > previousXeFlux;
+
 	//! The electronic stopping power for re-solution
 	double electronicStoppingPower;
 
@@ -572,6 +575,7 @@ public:
 	 */
 	void createLocalXeRate(int a, int b = 1, int c = 1) override {
 		localXeRate.clear();
+		previousXeFlux.clear();
 		// Create the vector of vectors and fill it with 0.0
 		for (int i = 0; i < a; i++) {
 			std::vector<std::vector<double> > tempTempVector;
@@ -583,6 +587,7 @@ public:
 				tempTempVector.push_back(tempVector);
 			}
 			localXeRate.push_back(tempTempVector);
+			previousXeFlux.push_back(tempTempVector);
 		}
 	}
 
@@ -595,11 +600,43 @@ public:
 	}
 
 	/**
-	 * Get the value of the local Xe rate.
+	 * Set the whole vector of local Xe rate.
 	 * \see ISolverHandler.h
 	 */
-	double getLocalXeRate(int i, int j, int k) override {
-		return localXeRate[i][j][k];
+	void setLocalXeRate(std::vector<std::vector<std::vector<double> > > rateVector) override {
+		localXeRate = rateVector;
+	}
+
+	/**
+	 * Get the local Xe rate vector that needs to be passed.
+	 * \see ISolverHandler.h
+	 */
+	std::vector<std::vector<std::vector<double> > > & getLocalXeRate() override {
+		return localXeRate;
+	}
+
+	/**
+	 * Set the latest value of the Xe flux.
+	 * \see ISolverHandler.h
+	 */
+	void setPreviousXeFlux(double flux, int i, int j = 0, int k = 0) override {
+		previousXeFlux[i][j][k] = flux;
+	}
+
+	/**
+	 * Set the whole vector of local Xe flux.
+	 * \see ISolverHandler.h
+	 */
+	void setPreviousXeFlux(std::vector<std::vector<std::vector<double> > > fluxVector) override {
+		previousXeFlux = fluxVector;
+	}
+
+	/**
+	 * Get the local Xe flux vector that needs to be passed.
+	 * \see ISolverHandler.h
+	 */
+	std::vector<std::vector<std::vector<double> > > & getPreviousXeFlux() override {
+		return previousXeFlux;
 	}
 
 	/**

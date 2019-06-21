@@ -58,10 +58,30 @@ public:
 	/**
 	 * Get the local Xe rate that needs to be passed
 	 *
-	 * @param i, j, k, the local coordinate of the grid point
-	 * @return The rate
+	 * @return The vector
 	 */
-	double getLocalXeRate(int i, int j, int k);
+	std::vector<std::vector<std::vector<double> > > getLocalXeRate();
+
+	/**
+	 * Set the local Xe rate
+	 *
+	 * @param The vector
+	 */
+	void setLocalXeRate(std::vector<std::vector<std::vector<double> > > rateVector);
+
+	/**
+	 * Get the previous Xe flux that needs to be passed
+	 *
+	 * @return The vector
+	 */
+	std::vector<std::vector<std::vector<double> > > getPreviousXeFlux();
+
+	/**
+	 * Set the previous Xe flux
+	 *
+	 * @param The vector
+	 */
+	void setPreviousXeFlux(std::vector<std::vector<std::vector<double> > > fluxVector);
 
 	/**
 	 * Get the local Xe rate that needs to be passed

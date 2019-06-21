@@ -237,7 +237,7 @@ public:
 	virtual int getRightOffset() const = 0;
 
 	/**
-	 * Create the local Xe rate vector.
+	 * Create the local Xe rate vector and the previous Xe flux one.
 	 *
 	 * @param a The size in the x direction
 	 * @param b The size in the y direction
@@ -256,12 +256,42 @@ public:
 	virtual void setLocalXeRate(double rate, int i, int j = 0, int k = 0) = 0;
 
 	/**
-	 * Get the local Xe rate that needs to be passed
+	 * Set the whole vector of local Xe rate.
 	 *
-	 * @param i, j, k, the local coordinate of the grid point
-	 * @return The rate
+	 * @param rateVector The vector to replace the local Xe rate.
 	 */
-	virtual double getLocalXeRate(int i, int j, int k) = 0;
+	virtual void setLocalXeRate(std::vector<std::vector<std::vector<double> > > rateVector) = 0;
+
+	/**
+	 * Get the local Xe rate vector that needs to be passed.
+	 *
+	 * @return The vector of rates
+	 */
+	virtual std::vector<std::vector<std::vector<double> > > & getLocalXeRate() = 0;
+
+	/**
+	 * Set the latest value of the Xe flux.
+	 *
+	 * @param flux The latest value of flux
+	 * @param i The x coordinate of the location
+	 * @param j The y coordinate of the location
+	 * @param z The z coordinate of the location
+	 */
+	virtual void setPreviousXeFlux(double flux, int i, int j = 0, int k = 0) = 0;
+
+	/**
+	 * Set the whole vector of local Xe flux.
+	 *
+	 * @param fluxVector The vector to replace the previous Xe flux.
+	 */
+	virtual void setPreviousXeFlux(std::vector<std::vector<std::vector<double> > > fluxVector) = 0;
+
+	/**
+	 * Get the local Xe flux vector that needs to be passed.
+	 *
+	 * @return The vector of fluxes
+	 */
+	virtual std::vector<std::vector<std::vector<double> > > & getPreviousXeFlux() = 0;
 
 	/**
 	 * Set the coordinates covered by the local grid.
