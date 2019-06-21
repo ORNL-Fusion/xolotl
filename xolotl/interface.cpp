@@ -374,7 +374,7 @@ void XolotlInterface::setPreviousTime(double time) {
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
-		solverHandler.setPreviousTime(time);
+		solverHandler.setPreviousTime(time, true); // Update the fluence from here
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;

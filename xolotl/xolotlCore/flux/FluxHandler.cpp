@@ -161,6 +161,13 @@ void FluxHandler::incrementFluence(double dt) {
 	return;
 }
 
+void FluxHandler::computeFluence(double time) {
+	// The fluence is the flux times the time
+	fluence = fluxAmplitude * time;
+
+	return;
+}
+
 double FluxHandler::getFluence() const {
 	return fluence;
 }

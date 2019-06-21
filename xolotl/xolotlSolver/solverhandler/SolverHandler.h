@@ -751,8 +751,9 @@ public:
 	 * Set the previous time.
 	 * \see ISolverHandler.h
 	 */
-	void setPreviousTime(double time) override {
+	void setPreviousTime(double time, bool updateFluence = false) override {
 		previousTime = time;
+		if (updateFluence) fluxHandler->computeFluence(time);
 	}
 
 	/**

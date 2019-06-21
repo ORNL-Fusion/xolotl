@@ -104,8 +104,9 @@ public:
 	 * Set the previous time.
 	 *
 	 * @param time The previous time
+	 * @param updateFluence To know whether the fluence should be updated
 	 */
-	virtual void setPreviousTime(double time) = 0;
+	virtual void setPreviousTime(double time, bool updateFluence = false) = 0;
 
 	/**
 	 * Get the number of Xe that went to the GB.

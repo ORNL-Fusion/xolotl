@@ -691,7 +691,7 @@ PetscErrorCode setupPetsc0DMonitor(TS& ts) {
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(previousTime);
+			fluxHandler->computeFluence(previousTime);
 		}
 
 		// computeFluence will be called at each timestep
