@@ -224,14 +224,22 @@ void PetscSolver0DHandler::setConcVector(DM &da, Vec &C,
 	checkPetscError(ierr, "PetscSolver0DHandler::setConcVector: "
 			"DMDAVecGetArrayDOF failed.");
 
-	// Get the local concentration
-		gridPointSolution = concentrations[0];
+	// Get the DOF of the network
+	const int dof = network.getDOF();
 
-		// Loop on the given vector
-		for (int l = 0; l < concVector[0][0][0].size(); l++) {
-			gridPointSolution[concVector[0][0][0][l].first] =
-					concVector[0][0][0][l].second;
-		}
+	// Get the local concentration
+	gridPointSolution = concentrations[0];
+
+	// Loop on the given vector
+	for (int l = 0; l < concVector[0][0][0].size(); l++) {
+		gridPointSolution[concVector[0][0][0][l].first] =
+				concVector[0][0][0][l].second;
+	}
+
+	// Set the temperature in the network
+	double temp = gridPointSolution[dof - 1];
+	network.setTemperature(temp);
+	lastTemperature[0] = temp;
 
 	/*
 	 Restore vectors
@@ -413,8 +421,8 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	MatStencil rowIds[5];
 
 	// Compute the partial derivative from re-solution at this grid point
-	int nResoluting = resolutionHandler->computePartialsForReSolution(
-			network, resolutionVals, resolutionIndices, 0, 0);
+	int nResoluting = resolutionHandler->computePartialsForReSolution(network,
+			resolutionVals, resolutionIndices, 0, 0);
 
 	// Loop on the number of xenon to set the values in the Jacobian
 	for (int i = 0; i < nResoluting; i++) {
@@ -436,9 +444,8 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		colIds[1].c = resolutionIndices[(5 * i) + 1];
 		ierr = MatSetValuesStencil(J, 5, rowIds, 2, colIds,
 				resolutionVals + (10 * i), ADD_VALUES);
-		checkPetscError(ierr,
-				"PetscSolver0DHandler::computeDiagonalJacobian: "
-						"MatSetValuesStencil (Xe re-solution) failed.");
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (Xe re-solution) failed.");
 	}
 
 	/*

@@ -375,6 +375,46 @@ void PetscSolver1DHandler::setConcVector(DM &da, Vec &C,
 	checkPetscError(ierr, "PetscSolver1DHandler::setConcVector: "
 			"DMDAVecRestoreArrayDOF failed.");
 
+	// Get the complete data array, including ghost cells to set the temperature at the ghost points
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	checkPetscError(ierr, "PetscSolver1DHandler::setConcVector: "
+			"DMGetLocalVector failed.");
+	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localSolution);
+	checkPetscError(ierr, "PetscSolver1DHandler::setConcVector: "
+			"DMGlobalToLocalBegin failed.");
+	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localSolution);
+	checkPetscError(ierr, "PetscSolver1DHandler::setConcVector: "
+			"DMGlobalToLocalEnd failed.");
+	// Get the array of concentration
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &concentrations);
+	checkPetscError(ierr, "PetscSolver1DHandler::setConcVector: "
+			"DMDAVecGetArrayDOFRead failed.");
+
+	// Getthe DOF of the network
+	const int dof = network.getDOF();
+
+	// Loop on the grid points
+	for (auto i = -1; i <= localXM; ++i) {
+		gridPointSolution = concentrations[localXS + i];
+
+		// Set the temperature in the network
+		double temp = gridPointSolution[dof - 1];
+		network.setTemperature(temp, i + 1);
+		// Update the modified trap-mutation rate
+		// that depends on the network reaction rates
+		mutationHandler->updateTrapMutationRate(network);
+		lastTemperature[i + 1] = temp;
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations);
+	checkPetscError(ierr, "PetscSolver1DHandler::setConcVector: "
+			"DMDAVecRestoreArrayDOFRead failed.");
+	ierr = DMRestoreLocalVector(da, &localSolution);
+	checkPetscError(ierr, "PetscSolver1DHandler::setConcVector: "
+			"DMRestoreLocalVector failed.");
+
 	return;
 }
 
