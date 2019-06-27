@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <xolotlPerf.h>
+#include <NDArray.h>
 
 namespace xolotlCore {
 
@@ -734,14 +735,14 @@ public:
 	 *
 	 * @return The size
 	 */
-	virtual int getRadiusMinSize() const = 0;
+	virtual Array<int, 4> getRadiusMinSizes() const = 0;
 
 	/**
 	 * Set the minimum size for the average radius computation.
 	 *
-	 * @param size The minimum size
+	 * @param sizes The minimum sizes
 	 */
-	virtual void setRadiusMinSize(int size) = 0;
+	virtual void setRadiusMinSizes(Array<int, 4> sizes) = 0;
 
 	/**
 	 * Obtain the value of the density of a bubble.

@@ -3,6 +3,7 @@
 
 // Includes
 #include "OptionHandler.h"
+#include <algorithm>
 
 namespace xolotlCore {
 
@@ -17,7 +18,7 @@ public:
 	 */
 	RadiusMinSizeOptionHandler() :
 			OptionHandler("radiusSize",
-					"radiusSize <minSize>              "
+					"radiusSize <minSize> ...              "
 							"This option allows the user a minimum size for the computation for the average radius (default is 0).  \n") {
 	}
 
@@ -32,13 +33,26 @@ public:
 	 * to the value given as the argument.
 	 *
 	 * @param opt The pointer to the option that will be modified.
-	 * @param arg The minimum size.
+	 * @param arg The minimum sizes.
 	 */
 	bool handler(IOptions *opt, const std::string& arg) {
-		// Convert to integer
-		int size = strtol(arg.c_str(), NULL, 10);
-		// Set the number of dimensions
-		opt->setRadiusMinSize(size);
+		// Build an input stream from the argument string.
+		xolotlCore::TokenizedLineReader<int> reader;
+		auto argSS = std::make_shared<std::istringstream>(arg);
+		reader.setInputStream(argSS);
+
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+
+		// Create the array of sizes
+		Array<int, 4> sizes;
+		sizes.Init(0);
+
+		// Set the values
+		for (int i = 0; i < std::min((int) tokens.size(), 4); i++) {
+			sizes[i] = tokens[i];
+		}
+		opt->setRadiusMinSizes(sizes);
 
 		return true;
 	}

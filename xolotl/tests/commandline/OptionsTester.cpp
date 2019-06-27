@@ -194,7 +194,11 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	BOOST_REQUIRE_EQUAL(opts.getResoMinSize(), 10);
 
 	// Check the minimum size option for the average radius computation
-	BOOST_REQUIRE_EQUAL(opts.getRadiusMinSize(), 5);
+	auto sizes = opts.getRadiusMinSizes();
+	BOOST_REQUIRE_EQUAL(sizes[0], 5);
+	BOOST_REQUIRE_EQUAL(sizes[1], 0);
+	BOOST_REQUIRE_EQUAL(sizes[2], 0);
+	BOOST_REQUIRE_EQUAL(sizes[3], 0);
 
 	// Check the xenon density option
 	BOOST_REQUIRE_EQUAL(opts.getDensity(), 9.0);

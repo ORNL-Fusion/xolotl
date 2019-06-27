@@ -13,6 +13,7 @@
 #include <IReSolutionHandler.h>
 #include <IMaterialFactory.h>
 #include <IReactionNetwork.h>
+#include <NDArray.h>
 
 namespace xolotlSolver {
 
@@ -196,7 +197,7 @@ public:
 	 *
 	 * @return The minimum size
 	 */
-	virtual int getMinSize() const = 0;
+	virtual xolotlCore::Array<int, 4> getMinSizes() const = 0;
 
 	/**
 	 * Get the flux handler.

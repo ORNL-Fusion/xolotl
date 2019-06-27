@@ -752,7 +752,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	PetscReal *gridPointSolution;
 
 	// Get the minimum size for the radius
-	int minSize = solverHandler.getMinSize();
+	auto minSizes = solverHandler.getMinSizes();
 
 	// Loop on the grid
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
@@ -773,7 +773,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 					* (grid[xi + 1] - grid[xi]);
 			radii += gridPointSolution[indices1D[i]] * radii1D[i]
 					* (grid[xi + 1] - grid[xi]);
-			if (weights1D[i] >= minSize) {
+			if (weights1D[i] >= minSizes[0]) {
 				partialBubbleConcentration += gridPointSolution[indices1D[i]]
 						* (grid[xi + 1] - grid[xi]);
 				partialRadii += gridPointSolution[indices1D[i]] * radii1D[i]
@@ -791,7 +791,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 					* (grid[xi + 1] - grid[xi]);
 			radii += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi]);
-			if (cluster.getSize() >= minSize) {
+			if (cluster.getSize() >= minSizes[0]) {
 				partialBubbleConcentration += cluster.getTotalConcentration()
 						* (grid[xi + 1] - grid[xi]);
 				partialRadii += cluster.getTotalConcentration()
@@ -1247,7 +1247,7 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			faultedPartialDiameter = 0.0, perfectPartialDiameter = 0.0;
 
 	// Get the minimum size for the loop densities and diameters
-	int minSize = solverHandler.getMinSize();
+	auto minSizes = solverHandler.getMinSizes();
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
@@ -1269,109 +1269,30 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 		for (auto const& iMapItem : network.getAll(ReactantType::I)) {
 			// Get the cluster
 			auto const& cluster = *(iMapItem.second);
-			iDensity += gridPointSolution[cluster.getId() - 1]
-					* (grid[xi + 1] - grid[xi]);
+			iDensity += gridPointSolution[cluster.getId() - 1];
 			iDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
+					* cluster.getReactionRadius() * 2.0;
 		}
 
 		// Loop on V
 		for (auto const& vMapItem : network.getAll(ReactantType::V)) {
 			// Get the cluster
 			auto const& cluster = *(vMapItem.second);
-			vDensity += gridPointSolution[cluster.getId() - 1]
-					* (grid[xi + 1] - grid[xi]);
+			vDensity += gridPointSolution[cluster.getId() - 1];
 			vDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
-		}
-
-		// Loop on Frank
-		for (auto const& frankMapItem : network.getAll(ReactantType::Frank)) {
-			// Get the cluster
-			auto const& cluster = *(frankMapItem.second);
-			frankDensity += gridPointSolution[cluster.getId() - 1]
-					* (grid[xi + 1] - grid[xi]);
-			frankDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
-			if (cluster.getSize() >= minSize) {
-				frankPartialDensity += gridPointSolution[cluster.getId() - 1]
-						* (grid[xi + 1] - grid[xi]);
-				frankPartialDiameter += gridPointSolution[cluster.getId() - 1]
-						* (grid[xi + 1] - grid[xi])
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-		for (auto const& frankMapItem : network.getAll(ReactantType::FrankSuper)) {
-			// Get the cluster
-			auto const& cluster =
-					static_cast<AlloySuperCluster&>(*(frankMapItem.second));
-			frankDensity += cluster.getTotalConcentration()
-					* (grid[xi + 1] - grid[xi]);
-			frankDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
-			if (cluster.getSize() >= minSize) {
-				frankPartialDensity += cluster.getTotalConcentration()
-						* (grid[xi + 1] - grid[xi]);
-				frankPartialDiameter += cluster.getTotalConcentration()
-						* (grid[xi + 1] - grid[xi])
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-
-		// Loop on Perfect
-		for (auto const& perfectMapItem : network.getAll(ReactantType::Perfect)) {
-			// Get the cluster
-			auto const& cluster = *(perfectMapItem.second);
-			perfectDensity += gridPointSolution[cluster.getId() - 1]
-					* (grid[xi + 1] - grid[xi]);
-			perfectDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
-			if (cluster.getSize() >= minSize) {
-				perfectPartialDensity += gridPointSolution[cluster.getId() - 1]
-						* (grid[xi + 1] - grid[xi]);
-				perfectPartialDiameter += gridPointSolution[cluster.getId() - 1]
-						* (grid[xi + 1] - grid[xi])
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-		for (auto const& perfectMapItem : network.getAll(
-				ReactantType::PerfectSuper)) {
-			// Get the cluster
-			auto const& cluster =
-					static_cast<AlloySuperCluster&>(*(perfectMapItem.second));
-			perfectDensity += cluster.getTotalConcentration()
-					* (grid[xi + 1] - grid[xi]);
-			perfectDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
-			if (cluster.getSize() >= minSize) {
-				perfectPartialDensity += cluster.getTotalConcentration()
-						* (grid[xi + 1] - grid[xi]);
-				perfectPartialDiameter += cluster.getTotalConcentration()
-						* (grid[xi + 1] - grid[xi])
-						* cluster.getReactionRadius() * 2.0;
-			}
+					* cluster.getReactionRadius() * 2.0;
 		}
 
 		// Loop on Void
 		for (auto const& voidMapItem : network.getAll(ReactantType::Void)) {
 			// Get the cluster
 			auto const& cluster = *(voidMapItem.second);
-			voidDensity += gridPointSolution[cluster.getId() - 1]
-					* (grid[xi + 1] - grid[xi]);
+			voidDensity += gridPointSolution[cluster.getId() - 1];
 			voidDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
-			if (cluster.getSize() >= minSize) {
-				voidPartialDensity += gridPointSolution[cluster.getId() - 1]
-						* (grid[xi + 1] - grid[xi]);
+					* cluster.getReactionRadius() * 2.0;
+			if (cluster.getSize() >= minSizes[0]) {
+				voidPartialDensity += gridPointSolution[cluster.getId() - 1];
 				voidPartialDiameter += gridPointSolution[cluster.getId() - 1]
-						* (grid[xi + 1] - grid[xi])
 						* cluster.getReactionRadius() * 2.0;
 			}
 		}
@@ -1379,16 +1300,12 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			// Get the cluster
 			auto const& cluster =
 					static_cast<AlloySuperCluster&>(*(voidMapItem.second));
-			voidDensity += cluster.getTotalConcentration()
-					* (grid[xi + 1] - grid[xi]);
+			voidDensity += cluster.getTotalConcentration();
 			voidDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
-			if (cluster.getSize() >= minSize) {
-				voidPartialDensity += cluster.getTotalConcentration()
-						* (grid[xi + 1] - grid[xi]);
+					* cluster.getReactionRadius() * 2.0;
+			if (cluster.getSize() >= minSizes[0]) {
+				voidPartialDensity += cluster.getTotalConcentration();
 				voidPartialDiameter += cluster.getTotalConcentration()
-						* (grid[xi + 1] - grid[xi])
 						* cluster.getReactionRadius() * 2.0;
 			}
 		}
@@ -1397,16 +1314,12 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 		for (auto const& faultedMapItem : network.getAll(ReactantType::Faulted)) {
 			// Get the cluster
 			auto const& cluster = *(faultedMapItem.second);
-			faultedDensity += gridPointSolution[cluster.getId() - 1]
-					* (grid[xi + 1] - grid[xi]);
+			faultedDensity += gridPointSolution[cluster.getId() - 1];
 			faultedDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
-			if (cluster.getSize() >= minSize) {
-				faultedPartialDensity += gridPointSolution[cluster.getId() - 1]
-						* (grid[xi + 1] - grid[xi]);
+					* cluster.getReactionRadius() * 2.0;
+			if (cluster.getSize() >= minSizes[1]) {
+				faultedPartialDensity += gridPointSolution[cluster.getId() - 1];
 				faultedPartialDiameter += gridPointSolution[cluster.getId() - 1]
-						* (grid[xi + 1] - grid[xi])
 						* cluster.getReactionRadius() * 2.0;
 			}
 		}
@@ -1415,16 +1328,67 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 			// Get the cluster
 			auto const& cluster =
 					static_cast<AlloySuperCluster&>(*(faultedMapItem.second));
-			faultedDensity += cluster.getTotalConcentration()
-					* (grid[xi + 1] - grid[xi]);
+			faultedDensity += cluster.getTotalConcentration();
 			faultedDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi])
-					* 2.0;
-			if (cluster.getSize() >= minSize) {
-				faultedPartialDensity += cluster.getTotalConcentration()
-						* (grid[xi + 1] - grid[xi]);
+					* cluster.getReactionRadius() * 2.0;
+			if (cluster.getSize() >= minSizes[1]) {
+				faultedPartialDensity += cluster.getTotalConcentration();
 				faultedPartialDiameter += cluster.getTotalConcentration()
-						* (grid[xi + 1] - grid[xi])
+						* cluster.getReactionRadius() * 2.0;
+			}
+		}
+
+		// Loop on Perfect
+		for (auto const& perfectMapItem : network.getAll(ReactantType::Perfect)) {
+			// Get the cluster
+			auto const& cluster = *(perfectMapItem.second);
+			perfectDensity += gridPointSolution[cluster.getId() - 1];
+			perfectDiameter += gridPointSolution[cluster.getId() - 1]
+					* cluster.getReactionRadius() * 2.0;
+			if (cluster.getSize() >= minSizes[2]) {
+				perfectPartialDensity += gridPointSolution[cluster.getId() - 1];
+				perfectPartialDiameter += gridPointSolution[cluster.getId() - 1]
+						* cluster.getReactionRadius() * 2.0;
+			}
+		}
+		for (auto const& perfectMapItem : network.getAll(
+				ReactantType::PerfectSuper)) {
+			// Get the cluster
+			auto const& cluster =
+					static_cast<AlloySuperCluster&>(*(perfectMapItem.second));
+			perfectDensity += cluster.getTotalConcentration();
+			perfectDiameter += cluster.getTotalConcentration()
+					* cluster.getReactionRadius() * 2.0;
+			if (cluster.getSize() >= minSizes[2]) {
+				perfectPartialDensity += cluster.getTotalConcentration();
+				perfectPartialDiameter += cluster.getTotalConcentration()
+						* cluster.getReactionRadius() * 2.0;
+			}
+		}
+
+		// Loop on Frank
+		for (auto const& frankMapItem : network.getAll(ReactantType::Frank)) {
+			// Get the cluster
+			auto const& cluster = *(frankMapItem.second);
+			frankDensity += gridPointSolution[cluster.getId() - 1];
+			frankDiameter += gridPointSolution[cluster.getId() - 1]
+					* cluster.getReactionRadius() * 2.0;
+			if (cluster.getSize() >= minSizes[3]) {
+				frankPartialDensity += gridPointSolution[cluster.getId() - 1];
+				frankPartialDiameter += gridPointSolution[cluster.getId() - 1]
+						* cluster.getReactionRadius() * 2.0;
+			}
+		}
+		for (auto const& frankMapItem : network.getAll(ReactantType::FrankSuper)) {
+			// Get the cluster
+			auto const& cluster =
+					static_cast<AlloySuperCluster&>(*(frankMapItem.second));
+			frankDensity += cluster.getTotalConcentration();
+			frankDiameter += cluster.getTotalConcentration()
+					* cluster.getReactionRadius() * 2.0;
+			if (cluster.getSize() >= minSizes[3]) {
+				frankPartialDensity += cluster.getTotalConcentration();
+				frankPartialDiameter += cluster.getTotalConcentration()
 						* cluster.getReactionRadius() * 2.0;
 			}
 		}
@@ -1454,13 +1418,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 	MPI_Reduce(&faultedDensity, &faultedTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
 			PETSC_COMM_WORLD);
 	MPI_Reduce(&voidPartialDensity, &voidPartialTotalDensity, 1, MPI_DOUBLE,
-			MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_SUM, 0, PETSC_COMM_WORLD);
 	MPI_Reduce(&perfectPartialDensity, &perfectPartialTotalDensity, 1,
-			MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 	MPI_Reduce(&frankPartialDensity, &frankPartialTotalDensity, 1, MPI_DOUBLE,
-			MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_SUM, 0, PETSC_COMM_WORLD);
 	MPI_Reduce(&faultedPartialDensity, &faultedPartialTotalDensity, 1,
-			MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 	MPI_Reduce(&iDiameter, &iTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
 			PETSC_COMM_WORLD);
 	MPI_Reduce(&vDiameter, &vTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
@@ -1474,13 +1438,13 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 	MPI_Reduce(&faultedDiameter, &faultedTotalDiameter, 1, MPI_DOUBLE, MPI_SUM,
 			0, PETSC_COMM_WORLD);
 	MPI_Reduce(&voidPartialDiameter, &voidPartialTotalDiameter, 1, MPI_DOUBLE,
-			MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_SUM, 0, PETSC_COMM_WORLD);
 	MPI_Reduce(&perfectPartialDiameter, &perfectPartialTotalDiameter, 1,
-			MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 	MPI_Reduce(&frankPartialDiameter, &frankPartialTotalDiameter, 1, MPI_DOUBLE,
-			MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_SUM, 0, PETSC_COMM_WORLD);
 	MPI_Reduce(&faultedPartialDiameter, &faultedPartialTotalDiameter, 1,
-			MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 
 	// Average the data
 	if (procId == 0) {

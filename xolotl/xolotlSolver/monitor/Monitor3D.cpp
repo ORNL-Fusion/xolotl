@@ -428,7 +428,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 			partialBubbleConcentration = 0.0, partialRadii = 0.0;
 
 	// Get the minimum size for the radius
-	int minSize = solverHandler.getMinSize();
+	auto minSizes = solverHandler.getMinSizes();
 
 	// Loop on the grid
 	for (PetscInt zk = zs; zk < zs + zm; zk++) {
@@ -452,7 +452,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 							* (grid[xi + 1] - grid[xi]) * hy * hz;
 					radii += gridPointSolution[indices3D[i]] * radii3D[i]
 							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					if (weights3D[i] >= minSize) {
+					if (weights3D[i] >= minSizes[0]) {
 						partialBubbleConcentration +=
 								gridPointSolution[indices3D[i]]
 										* (grid[xi + 1] - grid[xi]) * hy * hz;
@@ -474,7 +474,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 					radii += cluster.getTotalConcentration()
 							* cluster.getReactionRadius()
 							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					if (cluster.getSize() >= minSize) {
+					if (cluster.getSize() >= minSizes[0]) {
 						partialBubbleConcentration +=
 								cluster.getTotalConcentration()
 										* (grid[xi + 1] - grid[xi]) * hy * hz;

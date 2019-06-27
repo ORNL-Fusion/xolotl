@@ -105,8 +105,8 @@ protected:
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
 
-	//! The minimum size for average radius computation.
-	int minRadiusSize;
+	//! The minimum sizes for average radius computation.
+	xolotlCore::Array<int, 4> minRadiusSizes;
 
 	//! The random number generator to use.
 	std::unique_ptr<RandomNumberGenerator<int, unsigned int>> rng;
@@ -329,7 +329,7 @@ protected:
 					false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
 					nullptr), diffusionHandler(nullptr), mutationHandler(
 					nullptr), resolutionHandler(nullptr), tauBursting(10.0), rngSeed(
-					0), minRadiusSize(0) {
+					0) {
 	}
 
 public:
@@ -424,7 +424,7 @@ public:
 		resolutionHandler->setMinSize(options.getResoMinSize());
 
 		// Set the minimum size for the average radius compuation
-		minRadiusSize = options.getRadiusMinSize();
+		minRadiusSizes = options.getRadiusMinSizes();
 
 		// Set the initial vacancy concentration
 		initialVConc = options.getInitialVConcentration();
@@ -586,7 +586,7 @@ public:
 	 * Get the minimum size for computing average radius.
 	 * \see ISolverHandler.h
 	 */
-	int getMinSize() const override { return minRadiusSize;}
+	xolotlCore::Array<int, 4> getMinSizes() const override { return minRadiusSizes;}
 
 	/**
 	 * Get the flux handler.

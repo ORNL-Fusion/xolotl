@@ -190,7 +190,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	network.updateConcentrationsFromArray(gridPointSolution);
 
 	// Get the minimum size for the radius
-	int minSize = solverHandler.getMinSize();
+	auto minSizes = solverHandler.getMinSizes();
 
 	// Loop on all the indices
 	for (unsigned int i = 0; i < indices0D.size(); i++) {
@@ -199,7 +199,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 		xeConcentration += gridPointSolution[indices0D[i]] * weights0D[i];
 		bubbleConcentration += gridPointSolution[indices0D[i]];
 		radii += gridPointSolution[indices0D[i]] * radii0D[i];
-		if (weights0D[i] >= minSize) {
+		if (weights0D[i] >= minSizes[0]) {
 			partialBubbleConcentration += gridPointSolution[indices0D[i]];
 			partialRadii += gridPointSolution[indices0D[i]] * radii0D[i];
 		}
@@ -212,7 +212,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 		xeConcentration += cluster.getTotalXenonConcentration();
 		bubbleConcentration += cluster.getTotalConcentration();
 		radii += cluster.getTotalConcentration() * cluster.getReactionRadius();
-		if (cluster.getSize() >= minSize) {
+		if (cluster.getSize() >= minSizes[0]) {
 			partialBubbleConcentration += cluster.getTotalConcentration();
 			partialRadii += cluster.getTotalConcentration()
 					* cluster.getReactionRadius();
@@ -295,7 +295,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 			faultedPartialDiameter = 0.0, perfectPartialDiameter = 0.0;
 
 	// Get the minimum size for the loop densities and diameters
-	int minSize = solverHandler.getMinSize();
+	auto minSizes = solverHandler.getMinSizes();
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
@@ -324,60 +324,6 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 				* cluster.getReactionRadius() * 2.0;
 	}
 
-	// Loop on Frank
-	for (auto const& frankMapItem : network.getAll(ReactantType::Frank)) {
-		// Get the cluster
-		auto const& cluster = *(frankMapItem.second);
-		frankDensity += gridPointSolution[cluster.getId() - 1];
-		frankDiameter += gridPointSolution[cluster.getId() - 1]
-				* cluster.getReactionRadius() * 2.0;
-		if (cluster.getSize() >= minSize) {
-			frankPartialDensity += gridPointSolution[cluster.getId() - 1];
-			frankPartialDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * 2.0;
-		}
-	}
-	for (auto const& frankMapItem : network.getAll(ReactantType::FrankSuper)) {
-		// Get the cluster
-		auto const& cluster =
-				static_cast<AlloySuperCluster&>(*(frankMapItem.second));
-		frankDensity += cluster.getTotalConcentration();
-		frankDiameter += cluster.getTotalConcentration()
-				* cluster.getReactionRadius() * 2.0;
-		if (cluster.getSize() >= minSize) {
-			frankPartialDensity += cluster.getTotalConcentration();
-			frankPartialDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * 2.0;
-		}
-	}
-
-	// Loop on Perfect
-	for (auto const& perfectMapItem : network.getAll(ReactantType::Perfect)) {
-		// Get the cluster
-		auto const& cluster = *(perfectMapItem.second);
-		perfectDensity += gridPointSolution[cluster.getId() - 1];
-		perfectDiameter += gridPointSolution[cluster.getId() - 1]
-				* cluster.getReactionRadius() * 2.0;
-		if (cluster.getSize() >= minSize) {
-			perfectPartialDensity += gridPointSolution[cluster.getId() - 1];
-			perfectPartialDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * 2.0;
-		}
-	}
-	for (auto const& perfectMapItem : network.getAll(ReactantType::PerfectSuper)) {
-		// Get the cluster
-		auto const& cluster =
-				static_cast<AlloySuperCluster&>(*(perfectMapItem.second));
-		perfectDensity += cluster.getTotalConcentration();
-		perfectDiameter += cluster.getTotalConcentration()
-				* cluster.getReactionRadius() * 2.0;
-		if (cluster.getSize() >= minSize) {
-			perfectPartialDensity += cluster.getTotalConcentration();
-			perfectPartialDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * 2.0;
-		}
-	}
-
 	// Loop on Void
 	for (auto const& voidMapItem : network.getAll(ReactantType::Void)) {
 		// Get the cluster
@@ -385,7 +331,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 		voidDensity += gridPointSolution[cluster.getId() - 1];
 		voidDiameter += gridPointSolution[cluster.getId() - 1]
 				* cluster.getReactionRadius() * 2.0;
-		if (cluster.getSize() >= minSize) {
+		if (cluster.getSize() >= minSizes[0]) {
 			voidPartialDensity += gridPointSolution[cluster.getId() - 1];
 			voidPartialDiameter += gridPointSolution[cluster.getId() - 1]
 					* cluster.getReactionRadius() * 2.0;
@@ -398,7 +344,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 		voidDensity += cluster.getTotalConcentration();
 		voidDiameter += cluster.getTotalConcentration()
 				* cluster.getReactionRadius() * 2.0;
-		if (cluster.getSize() >= minSize) {
+		if (cluster.getSize() >= minSizes[0]) {
 			voidPartialDensity += cluster.getTotalConcentration();
 			voidPartialDiameter += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * 2.0;
@@ -412,7 +358,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 		faultedDensity += gridPointSolution[cluster.getId() - 1];
 		faultedDiameter += gridPointSolution[cluster.getId() - 1]
 				* cluster.getReactionRadius() * 2.0;
-		if (cluster.getSize() >= minSize) {
+		if (cluster.getSize() >= minSizes[1]) {
 			faultedPartialDensity += gridPointSolution[cluster.getId() - 1];
 			faultedPartialDiameter += gridPointSolution[cluster.getId() - 1]
 					* cluster.getReactionRadius() * 2.0;
@@ -425,9 +371,63 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 		faultedDensity += cluster.getTotalConcentration();
 		faultedDiameter += cluster.getTotalConcentration()
 				* cluster.getReactionRadius() * 2.0;
-		if (cluster.getSize() >= minSize) {
+		if (cluster.getSize() >= minSizes[1]) {
 			faultedPartialDensity += cluster.getTotalConcentration();
 			faultedPartialDiameter += cluster.getTotalConcentration()
+					* cluster.getReactionRadius() * 2.0;
+		}
+	}
+
+	// Loop on Perfect
+	for (auto const& perfectMapItem : network.getAll(ReactantType::Perfect)) {
+		// Get the cluster
+		auto const& cluster = *(perfectMapItem.second);
+		perfectDensity += gridPointSolution[cluster.getId() - 1];
+		perfectDiameter += gridPointSolution[cluster.getId() - 1]
+				* cluster.getReactionRadius() * 2.0;
+		if (cluster.getSize() >= minSizes[2]) {
+			perfectPartialDensity += gridPointSolution[cluster.getId() - 1];
+			perfectPartialDiameter += gridPointSolution[cluster.getId() - 1]
+					* cluster.getReactionRadius() * 2.0;
+		}
+	}
+	for (auto const& perfectMapItem : network.getAll(ReactantType::PerfectSuper)) {
+		// Get the cluster
+		auto const& cluster =
+				static_cast<AlloySuperCluster&>(*(perfectMapItem.second));
+		perfectDensity += cluster.getTotalConcentration();
+		perfectDiameter += cluster.getTotalConcentration()
+				* cluster.getReactionRadius() * 2.0;
+		if (cluster.getSize() >= minSizes[2]) {
+			perfectPartialDensity += cluster.getTotalConcentration();
+			perfectPartialDiameter += cluster.getTotalConcentration()
+					* cluster.getReactionRadius() * 2.0;
+		}
+	}
+
+	// Loop on Frank
+	for (auto const& frankMapItem : network.getAll(ReactantType::Frank)) {
+		// Get the cluster
+		auto const& cluster = *(frankMapItem.second);
+		frankDensity += gridPointSolution[cluster.getId() - 1];
+		frankDiameter += gridPointSolution[cluster.getId() - 1]
+				* cluster.getReactionRadius() * 2.0;
+		if (cluster.getSize() >= minSizes[3]) {
+			frankPartialDensity += gridPointSolution[cluster.getId() - 1];
+			frankPartialDiameter += gridPointSolution[cluster.getId() - 1]
+					* cluster.getReactionRadius() * 2.0;
+		}
+	}
+	for (auto const& frankMapItem : network.getAll(ReactantType::FrankSuper)) {
+		// Get the cluster
+		auto const& cluster =
+				static_cast<AlloySuperCluster&>(*(frankMapItem.second));
+		frankDensity += cluster.getTotalConcentration();
+		frankDiameter += cluster.getTotalConcentration()
+				* cluster.getReactionRadius() * 2.0;
+		if (cluster.getSize() >= minSizes[3]) {
+			frankPartialDensity += cluster.getTotalConcentration();
+			frankPartialDiameter += cluster.getTotalConcentration()
 					* cluster.getReactionRadius() * 2.0;
 		}
 	}
