@@ -38,7 +38,7 @@ endif()
 
 message(STATUS "Looking for C++ std::experimental::filesystem")
 check_cxx_source_compiles("#include <experimental/filesystem>
-int main() { std::experimental::filesystem::path test; return 0; }
+int main() { std::experimental::filesystem::path test; test.has_filename(); return 0; }
 " STD_EXPERIMENTAL_FILESYSTEM_COMPILES)
 if(NOT STD_EXPERIMENTAL_FILESYSTEM_COMPILES)
     message(STATUS "Code using std::experimental::filesystem fails to compile/link.")
