@@ -758,6 +758,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 	// Get the minimum size for the radius
 	int minSize = solverHandler.getMinSize();
+	double sphereFactor = 4.0 * xolotlCore::pi / 3.0;
 
 	// Loop on the grid
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
@@ -767,6 +768,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 		// Update the concentration in the network
 		network.updateConcentrationsFromArray(gridPointSolution);
+
+		// Initialize the volume fraction
+		double volumeFrac = 0.0;
 
 		// Loop on all the indices
 		for (unsigned int i = 0; i < indices1D.size(); i++) {
@@ -783,7 +787,14 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 						* (grid[xi + 1] - grid[xi]);
 				partialRadii += gridPointSolution[indices1D[i]] * radii1D[i]
 						* (grid[xi + 1] - grid[xi]);
+				// Update the volume fraction
+				volumeFrac += gridPointSolution[indices1D[i]] * sphereFactor
+						* pow(radii1D[i], 3.0);
 			}
+			// Set the monomer concentration
+			if (weights1D[i] == 1)
+				solverHandler.setMonomerConc(gridPointSolution[indices1D[i]],
+						xi - xs);
 		}
 
 		// Loop on all the super clusters
@@ -802,8 +813,14 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				partialRadii += cluster.getTotalConcentration()
 						* cluster.getReactionRadius()
 						* (grid[xi + 1] - grid[xi]);
+				// Update the volume fraction
+				volumeFrac += cluster.getTotalConcentration() * sphereFactor
+						* pow(cluster.getReactionRadius(), 3.0);
 			}
 		}
+
+		// Set the volume fraction
+		solverHandler.setVolumeFraction(volumeFrac, xi - xs);
 	}
 
 	// Get the current process ID
@@ -829,18 +846,17 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// Get the vector from the solver handler
 	auto gbVector = solverHandler.getGBVector();
 	// Get the previous flux vector
-	auto previousXeFlux = solverHandler.getPreviousXeFlux();
+	auto& localNE = solverHandler.getLocalNE();
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Middle
 		int xi = std::get<0>(pair);
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
-			globalXeFlux += previousXeFlux[xi - xs][0][0]
-					* (grid[xi + 1] - grid[xi]);
+			double previousXeFlux = std::get<1>(localNE[xi - xs][0][0]);
+			globalXeFlux += previousXeFlux * (grid[xi + 1] - grid[xi]);
 			// Set the amount in the vector we keep
-			solverHandler.setLocalXeRate(previousXeFlux[xi - xs][0][0] * dt,
-					xi - xs);
+			solverHandler.setLocalXeRate(previousXeFlux * dt, xi - xs);
 		}
 	}
 	double totalXeFlux = 0.0;
@@ -2590,8 +2606,7 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-check_negative) failed.");
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse",
-			&flagCollapse);
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCollapse);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
@@ -2702,8 +2717,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 	if (flagNeg) {
 		// Find the stride to know how often we want to check
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-check_negative",
-				&negStride1D, &flag);
+		ierr = PetscOptionsGetReal(NULL, NULL, "-check_negative", &negStride1D,
+				&flag);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: PetscOptionsGetReal (-check_negative) failed.");
 		if (!flag)
@@ -2731,8 +2746,8 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop",
-				&hdf5Stride1D, &flag);
+		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop", &hdf5Stride1D,
+				&flag);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: PetscOptionsGetReal (-start_stop) failed.");
 		if (!flag)
@@ -3093,7 +3108,7 @@ PetscErrorCode setupPetsc1DMonitor(TS& ts,
 		ierr = DMDAGetCorners(da, NULL, NULL, NULL, &xm, NULL, NULL);
 		checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetCorners failed.");
 		// Create the local vectors on each process
-		solverHandler.createLocalXeRate(xm);
+		solverHandler.createLocalNE(xm);
 
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {

@@ -60,28 +60,19 @@ public:
 	 *
 	 * @return The vector
 	 */
-	std::vector<std::vector<std::vector<double> > > getLocalXeRate();
+	std::vector<
+			std::vector<std::vector<std::tuple<double, double, double, double> > > > getLocalNE();
 
 	/**
 	 * Set the local Xe rate
 	 *
 	 * @param The vector
 	 */
-	void setLocalXeRate(std::vector<std::vector<std::vector<double> > > rateVector);
-
-	/**
-	 * Get the previous Xe flux that needs to be passed
-	 *
-	 * @return The vector
-	 */
-	std::vector<std::vector<std::vector<double> > > getPreviousXeFlux();
-
-	/**
-	 * Set the previous Xe flux
-	 *
-	 * @param The vector
-	 */
-	void setPreviousXeFlux(std::vector<std::vector<std::vector<double> > > fluxVector);
+	void setLocalNE(
+			std::vector<
+					std::vector<
+							std::vector<
+									std::tuple<double, double, double, double> > > > rateVector);
 
 	/**
 	 * Get the local Xe rate that needs to be passed
@@ -125,7 +116,10 @@ public:
 	 *
 	 * @ param concVector A given state of the concentrations
 	 */
-	void setConcVector(std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > concVector);
+	void setConcVector(
+			std::vector<
+					std::vector<
+							std::vector<std::vector<std::pair<int, double> > > > > concVector);
 
 	/**
 	 * Get the previous time.

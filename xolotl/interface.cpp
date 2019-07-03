@@ -147,14 +147,19 @@ void XolotlInterface::solveXolotl() {
 	return;
 }
 
-std::vector<std::vector<std::vector<double> > > XolotlInterface::getLocalXeRate() {
-	std::vector<std::vector<std::vector<double> > > toReturn = std::vector<
-			std::vector<std::vector<double> > >();
+std::vector<
+		std::vector<std::vector<std::tuple<double, double, double, double> > > > XolotlInterface::getLocalNE() {
+	std::vector<
+			std::vector<std::vector<std::tuple<double, double, double, double> > > > toReturn =
+			std::vector<
+					std::vector<
+							std::vector<
+									std::tuple<double, double, double, double> > > >();
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
 		// Get the rate vector
-		toReturn = solverHandler.getLocalXeRate();
+		toReturn = solverHandler.getLocalNE();
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
@@ -169,56 +174,15 @@ std::vector<std::vector<std::vector<double> > > XolotlInterface::getLocalXeRate(
 	return toReturn;
 }
 
-void XolotlInterface::setLocalXeRate(
-		std::vector<std::vector<std::vector<double> > > rateVector) {
+void XolotlInterface::setLocalNE(
+		std::vector<
+				std::vector<
+						std::vector<std::tuple<double, double, double, double> > > > rateVector) {
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver->getSolverHandler();
 		// Set the rate vector
-		solverHandler.setLocalXeRate(rateVector);
-	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
-		std::cerr << error << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (...) {
-		std::cerr << "Unrecognized exception seen." << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	}
-
-	return;
-}
-
-std::vector<std::vector<std::vector<double> > > XolotlInterface::getPreviousXeFlux() {
-	std::vector<std::vector<std::vector<double> > > toReturn = std::vector<
-			std::vector<std::vector<double> > >();
-	try {
-		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
-		// Get the flux vector
-		toReturn = solverHandler.getPreviousXeFlux();
-	} catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
-		std::cerr << error << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	} catch (...) {
-		std::cerr << "Unrecognized exception seen." << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	}
-
-	return toReturn;
-}
-
-void XolotlInterface::setPreviousXeFlux(
-		std::vector<std::vector<std::vector<double> > > fluxVector) {
-	try {
-		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
-		// Set the flux vector
-		solverHandler.setPreviousXeFlux(fluxVector);
+		solverHandler.setLocalNE(rateVector);
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;

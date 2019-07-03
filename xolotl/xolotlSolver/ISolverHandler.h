@@ -244,7 +244,7 @@ public:
 	 * @param b The size in the y direction
 	 * @param c The size in the y direction
 	 */
-	virtual void createLocalXeRate(int a, int b = 1, int c = 1) = 0;
+	virtual void createLocalNE(int a, int b = 1, int c = 1) = 0;
 
 	/**
 	 * Set the latest value of the local Xe rate.
@@ -261,14 +261,19 @@ public:
 	 *
 	 * @param rateVector The vector to replace the local Xe rate.
 	 */
-	virtual void setLocalXeRate(std::vector<std::vector<std::vector<double> > > rateVector) = 0;
+	virtual void setLocalNE(
+			std::vector<
+					std::vector<
+							std::vector<
+									std::tuple<double, double, double, double> > > > rateVector) = 0;
 
 	/**
 	 * Get the local Xe rate vector that needs to be passed.
 	 *
 	 * @return The vector of rates
 	 */
-	virtual std::vector<std::vector<std::vector<double> > > & getLocalXeRate() = 0;
+	virtual std::vector<
+			std::vector<std::vector<std::tuple<double, double, double, double> > > > & getLocalNE() = 0;
 
 	/**
 	 * Set the latest value of the Xe flux.
@@ -278,21 +283,30 @@ public:
 	 * @param j The y coordinate of the location
 	 * @param z The z coordinate of the location
 	 */
-	virtual void setPreviousXeFlux(double flux, int i, int j = 0, int k = 0) = 0;
+	virtual void setPreviousXeFlux(double flux, int i, int j = 0,
+			int k = 0) = 0;
 
 	/**
-	 * Set the whole vector of local Xe flux.
+	 * Set the latest value of the Xe monomer concentration.
 	 *
-	 * @param fluxVector The vector to replace the previous Xe flux.
+	 * @param conc The latest value of conc
+	 * @param i The x coordinate of the location
+	 * @param j The y coordinate of the location
+	 * @param z The z coordinate of the location
 	 */
-	virtual void setPreviousXeFlux(std::vector<std::vector<std::vector<double> > > fluxVector) = 0;
+	virtual void setMonomerConc(double conc, int i, int j = 0,
+			int k = 0) = 0;
 
 	/**
-	 * Get the local Xe flux vector that needs to be passed.
+	 * Set the latest value of the volume fraction.
 	 *
-	 * @return The vector of fluxes
+	 * @param frac The latest value of the fration
+	 * @param i The x coordinate of the location
+	 * @param j The y coordinate of the location
+	 * @param z The z coordinate of the location
 	 */
-	virtual std::vector<std::vector<std::vector<double> > > & getPreviousXeFlux() = 0;
+	virtual void setVolumeFraction(double frac, int i, int j = 0,
+			int k = 0) = 0;
 
 	/**
 	 * Set the coordinates covered by the local grid.

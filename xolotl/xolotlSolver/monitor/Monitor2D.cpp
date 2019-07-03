@@ -552,6 +552,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the minimum size for the radius
 	int minSize = solverHandler.getMinSize();
+	double sphereFactor = 4.0 * xolotlCore::pi / 3.0;
 
 	// Loop on the grid
 	for (PetscInt yj = ys; yj < ys + ym; yj++) {
@@ -562,6 +563,9 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 
 			// Update the concentration in the network
 			network.updateConcentrationsFromArray(gridPointSolution);
+
+			// Initialize the volume fraction
+			double volumeFrac = 0.0;
 
 			// Loop on all the indices
 			for (unsigned int i = 0; i < indices2D.size(); i++) {
@@ -579,7 +583,14 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 									* (grid[xi + 1] - grid[xi]) * hy;
 					partialRadii += gridPointSolution[indices2D[i]] * radii2D[i]
 							* (grid[xi + 1] - grid[xi]) * hy;
+					// Update the volume fraction
+					volumeFrac += gridPointSolution[indices2D[i]] * sphereFactor
+							* pow(radii2D[i], 3.0);
 				}
+				// Set the monomer concentration
+				if (weights2D[i] == 1)
+					solverHandler.setMonomerConc(
+							gridPointSolution[indices2D[i]], xi - xs, yj - ys);
 			}
 
 			// Loop on all the super clusters
@@ -601,8 +612,14 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 					partialRadii += cluster.getTotalConcentration()
 							* cluster.getReactionRadius()
 							* (grid[xi + 1] - grid[xi]) * hy;
+					// Update the volume fraction
+					volumeFrac += cluster.getTotalConcentration() * sphereFactor
+							* pow(cluster.getReactionRadius(), 3.0);
 				}
 			}
+
+			// Set the volume fraction
+			solverHandler.setVolumeFraction(volumeFrac, xi - xs, yj - ys);
 		}
 	}
 
@@ -629,7 +646,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the vector from the solver handler
 	auto gbVector = solverHandler.getGBVector();
 	// Get the previous Xe flux vector
-	auto previousXeFlux = solverHandler.getPreviousXeFlux();
+	auto& localNE = solverHandler.getLocalNE();
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Middle
@@ -637,11 +654,10 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 		int yj = std::get<1>(pair);
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
-			globalXeFlux += previousXeFlux[xi - xs][yj - ys][0]
-					* (grid[xi + 1] - grid[xi]) * hy;
+			double previousXeFlux = std::get<1>(localNE[xi - xs][yj - ys][0]);
+			globalXeFlux += previousXeFlux * (grid[xi + 1] - grid[xi]) * hy;
 			// Set the amount in the vector we keep
-			solverHandler.setLocalXeRate(
-					previousXeFlux[xi - xs][yj - ys][0] * dt, xi - xs, yj - ys);
+			solverHandler.setLocalXeRate(previousXeFlux * dt, xi - xs, yj - ys);
 		}
 	}
 	double totalXeFlux = 0.0;
@@ -1996,7 +2012,7 @@ PetscErrorCode setupPetsc2DMonitor(TS& ts) {
 		ierr = DMDAGetCorners(da, NULL, NULL, NULL, &xm, &ym, NULL);
 		checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetCorners failed.");
 		// Create the local vectors on each process
-		solverHandler.createLocalXeRate(xm, ym);
+		solverHandler.createLocalNE(xm, ym);
 
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {

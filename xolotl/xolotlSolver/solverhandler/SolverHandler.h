@@ -79,11 +79,10 @@ protected:
 	//! The initial vacancy concentration.
 	double initialVConc;
 
-	//! The vector of local Xe rate.
-	std::vector<std::vector<std::vector<double> > > localXeRate;
-
-	//! The vector of previous Xe flux.
-	std::vector<std::vector<std::vector<double> > > previousXeFlux;
+	//! The vector of quantities to pass to MOOSE.
+	// 0: Xe rate, 1: previous flux, 2: monomer concentration, 3: volume fraction
+	std::vector<
+			std::vector<std::vector<std::tuple<double, double, double, double> > > > localNE;
 
 	//! The electronic stopping power for re-solution
 	double electronicStoppingPower;
@@ -573,21 +572,19 @@ public:
 	 * Create the local Xe rate vector.
 	 * \see ISolverHandler.h
 	 */
-	void createLocalXeRate(int a, int b = 1, int c = 1) override {
-		localXeRate.clear();
-		previousXeFlux.clear();
+	void createLocalNE(int a, int b = 1, int c = 1) override {
+		localNE.clear();
 		// Create the vector of vectors and fill it with 0.0
 		for (int i = 0; i < a; i++) {
-			std::vector<std::vector<double> > tempTempVector;
+			std::vector<std::vector<std::tuple<double, double, double, double> > > tempTempVector;
 			for (int j = 0; j < b; j++) {
-				std::vector<double> tempVector;
+				std::vector<std::tuple<double, double, double, double> > tempVector;
 				for (int k = 0; k < c; k++) {
-					tempVector.push_back(0.0);
+					tempVector.push_back(std::make_tuple(0.0, 0.0, 0.0, 0.0));
 				}
 				tempTempVector.push_back(tempVector);
 			}
-			localXeRate.push_back(tempTempVector);
-			previousXeFlux.push_back(tempTempVector);
+			localNE.push_back(tempTempVector);
 		}
 	}
 
@@ -596,23 +593,30 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void setLocalXeRate(double rate, int i, int j = 0, int k = 0) override {
-		localXeRate[i][j][k] += rate;
+		std::get<0>(localNE[i][j][k]) += rate;
 	}
 
 	/**
 	 * Set the whole vector of local Xe rate.
 	 * \see ISolverHandler.h
 	 */
-	void setLocalXeRate(std::vector<std::vector<std::vector<double> > > rateVector) override {
-		localXeRate = rateVector;
+	void setLocalNE(
+			std::vector<
+					std::vector<
+							std::vector<
+									std::tuple<double, double, double, double> > > > rateVector)
+					override {
+		localNE = rateVector;
 	}
 
 	/**
 	 * Get the local Xe rate vector that needs to be passed.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<std::vector<std::vector<double> > > & getLocalXeRate() override {
-		return localXeRate;
+	std::vector<
+			std::vector<std::vector<std::tuple<double, double, double, double> > > > & getLocalNE()
+			override {
+		return localNE;
 	}
 
 	/**
@@ -620,23 +624,23 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void setPreviousXeFlux(double flux, int i, int j = 0, int k = 0) override {
-		previousXeFlux[i][j][k] = flux;
+		std::get<1>(localNE[i][j][k]) = flux;
 	}
 
 	/**
-	 * Set the whole vector of local Xe flux.
+	 * Set the latest value of the Xe monomer concentration.
 	 * \see ISolverHandler.h
 	 */
-	void setPreviousXeFlux(std::vector<std::vector<std::vector<double> > > fluxVector) override {
-		previousXeFlux = fluxVector;
+	void setMonomerConc(double conc, int i, int j = 0, int k = 0) override {
+		std::get<2>(localNE[i][j][k]) = conc;
 	}
 
 	/**
-	 * Get the local Xe flux vector that needs to be passed.
+	 * Set the latest value of the volume fraction.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<std::vector<std::vector<double> > > & getPreviousXeFlux() override {
-		return previousXeFlux;
+	void setVolumeFraction(double frac, int i, int j = 0, int k = 0) override {
+		std::get<3>(localNE[i][j][k]) = frac;
 	}
 
 	/**
@@ -753,7 +757,8 @@ public:
 	 */
 	void setPreviousTime(double time, bool updateFluence = false) override {
 		previousTime = time;
-		if (updateFluence) fluxHandler->computeFluence(time);
+		if (updateFluence)
+			fluxHandler->computeFluence(time);
 	}
 
 	/**
