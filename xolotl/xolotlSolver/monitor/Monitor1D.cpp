@@ -58,10 +58,6 @@ double nInterstitial1D = 0.0;
 double previousHeFlux1D = 0.0;
 //! The variable to store the total number of helium going through the bottom.
 double nHelium1D = 0.0;
-//! The variable to store the xenon flux at the previous time step.
-double previousXeFlux1D = 0.0;
-//! The variable to store the total number of xenon going through the GB.
-double nXenon1D = 0.0;
 //! The variable to store the deuterium flux at the previous time step.
 double previousDFlux1D = 0.0;
 //! The variable to store the total number of deuterium going through the bottom.
@@ -804,78 +800,11 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Sum all the concentrations through MPI reduce
-	double totalXeConcentration = 0.0;
-	MPI_Reduce(&xeConcentration, &totalXeConcentration, 1, MPI_DOUBLE,
-	MPI_SUM, 0, PETSC_COMM_WORLD);
-	double totalBubbleConcentration = 0.0;
-	MPI_Reduce(&bubbleConcentration, &totalBubbleConcentration, 1,
-	MPI_DOUBLE,
-	MPI_SUM, 0, MPI_COMM_WORLD);
-	double totalRadii = 0.0;
-	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0,
-	MPI_COMM_WORLD);
-
-	// GB
-	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
-	// Compute the total number of Xe that went to the GB
-	nXenon1D += previousXeFlux1D * dt;
-	// Get the vector from the solver handler
-	auto gbVector = solverHandler.getGBVector();
-	// Initialize the value for the flux
-	double newFlux = 0.0;
-	// Loop on the GB
-	for (auto const& pair : gbVector) {
-		// Left
-		int xi = std::get<0>(pair) - 1;
-
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi + 2] - grid[xi + 1];
-			double hxRight = grid[xi + 3] - grid[xi + 2];
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ (hxLeft + hxRight);
-			}
-		}
-
-		// Right
-		xi = std::get<0>(pair) + 1;
-
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi] - grid[xi - 1];
-			double hxRight = grid[xi + 1] - grid[xi];
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ (hxLeft + hxRight);
-			}
-		}
-	}
-	// Update the helium flux
-	previousXeFlux1D = newFlux;
+	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
+			radii, partialBubbleConcentration, partialRadii };
+	std::array<double, 5> totalConcData;
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 
 	// Master process
 	if (procId == 0) {
@@ -884,22 +813,15 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Xenon retention = "
-				<< 100.0 * (totalXeConcentration) / fluence << " %"
+		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl
 				<< std::endl;
-		std::cout << "Xenon concentration = " << totalXeConcentration
-				<< std::endl;
-		std::cout << "Xenon GB = " << nXenon1D << std::endl << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " " << 100.0 * (totalXeConcentration / fluence)
-				<< " " << totalXeConcentration << " "
-				<< fluence - totalXeConcentration << " "
-				<< totalRadii / totalBubbleConcentration << " "
-				<< partialRadii / partialBubbleConcentration << " " << nXenon1D
-				<< std::endl;
+		outputFile << time << " " << totalConcData[0] << " "
+				<< totalConcData[2] / totalConcData[1] << " "
+				<< totalConcData[4] / totalConcData[3] << std::endl;
 		outputFile.close();
 	}
 

@@ -1140,7 +1140,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					ierr = MatSetValuesStencil(J, 5, rowIds, 2, colIds,
 							resolutionVals + (10 * i), ADD_VALUES);
 					checkPetscError(ierr,
-							"PetscSolver2DHandler::computeDiagonalJacobian: "
+							"PetscSolver3DHandler::computeDiagonalJacobian: "
 									"MatSetValuesStencil (Xe re-solution) failed.");
 				}
 			}
