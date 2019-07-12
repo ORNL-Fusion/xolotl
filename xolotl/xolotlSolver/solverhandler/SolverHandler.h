@@ -92,6 +92,9 @@ protected:
 	//! If the user wants to burst bubbles.
 	bool bubbleBursting;
 
+	//! If the user wants to attenuate the modified trap mutation.
+	bool useAttenuation;
+
 	//! The sputtering yield for the problem.
 	double sputteringYield;
 
@@ -304,7 +307,7 @@ protected:
 					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
 					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
 					0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
-					false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
+					false), useAttenuation(false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
 					nullptr), diffusionHandler(nullptr), mutationHandler(
 					nullptr), resolutionHandler(nullptr), tauBursting(10.0), rngSeed(
 					0), minRadiusSize(0) {
@@ -441,8 +444,10 @@ public:
 		// Should we be able to move the surface?
 		auto map = options.getProcesses();
 		movingSurface = map["movingSurface"];
-		// Should we be able to burst bubble?
+		// Should we be able to burst bubbles?
 		bubbleBursting = map["bursting"];
+		// Should we be able to attenuate the modified trap mutation?
+		useAttenuation = map["attenuation"];
 
 		// Some safeguards about what to use with what
 		if (leftOffset == 0

@@ -281,37 +281,40 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = network.getDOF();
 
-	// Compute the total concentration of atoms contained in bubbles
-	double atomConc = 0.0;
+	// Computing the trapped atom concentration is only needed for the attenuation
+	if (useAttenuation) {
+		// Compute the total concentration of atoms contained in bubbles
+		double atomConc = 0.0;
 
-	// Loop over grid points to get the atom concentration
-	// near the surface
-	for (int xi = xs; xi < xs + xm; xi++) {
-		// Boundary conditions
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
-			continue;
+		// Loop over grid points to get the atom concentration
+		// near the surface
+		for (int xi = xs; xi < xs + xm; xi++) {
+			// Boundary conditions
+			if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+				continue;
 
-		// We are only interested in the helium near the surface
-		if (grid[xi] - grid[surfacePosition] > 2.0)
-			continue;
+			// We are only interested in the helium near the surface
+			if (grid[xi] - grid[surfacePosition] > 2.0)
+				continue;
 
-		// Get the concentrations at this grid point
-		concOffset = concs[xi];
-		// Copy data into the PSIClusterReactionNetwork
-		network.updateConcentrationsFromArray(concOffset);
+			// Get the concentrations at this grid point
+			concOffset = concs[xi];
+			// Copy data into the PSIClusterReactionNetwork
+			network.updateConcentrationsFromArray(concOffset);
 
-		// Sum the total atom concentration
-		atomConc += network.getTotalTrappedAtomConcentration()
-				* (grid[xi + 1] - grid[xi]);
+			// Sum the total atom concentration
+			atomConc += network.getTotalTrappedAtomConcentration()
+					* (grid[xi + 1] - grid[xi]);
+		}
+
+		// Share the concentration with all the processes
+		double totalAtomConc = 0.0;
+		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
+		MPI_COMM_WORLD);
+
+		// Set the disappearing rate in the modified TM handler
+		mutationHandler->updateDisappearingRate(totalAtomConc);
 	}
-
-	// Share the concentration with all the processes
-	double totalAtomConc = 0.0;
-	MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-			MPI_COMM_WORLD);
-
-	// Set the disappearing rate in the modified TM handler
-	mutationHandler->updateDisappearingRate(totalAtomConc);
 
 	// Declarations for variables used in the loop
 	double **concVector = new double*[3];
@@ -695,37 +698,40 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = network.getDOF();
 
-	// Compute the total concentration of atoms contained in bubbles
-	double atomConc = 0.0;
+	// Computing the trapped atom concentration is only needed for the attenuation
+	if (useAttenuation) {
+		// Compute the total concentration of atoms contained in bubbles
+		double atomConc = 0.0;
 
-	// Loop over grid points to get the atom concentration
-	// near the surface
-	for (int xi = xs; xi < xs + xm; xi++) {
-		// Boundary conditions
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
-			continue;
+		// Loop over grid points to get the atom concentration
+		// near the surface
+		for (int xi = xs; xi < xs + xm; xi++) {
+			// Boundary conditions
+			if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+				continue;
 
-		// We are only interested in the helium near the surface
-		if (grid[xi] - grid[surfacePosition] > 2.0)
-			continue;
+			// We are only interested in the helium near the surface
+			if (grid[xi] - grid[surfacePosition] > 2.0)
+				continue;
 
-		// Get the concentrations at this grid point
-		concOffset = concs[xi];
-		// Copy data into the PSIClusterReactionNetwork
-		network.updateConcentrationsFromArray(concOffset);
+			// Get the concentrations at this grid point
+			concOffset = concs[xi];
+			// Copy data into the PSIClusterReactionNetwork
+			network.updateConcentrationsFromArray(concOffset);
 
-		// Sum the total atom concentration
-		atomConc += network.getTotalTrappedAtomConcentration()
-				* (grid[xi + 1] - grid[xi]);
+			// Sum the total atom concentration
+			atomConc += network.getTotalTrappedAtomConcentration()
+					* (grid[xi + 1] - grid[xi]);
+		}
+
+		// Share the concentration with all the processes
+		double totalAtomConc = 0.0;
+		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
+		MPI_COMM_WORLD);
+
+		// Set the disappearing rate in the modified TM handler
+		mutationHandler->updateDisappearingRate(totalAtomConc);
 	}
-
-	// Share the concentration with all the processes
-	double totalAtomConc = 0.0;
-	MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-			MPI_COMM_WORLD);
-
-	// Set the disappearing rate in the modified TM handler
-	mutationHandler->updateDisappearingRate(totalAtomConc);
 
 	// Arguments for MatSetValuesStencil called below
 	MatStencil rowId;
