@@ -312,16 +312,19 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Sum all the concentrations through MPI reduce
-	double totalHeConcentration = 0.0;
-	MPI_Reduce(&heConcentration, &totalHeConcentration, 1, MPI_DOUBLE, MPI_SUM,
-			0, xolotlComm);
-	double totalDConcentration = 0.0;
-	MPI_Reduce(&dConcentration, &totalDConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
-			xolotlComm);
-	double totalTConcentration = 0.0;
-	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
-			xolotlComm);
+	// Determine total concentrations for He, D, T.
+	std::array<double, 3> myConcData { heConcentration, dConcentration,
+			tConcentration };
+	std::array<double, 3> totalConcData;
+
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE,
+	MPI_SUM, 0, xolotlComm);
+
+	// Extract total He, D, T concentrations.  Values are valid only on rank 0.
+	double totalHeConcentration = totalConcData[0];
+	double totalDConcentration = totalConcData[1];
+	double totalTConcentration = totalConcData[2];
 
 	// Master process
 	if (procId == 0) {
@@ -516,14 +519,11 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Sum all the concentrations through MPI reduce
-	double totalXeConcentration = 0.0;
-	MPI_Reduce(&xeConcentration, &totalXeConcentration, 1, MPI_DOUBLE, MPI_SUM,
-			0, xolotlComm);
-	double totalBubbleConcentration = 0.0;
-	MPI_Reduce(&bubbleConcentration, &totalBubbleConcentration, 1, MPI_DOUBLE,
-	MPI_SUM, 0, xolotlComm);
-	double totalRadii = 0.0;
-	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
+			radii, partialBubbleConcentration, partialRadii };
+	std::array<double, 5> totalConcData;
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
 	// GB
 	// Get the delta time from the previous timestep to this timestep
@@ -647,11 +647,11 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Get the number of Xe that went to the GB
 		double nXenon = solverHandler.getNXeGB();
 
-		totalXeConcentration = totalXeConcentration / surface;
+		totalConcData[0] = totalConcData[0] / surface;
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Xenon concentration = " << totalXeConcentration
+		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl
 				<< std::endl;
 		std::cout << "Xenon GB = " << nXenon / surface << std::endl
 				<< std::endl;
@@ -659,9 +659,9 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " " << totalXeConcentration << " " << fluence
-				<< " " << totalRadii / totalBubbleConcentration << " "
-				<< partialRadii / partialBubbleConcentration << " "
+		outputFile << time << " " << totalConcData[0] << " "
+				<< totalConcData[2] / totalConcData[1] << " "
+				<< totalConcData[4] / totalConcData[3] << " "
 				<< nXenon / surface << std::endl;
 		outputFile.close();
 	}
@@ -772,23 +772,25 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 			}
 		}
 
-		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
-		MPI_Reduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				xolotlComm);
-		MPI_Reduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
-		MPI_Reduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
-		MPI_Reduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
-		MPI_Reduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+		std::array<double, 5> myConcData { heLocalConc, dLocalConc, tLocalConc,
+				vLocalConc, iLocalConc };
+		std::array<double, 5> totalConcData;
 
-		// The master process writes computes the cumulative value and writes in the file
+		MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+		MPI_DOUBLE,
+		MPI_SUM, 0, xolotlComm);
+
+		// The master process writes the cumulative value and writes in the file
 		if (procId == 0) {
 			outputFile
 					<< x
 							- (grid[solverHandler.getSurfacePosition(0, 0) + 1]
-									- grid[1]) << " " << heConc / (My * Mz)
-					<< " " << dConc / (My * Mz) << " " << tConc / (My * Mz)
-					<< " " << vConc / (My * Mz) << " " << iConc / (My * Mz)
-					<< std::endl;
+									- grid[1]) << " "
+					<< totalConcData[0] / (My * Mz) << " "
+					<< totalConcData[1] / (My * Mz) << " "
+					<< totalConcData[2] / (My * Mz) << " "
+					<< totalConcData[3] / (My * Mz) << " "
+					<< totalConcData[4] / (My * Mz) << std::endl;
 		}
 	}
 

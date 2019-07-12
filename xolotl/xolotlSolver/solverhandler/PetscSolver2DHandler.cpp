@@ -487,38 +487,41 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// Loop over grid points
 	for (int yj = bottomOffset; yj < nY - topOffset; yj++) {
 
-		// Compute the total concentration of atoms contained in bubbles
-		atomConc = 0.0;
+		// Computing the trapped atom concentration is only needed for the attenuation
+		if (useAttenuation) {
+			// Compute the total concentration of atoms contained in bubbles
+			atomConc = 0.0;
 
-		// Loop over grid points
-		for (int xi = surfacePosition[yj] + leftOffset; xi < nX - rightOffset;
-				xi++) {
-			// We are only interested in the helium near the surface
-			if (grid[xi + 1] - grid[surfacePosition[yj] + 1] > 2.0)
-				continue;
+			// Loop over grid points
+			for (int xi = surfacePosition[yj] + leftOffset;
+					xi < nX - rightOffset; xi++) {
+				// We are only interested in the helium near the surface
+				if (grid[xi + 1] - grid[surfacePosition[yj] + 1] > 2.0)
+					continue;
 
-			// Check if we are on the right processor
-			if (xi >= localXS && xi < localXS + localXM && yj >= localYS
-					&& yj < localYS + localYM) {
-				// Get the concentrations at this grid point
-				concOffset = concs[yj][xi];
-				// Copy data into the PSIClusterReactionNetwork
-				network.updateConcentrationsFromArray(concOffset);
+				// Check if we are on the right processor
+				if (xi >= localXS && xi < localXS + localXM && yj >= localYS
+						&& yj < localYS + localYM) {
+					// Get the concentrations at this grid point
+					concOffset = concs[yj][xi];
+					// Copy data into the PSIClusterReactionNetwork
+					network.updateConcentrationsFromArray(concOffset);
 
-				// Sum the total atom concentration
-				atomConc += network.getTotalTrappedAtomConcentration()
-						* (grid[xi + 1] - grid[xi]);
+					// Sum the total atom concentration
+					atomConc += network.getTotalTrappedAtomConcentration()
+							* (grid[xi + 1] - grid[xi]);
+				}
 			}
+
+			// Share the concentration with all the processes
+			totalAtomConc = 0.0;
+			auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+			MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
+					xolotlComm);
+
+			// Set the disappearing rate in the modified TM handler
+			mutationHandler->updateDisappearingRate(totalAtomConc);
 		}
-
-		// Share the concentration with all the processes
-		totalAtomConc = 0.0;
-		auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
-		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-				xolotlComm);
-
-		// Set the disappearing rate in the modified TM handler
-		mutationHandler->updateDisappearingRate(totalAtomConc);
 
 		// Skip if we are not on the right process
 		if (yj < localYS || yj >= localYS + localYM)
@@ -977,38 +980,41 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	// Loop over the grid points
 	for (int yj = bottomOffset; yj < nY - topOffset; yj++) {
 
-		// Compute the total concentration of atoms contained in bubbles
-		atomConc = 0.0;
+		// Computing the trapped atom concentration is only needed for the attenuation
+		if (useAttenuation) {
+			// Compute the total concentration of atoms contained in bubbles
+			atomConc = 0.0;
 
-		// Loop over grid points
-		for (int xi = surfacePosition[yj] + leftOffset; xi < nX - rightOffset;
-				xi++) {
-			// We are only interested in the helium near the surface
-			if (grid[xi + 1] - grid[surfacePosition[yj] + 1] > 2.0)
-				continue;
+			// Loop over grid points
+			for (int xi = surfacePosition[yj] + leftOffset;
+					xi < nX - rightOffset; xi++) {
+				// We are only interested in the helium near the surface
+				if (grid[xi + 1] - grid[surfacePosition[yj] + 1] > 2.0)
+					continue;
 
-			// Check if we are on the right processor
-			if (xi >= localXS && xi < localXS + localXM && yj >= localYS
-					&& yj < localYS + localYM) {
-				// Get the concentrations at this grid point
-				concOffset = concs[yj][xi];
-				// Copy data into the PSIClusterReactionNetwork
-				network.updateConcentrationsFromArray(concOffset);
+				// Check if we are on the right processor
+				if (xi >= localXS && xi < localXS + localXM && yj >= localYS
+						&& yj < localYS + localYM) {
+					// Get the concentrations at this grid point
+					concOffset = concs[yj][xi];
+					// Copy data into the PSIClusterReactionNetwork
+					network.updateConcentrationsFromArray(concOffset);
 
-				// Sum the total atom concentration
-				atomConc += network.getTotalTrappedAtomConcentration()
-						* (grid[xi + 1] - grid[xi]);
+					// Sum the total atom concentration
+					atomConc += network.getTotalTrappedAtomConcentration()
+							* (grid[xi + 1] - grid[xi]);
+				}
 			}
+
+			// Share the concentration with all the processes
+			totalAtomConc = 0.0;
+			auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+			MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
+					xolotlComm);
+
+			// Set the disappearing rate in the modified TM handler
+			mutationHandler->updateDisappearingRate(totalAtomConc);
 		}
-
-		// Share the concentration with all the processes
-		totalAtomConc = 0.0;
-		auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
-		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-				xolotlComm);
-
-		// Set the disappearing rate in the modified TM handler
-		mutationHandler->updateDisappearingRate(totalAtomConc);
 
 		// Skip if we are not on the right process
 		if (yj < localYS || yj >= localYS + localYM)

@@ -829,14 +829,11 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Sum all the concentrations through MPI reduce
-	double totalXeConcentration = 0.0;
-	MPI_Reduce(&xeConcentration, &totalXeConcentration, 1, MPI_DOUBLE, MPI_SUM,
-			0, xolotlComm);
-	double totalBubbleConcentration = 0.0;
-	MPI_Reduce(&bubbleConcentration, &totalBubbleConcentration, 1, MPI_DOUBLE,
-	MPI_SUM, 0, xolotlComm);
-	double totalRadii = 0.0;
-	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
+			radii, partialBubbleConcentration, partialRadii };
+	std::array<double, 5> totalConcData;
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
 	// GB
 	// Get the delta time from the previous timestep to this timestep
@@ -919,16 +916,15 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Xenon concentration = " << totalXeConcentration
-				<< std::endl;
+		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl;
 		std::cout << "Xenon GB = " << nXenon << std::endl << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " " << totalXeConcentration << " " << fluence
-				<< " " << totalRadii / totalBubbleConcentration << " "
-				<< partialRadii / partialBubbleConcentration << " " << nXenon
+		outputFile << time << " " << totalConcData[0] << " "
+				<< totalConcData[2] / totalConcData[1] << " "
+				<< totalConcData[4] / totalConcData[3] << " " << nXenon
 				<< std::endl;
 		outputFile.close();
 	}
