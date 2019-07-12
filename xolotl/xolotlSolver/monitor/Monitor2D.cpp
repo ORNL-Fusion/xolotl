@@ -564,17 +564,15 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 			for (unsigned int i = 0; i < indices2D.size(); i++) {
 				// Add the current concentration times the number of xenon in the cluster
 				// (from the weight vector)
-				xeConcentration += gridPointSolution[indices2D[i]]
-						* weights2D[i] * (grid[xi + 1] - grid[xi]) * hy;
-				bubbleConcentration += gridPointSolution[indices2D[i]]
+				double conc = gridPointSolution[indices2D[i]];
+				xeConcentration += conc * weights2D[i]
 						* (grid[xi + 1] - grid[xi]) * hy;
-				radii += gridPointSolution[indices2D[i]] * radii2D[i]
-						* (grid[xi + 1] - grid[xi]) * hy;
-				if (weights2D[i] >= minSize) {
-					partialBubbleConcentration +=
-							gridPointSolution[indices2D[i]]
-									* (grid[xi + 1] - grid[xi]) * hy;
-					partialRadii += gridPointSolution[indices2D[i]] * radii2D[i]
+				bubbleConcentration += conc * (grid[xi + 1] - grid[xi]) * hy;
+				radii += conc * radii2D[i] * (grid[xi + 1] - grid[xi]) * hy;
+				if (weights2D[i] >= minSize && conc > 1.0e-16) {
+					partialBubbleConcentration += conc
+							* (grid[xi + 1] - grid[xi]) * hy;
+					partialRadii += conc * radii2D[i]
 							* (grid[xi + 1] - grid[xi]) * hy;
 				}
 			}
@@ -584,19 +582,16 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 					ReactantType::NESuper)) {
 				auto const& cluster =
 						static_cast<NESuperCluster&>(*(superMapItem.second));
+				double conc = cluster.getTotalConcentration();
 				xeConcentration += cluster.getTotalXenonConcentration()
 						* (grid[xi + 1] - grid[xi]) * hy;
-				bubbleConcentration += cluster.getTotalConcentration()
+				bubbleConcentration += conc * (grid[xi + 1] - grid[xi]) * hy;
+				radii += conc * cluster.getReactionRadius()
 						* (grid[xi + 1] - grid[xi]) * hy;
-				radii += cluster.getTotalConcentration()
-						* cluster.getReactionRadius()
-						* (grid[xi + 1] - grid[xi]) * hy;
-				if (cluster.getSize() >= minSize) {
-					partialBubbleConcentration +=
-							cluster.getTotalConcentration()
-									* (grid[xi + 1] - grid[xi]) * hy;
-					partialRadii += cluster.getTotalConcentration()
-							* cluster.getReactionRadius()
+				if (cluster.getSize() >= minSize && conc > 1.0e-16) {
+					partialBubbleConcentration += conc
+							* (grid[xi + 1] - grid[xi]) * hy;
+					partialRadii += conc * cluster.getReactionRadius()
 							* (grid[xi + 1] - grid[xi]) * hy;
 				}
 			}
@@ -628,12 +623,22 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl
 				<< std::endl;
 
+		// Make sure the average partial radius makes sense
+		double averagePartialRadius = totalConcData[4] / totalConcData[3];
+		double minRadius = pow(
+				(3.0 * (double) minSize)
+						/ (4.0 * xolotlCore::pi * network.getDensity()),
+				(1.0 / 3.0));
+		if (partialBubbleConcentration < 1.e-16
+				|| averagePartialRadius < minRadius)
+			averagePartialRadius = minRadius;
+
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
 		outputFile << time << " " << totalConcData[0] << " "
 				<< totalConcData[2] / totalConcData[1] << " "
-				<< totalConcData[4] / totalConcData[3] << std::endl;
+				<< averagePartialRadius << std::endl;
 		outputFile.close();
 	}
 
