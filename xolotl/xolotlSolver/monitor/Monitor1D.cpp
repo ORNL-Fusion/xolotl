@@ -68,14 +68,12 @@ double previousTFlux1D = 0.0;
 double nTritium1D = 0.0;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield1D = 0.0;
+//! The threshold for the negative concentration
+double negThreshold1D = 0.0;
 //! How often HDF5 file is written
 PetscReal hdf5Stride1D = 0.0;
 //! Previous time for HDF5
 PetscInt hdf5Previous1D = 0;
-//! How often negative concentrations are checked
-PetscReal negStride1D = 0.0;
-//! Previous time for negative concentration
-PetscInt negPrevious1D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName1D = "xolotlStop.h5";
 // Declare the vector that will store the Id of the helium clusters
@@ -121,21 +119,10 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Initial declaration
 	PetscErrorCode ierr;
-	const double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm, Mx;
+	double **solutionArray, *gridPointSolution;
+	PetscInt xs, xm;
 
 	PetscFunctionBeginUser;
-
-	// Compute the dt
-	double dt = time - previousTime;
-
-	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / negStride1D) <= negPrevious1D
-			&& negStride1D > 0.0)
-		PetscFunctionReturn(0);
-
-	// Update the previous time
-	negPrevious1D++;
 
 	// Get the number of processes
 	int worldSize;
@@ -151,17 +138,11 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -171,27 +152,23 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 	auto& network = solverHandler.getNetwork();
 	const int nClusters = network.size();
 
-	// Loop on the full grid
-	for (PetscInt i = 0; i < Mx; i++) {
-
-		// If it is the locally owned part of the grid
-		if (i >= xs && i < xs + xm) {
-			// Get the pointer to the beginning of the solution data for this grid point
-			gridPointSolution = solutionArray[i];
-
-			// Loop on the concentrations
-			for (int l = 0; l < nClusters; l++) {
-				if (gridPointSolution[l] < -1.0e-14) {
-					std::cout << "Negative concentration: "
-							<< gridPointSolution[l] << " at xi: " << i
-							<< ", cluster ID: " << l + 1 << std::endl;
-				}
+	// Loop on the local grid
+	for (PetscInt i = xs; i < xs + xm; i++) {
+		// Get the pointer to the beginning of the solution data for this grid point
+		gridPointSolution = solutionArray[i]; // Loop on the concentrations
+		for (int l = 0; l < nClusters; l++) {
+			if (gridPointSolution[l] < negThreshold1D
+					&& gridPointSolution[l] > 0.0) {
+				gridPointSolution[l] = negThreshold1D;
+			} else if (gridPointSolution[l] > -negThreshold1D
+					&& gridPointSolution[l] < 0.0) {
+				gridPointSolution[l] = -negThreshold1D;
 			}
 		}
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
@@ -2620,23 +2597,12 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	if (flagNeg) {
 		// Find the stride to know how often we want to check
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-check_negative", &negStride1D,
-				&flag);
+		ierr = PetscOptionsGetReal(NULL, NULL, "-check_negative",
+				&negThreshold1D, &flag);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: PetscOptionsGetInt (-check_negative) failed.");
 		if (!flag)
-			negStride1D = -1.0;
-
-		// Compute the correct negPrevious1D for a restart
-		// Get the last time step written in the HDF5 file
-		if (hasConcentrations) {
-
-			assert(lastTsGroup);
-
-			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
-			negPrevious1D = (int) (previousTime / negPrevious1D);
-		}
+			negThreshold1D = 1.0e-30;
 
 		// checkNegative1D will be called at each timestep
 		ierr = TSMonitorSet(ts, checkNegative1D, NULL, NULL);
