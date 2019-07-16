@@ -50,11 +50,14 @@ endif()
 # Find the Boost libraries we (potentially) use.
 # Note that we only need to list Boost component libraries that have a
 # library implementation (i.e., not header only) as required components.
-if(Boost_FILESYSTEM_LIBRARY_RELEASE)
-    message(STATUS "Already found Boost filesystem library.")
+if (Boost_FILESYSTEM_FOUND)
+    message(STATUS "Have Boost filesystem library.")
     set(HAVE_BOOST_FILESYSTEM ON)
     include_directories(${Boost_INCLUDE_DIR})
 endif()
+
+# Set a single variable indicating whether we have a filesystem library.
+set (HAVE_FILESYSTEM_LIBRARY (HAVE_STD_FILESYSTEM OR HAVE_STD_EXPERIMENTAL_FILESYSTEM OR Boost_FILESYSTEM_FOUND))
 
 #Collect all header filenames in this project 
 #and glob them in HEADERS
