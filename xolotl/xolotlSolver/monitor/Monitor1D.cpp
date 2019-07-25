@@ -648,13 +648,15 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		std::cout << "Tritium content = " << totalTConcentration << std::endl;
 		std::cout << "Fluence = " << fluence << "\n" << std::endl;
 
+		int dof = network.getDOF();
+
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << fluence << " " << totalHeConcentration << " "
+		outputFile << time << " " << totalHeConcentration << " "
 				<< totalDConcentration << " " << totalTConcentration << " "
 				<< nHelium1D << " " << nDeuterium1D << " " << nTritium1D
-				<< std::endl;
+				<< " " << solutionArray[1][dof-1] << std::endl;
 		outputFile.close();
 	}
 
@@ -683,9 +685,6 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
-
-	// Get the flux handler that will be used to get the fluence
-	auto fluxHandler = solverHandler.getFluxHandler();
 
 	// Get the da from ts
 	DM da;
@@ -779,9 +778,6 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 	// Master process
 	if (procId == 0) {
-		// Get the fluence (Multiply by the size of the grid)
-		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
-
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl

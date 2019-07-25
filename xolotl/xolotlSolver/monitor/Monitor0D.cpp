@@ -158,9 +158,6 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the flux handler that will be used to get the fluence
-	auto fluxHandler = solverHandler.getFluxHandler();
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -217,9 +214,6 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 			partialRadii += conc * cluster.getReactionRadius();
 		}
 	}
-
-	// Get the fluence
-	double fluence = fluxHandler->getFluence();
 
 	// Print the result
 	std::cout << "\nTime: " << time << std::endl;

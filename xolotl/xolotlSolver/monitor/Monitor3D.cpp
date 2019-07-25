@@ -388,9 +388,6 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the flux handler that will be used to get the fluence
-	auto fluxHandler = solverHandler.getFluxHandler();
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -497,8 +494,6 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	if (procId == 0) {
 		// Compute the total surface irradiated
 		double surface = (double) My * hy * (double) Mz * hz;
-		// Get the fluence
-		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
 
 		totalConcData[0] = totalConcData[0] / surface;
 
