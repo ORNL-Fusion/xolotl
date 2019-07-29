@@ -86,28 +86,21 @@ public:
 		NECluster * second;
 
 		/**
-		 * The first cluster distance in the group (0.0 for non-super clusters)
-		 */
-		double firstDistance;
-
-		/**
-		 * The second cluster distance in the group (0.0 for non-super clusters)
-		 */
-		double secondDistance;
-
-		/**
 		 * The reaction/dissociation pointer to the list
 		 */
-		// NB: we use a reference_wrapper because we assign
-		// this after constructing the object.
-		// TODO why can't we add this when we construct the object?
-		std::reference_wrapper<Reaction> reaction;
+		Reaction& reaction;
+
+		/**
+		 * All the coefficient needed to compute each element
+		 */
+		double a0;
+		double a1;
 
 		//! The constructor
 		ClusterPair(Reaction& _reaction, NECluster * firstPtr,
 				NECluster * secondPtr) :
-				reaction(_reaction), first(firstPtr), second(secondPtr), firstDistance(
-						0.0), secondDistance(0.0) {
+				first(firstPtr), second(secondPtr), reaction(_reaction), a0(
+						0.0), a1(0.0) {
 		}
 	};
 
@@ -131,23 +124,19 @@ public:
 		NECluster * combining;
 
 		/**
-		 * The reaction pointer to the list
+		 * The reaction/dissociation pointer to the list
 		 */
-		// We use a reference wrapper here because it allows NESuperCluster
-		// to edit vectors of CombiningClusters in place when grouping
-		// into superclusters.
-		// TODO can't this be done similar to what we're doing in PSI
-		// to avoid the need for the reference wrappers?
-		std::reference_wrapper<Reaction> reaction;
+		Reaction& reaction;
 
 		/**
-		 * The cluster distance in the group (0.0 for non-super clusters)
+		 * All the coefficient needed to compute each element
 		 */
-		double distance;
+		double a0;
+		double a1;
 
 		//! The constructor
 		CombiningCluster(Reaction& _reaction, NECluster * _comb) :
-				combining(_comb), reaction(_reaction), distance(0.0) {
+				combining(_comb), reaction(_reaction), a0(0.0), a1(0.0) {
 		}
 	};
 
