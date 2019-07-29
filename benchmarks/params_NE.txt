@@ -13,3 +13,4 @@ process=diff reaction
 voidPortion=0.0
 regularGrid=yes
 initialV=0.0
+radiusSize=50

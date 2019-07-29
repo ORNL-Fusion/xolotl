@@ -160,9 +160,6 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the flux handler that will be used to get the fluence
-	auto fluxHandler = solverHandler.getFluxHandler();
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -196,12 +193,13 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	for (unsigned int i = 0; i < indices0D.size(); i++) {
 		// Add the current concentration times the number of xenon in the cluster
 		// (from the weight vector)
-		xeConcentration += gridPointSolution[indices0D[i]] * weights0D[i];
-		bubbleConcentration += gridPointSolution[indices0D[i]];
-		radii += gridPointSolution[indices0D[i]] * radii0D[i];
-		if (weights0D[i] >= minSizes[0]) {
-			partialBubbleConcentration += gridPointSolution[indices0D[i]];
-			partialRadii += gridPointSolution[indices0D[i]] * radii0D[i];
+		double conc = gridPointSolution[indices0D[i]];
+		xeConcentration += conc * weights0D[i];
+		bubbleConcentration += conc;
+		radii += conc * radii0D[i];
+		if (weights0D[i] >= minSizes[0] && conc > 1.0e-16) {
+			partialBubbleConcentration += conc;
+			partialRadii += conc * radii0D[i];
 		}
 	}
 
@@ -209,33 +207,36 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	for (auto const& superMapItem : network.getAll(ReactantType::NESuper)) {
 		auto const& cluster =
 				static_cast<NESuperCluster&>(*(superMapItem.second));
+		double conc = cluster.getTotalConcentration();
 		xeConcentration += cluster.getTotalXenonConcentration();
-		bubbleConcentration += cluster.getTotalConcentration();
-		radii += cluster.getTotalConcentration() * cluster.getReactionRadius();
-		if (cluster.getSize() >= minSizes[0]) {
-			partialBubbleConcentration += cluster.getTotalConcentration();
-			partialRadii += cluster.getTotalConcentration()
-					* cluster.getReactionRadius();
+		bubbleConcentration += conc;
+		radii += conc * cluster.getReactionRadius();
+		if (cluster.getSize() >= minSizes[0] && conc > 1.0e-16) {
+			partialBubbleConcentration += conc;
+			partialRadii += conc * cluster.getReactionRadius();
 		}
 	}
 
-	// Get the fluence
-	double fluence = fluxHandler->getFluence();
-
 	// Print the result
 	std::cout << "\nTime: " << time << std::endl;
-	std::cout << "Xenon retention = " << 100.0 * (xeConcentration / fluence)
-			<< " %" << std::endl;
 	std::cout << "Xenon concentration = " << xeConcentration << std::endl
 			<< std::endl;
+
+	// Make sure the average partial radius makes sense
+	double averagePartialRadius = partialRadii / partialBubbleConcentration;
+	double minRadius = pow(
+			(3.0 * (double) minSizes[0])
+					/ (4.0 * xolotlCore::pi * network.getDensity()),
+			(1.0 / 3.0));
+	if (partialBubbleConcentration < 1.e-16 || averagePartialRadius < minRadius)
+		averagePartialRadius = minRadius;
 
 	// Uncomment to write the retention and the fluence in a file
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", ios::app);
-	outputFile << time << " " << 100.0 * (xeConcentration / fluence) << " "
-			<< xeConcentration << " " << fluence - xeConcentration << " "
-			<< radii / bubbleConcentration << " "
-			<< partialRadii / partialBubbleConcentration << std::endl;
+	outputFile << time << " " << xeConcentration << " "
+			<< radii / bubbleConcentration << " " << averagePartialRadius
+			<< std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray

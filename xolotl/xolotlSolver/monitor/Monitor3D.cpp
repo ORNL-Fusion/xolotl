@@ -52,10 +52,6 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlotXZ3D;
 std::vector<std::vector<double> > previousIFlux3D;
 //! The variable to store the total number of interstitials going through the surface.
 std::vector<std::vector<double> > nInterstitial3D;
-//! The variable to store the xenon flux at the previous time step.
-double previousXeFlux3D = 0.0;
-//! The variable to store the total number of xenon going through the GB.
-double nXenon3D = 0.0;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield3D = 0.0;
 // The vector of depths at which bursting happens
@@ -317,16 +313,19 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	int procId;
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
-	// Sum all the concentrations through MPI reduce
-	double totalHeConcentration = 0.0;
-	MPI_Reduce(&heConcentration, &totalHeConcentration, 1, MPI_DOUBLE, MPI_SUM,
-			0, PETSC_COMM_WORLD);
-	double totalDConcentration = 0.0;
-	MPI_Reduce(&dConcentration, &totalDConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	double totalTConcentration = 0.0;
-	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
+	// Determine total concentrations for He, D, T.
+	std::array<double, 3> myConcData { heConcentration, dConcentration,
+			tConcentration };
+	std::array<double, 3> totalConcData;
+
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE,
+	MPI_SUM, 0, PETSC_COMM_WORLD);
+
+	// Extract total He, D, T concentrations.  Values are valid only on rank 0.
+	double totalHeConcentration = totalConcData[0];
+	double totalDConcentration = totalConcData[1];
+	double totalTConcentration = totalConcData[2];
 
 	// Master process
 	if (procId == 0) {
@@ -389,9 +388,6 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the flux handler that will be used to get the fluence
-	auto fluxHandler = solverHandler.getFluxHandler();
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -445,20 +441,18 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				for (unsigned int i = 0; i < indices3D.size(); i++) {
 					// Add the current concentration times the number of xenon in the cluster
 					// (from the weight vector)
-					xeConcentration += gridPointSolution[indices3D[i]]
-							* weights3D[i] * (grid[xi + 1] - grid[xi]) * hy
+					double conc = gridPointSolution[indices3D[i]];
+					xeConcentration += conc * weights3D[i]
+							* (grid[xi + 1] - grid[xi]) * hy * hz;
+					bubbleConcentration += conc * (grid[xi + 1] - grid[xi]) * hy
 							* hz;
-					bubbleConcentration += gridPointSolution[indices3D[i]]
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					radii += gridPointSolution[indices3D[i]] * radii3D[i]
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					if (weights3D[i] >= minSizes[0]) {
-						partialBubbleConcentration +=
-								gridPointSolution[indices3D[i]]
-										* (grid[xi + 1] - grid[xi]) * hy * hz;
-						partialRadii += gridPointSolution[indices3D[i]]
-								* radii3D[i] * (grid[xi + 1] - grid[xi]) * hy
-								* hz;
+					radii += conc * radii3D[i] * (grid[xi + 1] - grid[xi]) * hy
+							* hz;
+					if (weights3D[i] >= minSizes[0] && conc > 1.0e-16) {
+						partialBubbleConcentration += conc
+								* (grid[xi + 1] - grid[xi]) * hy * hz;
+						partialRadii += conc * radii3D[i]
+								* (grid[xi + 1] - grid[xi]) * hy * hz;
 					}
 				}
 
@@ -467,19 +461,17 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 						ReactantType::NESuper)) {
 					auto const& cluster =
 							static_cast<NESuperCluster&>(*(superMapItem.second));
+					double conc = cluster.getTotalConcentration();
 					xeConcentration += cluster.getTotalXenonConcentration()
 							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					bubbleConcentration += cluster.getTotalConcentration()
+					bubbleConcentration += conc * (grid[xi + 1] - grid[xi]) * hy
+							* hz;
+					radii += conc * cluster.getReactionRadius()
 							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					radii += cluster.getTotalConcentration()
-							* cluster.getReactionRadius()
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					if (cluster.getSize() >= minSizes[0]) {
-						partialBubbleConcentration +=
-								cluster.getTotalConcentration()
-										* (grid[xi + 1] - grid[xi]) * hy * hz;
-						partialRadii += cluster.getTotalConcentration()
-								* cluster.getReactionRadius()
+					if (cluster.getSize() >= minSizes[0] && conc > 1.0e-16) {
+						partialBubbleConcentration += conc
+								* (grid[xi + 1] - grid[xi]) * hy * hz;
+						partialRadii += conc * cluster.getReactionRadius()
 								* (grid[xi + 1] - grid[xi]) * hy * hz;
 					}
 				}
@@ -492,113 +484,40 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Sum all the concentrations through MPI reduce
-	double totalXeConcentration = 0.0;
-	MPI_Reduce(&xeConcentration, &totalXeConcentration, 1, MPI_DOUBLE,
-	MPI_SUM, 0, PETSC_COMM_WORLD);
-	double totalBubbleConcentration = 0.0;
-	MPI_Reduce(&bubbleConcentration, &totalBubbleConcentration, 1,
-	MPI_DOUBLE,
-	MPI_SUM, 0, MPI_COMM_WORLD);
-	double totalRadii = 0.0;
-	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0,
-	MPI_COMM_WORLD);
-
-	// GB
-	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
-	// Compute the total number of Xe that went to the GB
-	nXenon3D += previousXeFlux3D * dt;
-
-	// Get the vector from the solver handler
-	auto gbVector = solverHandler.getGBVector();
-	// Initialize the value for the flux
-	double newFlux = 0.0;
-	// Loop on the GB
-	for (auto const& pair : gbVector) {
-		// X segment
-		// Left
-		int xi = std::get<0>(pair) - 1;
-		int yj = std::get<1>(pair);
-		int zk = std::get<2>(pair);
-
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi + 2] - grid[xi + 1];
-			double hxRight = grid[xi + 3] - grid[xi + 2];
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						* hy * hz / (hxLeft + hxRight);
-			}
-		}
-
-		// Right
-		xi = std::get<0>(pair) + 1;
-
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi] - grid[xi - 1];
-			double hxRight = grid[xi + 1] - grid[xi];
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the right
-				newFlux += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						* hy * hz / (hxLeft + hxRight);
-			}
-		}
-	}
-	// Update the xenon flux
-	previousXeFlux3D = newFlux;
+	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
+			radii, partialBubbleConcentration, partialRadii };
+	std::array<double, 5> totalConcData;
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 
 	// Master process
 	if (procId == 0) {
 		// Compute the total surface irradiated
 		double surface = (double) My * hy * (double) Mz * hz;
-		// Get the fluence
-		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
 
-		totalXeConcentration = totalXeConcentration / surface;
+		totalConcData[0] = totalConcData[0] / surface;
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Xenon retention = "
-				<< 100.0 * (totalXeConcentration) / (fluence) << " %"
+		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl
 				<< std::endl;
-		std::cout << "Xenon concentration = " << totalXeConcentration
-				<< std::endl;
-		std::cout << "Xenon GB = " << nXenon3D / surface << std::endl
-				<< std::endl;
+
+		// Make sure the average partial radius makes sense
+		double averagePartialRadius = totalConcData[4] / totalConcData[3];
+		double minRadius = pow(
+				(3.0 * (double) minSizes[0])
+						/ (4.0 * xolotlCore::pi * network.getDensity()),
+				(1.0 / 3.0));
+		if (partialBubbleConcentration < 1.e-16
+				|| averagePartialRadius < minRadius)
+			averagePartialRadius = minRadius;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " " << 100.0 * (totalXeConcentration / (fluence))
-				<< " " << totalXeConcentration << " "
-				<< fluence - totalXeConcentration << " "
-				<< totalRadii / totalBubbleConcentration << " "
-				<< partialRadii / partialBubbleConcentration << " "
-				<< nXenon3D / surface << std::endl;
+		outputFile << time << " " << totalConcData[0] << " "
+				<< totalConcData[2] / totalConcData[1] << " "
+				<< averagePartialRadius << std::endl;
 		outputFile.close();
 	}
 
@@ -705,27 +624,25 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 			}
 		}
 
-		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
-		MPI_Reduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
+		std::array<double, 5> myConcData { heLocalConc, dLocalConc, tLocalConc,
+				vLocalConc, iLocalConc };
+		std::array<double, 5> totalConcData;
+
+		MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+		MPI_DOUBLE,
+		MPI_SUM, 0, PETSC_COMM_WORLD);
 
 		// The master process writes computes the cumulative value and writes in the file
 		if (procId == 0) {
 			outputFile
 					<< x
 							- (grid[solverHandler.getSurfacePosition(0, 0) + 1]
-									- grid[1]) << " " << heConc / (My * Mz)
-					<< " " << dConc / (My * Mz) << " " << tConc / (My * Mz)
-					<< " " << vConc / (My * Mz) << " " << iConc / (My * Mz)
-					<< std::endl;
+									- grid[1]) << " "
+					<< totalConcData[0] / (My * Mz) << " "
+					<< totalConcData[1] / (My * Mz) << " "
+					<< totalConcData[2] / (My * Mz) << " "
+					<< totalConcData[3] / (My * Mz) << " "
+					<< totalConcData[4] / (My * Mz) << std::endl;
 		}
 	}
 

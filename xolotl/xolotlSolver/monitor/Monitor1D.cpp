@@ -60,10 +60,6 @@ double nInterstitial1D = 0.0;
 double previousHeFlux1D = 0.0;
 //! The variable to store the total number of helium going through the bottom.
 double nHelium1D = 0.0;
-//! The variable to store the xenon flux at the previous time step.
-double previousXeFlux1D = 0.0;
-//! The variable to store the total number of xenon going through the GB.
-double nXenon1D = 0.0;
 //! The variable to store the deuterium flux at the previous time step.
 double previousDFlux1D = 0.0;
 //! The variable to store the total number of deuterium going through the bottom.
@@ -74,14 +70,12 @@ double previousTFlux1D = 0.0;
 double nTritium1D = 0.0;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield1D = 0.0;
+//! The threshold for the negative concentration
+double negThreshold1D = 0.0;
 //! How often HDF5 file is written
 PetscReal hdf5Stride1D = 0.0;
 //! Previous time for HDF5
 PetscInt hdf5Previous1D = 0;
-//! How often negative concentrations are checked
-PetscReal negStride1D = 0.0;
-//! Previous time for negative concentration
-PetscInt negPrevious1D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName1D = "xolotlStop.h5";
 // Declare the vector that will store the Id of the helium clusters
@@ -127,21 +121,10 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Initial declaration
 	PetscErrorCode ierr;
-	const double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm, Mx;
+	double **solutionArray, *gridPointSolution;
+	PetscInt xs, xm;
 
 	PetscFunctionBeginUser;
-
-	// Compute the dt
-	double dt = time - previousTime;
-
-	// Don't do anything if it is not on the stride
-	if ((int) ((time + dt / 10.0) / negStride1D) <= negPrevious1D
-			&& negStride1D > 0.0)
-		PetscFunctionReturn(0);
-
-	// Update the previous time
-	negPrevious1D++;
 
 	// Get the number of processes
 	int worldSize;
@@ -157,17 +140,11 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -177,27 +154,23 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 	auto& network = solverHandler.getNetwork();
 	const int nClusters = network.size();
 
-	// Loop on the full grid
-	for (PetscInt i = 0; i < Mx; i++) {
-
-		// If it is the locally owned part of the grid
-		if (i >= xs && i < xs + xm) {
-			// Get the pointer to the beginning of the solution data for this grid point
-			gridPointSolution = solutionArray[i];
-
-			// Loop on the concentrations
-			for (int l = 0; l < nClusters; l++) {
-				if (gridPointSolution[l] < -1.0e-14) {
-					std::cout << "Negative concentration: "
-							<< gridPointSolution[l] << " at xi: " << i
-							<< ", cluster ID: " << l + 1 << std::endl;
-				}
+	// Loop on the local grid
+	for (PetscInt i = xs; i < xs + xm; i++) {
+		// Get the pointer to the beginning of the solution data for this grid point
+		gridPointSolution = solutionArray[i]; // Loop on the concentrations
+		for (int l = 0; l < nClusters; l++) {
+			if (gridPointSolution[l] < negThreshold1D
+					&& gridPointSolution[l] > 0.0) {
+				gridPointSolution[l] = negThreshold1D;
+			} else if (gridPointSolution[l] > -negThreshold1D
+					&& gridPointSolution[l] < 0.0) {
+				gridPointSolution[l] = -negThreshold1D;
 			}
 		}
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
@@ -682,8 +655,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		outputFile.open("retentionOut.txt", ios::app);
 		outputFile << fluence << " " << totalHeConcentration << " "
 				<< totalDConcentration << " " << totalTConcentration << " "
-				<< nHelium1D << " " << nDeuterium1D << " " << nTritium1D
-				<< std::endl;
+				<< nHelium1D << " " << nDeuterium1D << " " << nTritium1D << std::endl;
 		outputFile.close();
 	}
 
@@ -712,9 +684,6 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
-
-	// Get the flux handler that will be used to get the fluence
-	auto fluxHandler = solverHandler.getFluxHandler();
 
 	// Get the da from ts
 	DM da;
@@ -767,17 +736,13 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		for (unsigned int i = 0; i < indices1D.size(); i++) {
 			// Add the current concentration times the number of xenon in the cluster
 			// (from the weight vector)
-			xeConcentration += gridPointSolution[indices1D[i]] * weights1D[i]
-					* (grid[xi + 1] - grid[xi]);
-			bubbleConcentration += gridPointSolution[indices1D[i]]
-					* (grid[xi + 1] - grid[xi]);
-			radii += gridPointSolution[indices1D[i]] * radii1D[i]
-					* (grid[xi + 1] - grid[xi]);
-			if (weights1D[i] >= minSizes[0]) {
-				partialBubbleConcentration += gridPointSolution[indices1D[i]]
-						* (grid[xi + 1] - grid[xi]);
-				partialRadii += gridPointSolution[indices1D[i]] * radii1D[i]
-						* (grid[xi + 1] - grid[xi]);
+			double conc = gridPointSolution[indices1D[i]];
+			xeConcentration += conc * weights1D[i] * (grid[xi + 1] - grid[xi]);
+			bubbleConcentration += conc * (grid[xi + 1] - grid[xi]);
+			radii += conc * radii1D[i] * (grid[xi + 1] - grid[xi]);
+			if (weights1D[i] >= minSizes[0] && conc > 1.0e-16) {
+				partialBubbleConcentration += conc * (grid[xi + 1] - grid[xi]);
+				partialRadii += conc * radii1D[i] * (grid[xi + 1] - grid[xi]);
 			}
 		}
 
@@ -785,17 +750,15 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		for (auto const& superMapItem : network.getAll(ReactantType::NESuper)) {
 			auto const& cluster =
 					static_cast<NESuperCluster&>(*(superMapItem.second));
+			double conc = cluster.getTotalConcentration();
 			xeConcentration += cluster.getTotalXenonConcentration()
 					* (grid[xi + 1] - grid[xi]);
-			bubbleConcentration += cluster.getTotalConcentration()
+			bubbleConcentration += conc * (grid[xi + 1] - grid[xi]);
+			radii += conc * cluster.getReactionRadius()
 					* (grid[xi + 1] - grid[xi]);
-			radii += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * (grid[xi + 1] - grid[xi]);
-			if (cluster.getSize() >= minSizes[0]) {
-				partialBubbleConcentration += cluster.getTotalConcentration()
-						* (grid[xi + 1] - grid[xi]);
-				partialRadii += cluster.getTotalConcentration()
-						* cluster.getReactionRadius()
+			if (cluster.getSize() >= minSizes[0] && conc > 1.0e-16) {
+				partialBubbleConcentration += conc * (grid[xi + 1] - grid[xi]);
+				partialRadii += conc * cluster.getReactionRadius()
 						* (grid[xi + 1] - grid[xi]);
 			}
 		}
@@ -806,102 +769,35 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Sum all the concentrations through MPI reduce
-	double totalXeConcentration = 0.0;
-	MPI_Reduce(&xeConcentration, &totalXeConcentration, 1, MPI_DOUBLE,
-	MPI_SUM, 0, PETSC_COMM_WORLD);
-	double totalBubbleConcentration = 0.0;
-	MPI_Reduce(&bubbleConcentration, &totalBubbleConcentration, 1,
-	MPI_DOUBLE,
-	MPI_SUM, 0, MPI_COMM_WORLD);
-	double totalRadii = 0.0;
-	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0,
-	MPI_COMM_WORLD);
-
-	// GB
-	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
-	// Compute the total number of Xe that went to the GB
-	nXenon1D += previousXeFlux1D * dt;
-	// Get the vector from the solver handler
-	auto gbVector = solverHandler.getGBVector();
-	// Initialize the value for the flux
-	double newFlux = 0.0;
-	// Loop on the GB
-	for (auto const& pair : gbVector) {
-		// Left
-		int xi = std::get<0>(pair) - 1;
-
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi + 2] - grid[xi + 1];
-			double hxRight = grid[xi + 3] - grid[xi + 2];
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ (hxLeft + hxRight);
-			}
-		}
-
-		// Right
-		xi = std::get<0>(pair) + 1;
-
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi] - grid[xi - 1];
-			double hxRight = grid[xi + 1] - grid[xi];
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						/ (hxLeft + hxRight);
-			}
-		}
-	}
-	// Update the helium flux
-	previousXeFlux1D = newFlux;
+	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
+			radii, partialBubbleConcentration, partialRadii };
+	std::array<double, 5> totalConcData;
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 
 	// Master process
 	if (procId == 0) {
-		// Get the fluence (Multiply by the size of the grid)
-		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
-
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Xenon retention = "
-				<< 100.0 * (totalXeConcentration) / fluence << " %"
+		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl
 				<< std::endl;
-		std::cout << "Xenon concentration = " << totalXeConcentration
-				<< std::endl;
-		std::cout << "Xenon GB = " << nXenon1D << std::endl << std::endl;
+
+		// Make sure the average partial radius makes sense
+		double averagePartialRadius = totalConcData[4] / totalConcData[3];
+		double minRadius = pow(
+				(3.0 * (double) minSizes[0])
+						/ (4.0 * xolotlCore::pi * network.getDensity()),
+				(1.0 / 3.0));
+		if (partialBubbleConcentration < 1.e-16
+				|| averagePartialRadius < minRadius)
+			averagePartialRadius = minRadius;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " " << 100.0 * (totalXeConcentration / fluence)
-				<< " " << totalXeConcentration << " "
-				<< fluence - totalXeConcentration << " "
-				<< totalRadii / totalBubbleConcentration << " "
-				<< partialRadii / partialBubbleConcentration << " " << nXenon1D
-				<< std::endl;
+		outputFile << time << " " << totalConcData[0] << " "
+				<< totalConcData[2] / totalConcData[1] << " "
+				<< averagePartialRadius << std::endl;
 		outputFile.close();
 	}
 
@@ -3052,23 +2948,12 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	if (flagNeg) {
 		// Find the stride to know how often we want to check
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(NULL, NULL, "-check_negative", &negStride1D,
-				&flag);
+		ierr = PetscOptionsGetReal(NULL, NULL, "-check_negative",
+				&negThreshold1D, &flag);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: PetscOptionsGetInt (-check_negative) failed.");
 		if (!flag)
-			negStride1D = -1.0;
-
-		// Compute the correct negPrevious1D for a restart
-		// Get the last time step written in the HDF5 file
-		if (hasConcentrations) {
-
-			assert(lastTsGroup);
-
-			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
-			negPrevious1D = (int) (previousTime / negPrevious1D);
-		}
+			negThreshold1D = 1.0e-30;
 
 		// checkNegative1D will be called at each timestep
 		ierr = TSMonitorSet(ts, checkNegative1D, NULL, NULL);

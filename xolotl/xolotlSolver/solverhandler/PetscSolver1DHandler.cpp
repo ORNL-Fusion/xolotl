@@ -281,37 +281,40 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = network.getDOF();
 
-	// Compute the total concentration of atoms contained in bubbles
-	double atomConc = 0.0;
+	// Computing the trapped atom concentration is only needed for the attenuation
+	if (useAttenuation) {
+		// Compute the total concentration of atoms contained in bubbles
+		double atomConc = 0.0;
 
-	// Loop over grid points to get the atom concentration
-	// near the surface
-	for (int xi = xs; xi < xs + xm; xi++) {
-		// Boundary conditions
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
-			continue;
+		// Loop over grid points to get the atom concentration
+		// near the surface
+		for (int xi = xs; xi < xs + xm; xi++) {
+			// Boundary conditions
+			if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+				continue;
 
-		// We are only interested in the helium near the surface
-		if (grid[xi] - grid[surfacePosition] > 2.0)
-			continue;
+			// We are only interested in the helium near the surface
+			if (grid[xi] - grid[surfacePosition] > 2.0)
+				continue;
 
-		// Get the concentrations at this grid point
-		concOffset = concs[xi];
-		// Copy data into the PSIClusterReactionNetwork
-		network.updateConcentrationsFromArray(concOffset);
+			// Get the concentrations at this grid point
+			concOffset = concs[xi];
+			// Copy data into the PSIClusterReactionNetwork
+			network.updateConcentrationsFromArray(concOffset);
 
-		// Sum the total atom concentration
-		atomConc += network.getTotalTrappedAtomConcentration()
-				* (grid[xi + 1] - grid[xi]);
+			// Sum the total atom concentration
+			atomConc += network.getTotalTrappedAtomConcentration()
+					* (grid[xi + 1] - grid[xi]);
+		}
+
+		// Share the concentration with all the processes
+		double totalAtomConc = 0.0;
+		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
+		MPI_COMM_WORLD);
+
+		// Set the disappearing rate in the modified TM handler
+		mutationHandler->updateDisappearingRate(totalAtomConc);
 	}
-
-	// Share the concentration with all the processes
-	double totalAtomConc = 0.0;
-	MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-			MPI_COMM_WORLD);
-
-	// Set the disappearing rate in the modified TM handler
-	mutationHandler->updateDisappearingRate(totalAtomConc);
 
 	// Declarations for variables used in the loop
 	double **concVector = new double*[3];
@@ -695,37 +698,40 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = network.getDOF();
 
-	// Compute the total concentration of atoms contained in bubbles
-	double atomConc = 0.0;
+	// Computing the trapped atom concentration is only needed for the attenuation
+	if (useAttenuation) {
+		// Compute the total concentration of atoms contained in bubbles
+		double atomConc = 0.0;
 
-	// Loop over grid points to get the atom concentration
-	// near the surface
-	for (int xi = xs; xi < xs + xm; xi++) {
-		// Boundary conditions
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
-			continue;
+		// Loop over grid points to get the atom concentration
+		// near the surface
+		for (int xi = xs; xi < xs + xm; xi++) {
+			// Boundary conditions
+			if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+				continue;
 
-		// We are only interested in the helium near the surface
-		if (grid[xi] - grid[surfacePosition] > 2.0)
-			continue;
+			// We are only interested in the helium near the surface
+			if (grid[xi] - grid[surfacePosition] > 2.0)
+				continue;
 
-		// Get the concentrations at this grid point
-		concOffset = concs[xi];
-		// Copy data into the PSIClusterReactionNetwork
-		network.updateConcentrationsFromArray(concOffset);
+			// Get the concentrations at this grid point
+			concOffset = concs[xi];
+			// Copy data into the PSIClusterReactionNetwork
+			network.updateConcentrationsFromArray(concOffset);
 
-		// Sum the total atom concentration
-		atomConc += network.getTotalTrappedAtomConcentration()
-				* (grid[xi + 1] - grid[xi]);
+			// Sum the total atom concentration
+			atomConc += network.getTotalTrappedAtomConcentration()
+					* (grid[xi + 1] - grid[xi]);
+		}
+
+		// Share the concentration with all the processes
+		double totalAtomConc = 0.0;
+		MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
+		MPI_COMM_WORLD);
+
+		// Set the disappearing rate in the modified TM handler
+		mutationHandler->updateDisappearingRate(totalAtomConc);
 	}
-
-	// Share the concentration with all the processes
-	double totalAtomConc = 0.0;
-	MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-			MPI_COMM_WORLD);
-
-	// Set the disappearing rate in the modified TM handler
-	mutationHandler->updateDisappearingRate(totalAtomConc);
 
 	// Arguments for MatSetValuesStencil called below
 	MatStencil rowId;
@@ -866,7 +872,8 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 		// Arguments for MatSetValuesStencil called below
 		PetscScalar resolutionVals[10 * nXenon];
-		PetscInt resolutionIndices[10 * nXenon];
+		PetscInt resolutionIndices[5 * nXenon];
+		MatStencil rowIds[5];
 
 		// Compute the partial derivative from re-solution at this grid point
 		int nResoluting = resolutionHandler->computePartialsForReSolution(
@@ -875,80 +882,26 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// Loop on the number of xenon to set the values in the Jacobian
 		for (int i = 0; i < nResoluting; i++) {
 			// Set grid coordinate and component number for the row and column
-			// corresponding to the  large xenon cluster
-			row.i = xi;
-			row.c = resolutionIndices[10 * i];
-			col.i = xi;
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
+			// corresponding to the clusters involved in re-solution
+			rowIds[0].i = xi;
+			rowIds[0].c = resolutionIndices[5 * i];
+			rowIds[1].i = xi;
+			rowIds[1].c = resolutionIndices[(5 * i) + 1];
+			rowIds[2].i = xi;
+			rowIds[2].c = resolutionIndices[(5 * i) + 2];
+			rowIds[3].i = xi;
+			rowIds[3].c = resolutionIndices[(5 * i) + 3];
+			rowIds[4].i = xi;
+			rowIds[4].c = resolutionIndices[(5 * i) + 4];
+			colIds[0].i = xi;
+			colIds[0].c = resolutionIndices[5 * i];
+			colIds[1].i = xi;
+			colIds[1].c = resolutionIndices[(5 * i) + 1];
+			ierr = MatSetValuesStencil(J, 5, rowIds, 2, colIds,
 					resolutionVals + (10 * i), ADD_VALUES);
 			checkPetscError(ierr,
 					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (large Xe re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 1, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (large Xe re-solution) failed.");
-			row.c = resolutionIndices[(10 * i) + 1];
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 2, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (large Xe re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 3, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (large Xe re-solution) failed.");
-
-			// Set component number for the row
-			// corresponding to the smaller xenon cluster created through re-solution
-			row.c = resolutionIndices[(10 * i) + 4];
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 4, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (smaller Xe re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 5, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (smaller Xe re-solution) failed.");
-			row.c = resolutionIndices[(10 * i) + 5];
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 6, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (smaller Xe re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 7, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (smaller Xe re-solution) failed.");
-
-			// Set component number for the row
-			// corresponding to the single xenon created through re-solution
-			row.c = resolutionIndices[(10 * i) + 8];
-			col.c = resolutionIndices[10 * i];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 8, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (Xe_1 re-solution) failed.");
-			col.c = resolutionIndices[(10 * i) + 1];
-			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					resolutionVals + (10 * i) + 9, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (Xe_1 re-solution) failed.");
+							"MatSetValuesStencil (Xe re-solution) failed.");
 		}
 	}
 
