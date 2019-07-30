@@ -281,7 +281,7 @@ void NEClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 		size = 0;
 		count = 0;
 		superCount++;
-//		width = max(sectionWidth * (int) (superCount / 10), sectionWidth);
+		width += 1;
 	}
 
 	if (xeMin < xeMax) {
