@@ -59,25 +59,22 @@ protected:
 		AlloyCluster * second;
 
 		/**
-		 * The first cluster distance in the group (0.0 for non-super clusters)
-		 */
-		double firstDistance;
-
-		/**
-		 * The second cluster distance in the group (0.0 for non-super clusters)
-		 */
-		double secondDistance;
-
-		/**
 		 * The reaction/dissociation pointer to the list
 		 */
-		std::reference_wrapper<Reaction> reaction;
+		Reaction& reaction;
+
+		/**
+		 * All the coefficient needed to compute each element
+		 */
+		double a0;
+		double a1;
+		double a2;
 
 		//! The constructor
 		ClusterPair(Reaction& _reaction, AlloyCluster * firstPtr,
 				AlloyCluster * secondPtr) :
-				reaction(_reaction), first(firstPtr), second(secondPtr), firstDistance(
-						0.0), secondDistance(0.0) {
+				first(firstPtr), second(secondPtr), reaction(_reaction), a0(
+						0.0), a1(0.0), a2(0.0) {
 		}
 	};
 
@@ -98,18 +95,19 @@ protected:
 		AlloyCluster * combining;
 
 		/**
-		 * The reaction pointer to the list
+		 * The reaction/dissociation pointer to the list
 		 */
-		std::reference_wrapper<Reaction> reaction;
+		Reaction& reaction;
 
 		/**
-		 * The cluster distance in the group (0.0 for non-super clusters)
+		 * All the coefficient needed to compute each element
 		 */
-		double distance;
+		double a0;
+		double a1;
 
 		//! The constructor
-		CombiningCluster(Reaction& _reaction, AlloyCluster * ptr) :
-				combining(ptr), reaction(_reaction), distance(0.0) {
+		CombiningCluster(Reaction& _reaction, AlloyCluster * _comb) :
+				combining(_comb), reaction(_reaction), a0(0.0), a1(0.0) {
 		}
 	};
 

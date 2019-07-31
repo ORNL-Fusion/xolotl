@@ -45,13 +45,25 @@ void AlloyCluster::resultFrom(ProductionReaction& reaction,
 
 	// Create the pair
 	ClusterPair pair(reaction, &cluster1, &cluster2);
-
-	// Set the distance if super clusters are involved
-	if (cluster1.isSuper()) {
-		pair.firstDistance = cluster1.getDistance(prodHi - hi2); // prod and 2 are normal
+	// Compute the coefficients
+	pair.a0 = overlap;
+	if (width1 > 1) {
+		pair.a2 = 2.0
+				* firstOrderSum(std::max(prodLo - lo2, lo1),
+						std::min(prodHi - hi2, hi1), (double) (lo1 + hi1) / 2.0)
+				/ (double) (hi1 - lo1);
 	}
-	if (cluster2.isSuper()) {
-		pair.secondDistance = cluster2.getDistance(prodHi - hi1); // prod and 1 are normal
+	if (width2 > 1) {
+		pair.a1 = 2.0
+				* firstOrderSum(std::max(prodLo - lo1, lo2),
+						std::min(prodHi - hi1, hi2), (double) (lo2 + hi2) / 2.0)
+				/ (double) ((hi2 - lo2));
+
+	}
+	if (width1 > 1 && width2 > 1) {
+		// Should never happen for now
+		std::cout << "Both reactants are super: " << cluster1.getName() << " + "
+				<< cluster2.getName() << " -> " << name << std::endl;
 	}
 
 	// Add the pair
@@ -87,9 +99,10 @@ void AlloyCluster::resultFrom(ProductionReaction& reaction, double *coef) {
 	setReactionConnectivity(reaction.first.getId());
 	setReactionConnectivity(reaction.second.getId());
 
-	// Update the distances
-	newPair.firstDistance = coef[0];
-	newPair.secondDistance = coef[1];
+	// Update the coefs
+	newPair.a0 = coef[0];
+	newPair.a1 = coef[1];
+	newPair.a2 = coef[2];
 
 	return;
 }
@@ -130,20 +143,21 @@ void AlloyCluster::participateIn(ProductionReaction& reaction,
 	if (overlap < 1)
 		return;
 
-	// Loop on the overlap
-	for (int i = 0; i < overlap; i++) {
-		// Create the pair
-		CombiningCluster pair(reaction, &otherCluster);
+	// Create the pair
+	CombiningCluster pair(reaction, &otherCluster);
 
-		// Set the distance if super clusters are involved
-		if (otherCluster.isSuper()) {
-			pair.distance = otherCluster.getDistance(
-					std::max(prodLo - lo2, lo1) + i);
-		}
+	// Compute the coefficients
+	pair.a0 = overlap;
 
-		// Add the combining cluster to list of clusters that combine with us
-		combiningReactants.emplace_back(pair);
+	if (width1 > 1) {
+		pair.a1 = 2.0
+				* firstOrderSum(std::max(prodLo - lo2, lo1),
+						std::min(prodHi - hi2, hi1), (double) (lo1 + hi1) / 2.0)
+				/ (double) (hi1 - lo1);
 	}
+
+	// Add the combining cluster to list of clusters that combine with us
+	combiningReactants.emplace_back(pair);
 
 	return;
 }
@@ -153,8 +167,14 @@ void AlloyCluster::participateIn(ProductionReaction& reaction, int[4]) {
 	auto& otherCluster = static_cast<AlloyCluster&>(
 			(reaction.first.getId() == id) ? reaction.second : reaction.first);
 
+
+	// Create the pair
+	CombiningCluster pair(reaction, &otherCluster);
+	// Compute the coefficients
+	// This is called by the clusters combining together
+	pair.a0 = 1.0;
 	// Add the combining cluster to list of clusters that combine with us
-	combiningReactants.emplace_back(reaction, &otherCluster);
+	combiningReactants.emplace_back(pair);
 
 	// Setup the connectivity array
 	setReactionConnectivity(id);
@@ -181,8 +201,9 @@ void AlloyCluster::participateIn(ProductionReaction& reaction, double *coef) {
 	setReactionConnectivity(id);
 	setReactionConnectivity(otherCluster.getId());
 
-	// Update the distances
-	newComb.distance = coef[0];
+	// Update the coefs
+	newComb.a0 = coef[0];
+	newComb.a1 = coef[1];
 
 	return;
 }
@@ -224,20 +245,20 @@ void AlloyCluster::participateIn(DissociationReaction& reaction,
 	if (overlap < 1)
 		return;
 
-	// Loop on the overlap
-	for (int i = 0; i < overlap; i++) {
-		// Create the pair
-		ClusterPair pair(reaction, &dissoCluster, &emittedCluster);
-
-		// Set the distance if super clusters are involved
-		if (dissoCluster.isSuper()) {
-			pair.firstDistance = dissoCluster.getDistance(
-					std::max(dissoLo, lo1 + lo2) + i);
-		}
-
-		// Add the combining cluster to list of clusters that combine with us
-		dissociatingPairs.emplace_back(pair);
+	// Create the pair
+	ClusterPair pair(reaction, &dissoCluster, &emittedCluster);
+	// Compute the coefficients
+	pair.a0 = overlap;
+	if (dissoWidth > 1) {
+		pair.a1 = 2.0
+				* firstOrderSum(std::max(dissoLo, lo1 + lo2),
+						std::min(dissoHi, hi1 + hi2),
+						(double) (dissoLo + dissoHi) / 2.0)
+				/ (double) (dissoHi - dissoLo);
 	}
+
+	// Add the pair to the vector
+	dissociatingPairs.emplace_back(pair);
 
 	return;
 }
@@ -277,8 +298,9 @@ void AlloyCluster::participateIn(DissociationReaction& reaction, double *coef) {
 	// Setup the connectivity array
 	setDissociationConnectivity(reaction.dissociating.getId());
 
-	// Set the distance
-	newPair.firstDistance = coef[0];
+	// Set the coefs
+	newPair.a0 = coef[0];
+	newPair.a1 = coef[1];
 
 	return;
 }
@@ -319,14 +341,14 @@ void AlloyCluster::emitFrom(DissociationReaction& reaction, IReactant& disso) {
 	if (overlap < 1)
 		return;
 
-	// Loop on the overlap
-	for (int i = 0; i < overlap; i++) {
-		// Create the pair
-		ClusterPair pair(reaction, &cluster1, &cluster2);
+	// Create the pair
+	ClusterPair pair(reaction, &cluster1, &cluster2);
 
-		// Add the pair
-		emissionPairs.emplace_back(pair);
-	}
+	// Compute the coefficients
+	pair.a0 = overlap;
+
+	// Add the pair
+	emissionPairs.emplace_back(pair);
 
 	return;
 }
@@ -352,11 +374,13 @@ void AlloyCluster::emitFrom(DissociationReaction& reaction, double *coef) {
 			reaction, // TODO is this correct?
 			&static_cast<AlloyCluster&>(reaction.first),
 			&static_cast<AlloyCluster&>(reaction.second));
+	auto& newPair = emissionPairs.back();
 
 	// Setup the connectivity array to itself
 	setReactionConnectivity(id);
 
-	// Nothing more to do
+	// Set the coefs
+	newPair.a0 = coef[0];
 
 	return;
 }
@@ -457,12 +481,12 @@ double AlloyCluster::getDissociationFlux(int xi) const {
 	double flux =
 			std::accumulate(dissociatingPairs.begin(), dissociatingPairs.end(),
 					0.0, [&xi](double running, const ClusterPair& currPair) {
-						// Get the dissociating cluster
-					auto& dissociatingCluster = currPair.first;
-					// Calculate the Dissociation flux
-					Reaction const& currReaction = currPair.reaction;
-					return running + (currReaction.kConstant[xi] *
-							dissociatingCluster->getConcentration(currPair.firstDistance));
+						// Get the dissociating clusters
+					AlloyCluster* dissociatingCluster = currPair.first;
+					double l0A = dissociatingCluster->getConcentration();
+					double l1A = dissociatingCluster->getMoment();
+					// Update the flux
+					return running + (currPair.reaction.kConstant[xi] * (currPair.a0 * l0A + currPair.a1 * l1A));
 				});
 
 	// Return the flux
@@ -474,8 +498,7 @@ double AlloyCluster::getEmissionFlux(int xi) const {
 	// Sum reaction rate constants over all emission pair reactions.
 	double flux = std::accumulate(emissionPairs.begin(), emissionPairs.end(),
 			0.0, [&xi](double running, const ClusterPair& currPair) {
-				Reaction const& currReaction = currPair.reaction;
-				return running + currReaction.kConstant[xi];
+				return running + currPair.reaction.kConstant[xi] * currPair.a0;
 			});
 
 	return flux * concentration;
@@ -491,13 +514,15 @@ double AlloyCluster::getProductionFlux(int xi) const {
 				// Get the two reacting clusters
 				AlloyCluster* firstReactant = currPair.first;
 				AlloyCluster* secondReactant = currPair.second;
+				// We know the first one is always the single one
+				double l0A = firstReactant->getConcentration();
+				double l1A = firstReactant->getMoment();
+				double l0B = secondReactant->getConcentration();
+				double l1B = secondReactant->getMoment();
 				// Update the flux
-				Reaction const& currReaction = currPair.reaction;
-				flux += currReaction.kConstant[xi]
-				* firstReactant->getConcentration(
-						currPair.firstDistance)
-				* secondReactant->getConcentration(
-						currPair.secondDistance);
+				// The double moment term is not possible because 2 super can't react together
+				flux += currPair.reaction.kConstant[xi] *
+						(currPair.a0 * l0A * l0B + currPair.a1 * l0B * l1A + currPair.a2 * l0A * l1B);
 			});
 
 	// Return the production flux
@@ -511,13 +536,12 @@ double AlloyCluster::getCombinationFlux(int xi) const {
 			[xi, this](double running, const CombiningCluster& currPair) {
 				// Get the cluster that combines with this one
 				AlloyCluster const& combiningCluster = *currPair.combining;
-				Reaction const& currReaction = currPair.reaction;
-
-				// Calculate Second term of production flux
+				double l0A = combiningCluster.getConcentration();
+				double l1A = combiningCluster.getMoment();
+				// Update the flux
 				return running +
-				(currReaction.kConstant[xi] *
-						combiningCluster.getConcentration(currPair.distance));
-
+				(currPair.reaction.kConstant[xi] *
+						(currPair.a0 * l0A + currPair.a1 * l1A));
 			});
 
 	return flux * concentration;
@@ -559,25 +583,25 @@ void AlloyCluster::getProductionPartialDerivatives(
 	// dF(C_D)/dC_B = k+_(A,B)*C_A
 	std::for_each(reactingPairs.begin(), reactingPairs.end(),
 			[&partials,&xi](ClusterPair const& currPair) {
-
-				Reaction const& currReaction = currPair.reaction;
+				// Get the two reacting clusters
+				AlloyCluster* firstReactant = currPair.first;
+				AlloyCluster* secondReactant = currPair.second;
+				double l0A = firstReactant->getConcentration();
+				double l1A = firstReactant->getMoment();
+				double l0B = secondReactant->getConcentration();
+				double l1B = secondReactant->getMoment();
 
 				// Compute the contribution from the first part of the reacting pair
-				auto value = currReaction.kConstant[xi]
-				* currPair.second->getConcentration(
-						currPair.secondDistance);
-				auto index = currPair.first->id - 1;
-				partials[index] += value;
-				index = currPair.first->momId[0] - 1;
-				partials[index] += value * currPair.firstDistance;
+				auto value = currPair.reaction.kConstant[xi];
+				auto index = firstReactant->id - 1;
+				partials[index] += value * (currPair.a0 * l0B + currPair.a2 * l1B);
+				index = firstReactant->momId[0] - 1;
+				partials[index] += value * currPair.a1 * l0B;
 				// Compute the contribution from the second part of the reacting pair
-				value = currReaction.kConstant[xi]
-				* currPair.first->getConcentration(
-						currPair.firstDistance);
-				index = currPair.second->id - 1;
-				partials[index] += value;
-				index = currPair.second->momId[0] - 1;
-				partials[index] += value * currPair.secondDistance;
+				index = secondReactant->id - 1;
+				partials[index] += value * (currPair.a0 * l0A + currPair.a1 * l1A);
+				index = secondReactant->momId[0] - 1;
+				partials[index] += value * currPair.a2 * l0A;
 			});
 
 	return;
@@ -595,19 +619,19 @@ void AlloyCluster::getCombinationPartialDerivatives(
 	// dF(C_A)/dC_B = - k+_(A,B)*C_A
 	std::for_each(combiningReactants.begin(), combiningReactants.end(),
 			[this,&partials,&xi](const CombiningCluster& cc) {
-
 				AlloyCluster const& cluster = *cc.combining;
 				Reaction const& currReaction = cc.reaction;
+				double l0A = cluster.getConcentration();
+				double l1A = cluster.getMoment();
 
 				// Remember that the flux due to combinations is OUTGOING (-=)!
 				// Compute the contribution from this cluster
-				partials[id - 1] -= currReaction.kConstant[xi] *
-				cluster.getConcentration(cc.distance);
+				partials[id - 1] -= currReaction.kConstant[xi] * (cc.a0 * l0A + cc.a1 * l1A);
 				// Compute the contribution from the combining cluster
 				double value = currReaction.kConstant[xi] * concentration;
 
-				partials[cluster.id - 1] -= value;
-				partials[cluster.momId[0] - 1] -= value * cc.distance;
+				partials[cluster.id - 1] -= value * cc.a0;
+				partials[cluster.momId[0] - 1] -= value * cc.a1;
 			});
 
 	return;
@@ -627,9 +651,9 @@ void AlloyCluster::getDissociationPartialDerivatives(
 				// Get the dissociating cluster
 				AlloyCluster* cluster = currPair.first;
 				Reaction const& currReaction = currPair.reaction;
-				partials[cluster->id - 1] += currReaction.kConstant[xi];
+				partials[cluster->id - 1] += currReaction.kConstant[xi] * currPair.a0;
 				partials[cluster->momId[0] - 1] += currReaction.kConstant[xi] *
-				currPair.firstDistance;
+				currPair.a1;
 			});
 
 	return;
@@ -647,8 +671,7 @@ void AlloyCluster::getEmissionPartialDerivatives(std::vector<double> & partials,
 	double emissionFlux = std::accumulate(emissionPairs.begin(),
 			emissionPairs.end(), 0.0,
 			[&xi](double running, const ClusterPair& currPair) {
-				Reaction const& currReaction = currPair.reaction;
-				return running + currReaction.kConstant[xi];
+				return running + currPair.reaction.kConstant[xi] * currPair.a0;
 			});
 
 	// Recall emission flux is OUTGOING
@@ -692,8 +715,9 @@ std::vector<std::vector<double> > AlloyCluster::getProdVector() const {
 				std::vector<double> tempVec;
 				tempVec.push_back(currPair.first->getId() - 1);
 				tempVec.push_back(currPair.second->getId() - 1);
-				tempVec.push_back(currPair.firstDistance);
-				tempVec.push_back(currPair.secondDistance);
+				tempVec.push_back(currPair.a0);
+				tempVec.push_back(currPair.a1);
+				tempVec.push_back(currPair.a2);
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -712,7 +736,8 @@ std::vector<std::vector<double> > AlloyCluster::getCombVector() const {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				tempVec.push_back(cc.combining->getId() - 1);
-				tempVec.push_back(cc.distance);
+				tempVec.push_back(cc.a0);
+				tempVec.push_back(cc.a1);
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -732,7 +757,8 @@ std::vector<std::vector<double> > AlloyCluster::getDissoVector() const {
 				std::vector<double> tempVec;
 				tempVec.push_back(currPair.first->getId() - 1);
 				tempVec.push_back(currPair.second->getId() - 1);
-				tempVec.push_back(currPair.firstDistance);
+				tempVec.push_back(currPair.a0);
+				tempVec.push_back(currPair.a1);
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -752,6 +778,7 @@ std::vector<std::vector<double> > AlloyCluster::getEmitVector() const {
 				std::vector<double> tempVec;
 				tempVec.push_back(currPair.first->getId() - 1);
 				tempVec.push_back(currPair.second->getId() - 1);
+				tempVec.push_back(currPair.a0);
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);

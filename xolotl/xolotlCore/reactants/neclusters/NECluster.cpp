@@ -70,13 +70,6 @@ void NECluster::resultFrom(ProductionReaction& reaction, IReactant& product) {
 						std::min(prodHi - hi2, hi1), (double) (lo1 + hi1) / 2.0)
 				/ (double) (hi1 - lo1);
 	}
-	if (width2 > 1) {
-		pair.a1 = 2.0
-				* firstOrderSum(std::max(prodLo - lo1, lo2),
-						std::min(prodHi - hi1, hi2), (double) (lo2 + hi2) / 2.0)
-				/ (double) ((hi2 - lo2));
-
-	}
 	if (width1 > 1 && width2 > 1) {
 		// Should never happen for now
 		std::cout << "Both reactants are super: " << cluster1.getName() << " + "
@@ -153,14 +146,6 @@ void NECluster::participateIn(ProductionReaction& reaction,
 				* firstOrderSum(std::max(prodLo - lo2, lo1),
 						std::min(prodHi - hi2, hi1), (double) (lo1 + hi1) / 2.0)
 				/ (double) (hi1 - lo1);
-	}
-
-	if (width2 > 1) {
-		pair.a1 = 2.0
-				* firstOrderSum(std::max(prodLo - lo1, lo2),
-						std::min(prodHi - hi1, hi2), (double) (lo2 + hi2) / 2.0)
-				/ (double) ((hi2 - lo2));
-
 	}
 
 	// Add the combining cluster to list of clusters that combine with us
@@ -481,6 +466,7 @@ double NECluster::getProductionFlux(int xi) const {
 				// Get the two reacting clusters
 				NECluster* firstReactant = currPair.first;
 				NECluster* secondReactant = currPair.second;
+				// We know the first one is always the single one
 				double l0A = firstReactant->getConcentration();
 				double l0B = secondReactant->getConcentration();
 				double l1B = secondReactant->getMoment();
@@ -505,7 +491,6 @@ double NECluster::getCombinationFlux(int xi) const {
 				return running +
 				(currPair.reaction.kConstant[xi] *
 						(currPair.a0 * l0A + currPair.a1 * l1A));
-
 			});
 
 	return flux * concentration;
@@ -580,7 +565,6 @@ void NECluster::getCombinationPartialDerivatives(std::vector<double> & partials,
 	// dF(C_A)/dC_B = - k+_(A,B)*C_A
 	std::for_each(combiningReactants.begin(), combiningReactants.end(),
 			[this,&partials,&xi](const CombiningCluster& cc) {
-
 				NECluster const& cluster = *cc.combining;
 				Reaction const& currReaction = cc.reaction;
 				double l0A = cluster.getConcentration();
