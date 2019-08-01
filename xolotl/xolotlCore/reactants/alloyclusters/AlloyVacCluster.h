@@ -43,7 +43,7 @@ public:
 		// Define the diffusion pre-factor
 		{
 			double jumpDistance = xolotlCore::alloyLatticeConstant / sqrt(2.0);
-			double phononFrequency = 1.0e13;
+			double phononFrequency = 9.6e12;
 			double jumpsPerPhonon = 1.0;
 			double prefactorExponent = -1.0;
 			diffusionFactor = phononFrequency * jumpsPerPhonon * jumpDistance
