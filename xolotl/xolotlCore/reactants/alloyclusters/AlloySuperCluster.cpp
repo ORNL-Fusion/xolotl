@@ -609,11 +609,11 @@ double AlloySuperCluster::getProductionFlux(int xi) {
 		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		flux += value
 				* ((*it).a000 * l0A * l0B + (*it).a010 * l0A * l1B
-						+ (*it).a100 * l1A * l0B + (*it).a110 * l1A);
+						+ (*it).a100 * l1A * l0B + (*it).a110 * l1A * l1B);
 		// Compute the moment flux
 		momentFlux += value
 				* ((*it).a001 * l0A * l0B + (*it).a011 * l0A * l1B
-						+ (*it).a101 * l1A * l0B + (*it).a111 * l1A);
+						+ (*it).a101 * l1A * l0B + (*it).a111 * l1A * l1B);
 	}
 
 	// Return the production flux
