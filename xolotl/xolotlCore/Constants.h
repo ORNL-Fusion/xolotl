@@ -36,7 +36,7 @@ constexpr double uraniumDioxydeLatticeConstant = 0.57400000000000000;
 constexpr double ironLatticeConstant = 0.28700000000000000;
 
 //! Core radius. Given in units here of nm.
-static const double alloyCoreRadius = 0.36000000000000000;
+static const double alloyCoreRadius = 0.37000000000000000;
 
 // Tungsten heat coefficient = lambda / (rho * C) in nm2 s-1
 constexpr double tungstenHeatCoefficient = 6.835e13;
