@@ -291,8 +291,9 @@ void PSISuperCluster::resultFrom(ProductionReaction& reaction,
 		}
 
 		// Special case for V and I
-		if (i == 4)
+		if (i == 4) {
 			singleComp[i - 1] -= iSize;
+		}
 
 		width[i - 1] = std::min(productHi[i - 1],
 				r1Hi[i - 1] + singleComp[i - 1])
@@ -975,6 +976,15 @@ void PSISuperCluster::setHeVVector(const HeVListType& vec) {
 			dispersion[i] = 2.0
 					* (nSquare[i] - (numAtom[i] * (double) nTot * numAtom[i]))
 					/ ((double) (nTot * (sectionWidth[i] - 1)));
+		if (dispersion[i] == 0) {
+			std::cout << name << " " << i << " " << numAtom[i] << " " << nTot << " " << sectionWidth[i] << " " << nSquare[i] << std::endl;
+
+			for (auto const& pair : heVList) {
+				std::cout << std::get<0>(pair) << std::endl;
+			}
+		}
+
+
 	}
 
 	return;

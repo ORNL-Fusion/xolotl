@@ -95,7 +95,7 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 	int advClusterIdx = 0;
 	for (IReactant const& currReactant : advectingClusters) {
 		// Get a specific one and its index
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		int index = cluster.getId() - 1;
 
 		// Get the initial concentrations
@@ -144,7 +144,7 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 	int advClusterIdx = 0;
 	for (IReactant const& currReactant : advectingClusters) {
 		// Get a specific one and its index
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		int index = cluster.getId() - 1;
 		// Get the diffusion coefficient of the cluster
 		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1 - xs);

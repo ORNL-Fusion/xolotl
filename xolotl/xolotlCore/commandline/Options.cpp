@@ -40,7 +40,8 @@ Options::Options() :
 				0.0), fluxFlag(false), fluxAmplitude(0.0), fluxProfileFlag(
 				false), perfRegistryType(xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
 				false), materialName(""), initialVConcentration(0.0), voidPortion(
-				50.0), dimensionNumber(1), useRegularGridFlag(true), gbList(""), groupingMin(
+				50.0), dimensionNumber(1), useRegularGridFlag(true), useChebyshevGridFlag(
+				false), gbList(""), groupingMin(
 				std::numeric_limits<int>::max()), groupingWidthA(1), groupingWidthB(
 				1), sputteringYield(0.0), useHDF5Flag(true), usePhaseCutFlag(
 				false), maxImpurity(8), maxD(0), maxT(0), maxV(20), maxI(6), nX(
@@ -48,7 +49,8 @@ Options::Options() :
 				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
 				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), rngUseSeed(
 				false), rngSeed(0), rngPrintSeed(false), zeta(0.73), resoMinSize(
-				0), radiusMinSize(0), density(10.162795276841) {
+				0), density(10.162795276841) {
+	radiusMinSizes.Init(0);
 
 	// Create the network option handler
 	auto networkHandler = new NetworkOptionHandler();

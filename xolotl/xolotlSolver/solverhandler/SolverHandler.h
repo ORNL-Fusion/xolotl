@@ -7,6 +7,7 @@
 #include <XFile.h>
 #include <MPIUtils.h>
 #include <TokenizedLineReader.h>
+#include <Constants.h>
 
 namespace xolotlSolver {
 
@@ -114,6 +115,9 @@ protected:
 	//! Which type of grid does the used want to use.
 	std::string useRegularGrid;
 
+	//! If the user wants to use a Chebyshev grid.
+	bool useChebyshevGrid;
+
 	//! If the user wants to move the surface.
 	bool movingSurface;
 
@@ -135,8 +139,8 @@ protected:
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
 
-	//! The minimum size for average radius computation.
-	int minRadiusSize;
+	//! The minimum sizes for average radius computation.
+	xolotlCore::Array<int, 4> minRadiusSizes;
 
 	//! The previous time.
 	double previousTime;
@@ -159,6 +163,24 @@ protected:
 		// Clear the grid
 		grid.clear();
 
+		// Maybe the user wants a Chebyshev grid
+		if (useChebyshevGrid) {
+			// The first grid point will be at x = 0.0
+			grid.push_back(0.0);
+			grid.push_back(0.0);
+
+			// In that case hx correspond to the full length of the grid
+			for (int l = 1; l <= nx - 1; l++) {
+				grid.push_back(
+						(hx / 2.0)
+								* (1.0
+										- cos(
+												xolotlCore::pi * double(l)
+														/ double(nx - 1))));
+			}
+			// The last grid point will be at x = hx
+			grid.push_back(hx);
+		}
 		// Check if the user wants a regular grid
 		if (useRegularGrid == "regular") {
 			// The grid will me made of nx + 1 points separated by hx nm
@@ -348,8 +370,8 @@ protected:
 					false), isMirror(true), useAttenuation(false), sputteringYield(
 					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
 					nullptr), mutationHandler(nullptr), resolutionHandler(
-					nullptr), tauBursting(10.0), rngSeed(0), minRadiusSize(0), previousTime(
-					0.0), nXeGB(0.0) {
+					nullptr), tauBursting(10.0), rngSeed(0), previousTime(0.0), nXeGB(
+					0.0) {
 	}
 
 public:
@@ -444,7 +466,7 @@ public:
 		resolutionHandler->setMinSize(options.getResoMinSize());
 
 		// Set the minimum size for the average radius compuation
-		minRadiusSize = options.getRadiusMinSize();
+		minRadiusSizes = options.getRadiusMinSizes();
 
 		// Set the initial vacancy concentration
 		initialVConc = options.getInitialVConcentration();
@@ -476,7 +498,10 @@ public:
 		if (options.getMaterial() == "Fuel")
 			isMirror = false;
 
-		// Set the boundary conditions (= 1: free surface; = 0: mirror or periodic)
+		// Look at if the user wants to use a Chebyshev grid in the x direction
+		useChebyshevGrid = options.useChebyshevGrid();
+
+		// Set the boundary conditions (= 1: free surface; = 0: mirror)
 		leftOffset = options.getLeftBoundary();
 		rightOffset = options.getRightBoundary();
 		bottomOffset = options.getBottomBoundary();
@@ -741,14 +766,6 @@ public:
 	}
 
 	/**
-	 * Get the minimum size for computing average radius.
-	 * \see ISolverHandler.h
-	 */
-	int getMinSize() const override {
-		return minRadiusSize;
-	}
-
-	/**
 	 * Get the previous time.
 	 * \see ISolverHandler.h
 	 */
@@ -780,6 +797,14 @@ public:
 	 */
 	void setNXeGB(double nXe) override {
 		nXeGB = nXe;
+	}
+
+	/**
+	 * Get the minimum size for computing average radius.
+	 * \see ISolverHandler.h
+	 */
+	xolotlCore::Array<int, 4> getMinSizes() const override {
+		return minRadiusSizes;
 	}
 
 	/**

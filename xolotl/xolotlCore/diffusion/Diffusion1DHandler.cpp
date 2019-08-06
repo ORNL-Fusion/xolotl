@@ -74,7 +74,7 @@ void Diffusion1DHandler::computeDiffusion(const IReactionNetwork& network,
 	int diffClusterIdx = 0;
 	for (IReactant const& currReactant : diffusingClusters) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		int index = cluster.getId() - 1;
 
 		// Get the initial concentrations
@@ -97,6 +97,9 @@ void Diffusion1DHandler::computeDiffusion(const IReactionNetwork& network,
 
 		// Update the concentration of the cluster
 		updatedConcOffset[index] += conc;
+
+		// Increase the index
+		diffClusterIdx++;
 	}
 
 	return;
@@ -116,7 +119,7 @@ void Diffusion1DHandler::computePartialsForDiffusion(
 	int diffClusterIdx = 0;
 	for (IReactant const& currReactant : diffusingClusters) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 
 		int index = cluster.getId() - 1;
 

@@ -47,7 +47,7 @@ std::unique_ptr<FeCluster> FeClusterNetworkLoader::createFeCluster(int numHe,
 }
 
 std::unique_ptr<FeCluster> FeClusterNetworkLoader::createFeSuperCluster(
-		Array1D<int, 4> &bounds, IReactionNetwork& network) const {
+		Array<int, 4> &bounds, IReactionNetwork& network) const {
 	// Compute the values to create the cluster from the bounds
 	int count = (bounds[1] - bounds[0]) * (bounds[3] - bounds[2]);
 	double heSize = (bounds[0] + bounds[1] - 1) / 2.0, vSize = (bounds[2]

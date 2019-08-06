@@ -12,7 +12,7 @@ void ZGBAdvectionHandler::initialize(const IReactionNetwork& network,
 	// Loop on all the reactants
 	for (IReactant const& currReactant : network.getAll()) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		// Get its diffusion coefficient
 		double diffFactor = cluster.getDiffusionFactor();
 
@@ -88,7 +88,7 @@ void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 	int advClusterIdx = 0;
 	for (IReactant const& currReactant : advectingClusters) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		int index = cluster.getId() - 1;
 
 		// If we are on the sink, the behavior is not the same
@@ -150,7 +150,7 @@ void ZGBAdvectionHandler::computePartialsForAdvection(
 	int advClusterIdx = 0;
 	for (IReactant const& currReactant : advectingClusters) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 
 		int index = cluster.getId() - 1;
 		// Get the diffusion coefficient of the cluster

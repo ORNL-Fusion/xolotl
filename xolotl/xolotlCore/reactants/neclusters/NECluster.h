@@ -86,28 +86,21 @@ public:
 		NECluster * second;
 
 		/**
-		 * The first cluster distance in the group (0.0 for non-super clusters)
-		 */
-		double firstDistance;
-
-		/**
-		 * The second cluster distance in the group (0.0 for non-super clusters)
-		 */
-		double secondDistance;
-
-		/**
 		 * The reaction/dissociation pointer to the list
 		 */
-		// NB: we use a reference_wrapper because we assign
-		// this after constructing the object.
-		// TODO why can't we add this when we construct the object?
-		std::reference_wrapper<Reaction> reaction;
+		Reaction& reaction;
+
+		/**
+		 * All the coefficient needed to compute each element
+		 */
+		double a0;
+		double a1;
 
 		//! The constructor
 		ClusterPair(Reaction& _reaction, NECluster * firstPtr,
 				NECluster * secondPtr) :
-				first(firstPtr), second(secondPtr), firstDistance(
-						0.0), secondDistance(0.0), reaction(_reaction) {
+				first(firstPtr), second(secondPtr), reaction(_reaction), a0(
+						0.0), a1(0.0) {
 		}
 	};
 
@@ -131,23 +124,19 @@ public:
 		NECluster * combining;
 
 		/**
-		 * The reaction pointer to the list
+		 * The reaction/dissociation pointer to the list
 		 */
-		// We use a reference wrapper here because it allows NESuperCluster
-		// to edit vectors of CombiningClusters in place when grouping
-		// into superclusters.
-		// TODO can't this be done similar to what we're doing in PSI
-		// to avoid the need for the reference wrappers?
-		std::reference_wrapper<Reaction> reaction;
+		Reaction& reaction;
 
 		/**
-		 * The cluster distance in the group (0.0 for non-super clusters)
+		 * All the coefficient needed to compute each element
 		 */
-		double distance;
+		double a0;
+		double a1;
 
 		//! The constructor
 		CombiningCluster(Reaction& _reaction, NECluster * _comb) :
-				combining(_comb), reaction(_reaction), distance(0.0) {
+				combining(_comb), reaction(_reaction), a0(0.0), a1(0.0) {
 		}
 	};
 
@@ -216,9 +205,12 @@ public:
 	}
 
 	/**
-	 * Update reactant using other reactants in its network.
+	 * Note that we result from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
 	 */
-	virtual void updateFromNetwork() override;
+	void resultFrom(ProductionReaction& reaction, IReactant& product) override;
 
 	/**
 	 * Note that we result from the given reaction.
@@ -243,6 +235,15 @@ public:
 	 *
 	 * \see Reactant.h
 	 */
+	void participateIn(ProductionReaction& reaction, IReactant& product)
+			override;
+
+	/**
+	 * Note that we combine with another cluster in a production reaction.
+	 * Assumes that the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
 	void participateIn(ProductionReaction& reaction, int a[4] = { }) override;
 
 	/**
@@ -252,6 +253,15 @@ public:
 	 * \see Reactant.h
 	 */
 	void participateIn(ProductionReaction& reaction, double *coef) override;
+
+	/**
+	 * Note that we combine with another cluster in a dissociation reaction.
+	 * Assumes the reaction is already inour network.
+	 *
+	 * \see Reactant.h
+	 */
+	void participateIn(DissociationReaction& reaction, IReactant& disso)
+			override;
 
 	/**
 	 * Note that we combine with another cluster in a dissociation reaction.
@@ -276,6 +286,14 @@ public:
 	 *
 	 * \see Reactant.h
 	 */
+	void emitFrom(DissociationReaction& reaction, IReactant& disso) override;
+
+	/**
+	 * Note that we emit from the given reaction.
+	 * Assumes the reaction is already in our network.
+	 *
+	 * \see Reactant.h
+	 */
 	void emitFrom(DissociationReaction& reaction, int a[4] = { }) override;
 
 	/**
@@ -285,11 +303,6 @@ public:
 	 * \see Reactant.h
 	 */
 	void emitFrom(DissociationReaction& reaction, double *coef) override;
-
-	/**
-	 * Add the reactions to the network lists.
-	 */
-	virtual void optimizeReactions() override;
 
 	/**
 	 * This operation returns the connectivity array for this cluster for
@@ -534,6 +547,25 @@ public:
 	 * that it does not.
 	 */
 	std::vector<int> getConnectivity() const override;
+
+	/**
+	 * This operation returns the section width.
+	 *
+	 * @return 1
+	 */
+	virtual int getSectionWidth() const {
+		return 1;
+	}
+
+	/**
+	 * This operation returns the distance to the mean.
+	 *
+	 * @param atom The number of atom
+	 * @return The distance to the mean number of in the group
+	 */
+	virtual double getDistance(int atom) const {
+		return 0.0;
+	}
 
 	/**
 	 * Tell reactant to output a representation of its reaction coefficients

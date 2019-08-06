@@ -8,6 +8,7 @@
 #include <PSISuperCluster.h>
 #include <FeSuperCluster.h>
 #include <NESuperCluster.h>
+#include <AlloySuperCluster.h>
 
 namespace xolotlCore {
 
@@ -323,8 +324,8 @@ const std::string XFile::ClusterGroup::compositionAttrName = "composition";
 const std::string XFile::ClusterGroup::heVListDataName = "heVList";
 const std::string XFile::ClusterGroup::boundsAttrName = "bounds";
 const std::string XFile::ClusterGroup::nTotAttrName = "nTot";
-const std::string XFile::ClusterGroup::numXeAttrName = "numXe";
-const std::string XFile::ClusterGroup::radiusAttrName = "radius";
+const std::string XFile::ClusterGroup::numAtomAttrName = "numAtom";
+const std::string XFile::ClusterGroup::typeAttrName = "type";
 const std::string XFile::ClusterGroup::productionDataName = "prod";
 const std::string XFile::ClusterGroup::combinationDataName = "comb";
 const std::string XFile::ClusterGroup::dissociationDataName = "disso";
@@ -386,16 +387,44 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 		int nTot = currCluster.getNTot();
 		Attribute<decltype(nTot)> nTotAttr(*this, nTotAttrName, scalarDSpace);
 		nTotAttr.setTo(nTot);
-		// Add a numXe attribute.
-		double numXe = currCluster.getAverage();
-		Attribute<decltype(numXe)> numXeAttr(*this, numXeAttrName,
+		// Add a numAtom attribute.
+		int numAtom = currCluster.getAverage()
+				+ (double) (currCluster.getNTot() - 1) / 2.0;
+		Attribute<decltype(numAtom)> numAtomAttr(*this, numAtomAttrName,
 				scalarDSpace);
-		numXeAttr.setTo(numXe);
-		// Add a radius attribute.
-		double radius = currCluster.getReactionRadius();
-		Attribute<decltype(radius)> radiusAttr(*this, radiusAttrName,
+		numAtomAttr.setTo(numAtom);
+	}
+	// Super Alloy cluster case
+	else if (cluster.getType() == ReactantType::VoidSuper
+			|| cluster.getType() == ReactantType::FrankSuper
+			|| cluster.getType() == ReactantType::PerfectSuper
+			|| cluster.getType() == ReactantType::FaultedSuper) {
+		auto& currCluster = static_cast<AlloySuperCluster&>(cluster);
+		// Build a dataspace for our scalar attributes.
+		XFile::ScalarDataSpace scalarDSpace;
+
+		// Add a nTot attribute.
+		int nTot = currCluster.getSectionWidth();
+		Attribute<decltype(nTot)> nTotAttr(*this, nTotAttrName, scalarDSpace);
+		nTotAttr.setTo(nTot);
+		// Add a numAtom attribute.
+		int numAtom = currCluster.getSize()
+				+ (double) (nTot - 1) / 2.0;
+		Attribute<decltype(numAtom)> numAtomAttr(*this, numAtomAttrName,
 				scalarDSpace);
-		radiusAttr.setTo(radius);
+		numAtomAttr.setTo(numAtom);
+		// Add a type attribute.
+		int type = 0;
+		if (cluster.getType() == ReactantType::VoidSuper)
+			type = 1;
+		else if (cluster.getType() == ReactantType::FrankSuper)
+			type = 2;
+		else if (cluster.getType() == ReactantType::PerfectSuper)
+			type = 3;
+		else if (cluster.getType() == ReactantType::FaultedSuper)
+			type = 4;
+		Attribute<decltype(type)> typeAttr(*this, typeAttrName, scalarDSpace);
+		typeAttr.setTo(type);
 	}
 	// Normal cluster case
 	else {
@@ -594,10 +623,10 @@ XFile::ClusterGroup::clusterList XFile::ClusterGroup::readPSISuperCluster() cons
 	return heVList;
 }
 
-Array1D<int, 4> XFile::ClusterGroup::readFeSuperCluster() const {
+Array<int, 4> XFile::ClusterGroup::readFeSuperCluster() const {
 
 	// Read the bounds attribute
-	Array1D<int, 4> bounds;
+	Array<int, 4> bounds;
 	hid_t attributeId = H5Aopen_name(getId(), boundsAttrName.c_str());
 	herr_t status = H5Aread(attributeId, H5T_STD_I32LE, &bounds);
 	status = H5Aclose(attributeId);
@@ -605,17 +634,47 @@ Array1D<int, 4> XFile::ClusterGroup::readFeSuperCluster() const {
 	return bounds;
 }
 
-void XFile::ClusterGroup::readNESuperCluster(int &nTot, double &numXe,
-		double &radius) const {
+void XFile::ClusterGroup::readNESuperCluster(int &nTot, int &maxXe) const {
 	// Open and read the nTot attribute
 	Attribute<int> nTotAttr(*this, nTotAttrName);
 	nTot = nTotAttr.get();
 	// Open and read the numXe attribute
-	Attribute<double> numXeAttr(*this, numXeAttrName);
-	numXe = numXeAttr.get();
-	// Open and read the radius attribute
-	Attribute<double> radiusAttr(*this, radiusAttrName);
-	radius = radiusAttr.get();
+	Attribute<int> numAtomAttr(*this, numAtomAttrName);
+	maxXe = numAtomAttr.get();
+
+	return;
+}
+
+void XFile::ClusterGroup::readAlloySuperCluster(int &nTot, int &maxAtom,
+		ReactantType &type) const {
+	// Open and read the nTot attribute
+	Attribute<int> nTotAttr(*this, nTotAttrName);
+	nTot = nTotAttr.get();
+	// Open and read the numAtom attribute
+	Attribute<int> numAtomAttr(*this, numAtomAttrName);
+	maxAtom = numAtomAttr.get();
+	// Open and read the type attribute
+	Attribute<int> typeAttr(*this, typeAttrName);
+	int typeIndex = typeAttr.get();
+
+	switch (typeIndex) {
+	case 1:
+		type = ReactantType::Void;
+		break;
+	case 2:
+		type = ReactantType::Frank;
+		break;
+	case 3:
+		type = ReactantType::Perfect;
+		break;
+	case 4:
+		type = ReactantType::Faulted;
+		break;
+	default:
+		std::cout << "Type not recognized for alloy super cluster: "
+				<< typeIndex << std::endl;
+		break;
+	}
 
 	return;
 }

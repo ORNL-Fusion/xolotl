@@ -64,7 +64,7 @@ private:
 	 * @return The dissociation constant
 	 */
 	double calculateDissociationConstant(
-			const DissociationReaction& reaction, int i) const override;
+			const DissociationReaction& reaction, int i) override;
 
 	/**
 	 * Calculate the binding energy for the dissociation cluster to emit the single

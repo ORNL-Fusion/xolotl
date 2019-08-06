@@ -130,6 +130,11 @@ protected:
 	bool useRegularGridFlag;
 
 	/**
+	 * Use a Chebyshev grid on the x direction?
+	 */
+	bool useChebyshevGridFlag;
+
+	/**
 	 * The map of physical processes to use in the simulation.
 	 */
 	std::map<std::string, bool> processMap;
@@ -259,7 +264,7 @@ protected:
 	/**
 	 * Average radius computation minimum size
 	 */
-	int radiusMinSize;
+	Array<int, 4> radiusMinSizes;
 
 	/**
 	 * Density of atom in a bubble in nm-3.
@@ -646,6 +651,22 @@ public:
 	 */
 	void setRegularXGrid(bool flag) override {
 		useRegularGridFlag = flag;
+	}
+
+	/**
+	 * Should we use a Chebyshev grid on the x direction?
+	 * \see IOptions.h
+	 */
+	bool useChebyshevGrid() const override {
+		return useChebyshevGridFlag;
+	}
+
+	/**
+	 * Set the useChebyshevGridFlag.
+	 * \see IOptions.h
+	 */
+	void setChebyshevGrid(bool flag) override {
+		useChebyshevGridFlag = flag;
 	}
 
 	/**
@@ -1075,16 +1096,16 @@ public:
 	 * Obtain the minimum size for the average radius computation.
 	 * \see IOptions.h
 	 */
-	virtual int getRadiusMinSize() const override {
-		return radiusMinSize;
+	virtual Array<int, 4> getRadiusMinSizes() const override {
+		return radiusMinSizes;
 	}
 
 	/**
 	 * Set the minimum size for the average radius computation.
 	 * \see IOptions.h
 	 */
-	virtual void setRadiusMinSize(int size) override {
-		radiusMinSize = size;
+	virtual void setRadiusMinSizes(Array<int, 4> sizes) override {
+		radiusMinSizes = sizes;
 	}
 
 	/**

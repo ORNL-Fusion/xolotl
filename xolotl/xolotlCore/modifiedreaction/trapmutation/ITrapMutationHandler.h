@@ -2,7 +2,6 @@
 #define ITRAPMUTATIONHANDLER_H
 
 // Includes
-#include <PSICluster.h>
 #include <IReactionNetwork.h>
 #include <IAdvectionHandler.h>
 #include <memory>

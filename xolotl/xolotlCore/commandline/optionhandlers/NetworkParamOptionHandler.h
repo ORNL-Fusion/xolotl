@@ -79,7 +79,8 @@ public:
 		return true;
 	}
 
-};
+}
+;
 //end class NetworkParamOptionHandler
 
 } /* namespace xolotlCore */

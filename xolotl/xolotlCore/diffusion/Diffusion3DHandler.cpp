@@ -89,7 +89,7 @@ void Diffusion3DHandler::computeDiffusion(const IReactionNetwork& network,
 	int diffClusterIdx = 0;
 	for (IReactant const& currReactant : diffusingClusters) {
 		// Get the diffusing cluster and its index
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		int index = cluster.getId() - 1;
 
 		// Get the initial concentrations
@@ -144,7 +144,7 @@ void Diffusion3DHandler::computePartialsForDiffusion(
 	int diffClusterIdx = 0;
 	for (IReactant const& currReactant : diffusingClusters) {
 		// Get the diffusing cluster and its index
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		int index = cluster.getId() - 1;
 		// Get the diffusion coefficient of the cluster
 		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1 - xs);

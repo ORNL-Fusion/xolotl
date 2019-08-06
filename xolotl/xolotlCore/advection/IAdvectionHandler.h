@@ -4,8 +4,7 @@
 // Includes
 #include <array>
 #include <memory>
-#include "NDPoint.h"
-#include <PSICluster.h>
+#include <NDPoint.h>
 #include <IReactionNetwork.h>
 
 namespace xolotlCore {

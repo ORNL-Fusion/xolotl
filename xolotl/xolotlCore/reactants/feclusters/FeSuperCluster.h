@@ -807,8 +807,8 @@ public:
 	 *
 	 * @return The boundaries
 	 */
-	Array1D<int, 4> getBounds() const {
-		Array1D<int, 4> toReturn;
+	Array<int, 4> getBounds() const {
+		Array<int, 4> toReturn;
 		toReturn[0] = *(heBounds.begin());
 		toReturn[1] = *(heBounds.end());
 		toReturn[2] = *(vBounds.begin());

@@ -65,7 +65,7 @@ enable_testing()
 # Find the Boost libraries we (potentially) use.
 # Note that we only need to list Boost component libraries that have a
 # library implementation (i.e., not header only) as required components.
-FIND_PACKAGE(Boost OPTIONAL_COMPONENTS chrono timer filesystem unit_test_framework)
+FIND_PACKAGE(Boost OPTIONAL_COMPONENTS chrono timer filesystem program_options unit_test_framework)
 IF (Boost_FOUND)
     message(STATUS "Boost version ${Boost_VERSION} found.")
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
@@ -123,8 +123,6 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/diffusion
                     ${CMAKE_SOURCE_DIR}/xolotlCore/advection
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/temperature
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution

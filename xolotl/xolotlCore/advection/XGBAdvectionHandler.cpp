@@ -12,7 +12,7 @@ void XGBAdvectionHandler::initialize(const IReactionNetwork& network,
 	// Consider each reactant.
 	for (IReactant const& currReactant : network.getAll()) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		// Get its diffusion coefficient
 		double diffFactor = cluster.getDiffusionFactor();
 
@@ -88,7 +88,7 @@ void XGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 	int advClusterIdx = 0;
 	for (IReactant const& currReactant : advectingClusters) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 
 		int index = cluster.getId() - 1;
 
@@ -154,7 +154,7 @@ void XGBAdvectionHandler::computePartialsForAdvection(
 	int advClusterIdx = 0;
 	for (IReactant const& currReactant : advectingClusters) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 
 		int index = cluster.getId() - 1;
 		// Get the diffusion coefficient of the cluster

@@ -38,13 +38,13 @@ protected:
 		 * 2-5 is for larger
 		 * 6-9 is for smaller
 		 */
-		Array<double, 8> coefs;
+		Array<double, 10> coefs;
 
 		//! The constructor
 		ReSolutionBase(IReactant* _larger, IReactant* _smaller, double _rate,
-				Array<double, 8> _coefs) :
+				Array<double, 10> _coefs) :
 				larger(_larger), smaller(_smaller), fractionRate(_rate) {
-			for (int i = 0; i < 8; i++) {
+			for (int i = 0; i < 10; i++) {
 				coefs[i] = _coefs[i];
 			}
 		}
@@ -56,7 +56,7 @@ protected:
 		ReSolutionBase(const ReSolutionBase& other) :
 				larger(other.larger), smaller(other.smaller), fractionRate(
 						other.fractionRate) {
-			for (int i = 0; i < 8; i++) {
+			for (int i = 0; i < 10; i++) {
 				coefs[i] = other.coefs[i];
 			}
 		}

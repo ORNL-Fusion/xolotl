@@ -1,0 +1,10 @@
+dimensions=0
+process=reaction
+netParam=1000 0 0 5 4
+grouping=101 5
+vizHandler=dummy
+perfHandler=dummy
+material=800H
+startTemp=713
+flux=0.667
+petscArgs=-ts_max_steps 100 -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_dt 1.0e-8 -ts_adapt_dt_max 1.0e-3 -ts_exact_final_time stepover -ts_monitor -pc_type fieldsplit -fieldsplit_0_pc_type sor -fieldsplit_1_pc_type redundant -ts_final_time 20000.0 -alloy

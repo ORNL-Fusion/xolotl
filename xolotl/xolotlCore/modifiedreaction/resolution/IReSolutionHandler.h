@@ -2,7 +2,6 @@
 #define IRESOLUTIONHANDLER_H
 
 // Includes
-#include <NECluster.h>
 #include <IReactionNetwork.h>
 #include <memory>
 

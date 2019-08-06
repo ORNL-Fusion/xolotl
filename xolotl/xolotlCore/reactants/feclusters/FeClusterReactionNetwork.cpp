@@ -12,8 +12,7 @@ namespace xolotlCore {
 FeClusterReactionNetwork::FeClusterReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		ReactionNetwork( { ReactantType::V, ReactantType::I, ReactantType::He,
-				ReactantType::HeV, ReactantType::FeSuper },
-				ReactantType::FeSuper, registry) {
+				ReactantType::HeV, ReactantType::FeSuper }, registry) {
 
 	// Initialize default properties
 	dissociationsEnabled = true;
@@ -22,7 +21,7 @@ FeClusterReactionNetwork::FeClusterReactionNetwork(
 }
 
 double FeClusterReactionNetwork::calculateDissociationConstant(
-		const DissociationReaction& reaction, int i) const {
+		const DissociationReaction& reaction, int i) {
 
 	// If the dissociations are not allowed
 	if (!dissociationsEnabled)
@@ -648,10 +647,12 @@ std::vector<std::vector<int> > FeClusterReactionNetwork::getCompositionList() co
 }
 
 void FeClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
+	// Degrees of freedom is the total number of clusters in the network
+	const int dof = getDOF();
 
 	// Get the connectivity for each reactant
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&fillMap,this](const IReactant& reactant) {
+			[&fillMap,&dof,this](const IReactant& reactant) {
 
 				// Get the reactant's connectivity
 				auto const& connectivity = reactant.getConnectivity();

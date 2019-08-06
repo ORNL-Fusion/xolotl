@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cassert>
 #include "NECluster.h"
 #include <xolotlPerf.h>
 #include <Constants.h>
@@ -9,28 +8,76 @@ using namespace xolotlCore;
 
 void NECluster::recomputeDiffusionCoefficient(double temp, int i) {
 	// Return zero if the diffusion factor is zero.
-	if (xolotlCore::equal(diffusionFactor, 0.0)) return;
+	if (xolotlCore::equal(diffusionFactor, 0.0))
+		return;
 
 	// Here the formula depends on the temperature
 	if (temp > 1650) {
 		// Intrinsic diffusion
 		double kernel = -3.04 / (xolotlCore::kBoltzmann * temp);
 		diffusionCoefficient[i] = 7.6e8 * exp(kernel); // nm2/s
-	}
-	else {
+	} else {
 		// We need the fission rate now
 		double fissionRate = network.getFissionRate() * 1.0e27; // #/m3/s
 
 		if (temp < 1381) {
 			// Athermal diffusion
 			diffusionCoefficient[i] = (8e-40 * fissionRate) * 1.0e18; // nm2/s
-		}
-		else {
+		} else {
 			// Radiation-enhanced diffusion
 			double kernel = -1.2 / (xolotlCore::kBoltzmann * temp);
-			diffusionCoefficient[i] = (5.6e-25 * sqrt(fissionRate) * exp(kernel)) * 1.0e18; // nm2/s
+			diffusionCoefficient[i] =
+					(5.6e-25 * sqrt(fissionRate) * exp(kernel)) * 1.0e18; // nm2/s
 		}
 	}
+
+	return;
+}
+
+void NECluster::resultFrom(ProductionReaction& reaction, IReactant& product) {
+	// Cast the reacting clusters
+	auto& cluster1 = static_cast<NECluster&>(reaction.first);
+	auto& cluster2 = static_cast<NECluster&>(reaction.second);
+	auto& prodCluster = static_cast<NECluster&>(product);
+
+	// Compute the overlap
+	int width1 = cluster1.getSectionWidth();
+	int size1 = cluster1.getSize();
+	int width2 = cluster2.getSectionWidth();
+	int size2 = cluster2.getSize();
+	int prodWidth = prodCluster.getSectionWidth(), prodSize =
+			prodCluster.getSize();
+	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
+	int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
+			prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
+
+	int overlap = std::min(prodHi, hi1 + hi2) - std::max(prodLo, lo1 + lo2) + 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Create the pair
+	ClusterPair pair(reaction, &cluster1, &cluster2);
+	// Compute the coefficients
+	pair.a0 = overlap;
+	if (width1 > 1) {
+		pair.a1 = 2.0
+				* firstOrderSum(std::max(prodLo - lo2, lo1),
+						std::min(prodHi - hi2, hi1), (double) (lo1 + hi1) / 2.0)
+				/ (double) (hi1 - lo1);
+	}
+	if (width1 > 1 && width2 > 1) {
+		// Should never happen for now
+		std::cout << "Both reactants are super: " << cluster1.getName() << " + "
+				<< cluster2.getName() << " -> " << name << std::endl;
+	}
+
+	// Add the pair
+	reactingPairs.emplace_back(pair);
 
 	return;
 }
@@ -42,9 +89,6 @@ void NECluster::resultFrom(ProductionReaction& reaction, int[4], int[4]) {
 			reaction,  // TODO verify this is correct
 			&static_cast<NECluster&>(reaction.first),
 			&static_cast<NECluster&>(reaction.second));
-	// Setup the connectivity array
-	setReactionConnectivity(reaction.first.getId());
-	setReactionConnectivity(reaction.second.getId());
 
 	return;
 }
@@ -58,13 +102,54 @@ void NECluster::resultFrom(ProductionReaction& reaction, double *coef) {
 			&static_cast<NECluster&>(reaction.second));
 	auto& newPair = reactingPairs.back();
 
-	// Setup the connectivity array
-	setReactionConnectivity(reaction.first.getId());
-	setReactionConnectivity(reaction.second.getId());
+	// Update the coefs
+	newPair.a0 = coef[0];
+	newPair.a1 = coef[1];
 
-	// Update the distances
-	newPair.firstDistance = coef[0];
-	newPair.secondDistance = coef[1];
+	return;
+}
+
+void NECluster::participateIn(ProductionReaction& reaction,
+		IReactant& product) {
+	// Look for the other cluster
+	auto& otherCluster = static_cast<NECluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+	auto& prodCluster = static_cast<NECluster&>(product);
+
+	// Compute the overlap
+	int width1 = otherCluster.getSectionWidth();
+	int size1 = otherCluster.getSize();
+	int width2 = getSectionWidth();
+	int size2 = getSize();
+	int prodWidth = prodCluster.getSectionWidth(), prodSize =
+			prodCluster.getSize();
+	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
+	int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
+			prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
+
+	int overlap = std::min(prodHi, hi1 + hi2) - std::max(prodLo, lo1 + lo2) + 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Create the pair
+	CombiningCluster pair(reaction, &otherCluster);
+
+	// Compute the coefficients
+	pair.a0 = overlap;
+	if (width1 > 1) {
+		pair.a1 = 2.0
+				* firstOrderSum(std::max(prodLo - lo2, lo1),
+						std::min(prodHi - hi2, hi1), (double) (lo1 + hi1) / 2.0)
+				/ (double) (hi1 - lo1);
+	}
+
+	// Add the combining cluster to list of clusters that combine with us
+	combiningReactants.emplace_back(pair);
 
 	return;
 }
@@ -81,10 +166,6 @@ void NECluster::participateIn(ProductionReaction& reaction, int[4]) {
 
 	// Add the combining cluster to list of clusters that combine with us
 	combiningReactants.emplace_back(reaction, &otherCluster);
-
-	// Setup the connectivity array
-	setReactionConnectivity(id);
-	setReactionConnectivity(otherCluster.getId());
 
 	return;
 }
@@ -103,12 +184,55 @@ void NECluster::participateIn(ProductionReaction& reaction, double *coef) {
 	combiningReactants.emplace_back(reaction, &otherCluster);
 	auto& newComb = combiningReactants.back();
 
-	// Setup the connectivity array
-	setReactionConnectivity(id);
-	setReactionConnectivity(otherCluster.getId());
+	// Update the coefs
+	newComb.a0 = coef[0];
+	newComb.a1 = coef[1];
 
-	// Update the distances
-	newComb.distance = coef[0];
+	return;
+}
+
+void NECluster::participateIn(DissociationReaction& reaction,
+		IReactant& disso) {
+	// Look for the other cluster
+	auto& emittedCluster = static_cast<NECluster&>(
+			(reaction.first.getId() == id) ? reaction.second : reaction.first);
+	auto& dissoCluster = static_cast<NECluster&>(disso);
+
+	// Compute the overlap
+	int width1 = emittedCluster.getSectionWidth();
+	int size1 = emittedCluster.getSize();
+	int width2 = getSectionWidth();
+	int size2 = getSize();
+	int dissoWidth = dissoCluster.getSectionWidth(), dissoSize =
+			dissoCluster.getSize();
+	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
+	int dissoLo = ((int) ((double) dissoSize - (double) dissoWidth / 2.0) + 1),
+			dissoHi = ((int) ((double) dissoSize + (double) dissoWidth / 2.0));
+
+	int overlap = std::min(dissoHi, hi1 + hi2) - std::max(dissoLo, lo1 + lo2)
+			+ 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Create the pair
+	ClusterPair pair(reaction, &dissoCluster, &emittedCluster);
+	// Compute the coefficients
+	pair.a0 = overlap;
+	if (dissoWidth > 1) {
+		pair.a1 = 2.0
+				* firstOrderSum(std::max(dissoLo, lo1 + lo2),
+						std::min(dissoHi, hi1 + hi2),
+						(double) (dissoLo + dissoHi) / 2.0)
+				/ (double) (dissoHi - dissoLo);
+	}
+
+	// Add the pair to the vector
+	dissociatingPairs.emplace_back(pair);
 
 	return;
 }
@@ -124,9 +248,6 @@ void NECluster::participateIn(DissociationReaction& reaction, int[4], int[4]) {
 			reaction,  // TODO is this correct?
 			&static_cast<NECluster&>(reaction.dissociating),
 			&static_cast<NECluster&>(emittedCluster));
-
-	// Setup the connectivity array
-	setDissociationConnectivity(reaction.dissociating.getId());
 
 	return;
 }
@@ -144,11 +265,48 @@ void NECluster::participateIn(DissociationReaction& reaction, double *coef) {
 			&static_cast<NECluster&>(emittedCluster));
 	auto& newPair = dissociatingPairs.back();
 
-	// Setup the connectivity array
-	setDissociationConnectivity(reaction.dissociating.getId());
+	// Set the coefs
+	newPair.a0 = coef[0];
+	newPair.a1 = coef[1];
 
-	// Set the distance
-	newPair.firstDistance = coef[0];
+	return;
+}
+
+void NECluster::emitFrom(DissociationReaction& reaction, IReactant& disso) {
+	// Cast the reacting clusters
+	auto& cluster1 = static_cast<NECluster&>(reaction.first);
+	auto& cluster2 = static_cast<NECluster&>(reaction.second);
+	auto& dissoCluster = static_cast<NECluster&>(disso);
+
+	// Compute the overlap
+	int width1 = cluster1.getSectionWidth();
+	int size1 = cluster1.getSize();
+	int width2 = cluster2.getSectionWidth();
+	int size2 = cluster2.getSize();
+	int dissoWidth = dissoCluster.getSectionWidth(), dissoSize =
+			dissoCluster.getSize();
+	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
+	int dissoLo = ((int) ((double) dissoSize - (double) dissoWidth / 2.0) + 1),
+			dissoHi = ((int) ((double) dissoSize + (double) dissoWidth / 2.0));
+
+	int overlap = std::min(dissoHi, hi1 + hi2) - std::max(dissoLo, lo1 + lo2)
+			+ 1;
+
+	// Skip if the reaction doesn't overlap
+	if (overlap < 1)
+		return;
+
+	// Create the pair
+	ClusterPair pair(reaction, &cluster1, &cluster2);
+
+	// Compute the coefficients
+	pair.a0 = overlap;
+
+	// Add the pair
+	emissionPairs.emplace_back(pair);
 
 	return;
 }
@@ -161,9 +319,6 @@ void NECluster::emitFrom(DissociationReaction& reaction, int[4]) {
 			&static_cast<NECluster&>(reaction.first),
 			&static_cast<NECluster&>(reaction.second));
 
-	// Setup the connectivity array to itself
-	setReactionConnectivity(id);
-
 	return;
 }
 
@@ -174,68 +329,10 @@ void NECluster::emitFrom(DissociationReaction& reaction, double *coef) {
 			reaction, // TODO is this correct?
 			&static_cast<NECluster&>(reaction.first),
 			&static_cast<NECluster&>(reaction.second));
+	auto& newPair = emissionPairs.back();
 
-	// Setup the connectivity array to itself
-	setReactionConnectivity(id);
-
-	// Nothing more to do
-
-	return;
-}
-
-void NECluster::optimizeReactions() {
-	// Loop on the pairs to add reactions to the network
-	std::for_each(reactingPairs.begin(), reactingPairs.end(),
-			[this](ClusterPair& currPair) {
-				// Create the corresponding production reaction
-				std::unique_ptr<ProductionReaction> newReaction(new ProductionReaction(*currPair.first, *currPair.second));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReaction));
-				// Link it to the pair
-				currPair.reaction = prref;
-			});
-
-	std::for_each(combiningReactants.begin(), combiningReactants.end(),
-			[this](CombiningCluster& cc) {
-				// Create the corresponding production reaction
-				std::unique_ptr<ProductionReaction> newReaction(new ProductionReaction(*cc.combining, *this));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReaction));
-				// Link it to the pair
-				cc.reaction = prref;
-			});
-
-	std::for_each(dissociatingPairs.begin(), dissociatingPairs.end(),
-			[this](ClusterPair& currPair) {
-				// Create the corresponding dissociation reaction
-				std::unique_ptr<DissociationReaction> newReaction(new DissociationReaction(*currPair.first, *currPair.second, *this));
-				// Add it to the network
-				auto& drref = network.add(std::move(newReaction));
-				// Create the corresponding reverse reaction
-				std::unique_ptr<ProductionReaction> newReverseReaction(new ProductionReaction(*currPair.second, *this));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReverseReaction));
-				// Link it
-				drref.reverseReaction = &prref;
-				// Link it to the pair
-				currPair.reaction = drref;
-			});
-
-	std::for_each(emissionPairs.begin(), emissionPairs.end(),
-			[this](ClusterPair& currPair) {
-				// Create the corresponding dissociation reaction
-				std::unique_ptr<DissociationReaction> newReaction(new DissociationReaction(*this, *currPair.first, *currPair.second));
-				// Add it to the network
-				auto& drref = network.add(std::move(newReaction));
-				// Create the corresponding reverse reaction
-				std::unique_ptr<ProductionReaction> newReverseReaction(new ProductionReaction(*currPair.first, *currPair.second));
-				// Add it to the network
-				auto& prref = network.add(std::move(newReverseReaction));
-				// Link it
-				drref.reverseReaction = &prref;
-				// Link it to the pair
-				currPair.reaction = drref;
-			});
+	// Set the coefs
+	newPair.a0 = coef[0];
 
 	return;
 }
@@ -316,17 +413,6 @@ void NECluster::resetConnectivities() {
 	return;
 }
 
-void NECluster::updateFromNetwork() {
-
-	// Clear the flux-related arrays
-	reactingPairs.clear();
-	combiningReactants.clear();
-	dissociatingPairs.clear();
-	emissionPairs.clear();
-
-	return;
-}
-
 double NECluster::getMoment() const {
 	return 0.0;
 }
@@ -347,12 +433,12 @@ double NECluster::getDissociationFlux(int xi) {
 	double flux =
 			std::accumulate(dissociatingPairs.begin(), dissociatingPairs.end(),
 					0.0, [&xi](double running, const ClusterPair& currPair) {
-						// Get the dissociating cluster
-					auto& dissociatingCluster = currPair.first;
-					// Calculate the Dissociation flux
-					Reaction const& currReaction = currPair.reaction;
-					return running + (currReaction.kConstant[xi] *
-							dissociatingCluster->getConcentration(currPair.firstDistance));
+						// Get the dissociating clusters
+					NECluster* dissociatingCluster = currPair.first;
+					double l0A = dissociatingCluster->getConcentration();
+					double l1A = dissociatingCluster->getMoment();
+					// Update the flux
+					return running + (currPair.reaction.kConstant[xi] * (currPair.a0 * l0A + currPair.a1 * l1A));
 				});
 
 	// Return the flux
@@ -364,8 +450,7 @@ double NECluster::getEmissionFlux(int xi) {
 	// Sum reaction rate constants over all emission pair reactions.
 	double flux = std::accumulate(emissionPairs.begin(), emissionPairs.end(),
 			0.0, [&xi](double running, const ClusterPair& currPair) {
-				Reaction const& currReaction = currPair.reaction;
-				return running + currReaction.kConstant[xi];
+				return running + currPair.reaction.kConstant[xi] * currPair.a0;
 			});
 
 	return flux * concentration;
@@ -381,13 +466,12 @@ double NECluster::getProductionFlux(int xi) {
 				// Get the two reacting clusters
 				NECluster* firstReactant = currPair.first;
 				NECluster* secondReactant = currPair.second;
+				// We know the first one is always the single one
+				double l0A = firstReactant->getConcentration();
+				double l0B = secondReactant->getConcentration();
+				double l1B = secondReactant->getMoment();
 				// Update the flux
-				Reaction const& currReaction = currPair.reaction;
-				flux += currReaction.kConstant[xi]
-				* firstReactant->getConcentration(
-						currPair.firstDistance)
-				* secondReactant->getConcentration(
-						currPair.secondDistance);
+				flux += currPair.reaction.kConstant[xi] * l0A * (currPair.a0 * l0B + currPair.a1 * l1B);
 			});
 
 	// Return the production flux
@@ -401,13 +485,12 @@ double NECluster::getCombinationFlux(int xi) {
 			[xi](double running, const CombiningCluster& currPair) {
 				// Get the cluster that combines with this one
 				NECluster const& combiningCluster = *currPair.combining;
-				Reaction const& currReaction = currPair.reaction;
-
-				// Calculate Second term of production flux
+				double l0A = combiningCluster.getConcentration();
+				double l1A = combiningCluster.getMoment();
+				// Update the flux
 				return running +
-				(currReaction.kConstant[xi] *
-						combiningCluster.getConcentration(currPair.distance));
-
+				(currPair.reaction.kConstant[xi] *
+						(currPair.a0 * l0A + currPair.a1 * l1A));
 			});
 
 	return flux * concentration;
@@ -449,25 +532,22 @@ void NECluster::getProductionPartialDerivatives(std::vector<double> & partials,
 	// dF(C_D)/dC_B = k+_(A,B)*C_A
 	std::for_each(reactingPairs.begin(), reactingPairs.end(),
 			[&partials,&xi](ClusterPair const& currPair) {
-
-				Reaction const& currReaction = currPair.reaction;
+				// Get the two reacting clusters
+				NECluster* firstReactant = currPair.first;
+				NECluster* secondReactant = currPair.second;
+				double l0A = firstReactant->getConcentration();
+				double l0B = secondReactant->getConcentration();
+				double l1B = secondReactant->getMoment();
 
 				// Compute the contribution from the first part of the reacting pair
-				auto value = currReaction.kConstant[xi]
-				* currPair.second->getConcentration(
-						currPair.secondDistance);
+				auto value = currPair.reaction.kConstant[xi];
 				auto index = currPair.first->id - 1;
-				partials[index] += value;
-				index = currPair.first->momId[0] - 1;
-				partials[index] += value * currPair.firstDistance;
+				partials[index] += value * (currPair.a0 * l0B + currPair.a1 * l1B);
 				// Compute the contribution from the second part of the reacting pair
-				value = currReaction.kConstant[xi]
-				* currPair.first->getConcentration(
-						currPair.firstDistance);
 				index = currPair.second->id - 1;
-				partials[index] += value;
+				partials[index] += value * currPair.a0 * l0A;
 				index = currPair.second->momId[0] - 1;
-				partials[index] += value * currPair.secondDistance;
+				partials[index] += value * currPair.a1 * l0A;
 			});
 
 	return;
@@ -485,19 +565,19 @@ void NECluster::getCombinationPartialDerivatives(std::vector<double> & partials,
 	// dF(C_A)/dC_B = - k+_(A,B)*C_A
 	std::for_each(combiningReactants.begin(), combiningReactants.end(),
 			[this,&partials,&xi](const CombiningCluster& cc) {
-
 				NECluster const& cluster = *cc.combining;
 				Reaction const& currReaction = cc.reaction;
+				double l0A = cluster.getConcentration();
+				double l1A = cluster.getMoment();
 
 				// Remember that the flux due to combinations is OUTGOING (-=)!
 				// Compute the contribution from this cluster
-				partials[id - 1] -= currReaction.kConstant[xi] *
-				cluster.getConcentration(cc.distance);
+				partials[id - 1] -= currReaction.kConstant[xi] * (cc.a0 * l0A + cc.a1 * l1A);
 				// Compute the contribution from the combining cluster
 				double value = currReaction.kConstant[xi] * concentration;
 
-				partials[cluster.id - 1] -= value;
-				partials[cluster.momId[0] - 1] -= value * cc.distance;
+				partials[cluster.id - 1] -= value * cc.a0;
+				partials[cluster.momId[0] - 1] -= value * cc.a1;
 			});
 
 	return;
@@ -517,9 +597,9 @@ void NECluster::getDissociationPartialDerivatives(
 				// Get the dissociating cluster
 				NECluster* cluster = currPair.first;
 				Reaction const& currReaction = currPair.reaction;
-				partials[cluster->id - 1] += currReaction.kConstant[xi];
+				partials[cluster->id - 1] += currReaction.kConstant[xi] * currPair.a0;
 				partials[cluster->momId[0] - 1] += currReaction.kConstant[xi] *
-				currPair.firstDistance;
+				currPair.a1;
 			});
 
 	return;
@@ -537,8 +617,7 @@ void NECluster::getEmissionPartialDerivatives(std::vector<double> & partials,
 	double emissionFlux = std::accumulate(emissionPairs.begin(),
 			emissionPairs.end(), 0.0,
 			[&xi](double running, const ClusterPair& currPair) {
-				Reaction const& currReaction = currPair.reaction;
-				return running + currReaction.kConstant[xi];
+				return running + currPair.reaction.kConstant[xi] * currPair.a0;
 			});
 
 	// Recall emission flux is OUTGOING
@@ -554,9 +633,8 @@ double NECluster::getLeftSideRate(int i) const {
 			combiningReactants.end(), 0.0,
 			[&i](double running, const CombiningCluster& currPair) {
 				NECluster const& cluster = *currPair.combining;
-				Reaction const& currReaction = currPair.reaction;
 
-				return running + (currReaction.kConstant[i] *
+				return running + (currPair.reaction.kConstant[i] *
 						cluster.concentration);
 			});
 
@@ -564,8 +642,7 @@ double NECluster::getLeftSideRate(int i) const {
 	double emissionRateTotal = std::accumulate(emissionPairs.begin(),
 			emissionPairs.end(), 0.0,
 			[&i](double running, const ClusterPair& currPair) {
-				Reaction const& currReaction = currPair.reaction;
-				return running + currReaction.kConstant[i];
+				return running + currPair.reaction.kConstant[i];
 			});
 
 	return combiningRateTotal + emissionRateTotal;
@@ -582,8 +659,8 @@ std::vector<std::vector<double> > NECluster::getProdVector() const {
 				std::vector<double> tempVec;
 				tempVec.push_back(currPair.first->getId() - 1);
 				tempVec.push_back(currPair.second->getId() - 1);
-				tempVec.push_back(currPair.firstDistance);
-				tempVec.push_back(currPair.secondDistance);
+				tempVec.push_back(currPair.a0);
+				tempVec.push_back(currPair.a1);
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -602,7 +679,8 @@ std::vector<std::vector<double> > NECluster::getCombVector() const {
 				// Build the vector containing ids and rates
 				std::vector<double> tempVec;
 				tempVec.push_back(cc.combining->getId() - 1);
-				tempVec.push_back(cc.distance);
+				tempVec.push_back(cc.a0);
+				tempVec.push_back(cc.a1);
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -622,7 +700,8 @@ std::vector<std::vector<double> > NECluster::getDissoVector() const {
 				std::vector<double> tempVec;
 				tempVec.push_back(currPair.first->getId() - 1);
 				tempVec.push_back(currPair.second->getId() - 1);
-				tempVec.push_back(currPair.firstDistance);
+				tempVec.push_back(currPair.a0);
+				tempVec.push_back(currPair.a1);
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);
@@ -642,6 +721,7 @@ std::vector<std::vector<double> > NECluster::getEmitVector() const {
 				std::vector<double> tempVec;
 				tempVec.push_back(currPair.first->getId() - 1);
 				tempVec.push_back(currPair.second->getId() - 1);
+				tempVec.push_back(currPair.a0);
 
 				// Add it to the main vector
 				toReturn.push_back(tempVec);

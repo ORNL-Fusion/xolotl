@@ -80,7 +80,7 @@ void Diffusion2DHandler::computeDiffusion(const IReactionNetwork& network,
 	int diffClusterIdx = 0;
 	for (IReactant const& currReactant : diffusingClusters) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		int index = cluster.getId() - 1;
 
 		// Get the initial concentrations
@@ -130,7 +130,7 @@ void Diffusion2DHandler::computePartialsForDiffusion(
 	int diffClusterIdx = 0;
 	for (IReactant const& currReactant : diffusingClusters) {
 
-		auto const& cluster = static_cast<PSICluster const&>(currReactant);
+		auto const& cluster = static_cast<IReactant const&>(currReactant);
 		int index = cluster.getId() - 1;
 
 		// Set the cluster index, the PetscSolver will use it to compute
