@@ -287,9 +287,11 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Initial declarations for the density and diameter
 	double iDensity = exp(-1.0 * cluster.getFormationEnergy(ReactantType::I) / (xolotlCore::kBoltzmann * temperature))
-		 / xolotlCore::atomicVolume, vDensity = exp(-1.0 * cluster.getFormationEnergy(ReactantType::V) / 
+		 / (0.25 * xolotlCore::alloyLatticeConstant * xolotlCore::alloyLatticeConstant 
+		    * xolotlCore::alloyLatticeConstant), vDensity = exp(-1.0 * cluster.getFormationEnergy(ReactantType::V) / 
 							    (xolotlCore::kBoltzmann * temperature))
-		 / xolotlCore::atomicVolume, voidDensity = 0.0,
+		 / (0.25 * xolotlCore::alloyLatticeConstant * xolotlCore::alloyLatticeConstant 
+		    * xolotlCore::alloyLatticeConstant), voidDensity = 0.0,
 			frankDensity = 0.0, faultedDensity = 0.0, perfectDensity = 0.0,
 			voidPartialDensity = 0.0, frankPartialDensity = 0.0,
 			faultedPartialDensity = 0.0, perfectPartialDensity = 0.0,
