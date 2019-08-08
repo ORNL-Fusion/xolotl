@@ -97,6 +97,12 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	// + the super clusters
 	const int dof = network.getDOF();
 
+	// Get the single interstitial ID
+	auto singleIntCluster = network.get(xolotlCore::Species::I, 1);
+	int intIndex = 1;
+	if (singleIntCluster)
+		intIndex = singleIntCluster->getId() + 1;
+	
 	// Get the single vacancy ID
 	auto singleVacancyCluster = network.get(xolotlCore::Species::V, 1);
 	int vacancyIndex = -1;
@@ -126,6 +132,24 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
 
+	// Initialize the interstitial density to thermal equilibrium
+	double iDensity = exp(-1.0 * singleIntCluster->getFormationEnergy() / 
+			      (xolotlCore::kBoltzmann * network.getTemperature())) / 
+		(0.25 * xolotlCore::alloyLatticeConstant * xolotlCore::alloyLatticeConstant * 
+		 xolotlCore::alloyLatticeConstant);
+	
+	// Initialize the vacancy density to thermal equilibrium
+	double vDensity = exp(-1.0 * singleVacancyCluster->getFormationEnergy() / 
+			      (xolotlCore::kBoltzmann * network.getTemperature())) / 
+		(0.25 * xolotlCore::alloyLatticeConstant * xolotlCore::alloyLatticeConstant * 
+		 xolotlCore::alloyLatticeConstant);
+	
+	// Initialize the interstitial concentration
+	if (singleIntCluster and not hasConcentrations
+	                and singleIntCluster) {
+		concOffset[intIndex] = initialIConc;
+	}
+	
 	// Initialize the vacancy concentration
 	if (singleVacancyCluster and not hasConcentrations
 			and singleVacancyCluster) {
