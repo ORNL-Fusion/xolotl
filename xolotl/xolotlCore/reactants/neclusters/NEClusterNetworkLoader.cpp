@@ -205,7 +205,7 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 			62.55, 65.05, 67.45, 69.45, 71.20, 72.75, 74.15, 75.35, 76.40,
 			77.25, 77.95, 78.45, 78.80, 78.95, 79.0 };
 
-	// Generate the I clusters
+	// Generate the Xe clusters
 	for (int i = 1; i <= min(xeMin - 1, xeMax); ++i) {
 		// Set the composition
 		numXe = i;
@@ -281,7 +281,7 @@ void NEClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 		size = 0;
 		count = 0;
 		superCount++;
-//		width = max(sectionWidth * (int) (superCount / 10), sectionWidth);
+		width += 1;
 	}
 
 	if (xeMin < xeMax) {

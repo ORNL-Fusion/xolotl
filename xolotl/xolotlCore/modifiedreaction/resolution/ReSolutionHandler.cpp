@@ -55,13 +55,13 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 				// If the resolutedSize is less than 1, or if the cluster is too small the reaction should not happen
 				if (resolutedSize > 0 && resolutedSize < size && size >= minSize) {
 					// Initialize the coefficients
-					Array<double, 8> coefs;
+					Array<double, 10> coefs;
 					coefs.Init(0.0);
 					// Different if it is a super cluster
 					if (cluster.getType() == ReactantType::NESuper) {
 						// Loop the bounds of the super cluster
 						auto& superCluster = static_cast<NESuperCluster&> (cluster);
-						int sectionWidth = superCluster.getSectionWidth();
+						int sectionWidth = superCluster.getSectionWidth(), smallerSectionWidth = 0.0;
 						double dispersion = superCluster.getDispersion();
 						double numXe = superCluster.getAverage();
 						IReactant* previousSmaller = nullptr;
@@ -91,13 +91,16 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 								singleXenon->setDissociationConnectivity(cluster.getMomentId());
 								previousSmaller->setDissociationConnectivity(cluster.getId());
 								previousSmaller->setDissociationConnectivity(cluster.getMomentId());
+								smallerSectionWidth = ((NECluster *) previousSmaller)->getSectionWidth();
 								// Finish computing the factors
 								coefs[2] = coefs[2] / ((double) sectionWidth);
 								coefs[3] = coefs[3] / ((double) sectionWidth);
 								coefs[4] = coefs[4] / ((double) sectionWidth);
 								coefs[5] = coefs[5] / ((double) sectionWidth);
-								coefs[6] = coefs[6] / ((double) sectionWidth);
-								coefs[7] = coefs[7] / ((double) sectionWidth);
+								coefs[6] = coefs[6] / ((double) smallerSectionWidth);
+								coefs[7] = coefs[7] / ((double) smallerSectionWidth);
+								coefs[8] = coefs[8] / ((double) smallerSectionWidth);
+								coefs[9] = coefs[9] / ((double) smallerSectionWidth);
 								// Compute the fraction rate
 								auto radius = cluster.getReactionRadius();
 								auto size = cluster.getSize();
@@ -121,6 +124,8 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 							coefs[5] += distance * factor;
 							coefs[6] += smallerFactor;
 							coefs[7] += distance * smallerFactor;
+							coefs[8] += 1.0;
+							coefs[9] += distance;
 						}
 						if (previousSmaller) {
 							// Set the connectivities
@@ -130,13 +135,16 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 							singleXenon->setDissociationConnectivity(cluster.getMomentId());
 							previousSmaller->setDissociationConnectivity(cluster.getId());
 							previousSmaller->setDissociationConnectivity(cluster.getMomentId());
+							smallerSectionWidth = ((NECluster *) previousSmaller)->getSectionWidth();
 							// Finish computing the factors
 							coefs[2] = coefs[2] / ((double) sectionWidth);
 							coefs[3] = coefs[3] / ((double) sectionWidth);
 							coefs[4] = coefs[4] / ((double) sectionWidth);
 							coefs[5] = coefs[5] / ((double) sectionWidth);
-							coefs[6] = coefs[6] / ((double) sectionWidth);
-							coefs[7] = coefs[7] / ((double) sectionWidth);
+							coefs[6] = coefs[6] / ((double) smallerSectionWidth);
+							coefs[7] = coefs[7] / ((double) smallerSectionWidth);
+							coefs[8] = coefs[8] / ((double) smallerSectionWidth);
+							coefs[9] = coefs[9] / ((double) smallerSectionWidth);
 							// Compute the fraction rate
 							auto radius = cluster.getReactionRadius();
 							auto size = cluster.getSize();
@@ -223,7 +231,7 @@ void ReSolutionHandler::computeReSolution(const IReactionNetwork& network,
 				* (currPair.coefs[3] * l0 + currPair.coefs[5] * l1);
 		if (resoCluster->getType() == ReactantType::NESuper) {
 			updatedConcOffset[resoId] += rate
-					* (currPair.coefs[2] * l0 + currPair.coefs[4] * l1);
+					* (currPair.coefs[8] * l0 + currPair.coefs[9] * l1);
 			updatedConcOffset[resoMomId] += rate
 					* (currPair.coefs[6] * l0 + currPair.coefs[7] * l1);
 		} else {
@@ -267,9 +275,9 @@ int ReSolutionHandler::computePartialsForReSolution(
 		val[(baseIndex) + 3] = -rate * currPair.coefs[5]; // Large cluster
 		if (resoCluster->getType() == ReactantType::NESuper) {
 			indices[(5 * i) + 2] = resoId;
-			val[(baseIndex) + 4] = rate * currPair.coefs[2];
+			val[(baseIndex) + 4] = rate * currPair.coefs[8];
 			indices[(5 * i) + 3] = resoMomId;
-			val[(baseIndex) + 5] = rate * currPair.coefs[4];
+			val[(baseIndex) + 5] = rate * currPair.coefs[9];
 			val[(baseIndex) + 6] = rate * currPair.coefs[6];
 			val[(baseIndex) + 7] = rate * currPair.coefs[7]; // Smaller cluster
 		} else {
