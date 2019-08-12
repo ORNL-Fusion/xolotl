@@ -54,6 +54,9 @@ protected:
 	int leftOffset, rightOffset, bottomOffset, topOffset, frontOffset,
 			backOffset;
 
+        //! The initial interstitial concentration.
+        double initialIConc;
+
 	//! The initial vacancy concentration.
 	double initialVConc;
 
@@ -326,7 +329,8 @@ protected:
 	SolverHandler(xolotlCore::IReactionNetwork& _network) :
 			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
 					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
-					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
+					1), topOffset(1), frontOffset(1), backOffset(1), initialIConc(
+                                        0.0), initialVConc(
 					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
 					0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
 					false), useAttenuation(false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(

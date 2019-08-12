@@ -144,7 +144,13 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 		(0.25 * xolotlCore::alloyLatticeConstant * xolotlCore::alloyLatticeConstant * 
 		 xolotlCore::alloyLatticeConstant);
 
-	// Initialize the vacancy concentration
+	// Initialize the interstitial concentration
+        if (singleIntCluster and not hasConcentrations
+                        and singleIntCluster) {
+                concOffset[intIndex] = initialIConc;
+        }
+
+        // Initialize the vacancy concentration
 	if (singleVacancyCluster and not hasConcentrations
 			and singleVacancyCluster) {
 		concOffset[vacancyIndex] = initialVConc;
