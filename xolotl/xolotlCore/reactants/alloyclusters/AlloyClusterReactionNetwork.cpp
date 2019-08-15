@@ -173,16 +173,16 @@ double AlloyClusterReactionNetwork::getFormationEnergy(
 	if (typeName == ReactantType::Perfect || typeName == ReactantType::Frank
 			|| typeName == ReactantType::PerfectSuper
 			|| typeName == ReactantType::FrankSuper)
-		return 4.0 + 2.0 * (pow(double(size), 2.0 / 3.0) - 1.0);
+		return 3.4 + 2.0 * (pow(double(size), 2.0 / 3.0) - 1.0);
 	if (typeName == ReactantType::Faulted
 			|| typeName == ReactantType::FaultedSuper)
-		return 1.5 + 2.05211 * (pow(double(size), 2.0 / 3.0) - 1.0);
+		return 1.9 + 2.05211 * (pow(double(size), 2.0 / 3.0) - 1.0);
 	if (typeName == ReactantType::Void || typeName == ReactantType::VoidSuper)
-		return 1.5 + 3.41649 * (pow(double(size), 2.0 / 3.0) - 1.0);
+		return 1.9 + 3.41649 * (pow(double(size), 2.0 / 3.0) - 1.0);
 	if (typeName == ReactantType::V)
-		return 1.5 + 3.41649 * (pow(double(size), 2.0 / 3.0) - 1.0);
+		return 1.9 + 3.41649 * (pow(double(size), 2.0 / 3.0) - 1.0);
 	if (typeName == ReactantType::I)
-		return 4.0 + 3.5 * (pow(double(size), 2.0 / 3.0) - 1.0);
+		return 3.4 + 3.5 * (pow(double(size), 2.0 / 3.0) - 1.0);
 	return 0.0;
 }
 
