@@ -152,18 +152,16 @@ double AlloyClusterReactionNetwork::getReactionRadius(
 		ReactantType const typeName, int size) const {
 	if (typeName == ReactantType::Faulted || typeName == ReactantType::Frank
 			|| typeName == ReactantType::FaultedSuper
-			|| typeName == ReactantType::FrankSuper)
-		return 0.5 * xolotlCore::alloyLatticeConstant
-				* sqrt(double(size) * sqrt(3.0) / xolotlCore::pi);
+			|| typeName == ReactantType::FrankSuper
+	                || typeName == ReactantType::Perfect
+	                || typeName == ReactantType::PerfectSuper)
+		return sqrt((double(size) * atomicVolume) / (xolotlCore::pi 
+			* xolotlCore::alloyCoreRadius));
 	if (typeName == ReactantType::V || typeName == ReactantType::Void
 			|| typeName == ReactantType::I
 			|| typeName == ReactantType::VoidSuper)
-		return 0.5 * xolotlCore::alloyLatticeConstant
-				* pow(1.5 * double(size) / xolotlCore::pi, 1.0 / 3.0);
-	if (typeName == ReactantType::Perfect
-			|| typeName == ReactantType::PerfectSuper)
-		return 0.5 * xolotlCore::alloyLatticeConstant
-				* sqrt(double(size) * sqrt(2.0) / xolotlCore::pi);
+		return pow((0.75 * atomicVolume * double(size)) / xolotlCore::pi, 
+			   1.0 / 3.0);
 
 	return 0.0;
 }
