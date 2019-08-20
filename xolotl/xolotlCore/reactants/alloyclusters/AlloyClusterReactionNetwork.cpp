@@ -64,14 +64,14 @@ double AlloyClusterReactionNetwork::calculateReactionRateConstant(
 			(r_second + xolotlCore::alloyCoreRadius), 2.0));
 			zl = 4.0 * xolotlCore::pi * pow(r_first, 2.0) 
 			       / log(1.0 + 8.0 * r_first 
-			       / (r_second + xolotlCore::alloyCoreRadius))
+			       / (r_second + xolotlCore::alloyCoreRadius));
 			}
 		else {
 			p = 1.0 / (1.0 + pow(r_second / 
 			       (r_first + xolotlCore::alloyCoreRadius), 2.0));
 			zl = 4.0 * xolotlCore::pi * pow(r_second, 2.0) 
 				/ log(1.0 + 8.0 * r_second 
-			        / (r_first + xolotlCore::alloyCoreRadius))
+			        / (r_first + xolotlCore::alloyCoreRadius));
 			}
 		k_plus = (firstDiffusion + secondDiffusion) * (p * zs 
 				+ (1.0 - p) / zl);
