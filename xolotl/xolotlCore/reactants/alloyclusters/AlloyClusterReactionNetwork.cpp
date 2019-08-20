@@ -30,11 +30,60 @@ double AlloyClusterReactionNetwork::calculateReactionRateConstant(
 	// Get the diffusion coefficients
 	double firstDiffusion = reaction.first.getDiffusionCoefficient(i);
 	double secondDiffusion = reaction.second.getDiffusionCoefficient(i);
+	
+	// Initialize rate constant and parameters to calculate k+ for loop/sphere case
+	double k_plus, zl, p = 0.0;
+	double zs = 4.0 * xolotlCore::pi * 
+		(r_first + r_second + xolotlCore::alloyCoreRadius);
 
 	// Calculate and return
-	double k_plus = 4.0 * xolotlCore::pi
+	// Formula for reaction rate constant depends on type of reactants
+	// If one is a loop and the other is a sphere
+	if (((reaction.first.getType() == ReactantType::Perfect || 
+	    reaction.first.getType() == ReactantType::PerfectSuper ||
+	    reaction.first.getType() == ReactantType::Faulted || 
+	    reaction.first.getType() == ReactantType::FaultedSuper || 
+	    reaction.first.getType() == ReactantType::Frank || 
+	    reaction.first.getType() == ReactantType::FrankSuper)
+	    && (reaction.second.getType() == ReactantType::I ||
+	    reaction.second.getType() == ReactantType::V ||
+	    reaction.second.getType() == ReactantType::Void ||
+	    reaction.second.getType() == ReactantType::VoidSuper))
+	    || ((reaction.first.getType() == ReactantType::I ||
+		 reaction.first.getType() == ReactantType::V ||
+		 reaction.first.getType() == ReactantType::Void ||
+		 reaction.first.getType() == ReactantType::VoidSuper)
+	        && (reaction.second.getType() == ReactantType::Perfect || 
+	    reaction.second.getType() == ReactantType::PerfectSuper ||
+	    reaction.second.getType() == ReactantType::Faulted || 
+	    reaction.second.getType() == ReactantType::FaultedSuper || 
+	    reaction.second.getType() == ReactantType::Frank || 
+	    reaction.second.getType() == ReactantType::FrankSuper))) {
+		if (r_first >= r_second) {
+			p = 1.0 / (1.0 + pow(r_first / 
+			(r_second + xolotlCore::alloyCoreRadius), 2.0))
+			zl = 4.0 * xolotlCore::pi * pow(r_first, 2.0) 
+			       / log(1.0 + 8.0 * r_first 
+			       / (r_second + xolotlCore::alloyCoreRadius))
+			}
+		else {
+			p = 1.0 / (1.0 + pow(r_second / 
+			       (r_first + xolotlCore::alloyCoreRadius), 2.0))
+			zl = 4.0 * xolotlCore::pi * pow(r_second, 2.0) 
+				/ log(1.0 + 8.0 * r_second 
+			        / (r_first + xolotlCore::alloyCoreRadius))
+			}
+		k_plus = (firstDiffusion + secondDiffusion) * (p * zs 
+				+ (1.0 - p) / zl)
+	}
+	
+	// Else both are loops or both are spheres
+	else {
+		k_plus = 4.0 * xolotlCore::pi
 			* (r_first + r_second + xolotlCore::alloyCoreRadius)
 			* (firstDiffusion + secondDiffusion);
+	}
+	
 	return k_plus;
 }
 
@@ -60,7 +109,7 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 	int minFaultedSize = 7;
 	if (reaction.dissociating.getType() == ReactantType::Faulted
 			&& reaction.dissociating.getSize() == minFaultedSize) {
-		bindingEnergy = 1.5
+		bindingEnergy = 1.9
 				- 2.05211
 						* (pow(double(minFaultedSize), 2.0 / 3.0)
 								- pow(double(minFaultedSize - 1), 2.0 / 3.0));
