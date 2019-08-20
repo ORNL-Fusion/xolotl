@@ -61,20 +61,20 @@ double AlloyClusterReactionNetwork::calculateReactionRateConstant(
 	    reaction.second.getType() == ReactantType::FrankSuper))) {
 		if (r_first >= r_second) {
 			p = 1.0 / (1.0 + pow(r_first / 
-			(r_second + xolotlCore::alloyCoreRadius), 2.0))
+			(r_second + xolotlCore::alloyCoreRadius), 2.0));
 			zl = 4.0 * xolotlCore::pi * pow(r_first, 2.0) 
 			       / log(1.0 + 8.0 * r_first 
 			       / (r_second + xolotlCore::alloyCoreRadius))
 			}
 		else {
 			p = 1.0 / (1.0 + pow(r_second / 
-			       (r_first + xolotlCore::alloyCoreRadius), 2.0))
+			       (r_first + xolotlCore::alloyCoreRadius), 2.0));
 			zl = 4.0 * xolotlCore::pi * pow(r_second, 2.0) 
 				/ log(1.0 + 8.0 * r_second 
 			        / (r_first + xolotlCore::alloyCoreRadius))
 			}
 		k_plus = (firstDiffusion + secondDiffusion) * (p * zs 
-				+ (1.0 - p) / zl)
+				+ (1.0 - p) / zl);
 	}
 	
 	// Else both are loops or both are spheres
