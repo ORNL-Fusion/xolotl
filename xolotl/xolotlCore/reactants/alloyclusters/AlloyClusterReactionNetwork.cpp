@@ -32,7 +32,7 @@ double AlloyClusterReactionNetwork::calculateReactionRateConstant(
 	double secondDiffusion = reaction.second.getDiffusionCoefficient(i);
 	
 	// Initialize rate constant and parameters to calculate k+ for loop/sphere case
-	double k_plus, zl, p = 0.0;
+	double k_plus, zl, intBias, p = 0.0;
 	double zs = 4.0 * xolotlCore::pi * 
 		(r_first + r_second + xolotlCore::alloyCoreRadius);
 
@@ -62,14 +62,14 @@ double AlloyClusterReactionNetwork::calculateReactionRateConstant(
 		if (r_first >= r_second) {
 			p = 1.0 / (1.0 + pow(r_first / 
 			(r_second + xolotlCore::alloyCoreRadius), 2.0));
-			zl = 4.0 * xolotlCore::pi * pow(r_first, 2.0) 
+			zl = 4.0 * pow(xolotlCore::pi, 2.0) * r_first 
 			       / log(1.0 + 8.0 * r_first 
 			       / (r_second + xolotlCore::alloyCoreRadius));
 			}
 		else {
 			p = 1.0 / (1.0 + pow(r_second / 
 			       (r_first + xolotlCore::alloyCoreRadius), 2.0));
-			zl = 4.0 * xolotlCore::pi * pow(r_second, 2.0) 
+			zl = 4.0 * pow(xolotlCore::pi, 2.0) * r_second 
 				/ log(1.0 + 8.0 * r_second 
 			        / (r_first + xolotlCore::alloyCoreRadius));
 			}
@@ -83,6 +83,28 @@ double AlloyClusterReactionNetwork::calculateReactionRateConstant(
 			* (r_first + r_second + xolotlCore::alloyCoreRadius)
 			* (firstDiffusion + secondDiffusion);
 	}
+	
+	// Interstitial bias for interactions with loops
+	if ((reaction.first.getType() == I && (reaction.second.getType() == Perfect
+		 || reaction.second.getType() == PerfectSuper 
+		 || reaction.second.getType() == Faulted 
+		 || reaction.second.getType() == FaultedSuper 
+	         || reaction.second.getType() == Frank 
+                 || reaction.second.getType() == FrankSuper))
+	    || (reaction.second.getType() == I && (reaction.first.getType() == Perfect 
+		 || reaction.first.getType() == PerfectSuper 
+		 || reaction.first.getType() == Faulted 
+		 || reaction.first.getType() == FaultedSuper 
+	         || reaction.first.getType() == Frank 
+                 || reaction.first.getType() == FrankSuper))) {
+		intBias = 1.2;
+	}
+	
+	else {
+		intBias = 1.0;
+	}
+	
+	k_plus = k_plus * intBias;
 	
 	return k_plus;
 }
