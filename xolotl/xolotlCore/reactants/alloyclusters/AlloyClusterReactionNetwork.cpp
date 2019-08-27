@@ -85,18 +85,18 @@ double AlloyClusterReactionNetwork::calculateReactionRateConstant(
 	}
 	
 	// Interstitial bias for interactions with loops
-	if ((reaction.first.getType() == I && (reaction.second.getType() == Perfect
-		 || reaction.second.getType() == PerfectSuper 
-		 || reaction.second.getType() == Faulted 
-		 || reaction.second.getType() == FaultedSuper 
-	         || reaction.second.getType() == Frank 
-                 || reaction.second.getType() == FrankSuper))
-	    || (reaction.second.getType() == I && (reaction.first.getType() == Perfect 
-		 || reaction.first.getType() == PerfectSuper 
-		 || reaction.first.getType() == Faulted 
-		 || reaction.first.getType() == FaultedSuper 
-	         || reaction.first.getType() == Frank 
-                 || reaction.first.getType() == FrankSuper))) {
+	if ((reaction.first.getType() == ReactantType::I && (reaction.second.getType() == ReactantType::Perfect
+		 || reaction.second.getType() == ReactantType::PerfectSuper 
+		 || reaction.second.getType() == ReactantType::Faulted 
+		 || reaction.second.getType() == ReactantType::FaultedSuper 
+	         || reaction.second.getType() == ReactantType::Frank 
+                 || reaction.second.getType() == ReactantType::FrankSuper))
+	    || (reaction.second.getType() == ReactantType::I && (reaction.first.getType() == ReactantType::Perfect 
+		 || reaction.first.getType() == ReactantType::PerfectSuper 
+		 || reaction.first.getType() == ReactantType::Faulted 
+		 || reaction.first.getType() == ReactantType::FaultedSuper 
+	         || reaction.first.getType() == ReactantType::Frank 
+                 || reaction.first.getType() == ReactantType::FrankSuper))) {
 		intBias = 1.2;
 	}
 	
