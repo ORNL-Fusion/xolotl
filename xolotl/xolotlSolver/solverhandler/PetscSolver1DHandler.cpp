@@ -472,7 +472,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			"DMDAGetCorners failed.");
 
 	// Get the total number of diffusing clusters
-	const int nDiff = max(diffusionHandler->getNumberOfDiffusing(), 1);
+	const int nDiff = max(diffusionHandler->getNumberOfDiffusing(), 0);
 
 	// Get the total number of advecting clusters
 	int nAdvec = 0;
@@ -484,6 +484,8 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 	// Arguments for MatSetValuesStencil called below
 	MatStencil row, cols[3];
+	PetscScalar tempVals[3];
+	PetscInt tempIndices[1];
 	PetscScalar diffVals[3 * nDiff];
 	PetscInt diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
@@ -498,24 +500,24 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		// Heat condition
 		if (xi == surfacePosition) {
 			// Get the partial derivatives for the temperature
-			temperatureHandler->computePartialsForTemperature(diffVals,
-					diffIndices, grid[xi + 1] - grid[xi],
+			temperatureHandler->computePartialsForTemperature(tempVals,
+					tempIndices, grid[xi + 1] - grid[xi],
 					grid[xi + 2] - grid[xi + 1], xi);
 
 			// Set grid coordinate and component number for the row
 			row.i = xi;
-			row.c = diffIndices[0];
+			row.c = tempIndices[0];
 
 			// Set grid coordinates and component numbers for the columns
 			// corresponding to the middle, left, and right grid points
 			cols[0].i = xi; // middle
-			cols[0].c = diffIndices[0];
+			cols[0].c = tempIndices[0];
 			cols[1].i = xi - 1; // left
-			cols[1].c = diffIndices[0];
+			cols[1].c = tempIndices[0];
 			cols[2].i = xi + 1; // right
-			cols[2].c = diffIndices[0];
+			cols[2].c = tempIndices[0];
 
-			ierr = MatSetValuesStencil(J, 1, &row, 3, cols, diffVals,
+			ierr = MatSetValuesStencil(J, 1, &row, 3, cols, tempVals,
 					ADD_VALUES);
 			checkPetscError(ierr,
 					"PetscSolver1DHandler::computeOffDiagonalJacobian: "
@@ -566,23 +568,23 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		}
 
 		// Get the partial derivatives for the temperature
-		temperatureHandler->computePartialsForTemperature(diffVals, diffIndices,
+		temperatureHandler->computePartialsForTemperature(tempVals, tempIndices,
 				grid[xi + 1] - grid[xi], grid[xi + 2] - grid[xi + 1], xi);
 
 		// Set grid coordinate and component number for the row
 		row.i = xi;
-		row.c = diffIndices[0];
+		row.c = tempIndices[0];
 
 		// Set grid coordinates and component numbers for the columns
 		// corresponding to the middle, left, and right grid points
 		cols[0].i = xi; // middle
-		cols[0].c = diffIndices[0];
+		cols[0].c = tempIndices[0];
 		cols[1].i = xi - 1; // left
-		cols[1].c = diffIndices[0];
+		cols[1].c = tempIndices[0];
 		cols[2].i = xi + 1; // right
-		cols[2].c = diffIndices[0];
+		cols[2].c = tempIndices[0];
 
-		ierr = MatSetValuesStencil(J, 1, &row, 3, cols, diffVals, ADD_VALUES);
+		ierr = MatSetValuesStencil(J, 1, &row, 3, cols, tempVals, ADD_VALUES);
 		checkPetscError(ierr,
 				"PetscSolver1DHandler::computeOffDiagonalJacobian: "
 						"MatSetValuesStencil (temperature) failed.");
