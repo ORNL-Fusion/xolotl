@@ -30,14 +30,7 @@ public:
 	 *
 	 * @param argv Vector of argument strings
 	 */
-	virtual void readParams(char* argv[]) = 0;
-
-	/**
-	 * Show our help message.
-	 *
-	 * @param os The output stream upon which to print the help message
-	 */
-	virtual void showHelp(std::ostream& os) const = 0;
+	virtual void readParams(int argc, char* argv[]) = 0;
 
 	/**
 	 * Should the program run after parsing the parameter file?

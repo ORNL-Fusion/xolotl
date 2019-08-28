@@ -38,11 +38,6 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
  * in 0D.
  */
 BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
-	// Initialize MPI for HDF5
-	int argc = 0;
-	char **argv;
-	MPI_Init(&argc, &argv);
-
 	// Local Declarations
 	string sourceDir(XolotlSourceDirectory);
 
@@ -69,15 +64,20 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
+	MPI_Init(&argc, &argv);
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Set the options to use a regular grid in the x direction because the parameter file
 	// says the opposite
@@ -182,16 +182,19 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Set the options to use a regular grid in the x direction because the parameter file
 	// says the opposite
@@ -297,16 +300,19 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the network loader
 	std::shared_ptr<HDF5NetworkLoader> loader = std::make_shared<
@@ -401,16 +407,19 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the network loader
 	std::shared_ptr<HDF5NetworkLoader> loader = std::make_shared<

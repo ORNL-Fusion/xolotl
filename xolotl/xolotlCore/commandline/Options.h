@@ -2,7 +2,6 @@
 #define OPTIONS_H
 
 #include "IOptions.h"
-#include "optionhandlers/IOptionHandler.h"
 
 namespace xolotlCore {
 
@@ -13,11 +12,6 @@ namespace xolotlCore {
 class Options: public IOptions {
 
 protected:
-	/**
-	 * Map of options we support, keyed by option switch string.
-	 */
-	typedef std::map<std::string, IOptionHandler*> OptionsMap;
-	OptionsMap optionsMap;
 
 	/**
 	 * The flag that says if Xolotl should run.
@@ -293,13 +287,7 @@ public:
 	 * xolotl options.
 	 * \see IOptions.h
 	 */
-	void readParams(char* argv[]) override;
-
-	/**
-	 * Show our help message.
-	 * \see IOptions.h
-	 */
-	void showHelp(std::ostream& os) const override;
+	void readParams(int argc, char* argv[]) override;
 
 	/**
 	 * Should the program run after parsing the parameter file?

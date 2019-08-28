@@ -34,19 +34,21 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 0;
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
@@ -92,17 +94,19 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 0;
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
@@ -151,17 +155,19 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 0;
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
@@ -239,17 +245,19 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 0;
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
@@ -282,16 +290,19 @@ BOOST_AUTO_TEST_CASE(checkGetConcentrations) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(
@@ -338,17 +349,19 @@ BOOST_AUTO_TEST_CASE(checkBoundaries) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 0;
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	PSIClusterNetworkLoader loader = PSIClusterNetworkLoader(

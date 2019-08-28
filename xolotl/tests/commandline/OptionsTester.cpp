@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(noOptions) {
 
 	// Attempt to read the parameters
 	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(1, fargv);
 
 	// The Option class does not like empty command line
 	// a parameter file is always needed
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(badParamFileName) {
 
 	// Attempt to read the parameters
 	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// If the parameter file does not exist, xolotl should not run
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(badParamFile) {
 
 	// Attempt to read the parameter file
 	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// An unrecognized parameter should result in indicating
 	// the program shouldn't run, and an error exit code.
@@ -127,8 +127,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -261,8 +260,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -310,8 +308,7 @@ BOOST_AUTO_TEST_CASE(wrongPerfHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should not be able to run with a wrong performance handler parameter
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -342,8 +339,7 @@ BOOST_AUTO_TEST_CASE(wrongVizHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should not be able to run with a wrong visualization handler parameter
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -404,8 +400,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -451,8 +446,7 @@ BOOST_AUTO_TEST_CASE(wrongFluxProfile) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should not be able to run with a wrong flux profile file name
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -483,8 +477,7 @@ BOOST_AUTO_TEST_CASE(wrongTempProfile) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should not be able to run with a wrong temperature profile file name
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -515,8 +508,7 @@ BOOST_AUTO_TEST_CASE(papiPerfHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -551,8 +543,7 @@ BOOST_AUTO_TEST_CASE(osPerfHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -587,8 +578,7 @@ BOOST_AUTO_TEST_CASE(dummyPerfHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);

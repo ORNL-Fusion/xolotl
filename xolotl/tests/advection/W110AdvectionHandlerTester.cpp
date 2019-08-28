@@ -23,11 +23,6 @@ BOOST_AUTO_TEST_SUITE(W110AdvectionHandler_testSuite)
  * Method checking the initialization and the compute advection methods.
  */
 BOOST_AUTO_TEST_CASE(checkAdvection) {
-	// Initialize MPI for HDF5
-	int argc = 0;
-	char **argv;
-	MPI_Init(&argc, &argv);
-
 	// Create the option to create a network
 	xolotlCore::Options opts;
 	// Create a good parameter file
@@ -36,12 +31,18 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
-	opts.readParams(argv);
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
+	// Initialize MPI for HDF5
+	MPI_Init(&argc, &argv);
+	opts.readParams(argc, argv);
 
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
