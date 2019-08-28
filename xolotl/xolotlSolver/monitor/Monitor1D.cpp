@@ -655,7 +655,8 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		outputFile.open("retentionOut.txt", ios::app);
 		outputFile << fluence << " " << totalHeConcentration << " "
 				<< totalDConcentration << " " << totalTConcentration << " "
-				<< nHelium1D << " " << nDeuterium1D << " " << nTritium1D << std::endl;
+				<< nHelium1D << " " << nDeuterium1D << " " << nTritium1D
+				<< std::endl;
 		outputFile.close();
 	}
 
@@ -1065,6 +1066,111 @@ PetscErrorCode computeCumulativeHelium1D(TS ts, PetscInt timestep,
 
 	// Close the file
 	if (procId == 0) {
+		outputFile.close();
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "profileTemperature1D")
+/**
+ * This is a monitoring method that will store the temperature profile
+ */
+PetscErrorCode profileTemperature1D(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void *ictx) {
+	// Initial declarations
+	PetscErrorCode ierr;
+	PetscInt xs, xm;
+
+	PetscFunctionBeginUser;
+
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+
+	// Gets the process ID
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the network and dof
+	auto& network = solverHandler.getNetwork();
+	const int dof = network.getDOF();
+
+	// Get the position of the surface
+	int surfacePos = solverHandler.getSurfacePosition();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+	CHKERRQ(ierr);
+
+	// Get the total size of the grid
+	PetscInt Mx;
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
+	CHKERRQ(ierr);
+
+	// Get the physical grid
+	auto grid = solverHandler.getXGrid();
+
+	// Get the array of concentration
+	PetscReal **solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal *gridPointSolution;
+
+	// Create the output file
+	std::ofstream outputFile;
+	if (procId == 0) {
+		outputFile.open("tempProf.txt", ios::app);
+		outputFile << time;
+	}
+
+	// Loop on the entire grid
+	for (int xi = surfacePos + 1; xi < Mx; xi++) {
+		// Set x
+		double x = grid[xi + 1] - grid[1];
+
+		double localTemp = 0.0;
+		// Check if this process is in charge of xi
+		if (xi >= xs && xi < xs + xm) {
+			// Get the pointer to the beginning of the solution data for this grid point
+			gridPointSolution = solutionArray[xi];
+
+			// Get the local temperature
+			localTemp = gridPointSolution[dof - 1];
+		}
+
+		// Get the value on procId = 0
+		double temperature = 0.0;
+		MPI_Reduce(&localTemp, &temperature, 1, MPI_DOUBLE,
+		MPI_SUM, 0, PETSC_COMM_WORLD);
+
+		// The master process writes in the file
+		if (procId == 0) {
+			outputFile << " " << temperature;
+		}
+	}
+
+	// Close the file
+	if (procId == 0) {
+		outputFile << std::endl;
 		outputFile.close();
 	}
 
@@ -2819,7 +2925,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
 			flagPerf, flagHeRetention, flagStatus, flagMaxClusterConc,
 			flagCumul, flagMeanSize, flagConc, flagXeRetention, flagTRIDYN,
-			flagAlloy;
+			flagAlloy, flagTemp;
 
 	// Check the option -check_negative
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg);
@@ -2898,6 +3004,11 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	ierr = PetscOptionsHasName(NULL, NULL, "-alloy", &flagAlloy);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-alloy) failed.");
+
+	// Check the option -temp_profile
+	ierr = PetscOptionsHasName(NULL, NULL, "-temp_profile", &flagTemp);
+	checkPetscError(ierr,
+			"setupPetsc1DMonitor: PetscOptionsHasName (-temp_profile) failed.");
 
 	// Initialize the timers
 	startStopTimer = handlerRegistry->getTimer("monitor1D:startStop");
@@ -3408,6 +3519,50 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 		ierr = TSMonitorSet(ts, computeAlloy1D, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: TSMonitorSet (computeAlloy1D) failed.");
+	}
+
+	// Set the monitor to compute the temperature profile
+	if (flagTemp) {
+
+		if (procId == 0) {
+			// Uncomment to clear the file where the retention will be written
+			std::ofstream outputFile;
+			outputFile.open("tempProf.txt");
+
+			// Get the da from ts
+			DM da;
+			ierr = TSGetDM(ts, &da);
+			checkPetscError(ierr, "setupPetsc1DMonitor: TSGetDM failed.");
+
+			// Get the total size of the grid
+			PetscInt Mx;
+			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
+			PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
+			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
+
+			// Get the physical grid
+			auto grid = solverHandler.getXGrid();
+			// Get the position of the surface
+			int surfacePos = solverHandler.getSurfacePosition();
+
+			// Loop on the entire grid
+			for (int xi = surfacePos + 1; xi < Mx; xi++) {
+				// Set x
+				double x = grid[xi + 1] - grid[1];
+				outputFile << x << " ";
+
+			}
+			outputFile << std::endl;
+			outputFile.close();
+		}
+
+		// computeCumulativeHelium1D will be called at each timestep
+		ierr = TSMonitorSet(ts, profileTemperature1D, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc1DMonitor: TSMonitorSet (profileTemperature1D) failed.");
 	}
 
 	// Set the monitor to simply change the previous time to the new time
