@@ -221,14 +221,21 @@ int AlloyClusterReactionNetwork::typeSwitch(ReactantType const typeName) const {
 
 double AlloyClusterReactionNetwork::getReactionRadius(
 		ReactantType const typeName, int size) const {
-	if (typeName == ReactantType::Faulted || typeName == ReactantType::Frank
-			|| typeName == ReactantType::FaultedSuper
-			|| typeName == ReactantType::FrankSuper
-	                || typeName == ReactantType::Perfect
-	                || typeName == ReactantType::PerfectSuper)
+	if (typeName == ReactantType::Perfect || typeName == ReactantType::PerfectSuper)
 		return sqrt((double(size) * 0.25 * xolotlCore::alloyLatticeConstant 
 			* xolotlCore::alloyLatticeConstant * xolotlCore::alloyLatticeConstant) 
-			/ (xolotlCore::pi * xolotlCore::alloyCoreRadius));
+			/ (xolotlCore::pi * xolotlCore::alloyLatticeConstant
+			  * xolotlCore::perfectBurgers));
+	if (typeName == ReactantType::Faulted || typeName == ReactantType::FaultedSuper)
+		return sqrt((double(size) * 0.25 * xolotlCore::alloyLatticeConstant 
+			* xolotlCore::alloyLatticeConstant * xolotlCore::alloyLatticeConstant) 
+			/ (xolotlCore::pi * xolotlCore::alloyLatticeConstant
+			  * xolotlCore::faultedBurgers));
+	if (typeName == ReactantType::Frank || typeName == ReactantType::FrankSuper)
+		return sqrt((double(size) * 0.25 * xolotlCore::alloyLatticeConstant 
+			* xolotlCore::alloyLatticeConstant * xolotlCore::alloyLatticeConstant) 
+			/ (xolotlCore::pi * xolotlCore::alloyLatticeConstant
+			  * xolotlCore::frankBurgers));
 	if (typeName == ReactantType::V || typeName == ReactantType::Void
 			|| typeName == ReactantType::I
 			|| typeName == ReactantType::VoidSuper)
