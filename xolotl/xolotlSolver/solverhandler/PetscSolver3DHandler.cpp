@@ -13,23 +13,6 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = network.getDOF();
 
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Create distributed array (DMDA) to manage parallel grid and vectors
-	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-	ierr = DMDACreate3d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR,
-			DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX,
-			nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1, NULL,
-			NULL, NULL, &da);
-	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-			"DMDACreate3d failed.");
-	ierr = DMSetFromOptions(da);
-	checkPetscError(ierr,
-			"PetscSolver3DHandler::createSolverContext: DMSetFromOptions failed.");
-	ierr = DMSetUp(da);
-	checkPetscError(ierr,
-			"PetscSolver3DHandler::createSolverContext: DMSetUp failed.");
-
 	// Set the position of the surface
 	// Loop on Y
 	for (int j = 0; j < nY; j++) {
@@ -74,11 +57,6 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 		}
 	}
 
-	// Initialize the surface of the first advection handler corresponding to the
-	// advection toward the surface (or a dummy one if it is deactivated)
-	advectionHandlers[0]->setLocation(
-			grid[surfacePosition[0][0] + 1] - grid[1]);
-
 	// Prints the grid on one process
 	int procId;
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
@@ -89,8 +67,29 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 		std::cout << std::endl;
 	}
 
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Create distributed array (DMDA) to manage parallel grid and vectors
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+	ierr = DMDACreate3d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR,
+			DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX,
+			nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1, NULL,
+			NULL, NULL, &da);
+	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
+			"DMDACreate3d failed.");
+	ierr = DMSetFromOptions(da);
+	checkPetscError(ierr,
+			"PetscSolver3DHandler::createSolverContext: DMSetFromOptions failed.");
+	ierr = DMSetUp(da);
+	checkPetscError(ierr,
+			"PetscSolver3DHandler::createSolverContext: DMSetUp failed.");
+
+	// Initialize the surface of the first advection handler corresponding to the
+	// advection toward the surface (or a dummy one if it is deactivated)
+	advectionHandlers[0]->setLocation(
+			grid[surfacePosition[0][0] + 1] - grid[1]);
+
 	// Set the size of the partial derivatives vectors
-	clusterPartials.resize(dof, 0.0);
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	/*  The only spatial coupling in the Jacobian is due to diffusion.

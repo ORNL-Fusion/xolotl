@@ -87,7 +87,7 @@ void FluxHandler::initializeTimeProfile(const std::string& fileName) {
 	// Set use time profile to true
 	useTimeProfile = true;
 
-	// Open file dataFile.dat containing the time and amplitude
+	// Open file containing the time and amplitude
 	std::ifstream inputFile(fileName.c_str());
 	std::string line;
 

@@ -13,22 +13,6 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = network.getDOF();
 
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Create distributed array (DMDA) to manage parallel grid and vectors
-	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-	ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR,
-			DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE,
-			PETSC_DECIDE, dof, 1, NULL, NULL, &da);
-	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
-			"DMDACreate2d failed.");
-	ierr = DMSetFromOptions(da);
-	checkPetscError(ierr,
-			"PetscSolver2DHandler::createSolverContext: DMSetFromOptions failed.");
-	ierr = DMSetUp(da);
-	checkPetscError(ierr,
-			"PetscSolver2DHandler::createSolverContext: DMSetUp failed.");
-
 	// Set the position of the surface
 	for (int j = 0; j < nY; j++) {
 		surfacePosition.push_back(0);
@@ -69,12 +53,27 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 		std::cout << std::endl;
 	}
 
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Create distributed array (DMDA) to manage parallel grid and vectors
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+	ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR,
+			DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE,
+			PETSC_DECIDE, dof, 1, NULL, NULL, &da);
+	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
+			"DMDACreate2d failed.");
+	ierr = DMSetFromOptions(da);
+	checkPetscError(ierr,
+			"PetscSolver2DHandler::createSolverContext: DMSetFromOptions failed.");
+	ierr = DMSetUp(da);
+	checkPetscError(ierr,
+			"PetscSolver2DHandler::createSolverContext: DMSetUp failed.");
+
 	// Initialize the surface of the first advection handler corresponding to the
 	// advection toward the surface (or a dummy one if it is deactivated)
 	advectionHandlers[0]->setLocation(grid[surfacePosition[0] + 1] - grid[1]);
 
 	// Set the size of the partial derivatives vectors
-	clusterPartials.resize(dof, 0.0);
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	/*  The only spatial coupling in the Jacobian is due to diffusion.

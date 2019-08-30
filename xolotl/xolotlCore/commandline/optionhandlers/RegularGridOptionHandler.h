@@ -43,13 +43,9 @@ public:
 		} else if (arg == "cheby") {
 			opt->setChebyshevGrid(true);
 		} else {
-			std::cerr
-					<< "Options: unrecognized argument in the regular grid option handler: "
-					<< arg << std::endl;
-			opt->showHelp(std::cerr);
-			opt->setShouldRunFlag(false);
-			opt->setExitCode(EXIT_FAILURE);
-			return false;
+			// Read it as a file name
+			opt->setGridFilename(arg);
+			opt->setReadInGrid(true);
 		}
 
 		return true;
