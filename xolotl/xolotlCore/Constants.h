@@ -61,6 +61,12 @@ constexpr double feHeatConductivity = 0.0;
 
 // Alloy heat conductivity = lambda in W K-1 m-1
 static const double alloyHeatConductivity = 0.0;
+	
+// Burgers vector magnitudes for loops in Alloy case
+// In lattice parameter units
+constexpr double perfectBurgers = 0.5;
+constexpr double faultedBurgers = 0.333;
+constexpr double frankBurgers = 0.333;
 
 //! Parameters for biased sink in the iron case
 static const double reactionRadius = ironLatticeConstant
