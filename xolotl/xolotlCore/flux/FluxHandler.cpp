@@ -137,6 +137,9 @@ double FluxHandler::getProfileAmplitude(double currentTime) const {
 
 void FluxHandler::computeIncidentFlux(double currentTime,
 		double *updatedConcOffset, int xi, int surfacePos) {
+	// Skip if no index was set
+	if (fluxIndices.size() == 0) return;
+
 	// Recompute the flux vector if a time profile is used
 	if (useTimeProfile) {
 		fluxAmplitude = getProfileAmplitude(currentTime);
