@@ -28,10 +28,10 @@ private:
 	}
 
 	std::vector<double> AlloyDamageFunction(const double x) {
-		std::vector<double> damage = { 0.0, 0.0, 0.0, 0.0 };
+		std::vector<double> damage;
 		auto srimDamage = srim.getDamage();
 		for (int it = 0; it < srimDamage.size(); ++it) {
-			damage[it] = srimDamage[it][0];
+			damage.push_back(srimDamage[it][0]);
 			for (int it2 = 1; it2 < srimDamage[it].size(); ++it2) {
 				damage[it] += srimDamage[it][it2] * pow(x, double(it2));
 			}
