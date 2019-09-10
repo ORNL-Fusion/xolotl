@@ -236,7 +236,7 @@ SimpleAlloyReactionNetwork::SimpleAlloyReactionNetwork(const int maxClusterSize,
 	}
 
 	// Add perfect clusters
-	for (int numI = 5; numI <= maxClusterSize; numI++) {
+	for (int numI = 5; numI <= 45; numI++) {
 		// Create a perfect cluster with cluster size numI
 		auto cluster = new AlloyPerfectCluster(numI, *this, registry);
 		// Add it to the network
