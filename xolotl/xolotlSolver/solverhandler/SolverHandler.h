@@ -385,9 +385,9 @@ protected:
 					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
 					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
 					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
-					0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
-					false), useAttenuation(false), sputteringYield(0.0), fluxHandler(
-					nullptr), temperatureHandler(nullptr), diffusionHandler(
+					0.0), useRegularGrid(""), readInGrid(false), movingSurface(
+					false), bubbleBursting(false), useAttenuation(false), sputteringYield(
+					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
 					nullptr), mutationHandler(nullptr), resolutionHandler(
 					nullptr), tauBursting(10.0), rngSeed(0) {
 	}
