@@ -132,7 +132,7 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 	if (reaction.dissociating.getType() == ReactantType::Faulted
 			&& reaction.dissociating.getSize() == minFaultedSize) {
 		bindingEnergy = 1.9
-				- 2.05211
+				- 3.2
 						* (pow(double(minFaultedSize), 2.0 / 3.0)
 								- pow(double(minFaultedSize - 1), 2.0 / 3.0));
 	}
