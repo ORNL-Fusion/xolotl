@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Initialize it
 	diffusionHandler.initializeOFill(*network, ofill);
-	diffusionHandler.initializeDiffusionGrid(advectionHandlers, grid);
+	diffusionHandler.initializeDiffusionGrid(advectionHandlers, grid, 5, 0);
 
 	// All the clusters diffuse except the 7-th and 8-th one
 	BOOST_REQUIRE_EQUAL(ofill[0][0], 0);
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Compute the diffusion at this grid point
 	diffusionHandler.computeDiffusion(*network, concVector, updatedConcOffset,
-			hx, hx, 1, 1);
+			hx, hx, 0);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 4.632e+12, 0.01);
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Compute the partial derivatives for the diffusion a the grid point 1
 	diffusionHandler.computePartialsForDiffusion(*network, valPointer,
-			indicesPointer, hx, hx, 1, 1);
+			indicesPointer, hx, hx, 0);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 0);

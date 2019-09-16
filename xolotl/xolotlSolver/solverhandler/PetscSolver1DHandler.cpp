@@ -165,7 +165,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	fluxHandler->initializeFluxHandler(network, surfacePosition, grid);
 
 	// Initialize the grid for the diffusion
-	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid);
+	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, xm, xs);
 
 	// Initialize the grid for the advection
 	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid);
@@ -402,7 +402,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// ---- Compute diffusion over the locally owned part of the grid -----
 		diffusionHandler->computeDiffusion(network, concVector,
 				updatedConcOffset, grid[xi + 1] - grid[xi],
-				grid[xi + 2] - grid[xi + 1], xi, xs);
+				grid[xi + 2] - grid[xi + 1], xi - xs);
 
 		// ---- Compute advection over the locally owned part of the grid -----
 		// Set the grid position
@@ -592,7 +592,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		// Get the partial derivatives for the diffusion
 		diffusionHandler->computePartialsForDiffusion(network, diffVals,
 				diffIndices, grid[xi + 1] - grid[xi],
-				grid[xi + 2] - grid[xi + 1], xi, xs);
+				grid[xi + 2] - grid[xi + 1], xi - xs);
 
 		// Loop on the number of diffusion cluster to set the values in the Jacobian
 		for (int i = 0; i < nDiff; i++) {
