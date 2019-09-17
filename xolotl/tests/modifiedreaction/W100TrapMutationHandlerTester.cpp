@@ -73,9 +73,9 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	advectionHandlers.push_back(new DummyAdvectionHandler());
 
 	// Initialize it
-	trapMutationHandler.initialize(*network, grid);
+	trapMutationHandler.initialize(*network, 11, 0);
 	trapMutationHandler.initializeIndex1D(surfacePos, *network,
-			advectionHandlers, grid);
+			advectionHandlers, grid, 11, 0);
 
 	// The arrays of concentration
 	double concentration[nGrid * dof];
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the ninth grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 8, 0);
+			updatedConcOffset, 8);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 4.1527e+21, 0.01); // Create I
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
 	int nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8, 0);
+			valPointer, indicesPointer, 8);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(nMutating, 3);
@@ -160,13 +160,13 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	network->setTemperature(500.0);
 
 	// Reinitialize the handler
-	trapMutationHandler.initialize(*network, grid);
+	trapMutationHandler.initialize(*network, 11, 0);
 	// Update the bursting rate
 	trapMutationHandler.updateTrapMutationRate(*network);
 
 	// Compute the partial derivatives for the bursting a the grid point 8
 	nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8, 0);
+			valPointer, indicesPointer, 8);
 
 	// Check values
 	BOOST_REQUIRE_EQUAL(nMutating, 3);

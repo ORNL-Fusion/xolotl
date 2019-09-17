@@ -98,10 +98,16 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 		advectionHandlers[i]->initialize(network, ofill);
 	}
 
+	// Get the local boundaries
+	PetscInt xs, xm, ys, ym;
+	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
+	checkPetscError(ierr, "PetscSolver2DHandler::initializeConcentration: "
+			"DMDAGetCorners failed.");
+
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, grid, nY, hY);
+	mutationHandler->initialize(network, xm, xs, ym, hY, ys);
 	mutationHandler->initializeIndex2D(surfacePosition, network,
-			advectionHandlers, grid, nY, hY);
+			advectionHandlers, grid, xm, xs, ym, hY, ys);
 
 	// Initialize the re-solution handler here
 	// because it adds connectivity
@@ -170,11 +176,11 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, xm, xs,
-			nY, hY, ys);
+			ym, hY, ys);
 
 	// Initialize the grid for the advection
-	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, nY,
-			hY);
+	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, xm,
+			xs, ym, hY, ys);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar *concOffset = nullptr;
@@ -443,7 +449,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// ---- Compute diffusion over the locally owned part of the grid -----
 			diffusionHandler->computeDiffusion(network, concVector,
 					updatedConcOffset, grid[xi + 1] - grid[xi],
-					grid[xi + 2] - grid[xi + 1], xi - xs, sy, yj);
+					grid[xi + 2] - grid[xi + 1], xi - xs, sy, yj - ys);
 
 			// ---- Compute advection over the locally owned part of the grid -----
 			// Set the grid position
@@ -451,12 +457,12 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			for (int i = 0; i < advectionHandlers.size(); i++) {
 				advectionHandlers[i]->computeAdvection(network, gridPosition,
 						concVector, updatedConcOffset, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi, xs, hY, yj);
+						grid[xi + 2] - grid[xi + 1], xi - xs, hY, yj - ys);
 			}
 
 			// ----- Compute the modified trap-mutation over the locally owned part of the grid -----
 			mutationHandler->computeTrapMutation(network, concOffset,
-					updatedConcOffset, xi, xs, yj);
+					updatedConcOffset, xi - xs, yj - ys);
 
 			// ----- Compute the re-solution over the locally owned part of the grid -----
 			resolutionHandler->computeReSolution(network, concOffset,
@@ -672,7 +678,7 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			// Get the partial derivatives for the diffusion
 			diffusionHandler->computePartialsForDiffusion(network, diffVals,
 					diffIndices, grid[xi + 1] - grid[xi],
-					grid[xi + 2] - grid[xi + 1], xi - xs, sy, yj);
+					grid[xi + 2] - grid[xi + 1], xi - xs, sy, yj - ys);
 
 			// Loop on the number of diffusion cluster to set the values in the Jacobian
 			for (int i = 0; i < nDiff; i++) {
@@ -713,7 +719,7 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				advectionHandlers[l]->computePartialsForAdvection(network,
 						advecVals, advecIndices, gridPosition,
 						grid[xi + 1] - grid[xi], grid[xi + 2] - grid[xi + 1],
-						xi, xs, hY, yj);
+						xi - xs, hY, yj - ys);
 
 				// Get the stencil indices to know where to put the partial derivatives in the Jacobian
 				auto advecStencil =
@@ -939,7 +945,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Compute the partial derivative from modified trap-mutation at this grid point
 			int nMutating = mutationHandler->computePartialsForTrapMutation(
-					network, mutationVals, mutationIndices, xi, xs, yj);
+					network, mutationVals, mutationIndices, xi - xs, yj - ys);
 
 			// Loop on the number of helium undergoing trap-mutation to set the values
 			// in the Jacobian

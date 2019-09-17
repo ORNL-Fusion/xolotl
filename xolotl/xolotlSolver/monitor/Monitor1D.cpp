@@ -2867,7 +2867,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	auto mutationHandler = solverHandler.getMutationHandler();
 	auto advecHandlers = solverHandler.getAdvectionHandlers();
 	mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers,
-			grid);
+			grid, xm, xs);
 
 	// Write the updated surface position
 	if (procId == 0) {

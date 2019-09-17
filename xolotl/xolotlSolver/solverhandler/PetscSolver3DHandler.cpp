@@ -114,10 +114,16 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 		advectionHandlers[i]->initialize(network, ofill);
 	}
 
+	// Get the local boundaries
+	PetscInt xs, xm, ys, ym, zs, zm;
+	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
+	checkPetscError(ierr, "PetscSolver3DHandler::initializeConcentration: "
+			"DMDAGetCorners failed.");
+
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, grid, nY, hY, nZ, hZ);
+	mutationHandler->initialize(network, xm, xs, ym, hY, ys, zm, hZ, zs);
 	mutationHandler->initializeIndex3D(surfacePosition, network,
-			advectionHandlers, grid, nY, hY, nZ, hZ);
+			advectionHandlers, grid, xm, xs, ym, hY, ys, zm, hZ, zs);
 
 	// Initialize the re-solution handler here
 	// because it adds connectivity
@@ -187,11 +193,11 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, xm, xs,
-			nY, hY, ys, nZ, hZ, zs);
+			ym, hY, ys, zm, hZ, zs);
 
 	// Initialize the grid for the advection
-	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, nY,
-			hY, nZ, hZ);
+	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, xm,
+			xs, ym, hY, ys, zm, hZ, zs);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar *concOffset = nullptr;
@@ -482,7 +488,8 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				// ---- Compute diffusion over the locally owned part of the grid -----
 				diffusionHandler->computeDiffusion(network, concVector,
 						updatedConcOffset, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi - xs, sy, yj, sz, zk);
+						grid[xi + 2] - grid[xi + 1], xi - xs, sy, yj - ys, sz,
+						zk - zs);
 
 				// ---- Compute advection over the locally owned part of the grid -----
 				// Set the grid position
@@ -491,13 +498,13 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					advectionHandlers[i]->computeAdvection(network,
 							gridPosition, concVector, updatedConcOffset,
 							grid[xi + 1] - grid[xi],
-							grid[xi + 2] - grid[xi + 1], xi, xs, hY, yj, hZ,
-							zk);
+							grid[xi + 2] - grid[xi + 1], xi - xs, hY, yj - ys,
+							hZ, zk - zs);
 				}
 
 				// ----- Compute the modified trap-mutation over the locally owned part of the grid -----
 				mutationHandler->computeTrapMutation(network, concOffset,
-						updatedConcOffset, xi, xs, yj, zk);
+						updatedConcOffset, xi - xs, yj - ys, zk - zs);
 
 				// ----- Compute the re-solution over the locally owned part of the grid -----
 				resolutionHandler->computeReSolution(network, concOffset,
@@ -753,7 +760,8 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				// Get the partial derivatives for the diffusion
 				diffusionHandler->computePartialsForDiffusion(network, diffVals,
 						diffIndices, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi - xs, sy, yj, sz, zk);
+						grid[xi + 2] - grid[xi + 1], xi - xs, sy, yj - ys, sz,
+						zk - zs);
 
 				// Loop on the number of diffusion cluster to set the values in the Jacobian
 				for (int i = 0; i < nDiff; i++) {
@@ -809,8 +817,8 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					advectionHandlers[l]->computePartialsForAdvection(network,
 							advecVals, advecIndices, gridPosition,
 							grid[xi + 1] - grid[xi],
-							grid[xi + 2] - grid[xi + 1], xi, xs, hY, yj, hZ,
-							zk);
+							grid[xi + 2] - grid[xi + 1], xi - xs, hY, yj - ys,
+							hZ, zk - zs);
 
 					// Get the stencil indices to know where to put the partial derivatives in the Jacobian
 					auto advecStencil =
@@ -1053,7 +1061,8 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 				// Compute the partial derivative from modified trap-mutation at this grid point
 				int nMutating = mutationHandler->computePartialsForTrapMutation(
-						network, mutationVals, mutationIndices, xi, xs, yj, zk);
+						network, mutationVals, mutationIndices, xi - xs,
+						yj - ys, zk - zs);
 
 				// Loop on the number of helium undergoing trap-mutation to set the values
 				// in the Jacobian
