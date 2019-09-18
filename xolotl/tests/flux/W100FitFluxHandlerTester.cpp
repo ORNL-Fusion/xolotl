@@ -89,9 +89,9 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.476819, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.225961, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.097220, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.444777, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.247638, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.10758, 0.01);
 
 	return;
 }
@@ -280,9 +280,9 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 1.192047, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.564902, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.243050, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 1.111943, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.619095, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.268961, 0.01);
 
 	return;
 }
@@ -363,9 +363,9 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 1192.047, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 564.902, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 243.050, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 1111.94, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 619.095, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 268.961, 0.01);
 	// Check the value of the flux amplitude
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2500.0);
 
@@ -389,9 +389,9 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 715.228, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 338.941, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 145.830, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 667.166, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 371.457, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 161.377, 0.01);
 	// Check the value of the flux amplitude
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 1500.0);
 

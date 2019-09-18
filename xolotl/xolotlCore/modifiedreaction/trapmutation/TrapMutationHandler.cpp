@@ -150,8 +150,10 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 		}
 
 		// Get the depth
-		double depth = grid[i + xs + 1] - grid[surfacePos + 1];
-		double previousDepth = grid[i + xs] - grid[surfacePos + 1];
+		double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0
+				- grid[surfacePos + 1];
+		double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0
+				- grid[surfacePos + 1];
 
 		// Loop on the depth vector
 		std::vector<std::reference_wrapper<IReactant> > indices;
@@ -229,8 +231,10 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 			}
 
 			// Get the depth
-			double depth = grid[i + xs + 1] - grid[surfacePos[j] + 1];
-			double previousDepth = grid[i + xs] - grid[surfacePos[j] + 1];
+			double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0
+					- grid[surfacePos[j] + 1];
+			double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0
+					- grid[surfacePos[j] + 1];
 
 			// Loop on the depth vector
 			for (int l = 0; l < depthVec.size(); l++) {
@@ -361,8 +365,9 @@ void TrapMutationHandler::initializeIndex3D(
 				}
 
 				// Get the depth
-				double depth = grid[i + xs + 1] - grid[surfacePos[j][k] + 1];
-				double previousDepth = grid[i + xs]
+				double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0
+						- grid[surfacePos[j][k] + 1];
+				double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0
 						- grid[surfacePos[j][k] + 1];
 
 				// Loop on the depth vector

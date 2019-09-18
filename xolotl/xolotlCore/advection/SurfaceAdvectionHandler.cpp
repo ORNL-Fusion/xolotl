@@ -43,14 +43,14 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 			for (int j = -1; j < ny + 1; j++) {
 				// Set the grid position
 				gridPosition[1] = hy * (double) j;
-				for (int i = -1; i < nx + 1; i++) {
+				for (int i = 0; i < nx + 2; i++) {
 					// Set the grid position
-					if (i + xs == -1)
-						gridPosition[0] = -1.0;
-					else if (i + xs == nx)
-						gridPosition[0] = grid[i + xs - 1] + 1.0;
+					if (i + xs == nx - 1)
+						gridPosition[0] = grid[i + xs]
+								+ (grid[i + xs] - grid[i + xs - 1]) / 2.0;
 					else
-						gridPosition[0] = grid[i + xs];
+						gridPosition[0] = (grid[i + xs] + grid[i + xs + 1])
+								/ 2.0;
 
 					// Check if we are on a sink
 					if (currAdvecHandler->isPointOnSink(gridPosition)) {

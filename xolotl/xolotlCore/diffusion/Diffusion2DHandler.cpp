@@ -5,8 +5,8 @@ namespace xolotlCore {
 
 void Diffusion2DHandler::initializeDiffusionGrid(
 		std::vector<IAdvectionHandler *> advectionHandlers,
-		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys, int nz,
-		double hz, int zs) {
+		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
+		int nz, double hz, int zs) {
 	// Get the number of diffusing clusters
 	int nDiff = diffusingClusters.size();
 
@@ -36,7 +36,8 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 			gridPosition[1] = hy * (double) j;
 			for (int i = 0; i < nx; i++) {
 				// Set the grid position
-				gridPosition[0] = grid[i + xs] - grid[1];
+				gridPosition[0] = (grid[i + xs] + grid[i + xs + 1]) / 2.0
+						- grid[1];
 
 				// Check if we are on a sink
 				if (currAdvectionHandler->isPointOnSink(gridPosition)) {

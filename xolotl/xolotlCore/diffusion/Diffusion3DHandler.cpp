@@ -43,7 +43,8 @@ void Diffusion3DHandler::initializeDiffusionGrid(
 				gridPosition[1] = hy * (double) j;
 				for (int i = 0; i < nx; i++) {
 					// Set the grid position
-					gridPosition[0] = grid[i + xs] - grid[1];
+					gridPosition[0] = (grid[i + xs] + grid[i + xs + 1]) / 2.0
+							- grid[1];
 
 					// Check if we are on a sink
 					if (currAdvectionHandler->isPointOnSink(gridPosition)) {
