@@ -60,6 +60,11 @@ public:
 		// Define the reaction radius
 		reactionRadius = _network.getReactionRadius(type, size);
 
+                // Voids are considered spheres so set isSphere to true
+                bool isSphere() const override {
+                        return true;
+                }
+
 		return;
 	}
 

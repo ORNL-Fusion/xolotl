@@ -557,6 +557,15 @@ public:
 		return false;
 	}
 
+        /**
+         * This operation returns true if the cluster is a sphere.
+         *
+         * @return False by default
+         */
+        virtual bool isSphere() const {
+                return false;
+        }
+
 	/**
 	 * This operation returns the distance to the mean.
 	 *
