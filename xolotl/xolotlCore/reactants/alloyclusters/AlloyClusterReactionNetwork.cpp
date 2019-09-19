@@ -140,7 +140,7 @@ double AlloyClusterReactionNetwork::computeBindingEnergy(
 //					dissoCluster.getSize() - 1);
 //	}
 //
-//	double bindingEnergy = firstEnergy + secondEnergy - dissoEnergy;
+	double bindingEnergy = 0.0;
 
 	if (reaction.dissociating.getType() == ReactantType::Void
 		|| reaction.dissociating.getType() == ReactantType::VoidSuper) {
