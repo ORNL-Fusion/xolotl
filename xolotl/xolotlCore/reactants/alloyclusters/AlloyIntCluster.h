@@ -60,11 +60,6 @@ public:
 		// Define the reaction radius (using spherical)
 		reactionRadius = _network.getReactionRadius(type, size);
 
-                // Int clusters are considered spheres so set isSphere to true
-                bool isSphere() const override {
-                        return true;
-                }
-
 		return;
 	}
 
@@ -72,6 +67,11 @@ public:
 	 * Destructor
 	 */
 	~AlloyIntCluster() {
+	}
+
+	// Int clusters are considered spheres so set isSphere to true
+	bool isSphere() const override {
+		return true;
 	}
 
 };
