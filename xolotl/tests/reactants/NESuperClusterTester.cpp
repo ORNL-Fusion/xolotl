@@ -19,7 +19,7 @@ using namespace xolotlCore;
 /**
  * This suite is responsible for testing the NESuperCluster.
  */
-BOOST_AUTO_TEST_SUITE(NESuperCluster_testSuite)
+BOOST_AUTO_TEST_SUITE (NESuperCluster_testSuite)
 
 /**
  * This operation checks the ability of the NESuperCluster to describe
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(0);
-	BOOST_REQUIRE_CLOSE(0.0, flux, 0.000001);
+	BOOST_REQUIRE_CLOSE(1.641002464e-06, flux, 0.000001);
 
 	// Remove the created file
 	std::string tempFile = "param.txt";
@@ -144,9 +144,8 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 0.0578672, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			-5.14769e-37, 5.37186e-37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			5.14769e-37, -5.37186e-37, 0, 0 };
+	double knownPartials[] = {0.0707013, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -6.28937e-37,
+		6.56326e-37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6.28937e-37, -6.56326e-37, 0, 0};
 
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");

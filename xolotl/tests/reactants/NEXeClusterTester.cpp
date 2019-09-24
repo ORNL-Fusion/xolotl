@@ -20,7 +20,7 @@ static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
 /**
  * This suite is responsible for testing the NEXeCluster.
  */
-BOOST_AUTO_TEST_SUITE(NEXeCluster_testSuite)
+BOOST_AUTO_TEST_SUITE (NEXeCluster_testSuite)
 
 /**
  * This operation checks the ability of the NEXeCluster to describe
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	BOOST_TEST_MESSAGE(
 			"NEXeClusterTester Message: \n" << "Total Flux is " << flux << "\n" << "   -Production Flux: " << cluster->getProductionFlux(0) << "\n" << "   -Combination Flux: " << cluster->getCombinationFlux(0) << "\n" << "   -Dissociation Flux: " << cluster->getDissociationFlux(0) << "\n" << "   -Emission Flux: " << cluster->getEmissionFlux(0) << "\n");
 
-	BOOST_REQUIRE_CLOSE(0.94579448, flux, 0.0001);
+	BOOST_REQUIRE_CLOSE(1.1555563138, flux, 0.0001);
 
 	return;
 }
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { -0.193019, 2.01467, 0.562053, 0.0 };
+	double knownPartials[] = {-0.235828, 2.46149, 0.686708, 0};
 	// Get the simple reaction network
 	auto network = getSimpleNEReactionNetwork(3);
 	// Set a fission rate for the diffusion to work
