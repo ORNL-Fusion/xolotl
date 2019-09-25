@@ -57,8 +57,6 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	auto network = getSimpleNEReactionNetwork();
 	// Set a fission rate for the diffusion to work
 	network->setFissionRate(8.0e-9);
-	// Add a grid point for the rates
-	network->addGridPoints(1);
 
 	// Get an Xe cluster with compostion 1,0,0.
 	auto cluster = (NECluster *) network->get(Species::Xe, 1);
@@ -73,6 +71,9 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	secondCluster->setDiffusionFactor(3.240E+010);
 	secondCluster->setMigrationEnergy(0.2);
 	secondCluster->setConcentration(0.5);
+
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 
 	// Compute the rate constants that are needed for the flux
 	network->setTemperature(1000.0, 0);

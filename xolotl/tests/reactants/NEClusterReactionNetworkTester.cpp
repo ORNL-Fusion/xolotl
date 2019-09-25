@@ -59,11 +59,13 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	auto& reactants = neNetwork->getAll();
 	BOOST_REQUIRE_EQUAL(1U, reactants.size());
 
+	// Set the diffusion factor for the temperature
+	IReactant& reactant = reactants.at(0);
+	reactant.setDiffusionFactor(1.0);
 	// Try changing the temperature and make sure it works
 	// Add a grid point for the temperature
 	neNetwork->addGridPoints(1);
 	neNetwork->setTemperature(1000.0, 0);
-	IReactant& reactant = reactants.at(0);
 	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(0), 0.0001);
 
 	return;
