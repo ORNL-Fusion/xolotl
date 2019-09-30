@@ -46,11 +46,6 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
         reaction.addProduct(ReactantType::Perfect);
         reaction.addProduct(ReactantType::I);
         reactions.push_back(reaction);
-        reaction = forwardReaction(ReactantType::V, ReactantType::PerfectSuper);
-        reaction.addProduct(ReactantType::Perfect);
-        reaction.addProduct(ReactantType::PerfectSuper);
-        reaction.addProduct(ReactantType::I);
-        reactions.push_back(reaction);
 
         // vac + frank = frank | int
         reaction = forwardReaction(ReactantType::V, ReactantType::Frank);
@@ -138,9 +133,6 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 	reaction.addProduct(ReactantType::Perfect);
 	reaction.addProduct(ReactantType::PerfectSuper);
 	reactions.push_back(reaction);
-	reaction = forwardReaction(ReactantType::I, ReactantType::PerfectSuper);
-	reaction.addProduct(ReactantType::PerfectSuper);
-	reactions.push_back(reaction);
 
         // int + faulted = faulted | vac 
         reaction = forwardReaction(ReactantType::I, ReactantType::Faulted);
@@ -205,14 +197,6 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 	reaction.addProduct(ReactantType::I);
 	reaction.addProduct(ReactantType::Perfect);
 	reactions.push_back(reaction);
-	reaction = forwardReaction(ReactantType::PerfectSuper,
-			ReactantType::Faulted);
-	reaction.addProduct(ReactantType::Faulted);
-	reaction.addProduct(ReactantType::V);
-	reaction.addProduct(ReactantType::I);
-	reaction.addProduct(ReactantType::Perfect);
-	reaction.addProduct(ReactantType::PerfectSuper);
-	reactions.push_back(reaction);
 	reaction = forwardReaction(ReactantType::Perfect,
 			ReactantType::FaultedSuper);
 	reaction.addProduct(ReactantType::Faulted);
@@ -221,40 +205,19 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 	reaction.addProduct(ReactantType::I);
 	reaction.addProduct(ReactantType::Perfect);
 	reactions.push_back(reaction);
-	reaction = forwardReaction(ReactantType::PerfectSuper,
-			ReactantType::FaultedSuper);
-	reaction.addProduct(ReactantType::Faulted);
-	reaction.addProduct(ReactantType::FaultedSuper);
-	reaction.addProduct(ReactantType::V);
-	reaction.addProduct(ReactantType::I);
-	reaction.addProduct(ReactantType::Perfect);
-	reaction.addProduct(ReactantType::PerfectSuper);
-	reactions.push_back(reaction);
 
 	// perfect + frank = frank
 	reaction = forwardReaction(ReactantType::Perfect, ReactantType::Frank);
 	reaction.addProduct(ReactantType::Frank);
 	reaction.addProduct(ReactantType::FrankSuper);
 	reactions.push_back(reaction);
-	reaction = forwardReaction(ReactantType::PerfectSuper, ReactantType::Frank);
-	reaction.addProduct(ReactantType::FrankSuper);
-	reactions.push_back(reaction);
 	reaction = forwardReaction(ReactantType::Perfect, ReactantType::FrankSuper);
-	reaction.addProduct(ReactantType::FrankSuper);
-	reactions.push_back(reaction);
-	reaction = forwardReaction(ReactantType::PerfectSuper,
-			ReactantType::FrankSuper);
 	reaction.addProduct(ReactantType::FrankSuper);
 	reactions.push_back(reaction);
 
         // perfect + int | perfect 
         reaction = forwardReaction(ReactantType::Perfect, ReactantType::I);
         reaction.addProduct(ReactantType::Perfect);
-        reaction.addProduct(ReactantType::PerfectSuper);
-        reactions.push_back(reaction);
-        reaction = forwardReaction(ReactantType::PerfectSuper, ReactantType::I);
-        reaction.addProduct(ReactantType::Perfect);
-        reaction.addProduct(ReactantType::PerfectSuper);
         reactions.push_back(reaction);
 
         // perfect + void | void + vac
@@ -262,16 +225,7 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 	reaction.addProduct(ReactantType::Void);
         reaction.addProduct(ReactantType::V);
         reactions.push_back(reaction);
-        reaction = forwardReaction(ReactantType::PerfectSuper, ReactantType::Void);
-        reaction.addProduct(ReactantType::Void);
-        reaction.addProduct(ReactantType::V);
-        reactions.push_back(reaction);
         reaction = forwardReaction(ReactantType::Perfect, ReactantType::VoidSuper);
-        reaction.addProduct(ReactantType::Void);
-        reaction.addProduct(ReactantType::VoidSuper);
-        reaction.addProduct(ReactantType::V);
-        reactions.push_back(reaction);
-        reaction = forwardReaction(ReactantType::PerfectSuper, ReactantType::VoidSuper);
         reaction.addProduct(ReactantType::Void);
         reaction.addProduct(ReactantType::VoidSuper);
         reaction.addProduct(ReactantType::V);
@@ -282,24 +236,10 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
         reaction.addProduct(ReactantType::Perfect);
         reaction.addProduct(ReactantType::I);
         reactions.push_back(reaction);
-        reaction = forwardReaction(ReactantType::PerfectSuper, ReactantType::V);
-        reaction.addProduct(ReactantType::Perfect);
-        reaction.addProduct(ReactantType::PerfectSuper);
-        reaction.addProduct(ReactantType::I);
-        reactions.push_back(reaction);
 
         // perfect + perfect | perfect + frank 
         reaction = forwardReaction(ReactantType::Perfect, ReactantType::Perfect);
         reaction.addProduct(ReactantType::Perfect);
-        reaction.addProduct(ReactantType::Frank);
-        reactions.push_back(reaction);
-        reaction = forwardReaction(ReactantType::Perfect, ReactantType::PerfectSuper);
-        reaction.addProduct(ReactantType::Perfect);
-        reaction.addProduct(ReactantType::PerfectSuper);
-        reaction.addProduct(ReactantType::Frank);
-        reactions.push_back(reaction);
-        reaction = forwardReaction(ReactantType::PerfectSuper, ReactantType::PerfectSuper);
-        reaction.addProduct(ReactantType::PerfectSuper);
         reaction.addProduct(ReactantType::Frank);
         reactions.push_back(reaction);
 
