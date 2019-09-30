@@ -12,7 +12,7 @@ AlloyClusterReactionNetwork::AlloyClusterReactionNetwork(
 		ReactionNetwork( { ReactantType::V, ReactantType::I,
 				ReactantType::Frank, ReactantType::Void, ReactantType::Perfect,
 				ReactantType::Faulted, ReactantType::VoidSuper,
-				ReactantType::FaultedSuper, ReactantType::PerfectSuper,
+				ReactantType::FaultedSuper,
 				ReactantType::FrankSuper }, registry) {
 
 	// Initialize default properties
