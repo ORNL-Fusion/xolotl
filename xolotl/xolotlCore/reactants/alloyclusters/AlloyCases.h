@@ -131,7 +131,6 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 	// int + perfect = perfect
 	reaction = forwardReaction(ReactantType::I, ReactantType::Perfect);
 	reaction.addProduct(ReactantType::Perfect);
-	reaction.addProduct(ReactantType::PerfectSuper);
 	reactions.push_back(reaction);
 
         // int + faulted = faulted | vac 
