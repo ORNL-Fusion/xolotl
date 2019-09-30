@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <Constants.h>
+#include <MathUtils.h>
 
 namespace xolotlCore {
 
@@ -30,6 +31,9 @@ public:
 			std::vector<double> grid) {
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
+
+		// Skip if the flux amplitude is 0.0 and we are not using a time profile
+		if (equal(fluxAmplitude, 0.0) && !useTimeProfile) return;
 
 		// Set the flux index corresponding the the single helium cluster here
 		auto fluxCluster = network.get(Species::He, 1);

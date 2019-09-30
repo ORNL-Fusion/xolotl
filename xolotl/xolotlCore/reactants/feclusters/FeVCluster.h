@@ -77,7 +77,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux(int i) const {
+	double getEmissionFlux(int i) const override {
 		// Initial declarations
 		double flux = FeCluster::getEmissionFlux(i);
 
@@ -101,17 +101,65 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 */
 	void getEmissionPartialDerivatives(std::vector<double> & partials,
-			int i) const {
+			int i) const override {
 		// Initial declarations
 		FeCluster::getEmissionPartialDerivatives(partials, i);
 
 		// Compute the loss to dislocation sinks
 		if (size < 5) {
 			// k^2 * D * C
-			partials[id - 1] -= xolotlCore::sinkStrength * diffusionCoefficient[i];
+			partials[id - 1] -= xolotlCore::sinkStrength
+					* diffusionCoefficient[i];
 		}
 
 		return;
+	}
+
+	/**
+	 * Add grid points to the vector of diffusion coefficients or remove
+	 * them if the value is negative.
+	 *
+	 * @param i The number of grid point to add or remove
+	 */
+	void addGridPoints(int i) override {
+		if (diffusionFactor > 0.0) {
+			Reactant::addGridPoints(i);
+		}
+
+		// Don't do anything
+		return;
+	}
+
+	/**
+	 * This operation sets the temperature at which the reactant currently
+	 * exists. Temperature-dependent quantities are recomputed when this
+	 * operation is called, so the temperature should always be set first.
+	 *
+	 * @param temp The new cluster temperature
+	 * @param i The location on the grid
+	 */
+	void setTemperature(double temp, int i) override {
+		if (diffusionFactor > 0.0) {
+			Reactant::setTemperature(temp, i);
+		}
+
+		// Don't do anything
+		return;
+	}
+
+	/**
+	 * This operation returns the diffusion coefficient for this reactant and is
+	 * calculated from the diffusion factor.
+	 *
+	 * @param i The position on the grid
+	 * @return The diffusion coefficient
+	 */
+	double getDiffusionCoefficient(int i) const override {
+		if (diffusionFactor > 0.0) {
+			return Reactant::getDiffusionCoefficient(i);
+		}
+
+		return 0.0;
 	}
 
 };

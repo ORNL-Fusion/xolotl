@@ -80,9 +80,9 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	advectionHandlers.push_back(advecHandler);
 
 	// Initialize it
-	trapMutationHandler.initialize(*network, grid, 5, 0.5);
+	trapMutationHandler.initialize(*network, 11, 0, 5, 0.5, 0);
 	trapMutationHandler.initializeIndex2D(surfacePos, *network,
-			advectionHandlers, grid, 5, 0.5);
+			advectionHandlers, grid, 11, 0, 5, 0.5, 0);
 
 	// The arrays of concentration
 	double concentration[nGrid * 5 * dof];
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the sixth grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 5, 0, 1);
+			updatedConcOffset, 5, 1);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 8.0900e+22, 0.01); // Create I
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the ninth grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 8, 0, 3);
+			updatedConcOffset, 8, 3);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 5.5031e+23, 0.01); // Create I
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
 	int nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8, 0, 3);
+			valPointer, indicesPointer, 8, 3);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(nMutating, 4);
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the bursting a the grid point 8
 	nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8, 0, 3);
+			valPointer, indicesPointer, 8, 3);
 
 	// Check values
 	BOOST_REQUIRE_EQUAL(nMutating, 4);

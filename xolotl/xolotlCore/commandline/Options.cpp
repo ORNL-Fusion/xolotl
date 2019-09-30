@@ -18,7 +18,7 @@ Options::Options() :
 				xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
 				false), materialName(""), initialVConcentration(0.0), voidPortion(
 				50.0), dimensionNumber(1), useRegularGridFlag(true), useChebyshevGridFlag(
-				false), gbList(""), groupingMin(
+				false), readInGridFlag(false), gridFilename(""), gbList(""), groupingMin(
 				std::numeric_limits<int>::max()), groupingWidthA(1), groupingWidthB(
 				1), sputteringYield(0.0), useHDF5Flag(true), usePhaseCutFlag(
 				false), maxImpurity(8), maxD(0), maxT(0), maxV(20), maxI(6), nX(
@@ -102,7 +102,7 @@ void Options::readParams(int argc, char* argv[]) {
 			"voidPortion", bpo::value<double>(&voidPortion),
 			"The value (in %) of the void portion at the start of the simulation.")(
 			"regularGrid", bpo::value<string>(),
-			"Will the grid be regularly spaced in the x direction? (available yes,no,cheby)")(
+			"Will the grid be regularly spaced in the x direction? (available yes,no,cheby,<filename>)")(
 			"petscArgs", bpo::value<string>(),
 			"All the arguments that will be given to PETSc.")("process",
 			bpo::value<string>(),
@@ -277,19 +277,18 @@ void Options::readParams(int argc, char* argv[]) {
 
 		// Take care of the grid
 		if (opts.count("regularGrid")) {
+			auto arg = opts["regularGrid"].as<string>();
 			// Determine the type of handlers we are being asked to use
-			if (opts["regularGrid"].as<string>() == "yes") {
+			if (arg == "yes") {
 				setRegularXGrid(true);
-			} else if (opts["regularGrid"].as<string>() == "no") {
+			} else if (arg == "no") {
 				setRegularXGrid(false);
-			} else if (opts["regularGrid"].as<string>() == "cheby") {
+			} else if (arg == "cheby") {
 				setChebyshevGrid(true);
 			} else {
-				std::cerr
-						<< "\nOptions: unrecognized argument in the regular grid option handler."
-								"Aborting!\n" << std::endl;
-				shouldRunFlag = false;
-				exitCode = EXIT_FAILURE;
+				// Read it as a file name
+				setGridFilename(arg);
+				setReadInGrid(true);
 			}
 		}
 

@@ -426,6 +426,41 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles) {
 	std::remove(tempFile.c_str());
 }
 
+BOOST_AUTO_TEST_CASE(readGridIn) {
+	xolotlCore::Options opts;
+
+	// Create a parameter file with a file name for the grid
+	std::ofstream paramFile("param_read_in_grid.txt");
+	paramFile << "regularGrid=grid.dat" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_read_in_grid.txt");
+	string filename = pathToFile;
+	const char* fname = filename.c_str();
+
+	// Build a command line with a parameter file containing a wrong performance handler option
+	char* args[3];
+	args[0] = const_cast<char*>("./xolotl");
+	args[1] = const_cast<char*>(fname);
+	args[2] = NULL;
+	char** fargv = args;
+
+	// Attempt to read the parameter file
+	opts.readParams(2, fargv);
+
+	// Xolotl should run
+	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
+	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+
+	// Check the grid options
+	BOOST_REQUIRE_EQUAL(opts.useReadInGrid(), true);
+	BOOST_REQUIRE_EQUAL(opts.getGridFilename(), "grid.dat");
+
+	// Remove the created file
+	std::string tempFile = "param_read_in_grid.txt";
+	std::remove(tempFile.c_str());
+}
+
 BOOST_AUTO_TEST_CASE(wrongFluxProfile) {
 	xolotlCore::Options opts;
 

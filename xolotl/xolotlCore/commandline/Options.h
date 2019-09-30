@@ -134,6 +134,16 @@ protected:
 	bool useChebyshevGridFlag;
 
 	/**
+	 * Read in the grid on the x direction?
+	 */
+	bool readInGridFlag;
+
+	/**
+	 * The name of the file where the grid is stored.
+	 */
+	std::string gridFilename;
+
+	/**
 	 * The map of physical processes to use in the simulation.
 	 */
 	std::map<std::string, bool> processMap;
@@ -676,6 +686,38 @@ public:
 	 */
 	void setChebyshevGrid(bool flag) override {
 		useChebyshevGridFlag = flag;
+	}
+
+	/**
+	 * Should we read in the grid on the x direction?
+	 * \see IOptions.h
+	 */
+	bool useReadInGrid() const override {
+		return readInGridFlag;
+	}
+
+	/**
+	 * Set the readInGridFlag.
+	 * \see IOptions.h
+	 */
+	void setReadInGrid(bool flag) override {
+		readInGridFlag = flag;
+	}
+
+	/**
+	 * Get the name of the grid file.
+	 * \see IOptions.h
+	 */
+	std::string getGridFilename() const override {
+		return gridFilename;
+	}
+
+	/**
+	 * Set the name of the grid file.
+	 * \see IOptions.h
+	 */
+	void setGridFilename(const std::string& name) override {
+		gridFilename = name;
 	}
 
 	/**

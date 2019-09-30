@@ -6,6 +6,7 @@
 #include "RandomNumberGenerator.h"
 #include "xolotlCore/io/XFile.h"
 #include <Constants.h>
+#include <TokenizedLineReader.h>
 
 namespace xolotlSolver {
 
@@ -88,7 +89,7 @@ protected:
 	std::string useRegularGrid;
 
 	//! If the user wants to use a Chebyshev grid.
-	bool useChebyshevGrid;
+	bool readInGrid;
 
 	//! If the user wants to move the surface.
 	bool movingSurface;
@@ -126,8 +127,56 @@ protected:
 		// Clear the grid
 		grid.clear();
 
+		// Check if we want to read in the grid from a file
+		if (readInGrid) {
+			// Open the corresponding file
+			std::ifstream inputFile(useRegularGrid.c_str());
+			if (!inputFile)
+				std::cerr
+						<< "\nCould not open the file containing the grid spacing information. "
+								"Aborting!\n" << std::endl;
+			// Get the data
+			std::string line;
+			getline(inputFile, line);
+
+			// Break the line into a vector
+			xolotlCore::TokenizedLineReader<double> reader;
+			auto argSS = std::make_shared<std::istringstream>(line);
+			reader.setInputStream(argSS);
+			auto tokens = reader.loadLine();
+
+			if (tokens.size() == 0)
+				std::cerr
+						<< "\nDid not read correctly the file containing the grid spacing information. "
+								"Aborting!\n" << std::endl;
+
+			// Compute the offset to add to the grid for boundary conditions
+			double offset = tokens[1] - tokens[0];
+			// Add the first grid point
+			grid.push_back(0.0);
+			// Check the location of the first grid point
+			if (tokens[0] > 0.0) {
+				grid.push_back(offset);
+			}
+
+			// Loop on the tokens
+			for (int i = 0; i < tokens.size(); i++) {
+				grid.push_back(tokens[i] + offset);
+			}
+
+			// Add the last grid point for boundary conditions
+			grid.push_back(
+					2.0 * tokens[tokens.size() - 1] - tokens[tokens.size() - 2]
+							+ offset);
+
+			// Set the number of grid points
+			nX = grid.size() - 2;
+
+			return;
+		}
+
 		// Maybe the user wants a Chebyshev grid
-		if (useChebyshevGrid) {
+		if (useRegularGrid == "cheby") {
 			// The first grid point will be at x = 0.0
 			grid.push_back(0.0);
 			grid.push_back(0.0);
@@ -143,6 +192,8 @@ protected:
 			}
 			// The last grid point will be at x = hx
 			grid.push_back(hx);
+
+			return;
 		}
 		// Check if the user wants a regular grid
 		if (useRegularGrid == "regular") {
@@ -150,6 +201,8 @@ protected:
 			for (int l = 0; l <= nx + 1; l++) {
 				grid.push_back((double) l * hx);
 			}
+
+			return;
 		}
 		// If it is not regular do a fine mesh close to the surface and
 		// increase the step size when away from the surface
@@ -250,6 +303,8 @@ protected:
 					previousPoint += 1000000.0;
 				}
 			}
+
+			return;
 		}
 		// If it is not regular do a fine mesh near points of interests
 		else if (useRegularGrid == "NE") {
@@ -313,6 +368,8 @@ protected:
 					previousPoint += 10;
 				}
 			}
+
+			return;
 		}
 
 		return;
@@ -328,11 +385,11 @@ protected:
 					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
 					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
 					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
-					0.0), useRegularGrid(""), movingSurface(false), bubbleBursting(
-					false), useAttenuation(false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
-					nullptr), diffusionHandler(nullptr), mutationHandler(
-					nullptr), resolutionHandler(nullptr), tauBursting(10.0), rngSeed(
-					0) {
+					0.0), useRegularGrid(""), readInGrid(false), movingSurface(
+					false), bubbleBursting(false), useAttenuation(false), sputteringYield(
+					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
+					nullptr), mutationHandler(nullptr), resolutionHandler(
+					nullptr), tauBursting(10.0), rngSeed(0) {
 	}
 
 public:
@@ -454,9 +511,15 @@ public:
 			useRegularGrid = "NE";
 		else
 			useRegularGrid = "PSI";
-
 		// Look at if the user wants to use a Chebyshev grid in the x direction
-		useChebyshevGrid = options.useChebyshevGrid();
+		if (options.useChebyshevGrid())
+			useRegularGrid = "cheby";
+
+		// Look at if the user wants to read in the grid in the x direction
+		if (options.useReadInGrid()) {
+			readInGrid = true;
+			useRegularGrid = options.getGridFilename();
+		}
 
 		// Set the boundary conditions (= 1: free surface; = 0: mirror)
 		leftOffset = options.getLeftBoundary();
@@ -591,7 +654,9 @@ public:
 	 * Get the minimum size for computing average radius.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::Array<int, 4> getMinSizes() const override { return minRadiusSizes;}
+	xolotlCore::Array<int, 4> getMinSizes() const override {
+		return minRadiusSizes;
+	}
 
 	/**
 	 * Get the flux handler.

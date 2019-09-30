@@ -90,9 +90,9 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.454047, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.249781, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.096172, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.385429, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.286585, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.127985, 0.01);
 
 	// Remove the created file
 	std::string tempFile = "param.txt";

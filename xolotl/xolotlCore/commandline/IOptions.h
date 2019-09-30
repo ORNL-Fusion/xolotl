@@ -372,6 +372,33 @@ public:
 	virtual void setChebyshevGrid(bool flag) = 0;
 
 	/**
+	 * Should we read in the grid on the x direction?
+	 * @return true if program should read in the grid,
+	 * false if not
+	 */
+	virtual bool useReadInGrid() const = 0;
+
+	/**
+	 * Set the readInGridFlag.
+	 * @param flag The value for the readInGridFlag.
+	 */
+	virtual void setReadInGrid(bool flag) = 0;
+
+	/**
+	 * Get the name of the grid file.
+	 *
+	 * @return The name of the grid file
+	 */
+	virtual std::string getGridFilename() const = 0;
+
+	/**
+	 * Set the name of the grid file.
+	 *
+	 * @param name Name for the grid file
+	 */
+	virtual void setGridFilename(const std::string& name) = 0;
+
+	/**
 	 * Obtain the physical process map.
 	 *
 	 * @return The map

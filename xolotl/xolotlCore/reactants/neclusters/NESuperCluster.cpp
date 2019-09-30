@@ -10,7 +10,8 @@ std::vector<double> xeMomentPartials;
 
 NESuperCluster::NESuperCluster(int numMax, int nTot, IReactionNetwork& _network,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		NECluster(_network, registry, buildName(numMax - (double) (nTot - 1) / 2.0)), nTot(nTot), l0(
+		NECluster(_network, registry,
+				buildName(numMax - (double) (nTot - 1) / 2.0)), nTot(nTot), l0(
 				0.0), l1(0.0), dispersion(0.0), momentFlux(0.0) {
 	// Initialize the dispersion sum
 	double nXeSquare = 0.0;
@@ -19,9 +20,9 @@ NESuperCluster::NESuperCluster(int numMax, int nTot, IReactionNetwork& _network,
 	// Loop on the contained size
 	for (int i = numMax; i > numMax - nTot; i--) {
 		size += i;
-		reactionRadius += 1.05
-				* pow((3.0 * 85.0 * (double) i) / FourPi, (1.0 / 3.0))
-				/ 10.0;
+		reactionRadius += pow(
+				(3.0 * (double) i) / (FourPi * network.getDensity()),
+				(1.0 / 3.0));
 		nXeSquare += (double) i * i;
 	}
 
@@ -67,9 +68,9 @@ void NESuperCluster::resultFrom(ProductionReaction& reaction,
 	int prodWidth = prodCluster.getSectionWidth(), prodSize =
 			prodCluster.getSize();
 	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
-			((int) ((double) size2 - (double) width2 / 2.0) + 1),
-			hi1 = ((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
-					((int) ((double) size2 + (double) width2 / 2.0));
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
 	int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
 			prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
 
@@ -162,9 +163,9 @@ void NESuperCluster::participateIn(ProductionReaction& reaction,
 	int prodWidth = prodCluster.getSectionWidth(), prodSize =
 			prodCluster.getSize();
 	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
-			((int) ((double) size2 - (double) width2 / 2.0) + 1),
-			hi1 = ((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
-					((int) ((double) size2 + (double) width2 / 2.0));
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
 	int prodLo = ((int) ((double) prodSize - (double) prodWidth / 2.0) + 1),
 			prodHi = ((int) ((double) prodSize + (double) prodWidth / 2.0));
 
@@ -251,9 +252,9 @@ void NESuperCluster::participateIn(DissociationReaction& reaction,
 	int dissoWidth = dissoCluster.getSectionWidth(), dissoSize =
 			dissoCluster.getSize();
 	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
-			((int) ((double) size2 - (double) width2 / 2.0) + 1),
-			hi1 = ((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
-					((int) ((double) size2 + (double) width2 / 2.0));
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
 	int dissoLo = ((int) ((double) dissoSize - (double) dissoWidth / 2.0) + 1),
 			dissoHi = ((int) ((double) dissoSize + (double) dissoWidth / 2.0));
 
@@ -330,9 +331,9 @@ void NESuperCluster::emitFrom(DissociationReaction& reaction,
 	int dissoWidth = dissoCluster.getSectionWidth(), dissoSize =
 			dissoCluster.getSize();
 	int lo1 = ((int) ((double) size1 - (double) width1 / 2.0) + 1), lo2 =
-			((int) ((double) size2 - (double) width2 / 2.0) + 1),
-			hi1 = ((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
-					((int) ((double) size2 + (double) width2 / 2.0));
+			((int) ((double) size2 - (double) width2 / 2.0) + 1), hi1 =
+			((int) ((double) size1 + (double) width1 / 2.0)), hi2 =
+			((int) ((double) size2 + (double) width2 / 2.0));
 	int dissoLo = ((int) ((double) dissoSize - (double) dissoWidth / 2.0) + 1),
 			dissoHi = ((int) ((double) dissoSize + (double) dissoWidth / 2.0));
 
@@ -633,17 +634,21 @@ void NESuperCluster::getProductionPartialDerivatives(
 		value = (*it).reaction.kConstant[xi] / (double) nTot;
 		index = firstReactant->getId() - 1;
 		partials[index] += value * ((*it).a000 * l0B + (*it).a010 * l1B);
-		xeMomentPartials[index] += value * ((*it).a001 * l0B + (*it).a011 * l1B);
+		xeMomentPartials[index] += value
+				* ((*it).a001 * l0B + (*it).a011 * l1B);
 		index = firstReactant->getMomentId() - 1;
 		partials[index] += value * ((*it).a100 * l0B + (*it).a110 * l1B);
-		xeMomentPartials[index] += value * ((*it).a101 * l0B + (*it).a111 * l1B);
+		xeMomentPartials[index] += value
+				* ((*it).a101 * l0B + (*it).a111 * l1B);
 		// Compute the contribution from the second part of the reacting pair
 		index = secondReactant->getId() - 1;
 		partials[index] += value * ((*it).a000 * l0A + (*it).a100 * l1A);
-		xeMomentPartials[index] += value * ((*it).a001 * l0A + (*it).a101 * l1A);
+		xeMomentPartials[index] += value
+				* ((*it).a001 * l0A + (*it).a101 * l1A);
 		index = secondReactant->getMomentId() - 1;
 		partials[index] += value * ((*it).a010 * l0A + (*it).a110 * l1A);
-		xeMomentPartials[index] += value * ((*it).a011 * l0A + (*it).a111 * l1A);
+		xeMomentPartials[index] += value
+				* ((*it).a011 * l0A + (*it).a111 * l1A);
 	}
 
 	return;
@@ -683,10 +688,12 @@ void NESuperCluster::getCombinationPartialDerivatives(
 		// Compute the contribution from this cluster
 		index = id - 1;
 		partials[index] -= value * ((*it).a000 * l0A + (*it).a010 * l1A);
-		xeMomentPartials[index] -= value * ((*it).a001 * l0A + (*it).a011 * l1A);
+		xeMomentPartials[index] -= value
+				* ((*it).a001 * l0A + (*it).a011 * l1A);
 		index = momId[0] - 1;
 		partials[index] -= value * ((*it).a100 * l0A + (*it).a110 * l1A);
-		xeMomentPartials[index] -= value * ((*it).a101 * l0A + (*it).a111 * l1A);
+		xeMomentPartials[index] -= value
+				* ((*it).a101 * l0A + (*it).a111 * l1A);
 	}
 
 	return;
