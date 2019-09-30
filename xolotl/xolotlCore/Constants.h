@@ -67,6 +67,9 @@ static const double alloyHeatConductivity = 0.0;
 constexpr double perfectBurgers = 0.5;
 constexpr double faultedBurgers = 0.333;
 constexpr double frankBurgers = 0.333;
+	
+// Sink strength for Alloy case in nm^-2
+constexpr double alloysinkStrength = 1.0e-5;
 
 //! Parameters for biased sink in the iron case
 static const double reactionRadius = ironLatticeConstant
