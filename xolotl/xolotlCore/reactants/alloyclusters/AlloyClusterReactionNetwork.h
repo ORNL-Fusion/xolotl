@@ -206,7 +206,6 @@ public:
 	 */
 	int getSuperSize() const override {
 		return getAll(ReactantType::VoidSuper).size()
-				+ getAll(ReactantType::PerfectSuper).size()
 				+ getAll(ReactantType::FrankSuper).size()
 				+ getAll(ReactantType::FaultedSuper).size();
 	}

@@ -51,8 +51,6 @@ AlloySuperCluster::AlloySuperCluster(int numMax, int nTot,
 	// Set the typename appropriately
 	if (typeName == ReactantType::Void)
 		type = ReactantType::VoidSuper;
-	else if (typeName == ReactantType::Perfect)
-		type = ReactantType::PerfectSuper;
 	else if (typeName == ReactantType::Frank)
 		type = ReactantType::FrankSuper;
 	else if (typeName == ReactantType::Faulted)

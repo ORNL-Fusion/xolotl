@@ -392,19 +392,6 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 					* cluster.getReactionRadius() * 2.0;
 		}
 	}
-	for (auto const& perfectMapItem : network.getAll(ReactantType::PerfectSuper)) {
-		// Get the cluster
-		auto const& cluster =
-				static_cast<AlloySuperCluster&>(*(perfectMapItem.second));
-		perfectDensity += cluster.getTotalConcentration();
-		perfectDiameter += cluster.getTotalConcentration()
-				* cluster.getReactionRadius() * 2.0;
-		if (cluster.getSize() >= minSizes[2]) {
-			perfectPartialDensity += cluster.getTotalConcentration();
-			perfectPartialDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * 2.0;
-		}
-	}
 
 	// Loop on Frank
 	for (auto const& frankMapItem : network.getAll(ReactantType::Frank)) {

@@ -399,7 +399,6 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 	// Super Alloy cluster case
 	else if (cluster.getType() == ReactantType::VoidSuper
 			|| cluster.getType() == ReactantType::FrankSuper
-			|| cluster.getType() == ReactantType::PerfectSuper
 			|| cluster.getType() == ReactantType::FaultedSuper) {
 		auto& currCluster = static_cast<AlloySuperCluster&>(cluster);
 		// Build a dataspace for our scalar attributes.
@@ -421,10 +420,8 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 			type = 1;
 		else if (cluster.getType() == ReactantType::FrankSuper)
 			type = 2;
-		else if (cluster.getType() == ReactantType::PerfectSuper)
-			type = 3;
 		else if (cluster.getType() == ReactantType::FaultedSuper)
-			type = 4;
+			type = 3;
 		Attribute<decltype(type)> typeAttr(*this, typeAttrName, scalarDSpace);
 		typeAttr.setTo(type);
 	}
@@ -668,9 +665,6 @@ void XFile::ClusterGroup::readAlloySuperCluster(int &nTot, int &maxAtom,
 		type = ReactantType::Frank;
 		break;
 	case 3:
-		type = ReactantType::Perfect;
-		break;
-	case 4:
 		type = ReactantType::Faulted;
 		break;
 	default:

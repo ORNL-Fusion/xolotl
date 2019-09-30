@@ -200,7 +200,7 @@ int AlloyClusterReactionNetwork::typeSwitch(ReactantType const typeName) const {
 
 double AlloyClusterReactionNetwork::getReactionRadius(
 		ReactantType const typeName, int size) const {
-	if (typeName == ReactantType::Perfect || typeName == ReactantType::PerfectSuper)
+	if (typeName == ReactantType::Perfect)
 		return sqrt((double(size) * 0.25 * xolotlCore::alloyLatticeConstant 
 			* xolotlCore::alloyLatticeConstant * xolotlCore::alloyLatticeConstant) 
 			/ (xolotlCore::pi * xolotlCore::alloyLatticeConstant
@@ -228,7 +228,6 @@ double AlloyClusterReactionNetwork::getReactionRadius(
 double AlloyClusterReactionNetwork::getFormationEnergy(
 		ReactantType const typeName, int size) const {
 	if (typeName == ReactantType::Perfect || typeName == ReactantType::Frank
-			|| typeName == ReactantType::PerfectSuper
 			|| typeName == ReactantType::FrankSuper)
 		return 3.4 + 2.0 * (pow(double(size), 2.0 / 3.0) - 1.0);
 	if (typeName == ReactantType::Faulted
@@ -394,8 +393,7 @@ void AlloyClusterReactionNetwork::reinitializeNetwork() {
 
 				if (currReactant.getType() == ReactantType::VoidSuper
 						|| currReactant.getType() == ReactantType::FaultedSuper
-						|| currReactant.getType() == ReactantType::FrankSuper
-						|| currReactant.getType() == ReactantType::PerfectSuper) {
+						|| currReactant.getType() == ReactantType::FrankSuper) {
 					auto& currCluster = static_cast<AlloySuperCluster&>(currReactant);
 					id++;
 					currCluster.setMomentId(id);
@@ -410,10 +408,6 @@ void AlloyClusterReactionNetwork::reinitializeNetwork() {
 					if (currReactant.getType() == ReactantType::FaultedSuper
 							&& clusterSize > maxClusterSizeMap[ReactantType::Faulted]) {
 						maxClusterSizeMap[ReactantType::Faulted] = clusterSize;
-					}
-					if (currReactant.getType() == ReactantType::PerfectSuper
-							&& clusterSize > maxClusterSizeMap[ReactantType::Perfect]) {
-						maxClusterSizeMap[ReactantType::Perfect] = clusterSize;
 					}
 					if (currReactant.getType() == ReactantType::FrankSuper
 							&& clusterSize > maxClusterSizeMap[ReactantType::Frank]) {
@@ -446,8 +440,7 @@ void AlloyClusterReactionNetwork::updateConcentrationsFromArray(
 				// Set the moments
 				if (currReactant.getType() == ReactantType::VoidSuper
 						|| currReactant.getType() == ReactantType::FaultedSuper
-						|| currReactant.getType() == ReactantType::FrankSuper
-						|| currReactant.getType() == ReactantType::PerfectSuper) {
+						|| currReactant.getType() == ReactantType::FrankSuper) {
 					auto& currCluster = static_cast<AlloySuperCluster&>(currReactant);
 					currCluster.setZerothMoment(concentrations[id]);
 					currCluster.setMoment(concentrations[currCluster.getMomentId() - 1]);
@@ -511,7 +504,7 @@ void AlloyClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 
 	// Get the connectivity for each moment
 	// Make a vector of types for the super clusters
-	std::vector<ReactantType> typeVec { ReactantType::PerfectSuper,
+	std::vector<ReactantType> typeVec { 
 			ReactantType::FaultedSuper, ReactantType::FrankSuper,
 			ReactantType::VoidSuper };
 	// Loop on it
@@ -568,7 +561,7 @@ void AlloyClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset,
 
 	// ---- Moments ----
 	// Make a vector of types for the super clusters
-	std::vector<ReactantType> typeVec { ReactantType::PerfectSuper,
+	std::vector<ReactantType> typeVec { 
 			ReactantType::FaultedSuper, ReactantType::FrankSuper,
 			ReactantType::VoidSuper };
 	// Loop on it
@@ -645,7 +638,7 @@ void AlloyClusterReactionNetwork::computeAllPartials(
 
 	// Update the column in the Jacobian that represents the moment for the super clusters
 	// Make a vector of types for the super clusters
-	std::vector<ReactantType> superTypeVec { ReactantType::PerfectSuper,
+	std::vector<ReactantType> superTypeVec { 
 			ReactantType::FaultedSuper, ReactantType::FrankSuper,
 			ReactantType::VoidSuper };
 	// Loop on it

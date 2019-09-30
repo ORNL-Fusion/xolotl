@@ -118,8 +118,6 @@ BOOST_AUTO_TEST_CASE(checkNames) {
 			++marker;
 		else if (name == ReactantType::FaultedSuper)
 			++marker;
-		else if (name == ReactantType::PerfectSuper)
-			++marker;
 		else if (name == ReactantType::FrankSuper)
 			++marker;
 	}

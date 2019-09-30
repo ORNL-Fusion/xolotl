@@ -18,7 +18,7 @@ std::string toString(ReactantType rtype) {
 			ReactantType::PSIMixed, "PSIMixed" }, { ReactantType::PSISuper,
 			"PSISuper" }, { ReactantType::NESuper, "NESuper" }, {
 			ReactantType::FeSuper, "FeSuper" }, { ReactantType::VoidSuper,
-			"VoidSuper" }, { ReactantType::PerfectSuper, "PerfectSuper" }, {
+			"VoidSuper" }, {
 			ReactantType::FaultedSuper, "FaultedSuper" }, {
 			ReactantType::FrankSuper, "FrankSuper" } };
 
