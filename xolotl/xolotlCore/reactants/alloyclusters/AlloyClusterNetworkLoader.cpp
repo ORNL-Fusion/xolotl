@@ -284,7 +284,7 @@ void AlloyClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 
 	// Decide here which types will undergo grouping
 	std::vector<ReactantType> typeVec { ReactantType::Void,
-			ReactantType::Faulted, ReactantType::Frank, ReactantType::Perfect };
+			ReactantType::Faulted, ReactantType::Frank };
 
 	// Loop on them
 	for (auto tvIter = typeVec.begin(); tvIter != typeVec.end(); ++tvIter) {
