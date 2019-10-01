@@ -660,6 +660,34 @@ public:
 	 */
 	virtual double getDensity() const = 0;
 
+	/**
+	 * Obtain the value of the length of the flux pulse.
+	 *
+	 * @return The value for the pulse
+	 */
+	virtual double getPulseTime() const = 0;
+
+	/**
+	 * Set the pulse time.
+	 *
+	 * @param time The value for the pulse
+	 */
+	virtual void setPulseTime(double time) = 0;
+
+	/**
+	 * Obtain the value of the proportion the flux pulse (on).
+	 *
+	 * @return The value for the proportion
+	 */
+	virtual double getPulseProportion() const = 0;
+
+	/**
+	 * Set the pulse proportion.
+	 *
+	 * @param prop The value for the proportion
+	 */
+	virtual void setPulseProportion(double prop) = 0;
+
 };
 //end class IOptions
 

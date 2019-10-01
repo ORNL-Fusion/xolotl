@@ -275,6 +275,16 @@ protected:
 	 */
 	double density;
 
+	/**
+	 * Length of time of the pulse in s.
+	 */
+	double pulseTime;
+
+	/**
+	 * Proportion of the pulse that is on.
+	 */
+	double pulseProportion;
+
 public:
 
 	/**
@@ -1032,6 +1042,38 @@ public:
 	 */
 	double getDensity() const override {
 		return density;
+	}
+
+	/**
+	 * Obtain the value of the length of the flux pulse.
+	 * \see IOptions.h
+	 */
+	virtual double getPulseTime() const override {
+		return pulseTime;
+	}
+
+	/**
+	 * Set the pulse time.
+	 * \see IOptions.h
+	 */
+	virtual void setPulseTime(double time) override {
+		pulseTime = time;
+	}
+
+	/**
+	 * Obtain the value of the proportion the flux pulse (on).
+	 * \see IOptions.h
+	 */
+	virtual double getPulseProportion() const override {
+		return pulseProportion;
+	}
+
+	/**
+	 * Set the pulse proportion.
+	 * \see IOptions.h
+	 */
+	virtual void setPulseProportion(double prop) override {
+		pulseProportion = prop;
 	}
 
 };

@@ -5,6 +5,7 @@
 #include <W211MaterialFactory.h>
 #include <FuelMaterialFactory.h>
 #include <TRIDYNMaterialFactory.h>
+#include <PulsedMaterialFactory.h>
 #include <AlloyMaterialFactory.h>
 #include <FeMaterialFactory.h>
 
@@ -32,6 +33,9 @@ std::shared_ptr<IMaterialFactory> IMaterialFactory::createMaterialFactory(
 	// TRIDYN case
 	else if (materialType == "TRIDYN")
 		theMaterialFactory = std::make_shared<TRIDYNMaterialFactory>(dimension);
+	// Pulsed case
+	else if (materialType == "Pulsed")
+		theMaterialFactory = std::make_shared<PulsedMaterialFactory>(dimension);
 	// Alloy case
 	else if (materialType == "800H")
 		theMaterialFactory = std::make_shared<AlloyMaterialFactory>(dimension);

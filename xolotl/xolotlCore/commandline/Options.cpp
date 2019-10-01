@@ -25,7 +25,8 @@ Options::Options() :
 				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
 				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), rngUseSeed(
 				false), rngSeed(0), rngPrintSeed(false), zeta(0.73), resoMinSize(
-				0), density(10.162795276841) {
+				0), density(10.162795276841), pulseTime(0.0), pulseProportion(
+				0.0) {
 	radiusMinSizes.Init(0);
 
 	return;
@@ -41,7 +42,7 @@ void Options::readParams(int argc, char* argv[]) {
 	// Parse the command line options.
 	bpo::options_description desc("Command line options");
 	desc.add_options()("help", "show this help message")("parameterFile",
-			bpo::value<std::string>(&param_file), "input file name");
+			bpo::value < std::string > (&param_file), "input file name");
 
 	bpo::positional_options_description p;
 	p.add("parameterFile", -1);
@@ -57,13 +58,14 @@ void Options::readParams(int argc, char* argv[]) {
 	// allowed both on command line and in
 	// config file
 	bpo::options_description config("Parameters");
-	config.add_options()("networkFile", bpo::value<string>(&networkFilename),
+	config.add_options()("networkFile",
+			bpo::value < string > (&networkFilename),
 			"The network will be loaded from this HDF5 file.")("startTemp",
 			bpo::value<string>(),
 			"The temperature (in Kelvin) will be the constant floating point value specified. "
 					"(default = 1000). If two values are given, the second one is interpreted "
 					"as the bulk temperature and a gradient will be used. (NOTE: Use only ONE temperature option)")(
-			"tempFile", bpo::value<string>(&tempProfileFilename),
+			"tempFile", bpo::value < string > (&tempProfileFilename),
 			"A temperature profile is given by the specified file, "
 					"then linear interpolation is used to fit the data."
 					"(NOTE: If a temperature file is given, "
@@ -73,7 +75,7 @@ void Options::readParams(int argc, char* argv[]) {
 			"flux", bpo::value<double>(&fluxAmplitude),
 			"The value of the incoming flux in #/nm2/s. If the Fuel case is used it actually "
 					"corresponds to the fission rate in #/nm3/s.")("fluxFile",
-			bpo::value<string>(&fluxProfileFilename),
+			bpo::value < string > (&fluxProfileFilename),
 			"A time profile for the flux is given by the specified file, "
 					"then linear interpolation is used to fit the data."
 					"(NOTE: If a flux profile file is given, "
@@ -84,7 +86,7 @@ void Options::readParams(int argc, char* argv[]) {
 			"Which set of handlers to use for the visualization. (default = dummy, available std,dummy).")(
 			"dimensions", bpo::value<int>(&dimensionNumber),
 			"Number of dimensions for the simulation.")("material",
-			bpo::value<string>(&materialName),
+			bpo::value < string > (&materialName),
 			"The material options are as follows: {W100, W110, W111, "
 					"W211, Fuel, TRIDYN, Fe, 800H}, where W is for tungsten and "
 					"the numbers correspond to the surface orientation.")(
@@ -96,12 +98,12 @@ void Options::readParams(int argc, char* argv[]) {
 			"The value (in %) of the void portion at the start of the simulation.")(
 			"regularGrid", bpo::value<string>(),
 			"Will the grid be regularly spaced in the x direction? (available yes,no,cheby,<filename>)")(
-			"petscArgs", bpo::value<string>(&petscArg),
+			"petscArgs", bpo::value < string > (&petscArg),
 			"All the arguments that will be given to PETSc.")("process",
 			bpo::value<string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
 					"advec, modifiedTM, movingSurface, bursting, attenuation, resolution).")(
-			"grain", bpo::value<string>(&gbList),
+			"grain", bpo::value < string > (&gbList),
 			"This option allows the user to add GB in the X, Y, or Z directions. "
 					"To do so, simply write the direction followed "
 					"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
@@ -138,7 +140,9 @@ void Options::readParams(int argc, char* argv[]) {
 			"This option allows the user a minimum size for the re-solution (default is 0).")(
 			"density", bpo::value<double>(&density),
 			"This option allows the user to set a density in nm-3 "
-					"for the number of xenon per volume in a bubble.");
+					"for the number of xenon per volume in a bubble.")("pulse",
+			bpo::value<string>(),
+			"The total length of the pulse (in s) and the proportion of it that is ON.");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);
@@ -508,6 +512,21 @@ void Options::readParams(int argc, char* argv[]) {
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
 			}
+		}
+
+		// Take care of the flux pulse
+		if (opts.count("pulse")) {
+			// Build an input stream from the argument string.
+			xolotlCore::TokenizedLineReader<double> reader;
+			auto argSS = std::make_shared<std::istringstream>(
+					opts["pulse"].as<string>());
+			reader.setInputStream(argSS);
+
+			// Break the argument into tokens.
+			auto tokens = reader.loadLine();
+
+			setPulseTime(tokens[0]);
+			setPulseProportion(tokens[1]);
 		}
 	}
 
