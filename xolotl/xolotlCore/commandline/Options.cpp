@@ -10,12 +10,11 @@ namespace bpo = boost::program_options;
 namespace xolotlCore {
 
 Options::Options() :
-		shouldRunFlag(true), exitCode(EXIT_SUCCESS), petscArgc(0), petscArgv(
-		NULL), networkFilename(""), constTempFlag(false), constTemperature(
-				1000.0), tempProfileFlag(false), tempProfileFilename(""), heatFlag(
-				false), bulkTemperature(0.0), fluxFlag(false), fluxAmplitude(
-				0.0), fluxProfileFlag(false), perfRegistryType(
-				xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
+		shouldRunFlag(true), exitCode(EXIT_SUCCESS), petscArg(""), networkFilename(
+				""), constTempFlag(false), constTemperature(1000.0), tempProfileFlag(
+				false), tempProfileFilename(""), heatFlag(false), bulkTemperature(
+				0.0), fluxFlag(false), fluxAmplitude(0.0), fluxProfileFlag(
+				false), perfRegistryType(xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
 				false), materialName(""), initialVConcentration(0.0), voidPortion(
 				50.0), dimensionNumber(1), useRegularGridFlag(true), useChebyshevGridFlag(
 				false), readInGridFlag(false), gridFilename(""), gbList(""), groupingMin(
@@ -33,12 +32,6 @@ Options::Options() :
 }
 
 Options::~Options(void) {
-	// release the dynamically-allocated PETSc arguments
-	for (int i = 0; i < petscArgc; ++i) {
-		delete[] petscArgv[i];
-	}
-	delete[] petscArgv;
-	petscArgv = NULL;
 }
 
 void Options::readParams(int argc, char* argv[]) {
@@ -103,7 +96,7 @@ void Options::readParams(int argc, char* argv[]) {
 			"The value (in %) of the void portion at the start of the simulation.")(
 			"regularGrid", bpo::value<string>(),
 			"Will the grid be regularly spaced in the x direction? (available yes,no,cheby,<filename>)")(
-			"petscArgs", bpo::value<string>(),
+			"petscArgs", bpo::value<string>(&petscArg),
 			"All the arguments that will be given to PETSc.")("process",
 			bpo::value<string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
@@ -515,45 +508,6 @@ void Options::readParams(int argc, char* argv[]) {
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
 			}
-		}
-
-		// Take care of the PETSc options
-		if (opts.count("petscArgs")) {
-			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<string> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-					opts["petscArgs"].as<string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-
-			// PETSc assumes that argv[0] in the arguments it is given is the
-			// program name.  But our parsing of the PETSc arguments from
-			// the input parameter file gives us only the PETSc arguments without
-			// the program name as argv[0].  So - we adjust the arguments array.
-
-			// Construct the argv from the stream of tokens.
-			setPetscArgc(tokens.size() + 1);
-
-			// The PETSc argv is an array of pointers to C strings.
-			auto petscArgv = new char*[tokens.size() + 2];
-			// Create the fake application name
-			std::string appName = "fakeXolotlApplicationNameForPETSc";
-			petscArgv[0] = new char[appName.length() + 1];
-			strcpy(petscArgv[0], appName.c_str());
-
-			// Now loop on the actual PETSc options
-			int idx = 1;
-			for (auto iter = tokens.begin(); iter != tokens.end(); ++iter) {
-				petscArgv[idx] = new char[iter->length() + 1];
-				strcpy(petscArgv[idx], iter->c_str());
-				++idx;
-			}
-			petscArgv[idx] = 0; // null-terminate the array
-
-			// Set the petscArgv
-			setPetscArgv(petscArgv);
 		}
 	}
 

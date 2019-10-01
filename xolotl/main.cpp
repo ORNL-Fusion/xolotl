@@ -85,8 +85,7 @@ std::unique_ptr<xolotlSolver::PetscSolver> setUpSolver(
 	// Once we have widespread C++14 support, use std::make_unique.
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
-	solver->setCommandLineOptions(options.getPetscArgc(),
-			options.getPetscArgv());
+	solver->setCommandLineOptions(options.getPetscArg());
 	solver->initialize();
 	solverInitTimer->stop();
 

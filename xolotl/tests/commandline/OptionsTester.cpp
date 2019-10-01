@@ -213,26 +213,12 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	BOOST_REQUIRE_EQUAL(map["bursting"], false);
 
 	// Check the PETSc options
-	BOOST_REQUIRE_EQUAL(opts.getPetscArgc(), 16);
-
-	// Get the detailed PETSc argument
-	auto petscArgv = opts.getPetscArgv();
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[1], "-fieldsplit_0_pc_type"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[2], "redundant"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[3], "-ts_max_snes_failures"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[4], "200"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[5], "-pc_fieldsplit_detect_coupling"),
-			0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[6], "-ts_adapt_dt_max"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[7], "10"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[8], "-pc_type"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[9], "fieldsplit"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[10], "-fieldsplit_1_pc_type"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[11], "sor"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[12], "-ts_final_time"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[13], "1000"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[14], "-ts_max_steps"), 0);
-	BOOST_REQUIRE_EQUAL(strcmp(petscArgv[15], "3"), 0);
+	BOOST_REQUIRE_EQUAL(opts.getPetscArg(), "-fieldsplit_0_pc_type redundant "
+					"-ts_max_snes_failures 200 "
+					"-pc_fieldsplit_detect_coupling "
+					"-ts_adapt_dt_max 10 -pc_type fieldsplit "
+					"-fieldsplit_1_pc_type sor -ts_final_time 1000 "
+					"-ts_max_steps 3");
 
 	// Remove the created file
 	std::string tempFile = "param_good.txt";

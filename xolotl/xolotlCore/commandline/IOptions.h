@@ -68,39 +68,11 @@ public:
 	virtual std::string getNetworkFilename() const = 0;
 
 	/**
-	 * Set the name of the network file.
+	 * Get the Arguments for PETSc.
 	 *
-	 * @param name Name for the network file
+	 * @return arg
 	 */
-	virtual void setNetworkFilename(const std::string& name) = 0;
-
-	/**
-	 * Get the Argc for PETSc.
-	 *
-	 * @return argc
-	 */
-	virtual int getPetscArgc() const = 0;
-
-	/**
-	 * Set the Argc for PETSc.
-	 *
-	 * @param argc The number of options for PETSc
-	 */
-	virtual void setPetscArgc(int argc) = 0;
-
-	/**
-	 * Get the Argv for PETSc.
-	 *
-	 * @return argv
-	 */
-	virtual char** getPetscArgv() const = 0;
-
-	/**
-	 * Set the Argv for PETSc.
-	 *
-	 * @param argv The pointer to the options for PETSc
-	 */
-	virtual void setPetscArgv(char** argv) = 0;
+	virtual std::string getPetscArg() const = 0;
 
 	/**
 	 * Should we use const temperature handlers?
@@ -150,13 +122,6 @@ public:
 	 * @return The name of the file
 	 */
 	virtual std::string getTempProfileFilename() const = 0;
-
-	/**
-	 * Set the name of the profile file to use.
-	 *
-	 * @param name The name of the file
-	 */
-	virtual void setTempProfileFilename(const std::string& name) = 0;
 
 	/**
 	 * Should we use heat equation handlers?
@@ -210,13 +175,6 @@ public:
 	virtual double getFluxAmplitude() const = 0;
 
 	/**
-	 * Set the value for the flux intensity to use.
-	 *
-	 * @param flux The value for the flux amplitude
-	 */
-	virtual void setFluxAmplitude(double flux) = 0;
-
-	/**
 	 * Should we use a time profile for the helium flux?
 	 *
 	 * @return True is a time profile file is given for the helium flux
@@ -237,13 +195,6 @@ public:
 	 * @return The name of the file
 	 */
 	virtual std::string getFluxProfileName() const = 0;
-
-	/**
-	 * Set the name of the time profile file to use.
-	 *
-	 * @param name The name of the file
-	 */
-	virtual void setFluxProfileName(const std::string& name) = 0;
 
 	/**
 	 * Which type of performance handlers should we use?
@@ -285,23 +236,10 @@ public:
 	virtual std::string getMaterial() const = 0;
 
 	/**
-	 * Set the name of the material to be used for the simulation.
-	 *
-	 * @param material The name of the material
-	 */
-	virtual void setMaterial(const std::string& material) = 0;
-
-	/**
 	 * Obtain the value of the void portion for the simulation.
 	 * @return The portion.
 	 */
 	virtual double getVoidPortion() const = 0;
-
-	/**
-	 * Set the value of the void portion for the surface to grow.
-	 * @param portion The value for the portion.
-	 */
-	virtual void setVoidPortion(double portion) = 0;
 
 	/**
 	 * Obtain the value of the concentration for the vacancies.
@@ -311,13 +249,6 @@ public:
 	virtual double getInitialVConcentration() const = 0;
 
 	/**
-	 * Set the value of the concentration for the vacancies.
-	 *
-	 * @param conc The value for the concentration
-	 */
-	virtual void setInitialVConcentration(double conc) = 0;
-
-	/**
 	 * Obtain the value of the electronic stopping power.
 	 *
 	 * @return Zeta
@@ -325,25 +256,11 @@ public:
 	virtual double getZeta() const = 0;
 
 	/**
-	 * Set the value of the electronic stopping power.
-	 *
-	 * @param zeta The value for the electronic stopping power
-	 */
-	virtual void setZeta(double zeta) = 0;
-
-	/**
 	 * Obtain the number of dimensions for the simulation.
 	 *
 	 * @return The number of dimensions
 	 */
 	virtual int getDimensionNumber() const = 0;
-
-	/**
-	 * Set the number of dimensions for the simulation.
-	 *
-	 * @param number The number of dimensions
-	 */
-	virtual void setDimensionNumber(int number) = 0;
 
 	/**
 	 * Should we use a regular grid on the x direction?
@@ -420,13 +337,6 @@ public:
 	virtual std::string getGbString() const = 0;
 
 	/**
-	 * Set the string listing the wanted GB.
-	 *
-	 * @param gbString The string of GB
-	 */
-	virtual void setGbString(const std::string& gbString) = 0;
-
-	/**
 	 * Obtain the minimum size for the grouping.
 	 *
 	 * @return The size
@@ -474,13 +384,6 @@ public:
 	 * @return The value of the sputtering yield
 	 */
 	virtual double getSputteringYield() const = 0;
-
-	/**
-	 * Set the value for the sputtering yield to use.
-	 *
-	 * @param yield The value for the sputtering yield
-	 */
-	virtual void setSputteringYield(double yield) = 0;
 
 	/**
 	 * To know if we should use the HDF5 file.
@@ -696,13 +599,6 @@ public:
 	virtual double getBurstingDepth() const = 0;
 
 	/**
-	 * Set the value for the depth above which the bursting is happening.
-	 *
-	 * @param depth The depth
-	 */
-	virtual void setBurstingDepth(double depth) = 0;
-
-	/**
 	 * Set the seed that should be used for initializing the random
 	 * number generator.
 	 *
@@ -744,13 +640,6 @@ public:
 	virtual int getResoMinSize() const = 0;
 
 	/**
-	 * Set the minimum size for the re-solution.
-	 *
-	 * @param size The minimum size
-	 */
-	virtual void setResoMinSize(int size) = 0;
-
-	/**
 	 * Obtain the minimum size for the average radius computation.
 	 *
 	 * @return The size
@@ -770,13 +659,6 @@ public:
 	 * @return The density
 	 */
 	virtual double getDensity() const = 0;
-
-	/**
-	 * Set the value for the density of a bubble.
-	 *
-	 * @param rho The density
-	 */
-	virtual void setDensity(double rho) = 0;
 
 };
 //end class IOptions

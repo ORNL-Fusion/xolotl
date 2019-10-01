@@ -197,13 +197,26 @@ void PetscSolver::initialize() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
+	PetscInitialize(NULL, NULL, NULL, help);
 
 	return;
 }
 
 void PetscSolver::solve() {
 	PetscErrorCode ierr;
+
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Create the solver options
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	PetscOptions petscOptions;
+	ierr = PetscOptionsCreate(&petscOptions);
+	checkPetscError(ierr,
+			"PetscSolver::initialize: PetscOptionsCreate failed.");
+	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
+	checkPetscError(ierr,
+			"PetscSolver::initialize: PetscOptionsInsertString failed.");
+	ierr = PetscOptionsPush(petscOptions);
+	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPush failed.");
 
 	// Create the solver context
 	DM da;

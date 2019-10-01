@@ -29,14 +29,9 @@ protected:
 	std::string networkFilename;
 
 	/**
-	 * The number of options that will be given to PETSc.
+	 * The options that will be given to PETSc.
 	 */
-	int petscArgc;
-
-	/**
-	 * The pointer to the options that will be given to PETSc.
-	 */
-	char **petscArgv;
+	std::string petscArg;
 
 	/**
 	 * Use the constant temperature set of handlers?
@@ -340,43 +335,11 @@ public:
 	}
 
 	/**
-	 * Set the name of the network file.
+	 * Get the Arguments for PETSc.
 	 * \see IOptions.h
 	 */
-	void setNetworkFilename(const std::string& name) override {
-		networkFilename = name;
-	}
-
-	/**
-	 * Get the Argc for PETSc.
-	 * \see IOptions.h
-	 */
-	int getPetscArgc() const override {
-		return petscArgc;
-	}
-
-	/**
-	 * Set the Argc for PETSc.
-	 * \see IOptions.h
-	 */
-	void setPetscArgc(int argc) override {
-		petscArgc = argc;
-	}
-
-	/**
-	 * Get the Argv for PETSc.
-	 * \see IOptions.h
-	 */
-	char** getPetscArgv() const override {
-		return petscArgv;
-	}
-
-	/**
-	 * Set the Argv for PETSc.
-	 * \see IOptions.h
-	 */
-	void setPetscArgv(char** argv) override {
-		petscArgv = argv;
+	std::string getPetscArg() const override {
+		return petscArg;
 	}
 
 	/**
@@ -433,14 +396,6 @@ public:
 	 */
 	std::string getTempProfileFilename() const override {
 		return tempProfileFilename;
-	}
-
-	/**
-	 * Set the name of the profile file to use.
-	 * \see IOptions.h
-	 */
-	void setTempProfileFilename(const std::string& name) override {
-		tempProfileFilename = name;
 	}
 
 	/**
@@ -501,14 +456,6 @@ public:
 	}
 
 	/**
-	 * Set the value for the flux intensity to use.
-	 * \see IOptions.h
-	 */
-	void setFluxAmplitude(double flux) override {
-		fluxAmplitude = flux;
-	}
-
-	/**
 	 * Should we use a time profile for the flux?
 	 * \see IOptions.h
 	 */
@@ -531,14 +478,6 @@ public:
 	 */
 	std::string getFluxProfileName() const override {
 		return fluxProfileFilename;
-	}
-
-	/**
-	 * Set the name of the time profile file to use.
-	 * \see IOptions.h
-	 */
-	void setFluxProfileName(const std::string& name) override {
-		fluxProfileFilename = name;
 	}
 
 	/**
@@ -585,27 +524,11 @@ public:
 	}
 
 	/**
-	 * Set the name of the material to be used for the simulation.
-	 * \see IOptions.h
-	 */
-	void setMaterial(const std::string& material) override {
-		materialName = material;
-	}
-
-	/**
 	 * Obtain the value of the concentration for the vacancies.
 	 * \see IOptions.h
 	 */
 	double getInitialVConcentration() const override {
 		return initialVConcentration;
-	}
-
-	/**
-	 * Set the value of the concentration for the vacancies.
-	 * \see IOptions.h
-	 */
-	void setInitialVConcentration(double conc) override {
-		initialVConcentration = conc;
 	}
 
 	/**
@@ -617,14 +540,6 @@ public:
 	}
 
 	/**
-	 * Set the value of the electronic stopping power.
-	 * \see IOptions.h
-	 */
-	void setZeta(double z) override {
-		zeta = z;
-	}
-
-	/**
 	 * Obtain the number of dimensions for the simulation.
 	 * \see IOptions.h
 	 */
@@ -633,27 +548,11 @@ public:
 	}
 
 	/**
-	 * Set the number of dimensions for the simulation.
-	 * \see IOptions.h
-	 */
-	void setDimensionNumber(int number) override {
-		dimensionNumber = number;
-	}
-
-	/**
 	 * Obtain the value of the void portion for the simulation.
 	 * \see IOptions.h
 	 */
 	double getVoidPortion() const override {
 		return voidPortion;
-	}
-
-	/**
-	 * Set the value of the void portion for the surface to grow.
-	 * \see IOptions.h
-	 */
-	void setVoidPortion(double portion) override {
-		voidPortion = portion;
 	}
 
 	/**
@@ -747,14 +646,6 @@ public:
 	}
 
 	/**
-	 * Set the string listing the wanted GB.
-	 * \see IOptions.h
-	 */
-	void setGbString(const std::string& gbString) override {
-		gbList = gbString;
-	}
-
-	/**
 	 * Obtain the minimum size for the grouping.
 	 * \see IOptions.h
 	 */
@@ -808,14 +699,6 @@ public:
 	 */
 	double getSputteringYield() const override {
 		return sputteringYield;
-	}
-
-	/**
-	 * Set the value for the sputtering yield to use.
-	 * \see IOptions.h
-	 */
-	void setSputteringYield(double yield) override {
-		sputteringYield = yield;
 	}
 
 	/**
@@ -1081,14 +964,6 @@ public:
 	}
 
 	/**
-	 * Set the value for the depth above which the bursting is happening.
-	 * \see IOptions.h
-	 */
-	void setBurstingDepth(double depth) override {
-		burstingDepth = depth;
-	}
-
-	/**
 	 * Set the seed that should be used for initializing the random
 	 * number generator.
 	 * \see IOptions.h
@@ -1136,14 +1011,6 @@ public:
 	}
 
 	/**
-	 * Set the minimum size for the re-solution.
-	 * \see IOptions.h
-	 */
-	void setResoMinSize(int size) override {
-		resoMinSize = size;
-	}
-
-	/**
 	 * Obtain the minimum size for the average radius computation.
 	 * \see IOptions.h
 	 */
@@ -1165,14 +1032,6 @@ public:
 	 */
 	double getDensity() const override {
 		return density;
-	}
-
-	/**
-	 * Set the value for the density of a bubble.
-	 * \see IOptions.h
-	 */
-	void setDensity(double rho) override {
-		density = rho;
 	}
 
 };
