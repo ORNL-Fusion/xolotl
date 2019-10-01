@@ -361,14 +361,6 @@ public:
 	}
 
 	/**
-	 * Set the constTempFlag.
-	 * \see IOptions.h
-	 */
-	void setConstTempFlag(bool flag) override {
-		constTempFlag = flag;
-	}
-
-	/**
 	 * Obtain the value of the constant temperature to be used.
 	 * \see IOptions.h
 	 */
@@ -377,27 +369,11 @@ public:
 	}
 
 	/**
-	 * Set the constant temperature.
-	 * \see IOptions.h
-	 */
-	void setConstTemperature(double temp) override {
-		constTemperature = temp;
-	}
-
-	/**
 	 * Should we use temperature profile handlers?
 	 * \see IOptions.h
 	 */
 	bool useTemperatureProfileHandlers() const override {
 		return tempProfileFlag;
-	}
-
-	/**
-	 * Set the tempProfileFlag.
-	 * \see IOptions.h
-	 */
-	void setTempProfileFlag(bool flag) override {
-		tempProfileFlag = flag;
 	}
 
 	/**
@@ -417,14 +393,6 @@ public:
 	}
 
 	/**
-	 * Set the heatFlag.
-	 * \see IOptions.h
-	 */
-	void setHeatFlag(bool flag) override {
-		heatFlag = flag;
-	}
-
-	/**
 	 * Obtain the value of the temperature to be used in the bulk.
 	 * \see IOptions.h
 	 */
@@ -433,28 +401,11 @@ public:
 	}
 
 	/**
-	 * Set the bulk temperature.
-	 * \see IOptions.h
-	 */
-	void setBulkTemperature(double temp) override {
-		bulkTemperature = temp;
-	}
-
-	/**
 	 * Should we use the flux option?
 	 * \see IOptions.h
 	 */
 	bool useFluxAmplitude() const override {
 		return fluxFlag;
-	}
-	;
-
-	/**
-	 * Set the fluxFlag.
-	 * \see IOptions.h
-	 */
-	void setFluxFlag(bool flag) override {
-		fluxFlag = flag;
 	}
 
 	/**
@@ -471,14 +422,6 @@ public:
 	 */
 	bool useFluxTimeProfile() const override {
 		return fluxProfileFlag;
-	}
-
-	/**
-	 * Set the fluxProfileFlag.
-	 * \see IOptions.h
-	 */
-	void setFluxProfileFlag(bool flag) override {
-		fluxProfileFlag = flag;
 	}
 
 	/**
@@ -500,29 +443,12 @@ public:
 	}
 
 	/**
-	 * Set the type of performance handlers to use.
-	 * \see IOptions.h
-	 */
-	void setPerfHandlerType(xolotlPerf::IHandlerRegistry::RegistryType rtype)
-			override {
-		perfRegistryType = rtype;
-	}
-
-	/**
 	 * Should we use the "standard" set of handlers for the visualization?
 	 * If false, use dummy (stub) handlers.
 	 * \see IOptions.h
 	 */
 	bool useVizStandardHandlers() const override {
 		return vizStandardHandlersFlag;
-	}
-
-	/**
-	 * Set the vizStandardHandlersFlag.
-	 * \see IOptions.h
-	 */
-	void setVizStandardHandlers(bool flag) override {
-		vizStandardHandlersFlag = flag;
 	}
 
 	/**
@@ -574,27 +500,11 @@ public:
 	}
 
 	/**
-	 * Set the useRegularGridFlag.
-	 * \see IOptions.h
-	 */
-	void setRegularXGrid(bool flag) override {
-		useRegularGridFlag = flag;
-	}
-
-	/**
 	 * Should we use a Chebyshev grid on the x direction?
 	 * \see IOptions.h
 	 */
 	bool useChebyshevGrid() const override {
 		return useChebyshevGridFlag;
-	}
-
-	/**
-	 * Set the useChebyshevGridFlag.
-	 * \see IOptions.h
-	 */
-	void setChebyshevGrid(bool flag) override {
-		useChebyshevGridFlag = flag;
 	}
 
 	/**
@@ -606,27 +516,11 @@ public:
 	}
 
 	/**
-	 * Set the readInGridFlag.
-	 * \see IOptions.h
-	 */
-	void setReadInGrid(bool flag) override {
-		readInGridFlag = flag;
-	}
-
-	/**
 	 * Get the name of the grid file.
 	 * \see IOptions.h
 	 */
 	std::string getGridFilename() const override {
 		return gridFilename;
-	}
-
-	/**
-	 * Set the name of the grid file.
-	 * \see IOptions.h
-	 */
-	void setGridFilename(const std::string& name) override {
-		gridFilename = name;
 	}
 
 	/**
@@ -636,15 +530,6 @@ public:
 	 */
 	std::map<std::string, bool> getProcesses() const override {
 		return processMap;
-	}
-
-	/**
-	 * Set the physical process map.
-	 *
-	 * @param map The map
-	 */
-	void setProcesses(std::map<std::string, bool> map) override {
-		processMap = map;
 	}
 
 	/**
@@ -664,14 +549,6 @@ public:
 	}
 
 	/**
-	 * Set the minimum size for the grouping.
-	 * \see IOptions.h
-	 */
-	void setGroupingMin(int size) override {
-		groupingMin = size;
-	}
-
-	/**
 	 * Obtain the first width for the grouping.
 	 * \see IOptions.h
 	 */
@@ -680,27 +557,11 @@ public:
 	}
 
 	/**
-	 * Set the first width for the grouping.
-	 * \see IOptions.h
-	 */
-	void setGroupingWidthA(int width) override {
-		groupingWidthA = width;
-	}
-
-	/**
 	 * Obtain the second width for the grouping.
 	 * \see IOptions.h
 	 */
 	int getGroupingWidthB() const override {
 		return groupingWidthB;
-	}
-
-	/**
-	 * Set the second width for the grouping.
-	 * \see IOptions.h
-	 */
-	void setGroupingWidthB(int width) override {
-		groupingWidthB = width;
 	}
 
 	/**
@@ -720,27 +581,11 @@ public:
 	}
 
 	/**
-	 * Set the useHDF5Flag.
-	 * \see IOptions.h
-	 */
-	void setHDF5Flag(bool flag) override {
-		useHDF5Flag = flag;
-	}
-
-	/**
 	 * To know if we should use the phase cut.
 	 * \see IOptions.h
 	 */
 	bool usePhaseCut() const override {
 		return usePhaseCutFlag;
-	}
-
-	/**
-	 * Set the usePhaseCutFlag.
-	 * \see IOptions.h
-	 */
-	void setPhaseCutFlag(bool flag) override {
-		usePhaseCutFlag = flag;
 	}
 
 	/**
@@ -752,27 +597,11 @@ public:
 	}
 
 	/**
-	 * Set the maximum value of impurities to use.
-	 * \see IOptions.h
-	 */
-	void setMaxImpurity(int max) override {
-		maxImpurity = max;
-	}
-
-	/**
 	 * Obtain the maximum value of deuterium to be used.
 	 * \see IOptions.h
 	 */
 	int getMaxD() const override {
 		return maxD;
-	}
-
-	/**
-	 * Set the maximum value of deuterium to use.
-	 * \see IOptions.h
-	 */
-	void setMaxD(int max) override {
-		maxD = max;
 	}
 
 	/**
@@ -784,27 +613,11 @@ public:
 	}
 
 	/**
-	 * Set the maximum value of tritium to use.
-	 * \see IOptions.h
-	 */
-	void setMaxT(int max) override {
-		maxT = max;
-	}
-
-	/**
 	 * Obtain the maximum value of vacancies to be used.
 	 * \see IOptions.h
 	 */
 	int getMaxV() const override {
 		return maxV;
-	}
-
-	/**
-	 * Set the maximum value of vacancies to use.
-	 * \see IOptions.h
-	 */
-	void setMaxV(int max) override {
-		maxV = max;
 	}
 
 	/**
@@ -816,27 +629,11 @@ public:
 	}
 
 	/**
-	 * Set the maximum value of interstitials to use.
-	 * \see IOptions.h
-	 */
-	void setMaxI(int max) override {
-		maxI = max;
-	}
-
-	/**
 	 * Obtain the number of grid points in the depth direction to be used.
 	 * \see IOptions.h
 	 */
 	int getNX() const override {
 		return nX;
-	}
-
-	/**
-	 * Set the number of grid points in the depth direction to use.
-	 * \see IOptions.h
-	 */
-	void setNX(int n) override {
-		nX = n;
 	}
 
 	/**
@@ -848,27 +645,11 @@ public:
 	}
 
 	/**
-	 * Set the value for the step size in the depth direction to use.
-	 * \see IOptions.h
-	 */
-	void setXStepSize(double stepSize) override {
-		xStepSize = stepSize;
-	}
-
-	/**
 	 * Obtain the number of grid points in the Y direction to be used.
 	 * \see IOptions.h
 	 */
 	int getNY() const override {
 		return nY;
-	}
-
-	/**
-	 * Set the number of grid points in the Y direction to use.
-	 * \see IOptions.h
-	 */
-	void setNY(int n) override {
-		nY = n;
 	}
 
 	/**
@@ -880,14 +661,6 @@ public:
 	}
 
 	/**
-	 * Set the value for the step size in the Y direction to use.
-	 * \see IOptions.h
-	 */
-	void setYStepSize(double stepSize) override {
-		yStepSize = stepSize;
-	}
-
-	/**
 	 * Obtain the number of grid points in the Z direction to be used.
 	 * \see IOptions.h
 	 */
@@ -896,27 +669,11 @@ public:
 	}
 
 	/**
-	 * Set the number of grid points in the Z direction to use.
-	 * \see IOptions.h
-	 */
-	void setNZ(int n) override {
-		nZ = n;
-	}
-
-	/**
 	 * Obtain the value of the step size in the Z direction to be used.
 	 * \see IOptions.h
 	 */
 	double getZStepSize() const override {
 		return zStepSize;
-	}
-
-	/**
-	 * Set the value for the step size in the Z direction to use.
-	 * \see IOptions.h
-	 */
-	void setZStepSize(double stepSize) override {
-		zStepSize = stepSize;
 	}
 
 	/**
@@ -940,29 +697,6 @@ public:
 	}
 	int getBackBoundary() const override {
 		return backBoundary;
-	}
-
-	/**
-	 * Set the boundary condition on a given side of the grid.
-	 * \see IOptions.h
-	 */
-	void setLeftBoundary(int n) override {
-		leftBoundary = n;
-	}
-	void setRightBoundary(int n) override {
-		rightBoundary = n;
-	}
-	void setBottomBoundary(int n) override {
-		bottomBoundary = n;
-	}
-	void setTopBoundary(int n) override {
-		topBoundary = n;
-	}
-	void setFrontBoundary(int n) override {
-		frontBoundary = n;
-	}
-	void setBackBoundary(int n) override {
-		backBoundary = n;
 	}
 
 	/**
@@ -993,16 +727,6 @@ public:
 	}
 
 	/**
-	 * Specify whether each process should print the value it uses
-	 * to seed the random number generator.
-	 *
-	 * @param b A bool indicating whether to print the RNG seed value.
-	 */
-	void setPrintRNGSeed(bool b) override {
-		rngPrintSeed = b;
-	}
-
-	/**
 	 * Determine if we should print the value used to seed the random
 	 * number generator (regardless if it was given on the command line
 	 * or generated dynamically).
@@ -1029,14 +753,6 @@ public:
 	}
 
 	/**
-	 * Set the minimum size for the average radius computation.
-	 * \see IOptions.h
-	 */
-	virtual void setRadiusMinSizes(Array<int, 4> sizes) override {
-		radiusMinSizes = sizes;
-	}
-
-	/**
 	 * Obtain the value of the density of a bubble.
 	 * \see IOptions.h
 	 */
@@ -1053,27 +769,11 @@ public:
 	}
 
 	/**
-	 * Set the pulse time.
-	 * \see IOptions.h
-	 */
-	virtual void setPulseTime(double time) override {
-		pulseTime = time;
-	}
-
-	/**
 	 * Obtain the value of the proportion the flux pulse (on).
 	 * \see IOptions.h
 	 */
 	virtual double getPulseProportion() const override {
 		return pulseProportion;
-	}
-
-	/**
-	 * Set the pulse proportion.
-	 * \see IOptions.h
-	 */
-	virtual void setPulseProportion(double prop) override {
-		pulseProportion = prop;
 	}
 
 };

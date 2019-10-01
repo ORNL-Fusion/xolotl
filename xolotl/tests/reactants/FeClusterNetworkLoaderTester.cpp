@@ -18,12 +18,12 @@ using namespace std;
 using namespace xolotlCore;
 
 // Initialize MPI before running any tests; finalize it running all tests.
-BOOST_GLOBAL_FIXTURE(MPIFixture);
+BOOST_GLOBAL_FIXTURE (MPIFixture);
 
 /**
  * This suite is responsible for testing the FeClusterNetworkLoader.
  */
-BOOST_AUTO_TEST_SUITE(FeClusterNetworkLoader_testSuite)
+BOOST_AUTO_TEST_SUITE (FeClusterNetworkLoader_testSuite)
 
 /**
  * Method checking the loading of the network from the HDF5 file.
@@ -174,6 +174,25 @@ BOOST_AUTO_TEST_CASE(checkGenerate) {
  * the apply sectional method.
  */
 BOOST_AUTO_TEST_CASE(checkApplySectional) {
+	// Create the parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=6 0 0 6 1" << std::endl <<std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
+	std::string parameterFile = "param.txt";
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
+
+	// Read the options
+	Options opts;
+	opts.readParams(argc, argv);
 
 	// Create the network loader
 	FeClusterNetworkLoader loader = FeClusterNetworkLoader(
@@ -182,12 +201,6 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	loader.setVMin(4);
 	loader.setHeWidth(2);
 	loader.setVWidth(2);
-
-	// Create the options needed to load the network
-	Options opts;
-	opts.setMaxV(6);
-	opts.setMaxImpurity(6);
-	opts.setMaxI(1);
 	// Load the network
 	auto network = loader.generate(opts);
 
@@ -207,6 +220,10 @@ BOOST_AUTO_TEST_CASE(checkApplySectional) {
 	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::V), 6);
 	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::I), 1);
 	BOOST_REQUIRE_EQUAL(neNetwork->getMaxClusterSize(ReactantType::HeV), 12);
+
+	// Remove the created file
+	std::string tempFile = "param.txt";
+	std::remove(tempFile.c_str());
 
 	return;
 }

@@ -82,13 +82,6 @@ public:
 	virtual bool useConstTemperatureHandlers() const = 0;
 
 	/**
-	 * Set the constTempFlag.
-	 *
-	 * @param flag The value for the constTempFlag
-	 */
-	virtual void setConstTempFlag(bool flag) = 0;
-
-	/**
 	 * Obtain the value of the constant temperature to be used.
 	 *
 	 * @return The value for the temperature
@@ -96,25 +89,11 @@ public:
 	virtual double getConstTemperature() const = 0;
 
 	/**
-	 * Set the constant temperature.
-	 *
-	 * @param temp The value for the constant temperature
-	 */
-	virtual void setConstTemperature(double temp) = 0;
-
-	/**
 	 * Should we use temperature profile handlers?
 	 *
 	 * @return true if Xolotl must use a temperature profile
 	 */
 	virtual bool useTemperatureProfileHandlers() const = 0;
-
-	/**
-	 * Set the tempProfileFlag.
-	 *
-	 * @param flag The value for the tempProfileFlag
-	 */
-	virtual void setTempProfileFlag(bool flag) = 0;
 
 	/**
 	 * Obtain the name of the file containing the temperature profile data.
@@ -131,25 +110,11 @@ public:
 	virtual bool useHeatEquationHandlers() const = 0;
 
 	/**
-	 * Set the heatFlag.
-	 *
-	 * @param flag The value for the heatFlag
-	 */
-	virtual void setHeatFlag(bool flag) = 0;
-
-	/**
 	 * Obtain the value of the temperature to be used in the bulk.
 	 *
 	 * @return The value for the temperature
 	 */
 	virtual double getBulkTemperature() const = 0;
-
-	/**
-	 * Set the bulk temperature.
-	 *
-	 * @param temp The value for the bulk temperature
-	 */
-	virtual void setBulkTemperature(double temp) = 0;
 
 	/**
 	 * Should we use the flux amplitude option?
@@ -159,13 +124,6 @@ public:
 	 * the parameter file, false if it was not
 	 */
 	virtual bool useFluxAmplitude() const = 0;
-
-	/**
-	 * Set the fluxFlag.
-	 *
-	 * @param flag The value for the fluxFlag
-	 */
-	virtual void setFluxFlag(bool flag) = 0;
 
 	/**
 	 * Obtain the value of the intensity of the flux to be used.
@@ -180,13 +138,6 @@ public:
 	 * @return True is a time profile file is given for the helium flux
 	 */
 	virtual bool useFluxTimeProfile() const = 0;
-
-	/**
-	 * Set the fluxProfileFlag.
-	 *
-	 * @param flag The value for the flag
-	 */
-	virtual void setFluxProfileFlag(bool flag) = 0;
 
 	/**
 	 * Obtain the name of the file containing the time profile data for the
@@ -205,14 +156,6 @@ public:
 			void) const = 0;
 
 	/**
-	 * Set the type of performance handlers to use.
-	 *
-	 * @param rtype The type of performance handler registry to use
-	 */
-	virtual void setPerfHandlerType(
-			xolotlPerf::IHandlerRegistry::RegistryType rtype) = 0;
-
-	/**
 	 * Should we use the "standard" set of handlers for the visualization?
 	 * If false, use dummy (stub) handlers.
 	 *
@@ -220,13 +163,6 @@ public:
 	 * should use dummy handlers
 	 */
 	virtual bool useVizStandardHandlers() const = 0;
-
-	/**
-	 * Set the vizStandardHandlersFlag.
-	 *
-	 * @param flag The value for the vizStandardHandlersFlag
-	 */
-	virtual void setVizStandardHandlers(bool flag) = 0;
 
 	/**
 	 * Obtain the name of the material to be used for the simulation.
@@ -270,23 +206,11 @@ public:
 	virtual bool useRegularXGrid() const = 0;
 
 	/**
-	 * Set the useRegularGridFlag.
-	 * @param flag The value for the useRegularGridFlag.
-	 */
-	virtual void setRegularXGrid(bool flag) = 0;
-
-	/**
 	 * Should we use a Chebyshev grid on the x direction?
 	 * @return true if program should use a Chebyshev grid,
 	 * false if not
 	 */
 	virtual bool useChebyshevGrid() const = 0;
-
-	/**
-	 * Set the useChebyshevGridFlag.
-	 * @param flag The value for the useChebyshevGridFlag.
-	 */
-	virtual void setChebyshevGrid(bool flag) = 0;
 
 	/**
 	 * Should we read in the grid on the x direction?
@@ -296,12 +220,6 @@ public:
 	virtual bool useReadInGrid() const = 0;
 
 	/**
-	 * Set the readInGridFlag.
-	 * @param flag The value for the readInGridFlag.
-	 */
-	virtual void setReadInGrid(bool flag) = 0;
-
-	/**
 	 * Get the name of the grid file.
 	 *
 	 * @return The name of the grid file
@@ -309,25 +227,11 @@ public:
 	virtual std::string getGridFilename() const = 0;
 
 	/**
-	 * Set the name of the grid file.
-	 *
-	 * @param name Name for the grid file
-	 */
-	virtual void setGridFilename(const std::string& name) = 0;
-
-	/**
 	 * Obtain the physical process map.
 	 *
 	 * @return The map
 	 */
 	virtual std::map<std::string, bool> getProcesses() const = 0;
-
-	/**
-	 * Set the physical process map.
-	 *
-	 * @param map The map
-	 */
-	virtual void setProcesses(std::map<std::string, bool> map) = 0;
 
 	/**
 	 * Obtain the string listing the wanted GB.
@@ -344,13 +248,6 @@ public:
 	virtual int getGroupingMin() const = 0;
 
 	/**
-	 * Set the minimum size for the grouping.
-	 *
-	 * @param size The size
-	 */
-	virtual void setGroupingMin(int size) = 0;
-
-	/**
 	 * Obtain the first width for the grouping.
 	 *
 	 * @return The width
@@ -358,25 +255,11 @@ public:
 	virtual int getGroupingWidthA() const = 0;
 
 	/**
-	 * Set the first width for the grouping.
-	 *
-	 * @param width The width
-	 */
-	virtual void setGroupingWidthA(int width) = 0;
-
-	/**
 	 * Obtain the second width for the grouping.
 	 *
 	 * @return The width
 	 */
 	virtual int getGroupingWidthB() const = 0;
-
-	/**
-	 * Set the second width for the grouping.
-	 *
-	 * @param width The width
-	 */
-	virtual void setGroupingWidthB(int width) = 0;
 
 	/**
 	 * Obtain the value of the intensity of the sputtering yield to be used.
@@ -393,25 +276,11 @@ public:
 	virtual bool useHDF5() const = 0;
 
 	/**
-	 * Set the useHDF5Flag.
-	 *
-	 * @param flag The value for the useHDF5Flag
-	 */
-	virtual void setHDF5Flag(bool flag) = 0;
-
-	/**
 	 * To know if we should use the phase cut.
 	 *
 	 * @return usePhaseCutFlag
 	 */
 	virtual bool usePhaseCut() const = 0;
-
-	/**
-	 * Set the usePhaseCutFlag.
-	 *
-	 * @param flag The value for the usePhaseCutFlag
-	 */
-	virtual void setPhaseCutFlag(bool flag) = 0;
 
 	/**
 	 * Obtain the maximum value of impurities (He or Xe) to be used.
@@ -421,25 +290,11 @@ public:
 	virtual int getMaxImpurity() const = 0;
 
 	/**
-	 * Set the maximum value of impurities to use.
-	 *
-	 * @param max The maximum
-	 */
-	virtual void setMaxImpurity(int max) = 0;
-
-	/**
 	 * Obtain the maximum value of deuterium to be used.
 	 *
 	 * @return The maximum value
 	 */
 	virtual int getMaxD() const = 0;
-
-	/**
-	 * Set the maximum value of deuterium to use.
-	 *
-	 * @param max The maximum
-	 */
-	virtual void setMaxD(int max) = 0;
 
 	/**
 	 * Obtain the maximum value of tritium to be used.
@@ -449,25 +304,11 @@ public:
 	virtual int getMaxT() const = 0;
 
 	/**
-	 * Set the maximum value of tritium to use.
-	 *
-	 * @param max The maximum
-	 */
-	virtual void setMaxT(int max) = 0;
-
-	/**
 	 * Obtain the maximum value of vacancies to be used.
 	 *
 	 * @return The maximum value
 	 */
 	virtual int getMaxV() const = 0;
-
-	/**
-	 * Set the maximum value of vacancies to use.
-	 *
-	 * @param max The maximum
-	 */
-	virtual void setMaxV(int max) = 0;
 
 	/**
 	 * Obtain the maximum value of interstitials to be used.
@@ -477,25 +318,11 @@ public:
 	virtual int getMaxI() const = 0;
 
 	/**
-	 * Set the maximum value of interstitials to use.
-	 *
-	 * @param max The maximum
-	 */
-	virtual void setMaxI(int max) = 0;
-
-	/**
 	 * Obtain the number of grid points in the depth direction to be used.
 	 *
 	 * @return The number of grid points
 	 */
 	virtual int getNX() const = 0;
-
-	/**
-	 * Set the number of grid points in the depth direction to use.
-	 *
-	 * @param n The number
-	 */
-	virtual void setNX(int n) = 0;
 
 	/**
 	 * Obtain the value of the step size in the depth direction to be used.
@@ -505,25 +332,11 @@ public:
 	virtual double getXStepSize() const = 0;
 
 	/**
-	 * Set the value for the step size in the depth direction to use.
-	 *
-	 * @param stepSize The value for the step size
-	 */
-	virtual void setXStepSize(double stepSize) = 0;
-
-	/**
 	 * Obtain the number of grid points in the Y direction to be used.
 	 *
 	 * @return The number of grid points
 	 */
 	virtual int getNY() const = 0;
-
-	/**
-	 * Set the number of grid points in the Y direction to use.
-	 *
-	 * @param n The number
-	 */
-	virtual void setNY(int n) = 0;
 
 	/**
 	 * Obtain the value of the step size in the Y direction to be used.
@@ -533,13 +346,6 @@ public:
 	virtual double getYStepSize() const = 0;
 
 	/**
-	 * Set the value for the step size in the Y direction to use.
-	 *
-	 * @param stepSize The value for the step size
-	 */
-	virtual void setYStepSize(double stepSize) = 0;
-
-	/**
 	 * Obtain the number of grid points in the Z direction to be used.
 	 *
 	 * @return The number of grid points
@@ -547,25 +353,11 @@ public:
 	virtual int getNZ() const = 0;
 
 	/**
-	 * Set the number of grid points in the Z direction to use.
-	 *
-	 * @param n The number
-	 */
-	virtual void setNZ(int n) = 0;
-
-	/**
 	 * Obtain the value of the step size in the Z direction to be used.
 	 *
 	 * @return The value of the step size
 	 */
 	virtual double getZStepSize() const = 0;
-
-	/**
-	 * Set the value for the step size in the Z direction to use.
-	 *
-	 * @param stepSize The value for the step size
-	 */
-	virtual void setZStepSize(double stepSize) = 0;
 
 	/**
 	 * Obtain the boundary condition on a given side of the grid.
@@ -578,18 +370,6 @@ public:
 	virtual int getTopBoundary() const = 0;
 	virtual int getFrontBoundary() const = 0;
 	virtual int getBackBoundary() const = 0;
-
-	/**
-	 * Set the boundary condition on a given side of the grid.
-	 *
-	 * @param n The condition
-	 */
-	virtual void setLeftBoundary(int n) = 0;
-	virtual void setRightBoundary(int n) = 0;
-	virtual void setBottomBoundary(int n) = 0;
-	virtual void setTopBoundary(int n) = 0;
-	virtual void setFrontBoundary(int n) = 0;
-	virtual void setBackBoundary(int n) = 0;
 
 	/**
 	 * Obtain the value of the depth above which the bursting is happening.
@@ -616,14 +396,6 @@ public:
 	virtual std::tuple<bool, unsigned int> getRNGSeed(void) const = 0;
 
 	/**
-	 * Specify whether each process should print the value it uses
-	 * to seed the random number generator.
-	 *
-	 * @param b A bool indicating whether to print the RNG seed value.
-	 */
-	virtual void setPrintRNGSeed(bool b) = 0;
-
-	/**
 	 * Determine if we should print the value used to seed the random
 	 * number generator (regardless if it was given on the command line
 	 * or generated dynamically).
@@ -647,13 +419,6 @@ public:
 	virtual Array<int, 4> getRadiusMinSizes() const = 0;
 
 	/**
-	 * Set the minimum size for the average radius computation.
-	 *
-	 * @param sizes The minimum sizes
-	 */
-	virtual void setRadiusMinSizes(Array<int, 4> sizes) = 0;
-
-	/**
 	 * Obtain the value of the density of a bubble.
 	 *
 	 * @return The density
@@ -668,25 +433,11 @@ public:
 	virtual double getPulseTime() const = 0;
 
 	/**
-	 * Set the pulse time.
-	 *
-	 * @param time The value for the pulse
-	 */
-	virtual void setPulseTime(double time) = 0;
-
-	/**
 	 * Obtain the value of the proportion the flux pulse (on).
 	 *
 	 * @return The value for the proportion
 	 */
 	virtual double getPulseProportion() const = 0;
-
-	/**
-	 * Set the pulse proportion.
-	 *
-	 * @param prop The value for the proportion
-	 */
-	virtual void setPulseProportion(double prop) = 0;
 
 };
 //end class IOptions

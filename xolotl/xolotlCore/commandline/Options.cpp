@@ -19,7 +19,7 @@ Options::Options() :
 				50.0), dimensionNumber(1), useRegularGridFlag(true), useChebyshevGridFlag(
 				false), readInGridFlag(false), gridFilename(""), gbList(""), groupingMin(
 				std::numeric_limits<int>::max()), groupingWidthA(1), groupingWidthB(
-				1), sputteringYield(0.0), useHDF5Flag(true), usePhaseCutFlag(
+				0), sputteringYield(0.0), useHDF5Flag(true), usePhaseCutFlag(
 				false), maxImpurity(8), maxD(0), maxT(0), maxV(20), maxI(6), nX(
 				10), nY(0), nZ(0), xStepSize(0.5), yStepSize(0.0), zStepSize(
 				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
@@ -179,15 +179,15 @@ void Options::readParams(int argc, char* argv[]) {
 			auto tokens = reader.loadLine();
 
 			// Set the flag to use constant temperature to true
-			setConstTempFlag(true);
+			constTempFlag = true;
 
 			// Set the temperature
-			setConstTemperature(tokens[0]);
+			constTemperature = tokens[0];
 
 			// Check if we have another value
 			if (tokens.size() > 1) {
 				// Set the temperature gradient
-				setBulkTemperature(tokens[1]);
+				bulkTemperature = tokens[1];
 			}
 		}
 		if (opts.count("tempFile")) {
@@ -201,7 +201,7 @@ void Options::readParams(int argc, char* argv[]) {
 				exitCode = EXIT_FAILURE;
 			} else {
 				// Set the flag to use a temperature profile to true
-				setTempProfileFlag(true);
+				tempProfileFlag = true;
 			}
 		}
 
@@ -216,13 +216,14 @@ void Options::readParams(int argc, char* argv[]) {
 			// Break the argument into tokens.
 			auto tokens = reader.loadLine();
 
-			setConstTemperature(tokens[0]);
-			setBulkTemperature(tokens[1]);
+			heatFlag = true;
+			constTemperature = tokens[0];
+			bulkTemperature = tokens[1];
 		}
 
 		// Take care of the flux
 		if (opts.count("flux")) {
-			setFluxFlag(true);
+			fluxFlag = true;
 		}
 		if (opts.count("fluxFile")) {
 			// Check that the profile file exists
@@ -235,7 +236,7 @@ void Options::readParams(int argc, char* argv[]) {
 				exitCode = EXIT_FAILURE;
 			} else {
 				// Set the flag to use a flux profile to true
-				setFluxProfileFlag(true);
+				fluxProfileFlag = true;
 			}
 		}
 
@@ -246,7 +247,7 @@ void Options::readParams(int argc, char* argv[]) {
 				xolotlPerf::IHandlerRegistry::RegistryType rtype =
 						xolotlPerf::toPerfRegistryType(
 								opts["perfHandler"].as<string>());
-				setPerfHandlerType(rtype);
+				perfRegistryType = rtype;
 			} catch (const std::invalid_argument& e) {
 				std::cerr
 						<< "\nOptions: could not understand the performance handler type. "
@@ -260,9 +261,9 @@ void Options::readParams(int argc, char* argv[]) {
 		if (opts.count("vizHandler")) {
 			// Determine the type of handlers we are being asked to use
 			if (opts["vizHandler"].as<string>() == "std") {
-				setVizStandardHandlers(true);
+				vizStandardHandlersFlag = true;
 			} else if (opts["vizHandler"].as<string>() == "dummy") {
-				setVizStandardHandlers(false);
+				vizStandardHandlersFlag = false;
 			} else {
 				std::cerr
 						<< "\nOptions: unrecognized argument in the visualization option handler."
@@ -277,15 +278,15 @@ void Options::readParams(int argc, char* argv[]) {
 			auto arg = opts["regularGrid"].as<string>();
 			// Determine the type of handlers we are being asked to use
 			if (arg == "yes") {
-				setRegularXGrid(true);
+				useRegularGridFlag = true;
 			} else if (arg == "no") {
-				setRegularXGrid(false);
+				useRegularGridFlag = false;
 			} else if (arg == "cheby") {
-				setChebyshevGrid(true);
+				useChebyshevGridFlag = true;
 			} else {
 				// Read it as a file name
-				setGridFilename(arg);
-				setReadInGrid(true);
+				gridFilename = arg;
+				readInGridFlag = true;
 			}
 		}
 
@@ -308,7 +309,7 @@ void Options::readParams(int argc, char* argv[]) {
 			for (int i = 0; i < std::min((int) tokens.size(), 4); i++) {
 				sizes[i] = tokens[i];
 			}
-			setRadiusMinSizes(sizes);
+			radiusMinSizes = sizes;
 		}
 
 		// Take care of the processes
@@ -323,7 +324,6 @@ void Options::readParams(int argc, char* argv[]) {
 			auto tokens = reader.loadLine();
 
 			// Initialize the map of processes
-			std::map<std::string, bool> processMap;
 			processMap["reaction"] = false;
 			processMap["diff"] = false;
 			processMap["advec"] = false;
@@ -338,9 +338,6 @@ void Options::readParams(int argc, char* argv[]) {
 				// Switch the value to true in the map
 				processMap[tokens[i]] = true;
 			}
-
-			// Set it in the options
-			setProcesses(processMap);
 		}
 
 		// Take care of the gouping
@@ -355,14 +352,12 @@ void Options::readParams(int argc, char* argv[]) {
 			auto tokens = reader.loadLine();
 
 			// Set grouping minimum size
-			setGroupingMin(tokens[0]);
+			groupingMin = tokens[0];
 			// Set the grouping width in the first direction
-			setGroupingWidthA(tokens[1]);
+			groupingWidthA = tokens[1];
 			// Set the grouping width in the second direction
 			if (tokens.size() > 2)
-				setGroupingWidthB(tokens[2]);
-			else
-				setGroupingWidthB(0);
+				groupingWidthB = tokens[2];
 		}
 
 		// Take care of the network parameters
@@ -377,31 +372,26 @@ void Options::readParams(int argc, char* argv[]) {
 			auto tokens = reader.loadLine();
 
 			// Set the flag to not use the HDF5 file
-			setHDF5Flag(false);
+			useHDF5Flag = false;
 
 			// Set the value for the impurities
-			int max = strtol(tokens[0].c_str(), NULL, 10);
-			setMaxImpurity(max);
+			maxImpurity = strtol(tokens[0].c_str(), NULL, 10);
 
 			// Check if we have other values
 			if (tokens.size() > 1) {
 				// Set the deuterium size
-				max = strtol(tokens[1].c_str(), NULL, 10);
-				setMaxD(max);
+				maxD = strtol(tokens[1].c_str(), NULL, 10);
 				// Set the tritium size
-				max = strtol(tokens[2].c_str(), NULL, 10);
-				setMaxT(max);
+				maxT = strtol(tokens[2].c_str(), NULL, 10);
 				// Set the vacancy size
-				max = strtol(tokens[3].c_str(), NULL, 10);
-				setMaxV(max);
+				maxV = strtol(tokens[3].c_str(), NULL, 10);
 				// Set the interstitial size
-				max = strtol(tokens[4].c_str(), NULL, 10);
-				setMaxI(max);
+				maxI = strtol(tokens[4].c_str(), NULL, 10);
 
 				// Check if there are other values
 				if (tokens.size() > 5) {
 					// Set the phase cut
-					setPhaseCutFlag(tokens[5] == "true");
+					usePhaseCutFlag = (tokens[5] == "true");
 				}
 			}
 		}
@@ -418,26 +408,20 @@ void Options::readParams(int argc, char* argv[]) {
 			auto tokens = reader.loadLine();
 
 			// Set the values for the for the depth
-			int n = strtol(tokens[0].c_str(), NULL, 10);
-			setNX(n);
-			double size = strtod(tokens[1].c_str(), NULL);
-			setXStepSize(size);
+			nX = strtol(tokens[0].c_str(), NULL, 10);
+			xStepSize = strtod(tokens[1].c_str(), NULL);
 
 			// Check if we have other values
 			if (tokens.size() > 2) {
 				// Set the values for the for Y
-				n = strtol(tokens[2].c_str(), NULL, 10);
-				setNY(n);
-				size = strtod(tokens[3].c_str(), NULL);
-				setYStepSize(size);
+				nY = strtol(tokens[2].c_str(), NULL, 10);
+				yStepSize = strtod(tokens[3].c_str(), NULL);
 
 				// Check if we have other values
 				if (tokens.size() > 4) {
 					// Set the values for the for Z
-					n = strtol(tokens[4].c_str(), NULL, 10);
-					setNZ(n);
-					size = strtod(tokens[5].c_str(), NULL);
-					setZStepSize(size);
+					nZ = strtol(tokens[4].c_str(), NULL, 10);
+					zStepSize = strtod(tokens[5].c_str(), NULL);
 				}
 			}
 		}
@@ -454,21 +438,21 @@ void Options::readParams(int argc, char* argv[]) {
 			auto tokens = reader.loadLine();
 
 			// Set the left boundary
-			setLeftBoundary(tokens[0]);
+			leftBoundary = tokens[0];
 			// Set the right boundary
-			setRightBoundary(tokens[1]);
+			rightBoundary = tokens[1];
 			if (tokens.size() > 2)
 				// Set the bottom boundary
-				setBottomBoundary(tokens[2]);
+				bottomBoundary = tokens[2];
 			if (tokens.size() > 3)
 				// Set the top boundary
-				setTopBoundary(tokens[3]);
+				topBoundary = tokens[3];
 			if (tokens.size() > 4)
 				// Set the front boundary
-				setFrontBoundary(tokens[4]);
+				frontBoundary = tokens[4];
 			if (tokens.size() > 5)
 				// Set the back boundary
-				setBackBoundary(tokens[5]);
+				backBoundary = tokens[5];
 		}
 
 		// Take care of the rng
@@ -490,7 +474,7 @@ void Options::readParams(int argc, char* argv[]) {
 					shouldPrintSeed = true;
 					++currIdx;
 				}
-				setPrintRNGSeed(shouldPrintSeed);
+				rngPrintSeed = shouldPrintSeed;
 
 				if (currIdx < tokens.size()) {
 					// Convert arg to an integer.
@@ -525,8 +509,8 @@ void Options::readParams(int argc, char* argv[]) {
 			// Break the argument into tokens.
 			auto tokens = reader.loadLine();
 
-			setPulseTime(tokens[0]);
-			setPulseProportion(tokens[1]);
+			pulseTime = tokens[0];
+			pulseProportion = tokens[1];
 		}
 	}
 
