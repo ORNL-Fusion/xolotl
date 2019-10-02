@@ -214,11 +214,6 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
 	reaction.addProduct(ReactantType::FrankSuper);
 	reactions.push_back(reaction);
 
-        // perfect + int | perfect 
-        reaction = forwardReaction(ReactantType::Perfect, ReactantType::I);
-        reaction.addProduct(ReactantType::Perfect);
-        reactions.push_back(reaction);
-
         // perfect + void | void + vac
         reaction = forwardReaction(ReactantType::Perfect, ReactantType::Void);
 	reaction.addProduct(ReactantType::Void);
@@ -228,12 +223,6 @@ std::vector<forwardReaction> getForwardReactions(std::string caseName) {
         reaction.addProduct(ReactantType::Void);
         reaction.addProduct(ReactantType::VoidSuper);
         reaction.addProduct(ReactantType::V);
-        reactions.push_back(reaction);
-        
-        // perfect + vac | perfect + int
-        reaction = forwardReaction(ReactantType::Perfect, ReactantType::V);
-        reaction.addProduct(ReactantType::Perfect);
-        reaction.addProduct(ReactantType::I);
         reactions.push_back(reaction);
 
         // perfect + perfect | perfect + frank 
