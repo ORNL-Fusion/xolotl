@@ -20,7 +20,7 @@ static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
 /**
  * This suite is responsible for testing the NEXeCluster.
  */
-BOOST_AUTO_TEST_SUITE(NEXeCluster_testSuite)
+BOOST_AUTO_TEST_SUITE (NEXeCluster_testSuite)
 
 /**
  * This operation checks the ability of the NEXeCluster to describe
@@ -57,8 +57,6 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	auto network = getSimpleNEReactionNetwork();
 	// Set a fission rate for the diffusion to work
 	network->setFissionRate(8.0e-9);
-	// Add a grid point for the rates
-	network->addGridPoints(1);
 
 	// Get an Xe cluster with compostion 1,0,0.
 	auto cluster = (NECluster *) network->get(Species::Xe, 1);
@@ -74,6 +72,9 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	secondCluster->setMigrationEnergy(0.2);
 	secondCluster->setConcentration(0.5);
 
+	// Add a grid point for the rates
+	network->addGridPoints(1);
+
 	// Compute the rate constants that are needed for the flux
 	network->setTemperature(1000.0, 0);
 	// The flux can pretty much be anything except "not a number" (nan).
@@ -81,7 +82,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	BOOST_TEST_MESSAGE(
 			"NEXeClusterTester Message: \n" << "Total Flux is " << flux << "\n" << "   -Production Flux: " << cluster->getProductionFlux(0) << "\n" << "   -Combination Flux: " << cluster->getCombinationFlux(0) << "\n" << "   -Dissociation Flux: " << cluster->getDissociationFlux(0) << "\n" << "   -Emission Flux: " << cluster->getEmissionFlux(0) << "\n");
 
-	BOOST_REQUIRE_CLOSE(0.94579448, flux, 0.0001);
+	BOOST_REQUIRE_CLOSE(1.1555563138, flux, 0.0001);
 
 	return;
 }
@@ -92,7 +93,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { -0.193019, 2.01467, 0.562053, 0.0 };
+	double knownPartials[] = {-0.235828, 2.46149, 0.686708, 0};
 	// Get the simple reaction network
 	auto network = getSimpleNEReactionNetwork(3);
 	// Set a fission rate for the diffusion to work

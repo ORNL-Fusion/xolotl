@@ -29,7 +29,7 @@ void FluxHandler::initializeFluxHandler(const IReactionNetwork& network,
 	// and last because of the boundary conditions
 	for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 		// Get the x position
-		double x = xGrid[i + 1] - xGrid[surfacePos + 1];
+		double x = (xGrid[i] + xGrid[i + 1]) / 2.0 - xGrid[surfacePos + 1];
 
 		// Add the the value of the function times the step size
 		normFactor += FitFunction(x) * (xGrid[i + 1] - xGrid[i]);
@@ -49,7 +49,7 @@ void FluxHandler::initializeFluxHandler(const IReactionNetwork& network,
 	// Starts a i = surfacePos + 1 because the first value was already put in the vector
 	for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 		// Get the x position
-		auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
+		auto x = (xGrid[i] + xGrid[i + 1]) / 2.0 - xGrid[surfacePos + 1];
 
 		// Compute the flux value
 		double incidentFlux = fluxNormalized * FitFunction(x);
@@ -72,7 +72,7 @@ void FluxHandler::recomputeFluxHandler(int surfacePos) {
 	// Starts at i = surfacePos + 1 because the first values were already put in the vector
 	for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 		// Get the x position
-		auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
+		auto x = (xGrid[i] + xGrid[i + 1]) / 2.0 - xGrid[surfacePos + 1];
 
 		// Compute the flux value
 		double incidentFlux = fluxNormalized * FitFunction(x);
@@ -87,7 +87,7 @@ void FluxHandler::initializeTimeProfile(const std::string& fileName) {
 	// Set use time profile to true
 	useTimeProfile = true;
 
-	// Open file dataFile.dat containing the time and amplitude
+	// Open file containing the time and amplitude
 	std::ifstream inputFile(fileName.c_str());
 	std::string line;
 
@@ -137,6 +137,10 @@ double FluxHandler::getProfileAmplitude(double currentTime) const {
 
 void FluxHandler::computeIncidentFlux(double currentTime,
 		double *updatedConcOffset, int xi, int surfacePos) {
+	// Skip if no index was set
+	if (fluxIndices.size() == 0)
+		return;
+
 	// Recompute the flux vector if a time profile is used
 	if (useTimeProfile) {
 		fluxAmplitude = getProfileAmplitude(currentTime);

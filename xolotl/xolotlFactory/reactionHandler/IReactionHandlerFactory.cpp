@@ -12,7 +12,7 @@ std::shared_ptr<IReactionHandlerFactory> IReactionHandlerFactory::createNetworkF
 		const std::string& problemType) {
 	// PSI case
 	if (problemType == "W100" || problemType == "W110" || problemType == "W111"
-			|| problemType == "W211" || problemType == "TRIDYN")
+			|| problemType == "W211" || problemType == "TRIDYN" || problemType == "Pulsed")
 		theReactionFactory = std::make_shared<PSIReactionHandlerFactory>();
 	// NE case
 	else if (problemType == "Fuel")

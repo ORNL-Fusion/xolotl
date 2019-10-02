@@ -54,15 +54,20 @@ public:
 	 *
 	 * @param advectionHandlers The vector of advection handlers
 	 * @param grid The spatial grid in the depth direction
+	 * @param nx The number of grid points in the X direction
+	 * @param xs The beginning of the grid on this process
 	 * @param ny The number of grid points in the Y direction
 	 * @param hy The step size in the Y direction
+	 * @param ys The beginning of the grid on this process
 	 * @param nz The number of grid points in the Z direction
 	 * @param hz The step size in the Z direction
+	 * @param zs The beginning of the grid on this process
 	 */
 	virtual void initializeAdvectionGrid(
 			std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid, int ny = 1, double hy = 0.0, int nz = 1,
-			double hz = 0.0) = 0;
+			std::vector<double> grid, int nx, int xs, int ny = 1, double hy =
+					0.0, int ys = 0, int nz = 1, double hz = 0.0,
+			int zs = 0) = 0;
 
 	/**
 	 * Compute the flux due to the advection for all the helium clusters,
@@ -78,16 +83,15 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
 	 * @param ix The position on the x grid
-	 * @param xs The beginning of the grid on this process
 	 * @param hy The step size in the y direction
 	 * @param iy The position on the y grid
 	 * @param hz The step size in the z direction
 	 * @param iz The position on the z grid
 	 */
 	virtual void computeAdvection(const IReactionNetwork& network,
-			const NDPoint<3>& pos, double **concVector, double *updatedConcOffset,
-			double hxLeft, double hxRight, int ix, int xs, double hy = 0.0,
-			int iy = 0, double hz = 0.0, int iz = 0) const = 0;
+			const NDPoint<3>& pos, double **concVector,
+			double *updatedConcOffset, double hxLeft, double hxRight, int ix,
+			double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0) const = 0;
 
 	/**
 	 * Compute the partial derivatives due to the advection of all the helium clusters given
@@ -104,7 +108,6 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction
 	 * @param hxRight The step size on the right side of the point in the x direction
 	 * @param ix The position on the x grid
-	 * @param xs The beginning of the grid on this process
 	 * @param hy The step size in the y direction
 	 * @param iy The position on the y grid
 	 * @param hz The step size in the z direction
@@ -112,7 +115,7 @@ public:
 	 */
 	virtual void computePartialsForAdvection(const IReactionNetwork& network,
 			double *val, int *indices, const NDPoint<3>& pos, double hxLeft,
-			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
+			double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const = 0;
 
 	/**

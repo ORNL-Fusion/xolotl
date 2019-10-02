@@ -31,12 +31,9 @@ public:
 	 * the start of the program whereas the options passed to setOptions() may
 	 * change.
 	 *
-	 * Const correctness is violated here because char ** is not const correct
-	 * in main().
-	 *
-	 * @param argv The string of command line arguments
+	 * @param arg The string containing all the solver options
 	 */
-	virtual void setCommandLineOptions(std::string argv) = 0;
+	virtual void setCommandLineOptions(std::string arg) = 0;
 
 	/**
 	 * This operation sets the run-time options of the solver. The map is a set

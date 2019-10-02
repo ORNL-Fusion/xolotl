@@ -192,13 +192,9 @@ public:
 					return loadLine();
 
 				// Remove delimiters at the beginning of the string
-				if (line.find(dataDelimiter) == 0)
+				while (line.find(dataDelimiter) == 0) {
 					line = line.substr(1);
-
-				// Remove delimiters at the end of the string
-				if (line.find(dataDelimiter, line.size() - 2)
-						== line.size() - 1)
-					line = line.erase(line.size() - 1);
+				}
 				// Find the first instance of the delimiter
 				nextDelimiterPos = line.find(dataDelimiter);
 
@@ -211,6 +207,16 @@ public:
 						// data between the delimiters
 						subLine = line.substr(lastDelimiterPos,
 								nextDelimiterPos - lastDelimiterPos);
+						// Skip if subline is empty
+						if (subLine == "") {
+							lastDelimiterPos =
+									(nextDelimiterPos != finalDelimiterPos) ?
+											nextDelimiterPos + 1 :
+											nextDelimiterPos;
+							nextDelimiterPos = line.find(dataDelimiter,
+									lastDelimiterPos);
+							continue;
+						}
 						// Load the subLine in the data
 						// This function is defined only for string, bool, char, int double
 						loadData(subLine, data);

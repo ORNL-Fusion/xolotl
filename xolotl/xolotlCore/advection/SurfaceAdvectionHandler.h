@@ -37,8 +37,9 @@ public:
 	 */
 	void initializeAdvectionGrid(
 			std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid, int ny = 1, double hy = 0.0, int nz = 1,
-			double hz = 0.0) override;
+			std::vector<double> grid, int nx, int xs, int ny = 1, double hy =
+					0.0, int ys = 0, int nz = 1, double hz = 0.0, int zs = 0)
+					override;
 
 	/**
 	 * Compute the flux due to the advection for all the helium clusters,
@@ -53,10 +54,11 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computeAdvection(const IReactionNetwork& network, const NDPoint<3>& pos,
-			double **concVector, double *updatedConcOffset, double hxLeft,
-			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
-			double hz = 0.0, int iz = 0) const override;
+	void computeAdvection(const IReactionNetwork& network,
+			const NDPoint<3>& pos, double **concVector,
+			double *updatedConcOffset, double hxLeft, double hxRight, int ix,
+			double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0) const
+					override;
 
 	/**
 	 * Compute the partials due to the advection of all the helium clusters given
@@ -76,7 +78,7 @@ public:
 	 */
 	void computePartialsForAdvection(const IReactionNetwork& network,
 			double *val, int *indices, const NDPoint<3>& pos, double hxLeft,
-			double hxRight, int ix, int xs, double hy = 0.0, int iy = 0,
+			double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override;
 
 	/**

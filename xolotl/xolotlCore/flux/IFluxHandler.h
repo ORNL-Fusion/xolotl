@@ -91,6 +91,20 @@ public:
 	 */
 	virtual double getFluxRate() const = 0;
 
+	/**
+	 * This operation sets the time of the pulse.
+	 *
+	 * @param time The total time of one pulse
+	 */
+	virtual void setPulseTime(double time) = 0;
+
+	/**
+	 * This operation sets proportion of the pulse that is on.
+	 *
+	 * @param a The proprotion
+	 */
+	virtual void setProportion(double a) = 0;
+
 };
 //end class IFluxHandler
 

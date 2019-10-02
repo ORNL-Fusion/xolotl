@@ -2,29 +2,29 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
-#include "TRIDYNFitFluxHandler.h"
+#include "PulsedFitFluxHandler.h"
 #include <mpi.h>
 #include <HDF5NetworkLoader.h>
 #include <DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
 #include <Options.h>
-#include <fstream>
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 using namespace xolotlCore;
 
 /**
- * The test suite is responsible for testing the TRIDYNFitFluxHandler.
+ * The test suite is responsible for testing the PulsedFitFluxHandler.
  */
-BOOST_AUTO_TEST_SUITE (TRIDYNFitFluxHandlerTester_testSuite)
+BOOST_AUTO_TEST_SUITE (PulsedFitFluxHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Create the option to create a network
 	xolotlCore::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=8 0 0 10 6" << std::endl;
+	paramFile << "netParam=0 0 0 2 2" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -51,52 +51,55 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 
 	// Create a grid
 	std::vector<double> grid;
-	for (int l = 0; l < 5; l++) {
-		grid.push_back((double) l * 1.25);
+	for (int l = 0; l < 100; l++) {
+		grid.push_back((double) l * 50.0);
 	}
 	// Specify the surface position
 	int surfacePos = 0;
 
-	// Create the TRIDYN flux handler
-	auto testFitFlux = make_shared<TRIDYNFitFluxHandler>();
-	// Set the flux amplitude
+	// Create the ulsed flux handler
+	auto testFitFlux = make_shared<PulsedFitFluxHandler>();
+	// Set the flux amplitude and pulse parameters
 	testFitFlux->setFluxAmplitude(1.0);
+	testFitFlux->setPulseTime(1.0e-3);
+	testFitFlux->setProportion(0.2);
 	// Initialize the flux handler
 	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
 
 	// Create a time
-	double currTime = 1.0;
+	double currTime = 1.0e-4;
 
 	// The array of concentration
-	double newConcentration[5 * dof];
+	double newConcentration[100 * dof];
 
 	// Initialize their values
-	for (int i = 0; i < 5 * dof; i++) {
+	for (int i = 0; i < 100 * dof; i++) {
 		newConcentration[i] = 0.0;
 	}
 
 	// The pointer to the grid point we want
 	double *updatedConc = &newConcentration[0];
-	double *updatedConcOffset = updatedConc + dof;
+	double *updatedConcOffset = updatedConc + 20 * dof;
 
-	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1,
-			surfacePos);
-	updatedConcOffset = updatedConc + 2 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2,
-			surfacePos);
-	updatedConcOffset = updatedConc + 3 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3,
+	// Update the concentrations at some grid point
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 20,
 			surfacePos);
 
-	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.0, 0.01);
+	// Check the value at some grid point
+	BOOST_REQUIRE_CLOSE(newConcentration[100], 0.002777, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[102], 0.002777, 0.01);
 
-	// Remove the created file
-	std::string tempFile = "param.txt";
-	std::remove(tempFile.c_str());
+	// Check that the flux is 0.0 at later time
+	currTime = 8.0e-4;
+	updatedConcOffset = updatedConc + 22 * dof;
+
+	// Update the concentrations at some grid point
+	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 22,
+			surfacePos);
+
+	// Check the value at some grid point
+	BOOST_REQUIRE_CLOSE(newConcentration[110], 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[112], 0.0, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

@@ -293,16 +293,18 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 				// this grid point
 				gridPointSolution = solutionArray[zk][yj][xi];
 
+				double hx = grid[xi + 1] - grid[xi];
+
 				// Update the concentration in the network
 				network.updateConcentrationsFromArray(gridPointSolution);
 
 				// Get the total helium concentration at this grid point
-				heConcentration += network.getTotalAtomConcentration(0)
-						* (grid[xi + 1] - grid[xi]) * hy * hz;
-				dConcentration += network.getTotalAtomConcentration(1)
-						* (grid[xi + 1] - grid[xi]) * hy * hz;
-				tConcentration += network.getTotalAtomConcentration(2)
-						* (grid[xi + 1] - grid[xi]) * hy * hz;
+				heConcentration += network.getTotalAtomConcentration(0) * hx
+						* hy * hz;
+				dConcentration += network.getTotalAtomConcentration(1) * hx * hy
+						* hz;
+				tConcentration += network.getTotalAtomConcentration(2) * hx * hy
+						* hz;
 			}
 		}
 	}
@@ -442,6 +444,8 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				// Get the pointer to the beginning of the solution data for this grid point
 				gridPointSolution = solutionArray[zk][yj][xi];
 
+				double hx = grid[xi + 1] - grid[xi];
+
 				// Update the concentration in the network
 				network.updateConcentrationsFromArray(gridPointSolution);
 
@@ -453,17 +457,12 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 					// Add the current concentration times the number of xenon in the cluster
 					// (from the weight vector)
 					double conc = gridPointSolution[indices3D[i]];
-					xeConcentration += conc * weights3D[i]
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					bubbleConcentration += conc * (grid[xi + 1] - grid[xi]) * hy
-							* hz;
-					radii += conc * radii3D[i] * (grid[xi + 1] - grid[xi]) * hy
-							* hz;
+					xeConcentration += conc * weights3D[i] * hx * hy * hz;
+					bubbleConcentration += conc * hx * hy * hz;
+					radii += conc * radii3D[i] * hx * hy * hz;
 					if (weights3D[i] >= minSizes[0] && conc > 1.0e-16) {
-						partialBubbleConcentration += conc
-								* (grid[xi + 1] - grid[xi]) * hy * hz;
-						partialRadii += conc * radii3D[i]
-								* (grid[xi + 1] - grid[xi]) * hy * hz;
+						partialBubbleConcentration += conc * hx * hy * hz;
+						partialRadii += conc * radii3D[i] * hx * hy * hz;
 						// Update the volume fraction
 						volumeFrac += gridPointSolution[indices3D[i]]
 								* sphereFactor * pow(radii3D[i], 3.0);
@@ -481,17 +480,14 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 					auto const& cluster =
 							static_cast<NESuperCluster&>(*(superMapItem.second));
 					double conc = cluster.getTotalConcentration();
-					xeConcentration += cluster.getTotalXenonConcentration()
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					bubbleConcentration += conc * (grid[xi + 1] - grid[xi]) * hy
-							* hz;
-					radii += conc * cluster.getReactionRadius()
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
+					xeConcentration += cluster.getTotalXenonConcentration() * hx
+							* hy * hz;
+					bubbleConcentration += conc * hx * hy * hz;
+					radii += conc * cluster.getReactionRadius() * hx * hy * hz;
 					if (cluster.getSize() >= minSizes[0] && conc > 1.0e-16) {
-						partialBubbleConcentration += conc
-								* (grid[xi + 1] - grid[xi]) * hy * hz;
-						partialRadii += conc * cluster.getReactionRadius()
-								* (grid[xi + 1] - grid[xi]) * hy * hz;
+						partialBubbleConcentration += conc * hx * hy * hz;
+						partialRadii += conc * cluster.getReactionRadius() * hx
+								* hy * hz;
 						// Update the volume fraction
 						volumeFrac += cluster.getTotalConcentration()
 								* sphereFactor
@@ -738,7 +734,7 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 // Loop on the entire grid
 	for (int xi = 0; xi < Mx; xi++) {
 		// Set x
-		double x = grid[xi + 1] - grid[1];
+		double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 
 		// Initialize the concentrations at this grid point
 		double heLocalConc = 0.0, dLocalConc = 0.0, tLocalConc = 0.0,
@@ -877,7 +873,7 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 
 		for (PetscInt i = 0; i < Mx; i++) {
 			// Compute x
-			x = grid[i + 1] - grid[1];
+			x = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
 
 			// Initialize the value of the concentration to integrate over Z
 			double conc = 0.0;
@@ -1023,7 +1019,7 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 
 		for (PetscInt i = 0; i < Mx; i++) {
 			// Compute x
-			x = grid[i + 1] - grid[1];
+			x = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
 
 			// Initialize the value of the concentration to integrate over Y
 			double conc = 0.0;
@@ -1205,8 +1201,10 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 					gridPointSolution = solutionArray[zk][yj][xi];
 
 					// Factor for finite difference
-					double hxLeft = grid[xi + 1] - grid[xi];
-					double hxRight = grid[xi + 2] - grid[xi + 1];
+					double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0,
+							hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+					if (xi - 1 < 0)
+						hxLeft = grid[xi + 1] - grid[xi];
 					double factor = 2.0 / (hxLeft + hxRight);
 
 					// Loop on all the interstitial clusters to add the contribution from deeper
@@ -1236,7 +1234,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 
 				// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 				double threshold = (62.8 - initialVConc)
-						* (grid[xi + 1] - grid[xi]);
+						* (grid[xi] - grid[xi - 1]);
 				if (nInterstitial3D[yj][zk] > threshold) {
 					// The surface is moving
 					fvalue[0] = 0.0;
@@ -1283,7 +1281,8 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 								gridPointSolution);
 
 						// Get the distance from the surface
-						double distance = grid[xi + 1] - grid[surfacePos + 1];
+						double distance = (grid[xi] + grid[xi + 1]) / 2.0
+								- grid[surfacePos + 1];
 
 						// Compute the helium density at this grid point
 						double heDensity = network.getTotalAtomConcentration();
@@ -1427,7 +1426,8 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 		// Get the surface position
 		int surfacePos = solverHandler.getSurfacePosition(yj, zk);
 		// Get the distance from the surface
-		double distance = grid[xi + 1] - grid[surfacePos + 1];
+		double distance = (grid[xi] + grid[xi + 1]) / 2.0
+				- grid[surfacePos + 1];
 
 		std::cout << "bursting at: " << zk * hz << " " << yj * hy << " "
 				<< distance << std::endl;
@@ -1529,7 +1529,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold = (62.8 - initialVConc)
-					* (grid[xi + 1] - grid[xi]);
+					* (grid[xi] - grid[xi - 1]);
 
 			// Move the surface up
 			if (nInterstitial3D[yj][zk] > threshold) {
@@ -1544,7 +1544,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 					nInterstitial3D[yj][zk] -= threshold;
 					// Update the thresold
 					double threshold = (62.8 - initialVConc)
-							* (grid[xi + 1] - grid[xi]);
+							* (grid[xi] - grid[xi - 1]);
 				}
 
 				// Throw an exception if the position is negative
@@ -1621,7 +1621,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 				while (nInterstitial3D[yj][zk] < 0.0) {
 					// Compute the threshold to a deeper grid point
 					threshold = (62.8 - initialVConc)
-							* (grid[xi + 2] - grid[xi + 1]);
+							* (grid[xi + 1] - grid[xi]);
 					// Set all the concentrations to 0.0 at xi = surfacePos + 1
 					// if xi is on this process
 					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
@@ -1670,7 +1670,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 	}
 
 	mutationHandler->initializeIndex3D(surfaceIndices, network, advecHandlers,
-			grid, My, hy, Mz, hz);
+			grid, xm, xs, ym, hy, ys, zm, hz, zs);
 
 // Write the surface positions
 	if (procId == 0) {

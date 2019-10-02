@@ -39,11 +39,8 @@ void XolotlInterface::initializeXolotl(int argc, char **argv, MPI_Comm comm,
 	}
 
 	try {
-		// Skip the executable name before parsing
-		argc -= 1; // one for the executable name
-		argv += 1; // one for the executable name
 		Options opts;
-		opts.readParams(argv);
+		opts.readParams(argc, argv);
 		if (!opts.shouldRun()) {
 			std::cerr << "Unable to read the options.  Aborting" << std::endl;
 		}
@@ -96,7 +93,7 @@ void XolotlInterface::initializeXolotl(int argc, char **argv, MPI_Comm comm,
 		solver = std::shared_ptr<xolotlSolver::PetscSolver>(
 				new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
 		// Initialize the solver
-		solver->setCommandLineOptions(opts.getPetscArgv());
+		solver->setCommandLineOptions(opts.getPetscArg());
 		solver->initialize(isStandalone);
 	} catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;

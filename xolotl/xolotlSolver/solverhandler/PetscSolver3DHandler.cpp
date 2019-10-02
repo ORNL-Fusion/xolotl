@@ -87,23 +87,22 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 		}
 	}
 
-	// Initialize the surface of the first advection handler corresponding to the
-	// advection toward the surface (or a dummy one if it is deactivated)
-	advectionHandlers[0]->setLocation(
-			grid[surfacePosition[0][0] + 1] - grid[1]);
-
 	// Prints the grid on one process
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
 		for (int i = 1; i < grid.size() - 1; i++) {
-			std::cout << grid[i + 1] - grid[surfacePosition[0][0] + 1] << " ";
+			std::cout << grid[i] - grid[surfacePosition[0][0] + 1] << " ";
 		}
 		std::cout << std::endl;
 	}
 
+	// Initialize the surface of the first advection handler corresponding to the
+	// advection toward the surface (or a dummy one if it is deactivated)
+	advectionHandlers[0]->setLocation(
+			grid[surfacePosition[0][0] + 1] - grid[1]);
+
 	// Set the size of the partial derivatives vectors
-	clusterPartials.resize(dof, 0.0);
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	/*  The only spatial coupling in the Jacobian is due to diffusion.
@@ -128,10 +127,20 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 		advectionHandlers[i]->initialize(network, ofill);
 	}
 
+	// Get the local boundaries
+	PetscInt xs, xm, ys, ym, zs, zm;
+	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
+	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
+			"DMDAGetCorners failed.");
+	// Set it in the handler
+	setLocalCoordinates(xs, xm, ys, ym, zs, zm);
+
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, grid, nY, hY, nZ, hZ);
+	mutationHandler->initialize(network, localXM, localXS, localYM, hY, localYS,
+			localZM, hZ, localZS);
 	mutationHandler->initializeIndex3D(surfacePosition, network,
-			advectionHandlers, grid, nY, hY, nZ, hZ);
+			advectionHandlers, grid, localXM, localXS, localYM, hY, localYS,
+			localZM, hZ, localZS);
 
 	// Initialize the re-solution handler here
 	// because it adds connectivity
@@ -170,14 +179,6 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 	checkPetscError(ierr, "PetscSolver3DHandler::initializeConcentration: "
 			"DMDAVecGetArrayDOF failed.");
 
-	// Get the local boundaries
-	PetscInt xs, xm, ys, ym, zs, zm;
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	checkPetscError(ierr, "PetscSolver3DHandler::initializeConcentration: "
-			"DMDAGetCorners failed.");
-	// Set it in the handler
-	setLocalCoordinates(xs, xm, ys, ym, zs, zm);
-
 	// Initialize the last temperature at each grid point on this process
 	for (int i = 0; i < localXM + 2; i++) {
 		lastTemperature.push_back(0.0);
@@ -202,12 +203,12 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 	fluxHandler->initializeFluxHandler(network, surfacePosition[0][0], grid);
 
 	// Initialize the grid for the diffusion
-	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, nY, hY,
-			nZ, hZ);
+	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, localXM,
+			localXS, localYM, hY, localYS, localZM, hZ, localZS);
 
 	// Initialize the grid for the advection
-	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, nY,
-			hY, nZ, hZ);
+	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid,
+			localXM, localXS, localYM, hY, localYS, localZM, hZ, localZS);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar *concOffset = nullptr;
@@ -233,10 +234,12 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 				}
 
 				// Temperature
-				xolotlCore::NDPoint<3> gridPosition { (grid[i + 1]
-						- grid[surfacePosition[j][k] + 1])
-						/ (grid[grid.size() - 1]
-								- grid[surfacePosition[j][k] + 1]), 0.0, 0.0 };
+				xolotlCore::NDPoint < 3
+						> gridPosition { ((grid[i] + grid[i + 1]) / 2.0
+								- grid[surfacePosition[j][k] + 1])
+								/ (grid[grid.size() - 1]
+										- grid[surfacePosition[j][k] + 1]), 0.0,
+								0.0 };
 				concOffset[dof - 1] = temperatureHandler->getTemperature(
 						gridPosition, 0.0);
 
@@ -536,7 +539,8 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				for (int xi = surfacePosition[yj][zk] + leftOffset;
 						xi < nX - rightOffset; xi++) {
 					// We are only interested in the helium near the surface
-					if (grid[xi + 1] - grid[surfacePosition[yj][zk] + 1] > 2.0)
+					if ((grid[xi] + grid[xi + 1]) / 2.0
+							- grid[surfacePosition[yj][zk] + 1] > 2.0)
 						continue;
 
 					// Check if we are on the right processor
@@ -596,11 +600,17 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				concVector[5] = concs[zk - 1][yj][xi];				// front
 				concVector[6] = concs[zk + 1][yj][xi];				// back
 
+				// Compute the left and right hx
+				double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0, hxRight =
+						(grid[xi + 2] - grid[xi]) / 2.0;
+				if (xi - 1 < 0)
+					hxLeft = grid[xi + 1] - grid[xi];
+
 				// Heat condition
 				if (xi == surfacePosition[yj][zk]) {
 					temperatureHandler->computeTemperature(concVector,
-							updatedConcOffset, grid[xi + 1] - grid[xi],
-							grid[xi + 2] - grid[xi + 1], xi, sy, yj, sz, zk);
+							updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz,
+							zk);
 				}
 
 				// Boundary conditions
@@ -640,7 +650,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				}
 
 				// Set the grid fraction
-				gridPosition[0] = (grid[xi + 1]
+				gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
 						- grid[surfacePosition[yj][zk] + 1])
 						/ (grid[grid.size() - 1]
 								- grid[surfacePosition[yj][zk] + 1]);
@@ -672,29 +682,27 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 				// ---- Compute the temperature over the locally owned part of the grid -----
 				temperatureHandler->computeTemperature(concVector,
-						updatedConcOffset, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi, sy, yj, sz, zk);
+						updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz, zk);
 
 				// ---- Compute diffusion over the locally owned part of the grid -----
 				diffusionHandler->computeDiffusion(network, concVector,
-						updatedConcOffset, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi, localXS, sy, yj, sz,
-						zk);
+						updatedConcOffset, hxLeft, hxRight, xi - localXS, sy,
+						yj - localYS, sz, zk - localZS);
 
 				// ---- Compute advection over the locally owned part of the grid -----
 				// Set the grid position
-				gridPosition[0] = grid[xi + 1] - grid[1];
+				gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 				for (int i = 0; i < advectionHandlers.size(); i++) {
 					advectionHandlers[i]->computeAdvection(network,
-							gridPosition, concVector, updatedConcOffset,
-							grid[xi + 1] - grid[xi],
-							grid[xi + 2] - grid[xi + 1], xi, localXS, hY, yj,
-							hZ, zk);
+							gridPosition, concVector, updatedConcOffset, hxLeft,
+							hxRight, xi - localXS, hY, yj - localYS, hZ,
+							zk - localZS);
 				}
 
 				// ----- Compute the modified trap-mutation over the locally owned part of the grid -----
 				mutationHandler->computeTrapMutation(network, concOffset,
-						updatedConcOffset, xi, localXS, yj, zk);
+						updatedConcOffset, xi - localXS, yj - localYS,
+						zk - localZS);
 
 				// ----- Compute the re-solution over the locally owned part of the grid -----
 				resolutionHandler->computeReSolution(network, concOffset,
@@ -751,7 +759,7 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	const int dof = network.getDOF();
 
 	// Get the total number of diffusing clusters
-	const int nDiff = max(diffusionHandler->getNumberOfDiffusing(), 1);
+	const int nDiff = max(diffusionHandler->getNumberOfDiffusing(), 0);
 
 	// Get the total number of advecting clusters
 	int nAdvec = 0;
@@ -763,6 +771,8 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 	// Arguments for MatSetValuesStencil called below
 	MatStencil row, cols[7];
+	PetscScalar tempVals[7];
+	PetscInt tempIndices[1];
 	PetscScalar diffVals[7 * nDiff];
 	PetscInt diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
@@ -787,51 +797,56 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
 
 			for (int xi = localXS; xi < localXS + localXM; xi++) {
+				// Compute the left and right hx
+				double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0, hxRight =
+						(grid[xi + 2] - grid[xi]) / 2.0;
+				if (xi - 1 < 0)
+					hxLeft = grid[xi + 1] - grid[xi];
+
 				// Heat condition
 				if (xi == surfacePosition[yj][zk]) {
 					// Get the partial derivatives for the temperature
-					temperatureHandler->computePartialsForTemperature(diffVals,
-							diffIndices, grid[xi + 1] - grid[xi],
-							grid[xi + 2] - grid[xi + 1], xi, sy, yj, sz, zk);
+					temperatureHandler->computePartialsForTemperature(tempVals,
+							tempIndices, hxLeft, hxRight, xi, sy, yj, sz, zk);
 
 					// Set grid coordinate and component number for the row
 					row.i = xi;
 					row.j = yj;
 					row.k = zk;
-					row.c = diffIndices[0];
+					row.c = tempIndices[0];
 
 					// Set grid coordinates and component numbers for the columns
 					// corresponding to the middle, left, and right grid points
 					cols[0].i = xi;					// middle
 					cols[0].j = yj;
 					cols[0].k = zk;
-					cols[0].c = diffIndices[0];
-					cols[1].i = xi - 1;					// left
+					cols[0].c = tempIndices[0];
+					cols[1].i = xi - 1; // left
 					cols[1].j = yj;
 					cols[1].k = zk;
-					cols[1].c = diffIndices[0];
-					cols[2].i = xi + 1;					// right
+					cols[1].c = tempIndices[0];
+					cols[2].i = xi + 1; // right
 					cols[2].j = yj;
 					cols[2].k = zk;
-					cols[2].c = diffIndices[0];
-					cols[3].i = xi;					// bottom
+					cols[2].c = tempIndices[0];
+					cols[3].i = xi; // bottom
 					cols[3].j = yj - 1;
 					cols[3].k = zk;
-					cols[3].c = diffIndices[0];
-					cols[4].i = xi;					// top
+					cols[3].c = tempIndices[0];
+					cols[4].i = xi; // top
 					cols[4].j = yj + 1;
 					cols[4].k = zk;
-					cols[4].c = diffIndices[0];
-					cols[5].i = xi;					// front
+					cols[4].c = tempIndices[0];
+					cols[5].i = xi; // front
 					cols[5].j = yj;
 					cols[5].k = zk - 1;
-					cols[5].c = diffIndices[0];
-					cols[6].i = xi;					// back
+					cols[5].c = tempIndices[0];
+					cols[6].i = xi; // back
 					cols[6].j = yj;
 					cols[6].k = zk + 1;
-					cols[6].c = diffIndices[0];
+					cols[6].c = tempIndices[0];
 
-					ierr = MatSetValuesStencil(J, 1, &row, 7, cols, diffVals,
+					ierr = MatSetValuesStencil(J, 1, &row, 7, cols, tempVals,
 							ADD_VALUES);
 					checkPetscError(ierr,
 							"PetscSolver3DHandler::computeOffDiagonalJacobian: "
@@ -875,7 +890,7 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				}
 
 				// Set the grid fraction
-				gridPosition[0] = (grid[xi + 1]
+				gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
 						- grid[surfacePosition[yj][zk] + 1])
 						/ (grid[grid.size() - 1]
 								- grid[surfacePosition[yj][zk] + 1]);
@@ -893,48 +908,47 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				}
 
 				// Get the partial derivatives for the temperature
-				temperatureHandler->computePartialsForTemperature(diffVals,
-						diffIndices, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi, sy, yj, sz, zk);
+				temperatureHandler->computePartialsForTemperature(tempVals,
+						tempIndices, hxLeft, hxRight, xi, sy, yj, sz, zk);
 
 				// Set grid coordinate and component number for the row
 				row.i = xi;
 				row.j = yj;
 				row.k = zk;
-				row.c = diffIndices[0];
+				row.c = tempIndices[0];
 
 				// Set grid coordinates and component numbers for the columns
 				// corresponding to the middle, left, and right grid points
 				cols[0].i = xi;				// middle
 				cols[0].j = yj;
 				cols[0].k = zk;
-				cols[0].c = diffIndices[0];
-				cols[1].i = xi - 1;				// left
+				cols[0].c = tempIndices[0];
+				cols[1].i = xi - 1; // left
 				cols[1].j = yj;
 				cols[1].k = zk;
-				cols[1].c = diffIndices[0];
-				cols[2].i = xi + 1;				// right
+				cols[1].c = tempIndices[0];
+				cols[2].i = xi + 1; // right
 				cols[2].j = yj;
 				cols[2].k = zk;
-				cols[2].c = diffIndices[0];
-				cols[3].i = xi;				// bottom
+				cols[2].c = tempIndices[0];
+				cols[3].i = xi; // bottom
 				cols[3].j = yj - 1;
 				cols[3].k = zk;
-				cols[3].c = diffIndices[0];
-				cols[4].i = xi;				// top
+				cols[3].c = tempIndices[0];
+				cols[4].i = xi; // top
 				cols[4].j = yj + 1;
 				cols[4].k = zk;
-				cols[4].c = diffIndices[0];
-				cols[5].i = xi;				// front
+				cols[4].c = tempIndices[0];
+				cols[5].i = xi; // front
 				cols[5].j = yj;
 				cols[5].k = zk - 1;
-				cols[5].c = diffIndices[0];
-				cols[6].i = xi;				// back
+				cols[5].c = tempIndices[0];
+				cols[6].i = xi; // back
 				cols[6].j = yj;
 				cols[6].k = zk + 1;
-				cols[6].c = diffIndices[0];
+				cols[6].c = tempIndices[0];
 
-				ierr = MatSetValuesStencil(J, 1, &row, 7, cols, diffVals,
+				ierr = MatSetValuesStencil(J, 1, &row, 7, cols, tempVals,
 						ADD_VALUES);
 				checkPetscError(ierr,
 						"PetscSolver3DHandler::computeOffDiagonalJacobian: "
@@ -942,9 +956,8 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 				// Get the partial derivatives for the diffusion
 				diffusionHandler->computePartialsForDiffusion(network, diffVals,
-						diffIndices, grid[xi + 1] - grid[xi],
-						grid[xi + 2] - grid[xi + 1], xi, localXS, sy, yj, sz,
-						zk);
+						diffIndices, hxLeft, hxRight, xi - localXS, sy,
+						yj - localYS, sz, zk - localZS);
 
 				// Loop on the number of diffusion cluster to set the values in the Jacobian
 				for (int i = 0; i < nDiff; i++) {
@@ -995,13 +1008,12 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 				// Get the partial derivatives for the advection
 				// Set the grid position
-				gridPosition[0] = grid[xi + 1] - grid[1];
+				gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 				for (int l = 0; l < advectionHandlers.size(); l++) {
 					advectionHandlers[l]->computePartialsForAdvection(network,
-							advecVals, advecIndices, gridPosition,
-							grid[xi + 1] - grid[xi],
-							grid[xi + 2] - grid[xi + 1], xi, localXS, hY, yj,
-							hZ, zk);
+							advecVals, advecIndices, gridPosition, hxLeft,
+							hxRight, xi - localXS, hY, yj - localYS, hZ,
+							zk - localZS);
 
 					// Get the stencil indices to know where to put the partial derivatives in the Jacobian
 					auto advecStencil =
@@ -1107,7 +1119,8 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				for (int xi = surfacePosition[yj][zk] + leftOffset;
 						xi < nX - rightOffset; xi++) {
 					// We are only interested in the helium near the surface
-					if (grid[xi + 1] - grid[surfacePosition[yj][zk] + 1] > 2.0)
+					if ((grid[xi] + grid[xi + 1]) / 2.0
+							- grid[surfacePosition[yj][zk] + 1] > 2.0)
 						continue;
 
 					// Check if we are on the right processor
@@ -1165,7 +1178,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					continue;
 
 				// Set the grid fraction
-				gridPosition[0] = (grid[xi + 1]
+				gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
 						- grid[surfacePosition[yj][zk] + 1])
 						/ (grid[grid.size() - 1]
 								- grid[surfacePosition[yj][zk] + 1]);
@@ -1241,8 +1254,8 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 				// Compute the partial derivative from modified trap-mutation at this grid point
 				int nMutating = mutationHandler->computePartialsForTrapMutation(
-						network, mutationVals, mutationIndices, xi, localXS, yj,
-						zk);
+						network, mutationVals, mutationIndices, xi - localXS,
+						yj - localYS, zk - localZS);
 
 				// Loop on the number of helium undergoing trap-mutation to set the values
 				// in the Jacobian

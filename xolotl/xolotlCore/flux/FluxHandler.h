@@ -157,6 +157,22 @@ public:
 	 */
 	virtual double getFluxRate() const;
 
+	/**
+	 * This operation sets the time of the pulse.
+	 * \see IFluxHandler.h
+	 */
+	virtual void setPulseTime(double time) {
+		return;
+	}
+
+	/**
+	 * This operation sets proportion of the pulse that is on.
+	 * \see IFluxHandler.h
+	 */
+	virtual void setProportion(double a) {
+		return;
+	}
+
 };
 //end class FluxHandler
 

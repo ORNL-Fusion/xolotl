@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	auto& heVReactants = feNetwork->getAll(ReactantType::HeV);
 	BOOST_REQUIRE_EQUAL(36U, heVReactants.size());
 
-	// Add the required He_1, V_1clusters to the network.
+	// Add the required He_1, V_1 clusters to the network.
 	heCluster = std::unique_ptr<FeHeCluster>(
 			new FeHeCluster(1, *(feNetwork.get()), registry));
 	vCluster = std::unique_ptr<FeVCluster>(
@@ -128,11 +128,12 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	feNetwork->add(std::move(vCluster));
 
 	// Try changing the temperature and make sure it works
+	// Set the diffusion factor because temperature is only relevant for mobile clusters
+	heReactant->setDiffusionFactor(1.0);
 	// Add a grid point for the temperature
 	feNetwork->addGridPoints(1);
 	feNetwork->setTemperature(1000.0, 0);
-	IReactant& reactant = reactants.at(0);
-	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(0), 0.0001);
+	BOOST_REQUIRE_CLOSE(1000.0, heReactant->getTemperature(0), 0.0001);
 
 	return;
 }

@@ -214,7 +214,8 @@ public:
 			// and last because of the boundary conditions
 			for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 				// Get the x position
-				double x = xGrid[i + 1] - xGrid[surfacePos + 1];
+				double x = (xGrid[i] + xGrid[i + 1]) / 2.0
+						- xGrid[surfacePos + 1];
 
 				// Add the the value of the function times the step size
 				normFactors[index] += FitFunction(x, index)
@@ -256,7 +257,8 @@ public:
 			// Starts at i = surfacePos + 1 because the first value was already put in the vector
 			for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 				// Get the x position
-				auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
+				auto x = (xGrid[i] + xGrid[i + 1]) / 2.0
+						- xGrid[surfacePos + 1];
 
 				// Compute the flux value
 				double incidentFlux = fluxNormalized * FitFunction(x, index);
@@ -329,10 +331,12 @@ public:
 			std::ofstream outputFile;
 			outputFile.open("incidentVectors.txt");
 			for (int i = 0; i < incidentFluxVec.size(); i++) {
-				outputFile << grid[surfacePos + i + 1] - grid[surfacePos + 1]
-						<< " " << incidentFluxVec[i] << " "
-						<< incidentWFluxVec[i] << " " << incidentDFluxVec[i]
-						<< " " << incidentTFluxVec[i] << std::endl;
+				outputFile
+						<< (grid[surfacePos + i] + grid[surfacePos + i + 1])
+								/ 2.0 - grid[surfacePos + 1] << " "
+						<< incidentFluxVec[i] << " " << incidentWFluxVec[i]
+						<< " " << incidentDFluxVec[i] << " "
+						<< incidentTFluxVec[i] << std::endl;
 			}
 			outputFile.close();
 		}
@@ -393,7 +397,8 @@ public:
 			// Starts a i = surfacePos + 1 because the first values were already put in the vector
 			for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 				// Get the x position
-				auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
+				auto x = (xGrid[i] + xGrid[i + 1]) / 2.0
+						- xGrid[surfacePos + 1];
 
 				// Compute the flux value
 				double incidentFlux = fluxNormalized * FitFunction(x, index);

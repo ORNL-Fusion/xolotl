@@ -32,15 +32,20 @@ public:
 	 *
 	 * @param advectionHandlers The vector of advection handlers
 	 * @param grid The spatial grid in the depth direction
+	 * @param nx The number of grid points in the X direction
+	 * @param xs The beginning of the grid on this process
 	 * @param ny The number of grid points in the Y direction
 	 * @param hy The step size in the Y direction
+	 * @param ys The beginning of the grid on this process
 	 * @param nz The number of grid points in the Z direction
 	 * @param hz The step size in the Z direction
+	 * @param zs The beginning of the grid on this process
 	 */
 	void initializeDiffusionGrid(
 			std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid, int ny = 0, double hy = 0.0, int nz = 0,
-			double hz = 0.0) override;
+			std::vector<double> grid, int nx, int xs, int ny = 0, double hy =
+					0.0, int ys = 0, int nz = 0, double hz = 0.0, int zs = 0)
+					override;
 
 	/**
 	 * Compute the flux due to the diffusion for all the clusters that are diffusing,
@@ -63,7 +68,6 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction (a)
 	 * @param hxRight The step size on the right side of the point in the x direction (b)
 	 * @param ix The position on the x grid
-	 * @param xs The beginning of the grid on this process
 	 * @param sy The space parameter, depending on the grid step size in the y direction
 	 * @param iy The position on the y grid
 	 * @param sz The space parameter, depending on the grid step size in the z direction
@@ -71,8 +75,8 @@ public:
 	 */
 	void computeDiffusion(const IReactionNetwork& network, double **concVector,
 			double *updatedConcOffset, double hxLeft, double hxRight, int ix,
-			int xs, double sy = 0.0, int iy = 0, double sz = 0.0,
-			int iz = 0) const override;
+			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const
+					override;
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters given
@@ -108,7 +112,6 @@ public:
 	 * @param hxLeft The step size on the left side of the point in the x direction (a)
 	 * @param hxRight The step size on the right side of the point in the x direction (b)
 	 * @param ix The position on the x grid
-	 * @param xs The beginning of the grid on this process
 	 * @param sy The space parameter, depending on the grid step size in the y direction
 	 * @param iy The position on the y grid
 	 * @param sz The space parameter, depending on the grid step size in the z direction
@@ -116,8 +119,8 @@ public:
 	 */
 	void computePartialsForDiffusion(const IReactionNetwork& network,
 			double *val, int *indices, double hxLeft, double hxRight, int ix,
-			int xs, double sy = 0.0, int iy = 0, double sz = 0.0,
-			int iz = 0) const override;
+			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const
+					override;
 
 };
 //end class Diffusion3DHandler

@@ -279,23 +279,15 @@ void ReactionNetwork::addGridPoints(int i) {
 
 	// Add grid points
 	if (i > 0) {
-		while (i > 0) {
-			// Loop on all the production reactions
-			for (auto& currReactionInfo : productionReactionMap) {
-				currReactionInfo.second->kConstant.emplace(
-						currReactionInfo.second->kConstant.begin(), 0.0);
-
-			}
-
-			// Loop on all the dissociation reactions
-			for (auto& currReactionInfo : dissociationReactionMap) {
-				currReactionInfo.second->kConstant.emplace(
-						currReactionInfo.second->kConstant.begin(), 0.0);
-
-			}
-
-			// Decrease i
-			i--;
+		// Loop on all the production reactions
+		for (auto& currReactionInfo : productionReactionMap) {
+			int size = currReactionInfo.second->kConstant.size();
+			currReactionInfo.second->kConstant.resize(size + i, 0.0);
+		}
+		// Loop on all the dissociation reactions
+		for (auto& currReactionInfo : dissociationReactionMap) {
+			int size = currReactionInfo.second->kConstant.size();
+			currReactionInfo.second->kConstant.resize(size + i, 0.0);
 		}
 	} else {
 		// Loop on all the production reactions

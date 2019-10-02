@@ -208,7 +208,7 @@ void PetscSolver::initialize(bool isStandalone) {
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	if (isStandalone) {
-		PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
+		PetscInitialize(NULL, NULL, NULL, help);
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

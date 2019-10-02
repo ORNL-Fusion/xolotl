@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(noOptions) {
 
 	// Attempt to read the parameters
 	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(1, fargv);
 
 	// The Option class does not like empty command line
 	// a parameter file is always needed
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(badParamFileName) {
 
 	// Attempt to read the parameters
 	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// If the parameter file does not exist, xolotl should not run
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(badParamFile) {
 
 	// Attempt to read the parameter file
 	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// An unrecognized parameter should result in indicating
 	// the program shouldn't run, and an error exit code.
@@ -127,8 +127,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -214,11 +213,12 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	BOOST_REQUIRE_EQUAL(map["bursting"], false);
 
 	// Check the PETSc options
-	auto petscArgv = opts.getPetscArgv();
-	BOOST_REQUIRE_EQUAL(
-			strcmp(petscArgv.c_str(),
-					"-fieldsplit_0_pc_type redundant -ts_max_snes_failures 200 -pc_fieldsplit_detect_coupling -ts_adapt_dt_max 10 -pc_type fieldsplit -fieldsplit_1_pc_type sor -ts_final_time 1000 -ts_max_steps 3"),
-			0);
+	BOOST_REQUIRE_EQUAL(opts.getPetscArg(), "-fieldsplit_0_pc_type redundant "
+			"-ts_max_snes_failures 200 "
+			"-pc_fieldsplit_detect_coupling "
+			"-ts_adapt_dt_max 10 -pc_type fieldsplit "
+			"-fieldsplit_1_pc_type sor -ts_final_time 1000 "
+			"-ts_max_steps 3");
 
 	// Remove the created file
 	std::string tempFile = "param_good.txt";
@@ -246,8 +246,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -295,8 +294,7 @@ BOOST_AUTO_TEST_CASE(wrongPerfHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should not be able to run with a wrong performance handler parameter
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -327,8 +325,7 @@ BOOST_AUTO_TEST_CASE(wrongVizHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should not be able to run with a wrong visualization handler parameter
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -389,8 +386,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -416,6 +412,41 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles) {
 	std::remove(tempFile.c_str());
 }
 
+BOOST_AUTO_TEST_CASE(readGridIn) {
+	xolotlCore::Options opts;
+
+	// Create a parameter file with a file name for the grid
+	std::ofstream paramFile("param_read_in_grid.txt");
+	paramFile << "regularGrid=grid.dat" << std::endl;
+	paramFile.close();
+
+	string pathToFile("param_read_in_grid.txt");
+	string filename = pathToFile;
+	const char* fname = filename.c_str();
+
+	// Build a command line with a parameter file containing a wrong performance handler option
+	char* args[3];
+	args[0] = const_cast<char*>("./xolotl");
+	args[1] = const_cast<char*>(fname);
+	args[2] = NULL;
+	char** fargv = args;
+
+	// Attempt to read the parameter file
+	opts.readParams(2, fargv);
+
+	// Xolotl should run
+	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
+	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+
+	// Check the grid options
+	BOOST_REQUIRE_EQUAL(opts.useReadInGrid(), true);
+	BOOST_REQUIRE_EQUAL(opts.getGridFilename(), "grid.dat");
+
+	// Remove the created file
+	std::string tempFile = "param_read_in_grid.txt";
+	std::remove(tempFile.c_str());
+}
+
 BOOST_AUTO_TEST_CASE(wrongFluxProfile) {
 	xolotlCore::Options opts;
 
@@ -436,8 +467,7 @@ BOOST_AUTO_TEST_CASE(wrongFluxProfile) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should not be able to run with a wrong flux profile file name
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -468,8 +498,7 @@ BOOST_AUTO_TEST_CASE(wrongTempProfile) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should not be able to run with a wrong temperature profile file name
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
@@ -500,8 +529,7 @@ BOOST_AUTO_TEST_CASE(papiPerfHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -536,8 +564,7 @@ BOOST_AUTO_TEST_CASE(osPerfHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
@@ -572,8 +599,7 @@ BOOST_AUTO_TEST_CASE(dummyPerfHandler) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
-	opts.readParams(fargv);
+	opts.readParams(2, fargv);
 
 	// Xolotl should run with good parameters
 	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);

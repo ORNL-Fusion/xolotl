@@ -7,7 +7,7 @@ SET(LIBRARY_NAME "xolotlCL")
 
 #Collect all header filenames in this project
 #and glob them in HEADERS
-file(GLOB HEADERS *.h optionhandlers/*.h)
+file(GLOB HEADERS *.h)
 
 #Grab all of the source files
 file(GLOB SRC *.cpp)
@@ -17,12 +17,11 @@ include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline/optionhandlers)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/)
 
 #Add a library to hold the command line handling code
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME})
+target_link_libraries(${LIBRARY_NAME} ${Boost_LIBRARIES})
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)

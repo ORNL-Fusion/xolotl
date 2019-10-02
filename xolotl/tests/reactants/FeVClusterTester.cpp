@@ -65,8 +65,6 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	// Local Declarations
 	auto network = getSimpleFeReactionNetwork();
-	// Add a grid point for the rates
-	network->addGridPoints(1);
 
 	// Get an V cluster with compostion 0,1,0.
 	auto cluster = (FeCluster *) network->get(Species::V, 1);
@@ -84,6 +82,8 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	secondCluster->setMigrationEnergy(0.62);
 	secondCluster->setConcentration(0.5);
 
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 	// Compute the rate constants that are needed for the flux
 	network->setTemperature(1000.0, 0);
 	// The flux can pretty much be anything except "not a number" (nan).

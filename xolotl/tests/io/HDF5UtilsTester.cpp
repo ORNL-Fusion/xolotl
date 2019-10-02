@@ -55,12 +55,15 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	char **argv = new char*[2];
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
-	opts.readParams(argv);
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
+	opts.readParams(2, argv);
 
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(

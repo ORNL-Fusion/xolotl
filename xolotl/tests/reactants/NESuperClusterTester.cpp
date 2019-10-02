@@ -19,7 +19,7 @@ using namespace xolotlCore;
 /**
  * This suite is responsible for testing the NESuperCluster.
  */
-BOOST_AUTO_TEST_SUITE(NESuperCluster_testSuite)
+BOOST_AUTO_TEST_SUITE (NESuperCluster_testSuite)
 
 /**
  * This operation checks the ability of the NESuperCluster to describe
@@ -32,19 +32,21 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 0;
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	NEClusterNetworkLoader loader = NEClusterNetworkLoader(
@@ -91,17 +93,19 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 0;
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	NEClusterNetworkLoader loader = NEClusterNetworkLoader(
@@ -129,7 +133,7 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 
 	// The flux can pretty much be anything except "not a number" (nan).
 	double flux = cluster->getTotalFlux(0);
-	BOOST_REQUIRE_CLOSE(0.0, flux, 0.000001);
+	BOOST_REQUIRE_CLOSE(1.641002464e-06, flux, 0.000001);
 
 	// Remove the created file
 	std::string tempFile = "param.txt";
@@ -144,9 +148,8 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 0.0578672, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			-5.14769e-37, 5.37186e-37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			5.14769e-37, -5.37186e-37, 0, 0 };
+	double knownPartials[] = {0.0707013, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -6.28937e-37,
+		6.56326e-37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6.28937e-37, -6.56326e-37, 0, 0};
 
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
@@ -154,17 +157,19 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 0;
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	NEClusterNetworkLoader loader = NEClusterNetworkLoader(
@@ -219,17 +224,19 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 0;
-	char **argv;
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
 
 	// Read the options
 	Options opts;
-	opts.readParams(argv);
+	opts.readParams(argc, argv);
 
 	// Create the loader
 	NEClusterNetworkLoader loader = NEClusterNetworkLoader(

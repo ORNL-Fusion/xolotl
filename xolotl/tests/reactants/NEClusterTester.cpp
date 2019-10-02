@@ -38,13 +38,13 @@ BOOST_AUTO_TEST_CASE(checkDiffusionCoefficient) {
 	// Check 3 different temperature for each regime
 	cluster.setMigrationEnergy(0.0);
 	cluster.setDiffusionFactor(1.0);
-	cluster.setTemperature(1200.0, 0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 0.0064000, 0.00001);
-	BOOST_REQUIRE_CLOSE(1200.0, cluster.getTemperature(0), 0.0001);
+	cluster.setTemperature(600.0, 0);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 0.0064001319, 0.00001);
+	BOOST_REQUIRE_CLOSE(600.0, cluster.getTemperature(0), 0.0001);
 	cluster.setTemperature(1500.0, 0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 0.1472007656, 0.00001);
-	cluster.setTemperature(1800.0, 0);
-	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 2.339846465, 0.00001);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 0.20003754747, 0.00001);
+	cluster.setTemperature(2000.0, 0);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(0), 18.114870067, 0.00001);
 
 	return;
 }
