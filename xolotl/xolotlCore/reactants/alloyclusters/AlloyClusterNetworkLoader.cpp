@@ -257,7 +257,7 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
 	}
 
 	// Generate the Perfect clusters
-	for (int i = maxI + 1; i <= 45; ++i) {
+	for (int i = maxI; i <= 45; ++i) {
 		// Set the composition
 		numPerfect = i;
 		// Create the cluster
