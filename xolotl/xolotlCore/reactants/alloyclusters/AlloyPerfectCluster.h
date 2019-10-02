@@ -57,7 +57,7 @@ public:
 		formationEnergy = _network.getFormationEnergy(type, size);
 
 		// Define the migration energy
-		migrationEnergy = 0.5;
+		migrationEnergy = 0.7;
 
 		// Define the reaction radius
 		reactionRadius = _network.getReactionRadius(type, size);
