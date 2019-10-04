@@ -5,6 +5,10 @@ SET(PACKAGE_DESCRIPTION "Xolotl Reactants")
 #Set the library name
 SET(LIBRARY_NAME "xolotlReactants")
 
+list(APPEND CMAKE_PREFIX_PATH ${Kokkos_DIR} ${plsm_DIR})
+find_package(Kokkos REQUIRED)
+find_package(plsm REQUIRED)
+
 #Collect all header filenames in this project 
 #and glob them in HEADERS
 file(GLOB HEADERS *.h psiclusters/*.h neclusters/*.h feclusters/*.h alloyclusters/*.h)
@@ -31,7 +35,7 @@ include_directories(${CMAKE_SOURCE_DIR}
 
 #Add the library
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} xolotlPerf xolotlIO)
+target_link_libraries(${LIBRARY_NAME} xolotlPerf xolotlIO plsm)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

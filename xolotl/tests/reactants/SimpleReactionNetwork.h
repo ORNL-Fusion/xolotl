@@ -1,6 +1,8 @@
 #ifndef SIMPLEREACTIONNETWORK_H_
 #define SIMPLEREACTIONNETWORK_H_
 
+#include <plsm/Subpaving.h>
+
 #include <PSIClusterReactionNetwork.h>
 #include <NEClusterReactionNetwork.h>
 #include <FeClusterReactionNetwork.h>
@@ -22,21 +24,26 @@ namespace testUtils {
  */
 class SimplePSIReactionNetwork: public xolotlCore::PSIClusterReactionNetwork {
 
-public:
-	/**
-	 * Constructor
-	 *
-	 * @param maxClusterSize the maximal size of the clusters that will be in
-	 * the network. Set to 10 by default.
-	 * @param registry The dummy handler registry by default
-	 */
-	SimplePSIReactionNetwork(const int maxClusterSize = 10,
-			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
-					std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+    using Subpaving = plsm::Subpaving<xolotlCore::IReactant::SizeType, 5>;
+    using Region = typename Subpaving::RegionType;
+    using Ival = typename Region::IntervalType;
+    Subpaving _subpaving;
 
-	//! Destructor
-	virtual ~SimplePSIReactionNetwork() {
-	}
+public:
+    /**
+     * Constructor
+     *
+     * @param maxClusterSize the maximal size of the clusters that will be in
+     * the network. Set to 10 by default.
+     * @param registry The dummy handler registry by default
+     */
+    SimplePSIReactionNetwork(const int maxClusterSize = 10,
+            std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
+                    std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+
+    //! Destructor
+    virtual ~SimplePSIReactionNetwork() {
+    }
 
 };
 
@@ -52,22 +59,22 @@ public:
 class SimpleNEReactionNetwork: public xolotlCore::NEClusterReactionNetwork {
 
 public:
-	/**
-	 * Constructor
-	 *
-	 * @param maxClusterSize the maximal size of the clusters that will be in
-	 * the network. Set to 10 by default.
-	 * @param registry The dummy handler registry by default
-	 * @param rho The density of xenon in bubbles
-	 */
-	SimpleNEReactionNetwork(const int maxClusterSize = 10,
-			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
-					std::make_shared<xolotlPerf::DummyHandlerRegistry>(),
-			const double rho = 10.162795276841);
+    /**
+     * Constructor
+     *
+     * @param maxClusterSize the maximal size of the clusters that will be in
+     * the network. Set to 10 by default.
+     * @param registry The dummy handler registry by default
+     * @param rho The density of xenon in bubbles
+     */
+    SimpleNEReactionNetwork(const int maxClusterSize = 10,
+            std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
+                    std::make_shared<xolotlPerf::DummyHandlerRegistry>(),
+            const double rho = 10.162795276841);
 
-	//! Destructor
-	virtual ~SimpleNEReactionNetwork() {
-	}
+    //! Destructor
+    virtual ~SimpleNEReactionNetwork() {
+    }
 
 };
 
@@ -83,20 +90,20 @@ public:
 class SimpleFeReactionNetwork: public xolotlCore::FeClusterReactionNetwork {
 
 public:
-	/**
-	 * Constructor
-	 *
-	 * @param maxClusterSize the maximal size of the clusters that will be in
-	 * the network. Set to 5 by default.
-	 * @param registry The dummy handler registry by default
-	 */
-	SimpleFeReactionNetwork(const int maxClusterSize = 5,
-			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
-					std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+    /**
+     * Constructor
+     *
+     * @param maxClusterSize the maximal size of the clusters that will be in
+     * the network. Set to 5 by default.
+     * @param registry The dummy handler registry by default
+     */
+    SimpleFeReactionNetwork(const int maxClusterSize = 5,
+            std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
+                    std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 
-	//! Destructor
-	virtual ~SimpleFeReactionNetwork() {
-	}
+    //! Destructor
+    virtual ~SimpleFeReactionNetwork() {
+    }
 
 };
 
@@ -112,20 +119,20 @@ public:
 class SimpleAlloyReactionNetwork: public xolotlCore::AlloyClusterReactionNetwork {
 
 public:
-	/**
-	 * Constructor
-	 *
-	 * @param maxClusterSize the maximal size of the clusters that will be in
-	 * the network. Set to 20 by default.
-	 * @param registry The dummy handler registry by default
-	 */
-	SimpleAlloyReactionNetwork(const int maxClusterSize = 20,
-			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
-					std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+    /**
+     * Constructor
+     *
+     * @param maxClusterSize the maximal size of the clusters that will be in
+     * the network. Set to 20 by default.
+     * @param registry The dummy handler registry by default
+     */
+    SimpleAlloyReactionNetwork(const int maxClusterSize = 20,
+            std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
+                    std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 
-	//! Destructor
-	virtual ~SimpleAlloyReactionNetwork() {
-	}
+    //! Destructor
+    virtual ~SimpleAlloyReactionNetwork() {
+    }
 
 };
 
@@ -140,9 +147,9 @@ public:
  * @return The reaction network.
  */
 std::shared_ptr<xolotlCore::PSIClusterReactionNetwork> getSimplePSIReactionNetwork(
-		const int maxClusterSize = 10,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
-				std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+        const int maxClusterSize = 10,
+        std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
+                std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 
 /**
  * This operation creates a SimpleNEReactionNetwork and makes sure that it is
@@ -156,10 +163,10 @@ std::shared_ptr<xolotlCore::PSIClusterReactionNetwork> getSimplePSIReactionNetwo
  * @return The reaction network.
  */
 std::shared_ptr<xolotlCore::NEClusterReactionNetwork> getSimpleNEReactionNetwork(
-		const int maxClusterSize = 10,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
-				std::make_shared<xolotlPerf::DummyHandlerRegistry>(),
-				const double rho = 10.162795276841);
+        const int maxClusterSize = 10,
+        std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
+                std::make_shared<xolotlPerf::DummyHandlerRegistry>(),
+                const double rho = 10.162795276841);
 
 /**
  * This operation creates a SimpleFeReactionNetwork and makes sure that it is
@@ -172,9 +179,9 @@ std::shared_ptr<xolotlCore::NEClusterReactionNetwork> getSimpleNEReactionNetwork
  * @return The reaction network.
  */
 std::shared_ptr<xolotlCore::FeClusterReactionNetwork> getSimpleFeReactionNetwork(
-		const int maxClusterSize = 5,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
-				std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+        const int maxClusterSize = 5,
+        std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
+                std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 
 /**
  * This operation creates a SimpleAlloyReactionNetwork and makes sure that it is
@@ -187,9 +194,9 @@ std::shared_ptr<xolotlCore::FeClusterReactionNetwork> getSimpleFeReactionNetwork
  * @return The reaction network.
  */
 std::shared_ptr<xolotlCore::AlloyClusterReactionNetwork> getSimpleAlloyReactionNetwork(
-		const int maxClusterSize = 20,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
-				std::make_shared<xolotlPerf::DummyHandlerRegistry>());
+        const int maxClusterSize = 20,
+        std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
+                std::make_shared<xolotlPerf::DummyHandlerRegistry>());
 
 } /* end namespace testUtils */
 #endif
