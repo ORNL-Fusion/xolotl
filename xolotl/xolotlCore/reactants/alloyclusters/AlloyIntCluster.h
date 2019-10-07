@@ -102,7 +102,7 @@ public:
 
 		// Compute the loss to dislocation sinks
 		// k^2 * D * C, including 20% interstitial bias
-		partials[id + 1] -= 1.2 * xolotlCore::alloysinkStrength * diffusionCoefficient[i];
+		partials[id - 1] -= 1.2 * xolotlCore::alloysinkStrength * diffusionCoefficient[i];
 
 		return;
 	}
