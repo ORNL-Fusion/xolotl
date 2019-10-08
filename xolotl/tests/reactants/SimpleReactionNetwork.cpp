@@ -41,20 +41,7 @@ using namespace xolotlPerf;
 
 SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
         std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-        PSIClusterReactionNetwork(registry),
-        _subpaving(
-            Region{{
-                Ival{0, maxClusterSize},
-                Ival{0, maxClusterSize},
-                Ival{0, maxClusterSize},
-                Ival{0, maxClusterSize},
-                Ival{0, maxClusterSize}}},
-            {{{
-                maxClusterSize,
-                maxClusterSize,
-                maxClusterSize,
-                maxClusterSize,
-                maxClusterSize}}}) {
+        PSIClusterReactionNetwork(registry) {
 
     // Add He clusters
     for (int numHe = 1; numHe <= maxClusterSize; numHe++) {

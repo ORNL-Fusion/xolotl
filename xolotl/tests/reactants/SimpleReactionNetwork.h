@@ -1,8 +1,6 @@
 #ifndef SIMPLEREACTIONNETWORK_H_
 #define SIMPLEREACTIONNETWORK_H_
 
-#include <plsm/Subpaving.h>
-
 #include <PSIClusterReactionNetwork.h>
 #include <NEClusterReactionNetwork.h>
 #include <FeClusterReactionNetwork.h>
@@ -23,11 +21,6 @@ namespace testUtils {
  * insure that it is properly initialized.
  */
 class SimplePSIReactionNetwork: public xolotlCore::PSIClusterReactionNetwork {
-
-    using Subpaving = plsm::Subpaving<xolotlCore::IReactant::SizeType, 5>;
-    using Region = typename Subpaving::RegionType;
-    using Ival = typename Region::IntervalType;
-    Subpaving _subpaving;
 
 public:
     /**

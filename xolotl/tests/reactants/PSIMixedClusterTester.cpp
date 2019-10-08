@@ -13,9 +13,26 @@
 #include <math.h>
 #include <limits>
 
+#include <experimental/ReactionNetwork.h>
+
 using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
+
+class KokkosContext
+{
+public:
+    KokkosContext()
+    {
+        ::Kokkos::initialize();
+    }
+
+    ~KokkosContext()
+    {
+        ::Kokkos::finalize();
+    }
+};
+static KokkosContext kokkosContext{};
 
 static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
 		std::make_shared<xolotlPerf::DummyHandlerRegistry>();
@@ -49,6 +66,17 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
  * its connectivity to other clusters.
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
+
+    auto rNetwork = experimental::makeSimpleReactionNetwork<5>();
+    experimental::ReactionNetwork<5>::Composition comp{};
+    comp[Species::He] = 3;
+    comp[Species::V] = 2;
+    comp[Species::I] = 0;
+    auto cluster = rNetwork.get(comp);
+    auto compRegion = cluster.getRegion();
+    BOOST_REQUIRE_EQUAL(cluster.getRegion()[toCompIdx(Species::He)].begin(), 3);
+    // BOOST_REQUIRE_EQUAL(cluster.getComposition()[Species::He], 3);
+
 	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();
 
 	// Check the reaction connectivity of the PSIMixed cluster
