@@ -65,7 +65,7 @@ protected:
 	//! The map containing the information of who re-solves into what.
 	std::vector<ReSolutionBase> sizeVec;
 
-	//! The trap-mutation rate
+	//! The re-solution rate
 	double resolutionRate;
 
 	//! The minimum size at which the re-solution starts
@@ -108,7 +108,7 @@ public:
 	 * given the position index xi.
 	 * This method is called by the RHSFunction from the PetscSolver.
 	 *
-	 * Xe_i --> Xe_(i-n) + n Xe_1
+	 * Xe_i --> Xe_(i-n) + n Xe_1 (n=1)
 	 *
 	 * F(Xe_i) = -F[Xe_(i-n)] = -1/n * F(Xe_1) = -rate * C_(Xe_i)
 	 *
@@ -124,7 +124,7 @@ public:
 	 * clusters that are re-soluted at this grid point.
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *
-	 * Xe_i --> Xe_(i-n) + n Xe_1
+	 * Xe_i --> Xe_(i-n) + n Xe_1 (n=1)
 	 *
 	 * dF(Xe_i)/dC_(Xe_i) = -dF[Xe_(i-n)]/dC_(Xe_i) = -1/n * dF(Xe_1)/dC_(Xe_i)
 	 * 		= -rate

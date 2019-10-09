@@ -108,11 +108,11 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	int nXenon = reSolutionHandler.getNumberOfReSoluting();
 	int indices[10 * nXenon];
 	double val[10 * nXenon];
-	// Get the pointer on them for the compute modified trap-mutation method
+	// Get the pointer on them for the compute re-solution method
 	int *indicesPointer = &indices[0];
 	double *valPointer = &val[0];
 
-	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
+	// Compute the partial derivatives for the re-solution at the grid point 8
 	int nReSo = reSolutionHandler.computePartialsForReSolution(*network,
 			valPointer, indicesPointer, 1, 0);
 
@@ -230,11 +230,11 @@ BOOST_AUTO_TEST_CASE(checkMinimumSize) {
 	int nXenon = reSolutionHandler.getNumberOfReSoluting();
 	int indices[10 * nXenon];
 	double val[10 * nXenon];
-	// Get the pointer on them for the compute modified trap-mutation method
+	// Get the pointer on them for the compute re-solution method
 	int *indicesPointer = &indices[0];
 	double *valPointer = &val[0];
 
-	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
+	// Compute the partial derivatives for the re-solution at the grid point 8
 	int nReSo = reSolutionHandler.computePartialsForReSolution(*network,
 			valPointer, indicesPointer, 1, 0);
 
@@ -343,11 +343,11 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 	int nXenon = reSolutionHandler.getNumberOfReSoluting();
 	int indices[10 * nXenon];
 	double val[10 * nXenon];
-	// Get the pointer on them for the compute modified trap-mutation method
+	// Get the pointer on them for the compute re-solution method
 	int *indicesPointer = &indices[0];
 	double *valPointer = &val[0];
 
-	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
+	// Compute the partial derivatives for the re-solution at the grid point 8
 	int nReSo = reSolutionHandler.computePartialsForReSolution(*network,
 			valPointer, indicesPointer, 1, 0);
 

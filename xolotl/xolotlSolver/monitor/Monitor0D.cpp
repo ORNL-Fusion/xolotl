@@ -175,7 +175,8 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 
 	// Store the concentration and other values over the grid
 	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
-			partialBubbleConcentration = 0.0, partialRadii = 0.0;
+			partialBubbleConcentration = 0.0, partialRadii = 0.0, partialSize =
+					0.0;
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
@@ -200,6 +201,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 		if (weights0D[i] >= minSizes[0] && conc > 1.0e-16) {
 			partialBubbleConcentration += conc;
 			partialRadii += conc * radii0D[i];
+			partialSize += conc * weights0D[i];
 		}
 	}
 
@@ -214,6 +216,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 		if (cluster.getSize() >= minSizes[0] && conc > 1.0e-16) {
 			partialBubbleConcentration += conc;
 			partialRadii += conc * cluster.getReactionRadius();
+			partialSize += cluster.getTotalXenonConcentration();
 		}
 	}
 
@@ -235,8 +238,9 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", ios::app);
 	outputFile << time << " " << xeConcentration << " "
-			<< radii / bubbleConcentration << " " << averagePartialRadius
-			<< std::endl;
+			<< radii / bubbleConcentration << " " << averagePartialRadius << " "
+			<< partialBubbleConcentration << " "
+			<< partialSize / partialBubbleConcentration << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray
@@ -792,9 +796,9 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 
 			// Get the size of the total grid
 			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE);
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc0DMonitor: DMDAGetInfo failed.");
 
 			// Get the solver handler
