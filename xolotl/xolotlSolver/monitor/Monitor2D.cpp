@@ -1173,23 +1173,13 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					// Compute the radius of the bubble from the number of helium
 					double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
 					//				double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
-					double radius =
-							(sqrt(3.0) / 4.0)
-									* xolotlCore::tungstenLatticeConstant
-									+ pow(
-											(3.0
-													* pow(
-															xolotlCore::tungstenLatticeConstant,
-															3.0) * nV)
-													/ (8.0 * xolotlCore::pi),
-											(1.0 / 3.0))
-									- pow(
-											(3.0
-													* pow(
-															xolotlCore::tungstenLatticeConstant,
-															3.0))
-													/ (8.0 * xolotlCore::pi),
-											(1.0 / 3.0));
+
+					double latticeParam = network.getLatticeParameter();
+					double tlcCubed = latticeParam * latticeParam
+							* latticeParam;
+					double radius = (sqrt(3.0) / 4) * latticeParam
+							+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
+							- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
 
 					// If the radius is larger than the distance to the surface, burst
 					if (radius > distance) {

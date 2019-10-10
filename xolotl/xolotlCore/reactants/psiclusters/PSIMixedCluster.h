@@ -29,7 +29,8 @@ private:
 	//! The number of atomic vacancies in this cluster.
 	int numV;
 
-	static std::string buildName(IReactant::SizeType nHe,IReactant::SizeType nD,IReactant::SizeType nT,
+	static std::string buildName(IReactant::SizeType nHe,
+			IReactant::SizeType nD, IReactant::SizeType nT,
 			IReactant::SizeType nV) {
 		std::stringstream nameStream;
 		nameStream << "He_" << nHe << "D_" << nD << "T_" << nT << "V_" << nV;
@@ -57,7 +58,8 @@ public:
 	 * @param _network The network the cluster will belong to.
 	 * @param registry The performance handler registry
 	 */
-	PSIMixedCluster(int numHe, int numD, int numT, int numV, IReactionNetwork& _network,
+	PSIMixedCluster(int numHe, int numD, int numT, int numV,
+			IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 			PSICluster(_network, registry, buildName(numHe, numD, numT, numV)), numHe(
 					numHe), numD(numD), numT(numT), numV(numV) {
@@ -75,27 +77,27 @@ public:
 		type = ReactantType::PSIMixed;
 
 		// Compute the reaction radius
-		reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
+		double latticeParam = network.getLatticeParameter();
+		reactionRadius = (sqrt(3.0) / 4.0) * latticeParam
 				+ pow(
-						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0)
-								* numV) / (8.0 * xolotlCore::pi), (1.0 / 3.0))
-				- pow(
-						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
-								/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+						(3.0 * pow(latticeParam, 3.0) * numV)
+								/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+				- pow((3.0 * pow(latticeParam, 3.0)) / (8.0 * xolotlCore::pi),
+						(1.0 / 3.0));
 
 		// Bounds on He, D, T, and V
 		bounds[0] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(numHe),
-				static_cast<IReactant::SizeType>(numHe+1));
+				static_cast<IReactant::SizeType>(numHe + 1));
 		bounds[1] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(numD),
-				static_cast<IReactant::SizeType>(numD+1));
+				static_cast<IReactant::SizeType>(numD + 1));
 		bounds[2] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(numT),
-				static_cast<IReactant::SizeType>(numT+1));
+				static_cast<IReactant::SizeType>(numT + 1));
 		bounds[3] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(numV),
-				static_cast<IReactant::SizeType>(numV+1));
+				static_cast<IReactant::SizeType>(numV + 1));
 
 		return;
 	}
@@ -138,7 +140,7 @@ public:
 	 * @param temp The new cluster temperature
 	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp, int i) override{
+	void setTemperature(double temp, int i) override {
 		// Don't do anything
 		return;
 	}

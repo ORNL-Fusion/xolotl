@@ -74,11 +74,11 @@ public:
 	 *
 	 * \see IHeterogeneousNucleationHandler.h
 	 */
-	void computePartialsForHeterogeneousNucleation(
+	bool computePartialsForHeterogeneousNucleation(
 			const IReactionNetwork& network, double *val, int *indices, int xi,
 			int xs, int yj = 0, int zk = 0) {
 		// Doesn't do anything
-		return;
+		return false;
 	}
 
 };

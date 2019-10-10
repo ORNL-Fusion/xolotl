@@ -68,9 +68,9 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	// Create the re-solution handler
 	ReSolutionHandler reSolutionHandler;
 
-
 	// Initialize it
 	reSolutionHandler.initialize(*network, 0.73);
+	reSolutionHandler.setFissionYield(0.25);
 	reSolutionHandler.updateReSolutionRate(1.0);
 
 	// The arrays of concentration
@@ -192,6 +192,7 @@ BOOST_AUTO_TEST_CASE(checkMinimumSize) {
 
 	// Initialize it
 	reSolutionHandler.initialize(*network, 0.73);
+	reSolutionHandler.setFissionYield(0.25);
 	reSolutionHandler.updateReSolutionRate(1.0);
 	reSolutionHandler.setMinSize(10);
 
@@ -306,6 +307,7 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 
 	// Initialize it
 	reSolutionHandler.initialize(*network, 1.0);
+	reSolutionHandler.setFissionYield(0.25);
 	reSolutionHandler.updateReSolutionRate(1.0);
 
 	// The arrays of concentration

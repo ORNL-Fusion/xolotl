@@ -41,6 +41,15 @@ public:
 	}
 
 	/**
+	 * This method updates the fission yield.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	void setFissionYield(double yield) {
+		return;
+	}
+
+	/**
 	 * This method update the rate for the re-solution if the fission rate
 	 * changed, it should be called when the flux changes for instance.
 	 *

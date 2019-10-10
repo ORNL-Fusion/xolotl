@@ -948,12 +948,11 @@ void PSISuperCluster::setHeVVector(const HeVListType& vec) {
 
 	// Initialize the dispersion sum
 	double nSquare[4] = { };
+	double latticeParam = network.getLatticeParameter();
 	// Update the network map, compute the radius and dispersions
 	for (auto const& pair : heVList) {
-		constexpr auto tlcCubed = xolotlCore::tungstenLatticeConstant
-				* xolotlCore::tungstenLatticeConstant
-				* xolotlCore::tungstenLatticeConstant;
-		double rad = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
+		auto tlcCubed = latticeParam * latticeParam * latticeParam;
+		double rad = (sqrt(3.0) / 4.0) * latticeParam
 				+ cbrt(
 						(3.0 * tlcCubed * std::get<3>(pair))
 								/ (8.0 * xolotlCore::pi))
@@ -977,13 +976,13 @@ void PSISuperCluster::setHeVVector(const HeVListType& vec) {
 					* (nSquare[i] - (numAtom[i] * (double) nTot * numAtom[i]))
 					/ ((double) (nTot * (sectionWidth[i] - 1)));
 		if (dispersion[i] == 0) {
-			std::cout << name << " " << i << " " << numAtom[i] << " " << nTot << " " << sectionWidth[i] << " " << nSquare[i] << std::endl;
+			std::cout << name << " " << i << " " << numAtom[i] << " " << nTot
+					<< " " << sectionWidth[i] << " " << nSquare[i] << std::endl;
 
 			for (auto const& pair : heVList) {
 				std::cout << std::get<0>(pair) << std::endl;
 			}
 		}
-
 
 	}
 

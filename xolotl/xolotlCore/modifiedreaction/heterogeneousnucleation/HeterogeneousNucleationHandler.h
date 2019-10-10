@@ -76,7 +76,7 @@ public:
 	 *
 	 * \see IHeterogeneousNucleationHandler.h
 	 */
-	virtual void computePartialsForHeterogeneousNucleation(
+	virtual bool computePartialsForHeterogeneousNucleation(
 			const IReactionNetwork& network, double *val, int *indices, int xi,
 			int xs, int yj = 0, int zk = 0);
 

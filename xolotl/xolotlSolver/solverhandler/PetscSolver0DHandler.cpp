@@ -383,21 +383,22 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	PetscInt nucleationIndices[2];
 
 	// Compute the partial derivative from nucleation at this grid point
-	nucleationHandler->computePartialsForHeterogeneousNucleation(network,
-			nucleationVals, nucleationIndices, 0, 0);
+	if (nucleationHandler->computePartialsForHeterogeneousNucleation(network,
+			nucleationVals, nucleationIndices, 0, 0)) {
 
-	// Set grid coordinate and component number for the row and column
-	// corresponding to the clusters involved in re-solution
-	rowIds[0].i = 0;
-	rowIds[0].c = nucleationIndices[0];
-	rowIds[1].i = 0;
-	rowIds[1].c = nucleationIndices[1];
-	colIds[0].i = 0;
-	colIds[0].c = nucleationIndices[0];
-	ierr = MatSetValuesStencil(J, 2, rowIds, 1, colIds, nucleationVals,
-			ADD_VALUES);
-	checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
-			"MatSetValuesStencil (Xe nucleation) failed.");
+		// Set grid coordinate and component number for the row and column
+		// corresponding to the clusters involved in re-solution
+		rowIds[0].i = 0;
+		rowIds[0].c = nucleationIndices[0];
+		rowIds[1].i = 0;
+		rowIds[1].c = nucleationIndices[1];
+		colIds[0].i = 0;
+		colIds[0].c = nucleationIndices[0];
+		ierr = MatSetValuesStencil(J, 2, rowIds, 1, colIds, nucleationVals,
+				ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (Xe nucleation) failed.");
+	}
 
 	/*
 	 Restore vectors

@@ -40,9 +40,7 @@ double PSIClusterReactionNetwork::calculateDissociationConstant(
 	// the corners are shared across a total of eight cells. The fraction of
 	// the volume of the lattice cell that is filled with tungsten atoms is the
 	// atomic volume and is a_0^3/(8*1/8 + 1) = 0.5*a_0^3.
-	double atomicVolume = 0.5 * xolotlCore::tungstenLatticeConstant
-			* xolotlCore::tungstenLatticeConstant
-			* xolotlCore::tungstenLatticeConstant;
+	double atomicVolume = 0.5 * pow(latticeParameter, 3);
 
 	// Get the rate constant from the reverse reaction
 	double kPlus = reaction.reverseReaction->kConstant[i];
@@ -1823,11 +1821,11 @@ void PSIClusterReactionNetwork::computeAllPartials(
 
 		// Get the inverse mappings from dense DOF space to
 		// the indices/vals arrays.
-        // We use a pointer to the maps to avoid copying them into
-        // our array.
-        // TODO can we use references here, without having to
-        // change PartialsIdxMap type from unordered_map?
-        std::array<const PartialsIdxMap*, 5> partialsIdxMap;
+		// We use a pointer to the maps to avoid copying them into
+		// our array.
+		// TODO can we use references here, without having to
+		// change PartialsIdxMap type from unordered_map?
+		std::array<const PartialsIdxMap*, 5> partialsIdxMap;
 		for (int i = 0; i < psDim; i++) {
 			partialsIdxMap[i] = &(dFillInvMap.at(reactantIndices[i]));
 			partials[i] = &(vals[startingIdx[reactantIndices[i]]]);

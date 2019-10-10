@@ -68,6 +68,9 @@ protected:
 	//! The re-solution rate
 	double resolutionRate;
 
+	//! The fission yield
+	double fissionYield;
+
 	//! The minimum size at which the re-solution starts
 	int minSize;
 
@@ -77,7 +80,7 @@ public:
 	 * The constructor
 	 */
 	ReSolutionHandler() :
-			resolutionRate(0.0), minSize(0) {
+			resolutionRate(0.0), fissionYield(0.0), minSize(0) {
 	}
 
 	/**
@@ -96,12 +99,19 @@ public:
 			double electronicStoppingPower);
 
 	/**
-	 * This method update the rate for the re-solution if the fission rate
+	 * This method updates the rate for the re-solution if the fission rate
 	 * changed, it should be called when the flux changes for instance.
 	 *
 	 * \see IReSolutionHandler.h
 	 */
 	void updateReSolutionRate(double rate);
+
+	/**
+	 * This method updates the fission yield.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	void setFissionYield(double yield);
 
 	/**
 	 * Compute the flux due to the re-solution for all the cluster,

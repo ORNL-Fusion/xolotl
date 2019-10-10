@@ -41,8 +41,8 @@ public:
 				xolotlCore::DummyTrapMutationHandler>();
 		theReSolutionHandler =
 				std::make_shared<xolotlCore::ReSolutionHandler>();
-		theNucleationHandler =
-				std::make_shared<xolotlCore::HeterogeneousNucleationHandler>();
+		theNucleationHandler = std::make_shared<
+				xolotlCore::HeterogeneousNucleationHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {
@@ -87,7 +87,11 @@ public:
 
 		// Change the flux amplitude because we have to take into account
 		// that there are one xenon created every 4 fissions.
-		theFluxHandler->setFluxAmplitude(options.getFluxAmplitude() / 4.0);
+		theFluxHandler->setFluxAmplitude(
+				options.getFluxAmplitude() * options.getFissionYield());
+
+		// Pass the fission yield to the re-solution handler
+		theReSolutionHandler->setFissionYield(options.getFissionYield());
 
 		return;
 	}

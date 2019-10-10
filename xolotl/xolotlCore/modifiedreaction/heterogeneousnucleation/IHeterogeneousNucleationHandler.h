@@ -72,8 +72,10 @@ public:
 	 * @param xs The beginning of the grid on this process
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
+	 *
+	 * @return true if nucleation is happening
 	 */
-	virtual void computePartialsForHeterogeneousNucleation(const IReactionNetwork& network,
+	virtual bool computePartialsForHeterogeneousNucleation(const IReactionNetwork& network,
 			double *val, int *indices, int xi, int xs, int yj = 0,
 			int zk = 0) = 0;
 

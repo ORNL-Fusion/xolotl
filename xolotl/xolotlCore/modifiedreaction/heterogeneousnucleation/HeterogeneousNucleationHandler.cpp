@@ -64,7 +64,7 @@ void HeterogeneousNucleationHandler::computeHeterogeneousNucleation(
 	return;
 }
 
-void HeterogeneousNucleationHandler::computePartialsForHeterogeneousNucleation(
+bool HeterogeneousNucleationHandler::computePartialsForHeterogeneousNucleation(
 		const IReactionNetwork& network, double *val, int *indices, int xi,
 		int xs, int yj, int zk) {
 	// Get the single and double xenon
@@ -92,7 +92,7 @@ void HeterogeneousNucleationHandler::computePartialsForHeterogeneousNucleation(
 	val[1] -= 16.0 * xolotlCore::pi * singleXenon->getReactionRadius()
 			* singleXenon->getDiffusionCoefficient(0) * singleConc;
 
-	return;
+	return true;
 }
 
 }/* end namespace xolotlCore */

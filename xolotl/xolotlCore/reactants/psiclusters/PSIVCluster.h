@@ -45,13 +45,13 @@ public:
 
 		// Compute the reaction radius
 		// It is the same formula for HeV clusters
-		reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
+		double latticeParam = network.getLatticeParameter();
+		reactionRadius = (sqrt(3.0) / 4.0) * latticeParam
 				+ pow(
-						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0)
-								* size) / (8.0 * xolotlCore::pi), (1.0 / 3.0))
-				- pow(
-						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
-								/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+						(3.0 * pow(latticeParam, 3.0) * size)
+								/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+				- pow((3.0 * pow(latticeParam, 3.0)) / (8.0 * xolotlCore::pi),
+						(1.0 / 3.0));
 
 		// Bounds on He, D, T, and V
 		bounds[0] = IntegerRange<IReactant::SizeType>(
@@ -65,7 +65,7 @@ public:
 				static_cast<IReactant::SizeType>(1));
 		bounds[3] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(size),
-				static_cast<IReactant::SizeType>(size+1));
+				static_cast<IReactant::SizeType>(size + 1));
 
 		return;
 	}
@@ -102,7 +102,7 @@ public:
 	 * @param temp The new cluster temperature
 	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp, int i) override{
+	void setTemperature(double temp, int i) override {
 		if (diffusionFactor > 0.0) {
 			Reactant::setTemperature(temp, i);
 		}

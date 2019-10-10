@@ -47,9 +47,11 @@ public:
 
 		// Compute the reaction radius
 		double FourPi = 4.0 * xolotlCore::pi;
-		reactionRadius = pow((3.0 * (double) size) / (FourPi * network.getDensity()), (1.0 / 3.0));
+		reactionRadius = pow(
+				(3.0 * (double) size) / (FourPi * network.getDensity()),
+				(1.0 / 3.0));
 		if (size == 1)
-			reactionRadius = 0.3;
+			reactionRadius = network.getImpurityRadius();
 
 		return;
 	}
@@ -88,7 +90,7 @@ public:
 	 * @param temp The new cluster temperature
 	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp, int i) override{
+	void setTemperature(double temp, int i) override {
 		if (diffusionFactor > 0.0) {
 			Reactant::setTemperature(temp, i);
 		}
