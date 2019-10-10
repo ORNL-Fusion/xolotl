@@ -98,7 +98,7 @@ public:
 
                 // Compute the loss to dislocation sinks
                 // k^2 * D * C
-                partials[id + 1] -= xolotlCore::alloysinkStrength * diffusionCoefficient[i];
+                partials[id - 1] -= xolotlCore::alloysinkStrength * diffusionCoefficient[i];
 
                 return;
         }
