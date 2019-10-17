@@ -13,33 +13,6 @@ namespace xolotlCore
 {
 namespace experimental
 {
-template <typename TIndexEnum, typename TData, std::size_t N,
-    template <typename, std::size_t> typename TArrayTemplate = std::array>
-class EnumIndexed : public TArrayTemplate<TData, N>
-{
-public:
-    static_assert(std::is_enum<TIndexEnum>::value, "");
-    using IndexEnum = TIndexEnum;
-    using IndexType = std::underlying_type_t<TIndexEnum>;
-
-    KOKKOS_INLINE_FUNCTION
-    decltype(auto)
-    operator[](IndexEnum enumVal)
-    {
-        return TArrayTemplate<TData, N>::operator[](
-            static_cast<IndexType>(enumVal));
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    decltype(auto)
-    operator[](IndexEnum enumVal) const
-    {
-        return TArrayTemplate<TData, N>::operator[](
-            static_cast<IndexType>(enumVal));
-    }
-};
-
-
 template <std::size_t NumSpecies>
 class ReactionNetwork
 {
@@ -50,9 +23,8 @@ public:
     //use and the "Species" enum and/or number of species
 
     using AmountType = std::uint32_t;
-    using Composition = EnumIndexed<Species, AmountType, NumSpecies,
-        plsm::SpaceVector>;
-    using Subpaving = plsm::Subpaving<AmountType, NumSpecies>;
+    using Subpaving = plsm::Subpaving<AmountType, NumSpecies, Species>;
+    using Composition = typename Subpaving::PointType;
     using Region = typename Subpaving::RegionType;
     using Ival = typename Region::IntervalType;
 
@@ -64,7 +36,7 @@ public:
     Cluster
     get(const Composition& comp);
 
-    plsm::Subpaving<AmountType, NumSpecies>&
+    Subpaving&
     getSubpaving()
     {
         return _subpaving;

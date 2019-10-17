@@ -1,8 +1,5 @@
 #pragma once
 
-#include <array>
-#pragma once
-
 namespace xolotlCore
 {
 namespace experimental
