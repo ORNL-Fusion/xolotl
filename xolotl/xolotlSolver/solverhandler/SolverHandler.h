@@ -79,6 +79,9 @@ protected:
 	//! The original re-solution handler created.
 	xolotlCore::IReSolutionHandler *resolutionHandler;
 
+	//! The original heterogeneous nucleation handler created.
+	xolotlCore::IHeterogeneousNucleationHandler *nucleationHandler;
+
 	//! The number of dimensions for the problem.
 	int dimension;
 
@@ -389,7 +392,8 @@ protected:
 					false), bubbleBursting(false), useAttenuation(false), sputteringYield(
 					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
 					nullptr), mutationHandler(nullptr), resolutionHandler(
-					nullptr), tauBursting(10.0), rngSeed(0) {
+					nullptr), nucleationHandler(nullptr), tauBursting(10.0), rngSeed(
+					0) {
 	}
 
 public:
@@ -482,6 +486,10 @@ public:
 				(xolotlCore::IReSolutionHandler *) material->getReSolutionHandler().get();
 		// Set its minimum size
 		resolutionHandler->setMinSize(options.getResoMinSize());
+
+		// Set the heterogeneous nucleation handler
+		nucleationHandler =
+				(xolotlCore::IHeterogeneousNucleationHandler *) material->getNucleationHandler().get();
 
 		// Set the minimum size for the average radius compuation
 		minRadiusSizes = options.getRadiusMinSizes();
@@ -713,6 +721,15 @@ public:
 	 */
 	xolotlCore::IReSolutionHandler *getReSolutionHandler() const override {
 		return resolutionHandler;
+	}
+
+	/**
+	 * Get the heterogeneous nucleation handler.
+	 * \see ISolverHandler.h
+	 */
+	xolotlCore::IHeterogeneousNucleationHandler *getHeterogeneousNucleationHandler() const
+			override {
+		return nucleationHandler;
 	}
 
 	/**

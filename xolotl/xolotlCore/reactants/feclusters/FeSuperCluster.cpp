@@ -1146,7 +1146,7 @@ void FeSuperCluster::setHeVVector(std::vector<std::pair<int, int> > vec) {
 	double nHeSquare = 0.0, nVSquare = 0.0;
 	// Update the network map, compute the radius and dispersions
 	for (auto it = vec.begin(); it != vec.end(); it++) {
-		reactionRadius += xolotlCore::ironLatticeConstant
+		reactionRadius += network.getLatticeParameter()
 				* pow((3.0 * (double) ((*it).second)) / xolotlCore::pi,
 						(1.0 / 3.0)) * 0.5 / (double) nTot;
 

@@ -214,9 +214,9 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -240,8 +240,9 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	// Everyone must create the dataset with the same shape.
 	constexpr auto numConcSpecies = 5;
 	constexpr auto numValsPerGridpoint = numConcSpecies + 2;
-	const auto firstIdxToWrite = (surfacePos + 1);
-	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
+	const auto firstIdxToWrite = (surfacePos + solverHandler.getLeftOffset());
+	const auto numGridpointsWithConcs = (Mx - solverHandler.getRightOffset()
+			- firstIdxToWrite);
 	xolotlCore::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
 			(hsize_t) numGridpointsWithConcs, numValsPerGridpoint };
 	xolotlCore::HDF5File::SimpleDataSpace<2> concsDsetSpace(concsDsetDims);
@@ -348,9 +349,9 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -459,9 +460,9 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -487,7 +488,8 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
 
 		// Boundary conditions
-		if (xi < surfacePos || xi == Mx - 1)
+		if (xi < surfacePos + solverHandler.getLeftOffset()
+				|| xi >= Mx - solverHandler.getRightOffset())
 			continue;
 
 		// Get the pointer to the beginning of the solution data for this grid point
@@ -543,10 +545,17 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 			gridPointSolution = solutionArray[xi];
 
 			// Factor for finite difference
-			double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0, hxRight =
-					(grid[xi + 2] - grid[xi]) / 2.0;
-			if (xi - 1 < 0)
+			double hxLeft = 0.0, hxRight = 0.0;
+			if (xi - 1 >= 0 && xi < Mx) {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else if (xi - 1 < 0) {
 				hxLeft = grid[xi + 1] - grid[xi];
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = grid[xi + 1] - grid[xi];
+			}
 			double factor = 2.0 / (hxRight * (hxLeft + hxRight));
 
 			// Initialize the value for the flux
@@ -691,9 +700,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -764,7 +773,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// Sum all the concentrations through MPI reduce
 	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
 			radii, partialBubbleConcentration, partialRadii };
-	std::array<double, 5> totalConcData;
+	std::array<double, 5> totalConcData { 0.0, 0.0, 0.0, 0.0, 0.0 };
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 
@@ -781,8 +790,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				(3.0 * (double) minSizes[0])
 						/ (4.0 * xolotlCore::pi * network.getDensity()),
 				(1.0 / 3.0));
-		if (totalConcData[4] < 1.e-16
-				|| averagePartialRadius < minRadius)
+		if (totalConcData[4] < 1.e-16 || averagePartialRadius < minRadius)
 			averagePartialRadius = minRadius;
 
 		// Uncomment to write the retention and the fluence in a file
@@ -844,9 +852,9 @@ PetscErrorCode profileTemperature1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -868,7 +876,8 @@ PetscErrorCode profileTemperature1D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Loop on the entire grid
-	for (int xi = surfacePos + 1; xi < Mx; xi++) {
+	for (int xi = surfacePos + solverHandler.getLeftOffset();
+			xi < Mx - solverHandler.getRightOffset(); xi++) {
 		// Set x
 		double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 
@@ -950,9 +959,9 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the array of concentration
@@ -983,7 +992,8 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
 
 		// Boundary conditions
-		if (xi < surfacePos || xi == Mx - 1)
+		if (xi < surfacePos + solverHandler.getLeftOffset()
+				|| xi == Mx - solverHandler.getRightOffset())
 			continue;
 
 		// Get the pointer to the beginning of the solution data for this grid point
@@ -1296,9 +1306,9 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1367,7 +1377,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 			for (int i = 0; i < networkSize - superClusters.size(); i++) {
 				double conc = 0.0;
 				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10,
-						MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+				MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				// Create a Point with conc as the value
 				// and add it to myPoints
 				xolotlViz::Point aPoint;
@@ -1442,7 +1452,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 			for (int i = 0; i < networkSize - superClusters.size(); i++) {
 				// Send the value of each concentration to the master process
 				MPI_Send(&gridPointSolution[i], 1, MPI_DOUBLE, 0, 10,
-						MPI_COMM_WORLD);
+				MPI_COMM_WORLD);
 			}
 
 			// Loop on the super clusters
@@ -1557,19 +1567,19 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 			// Get the size of the local grid of that process
 			int localSize = 0;
 			MPI_Recv(&localSize, 1, MPI_INT, i, 20, PETSC_COMM_WORLD,
-					MPI_STATUS_IGNORE);
+			MPI_STATUS_IGNORE);
 
 			// Loop on their grid
 			for (int k = 0; k < localSize; k++) {
 				// Get the position
 				MPI_Recv(&x, 1, MPI_DOUBLE, i, 21, PETSC_COMM_WORLD,
-						MPI_STATUS_IGNORE);
+				MPI_STATUS_IGNORE);
 
 				for (int j = 0; j < loopSize; j++) {
 					// and the concentrations
 					double conc = 0.0;
 					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 22, PETSC_COMM_WORLD,
-							MPI_STATUS_IGNORE);
+					MPI_STATUS_IGNORE);
 
 					// Create a Point with the concentration[i] as the value
 					// and add it to myPoints
@@ -1856,9 +1866,9 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the solver handler
@@ -1866,7 +1876,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 
 	// Get the position of the surface
 	int surfacePos = solverHandler.getSurfacePosition();
-	xi = surfacePos + 1;
+	xi = surfacePos + solverHandler.getLeftOffset();
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
@@ -1923,10 +1933,17 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 				double coef = cluster.getDiffusionCoefficient(xi - xs);
 
 				// Factor for finite difference
-				double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0, hxRight =
-						(grid[xi + 2] - grid[xi]) / 2.0;
-				if (xi - 1 < 0)
+				double hxLeft = 0.0, hxRight = 0.0;
+				if (xi - 1 >= 0 && xi < Mx) {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				} else if (xi - 1 < 0) {
 					hxLeft = grid[xi + 1] - grid[xi];
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				} else {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = grid[xi + 1] - grid[xi];
+				}
 				double factor = 2.0 / (hxLeft * (hxLeft + hxRight));
 				// Compute the flux going to the left
 				newFlux += (double) size * factor * coef * conc * hxLeft;
@@ -1980,11 +1997,9 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 		// For now we are not bursting
 		bool burst = false;
 
-		// Loop on the full grid
-		for (xi = 0; xi < Mx; xi++) {
-			// Skip everything before the surface
-			if (xi < surfacePos)
-				continue;
+		// Loop on the full grid of interest
+		for (xi = surfacePos + solverHandler.getLeftOffset();
+				xi < Mx - solverHandler.getRightOffset(); xi++) {
 
 			// If this is the locally owned part of the grid
 			if (xi >= xs && xi < xs + xm) {
@@ -2004,11 +2019,9 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 				// Compute the radius of the bubble from the number of helium
 				double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
 //			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
-				constexpr double tlcCubed = xolotlCore::tungstenLatticeConstant
-						* xolotlCore::tungstenLatticeConstant
-						* xolotlCore::tungstenLatticeConstant;
-				double radius = (sqrt(3.0) / 4)
-						* xolotlCore::tungstenLatticeConstant
+				double latticeParam = network.getLatticeParameter();
+				double tlcCubed = latticeParam * latticeParam * latticeParam;
+				double radius = (sqrt(3.0) / 4) * latticeParam
 						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
 						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
 
@@ -2220,7 +2233,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	}
 
 	// Set the surface position
-	xi = surfacePos + 1;
+	xi = surfacePos + solverHandler.getLeftOffset();
 
 	// Get the initial vacancy concentration
 	double initialVConc = solverHandler.getInitialVConc();
@@ -2234,7 +2247,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		while (nInterstitial1D > threshold) {
 			// Move the surface higher
 			surfacePos--;
-			xi = surfacePos + 1;
+			xi = surfacePos + solverHandler.getLeftOffset();
 			nGridPoints++;
 			// Update the number of interstitials
 			nInterstitial1D -= threshold;
@@ -2327,7 +2340,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 			// Move the surface deeper
 			surfacePos++;
-			xi = surfacePos + 1;
+			xi = surfacePos + solverHandler.getLeftOffset();
 			// Update the number of interstitials
 			nInterstitial1D += threshold;
 		}
@@ -2357,8 +2370,8 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	// Get the modified trap-mutation handler to reinitialize it
 	auto mutationHandler = solverHandler.getMutationHandler();
 	auto advecHandlers = solverHandler.getAdvectionHandlers();
-	mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers,
-			grid, xm, xs);
+	mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers, grid,
+			xm, xs);
 
 	// Write the updated surface position
 	if (procId == 0) {
@@ -2567,9 +2580,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 
 			// Get the size of the total grid
 			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE);
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 			// Get the solver handler
@@ -2963,10 +2976,9 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 			// Get the total size of the grid
 			PetscInt Mx;
 			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-			PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE);
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+					PETSC_IGNORE, PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 			// Get the physical grid
@@ -2975,7 +2987,8 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 			int surfacePos = solverHandler.getSurfacePosition();
 
 			// Loop on the entire grid
-			for (int xi = surfacePos + 1; xi < Mx; xi++) {
+			for (int xi = surfacePos + solverHandler.getLeftOffset();
+					xi < Mx - solverHandler.getRightOffset(); xi++) {
 				// Set x
 				double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 				outputFile << x << " ";

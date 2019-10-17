@@ -50,6 +50,10 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	// because it adds connectivity
 	resolutionHandler->initialize(network, electronicStoppingPower);
 
+	// Initialize the nucleation handler here
+	// because it adds connectivity
+	nucleationHandler->initialize(network);
+
 	// Get the diagonal fill
 	network.getDiagonalFill(dfill);
 
@@ -160,8 +164,10 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	checkPetscError(ierr, "PetscSolver0DHandler::initializeConcentration: "
 			"DMDAVecRestoreArrayDOF failed.");
 
-	// Set the rate for re-solution
+	// Set the rate for re-solution and nucleation
 	resolutionHandler->updateReSolutionRate(fluxHandler->getFluxAmplitude());
+	nucleationHandler->updateHeterogeneousNucleationRate(
+			fluxHandler->getFluxAmplitude());
 
 	return;
 }
@@ -226,6 +232,10 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// ----- Compute the re-solution -----
 	resolutionHandler->computeReSolution(network, concOffset, updatedConcOffset,
 			0, 0);
+
+	// ----- Compute the heterogeneous nucleation -----
+	nucleationHandler->computeHeterogeneousNucleation(network, concOffset,
+			updatedConcOffset, 0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 	network.computeAllFluxes(updatedConcOffset);
@@ -339,8 +349,8 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	MatStencil rowIds[5];
 
 	// Compute the partial derivative from re-solution at this grid point
-	int nResoluting = resolutionHandler->computePartialsForReSolution(
-			network, resolutionVals, resolutionIndices, 0, 0);
+	int nResoluting = resolutionHandler->computePartialsForReSolution(network,
+			resolutionVals, resolutionIndices, 0, 0);
 
 	// Loop on the number of xenon to set the values in the Jacobian
 	for (int i = 0; i < nResoluting; i++) {
@@ -362,9 +372,32 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		colIds[1].c = resolutionIndices[(5 * i) + 1];
 		ierr = MatSetValuesStencil(J, 5, rowIds, 2, colIds,
 				resolutionVals + (10 * i), ADD_VALUES);
-		checkPetscError(ierr,
-				"PetscSolver0DHandler::computeDiagonalJacobian: "
-						"MatSetValuesStencil (Xe re-solution) failed.");
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (Xe re-solution) failed.");
+	}
+
+	// ----- Take care of the nucleation for all the reactants -----
+
+	// Arguments for MatSetValuesStencil called below
+	PetscScalar nucleationVals[2];
+	PetscInt nucleationIndices[2];
+
+	// Compute the partial derivative from nucleation at this grid point
+	if (nucleationHandler->computePartialsForHeterogeneousNucleation(network,
+			nucleationVals, nucleationIndices, 0, 0)) {
+
+		// Set grid coordinate and component number for the row and column
+		// corresponding to the clusters involved in re-solution
+		rowIds[0].i = 0;
+		rowIds[0].c = nucleationIndices[0];
+		rowIds[1].i = 0;
+		rowIds[1].c = nucleationIndices[1];
+		colIds[0].i = 0;
+		colIds[0].c = nucleationIndices[0];
+		ierr = MatSetValuesStencil(J, 2, rowIds, 1, colIds, nucleationVals,
+				ADD_VALUES);
+		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
+				"MatSetValuesStencil (Xe nucleation) failed.");
 	}
 
 	/*

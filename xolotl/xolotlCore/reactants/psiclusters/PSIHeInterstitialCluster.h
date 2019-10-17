@@ -66,13 +66,13 @@ public:
 		type = ReactantType::HeI;
 
 		// Compute the reaction radius
-		reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
+		double latticeParam = network.getLatticeParameter();
+		reactionRadius = (sqrt(3.0) / 4.0) * latticeParam
 				+ pow(
-						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0)
-								* numI) / (8.0 * xolotlCore::pi), (1.0 / 3.0))
-				- pow(
-						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
-								/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+						(3.0 * pow(latticeParam, 3.0) * numI)
+								/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+				- pow((3.0 * pow(latticeParam, 3.0)) / (8.0 * xolotlCore::pi),
+						(1.0 / 3.0));
 
 		// Bounds on He, D, T, and V
 		bounds[0] = IntegerRange<IReactant::SizeType>(

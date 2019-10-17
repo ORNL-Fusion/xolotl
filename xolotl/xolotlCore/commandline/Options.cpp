@@ -26,7 +26,9 @@ Options::Options() :
 				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), rngUseSeed(
 				false), rngSeed(0), rngPrintSeed(false), zeta(0.73), resoMinSize(
 				0), density(10.162795276841), pulseTime(0.0), pulseProportion(
-				0.0) {
+				0.0), latticeParameter(-1.0), impurityRadius(-1.0), biasFactor(
+				1.15), hydrogenFactor(0.25), xenonDiffusivity(-1.0), fissionYield(
+				0.25) {
 	radiusMinSizes.Init(0);
 
 	return;
@@ -102,7 +104,7 @@ void Options::readParams(int argc, char* argv[]) {
 			"All the arguments that will be given to PETSc.")("process",
 			bpo::value<string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
-					"advec, modifiedTM, movingSurface, bursting, attenuation, resolution).")(
+					"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, heterogeneous).")(
 			"grain", bpo::value < string > (&gbList),
 			"This option allows the user to add GB in the X, Y, or Z directions. "
 					"To do so, simply write the direction followed "
@@ -142,7 +144,20 @@ void Options::readParams(int argc, char* argv[]) {
 			"This option allows the user to set a density in nm-3 "
 					"for the number of xenon per volume in a bubble.")("pulse",
 			bpo::value<string>(),
-			"The total length of the pulse (in s) and the proportion of it that is ON.");
+			"The total length of the pulse (in s) and the proportion of it that is ON.")(
+			"lattice", bpo::value<double>(&latticeParameter),
+			"This option allows the user to set the length of the lattice side in nm.")(
+			"impurityRadius", bpo::value<double>(&impurityRadius),
+			"This option allows the user to set the radius of the main impurity (He or Xe) in nm.")(
+			"biasFactor", bpo::value<double>(&biasFactor),
+			"This option allows the user to set the bias factor reflecting the fact that interstitial "
+					"clusters have a larger surrounding strain field.")(
+			"hydrogenFactor", bpo::value<double>(&hydrogenFactor),
+			"This option allows the user to set the factor between the size of He and H.")(
+			"xenonDiffusivity", bpo::value<double>(&xenonDiffusivity),
+			"This option allows the user to set the diffusion coefficient for xenon in nm2 s-1.")(
+			"fissionYield", bpo::value<double>(&fissionYield),
+			"This option allows the user to set the number of xenon created for each fission.");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);
@@ -332,6 +347,7 @@ void Options::readParams(int argc, char* argv[]) {
 			processMap["bursting"] = false;
 			processMap["attenuation"] = false;
 			processMap["resolution"] = false;
+			processMap["heterogeneous"] = false;
 
 			// Loop on the tokens
 			for (int i = 0; i < tokens.size(); ++i) {

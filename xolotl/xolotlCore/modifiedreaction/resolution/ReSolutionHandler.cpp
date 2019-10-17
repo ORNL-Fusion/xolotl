@@ -198,7 +198,13 @@ void ReSolutionHandler::initialize(const IReactionNetwork& network,
 
 void ReSolutionHandler::updateReSolutionRate(double rate) {
 	// Scale the fission rate with the standard one
-	resolutionRate = 1.0e8 * 4.0 * rate; // The 4.0 factor is to get from the Xe rate to the fission rate
+	resolutionRate = 1.0e8 * rate / fissionYield;
+
+	return;
+}
+
+void ReSolutionHandler::setFissionYield(double yield) {
+	fissionYield = yield;
 
 	return;
 }

@@ -49,12 +49,12 @@ public:
 
 		// Compute the reaction radius
 		double FourPi = 4.0 * xolotlCore::pi;
-		double aCubed = pow(xolotlCore::ironLatticeConstant, 3);
+		double aCubed = pow(network.getLatticeParameter(), 3);
 		double termOne = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * size,
 				(1.0 / 3.0));
 		double termTwo = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed,
 				(1.0 / 3.0));
-		reactionRadius = 0.3 + termOne - termTwo;
+		reactionRadius = network.getImpurityRadius() + termOne - termTwo;
 
 		// Bounds on He and V
 		heBounds = IntegerRange<IReactant::SizeType>(
@@ -101,7 +101,7 @@ public:
 	 * @param temp The new cluster temperature
 	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp, int i) override{
+	void setTemperature(double temp, int i) override {
 		if (diffusionFactor > 0.0) {
 			Reactant::setTemperature(temp, i);
 		}

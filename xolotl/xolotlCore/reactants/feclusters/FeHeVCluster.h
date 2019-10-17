@@ -52,8 +52,8 @@ public:
 	 */
 	FeHeVCluster(int numHe, int numV, IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-			FeCluster(_network, registry, buildName(numHe, numV)), numHe(
-					numHe), numV(numV) {
+			FeCluster(_network, registry, buildName(numHe, numV)), numHe(numHe), numV(
+					numV) {
 		// Set the cluster size as the sum of
 		// the number of Helium and Vacancies
 		size = numHe + numV;
@@ -67,7 +67,7 @@ public:
 
 		// Compute the reaction radius
 		// It is the same formula for HeV clusters
-		reactionRadius = xolotlCore::ironLatticeConstant
+		reactionRadius = network.getLatticeParameter()
 				* pow((3.0 * numV) / xolotlCore::pi, (1.0 / 3.0)) * 0.5;
 
 		// Bounds on He and V
@@ -119,7 +119,7 @@ public:
 	 * @param temp The new cluster temperature
 	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp, int i) override{
+	void setTemperature(double temp, int i) override {
 		// Don't do anything
 		return;
 	}

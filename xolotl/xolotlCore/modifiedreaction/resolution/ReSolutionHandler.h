@@ -65,8 +65,11 @@ protected:
 	//! The map containing the information of who re-solves into what.
 	std::vector<ReSolutionBase> sizeVec;
 
-	//! The trap-mutation rate
+	//! The re-solution rate
 	double resolutionRate;
+
+	//! The fission yield
+	double fissionYield;
 
 	//! The minimum size at which the re-solution starts
 	int minSize;
@@ -77,7 +80,7 @@ public:
 	 * The constructor
 	 */
 	ReSolutionHandler() :
-			resolutionRate(0.0), minSize(0) {
+			resolutionRate(0.0), fissionYield(0.0), minSize(0) {
 	}
 
 	/**
@@ -96,7 +99,7 @@ public:
 			double electronicStoppingPower);
 
 	/**
-	 * This method update the rate for the re-solution if the fission rate
+	 * This method updates the rate for the re-solution if the fission rate
 	 * changed, it should be called when the flux changes for instance.
 	 *
 	 * \see IReSolutionHandler.h
@@ -104,11 +107,18 @@ public:
 	void updateReSolutionRate(double rate);
 
 	/**
+	 * This method updates the fission yield.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	void setFissionYield(double yield);
+
+	/**
 	 * Compute the flux due to the re-solution for all the cluster,
 	 * given the position index xi.
 	 * This method is called by the RHSFunction from the PetscSolver.
 	 *
-	 * Xe_i --> Xe_(i-n) + n Xe_1
+	 * Xe_i --> Xe_(i-n) + n Xe_1 (n=1)
 	 *
 	 * F(Xe_i) = -F[Xe_(i-n)] = -1/n * F(Xe_1) = -rate * C_(Xe_i)
 	 *
@@ -124,7 +134,7 @@ public:
 	 * clusters that are re-soluted at this grid point.
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *
-	 * Xe_i --> Xe_(i-n) + n Xe_1
+	 * Xe_i --> Xe_(i-n) + n Xe_1 (n=1)
 	 *
 	 * dF(Xe_i)/dC_(Xe_i) = -dF[Xe_(i-n)]/dC_(Xe_i) = -1/n * dF(Xe_1)/dC_(Xe_i)
 	 * 		= -rate

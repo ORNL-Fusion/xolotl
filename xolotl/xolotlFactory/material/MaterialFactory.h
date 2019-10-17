@@ -7,6 +7,7 @@
 #include <DummyAdvectionHandler.h>
 #include <DummyTrapMutationHandler.h>
 #include <DummyReSolutionHandler.h>
+#include <DummyNucleationHandler.h>
 #include <TokenizedLineReader.h>
 #include <XGBAdvectionHandler.h>
 #include <YGBAdvectionHandler.h>
@@ -36,6 +37,9 @@ protected:
 	//! The re-solution handler
 	std::shared_ptr<xolotlCore::IReSolutionHandler> theReSolutionHandler;
 
+	//! The heterogeneous nucleation handler
+	std::shared_ptr<xolotlCore::IHeterogeneousNucleationHandler> theNucleationHandler;
+
 public:
 
 	/**
@@ -61,12 +65,10 @@ public:
 			// A constant flux value AND a time profile cannot both be given.
 			throw std::string(
 					"\nA constant flux value AND a time profile cannot both be given.");
-		}
-		else if (options.useFluxAmplitude()) {
+		} else if (options.useFluxAmplitude()) {
 			// Set the constant value of the flux
 			theFluxHandler->setFluxAmplitude(options.getFluxAmplitude());
-		}
-		else if (options.useFluxTimeProfile()) {
+		} else if (options.useFluxTimeProfile()) {
 			// Initialize the time profile
 			theFluxHandler->initializeTimeProfile(options.getFluxProfileName());
 		}
@@ -75,19 +77,26 @@ public:
 		auto map = options.getProcesses();
 		// Set dummy handlers when needed
 		if (!map["diff"])
-			theDiffusionHandler = std::make_shared<xolotlCore::DummyDiffusionHandler>();
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::DummyDiffusionHandler>();
 		if (!map["advec"]) {
 			// Clear the advection handler
 			theAdvectionHandler.clear();
 			// To replace it by a dummy one
-			theAdvectionHandler.push_back(std::make_shared<xolotlCore::DummyAdvectionHandler>());
+			theAdvectionHandler.push_back(
+					std::make_shared<xolotlCore::DummyAdvectionHandler>());
 		}
 		if (!map["modifiedTM"])
-			theTrapMutationHandler = std::make_shared<xolotlCore::DummyTrapMutationHandler>();
+			theTrapMutationHandler = std::make_shared<
+					xolotlCore::DummyTrapMutationHandler>();
 		if (!map["attenuation"])
 			theTrapMutationHandler->setAttenuation(false);
 		if (!map["resolution"])
-			theReSolutionHandler = std::make_shared<xolotlCore::DummyReSolutionHandler>();
+			theReSolutionHandler = std::make_shared<
+					xolotlCore::DummyReSolutionHandler>();
+		if (!map["heterogeneous"])
+			theNucleationHandler = std::make_shared<
+					xolotlCore::DummyNucleationHandler>();
 
 		// Get the number of dimensions
 		int dim = options.getDimensionNumber();
@@ -96,7 +105,7 @@ public:
 		std::string gbString = options.getGbString();
 		// Build an input stream from the GB string.
 		xolotlCore::TokenizedLineReader<std::string> reader;
-		auto argSS = std::make_shared < std::istringstream > (gbString);
+		auto argSS = std::make_shared<std::istringstream>(gbString);
 		reader.setInputStream(argSS);
 		// Break the string into tokens.
 		auto tokens = reader.loadLine();
@@ -104,38 +113,41 @@ public:
 		for (int i = 0; i < tokens.size(); i++) {
 			// Switch on the type of grain boundaries
 			if (tokens[i] == "X") {
-				auto GBAdvecHandler = std::make_shared<xolotlCore::XGBAdvectionHandler>();
-				GBAdvecHandler->setLocation(strtod(tokens[i+1].c_str(), NULL));
+				auto GBAdvecHandler = std::make_shared<
+						xolotlCore::XGBAdvectionHandler>();
+				GBAdvecHandler->setLocation(
+						strtod(tokens[i + 1].c_str(), NULL));
 				GBAdvecHandler->setDimension(dim);
 				theAdvectionHandler.push_back(GBAdvecHandler);
-			}
-			else if (tokens[i] == "Y") {
+			} else if (tokens[i] == "Y") {
 				if (dim < 2)
 					// A Y grain boundary cannot be used in 1D.
 					throw std::string(
 							"\nA Y grain boundary CANNOT be used in 1D. Switch to 2D or 3D or remove it.");
 
-				auto GBAdvecHandler = std::make_shared<xolotlCore::YGBAdvectionHandler>();
-				GBAdvecHandler->setLocation(strtod(tokens[i+1].c_str(), NULL));
+				auto GBAdvecHandler = std::make_shared<
+						xolotlCore::YGBAdvectionHandler>();
+				GBAdvecHandler->setLocation(
+						strtod(tokens[i + 1].c_str(), NULL));
 				GBAdvecHandler->setDimension(dim);
 				theAdvectionHandler.push_back(GBAdvecHandler);
-			}
-			else if (tokens[i] == "Z") {
+			} else if (tokens[i] == "Z") {
 				if (dim < 3)
 					// A Z grain boundary cannot be used in 1D/2D.
 					throw std::string(
 							"\nA Z grain boundary CANNOT be used in 1D/2D. Switch to 3D or remove it.");
 
-				auto GBAdvecHandler = std::make_shared<xolotlCore::ZGBAdvectionHandler>();
-				GBAdvecHandler->setLocation(strtod(tokens[i+1].c_str(), NULL));
+				auto GBAdvecHandler = std::make_shared<
+						xolotlCore::ZGBAdvectionHandler>();
+				GBAdvecHandler->setLocation(
+						strtod(tokens[i + 1].c_str(), NULL));
 				GBAdvecHandler->setDimension(dim);
 				theAdvectionHandler.push_back(GBAdvecHandler);
-			}
-			else {
+			} else {
 				// Wrong GB type
 				throw std::string(
-						"\nThe type of grain boundary is not known: \"" + tokens[i]
-						+ "\"");
+						"\nThe type of grain boundary is not known: \""
+								+ tokens[i] + "\"");
 			}
 
 			i++;
@@ -187,6 +199,15 @@ public:
 	 */
 	std::shared_ptr<xolotlCore::IReSolutionHandler> getReSolutionHandler() const {
 		return theReSolutionHandler;
+	}
+
+	/**
+	 * Return the heterogeneous nucleation handler.
+	 *
+	 *  @return The nucleation handler.
+	 */
+	std::shared_ptr<xolotlCore::IHeterogeneousNucleationHandler> getNucleationHandler() const {
+		return theNucleationHandler;
 	}
 };
 

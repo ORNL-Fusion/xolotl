@@ -164,6 +164,21 @@ protected:
 	double biggestRate;
 
 	/**
+	 * The lattice parameter.
+	 */
+	double latticeParameter;
+
+	/**
+	 * The impurity radius.
+	 */
+	double impurityRadius;
+
+	/**
+	 * The interstitial bias.
+	 */
+	double interstitialBias;
+
+	/**
 	 * Are dissociations enabled?
 	 */
 	bool dissociationsEnabled;
@@ -199,8 +214,8 @@ protected:
 	 * @param i The location on the grid
 	 * @return The rate
 	 */
-	virtual double calculateReactionRateConstant(const ProductionReaction& reaction,
-			int i) const;
+	virtual double calculateReactionRateConstant(
+			const ProductionReaction& reaction, int i) const;
 
 	/**
 	 * Calculate the dissociation constant of the first cluster with respect to
@@ -684,6 +699,60 @@ public:
 	 */
 	virtual double getDensity() const override {
 		return 0.0;
+	}
+
+	/**
+	 * This operation sets the lattice parameter
+	 *
+	 * @param lattice The lattice parameter
+	 */
+	virtual void setLatticeParameter(double lattice) override {
+		latticeParameter = lattice;
+	}
+
+	/**
+	 * This operation returns the lattice parameter
+	 *
+	 * @return The lattice parameter
+	 */
+	double getLatticeParameter() const override {
+		return latticeParameter;
+	}
+
+	/**
+	 * This operation sets the impurity radius
+	 *
+	 * @param radius The impurity radius
+	 */
+	void setImpurityRadius(double radius) override {
+		impurityRadius = radius;
+	}
+
+	/**
+	 * This operation returns the impurity radius
+	 *
+	 * @return The impurity radius
+	 */
+	double getImpurityRadius() const override {
+		return impurityRadius;
+	}
+
+	/**
+	 * This operation sets the interstitial bias
+	 *
+	 * @param bias The interstitial bias
+	 */
+	void setInterstitialBias(double bias) override {
+		interstitialBias = bias;
+	}
+
+	/**
+	 * This operation returns the interstitial bias
+	 *
+	 * @return The interstitial bias
+	 */
+	double getInterstitialBias() const override {
+		return interstitialBias;
 	}
 
 	/**

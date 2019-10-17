@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	try {
 		alloyNetwork->add(std::move(duplicateCluster));
 		BOOST_FAIL(
-				"Test failed because adding a duplicate" << " to the network was allowed.");
+				"Test failed because adding a duplicate to the network was allowed.");
 	} catch (const std::string& /* e */) {
 		// Do nothing. It was supposed to fail.
 	}
@@ -61,11 +61,12 @@ BOOST_AUTO_TEST_CASE(checkReactants) {
 	BOOST_REQUIRE_EQUAL(1U, reactants.size());
 
 	// Try changing the temperature and make sure it works
+	//Set a diffusion factor so that the temperature matters
+	retVCluster->setDiffusionFactor(1.0);
 	// Add a grid point for the temperature
 	alloyNetwork->addGridPoints(1);
 	alloyNetwork->setTemperature(1000.0, 0);
-	IReactant& reactant = reactants.at(0);
-	BOOST_REQUIRE_CLOSE(1000.0, reactant.getTemperature(0), 0.0001);
+	BOOST_REQUIRE_CLOSE(1000.0, retVCluster->getTemperature(0), 0.0001);
 
 	return;
 }

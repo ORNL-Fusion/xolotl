@@ -125,6 +125,12 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::load(
 	std::unique_ptr<AlloyClusterReactionNetwork> network(
 			new AlloyClusterReactionNetwork(handlerRegistry));
 
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = alloyLatticeConstant;
+	network->setLatticeParameter(latticeParam);
+
 	// Loop on the clusters
 	for (int i = 0; i < normalSize + superSize; i++) {
 		// Open the cluster group
@@ -198,6 +204,12 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::generate(
 	std::unique_ptr<AlloyClusterReactionNetwork> network(
 			new AlloyClusterReactionNetwork(handlerRegistry));
 	std::vector<std::reference_wrapper<Reactant> > reactants;
+
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = alloyLatticeConstant;
+	network->setLatticeParameter(latticeParam);
 
 	// Generate the Vacancy clusters
 	for (int i = 1; i <= maxV; ++i) {

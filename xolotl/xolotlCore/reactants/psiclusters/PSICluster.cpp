@@ -741,7 +741,7 @@ void PSICluster::resetConnectivities() {
 				// The cluster is connecting to the dissociating cluster which
 				// is the first one by definition
 				setDissociationConnectivity(currPair.first.id);
-				for (int i = 0; i < psDim; i++) {
+				for (int i = 1; i < psDim; i++) {
 					setDissociationConnectivity(currPair.first.momId[indexList[i]-1]);
 				}
 			});

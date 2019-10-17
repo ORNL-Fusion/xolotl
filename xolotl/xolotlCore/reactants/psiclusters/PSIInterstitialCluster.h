@@ -47,9 +47,9 @@ public:
 
 		// Compute the reaction radius
 		double EightPi = 8.0 * xolotlCore::pi;
-		double aCubed = pow(xolotlCore::tungstenLatticeConstant, 3.0);
-		double termOne = 1.15 * (sqrt(3.0) / 4.0)
-				* xolotlCore::tungstenLatticeConstant;
+		double aCubed = pow(network.getLatticeParameter(), 3.0);
+		double termOne = network.getInterstitialBias() * (sqrt(3.0) / 4.0)
+				* network.getLatticeParameter();
 		double termTwo = pow((3.0 / EightPi) * aCubed * size, (1.0 / 3.0));
 		double termThree = pow((3.0 / EightPi) * aCubed, (1.0 / 3.0));
 		reactionRadius = termOne + termTwo - termThree;
@@ -105,7 +105,7 @@ public:
 	 * @param temp The new cluster temperature
 	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp, int i) override{
+	void setTemperature(double temp, int i) override {
 		if (diffusionFactor > 0.0) {
 			Reactant::setTemperature(temp, i);
 		}

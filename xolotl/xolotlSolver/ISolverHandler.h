@@ -11,6 +11,7 @@
 #include <IAdvectionHandler.h>
 #include <ITrapMutationHandler.h>
 #include <IReSolutionHandler.h>
+#include <IHeterogeneousNucleationHandler.h>
 #include <IMaterialFactory.h>
 #include <IReactionNetwork.h>
 #include <NDArray.h>
@@ -247,6 +248,13 @@ public:
 	 * @return The re-solution handler
 	 */
 	virtual xolotlCore::IReSolutionHandler *getReSolutionHandler() const = 0;
+
+	/**
+	 * Get the heterogeneous nucleation handler.
+	 *
+	 * @return The heterogeneous nucleation handler
+	 */
+	virtual xolotlCore::IHeterogeneousNucleationHandler *getHeterogeneousNucleationHandler() const = 0;
 
 	/**
 	 * Get the network.

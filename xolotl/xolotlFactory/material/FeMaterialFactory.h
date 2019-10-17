@@ -37,7 +37,10 @@ public:
 				std::make_shared<xolotlCore::DummyAdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				xolotlCore::DummyTrapMutationHandler>();
-		theReSolutionHandler = std::make_shared<xolotlCore::DummyReSolutionHandler>();
+		theReSolutionHandler = std::make_shared<
+				xolotlCore::DummyReSolutionHandler>();
+		theNucleationHandler = std::make_shared<
+				xolotlCore::DummyNucleationHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {
