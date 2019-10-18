@@ -4,8 +4,8 @@ namespace xolotlCore
 {
 namespace experimental
 {
-template <std::size_t NumSpecies>
-class ReactionNetwork<NumSpecies>::Cluster
+template <typename TImpl>
+class ReactionNetwork<TImpl>::Cluster
 {
 public:
     Cluster() = delete;
@@ -23,7 +23,7 @@ public:
     }
 
 private:
-    ReactionNetwork<NumSpecies>* _network {nullptr};
+    ReactionNetwork<TImpl>* _network {nullptr};
     std::size_t _id {plsm::invalid<std::size_t>};
 };
 }

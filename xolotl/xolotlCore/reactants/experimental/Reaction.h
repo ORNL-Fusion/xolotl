@@ -8,74 +8,106 @@ namespace experimental
 template <typename TDerived>
 class Reaction
 {
+    static constexpr auto invalid = plsm::invalid<std::size_t>;
+
 public:
+    using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
+    using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
+
     enum class Type
     {
         production,
         dissociation
     };
 
-    void
-    computeProductionFluxes(
-        Kokkos::View<double*, Kokkos::MemoryUnmanaged> concentrations,
-        Kokkos::View<double*, Kokkos::MemoryUnmanaged> fluxes)
+    Reaction() = default;
+
+    template <typename TReactionNetwork>
+    Reaction(TReactionNetwork& network, Type reactionType,
+            std::size_t cluster0, std::size_t cluster1,
+            std::size_t cluster2 = invalid, std::size_t cluster3 = invalid)
+        :
+        _type(reactionType),
+        _fluxFn((_type == Type::production) ?
+            &Reaction::productionFlux : &Reaction::dissociationFlux),
+        _reactants((_type == Type::production) ?
+            Kokkos::Array<std::size_t, 2>({cluster0, cluster1}) :
+            Kokkos::Array<std::size_t, 2>({cluster0, invalid})),
+        _products(_type == Type::production ?
+            Kokkos::Array<std::size_t, 2>({cluster2, cluster3}) :
+            Kokkos::Array<std::size_t, 2>({cluster1, cluster2})),
+        _rate(static_cast<TDerived*>(this)->computeRate(network))
     {
-        //TODO: compute flux using TDerived definition
-        //      auto f = computeProductionFlux(/*_reactants[0], _reacants[1]*/);
+        //TODO:
+        //      Compute grouping coefficients
+    }
+
+    Type
+    getType() const noexcept
+    {
+        return _type;
+    }
+
+    void
+    productionFlux(ConcentrationsView concentrations, FluxesView fluxes)
+    {
+        //TODO: Compute flux
         double f = 1.0;
-        fluxes[_reactants[0]] = -f;
-        fluxes[_reactants[1]] = -f;
-        auto invalid = plsm::invalid<std::size_t>;
+        fluxes[_reactants[0]] -= f;
+        fluxes[_reactants[1]] -= f;
         for (auto prodId : _products) {
             if (prodId == invalid) {
                 continue;
             }
-            fluxes[prodId] = f;
+            fluxes[prodId] += f;
         }
     }
 
     void
-    computeDissociationFluxes(
-        Kokkos::View<double*, Kokkos::MemoryUnmanaged> concentrations,
-        Kokkos::View<double*, Kokkos::MemoryUnmanaged> fluxes)
+    dissociationFlux(ConcentrationsView concentrations, FluxesView fluxes)
     {
-        //TODO: compute flux using TDerived definition
-        //      auto f = computeDissociationFlux(/*_reactants[0]*/);
         double f = 1.0;
-        fluxes[_reactants[0]] = -f;
-        fluxes[_products[0]] = f;
-        fluxes[_products[1]] = f;
+        fluxes[_reactants[0]] -= f;
+        fluxes[_products[0]] += f;
+        fluxes[_products[1]] += f;
     }
 
-
     void
-    computeFluxes(Kokkos::View<double*, Kokkos::MemoryUnmanaged> concentrations,
-        Kokkos::View<double*, Kokkos::MemoryUnmanaged> fluxes)
+    contributeFlux(ConcentrationsView concentrations, FluxesView fluxes)
     {
-        //TODO: Use function_ref and make this decision at construction
-
-        switch (_type) {
-            case Type::production:
-                computeProductionFluxes(concentrations, fluxes);
-                break;
-            case Type::dissociation:
-                computeDissociationFluxes(concentrations, fluxes);
-                break;
-        }
+        ((*this).*(_fluxFn))(concentrations, fluxes);
     }
 
 private:
-    Type _type;
+    Type _type {};
+
+    using FluxFn = void (Reaction::*)(ConcentrationsView, FluxesView);
+    FluxFn _fluxFn {nullptr};
 
     //Cluster indices for LHS and RHS
     //Dissociation reactions always have 1 input and 2 outputs
     //Production reactions always have 2 inputs, but may have 0, 1, or 2 outputs
-    //TODO: Both of these should default their elements to some 'invalid' index
-    Kokkos::Array<std::size_t, 2> _reactants;
-    Kokkos::Array<std::size_t, 2> _products;
+    Kokkos::Array<std::size_t, 2> _reactants {invalid, invalid};
+    Kokkos::Array<std::size_t, 2> _products {invalid, invalid};
 
     //! Reaction rate, k
-    double _rate;
+    double _rate {};
+};
+
+
+class PSIReactionNetwork;
+
+
+class PSIReaction : public Reaction<PSIReaction>
+{
+public:
+    using Reaction<PSIReaction>::Reaction;
+
+    double
+    computeRate(PSIReactionNetwork& network)
+    {
+        return 1.0;
+    }
 };
 }
 }

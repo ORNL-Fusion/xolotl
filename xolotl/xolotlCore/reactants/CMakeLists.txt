@@ -5,15 +5,14 @@ SET(PACKAGE_DESCRIPTION "Xolotl Reactants")
 #Set the library name
 SET(LIBRARY_NAME "xolotlReactants")
 
-list(APPEND CMAKE_PREFIX_PATH ${Kokkos_DIR} ${plsm_DIR})
-find_package(Kokkos REQUIRED)
+list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
 find_package(plsm REQUIRED)
 
-#Collect all header filenames in this project 
+#Collect all header filenames in this project
 #and glob them in HEADERS
 file(GLOB HEADERS *.h psiclusters/*.h neclusters/*.h feclusters/*.h alloyclusters/*.h)
 
-#Collect all of the cpp files in this folder 
+#Collect all of the cpp files in this folder
 #and the psiclusters folder and glob them in SRC
 file(GLOB SRC *.cpp psiclusters/*.cpp neclusters/*.cpp feclusters/*.cpp alloyclusters/*.cpp)
 

@@ -67,17 +67,30 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
-    auto rNetwork = experimental::makeSimpleReactionNetwork<5>();
-    experimental::ReactionNetwork<5>::Composition comp{};
-    comp[Species::He] = 3;
-    comp[Species::V] = 2;
-    comp[Species::I] = 0;
+    using NetworkType = experimental::PSIReactionNetwork;
+    using Spec = typename NetworkType::Species;
+
+    auto rNetwork = experimental::makeSimpleReactionNetwork<experimental::PSIReactionNetwork>();
+    experimental::PSIReactionNetwork::Composition comp{};
+    comp[Spec::He] = 3;
+    comp[Spec::V] = 2;
+    comp[Spec::I] = 0;
     auto cluster = rNetwork.get(comp);
     auto compRegion = cluster.getRegion();
-    BOOST_REQUIRE_EQUAL(cluster.getRegion()[Species::He].begin(), 3);
-    BOOST_REQUIRE_EQUAL(cluster.getRegion()[Species::V].begin(), 2);
-    BOOST_REQUIRE_EQUAL(cluster.getRegion()[Species::I].begin(), 0);
-    // BOOST_REQUIRE_EQUAL(cluster.getComposition()[Species::He], 3);
+    BOOST_REQUIRE_EQUAL(cluster.getRegion()[Spec::He].begin(), 3);
+    BOOST_REQUIRE_EQUAL(cluster.getRegion()[Spec::V].begin(), 2);
+    BOOST_REQUIRE_EQUAL(cluster.getRegion()[Spec::I].begin(), 0);
+    // BOOST_REQUIRE_EQUAL(cluster.getComposition()[Spec::He], 3);
+
+    experimental::PSIReaction r0;
+    experimental::PSIReaction r(rNetwork,
+        experimental::PSIReaction::Type::dissociation, 0, 1, 2);
+    BOOST_REQUIRE(r.getType() == experimental::PSIReaction::Type::dissociation);
+
+    auto concs = new double[3]{};
+    auto fluxes = new double[3]{};
+    using Vue = experimental::PSIReaction::ConcentrationsView;
+    r.contributeFlux(Vue(concs, 3), Vue(fluxes, 3));
 
 	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();
 

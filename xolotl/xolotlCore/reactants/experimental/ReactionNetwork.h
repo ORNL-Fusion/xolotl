@@ -7,23 +7,34 @@
 #include <plsm/Subpaving.h>
 #include <plsm/refine/RegionDetector.h>
 
-#include <Species.h>
+// #include <Species.h>
+#include <experimental/Reaction.h>
 
 namespace xolotlCore
 {
 namespace experimental
 {
-template <std::size_t NumSpecies>
+template <typename TImpl>
+struct ReactionNetworkTraits
+{
+};
+
+
+// template <std::size_t NumSpecies>
+template <typename TImpl>
 class ReactionNetwork
 {
 public:
-    //TODO: Maybe we could traits-ify this:
-    //Define a phase space for a specific application.
-    //The "phase space" could define the underlying amount type to
-    //use and the "Species" enum and/or number of species
+    using Traits = ReactionNetworkTraits<TImpl>;
 
+private:
+    static constexpr std::size_t numSpecies = Traits::numSpecies;
+
+public:
+    using Species = typename Traits::Species;
+    using ReactionType = typename Traits::ReactionType;
     using AmountType = std::uint32_t;
-    using Subpaving = plsm::Subpaving<AmountType, NumSpecies, Species>;
+    using Subpaving = plsm::Subpaving<AmountType, numSpecies, Species>;
     using Composition = typename Subpaving::PointType;
     using Region = typename Subpaving::RegionType;
     using Ival = typename Region::IntervalType;
@@ -32,6 +43,13 @@ public:
 
     ReactionNetwork() = delete;
     ReactionNetwork(AmountType maxSpeciesAmount);
+
+    static
+    constexpr std::size_t
+    getNumberOfSpecies() noexcept
+    {
+        return numSpecies;
+    }
 
     Cluster
     get(const Composition& comp);
@@ -47,8 +65,8 @@ private:
 };
 
 
-template <std::size_t NumSpecies>
-ReactionNetwork<NumSpecies>::ReactionNetwork(AmountType maxSpeciesAmount)
+template <typename TImpl>
+ReactionNetwork<TImpl>::ReactionNetwork(AmountType maxSpeciesAmount)
     :
     _subpaving(Region{{
         Ival{0, maxSpeciesAmount+1},
@@ -66,29 +84,57 @@ ReactionNetwork<NumSpecies>::ReactionNetwork(AmountType maxSpeciesAmount)
 }
 
 
-template <std::size_t NumSpecies>
-typename ReactionNetwork<NumSpecies>::Cluster
-ReactionNetwork<NumSpecies>::get(const Composition& comp)
+template <typename TImpl>
+typename ReactionNetwork<TImpl>::Cluster
+ReactionNetwork<TImpl>::get(const Composition& comp)
 {
     Cluster ret(*this, _subpaving.getTileId(comp));
     return ret;
 }
 
 
-template <std::size_t NumSpecies>
-ReactionNetwork<NumSpecies>
+template <typename TReactionNetwork>
+TReactionNetwork
 makeSimpleReactionNetwork(
-    typename ReactionNetwork<NumSpecies>::AmountType maxSpeciesAmount = 10)
+    typename TReactionNetwork::AmountType maxSpeciesAmount = 10)
 {
-    using AmountType = typename ReactionNetwork<NumSpecies>::AmountType;
-    ReactionNetwork<NumSpecies> network(maxSpeciesAmount);
+    using AmountType = typename TReactionNetwork::AmountType;
+    TReactionNetwork network(maxSpeciesAmount);
 
+    constexpr auto numSpecies = network.getNumberOfSpecies();
     network.getSubpaving().refine(
-        plsm::refine::RegionDetector<AmountType, NumSpecies, plsm::Select>{
+        plsm::refine::RegionDetector<AmountType, numSpecies, plsm::Select>{
             network.getSubpaving().getLatticeRegion()});
 
     return network;
 }
+
+
+class PSIReactionNetwork;
+
+
+template <>
+struct ReactionNetworkTraits<PSIReactionNetwork>
+{
+    enum class Species
+    {
+        V,
+        I,
+        He,
+        D,
+        T
+    };
+
+    static constexpr std::size_t numSpecies = 5;
+
+    using ReactionType = PSIReaction;
+};
+
+
+class PSIReactionNetwork : public ReactionNetwork<PSIReactionNetwork>
+{
+    using ReactionNetwork<PSIReactionNetwork>::ReactionNetwork;
+};
 }
 }
 
