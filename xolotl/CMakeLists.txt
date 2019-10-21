@@ -23,8 +23,8 @@ PROJECT ( xolotl C CXX )
 # Include the modules to find PETSC, ITAPS, etc. from Jed Brown
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
 
-# xolotl requires some C++11 features.
-set(CMAKE_CXX_STANDARD 11)
+# xolotl requires some C++14 features.
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
