@@ -147,13 +147,13 @@ double AlloyClusterReactionNetwork::computeBindingEnergy(
 			if (reaction.first.getType() == ReactantType::I
 					|| reaction.second.getType() == ReactantType::I) {
 				double n = reaction.dissociating.getSize();
-				bindingEnergy = 3.5
-						- 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0));
+				bindingEnergy = std::max(0.1, 3.5
+						- 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0)));
 			} else if (reaction.first.getType() == ReactantType::V
 					|| reaction.second.getType() == ReactantType::V) {
 				double n = reaction.dissociating.getSize();
-				bindingEnergy = 1.9
-						- 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+				bindingEnergy = std::max(0.1, 1.9
+						- 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0)));
 			}
 		} else if (reaction.dissociating.getType() == ReactantType::Faulted
 				|| reaction.dissociating.getType()
@@ -161,22 +161,22 @@ double AlloyClusterReactionNetwork::computeBindingEnergy(
 			if (reaction.first.getType() == ReactantType::V
 					|| reaction.second.getType() == ReactantType::V) {
 				double n = reaction.dissociating.getSize();
-				bindingEnergy = 1.9
-						- 3.2 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+				bindingEnergy = std::max(0.1, 1.9
+						- 3.2 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0)));
 			}
 		} else if (reaction.dissociating.getType() == ReactantType::V) {
 			if (reaction.first.getType() == ReactantType::V 
 					|| reaction.second.getType() == ReactantType::V) {
 				double n = reaction.dissociating.getSize();
-				bindingEnergy = 1.9 
-						- 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+				bindingEnergy = std::max(0.1, 1.9 
+						- 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0)));
 			}
 		} else if (reaction.dissociating.getType() == ReactantType::I) {
 			if (reaction.first.getType() == ReactantType::I
 					|| reaction.second.getType() == ReactantType::I) {
 				double n = reaction.dissociating.getSize();
-				bindingEnergy = 3.5
-						- 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+				bindingEnergy = std::max(0.1, 3.5
+						- 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0)));
 			}
 		}
 
