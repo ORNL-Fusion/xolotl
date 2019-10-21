@@ -325,7 +325,7 @@ void AlloyClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
 			superCount++;
 //			width = std::max((int) (std::pow((double) superCount, 1.0) / 1.0),
 //					sectionWidth);
-//			width -= width % sectionWidth;
+			width += 1;
 		}
 
 		if (sizeMin < sizeMax) {
