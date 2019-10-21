@@ -490,6 +490,16 @@ public:
 	bool isSuper() const override{
 		return true;
 	}
+	
+	// Voids are considered spheres so set isSphere to true
+	bool isSphere() const override {
+		if (type == ReactantType::VoidSuper) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
 
 };
 //end class AlloySuperCluster
