@@ -36,10 +36,26 @@ public:
         _products(_type == Type::production ?
             Kokkos::Array<std::size_t, 2>({cluster2, cluster3}) :
             Kokkos::Array<std::size_t, 2>({cluster1, cluster2})),
-        _rate(static_cast<TDerived*>(this)->computeRate(network))
+        _rate(static_cast<TDerived*>(this)->computeRate(network)),
+        _coefs("Flux Coefficients", 5, 5, 5)
     {
-        //TODO:
-        //      Compute grouping coefficients
+        using Species = typename TReactionNetwork::Species;
+        //Compute flux coefficients
+        //NOTE: _coefs is allocated 5x5x5 and zero-initialized
+        //      Access with _coefs(i,j,k) with i,j,k in [0,5)
+        //
+        //      Get cluster tile region with, for example (plsm::Region),
+        //      auto clReg = network.getCluster(_reactants[0]).getRegion()
+        //
+        //      Index the region with Species as aliased above (or with
+        //      integers): for example
+        //      auto ival = clReg[Species::V]
+        //      ival represents the half-open interval (plsm::Interval)
+        //      [ ival.begin(), ival.end() )
+        //
+        //      ival.length() is the same as ival.end() - ival.begin()
+        //
+        //TODO
     }
 
     Type
@@ -92,6 +108,9 @@ private:
 
     //! Reaction rate, k
     double _rate {};
+
+    //! Flux coefficients
+    Kokkos::View<double***> _coefs;
 };
 
 

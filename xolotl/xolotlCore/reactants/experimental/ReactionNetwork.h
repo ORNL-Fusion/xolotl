@@ -52,7 +52,13 @@ public:
     }
 
     Cluster
-    get(const Composition& comp);
+    getCluster(const Composition& comp);
+
+    Cluster
+    getCluster(std::size_t clusterId)
+    {
+        return Cluster(*this, clusterId);
+    }
 
     Subpaving&
     getSubpaving()
@@ -62,6 +68,7 @@ public:
 
 private:
     Subpaving _subpaving;
+    Kokkos::View<ReactionType> _reactions;
 };
 
 
@@ -86,7 +93,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(AmountType maxSpeciesAmount)
 
 template <typename TImpl>
 typename ReactionNetwork<TImpl>::Cluster
-ReactionNetwork<TImpl>::get(const Composition& comp)
+ReactionNetwork<TImpl>::getCluster(const Composition& comp)
 {
     Cluster ret(*this, _subpaving.getTileId(comp));
     return ret;

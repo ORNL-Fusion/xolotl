@@ -70,17 +70,24 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
     using NetworkType = experimental::PSIReactionNetwork;
     using Spec = typename NetworkType::Species;
 
-    auto rNetwork = experimental::makeSimpleReactionNetwork<experimental::PSIReactionNetwork>();
+    auto rNetwork =
+        experimental::makeSimpleReactionNetwork<experimental::PSIReactionNetwork>();
     experimental::PSIReactionNetwork::Composition comp{};
     comp[Spec::He] = 3;
     comp[Spec::V] = 2;
     comp[Spec::I] = 0;
-    auto cluster = rNetwork.get(comp);
+    auto cluster = rNetwork.getCluster(comp);
     auto compRegion = cluster.getRegion();
-    BOOST_REQUIRE_EQUAL(cluster.getRegion()[Spec::He].begin(), 3);
-    BOOST_REQUIRE_EQUAL(cluster.getRegion()[Spec::V].begin(), 2);
-    BOOST_REQUIRE_EQUAL(cluster.getRegion()[Spec::I].begin(), 0);
+    BOOST_REQUIRE_EQUAL(compRegion[Spec::He].begin(), 3);
+    BOOST_REQUIRE_EQUAL(compRegion[Spec::V].begin(), 2);
+    BOOST_REQUIRE_EQUAL(compRegion[Spec::I].begin(), 0);
     // BOOST_REQUIRE_EQUAL(cluster.getComposition()[Spec::He], 3);
+
+    cluster = rNetwork.getCluster(0);
+    compRegion = cluster.getRegion();
+    BOOST_REQUIRE_EQUAL(compRegion[Spec::He].begin(), 0);
+    BOOST_REQUIRE_EQUAL(compRegion[Spec::V].begin(), 0);
+    BOOST_REQUIRE_EQUAL(compRegion[Spec::I].begin(), 0);
 
     experimental::PSIReaction r0;
     experimental::PSIReaction r(rNetwork,
