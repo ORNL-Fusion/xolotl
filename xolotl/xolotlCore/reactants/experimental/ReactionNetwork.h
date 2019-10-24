@@ -7,7 +7,6 @@
 #include <plsm/Subpaving.h>
 #include <plsm/refine/RegionDetector.h>
 
-// #include <Species.h>
 #include <experimental/Reaction.h>
 
 namespace xolotlCore
@@ -20,7 +19,6 @@ struct ReactionNetworkTraits
 };
 
 
-// template <std::size_t NumSpecies>
 template <typename TImpl>
 class ReactionNetwork
 {
@@ -95,7 +93,8 @@ template <typename TImpl>
 typename ReactionNetwork<TImpl>::Cluster
 ReactionNetwork<TImpl>::getCluster(const Composition& comp)
 {
-    Cluster ret(*this, _subpaving.getTileId(comp));
+    _subpaving.syncAll(plsm::onHost);
+    Cluster ret(*this, _subpaving.findTileId(comp, plsm::onHost));
     return ret;
 }
 

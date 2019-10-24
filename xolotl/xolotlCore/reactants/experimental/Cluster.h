@@ -19,7 +19,7 @@ public:
     decltype(auto)
     getRegion()
     {
-        return _network->getSubpaving().getTilesOnHost()(_id).getRegion();
+        return _network->getSubpaving().getTiles(plsm::onHost)(_id).getRegion();
     }
 
 private:
