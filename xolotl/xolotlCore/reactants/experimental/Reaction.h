@@ -87,7 +87,7 @@ private:
     double _rate {};
 
     //! Flux coefficients
-    Kokkos::View<double*****> _coefs;
+    Kokkos::View<double****> _coefs;
 };
 
 

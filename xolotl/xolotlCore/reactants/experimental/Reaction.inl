@@ -19,11 +19,12 @@ Reaction<TDerived>::Reaction(TReactionNetwork& network, Type reactionType,
 						cluster2, cluster3 }) :
 											Kokkos::Array<std::size_t, 2>( {
 													cluster1, cluster2 })), _rate(
-				static_cast<TDerived*>(this)->computeRate(network)), _coefs(
-				"Flux Coefficients", 5, 5, 5, 5, 5) {
+				static_cast<TDerived*>(this)->computeRate(network)) {
 	if (_type == Type::production) {
+        _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 5, 3, 5);
 		computeProductionCoefficients(network);
 	} else {
+        _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 1, 3, 5);
 		computeDissociationCoefficients(network);
 	}
 }
@@ -33,22 +34,6 @@ template<typename TReactionNetwork>
 inline void Reaction<TDerived>::computeProductionCoefficients(
 		TReactionNetwork& network) {
 	using Species = typename TReactionNetwork::Species;
-	//Compute flux coefficients
-	//NOTE: _coefs is allocated 5x5x5 and zero-initialized
-	//      Access with _coefs(i,j,k) with i,j,k in [0,5)
-	//
-	//      Get cluster tile region with, for example (plsm::Region),
-	//      auto clReg = network.getCluster(_reactants[0]).getRegion()
-	//
-	//      Index the region with Species as aliased above (or with
-	//      integers): for example
-	//      auto ival = clReg[Species::V]
-	//      ival represents the half-open interval (plsm::Interval)
-	//      [ ival.begin(), ival.end() )
-	//
-	//      ival.length() is the same as ival.end() - ival.begin()
-	//
-	//TODO
 
 	// Find the overlap for this reaction
 	int width[4] = { };
@@ -85,14 +70,14 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 		for (int j = 0; j < 5; j++) {
 			if (i + j == 0) {
 				// The first coefficient is simply the overlap because it is the sum over 1
-				_coefs(i, j, 0, 0, 0) = (double) nOverlap;
+				_coefs(i, j, 0, 0) = (double) nOverlap;
 			}
 
 			else if (j == 0) {
 				// First order sum
 				for (int l = cl2Reg[i - 1].begin(); l < cl2Reg[i - 1].end();
 						l++) {
-					_coefs(i, j, 0, 0, 0) += firstOrderSum(
+					_coefs(i, j, 0, 0) += firstOrderSum(
 							std::max(prodReg[i - 1].begin() - l,
 									cl1Reg[i - 1].begin()),
 							std::min(prodReg[i - 1].end() - 1 - l,
@@ -106,7 +91,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 				// First order sum
 				for (int l = cl1Reg[j - 1].begin(); l < cl1Reg[j - 1].end();
 						l++) {
-					_coefs(i, j, 0, 0, 0) += firstOrderSum(
+					_coefs(i, j, 0, 0) += firstOrderSum(
 							std::max(prodReg[j - 1].begin() - l,
 									cl2Reg[j - 1].begin()),
 							std::min(prodReg[j - 1].end() - 1 - l,
@@ -121,7 +106,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 				if (i == j) {
 					for (int l = cl1Reg[j - 1].begin(); l < cl1Reg[j - 1].end();
 							l++) {
-						_coefs(i, j, 0, 0, 0) += (l
+						_coefs(i, j, 0, 0) += (l
 								- (double) (cl1Reg[j - 1].end() - 1
 										+ cl1Reg[j - 1].begin()) / 2.0)
 								* firstOrderSum(
@@ -133,8 +118,8 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 												+ cl2Reg[j - 1].begin()) / 2.0);
 					}
 				} else {
-					_coefs(i, j, 0, 0, 0) += _coefs(i, 0, 0, 0, 0)
-							* _coefs(0, j, 0, 0, 0) / (double) nOverlap;
+					_coefs(i, j, 0, 0) += _coefs(i, 0, 0, 0)
+							* _coefs(0, j, 0, 0) / (double) nOverlap;
 				}
 			}
 
@@ -146,7 +131,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 					// First order sum
 					for (int l = cl1Reg[k - 1].begin(); l < cl1Reg[k - 1].end();
 							l++) {
-						_coefs(i, j, k, 0, 0) += firstOrderSum(
+						_coefs(i, j, 0, k) += firstOrderSum(
 								std::max(prodReg[k - 1].begin(),
 										cl2Reg[k - 1].begin() + l),
 								std::min(prodReg[k - 1].end() - 1,
@@ -161,7 +146,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 					if (i == k) {
 						for (int l = cl2Reg[i - 1].begin();
 								l < cl2Reg[i - 1].end(); l++) {
-							_coefs(i, j, k, 0, 0) += secondOrderOffsetSum(
+							_coefs(i, j, 0, k) += secondOrderOffsetSum(
 									std::max(prodReg[i - 1].begin() - l,
 											cl1Reg[i - 1].begin()),
 									std::min(prodReg[i - 1].end() - 1 - l,
@@ -172,8 +157,8 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 											+ prodReg[i - 1].begin()) / 2.0, l);
 						}
 					} else {
-						_coefs(i, j, k, 0, 0) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(0, 0, k, 0, 0) / (double) nOverlap;
+						_coefs(i, j, 0, k) += _coefs(i, 0, 0, 0)
+								* _coefs(0, 0, 0, k) / (double) nOverlap;
 					}
 				}
 
@@ -182,7 +167,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 					if (j == k) {
 						for (int l = cl1Reg[j - 1].begin();
 								l < cl1Reg[j - 1].end(); l++) {
-							_coefs(i, j, k, 0, 0) += secondOrderOffsetSum(
+							_coefs(i, j, 0, k) += secondOrderOffsetSum(
 									std::max(prodReg[j - 1].begin() - l,
 											cl2Reg[j - 1].begin()),
 									std::min(prodReg[j - 1].end() - 1 - l,
@@ -193,8 +178,8 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 											+ prodReg[j - 1].begin()) / 2.0, l);
 						}
 					} else {
-						_coefs(i, j, k, 0, 0) += _coefs(0, j, 0, 0, 0)
-								* _coefs(0, 0, k, 0, 0) / (double) nOverlap;
+						_coefs(i, j, 0, k) += _coefs(0, j, 0, 0)
+								* _coefs(0, 0, 0, k) / (double) nOverlap;
 					}
 				}
 
@@ -203,7 +188,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 					if (i == j == k) {
 						for (int l = cl1Reg[i - 1].begin();
 								l < cl1Reg[i - 1].end(); l++) {
-							_coefs(i, j, k, 0, 0) += (l
+							_coefs(i, j, 0, k) += (l
 									- (double) (cl1Reg[i - 1].end() - 1
 											+ cl1Reg[i - 1].begin()) / 2.0)
 									* secondOrderOffsetSum(
@@ -221,15 +206,15 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 													/ 2.0, l);
 						}
 					} else if (j == k) {
-						_coefs(i, j, k, 0, 0) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(0, j, k, 0, 0) / (double) nOverlap;
+						_coefs(i, j, 0, k) += _coefs(i, 0, 0, 0)
+								* _coefs(0, j, 0, k) / (double) nOverlap;
 					} else if (i == k) {
-						_coefs(i, j, k, 0, 0) += _coefs(0, j, 0, 0, 0)
-								* _coefs(i, 0, k, 0, 0) / (double) nOverlap;
+						_coefs(i, j, 0, k) += _coefs(0, j, 0, 0)
+								* _coefs(i, 0, 0, k) / (double) nOverlap;
 					} else {
 						// TODO check this is the right formula, might be divided by nOverlap^2
-						_coefs(i, j, k, 0, 0) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(0, j, 0, 0, 0) * _coefs(0, 0, k, 0, 0)
+						_coefs(i, j, 0, k) += _coefs(i, 0, 0, 0)
+								* _coefs(0, j, 0, 0) * _coefs(0, 0, 0, k)
 								/ (double) nOverlap;
 					}
 				}
@@ -239,7 +224,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 
 				if (i + j == 0) {
 					// Same as from the flux
-					_coefs(i, j, 0, k, 0) += _coefs(k, 0, 0, 0, 0);
+					_coefs(i, j, 1, k) += _coefs(k, 0, 0, 0);
 				}
 
 				else if (j == 0) {
@@ -247,7 +232,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 					if (i == k) {
 						for (int l = cl2Reg[i - 1].begin();
 								l < cl2Reg[i - 1].end(); l++) {
-							_coefs(i, j, 0, k, 0) += secondOrderSum(
+							_coefs(i, j, 1, k) += secondOrderSum(
 									std::max(prodReg[i - 1].begin() - l,
 											cl1Reg[i - 1].begin()),
 									std::min(prodReg[i - 1].end() - 1 - l,
@@ -256,13 +241,13 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 											+ cl1Reg[i - 1].begin()) / 2.0);
 						}
 					} else {
-						_coefs(i, j, 0, k, 0) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(k, 0, 0, 0, 0) / (double) nOverlap;
+						_coefs(i, j, 1, k) += _coefs(i, 0, 0, 0)
+								* _coefs(k, 0, 0, 0) / (double) nOverlap;
 					}
 				}
 
 				else if (i == 0) {
-					_coefs(i, j, 0, k, 0) += _coefs(k, j, 0, 0, 0);
+					_coefs(i, j, 1, k) += _coefs(k, j, 0, 0);
 				}
 
 				else {
@@ -270,7 +255,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 					if (i == j == k) {
 						for (int l = cl1Reg[i - 1].begin();
 								l < cl1Reg[i - 1].end(); l++) {
-							_coefs(i, j, 0, k, 0) += (l
+							_coefs(i, j, 1, k) += (l
 									- (double) (cl1Reg[i - 1].end() - 1
 											+ cl1Reg[i - 1].begin()) / 2.0)
 									* (l
@@ -289,15 +274,15 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 													/ 2.0);
 						}
 					} else if (i == k) {
-						_coefs(i, j, 0, k, 0) += _coefs(0, j, 0, 0, 0)
-								* _coefs(i, 0, 0, k, 0) / (double) nOverlap;
+						_coefs(i, j, 1, k) += _coefs(0, j, 0, 0)
+								* _coefs(i, 0, 1, k) / (double) nOverlap;
 					} else if (j == k) {
-						_coefs(i, j, 0, k, 0) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(0, j, 0, k, 0) / (double) nOverlap;
+						_coefs(i, j, 1, k) += _coefs(i, 0, 0, 0)
+								* _coefs(0, j, 1, k) / (double) nOverlap;
 					} else {
 						// TODO check this is the right formula, might be divided by nOverlap^2
-						_coefs(i, j, 0, k, 0) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(0, j, 0, 0, 0) * _coefs(k, 0, 0, 0, 0)
+						_coefs(i, j, 1, k) += _coefs(i, 0, 0, 0)
+								* _coefs(0, j, 0, 0) * _coefs(k, 0, 0, 0)
 								/ (double) nOverlap;
 					}
 				}
@@ -308,7 +293,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 
 				if (i + j == 0) {
 					// Same as from the flux
-					_coefs(i, j, 0, 0, k) += _coefs(0, k, 0, 0, 0);
+					_coefs(i, j, 2, k) += _coefs(0, k, 0, 0);
 				}
 
 				else if (i == 0) {
@@ -316,7 +301,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 					if (j == k) {
 						for (int l = cl1Reg[j - 1].begin();
 								l < cl1Reg[j - 1].end(); l++) {
-							_coefs(i, j, 0, 0, k) += secondOrderSum(
+							_coefs(i, j, 2, k) += secondOrderSum(
 									std::max(prodReg[j - 1].begin() - l,
 											cl2Reg[j - 1].begin()),
 									std::min(prodReg[j - 1].end() - 1 - l,
@@ -325,13 +310,13 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 											+ cl2Reg[j - 1].begin()) / 2.0);
 						}
 					} else {
-						_coefs(i, j, 0, 0, k) += _coefs(0, j, 0, 0, 0)
-								* _coefs(0, k, 0, 0, 0) / (double) nOverlap;
+						_coefs(i, j, 2, k) += _coefs(0, j, 0, 0)
+								* _coefs(0, k, 0, 0) / (double) nOverlap;
 					}
 				}
 
 				else if (j == 0) {
-					_coefs(i, j, 0, 0, k) += _coefs(i, k, 0, 0, 0);
+					_coefs(i, j, 2, k) += _coefs(i, k, 0, 0);
 				}
 
 				else {
@@ -339,7 +324,7 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 					if (i == j == k) {
 						for (int l = cl2Reg[i - 1].begin();
 								l < cl2Reg[i - 1].end(); l++) {
-							_coefs(i, j, 0, 0, k) += (l
+							_coefs(i, j, 2, k) += (l
 									- (double) (cl2Reg[i - 1].end() - 1
 											+ cl2Reg[i - 1].begin()) / 2.0)
 									* (l
@@ -358,15 +343,15 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
 													/ 2.0);
 						}
 					} else if (i == k) {
-						_coefs(i, j, 0, 0, k) += _coefs(0, j, 0, 0, 0)
-								* _coefs(i, 0, 0, 0, k) / (double) nOverlap;
+						_coefs(i, j, 2, k) += _coefs(0, j, 0, 0)
+								* _coefs(i, 0, 2, k) / (double) nOverlap;
 					} else if (j == k) {
-						_coefs(i, j, 0, 0, k) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(0, j, 0, 0, k) / (double) nOverlap;
+						_coefs(i, j, 2, k) += _coefs(i, 0, 0, 0)
+								* _coefs(0, j, 2, k) / (double) nOverlap;
 					} else {
 						// TODO check this is the right formula, might be divided by nOverlap^2
-						_coefs(i, j, 0, 0, k) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(0, j, 0, 0, 0) * _coefs(0, k, 0, 0, 0)
+						_coefs(i, j, 2, k) += _coefs(i, 0, 0, 0)
+								* _coefs(0, j, 0, 0) * _coefs(0, k, 0, 0)
 								/ (double) nOverlap;
 					}
 				}
@@ -414,14 +399,14 @@ inline void Reaction<TDerived>::computeDissociationCoefficients(
 		for (int i = 0; i < 5; i++) {
 			if (i == 0) {
 				// The first coefficient is simply the overlap because it is the sum over 1
-				_coefs(i, 0, 0, 0, 0) = (double) nOverlap;
+				_coefs(i, 0, 0, 0) = (double) nOverlap;
 			}
 
 			else {
 				// First order sum
 				for (int l = prod1Reg[i - 1].begin(); l < prod1Reg[i - 1].end();
 						l++) {
-					_coefs(i, 0, 0, 0, 0) += firstOrderSum(
+					_coefs(i, 0, 0, 0) += firstOrderSum(
 							std::max(clReg[i - 1].begin(),
 									prod2Reg[i - 1].begin() + l),
 							std::min(clReg[i - 1].end() - 1,
@@ -437,13 +422,13 @@ inline void Reaction<TDerived>::computeDissociationCoefficients(
 
 				if (i == 0) {
 					// Same as for the flux
-					_coefs(i, k, 0, 0, 0) += _coefs(k, 0, 0, 0, 0);
+					_coefs(i, 0, 0, k) += _coefs(k, 0, 0, 0);
 				} else {
 					// Second order sum
 					if (i == k) {
 						for (int l = prod1Reg[i - 1].begin();
 								l < prod1Reg[i - 1].end(); l++) {
-							_coefs(i, k, 0, 0, 0) += secondOrderSum(
+							_coefs(i, 0, 0, k) += secondOrderSum(
 									std::max(clReg[i - 1].begin(),
 											prod2Reg[i - 1].begin() + l),
 									std::min(clReg[i - 1].end() - 1,
@@ -452,8 +437,8 @@ inline void Reaction<TDerived>::computeDissociationCoefficients(
 											+ clReg[i - 1].begin()) / 2.0);
 						}
 					} else {
-						_coefs(i, k, 0, 0, 0) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(k, 0, 0, 0, 0) / (double) nOverlap;
+						_coefs(i, 0, 0, k) += _coefs(i, 0, 0, 0)
+								* _coefs(k, 0, 0, 0) / (double) nOverlap;
 					}
 				}
 			}
@@ -465,7 +450,7 @@ inline void Reaction<TDerived>::computeDissociationCoefficients(
 					// First order sum
 					for (int l = prod2Reg[k - 1].begin();
 							l < prod2Reg[k - 1].end(); l++) {
-						_coefs(i, 0, k, 0, 0) += firstOrderSum(
+						_coefs(i, 0, 1, k) += firstOrderSum(
 								std::max(clReg[k - 1].begin() - l,
 										prod1Reg[k - 1].begin()),
 								std::min(clReg[k - 1].end() - 1 - l,
@@ -478,7 +463,7 @@ inline void Reaction<TDerived>::computeDissociationCoefficients(
 					if (i == k) {
 						for (int l = prod2Reg[i - 1].begin();
 								l < prod2Reg[i - 1].end(); l++) {
-							_coefs(i, 0, k, 0, 0) += secondOrderOffsetSum(
+							_coefs(i, 0, 1, k) += secondOrderOffsetSum(
 									std::max(clReg[i - 1].begin(),
 											prod1Reg[i - 1].begin() + l),
 									std::min(clReg[i - 1].end() - 1,
@@ -490,8 +475,8 @@ inline void Reaction<TDerived>::computeDissociationCoefficients(
 									-l);
 						}
 					} else {
-						_coefs(i, 0, k, 0, 0) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(0, 0, k, 0, 0) / (double) nOverlap;
+						_coefs(i, 0, 1, k) += _coefs(i, 0, 0, 0)
+								* _coefs(0, 0, 1, k) / (double) nOverlap;
 					}
 				}
 			}
@@ -503,7 +488,7 @@ inline void Reaction<TDerived>::computeDissociationCoefficients(
 					// First order sum
 					for (int l = prod1Reg[k - 1].begin();
 							l < prod1Reg[k - 1].end(); l++) {
-						_coefs(i, 0, 0, k, 0) += firstOrderSum(
+						_coefs(i, 0, 2, k) += firstOrderSum(
 								std::max(clReg[k - 1].begin() - l,
 										prod2Reg[k - 1].begin()),
 								std::min(clReg[k - 1].end() - 1 - l,
@@ -516,7 +501,7 @@ inline void Reaction<TDerived>::computeDissociationCoefficients(
 					if (i == k) {
 						for (int l = prod1Reg[i - 1].begin();
 								l < prod1Reg[i - 1].end(); l++) {
-							_coefs(i, 0, 0, k, 0) += secondOrderOffsetSum(
+							_coefs(i, 0, 2, k) += secondOrderOffsetSum(
 									std::max(clReg[i - 1].begin(),
 											prod2Reg[i - 1].begin() + l),
 									std::min(clReg[i - 1].end() - 1,
@@ -528,8 +513,8 @@ inline void Reaction<TDerived>::computeDissociationCoefficients(
 									-l);
 						}
 					} else {
-						_coefs(i, 0, 0, k, 0) += _coefs(i, 0, 0, 0, 0)
-								* _coefs(0, 0, 0, k, 0) / (double) nOverlap;
+						_coefs(i, 0, 2, k) += _coefs(i, 0, 0, 0)
+								* _coefs(0, 0, 2, k) / (double) nOverlap;
 					}
 				}
 			}

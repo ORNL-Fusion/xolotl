@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
     auto rNetwork =
         experimental::makeSimpleReactionNetwork<experimental::PSIReactionNetwork>();
-    experimental::PSIReactionNetwork::Composition comp{};
+    typename experimental::PSIReactionNetwork::Composition comp{};
     comp[Spec::He] = 3;
     comp[Spec::V] = 2;
     comp[Spec::I] = 0;

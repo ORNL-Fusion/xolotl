@@ -8,6 +8,7 @@
 #include <plsm/refine/RegionDetector.h>
 
 #include <experimental/Reaction.h>
+#include <experimental/SequencedEnumBase.h>
 
 namespace xolotlCore
 {
@@ -128,8 +129,23 @@ struct ReactionNetworkTraits<PSIReactionNetwork>
         I,
         He,
         D,
-        T
+        T,
+        first = V,
+        last = T
     };
+
+
+    // struct Species : SequencedEnumBase<Species, 5>
+    // {
+    //     using S = SequencedEnumBase<Species, 5>;
+    //     using S::S;
+
+    //     static constexpr S He{0};
+    //     static constexpr S D{1};
+    //     static constexpr S T{2};
+    //     static constexpr S V{3};
+    //     static constexpr S I{4};
+    // };
 
     static constexpr std::size_t numSpecies = 5;
 
