@@ -1,0 +1,269 @@
+#pragma once
+
+namespace xolotlCore
+{
+namespace experimental
+{
+template <typename TEnum, std::size_t N>
+struct EnumSequence
+{
+    using Enum = TEnum;
+    static_assert(std::is_enum<Enum>::value, "");
+    using Rep = std::underlying_type_t<Enum>;
+    // static_assert(std::is_signed<Rep>::value, ""); // maybe ?
+
+    constexpr
+    EnumSequence(Enum val)
+        :
+        value{val}
+    {
+    }
+
+    constexpr
+    operator Enum() const noexcept
+    {
+        return value;
+    }
+
+    constexpr
+    Rep
+    operator()() const noexcept
+    {
+        return static_cast<Rep>(value);
+    }
+
+    static
+    constexpr std::size_t
+    size() noexcept
+    {
+        return N;
+    }
+
+    static constexpr
+    EnumSequence
+    first() noexcept
+    {
+        return static_cast<Enum>(0);
+    }
+
+    static constexpr
+    EnumSequence
+    last() noexcept
+    {
+        return static_cast<Enum>(N - 1);
+    }
+
+    static constexpr
+    Enum
+    invalid() noexcept
+    {
+        return static_cast<Enum>(-1);
+    }
+
+    //TODO: Should these wrap?
+    EnumSequence&
+    operator++()
+    {
+        value = static_cast<Enum>(static_cast<Rep>(value) + 1);
+        return *this;
+    }
+
+    EnumSequence
+    operator++(int)
+    {
+        ++static_cast<Rep&>(value);
+        return *this;
+    }
+
+    Enum value;
+};
+
+
+template <typename T, std::size_t N>
+inline
+constexpr EnumSequence<T, N>
+operator+(EnumSequence<T, N> a, EnumSequence<T, N> b)
+{
+    using Rep = typename EnumSequence<T, N>::Rep;
+    return static_cast<Rep>(a.value) + static_cast<Rep>(b.value);
+}
+
+
+template <typename T, std::size_t N>
+inline
+constexpr EnumSequence<T, N>
+operator+(EnumSequence<T, N> a, typename EnumSequence<T, N>::Rep b)
+{
+    using Rep = typename EnumSequence<T, N>::Rep;
+    return static_cast<T>(static_cast<Rep>(a.value) + b);
+}
+
+
+template <typename T, std::size_t N>
+inline
+constexpr EnumSequence<T, N>
+operator-(EnumSequence<T, N> a, EnumSequence<T, N> b)
+{
+    using Rep = typename EnumSequence<T, N>::Rep;
+    return static_cast<T>(
+        static_cast<Rep>(a.value) - static_cast<Rep>(b.value));
+}
+
+
+template <typename T, std::size_t N>
+inline
+constexpr EnumSequence<T, N>
+operator-(EnumSequence<T, N> a, typename EnumSequence<T, N>::Rep b)
+{
+    using Rep = typename EnumSequence<T, N>::Rep;
+    return static_cast<T>(static_cast<Rep>(a.value) - b);
+}
+
+
+template <typename T, std::size_t N>
+inline
+constexpr bool
+operator<(EnumSequence<T, N> a, EnumSequence<T, N> b)
+{
+    return a.value < b.value;
+}
+
+
+template <typename T, std::size_t N>
+inline
+constexpr bool
+operator<=(EnumSequence<T, N> a, EnumSequence<T, N> b)
+{
+    return a.value <= b.value;
+}
+
+
+template <typename T, std::size_t N>
+inline
+constexpr bool
+operator>(EnumSequence<T, N> a, EnumSequence<T, N> b)
+{
+    return a.value > b.value;
+}
+
+
+template <typename T, std::size_t N>
+inline
+constexpr bool
+operator>=(EnumSequence<T, N> a, EnumSequence<T, N> b)
+{
+    return a.value >= b.value;
+}
+
+
+template <typename TEnum, std::size_t N>
+class EnumSequenceRange
+{
+public:
+    using Enum = TEnum;
+    using Sequence = EnumSequence<Enum, N>;
+
+    class Iterator
+    {
+    public:
+        // using difference_type = Sequence;
+        using value_type = Sequence;
+        using reference = const Sequence&;
+
+        explicit
+        Iterator(Sequence seq) noexcept
+            :
+            _curr{seq}
+        {
+        }
+
+        constexpr reference
+        operator*() const noexcept
+        {
+            return _curr;
+        }
+
+        Iterator&
+        operator++() noexcept
+        {
+            ++_curr;
+            return *this;
+        }
+
+        constexpr bool
+        operator==(Iterator other) const noexcept
+        {
+            return _curr == other._curr;
+        }
+
+        constexpr bool
+        operator!=(Iterator other) const noexcept
+        {
+            return !((*this) == other);
+        }
+
+    private:
+        Sequence _curr;
+    };
+
+    constexpr
+    EnumSequenceRange()
+    {
+    }
+
+    explicit
+    constexpr
+    EnumSequenceRange(Sequence first, Sequence last)
+        :
+        _first{first},
+        _last{last}
+    {
+    }
+
+    constexpr Iterator
+    begin() const noexcept
+    {
+        return Iterator{_first};
+    }
+
+    constexpr Iterator
+    end() const noexcept
+    {
+        return Iterator{_last+1};
+    }
+
+private:
+    Sequence _first {Sequence::first()};
+    Sequence _last {Sequence::last()};
+};
+
+
+template <typename TSpeciesEnum>
+struct hasInterstitial : std::false_type { };
+
+
+template <typename TSpeciesEnum, std::size_t N>
+class SpeciesEnumSequence : public EnumSequence<TSpeciesEnum, N>
+{
+public:
+    using Sequence = EnumSequence<TSpeciesEnum, N>;
+
+    using Sequence::Sequence;
+
+    static
+    constexpr std::size_t
+    sizeNoI() noexcept
+    {
+        return hasInterstitial<TSpeciesEnum>::value ? N - 1 : N;
+    }
+
+    static
+    constexpr Sequence
+    lastNoI() noexcept
+    {
+        return hasInterstitial<TSpeciesEnum>::value ?
+            Sequence::last() - 1 : Sequence::last();
+    }
+};
+}
+}

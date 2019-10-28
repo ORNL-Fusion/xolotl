@@ -8,7 +8,7 @@
 #include <plsm/refine/RegionDetector.h>
 
 #include <experimental/Reaction.h>
-#include <experimental/SequencedEnumBase.h>
+#include <experimental/EnumSequence.h>
 
 namespace xolotlCore
 {
@@ -25,12 +25,14 @@ class ReactionNetwork
 {
 public:
     using Traits = ReactionNetworkTraits<TImpl>;
+    using Species = typename Traits::Species;
 
 private:
     static constexpr std::size_t numSpecies = Traits::numSpecies;
 
 public:
-    using Species = typename Traits::Species;
+    using SpeciesSequence = SpeciesEnumSequence<Species, numSpecies>;
+    using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
     using ReactionType = typename Traits::ReactionType;
     using AmountType = std::uint32_t;
     using Subpaving = plsm::Subpaving<AmountType, numSpecies, Species>;
@@ -48,6 +50,28 @@ public:
     getNumberOfSpecies() noexcept
     {
         return numSpecies;
+    }
+
+    static
+    constexpr std::size_t
+    getNumberOfSpeciesNoI() noexcept
+    {
+        return SpeciesSequence::sizeNoI();
+    }
+
+    static
+    constexpr SpeciesRange
+    getSpeciesRange() noexcept
+    {
+        return SpeciesRange{};
+    }
+
+    static
+    constexpr SpeciesRange
+    getSpeciesRangeNoI() noexcept
+    {
+        return
+            SpeciesRange(SpeciesSequence::first(), SpeciesSequence::lastNoI());
     }
 
     Cluster
@@ -117,35 +141,28 @@ makeSimpleReactionNetwork(
 }
 
 
+template <typename TSpeciesEnum>
 class PSIReactionNetwork;
 
 
-template <>
-struct ReactionNetworkTraits<PSIReactionNetwork>
+enum class PSIFullSpeciesList
 {
-    enum class Species
-    {
-        V,
-        I,
-        He,
-        D,
-        T,
-        first = V,
-        last = T
-    };
+    He,
+    D,
+    T,
+    V,
+    I
+};
 
 
-    // struct Species : SequencedEnumBase<Species, 5>
-    // {
-    //     using S = SequencedEnumBase<Species, 5>;
-    //     using S::S;
+template <>
+struct hasInterstitial<PSIFullSpeciesList> : std::true_type { };
 
-    //     static constexpr S He{0};
-    //     static constexpr S D{1};
-    //     static constexpr S T{2};
-    //     static constexpr S V{3};
-    //     static constexpr S I{4};
-    // };
+
+template <typename TSpeciesEnum>
+struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
+{
+    using Species = TSpeciesEnum;
 
     static constexpr std::size_t numSpecies = 5;
 
@@ -153,9 +170,12 @@ struct ReactionNetworkTraits<PSIReactionNetwork>
 };
 
 
-class PSIReactionNetwork : public ReactionNetwork<PSIReactionNetwork>
+template <typename TSpeciesEnum>
+class PSIReactionNetwork :
+    public ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
 {
-    using ReactionNetwork<PSIReactionNetwork>::ReactionNetwork;
+public:
+    using ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>::ReactionNetwork;
 };
 }
 }

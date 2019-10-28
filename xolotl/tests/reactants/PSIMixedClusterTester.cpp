@@ -67,12 +67,12 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
 
-    using NetworkType = experimental::PSIReactionNetwork;
+    using NetworkType =
+        experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
     using Spec = typename NetworkType::Species;
 
-    auto rNetwork =
-        experimental::makeSimpleReactionNetwork<experimental::PSIReactionNetwork>();
-    typename experimental::PSIReactionNetwork::Composition comp{};
+    auto rNetwork = experimental::makeSimpleReactionNetwork<NetworkType>();
+    typename NetworkType::Composition comp{};
     comp[Spec::He] = 3;
     comp[Spec::V] = 2;
     comp[Spec::I] = 0;
