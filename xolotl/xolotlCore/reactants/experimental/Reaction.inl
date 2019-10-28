@@ -1,5 +1,10 @@
 #pragma once
 
+#include <algorithm>
+#include <array>
+
+#include <plsm/EnumIndexed.h>
+
 namespace xolotlCore {
 namespace experimental {
 template<typename TDerived>
@@ -49,13 +54,17 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
     AmountType nOverlapProduct = 1;
     // Loop on the phase space
     for (auto i : speciesRangeNoI) {
-        // The width is the subset of the tiles for which the reaction is possible
+        // The width is the subset of the tiles for which the
+        // reaction is possible
         // For instance if we have X_1 + X_[3,5) -> X_[5,7)
-        // It is only possible for 4 within X_[3,5) and 5 within X_[5,7) so the width is 1
+        // It is only possible for 4 within X_[3,5) and 5 within X_[5,7)
+        // so the width is 1
         // More complicated with X_[3,5) + X_[5,7) -> X_[9,11)
         // 3+6, 4+5, 4+6, width is 3
         width[i] = 0;
-        // Loop on the interval of reactant_1 (it would be great if it could be the one with the smallest tile of the two)
+
+        // Loop on the interval of reactant_1 (it would be great if it
+        // could be the one with the smallest tile of the two)
         for (auto j : makeIntervalRange(cl1Reg[i])) {
             width[i] += std::min(prodReg[i].end() - 1, cl2Reg[i].end() - 1 + j)
                     - std::max(prodReg[i].begin(), cl2Reg[i].begin() + j) + 1;
@@ -163,9 +172,12 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
         }
     }
 
-    // Now we loop over the 2 dimensions of the coefs to compute all the possible sums over distances for the flux
-    // The first index represents the first reactant, the second one is the second reactant
-    // 0 is the 0th order, 1, 2, 3, 4, are the distances in the He, D, T, V directions (TODO make sure the order is correct)
+    // Now we loop over the 2 dimensions of the coefs to compute all
+    // the possible sums over distances for the flux
+    // The first index represents the first reactant,
+    // the second one is the second reactant
+    // 0 is the 0th order, 1, 2, 3, 4, are the distances in the
+    // He, D, T, V directions (TODO make sure the order is correct)
     for (auto i : speciesRangeNoI) {
         for (auto j : speciesRangeNoI) {
             // Second order sum
@@ -188,7 +200,8 @@ inline void Reaction<TDerived>::computeProductionCoefficients(
                         * _coefs(0, j()+1, 0, 0) / nOverlap;
             }
 
-            // Now we deal with the coefficients needed for the partial derivatives
+            // Now we deal with the coefficients needed for the
+            // partial derivatives
             // Let's start with the product
             for (auto k : speciesRangeNoI) {
                 // Third order sum

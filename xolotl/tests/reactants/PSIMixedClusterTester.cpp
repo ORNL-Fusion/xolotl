@@ -13,7 +13,7 @@
 #include <math.h>
 #include <limits>
 
-#include <experimental/ReactionNetwork.h>
+#include <experimental/PSIReactionNetwork.h>
 
 using namespace std;
 using namespace xolotlCore;

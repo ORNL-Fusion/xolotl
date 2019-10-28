@@ -1,5 +1,9 @@
 #pragma once
 
+#include <Kokkos_Core.hpp>
+
+#include <plsm/detail/KokkosExtension.h>
+#include <plsm/Utility.h>
 
 namespace xolotlCore
 {
@@ -88,20 +92,6 @@ private:
 
     //! Flux coefficients
     Kokkos::View<double****> _coefs;
-};
-
-
-class PSIReaction : public Reaction<PSIReaction>
-{
-public:
-    using Reaction<PSIReaction>::Reaction;
-
-    template <typename TReactionNetwork>
-    double
-    computeRate(TReactionNetwork& network)
-    {
-        return 1.0;
-    }
 };
 }
 }

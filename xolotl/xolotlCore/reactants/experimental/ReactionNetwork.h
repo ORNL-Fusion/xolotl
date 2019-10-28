@@ -43,6 +43,9 @@ public:
     class Cluster;
 
     ReactionNetwork() = delete;
+
+    //TODO: Need a more versatile constructor interface
+    //      (and probably don't need the 'make' function)
     ReactionNetwork(AmountType maxSpeciesAmount);
 
     static
@@ -70,8 +73,8 @@ public:
     constexpr SpeciesRange
     getSpeciesRangeNoI() noexcept
     {
-        return
-            SpeciesRange(SpeciesSequence::first(), SpeciesSequence::lastNoI());
+        return SpeciesRange(SpeciesSequence::first(),
+            SpeciesSequence::lastNoI());
     }
 
     Cluster
@@ -89,39 +92,16 @@ public:
         return _subpaving;
     }
 
+    void
+    defineMomentIds();
+
 private:
     Subpaving _subpaving;
-    Kokkos::View<ReactionType> _reactions;
+
+    Kokkos::View<std::size_t*[4]> _momentIds;
+
+    Kokkos::View<ReactionType*> _reactions;
 };
-
-
-template <typename TImpl>
-ReactionNetwork<TImpl>::ReactionNetwork(AmountType maxSpeciesAmount)
-    :
-    _subpaving(Region{{
-        Ival{0, maxSpeciesAmount+1},
-        Ival{0, maxSpeciesAmount+1},
-        Ival{0, maxSpeciesAmount+1},
-        Ival{0, maxSpeciesAmount+1},
-        Ival{0, maxSpeciesAmount+1}}},
-    {{{
-        maxSpeciesAmount+1,
-        maxSpeciesAmount+1,
-        maxSpeciesAmount+1,
-        maxSpeciesAmount+1,
-        maxSpeciesAmount+1}}})
-{
-}
-
-
-template <typename TImpl>
-typename ReactionNetwork<TImpl>::Cluster
-ReactionNetwork<TImpl>::getCluster(const Composition& comp)
-{
-    _subpaving.syncAll(plsm::onHost);
-    Cluster ret(*this, _subpaving.findTileId(comp, plsm::onHost));
-    return ret;
-}
 
 
 template <typename TReactionNetwork>
@@ -137,47 +117,12 @@ makeSimpleReactionNetwork(
         plsm::refine::RegionDetector<AmountType, numSpecies, plsm::Select>{
             network.getSubpaving().getLatticeRegion()});
 
+    network.defineMomentIds();
+
     return network;
 }
-
-
-template <typename TSpeciesEnum>
-class PSIReactionNetwork;
-
-
-enum class PSIFullSpeciesList
-{
-    He,
-    D,
-    T,
-    V,
-    I
-};
-
-
-template <>
-struct hasInterstitial<PSIFullSpeciesList> : std::true_type { };
-
-
-template <typename TSpeciesEnum>
-struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
-{
-    using Species = TSpeciesEnum;
-
-    static constexpr std::size_t numSpecies = 5;
-
-    using ReactionType = PSIReaction;
-};
-
-
-template <typename TSpeciesEnum>
-class PSIReactionNetwork :
-    public ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
-{
-public:
-    using ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>::ReactionNetwork;
-};
 }
 }
 
+#include <experimental/ReactionNetwork.inl>
 #include <experimental/Cluster.h>
