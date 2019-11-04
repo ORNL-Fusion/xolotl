@@ -99,6 +99,8 @@ private:
     Subpaving _subpaving;
 
     Kokkos::View<std::size_t*[4]> _momentIds;
+    Kokkos::View<double*> _reactionRadius;
+    Kokkos::View<double**> _diffusionCoefficient;
 
     Kokkos::View<ReactionType*> _reactions;
 };
