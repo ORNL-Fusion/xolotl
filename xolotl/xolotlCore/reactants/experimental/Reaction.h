@@ -31,14 +31,6 @@ public:
         std::size_t cluster0, std::size_t cluster1,
         std::size_t cluster2 = invalid, std::size_t cluster3 = invalid);
 
-    template <typename TReactionNetwork>
-    void
-    computeProductionCoefficients(TReactionNetwork& network);
-
-    template <typename TReactionNetwork>
-    void
-    computeDissociationCoefficients(TReactionNetwork& network);
-
     Type
     getType() const noexcept
     {
@@ -74,6 +66,19 @@ public:
     {
         ((*this).*(_fluxFn))(concentrations, fluxes);
     }
+
+private:
+    template <typename TCluster>
+    typename TCluster::NetworkType::AmountType
+    computeOverlap(TCluster singleCl, TCluster pairCl1, TCluster pairCl2);
+
+    template <typename TReactionNetwork>
+    void
+    computeProductionCoefficients(TReactionNetwork& network);
+
+    template <typename TReactionNetwork>
+    void
+    computeDissociationCoefficients(TReactionNetwork& network);
 
 private:
     Type _type {};

@@ -8,6 +8,8 @@ template <typename TImpl>
 class ReactionNetwork<TImpl>::Cluster
 {
 public:
+    using NetworkType = ReactionNetwork<TImpl>;
+
     Cluster() = delete;
     Cluster(ReactionNetwork& network, std::size_t id)
         :
