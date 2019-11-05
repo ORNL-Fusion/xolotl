@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
     comp[Spec::He] = 3;
     comp[Spec::V] = 2;
     comp[Spec::I] = 0;
-    auto cluster = rNetwork.getCluster(comp);
+    auto cluster = rNetwork.findCluster(comp);
     auto compRegion = cluster.getRegion();
     BOOST_REQUIRE_EQUAL(compRegion[Spec::He].begin(), 3);
     BOOST_REQUIRE_EQUAL(compRegion[Spec::V].begin(), 2);

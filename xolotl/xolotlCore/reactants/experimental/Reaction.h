@@ -80,6 +80,22 @@ private:
     void
     computeDissociationCoefficients(TReactionNetwork& network);
 
+    template <typename TReactionNetwork>
+    void
+    copyMomentIds(std::size_t clusterId, TReactionNetwork& network,
+        Kokkos::Array<std::size_t, 4>& momentIds)
+    {
+        if (clusterId == invalid) {
+            momentIds = {invalid, invalid, invalid, invalid};
+            return;
+        }
+
+        const auto& mIds = network.getMomentIds(clusterId);
+        for (std::size_t i = 0; i < 4; ++i) {
+            momentIds[i] = mIds[i];
+        }
+    }
+
 private:
     Type _type {};
 
@@ -91,6 +107,9 @@ private:
     //Production reactions always have 2 inputs, but may have 0, 1, or 2 outputs
     Kokkos::Array<std::size_t, 2> _reactants {invalid, invalid};
     Kokkos::Array<std::size_t, 2> _products {invalid, invalid};
+
+    Kokkos::Array<Kokkos::Array<std::size_t, 4>, 2> _reactantMomentIds;
+    Kokkos::Array<Kokkos::Array<std::size_t, 4>, 2> _productMomentIds;
 
     //! Reaction rate, k
     double _rate {};

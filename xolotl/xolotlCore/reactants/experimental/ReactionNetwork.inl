@@ -24,20 +24,11 @@ ReactionNetwork<TImpl>::ReactionNetwork(AmountType maxSpeciesAmount)
 
 
 template <typename TImpl>
-typename ReactionNetwork<TImpl>::Cluster
-ReactionNetwork<TImpl>::getCluster(const Composition& comp)
-{
-    _subpaving.syncAll(plsm::onHost);
-    Cluster ret(*this, _subpaving.findTileId(comp, plsm::onHost));
-    return ret;
-}
-
-
-template <typename TImpl>
 void
 ReactionNetwork<TImpl>::defineMomentIds()
 {
     constexpr auto invalid = plsm::invalid<std::size_t>;
+
     _subpaving.syncAll(plsm::onHost);
     auto tiles = _subpaving.getTiles(plsm::onHost);
     auto nClusters = _subpaving.getNumberOfTiles(plsm::onHost);

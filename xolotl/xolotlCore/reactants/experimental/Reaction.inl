@@ -27,6 +27,11 @@ Reaction<TDerived>::Reaction(TReactionNetwork& network, Type reactionType,
         cluster2})),
     _rate(static_cast<TDerived*>(this)->computeRate(network))
 {
+    for (std::size_t i : {0, 1}) {
+        copyMomentIds(_reactants[i], network, _reactantMomentIds[i]);
+        copyMomentIds(_products[i], network, _productMomentIds[i]);
+    }
+
     if (_type == Type::production) {
         //TODO: Vary third extent based number of valid products
         _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 5, 3, 5);

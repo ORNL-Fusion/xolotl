@@ -78,7 +78,11 @@ public:
     }
 
     Cluster
-    getCluster(const Composition& comp);
+    findCluster(const Composition& comp)
+    {
+        _subpaving.syncAll(plsm::onHost);
+        return Cluster(*this, _subpaving.findTileId(comp, plsm::onHost));
+    }
 
     Cluster
     getCluster(std::size_t clusterId)
@@ -90,6 +94,12 @@ public:
     getSubpaving()
     {
         return _subpaving;
+    }
+
+    decltype(auto)
+    getMomentIds(std::size_t clusterId)
+    {
+        return Kokkos::subview(_momentIds, clusterId, Kokkos::ALL);
     }
 
     void
