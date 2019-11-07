@@ -483,6 +483,15 @@ public:
 	}
 
 	/**
+	 * This operation returns the average number of clusters it contains.
+	 *
+	 * @return The average number of clusters
+	 */
+	 double getAverage() const {
+		 return numAtom;
+	 }
+	
+	/**
 	 * This operation returns true if the cluster is a super cluster.
 	 *
 	 * @return True
