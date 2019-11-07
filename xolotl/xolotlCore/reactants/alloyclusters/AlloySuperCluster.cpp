@@ -18,17 +18,18 @@ AlloySuperCluster::AlloySuperCluster(int numMax, int nTot,
 				0.0) {
 	// Initialize the dispersion sum
 	double nAtomSquare = 0.0;
+	double iSum = 0.0;
 	reactionRadius = 0.0, formationEnergy = 0.0;
 	// Loop on the contained size
 	for (int i = numMax; i > numMax - nTot; i--) {
-		size += i;
+		iSum += (double) i;
 		reactionRadius += _network.getReactionRadius(typeName, i);
 		formationEnergy += _network.getFormationEnergy(typeName, i);
 		nAtomSquare += (double) i * i;
 	}
 
 	// Set the cluster sizes
-	numAtom = (double) size / (double) nTot;
+	numAtom = iSum / (double) nTot;
 	size = (int) numAtom;
 	reactionRadius = reactionRadius / (double) nTot;
 	formationEnergy = formationEnergy / (double) nTot;
