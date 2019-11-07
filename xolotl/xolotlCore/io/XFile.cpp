@@ -409,7 +409,7 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 		Attribute<decltype(nTot)> nTotAttr(*this, nTotAttrName, scalarDSpace);
 		nTotAttr.setTo(nTot);
 		// Add a numAtom attribute.
-		int numAtom = currCluster.getSize()
+		int numAtom = currCluster.getAverage()
 				+ (double) (nTot - 1) / 2.0;
 		Attribute<decltype(numAtom)> numAtomAttr(*this, numAtomAttrName,
 				scalarDSpace);
