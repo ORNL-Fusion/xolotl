@@ -9,6 +9,7 @@ class ReactionNetwork<TImpl>::Cluster
 {
 public:
     using NetworkType = ReactionNetwork<TImpl>;
+    using Region = typename NetworkType::Region;
 
     Cluster() = delete;
     Cluster(ReactionNetwork& network, std::size_t id)
@@ -18,10 +19,17 @@ public:
     {
     }
 
-    decltype(auto)
+    Region
     getRegion()
     {
+        //FIXME: explicitly using host space
         return _network->getSubpaving().getTiles(plsm::onHost)(_id).getRegion();
+    }
+
+    double
+    getReactionRadius()
+    {
+        return _network->getReactionRadius(_id);
     }
 
 private:

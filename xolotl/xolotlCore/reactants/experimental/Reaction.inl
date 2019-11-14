@@ -5,15 +5,17 @@
 
 #include <plsm/EnumIndexed.h>
 
+#include <Constants.h>
+
 namespace xolotlCore
 {
 namespace experimental
 {
 template <typename TDerived>
 template <typename TReactionNetwork>
-Reaction<TDerived>::Reaction(TReactionNetwork& network, Type reactionType,
-    std::size_t cluster0, std::size_t cluster1, std::size_t cluster2,
-    std::size_t cluster3)
+Reaction<TDerived>::Reaction(TReactionNetwork& network, std::size_t reactionId,
+    Type reactionType, std::size_t cluster0, std::size_t cluster1,
+    std::size_t cluster2, std::size_t cluster3)
     :
     _type(reactionType),
     _fluxFn(
@@ -25,7 +27,7 @@ Reaction<TDerived>::Reaction(TReactionNetwork& network, Type reactionType,
     _products(_type == Type::production ? Kokkos::Array<std::size_t, 2>( {
         cluster2, cluster3}) : Kokkos::Array<std::size_t, 2>( {cluster1,
         cluster2})),
-    _rate(static_cast<TDerived*>(this)->computeRate(network))
+    _rate(network.getReactionRates(reactionId))
 {
     for (std::size_t i : {0, 1}) {
         copyMomentIds(_reactants[i], network, _reactantMomentIds[i]);
@@ -40,6 +42,19 @@ Reaction<TDerived>::Reaction(TReactionNetwork& network, Type reactionType,
     else {
         _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 1, 3, 5);
         computeDissociationCoefficients(network);
+    }
+}
+
+template <typename TDerived>
+template <typename TReactionNetwork>
+inline void
+Reaction<TDerived>::updateRates(TReactionNetwork& network)
+{
+    if (_type == Type::production) {
+        computeProductionRates(network);
+    }
+    else {
+        computeDissociationRates(network);
     }
 }
 
@@ -468,6 +483,44 @@ Reaction<TDerived>::computeDissociationCoefficients(TReactionNetwork& network)
             }
         }
     }
+}
+
+template <typename TDerived>
+template <typename TReactionNetwork>
+inline double
+Reaction<TDerived>::computeProductionRate(TReactionNetwork& network,
+    std::size_t gridIndex)
+{
+    double r0 = network.getReactionRadius(_reactants[0]);
+    double r1 = network.getReactionRadius(_reactants[1]);
+
+    double dc0 = network.getDiffusionCoefficient(_reactants[0], gridIndex);
+    double dc1 = network.getDiffusionCoefficient(_reactants[1], gridIndex);
+
+    constexpr double pi = ::xolotlCore::pi;
+
+    double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
+
+    return kPlus;
+}
+
+template <typename TDerived>
+template <typename TReactionNetwork>
+inline double
+Reaction<TDerived>::computeDissociationRate(TReactionNetwork& network,
+    std::size_t gridIndex)
+{
+    double omega = network.getAtomicVolume();
+    double T = network.getTemperature(gridIndex);
+
+    double kPlus = asDerived()->computeProductionRate(network, gridIndex);
+    double E_b = asDerived()->computeBindingEnergy(network);
+
+    constexpr double k_B = ::xolotlCore::kBoltzmann;
+
+    double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));
+
+    return kMinus;
 }
 }
 }

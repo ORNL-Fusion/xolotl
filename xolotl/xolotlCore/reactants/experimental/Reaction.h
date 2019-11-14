@@ -27,8 +27,8 @@ public:
     Reaction() = default;
 
     template <typename TReactionNetwork>
-    Reaction(TReactionNetwork& network, Type reactionType,
-        std::size_t cluster0, std::size_t cluster1,
+    Reaction(TReactionNetwork& network, std::size_t reactionId,
+        Type reactionType, std::size_t cluster0, std::size_t cluster1,
         std::size_t cluster2 = invalid, std::size_t cluster3 = invalid);
 
     Type
@@ -36,6 +36,10 @@ public:
     {
         return _type;
     }
+
+    template <typename TReactionNetwork>
+    void
+    updateRates(TReactionNetwork& network);
 
     void
     productionFlux(ConcentrationsView concentrations, FluxesView fluxes)
@@ -235,6 +239,12 @@ public:
     }
 
 private:
+    TDerived*
+    asDerived()
+    {
+        return static_cast<TDerived*>(this);
+    }
+
     template <typename TCluster>
     typename TCluster::NetworkType::AmountType
     computeOverlap(TCluster singleCl, TCluster pairCl1, TCluster pairCl2);
@@ -263,6 +273,32 @@ private:
         }
     }
 
+    template <typename TReactionNetwork>
+    double
+    computeProductionRate(TReactionNetwork& network, std::size_t gridIndex);
+
+    template <typename TReactionNetwork>
+    double
+    computeDissociationRate(TReactionNetwork& network, std::size_t gridIndex);
+
+    template <typename TReactionNetwork>
+    void
+    computeProductionRates(TReactionNetwork& network)
+    {
+        for (std::size_t i = 0; i < _rate.extent(0); ++i) {
+            _rate(i) = asDerived()->computeProductionRate(network, i);
+        }
+    }
+
+    template <typename TReactionNetwork>
+    void
+    computeDissociationRates(TReactionNetwork& network)
+    {
+        for (std::size_t i = 0; i < _rate.extent(0); ++i) {
+            _rate(i) = asDerived()->computeDissociationRate(network, i);
+        }
+    }
+
 private:
     Type _type {};
 
@@ -278,8 +314,8 @@ private:
     Kokkos::Array<Kokkos::Array<std::size_t, 4>, 2> _reactantMomentIds;
     Kokkos::Array<Kokkos::Array<std::size_t, 4>, 2> _productMomentIds;
 
-    //! Reaction rate, k
-    double _rate {};
+    //! Reaction rate (k)
+    Kokkos::View<double*> _rate;
 
     //! Flux coefficients
     Kokkos::View<double****> _coefs;

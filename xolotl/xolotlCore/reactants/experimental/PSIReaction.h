@@ -13,8 +13,10 @@ public:
 
     template <typename TReactionNetwork>
     double
-    computeRate(TReactionNetwork& network)
+    computeBindingEnergy(TReactionNetwork& network)
     {
+        // static constexpr double bindingEnergyMap[2];
+
         return 1.0;
     }
 };

@@ -77,9 +77,36 @@ public:
             SpeciesSequence::lastNoI());
     }
 
+    double
+    getLatticeParameter() const noexcept
+    {
+        return _latticeParameter;
+    }
+
+    double
+    getAtomicVolume() const noexcept
+    {
+        return _atomicVolume;
+    }
+
+    double
+    getTemperature(std::size_t gridIndex) const noexcept
+    {
+        return _temperature(gridIndex);
+    }
+
+    void
+    setLatticeParameter(double latticeParameter)
+    {
+        _latticeParameter = latticeParameter;
+        _atomicVolume =
+            0.5 * latticeParameter * latticeParameter * latticeParameter;
+    }
+
     Cluster
     findCluster(const Composition& comp)
     {
+        //FIXME: explicitly using host space
         _subpaving.syncAll(plsm::onHost);
         return Cluster(*this, _subpaving.findTileId(comp, plsm::onHost));
     }
@@ -102,17 +129,35 @@ public:
         return Kokkos::subview(_momentIds, clusterId, Kokkos::ALL);
     }
 
+    double
+    getReactionRadius(std::size_t clusterId)
+    {
+        return _reactionRadius(clusterId);
+    }
+
     void
     defineMomentIds();
 
+    decltype(auto)
+    getReactionRates(std::size_t reactionId)
+    {
+        return Kokkos::subview(_reactionRates, reactionId, Kokkos::ALL);
+    }
+
 private:
+    double _latticeParameter;
+    double _atomicVolume;
+    Kokkos::View<double*> _temperature;
+
     Subpaving _subpaving;
 
     Kokkos::View<std::size_t*[4]> _momentIds;
     Kokkos::View<double*> _reactionRadius;
     Kokkos::View<double**> _diffusionCoefficient;
+    Kokkos::View<double*> _formationEnergy;
 
     Kokkos::View<ReactionType*> _reactions;
+    Kokkos::View<double**> _reactionRates;
 };
 
 

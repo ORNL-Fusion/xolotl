@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
     BOOST_REQUIRE_EQUAL(compRegion[Spec::I].begin(), 0);
 
     experimental::PSIReaction r0;
-    experimental::PSIReaction r(rNetwork,
+    experimental::PSIReaction r(rNetwork, 0,
         experimental::PSIReaction::Type::dissociation, 0, 1, 2);
     BOOST_REQUIRE(r.getType() == experimental::PSIReaction::Type::dissociation);
 
