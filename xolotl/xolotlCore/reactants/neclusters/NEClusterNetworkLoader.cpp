@@ -149,6 +149,15 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 			nextCluster->setMigrationEnergy(migrationEnergy);
 			nextCluster->setDiffusionFactor(diffusionFactor);
 
+			if (numXe == 1) {
+				// If the diffusivity is given
+				if (options.getXenonDiffusivity() > 0.0) {
+					nextCluster->setDiffusionFactor(
+							options.getXenonDiffusivity());
+					nextCluster->setMigrationEnergy(-1.0);
+				}
+			}
+
 			// Save it in the network
 			pushNECluster(network, reactants, nextCluster);
 		} else {
