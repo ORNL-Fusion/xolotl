@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
     auto concs = new double[3]{};
     auto fluxes = new double[3]{};
     using Vue = Reaction::ConcentrationsView;
-    r.contributeFlux(Vue(concs, 3), Vue(fluxes, 3));
+    r.contributeFlux(Vue(concs, 3), Vue(fluxes, 3), 0);
 
 	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();
 
