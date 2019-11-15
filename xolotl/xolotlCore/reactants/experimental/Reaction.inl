@@ -38,7 +38,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::Reaction(NetworkType& network,
         copyMomentIds(_products[i], _productMomentIds[i]);
     }
 
-    //TODO: Replace '5' with (numSpeciesNoI + 1)
+    constexpr auto coeffExtent = NetworkType::getNumberOfSpeciesNoI() + 1;
     if (_type == Type::production) {
         int nProd = 0;
         for (auto prodId : _products) {
@@ -47,11 +47,13 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::Reaction(NetworkType& network,
             }
         }
         auto nCl = 2 + nProd;
-        _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 5, nCl, 5);
+        _coefs = Kokkos::View<double****>(
+            "Flux Coefficients", coeffExtent, coeffExtent, nCl, coeffExtent);
         computeProductionCoefficients();
     }
     else {
-        _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 1, 3, 5);
+        _coefs = Kokkos::View<double****>(
+            "Flux Coefficients", coeffExtent, 1, 3, coeffExtent);
         computeDissociationCoefficients();
     }
 
