@@ -51,6 +51,15 @@ public:
 	}
 
 	/**
+	 * This method updates the fission yield.
+	 *
+	 * \see IHeterogeneousNucleationHandler.h
+	 */
+	void setFissionYield(double yield) {
+		return;
+	}
+
+	/**
 	 * Compute the flux due to the heterogeneous nucleation for all the clusters,
 	 * given the position index xi.
 	 * This method is called by the RHSFunction from the PetscSolver.

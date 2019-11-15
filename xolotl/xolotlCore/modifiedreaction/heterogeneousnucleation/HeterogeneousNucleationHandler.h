@@ -17,13 +17,16 @@ private:
 	//! The nucleation rate
 	double nucleationRate;
 
+	//! The fission yield
+	double fissionYield;
+
 public:
 
 	/**
 	 * The constructor
 	 */
 	HeterogeneousNucleationHandler() :
-			nucleationRate(0.0) {
+			nucleationRate(0.0), fissionYield(0.0) {
 	}
 
 	/**
@@ -47,6 +50,13 @@ public:
 	 * \see IHeterogeneousNucleationHandler.h
 	 */
 	virtual void updateHeterogeneousNucleationRate(double rate);
+
+	/**
+	 * This method updates the fission yield.
+	 *
+	 * \see IHeterogeneousNucleationHandler.h
+	 */
+	void setFissionYield(double yield);
 
 	/**
 	 * Compute the flux due to the heterogeneous nucleation for all the clusters,
