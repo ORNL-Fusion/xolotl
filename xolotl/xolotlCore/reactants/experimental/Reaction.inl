@@ -37,8 +37,14 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::Reaction(NetworkType& network,
 
     //TODO: Replace '5' with (numSpeciesNoI + 1)
     if (_type == Type::production) {
-        //TODO: Vary third extent based number of valid products
-        _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 5, 3, 5);
+        int nProd = 0;
+        for (auto prodId : _products) {
+            if (prodId != invalid) {
+                ++nProd;
+            }
+        }
+        auto nCl = 2 + nProd;
+        _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 5, nCl, 5);
         computeProductionCoefficients();
     }
     else {
