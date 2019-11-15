@@ -54,7 +54,7 @@ public:
     constexpr std::size_t
     getNumberOfSpecies() noexcept
     {
-        return numSpecies;
+        return SpeciesSequence::size();
     }
 
     static

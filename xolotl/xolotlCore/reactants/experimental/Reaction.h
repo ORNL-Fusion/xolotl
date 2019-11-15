@@ -125,8 +125,10 @@ private:
     Kokkos::Array<std::size_t, 2> _reactants {invalid, invalid};
     Kokkos::Array<std::size_t, 2> _products {invalid, invalid};
 
-    Kokkos::Array<Kokkos::Array<std::size_t, 4>, 2> _reactantMomentIds;
-    Kokkos::Array<Kokkos::Array<std::size_t, 4>, 2> _productMomentIds;
+    //TODO: This '4' be numSpeciesNoI?
+    static constexpr auto nMomentIds = NetworkType::getNumberOfSpeciesNoI();
+    Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _reactantMomentIds;
+    Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _productMomentIds;
 
     //! Reaction rate (k)
     Kokkos::View<double*> _rate;
