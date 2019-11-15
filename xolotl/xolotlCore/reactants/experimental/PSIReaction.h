@@ -1,19 +1,23 @@
 #pragma once
 
-#include <experimental/Reaction.h>
-
 namespace xolotlCore
 {
 namespace experimental
 {
-class PSIReaction : public Reaction<PSIReaction>
+template <typename TSpeciesEnum>
+class PSIReaction : public
+    ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
+        ::template Reaction<PSIReaction<TSpeciesEnum>>
 {
 public:
-    using Reaction<PSIReaction>::Reaction;
+    using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
 
-    template <typename TReactionNetwork>
+    using Superclass = typename ReactionNetwork<NetworkType>
+        ::template Reaction<PSIReaction<TSpeciesEnum>>;
+    using Superclass::Superclass;
+
     double
-    computeBindingEnergy(TReactionNetwork& network)
+    computeBindingEnergy()
     {
         // static constexpr double bindingEnergyMap[2];
 

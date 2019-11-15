@@ -1,6 +1,5 @@
 #pragma once
 
-#include <experimental/PSIReaction.h>
 #include <experimental/ReactionNetwork.h>
 
 namespace xolotlCore
@@ -9,6 +8,10 @@ namespace experimental
 {
 template <typename TSpeciesEnum>
 class PSIReactionNetwork;
+
+
+template <typename TSpeciesEnum>
+class PSIReaction;
 
 
 enum class PSIFullSpeciesList
@@ -32,7 +35,7 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 
     static constexpr std::size_t numSpecies = 5;
 
-    using ReactionType = PSIReaction;
+    using ReactionType = PSIReaction<TSpeciesEnum>;
 };
 
 
@@ -45,3 +48,5 @@ public:
 };
 }
 }
+
+#include <experimental/PSIReaction.h>

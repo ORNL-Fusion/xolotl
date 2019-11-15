@@ -11,12 +11,13 @@ namespace xolotlCore
 {
 namespace experimental
 {
+template <typename TImpl>
 template <typename TDerived>
-template <typename TReactionNetwork>
-Reaction<TDerived>::Reaction(TReactionNetwork& network, std::size_t reactionId,
-    Type reactionType, std::size_t cluster0, std::size_t cluster1,
-    std::size_t cluster2, std::size_t cluster3)
+ReactionNetwork<TImpl>::Reaction<TDerived>::Reaction(NetworkType& network,
+    std::size_t reactionId, Type reactionType, std::size_t cluster0,
+    std::size_t cluster1, std::size_t cluster2, std::size_t cluster3)
     :
+    _network(&network),
     _type(reactionType),
     _fluxFn(
         _type == Type::production ? &Reaction::productionFlux :
@@ -27,44 +28,45 @@ Reaction<TDerived>::Reaction(TReactionNetwork& network, std::size_t reactionId,
     _products(_type == Type::production ? Kokkos::Array<std::size_t, 2>( {
         cluster2, cluster3}) : Kokkos::Array<std::size_t, 2>( {cluster1,
         cluster2})),
-    _rate(network.getReactionRates(reactionId))
+    _rate(_network->getReactionRates(reactionId))
 {
     for (std::size_t i : {0, 1}) {
-        copyMomentIds(_reactants[i], network, _reactantMomentIds[i]);
-        copyMomentIds(_products[i], network, _productMomentIds[i]);
+        copyMomentIds(_reactants[i], _reactantMomentIds[i]);
+        copyMomentIds(_products[i], _productMomentIds[i]);
     }
 
     if (_type == Type::production) {
         //TODO: Vary third extent based number of valid products
         _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 5, 3, 5);
-        computeProductionCoefficients(network);
+        computeProductionCoefficients();
     }
     else {
         _coefs = Kokkos::View<double****>("Flux Coefficients", 5, 1, 3, 5);
-        computeDissociationCoefficients(network);
+        computeDissociationCoefficients();
     }
+
+    updateRates();
 }
 
+template <typename TImpl>
 template <typename TDerived>
-template <typename TReactionNetwork>
 inline void
-Reaction<TDerived>::updateRates(TReactionNetwork& network)
+ReactionNetwork<TImpl>::Reaction<TDerived>::updateRates()
 {
     if (_type == Type::production) {
-        computeProductionRates(network);
+        computeProductionRates();
     }
     else {
-        computeDissociationRates(network);
+        computeDissociationRates();
     }
 }
 
+template <typename TImpl>
 template <typename TDerived>
-template <typename TCluster>
-inline typename TCluster::NetworkType::AmountType
-Reaction<TDerived>::computeOverlap(
-    TCluster singleCl, TCluster pairCl1, TCluster pairCl2)
+inline typename ReactionNetwork<TImpl>::AmountType
+ReactionNetwork<TImpl>::Reaction<TDerived>::computeOverlap(
+    Cluster singleCl, Cluster pairCl1, Cluster pairCl2)
 {
-    using NetworkType = typename TCluster::NetworkType;
     using AmountType = typename NetworkType::AmountType;
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
@@ -99,22 +101,22 @@ Reaction<TDerived>::computeOverlap(
     return nOverlap;
 }
 
+template <typename TImpl>
 template <typename TDerived>
-template <typename TReactionNetwork>
 inline void
-Reaction<TDerived>::computeProductionCoefficients(TReactionNetwork& network)
+ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
 {
-    using Species = typename TReactionNetwork::Species;
-    using SpeciesSeq = typename TReactionNetwork::SpeciesSequence;
-    using AmountType = typename TReactionNetwork::AmountType;
+    using Species = typename NetworkType::Species;
+    using SpeciesSeq = typename NetworkType::SpeciesSequence;
+    using AmountType = typename NetworkType::AmountType;
 
     // Find the overlap for this reaction
-    constexpr auto numSpeciesNoI = TReactionNetwork::getNumberOfSpeciesNoI();
-    constexpr auto speciesRangeNoI = TReactionNetwork::getSpeciesRangeNoI();
+    constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
+    constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-    auto cl1 = network.getCluster(_reactants[0]);
-    auto cl2 = network.getCluster(_reactants[1]);
-    auto prod = network.getCluster(_products[0]);
+    auto cl1 = _network->getCluster(_reactants[0]);
+    auto cl2 = _network->getCluster(_reactants[1]);
+    auto prod = _network->getCluster(_products[0]);
 
     auto nOverlap = static_cast<double>(computeOverlap(prod, cl1, cl2));
 
@@ -364,21 +366,21 @@ Reaction<TDerived>::computeProductionCoefficients(TReactionNetwork& network)
     }
 }
 
+template <typename TImpl>
 template <typename TDerived>
-template <typename TReactionNetwork>
 inline void
-Reaction<TDerived>::computeDissociationCoefficients(TReactionNetwork& network)
+ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
 {
-    using Species = typename TReactionNetwork::Species;
-    using SpeciesSeq = typename TReactionNetwork::SpeciesSequence;
-    using AmountType = typename TReactionNetwork::AmountType;
+    using Species = typename NetworkType::Species;
+    using SpeciesSeq = typename NetworkType::SpeciesSequence;
+    using AmountType = typename NetworkType::AmountType;
 
-    constexpr auto numSpeciesNoI = TReactionNetwork::getNumberOfSpeciesNoI();
-    constexpr auto speciesRangeNoI = TReactionNetwork::getSpeciesRangeNoI();
+    constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
+    constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-    auto cl = network.getCluster(_reactants[0]);
-    auto prod1 = network.getCluster(_products[0]);
-    auto prod2 = network.getCluster(_products[1]);
+    auto cl = _network->getCluster(_reactants[0]);
+    auto prod1 = _network->getCluster(_products[0]);
+    auto prod2 = _network->getCluster(_products[1]);
 
     auto nOverlap = static_cast<double>(computeOverlap(cl, prod1, prod2));
 
@@ -485,17 +487,17 @@ Reaction<TDerived>::computeDissociationCoefficients(TReactionNetwork& network)
     }
 }
 
+template <typename TImpl>
 template <typename TDerived>
-template <typename TReactionNetwork>
 inline double
-Reaction<TDerived>::computeProductionRate(TReactionNetwork& network,
+ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionRate(
     std::size_t gridIndex)
 {
-    double r0 = network.getReactionRadius(_reactants[0]);
-    double r1 = network.getReactionRadius(_reactants[1]);
+    double r0 = _network->getReactionRadius(_reactants[0]);
+    double r1 = _network->getReactionRadius(_reactants[1]);
 
-    double dc0 = network.getDiffusionCoefficient(_reactants[0], gridIndex);
-    double dc1 = network.getDiffusionCoefficient(_reactants[1], gridIndex);
+    double dc0 = _network->getDiffusionCoefficient(_reactants[0], gridIndex);
+    double dc1 = _network->getDiffusionCoefficient(_reactants[1], gridIndex);
 
     constexpr double pi = ::xolotlCore::pi;
 
@@ -504,17 +506,17 @@ Reaction<TDerived>::computeProductionRate(TReactionNetwork& network,
     return kPlus;
 }
 
+template <typename TImpl>
 template <typename TDerived>
-template <typename TReactionNetwork>
 inline double
-Reaction<TDerived>::computeDissociationRate(TReactionNetwork& network,
+ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationRate(
     std::size_t gridIndex)
 {
-    double omega = network.getAtomicVolume();
-    double T = network.getTemperature(gridIndex);
+    double omega = _network->getAtomicVolume();
+    double T = _network->getTemperature(gridIndex);
 
-    double kPlus = asDerived()->computeProductionRate(network, gridIndex);
-    double E_b = asDerived()->computeBindingEnergy(network);
+    double kPlus = asDerived()->computeProductionRate(gridIndex);
+    double E_b = asDerived()->computeBindingEnergy();
 
     constexpr double k_B = ::xolotlCore::kBoltzmann;
 

@@ -89,14 +89,14 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
     BOOST_REQUIRE_EQUAL(compRegion[Spec::V].begin(), 0);
     BOOST_REQUIRE_EQUAL(compRegion[Spec::I].begin(), 0);
 
-    experimental::PSIReaction r0;
-    experimental::PSIReaction r(rNetwork, 0,
-        experimental::PSIReaction::Type::dissociation, 0, 1, 2);
-    BOOST_REQUIRE(r.getType() == experimental::PSIReaction::Type::dissociation);
+    using Reaction = typename NetworkType::ReactionType;
+    Reaction r0;
+    Reaction r(rNetwork, 0, Reaction::Type::dissociation, 0, 1, 2);
+    BOOST_REQUIRE(r.getType() == Reaction::Type::dissociation);
 
     auto concs = new double[3]{};
     auto fluxes = new double[3]{};
-    using Vue = experimental::PSIReaction::ConcentrationsView;
+    using Vue = Reaction::ConcentrationsView;
     r.contributeFlux(Vue(concs, 3), Vue(fluxes, 3));
 
 	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();

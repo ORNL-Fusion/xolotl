@@ -7,7 +7,6 @@
 #include <plsm/Subpaving.h>
 #include <plsm/refine/RegionDetector.h>
 
-#include <experimental/Reaction.h>
 #include <experimental/EnumSequence.h>
 
 namespace xolotlCore
@@ -41,6 +40,9 @@ public:
     using Ival = typename Region::IntervalType;
 
     class Cluster;
+
+    template <typename T>
+    class Reaction;
 
     ReactionNetwork() = delete;
 
@@ -87,12 +89,6 @@ public:
     getAtomicVolume() const noexcept
     {
         return _atomicVolume;
-    }
-
-    double
-    getTemperature(std::size_t gridIndex) const noexcept
-    {
-        return _temperature(gridIndex);
     }
 
     void
@@ -145,6 +141,19 @@ public:
     }
 
 private:
+    double
+    getTemperature(std::size_t gridIndex) const noexcept
+    {
+        return _temperature(gridIndex);
+    }
+
+    double
+    getDiffusionCoefficient(std::size_t reactionId, std::size_t gridIndex)
+    {
+        return _diffusionCoefficient(reactionId, gridIndex);
+    }
+
+private:
     double _latticeParameter;
     double _atomicVolume;
     Kokkos::View<double*> _temperature;
@@ -183,3 +192,4 @@ makeSimpleReactionNetwork(
 
 #include <experimental/ReactionNetwork.inl>
 #include <experimental/Cluster.h>
+#include <experimental/Reaction.h>

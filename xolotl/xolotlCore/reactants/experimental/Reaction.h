@@ -9,12 +9,15 @@ namespace xolotlCore
 {
 namespace experimental
 {
+template <typename TImpl>
 template <typename TDerived>
-class Reaction
+class ReactionNetwork<TImpl>::Reaction
 {
     static constexpr auto invalid = plsm::invalid<std::size_t>;
 
 public:
+    using NetworkType = ReactionNetwork<TImpl>;
+    using Cluster = typename NetworkType::Cluster;
     using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
     using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 
@@ -26,9 +29,8 @@ public:
 
     Reaction() = default;
 
-    template <typename TReactionNetwork>
-    Reaction(TReactionNetwork& network, std::size_t reactionId,
-        Type reactionType, std::size_t cluster0, std::size_t cluster1,
+    Reaction(NetworkType& network, std::size_t reactionId, Type reactionType,
+        std::size_t cluster0, std::size_t cluster1,
         std::size_t cluster2 = invalid, std::size_t cluster3 = invalid);
 
     Type
@@ -37,9 +39,8 @@ public:
         return _type;
     }
 
-    template <typename TReactionNetwork>
     void
-    updateRates(TReactionNetwork& network);
+    updateRates();
 
     void
     productionFlux(ConcentrationsView concentrations, FluxesView fluxes)
@@ -245,21 +246,17 @@ private:
         return static_cast<TDerived*>(this);
     }
 
-    template <typename TCluster>
-    typename TCluster::NetworkType::AmountType
-    computeOverlap(TCluster singleCl, TCluster pairCl1, TCluster pairCl2);
+    typename NetworkType::AmountType
+    computeOverlap(Cluster singleCl, Cluster pairCl1, Cluster pairCl2);
 
-    template <typename TReactionNetwork>
     void
-    computeProductionCoefficients(TReactionNetwork& network);
+    computeProductionCoefficients();
 
-    template <typename TReactionNetwork>
     void
-    computeDissociationCoefficients(TReactionNetwork& network);
+    computeDissociationCoefficients();
 
-    template <typename TReactionNetwork>
     void
-    copyMomentIds(std::size_t clusterId, TReactionNetwork& network,
+    copyMomentIds(std::size_t clusterId,
         Kokkos::Array<std::size_t, 4>& momentIds)
     {
         if (clusterId == invalid) {
@@ -267,39 +264,37 @@ private:
             return;
         }
 
-        const auto& mIds = network.getMomentIds(clusterId);
+        const auto& mIds = _network->getMomentIds(clusterId);
         for (std::size_t i = 0; i < 4; ++i) {
             momentIds[i] = mIds[i];
         }
     }
 
-    template <typename TReactionNetwork>
     double
-    computeProductionRate(TReactionNetwork& network, std::size_t gridIndex);
+    computeProductionRate(std::size_t gridIndex);
 
-    template <typename TReactionNetwork>
     double
-    computeDissociationRate(TReactionNetwork& network, std::size_t gridIndex);
+    computeDissociationRate(std::size_t gridIndex);
 
-    template <typename TReactionNetwork>
     void
-    computeProductionRates(TReactionNetwork& network)
+    computeProductionRates()
     {
         for (std::size_t i = 0; i < _rate.extent(0); ++i) {
-            _rate(i) = asDerived()->computeProductionRate(network, i);
+            _rate(i) = asDerived()->computeProductionRate(i);
         }
     }
 
-    template <typename TReactionNetwork>
     void
-    computeDissociationRates(TReactionNetwork& network)
+    computeDissociationRates()
     {
         for (std::size_t i = 0; i < _rate.extent(0); ++i) {
-            _rate(i) = asDerived()->computeDissociationRate(network, i);
+            _rate(i) = asDerived()->computeDissociationRate(i);
         }
     }
 
 private:
+    NetworkType* _network {nullptr};
+
     Type _type {};
 
     using FluxFn = void (Reaction::*)(ConcentrationsView, FluxesView);
