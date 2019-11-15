@@ -22,6 +22,9 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::Reaction(NetworkType& network,
     _fluxFn(
         _type == Type::production ? &Reaction::productionFlux :
             &Reaction::dissociationFlux),
+    _partialsFn(
+        _type == Type::production ? &Reaction::productionPartialDerivatives :
+            &Reaction::dissociationPartialDerivatives),
     _reactants(
         _type == Type::production ? Kokkos::Array<std::size_t, 2>( {cluster0,
             cluster1}) : Kokkos::Array<std::size_t, 2>( {cluster0, invalid})),
@@ -762,6 +765,24 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
         f *= _rate(gridIndex) * prefactor;
         fluxes[_productMomentIds[1][k()]] += f / (double) nProd2;
     }
+}
+
+template <typename TImpl>
+template <typename TDerived>
+inline void
+ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
+    ConcentrationsView concentrations, Kokkos::View<std::size_t*> indices,
+    Kokkos::View<double*> values, std::size_t gridIndex)
+{
+}
+
+template <typename TImpl>
+template <typename TDerived>
+inline void
+ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationPartialDerivatives(
+    ConcentrationsView concentrations, Kokkos::View<std::size_t*> indices,
+    Kokkos::View<double*> values, std::size_t gridIndex)
+{
 }
 }
 }

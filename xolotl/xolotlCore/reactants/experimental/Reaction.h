@@ -57,6 +57,24 @@ public:
         ((*this).*(_fluxFn))(concentrations, fluxes, gridIndex);
     }
 
+    void
+    productionPartialDerivatives(ConcentrationsView concentrations,
+        Kokkos::View<std::size_t*> indices, Kokkos::View<double*> values,
+        std::size_t gridIndex);
+
+    void
+    dissociationPartialDerivatives(ConcentrationsView concentrations,
+        Kokkos::View<std::size_t*> indices, Kokkos::View<double*> values,
+        std::size_t gridIndex);
+
+    void
+    contributePartialDerivatives(ConcentrationsView concentrations,
+        Kokkos::View<std::size_t*> indices, Kokkos::View<double*> values,
+        std::size_t gridIndex)
+    {
+        ((*this).*(_partialsFn))(concentrations, indices, values, gridIndex);
+    }
+
 private:
     TDerived*
     asDerived()
@@ -118,6 +136,11 @@ private:
     using FluxFn =
         void (Reaction::*)(ConcentrationsView, FluxesView, std::size_t);
     FluxFn _fluxFn {nullptr};
+
+    using PartialsFn =
+        void (Reaction::*)(ConcentrationsView, Kokkos::View<std::size_t*>,
+            Kokkos::View<double*>, std::size_t);
+    PartialsFn _partialsFn {nullptr};
 
     //Cluster indices for LHS and RHS of the reaction
     //Dissociation reactions always have 1 input and 2 outputs
