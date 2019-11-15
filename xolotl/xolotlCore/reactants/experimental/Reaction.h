@@ -128,7 +128,7 @@ private:
         }
     }
 
-private:
+protected:
     NetworkType* _network {nullptr};
 
     Type _type {};

@@ -131,6 +131,12 @@ public:
         return _reactionRadius(clusterId);
     }
 
+    double
+    getFormationEnergy(std::size_t clusterId)
+    {
+        return _formationEnergy(clusterId);
+    }
+
     void
     defineMomentIds();
 
