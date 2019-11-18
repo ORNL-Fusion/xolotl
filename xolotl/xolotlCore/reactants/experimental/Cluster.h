@@ -23,7 +23,7 @@ public:
     getRegion()
     {
         //FIXME: explicitly using host space
-        return _network->getSubpaving().getTiles(plsm::onHost)(_id).getRegion();
+        return _network->_subpaving.getTiles(plsm::onHost)(_id).getRegion();
     }
 
     decltype(auto)

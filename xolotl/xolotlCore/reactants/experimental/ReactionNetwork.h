@@ -48,7 +48,7 @@ public:
 
     //TODO: Need a more versatile constructor interface
     //      (and probably don't need the 'make' function)
-    ReactionNetwork(AmountType maxSpeciesAmount);
+    ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize);
 
     static
     constexpr std::size_t
@@ -119,9 +119,6 @@ public:
         return _subpaving;
     }
 
-    void
-    defineMomentIds();
-
     decltype(auto)
     getReactionRates(std::size_t reactionId)
     {
@@ -129,6 +126,12 @@ public:
     }
 
 private:
+    void
+    defineMomentIds();
+
+    void
+    defineReactions();
+
     double
     getTemperature(std::size_t gridIndex) const noexcept
     {
@@ -136,12 +139,13 @@ private:
     }
 
 private:
-    double _latticeParameter;
-    double _atomicVolume;
-    Kokkos::View<double*> _temperature;
-
     Subpaving _subpaving;
 
+    double _latticeParameter{};
+    double _atomicVolume{};
+    Kokkos::View<double*> _temperature;
+
+    std::size_t _numClusters;
     Kokkos::View<std::size_t*[4]> _momentIds;
     Kokkos::View<double*> _reactionRadius;
     Kokkos::View<double**> _diffusionCoefficient;
@@ -157,15 +161,28 @@ TReactionNetwork
 makeSimpleReactionNetwork(
     typename TReactionNetwork::AmountType maxSpeciesAmount = 10)
 {
+    using Subpaving = typename TReactionNetwork::Subpaving;
+    using Region = typename TReactionNetwork::Region;
+    using Ival = typename TReactionNetwork::Ival;
     using AmountType = typename TReactionNetwork::AmountType;
-    TReactionNetwork network(maxSpeciesAmount);
+    using SubdivRatio = typename Subpaving::SubdivisionRatioType;
 
-    constexpr auto numSpecies = network.getNumberOfSpecies();
-    network.getSubpaving().refine(
+    constexpr auto numSpecies = TReactionNetwork::getNumberOfSpecies();
+
+    Ival ival{0, maxSpeciesAmount + 1};
+    Region latticeRegion;
+    SubdivRatio ratio;
+    for (std::size_t i = 0; i < numSpecies; ++i) {
+        latticeRegion[i] = ival;
+        ratio[i] = maxSpeciesAmount + 1;
+    }
+    Subpaving subpaving(latticeRegion, {ratio});
+
+    subpaving.refine(
         plsm::refine::RegionDetector<AmountType, numSpecies, plsm::Select>{
-            network.getSubpaving().getLatticeRegion()});
+            latticeRegion});
 
-    network.defineMomentIds();
+    TReactionNetwork network(std::move(subpaving), 0);
 
     return network;
 }

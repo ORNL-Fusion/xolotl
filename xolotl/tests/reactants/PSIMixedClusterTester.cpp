@@ -70,24 +70,21 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
     using NetworkType =
         experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
     using Spec = typename NetworkType::Species;
+    using Composition = typename NetworkType::Composition;
 
     auto rNetwork = experimental::makeSimpleReactionNetwork<NetworkType>();
-    typename NetworkType::Composition comp{};
+    Composition comp{};
     comp[Spec::He] = 3;
     comp[Spec::V] = 2;
     comp[Spec::I] = 0;
     auto cluster = rNetwork.findCluster(comp);
     auto compRegion = cluster.getRegion();
-    BOOST_REQUIRE_EQUAL(compRegion[Spec::He].begin(), 3);
-    BOOST_REQUIRE_EQUAL(compRegion[Spec::V].begin(), 2);
-    BOOST_REQUIRE_EQUAL(compRegion[Spec::I].begin(), 0);
-    // BOOST_REQUIRE_EQUAL(cluster.getComposition()[Spec::He], 3);
+    BOOST_REQUIRE(compRegion.isSimplex());
+    BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), comp);
 
     cluster = rNetwork.getCluster(0);
     compRegion = cluster.getRegion();
-    BOOST_REQUIRE_EQUAL(compRegion[Spec::He].begin(), 0);
-    BOOST_REQUIRE_EQUAL(compRegion[Spec::V].begin(), 0);
-    BOOST_REQUIRE_EQUAL(compRegion[Spec::I].begin(), 0);
+    BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), Composition{});
 
     using Reaction = typename NetworkType::ReactionType;
     Reaction r0;
@@ -97,7 +94,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
     auto concs = new double[3]{};
     auto fluxes = new double[3]{};
     using Vue = Reaction::ConcentrationsView;
-    r.contributeFlux(Vue(concs, 3), Vue(fluxes, 3), 0);
+    // r.contributeFlux(Vue(concs, 3), Vue(fluxes, 3), 0);
 
 	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();
 

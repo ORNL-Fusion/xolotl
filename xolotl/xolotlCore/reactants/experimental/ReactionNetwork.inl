@@ -5,23 +5,19 @@ namespace xolotlCore
 namespace experimental
 {
 template <typename TImpl>
-ReactionNetwork<TImpl>::ReactionNetwork(AmountType maxSpeciesAmount)
+ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
+        std::size_t gridSize)
     :
-    _subpaving(Region{{
-        Ival{0, maxSpeciesAmount+1},
-        Ival{0, maxSpeciesAmount+1},
-        Ival{0, maxSpeciesAmount+1},
-        Ival{0, maxSpeciesAmount+1},
-        Ival{0, maxSpeciesAmount+1}}},
-    {{{
-        maxSpeciesAmount+1,
-        maxSpeciesAmount+1,
-        maxSpeciesAmount+1,
-        maxSpeciesAmount+1,
-        maxSpeciesAmount+1}}})
+    _subpaving(std::move(subpaving)),
+    _temperature("Temperature", gridSize),
+    _numClusters(_subpaving.getNumberOfTiles(plsm::onDevice)),
+    _reactionRadius("Reaction Radius", _numClusters),
+    _diffusionCoefficient("Diffusion Coefficient", _numClusters, gridSize),
+    _formationEnergy("Formation Energy", _numClusters)
 {
+    defineMomentIds();
+    defineReactions();
 }
-
 
 template <typename TImpl>
 void
@@ -49,6 +45,13 @@ ReactionNetwork<TImpl>::defineMomentIds()
             }
         }
     }
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::defineReactions()
+{
+    //TODO
 }
 }
 }
