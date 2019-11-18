@@ -101,7 +101,7 @@ private:
             return;
         }
 
-        const auto& mIds = _network->getMomentIds(clusterId);
+        const auto& mIds = _network->getCluster(clusterId).getMomentIds();
         for (std::size_t i = 0; i < 4; ++i) {
             momentIds[i] = mIds[i];
         }

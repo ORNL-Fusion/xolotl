@@ -26,10 +26,28 @@ public:
         return _network->getSubpaving().getTiles(plsm::onHost)(_id).getRegion();
     }
 
+    decltype(auto)
+    getMomentIds()
+    {
+        return Kokkos::subview(_network->_momentIds, _id, Kokkos::ALL);
+    }
+
     double
     getReactionRadius()
     {
-        return _network->getReactionRadius(_id);
+        return _network->_reactionRadius(_id);
+    }
+
+    double
+    getFormationEnergy()
+    {
+        return _network->_formationEnergy(_id);
+    }
+
+    double
+    getDiffusionCoefficient(std::size_t gridIndex)
+    {
+        return _network->_diffusionCoefficient(_id, gridIndex);
     }
 
 private:

@@ -119,24 +119,6 @@ public:
         return _subpaving;
     }
 
-    decltype(auto)
-    getMomentIds(std::size_t clusterId)
-    {
-        return Kokkos::subview(_momentIds, clusterId, Kokkos::ALL);
-    }
-
-    double
-    getReactionRadius(std::size_t clusterId)
-    {
-        return _reactionRadius(clusterId);
-    }
-
-    double
-    getFormationEnergy(std::size_t clusterId)
-    {
-        return _formationEnergy(clusterId);
-    }
-
     void
     defineMomentIds();
 
@@ -151,12 +133,6 @@ private:
     getTemperature(std::size_t gridIndex) const noexcept
     {
         return _temperature(gridIndex);
-    }
-
-    double
-    getDiffusionCoefficient(std::size_t reactionId, std::size_t gridIndex)
-    {
-        return _diffusionCoefficient(reactionId, gridIndex);
     }
 
 private:

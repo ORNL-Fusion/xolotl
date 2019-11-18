@@ -64,9 +64,13 @@ PSIReaction<TSpeciesEnum>::computeBindingEnergy()
 
     double be = 0.0;
 
-    auto clReg = this->_network->getCluster(this->_reactants[0]).getRegion();
-    auto prod1Reg = this->_network->getCluster(this->_products[0]).getRegion();
-    auto prod2Reg = this->_network->getCluster(this->_products[1]).getRegion();
+    auto cl = this->_network->getCluster(this->_reactants[0]);
+    auto prod1 = this->_network->getCluster(this->_products[0]);
+    auto prod2 = this->_network->getCluster(this->_products[1]);
+
+    auto clReg = cl.getRegion();
+    auto prod1Reg = prod1.getRegion();
+    auto prod2Reg = prod2.getRegion();
     bool useTable = false;
     if (clReg.isSimplex()) {
         if (prod1Reg.isSimplex()) {
@@ -95,9 +99,8 @@ PSIReaction<TSpeciesEnum>::computeBindingEnergy()
     }
 
     if (be == 0.0) {
-        be = this->_network->getFormationEnergy(this->_products[0]) +
-            this->_network->getFormationEnergy(this->_products[1]) -
-            this->_network->getFormationEnergy(this->_reactants[0]);
+        be = prod1.getFormationEnergy() + prod2.getFormationEnergy() -
+            cl.getFormationEnergy();
     }
 
     return be;

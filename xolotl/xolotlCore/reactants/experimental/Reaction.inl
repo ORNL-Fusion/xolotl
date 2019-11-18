@@ -523,11 +523,14 @@ inline double
 ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionRate(
     std::size_t gridIndex)
 {
-    double r0 = _network->getReactionRadius(_reactants[0]);
-    double r1 = _network->getReactionRadius(_reactants[1]);
+    auto cl0 = _network->getCluster(_reactants[0]);
+    auto cl1 = _network->getCluster(_reactants[1]);
 
-    double dc0 = _network->getDiffusionCoefficient(_reactants[0], gridIndex);
-    double dc1 = _network->getDiffusionCoefficient(_reactants[1], gridIndex);
+    double r0 = cl0.getReactionRadius();
+    double r1 = cl1.getReactionRadius();
+
+    double dc0 = cl0.getDiffusionCoefficient(gridIndex);
+    double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
     constexpr double pi = ::xolotlCore::pi;
 
