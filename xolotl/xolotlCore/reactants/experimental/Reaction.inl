@@ -128,135 +128,161 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
 
     auto cl1 = _network->getCluster(_reactants[0]);
     auto cl2 = _network->getCluster(_reactants[1]);
-    auto prod = _network->getCluster(_products[0]);
+    auto prod1 = _network->getCluster(_products[0]);
+    if (_products[0] == invalid) {
+        // TODO: point to a null/zero tile to use the same formula bellow?
+    }
+    auto prod2 = _network->getCluster(_products[1]);
+    if (_products[1] == invalid) {
+        // TODO: point to a null/zero tile to use the same formula bellow?
+    }
 
-    auto nOverlap = static_cast<double>(computeOverlap(prod, cl1, cl2));
+    auto nOverlap = static_cast<double>(computeOverlap(prod1, cl1, cl2));
 
     const auto& cl1Reg = cl1.getRegion();
     const auto& cl2Reg = cl2.getRegion();
-    const auto& prodReg = prod.getRegion();
+    const auto& prod1Reg = prod1.getRegion();
+    const auto& prod2Reg = prod2.getRegion();
 
     _coefs(0, 0, 0, 0) = nOverlap;
     for (auto i : speciesRangeNoI) {
-        // First order sum
+        // First order sum on the first reactant
+        for (auto m : makeIntervalRange(prod2Reg[i]))
         for (auto l : makeIntervalRange(cl2Reg[i])) {
             _coefs(i() + 1, 0, 0, 0) += firstOrderSum(
-                std::max(prodReg[i].begin() - l, cl1Reg[i].begin()),
-                std::min(prodReg[i].end() - 1 - l, cl1Reg[i].end() - 1),
+                std::max(prod1Reg[i].begin() + m - l, cl1Reg[i].begin()),
+                std::min(prod1Reg[i].end() - 1 + m - l, cl1Reg[i].end() - 1),
                 static_cast<double>(cl1Reg[i].end() - 1 + cl1Reg[i].begin())
                     / 2.0);
         }
 
+        // First order sum on the second reactant
+        for (auto m : makeIntervalRange(prod2Reg[i]))
         for (auto l : makeIntervalRange(cl1Reg[i])) {
             _coefs(0, i() + 1, 0, 0) += firstOrderSum(
-                std::max(prodReg[i].begin() - l, cl2Reg[i].begin()),
-                std::min(prodReg[i].end() - 1 - l, cl2Reg[i].end() - 1),
+                std::max(prod1Reg[i].begin() + m - l, cl2Reg[i].begin()),
+                std::min(prod1Reg[i].end() - 1 + m - l, cl2Reg[i].end() - 1),
                 static_cast<double>(cl2Reg[i].end() - 1 + cl2Reg[i].begin())
                     / 2.0);
         }
 
-        for (auto l : makeIntervalRange(cl1Reg[i])) {
-            _coefs(0, 0, 0, i() + 1) += firstOrderSum(
-                std::max(prodReg[i].begin(), cl2Reg[i].begin() + l),
-                std::min(prodReg[i].end() - 1, cl2Reg[i].end() - 1 + l),
-                static_cast<double>(prodReg[i].end() - 1 + prodReg[i].begin())
-                    / 2.0);
-        }
-
-        // Product partial derivatives
-        for (auto k : speciesRangeNoI) {
-            // Second order sum
-            if (k == i) {
-                for (auto l : makeIntervalRange(cl2Reg[i])) {
-                    _coefs(i() + 1, 0, 0, k() + 1) += secondOrderOffsetSum(
-                        std::max(prodReg[i].begin() - l, cl1Reg[i].begin()),
-                        std::min(prodReg[i].end() - 1 - l, cl1Reg[i].end() - 1),
-                        (double) (cl1Reg[i].end() - 1 + cl1Reg[i].begin())
-                            / 2.0,
-                        (double) (prodReg[i].end() - 1 + prodReg[i].begin())
-                            / 2.0, l);
-                }
-                for (auto l : makeIntervalRange(cl1Reg[i])) {
-                    _coefs(0, i() + 1, 0, k() + 1) += secondOrderOffsetSum(
-                        std::max(prodReg[i].begin() - l, cl2Reg[i].begin()),
-                        std::min(prodReg[i].end() - 1 - l, cl2Reg[i].end() - 1),
-                        (double) (cl2Reg[i].end() - 1 + cl2Reg[i].begin())
-                            / 2.0,
-                        (double) (prodReg[i].end() - 1 + prodReg[i].begin())
-                            / 2.0, l);
-                }
+        // Loop on the potential products
+        for (std::size_t p : {0,1}) {
+            auto prodId = _products[p];
+            if (prodId == invalid) {
+                continue;
             }
-            else {
-                _coefs(i() + 1, 0, 0, k() + 1) += _coefs(i() + 1, 0, 0, 0)
-                    * _coefs(0, 0, 0, k() + 1) / nOverlap;
+            
+            // Get the regions in the right order
+            const auto& thisReg = (prodId == _products[0]) ? prod1Reg : prod2Reg;
+            const auto& otherReg = (prodId == _products[0]) ? prod2Reg : prod1Reg;
+            
+            // First order sum on the second products
+            for (auto m : makeIntervalRange(otherReg[i]))
+            for (auto l : makeIntervalRange(cl1Reg[i])) {
+                _coefs(0, 0, p+2, i() + 1) += firstOrderSum( // p+2 because 0 and 1 are used for reactants
+                    std::max(thisReg[i].begin(), cl2Reg[i].begin() + l - m),
+                    std::min(thisReg[i].end() - 1, cl2Reg[i].end() - 1 + l - m),
+                    static_cast<double>(thisReg[i].end() - 1 + thisReg[i].begin())
+                        / 2.0);
+            }
 
-                _coefs(0, i() + 1, 0, k() + 1) += _coefs(0, i() + 1, 0, 0)
-                    * _coefs(0, 0, 0, k() + 1) / nOverlap;
+            // Products first moments
+            for (auto k : speciesRangeNoI) {
+                // Second order sum
+                if (k == i) {
+                    for (auto m : makeIntervalRange(otherReg[i]))
+                    for (auto l : makeIntervalRange(cl2Reg[i])) {
+                    _coefs(i() + 1, 0, p+2, k() + 1) += secondOrderOffsetSum(
+                            std::max(thisReg[i].begin() + m - l, cl1Reg[i].begin()),
+                            std::min(thisReg[i].end() - 1 + m - l, cl1Reg[i].end() - 1),
+                            (double) (cl1Reg[i].end() - 1 + cl1Reg[i].begin())
+                                / 2.0,
+                            (double) (thisReg[i].end() - 1 + thisReg[i].begin())
+                                / 2.0, l - m);
+                    }
+                    for (auto m : makeIntervalRange(otherReg[i]))
+                    for (auto l : makeIntervalRange(cl1Reg[i])) {
+                        _coefs(0, i() + 1, p+2, k() + 1) += secondOrderOffsetSum(
+                            std::max(thisReg[i].begin() + m - l, cl2Reg[i].begin()),
+                            std::min(thisReg[i].end() - 1 + m - l, cl2Reg[i].end() - 1),
+                            (double) (cl2Reg[i].end() - 1 + cl2Reg[i].begin())
+                                / 2.0,
+                            (double) (thisReg[i].end() - 1 + thisReg[i].begin())
+                                / 2.0, l - m);
+                    }
+                }
+                else {
+                    _coefs(i() + 1, 0, p+2, k() + 1) += _coefs(i() + 1, 0, 0, 0)
+                        * _coefs(0, 0, p+2, k() + 1) / nOverlap;
+
+                    _coefs(0, i() + 1, p+2, k() + 1) += _coefs(0, i() + 1, 0, 0)
+                        * _coefs(0, 0, p+2, k() + 1) / nOverlap;
+                }
             }
         }
     }
 
     for (auto i : speciesRangeNoI) {
-        // First reactant partial derivatives
+        // First reactant first moments
         for (auto k : speciesRangeNoI) {
-            _coefs(0, 0, 1, k() + 1) += _coefs(k() + 1, 0, 0, 0);
+            _coefs(0, 0, 0, k() + 1) += _coefs(k() + 1, 0, 0, 0);
 
             if (k == i) {
+                for (auto m : makeIntervalRange(prod2Reg[i]))
                 for (auto l : makeIntervalRange(cl2Reg[i])) {
-                    _coefs(i() + 1, 0, 1, k()) += secondOrderSum(
-                        std::max(prodReg[i].begin() - l, cl1Reg[i].begin()),
-                        std::min(prodReg[i].end() - 1 - l, cl1Reg[i].end() - 1),
+                    _coefs(i() + 1, 0, 0, k()) += secondOrderSum(
+                        std::max(prod1Reg[i].begin() + m - l, cl1Reg[i].begin()),
+                        std::min(prod1Reg[i].end() - 1 + m - l, cl1Reg[i].end() - 1),
                         (double) (cl1Reg[i].end() - 1 + cl1Reg[i].begin())
                             / 2.0);
                 }
             }
             else {
-                _coefs(i() + 1, 0, 1, k() + 1) += _coefs(i() + 1, 0, 0, 0)
+                _coefs(i() + 1, 0, 0, k() + 1) += _coefs(i() + 1, 0, 0, 0)
                     * _coefs(k() + 1, 0, 0, 0) / nOverlap;
             }
 
-            _coefs(0, i() + 1, 1, k() + 1) += _coefs(k() + 1, i(), 0, 0);
+            _coefs(0, i() + 1, 0, k() + 1) += _coefs(k() + 1, i() + 1, 0, 0);
         }
 
         // Second reactant partial derivatives
         for (auto k : speciesRangeNoI) {
-            _coefs(0, 0, 2, k() + 1) += _coefs(0, k() + 1, 0, 0);
+            _coefs(0, 0, 1, k() + 1) += _coefs(0, k() + 1, 0, 0);
 
             if (k == i) {
+                for (auto m : makeIntervalRange(prod2Reg[i]))
                 for (auto l : makeIntervalRange(cl1Reg[i])) {
-                    _coefs(0, i() + 1, 2, k() + 1) += secondOrderSum(
-                        std::max(prodReg[i].begin() - l, cl2Reg[i].begin()),
-                        std::min(prodReg[i].end() - 1 - l, cl2Reg[i].end() - 1),
+                    _coefs(0, i() + 1, 1, k() + 1) += secondOrderSum(
+                        std::max(prod1Reg[i].begin() + m - l, cl2Reg[i].begin()),
+                        std::min(prod1Reg[i].end() - 1 + m - l, cl2Reg[i].end() - 1),
                         (double) (cl2Reg[i].end() - 1 + cl2Reg[i].begin())
                             / 2.0);
                 }
             }
             else {
-                _coefs(0, i() + 1, 2, k() + 1) += _coefs(0, i() + 1, 0, 0)
+                _coefs(0, i() + 1, 1, k() + 1) += _coefs(0, i() + 1, 0, 0)
                     * _coefs(0, k() + 1, 0, 0) / nOverlap;
             }
 
-            _coefs(i() + 1, 0, 2, k() + 1) += _coefs(i() + 1, k() + 1, 0, 0);
+            _coefs(i() + 1, 0, 1, k() + 1) += _coefs(i() + 1, k() + 1, 0, 0);
         }
     }
 
     // Now we loop over the 2 dimensions of the coefs to compute all
     // the possible sums over distances for the flux
-    // The first index represents the first reactant,
-    // the second one is the second reactant
-    // 0 is the 0th order, 1, 2, 3, 4, are the distances in the
-    // He, D, T, V directions (TODO make sure the order is correct)
     for (auto i : speciesRangeNoI) {
         for (auto j : speciesRangeNoI) {
             // Second order sum
             if (i == j) {
+                for (auto m : makeIntervalRange(prod2Reg[j]))
                 for (auto l : makeIntervalRange(cl1Reg[j])) {
                     _coefs(i() + 1, j() + 1, 0, 0) += (l
                         - (double) (cl1Reg[j].end() - 1 + cl1Reg[j].begin())
                             / 2.0)
                         * firstOrderSum(
-                            std::max(prodReg[j].begin() - l, cl2Reg[j].begin()),
-                            std::min(prodReg[j].end() - 1 - l,
+                            std::max(prod1Reg[j].begin() + m - l, cl2Reg[j].begin()),
+                            std::min(prod1Reg[j].end() - 1 + m - l,
                                 cl2Reg[j].end() - 1),
                             (double) (cl2Reg[j].end() - 1 + cl2Reg[j].begin())
                                 / 2.0);
@@ -268,59 +294,110 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
             }
 
             // Now we deal with the coefficients needed for the
-            // partial derivatives
-            // Let's start with the product
-            for (auto k : speciesRangeNoI) {
-                // Third order sum
-                if (i == j && j == k) {
-                    for (auto l : makeIntervalRange(cl1Reg[i])) {
-                        _coefs(i() + 1, j() + 1, 0, k() + 1) += (l
-                            - (double) (cl1Reg[i].end() - 1 + cl1Reg[i].begin())
-                                / 2.0)
-                            * secondOrderOffsetSum(
-                                std::max(prodReg[i].begin() - l,
-                                    cl2Reg[i].begin()),
-                                std::min(prodReg[i].end() - 1 - l,
-                                    cl2Reg[i].end() - 1),
-                                (double) (cl2Reg[i].end() - 1
-                                    + cl2Reg[i].begin()) / 2.0,
-                                (double) (prodReg[i].end() - 1
-                                    + prodReg[i].begin()) / 2.0, l);
+            // first moments
+            // Let's start with the products
+            for (std::size_t p : {0,1}) {
+                auto prodId = _products[p];
+                if (prodId == invalid) {
+                    continue;
+                }
+                
+                // Get the regions in the right order
+                const auto& thisReg = (prodId == _products[0]) ? prod1Reg : prod2Reg;
+                const auto& otherReg = (prodId == _products[0]) ? prod2Reg : prod1Reg;
+                
+                for (auto k : speciesRangeNoI) {
+                    // Third order sum
+                    if (i == j && j == k) {
+                        for (auto m : makeIntervalRange(otherReg[i]))
+                        for (auto l : makeIntervalRange(cl1Reg[i])) {
+                            _coefs(i() + 1, j() + 1, p+2, k() + 1) += (l
+                                - (double) (cl1Reg[i].end() - 1 + cl1Reg[i].begin())
+                                    / 2.0)
+                                * secondOrderOffsetSum(
+                                    std::max(thisReg[i].begin() + m - l,
+                                        cl2Reg[i].begin()),
+                                    std::min(thisReg[i].end() - 1 + m - l,
+                                        cl2Reg[i].end() - 1),
+                                    (double) (cl2Reg[i].end() - 1
+                                        + cl2Reg[i].begin()) / 2.0,
+                                    (double) (thisReg[i].end() - 1
+                                        + thisReg[i].begin()) / 2.0, l - m);
+                        }
+                    }
+                    else if (j == k) {
+                        _coefs(i() + 1, j() + 1, p+2, k() + 1) += _coefs(i() + 1, 0,
+                            0, 0) * _coefs(0, j() + 1, p+2, k() + 1) / nOverlap;
+                    }
+                    else if (i == k) {
+                        _coefs(i() + 1, j() + 1, p+2, k() + 1) += _coefs(0, j() + 1,
+                            0, 0) * _coefs(i() + 1, 0, p+2, k() + 1) / nOverlap;
+                    }
+                    else {
+                        // TODO check this is the right formula, might be divided by nOverlap^2
+                        _coefs(i() + 1, j() + 1, p+2, k() + 1) += _coefs(i() + 1, 0,
+                            0, 0) * _coefs(0, j() + 1, 0, 0)
+                            * _coefs(0, 0, p+2, k() + 1) / nOverlap;
                     }
                 }
-                else if (j == k) {
-                    _coefs(i() + 1, j() + 1, 0, k() + 1) += _coefs(i() + 1, 0,
-                        0, 0) * _coefs(0, j() + 1, 0, k() + 1) / nOverlap;
-                }
-                else if (i == k) {
-                    _coefs(i() + 1, j() + 1, 0, k() + 1) += _coefs(0, j() + 1,
-                        0, 0) * _coefs(i() + 1, 0, 0, k() + 1) / nOverlap;
-                }
-                else {
-                    // TODO check this is the right formula, might be divided by nOverlap^2
-                    _coefs(i() + 1, j() + 1, 0, k() + 1) += _coefs(i() + 1, 0,
-                        0, 0) * _coefs(0, j() + 1, 0, 0)
-                        * _coefs(0, 0, 0, k() + 1) / nOverlap;
-                }
             }
-            // Let's take care of the first reactant partial derivatives
+            
+            // Let's take care of the first reactant first moments
             for (auto k : speciesRangeNoI) {
                 // Third order sum
                 if (i == j && j == k) {
+                    for (auto m : makeIntervalRange(prod2Reg[i]))
                     for (auto l : makeIntervalRange(cl1Reg[i])) {
-                        _coefs(i() + 1, j() + 1, 1, k() + 1) += (l
+                        _coefs(i() + 1, j() + 1, 0, k() + 1) += (l
                             - (double) (cl1Reg[i].end() - 1 + cl1Reg[i].begin())
                                 / 2.0)
                             * (l
                                 - (double) (cl1Reg[i].end() - 1
                                     + cl1Reg[i].begin()) / 2.0)
                             * firstOrderSum(
-                                std::max(prodReg[i].begin() - l,
+                                std::max(prod1Reg[i].begin() + m - l,
                                     cl2Reg[i].begin()),
-                                std::min(prodReg[i].end() - 1 - l,
+                                std::min(prod1Reg[i].end() - 1 + m - l,
                                     cl2Reg[i].end() - 1),
                                 (double) (cl2Reg[i].end() - 1
                                     + cl2Reg[i].begin()) / 2.0);
+                    }
+                }
+                else if (i == k) {
+                    _coefs(i() + 1, j() + 1, 0, k() + 1) += _coefs(0, j() + 1,
+                        0, 0) * _coefs(i() + 1, 0, 0, k() + 1) / nOverlap;
+                }
+                else if (j == k) {
+                    _coefs(i() + 1, j() + 1, 0, k() + 1) += _coefs(i() + 1, 0,
+                        0, 0) * _coefs(0, j() + 1, 0, k() + 1) / nOverlap;
+                }
+                else {
+                    // TODO check this is the right formula, might be divided by nOverlap^2
+                    _coefs(i() + 1, j() + 1, 0, k() + 1) += _coefs(i() + 1, 0,
+                        0, 0) * _coefs(0, j() + 1, 0, 0)
+                        * _coefs(k() + 1, 0, 0, 0) / nOverlap;
+                }
+            }
+
+            // Let's take care of the second reactant partial derivatives
+            for (auto k : speciesRangeNoI) {
+                // Third order sum
+                if (i == j && j == k) {
+                    for (auto m : makeIntervalRange(prod2Reg[i]))
+                    for (auto l : makeIntervalRange(cl2Reg[i])) {
+                        _coefs(i() + 1, j() + 1, 1, k() + 1) += (l
+                            - (double) (cl2Reg[i].end() - 1 + cl2Reg[i].begin())
+                                / 2.0)
+                            * (l
+                                - (double) (cl2Reg[i].end() - 1
+                                    + cl2Reg[i].begin()) / 2.0)
+                            * firstOrderSum(
+                                std::max(prod1Reg[i].begin() + m - l,
+                                    cl1Reg[i].begin()),
+                                std::min(prod1Reg[i].end() - 1 + m - l,
+                                    cl1Reg[i].end() - 1),
+                                (double) (cl1Reg[i].end() - 1
+                                    + cl1Reg[i].begin()) / 2.0);
                     }
                 }
                 else if (i == k) {
@@ -334,42 +411,6 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                 else {
                     // TODO check this is the right formula, might be divided by nOverlap^2
                     _coefs(i() + 1, j() + 1, 1, k() + 1) += _coefs(i() + 1, 0,
-                        0, 0) * _coefs(0, j() + 1, 0, 0)
-                        * _coefs(k() + 1, 0, 0, 0) / nOverlap;
-                }
-            }
-
-            // Let's take care of the second reactant partial derivatives
-            for (auto k : speciesRangeNoI) {
-                // Third order sum
-                if (i == j && j == k) {
-                    for (auto l : makeIntervalRange(cl2Reg[i])) {
-                        _coefs(i() + 1, j() + 1, 2, k() + 1) += (l
-                            - (double) (cl2Reg[i].end() - 1 + cl2Reg[i].begin())
-                                / 2.0)
-                            * (l
-                                - (double) (cl2Reg[i].end() - 1
-                                    + cl2Reg[i].begin()) / 2.0)
-                            * firstOrderSum(
-                                std::max(prodReg[i].begin() - l,
-                                    cl1Reg[i].begin()),
-                                std::min(prodReg[i].end() - 1 - l,
-                                    cl1Reg[i].end() - 1),
-                                (double) (cl1Reg[i].end() - 1
-                                    + cl1Reg[i].begin()) / 2.0);
-                    }
-                }
-                else if (i == k) {
-                    _coefs(i() + 1, j() + 1, 2, k() + 1) += _coefs(0, j() + 1,
-                        0, 0) * _coefs(i() + 1, 0, 2, k() + 1) / nOverlap;
-                }
-                else if (j == k) {
-                    _coefs(i() + 1, j() + 1, 2, k() + 1) += _coefs(i() + 1, 0,
-                        0, 0) * _coefs(0, j() + 1, 2, k() + 1) / nOverlap;
-                }
-                else {
-                    // TODO check this is the right formula, might be divided by nOverlap^2
-                    _coefs(i() + 1, j() + 1, 2, k() + 1) += _coefs(i() + 1, 0,
                         0, 0) * _coefs(0, j() + 1, 0, 0)
                         * _coefs(0, k() + 1, 0, 0) / nOverlap;
                 }
@@ -412,7 +453,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
         }
     }
 
-    // Partial derivatives
+    // First moments 
     for (auto k : speciesRangeNoI) {
         // Reactant
         _coefs(0, 0, 0, k() + 1) += _coefs(k() + 1, 0, 0, 0);
@@ -436,10 +477,6 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
 
     // Now we loop over the 1 dimension of the coefs to compute all the
     // possible sums over distances for the flux
-    // The first index represents the reactant
-    // 0 is the 0th order, 1, 2, 3, 4, are the distances in the
-    // He, D, T, V directions
-    // TODO: make sure the order is correct
     for (auto i : speciesRangeNoI) {
         // Now we deal with the coefficients needed for the partial derivatives
         // Starting with the reactant
@@ -459,7 +496,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
             }
         }
 
-        // Partial derivatives for the first product
+        // First moments for the first product
         for (auto k : speciesRangeNoI) {
             // Second order sum
             if (k == i) {
@@ -478,7 +515,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
             }
         }
 
-        // Partial derivatives for the second product
+        // First moments for the second product
         for (auto k : speciesRangeNoI) {
             // Second order sum
             if (k == i) {
@@ -602,6 +639,32 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {
         // First for the first reactant
+        f = _coefs(0, 0, 0, k() + 1) * concentrations[_reactants[0]] *
+            concentrations[_reactants[1]];
+        for (auto i : speciesRangeNoI) {
+            f += _coefs(i() + 1, 0, 0, k() + 1) *
+                concentrations[_reactantMomentIds[0][i()]] *
+                concentrations[_reactants[1]];
+        }
+        for (auto j : speciesRangeNoI) {
+            f += _coefs(0, j() + 1, 0, k() + 1) *
+                concentrations[_reactants[0]] *
+                concentrations[_reactantMomentIds[1][j()]];
+        }
+        for (auto i : speciesRangeNoI) {
+            for (auto j : speciesRangeNoI) {
+                f += _coefs(i() + 1, j() + 1, 0, k() + 1) *
+                    concentrations[_reactantMomentIds[0][i()]] *
+                    concentrations[_reactantMomentIds[1][j()]];
+            }
+        }
+        // TODO compute the prefactor related to the dispersion, it can be
+        // moved to the coefs maybe
+        double prefactor = 1.0;
+        f *= _rate(gridIndex) * prefactor;
+        fluxes[_reactantMomentIds[0][k()]] -= f / (double) nCl1;
+
+        // For the second reactant
         f = _coefs(0, 0, 1, k() + 1) * concentrations[_reactants[0]] *
             concentrations[_reactants[1]];
         for (auto i : speciesRangeNoI) {
@@ -621,34 +684,15 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
                     concentrations[_reactantMomentIds[1][j()]];
             }
         }
-        f *= _rate(gridIndex);
-        fluxes[_reactantMomentIds[0][k()]] -= f / (double) nCl1;
-
-        // For the second reactant
-        f = _coefs(0, 0, 2, k() + 1) * concentrations[_reactants[0]] *
-            concentrations[_reactants[1]];
-        for (auto i : speciesRangeNoI) {
-            f += _coefs(i() + 1, 0, 2, k() + 1) *
-                concentrations[_reactantMomentIds[0][i()]] *
-                concentrations[_reactants[1]];
-        }
-        for (auto j : speciesRangeNoI) {
-            f += _coefs(0, j() + 1, 2, k() + 1) *
-                concentrations[_reactants[0]] *
-                concentrations[_reactantMomentIds[1][j()]];
-        }
-        for (auto i : speciesRangeNoI) {
-            for (auto j : speciesRangeNoI) {
-                f += _coefs(i() + 1, j() + 1, 2, k() + 1) *
-                    concentrations[_reactantMomentIds[0][i()]] *
-                    concentrations[_reactantMomentIds[1][j()]];
-            }
-        }
-        f *= _rate(gridIndex);
+        // TODO compute the prefactor related to the dispersion, it can be
+        // moved to the coefs maybe
+        prefactor = 1.0;
+        f *= _rate(gridIndex) * prefactor;
         fluxes[_reactantMomentIds[1][k()]] -= f / (double) nCl2;
 
         // For the products
-        for (auto prodId : _products) {
+        for (std::size_t p : {0,1}) {
+            auto prodId = _products[p];
             if (prodId == invalid) {
                 continue;
             }
@@ -660,30 +704,30 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
                 nProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
             }
 
-            // TODO generalize for 0, 1, or 2 products because here we are
-            // taking the same coefs for all of them
-            f = _coefs(0, 0, 0, k() + 1) * concentrations[_reactants[0]] *
+            f = _coefs(0, 0, p+2, k() + 1) * concentrations[_reactants[0]] *
                 concentrations[_reactants[1]];
             for (auto i : speciesRangeNoI) {
-                f += _coefs(i() + 1, 0, 0, k() + 1) *
+                f += _coefs(i() + 1, 0, p+2, k() + 1) *
                     concentrations[_reactantMomentIds[0][i()]] *
                     concentrations[_reactants[1]];
             }
             for (auto j : speciesRangeNoI) {
-                f += _coefs(0, j() + 1, 0, k() + 1) *
+                f += _coefs(0, j() + 1, p+2, k() + 1) *
                     concentrations[_reactants[0]] *
                     concentrations[_reactantMomentIds[1][j()]];
             }
             for (auto i : speciesRangeNoI) {
                 for (auto j : speciesRangeNoI) {
-                    f += _coefs(i() + 1, j() + 1, 0, k() + 1) *
+                    f += _coefs(i() + 1, j() + 1, p+2, k() + 1) *
                         concentrations[_reactantMomentIds[0][i()]] *
                         concentrations[_reactantMomentIds[1][j()]];
                 }
             }
-            f *= _rate(gridIndex);
-            // TODO use the correct first index
-            fluxes[_productMomentIds[0][k()]] -= f / (double) nProd;
+            // TODO compute the prefactor related to the dispersion, it can be
+            // moved to the coefs maybe
+            prefactor = 1.0;
+            f *= _rate(gridIndex) * prefactor;
+            fluxes[_productMomentIds[p][k()]] -= f / (double) nProd;
         }
     }
 }
