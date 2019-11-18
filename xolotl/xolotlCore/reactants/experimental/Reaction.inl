@@ -80,7 +80,6 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeOverlap(
     const Region& singleClReg, const Region& pairCl1Reg,
     const Region& pairCl2Reg)
 {
-    using AmountType = typename NetworkType::AmountType;
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -117,11 +116,7 @@ template <typename TDerived>
 inline void
 ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
 {
-    // using Species = typename NetworkType::Species;
-    // using SpeciesSeq = typename NetworkType::SpeciesSequence;
-    // using AmountType = typename NetworkType::AmountType;
-
-    auto dummyRegion = Region(Composition{});
+    static const auto dummyRegion = Region(Composition{});
 
     // Find the overlap for this reaction
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
@@ -417,10 +412,6 @@ template <typename TDerived>
 inline void
 ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
 {
-    using Species = typename NetworkType::Species;
-    using SpeciesSeq = typename NetworkType::SpeciesSequence;
-    using AmountType = typename NetworkType::AmountType;
-
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -570,7 +561,6 @@ inline void
 ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
     ConcentrationsView concentrations, FluxesView fluxes, std::size_t gridIndex)
 {
-    using AmountType = typename NetworkType::AmountType;
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -728,7 +718,6 @@ inline void
 ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
     ConcentrationsView concentrations, FluxesView fluxes, std::size_t gridIndex)
 {
-    using AmountType = typename NetworkType::AmountType;
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 

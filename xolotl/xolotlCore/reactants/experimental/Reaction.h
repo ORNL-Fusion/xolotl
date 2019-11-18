@@ -82,7 +82,6 @@ private:
         return static_cast<TDerived*>(this);
     }
 
-    // typename NetworkType::AmountType
     AmountType
     computeOverlap(const Region& singleCl, const Region& pairCl1,
         const Region& pairCl2);
