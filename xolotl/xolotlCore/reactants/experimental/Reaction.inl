@@ -77,15 +77,12 @@ template <typename TImpl>
 template <typename TDerived>
 inline typename ReactionNetwork<TImpl>::AmountType
 ReactionNetwork<TImpl>::Reaction<TDerived>::computeOverlap(
-    Cluster singleCl, Cluster pairCl1, Cluster pairCl2)
+    const Region& singleClReg, const Region& pairCl1Reg,
+    const Region& pairCl2Reg)
 {
     using AmountType = typename NetworkType::AmountType;
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-
-    const auto& sReg = singleCl.getRegion();
-    const auto& pReg1 = pairCl1.getRegion();
-    const auto& pReg2 = pairCl2.getRegion();
 
     AmountType nOverlap = 1;
     for (auto i : speciesRangeNoI) {
@@ -100,9 +97,11 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeOverlap(
         AmountType width{};
 
         //TODO: Would be nice to loop on the cluster with the smaller tile
-        for (auto j : makeIntervalRange(pReg1[i])) {
-            width += std::min(sReg[i].end() - 1, pReg2[i].end() - 1 + j)
-                - std::max(sReg[i].begin(), pReg2[i].begin() + j) + 1;
+        for (auto j : makeIntervalRange(pairCl1Reg[i])) {
+            width +=
+                std::min(singleClReg[i].end() - 1, pairCl2Reg[i].end() - 1 + j)
+                - std::max(singleClReg[i].begin(), pairCl2Reg[i].begin() + j)
+                + 1;
         }
 
         nOverlap *= width;
@@ -118,31 +117,25 @@ template <typename TDerived>
 inline void
 ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
 {
-    using Species = typename NetworkType::Species;
-    using SpeciesSeq = typename NetworkType::SpeciesSequence;
-    using AmountType = typename NetworkType::AmountType;
+    // using Species = typename NetworkType::Species;
+    // using SpeciesSeq = typename NetworkType::SpeciesSequence;
+    // using AmountType = typename NetworkType::AmountType;
+
+    auto dummyRegion = Region(Composition{});
 
     // Find the overlap for this reaction
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-    auto cl1 = _network->getCluster(_reactants[0]);
-    auto cl2 = _network->getCluster(_reactants[1]);
-    auto prod1 = _network->getCluster(_products[0]);
-    if (_products[0] == invalid) {
-        // TODO: point to a null/zero tile to use the same formula bellow?
-    }
-    auto prod2 = _network->getCluster(_products[1]);
-    if (_products[1] == invalid) {
-        // TODO: point to a null/zero tile to use the same formula bellow?
-    }
+    const auto& cl1Reg = _network->getCluster(_reactants[0]).getRegion();
+    const auto& cl2Reg = _network->getCluster(_reactants[1]).getRegion();
+    const auto& prod1Reg = (_products[0] == invalid) ? dummyRegion :
+        _network->getCluster(_products[0]).getRegion();
+    const auto& prod2Reg = (_products[1] == invalid) ? dummyRegion :
+        _network->getCluster(_products[1]).getRegion();
 
-    auto nOverlap = static_cast<double>(computeOverlap(prod1, cl1, cl2));
-
-    const auto& cl1Reg = cl1.getRegion();
-    const auto& cl2Reg = cl2.getRegion();
-    const auto& prod1Reg = prod1.getRegion();
-    const auto& prod2Reg = prod2.getRegion();
+    auto nOverlap =
+        static_cast<double>(computeOverlap(prod1Reg, cl1Reg, cl2Reg));
 
     _coefs(0, 0, 0, 0) = nOverlap;
     for (auto i : speciesRangeNoI) {
@@ -172,11 +165,11 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
             if (prodId == invalid) {
                 continue;
             }
-            
+
             // Get the regions in the right order
             const auto& thisReg = (prodId == _products[0]) ? prod1Reg : prod2Reg;
             const auto& otherReg = (prodId == _products[0]) ? prod2Reg : prod1Reg;
-            
+
             // First order sum on the second products
             for (auto m : makeIntervalRange(otherReg[i]))
             for (auto l : makeIntervalRange(cl1Reg[i])) {
@@ -301,11 +294,11 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                 if (prodId == invalid) {
                     continue;
                 }
-                
+
                 // Get the regions in the right order
                 const auto& thisReg = (prodId == _products[0]) ? prod1Reg : prod2Reg;
                 const auto& otherReg = (prodId == _products[0]) ? prod2Reg : prod1Reg;
-                
+
                 for (auto k : speciesRangeNoI) {
                     // Third order sum
                     if (i == j && j == k) {
@@ -341,7 +334,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                     }
                 }
             }
-            
+
             // Let's take care of the first reactant first moments
             for (auto k : speciesRangeNoI) {
                 // Third order sum
@@ -431,15 +424,12 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-    auto cl = _network->getCluster(_reactants[0]);
-    auto prod1 = _network->getCluster(_products[0]);
-    auto prod2 = _network->getCluster(_products[1]);
+    auto clReg = _network->getCluster(_reactants[0]).getRegion();
+    auto prod1Reg = _network->getCluster(_products[0]).getRegion();
+    auto prod2Reg = _network->getCluster(_products[1]).getRegion();
 
-    auto nOverlap = static_cast<double>(computeOverlap(cl, prod1, prod2));
-
-    auto clReg = cl.getRegion();
-    auto prod1Reg = prod1.getRegion();
-    auto prod2Reg = prod2.getRegion();
+    auto nOverlap =
+        static_cast<double>(computeOverlap(clReg, prod1Reg, prod2Reg));
 
     // The first coefficient is simply the overlap because it is the sum over 1
     _coefs(0, 0, 0, 0) = nOverlap;
@@ -453,7 +443,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
         }
     }
 
-    // First moments 
+    // First moments
     for (auto k : speciesRangeNoI) {
         // Reactant
         _coefs(0, 0, 0, k() + 1) += _coefs(k() + 1, 0, 0, 0);

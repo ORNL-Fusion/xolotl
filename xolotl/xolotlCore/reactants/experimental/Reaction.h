@@ -82,8 +82,10 @@ private:
         return static_cast<TDerived*>(this);
     }
 
-    typename NetworkType::AmountType
-    computeOverlap(Cluster singleCl, Cluster pairCl1, Cluster pairCl2);
+    // typename NetworkType::AmountType
+    AmountType
+    computeOverlap(const Region& singleCl, const Region& pairCl1,
+        const Region& pairCl2);
 
     void
     computeProductionCoefficients();

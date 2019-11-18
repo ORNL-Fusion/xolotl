@@ -24,7 +24,7 @@ template <typename TSpeciesEnum>
 inline double
 PSIReaction<TSpeciesEnum>::computeBindingEnergy()
 {
-    assert(_type == Type::dissociation);
+    assert(this->_type == PSIReaction::Type::dissociation);
 
     constexpr double beTableV1[10][7] = {
         //H:  1     2     3     4     5     6      // He:
