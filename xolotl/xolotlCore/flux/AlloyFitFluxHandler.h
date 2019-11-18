@@ -263,11 +263,16 @@ public:
 	 */
 	void computeIncidentFlux(double currentTime, double *updatedConcOffset,
 			int xi, int surfacePos) {
+		
+		// Attenuation factor to model reduced production of new point defects
+		// with increasing dose (or time).
+		double tau = 1.0e7;
+		double attenuation = 1.0 - exp((-1.0 * tau) / currentTime);
 
 		// Update the concentration array
 		for (int it = 0; it < ionDamage.fluxIndex.size(); ++it) {
 			updatedConcOffset[ionDamage.fluxIndex[it]] +=
-					ionDamage.damageRate[it][xi - surfacePos];
+					attenuation * ionDamage.damageRate[it][xi - surfacePos];
 		}
 
 		return;
