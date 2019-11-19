@@ -570,16 +570,10 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
     // Compute the total number of elements in each cluster
     auto cl1 = _network->getCluster(_reactants[0]);
     const auto& cl1Reg = cl1.getRegion();
-    AmountType volCl1 = 1;
-    for (auto i : speciesRangeNoI) {
-        volCl1 *= (cl1Reg[i].end() - 1 - cl1Reg[i].begin());
-    }
+    AmountType volCl1 = cl1Reg.volume();
     auto cl2 = _network->getCluster(_reactants[1]);
     const auto& cl2Reg = cl2.getRegion();
-    AmountType volCl2 = 1;
-    for (auto i : speciesRangeNoI) {
-        volCl2 *= (cl2Reg[i].end() - 1 - cl2Reg[i].begin());
-    }
+    AmountType volCl2 = cl2Reg.volume();
 
     // Compute the flux for the 0th order moments
     double f = _coefs(0, 0, 0, 0) * concentrations[_reactants[0]] *
@@ -611,11 +605,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
 
         auto prod = _network->getCluster(prodId);
         const auto& prodReg = prod.getRegion();
-        AmountType volProd = 1;
-        for (auto i : speciesRangeNoI) {
-            volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
-        }
-
+        AmountType volProd = prodReg.volume();
         fluxes[prodId] += f / (double) volProd;
     }
 
@@ -682,10 +672,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
 
             auto prod = _network->getCluster(prodId);
             const auto& prodReg = prod.getRegion();
-            AmountType volProd = 1;
-            for (auto i : speciesRangeNoI) {
-                volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
-            }
+            AmountType volProd = prodReg.volume();
 
             f = _coefs(0, 0, p+2, k() + 1) * concentrations[_reactants[0]] *
                 concentrations[_reactants[1]];
@@ -727,22 +714,13 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
     // Compute the total number of elements in each cluster
     auto cl = _network->getCluster(_reactants[0]);
     const auto& clReg = cl.getRegion();
-    AmountType volCl = 1;
-    for (auto i : speciesRangeNoI) {
-        volCl *= (clReg[i].end() - 1 - clReg[i].begin());
-    }
+    AmountType volCl = clReg.volume();
     auto prod1 = _network->getCluster(_products[0]);
     const auto& prod1Reg = prod1.getRegion();
-    AmountType volProd1 = 1;
-    for (auto i : speciesRangeNoI) {
-        volProd1 *= (prod1Reg[i].end() - 1 - prod1Reg[i].begin());
-    }
+    AmountType volProd1 = prod1Reg.volume();
     auto prod2 = _network->getCluster(_products[1]);
     const auto& prod2Reg = prod2.getRegion();
-    AmountType volProd2 = 1;
-    for (auto i : speciesRangeNoI) {
-        volProd2 *= (prod2Reg[i].end() - 1 - prod2Reg[i].begin());
-    }
+    AmountType volProd2 = prod2Reg.volume();
 
     // Compute the flux for the 0th order moments
     double f = _coefs(0, 0, 0, 0) * concentrations[_reactants[0]];
@@ -816,16 +794,10 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
     // Compute the total number of elements in each cluster
     auto cl1 = _network->getCluster(_reactants[0]);
     const auto& cl1Reg = cl1.getRegion();
-    AmountType volCl1 = 1;
-    for (auto i : speciesRangeNoI) {
-        volCl1 *= (cl1Reg[i].end() - 1 - cl1Reg[i].begin());
-    }
+    AmountType volCl1 = cl1Reg.volume();
     auto cl2 = _network->getCluster(_reactants[1]);
     const auto& cl2Reg = cl2.getRegion();
-    AmountType volCl2 = 1;
-    for (auto i : speciesRangeNoI) {
-        volCl2 *= (cl2Reg[i].end() - 1 - cl2Reg[i].begin());
-    }
+    AmountType volCl2 = cl2Reg.volume();
 
     // Save the indices for the reactants because they will be used for every partials
     indices(0) = _reactants[0];
@@ -858,10 +830,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
         }
         auto prod = _network->getCluster(prodId);
         const auto& prodReg = prod.getRegion();
-        AmountType volProd = 1;
-        for (auto i : speciesRangeNoI) {
-            volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
-        }
+        AmountType volProd = prodReg.volume();
         indices(2 * (numSpeciesNoI + 1) + 3 + p) = _products[p];
         values(2 * (p + 2) * (numSpeciesNoI + 1) + 1) = _rate(gridIndex) * temp / (double) volProd;
     }
@@ -884,10 +853,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             }
             auto prod = _network->getCluster(prodId);
             const auto& prodReg = prod.getRegion();
-            AmountType volProd = 1;
-            for (auto i : speciesRangeNoI) {
-                volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
-            }
+            AmountType volProd = prodReg.volume();
             values(2 * (p + 2) * (numSpeciesNoI + 1) + i() + 2) = _rate(gridIndex) * temp / (double) volProd;
         }
     }
@@ -907,10 +873,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
         }
         auto prod = _network->getCluster(prodId);
         const auto& prodReg = prod.getRegion();
-        AmountType volProd = 1;
-        for (auto i : speciesRangeNoI) {
-            volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
-        }
+        AmountType volProd = prodReg.volume();
         values((2 * (p + 2) + 1) * (numSpeciesNoI + 1) + 1) = _rate(gridIndex) * temp / (double) volProd;
     }
     
@@ -929,10 +892,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             }
             auto prod = _network->getCluster(prodId);
             const auto& prodReg = prod.getRegion();
-            AmountType volProd = 1;
-            for (auto i : speciesRangeNoI) {
-                volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
-            }
+            AmountType volProd = prodReg.volume();
             values((2 * (p + 2) + 1) * (numSpeciesNoI + 1) + i() + 2) = _rate(gridIndex) * temp / (double) volProd;
         }
     }
@@ -1021,10 +981,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
 
         auto prod = _network->getCluster(prodId);
         const auto& prodReg = prod.getRegion();
-        AmountType volProd = 1;
-        for (auto i : speciesRangeNoI) {
-            volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
-        }
+        AmountType volProd = prodReg.volume();
 
         // Take care of the first moments
         for (auto k : speciesRangeNoI) {
@@ -1079,22 +1036,13 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationPartialDerivatives(
     // Compute the total number of elements in each cluster
     auto cl = _network->getCluster(_reactants[0]);
     const auto& clReg = cl.getRegion();
-    AmountType volCl = 1;
-    for (auto i : speciesRangeNoI) {
-        volCl *= (clReg[i].end() - 1 - clReg[i].begin());
-    }
+    AmountType volCl = clReg.volume();
     auto prod1 = _network->getCluster(_products[0]);
     const auto& prod1Reg = prod1.getRegion();
-    AmountType volProd1 = 1;
-    for (auto i : speciesRangeNoI) {
-        volProd1 *= (prod1Reg[i].end() - 1 - prod1Reg[i].begin());
-    }
+    AmountType volProd1 = prod1Reg.volume();
     auto prod2 = _network->getCluster(_products[1]);
     const auto& prod2Reg = prod2.getRegion();
-    AmountType volProd2 = 1;
-    for (auto i : speciesRangeNoI) {
-        volProd2 *= (prod2Reg[i].end() - 1 - prod2Reg[i].begin());
-    }
+    AmountType volProd2 = prod2Reg.volume();
 
     // Save the indices for the reactant because they will be used for every partials
     indices(0) = _reactants[0];
