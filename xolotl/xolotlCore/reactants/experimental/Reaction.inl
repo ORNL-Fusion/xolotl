@@ -570,15 +570,15 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
     // Compute the total number of elements in each cluster
     auto cl1 = _network->getCluster(_reactants[0]);
     const auto& cl1Reg = cl1.getRegion();
-    AmountType nCl1 = 1;
+    AmountType volCl1 = 1;
     for (auto i : speciesRangeNoI) {
-        nCl1 *= (cl1Reg[i].end() - 1 - cl1Reg[i].begin());
+        volCl1 *= (cl1Reg[i].end() - 1 - cl1Reg[i].begin());
     }
     auto cl2 = _network->getCluster(_reactants[1]);
     const auto& cl2Reg = cl2.getRegion();
-    AmountType nCl2 = 1;
+    AmountType volCl2 = 1;
     for (auto i : speciesRangeNoI) {
-        nCl2 *= (cl2Reg[i].end() - 1 - cl2Reg[i].begin());
+        volCl2 *= (cl2Reg[i].end() - 1 - cl2Reg[i].begin());
     }
 
     // Compute the flux for the 0th order moments
@@ -602,8 +602,8 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
     }
     f *= _rate(gridIndex);
 
-    fluxes[_reactants[0]] -= f / (double) nCl1;
-    fluxes[_reactants[1]] -= f / (double) nCl2;
+    fluxes[_reactants[0]] -= f / (double) volCl1;
+    fluxes[_reactants[1]] -= f / (double) volCl2;
     for (auto prodId : _products) {
         if (prodId == invalid) {
             continue;
@@ -611,12 +611,12 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
 
         auto prod = _network->getCluster(prodId);
         const auto& prodReg = prod.getRegion();
-        AmountType nProd = 1;
+        AmountType volProd = 1;
         for (auto i : speciesRangeNoI) {
-            nProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
+            volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
         }
 
-        fluxes[prodId] += f / (double) nProd;
+        fluxes[prodId] += f / (double) volProd;
     }
 
     // Take care of the first moments
@@ -645,7 +645,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
         // moved to the coefs maybe
         double prefactor = 1.0;
         f *= _rate(gridIndex) * prefactor;
-        fluxes[_reactantMomentIds[0][k()]] -= f / (double) nCl1;
+        fluxes[_reactantMomentIds[0][k()]] -= f / (double) volCl1;
 
         // For the second reactant
         f = _coefs(0, 0, 1, k() + 1) * concentrations[_reactants[0]] *
@@ -671,7 +671,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
         // moved to the coefs maybe
         prefactor = 1.0;
         f *= _rate(gridIndex) * prefactor;
-        fluxes[_reactantMomentIds[1][k()]] -= f / (double) nCl2;
+        fluxes[_reactantMomentIds[1][k()]] -= f / (double) volCl2;
 
         // For the products
         for (std::size_t p : {0,1}) {
@@ -682,9 +682,9 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
 
             auto prod = _network->getCluster(prodId);
             const auto& prodReg = prod.getRegion();
-            AmountType nProd = 1;
+            AmountType volProd = 1;
             for (auto i : speciesRangeNoI) {
-                nProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
+                volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
             }
 
             f = _coefs(0, 0, p+2, k() + 1) * concentrations[_reactants[0]] *
@@ -710,7 +710,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
             // moved to the coefs maybe
             prefactor = 1.0;
             f *= _rate(gridIndex) * prefactor;
-            fluxes[_productMomentIds[p][k()]] -= f / (double) nProd;
+            fluxes[_productMomentIds[p][k()]] -= f / (double) volProd;
         }
     }
 }
@@ -727,21 +727,21 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
     // Compute the total number of elements in each cluster
     auto cl = _network->getCluster(_reactants[0]);
     const auto& clReg = cl.getRegion();
-    AmountType nCl = 1;
+    AmountType volCl = 1;
     for (auto i : speciesRangeNoI) {
-        nCl *= (clReg[i].end() - 1 - clReg[i].begin());
+        volCl *= (clReg[i].end() - 1 - clReg[i].begin());
     }
     auto prod1 = _network->getCluster(_products[0]);
     const auto& prod1Reg = prod1.getRegion();
-    AmountType nProd1 = 1;
+    AmountType volProd1 = 1;
     for (auto i : speciesRangeNoI) {
-        nProd1 *= (prod1Reg[i].end() - 1 - prod1Reg[i].begin());
+        volProd1 *= (prod1Reg[i].end() - 1 - prod1Reg[i].begin());
     }
     auto prod2 = _network->getCluster(_products[1]);
     const auto& prod2Reg = prod2.getRegion();
-    AmountType nProd2 = 1;
+    AmountType volProd2 = 1;
     for (auto i : speciesRangeNoI) {
-        nProd2 *= (prod2Reg[i].end() - 1 - prod2Reg[i].begin());
+        volProd2 *= (prod2Reg[i].end() - 1 - prod2Reg[i].begin());
     }
 
     // Compute the flux for the 0th order moments
@@ -751,9 +751,9 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
             concentrations[_reactantMomentIds[0][i()]];
     }
     f *= _rate(gridIndex);
-    fluxes[_reactants[0]] -= f / (double) nCl;
-    fluxes[_products[0]] += f / (double) nProd1;
-    fluxes[_products[1]] += f / (double) nProd2;
+    fluxes[_reactants[0]] -= f / (double) volCl;
+    fluxes[_products[0]] += f / (double) volProd1;
+    fluxes[_products[1]] += f / (double) volProd2;
 
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {
@@ -767,7 +767,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
         // moved to the coefs maybe
         double prefactor = 1.0;
         f *= _rate(gridIndex) * prefactor;
-        fluxes[_reactantMomentIds[0][k()]] -= f / (double) nCl;
+        fluxes[_reactantMomentIds[0][k()]] -= f / (double) volCl;
 
         // Now the first product
         f = _coefs(0, 0, 1, k() + 1) * concentrations[_reactants[0]];
@@ -779,7 +779,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
         // moved to the coefs maybe
         prefactor = 1.0;
         f *= _rate(gridIndex) * prefactor;
-        fluxes[_productMomentIds[0][k()]] += f / (double) nProd1;
+        fluxes[_productMomentIds[0][k()]] += f / (double) volProd1;
 
         // Finally the second product
         f = _coefs(0, 0, 2, k() + 1) * concentrations[_reactants[0]];
@@ -791,7 +791,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
         // moved to the coefs maybe
         prefactor = 1.0;
         f *= _rate(gridIndex) * prefactor;
-        fluxes[_productMomentIds[1][k()]] += f / (double) nProd2;
+        fluxes[_productMomentIds[1][k()]] += f / (double) volProd2;
     }
 }
 
@@ -802,6 +802,267 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
     ConcentrationsView concentrations, Kokkos::View<std::size_t*> indices,
     Kokkos::View<double*> values, std::size_t gridIndex)
 {
+    constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
+    constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+    int nProd = 0;
+    for (auto prodId : _products) {
+        if (prodId != invalid) {
+            ++nProd;
+        }
+    }
+    
+    // TODO The is probably a better way to index everything
+
+    // Compute the total number of elements in each cluster
+    auto cl1 = _network->getCluster(_reactants[0]);
+    const auto& cl1Reg = cl1.getRegion();
+    AmountType volCl1 = 1;
+    for (auto i : speciesRangeNoI) {
+        volCl1 *= (cl1Reg[i].end() - 1 - cl1Reg[i].begin());
+    }
+    auto cl2 = _network->getCluster(_reactants[1]);
+    const auto& cl2Reg = cl2.getRegion();
+    AmountType volCl2 = 1;
+    for (auto i : speciesRangeNoI) {
+        volCl2 *= (cl2Reg[i].end() - 1 - cl2Reg[i].begin());
+    }
+
+    // Save the indices for the reactants because they will be used for every partials
+    indices(0) = _reactants[0];
+    for (auto i : speciesRangeNoI) {
+    	indices(i() + 1) = _reactantMomentIds[0][i()];
+    }
+    indices(numSpeciesNoI + 2) = _reactants[1];
+    for (auto i : speciesRangeNoI) {
+    	indices(numSpeciesNoI + i() + 3) = _reactantMomentIds[1][i()];
+    }
+    
+    // Compute the partials for the 0th order moments
+    // Compute the values (d / dL_0^A)
+    double temp = _coefs(0, 0, 0, 0) * concentrations[_reactants[1]];
+    for (auto i : speciesRangeNoI) {
+    	temp += _coefs(0, i() + 1, 0, 0) *
+                concentrations[_reactantMomentIds[1][i()]];
+    }
+    // First for the first reactant
+    indices(2 * (numSpeciesNoI + 1) + 1) = _reactants[0];
+    values(0) = - _rate(gridIndex) * temp / (double) volCl1;
+    // Second reactant
+    indices(2 * (numSpeciesNoI + 1) + 2) = _reactants[1];
+    values(2 * (numSpeciesNoI + 1) + 1) = - _rate(gridIndex) * temp / (double) volCl2;
+    // For the products
+    for (std::size_t p : {0,1}) {
+        auto prodId = _products[p];
+        if (prodId == invalid) {
+            continue;
+        }
+        auto prod = _network->getCluster(prodId);
+        const auto& prodReg = prod.getRegion();
+        AmountType volProd = 1;
+        for (auto i : speciesRangeNoI) {
+            volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
+        }
+        indices(2 * (numSpeciesNoI + 1) + 3 + p) = _products[p];
+        values(2 * (p + 2) * (numSpeciesNoI + 1) + 1) = _rate(gridIndex) * temp / (double) volProd;
+    }
+    
+    // (d / dL_1^A)
+    for (auto i : speciesRangeNoI) {
+    	temp = _coefs(i() + 1, 0, 0, 0) * concentrations[_reactants[1]];
+        for (auto j : speciesRangeNoI) {
+        	temp += _coefs(i() + 1, j() + 1, 0, 0) * concentrations[_reactantMomentIds[1][j()]];
+        }
+        // First reactant
+        values(i() + 1) = - _rate(gridIndex) * temp / (double) volCl1;
+        // second reactant
+        values(2 * (numSpeciesNoI + 1) + i() + 2) = - _rate(gridIndex) * temp / (double) volCl2;
+        // For the products
+        for (std::size_t p : {0,1}) {
+            auto prodId = _products[p];
+            if (prodId == invalid) {
+                continue;
+            }
+            auto prod = _network->getCluster(prodId);
+            const auto& prodReg = prod.getRegion();
+            AmountType volProd = 1;
+            for (auto i : speciesRangeNoI) {
+                volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
+            }
+            values(2 * (p + 2) * (numSpeciesNoI + 1) + i() + 2) = _rate(gridIndex) * temp / (double) volProd;
+        }
+    }
+    
+    // (d / dL_0^B)
+    temp = _coefs(0, 0, 0, 0) * concentrations[_reactants[0]];
+    for (auto i : speciesRangeNoI) {
+    	temp += _coefs(i() + 1, 0, 0, 0) *
+                concentrations[_reactantMomentIds[0][i()]];
+    }
+    values(numSpeciesNoI + 2) = - _rate(gridIndex) * temp / (double) volCl1;
+    values(3 * (numSpeciesNoI + 1) + 1) = - _rate(gridIndex) * temp / (double) volCl2;
+    for (std::size_t p : {0,1}) {
+        auto prodId = _products[p];
+        if (prodId == invalid) {
+            continue;
+        }
+        auto prod = _network->getCluster(prodId);
+        const auto& prodReg = prod.getRegion();
+        AmountType volProd = 1;
+        for (auto i : speciesRangeNoI) {
+            volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
+        }
+        values((2 * (p + 2) + 1) * (numSpeciesNoI + 1) + 1) = _rate(gridIndex) * temp / (double) volProd;
+    }
+    
+    // (d / dL_1^B)
+    for (auto i : speciesRangeNoI) {
+    	temp = _coefs(0, i() + 1, 0, 0) * concentrations[_reactants[0]];
+        for (auto j : speciesRangeNoI) {
+        	temp += _coefs(j() + 1, i() + 1, 0, 0) * concentrations[_reactantMomentIds[0][j()]];
+        }
+        values(numSpeciesNoI + i() + 3) = - _rate(gridIndex) * temp / (double) volCl1;
+        values(3 * (numSpeciesNoI + 1) + i() + 2) = - _rate(gridIndex) * temp / (double) volCl2;
+        for (std::size_t p : {0,1}) {
+            auto prodId = _products[p];
+            if (prodId == invalid) {
+                continue;
+            }
+            auto prod = _network->getCluster(prodId);
+            const auto& prodReg = prod.getRegion();
+            AmountType volProd = 1;
+            for (auto i : speciesRangeNoI) {
+                volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
+            }
+            values((2 * (p + 2) + 1) * (numSpeciesNoI + 1) + i() + 2) = _rate(gridIndex) * temp / (double) volProd;
+        }
+    }
+        
+    // Take care of the first moments
+    for (auto k : speciesRangeNoI) {
+        // First for the first reactant
+        indices(2 * (numSpeciesNoI + 1) + nProd + 3 + k()) = _reactantMomentIds[0][k()];
+        // (d / dL_0^A)
+        temp = _coefs(0, 0, 0, k() + 1) * concentrations[_reactants[1]];
+        for (auto j : speciesRangeNoI) {
+            temp += _coefs(0, j() + 1, 0, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
+        }
+        values(2 * (nProd + 3) * (numSpeciesNoI + 1) + k() + 1) = - _rate(gridIndex) * temp / (double) volCl1;
+        // (d / dL_1^A)
+        for (auto i : speciesRangeNoI) {
+            temp = _coefs(i() + 1, 0, 0, k() + 1) * concentrations[_reactants[1]];
+            for (auto j : speciesRangeNoI) {
+                temp += _coefs(i() + 1, j() + 1, 0, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
+            }
+            values((2 * (nProd + 3) + 1) * (numSpeciesNoI + 1) + k() * numSpeciesNoI + i()) 
+            = - _rate(gridIndex) * temp / (double) volCl1;
+        }
+        // (d / dL_0^B)
+        temp = _coefs(0, 0, 0, k() + 1) * concentrations[_reactants[0]];
+        for (auto j : speciesRangeNoI) {
+            temp += _coefs(j() + 1, 0, 0, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
+        }
+        values((2 * (nProd + 3) + 1) * (numSpeciesNoI + 1) + k() + numSpeciesNoI * numSpeciesNoI) 
+        = - _rate(gridIndex) * temp / (double) volCl1;
+        // (d / dL_1^B)
+        for (auto i : speciesRangeNoI) {
+            temp = _coefs(0, i() + 1, 0, k() + 1) * concentrations[_reactants[0]];
+            for (auto j : speciesRangeNoI) {
+                temp += _coefs(j() + 1, i() + 1, 0, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
+            }
+            values(2 * (nProd + 4) * (numSpeciesNoI + 1) + numSpeciesNoI * numSpeciesNoI + k() * numSpeciesNoI + i()) 
+            = - _rate(gridIndex) * temp / (double) volCl1;
+        }
+    }
+
+    // Take care of the first moments
+    for (auto k : speciesRangeNoI) {
+        // First for the second reactant
+        indices(2 * (numSpeciesNoI + 1) + nProd + numSpeciesNoI + 3 + k()) = _reactantMomentIds[1][k()];
+        // (d / dL_0^A)
+        temp = _coefs(0, 0, 1, k() + 1) * concentrations[_reactants[1]];
+        for (auto j : speciesRangeNoI) {
+            temp += _coefs(0, j() + 1, 1, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
+        }
+        values(2 * (nProd + 4) * (numSpeciesNoI + 1) + 2 * numSpeciesNoI * numSpeciesNoI + k()) 
+        = - _rate(gridIndex) * temp / (double) volCl2;
+        // (d / dL_1^A)
+        for (auto i : speciesRangeNoI) {
+            temp = _coefs(i() + 1, 0, 1, k() + 1) * concentrations[_reactants[1]];
+            for (auto j : speciesRangeNoI) {
+                temp += _coefs(i() + 1, j() + 1, 1, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
+            }
+            values((2 * (nProd + 4) + 1) * (numSpeciesNoI + 1) + 2 * numSpeciesNoI * numSpeciesNoI + k() * numSpeciesNoI + i()) 
+            = - _rate(gridIndex) * temp / (double) volCl2;
+        }
+        // (d / dL_0^B)
+        temp = _coefs(0, 0, 1, k() + 1) * concentrations[_reactants[0]];
+        for (auto j : speciesRangeNoI) {
+            temp += _coefs(j() + 1, 0, 1, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
+        }
+        values((2 * (nProd + 4) + 1) * (numSpeciesNoI + 1) + 3 * numSpeciesNoI * numSpeciesNoI + k()) 
+        = - _rate(gridIndex) * temp / (double) volCl2;
+        // (d / dL_1^B)
+        for (auto i : speciesRangeNoI) {
+            temp = _coefs(0, i() + 1, 1, k() + 1) * concentrations[_reactants[0]];
+            for (auto j : speciesRangeNoI) {
+                temp += _coefs(j() + 1, i() + 1, 1, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
+            }
+            values(2 * (nProd + 5) * (numSpeciesNoI + 1) + 3 * numSpeciesNoI * numSpeciesNoI + k() * numSpeciesNoI + i()) 
+            = - _rate(gridIndex) * temp / (double) volCl2;
+        }
+    }
+    
+    // Loop on the products
+    for (std::size_t p : {0,1}) {
+        auto prodId = _products[p];
+        if (prodId == invalid) {
+            continue;
+        }
+
+        auto prod = _network->getCluster(prodId);
+        const auto& prodReg = prod.getRegion();
+        AmountType volProd = 1;
+        for (auto i : speciesRangeNoI) {
+            volProd *= (prodReg[i].end() - 1 - prodReg[i].begin());
+        }
+
+        // Take care of the first moments
+        for (auto k : speciesRangeNoI) {
+            indices(2 * (numSpeciesNoI + 1) + nProd + 3 + (p + 2) * numSpeciesNoI + k()) = _productMomentIds[p][k()];
+            // (d / dL_0^A)
+            temp = _coefs(0, 0, p + 2, k() + 1) * concentrations[_reactants[1]];
+            for (auto j : speciesRangeNoI) {
+                temp += _coefs(0, j() + 1, p + 2, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
+            }
+            values(2 * (nProd + 5 + p) * (numSpeciesNoI + 1) + 2 * (p + 2) * numSpeciesNoI * numSpeciesNoI + k()) 
+            = _rate(gridIndex) * temp / (double) volProd;
+            // (d / dL_1^A)
+            for (auto i : speciesRangeNoI) {
+                temp = _coefs(i() + 1, 0, p + 2, k() + 1) * concentrations[_reactants[1]];
+                for (auto j : speciesRangeNoI) {
+                    temp += _coefs(i() + 1, j() + 1, p + 2, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
+                }
+                values((2 * (nProd + 5 + p) + 1) * (numSpeciesNoI + 1) + 2 * (p + 2) * numSpeciesNoI * numSpeciesNoI 
+                		+ k() * numSpeciesNoI + i()) = _rate(gridIndex) * temp / (double) volProd;
+            }
+            // (d / dL_0^B)
+            temp = _coefs(0, 0, p + 2, k() + 1) * concentrations[_reactants[0]];
+            for (auto j : speciesRangeNoI) {
+                temp += _coefs(j() + 1, 0, p + 2, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
+            }
+            values((2 * (nProd + 5 + p) + 1) * (numSpeciesNoI + 1) + (2 * (p + 2) + 1) * numSpeciesNoI * numSpeciesNoI 
+            		+ k()) = _rate(gridIndex) * temp / (double) volProd;
+            // (d / dL_1^B)
+            for (auto i : speciesRangeNoI) {
+                temp = _coefs(0, i() + 1, p + 2, k() + 1) * concentrations[_reactants[0]];
+                for (auto j : speciesRangeNoI) {
+                    temp += _coefs(j() + 1, i() + 1, p + 2, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
+                }
+                values(2 * (nProd + 6 + p) * (numSpeciesNoI + 1) + (2 * (p + 2) + 1) * numSpeciesNoI * numSpeciesNoI 
+                		+ k() * numSpeciesNoI + i()) = _rate(gridIndex) * temp / (double) volProd;
+            }
+        }
+    }
 }
 
 template <typename TImpl>
@@ -811,6 +1072,92 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationPartialDerivatives(
     ConcentrationsView concentrations, Kokkos::View<std::size_t*> indices,
     Kokkos::View<double*> values, std::size_t gridIndex)
 {
+    using AmountType = typename NetworkType::AmountType;
+    constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
+    constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+    // Compute the total number of elements in each cluster
+    auto cl = _network->getCluster(_reactants[0]);
+    const auto& clReg = cl.getRegion();
+    AmountType volCl = 1;
+    for (auto i : speciesRangeNoI) {
+        volCl *= (clReg[i].end() - 1 - clReg[i].begin());
+    }
+    auto prod1 = _network->getCluster(_products[0]);
+    const auto& prod1Reg = prod1.getRegion();
+    AmountType volProd1 = 1;
+    for (auto i : speciesRangeNoI) {
+        volProd1 *= (prod1Reg[i].end() - 1 - prod1Reg[i].begin());
+    }
+    auto prod2 = _network->getCluster(_products[1]);
+    const auto& prod2Reg = prod2.getRegion();
+    AmountType volProd2 = 1;
+    for (auto i : speciesRangeNoI) {
+        volProd2 *= (prod2Reg[i].end() - 1 - prod2Reg[i].begin());
+    }
+
+    // Save the indices for the reactant because they will be used for every partials
+    indices(0) = _reactants[0];
+    for (auto i : speciesRangeNoI) {
+    	indices(i() + 1) = _reactantMomentIds[0][i()];
+    }
+    
+    // Compute the partials for the 0th order moments
+    // First for the reactant
+    double df = - _rate(gridIndex) / (double) volCl;
+    // Keep its index
+    indices(numSpeciesNoI + 2) = _reactants[0];
+    // Compute the values
+    values(0) = df * _coefs(0, 0, 0, 0);
+    for (auto i : speciesRangeNoI) {
+    	values(i() + 1) = df * _coefs(i() + 1, 0, 0, 0);
+    }
+    // For the first product
+    df = _rate(gridIndex) / (double) volProd1;
+    indices(numSpeciesNoI + 3) = _products[0];
+    values(numSpeciesNoI + 2) = df * _coefs(0, 0, 0, 0);
+    for (auto i : speciesRangeNoI) {
+    	values(numSpeciesNoI + i() + 3) = df * _coefs(i() + 1, 0, 0, 0);
+    }
+    // For the second product
+    df = _rate(gridIndex) / (double) volProd2;
+    indices(numSpeciesNoI + 4) = _products[1];
+    values(2 * (numSpeciesNoI + 1) + 1) = df * _coefs(0, 0, 0, 0);
+    for (auto i : speciesRangeNoI) {
+    	values(2 * (numSpeciesNoI + 1) + i() + 2) = df * _coefs(i() + 1, 0, 0, 0);
+    }
+    
+    // Take care of the first moments
+    for (auto k : speciesRangeNoI) {
+        // First for the reactant
+        // TODO compute the prefactor related to the dispersion, it can be
+        // moved to the coefs maybe
+        double prefactor = 1.0;
+        df = - _rate(gridIndex) * prefactor / (double) volCl;
+        // Keep its index
+        indices(numSpeciesNoI + (3 * k()) + 5) = _reactantMomentIds[0][k()];
+        // Compute the values
+        values((3 * k() + 3) * (numSpeciesNoI + 1) + 1) = df * _coefs(0, 0, 0, k() + 1);
+        for (auto i : speciesRangeNoI) {
+        	values((3 * k() + 3) * (numSpeciesNoI + 1) + i() + 2) = df * _coefs(i() + 1, 0, 0, k() + 1);
+        }
+        // For the first product
+        prefactor = 1.0;
+        df = _rate(gridIndex) * prefactor / (double) volProd1;
+        indices(numSpeciesNoI + (3 * k()) + 6) = _productMomentIds[0][k()];
+        values((3 * k() + 4) * (numSpeciesNoI + 1) + 1) = df * _coefs(0, 0, 1, k() + 1);
+        for (auto i : speciesRangeNoI) {
+        	values((3 * k() + 4) * (numSpeciesNoI + 1) + i() + 2) = df * _coefs(i() + 1, 0, 1, k() + 1);
+        }
+        // For the second product
+        prefactor = 1.0;
+        df = _rate(gridIndex) * prefactor / (double) volProd2;
+        indices(numSpeciesNoI + (3 * k()) + 7) = _productMomentIds[1][k()];
+        values((3 * k() + 5) * (numSpeciesNoI + 1) + 1) = df * _coefs(0, 0, 2, k() + 1);
+        for (auto i : speciesRangeNoI) {
+        	values((3 * k() + 5) * (numSpeciesNoI + 1) + i() + 2) = df * _coefs(i() + 1, 0, 2, k() + 1);
+        }
+    }
 }
 }
 }
