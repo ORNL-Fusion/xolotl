@@ -44,6 +44,10 @@ enum class ReactantType {
 	Xe,
 	XeV,
 	XeI,
+	Void,
+	Frank,
+	Faulted,
+	Perfect,
 
 	// Reactant types for PSI networks
 	PSIMixed,
@@ -53,7 +57,13 @@ enum class ReactantType {
 	NESuper,
 
 	// Reactant types for iron networks
-	FeSuper
+	FeSuper,
+
+	// Reactant types for alloy networks
+	VoidSuper,
+	FrankSuper,
+	FaultedSuper,
+	PerfectSuper
 };
 
 std::string toString(ReactantType rtype);

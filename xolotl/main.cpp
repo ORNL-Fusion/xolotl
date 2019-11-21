@@ -85,8 +85,7 @@ std::unique_ptr<xolotlSolver::PetscSolver> setUpSolver(
 	// Once we have widespread C++14 support, use std::make_unique.
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
-	solver->setCommandLineOptions(options.getPetscArgc(),
-			options.getPetscArgv());
+	solver->setCommandLineOptions(options.getPetscArg());
 	solver->initialize();
 	solverInitTimer->stop();
 
@@ -189,9 +188,9 @@ int runXolotl(const Options& opts) {
 
 	// Report statistics about the performance data collected during
 	// the run we just completed.
-	xperf::PerfObjStatsMap < xperf::ITimer::ValType > timerStats;
-	xperf::PerfObjStatsMap < xperf::IEventCounter::ValType > counterStats;
-	xperf::PerfObjStatsMap < xperf::IHardwareCounter::CounterType > hwCtrStats;
+	xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
+	xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> counterStats;
+	xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
 	handlerRegistry->collectStatistics(timerStats, counterStats, hwCtrStats);
 	if (rank == 0) {
 		handlerRegistry->reportStatistics(std::cout, timerStats, counterStats,
@@ -216,17 +215,14 @@ int main(int argc, char **argv) {
 
 	try {
 		// Check the command line arguments.
-		// Skip the executable name before parsing
-		argc -= 1; // one for the executable name
-		argv += 1; // one for the executable name
 		Options opts;
-		opts.readParams(argv);
+		opts.readParams(argc, argv);
 		if (opts.shouldRun()) {
 			// Skip the name of the parameter file that was just used.
 			// The arguments should be empty now.
 			// TODO is this needed?
-			argc -= 1;
-			argv += 1;
+			argc -= 2;
+			argv += 2;
 
 			// Run the simulation.
 			ret = runXolotl(opts);

@@ -108,8 +108,9 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initialize(const IReactionNetwork& network, std::vector<double> grid,
-			int ny = 0, double hy = 0.0, int nz = 0, double hz = 0.0);
+	void initialize(const IReactionNetwork& network, int nx, int xs, int ny = 0,
+			double hy = 0.0, int ys = 0, int nz = 0, double hz = 0.0,
+			int zs = 0);
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
@@ -120,7 +121,7 @@ public:
 	 */
 	void initializeIndex1D(int surfacePos, const IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid);
+			std::vector<double> grid, int nx, int xs);
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
@@ -132,7 +133,8 @@ public:
 	void initializeIndex2D(std::vector<int> surfacePos,
 			const IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid, int ny, double hy);
+			std::vector<double> grid, int nx, int xs, int ny, double hy,
+			int ys);
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
@@ -144,7 +146,8 @@ public:
 	void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
 			const IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid, int ny, double hy, int nz, double hz);
+			std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
+			int nz, double hz, int zs);
 
 	/**
 	 * This method update the rate for the modified trap-mutation if the rates
@@ -182,8 +185,8 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	void computeTrapMutation(const IReactionNetwork& network,
-			double *concOffset, double *updatedConcOffset, int xi, int xs,
-			int yj = 0, int zk = 0);
+			double *concOffset, double *updatedConcOffset, int xi, int yj = 0,
+			int zk = 0);
 
 	/**
 	 * Compute the partials due to the modified trap-mutation for all the
@@ -199,7 +202,7 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	int computePartialsForTrapMutation(const IReactionNetwork& network,
-			double *val, int *indices, int xi, int xs, int yj = 0, int zk = 0);
+			double *val, int *indices, int xi, int yj = 0, int zk = 0);
 
 	/**
 	 * Get the total number of clusters in the network that can undergo trap mutation.

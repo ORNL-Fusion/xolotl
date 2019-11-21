@@ -38,7 +38,8 @@ static char help[] =
 
 // ----- GLOBAL VARIABLES ----- //
 extern PetscErrorCode setupPetsc0DMonitor(TS);
-extern PetscErrorCode setupPetsc1DMonitor(TS, std::shared_ptr<xolotlPerf::IHandlerRegistry>);
+extern PetscErrorCode setupPetsc1DMonitor(TS,
+		std::shared_ptr<xolotlPerf::IHandlerRegistry>);
 extern PetscErrorCode setupPetsc2DMonitor(TS);
 extern PetscErrorCode setupPetsc3DMonitor(TS);
 
@@ -102,6 +103,10 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 	// Stop the RHSFunction Timer
 	RHSFunctionTimer->stop();
 
+	// Return the local vector
+	ierr = DMRestoreLocalVector(da, &localC);
+	CHKERRQ(ierr);
+
 	PetscFunctionReturn(0);
 }
 
@@ -148,6 +153,10 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	/* ----- Compute the partial derivatives for the reaction term ----- */
 	solverHandler.computeDiagonalJacobian(ts, localC, J, ftime);
 
+	// Return the local vector
+	ierr = DMRestoreLocalVector(da, &localC);
+	CHKERRQ(ierr);
+
 	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
 	CHKERRQ(ierr);
 	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
@@ -188,13 +197,26 @@ void PetscSolver::initialize() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
+	PetscInitialize(NULL, NULL, NULL, help);
 
 	return;
 }
 
 void PetscSolver::solve() {
 	PetscErrorCode ierr;
+
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Create the solver options
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	PetscOptions petscOptions;
+	ierr = PetscOptionsCreate(&petscOptions);
+	checkPetscError(ierr,
+			"PetscSolver::initialize: PetscOptionsCreate failed.");
+	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
+	checkPetscError(ierr,
+			"PetscSolver::initialize: PetscOptionsInsertString failed.");
+	ierr = PetscOptionsPush(petscOptions);
+	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPush failed.");
 
 	// Create the solver context
 	DM da;
@@ -238,13 +260,13 @@ void PetscSolver::solve() {
 	double time = 0.0, deltaTime = 1.0e-12;
 	if (!fileName.empty()) {
 
-        XFile xfile(fileName);
-        auto concGroup = xfile.getGroup<XFile::ConcentrationGroup>();
-        if(concGroup and concGroup->hasTimesteps()) {
-            auto tsGroup = concGroup->getLastTimestepGroup();
-            assert(tsGroup);
-            std::tie(time, deltaTime) = tsGroup->readTimes();
-        }
+		XFile xfile(fileName);
+		auto concGroup = xfile.getGroup<XFile::ConcentrationGroup>();
+		if (concGroup and concGroup->hasTimesteps()) {
+			auto tsGroup = concGroup->getLastTimestepGroup();
+			assert(tsGroup);
+			std::tie(time, deltaTime) = tsGroup->readTimes();
+		}
 	}
 
 	ierr = TSSetTime(ts, time);
@@ -357,6 +379,5 @@ void PetscSolver::finalize() {
 
 	return;
 }
-
 
 } /* end namespace xolotlSolver */

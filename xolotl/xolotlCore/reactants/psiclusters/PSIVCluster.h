@@ -45,13 +45,13 @@ public:
 
 		// Compute the reaction radius
 		// It is the same formula for HeV clusters
-		reactionRadius = (sqrt(3.0) / 4.0) * xolotlCore::tungstenLatticeConstant
+		double latticeParam = network.getLatticeParameter();
+		reactionRadius = (sqrt(3.0) / 4.0) * latticeParam
 				+ pow(
-						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0)
-								* size) / (8.0 * xolotlCore::pi), (1.0 / 3.0))
-				- pow(
-						(3.0 * pow(xolotlCore::tungstenLatticeConstant, 3.0))
-								/ (8.0 * xolotlCore::pi), (1.0 / 3.0));
+						(3.0 * pow(latticeParam, 3.0) * size)
+								/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+				- pow((3.0 * pow(latticeParam, 3.0)) / (8.0 * xolotlCore::pi),
+						(1.0 / 3.0));
 
 		// Bounds on He, D, T, and V
 		bounds[0] = IntegerRange<IReactant::SizeType>(
@@ -65,7 +65,7 @@ public:
 				static_cast<IReactant::SizeType>(1));
 		bounds[3] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(size),
-				static_cast<IReactant::SizeType>(size+1));
+				static_cast<IReactant::SizeType>(size + 1));
 
 		return;
 	}
@@ -77,6 +77,53 @@ public:
 
 	//! Destructor
 	~PSIVCluster() {
+	}
+
+	/**
+	 * Add grid points to the vector of diffusion coefficients or remove
+	 * them if the value is negative.
+	 *
+	 * @param i The number of grid point to add or remove
+	 */
+	void addGridPoints(int i) override {
+		if (diffusionFactor > 0.0) {
+			Reactant::addGridPoints(i);
+		}
+
+		// Don't do anything
+		return;
+	}
+
+	/**
+	 * This operation sets the temperature at which the reactant currently
+	 * exists. Temperature-dependent quantities are recomputed when this
+	 * operation is called, so the temperature should always be set first.
+	 *
+	 * @param temp The new cluster temperature
+	 * @param i The location on the grid
+	 */
+	void setTemperature(double temp, int i) override {
+		if (diffusionFactor > 0.0) {
+			Reactant::setTemperature(temp, i);
+		}
+
+		// Don't do anything
+		return;
+	}
+
+	/**
+	 * This operation returns the diffusion coefficient for this reactant and is
+	 * calculated from the diffusion factor.
+	 *
+	 * @param i The position on the grid
+	 * @return The diffusion coefficient
+	 */
+	double getDiffusionCoefficient(int i) const override {
+		if (diffusionFactor > 0.0) {
+			return Reactant::getDiffusionCoefficient(i);
+		}
+
+		return 0.0;
 	}
 
 };

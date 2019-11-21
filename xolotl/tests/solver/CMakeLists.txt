@@ -20,6 +20,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation
                     ${CMAKE_SOURCE_DIR}/xolotlPerf
                     ${CMAKE_SOURCE_DIR}/xolotlPerf/dummy
                     ${CMAKE_SOURCE_DIR}/xolotlFactory/material

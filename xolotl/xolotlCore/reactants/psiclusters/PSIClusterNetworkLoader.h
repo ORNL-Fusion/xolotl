@@ -59,6 +59,9 @@ protected:
 	// The migration energy for a single vacancy in eV
 	double vOneMigration = 1.30;
 
+	// The factor between He and H radius sizes
+	double hydrogenRadiusFactor = 0.25;
+
 	/**
 	 * The maximum number of helium atoms that can be combined with a vacancy
 	 * cluster with size equal to the index i in the array plus one. For

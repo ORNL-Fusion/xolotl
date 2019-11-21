@@ -28,9 +28,10 @@ public:
 	 * The constructor. All PSIDClusters must be initialized with a size.
 	 *
 	 * @param nD the number of deuterium atoms in the cluster
+	 * @param factor The ratio between the He and H radius
 	 * @param registry The performance handler registry
 	 */
-	PSIDCluster(int nD, IReactionNetwork& _network,
+	PSIDCluster(int nD, double factor, IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 			PSICluster(_network, registry, buildName(nD)) {
 		// Set the size
@@ -42,12 +43,12 @@ public:
 
 		// Compute the reaction radius
 		double FourPi = 4.0 * xolotlCore::pi;
-		double aCubed = pow(xolotlCore::tungstenLatticeConstant, 3);
+		double aCubed = pow(network.getLatticeParameter(), 3);
 		double termOne = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * size,
 				(1.0 / 3.0));
 		double termTwo = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed,
 				(1.0 / 3.0));
-		reactionRadius = (0.3 + termOne - termTwo) * 0.25;
+		reactionRadius = (0.3 + termOne - termTwo) * factor;
 
 		// Bounds on He, D, T, and V
 		bounds[0] = IntegerRange<IReactant::SizeType>(
@@ -55,7 +56,7 @@ public:
 				static_cast<IReactant::SizeType>(1));
 		bounds[1] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(size),
-				static_cast<IReactant::SizeType>(size+1));
+				static_cast<IReactant::SizeType>(size + 1));
 		bounds[2] = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(0),
 				static_cast<IReactant::SizeType>(1));

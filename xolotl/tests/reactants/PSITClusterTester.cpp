@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	// Check all the values
 	for (int i = 1; i <= 5; i++) {
 		cluster = shared_ptr<PSITCluster>(
-				new PSITCluster(i, *(network.get()), registry));
+				new PSITCluster(i, 0.25, *(network.get()), registry));
 		BOOST_REQUIRE_CLOSE(expectedRadii[i - 1], cluster->getReactionRadius(),
 				0.001);
 	}

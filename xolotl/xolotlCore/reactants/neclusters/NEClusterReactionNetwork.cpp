@@ -1,10 +1,7 @@
 #include "NEClusterReactionNetwork.h"
-#include "NECluster.h"
 #include "NESuperCluster.h"
 #include <xolotlPerf.h>
-#include <iostream>
 #include <sstream>
-#include <algorithm>
 #include <Constants.h>
 
 using namespace xolotlCore;
@@ -13,7 +10,7 @@ NEClusterReactionNetwork::NEClusterReactionNetwork(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		ReactionNetwork( { ReactantType::V, ReactantType::I, ReactantType::Xe,
 				ReactantType::XeV, ReactantType::XeI, ReactantType::NESuper },
-				ReactantType::NESuper, registry) {
+				registry), rho(0.0) {
 
 	// Initialize default properties
 	dissociationsEnabled = true;
@@ -22,16 +19,15 @@ NEClusterReactionNetwork::NEClusterReactionNetwork(
 }
 
 double NEClusterReactionNetwork::calculateDissociationConstant(
-		const DissociationReaction& reaction, int i) const {
+		const DissociationReaction& reaction, int i) {
 
 	// If the dissociations are not allowed
 	if (!dissociationsEnabled)
 		return 0.0;
 
 	// Compute the atomic volume
-	double atomicVolume = 0.5 * xolotlCore::uraniumDioxydeLatticeConstant
-			* xolotlCore::uraniumDioxydeLatticeConstant
-			* xolotlCore::uraniumDioxydeLatticeConstant;
+	double atomicVolume = 0.5 * latticeParameter * latticeParameter
+			* latticeParameter;
 
 	// Get the rate constant from the reverse reaction
 	double kPlus = reaction.reverseReaction->kConstant[i];
@@ -39,7 +35,9 @@ double NEClusterReactionNetwork::calculateDissociationConstant(
 	// Calculate and return
 	double bindingEnergy = computeBindingEnergy(reaction);
 	double k_minus_exp = exp(
-			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature));
+			-1.0 * bindingEnergy / (xolotlCore::kBoltzmann * temperature)); // We can use the network temperature
+	// because this method is called only
+	// when the temperature is updated
 	double k_minus = (1.0 / atomicVolume) * kPlus * k_minus_exp;
 
 	return k_minus;
@@ -53,33 +51,85 @@ void NEClusterReactionNetwork::createReactionConnectivity() {
 	// We know here that only Xe_1 can cluster so we simplify the search
 	// Xe_(a-i) + Xe_i --> Xe_a
 	firstSize = 1;
-	auto singleXeCluster = get(Species::Xe, firstSize);
-	// Get all the Xe clusters
-	auto const& xeClusters = getAll(ReactantType::Xe);
-	// Consider each Xe cluster.
+	auto& singleXeCluster = static_cast<NECluster&>(*(get(Species::Xe,
+			firstSize)));
+	// Consider each Xe super cluster.
 	for (auto const& currMapItem : getAll(ReactantType::Xe)) {
 
-		auto& xeReactant = *(currMapItem.second);
+		auto& xeReactant = static_cast<NECluster&>(*(currMapItem.second));
+		// Consider each potential product in normal clusters
+		for (auto const& currMapItemBis : getAll(ReactantType::Xe)) {
 
-		// Get the size of the second reactant and product
-		secondSize = xeReactant.getSize();
-		productSize = firstSize + secondSize;
-		// Get the product cluster for the reaction
-		auto product = get(Species::Xe, productSize);
-		// Check that the reaction can occur
-		if (product
-				&& (singleXeCluster->getDiffusionFactor() > 0.0
-						|| xeReactant.getDiffusionFactor() > 0.0)) {
-			// Create a production reaction
-			auto reaction = std::make_shared<ProductionReaction>(
-					*singleXeCluster, xeReactant);
-			// Tell the reactants that they are in this reaction
-			singleXeCluster->participateIn(*reaction);
-			xeReactant.participateIn(*reaction);
-			product->resultFrom(*reaction);
+			auto& product = static_cast<NECluster&>(*(currMapItemBis.second));
+			// Check that the reaction can occur
+			if (singleXeCluster.getDiffusionFactor() > 0.0
+					|| xeReactant.getDiffusionFactor() > 0.0) {
+				if (checkOverlap(singleXeCluster, xeReactant, product)) {
+					// Create the reaction
+					std::unique_ptr<ProductionReaction> reaction(
+							new ProductionReaction(singleXeCluster,
+									xeReactant));
+					auto& prref = add(std::move(reaction));
+					// Tell the reactants that they are in this reaction
+					singleXeCluster.participateIn(prref, product);
+					xeReactant.participateIn(prref, product);
+					product.resultFrom(prref, product);
 
-			// Check if the reverse reaction is allowed
-			checkForDissociation(product, reaction);
+					// Check if the reverse reaction is allowed
+					checkForDissociation(&product, prref);
+				}
+			}
+		}
+		// Consider each potential product in super clusters
+		for (auto const& currMapItemBis : getAll(ReactantType::NESuper)) {
+
+			auto& product = static_cast<NECluster&>(*(currMapItemBis.second));
+			// Check that the reaction can occur
+			if (singleXeCluster.getDiffusionFactor() > 0.0
+					|| xeReactant.getDiffusionFactor() > 0.0) {
+				if (checkOverlap(singleXeCluster, xeReactant, product)) {
+					// Create the reaction
+					std::unique_ptr<ProductionReaction> reaction(
+							new ProductionReaction(singleXeCluster,
+									xeReactant));
+					auto& prref = add(std::move(reaction));
+					// Tell the reactants that they are in this reaction
+					singleXeCluster.participateIn(prref, product);
+					xeReactant.participateIn(prref, product);
+					product.resultFrom(prref, product);
+
+					// Check if the reverse reaction is allowed
+					checkForDissociation(&product, prref);
+				}
+			}
+		}
+	}
+	// Consider each Xe super cluster.
+	for (auto const& currMapItem : getAll(ReactantType::NESuper)) {
+
+		auto& xeReactant = static_cast<NECluster&>(*(currMapItem.second));
+		// Consider each potential product
+		for (auto const& currMapItemBis : getAll(ReactantType::NESuper)) {
+
+			auto& product = static_cast<NECluster&>(*(currMapItemBis.second));
+			// Check that the reaction can occur
+			if (singleXeCluster.getDiffusionFactor() > 0.0
+					|| xeReactant.getDiffusionFactor() > 0.0) {
+				if (checkOverlap(singleXeCluster, xeReactant, product)) {
+					// Create the reaction
+					std::unique_ptr<ProductionReaction> reaction(
+							new ProductionReaction(singleXeCluster,
+									xeReactant));
+					auto& prref = add(std::move(reaction));
+					// Tell the reactants that they are in this reaction
+					singleXeCluster.participateIn(prref, product);
+					xeReactant.participateIn(prref, product);
+					product.resultFrom(prref, product);
+
+					// Check if the reverse reaction is allowed
+					checkForDissociation(&product, prref);
+				}
+			}
 		}
 	}
 
@@ -87,10 +137,9 @@ void NEClusterReactionNetwork::createReactionConnectivity() {
 }
 
 void NEClusterReactionNetwork::checkForDissociation(
-		IReactant * emittingReactant,
-		std::shared_ptr<ProductionReaction> reaction) {
+		IReactant * emittingReactant, ProductionReaction& reaction) {
 	// Check if at least one of the potentially emitted cluster is size one
-	if (reaction->first.getSize() != 1 && reaction->second.getSize() != 1) {
+	if (reaction.first.getSize() != 1 && reaction.second.getSize() != 1) {
 		// Don't add the reverse reaction
 		return;
 	}
@@ -99,14 +148,15 @@ void NEClusterReactionNetwork::checkForDissociation(
 	// Create a dissociation reaction
 	// TODO can this be on the stack?
 	std::unique_ptr<DissociationReaction> dissociationReaction(
-			new DissociationReaction(*emittingReactant, reaction->first,
-					reaction->second));
+			new DissociationReaction(*emittingReactant, reaction.first,
+					reaction.second));
 	// Set the reverse reaction
-	dissociationReaction->reverseReaction = reaction.get();
+	dissociationReaction->reverseReaction = &reaction;
+	auto& drref = add(std::move(dissociationReaction));
 	// Tell the reactants that their are in this reaction
-	reaction->first.participateIn(*dissociationReaction);
-	reaction->second.participateIn(*dissociationReaction);
-	emittingReactant->emitFrom(*dissociationReaction);
+	reaction.first.participateIn(drref, *emittingReactant);
+	reaction.second.participateIn(drref, *emittingReactant);
+	emittingReactant->emitFrom(drref, *emittingReactant);
 
 	return;
 }
@@ -127,8 +177,6 @@ void NEClusterReactionNetwork::reinitializeNetwork() {
 				id++;
 				currReactant.setId(id);
 				currReactant.setMomentId(id);
-
-				currReactant.optimizeReactions();
 			});
 
 	// Get all the super clusters and loop on them
@@ -141,7 +189,12 @@ void NEClusterReactionNetwork::reinitializeNetwork() {
 					id++;
 					currCluster.setMomentId(id);
 
-					currCluster.optimizeReactions();
+					// Update the size
+					IReactant::SizeType clusterSize = (double)currCluster.getAverage()
+					+ (double)(currCluster.getNTot() - 1) / 2.0;
+					if (clusterSize > maxClusterSizeMap[ReactantType::Xe]) {
+						maxClusterSizeMap[ReactantType::Xe] = clusterSize;
+					}
 				}
 			});
 

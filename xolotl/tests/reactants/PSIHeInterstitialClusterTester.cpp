@@ -27,7 +27,7 @@ static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
 /**
  * This suite is responsible for testing the PSIHeInterstitialCluster.
  */
-BOOST_AUTO_TEST_SUITE(PSIHeInterstitialCluster_testSuite)
+BOOST_AUTO_TEST_SUITE (PSIHeInterstitialCluster_testSuite)
 
 BOOST_AUTO_TEST_CASE(getSpeciesSize) {
 	// Create a simple reaction network and create a HeInterstitial cluster
@@ -158,12 +158,10 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = { 3.24895e+12, 0, 0, 0, 0, 0, -2.58738e+10, 0, 0,
-			0, 0, 0, 0, 0, 0, 0 };
+	double knownPartials[] = {216.597, 0, 0, 0, 0, 0, -1.72492, 0, 0,
+		0, 0, 0, 0, 0, 0, 0};
 	// Get the simple reaction network
 	auto network = getSimplePSIReactionNetwork(2);
-	// Add a grid point for the rates
-	network->addGridPoints(1);
 
 	// Get an HeI cluster with compostion 2,0,1.
 	IReactant::Composition composition;
@@ -171,10 +169,10 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	composition[toCompIdx(Species::V)] = 0;
 	composition[toCompIdx(Species::I)] = 1;
 	auto cluster = (PSICluster *) network->get(ReactantType::HeI, composition);
-	// Set the diffusion factor and migration energy to arbitrary values
-	cluster->setDiffusionFactor(1.5E+10);
 	cluster->setConcentration(0.5);
 
+	// Add a grid point for the rates
+	network->addGridPoints(1);
 	// Compute the rate constants that are needed for the partials
 	network->setTemperature(1000.0, 0);
 	// Get the vector of partial derivatives

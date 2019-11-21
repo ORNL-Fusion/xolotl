@@ -52,10 +52,6 @@ std::shared_ptr<xolotlViz::IPlot> surfacePlotXZ3D;
 std::vector<std::vector<double> > previousIFlux3D;
 //! The variable to store the total number of interstitials going through the surface.
 std::vector<std::vector<double> > nInterstitial3D;
-//! The variable to store the xenon flux at the previous time step.
-double previousXeFlux3D = 0.0;
-//! The variable to store the total number of xenon going through the GB.
-double nXenon3D = 0.0;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield3D = 0.0;
 // The vector of depths at which bursting happens
@@ -218,8 +214,8 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 					continue;
 
 				// All processes create the dataset and fill it
-				tsGroup->writeConcentrationDataset(concSize, concArray, write, i, j,
-						k);
+				tsGroup->writeConcentrationDataset(concSize, concArray, write,
+						i, j, k);
 			}
 		}
 	}
@@ -292,23 +288,26 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 			for (PetscInt xi = xs; xi < xs + xm; xi++) {
 
 				// Boundary conditions
-				if (xi < surfacePos || xi == Mx - 1)
+				if (xi < surfacePos + solverHandler.getLeftOffset()
+						|| xi >= Mx - solverHandler.getRightOffset())
 					continue;
 
 				// Get the pointer to the beginning of the solution data for
 				// this grid point
 				gridPointSolution = solutionArray[zk][yj][xi];
 
+				double hx = grid[xi + 1] - grid[xi];
+
 				// Update the concentration in the network
 				network.updateConcentrationsFromArray(gridPointSolution);
 
 				// Get the total helium concentration at this grid point
-				heConcentration += network.getTotalAtomConcentration(0)
-						* (grid[xi + 1] - grid[xi]) * hy * hz;
-				dConcentration += network.getTotalAtomConcentration(1)
-						* (grid[xi + 1] - grid[xi]) * hy * hz;
-				tConcentration += network.getTotalAtomConcentration(2)
-						* (grid[xi + 1] - grid[xi]) * hy * hz;
+				heConcentration += network.getTotalAtomConcentration(0) * hx
+						* hy * hz;
+				dConcentration += network.getTotalAtomConcentration(1) * hx * hy
+						* hz;
+				tConcentration += network.getTotalAtomConcentration(2) * hx * hy
+						* hz;
 			}
 		}
 	}
@@ -317,16 +316,19 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	int procId;
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
-	// Sum all the concentrations through MPI reduce
-	double totalHeConcentration = 0.0;
-	MPI_Reduce(&heConcentration, &totalHeConcentration, 1, MPI_DOUBLE, MPI_SUM,
-			0, PETSC_COMM_WORLD);
-	double totalDConcentration = 0.0;
-	MPI_Reduce(&dConcentration, &totalDConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	double totalTConcentration = 0.0;
-	MPI_Reduce(&tConcentration, &totalTConcentration, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
+	// Determine total concentrations for He, D, T.
+	std::array<double, 3> myConcData { heConcentration, dConcentration,
+			tConcentration };
+	std::array<double, 3> totalConcData;
+
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE,
+	MPI_SUM, 0, PETSC_COMM_WORLD);
+
+	// Extract total He, D, T concentrations.  Values are valid only on rank 0.
+	double totalHeConcentration = totalConcData[0];
+	double totalDConcentration = totalConcData[1];
+	double totalTConcentration = totalConcData[2];
 
 	// Master process
 	if (procId == 0) {
@@ -389,9 +391,6 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the flux handler that will be used to get the fluence
-	auto fluxHandler = solverHandler.getFluxHandler();
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -403,10 +402,9 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the total size of the grid
 	PetscInt Mx, My, Mz;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz,
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -425,7 +423,11 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
-	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0;
+	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
+			partialBubbleConcentration = 0.0, partialRadii = 0.0;
+
+	// Get the minimum size for the radius
+	auto minSizes = solverHandler.getMinSizes();
 
 	// Loop on the grid
 	for (PetscInt zk = zs; zk < zs + zm; zk++) {
@@ -435,6 +437,8 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				// Get the pointer to the beginning of the solution data for this grid point
 				gridPointSolution = solutionArray[zk][yj][xi];
 
+				double hx = grid[xi + 1] - grid[xi];
+
 				// Update the concentration in the network
 				network.updateConcentrationsFromArray(gridPointSolution);
 
@@ -442,13 +446,14 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				for (unsigned int i = 0; i < indices3D.size(); i++) {
 					// Add the current concentration times the number of xenon in the cluster
 					// (from the weight vector)
-					xeConcentration += gridPointSolution[indices3D[i]]
-							* weights3D[i] * (grid[xi + 1] - grid[xi]) * hy
-							* hz;
-					bubbleConcentration += gridPointSolution[indices3D[i]]
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					radii += gridPointSolution[indices3D[i]] * radii3D[i]
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
+					double conc = gridPointSolution[indices3D[i]];
+					xeConcentration += conc * weights3D[i] * hx * hy * hz;
+					bubbleConcentration += conc * hx * hy * hz;
+					radii += conc * radii3D[i] * hx * hy * hz;
+					if (weights3D[i] >= minSizes[0] && conc > 1.0e-16) {
+						partialBubbleConcentration += conc * hx * hy * hz;
+						partialRadii += conc * radii3D[i] * hx * hy * hz;
+					}
 				}
 
 				// Loop on all the super clusters
@@ -456,13 +461,16 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 						ReactantType::NESuper)) {
 					auto const& cluster =
 							static_cast<NESuperCluster&>(*(superMapItem.second));
-					xeConcentration += cluster.getTotalXenonConcentration()
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					bubbleConcentration += cluster.getTotalConcentration()
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
-					radii += cluster.getTotalConcentration()
-							* cluster.getReactionRadius()
-							* (grid[xi + 1] - grid[xi]) * hy * hz;
+					double conc = cluster.getTotalConcentration();
+					xeConcentration += cluster.getTotalXenonConcentration() * hx
+							* hy * hz;
+					bubbleConcentration += conc * hx * hy * hz;
+					radii += conc * cluster.getReactionRadius() * hx * hy * hz;
+					if (cluster.getSize() >= minSizes[0] && conc > 1.0e-16) {
+						partialBubbleConcentration += conc * hx * hy * hz;
+						partialRadii += conc * cluster.getReactionRadius() * hx
+								* hy * hz;
+					}
 				}
 			}
 		}
@@ -473,112 +481,40 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Sum all the concentrations through MPI reduce
-	double totalXeConcentration = 0.0;
-	MPI_Reduce(&xeConcentration, &totalXeConcentration, 1, MPI_DOUBLE,
-	MPI_SUM, 0, PETSC_COMM_WORLD);
-	double totalBubbleConcentration = 0.0;
-	MPI_Reduce(&bubbleConcentration, &totalBubbleConcentration, 1,
-	MPI_DOUBLE,
-	MPI_SUM, 0, MPI_COMM_WORLD);
-	double totalRadii = 0.0;
-	MPI_Reduce(&radii, &totalRadii, 1, MPI_DOUBLE, MPI_SUM, 0,
-	MPI_COMM_WORLD);
-
-	// GB
-	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
-	// Compute the total number of Xe that went to the GB
-	nXenon3D += previousXeFlux3D * dt;
-
-	// Get the vector from the solver handler
-	auto gbVector = solverHandler.getGBVector();
-	// Initialize the value for the flux
-	double newFlux = 0.0;
-	// Loop on the GB
-	for (auto const& pair : gbVector) {
-		// X segment
-		// Left
-		int xi = std::get<0>(pair) - 1;
-		int yj = std::get<1>(pair);
-		int zk = std::get<2>(pair);
-
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi + 2] - grid[xi + 1];
-			double hxRight = grid[xi + 3] - grid[xi + 2];
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the left
-				newFlux += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						* hy * hz / (hxLeft + hxRight);
-			}
-		}
-
-		// Right
-		xi = std::get<0>(pair) + 1;
-
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
-				&& zk < zs + zm) {
-
-			// Factor for finite difference
-			double hxLeft = grid[xi] - grid[xi - 1];
-			double hxRight = grid[xi + 1] - grid[xi];
-			// Consider each xenon cluster.
-			for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-				// Get the cluster
-				auto const& cluster = *(xeMapItem.second);
-				// Get its id
-				int id = cluster.getId() - 1;
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				// Compute the flux coming from the right
-				newFlux += (double) size * solutionArray[zk][yj][xi][id]
-						* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-						* hy * hz / (hxLeft + hxRight);
-			}
-		}
-	}
-	// Update the xenon flux
-	previousXeFlux3D = newFlux;
+	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
+			radii, partialBubbleConcentration, partialRadii };
+	std::array<double, 5> totalConcData { 0.0, 0.0, 0.0, 0.0, 0.0 };
+	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 
 	// Master process
 	if (procId == 0) {
 		// Compute the total surface irradiated
 		double surface = (double) My * hy * (double) Mz * hz;
-		// Get the fluence
-		double fluence = fluxHandler->getFluence() * (grid[Mx - 1] - grid[1]);
 
-		totalXeConcentration = totalXeConcentration / surface;
+		totalConcData[0] = totalConcData[0] / surface;
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Xenon retention = "
-				<< 100.0 * (totalXeConcentration) / (fluence) << " %"
+		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl
 				<< std::endl;
-		std::cout << "Xenon concentration = " << totalXeConcentration
-				<< std::endl;
-		std::cout << "Xenon GB = " << nXenon3D / surface << std::endl
-				<< std::endl;
+
+		// Make sure the average partial radius makes sense
+		double averagePartialRadius = totalConcData[4] / totalConcData[3];
+		double minRadius = pow(
+				(3.0 * (double) minSizes[0])
+						/ (4.0 * xolotlCore::pi * network.getDensity()),
+				(1.0 / 3.0));
+		if (partialBubbleConcentration < 1.e-16
+				|| averagePartialRadius < minRadius)
+			averagePartialRadius = minRadius;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
-		outputFile << time << " " << 100.0 * (totalXeConcentration / (fluence))
-				<< " " << totalXeConcentration << " "
-				<< fluence - totalXeConcentration << " "
-				<< totalRadii / totalBubbleConcentration << " "
-				<< nXenon3D / surface << std::endl;
+		outputFile << time << " " << totalConcData[0] << " "
+				<< totalConcData[2] / totalConcData[1] << " "
+				<< averagePartialRadius << std::endl;
 		outputFile.close();
 	}
 
@@ -651,7 +587,7 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 	// Loop on the entire grid
 	for (int xi = 0; xi < Mx; xi++) {
 		// Set x
-		double x = grid[xi + 1] - grid[1];
+		double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 
 		// Initialize the concentrations at this grid point
 		double heLocalConc = 0.0, dLocalConc = 0.0, tLocalConc = 0.0,
@@ -664,7 +600,8 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 				// Get the surface position
 				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
 				// Boundary conditions
-				if (xi < surfacePos)
+				if (xi < surfacePos + solverHandler.getLeftOffset()
+						|| xi >= Mx - solverHandler.getRightOffset())
 					continue;
 
 				// If it is the locally owned part of the grid
@@ -685,27 +622,25 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 			}
 		}
 
-		double heConc = 0.0, dConc = 0.0, tConc = 0.0, vConc = 0.0, iConc = 0.0;
-		MPI_Reduce(&heLocalConc, &heConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&dLocalConc, &dConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&tLocalConc, &tConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&vLocalConc, &vConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
-		MPI_Reduce(&iLocalConc, &iConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-				PETSC_COMM_WORLD);
+		std::array<double, 5> myConcData { heLocalConc, dLocalConc, tLocalConc,
+				vLocalConc, iLocalConc };
+		std::array<double, 5> totalConcData = { 0.0, 0.0, 0.0, 0.0, 0.0 };
+
+		MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
+		MPI_DOUBLE,
+		MPI_SUM, 0, PETSC_COMM_WORLD);
 
 		// The master process writes computes the cumulative value and writes in the file
 		if (procId == 0) {
 			outputFile
 					<< x
 							- (grid[solverHandler.getSurfacePosition(0, 0) + 1]
-									- grid[1]) << " " << heConc / (My * Mz)
-					<< " " << dConc / (My * Mz) << " " << tConc / (My * Mz)
-					<< " " << vConc / (My * Mz) << " " << iConc / (My * Mz)
-					<< std::endl;
+									- grid[1]) << " "
+					<< totalConcData[0] / (My * Mz) << " "
+					<< totalConcData[1] / (My * Mz) << " "
+					<< totalConcData[2] / (My * Mz) << " "
+					<< totalConcData[3] / (My * Mz) << " "
+					<< totalConcData[4] / (My * Mz) << std::endl;
 		}
 	}
 
@@ -791,7 +726,7 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 
 		for (PetscInt i = 0; i < Mx; i++) {
 			// Compute x
-			x = grid[i + 1] - grid[1];
+			x = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
 
 			// Initialize the value of the concentration to integrate over Z
 			double conc = 0.0;
@@ -936,7 +871,7 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 
 		for (PetscInt i = 0; i < Mx; i++) {
 			// Compute x
-			x = grid[i + 1] - grid[1];
+			x = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
 
 			// Initialize the value of the concentration to integrate over Y
 			double conc = 0.0;
@@ -1105,7 +1040,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 
 				// Get the position of the surface at yj
 				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
-				xi = surfacePos + 1;
+				xi = surfacePos + solverHandler.getLeftOffset();
 
 				// Initialize the value for the flux
 				double newFlux = 0.0;
@@ -1117,8 +1052,17 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 					gridPointSolution = solutionArray[zk][yj][xi];
 
 					// Factor for finite difference
-					double hxLeft = grid[xi + 1] - grid[xi];
-					double hxRight = grid[xi + 2] - grid[xi + 1];
+					double hxLeft = 0.0, hxRight = 0.0;
+					if (xi - 1 >= 0 && xi < Mx) {
+						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+					} else if (xi - 1 < 0) {
+						hxLeft = grid[xi + 1] - grid[xi];
+						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+					} else {
+						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+						hxRight = grid[xi + 1] - grid[xi];
+					}
 					double factor = 2.0 / (hxLeft + hxRight);
 
 					// Loop on all the interstitial clusters to add the contribution from deeper
@@ -1148,7 +1092,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 
 				// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 				double threshold = (62.8 - initialVConc)
-						* (grid[xi + 1] - grid[xi]);
+						* (grid[xi] - grid[xi - 1]);
 				if (nInterstitial3D[yj][zk] > threshold) {
 					// The surface is moving
 					fvalue[0] = 0.0;
@@ -1179,10 +1123,8 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 			for (yj = 0; yj < My; yj++) {
 				// Get the surface position
 				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
-				for (xi = 0; xi < Mx; xi++) {
-					// Skip everything before the surface
-					if (xi < surfacePos)
-						continue;
+				for (xi = surfacePos + solverHandler.getLeftOffset();
+						xi < Mx - solverHandler.getRightOffset(); xi++) {
 
 					// If this is the locally owned part of the grid
 					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
@@ -1195,7 +1137,8 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 								gridPointSolution);
 
 						// Get the distance from the surface
-						double distance = grid[xi + 1] - grid[surfacePos + 1];
+						double distance = (grid[xi] + grid[xi + 1]) / 2.0
+								- grid[surfacePos + 1];
 
 						// Compute the helium density at this grid point
 						double heDensity = network.getTotalAtomConcentration();
@@ -1203,23 +1146,16 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 						// Compute the radius of the bubble from the number of helium
 						double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
 						//					double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
-						double radius =
-								(sqrt(3.0) / 4.0)
-										* xolotlCore::tungstenLatticeConstant
-										+ pow(
-												(3.0
-														* pow(
-																xolotlCore::tungstenLatticeConstant,
-																3.0) * nV)
-														/ (8.0 * xolotlCore::pi),
-												(1.0 / 3.0))
-										- pow(
-												(3.0
-														* pow(
-																xolotlCore::tungstenLatticeConstant,
-																3.0))
-														/ (8.0 * xolotlCore::pi),
-												(1.0 / 3.0));
+						double latticeParam = network.getLatticeParameter();
+						double tlcCubed = latticeParam * latticeParam
+								* latticeParam;
+						double radius = (sqrt(3.0) / 4) * latticeParam
+								+ cbrt(
+										(3.0 * tlcCubed * nV)
+												/ (8.0 * xolotlCore::pi))
+								- cbrt(
+										(3.0 * tlcCubed)
+												/ (8.0 * xolotlCore::pi));
 
 						// If the radius is larger than the distance to the surface, burst
 						if (radius > distance) {
@@ -1338,7 +1274,8 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 		// Get the surface position
 		int surfacePos = solverHandler.getSurfacePosition(yj, zk);
 		// Get the distance from the surface
-		double distance = grid[xi + 1] - grid[surfacePos + 1];
+		double distance = (grid[xi] + grid[xi + 1]) / 2.0
+				- grid[surfacePos + 1];
 
 		std::cout << "bursting at: " << zk * hz << " " << yj * hy << " "
 				<< distance << std::endl;
@@ -1436,11 +1373,11 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 		for (yj = 0; yj < My; yj++) {
 			// Get the position of the surface at yj
 			int surfacePos = solverHandler.getSurfacePosition(yj, zk);
-			xi = surfacePos + 1;
+			xi = surfacePos + solverHandler.getLeftOffset();
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold = (62.8 - initialVConc)
-					* (grid[xi + 1] - grid[xi]);
+					* (grid[xi] - grid[xi - 1]);
 
 			// Move the surface up
 			if (nInterstitial3D[yj][zk] > threshold) {
@@ -1449,13 +1386,13 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 				while (nInterstitial3D[yj][zk] > threshold) {
 					// Move the surface higher
 					surfacePos--;
-					xi = surfacePos + 1;
+					xi = surfacePos + solverHandler.getLeftOffset();
 					nGridPoints++;
 					// Update the number of interstitials
 					nInterstitial3D[yj][zk] -= threshold;
 					// Update the thresold
 					double threshold = (62.8 - initialVConc)
-							* (grid[xi + 1] - grid[xi]);
+							* (grid[xi] - grid[xi - 1]);
 				}
 
 				// Throw an exception if the position is negative
@@ -1532,7 +1469,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 				while (nInterstitial3D[yj][zk] < 0.0) {
 					// Compute the threshold to a deeper grid point
 					threshold = (62.8 - initialVConc)
-							* (grid[xi + 2] - grid[xi + 1]);
+							* (grid[xi + 1] - grid[xi]);
 					// Set all the concentrations to 0.0 at xi = surfacePos + 1
 					// if xi is on this process
 					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
@@ -1547,7 +1484,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 
 					// Move the surface deeper
 					surfacePos++;
-					xi = surfacePos + 1;
+					xi = surfacePos + solverHandler.getLeftOffset();
 					// Update the number of interstitials
 					nInterstitial3D[yj][zk] += threshold;
 				}
@@ -1581,7 +1518,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 	}
 
 	mutationHandler->initializeIndex3D(surfaceIndices, network, advecHandlers,
-			grid, My, hy, Mz, hz);
+			grid, xm, xs, ym, hy, ys, zm, hz, zs);
 
 	// Write the surface positions
 	if (procId == 0) {
@@ -1626,8 +1563,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
-	PetscBool flagCheck, flagPerf, flagHeRetention, flagXeRetention, flagStatus, flag2DXYPlot,
-			flag2DXZPlot, flagTRIDYN;
+	PetscBool flagCheck, flagPerf, flagHeRetention, flagXeRetention, flagStatus,
+			flag2DXYPlot, flag2DXZPlot, flagTRIDYN;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -1650,7 +1587,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			"setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xz) failed.");
 
 	// Check the option -helium_retention
-	ierr = PetscOptionsHasName(NULL, NULL, "-helium_retention", &flagHeRetention);
+	ierr = PetscOptionsHasName(NULL, NULL, "-helium_retention",
+			&flagHeRetention);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-helium_retention) failed.");
 
@@ -1818,10 +1756,13 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			// Get the sputtering yield
 			sputteringYield3D = solverHandler.getSputteringYield();
 
-			// Clear the file where the surface will be written
-			std::ofstream outputFile;
-			outputFile.open("surface.txt");
-			outputFile.close();
+			// Master process
+			if (procId == 0) {
+				// Clear the file where the surface will be written
+				std::ofstream outputFile;
+				outputFile.open("surface.txt");
+				outputFile.close();
+			}
 		}
 
 		// Bursting
@@ -1901,10 +1842,13 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		checkPetscError(ierr,
 				"setupPetsc3DMonitor: TSMonitorSet (computeHeliumRetention3D) failed.");
 
-		// Uncomment to clear the file where the retention will be written
-		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt");
-		outputFile.close();
+		// Master process
+		if (procId == 0) {
+			// Uncomment to clear the file where the retention will be written
+			std::ofstream outputFile;
+			outputFile.open("retentionOut.txt");
+			outputFile.close();
+		}
 	}
 
 	// Set the monitor to compute the xenon fluence and the retention
@@ -1950,10 +1894,13 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		checkPetscError(ierr,
 				"setupPetsc3DMonitor: TSMonitorSet (computeXenonRetention3D) failed.");
 
-		// Uncomment to clear the file where the retention will be written
-		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt");
-		outputFile.close();
+		// Master process
+		if (procId == 0) {
+			// Uncomment to clear the file where the retention will be written
+			std::ofstream outputFile;
+			outputFile.open("retentionOut.txt");
+			outputFile.close();
+		}
 	}
 
 	// Set the monitor to save surface plots of clusters concentration

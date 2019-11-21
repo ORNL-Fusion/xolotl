@@ -365,7 +365,7 @@ public interface Arguments {
 	 * 
 	 * @param description Brief description of this option
 	 */
-	@Option(defaultValue = "W100", description = "{W100, W110, W111, W211, Fuel, TRIDYN, Fe} "
+	@Option(defaultValue = "W100", description = "{W100, W110, W111, W211, Fuel, TRIDYN, Fe, 800H} "
 			+ "The option declaring which material will be used "
 			+ "(W is for tungsten and the numbers correspond to the surface orientation)")
 	/**

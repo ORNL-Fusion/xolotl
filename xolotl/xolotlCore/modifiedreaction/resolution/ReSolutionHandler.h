@@ -38,13 +38,13 @@ protected:
 		 * 2-5 is for larger
 		 * 6-9 is for smaller
 		 */
-		Array<double, 8> coefs;
+		Array<double, 10> coefs;
 
 		//! The constructor
 		ReSolutionBase(IReactant* _larger, IReactant* _smaller, double _rate,
-				Array<double, 8> _coefs) :
+				Array<double, 10> _coefs) :
 				larger(_larger), smaller(_smaller), fractionRate(_rate) {
-			for (int i = 0; i < 8; i++) {
+			for (int i = 0; i < 10; i++) {
 				coefs[i] = _coefs[i];
 			}
 		}
@@ -56,7 +56,7 @@ protected:
 		ReSolutionBase(const ReSolutionBase& other) :
 				larger(other.larger), smaller(other.smaller), fractionRate(
 						other.fractionRate) {
-			for (int i = 0; i < 8; i++) {
+			for (int i = 0; i < 10; i++) {
 				coefs[i] = other.coefs[i];
 			}
 		}
@@ -65,8 +65,14 @@ protected:
 	//! The map containing the information of who re-solves into what.
 	std::vector<ReSolutionBase> sizeVec;
 
-	//! The trap-mutation rate
+	//! The re-solution rate
 	double resolutionRate;
+
+	//! The fission yield
+	double fissionYield;
+
+	//! The minimum size at which the re-solution starts
+	int minSize;
 
 public:
 
@@ -74,7 +80,7 @@ public:
 	 * The constructor
 	 */
 	ReSolutionHandler() :
-			resolutionRate(0.0) {
+			resolutionRate(0.0), fissionYield(0.0), minSize(0) {
 	}
 
 	/**
@@ -93,7 +99,7 @@ public:
 			double electronicStoppingPower);
 
 	/**
-	 * This method update the rate for the re-solution if the fission rate
+	 * This method updates the rate for the re-solution if the fission rate
 	 * changed, it should be called when the flux changes for instance.
 	 *
 	 * \see IReSolutionHandler.h
@@ -101,11 +107,18 @@ public:
 	void updateReSolutionRate(double rate);
 
 	/**
+	 * This method updates the fission yield.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	void setFissionYield(double yield);
+
+	/**
 	 * Compute the flux due to the re-solution for all the cluster,
 	 * given the position index xi.
 	 * This method is called by the RHSFunction from the PetscSolver.
 	 *
-	 * Xe_i --> Xe_(i-n) + n Xe_1
+	 * Xe_i --> Xe_(i-n) + n Xe_1 (n=1)
 	 *
 	 * F(Xe_i) = -F[Xe_(i-n)] = -1/n * F(Xe_1) = -rate * C_(Xe_i)
 	 *
@@ -121,7 +134,7 @@ public:
 	 * clusters that are re-soluted at this grid point.
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *
-	 * Xe_i --> Xe_(i-n) + n Xe_1
+	 * Xe_i --> Xe_(i-n) + n Xe_1 (n=1)
 	 *
 	 * dF(Xe_i)/dC_(Xe_i) = -dF[Xe_(i-n)]/dC_(Xe_i) = -1/n * dF(Xe_1)/dC_(Xe_i)
 	 * 		= -rate
@@ -138,6 +151,24 @@ public:
 	 */
 	virtual int getNumberOfReSoluting() const {
 		return sizeVec.size();
+	}
+
+	/**
+	 * Set the minimum size for a cluster to undergo re-solution.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	virtual void setMinSize(int size) {
+		minSize = size;
+	}
+
+	/**
+	 * Get the minimum size for a cluster to undergo re-solution.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	virtual int getMinSize() const {
+		return minSize;
 	}
 
 };

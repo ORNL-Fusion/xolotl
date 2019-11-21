@@ -69,8 +69,8 @@ private:
 	 * @param i The location on the grid in the depth direction
 	 * @return The dissociation constant
 	 */
-	double calculateDissociationConstant(const DissociationReaction& reaction,
-			int i) const override;
+	double calculateDissociationConstant(
+			const DissociationReaction& reaction, int i) override;
 
 	/**
 	 * Calculate the binding energy for the dissociation cluster to emit the single

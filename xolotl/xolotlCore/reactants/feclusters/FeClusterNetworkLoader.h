@@ -97,7 +97,7 @@ protected:
 	 * @param bounds The bounds of the clusters it contains
 	 * @return The new cluster
 	 */
-	std::unique_ptr<FeCluster> createFeSuperCluster(Array1D<int, 4> &bounds,
+	std::unique_ptr<FeCluster> createFeSuperCluster(Array<int, 4> &bounds,
 			IReactionNetwork& network) const;
 
 	/**

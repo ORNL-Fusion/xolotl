@@ -18,17 +18,12 @@ using namespace xolotlCore;
 /**
  * This suite is responsible for testing the W100TrapMutationHandler.
  */
-BOOST_AUTO_TEST_SUITE(W100TrapMutationHandler_testSuite)
+BOOST_AUTO_TEST_SUITE (W100TrapMutationHandler_testSuite)
 
 /**
  * Method checking the initialization and the compute modified trap-mutation methods.
  */
 BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
-	// Initialize MPI for HDF5
-	int argc = 0;
-	char **argv;
-	MPI_Init(&argc, &argv);
-
 	// Create the option to create a network
 	xolotlCore::Options opts;
 	// Create a good parameter file
@@ -37,12 +32,18 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	argv = new char*[2];
+	int argc = 2;
+	char **argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
 	std::string parameterFile = "param.txt";
-	argv[0] = new char[parameterFile.length() + 1];
-	strcpy(argv[0], parameterFile.c_str());
-	argv[1] = 0; // null-terminate the array
-	opts.readParams(argv);
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
+	// Initialize MPI for HDF5
+	MPI_Init(&argc, &argv);
+	opts.readParams(argc, argv);
 
 	// Create the network loader
 	HDF5NetworkLoader loader = HDF5NetworkLoader(
@@ -73,9 +74,9 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	advectionHandlers.push_back(new DummyAdvectionHandler());
 
 	// Initialize it
-	trapMutationHandler.initialize(*network, grid);
+	trapMutationHandler.initialize(*network, 11, 0);
 	trapMutationHandler.initializeIndex1D(surfacePos, *network,
-			advectionHandlers, grid);
+			advectionHandlers, grid, 11, 0);
 
 	// The arrays of concentration
 	double concentration[nGrid * dof];
@@ -92,8 +93,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	double *updatedConc = &newConcentration[0];
 
 	// Get the offset for the fifth grid point
-	double *concOffset = conc + 5 * dof;
-	double *updatedConcOffset = updatedConc + 5 * dof;
+	double *concOffset = conc + 6 * dof;
+	double *updatedConcOffset = updatedConc + 6 * dof;
 
 	// Putting the concentrations in the network so that the rate for
 	// desorption is computed correctly
@@ -101,16 +102,16 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the sixth grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 5, 0);
+			updatedConcOffset, 6, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.3757e+26, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], -3.3757e+26, 0.01); // He2
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 3.3757e+26, 0.01); // Create He2V
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 6.77036e+26, 0.01);// Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], -6.77036e+26, 0.01);// He2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], 6.77036e+26, 0.01);// Create He2V
 
 	// Get the offset for the ninth grid point
-	concOffset = conc + 8 * dof;
-	updatedConcOffset = updatedConc + 8 * dof;
+	concOffset = conc + 9 * dof;
+	updatedConcOffset = updatedConc + 9 * dof;
 
 	// Putting the concentrations in the network so that the rate for
 	// desorption is computed correctly
@@ -118,14 +119,14 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the modified trap mutation at the ninth grid point
 	trapMutationHandler.computeTrapMutation(*network, concOffset,
-			updatedConcOffset, 8, 0);
+			updatedConcOffset, 9);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 4.1527e+21, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // He3
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[17], 0.0, 0.01); // Doesn't create He3V
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -4.1627e+21, 0.01); // He7
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[31], 4.1627e+21, 0.01); // Create He7V2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 5.25172e+21, 0.01);// Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01);// He3
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[17], 0.0, 0.01);// Doesn't create He3V
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -5.2628766e+21, 0.01);// He7
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[31], 5.2628766e+21, 0.01);// Create He7V2
 
 	// Initialize the indices and values to set in the Jacobian
 	int nHelium = network->getAll(ReactantType::He).size();
@@ -137,16 +138,16 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
 	int nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8, 0);
+			valPointer, indicesPointer, 9);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(nMutating, 3);
-	BOOST_REQUIRE_EQUAL(indices[0], 9); // He4
-	BOOST_REQUIRE_EQUAL(indices[1], 18); // He4V
-	BOOST_REQUIRE_EQUAL(indices[2], 0); // I
-	BOOST_REQUIRE_EQUAL(indices[3], 11); // He6
-	BOOST_REQUIRE_EQUAL(indices[4], 30); // He6V2
-	BOOST_REQUIRE_EQUAL(indices[5], 1); // I2
+	BOOST_REQUIRE_EQUAL(indices[0], 9);// He4
+	BOOST_REQUIRE_EQUAL(indices[1], 18);// He4V
+	BOOST_REQUIRE_EQUAL(indices[2], 0);// I
+	BOOST_REQUIRE_EQUAL(indices[3], 11);// He6
+	BOOST_REQUIRE_EQUAL(indices[4], 30);// He6V2
+	BOOST_REQUIRE_EQUAL(indices[5], 1);// I2
 
 	// Check values
 	BOOST_REQUIRE_CLOSE(val[0], -6.575931697e+14, 0.01);
@@ -160,13 +161,13 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	network->setTemperature(500.0);
 
 	// Reinitialize the handler
-	trapMutationHandler.initialize(*network, grid);
+	trapMutationHandler.initialize(*network, 11, 0);
 	// Update the bursting rate
 	trapMutationHandler.updateTrapMutationRate(*network);
 
 	// Compute the partial derivatives for the bursting a the grid point 8
 	nMutating = trapMutationHandler.computePartialsForTrapMutation(*network,
-			valPointer, indicesPointer, 8, 0);
+			valPointer, indicesPointer, 9);
 
 	// Check values
 	BOOST_REQUIRE_EQUAL(nMutating, 3);

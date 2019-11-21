@@ -44,7 +44,7 @@ public:
 		// Loop on all the reactants
 		for (IReactant const& currReactant : network.getAll()) {
 
-			auto const& cluster = static_cast<PSICluster const&>(currReactant);
+			auto const& cluster = static_cast<IReactant const&>(currReactant);
 
 			// Get its diffusion coefficient
 			double diffFactor = cluster.getDiffusionFactor();

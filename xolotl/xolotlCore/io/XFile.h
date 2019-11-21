@@ -536,8 +536,8 @@ public:
 		static const std::string heVListDataName;
 		static const std::string boundsAttrName;
 		static const std::string nTotAttrName;
-		static const std::string numXeAttrName;
-		static const std::string radiusAttrName;
+		static const std::string numAtomAttrName;
+		static const std::string typeAttrName;
 		static const std::string productionDataName;
 		static const std::string combinationDataName;
 		static const std::string dissociationDataName;
@@ -595,16 +595,24 @@ public:
 		 *
 		 * @return The bounds on the clusters that it contains.
 		 */
-		Array1D<int, 4> readFeSuperCluster() const;
+		Array<int, 4> readFeSuperCluster() const;
 
 		/**
 		 * Read the cluster properties from our group.
 		 *
 		 * @param nTot The total number of clusters it contains.
-		 * @param numXe The average value
-		 * @param radius The radius
+		 * @param maxXe The maximum value
 		 */
-		void readNESuperCluster(int &nTot, double &numXe, double &radius) const;
+		void readNESuperCluster(int &nTot, int &maxXe) const;
+
+		/**
+		 * Read the cluster properties from our group.
+		 *
+		 * @param nTot The total number of clusters it contains.
+		 * @param maxAtom The maximum value
+		 * @param type The type of cluster
+		 */
+		void readAlloySuperCluster(int &nTot, int &maxXe, ReactantType &type) const;
 
 		/**
 		 * Read the reactions from our group.

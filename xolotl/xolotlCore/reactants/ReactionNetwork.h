@@ -2,7 +2,6 @@
 #define REACTION_NETWORK_H
 
 // Includes
-#include <set>
 #include <map>
 #include <unordered_map>
 #include <algorithm>
@@ -165,6 +164,21 @@ protected:
 	double biggestRate;
 
 	/**
+	 * The lattice parameter.
+	 */
+	double latticeParameter;
+
+	/**
+	 * The impurity radius.
+	 */
+	double impurityRadius;
+
+	/**
+	 * The interstitial bias.
+	 */
+	double interstitialBias;
+
+	/**
 	 * Are dissociations enabled?
 	 */
 	bool dissociationsEnabled;
@@ -191,11 +205,6 @@ protected:
 	std::unordered_map<ReactantType, ReactantMap> clusterTypeMap;
 
 	/**
-	 * Type of super cluster known by our network.
-	 */
-	ReactantType superClusterType;
-
-	/**
 	 * Calculate the reaction constant dependent on the
 	 * reaction radii and the diffusion coefficients for the
 	 * ith and jth clusters, which itself depends on the current
@@ -205,8 +214,8 @@ protected:
 	 * @param i The location on the grid
 	 * @return The rate
 	 */
-	double calculateReactionRateConstant(const ProductionReaction& reaction,
-			int i) const;
+	virtual double calculateReactionRateConstant(
+			const ProductionReaction& reaction, int i) const;
 
 	/**
 	 * Calculate the dissociation constant of the first cluster with respect to
@@ -220,7 +229,7 @@ protected:
 	 * @return The dissociation constant
 	 */
 	virtual double calculateDissociationConstant(
-			const DissociationReaction& reaction, int i) const = 0;
+			const DissociationReaction& reaction, int i) = 0;
 
 	/**
 	 * Calculate the binding energy for the dissociation cluster to emit the single
@@ -272,11 +281,9 @@ public:
 	 * It initializes the properties and reactants vector.
 	 *
 	 * @param _knownReactantTypes Reactant types that we support.
-	 * @param _superClusterType Type of super cluster we should use.
 	 * @param _registry The performance handler registry
 	 */
 	ReactionNetwork(const std::set<ReactantType>& _knownReactantTypes,
-			ReactantType _superClusterType,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> _registry);
 
 	/**
@@ -363,6 +370,34 @@ public:
 	virtual const ReactantMap& getAll(ReactantType type) const override {
 
 		return clusterTypeMap.at(type);
+	}
+
+	/**
+	 * Get the reaction radius for any type of cluster given its size.
+	 *
+	 * Daughter classes have to define it.
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The reaction radius
+	 */
+	virtual double getReactionRadius(ReactantType const typeName,
+			int size) const override {
+		return 0.0;
+	}
+
+	/**
+	 * Get the formation energy for any type of cluster given its size.
+	 *
+	 * Daughter classes have to define it.
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The formation energy
+	 */
+	virtual double getFormationEnergy(ReactantType const typeName,
+			int size) const override {
+		return 0.0;
 	}
 
 	/**
@@ -662,6 +697,80 @@ public:
 	}
 
 	/**
+	 * This operation sets the density of xenon in a bubble, needed to compute all the reaction radii
+	 * in NE.
+	 *
+	 * @param density The density
+	 */
+	virtual void setDensity(double density) override {
+		return;
+	}
+
+	/**
+	 * This operation returns the density of xenon in a bubble, needed to compute all the reaction radii
+	 * in NE.
+	 *
+	 * @return The density
+	 */
+	virtual double getDensity() const override {
+		return 0.0;
+	}
+
+	/**
+	 * This operation sets the lattice parameter
+	 *
+	 * @param lattice The lattice parameter
+	 */
+	virtual void setLatticeParameter(double lattice) override {
+		latticeParameter = lattice;
+	}
+
+	/**
+	 * This operation returns the lattice parameter
+	 *
+	 * @return The lattice parameter
+	 */
+	double getLatticeParameter() const override {
+		return latticeParameter;
+	}
+
+	/**
+	 * This operation sets the impurity radius
+	 *
+	 * @param radius The impurity radius
+	 */
+	void setImpurityRadius(double radius) override {
+		impurityRadius = radius;
+	}
+
+	/**
+	 * This operation returns the impurity radius
+	 *
+	 * @return The impurity radius
+	 */
+	double getImpurityRadius() const override {
+		return impurityRadius;
+	}
+
+	/**
+	 * This operation sets the interstitial bias
+	 *
+	 * @param bias The interstitial bias
+	 */
+	void setInterstitialBias(double bias) override {
+		interstitialBias = bias;
+	}
+
+	/**
+	 * This operation returns the interstitial bias
+	 *
+	 * @return The interstitial bias
+	 */
+	double getInterstitialBias() const override {
+		return interstitialBias;
+	}
+
+	/**
 	 * Remove the given reactants from the network.
 	 *
 	 * @param reactants The reactants that should be removed.
@@ -682,7 +791,7 @@ public:
 	 *
 	 * @return Collection of reactant types supported by our network.
 	 */
-	const std::set<ReactantType>& getKnownReactantTypes() const {
+	const std::set<ReactantType>& getKnownReactantTypes() const override {
 		return knownReactantTypes;
 	}
 
