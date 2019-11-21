@@ -128,6 +128,8 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
         _network->getCluster(_products[0]).getRegion();
     const auto& prod2Reg = (_products[1] == invalid) ? dummyRegion :
         _network->getCluster(_products[1]).getRegion();
+    const auto& cl1Disp = cl1Reg.dispersion();
+    const auto& cl2Disp = cl2Reg.dispersion();
 
     auto nOverlap =
         static_cast<double>(computeOverlap(prod1Reg, cl1Reg, cl2Reg));
@@ -164,8 +166,11 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
             // Get the regions in the right order
             const auto& thisReg = (prodId == _products[0]) ? prod1Reg : prod2Reg;
             const auto& otherReg = (prodId == _products[0]) ? prod2Reg : prod1Reg;
+            
+            // Get the dispersion
+            const auto& thisDispersion = thisReg.dispersion();
 
-            // First order sum on the second products
+            // First order sum on the other products
             for (auto m : makeIntervalRange(otherReg[i]))
             for (auto l : makeIntervalRange(cl1Reg[i])) {
                 _coefs(0, 0, p+2, i() + 1) += firstOrderSum( // p+2 because 0 and 1 are used for reactants
@@ -174,6 +179,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                     static_cast<double>(thisReg[i].end() - 1 + thisReg[i].begin())
                         / 2.0);
             }
+            _coefs(0, 0, p+2, i() + 1) /= thisDispersion[i()];
 
             // Products first moments
             for (auto k : speciesRangeNoI) {
@@ -189,6 +195,8 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                             (double) (thisReg[i].end() - 1 + thisReg[i].begin())
                                 / 2.0, l - m);
                     }
+                    _coefs(i() + 1, 0, p+2, k() + 1) /= thisDispersion[k()];
+                    
                     for (auto m : makeIntervalRange(otherReg[i]))
                     for (auto l : makeIntervalRange(cl1Reg[i])) {
                         _coefs(0, i() + 1, p+2, k() + 1) += secondOrderOffsetSum(
@@ -199,6 +207,8 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                             (double) (thisReg[i].end() - 1 + thisReg[i].begin())
                                 / 2.0, l - m);
                     }
+                    _coefs(0, i() + 1, p+2, k() + 1) /= thisDispersion[k()];
+                    
                 }
                 else {
                     _coefs(i() + 1, 0, p+2, k() + 1) += _coefs(i() + 1, 0, 0, 0)
@@ -214,29 +224,30 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
     for (auto i : speciesRangeNoI) {
         // First reactant first moments
         for (auto k : speciesRangeNoI) {
-            _coefs(0, 0, 0, k() + 1) += _coefs(k() + 1, 0, 0, 0);
+            _coefs(0, 0, 0, k() + 1) = _coefs(k() + 1, 0, 0, 0) / cl1Disp[k()];
 
             if (k == i) {
                 for (auto m : makeIntervalRange(prod2Reg[i]))
                 for (auto l : makeIntervalRange(cl2Reg[i])) {
-                    _coefs(i() + 1, 0, 0, k()) += secondOrderSum(
+                    _coefs(i() + 1, 0, 0, k() + 1) += secondOrderSum(
                         std::max(prod1Reg[i].begin() + m - l, cl1Reg[i].begin()),
                         std::min(prod1Reg[i].end() - 1 + m - l, cl1Reg[i].end() - 1),
                         (double) (cl1Reg[i].end() - 1 + cl1Reg[i].begin())
                             / 2.0);
                 }
+                _coefs(i() + 1, 0, 0, k() + 1) /= cl1Disp[k()];
             }
             else {
-                _coefs(i() + 1, 0, 0, k() + 1) += _coefs(i() + 1, 0, 0, 0)
-                    * _coefs(k() + 1, 0, 0, 0) / nOverlap;
+                _coefs(i() + 1, 0, 0, k() + 1) = _coefs(i() + 1, 0, 0, 0)
+                    * _coefs(k() + 1, 0, 0, 0) / (nOverlap * cl1Disp[k()]);
             }
 
-            _coefs(0, i() + 1, 0, k() + 1) += _coefs(k() + 1, i() + 1, 0, 0);
+            _coefs(0, i() + 1, 0, k() + 1) = _coefs(k() + 1, i() + 1, 0, 0) / cl1Disp[k()];
         }
 
         // Second reactant partial derivatives
         for (auto k : speciesRangeNoI) {
-            _coefs(0, 0, 1, k() + 1) += _coefs(0, k() + 1, 0, 0);
+            _coefs(0, 0, 1, k() + 1) = _coefs(0, k() + 1, 0, 0) / cl2Disp[k()];
 
             if (k == i) {
                 for (auto m : makeIntervalRange(prod2Reg[i]))
@@ -247,13 +258,14 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                         (double) (cl2Reg[i].end() - 1 + cl2Reg[i].begin())
                             / 2.0);
                 }
+                _coefs(0, i() + 1, 1, k() + 1) /= cl2Disp[k()];
             }
             else {
-                _coefs(0, i() + 1, 1, k() + 1) += _coefs(0, i() + 1, 0, 0)
-                    * _coefs(0, k() + 1, 0, 0) / nOverlap;
+                _coefs(0, i() + 1, 1, k() + 1) = _coefs(0, i() + 1, 0, 0)
+                    * _coefs(0, k() + 1, 0, 0) / (nOverlap * cl2Disp[k()]);
             }
 
-            _coefs(i() + 1, 0, 1, k() + 1) += _coefs(i() + 1, k() + 1, 0, 0);
+            _coefs(i() + 1, 0, 1, k() + 1) = _coefs(i() + 1, k() + 1, 0, 0) / cl2Disp[k()];
         }
     }
 
@@ -277,7 +289,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                 }
             }
             else {
-                _coefs(i() + 1, j() + 1, 0, 0) += _coefs(i() + 1, 0, 0, 0)
+                _coefs(i() + 1, j() + 1, 0, 0) = _coefs(i() + 1, 0, 0, 0)
                     * _coefs(0, j() + 1, 0, 0) / nOverlap;
             }
 
@@ -293,6 +305,9 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                 // Get the regions in the right order
                 const auto& thisReg = (prodId == _products[0]) ? prod1Reg : prod2Reg;
                 const auto& otherReg = (prodId == _products[0]) ? prod2Reg : prod1Reg;
+                
+                // Get the dispersion
+                const auto& thisDispersion = thisReg.dispersion();
 
                 for (auto k : speciesRangeNoI) {
                     // Third order sum
@@ -312,18 +327,19 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                                     (double) (thisReg[i].end() - 1
                                         + thisReg[i].begin()) / 2.0, l - m);
                         }
+                        _coefs(i() + 1, j() + 1, p+2, k() + 1) /= thisDispersion[k()];
                     }
                     else if (j == k) {
-                        _coefs(i() + 1, j() + 1, p+2, k() + 1) += _coefs(i() + 1, 0,
+                        _coefs(i() + 1, j() + 1, p+2, k() + 1) = _coefs(i() + 1, 0,
                             0, 0) * _coefs(0, j() + 1, p+2, k() + 1) / nOverlap;
                     }
                     else if (i == k) {
-                        _coefs(i() + 1, j() + 1, p+2, k() + 1) += _coefs(0, j() + 1,
+                        _coefs(i() + 1, j() + 1, p+2, k() + 1) = _coefs(0, j() + 1,
                             0, 0) * _coefs(i() + 1, 0, p+2, k() + 1) / nOverlap;
                     }
                     else {
                         // TODO check this is the right formula, might be divided by nOverlap^2
-                        _coefs(i() + 1, j() + 1, p+2, k() + 1) += _coefs(i() + 1, 0,
+                        _coefs(i() + 1, j() + 1, p+2, k() + 1) = _coefs(i() + 1, 0,
                             0, 0) * _coefs(0, j() + 1, 0, 0)
                             * _coefs(0, 0, p+2, k() + 1) / nOverlap;
                     }
@@ -350,20 +366,21 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                                 (double) (cl2Reg[i].end() - 1
                                     + cl2Reg[i].begin()) / 2.0);
                     }
+                    _coefs(i() + 1, j() + 1, 0, k() + 1) /= cl1Disp[k()];
                 }
                 else if (i == k) {
-                    _coefs(i() + 1, j() + 1, 0, k() + 1) += _coefs(0, j() + 1,
+                    _coefs(i() + 1, j() + 1, 0, k() + 1) = _coefs(0, j() + 1,
                         0, 0) * _coefs(i() + 1, 0, 0, k() + 1) / nOverlap;
                 }
                 else if (j == k) {
-                    _coefs(i() + 1, j() + 1, 0, k() + 1) += _coefs(i() + 1, 0,
+                    _coefs(i() + 1, j() + 1, 0, k() + 1) = _coefs(i() + 1, 0,
                         0, 0) * _coefs(0, j() + 1, 0, k() + 1) / nOverlap;
                 }
                 else {
                     // TODO check this is the right formula, might be divided by nOverlap^2
-                    _coefs(i() + 1, j() + 1, 0, k() + 1) += _coefs(i() + 1, 0,
+                    _coefs(i() + 1, j() + 1, 0, k() + 1) = _coefs(i() + 1, 0,
                         0, 0) * _coefs(0, j() + 1, 0, 0)
-                        * _coefs(k() + 1, 0, 0, 0) / nOverlap;
+                        * _coefs(k() + 1, 0, 0, 0) / (nOverlap * cl1Disp[k()]);
                 }
             }
 
@@ -387,6 +404,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                                 (double) (cl1Reg[i].end() - 1
                                     + cl1Reg[i].begin()) / 2.0);
                     }
+                    _coefs(i() + 1, j() + 1, 1, k() + 1) /= cl2Disp[k()];
                 }
                 else if (i == k) {
                     _coefs(i() + 1, j() + 1, 1, k() + 1) += _coefs(0, j() + 1,
@@ -400,7 +418,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                     // TODO check this is the right formula, might be divided by nOverlap^2
                     _coefs(i() + 1, j() + 1, 1, k() + 1) += _coefs(i() + 1, 0,
                         0, 0) * _coefs(0, j() + 1, 0, 0)
-                        * _coefs(0, k() + 1, 0, 0) / nOverlap;
+                        * _coefs(0, k() + 1, 0, 0) / (nOverlap * cl2Disp[k()]);
                 }
             }
         }
@@ -415,9 +433,12 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-    auto clReg = _network->getCluster(_reactants[0]).getRegion();
-    auto prod1Reg = _network->getCluster(_products[0]).getRegion();
-    auto prod2Reg = _network->getCluster(_products[1]).getRegion();
+    const auto& clReg = _network->getCluster(_reactants[0]).getRegion();
+    const auto& prod1Reg = _network->getCluster(_products[0]).getRegion();
+    const auto& prod2Reg = _network->getCluster(_products[1]).getRegion();
+    const auto& clDisp = clReg.dispersion();
+    const auto& prod1Disp = prod1Reg.dispersion();
+    const auto& prod2Disp = prod2Reg.dispersion();
 
     auto nOverlap =
         static_cast<double>(computeOverlap(clReg, prod1Reg, prod2Reg));
@@ -437,7 +458,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
     // First moments
     for (auto k : speciesRangeNoI) {
         // Reactant
-        _coefs(0, 0, 0, k() + 1) += _coefs(k() + 1, 0, 0, 0);
+        _coefs(0, 0, 0, k() + 1) = _coefs(k() + 1, 0, 0, 0) / clDisp[k()];
 
         // First product
         for (auto l : makeIntervalRange(prod2Reg[k])) {
@@ -446,6 +467,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
                 std::min(clReg[k].end() - 1 - l, prod1Reg[k].end() - 1),
                 (double) (prod1Reg[k].end() - 1 + prod1Reg[k].begin()) / 2.0);
         }
+        _coefs(0, 0, 1, k() + 1) /= prod1Disp[k()];
 
         // Second product
         for (auto l : makeIntervalRange(prod1Reg[k])) {
@@ -454,6 +476,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
                 std::min(clReg[k].end() - 1 - l, prod2Reg[k].end() - 1),
                 (double) (prod2Reg[k].end() - 1 + prod2Reg[k].begin()) / 2.0);
         }
+        _coefs(0, 0, 2, k() + 1) /= prod2Disp[k()];
     }
 
     // Now we loop over the 1 dimension of the coefs to compute all the
@@ -470,10 +493,11 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
                         std::min(clReg[i].end() - 1, prod2Reg[i].end() - 1 + l),
                         (double) (clReg[i].end() - 1 + clReg[i].begin()) / 2.0);
                 }
+                _coefs(i() + 1, 0, 0, k() + 1) /= clDisp[k()];
             }
             else {
-                _coefs(i() + 1, 0, 0, k() + 1) += _coefs(i() + 1, 0, 0, 0)
-                    * _coefs(k() + 1, 0, 0, 0) / nOverlap;
+                _coefs(i() + 1, 0, 0, k() + 1) = _coefs(i() + 1, 0, 0, 0)
+                    * _coefs(k() + 1, 0, 0, 0) / (nOverlap * clDisp[k()]);
             }
         }
 
@@ -489,6 +513,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
                         (double) (prod1Reg[i].end() - 1 + prod1Reg[i].begin())
                             / 2.0, -l);
                 }
+                _coefs(i() + 1, 0, 1, k() + 1) /= prod1Disp[k()];
             }
             else {
                 _coefs(i() + 1, 0, 1, k() + 1) += _coefs(i() + 1, 0, 0, 0)
@@ -508,9 +533,10 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeDissociationCoefficients()
                         (double) (prod2Reg[i].end() - 1 + prod2Reg[i].begin())
                             / 2.0, -l);
                 }
+                _coefs(i() + 1, 0, 2, k() + 1) /= prod2Disp[k()];
             }
             else {
-                _coefs(i() + 1, 0, 2, k() + 1) += _coefs(i() + 1, 0, 0, 0)
+                _coefs(i() + 1, 0, 2, k() + 1) = _coefs(i() + 1, 0, 0, 0)
                     * _coefs(0, 0, 2, k() + 1) / nOverlap;
             }
         }
@@ -631,10 +657,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
                     concentrations[_reactantMomentIds[1][j()]];
             }
         }
-        // TODO compute the prefactor related to the dispersion, it can be
-        // moved to the coefs maybe
-        double prefactor = 1.0;
-        f *= _rate(gridIndex) * prefactor;
+        f *= _rate(gridIndex);
         fluxes[_reactantMomentIds[0][k()]] -= f / (double) volCl1;
 
         // For the second reactant
@@ -657,10 +680,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
                     concentrations[_reactantMomentIds[1][j()]];
             }
         }
-        // TODO compute the prefactor related to the dispersion, it can be
-        // moved to the coefs maybe
-        prefactor = 1.0;
-        f *= _rate(gridIndex) * prefactor;
+        f *= _rate(gridIndex);
         fluxes[_reactantMomentIds[1][k()]] -= f / (double) volCl2;
 
         // For the products
@@ -693,10 +713,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionFlux(
                         concentrations[_reactantMomentIds[1][j()]];
                 }
             }
-            // TODO compute the prefactor related to the dispersion, it can be
-            // moved to the coefs maybe
-            prefactor = 1.0;
-            f *= _rate(gridIndex) * prefactor;
+            f *= _rate(gridIndex);
             fluxes[_productMomentIds[p][k()]] -= f / (double) volProd;
         }
     }
@@ -741,10 +758,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
             f += _coefs(i() + 1, 0, 0, k() + 1) *
                 concentrations[_reactantMomentIds[0][i()]];
         }
-        // TODO compute the prefactor related to the dispersion, it can be
-        // moved to the coefs maybe
-        double prefactor = 1.0;
-        f *= _rate(gridIndex) * prefactor;
+        f *= _rate(gridIndex);
         fluxes[_reactantMomentIds[0][k()]] -= f / (double) volCl;
 
         // Now the first product
@@ -753,10 +767,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
             f += _coefs(i() + 1, 0, 1, k() + 1) *
                 concentrations[_reactantMomentIds[0][i()]];
         }
-        // TODO compute the prefactor related to the dispersion, it can be
-        // moved to the coefs maybe
-        prefactor = 1.0;
-        f *= _rate(gridIndex) * prefactor;
+        f *= _rate(gridIndex);
         fluxes[_productMomentIds[0][k()]] += f / (double) volProd1;
 
         // Finally the second product
@@ -765,10 +776,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationFlux(
             f += _coefs(i() + 1, 0, 2, k() + 1) *
                 concentrations[_reactantMomentIds[0][i()]];
         }
-        // TODO compute the prefactor related to the dispersion, it can be
-        // moved to the coefs maybe
-        prefactor = 1.0;
-        f *= _rate(gridIndex) * prefactor;
+        f *= _rate(gridIndex);
         fluxes[_productMomentIds[1][k()]] += f / (double) volProd2;
     }
 }
@@ -1078,10 +1086,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationPartialDerivatives(
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {
         // First for the reactant
-        // TODO compute the prefactor related to the dispersion, it can be
-        // moved to the coefs maybe
-        double prefactor = 1.0;
-        df = - _rate(gridIndex) * prefactor / (double) volCl;
+        df = - _rate(gridIndex) / (double) volCl;
         // Keep its index
         indices(numSpeciesNoI + (3 * k()) + 5) = _reactantMomentIds[0][k()];
         // Compute the values
@@ -1090,16 +1095,14 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationPartialDerivatives(
         	values((3 * k() + 3) * (numSpeciesNoI + 1) + i() + 2) = df * _coefs(i() + 1, 0, 0, k() + 1);
         }
         // For the first product
-        prefactor = 1.0;
-        df = _rate(gridIndex) * prefactor / (double) volProd1;
+        df = _rate(gridIndex) / (double) volProd1;
         indices(numSpeciesNoI + (3 * k()) + 6) = _productMomentIds[0][k()];
         values((3 * k() + 4) * (numSpeciesNoI + 1) + 1) = df * _coefs(0, 0, 1, k() + 1);
         for (auto i : speciesRangeNoI) {
         	values((3 * k() + 4) * (numSpeciesNoI + 1) + i() + 2) = df * _coefs(i() + 1, 0, 1, k() + 1);
         }
         // For the second product
-        prefactor = 1.0;
-        df = _rate(gridIndex) * prefactor / (double) volProd2;
+        df = _rate(gridIndex) / (double) volProd2;
         indices(numSpeciesNoI + (3 * k()) + 7) = _productMomentIds[1][k()];
         values((3 * k() + 5) * (numSpeciesNoI + 1) + 1) = df * _coefs(0, 0, 2, k() + 1);
         for (auto i : speciesRangeNoI) {
