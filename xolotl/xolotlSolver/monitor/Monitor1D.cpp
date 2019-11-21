@@ -702,7 +702,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = grid[xi + 1] - grid[xi];
 			}
-			double factor = 2.0 / (hxRight * (hxLeft + hxRight));
+			double factor = 2.0 / (hxLeft + hxRight);
 
 			// Initialize the value for the flux
 			double newFlux = 0.0;
