@@ -27,7 +27,8 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 	xolotlCore::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=1000 0 0 0 0" << std::endl;
+	paramFile << "netParam=1000 0 0 0 0" << std::endl << "xenonDiffusivity=1"
+			<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -68,9 +69,9 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 	// Create the re-solution handler
 	HeterogeneousNucleationHandler nucleationHandler;
 
-
 	// Initialize it
 	nucleationHandler.initialize(*network);
+	nucleationHandler.setFissionYield(0.5);
 	nucleationHandler.updateHeterogeneousNucleationRate(1.0);
 
 	// The arrays of concentration
@@ -79,7 +80,7 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 
 	// Initialize their values
 	for (int i = 0; i < nGrid * dof; i++) {
-		concentration[i] = (double) i * i;
+		concentration[i] = 110.0;
 		newConcentration[i] = 0.0;
 	}
 
@@ -100,8 +101,8 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 			updatedConcOffset, 1, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 70850802986945, 0.01); // Xe
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -35425401493472, 0.01); // Xe_2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 364817.4, 0.01); // Xe
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -182408.7, 0.01); // Xe_2
 
 	// Initialize the indices and values to set in the Jacobian
 	int indices[2];
@@ -119,8 +120,8 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 	BOOST_REQUIRE_EQUAL(indices[1], 1); // Xe_2
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], 70709313, 0.01); // Xe_1
-	BOOST_REQUIRE_CLOSE(val[1], -35354657, 0.01); // Xe_2
+	BOOST_REQUIRE_CLOSE(val[0], 3316.5, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[1], -1658.26, 0.01); // Xe_2
 
 	// Decrease the concentrations to test the regime where there is not enought Xe_1
 	for (int i = 0; i < nGrid * dof; i++) {
@@ -137,8 +138,8 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 			updatedConcOffset, 1, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 176370.3, 0.01); // Xe
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -88185.1, 0.01); // Xe_2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 75348.22, 0.01); // Xe
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -37674.11, 0.01); // Xe_2
 
 	// Compute the partial derivatives for the heterogeneous nucleation at the grid point 8
 	nucleationHandler.computePartialsForHeterogeneousNucleation(*network,
@@ -149,8 +150,8 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 	BOOST_REQUIRE_EQUAL(indices[1], 1); // Xe_2
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], 3527.4, 0.01); // Xe_1
-	BOOST_REQUIRE_CLOSE(val[1], -1763.7, 0.01); // Xe_2
+	BOOST_REQUIRE_CLOSE(val[0], 1506.96, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[1], -753.48, 0.01); // Xe_2
 
 	// Remove the created file
 	std::string tempFile = "param.txt";

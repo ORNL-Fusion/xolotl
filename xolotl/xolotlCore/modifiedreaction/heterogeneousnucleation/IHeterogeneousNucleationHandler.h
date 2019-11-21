@@ -39,6 +39,13 @@ public:
 	virtual void updateHeterogeneousNucleationRate(double rate) = 0;
 
 	/**
+	 * This method updates the fission yield.
+	 *
+	 * @param yield The fission yield
+	 */
+	virtual void setFissionYield(double yield) = 0;
+
+	/**
 	 * Compute the flux due to the heterogeneous nucleation for all the clusters,
 	 * given the position index xi.
 	 * This method is called by the RHSFunction from the PetscSolver.

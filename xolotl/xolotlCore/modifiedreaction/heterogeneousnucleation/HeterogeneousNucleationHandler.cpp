@@ -28,7 +28,13 @@ void HeterogeneousNucleationHandler::initialize(
 void HeterogeneousNucleationHandler::updateHeterogeneousNucleationRate(
 		double rate) {
 	// We say there are 25 bubbles created per fission fragments and there are 2 fission fragments per fission
-	nucleationRate = 50.0 * rate;
+	nucleationRate = 50.0 * rate / fissionYield;
+
+	return;
+}
+
+void HeterogeneousNucleationHandler::setFissionYield(double yield) {
+	fissionYield = yield;
 
 	return;
 }
@@ -44,6 +50,7 @@ void HeterogeneousNucleationHandler::computeHeterogeneousNucleation(
 
 	// Get the single concentration to know in which regime we are
 	double singleConc = singleXenon->getConcentration();
+
 	// Update the concentrations
 	if (singleConc > 2.0 * nucleationRate) {
 		updatedConcOffset[singleXenonId] -= 2.0 * nucleationRate;
