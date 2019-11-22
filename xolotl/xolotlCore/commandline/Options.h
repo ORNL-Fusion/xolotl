@@ -325,6 +325,11 @@ protected:
 	 */
 	double fissionYield;
 
+	/**
+	 * HeV ration, how many He per V are allowed
+	 */
+	double heVRatio;
+
 public:
 
 	/**
@@ -878,6 +883,14 @@ public:
 	 */
 	virtual double getFissionYield() const override {
 		return fissionYield;
+	}
+
+	/**
+	 * Obtain the value of the HeV ratio.
+	 * \see IOptions.h
+	 */
+	virtual double getHeVRatio() const override {
+		return heVRatio;
 	}
 
 };

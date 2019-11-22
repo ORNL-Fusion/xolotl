@@ -495,6 +495,13 @@ public:
 	 */
 	virtual double getFissionYield() const = 0;
 
+	/**
+	 * Obtain the value of the HeV ratio.
+	 *
+	 * @return The ratio
+	 */
+	virtual double getHeVRatio() const = 0;
+
 };
 //end class IOptions
 

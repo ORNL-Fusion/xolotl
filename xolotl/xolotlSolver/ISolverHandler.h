@@ -173,6 +173,13 @@ public:
 	virtual double getBurstingFactor() const = 0;
 
 	/**
+	 * Get the HeV ratio.
+	 *
+	 * @return The ratio
+	 */
+	virtual double getHeVRatio() const = 0;
+
+	/**
 	 * Get the bursting minimum size parameter.
 	 *
 	 * @return The minimum size

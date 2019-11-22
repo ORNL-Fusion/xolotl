@@ -2156,6 +2156,8 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 		double depthParam = solverHandler.getTauBursting();			// nm
 		// The minimum size at which the bursting could start
 		int minSizeBursting = solverHandler.getMinSizeBursting();
+		// The number of He per V in a bubble
+		double heVRatio = solverHandler.getHeVRatio();
 
 		// For now we are not bursting
 		bool burst = false;
@@ -2189,7 +2191,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 						/ network.getTotalBubbleConcentration(minSizeBursting);
 
 				// Compute the radius of the bubble from the number of helium
-				double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
+				double nV = heDensity * (grid[xi + 1] - grid[xi]) / heVRatio;
 //			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
 				double latticeParam = network.getLatticeParameter();
 				double tlcCubed = latticeParam * latticeParam * latticeParam;

@@ -118,10 +118,12 @@ std::unique_ptr<PSICluster> PSIClusterNetworkLoader::createPSICluster(int numHe,
 		cluster = new PSIInterstitialCluster(numI, network, handlerRegistry);
 	} else if (numD > 0) {
 		// Create a new DCluster
-		cluster = new PSIDCluster(numD, hydrogenRadiusFactor, network, handlerRegistry);
+		cluster = new PSIDCluster(numD, hydrogenRadiusFactor, network,
+				handlerRegistry);
 	} else if (numT > 0) {
 		// Create a new TCluster
-		cluster = new PSITCluster(numT, hydrogenRadiusFactor, network, handlerRegistry);
+		cluster = new PSITCluster(numT, hydrogenRadiusFactor, network,
+				handlerRegistry);
 	}
 	assert(cluster != nullptr);
 
@@ -322,6 +324,7 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 			options.getMaxT();
 	bool usePhaseCut = options.usePhaseCut();
 	int numHe = 0, numD = 0, numT = 0, numV = 0, numI = 0;
+	double heVRatio = options.getHeVRatio();
 
 	// Once we have C++14, use std::make_unique.
 	std::unique_ptr<PSIClusterReactionNetwork> network(
@@ -664,7 +667,6 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 		}
 
 		// Create V and HeV up to the maximum length with a constant nHe/nV
-		// = 4.
 		for (int i = maxHePerV.size() + 1; i <= maxV; i++) {
 			// Create the V cluster
 			numV = i;
@@ -686,19 +688,21 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 			pushPSICluster(network, reactants, nextCluster);
 
 			// Loop on the helium number
-			int upperHe = numV * 4;
+			int upperHe = max((int) (numV * heVRatio),
+					maxHePerV[maxHePerV.size() - 1] + numV
+							- (int) maxHePerV.size());
 			if (maxHe <= 0)
 				upperHe = 0;
 			for (int j = 0; j <= upperHe; j++) {
 				numHe = j;
 				// Loop on the deuterium number
-				int upperD = (int) ((2.0 / 3.0) * (double) numV * 4.0);
+				int upperD = (int) ((2.0 / 3.0) * (double) upperHe);
 				if (maxD <= 0)
 					upperD = 0;
 				for (int k = 0; k <= upperD; k++) {
 					numD = k;
 					// Loop on the tritium number
-					int upperT = (int) ((2.0 / 3.0) * (double) numV * 4.0);
+					int upperT = (int) ((2.0 / 3.0) * (double) upperHe);
 					if (maxT <= 0)
 						upperT = 0;
 					for (int l = 0; l <= upperT; l++) {
@@ -714,6 +718,7 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 //							continue;
 
 						// Too many hydrogen
+						// TODO how should the HeV ratio should be taken into account here?
 						if ((numHe == 0 && numD + numT > 6 * numV)
 								|| (numHe > 0
 										&& numD + numT

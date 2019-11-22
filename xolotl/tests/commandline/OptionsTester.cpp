@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	<< std::endl << "lattice=0.1" << std::endl << "impurityRadius=0.5"
 	<< std::endl << "biasFactor=2.0" << std::endl
 	<< "hydrogenFactor=0.5" << std::endl << "xenonDiffusivity=3.0"
-	<< std::endl << "fissionYield=0.3" << std::endl;
+	<< std::endl << "fissionYield=0.3" << std::endl << "heVRatio=5.0" << std::endl;
 	;
 	goodParamFile.close();
 
@@ -230,6 +230,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 
 	// Check the fission yield option
 	BOOST_REQUIRE_EQUAL(opts.getFissionYield(), 0.3);
+
+	// Check the HeV ration option
+	BOOST_REQUIRE_EQUAL(opts.getHeVRatio(), 5.0);
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();

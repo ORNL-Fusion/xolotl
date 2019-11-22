@@ -28,7 +28,7 @@ Options::Options() :
 				false), zeta(0.73), resoMinSize(0), density(10.162795276841), pulseTime(
 				0.0), pulseProportion(0.0), latticeParameter(-1.0), impurityRadius(
 				-1.0), biasFactor(1.15), hydrogenFactor(0.25), xenonDiffusivity(
-				-1.0), fissionYield(0.25) {
+				-1.0), fissionYield(0.25), heVRatio(4.0) {
 	radiusMinSizes.Init(0);
 
 	return;
@@ -162,7 +162,9 @@ void Options::readParams(int argc, char* argv[]) {
 			"xenonDiffusivity", bpo::value<double>(&xenonDiffusivity),
 			"This option allows the user to set the diffusion coefficient for xenon in nm2 s-1.")(
 			"fissionYield", bpo::value<double>(&fissionYield),
-			"This option allows the user to set the number of xenon created for each fission.");
+			"This option allows the user to set the number of xenon created for each fission.")(
+			"heVRatio", bpo::value<double>(&heVRatio),
+			"This option allows the user to set the number of He atoms allowed per V in a bubble.");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);

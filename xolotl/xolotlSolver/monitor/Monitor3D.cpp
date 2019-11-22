@@ -1115,6 +1115,8 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 
 		// The depth parameter to know where the bursting should happen
 		double depthParam = solverHandler.getTauBursting();	// nm
+		// The number of He per V in a bubble
+		double heVRatio = solverHandler.getHeVRatio();
 
 		// For now we are not bursting
 		bool burst = false;
@@ -1141,11 +1143,16 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 						double distance = (grid[xi] + grid[xi + 1]) / 2.0
 								- grid[surfacePos + 1];
 
+						// Hard cut-off of 5 tau, no bursting deeper
+						if (distance > 5.0 * depthParam)
+							continue;
+
 						// Compute the helium density at this grid point
 						double heDensity = network.getTotalAtomConcentration();
 
 						// Compute the radius of the bubble from the number of helium
-						double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
+						double nV = heDensity * (grid[xi + 1] - grid[xi])
+								/ heVRatio;
 						//					double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
 						double latticeParam = network.getLatticeParameter();
 						double tlcCubed = latticeParam * latticeParam
