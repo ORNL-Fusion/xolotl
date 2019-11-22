@@ -250,6 +250,11 @@ protected:
 	int burstingMinSize;
 
 	/**
+	 * Factor used in bursting probability.
+	 */
+	double burstingFactor;
+
+	/**
 	 * An explicitly-given value to use to seed the random number generator.
 	 * Only used if rngUseSeed is true.
 	 */
@@ -740,6 +745,14 @@ public:
 	 */
 	double getBurstingDepth() const override {
 		return burstingDepth;
+	}
+
+	/**
+	 * Obtain the value of the factor in the bursting probability.
+	 * \see IOptions.h
+	 */
+	double getBurstingFactor() const override {
+		return burstingFactor;
 	}
 
 	/**

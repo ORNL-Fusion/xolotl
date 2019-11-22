@@ -386,6 +386,13 @@ public:
 	virtual int getBurstingSize() const = 0;
 
 	/**
+	 * Obtain the value of the factor in the bursting probability.
+	 *
+	 * @return The factor
+	 */
+	virtual double getBurstingFactor() const = 0;
+
+	/**
 	 * Set the seed that should be used for initializing the random
 	 * number generator.
 	 *

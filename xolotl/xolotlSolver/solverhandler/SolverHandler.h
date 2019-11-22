@@ -112,6 +112,9 @@ protected:
 	//! The minimum size for the bubble bursting.
 	int minSizeBursting;
 
+	//! The factor involved in computing bursting likelihood.
+	double burstingFactor;
+
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
 
@@ -396,7 +399,7 @@ protected:
 					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
 					nullptr), mutationHandler(nullptr), resolutionHandler(
 					nullptr), nucleationHandler(nullptr), tauBursting(10.0), minSizeBursting(
-					0), rngSeed(0) {
+					0), burstingFactor(0.1), rngSeed(0) {
 	}
 
 public:
@@ -518,6 +521,9 @@ public:
 		// Set minimum size for bursting
 		minSizeBursting = options.getBurstingSize();
 
+		// Set the bursting factor
+		burstingFactor = options.getBurstingFactor();
+
 		// Look at if the user wants to use a regular grid in the x direction
 		if (options.useRegularXGrid())
 			useRegularGrid = "regular";
@@ -638,6 +644,14 @@ public:
 	 */
 	int getMinSizeBursting() const override {
 		return minSizeBursting;
+	}
+
+	/**
+	 * Get the bursting factor.
+	 * \see ISolverHandler.h
+	 */
+	double getBurstingFactor() const override {
+		return burstingFactor;
 	}
 
 	/**

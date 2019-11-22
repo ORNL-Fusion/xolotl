@@ -166,6 +166,13 @@ public:
 	virtual double getTauBursting() const = 0;
 
 	/**
+	 * Get the bursting factor for likelihood of bursting.
+	 *
+	 * @return The factor
+	 */
+	virtual double getBurstingFactor() const = 0;
+
+	/**
 	 * Get the bursting minimum size parameter.
 	 *
 	 * @return The minimum size

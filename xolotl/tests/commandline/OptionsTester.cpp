@@ -98,25 +98,25 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	// Create a good parameter file
 	std::ofstream goodParamFile("param_good.txt");
 	goodParamFile << "vizHandler=std" << std::endl
-			<< "petscArgs=-fieldsplit_0_pc_type redundant "
-					"-ts_max_snes_failures 200 "
-					"-pc_fieldsplit_detect_coupling "
-					"-ts_adapt_dt_max 10 -pc_type fieldsplit "
-					"-fieldsplit_1_pc_type sor -ts_final_time 1000 "
-					"-ts_max_steps 3" << std::endl << "networkFile=tungsten.txt"
-			<< std::endl << "startTemp=900" << std::endl << "perfHandler=std"
-			<< std::endl << "flux=1.5" << std::endl << "material=W100"
-			<< std::endl << "initialV=0.05" << std::endl << "dimensions=1"
-			<< std::endl << "voidPortion=60.0" << std::endl << "regularGrid=no"
-			<< std::endl << "process=diff" << std::endl << "grouping=11 2 4"
-			<< std::endl << "sputtering=0.5" << std::endl << "boundary=1 1"
-			<< std::endl << "burstingDepth=5.0" << std::endl << "burstingMin=3"
-			<< std::endl << "zeta=0.6" << std::endl << "resoSize=10"
-			<< std::endl << "radiusSize=5" << std::endl << "density=9.0"
-			<< std::endl << "lattice=0.1" << std::endl << "impurityRadius=0.5"
-			<< std::endl << "biasFactor=2.0" << std::endl
-			<< "hydrogenFactor=0.5" << std::endl << "xenonDiffusivity=3.0"
-			<< std::endl << "fissionYield=0.3" << std::endl;
+	<< "petscArgs=-fieldsplit_0_pc_type redundant "
+	"-ts_max_snes_failures 200 "
+	"-pc_fieldsplit_detect_coupling "
+	"-ts_adapt_dt_max 10 -pc_type fieldsplit "
+	"-fieldsplit_1_pc_type sor -ts_final_time 1000 "
+	"-ts_max_steps 3" << std::endl << "networkFile=tungsten.txt"
+	<< std::endl << "startTemp=900" << std::endl << "perfHandler=std"
+	<< std::endl << "flux=1.5" << std::endl << "material=W100"
+	<< std::endl << "initialV=0.05" << std::endl << "dimensions=1"
+	<< std::endl << "voidPortion=60.0" << std::endl << "regularGrid=no"
+	<< std::endl << "process=diff" << std::endl << "grouping=11 2 4"
+	<< std::endl << "sputtering=0.5" << std::endl << "boundary=1 1"
+	<< std::endl << "burstingDepth=5.0" << std::endl << "burstingMin=3"
+	<< std::endl << "burstingFactor=2.5" << std::endl << "zeta=0.6" << std::endl << "resoSize=10"
+	<< std::endl << "radiusSize=5" << std::endl << "density=9.0"
+	<< std::endl << "lattice=0.1" << std::endl << "impurityRadius=0.5"
+	<< std::endl << "biasFactor=2.0" << std::endl
+	<< "hydrogenFactor=0.5" << std::endl << "xenonDiffusivity=3.0"
+	<< std::endl << "fissionYield=0.3" << std::endl;
 	;
 	goodParamFile.close();
 
@@ -185,6 +185,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 
 	// Check the bursting size option
 	BOOST_REQUIRE_EQUAL(opts.getBurstingSize(), 3);
+
+	// Check the bursting factor option
+	BOOST_REQUIRE_EQUAL(opts.getBurstingFactor(), 2.5);
 
 	// Check the boundary conditions
 	BOOST_REQUIRE_EQUAL(opts.getLeftBoundary(), 1);
@@ -259,7 +262,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5) {
 	// Create a good parameter file
 	std::ofstream goodParamFile("param_good.txt");
 	goodParamFile << "netParam=8 1 0 5 3" << std::endl << "grid=100 0.5"
-			<< std::endl;
+	<< std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -370,16 +373,16 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles) {
 	// the temperature at that time.
 	std::ofstream writeTempFile("temperatureFile.dat");
 	writeTempFile << "0.0 2.0 \n"
-			"1.0 1.99219766723 \n"
-			"2.0 1.87758256189 \n"
-			"3.0 1.4311765168 \n"
-			"4.0 0.583853163453 \n"
-			"5.0 0.000137654918313 \n"
-			"6.0 0.789204200569 \n"
-			"7.0 1.9875147713 \n"
-			"8.0 0.854499966191 \n"
-			"9.0 0.235300873168 \n"
-			"10.0 1.99779827918";
+	"1.0 1.99219766723 \n"
+	"2.0 1.87758256189 \n"
+	"3.0 1.4311765168 \n"
+	"4.0 0.583853163453 \n"
+	"5.0 0.000137654918313 \n"
+	"6.0 0.789204200569 \n"
+	"7.0 1.9875147713 \n"
+	"8.0 0.854499966191 \n"
+	"9.0 0.235300873168 \n"
+	"10.0 1.99779827918";
 	writeTempFile.close();
 
 	// Create a file with a time profile for the flux
@@ -387,10 +390,10 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles) {
 	// the amplitude (in He/nm2/s) at that time.
 	std::ofstream writeFluxFile("fluxFile.dat");
 	writeFluxFile << "0.0 1000.0 \n"
-			"1.0 4000.0 \n"
-			"2.0 2000.0 \n"
-			"3.0 3000.0 \n"
-			"4.0 0.0";
+	"1.0 4000.0 \n"
+	"2.0 2000.0 \n"
+	"3.0 3000.0 \n"
+	"4.0 0.0";
 	writeFluxFile.close();
 
 	xolotlCore::Options opts;
@@ -398,7 +401,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles) {
 	// Create a parameter file using these two profile files
 	std::ofstream paramFile("param_good_profiles.txt");
 	paramFile << "fluxFile=fluxFile.dat" << std::endl
-			<< "tempFile=temperatureFile.dat" << std::endl;
+	<< "tempFile=temperatureFile.dat" << std::endl;
 	paramFile.close();
 
 	string pathToFile("param_good_profiles.txt");
