@@ -20,7 +20,7 @@ public:
     }
 
     Region
-    getRegion()
+    getRegion() const
     {
         //FIXME: explicitly using host space
         return _network->_subpaving.getTiles(plsm::onHost)(_id).getRegion();

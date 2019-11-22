@@ -7,6 +7,9 @@
 #include <plsm/Subpaving.h>
 #include <plsm/refine/RegionDetector.h>
 
+#include <IOptions.h>
+#include <Options.h>
+
 #include <experimental/EnumSequence.h>
 
 namespace xolotlCore
@@ -46,9 +49,13 @@ public:
 
     ReactionNetwork() = delete;
 
+    ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize);
+
     //TODO: Need a more versatile constructor interface
     //      (and probably don't need the 'make' function)
-    ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize);
+    template <typename TClusterGenerator>
+    ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize,
+        const IOptions& options, const TClusterGenerator& clusterGenerator);
 
     static
     constexpr std::size_t
@@ -92,11 +99,30 @@ public:
     }
 
     void
-    setLatticeParameter(double latticeParameter)
+    setLatticeParameter(double latticeParameter);
+
+    double
+    getInterstitialBias() const noexcept
     {
-        _latticeParameter = latticeParameter;
-        _atomicVolume =
-            0.5 * latticeParameter * latticeParameter * latticeParameter;
+        return _interstitialBias;
+    }
+
+    void
+    setInterstitialBias(double interstitialBias) noexcept
+    {
+        _interstitialBias = interstitialBias;
+    }
+
+    double
+    getImpurityRadius() const noexcept
+    {
+        return _impurityRadius;
+    }
+
+    void
+    setImpurityRadius(double impurityRadius) noexcept
+    {
+        _impurityRadius = impurityRadius;
     }
 
     Cluster
@@ -129,6 +155,10 @@ private:
     void
     defineMomentIds();
 
+    template <typename TClusterGenerator>
+    void
+    generateClusterData(const TClusterGenerator& clusterGenerator);
+
     void
     defineReactions();
 
@@ -141,15 +171,20 @@ private:
 private:
     Subpaving _subpaving;
 
-    double _latticeParameter{};
-    double _atomicVolume{};
+    double _latticeParameter {};
+    double _atomicVolume {};
+    double _interstitialBias {};
+    double _impurityRadius {};
+
     Kokkos::View<double*> _temperature;
 
-    std::size_t _numClusters;
+    std::size_t _numClusters {};
     Kokkos::View<std::size_t*[4]> _momentIds;
     Kokkos::View<double*> _reactionRadius;
     Kokkos::View<double**> _diffusionCoefficient;
     Kokkos::View<double*> _formationEnergy;
+    Kokkos::View<double*> _migrationEnergy;
+    Kokkos::View<double*> _diffusionFactor;
 
     Kokkos::View<ReactionType*> _reactions;
     Kokkos::View<double**> _reactionRates;
@@ -182,7 +217,7 @@ makeSimpleReactionNetwork(
         plsm::refine::RegionDetector<AmountType, numSpecies, plsm::Select>{
             latticeRegion});
 
-    TReactionNetwork network(std::move(subpaving), 0);
+    TReactionNetwork network(std::move(subpaving), 0, Options{});
 
     return network;
 }
