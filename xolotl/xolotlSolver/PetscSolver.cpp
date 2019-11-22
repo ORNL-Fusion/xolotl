@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include "xolotlCore/io/XFile.h"
+#include <TokenizedLineReader.h>
 
 using namespace xolotlCore;
 
@@ -194,10 +195,46 @@ void PetscSolver::setupMesh() {
 }
 
 void PetscSolver::initialize() {
+	// Build an input stream from the argument string.
+	int numCLIArgs;
+	char **CLIArgs;
+	xolotlCore::TokenizedLineReader<string> reader;
+	auto argSS = std::make_shared<std::istringstream>(optionsString);
+	reader.setInputStream(argSS);
+
+	// Break the argument into tokens.
+	auto tokens = reader.loadLine();
+
+	// PETSc assumes that argv[0] in the arguments it is given is the
+	// program name.  But our parsing of the PETSc arguments from
+	// the input parameter file gives us only the PETSc arguments without
+	// the program name as argv[0].  So - we adjust the arguments array.
+
+	// Construct the argv from the stream of tokens.
+	numCLIArgs = tokens.size() + 1;
+
+	// The PETSc argv is an array of pointers to C strings.
+	auto petscArgv = new char*[tokens.size() + 2];
+	// Create the fake application name
+	std::string appName = "fakeXolotlApplicationNameForPETSc";
+	petscArgv[0] = new char[appName.length() + 1];
+	strcpy(petscArgv[0], appName.c_str());
+
+	// Now loop on the actual PETSc options
+	int idx = 1;
+	for (auto iter = tokens.begin(); iter != tokens.end(); ++iter) {
+		petscArgv[idx] = new char[iter->length() + 1];
+		strcpy(petscArgv[idx], iter->c_str());
+		++idx;
+	}
+	petscArgv[idx] = 0; // null-terminate the array
+
+	// Set the petscArgv
+	CLIArgs = petscArgv;
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	PetscInitialize(NULL, NULL, NULL, help);
+	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
 
 	return;
 }
@@ -208,16 +245,15 @@ void PetscSolver::solve() {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create the solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	PetscOptions petscOptions;
-	ierr = PetscOptionsCreate(&petscOptions);
-	checkPetscError(ierr,
-			"PetscSolver::initialize: PetscOptionsCreate failed.");
-	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
-	checkPetscError(ierr,
-			"PetscSolver::initialize: PetscOptionsInsertString failed.");
-	ierr = PetscOptionsPush(petscOptions);
-	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPush failed.");
-
+//	PetscOptions petscOptions;
+//	ierr = PetscOptionsCreate(&petscOptions);
+//	checkPetscError(ierr,
+//			"PetscSolver::initialize: PetscOptionsCreate failed.");
+//	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
+//	checkPetscError(ierr,
+//			"PetscSolver::initialize: PetscOptionsInsertString failed.");
+//	ierr = PetscOptionsPush(petscOptions);
+//	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPush failed.");
 	// Create the solver context
 	DM da;
 	getSolverHandler().createSolverContext(da);
