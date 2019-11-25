@@ -62,6 +62,19 @@ ReactionNetwork<TImpl>::generateClusterData(
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
+        std::size_t gridIndex) 
+{
+    // Get the extent of the reactions view
+    const auto& nReactions = _reactions.extent(0);
+    // Loop on the reactions
+    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
+        _reactions(i).contributeFlux(concentrations, fluxes, gridIndex);
+    });
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::defineMomentIds()
 {
     constexpr auto invalid = plsm::invalid<std::size_t>;

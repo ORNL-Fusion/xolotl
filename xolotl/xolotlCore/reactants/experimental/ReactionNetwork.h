@@ -41,6 +41,8 @@ public:
     using Composition = typename Subpaving::PointType;
     using Region = typename Subpaving::RegionType;
     using Ival = typename Region::IntervalType;
+    using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
+    using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 
     class Cluster;
 
@@ -150,6 +152,10 @@ public:
     {
         return Kokkos::subview(_reactionRates, reactionId, Kokkos::ALL);
     }
+
+    void
+    computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
+            std::size_t gridIndex);
 
 private:
     void
