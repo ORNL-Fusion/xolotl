@@ -75,6 +75,26 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations, Flux
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations, 
+        Kokkos::View<double*> values, std::size_t gridIndex) 
+{
+    // Reset the values
+    const auto& nValues = values.extent(0);
+    // Loop on the reactions
+    Kokkos::parallel_for(nValues, KOKKOS_LAMBDA (const std::size_t i) {
+        values(i) = 0.0;
+    });
+    
+    // Get the extent of the reactions view
+    const auto& nReactions = _reactions.extent(0);
+    // Loop on the reactions
+    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
+        _reactions(i).contributePartialDerivatives(concentrations, values, gridIndex);
+    });
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::defineMomentIds()
 {
     constexpr auto invalid = plsm::invalid<std::size_t>;
@@ -106,6 +126,14 @@ void
 ReactionNetwork<TImpl>::defineReactions()
 {
     //TODO
+}
+
+template <typename TImpl>
+size_t
+ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
+{
+    //TODO
+	return 0;
 }
 }
 }

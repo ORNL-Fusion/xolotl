@@ -5,7 +5,7 @@
 
 namespace xolotlSolver {
 
-template <typename TImpl>
+template<typename TImpl>
 void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
 	// Recompute Ids and network size and redefine the connectivities
@@ -29,9 +29,6 @@ void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
 	checkPetscError(ierr,
 			"PetscSolverExpHandler::createSolverContext: DMSetUp failed.");
 
-	// Set the size of the partial derivatives vectors
-	reactingPartialsForCluster.resize(dof, 0.0);
-
 	/*  The only spatial coupling in the Jacobian is due to diffusion.
 	 *  The ofill (thought of as a dof by dof 2d (row-oriented) array represents
 	 *  the nonzero coupling between degrees of freedom at one point with degrees
@@ -42,13 +39,12 @@ void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
 	 *  coupling is regular diffusion.
 	 */
 	xolotlCore::IReactionNetwork::SparseFillMap ofill;
-	xolotlCore::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
 
 	// Get the diagonal fill
-	network.getDiagonalFill(dfill);
+	auto nPartials = expNetwork.getDiagonalFill(dfill);
 
 	// Load up the block fills
 	auto dfillsparse = ConvertToPetscSparseFillMap(dof, dfill);
@@ -58,20 +54,15 @@ void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
 			"DMDASetBlockFills failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	reactionSize.resize(dof);
-	reactionStartingIdx.resize(dof);
-	auto nPartials = network.initPartialsSizes(reactionSize,
-			reactionStartingIdx);
+	expVals = Kokkos::View<double*, Kokkos::MemoryUnmanaged>(nPartials);
 
-	reactionIndices.resize(nPartials);
-	network.initPartialsIndices(reactionSize, reactionStartingIdx,
-			reactionIndices);
-	reactionVals.resize(nPartials);
+	// Set the size of the partial derivatives vectors
+	reactingPartialsForCluster.resize(dof, 0.0);
 
 	return;
 }
 
-template <typename TImpl>
+template<typename TImpl>
 void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
@@ -161,9 +152,9 @@ void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 	return;
 }
 
-template <typename TImpl>
-void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC, Vec &F,
-		PetscReal ftime) {
+template<typename TImpl>
+void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC,
+		Vec &F, PetscReal ftime) {
 	PetscErrorCode ierr;
 
 	// Get the local data vector from PETSc
@@ -215,7 +206,7 @@ void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC, Vec 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 	ConcentrationsView xView(concOffset, dof);
 	FluxesView fView(updatedConcOffset, dof);
-	expNetwork.computeAllFluxes(concOffset, updatedConcOffset, 0);
+	expNetwork.computeAllFluxes(xView, fView, 0);
 
 	/*
 	 Restore vectors
@@ -230,17 +221,17 @@ void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC, Vec 
 	return;
 }
 
-template <typename TImpl>
-void PetscSolverExpHandler<TImpl>::computeOffDiagonalJacobian(TS &ts, Vec &localC,
-		Mat &J, PetscReal ftime) {
+template<typename TImpl>
+void PetscSolverExpHandler<TImpl>::computeOffDiagonalJacobian(TS &ts,
+		Vec &localC, Mat &J, PetscReal ftime) {
 	// Does nothing in 0D
 
 	return;
 }
 
-template <typename TImpl>
-void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
-		PetscReal ftime) {
+template<typename TImpl>
+void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC,
+		Mat &J, PetscReal ftime) {
 	PetscErrorCode ierr;
 
 	// Get the distributed array
@@ -282,16 +273,14 @@ void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC, 
 		lastTemperature[0] = temperature;
 	}
 
-	// Copy data into the ReactionNetwork so that it can
-	// compute the new concentrations.
-	network.updateConcentrationsFromArray(concOffset);
-
 	// ----- Take care of the reactions for all the reactants -----
 
 	// Compute all the partial derivatives for the reactions
-	network.computeAllPartials(reactionStartingIdx, reactionIndices,
-			reactionVals);
+	ConcentrationsView xView(concOffset, dof);
+	expNetwork.computeAllPartials(concOffset, expVals, 0);
 
+	// Variable for the loop on reactants
+	int startingIdx = 0;
 	// Update the column in the Jacobian that represents each DOF
 	for (int i = 0; i < dof - 1; i++) {
 		// Set grid coordinate and component number for the row
@@ -299,22 +288,28 @@ void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC, 
 		rowId.c = i;
 
 		// Number of partial derivatives
-		pdColIdsVectorSize = reactionSize[i];
-		auto startingIdx = reactionStartingIdx[i];
+		auto rowIter = dfill.find(i);
+		if (rowIter != dfill.end()) {
+			pdColIdsVectorSize = rowIter.size();
 
-		// Loop over the list of column ids
-		for (int j = 0; j < pdColIdsVectorSize; j++) {
-			// Set grid coordinate and component number for a column in the list
-			colIds[j].i = 0;
-			colIds[j].c = reactionIndices[startingIdx + j];
-			// Get the partial derivative from the array of all of the partials
-			reactingPartialsForCluster[j] = reactionVals[startingIdx + j];
+			// Loop over the list of column ids
+			for (int j = 0; j < pdColIdsVectorSize; j++) {
+				// Set grid coordinate and component number for a column in the list
+				colIds[j].i = 0;
+				colIds[j].c = rowIter[j];
+				// Get the partial derivative from the array of all of the partials
+				reactingPartialsForCluster[j] = expVals(startingIdx + j);
+			}
+			// Update the matrix
+			ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize, colIds,
+					reactingPartialsForCluster.data(), ADD_VALUES);
+			checkPetscError(ierr,
+					"PetscSolverExpHandler::computeDiagonalJacobian: "
+							"MatSetValuesStencil (reactions) failed.");
+
+			// Increase the starting index
+			startingIdx += pdColIdsVectorSize;
 		}
-		// Update the matrix
-		ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize, colIds,
-				reactingPartialsForCluster.data(), ADD_VALUES);
-		checkPetscError(ierr, "PetscSolverExpHandler::computeDiagonalJacobian: "
-				"MatSetValuesStencil (reactions) failed.");
 	}
 
 	/*

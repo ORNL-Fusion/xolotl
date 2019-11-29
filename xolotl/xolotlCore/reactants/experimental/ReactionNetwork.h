@@ -43,6 +43,7 @@ public:
     using Ival = typename Region::IntervalType;
     using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
     using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
+    using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 
     class Cluster;
 
@@ -157,6 +158,10 @@ public:
     computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
             std::size_t gridIndex);
 
+    void
+    computeAllPartials(ConcentrationsView concentrations,
+            Kokkos::View<double*> values, std::size_t gridIndex);
+
 private:
     void
     defineMomentIds();
@@ -173,6 +178,22 @@ private:
     {
         return _temperature(gridIndex);
     }
+
+    size_t
+    getReactionIndex(std::size_t rowId, std::size_t colId) const noexcept
+    {
+        return _inverseMap(rowId, colId);
+    }
+
+    /**
+     * Get the diagonal fill for the Jacobian, corresponding to the reactions.
+     * Also populates the inverse map.
+     *
+     * @param fillMap Connectivity map.
+     * @return The total number of partials.
+     */
+    size_t
+    getDiagonalFill(SparseFillMap& fillMap);
 
 private:
     Subpaving _subpaving;
@@ -193,7 +214,10 @@ private:
     Kokkos::View<double*> _diffusionFactor;
 
     Kokkos::View<ReactionType*> _reactions;
+
     Kokkos::View<double**> _reactionRates;
+
+    Kokkos::View<size_t**> _inverseMap;
 };
 
 

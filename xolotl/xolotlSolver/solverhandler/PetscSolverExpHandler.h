@@ -13,7 +13,7 @@ namespace xolotlSolver {
  * to solve the ADR equations in 0D for the experimental network,
  * using PETSc from Argonne National Laboratory.
  */
-template <typename TImpl>
+template<typename TImpl>
 class PetscSolverExpHandler: public PetscSolverHandler {
 public:
 	using NetworkType =
@@ -21,10 +21,17 @@ public:
 
 	using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
+	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 protected:
 
 	//! The original network created from the network loader.
 	NetworkType& expNetwork;
+
+	//! Partial derivatives for all reactions at one grid point.
+	Kokkos::View<double*> expVals;
+
+	//! Map of connectivities
+	SparseFillMap dfill;
 
 public:
 

@@ -59,20 +59,20 @@ public:
 
     void
     productionPartialDerivatives(ConcentrationsView concentrations,
-        Kokkos::View<std::size_t*> indices, Kokkos::View<double*> values,
+        Kokkos::View<double*> values,
         std::size_t gridIndex);
 
     void
     dissociationPartialDerivatives(ConcentrationsView concentrations,
-        Kokkos::View<std::size_t*> indices, Kokkos::View<double*> values,
+        Kokkos::View<double*> values,
         std::size_t gridIndex);
 
     void
     contributePartialDerivatives(ConcentrationsView concentrations,
-        Kokkos::View<std::size_t*> indices, Kokkos::View<double*> values,
+        Kokkos::View<double*> values,
         std::size_t gridIndex)
     {
-        ((*this).*(_partialsFn))(concentrations, indices, values, gridIndex);
+        ((*this).*(_partialsFn))(concentrations, values, gridIndex);
     }
 
 private:
@@ -139,7 +139,7 @@ protected:
     FluxFn _fluxFn {nullptr};
 
     using PartialsFn =
-        void (Reaction::*)(ConcentrationsView, Kokkos::View<std::size_t*>,
+        void (Reaction::*)(ConcentrationsView,
             Kokkos::View<double*>, std::size_t);
     PartialsFn _partialsFn {nullptr};
 
