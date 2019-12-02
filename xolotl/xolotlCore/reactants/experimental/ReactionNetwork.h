@@ -247,7 +247,7 @@ makeSimpleReactionNetwork(
         plsm::refine::RegionDetector<AmountType, numSpecies, plsm::Select>{
             latticeRegion});
 
-    TReactionNetwork network(std::move(subpaving), 0, Options{});
+    TReactionNetwork network(std::move(subpaving), 0);
 
     return network;
 }
