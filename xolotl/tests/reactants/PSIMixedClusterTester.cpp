@@ -72,7 +72,8 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
     using Spec = typename NetworkType::Species;
     using Composition = typename NetworkType::Composition;
 
-    auto rNetwork = experimental::makeSimpleReactionNetwork<NetworkType>();
+    // auto rNetwork = experimental::makeSimpleReactionNetwork<NetworkType>();
+    NetworkType rNetwork({10, 10, 10, 10, 10}, 0, Options{});
     Composition comp{};
     comp[Spec::He] = 3;
     comp[Spec::V] = 2;

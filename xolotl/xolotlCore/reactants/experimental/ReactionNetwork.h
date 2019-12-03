@@ -39,6 +39,7 @@ public:
     using ClusterGenerator = typename Traits::ClusterGenerator;
     using AmountType = std::uint32_t;
     using Subpaving = plsm::Subpaving<AmountType, numSpecies, Species>;
+    using SubdivisionRatio = typename Subpaving::SubdivisionRatioType;
     using Composition = typename Subpaving::PointType;
     using Region = typename Subpaving::RegionType;
     using Ival = typename Region::IntervalType;
@@ -61,7 +62,12 @@ public:
     //TODO: Need a more versatile constructor interface
     //      (and probably don't need the 'make' function)
 
-    // ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+    ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+        const std::vector<SubdivisionRatio>& subdivisionRatios,
+        std::size_t gridSize, const IOptions& options);
+
+    ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+        std::size_t gridSize, const IOptions& options);
 
     static
     constexpr std::size_t

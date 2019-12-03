@@ -38,11 +38,44 @@ ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
 {
 }
 
-// TODO
-// template <typename TImpl>
-// ReactionNetwork<TImpl>::ReactionNetwork(< subpaving region and subdivision infos >)
-// {
-// }
+template <typename TImpl>
+ReactionNetwork<TImpl>::ReactionNetwork(
+        const std::vector<AmountType>& maxSpeciesAmounts,
+        const std::vector<SubdivisionRatio>& subdivisionRatios,
+        std::size_t gridSize, const IOptions& options)
+    :
+    ReactionNetwork(
+        [&maxSpeciesAmounts, &subdivisionRatios, &options]()
+        {
+            Region latticeRegion;
+            for (std::size_t i = 0; i < getNumberOfSpecies(); ++i) {
+                latticeRegion[i] = Ival{0, maxSpeciesAmounts[i] + 1};
+            }
+            Subpaving subpaving(latticeRegion, subdivisionRatios);
+            subpaving.refine(ClusterGenerator{options});
+            return subpaving;
+        }(),
+        gridSize, options)
+{
+}
+
+template <typename TImpl>
+ReactionNetwork<TImpl>::ReactionNetwork(
+        const std::vector<AmountType>& maxSpeciesAmounts,
+        std::size_t gridSize, const IOptions& options)
+    :
+    ReactionNetwork(maxSpeciesAmounts,
+        [&maxSpeciesAmounts]() -> std::vector<SubdivisionRatio>
+        {
+            SubdivisionRatio ratio;
+            for (std::size_t i = 0; i < getNumberOfSpecies(); ++i) {
+                ratio[i] = maxSpeciesAmounts[i] + 1;
+            }
+            return {ratio};
+        }(),
+        gridSize, options)
+{
+}
 
 template <typename TImpl>
 void
