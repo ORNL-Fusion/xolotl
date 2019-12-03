@@ -8,7 +8,7 @@ namespace experimental
 {
 template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
-        std::size_t gridSize)
+        std::size_t gridSize, const IOptions& options)
     :
     _subpaving(std::move(subpaving)),
     _temperature("Temperature", gridSize),
@@ -20,23 +20,29 @@ ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
     _diffusionFactor("Diffusion Factor", _numClusters),
     _reactions("Reactions", 1000)
 {
-    defineMomentIds();
-}
-
-template <typename TImpl>
-ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
-        std::size_t gridSize, const IOptions& options)
-    :
-    ReactionNetwork(std::move(subpaving), gridSize)
-{
     setInterstitialBias(options.getBiasFactor());
     setImpurityRadius(options.getImpurityRadius());
     setLatticeParameter(options.getLatticeParameter());
 
     generateClusterData(ClusterGenerator{options});
+    defineMomentIds();
 
     defineReactions();
 }
+
+template <typename TImpl>
+ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
+        std::size_t gridSize)
+    :
+    ReactionNetwork(std::move(subpaving), gridSize, Options{})
+{
+}
+
+// TODO
+// template <typename TImpl>
+// ReactionNetwork<TImpl>::ReactionNetwork(< subpaving region and subdivision infos >)
+// {
+// }
 
 template <typename TImpl>
 void

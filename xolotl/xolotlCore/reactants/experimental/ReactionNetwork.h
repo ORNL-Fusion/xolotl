@@ -53,13 +53,15 @@ public:
 
     ReactionNetwork() = delete;
 
+    ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize,
+        const IOptions& options);
+
     ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize);
 
     //TODO: Need a more versatile constructor interface
     //      (and probably don't need the 'make' function)
 
-    ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize,
-        const IOptions& options);
+    // ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 
     static
     constexpr std::size_t
@@ -235,12 +237,12 @@ makeReactionNetwork(
 
     constexpr auto numSpecies = TReactionNetwork::getNumberOfSpecies();
 
-    Ival ival{0, maxSpeciesAmount + 1};
     Region latticeRegion;
     SubdivRatio ratio;
     for (std::size_t i = 0; i < numSpecies; ++i) {
-        latticeRegion[i] = ival;
-        ratio[i] = maxSpeciesAmount + 1;
+        auto maxAmt = maxSpeciesAmounts[i];
+        latticeRegion[i] = Ival{0, maxAmt + 1};
+        ratio[i] = maxAmt + 1;
     }
     Subpaving subpaving(latticeRegion, {ratio});
 
@@ -285,6 +287,6 @@ makeSimpleReactionNetwork(
 }
 }
 
-#include <experimental/ReactionNetwork.inl>
 #include <experimental/Cluster.h>
 #include <experimental/Reaction.h>
+#include <experimental/ReactionNetwork.inl>

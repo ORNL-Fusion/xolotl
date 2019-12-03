@@ -3,6 +3,7 @@
 #include <MathUtils.h>
 
 #include <experimental/ReactionNetwork.h>
+#include <experimental/PSIReaction.h>
 
 namespace xolotlCore
 {
@@ -83,13 +84,18 @@ class PSIClusterGenerator<PSIFullSpeciesList> :
 {
 public:
     using Species = PSIFullSpeciesList;
-    using Superclass =
-        plsm::refine::Detector<PSIClusterGenerator<Species>>;
+    using Superclass = plsm::refine::Detector<PSIClusterGenerator<Species>>;
     using NetworkType = PSIReactionNetwork<Species>;
     using Cluster = typename NetworkType::Cluster;
     using Region = typename NetworkType::Region;
     using Composition = typename NetworkType::Composition;
     using AmountType = typename NetworkType::AmountType;
+
+    PSIClusterGenerator(const IOptions& options)
+        :
+        _hydrogenRadiusFactor(options.getHydrogenFactor())
+    {
+    }
 
     PSIClusterGenerator(const IOptions& options, std::size_t refineDepth)
         :
@@ -156,8 +162,20 @@ public:
     AmountType
     getMaxHePerV(AmountType amtV) const noexcept
     {
-        if (amtV < _maxHePerV.size()) {
-            return _maxHePerV[amtV];
+        /**
+         * The maximum number of helium atoms that can be combined with a
+         * vacancy cluster with size equal to the index i in the array plus one.
+         * For example, an HeV size cluster with size 1 would have
+         * size = i+1 = 1 and i = 0. It could support a mixture of up to nine
+         * helium atoms with one vacancy.
+         */
+        constexpr Kokkos::Array<AmountType, 30> maxHePerV = {
+            0, 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80,
+            85, 90, 95, 98, 100, 101, 103, 105, 107, 109, 110, 112, 116
+        };
+
+        if (amtV < maxHePerV.size()) {
+            return maxHePerV[amtV];
         }
         return 4 * amtV;
     }
@@ -166,14 +184,25 @@ public:
     getFormationEnergy(const Cluster& cluster) const noexcept
     {
         constexpr auto infinity = std::numeric_limits<double>::infinity();
+
+        // I formation energies in eV
+        constexpr Kokkos::Array<double, 7> iFormationEnergies = {
+            0.0, 10.0, 18.5, 27.0, 35.0, 42.5, 48.0
+        };
+        // He formation energies in eV
+        constexpr Kokkos::Array<double, 9> heFormationEnergies = {
+            0.0, 6.15, 11.44, 16.35, 21.0, 26.1, 30.24, 34.93, 38.80
+        };
+
+
         const auto& reg = cluster.getRegion();
         double formationEnergy {};
         if (reg.isSimplex()) {
             Composition comp(reg.getOrigin());
             if (comp.isOnAxis(Species::I)) {
                 auto amtI = comp[Species::I];
-                if (amtI < _iFormationEnergies.size()) {
-                    formationEnergy = _iFormationEnergies[amtI];
+                if (amtI < iFormationEnergies.size()) {
+                    formationEnergy = iFormationEnergies[amtI];
                 }
                 else {
                     formationEnergy = /* 48 + 6*(amtI - 6) */
@@ -182,8 +211,8 @@ public:
             }
             else if (comp.isOnAxis(Species::He)) {
                 auto amtHe = comp[Species::He];
-                if (amtHe < _heFormationEnergies.size()) {
-                    formationEnergy = _heFormationEnergies[amtHe];
+                if (amtHe < heFormationEnergies.size()) {
+                    formationEnergy = heFormationEnergies[amtHe];
                 }
                 else {
                     formationEnergy = infinity;
@@ -205,35 +234,50 @@ public:
     double
     getMigrationEnergy(const Cluster& cluster) const noexcept
     {
+        // I migration energies in eV
+        constexpr Kokkos::Array<double, 6> iMigration = {
+            0.0, 0.01, 0.02, 0.03, 0.04, 0.05
+        };
+        // He migration energies in eV
+        constexpr Kokkos::Array<double, 8> heMigration = {
+            0.0, 0.13, 0.20, 0.25, 0.20, 0.12, 0.3, 0.4
+        };
+        // The migration energy for a single deuterium.
+        constexpr double dOneMigrationEnergy = 0.38;
+        // The migration energy for a single tritium.
+        static constexpr double tOneMigrationEnergy = 0.38;
+        // The migration energy for a single vacancy in eV
+        static constexpr double vOneMigration = 1.30;
+
         const auto& reg = cluster.getRegion();
         double migrationEnergy = std::numeric_limits<double>::infinity();
         if (reg.isSimplex()) {
             Composition comp(reg.getOrigin());
             if (comp.isOnAxis(Species::I)) {
                 auto amtI = comp[Species::I];
-                if (amtI < _iMigration.size()) {
-                    migrationEnergy = _iMigration[amtI];
+                if (amtI < iMigration.size()) {
+                    migrationEnergy = iMigration[amtI];
                 }
             }
             else if (comp.isOnAxis(Species::He)) {
                 auto amtHe = comp[Species::He];
-                if (amtHe < _heMigration.size()) {
-                    migrationEnergy = _heMigration[amtHe];
+                if (amtHe < heMigration.size()) {
+                    migrationEnergy = heMigration[amtHe];
                 }
             }
             else if (comp.isOnAxis(Species::D)) {
                 if (comp[Species::D] == 1) {
-                    migrationEnergy = _dOneMigrationEnergy;
+                    migrationEnergy = dOneMigrationEnergy;
                 }
             }
             else if (comp.isOnAxis(Species::T)) {
                 if (comp[Species::T] == 1) {
-                    migrationEnergy = _tOneMigrationEnergy;
+                    migrationEnergy = tOneMigrationEnergy;
                 }
             }
             else if (comp.isOnAxis(Species::V)) {
                 if (comp[Species::V] <= 1) {
-                    migrationEnergy = _vOneMigration;
+                    migrationEnergy = vOneMigration;
                 }
             }
         }
@@ -243,35 +287,50 @@ public:
     double
     getDiffusionFactor(const Cluster& cluster) const noexcept
     {
+        // I diffusion factors in nm^2/s
+        constexpr Kokkos::Array<double, 6> iDiffusion = {
+            0.0, 8.8e+10, 8.0e+10, 3.9e+10, 2.0e+10, 1.0e+10
+        };
+        // He diffusion factors in nm^2/s
+        constexpr Kokkos::Array<double, 8> heDiffusion = {
+            0.0, 2.9e+10, 3.2e+10, 2.3e+10, 1.7e+10, 5.0e+09, 1.0e+09, 5.0e+08
+        };
+        // The diffusion factor for a single deuterium.
+        constexpr double dOneDiffusionFactor = 2.83e+11;
+        // The diffusion factor for a single tritium.
+        constexpr double tOneDiffusionFactor = 2.31e+11;
+        // The diffusion factor for a single vacancy in nm^2/s
+        constexpr double vOneDiffusion = 1.8e+12;
+
         const auto& reg = cluster.getRegion();
         double diffusionFactor = 0.0;
         if (reg.isSimplex()) {
             Composition comp(reg.getOrigin());
             if (comp.isOnAxis(Species::I)) {
                 auto amtI = comp[Species::I];
-                if (amtI < _iDiffusion.size()) {
-                    diffusionFactor = _iDiffusion[amtI];
+                if (amtI < iDiffusion.size()) {
+                    diffusionFactor = iDiffusion[amtI];
                 }
             }
             else if (comp.isOnAxis(Species::He)) {
                 auto amtHe = comp[Species::He];
-                if (amtHe < _heDiffusion.size()) {
-                    diffusionFactor = _heDiffusion[amtHe];
+                if (amtHe < heDiffusion.size()) {
+                    diffusionFactor = heDiffusion[amtHe];
                 }
             }
             else if (comp.isOnAxis(Species::D)) {
                 if (comp[Species::D] == 1) {
-                    diffusionFactor = _dOneDiffusionFactor;
+                    diffusionFactor = dOneDiffusionFactor;
                 }
             }
             else if (comp.isOnAxis(Species::T)) {
                 if (comp[Species::T] == 1) {
-                    diffusionFactor = _tOneDiffusionFactor;
+                    diffusionFactor = tOneDiffusionFactor;
                 }
             }
             else if (comp.isOnAxis(Species::V)) {
                 if (comp[Species::V] <= 1) {
-                    diffusionFactor = _vOneDiffusion;
+                    diffusionFactor = vOneDiffusion;
                 }
             }
         }
@@ -281,7 +340,7 @@ public:
 private:
     //TODO: Move to MathUtils.h
     template <std::size_t N>
-    double
+    static double
     computeNthOrderLegendre(double x, const Kokkos::Array<double, N+1>& coeffs)
     {
         int currDegree = 0;
@@ -412,63 +471,8 @@ private:
     }
 
 private:
-    // I formation energies in eV
-    static constexpr Kokkos::Array<double, 7> _iFormationEnergies = {
-        0.0, 10.0, 18.5, 27.0, 35.0, 42.5, 48.0
-    };
-    // I diffusion factors in nm^2/s
-    static constexpr Kokkos::Array<double, 6> _iDiffusion = {
-        0.0, 8.8e+10, 8.0e+10, 3.9e+10, 2.0e+10, 1.0e+10
-    };
-    // I migration energies in eV
-    static constexpr Kokkos::Array<double, 6> _iMigration = {
-        0.0, 0.01, 0.02, 0.03, 0.04, 0.05
-    };
-
-    // He formation energies in eV
-    static constexpr Kokkos::Array<double, 9> _heFormationEnergies = {
-        0.0, 6.15, 11.44, 16.35, 21.0, 26.1, 30.24, 34.93, 38.80
-    };
-    // He diffusion factors in nm^2/s
-    static constexpr Kokkos::Array<double, 8> _heDiffusion = {
-        0.0, 2.9e+10, 3.2e+10, 2.3e+10, 1.7e+10, 5.0e+09, 1.0e+09, 5.0e+08
-    };
-    // He migration energies in eV
-    static constexpr Kokkos::Array<double, 8> _heMigration = {
-        0.0, 0.13, 0.20, 0.25, 0.20, 0.12, 0.3, 0.4
-    };
-
-    // The diffusion factor for a single deuterium.
-    static constexpr double _dOneDiffusionFactor = 2.83e+11;
-    // The migration energy for a single deuterium.
-    static constexpr double _dOneMigrationEnergy = 0.38;
-
-    // The diffusion factor for a single tritium.
-    static constexpr double _tOneDiffusionFactor = 2.31e+11;
-    // The migration energy for a single tritium.
-    static constexpr double _tOneMigrationEnergy = 0.38;
-
-    // The diffusion factor for a single vacancy in nm^2/s
-    static constexpr double _vOneDiffusion = 1.8e+12;
-    // The migration energy for a single vacancy in eV
-    static constexpr double _vOneMigration = 1.30;
-
-    /**
-     * The maximum number of helium atoms that can be combined with a
-     * vacancy cluster with size equal to the index i in the array plus one.
-     * For example, an HeV size cluster with size 1 would have
-     * size = i+1 = 1 and i = 0. It could support a mixture of up to nine
-     * helium atoms with one vacancy.
-     */
-    static constexpr Kokkos::Array<AmountType, 29> _maxHePerV = {
-        0, 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85,
-        90, 95, 98, 100, 101, 103, 105, 107, 109, 110, 112, 116
-    };
-
     // The factor between He and H radius sizes
-    double _hydrogenRadiusFactor = 0.25;
+    double _hydrogenRadiusFactor {0.25};
 };
 }
 }
-
-#include <experimental/PSIReaction.h>

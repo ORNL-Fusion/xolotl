@@ -5,6 +5,10 @@ namespace xolotlCore
 namespace experimental
 {
 template <typename TSpeciesEnum>
+class PSIReactionNetwork;
+
+
+template <typename TSpeciesEnum>
 class PSIReaction : public
     ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
         ::template Reaction<PSIReaction<TSpeciesEnum>>
