@@ -36,6 +36,7 @@ public:
     using SpeciesSequence = SpeciesEnumSequence<Species, numSpecies>;
     using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
     using ReactionType = typename Traits::ReactionType;
+    using ClusterGenerator = typename Traits::ClusterGenerator;
     using AmountType = std::uint32_t;
     using Subpaving = plsm::Subpaving<AmountType, numSpecies, Species>;
     using Composition = typename Subpaving::PointType;
@@ -56,9 +57,9 @@ public:
 
     //TODO: Need a more versatile constructor interface
     //      (and probably don't need the 'make' function)
-    template <typename TClusterGenerator>
+
     ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize,
-        const IOptions& options, const TClusterGenerator& clusterGenerator);
+        const IOptions& options);
 
     static
     constexpr std::size_t
@@ -166,9 +167,8 @@ private:
     void
     defineMomentIds();
 
-    template <typename TClusterGenerator>
     void
-    generateClusterData(const TClusterGenerator& clusterGenerator);
+    generateClusterData(const ClusterGenerator& generator);
 
     void
     defineReactions();
@@ -219,6 +219,37 @@ private:
 
     Kokkos::View<size_t**> _inverseMap;
 };
+
+
+template <typename TReactionNetwork>
+TReactionNetwork
+makeReactionNetwork(
+    const std::vector<typename TReactionNetwork::AmountType>& maxSpeciesAmounts,
+    std::size_t gridSize, const IOptions& options)
+{
+    using Subpaving = typename TReactionNetwork::Subpaving;
+    using Region = typename TReactionNetwork::Region;
+    using Ival = typename TReactionNetwork::Ival;
+    using AmountType = typename TReactionNetwork::AmountType;
+    using SubdivRatio = typename Subpaving::SubdivisionRatioType;
+
+    constexpr auto numSpecies = TReactionNetwork::getNumberOfSpecies();
+
+    Ival ival{0, maxSpeciesAmount + 1};
+    Region latticeRegion;
+    SubdivRatio ratio;
+    for (std::size_t i = 0; i < numSpecies; ++i) {
+        latticeRegion[i] = ival;
+        ratio[i] = maxSpeciesAmount + 1;
+    }
+    Subpaving subpaving(latticeRegion, {ratio});
+
+    //TODO: refine
+
+    TReactionNetwork network(std::move(subpaving), gridSize, options);
+
+    return network;
+}
 
 
 template <typename TReactionNetwork>

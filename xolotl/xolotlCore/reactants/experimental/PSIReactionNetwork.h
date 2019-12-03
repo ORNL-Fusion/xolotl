@@ -16,6 +16,12 @@ template <typename TSpeciesEnum>
 class PSIReaction;
 
 
+template <typename TSpeciesEnum>
+class PSIClusterGenerator
+{
+};
+
+
 enum class PSIFullSpeciesList
 {
     He,
@@ -37,12 +43,10 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 
     static constexpr std::size_t numSpecies = 5;
 
-    using ReactionType = PSIReaction<TSpeciesEnum>;
+    using ReactionType = PSIReaction<Species>;
+
+    using ClusterGenerator = PSIClusterGenerator<Species>;
 };
-
-
-template <typename TSpeciesEnum>
-class PSIClusterGenerator;
 
 
 template <typename TSpeciesEnum>
@@ -72,13 +76,13 @@ public:
 };
 
 
-template <typename TSpeciesEnum>
-class PSIClusterGenerator :
+template <>
+class PSIClusterGenerator<PSIFullSpeciesList> :
     public
-    plsm::refine::Detector<PSIClusterGenerator<TSpeciesEnum>>
+    plsm::refine::Detector<PSIClusterGenerator<PSIFullSpeciesList>>
 {
 public:
-    using Species = TSpeciesEnum;
+    using Species = PSIFullSpeciesList;
     using Superclass =
         plsm::refine::Detector<PSIClusterGenerator<Species>>;
     using NetworkType = PSIReactionNetwork<Species>;
@@ -449,9 +453,6 @@ private:
     // The migration energy for a single vacancy in eV
     static constexpr double _vOneMigration = 1.30;
 
-    // The factor between He and H radius sizes
-    double _hydrogenRadiusFactor = 0.25;
-
     /**
      * The maximum number of helium atoms that can be combined with a
      * vacancy cluster with size equal to the index i in the array plus one.
@@ -463,6 +464,9 @@ private:
         0, 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85,
         90, 95, 98, 100, 101, 103, 105, 107, 109, 110, 112, 116
     };
+
+    // The factor between He and H radius sizes
+    double _hydrogenRadiusFactor = 0.25;
 };
 }
 }

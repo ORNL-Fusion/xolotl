@@ -24,10 +24,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
 }
 
 template <typename TImpl>
-template <typename TClusterGenerator>
 ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
-        std::size_t gridSize, const IOptions& options,
-        const TClusterGenerator& clusterGenerator)
+        std::size_t gridSize, const IOptions& options)
     :
     ReactionNetwork(std::move(subpaving), gridSize)
 {
@@ -35,7 +33,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
     setImpurityRadius(options.getImpurityRadius());
     setLatticeParameter(options.getLatticeParameter());
 
-    generateClusterData(clusterGenerator);
+    generateClusterData(ClusterGenerator{options});
 
     defineReactions();
 }
@@ -50,20 +48,21 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 }
 
 template <typename TImpl>
-template <typename TClusterGenerator>
 void
-ReactionNetwork<TImpl>::generateClusterData(
-    const TClusterGenerator& clusterGenerator)
+ReactionNetwork<TImpl>::generateClusterData(const ClusterGenerator& generator)
 {
     Kokkos::parallel_for(_numClusters, KOKKOS_LAMBDA (const std::size_t i) {
-        _formationEnergy(i) = clusterGenerator.getFormationEnergy(getCluster(i));
+        auto cluster = getCluster(i);
+        _formationEnergy(i) = generator.getFormationEnergy(cluster);
+        _migrationEnergy(i) = generator.getMigrationEnergy(cluster);
+        _diffusionFactor(i) = generator.getDiffusionFactor(cluster);
     });
 }
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-        std::size_t gridIndex) 
+ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
+    FluxesView fluxes, std::size_t gridIndex)
 {
     // Get the extent of the reactions view
     const auto& nReactions = _reactions.extent(0);
@@ -75,8 +74,8 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations, Flux
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations, 
-        Kokkos::View<double*> values, std::size_t gridIndex) 
+ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
+    Kokkos::View<double*> values, std::size_t gridIndex)
 {
     // Reset the values
     const auto& nValues = values.extent(0);
@@ -84,7 +83,7 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
     Kokkos::parallel_for(nValues, KOKKOS_LAMBDA (const std::size_t i) {
         values(i) = 0.0;
     });
-    
+
     // Get the extent of the reactions view
     const auto& nReactions = _reactions.extent(0);
     // Loop on the reactions
@@ -133,7 +132,7 @@ size_t
 ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 {
     //TODO
-	return 0;
+    return 0;
 }
 }
 }
