@@ -25,6 +25,8 @@ struct ReactionNetworkTraits
 template <typename TImpl>
 class ReactionNetwork
 {
+    static constexpr auto invalid = plsm::invalid<std::size_t>;
+
 public:
     using Traits = ReactionNetworkTraits<TImpl>;
     using Species = typename Traits::Species;
@@ -45,6 +47,7 @@ public:
     using Ival = typename Region::IntervalType;
     using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
     using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
+    using ConnectivityView = Kokkos::View<size_t**, Kokkos::MemoryUnmanaged>;
     using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 
     class Cluster;
@@ -96,6 +99,12 @@ public:
     {
         return SpeciesRange(SpeciesSequence::first(),
             SpeciesSequence::lastNoI());
+    }
+
+    std::size_t
+    getDOF() const noexcept
+    {
+        return _numDOFs;
     }
 
     double
@@ -214,6 +223,7 @@ private:
     Kokkos::View<double*> _temperature;
 
     std::size_t _numClusters {};
+    std::size_t _numDOFs {};
     Kokkos::View<std::size_t*[4]> _momentIds;
     Kokkos::View<double*> _reactionRadius;
     Kokkos::View<double**> _diffusionCoefficient;
@@ -225,6 +235,7 @@ private:
 
     Kokkos::View<double**> _reactionRates;
 
+    // TODO: the original code uses an actual map here because it is sparse
     Kokkos::View<size_t**> _inverseMap;
 };
 

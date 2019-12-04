@@ -170,8 +170,44 @@ template <typename TImpl>
 size_t
 ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 {
-    //TODO
-    return 0;
+    // TODO: initialize connectivity to invalid
+    auto connectivity = Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged>(_numDOFs, _numDOFs);
+    // Loop on each reaction to add its contribution to the connectivity matrix
+    const auto& nReactions = _reactions.extent(0);
+    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
+        _reactions(i).contributeConnectivity(connectivity);
+    });
+
+    // Transfer to fillMap, fill the inverse map,
+    // and count the total number of partials
+    // TODO: should it be initialized to invalid as well?
+    _inverseMap = Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged>(_numDOFs, _numDOFs);
+    std::size_t nPartials = 0;
+    for (std::size_t i = 0; i < _numDOFs; ++i) 
+    {
+        // Create a vector for ids
+        std::vector<int> current;
+        // Loop on this row
+        for (std::size_t j = 0; j < _numDOFs; ++j)
+        {
+            if (connectivity(i,j) == invalid) 
+            {
+                // This is the end of the row
+                break;
+            }
+            // Add the value to the vector
+            // TODO: Should we use emplace_back instead?
+            current.push_back((int) connectivity(i,j));
+            // Update the inverse map
+            _inverseMap(i,connectivity(i,j)) = nPartials;
+            // Count
+            nPartials++;
+        }
+        // Add the current vector to fillMap
+        fillMap[(int) i] = current;
+    }
+    
+    return nPartials;
 }
 }
 }

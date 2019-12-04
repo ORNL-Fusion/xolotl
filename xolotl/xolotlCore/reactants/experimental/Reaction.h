@@ -13,7 +13,6 @@ template <typename TImpl>
 template <typename TDerived>
 class ReactionNetwork<TImpl>::Reaction
 {
-    static constexpr auto invalid = plsm::invalid<std::size_t>;
 
 public:
     using NetworkType = ReactionNetwork<TImpl>;
@@ -41,6 +40,18 @@ public:
 
     void
     updateRates();
+
+    void
+    productionConnectivity(ConnectivityView connectivity);
+
+    void
+    dissociationConnectivity(ConnectivityView connectivity);
+
+    void
+    contributeConnectivity(ConnectivityView connectivity)
+    {
+        ((*this).*(_connectFn))(connectivity);
+    }
 
     void
     productionFlux(ConcentrationsView concentrations, FluxesView fluxes,
@@ -129,10 +140,33 @@ private:
         }
     }
 
+    void
+    addConnectivity(std::size_t rowId, std::size_t columnId, ConnectivityView connectivity)
+    {
+        // Check if the columnId is already present
+        std::size_t i = 0;
+        for (i = 0; i < connectivity.extent(1); ++i) {
+            if (connectivity(rowId, i) == columnId) {
+                // It is already present, don't do anything
+                return;
+            }
+            if (connectivity(rowId, i) == invalid) {
+                // We reached the end of the list and it was not present
+                break;
+            }
+        }
+        // Add the value
+        connectivity(rowId, i) = columnId;
+    }
+
 protected:
     NetworkType* _network {nullptr};
 
     Type _type {};
+
+    using ConnectFn =
+        void (Reaction::*)(ConnectivityView);
+    ConnectFn _connectFn {nullptr};
 
     using FluxFn =
         void (Reaction::*)(ConcentrationsView, FluxesView, std::size_t);

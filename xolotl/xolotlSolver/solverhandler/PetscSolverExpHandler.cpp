@@ -8,11 +8,9 @@ namespace xolotlSolver {
 template<typename TImpl>
 void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
-	// Recompute Ids and network size and redefine the connectivities
-	network.reinitializeConnectivities();
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create distributed array (DMDA) to manage parallel grid and vectors
@@ -84,13 +82,7 @@ void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + the super clusters
-	const int dof = network.getDOF();
-
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network.get(xolotlCore::Species::V, 1);
-	int vacancyIndex = -1;
-	if (singleVacancyCluster)
-		vacancyIndex = singleVacancyCluster->getId() - 1;
+	const int dof = expNetwork.getDOF();
 
 	// Get the concentration of the only grid point
 	concOffset = concentrations[0];
@@ -113,12 +105,6 @@ void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 		xfile.reset(new xolotlCore::XFile(networkName));
 		concGroup = xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
-	}
-
-	// Initialize the vacancy concentration
-	if (singleVacancyCluster and not hasConcentrations
-			and singleVacancyCluster) {
-		concOffset[vacancyIndex] = initialVConc;
 	}
 
 	// If the concentration must be set from the HDF5 file
@@ -180,7 +166,7 @@ void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC,
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	// Set the grid position
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
@@ -250,7 +236,7 @@ void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC,
 	PetscScalar *concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	// Arguments for MatSetValuesStencil called below
 	MatStencil rowId;
