@@ -11,9 +11,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
         std::size_t gridSize, const IOptions& options)
     :
     _subpaving(std::move(subpaving)),
-    _temperature("Temperature", gridSize),
+    _gridSize(gridSize),
+    _temperature("Temperature", _gridSize),
     _numClusters(_subpaving.getNumberOfTiles(plsm::onDevice)),
-    _diffusionCoefficient("Diffusion Coefficient", _numClusters, gridSize),
+    _diffusionCoefficient("Diffusion Coefficient", _numClusters, _gridSize),
     _reactionRadius("Reaction Radius", _numClusters),
     _formationEnergy("Formation Energy", _numClusters),
     _migrationEnergy("Migration Energy", _numClusters),
@@ -83,6 +84,34 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
     _latticeParameter = asDerived()->checkLatticeParameter(latticeParameter);
     _atomicVolume =
         0.5 * _latticeParameter * _latticeParameter * _latticeParameter;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
+{
+    Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> tempsHost(
+        gridTemps.data(), _gridSize);
+    _temperature = Kokkos::View<double*>("Grid Temperatures", _gridSize);
+    Kokkos::deep_copy(_temperature, tempsHost);
+
+    updateDiffusionCoefficients();
+
+    Kokkos::parallel_for(_reactions.extent(0), KOKKOS_LAMBDA (std::size_t i) {
+        _reactions(i).updateRates();
+    });
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::updateDiffusionCoefficients()
+{
+    using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
+    Kokkos::parallel_for(Range2D({0, 0}, {_numClusters, _gridSize}),
+            KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
+        _diffusionCoefficient(i,j) = _diffusionFactor(i) * std::exp(
+            -_migrationEnergy(i) / (kBoltzmann * _temperature(j)));
+    });
 }
 
 template <typename TImpl>
@@ -172,6 +201,7 @@ ReactionNetwork<TImpl>::defineReactions()
         asDerived()->defineReactionClusterSets(tiles, diffusionFactor);
 
     auto numReactions = clusterSets.size();
+    //FIXME: This should be unmanaged on host space
     typename Kokkos::View<ClusterAssoc*, Kokkos::MemoryUnmanaged>::HostMirror
         clSetsHostView(clusterSets.data(), numReactions);
     Kokkos::View<ClusterAssoc*> clSets("Cluster Sets", numReactions);
@@ -186,7 +216,7 @@ ReactionNetwork<TImpl>::defineReactions()
 }
 
 template <typename TImpl>
-size_t
+std::size_t
 ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 {
     // TODO: initialize connectivity to invalid
@@ -202,15 +232,13 @@ ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
     // TODO: should it be initialized to invalid as well?
     _inverseMap = Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged>(_numDOFs, _numDOFs);
     std::size_t nPartials = 0;
-    for (std::size_t i = 0; i < _numDOFs; ++i) 
-    {
+    for (std::size_t i = 0; i < _numDOFs; ++i) {
         // Create a vector for ids
         std::vector<int> current;
         // Loop on this row
         for (std::size_t j = 0; j < _numDOFs; ++j)
         {
-            if (connectivity(i,j) == invalid) 
-            {
+            if (connectivity(i,j) == invalid) {
                 // This is the end of the row
                 break;
             }
@@ -225,7 +253,7 @@ ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
         // Add the current vector to fillMap
         fillMap[(int) i] = current;
     }
-    
+
     return nPartials;
 }
 }

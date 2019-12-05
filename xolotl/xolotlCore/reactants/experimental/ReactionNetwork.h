@@ -146,6 +146,9 @@ public:
         _impurityRadius = asDerived()->checkImpurityRadius(impurityRadius);
     }
 
+    void
+    setTemperatures(const std::vector<double>& gridTemperatures);
+
     Cluster
     findCluster(const Composition& comp)
     {
@@ -196,13 +199,16 @@ private:
     void
     defineReactions();
 
+    void
+    updateDiffusionCoefficients();
+
     double
     getTemperature(std::size_t gridIndex) const noexcept
     {
         return _temperature(gridIndex);
     }
 
-    size_t
+    std::size_t
     getReactionIndex(std::size_t rowId, std::size_t colId) const noexcept
     {
         return _inverseMap(rowId, colId);
@@ -215,7 +221,7 @@ private:
      * @param fillMap Connectivity map.
      * @return The total number of partials.
      */
-    size_t
+    std::size_t
     getDiagonalFill(SparseFillMap& fillMap);
 
 private:
@@ -226,6 +232,7 @@ private:
     double _interstitialBias {};
     double _impurityRadius {};
 
+    std::size_t _gridSize {};
     Kokkos::View<double*> _temperature;
 
     std::size_t _numClusters {};
@@ -242,7 +249,7 @@ private:
     Kokkos::View<double**> _reactionRates;
 
     // TODO: the original code uses an actual map here because it is sparse
-    Kokkos::View<size_t**> _inverseMap;
+    Kokkos::View<std::size_t**> _inverseMap;
 };
 
 
