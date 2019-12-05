@@ -80,7 +80,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 {
-    _latticeParameter = latticeParameter;
+    _latticeParameter = asDerived()->checkLatticeParameter(latticeParameter);
     _atomicVolume =
         0.5 * _latticeParameter * _latticeParameter * _latticeParameter;
 }
@@ -169,8 +169,7 @@ ReactionNetwork<TImpl>::defineReactions()
 
     using ClusterAssoc = typename ReactionType::ClusterAssoc;
     std::vector<ClusterAssoc> clusterSets =
-        static_cast<TImpl*>(this)->defineReactionClusterSets(tiles,
-            diffusionFactor);
+        asDerived()->defineReactionClusterSets(tiles, diffusionFactor);
 
     auto numReactions = clusterSets.size();
     typename Kokkos::View<ClusterAssoc*, Kokkos::MemoryUnmanaged>::HostMirror

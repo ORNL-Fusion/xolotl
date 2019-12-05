@@ -62,22 +62,25 @@ public:
 
     using Superclass::Superclass;
 
-    PSIReactionNetwork(Subpaving&& subpaving, std::size_t gridSize,
-            const IOptions& options, std::size_t refineDepth)
-        :
-        Superclass(std::move(subpaving), gridSize, options,
-            PSIClusterGenerator<TSpeciesEnum>{options, refineDepth})
+private:
+    double
+    checkLatticeParameter(double latticeParameter)
     {
-        if (this->getLatticeParameter() <= 0.0) {
-            this->setLatticeParameter(tungstenLatticeConstant);
+        if (latticeParameter <= 0.0) {
+            return tungstenLatticeConstant;
         }
-
-        if (this->getImpurityRadius() <= 0.0) {
-            this->setImpurityRadius(heliumRadius);
-        }
+        return latticeParameter;
     }
 
-private:
+    double
+    checkImpurityRadius(double impurityRadius)
+    {
+        if (impurityRadius <= 0.0) {
+            return heliumRadius;
+        }
+        return impurityRadius;
+    }
+
     std::vector<typename ReactionType::ClusterAssoc>
     defineReactionClusterSets(
         typename Subpaving::template TilesView<plsm::OnHost> tiles,

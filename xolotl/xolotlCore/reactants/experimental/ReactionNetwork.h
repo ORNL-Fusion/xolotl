@@ -143,7 +143,7 @@ public:
     void
     setImpurityRadius(double impurityRadius) noexcept
     {
-        _impurityRadius = impurityRadius;
+        _impurityRadius = asDerived()->checkImpurityRadius(impurityRadius);
     }
 
     Cluster
@@ -181,6 +181,12 @@ public:
             Kokkos::View<double*> values, std::size_t gridIndex);
 
 private:
+    TImpl*
+    asDerived()
+    {
+        return static_cast<TImpl*>(this);
+    }
+
     void
     defineMomentIds();
 
