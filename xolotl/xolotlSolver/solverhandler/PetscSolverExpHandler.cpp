@@ -276,13 +276,14 @@ void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC,
 		// Number of partial derivatives
 		auto rowIter = dfill.find(i);
 		if (rowIter != dfill.end()) {
-			pdColIdsVectorSize = rowIter.size();
+            const auto& row = rowIter->second;
+			pdColIdsVectorSize = row.size();
 
 			// Loop over the list of column ids
 			for (int j = 0; j < pdColIdsVectorSize; j++) {
 				// Set grid coordinate and component number for a column in the list
 				colIds[j].i = 0;
-				colIds[j].c = rowIter[j];
+				colIds[j].c = row[j];
 				// Get the partial derivative from the array of all of the partials
 				reactingPartialsForCluster[j] = expVals(startingIdx + j);
 			}
