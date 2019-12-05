@@ -17,8 +17,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(Subpaving&& subpaving,
     _reactionRadius("Reaction Radius", _numClusters),
     _formationEnergy("Formation Energy", _numClusters),
     _migrationEnergy("Migration Energy", _numClusters),
-    _diffusionFactor("Diffusion Factor", _numClusters),
-    _reactions("Reactions", 1000)
+    _diffusionFactor("Diffusion Factor", _numClusters)
 {
     setInterstitialBias(options.getBiasFactor());
     setImpurityRadius(options.getImpurityRadius());
@@ -163,7 +162,28 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::defineReactions()
 {
-    //TODO
+    _subpaving.syncTiles(plsm::onHost);
+    auto tiles = _subpaving.getTiles(plsm::onHost);
+    auto diffusionFactor = Kokkos::create_mirror_view(_diffusionFactor);
+    Kokkos::deep_copy(diffusionFactor, _diffusionFactor);
+
+    using ClusterAssoc = typename ReactionType::ClusterAssoc;
+    std::vector<ClusterAssoc> clusterSets =
+        static_cast<TImpl*>(this)->defineReactionClusterSets(tiles,
+            diffusionFactor);
+
+    auto numReactions = clusterSets.size();
+    typename Kokkos::View<ClusterAssoc*, Kokkos::MemoryUnmanaged>::HostMirror
+        clSetsHostView(clusterSets.data(), numReactions);
+    Kokkos::View<ClusterAssoc*> clSets("Cluster Sets", numReactions);
+    Kokkos::deep_copy(clSets, clSetsHostView);
+    _reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
+
+    Kokkos::parallel_for(numReactions, KOKKOS_LAMBDA (std::size_t i) {
+        const auto& clSet = clSets(i);
+        _reactions(i) = ReactionType(*this, i, clSet.reactionType,
+            clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
+    });
 }
 
 template <typename TImpl>
