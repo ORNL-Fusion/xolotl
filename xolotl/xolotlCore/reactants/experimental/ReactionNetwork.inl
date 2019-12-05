@@ -201,8 +201,7 @@ ReactionNetwork<TImpl>::defineReactions()
         asDerived()->defineReactionClusterSets(tiles, diffusionFactor);
 
     auto numReactions = clusterSets.size();
-    //FIXME: This should be unmanaged on host space
-    typename Kokkos::View<ClusterAssoc*, Kokkos::MemoryUnmanaged>::HostMirror
+    Kokkos::View<ClusterAssoc*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
         clSetsHostView(clusterSets.data(), numReactions);
     Kokkos::View<ClusterAssoc*> clSets("Cluster Sets", numReactions);
     Kokkos::deep_copy(clSets, clSetsHostView);
