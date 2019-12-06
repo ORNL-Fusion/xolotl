@@ -9,6 +9,10 @@ namespace xolotlCore
 {
 namespace experimental
 {
+// template <typename>
+// class MemFnPtr;
+
+
 template <typename TImpl>
 template <typename TDerived>
 class ReactionNetwork<TImpl>::Reaction
@@ -71,7 +75,7 @@ public:
     void
     contributeConnectivity(ConnectivityView connectivity)
     {
-        ((*this).*(_connectFn))(connectivity);
+        _connectFn(*this, connectivity);
     }
 
     void
@@ -86,7 +90,7 @@ public:
     contributeFlux(ConcentrationsView concentrations, FluxesView fluxes,
         std::size_t gridIndex)
     {
-        ((*this).*(_fluxFn))(concentrations, fluxes, gridIndex);
+        _fluxFn(*this, concentrations, fluxes, gridIndex);
     }
 
     void
@@ -104,7 +108,7 @@ public:
         Kokkos::View<double*> values,
         std::size_t gridIndex)
     {
-        ((*this).*(_partialsFn))(concentrations, values, gridIndex);
+        _partialsFn(*this, concentrations, values, gridIndex);
     }
 
 private:
@@ -188,17 +192,14 @@ protected:
 
     Type _type {};
 
-    using ConnectFn =
-        void (Reaction::*)(ConnectivityView);
+    using ConnectFn = decltype(std::mem_fn(&Reaction::contributeConnectivity));
     ConnectFn _connectFn {nullptr};
 
-    using FluxFn =
-        void (Reaction::*)(ConcentrationsView, FluxesView, std::size_t);
+    using FluxFn = decltype(std::mem_fn(&Reaction::contributeFlux));
     FluxFn _fluxFn {nullptr};
 
     using PartialsFn =
-        void (Reaction::*)(ConcentrationsView,
-            Kokkos::View<double*>, std::size_t);
+        decltype(std::mem_fn(&Reaction::contributePartialDerivatives));
     PartialsFn _partialsFn {nullptr};
 
     //Cluster indices for LHS and RHS of the reaction
@@ -213,7 +214,7 @@ protected:
     Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _productMomentIds;
 
     //! Reaction rate (k)
-    Kokkos::View<double*> _rate;
+    Kokkos::View<double*, Kokkos::MemoryUnmanaged> _rate;
 
     //! Flux coefficients
     Kokkos::View<double****> _coefs;
