@@ -164,6 +164,9 @@ private:
     void
     addConnectivity(std::size_t rowId, std::size_t columnId, ConnectivityView connectivity)
     {
+        // Check that the Ids are valid
+        if (rowId == invalid || columnId == invalid) return;
+
         // Check if the columnId is already present
         std::size_t i = 0;
         for (i = 0; i < connectivity.extent(1); ++i) {
