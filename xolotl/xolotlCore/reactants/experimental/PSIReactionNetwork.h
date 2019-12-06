@@ -81,24 +81,25 @@ private:
         return impurityRadius;
     }
 
-    std::vector<typename ReactionType::ClusterAssoc>
+    typename Superclass::ClusterSetsPair
     defineReactionClusterSets(
         typename Subpaving::template TilesView<plsm::OnHost> tiles,
         Kokkos::View<double*>::HostMirror diffusionFactor)
     {
-        using ClusterAssoc = typename ReactionType::ClusterAssoc;
-        std::vector<ClusterAssoc> clSets;
-
-        //FIXME: Now I want to change this enum name (Kind?)
-        using RType = typename ReactionType::Type;
+        typename Superclass::ClusterSetsPair ret;
 
         std::size_t numClusters = tiles.extent(0);
         for (std::size_t i = 0; i < numClusters; ++i) {
             //TODO: I'm guessing you probably need nested loops here?
-            clSets.emplace_back(RType::production, 0, 1, 2);
+            if (true /* production */) {
+                ret.prodClusterSets.emplace_back(0, 1, 2);
+            }
+            else {
+                ret.dissClusterSets.emplace_back(0, 1, 2);
+            }
         }
 
-        return clSets;
+        return ret;
     }
 };
 

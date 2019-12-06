@@ -175,6 +175,20 @@ public:
         return Kokkos::subview(_reactionRates, reactionId, Kokkos::ALL);
     }
 
+    decltype(auto)
+    getReactionCoefficients(std::size_t reactionId)
+    {
+        if (reactionId < _productionCoeffs.extent(0)) {
+            return Kokkos::subview(_productionCoeffs, reactionId, Kokkos::ALL,
+                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+        }
+        else {
+            reactionId -= _productionCoeffs.extent(0);
+            return Kokkos::subview(_dissociationCoeffs, reactionId, Kokkos::ALL,
+                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+        }
+    }
+
     void
     computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
             std::size_t gridIndex);
@@ -182,6 +196,14 @@ public:
     void
     computeAllPartials(ConcentrationsView concentrations,
             Kokkos::View<double*> values, std::size_t gridIndex);
+
+protected:
+    struct ClusterSetsPair
+    {
+        using ClusterSet = typename ReactionType::ClusterSet;
+        std::vector<ClusterSet> prodClusterSets;
+        std::vector<ClusterSet> dissClusterSets;
+    };
 
 private:
     TImpl*
@@ -245,10 +267,12 @@ private:
     Kokkos::View<double*> _diffusionFactor;
 
     Kokkos::View<ReactionType*> _reactions;
-
+    Kokkos::View<double*****> _productionCoeffs;
+    Kokkos::View<double*****> _dissociationCoeffs;
     Kokkos::View<double**> _reactionRates;
 
     // TODO: the original code uses an actual map here because it is sparse
+    //       Look into Kokkos::Crs
     Kokkos::View<std::size_t**> _inverseMap;
 };
 

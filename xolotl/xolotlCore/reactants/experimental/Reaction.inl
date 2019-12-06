@@ -34,7 +34,8 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::Reaction(NetworkType& network,
     _products(_type == Type::production ? Kokkos::Array<std::size_t, 2>( {
         cluster2, cluster3}) : Kokkos::Array<std::size_t, 2>( {cluster1,
         cluster2})),
-    _rate(_network->getReactionRates(reactionId))
+    _rate(_network->getReactionRates(reactionId)),
+    _coefs(_network->getReactionCoefficients(reactionId))
 {
     for (std::size_t i : {0, 1}) {
         copyMomentIds(_reactants[i], _reactantMomentIds[i]);
@@ -43,20 +44,9 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::Reaction(NetworkType& network,
 
     constexpr auto coeffExtent = NetworkType::getNumberOfSpeciesNoI() + 1;
     if (_type == Type::production) {
-        int nProd = 0;
-        for (auto prodId : _products) {
-            if (prodId != invalid) {
-                ++nProd;
-            }
-        }
-        auto nCl = 2 + nProd;
-        _coefs = Kokkos::View<double****>(
-            "Flux Coefficients", coeffExtent, coeffExtent, nCl, coeffExtent);
         computeProductionCoefficients();
     }
     else {
-        _coefs = Kokkos::View<double****>(
-            "Flux Coefficients", coeffExtent, 1, 3, coeffExtent);
         computeDissociationCoefficients();
     }
 
@@ -198,7 +188,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::computeProductionCoefficients()
                                 / 2.0, l - m);
                     }
                     _coefs(i() + 1, 0, p+2, k() + 1) /= thisDispersion[k()];
-                    
+
                     for (auto m : makeIntervalRange(otherReg[i]))
                     for (auto l : makeIntervalRange(cl1Reg[i])) {
                         _coefs(0, i() + 1, p+2, k() + 1) += secondOrderOffsetSum(
@@ -670,7 +660,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionConnectivity(
         auto prod = _network->getCluster(prodId);
         const auto& prodReg = prod.getRegion();
         AmountType volProd = prodReg.volume();
-        
+
         // With reactant 1
         addConnectivity(prodId, _reactants[0], connectivity);
         if (volCl1 > 1) {
@@ -731,7 +721,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationConnectivity(
     auto prod2 = _network->getCluster(_products[1]);
     const auto& prod2Reg = prod2.getRegion();
     AmountType volProd2 = prod2Reg.volume();
-    
+
     // The reactant connects with the reactant
     addConnectivity(_reactants[0], _reactants[0], connectivity);
     if (volCl > 1) {
@@ -985,7 +975,7 @@ template <typename TImpl>
 template <typename TDerived>
 inline void
 ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
-    ConcentrationsView concentrations, 
+    ConcentrationsView concentrations,
     Kokkos::View<double*> values, std::size_t gridIndex)
 {
     constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
@@ -1009,7 +999,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
     // Compute the values (d / dL_0^A)
     double temp = _coefs(0, 0, 0, 0) * concentrations[_reactants[1]];
     for (auto i : speciesRangeNoI) {
-    	temp += _coefs(0, i() + 1, 0, 0) *
+        temp += _coefs(0, i() + 1, 0, 0) *
                 concentrations[_reactantMomentIds[1][i()]];
     }
     // First for the first reactant
@@ -1027,12 +1017,12 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
         AmountType volProd = prodReg.volume();
         values(_network->getReactionIndex(prodId, _reactants[0])) += _rate(gridIndex) * temp / (double) volProd;
     }
-    
+
     // (d / dL_1^A)
     for (auto i : speciesRangeNoI) {
-    	temp = _coefs(i() + 1, 0, 0, 0) * concentrations[_reactants[1]];
+        temp = _coefs(i() + 1, 0, 0, 0) * concentrations[_reactants[1]];
         for (auto j : speciesRangeNoI) {
-        	temp += _coefs(i() + 1, j() + 1, 0, 0) * concentrations[_reactantMomentIds[1][j()]];
+            temp += _coefs(i() + 1, j() + 1, 0, 0) * concentrations[_reactantMomentIds[1][j()]];
         }
         // First reactant
         values(_network->getReactionIndex(_reactants[0], _reactantMomentIds[0][i()])) -= _rate(gridIndex) * temp / (double) volCl1;
@@ -1050,11 +1040,11 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             values(_network->getReactionIndex(prodId, _reactantMomentIds[0][i()])) += _rate(gridIndex) * temp / (double) volProd;
         }
     }
-    
+
     // (d / dL_0^B)
     temp = _coefs(0, 0, 0, 0) * concentrations[_reactants[0]];
     for (auto i : speciesRangeNoI) {
-    	temp += _coefs(i() + 1, 0, 0, 0) *
+        temp += _coefs(i() + 1, 0, 0, 0) *
                 concentrations[_reactantMomentIds[0][i()]];
     }
     values(_network->getReactionIndex(_reactants[0], _reactants[1])) -= _rate(gridIndex) * temp / (double) volCl1;
@@ -1069,12 +1059,12 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
         AmountType volProd = prodReg.volume();
         values(_network->getReactionIndex(prodId, _reactants[1])) += _rate(gridIndex) * temp / (double) volProd;
     }
-    
+
     // (d / dL_1^B)
     for (auto i : speciesRangeNoI) {
-    	temp = _coefs(0, i() + 1, 0, 0) * concentrations[_reactants[0]];
+        temp = _coefs(0, i() + 1, 0, 0) * concentrations[_reactants[0]];
         for (auto j : speciesRangeNoI) {
-        	temp += _coefs(j() + 1, i() + 1, 0, 0) * concentrations[_reactantMomentIds[0][j()]];
+            temp += _coefs(j() + 1, i() + 1, 0, 0) * concentrations[_reactantMomentIds[0][j()]];
         }
         values(_network->getReactionIndex(_reactants[0], _reactantMomentIds[1][i()])) -= _rate(gridIndex) * temp / (double) volCl1;
         values(_network->getReactionIndex(_reactants[1], _reactantMomentIds[1][i()])) -= _rate(gridIndex) * temp / (double) volCl2;
@@ -1089,7 +1079,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             values(_network->getReactionIndex(prodId, _reactantMomentIds[1][i()])) += _rate(gridIndex) * temp / (double) volProd;
         }
     }
-        
+
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {
         // First for the first reactant
@@ -1105,7 +1095,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             for (auto j : speciesRangeNoI) {
                 temp += _coefs(i() + 1, j() + 1, 0, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
             }
-            values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactantMomentIds[0][i()])) 
+            values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactantMomentIds[0][i()]))
             -= _rate(gridIndex) * temp / (double) volCl1;
         }
         // (d / dL_0^B)
@@ -1113,7 +1103,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
         for (auto j : speciesRangeNoI) {
             temp += _coefs(j() + 1, 0, 0, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
         }
-        values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactants[1])) 
+        values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactants[1]))
         -= _rate(gridIndex) * temp / (double) volCl1;
         // (d / dL_1^B)
         for (auto i : speciesRangeNoI) {
@@ -1121,7 +1111,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             for (auto j : speciesRangeNoI) {
                 temp += _coefs(j() + 1, i() + 1, 0, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
             }
-            values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactantMomentIds[1][i()])) 
+            values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactantMomentIds[1][i()]))
             -= _rate(gridIndex) * temp / (double) volCl1;
         }
     }
@@ -1134,7 +1124,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
         for (auto j : speciesRangeNoI) {
             temp += _coefs(0, j() + 1, 1, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
         }
-        values(_network->getReactionIndex(_reactantMomentIds[1][k()], _reactants[0])) 
+        values(_network->getReactionIndex(_reactantMomentIds[1][k()], _reactants[0]))
         -= _rate(gridIndex) * temp / (double) volCl2;
         // (d / dL_1^A)
         for (auto i : speciesRangeNoI) {
@@ -1142,7 +1132,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             for (auto j : speciesRangeNoI) {
                 temp += _coefs(i() + 1, j() + 1, 1, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
             }
-            values(_network->getReactionIndex(_reactantMomentIds[1][k()], _reactantMomentIds[0][i()])) 
+            values(_network->getReactionIndex(_reactantMomentIds[1][k()], _reactantMomentIds[0][i()]))
             -= _rate(gridIndex) * temp / (double) volCl2;
         }
         // (d / dL_0^B)
@@ -1150,7 +1140,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
         for (auto j : speciesRangeNoI) {
             temp += _coefs(j() + 1, 0, 1, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
         }
-        values(_network->getReactionIndex(_reactantMomentIds[1][k()], _reactants[1])) 
+        values(_network->getReactionIndex(_reactantMomentIds[1][k()], _reactants[1]))
         -= _rate(gridIndex) * temp / (double) volCl2;
         // (d / dL_1^B)
         for (auto i : speciesRangeNoI) {
@@ -1158,11 +1148,11 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             for (auto j : speciesRangeNoI) {
                 temp += _coefs(j() + 1, i() + 1, 1, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
             }
-            values(_network->getReactionIndex(_reactantMomentIds[1][k()], _reactantMomentIds[1][i()])) 
+            values(_network->getReactionIndex(_reactantMomentIds[1][k()], _reactantMomentIds[1][i()]))
             -= _rate(gridIndex) * temp / (double) volCl2;
         }
     }
-    
+
     // Loop on the products
     for (std::size_t p : {0,1}) {
         auto prodId = _products[p];
@@ -1181,7 +1171,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             for (auto j : speciesRangeNoI) {
                 temp += _coefs(0, j() + 1, p + 2, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
             }
-            values(_network->getReactionIndex(_productMomentIds[p][k()], _reactants[0])) 
+            values(_network->getReactionIndex(_productMomentIds[p][k()], _reactants[0]))
             += _rate(gridIndex) * temp / (double) volProd;
             // (d / dL_1^A)
             for (auto i : speciesRangeNoI) {
@@ -1189,7 +1179,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
                 for (auto j : speciesRangeNoI) {
                     temp += _coefs(i() + 1, j() + 1, p + 2, k() + 1) * concentrations[_reactantMomentIds[1][j()]];
                 }
-                values(_network->getReactionIndex(_productMomentIds[p][k()], _reactantMomentIds[0][i()])) 
+                values(_network->getReactionIndex(_productMomentIds[p][k()], _reactantMomentIds[0][i()]))
                 += _rate(gridIndex) * temp / (double) volProd;
             }
             // (d / dL_0^B)
@@ -1197,7 +1187,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
             for (auto j : speciesRangeNoI) {
                 temp += _coefs(j() + 1, 0, p + 2, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
             }
-            values(_network->getReactionIndex(_productMomentIds[p][k()], _reactants[1])) 
+            values(_network->getReactionIndex(_productMomentIds[p][k()], _reactants[1]))
             += _rate(gridIndex) * temp / (double) volProd;
             // (d / dL_1^B)
             for (auto i : speciesRangeNoI) {
@@ -1205,7 +1195,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionPartialDerivatives(
                 for (auto j : speciesRangeNoI) {
                     temp += _coefs(j() + 1, i() + 1, p + 2, k() + 1) * concentrations[_reactantMomentIds[0][j()]];
                 }
-                values(_network->getReactionIndex(_productMomentIds[p][k()], _reactantMomentIds[1][i()])) 
+                values(_network->getReactionIndex(_productMomentIds[p][k()], _reactantMomentIds[1][i()]))
                 += _rate(gridIndex) * temp / (double) volProd;
             }
         }
@@ -1216,7 +1206,7 @@ template <typename TImpl>
 template <typename TDerived>
 inline void
 ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationPartialDerivatives(
-    ConcentrationsView concentrations, 
+    ConcentrationsView concentrations,
     Kokkos::View<double*> values, std::size_t gridIndex)
 {
     using AmountType = typename NetworkType::AmountType;
@@ -1238,51 +1228,51 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationPartialDerivatives(
     // First for the reactant
     double df = _rate(gridIndex) / (double) volCl;
     // Compute the values
-    values(_network->getReactionIndex(_reactants[0], _reactants[0])) 
+    values(_network->getReactionIndex(_reactants[0], _reactants[0]))
     -= df * _coefs(0, 0, 0, 0);
     for (auto i : speciesRangeNoI) {
-    	values(_network->getReactionIndex(_reactants[0], _reactantMomentIds[0][i()])) 
-    			-= df * _coefs(i() + 1, 0, 0, 0);
+        values(_network->getReactionIndex(_reactants[0], _reactantMomentIds[0][i()]))
+                -= df * _coefs(i() + 1, 0, 0, 0);
     }
     // For the first product
     df = _rate(gridIndex) / (double) volProd1;
     values(_network->getReactionIndex(_products[0], _reactants[0])) += df * _coefs(0, 0, 0, 0);
     for (auto i : speciesRangeNoI) {
-    	values(_network->getReactionIndex(_products[0], _reactantMomentIds[0][i()])) 
-    			+= df * _coefs(i() + 1, 0, 0, 0);
+        values(_network->getReactionIndex(_products[0], _reactantMomentIds[0][i()]))
+                += df * _coefs(i() + 1, 0, 0, 0);
     }
     // For the second product
     df = _rate(gridIndex) / (double) volProd2;
     values(_network->getReactionIndex(_products[1], _reactants[0])) += df * _coefs(0, 0, 0, 0);
     for (auto i : speciesRangeNoI) {
-    	values(_network->getReactionIndex(_products[1], _reactantMomentIds[0][i()])) 
-    			+= df * _coefs(i() + 1, 0, 0, 0);
+        values(_network->getReactionIndex(_products[1], _reactantMomentIds[0][i()]))
+                += df * _coefs(i() + 1, 0, 0, 0);
     }
-    
+
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {
         // First for the reactant
         df = _rate(gridIndex) / (double) volCl;
         // Compute the values
-        values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactants[0])) 
+        values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactants[0]))
         -= df * _coefs(0, 0, 0, k() + 1);
         for (auto i : speciesRangeNoI) {
-            values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactantMomentIds[0][i()])) 
+            values(_network->getReactionIndex(_reactantMomentIds[0][k()], _reactantMomentIds[0][i()]))
             -= df * _coefs(i() + 1, 0, 0, k() + 1);
         }
         // For the first product
         df = _rate(gridIndex) / (double) volProd1;
         values(_network->getReactionIndex(_productMomentIds[0][k()], _reactants[0])) += df * _coefs(0, 0, 1, k() + 1);
         for (auto i : speciesRangeNoI) {
-        	values(_network->getReactionIndex(_productMomentIds[0][k()], _reactantMomentIds[0][i()])) 
-        			+= df * _coefs(i() + 1, 0, 1, k() + 1);
+            values(_network->getReactionIndex(_productMomentIds[0][k()], _reactantMomentIds[0][i()]))
+                    += df * _coefs(i() + 1, 0, 1, k() + 1);
         }
         // For the second product
         df = _rate(gridIndex) / (double) volProd2;
         values(_network->getReactionIndex(_productMomentIds[1][k()], _reactants[0])) += df * _coefs(0, 0, 2, k() + 1);
         for (auto i : speciesRangeNoI) {
-        	values(_network->getReactionIndex(_productMomentIds[1][k()], _reactantMomentIds[0][i()])) 
-        			+= df * _coefs(i() + 1, 0, 2, k() + 1);
+            values(_network->getReactionIndex(_productMomentIds[1][k()], _reactantMomentIds[0][i()]))
+                    += df * _coefs(i() + 1, 0, 2, k() + 1);
         }
     }
 }

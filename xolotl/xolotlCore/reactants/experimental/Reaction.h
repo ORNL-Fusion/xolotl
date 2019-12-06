@@ -9,10 +9,6 @@ namespace xolotlCore
 {
 namespace experimental
 {
-// template <typename>
-// class MemFnPtr;
-
-
 template <typename TImpl>
 template <typename TDerived>
 class ReactionNetwork<TImpl>::Reaction
@@ -29,20 +25,18 @@ public:
         dissociation
     };
 
-    struct ClusterAssoc
+    struct ClusterSet
     {
-        Type reactionType{};
         std::size_t cluster0 {invalid};
         std::size_t cluster1 {invalid};
         std::size_t cluster2 {invalid};
         std::size_t cluster3 {invalid};
 
-        ClusterAssoc() = default;
+        ClusterSet() = default;
 
-        ClusterAssoc(Type rType, std::size_t cl0, std::size_t cl1,
-                std::size_t cl2 = invalid, std::size_t cl3 = invalid)
+        ClusterSet(std::size_t cl0, std::size_t cl1, std::size_t cl2 = invalid,
+                std::size_t cl3 = invalid)
             :
-            reactionType{rType},
             cluster0{cl0},
             cluster1{cl1},
             cluster2{cl2},
@@ -192,6 +186,7 @@ protected:
 
     Type _type {};
 
+    //TODO: This might not compile for device code
     using ConnectFn = decltype(std::mem_fn(&Reaction::contributeConnectivity));
     ConnectFn _connectFn {nullptr};
 
@@ -217,7 +212,7 @@ protected:
     Kokkos::View<double*, Kokkos::MemoryUnmanaged> _rate;
 
     //! Flux coefficients
-    Kokkos::View<double****> _coefs;
+    Kokkos::View<double****, Kokkos::MemoryUnmanaged> _coefs;
 };
 }
 }

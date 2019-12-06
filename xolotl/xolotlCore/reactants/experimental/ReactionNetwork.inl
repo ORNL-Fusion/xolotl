@@ -202,20 +202,46 @@ ReactionNetwork<TImpl>::defineReactions()
     auto diffusionFactor = Kokkos::create_mirror_view(_diffusionFactor);
     Kokkos::deep_copy(diffusionFactor, _diffusionFactor);
 
-    using ClusterAssoc = typename ReactionType::ClusterAssoc;
-    std::vector<ClusterAssoc> clusterSets =
+    using ClusterSet = typename ReactionType::ClusterSet;
+    ClusterSetsPair clusterSetsPair =
         asDerived()->defineReactionClusterSets(tiles, diffusionFactor);
+    auto& prodClusterSets = clusterSetsPair.prodClusterSets;
+    auto& dissClusterSets = clusterSetsPair.dissClusterSets;
+    auto nProdReactions = prodClusterSets.size();
+    auto nDissReactions = dissClusterSets.size();
 
-    auto numReactions = clusterSets.size();
-    Kokkos::View<ClusterAssoc*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-        clSetsHostView(clusterSets.data(), numReactions);
-    Kokkos::View<ClusterAssoc*> clSets("Cluster Sets", numReactions);
-    Kokkos::deep_copy(clSets, clSetsHostView);
+    auto prodSetsHostView = 
+        Kokkos::View<ClusterSet*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+            prodClusterSets.data(), nProdReactions);
+    auto prodSets = Kokkos::View<ClusterSet*>("Production Cluster Sets",
+        nProdReactions);
+    Kokkos::deep_copy(prodSets, prodSetsHostView);
+    auto dissSetsHostView =
+        Kokkos::View<ClusterSet*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+            dissClusterSets.data(), nDissReactions);
+    auto dissSets = Kokkos::View<ClusterSet*>("Dissociation Cluster Sets",
+        nDissReactions);
+    Kokkos::deep_copy(dissSets, dissSetsHostView);
+
+    static constexpr auto cExt = getNumberOfSpeciesNoI() + 1;
+    Kokkos::resize(_productionCoeffs, nProdReactions, cExt, cExt, 4, cExt);
+    Kokkos::resize(_dissociationCoeffs, nDissReactions, cExt, 1, 3, cExt);
+
+    auto numReactions = nProdReactions + nDissReactions;
+    Kokkos::resize(_reactions, numReactions);
     _reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
+    Kokkos::resize(_reactionRates, numReactions);
 
-    Kokkos::parallel_for(numReactions, KOKKOS_LAMBDA (std::size_t i) {
-        const auto& clSet = clSets(i);
-        _reactions(i) = ReactionType(*this, i, clSet.reactionType,
+    using RType = typename ReactionType::Type;
+    Kokkos::parallel_for(nProdReactions, KOKKOS_LAMBDA (std::size_t i) {
+        const auto& clSet = prodSets(i);
+        _reactions(i) = ReactionType(*this, i, RType::production,
+            clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
+    });
+    Kokkos::parallel_for(nDissReactions, KOKKOS_LAMBDA (std::size_t i) {
+        const auto& clSet = dissSets(i);
+        auto id = i + nProdReactions;
+        _reactions(id) = ReactionType(*this, id, RType::dissociation,
             clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
     });
 }
