@@ -68,6 +68,14 @@ double nDeuterium1D = 0.0;
 double previousTFlux1D = 0.0;
 //! The variable to store the total number of tritium going through the bottom.
 double nTritium1D = 0.0;
+//! The variable to store the vacancy flux at the previous time step.
+double previousVFlux1D = 0.0;
+//! The variable to store the total number of vacancy going through the bottom.
+double nVacancy1D = 0.0;
+//! The variable to store the int flux at the previous time step.
+double previousIBulkFlux1D = 0.0;
+//! The variable to store the total number of int going through the bottom.
+double nIBulk1D = 0.0;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield1D = 0.0;
 //! The threshold for the negative concentration
@@ -241,8 +249,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	constexpr auto numConcSpecies = 5;
 	constexpr auto numValsPerGridpoint = numConcSpecies + 2;
 	const auto firstIdxToWrite = (surfacePos + solverHandler.getLeftOffset());
-	const auto numGridpointsWithConcs = (Mx - solverHandler.getRightOffset()
-			- firstIdxToWrite);
+	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
 	xolotlCore::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
 			(hsize_t) numGridpointsWithConcs, numValsPerGridpoint };
 	xolotlCore::HDF5File::SimpleDataSpace<2> concsDsetSpace(concsDsetDims);
@@ -392,7 +399,8 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	// Write the bottom impurity information if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1)
 		tsGroup->writeBottom1D(nHelium1D, previousHeFlux1D, nDeuterium1D,
-				previousDFlux1D, nTritium1D, previousTFlux1D);
+				previousDFlux1D, nTritium1D, previousTFlux1D, nVacancy1D,
+				previousVFlux1D, nIBulk1D, previousIBulkFlux1D);
 
 	// Determine the concentration values we will write.
 	// We only examine and collect the grid points we own.
@@ -479,7 +487,8 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
-	double heConcentration = 0.0, dConcentration = 0.0, tConcentration = 0.0;
+	double heConcentration = 0.0, dConcentration = 0.0, tConcentration = 0.0,
+			vConcentration = 0.0, iConcentration = 0.0;
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
@@ -504,6 +513,8 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		heConcentration += network.getTotalAtomConcentration(0) * hx;
 		dConcentration += network.getTotalAtomConcentration(1) * hx;
 		tConcentration += network.getTotalAtomConcentration(2) * hx;
+		vConcentration += network.getTotalVConcentration() * hx;
+		iConcentration += network.getTotalIConcentration() * hx;
 	}
 
 	// Get the current process ID
@@ -511,9 +522,9 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Determine total concentrations for He, D, T.
-	std::array<double, 3> myConcData { heConcentration, dConcentration,
-			tConcentration };
-	std::array<double, 3> totalConcData;
+	std::array<double, 5> myConcData { heConcentration, dConcentration,
+			tConcentration, vConcentration, iConcentration };
+	std::array<double, 5> totalConcData;
 
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 	MPI_DOUBLE,
@@ -523,6 +534,8 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	double totalHeConcentration = totalConcData[0];
 	double totalDConcentration = totalConcData[1];
 	double totalTConcentration = totalConcData[2];
+	double totalVConcentration = totalConcData[3];
+	double totalIConcentration = totalConcData[4];
 
 	// Look at the fluxes going in the bulk if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1) {
@@ -540,6 +553,8 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 			nHelium1D += previousHeFlux1D * dt;
 			nDeuterium1D += previousDFlux1D * dt;
 			nTritium1D += previousTFlux1D * dt;
+			nVacancy1D += previousVFlux1D * dt;
+			nIBulk1D += previousIBulkFlux1D * dt;
 
 			// Get the pointer to the beginning of the solution data for this grid point
 			gridPointSolution = solutionArray[xi];
@@ -612,6 +627,44 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 			// Update the tritium flux
 			previousTFlux1D = newFlux;
 
+			// Initialize the value for the flux
+			newFlux = 0.0;
+			// Consider each vacancy cluster.
+			for (auto const& vMapItem : network.getAll(ReactantType::V)) {
+				// Get the cluster
+				auto const& cluster = *(vMapItem.second);
+				// Get it diffusion coefficient
+				double coef = cluster.getDiffusionCoefficient(xi - xs);
+				if (coef <= 0.0) continue;
+				// Get its id and concentration
+				int id = cluster.getId() - 1;
+				double conc = gridPointSolution[id];
+				// Get its size
+				int size = cluster.getSize();
+				// Compute the flux going to the right
+				newFlux += (double) size * factor * coef * conc * hxRight;
+			}
+			// Update the tritium flux
+			previousVFlux1D = newFlux;
+
+			// Initialize the value for the flux
+			newFlux = 0.0;
+			// Consider each int cluster.
+			for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+				// Get the cluster
+				auto const& cluster = *(iMapItem.second);
+				// Get its id and concentration
+				int id = cluster.getId() - 1;
+				double conc = gridPointSolution[id];
+				// Get its size and diffusion coefficient
+				int size = cluster.getSize();
+				double coef = cluster.getDiffusionCoefficient(xi - xs);
+				// Compute the flux going to the right
+				newFlux += (double) size * factor * coef * conc * hxRight;
+			}
+			// Update the tritium flux
+			previousIBulkFlux1D = newFlux;
+
 			// Set the bottom processor
 			bottomProc = procId;
 		}
@@ -626,8 +679,9 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 
 		// Send the information about impurities
 		// to the other processes
-		std::array<double, 6> countFluxData { nHelium1D, previousHeFlux1D,
-				nDeuterium1D, previousDFlux1D, nTritium1D, previousTFlux1D };
+		std::array<double, 10> countFluxData { nHelium1D, previousHeFlux1D,
+				nDeuterium1D, previousDFlux1D, nTritium1D, previousTFlux1D,
+				nVacancy1D, previousVFlux1D, nIBulk1D, previousIBulkFlux1D };
 		MPI_Bcast(countFluxData.data(), countFluxData.size(), MPI_DOUBLE,
 				bottomId, PETSC_COMM_WORLD);
 
@@ -638,6 +692,10 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		previousDFlux1D = countFluxData[3];
 		nTritium1D = countFluxData[4];
 		previousTFlux1D = countFluxData[5];
+		nVacancy1D = countFluxData[6];
+		previousVFlux1D = countFluxData[7];
+		nIBulk1D = countFluxData[8];
+		previousIBulkFlux1D = countFluxData[9];
 	}
 
 	// Master process
@@ -650,6 +708,9 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		std::cout << "Helium content = " << totalHeConcentration << std::endl;
 		std::cout << "Deuterium content = " << totalDConcentration << std::endl;
 		std::cout << "Tritium content = " << totalTConcentration << std::endl;
+		std::cout << "Vacancy content = " << totalVConcentration << std::endl;
+		std::cout << "Interstitial content = " << totalIConcentration
+				<< std::endl;
 		std::cout << "Fluence = " << fluence << "\n" << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
@@ -657,8 +718,9 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		outputFile.open("retentionOut.txt", ios::app);
 		outputFile << fluence << " " << totalHeConcentration << " "
 				<< totalDConcentration << " " << totalTConcentration << " "
-				<< nHelium1D << " " << nDeuterium1D << " " << nTritium1D
-				<< std::endl;
+				<< totalVConcentration << " " << totalIConcentration << " "
+				<< nHelium1D << " " << nDeuterium1D << " " << nTritium1D << " "
+				<< nVacancy1D << " " << nIBulk1D << std::endl;
 		outputFile.close();
 	}
 
@@ -2875,6 +2937,11 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 				previousDFlux1D = lastTsGroup->readData1D("previousDFlux");
 				nTritium1D = lastTsGroup->readData1D("nTritium");
 				previousTFlux1D = lastTsGroup->readData1D("previousTFlux");
+				nVacancy1D = lastTsGroup->readData1D("nVacancy");
+				previousVFlux1D = lastTsGroup->readData1D("previousVFlux");
+				nIBulk1D = lastTsGroup->readData1D("nIBulk");
+				previousIBulkFlux1D = lastTsGroup->readData1D(
+						"previousIBulkFlux");
 			}
 		}
 
