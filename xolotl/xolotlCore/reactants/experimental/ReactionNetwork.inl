@@ -53,6 +53,9 @@ ReactionNetwork<TImpl>::ReactionNetwork(
             }
             Subpaving subpaving(latticeRegion, subdivisionRatios);
             subpaving.refine(ClusterGenerator{options});
+            ////
+            subpaving.syncAll(plsm::onHost);
+            ////
             return subpaving;
         }(),
         gridSize, options)
