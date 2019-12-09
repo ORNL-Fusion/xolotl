@@ -31,6 +31,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Tell CMake to look for static libraries
 # SET(BUILD_SHARED_LIBS OFF)
 
+find_package(MPI REQUIRED)
+
 # Find PETSc
 # We need to save and restore CMAKE_REQUIRED_{INCLUDES,LIBRARIES}
 # because the FindPETSc.cmake module sets during its operation

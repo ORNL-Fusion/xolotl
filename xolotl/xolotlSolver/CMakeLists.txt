@@ -44,8 +44,10 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters)
 
 #Add the library
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} xolotlReactants xolotlIO xolotlCL xolotlDiffusion
-xolotlAdvection xolotlFlux xolotlModified ${PETSC_LIBRARIES} xolotlPerf xolotlViz)
+target_link_libraries(${LIBRARY_NAME}
+    xolotlReactants xolotlIO xolotlCL xolotlDiffusion
+    xolotlAdvection xolotlFlux xolotlModified ${PETSC_LIBRARIES} xolotlPerf
+    xolotlViz MPI::MPI_CXX)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

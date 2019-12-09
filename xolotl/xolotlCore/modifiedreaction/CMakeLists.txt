@@ -24,7 +24,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
 
 #Add a library
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} xolotlAdvection)
+target_link_libraries(${LIBRARY_NAME} xolotlAdvection MPI::MPI_CXX)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

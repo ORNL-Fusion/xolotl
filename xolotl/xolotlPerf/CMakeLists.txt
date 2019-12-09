@@ -56,7 +56,7 @@ set(SRC ${COMMONSRC} ${DUMMYSRC} ${STD_SRC} ${OS_SRC} ${PAPI_SRC})
 
 # Specify the library to build
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} ${MAYBE_PAPI} ${MAYBE_RT})
+target_link_libraries(${LIBRARY_NAME} ${MAYBE_PAPI} ${MAYBE_RT} MPI::MPI_CXX)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)
