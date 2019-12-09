@@ -88,15 +88,46 @@ private:
     {
         typename Superclass::ClusterSetsPair ret;
 
+        auto numSpecies = this->getNumberOfSpecies();
+
         std::size_t numClusters = tiles.extent(0);
-        for (std::size_t i = 0; i < numClusters; ++i) {
-            //TODO: I'm guessing you probably need nested loops here?
-            if (true /* production */) {
-                ret.prodClusterSets.emplace_back(0, 1, 2);
-            }
-            else {
-                ret.dissClusterSets.emplace_back(0, 1, 2);
-            }
+        for (std::size_t i = 0; i < numClusters; ++i)
+            for (std::size_t j = i; j < numClusters; ++j) {
+                // Get the composition of each cluster
+                const auto& cl1Reg = tiles(i).getRegion();
+                const auto& cl2Reg = tiles(j).getRegion();
+                // Compute the produced bounds
+                std::vector<std::pair<std::size_t, std::size_t> > bounds;
+                // Loop on the species
+                for (std::size_t l = 0; l < numSpecies; ++l) {
+                    auto low = cl1Reg[l].begin() + cl2Reg[l].begin();
+                    auto high = cl1Reg[l].end() + cl2Reg[l].end() - 2;
+                    bounds.emplace_back(std::make_pair(low, high));
+                }
+
+                // Look for potential product
+                for (std::size_t k = 0; k < numClusters; ++i) {
+                    // Get the composition
+                    const auto& prodReg = tiles(k).getRegion();
+                    bool isGood = true;
+                    // Loop on the species
+                    for (std::size_t l = 0; l < numSpecies; ++l) {
+                        if (prodReg[l].begin() > bounds[l].second) {
+                            isGood = false;
+                            break;
+                        }
+                        if (prodReg[l].end() - 1 < bounds[l].first) {
+                            isGood = false;
+                            break;
+                        }
+                    }
+
+                    if (isGood) {
+                        ret.prodClusterSets.emplace_back(i, j, k);
+                        // TODO: will have to add some rules
+                        ret.dissClusterSets.emplace_back(k, i, j);
+                    }
+                }
         }
 
         return ret;
