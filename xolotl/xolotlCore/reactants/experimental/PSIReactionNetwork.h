@@ -59,6 +59,7 @@ public:
     using Superclass = ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
     using Subpaving = typename Superclass::Subpaving;
     using ReactionType = typename Superclass::ReactionType;
+    using Composition = typename Superclass::Composition;
 
     using Superclass::Superclass;
 
@@ -88,44 +89,199 @@ private:
     {
         typename Superclass::ClusterSetsPair ret;
 
-        auto numSpecies = this->getNumberOfSpecies();
+        auto species = this->getSpeciesRange();
+        auto speciesNoI = this->getSpeciesRangeNoI();
 
         std::size_t numClusters = tiles.extent(0);
         for (std::size_t i = 0; i < numClusters; ++i)
             for (std::size_t j = i; j < numClusters; ++j) {
+                // Check that at least one of them is mobile
+                if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0)
+                    continue;
+
                 // Get the composition of each cluster
                 const auto& cl1Reg = tiles(i).getRegion();
                 const auto& cl2Reg = tiles(j).getRegion();
-                // Compute the produced bounds
-                std::vector<std::pair<std::size_t, std::size_t> > bounds;
+                Composition lo1 = cl1Reg.getOrigin();
+                Composition hi1 = cl1Reg.getUpperLimitPoint();
+                Composition lo2 = cl2Reg.getOrigin();
+                Composition hi2 = cl2Reg.getUpperLimitPoint();
+
+                // Special case for I + I
+                if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I)
+                    && lo2.isOnAxis(Species::I)) {
+                    // Compute the composition of the new cluster
+                    std::size_t size = lo1[static_cast<std::size_t>(Species::I)]
+                        + lo2[static_cast<std::size_t>(Species::I)];
+                    // Loop on potential products
+                    for (std::size_t k = 0; k < numClusters; ++i) {
+                        // Get the composition
+                        const auto& prodReg = tiles(k).getRegion();
+                        if (!prodReg.isSimplex()) continue;
+                        Composition lo = prodReg.getOrigin();
+                        if (!lo.isOnAxis(Species::I)) continue;
+                        if (lo[static_cast<std::size_t>(Species::I)] == size) {
+                            ret.prodClusterSets.emplace_back(i, j, k);
+                            if (lo1[static_cast<std::size_t>(Species::I)] == 1
+                                || lo2[static_cast<std::size_t>(Species::I)] == 1)
+                                ret.dissClusterSets.emplace_back(k, i, j);
+                            break;
+                        }
+                    }
+                    continue;
+                }
+
+                // Special case for I + V
+                if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && ((lo1.isOnAxis(Species::I)
+                        && lo2.isOnAxis(Species::V)) || (lo1.isOnAxis(Species::V)
+                                && lo2.isOnAxis(Species::I)))) {
+                    // Find out which one is which
+                    auto vSize = lo1.isOnAxis(Species::V)? lo1[static_cast<std::size_t>(Species::V)] :
+                       lo2[static_cast<std::size_t>(Species::V)];
+                    auto iSize = lo1.isOnAxis(Species::I)? lo1[static_cast<std::size_t>(Species::I)] :
+                       lo2[static_cast<std::size_t>(Species::I)];
+                    // Compute the product size
+                    int prodSize = vSize - iSize;
+                    // 3 cases
+                    if (prodSize > 0) {
+                        // Looking for V cluster
+                        for (std::size_t k = 0; k < numClusters; ++i) {
+                            // Get the composition
+                            const auto& prodReg = tiles(k).getRegion();
+                            if (!prodReg.isSimplex()) continue;
+                            Composition lo = prodReg.getOrigin();
+                            if (!lo.isOnAxis(Species::V)) continue;
+                            if (lo[static_cast<std::size_t>(Species::V)] == prodSize) {
+                                ret.prodClusterSets.emplace_back(i, j, k);
+                                // No dissociation
+                                break;
+                            }
+                        }
+                    }
+                    else if (prodSize < 0) {
+                        // Looking for I cluster
+                        for (std::size_t k = 0; k < numClusters; ++i) {
+                            // Get the composition
+                            const auto& prodReg = tiles(k).getRegion();
+                            if (!prodReg.isSimplex()) continue;
+                            Composition lo = prodReg.getOrigin();
+                            if (!lo.isOnAxis(Species::I)) continue;
+                            if (lo[static_cast<std::size_t>(Species::I)] == prodSize) {
+                                ret.prodClusterSets.emplace_back(i, j, k);
+                                // No dissociation
+                                break;
+                            }
+                        }
+                    }
+                    else {
+                        // No product
+                        ret.prodClusterSets.emplace_back(i, j);
+                    }
+                    continue;
+                }
+
+                // General case
+                std::vector<std::pair<int, int> > bounds;
                 // Loop on the species
-                for (std::size_t l = 0; l < numSpecies; ++l) {
-                    auto low = cl1Reg[l].begin() + cl2Reg[l].begin();
-                    auto high = cl1Reg[l].end() + cl2Reg[l].end() - 2;
-                    bounds.emplace_back(std::make_pair(low, high));
+                for (auto l : species) {
+                    auto low = lo1[l] + lo2[l];
+                    auto high = hi1[l] + hi2[l] - 2;
+                    // Special case for I
+                    if (l() == static_cast<std::size_t>(Species::I)) {
+                        // Look for V
+                        size_t vIdx = 0;
+                        for (auto m : speciesNoI) {
+                            if (m() == static_cast<std::size_t>(Species::V)) {
+                                vIdx = m();
+                                break;
+                            }
+                        }
+                        bounds[vIdx].first -= high;
+                        bounds[vIdx].second -= low;
+
+                        if (bounds[vIdx].first < 0) bounds[vIdx].first = 0;
+                        if (bounds[vIdx].second < 0) bounds[vIdx].second = 0;
+                    }
+                    else
+                        bounds.emplace_back(std::make_pair(low, high));
                 }
 
                 // Look for potential product
+                std::size_t nProd = 0;
                 for (std::size_t k = 0; k < numClusters; ++i) {
                     // Get the composition
                     const auto& prodReg = tiles(k).getRegion();
                     bool isGood = true;
                     // Loop on the species
-                    for (std::size_t l = 0; l < numSpecies; ++l) {
-                        if (prodReg[l].begin() > bounds[l].second) {
+                    // TODO: check l correspond to the same species in bounds and prod
+                    for (auto l : speciesNoI) {
+                        if (prodReg[l()].begin() > bounds[l()].second) {
                             isGood = false;
                             break;
                         }
-                        if (prodReg[l].end() - 1 < bounds[l].first) {
+                        if (prodReg[l()].end() - 1 < bounds[l()].first) {
                             isGood = false;
                             break;
                         }
                     }
 
                     if (isGood) {
+                        // Increase nProd
+                        nProd++;
                         ret.prodClusterSets.emplace_back(i, j, k);
-                        // TODO: will have to add some rules
+                        // TODO: will have to add some rules, i or j should be a simplex cluster of max size 1
                         ret.dissClusterSets.emplace_back(k, i, j);
+                    }
+                }
+
+                // Special case for trap-mutation
+                if (nProd == 0) {
+                    // Look for larger clusters
+                    // Loop on possible I sizes
+                    // TODO: get the correct value for maxISize
+                    std::size_t maxISize = 6;
+                    for (std::size_t n = 1; n <= maxISize; ++n) {
+                        // TODO: Find the corresponding cluster
+
+                        // Look for V
+                        size_t vIdx = 0;
+                        for (auto m : speciesNoI) {
+                            if (m() == static_cast<std::size_t>(Species::V)) {
+                                vIdx = m();
+                                break;
+                            }
+                        }
+                        bounds[vIdx].first += 1;
+                        bounds[vIdx].second += 1;
+
+                        // Look for potential product
+                        std::size_t nProd = 0;
+                        for (std::size_t k = 0; k < numClusters; ++i) {
+                            // Get the composition
+                            const auto& prodReg = tiles(k).getRegion();
+                            bool isGood = true;
+                            // Loop on the species
+                            // TODO: check l correspond to the same species in bounds and prod
+                            for (auto l : speciesNoI) {
+                                if (prodReg[l()].begin() > bounds[l()].second) {
+                                    isGood = false;
+                                    break;
+                                }
+                                if (prodReg[l()].end() - 1 < bounds[l()].first) {
+                                    isGood = false;
+                                    break;
+                                }
+                            }
+
+                            if (isGood) {
+                                // Increase nProd
+                                nProd++;
+//                                ret.prodClusterSets.emplace_back(i, j, k, m);
+                                // No dissociation
+                            }
+                        }
+                        // Stop if we found a product
+                        if (nProd > 0) break;
                     }
                 }
         }
