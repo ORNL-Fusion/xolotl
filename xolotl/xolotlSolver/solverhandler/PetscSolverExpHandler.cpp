@@ -64,9 +64,9 @@ template<typename TImpl>
 void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
-	// Initialize the last temperature and rates
+	// Initialize the temperatures
 	lastTemperature.push_back(0.0);
-	network.addGridPoints(1);
+	temperature.push_back(0.0);
 
 	// Pointer for the concentration vector
 	PetscScalar **concentrations = nullptr;
@@ -124,8 +124,10 @@ void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 		}
 		// Set the temperature in the network
 		double temp = myConcs[0][myConcs[0].size() - 1].second;
-		network.setTemperature(temp, 0);
+		temperature[0] = temp;
 		lastTemperature[0] = temp;
+
+		expNetwork.setTemperature(temperature);
 	}
 
 	/*
@@ -177,12 +179,12 @@ void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC,
 
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
-	double temperature = temperatureHandler->getTemperature(gridPosition,
+	temperature[0] = temperatureHandler->getTemperature(gridPosition,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
-		network.setTemperature(temperature);
+	if (std::fabs(lastTemperature[0] - temperature[0]) > 0.1) {
+		expNetwork.setTemperature(temperature);
 		lastTemperature[0] = temperature;
 	}
 
@@ -250,12 +252,12 @@ void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC,
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];
 	temperatureHandler->setTemperature(concOffset);
-	double temperature = temperatureHandler->getTemperature(gridPosition,
+	temperature[0] = temperatureHandler->getTemperature(gridPosition,
 			ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
-		network.setTemperature(temperature);
+	if (std::fabs(lastTemperature[0] - temperature[0]) > 0.1) {
+		expNetwork.setTemperature(temperature);
 		lastTemperature[0] = temperature;
 	}
 

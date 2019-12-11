@@ -33,6 +33,11 @@ protected:
 	//! Map of connectivities
 	SparseFillMap dfill;
 
+	/**
+	 * The current temperature on the grid.
+	 */
+	std::vector<double> temperature;
+
 public:
 
 	/**
