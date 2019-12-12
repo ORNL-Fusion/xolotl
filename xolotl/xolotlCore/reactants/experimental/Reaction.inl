@@ -586,14 +586,14 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionConnectivity(
     // Get the total number of elements in each cluster
     auto cl1 = _network->getCluster(_reactants[0]);
     const auto& cl1Reg = cl1.getRegion();
-    AmountType volCl1 = cl1Reg.volume();
+    const bool cl1IsSimplex = cl1Reg.isSimplex();
     auto cl2 = _network->getCluster(_reactants[1]);
     const auto& cl2Reg = cl2.getRegion();
-    AmountType volCl2 = cl2Reg.volume();
+    const bool cl2IsSimplex = cl2Reg.isSimplex();
     // Each reactant connects with all the reactants
     // Reactant 1 with reactant 1
     addConnectivity(_reactants[0], _reactants[0], connectivity);
-    if (volCl1 > 1) {
+    if (!cl1IsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_reactants[0], _reactantMomentIds[0][i()], connectivity);
             addConnectivity(_reactantMomentIds[0][i()], _reactants[0], connectivity);
@@ -604,17 +604,17 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionConnectivity(
     }
     // Reactant 2 with reactant 1
     addConnectivity(_reactants[1], _reactants[0], connectivity);
-    if (volCl1 > 1) {
+    if (!cl1IsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_reactants[1], _reactantMomentIds[0][i()], connectivity);
         }
     }
-    if (volCl2 > 1) {
+    if (!cl2IsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_reactantMomentIds[1][i()], _reactants[0], connectivity);
         }
     }
-    if (volCl1 > 1 && volCl2 > 1) {
+    if (!cl1IsSimplex && !cl2IsSimplex) {
         for (auto i : speciesRangeNoI) {
             for (auto j : speciesRangeNoI) {
                 addConnectivity(_reactantMomentIds[1][i()], _reactantMomentIds[0][j()], connectivity);
@@ -623,17 +623,17 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionConnectivity(
     }
     // Reactant 1 with reactant 2
     addConnectivity(_reactants[0], _reactants[1], connectivity);
-    if (volCl2 > 1) {
+    if (!cl2IsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_reactants[0], _reactantMomentIds[1][i()], connectivity);
         }
     }
-    if (volCl1 > 1) {
+    if (!cl1IsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_reactantMomentIds[0][i()], _reactants[1], connectivity);
         }
     }
-    if (volCl1 > 1 && volCl2 > 1) {
+    if (!cl1IsSimplex && !cl2IsSimplex) {
         for (auto i : speciesRangeNoI) {
             for (auto j : speciesRangeNoI) {
                 addConnectivity(_reactantMomentIds[0][i()], _reactantMomentIds[1][j()], connectivity);
@@ -642,7 +642,7 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionConnectivity(
     }
     // Reactant 2 with reactant 2
     addConnectivity(_reactants[1], _reactants[1], connectivity);
-    if (volCl2 > 1) {
+    if (!cl2IsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_reactants[1], _reactantMomentIds[1][i()], connectivity);
             addConnectivity(_reactantMomentIds[1][i()], _reactants[1], connectivity);
@@ -659,21 +659,21 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionConnectivity(
         }
         auto prod = _network->getCluster(prodId);
         const auto& prodReg = prod.getRegion();
-        AmountType volProd = prodReg.volume();
+        const bool prodIsSimplex = prodReg.isSimplex();
 
         // With reactant 1
         addConnectivity(prodId, _reactants[0], connectivity);
-        if (volCl1 > 1) {
+        if (!cl1IsSimplex) {
             for (auto i : speciesRangeNoI) {
                 addConnectivity(prodId, _reactantMomentIds[0][i()], connectivity);
             }
         }
-        if (volProd > 1) {
+        if (!prodIsSimplex) {
             for (auto i : speciesRangeNoI) {
                 addConnectivity(_productMomentIds[p][i()], _reactants[0], connectivity);
             }
         }
-        if (volCl1 > 1 && volProd > 1) {
+        if (!cl1IsSimplex && !prodIsSimplex) {
             for (auto i : speciesRangeNoI) {
                 for (auto j : speciesRangeNoI) {
                     addConnectivity(_productMomentIds[p][i()], _reactantMomentIds[0][j()], connectivity);
@@ -682,17 +682,17 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::productionConnectivity(
         }
         // With reactant 2
         addConnectivity(prodId, _reactants[1], connectivity);
-        if (volCl2 > 1) {
+        if (!cl2IsSimplex) {
             for (auto i : speciesRangeNoI) {
                 addConnectivity(prodId, _reactantMomentIds[1][i()], connectivity);
             }
         }
-        if (volProd > 1) {
+        if (!prodIsSimplex) {
             for (auto i : speciesRangeNoI) {
                 addConnectivity(_productMomentIds[p][i()], _reactants[1], connectivity);
             }
         }
-        if (volCl2 > 1 && volProd > 1) {
+        if (!cl2IsSimplex && !prodIsSimplex) {
             for (auto i : speciesRangeNoI) {
                 for (auto j : speciesRangeNoI) {
                     addConnectivity(_productMomentIds[p][i()], _reactantMomentIds[1][j()], connectivity);
@@ -714,17 +714,17 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationConnectivity(
     // Get the total number of elements in each cluster
     auto cl = _network->getCluster(_reactants[0]);
     const auto& clReg = cl.getRegion();
-    AmountType volCl = clReg.volume();
+    const bool clIsSimplex = clReg.isSimplex();
     auto prod1 = _network->getCluster(_products[0]);
     const auto& prod1Reg = prod1.getRegion();
-    AmountType volProd1 = prod1Reg.volume();
+    const bool prod1IsSimplex = prod1Reg.isSimplex();
     auto prod2 = _network->getCluster(_products[1]);
     const auto& prod2Reg = prod2.getRegion();
-    AmountType volProd2 = prod2Reg.volume();
+    const bool prod2IsSimplex = prod2Reg.isSimplex();
 
     // The reactant connects with the reactant
     addConnectivity(_reactants[0], _reactants[0], connectivity);
-    if (volCl > 1) {
+    if (!clIsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_reactants[0], _reactantMomentIds[0][i()], connectivity);
             addConnectivity(_reactantMomentIds[0][i()], _reactants[0], connectivity);
@@ -736,17 +736,17 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationConnectivity(
     // Each product connects with  the reactant
     // Product 1 with reactant
     addConnectivity(_products[0], _reactants[0], connectivity);
-    if (volCl > 1) {
+    if (!clIsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_products[0], _reactantMomentIds[0][i()], connectivity);
         }
     }
-    if (volProd1 > 1) {
+    if (!prod1IsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_productMomentIds[0][i()], _reactants[0], connectivity);
         }
     }
-    if (volCl > 1 && volProd1 > 1) {
+    if (!clIsSimplex && !prod1IsSimplex) {
         for (auto i : speciesRangeNoI) {
             for (auto j : speciesRangeNoI) {
                 addConnectivity(_productMomentIds[0][i()], _reactantMomentIds[0][j()], connectivity);
@@ -755,17 +755,17 @@ ReactionNetwork<TImpl>::Reaction<TDerived>::dissociationConnectivity(
     }
     // Product 2 with reactant
     addConnectivity(_products[1], _reactants[0], connectivity);
-    if (volCl > 1) {
+    if (!clIsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_products[1], _reactantMomentIds[0][i()], connectivity);
         }
     }
-    if (volProd2 > 1) {
+    if (!prod2IsSimplex) {
         for (auto i : speciesRangeNoI) {
             addConnectivity(_productMomentIds[1][i()], _reactants[0], connectivity);
         }
     }
-    if (volCl > 1 && volProd2 > 1) {
+    if (!clIsSimplex && !prod2IsSimplex) {
         for (auto i : speciesRangeNoI) {
             for (auto j : speciesRangeNoI) {
                 addConnectivity(_productMomentIds[1][i()], _reactantMomentIds[0][j()], connectivity);
