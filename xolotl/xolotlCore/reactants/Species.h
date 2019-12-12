@@ -20,7 +20,18 @@ namespace xolotlCore {
  * it is specific to the type of reaction network used.
  */
 enum class Species {
-	Invalid = -1, V = 0, I, He, D, T, Xe, last = Xe
+	Invalid = -1,
+	V = 0,
+	I,
+	He,
+	D,
+	T,
+	Xe,
+	Void,
+	Perfect,
+	Faulted,
+	Frank,
+	last = Frank
 };
 constexpr uint32_t NumSpecies = static_cast<uint32_t>(Species::last) + 1;
 

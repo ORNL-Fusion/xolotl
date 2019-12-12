@@ -41,6 +41,15 @@ public:
 	}
 
 	/**
+	 * This method updates the fission yield.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	void setFissionYield(double yield) {
+		return;
+	}
+
+	/**
 	 * This method update the rate for the re-solution if the fission rate
 	 * changed, it should be called when the flux changes for instance.
 	 *
@@ -81,6 +90,15 @@ public:
 	 */
 	int computePartialsForReSolution(const IReactionNetwork& network,
 			double *val, int *indices, int xi, int xs, int yj = 0, int zk = 0) {
+		return 0;
+	}
+
+	/**
+	 * Get the minimum size for a cluster to undergo re-solution.
+	 *
+	 * \see IReSolutionHandler.h
+	 */
+	int getMinSize() const {
 		return 0;
 	}
 

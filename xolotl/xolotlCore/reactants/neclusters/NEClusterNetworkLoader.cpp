@@ -31,11 +31,10 @@ std::unique_ptr<NECluster> NEClusterNetworkLoader::createNECluster(int numXe,
 }
 
 std::unique_ptr<NECluster> NEClusterNetworkLoader::createNESuperCluster(
-		int nTot, double numXe, double radius,
-		IReactionNetwork& network) const {
+		int nTot, int maxXe, IReactionNetwork& network) const {
 	// Create the cluster
-	auto superCluster = new NESuperCluster(numXe, nTot, nTot, radius, 0.0,
-			network, handlerRegistry);
+	auto superCluster = new NESuperCluster(maxXe, nTot, network,
+			handlerRegistry);
 
 	// TODO when we have widespread C++14 support, use std::make_unique
 	// and construct unique ptr and object pointed to in one memory operation.
@@ -75,6 +74,7 @@ NEClusterNetworkLoader::NEClusterNetworkLoader(
 	fileName = "";
 	dummyReactions = false;
 	xeMin = 1000000;
+	xeMax = -1;
 	sectionWidth = 1;
 
 	return;
@@ -88,6 +88,7 @@ NEClusterNetworkLoader::NEClusterNetworkLoader(
 	fileName = "";
 	dummyReactions = false;
 	xeMin = 1000000;
+	xeMax = -1;
 	sectionWidth = 1;
 
 	return;
@@ -112,6 +113,21 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 	std::unique_ptr<NEClusterReactionNetwork> network(
 			new NEClusterReactionNetwork(handlerRegistry));
 
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = uraniumDioxydeLatticeConstant;
+	network->setLatticeParameter(latticeParam);
+
+	// Set the xenon radius in the network
+	double radius = options.getImpurityRadius();
+	if (!(radius > 0.0))
+		radius = xenonRadius;
+	network->setImpurityRadius(radius);
+
+	// Set the density in a bubble
+	network->setDensity(options.getDensity());
+
 	// Loop on the clusters
 	for (int i = 0; i < normalSize + superSize; i++) {
 		// Open the cluster group
@@ -133,17 +149,24 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 			nextCluster->setMigrationEnergy(migrationEnergy);
 			nextCluster->setDiffusionFactor(diffusionFactor);
 
+			if (numXe == 1) {
+				// If the diffusivity is given
+				if (options.getXenonDiffusivity() > 0.0) {
+					nextCluster->setDiffusionFactor(
+							options.getXenonDiffusivity());
+					nextCluster->setMigrationEnergy(-1.0);
+				}
+			}
+
 			// Save it in the network
 			pushNECluster(network, reactants, nextCluster);
 		} else {
 			// Super cluster
-			int nTot = 0;
-			double average = 0.0, radius = 0.0;
-			clusterGroup.readNESuperCluster(nTot, average, radius);
+			int nTot = 0, maxXe = 0;
+			clusterGroup.readNESuperCluster(nTot, maxXe);
 
 			// Create the cluster
-			auto nextCluster = createNESuperCluster(nTot, average, radius,
-					*network);
+			auto nextCluster = createNESuperCluster(nTot, maxXe, *network);
 
 			// Save it in the network
 			pushNECluster(network, reactants, nextCluster);
@@ -171,7 +194,7 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 		const IOptions &options) {
 	// Initial declarations
-	int maxXe = options.getMaxImpurity();
+	xeMax = options.getMaxImpurity();
 	int numXe = 0;
 	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
@@ -179,6 +202,21 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 	std::unique_ptr<NEClusterReactionNetwork> network(
 			new NEClusterReactionNetwork(handlerRegistry));
 	std::vector<std::reference_wrapper<Reactant> > reactants;
+
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = uraniumDioxydeLatticeConstant;
+	network->setLatticeParameter(latticeParam);
+
+	// Set the xenon radius in the network
+	double radius = options.getImpurityRadius();
+	if (!(radius > 0.0))
+		radius = xenonRadius;
+	network->setImpurityRadius(radius);
+
+	// Set the density in a bubble
+	network->setDensity(options.getDensity());
 
 	// The diffusion factor for a single xenon in nm^2/s, 1.0 is used
 	// to trigger the computation but the exact value and formula are
@@ -197,8 +235,8 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 			62.55, 65.05, 67.45, 69.45, 71.20, 72.75, 74.15, 75.35, 76.40,
 			77.25, 77.95, 78.45, 78.80, 78.95, 79.0 };
 
-	// Generate the I clusters
-	for (int i = 1; i <= maxXe; ++i) {
+	// Generate the Xe clusters
+	for (int i = 1; i <= min(xeMin - 1, xeMax); ++i) {
 		// Set the composition
 		numXe = i;
 		// Create the cluster
@@ -212,6 +250,11 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 		if (i <= 1) {
 			nextCluster->setDiffusionFactor(xeOneDiffusion);
 			nextCluster->setMigrationEnergy(xeOneMigration);
+			// If the diffusivity is given
+			if (options.getXenonDiffusivity() > 0.0) {
+				nextCluster->setDiffusionFactor(options.getXenonDiffusivity());
+				nextCluster->setMigrationEnergy(-1.0);
+			}
 		} else {
 			nextCluster->setDiffusionFactor(0.0);
 			nextCluster->setMigrationEnergy(
@@ -227,252 +270,67 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::generate(
 		currCluster.updateFromNetwork();
 	}
 
-	// Create the reactions
-	network->createReactionConnectivity();
-
 	// Check if we want dummy reactions
 	if (!dummyReactions) {
 		// Apply sectional grouping
 		applyGrouping(*network);
 	}
 
-//	// Dump the network we've created, if desired.
-//	int rank;
-//	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-//	if (rank == 0) {
-//		// Dump the network we've created for comparison with baseline.
-//		std::ofstream networkStream(netDebugOpts.second);
-//		network->dumpTo(networkStream);
-//	}
+	// Create the reactions
+	network->createReactionConnectivity();
 
-	// Need to use move() because return type uses smart pointer to base class,
-	// not derived class that we created.
-	// Some C++11 compilers accept it without the move, but apparently
-	// that is not correct behavior until C++14.
 	return std::move(network);
 }
 
 void NEClusterNetworkLoader::applyGrouping(IReactionNetwork& network) const {
-	// Get the xenon cluster map
-	auto const& xeMap = network.getAll(ReactantType::Xe);
-
-	// Create a temporary vector for the loop
-	std::vector<NECluster *> tempVector;
 
 	// Initialize variables for the loop
 	int count = 0, superCount = 0, width = sectionWidth;
-	double size = 0.0, radius = 0.0, energy = 0.0;
-
-	// Map to know which cluster is in which group
-	std::map<int, int> clusterGroupMap;
-	// Map to know which super cluster gathers which group
-	// TODO replace use of naked ptr with ref.  Requires fix to use
-	// refs in reactions instead of naked ptrs.
-	std::map<int, NESuperCluster *> superGroupMap;
+	int size = 0;
 
 	// Loop on the xenon groups
-	for (int k = xeMin; k <= xeMap.size(); k++) {
-		// Get the corresponding cluster
-		auto cluster = (NECluster *) network.get(Species::Xe, k);
-
-		// Verify if the cluster exists
-		if (!cluster)
-			continue;
+	for (int k = xeMin; k < xeMax; k++) {
 
 		// Increment the counter
 		count++;
 
-		// Add this cluster to the temporary vector
-		tempVector.push_back(cluster);
-		size += (double) k;
-		radius += cluster->getReactionRadius();
-		energy += cluster->getFormationEnergy();
+		// Track the size
+		size = k;
 
-		// Save in which group it is
-		clusterGroupMap[k] = superCount;
-
-		// Check if there were clusters in this group
-		if (count < width && k < xeMap.size())
+		// Continue if we are not at the wanted width yet
+		if (count < width && k < xeMax - 1)
 			continue;
 
-		// Average all values
-		size = size / (double) count;
-		radius = radius / (double) count;
-		energy = energy / (double) count;
-
 		// Create the cluster
-		auto rawSuperCluster = new NESuperCluster(size, count, count, radius,
-				energy, network, handlerRegistry);
-		auto superCluster = std::unique_ptr<NESuperCluster>(rawSuperCluster);
-		// Save access to the cluster so we can trigger updates
-		// after we give it to the network.
-		auto& scref = *superCluster;
-		// Set the HeV vector
-		scref.setXeVector(tempVector);
-		// Give the cluster to the network.
-		network.add(std::move(superCluster));
-
-		// Keep the information of the group
-		superGroupMap[superCount] = rawSuperCluster;
+		auto rawSuperCluster = new NESuperCluster(size, count, network,
+				handlerRegistry);
 
 //		std::cout << superCount << " " << count << " "
 //				<< rawSuperCluster->getName() << std::endl;
 
+		auto superCluster = std::unique_ptr<NESuperCluster>(rawSuperCluster);
+		// Give the cluster to the network.
+		network.add(std::move(superCluster));
+
 		// Reinitialize everything
-		size = 0.0, radius = 0.0, energy = 0.0;
+		size = 0;
 		count = 0;
-		tempVector.clear();
 		superCount++;
-//		width = max(sectionWidth * (int) (superCount / 10), sectionWidth);
+		width += 1;
 	}
 
-	// Tell each reactant to update the pairs vector with super clusters
-	for (IReactant& currReactant : network.getAll()) {
+	if (xeMin < xeMax) {
+		// Group the last one alone
+		auto rawSuperCluster = new NESuperCluster(xeMax, 1, network,
+				handlerRegistry);
 
-		auto& cluster = static_cast<NECluster&>(currReactant);
+//		std::cout << superCount << " last " << rawSuperCluster->getName()
+//				<< std::endl;
 
-		// Get their production and dissociation vectors
-		// TODO can these be updated in place?
-		auto react = cluster.reactingPairs;
-		auto combi = cluster.combiningReactants;
-		auto disso = cluster.dissociatingPairs;
-		auto emi = cluster.emissionPairs;
-
-		// Loop on its reacting pairs
-		for (int l = 0; l < react.size(); l++) {
-			// Test the first reactant
-			if (react[l].first->getType() == ReactantType::Xe) {
-				// Get its size
-				auto nXe = react[l].first->getSize();
-				// Test its size
-				if (nXe >= xeMin) {
-					// It has to be replaced by a super cluster
-					auto newCluster = superGroupMap[clusterGroupMap[nXe]];
-					react[l].first = newCluster;
-					react[l].firstDistance = newCluster->getDistance(size);
-				}
-			}
-
-			// Test the second reactant
-			if (react[l].second->getType() == ReactantType::Xe) {
-				// Get its size
-				auto nXe = react[l].second->getSize();
-				// Test its size
-				if (nXe >= xeMin) {
-					// It has to be replaced by a super cluster
-					auto newCluster = superGroupMap[clusterGroupMap[nXe]];
-					react[l].second = newCluster;
-					react[l].secondDistance = newCluster->getDistance(nXe);
-				}
-			}
-		}
-
-		// Visit each combining reactant.
-		std::for_each(combi.begin(), combi.end(),
-				[this,&superGroupMap,&clusterGroupMap](NECluster::CombiningCluster& cc) {
-					// Test the combining reactant
-					NECluster& currCombining = *(cc.combining);
-					if (currCombining.getType() == ReactantType::Xe) {
-						// Get its size
-						auto nXe = currCombining.getSize();
-						// Test its size
-						if (nXe >= xeMin) {
-							// It has to be replaced by a super cluster
-							auto newCluster = superGroupMap[clusterGroupMap[nXe]];
-							cc.combining = newCluster;
-							cc.distance = newCluster->getDistance(nXe);
-						}
-					}
-				});
-
-		// Loop on its dissociating pairs
-		for (int l = 0; l < disso.size(); l++) {
-			// Test the first reactant
-			if (disso[l].first->getType() == ReactantType::Xe) {
-				// Get its size
-				auto nXe = disso[l].first->getSize();
-				// Test its size
-				if (nXe >= xeMin) {
-					// It has to be replaced by a super cluster
-					auto newCluster = superGroupMap[clusterGroupMap[nXe]];
-					disso[l].first = newCluster;
-					disso[l].firstDistance = newCluster->getDistance(nXe);
-				}
-			}
-
-			// Test the second reactant
-			if (disso[l].second->getType() == ReactantType::Xe) {
-				// Get its size
-				auto nXe = disso[l].second->getSize();
-				// Test its size
-				if (nXe >= xeMin) {
-					// It has to be replaced by a super cluster
-					auto newCluster = superGroupMap[clusterGroupMap[nXe]];
-					disso[l].second = newCluster;
-					disso[l].secondDistance = newCluster->getDistance(nXe);
-				}
-			}
-		}
-
-		// Loop on its emission pairs
-		for (int l = 0; l < emi.size(); l++) {
-			// Test the first reactant
-			if (emi[l].first->getType() == ReactantType::Xe) {
-				// Get its size
-				auto nXe = emi[l].first->getSize();
-				// Test its size
-				if (nXe >= xeMin) {
-					// It has to be replaced by a super cluster
-					auto newCluster = superGroupMap[clusterGroupMap[nXe]];
-					emi[l].first = newCluster;
-					emi[l].firstDistance = newCluster->getDistance(nXe);
-				}
-			}
-
-			// Test the second reactant
-			if (emi[l].second->getType() == ReactantType::Xe) {
-				// Get its size
-				auto nXe = emi[l].second->getSize();
-				// Test its size
-				if (nXe >= xeMin) {
-					// It has to be replaced by a super cluster
-					auto newCluster = superGroupMap[clusterGroupMap[nXe]];
-					emi[l].second = newCluster;
-					emi[l].secondDistance = newCluster->getDistance(nXe);
-				}
-			}
-		}
-
-		// Set their production and dissociation vectors
-		cluster.reactingPairs = react;
-		cluster.combiningReactants = combi;
-		cluster.dissociatingPairs = disso;
-		cluster.emissionPairs = emi;
+		auto superCluster = std::unique_ptr<NESuperCluster>(rawSuperCluster);
+		// Give the cluster to the network.
+		network.add(std::move(superCluster));
 	}
-
-	// Set the reaction network for each super reactant
-	for (auto const& superMapItem : network.getAll(ReactantType::NESuper)) {
-		auto& currCluster = static_cast<NESuperCluster&>(*(superMapItem.second));
-		currCluster.updateFromNetwork();
-	}
-
-	// Remove Xe clusters bigger than xeMin from the network
-	// Loop on the Xe clusters
-	std::vector<std::reference_wrapper<IReactant> > doomedReactants;
-	for (auto const& currMapItem : xeMap) {
-
-		auto& currCluster = currMapItem.second;
-
-		// Get the cluster's size.
-		auto nXe = currCluster->getSize();
-
-		// Check if the cluster is too large.
-		if (nXe >= xeMin) {
-			// The cluster is too large.  Add it to the ones we will remove.
-			doomedReactants.push_back(*currCluster);
-		}
-	}
-	network.removeReactants(doomedReactants);
 
 	// Recompute Ids and network size
 	network.reinitializeNetwork();

@@ -7,13 +7,14 @@ SET(LIBRARY_NAME "xolotlModified")
 
 #Collect all header filenames in this project 
 #and glob them in HEADERS
-file(GLOB HEADERS trapmutation/*.h resolution/*.h desorption/*.h)
+file(GLOB HEADERS trapmutation/*.h resolution/*.h desorption/*.h heterogeneousnucleation/*.h)
 
 #Grab all of the source files
-file(GLOB SRC trapmutation/*.cpp resolution/*.cpp desorption/*.cpp)
+file(GLOB SRC trapmutation/*.cpp resolution/*.cpp desorption/*.cpp heterogeneousnucleation/*.cpp)
 
 #Include directories
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/desorption)

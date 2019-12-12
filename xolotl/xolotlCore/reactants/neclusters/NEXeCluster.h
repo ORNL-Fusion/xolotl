@@ -47,11 +47,11 @@ public:
 
 		// Compute the reaction radius
 		double FourPi = 4.0 * xolotlCore::pi;
-		reactionRadius = 1.05
-				* pow((3.0 * 85.0 * (double) size) / FourPi, (1.0 / 3.0))
-				/ 10.0;
+		reactionRadius = pow(
+				(3.0 * (double) size) / (FourPi * network.getDensity()),
+				(1.0 / 3.0));
 		if (size == 1)
-			reactionRadius = 0.3;
+			reactionRadius = network.getImpurityRadius();
 
 		return;
 	}
@@ -65,6 +65,53 @@ public:
 	 * Destructor
 	 */
 	~NEXeCluster() {
+	}
+
+	/**
+	 * Add grid points to the vector of diffusion coefficients or remove
+	 * them if the value is negative.
+	 *
+	 * @param i The number of grid point to add or remove
+	 */
+	void addGridPoints(int i) override {
+		if (diffusionFactor > 0.0) {
+			Reactant::addGridPoints(i);
+		}
+
+		// Don't do anything
+		return;
+	}
+
+	/**
+	 * This operation sets the temperature at which the reactant currently
+	 * exists. Temperature-dependent quantities are recomputed when this
+	 * operation is called, so the temperature should always be set first.
+	 *
+	 * @param temp The new cluster temperature
+	 * @param i The location on the grid
+	 */
+	void setTemperature(double temp, int i) override {
+		if (diffusionFactor > 0.0) {
+			Reactant::setTemperature(temp, i);
+		}
+
+		// Don't do anything
+		return;
+	}
+
+	/**
+	 * This operation returns the diffusion coefficient for this reactant and is
+	 * calculated from the diffusion factor.
+	 *
+	 * @param i The position on the grid
+	 * @return The diffusion coefficient
+	 */
+	double getDiffusionCoefficient(int i) const override {
+		if (diffusionFactor > 0.0) {
+			return Reactant::getDiffusionCoefficient(i);
+		}
+
+		return 0.0;
 	}
 
 };

@@ -1,6 +1,7 @@
 // Includes
 #include "SurfacePlot.h"
 #include <iostream>
+#include <string>
 
 // General VTKM includes
 #include <vtkm/cont/ArrayHandle.h>
@@ -8,9 +9,7 @@
 #include <vtkm/cont/CoordinateSystem.h>
 #include <vtkm/cont/DataSet.h>
 #include <vtkm/cont/DataSetBuilderRectilinear.h>
-#include <vtkm/cont/DeviceAdapter.h>
 #include <vtkm/cont/DynamicCellSet.h>
-#include <vtkm/cont/DynamicArrayHandle.h>
 #include <vtkm/cont/ErrorBadValue.h>
 #include <vtkm/cont/Field.h>
 
@@ -31,7 +30,6 @@
 #include <vtkm/io/writer/VTKDataSetWriter.h>
 
 using namespace xolotlViz;
-using DeviceAdapter = VTKM_DEFAULT_DEVICE_ADAPTER_TAG;
 
 #define W_WIDTH 1024
 #define W_HEIGHT 1024
@@ -105,53 +103,60 @@ void SurfacePlot::render(const std::string& fileName) {
 	view = new vtkm::rendering::View2D(scene, mapper, canvas, camera, bg);
 
 	// Print the title
-	vtkm::rendering::TextAnnotationScreen *titleAnnotation;
+	std::string titleLabel;
+	float labelLeftPos;
 	if (enableLogScale)
-		titleAnnotation = new vtkm::rendering::TextAnnotationScreen(
-				"Log of " + plotLabelProvider->titleLabel,
-				vtkm::rendering::Color::white, .07,
-				vtkm::Vec<vtkm::Float32, 2>(-.45, .93), 0);
+	{
+	  titleLabel = "Log of " + plotLabelProvider->titleLabel;
+	  labelLeftPos = -.45;
+
+	}
 	else
-		titleAnnotation = new vtkm::rendering::TextAnnotationScreen(
-				plotLabelProvider->titleLabel, vtkm::rendering::Color::white,
-				.07, vtkm::Vec<vtkm::Float32, 2>(-.45, .93), 0);
-	view->AddAnnotation(titleAnnotation);
+	{
+	  titleLabel = plotLabelProvider->titleLabel;
+	  labelLeftPos = -.25;
+	}
+  std::unique_ptr<vtkm::rendering::TextAnnotationScreen> titleAnnotation(
+      new vtkm::rendering::TextAnnotationScreen(
+				titleLabel, vtkm::rendering::Color::white,
+				.07, vtkm::Vec<vtkm::Float32, 2>(labelLeftPos, .93), 0));
+	view->AddAnnotation(std::move(titleAnnotation));
 
 	// Print the axis labels
-	vtkm::rendering::TextAnnotationScreen *axis1Annotation =
+	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis1Annotation(
 			new vtkm::rendering::TextAnnotationScreen(
 					plotLabelProvider->axis1Label,
 					vtkm::rendering::Color::white, .065,
-					vtkm::Vec<vtkm::Float32, 2>(-.12, -.9), 0);
-	view->AddAnnotation(axis1Annotation);
+					vtkm::Vec<vtkm::Float32, 2>(-.12, -.9), 0));
+	view->AddAnnotation(std::move(axis1Annotation));
 
-	vtkm::rendering::TextAnnotationScreen *axis2Annotation =
+	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis2Annotation(
 			new vtkm::rendering::TextAnnotationScreen(
 					plotLabelProvider->axis2Label,
 					vtkm::rendering::Color::white, .065,
-					vtkm::Vec<vtkm::Float32, 2>(-.85, -.15), 90);
-	view->AddAnnotation(axis2Annotation);
+					vtkm::Vec<vtkm::Float32, 2>(-.85, -.15), 90));
+	view->AddAnnotation(std::move(axis2Annotation));
 
-	vtkm::rendering::TextAnnotationScreen *axis3Annotation =
+	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis3Annotation(
 			new vtkm::rendering::TextAnnotationScreen(
 					plotLabelProvider->axis3Label,
 					vtkm::rendering::Color::white, .065,
-					vtkm::Vec<vtkm::Float32, 2>(-.15, .73), 0);
-	view->AddAnnotation(axis3Annotation);
+					vtkm::Vec<vtkm::Float32, 2>(-.15, .73), 0));
+	view->AddAnnotation(std::move(axis3Annotation));
 
 	// Add the time information
-	vtkm::rendering::TextAnnotationScreen *timeAnnotation =
+	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> timeAnnotation(
 			new vtkm::rendering::TextAnnotationScreen(
 					plotLabelProvider->timeLabel, vtkm::rendering::Color::white,
-					.055, vtkm::Vec<vtkm::Float32, 2>(.6, -.91), 0);
-	view->AddAnnotation(timeAnnotation);
+					.055, vtkm::Vec<vtkm::Float32, 2>(.6, -.91), 0));
+	view->AddAnnotation(std::move(timeAnnotation));
 
-	vtkm::rendering::TextAnnotationScreen *timeStepAnnotation =
+	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> timeStepAnnotation(
 			new vtkm::rendering::TextAnnotationScreen(
 					plotLabelProvider->timeStepLabel,
 					vtkm::rendering::Color::white, .055,
-					vtkm::Vec<vtkm::Float32, 2>(.6, -.96), 0);
-	view->AddAnnotation(timeStepAnnotation);
+					vtkm::Vec<vtkm::Float32, 2>(.6, -.96), 0));
+	view->AddAnnotation(std::move(timeStepAnnotation));
 
 	// Set the view
 	view->Initialize();

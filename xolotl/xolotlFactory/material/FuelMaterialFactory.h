@@ -5,6 +5,12 @@
 #include <MaterialFactory.h>
 #include <FuelFitFluxHandler.h>
 #include <ReSolutionHandler.h>
+#include <HeterogeneousNucleationHandler.h>
+#include <DummyAdvectionHandler.h>
+#include <DummyTrapMutationHandler.h>
+#include <Diffusion1DHandler.h>
+#include <Diffusion2DHandler.h>
+#include <Diffusion3DHandler.h>
 
 namespace xolotlFactory {
 
@@ -37,6 +43,8 @@ public:
 				std::make_shared<xolotlCore::ReSolutionHandler>();
 		theDesorptionHandler = std::make_shared<
 				xolotlCore::DummyDesorptionHandler>();
+		theNucleationHandler = std::make_shared<
+				xolotlCore::HeterogeneousNucleationHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {
@@ -81,7 +89,12 @@ public:
 
 		// Change the flux amplitude because we have to take into account
 		// that there are one xenon created every 4 fissions.
-		theFluxHandler->setFluxAmplitude(options.getFluxAmplitude() / 4.0);
+		theFluxHandler->setFluxAmplitude(
+				options.getFluxAmplitude() * options.getFissionYield());
+
+		// Pass the fission yield to the re-solution and heterogenenous nucletation handlers
+		theReSolutionHandler->setFissionYield(options.getFissionYield());
+		theNucleationHandler->setFissionYield(options.getFissionYield());
 
 		return;
 	}

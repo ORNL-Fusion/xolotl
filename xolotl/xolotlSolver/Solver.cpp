@@ -9,15 +9,14 @@ ISolverHandler* Solver::solverHandler = nullptr;
 
 Solver::Solver(ISolverHandler& _solverHandler,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-		numCLIArgs(0), CLIArgs(NULL), handlerRegistry(registry) {
+		optionsString(""), handlerRegistry(registry) {
 
 	solverHandler = &_solverHandler;
 }
 
-void Solver::setCommandLineOptions(int argc, char **argv) {
+void Solver::setCommandLineOptions(std::string arg) {
 	// Keep the arguments
-	numCLIArgs = argc;
-	CLIArgs = argv;
+	optionsString = arg;
 }
 
 } /* end namespace xolotlSolver */

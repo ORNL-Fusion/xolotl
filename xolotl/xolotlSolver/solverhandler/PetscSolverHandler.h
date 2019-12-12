@@ -38,17 +38,6 @@ protected:
 	std::vector<double> lastTemperature;
 
 	/**
-	 * A vector for holding the partial derivatives of one cluster. It is sized in
-	 * the createSolverContext() operation.
-	 *
-	 * The vector is used for every cluster and immediately reset to zero before
-	 * being used for the next. This allows the acquisition of the partial
-	 * derivatives to take up minimal memory and require no additional dynamic
-	 * allocations.
-	 */
-	std::vector<double> clusterPartials;
-
-	/**
 	 * A vector for holding the partial derivatives for one cluster in the order
 	 * that PETSc expects. It is sized in the createSolverContext() operation.
 	 *

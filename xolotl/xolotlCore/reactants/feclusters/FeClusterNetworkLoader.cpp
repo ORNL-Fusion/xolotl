@@ -46,7 +46,7 @@ std::unique_ptr<FeCluster> FeClusterNetworkLoader::createFeCluster(int numHe,
 }
 
 std::unique_ptr<FeCluster> FeClusterNetworkLoader::createFeSuperCluster(
-		Array1D<int, 4> &bounds, IReactionNetwork& network) const {
+		Array<int, 4> &bounds, IReactionNetwork& network) const {
 	// Compute the values to create the cluster from the bounds
 	int count = (bounds[1] - bounds[0]) * (bounds[3] - bounds[2]);
 	double heSize = (bounds[0] + bounds[1] - 1) / 2.0, vSize = (bounds[2]
@@ -122,6 +122,18 @@ std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::load(
 	// Prepare the network
 	std::unique_ptr<FeClusterReactionNetwork> network(
 			new FeClusterReactionNetwork(handlerRegistry));
+
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = ironLatticeConstant;
+	network->setLatticeParameter(latticeParam);
+
+	// Set the helium radius in the network
+	double radius = options.getImpurityRadius();
+	if (!(radius > 0.0))
+		radius = heliumRadius;
+	network->setImpurityRadius(radius);
 
 	// Loop on the clusters
 	for (int i = 0; i < normalSize + superSize; i++) {
@@ -199,6 +211,18 @@ std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::generate(
 	std::unique_ptr<FeClusterReactionNetwork> network(
 			new FeClusterReactionNetwork(handlerRegistry));
 	std::vector<std::reference_wrapper<Reactant> > reactants;
+
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = ironLatticeConstant;
+	network->setLatticeParameter(latticeParam);
+
+	// Set the helium radius in the network
+	double radius = options.getImpurityRadius();
+	if (!(radius > 0.0))
+		radius = heliumRadius;
+	network->setImpurityRadius(radius);
 
 	// I formation energies in eV
 	std::vector<double> iFormationEnergies = { 0.0 };

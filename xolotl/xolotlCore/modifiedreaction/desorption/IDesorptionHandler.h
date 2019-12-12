@@ -26,52 +26,52 @@ public:
 	/**
 	 * The initialize method generates an empty vector for desorption.
 	 *
-	 * @param grid The grid on the x axis
+	 * @param nx The number of grid points in the X direction
 	 * @param ny The number of grid points in the Y direction
-	 * @param hy The step size in the Y direction
 	 * @param nz The number of grid points in the Z direction
-	 * @param hz The step size in the Z direction
 	 */
-	virtual void initialize(std::vector<double> grid, int ny = 0, double hy =
-			0.0, int nz = 0, double hz = 0.0) = 0;
+	virtual void initialize(int nx, int ny = 1, int nz = 1) = 0;
 
 	/**
 	 * This method defines which cluster desorbs at each grid point.
 	 *
 	 * @param surfacePos The index of the position of the surface
 	 * @param network The network
-	 * @param grid The grid on the x axis
+	 * @param nx The number of grid points in the X direction
+	 * @param xs The beginning of the grid on this process
 	 */
 	virtual void initializeIndex1D(int surfacePos,
-			const IReactionNetwork& network, std::vector<double> grid) = 0;
+			const IReactionNetwork& network, int nx, int xs) = 0;
 
 	/**
 	 * This method defines which cluster desorbs at each grid point.
 	 *
 	 * @param surfacePos The index of the position of the surface
 	 * @param network The network
-	 * @param grid The grid on the x axis
+	 * @param nx The number of grid points in the X direction
+	 * @param xs The beginning of the grid on this process
 	 * @param ny The number of grid points in the Y direction
-	 * @param hy The step size in the Y direction
+	 * @param ys The beginning of the grid on this process
 	 */
 	virtual void initializeIndex2D(std::vector<int> surfacePos,
-			const IReactionNetwork& network, std::vector<double> grid, int ny,
-			double hy) = 0;
+			const IReactionNetwork& network, int nx, int xs, int ny = 1,
+			int ys = 0) = 0;
 
 	/**
 	 * This method defines which cluster desorbs at each grid point.
 	 *
 	 * @param surfacePos The index of the position of the surface
 	 * @param network The network
-	 * @param grid The grid on the x axis
+	 * @param nx The number of grid points in the X direction
+	 * @param xs The beginning of the grid on this process
 	 * @param ny The number of grid points in the Y direction
-	 * @param hy The step size in the Y direction
+	 * @param ys The beginning of the grid on this process
 	 * @param nz The number of grid points in the Z direction
-	 * @param hz The step size in the Z direction
+	 * @param zs The beginning of the grid on this process
 	 */
 	virtual void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-			const IReactionNetwork& network, std::vector<double> grid, int ny,
-			double hy, int nz, double hz) = 0;
+			const IReactionNetwork& network, int nx, int xs, int ny = 1,
+			int ys = 0, int nz = 1, int zs = 0) = 0;
 
 	/**
 	 * Compute the flux due to the desorption for all the cluster,
@@ -84,13 +84,11 @@ public:
 	 * at the grid point where the desorption is computed used to find the
 	 * next solution
 	 * @param xi The index of the position on the grid in the depth direction
-	 * @param xs The beginning of the grid on this process
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 */
 	virtual void computeDesorption(double *concOffset,
-			double *updatedConcOffset, int xi, int xs, int yj = 0,
-			int zk = 0) = 0;
+			double *updatedConcOffset, int xi, int yj = 0, int zk = 0) = 0;
 
 	/**
 	 * Compute the partials due to the desorption for all the
@@ -103,7 +101,6 @@ public:
 	 * @param indices The pointer to the array that will contain the indices
 	 * of the clusters
 	 * @param xi The index of the position on the grid in the depth direction
-	 * @param xs The beginning of the grid on this process
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 *
@@ -111,7 +108,7 @@ public:
 	 * at this grid point
 	 */
 	virtual int computePartialsForDesorption(double *val, int *indices, int xi,
-			int xs, int yj = 0, int zk = 0) = 0;
+			int yj = 0, int zk = 0) = 0;
 
 	/**
 	 * Get the total number of clusters in the network that can undergo desorption.

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <memory>
 #include "NDArray.h"
 #include "IReactant.h"
@@ -105,6 +106,26 @@ public:
 	 * @return The list of all of the reactants in the network.
 	 */
 	virtual const ReactantMap& getAll(ReactantType type) const = 0;
+
+	/**
+	 * Get the reaction radius for any type of cluster given its size
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The reaction radius
+	 */
+	virtual double getReactionRadius(ReactantType const typeName,
+			int size) const = 0;
+
+	/**
+	 * Get the formation energy for any type of cluster given its size
+	 *
+	 * @param typeName The type of cluster
+	 * @param size The size of cluster
+	 * @return The formation energy
+	 */
+	virtual double getFormationEnergy(ReactantType const typeName,
+			int size) const = 0;
 
 	/**
 	 * Give the reactant to the network.
@@ -314,8 +335,8 @@ public:
 	 * @param vals The values of partials for the reactions
 	 */
 	virtual void computeAllPartials(const std::vector<size_t>& startingIdx,
-			const std::vector<int>& indices,
-			std::vector<double>& vals, int i = 0) const = 0;
+			const std::vector<int>& indices, std::vector<double>& vals, int i =
+					0) const = 0;
 
 	/**
 	 * This operation returns the biggest production rate in the network.
@@ -365,11 +386,78 @@ public:
 	virtual double getFissionRate() const = 0;
 
 	/**
+	 * This operation sets the density of xenon in a bubble, needed to compute all the reaction radii
+	 * in NE.
+	 *
+	 * @param density The density
+	 */
+	virtual void setDensity(double density) = 0;
+
+	/**
+	 * This operation returns the density of xenon in a bubble, needed to compute all the reaction radii
+	 * in NE.
+	 *
+	 * @return The density
+	 */
+	virtual double getDensity() const = 0;
+
+	/**
+	 * This operation sets the lattice parameter
+	 *
+	 * @param lattice The lattice parameter
+	 */
+	virtual void setLatticeParameter(double lattice) = 0;
+
+	/**
+	 * This operation returns the lattice parameter
+	 *
+	 * @return The lattice parameter
+	 */
+	virtual double getLatticeParameter() const = 0;
+
+	/**
+	 * This operation sets the impurity radius
+	 *
+	 * @param radius The impurity radius
+	 */
+	virtual void setImpurityRadius(double radius) = 0;
+
+	/**
+	 * This operation returns the impurity radius
+	 *
+	 * @return The impurity radius
+	 */
+	virtual double getImpurityRadius() const = 0;
+
+	/**
+	 * This operation sets the interstitial bias
+	 *
+	 * @param bias The interstitial bias
+	 */
+	virtual void setInterstitialBias(double bias) = 0;
+
+	/**
+	 * This operation returns the interstitial bias
+	 *
+	 * @return The interstitial bias
+	 */
+	virtual double getInterstitialBias() const = 0;
+
+	/**
 	 * Dump a representation of the network to the given output stream.
 	 *
 	 * @param os Output stream on which to write network description.
 	 */
 	virtual void dumpTo(std::ostream& os) const = 0;
+
+	/**
+	 * Obtain reactant types supported by our network.
+	 * A reactant type might be returned even though no reactant
+	 * of that type currently exists in the network.
+	 *
+	 * @return Collection of reactant types supported by our network.
+	 */
+	virtual const std::set<ReactantType>& getKnownReactantTypes() const = 0;
 };
 
 }

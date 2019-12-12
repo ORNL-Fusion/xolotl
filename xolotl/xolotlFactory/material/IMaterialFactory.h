@@ -9,6 +9,7 @@
 #include <ITrapMutationHandler.h>
 #include <IReSolutionHandler.h>
 #include <IDesorptionHandler.h>
+#include <IHeterogeneousNucleationHandler.h>
 
 namespace xolotlFactory {
 
@@ -73,6 +74,13 @@ public:
 	 * @return The desorption handler.
 	 */
 	virtual std::shared_ptr<xolotlCore::IDesorptionHandler> getDesorptionHandler() const = 0;
+
+	/**
+	 * Return the heterogeneous nucleation handler.
+	 *
+	 * @return The nucleation handler.
+	 */
+	virtual std::shared_ptr<xolotlCore::IHeterogeneousNucleationHandler> getNucleationHandler() const = 0;
 
 	/**
 	 * Function that create the wanted material factory depending on the given type.

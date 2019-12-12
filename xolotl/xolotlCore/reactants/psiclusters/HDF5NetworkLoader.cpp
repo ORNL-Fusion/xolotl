@@ -22,11 +22,29 @@ std::unique_ptr<IReactionNetwork> HDF5NetworkLoader::load(
 	int numHe = 0, numV = 0, numI = 0, numD = 0, numT = 0;
 	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
-	std::vector < std::reference_wrapper<Reactant> > reactants;
+	std::vector<std::reference_wrapper<Reactant> > reactants;
 
 	// Prepare the network
-	std::unique_ptr < PSIClusterReactionNetwork
-			> network(new PSIClusterReactionNetwork(handlerRegistry));
+	std::unique_ptr<PSIClusterReactionNetwork> network(
+			new PSIClusterReactionNetwork(handlerRegistry));
+
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = tungstenLatticeConstant;
+	network->setLatticeParameter(latticeParam);
+
+	// Set the helium radius in the network
+	double radius = options.getImpurityRadius();
+	if (!(radius > 0.0))
+		radius = heliumRadius;
+	network->setImpurityRadius(radius);
+
+	// Set the interstitial bias in the network
+	network->setInterstitialBias(options.getBiasFactor());
+
+	// Set the hydrogan radius factor
+	hydrogenRadiusFactor = options.getHydrogenFactor();
 
 	// Loop on the clusters
 	for (int i = 0; i < normalSize + superSize; i++) {

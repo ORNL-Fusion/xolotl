@@ -13,11 +13,8 @@ namespace xolotlSolver {
 class Solver: public ISolver {
 protected:
 
-	//! The number command line arguments
-	int numCLIArgs;
-
-	//! The command line arguments
-	char **CLIArgs;
+	//! The string of option
+	std::string optionsString;
 
 	//! The original solver handler.
 	static ISolverHandler* solverHandler;
@@ -43,10 +40,9 @@ public:
 	 * startup to the solver. These options are static options specified at
 	 * the start of the program whereas the options passed to setOptions() may
 	 * change.
-	 * @param argc The number of command line arguments
-	 * @param argv The array of command line arguments
+	 * @param arg The string of arguments
 	 */
-	void setCommandLineOptions(int argc, char **argv);
+	void setCommandLineOptions(std::string arg);
 
 	/**
 	 * This operation returns the solver handler for this solver. This

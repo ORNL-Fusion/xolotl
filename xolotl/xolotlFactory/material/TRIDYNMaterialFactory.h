@@ -40,6 +40,8 @@ public:
 				xolotlCore::DummyReSolutionHandler>();
 		theDesorptionHandler =
 				std::make_shared<xolotlCore::DesorptionHandler>();
+		theNucleationHandler = std::make_shared<
+				xolotlCore::DummyNucleationHandler>();
 
 		// Switch on the dimension for the diffusion handler
 		switch (dim) {

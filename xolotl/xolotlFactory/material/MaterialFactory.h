@@ -8,6 +8,7 @@
 #include <DummyTrapMutationHandler.h>
 #include <DummyReSolutionHandler.h>
 #include <DummyDesorptionHandler.h>
+#include <DummyNucleationHandler.h>
 #include <TokenizedLineReader.h>
 #include <XGBAdvectionHandler.h>
 #include <YGBAdvectionHandler.h>
@@ -43,6 +44,9 @@ protected:
 	//! The desorption handler
 	std::shared_ptr<xolotlCore::IDesorptionHandler> theDesorptionHandler;
 
+	//! The heterogeneous nucleation handler
+	std::shared_ptr<xolotlCore::IHeterogeneousNucleationHandler> theNucleationHandler;
+
 public:
 
 	/**
@@ -62,7 +66,7 @@ public:
 	 *
 	 * @param options The Xolotl options.
 	 */
-	void initializeMaterial(const xolotlCore::Options &options) {
+	virtual void initializeMaterial(const xolotlCore::Options &options) {
 		// Wrong if both he flux and time profile options are used
 		if (options.useFluxAmplitude() && options.useFluxTimeProfile()) {
 			// A constant flux value AND a time profile cannot both be given.
@@ -102,6 +106,9 @@ public:
 					xolotlCore::DummyDesorptionHandler>();
 		else
 			theDiffusionHandler->setDesorption(true);
+		if (!map["heterogeneous"])
+			theNucleationHandler = std::make_shared<
+					xolotlCore::DummyNucleationHandler>();
 
 		// Get the number of dimensions
 		int dim = options.getDimensionNumber();
@@ -214,7 +221,17 @@ public:
 	std::shared_ptr<xolotlCore::IDesorptionHandler> getDesorptionHandler() const {
 		return theDesorptionHandler;
 	}
-};
+
+	/**
+	 * Return the heterogeneous nucleation handler.
+	 *
+	 *  @return The nucleation handler.
+	 */
+	std::shared_ptr<xolotlCore::IHeterogeneousNucleationHandler> getNucleationHandler() const {
+		return theNucleationHandler;
+	}
+}
+;
 
 } // end namespace xolotlFactory
 

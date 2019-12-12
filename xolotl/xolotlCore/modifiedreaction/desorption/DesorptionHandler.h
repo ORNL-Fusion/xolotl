@@ -51,16 +51,15 @@ public:
 	 *
 	 * \see IDesorptionHandler.h
 	 */
-	virtual void initialize(std::vector<double> grid, int ny = 0, double hy = 0.0,
-			int nz = 0, double hz = 0.0);
+	virtual void initialize(int nx, int ny = 1, int nz = 1);
 
 	/**
 	 * This method defines which cluster desorbs at each grid point.
 	 *
 	 * \see IDesorptionHandler.h
 	 */
-	virtual void initializeIndex1D(int surfacePos, const IReactionNetwork& network,
-			std::vector<double> grid);
+	virtual void initializeIndex1D(int surfacePos,
+			const IReactionNetwork& network, int nx, int xs);
 
 	/**
 	 * This method defines which cluster desorbs at each grid point.
@@ -68,8 +67,8 @@ public:
 	 * \see IDesorptionHandler.h
 	 */
 	virtual void initializeIndex2D(std::vector<int> surfacePos,
-			const IReactionNetwork& network, std::vector<double> grid, int ny,
-			double hy);
+			const IReactionNetwork& network, int nx, int xs, int ny = 1,
+			int ys = 0);
 
 	/**
 	 * This method defines which cluster desorbs at each grid point.
@@ -77,8 +76,8 @@ public:
 	 * \see IDesorptionHandler.h
 	 */
 	virtual void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-			const IReactionNetwork& network, std::vector<double> grid, int ny,
-			double hy, int nz, double hz);
+			const IReactionNetwork& network, int nx, int xs, int ny = 1,
+			int ys = 0, int nz = 1, int zs = 0);
 
 	/**
 	 * Compute the flux due to the desorption for all the cluster,
@@ -94,7 +93,7 @@ public:
 	 * \see IDesorptionHandler.h
 	 */
 	void computeDesorption(double *concOffset, double *updatedConcOffset,
-			int xi, int xs, int yj = 0, int zk = 0);
+			int xi, int yj = 0, int zk = 0);
 
 	/**
 	 * Compute the partials due to the desorption for all the
@@ -110,8 +109,8 @@ public:
 	 *
 	 * \see IDesorptionHandler.h
 	 */
-	int computePartialsForDesorption(double *val, int *indices, int xi, int xs,
-			int yj = 0, int zk = 0);
+	int computePartialsForDesorption(double *val, int *indices, int xi, int yj =
+			0, int zk = 0);
 
 	/**
 	 * Get the total number of clusters in the network that can undergo desorption.

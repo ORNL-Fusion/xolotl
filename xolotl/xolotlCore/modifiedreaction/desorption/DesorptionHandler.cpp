@@ -7,8 +7,7 @@
 
 namespace xolotlCore {
 
-void DesorptionHandler::initialize(std::vector<double> grid, int ny, double hy,
-		int nz, double hz) {
+void DesorptionHandler::initialize(int nx, int ny, int nz) {
 	// Clear the vector of H indices at each grid point
 	hClusters.clear();
 
@@ -34,8 +33,8 @@ void DesorptionHandler::initialize(std::vector<double> grid, int ny, double hy,
 			ReactantRefVector1D temp1DVector;
 
 			// Loop on the grid points in the depth direction
-			temp1DVector.reserve(grid.size() - 2);
-			for (int i = 0; i < grid.size() - 2; i++) {
+			temp1DVector.reserve(nx);
+			for (int i = 0; i < nx; i++) {
 				// Indicate no bubbles at this grid point.
 				temp1DVector.emplace_back();
 			}
@@ -54,7 +53,7 @@ void DesorptionHandler::initialize(std::vector<double> grid, int ny, double hy,
 }
 
 void DesorptionHandler::initializeIndex1D(int surfacePos,
-		const IReactionNetwork& network, std::vector<double> grid) {
+		const IReactionNetwork& network, int nx, int xs) {
 	// Clear the vector of H indices
 	hClusters.clear();
 
@@ -64,10 +63,10 @@ void DesorptionHandler::initializeIndex1D(int surfacePos,
 	ReactantRefVector1D temp1DVector;
 
 	// Loop on the grid points in the depth direction
-	for (int i = 0; i < grid.size() - 2; i++) {
+	for (int i = 0; i < nx; i++) {
 		// If we are on the left side of the surface there is no
 		// modified trap-mutation
-		if (i <= surfacePos || i > surfacePos + 1) {
+		if (i + xs <= surfacePos || i + xs > surfacePos + 1) {
 			temp1DVector.emplace_back();
 			continue;
 		}
@@ -99,8 +98,7 @@ void DesorptionHandler::initializeIndex1D(int surfacePos,
 }
 
 void DesorptionHandler::initializeIndex2D(std::vector<int> surfacePos,
-		const IReactionNetwork& network, std::vector<double> grid, int ny,
-		double hy) {
+		const IReactionNetwork& network, int nx, int xs, int ny, int ys) {
 	// Clear the vector of H indices
 	hClusters.clear();
 
@@ -115,10 +113,11 @@ void DesorptionHandler::initializeIndex2D(std::vector<int> surfacePos,
 		ReactantRefVector1D temp1DVector;
 
 		// Loop on the grid points in the depth direction
-		for (int i = 0; i < grid.size() - 2; i++) {
+		for (int i = 0; i < nx; i++) {
 			// If we are on the left side of the surface there is no
 			// modified trap-mutation
-			if (i <= surfacePos[j] || i > surfacePos[j] + 1) {
+			if (i + xs <= surfacePos[j + ys]
+					|| i + xs > surfacePos[j + ys] + 1) {
 				temp1DVector.emplace_back();
 				continue;
 			}
@@ -152,8 +151,8 @@ void DesorptionHandler::initializeIndex2D(std::vector<int> surfacePos,
 
 void DesorptionHandler::initializeIndex3D(
 		std::vector<std::vector<int> > surfacePos,
-		const IReactionNetwork& network, std::vector<double> grid, int ny,
-		double hy, int nz, double hz) {
+		const IReactionNetwork& network, int nx, int xs, int ny, int ys, int nz,
+		int zs) {
 	// Clear the vector of H indices
 	hClusters.clear();
 
@@ -171,10 +170,11 @@ void DesorptionHandler::initializeIndex3D(
 			ReactantRefVector1D temp1DVector;
 
 			// Loop on the grid points in the depth direction
-			for (int i = 0; i < grid.size() - 2; i++) {
+			for (int i = 0; i < nx; i++) {
 				// If we are on the left side of the surface there is no
 				// modified trap-mutation
-				if (i <= surfacePos[j][k] || i > surfacePos[j][k] + 1) {
+				if (i <= surfacePos[j + ys][k + zs]
+						|| i > surfacePos[j + ys][k + zs] + 1) {
 					temp1DVector.emplace_back();
 					continue;
 				}
@@ -208,7 +208,7 @@ void DesorptionHandler::initializeIndex3D(
 }
 
 void DesorptionHandler::computeDesorption(double *concOffset,
-		double *updatedConcOffset, int xi, int xs, int yj, int zk) {
+		double *updatedConcOffset, int xi, int yj, int zk) {
 	// Loop on the list
 	for (IReactant const& currReactant : hClusters[zk][yj][xi]) {
 		// Get the stored cluster and its ID
@@ -217,6 +217,8 @@ void DesorptionHandler::computeDesorption(double *concOffset,
 
 		// Get the initial concentration of hydrogen
 		double oldConc = concOffset[clusterIndex];
+
+		std::cout << xi << " " << oldConc << " " << equilibriumConc << std::endl;
 
 		// Check the equilibrium concentration
 		if (oldConc > equilibriumConc)
@@ -228,7 +230,7 @@ void DesorptionHandler::computeDesorption(double *concOffset,
 }
 
 int DesorptionHandler::computePartialsForDesorption(double *val, int *indices,
-		int xi, int xs, int yj, int zk) {
+		int xi, int yj, int zk) {
 	// Consider all clusters at this grid point.
 	// TODO Relying on convention for indices in indices/vals arrays is
 	// error prone - could be done with multiple parallel arrays.

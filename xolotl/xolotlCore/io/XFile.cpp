@@ -8,6 +8,7 @@
 #include <PSISuperCluster.h>
 #include <FeSuperCluster.h>
 #include <NESuperCluster.h>
+#include <AlloySuperCluster.h>
 
 namespace xolotlCore {
 
@@ -325,8 +326,8 @@ const std::string XFile::ClusterGroup::compositionAttrName = "composition";
 const std::string XFile::ClusterGroup::heVListDataName = "heVList";
 const std::string XFile::ClusterGroup::boundsAttrName = "bounds";
 const std::string XFile::ClusterGroup::nTotAttrName = "nTot";
-const std::string XFile::ClusterGroup::numXeAttrName = "numXe";
-const std::string XFile::ClusterGroup::radiusAttrName = "radius";
+const std::string XFile::ClusterGroup::numAtomAttrName = "numAtom";
+const std::string XFile::ClusterGroup::typeAttrName = "type";
 const std::string XFile::ClusterGroup::productionDataName = "prod";
 const std::string XFile::ClusterGroup::combinationDataName = "comb";
 const std::string XFile::ClusterGroup::dissociationDataName = "disso";
@@ -388,16 +389,43 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 		int nTot = currCluster.getNTot();
 		Attribute<decltype(nTot)> nTotAttr(*this, nTotAttrName, scalarDSpace);
 		nTotAttr.setTo(nTot);
-		// Add a numXe attribute.
-		double numXe = currCluster.getAverage();
-		Attribute<decltype(numXe)> numXeAttr(*this, numXeAttrName,
+		// Add a numAtom attribute.
+		int numAtom = currCluster.getAverage()
+				+ (double) (currCluster.getNTot() - 1) / 2.0;
+		Attribute<decltype(numAtom)> numAtomAttr(*this, numAtomAttrName,
 				scalarDSpace);
-		numXeAttr.setTo(numXe);
-		// Add a radius attribute.
-		double radius = currCluster.getReactionRadius();
-		Attribute<decltype(radius)> radiusAttr(*this, radiusAttrName,
+		numAtomAttr.setTo(numAtom);
+	}
+	// Super Alloy cluster case
+	else if (cluster.getType() == ReactantType::VoidSuper
+			|| cluster.getType() == ReactantType::FrankSuper
+			|| cluster.getType() == ReactantType::PerfectSuper
+			|| cluster.getType() == ReactantType::FaultedSuper) {
+		auto& currCluster = static_cast<AlloySuperCluster&>(cluster);
+		// Build a dataspace for our scalar attributes.
+		XFile::ScalarDataSpace scalarDSpace;
+
+		// Add a nTot attribute.
+		int nTot = currCluster.getSectionWidth();
+		Attribute<decltype(nTot)> nTotAttr(*this, nTotAttrName, scalarDSpace);
+		nTotAttr.setTo(nTot);
+		// Add a numAtom attribute.
+		int numAtom = currCluster.getSize() + (double) (nTot - 1) / 2.0;
+		Attribute<decltype(numAtom)> numAtomAttr(*this, numAtomAttrName,
 				scalarDSpace);
-		radiusAttr.setTo(radius);
+		numAtomAttr.setTo(numAtom);
+		// Add a type attribute.
+		int type = 0;
+		if (cluster.getType() == ReactantType::VoidSuper)
+			type = 1;
+		else if (cluster.getType() == ReactantType::FrankSuper)
+			type = 2;
+		else if (cluster.getType() == ReactantType::PerfectSuper)
+			type = 3;
+		else if (cluster.getType() == ReactantType::FaultedSuper)
+			type = 4;
+		Attribute<decltype(type)> typeAttr(*this, typeAttrName, scalarDSpace);
+		typeAttr.setTo(type);
 	}
 	// Normal cluster case
 	else {
@@ -596,10 +624,10 @@ XFile::ClusterGroup::clusterList XFile::ClusterGroup::readPSISuperCluster() cons
 	return heVList;
 }
 
-Array1D<int, 4> XFile::ClusterGroup::readFeSuperCluster() const {
+Array<int, 4> XFile::ClusterGroup::readFeSuperCluster() const {
 
 	// Read the bounds attribute
-	Array1D<int, 4> bounds;
+	Array<int, 4> bounds;
 	hid_t attributeId = H5Aopen_name(getId(), boundsAttrName.c_str());
 	hid_t dataspaceId = H5Aget_space(attributeId);
 	herr_t status = H5Aread(attributeId, H5T_STD_I32LE, &bounds);
@@ -608,17 +636,47 @@ Array1D<int, 4> XFile::ClusterGroup::readFeSuperCluster() const {
 	return bounds;
 }
 
-void XFile::ClusterGroup::readNESuperCluster(int &nTot, double &numXe,
-		double &radius) const {
+void XFile::ClusterGroup::readNESuperCluster(int &nTot, int &maxXe) const {
 	// Open and read the nTot attribute
 	Attribute<int> nTotAttr(*this, nTotAttrName);
 	nTot = nTotAttr.get();
 	// Open and read the numXe attribute
-	Attribute<double> numXeAttr(*this, numXeAttrName);
-	numXe = numXeAttr.get();
-	// Open and read the radius attribute
-	Attribute<double> radiusAttr(*this, radiusAttrName);
-	radius = radiusAttr.get();
+	Attribute<int> numAtomAttr(*this, numAtomAttrName);
+	maxXe = numAtomAttr.get();
+
+	return;
+}
+
+void XFile::ClusterGroup::readAlloySuperCluster(int &nTot, int &maxAtom,
+		ReactantType &type) const {
+	// Open and read the nTot attribute
+	Attribute<int> nTotAttr(*this, nTotAttrName);
+	nTot = nTotAttr.get();
+	// Open and read the numAtom attribute
+	Attribute<int> numAtomAttr(*this, numAtomAttrName);
+	maxAtom = numAtomAttr.get();
+	// Open and read the type attribute
+	Attribute<int> typeAttr(*this, typeAttrName);
+	int typeIndex = typeAttr.get();
+
+	switch (typeIndex) {
+	case 1:
+		type = ReactantType::Void;
+		break;
+	case 2:
+		type = ReactantType::Frank;
+		break;
+	case 3:
+		type = ReactantType::Perfect;
+		break;
+	case 4:
+		type = ReactantType::Faulted;
+		break;
+	default:
+		std::cout << "Type not recognized for alloy super cluster: "
+				<< typeIndex << std::endl;
+		break;
+	}
 
 	return;
 }
@@ -852,6 +910,11 @@ const std::string XFile::TimestepGroup::nDAttrName = "nDeuterium";
 const std::string XFile::TimestepGroup::prevDFluxAttrName = "previousDFlux";
 const std::string XFile::TimestepGroup::nTAttrName = "nTritium";
 const std::string XFile::TimestepGroup::prevTFluxAttrName = "previousTFlux";
+const std::string XFile::TimestepGroup::nVAttrName = "nVacancy";
+const std::string XFile::TimestepGroup::prevVFluxAttrName = "previousVFlux";
+const std::string XFile::TimestepGroup::nIntersBulkAttrName = "nIBulk";
+const std::string XFile::TimestepGroup::prevIBulkFluxAttrName =
+		"previousIBulkFlux";
 
 const std::string XFile::TimestepGroup::concDatasetName = "concs";
 
@@ -1032,7 +1095,8 @@ void XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
 
 void XFile::TimestepGroup::writeBottom1D(Data1DType nHe,
 		Data1DType previousHeFlux, Data1DType nD, Data1DType previousDFlux,
-		Data1DType nT, Data1DType previousTFlux) {
+		Data1DType nT, Data1DType previousTFlux, Data1DType nV,
+		Data1DType previousVFlux, Data1DType nI, Data1DType previousIFlux) {
 
 	// Build a data space for scalar attributes.
 	XFile::ScalarDataSpace scalarDSpace;
@@ -1061,6 +1125,23 @@ void XFile::TimestepGroup::writeBottom1D(Data1DType nHe,
 	// Add flux of tritium attribute
 	Attribute<Data1DType> prevTFluxAttr(*this, prevTFluxAttrName, scalarDSpace);
 	prevTFluxAttr.setTo(previousTFlux);
+
+	// Add quantity of vacancy attribute
+	Attribute<Data1DType> nVAttr(*this, nVAttrName, scalarDSpace);
+	nVAttr.setTo(nV);
+
+	// Add flux of vacancy attribute
+	Attribute<Data1DType> prevVFluxAttr(*this, prevVFluxAttrName, scalarDSpace);
+	prevVFluxAttr.setTo(previousVFlux);
+
+	// Add quantity of int attribute
+	Attribute<Data1DType> nIAttr(*this, nIntersBulkAttrName, scalarDSpace);
+	nIAttr.setTo(nI);
+
+	// Add flux of int attribute
+	Attribute<Data1DType> prevIFluxAttr(*this, prevIBulkFluxAttrName,
+			scalarDSpace);
+	prevIFluxAttr.setTo(previousIFlux);
 }
 
 void XFile::TimestepGroup::writeBottom2D(const Data2DType& nHe,

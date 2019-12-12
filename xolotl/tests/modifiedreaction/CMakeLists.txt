@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/desorption
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters

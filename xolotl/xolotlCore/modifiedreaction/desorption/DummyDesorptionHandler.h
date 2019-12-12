@@ -36,7 +36,7 @@ public:
 	 * \see IDesorptionHandler.h
 	 */
 	void initializeIndex1D(int surfacePos, const IReactionNetwork& network,
-			std::vector<double> grid) {
+			int nx, int xs) {
 		// Don't do anything
 		return;
 	}
@@ -47,8 +47,8 @@ public:
 	 * \see IDesorptionHandler.h
 	 */
 	void initializeIndex2D(std::vector<int> surfacePos,
-			const IReactionNetwork& network, std::vector<double> grid, int ny,
-			double hy) {
+			const IReactionNetwork& network, int nx, int xs, int ny = 1,
+			int ys = 0) {
 		// Don't do anything
 		return;
 	}
@@ -59,8 +59,8 @@ public:
 	 * \see IDesorptionHandler.h
 	 */
 	void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-			const IReactionNetwork& network, std::vector<double> grid, int ny,
-			double hy, int nz, double hz) {
+			const IReactionNetwork& network, int nx, int xs, int ny = 1,
+			int ys = 0, int nz = 1, int zs = 0) {
 		// Don't do anything
 		return;
 	}

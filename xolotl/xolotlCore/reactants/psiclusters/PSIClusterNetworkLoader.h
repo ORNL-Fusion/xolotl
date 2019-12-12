@@ -28,7 +28,7 @@ protected:
 
 	// I formation energies in eV
 	std::vector<double> iFormationEnergies = { 10.0, 18.5, 27.0, 35.0, 42.5,
-			48.0 };
+			48.0, 54.0, 59.5, 64.5, 69.0, 73.5, 77.5, 81.0, 84.0, 86.5, 88.5, 90.0, 91.0 };
 	// I diffusion factors in nm^2/s
 	std::vector<double> iDiffusion = { 8.8e+10, 8.0e+10, 3.9e+10, 2.0e+10,
 			1.0e+10 };
@@ -58,6 +58,9 @@ protected:
 	double vOneDiffusion = 1.8e+12;
 	// The migration energy for a single vacancy in eV
 	double vOneMigration = 1.30;
+
+	// The factor between He and H radius sizes
+	double hydrogenRadiusFactor = 0.25;
 
 	/**
 	 * The maximum number of helium atoms that can be combined with a vacancy
