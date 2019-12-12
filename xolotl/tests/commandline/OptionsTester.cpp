@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	<< std::endl << "density=9.0" << std::endl << "lattice=0.1"
 	<< std::endl << "impurityRadius=0.5" << std::endl << "biasFactor=2.0"
 	<< std::endl << "hydrogenFactor=0.5" << std::endl<< "xenonDiffusivity=3.0"
-	<< std::endl<< "fissionYield=0.3" << std::endl;
+	<< std::endl << "fissionYield=0.3" << std::endl << "solutionEnergy=1.1" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -223,6 +223,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	// Check the fission yield option
 	BOOST_REQUIRE_EQUAL(opts.getFissionYield(), 0.3);
 
+	// Check the solution energy option
+	BOOST_REQUIRE_EQUAL(opts.getSolutionEnergy(), 1.1);
+
 	// Check the physical processes option
 	auto map = opts.getProcesses();
 	BOOST_REQUIRE_EQUAL(map["diff"], true);
@@ -234,6 +237,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 	BOOST_REQUIRE_EQUAL(map["bursting"], false);
 	BOOST_REQUIRE_EQUAL(map["resolution"], false);
 	BOOST_REQUIRE_EQUAL(map["heterogeneous"], false);
+	BOOST_REQUIRE_EQUAL(map["desorption"], false);
 
 	// Check the PETSc options
 	BOOST_REQUIRE_EQUAL(opts.getPetscArg(), "-fieldsplit_0_pc_type redundant "

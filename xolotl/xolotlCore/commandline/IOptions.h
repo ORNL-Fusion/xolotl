@@ -481,6 +481,13 @@ public:
 	 */
 	virtual double getFissionYield() const = 0;
 
+	/**
+	 * Obtain the value of the H solution energy.
+	 *
+	 * @return The energy
+	 */
+	virtual double getSolutionEnergy() const = 0;
+
 };
 //end class IOptions
 

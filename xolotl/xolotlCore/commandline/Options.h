@@ -315,6 +315,11 @@ protected:
 	 */
 	double fissionYield;
 
+	/**
+	 * Energy for H desorption
+	 */
+	double solutionEnergy;
+
 public:
 
 	/**
@@ -852,6 +857,14 @@ public:
 	 */
 	virtual double getFissionYield() const override {
 		return fissionYield;
+	}
+
+	/**
+	 * Obtain the value of the H solution energy.
+	 * \see IOptions.h
+	 */
+	virtual double getSolutionEnergy() const override {
+		return solutionEnergy;
 	}
 
 };

@@ -234,9 +234,10 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 			for (auto const& currConcData : myConcs[i]) {
 				concOffset[currConcData.first] = currConcData.second;
 			}
-			// Set the temperature in the network
+			// Set the temperature in the network and desorption handler
 			double temp = myConcs[i][myConcs[i].size() - 1].second;
 			network.setTemperature(temp, i);
+			desorptionHandler->setTemperature(temp);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
@@ -403,6 +404,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// middle
 		if (std::fabs(lastTemperature[xi + 1 - xs] - temperature) > 0.1) {
 			network.setTemperature(temperature, xi + 1 - xs);
+			desorptionHandler->setTemperature(temperature);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);
@@ -445,7 +447,8 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				updatedConcOffset, xi, xs);
 
 		// ----- Compute the desorption over the locally owned part of the grid -----
-		desorptionHandler->computeDesorption(concOffset, updatedConcOffset, xi - xs);
+		desorptionHandler->computeDesorption(concOffset, updatedConcOffset,
+				xi - xs);
 
 		// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 		network.computeAllFluxes(updatedConcOffset, xi + 1 - xs);
@@ -603,6 +606,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		// middle
 		if (std::fabs(lastTemperature[xi + 1 - xs] - temperature) > 0.1) {
 			network.setTemperature(temperature, xi + 1 - xs);
+			desorptionHandler->setTemperature(temperature);
 			lastTemperature[xi + 1 - xs] = temperature;
 		}
 
@@ -812,6 +816,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// Update the network if the temperature changed
 		if (std::fabs(lastTemperature[xi + 1 - xs] - temperature) > 0.1) {
 			network.setTemperature(temperature, xi + 1 - xs);
+			desorptionHandler->setTemperature(temperature);
 			// Update the modified trap-mutation rate
 			// that depends on the network reaction rates
 			mutationHandler->updateTrapMutationRate(network);

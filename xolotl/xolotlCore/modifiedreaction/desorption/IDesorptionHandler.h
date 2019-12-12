@@ -117,6 +117,20 @@ public:
 	 */
 	virtual int getNumberOfDesorbing() const = 0;
 
+	/**
+	 * Set the temperature to compute the equilibrium concentration and the rate.
+	 *
+	 * @param temp The temperature
+	 */
+	virtual void setTemperature(double temp) = 0;
+
+	/**
+	 * Set H solution energy.
+	 *
+	 * @param esol The energy
+	 */
+	virtual void setSolutionEnergy(double esol) = 0;
+
 };
 //end class IDesorptionHandler
 

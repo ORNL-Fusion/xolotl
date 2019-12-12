@@ -23,6 +23,9 @@ protected:
 	//! The equilibrium concentration
 	double equilibriumConc;
 
+	//! The solution energy
+	double solutionEnergy;
+
 	/**
 	 * The vector containing the indices of the cluster undergoing desorption for each grid point.
 	 */
@@ -37,7 +40,8 @@ public:
 	 * The constructor
 	 */
 	DesorptionHandler() :
-			nCluster(2), kRecombination(0.5), equilibriumConc(1.0) {
+			nCluster(0), kRecombination(0.0), equilibriumConc(0.0), solutionEnergy(
+					0.0) {
 	}
 
 	/**
@@ -119,6 +123,26 @@ public:
 	 */
 	virtual int getNumberOfDesorbing() const {
 		return nCluster;
+	}
+
+	/**
+	 * Set the temperature to compute the equilibrium concentration and the rate.
+	 *
+	 * @param temp The temperature
+	 */
+	virtual void setTemperature(double temp) {
+		equilibriumConc = exp(
+				-solutionEnergy / (xolotlCore::kBoltzmann * temp));
+		kRecombination = 5.0e-17 * exp(-1.34 / (xolotlCore::kBoltzmann * temp));
+	}
+
+	/**
+	 * Set H solution energy.
+	 *
+	 * @param esol The energy
+	 */
+	virtual void setSolutionEnergy(double esol) {
+		solutionEnergy = esol;
 	}
 
 };

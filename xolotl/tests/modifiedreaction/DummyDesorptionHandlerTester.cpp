@@ -68,6 +68,8 @@ BOOST_AUTO_TEST_CASE(checkDesorption) {
 	DummyDesorptionHandler desorptionHandler;
 
 	// Initialize it
+	desorptionHandler.setSolutionEnergy(1.0);
+	desorptionHandler.setTemperature(1000.0);
 	desorptionHandler.initialize(13);
 	desorptionHandler.initializeIndex1D(surfacePos, *network, 13, 0);
 

@@ -39,12 +39,15 @@ void Diffusion1DHandler::initializeDiffusionGrid(
 						diffusionGrid[i + 1][n] = false;
 					}
 				}
+
+				break;
 			}
 			// Set the grid position
 			gridPosition[0] = (grid[i + xs] + grid[i + xs + 1]) / 2.0 - grid[1];
 
 			// Check if we are on a sink
-			if (fabs(gridPosition[0] - surfaceLocation) < 0.001) {
+			if (fabs(gridPosition[0] - surfaceLocation)
+					< (grid[1] - grid[0]) * 0.9) {
 				wasOnSink = true;
 			}
 		}

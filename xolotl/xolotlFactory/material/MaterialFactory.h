@@ -113,6 +113,9 @@ public:
 		// Get the number of dimensions
 		int dim = options.getDimensionNumber();
 
+		// Pass the solution energy to the desorption handler
+		theDesorptionHandler->setSolutionEnergy(options.getSolutionEnergy());
+
 		// Set-up the grain boundaries from the options
 		std::string gbString = options.getGbString();
 		// Build an input stream from the GB string.

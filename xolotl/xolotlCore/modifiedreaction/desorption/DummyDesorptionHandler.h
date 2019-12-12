@@ -65,6 +65,26 @@ public:
 		return;
 	}
 
+	/**
+	 * Set the temperature to compute the equilibrium concentration and the rate.
+	 *
+	 * \see IDesorptionHandler.h
+	 */
+	virtual void setTemperature(double temp) {
+		// Don't do anything
+		return;
+	}
+
+	/**
+	 * Set H solution energy.
+	 *
+	 * \see IDesorptionHandler.h
+	 */
+	virtual void setSolutionEnergy(double esol) {
+		// Don't do anything
+		return;
+	}
+
 };
 //end class DummyDesorptionHandler
 

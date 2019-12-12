@@ -84,6 +84,8 @@ void DesorptionHandler::initializeIndex1D(int surfacePos,
 			if (cluster.getSize() == 1)
 				indices.emplace_back(cluster);
 		}
+		// Get the number of clusters
+		nCluster = indices.size();
 		// Add indices to the index vector
 		temp1DVector.emplace_back(indices);
 	}
@@ -135,6 +137,8 @@ void DesorptionHandler::initializeIndex2D(std::vector<int> surfacePos,
 				if (cluster.getSize() == 1)
 					indices.emplace_back(cluster);
 			}
+			// Get the number of clusters
+			nCluster = indices.size();
 			// Add indices to the index vector
 			temp1DVector.emplace_back(indices);
 		}
@@ -192,6 +196,8 @@ void DesorptionHandler::initializeIndex3D(
 					if (cluster.getSize() == 1)
 						indices.emplace_back(cluster);
 				}
+				// Get the number of clusters
+				nCluster = indices.size();
 				// Add indices to the index vector
 				temp1DVector.emplace_back(indices);
 			}
@@ -217,8 +223,6 @@ void DesorptionHandler::computeDesorption(double *concOffset,
 
 		// Get the initial concentration of hydrogen
 		double oldConc = concOffset[clusterIndex];
-
-		std::cout << xi << " " << oldConc << " " << equilibriumConc << std::endl;
 
 		// Check the equilibrium concentration
 		if (oldConc > equilibriumConc)

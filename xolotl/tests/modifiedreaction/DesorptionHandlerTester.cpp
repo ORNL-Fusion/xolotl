@@ -69,6 +69,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedDesorption) {
 	DesorptionHandler desorptionHandler;
 
 	// Initialize it
+	desorptionHandler.setSolutionEnergy(1.0);
+	desorptionHandler.setTemperature(1200.0);
 	desorptionHandler.initialize(13);
 	desorptionHandler.initializeIndex1D(surfacePos, *network, 13, 0);
 
@@ -98,7 +100,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedDesorption) {
 	desorptionHandler.computeDesorption(concOffset, updatedConcOffset, 1, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[14], -417605000, 0.01); // D_1
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[14], -9.84040153e-14, 0.01); // D_1
 
 	// Get the offset for the ninth grid point
 	concOffset = conc + 8 * dof;
@@ -141,7 +143,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedDesorption) {
 	// Check values
 	BOOST_REQUIRE_EQUAL(nDesorbing, 1);
 	BOOST_REQUIRE_EQUAL(indices[0], 14);
-	BOOST_REQUIRE_CLOSE(val[0], -28900, 0.01); // D_1
+	BOOST_REQUIRE_CLOSE(val[0], -6.809966e-18, 0.01); // D_1
 
 	// Remove the created file
 	std::string tempFile = "param.txt";

@@ -28,7 +28,7 @@ Options::Options() :
 				0), density(10.162795276841), pulseTime(0.0), pulseProportion(
 				0.0), latticeParameter(-1.0), impurityRadius(-1.0), biasFactor(
 				1.15), hydrogenFactor(0.25), xenonDiffusivity(-1.0), fissionYield(
-				0.25) {
+				0.25), solutionEnergy(1.0) {
 	radiusMinSizes.Init(0);
 
 	return;
@@ -93,7 +93,7 @@ void Options::readParams(int argc, char* argv[]) {
 					"the numbers correspond to the surface orientation.")(
 			"initialV", bpo::value<double>(&initialVConcentration),
 			"The value of the initial concentration of vacancies in the material.")(
-			"zeta", bpo::value<double>(&zeta)->default_value(0.73),
+			"zeta", bpo::value<double>(&zeta),
 			"The value of the electronic stopping power in the material (0.73 by default).")(
 			"voidPortion", bpo::value<double>(&voidPortion),
 			"The value (in %) of the void portion at the start of the simulation.")(
@@ -137,7 +137,7 @@ void Options::readParams(int argc, char* argv[]) {
 					"generator (default = determined from current time) and "
 					"whether each process should print the seed value "
 					"it uses (default = don't print)")("resoSize",
-			bpo::value<int>(&resoMinSize)->default_value(0),
+			bpo::value<int>(&resoMinSize),
 			"This option allows the user a minimum size for the re-solution (default is 0).")(
 			"density", bpo::value<double>(&density),
 			"This option allows the user to set a density in nm-3 "
@@ -156,7 +156,10 @@ void Options::readParams(int argc, char* argv[]) {
 			"xenonDiffusivity", bpo::value<double>(&xenonDiffusivity),
 			"This option allows the user to set the diffusion coefficient for xenon in nm2 s-1.")(
 			"fissionYield", bpo::value<double>(&fissionYield),
-			"This option allows the user to set the number of xenon created for each fission.");
+			"This option allows the user to set the number of xenon created for each fission.")(
+			"solutionEnergy", bpo::value<double>(&solutionEnergy),
+			"This option allows the user to set the solution energy needed to compute the equilibrium "
+					"concentration for H desorption (default is 1 eV).");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);
