@@ -50,6 +50,12 @@ public:
         return _network->_diffusionCoefficient(_id, gridIndex);
     }
 
+    std::size_t
+	getId()
+    {
+        return _id;
+    }
+
 private:
     ReactionNetwork<TImpl>* _network {nullptr};
     std::size_t _id {plsm::invalid<std::size_t>};

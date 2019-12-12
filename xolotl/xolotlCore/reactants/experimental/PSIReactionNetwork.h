@@ -60,6 +60,7 @@ public:
     using Subpaving = typename Superclass::Subpaving;
     using ReactionType = typename Superclass::ReactionType;
     using Composition = typename Superclass::Composition;
+    using Species = PSIFullSpeciesList;
 
     using Superclass::Superclass;
 
@@ -111,8 +112,8 @@ private:
                 if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I)
                     && lo2.isOnAxis(Species::I)) {
                     // Compute the composition of the new cluster
-                    std::size_t size = lo1[static_cast<std::size_t>(Species::I)]
-                        + lo2[static_cast<std::size_t>(Species::I)];
+                    std::size_t size = lo1[Species::I]
+                        + lo2[Species::I];
                     // Loop on potential products
                     for (std::size_t k = 0; k < numClusters; ++i) {
                         // Get the composition
@@ -120,10 +121,10 @@ private:
                         if (!prodReg.isSimplex()) continue;
                         Composition lo = prodReg.getOrigin();
                         if (!lo.isOnAxis(Species::I)) continue;
-                        if (lo[static_cast<std::size_t>(Species::I)] == size) {
+                        if (lo[Species::I] == size) {
                             ret.prodClusterSets.emplace_back(i, j, k);
-                            if (lo1[static_cast<std::size_t>(Species::I)] == 1
-                                || lo2[static_cast<std::size_t>(Species::I)] == 1)
+                            if (lo1[Species::I] == 1
+                                || lo2[Species::I] == 1)
                                 ret.dissClusterSets.emplace_back(k, i, j);
                             break;
                         }
@@ -136,10 +137,10 @@ private:
                         && lo2.isOnAxis(Species::V)) || (lo1.isOnAxis(Species::V)
                                 && lo2.isOnAxis(Species::I)))) {
                     // Find out which one is which
-                    auto vSize = lo1.isOnAxis(Species::V)? lo1[static_cast<std::size_t>(Species::V)] :
-                       lo2[static_cast<std::size_t>(Species::V)];
-                    auto iSize = lo1.isOnAxis(Species::I)? lo1[static_cast<std::size_t>(Species::I)] :
-                       lo2[static_cast<std::size_t>(Species::I)];
+                    auto vSize = lo1.isOnAxis(Species::V)? lo1[Species::V] :
+                       lo2[Species::V];
+                    auto iSize = lo1.isOnAxis(Species::I)? lo1[Species::I] :
+                       lo2[Species::I];
                     // Compute the product size
                     int prodSize = vSize - iSize;
                     // 3 cases
@@ -151,7 +152,7 @@ private:
                             if (!prodReg.isSimplex()) continue;
                             Composition lo = prodReg.getOrigin();
                             if (!lo.isOnAxis(Species::V)) continue;
-                            if (lo[static_cast<std::size_t>(Species::V)] == prodSize) {
+                            if (lo[Species::V] == prodSize) {
                                 ret.prodClusterSets.emplace_back(i, j, k);
                                 // No dissociation
                                 break;
@@ -166,7 +167,7 @@ private:
                             if (!prodReg.isSimplex()) continue;
                             Composition lo = prodReg.getOrigin();
                             if (!lo.isOnAxis(Species::I)) continue;
-                            if (lo[static_cast<std::size_t>(Species::I)] == prodSize) {
+                            if (lo[Species::I] == prodSize) {
                                 ret.prodClusterSets.emplace_back(i, j, k);
                                 // No dissociation
                                 break;
@@ -187,11 +188,11 @@ private:
                     auto low = lo1[l] + lo2[l];
                     auto high = hi1[l] + hi2[l] - 2;
                     // Special case for I
-                    if (l() == static_cast<std::size_t>(Species::I)) {
+                    if (l == Species::I) {
                         // Look for V
                         size_t vIdx = 0;
                         for (auto m : speciesNoI) {
-                            if (m() == static_cast<std::size_t>(Species::V)) {
+                            if (m == Species::V) {
                                 vIdx = m();
                                 break;
                             }
@@ -241,12 +242,15 @@ private:
                     // TODO: get the correct value for maxISize
                     std::size_t maxISize = 6;
                     for (std::size_t n = 1; n <= maxISize; ++n) {
-                        // TODO: Find the corresponding cluster
+                        // Find the corresponding cluster
+                        Composition comp{};
+                        comp[Species::I] = n;
+                        auto iCluster = this->findCluster(comp);
 
                         // Look for V
                         size_t vIdx = 0;
                         for (auto m : speciesNoI) {
-                            if (m() == static_cast<std::size_t>(Species::V)) {
+                            if (m == Species::V) {
                                 vIdx = m();
                                 break;
                             }
@@ -276,7 +280,7 @@ private:
                             if (isGood) {
                                 // Increase nProd
                                 nProd++;
-//                                ret.prodClusterSets.emplace_back(i, j, k, m);
+                                ret.prodClusterSets.emplace_back(i, j, k, iCluster.getId());
                                 // No dissociation
                             }
                         }
