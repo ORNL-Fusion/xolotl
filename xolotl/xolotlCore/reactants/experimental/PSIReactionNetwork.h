@@ -151,7 +151,7 @@ private:
                     // 3 cases
                     if (prodSize > 0) {
                         // Looking for V cluster
-                        for (std::size_t k = 0; k < numClusters; ++i) {
+                        for (std::size_t k = 1; k < numClusters; ++k) {
                             // Get the composition
                             const auto& prodReg = tiles(k).getRegion();
                             if (!prodReg.isSimplex()) continue;
@@ -166,7 +166,7 @@ private:
                     }
                     else if (prodSize < 0) {
                         // Looking for I cluster
-                        for (std::size_t k = 0; k < numClusters; ++i) {
+                        for (std::size_t k = 1; k < numClusters; ++k) {
                             // Get the composition
                             const auto& prodReg = tiles(k).getRegion();
                             if (!prodReg.isSimplex()) continue;
@@ -214,7 +214,7 @@ private:
 
                 // Look for potential product
                 std::size_t nProd = 0;
-                for (std::size_t k = 0; k < numClusters; ++i) {
+                for (std::size_t k = 1; k < numClusters; ++k) {
                     // Get the composition
                     const auto& prodReg = tiles(k).getRegion();
                     bool isGood = true;
@@ -265,7 +265,7 @@ private:
 
                         // Look for potential product
                         std::size_t nProd = 0;
-                        for (std::size_t k = 0; k < numClusters; ++i) {
+                        for (std::size_t k = 1; k < numClusters; ++k) {
                             // Get the composition
                             const auto& prodReg = tiles(k).getRegion();
                             bool isGood = true;

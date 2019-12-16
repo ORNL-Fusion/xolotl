@@ -228,9 +228,8 @@ ReactionNetwork<TImpl>::defineReactions()
     Kokkos::resize(_dissociationCoeffs, nDissReactions, cExt, 1, 3, cExt);
 
     auto numReactions = nProdReactions + nDissReactions;
-    Kokkos::resize(_reactions, numReactions);
     _reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
-    Kokkos::resize(_reactionRates, numReactions);
+    _reactionRates = Kokkos::View<double**>("Reaction Rates", numReactions, _gridSize);
 
     using RType = typename ReactionType::Type;
     Kokkos::parallel_for(nProdReactions, KOKKOS_LAMBDA (std::size_t i) {
