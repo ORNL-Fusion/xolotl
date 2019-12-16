@@ -13,26 +13,9 @@
 #include <math.h>
 #include <limits>
 
-#include <experimental/PSIReactionNetwork.h>
-
 using namespace std;
 using namespace xolotlCore;
 using namespace testUtils;
-
-class KokkosContext
-{
-public:
-    KokkosContext()
-    {
-        ::Kokkos::initialize();
-    }
-
-    ~KokkosContext()
-    {
-        ::Kokkos::finalize();
-    }
-};
-static KokkosContext kokkosContext{};
 
 static std::shared_ptr<xolotlPerf::IHandlerRegistry> registry =
 		std::make_shared<xolotlPerf::DummyHandlerRegistry>();
@@ -66,36 +49,6 @@ BOOST_AUTO_TEST_CASE(getSpeciesSize) {
  * its connectivity to other clusters.
  */
 BOOST_AUTO_TEST_CASE(checkConnectivity) {
-
-    using NetworkType =
-        experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
-    using Spec = typename NetworkType::Species;
-    using Composition = typename NetworkType::Composition;
-
-    // auto rNetwork = experimental::makeSimpleReactionNetwork<NetworkType>();
-    NetworkType rNetwork({10, 10, 10, 10, 10}, 0, Options{});
-    Composition comp{};
-    comp[Spec::He] = 3;
-    comp[Spec::V] = 2;
-    comp[Spec::I] = 0;
-    auto cluster = rNetwork.findCluster(comp);
-    auto compRegion = cluster.getRegion();
-    BOOST_REQUIRE(compRegion.isSimplex());
-    BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), comp);
-
-    cluster = rNetwork.getCluster(0);
-    compRegion = cluster.getRegion();
-    BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), Composition{});
-
-    using Reaction = typename NetworkType::ReactionType;
-    Reaction r0;
-    Reaction r(rNetwork, 0, Reaction::Type::dissociation, 0, 1, 2);
-    BOOST_REQUIRE(r.getType() == Reaction::Type::dissociation);
-
-    auto concs = new double[3]{};
-    auto fluxes = new double[3]{};
-    using Vue = Reaction::ConcentrationsView;
-    // r.contributeFlux(Vue(concs, 3), Vue(fluxes, 3), 0);
 
 	shared_ptr<ReactionNetwork> network = getSimplePSIReactionNetwork();
 

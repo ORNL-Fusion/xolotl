@@ -61,6 +61,7 @@ public:
     using ReactionType = typename Superclass::ReactionType;
     using Composition = typename Superclass::Composition;
     using Species = PSIFullSpeciesList;
+    static constexpr auto invalid = plsm::invalid<std::size_t>;
 
     using Superclass::Superclass;
 
@@ -89,13 +90,15 @@ private:
         Kokkos::View<double*>::HostMirror diffusionFactor)
     {
         typename Superclass::ClusterSetsPair ret;
+//    	std::cout <<"in define reaction" << std::endl;
 
         auto species = this->getSpeciesRange();
         auto speciesNoI = this->getSpeciesRangeNoI();
 
         std::size_t numClusters = tiles.extent(0);
-        for (std::size_t i = 0; i < numClusters; ++i)
+        for (std::size_t i = 1; i < numClusters; ++i)
             for (std::size_t j = i; j < numClusters; ++j) {
+//            	std::cout <<"trying: " << i << " + " << j << std::endl;
                 // Check that at least one of them is mobile
                 if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0)
                     continue;
@@ -108,26 +111,28 @@ private:
                 Composition lo2 = cl2Reg.getOrigin();
                 Composition hi2 = cl2Reg.getUpperLimitPoint();
 
+//                std::cout << lo1[Species::He] << ", " << lo1[Species::D] << ", " << lo1[Species::T]
+//						<< ", " << lo1[Species::V] << ", " << lo1[Species::I] << std::endl;
+//                std::cout << lo2[Species::He] << ", " << lo2[Species::D] << ", " << lo2[Species::T]
+//						<< ", " << lo2[Species::V] << ", " << lo2[Species::I] << std::endl;
+
                 // Special case for I + I
                 if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I)
                     && lo2.isOnAxis(Species::I)) {
                     // Compute the composition of the new cluster
                     std::size_t size = lo1[Species::I]
                         + lo2[Species::I];
-                    // Loop on potential products
-                    for (std::size_t k = 0; k < numClusters; ++i) {
-                        // Get the composition
-                        const auto& prodReg = tiles(k).getRegion();
-                        if (!prodReg.isSimplex()) continue;
-                        Composition lo = prodReg.getOrigin();
-                        if (!lo.isOnAxis(Species::I)) continue;
-                        if (lo[Species::I] == size) {
-                            ret.prodClusterSets.emplace_back(i, j, k);
-                            if (lo1[Species::I] == 1
-                                || lo2[Species::I] == 1)
-                                ret.dissClusterSets.emplace_back(k, i, j);
-                            break;
-                        }
+//                    std::cout << "I product size: " << size << std::endl;
+                    // Find the corresponding cluster
+                    Composition comp{};
+                    comp[Species::I] = size;
+                    auto iProd = this->findCluster(comp);
+                    if (iProd.getId() != invalid) {
+                        ret.prodClusterSets.emplace_back(i, j, iProd.getId());
+//                        std::cout << "prod: " << iProd.getId() << std::endl;
+                        if (lo1[Species::I] == 1
+                            || lo2[Species::I] == 1)
+                            ret.dissClusterSets.emplace_back(iProd.getId(), i, j);
                     }
                     continue;
                 }
