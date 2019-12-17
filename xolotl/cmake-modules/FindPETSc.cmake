@@ -243,7 +243,6 @@ show :
     message (STATUS "Recognized PETSc install with single library for all packages")
   endif ()
 
-  include(Check${PETSC_LANGUAGE_BINDINGS}SourceRuns)
   macro (PETSC_TEST_RUNS includes libraries runs)
     if (PETSC_VERSION VERSION_GREATER 3.1)
       set (_PETSC_TSDestroy "TSDestroy(&ts)")
@@ -278,6 +277,10 @@ int main(int argc,char *argv[]) {
   find_path (PETSC_INCLUDE_CONF petscconf.h HINTS "${PETSC_DIR}" PATH_SUFFIXES "${PETSC_ARCH}/include" "bmake/${PETSC_ARCH}" NO_DEFAULT_PATH)
   mark_as_advanced (PETSC_INCLUDE_DIR PETSC_INCLUDE_CONF)
   set (petsc_includes_minimal ${PETSC_INCLUDE_CONF} ${PETSC_INCLUDE_DIR})
+  foreach(_lang IN LISTS PETSC_LANGUAGE_BINDINGS)
+      set(petsc_includes_minimal ${petsc_includes_minimal}
+          ${MPI_${_lang}_INCLUDE_DIRS})
+  endforeach()
 
   petsc_test_runs ("${petsc_includes_minimal}" "${PETSC_LIBRARIES_TS}" petsc_works_minimal)
   if (petsc_works_minimal)
