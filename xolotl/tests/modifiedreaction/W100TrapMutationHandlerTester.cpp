@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	advectionHandlers.push_back(new DummyAdvectionHandler());
 
 	// Initialize it
-	trapMutationHandler.initialize(*network, 11, 0);
+	trapMutationHandler.initialize(*network, 11);
 	trapMutationHandler.initializeIndex1D(surfacePos, *network,
 			advectionHandlers, grid, 11, 0);
 
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	network->setTemperature(500.0);
 
 	// Reinitialize the handler
-	trapMutationHandler.initialize(*network, 11, 0);
+	trapMutationHandler.initialize(*network, 11);
 	// Update the bursting rate
 	trapMutationHandler.updateTrapMutationRate(*network);
 

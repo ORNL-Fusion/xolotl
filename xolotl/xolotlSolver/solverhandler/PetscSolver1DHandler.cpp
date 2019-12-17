@@ -100,7 +100,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	// Initialize the modified trap-mutation handler here
 	// because it adds connectivity
-	mutationHandler->initialize(network, xm, xs);
+	mutationHandler->initialize(network, xm);
 	mutationHandler->initializeIndex1D(surfacePosition, network,
 			advectionHandlers, grid, xm, xs);
 
