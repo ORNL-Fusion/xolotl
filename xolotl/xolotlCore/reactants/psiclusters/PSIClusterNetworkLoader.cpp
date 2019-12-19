@@ -361,14 +361,15 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 		if (i <= iFormationEnergies.size())
 			nextCluster->setFormationEnergy(iFormationEnergies[i - 1]);
 		else
-			nextCluster->setFormationEnergy(48.0 + 6.0 * ((double) i - 6.0));
+			nextCluster->setFormationEnergy(
+					iFormationEnergies[iFormationEnergies.size() - 1]
+							+ (double) (i - iFormationEnergies.size()));
 		if (i <= iDiffusion.size()) {
 			nextCluster->setDiffusionFactor(iDiffusion[i - 1]);
 			nextCluster->setMigrationEnergy(iMigration[i - 1]);
 		} else {
-			nextCluster->setDiffusionFactor(0.0);
-			nextCluster->setMigrationEnergy(
-					std::numeric_limits<double>::infinity());
+			nextCluster->setDiffusionFactor(iDiffusion[0] / (double) i);
+			nextCluster->setMigrationEnergy(min((double) i, 15.0) * 0.1);
 		}
 
 		// Save it in the network

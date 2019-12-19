@@ -108,9 +108,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initialize(const IReactionNetwork& network, int nx, int xs, int ny = 0,
-			double hy = 0.0, int ys = 0, int nz = 0, double hz = 0.0,
-			int zs = 0);
+	void initialize(const IReactionNetwork& network, int nx, int ny = 0,
+			int nz = 0);
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.

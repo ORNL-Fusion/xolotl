@@ -410,8 +410,7 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 		Attribute<decltype(nTot)> nTotAttr(*this, nTotAttrName, scalarDSpace);
 		nTotAttr.setTo(nTot);
 		// Add a numAtom attribute.
-		int numAtom = currCluster.getSize()
-				+ (double) (nTot - 1) / 2.0;
+		int numAtom = currCluster.getSize() + (double) (nTot - 1) / 2.0;
 		Attribute<decltype(numAtom)> numAtomAttr(*this, numAtomAttrName,
 				scalarDSpace);
 		numAtomAttr.setTo(numAtom);
@@ -923,6 +922,12 @@ const std::string XFile::TimestepGroup::prevDBulkFluxAttrName =
 const std::string XFile::TimestepGroup::nTBulkAttrName = "nTritiumBulk";
 const std::string XFile::TimestepGroup::prevTBulkFluxAttrName =
 		"previousTBulkFlux";
+const std::string XFile::TimestepGroup::nVBulkAttrName = "nVacancyBulk";
+const std::string XFile::TimestepGroup::prevVBulkFluxAttrName =
+		"previousVBulkFlux";
+const std::string XFile::TimestepGroup::nIntersBulkAttrName = "nInterBulk";
+const std::string XFile::TimestepGroup::prevIBulkFluxAttrName =
+		"previousIBulkFlux";
 const std::string XFile::TimestepGroup::nHeBurstAttrName = "nHeliumBurst";
 const std::string XFile::TimestepGroup::nDBurstAttrName = "nDeuteriumBurst";
 const std::string XFile::TimestepGroup::nTBurstAttrName = "nTritiumBurst";
@@ -1135,7 +1140,8 @@ void XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
 
 void XFile::TimestepGroup::writeBottom1D(Data1DType nHe,
 		Data1DType previousHeFlux, Data1DType nD, Data1DType previousDFlux,
-		Data1DType nT, Data1DType previousTFlux) {
+		Data1DType nT, Data1DType previousTFlux, Data1DType nV,
+		Data1DType previousVFlux, Data1DType nI, Data1DType previousIFlux) {
 
 	// Build a data space for scalar attributes.
 	XFile::ScalarDataSpace scalarDSpace;
@@ -1166,6 +1172,23 @@ void XFile::TimestepGroup::writeBottom1D(Data1DType nHe,
 	Attribute<Data1DType> prevTFluxAttr(*this, prevTBulkFluxAttrName,
 			scalarDSpace);
 	prevTFluxAttr.setTo(previousTFlux);
+
+	// Add quantity of vacancy attribute
+	Attribute<Data1DType> nVAttr(*this, nVBulkAttrName, scalarDSpace);
+	nVAttr.setTo(nV);
+
+	// Add flux of vacancy attribute
+	Attribute<Data1DType> prevVFluxAttr(*this, prevVBulkFluxAttrName, scalarDSpace);
+	prevVFluxAttr.setTo(previousVFlux);
+
+	// Add quantity of int attribute
+	Attribute<Data1DType> nIAttr(*this, nIntersBulkAttrName, scalarDSpace);
+	nIAttr.setTo(nI);
+
+	// Add flux of int attribute
+	Attribute<Data1DType> prevIFluxAttr(*this, prevIBulkFluxAttrName,
+			scalarDSpace);
+	prevIFluxAttr.setTo(previousIFlux);
 }
 
 void XFile::TimestepGroup::writeBottom2D(const Data2DType& nHe,

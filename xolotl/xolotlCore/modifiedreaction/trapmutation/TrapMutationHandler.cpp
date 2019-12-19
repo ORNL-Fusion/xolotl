@@ -8,7 +8,7 @@
 namespace xolotlCore {
 
 void TrapMutationHandler::initialize(const IReactionNetwork& network, int nx,
-		int xs, int ny, double hy, int ys, int nz, double hz, int zs) {
+		int ny, int nz) {
 	// Add the needed reaction (dissociation) connectivity
 	// Each (He_i)(V) cluster and I clusters are connected to He_i
 
@@ -144,7 +144,7 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 	for (int i = 0; i < nx; i++) {
 		// If we are on the left side of the surface there is no
 		// modified trap-mutation
-		if (i <= surfacePos) {
+		if (i + xs <= surfacePos) {
 			temp1DVector.emplace_back();
 			continue;
 		}
@@ -225,16 +225,16 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 
 			// If we are on the left side of the surface there is no
 			// modified trap-mutation
-			if (i <= surfacePos[j]) {
+			if (i + xs <= surfacePos[j + ys]) {
 				temp1DVector.push_back(indices);
 				continue;
 			}
 
 			// Get the depth
 			double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0
-					- grid[surfacePos[j] + 1];
+					- grid[surfacePos[j + ys] + 1];
 			double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0
-					- grid[surfacePos[j] + 1];
+					- grid[surfacePos[j + ys] + 1];
 
 			// Loop on the depth vector
 			for (int l = 0; l < depthVec.size(); l++) {
@@ -359,16 +359,16 @@ void TrapMutationHandler::initializeIndex3D(
 
 				// If we are on the left side of the surface there is no
 				// modified trap-mutation
-				if (i <= surfacePos[j][k]) {
+				if (i + xs <= surfacePos[j + ys][k + zs]) {
 					temp1DVector.emplace_back(indices);
 					continue;
 				}
 
 				// Get the depth
 				double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0
-						- grid[surfacePos[j][k] + 1];
+						- grid[surfacePos[j + ys][k + zs] + 1];
 				double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0
-						- grid[surfacePos[j][k] + 1];
+						- grid[surfacePos[j + ys][k + zs] + 1];
 
 				// Loop on the depth vector
 				for (int l = 0; l < depthVec.size(); l++) {

@@ -44,7 +44,7 @@ void Options::readParams(int argc, char* argv[]) {
 	// Parse the command line options.
 	bpo::options_description desc("Command line options");
 	desc.add_options()("help", "show this help message")("parameterFile",
-			bpo::value < std::string > (&param_file), "input file name");
+			bpo::value<std::string>(&param_file), "input file name");
 
 	bpo::positional_options_description p;
 	p.add("parameterFile", -1);
@@ -60,14 +60,13 @@ void Options::readParams(int argc, char* argv[]) {
 	// allowed both on command line and in
 	// config file
 	bpo::options_description config("Parameters");
-	config.add_options()("networkFile",
-			bpo::value < string > (&networkFilename),
+	config.add_options()("networkFile", bpo::value<string>(&networkFilename),
 			"The network will be loaded from this HDF5 file.")("startTemp",
 			bpo::value<string>(),
 			"The temperature (in Kelvin) will be the constant floating point value specified. "
 					"(default = 1000). If two values are given, the second one is interpreted "
 					"as the bulk temperature and a gradient will be used. (NOTE: Use only ONE temperature option)")(
-			"tempFile", bpo::value < string > (&tempProfileFilename),
+			"tempFile", bpo::value<string>(&tempProfileFilename),
 			"A temperature profile is given by the specified file, "
 					"then linear interpolation is used to fit the data."
 					"(NOTE: If a temperature file is given, "
@@ -77,7 +76,7 @@ void Options::readParams(int argc, char* argv[]) {
 			"flux", bpo::value<double>(&fluxAmplitude),
 			"The value of the incoming flux in #/nm2/s. If the Fuel case is used it actually "
 					"corresponds to the fission rate in #/nm3/s.")("fluxFile",
-			bpo::value < string > (&fluxProfileFilename),
+			bpo::value<string>(&fluxProfileFilename),
 			"A time profile for the flux is given by the specified file, "
 					"then linear interpolation is used to fit the data."
 					"(NOTE: If a flux profile file is given, "
@@ -88,7 +87,7 @@ void Options::readParams(int argc, char* argv[]) {
 			"Which set of handlers to use for the visualization. (default = dummy, available std,dummy).")(
 			"dimensions", bpo::value<int>(&dimensionNumber),
 			"Number of dimensions for the simulation.")("material",
-			bpo::value < string > (&materialName),
+			bpo::value<string>(&materialName),
 			"The material options are as follows: {W100, W110, W111, "
 					"W211, Fuel, TRIDYN, Fe, 800H}, where W is for tungsten and "
 					"the numbers correspond to the surface orientation.")(
@@ -100,12 +99,12 @@ void Options::readParams(int argc, char* argv[]) {
 			"The value (in %) of the void portion at the start of the simulation.")(
 			"regularGrid", bpo::value<string>(),
 			"Will the grid be regularly spaced in the x direction? (available yes,no,cheby,<filename>)")(
-			"petscArgs", bpo::value < string > (&petscArg),
+			"petscArgs", bpo::value<string>(&petscArg),
 			"All the arguments that will be given to PETSc.")("process",
 			bpo::value<string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
 					"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, heterogeneous).")(
-			"grain", bpo::value < string > (&gbList),
+			"grain", bpo::value<string>(&gbList),
 			"This option allows the user to add GB in the X, Y, or Z directions. "
 					"To do so, simply write the direction followed "
 					"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
@@ -358,8 +357,18 @@ void Options::readParams(int argc, char* argv[]) {
 
 			// Loop on the tokens
 			for (int i = 0; i < tokens.size(); ++i) {
-				// Switch the value to true in the map
-				processMap[tokens[i]] = true;
+				// Look for the key
+				if (processMap.find(tokens[i]) == processMap.end()) {
+					// Send an error
+					std::cerr << "\nOptions: The process name is not known: "
+							<< tokens[i] << std::endl << "Aborting!\n"
+							<< std::endl;
+					shouldRunFlag = false;
+					exitCode = EXIT_FAILURE;
+				} else {
+					// Switch the value to true in the map
+					processMap[tokens[i]] = true;
+				}
 			}
 		}
 

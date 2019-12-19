@@ -121,7 +121,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 			"DMDAGetCorners failed.");
 
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, xm, xs, ym, hY, ys, zm, hZ, zs);
+	mutationHandler->initialize(network, xm, ym, zm);
 	mutationHandler->initializeIndex3D(surfacePosition, network,
 			advectionHandlers, grid, xm, xs, ym, hY, ys, zm, hZ, zs);
 

@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	advectionHandlers.push_back(advecHandler);
 
 	// Initialize it
-	trapMutationHandler.initialize(*network, 11, 0, 5, 0.5, 0);
+	trapMutationHandler.initialize(*network, 11, 5);
 	trapMutationHandler.initializeIndex2D(surfacePos, *network,
 			advectionHandlers, grid, 11, 0, 5, 0.5, 0);
 
