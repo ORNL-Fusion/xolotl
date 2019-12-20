@@ -146,3 +146,5 @@ ADD_EXECUTABLE (xolotl main.cpp)
 
 # Link the reactants library
 target_link_libraries(xolotl ${XOLOTL_LIBS})
+
+message("REPOSITORY_NAME: ${REPOSITORY_NAME}")

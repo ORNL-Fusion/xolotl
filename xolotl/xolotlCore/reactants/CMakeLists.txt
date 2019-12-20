@@ -5,9 +5,6 @@ SET(PACKAGE_DESCRIPTION "Xolotl Reactants")
 #Set the library name
 SET(LIBRARY_NAME "xolotlReactants")
 
-list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
-find_package(plsm REQUIRED)
-
 #Collect all header filenames in this project
 #and glob them in HEADERS
 file(GLOB HEADERS *.h psiclusters/*.h neclusters/*.h feclusters/*.h alloyclusters/*.h)

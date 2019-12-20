@@ -19,6 +19,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 
 #Add a library
 add_library(${LIBRARY_NAME} STATIC ${SRC})
+target_link_libraries(${LIBRARY_NAME} Kokkos::kokkos)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

@@ -9,23 +9,24 @@ class PSIReactionNetwork;
 
 
 template <typename TSpeciesEnum>
-class PSIReaction : public
-    ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
-        ::template Reaction<PSIReaction<TSpeciesEnum>>
+class PSIReaction :
+    public Reaction<PSIReactionNetwork<TSpeciesEnum>, PSIReaction<TSpeciesEnum>>
 {
 public:
     using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
 
-    using Superclass = typename ReactionNetwork<NetworkType>
-        ::template Reaction<PSIReaction<TSpeciesEnum>>;
+    using Superclass = Reaction<NetworkType, PSIReaction<TSpeciesEnum>>;
+
     using Superclass::Superclass;
 
+    KOKKOS_INLINE_FUNCTION
     double
     computeBindingEnergy();
 };
 
 template <typename TSpeciesEnum>
-inline double
+KOKKOS_INLINE_FUNCTION
+double
 PSIReaction<TSpeciesEnum>::computeBindingEnergy()
 {
     assert(this->_type == PSIReaction::Type::dissociation);
@@ -68,9 +69,9 @@ PSIReaction<TSpeciesEnum>::computeBindingEnergy()
 
     double be = 0.0;
 
-    auto cl = this->_network->getCluster(this->_reactants[0]);
-    auto prod1 = this->_network->getCluster(this->_products[0]);
-    auto prod2 = this->_network->getCluster(this->_products[1]);
+    auto cl = this->_clusterData.getCluster(this->_reactants[0]);
+    auto prod1 = this->_clusterData.getCluster(this->_products[0]);
+    auto prod2 = this->_clusterData.getCluster(this->_products[1]);
 
     auto clReg = cl.getRegion();
     auto prod1Reg = prod1.getRegion();

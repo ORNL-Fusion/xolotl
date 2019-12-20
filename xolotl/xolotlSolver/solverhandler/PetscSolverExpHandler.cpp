@@ -185,7 +185,7 @@ void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC,
 	// Update the network if the temperature changed
 	if (std::fabs(lastTemperature[0] - temperature[0]) > 0.1) {
 		expNetwork.setTemperature(temperature);
-		lastTemperature[0] = temperature;
+		lastTemperature[0] = temperature[0];
 	}
 
 	// ----- Account for flux of incoming particles -----
@@ -258,7 +258,7 @@ void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC,
 	// Update the network if the temperature changed
 	if (std::fabs(lastTemperature[0] - temperature[0]) > 0.1) {
 		expNetwork.setTemperature(temperature);
-		lastTemperature[0] = temperature;
+		lastTemperature[0] = temperature[0];
 	}
 
 	// ----- Take care of the reactions for all the reactants -----

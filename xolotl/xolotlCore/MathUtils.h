@@ -14,7 +14,36 @@
 #include <cmath>
 #include <numeric>
 
+#include <Kokkos_Array.hpp>
+
 namespace xolotlCore {
+
+//@{
+/**
+ * Duplicate of the generic std::min and std::max to be used in device kernels
+ */
+template <typename T>
+KOKKOS_INLINE_FUNCTION
+const T&
+min(const T& a, const T& b)
+{
+    if (b < a) {
+        return b;
+    }
+    return a;
+}
+
+template <typename T>
+KOKKOS_INLINE_FUNCTION
+const T&
+max(const T& a, const T& b)
+{
+    if (a < b) {
+        return b;
+    }
+    return a;
+}
+//@}
 
 /**
  * This function tests two doubles to see if they are equal.
@@ -44,7 +73,7 @@ inline bool equal(double a, double b) {
  * @param order
  *            The order of the polynomial
  */
-inline double legendrePolynomial(double x, int degree) {
+KOKKOS_INLINE_FUNCTION double legendrePolynomial(double x, int degree) {
 	// For degree 0 the return value is 1.0
 	if (degree == 0)
 		return 1.0;
@@ -67,6 +96,7 @@ inline double legendrePolynomial(double x, int degree) {
 	return Pn;
 }
 
+//@{
 /**
  * This operation computes the Nth order Legendre polynomials
  *
@@ -91,12 +121,28 @@ inline double computeNthOrderLegendre(double x,
 	return valAtX;
 }
 
+template <std::size_t N>
+KOKKOS_INLINE_FUNCTION
+double
+computeNthOrderLegendre(double x, const Kokkos::Array<double, N+1>& coeffs)
+{
+    int currDegree = 0;
+    double value = 0.0;
+    for (auto currCoeff : coeffs) {
+        value += currCoeff * legendrePolynomial(x, currDegree);
+        ++currDegree;
+    }
+    return value;
+}
+//@}
+
 /**
  * Computes
  *
  * sum (n - mean) from alpha to beta
  */
-inline double firstOrderSum(double alpha, double beta, double mean) {
+KOKKOS_INLINE_FUNCTION
+double firstOrderSum(double alpha, double beta, double mean) {
 	double toReturn = ((beta * (beta + 1.0)) / 2.0)
 			- ((alpha * (alpha - 1.0)) / 2.0) - ((beta - alpha + 1.0) * mean);
 
@@ -108,7 +154,8 @@ inline double firstOrderSum(double alpha, double beta, double mean) {
  *
  * sum (n - mean)^2 from alpha to beta
  */
-inline double secondOrderSum(double alpha, double beta, double mean) {
+KOKKOS_INLINE_FUNCTION
+double secondOrderSum(double alpha, double beta, double mean) {
 	double toReturn = (beta * (beta + 1.0) * ((2.0 * beta) + 1.0)) / 6.0;
 
 	toReturn -= (alpha * (alpha - 1.0) * ((2.0 * alpha) - 1.0)) / 6.0;
@@ -127,7 +174,8 @@ inline double secondOrderSum(double alpha, double beta, double mean) {
  *
  * sum (n - mean1) * (n + offset - mean2) from alpha to beta
  */
-inline double secondOrderOffsetSum(double alpha, double beta, double mean1,
+KOKKOS_INLINE_FUNCTION
+double secondOrderOffsetSum(double alpha, double beta, double mean1,
 		double mean2, double offset) {
 	double toReturn = (beta * (beta + 1.0) * (2.0 * beta + 1.0)) / 6.0;
 

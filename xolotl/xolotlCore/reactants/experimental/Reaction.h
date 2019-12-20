@@ -5,19 +5,95 @@
 #include <plsm/detail/KokkosExtension.h>
 #include <plsm/Utility.h>
 
+#include <experimental/Cluster.h>
+
 namespace xolotlCore
 {
 namespace experimental
 {
-template <typename TImpl>
-template <typename TDerived>
-class ReactionNetwork<TImpl>::Reaction
+namespace detail
 {
+struct ReactionDataRef
+{
+    KOKKOS_INLINE_FUNCTION
+    decltype(auto)
+    getCoefficients(std::size_t reactionId)
+    {
+        if (reactionId < productionCoeffs.extent(0)) {
+            return Kokkos::subview(productionCoeffs, reactionId, Kokkos::ALL,
+                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+        }
+        else {
+            reactionId -= productionCoeffs.extent(0);
+            return Kokkos::subview(dissociationCoeffs, reactionId, Kokkos::ALL,
+                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+        }
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    decltype(auto)
+    getRates(std::size_t reactionId)
+    {
+        return Kokkos::subview(rates, reactionId, Kokkos::ALL);
+    }
+
+    Kokkos::View<double*****, Kokkos::MemoryUnmanaged> productionCoeffs;
+    Kokkos::View<double*****, Kokkos::MemoryUnmanaged> dissociationCoeffs;
+    Kokkos::View<double**, Kokkos::MemoryUnmanaged> rates;
+
+    Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged> inverseMap;
+};
+}
+
+template <typename TImpl>
+struct ReactionNetworkTraits
+{
+};
+
+namespace detail
+{
+template <typename TImpl>
+struct ReactionNetworkTypes
+{
+    using AmountType = std::uint32_t;
+    using Traits = ReactionNetworkTraits<TImpl>;
+    using Species = typename Traits::Species;
+    using Subpaving = plsm::Subpaving<AmountType, Traits::numSpecies, Species>;
+    using Region = typename Subpaving::RegionType;
+    using Composition = typename Subpaving::PointType;
+    using ClusterData = detail::ClusterData<Subpaving>;
+    using ClusterDataRef = detail::ClusterDataRef<Subpaving>;
+    using ConnectivityView = Kokkos::View<size_t**, Kokkos::MemoryUnmanaged>;
+};
+
+template <typename TImpl>
+struct ReactionNetworkProperties
+{
+    using Traits = ReactionNetworkTraits<TImpl>;
+    using Species = typename Traits::Species;
+    static constexpr std::size_t numSpecies = Traits::numSpecies;
+    using SpeciesSequence = SpeciesEnumSequence<Species, numSpecies>;
+    static constexpr std::size_t numSpeciesNoI = SpeciesSequence::sizeNoI();
+};
+}
+
+template <typename TNetwork, typename TDerived>
+class Reaction
+{
+    static constexpr std::size_t invalid = plsm::invalid<std::size_t>;
+
+    using Types = detail::ReactionNetworkTypes<TNetwork>;
+    using Props = detail::ReactionNetworkProperties<TNetwork>;
+
 public:
-    using NetworkType = ReactionNetwork<TImpl>;
-    using Cluster = typename NetworkType::Cluster;
+    using NetworkType = TNetwork;
+    using AmountType = typename Types::AmountType;
+    using Region = typename Types::Region;
+    using Composition = typename Types::Composition;
+    using ClusterDataRef = typename Types::ClusterDataRef;
     using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
     using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
+    using ConnectivityView = typename Types::ConnectivityView;
 
     enum class Type
     {
@@ -47,39 +123,49 @@ public:
 
     Reaction() = default;
 
-    Reaction(NetworkType& network, std::size_t reactionId, Type reactionType,
+    KOKKOS_INLINE_FUNCTION
+    Reaction(detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
+        std::size_t reactionId, Type reactionType,
         std::size_t cluster0, std::size_t cluster1,
         std::size_t cluster2 = invalid, std::size_t cluster3 = invalid);
 
+    KOKKOS_INLINE_FUNCTION
     Type
     getType() const noexcept
     {
         return _type;
     }
 
+    KOKKOS_INLINE_FUNCTION
     void
     updateRates();
 
+    KOKKOS_INLINE_FUNCTION
     void
     productionConnectivity(ConnectivityView connectivity);
 
+    KOKKOS_INLINE_FUNCTION
     void
     dissociationConnectivity(ConnectivityView connectivity);
 
+    KOKKOS_INLINE_FUNCTION
     void
     contributeConnectivity(ConnectivityView connectivity)
     {
         _connectFn(*this, connectivity);
     }
 
+    KOKKOS_INLINE_FUNCTION
     void
     productionFlux(ConcentrationsView concentrations, FluxesView fluxes,
         std::size_t gridIndex);
 
+    KOKKOS_INLINE_FUNCTION
     void
     dissociationFlux(ConcentrationsView concentrations, FluxesView fluxes,
         std::size_t gridIndex);
 
+    KOKKOS_INLINE_FUNCTION
     void
     contributeFlux(ConcentrationsView concentrations, FluxesView fluxes,
         std::size_t gridIndex)
@@ -87,16 +173,19 @@ public:
         _fluxFn(*this, concentrations, fluxes, gridIndex);
     }
 
+    KOKKOS_INLINE_FUNCTION
     void
     productionPartialDerivatives(ConcentrationsView concentrations,
         Kokkos::View<double*> values,
         std::size_t gridIndex);
 
+    KOKKOS_INLINE_FUNCTION
     void
     dissociationPartialDerivatives(ConcentrationsView concentrations,
         Kokkos::View<double*> values,
         std::size_t gridIndex);
 
+    KOKKOS_INLINE_FUNCTION
     void
     contributePartialDerivatives(ConcentrationsView concentrations,
         Kokkos::View<double*> values,
@@ -106,22 +195,27 @@ public:
     }
 
 private:
+    KOKKOS_INLINE_FUNCTION
     TDerived*
     asDerived()
     {
         return static_cast<TDerived*>(this);
     }
 
+    KOKKOS_INLINE_FUNCTION
     AmountType
     computeOverlap(const Region& singleCl, const Region& pairCl1,
         const Region& pairCl2);
 
+    KOKKOS_INLINE_FUNCTION
     void
     computeProductionCoefficients();
 
+    KOKKOS_INLINE_FUNCTION
     void
     computeDissociationCoefficients();
 
+    KOKKOS_INLINE_FUNCTION
     void
     copyMomentIds(std::size_t clusterId,
         Kokkos::Array<std::size_t, 4>& momentIds)
@@ -131,18 +225,21 @@ private:
             return;
         }
 
-        const auto& mIds = _network->getCluster(clusterId).getMomentIds();
+        const auto& mIds = _clusterData.getCluster(clusterId).getMomentIds();
         for (std::size_t i = 0; i < 4; ++i) {
             momentIds[i] = mIds[i];
         }
     }
 
+    KOKKOS_INLINE_FUNCTION
     double
     computeProductionRate(std::size_t gridIndex);
 
+    KOKKOS_INLINE_FUNCTION
     double
     computeDissociationRate(std::size_t gridIndex);
 
+    KOKKOS_INLINE_FUNCTION
     void
     computeProductionRates()
     {
@@ -151,6 +248,7 @@ private:
         }
     }
 
+    KOKKOS_INLINE_FUNCTION
     void
     computeDissociationRates()
     {
@@ -159,8 +257,10 @@ private:
         }
     }
 
+    KOKKOS_INLINE_FUNCTION
     void
-    addConnectivity(std::size_t rowId, std::size_t columnId, ConnectivityView connectivity)
+    addConnectivity(std::size_t rowId, std::size_t columnId,
+        ConnectivityView connectivity)
     {
         // Check that the Ids are valid
         if (rowId == invalid || columnId == invalid) return;
@@ -182,7 +282,7 @@ private:
     }
 
 protected:
-    NetworkType* _network {nullptr};
+    ClusterDataRef _clusterData;
 
     Type _type {};
 
@@ -203,8 +303,7 @@ protected:
     Kokkos::Array<std::size_t, 2> _reactants {invalid, invalid};
     Kokkos::Array<std::size_t, 2> _products {invalid, invalid};
 
-    //TODO: This '4' be numSpeciesNoI?
-    static constexpr auto nMomentIds = NetworkType::getNumberOfSpeciesNoI();
+    static constexpr auto nMomentIds = Props::numSpeciesNoI;
     Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _reactantMomentIds;
     Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _productMomentIds;
 
@@ -213,6 +312,8 @@ protected:
 
     //! Flux coefficients
     Kokkos::View<double****, Kokkos::MemoryUnmanaged> _coefs;
+
+    Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged> _inverseMap;
 };
 }
 }

@@ -21,7 +21,7 @@ public:
         ::Kokkos::finalize();
     }
 };
-static KokkosContext kokkosContext{};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
 
 /**
  * This suite is responsible for testing the experimental networks.
@@ -32,6 +32,7 @@ BOOST_AUTO_TEST_SUITE(ExpNetwork_testSuite)
  * This operation checks the creation of a PSI network
  */
 BOOST_AUTO_TEST_CASE(PSINetwork) {
+    KokkosContext kokkosContext;
 	std::cout <<"in test" << std::endl;
 
     using NetworkType =
@@ -56,9 +57,9 @@ BOOST_AUTO_TEST_CASE(PSINetwork) {
     BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), Composition{});
 
     using Reaction = typename NetworkType::ReactionType;
-    Reaction r0;
-    Reaction r(rNetwork, 0, Reaction::Type::dissociation, 0, 1, 2);
-    BOOST_REQUIRE(r.getType() == Reaction::Type::dissociation);
+    // Reaction r0;
+    // Reaction r(rNetwork, 0, Reaction::Type::dissociation, 0, 1, 2);
+    // BOOST_REQUIRE(r.getType() == Reaction::Type::dissociation);
 
     auto concs = new double[3]{};
     auto fluxes = new double[3]{};

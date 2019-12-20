@@ -55,6 +55,8 @@ class PSIReactionNetwork :
     public ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
 {
     friend class ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
+    friend class detail::ReactionNetworkWorker<PSIReactionNetwork<TSpeciesEnum>>;
+
 public:
     using Superclass = ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
     using Subpaving = typename Superclass::Subpaving;
@@ -309,7 +311,8 @@ public:
     using Species = PSIFullSpeciesList;
     using Superclass = plsm::refine::Detector<PSIClusterGenerator<Species>>;
     using NetworkType = PSIReactionNetwork<Species>;
-    using Cluster = typename NetworkType::Cluster;
+    template <typename TMemSpace>
+    using Cluster = typename NetworkType::Cluster<TMemSpace>;
     using Region = typename NetworkType::Region;
     using Composition = typename NetworkType::Composition;
     using AmountType = typename NetworkType::AmountType;
@@ -403,8 +406,10 @@ public:
         return 4 * amtV;
     }
 
+    template <typename TMemSpace>
+    KOKKOS_INLINE_FUNCTION
     double
-    getFormationEnergy(const Cluster& cluster) const noexcept
+    getFormationEnergy(const Cluster<TMemSpace>& cluster) const noexcept
     {
         constexpr auto infinity = std::numeric_limits<double>::infinity();
 
@@ -454,8 +459,10 @@ public:
         return formationEnergy;
     }
 
+    template <typename TMemSpace>
+    KOKKOS_INLINE_FUNCTION
     double
-    getMigrationEnergy(const Cluster& cluster) const noexcept
+    getMigrationEnergy(const Cluster<TMemSpace>& cluster) const noexcept
     {
         // I migration energies in eV
         constexpr Kokkos::Array<double, 6> iMigration = {
@@ -507,8 +514,10 @@ public:
         return migrationEnergy;
     }
 
+    template <typename TMemSpace>
+    KOKKOS_INLINE_FUNCTION
     double
-    getDiffusionFactor(const Cluster& cluster) const noexcept
+    getDiffusionFactor(const Cluster<TMemSpace>& cluster) const noexcept
     {
         // I diffusion factors in nm^2/s
         constexpr Kokkos::Array<double, 6> iDiffusion = {
@@ -561,20 +570,7 @@ public:
     }
 
 private:
-    //TODO: Move to MathUtils.h
-    template <std::size_t N>
-    static double
-    computeNthOrderLegendre(double x, const Kokkos::Array<double, N+1>& coeffs)
-    {
-        int currDegree = 0;
-        double value = 0.0;
-        for (auto currCoeff : coeffs) {
-            value += currCoeff * legendrePolynomial(x, currDegree);
-            ++currDegree;
-        }
-        return value;
-    }
-
+    KOKKOS_INLINE_FUNCTION
     double
     getHeVFormationEnergy(Composition comp) const noexcept
     {

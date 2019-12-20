@@ -12,6 +12,7 @@ struct EnumSequence
     using Rep = std::underlying_type_t<Enum>;
     // static_assert(std::is_signed<Rep>::value, ""); // maybe ?
 
+    KOKKOS_INLINE_FUNCTION
     constexpr
     EnumSequence(Enum val)
         :
@@ -19,12 +20,14 @@ struct EnumSequence
     {
     }
 
+    KOKKOS_INLINE_FUNCTION
     constexpr
     operator Enum() const noexcept
     {
         return value;
     }
 
+    KOKKOS_INLINE_FUNCTION
     constexpr
     Rep
     operator()() const noexcept
@@ -32,6 +35,7 @@ struct EnumSequence
         return static_cast<Rep>(value);
     }
 
+    KOKKOS_INLINE_FUNCTION
     static
     constexpr std::size_t
     size() noexcept
@@ -39,6 +43,7 @@ struct EnumSequence
         return N;
     }
 
+    KOKKOS_INLINE_FUNCTION
     static constexpr
     EnumSequence
     first() noexcept
@@ -46,6 +51,7 @@ struct EnumSequence
         return static_cast<Enum>(0);
     }
 
+    KOKKOS_INLINE_FUNCTION
     static constexpr
     EnumSequence
     last() noexcept
@@ -53,6 +59,7 @@ struct EnumSequence
         return static_cast<Enum>(N - 1);
     }
 
+    KOKKOS_INLINE_FUNCTION
     static constexpr
     Enum
     invalid() noexcept
@@ -61,6 +68,7 @@ struct EnumSequence
     }
 
     //TODO: Should these wrap?
+    KOKKOS_INLINE_FUNCTION
     EnumSequence&
     operator++()
     {
@@ -68,6 +76,7 @@ struct EnumSequence
         return *this;
     }
 
+    KOKKOS_INLINE_FUNCTION
     EnumSequence
     operator++(int)
     {
@@ -80,7 +89,7 @@ struct EnumSequence
 
 
 template <typename T, std::size_t N>
-inline
+KOKKOS_INLINE_FUNCTION
 constexpr EnumSequence<T, N>
 operator+(EnumSequence<T, N> a, EnumSequence<T, N> b)
 {
@@ -90,7 +99,7 @@ operator+(EnumSequence<T, N> a, EnumSequence<T, N> b)
 
 
 template <typename T, std::size_t N>
-inline
+KOKKOS_INLINE_FUNCTION
 constexpr EnumSequence<T, N>
 operator+(EnumSequence<T, N> a, typename EnumSequence<T, N>::Rep b)
 {
@@ -100,7 +109,7 @@ operator+(EnumSequence<T, N> a, typename EnumSequence<T, N>::Rep b)
 
 
 template <typename T, std::size_t N>
-inline
+KOKKOS_INLINE_FUNCTION
 constexpr EnumSequence<T, N>
 operator-(EnumSequence<T, N> a, EnumSequence<T, N> b)
 {
@@ -111,7 +120,7 @@ operator-(EnumSequence<T, N> a, EnumSequence<T, N> b)
 
 
 template <typename T, std::size_t N>
-inline
+KOKKOS_INLINE_FUNCTION
 constexpr EnumSequence<T, N>
 operator-(EnumSequence<T, N> a, typename EnumSequence<T, N>::Rep b)
 {
@@ -121,7 +130,7 @@ operator-(EnumSequence<T, N> a, typename EnumSequence<T, N>::Rep b)
 
 
 template <typename T, std::size_t N>
-inline
+KOKKOS_INLINE_FUNCTION
 constexpr bool
 operator<(EnumSequence<T, N> a, EnumSequence<T, N> b)
 {
@@ -130,7 +139,7 @@ operator<(EnumSequence<T, N> a, EnumSequence<T, N> b)
 
 
 template <typename T, std::size_t N>
-inline
+KOKKOS_INLINE_FUNCTION
 constexpr bool
 operator<=(EnumSequence<T, N> a, EnumSequence<T, N> b)
 {
@@ -139,7 +148,7 @@ operator<=(EnumSequence<T, N> a, EnumSequence<T, N> b)
 
 
 template <typename T, std::size_t N>
-inline
+KOKKOS_INLINE_FUNCTION
 constexpr bool
 operator>(EnumSequence<T, N> a, EnumSequence<T, N> b)
 {
@@ -148,7 +157,7 @@ operator>(EnumSequence<T, N> a, EnumSequence<T, N> b)
 
 
 template <typename T, std::size_t N>
-inline
+KOKKOS_INLINE_FUNCTION
 constexpr bool
 operator>=(EnumSequence<T, N> a, EnumSequence<T, N> b)
 {
@@ -170,6 +179,7 @@ public:
         using value_type = Sequence;
         using reference = const Sequence&;
 
+        KOKKOS_INLINE_FUNCTION
         explicit
         Iterator(Sequence seq) noexcept
             :
@@ -177,12 +187,14 @@ public:
         {
         }
 
+        KOKKOS_INLINE_FUNCTION
         constexpr reference
         operator*() const noexcept
         {
             return _curr;
         }
 
+        KOKKOS_INLINE_FUNCTION
         Iterator&
         operator++() noexcept
         {
@@ -190,12 +202,14 @@ public:
             return *this;
         }
 
+        KOKKOS_INLINE_FUNCTION
         constexpr bool
         operator==(Iterator other) const noexcept
         {
             return _curr == other._curr;
         }
 
+        KOKKOS_INLINE_FUNCTION
         constexpr bool
         operator!=(Iterator other) const noexcept
         {
@@ -206,11 +220,13 @@ public:
         Sequence _curr;
     };
 
+    KOKKOS_INLINE_FUNCTION
     constexpr
     EnumSequenceRange()
     {
     }
 
+    KOKKOS_INLINE_FUNCTION
     explicit
     constexpr
     EnumSequenceRange(Sequence first, Sequence last)
@@ -220,12 +236,14 @@ public:
     {
     }
 
+    KOKKOS_INLINE_FUNCTION
     constexpr Iterator
     begin() const noexcept
     {
         return Iterator{_first};
     }
 
+    KOKKOS_INLINE_FUNCTION
     constexpr Iterator
     end() const noexcept
     {
@@ -250,6 +268,7 @@ public:
 
     using Sequence::Sequence;
 
+    KOKKOS_INLINE_FUNCTION
     static
     constexpr std::size_t
     sizeNoI() noexcept
@@ -257,6 +276,7 @@ public:
         return hasInterstitial<TSpeciesEnum>::value ? N - 1 : N;
     }
 
+    KOKKOS_INLINE_FUNCTION
     static
     constexpr Sequence
     lastNoI() noexcept

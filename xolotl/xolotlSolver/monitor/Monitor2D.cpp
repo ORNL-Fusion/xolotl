@@ -1206,7 +1206,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					// Add randomness
 					double prob = prefactor
 							* (1.0 - (distance - radius) / distance)
-							* min(1.0,
+							* std::min(1.0,
 									exp(
 											-(distance - depthParam)
 													/ (depthParam * 2.0)));

@@ -1,3 +1,6 @@
+list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
+find_package(plsm REQUIRED)
+
 #Add the core subdirectories
 add_subdirectory(commandline)
 add_subdirectory(io)

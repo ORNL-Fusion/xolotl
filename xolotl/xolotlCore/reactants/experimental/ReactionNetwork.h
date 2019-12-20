@@ -11,20 +11,27 @@
 #include <Options.h>
 
 #include <experimental/EnumSequence.h>
+#include <experimental/Cluster.h>
+#include <experimental/Reaction.h>
 
 namespace xolotlCore
 {
 namespace experimental
 {
-template <typename TImpl>
-struct ReactionNetworkTraits
+namespace detail
 {
-};
-
+template <typename TImpl>
+struct ReactionNetworkWorker;
+}
 
 template <typename TImpl>
 class ReactionNetwork
 {
+    friend class detail::ReactionNetworkWorker<TImpl>;
+
+    // template <typename TNetwork, typename TDerived>
+    // friend class Reaction;
+
     static constexpr auto invalid = plsm::invalid<std::size_t>;
 
 public:
@@ -32,6 +39,8 @@ public:
     using Species = typename Traits::Species;
 
 private:
+    using Types = detail::ReactionNetworkTypes<TImpl>;
+
     static constexpr std::size_t numSpecies = Traits::numSpecies;
 
 public:
@@ -39,31 +48,29 @@ public:
     using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
     using ReactionType = typename Traits::ReactionType;
     using ClusterGenerator = typename Traits::ClusterGenerator;
-    using AmountType = std::uint32_t;
-    using Subpaving = plsm::Subpaving<AmountType, numSpecies, Species>;
+    using AmountType = typename Types::AmountType;
+    using Subpaving = typename Types::Subpaving;
     using SubdivisionRatio = typename Subpaving::SubdivisionRatioType;
-    using Composition = typename Subpaving::PointType;
-    using Region = typename Subpaving::RegionType;
+    using Composition = typename Types::Composition;
+    using Region = typename Types::Region;
     using Ival = typename Region::IntervalType;
     using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
     using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
-    using ConnectivityView = Kokkos::View<size_t**, Kokkos::MemoryUnmanaged>;
+    using ConnectivityView = typename Types::ConnectivityView;
     using SparseFillMap = std::unordered_map<int, std::vector<int>>;
+    using ClusterData = typename Types::ClusterData;
+    using ClusterDataRef = typename Types::ClusterDataRef;
+    using InverseMap = Kokkos::View<std::size_t**>;
 
-    class Cluster;
+    template <typename TMemSpace>
+    using Cluster = Cluster<Subpaving, TMemSpace>;
 
-    template <typename T>
-    class Reaction;
+    ReactionNetwork() = default;
 
-    ReactionNetwork() = delete;
-
-    ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize,
+    ReactionNetwork(const Subpaving& subpaving, std::size_t gridSize,
         const IOptions& options);
 
-    ReactionNetwork(Subpaving&& subpaving, std::size_t gridSize);
-
-    //TODO: Need a more versatile constructor interface
-    //      (and probably don't need the 'make' function)
+    ReactionNetwork(const Subpaving& subpaving, std::size_t gridSize);
 
     ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
         const std::vector<SubdivisionRatio>& subdivisionRatios,
@@ -72,6 +79,7 @@ public:
     ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
         std::size_t gridSize, const IOptions& options);
 
+    KOKKOS_INLINE_FUNCTION
     static
     constexpr std::size_t
     getNumberOfSpecies() noexcept
@@ -79,6 +87,7 @@ public:
         return SpeciesSequence::size();
     }
 
+    KOKKOS_INLINE_FUNCTION
     static
     constexpr std::size_t
     getNumberOfSpeciesNoI() noexcept
@@ -86,6 +95,7 @@ public:
         return SpeciesSequence::sizeNoI();
     }
 
+    KOKKOS_INLINE_FUNCTION
     static
     constexpr SpeciesRange
     getSpeciesRange() noexcept
@@ -93,6 +103,7 @@ public:
         return SpeciesRange{};
     }
 
+    KOKKOS_INLINE_FUNCTION
     static
     constexpr SpeciesRange
     getSpeciesRangeNoI() noexcept
@@ -101,18 +112,21 @@ public:
             SpeciesSequence::lastNoI());
     }
 
+    KOKKOS_INLINE_FUNCTION
     std::size_t
     getDOF() const noexcept
     {
         return _numDOFs;
     }
 
+    KOKKOS_INLINE_FUNCTION
     double
     getLatticeParameter() const noexcept
     {
         return _latticeParameter;
     }
 
+    KOKKOS_INLINE_FUNCTION
     double
     getAtomicVolume() const noexcept
     {
@@ -122,6 +136,7 @@ public:
     void
     setLatticeParameter(double latticeParameter);
 
+    KOKKOS_INLINE_FUNCTION
     double
     getInterstitialBias() const noexcept
     {
@@ -134,6 +149,7 @@ public:
         _interstitialBias = interstitialBias;
     }
 
+    KOKKOS_INLINE_FUNCTION
     double
     getImpurityRadius() const noexcept
     {
@@ -149,32 +165,42 @@ public:
     void
     setTemperatures(const std::vector<double>& gridTemperatures);
 
-    Cluster
-    findCluster(const Composition& comp)
+    template <typename TMemSpace = plsm::OnDevice>
+    KOKKOS_INLINE_FUNCTION
+    Cluster<TMemSpace>
+    findCluster(const Composition& comp, TMemSpace memSpace = plsm::onDevice)
     {
-        //FIXME: explicitly using host space
-        _subpaving.syncAll(plsm::onHost);
-        return Cluster(*this, _subpaving.findTileId(comp, plsm::onHost));
+        // TODO: Implement synchronization for ReactionNetwork
+        // _subpaving.syncAll(memSpace);
+        //FIXME: (for host)
+        return Cluster<TMemSpace>(_clusterData,
+            _subpaving.findTileId(comp, memSpace));
     }
 
-    Cluster
-    getCluster(std::size_t clusterId)
+    template <typename TMemSpace = plsm::OnDevice>
+    KOKKOS_INLINE_FUNCTION
+    Cluster<TMemSpace>
+    getCluster(std::size_t clusterId, TMemSpace = plsm::onDevice)
     {
-        return Cluster(*this, clusterId);
+        //FIXME: (for host)
+        return Cluster<TMemSpace>(_clusterData, clusterId);
     }
 
+    KOKKOS_INLINE_FUNCTION
     Subpaving&
     getSubpaving()
     {
         return _subpaving;
     }
 
+    KOKKOS_INLINE_FUNCTION
     decltype(auto)
     getReactionRates(std::size_t reactionId)
     {
         return Kokkos::subview(_reactionRates, reactionId, Kokkos::ALL);
     }
 
+    KOKKOS_INLINE_FUNCTION
     decltype(auto)
     getReactionCoefficients(std::size_t reactionId)
     {
@@ -206,6 +232,7 @@ protected:
     };
 
 private:
+    KOKKOS_INLINE_FUNCTION
     TImpl*
     asDerived()
     {
@@ -224,12 +251,14 @@ private:
     void
     updateDiffusionCoefficients();
 
+    KOKKOS_INLINE_FUNCTION
     double
     getTemperature(std::size_t gridIndex) const noexcept
     {
-        return _temperature(gridIndex);
+        return _clusterData.temperature(gridIndex);
     }
 
+    KOKKOS_INLINE_FUNCTION
     std::size_t
     getReactionIndex(std::size_t rowId, std::size_t colId) const noexcept
     {
@@ -255,16 +284,10 @@ private:
     double _impurityRadius {};
 
     std::size_t _gridSize {};
-    Kokkos::View<double*> _temperature;
 
-    std::size_t _numClusters {};
+    ClusterData _clusterData;
+
     std::size_t _numDOFs {};
-    Kokkos::View<std::size_t*[4]> _momentIds;
-    Kokkos::View<double*> _reactionRadius;
-    Kokkos::View<double**> _diffusionCoefficient;
-    Kokkos::View<double*> _formationEnergy;
-    Kokkos::View<double*> _migrationEnergy;
-    Kokkos::View<double*> _diffusionFactor;
 
     Kokkos::View<ReactionType*> _reactions;
     Kokkos::View<double*****> _productionCoeffs;
@@ -274,7 +297,91 @@ private:
     // TODO: the original code uses an actual map here because it is sparse
     //       Look into Kokkos::Crs
     Kokkos::View<std::size_t**> _inverseMap;
+
+    detail::ReactionNetworkWorker<TImpl> _worker;
 };
+
+
+namespace detail
+{
+template <typename TImpl>
+struct ReactionNetworkWorker
+{
+    class ExclusiveScanFunctor
+    {
+    public:
+        ExclusiveScanFunctor(Kokkos::View<std::size_t*> data)
+            :
+            _data(data)
+        {
+        }
+
+        KOKKOS_INLINE_FUNCTION
+        void
+        operator()(std::size_t index, std::size_t& update, const bool finalPass)
+            const
+        {
+            const auto temp = _data(index);
+            if (finalPass) {
+                _data(index) = update;
+            }
+            update += temp;
+        }
+
+        KOKKOS_INLINE_FUNCTION
+        void
+        init(std::size_t& update) const
+        {
+          update = 0;
+        }
+
+        KOKKOS_INLINE_FUNCTION
+        void
+        join(volatile std::size_t& update, std::size_t input) const
+        {
+          update += input;
+        }
+
+    private:
+        Kokkos::View<std::size_t*> _data;
+    };
+
+    using Network = ReactionNetwork<TImpl>;
+    using ClusterDataRef = typename Network::ClusterDataRef;
+
+    Network& _nw;
+    ClusterDataRef _data;
+
+    ReactionNetworkWorker(Network& network)
+        :
+        _nw(network),
+        _data(_nw._clusterData)
+    {
+    }
+
+    void
+    updateDiffusionCoefficients();
+
+    void
+    generateClusterData(const typename Network::ClusterGenerator& generator);
+
+    void
+    defineMomentIds(std::size_t& numDOFs);
+
+    void
+    defineReactions(Network& network);
+
+    std::size_t
+    getDiagonalFill(typename Network::SparseFillMap& fillMap);
+};
+}
+
+
+
+
+
+
+
 
 
 template <typename TReactionNetwork>
@@ -341,6 +448,4 @@ makeSimpleReactionNetwork(
 }
 }
 
-#include <experimental/Cluster.h>
-#include <experimental/Reaction.h>
 #include <experimental/ReactionNetwork.inl>
