@@ -18,7 +18,7 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
     std::size_t cluster0, std::size_t cluster1, std::size_t cluster2,
     std::size_t cluster3)
     :
-    _clusterData(_clusterData),
+    _clusterData(clusterData),
     _type(reactionType),
     _connectFn(
         _type == Type::production ? &Reaction::productionConnectivity :

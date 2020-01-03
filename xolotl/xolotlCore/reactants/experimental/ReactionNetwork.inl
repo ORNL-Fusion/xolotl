@@ -2,22 +2,17 @@
 
 #include <Constants.h>
 
-#ifdef KOKKOS_ENABLE_CUDA
-#include <cuda_runtime_api.h>
-#endif
-
 namespace xolotlCore
 {
 namespace experimental
 {
 template <typename TImpl>
-    //FIXME: Disallow moving Subpaving
 ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
         std::size_t gridSize, const IOptions& options)
     :
     _subpaving(subpaving),
     _gridSize(gridSize),
-    _clusterData(_subpaving.getNumberOfTiles(plsm::onDevice), _gridSize),
+    _clusterData(_subpaving, _gridSize),
     _worker(*this)
 {
     setInterstitialBias(options.getBiasFactor());
@@ -53,10 +48,6 @@ ReactionNetwork<TImpl>::ReactionNetwork(
             }
             Subpaving sp(latticeRegion, subdivisionRatios);
             sp.refine(ClusterGenerator{options});
-            ////
-            //FIXME: This should be done later (in body of top constructor)
-            sp.syncAll(plsm::onHost);
-            ////
             return sp;
         }(),
         gridSize, options)
@@ -223,19 +214,17 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
     const typename Network::ClusterGenerator& generator)
 {
     auto nClusters = _data.numClusters;
-    Kokkos::View<double*> formationEnergy("Formation Energy", nClusters);
-    Kokkos::View<double*> migrationEnergy("Migration Energy", nClusters);
-    Kokkos::View<double*> diffusionFactor("Diffusion Factor", nClusters);
-    Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const std::size_t i) {
-        auto cluster = _data.getCluster(i);
-        formationEnergy(i) = generator.getFormationEnergy(cluster);
-        migrationEnergy(i) = generator.getMigrationEnergy(cluster);
-        diffusionFactor(i) = generator.getDiffusionFactor(cluster);
-    });
+    _data.formationEnergy = Kokkos::View<double*>("Diffusion Factor", nClusters);
+    _data.migrationEnergy = Kokkos::View<double*>("Migration Energy", nClusters);
+    _data.diffusionFactor = Kokkos::View<double*>("Formation Energy", nClusters);
 
-    _data.formationEnergy = formationEnergy;
-    _data.migrationEnergy = migrationEnergy;
-    _data.diffusionFactor = diffusionFactor;
+    ClusterData data(_data);
+    Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const std::size_t i) {
+        auto cluster = data.getCluster(i);
+        data.formationEnergy(i) = generator.getFormationEnergy(cluster);
+        data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
+        data.diffusionFactor(i) = generator.getDiffusionFactor(cluster);
+    });
 }
 
 template <typename TImpl>
@@ -247,11 +236,13 @@ ReactionNetworkWorker<TImpl>::defineMomentIds(std::size_t& numDOFs)
     auto nClusters = _data.numClusters;
     auto counts = Kokkos::View<std::size_t*>("Moment Id Counts", nClusters);
 
+    ClusterDataRef data(_data);
+
     std::size_t nMomentIds = 0;
     Kokkos::parallel_reduce(nClusters,
         KOKKOS_LAMBDA (const std::size_t i, std::size_t& running)
         {
-            const auto& reg = _data.getCluster(i).getRegion();
+            const auto& reg = data.getCluster(i).getRegion();
             std::size_t count = 0;
             for (auto k : speciesRangeNoI) {
                 if (reg[k].length() != 1) {
@@ -266,14 +257,14 @@ ReactionNetworkWorker<TImpl>::defineMomentIds(std::size_t& numDOFs)
     Kokkos::parallel_scan(nClusters, ExclusiveScanFunctor{counts});
 
     Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const std::size_t i) {
-        const auto& reg = _data.getCluster(i).getRegion();
+        const auto& reg = data.getCluster(i).getRegion();
         std::size_t current = counts(i);
         for (auto k : speciesRangeNoI) {
             if (reg[k].length() == 1) {
-                _data.momentIds(i, k()) = Network::invalid;
+                data.momentIds(i, k()) = Network::invalid;
             }
             else {
-                _data.momentIds(i, k()) = current;
+                data.momentIds(i, k()) = current;
                 ++current;
             }
         }
@@ -287,7 +278,7 @@ template <typename TImpl>
 void
 ReactionNetworkWorker<TImpl>::defineReactions(Network& network)
 {
-    network._subpaving.syncTiles(plsm::onHost);
+    network._subpaving.syncAll(plsm::onHost);
     auto tiles = network._subpaving.getTiles(plsm::onHost);
     auto diffusionFactor = Kokkos::create_mirror_view(_data.diffusionFactor);
     Kokkos::deep_copy(diffusionFactor, _data.diffusionFactor);
@@ -321,8 +312,7 @@ ReactionNetworkWorker<TImpl>::defineReactions(Network& network)
         "Dissociation Coefficients", nDissReactions, cExt, 1, 3, cExt);
 
     auto numReactions = nProdReactions + nDissReactions;
-    Kokkos::View<ReactionType*> reactions(
-        Kokkos::ViewAllocateWithoutInitializing("Reactions"s), numReactions);
+    Kokkos::View<ReactionType*> reactions("Reactions", numReactions);
     Kokkos::View<double**> reactionRates("Reaction Rates", numReactions,
         _nw._gridSize);
 

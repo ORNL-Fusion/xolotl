@@ -63,10 +63,11 @@ struct ClusterData
 {
     using MemSpace = TMemSpace;
     using Subpaving = TSubpaving;
-    //TODO: Apply MemSpace
+    using PlsmContext = detail::Context<MemSpace>;
     using TilesView =
-        Unmanaged<typename Subpaving::template TilesView<plsm::OnDevice>>;
-    using ClusterType = Cluster<Subpaving, detail::Context<MemSpace>>;
+        Unmanaged<typename Subpaving::template TilesView<PlsmContext>>;
+    using ClusterType = Cluster<Subpaving, PlsmContext>;
+    static constexpr auto plsmContext = detail::Context<MemSpace>{};
 
     template <typename TData>
     using View = Kokkos::View<TData, MemSpace>;
@@ -74,11 +75,13 @@ struct ClusterData
     ClusterData() = default;
 
     explicit
-    ClusterData(std::size_t numClusters_, std::size_t gridSize_ = 0)
+    ClusterData(Subpaving& subpaving, std::size_t gridSize_ = 0)
         :
-        numClusters(numClusters_),
+        numClusters(subpaving.getNumberOfTiles(plsmContext)),
         gridSize(gridSize_),
+        atomicVolume("Atomic Volume"),
         temperature("Temperature", gridSize),
+        tiles(subpaving.getTiles(plsmContext)),
         momentIds("Moment Ids", numClusters),
         reactionRadius("Reaction Radius", numClusters),
         formationEnergy("Formation Energy", numClusters),
@@ -93,7 +96,7 @@ struct ClusterData
 
     KOKKOS_INLINE_FUNCTION
     ClusterType
-    getCluster(std::size_t clusterId)
+    getCluster(std::size_t clusterId) const noexcept
     {
         return ClusterType(*this, clusterId);
     }
@@ -123,12 +126,12 @@ struct ClusterDataRef
 {
     using MemSpace = TMemSpace;
     using Subpaving = TSubpaving;
+    using PlsmContext = detail::Context<MemSpace>;
 
-    //TODO: Apply MemSpace
     using TilesView =
-        Unmanaged<typename Subpaving::template TilesView<plsm::OnDevice>>;
+        Unmanaged<typename Subpaving::template TilesView<PlsmContext>>;
 
-    using ClusterType = Cluster<Subpaving, detail::Context<MemSpace>>;
+    using ClusterType = Cluster<Subpaving, PlsmContext>;
 
     template <typename TData>
     using View = Kokkos::View<TData, MemSpace, Kokkos::MemoryUnmanaged>;
@@ -137,10 +140,12 @@ struct ClusterDataRef
     ClusterDataRef() = default;
 
     KOKKOS_INLINE_FUNCTION
-    ClusterDataRef(detail::ClusterData<Subpaving, MemSpace>& data)
+    ClusterDataRef(const detail::ClusterData<Subpaving, MemSpace>& data)
         :
         numClusters(data.numClusters),
         gridSize(data.gridSize),
+        atomicVolume(data.atomicVolume),
+        temperature(data.temperature),
         tiles(data.tiles),
         momentIds(data.momentIds),
         reactionRadius(data.reactionRadius),
@@ -152,13 +157,8 @@ struct ClusterDataRef
     }
 
     KOKKOS_INLINE_FUNCTION
-    ClusterDataRef(const ClusterDataRef&) = default;
-    KOKKOS_INLINE_FUNCTION
-    ClusterDataRef& operator=(const ClusterDataRef&) = default;
-
-    KOKKOS_INLINE_FUNCTION
     ClusterType
-    getCluster(std::size_t clusterId)
+    getCluster(std::size_t clusterId) const noexcept
     {
         return ClusterType(*this, clusterId);
     }
@@ -198,7 +198,7 @@ public:
     Cluster() = delete;
 
     KOKKOS_INLINE_FUNCTION
-    Cluster(ClusterData& data, std::size_t id)
+    Cluster(const ClusterData& data, std::size_t id)
         :
         _data{data},
         _id{id}
@@ -206,7 +206,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    Cluster(ClusterDataRef& data, std::size_t id)
+    Cluster(const ClusterDataRef& data, std::size_t id)
         :
         _data{data},
         _id{id}

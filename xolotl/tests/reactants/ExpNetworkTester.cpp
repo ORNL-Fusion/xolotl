@@ -32,7 +32,6 @@ BOOST_AUTO_TEST_SUITE(ExpNetwork_testSuite)
  * This operation checks the creation of a PSI network
  */
 BOOST_AUTO_TEST_CASE(PSINetwork) {
-    KokkosContext kokkosContext;
 	std::cout <<"in test" << std::endl;
 
     using NetworkType =

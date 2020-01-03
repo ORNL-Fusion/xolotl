@@ -347,10 +347,11 @@ struct ReactionNetworkWorker
     };
 
     using Network = ReactionNetwork<TImpl>;
+    using ClusterData = typename Network::ClusterData;
     using ClusterDataRef = typename Network::ClusterDataRef;
 
     Network& _nw;
-    ClusterDataRef _data;
+    ClusterData _data;
 
     ReactionNetworkWorker(Network& network)
         :
