@@ -40,24 +40,6 @@ private:
 	std::vector<double> normFactors;
 
 	/**
-	 * Vector to hold the incident flux for W values at each grid
-	 * point (x position).
-	 */
-	std::vector<double> incidentWFluxVec;
-
-	/**
-	 * Vector to hold the incident flux for D values at each grid
-	 * point (x position).
-	 */
-	std::vector<double> incidentDFluxVec;
-
-	/**
-	 * Vector to hold the incident flux for T values at each grid
-	 * point (x position).
-	 */
-	std::vector<double> incidentTFluxVec;
-
-	/**
 	 * Function that calculate the flux of He at a given position x (in nm).
 	 * This function is not normalized. The surface is supposed to be (100).
 	 *
@@ -103,6 +85,9 @@ public:
 	 */
 	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
 			std::vector<double> grid) {
+		// Set the grid
+		xGrid = grid;
+
 		// Read the parameter file
 		std::ifstream paramFile;
 		paramFile.open("tridyn.dat");
@@ -118,21 +103,9 @@ public:
 				std::cout
 						<< "No parameter files for TRIDYN flux, the flux will be 0"
 						<< std::endl;
-
-			// Set the depths to 0.0
-			totalDepths.push_back(0.0);
-			totalDepths.push_back(0.0);
-			totalDepths.push_back(0.0);
-			totalDepths.push_back(0.0);
-
-			// Set the reduction factors to 0.0
-			reductionFactors.push_back(0.0);
-			reductionFactors.push_back(0.0);
-			reductionFactors.push_back(0.0);
-			reductionFactors.push_back(0.0);
 		} else {
 			// Build an input stream from the string
-			xolotlCore::TokenizedLineReader<double> reader;
+			xolotlCore::TokenizedLineReader<std::string> reader;
 			// Get the line
 			std::string line;
 			getline(paramFile, line);
@@ -142,13 +115,44 @@ public:
 			// Read the first line
 			auto tokens = reader.loadLine();
 			// And start looping on the lines
-			int i = 0;
-			while (i < 4) {
-				// Get the fraction
-				reductionFactors.push_back(tokens[0]);
+			int index = 0;
+			while (tokens.size() > 0) {
+				// Read the cluster type
+				auto clusterSpecies = Species::Invalid;
+				if (tokens[0] == "He")
+					clusterSpecies = Species::He;
+				else if (tokens[0] == "I")
+					clusterSpecies = Species::I;
+				else if (tokens[0] == "D")
+					clusterSpecies = Species::D;
+				else if (tokens[0] == "T")
+					clusterSpecies = Species::T;
+				else if (tokens[0] == "V")
+					clusterSpecies = Species::V;
+				else {
+					// Print a message
+					if (procId == 0)
+						std::cout
+								<< "Unrecognize type for cluster in TRIDYN flux: "
+								<< tokens[0] << "." << std::endl;
+				}
+				// Get the cluster
+				auto fluxCluster = network.get(clusterSpecies,
+						std::stoi(tokens[1]));
+				// Check that it is present in the network
+				if (!fluxCluster) {
+					throw std::string(
+							"\nThe requested cluster is not present in the network: "
+									+ tokens[0] + "_" + tokens[1]
+									+ ", cannot use the flux option!");
+				} else
+					fluxIndices.push_back(fluxCluster->getId() - 1);
+
+				// Get the reduction factor
+				reductionFactors.push_back(std::stod(tokens[2]));
 
 				// Check if the reduction factor is positive
-				if (tokens[0] < 0.0) {
+				if (reductionFactors[index] < 0.0) {
 					// Print a message
 					if (procId == 0)
 						std::cout
@@ -163,183 +167,100 @@ public:
 				reader.setInputStream(lineSS);
 				tokens = reader.loadLine();
 				std::vector<double> params;
-				params.push_back(tokens[0]);
-				params.push_back(tokens[1]);
-				params.push_back(tokens[2]);
-				params.push_back(tokens[3]);
-				params.push_back(tokens[4]);
-				params.push_back(tokens[5]);
-				params.push_back(tokens[6]);
-				params.push_back(tokens[7]);
-				params.push_back(tokens[8]);
-				params.push_back(tokens[9]);
-				params.push_back(tokens[10]);
-				params.push_back(tokens[11]);
-				params.push_back(tokens[12]);
-				params.push_back(tokens[13]);
-				params.push_back(tokens[14]);
-				params.push_back(tokens[15]);
+				params.push_back(std::stod(tokens[0]));
+				params.push_back(std::stod(tokens[1]));
+				params.push_back(std::stod(tokens[2]));
+				params.push_back(std::stod(tokens[3]));
+				params.push_back(std::stod(tokens[4]));
+				params.push_back(std::stod(tokens[5]));
+				params.push_back(std::stod(tokens[6]));
+				params.push_back(std::stod(tokens[7]));
+				params.push_back(std::stod(tokens[8]));
+				params.push_back(std::stod(tokens[9]));
+				params.push_back(std::stod(tokens[10]));
+				params.push_back(std::stod(tokens[11]));
+				params.push_back(std::stod(tokens[12]));
+				params.push_back(std::stod(tokens[13]));
+				params.push_back(std::stod(tokens[14]));
+				params.push_back(std::stod(tokens[15]));
 				fitParams.push_back(params);
 				// Set the total depth where the fit is defined
-				totalDepths.push_back(tokens[16] + 0.1);
+				totalDepths.push_back(std::stod(tokens[16]) + 0.1);
+
+				if (xGrid.size() > 0) {
+					// Compute the norm factor because the fit function has an
+					// arbitrary amplitude
+					normFactors.push_back(0.0);
+					incidentFluxVec.push_back(std::vector<double>());
+					// Loop on the x grid points skipping the first after the surface position
+					// and last because of the boundary conditions
+					for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
+						// Get the x position
+						double x = (xGrid[i] + xGrid[i + 1]) / 2.0
+								- xGrid[surfacePos + 1];
+
+						// Add the the value of the function times the step size
+						normFactors[index] += FitFunction(x, index)
+								* (xGrid[i + 1] - xGrid[i]);
+					}
+
+					// Factor the incident flux will be multiplied by to get
+					// the wanted intensity
+					double fluxNormalized = 0.0;
+					if (normFactors[index] > 0.0) {
+						fluxNormalized = fluxAmplitude * reductionFactors[index]
+								/ normFactors[index];
+					}
+
+					// Clear the flux vector
+					incidentFluxVec[index].clear();
+					// The first value corresponding to the surface position should always be 0.0
+					incidentFluxVec[index].push_back(0.0);
+
+					// Starts at i = surfacePos + 1 because the first value was already put in the vector
+					for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
+						// Get the x position
+						auto x = (xGrid[i] + xGrid[i + 1]) / 2.0
+								- xGrid[surfacePos + 1];
+
+						// Compute the flux value
+						double incidentFlux = fluxNormalized
+								* FitFunction(x, index);
+						// Add it to the vector
+						incidentFluxVec[index].push_back(incidentFlux);
+					}
+
+					// The last value should always be 0.0 because of boundary conditions
+					incidentFluxVec[index].push_back(0.0);
+				}
 
 				// Read the next line
 				getline(paramFile, line);
 				lineSS = std::make_shared<std::istringstream>(line);
 				reader.setInputStream(lineSS);
 				tokens = reader.loadLine();
-				// Increase the loop number
-				i++;
+				// Increase the index
+				index++;
+			}
+
+			// Prints both incident vectors in a file
+			if (procId == 0) {
+				std::ofstream outputFile;
+				outputFile.open("incidentVectors.txt");
+				for (int i = 0; i < incidentFluxVec[0].size(); i++) {
+					outputFile
+							<< (grid[surfacePos + i] + grid[surfacePos + i + 1])
+									/ 2.0 - grid[surfacePos + 1] << " ";
+					for (int j = 0; j < index; j++)
+						outputFile << incidentFluxVec[j][i] << " ";
+					outputFile << std::endl;
+				}
+				outputFile.close();
 			}
 		}
 
 		// Close the file
 		paramFile.close();
-
-		// Set the grid
-		xGrid = grid;
-
-		if (xGrid.size() == 0)
-			return;
-
-		// Clear the norm factors
-		normFactors.clear();
-
-		// Loop on the different types of clusters, He, W, D, T
-		for (int index = 0; index < 4; index++) {
-			// Compute the norm factor because the fit function has an
-			// arbitrary amplitude
-			normFactors.push_back(0.0);
-			// Loop on the x grid points skipping the first after the surface position
-			// and last because of the boundary conditions
-			for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
-				// Get the x position
-				double x = (xGrid[i] + xGrid[i + 1]) / 2.0
-						- xGrid[surfacePos + 1];
-
-				// Add the the value of the function times the step size
-				normFactors[index] += FitFunction(x, index)
-						* (xGrid[i + 1] - xGrid[i]);
-			}
-
-			// Factor the incident flux will be multiplied by to get
-			// the wanted intensity
-			double fluxNormalized = 0.0;
-			if (normFactors[index] > 0.0) {
-				fluxNormalized = fluxAmplitude * reductionFactors[index]
-						/ normFactors[index];
-			}
-
-			// Select the right vector
-			std::vector<double> *fluxVec = nullptr;
-			switch (index) {
-			case 0:
-				fluxVec = &incidentFluxVec;
-				break;
-			case 1:
-				fluxVec = &incidentWFluxVec;
-				break;
-			case 2:
-				fluxVec = &incidentDFluxVec;
-				break;
-			case 3:
-				fluxVec = &incidentTFluxVec;
-				break;
-			default:
-				break;
-			}
-
-			// Clear the flux vector
-			fluxVec->clear();
-			// The first value corresponding to the surface position should always be 0.0
-			fluxVec->push_back(0.0);
-
-			// Starts at i = surfacePos + 1 because the first value was already put in the vector
-			for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
-				// Get the x position
-				auto x = (xGrid[i] + xGrid[i + 1]) / 2.0
-						- xGrid[surfacePos + 1];
-
-				// Compute the flux value
-				double incidentFlux = fluxNormalized * FitFunction(x, index);
-				// Add it to the vector
-				fluxVec->push_back(incidentFlux);
-			}
-
-			// The last value should always be 0.0 because of boundary conditions
-			fluxVec->push_back(0.0);
-		}
-
-		// Set the flux index corresponding the the single helium cluster here
-		auto fluxCluster = network.get(Species::He, 1);
-		// Check that the helium cluster is present in the network
-		if (!fluxCluster) {
-			// Set its flux to 0.0
-			fluxIndices.push_back(0);
-			if (reductionFactors[0] > 0.0) {
-				throw std::string(
-						"\nThe single helium cluster is not present in the network, "
-								"cannot use the flux option!");
-			}
-		} else
-			fluxIndices.push_back(fluxCluster->getId() - 1);
-
-		// Set the I index corresponding the the single interstitial cluster here
-		fluxCluster = network.get(Species::I, 1);
-		// Check that the I cluster is present in the network
-		if (!fluxCluster) {
-			// Set its flux to 0.0
-			fluxIndices.push_back(0);
-			if (reductionFactors[1] > 0.0) {
-				throw std::string(
-						"\nThe single interstitial cluster is not present in the network, "
-								"cannot use the flux option!");
-			}
-		} else
-			fluxIndices.push_back(fluxCluster->getId() - 1);
-
-		// Set the D index corresponding the the single deuterium cluster here
-		fluxCluster = network.get(Species::D, 1);
-		// Check that the D cluster is present in the network
-		if (!fluxCluster) {
-			// Set its flux to 0.0
-			fluxIndices.push_back(0);
-			if (reductionFactors[2] > 0.0) {
-				throw std::string(
-						"\nThe single deuterium cluster is not present in the network, "
-								"cannot use the flux option!");
-			}
-		} else
-			fluxIndices.push_back(fluxCluster->getId() - 1);
-
-		// Set the T index corresponding the the single tritium cluster here
-		fluxCluster = network.get(Species::T, 1);
-		// Check that the T cluster is present in the network
-		if (!fluxCluster) {
-			// Set its flux to 0.0
-			fluxIndices.push_back(0);
-			if (reductionFactors[3] > 0.0) {
-				throw std::string(
-						"\nThe single tritium cluster is not present in the network, "
-								"cannot use the flux option!");
-			}
-		} else
-			fluxIndices.push_back(fluxCluster->getId() - 1);
-
-		// Prints both incident vectors in a file
-		if (procId == 0) {
-			std::ofstream outputFile;
-			outputFile.open("incidentVectors.txt");
-			for (int i = 0; i < incidentFluxVec.size(); i++) {
-				outputFile
-						<< (grid[surfacePos + i] + grid[surfacePos + i + 1])
-								/ 2.0 - grid[surfacePos + 1] << " "
-						<< incidentFluxVec[i] << " " << incidentWFluxVec[i]
-						<< " " << incidentDFluxVec[i] << " "
-						<< incidentTFluxVec[i] << std::endl;
-			}
-			outputFile.close();
-		}
 
 		return;
 	}
@@ -357,36 +278,17 @@ public:
 		}
 
 		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] += incidentFluxVec[xi - surfacePos]; // He
-//		updatedConcOffset[fluxIndices[1]] += incidentFluxVec[xi - surfacePos] * 4.25e-7;
-		updatedConcOffset[fluxIndices[1]] += incidentWFluxVec[xi - surfacePos]; // I
-		updatedConcOffset[fluxIndices[2]] += incidentDFluxVec[xi - surfacePos]; // D
-		updatedConcOffset[fluxIndices[3]] += incidentTFluxVec[xi - surfacePos]; // T
+		for (int i = 0; i < fluxIndices.size(); i++) {
+			updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][xi
+					- surfacePos];
+		}
 
 		return;
 	}
 
 	void recomputeFluxHandler(int surfacePos) {
 		// Loop on the different types of clusters, He, W, D, t
-		for (int index = 0; index < 4; index++) {
-			// Select the right vector
-			std::vector<double> *fluxVec = nullptr;
-			switch (index) {
-			case 0:
-				fluxVec = &incidentFluxVec;
-				break;
-			case 1:
-				fluxVec = &incidentWFluxVec;
-				break;
-			case 2:
-				fluxVec = &incidentDFluxVec;
-				break;
-			case 3:
-				fluxVec = &incidentTFluxVec;
-				break;
-			default:
-				break;
-			}
+		for (int index = 0; index < fluxIndices.size(); index++) {
 
 			// Factor the incident flux will be multiplied by
 			double fluxNormalized = 0.0;
@@ -403,7 +305,7 @@ public:
 				// Compute the flux value
 				double incidentFlux = fluxNormalized * FitFunction(x, index);
 				// Add it to the vector
-				fluxVec->at(i - surfacePos) = incidentFlux;
+				incidentFluxVec[index][i - surfacePos] = incidentFlux;
 			}
 		}
 

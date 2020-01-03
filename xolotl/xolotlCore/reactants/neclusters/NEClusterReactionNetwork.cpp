@@ -26,9 +26,8 @@ double NEClusterReactionNetwork::calculateDissociationConstant(
 		return 0.0;
 
 	// Compute the atomic volume
-	double atomicVolume = 0.5 * xolotlCore::uraniumDioxydeLatticeConstant
-			* xolotlCore::uraniumDioxydeLatticeConstant
-			* xolotlCore::uraniumDioxydeLatticeConstant;
+	double atomicVolume = 0.5 * latticeParameter * latticeParameter
+			* latticeParameter;
 
 	// Get the rate constant from the reverse reaction
 	double kPlus = reaction.reverseReaction->kConstant[i];

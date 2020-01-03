@@ -58,7 +58,7 @@ public:
 
 		// Compute the reaction radius
 		// It is the same formula for HeV clusters
-		reactionRadius = xolotlCore::ironLatticeConstant
+		reactionRadius = network.getLatticeParameter()
 				* pow((3.0 * numV) / xolotlCore::pi, (1.0 / 3.0)) * 0.5;
 
 		// Bounds on He and V
@@ -110,7 +110,7 @@ public:
 	 * @param temp The new cluster temperature
 	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp, int i) override{
+	void setTemperature(double temp, int i) override {
 		// Don't do anything
 		return;
 	}

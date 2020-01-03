@@ -42,7 +42,7 @@ public:
 
 		// Define the diffusion pre-factor
 		{
-			double jumpDistance = xolotlCore::alloyLatticeConstant / sqrt(2.0);
+			double jumpDistance = network.getLatticeParameter() / sqrt(2.0);
 			double phononFrequency = 1.0e13;
 			double jumpsPerPhonon = 1.0;
 			double prefactorExponent = -1.0;
@@ -92,7 +92,7 @@ public:
 	 * @param temp The new cluster temperature
 	 * @param i The location on the grid
 	 */
-	void setTemperature(double temp, int i) override{
+	void setTemperature(double temp, int i) override {
 		if (diffusionFactor > 0.0) {
 			Reactant::setTemperature(temp, i);
 		}

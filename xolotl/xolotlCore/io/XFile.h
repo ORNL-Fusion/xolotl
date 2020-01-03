@@ -53,6 +53,14 @@ public:
 		static const std::string nTAttrName;
 		static const std::string prevTFluxAttrName;
 
+		// Names of the vacancy attributes.
+		static const std::string nVAttrName;
+		static const std::string prevVFluxAttrName;
+
+		// Names of the int attributes
+		static const std::string nIntersBulkAttrName;
+		static const std::string prevIBulkFluxAttrName;
+
 		// Name of the concentrations data set.
 		static const std::string concDatasetName;
 
@@ -150,10 +158,16 @@ public:
 		 * @param previousDFlux The previous D flux
 		 * @param nT The quantity of tritium at the bottom
 		 * @param previousTFlux The previous T flux
+		 * @param nV The quantity of vacancy at the bottom
+		 * @param previousVFlux The previous V flux
+		 * @param nI The quantity of int at the bottom
+		 * @param previousIFlux The previous I flux
 		 */
 		void writeBottom1D(Data1DType nHe, Data1DType previousHeFlux,
 				Data1DType nD, Data1DType previousDFlux, Data1DType nT,
-				Data1DType previousTFlux);
+				Data1DType previousTFlux, Data1DType nV,
+				Data1DType previousVFlux, Data1DType nI,
+				Data1DType previousIFlux);
 
 		/**
 		 * Save the bottom informations to our timestep group.
@@ -181,8 +195,8 @@ public:
 		 * @param k The index of the position on the grid on the z direction
 		 */
 		// TODO this should go away.
-		void writeConcentrationDataset(int size, double concArray[][2], bool write, int i,
-				int j = -1, int k = -1);
+		void writeConcentrationDataset(int size, double concArray[][2],
+				bool write, int i, int j = -1, int k = -1);
 
 		/**
 		 * Add a concentration dataset for all grid points in a 1D problem.
@@ -553,8 +567,8 @@ public:
 		 * @param diffusionFactor The diffusion factor.
 		 * @return The cluster composition.
 		 */
-		clusterComp readCluster(double &formationEnergy, double &migrationEnergy,
-				double &diffusionFactor) const;
+		clusterComp readCluster(double &formationEnergy,
+				double &migrationEnergy, double &diffusionFactor) const;
 
 		/**
 		 * Read the cluster properties from our group.
@@ -585,7 +599,8 @@ public:
 		 * @param maxAtom The maximum value
 		 * @param type The type of cluster
 		 */
-		void readAlloySuperCluster(int &nTot, int &maxXe, ReactantType &type) const;
+		void readAlloySuperCluster(int &nTot, int &maxXe,
+				ReactantType &type) const;
 
 		/**
 		 * Read the reactions from our group.
@@ -632,9 +647,9 @@ public:
 	 *              are supported.
 	 */
 	XFile(fs::path path, const std::vector<double>& grid,
-			const HeaderGroup::NetworkCompsType& compVec,
-			MPI_Comm _comm = MPI_COMM_WORLD, int ny =
-					0, double hy = 0.0, int nz = 0, double hz = 0.0,
+			const HeaderGroup::NetworkCompsType& compVec, MPI_Comm _comm =
+			MPI_COMM_WORLD, int ny = 0, double hy = 0.0, int nz = 0, double hz =
+					0.0,
 			AccessMode mode = AccessMode::CreateOrTruncateIfExists);
 
 	/**

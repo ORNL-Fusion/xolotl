@@ -285,6 +285,36 @@ protected:
 	 */
 	double pulseProportion;
 
+	/**
+	 * Length of the lattice side in nm.
+	 */
+	double latticeParameter;
+
+	/**
+	 * Radius of the main impurity (He, Xe) in nm.
+	 */
+	double impurityRadius;
+
+	/**
+	 * Reflect the fact that interstitial clusters have a larger surrounding strain field.
+	 */
+	double biasFactor;
+
+	/**
+	 * Factor between the He and the H radius.
+	 */
+	double hydrogenFactor;
+
+	/**
+	 * Xenon diffusion coefficient in nm2 s-1
+	 */
+	double xenonDiffusivity;
+
+	/**
+	 * Fission yield, how many xenon atoms are created per fission
+	 */
+	double fissionYield;
+
 public:
 
 	/**
@@ -774,6 +804,54 @@ public:
 	 */
 	virtual double getPulseProportion() const override {
 		return pulseProportion;
+	}
+
+	/**
+	 * Obtain the value of the lattice parameter.
+	 * \see IOptions.h
+	 */
+	virtual double getLatticeParameter() const override {
+		return latticeParameter;
+	}
+
+	/**
+	 * Obtain the value of the impurity radius.
+	 * \see IOptions.h
+	 */
+	virtual double getImpurityRadius() const override {
+		return impurityRadius;
+	}
+
+	/**
+	 * Obtain the value of the bias factor for interstitial.
+	 * \see IOptions.h
+	 */
+	virtual double getBiasFactor() const override {
+		return biasFactor;
+	}
+
+	/**
+	 * Obtain the value of the factor between H and He radii.
+	 * \see IOptions.h
+	 */
+	virtual double getHydrogenFactor() const override {
+		return hydrogenFactor;
+	}
+
+	/**
+	 * Obtain the value of the xenon diffusion coefficient.
+	 * \see IOptions.h
+	 */
+	virtual double getXenonDiffusivity() const override {
+		return xenonDiffusivity;
+	}
+
+	/**
+	 * Obtain the value of the fission yield.
+	 * \see IOptions.h
+	 */
+	virtual double getFissionYield() const override {
+		return fissionYield;
 	}
 
 };

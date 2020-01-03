@@ -20,6 +20,11 @@ class FeInterstitialCluster: public FeCluster {
 		return nameStream.str();
 	}
 
+	/**
+	 * The sink strength
+	 */
+	double sinkStrength;
+
 public:
 
 	/**
@@ -47,8 +52,9 @@ public:
 		type = ReactantType::I;
 
 		// Compute the reaction radius
+		double latticeParam = network.getLatticeParameter();
 		double EightPi = 8.0 * xolotlCore::pi;
-		reactionRadius = xolotlCore::ironLatticeConstant
+		reactionRadius = latticeParam
 				* pow((3.0 / EightPi) * size, (1.0 / 3.0));
 
 		// Bounds on He and V
@@ -58,6 +64,15 @@ public:
 		vBounds = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(0),
 				static_cast<IReactant::SizeType>(1));
+
+		//! Parameters for biased sink in the iron case
+		double r0 = latticeParam * 0.75 * sqrt(3.0);
+		double reactionRadius = latticeParam * cbrt(3.0 / xolotlCore::pi) * 0.5;
+		constexpr double rho = 0.0003;
+		sinkStrength = 1.05 * -4.0 * xolotlCore::pi * rho
+				/ log(
+						xolotlCore::pi * rho * (reactionRadius + r0)
+								* (reactionRadius + r0));
 
 		return;
 	}
@@ -87,8 +102,7 @@ public:
 		// Compute the loss to dislocation sinks
 		if (size < 2) {
 			// bias * k^2 * D * C
-			flux += sinkBias * sinkStrength * diffusionCoefficient[i]
-					* concentration;
+			flux += sinkStrength * diffusionCoefficient[i] * concentration;
 		}
 
 		return flux;
@@ -111,8 +125,7 @@ public:
 		// Compute the loss to dislocation sinks
 		if (size < 2) {
 			// bias * k^2 * D * C
-			partials[id - 1] -= sinkBias * sinkStrength
-					* diffusionCoefficient[i];
+			partials[id - 1] -= sinkStrength * diffusionCoefficient[i];
 		}
 
 		return;

@@ -42,6 +42,13 @@ using namespace xolotlPerf;
 SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		PSIClusterReactionNetwork(registry) {
+	// Set the lattice constant
+	setLatticeParameter(tungstenLatticeConstant);
+	// Set the impurity radius (He)
+	setImpurityRadius(heliumRadius);
+	// Set the interstitial bias in the network
+	setInterstitialBias(1.15);
+
 	// Add He clusters
 	for (int numHe = 1; numHe <= maxClusterSize; numHe++) {
 		// Create a He cluster with cluster size numHe
@@ -56,7 +63,7 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 	// Add deuterium clusters
 	for (int numD = 1; numD <= maxClusterSize; numD++) {
 		// Create a D cluster with cluster size numD
-		auto cluster = new PSIDCluster(numD, *this, registry);
+		auto cluster = new PSIDCluster(numD, 0.25, *this, registry);
 		// Set the diffusion factor for the first one so that it can react
 		if (numD == 1)
 			cluster->setDiffusionFactor(1.0);
@@ -67,7 +74,7 @@ SimplePSIReactionNetwork::SimplePSIReactionNetwork(const int maxClusterSize,
 	// Add tritium clusters
 	for (int numT = 1; numT <= maxClusterSize; numT++) {
 		// Create a T cluster with cluster size numT
-		auto cluster = new PSITCluster(numT, *this, registry);
+		auto cluster = new PSITCluster(numT, 0.25, *this, registry);
 		// Set the diffusion factor for the first one so that it can react
 		if (numT == 1)
 			cluster->setDiffusionFactor(1.0);
@@ -131,6 +138,10 @@ SimpleNEReactionNetwork::SimpleNEReactionNetwork(const int maxClusterSize,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry,
 		const double rho) :
 		NEClusterReactionNetwork(registry) {
+	// Set the lattice constant
+	setLatticeParameter(uraniumDioxydeLatticeConstant);
+	// Set the impurity radius (Xe)
+	setImpurityRadius(xenonRadius);
 	// Set the density
 	setDensity(rho);
 
@@ -151,6 +162,11 @@ SimpleNEReactionNetwork::SimpleNEReactionNetwork(const int maxClusterSize,
 SimpleFeReactionNetwork::SimpleFeReactionNetwork(const int maxClusterSize,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		FeClusterReactionNetwork(registry) {
+	// Set the lattice constant
+	setLatticeParameter(ironLatticeConstant);
+	// Set the impurity radius (He)
+	setImpurityRadius(heliumRadius);
+
 	// Add He clusters
 	for (int numHe = 1; numHe <= 8; numHe++) {
 		// Create a He cluster with cluster size numHe
@@ -199,6 +215,9 @@ SimpleFeReactionNetwork::SimpleFeReactionNetwork(const int maxClusterSize,
 SimpleAlloyReactionNetwork::SimpleAlloyReactionNetwork(const int maxClusterSize,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		AlloyClusterReactionNetwork(registry) {
+	// Set the lattice constant
+	setLatticeParameter(alloyLatticeConstant);
+
 	// Add vacancy clusters
 	for (int numV = 1; numV <= 5; numV++) {
 		// Create a vacancy cluster with cluster size numV

@@ -402,6 +402,48 @@ public:
 	virtual double getDensity() const = 0;
 
 	/**
+	 * This operation sets the lattice parameter
+	 *
+	 * @param lattice The lattice parameter
+	 */
+	virtual void setLatticeParameter(double lattice) = 0;
+
+	/**
+	 * This operation returns the lattice parameter
+	 *
+	 * @return The lattice parameter
+	 */
+	virtual double getLatticeParameter() const = 0;
+
+	/**
+	 * This operation sets the impurity radius
+	 *
+	 * @param radius The impurity radius
+	 */
+	virtual void setImpurityRadius(double radius) = 0;
+
+	/**
+	 * This operation returns the impurity radius
+	 *
+	 * @return The impurity radius
+	 */
+	virtual double getImpurityRadius() const = 0;
+
+	/**
+	 * This operation sets the interstitial bias
+	 *
+	 * @param bias The interstitial bias
+	 */
+	virtual void setInterstitialBias(double bias) = 0;
+
+	/**
+	 * This operation returns the interstitial bias
+	 *
+	 * @return The interstitial bias
+	 */
+	virtual double getInterstitialBias() const = 0;
+
+	/**
 	 * Dump a representation of the network to the given output stream.
 	 *
 	 * @param os Output stream on which to write network description.

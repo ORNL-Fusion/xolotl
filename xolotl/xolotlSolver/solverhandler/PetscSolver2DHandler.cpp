@@ -119,8 +119,7 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	setLocalCoordinates(xs, xm, ys, ym);
 
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, localXM, localXS, localYM, hY,
-			localYS);
+	mutationHandler->initialize(network, localXM, localYM);
 	mutationHandler->initializeIndex2D(surfacePosition, network,
 			advectionHandlers, grid, localXM, localXS, localYM, hY, localYS);
 
@@ -214,11 +213,10 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 			}
 
 			// Temperature
-			xolotlCore::NDPoint < 3
-					> gridPosition { ((grid[i] + grid[i + 1]) / 2.0
-							- grid[surfacePosition[j] + 1])
-							/ (grid[grid.size() - 1]
-									- grid[surfacePosition[j] + 1]), 0.0, 0.0 };
+			xolotlCore::NDPoint<3> gridPosition { ((grid[i] + grid[i + 1]) / 2.0
+					- grid[surfacePosition[j] + 1])
+					/ (grid[grid.size() - 1] - grid[surfacePosition[j] + 1]),
+					0.0, 0.0 };
 			concOffset[dof - 1] = temperatureHandler->getTemperature(
 					gridPosition, 0.0);
 
@@ -553,10 +551,17 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			concVector[4] = concs[yj + 1][xi]; // top
 
 			// Compute the left and right hx
-			double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0, hxRight =
-					(grid[xi + 2] - grid[xi]) / 2.0;
-			if (xi - 1 < 0)
+			double hxLeft = 0.0, hxRight = 0.0;
+			if (xi - 1 >= 0 && xi < nX) {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else if (xi - 1 < 0) {
 				hxLeft = grid[xi + 1] - grid[xi];
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = grid[xi + 1] - grid[xi];
+			}
 
 			// Heat condition
 			if (xi == surfacePosition[yj]) {
@@ -738,10 +743,17 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 		for (int xi = localXS; xi < localXS + localXM; xi++) {
 			// Compute the left and right hx
-			double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0, hxRight =
-					(grid[xi + 2] - grid[xi]) / 2.0;
-			if (xi - 1 < 0)
+			double hxLeft = 0.0, hxRight = 0.0;
+			if (xi - 1 >= 0 && xi < nX) {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else if (xi - 1 < 0) {
 				hxLeft = grid[xi + 1] - grid[xi];
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = grid[xi + 1] - grid[xi];
+			}
 
 			// Heat condition
 			if (xi == surfacePosition[yj]) {

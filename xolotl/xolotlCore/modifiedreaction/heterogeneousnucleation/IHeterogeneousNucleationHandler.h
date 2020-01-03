@@ -1,5 +1,5 @@
-#ifndef IRESOLUTIONHANDLER_H
-#define IRESOLUTIONHANDLER_H
+#ifndef IHETEROGENEOUSNUCLEATIONHANDLER_H
+#define IHETEROGENEOUSNUCLEATIONHANDLER_H
 
 // Includes
 #include <IReactionNetwork.h>
@@ -9,36 +9,34 @@ namespace xolotlCore {
 
 /**
  * Realizations of this interface are responsible for all the physical parts
- * for the re-solution of xenon clusterse.
- * The solver call these methods to handle the re-solution.
+ * for the heterogeneous nucleation of xenon clusters.
+ * The solver call these methods to handle the heterogeneous nucleation.
  */
-class IReSolutionHandler {
+class IHeterogeneousNucleationHandler {
 
 public:
 
 	/**
 	 * The destructor
 	 */
-	virtual ~IReSolutionHandler() {
+	virtual ~IHeterogeneousNucleationHandler() {
 	}
 
 	/**
 	 * The initialize method has to add connectivity between the Xe clusters,
-	 * It must also initialize the rates of the reactions.
+	 * It must also initialize the rates of the reaction.
 	 *
 	 * @param network The network
-	 * @param electronicStoppingPower To select which fit to use
 	 */
-	virtual void initialize(const IReactionNetwork& network,
-			double electronicStoppingPower) = 0;
+	virtual void initialize(const IReactionNetwork& network) = 0;
 
 	/**
-	 * This method update the rate for the re-solution if the fission rate
+	 * This method update the rate for the heterogeneous nucleation if the fission rate
 	 * changed, it should be called when the flux changes for instance.
 	 *
 	 * @param rate The fission rate
 	 */
-	virtual void updateReSolutionRate(double rate) = 0;
+	virtual void updateHeterogeneousNucleationRate(double rate) = 0;
 
 	/**
 	 * This method updates the fission yield.
@@ -48,7 +46,7 @@ public:
 	virtual void setFissionYield(double yield) = 0;
 
 	/**
-	 * Compute the flux due to the re-solution for all the cluster,
+	 * Compute the flux due to the heterogeneous nucleation for all the clusters,
 	 * given the position index xi.
 	 * This method is called by the RHSFunction from the PetscSolver.
 	 *
@@ -63,14 +61,13 @@ public:
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 */
-	virtual void computeReSolution(const IReactionNetwork& network,
+	virtual void computeHeterogeneousNucleation(const IReactionNetwork& network,
 			double *concOffset, double *updatedConcOffset, int xi, int xs,
 			int yj = 0, int zk = 0) = 0;
 
 	/**
-	 * Compute the partials due to the re-solution for all the
-	 * clusters given the position index xi. Returns the number of xenon
-	 * clusters that are re-soluted at this grid point.
+	 * Compute the partials due to the heterogeneous nucleation for all the
+	 * clusters given the position index xi.
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *
 	 * @param network The network
@@ -83,36 +80,14 @@ public:
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 *
-	 * @return The number of xenon clusters that go re-soluted
-	 * at this grid point
+	 * @return true if nucleation is happening
 	 */
-	virtual int computePartialsForReSolution(const IReactionNetwork& network,
+	virtual bool computePartialsForHeterogeneousNucleation(const IReactionNetwork& network,
 			double *val, int *indices, int xi, int xs, int yj = 0,
 			int zk = 0) = 0;
 
-	/**
-	 * Get the total number of clusters in the network that can undergo re-solution.
-	 *
-	 * @return The number of clusters
-	 */
-	virtual int getNumberOfReSoluting() const = 0;
-
-	/**
-	 * Set the minimum size for a cluster to undergo re-solution.
-	 *
-	 * @param size The minimum size
-	 */
-	virtual void setMinSize(int size) = 0;
-
-	/**
-	 * Get the minimum size for a cluster to undergo re-solution.
-	 *
-	 * @return The minimum size
-	 */
-	virtual int getMinSize() const = 0;
-
 };
-//end class IReSolutionHandler
+//end class IHeterogeneousNucleationHandler
 
 } /* namespace xolotlCore */
 #endif

@@ -119,10 +119,12 @@ std::unique_ptr<PSICluster> PSIClusterNetworkLoader::createPSICluster(int numHe,
 		cluster = new PSIInterstitialCluster(numI, network, handlerRegistry);
 	} else if (numD > 0) {
 		// Create a new DCluster
-		cluster = new PSIDCluster(numD, network, handlerRegistry);
+		cluster = new PSIDCluster(numD, hydrogenRadiusFactor, network,
+				handlerRegistry);
 	} else if (numT > 0) {
 		// Create a new TCluster
-		cluster = new PSITCluster(numT, network, handlerRegistry);
+		cluster = new PSITCluster(numT, hydrogenRadiusFactor, network,
+				handlerRegistry);
 	}
 	assert(cluster != nullptr);
 
@@ -207,6 +209,24 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::load(
 	// TODO Once we have C++14, use std::make_unique.
 	std::unique_ptr<PSIClusterReactionNetwork> network(
 			new PSIClusterReactionNetwork(handlerRegistry));
+
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = tungstenLatticeConstant;
+	network->setLatticeParameter(latticeParam);
+
+	// Set the helium radius in the network
+	double radius = options.getImpurityRadius();
+	if (!(radius > 0.0))
+		radius = heliumRadius;
+	network->setImpurityRadius(radius);
+
+	// Set the interstitial bias in the network
+	network->setInterstitialBias(options.getBiasFactor());
+
+	// Set the hydrogan radius factor
+	hydrogenRadiusFactor = options.getHydrogenFactor();
 
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
@@ -312,6 +332,24 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 			new PSIClusterReactionNetwork(handlerRegistry));
 	std::vector<std::reference_wrapper<Reactant> > reactants;
 
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = tungstenLatticeConstant;
+	network->setLatticeParameter(latticeParam);
+
+	// Set the helium radius in the network
+	double radius = options.getImpurityRadius();
+	if (!(radius > 0.0))
+		radius = heliumRadius;
+	network->setImpurityRadius(radius);
+
+	// Set the interstitial bias in the network
+	network->setInterstitialBias(options.getBiasFactor());
+
+	// Set the hydrogan radius factor
+	hydrogenRadiusFactor = options.getHydrogenFactor();
+
 	// Generate the I clusters
 	for (int i = 1; i <= maxI; ++i) {
 		// Set the composition
@@ -324,14 +362,15 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 		if (i <= iFormationEnergies.size())
 			nextCluster->setFormationEnergy(iFormationEnergies[i - 1]);
 		else
-			nextCluster->setFormationEnergy(48.0 + 6.0 * ((double) i - 6.0));
+			nextCluster->setFormationEnergy(
+					iFormationEnergies[iFormationEnergies.size() - 1]
+							+ (double) (i - iFormationEnergies.size()));
 		if (i <= iDiffusion.size()) {
 			nextCluster->setDiffusionFactor(iDiffusion[i - 1]);
 			nextCluster->setMigrationEnergy(iMigration[i - 1]);
 		} else {
-			nextCluster->setDiffusionFactor(0.0);
-			nextCluster->setMigrationEnergy(
-					std::numeric_limits<double>::infinity());
+			nextCluster->setDiffusionFactor(iDiffusion[0] / (double) i);
+			nextCluster->setMigrationEnergy(min((double) i, 15.0) * 0.1);
 		}
 
 		// Save it in the network
@@ -1017,17 +1056,18 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 			// Create the super cluster
 			double size[4] = { heSize, dSize, tSize, (double) k };
-			int width[4] = { heHigh - heLow + 1, dHigh - dLow + 1, tHigh - tLow + 1,
-					1 };
+			int width[4] = { heHigh - heLow + 1, dHigh - dLow + 1, tHigh - tLow
+					+ 1, 1 };
 			int lower[4] = { heLow, dLow, tLow, k };
 			int higher[4] = { heHigh, dHigh, tHigh, k };
 			PSISuperCluster* rawSuperCluster = new PSISuperCluster(size, count,
 					width, lower, higher, network, handlerRegistry);
 
-	//		std::cout << "super: " << rawSuperCluster->getName() << " " << count
-	//				<< " " << heLow << " " << heHigh << " " << upperH << std::endl;
+			//		std::cout << "super: " << rawSuperCluster->getName() << " " << count
+			//				<< " " << heLow << " " << heHigh << " " << upperH << std::endl;
 
-			auto superCluster = std::unique_ptr<PSISuperCluster>(rawSuperCluster);
+			auto superCluster = std::unique_ptr<PSISuperCluster>(
+					rawSuperCluster);
 			// Save access to the cluster so we can trigger updates
 			// after we give it to the network.
 			auto& scref = *superCluster;

@@ -20,7 +20,7 @@ protected:
 	 * Vector to hold the incident flux values at each grid
 	 * point (x position).
 	 */
-	std::vector<double> incidentFluxVec;
+	std::vector<std::vector<double> > incidentFluxVec;
 
 	/**
 	 * Vector to hold the position at each grid

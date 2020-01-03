@@ -17,9 +17,10 @@ NESuperCluster::NESuperCluster(int numMax, int nTot, IReactionNetwork& _network,
 	double nXeSquare = 0.0;
 	reactionRadius = 0.0;
 	double FourPi = 4.0 * xolotlCore::pi;
+	double sizeSum = 0.0;
 	// Loop on the contained size
 	for (int i = numMax; i > numMax - nTot; i--) {
-		size += i;
+		sizeSum += i;
 		reactionRadius += pow(
 				(3.0 * (double) i) / (FourPi * network.getDensity()),
 				(1.0 / 3.0));
@@ -27,7 +28,7 @@ NESuperCluster::NESuperCluster(int numMax, int nTot, IReactionNetwork& _network,
 	}
 
 	// Set the cluster sizes
-	numXe = (double) size / (double) nTot;
+	numXe = sizeSum / (double) nTot;
 	size = (int) numXe;
 	reactionRadius = reactionRadius / (double) nTot;
 	formationEnergy = 79.0;

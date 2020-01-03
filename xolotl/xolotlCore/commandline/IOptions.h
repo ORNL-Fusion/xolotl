@@ -439,6 +439,48 @@ public:
 	 */
 	virtual double getPulseProportion() const = 0;
 
+	/**
+	 * Obtain the value of the lattice parameter.
+	 *
+	 * @return The lattice parameter in nm
+	 */
+	virtual double getLatticeParameter() const = 0;
+
+	/**
+	 * Obtain the value of the impurity radius.
+	 *
+	 * @return The impurity radius in nm
+	 */
+	virtual double getImpurityRadius() const = 0;
+
+	/**
+	 * Obtain the value of the bias factor for interstitial.
+	 *
+	 * @return The bias
+	 */
+	virtual double getBiasFactor() const = 0;
+
+	/**
+	 * Obtain the value of the factor between H and He radii.
+	 *
+	 * @return The hydrogen factor
+	 */
+	virtual double getHydrogenFactor() const = 0;
+
+	/**
+	 * Obtain the value of the xenon diffusion coefficient.
+	 *
+	 * @return The diffusivity in nm2 s-1
+	 */
+	virtual double getXenonDiffusivity() const = 0;
+
+	/**
+	 * Obtain the value of the fission yield.
+	 *
+	 * @return The number of xenon per fission
+	 */
+	virtual double getFissionYield() const = 0;
+
 };
 //end class IOptions
 

@@ -46,9 +46,7 @@ double AlloyClusterReactionNetwork::calculateDissociationConstant(
 		return 0.0;
 
 	// Compute the atomic volume (included the fact that there are 4 atoms per cell)
-	double atomicVolume = 0.25 * xolotlCore::alloyLatticeConstant
-			* xolotlCore::alloyLatticeConstant
-			* xolotlCore::alloyLatticeConstant;
+	double atomicVolume = 0.25 * pow(latticeParameter, 3);
 
 	// Get the rate constant from the reverse reaction
 	double kPlus = reaction.reverseReaction->kConstant[i];
@@ -153,16 +151,16 @@ double AlloyClusterReactionNetwork::getReactionRadius(
 	if (typeName == ReactantType::Faulted || typeName == ReactantType::Frank
 			|| typeName == ReactantType::FaultedSuper
 			|| typeName == ReactantType::FrankSuper)
-		return 0.5 * xolotlCore::alloyLatticeConstant
+		return 0.5 * latticeParameter
 				* sqrt(double(size) * sqrt(3.0) / xolotlCore::pi);
 	if (typeName == ReactantType::V || typeName == ReactantType::Void
 			|| typeName == ReactantType::I
 			|| typeName == ReactantType::VoidSuper)
-		return 0.5 * xolotlCore::alloyLatticeConstant
+		return 0.5 * latticeParameter
 				* pow(1.5 * double(size) / xolotlCore::pi, 1.0 / 3.0);
 	if (typeName == ReactantType::Perfect
 			|| typeName == ReactantType::PerfectSuper)
-		return 0.5 * xolotlCore::alloyLatticeConstant
+		return 0.5 * latticeParameter
 				* sqrt(double(size) * sqrt(2.0) / xolotlCore::pi);
 
 	return 0.0;

@@ -20,6 +20,11 @@ private:
 		return nameStream.str();
 	}
 
+	/**
+	 * The sink strength
+	 */
+	double sinkStrength;
+
 public:
 
 	/**
@@ -46,8 +51,9 @@ public:
 		composition[toCompIdx(Species::V)] = size;
 
 		// Compute the reaction radius
+		double latticeParam = network.getLatticeParameter();
 		// It is the same formula for HeV clusters
-		reactionRadius = xolotlCore::ironLatticeConstant
+		reactionRadius = latticeParam
 				* pow((3.0 * size) / xolotlCore::pi, (1.0 / 3.0)) * 0.5;
 
 		// Bounds on He and V
@@ -57,6 +63,15 @@ public:
 		vBounds = IntegerRange<IReactant::SizeType>(
 				static_cast<IReactant::SizeType>(size),
 				static_cast<IReactant::SizeType>(size + 1));
+
+		//! Parameters for biased sink in the iron case
+		double r0 = latticeParam * 0.75 * sqrt(3.0);
+		double reactionRadius = latticeParam * cbrt(3.0 / xolotlCore::pi) * 0.5;
+		constexpr double rho = 0.0003;
+		sinkStrength = -4.0 * xolotlCore::pi * rho
+				/ log(
+						xolotlCore::pi * rho * (reactionRadius + r0)
+								* (reactionRadius + r0));
 
 		return;
 	}
@@ -84,7 +99,7 @@ public:
 		// Compute the loss to dislocation sinks
 		if (size < 5) {
 			// k^2 * D * C
-			flux += xolotlCore::sinkStrength * diffusionCoefficient[i]
+			flux += sinkStrength * diffusionCoefficient[i]
 					* concentration;
 		}
 
@@ -108,8 +123,7 @@ public:
 		// Compute the loss to dislocation sinks
 		if (size < 5) {
 			// k^2 * D * C
-			partials[id - 1] -= xolotlCore::sinkStrength
-					* diffusionCoefficient[i];
+			partials[id - 1] -= sinkStrength * diffusionCoefficient[i];
 		}
 
 		return;

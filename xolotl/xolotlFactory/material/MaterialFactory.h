@@ -7,6 +7,7 @@
 #include <DummyAdvectionHandler.h>
 #include <DummyTrapMutationHandler.h>
 #include <DummyReSolutionHandler.h>
+#include <DummyNucleationHandler.h>
 #include <TokenizedLineReader.h>
 #include <XGBAdvectionHandler.h>
 #include <YGBAdvectionHandler.h>
@@ -36,6 +37,9 @@ protected:
 	//! The re-solution handler
 	std::shared_ptr<xolotlCore::IReSolutionHandler> theReSolutionHandler;
 
+	//! The heterogeneous nucleation handler
+	std::shared_ptr<xolotlCore::IHeterogeneousNucleationHandler> theNucleationHandler;
+
 public:
 
 	/**
@@ -61,12 +65,10 @@ public:
 			// A constant flux value AND a time profile cannot both be given.
 			throw std::string(
 					"\nA constant flux value AND a time profile cannot both be given.");
-		}
-		else if (options.useFluxAmplitude()) {
+		} else if (options.useFluxAmplitude()) {
 			// Set the constant value of the flux
 			theFluxHandler->setFluxAmplitude(options.getFluxAmplitude());
-		}
-		else if (options.useFluxTimeProfile()) {
+		} else if (options.useFluxTimeProfile()) {
 			// Initialize the time profile
 			theFluxHandler->initializeTimeProfile(options.getFluxProfileName());
 		}
@@ -75,19 +77,26 @@ public:
 		auto map = options.getProcesses();
 		// Set dummy handlers when needed
 		if (!map["diff"])
-			theDiffusionHandler = std::make_shared<xolotlCore::DummyDiffusionHandler>();
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::DummyDiffusionHandler>();
 		if (!map["advec"]) {
 			// Clear the advection handler
 			theAdvectionHandler.clear();
 			// To replace it by a dummy one
-			theAdvectionHandler.push_back(std::make_shared<xolotlCore::DummyAdvectionHandler>());
+			theAdvectionHandler.push_back(
+					std::make_shared<xolotlCore::DummyAdvectionHandler>());
 		}
 		if (!map["modifiedTM"])
-			theTrapMutationHandler = std::make_shared<xolotlCore::DummyTrapMutationHandler>();
+			theTrapMutationHandler = std::make_shared<
+					xolotlCore::DummyTrapMutationHandler>();
 		if (!map["attenuation"])
 			theTrapMutationHandler->setAttenuation(false);
 		if (!map["resolution"])
-			theReSolutionHandler = std::make_shared<xolotlCore::DummyReSolutionHandler>();
+			theReSolutionHandler = std::make_shared<
+					xolotlCore::DummyReSolutionHandler>();
+		if (!map["heterogeneous"])
+			theNucleationHandler = std::make_shared<
+					xolotlCore::DummyNucleationHandler>();
 
 		return;
 	}
@@ -135,6 +144,15 @@ public:
 	 */
 	std::shared_ptr<xolotlCore::IReSolutionHandler> getReSolutionHandler() const {
 		return theReSolutionHandler;
+	}
+
+	/**
+	 * Return the heterogeneous nucleation handler.
+	 *
+	 *  @return The nucleation handler.
+	 */
+	std::shared_ptr<xolotlCore::IHeterogeneousNucleationHandler> getNucleationHandler() const {
+		return theNucleationHandler;
 	}
 };
 

@@ -286,7 +286,8 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 			for (PetscInt xi = xs; xi < xs + xm; xi++) {
 
 				// Boundary conditions
-				if (xi < surfacePos || xi == Mx - 1)
+				if (xi < surfacePos + solverHandler.getLeftOffset()
+						|| xi >= Mx - solverHandler.getRightOffset())
 					continue;
 
 				// Get the pointer to the beginning of the solution data for
@@ -510,7 +511,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	// Sum all the concentrations through MPI reduce
 	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
 			radii, partialBubbleConcentration, partialRadii };
-	std::array<double, 5> totalConcData;
+	std::array<double, 5> totalConcData { 0.0, 0.0, 0.0, 0.0, 0.0 };
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 	MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
@@ -747,7 +748,8 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 				// Get the surface position
 				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
 				// Boundary conditions
-				if (xi < surfacePos)
+				if (xi < surfacePos + solverHandler.getLeftOffset()
+						|| xi >= Mx - solverHandler.getRightOffset())
 					continue;
 
 				// If it is the locally owned part of the grid
@@ -770,7 +772,7 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 
 		std::array<double, 5> myConcData { heLocalConc, dLocalConc, tLocalConc,
 				vLocalConc, iLocalConc };
-		std::array<double, 5> totalConcData;
+		std::array<double, 5> totalConcData = { 0.0, 0.0, 0.0, 0.0, 0.0 };
 
 		MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 		MPI_DOUBLE,
@@ -1189,7 +1191,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 
 				// Get the position of the surface at yj
 				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
-				xi = surfacePos + 1;
+				xi = surfacePos + solverHandler.getLeftOffset();
 
 				// Initialize the value for the flux
 				double newFlux = 0.0;
@@ -1201,10 +1203,17 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 					gridPointSolution = solutionArray[zk][yj][xi];
 
 					// Factor for finite difference
-					double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0,
-							hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-					if (xi - 1 < 0)
+					double hxLeft = 0.0, hxRight = 0.0;
+					if (xi - 1 >= 0 && xi < Mx) {
+						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+					} else if (xi - 1 < 0) {
 						hxLeft = grid[xi + 1] - grid[xi];
+						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+					} else {
+						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+						hxRight = grid[xi + 1] - grid[xi];
+					}
 					double factor = 2.0 / (hxLeft + hxRight);
 
 					// Loop on all the interstitial clusters to add the contribution from deeper
@@ -1265,10 +1274,8 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 			for (yj = 0; yj < My; yj++) {
 				// Get the surface position
 				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
-				for (xi = 0; xi < Mx; xi++) {
-					// Skip everything before the surface
-					if (xi < surfacePos)
-						continue;
+				for (xi = surfacePos + solverHandler.getLeftOffset();
+						xi < Mx - solverHandler.getRightOffset(); xi++) {
 
 					// If this is the locally owned part of the grid
 					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
@@ -1290,23 +1297,16 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 						// Compute the radius of the bubble from the number of helium
 						double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
 						//					double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
-						double radius =
-								(sqrt(3.0) / 4.0)
-										* xolotlCore::tungstenLatticeConstant
-										+ pow(
-												(3.0
-														* pow(
-																xolotlCore::tungstenLatticeConstant,
-																3.0) * nV)
-														/ (8.0 * xolotlCore::pi),
-												(1.0 / 3.0))
-										- pow(
-												(3.0
-														* pow(
-																xolotlCore::tungstenLatticeConstant,
-																3.0))
-														/ (8.0 * xolotlCore::pi),
-												(1.0 / 3.0));
+						double latticeParam = network.getLatticeParameter();
+						double tlcCubed = latticeParam * latticeParam
+								* latticeParam;
+						double radius = (sqrt(3.0) / 4) * latticeParam
+								+ cbrt(
+										(3.0 * tlcCubed * nV)
+												/ (8.0 * xolotlCore::pi))
+								- cbrt(
+										(3.0 * tlcCubed)
+												/ (8.0 * xolotlCore::pi));
 
 						// If the radius is larger than the distance to the surface, burst
 						if (radius > distance) {
@@ -1525,7 +1525,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 		for (yj = 0; yj < My; yj++) {
 			// Get the position of the surface at yj
 			int surfacePos = solverHandler.getSurfacePosition(yj, zk);
-			xi = surfacePos + 1;
+			xi = surfacePos + solverHandler.getLeftOffset();
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold = (62.8 - initialVConc)
@@ -1538,7 +1538,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 				while (nInterstitial3D[yj][zk] > threshold) {
 					// Move the surface higher
 					surfacePos--;
-					xi = surfacePos + 1;
+					xi = surfacePos + solverHandler.getLeftOffset();
 					nGridPoints++;
 					// Update the number of interstitials
 					nInterstitial3D[yj][zk] -= threshold;
@@ -1636,7 +1636,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 
 					// Move the surface deeper
 					surfacePos++;
-					xi = surfacePos + 1;
+					xi = surfacePos + solverHandler.getLeftOffset();
 					// Update the number of interstitials
 					nInterstitial3D[yj][zk] += threshold;
 				}
@@ -1911,10 +1911,13 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 			// Get the sputtering yield
 			sputteringYield3D = solverHandler.getSputteringYield();
 
-			// Clear the file where the surface will be written
-			std::ofstream outputFile;
-			outputFile.open("surface.txt");
-			outputFile.close();
+			// Master process
+			if (procId == 0) {
+				// Clear the file where the surface will be written
+				std::ofstream outputFile;
+				outputFile.open("surface.txt");
+				outputFile.close();
+			}
 		}
 
 		// Bursting
@@ -1990,10 +1993,13 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 		checkPetscError(ierr,
 				"setupPetsc3DMonitor: TSMonitorSet (computeHeliumRetention3D) failed.");
 
-		// Uncomment to clear the file where the retention will be written
-		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt");
-		outputFile.close();
+		// Master process
+		if (procId == 0) {
+			// Uncomment to clear the file where the retention will be written
+			std::ofstream outputFile;
+			outputFile.open("retentionOut.txt");
+			outputFile.close();
+		}
 	}
 
 // Set the monitor to compute the xenon fluence and the retention
@@ -2046,10 +2052,13 @@ PetscErrorCode setupPetsc3DMonitor(TS& ts) {
 		checkPetscError(ierr,
 				"setupPetsc3DMonitor: TSMonitorSet (computeXenonRetention3D) failed.");
 
-		// Uncomment to clear the file where the retention will be written
-		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt");
-		outputFile.close();
+		// Master process
+		if (procId == 0) {
+			// Uncomment to clear the file where the retention will be written
+			std::ofstream outputFile;
+			outputFile.open("retentionOut.txt");
+			outputFile.close();
+		}
 	}
 
 // Set the monitor to save surface plots of clusters concentration

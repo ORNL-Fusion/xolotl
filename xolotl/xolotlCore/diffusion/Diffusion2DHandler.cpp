@@ -33,7 +33,7 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 		// Loop on the spatial grid
 		for (int j = -1; j < ny + 1; j++) {
 			// Set the grid position
-			gridPosition[1] = hy * (double) j;
+			gridPosition[1] = hy * (double) (j + ys);
 			for (int i = 0; i < nx; i++) {
 				// Set the grid position
 				gridPosition[0] = (grid[i + xs] + grid[i + xs + 1]) / 2.0

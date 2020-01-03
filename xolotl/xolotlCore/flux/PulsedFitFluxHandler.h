@@ -25,6 +25,12 @@ private:
 	double alpha;
 
 	/**
+	 * Parameters for the gaussian profile
+	 */
+	double mu = 2000.0;
+	double sigma = 100.0;
+
+	/**
 	 * Function that calculate the flux at a given position x (in nm).
 	 * This function is not normalized.
 	 *
@@ -33,7 +39,7 @@ private:
 	 */
 	double FitFunction(double x) {
 		// Compute the polynomial fit
-		double value = exp(-pow(((double) x - 1000.0) / 200.0, 2.0));
+		double value = exp(-pow((x - mu) / (sqrt(2.0) * sigma), 2.0));
 
 		return std::max(value, 0.0);
 	}
@@ -103,8 +109,8 @@ public:
 			return;
 
 		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] += incidentFluxVec[xi - surfacePos]; // V
-		updatedConcOffset[fluxIndices[1]] += incidentFluxVec[xi - surfacePos]; // I
+		updatedConcOffset[fluxIndices[0]] += incidentFluxVec[0][xi - surfacePos]; // V
+		updatedConcOffset[fluxIndices[1]] += incidentFluxVec[0][xi - surfacePos]; // I
 
 		return;
 	}

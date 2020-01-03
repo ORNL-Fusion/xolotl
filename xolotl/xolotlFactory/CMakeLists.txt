@@ -31,6 +31,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation
                     ${CMAKE_SOURCE_DIR}/xolotlPerf
                     ${CMAKE_CURRENT_SOURCE_DIR}/vizHandler
                     ${CMAKE_BINARY_DIR}/xolotlFactory

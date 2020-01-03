@@ -11,6 +11,12 @@ void NECluster::recomputeDiffusionCoefficient(double temp, int i) {
 	if (xolotlCore::equal(diffusionFactor, 0.0))
 		return;
 
+	// If the diffusivity is given
+	if (migrationEnergy < 0.0) {
+		diffusionCoefficient[i] = diffusionFactor;
+		return;
+	}
+
 	// Intrinsic diffusion
 	double kernel = -3.04 / (xolotlCore::kBoltzmann * temp);
 	double D3 = 7.6e8 * exp(kernel); // nm2/s

@@ -136,8 +136,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	setLocalCoordinates(xs, xm, ys, ym, zs, zm);
 
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, localXM, localXS, localYM, hY, localYS,
-			localZM, hZ, localZS);
+	mutationHandler->initialize(network, localXM, localYM, localZM);
 	mutationHandler->initializeIndex3D(surfacePosition, network,
 			advectionHandlers, grid, localXM, localXS, localYM, hY, localYS,
 			localZM, hZ, localZS);
@@ -234,12 +233,10 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 				}
 
 				// Temperature
-				xolotlCore::NDPoint < 3
-						> gridPosition { ((grid[i] + grid[i + 1]) / 2.0
-								- grid[surfacePosition[j][k] + 1])
-								/ (grid[grid.size() - 1]
-										- grid[surfacePosition[j][k] + 1]), 0.0,
-								0.0 };
+				xolotlCore::NDPoint<3> gridPosition { ((grid[i] + grid[i + 1])
+						/ 2.0 - grid[surfacePosition[j][k] + 1])
+						/ (grid[grid.size() - 1]
+								- grid[surfacePosition[j][k] + 1]), 0.0, 0.0 };
 				concOffset[dof - 1] = temperatureHandler->getTemperature(
 						gridPosition, 0.0);
 
@@ -601,10 +598,17 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				concVector[6] = concs[zk + 1][yj][xi];				// back
 
 				// Compute the left and right hx
-				double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0, hxRight =
-						(grid[xi + 2] - grid[xi]) / 2.0;
-				if (xi - 1 < 0)
+				double hxLeft = 0.0, hxRight = 0.0;
+				if (xi - 1 >= 0 && xi + 2 < nX + 2) {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				} else if (xi - 1 < 0) {
 					hxLeft = grid[xi + 1] - grid[xi];
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				} else {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = grid[xi + 1] - grid[xi];
+				}
 
 				// Heat condition
 				if (xi == surfacePosition[yj][zk]) {
@@ -798,10 +802,17 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 			for (int xi = localXS; xi < localXS + localXM; xi++) {
 				// Compute the left and right hx
-				double hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0, hxRight =
-						(grid[xi + 2] - grid[xi]) / 2.0;
-				if (xi - 1 < 0)
+				double hxLeft = 0.0, hxRight = 0.0;
+				if (xi - 1 >= 0 && xi < nX) {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				} else if (xi - 1 < 0) {
 					hxLeft = grid[xi + 1] - grid[xi];
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				} else {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = grid[xi + 1] - grid[xi];
+				}
 
 				// Heat condition
 				if (xi == surfacePosition[yj][zk]) {
