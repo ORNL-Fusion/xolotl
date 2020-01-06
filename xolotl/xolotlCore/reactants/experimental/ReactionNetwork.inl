@@ -279,9 +279,14 @@ void
 ReactionNetworkWorker<TImpl>::defineReactions(Network& network)
 {
     network._subpaving.syncAll(plsm::onHost);
-    auto tiles = network._subpaving.getTiles(plsm::onHost);
-    auto diffusionFactor = Kokkos::create_mirror_view(_data.diffusionFactor);
-    Kokkos::deep_copy(diffusionFactor, _data.diffusionFactor);
+    network.syncClusterDataOnHost();
+
+    auto tiles = network._clusterDataMirror.tiles;
+    auto diffusionFactor = network._clusterDataMirror.diffusionFactor;
+
+    // auto tiles = network._subpaving.getTiles(plsm::onHost);
+    // auto diffusionFactor = Kokkos::create_mirror_view(_data.diffusionFactor);
+    // Kokkos::deep_copy(diffusionFactor, _data.diffusionFactor);
 
     using ReactionType = typename Network::ReactionType;
     using ClusterSet = typename ReactionType::ClusterSet;

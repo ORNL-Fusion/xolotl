@@ -128,7 +128,7 @@ private:
                     // Find the corresponding cluster
                     Composition comp{};
                     comp[Species::I] = size;
-                    auto iProd = this->findCluster(comp);
+                    auto iProd = this->findCluster(comp, plsm::onHost);
                     if (iProd.getId() != invalid) {
                         ret.prodClusterSets.emplace_back(i, j, iProd.getId());
 //                        std::cout << "prod: " << iProd.getId() << std::endl;
@@ -252,7 +252,7 @@ private:
                         // Find the corresponding cluster
                         Composition comp{};
                         comp[Species::I] = n;
-                        auto iCluster = this->findCluster(comp);
+                        auto iCluster = this->findCluster(comp, plsm::onHost);
 
                         // Look for V
                         size_t vIdx = 0;

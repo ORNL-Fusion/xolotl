@@ -59,11 +59,12 @@ public:
     using ConnectivityView = typename Types::ConnectivityView;
     using SparseFillMap = std::unordered_map<int, std::vector<int>>;
     using ClusterData = typename Types::ClusterData;
+    using ClusterDataMirror = typename Types::ClusterDataMirror;
     using ClusterDataRef = typename Types::ClusterDataRef;
     using InverseMap = Kokkos::View<std::size_t**>;
 
-    template <typename TMemSpace>
-    using Cluster = Cluster<Subpaving, TMemSpace>;
+    template <typename PlsmContext>
+    using Cluster = Cluster<Subpaving, PlsmContext>;
 
     ReactionNetwork() = default;
 
@@ -165,25 +166,65 @@ public:
     void
     setTemperatures(const std::vector<double>& gridTemperatures);
 
-    template <typename TMemSpace = plsm::OnDevice>
-    KOKKOS_INLINE_FUNCTION
-    Cluster<TMemSpace>
-    findCluster(const Composition& comp, TMemSpace memSpace = plsm::onDevice)
+    void
+    syncClusterDataOnHost()
     {
-        // TODO: Implement synchronization for ReactionNetwork
-        // _subpaving.syncAll(memSpace);
-        //FIXME: (for host)
-        return Cluster<TMemSpace>(_clusterData,
-            _subpaving.findTileId(comp, memSpace));
+        auto data = _clusterData;
+        _subpaving.syncTiles(plsm::onHost);
+        auto mirror = ClusterDataMirror(_subpaving, _gridSize);
+        Kokkos::deep_copy(mirror.atomicVolume, data.atomicVolume);
+        Kokkos::deep_copy(mirror.temperature, data.temperature);
+        auto mncl = mirror.momentIds.extent(0);
+        auto ncl = data.momentIds.extent(0);
+        Kokkos::deep_copy(mirror.momentIds, data.momentIds);
+        Kokkos::deep_copy(mirror.reactionRadius, data.reactionRadius);
+        Kokkos::deep_copy(mirror.formationEnergy, data.formationEnergy);
+        Kokkos::deep_copy(mirror.migrationEnergy, data.migrationEnergy);
+        Kokkos::deep_copy(mirror.diffusionFactor, data.diffusionFactor);
+        Kokkos::deep_copy(mirror.diffusionCoefficient, data.diffusionCoefficient);
+        _clusterDataMirror = mirror;
     }
 
-    template <typename TMemSpace = plsm::OnDevice>
     KOKKOS_INLINE_FUNCTION
-    Cluster<TMemSpace>
-    getCluster(std::size_t clusterId, TMemSpace = plsm::onDevice)
+    Cluster<plsm::OnDevice>
+    findCluster(const Composition& comp, plsm::OnDevice context)
     {
-        //FIXME: (for host)
-        return Cluster<TMemSpace>(_clusterData, clusterId);
+        return Cluster<plsm::OnDevice>(_clusterData,
+            _subpaving.findTileId(comp, context));
+    }
+
+    Cluster<plsm::OnHost>
+    findCluster(const Composition& comp, plsm::OnHost context)
+    {
+        return Cluster<plsm::OnHost>(_clusterDataMirror,
+            _subpaving.findTileId(comp, context));
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    auto
+    findCluster(const Composition& comp)
+    {
+        return findCluster(comp, plsm::onDevice);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    Cluster<plsm::OnDevice>
+    getCluster(std::size_t clusterId, plsm::OnDevice)
+    {
+        return Cluster<plsm::OnDevice>(_clusterData, clusterId);
+    }
+
+    Cluster<plsm::OnHost>
+    getCluster(std::size_t clusterId, plsm::OnHost)
+    {
+        return Cluster<plsm::OnHost>(_clusterDataMirror, clusterId);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    auto
+    getCluster(std::size_t clusterId)
+    {
+        return getCluster(clusterId, plsm::onDevice);
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -286,6 +327,7 @@ private:
     std::size_t _gridSize {};
 
     ClusterData _clusterData;
+    ClusterDataMirror _clusterDataMirror;
 
     std::size_t _numDOFs {};
 

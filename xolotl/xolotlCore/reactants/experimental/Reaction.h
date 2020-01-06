@@ -62,6 +62,7 @@ struct ReactionNetworkTypes
     using Region = typename Subpaving::RegionType;
     using Composition = typename Subpaving::PointType;
     using ClusterData = detail::ClusterData<Subpaving>;
+    using ClusterDataMirror = detail::ClusterData<Subpaving, plsm::OnHost>;
     using ClusterDataRef = detail::ClusterDataRef<Subpaving>;
     using ConnectivityView = Kokkos::View<size_t**, Kokkos::MemoryUnmanaged>;
 };

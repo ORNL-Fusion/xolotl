@@ -42,16 +42,18 @@ BOOST_AUTO_TEST_CASE(PSINetwork) {
     // auto rNetwork = experimental::makeSimpleReactionNetwork<NetworkType>();
     NetworkType rNetwork({8, 1, 1, 2, 6}, 0, Options{});
 	std::cout <<"created network" << std::endl;
+
+	rNetwork.syncClusterDataOnHost();
     Composition comp{};
     comp[Spec::He] = 3;
     comp[Spec::V] = 2;
     comp[Spec::I] = 0;
-    auto cluster = rNetwork.findCluster(comp);
+    auto cluster = rNetwork.findCluster(comp, plsm::onHost);
     auto compRegion = cluster.getRegion();
     BOOST_REQUIRE(compRegion.isSimplex());
     BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), comp);
 
-    cluster = rNetwork.getCluster(0);
+    cluster = rNetwork.getCluster(0, plsm::onHost);
     compRegion = cluster.getRegion();
     BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), Composition{});
 
