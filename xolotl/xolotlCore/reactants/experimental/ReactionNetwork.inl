@@ -184,7 +184,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::defineReactions()
 {
-    _worker.defineReactions(*this);
+    _worker.defineReactions();
 }
 
 template <typename TImpl>
@@ -201,10 +201,11 @@ void
 ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
 {
     using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-    Kokkos::parallel_for(Range2D({0, 0}, {_data.numClusters, _data.gridSize}),
+    auto data = _nw._clusterData;
+    Kokkos::parallel_for(Range2D({0, 0}, {data.numClusters, data.gridSize}),
             KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
-        _data.diffusionCoefficient(i,j) = _data.diffusionFactor(i) * std::exp(
-            -_data.migrationEnergy(i) / (kBoltzmann * _data.temperature(j)));
+        data.diffusionCoefficient(i,j) = data.diffusionFactor(i) * std::exp(
+            -data.migrationEnergy(i) / (kBoltzmann * data.temperature(j)));
     });
 }
 
@@ -213,12 +214,13 @@ void
 ReactionNetworkWorker<TImpl>::generateClusterData(
     const typename Network::ClusterGenerator& generator)
 {
-    auto nClusters = _data.numClusters;
-    _data.formationEnergy = Kokkos::View<double*>("Diffusion Factor", nClusters);
-    _data.migrationEnergy = Kokkos::View<double*>("Migration Energy", nClusters);
-    _data.diffusionFactor = Kokkos::View<double*>("Formation Energy", nClusters);
 
-    ClusterData data(_data);
+    auto nClusters = _nw._clusterData.numClusters;
+    _nw._clusterData.formationEnergy = Kokkos::View<double*>("Diffusion Factor", nClusters);
+    _nw._clusterData.migrationEnergy = Kokkos::View<double*>("Migration Energy", nClusters);
+    _nw._clusterData.diffusionFactor = Kokkos::View<double*>("Formation Energy", nClusters);
+
+    ClusterData data(_nw._clusterData);
     Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const std::size_t i) {
         auto cluster = data.getCluster(i);
         data.formationEnergy(i) = generator.getFormationEnergy(cluster);
@@ -233,10 +235,10 @@ ReactionNetworkWorker<TImpl>::defineMomentIds(std::size_t& numDOFs)
 {
     constexpr auto speciesRangeNoI = Network::getSpeciesRangeNoI();
 
-    auto nClusters = _data.numClusters;
-    auto counts = Kokkos::View<std::size_t*>("Moment Id Counts", nClusters);
+    ClusterDataRef data(_nw._clusterData);
 
-    ClusterDataRef data(_data);
+    auto nClusters = data.numClusters;
+    auto counts = Kokkos::View<std::size_t*>("Moment Id Counts", nClusters);
 
     std::size_t nMomentIds = 0;
     Kokkos::parallel_reduce(nClusters,
@@ -276,22 +278,18 @@ ReactionNetworkWorker<TImpl>::defineMomentIds(std::size_t& numDOFs)
 
 template <typename TImpl>
 void
-ReactionNetworkWorker<TImpl>::defineReactions(Network& network)
+ReactionNetworkWorker<TImpl>::defineReactions()
 {
-    network._subpaving.syncAll(plsm::onHost);
-    network.syncClusterDataOnHost();
+    _nw._subpaving.syncAll(plsm::onHost);
+    _nw.syncClusterDataOnHost();
 
-    auto tiles = network._clusterDataMirror.tiles;
-    auto diffusionFactor = network._clusterDataMirror.diffusionFactor;
-
-    // auto tiles = network._subpaving.getTiles(plsm::onHost);
-    // auto diffusionFactor = Kokkos::create_mirror_view(_data.diffusionFactor);
-    // Kokkos::deep_copy(diffusionFactor, _data.diffusionFactor);
+    auto tiles = _nw._clusterDataMirror.tiles;
+    auto diffusionFactor = _nw._clusterDataMirror.diffusionFactor;
 
     using ReactionType = typename Network::ReactionType;
     using ClusterSet = typename ReactionType::ClusterSet;
     typename Network::ClusterSetsPair clusterSetsPair =
-        network.asDerived()->defineReactionClusterSets(tiles, diffusionFactor);
+        _nw.asDerived()->defineReactionClusterSets(tiles, diffusionFactor);
     auto& prodClusterSets = clusterSetsPair.prodClusterSets;
     auto& dissClusterSets = clusterSetsPair.dissClusterSets;
     auto nProdReactions = prodClusterSets.size();
@@ -318,26 +316,27 @@ ReactionNetworkWorker<TImpl>::defineReactions(Network& network)
 
     auto numReactions = nProdReactions + nDissReactions;
     Kokkos::View<ReactionType*> reactions("Reactions", numReactions);
-    Kokkos::View<double**> reactionRates("Reaction Rates", numReactions,
-        _nw._gridSize);
 
     ReactionDataRef reactionData{_nw._productionCoeffs, _nw._dissociationCoeffs,
         _nw._reactionRates, _nw._inverseMap};
     using RType = typename ReactionType::Type;
+    auto data = _nw._clusterData;
     Kokkos::parallel_for(nProdReactions, KOKKOS_LAMBDA (std::size_t i) {
         const auto& clSet = prodSets(i);
-        reactions(i) = ReactionType(reactionData, _data, i, RType::production,
+        reactions(i) = ReactionType(reactionData, data, i, RType::production,
             clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
     });
     Kokkos::parallel_for(nDissReactions, KOKKOS_LAMBDA (std::size_t i) {
         const auto& clSet = dissSets(i);
         auto id = i + nProdReactions;
-        reactions(id) = ReactionType(reactionData, _data, id, RType::dissociation,
+        ReactionType rx(reactionData, data, id, RType::dissociation,
             clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
+        // reactions(id) = 
     });
 
     _nw._reactions = reactions;
-    _nw._reactionRates = reactionRates;
+    _nw._reactionRates = Kokkos::View<double**>("Reaction Rates", numReactions,
+        _nw._gridSize);
 }
 
 template <typename TImpl>
