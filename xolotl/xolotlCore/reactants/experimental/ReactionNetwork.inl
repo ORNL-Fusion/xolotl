@@ -225,6 +225,9 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
         data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
         data.diffusionFactor(i) = generator.getDiffusionFactor(cluster);
     });
+    
+
+        std::cout << data.diffusionFactor(0) << std::endl;
 }
 
 template <typename TImpl>
@@ -283,6 +286,8 @@ ReactionNetworkWorker<TImpl>::defineReactions(Network& network)
 
     auto tiles = network._clusterDataMirror.tiles;
     auto diffusionFactor = network._clusterDataMirror.diffusionFactor;
+    
+    std::cout << diffusionFactor(0) << std::endl;
 
     // auto tiles = network._subpaving.getTiles(plsm::onHost);
     // auto diffusionFactor = Kokkos::create_mirror_view(_data.diffusionFactor);
@@ -296,6 +301,7 @@ ReactionNetworkWorker<TImpl>::defineReactions(Network& network)
     auto& dissClusterSets = clusterSetsPair.dissClusterSets;
     auto nProdReactions = prodClusterSets.size();
     auto nDissReactions = dissClusterSets.size();
+//	std::cout << nProdReactions << " " << nDissReactions << std::endl;
 
     auto prodSetsHostView =
         Kokkos::View<ClusterSet*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(

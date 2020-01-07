@@ -39,6 +39,8 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
     _coefs(reactionData.getCoefficients(reactionId)),
     _inverseMap(reactionData.inverseMap)
 {
+
+	std::cout << "here" << std::endl;
     for (std::size_t i : {0, 1}) {
         copyMomentIds(_reactants[i], _reactantMomentIds[i]);
         copyMomentIds(_products[i], _productMomentIds[i]);
@@ -73,6 +75,20 @@ typename Reaction<TNetwork, TDerived>::AmountType
 Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
     const Region& pairCl1Reg, const Region& pairCl2Reg)
 {
+    // Special case for I
+    AmountType iSize = 0;
+    if (NetworkType::getNumberOfSpeciesNoI() != NetworkType::getNumberOfSpecies()) {
+        if (pairCl1Reg.isSimplex() && pairCl1Reg.getOrigin().isOnAxis(TNetwork::Traits::Species::I)) {
+            iSize += pairCl1Reg[TNetwork::Traits::Species::I].begin();
+        }
+        if (pairCl2Reg.isSimplex() && pairCl2Reg.getOrigin().isOnAxis(TNetwork::Traits::Species::I)) {
+            iSize += pairCl1Reg[TNetwork::Traits::Species::I].begin();
+        }
+        if (singleClReg.isSimplex() && singleClReg.getOrigin().isOnAxis(TNetwork::Traits::Species::I)) {
+            iSize -= pairCl1Reg[TNetwork::Traits::Species::I].begin();
+        }
+    }
+    
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
     AmountType nOverlap = 1;
@@ -86,19 +102,41 @@ Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
         // 3+6, 4+5, 4+6, width is 3
 
         AmountType width{};
-
-        //TODO: Would be nice to loop on the cluster with the smaller tile
-        for (auto j : makeIntervalRange(pairCl1Reg[i])) {
-            width +=
-                min(singleClReg[i].end() - 1, pairCl2Reg[i].end() - 1 + j)
-                - max(singleClReg[i].begin(), pairCl2Reg[i].begin() + j)
-                + 1;
+        
+        // Special case for I
+        if (i == TNetwork::Traits::Species::V) {
+            for (auto j : makeIntervalRange(pairCl1Reg[i])) {
+                width +=
+                    min(singleClReg[i].end() - 1, pairCl2Reg[i].end() - 1 + j - iSize)
+                    - max(singleClReg[i].begin(), pairCl2Reg[i].begin() + j - iSize)
+                    + 1;
+            }
         }
-
+        else {
+            //TODO: Would be nice to loop on the cluster with the smaller tile
+            for (auto j : makeIntervalRange(pairCl1Reg[i])) {
+                width +=
+                    min(singleClReg[i].end() - 1, pairCl2Reg[i].end() - 1 + j)
+                    - max(singleClReg[i].begin(), pairCl2Reg[i].begin() + j)
+                    + 1;
+            }
+        }
+        
         nOverlap *= width;
     }
-
-    // assert(nOverlap > 0);
+    
+    if (nOverlap <= 0) {
+        std::cout << pairCl1Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl1Reg[TNetwork::Traits::Species::D].begin() 
+        		<< ", " << pairCl1Reg[TNetwork::Traits::Species::T].begin()
+            << ", " << pairCl1Reg[TNetwork::Traits::Species::V].begin() << ", " << pairCl1Reg[TNetwork::Traits::Species::I].begin() << std::endl;
+        std::cout << pairCl2Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl2Reg[TNetwork::Traits::Species::D].begin() 
+        		<< ", " << pairCl2Reg[TNetwork::Traits::Species::T].begin()
+            << ", " << pairCl2Reg[TNetwork::Traits::Species::V].begin() << ", " << pairCl2Reg[TNetwork::Traits::Species::I].begin() << std::endl;
+        std::cout << "Prod: " << singleClReg[TNetwork::Traits::Species::He].begin() << ", " << singleClReg[TNetwork::Traits::Species::D].begin() 
+        		<< ", " << singleClReg[TNetwork::Traits::Species::T].begin()
+            << ", " << singleClReg[TNetwork::Traits::Species::V].begin() << ", " << singleClReg[TNetwork::Traits::Species::I].begin() << std::endl;
+    }
+    assert(nOverlap > 0);
 
     return nOverlap;
 }
@@ -110,7 +148,7 @@ Reaction<TNetwork, TDerived>::computeProductionCoefficients()
 {
     // static
     const auto dummyRegion = Region(Composition{});
-
+    
     // Find the overlap for this reaction
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -123,8 +161,23 @@ Reaction<TNetwork, TDerived>::computeProductionCoefficients()
     const auto& cl1Disp = cl1Reg.dispersion();
     const auto& cl2Disp = cl2Reg.dispersion();
 
-    auto nOverlap =
-        static_cast<double>(computeOverlap(prod1Reg, cl1Reg, cl2Reg));
+    // If there is no product the overlap is 1
+    double nOverlap = 1.0;
+    // General case
+    if (_products[0] != invalid && _products[1] == invalid)
+        nOverlap = static_cast<double>(computeOverlap(prod1Reg, cl1Reg, cl2Reg));
+    // Special case with two products
+    else if (_products[0] != invalid && _products[1] != invalid) {
+        // Combine the regions 
+        auto ilist = Kokkos::Array<plsm::Interval<AmountType>, NetworkType::getNumberOfSpecies()>();
+        for (auto i : NetworkType::getSpeciesRange()) {
+            auto inter = plsm::Interval<AmountType> (prod1Reg[i].begin() + prod2Reg[i].begin(), 
+                    prod1Reg[i].end() + prod2Reg[i].end() - 1);
+            ilist[i()] = inter;
+        }
+        auto prodReg = Region(ilist);
+        nOverlap = static_cast<double>(computeOverlap(prodReg, cl1Reg, cl2Reg));
+    }
 
     _coefs(0, 0, 0, 0) = nOverlap;
     for (auto i : speciesRangeNoI) {

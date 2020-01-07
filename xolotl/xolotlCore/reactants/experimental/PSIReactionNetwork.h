@@ -92,18 +92,18 @@ private:
         Kokkos::View<double*>::HostMirror diffusionFactor)
     {
         typename Superclass::ClusterSetsPair ret;
-//    	std::cout <<"in define reaction" << std::endl;
 
         auto species = this->getSpeciesRange();
         auto speciesNoI = this->getSpeciesRangeNoI();
 
         std::size_t numClusters = tiles.extent(0);
-        for (std::size_t i = 1; i < numClusters; ++i)
+        for (std::size_t i = 0; i < numClusters; ++i)
             for (std::size_t j = i; j < numClusters; ++j) {
-//            	std::cout <<"trying: " << i << " + " << j << std::endl;
+//                std::cout << diffusionFactor(i) << " " << diffusionFactor(j) << std::endl;
                 // Check that at least one of them is mobile
                 if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0)
                     continue;
+                std::cout << i << " + " << j << std::endl;
 
                 // Get the composition of each cluster
                 const auto& cl1Reg = tiles(i).getRegion();
@@ -113,25 +113,22 @@ private:
                 Composition lo2 = cl2Reg.getOrigin();
                 Composition hi2 = cl2Reg.getUpperLimitPoint();
 
-//                std::cout << lo1[Species::He] << ", " << lo1[Species::D] << ", " << lo1[Species::T]
-//						<< ", " << lo1[Species::V] << ", " << lo1[Species::I] << std::endl;
-//                std::cout << lo2[Species::He] << ", " << lo2[Species::D] << ", " << lo2[Species::T]
-//						<< ", " << lo2[Species::V] << ", " << lo2[Species::I] << std::endl;
-
                 // Special case for I + I
                 if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I)
                     && lo2.isOnAxis(Species::I)) {
                     // Compute the composition of the new cluster
                     std::size_t size = lo1[Species::I]
                         + lo2[Species::I];
-//                    std::cout << "I product size: " << size << std::endl;
                     // Find the corresponding cluster
-                    Composition comp{};
+                    Composition comp;
+                    // Initialize the composition
+                    for (auto i : species) {
+                        comp[i] = 0;
+                    }
                     comp[Species::I] = size;
                     auto iProd = this->findCluster(comp, plsm::onHost);
                     if (iProd.getId() != invalid) {
                         ret.prodClusterSets.emplace_back(i, j, iProd.getId());
-//                        std::cout << "prod: " << iProd.getId() << std::endl;
                         if (lo1[Species::I] == 1
                             || lo2[Species::I] == 1)
                             ret.dissClusterSets.emplace_back(iProd.getId(), i, j);
@@ -153,32 +150,30 @@ private:
                     // 3 cases
                     if (prodSize > 0) {
                         // Looking for V cluster
-                        for (std::size_t k = 1; k < numClusters; ++k) {
-                            // Get the composition
-                            const auto& prodReg = tiles(k).getRegion();
-                            if (!prodReg.isSimplex()) continue;
-                            Composition lo = prodReg.getOrigin();
-                            if (!lo.isOnAxis(Species::V)) continue;
-                            if (lo[Species::V] == prodSize) {
-                                ret.prodClusterSets.emplace_back(i, j, k);
-                                // No dissociation
-                                break;
-                            }
+                        Composition comp;
+                        // Initialize the composition
+                        for (auto i : species) {
+                            comp[i] = 0;
+                        }
+                        comp[Species::V] = prodSize;
+                        auto vProd = this->findCluster(comp);
+                        if (vProd.getId() != invalid) {
+                            ret.prodClusterSets.emplace_back(i, j, vProd.getId());
+                            // No dissociation
                         }
                     }
                     else if (prodSize < 0) {
                         // Looking for I cluster
-                        for (std::size_t k = 1; k < numClusters; ++k) {
-                            // Get the composition
-                            const auto& prodReg = tiles(k).getRegion();
-                            if (!prodReg.isSimplex()) continue;
-                            Composition lo = prodReg.getOrigin();
-                            if (!lo.isOnAxis(Species::I)) continue;
-                            if (lo[Species::I] == prodSize) {
-                                ret.prodClusterSets.emplace_back(i, j, k);
-                                // No dissociation
-                                break;
-                            }
+                        Composition comp;
+                        // Initialize the composition
+                        for (auto i : species) {
+                            comp[i] = 0;
+                        }
+                        comp[Species::I] = -prodSize;
+                        auto iProd = this->findCluster(comp);
+                        if (iProd.getId() != invalid) {
+                            ret.prodClusterSets.emplace_back(i, j, iProd.getId());
+                            // No dissociation
                         }
                     }
                     else {
@@ -206,9 +201,6 @@ private:
                         }
                         bounds[vIdx].first -= high;
                         bounds[vIdx].second -= low;
-
-                        if (bounds[vIdx].first < 0) bounds[vIdx].first = 0;
-                        if (bounds[vIdx].second < 0) bounds[vIdx].second = 0;
                     }
                     else
                         bounds.emplace_back(std::make_pair(low, high));
@@ -216,7 +208,7 @@ private:
 
                 // Look for potential product
                 std::size_t nProd = 0;
-                for (std::size_t k = 1; k < numClusters; ++k) {
+                for (std::size_t k = 0; k < numClusters; ++k) {
                     // Get the composition
                     const auto& prodReg = tiles(k).getRegion();
                     bool isGood = true;
@@ -238,19 +230,44 @@ private:
                         nProd++;
                         ret.prodClusterSets.emplace_back(i, j, k);
                         // TODO: will have to add some rules, i or j should be a simplex cluster of max size 1
-                        ret.dissClusterSets.emplace_back(k, i, j);
+                        if (!cl1Reg.isSimplex() && !cl2Reg.isSimplex())
+                            continue;
+                        // Loop on the species
+                        bool isOnAxis1 = false, isOnAxis2 = false;
+                        for (auto l : species) {
+                            if (lo1.isOnAxis(l()) && lo1[l()] == 1) isOnAxis1 = true;
+                            if (lo2.isOnAxis(l()) && lo2[l()] == 1) isOnAxis2 = true;
+                        }
+                        if (isOnAxis1 || isOnAxis2) {
+                            if (lo1.isOnAxis(Species::I) || lo2.isOnAxis(Species::I))
+                                continue;
+
+                            ret.dissClusterSets.emplace_back(k, i, j);
+                        }
                     }
                 }
 
                 // Special case for trap-mutation
                 if (nProd == 0) {
-                    // Look for larger clusters
+                    // Look for larger clusters only if one of the reactant is pure He
+                    if (!(cl1Reg.isSimplex() && lo1.isOnAxis(Species::He)) && !(cl2Reg.isSimplex()
+                                    && lo2.isOnAxis(Species::He)))
+                        continue;
+
+                    // Check that both reactants contain He
+                    if (cl1Reg[Species::He].begin() < 1 || cl2Reg[Species::He].begin() < 1)
+                        continue;
+
                     // Loop on possible I sizes
                     // TODO: get the correct value for maxISize
                     std::size_t maxISize = 6;
                     for (std::size_t n = 1; n <= maxISize; ++n) {
                         // Find the corresponding cluster
-                        Composition comp{};
+                        Composition comp;
+	                    // Initialize the composition
+	                    for (auto i : species) {
+	                        comp[i] = 0;
+	                    }
                         comp[Species::I] = n;
                         auto iCluster = this->findCluster(comp, plsm::onHost);
 
@@ -267,7 +284,7 @@ private:
 
                         // Look for potential product
                         std::size_t nProd = 0;
-                        for (std::size_t k = 1; k < numClusters; ++k) {
+                        for (std::size_t k = 0; k < numClusters; ++k) {
                             // Get the composition
                             const auto& prodReg = tiles(k).getRegion();
                             bool isGood = true;
@@ -296,6 +313,7 @@ private:
                     }
                 }
         }
+    	std::cout << ret.prodClusterSets.size() << " " << ret.dissClusterSets.size() << std::endl;
 
         return ret;
     }
@@ -319,14 +337,20 @@ public:
 
     PSIClusterGenerator(const IOptions& options)
         :
-        _hydrogenRadiusFactor(options.getHydrogenFactor())
+        _hydrogenRadiusFactor(options.getHydrogenFactor()),
+        _maxHe(options.getMaxImpurity()),
+        _maxD(options.getMaxD()),
+        _maxT(options.getMaxT())
     {
     }
 
     PSIClusterGenerator(const IOptions& options, std::size_t refineDepth)
         :
         Superclass(refineDepth),
-        _hydrogenRadiusFactor(options.getHydrogenFactor())
+        _hydrogenRadiusFactor(options.getHydrogenFactor()),
+        _maxHe(options.getMaxImpurity()),
+        _maxD(options.getMaxD()),
+        _maxT(options.getMaxT())
     {
     }
 
@@ -342,51 +366,93 @@ public:
     bool
     select(const Region& region) const
     {
+        // Remove 0
+        if (region[Species::He].end() == 1 && region[Species::D].end() == 1 &&
+                region[Species::T].end() == 1 && region[Species::V].end() == 1 &&
+                region[Species::I].end() == 1) {
+            return false;
+        }
+
+        // Interstitials
+        if (region[Species::I].begin() > 0 && (region[Species::He].begin() > 0 ||
+                region[Species::D].begin() > 0 || region[Species::T].begin() > 0 ||
+                region[Species::V].begin() > 0)) {
+            return false;
+        }
+
+        // Helium
+        if (region[Species::He].begin() > _maxHe && region[Species::D].end() == 1 &&
+                region[Species::T].end() == 1 && region[Species::V].end() == 1 &&
+                region[Species::I].end() == 1) {
+            return false;
+        }
+
+        // Deuterium
+        if (region[Species::D].begin() > _maxD && region[Species::He].end() == 1 &&
+                region[Species::T].end() == 1 && region[Species::V].end() == 1 &&
+                region[Species::I].end() == 1) {
+            return false;
+        }
+
+        // Tritium
+        if (region[Species::T].begin() > _maxT && region[Species::He].end() == 1 &&
+                region[Species::D].end() == 1 && region[Species::V].end() == 1 &&
+                region[Species::I].end() == 1) {
+            return false;
+        }
+
         auto maxDPerV =
-            KOKKOS_LAMBDA (AmountType amtV) { return (8.0/3.0) * amtV; };
+            KOKKOS_LAMBDA (AmountType amtV) { return (2.0/3.0) * getMaxHePerV(amtV); };
         if (region[Species::V].begin() > 0) {
             Composition lo = region.getOrigin();
             Composition hi = region.getUpperLimitPoint();
 
             //Too many helium
-            if (lo[Species::He] > getMaxHePerV(lo[Species::V]) &&
-                    lo[Species::He] > getMaxHePerV(hi[Species::V] - 1)) {
+            if (lo[Species::He] > getMaxHePerV(lo[Species::V])) {
                 return false;
             }
 
             //Too many deuterium
-            if (lo[Species::D] > maxDPerV(lo[Species::V]) &&
-                    lo[Species::D] > maxDPerV(hi[Species::V])) {
+            if (lo[Species::D] > maxDPerV(lo[Species::V])) {
                 return false;
             }
 
             //Too many tritium
-            if (lo[Species::T] > maxDPerV(lo[Species::V]) &&
-                    lo[Species::T] > maxDPerV(hi[Species::V])) {
+            if (lo[Species::T] > maxDPerV(lo[Species::V])) {
                 return false;
             }
 
             // Too many hydrogen
             auto loH = lo[Species::D] + lo[Species::T];
             if (lo[Species::He] == 0 && hi[Species::He] - 1 == 0) {
-                if (loH > 6 * lo[Species::V] && loH > 6 * hi[Species::V]) {
+                if (loH > 6 * lo[Species::V]) {
                     return false;
                 }
             }
             else {
-                if (loH > (2.0/3.0) * lo[Species::He] + 0.5 &&
-                        loH > (2.0/3.0) * hi[Species::He] + 0.5) {
+                if (loH > (2.0/3.0) * lo[Species::He] + 0.5 ) {
                     return false;
                 }
             }
+        }
+
+        // Can't cluster without V
+        if (region[Species::V].end() == 1) {
+            if (region[Species::He].begin() > 0 && region[Species::D].begin() > 0)
+                return false;
+            if (region[Species::He].begin() > 0 && region[Species::T].begin() > 0)
+                return false;
+            if (region[Species::D].begin() > 0 && region[Species::T].begin() > 0)
+                return false;
         }
 
         return true;
     }
 
     KOKKOS_INLINE_FUNCTION
+    static
     AmountType
-    getMaxHePerV(AmountType amtV) const noexcept
+    getMaxHePerV(AmountType amtV) noexcept
     {
         /**
          * The maximum number of helium atoms that can be combined with a
@@ -566,6 +632,9 @@ public:
                 }
             }
         }
+
+//        std::cout << diffusionFactor << std::endl;
+
         return diffusionFactor;
     }
 
@@ -692,6 +761,11 @@ private:
 private:
     // The factor between He and H radius sizes
     double _hydrogenRadiusFactor {0.25};
+
+    // Maximum size of single species
+    AmountType _maxHe {8};
+    AmountType _maxD {1};
+    AmountType _maxT {1};
 };
 }
 }
