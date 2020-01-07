@@ -309,10 +309,14 @@ protected:
     Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _productMomentIds;
 
     //! Reaction rate (k)
-    Kokkos::View<double*, Kokkos::MemoryUnmanaged> _rate;
+    using RateSubView = decltype(
+        std::declval<detail::ReactionDataRef>().getRates(0));
+    RateSubView _rate;
 
     //! Flux coefficients
-    Kokkos::View<double****, Kokkos::MemoryUnmanaged> _coefs;
+    using CoefsSubView = decltype(
+        std::declval<detail::ReactionDataRef>().getCoefficients(0));
+    CoefsSubView _coefs;
 
     Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged> _inverseMap;
 };

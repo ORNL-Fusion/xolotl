@@ -99,11 +99,9 @@ private:
         std::size_t numClusters = tiles.extent(0);
         for (std::size_t i = 0; i < numClusters; ++i)
             for (std::size_t j = i; j < numClusters; ++j) {
-//                std::cout << diffusionFactor(i) << " " << diffusionFactor(j) << std::endl;
                 // Check that at least one of them is mobile
                 if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0)
                     continue;
-                std::cout << i << " + " << j << std::endl;
 
                 // Get the composition of each cluster
                 const auto& cl1Reg = tiles(i).getRegion();
@@ -313,7 +311,6 @@ private:
                     }
                 }
         }
-    	std::cout << ret.prodClusterSets.size() << " " << ret.dissClusterSets.size() << std::endl;
 
         return ret;
     }
@@ -632,8 +629,6 @@ public:
                 }
             }
         }
-
-//        std::cout << diffusionFactor << std::endl;
 
         return diffusionFactor;
     }

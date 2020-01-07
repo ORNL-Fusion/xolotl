@@ -96,9 +96,9 @@ BOOST_AUTO_TEST_CASE(PSINetwork) {
 	BOOST_REQUIRE(compRegion.isSimplex());
 	BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), comp);
 
-	cluster = rNetwork.getCluster(0, plsm::onHost);
-	compRegion = cluster.getRegion();
-	BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), Composition { });
+//	cluster = rNetwork.getCluster(0, plsm::onHost);
+//	compRegion = cluster.getRegion();
+//	BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), Composition { });
 
 	using Reaction = typename NetworkType::ReactionType;
 	// Reaction r0;

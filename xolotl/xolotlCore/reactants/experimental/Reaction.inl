@@ -40,7 +40,6 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
     _inverseMap(reactionData.inverseMap)
 {
 
-	std::cout << "here" << std::endl;
     for (std::size_t i : {0, 1}) {
         copyMomentIds(_reactants[i], _reactantMomentIds[i]);
         copyMomentIds(_products[i], _productMomentIds[i]);
@@ -76,17 +75,11 @@ Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
     const Region& pairCl1Reg, const Region& pairCl2Reg)
 {
     // Special case for I
-    AmountType iSize = 0;
+	int iSize = 0;
     if (NetworkType::getNumberOfSpeciesNoI() != NetworkType::getNumberOfSpecies()) {
-        if (pairCl1Reg.isSimplex() && pairCl1Reg.getOrigin().isOnAxis(TNetwork::Traits::Species::I)) {
-            iSize += pairCl1Reg[TNetwork::Traits::Species::I].begin();
-        }
-        if (pairCl2Reg.isSimplex() && pairCl2Reg.getOrigin().isOnAxis(TNetwork::Traits::Species::I)) {
-            iSize += pairCl1Reg[TNetwork::Traits::Species::I].begin();
-        }
-        if (singleClReg.isSimplex() && singleClReg.getOrigin().isOnAxis(TNetwork::Traits::Species::I)) {
-            iSize -= pairCl1Reg[TNetwork::Traits::Species::I].begin();
-        }
+        iSize += pairCl1Reg[TNetwork::Traits::Species::I].begin();
+        iSize += pairCl2Reg[TNetwork::Traits::Species::I].begin();
+        iSize -= singleClReg[TNetwork::Traits::Species::I].begin();
     }
     
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
@@ -101,7 +94,7 @@ Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
         // More complicated with X_[3,5) + X_[5,7) ⇄ X_[9,11)
         // 3+6, 4+5, 4+6, width is 3
 
-        AmountType width{};
+    	AmountType width{};
         
         // Special case for I
         if (i == TNetwork::Traits::Species::V) {
@@ -121,21 +114,21 @@ Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
                     + 1;
             }
         }
-        
         nOverlap *= width;
     }
     
-    if (nOverlap <= 0) {
-        std::cout << pairCl1Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl1Reg[TNetwork::Traits::Species::D].begin() 
-        		<< ", " << pairCl1Reg[TNetwork::Traits::Species::T].begin()
-            << ", " << pairCl1Reg[TNetwork::Traits::Species::V].begin() << ", " << pairCl1Reg[TNetwork::Traits::Species::I].begin() << std::endl;
-        std::cout << pairCl2Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl2Reg[TNetwork::Traits::Species::D].begin() 
-        		<< ", " << pairCl2Reg[TNetwork::Traits::Species::T].begin()
-            << ", " << pairCl2Reg[TNetwork::Traits::Species::V].begin() << ", " << pairCl2Reg[TNetwork::Traits::Species::I].begin() << std::endl;
-        std::cout << "Prod: " << singleClReg[TNetwork::Traits::Species::He].begin() << ", " << singleClReg[TNetwork::Traits::Species::D].begin() 
-        		<< ", " << singleClReg[TNetwork::Traits::Species::T].begin()
-            << ", " << singleClReg[TNetwork::Traits::Species::V].begin() << ", " << singleClReg[TNetwork::Traits::Species::I].begin() << std::endl;
-    }
+//    if (nOverlap <= 0) {
+//        std::cout << pairCl1Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl1Reg[TNetwork::Traits::Species::D].begin() 
+//        		<< ", " << pairCl1Reg[TNetwork::Traits::Species::T].begin()
+//            << ", " << pairCl1Reg[TNetwork::Traits::Species::V].begin() << ", " << pairCl1Reg[TNetwork::Traits::Species::I].begin() << std::endl;
+//        std::cout << pairCl2Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl2Reg[TNetwork::Traits::Species::D].begin() 
+//        		<< ", " << pairCl2Reg[TNetwork::Traits::Species::T].begin()
+//            << ", " << pairCl2Reg[TNetwork::Traits::Species::V].begin() << ", " << pairCl2Reg[TNetwork::Traits::Species::I].begin() << std::endl;
+//        std::cout << "Prod: " << singleClReg[TNetwork::Traits::Species::He].begin() << ", " << singleClReg[TNetwork::Traits::Species::D].begin() 
+//        		<< ", " << singleClReg[TNetwork::Traits::Species::T].begin()
+//            << ", " << singleClReg[TNetwork::Traits::Species::V].begin() << ", " << singleClReg[TNetwork::Traits::Species::I].begin() << std::endl;
+//        std::cout << "Overlap: " << nOverlap << std::endl;
+//    }
     assert(nOverlap > 0);
 
     return nOverlap;

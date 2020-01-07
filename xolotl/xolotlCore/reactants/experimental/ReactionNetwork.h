@@ -169,19 +169,16 @@ public:
     void
     syncClusterDataOnHost()
     {
-        auto data = _clusterData;
         _subpaving.syncTiles(plsm::onHost);
         auto mirror = ClusterDataMirror(_subpaving, _gridSize);
-        Kokkos::deep_copy(mirror.atomicVolume, data.atomicVolume);
-        Kokkos::deep_copy(mirror.temperature, data.temperature);
-        auto mncl = mirror.momentIds.extent(0);
-        auto ncl = data.momentIds.extent(0);
-        Kokkos::deep_copy(mirror.momentIds, data.momentIds);
-        Kokkos::deep_copy(mirror.reactionRadius, data.reactionRadius);
-        Kokkos::deep_copy(mirror.formationEnergy, data.formationEnergy);
-        Kokkos::deep_copy(mirror.migrationEnergy, data.migrationEnergy);
-        Kokkos::deep_copy(mirror.diffusionFactor, data.diffusionFactor);
-        Kokkos::deep_copy(mirror.diffusionCoefficient, data.diffusionCoefficient);
+        Kokkos::deep_copy(mirror.atomicVolume, _clusterData.atomicVolume);
+        Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
+        Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
+        Kokkos::deep_copy(mirror.reactionRadius, _clusterData.reactionRadius);
+        Kokkos::deep_copy(mirror.formationEnergy, _clusterData.formationEnergy);
+        Kokkos::deep_copy(mirror.migrationEnergy, _clusterData.migrationEnergy);
+        Kokkos::deep_copy(mirror.diffusionFactor, _clusterData.diffusionFactor);
+        Kokkos::deep_copy(mirror.diffusionCoefficient, _clusterData.diffusionCoefficient);
         _clusterDataMirror = mirror;
     }
 
@@ -393,12 +390,10 @@ struct ReactionNetworkWorker
     using ClusterDataRef = typename Network::ClusterDataRef;
 
     Network& _nw;
-    ClusterData _data;
 
     ReactionNetworkWorker(Network& network)
         :
-        _nw(network),
-        _data(_nw._clusterData)
+        _nw(network)
     {
     }
 
@@ -412,7 +407,7 @@ struct ReactionNetworkWorker
     defineMomentIds(std::size_t& numDOFs);
 
     void
-    defineReactions(Network& network);
+    defineReactions();
 
     std::size_t
     getDiagonalFill(typename Network::SparseFillMap& fillMap);
