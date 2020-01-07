@@ -329,10 +329,10 @@ ReactionNetworkWorker<TImpl>::defineReactions()
     Kokkos::parallel_for(nDissReactions, KOKKOS_LAMBDA (std::size_t i) {
         const auto& clSet = dissSets(i);
         auto id = i + nProdReactions;
-        ReactionType rx(reactionData, data, id, RType::dissociation,
+        reactions(id) = ReactionType(reactionData, data, id, RType::dissociation,
             clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
-        // reactions(id) = 
     });
+    Kokkos::fence();
 
     _nw._reactions = reactions;
     _nw._reactionRates = Kokkos::View<double**>("Reaction Rates", numReactions,
