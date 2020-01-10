@@ -120,6 +120,13 @@ public:
             cluster3{cl3}
         {
         }
+
+        KOKKOS_INLINE_FUNCTION
+        bool
+        valid() const noexcept
+        {
+            return cluster0 != invalid;
+        }
     };
 
     Reaction() = default;

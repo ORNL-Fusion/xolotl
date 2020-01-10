@@ -29,9 +29,6 @@ class ReactionNetwork
 {
     friend class detail::ReactionNetworkWorker<TImpl>;
 
-    // template <typename TNetwork, typename TDerived>
-    // friend class Reaction;
-
     static constexpr auto invalid = plsm::invalid<std::size_t>;
 
 public:
@@ -261,12 +258,18 @@ public:
     computeAllPartials(ConcentrationsView concentrations,
             Kokkos::View<double*> values, std::size_t gridIndex);
 
-protected:
     struct ClusterSetsPair
     {
         using ClusterSet = typename ReactionType::ClusterSet;
         std::vector<ClusterSet> prodClusterSets;
         std::vector<ClusterSet> dissClusterSets;
+    };
+
+    struct ClusterSetsViewPair
+    {
+        using ClusterSet = typename ReactionType::ClusterSet;
+        Kokkos::View<ClusterSet*> prodClusterSets;
+        Kokkos::View<ClusterSet*> dissClusterSets;
     };
 
 private:

@@ -38,6 +38,7 @@ BOOST_AUTO_TEST_CASE(PSINetwork) {
 	// Create the option to create a network
 	xolotlCore::Options opts;
 	// Create a good parameter file
+    //NetworkType rNetwork({31, 31, 31, 31, 31}, {{{2, 2, 2, 2, 2}}}, 0, Options{});
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 1 1 2 6" << std::endl;
 	paramFile.close();
@@ -69,7 +70,7 @@ BOOST_AUTO_TEST_CASE(PSINetwork) {
 		maxT = 0;
 	NetworkType rNetwork( { maxHe, maxD, maxT, maxV, maxI }, 0, opts);
 
-	rNetwork.syncClusterDataOnHost();
+    rNetwork.syncClusterDataOnHost();
 
 //	// PRINT ALL THE CLUSTERS
 //	std::size_t numClusters = rNetwork.getDOF();
