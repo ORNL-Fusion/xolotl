@@ -71,6 +71,7 @@ BOOST_AUTO_TEST_CASE(PSINetwork) {
 	NetworkType rNetwork( { maxHe, maxD, maxT, maxV, maxI }, 0, opts);
 
     rNetwork.syncClusterDataOnHost();
+    rNetwork.getSubpaving().syncZones(plsm::onHost);
 
 //	// PRINT ALL THE CLUSTERS
 //	std::size_t numClusters = rNetwork.getDOF();
