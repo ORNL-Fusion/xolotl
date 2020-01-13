@@ -435,6 +435,109 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 #undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeHeliumDesorption1D")
+/**
+ * This is a monitoring method that will compute the helium desorption at the surface
+ */
+PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
+		Vec solution, void *) {
+
+	// Initial declarations
+	PetscErrorCode ierr;
+	PetscInt xs, xm;
+
+	PetscFunctionBeginUser;
+
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the flux handler that will be used to know the fluence
+	auto fluxHandler = solverHandler.getFluxHandler();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+	CHKERRQ(ierr);
+
+	// Get the total size of the grid
+	PetscInt Mx;
+	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE);
+	CHKERRQ(ierr);
+
+	// Get the physical grid
+	auto grid = solverHandler.getXGrid();
+	// Get the position of the surface
+	int surfacePos = solverHandler.getSurfacePosition();
+
+	// Get the network
+	auto& network = solverHandler.getNetwork();
+
+	// Get the array of concentration
+	PetscReal **solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Store the He concentration at the surface
+	double heConc = 0.0, diffCoeff = 0.0;
+	int heIndex = network.get(Species::He, 1)->getId() - 1;
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal *gridPointSolution;
+
+	// Loop on the grid
+	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+		// Get the pointer to the beginning of the solution data for this grid point
+		gridPointSolution = solutionArray[xi];
+
+		// Check if we are next to the surface
+		if (xi == surfacePos + 1) {
+			heConc = gridPointSolution[heIndex];
+			diffCoeff = network.get(Species::He, 1)->getDiffusionCoefficient(
+					xi - xs);
+		}
+	}
+
+	// Get the current process ID
+	int procId;
+	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+
+	// Send the concentration to proc Id 0
+	double localFactor = heConc * diffCoeff, factor = 0.0;
+	MPI_Reduce(&localFactor, &factor, 1, MPI_DOUBLE, MPI_SUM, 0,
+			PETSC_COMM_WORLD);
+
+	// Master process
+	if (procId == 0) {
+		double hxLeft = 0.0;
+		if (surfacePos < 0) {
+			hxLeft = grid[surfacePos + 2] - grid[surfacePos + 1];
+		} else {
+			hxLeft = (grid[surfacePos + 2] - grid[surfacePos]) / 2.0;
+		}
+		double surfaceFlux = factor * hxLeft;
+		// Write the flux at the boundary and temperature in a file
+		std::ofstream outputFile;
+		outputFile.open("thds.txt", ios::app);
+		outputFile << network.getTemperature() << " " << surfaceFlux
+				<< std::endl;
+		outputFile.close();
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeHeliumRetention1D")
 /**
  * This is a monitoring method that will compute the helium retention
@@ -635,7 +738,8 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 				auto const& cluster = *(vMapItem.second);
 				// Get it diffusion coefficient
 				double coef = cluster.getDiffusionCoefficient(xi - xs);
-				if (coef <= 0.0) continue;
+				if (coef <= 0.0)
+					continue;
 				// Get its id and concentration
 				int id = cluster.getId() - 1;
 				double conc = gridPointSolution[id];
@@ -2485,8 +2589,8 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 
 	// Flags to launch the monitors or not
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
-			flagPerf, flagHeRetention, flagStatus, flagXeRetention, flagTRIDYN,
-			flagAlloy, flagTemp;
+			flagPerf, flagHeDesorption, flagHeRetention, flagStatus,
+			flagXeRetention, flagTRIDYN, flagAlloy, flagTemp;
 
 	// Check the option -check_negative
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg);
@@ -2517,6 +2621,12 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d", &flag2DPlot);
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-plot_2d) failed.");
+
+	// Check the option -helium_desorption
+	ierr = PetscOptionsHasName(NULL, NULL, "-helium_desorption",
+			&flagHeDesorption);
+	checkPetscError(ierr,
+			"setupPetsc1DMonitor: PetscOptionsHasName (-helium_desorption) failed.");
 
 	// Check the option -helium_retention
 	ierr = PetscOptionsHasName(NULL, NULL, "-helium_retention",
@@ -2904,6 +3014,22 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 			auto& comp = cluster.getComposition();
 			weights1D.push_back(comp[toCompIdx(Species::He)]);
 			radii1D.push_back(cluster.getReactionRadius());
+		}
+	}
+
+	// Set the monitor to compute the helium desorption
+	if (flagHeDesorption) {
+		// computeHeliumDesorption1D will be called at each timestep
+		ierr = TSMonitorSet(ts, computeHeliumDesorption1D, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc1DMonitor: TSMonitorSet (computeHeliumDesorption1D) failed.");
+
+		// Master process
+		if (procId == 0) {
+			// Uncomment to clear the file where the desorption
+			std::ofstream outputFile;
+			outputFile.open("thds.txt");
+			outputFile.close();
 		}
 	}
 

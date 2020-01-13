@@ -39,10 +39,10 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 		// Loop on the spatial grid
 		for (int k = -1; k < nz + 1; k++) {
 			// Set the grid position
-			gridPosition[2] = hz * (double) k;
+			gridPosition[2] = hz * (double) (k + zs);
 			for (int j = -1; j < ny + 1; j++) {
 				// Set the grid position
-				gridPosition[1] = hy * (double) j;
+				gridPosition[1] = hy * (double) (j + ys);
 				for (int i = 0; i < nx + 2; i++) {
 					// Set the grid position
 					if (i + xs == nx - 1)

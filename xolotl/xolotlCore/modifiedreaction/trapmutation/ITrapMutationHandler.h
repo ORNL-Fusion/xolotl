@@ -31,17 +31,11 @@ public:
 	 *
 	 * @param network The network
 	 * @param nx The number of grid points in the X direction
-	 * @param xs The beginning of the grid on this process
 	 * @param ny The number of grid points in the Y direction
-	 * @param hy The step size in the Y direction
-	 * @param ys The beginning of the grid on this process
 	 * @param nz The number of grid points in the Z direction
-	 * @param hz The step size in the Z direction
-	 * @param zs The beginning of the grid on this process
 	 */
-	virtual void initialize(const IReactionNetwork& network, int nx, int xs,
-			int ny = 0, double hy = 0.0, int ys = 0, int nz = 0,
-			double hz = 0.0, int zs = 0) = 0;
+	virtual void initialize(const IReactionNetwork& network, int nx, int ny = 0,
+			int nz = 0) = 0;
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
