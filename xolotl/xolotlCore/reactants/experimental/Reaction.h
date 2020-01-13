@@ -15,6 +15,7 @@ namespace detail
 {
 struct ReactionDataRef
 {
+
     KOKKOS_INLINE_FUNCTION
     decltype(auto)
     getCoefficients(std::size_t reactionId)

@@ -408,6 +408,68 @@ public:
         return diffusionFactor;
     }
 
+    template <typename TMemSpace>
+    KOKKOS_INLINE_FUNCTION
+    double
+    getReactionRadius(const Cluster<TMemSpace>& cluster, double latticeParameter,
+        double interstitialBias, double impurityRadius) const noexcept
+    {
+    	// TODO: get this factor in and from the network
+    	double hydrogenFactor = 0.25;
+
+        const auto& reg = cluster.getRegion();
+        double radius = 0.0;
+        if (reg.isSimplex()) {
+            Composition comp(reg.getOrigin());
+            if (comp.isOnAxis(Species::I)) {
+        		double EightPi = 8.0 * xolotlCore::pi;
+        		double aCubed = pow(latticeParameter, 3.0);
+        		double termOne = interstitialBias * (sqrt(3.0) / 4.0)
+        				* latticeParameter;
+        		double termTwo = pow((3.0 / EightPi) * aCubed * comp[Species::I], (1.0 / 3.0));
+        		double termThree = pow((3.0 / EightPi) * aCubed, (1.0 / 3.0));
+        		radius = termOne + termTwo - termThree;
+            }
+            else if (comp.isOnAxis(Species::He)) {
+        		double FourPi = 4.0 * xolotlCore::pi;
+        		double aCubed = pow(latticeParameter, 3);
+        		double termOne = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * comp[Species::He],
+        				(1.0 / 3.0));
+        		double termTwo = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed,
+        				(1.0 / 3.0));
+        		radius = impurityRadius + termOne - termTwo;
+            }
+            else if (comp.isOnAxis(Species::D)) {
+        		double FourPi = 4.0 * xolotlCore::pi;
+        		double aCubed = pow(latticeParameter, 3);
+        		double termOne = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * comp[Species::D],
+        				(1.0 / 3.0));
+        		double termTwo = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed,
+        				(1.0 / 3.0));
+        		radius = (impurityRadius + termOne - termTwo) * hydrogenFactor;
+            }
+            else if (comp.isOnAxis(Species::T)) {
+        		double FourPi = 4.0 * xolotlCore::pi;
+        		double aCubed = pow(latticeParameter, 3);
+        		double termOne = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * comp[Species::T],
+        				(1.0 / 3.0));
+        		double termTwo = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed,
+        				(1.0 / 3.0));
+        		radius = (impurityRadius + termOne - termTwo) * hydrogenFactor;
+            }
+            else {
+                radius = (sqrt(3.0) / 4.0) * latticeParameter
+        				+ pow(
+        						(3.0 * pow(latticeParameter, 3.0) * comp[Species::V])
+        								/ (8.0 * xolotlCore::pi), (1.0 / 3.0))
+        				- pow((3.0 * pow(latticeParameter, 3.0)) / (8.0 * xolotlCore::pi),
+        						(1.0 / 3.0));
+            }
+        }
+
+        return radius;
+    }
+
 private:
     KOKKOS_INLINE_FUNCTION
     double

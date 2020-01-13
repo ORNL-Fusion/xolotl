@@ -1,5 +1,4 @@
 // Includes
-#include <PetscSolverExpHandler.h>
 #include <MathUtils.h>
 #include <Constants.h>
 
@@ -16,8 +15,8 @@ void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, 1, dof, 0,
-	NULL, &da);
+	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, 1, dof, 0, NULL,
+			&da);
 	checkPetscError(ierr, "PetscSolverExpHandler::createSolverContext: "
 			"DMDACreate1d failed.");
 	ierr = DMSetFromOptions(da);
@@ -38,9 +37,6 @@ void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
 	 */
 	xolotlCore::IReactionNetwork::SparseFillMap ofill;
 
-	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(network, ofill, dfill);
-
 	// Get the diagonal fill
 	auto nPartials = expNetwork.getDiagonalFill(dfill);
 
@@ -52,7 +48,7 @@ void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
 			"DMDASetBlockFills failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	expVals = Kokkos::View<double*, Kokkos::MemoryUnmanaged>(nPartials);
+	expVals = Kokkos::View<double*>("solverPartials", nPartials);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -74,9 +70,6 @@ void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 	checkPetscError(ierr, "PetscSolverExpHandler::initializeConcentration: "
 			"DMDAVecGetArrayDOF failed.");
 
-	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, 0, grid);
-
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar *concOffset = nullptr;
 
@@ -88,46 +81,8 @@ void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 	concOffset = concentrations[0];
 
 	// Loop on all the clusters to initialize at 0.0
-	for (int n = 0; n < dof - 1; n++) {
+	for (int n = 0; n < dof; n++) {
 		concOffset[n] = 0.0;
-	}
-
-	// Temperature
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
-	concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition, 0.0);
-
-	// Get the last time step written in the HDF5 file
-	bool hasConcentrations = false;
-	std::unique_ptr<xolotlCore::XFile> xfile;
-	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
-	if (not networkName.empty()) {
-
-		xfile.reset(new xolotlCore::XFile(networkName));
-		concGroup = xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
-		hasConcentrations = (concGroup and concGroup->hasTimesteps());
-	}
-
-	// If the concentration must be set from the HDF5 file
-	if (hasConcentrations) {
-		// Read the concentrations from the HDF5 file for
-		// each of our grid points.
-		assert(concGroup);
-		auto tsGroup = concGroup->getLastTimestepGroup();
-		assert(tsGroup);
-		auto myConcs = tsGroup->readConcentrations(*xfile, 0, 1);
-
-		// Apply the concentrations we just read.
-		concOffset = concentrations[0];
-
-		for (auto const& currConcData : myConcs[0]) {
-			concOffset[currConcData.first] = currConcData.second;
-		}
-		// Set the temperature in the network
-		double temp = myConcs[0][myConcs[0].size() - 1].second;
-		temperature[0] = temp;
-		lastTemperature[0] = temp;
-
-		expNetwork.setTemperature(temperature);
 	}
 
 	/*
@@ -136,6 +91,32 @@ void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
 	checkPetscError(ierr, "PetscSolverExpHandler::initializeConcentration: "
 			"DMDAVecRestoreArrayDOF failed.");
+
+	// Find the He id for the flux
+	xolotlCore::experimental::PSIReactionNetwork<
+			experimental::PSIFullSpeciesList>::Composition comp;
+	// Initialize the composition
+	for (auto i : expNetwork.getSpeciesRange()) {
+		comp[i] = 0;
+	}
+	comp[xolotlCore::experimental::PSIReactionNetwork<
+			experimental::PSIFullSpeciesList>::Species::He] = 1;
+	auto cluster = expNetwork.findCluster(comp, plsm::onHost);
+	heId = cluster.getId();
+	for (auto i : expNetwork.getSpeciesRange()) {
+		comp[i] = 0;
+	}
+	comp[xolotlCore::experimental::PSIReactionNetwork<
+			experimental::PSIFullSpeciesList>::Species::D] = 1;
+	cluster = expNetwork.findCluster(comp, plsm::onHost);
+	dId = cluster.getId();
+	for (auto i : expNetwork.getSpeciesRange()) {
+		comp[i] = 0;
+	}
+	comp[xolotlCore::experimental::PSIReactionNetwork<
+			experimental::PSIFullSpeciesList>::Species::T] = 1;
+	cluster = expNetwork.findCluster(comp, plsm::onHost);
+	tId = cluster.getId();
 
 	return;
 }
@@ -171,7 +152,7 @@ void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC,
 	const int dof = expNetwork.getDOF();
 
 	// Set the grid position
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point < 3 > gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the old and new array offsets
 	concOffset = concs[0];
@@ -179,17 +160,19 @@ void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC,
 
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
-	temperature[0] = temperatureHandler->getTemperature(gridPosition,
-			ftime);
+	temperature[0] = temperatureHandler->getTemperature(gridPosition, ftime);
 
 	// Update the network if the temperature changed
 	if (std::fabs(lastTemperature[0] - temperature[0]) > 0.1) {
-		expNetwork.setTemperature(temperature);
+		expNetwork.setTemperatures(temperature);
+		expNetwork.syncClusterDataOnHost();
 		lastTemperature[0] = temperature[0];
 	}
 
 	// ----- Account for flux of incoming particles -----
-	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
+	updatedConcOffset[heId] += fluxHandler->getFluxAmplitude();
+	updatedConcOffset[dId] += fluxHandler->getFluxAmplitude();
+	updatedConcOffset[tId] += fluxHandler->getFluxAmplitude();
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 	ConcentrationsView xView(concOffset, dof);
@@ -247,17 +230,17 @@ void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC,
 	int pdColIdsVectorSize = 0;
 
 	// Set the grid position
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	xolotlCore::Point < 3 > gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];
 	temperatureHandler->setTemperature(concOffset);
-	temperature[0] = temperatureHandler->getTemperature(gridPosition,
-			ftime);
+	temperature[0] = temperatureHandler->getTemperature(gridPosition, ftime);
 
 	// Update the network if the temperature changed
 	if (std::fabs(lastTemperature[0] - temperature[0]) > 0.1) {
-		expNetwork.setTemperature(temperature);
+		expNetwork.setTemperatures(temperature);
+		expNetwork.syncClusterDataOnHost();
 		lastTemperature[0] = temperature[0];
 	}
 
@@ -265,12 +248,12 @@ void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC,
 
 	// Compute all the partial derivatives for the reactions
 	ConcentrationsView xView(concOffset, dof);
-	expNetwork.computeAllPartials(concOffset, expVals, 0);
+	expNetwork.computeAllPartials(xView, expVals, 0);
 
 	// Variable for the loop on reactants
 	int startingIdx = 0;
 	// Update the column in the Jacobian that represents each DOF
-	for (int i = 0; i < dof - 1; i++) {
+	for (int i = 0; i < dof; i++) {
 		// Set grid coordinate and component number for the row
 		rowId.i = 0;
 		rowId.c = i;
@@ -278,7 +261,7 @@ void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC,
 		// Number of partial derivatives
 		auto rowIter = dfill.find(i);
 		if (rowIter != dfill.end()) {
-            const auto& row = rowIter->second;
+			const auto& row = rowIter->second;
 			pdColIdsVectorSize = row.size();
 
 			// Loop over the list of column ids

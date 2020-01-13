@@ -741,6 +741,19 @@ public:
 	}
 
 	/**
+	 * Get the network.
+	 * \see ISolverHandler.h
+	 */
+	virtual xolotlCore::experimental::PSIReactionNetwork<
+			xolotlCore::experimental::PSIFullSpeciesList>& getExpNetwork() const
+			override {
+		static auto tempNetwork = xolotlCore::experimental::PSIReactionNetwork<
+				xolotlCore::experimental::PSIFullSpeciesList>(
+				{ 0, 0, 0, 0, 0 }, 0, xolotlCore::Options());
+		return tempNetwork;
+	}
+
+	/**
 	 * Get the network name.
 	 * \see ISolverHandler.h
 	 */

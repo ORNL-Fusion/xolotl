@@ -605,9 +605,22 @@ double
 Reaction<TNetwork, TDerived>::computeDissociationRate(std::size_t gridIndex)
 {
     double omega = _clusterData.getAtomicVolume();
+    // Temperature is 0
     double T = _clusterData.temperature(gridIndex);
 
-    double kPlus = asDerived()->computeProductionRate(gridIndex);
+    // TODO: computeProductionRate should use products and not reactants
+    auto cl0 = _clusterData.getCluster(_products[0]);
+    auto cl1 = _clusterData.getCluster(_products[1]);
+
+    double r0 = cl0.getReactionRadius();
+    double r1 = cl1.getReactionRadius();
+
+    double dc0 = cl0.getDiffusionCoefficient(gridIndex);
+    double dc1 = cl1.getDiffusionCoefficient(gridIndex);
+
+    constexpr double pi = ::xolotlCore::pi;
+
+    double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
     double E_b = asDerived()->computeBindingEnergy();
 
     constexpr double k_B = ::xolotlCore::kBoltzmann;
@@ -864,6 +877,9 @@ Reaction<TNetwork, TDerived>::productionFlux(ConcentrationsView concentrations,
         fluxes[prodId] += f / (double) volProd;
     }
 
+    // Skip if there is no grouping
+    if (volCl1 == 1 && volCl2 == 1) return;
+
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {
         // First for the first reactant
@@ -978,6 +994,9 @@ Reaction<TNetwork, TDerived>::dissociationFlux(
     fluxes[_products[0]] += f / (double) volProd1;
     fluxes[_products[1]] += f / (double) volProd2;
 
+    // Skip if there is no grouping
+    if (volProd1 == 1 && volProd2 == 1) return;
+
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {
         // First for the reactant
@@ -1035,9 +1054,11 @@ Reaction<TNetwork, TDerived>::productionPartialDerivatives(
     // Compute the partials for the 0th order moments
     // Compute the values (d / dL_0^A)
     double temp = _coefs(0, 0, 0, 0) * concentrations[_reactants[1]];
-    for (auto i : speciesRangeNoI) {
-        temp += _coefs(0, i() + 1, 0, 0) *
+    if (volCl1 > 1 || volCl2 > 1) {
+        for (auto i : speciesRangeNoI) {
+            temp += _coefs(0, i() + 1, 0, 0) *
                 concentrations[_reactantMomentIds[1][i()]];
+        }
     }
     // First for the first reactant
     values(_inverseMap(_reactants[0], _reactants[0])) -= _rate(gridIndex) * temp / (double) volCl1;
@@ -1054,7 +1075,34 @@ Reaction<TNetwork, TDerived>::productionPartialDerivatives(
         AmountType volProd = prodReg.volume();
         values(_inverseMap(prodId, _reactants[0])) += _rate(gridIndex) * temp / (double) volProd;
     }
+    
+    // Compute the values (d / dL_0^B)
+    temp = _coefs(0, 0, 0, 0) * concentrations[_reactants[0]];
+    if (volCl1 > 1 || volCl2 > 1) {
+        for (auto i : speciesRangeNoI) {
+            temp += _coefs(0, 0, i() + 1, 0) *
+                concentrations[_reactantMomentIds[0][i()]];
+        }
+    }
+    // First for the first reactant
+    values(_inverseMap(_reactants[0], _reactants[1])) -= _rate(gridIndex) * temp / (double) volCl1;
+    // Second reactant
+    values(_inverseMap(_reactants[1], _reactants[1])) -= _rate(gridIndex) * temp / (double) volCl2;
+    // For the products
+    for (std::size_t p : {0,1}) {
+        auto prodId = _products[p];
+        if (prodId == invalid) {
+            continue;
+        }
+        auto prod = _clusterData.getCluster(prodId);
+        const auto& prodReg = prod.getRegion();
+        AmountType volProd = prodReg.volume();
+        values(_inverseMap(prodId, _reactants[1])) += _rate(gridIndex) * temp / (double) volProd;
+    }
 
+    // Skip if there is no grouping
+    if (volCl1 == 1 && volCl2 == 1) return;
+    
     // (d / dL_1^A)
     for (auto i : speciesRangeNoI) {
         temp = _coefs(i() + 1, 0, 0, 0) * concentrations[_reactants[1]];
@@ -1266,24 +1314,35 @@ Reaction<TNetwork, TDerived>::dissociationPartialDerivatives(
     // Compute the values
     values(_inverseMap(_reactants[0], _reactants[0]))
     -= df * _coefs(0, 0, 0, 0);
-    for (auto i : speciesRangeNoI) {
-        values(_inverseMap(_reactants[0], _reactantMomentIds[0][i()]))
+    if (volProd1 > 1 || volProd2 > 1) {
+        for (auto i : speciesRangeNoI) {
+            values(_inverseMap(_reactants[0], _reactantMomentIds[0][i()]))
                 -= df * _coefs(i() + 1, 0, 0, 0);
+        }
     }
     // For the first product
     df = _rate(gridIndex) / (double) volProd1;
     values(_inverseMap(_products[0], _reactants[0])) += df * _coefs(0, 0, 0, 0);
-    for (auto i : speciesRangeNoI) {
-        values(_inverseMap(_products[0], _reactantMomentIds[0][i()]))
+
+    if (volProd1 > 1 || volProd2 > 1) {
+        for (auto i : speciesRangeNoI) {
+            values(_inverseMap(_products[0], _reactantMomentIds[0][i()]))
                 += df * _coefs(i() + 1, 0, 0, 0);
+        }
     }
     // For the second product
     df = _rate(gridIndex) / (double) volProd2;
     values(_inverseMap(_products[1], _reactants[0])) += df * _coefs(0, 0, 0, 0);
-    for (auto i : speciesRangeNoI) {
-        values(_inverseMap(_products[1], _reactantMomentIds[0][i()]))
+
+    if (volProd1 > 1 || volProd2 > 1) {
+        for (auto i : speciesRangeNoI) {
+            values(_inverseMap(_products[1], _reactantMomentIds[0][i()]))
                 += df * _coefs(i() + 1, 0, 0, 0);
+        }
     }
+
+    // Skip if there is no grouping
+    if (volProd1 == 1 && volProd2 == 1) return;
 
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {

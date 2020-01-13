@@ -19,6 +19,8 @@
 #include <SolverHandlerFactory.h>
 #include <ISolverHandler.h>
 #include <IReactionHandlerFactory.h>
+#include <experimental/PSIReactionNetwork.h>
+#include <solverhandler/PetscSolverExpHandler.h>
 #include <ctime>
 
 using namespace std;
@@ -125,76 +127,191 @@ int runXolotl(const Options& opts) {
 		printStartMessage();
 	}
 
-	// Set up the material infrastructure that is used to calculate flux
-	auto material = initMaterial(opts);
-	// Set up the temperature infrastructure
-	bool tempInitOK = initTemp(opts);
-	if (!tempInitOK) {
-		throw std::runtime_error("Unable to initialize temperature.");
-	}
-	// Set up the visualization infrastructure.
-	bool vizInitOK = initViz(opts.useVizStandardHandlers());
-	if (!vizInitOK) {
-		throw std::runtime_error(
-				"Unable to initialize visualization infrastructure.");
-	}
+	if (opts.getMaterial() == "Exp") {
+		// Initialize kokkos
+		Kokkos::initialize();
+		{
 
-	// Access the temperature handler registry to get the temperature
-	auto tempHandler = xolotlFactory::getTemperatureHandler();
+			// Set up the material infrastructure that is used to calculate flux
+			auto material = initMaterial(opts);
+			// Set up the temperature infrastructure
+			bool tempInitOK = initTemp(opts);
+			if (!tempInitOK) {
+				throw std::runtime_error("Unable to initialize temperature.");
+			}
+			// Set up the visualization infrastructure.
+			bool vizInitOK = initViz(opts.useVizStandardHandlers());
+			if (!vizInitOK) {
+				throw std::runtime_error(
+						"Unable to initialize visualization infrastructure.");
+			}
 
-	// Access our performance handler registry to obtain a Timer
-	// measuring the runtime of the entire program.
-	auto handlerRegistry = xolotlPerf::getHandlerRegistry();
-	auto totalTimer = handlerRegistry->getTimer("total");
-	totalTimer->start();
+			// Access the temperature handler registry to get the temperature
+			auto tempHandler = xolotlFactory::getTemperatureHandler();
 
-	// Create the network handler factory
-	auto networkFactory =
-			xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
-					opts.getMaterial());
+			// Access our performance handler registry to obtain a Timer
+			// measuring the runtime of the entire program.
+			auto handlerRegistry = xolotlPerf::getHandlerRegistry();
+			auto totalTimer = handlerRegistry->getTimer("total");
+			totalTimer->start();
 
-	// Build a reaction network
-	auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
-	networkLoadTimer->start();
-	networkFactory->initializeReactionNetwork(opts, handlerRegistry);
-	networkLoadTimer->stop();
-	if (rank == 0) {
-		std::time_t currentTime = std::time(NULL);
-		std::cout << std::asctime(std::localtime(&currentTime));
-	}
-	auto& network = networkFactory->getNetworkHandler();
+			// Build a reaction network
+			auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
+			networkLoadTimer->start();
 
-	// Initialize and get the solver handler
-	bool dimOK = xolotlFactory::initializeDimension(opts, network);
-	if (!dimOK) {
-		throw std::runtime_error("Unable to initialize dimension from inputs.");
-	}
-	auto& solvHandler = xolotlFactory::getSolverHandler();
+			using NetworkType =
+			xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
 
-	// Setup the solver
-	auto solver = setUpSolver(handlerRegistry, material, tempHandler,
-			solvHandler, opts);
+			// Get the boundaries from the options
+			NetworkType::AmountType maxV = opts.getMaxV();
+			NetworkType::AmountType maxI = opts.getMaxI();
+			NetworkType::AmountType maxHe =
+					xolotlCore::experimental::PSIClusterGenerator<
+							xolotlCore::experimental::PSIFullSpeciesList>::getMaxHePerV(
+							maxV);
+			NetworkType::AmountType maxD = 2.0 / 3.0 * (double) maxHe;
+			NetworkType::AmountType maxT = 2.0 / 3.0 * (double) maxHe;
+			if (opts.getMaxImpurity() <= 0)
+				maxHe = 0;
+			if (opts.getMaxD() <= 0)
+				maxD = 0;
+			if (opts.getMaxT() <= 0)
+				maxT = 0;
+			if (maxV <= 0) {
+				maxHe = opts.getMaxImpurity();
+				maxD = opts.getMaxD();
+				maxT = opts.getMaxT();
+			}
+			NetworkType rNetwork( { maxHe, maxD, maxT, maxV, maxI }, 1, opts);
 
-	// Launch the PetscSolver
-	launchPetscSolver(*solver, handlerRegistry);
+			rNetwork.syncClusterDataOnHost();
+			rNetwork.getSubpaving().syncZones(plsm::onHost);
 
-	// Finalize our use of the solver.
-	auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");
-	solverFinalizeTimer->start();
-	solver->finalize();
-	solverFinalizeTimer->stop();
+			if (rank == 0) {
+				std::cout << "\nFactory Message: "
+						<< "Master loaded network of size " << rNetwork.getDOF()
+						<< "." << std::endl;
+			}
+			networkLoadTimer->stop();
+			if (rank == 0) {
+				std::time_t currentTime = std::time(NULL);
+				std::cout << std::asctime(std::localtime(&currentTime));
+			}
 
-	totalTimer->stop();
+			// Creating the solver handler
+			xolotlSolver::ISolverHandler* rawSolverHandler = nullptr;
+			rawSolverHandler = new xolotlSolver::PetscSolverExpHandler<
+					xolotlCore::experimental::PSIFullSpeciesList>(rNetwork);
+			static std::unique_ptr<xolotlSolver::ISolverHandler> theSolverHandler =
+					std::unique_ptr<xolotlSolver::ISolverHandler>(
+							rawSolverHandler);
 
-	// Report statistics about the performance data collected during
-	// the run we just completed.
-	xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
-	xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> counterStats;
-	xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
-	handlerRegistry->collectStatistics(timerStats, counterStats, hwCtrStats);
-	if (rank == 0) {
-		handlerRegistry->reportStatistics(std::cout, timerStats, counterStats,
+			// Setup the solver
+			auto solver = setUpSolver(handlerRegistry, material, tempHandler,
+					*theSolverHandler, opts);
+
+			// Launch the PetscSolver
+			launchPetscSolver(*solver, handlerRegistry);
+
+			// Finalize our use of the solver.
+			auto solverFinalizeTimer = handlerRegistry->getTimer(
+					"solverFinalize");
+			solverFinalizeTimer->start();
+			solver->finalize();
+			solverFinalizeTimer->stop();
+
+			totalTimer->stop();
+
+			// Report statistics about the performance data collected during
+			// the run we just completed.
+			xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
+			xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> counterStats;
+			xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
+			handlerRegistry->collectStatistics(timerStats, counterStats,
+					hwCtrStats);
+			if (rank == 0) {
+				handlerRegistry->reportStatistics(std::cout, timerStats,
+						counterStats, hwCtrStats);
+			}
+		}
+
+		// Finalize kokkos
+		Kokkos::finalize();
+
+	} else {
+		// Set up the material infrastructure that is used to calculate flux
+		auto material = initMaterial(opts);
+		// Set up the temperature infrastructure
+		bool tempInitOK = initTemp(opts);
+		if (!tempInitOK) {
+			throw std::runtime_error("Unable to initialize temperature.");
+		}
+		// Set up the visualization infrastructure.
+		bool vizInitOK = initViz(opts.useVizStandardHandlers());
+		if (!vizInitOK) {
+			throw std::runtime_error(
+					"Unable to initialize visualization infrastructure.");
+		}
+
+		// Access the temperature handler registry to get the temperature
+		auto tempHandler = xolotlFactory::getTemperatureHandler();
+
+		// Access our performance handler registry to obtain a Timer
+		// measuring the runtime of the entire program.
+		auto handlerRegistry = xolotlPerf::getHandlerRegistry();
+		auto totalTimer = handlerRegistry->getTimer("total");
+		totalTimer->start();
+
+		// Create the network handler factory
+		auto networkFactory =
+				xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
+						opts.getMaterial());
+
+		// Build a reaction network
+		auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
+		networkLoadTimer->start();
+		networkFactory->initializeReactionNetwork(opts, handlerRegistry);
+		networkLoadTimer->stop();
+		if (rank == 0) {
+			std::time_t currentTime = std::time(NULL);
+			std::cout << std::asctime(std::localtime(&currentTime));
+		}
+		auto& network = networkFactory->getNetworkHandler();
+
+		// Initialize and get the solver handler
+		bool dimOK = xolotlFactory::initializeDimension(opts, network);
+		if (!dimOK) {
+			throw std::runtime_error(
+					"Unable to initialize dimension from inputs.");
+		}
+		auto& solvHandler = xolotlFactory::getSolverHandler();
+
+		// Setup the solver
+		auto solver = setUpSolver(handlerRegistry, material, tempHandler,
+				solvHandler, opts);
+
+		// Launch the PetscSolver
+		launchPetscSolver(*solver, handlerRegistry);
+
+		// Finalize our use of the solver.
+		auto solverFinalizeTimer = handlerRegistry->getTimer("solverFinalize");
+		solverFinalizeTimer->start();
+		solver->finalize();
+		solverFinalizeTimer->stop();
+
+		totalTimer->stop();
+
+		// Report statistics about the performance data collected during
+		// the run we just completed.
+		xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
+		xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> counterStats;
+		xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
+		handlerRegistry->collectStatistics(timerStats, counterStats,
 				hwCtrStats);
+		if (rank == 0) {
+			handlerRegistry->reportStatistics(std::cout, timerStats,
+					counterStats, hwCtrStats);
+		}
 	}
 
 	return 0;

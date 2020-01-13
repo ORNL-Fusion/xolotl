@@ -100,8 +100,6 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 {
     Kokkos::View<const double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
         tempsHost(gridTemps.data(), _gridSize);
-    _clusterData.temperature =
-        Kokkos::View<double*>("Grid Temperatures", _gridSize);
     Kokkos::deep_copy(_clusterData.temperature, tempsHost);
 
     updateDiffusionCoefficients();
@@ -201,9 +199,10 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
 {
 
     auto nClusters = _nw._clusterData.numClusters;
-    _nw._clusterData.formationEnergy = Kokkos::View<double*>("Diffusion Factor", nClusters);
+    _nw._clusterData.formationEnergy = Kokkos::View<double*>("Formation Energy", nClusters);
     _nw._clusterData.migrationEnergy = Kokkos::View<double*>("Migration Energy", nClusters);
-    _nw._clusterData.diffusionFactor = Kokkos::View<double*>("Formation Energy", nClusters);
+    _nw._clusterData.diffusionFactor = Kokkos::View<double*>("Diffusion Factor", nClusters);
+    _nw._clusterData.reactionRadius = Kokkos::View<double*>("Reaction Radius", nClusters);
 
     ClusterData data(_nw._clusterData);
     Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const std::size_t i) {
@@ -211,6 +210,8 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
         data.formationEnergy(i) = generator.getFormationEnergy(cluster);
         data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
         data.diffusionFactor(i) = generator.getDiffusionFactor(cluster);
+        data.reactionRadius(i) = generator.getReactionRadius(cluster, _nw.getLatticeParameter(),
+        		_nw.getInterstitialBias(), _nw.getImpurityRadius());
     });
     
 }
@@ -287,9 +288,20 @@ ReactionNetworkWorker<TImpl>::defineReactions()
         _nw._gridSize);
     _nw._reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
 
+    // Initialize the inverse map to invalid
+    _nw._inverseMap = Kokkos::View<std::size_t**>(
+        Kokkos::ViewAllocateWithoutInitializing("_inverseMap"),
+        _nw._numDOFs, _nw._numDOFs);
+    using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
+    Kokkos::parallel_for(Range2D({0, 0}, {_nw._numDOFs, _nw._numDOFs}),
+            KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
+        _nw._inverseMap(i,j) = Network::invalid;
+    });
+
     auto reactions = _nw._reactions;
     ReactionDataRef reactionData{_nw._productionCoeffs, _nw._dissociationCoeffs,
         _nw._reactionRates, _nw._inverseMap};
+
     using RType = typename ReactionType::Type;
     auto data = _nw._clusterData;
     Kokkos::parallel_for(nProdReactions, KOKKOS_LAMBDA (std::size_t i) {
@@ -326,14 +338,6 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
         _nw._reactions(i).contributeConnectivity(connectivity);
     });
 
-    // Initialize the inverse map to invalid as well
-    _nw._inverseMap = Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged>(
-        Kokkos::ViewAllocateWithoutInitializing("_inverseMap"),
-        _nw._numDOFs, _nw._numDOFs);
-    Kokkos::parallel_for(Range2D({0, 0}, {_nw._numDOFs, _nw._numDOFs}),
-            KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
-        _nw._inverseMap(i,j) = Network::invalid;
-    });
     // Transfer to fillMap, fill the inverse map,
     // and count the total number of partials
     std::size_t nPartials = 0;
@@ -351,6 +355,7 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
             current.push_back((int) connectivity(i,j));
             // Update the inverse map
             _nw._inverseMap(i,connectivity(i,j)) = nPartials;
+            
             // Count
             nPartials++;
         }

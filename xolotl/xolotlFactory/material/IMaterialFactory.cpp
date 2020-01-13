@@ -42,6 +42,9 @@ std::shared_ptr<IMaterialFactory> IMaterialFactory::createMaterialFactory(
 	// Fe case
 	else if (materialType == "Fe")
 		theMaterialFactory = std::make_shared<FeMaterialFactory>(dimension);
+	// Exp is PSI for now
+	else if (materialType == "Exp")
+		theMaterialFactory = std::make_shared<TRIDYNMaterialFactory>(dimension);
 	// The type is not supported
 	else {
 		throw std::string(

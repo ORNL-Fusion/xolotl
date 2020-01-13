@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(PSINetwork) {
 	// Create a good parameter file
     //NetworkType rNetwork({31, 31, 31, 31, 31}, {{{2, 2, 2, 2, 2}}}, 0, Options{});
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=8 1 1 2 6" << std::endl;
+	paramFile << "netParam=8 1 1 6 6" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -68,7 +68,13 @@ BOOST_AUTO_TEST_CASE(PSINetwork) {
 		maxD = 0;
 	if (opts.getMaxT() <= 0)
 		maxT = 0;
-	NetworkType rNetwork( { maxHe, maxD, maxT, maxV, maxI }, 0, opts);
+	NetworkType::SubdivisionRatio ratio = {31, 3, 3, 7, 7};
+	std::vector<NetworkType::SubdivisionRatio> input;
+	input.push_back(ratio);
+	NetworkType::SubdivisionRatio ratioBis = {1, 7, 7, 1, 1};
+	input.push_back(ratioBis);
+	std::cout << maxHe << " " << maxD << " " << maxT << " " << maxV << " " << maxI << std::endl;
+	NetworkType rNetwork( { maxHe, maxD, maxT, maxV, maxI }, input, 0, opts);
 
     rNetwork.syncClusterDataOnHost();
     rNetwork.getSubpaving().syncZones(plsm::onHost);

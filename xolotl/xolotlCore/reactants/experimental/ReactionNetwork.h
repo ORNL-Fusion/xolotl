@@ -258,6 +258,17 @@ public:
     computeAllPartials(ConcentrationsView concentrations,
             Kokkos::View<double*> values, std::size_t gridIndex);
 
+    /**
+     * Get the diagonal fill for the Jacobian, corresponding to the reactions.
+     * Also populates the inverse map.
+     *
+     * @param fillMap Connectivity map.
+     * @return The total number of partials.
+     */
+    std::size_t
+    getDiagonalFill(SparseFillMap& fillMap);
+
+protected:
     struct ClusterSetsPair
     {
         using ClusterSet = typename ReactionType::ClusterSet;
@@ -305,16 +316,6 @@ private:
     {
         return _inverseMap(rowId, colId);
     }
-
-    /**
-     * Get the diagonal fill for the Jacobian, corresponding to the reactions.
-     * Also populates the inverse map.
-     *
-     * @param fillMap Connectivity map.
-     * @return The total number of partials.
-     */
-    std::size_t
-    getDiagonalFill(SparseFillMap& fillMap);
 
 private:
     Subpaving _subpaving;
