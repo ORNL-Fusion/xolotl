@@ -3,6 +3,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <unordered_map>
+#include <experimental/NEReactionNetwork.h>
 #include <experimental/PSIReactionNetwork.h>
 
 using namespace std;
@@ -24,6 +25,13 @@ BOOST_GLOBAL_FIXTURE(KokkosContext);
  * This suite is responsible for testing the experimental networks.
  */
 BOOST_AUTO_TEST_SUITE(ExpNetwork_testSuite)
+
+BOOST_AUTO_TEST_CASE(NENetwork) {
+    using NetworkType = experimental::NEReactionNetwork;
+    using Spec = NetworkType::Species;
+    using Composition = NetworkType::Composition;
+    NetworkType network({100}, 0, Options{});
+}
 
 /**
  * This operation checks the creation of a PSI network

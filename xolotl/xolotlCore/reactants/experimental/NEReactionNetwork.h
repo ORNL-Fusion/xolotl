@@ -1,8 +1,8 @@
 #pragma once
 
 #include <experimental/ReactionNetwork.h>
-#include <experimental/PSIReaction.h>
-#include <experimental/PSITraits.h>
+#include <experimental/NEReaction.h>
+#include <experimental/NETraits.h>
 
 namespace xolotlCore
 {
@@ -10,25 +10,20 @@ namespace experimental
 {
 namespace detail
 {
-template <typename TSpeciesEnum>
-class PSIReactionValidator;
+class NEReactionValidator;
 }
 
-template <typename TSpeciesEnum>
-class PSIReactionNetwork :
-    public ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
+class NEReactionNetwork : public ReactionNetwork<NEReactionNetwork>
 {
-    friend class ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
-    friend class detail::ReactionNetworkWorker<PSIReactionNetwork<TSpeciesEnum>>;
+    friend class ReactionNetwork<NEReactionNetwork>;
+    friend class detail::ReactionNetworkWorker<NEReactionNetwork>;
 
 public:
-    using Superclass = ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
+    using Superclass = ReactionNetwork<NEReactionNetwork>;
     using Subpaving = typename Superclass::Subpaving;
     using ReactionType = typename Superclass::ReactionType;
     using Composition = typename Superclass::Composition;
     using Species = typename Superclass::Species;
-    using AmountType = typename Superclass::AmountType;
-
     static constexpr auto invalid = plsm::invalid<std::size_t>;
 
     using Superclass::Superclass;
@@ -38,34 +33,29 @@ private:
     checkLatticeParameter(double latticeParameter)
     {
         if (latticeParameter <= 0.0) {
-            return tungstenLatticeConstant;
+            return uraniumDioxydeLatticeConstant;
         }
         return latticeParameter;
     }
 
-    double
-    checkImpurityRadius(double impurityRadius)
+    double checkImpurityRadius(double impurityRadius)
     {
         if (impurityRadius <= 0.0) {
-            return heliumRadius;
+            return xenonRadius;
         }
         return impurityRadius;
     }
 
-    detail::PSIReactionValidator<Species>
-    getReactionValidator() const noexcept
-    {
-        return {};
-    }
+    detail::NEReactionValidator
+    getReactionValidator() const noexcept;
 };
 
 namespace detail
 {
-template <typename TSpeciesEnum>
-class PSIReactionValidator
+class NEReactionValidator
 {
 public:
-    using Network = PSIReactionNetwork<TSpeciesEnum>;
+    using Network = NEReactionNetwork;
     using Subpaving = typename Network::Subpaving;
     using ClusterSet = typename Network::ReactionType::ClusterSet;
 
@@ -79,5 +69,5 @@ public:
 }
 }
 
-#include <experimental/PSIClusterGenerator.h>
-#include <experimental/PSIReactionNetwork.inl>
+#include <experimental/NEClusterGenerator.h>
+#include <experimental/NEReactionNetwork.inl>

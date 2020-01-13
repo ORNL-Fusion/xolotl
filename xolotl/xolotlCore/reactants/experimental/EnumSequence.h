@@ -254,36 +254,5 @@ private:
     Sequence _first {Sequence::first()};
     Sequence _last {Sequence::last()};
 };
-
-
-template <typename TSpeciesEnum>
-struct hasInterstitial : std::false_type { };
-
-
-template <typename TSpeciesEnum, std::size_t N>
-class SpeciesEnumSequence : public EnumSequence<TSpeciesEnum, N>
-{
-public:
-    using Sequence = EnumSequence<TSpeciesEnum, N>;
-
-    using Sequence::Sequence;
-
-    KOKKOS_INLINE_FUNCTION
-    static
-    constexpr std::size_t
-    sizeNoI() noexcept
-    {
-        return hasInterstitial<TSpeciesEnum>::value ? N - 1 : N;
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    static
-    constexpr Sequence
-    lastNoI() noexcept
-    {
-        return hasInterstitial<TSpeciesEnum>::value ?
-            Sequence::last() - 1 : Sequence::last();
-    }
-};
 }
 }

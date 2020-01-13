@@ -1,5 +1,7 @@
 #pragma once
 
+#include <experimental/PSITraits.h>
+
 namespace xolotlCore
 {
 namespace experimental

@@ -10,9 +10,9 @@
 #include <IOptions.h>
 #include <Options.h>
 
-#include <experimental/EnumSequence.h>
 #include <experimental/Cluster.h>
 #include <experimental/Reaction.h>
+#include <experimental/SpeciesEnumSequence.h>
 
 namespace xolotlCore
 {
@@ -22,6 +22,45 @@ namespace detail
 {
 template <typename TImpl>
 struct ReactionNetworkWorker;
+
+template <typename TData>
+class UpperTriangle
+{
+public:
+    UpperTriangle(const std::string& label, std::size_t N)
+        :
+        _N(N),
+        _data(label, ((N+1)*N)/2)
+    {
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    std::size_t
+    size() const noexcept
+    {
+        return _data.extent(0);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    TData&
+    operator()(std::size_t i, std::size_t j) const
+    {
+        assert(j >= i);
+        auto id = i*_N + j - ((i+1)*i)/2;
+        return _data(id);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    TData&
+    operator()(std::size_t i) const
+    {
+        return _data(i);
+    }
+
+private:
+    std::size_t _N;
+    Kokkos::View<TData*> _data;
+};
 }
 
 template <typename TImpl>
@@ -268,21 +307,6 @@ public:
     std::size_t
     getDiagonalFill(SparseFillMap& fillMap);
 
-protected:
-    struct ClusterSetsPair
-    {
-        using ClusterSet = typename ReactionType::ClusterSet;
-        std::vector<ClusterSet> prodClusterSets;
-        std::vector<ClusterSet> dissClusterSets;
-    };
-
-    struct ClusterSetsViewPair
-    {
-        using ClusterSet = typename ReactionType::ClusterSet;
-        Kokkos::View<ClusterSet*> prodClusterSets;
-        Kokkos::View<ClusterSet*> dissClusterSets;
-    };
-
 private:
     KOKKOS_INLINE_FUNCTION
     TImpl*
@@ -410,6 +434,16 @@ struct ReactionNetworkWorker
     void
     defineMomentIds(std::size_t& numDOFs);
 
+    struct ClusterSetsViewPair
+    {
+        using ClusterSet = typename Network::ReactionType::ClusterSet;
+        Kokkos::View<ClusterSet*> prodClusterSets;
+        Kokkos::View<ClusterSet*> dissClusterSets;
+    };
+
+    ClusterSetsViewPair
+    defineReactionClusterSets();
+
     void
     defineReactions();
 
@@ -426,67 +460,67 @@ struct ReactionNetworkWorker
 
 
 
-template <typename TReactionNetwork>
-TReactionNetwork
-makeReactionNetwork(
-    const std::vector<typename TReactionNetwork::AmountType>& maxSpeciesAmounts,
-    std::size_t gridSize, const IOptions& options)
-{
-    using Subpaving = typename TReactionNetwork::Subpaving;
-    using Region = typename TReactionNetwork::Region;
-    using Ival = typename TReactionNetwork::Ival;
-    using AmountType = typename TReactionNetwork::AmountType;
-    using SubdivRatio = typename Subpaving::SubdivisionRatioType;
+//template <typename TReactionNetwork>
+//TReactionNetwork
+//makeReactionNetwork(
+//    const std::vector<typename TReactionNetwork::AmountType>& maxSpeciesAmounts,
+//    std::size_t gridSize, const IOptions& options)
+//{
+//    using Subpaving = typename TReactionNetwork::Subpaving;
+//    using Region = typename TReactionNetwork::Region;
+//    using Ival = typename TReactionNetwork::Ival;
+//    using AmountType = typename TReactionNetwork::AmountType;
+//    using SubdivRatio = typename Subpaving::SubdivisionRatioType;
 
-    constexpr auto numSpecies = TReactionNetwork::getNumberOfSpecies();
+//    constexpr auto numSpecies = TReactionNetwork::getNumberOfSpecies();
 
-    Region latticeRegion;
-    SubdivRatio ratio;
-    for (std::size_t i = 0; i < numSpecies; ++i) {
-        auto maxAmt = maxSpeciesAmounts[i];
-        latticeRegion[i] = Ival{0, maxAmt + 1};
-        ratio[i] = maxAmt + 1;
-    }
-    Subpaving subpaving(latticeRegion, {ratio});
+//    Region latticeRegion;
+//    SubdivRatio ratio;
+//    for (std::size_t i = 0; i < numSpecies; ++i) {
+//        auto maxAmt = maxSpeciesAmounts[i];
+//        latticeRegion[i] = Ival{0, maxAmt + 1};
+//        ratio[i] = maxAmt + 1;
+//    }
+//    Subpaving subpaving(latticeRegion, {ratio});
 
-    //TODO: refine
+//    //TODO: refine
 
-    TReactionNetwork network(std::move(subpaving), gridSize, options);
+//    TReactionNetwork network(std::move(subpaving), gridSize, options);
 
-    return network;
-}
+//    return network;
+//}
 
 
-template <typename TReactionNetwork>
-TReactionNetwork
-makeSimpleReactionNetwork(
-    typename TReactionNetwork::AmountType maxSpeciesAmount = 10)
-{
-    using Subpaving = typename TReactionNetwork::Subpaving;
-    using Region = typename TReactionNetwork::Region;
-    using Ival = typename TReactionNetwork::Ival;
-    using AmountType = typename TReactionNetwork::AmountType;
-    using SubdivRatio = typename Subpaving::SubdivisionRatioType;
+//template <typename TReactionNetwork>
+//TReactionNetwork
+//makeSimpleReactionNetwork(
+//    typename TReactionNetwork::AmountType maxSpeciesAmount = 10)
+//{
+//    using Subpaving = typename TReactionNetwork::Subpaving;
+//    using Region = typename TReactionNetwork::Region;
+//    using Ival = typename TReactionNetwork::Ival;
+//    using AmountType = typename TReactionNetwork::AmountType;
+//    using SubdivRatio = typename Subpaving::SubdivisionRatioType;
 
-    constexpr auto numSpecies = TReactionNetwork::getNumberOfSpecies();
+//    constexpr auto numSpecies = TReactionNetwork::getNumberOfSpecies();
 
-    Ival ival{0, maxSpeciesAmount + 1};
-    Region latticeRegion;
-    SubdivRatio ratio;
-    for (std::size_t i = 0; i < numSpecies; ++i) {
-        latticeRegion[i] = ival;
-        ratio[i] = maxSpeciesAmount + 1;
-    }
-    Subpaving subpaving(latticeRegion, {ratio});
+//    Ival ival{0, maxSpeciesAmount + 1};
+//    Region latticeRegion;
+//    SubdivRatio ratio;
+//    for (std::size_t i = 0; i < numSpecies; ++i) {
+//        latticeRegion[i] = ival;
+//        ratio[i] = maxSpeciesAmount + 1;
+//    }
+//    Subpaving subpaving(latticeRegion, {ratio});
 
-    subpaving.refine(
-        plsm::refine::RegionDetector<AmountType, numSpecies, plsm::Select>{
-            latticeRegion});
+//    subpaving.refine(
+//        plsm::refine::RegionDetector<AmountType, numSpecies, plsm::Select>{
+//            latticeRegion});
 
-    TReactionNetwork network(std::move(subpaving), 0);
+//    TReactionNetwork network(std::move(subpaving), 0);
 
-    return network;
-}
+//    return network;
+//}
 }
 }
 

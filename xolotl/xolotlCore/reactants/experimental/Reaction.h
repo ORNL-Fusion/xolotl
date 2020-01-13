@@ -6,6 +6,7 @@
 #include <plsm/Utility.h>
 
 #include <experimental/Cluster.h>
+#include <experimental/SpeciesEnumSequence.h>
 
 namespace xolotlCore
 {
@@ -87,8 +88,11 @@ class Reaction
     using Types = detail::ReactionNetworkTypes<TNetwork>;
     using Props = detail::ReactionNetworkProperties<TNetwork>;
 
+    static constexpr auto nMomentIds = Props::numSpeciesNoI;
+
 public:
     using NetworkType = TNetwork;
+    using Species = typename Types::Species;
     using AmountType = typename Types::AmountType;
     using Region = typename Types::Region;
     using Composition = typename Types::Composition;
@@ -112,6 +116,7 @@ public:
 
         ClusterSet() = default;
 
+        KOKKOS_INLINE_FUNCTION
         ClusterSet(std::size_t cl0, std::size_t cl1, std::size_t cl2 = invalid,
                 std::size_t cl3 = invalid)
             :
@@ -213,8 +218,8 @@ private:
 
     KOKKOS_INLINE_FUNCTION
     AmountType
-    computeOverlap(const Region& singleCl, const Region& pairCl1,
-        const Region& pairCl2);
+    computeOverlap(const Region& singleClReg, const Region& pairCl1Reg,
+        const Region& pairCl2Reg);
 
     KOKKOS_INLINE_FUNCTION
     void
@@ -227,10 +232,12 @@ private:
     KOKKOS_INLINE_FUNCTION
     void
     copyMomentIds(std::size_t clusterId,
-        Kokkos::Array<std::size_t, 4>& momentIds)
+        Kokkos::Array<std::size_t, nMomentIds>& momentIds)
     {
         if (clusterId == invalid) {
-            momentIds = {invalid, invalid, invalid, invalid};
+            for (std::size_t i = 0; i < nMomentIds; ++i) {
+                momentIds[i] = invalid;
+            }
             return;
         }
 
@@ -312,7 +319,6 @@ protected:
     Kokkos::Array<std::size_t, 2> _reactants {invalid, invalid};
     Kokkos::Array<std::size_t, 2> _products {invalid, invalid};
 
-    static constexpr auto nMomentIds = Props::numSpeciesNoI;
     Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _reactantMomentIds;
     Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _productMomentIds;
 

@@ -197,7 +197,6 @@ void
 ReactionNetworkWorker<TImpl>::generateClusterData(
     const typename Network::ClusterGenerator& generator)
 {
-
     auto nClusters = _nw._clusterData.numClusters;
     _nw._clusterData.formationEnergy = Kokkos::View<double*>("Formation Energy", nClusters);
     _nw._clusterData.migrationEnergy = Kokkos::View<double*>("Migration Energy", nClusters);
@@ -213,7 +212,6 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
         data.reactionRadius(i) = generator.getReactionRadius(cluster, _nw.getLatticeParameter(),
         		_nw.getInterstitialBias(), _nw.getImpurityRadius());
     });
-    
 }
 
 template <typename TImpl>
@@ -264,14 +262,87 @@ ReactionNetworkWorker<TImpl>::defineMomentIds(std::size_t& numDOFs)
 }
 
 template <typename TImpl>
+typename ReactionNetworkWorker<TImpl>::ClusterSetsViewPair
+ReactionNetworkWorker<TImpl>::defineReactionClusterSets()
+{
+    using ClusterSet = typename ClusterSetsViewPair::ClusterSet;
+    ClusterSetsViewPair ret;
+
+    auto subpaving = _nw._subpaving;
+    auto tiles = subpaving.getTiles(plsm::onDevice);
+    std::size_t numClusters = tiles.extent(0);
+
+    detail::UpperTriangle<ClusterSet> prodSet("Temp Production Set",
+        numClusters);
+    auto cap = prodSet.size();
+    detail::UpperTriangle<ClusterSet> dissSet("Temp Dissociation Set",
+        numClusters);
+
+    auto diffusionFactor = _nw._clusterData.diffusionFactor;
+    auto validator = _nw.asDerived()->getReactionValidator();
+    using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
+    Kokkos::parallel_for(Range2D({0, 0}, {numClusters, numClusters}),
+            KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
+        if (j < i) {
+            return;
+        }
+        if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+            return;
+        }
+        validator(i, j, subpaving, prodSet, dissSet);
+    });
+    Kokkos::fence();
+
+    auto ids = Kokkos::View<std::size_t*>("Reaction Ids", cap);
+    std::size_t numProdReactions = 0;
+    Kokkos::parallel_scan(cap,
+            KOKKOS_LAMBDA (std::size_t i, std::size_t& update,
+                const bool finalPass) {
+        if (prodSet(i).valid()) {
+            if (finalPass) {
+                ids(i) = update;
+            }
+            update += 1;
+        }
+    }, numProdReactions);
+    auto prodSetsView = Kokkos::View<ClusterSet*>("Production Cluster Sets",
+        numProdReactions);
+    Kokkos::parallel_for(cap, KOKKOS_LAMBDA (std::size_t i) {
+        if (prodSet(i).valid()) {
+            prodSetsView(ids(i)) = prodSet(i);
+        }
+    });
+
+    std::size_t numDissReactions = 0;
+    Kokkos::parallel_scan(cap,
+            KOKKOS_LAMBDA (std::size_t i, std::size_t& update,
+                const bool finalPass) {
+        if (dissSet(i).valid()) {
+            if (finalPass) {
+                ids(i) = update;
+            }
+            update += 1;
+        }
+    }, numDissReactions);
+    auto dissSetsView = Kokkos::View<ClusterSet*>("Dissociation Cluster Sets",
+        numDissReactions);
+    Kokkos::parallel_for(cap, KOKKOS_LAMBDA (std::size_t i) {
+        if (dissSet(i).valid()) {
+            dissSetsView(ids(i)) = dissSet(i);
+        }
+    });
+
+    return {prodSetsView, dissSetsView};
+}
+
+template <typename TImpl>
 void
 ReactionNetworkWorker<TImpl>::defineReactions()
 {
     using ReactionType = typename Network::ReactionType;
     using ClusterSet = typename ReactionType::ClusterSet;
 
-    auto clusterSetsPair = _nw.asDerived()->defineReactionClusterSets(
-        _nw._subpaving, _nw._clusterData.diffusionFactor);
+    auto clusterSetsPair = defineReactionClusterSets();
     auto prodSets = clusterSetsPair.prodClusterSets;
     auto nProdReactions = prodSets.extent(0);
     auto dissSets = clusterSetsPair.dissClusterSets;

@@ -11,8 +11,6 @@ class Cluster;
 
 namespace detail
 {
-//TODO: Change plsm:: OnHost/OnDevice to be aliases for Kokkos::HostSpace and
-//this
 using DefaultMemorySpace = typename Kokkos::View<int*>::traits::memory_space;
 
 template <typename PlsmContext>
@@ -280,7 +278,7 @@ public:
     }
 
     std::size_t
-	getId()
+    getId()
     {
         return _id;
     }

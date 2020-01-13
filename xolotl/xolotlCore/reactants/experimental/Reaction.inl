@@ -6,6 +6,7 @@
 #include <plsm/EnumIndexed.h>
 
 #include <Constants.h>
+#include <MathUtils.h>
 
 namespace xolotlCore
 {
@@ -68,20 +69,34 @@ Reaction<TNetwork, TDerived>::updateRates()
     }
 }
 
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<hasInterstitial<typename TRegion::EnumIndex>(),
+    typename TRegion::ScalarType>
+getISizeForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
+    const TRegion& pairCl2Reg)
+{
+    using Species = typename TRegion::EnumIndex;
+    return pairCl1Reg[Species::I].begin() + pairCl2Reg[Species::I].begin() -
+        singleClReg[Species::I].begin();
+}
+
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<!hasInterstitial<typename TRegion::EnumIndex>(),
+    typename TRegion::ScalarType>
+getISizeForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
+    const TRegion& pairCl2Reg)
+{
+    return 0;
+}
+
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 typename Reaction<TNetwork, TDerived>::AmountType
 Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
     const Region& pairCl1Reg, const Region& pairCl2Reg)
 {
-    // Special case for I
-	int iSize = 0;
-    if (NetworkType::getNumberOfSpeciesNoI() != NetworkType::getNumberOfSpecies()) {
-        iSize += pairCl1Reg[TNetwork::Traits::Species::I].begin();
-        iSize += pairCl2Reg[TNetwork::Traits::Species::I].begin();
-        iSize -= singleClReg[TNetwork::Traits::Species::I].begin();
-    }
-    
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
     AmountType nOverlap = 1;
@@ -94,10 +109,11 @@ Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
         // More complicated with X_[3,5) + X_[5,7) ⇄ X_[9,11)
         // 3+6, 4+5, 4+6, width is 3
 
-    	AmountType width{};
-        
+        AmountType width{};
+
         // Special case for I
-        if (i == TNetwork::Traits::Species::V) {
+        if (isVacancy(i)) {
+            auto iSize = getISizeForOverlap(singleClReg, pairCl1Reg, pairCl2Reg);
             for (auto j : makeIntervalRange(pairCl1Reg[i])) {
                 width +=
                     min(singleClReg[i].end() - 1, pairCl2Reg[i].end() - 1 + j - iSize)
@@ -116,16 +132,16 @@ Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
         }
         nOverlap *= width;
     }
-    
+
 //    if (nOverlap <= 0) {
-//        std::cout << pairCl1Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl1Reg[TNetwork::Traits::Species::D].begin() 
-//        		<< ", " << pairCl1Reg[TNetwork::Traits::Species::T].begin()
+//        std::cout << pairCl1Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl1Reg[TNetwork::Traits::Species::D].begin()
+//              << ", " << pairCl1Reg[TNetwork::Traits::Species::T].begin()
 //            << ", " << pairCl1Reg[TNetwork::Traits::Species::V].begin() << ", " << pairCl1Reg[TNetwork::Traits::Species::I].begin() << std::endl;
-//        std::cout << pairCl2Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl2Reg[TNetwork::Traits::Species::D].begin() 
-//        		<< ", " << pairCl2Reg[TNetwork::Traits::Species::T].begin()
+//        std::cout << pairCl2Reg[TNetwork::Traits::Species::He].begin() << ", " << pairCl2Reg[TNetwork::Traits::Species::D].begin()
+//              << ", " << pairCl2Reg[TNetwork::Traits::Species::T].begin()
 //            << ", " << pairCl2Reg[TNetwork::Traits::Species::V].begin() << ", " << pairCl2Reg[TNetwork::Traits::Species::I].begin() << std::endl;
-//        std::cout << "Prod: " << singleClReg[TNetwork::Traits::Species::He].begin() << ", " << singleClReg[TNetwork::Traits::Species::D].begin() 
-//        		<< ", " << singleClReg[TNetwork::Traits::Species::T].begin()
+//        std::cout << "Prod: " << singleClReg[TNetwork::Traits::Species::He].begin() << ", " << singleClReg[TNetwork::Traits::Species::D].begin()
+//              << ", " << singleClReg[TNetwork::Traits::Species::T].begin()
 //            << ", " << singleClReg[TNetwork::Traits::Species::V].begin() << ", " << singleClReg[TNetwork::Traits::Species::I].begin() << std::endl;
 //        std::cout << "Overlap: " << nOverlap << std::endl;
 //    }
@@ -141,7 +157,7 @@ Reaction<TNetwork, TDerived>::computeProductionCoefficients()
 {
     // static
     const auto dummyRegion = Region(Composition{});
-    
+
     // Find the overlap for this reaction
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -161,10 +177,10 @@ Reaction<TNetwork, TDerived>::computeProductionCoefficients()
         nOverlap = static_cast<double>(computeOverlap(prod1Reg, cl1Reg, cl2Reg));
     // Special case with two products
     else if (_products[0] != invalid && _products[1] != invalid) {
-        // Combine the regions 
+        // Combine the regions
         auto ilist = Kokkos::Array<plsm::Interval<AmountType>, NetworkType::getNumberOfSpecies()>();
         for (auto i : NetworkType::getSpeciesRange()) {
-            auto inter = plsm::Interval<AmountType> (prod1Reg[i].begin() + prod2Reg[i].begin(), 
+            auto inter = plsm::Interval<AmountType> (prod1Reg[i].begin() + prod2Reg[i].begin(),
                     prod1Reg[i].end() + prod2Reg[i].end() - 1);
             ilist[i()] = inter;
         }
