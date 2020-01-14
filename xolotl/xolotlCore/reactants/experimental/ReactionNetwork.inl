@@ -204,13 +204,16 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
     _nw._clusterData.reactionRadius = Kokkos::View<double*>("Reaction Radius", nClusters);
 
     ClusterData data(_nw._clusterData);
+    auto latticeParameter = _nw.getLatticeParameter();
+    auto interstitialBias = _nw.getInterstitialBias();
+    auto impurityRadius = _nw.getImpurityRadius();
     Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const std::size_t i) {
         auto cluster = data.getCluster(i);
         data.formationEnergy(i) = generator.getFormationEnergy(cluster);
         data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
         data.diffusionFactor(i) = generator.getDiffusionFactor(cluster);
-        data.reactionRadius(i) = generator.getReactionRadius(cluster, _nw.getLatticeParameter(),
-        		_nw.getInterstitialBias(), _nw.getImpurityRadius());
+        data.reactionRadius(i) = generator.getReactionRadius(cluster,
+            latticeParameter, interstitialBias, impurityRadius);
     });
 }
 
@@ -363,10 +366,11 @@ ReactionNetworkWorker<TImpl>::defineReactions()
     _nw._inverseMap = Kokkos::View<std::size_t**>(
         Kokkos::ViewAllocateWithoutInitializing("_inverseMap"),
         _nw._numDOFs, _nw._numDOFs);
+    auto invMap = _nw._inverseMap;
     using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
     Kokkos::parallel_for(Range2D({0, 0}, {_nw._numDOFs, _nw._numDOFs}),
             KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
-        _nw._inverseMap(i,j) = Network::invalid;
+        invMap(i,j) = Network::invalid;
     });
 
     auto reactions = _nw._reactions;
