@@ -16,7 +16,6 @@ namespace detail
 {
 struct ReactionDataRef
 {
-
     KOKKOS_INLINE_FUNCTION
     decltype(auto)
     getCoefficients(std::size_t reactionId)
@@ -46,7 +45,6 @@ struct ReactionDataRef
     Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged> inverseMap;
 };
 }
-
 template <typename TImpl>
 struct ReactionNetworkTraits
 {
@@ -166,7 +164,7 @@ public:
     void
     contributeConnectivity(ConnectivityView connectivity)
     {
-        _connectFn(*this, connectivity);
+        ((*this).*(_connectFn))(connectivity);
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -184,7 +182,7 @@ public:
     contributeFlux(ConcentrationsView concentrations, FluxesView fluxes,
         std::size_t gridIndex)
     {
-        _fluxFn(*this, concentrations, fluxes, gridIndex);
+        ((*this).*(_fluxFn))(concentrations, fluxes, gridIndex);
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -205,7 +203,7 @@ public:
         Kokkos::View<double*> values,
         std::size_t gridIndex)
     {
-        _partialsFn(*this, concentrations, values, gridIndex);
+        ((*this).*(_partialsFn))(concentrations, values, gridIndex);
     }
 
 private:
@@ -302,15 +300,17 @@ protected:
 
     Type _type {};
 
-    //TODO: This might not compile for device code
-    using ConnectFn = decltype(std::mem_fn(&Reaction::contributeConnectivity));
+    using ConnectFn =
+        void (Reaction::*)(ConnectivityView);
     ConnectFn _connectFn {nullptr};
 
-    using FluxFn = decltype(std::mem_fn(&Reaction::contributeFlux));
+    using FluxFn =
+        void (Reaction::*)(ConcentrationsView, FluxesView, std::size_t);
     FluxFn _fluxFn {nullptr};
 
     using PartialsFn =
-        decltype(std::mem_fn(&Reaction::contributePartialDerivatives));
+        void (Reaction::*)(ConcentrationsView,
+            Kokkos::View<double*>, std::size_t);
     PartialsFn _partialsFn {nullptr};
 
     //Cluster indices for LHS and RHS of the reaction
