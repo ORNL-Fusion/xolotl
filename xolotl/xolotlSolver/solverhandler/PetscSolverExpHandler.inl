@@ -4,8 +4,7 @@
 
 namespace xolotlSolver {
 
-template<typename TImpl>
-void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
+void PetscSolverExpHandler::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
 
 	// Degrees of freedom is the total number of clusters in the network
@@ -56,8 +55,7 @@ void PetscSolverExpHandler<TImpl>::createSolverContext(DM &da) {
 	return;
 }
 
-template<typename TImpl>
-void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
+void PetscSolverExpHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
 	// Initialize the temperatures
@@ -93,36 +91,19 @@ void PetscSolverExpHandler<TImpl>::initializeConcentration(DM &da, Vec &C) {
 			"DMDAVecRestoreArrayDOF failed.");
 
 	// Find the He id for the flux
-	xolotlCore::experimental::PSIReactionNetwork<
-			experimental::PSIFullSpeciesList>::Composition comp;
+	xolotlCore::experimental::NEReactionNetwork::Composition comp;
 	// Initialize the composition
 	for (auto i : expNetwork.getSpeciesRange()) {
 		comp[i] = 0;
 	}
-	comp[xolotlCore::experimental::PSIReactionNetwork<
-			experimental::PSIFullSpeciesList>::Species::He] = 1;
+	comp[xolotlCore::experimental::NEReactionNetwork::Species::Xe] = 1;
 	auto cluster = expNetwork.findCluster(comp, plsm::onHost);
-	heId = cluster.getId();
-	for (auto i : expNetwork.getSpeciesRange()) {
-		comp[i] = 0;
-	}
-	comp[xolotlCore::experimental::PSIReactionNetwork<
-			experimental::PSIFullSpeciesList>::Species::D] = 1;
-	cluster = expNetwork.findCluster(comp, plsm::onHost);
-	dId = cluster.getId();
-	for (auto i : expNetwork.getSpeciesRange()) {
-		comp[i] = 0;
-	}
-	comp[xolotlCore::experimental::PSIReactionNetwork<
-			experimental::PSIFullSpeciesList>::Species::T] = 1;
-	cluster = expNetwork.findCluster(comp, plsm::onHost);
-	tId = cluster.getId();
+	xeId = cluster.getId();
 
 	return;
 }
 
-template<typename TImpl>
-void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC,
+void PetscSolverExpHandler::updateConcentration(TS &ts, Vec &localC,
 		Vec &F, PetscReal ftime) {
 	PetscErrorCode ierr;
 
@@ -170,9 +151,7 @@ void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC,
 	}
 
 	// ----- Account for flux of incoming particles -----
-	updatedConcOffset[heId] += fluxHandler->getFluxAmplitude();
-	updatedConcOffset[dId] += fluxHandler->getFluxAmplitude();
-	updatedConcOffset[tId] += fluxHandler->getFluxAmplitude();
+	updatedConcOffset[xeId] += fluxHandler->getFluxAmplitude();
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 	ConcentrationsView xView(concOffset, dof);
@@ -192,16 +171,14 @@ void PetscSolverExpHandler<TImpl>::updateConcentration(TS &ts, Vec &localC,
 	return;
 }
 
-template<typename TImpl>
-void PetscSolverExpHandler<TImpl>::computeOffDiagonalJacobian(TS &ts,
+void PetscSolverExpHandler::computeOffDiagonalJacobian(TS &ts,
 		Vec &localC, Mat &J, PetscReal ftime) {
 	// Does nothing in 0D
 
 	return;
 }
 
-template<typename TImpl>
-void PetscSolverExpHandler<TImpl>::computeDiagonalJacobian(TS &ts, Vec &localC,
+void PetscSolverExpHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
 		Mat &J, PetscReal ftime) {
 	PetscErrorCode ierr;
 

@@ -19,7 +19,7 @@
 #include <SolverHandlerFactory.h>
 #include <ISolverHandler.h>
 #include <IReactionHandlerFactory.h>
-#include <experimental/PSIReactionNetwork.h>
+#include <experimental/NEReactionNetwork.h>
 #include <solverhandler/PetscSolverExpHandler.h>
 #include <ctime>
 
@@ -160,29 +160,11 @@ int runXolotl(const Options& opts) {
 			networkLoadTimer->start();
 
 			using NetworkType =
-			xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+			xolotlCore::experimental::NEReactionNetwork;
 
 			// Get the boundaries from the options
-			NetworkType::AmountType maxV = opts.getMaxV();
-			NetworkType::AmountType maxI = opts.getMaxI();
-			NetworkType::AmountType maxHe =
-					xolotlCore::experimental::PSIClusterGenerator<
-							xolotlCore::experimental::PSIFullSpeciesList>::getMaxHePerV(
-							maxV);
-			NetworkType::AmountType maxD = 2.0 / 3.0 * (double) maxHe;
-			NetworkType::AmountType maxT = 2.0 / 3.0 * (double) maxHe;
-			if (opts.getMaxImpurity() <= 0)
-				maxHe = 0;
-			if (opts.getMaxD() <= 0)
-				maxD = 0;
-			if (opts.getMaxT() <= 0)
-				maxT = 0;
-			if (maxV <= 0) {
-				maxHe = opts.getMaxImpurity();
-				maxD = opts.getMaxD();
-				maxT = opts.getMaxT();
-			}
-			NetworkType rNetwork( { maxHe, maxD, maxT, maxV, maxI }, 1, opts);
+			NetworkType::AmountType maxXe = opts.getMaxImpurity();
+			NetworkType rNetwork( { maxXe }, 1, opts);
 
 			rNetwork.syncClusterDataOnHost();
 			rNetwork.getSubpaving().syncZones(plsm::onHost);
@@ -200,8 +182,7 @@ int runXolotl(const Options& opts) {
 
 			// Creating the solver handler
 			xolotlSolver::ISolverHandler* rawSolverHandler = nullptr;
-			rawSolverHandler = new xolotlSolver::PetscSolverExpHandler<
-					xolotlCore::experimental::PSIFullSpeciesList>(rNetwork);
+			rawSolverHandler = new xolotlSolver::PetscSolverExpHandler(rNetwork);
 			static std::unique_ptr<xolotlSolver::ISolverHandler> theSolverHandler =
 					std::unique_ptr<xolotlSolver::ISolverHandler>(
 							rawSolverHandler);

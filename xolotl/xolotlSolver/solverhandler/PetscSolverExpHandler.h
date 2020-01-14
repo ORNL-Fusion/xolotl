@@ -4,8 +4,8 @@
 // Includes
 #include "PetscSolverHandler.h"
 #include <Kokkos_Core.hpp>
-#include <experimental/PSIReactionNetwork.h>
-#include <psiclusters/PSIClusterReactionNetwork.h>
+#include <experimental/NEReactionNetwork.h>
+#include <neclusters/NEClusterReactionNetwork.h>
 #include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 
 namespace xolotlSolver {
@@ -15,11 +15,10 @@ namespace xolotlSolver {
  * to solve the ADR equations in 0D for the experimental network,
  * using PETSc from Argonne National Laboratory.
  */
-template<typename TImpl>
 class PetscSolverExpHandler: public PetscSolverHandler {
 public:
 	using NetworkType =
-	xolotlCore::experimental::PSIReactionNetwork<TImpl>;
+	xolotlCore::experimental::NEReactionNetwork;
 
 	using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
@@ -40,10 +39,8 @@ protected:
 	 */
 	std::vector<double> temperature;
 
-	// The helium id for flux
-	int heId;
-	int dId;
-	int tId;
+	// The xenon id for flux
+	int xeId;
 
 public:
 
@@ -61,9 +58,9 @@ public:
 	 */
 	PetscSolverExpHandler(NetworkType& _network) :
 			PetscSolverHandler(
-					*(std::make_shared<xolotlCore::PSIClusterReactionNetwork>(
+					*(std::make_shared<xolotlCore::NEClusterReactionNetwork>(
 							std::make_shared<xolotlPerf::DummyHandlerRegistry>()))), expNetwork(
-					_network), heId(-1), dId(-1), tId(-1) {
+					_network), xeId(-1) {
 	}
 
 	//! The Destructor
@@ -124,8 +121,7 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::experimental::PSIReactionNetwork<
-			xolotlCore::experimental::PSIFullSpeciesList>& getExpNetwork() const
+	xolotlCore::experimental::NEReactionNetwork& getExpNetwork() const
 			override {
 		return expNetwork;
 	}

@@ -744,12 +744,10 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	virtual xolotlCore::experimental::PSIReactionNetwork<
-			xolotlCore::experimental::PSIFullSpeciesList>& getExpNetwork() const
+	virtual xolotlCore::experimental::NEReactionNetwork& getExpNetwork() const
 			override {
-		static auto tempNetwork = xolotlCore::experimental::PSIReactionNetwork<
-				xolotlCore::experimental::PSIFullSpeciesList>(
-				{ 0, 0, 0, 0, 0 }, 0, xolotlCore::Options());
+		static auto tempNetwork = xolotlCore::experimental::NEReactionNetwork( {
+				0 }, 0, xolotlCore::Options());
 		return tempNetwork;
 	}
 

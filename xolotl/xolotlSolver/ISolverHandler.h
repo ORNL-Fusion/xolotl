@@ -14,7 +14,7 @@
 #include <IHeterogeneousNucleationHandler.h>
 #include <IMaterialFactory.h>
 #include <IReactionNetwork.h>
-#include <experimental/PSIReactionNetwork.h>
+#include <experimental/NEReactionNetwork.h>
 #include <NDArray.h>
 
 namespace xolotlSolver {
@@ -269,8 +269,7 @@ public:
 	 *
 	 * @return The network
 	 */
-	virtual xolotlCore::experimental::PSIReactionNetwork<
-			xolotlCore::experimental::PSIFullSpeciesList>& getExpNetwork() const = 0;
+	virtual xolotlCore::experimental::NEReactionNetwork& getExpNetwork() const = 0;
 
 	/**
 	 * Get the network name.

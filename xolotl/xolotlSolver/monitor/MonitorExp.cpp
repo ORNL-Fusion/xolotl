@@ -203,11 +203,6 @@ PetscErrorCode computeHeliumRetentionExp(TS ts, PetscInt, PetscReal time,
 PetscErrorCode setupPetscExpMonitor(TS ts) {
 	PetscErrorCode ierr;
 
-	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
-
 	// Flags to launch the monitors or not
 	PetscBool flagXeRetention, flagHeRetention;
 
@@ -234,14 +229,19 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 	// for the retention calculation
 	if (flagXeRetention) {
 
+		using NetworkType =
+		experimental::NEReactionNetwork;
+		using Spec = typename NetworkType::Species;
+		using Composition = typename NetworkType::Composition;
+
 		for (std::size_t i = 0; i < networkSize; ++i) {
 			const auto& cl1Reg = network.getCluster(i).getRegion();
 			Composition lo1 = cl1Reg.getOrigin();
 			// Add the Id to the vector
 			indicesExp.push_back(i);
-//			// Add the number of xenon of this cluster to the weight
-//			weightsExp.push_back(cluster.getSize());
-//			radiiExp.push_back(cluster.getReactionRadius());
+			// Add the number of xenon of this cluster to the weight
+			weightsExp.push_back(lo1[Spec::Xe]);
+			radiiExp.push_back(network.getCluster(i).getReactionRadius());
 		}
 
 		// computeXenonRetentionExp will be called at each timestep
@@ -258,31 +258,36 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 	// Set the monitor to compute the helium fluence and the retention
 	// for the retention calculation
 	if (flagHeRetention) {
-		// Loop on the clusters
-		for (std::size_t i = 0; i < networkSize; ++i) {
-			const auto& cl1Reg = network.getCluster(i).getRegion();
-			Composition lo1 = cl1Reg.getOrigin();
-			if (lo1[Spec::He] > 0) {
-				heIndicesExp.push_back(i);
-				heWeightsExp.push_back(lo1[Spec::He]);
-			}
-			if (lo1[Spec::D] > 0) {
-				dIndicesExp.push_back(i);
-				dWeightsExp.push_back(lo1[Spec::D]);
-			}
-			if (lo1[Spec::T] > 0) {
-				tIndicesExp.push_back(i);
-				tWeightsExp.push_back(lo1[Spec::T]);
-			}
-			if (lo1[Spec::V] > 0) {
-				vIndicesExp.push_back(i);
-				vWeightsExp.push_back(lo1[Spec::V]);
-			}
-			if (lo1[Spec::I] > 0) {
-				iIndicesExp.push_back(i);
-				iWeightsExp.push_back(lo1[Spec::I]);
-			}
-		}
+//		using NetworkType =
+//		experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+//		using Spec = typename NetworkType::Species;
+//		using Composition = typename NetworkType::Composition;
+//
+//		// Loop on the clusters
+//		for (std::size_t i = 0; i < networkSize; ++i) {
+//			const auto& cl1Reg = network.getCluster(i).getRegion();
+//			Composition lo1 = cl1Reg.getOrigin();
+//			if (lo1[Spec::He] > 0) {
+//				heIndicesExp.push_back(i);
+//				heWeightsExp.push_back(lo1[Spec::He]);
+//			}
+//			if (lo1[Spec::D] > 0) {
+//				dIndicesExp.push_back(i);
+//				dWeightsExp.push_back(lo1[Spec::D]);
+//			}
+//			if (lo1[Spec::T] > 0) {
+//				tIndicesExp.push_back(i);
+//				tWeightsExp.push_back(lo1[Spec::T]);
+//			}
+//			if (lo1[Spec::V] > 0) {
+//				vIndicesExp.push_back(i);
+//				vWeightsExp.push_back(lo1[Spec::V]);
+//			}
+//			if (lo1[Spec::I] > 0) {
+//				iIndicesExp.push_back(i);
+//				iWeightsExp.push_back(lo1[Spec::I]);
+//			}
+//		}
 
 		// computeXenonRetentionExp will be called at each timestep
 		ierr = TSMonitorSet(ts, computeHeliumRetentionExp, NULL, NULL);
