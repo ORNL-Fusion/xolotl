@@ -47,7 +47,11 @@ public:
     bool
     select(const Region& region) const
     {
-        //TODO
+        // Remove 0
+        if (region[Species::Xe].end() == 1) {
+            return false;
+        }
+
         return true;
     }
 
@@ -124,8 +128,31 @@ public:
         double latticeParameter, double interstitialBias, double impurityRadius)
         const noexcept
     {
-        //TODO
-        return 0.0;
+        const auto& reg = cluster.getRegion();
+        double radius = 0.0;
+        double FourPi = 4.0 * xolotlCore::pi;
+        if (reg.isSimplex()) {
+            Composition comp(reg.getOrigin());
+            // Compute the reaction radius
+            // TODO: change the hard coded value to get the density from the network/options
+            radius = pow(
+                (3.0 * (double) comp[Species::Xe]) / (FourPi * 10.162795276841),
+                (1.0 / 3.0));
+            if (comp[Species::Xe] == 1)
+            	radius = impurityRadius;
+        }
+        else {
+            // Loop on the range
+            for (auto j : makeIntervalRange(reg[Species::Xe])) {
+                radius += pow(
+                            (3.0 * (double) j) / (FourPi * 10.162795276841),
+                            (1.0 / 3.0));
+            }
+            // Average the radius
+            radius /= reg.volume();
+        }
+
+        return radius;
     }
 
 private:
