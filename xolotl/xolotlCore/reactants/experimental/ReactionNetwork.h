@@ -46,6 +46,8 @@ public:
     operator()(std::size_t i, std::size_t j) const
     {
         assert(j >= i);
+        assert(i < _N);
+        assert(j < _N);
         auto id = i*_N + j - ((i+1)*i)/2;
         return _data(id);
     }
@@ -54,6 +56,7 @@ public:
     TData&
     operator()(std::size_t i) const
     {
+        assert(i < size());
         return _data(i);
     }
 

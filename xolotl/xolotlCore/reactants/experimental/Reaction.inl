@@ -40,7 +40,6 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
     _coefs(reactionData.getCoefficients(reactionId)),
     _inverseMap(reactionData.inverseMap)
 {
-
     for (std::size_t i : {0, 1}) {
         copyMomentIds(_reactants[i], _reactantMomentIds[i]);
         copyMomentIds(_products[i], _productMomentIds[i]);

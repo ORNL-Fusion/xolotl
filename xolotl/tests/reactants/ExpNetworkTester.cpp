@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(NENetwork) {
     using NetworkType = experimental::NEReactionNetwork;
     using Spec = NetworkType::Species;
     using Composition = NetworkType::Composition;
-    NetworkType network({100}, 0, Options{});
+    NetworkType network({100}, 1, Options{});
 }
 
 /**

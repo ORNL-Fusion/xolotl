@@ -17,7 +17,7 @@ namespace detail
 struct ReactionDataRef
 {
     KOKKOS_INLINE_FUNCTION
-    decltype(auto)
+	auto
     getCoefficients(std::size_t reactionId)
     {
         if (reactionId < productionCoeffs.extent(0)) {
@@ -32,7 +32,7 @@ struct ReactionDataRef
     }
 
     KOKKOS_INLINE_FUNCTION
-    decltype(auto)
+	auto
     getRates(std::size_t reactionId)
     {
         return Kokkos::subview(rates, reactionId, Kokkos::ALL);
@@ -240,7 +240,7 @@ private:
         }
 
         const auto& mIds = _clusterData.getCluster(clusterId).getMomentIds();
-        for (std::size_t i = 0; i < 4; ++i) {
+        for (std::size_t i = 0; i < nMomentIds; ++i) {
             momentIds[i] = mIds[i];
         }
     }
