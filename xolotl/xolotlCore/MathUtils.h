@@ -143,6 +143,7 @@ computeNthOrderLegendre(double x, const Kokkos::Array<double, N+1>& coeffs)
  */
 KOKKOS_INLINE_FUNCTION
 double firstOrderSum(double alpha, double beta, double mean) {
+	if (alpha > beta) return 0.0;
 	double toReturn = ((beta * (beta + 1.0)) / 2.0)
 			- ((alpha * (alpha - 1.0)) / 2.0) - ((beta - alpha + 1.0) * mean);
 
@@ -156,6 +157,7 @@ double firstOrderSum(double alpha, double beta, double mean) {
  */
 KOKKOS_INLINE_FUNCTION
 double secondOrderSum(double alpha, double beta, double mean) {
+	if (alpha > beta) return 0.0;
 	double toReturn = (beta * (beta + 1.0) * ((2.0 * beta) + 1.0)) / 6.0;
 
 	toReturn -= (alpha * (alpha - 1.0) * ((2.0 * alpha) - 1.0)) / 6.0;
@@ -177,6 +179,7 @@ double secondOrderSum(double alpha, double beta, double mean) {
 KOKKOS_INLINE_FUNCTION
 double secondOrderOffsetSum(double alpha, double beta, double mean1,
 		double mean2, double offset) {
+	if (alpha > beta) return 0.0;
 	double toReturn = (beta * (beta + 1.0) * (2.0 * beta + 1.0)) / 6.0;
 
 	toReturn -= (alpha * (alpha - 1.0) * (2.0 * alpha - 1.0)) / 6.0;

@@ -72,6 +72,9 @@ PetscErrorCode computeXenonRetentionExp(TS ts, PetscInt, PetscReal time,
 	// Get the minimum size for the radius
 	auto minSizes = solverHandler.getMinSizes();
 
+//	std::ofstream outFile;
+//	outFile.open("size.txt");
+
 	// Loop on all the indices
 	for (unsigned int i = 0; i < indicesExp.size(); i++) {
 		// Add the current concentration times the number of xenon in the cluster
@@ -85,7 +88,9 @@ PetscErrorCode computeXenonRetentionExp(TS ts, PetscInt, PetscReal time,
 			partialRadii += conc * radiiExp[i];
 			partialSize += conc * weightsExp[i];
 		}
+//		outFile << weightsExp[i] << " " << conc << std::endl;
 	}
+//	outFile.close();
 
 	// Print the result
 	std::cout << "\nTime: " << time << std::endl;
@@ -240,7 +245,10 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 			// Add the Id to the vector
 			indicesExp.push_back(i);
 			// Add the number of xenon of this cluster to the weight
-			weightsExp.push_back(lo1[Spec::Xe]);
+			if (cl1Reg.volume() > 1)
+				weightsExp.push_back(lo1[Spec::Xe] + 5);
+			else
+				weightsExp.push_back(lo1[Spec::Xe]);
 			radiiExp.push_back(network.getCluster(i).getReactionRadius());
 		}
 

@@ -9,8 +9,8 @@ namespace detail
 KOKKOS_INLINE_FUNCTION
 void
 NEReactionValidator::operator()(std::size_t i, std::size_t j,
-    const Subpaving& subpaving, const UpperTriangle<ClusterSet>& prodSet,
-    const UpperTriangle<ClusterSet>& dissSet) const
+    const Subpaving& subpaving, const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& prodSet,
+    const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& dissSet) const
 {
     using Species = typename Network::Species;
     using Composition = typename Network::Composition;
@@ -39,6 +39,7 @@ NEReactionValidator::operator()(std::size_t i, std::size_t j,
     bounds = {low, high};
 
     // Look for potential product
+    std::size_t nProd = 0;
     for (std::size_t k = 0; k < numClusters; ++k) {
         // Get the composition
         const auto& prodReg = tiles(k).getRegion();
@@ -53,15 +54,18 @@ NEReactionValidator::operator()(std::size_t i, std::size_t j,
 
         if (isGood) {
             // Increase nProd
-            prodSet(i, j) = {i, j, k};
-            // TODO: will have to add some rules, i or j should be a simplex cluster of max size 1
+            if (nProd == 0) prodSet(i, j).first = {i, j, k};
+            else prodSet(i, j).second = {i, j, k};
+            
             if (!cl1Reg.isSimplex() && !cl2Reg.isSimplex()) {
                 continue;
             }
             // Is the size of one of them one?
             if (lo1[Species::Xe] == 1 || lo2[Species::Xe] == 1) {
-                dissSet(i, j) = {k, i, j};
+                if (nProd == 0) dissSet(i, j).first = {k, i, j};
+                else dissSet(i, j).second = {k, i, j};
             }
+            nProd++;
         }
     }
 }

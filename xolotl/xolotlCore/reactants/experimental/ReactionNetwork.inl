@@ -20,6 +20,19 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     setInterstitialBias(options.getBiasFactor());
     setImpurityRadius(options.getImpurityRadius());
     setLatticeParameter(options.getLatticeParameter());
+    
+
+    	// PRINT ALL THE CLUSTERS
+        auto tiles = subpaving.getTiles(plsm::onDevice);
+        std::size_t numClusters = tiles.extent(0);
+//    	for (std::size_t i = 0; i < numClusters; ++i) {
+//    		const auto& cl1Reg = tiles(i).getRegion();
+//    		Composition lo1 = cl1Reg.getOrigin();
+//    	    Composition hi1 = cl1Reg.getUpperLimitPoint();
+//    
+//    		std::cout << lo1[0] << " " << hi1[0] - 1 << std::endl;
+//    	}
+    	std::cout << "num: " << numClusters << std::endl;
 
     {
     boost::timer::auto_cpu_timer t;
@@ -255,7 +268,7 @@ ReactionNetworkWorker<TImpl>::defineMomentIds(std::size_t& numDOFs)
                 data.momentIds(i, k()) = Network::invalid;
             }
             else {
-                data.momentIds(i, k()) = current;
+                data.momentIds(i, k()) = nClusters + current;
                 ++current;
             }
         }
@@ -276,10 +289,10 @@ ReactionNetworkWorker<TImpl>::defineReactionClusterSets()
     auto tiles = subpaving.getTiles(plsm::onDevice);
     std::size_t numClusters = tiles.extent(0);
 
-    detail::UpperTriangle<ClusterSet> prodSet("Temp Production Set",
+    detail::UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> > prodSet("Temp Production Set",
         numClusters);
     auto cap = prodSet.size();
-    detail::UpperTriangle<ClusterSet> dissSet("Temp Dissociation Set",
+    detail::UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> > dissSet("Temp Dissociation Set",
         numClusters);
 
     auto diffusionFactor = _nw._clusterData.diffusionFactor;
@@ -297,14 +310,20 @@ ReactionNetworkWorker<TImpl>::defineReactionClusterSets()
     });
     Kokkos::fence();
 
-    auto ids = Kokkos::View<std::size_t*>("Reaction Ids", cap);
+    auto ids = Kokkos::View<std::size_t*>("Reaction Ids", 2 * cap);
     std::size_t numProdReactions = 0;
     Kokkos::parallel_scan(cap,
             KOKKOS_LAMBDA (std::size_t i, std::size_t& update,
                 const bool finalPass) {
-        if (prodSet(i).valid()) {
+        if (prodSet(i).first.valid()) {
             if (finalPass) {
                 ids(i) = update;
+            }
+            update += 1;
+        }
+        if (prodSet(i).second.valid()) {
+            if (finalPass) {
+                ids(i + cap) = update;
             }
             update += 1;
         }
@@ -312,8 +331,11 @@ ReactionNetworkWorker<TImpl>::defineReactionClusterSets()
     auto prodSetsView = Kokkos::View<ClusterSet*>("Production Cluster Sets",
         numProdReactions);
     Kokkos::parallel_for(cap, KOKKOS_LAMBDA (std::size_t i) {
-        if (prodSet(i).valid()) {
-            prodSetsView(ids(i)) = prodSet(i);
+        if (prodSet(i).first.valid()) {
+            prodSetsView(ids(i)) = prodSet(i).first;
+        }
+        if (prodSet(i).second.valid()) {
+            prodSetsView(ids(i + cap)) = prodSet(i).second;
         }
     });
 
@@ -321,9 +343,15 @@ ReactionNetworkWorker<TImpl>::defineReactionClusterSets()
     Kokkos::parallel_scan(cap,
             KOKKOS_LAMBDA (std::size_t i, std::size_t& update,
                 const bool finalPass) {
-        if (dissSet(i).valid()) {
+        if (dissSet(i).first.valid()) {
             if (finalPass) {
                 ids(i) = update;
+            }
+            update += 1;
+        }
+        if (dissSet(i).second.valid()) {
+            if (finalPass) {
+                ids(i + cap) = update;
             }
             update += 1;
         }
@@ -331,8 +359,11 @@ ReactionNetworkWorker<TImpl>::defineReactionClusterSets()
     auto dissSetsView = Kokkos::View<ClusterSet*>("Dissociation Cluster Sets",
         numDissReactions);
     Kokkos::parallel_for(cap, KOKKOS_LAMBDA (std::size_t i) {
-        if (dissSet(i).valid()) {
-            dissSetsView(ids(i)) = dissSet(i);
+        if (dissSet(i).first.valid()) {
+            dissSetsView(ids(i)) = dissSet(i).first;
+        }
+        if (dissSet(i).second.valid()) {
+            dissSetsView(ids(i + cap)) = dissSet(i).second;
         }
     });
 

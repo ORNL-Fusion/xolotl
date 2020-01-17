@@ -72,8 +72,8 @@ public:
     KOKKOS_INLINE_FUNCTION
     void
     operator()(std::size_t i, std::size_t j, const Subpaving& subpaving,
-        const UpperTriangle<ClusterSet>& prodSet,
-        const UpperTriangle<ClusterSet>& dissSet) const;
+        const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& prodSet,
+        const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& dissSet) const;
 };
 }
 }

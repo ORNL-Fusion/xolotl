@@ -10,8 +10,8 @@ template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 void
 PSIReactionValidator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
-    const Subpaving& subpaving, const UpperTriangle<ClusterSet>& prodSet,
-    const UpperTriangle<ClusterSet>& dissSet) const
+    const Subpaving& subpaving, const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& prodSet,
+    const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& dissSet) const
 {
     using Species = typename Network::Species;
     using Composition = typename Network::Composition;
@@ -42,9 +42,9 @@ PSIReactionValidator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
         comp[Species::I] = size;
         auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
         if (iProdId != invalid) {
-            prodSet(i, j) = {i, j, iProdId};
+            prodSet(i, j).first = {i, j, iProdId};
             if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
-                dissSet(i, j) = {iProdId, i, j};
+                dissSet(i, j).first = {iProdId, i, j};
             }
         }
         return;
@@ -68,7 +68,7 @@ PSIReactionValidator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             comp[Species::V] = prodSize;
             auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
             if (vProdId != invalid) {
-                prodSet(i, j) = {i, j, vProdId};
+                prodSet(i, j).first = {i, j, vProdId};
                 // No dissociation
             }
         }
@@ -78,13 +78,13 @@ PSIReactionValidator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             comp[Species::I] = -prodSize;
             auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
             if (iProdId != invalid) {
-                prodSet(i, j) = {i, j, iProdId};
+                prodSet(i, j).first = {i, j, iProdId};
                 // No dissociation
             }
         }
         else {
             // No product
-            prodSet(i, j) = {i, j};
+            prodSet(i, j).first = {i, j};
         }
         return;
     }
@@ -130,7 +130,7 @@ PSIReactionValidator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
         if (isGood) {
             // Increase nProd
             nProd++;
-            prodSet(i, j) = {i, j, k};
+            prodSet(i, j).first = {i, j, k};
             // TODO: will have to add some rules, i or j should be a simplex cluster of max size 1
             if (!cl1Reg.isSimplex() && !cl2Reg.isSimplex()) {
                 continue;
@@ -146,7 +146,7 @@ PSIReactionValidator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
                     continue;
                 }
 
-                dissSet(i, j) = {k, i, j};
+                dissSet(i, j).first = {k, i, j};
             }
         }
     }
@@ -199,7 +199,7 @@ PSIReactionValidator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
                 if (isGood) {
                     // Increase nProd
                     nProd++;
-                    prodSet(i, j) = {i, j, k, iClusterId};
+                    prodSet(i, j).first = {i, j, k, iClusterId};
                     // No dissociation
                 }
             }

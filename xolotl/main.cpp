@@ -164,7 +164,8 @@ int runXolotl(const Options& opts) {
 
 			// Get the boundaries from the options
 			NetworkType::AmountType maxXe = opts.getMaxImpurity();
-			NetworkType rNetwork( { maxXe }, 1, opts);
+			NetworkType::AmountType refine = (maxXe + 1) / 10;
+			NetworkType rNetwork( { maxXe }, {{refine}, {10}}, 1, opts);
 
 			rNetwork.syncClusterDataOnHost();
 			rNetwork.getSubpaving().syncZones(plsm::onHost);

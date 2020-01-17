@@ -39,7 +39,14 @@ public:
     bool
     intersect(const Region& region) const
     {
-        //TODO
+//        // TODO: take the 100 from options
+//        if (region[Species::Xe].end() < 101) {
+//            return true;
+//        }
+//        // TODO: take the 10 from options
+//        if (region[Species::Xe].length() == 10) {
+//            return false;
+//        }
         return true;
     }
 
@@ -82,6 +89,7 @@ public:
                 return 79.0;
             }
         }
+        else return 79.0;
         return 0.0;
     }
 
@@ -97,7 +105,7 @@ public:
         if (reg.isSimplex()) {
             auto amtXe = reg.getOrigin()[0];
             if (amtXe <= 1) {
-                migrationEnergy = _xeDiffusive ? -1.0 : xeOneMigration;
+                migrationEnergy = _xeDiffusive ? 0.0 : xeOneMigration;
             }
         }
         return migrationEnergy;
