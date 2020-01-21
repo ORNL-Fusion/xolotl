@@ -159,9 +159,10 @@ void PetscSolverExpHandler::updateConcentration(TS &ts, Vec &localC,
     auto hConcs = HostUnmanaged(concOffset, dof);
     auto dConcs = Kokkos::View<double*>("Concentrations", dof);
     deep_copy(dConcs, hConcs);
-    auto dFlux = Kokkos::View<double*>("Fluxes", dof);
-	expNetwork.computeAllFluxes(dConcs, dFlux, 0);
     auto hFlux = HostUnmanaged(updatedConcOffset, dof);
+    auto dFlux = Kokkos::View<double*>("Fluxes", dof);
+    deep_copy(dFlux, hFlux);
+	expNetwork.computeAllFluxes(dConcs, dFlux, 0);
     deep_copy(hFlux, dFlux);
 
 	/*
