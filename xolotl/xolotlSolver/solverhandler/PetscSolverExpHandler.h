@@ -18,11 +18,11 @@ namespace xolotlSolver {
 class PetscSolverExpHandler: public PetscSolverHandler {
 public:
 	using NetworkType =
-	xolotlCore::experimental::NEReactionNetwork;
+        xolotlCore::experimental::NEReactionNetwork;
 
-	using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
-	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
-	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
+    using ConcentrationsView = typename NetworkType::ConcentrationsView;
+	using FluxesView = typename NetworkType::FluxesView;
+	using SparseFillMap = typename NetworkType::SparseFillMap;
 protected:
 
 	//! The original network created from the network loader.

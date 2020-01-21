@@ -154,9 +154,15 @@ void PetscSolverExpHandler::updateConcentration(TS &ts, Vec &localC,
 	updatedConcOffset[xeId] += fluxHandler->getFluxAmplitude() * 0.25;
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
-	ConcentrationsView xView(concOffset, dof);
-	FluxesView fView(updatedConcOffset, dof);
-	expNetwork.computeAllFluxes(xView, fView, 0);
+    using HostUnmanaged =
+        Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+    auto hConcs = HostUnmanaged(concOffset, dof);
+    auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+    deep_copy(dConcs, hConcs);
+    auto dFlux = Kokkos::View<double*>("Fluxes", dof);
+	expNetwork.computeAllFluxes(dConcs, dFlux, 0);
+    auto hFlux = HostUnmanaged(updatedConcOffset, dof);
+    deep_copy(hFlux, dFlux);
 
 	/*
 	 Restore vectors
@@ -224,8 +230,14 @@ void PetscSolverExpHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
 	// ----- Take care of the reactions for all the reactants -----
 
 	// Compute all the partial derivatives for the reactions
-	ConcentrationsView xView(concOffset, dof);
-	expNetwork.computeAllPartials(xView, expVals, 0);
+    using HostUnmanaged =
+        Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+    auto hConcs = HostUnmanaged(concOffset, dof);
+    auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+    deep_copy(dConcs, hConcs);
+	expNetwork.computeAllPartials(dConcs, expVals, 0);
+    auto hPartials = create_mirror_view(expVals);
+    deep_copy(hPartials, expVals);
 
 	// Variable for the loop on reactants
 	int startingIdx = 0;
@@ -247,7 +259,7 @@ void PetscSolverExpHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
 				colIds[j].i = 0;
 				colIds[j].c = row[j];
 				// Get the partial derivative from the array of all of the partials
-				reactingPartialsForCluster[j] = expVals(startingIdx + j);
+				reactingPartialsForCluster[j] = hPartials(startingIdx + j);
 			}
 			// Update the matrix
 			ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize, colIds,

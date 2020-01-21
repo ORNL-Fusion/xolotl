@@ -240,7 +240,7 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 		using Composition = typename NetworkType::Composition;
 
 		for (std::size_t i = 0; i < networkSize; ++i) {
-			const auto& cl1Reg = network.getCluster(i).getRegion();
+			const auto& cl1Reg = network.getCluster(i, plsm::onHost).getRegion();
 			Composition lo1 = cl1Reg.getOrigin();
 			// Add the Id to the vector
 			indicesExp.push_back(i);
@@ -249,7 +249,7 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 				weightsExp.push_back(lo1[Spec::Xe] + 5);
 			else
 				weightsExp.push_back(lo1[Spec::Xe]);
-			radiiExp.push_back(network.getCluster(i).getReactionRadius());
+			radiiExp.push_back(network.getCluster(i, plsm::onHost).getReactionRadius());
 		}
 
 		// computeXenonRetentionExp will be called at each timestep

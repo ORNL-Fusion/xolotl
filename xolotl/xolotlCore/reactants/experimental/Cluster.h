@@ -166,7 +166,6 @@ struct ClusterDataRef
     template <typename TData>
     using View = Unmanaged<ViewType<TData, PlsmContext>>;
 
-    KOKKOS_INLINE_FUNCTION
     ClusterDataRef() = default;
 
     KOKKOS_INLINE_FUNCTION

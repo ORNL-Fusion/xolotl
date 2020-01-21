@@ -117,9 +117,11 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
     updateDiffusionCoefficients();
 
-    Kokkos::parallel_for(_reactions.extent(0), KOKKOS_LAMBDA (std::size_t i) {
-        _reactions(i).updateRates();
+    auto reactions = _reactions;
+    Kokkos::parallel_for(reactions.extent(0), KOKKOS_LAMBDA (std::size_t i) {
+        reactions(i).updateRates();
     });
+    Kokkos::fence();
 }
 
 template <typename TImpl>
@@ -142,10 +144,11 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
     FluxesView fluxes, std::size_t gridIndex)
 {
     // Get the extent of the reactions view
-    const auto& nReactions = _reactions.extent(0);
+	auto reactions = _reactions;
+    const auto& nReactions = reactions.extent(0);
     // Loop on the reactions
     Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
-        _reactions(i).contributeFlux(concentrations, fluxes, gridIndex);
+        reactions(i).contributeFlux(concentrations, fluxes, gridIndex);
     });
 }
 
@@ -162,10 +165,11 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
     });
 
     // Get the extent of the reactions view
-    const auto& nReactions = _reactions.extent(0);
+    auto reactions = _reactions;
+    const auto& nReactions = reactions.extent(0);
     // Loop on the reactions
     Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
-        _reactions(i).contributePartialDerivatives(concentrations, values, gridIndex);
+        reactions(i).contributePartialDerivatives(concentrations, values, gridIndex);
     });
 }
 
@@ -430,6 +434,8 @@ std::size_t
 ReactionNetworkWorker<TImpl>::getDiagonalFill(
     typename Network::SparseFillMap& fillMap)
 {
+    //FIXME
+
     // Create the connectivity matrix initialized to invalid
     using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
     Kokkos::View<std::size_t**> connectivity(
@@ -440,10 +446,16 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
         connectivity(i,j) = Network::invalid;
     });
     // Loop on each reaction to add its contribution to the connectivity matrix
-    const auto& nReactions = _nw._reactions.extent(0);
+    auto reactions = _nw._reactions;
+    const auto& nReactions = reactions.extent(0);
     Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
-        _nw._reactions(i).contributeConnectivity(connectivity);
+        reactions(i).contributeConnectivity(connectivity);
     });
+    Kokkos::fence();
+
+    auto hConn = create_mirror_view(connectivity);
+    deep_copy(hConn, connectivity);
+    auto hInvMap = create_mirror_view(_nw._inverseMap);
 
     // Transfer to fillMap, fill the inverse map,
     // and count the total number of partials
@@ -454,14 +466,14 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
         // Loop on this row
         for (std::size_t j = 0; j < _nw._numDOFs; ++j)
         {
-            if (connectivity(i,j) == Network::invalid) {
+            if (hConn(i,j) == Network::invalid) {
                 // This is the end of the row
                 break;
             }
             // Add the value to the vector
-            current.push_back((int) connectivity(i,j));
+            current.push_back((int) hConn(i,j));
             // Update the inverse map
-            _nw._inverseMap(i,connectivity(i,j)) = nPartials;
+            hInvMap(i,hConn(i,j)) = nPartials;
             
             // Count
             nPartials++;
@@ -469,6 +481,8 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
         // Add the current vector to fillMap
         fillMap[(int) i] = current;
     }
+
+    deep_copy(_nw._inverseMap, hInvMap);
 
     return nPartials;
 }
