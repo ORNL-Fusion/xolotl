@@ -436,15 +436,9 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
 {
     //FIXME
 
-    // Create the connectivity matrix initialized to invalid
-    using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-    Kokkos::View<std::size_t**> connectivity(
-        Kokkos::ViewAllocateWithoutInitializing("connectivity"),
+    // Create the connectivity matrix initialized to 0
+    Kokkos::View<std::size_t**> connectivity("connectivity",
         _nw._numDOFs, _nw._numDOFs);
-    Kokkos::parallel_for(Range2D({0, 0}, {_nw._numDOFs, _nw._numDOFs}),
-            KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
-        connectivity(i,j) = Network::invalid;
-    });
     // Loop on each reaction to add its contribution to the connectivity matrix
     auto reactions = _nw._reactions;
     const auto& nReactions = reactions.extent(0);
@@ -466,14 +460,14 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
         // Loop on this row
         for (std::size_t j = 0; j < _nw._numDOFs; ++j)
         {
-            if (hConn(i,j) == Network::invalid) {
-                // This is the end of the row
-                break;
+            if (hConn(i,j) == 0) {
+                // Nothing to do
+                continue;
             }
             // Add the value to the vector
-            current.push_back((int) hConn(i,j));
+            current.push_back((int) j);
             // Update the inverse map
-            hInvMap(i,hConn(i,j)) = nPartials;
+            hInvMap(i,j) = nPartials;
             
             // Count
             nPartials++;

@@ -278,21 +278,8 @@ private:
     {
         // Check that the Ids are valid
         if (rowId == invalid || columnId == invalid) return;
-
-        // Check if the columnId is already present
-        std::size_t i = 0;
-        for (i = 0; i < connectivity.extent(1); ++i) {
-            if (connectivity(rowId, i) == columnId) {
-                // It is already present, don't do anything
-                return;
-            }
-            if (connectivity(rowId, i) == invalid) {
-                // We reached the end of the list and it was not present
-                break;
-            }
-        }
         // Add the value
-        connectivity(rowId, i) = columnId;
+        connectivity(rowId, columnId) = 1;
     }
 
 protected:
