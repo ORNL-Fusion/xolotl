@@ -228,7 +228,7 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 
 	// Get the network and its size
 	auto& network = solverHandler.getExpNetwork();
-	const int networkSize = network.getDOF();
+	const int networkSize = network.getSubpaving().getTiles(plsm::onHost).extent(0);
 
 	// Set the monitor to compute the xenon fluence and the retention
 	// for the retention calculation

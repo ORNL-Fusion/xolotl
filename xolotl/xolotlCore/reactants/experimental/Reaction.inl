@@ -891,9 +891,6 @@ Reaction<TNetwork, TDerived>::productionFlux(ConcentrationsView concentrations,
         fluxes[prodId] += f / (double) volProd;
     }
 
-    // Skip if there is no grouping
-    if (volCl1 == 1 && volCl2 == 1) return;
-
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {
         // First for the first reactant
@@ -978,7 +975,7 @@ Reaction<TNetwork, TDerived>::productionFlux(ConcentrationsView concentrations,
                 }
             }
             f *= _rate(gridIndex);
-            fluxes[_productMomentIds[p][k()]] -= f / (double) volProd;
+            fluxes[_productMomentIds[p][k()]] += f / (double) volProd;
             }
         }
     }
@@ -1013,9 +1010,6 @@ Reaction<TNetwork, TDerived>::dissociationFlux(
     fluxes[_reactants[0]] -= f / (double) volCl;
     fluxes[_products[0]] += f / (double) volProd1;
     fluxes[_products[1]] += f / (double) volProd2;
-
-    // Skip if there is no grouping
-    if (volProd1 == 1 && volProd2 == 1) return;
 
     // Take care of the first moments
     for (auto k : speciesRangeNoI) {
@@ -1106,7 +1100,7 @@ Reaction<TNetwork, TDerived>::productionPartialDerivatives(
     temp = _coefs(0, 0, 0, 0) * concentrations[_reactants[0]];
     if (volCl1 > 1) {
         for (auto i : speciesRangeNoI) {
-            temp += _coefs(0, 0, i() + 1, 0) *
+            temp += _coefs(i() + 1, 0, 0, 0) *
                 concentrations[_reactantMomentIds[0][i()]];
         }
     }
@@ -1125,9 +1119,6 @@ Reaction<TNetwork, TDerived>::productionPartialDerivatives(
         AmountType volProd = prodReg.volume();
         values(_inverseMap(prodId, _reactants[1])) += _rate(gridIndex) * temp / (double) volProd;
     }
-
-    // Skip if there is no grouping
-    if (volCl1 == 1 && volCl2 == 1) return;
     
     // (d / dL_1^A)
     if (volCl1 > 1) {
@@ -1377,9 +1368,6 @@ Reaction<TNetwork, TDerived>::dissociationPartialDerivatives(
                 += df * _coefs(i() + 1, 0, 0, 0);
         }
     }
-
-    // Skip if there is no grouping
-    if (volProd1 == 1 && volProd2 == 1) return;
 
     // Take care of the first moments
     if (volCl > 1) {
