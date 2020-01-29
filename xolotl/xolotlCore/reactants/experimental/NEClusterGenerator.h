@@ -22,7 +22,9 @@ public:
         :
         _maxXe(options.getMaxImpurity()),
         _xeDiffusivity(options.getXenonDiffusivity()),
-        _xeDiffusive(_xeDiffusivity > 0.0)
+        _xeDiffusive(_xeDiffusivity > 0.0),
+	    _groupingMin(options.getGroupingMin()),
+	    _groupingWidth(options.getGroupingWidthA())
     {
     }
 
@@ -31,7 +33,9 @@ public:
         Superclass(refineDepth),
         _maxXe(options.getMaxImpurity()),
         _xeDiffusivity(options.getXenonDiffusivity()),
-        _xeDiffusive(_xeDiffusivity > 0.0)
+        _xeDiffusive(_xeDiffusivity > 0.0),
+	    _groupingMin(options.getGroupingMin()),
+	    _groupingWidth(options.getGroupingWidthA())
     {
     }
 
@@ -39,14 +43,12 @@ public:
     bool
     intersect(const Region& region) const
     {
-//        // TODO: take the 100 from options
-//        if (region[Species::Xe].end() < 101) {
-//            return true;
-//        }
-//        // TODO: take the 10 from options
-//        if (region[Species::Xe].length() == 10) {
-//            return false;
-//        }
+        if (region[Species::Xe].end() < _groupingMin) {
+            return true;
+        }
+        if (region[Species::Xe].length() == _groupingWidth) {
+            return false;
+        }
         return true;
     }
 
@@ -167,6 +169,8 @@ private:
     AmountType _maxXe;
     double _xeDiffusivity;
     bool _xeDiffusive;
+    AmountType _groupingMin;
+    AmountType _groupingWidth;
 };
 }
 }
