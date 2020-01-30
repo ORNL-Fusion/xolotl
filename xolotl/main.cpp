@@ -183,11 +183,8 @@ int runXolotl(const Options& opts) {
 			}
 
 			// Creating the solver handler
-			xolotlSolver::ISolverHandler* rawSolverHandler = nullptr;
-			rawSolverHandler = new xolotlSolver::PetscSolverExpHandler(rNetwork);
-			static std::unique_ptr<xolotlSolver::ISolverHandler> theSolverHandler =
-					std::unique_ptr<xolotlSolver::ISolverHandler>(
-							rawSolverHandler);
+			std::unique_ptr<xolotlSolver::ISolverHandler> theSolverHandler =
+                std::make_unique<xolotlSolver::PetscSolverExpHandler>(rNetwork);
 
 			// Setup the solver
 			auto solver = setUpSolver(handlerRegistry, material, tempHandler,
