@@ -2406,6 +2406,35 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 			// Check the size
 			if (heSize >= minSizeBursting) {
 
+				// To know if this location is bursting
+				bool localBurst = false;
+				// Compute the radius of the bubble from the number of helium
+				double nV = heSize * (grid[xi + 1] - grid[xi]) / heVRatio;
+				double latticeParam = network.getLatticeParameter();
+				double tlcCubed = latticeParam * latticeParam * latticeParam;
+				double radius = (sqrt(3.0) / 4) * latticeParam
+						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
+						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
+
+				// If the radius is larger than the distance to the surface, burst
+				if (radius > distance) {
+					localBurst = true;
+				}
+				// Add randomness
+				double prob = prefactor * (1.0 - (distance - radius) / distance)
+						* min(1.0,
+								exp(
+										-(distance - depthParam)
+												/ (depthParam * 2.0)));
+				double test = solverHandler.getRNG().GetRandomDouble();
+
+				if (prob > test) {
+					localBurst = true;
+				}
+
+				if (!localBurst)
+					continue;
+
 				// Get the V cluster of the same size
 				auto vCluster = network.get(Species::V,
 						comp[toCompIdx(Species::V)]);
@@ -2433,6 +2462,34 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 			// Check the size
 			int heSize = *(cluster.getBounds(0).begin());
 			if (heSize >= minSizeBursting) {
+
+				// To know if this location is bursting
+				bool localBurst = false;
+				double nV = heSize * (grid[xi + 1] - grid[xi]) / heVRatio;
+				double latticeParam = network.getLatticeParameter();
+				double tlcCubed = latticeParam * latticeParam * latticeParam;
+				double radius = (sqrt(3.0) / 4) * latticeParam
+						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
+						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
+
+				// If the radius is larger than the distance to the surface, burst
+				if (radius > distance) {
+					localBurst = true;
+				}
+				// Add randomness
+				double prob = prefactor * (1.0 - (distance - radius) / distance)
+						* min(1.0,
+								exp(
+										-(distance - depthParam)
+												/ (depthParam * 2.0)));
+				double test = solverHandler.getRNG().GetRandomDouble();
+
+				if (prob > test) {
+					localBurst = true;
+				}
+
+				if (!localBurst)
+					continue;
 
 				// Compute the number of atoms released
 				localNHe += cluster.getTotalAtomConcentration(0) * hxLeft;
