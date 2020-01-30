@@ -1747,7 +1747,7 @@ double PSIClusterReactionNetwork::getTotalBubbleConcentration(int minSize) {
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		// Add its total helium concentration helium concentration
-		conc += cluster.getTotalAtomConcentration(minSize);
+		conc += cluster.getTotalAtomConcentration(0, minSize);
 	}
 
 	return conc;
