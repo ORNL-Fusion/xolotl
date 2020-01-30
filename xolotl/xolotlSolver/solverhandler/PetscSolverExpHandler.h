@@ -42,6 +42,9 @@ protected:
 	// The xenon id for flux
 	int xeId;
 
+    std::shared_ptr<xolotlPerf::ITimer> fluxTimer;
+    std::shared_ptr<xolotlPerf::ITimer> partialDerivativeTimer;
+
 public:
 
 	/**
@@ -59,8 +62,10 @@ public:
 	PetscSolverExpHandler(NetworkType& _network) :
 			PetscSolverHandler(
 					*(std::make_shared<xolotlCore::NEClusterReactionNetwork>(
-							std::make_shared<xolotlPerf::DummyHandlerRegistry>()))), expNetwork(
-					_network), xeId(-1) {
+							std::make_shared<xolotlPerf::DummyHandlerRegistry>()))),
+            expNetwork(_network), xeId(-1),
+            fluxTimer(xolotlPerf::getHandlerRegistry()->getTimer("Flux")),
+            partialDerivativeTimer(xolotlPerf::getHandlerRegistry()->getTimer("Partial Derivatives")) {
 	}
 
 	//! The Destructor
