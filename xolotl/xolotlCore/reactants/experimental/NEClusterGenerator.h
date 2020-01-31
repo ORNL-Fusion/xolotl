@@ -24,7 +24,8 @@ public:
         _xeDiffusivity(options.getXenonDiffusivity()),
         _xeDiffusive(_xeDiffusivity > 0.0),
 	    _groupingMin(options.getGroupingMin()),
-	    _groupingWidth(options.getGroupingWidthA())
+	    _groupingWidth(options.getGroupingWidthA()),
+	    _density(options.getDensity())
     {
     }
 
@@ -35,7 +36,8 @@ public:
         _xeDiffusivity(options.getXenonDiffusivity()),
         _xeDiffusive(_xeDiffusivity > 0.0),
 	    _groupingMin(options.getGroupingMin()),
-	    _groupingWidth(options.getGroupingWidthA())
+	    _groupingWidth(options.getGroupingWidthA()),
+	    _density(options.getDensity())
     {
     }
 
@@ -146,7 +148,7 @@ public:
             // Compute the reaction radius
             // TODO: change the hard coded value to get the density from the network/options
             radius = pow(
-                (3.0 * (double) comp[Species::Xe]) / (FourPi * 10.162795276841),
+                (3.0 * (double) comp[Species::Xe]) / (FourPi * _density),
                 (1.0 / 3.0));
             if (comp[Species::Xe] == 1)
             	radius = impurityRadius;
@@ -155,7 +157,7 @@ public:
             // Loop on the range
             for (auto j : makeIntervalRange(reg[Species::Xe])) {
                 radius += pow(
-                            (3.0 * (double) j) / (FourPi * 10.162795276841),
+                            (3.0 * (double) j) / (FourPi * _density),
                             (1.0 / 3.0));
             }
             // Average the radius
@@ -171,6 +173,7 @@ private:
     bool _xeDiffusive;
     AmountType _groupingMin;
     AmountType _groupingWidth;
+    double _density;
 };
 }
 }
