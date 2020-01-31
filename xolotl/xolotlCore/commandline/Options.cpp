@@ -177,8 +177,13 @@ void Options::readParams(int argc, char* argv[]) {
 	}
 
 	if (shouldRunFlag) {
-
 		ifstream ifs(param_file.c_str());
+		if (!ifs) {
+			std::cerr << "Options: unable to open parameter file: " <<
+				param_file << std::endl;
+			exitCode = EXIT_FAILURE;
+			return;
+		}
 		store(parse_config_file(ifs, config), opts);
 		notify(opts);
 
