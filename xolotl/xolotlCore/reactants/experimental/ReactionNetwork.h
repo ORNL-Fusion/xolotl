@@ -312,6 +312,30 @@ public:
     std::size_t
     getDiagonalFill(SparseFillMap& fillMap);
 
+    /**
+     * Get the total concentration of a given type of clusters.
+     *
+     * @param concentration The vector of concentrations
+     * @param type The type of atom we want the concentration of
+     * @param minSize The minimum number of atom to start counting
+     * @return The total accumulated concentration times the size of the cluster
+     */
+    double
+    getTotalAtomConcentration(ConcentrationsView concentrations,
+    		Species type, std::size_t minSize = 0);
+
+    /**
+     * Get the total concentration of a given type of clusters only if it is trapped in a vacancy.
+     *
+     * @param concentration The vector of concentrations
+     * @param type The type of atom we want the concentration of
+     * @param minSize The minimum number of atom to start counting
+     * @return The total accumulated concentration times the size of the cluster
+     */
+    double
+    getTotalTrappedAtomConcentration(ConcentrationsView concentrations,
+    		Species type, std::size_t minSize = 0);
+
 private:
     KOKKOS_INLINE_FUNCTION
     TImpl*

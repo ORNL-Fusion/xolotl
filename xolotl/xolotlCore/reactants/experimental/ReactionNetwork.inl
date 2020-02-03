@@ -174,6 +174,60 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 }
 
 template <typename TImpl>
+double
+ReactionNetwork<TImpl>::getTotalAtomConcentration(ConcentrationsView concentrations,
+		Species type, std::size_t minSize)
+{
+    auto tiles = _subpaving.getTiles(plsm::onDevice);
+    std::size_t numClusters = tiles.extent(0);
+    double conc = 0.0;
+    Kokkos::parallel_reduce(numClusters,
+            KOKKOS_LAMBDA (std::size_t i, double &lsum) {
+    	const Region& clReg = tiles(i).getRegion();
+    	for (std::size_t j : makeIntervalRange(clReg[type])) {
+    		if (j >= minSize) lsum += concentrations(i) * j;
+    	}
+    }, conc);
+
+    return conc;
+}
+
+template <typename TImpl>
+double
+ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(ConcentrationsView concentrations,
+		Species type, std::size_t minSize)
+{
+    // Find the vacancy index
+    constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
+    bool hasVacancy = false;
+    Species vIndex;
+    for (auto i : speciesRangeNoI) {
+    	if (isVacancy(i)) {
+    		hasVacancy = true;
+    		vIndex = i;
+    	}
+    }
+    
+    // Return 0 if there is not vacancy in the network
+    if (!hasVacancy) return 0.0;
+    
+    auto tiles = _subpaving.getTiles(plsm::onDevice);
+    std::size_t numClusters = tiles.extent(0);
+    double conc = 0.0;
+    Kokkos::parallel_reduce(numClusters,
+            KOKKOS_LAMBDA (std::size_t i, double &lsum) {
+    	const Region& clReg = tiles(i).getRegion();
+    	if (clReg[vIndex].begin() > 0) {
+    	for (std::size_t j : makeIntervalRange(clReg[type])) {
+    		if (j >= minSize) lsum += concentrations(i) * j;
+    	}
+    	}
+    }, conc);
+
+    return conc;
+}
+
+template <typename TImpl>
 void
 ReactionNetwork<TImpl>::defineMomentIds()
 {

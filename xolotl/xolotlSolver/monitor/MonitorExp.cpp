@@ -72,6 +72,23 @@ PetscErrorCode computeXenonRetentionExp(TS ts, PetscInt, PetscReal time,
 	// Get the minimum size for the radius
 	auto minSizes = solverHandler.getMinSizes();
 
+	// Degrees of freedom is the total number of clusters in the network
+	auto& network = solverHandler.getExpNetwork();
+	const int dof = network.getDOF();
+
+	using NetworkType =
+	experimental::NEReactionNetwork;
+	using Spec = typename NetworkType::Species;
+
+    using HostUnmanaged =
+        Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+    auto hConcs = HostUnmanaged(gridPointSolution, dof);
+    auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+    deep_copy(dConcs, hConcs);
+
+    xeConcentration = network.ReactionNetwork::getTotalAtomConcentration(dConcs, Spec::Xe, 0);
+    partialSize = network.ReactionNetwork::getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]);
+
 //	std::ofstream outFile;
 //	outFile.open("size.txt");
 
@@ -80,13 +97,11 @@ PetscErrorCode computeXenonRetentionExp(TS ts, PetscInt, PetscReal time,
 		// Add the current concentration times the number of xenon in the cluster
 		// (from the weight vector)
 		double conc = gridPointSolution[indicesExp[i]];
-		xeConcentration += conc * weightsExp[i];
 		bubbleConcentration += conc;
 		radii += conc * radiiExp[i];
 		if (weightsExp[i] >= minSizes[0] && conc > 1.0e-16) {
 			partialBubbleConcentration += conc;
 			partialRadii += conc * radiiExp[i];
-			partialSize += conc * weightsExp[i];
 		}
 //		outFile << weightsExp[i] << " " << conc << std::endl;
 	}
