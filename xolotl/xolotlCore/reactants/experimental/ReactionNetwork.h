@@ -89,7 +89,7 @@ public:
     using ClusterGenerator = typename Traits::ClusterGenerator;
     using AmountType = typename Types::AmountType;
     using Subpaving = typename Types::Subpaving;
-    using SubdivisionRatio = typename Subpaving::SubdivisionRatioType;
+    using SubdivisionRatio = plsm::SubdivisionRatio<numSpecies>;
     using Composition = typename Types::Composition;
     using Region = typename Types::Region;
     using Ival = typename Region::IntervalType;
