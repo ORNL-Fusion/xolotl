@@ -11,6 +11,7 @@
 #include <Options.h>
 
 #include <experimental/Cluster.h>
+#include <experimental/IReactionNetwork.h>
 #include <experimental/Reaction.h>
 #include <experimental/SpeciesEnumSequence.h>
 
@@ -67,7 +68,7 @@ private:
 }
 
 template <typename TImpl>
-class ReactionNetwork
+class ReactionNetwork : public IReactionNetwork
 {
     friend class detail::ReactionNetworkWorker<TImpl>;
 
@@ -87,18 +88,16 @@ public:
     using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
     using ReactionType = typename Traits::ReactionType;
     using ClusterGenerator = typename Traits::ClusterGenerator;
-    using AmountType = typename Types::AmountType;
+    using AmountType = typename IReactionNetwork::AmountType;
     using Subpaving = typename Types::Subpaving;
     using SubdivisionRatio = plsm::SubdivisionRatio<numSpecies>;
     using Composition = typename Types::Composition;
     using Region = typename Types::Region;
     using Ival = typename Region::IntervalType;
-    using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
-    using OwnedConcentrationsView = Kokkos::View<double*>;
-    using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
-    using OwnedFluxesView = Kokkos::View<double*>;
-    using ConnectivityView = typename Types::ConnectivityView;
-    using SparseFillMap = std::unordered_map<int, std::vector<int>>;
+    using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
+    using FluxesView = typename IReactionNetwork::FluxesView;
+    using ConnectivityView = typename IReactionNetwork::ConnectivityView;
+    using SparseFillMap = typename IReactionNetwork::SparseFillMap;
     using ClusterData = typename Types::ClusterData;
     using ClusterDataMirror = typename Types::ClusterDataMirror;
     using ClusterDataRef = typename Types::ClusterDataRef;
@@ -154,64 +153,24 @@ public:
             SpeciesSequence::lastNoI());
     }
 
-    KOKKOS_INLINE_FUNCTION
-    std::size_t
-    getDOF() const noexcept
-    {
-        return _numDOFs;
-    }
+    void
+    setLatticeParameter(double latticeParameter) override;
 
-    KOKKOS_INLINE_FUNCTION
-    double
-    getLatticeParameter() const noexcept
+    void
+    setImpurityRadius(double impurityRadius) noexcept override
     {
-        return _latticeParameter;
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    double
-    getAtomicVolume() const noexcept
-    {
-        return _atomicVolume;
+        this->_impurityRadius =
+            asDerived()->checkImpurityRadius(impurityRadius);
     }
 
     void
-    setLatticeParameter(double latticeParameter);
-
-    KOKKOS_INLINE_FUNCTION
-    double
-    getInterstitialBias() const noexcept
-    {
-        return _interstitialBias;
-    }
+    setTemperatures(const std::vector<double>& gridTemperatures) override;
 
     void
-    setInterstitialBias(double interstitialBias) noexcept
-    {
-        _interstitialBias = interstitialBias;
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    double
-    getImpurityRadius() const noexcept
-    {
-        return _impurityRadius;
-    }
-
-    void
-    setImpurityRadius(double impurityRadius) noexcept
-    {
-        _impurityRadius = asDerived()->checkImpurityRadius(impurityRadius);
-    }
-
-    void
-    setTemperatures(const std::vector<double>& gridTemperatures);
-
-    void
-    syncClusterDataOnHost()
+    syncClusterDataOnHost() override
     {
         _subpaving.syncTiles(plsm::onHost);
-        auto mirror = ClusterDataMirror(_subpaving, _gridSize);
+        auto mirror = ClusterDataMirror(_subpaving, this->_gridSize);
         Kokkos::deep_copy(mirror.atomicVolume, _clusterData.atomicVolume);
         Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
         Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
@@ -296,21 +255,14 @@ public:
 
     void
     computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-            std::size_t gridIndex);
+        std::size_t gridIndex) override;
 
     void
     computeAllPartials(ConcentrationsView concentrations,
-            Kokkos::View<double*> values, std::size_t gridIndex);
+        Kokkos::View<double*> values, std::size_t gridIndex) override;
 
-    /**
-     * Get the diagonal fill for the Jacobian, corresponding to the reactions.
-     * Also populates the inverse map.
-     *
-     * @param fillMap Connectivity map.
-     * @return The total number of partials.
-     */
     std::size_t
-    getDiagonalFill(SparseFillMap& fillMap);
+    getDiagonalFill(SparseFillMap& fillMap) override;
 
     /**
      * Get the total concentration of a given type of clusters.
@@ -373,17 +325,8 @@ private:
 private:
     Subpaving _subpaving;
 
-    double _latticeParameter {};
-    double _atomicVolume {};
-    double _interstitialBias {};
-    double _impurityRadius {};
-
-    std::size_t _gridSize {};
-
     ClusterData _clusterData;
     ClusterDataMirror _clusterDataMirror;
-
-    std::size_t _numDOFs {};
 
     Kokkos::View<ReactionType*> _reactions;
     Kokkos::View<double*****> _productionCoeffs;
@@ -480,76 +423,6 @@ struct ReactionNetworkWorker
     getDiagonalFill(typename Network::SparseFillMap& fillMap);
 };
 }
-
-
-
-
-
-
-
-
-
-//template <typename TReactionNetwork>
-//TReactionNetwork
-//makeReactionNetwork(
-//    const std::vector<typename TReactionNetwork::AmountType>& maxSpeciesAmounts,
-//    std::size_t gridSize, const IOptions& options)
-//{
-//    using Subpaving = typename TReactionNetwork::Subpaving;
-//    using Region = typename TReactionNetwork::Region;
-//    using Ival = typename TReactionNetwork::Ival;
-//    using AmountType = typename TReactionNetwork::AmountType;
-//    using SubdivRatio = typename Subpaving::SubdivisionRatioType;
-
-//    constexpr auto numSpecies = TReactionNetwork::getNumberOfSpecies();
-
-//    Region latticeRegion;
-//    SubdivRatio ratio;
-//    for (std::size_t i = 0; i < numSpecies; ++i) {
-//        auto maxAmt = maxSpeciesAmounts[i];
-//        latticeRegion[i] = Ival{0, maxAmt + 1};
-//        ratio[i] = maxAmt + 1;
-//    }
-//    Subpaving subpaving(latticeRegion, {ratio});
-
-//    //TODO: refine
-
-//    TReactionNetwork network(std::move(subpaving), gridSize, options);
-
-//    return network;
-//}
-
-
-//template <typename TReactionNetwork>
-//TReactionNetwork
-//makeSimpleReactionNetwork(
-//    typename TReactionNetwork::AmountType maxSpeciesAmount = 10)
-//{
-//    using Subpaving = typename TReactionNetwork::Subpaving;
-//    using Region = typename TReactionNetwork::Region;
-//    using Ival = typename TReactionNetwork::Ival;
-//    using AmountType = typename TReactionNetwork::AmountType;
-//    using SubdivRatio = typename Subpaving::SubdivisionRatioType;
-
-//    constexpr auto numSpecies = TReactionNetwork::getNumberOfSpecies();
-
-//    Ival ival{0, maxSpeciesAmount + 1};
-//    Region latticeRegion;
-//    SubdivRatio ratio;
-//    for (std::size_t i = 0; i < numSpecies; ++i) {
-//        latticeRegion[i] = ival;
-//        ratio[i] = maxSpeciesAmount + 1;
-//    }
-//    Subpaving subpaving(latticeRegion, {ratio});
-
-//    subpaving.refine(
-//        plsm::refine::RegionDetector<AmountType, numSpecies, plsm::Select>{
-//            latticeRegion});
-
-//    TReactionNetwork network(std::move(subpaving), 0);
-
-//    return network;
-//}
 }
 }
 

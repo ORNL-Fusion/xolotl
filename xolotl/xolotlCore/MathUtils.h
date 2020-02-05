@@ -10,6 +10,7 @@
 #ifndef MATHUTILS_H_
 #define MATHUTILS_H_
 
+#include <array>
 #include <limits>
 #include <cmath>
 #include <numeric>

@@ -269,7 +269,7 @@ public:
 	 *
 	 * @return The network
 	 */
-	virtual xolotlCore::experimental::NEReactionNetwork& getExpNetwork() const = 0;
+	virtual xolotlCore::experimental::IReactionNetwork& getExpNetwork() const = 0;
 
 	/**
 	 * Get the network name.

@@ -12,15 +12,14 @@ template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
         std::size_t gridSize, const IOptions& options)
     :
+    IReactionNetwork(gridSize),
     _subpaving(subpaving),
-    _gridSize(gridSize),
-    _clusterData(_subpaving, _gridSize),
+    _clusterData(_subpaving, gridSize),
     _worker(*this)
 {
     setInterstitialBias(options.getBiasFactor());
     setImpurityRadius(options.getImpurityRadius());
     setLatticeParameter(options.getLatticeParameter());
-    
 
     	// PRINT ALL THE CLUSTERS
         auto tiles = subpaving.getTiles(plsm::onDevice);
@@ -98,12 +97,13 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 {
-    _latticeParameter = asDerived()->checkLatticeParameter(latticeParameter);
+    auto lParam = asDerived()->checkLatticeParameter(latticeParameter);
+    this->_latticeParameter = lParam;
 
-    _atomicVolume =
-        0.5 * _latticeParameter * _latticeParameter * _latticeParameter;
+    this->_atomicVolume =
+        0.5 * lParam * lParam * lParam;
     auto mirror = Kokkos::create_mirror_view(_clusterData.atomicVolume);
-    mirror(0) = _atomicVolume;
+    mirror(0) = this->_atomicVolume;
     Kokkos::deep_copy(_clusterData.atomicVolume, mirror);
 }
 
@@ -112,7 +112,7 @@ void
 ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 {
     Kokkos::View<const double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-        tempsHost(gridTemps.data(), _gridSize);
+        tempsHost(gridTemps.data(), this->_gridSize);
     Kokkos::deep_copy(_clusterData.temperature, tempsHost);
 
     updateDiffusionCoefficients();
@@ -449,7 +449,7 @@ ReactionNetworkWorker<TImpl>::defineReactions()
 
     auto numReactions = nProdReactions + nDissReactions;
     _nw._reactionRates = Kokkos::View<double**>("Reaction Rates", numReactions,
-        _nw._gridSize);
+        _nw.getGridSize());
     _nw._reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
 
     // Initialize the inverse map to invalid
@@ -522,7 +522,7 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
             current.push_back((int) j);
             // Update the inverse map
             hInvMap(i,j) = nPartials;
-            
+
             // Count
             nPartials++;
         }

@@ -6,6 +6,7 @@
 #include <plsm/Utility.h>
 
 #include <experimental/Cluster.h>
+#include <experimental/IReactionNetwork.h>
 #include <experimental/SpeciesEnumSequence.h>
 
 namespace xolotlCore
@@ -55,7 +56,7 @@ namespace detail
 template <typename TImpl>
 struct ReactionNetworkTypes
 {
-    using AmountType = std::uint32_t;
+    using AmountType = typename IReactionNetwork::AmountType;
     using Traits = ReactionNetworkTraits<TImpl>;
     using Species = typename Traits::Species;
     using Subpaving = plsm::Subpaving<AmountType, Traits::numSpecies, Species>;
@@ -64,7 +65,6 @@ struct ReactionNetworkTypes
     using ClusterData = detail::ClusterData<Subpaving>;
     using ClusterDataMirror = detail::ClusterData<Subpaving, plsm::OnHost>;
     using ClusterDataRef = detail::ClusterDataRef<Subpaving>;
-    using ConnectivityView = Kokkos::View<size_t**, Kokkos::MemoryUnmanaged>;
 };
 
 template <typename TImpl>
@@ -95,9 +95,9 @@ public:
     using Region = typename Types::Region;
     using Composition = typename Types::Composition;
     using ClusterDataRef = typename Types::ClusterDataRef;
-    using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
-    using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
-    using ConnectivityView = typename Types::ConnectivityView;
+    using ConcentrationsView = IReactionNetwork::ConcentrationsView;
+    using FluxesView = IReactionNetwork::FluxesView;
+    using ConnectivityView = typename IReactionNetwork::ConnectivityView;
 
     enum class Type
     {

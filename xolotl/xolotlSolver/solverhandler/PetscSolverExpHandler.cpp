@@ -2,6 +2,10 @@
 #include <MathUtils.h>
 #include <Constants.h>
 
+#include "PetscSolverExpHandler.h"
+
+#include <experimental/NEReactionNetwork.h>
+
 namespace xolotlSolver {
 
 void PetscSolverExpHandler::createSolverContext(DM &da) {
@@ -55,6 +59,21 @@ void PetscSolverExpHandler::createSolverContext(DM &da) {
 	return;
 }
 
+//FIXME: This was just to make the compiler happy. It needs to be handled in a
+//generic way
+void findXeId(xolotlCore::experimental::NEReactionNetwork& neNetwork, int& xeId)
+{
+	// Find the He id for the flux
+	xolotlCore::experimental::NEReactionNetwork::Composition comp;
+	// Initialize the composition
+	for (auto i : neNetwork.getSpeciesRange()) {
+		comp[i] = 0;
+	}
+	comp[xolotlCore::experimental::NEReactionNetwork::Species::Xe] = 1;
+	auto cluster = neNetwork.findCluster(comp, plsm::onHost);
+	xeId = cluster.getId();
+}
+
 void PetscSolverExpHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
@@ -90,15 +109,11 @@ void PetscSolverExpHandler::initializeConcentration(DM &da, Vec &C) {
 	checkPetscError(ierr, "PetscSolverExpHandler::initializeConcentration: "
 			"DMDAVecRestoreArrayDOF failed.");
 
-	// Find the He id for the flux
-	xolotlCore::experimental::NEReactionNetwork::Composition comp;
-	// Initialize the composition
-	for (auto i : expNetwork.getSpeciesRange()) {
-		comp[i] = 0;
-	}
-	comp[xolotlCore::experimental::NEReactionNetwork::Species::Xe] = 1;
-	auto cluster = expNetwork.findCluster(comp, plsm::onHost);
-	xeId = cluster.getId();
+    auto neNetwork = dynamic_cast<xolotlCore::experimental::NEReactionNetwork*>(
+        &expNetwork);
+    if (neNetwork) {
+        findXeId(*neNetwork, xeId);
+    }
 
 	return;
 }

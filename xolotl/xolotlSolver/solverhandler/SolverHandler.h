@@ -744,7 +744,7 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	virtual xolotlCore::experimental::NEReactionNetwork& getExpNetwork() const
+	virtual xolotlCore::experimental::IReactionNetwork& getExpNetwork() const
 			override {
 		static auto tempNetwork = xolotlCore::experimental::NEReactionNetwork( {
 				0 }, 0, xolotlCore::Options());

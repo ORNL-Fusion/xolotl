@@ -1,10 +1,8 @@
-#ifndef PETSCSOLVEREXPHANDLER_H
-#define PETSCSOLVEREXPHANDLER_H
+#pragma once
 
 // Includes
 #include "PetscSolverHandler.h"
 #include <Kokkos_Core.hpp>
-#include <experimental/NEReactionNetwork.h>
 #include <neclusters/NEClusterReactionNetwork.h>
 #include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 
@@ -17,8 +15,7 @@ namespace xolotlSolver {
  */
 class PetscSolverExpHandler: public PetscSolverHandler {
 public:
-	using NetworkType =
-        xolotlCore::experimental::NEReactionNetwork;
+    using NetworkType = xolotlCore::experimental::IReactionNetwork;
 
     using ConcentrationsView = typename NetworkType::ConcentrationsView;
 	using FluxesView = typename NetworkType::FluxesView;
@@ -126,8 +123,7 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::experimental::NEReactionNetwork& getExpNetwork() const
-			override {
+	xolotlCore::experimental::IReactionNetwork& getExpNetwork() const override {
 		return expNetwork;
 	}
 
@@ -135,7 +131,3 @@ public:
 //end class PetscSolverExpHandler
 
 } /* end namespace xolotlSolver */
-
-#include <solverhandler/PetscSolverExpHandler.inl>
-
-#endif

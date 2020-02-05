@@ -73,7 +73,8 @@ PetscErrorCode computeXenonRetentionExp(TS ts, PetscInt, PetscReal time,
 	auto minSizes = solverHandler.getMinSizes();
 
 	// Degrees of freedom is the total number of clusters in the network
-	auto& network = solverHandler.getExpNetwork();
+	auto& network = dynamic_cast<xolotlCore::experimental::NEReactionNetwork&>(
+        solverHandler.getExpNetwork());
 	const int dof = network.getDOF();
 
 	using NetworkType =
@@ -86,8 +87,8 @@ PetscErrorCode computeXenonRetentionExp(TS ts, PetscInt, PetscReal time,
     auto dConcs = Kokkos::View<double*>("Concentrations", dof);
     deep_copy(dConcs, hConcs);
 
-    xeConcentration = network.ReactionNetwork::getTotalAtomConcentration(dConcs, Spec::Xe, 0);
-    partialSize = network.ReactionNetwork::getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]);
+    xeConcentration = network.getTotalAtomConcentration(dConcs, Spec::Xe, 0);
+    partialSize = network.getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]);
 
 //	std::ofstream outFile;
 //	outFile.open("size.txt");
@@ -242,7 +243,8 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto& network = solverHandler.getExpNetwork();
+	auto& network = dynamic_cast<xolotlCore::experimental::NEReactionNetwork&>(
+        solverHandler.getExpNetwork());
 	const int networkSize = network.getSubpaving().getTiles(plsm::onHost).extent(0);
 
 	// Set the monitor to compute the xenon fluence and the retention
