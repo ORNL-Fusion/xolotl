@@ -7,6 +7,7 @@
 
 #include <experimental/Cluster.h>
 #include <experimental/IReactionNetwork.h>
+#include <experimental/ReactionNetworkTraits.h>
 #include <experimental/SpeciesEnumSequence.h>
 
 namespace xolotlCore
@@ -44,37 +45,6 @@ struct ReactionDataRef
     Kokkos::View<double**, Kokkos::MemoryUnmanaged> rates;
 
     Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged> inverseMap;
-};
-}
-template <typename TImpl>
-struct ReactionNetworkTraits
-{
-};
-
-namespace detail
-{
-template <typename TImpl>
-struct ReactionNetworkTypes
-{
-    using AmountType = typename IReactionNetwork::AmountType;
-    using Traits = ReactionNetworkTraits<TImpl>;
-    using Species = typename Traits::Species;
-    using Subpaving = plsm::Subpaving<AmountType, Traits::numSpecies, Species>;
-    using Region = typename Subpaving::RegionType;
-    using Composition = typename Subpaving::PointType;
-    using ClusterData = detail::ClusterData<Subpaving>;
-    using ClusterDataMirror = detail::ClusterData<Subpaving, plsm::OnHost>;
-    using ClusterDataRef = detail::ClusterDataRef<Subpaving>;
-};
-
-template <typename TImpl>
-struct ReactionNetworkProperties
-{
-    using Traits = ReactionNetworkTraits<TImpl>;
-    using Species = typename Traits::Species;
-    static constexpr std::size_t numSpecies = Traits::numSpecies;
-    using SpeciesSequence = SpeciesEnumSequence<Species, numSpecies>;
-    static constexpr std::size_t numSpeciesNoI = SpeciesSequence::sizeNoI();
 };
 }
 

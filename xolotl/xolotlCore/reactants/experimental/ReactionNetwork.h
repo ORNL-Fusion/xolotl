@@ -104,7 +104,7 @@ public:
     using InverseMap = Kokkos::View<std::size_t**>;
 
     template <typename PlsmContext>
-    using Cluster = Cluster<Subpaving, PlsmContext>;
+    using Cluster = Cluster<TImpl, PlsmContext>;
 
     ReactionNetwork() = default;
 
@@ -386,8 +386,9 @@ struct ReactionNetworkWorker
     };
 
     using Network = ReactionNetwork<TImpl>;
-    using ClusterData = typename Network::ClusterData;
-    using ClusterDataRef = typename Network::ClusterDataRef;
+    using Types = ReactionNetworkTypes<TImpl>;
+    using ClusterData = typename Types::ClusterData;
+    using ClusterDataRef = typename Types::ClusterDataRef;
 
     Network& _nw;
 

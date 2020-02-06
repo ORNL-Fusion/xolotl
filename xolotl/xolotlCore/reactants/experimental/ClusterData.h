@@ -2,6 +2,8 @@
 
 #include <Kokkos_View.hpp>
 
+#include <experimental/ReactionNetworkTraits.h>
+
 namespace xolotlCore
 {
 namespace experimental
@@ -9,7 +11,7 @@ namespace experimental
 template <typename PlsmContext>
 class ClusterCommon;
 
-template <typename TSubpaving, typename PlsmContext>
+template <typename TNetwork, typename PlsmContext>
 class Cluster;
 
 namespace detail
@@ -119,14 +121,20 @@ public:
     View<double**> diffusionCoefficient;
 };
 
-template <typename TSubpaving, typename PlsmContext = plsm::OnDevice>
+template <typename TNetwork, typename PlsmContext = plsm::OnDevice>
 struct ClusterData : ClusterDataCommon<PlsmContext>
 {
+private:
+    using Types = detail::ReactionNetworkTypes<TNetwork>;
+    using Props = detail::ReactionNetworkProperties<TNetwork>;
+    static constexpr auto nMomentIds = Props::numSpeciesNoI;
+
+public:
     using Superclass = ClusterDataCommon<PlsmContext>;
-    using Subpaving = TSubpaving;
+    using Subpaving = typename Types::Subpaving;
     using TilesView =
         Unmanaged<typename Subpaving::template TilesView<PlsmContext>>;
-    using ClusterType = Cluster<Subpaving, PlsmContext>;
+    using ClusterType = Cluster<TNetwork, PlsmContext>;
 
     template <typename TData>
     using View = typename Superclass::template View<TData>;
@@ -158,7 +166,7 @@ struct ClusterData : ClusterDataCommon<PlsmContext>
     }
 
     TilesView tiles;
-    View<std::size_t*[4]> momentIds;
+    View<std::size_t*[nMomentIds]> momentIds;
 };
 
 template <typename PlsmContext = plsm::OnDevice>
@@ -211,14 +219,20 @@ struct ClusterDataCommonRef
     View<double*> diffusionFactor;
 };
 
-template <typename TSubpaving, typename PlsmContext = plsm::OnDevice>
+template <typename TNetwork, typename PlsmContext = plsm::OnDevice>
 struct ClusterDataRef : ClusterDataCommonRef<PlsmContext>
 {
+private:
+    using Types = detail::ReactionNetworkTypes<TNetwork>;
+    using Props = detail::ReactionNetworkProperties<TNetwork>;
+    static constexpr auto nMomentIds = Props::numSpeciesNoI;
+
+public:
     using Superclass = ClusterDataCommonRef<PlsmContext>;
-    using Subpaving = TSubpaving;
+    using Subpaving = typename Types::Subpaving;
     using TilesView =
         Unmanaged<typename Subpaving::template TilesView<PlsmContext>>;
-    using ClusterType = Cluster<Subpaving, PlsmContext>;
+    using ClusterType = Cluster<TNetwork, PlsmContext>;
 
     template <typename TData>
     using View = typename Superclass::template View<TData>;
@@ -226,7 +240,7 @@ struct ClusterDataRef : ClusterDataCommonRef<PlsmContext>
     ClusterDataRef() = default;
 
     KOKKOS_INLINE_FUNCTION
-    ClusterDataRef(const ClusterData<Subpaving, PlsmContext>& data)
+    ClusterDataRef(const ClusterData<TNetwork, PlsmContext>& data)
         :
         Superclass(data),
         tiles(data.tiles),
@@ -242,7 +256,7 @@ struct ClusterDataRef : ClusterDataCommonRef<PlsmContext>
     }
 
     TilesView tiles;
-    View<std::size_t*[4]> momentIds;
+    View<std::size_t*[nMomentIds]> momentIds;
 };
 }
 }

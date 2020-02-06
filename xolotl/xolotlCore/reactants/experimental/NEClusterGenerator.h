@@ -1,5 +1,7 @@
 #pragma once
 
+#include <plsm/refine/Detector.h>
+
 namespace xolotlCore
 {
 namespace experimental
@@ -12,7 +14,7 @@ public:
     using Species = NESpecies;
 
     template <typename PlsmContext>
-    using Cluster = typename NetworkType::Cluster<PlsmContext>;
+    using Cluster = Cluster<NetworkType, PlsmContext>;
 
     using Region = typename NetworkType::Region;
     using Composition = typename NetworkType::Composition;
@@ -23,9 +25,9 @@ public:
         _maxXe(options.getMaxImpurity()),
         _xeDiffusivity(options.getXenonDiffusivity()),
         _xeDiffusive(_xeDiffusivity > 0.0),
-	    _groupingMin(options.getGroupingMin()),
-	    _groupingWidth(options.getGroupingWidthA()),
-	    _density(options.getDensity())
+        _groupingMin(options.getGroupingMin()),
+        _groupingWidth(options.getGroupingWidthA()),
+        _density(options.getDensity())
     {
     }
 
@@ -35,9 +37,9 @@ public:
         _maxXe(options.getMaxImpurity()),
         _xeDiffusivity(options.getXenonDiffusivity()),
         _xeDiffusive(_xeDiffusivity > 0.0),
-	    _groupingMin(options.getGroupingMin()),
-	    _groupingWidth(options.getGroupingWidthA()),
-	    _density(options.getDensity())
+        _groupingMin(options.getGroupingMin()),
+        _groupingWidth(options.getGroupingWidthA()),
+        _density(options.getDensity())
     {
     }
 
@@ -151,7 +153,7 @@ public:
                 (3.0 * (double) comp[Species::Xe]) / (FourPi * _density),
                 (1.0 / 3.0));
             if (comp[Species::Xe] == 1)
-            	radius = impurityRadius;
+                radius = impurityRadius;
         }
         else {
             // Loop on the range

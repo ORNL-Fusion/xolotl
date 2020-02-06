@@ -87,16 +87,19 @@ private:
     ClusterDataRef _data;
 };
 
-template <typename TSubpaving, typename PlsmContext>
-class Cluster : public ClusterBase<Cluster<TSubpaving, PlsmContext>>
+template <typename TNetwork, typename PlsmContext>
+class Cluster : public ClusterBase<Cluster<TNetwork, PlsmContext>>
 {
     friend class ClusterBase<Cluster>;
+
+    using Types = detail::ReactionNetworkTypes<TNetwork>;
+
 public:
-    using Superclass = ClusterBase<Cluster<TSubpaving, PlsmContext>>;
-    using Subpaving = TSubpaving;
+    using Superclass = ClusterBase<Cluster<TNetwork, PlsmContext>>;
+    using Subpaving = typename Types::Subpaving;
     using Region = typename Subpaving::RegionType;
-    using ClusterData = detail::ClusterData<Subpaving, PlsmContext>;
-    using ClusterDataRef = detail::ClusterDataRef<Subpaving, PlsmContext>;
+    using ClusterData = detail::ClusterData<TNetwork, PlsmContext>;
+    using ClusterDataRef = detail::ClusterDataRef<TNetwork, PlsmContext>;
 
     Cluster() = delete;
 
