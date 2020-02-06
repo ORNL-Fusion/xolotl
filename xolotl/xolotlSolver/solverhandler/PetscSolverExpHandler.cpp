@@ -166,7 +166,7 @@ void PetscSolverExpHandler::updateConcentration(TS &ts, Vec &localC,
 	}
 
 	// ----- Account for flux of incoming particles -----
-	updatedConcOffset[xeId] += fluxHandler->getFluxAmplitude() * 0.25;
+	updatedConcOffset[xeId] += fluxHandler->getFluxAmplitude();
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
     using HostUnmanaged =

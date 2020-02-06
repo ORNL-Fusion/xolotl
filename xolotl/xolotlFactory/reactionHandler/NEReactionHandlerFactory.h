@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "IReactionHandlerFactory.h"
-#include <NEClusterNetworkLoader.h>
+#include <experimental/NEReactionNetwork.h>
 
 namespace xolotlFactory {
 
@@ -13,11 +13,8 @@ namespace xolotlFactory {
 class NEReactionHandlerFactory: public IReactionHandlerFactory {
 protected:
 
-	//! The network loader handler
-	std::shared_ptr<xolotlCore::INetworkLoader> theNetworkLoaderHandler;
-
 	//! The network handler
-	std::unique_ptr<xolotlCore::IReactionNetwork> theNetworkHandler;
+	std::unique_ptr<xolotlCore::experimental::IReactionNetwork> theNetworkHandler;
 
 public:
 
@@ -45,42 +42,29 @@ public:
 		int procId;
 		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
-		// Create a NEClusterNetworkLoader
-		auto tempNetworkLoader = std::make_shared<
-				xolotlCore::NEClusterNetworkLoader>(registry);
-		// Give the networkFilename to the network loader
-		tempNetworkLoader->setFilename(options.getNetworkFilename());
-		// Set the options for the grouping scheme
-		tempNetworkLoader->setXeMin(options.getGroupingMin());
-		tempNetworkLoader->setWidth(options.getGroupingWidthA());
-		theNetworkLoaderHandler = tempNetworkLoader;
+		using NetworkType =
+		xolotlCore::experimental::NEReactionNetwork;
 
-		// Check if we want dummy reactions
-		auto map = options.getProcesses();
-		if (!map["reaction"])
-			theNetworkLoaderHandler->setDummyReactions();
-		// Load the network
-		if (options.useHDF5())
-			theNetworkHandler = theNetworkLoaderHandler->load(options);
-		else
-			theNetworkHandler = theNetworkLoaderHandler->generate(options);
+		// Get the boundaries from the options
+		NetworkType::AmountType maxXe = options.getMaxImpurity();
+		NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
+		NetworkType::AmountType refine = (maxXe + 1) / groupingWidth;
+
+
+		std::unique_ptr<NetworkType> rNetwork(
+					new NetworkType( { maxXe }, { { refine }, { groupingWidth } }, 1,
+				options));
+		rNetwork->syncClusterDataOnHost();
+		rNetwork->getSubpaving().syncZones(plsm::onHost);
+		theNetworkHandler = std::move( rNetwork );
 
 		if (procId == 0) {
 			std::cout << "\nFactory Message: "
 					<< "Master loaded network of size "
-					<< theNetworkHandler->size() << "." << std::endl;
+					<< theNetworkHandler->getDOF() << "." << std::endl;
 		}
-		// Set the fission rate in the network
-		theNetworkHandler->setFissionRate(options.getFluxAmplitude());
-	}
-
-	/**
-	 * Return the network loader.
-	 *
-	 * @return The network loader.
-	 */
-	std::shared_ptr<xolotlCore::INetworkLoader> getNetworkLoaderHandler() const {
-		return theNetworkLoaderHandler;
+//		// Set the fission rate in the network to compute the diffusion coefficient correctly
+//		theNetworkHandler->setFissionRate(options.getFluxAmplitude());
 	}
 
 	/**
@@ -88,7 +72,7 @@ public:
 	 *
 	 * @return The network.
 	 */
-	xolotlCore::IReactionNetwork& getNetworkHandler() const {
+	xolotlCore::experimental::IReactionNetwork& getNetworkHandler() const {
 		return *theNetworkHandler;
 	}
 

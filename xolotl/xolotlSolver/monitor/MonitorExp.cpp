@@ -11,6 +11,8 @@
 #include <vector>
 #include <memory>
 #include "xolotlSolver/monitor/Monitor.h"
+#include <experimental/NEReactionNetwork.h>
+#include <experimental/PSIReactionNetwork.h>
 
 namespace xolotlSolver {
 
@@ -73,27 +75,28 @@ PetscErrorCode computeXenonRetentionExp(TS ts, PetscInt, PetscReal time,
 	auto minSizes = solverHandler.getMinSizes();
 
 	// Degrees of freedom is the total number of clusters in the network
-	auto& network = dynamic_cast<xolotlCore::experimental::NEReactionNetwork&>(
-        solverHandler.getExpNetwork());
+	auto& network =
+			dynamic_cast<xolotlCore::experimental::NEReactionNetwork&>(solverHandler.getExpNetwork());
 	const int dof = network.getDOF();
 
 	using NetworkType =
 	experimental::NEReactionNetwork;
 	using Spec = typename NetworkType::Species;
 
-    using HostUnmanaged =
-        Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-    auto hConcs = HostUnmanaged(gridPointSolution, dof);
-    auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-    deep_copy(dConcs, hConcs);
+	using HostUnmanaged =
+	Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(gridPointSolution, dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
 
-    xeConcentration = network.getTotalAtomConcentration(dConcs, Spec::Xe, 0);
-    partialSize = network.getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]);
+	xeConcentration = network.getTotalAtomConcentration(dConcs, Spec::Xe, 0);
+	partialSize = network.getTotalAtomConcentration(dConcs, Spec::Xe,
+			minSizes[0]);
 
 //	std::ofstream outFile;
 //	outFile.open("size.txt");
 
-	// Loop on all the indices
+// Loop on all the indices
 	for (unsigned int i = 0; i < indicesExp.size(); i++) {
 		// Add the current concentration times the number of xenon in the cluster
 		// (from the weight vector)
@@ -242,11 +245,6 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the network and its size
-	auto& network = dynamic_cast<xolotlCore::experimental::NEReactionNetwork&>(
-        solverHandler.getExpNetwork());
-	const int networkSize = network.getSubpaving().getTiles(plsm::onHost).extent(0);
-
 	// Set the monitor to compute the xenon fluence and the retention
 	// for the retention calculation
 	if (flagXeRetention) {
@@ -256,8 +254,15 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 		using Spec = typename NetworkType::Species;
 		using Composition = typename NetworkType::Composition;
 
+		// Get the network and its size
+		auto& network =
+				dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+		const int networkSize =
+				network.getSubpaving().getTiles(plsm::onHost).extent(0);
+
 		for (std::size_t i = 0; i < networkSize; ++i) {
-			const auto& cl1Reg = network.getCluster(i, plsm::onHost).getRegion();
+			const auto& cl1Reg =
+					network.getCluster(i, plsm::onHost).getRegion();
 			Composition lo1 = cl1Reg.getOrigin();
 			// Add the Id to the vector
 			indicesExp.push_back(i);
@@ -266,7 +271,8 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 				weightsExp.push_back(lo1[Spec::Xe] + 5);
 			else
 				weightsExp.push_back(lo1[Spec::Xe]);
-			radiiExp.push_back(network.getCluster(i, plsm::onHost).getReactionRadius());
+			radiiExp.push_back(
+					network.getCluster(i, plsm::onHost).getReactionRadius());
 		}
 
 		// computeXenonRetentionExp will be called at each timestep
@@ -283,36 +289,42 @@ PetscErrorCode setupPetscExpMonitor(TS ts) {
 	// Set the monitor to compute the helium fluence and the retention
 	// for the retention calculation
 	if (flagHeRetention) {
-//		using NetworkType =
-//		experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
-//		using Spec = typename NetworkType::Species;
-//		using Composition = typename NetworkType::Composition;
-//
-//		// Loop on the clusters
-//		for (std::size_t i = 0; i < networkSize; ++i) {
-//			const auto& cl1Reg = network.getCluster(i).getRegion();
-//			Composition lo1 = cl1Reg.getOrigin();
-//			if (lo1[Spec::He] > 0) {
-//				heIndicesExp.push_back(i);
-//				heWeightsExp.push_back(lo1[Spec::He]);
-//			}
-//			if (lo1[Spec::D] > 0) {
-//				dIndicesExp.push_back(i);
-//				dWeightsExp.push_back(lo1[Spec::D]);
-//			}
-//			if (lo1[Spec::T] > 0) {
-//				tIndicesExp.push_back(i);
-//				tWeightsExp.push_back(lo1[Spec::T]);
-//			}
-//			if (lo1[Spec::V] > 0) {
-//				vIndicesExp.push_back(i);
-//				vWeightsExp.push_back(lo1[Spec::V]);
-//			}
-//			if (lo1[Spec::I] > 0) {
-//				iIndicesExp.push_back(i);
-//				iWeightsExp.push_back(lo1[Spec::I]);
-//			}
-//		}
+		using NetworkType =
+		experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+		using Spec = typename NetworkType::Species;
+		using Composition = typename NetworkType::Composition;
+
+		// Get the network and its size
+		auto& network =
+				dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+		const int networkSize =
+				network.getSubpaving().getTiles(plsm::onHost).extent(0);
+
+		// Loop on the clusters
+		for (std::size_t i = 0; i < networkSize; ++i) {
+			const auto& cl1Reg = network.getCluster(i).getRegion();
+			Composition lo1 = cl1Reg.getOrigin();
+			if (lo1[Spec::He] > 0) {
+				heIndicesExp.push_back(i);
+				heWeightsExp.push_back(lo1[Spec::He]);
+			}
+			if (lo1[Spec::D] > 0) {
+				dIndicesExp.push_back(i);
+				dWeightsExp.push_back(lo1[Spec::D]);
+			}
+			if (lo1[Spec::T] > 0) {
+				tIndicesExp.push_back(i);
+				tWeightsExp.push_back(lo1[Spec::T]);
+			}
+			if (lo1[Spec::V] > 0) {
+				vIndicesExp.push_back(i);
+				vWeightsExp.push_back(lo1[Spec::V]);
+			}
+			if (lo1[Spec::I] > 0) {
+				iIndicesExp.push_back(i);
+				iWeightsExp.push_back(lo1[Spec::I]);
+			}
+		}
 
 		// computeXenonRetentionExp will be called at each timestep
 		ierr = TSMonitorSet(ts, computeHeliumRetentionExp, NULL, NULL);

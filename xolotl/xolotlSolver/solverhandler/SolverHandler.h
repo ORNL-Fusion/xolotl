@@ -7,6 +7,7 @@
 #include "xolotlCore/io/XFile.h"
 #include <Constants.h>
 #include <TokenizedLineReader.h>
+#include <experimental/NEReactionNetwork.h>
 
 namespace xolotlSolver {
 

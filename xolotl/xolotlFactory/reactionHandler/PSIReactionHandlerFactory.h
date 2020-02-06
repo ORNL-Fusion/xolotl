@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "IReactionHandlerFactory.h"
-#include <HDF5NetworkLoader.h>
+#include <experimental/PSIReactionNetwork.h>
 
 namespace xolotlFactory {
 
@@ -13,11 +13,8 @@ namespace xolotlFactory {
 class PSIReactionHandlerFactory: public IReactionHandlerFactory {
 protected:
 
-	//! The network loader handler
-	std::shared_ptr<xolotlCore::INetworkLoader> theNetworkLoaderHandler;
-
 	//! The network handler
-	std::unique_ptr<xolotlCore::IReactionNetwork> theNetworkHandler;
+	std::unique_ptr<xolotlCore::experimental::IReactionNetwork> theNetworkHandler;
 
 public:
 
@@ -45,43 +42,41 @@ public:
 		int procId;
 		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
-		// Create a HDF5NetworkLoader
-		auto tempNetworkLoader =
-				std::make_shared<xolotlCore::HDF5NetworkLoader>(registry);
-		// Give the networkFilename to the network loader
-		tempNetworkLoader->setFilename(options.getNetworkFilename());
-		// Set the options for the grouping scheme
-		tempNetworkLoader->setVMin(options.getGroupingMin());
-		tempNetworkLoader->setWidth(options.getGroupingWidthA(), 0);
-		tempNetworkLoader->setWidth(options.getGroupingWidthA(), 1);
-		tempNetworkLoader->setWidth(options.getGroupingWidthA(), 2);
-		tempNetworkLoader->setWidth(options.getGroupingWidthB(), 3);
-		theNetworkLoaderHandler = tempNetworkLoader;
+		using NetworkType =
+		xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
 
-		// Check if we want dummy reactions
-		auto map = options.getProcesses();
-		if (!map["reaction"])
-			theNetworkLoaderHandler->setDummyReactions();
-		// Load the network
-		if (options.useHDF5())
-			theNetworkHandler = theNetworkLoaderHandler->load(options);
-		else
-			theNetworkHandler = theNetworkLoaderHandler->generate(options);
+		// Get the boundaries from the options
+		NetworkType::AmountType maxV = options.getMaxV();
+		NetworkType::AmountType maxI = options.getMaxI();
+		NetworkType::AmountType maxHe =
+				xolotlCore::experimental::PSIClusterGenerator<
+						xolotlCore::experimental::PSIFullSpeciesList>::getMaxHePerV(
+						maxV);
+		NetworkType::AmountType maxD = 2.0 / 3.0 * (double) maxHe;
+		NetworkType::AmountType maxT = 2.0 / 3.0 * (double) maxHe;
+		if (options.getMaxImpurity() <= 0)
+			maxHe = 0;
+		if (options.getMaxD() <= 0)
+			maxD = 0;
+		if (options.getMaxT() <= 0)
+			maxT = 0;
+		if (maxV <= 0) {
+			maxHe = options.getMaxImpurity();
+			maxD = options.getMaxD();
+			maxT = options.getMaxT();
+		}
+
+		std::unique_ptr<NetworkType> rNetwork(
+					new NetworkType( { maxHe, maxD, maxT, maxV, maxI }, 1, options));
+		rNetwork->syncClusterDataOnHost();
+		rNetwork->getSubpaving().syncZones(plsm::onHost);
+		theNetworkHandler = std::move( rNetwork );
 
 		if (procId == 0) {
 			std::cout << "\nFactory Message: "
-					<< "Master loaded network of size "
-					<< theNetworkHandler->size() << "." << std::endl;
+					<< "Master loaded network of size " << theNetworkHandler->getDOF()
+					<< "." << std::endl;
 		}
-	}
-
-	/**
-	 * Return the network loader.
-	 *
-	 * @return The network loader.
-	 */
-	std::shared_ptr<xolotlCore::INetworkLoader> getNetworkLoaderHandler() const {
-		return theNetworkLoaderHandler;
 	}
 
 	/**
@@ -89,7 +84,7 @@ public:
 	 *
 	 * @return The network.
 	 */
-	xolotlCore::IReactionNetwork& getNetworkHandler() const {
+	xolotlCore::experimental::IReactionNetwork& getNetworkHandler() const {
 		return *theNetworkHandler;
 	}
 

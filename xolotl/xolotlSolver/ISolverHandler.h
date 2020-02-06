@@ -14,7 +14,7 @@
 #include <IHeterogeneousNucleationHandler.h>
 #include <IMaterialFactory.h>
 #include <IReactionNetwork.h>
-#include <experimental/NEReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 #include <NDArray.h>
 
 namespace xolotlSolver {

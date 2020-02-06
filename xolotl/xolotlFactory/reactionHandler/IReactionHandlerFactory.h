@@ -3,7 +3,7 @@
 
 #include <Options.h>
 #include <INetworkLoader.h>
-#include <IReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 
 namespace xolotlFactory {
 
@@ -30,18 +30,11 @@ public:
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) = 0;
 
 	/**
-	 * Return the network loader.
-	 *
-	 * @return The network loader.
-	 */
-	virtual std::shared_ptr<xolotlCore::INetworkLoader> getNetworkLoaderHandler() const = 0;
-
-	/**
 	 * Return the network.
 	 *
 	 * @return The network.
 	 */
-	virtual xolotlCore::IReactionNetwork& getNetworkHandler() const = 0;
+	virtual xolotlCore::experimental::IReactionNetwork& getNetworkHandler() const = 0;
 
 	/**
 	 * Function that create the wanted reaction handler factory depending on the given type.

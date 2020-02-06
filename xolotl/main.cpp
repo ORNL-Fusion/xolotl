@@ -126,99 +126,10 @@ int runXolotl(const Options& opts) {
 		// Print the start message
 		printStartMessage();
 	}
+	// Initialize kokkos
+	Kokkos::initialize();
+	{
 
-	if (opts.getMaterial() == "Exp") {
-		// Initialize kokkos
-		Kokkos::initialize();
-		{
-
-			// Set up the material infrastructure that is used to calculate flux
-			auto material = initMaterial(opts);
-			// Set up the temperature infrastructure
-			bool tempInitOK = initTemp(opts);
-			if (!tempInitOK) {
-				throw std::runtime_error("Unable to initialize temperature.");
-			}
-			// Set up the visualization infrastructure.
-			bool vizInitOK = initViz(opts.useVizStandardHandlers());
-			if (!vizInitOK) {
-				throw std::runtime_error(
-						"Unable to initialize visualization infrastructure.");
-			}
-
-			// Access the temperature handler registry to get the temperature
-			auto tempHandler = xolotlFactory::getTemperatureHandler();
-
-			// Access our performance handler registry to obtain a Timer
-			// measuring the runtime of the entire program.
-			auto handlerRegistry = xolotlPerf::getHandlerRegistry();
-			auto totalTimer = handlerRegistry->getTimer("total");
-			totalTimer->start();
-
-			// Build a reaction network
-			auto networkLoadTimer = handlerRegistry->getTimer("loadNetwork");
-			networkLoadTimer->start();
-
-			using NetworkType =
-			xolotlCore::experimental::NEReactionNetwork;
-
-			// Get the boundaries from the options
-			NetworkType::AmountType maxXe = opts.getMaxImpurity();
-			NetworkType::AmountType groupingWidth = opts.getGroupingWidthA();
-			NetworkType::AmountType refine = (maxXe + 1) / groupingWidth;
-			NetworkType rNetwork( { maxXe }, {{refine}, {groupingWidth}}, 1, opts);
-
-			rNetwork.syncClusterDataOnHost();
-			rNetwork.getSubpaving().syncZones(plsm::onHost);
-
-			if (rank == 0) {
-				std::cout << "\nFactory Message: "
-						<< "Master loaded network of size " << rNetwork.getDOF()
-						<< "." << std::endl;
-			}
-			networkLoadTimer->stop();
-			if (rank == 0) {
-				std::time_t currentTime = std::time(NULL);
-				std::cout << std::asctime(std::localtime(&currentTime));
-			}
-
-			// Creating the solver handler
-			std::unique_ptr<xolotlSolver::ISolverHandler> theSolverHandler =
-                std::make_unique<xolotlSolver::PetscSolverExpHandler>(rNetwork);
-
-			// Setup the solver
-			auto solver = setUpSolver(handlerRegistry, material, tempHandler,
-					*theSolverHandler, opts);
-
-			// Launch the PetscSolver
-			launchPetscSolver(*solver, handlerRegistry);
-
-			// Finalize our use of the solver.
-			auto solverFinalizeTimer = handlerRegistry->getTimer(
-					"solverFinalize");
-			solverFinalizeTimer->start();
-			solver->finalize();
-			solverFinalizeTimer->stop();
-
-			totalTimer->stop();
-
-			// Report statistics about the performance data collected during
-			// the run we just completed.
-			xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
-			xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> counterStats;
-			xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
-			handlerRegistry->collectStatistics(timerStats, counterStats,
-					hwCtrStats);
-			if (rank == 0) {
-				handlerRegistry->reportStatistics(std::cout, timerStats,
-						counterStats, hwCtrStats);
-			}
-		}
-
-		// Finalize kokkos
-		Kokkos::finalize();
-
-	} else {
 		// Set up the material infrastructure that is used to calculate flux
 		auto material = initMaterial(opts);
 		// Set up the temperature infrastructure
@@ -256,19 +167,16 @@ int runXolotl(const Options& opts) {
 			std::time_t currentTime = std::time(NULL);
 			std::cout << std::asctime(std::localtime(&currentTime));
 		}
-		auto& network = networkFactory->getNetworkHandler();
+		auto& rNetwork = networkFactory->getNetworkHandler();
 
-		// Initialize and get the solver handler
-		bool dimOK = xolotlFactory::initializeDimension(opts, network);
-		if (!dimOK) {
-			throw std::runtime_error(
-					"Unable to initialize dimension from inputs.");
-		}
-		auto& solvHandler = xolotlFactory::getSolverHandler();
+		// Creating the solver handler
+		std::unique_ptr<xolotlSolver::ISolverHandler> theSolverHandler =
+				std::make_unique < xolotlSolver::PetscSolverExpHandler
+						> (rNetwork);
 
 		// Setup the solver
 		auto solver = setUpSolver(handlerRegistry, material, tempHandler,
-				solvHandler, opts);
+				*theSolverHandler, opts);
 
 		// Launch the PetscSolver
 		launchPetscSolver(*solver, handlerRegistry);
@@ -293,6 +201,9 @@ int runXolotl(const Options& opts) {
 					counterStats, hwCtrStats);
 		}
 	}
+
+	// Finalize kokkos
+	Kokkos::finalize();
 
 	return 0;
 }
