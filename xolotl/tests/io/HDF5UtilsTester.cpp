@@ -93,7 +93,11 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	// Set the surface information
 	xolotlCore::XFile::TimestepGroup::Surface1DType iSurface = 3;
 	xolotlCore::XFile::TimestepGroup::Data1DType nInter = 1.0;
-	xolotlCore::XFile::TimestepGroup::Data1DType previousFlux = 0.1;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousIFlux = 0.1;
+	xolotlCore::XFile::TimestepGroup::Data1DType nHe = 3.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousHeFlux = 0.2;
+	xolotlCore::XFile::TimestepGroup::Data1DType nV = 0.5;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousVFlux = 0.01;
 
 	// Define a faux network composition vector.
 	BOOST_TEST_MESSAGE("Creating faux comp vec.");
@@ -145,8 +149,12 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		auto tsGroup = concGroup->addTimestepGroup(timeStep, currentTime,
 				previousTime, currentTimeStep);
 
-		// Write the surface position
-		tsGroup->writeSurface1D(iSurface, nInter, previousFlux);
+		// Write the surface information
+		tsGroup->writeSurface1D(iSurface, nInter, previousIFlux);
+
+		// Write the bulk information
+		tsGroup->writeBottom1D(nHe, previousHeFlux, 0.0, 0.0, 0.0, 0.0, nV,
+				previousVFlux, 0.0, 0.0);
 
 #if READY
 		// Fill it
@@ -203,15 +211,29 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		double previousReadTime = tsGroup->readPreviousTime();
 		BOOST_REQUIRE_CLOSE(previousReadTime, previousTime, 0.0001);
 
-		// Read the surface position
+		// Read the surface information
 		BOOST_TEST_MESSAGE(
 				"Checking test file last time step surface position.");
-		auto surfacePos = tsGroup->readSurface1D();
-		BOOST_REQUIRE_EQUAL(surfacePos, iSurface);
-		auto nInterstitial = tsGroup->readData1D("nInterstitial");
-		BOOST_REQUIRE_CLOSE(nInterstitial, nInter, 0.0001);
-		auto previousIFlux = tsGroup->readData1D("previousIFlux");
-		BOOST_REQUIRE_CLOSE(previousIFlux, previousFlux, 0.0001);
+		BOOST_REQUIRE_EQUAL(tsGroup->readSurface1D(), iSurface);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterstitial"), nInter,
+				0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousIFlux"), previousIFlux,
+				0.0001);
+
+		// Read the bulk information
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHelium"), nHe, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousHeFlux"),
+				previousHeFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuterium"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousDFlux"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritium"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousTFlux"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancy"), nV, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousVFlux"), previousVFlux,
+				0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nIBulk"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousIBulkFlux"), 0.0,
+				0.0001);
 
 		// Read the network of the written file
 		BOOST_TEST_MESSAGE("Checking test file last time step network.");
@@ -356,8 +378,8 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 	xolotlCore::XFile::TimestepGroup::Surface2DType iSurface = { 2, 3, 2, 0, 5 };
 	xolotlCore::XFile::TimestepGroup::Data2DType nInter = { 0.0, 0.0, 0.5, 0.6,
 			0.5 };
-	xolotlCore::XFile::TimestepGroup::Data2DType previousFlux = { 0.0, 0.1, 3.0,
-			-1.0, 5.0 };
+	xolotlCore::XFile::TimestepGroup::Data2DType previousIFlux = { 0.0, 0.1,
+			3.0, -1.0, 5.0 };
 
 	// Open the file to add concentrations.
 	// Done in its own scope so that it closes when the
@@ -380,7 +402,7 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 		BOOST_REQUIRE(tsGroup);
 
 		// Write the surface position
-		tsGroup->writeSurface2D(iSurface, nInter, previousFlux);
+		tsGroup->writeSurface2D(iSurface, nInter, previousIFlux);
 	}
 
 	// Read the file to check the values we wrote.
@@ -415,7 +437,7 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 		auto previousIFlux = tsGroup->readData2D("previousIFlux");
 		// Check all the values
 		for (int i = 0; i < previousIFlux.size(); i++) {
-			BOOST_REQUIRE_CLOSE(previousIFlux[i], previousFlux[i], 0.0001);
+			BOOST_REQUIRE_CLOSE(previousIFlux[i], previousIFlux[i], 0.0001);
 		}
 	}
 }
@@ -456,7 +478,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 	xolotlCore::XFile::TimestepGroup::Data3DType nInter =
 			{ { 0.0, 0.0, 0.0, 0.0, 0.0 }, { 2.0, 3.0, 2.0, 0.0, 0.5 }, { 0.0,
 					0.0, 0.0, 0.0, 0.0 } };
-	xolotlCore::XFile::TimestepGroup::Data3DType previousFlux = { { 0.0, 0.0,
+	xolotlCore::XFile::TimestepGroup::Data3DType previousIFlux = { { 0.0, 0.0,
 			0.0, 0.0, 0.0 }, { -2.0, 3.0, 2.0, 0.0, -0.5 }, { 0.0, 0.0, 0.0,
 			0.0, 0.0 } };
 
@@ -482,7 +504,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 		BOOST_REQUIRE(tsGroup);
 
 		// Write the surface position
-		tsGroup->writeSurface3D(iSurface, nInter, previousFlux);
+		tsGroup->writeSurface3D(iSurface, nInter, previousIFlux);
 	}
 
 	// Check contents of file we wrote.
@@ -517,7 +539,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 		// Check all the values
 		for (int i = 0; i < previousIFlux.size(); i++) {
 			for (int j = 0; j < previousIFlux[0].size(); j++) {
-				BOOST_REQUIRE_CLOSE(previousIFlux[i][j], previousFlux[i][j],
+				BOOST_REQUIRE_CLOSE(previousIFlux[i][j], previousIFlux[i][j],
 						0.0001);
 			}
 		}

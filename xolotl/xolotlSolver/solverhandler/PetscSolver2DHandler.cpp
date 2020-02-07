@@ -105,7 +105,7 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 			"DMDAGetCorners failed.");
 
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, xm, xs, ym, hY, ys);
+	mutationHandler->initialize(network, xm, ym);
 	mutationHandler->initializeIndex2D(surfacePosition, network,
 			advectionHandlers, grid, xm, xs, ym, hY, ys);
 

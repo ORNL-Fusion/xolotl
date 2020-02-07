@@ -120,7 +120,7 @@ public:
 	void computeIncidentFlux(double currentTime, double *updatedConcOffset,
 			int xi, int surfacePos) {
 		// Define only for a 0D case
-		if (incidentFluxVec.size() == 0) {
+		if (incidentFluxVec[0].size() == 0) {
 			updatedConcOffset[fluxIndices[0]] += 2.11e-11; // He1
 			updatedConcOffset[fluxIndices[1]] += 1.49e-05; // I1
 			updatedConcOffset[fluxIndices[2]] += 9.91e-06; // V1
