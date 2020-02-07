@@ -37,29 +37,39 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	argv[1] = new char[parameterFile.length() + 1];
 	strcpy(argv[1], parameterFile.c_str());
 	argv[2] = 0; // null-terminate the array
-	// Initialize MPI for HDF5
+	// Initialize MPI
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-
-	// Create the network loader
-	FeClusterNetworkLoader loader = FeClusterNetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Get its size
-	const int dof = network->getDOF();
+	// Initialize kokkos
+	Kokkos::initialize();
 
 	// Create an empty grid because we want 0D
 	std::vector<double> grid;
 	// Specify the surface position
 	int surfacePos = 0;
 
+	// Create the network
+	// TODO: change to Fe
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = opts.getMaxImpurity();
+	NetworkType::AmountType maxD = opts.getMaxD();
+	NetworkType::AmountType maxT = opts.getMaxT();
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(),
+			opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get its size
+	const int dof = network.getDOF();
+
 	// Create the iron flux handler
 	auto testFitFlux = make_shared<FeFitFluxHandler>();
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
 	// Create a time
 	double currTime = 1.0;
@@ -83,18 +93,20 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 1.49e-05, 0.01); // I
 	BOOST_REQUIRE_CLOSE(newConcentration[1], 0.0, 0.01); // I_2
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 2.11e-11, 0.01); // He
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 9.91e-06, 0.01); // V
-	BOOST_REQUIRE_CLOSE(newConcentration[29], 1.51e-06, 0.01); // V_2
-	BOOST_REQUIRE_CLOSE(newConcentration[40], 2.60e-07, 0.01); // V_3
-	BOOST_REQUIRE_CLOSE(newConcentration[51], 1.58e-07, 0.01); // V_4
-	BOOST_REQUIRE_CLOSE(newConcentration[62], 6.29e-08, 0.01); // V_5
-	BOOST_REQUIRE_CLOSE(newConcentration[106], 3.16e-08, 0.01); // V_9
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 2.11e-11, 0.01); // He
+	BOOST_REQUIRE_CLOSE(newConcentration[10], 9.91e-06, 0.01); // V
+	BOOST_REQUIRE_CLOSE(newConcentration[11], 1.51e-06, 0.01); // V_2
+	BOOST_REQUIRE_CLOSE(newConcentration[12], 2.60e-07, 0.01); // V_3
+	BOOST_REQUIRE_CLOSE(newConcentration[13], 1.58e-07, 0.01); // V_4
+	BOOST_REQUIRE_CLOSE(newConcentration[14], 6.29e-08, 0.01); // V_5
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 3.16e-08, 0.01); // V_9
 
 	// Remove the created file
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
+	// Finalize kokkos
+	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 

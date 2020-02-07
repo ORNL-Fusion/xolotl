@@ -189,7 +189,7 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 	temperatureHandler->updateSurfacePosition(surfacePosition[0][0]);
 
 	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, surfacePosition[0][0], grid);
+	fluxHandler->initializeFluxHandler(expNetwork, surfacePosition[0][0], grid);
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, xm, xs,
@@ -387,7 +387,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 			// Initialize the flux, advection, and temperature handlers which depend
 			// on the surface position at Y
-			fluxHandler->initializeFluxHandler(network, surfacePosition[yj][zk],
+			fluxHandler->initializeFluxHandler(expNetwork, surfacePosition[yj][zk],
 					grid);
 			advectionHandlers[0]->setLocation(
 					grid[surfacePosition[yj][zk] + 1] - grid[1]);

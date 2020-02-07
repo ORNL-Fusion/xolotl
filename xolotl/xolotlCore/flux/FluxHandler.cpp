@@ -14,8 +14,9 @@ FluxHandler::FluxHandler() :
 	return;
 }
 
-void FluxHandler::initializeFluxHandler(const IReactionNetwork& network,
-		int surfacePos, std::vector<double> grid) {
+void FluxHandler::initializeFluxHandler(
+		experimental::IReactionNetwork& network, int surfacePos,
+		std::vector<double> grid) {
 	// Set the grid
 	xGrid = grid;
 

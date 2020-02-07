@@ -59,21 +59,6 @@ void PetscSolverExpHandler::createSolverContext(DM &da) {
 	return;
 }
 
-//FIXME: This was just to make the compiler happy. It needs to be handled in a
-//generic way
-void findXeId(xolotlCore::experimental::NEReactionNetwork& neNetwork, int& xeId)
-{
-	// Find the He id for the flux
-	xolotlCore::experimental::NEReactionNetwork::Composition comp;
-	// Initialize the composition
-	for (auto i : neNetwork.getSpeciesRange()) {
-		comp[i] = 0;
-	}
-	comp[xolotlCore::experimental::NEReactionNetwork::Species::Xe] = 1;
-	auto cluster = neNetwork.findCluster(comp, plsm::onHost);
-	xeId = cluster.getId();
-}
-
 void PetscSolverExpHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
@@ -86,6 +71,9 @@ void PetscSolverExpHandler::initializeConcentration(DM &da, Vec &C) {
 	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
 	checkPetscError(ierr, "PetscSolverExpHandler::initializeConcentration: "
 			"DMDAVecGetArrayDOF failed.");
+
+	// Initialize the flux handler
+	fluxHandler->initializeFluxHandler(expNetwork, 0, grid);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar *concOffset = nullptr;
@@ -108,12 +96,6 @@ void PetscSolverExpHandler::initializeConcentration(DM &da, Vec &C) {
 	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
 	checkPetscError(ierr, "PetscSolverExpHandler::initializeConcentration: "
 			"DMDAVecRestoreArrayDOF failed.");
-
-    auto neNetwork = dynamic_cast<xolotlCore::experimental::NEReactionNetwork*>(
-        &expNetwork);
-    if (neNetwork) {
-        findXeId(*neNetwork, xeId);
-    }
 
 	return;
 }
@@ -166,7 +148,7 @@ void PetscSolverExpHandler::updateConcentration(TS &ts, Vec &localC,
 	}
 
 	// ----- Account for flux of incoming particles -----
-	updatedConcOffset[xeId] += fluxHandler->getFluxAmplitude();
+	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
     using HostUnmanaged =

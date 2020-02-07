@@ -14,16 +14,7 @@ namespace xolotlSolver {
  * using PETSc from Argonne National Laboratory.
  */
 class PetscSolverExpHandler: public PetscSolverHandler {
-public:
-    using NetworkType = xolotlCore::experimental::IReactionNetwork;
-
-    using ConcentrationsView = typename NetworkType::ConcentrationsView;
-	using FluxesView = typename NetworkType::FluxesView;
-	using SparseFillMap = typename NetworkType::SparseFillMap;
 protected:
-
-	//! The original network created from the network loader.
-	NetworkType& expNetwork;
 
 	//! Partial derivatives for all reactions at one grid point.
 	Kokkos::View<double*> expVals;
@@ -36,11 +27,8 @@ protected:
 	 */
 	std::vector<double> temperature;
 
-	// The xenon id for flux
-	int xeId;
-
-    std::shared_ptr<xolotlPerf::ITimer> fluxTimer;
-    std::shared_ptr<xolotlPerf::ITimer> partialDerivativeTimer;
+	std::shared_ptr<xolotlPerf::ITimer> fluxTimer;
+	std::shared_ptr<xolotlPerf::ITimer> partialDerivativeTimer;
 
 public:
 
@@ -59,10 +47,11 @@ public:
 	PetscSolverExpHandler(NetworkType& _network) :
 			PetscSolverHandler(
 					*(std::make_shared<xolotlCore::NEClusterReactionNetwork>(
-							std::make_shared<xolotlPerf::DummyHandlerRegistry>()))),
-            expNetwork(_network), xeId(-1),
-            fluxTimer(xolotlPerf::getHandlerRegistry()->getTimer("Flux")),
-            partialDerivativeTimer(xolotlPerf::getHandlerRegistry()->getTimer("Partial Derivatives")) {
+							std::make_shared<xolotlPerf::DummyHandlerRegistry>())),
+					_network), fluxTimer(
+					xolotlPerf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
+					xolotlPerf::getHandlerRegistry()->getTimer(
+							"Partial Derivatives")) {
 	}
 
 	//! The Destructor
@@ -117,14 +106,6 @@ public:
 	 */
 	void setSurfacePosition(int pos, int j = -1, int k = -1) override {
 		return;
-	}
-
-	/**
-	 * Get the network.
-	 * \see ISolverHandler.h
-	 */
-	xolotlCore::experimental::IReactionNetwork& getExpNetwork() const override {
-		return expNetwork;
 	}
 
 };

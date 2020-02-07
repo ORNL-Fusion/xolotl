@@ -16,6 +16,12 @@ namespace xolotlSolver {
  * advection-diffusion-reaction problem with currently supported solvers.
  */
 class SolverHandler: public ISolverHandler {
+public:
+	using NetworkType = xolotlCore::experimental::IReactionNetwork;
+
+	using ConcentrationsView = typename NetworkType::ConcentrationsView;
+	using FluxesView = typename NetworkType::FluxesView;
+	using SparseFillMap = typename NetworkType::SparseFillMap;
 protected:
 
 	/**
@@ -30,6 +36,9 @@ protected:
 
 	//! The original network created from the network loader.
 	xolotlCore::IReactionNetwork& network;
+
+	//! The original network created from the network loader.
+	NetworkType& expNetwork;
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
@@ -384,8 +393,8 @@ protected:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	SolverHandler(xolotlCore::IReactionNetwork& _network) :
-			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
+	SolverHandler(xolotlCore::IReactionNetwork& _network, NetworkType& _expNetwork) :
+			network(_network), expNetwork(_expNetwork),networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
 					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
 					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
 					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
@@ -747,9 +756,7 @@ public:
 	 */
 	virtual xolotlCore::experimental::IReactionNetwork& getExpNetwork() const
 			override {
-		static auto tempNetwork = xolotlCore::experimental::NEReactionNetwork( {
-				0 }, 0, xolotlCore::Options());
-		return tempNetwork;
+		return expNetwork;
 	}
 
 	/**

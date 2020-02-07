@@ -6,6 +6,7 @@
 #include <memory>
 #include <Constants.h>
 #include <MathUtils.h>
+#include <experimental/PSIReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -17,7 +18,8 @@ class PSIFluxHandler: public FluxHandler {
 
 public:
 
-	PSIFluxHandler() : FluxHandler() {
+	PSIFluxHandler() :
+			FluxHandler() {
 	}
 
 	~PSIFluxHandler() {
@@ -27,23 +29,35 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
-			std::vector<double> grid) {
+	void initializeFluxHandler(experimental::IReactionNetwork& network,
+			int surfacePos, std::vector<double> grid) {
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
 		// Skip if the flux amplitude is 0.0 and we are not using a time profile
-		if (equal(fluxAmplitude, 0.0) && !useTimeProfile) return;
+		if (equal(fluxAmplitude, 0.0) && !useTimeProfile)
+			return;
 
 		// Set the flux index corresponding the the single helium cluster here
-		auto fluxCluster = network.get(Species::He, 1);
-		// Check that the helium cluster is present in the network
-		if (!fluxCluster) {
-			throw std::string(
-					"\nThe single helium cluster is not present in the network, "
-							"cannot use the flux option!");
+		using NetworkType =
+		experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+
+		// Set the flux index corresponding the the single helium cluster here
+		NetworkType::Composition comp;
+		// Initialize the composition
+		for (auto i : psiNetwork->getSpeciesRange()) {
+			comp[i] = 0;
 		}
-		fluxIndices.push_back(fluxCluster->getId() - 1);
+		comp[NetworkType::Species::He] = 1;
+		auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
+		// Check that the helium cluster is present in the network
+//		if (!cluster) {
+//			throw std::string(
+//					"\nThe single helium cluster is not present in the network, "
+//							"cannot use the flux option!");
+//		}
+		fluxIndices.push_back(cluster.getId());
 
 		return;
 	}

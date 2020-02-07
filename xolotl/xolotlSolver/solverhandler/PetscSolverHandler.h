@@ -98,8 +98,9 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolverHandler(xolotlCore::IReactionNetwork& _network) :
-			SolverHandler(_network) {
+	PetscSolverHandler(xolotlCore::IReactionNetwork& _network,
+			NetworkType& _expNetwork) :
+			SolverHandler(_network, _expNetwork) {
 	}
 
 };

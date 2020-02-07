@@ -104,8 +104,9 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	virtual void initializeFluxHandler(const IReactionNetwork& network,
-			int surfacePos, std::vector<double> grid);
+	virtual void initializeFluxHandler(
+			experimental::IReactionNetwork& network, int surfacePos,
+			std::vector<double> grid);
 
 	/**
 	 * This method reads the values on the time profile file and store them in the

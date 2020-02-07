@@ -4,6 +4,7 @@
 #include "FluxHandler.h"
 #include <cmath>
 #include <MathUtils.h>
+#include <experimental/NEReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -43,23 +44,32 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
-			std::vector<double> grid) {
+	void initializeFluxHandler(experimental::IReactionNetwork& network,
+			int surfacePos, std::vector<double> grid) {
 		// Set the grid
 		xGrid = grid;
 
 		// Skip if the flux amplitude is 0.0 and we are not using a time profile
-		if (equal(fluxAmplitude, 0.0) && !useTimeProfile) return;
+		if (equal(fluxAmplitude, 0.0) && !useTimeProfile)
+			return;
 
 		// Set the flux index corresponding the the single xenon cluster here
-		auto fluxCluster = network.get(Species::Xe, 1);
-		// Check that the helium cluster is present in the network
-		if (!fluxCluster) {
-			throw std::string(
-					"\nThe single xenon cluster is not present in the network, "
-							"cannot use the flux option!");
+		using NetworkType = experimental::NEReactionNetwork;
+		auto& neNetwork = dynamic_cast<NetworkType&>(network);
+		NetworkType::Composition comp;
+		// Initialize the composition
+		for (auto i : neNetwork.getSpeciesRange()) {
+			comp[i] = 0;
 		}
-		fluxIndices.push_back(fluxCluster->getId() - 1);
+		comp[NetworkType::Species::Xe] = 1;
+		auto cluster = neNetwork.findCluster(comp, plsm::onHost);
+		// Check that the helium cluster is present in the network
+//		if (!cluster) {
+//			throw std::string(
+//					"\nThe single xenon cluster is not present in the network, "
+//							"cannot use the flux option!");
+//		}
+		fluxIndices.push_back(cluster.getId());
 
 		return;
 	}
@@ -68,10 +78,11 @@ public:
 	 * This operation computes the flux due to incoming particles at a given grid point.
 	 * \see IFluxHandler.h
 	 */
-	void computeIncidentFlux(double currentTime,
-			double *updatedConcOffset, int xi, int surfacePos) {
+	void computeIncidentFlux(double currentTime, double *updatedConcOffset,
+			int xi, int surfacePos) {
 		// Skip if no index was set
-		if (fluxIndices.size() == 0) return;
+		if (fluxIndices.size() == 0)
+			return;
 
 		// 0D Case
 		if (xGrid.size() == 0) {
@@ -80,7 +91,8 @@ public:
 		}
 
 		// Skip the boundaries
-		if (xi == surfacePos || xi == xGrid.size() - 3) return;
+		if (xi == surfacePos || xi == xGrid.size() - 3)
+			return;
 
 		// Update the concentration array
 		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;

@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include <IReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -25,8 +25,9 @@ public:
 	 * @param surfacePos The current position of the surface
 	 * @param grid The grid on the x axis
 	 */
-	virtual void initializeFluxHandler(const IReactionNetwork& network,
-			int surfacePos, std::vector<double> grid) = 0;
+	virtual void initializeFluxHandler(
+			experimental::IReactionNetwork& network, int surfacePos,
+			std::vector<double> grid) = 0;
 
 	/**
 	 * This method reads the values on the time profile file and store them in the

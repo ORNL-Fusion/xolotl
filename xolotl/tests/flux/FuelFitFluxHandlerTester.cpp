@@ -40,14 +40,8 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-
-	// Create the network loader
-	NEClusterNetworkLoader loader = NEClusterNetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Get its size
-	const int dof = network->getDOF();
+	// Initialize kokkos
+	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -57,12 +51,21 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Specify the surface position
 	int surfacePos = 0;
 
+	// Create the network
+	using NetworkType = experimental::NEReactionNetwork;
+	NetworkType::AmountType maxXe = opts.getMaxImpurity();
+	NetworkType network( { maxXe }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get its size
+	const int dof = network.getDOF();
+
 	// Create the fuel flux handler
 	auto testFitFlux = make_shared<FuelFitFluxHandler>();
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
 	// Create a time
 	double currTime = 1.0;
@@ -90,14 +93,16 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[101], 1.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[202], 1.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[303], 1.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[100], 1.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[200], 1.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[300], 1.0, 0.01);
 
 	// Remove the created file
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
+	// Finalize kokkos
+	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 

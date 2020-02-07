@@ -40,14 +40,8 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Get its size
-	const int dof = network->getDOF();
+	// Initialize kokkos
+	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -57,12 +51,26 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Specify the surface position
 	int surfacePos = 0;
 
+	// Create the network
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = opts.getMaxImpurity();
+	NetworkType::AmountType maxD = opts.getMaxD();
+	NetworkType::AmountType maxT = opts.getMaxT();
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get its size
+	const int dof = network.getDOF();
+
 	// Create the W100 flux handler
 	auto testFitFlux = make_shared<W100FitFluxHandler>();
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
 	// Create a time
 	double currTime = 1.0;
@@ -118,25 +126,31 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid) {
 	argv[2] = 0; // null-terminate the array
 	opts.readParams(argc, argv);
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Get its size
-	const int dof = network->getDOF();
-
 	// Create a grid
 	std::vector<double> grid;
 	// Specify the surface position
 	int surfacePos = 0;
+
+	// Create the network
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = opts.getMaxImpurity();
+	NetworkType::AmountType maxD = opts.getMaxD();
+	NetworkType::AmountType maxT = opts.getMaxT();
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get its size
+	const int dof = network.getDOF();
 
 	// Create the W100 flux handler
 	auto testFitFlux = make_shared<W100FitFluxHandler>();
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
 	// Create a time
 	double currTime = 1.0;
@@ -184,14 +198,6 @@ BOOST_AUTO_TEST_CASE(checkFluence) {
 	argv[2] = 0; // null-terminate the array
 	opts.readParams(argc, argv);
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Get its size
-	const int dof = network->getDOF();
-
 	// Create a grid
 	std::vector<double> grid;
 	for (int l = 0; l < 7; l++) {
@@ -200,12 +206,26 @@ BOOST_AUTO_TEST_CASE(checkFluence) {
 	// Specify the surface position
 	int surfacePos = 0;
 
+	// Create the network
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = opts.getMaxImpurity();
+	NetworkType::AmountType maxD = opts.getMaxD();
+	NetworkType::AmountType maxT = opts.getMaxT();
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get its size
+	const int dof = network.getDOF();
+
 	// Create the W100 flux handler
 	auto testFitFlux = make_shared<W100FitFluxHandler>();
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
 	// Check that the fluence is 0.0 at the beginning
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluence(), 0.0);
@@ -240,14 +260,6 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 	argv[2] = 0; // null-terminate the array
 	opts.readParams(argc, argv);
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Get its size
-	const int dof = network->getDOF();
-
 	// Create a grid
 	std::vector<double> grid;
 	for (int l = 0; l < 7; l++) {
@@ -256,13 +268,27 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 	// Specify the surface position
 	int surfacePos = 0;
 
+	// Create the network
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = opts.getMaxImpurity();
+	NetworkType::AmountType maxD = opts.getMaxD();
+	NetworkType::AmountType maxT = opts.getMaxT();
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get its size
+	const int dof = network.getDOF();
+
 	// Create the W100 flux handler
 	auto testFitFlux = make_shared<W100FitFluxHandler>();
 
 	// Set the factor to change the flux amplitude
 	testFitFlux->setFluxAmplitude(2.5);
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
 	// Check the value of the flux amplitude
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2.5);
@@ -321,14 +347,6 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	argv[2] = 0; // null-terminate the array
 	opts.readParams(argc, argv);
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Get its size
-	const int dof = network->getDOF();
-
 	// Create a grid
 	std::vector<double> grid;
 	for (int l = 0; l < 7; l++) {
@@ -336,6 +354,20 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	}
 	// Specify the surface position
 	int surfacePos = 0;
+
+	// Create the network
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = opts.getMaxImpurity();
+	NetworkType::AmountType maxD = opts.getMaxD();
+	NetworkType::AmountType maxT = opts.getMaxT();
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get its size
+	const int dof = network.getDOF();
 
 	// Create a file with a time profile for the flux
 	// First column with the time and the second with
@@ -352,7 +384,7 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	// Initialize the time profile for the flux handler
 	testFitFlux->initializeTimeProfile("fluxFile.dat");
 	// Initialize the flux handler
-	testFitFlux->initializeFluxHandler(*network, surfacePos, grid);
+	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
 	// Create a time
 	double currTime = 0.5;
@@ -418,6 +450,8 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
+	// Finalize kokkos
+	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 

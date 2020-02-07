@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <mpi.h>
+#include <experimental/PSIReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -82,8 +83,8 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
-			std::vector<double> grid) {
+	void initializeFluxHandler(experimental::IReactionNetwork& network,
+			int surfacePos, std::vector<double> grid) {
 		// Set the grid
 		xGrid = grid;
 
@@ -110,34 +111,51 @@ public:
 			auto lineSS = std::make_shared<std::istringstream>(line);
 			reader.setInputStream(lineSS);
 
+			using NetworkType =
+			experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+
 			// Read the first line
 			auto tokens = reader.loadLine();
 			// And start looping on the lines
 			int index = 0;
 			while (tokens.size() > 0) {
+				NetworkType::Composition comp;
+				// Initialize the composition
+				for (auto i : psiNetwork->getSpeciesRange()) {
+					comp[i] = 0;
+				}
+
 				// Read the cluster type
-				auto clusterSpecies = Species::Invalid;
-				if (tokens[0] == "He") clusterSpecies = Species::He;
-				else if (tokens[0] == "I") clusterSpecies = Species::I;
-				else if (tokens[0] == "D") clusterSpecies = Species::D;
-				else if (tokens[0] == "T") clusterSpecies = Species::T;
-				else if (tokens[0] == "V") clusterSpecies = Species::V;
+				NetworkType::Species clusterSpecies;
+				if (tokens[0] == "He")
+					clusterSpecies = NetworkType::Species::He;
+				else if (tokens[0] == "I")
+					clusterSpecies = NetworkType::Species::I;
+				else if (tokens[0] == "D")
+					clusterSpecies = NetworkType::Species::D;
+				else if (tokens[0] == "T")
+					clusterSpecies = NetworkType::Species::T;
+				else if (tokens[0] == "V")
+					clusterSpecies = NetworkType::Species::V;
 				else {
 					// Print a message
 					if (procId == 0)
 						std::cout
-								<< "Unrecognize type for cluster in TRIDYN flux: " << tokens[0] << "."
-								<< std::endl;
+								<< "Unrecognize type for cluster in TRIDYN flux: "
+								<< tokens[0] << "." << std::endl;
 				}
 				// Get the cluster
-				auto fluxCluster = network.get(clusterSpecies, std::stoi(tokens[1]));
+				comp[clusterSpecies] = std::stoi(tokens[1]);
+				auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 				// Check that it is present in the network
-				if (!fluxCluster) {
-						throw std::string(
-								"\nThe requested cluster is not present in the network: " + tokens[0] + "_" + tokens[1] +
-										", cannot use the flux option!");
-				} else
-					fluxIndices.push_back(fluxCluster->getId() - 1);
+//				if (!cluster) {
+//					throw std::string(
+//							"\nThe requested cluster is not present in the network: "
+//									+ tokens[0] + "_" + tokens[1]
+//									+ ", cannot use the flux option!");
+//				} else
+					fluxIndices.push_back(cluster.getId());
 
 				// Get the reduction factor
 				reductionFactors.push_back(std::stod(tokens[2]));

@@ -130,7 +130,7 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(const IReactionNetwork& network, int surfacePos,
+	void initializeFluxHandler(experimental::IReactionNetwork& network, int surfacePos,
 			std::vector<double> grid) {
 
 		// Setup the ion damage and implantation depth profile
@@ -159,100 +159,100 @@ public:
 
 			// Get the size of the cluster
 			int size = cascade.clusterSizes[it];
-
-			// Check if cluster is interstitial type
-			if (size > 0) {
-				// See if theres an iType cluster of size
-				auto fluxCluster = network.get(toSpecies(ReactantType::I),
-						size);
-				if (fluxCluster) {
-					(ionDamage.fluxIndex).push_back(fluxCluster->getId() - 1);
-					(ionDamage.damageRate).push_back(
-							AlloySetGeneration(size, it, 1.0));
-					if (size == 1 && implant) {
-						AlloyAddImplantation(ionDamage.damageRate.back());
-					}
-				}
-				// Otherwise the clusters must be frank and perfect type
-				else {
-					auto fluxCluster1 = network.get(
-							toSpecies(ReactantType::Frank), size);
-					auto fluxCluster2 = network.get(
-							toSpecies(ReactantType::Perfect), size);
-					if (!fluxCluster1 || !fluxCluster2) {
-						// Throw error -> missing type
-						std::cout << "Error: no flux cluster of size " << size
-								<< std::endl;
-					} else {
-						// Frank loop
-						(ionDamage.fluxIndex).push_back(
-								fluxCluster1->getId() - 1);
-						double frac = 1.0 - cascade.perfectFraction;
-						(ionDamage.damageRate).push_back(
-								AlloySetGeneration(size, it, frac));
-						// Perfect loop
-						(ionDamage.fluxIndex).push_back(
-								fluxCluster2->getId() - 1);
-						frac = cascade.perfectFraction;
-						(ionDamage.damageRate).push_back(
-								AlloySetGeneration(size, it, frac));
-					}
-				}
-			}
-			// Check if cluster is vacancy type
-			else if (size < 0) {
-				size = -size;
-				// See if theres an vType cluster of size
-				auto fluxCluster = network.get(toSpecies(ReactantType::V),
-						size);
-				if (fluxCluster) {
-					(ionDamage.fluxIndex).push_back(fluxCluster->getId() - 1);
-					(ionDamage.damageRate).push_back(
-							AlloySetGeneration(size, it, 1.0));
-				}
-				// Otherwise the clusters must be faulted type
-				else {
-					fluxCluster = network.get(toSpecies(ReactantType::Faulted),
-							size);
-					if (!fluxCluster) {
-						// Throw error -> no available type
-						std::cout << "Error: no flux cluster of size " << -size
-								<< std::endl;
-					} else {
-						// Faulted loop
-						(ionDamage.fluxIndex).push_back(
-								fluxCluster->getId() - 1);
-						(ionDamage.damageRate).push_back(
-								AlloySetGeneration(size, it, 1.0));
-					}
-				}
-			}
-			// Neither interstitial nor vacancy type cluster
-			else {
-				// Throw error for size 0 cluster
-			}
+//
+//			// Check if cluster is interstitial type
+//			if (size > 0) {
+//				// See if theres an iType cluster of size
+//				auto fluxCluster = network.get(toSpecies(ReactantType::I),
+//						size);
+//				if (fluxCluster) {
+//					(ionDamage.fluxIndex).push_back(fluxCluster->getId() - 1);
+//					(ionDamage.damageRate).push_back(
+//							AlloySetGeneration(size, it, 1.0));
+//					if (size == 1 && implant) {
+//						AlloyAddImplantation(ionDamage.damageRate.back());
+//					}
+//				}
+//				// Otherwise the clusters must be frank and perfect type
+//				else {
+//					auto fluxCluster1 = network.get(
+//							toSpecies(ReactantType::Frank), size);
+//					auto fluxCluster2 = network.get(
+//							toSpecies(ReactantType::Perfect), size);
+//					if (!fluxCluster1 || !fluxCluster2) {
+//						// Throw error -> missing type
+//						std::cout << "Error: no flux cluster of size " << size
+//								<< std::endl;
+//					} else {
+//						// Frank loop
+//						(ionDamage.fluxIndex).push_back(
+//								fluxCluster1->getId() - 1);
+//						double frac = 1.0 - cascade.perfectFraction;
+//						(ionDamage.damageRate).push_back(
+//								AlloySetGeneration(size, it, frac));
+//						// Perfect loop
+//						(ionDamage.fluxIndex).push_back(
+//								fluxCluster2->getId() - 1);
+//						frac = cascade.perfectFraction;
+//						(ionDamage.damageRate).push_back(
+//								AlloySetGeneration(size, it, frac));
+//					}
+//				}
+//			}
+//			// Check if cluster is vacancy type
+//			else if (size < 0) {
+//				size = -size;
+//				// See if theres an vType cluster of size
+//				auto fluxCluster = network.get(toSpecies(ReactantType::V),
+//						size);
+//				if (fluxCluster) {
+//					(ionDamage.fluxIndex).push_back(fluxCluster->getId() - 1);
+//					(ionDamage.damageRate).push_back(
+//							AlloySetGeneration(size, it, 1.0));
+//				}
+//				// Otherwise the clusters must be faulted type
+//				else {
+//					fluxCluster = network.get(toSpecies(ReactantType::Faulted),
+//							size);
+//					if (!fluxCluster) {
+//						// Throw error -> no available type
+//						std::cout << "Error: no flux cluster of size " << -size
+//								<< std::endl;
+//					} else {
+//						// Faulted loop
+//						(ionDamage.fluxIndex).push_back(
+//								fluxCluster->getId() - 1);
+//						(ionDamage.damageRate).push_back(
+//								AlloySetGeneration(size, it, 1.0));
+//					}
+//				}
+//			}
+//			// Neither interstitial nor vacancy type cluster
+//			else {
+//				// Throw error for size 0 cluster
+//			}
 
 		}
 
-		// record the results in a files
-		std::ofstream outfile;
-		outfile.open("alloyFlux.dat");
-		auto clusters = network.getAll();
-		for (int i = 0; i < ionDamage.fluxIndex.size(); ++i) {
-			outfile << ionDamage.fluxIndex[i];
-			for (int j = 0; j < ionDamage.damageRate[i].size(); ++j) {
-				outfile << " " << ionDamage.damageRate[i][j];
-			}
-			// find the corresponding flux clusters
-			std::for_each(clusters.begin(), clusters.end(),
-					[&outfile, &i, this](IReactant& currReactant) {
-						if (currReactant.getId() - 1 == ionDamage.fluxIndex[i]) {
-							outfile << " " << currReactant.getName();
-						}
-					});
-			outfile << std::endl;
-		}
-		outfile.close();
+//		// record the results in a files
+//		std::ofstream outfile;
+//		outfile.open("alloyFlux.dat");
+//		auto clusters = network.getAll();
+//		for (int i = 0; i < ionDamage.fluxIndex.size(); ++i) {
+//			outfile << ionDamage.fluxIndex[i];
+//			for (int j = 0; j < ionDamage.damageRate[i].size(); ++j) {
+//				outfile << " " << ionDamage.damageRate[i][j];
+//			}
+//			// find the corresponding flux clusters
+//			std::for_each(clusters.begin(), clusters.end(),
+//					[&outfile, &i, this](IReactant& currReactant) {
+//						if (currReactant.getId() - 1 == ionDamage.fluxIndex[i]) {
+//							outfile << " " << currReactant.getName();
+//						}
+//					});
+//			outfile << std::endl;
+//		}
+//		outfile.close();
 
 		return;
 	}

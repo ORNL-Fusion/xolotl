@@ -92,7 +92,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 			"DMDAVecGetArrayDOF failed.");
 
 	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, 0, grid);
+	fluxHandler->initializeFluxHandler(expNetwork, 0, grid);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar *concOffset = nullptr;

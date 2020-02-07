@@ -28,7 +28,11 @@ public:
 	 * @param _network The reaction network to use.
 	 */
 	PetscSolver2DHandler(xolotlCore::IReactionNetwork& _network) :
-			PetscSolverHandler(_network) {
+			PetscSolverHandler(_network,
+					*(std::shared_ptr<
+							xolotlCore::experimental::NEReactionNetwork>(
+							new xolotlCore::experimental::NEReactionNetwork(
+									{ 0 }, 0, xolotlCore::Options())))) {
 	}
 
 	//! The Destructor

@@ -451,9 +451,6 @@ PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the flux handler that will be used to know the fluence
-	auto fluxHandler = solverHandler.getFluxHandler();
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -2531,7 +2528,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 	// Get the flux handler to reinitialize it
 	auto fluxHandler = solverHandler.getFluxHandler();
-	fluxHandler->initializeFluxHandler(network, surfacePos, grid);
+	fluxHandler->initializeFluxHandler(solverHandler.getExpNetwork(), surfacePos, grid);
 
 	// Get the modified trap-mutation handler to reinitialize it
 	auto mutationHandler = solverHandler.getMutationHandler();

@@ -168,7 +168,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	temperatureHandler->updateSurfacePosition(surfacePosition);
 
 	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, surfacePosition, grid);
+	fluxHandler->initializeFluxHandler(expNetwork, surfacePosition, grid);
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, xm, xs);

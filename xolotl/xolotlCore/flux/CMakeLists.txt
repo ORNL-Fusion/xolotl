@@ -16,11 +16,11 @@ file(GLOB SRC *.cpp)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 
 #Add the libraries
 add_library(${LIBRARY_NAME} STATIC ${SRC})
+target_link_libraries(${LIBRARY_NAME} plsm)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)
