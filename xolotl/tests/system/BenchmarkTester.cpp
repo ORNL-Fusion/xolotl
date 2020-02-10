@@ -5,7 +5,7 @@
 
 #include <SystemTest.h>
 
-BOOST_AUTO_TEST_SUITE(System_testSuite)
+BOOST_AUTO_TEST_SUITE(Benchmark_testSuite)
 
 BOOST_AUTO_TEST_CASE(NE_9999DOF_plsm) {
     testUtils::runSystemTestCase("NE_9999DOF_plsm");
