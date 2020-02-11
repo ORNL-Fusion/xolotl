@@ -11,4 +11,8 @@ BOOST_AUTO_TEST_CASE(NE_9999DOF_plsm) {
     testUtils::runSystemTestCase("NE_9999DOF_plsm");
 }
 
+BOOST_AUTO_TEST_CASE(NE_20079DOF_plsm) {
+    testUtils::runSystemTestCase("NE_20079DOF_plsm");
+}
+
 BOOST_AUTO_TEST_SUITE_END()

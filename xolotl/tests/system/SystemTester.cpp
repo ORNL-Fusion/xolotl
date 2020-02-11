@@ -7,8 +7,12 @@
 
 BOOST_AUTO_TEST_SUITE(System_testSuite)
 
-BOOST_AUTO_TEST_CASE(NE_9999DOF_plsm) {
-    testUtils::runSystemTestCase("NE_9999DOF_plsm");
+BOOST_AUTO_TEST_CASE(system_NE_1) {
+    testUtils::runSystemTestCase("system_NE_1");
+}
+
+BOOST_AUTO_TEST_CASE(system_NE_2) {
+    testUtils::runSystemTestCase("system_NE_2");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
