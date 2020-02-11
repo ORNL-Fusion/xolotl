@@ -32,19 +32,26 @@ public:
 	 * @param ofillMap Map of connectivity for advecting clusters.
 	 * of the advecting clusters
 	 */
-	void initialize(const IReactionNetwork& network,
-                    IReactionNetwork::SparseFillMap& ofillMap) override {
-
-		int dof = network.getDOF();
-
+	void initialize(experimental::IReactionNetwork& network,
+			experimental::IReactionNetwork::SparseFillMap& ofillMap) override {
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();
 		sinkStrengthVector.clear();
 
-		// Loop on all the reactants
-		for (IReactant const& currReactant : network.getAll()) {
+		using NetworkType =
+		experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
-			auto const& cluster = static_cast<IReactant const&>(currReactant);
+		// Initialize the composition
+		NetworkType::Composition comp;
+		for (auto i : psiNetwork->getSpeciesRange()) {
+			comp[i] = 0;
+		}
+
+		// Loop on helium clusters from size 1 to 7
+		for (std::size_t i = 0; i < 7; i++) {
+			comp[NetworkType::Species::He] = i;
+			auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 
 			// Get its diffusion coefficient
 			double diffFactor = cluster.getDiffusionFactor();
@@ -53,16 +60,9 @@ public:
 			if (xolotlCore::equal(diffFactor, 0.0))
 				continue;
 
-			// Keep only the helium clusters
-			if (cluster.getType() != ReactantType::He)
-				continue;
-
-			// Get its size
-			int heSize = cluster.getSize();
-
 			// Switch on the size to get the sink strength (in eV.nm3)
 			double sinkStrength = 0.0;
-			switch (heSize) {
+			switch (i) {
 			case 1:
 				sinkStrength = 1.49e-3;
 				break;
@@ -90,17 +90,17 @@ public:
 			if (xolotlCore::equal(sinkStrength, 0.0))
 				continue;
 
-			// Add it to the collection of advecting clusters.
-			advectingClusters.emplace_back(currReactant);
+			// Get its id
+			auto index = cluster.getId();
+			// Add it to our collection of advecting clusters.
+			advectingClusters.emplace_back(index);
 
 			// Add the sink strength to the vector
 			sinkStrengthVector.push_back(sinkStrength);
 
 			// Set the off-diagonal part for the Jacobian to 1
-			// Get its id
-			int index = cluster.getId() - 1;
 			// Set the ofill value to 1 for this cluster
-            ofillMap[index].emplace_back(index);
+			ofillMap[index].emplace_back(index);
 		}
 
 		return;

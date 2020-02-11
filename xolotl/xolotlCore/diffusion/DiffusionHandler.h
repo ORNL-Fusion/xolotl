@@ -16,7 +16,7 @@ class DiffusionHandler: public IDiffusionHandler {
 protected:
 
 	//! Collection of diffusing clusters.
-	IReactant::ConstRefVector diffusingClusters;
+	std::vector<std::size_t> diffusingClusters;
 
 public:
 
@@ -37,18 +37,16 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	virtual void initializeOFill(const IReactionNetwork& network,
-			IReactionNetwork::SparseFillMap& ofillMap) override {
-
-		int dof = network.getDOF();
+	virtual void initializeOFill(const experimental::IReactionNetwork& network,
+			experimental::IReactionNetwork::SparseFillMap& ofillMap) override {
 
 		// Clear the index vector
 		diffusingClusters.clear();
 
-		// Consider each cluster.
-		for (IReactant const& currReactant : network.getAll()) {
+		// Consider each cluster
+		for (std::size_t i = 0; i < network.getNumClusters(); i++) {
 
-			auto const& cluster = static_cast<IReactant const&>(currReactant);
+			auto cluster = network.getClusterCommon(i);
 
 			// Get its diffusion coefficient
 			double diffFactor = cluster.getDiffusionFactor();
@@ -58,12 +56,10 @@ public:
 				continue;
 
 			// Note that cluster is diffusing.
-			diffusingClusters.emplace_back(cluster);
+			diffusingClusters.emplace_back(i);
 
-			// Get its id
-			int index = cluster.getId() - 1;
 			// Set the ofill value to 1 for this cluster
-			ofillMap[index].emplace_back(index);
+			ofillMap[i].emplace_back(i);
 		}
 
 		return;

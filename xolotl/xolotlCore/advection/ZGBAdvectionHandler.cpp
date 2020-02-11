@@ -1,21 +1,31 @@
 // Includes
 #include "ZGBAdvectionHandler.h"
+#include <experimental/PSIReactionNetwork.h>
 
 namespace xolotlCore {
 
-void ZGBAdvectionHandler::initialize(const IReactionNetwork& network,
-		IReactionNetwork::SparseFillMap& ofillMap) {
-
-	int dof = network.getDOF();
+void ZGBAdvectionHandler::initialize(experimental::IReactionNetwork& network,
+		experimental::IReactionNetwork::SparseFillMap& ofillMap) {
 
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
 	sinkStrengthVector.clear();
 
-	// Loop on all the reactants
-	for (IReactant const& currReactant : network.getAll()) {
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
-		auto const& cluster = static_cast<IReactant const&>(currReactant);
+	// Initialize the composition
+	NetworkType::Composition comp;
+	for (auto i : psiNetwork->getSpeciesRange()) {
+		comp[i] = 0;
+	}
+
+	// Loop on helium clusters from size 1 to 7
+	for (std::size_t i = 0; i < 7; i++) {
+		comp[NetworkType::Species::He] = i;
+		auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
+
 		// Get its diffusion coefficient
 		double diffFactor = cluster.getDiffusionFactor();
 
@@ -23,16 +33,9 @@ void ZGBAdvectionHandler::initialize(const IReactionNetwork& network,
 		if (xolotlCore::equal(diffFactor, 0.0))
 			continue;
 
-		// Keep only the helium clusters
-		if (cluster.getType() != ReactantType::He)
-			continue;
-
-		// Get its size
-		int heSize = cluster.getSize();
-
 		// Switch on the size to get the sink strength (in eV.nm3)
 		double sinkStrength = 0.0;
-		switch (heSize) {
+		switch (i) {
 		case 1:
 			sinkStrength = 0.54e-3;
 			break;
@@ -60,15 +63,15 @@ void ZGBAdvectionHandler::initialize(const IReactionNetwork& network,
 		if (xolotlCore::equal(sinkStrength, 0.0))
 			continue;
 
-		// Note that the current cluster is advecting.
-		advectingClusters.emplace_back(cluster);
+		// Get its id
+		auto index = cluster.getId();
+		// Add it to our collection of advecting clusters.
+		advectingClusters.emplace_back(index);
 
 		// Add the sink strength to the vector
 		sinkStrengthVector.push_back(sinkStrength);
 
 		// Set the off-diagonal part for the Jacobian to 1
-		// Get its id
-		int index = cluster.getId() - 1;
 		// Set the ofill value to 1 for this cluster
 		ofillMap[index].emplace_back(index);
 	}
@@ -76,10 +79,10 @@ void ZGBAdvectionHandler::initialize(const IReactionNetwork& network,
 	return;
 }
 
-void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
-		const Point<3>& pos, double **concVector, double *updatedConcOffset,
-		double hxLeft, double hxRight, int ix, double hy, int iy, double hz,
-		int iz) const {
+void ZGBAdvectionHandler::computeAdvection(
+		experimental::IReactionNetwork& network, const Point<3>& pos,
+		double **concVector, double *updatedConcOffset, double hxLeft,
+		double hxRight, int ix, double hy, int iy, double hz, int iz) const {
 
 	// Consider each advecting cluster.
 	// TODO Maintaining a separate index assumes that advectingClusters is
@@ -89,16 +92,15 @@ void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 	// advecting clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int advClusterIdx = 0;
-	for (IReactant const& currReactant : advectingClusters) {
+	for (auto const& currId : advectingClusters) {
 
-		auto const& cluster = static_cast<IReactant const&>(currReactant);
-		int index = cluster.getId() - 1;
+		auto cluster = network.getClusterCommon(currId);
 
 		// If we are on the sink, the behavior is not the same
 		// Both sides are giving their concentrations to the center
 		if (isPointOnSink(pos)) {
-			double oldFrontConc = concVector[5][index]; // front
-			double oldBackConc = concVector[6][index]; // back
+			double oldFrontConc = concVector[5][currId]; // front
+			double oldBackConc = concVector[6][currId]; // back
 
 			double conc = (3.0 * sinkStrengthVector[advClusterIdx]
 					* cluster.getDiffusionCoefficient(ix + 1))
@@ -106,14 +108,14 @@ void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 					/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1));
 
 			// Update the concentration of the cluster
-			updatedConcOffset[index] += conc;
+			updatedConcOffset[currId] += conc;
 		}
 		// Here we are NOT on the GB sink
 		else {
 			// Get the initial concentrations
-			double oldConc = concVector[0][index]; // middle
+			double oldConc = concVector[0][currId]; // middle
 			double oldRightConc = concVector[6 * (pos[2] > location)
-					+ 5 * (pos[2] < location)][index]; // back or front
+					+ 5 * (pos[2] < location)][currId]; // back or front
 
 			// Get the a=d and b=d+h positions
 			double a = fabs(location - pos[2]);
@@ -127,7 +129,7 @@ void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 							* hz);
 
 			// Update the concentration of the cluster
-			updatedConcOffset[index] += conc;
+			updatedConcOffset[currId] += conc;
 		}
 
 		++advClusterIdx;
@@ -137,7 +139,7 @@ void ZGBAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 }
 
 void ZGBAdvectionHandler::computePartialsForAdvection(
-		const IReactionNetwork& network, double *val, int *indices,
+		experimental::IReactionNetwork& network, double *val, int *indices,
 		const Point<3>& pos, double hxLeft, double hxRight, int ix, double hy,
 		int iy, double hz, int iz) const {
 
@@ -149,11 +151,9 @@ void ZGBAdvectionHandler::computePartialsForAdvection(
 	// advecting clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int advClusterIdx = 0;
-	for (IReactant const& currReactant : advectingClusters) {
+	for (auto const& currId : advectingClusters) {
 
-		auto const& cluster = static_cast<IReactant const&>(currReactant);
-
-		int index = cluster.getId() - 1;
+		auto cluster = network.getClusterCommon(currId);
 		// Get the diffusion coefficient of the cluster
 		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1);
 		// Get the sink strength value
@@ -161,7 +161,7 @@ void ZGBAdvectionHandler::computePartialsForAdvection(
 
 		// Set the cluster index that will be used by PetscSolver
 		// to compute the row and column indices for the Jacobian
-		indices[advClusterIdx] = index;
+		indices[advClusterIdx] = currId;
 
 		// If we are on the sink, the partial derivatives are not the same
 		// Both sides are giving their concentrations to the center

@@ -19,7 +19,7 @@ protected:
 	double location;
 
 	//! The collection of advecting clusters.
-	IReactant::ConstRefVector advectingClusters;
+	std::vector<std::size_t> advectingClusters;
 
 	//! The vector containing the value of the sink strength (called A) of the advecting clusters
 	std::vector<double> sinkStrengthVector;
@@ -70,7 +70,7 @@ public:
 	 *
 	 * @return The vector of advecting clusters
 	 */
-	const IReactant::ConstRefVector& getAdvectingClusters() override {
+	const std::vector<std::size_t>& getAdvectingClusters() override {
 		return advectingClusters;
 	}
 

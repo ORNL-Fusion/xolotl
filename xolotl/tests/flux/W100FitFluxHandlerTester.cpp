@@ -4,7 +4,6 @@
 #include <boost/test/unit_test.hpp>
 #include "W100FitFluxHandler.h"
 #include <mpi.h>
-#include <HDF5NetworkLoader.h>
 #include <DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
 #include <Options.h>

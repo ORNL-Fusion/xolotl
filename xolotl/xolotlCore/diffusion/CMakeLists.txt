@@ -16,11 +16,10 @@ file(GLOB SRC *.cpp)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 
 #Add a library 
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} Kokkos::kokkos)
+target_link_libraries(${LIBRARY_NAME} Kokkos::kokkos plsm)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

@@ -33,9 +33,23 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     double
+    getTemperature(std::size_t gridIndex)
+    {
+        return asDerived()->_data.temperature(gridIndex);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    double
     getDiffusionCoefficient(std::size_t gridIndex)
     {
         return asDerived()->_data.diffusionCoefficient(_id, gridIndex);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    double
+    getDiffusionFactor()
+    {
+        return asDerived()->_data.diffusionFactor(_id);
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -60,6 +74,8 @@ private:
 template <typename PlsmContext>
 class ClusterCommon : public ClusterBase<ClusterCommon<PlsmContext>>
 {
+    friend class ClusterBase<ClusterCommon<PlsmContext>>;
+
 public:
     using Superclass = ClusterBase<ClusterCommon<PlsmContext>>;
     using ClusterData = detail::ClusterDataCommon<PlsmContext>;

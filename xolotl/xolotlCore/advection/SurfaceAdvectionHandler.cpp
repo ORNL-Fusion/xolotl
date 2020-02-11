@@ -79,10 +79,10 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 	return;
 }
 
-void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
-		const Point<3>& pos, double **concVector, double *updatedConcOffset,
-		double hxLeft, double hxRight, int ix, double hy, int iy, double hz,
-		int iz) const {
+void SurfaceAdvectionHandler::computeAdvection(
+		experimental::IReactionNetwork& network, const Point<3>& pos,
+		double **concVector, double *updatedConcOffset, double hxLeft,
+		double hxRight, int ix, double hy, int iy, double hz, int iz) const {
 
 	// Get the number of advecting cluster
 	int nAdvec = advectingClusters.size();
@@ -95,15 +95,14 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 	// advecting clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int advClusterIdx = 0;
-	for (IReactant const& currReactant : advectingClusters) {
-		// Get a specific one and its index
-		auto const& cluster = static_cast<IReactant const&>(currReactant);
-		int index = cluster.getId() - 1;
+	for (auto const& currId : advectingClusters) {
+
+		auto cluster = network.getClusterCommon(currId);
 
 		// Get the initial concentrations
-		double oldConc = concVector[0][index]
+		double oldConc = concVector[0][currId]
 				* advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
-		double oldRightConc = concVector[2][index]
+		double oldRightConc = concVector[2][currId]
 				* advectionGrid[iz + 1][iy + 1][ix + 2][advClusterIdx]; // right
 
 		// Compute the concentration as explained in the description of the method
@@ -124,7 +123,7 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 								* pow(pos[0] - location, 4));
 
 		// Update the concentration of the cluster
-		updatedConcOffset[index] += conc;
+		updatedConcOffset[currId] += conc;
 
 		++advClusterIdx;
 	}
@@ -133,9 +132,9 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 }
 
 void SurfaceAdvectionHandler::computePartialsForAdvection(
-		const IReactionNetwork& network, double *val, int *indices,
-		const Point<3>& pos, double hxLeft, double hxRight, int ix, double hy,
-		int iy, double hz, int iz) const {
+		experimental::IReactionNetwork& network, double *val,
+		int *indices, const Point<3>& pos, double hxLeft, double hxRight,
+		int ix, double hy, int iy, double hz, int iz) const {
 
 	// Get the number of advecting cluster
 	int nAdvec = advectingClusters.size();
@@ -148,10 +147,9 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 	// advecting clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int advClusterIdx = 0;
-	for (IReactant const& currReactant : advectingClusters) {
-		// Get a specific one and its index
-		auto const& cluster = static_cast<IReactant const&>(currReactant);
-		int index = cluster.getId() - 1;
+	for (auto const& currId : advectingClusters) {
+
+		auto cluster = network.getClusterCommon(currId);
 		// Get the diffusion coefficient of the cluster
 		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1);
 		// Get the sink strength value
@@ -159,7 +157,7 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 
 		// Set the cluster index that will be used by PetscSolver
 		// to compute the row and column indices for the Jacobian
-		indices[advClusterIdx] = index;
+		indices[advClusterIdx] = currId;
 
 		// Compute the partial derivatives for advection of this cluster as
 		// explained in the description of this method

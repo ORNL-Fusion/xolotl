@@ -108,10 +108,10 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion
-	diffusionHandler->initializeOFill(network, ofill);
+	diffusionHandler->initializeOFill(expNetwork, ofill);
 	// Loop on the advection handlers to account the other "off-diagonal" elements
 	for (int i = 0; i < advectionHandlers.size(); i++) {
-		advectionHandlers[i]->initialize(network, ofill);
+		advectionHandlers[i]->initialize(expNetwork, ofill);
 	}
 
 	// Get the local boundaries
@@ -371,7 +371,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				// Share the concentration with all the processes
 				totalAtomConc = 0.0;
 				MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-				MPI_COMM_WORLD);
+						MPI_COMM_WORLD);
 
 				// Set the disappearing rate in the modified TM handler
 				mutationHandler->updateDisappearingRate(totalAtomConc);
@@ -387,8 +387,8 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 			// Initialize the flux, advection, and temperature handlers which depend
 			// on the surface position at Y
-			fluxHandler->initializeFluxHandler(expNetwork, surfacePosition[yj][zk],
-					grid);
+			fluxHandler->initializeFluxHandler(expNetwork,
+					surfacePosition[yj][zk], grid);
 			advectionHandlers[0]->setLocation(
 					grid[surfacePosition[yj][zk] + 1] - grid[1]);
 			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
@@ -499,7 +499,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 						updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz, zk);
 
 				// ---- Compute diffusion over the locally owned part of the grid -----
-				diffusionHandler->computeDiffusion(network, concVector,
+				diffusionHandler->computeDiffusion(expNetwork, concVector,
 						updatedConcOffset, hxLeft, hxRight, xi - xs, sy,
 						yj - ys, sz, zk - zs);
 
@@ -507,7 +507,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				// Set the grid position
 				gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 				for (int i = 0; i < advectionHandlers.size(); i++) {
-					advectionHandlers[i]->computeAdvection(network,
+					advectionHandlers[i]->computeAdvection(expNetwork,
 							gridPosition, concVector, updatedConcOffset, hxLeft,
 							hxRight, xi - xs, hY, yj - ys, hZ, zk - zs);
 				}
@@ -779,9 +779,9 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 								"MatSetValuesStencil (temperature) failed.");
 
 				// Get the partial derivatives for the diffusion
-				diffusionHandler->computePartialsForDiffusion(network, diffVals,
-						diffIndices, hxLeft, hxRight, xi - xs, sy, yj - ys, sz,
-						zk - zs);
+				diffusionHandler->computePartialsForDiffusion(expNetwork,
+						diffVals, diffIndices, hxLeft, hxRight, xi - xs, sy,
+						yj - ys, sz, zk - zs);
 
 				// Loop on the number of diffusion cluster to set the values in the Jacobian
 				for (int i = 0; i < nDiff; i++) {
@@ -834,9 +834,9 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				// Set the grid position
 				gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 				for (int l = 0; l < advectionHandlers.size(); l++) {
-					advectionHandlers[l]->computePartialsForAdvection(network,
-							advecVals, advecIndices, gridPosition, hxLeft,
-							hxRight, xi - xs, hY, yj - ys, hZ, zk - zs);
+					advectionHandlers[l]->computePartialsForAdvection(
+							expNetwork, advecVals, advecIndices, gridPosition,
+							hxLeft, hxRight, xi - xs, hY, yj - ys, hZ, zk - zs);
 
 					// Get the stencil indices to know where to put the partial derivatives in the Jacobian
 					auto advecStencil =
@@ -969,7 +969,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				// Share the concentration with all the processes
 				totalAtomConc = 0.0;
 				MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-				MPI_COMM_WORLD);
+						MPI_COMM_WORLD);
 
 				// Set the disappearing rate in the modified TM handler
 				mutationHandler->updateDisappearingRate(totalAtomConc);

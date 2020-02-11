@@ -17,21 +17,23 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     _clusterData(_subpaving, gridSize),
     _worker(*this)
 {
+	// Set constants
     setInterstitialBias(options.getBiasFactor());
     setImpurityRadius(options.getImpurityRadius());
     setLatticeParameter(options.getLatticeParameter());
+    auto tiles = subpaving.getTiles(plsm::onDevice);
+    _numClusters = tiles.extent(0);
+    
 
     	// PRINT ALL THE CLUSTERS
-        auto tiles = subpaving.getTiles(plsm::onDevice);
-        std::size_t numClusters = tiles.extent(0);
-//    	for (std::size_t i = 0; i < numClusters; ++i) {
+//    	for (std::size_t i = 0; i < _numClusters; ++i) {
 //    		const auto& cl1Reg = tiles(i).getRegion();
 //    		Composition lo1 = cl1Reg.getOrigin();
 //    	    Composition hi1 = cl1Reg.getUpperLimitPoint();
 //    
 //    		std::cout << lo1[0] << " " << hi1[0] - 1 << std::endl;
 //    	}
-    	std::cout << "num: " << numClusters << std::endl;
+    	std::cout << "num: " << _numClusters << std::endl;
 
     {
     boost::timer::auto_cpu_timer t;
@@ -179,9 +181,8 @@ ReactionNetwork<TImpl>::getTotalAtomConcentration(ConcentrationsView concentrati
 		Species type, std::size_t minSize)
 {
     auto tiles = _subpaving.getTiles(plsm::onDevice);
-    std::size_t numClusters = tiles.extent(0);
     double conc = 0.0;
-    Kokkos::parallel_reduce(numClusters,
+    Kokkos::parallel_reduce(_numClusters,
             KOKKOS_LAMBDA (std::size_t i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
     	for (std::size_t j : makeIntervalRange(clReg[type])) {
@@ -210,11 +211,10 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(ConcentrationsView conc
     
     // Return 0 if there is not vacancy in the network
     if (!hasVacancy) return 0.0;
-    
+
     auto tiles = _subpaving.getTiles(plsm::onDevice);
-    std::size_t numClusters = tiles.extent(0);
     double conc = 0.0;
-    Kokkos::parallel_reduce(numClusters,
+    Kokkos::parallel_reduce(_numClusters,
             KOKKOS_LAMBDA (std::size_t i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
     	if (clReg[vIndex].begin() > 0) {

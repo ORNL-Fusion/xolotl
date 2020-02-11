@@ -5,7 +5,7 @@
 #include <array>
 #include <memory>
 #include <NDPoint.h>
-#include <IReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -31,8 +31,8 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for advecting clusters.
 	 */
-	virtual void initialize(const IReactionNetwork& network,
-			IReactionNetwork::SparseFillMap& ofillMap) = 0;
+	virtual void initialize(experimental::IReactionNetwork& network,
+			experimental::IReactionNetwork::SparseFillMap& ofillMap) = 0;
 
 	/**
 	 * Set the number of dimension
@@ -65,8 +65,9 @@ public:
 	 */
 	virtual void initializeAdvectionGrid(
 			std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid, int nx, int xs, int ny = 1, double hy = 0.0,
-			int ys = 0, int nz = 1, double hz = 0.0, int zs = 0) = 0;
+			std::vector<double> grid, int nx, int xs, int ny = 1, double hy =
+					0.0, int ys = 0, int nz = 1, double hz = 0.0,
+			int zs = 0) = 0;
 
 	/**
 	 * Compute the flux due to the advection for all the helium clusters,
@@ -87,10 +88,10 @@ public:
 	 * @param hz The step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	virtual void computeAdvection(const IReactionNetwork& network,
+	virtual void computeAdvection(experimental::IReactionNetwork& network,
 			const Point<3>& pos, double **concVector, double *updatedConcOffset,
-			double hxLeft, double hxRight, int ix, double hy = 0.0,
-			int iy = 0, double hz = 0.0, int iz = 0) const = 0;
+			double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
+			double hz = 0.0, int iz = 0) const = 0;
 
 	/**
 	 * Compute the partial derivatives due to the advection of all the helium clusters given
@@ -112,10 +113,11 @@ public:
 	 * @param hz The step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	virtual void computePartialsForAdvection(const IReactionNetwork& network,
-			double *val, int *indices, const Point<3>& pos, double hxLeft,
-			double hxRight, int ix, double hy = 0.0, int iy = 0,
-			double hz = 0.0, int iz = 0) const = 0;
+	virtual void computePartialsForAdvection(
+			experimental::IReactionNetwork& network, double *val,
+			int *indices, const Point<3>& pos, double hxLeft, double hxRight,
+			int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
+			int iz = 0) const = 0;
 
 	/**
 	 * Compute the indices that will determine where the partial derivatives will
@@ -148,7 +150,7 @@ public:
 	 *
 	 * @return The vector of advecting clusters
 	 */
-	virtual const IReactant::ConstRefVector& getAdvectingClusters() = 0;
+	virtual const std::vector<std::size_t>& getAdvectingClusters() = 0;
 
 	/**
 	 * Get the location of the sink.

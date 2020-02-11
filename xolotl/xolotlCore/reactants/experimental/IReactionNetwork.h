@@ -4,10 +4,14 @@
 
 #include <Kokkos_View.hpp>
 
+#include <experimental/ClusterData.h>
+#include <experimental/Cluster.h>
+
 namespace xolotlCore
 {
 namespace experimental
 {
+
 class IReactionNetwork
 {
 public:
@@ -30,6 +34,13 @@ public:
     getDOF() const noexcept
     {
         return _numDOFs;
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    std::size_t
+    getNumClusters() const noexcept
+    {
+        return _numClusters;
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -88,6 +99,9 @@ public:
     virtual void
     syncClusterDataOnHost() = 0;
 
+    virtual ClusterCommon<plsm::OnHost>
+    getClusterCommon(std::size_t clusterId) const = 0;
+
     virtual void
     computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
         std::size_t gridIndex) = 0;
@@ -114,6 +128,7 @@ protected:
 
     std::size_t _gridSize {};
     std::size_t _numDOFs {};
+    std::size_t _numClusters {};
 };
 }
 }

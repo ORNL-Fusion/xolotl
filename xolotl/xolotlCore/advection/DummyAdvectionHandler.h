@@ -32,8 +32,8 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for advecting clusters.
 	 */
-	void initialize(const IReactionNetwork& network,
-			IReactionNetwork::SparseFillMap& ofillMap) override {
+	void initialize(experimental::IReactionNetwork& network,
+			experimental::IReactionNetwork::SparseFillMap& ofillMap) override {
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();
 		sinkStrengthVector.clear();
@@ -64,9 +64,9 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computeAdvection(const IReactionNetwork& network, const Point<3>& pos,
-			double **concVector, double *updatedConcOffset, double hxLeft,
-			double hxRight, int ix, double hy = 0.0, int iy = 0,
+	void computeAdvection(experimental::IReactionNetwork& network,
+			const Point<3>& pos, double **concVector, double *updatedConcOffset,
+			double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override {
 		// Doesn't do anything
 		return;
@@ -79,10 +79,11 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computePartialsForAdvection(const IReactionNetwork& network,
-			double *val, int *indices, const Point<3>& pos, double hxLeft,
-			double hxRight, int ix, double hy = 0.0, int iy = 0,
-			double hz = 0.0, int iz = 0) const override {
+	void computePartialsForAdvection(
+			experimental::IReactionNetwork& network, double *val,
+			int *indices, const Point<3>& pos, double hxLeft, double hxRight,
+			int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
+			int iz = 0) const override {
 		// Doesn't do anything
 		return;
 	}

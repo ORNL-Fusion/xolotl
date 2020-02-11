@@ -3,10 +3,9 @@
 
 #include <boost/test/unit_test.hpp>
 #include <Diffusion1DHandler.h>
-#include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
 #include <Options.h>
-#include <DummyHandlerRegistry.h>
+#include <experimental/PSIReactionNetwork.h>
 #include <mpi.h>
 #include <fstream>
 #include <iostream>
@@ -44,22 +43,30 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Get its size
-	const int dof = network->getDOF();
-	// Initialize the rates
-	network->addGridPoints(3);
+	// Initialize kokkos
+	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
+	std::vector<double> temperatures;
 	for (int l = 0; l < 5; l++) {
 		grid.push_back((double) l);
+		temperatures.push_back(1000.0);
 	}
+
+	// Create the network
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = opts.getMaxImpurity();
+	NetworkType::AmountType maxD = opts.getMaxD();
+	NetworkType::AmountType maxT = opts.getMaxT();
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get its size
+	const int dof = network.getDOF();
 
 	// Create the diffusion handler
 	Diffusion1DHandler diffusionHandler;
@@ -68,10 +75,10 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	std::vector<IAdvectionHandler *> advectionHandlers;
 
 	// Create ofill
-	xolotlCore::IReactionNetwork::SparseFillMap ofill;
+	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize it
-	diffusionHandler.initializeOFill(*network, ofill);
+	diffusionHandler.initializeOFill(network, ofill);
 	diffusionHandler.initializeDiffusionGrid(advectionHandlers, grid, 5, 0);
 
 	// All the clusters diffuse except the 7-th and 8-th one
@@ -100,9 +107,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	network->setTemperature(1000.0, 0);
-	network->setTemperature(1000.0, 1);
-	network->setTemperature(1000.0, 2);
+	network.setTemperatures(temperatures);
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -121,7 +126,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	concVector[2] = conc + 2 * dof; // right
 
 	// Compute the diffusion at this grid point
-	diffusionHandler.computeDiffusion(*network, concVector, updatedConcOffset,
+	diffusionHandler.computeDiffusion(network, concVector, updatedConcOffset,
 			hx, hx, 0);
 
 	// Check the new values of updatedConcOffset
@@ -144,7 +149,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	double *valPointer = &val[0];
 
 	// Compute the partial derivatives for the diffusion a the grid point 1
-	diffusionHandler.computePartialsForDiffusion(*network, valPointer,
+	diffusionHandler.computePartialsForDiffusion(network, valPointer,
 			indicesPointer, hx, hx, 0);
 
 	// Check the values for the indices
@@ -168,6 +173,8 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
+	// Finalize kokkos
+	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 }

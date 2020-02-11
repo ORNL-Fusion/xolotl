@@ -3,10 +3,9 @@
 
 #include <boost/test/unit_test.hpp>
 #include <DummyAdvectionHandler.h>
-#include <HDF5NetworkLoader.h>
+#include <experimental/PSIReactionNetwork.h>
 #include <XolotlConfig.h>
 #include <Options.h>
-#include <DummyHandlerRegistry.h>
 #include <mpi.h>
 #include <fstream>
 #include <iostream>
@@ -40,28 +39,42 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	argv[1] = new char[parameterFile.length() + 1];
 	strcpy(argv[1], parameterFile.c_str());
 	argv[2] = 0; // null-terminate the array
-	// Initialize MPI for HDF5
+	// Initialize MPI
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
+	// Initialize kokkos
+	Kokkos::initialize();
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
+	// Create a grid
+	std::vector<double> grid;
+	std::vector<double> temperatures;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double) l);
+		temperatures.push_back(1000.0);
+	}
+
 	// Create the network
-	auto network = loader.generate(opts);
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = opts.getMaxImpurity();
+	NetworkType::AmountType maxD = opts.getMaxD();
+	NetworkType::AmountType maxT = opts.getMaxT();
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
-	const int dof = network->getDOF();
-	// Initialize the rates
-	network->addGridPoints(1);
+	const int dof = network.getDOF();
 
 	// Create the advection handler
 	DummyAdvectionHandler advectionHandler;
 
 	// Create ofill
-	xolotlCore::IReactionNetwork::SparseFillMap ofill;
+	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize it
-	advectionHandler.initialize(*network, ofill);
+	advectionHandler.initialize(network, ofill);
 
 	// Check the total number of advecting clusters, it should be 0 here
 	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 0);
@@ -80,7 +93,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	}
 
 	// Set the temperature to 1000 K to initialize the diffusion coefficients
-	network->setTemperature(1000.0);
+	network.setTemperatures(temperatures);
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -100,7 +113,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	Point<3> gridPosition { hx, 0.0, 0.0 };
 
 	// Compute the advection at this grid point
-	advectionHandler.computeAdvection(*network, gridPosition, concVector,
+	advectionHandler.computeAdvection(network, gridPosition, concVector,
 			updatedConcOffset, hx, hx, 1, 1);
 
 	// Check the new values of updatedConcOffset
@@ -116,6 +129,8 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
+	// Finalize kokkos
+	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 

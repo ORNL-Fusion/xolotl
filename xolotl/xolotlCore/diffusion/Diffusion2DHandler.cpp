@@ -22,7 +22,7 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 	}
 
 	// Initialize the grid position
-	Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	Point < 3 > gridPosition { 0.0, 0.0, 0.0 };
 
 	// Loop on the advection handlers
 	for (auto const& currAdvectionHandler : advectionHandlers) {
@@ -43,14 +43,14 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 				if (currAdvectionHandler->isPointOnSink(gridPosition)) {
 					// We have to find the corresponding reactant in the 
 					// diffusion cluster collection.
-					for (IReactant const& currAdvCluster : advecClusters) {
+					for (auto const& currAdvCluster : advecClusters) {
 						// Initialize n the index in the diffusion index vector
 						// TODO use std::find or std::find_if
 						int n = 0;
 						while (n < nDiff) {
-							IReactant const& currDiffCluster =
+							auto const currDiffCluster =
 									diffusingClusters[n];
-							if (&currDiffCluster == &currAdvCluster) {
+							if (currDiffCluster == currAdvCluster) {
 								break;
 							}
 							n++;
@@ -66,7 +66,7 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 	return;
 }
 
-void Diffusion2DHandler::computeDiffusion(const IReactionNetwork& network,
+void Diffusion2DHandler::computeDiffusion(experimental::IReactionNetwork& network,
 		double **concVector, double *updatedConcOffset, double hxLeft,
 		double hxRight, int ix, double sy, int iy, double, int) const {
 
@@ -77,21 +77,20 @@ void Diffusion2DHandler::computeDiffusion(const IReactionNetwork& network,
 	// diffusing clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int diffClusterIdx = 0;
-	for (IReactant const& currReactant : diffusingClusters) {
+	for (auto const& currId : diffusingClusters) {
 
-		auto const& cluster = static_cast<IReactant const&>(currReactant);
-		int index = cluster.getId() - 1;
+		auto cluster = network.getClusterCommon(currId);
 
 		// Get the initial concentrations
-		double oldConc = concVector[0][index]
+		double oldConc = concVector[0][currId]
 				* diffusionGrid[iy + 1][ix + 1][diffClusterIdx]; // middle
-		double oldLeftConc = concVector[1][index]
+		double oldLeftConc = concVector[1][currId]
 				* diffusionGrid[iy + 1][ix][diffClusterIdx]; // left
-		double oldRightConc = concVector[2][index]
+		double oldRightConc = concVector[2][currId]
 				* diffusionGrid[iy + 1][ix + 2][diffClusterIdx]; // right
-		double oldBottomConc = concVector[3][index]
+		double oldBottomConc = concVector[3][currId]
 				* diffusionGrid[iy][ix + 1][diffClusterIdx]; // bottom
-		double oldTopConc = concVector[4][index]
+		double oldTopConc = concVector[4][currId]
 				* diffusionGrid[iy + 2][ix + 1][diffClusterIdx]; // top
 
 		// Use a simple midpoint stencil to compute the concentration
@@ -107,7 +106,7 @@ void Diffusion2DHandler::computeDiffusion(const IReactionNetwork& network,
 						/ ((hxLeft + hxRight) * (hxLeft + hxRight)));
 
 		// Update the concentration of the cluster
-		updatedConcOffset[index] += conc;
+		updatedConcOffset[currId] += conc;
 
 		++diffClusterIdx;
 	}
@@ -116,7 +115,7 @@ void Diffusion2DHandler::computeDiffusion(const IReactionNetwork& network,
 }
 
 void Diffusion2DHandler::computePartialsForDiffusion(
-		const IReactionNetwork& network, double *val, int *indices,
+		experimental::IReactionNetwork& network, double *val, int *indices,
 		double hxLeft, double hxRight, int ix, double sy, int iy, double,
 		int) const {
 
@@ -127,14 +126,13 @@ void Diffusion2DHandler::computePartialsForDiffusion(
 	// diffusing clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int diffClusterIdx = 0;
-	for (IReactant const& currReactant : diffusingClusters) {
+	for (auto const& currId : diffusingClusters) {
 
-		auto const& cluster = static_cast<IReactant const&>(currReactant);
-		int index = cluster.getId() - 1;
+		auto cluster = network.getClusterCommon(currId);
 
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
-		indices[diffClusterIdx] = index;
+		indices[diffClusterIdx] = currId;
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, right, bottom, and top grid point

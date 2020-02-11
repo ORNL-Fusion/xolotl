@@ -2,13 +2,13 @@
 
 #include <plsm/Subpaving.h>
 
-#include <experimental/IReactionNetwork.h>
 #include <experimental/SpeciesEnumSequence.h>
 
 namespace xolotlCore
 {
 namespace experimental
 {
+
 template <typename TImpl>
 struct ReactionNetworkTraits
 {
@@ -25,7 +25,7 @@ class ClusterDataRef;
 template <typename TImpl>
 struct ReactionNetworkTypes
 {
-    using AmountType = typename IReactionNetwork::AmountType;
+    using AmountType = typename std::uint32_t;
     using Traits = ReactionNetworkTraits<TImpl>;
     using Species = typename Traits::Species;
     using Subpaving = plsm::Subpaving<AmountType, Traits::numSpecies, Species>;

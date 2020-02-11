@@ -86,10 +86,10 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	temperatureHandler->initializeTemperature(network, ofill, dfill);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion
-	diffusionHandler->initializeOFill(network, ofill);
+	diffusionHandler->initializeOFill(expNetwork, ofill);
 	// Loop on the advection handlers to account the other "off-diagonal" elements
 	for (int i = 0; i < advectionHandlers.size(); i++) {
-		advectionHandlers[i]->initialize(network, ofill);
+		advectionHandlers[i]->initialize(expNetwork, ofill);
 	}
 
 	// Get the local boundaries
@@ -421,14 +421,14 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				hxLeft, hxRight, xi);
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
-		diffusionHandler->computeDiffusion(network, concVector,
+		diffusionHandler->computeDiffusion(expNetwork, concVector,
 				updatedConcOffset, hxLeft, hxRight, xi - xs);
 
 		// ---- Compute advection over the locally owned part of the grid -----
 		// Set the grid position
 		gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 		for (int i = 0; i < advectionHandlers.size(); i++) {
-			advectionHandlers[i]->computeAdvection(network, gridPosition,
+			advectionHandlers[i]->computeAdvection(expNetwork, gridPosition,
 					concVector, updatedConcOffset, hxLeft, hxRight, xi - xs);
 		}
 
@@ -622,7 +622,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 						"MatSetValuesStencil (temperature) failed.");
 
 		// Get the partial derivatives for the diffusion
-		diffusionHandler->computePartialsForDiffusion(network, diffVals,
+		diffusionHandler->computePartialsForDiffusion(expNetwork, diffVals,
 				diffIndices, hxLeft, hxRight, xi - xs);
 
 		// Loop on the number of diffusion cluster to set the values in the Jacobian
@@ -651,7 +651,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		// Set the grid position
 		gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 		for (int l = 0; l < advectionHandlers.size(); l++) {
-			advectionHandlers[l]->computePartialsForAdvection(network,
+			advectionHandlers[l]->computePartialsForAdvection(expNetwork,
 					advecVals, advecIndices, gridPosition, hxLeft, hxRight,
 					xi - xs);
 

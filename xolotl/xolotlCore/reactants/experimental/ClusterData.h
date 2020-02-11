@@ -1,8 +1,12 @@
 #pragma once
 
 #include <Kokkos_View.hpp>
+#include <string>
 
 #include <experimental/ReactionNetworkTraits.h>
+
+// TODO: move it
+using namespace std::string_literals;
 
 namespace xolotlCore
 {

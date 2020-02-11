@@ -204,6 +204,12 @@ public:
         return findCluster(comp, plsm::onDevice);
     }
 
+    ClusterCommon<plsm::OnHost>
+    getClusterCommon(std::size_t clusterId) const override
+	{
+    	return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
+	}
+
     KOKKOS_INLINE_FUNCTION
     Cluster<plsm::OnDevice>
     getCluster(std::size_t clusterId, plsm::OnDevice)

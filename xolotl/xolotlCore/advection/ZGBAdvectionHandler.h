@@ -33,8 +33,8 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void initialize(const IReactionNetwork& network,
-			IReactionNetwork::SparseFillMap& ofillMap) override;
+	void initialize(experimental::IReactionNetwork& network,
+			experimental::IReactionNetwork::SparseFillMap& ofillMap) override;
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the number of advecting
@@ -60,9 +60,9 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computeAdvection(const IReactionNetwork& network, const Point<3>& pos,
-			double **concVector, double *updatedConcOffset, double hxLeft,
-			double hxRight, int ix, double hy = 0.0, int iy = 0,
+	void computeAdvection(experimental::IReactionNetwork& network,
+			const Point<3>& pos, double **concVector, double *updatedConcOffset,
+			double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override;
 
 	/**
@@ -74,10 +74,11 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computePartialsForAdvection(const IReactionNetwork& network,
-			double *val, int *indices, const Point<3>& pos, double hxLeft,
-			double hxRight, int ix, double hy = 0.0, int iy = 0,
-			double hz = 0.0, int iz = 0) const override;
+	void computePartialsForAdvection(
+			experimental::IReactionNetwork& network, double *val,
+			int *indices, const Point<3>& pos, double hxLeft, double hxRight,
+			int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
+			int iz = 0) const override;
 
 	/**
 	 * Compute the indices that will determine where the partial derivatives will
