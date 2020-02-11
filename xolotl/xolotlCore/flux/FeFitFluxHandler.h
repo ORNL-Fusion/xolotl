@@ -63,11 +63,11 @@ public:
 		auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 		// Check that the helium cluster is present in the network
 		// TODO: is there a way to do that in experimental?
-//		if (!cluster) {
-//			throw std::string(
-//					"\nThe single helium cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nThe single helium cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 
 		// Look for interstitial now
@@ -76,11 +76,11 @@ public:
 		}
 		comp[NetworkType::Species::I] = 1;
 		cluster = psiNetwork->findCluster(comp, plsm::onHost);
-//		if (!cluster) {
-//			throw std::string(
-//					"\nThe single interstitial cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nThe single interstitial cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 
 		// Look for vacancies now
@@ -89,51 +89,51 @@ public:
 		}
 		comp[NetworkType::Species::V] = 1;
 		cluster = psiNetwork->findCluster(comp, plsm::onHost);
-//		if (!cluster) {
-//			throw std::string(
-//					"\nThe single vacancy cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nThe single vacancy cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 2;
 		cluster = psiNetwork->findCluster(comp, plsm::onHost);
-//		if (!cluster) {
-//			throw std::string(
-//					"\nThe double vacancy cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nThe double vacancy cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 3;
 		cluster = psiNetwork->findCluster(comp, plsm::onHost);
-//		if (!cluster) {
-//			throw std::string(
-//					"\nThe triple vacancy cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nThe triple vacancy cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 4;
 		cluster = psiNetwork->findCluster(comp, plsm::onHost);
-//		if (!cluster) {
-//			throw std::string(
-//					"\nThe quadruple vacancy cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nThe quadruple vacancy cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 5;
 		cluster = psiNetwork->findCluster(comp, plsm::onHost);
-//		if (!cluster) {
-//			throw std::string(
-//					"\nVacancy 5 cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nVacancy 5 cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 9;
 		cluster = psiNetwork->findCluster(comp, plsm::onHost);
-//		if (!cluster) {
-//			throw std::string(
-//					"\nVacancy 9 cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nVacancy 9 cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 
 		return;

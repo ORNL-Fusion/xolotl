@@ -149,12 +149,12 @@ public:
 				comp[clusterSpecies] = std::stoi(tokens[1]);
 				auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 				// Check that it is present in the network
-//				if (!cluster) {
-//					throw std::string(
-//							"\nThe requested cluster is not present in the network: "
-//									+ tokens[0] + "_" + tokens[1]
-//									+ ", cannot use the flux option!");
-//				} else
+				if (cluster.getId() == plsm::invalid<std::size_t>) {
+					throw std::string(
+							"\nThe requested cluster is not present in the network: "
+									+ tokens[0] + "_" + tokens[1]
+									+ ", cannot use the flux option!");
+				} else
 					fluxIndices.push_back(cluster.getId());
 
 				// Get the reduction factor

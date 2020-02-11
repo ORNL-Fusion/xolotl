@@ -64,11 +64,11 @@ public:
 		comp[NetworkType::Species::Xe] = 1;
 		auto cluster = neNetwork.findCluster(comp, plsm::onHost);
 		// Check that the helium cluster is present in the network
-//		if (!cluster) {
-//			throw std::string(
-//					"\nThe single xenon cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nThe single xenon cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 
 		return;

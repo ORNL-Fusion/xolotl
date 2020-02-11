@@ -87,11 +87,11 @@ public:
 		comp[NetworkType::Species::V] = 1;
 		auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 		// Check that the vacancy cluster is present in the network
-//		if (!cluster) {
-//			throw std::string(
-//					"\nThe single vacancy cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nThe single vacancy cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 
 		// Set the flux index corresponding the the single interstitial cluster here
@@ -102,11 +102,11 @@ public:
 		comp[NetworkType::Species::I] = 1;
 		cluster = psiNetwork->findCluster(comp, plsm::onHost);
 		// Check that the interstitial cluster is present in the network
-//		if (!cluster) {
-//			throw std::string(
-//					"\nThe single interstitial cluster is not present in the network, "
-//							"cannot use the flux option!");
-//		}
+		if (cluster.getId() == plsm::invalid<std::size_t>) {
+			throw std::string(
+					"\nThe single interstitial cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
 		fluxIndices.push_back(cluster.getId());
 
 		return;
@@ -126,8 +126,10 @@ public:
 			return;
 
 		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] += incidentFluxVec[0][xi - surfacePos]; // V
-		updatedConcOffset[fluxIndices[1]] += incidentFluxVec[0][xi - surfacePos]; // I
+		updatedConcOffset[fluxIndices[0]] +=
+				incidentFluxVec[0][xi - surfacePos]; // V
+		updatedConcOffset[fluxIndices[1]] +=
+				incidentFluxVec[0][xi - surfacePos]; // I
 
 		return;
 	}

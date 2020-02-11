@@ -55,6 +55,13 @@ public:
 		for (std::size_t i = 0; i < 7; i++) {
 			comp[NetworkType::Species::He] = i;
 			auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
+			// Check that the helium cluster is present in the network
+			if (cluster.getId() == plsm::invalid<std::size_t>) {
+				throw std::string(
+						"\nThe helium cluster of size " + std::to_string(i)
+								+ "is not present in the network, "
+										"cannot use the advection option!");
+			}
 
 			// Get its diffusion coefficient
 			double diffFactor = cluster.getDiffusionFactor();
