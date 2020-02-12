@@ -79,9 +79,6 @@ public:
 			return;
 		}
 
-		// Skip the boundaries
-		if (xi == surfacePos || xi == xGrid.size() - 3) return;
-
 		// Update the concentration array
 		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
 
