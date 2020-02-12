@@ -1734,7 +1734,7 @@ double PSIClusterReactionNetwork::getTotalBubbleConcentration(int minSize) {
 		auto& comp = cluster.getComposition();
 		double size = comp[toCompIdx(Species::He)];
 
-		// Add the concentration times the He content to the total helium concentration
+		// Add the concentration to the total bubble concentration
 		if (size >= minSize)
 			conc += cluster.getConcentration();
 	}
@@ -1746,8 +1746,8 @@ double PSIClusterReactionNetwork::getTotalBubbleConcentration(int minSize) {
 		auto const& cluster =
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
-		// Add its total helium concentration helium concentration
-		conc += cluster.getTotalAtomConcentration(0, minSize);
+		// Add its total concentration to the concentration
+		conc += cluster.getTotalConcentration(minSize);
 	}
 
 	return conc;
