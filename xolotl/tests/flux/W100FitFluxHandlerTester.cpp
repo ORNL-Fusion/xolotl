@@ -13,6 +13,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 /**
  * The test suite is responsible for testing the W100FitFluxHandler.
  */
@@ -39,8 +51,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-	// Initialize kokkos
-	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -97,9 +107,9 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.444777, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.247638, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.10758, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.444777, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.247638, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.10758, 0.01);
 
 	return;
 }
@@ -318,9 +328,9 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 1.111943, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.619095, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.268961, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 1.111943, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.619095, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.268961, 0.01);
 
 	return;
 }
@@ -411,9 +421,9 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 1111.94, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 619.095, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 268.961, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 1111.94, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 619.095, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 268.961, 0.01);
 	// Check the value of the flux amplitude
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 2500.0);
 
@@ -437,9 +447,9 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 667.166, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 371.457, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 161.377, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 667.166, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 371.457, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 161.377, 0.01);
 	// Check the value of the flux amplitude
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 1500.0);
 
@@ -449,8 +459,6 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
-	// Finalize kokkos
-	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 

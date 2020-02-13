@@ -14,6 +14,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 /**
  * The test suite is responsible for testing the PulsedFitFluxHandler.
  */
@@ -40,8 +52,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-	// Initialize kokkos
-	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -94,8 +104,8 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 			surfacePos);
 
 	// Check the value at some grid point
-	BOOST_REQUIRE_CLOSE(newConcentration[250], 5.0295072885924443e-08, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[252], 5.0295072885924443e-08, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[200], 5.0295072885924443e-08, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[202], 5.0295072885924443e-08, 0.01);
 
 	// Check that the flux is 0.0 at later time
 	currTime = 8.0e-4;
@@ -106,11 +116,9 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 			surfacePos);
 
 	// Check the value at some grid point
-	BOOST_REQUIRE_CLOSE(newConcentration[110], 0.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[112], 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[88], 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[90], 0.0, 0.01);
 
-	// Finalize kokkos
-	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 

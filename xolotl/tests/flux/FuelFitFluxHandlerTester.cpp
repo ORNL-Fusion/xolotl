@@ -14,6 +14,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 /**
  * The test suite is responsible for testing the WFitFluxHandler.
  */
@@ -40,8 +52,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-	// Initialize kokkos
-	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -101,8 +111,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
-	// Finalize kokkos
-	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 

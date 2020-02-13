@@ -13,6 +13,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 /**
  * This suite is responsible for testing the Diffusion1DHandler.
  */
@@ -43,8 +55,6 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-	// Initialize kokkos
-	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -81,14 +91,15 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	diffusionHandler.initializeOFill(network, ofill);
 	diffusionHandler.initializeDiffusionGrid(advectionHandlers, grid, 5, 0);
 
-	// All the clusters diffuse except the 7-th and 8-th one
-	BOOST_REQUIRE_EQUAL(ofill[0][0], 0);
-	BOOST_REQUIRE_EQUAL(ofill[1][0], 1);
-	BOOST_REQUIRE_EQUAL(ofill[2][0], 2);
-	BOOST_REQUIRE_EQUAL(ofill[3][0], 3);
-	BOOST_REQUIRE_EQUAL(ofill[4][0], 4);
-	BOOST_REQUIRE_EQUAL(ofill[5][0], 5);
-	BOOST_REQUIRE_EQUAL(ofill[8][0], 8);
+	// Test which cluster diffuses
+	BOOST_REQUIRE_EQUAL(ofill[1][0], 1); // He_1
+	BOOST_REQUIRE_EQUAL(ofill[3][0], 3); // He_2
+	BOOST_REQUIRE_EQUAL(ofill[5][0], 5); // He_3
+	BOOST_REQUIRE_EQUAL(ofill[7][0], 7); // He_4
+	BOOST_REQUIRE_EQUAL(ofill[9][0], 9); // He_5
+	BOOST_REQUIRE_EQUAL(ofill[11][0], 11); // He_6
+	BOOST_REQUIRE_EQUAL(ofill[13][0], 13); // He_7
+	BOOST_REQUIRE_EQUAL(ofill[0][0], 0); // V_1
 
 	// Check the total number of diffusing clusters
 	BOOST_REQUIRE_EQUAL(diffusionHandler.getNumberOfDiffusing(), 8);
@@ -108,6 +119,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	network.setTemperatures(temperatures);
+	network.syncClusterDataOnHost();
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -130,15 +142,15 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 			hx, hx, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 4.632e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 2.2685e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], 9.1268e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 1.2051e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 8.9687e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 2.2213e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 3.4801e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not diffuse
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 3.6483e+08, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 3.7081e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 1.8160e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 7.3065e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 9.6476e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 7.1800e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[11], 1.7783e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[13], 2.7860e+09, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[15], 0.0, 0.01); // He_8 does not diffuse
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 2.9207e+08, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();
@@ -155,26 +167,24 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 0);
 	BOOST_REQUIRE_EQUAL(indices[1], 1);
-	BOOST_REQUIRE_EQUAL(indices[2], 2);
-	BOOST_REQUIRE_EQUAL(indices[3], 3);
-	BOOST_REQUIRE_EQUAL(indices[4], 4);
-	BOOST_REQUIRE_EQUAL(indices[5], 5);
-	BOOST_REQUIRE_EQUAL(indices[6], 6);
-	BOOST_REQUIRE_EQUAL(indices[7], 8);
+	BOOST_REQUIRE_EQUAL(indices[2], 3);
+	BOOST_REQUIRE_EQUAL(indices[3], 5);
+	BOOST_REQUIRE_EQUAL(indices[4], 7);
+	BOOST_REQUIRE_EQUAL(indices[5], 9);
+	BOOST_REQUIRE_EQUAL(indices[6], 11);
+	BOOST_REQUIRE_EQUAL(indices[7], 13);
 
 	// Check some values
-	BOOST_REQUIRE_CLOSE(val[1], 6.41544e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 3.14191e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 3.14191e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(val[6], -2.52821e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(val[9], -3.33828e+09, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 505312, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 6415444736, 0.01);
+	BOOST_REQUIRE_CLOSE(val[5], 6415444736, 0.01);
+	BOOST_REQUIRE_CLOSE(val[6], -6283827232, 0.01);
+	BOOST_REQUIRE_CLOSE(val[9], -2528210084, 0.01);
 
 	// Remove the created file
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
-	// Finalize kokkos
-	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 }

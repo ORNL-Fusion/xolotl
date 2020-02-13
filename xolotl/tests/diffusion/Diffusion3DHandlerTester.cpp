@@ -13,6 +13,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 /**
  * This suite is responsible for testing the Diffusion3DHandler.
  */
@@ -43,8 +55,6 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Initialize MPI
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-	// Initialize kokkos
-	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -104,6 +114,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	network.setTemperatures(temperatures);
+	network.syncClusterDataOnHost();
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -133,15 +144,15 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 			hx, hx, 0, sy, 1, sz, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 4.215e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 2.0643e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], 8.3054e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 1.0967e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 8.1616e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 2.0214e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], 3.1669e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not diffuse
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 3.3200e+09, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 3.3744e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 1.6526e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 6.6489e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 8.7794e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 6.5338e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[11], 1.6182e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[13], 2.5353e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[15], 0.0, 0.01); // He_8 does not diffuse
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 2.6578e+09, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();
@@ -158,26 +169,24 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 0);
 	BOOST_REQUIRE_EQUAL(indices[1], 1);
-	BOOST_REQUIRE_EQUAL(indices[2], 2);
-	BOOST_REQUIRE_EQUAL(indices[3], 3);
-	BOOST_REQUIRE_EQUAL(indices[4], 4);
-	BOOST_REQUIRE_EQUAL(indices[5], 5);
-	BOOST_REQUIRE_EQUAL(indices[6], 6);
-	BOOST_REQUIRE_EQUAL(indices[7], 8);
+	BOOST_REQUIRE_EQUAL(indices[2], 3);
+	BOOST_REQUIRE_EQUAL(indices[3], 5);
+	BOOST_REQUIRE_EQUAL(indices[4], 7);
+	BOOST_REQUIRE_EQUAL(indices[5], 9);
+	BOOST_REQUIRE_EQUAL(indices[6], 11);
+	BOOST_REQUIRE_EQUAL(indices[7], 13);
 
 	// Check some values
-	BOOST_REQUIRE_CLOSE(val[0], -3.84927e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 6.41544e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(val[12], 3.14191e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(val[20], 1.26411e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(val[26], 1.66914e+09, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -3031876, 0.01);
+	BOOST_REQUIRE_CLOSE(val[5], 505312, 0.01);
+	BOOST_REQUIRE_CLOSE(val[12], 6415444736, 0.01);
+	BOOST_REQUIRE_CLOSE(val[20], 3141913616, 0.01);
+	BOOST_REQUIRE_CLOSE(val[26], 1264105042, 0.01);
 
 	// Remove the created file
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
-	// Finalize kokkos
-	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 }

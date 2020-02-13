@@ -14,6 +14,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 /**
  * The test suite is responsible for testing the FeFitFluxHandler.
  */
@@ -40,8 +52,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-	// Initialize kokkos
-	Kokkos::initialize();
 
 	// Create an empty grid because we want 0D
 	std::vector<double> grid;
@@ -57,8 +67,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(),
-			opts);
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -105,8 +114,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
-	// Finalize kokkos
-	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 

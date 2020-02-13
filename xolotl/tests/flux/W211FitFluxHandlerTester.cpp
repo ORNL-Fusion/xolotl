@@ -14,6 +14,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 /**
  * The test suite is responsible for testing the W211FitFluxHandler.
  */
@@ -40,8 +52,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-	// Initialize kokkos
-	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -59,8 +69,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(),
-			opts);
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -99,16 +108,14 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 			surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[10], 0.385429, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 0.286585, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[30], 0.127985, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.385429, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.286585, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.127985, 0.01);
 
 	// Remove the created file
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
-	// Finalize kokkos
-	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 

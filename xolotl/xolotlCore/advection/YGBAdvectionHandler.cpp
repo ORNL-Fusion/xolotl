@@ -22,7 +22,7 @@ void YGBAdvectionHandler::initialize(experimental::IReactionNetwork& network,
 	}
 
 	// Loop on helium clusters from size 1 to 7
-	for (std::size_t i = 0; i < 7; i++) {
+	for (std::size_t i = 1; i <= 7; i++) {
 		comp[NetworkType::Species::He] = i;
 		auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 

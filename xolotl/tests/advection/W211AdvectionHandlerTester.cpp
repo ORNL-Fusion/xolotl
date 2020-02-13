@@ -13,6 +13,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 /**
  * This suite is responsible for testing the W211AdvectionHandler.
  */
@@ -42,8 +54,6 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	// Initialize MPI
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-	// Initialize kokkos
-	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -82,13 +92,13 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 7);
 
 	// Check the clusters in ofill
-	BOOST_REQUIRE_EQUAL(ofill[0][0], 0);
 	BOOST_REQUIRE_EQUAL(ofill[1][0], 1);
-	BOOST_REQUIRE_EQUAL(ofill[2][0], 2);
 	BOOST_REQUIRE_EQUAL(ofill[3][0], 3);
-	BOOST_REQUIRE_EQUAL(ofill[4][0], 4);
 	BOOST_REQUIRE_EQUAL(ofill[5][0], 5);
-	BOOST_REQUIRE_EQUAL(ofill[6][0], 6);
+	BOOST_REQUIRE_EQUAL(ofill[7][0], 7);
+	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
+	BOOST_REQUIRE_EQUAL(ofill[11][0], 11);
+	BOOST_REQUIRE_EQUAL(ofill[13][0], 13);
 
 	// Set the size parameter in the x direction
 	double hx = 1.0;
@@ -105,6 +115,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	network.setTemperatures(temperatures);
+	network.syncClusterDataOnHost();
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -128,15 +139,15 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 			updatedConcOffset, hx, hx, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], -9.01011e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -1.23078e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], -1.85189e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -3.10696e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], -3.46611e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -1.76402e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[6], -5.72144e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -8.2343e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], -1.2691e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], -2.1122e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], -3.8613e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], -4.6389e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[11], -2.5188e+10, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[13], -8.6496e+09, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[15], 0.0, 0.01); // Does not advect
 
 	// Initialize the rows, columns, and values to set in the Jacobian
 	int nAdvec = advectionHandler.getNumberOfAdvecting();
@@ -151,13 +162,13 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 			indicesPointer, gridPosition, hx, hx, 0);
 
 	// Check the values for the indices
-	BOOST_REQUIRE_EQUAL(indices[0], 0);
-	BOOST_REQUIRE_EQUAL(indices[1], 1);
-	BOOST_REQUIRE_EQUAL(indices[2], 2);
-	BOOST_REQUIRE_EQUAL(indices[3], 3);
-	BOOST_REQUIRE_EQUAL(indices[4], 4);
-	BOOST_REQUIRE_EQUAL(indices[5], 5);
-	BOOST_REQUIRE_EQUAL(indices[6], 6);
+	BOOST_REQUIRE_EQUAL(indices[0], 1);
+	BOOST_REQUIRE_EQUAL(indices[1], 3);
+	BOOST_REQUIRE_EQUAL(indices[2], 5);
+	BOOST_REQUIRE_EQUAL(indices[3], 7);
+	BOOST_REQUIRE_EQUAL(indices[4], 9);
+	BOOST_REQUIRE_EQUAL(indices[5], 11);
+	BOOST_REQUIRE_EQUAL(indices[6], 13);
 
 	// Check values
 	BOOST_REQUIRE_CLOSE(val[0], -332783240.0, 0.01);
@@ -177,8 +188,6 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
-	// Finalize kokkos
-	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 }

@@ -13,6 +13,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 /**
  * This suite is responsible for testing the DummyDiffusionHandler.
  */
@@ -43,8 +55,6 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Initialize MPI for HDF5
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
-	// Initialize kokkos
-	Kokkos::initialize();
 
 	// Create a grid
 	std::vector<double> grid;
@@ -95,6 +105,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Set the temperature to 1000 K to initialize the diffusion coefficients
 	network.setTemperatures(temperatures);
+	network.syncClusterDataOnHost();
 
 	// Get pointers
 	double *conc = &concentration[0];
@@ -119,9 +130,9 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 0.0, 0.01); // Does not diffuse
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 0.0, 0.01); // Does not diffuse
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[2], 0.0, 0.01); // Does not diffuse
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 0.0, 0.01); // Does not diffuse
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[4], 0.0, 0.01); // Does not diffuse
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 0.0, 0.01); // Does not diffuse
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not diffuse
 
 	// Don't even test the Jacobian because the number of diffusing cluster is 0
 
@@ -129,8 +140,6 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	std::string tempFile = "param.txt";
 	std::remove(tempFile.c_str());
 
-	// Finalize kokkos
-	Kokkos::finalize();
 	// Finalize MPI
 	MPI_Finalize();
 
