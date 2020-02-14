@@ -2,7 +2,7 @@
 #define IHETEROGENEOUSNUCLEATIONHANDLER_H
 
 // Includes
-#include <IReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 #include <memory>
 
 namespace xolotlCore {
@@ -27,8 +27,10 @@ public:
 	 * It must also initialize the rates of the reaction.
 	 *
 	 * @param network The network
+	 * @param dfill the matrix for the reaction connectivities
 	 */
-	virtual void initialize(const IReactionNetwork& network) = 0;
+	virtual void initialize(experimental::IReactionNetwork& network,
+			experimental::IReactionNetwork::SparseFillMap& dfill) = 0;
 
 	/**
 	 * This method update the rate for the heterogeneous nucleation if the fission rate
@@ -52,18 +54,19 @@ public:
 	 *
 	 * @param network The network
 	 * @param concOffset The pointer to the array of concentration at the grid
-	 * point where the trap-mutation is computed
+	 * point where the nucleation is computed
 	 * @param updatedConcOffset The pointer to the array of the concentration
-	 * at the grid point where the trap-mutation is computed used to find the
+	 * at the grid point where the nucleation is computed used to find the
 	 * next solution
 	 * @param xi The index of the position on the grid in the depth direction
 	 * @param xs The beginning of the grid on this process
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 */
-	virtual void computeHeterogeneousNucleation(const IReactionNetwork& network,
-			double *concOffset, double *updatedConcOffset, int xi, int xs,
-			int yj = 0, int zk = 0) = 0;
+	virtual void computeHeterogeneousNucleation(
+			experimental::IReactionNetwork& network, double *concOffset,
+			double *updatedConcOffset, int xi, int xs, int yj = 0,
+			int zk = 0) = 0;
 
 	/**
 	 * Compute the partials due to the heterogeneous nucleation for all the
@@ -71,8 +74,10 @@ public:
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *
 	 * @param network The network
+	 * @param concOffset The pointer to the array of concentration at the grid
+	 * point where the nucleation is computed
 	 * @param val The pointer to the array that will contain the values of
-	 * partials for the trap-mutation
+	 * partials for the nucleation
 	 * @param indices The pointer to the array that will contain the indices
 	 * of the clusters
 	 * @param xi The index of the position on the grid in the depth direction
@@ -82,7 +87,8 @@ public:
 	 *
 	 * @return true if nucleation is happening
 	 */
-	virtual bool computePartialsForHeterogeneousNucleation(const IReactionNetwork& network,
+	virtual bool computePartialsForHeterogeneousNucleation(
+			experimental::IReactionNetwork& network, double *concOffset,
 			double *val, int *indices, int xi, int xs, int yj = 0,
 			int zk = 0) = 0;
 

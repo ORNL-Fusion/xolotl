@@ -2533,7 +2533,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	// Get the modified trap-mutation handler to reinitialize it
 	auto mutationHandler = solverHandler.getMutationHandler();
 	auto advecHandlers = solverHandler.getAdvectionHandlers();
-	mutationHandler->initializeIndex1D(surfacePos, network, advecHandlers, grid,
+	mutationHandler->initializeIndex1D(surfacePos, solverHandler.getExpNetwork(), advecHandlers, grid,
 			xm, xs);
 
 	// Write the updated surface position

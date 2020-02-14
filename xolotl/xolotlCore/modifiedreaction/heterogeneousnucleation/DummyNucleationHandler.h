@@ -34,7 +34,8 @@ public:
 	 *
 	 * \see IHeterogeneousNucleationHandler.h
 	 */
-	void initialize(const IReactionNetwork& network) {
+	void initialize(experimental::IReactionNetwork& network,
+			experimental::IReactionNetwork::SparseFillMap& dfill) {
 		// Doesn't do anything
 		return;
 	}
@@ -66,7 +67,7 @@ public:
 	 *
 	 * \see IHeterogeneousNucleationHandler.h
 	 */
-	void computeHeterogeneousNucleation(const IReactionNetwork& network,
+	void computeHeterogeneousNucleation(experimental::IReactionNetwork& network,
 			double *concOffset, double *updatedConcOffset, int xi, int xs,
 			int yj = 0, int zk = 0) {
 		// Doesn't do anything
@@ -84,8 +85,8 @@ public:
 	 * \see IHeterogeneousNucleationHandler.h
 	 */
 	bool computePartialsForHeterogeneousNucleation(
-			const IReactionNetwork& network, double *val, int *indices, int xi,
-			int xs, int yj = 0, int zk = 0) {
+			experimental::IReactionNetwork& network, double *concOffset,
+			double *val, int *indices, int xi, int xs, int yj = 0, int zk = 0) {
 		// Doesn't do anything
 		return false;
 	}

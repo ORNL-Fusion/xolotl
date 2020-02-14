@@ -110,6 +110,9 @@ public:
     computeAllPartials(ConcentrationsView concentrations,
         Kokkos::View<double*> values, std::size_t gridIndex) = 0;
 
+    virtual double
+    getLargestRate() = 0;
+
     /**
      * Get the diagonal fill for the Jacobian, corresponding to the reactions.
      * Also populates the inverse map.

@@ -54,18 +54,20 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature(const IReactionNetwork& network,
-			IReactionNetwork::SparseFillMap& ofillMap,
-			IReactionNetwork::SparseFillMap& dfillMap) {
+	virtual void initializeTemperature(const int _dof,
+			experimental::IReactionNetwork::SparseFillMap& ofillMap,
+			experimental::IReactionNetwork::SparseFillMap& dfillMap) {
+
+		// TODO: do we need the DOF if the heat equation is not ON?
 
 		// Set dof
-		dof = network.getDOF();
+		dof = _dof;
 
 		// Add the temperature to ofill
-		ofillMap[(dof - 1)].emplace_back(dof - 1);
+		ofillMap[dof].emplace_back(dof);
 
 		// Add the temperature to dfill
-		dfillMap[(dof - 1)].emplace_back(dof - 1);
+		dfillMap[dof].emplace_back(dof);
 
 		return;
 	}

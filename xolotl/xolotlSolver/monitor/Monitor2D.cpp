@@ -1538,8 +1538,9 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 		surfaceIndices.push_back(solverHandler.getSurfacePosition(i));
 	}
 
-	mutationHandler->initializeIndex2D(surfaceIndices, network, advecHandlers,
-			grid, xm, xs, ym, hy, ys);
+	mutationHandler->initializeIndex2D(surfaceIndices,
+			solverHandler.getExpNetwork(), advecHandlers, grid, xm, xs, ym, hy,
+			ys);
 
 	// Write the surface positions
 	if (procId == 0) {

@@ -1517,8 +1517,9 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 		surfaceIndices.push_back(temp);
 	}
 
-	mutationHandler->initializeIndex3D(surfaceIndices, network, advecHandlers,
-			grid, xm, xs, ym, hy, ys, zm, hz, zs);
+	mutationHandler->initializeIndex3D(surfaceIndices,
+			solverHandler.getExpNetwork(), advecHandlers, grid, xm, xs, ym, hy,
+			ys, zm, hz, zs);
 
 	// Write the surface positions
 	if (procId == 0) {

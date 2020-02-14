@@ -41,7 +41,8 @@ public:
 	 *
 	 * \see IHeterogeneousNucleationHandler.h
 	 */
-	virtual void initialize(const IReactionNetwork& network);
+	virtual void initialize(experimental::IReactionNetwork& network,
+			experimental::IReactionNetwork::SparseFillMap& dfill);
 
 	/**
 	 * This method update the rate for the heterogeneous nucleation if the fission rate
@@ -70,9 +71,9 @@ public:
 	 *
 	 * \see IHeterogeneousNucleationHandler.h
 	 */
-	virtual void computeHeterogeneousNucleation(const IReactionNetwork& network,
-			double *concOffset, double *updatedConcOffset, int xi, int xs,
-			int yj = 0, int zk = 0);
+	virtual void computeHeterogeneousNucleation(
+			experimental::IReactionNetwork& network, double *concOffset,
+			double *updatedConcOffset, int xi, int xs, int yj = 0, int zk = 0);
 
 	/**
 	 * Compute the partials due to the heterogeneous nucleation for all the
@@ -87,8 +88,8 @@ public:
 	 * \see IHeterogeneousNucleationHandler.h
 	 */
 	virtual bool computePartialsForHeterogeneousNucleation(
-			const IReactionNetwork& network, double *val, int *indices, int xi,
-			int xs, int yj = 0, int zk = 0);
+			experimental::IReactionNetwork& network, double *concOffset,
+			double *val, int *indices, int xi, int xs, int yj = 0, int zk = 0);
 
 };
 //end class HeterogeneousNucleationHandler

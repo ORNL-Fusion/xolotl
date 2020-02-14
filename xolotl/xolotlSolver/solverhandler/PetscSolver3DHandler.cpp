@@ -11,7 +11,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	network.reinitializeConnectivities();
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	// Set the position of the surface
 	// Loop on Y
@@ -73,7 +73,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 
 	ierr = DMDACreate3d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR,
 			DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX,
-			nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1, NULL,
+			nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof + 1, 1, NULL,
 			NULL, NULL, &da);
 	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
 			"DMDACreate3d failed.");
@@ -89,9 +89,6 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	advectionHandlers[0]->setLocation(
 			grid[surfacePosition[0][0] + 1] - grid[1]);
 
-	// Set the size of the partial derivatives vectors
-	reactingPartialsForCluster.resize(dof, 0.0);
-
 	/*  The only spatial coupling in the Jacobian is due to diffusion.
 	 *  The ofill (thought of as a dof by dof 2d (row-oriented) array represents
 	 *  the nonzero coupling between degrees of freedom at one point with degrees
@@ -105,7 +102,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	xolotlCore::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(network, ofill, dfill);
+	temperatureHandler->initializeTemperature(dof, ofill, dfill);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion
 	diffusionHandler->initializeOFill(expNetwork, ofill);
@@ -121,20 +118,20 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 			"DMDAGetCorners failed.");
 
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, xm, ym, zm);
-	mutationHandler->initializeIndex3D(surfacePosition, network,
+	mutationHandler->initialize(expNetwork, dfill, xm, ym, zm);
+	mutationHandler->initializeIndex3D(surfacePosition, expNetwork,
 			advectionHandlers, grid, xm, xs, ym, hY, ys, zm, hZ, zs);
 
 	// Initialize the re-solution handler here
 	// because it adds connectivity
-	resolutionHandler->initialize(network, electronicStoppingPower);
+	resolutionHandler->initialize(expNetwork, dfill, electronicStoppingPower);
 
 	// Get the diagonal fill
 	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	auto dfillsparse = ConvertToPetscSparseFillMap(dof, dfill);
-	auto ofillsparse = ConvertToPetscSparseFillMap(dof, ofill);
+	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
+	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
 	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
 	checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
 			"DMDASetBlockFills failed.");
@@ -142,6 +139,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	// Initialize the arrays for the reaction partial derivatives
 	reactionSize.resize(dof);
 	reactionStartingIdx.resize(dof);
+	reactingPartialsForCluster.resize(dof, 0.0);
 	auto nPartials = network.initPartialsSizes(reactionSize,
 			reactionStartingIdx);
 
@@ -203,7 +201,7 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscScalar *concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	// Get the single vacancy ID
 	auto singleVacancyCluster = network.get(xolotlCore::Species::V, 1);
@@ -218,7 +216,7 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 				concOffset = concentrations[k][j][i];
 
 				// Loop on all the clusters to initialize at 0.0
-				for (int n = 0; n < dof - 1; n++) {
+				for (int n = 0; n < dof; n++) {
 					concOffset[n] = 0.0;
 				}
 
@@ -227,7 +225,7 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 						/ 2.0 - grid[surfacePosition[j][k] + 1])
 						/ (grid[grid.size() - 1]
 								- grid[surfacePosition[j][k] + 1]), 0.0, 0.0 };
-				concOffset[dof - 1] = temperatureHandler->getTemperature(
+				concOffset[dof] = temperatureHandler->getTemperature(
 						gridPosition, 0.0);
 
 				// Initialize the vacancy concentration
@@ -271,7 +269,8 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 						network.setTemperature(temp, i - xs);
 						// Update the modified trap-mutation rate
 						// that depends on the network reaction rates
-						mutationHandler->updateTrapMutationRate(network);
+						mutationHandler->updateTrapMutationRate(
+								expNetwork.getLargestRate());
 						lastTemperature[i - xs] = temp;
 					}
 				}
@@ -335,7 +334,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	double atomConc = 0.0, totalAtomConc = 0.0;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	// Loop over grid points
 	for (PetscInt zk = frontOffset; zk < nZ - backOffset; zk++) {
@@ -450,13 +449,13 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 				// Update the network if the temperature changed
 				// left
-				double temperature = concs[zk][yj][xi - 1][dof - 1];
+				double temperature = concs[zk][yj][xi - 1][dof];
 				if (std::fabs(lastTemperature[xi - xs] - temperature) > 0.1) {
 					network.setTemperature(temperature, xi - xs);
 					lastTemperature[xi - xs] = temperature;
 				}
 				// right
-				temperature = concs[zk][yj][xi + 1][dof - 1];
+				temperature = concs[zk][yj][xi + 1][dof];
 				if (std::fabs(lastTemperature[xi + 2 - xs] - temperature)
 						> 0.1) {
 					network.setTemperature(temperature, xi + 2 - xs);
@@ -479,7 +478,8 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					network.setTemperature(temperature, xi + 1 - xs);
 					// Update the modified trap-mutation rate
 					// that depends on the network reaction rates
-					mutationHandler->updateTrapMutationRate(network);
+					mutationHandler->updateTrapMutationRate(
+							expNetwork.getLargestRate());
 					lastTemperature[xi + 1 - xs] = temperature;
 				}
 
@@ -513,11 +513,11 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				}
 
 				// ----- Compute the modified trap-mutation over the locally owned part of the grid -----
-				mutationHandler->computeTrapMutation(network, concOffset,
+				mutationHandler->computeTrapMutation(expNetwork, concOffset,
 						updatedConcOffset, xi - xs, yj - ys, zk - zs);
 
 				// ----- Compute the re-solution over the locally owned part of the grid -----
-				resolutionHandler->computeReSolution(network, concOffset,
+				resolutionHandler->computeReSolution(expNetwork, concOffset,
 						updatedConcOffset, xi, xs, yj, zk);
 
 				// ----- Compute the reaction fluxes over the locally owned part of the grid -----
@@ -557,7 +557,7 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	double sz = 1.0 / (hZ * hZ);
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	// Pointers to the PETSc arrays that start at the beginning (xs) of the
 	// local array!
@@ -700,13 +700,13 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 
 				// Update the network if the temperature changed
 				// left
-				double temperature = concs[zk][yj][xi - 1][dof - 1];
+				double temperature = concs[zk][yj][xi - 1][dof];
 				if (std::fabs(lastTemperature[xi - xs] - temperature) > 0.1) {
 					network.setTemperature(temperature, xi - xs);
 					lastTemperature[xi - xs] = temperature;
 				}
 				// right
-				temperature = concs[zk][yj][xi + 1][dof - 1];
+				temperature = concs[zk][yj][xi + 1][dof];
 				if (std::fabs(lastTemperature[xi + 2 - xs] - temperature)
 						> 0.1) {
 					network.setTemperature(temperature, xi + 2 - xs);
@@ -921,7 +921,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			"DMDAGetCorners failed.");
 
 	// The degree of freedom is the size of the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	// Pointer to the concentrations at a given grid point
 	PetscScalar *concOffset = nullptr;
@@ -1021,7 +1021,8 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					network.setTemperature(temperature, xi + 1 - xs);
 					// Update the modified trap-mutation rate that depends on the
 					// network reaction rates
-					mutationHandler->updateTrapMutationRate(network);
+					mutationHandler->updateTrapMutationRate(
+							expNetwork.getLargestRate());
 					lastTemperature[xi + 1 - xs] = temperature;
 				}
 
@@ -1036,7 +1037,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 						reactionVals, xi + 1 - xs);
 
 				// Update the column in the Jacobian that represents each DOF
-				for (int i = 0; i < dof - 1; i++) {
+				for (int i = 0; i < dof; i++) {
 					// Set grid coordinate and component number for the row
 					rowId.i = xi;
 					rowId.j = yj;
@@ -1080,7 +1081,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 				// Compute the partial derivative from modified trap-mutation at this grid point
 				int nMutating = mutationHandler->computePartialsForTrapMutation(
-						network, mutationVals, mutationIndices, xi - xs,
+						expNetwork, mutationVals, mutationIndices, xi - xs,
 						yj - ys, zk - zs);
 
 				// Loop on the number of helium undergoing trap-mutation to set the values
@@ -1136,9 +1137,9 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 				// Compute the partial derivative from re-solution at this grid point
 				int nResoluting =
-						resolutionHandler->computePartialsForReSolution(network,
-								resolutionVals, resolutionIndices, xi, xs, yj,
-								zk);
+						resolutionHandler->computePartialsForReSolution(
+								expNetwork, resolutionVals, resolutionIndices,
+								xi, xs, yj, zk);
 
 				// Loop on the number of xenon to set the values in the Jacobian
 				for (int i = 0; i < nResoluting; i++) {

@@ -14,13 +14,13 @@ file(GLOB SRC trapmutation/*.cpp resolution/*.cpp heterogeneousnucleation/*.cpp)
 
 #Include directories
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 
 #Add a library
 add_library(${LIBRARY_NAME} STATIC ${SRC})

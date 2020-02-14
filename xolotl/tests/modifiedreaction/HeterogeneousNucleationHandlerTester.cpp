@@ -3,16 +3,27 @@
 
 #include <boost/test/unit_test.hpp>
 #include <HeterogeneousNucleationHandler.h>
-#include <NEClusterNetworkLoader.h>
+#include <experimental/NEReactionNetwork.h>
 #include <XolotlConfig.h>
 #include <Options.h>
-#include <DummyHandlerRegistry.h>
 #include <mpi.h>
 #include <fstream>
 #include <iostream>
 
 using namespace std;
 using namespace xolotlCore;
+
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
 
 /**
  * This suite is responsible for testing the HeterogeneousNucleationHandler.
@@ -45,34 +56,43 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 	MPI_Init(&argc, &argv);
 	opts.readParams(argc, argv);
 
-	// Create the network loader
-	NEClusterNetworkLoader loader = NEClusterNetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Get its size
-	const int dof = network->getDOF();
-
-	// Suppose we have a grid with 3 grip points and distance of
-	// 0.1 nm between grid points
-	int nGrid = 3;
-	// Initialize the rates
-	network->addGridPoints(nGrid);
+	// Create a grid
 	std::vector<double> grid;
+	std::vector<double> temperatures;
+	int nGrid = 3;
 	for (int l = 0; l < nGrid; l++) {
 		grid.push_back((double) l * 0.1);
-		network->setTemperature(1800.0, l);
+		temperatures.push_back(1800.0);
 	}
-	// Set the surface position
+	// Specify the surface position
 	int surfacePos = 0;
+
+	// Create the network
+	using NetworkType = experimental::NEReactionNetwork;
+	NetworkType::AmountType maxXe = opts.getMaxImpurity();
+	NetworkType network( { maxXe }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get its size
+	const int dof = network.getDOF();
 
 	// Create the re-solution handler
 	HeterogeneousNucleationHandler nucleationHandler;
 
 	// Initialize it
-	nucleationHandler.initialize(*network);
+	xolotlCore::experimental::IReactionNetwork::SparseFillMap dfill;
+	nucleationHandler.initialize(network, dfill);
 	nucleationHandler.setFissionYield(0.5);
 	nucleationHandler.updateHeterogeneousNucleationRate(1.0);
+
+	// Check some values in dfill
+	BOOST_REQUIRE_EQUAL(dfill[1][0], 1);
+	BOOST_REQUIRE_EQUAL(dfill[3][0], 3);
+	BOOST_REQUIRE_EQUAL(dfill[5][0], 5);
+	BOOST_REQUIRE_EQUAL(dfill[7][0], 7);
+	BOOST_REQUIRE_EQUAL(dfill[9][0], 9);
+	BOOST_REQUIRE_EQUAL(dfill[11][0], 11);
+	BOOST_REQUIRE_EQUAL(dfill[13][0], 13);
 
 	// The arrays of concentration
 	double concentration[nGrid * dof];
@@ -92,12 +112,12 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 	double *concOffset = conc + 1 * dof;
 	double *updatedConcOffset = updatedConc + 1 * dof;
 
-	// Putting the concentrations in the network so that the rate for
-	// desorption is computed correctly
-	network->updateConcentrationsFromArray(concOffset);
+	// Set the temperature to compute the rates
+	network.setTemperatures(temperatures);
+	network.syncClusterDataOnHost();
 
 	// Compute the modified trap mutation at the grid point
-	nucleationHandler.computeHeterogeneousNucleation(*network, concOffset,
+	nucleationHandler.computeHeterogeneousNucleation(network, concOffset,
 			updatedConcOffset, 1, 0);
 
 	// Check the new values of updatedConcOffset
@@ -112,8 +132,8 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 	double *valPointer = &val[0];
 
 	// Compute the partial derivatives for the heterogeneous nucleation at the grid point 8
-	nucleationHandler.computePartialsForHeterogeneousNucleation(*network,
-			valPointer, indicesPointer, 1, 0);
+	nucleationHandler.computePartialsForHeterogeneousNucleation(network,
+			concOffset, valPointer, indicesPointer, 1, 0);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 0); // Xe_1
@@ -129,12 +149,8 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 		newConcentration[i] = 0.0;
 	}
 
-	// Putting the concentrations in the network so that the rate for
-	// desorption is computed correctly
-	network->updateConcentrationsFromArray(concOffset);
-
 	// Compute the modified trap mutation at the grid point
-	nucleationHandler.computeHeterogeneousNucleation(*network, concOffset,
+	nucleationHandler.computeHeterogeneousNucleation(network, concOffset,
 			updatedConcOffset, 1, 0);
 
 	// Check the new values of updatedConcOffset
@@ -142,8 +158,8 @@ BOOST_AUTO_TEST_CASE(checkNucleation) {
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], -37674.11, 0.01); // Xe_2
 
 	// Compute the partial derivatives for the heterogeneous nucleation at the grid point 8
-	nucleationHandler.computePartialsForHeterogeneousNucleation(*network,
-			valPointer, indicesPointer, 1, 0);
+	nucleationHandler.computePartialsForHeterogeneousNucleation(network,
+			concOffset, valPointer, indicesPointer, 1, 0);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 0); // Xe_1

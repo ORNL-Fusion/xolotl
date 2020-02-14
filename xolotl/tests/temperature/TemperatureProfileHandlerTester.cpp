@@ -4,10 +4,8 @@
 #include <boost/test/unit_test.hpp>
 #include <fstream>
 #include <TemperatureProfileHandler.h>
-#include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
 #include <Options.h>
-#include <DummyHandlerRegistry.h>
 #include <mpi.h>
 
 using namespace std;
@@ -19,25 +17,13 @@ using namespace xolotlCore;
 BOOST_AUTO_TEST_SUITE (TemperatureProfileHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(check_getTemperature) {
-	// Initialize MPI for HDF5
+	// Initialize MPI
 	int argc = 0;
 	char **argv;
 	MPI_Init(&argc, &argv);
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Define the filename to load the network from
-	string sourceDir(XolotlSourceDirectory);
-	string pathToFile("/tests/testfiles/tungsten_diminutive.h5");
-	string filename = sourceDir + pathToFile;
-	// Give the filename to the network loader
-	loader.setFilename(filename);
-
-	// Create the options needed to load the network
-	Options opts;
-	// Load the network
-	auto network = loader.load(opts);
+	// Set the DOF
+	const int dof = 9;
 
 	// Create a file with temperature profile data
 	// First column with the time and the second with
@@ -57,12 +43,12 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	writeTempFile.close();
 
 	// Create ofill and dfill
-	xolotlCore::IReactionNetwork::SparseFillMap ofill;
-	xolotlCore::IReactionNetwork::SparseFillMap dfill;
+	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
+	xolotlCore::experimental::IReactionNetwork::SparseFillMap dfill;
 
 	// Create and initialize the temperature profile handler
 	auto testTemp = make_shared<TemperatureProfileHandler>("tempFile.dat");
-	testTemp->initializeTemperature(*network, ofill, dfill);
+	testTemp->initializeTemperature(dof, ofill, dfill);
 	Point<3> pos { 1.142857142857143, 0.0, 0.0 };
 
 	// Vector to hold the user defined time values

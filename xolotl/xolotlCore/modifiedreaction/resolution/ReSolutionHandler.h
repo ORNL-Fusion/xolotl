@@ -4,6 +4,7 @@
 // Includes
 #include <IReSolutionHandler.h>
 #include <Constants.h>
+#include <NDArray.h>
 
 namespace xolotlCore {
 
@@ -19,12 +20,12 @@ protected:
 		/**
 		 * The larger cluster in the pair
 		 */
-		IReactant* larger;
+		std::size_t larger;
 
 		/**
 		 * The smaller cluster in the pair
 		 */
-		IReactant* smaller;
+		std::size_t smaller;
 
 		/**
 		 * The fraction rate at this size
@@ -41,7 +42,7 @@ protected:
 		Array<double, 10> coefs;
 
 		//! The constructor
-		ReSolutionBase(IReactant* _larger, IReactant* _smaller, double _rate,
+		ReSolutionBase(std::size_t _larger, std::size_t _smaller, double _rate,
 				Array<double, 10> _coefs) :
 				larger(_larger), smaller(_smaller), fractionRate(_rate) {
 			for (int i = 0; i < 10; i++) {
@@ -95,7 +96,8 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	virtual void initialize(const IReactionNetwork& network,
+	virtual void initialize(experimental::IReactionNetwork& network,
+			xolotlCore::experimental::IReactionNetwork::SparseFillMap& dfill,
 			double electronicStoppingPower);
 
 	/**
@@ -124,7 +126,7 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	virtual void computeReSolution(const IReactionNetwork& network,
+	virtual void computeReSolution(experimental::IReactionNetwork& network,
 			double *concOffset, double *updatedConcOffset, int xi, int xs,
 			int yj = 0, int zk = 0);
 
@@ -141,8 +143,9 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	virtual int computePartialsForReSolution(const IReactionNetwork& network,
-			double *val, int *indices, int xi, int xs, int yj = 0, int zk = 0);
+	virtual int computePartialsForReSolution(
+			experimental::IReactionNetwork& network, double *val, int *indices,
+			int xi, int xs, int yj = 0, int zk = 0);
 
 	/**
 	 * Get the total number of clusters in the network that can undergo re-solution.

@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <memory>
-#include <IReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 #include "NDPoint.h"
 
 namespace xolotlCore {
@@ -25,13 +25,13 @@ public:
 	 * This operation initializes the variables that need to be
 	 * depending on the type of handler used.
 	 *
-	 * @param network The network
+	 * @param dof The number of degrees of freedom
 	 * @param ofillMap Map indicating row/column of diffusing variables in off-diagonal fill map.
 	 * @param dfillMap Map indicating row/column of diffusing variables in diagonal fill map.
 	 */
-	virtual void initializeTemperature(const IReactionNetwork& network,
-			IReactionNetwork::SparseFillMap& ofillMap,
-			IReactionNetwork::SparseFillMap& dfillMap) = 0;
+	virtual void initializeTemperature(const int dof,
+			experimental::IReactionNetwork::SparseFillMap& ofillMap,
+			experimental::IReactionNetwork::SparseFillMap& dfillMap) = 0;
 
 	/**
 	 * This operation returns the temperature at the given position

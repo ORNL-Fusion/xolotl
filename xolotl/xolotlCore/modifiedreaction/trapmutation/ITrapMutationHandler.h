@@ -2,7 +2,7 @@
 #define ITRAPMUTATIONHANDLER_H
 
 // Includes
-#include <IReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 #include <IAdvectionHandler.h>
 #include <memory>
 
@@ -30,12 +30,14 @@ public:
 	 * is allowed at each grid point.
 	 *
 	 * @param network The network
+	 * @param dfill Connectivity map
 	 * @param nx The number of grid points in the X direction
 	 * @param ny The number of grid points in the Y direction
 	 * @param nz The number of grid points in the Z direction
 	 */
-	virtual void initialize(const IReactionNetwork& network, int nx, int ny = 0,
-			int nz = 0) = 0;
+	virtual void initialize(experimental::IReactionNetwork& network,
+			xolotlCore::experimental::IReactionNetwork::SparseFillMap& dfill,
+			int nx, int ny = 0, int nz = 0) = 0;
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
@@ -48,7 +50,7 @@ public:
 	 * @param xs The beginning of the grid on this process
 	 */
 	virtual void initializeIndex1D(int surfacePos,
-			const IReactionNetwork& network,
+			experimental::IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int nx, int xs) = 0;
 
@@ -66,7 +68,7 @@ public:
 	 * @param ys The beginning of the grid on this process
 	 */
 	virtual void initializeIndex2D(std::vector<int> surfacePos,
-			const IReactionNetwork& network,
+			experimental::IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy,
 			int ys) = 0;
@@ -88,7 +90,7 @@ public:
 	 * @param zs The beginning of the grid on this process
 	 */
 	virtual void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-			const IReactionNetwork& network,
+			experimental::IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 			int nz, double hz, int zs) = 0;
@@ -98,9 +100,9 @@ public:
 	 * changed in the network, it should be called when temperature changes
 	 * for instance.
 	 *
-	 * @param network The network
+	 * @param rate The largest rate in the network
 	 */
-	virtual void updateTrapMutationRate(const IReactionNetwork& network) = 0;
+	virtual void updateTrapMutationRate(const double rate) = 0;
 
 	/**
 	 * This method set the boolean to remember if we want attenuation or not.
@@ -132,7 +134,7 @@ public:
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 */
-	virtual void computeTrapMutation(const IReactionNetwork& network,
+	virtual void computeTrapMutation(experimental::IReactionNetwork& network,
 			double *concOffset, double *updatedConcOffset, int xi, int yj = 0,
 			int zk = 0) = 0;
 
@@ -154,8 +156,9 @@ public:
 	 * @return The number of helium clusters that go through modified trap-mutation
 	 * at this grid point
 	 */
-	virtual int computePartialsForTrapMutation(const IReactionNetwork& network,
-			double *val, int *indices, int xi, int yj = 0, int zk = 0) = 0;
+	virtual int computePartialsForTrapMutation(
+			experimental::IReactionNetwork& network, double *val, int *indices,
+			int xi, int yj = 0, int zk = 0) = 0;
 
 	/**
 	 * Get the total number of clusters in the network that can undergo trap mutation.

@@ -2,7 +2,7 @@
 #define IRESOLUTIONHANDLER_H
 
 // Includes
-#include <IReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 #include <memory>
 
 namespace xolotlCore {
@@ -27,9 +27,11 @@ public:
 	 * It must also initialize the rates of the reactions.
 	 *
 	 * @param network The network
+	 * @param dfill The matrix for the connectivity
 	 * @param electronicStoppingPower To select which fit to use
 	 */
-	virtual void initialize(const IReactionNetwork& network,
+	virtual void initialize(experimental::IReactionNetwork& network,
+			xolotlCore::experimental::IReactionNetwork::SparseFillMap& dfill,
 			double electronicStoppingPower) = 0;
 
 	/**
@@ -63,7 +65,7 @@ public:
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 */
-	virtual void computeReSolution(const IReactionNetwork& network,
+	virtual void computeReSolution(experimental::IReactionNetwork& network,
 			double *concOffset, double *updatedConcOffset, int xi, int xs,
 			int yj = 0, int zk = 0) = 0;
 
@@ -86,9 +88,9 @@ public:
 	 * @return The number of xenon clusters that go re-soluted
 	 * at this grid point
 	 */
-	virtual int computePartialsForReSolution(const IReactionNetwork& network,
-			double *val, int *indices, int xi, int xs, int yj = 0,
-			int zk = 0) = 0;
+	virtual int computePartialsForReSolution(
+			experimental::IReactionNetwork& network, double *val, int *indices,
+			int xi, int xs, int yj = 0, int zk = 0) = 0;
 
 	/**
 	 * Get the total number of clusters in the network that can undergo re-solution.

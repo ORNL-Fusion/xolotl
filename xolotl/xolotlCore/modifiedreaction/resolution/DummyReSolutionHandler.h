@@ -35,7 +35,8 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	void initialize(const IReactionNetwork& network,
+	void initialize(experimental::IReactionNetwork& network,
+			xolotlCore::experimental::IReactionNetwork::SparseFillMap& dfill,
 			double electronicStoppingPower) {
 		return;
 	}
@@ -70,8 +71,9 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	void computeReSolution(const IReactionNetwork& network, double *concOffset,
-			double *updatedConcOffset, int xi, int xs, int yj = 0, int zk = 0) {
+	void computeReSolution(experimental::IReactionNetwork& network,
+			double *concOffset, double *updatedConcOffset, int xi, int xs,
+			int yj = 0, int zk = 0) {
 		return;
 	}
 
@@ -88,7 +90,7 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	int computePartialsForReSolution(const IReactionNetwork& network,
+	int computePartialsForReSolution(experimental::IReactionNetwork& network,
 			double *val, int *indices, int xi, int xs, int yj = 0, int zk = 0) {
 		return 0;
 	}

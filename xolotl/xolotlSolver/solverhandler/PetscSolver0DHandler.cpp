@@ -11,13 +11,13 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	network.reinitializeConnectivities();
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, 1, dof, 0,
+	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, 1, dof + 1, 0,
 	NULL, &da);
 	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
 			"DMDACreate1d failed.");
@@ -27,9 +27,6 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	ierr = DMSetUp(da);
 	checkPetscError(ierr,
 			"PetscSolver0DHandler::createSolverContext: DMSetUp failed.");
-
-	// Set the size of the partial derivatives vectors
-	reactingPartialsForCluster.resize(dof, 0.0);
 
 	/*  The only spatial coupling in the Jacobian is due to diffusion.
 	 *  The ofill (thought of as a dof by dof 2d (row-oriented) array represents
@@ -44,22 +41,22 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	xolotlCore::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(network, ofill, dfill);
+	temperatureHandler->initializeTemperature(dof, ofill, dfill);
 
 	// Initialize the re-solution handler here
 	// because it adds connectivity
-	resolutionHandler->initialize(network, electronicStoppingPower);
+	resolutionHandler->initialize(expNetwork, dfill, electronicStoppingPower);
 
 	// Initialize the nucleation handler here
 	// because it adds connectivity
-	nucleationHandler->initialize(network);
+	nucleationHandler->initialize(expNetwork, dfill);
 
 	// Get the diagonal fill
 	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	auto dfillsparse = ConvertToPetscSparseFillMap(dof, dfill);
-	auto ofillsparse = ConvertToPetscSparseFillMap(dof, ofill);
+	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
+	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
 	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
 	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
 			"DMDASetBlockFills failed.");
@@ -67,6 +64,7 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	// Initialize the arrays for the reaction partial derivatives
 	reactionSize.resize(dof);
 	reactionStartingIdx.resize(dof);
+	reactingPartialsForCluster.resize(dof, 0.0);
 	auto nPartials = network.initPartialsSizes(reactionSize,
 			reactionStartingIdx);
 
@@ -99,7 +97,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + the super clusters
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	// Get the single vacancy ID
 	auto singleVacancyCluster = network.get(xolotlCore::Species::V, 1);
@@ -111,13 +109,13 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	concOffset = concentrations[0];
 
 	// Loop on all the clusters to initialize at 0.0
-	for (int n = 0; n < dof - 1; n++) {
+	for (int n = 0; n < dof; n++) {
 		concOffset[n] = 0.0;
 	}
 
 	// Temperature
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
-	concOffset[dof - 1] = temperatureHandler->getTemperature(gridPosition, 0.0);
+	concOffset[dof] = temperatureHandler->getTemperature(gridPosition, 0.0);
 
 	// Get the last time step written in the HDF5 file
 	bool hasConcentrations = false;
@@ -198,9 +196,6 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// current grid point. They are accessed just like regular arrays.
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
-
 	// Set the grid position
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
@@ -230,11 +225,11 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
 
 	// ----- Compute the re-solution -----
-	resolutionHandler->computeReSolution(network, concOffset, updatedConcOffset,
-			0, 0);
+	resolutionHandler->computeReSolution(expNetwork, concOffset,
+			updatedConcOffset, 0, 0);
 
 	// ----- Compute the heterogeneous nucleation -----
-	nucleationHandler->computeHeterogeneousNucleation(network, concOffset,
+	nucleationHandler->computeHeterogeneousNucleation(expNetwork, concOffset,
 			updatedConcOffset, 0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
@@ -280,7 +275,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	PetscScalar *concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const int dof = expNetwork.getDOF();
 
 	// Arguments for MatSetValuesStencil called below
 	MatStencil rowId;
@@ -314,7 +309,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			reactionVals);
 
 	// Update the column in the Jacobian that represents each DOF
-	for (int i = 0; i < dof - 1; i++) {
+	for (int i = 0; i < dof; i++) {
 		// Set grid coordinate and component number for the row
 		rowId.i = 0;
 		rowId.c = i;
@@ -349,8 +344,8 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	MatStencil rowIds[5];
 
 	// Compute the partial derivative from re-solution at this grid point
-	int nResoluting = resolutionHandler->computePartialsForReSolution(network,
-			resolutionVals, resolutionIndices, 0, 0);
+	int nResoluting = resolutionHandler->computePartialsForReSolution(
+			expNetwork, resolutionVals, resolutionIndices, 0, 0);
 
 	// Loop on the number of xenon to set the values in the Jacobian
 	for (int i = 0; i < nResoluting; i++) {
@@ -383,8 +378,8 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	PetscInt nucleationIndices[2];
 
 	// Compute the partial derivative from nucleation at this grid point
-	if (nucleationHandler->computePartialsForHeterogeneousNucleation(network,
-			nucleationVals, nucleationIndices, 0, 0)) {
+	if (nucleationHandler->computePartialsForHeterogeneousNucleation(expNetwork,
+			concOffset, nucleationVals, nucleationIndices, 0, 0)) {
 
 		// Set grid coordinate and component number for the row and column
 		// corresponding to the clusters involved in re-solution

@@ -85,18 +85,18 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature(const IReactionNetwork& network,
-			IReactionNetwork::SparseFillMap& ofillMap,
-			IReactionNetwork::SparseFillMap& dfillMap) {
+	virtual void initializeTemperature(const int _dof,
+			experimental::IReactionNetwork::SparseFillMap& ofillMap,
+			experimental::IReactionNetwork::SparseFillMap& dfillMap) {
 
 		// Set dof
-		dof = network.getDOF();
+		dof = _dof;
 
 		// Add the temperature to ofill
-		ofillMap[(dof - 1)].emplace_back(dof - 1);
+		ofillMap[dof].emplace_back(dof);
 
 		// Add the temperature to dfill
-		dfillMap[(dof - 1)].emplace_back(dof - 1);
+		dfillMap[dof].emplace_back(dof);
 
 		return;
 	}
@@ -118,7 +118,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void setTemperature(double * solution) {
-		localTemperature = solution[dof - 1];
+		localTemperature = solution[dof];
 	}
 
 	/**
@@ -158,7 +158,7 @@ public:
 			double *updatedConcOffset, double hxLeft, double hxRight, int xi,
 			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) {
 		// Initial declaration
-		int index = dof - 1;
+		int index = dof;
 
 		// Get the initial concentrations
 		double oldConc = concVector[0][index];
@@ -204,7 +204,7 @@ public:
 			double sz = 0.0, int iz = 0) {
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
-		indices[0] = dof - 1;
+		indices[0] = dof;
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, and right grid point

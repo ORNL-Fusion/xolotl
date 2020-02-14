@@ -60,8 +60,10 @@ protected:
 	 * trap-mutation for each grid point. The difference between this vector and depthVec
 	 * is that this one is used for the actual computation whereas the other one is
 	 * defined by the user. tmBubbles is created with the depthVec information.
+	 *
+	 * TODO: change name?
 	 */
-	using ReactantRefVector1D = std::vector<IReactant::RefVector>;
+	using ReactantRefVector1D = std::vector<std::vector<std::tuple<std::size_t, std::size_t, std::size_t> > >;
 	using ReactantRefVector2D = std::vector<ReactantRefVector1D>;
 	using ReactantRefVector3D = std::vector<ReactantRefVector2D>;
 	ReactantRefVector3D tmBubbles;
@@ -108,8 +110,9 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initialize(const IReactionNetwork& network, int nx, int ny = 0,
-			int nz = 0);
+	virtual void initialize(experimental::IReactionNetwork& network,
+			xolotlCore::experimental::IReactionNetwork::SparseFillMap& dfill,
+			int nx, int ny = 0, int nz = 0);
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
@@ -118,7 +121,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initializeIndex1D(int surfacePos, const IReactionNetwork& network,
+	virtual void initializeIndex1D(int surfacePos,
+			experimental::IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int nx, int xs);
 
@@ -129,8 +133,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initializeIndex2D(std::vector<int> surfacePos,
-			const IReactionNetwork& network,
+	virtual void initializeIndex2D(std::vector<int> surfacePos,
+			experimental::IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy,
 			int ys);
@@ -142,8 +146,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-			const IReactionNetwork& network,
+	virtual void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
+			experimental::IReactionNetwork& network,
 			std::vector<IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 			int nz, double hz, int zs);
@@ -153,9 +157,9 @@ public:
 	 * changed in the network, it should be called when temperature changes
 	 * for instance.
 	 *
-	 * @param network The network
+	 * @param rate The largest rate in the network
 	 */
-	void updateTrapMutationRate(const IReactionNetwork& network);
+	void updateTrapMutationRate(const double rate);
 
 	/**
 	 * This method set the boolean to remember if we want attenuation or not.
@@ -183,7 +187,7 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void computeTrapMutation(const IReactionNetwork& network,
+	virtual void computeTrapMutation(experimental::IReactionNetwork& network,
 			double *concOffset, double *updatedConcOffset, int xi, int yj = 0,
 			int zk = 0);
 
@@ -200,7 +204,7 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	int computePartialsForTrapMutation(const IReactionNetwork& network,
+	virtual int computePartialsForTrapMutation(experimental::IReactionNetwork& network,
 			double *val, int *indices, int xi, int yj = 0, int zk = 0);
 
 	/**

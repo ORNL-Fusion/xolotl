@@ -177,6 +177,25 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 
 template <typename TImpl>
 double
+ReactionNetwork<TImpl>::getLargestRate()
+{
+    // Get the extent of the reactions rates view and grid
+    const auto& nRates = _reactionRates.extent(0);
+    double largestRate = 0.0;
+    // Loop on all the rates to get the maximum
+    using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
+    Kokkos::parallel_reduce(Range2D({0, 0}, {nRates, _gridSize}),
+            KOKKOS_LAMBDA (std::size_t i, std::size_t j, double &max) {
+    	if (_reactionRates(i, j) > max) max = _reactionRates(i, j);
+    }, Kokkos::Max<double>(largestRate));
+    
+    // TODO: this is one the device I think, should it be passed to the host?
+    
+    return largestRate;
+}
+
+template <typename TImpl>
+double
 ReactionNetwork<TImpl>::getTotalAtomConcentration(ConcentrationsView concentrations,
 		Species type, std::size_t minSize)
 {

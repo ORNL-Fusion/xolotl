@@ -4,7 +4,6 @@
 #include <boost/test/unit_test.hpp>
 #include "FuelFitFluxHandler.h"
 #include <mpi.h>
-#include <NEClusterNetworkLoader.h>
 #include <DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
 #include <Options.h>

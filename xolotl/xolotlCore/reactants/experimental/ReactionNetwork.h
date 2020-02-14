@@ -267,6 +267,9 @@ public:
     computeAllPartials(ConcentrationsView concentrations,
         Kokkos::View<double*> values, std::size_t gridIndex) override;
 
+    double
+    getLargestRate() override;
+
     std::size_t
     getDiagonalFill(SparseFillMap& fillMap) override;
 
