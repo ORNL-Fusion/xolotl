@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+
 #include <plsm/Subpaving.h>
 
 #include <experimental/SpeciesEnumSequence.h>
@@ -16,6 +19,8 @@ struct ReactionNetworkTraits
 
 namespace detail
 {
+using ReactionNetworkAmountType = std::uint32_t;
+
 template <typename TNetwork, typename PlsmContext>
 class ClusterData;
 
@@ -25,7 +30,7 @@ class ClusterDataRef;
 template <typename TImpl>
 struct ReactionNetworkTypes
 {
-    using AmountType = typename std::uint32_t;
+    using AmountType = ReactionNetworkAmountType;
     using Traits = ReactionNetworkTraits<TImpl>;
     using Species = typename Traits::Species;
     using Subpaving = plsm::Subpaving<AmountType, Traits::numSpecies, Species>;

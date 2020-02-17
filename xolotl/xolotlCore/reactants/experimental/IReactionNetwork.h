@@ -15,7 +15,7 @@ namespace experimental
 class IReactionNetwork
 {
 public:
-    using AmountType = std::uint32_t;
+    using AmountType = detail::ReactionNetworkAmountType;
     using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
     using OwnedConcentrationsView = Kokkos::View<double*>;
     using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;

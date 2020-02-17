@@ -5,9 +5,6 @@
 
 #include <experimental/ReactionNetworkTraits.h>
 
-// TODO: move it
-using namespace std::string_literals;
-
 namespace xolotlCore
 {
 namespace experimental
@@ -39,6 +36,13 @@ struct ContextLabelHelper<plsm::OnDevice>
 
 template <typename PlsmContext>
 constexpr char contextLabel = ContextLabelHelper<PlsmContext>::label;
+
+inline
+std::string
+labelStr(const char labelChar)
+{
+    return std::string("_") + labelChar;
+}
 
 template <typename TData, typename PlsmContext>
 struct ViewTypeHelper;
@@ -90,14 +94,14 @@ public:
         :
         numClusters(numClusters_),
         gridSize(gridSize_),
-        atomicVolume("Atomic Volume"s + label),
-        temperature("Temperature"s + label, gridSize),
-        reactionRadius("Reaction Radius"s + label, numClusters),
-        formationEnergy("Formation Energy"s + label, numClusters),
-        migrationEnergy("Migration Energy"s + label, numClusters),
-        diffusionFactor("Diffusion Factor"s + label, numClusters),
-        diffusionCoefficient("Diffusion Coefficient"s + label, numClusters,
-            gridSize)
+        atomicVolume("Atomic Volume" + labelStr(label)),
+        temperature("Temperature" + labelStr(label), gridSize),
+        reactionRadius("Reaction Radius" + labelStr(label), numClusters),
+        formationEnergy("Formation Energy" + labelStr(label), numClusters),
+        migrationEnergy("Migration Energy" + labelStr(label), numClusters),
+        diffusionFactor("Diffusion Factor" + labelStr(label), numClusters),
+        diffusionCoefficient("Diffusion Coefficient" + labelStr(label),
+            numClusters, gridSize)
     {
     }
 
@@ -150,7 +154,7 @@ public:
         :
         Superclass(numClusters_, gridSize_),
         tiles(tiles_),
-        momentIds("Moment Ids"s + this->label, numClusters_)
+        momentIds("Moment Ids" + labelStr(this->label), numClusters_)
     {
     }
 
