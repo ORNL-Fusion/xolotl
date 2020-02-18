@@ -29,48 +29,6 @@ struct ReactionNetworkWorker;
 
 template <typename TImpl, typename TDerived>
 class ReactionGenerator;
-
-template <typename TData>
-class UpperTriangle
-{
-public:
-    UpperTriangle(const std::string& label, std::size_t N)
-        :
-        _N(N),
-        _data(label, ((N+1)*N)/2)
-    {
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    std::size_t
-    size() const noexcept
-    {
-        return _data.extent(0);
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    TData&
-    operator()(std::size_t i, std::size_t j) const
-    {
-        assert(j >= i);
-        assert(i < _N);
-        assert(j < _N);
-        auto id = i*_N + j - ((i+1)*i)/2;
-        return _data(id);
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    TData&
-    operator()(std::size_t i) const
-    {
-        assert(i < size());
-        return _data(i);
-    }
-
-private:
-    std::size_t _N;
-    Kokkos::View<TData*> _data;
-};
 }
 
 template <typename TImpl>
@@ -428,9 +386,11 @@ public:
     using Cluster = typename ClusterData::ClusterType;
     using ReactionType = typename Network::ReactionType;
     using ClusterSet = typename ReactionType::ClusterSet;
+    using Subpaving = typename Network::Subpaving;
 
     ReactionGenerator(const Network& network)
         :
+        _subpaving(network._subpaving),
         _clusterData(network._clusterData),
         _numDOFs(network.getDOF()),
         _clusterProdReactionCounts("Production Reaction Counts",
@@ -438,20 +398,6 @@ public:
         _clusterDissReactionCounts("Dissociation Reaction Counts",
             _clusterData.numClusters)
     {
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    Count
-    countTag() const noexcept
-    {
-        return {};
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    Construct
-    constructTag() const noexcept
-    {
-        return {};
     }
 
     void
@@ -467,7 +413,7 @@ public:
                 if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
                     continue;
                 }
-                generator(i, j, prodCount, dissCount, generator.countTag());
+                generator(i, j, prodCount, dissCount, Count{});
             }
         });
         Kokkos::fence();
@@ -484,17 +430,17 @@ public:
                 if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
                     continue;
                 }
-                generator(i, j, prodCount, dissCount, generator.constructTag());
+                generator(i, j, prodCount, dissCount, Construct{});
             }
         });
         Kokkos::fence();
     }
 
     KOKKOS_INLINE_FUNCTION
-    std::size_t
-    getNumberOfClusters() const noexcept
+    const Subpaving&
+    getSubpaving() const
     {
-        return _clusterData.numClusters;
+        return _subpaving;
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -530,6 +476,13 @@ public:
             _numDissReactions, _numDOFs, Network::getNumberOfSpeciesNoI(),
             _clusterData.gridSize);
         _reactionDataRef = detail::ReactionDataRef(_reactionData);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    std::size_t
+    getNumberOfClusters() const noexcept
+    {
+        return _clusterData.numClusters;
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -585,6 +538,7 @@ public:
     }
 
 private:
+    Subpaving _subpaving;
     ClusterData _clusterData;
     std::size_t _numDOFs;
     Kokkos::View<std::size_t*> _clusterProdReactionCounts;
@@ -600,8 +554,6 @@ private:
             Kokkos::ALL));
     ReactionSubView _prodCrsReactions;
     ReactionSubView _dissCrsReactions;
-    // Kokkos::Crs<ClusterSet, detail::DefaultMemorySpace> _prodCrs;
-    // Kokkos::Crs<ClusterSet, detail::DefaultMemorySpace> _dissCrs;
 
     detail::ReactionData _reactionData;
     detail::ReactionDataRef _reactionDataRef;

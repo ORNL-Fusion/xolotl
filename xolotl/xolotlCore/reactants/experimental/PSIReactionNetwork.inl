@@ -7,11 +7,11 @@ namespace experimental
 namespace detail
 {
 template <typename TSpeciesEnum>
+template <typename TTag>
 KOKKOS_INLINE_FUNCTION
 void
 PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
-    const Subpaving& subpaving, const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& prodSet,
-    const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& dissSet) const
+    std::size_t& prodCount, std::size_t& dissCount, TTag tag) const
 {
     using Species = typename Network::Species;
     using Composition = typename Network::Composition;
@@ -21,16 +21,17 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
     constexpr auto speciesNoI = Network::getSpeciesRangeNoI();
     constexpr auto invalid = Network::invalid;
 
-    const auto& tiles = subpaving.getTiles(plsm::onDevice);
-    auto numClusters = tiles.extent(0);
+    auto numClusters = this->getNumberOfClusters();
 
     // Get the composition of each cluster
-    const auto& cl1Reg = tiles(i).getRegion();
-    const auto& cl2Reg = tiles(j).getRegion();
+    const auto& cl1Reg = this->getCluster(i).getRegion();
+    const auto& cl2Reg = this->getCluster(j).getRegion();
     Composition lo1 = cl1Reg.getOrigin();
     Composition hi1 = cl1Reg.getUpperLimitPoint();
     Composition lo2 = cl2Reg.getOrigin();
     Composition hi2 = cl2Reg.getUpperLimitPoint();
+
+    auto& subpaving = this->getSubpaving();
 
     // Special case for I + I
     if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I)
@@ -42,9 +43,9 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
         comp[Species::I] = size;
         auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
         if (iProdId != invalid) {
-            prodSet(i, j).first = {i, j, iProdId};
+            this->addProductionReaction(tag, {i, j, iProdId}, prodCount);
             if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
-                dissSet(i, j).first = {iProdId, i, j};
+                this->addDissociationReaction(tag, {iProdId, i, j}, dissCount);
             }
         }
         return;
@@ -68,7 +69,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             comp[Species::V] = prodSize;
             auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
             if (vProdId != invalid) {
-                prodSet(i, j).first = {i, j, vProdId};
+                this->addProductionReaction(tag, {i, j, vProdId}, prodCount);
                 // No dissociation
             }
         }
@@ -78,13 +79,13 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             comp[Species::I] = -prodSize;
             auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
             if (iProdId != invalid) {
-                prodSet(i, j).first = {i, j, iProdId};
+                this->addProductionReaction(tag, {i, j, iProdId}, prodCount);
                 // No dissociation
             }
         }
         else {
             // No product
-            prodSet(i, j).first = {i, j};
+            this->addProductionReaction(tag, {i, j}, prodCount);
         }
         return;
     }
@@ -112,7 +113,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
     std::size_t nProd = 0;
     for (std::size_t k = 0; k < numClusters; ++k) {
         // Get the composition
-        const auto& prodReg = tiles(k).getRegion();
+        const auto& prodReg = this->getCluster(k).getRegion();
         bool isGood = true;
         // Loop on the species
         // TODO: check l correspond to the same species in bounds and prod
@@ -130,7 +131,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
         if (isGood) {
             // Increase nProd
             nProd++;
-            prodSet(i, j).first = {i, j, k};
+            this->addProductionReaction(tag, {i, j, k}, prodCount);
             // TODO: will have to add some rules, i or j should be a simplex cluster of max size 1
             if (!cl1Reg.isSimplex() && !cl2Reg.isSimplex()) {
                 continue;
@@ -146,7 +147,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
                     continue;
                 }
 
-                dissSet(i, j).first = {k, i, j};
+                this->addDissociationReaction(tag, {k, i, j}, dissCount);
             }
         }
     }
@@ -181,7 +182,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             std::size_t nProd = 0;
             for (std::size_t k = 0; k < numClusters; ++k) {
                 // Get the composition
-                const auto& prodReg = tiles(k).getRegion();
+                const auto& prodReg = this->getCluster(k).getRegion();
                 bool isGood = true;
                 // Loop on the species
                 // TODO: check l correspond to the same species in bounds and prod
@@ -199,7 +200,8 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
                 if (isGood) {
                     // Increase nProd
                     nProd++;
-                    prodSet(i, j).first = {i, j, k, iClusterId};
+                    this->addProductionReaction(tag, {i, j, k, iClusterId},
+                        prodCount);
                     // No dissociation
                 }
             }

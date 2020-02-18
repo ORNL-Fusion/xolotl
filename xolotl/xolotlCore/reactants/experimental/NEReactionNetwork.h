@@ -64,12 +64,6 @@ public:
 
     using Superclass::Superclass;
 
-    KOKKOS_INLINE_FUNCTION
-    void
-    operator()(std::size_t i, std::size_t j, const Subpaving& subpaving,
-        const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& prodSet,
-        const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& dissSet) const;
-
     template <typename TTag>
     KOKKOS_INLINE_FUNCTION
     void

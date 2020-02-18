@@ -75,19 +75,11 @@ public:
         PSIReactionGenerator<TSpeciesEnum>>;
     using Superclass::Superclass;
 
-    KOKKOS_INLINE_FUNCTION
-    void
-    operator()(std::size_t i, std::size_t j, const Subpaving& subpaving,
-        const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& prodSet,
-        const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& dissSet) const;
-
     template <typename TTag>
     KOKKOS_INLINE_FUNCTION
     void
     operator()(std::size_t i, std::size_t j, std::size_t& prodCount,
-        std::size_t& dissCount, TTag tag) const
-    {
-    }
+        std::size_t& dissCount, TTag tag) const;
 };
 }
 }
