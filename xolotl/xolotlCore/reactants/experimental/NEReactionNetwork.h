@@ -10,7 +10,7 @@ namespace experimental
 {
 namespace detail
 {
-class NEReactionValidator;
+class NEReactionGenerator;
 }
 
 class NEReactionNetwork : public ReactionNetwork<NEReactionNetwork>
@@ -46,24 +46,35 @@ private:
         return impurityRadius;
     }
 
-    detail::NEReactionValidator
-    getReactionValidator() const noexcept;
+    detail::NEReactionGenerator
+    getReactionGenerator() const noexcept;
 };
 
 namespace detail
 {
-class NEReactionValidator
+class NEReactionGenerator :
+    public ReactionGenerator<NEReactionNetwork, NEReactionGenerator>
 {
 public:
     using Network = NEReactionNetwork;
     using Subpaving = typename Network::Subpaving;
     using ClusterSet = typename Network::ReactionType::ClusterSet;
+    using Superclass =
+        ReactionGenerator<NEReactionNetwork, NEReactionGenerator>;
+
+    using Superclass::Superclass;
 
     KOKKOS_INLINE_FUNCTION
     void
     operator()(std::size_t i, std::size_t j, const Subpaving& subpaving,
         const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& prodSet,
         const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& dissSet) const;
+
+    template <typename TTag>
+    KOKKOS_INLINE_FUNCTION
+    void
+    operator()(std::size_t i, std::size_t j, std::size_t& prodCount,
+        std::size_t& dissCount, TTag tag) const;
 };
 }
 }

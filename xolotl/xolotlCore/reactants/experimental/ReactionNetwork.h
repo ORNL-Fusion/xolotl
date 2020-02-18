@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <type_traits>
 
+#include <Kokkos_Core.hpp>
+#include <Kokkos_Crs.hpp>
+
 #include <plsm/Subpaving.h>
 #include <plsm/refine/RegionDetector.h>
 
@@ -23,6 +26,9 @@ namespace detail
 {
 template <typename TImpl>
 struct ReactionNetworkWorker;
+
+template <typename TImpl, typename TDerived>
+class ReactionGenerator;
 
 template <typename TData>
 class UpperTriangle
@@ -71,6 +77,8 @@ template <typename TImpl>
 class ReactionNetwork : public IReactionNetwork
 {
     friend class detail::ReactionNetworkWorker<TImpl>;
+    template <typename, typename>
+    friend class detail::ReactionGenerator;
 
     static constexpr auto invalid = plsm::invalid<std::size_t>;
 
@@ -206,9 +214,9 @@ public:
 
     ClusterCommon<plsm::OnHost>
     getClusterCommon(std::size_t clusterId) const override
-	{
-    	return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
-	}
+    {
+        return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
+    }
 
     KOKKOS_INLINE_FUNCTION
     Cluster<plsm::OnDevice>
@@ -283,7 +291,7 @@ public:
      */
     double
     getTotalAtomConcentration(ConcentrationsView concentrations,
-    		Species type, std::size_t minSize = 0);
+            Species type, std::size_t minSize = 0);
 
     /**
      * Get the total concentration of a given type of clusters only if it is trapped in a vacancy.
@@ -295,7 +303,7 @@ public:
      */
     double
     getTotalTrappedAtomConcentration(ConcentrationsView concentrations,
-    		Species type, std::size_t minSize = 0);
+            Species type, std::size_t minSize = 0);
 
 private:
     KOKKOS_INLINE_FUNCTION
@@ -431,6 +439,171 @@ struct ReactionNetworkWorker
 
     std::size_t
     getDiagonalFill(typename Network::SparseFillMap& fillMap);
+};
+
+template <typename TNetwork, typename TDerived>
+class ReactionGenerator
+{
+public:
+    struct Count
+    {
+    };
+
+    struct Construct
+    {
+    };
+
+    using Network = TNetwork;
+    using Types = detail::ReactionNetworkTypes<Network>;
+    using ClusterData = typename Types::ClusterData;
+    using Cluster = typename ClusterData::ClusterType;
+    using ClusterSet = typename Network::ReactionType::ClusterSet;
+
+    ReactionGenerator(const Network& network)
+        :
+        _clusterData(network._clusterData),
+        _clusterProdReactionCounts("Production Reaction Counts",
+            _clusterData.numClusters),
+        _clusterDissReactionCounts("Dissociation Reaction Counts",
+            _clusterData.numClusters)
+    {
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    Count
+    countTag() const noexcept
+    {
+        return {};
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    Construct
+    constructTag() const noexcept
+    {
+        return {};
+    }
+
+    void
+    generateReactionClusterSets()
+    {
+        auto numClusters = _clusterData.numClusters;
+        auto diffusionFactor = _clusterData.diffusionFactor;
+        auto generator = *static_cast<TDerived*>(this);
+        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (std::size_t i) {
+            std::size_t prodCount {};
+            std::size_t dissCount {};
+            for (std::size_t j = i; j < numClusters; ++j) {
+                if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+                    continue;
+                }
+                generator(i, j, prodCount, dissCount, generator.countTag());
+            }
+        });
+        Kokkos::fence();
+
+        setupCrs();
+        generator = *static_cast<TDerived*>(this);
+
+        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (std::size_t i) {
+            std::size_t prodCount {};
+            std::size_t dissCount {};
+            for (std::size_t j = i; j < numClusters; ++j) {
+                if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+                    continue;
+                }
+                generator(i, j, prodCount, dissCount, generator.constructTag());
+            }
+        });
+        Kokkos::fence();
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    std::size_t
+    getNumberOfClusters() const noexcept
+    {
+        return _clusterData.numClusters;
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    Cluster
+    getCluster(std::size_t i) const
+    {
+        return _clusterData.getCluster(i);
+    }
+
+    void
+    setNumberOfReactions(std::size_t num);
+
+    void
+    setupCrs()
+    {
+        auto nProdReactions = Kokkos::get_crs_row_map_from_counts(
+            _prodCrs.row_map, _clusterProdReactionCounts);
+        _prodCrs.entries = Kokkos::View<ClusterSet*>(
+            "Production Cluster Sets", nProdReactions);
+
+        auto nDissReactions = Kokkos::get_crs_row_map_from_counts(
+            _dissCrs.row_map, _clusterDissReactionCounts);
+        _dissCrs.entries = Kokkos::View<ClusterSet*>(
+            "Dissociation Cluster Sets", nDissReactions);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    addProductionReaction(Count, const ClusterSet& clusterSet,
+        std::size_t& count) const
+    {
+        ++_clusterProdReactionCounts(clusterSet.cluster0);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    addProductionReaction(Construct, const ClusterSet& clusterSet,
+        std::size_t& count) const
+    {
+        //TODO: Just construct the reaction
+        _prodCrs.entries(_prodCrs.row_map(clusterSet.cluster0) + count) =
+            clusterSet;
+        ++count;
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    addDissociationReaction(Count, const ClusterSet& clusterSet,
+        std::size_t& count) const
+    {
+        ++_clusterDissReactionCounts(clusterSet.cluster1);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    addDissociationReaction(Construct, const ClusterSet& clusterSet,
+        std::size_t& count) const
+    {
+        _dissCrs.entries(_dissCrs.row_map(clusterSet.cluster1) + count) =
+            clusterSet;
+        ++count;
+    }
+
+    Kokkos::View<ClusterSet*>
+    getProdSets() const
+    {
+        return _prodCrs.entries;
+    }
+
+    Kokkos::View<ClusterSet*>
+    getDissSets() const
+    {
+        return _dissCrs.entries;
+    }
+
+private:
+    ClusterData _clusterData;
+    Kokkos::View<std::size_t*> _clusterProdReactionCounts;
+    Kokkos::View<std::size_t*> _clusterDissReactionCounts;
+
+    Kokkos::Crs<ClusterSet, detail::DefaultMemorySpace> _prodCrs;
+    Kokkos::Crs<ClusterSet, detail::DefaultMemorySpace> _dissCrs;
 };
 }
 }

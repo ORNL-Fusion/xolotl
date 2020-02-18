@@ -7,6 +7,7 @@
 
 #include <experimental/Cluster.h>
 #include <experimental/IReactionNetwork.h>
+#include <experimental/ReactionData.h>
 #include <experimental/ReactionNetworkTraits.h>
 #include <experimental/SpeciesEnumSequence.h>
 
@@ -14,40 +15,6 @@ namespace xolotlCore
 {
 namespace experimental
 {
-namespace detail
-{
-struct ReactionDataRef
-{
-    KOKKOS_INLINE_FUNCTION
-	auto
-    getCoefficients(std::size_t reactionId)
-    {
-        if (reactionId < productionCoeffs.extent(0)) {
-            return Kokkos::subview(productionCoeffs, reactionId, Kokkos::ALL,
-                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-        }
-        else {
-            reactionId -= productionCoeffs.extent(0);
-            return Kokkos::subview(dissociationCoeffs, reactionId, Kokkos::ALL,
-                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-        }
-    }
-
-    KOKKOS_INLINE_FUNCTION
-	auto
-    getRates(std::size_t reactionId)
-    {
-        return Kokkos::subview(rates, reactionId, Kokkos::ALL);
-    }
-
-    Kokkos::View<double*****, Kokkos::MemoryUnmanaged> productionCoeffs;
-    Kokkos::View<double*****, Kokkos::MemoryUnmanaged> dissociationCoeffs;
-    Kokkos::View<double**, Kokkos::MemoryUnmanaged> rates;
-
-    Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged> inverseMap;
-};
-}
-
 template <typename TNetwork, typename TDerived>
 class Reaction
 {

@@ -9,7 +9,7 @@ namespace detail
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 void
-PSIReactionValidator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
+PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
     const Subpaving& subpaving, const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& prodSet,
     const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& dissSet) const
 {

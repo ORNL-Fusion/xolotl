@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Kokkos_View.hpp>
 #include <string>
+
+#include <Kokkos_View.hpp>
 
 #include <experimental/ReactionNetworkTraits.h>
 

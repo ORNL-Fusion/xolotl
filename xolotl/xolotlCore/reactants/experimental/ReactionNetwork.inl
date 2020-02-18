@@ -359,92 +359,9 @@ template <typename TImpl>
 typename ReactionNetworkWorker<TImpl>::ClusterSetsViewPair
 ReactionNetworkWorker<TImpl>::defineReactionClusterSets()
 {
-    using ClusterSet = typename ClusterSetsViewPair::ClusterSet;
-    ClusterSetsViewPair ret;
-
-    auto subpaving = _nw._subpaving;
-    auto tiles = subpaving.getTiles(plsm::onDevice);
-    std::size_t numClusters = tiles.extent(0);
-
-    detail::UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> > prodSet("Temp Production Set",
-        numClusters);
-    auto cap = prodSet.size();
-    detail::UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> > dissSet("Temp Dissociation Set",
-        numClusters);
-
-    auto diffusionFactor = _nw._clusterData.diffusionFactor;
-    auto validator = _nw.asDerived()->getReactionValidator();
-    using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-    Kokkos::parallel_for(Range2D({0, 0}, {numClusters, numClusters}),
-            KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
-        if (j < i) {
-            return;
-        }
-        if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-            return;
-        }
-        validator(i, j, subpaving, prodSet, dissSet);
-    });
-    Kokkos::fence();
-
-    auto ids = Kokkos::View<std::size_t*>("Reaction Ids", 2 * cap);
-    std::size_t numProdReactions = 0;
-    Kokkos::parallel_scan(cap,
-            KOKKOS_LAMBDA (std::size_t i, std::size_t& update,
-                const bool finalPass) {
-        if (prodSet(i).first.valid()) {
-            if (finalPass) {
-                ids(i) = update;
-            }
-            update += 1;
-        }
-        if (prodSet(i).second.valid()) {
-            if (finalPass) {
-                ids(i + cap) = update;
-            }
-            update += 1;
-        }
-    }, numProdReactions);
-    auto prodSetsView = Kokkos::View<ClusterSet*>("Production Cluster Sets",
-        numProdReactions);
-    Kokkos::parallel_for(cap, KOKKOS_LAMBDA (std::size_t i) {
-        if (prodSet(i).first.valid()) {
-            prodSetsView(ids(i)) = prodSet(i).first;
-        }
-        if (prodSet(i).second.valid()) {
-            prodSetsView(ids(i + cap)) = prodSet(i).second;
-        }
-    });
-
-    std::size_t numDissReactions = 0;
-    Kokkos::parallel_scan(cap,
-            KOKKOS_LAMBDA (std::size_t i, std::size_t& update,
-                const bool finalPass) {
-        if (dissSet(i).first.valid()) {
-            if (finalPass) {
-                ids(i) = update;
-            }
-            update += 1;
-        }
-        if (dissSet(i).second.valid()) {
-            if (finalPass) {
-                ids(i + cap) = update;
-            }
-            update += 1;
-        }
-    }, numDissReactions);
-    auto dissSetsView = Kokkos::View<ClusterSet*>("Dissociation Cluster Sets",
-        numDissReactions);
-    Kokkos::parallel_for(cap, KOKKOS_LAMBDA (std::size_t i) {
-        if (dissSet(i).first.valid()) {
-            dissSetsView(ids(i)) = dissSet(i).first;
-        }
-        if (dissSet(i).second.valid()) {
-            dissSetsView(ids(i + cap)) = dissSet(i).second;
-        }
-    });
-
-    return {prodSetsView, dissSetsView};
+    auto generator = _nw.asDerived()->getReactionGenerator();
+    generator.generateReactionClusterSets();
+    return {generator.getProdSets(), generator.getDissSets()};
 }
 
 template <typename TImpl>

@@ -11,7 +11,7 @@ namespace experimental
 namespace detail
 {
 template <typename TSpeciesEnum>
-class PSIReactionValidator;
+class PSIReactionGenerator;
 }
 
 template <typename TSpeciesEnum>
@@ -52,28 +52,42 @@ private:
         return impurityRadius;
     }
 
-    detail::PSIReactionValidator<Species>
-    getReactionValidator() const noexcept
+    detail::PSIReactionGenerator<Species>
+    getReactionGenerator() const noexcept
     {
-        return {};
+        return detail::PSIReactionGenerator<Species>{*this};
     }
 };
 
 namespace detail
 {
 template <typename TSpeciesEnum>
-class PSIReactionValidator
+class PSIReactionGenerator : public
+    ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
+        PSIReactionGenerator<TSpeciesEnum>>
 {
 public:
     using Network = PSIReactionNetwork<TSpeciesEnum>;
     using Subpaving = typename Network::Subpaving;
     using ClusterSet = typename Network::ReactionType::ClusterSet;
 
+    using Superclass = ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
+        PSIReactionGenerator<TSpeciesEnum>>;
+    using Superclass::Superclass;
+
     KOKKOS_INLINE_FUNCTION
     void
     operator()(std::size_t i, std::size_t j, const Subpaving& subpaving,
         const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& prodSet,
         const UpperTriangle<Kokkos::pair<ClusterSet, ClusterSet> >& dissSet) const;
+
+    template <typename TTag>
+    KOKKOS_INLINE_FUNCTION
+    void
+    operator()(std::size_t i, std::size_t j, std::size_t& prodCount,
+        std::size_t& dissCount, TTag tag) const
+    {
+    }
 };
 }
 }
