@@ -79,6 +79,11 @@ public:
         std::size_t cluster2 = invalid, std::size_t cluster3 = invalid);
 
     KOKKOS_INLINE_FUNCTION
+    Reaction(detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
+        std::size_t reactionId, Type reactionType,
+        const ClusterSet& clusterSet);
+
+    KOKKOS_INLINE_FUNCTION
     Type
     getType() const noexcept
     {

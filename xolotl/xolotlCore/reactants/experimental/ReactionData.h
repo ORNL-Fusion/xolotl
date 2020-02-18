@@ -10,8 +10,10 @@ namespace detail
 {
 struct ReactionData
 {
+    ReactionData() = default;
+
     ReactionData(std::size_t numProductionReactions,
-            std::size_t numDissociationReactions, std::size_t numClusters,
+            std::size_t numDissociationReactions, std::size_t numDOFs,
             std::size_t numSpeciesNoI, std::size_t gridSize)
         :
         coeffExtent(numSpeciesNoI + 1),
@@ -23,32 +25,47 @@ struct ReactionData
         rates("Reaction Rates", numReactions, gridSize),
         inverseMap(
             Kokkos::ViewAllocateWithoutInitializing("Reactions Inverse Map"),
-            numClusters, numClusters)
+            numDOFs, numDOFs)
     {
-        initializeInverseMap(numClusters);
+        initializeInverseMap(numDOFs);
     }
 
     void
-    initializeInverseMap(std::size_t numClusters)
+    initializeInverseMap(std::size_t numDOFs)
     {
         auto invMap = inverseMap;
         using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-        Kokkos::parallel_for(Range2D({0, 0}, {numClusters, numClusters}),
+        Kokkos::parallel_for(Range2D({0, 0}, {numDOFs, numDOFs}),
                 KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
             invMap(i,j) = plsm::invalid<std::size_t>;
         });
     }
 
-    std::size_t coeffExtent;
-    std::size_t numReactions;
+    std::size_t coeffExtent {};
+    std::size_t numReactions {};
     Kokkos::View<double*****> productionCoeffs;
     Kokkos::View<double*****> dissociationCoeffs;
     Kokkos::View<double**> rates;
+
+    // TODO: the original code uses an actual map here because it is sparse
+    //       Does this need to be Kokkos::Crs?
     Kokkos::View<std::size_t**> inverseMap;
 };
 
 struct ReactionDataRef
 {
+    ReactionDataRef() = default;
+
+    KOKKOS_INLINE_FUNCTION
+    ReactionDataRef(const ReactionData& data)
+        :
+        productionCoeffs(data.productionCoeffs),
+        dissociationCoeffs(data.dissociationCoeffs),
+        rates(data.rates),
+        inverseMap(data.inverseMap)
+    {
+    }
+
     KOKKOS_INLINE_FUNCTION
     auto
     getCoefficients(std::size_t reactionId)

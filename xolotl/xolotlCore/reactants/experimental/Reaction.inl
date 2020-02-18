@@ -57,6 +57,18 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
+Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
+    ClusterDataRef clusterData, std::size_t reactionId, Type reactionType,
+    const ClusterSet& clusterSet)
+    :
+    Reaction(reactionData, clusterData, reactionId, reactionType,
+        clusterSet.cluster0, clusterSet.cluster1, clusterSet.cluster2,
+        clusterSet.cluster3)
+{
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
 void
 Reaction<TNetwork, TDerived>::updateRates()
 {

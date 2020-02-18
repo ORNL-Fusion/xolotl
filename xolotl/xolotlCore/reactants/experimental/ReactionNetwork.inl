@@ -180,13 +180,14 @@ double
 ReactionNetwork<TImpl>::getLargestRate()
 {
     // Get the extent of the reactions rates view and grid
-    const auto& nRates = _reactionRates.extent(0);
+    auto reactionRates = _reactionData.rates;
+    const auto& nRates = reactionRates.extent(0);
     double largestRate = 0.0;
     // Loop on all the rates to get the maximum
     using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
     Kokkos::parallel_reduce(Range2D({0, 0}, {nRates, _gridSize}),
             KOKKOS_LAMBDA (std::size_t i, std::size_t j, double &max) {
-    	if (_reactionRates(i, j) > max) max = _reactionRates(i, j);
+    	if (reactionRates(i, j) > max) max = reactionRates(i, j);
     }, Kokkos::Max<double>(largestRate));
     
     // TODO: this is one the device I think, should it be passed to the host?
@@ -250,7 +251,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::defineMomentIds()
 {
-    _worker.defineMomentIds(_numDOFs);
+    _worker.defineMomentIds();
 }
 
 template <typename TImpl>
@@ -288,10 +289,14 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
     const typename Network::ClusterGenerator& generator)
 {
     auto nClusters = _nw._clusterData.numClusters;
-    _nw._clusterData.formationEnergy = Kokkos::View<double*>("Formation Energy", nClusters);
-    _nw._clusterData.migrationEnergy = Kokkos::View<double*>("Migration Energy", nClusters);
-    _nw._clusterData.diffusionFactor = Kokkos::View<double*>("Diffusion Factor", nClusters);
-    _nw._clusterData.reactionRadius = Kokkos::View<double*>("Reaction Radius", nClusters);
+    _nw._clusterData.formationEnergy =
+        Kokkos::View<double*>("Formation Energy", nClusters);
+    _nw._clusterData.migrationEnergy =
+        Kokkos::View<double*>("Migration Energy", nClusters);
+    _nw._clusterData.diffusionFactor =
+        Kokkos::View<double*>("Diffusion Factor", nClusters);
+    _nw._clusterData.reactionRadius =
+        Kokkos::View<double*>("Reaction Radius", nClusters);
 
     ClusterData data(_nw._clusterData);
     auto latticeParameter = _nw.getLatticeParameter();
@@ -310,7 +315,7 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
 
 template <typename TImpl>
 void
-ReactionNetworkWorker<TImpl>::defineMomentIds(std::size_t& numDOFs)
+ReactionNetworkWorker<TImpl>::defineMomentIds()
 {
     constexpr auto speciesRangeNoI = Network::getSpeciesRangeNoI();
 
@@ -352,71 +357,76 @@ ReactionNetworkWorker<TImpl>::defineMomentIds(std::size_t& numDOFs)
     });
 
     Kokkos::fence();
-    numDOFs = nClusters + nMomentIds;
+    _nw._numDOFs = nClusters + nMomentIds;
 }
 
-template <typename TImpl>
-typename ReactionNetworkWorker<TImpl>::ClusterSetsViewPair
-ReactionNetworkWorker<TImpl>::defineReactionClusterSets()
-{
-    auto generator = _nw.asDerived()->getReactionGenerator();
-    generator.generateReactionClusterSets();
-    return {generator.getProdSets(), generator.getDissSets()};
-}
+// template <typename TImpl>
+// typename ReactionNetworkWorker<TImpl>::ClusterSetsViewPair
+// ReactionNetworkWorker<TImpl>::defineReactionClusterSets()
+// {
+//     auto generator = _nw.asDerived()->getReactionGenerator();
+//     generator.generateReactionClusterSets();
+//     return {generator.getProdSets(), generator.getDissSets()};
+// }
 
 template <typename TImpl>
 void
 ReactionNetworkWorker<TImpl>::defineReactions()
 {
-    using ReactionType = typename Network::ReactionType;
-    using ClusterSet = typename ReactionType::ClusterSet;
+    auto generator = _nw.asDerived()->getReactionGenerator();
+    generator.generateReactions();
+    _nw._reactionData = generator.getReactionData();
+    _nw._reactions = generator.getReactions();
 
-    auto clusterSetsPair = defineReactionClusterSets();
-    auto prodSets = clusterSetsPair.prodClusterSets;
-    auto nProdReactions = prodSets.extent(0);
-    auto dissSets = clusterSetsPair.dissClusterSets;
-    auto nDissReactions = dissSets.extent(0);
+    // using ReactionType = typename Network::ReactionType;
+    // using ClusterSet = typename ReactionType::ClusterSet;
 
-    static constexpr auto cExt = Network::getNumberOfSpeciesNoI() + 1;
-    _nw._productionCoeffs = Kokkos::View<double*****>("Production Coefficients",
-        nProdReactions, cExt, cExt, 4, cExt);
-    _nw._dissociationCoeffs = Kokkos::View<double*****>(
-        "Dissociation Coefficients", nDissReactions, cExt, 1, 3, cExt);
+    // auto clusterSetsPair = defineReactionClusterSets();
+    // auto prodSets = clusterSetsPair.prodClusterSets;
+    // auto nProdReactions = prodSets.extent(0);
+    // auto dissSets = clusterSetsPair.dissClusterSets;
+    // auto nDissReactions = dissSets.extent(0);
 
-    auto numReactions = nProdReactions + nDissReactions;
-    _nw._reactionRates = Kokkos::View<double**>("Reaction Rates", numReactions,
-        _nw.getGridSize());
-    _nw._reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
+    // static constexpr auto cExt = Network::getNumberOfSpeciesNoI() + 1;
+    // _nw._productionCoeffs = Kokkos::View<double*****>("Production Coefficients",
+    //     nProdReactions, cExt, cExt, 4, cExt);
+    // _nw._dissociationCoeffs = Kokkos::View<double*****>(
+    //     "Dissociation Coefficients", nDissReactions, cExt, 1, 3, cExt);
 
-    // Initialize the inverse map to invalid
-    _nw._inverseMap = Kokkos::View<std::size_t**>(
-        Kokkos::ViewAllocateWithoutInitializing("_inverseMap"),
-        _nw._numDOFs, _nw._numDOFs);
-    auto invMap = _nw._inverseMap;
-    using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-    Kokkos::parallel_for(Range2D({0, 0}, {_nw._numDOFs, _nw._numDOFs}),
-            KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
-        invMap(i,j) = Network::invalid;
-    });
+    // auto numReactions = nProdReactions + nDissReactions;
+    // _nw._reactionRates = Kokkos::View<double**>("Reaction Rates", numReactions,
+    //     _nw.getGridSize());
+    // _nw._reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
 
-    auto reactions = _nw._reactions;
-    ReactionDataRef reactionData{_nw._productionCoeffs, _nw._dissociationCoeffs,
-        _nw._reactionRates, _nw._inverseMap};
+    // // Initialize the inverse map to invalid
+    // _nw._inverseMap = Kokkos::View<std::size_t**>(
+    //     Kokkos::ViewAllocateWithoutInitializing("_inverseMap"),
+    //     _nw._numDOFs, _nw._numDOFs);
+    // auto invMap = _nw._inverseMap;
+    // using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
+    // Kokkos::parallel_for(Range2D({0, 0}, {_nw._numDOFs, _nw._numDOFs}),
+    //         KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
+    //     invMap(i,j) = Network::invalid;
+    // });
 
-    using RType = typename ReactionType::Type;
-    auto data = _nw._clusterData;
-    Kokkos::parallel_for(nProdReactions, KOKKOS_LAMBDA (std::size_t i) {
-        const auto& clSet = prodSets(i);
-        reactions(i) = ReactionType(reactionData, data, i, RType::production,
-            clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
-    });
-    Kokkos::parallel_for(nDissReactions, KOKKOS_LAMBDA (std::size_t i) {
-        const auto& clSet = dissSets(i);
-        auto id = i + nProdReactions;
-        reactions(id) = ReactionType(reactionData, data, id, RType::dissociation,
-            clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
-    });
-    Kokkos::fence();
+    // auto reactions = _nw._reactions;
+    // ReactionDataRef reactionData{_nw._productionCoeffs, _nw._dissociationCoeffs,
+    //     _nw._reactionRates, _nw._inverseMap};
+
+    // using RType = typename ReactionType::Type;
+    // auto data = _nw._clusterData;
+    // Kokkos::parallel_for(nProdReactions, KOKKOS_LAMBDA (std::size_t i) {
+    //     const auto& clSet = prodSets(i);
+    //     reactions(i) = ReactionType(reactionData, data, i, RType::production,
+    //         clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
+    // });
+    // Kokkos::parallel_for(nDissReactions, KOKKOS_LAMBDA (std::size_t i) {
+    //     const auto& clSet = dissSets(i);
+    //     auto id = i + nProdReactions;
+    //     reactions(id) = ReactionType(reactionData, data, id, RType::dissociation,
+    //         clSet.cluster0, clSet.cluster1, clSet.cluster2, clSet.cluster3);
+    // });
+    // Kokkos::fence();
 }
 
 template <typename TImpl>
@@ -428,7 +438,7 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
 
     // Create the connectivity matrix initialized to 0
     Kokkos::View<std::size_t**> connectivity("connectivity",
-        _nw._numDOFs, _nw._numDOFs);
+        _nw.getDOF(), _nw.getDOF());
     // Loop on each reaction to add its contribution to the connectivity matrix
     auto reactions = _nw._reactions;
     const auto& nReactions = reactions.extent(0);
@@ -439,16 +449,16 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
 
     auto hConn = create_mirror_view(connectivity);
     deep_copy(hConn, connectivity);
-    auto hInvMap = create_mirror_view(_nw._inverseMap);
+    auto hInvMap = create_mirror_view(_nw._reactionData.inverseMap);
 
     // Transfer to fillMap, fill the inverse map,
     // and count the total number of partials
     std::size_t nPartials = 0;
-    for (std::size_t i = 0; i < _nw._numDOFs; ++i) {
+    for (std::size_t i = 0; i < _nw.getDOF(); ++i) {
         // Create a vector for ids
         std::vector<int> current;
         // Loop on this row
-        for (std::size_t j = 0; j < _nw._numDOFs; ++j)
+        for (std::size_t j = 0; j < _nw.getDOF(); ++j)
         {
             if (hConn(i,j) == 0) {
                 // Nothing to do
@@ -466,7 +476,7 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
         fillMap[(int) i] = current;
     }
 
-    deep_copy(_nw._inverseMap, hInvMap);
+    deep_copy(_nw._reactionData.inverseMap, hInvMap);
 
     return nPartials;
 }
