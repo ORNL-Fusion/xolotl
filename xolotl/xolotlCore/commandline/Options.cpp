@@ -37,7 +37,26 @@ Options::Options() :
 Options::~Options(void) {
 }
 
-void Options::readParams(int argc, char* argv[]) {
+void Options::readParams(int argc, char *argv[]) {
+	// Check that a file name is given
+	if (argc < 2) {
+		std::cerr << "Options: parameter file name must not be empty"
+				<< std::endl;
+		shouldRunFlag = false;
+		exitCode = EXIT_FAILURE;
+		return;
+	}
+
+	// Check that the file exist
+	ifstream ifs(argv[1]);
+	if (!ifs) {
+		std::cerr << "Options: unable to open parameter file: " << argv[1]
+				<< std::endl;
+		shouldRunFlag = false;
+		exitCode = EXIT_FAILURE;
+		return;
+	}
+
 	// The name of the parameter file
 	string param_file;
 
@@ -167,14 +186,6 @@ void Options::readParams(int argc, char* argv[]) {
 		exitCode = EXIT_FAILURE;
 	}
 
-	if ((opts.count("parameterFile") == 0)
-			or opts["parameterFile"].as<std::string>().empty()) {
-		std::cerr << "Options: parameter file name must not be empty"
-				<< std::endl;
-		shouldRunFlag = false;
-		exitCode = EXIT_FAILURE;
-	}
-
 	if (shouldRunFlag) {
 
 		ifstream ifs(param_file.c_str());
@@ -262,7 +273,7 @@ void Options::readParams(int argc, char* argv[]) {
 						xolotlPerf::toPerfRegistryType(
 								opts["perfHandler"].as<string>());
 				perfRegistryType = rtype;
-			} catch (const std::invalid_argument& e) {
+			} catch (const std::invalid_argument &e) {
 				std::cerr
 						<< "\nOptions: could not understand the performance handler type. "
 								"Aborting!\n" << std::endl;
@@ -503,7 +514,7 @@ void Options::readParams(int argc, char* argv[]) {
 
 				if (currIdx < tokens.size()) {
 					// Convert arg to an integer.
-					char* ep = NULL;
+					char *ep = NULL;
 					auto useed = strtoul(tokens[currIdx].c_str(), &ep, 10);
 					if (ep
 							!= (tokens[currIdx].c_str()
@@ -514,7 +525,7 @@ void Options::readParams(int argc, char* argv[]) {
 					}
 					setRNGSeed(useed);
 				}
-			} catch (const std::invalid_argument& e) {
+			} catch (const std::invalid_argument &e) {
 				std::cerr
 						<< "\nOptions: unrecognized argument in setting the rng."
 								"Aborting!\n" << std::endl;

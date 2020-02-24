@@ -27,7 +27,6 @@ BOOST_AUTO_TEST_CASE(noOptions) {
 	char** fargv = args;
 
 	// Attempt to read the parameters
-	fargv += 1;
 	opts.readParams(1, fargv);
 
 	// The Option class does not like empty command line
@@ -51,7 +50,6 @@ BOOST_AUTO_TEST_CASE(badParamFileName) {
 	char** fargv = args;
 
 	// Attempt to read the parameters
-	fargv += 1;
 	opts.readParams(2, fargv);
 
 	// If the parameter file does not exist, xolotl should not run
@@ -79,7 +77,6 @@ BOOST_AUTO_TEST_CASE(badParamFile) {
 	char** fargv = args;
 
 	// Attempt to read the parameter file
-	fargv += 1;
 	opts.readParams(2, fargv);
 
 	// An unrecognized parameter should result in indicating
