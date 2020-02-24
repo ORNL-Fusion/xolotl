@@ -14,7 +14,7 @@ namespace xolotlFactory {
  * @return True if the solver handler was created successfully.
  */
 bool initializeDimension(const xolotlCore::Options &options,
-		xolotlCore::IReactionNetwork& network);
+		xolotlCore::experimental::IReactionNetwork& network);
 
 /**
  * Access the created solver handler.

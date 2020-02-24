@@ -19,7 +19,6 @@
 #include <SolverHandlerFactory.h>
 #include <ISolverHandler.h>
 #include <IReactionHandlerFactory.h>
-#include <experimental/NEReactionNetwork.h>
 #include <solverhandler/PetscSolverExpHandler.h>
 #include <ctime>
 
@@ -169,14 +168,16 @@ int runXolotl(const Options& opts) {
 		}
 		auto& rNetwork = networkFactory->getNetworkHandler();
 
-		// Creating the solver handler
-		std::unique_ptr<xolotlSolver::ISolverHandler> theSolverHandler =
-				std::make_unique < xolotlSolver::PetscSolverExpHandler
-						> (rNetwork);
+		// Initialize and get the solver handler
+		bool dimOK = xolotlFactory::initializeDimension(opts, rNetwork);
+		if (!dimOK) {
+			throw std::runtime_error("Unable to initialize dimension from inputs.");
+		}
+		auto& solvHandler = xolotlFactory::getSolverHandler();
 
 		// Setup the solver
 		auto solver = setUpSolver(handlerRegistry, material, tempHandler,
-				*theSolverHandler, opts);
+				solvHandler, opts);
 
 		// Launch the PetscSolver
 		launchPetscSolver(*solver, handlerRegistry);

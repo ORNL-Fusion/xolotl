@@ -282,7 +282,7 @@ void PetscSolver::solve() {
 	switch (dim) {
 	case 0:
 		// One dimension
-		ierr = setupPetscExpMonitor(ts);
+		ierr = setupPetsc0DMonitor(ts);
 		checkPetscError(ierr,
 				"PetscSolver::solve: setupPetsc0DMonitor failed.");
 		break;

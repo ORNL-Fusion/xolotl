@@ -38,7 +38,8 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	xolotlCore::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=10000 0 0 0 0" << std::endl;
+	paramFile << "netParam=9999 0 0 0 0" << std::endl << "grouping=100 10 0"
+			<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -69,7 +70,10 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	// Create the network
 	using NetworkType = experimental::NEReactionNetwork;
 	NetworkType::AmountType maxXe = opts.getMaxImpurity();
-	NetworkType network( { maxXe }, grid.size(), opts);
+	NetworkType::AmountType groupingWidth = opts.getGroupingWidthA();
+	NetworkType::AmountType refine = (maxXe + 1) / groupingWidth;
+	NetworkType network( { maxXe }, { { refine }, { groupingWidth } },
+			grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -85,13 +89,12 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	reSolutionHandler.updateReSolutionRate(1.0);
 
 	// Check some values in dfill
-	BOOST_REQUIRE_EQUAL(dfill[1][0], 1);
-	BOOST_REQUIRE_EQUAL(dfill[3][0], 3);
-	BOOST_REQUIRE_EQUAL(dfill[5][0], 5);
-	BOOST_REQUIRE_EQUAL(dfill[7][0], 7);
-	BOOST_REQUIRE_EQUAL(dfill[9][0], 9);
-	BOOST_REQUIRE_EQUAL(dfill[11][0], 11);
-	BOOST_REQUIRE_EQUAL(dfill[13][0], 13);
+	BOOST_REQUIRE_EQUAL(dfill[0][0], 1);
+	BOOST_REQUIRE_EQUAL(dfill[0][1], 2);
+	BOOST_REQUIRE_EQUAL(dfill[0][2], 3);
+	BOOST_REQUIRE_EQUAL(dfill[0][3], 4);
+	BOOST_REQUIRE_EQUAL(dfill[20][0], 20);
+	BOOST_REQUIRE_EQUAL(dfill[20][1], 1091);
 
 	// The arrays of concentration
 	double concentration[nGrid * dof];
@@ -171,7 +174,8 @@ BOOST_AUTO_TEST_CASE(checkMinimumSize) {
 	xolotlCore::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=10000 0 0 0 0" << std::endl;
+	paramFile << "netParam=9999 0 0 0 0" << std::endl << "grouping=100 10 0"
+			<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -200,8 +204,10 @@ BOOST_AUTO_TEST_CASE(checkMinimumSize) {
 	// Create the network
 	using NetworkType = experimental::NEReactionNetwork;
 	NetworkType::AmountType maxXe = opts.getMaxImpurity();
-	NetworkType network( { maxXe }, grid.size(), opts);
-	network.syncClusterDataOnHost();
+	NetworkType::AmountType groupingWidth = opts.getGroupingWidthA();
+	NetworkType::AmountType refine = (maxXe + 1) / groupingWidth;
+	NetworkType network( { maxXe }, { { refine }, { groupingWidth } },
+			grid.size(), opts);
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
@@ -286,7 +292,8 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 	xolotlCore::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=10000 0 0 0 0" << std::endl;
+	paramFile << "netParam=9999 0 0 0 0" << std::endl << "grouping=100 10 0"
+			<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -315,7 +322,10 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 	// Create the network
 	using NetworkType = experimental::NEReactionNetwork;
 	NetworkType::AmountType maxXe = opts.getMaxImpurity();
-	NetworkType network( { maxXe }, grid.size(), opts);
+	NetworkType::AmountType groupingWidth = opts.getGroupingWidthA();
+	NetworkType::AmountType refine = (maxXe + 1) / groupingWidth;
+	NetworkType network( { maxXe }, { { refine }, { groupingWidth } },
+			grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size

@@ -11,19 +11,22 @@ namespace xolotlViz {
  *  Realization of the IDataProvider interface. This is a general class with general methods,
  *  to actually get data from the data provider, one needs to use the subclasses.
  */
-class DataProvider: public virtual IDataProvider, public xolotlCore::Identifiable {
+class DataProvider: public virtual IDataProvider,
+		public xolotlCore::Identifiable {
 
 protected:
 
 	/**
-     * Declare the constructor as private to force the use of a name
+	 * Declare the constructor as private to force the use of a name
 	 */
-    DataProvider() : xolotlCore::Identifiable("unused") {}
+	DataProvider() :
+			xolotlCore::Identifiable("unused") {
+	}
 
 	/**
 	 * Collection of data points.
 	 */
-	std::shared_ptr< std::vector<Point> > dataPoints;
+	std::shared_ptr<std::vector<Point> > dataPoints;
 
 public:
 
@@ -46,13 +49,13 @@ public:
 	 * Returns a collection of the data points.
 	 * \see IDataProvider.h
 	 */
-	std::shared_ptr< std::vector<Point> > getDataPoints() const;
+	std::shared_ptr<std::vector<Point> > getDataPoints() const;
 
 	/**
 	 * Method filling the data collection.
 	 * \see IDataProvider.h
 	 */
-	void setPoints(std::shared_ptr< std::vector<Point> > points);
+	void setPoints(std::shared_ptr<std::vector<Point> > points);
 
 	/**
 	 * Returns the value of the mean of all the data points.
@@ -99,22 +102,21 @@ public:
 		return std::vector<double>();
 	}
 
+	/**
+	 * This operation returns the name of the data.
+	 * @return the name
+	 */
+	virtual std::string getDataName() const {
+		return dataName;
+	}
 
 	/**
- 	 * This operation returns the name of the data.
- 	 * @return the name
- 	 */
-	virtual std::string getDataName() const {
-                return dataName;
-        }
-
-        /**
- 	 * This operation sets the name of the data.
- 	 * @param name the name of the data
- 	 */ 
+	 * This operation sets the name of the data.
+	 * @param name the name of the data
+	 */
 	virtual void setDataName(const std::string& name) {
-                dataName = name;
-        }
+		dataName = name;
+	}
 
 };
 

@@ -94,14 +94,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	trapMutationHandler.initializeIndex1D(surfacePos, network,
 			advectionHandlers, grid, 11, 0);
 
-	// Check some values in dfill
-	BOOST_REQUIRE_EQUAL(dfill[1][0], 1);
-	BOOST_REQUIRE_EQUAL(dfill[3][0], 3);
-	BOOST_REQUIRE_EQUAL(dfill[5][0], 5);
-	BOOST_REQUIRE_EQUAL(dfill[7][0], 7);
-	BOOST_REQUIRE_EQUAL(dfill[9][0], 9);
-	BOOST_REQUIRE_EQUAL(dfill[11][0], 11);
-	BOOST_REQUIRE_EQUAL(dfill[13][0], 13);
+	// Check that nothing was added to dfill
+	BOOST_REQUIRE_EQUAL(dfill.size(), 0);
 
 	// The arrays of concentration
 	double concentration[13 * dof];

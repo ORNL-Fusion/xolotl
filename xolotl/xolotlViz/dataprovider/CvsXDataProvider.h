@@ -16,9 +16,11 @@ class CvsXDataProvider: public DataProvider {
 private:
 
 	/**
-     * Declare the constructor as private to force the use of a name
+	 * Declare the constructor as private to force the use of a name
 	 */
-    CvsXDataProvider() : DataProvider() {}
+	CvsXDataProvider() :
+			DataProvider() {
+	}
 
 public:
 

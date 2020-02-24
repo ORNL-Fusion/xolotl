@@ -176,6 +176,30 @@ public:
         return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
     }
 
+    ClusterCommon<plsm::OnHost>
+    getSingleVacancy() override
+    {
+    	Composition comp = Composition::zero();
+
+        // Find the vacancy index
+        constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
+        bool hasVacancy = false;
+        Species vIndex;
+        for (auto i : speciesRangeNoI) {
+        	if (isVacancy(i)) {
+        		hasVacancy = true;
+        		vIndex = i;
+        	}
+        }
+
+        // Update the composition if there is vacancy in the network
+        if (hasVacancy) comp[vIndex] = 1;
+
+        auto clusterId = findCluster(comp).getId();
+
+        return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
+    }
+
     KOKKOS_INLINE_FUNCTION
     Cluster<plsm::OnDevice>
     getCluster(std::size_t clusterId, plsm::OnDevice)
@@ -219,6 +243,30 @@ public:
 
     /**
      * Get the total concentration of a given type of clusters.
+     *
+     * @param concentration The vector of concentrations
+     * @param type The type of atom we want the concentration of
+     * @param minSize The minimum number of atom to start counting
+     * @return The total accumulated concentration times the size of the cluster
+     */
+    double
+    getTotalConcentration(ConcentrationsView concentrations,
+            Species type, std::size_t minSize = 0);
+
+    /**
+     * Get the total concentration of a given type of clusters times their radius.
+     *
+     * @param concentration The vector of concentrations
+     * @param type The type of atom we want the concentration of
+     * @param minSize The minimum number of atom to start counting
+     * @return The total accumulated concentration times the size of the cluster
+     */
+    double
+    getTotalRadiusConcentration(ConcentrationsView concentrations,
+            Species type, std::size_t minSize = 0);
+
+    /**
+     * Get the total concentration of a given type of clusters times the number of atoms.
      *
      * @param concentration The vector of concentrations
      * @param type The type of atom we want the concentration of

@@ -31,6 +31,12 @@ inline void checkPetscError(PetscErrorCode errorCode, const char* errorMsg) {
 class PetscSolverHandler: public SolverHandler {
 protected:
 
+	//! Partial derivatives for all reactions at one grid point.
+	Kokkos::View<double*> expVals;
+
+	//! Map of connectivities
+	SparseFillMap dfill;
+
 	/**
 	 * The last temperature on the grid. It is a vector to keep the temperature at each
 	 * grid point but we know the temperature changes with depth only.

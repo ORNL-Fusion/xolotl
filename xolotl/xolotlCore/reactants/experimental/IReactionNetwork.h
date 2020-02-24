@@ -102,6 +102,9 @@ public:
     virtual ClusterCommon<plsm::OnHost>
     getClusterCommon(std::size_t clusterId) const = 0;
 
+    virtual ClusterCommon<plsm::OnHost>
+    getSingleVacancy() = 0;
+
     virtual void
     computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
         std::size_t gridIndex) = 0;
