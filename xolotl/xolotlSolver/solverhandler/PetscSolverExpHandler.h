@@ -29,6 +29,8 @@ protected:
 
 	std::shared_ptr<xolotlPerf::ITimer> fluxTimer;
 	std::shared_ptr<xolotlPerf::ITimer> partialDerivativeTimer;
+	std::shared_ptr<xolotlPerf::IEventCounter> fluxCounter;
+	std::shared_ptr<xolotlPerf::IEventCounter> partialDerivativeCounter;
 
 public:
 
@@ -44,13 +46,16 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolverExpHandler(NetworkType& _network) :
+	PetscSolverExpHandler(NetworkType &_network) :
 			PetscSolverHandler(
 					*(std::make_shared<xolotlCore::NEClusterReactionNetwork>(
 							std::make_shared<xolotlPerf::DummyHandlerRegistry>())),
 					_network), fluxTimer(
 					xolotlPerf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
 					xolotlPerf::getHandlerRegistry()->getTimer(
+							"Partial Derivatives")), fluxCounter(
+					xolotlPerf::getHandlerRegistry()->getEventCounter("Flux")), partialDerivativeCounter(
+					xolotlPerf::getHandlerRegistry()->getEventCounter(
 							"Partial Derivatives")) {
 	}
 

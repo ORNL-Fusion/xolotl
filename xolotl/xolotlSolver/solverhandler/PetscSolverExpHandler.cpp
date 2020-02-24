@@ -159,6 +159,7 @@ void PetscSolverExpHandler::updateConcentration(TS &ts, Vec &localC,
     auto hFlux = HostUnmanaged(updatedConcOffset, dof);
     auto dFlux = Kokkos::View<double*>("Fluxes", dof);
     deep_copy(dFlux, hFlux);
+    fluxCounter->increment();
     fluxTimer->start();
 	expNetwork.computeAllFluxes(dConcs, dFlux, 0);
     fluxTimer->stop();
@@ -235,6 +236,7 @@ void PetscSolverExpHandler::computeDiagonalJacobian(TS &ts, Vec &localC,
     auto hConcs = HostUnmanaged(concOffset, dof);
     auto dConcs = Kokkos::View<double*>("Concentrations", dof);
     deep_copy(dConcs, hConcs);
+    partialDerivativeCounter->increment();
     partialDerivativeTimer->start();
 	expNetwork.computeAllPartials(dConcs, expVals, 0);
     partialDerivativeTimer->stop();

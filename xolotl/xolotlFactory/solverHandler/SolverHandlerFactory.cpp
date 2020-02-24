@@ -51,14 +51,22 @@ bool initializeDimension(const xolotlCore::Options &options,
 }
 
 // Provide access to our handler registry.
-xolotlSolver::ISolverHandler& getSolverHandler() {
+std::unique_ptr<xolotlSolver::ISolverHandler> getSolverHandler() {
 	if (!theSolverHandler) {
 		// We have not yet been initialized.
 		throw std::string("\nxolotlFactory: solver requested but "
 				"it has not been initialized.");
 	}
 
-	return *theSolverHandler;
+	return move(theSolverHandler);
+}
+
+void destroySolverHandler() {
+	if (theSolverHandler) {
+		theSolverHandler.reset();
+	}
+
+	return;
 }
 
 } // end namespace xolotlFactory
