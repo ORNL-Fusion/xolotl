@@ -11,7 +11,7 @@ template <typename TTag>
 KOKKOS_INLINE_FUNCTION
 void
 PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
-    std::size_t& prodCount, std::size_t& dissCount, TTag tag) const
+    TTag tag) const
 {
     using Species = typename Network::Species;
     using Composition = typename Network::Composition;
@@ -43,9 +43,9 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
         comp[Species::I] = size;
         auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
         if (iProdId != invalid) {
-            this->addProductionReaction(tag, {i, j, iProdId}, prodCount);
+            this->addProductionReaction(tag, {i, j, iProdId});
             if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
-                this->addDissociationReaction(tag, {iProdId, i, j}, dissCount);
+                this->addDissociationReaction(tag, {iProdId, i, j});
             }
         }
         return;
@@ -69,7 +69,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             comp[Species::V] = prodSize;
             auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
             if (vProdId != invalid) {
-                this->addProductionReaction(tag, {i, j, vProdId}, prodCount);
+                this->addProductionReaction(tag, {i, j, vProdId});
                 // No dissociation
             }
         }
@@ -79,13 +79,13 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             comp[Species::I] = -prodSize;
             auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
             if (iProdId != invalid) {
-                this->addProductionReaction(tag, {i, j, iProdId}, prodCount);
+                this->addProductionReaction(tag, {i, j, iProdId});
                 // No dissociation
             }
         }
         else {
             // No product
-            this->addProductionReaction(tag, {i, j}, prodCount);
+            this->addProductionReaction(tag, {i, j});
         }
         return;
     }
@@ -131,7 +131,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
         if (isGood) {
             // Increase nProd
             nProd++;
-            this->addProductionReaction(tag, {i, j, k}, prodCount);
+            this->addProductionReaction(tag, {i, j, k});
             // TODO: will have to add some rules, i or j should be a simplex cluster of max size 1
             if (!cl1Reg.isSimplex() && !cl2Reg.isSimplex()) {
                 continue;
@@ -147,7 +147,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
                     continue;
                 }
 
-                this->addDissociationReaction(tag, {k, i, j}, dissCount);
+                this->addDissociationReaction(tag, {k, i, j});
             }
         }
     }
@@ -200,8 +200,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
                 if (isGood) {
                     // Increase nProd
                     nProd++;
-                    this->addProductionReaction(tag, {i, j, k, iClusterId},
-                        prodCount);
+                    this->addProductionReaction(tag, {i, j, k, iClusterId});
                     // No dissociation
                 }
             }

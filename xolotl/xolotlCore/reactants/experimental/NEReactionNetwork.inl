@@ -9,16 +9,11 @@ namespace detail
 template <typename TTag>
 KOKKOS_INLINE_FUNCTION
 void
-NEReactionGenerator::operator()(std::size_t i, std::size_t j,
-    std::size_t& prodCount, std::size_t& dissCount, TTag tag) const
+NEReactionGenerator::operator()(std::size_t i, std::size_t j, TTag tag) const
 {
     using Species = typename Network::Species;
     using Composition = typename Network::Composition;
     using AmountType = typename Network::AmountType;
-
-    constexpr auto species = Network::getSpeciesRange();
-    constexpr auto speciesNoI = Network::getSpeciesRangeNoI();
-    constexpr auto invalid = Network::invalid;
 
     auto numClusters = this->getNumberOfClusters();
 
@@ -49,14 +44,14 @@ NEReactionGenerator::operator()(std::size_t i, std::size_t j,
             continue;
         }
 
-        this->addProductionReaction(tag, {i, j, k}, prodCount);
+        this->addProductionReaction(tag, {i, j, k});
 
         if (!cl1Reg.isSimplex() && !cl2Reg.isSimplex()) {
             continue;
         }
         // Is the size of one of them one?
         if (lo1[Species::Xe] == 1 || lo2[Species::Xe] == 1) {
-            this->addDissociationReaction(tag, {k, i, j}, dissCount);
+            this->addDissociationReaction(tag, {k, i, j});
         }
     }
 }

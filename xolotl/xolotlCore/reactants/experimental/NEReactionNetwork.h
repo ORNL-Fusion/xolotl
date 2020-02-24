@@ -67,8 +67,7 @@ public:
     template <typename TTag>
     KOKKOS_INLINE_FUNCTION
     void
-    operator()(std::size_t i, std::size_t j, std::size_t& prodCount,
-        std::size_t& dissCount, TTag tag) const;
+    operator()(std::size_t i, std::size_t j, TTag tag) const;
 };
 }
 }

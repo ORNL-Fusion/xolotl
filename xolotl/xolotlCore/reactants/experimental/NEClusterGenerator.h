@@ -95,8 +95,7 @@ public:
                 return 79.0;
             }
         }
-        else return 79.0;
-        return 0.0;
+        return 79.0;
     }
 
     template <typename PlsmContext>

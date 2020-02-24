@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <type_traits>
 
+#include <Kokkos_Atomic.hpp>
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Crs.hpp>
 
@@ -429,8 +430,9 @@ public:
     };
 
     using Network = TNetwork;
-    using Types = detail::ReactionNetworkTypes<Network>;
-    using ClusterData = typename Types::ClusterData;
+    // using Types = detail::ReactionNetworkTypes<Network>;
+    using ClusterData = typename Network::ClusterData;
+    using ClusterDataRef = typename Network::ClusterDataRef;
     using Cluster = typename ClusterData::ClusterType;
     using ReactionType = typename Network::ReactionType;
     using ClusterSet = typename ReactionType::ClusterSet;
@@ -454,15 +456,17 @@ public:
         auto numClusters = _clusterData.numClusters;
         auto diffusionFactor = _clusterData.diffusionFactor;
         auto generator = *static_cast<TDerived*>(this);
-        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (std::size_t i) {
-            std::size_t prodCount {};
-            std::size_t dissCount {};
-            for (std::size_t j = i; j < numClusters; ++j) {
-                if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-                    continue;
-                }
-                generator(i, j, prodCount, dissCount, Count{});
+        using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
+        auto range2d = Range2D({0, 0}, {numClusters, numClusters});
+        Kokkos::parallel_for(range2d,
+                KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
+            if (j < i) {
+                return;
             }
+            if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+                return;
+            }
+            generator(i, j, Count{});
         });
         Kokkos::fence();
 
@@ -471,15 +475,32 @@ public:
 
         generator = *static_cast<TDerived*>(this);
 
-        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (std::size_t i) {
-            std::size_t prodCount {};
-            std::size_t dissCount {};
-            for (std::size_t j = i; j < numClusters; ++j) {
-                if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-                    continue;
-                }
-                generator(i, j, prodCount, dissCount, Construct{});
+        Kokkos::parallel_for(range2d,
+                KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
+            if (j < i) {
+                return;
             }
+            if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+                return;
+            }
+            generator(i, j, Construct{});
+        });
+        Kokkos::fence();
+
+        using RType = typename ReactionType::Type;
+        auto reactionData = _reactionDataRef;
+        auto clusterData = ClusterDataRef(_clusterData);
+        auto prodReactions = _prodCrsReactions;
+        auto prodClusterSets = _prodCrsClusterSets;
+        Kokkos::parallel_for(_numProdReactions, KOKKOS_LAMBDA (std::size_t i) {
+            prodReactions(i) = ReactionType(reactionData, clusterData, i,
+                RType::production, prodClusterSets(i));
+        });
+        auto dissReactions = _dissCrsReactions;
+        auto dissClusterSets = _dissCrsClusterSets;
+        Kokkos::parallel_for(_numDissReactions, KOKKOS_LAMBDA (std::size_t i) {
+            dissReactions(i) = ReactionType(reactionData, clusterData, i,
+                RType::dissociation, dissClusterSets(i));
         });
         Kokkos::fence();
     }
@@ -507,8 +528,18 @@ public:
         _numDissReactions = Kokkos::get_crs_row_map_from_counts(
             _dissCrsRowMap, _clusterDissReactionCounts);
 
+        _prodCrsClusterSets =
+            Kokkos::View<ClusterSet*>("Production Cluster Sets",
+                _numProdReactions);
+
+        _dissCrsClusterSets =
+            Kokkos::View<ClusterSet*>("Dissociation Cluster Sets",
+                _numDissReactions);
+
         auto numReactions = _numProdReactions + _numDissReactions;
-        _reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
+        _reactions = Kokkos::View<ReactionType*>(
+                "Reactions", numReactions);
+            // Kokkos::ViewAllocateWithoutInitializing("Reactions"), numReactions);
 
         _prodCrsReactions = Kokkos::subview(_reactions,
             std::make_pair((std::size_t)0, _numProdReactions));
@@ -535,42 +566,46 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     void
-    addProductionReaction(Count, const ClusterSet& clusterSet,
-        std::size_t& count) const
+    addProductionReaction(Count, const ClusterSet& clusterSet) const
     {
-        ++_clusterProdReactionCounts(clusterSet.cluster0);
+        Kokkos::atomic_increment(
+            &_clusterProdReactionCounts(clusterSet.cluster0));
     }
 
     KOKKOS_INLINE_FUNCTION
     void
-    addProductionReaction(Construct, const ClusterSet& clusterSet,
-        std::size_t& count) const
+    addProductionReaction(Construct, const ClusterSet& clusterSet) const
     {
-        using RType = typename ReactionType::Type;
-        auto id = _prodCrsRowMap(clusterSet.cluster0) + count;
-        _prodCrsReactions(id) = ReactionType(_reactionDataRef, _clusterData, id,
-            RType::production, clusterSet);
-        ++count;
+        auto id = _prodCrsRowMap(clusterSet.cluster0);
+        for (; !Kokkos::atomic_compare_exchange_strong(
+                    &_prodCrsClusterSets(id).cluster0, Network::invalid,
+                    clusterSet.cluster0);
+                ++id)
+        {
+        }
+        _prodCrsClusterSets(id) = clusterSet;
     }
 
     KOKKOS_INLINE_FUNCTION
     void
-    addDissociationReaction(Count, const ClusterSet& clusterSet,
-        std::size_t& count) const
+    addDissociationReaction(Count, const ClusterSet& clusterSet) const
     {
-        ++_clusterDissReactionCounts(clusterSet.cluster1);
+        Kokkos::atomic_increment(
+            &_clusterDissReactionCounts(clusterSet.cluster1));
     }
 
     KOKKOS_INLINE_FUNCTION
     void
-    addDissociationReaction(Construct, const ClusterSet& clusterSet,
-        std::size_t& count) const
+    addDissociationReaction(Construct, const ClusterSet& clusterSet) const
     {
-        using RType = typename ReactionType::Type;
-        auto id = _dissCrsRowMap(clusterSet.cluster1) + count;
-        _dissCrsReactions(id) = ReactionType(_reactionDataRef, _clusterData,
-            id + _numProdReactions, RType::dissociation, clusterSet);
-        ++count;
+        auto id = _dissCrsRowMap(clusterSet.cluster1);
+        for (; !Kokkos::atomic_compare_exchange_strong(
+                    &_dissCrsClusterSets(id).cluster0, Network::invalid,
+                    clusterSet.cluster0);
+                ++id)
+        {
+        }
+        _dissCrsClusterSets(id) = clusterSet;
     }
 
     detail::ReactionData
@@ -597,6 +632,10 @@ private:
 
     Kokkos::View<std::size_t*> _prodCrsRowMap;
     Kokkos::View<std::size_t*> _dissCrsRowMap;
+
+    Kokkos::View<ClusterSet*> _prodCrsClusterSets;
+    Kokkos::View<ClusterSet*> _dissCrsClusterSets;
+
     using ReactionSubView = decltype(
         Kokkos::subview(std::declval<Kokkos::View<ReactionType*>>(),
             Kokkos::ALL));

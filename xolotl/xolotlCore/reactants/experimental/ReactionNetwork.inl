@@ -4,6 +4,8 @@
 
 #include <Constants.h>
 
+// #include <cuda_profiler_api.h>
+
 namespace xolotlCore
 {
 namespace experimental
@@ -400,10 +402,12 @@ template <typename TImpl>
 void
 ReactionNetworkWorker<TImpl>::defineReactions()
 {
+    // cudaProfilerStart();
     auto generator = _nw.asDerived()->getReactionGenerator();
     generator.generateReactions();
     _nw._reactionData = generator.getReactionData();
     _nw._reactions = generator.getReactions();
+    // cudaProfilerStop();
 }
 
 template <typename TImpl>
