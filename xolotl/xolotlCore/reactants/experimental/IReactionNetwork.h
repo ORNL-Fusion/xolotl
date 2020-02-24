@@ -29,6 +29,11 @@ public:
     {
     }
 
+    virtual
+    ~IReactionNetwork()
+    {
+    }
+
     KOKKOS_INLINE_FUNCTION
     std::size_t
     getDOF() const noexcept
