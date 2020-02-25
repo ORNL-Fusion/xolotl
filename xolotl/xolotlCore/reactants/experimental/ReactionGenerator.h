@@ -7,7 +7,192 @@ namespace experimental
 namespace detail
 {
 template <typename TNetwork, typename TDerived>
-class ReactionGenerator
+class ReactionGeneratorRange1D
+{
+public:
+    struct Count
+    {
+    };
+
+    struct Construct
+    {
+    };
+
+    using Network = TNetwork;
+    using Types = detail::ReactionNetworkTypes<Network>;
+    using ClusterData = typename Types::ClusterData;
+    using Cluster = typename ClusterData::ClusterType;
+    using ReactionType = typename Network::ReactionType;
+    using ClusterSet = typename ReactionType::ClusterSet;
+    using Subpaving = typename Network::Subpaving;
+
+    ReactionGeneratorRange1D(const Subpaving& subpaving,
+            const ClusterData& clusterData, std::size_t numDOFs)
+        :
+        _subpaving(subpaving),
+        _clusterData(clusterData),
+        _numDOFs(numDOFs),
+        _clusterProdReactionCounts("Production Reaction Counts",
+            _clusterData.numClusters),
+        _clusterDissReactionCounts("Dissociation Reaction Counts",
+            _clusterData.numClusters)
+    {
+    }
+
+    void
+    generateReactions()
+    {
+        auto numClusters = _clusterData.numClusters;
+        auto diffusionFactor = _clusterData.diffusionFactor;
+        auto generator = *static_cast<TDerived*>(this);
+        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (std::size_t j) {
+            for (std::size_t i = 0; i <= j; ++i) {
+                if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+                    continue;
+                }
+                generator(i, j, Count{});
+            }
+        });
+        Kokkos::fence();
+
+        setupCrs();
+        setupReactionData();
+
+        generator = *static_cast<TDerived*>(this);
+
+        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (std::size_t j) {
+            for (std::size_t i = 0; i <= j; ++i) {
+                if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+                    continue;
+                }
+                generator(i, j, Construct{});
+            }
+        });
+        Kokkos::fence();
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    const Subpaving&
+    getSubpaving() const
+    {
+        return _subpaving;
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    Cluster
+    getCluster(std::size_t i) const
+    {
+        return _clusterData.getCluster(i);
+    }
+
+    void
+    setupCrs()
+    {
+        _numProdReactions = Kokkos::get_crs_row_map_from_counts(
+            _prodCrsRowMap, _clusterProdReactionCounts);
+
+        _numDissReactions = Kokkos::get_crs_row_map_from_counts(
+            _dissCrsRowMap, _clusterDissReactionCounts);
+
+        auto numReactions = _numProdReactions + _numDissReactions;
+        _reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
+
+        _prodCrsReactions = Kokkos::subview(_reactions,
+            std::make_pair((std::size_t)0, _numProdReactions));
+
+        _dissCrsReactions = Kokkos::subview(_reactions,
+            std::make_pair(_numProdReactions, numReactions));
+    }
+
+    void
+    setupReactionData()
+    {
+        _reactionData = detail::ReactionData(_numProdReactions,
+            _numDissReactions, _numDOFs, Network::getNumberOfSpeciesNoI(),
+            _clusterData.gridSize);
+        _reactionDataRef = detail::ReactionDataRef(_reactionData);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    std::size_t
+    getNumberOfClusters() const noexcept
+    {
+        return _clusterData.numClusters;
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    addProductionReaction(Count, const ClusterSet& clusterSet) const
+    {
+        ++_clusterProdReactionCounts(clusterSet.cluster1);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    addProductionReaction(Construct, const ClusterSet& clusterSet) const
+    {
+        using RType = typename ReactionType::Type;
+        auto id = _prodCrsRowMap(clusterSet.cluster1);
+        _prodCrsReactions(id) = ReactionType(_reactionDataRef, _clusterData, id,
+            RType::production, clusterSet);
+        ++_prodCrsRowMap(clusterSet.cluster1);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    addDissociationReaction(Count, const ClusterSet& clusterSet) const
+    {
+        ++_clusterDissReactionCounts(clusterSet.cluster2);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    addDissociationReaction(Construct, const ClusterSet& clusterSet) const
+    {
+        using RType = typename ReactionType::Type;
+        auto id = _dissCrsRowMap(clusterSet.cluster2);
+        _dissCrsReactions(id) = ReactionType(_reactionDataRef, _clusterData,
+            id + _numProdReactions, RType::dissociation, clusterSet);
+        ++_dissCrsRowMap(clusterSet.cluster2);
+    }
+
+    detail::ReactionData
+    getReactionData() const
+    {
+        return _reactionData;
+    }
+
+    Kokkos::View<ReactionType*>
+    getReactions() const
+    {
+        return _reactions;
+    }
+
+private:
+    Subpaving _subpaving;
+    ClusterData _clusterData;
+    std::size_t _numDOFs;
+    Kokkos::View<std::size_t*> _clusterProdReactionCounts;
+    Kokkos::View<std::size_t*> _clusterDissReactionCounts;
+
+    std::size_t _numProdReactions;
+    std::size_t _numDissReactions;
+
+    Kokkos::View<std::size_t*> _prodCrsRowMap;
+    Kokkos::View<std::size_t*> _dissCrsRowMap;
+    using ReactionSubView = decltype(
+        Kokkos::subview(std::declval<Kokkos::View<ReactionType*>>(),
+            Kokkos::ALL));
+    ReactionSubView _prodCrsReactions;
+    ReactionSubView _dissCrsReactions;
+
+    detail::ReactionData _reactionData;
+    detail::ReactionDataRef _reactionDataRef;
+    Kokkos::View<ReactionType*> _reactions;
+};
+
+template <typename TNetwork, typename TDerived>
+class ReactionGeneratorRange2D
 {
 public:
     struct Count
@@ -27,11 +212,12 @@ public:
     using ClusterSet = typename ReactionType::ClusterSet;
     using Subpaving = typename Network::Subpaving;
 
-    ReactionGenerator(const Network& network)
+    ReactionGeneratorRange2D(const Subpaving& subpaving,
+            const ClusterData& clusterData, std::size_t numDOFs)
         :
-        _subpaving(network._subpaving),
-        _clusterData(network._clusterData),
-        _numDOFs(network.getDOF()),
+        _subpaving(subpaving),
+        _clusterData(clusterData),
+        _numDOFs(numDOFs),
         _clusterProdReactionCounts("Production Reaction Counts",
             _clusterData.numClusters),
         _clusterDissReactionCounts("Dissociation Reaction Counts",
@@ -87,9 +273,10 @@ public:
         });
         auto dissReactions = _dissCrsReactions;
         auto dissClusterSets = _dissCrsClusterSets;
+        auto nProdReactions = _numProdReactions;
         Kokkos::parallel_for(_numDissReactions, KOKKOS_LAMBDA (std::size_t i) {
-            dissReactions(i) = ReactionType(reactionData, clusterData, i,
-                RType::dissociation, dissClusterSets(i));
+            dissReactions(i) = ReactionType(reactionData, clusterData,
+                i + nProdReactions, RType::dissociation, dissClusterSets(i));
         });
         Kokkos::fence();
     }
@@ -189,8 +376,8 @@ public:
     {
         auto id = _dissCrsRowMap(clusterSet.cluster1);
         for (; !Kokkos::atomic_compare_exchange_strong(
-                    &_dissCrsClusterSets(id).cluster0, Network::invalid,
-                    clusterSet.cluster0);
+                    &_dissCrsClusterSets(id).cluster1, Network::invalid,
+                    clusterSet.cluster1);
                 ++id)
         {
         }
@@ -234,6 +421,29 @@ private:
     detail::ReactionData _reactionData;
     detail::ReactionDataRef _reactionDataRef;
     Kokkos::View<ReactionType*> _reactions;
+};
+
+template <typename TNetwork, typename TDerived>
+using ReactionGeneratorImpl =
+#if 1
+ReactionGeneratorRange2D<TNetwork, TDerived>;
+#else
+ReactionGeneratorRange1D<TNetwork, TDerived>;
+#endif
+
+template <typename TNetwork, typename TDerived>
+class ReactionGenerator : public ReactionGeneratorImpl<TNetwork, TDerived>
+{
+public:
+    using Superclass = ReactionGeneratorImpl<TNetwork, TDerived>;
+
+    using Superclass::Superclass;
+
+    ReactionGenerator(const TNetwork& network)
+        :
+        Superclass(network._subpaving, network._clusterData, network.getDOF())
+    {
+    }
 };
 }
 }
