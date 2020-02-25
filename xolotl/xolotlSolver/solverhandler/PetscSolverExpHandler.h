@@ -27,11 +27,6 @@ protected:
 	 */
 	std::vector<double> temperature;
 
-	std::shared_ptr<xolotlPerf::ITimer> fluxTimer;
-	std::shared_ptr<xolotlPerf::ITimer> partialDerivativeTimer;
-	std::shared_ptr<xolotlPerf::IEventCounter> fluxCounter;
-	std::shared_ptr<xolotlPerf::IEventCounter> partialDerivativeCounter;
-
 public:
 
 	/**
@@ -50,13 +45,7 @@ public:
 			PetscSolverHandler(
 					*(std::make_shared<xolotlCore::NEClusterReactionNetwork>(
 							std::make_shared<xolotlPerf::DummyHandlerRegistry>())),
-					_network), fluxTimer(
-					xolotlPerf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
-					xolotlPerf::getHandlerRegistry()->getTimer(
-							"Partial Derivatives")), fluxCounter(
-					xolotlPerf::getHandlerRegistry()->getEventCounter("Flux")), partialDerivativeCounter(
-					xolotlPerf::getHandlerRegistry()->getEventCounter(
-							"Partial Derivatives")) {
+					_network) {
 	}
 
 	//! The Destructor

@@ -196,7 +196,7 @@ public:
         // Update the composition if there is vacancy in the network
         if (hasVacancy) comp[vIndex] = 1;
 
-        auto clusterId = findCluster(comp).getId();
+        auto clusterId = findCluster(comp, plsm::onHost).getId();
 
         return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
     }

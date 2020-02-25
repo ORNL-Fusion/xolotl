@@ -14,7 +14,7 @@ namespace xolotlSolver {
  * @param errorCode The PETSc error code.
  * @param errMsg The error message in the thrown exception.
  */
-inline void checkPetscError(PetscErrorCode errorCode, const char* errorMsg) {
+inline void checkPetscError(PetscErrorCode errorCode, const char *errorMsg) {
 	if (PetscUnlikely(errorCode))
 		throw std::string(errorMsg);
 }
@@ -80,6 +80,12 @@ protected:
 	 */
 	std::vector<PetscScalar> reactionVals;
 
+	//! Times and counters
+	std::shared_ptr<xolotlPerf::ITimer> fluxTimer;
+	std::shared_ptr<xolotlPerf::ITimer> partialDerivativeTimer;
+	std::shared_ptr<xolotlPerf::IEventCounter> fluxCounter;
+	std::shared_ptr<xolotlPerf::IEventCounter> partialDerivativeCounter;
+
 	/**
 	 * Convert a C++ sparse fill map representation to the one that
 	 * PETSc's DMDASetBlockFillsSparse() expects.
@@ -90,7 +96,7 @@ protected:
 	 *      PETSc's DMDASetBlockFillsSparse() expects.
 	 */
 	static std::vector<PetscInt> ConvertToPetscSparseFillMap(size_t dof,
-			const xolotlCore::IReactionNetwork::SparseFillMap& fillMap);
+			const xolotlCore::IReactionNetwork::SparseFillMap &fillMap);
 
 public:
 
@@ -104,9 +110,15 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolverHandler(xolotlCore::IReactionNetwork& _network,
-			NetworkType& _expNetwork) :
-			SolverHandler(_network, _expNetwork) {
+	PetscSolverHandler(xolotlCore::IReactionNetwork &_network,
+			NetworkType &_expNetwork) :
+			SolverHandler(_network, _expNetwork), fluxTimer(
+					xolotlPerf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
+					xolotlPerf::getHandlerRegistry()->getTimer(
+							"Partial Derivatives")), fluxCounter(
+					xolotlPerf::getHandlerRegistry()->getEventCounter("Flux")), partialDerivativeCounter(
+					xolotlPerf::getHandlerRegistry()->getEventCounter(
+							"Partial Derivatives")) {
 	}
 
 };

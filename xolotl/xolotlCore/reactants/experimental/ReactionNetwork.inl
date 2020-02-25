@@ -222,11 +222,12 @@ ReactionNetwork<TImpl>::getTotalRadiusConcentration(ConcentrationsView concentra
 {
     auto tiles = _subpaving.getTiles(plsm::onDevice);
     double conc = 0.0;
+    auto clusterData = _clusterData;
     Kokkos::parallel_reduce(_numClusters,
             KOKKOS_LAMBDA (std::size_t i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
     	for (std::size_t j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i) * _clusterData.reactionRadius(i);
+    		if (j >= minSize) lsum += concentrations(i) * clusterData.reactionRadius(i);
     	}
     }, conc);
 

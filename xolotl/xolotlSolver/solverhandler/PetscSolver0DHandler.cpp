@@ -136,7 +136,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 		// Apply the concentrations we just read.
 		concOffset = concentrations[0];
 
-		for (auto const& currConcData : myConcs[0]) {
+		for (auto const &currConcData : myConcs[0]) {
 			concOffset[currConcData.first] = currConcData.second;
 		}
 		// Set the temperature in the network
@@ -230,9 +230,10 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	auto hFlux = HostUnmanaged(updatedConcOffset, dof);
 	auto dFlux = Kokkos::View<double*>("Fluxes", dof);
 	deep_copy(dFlux, hFlux);
-//    fluxTimer->start();
+	fluxCounter->increment();
+	fluxTimer->start();
 	expNetwork.computeAllFluxes(dConcs, dFlux, 0);
-//    fluxTimer->stop();
+	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
 
 	/*
@@ -307,9 +308,10 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	auto hConcs = HostUnmanaged(concOffset, dof);
 	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 	deep_copy(dConcs, hConcs);
-//    partialDerivativeTimer->start();
+	partialDerivativeCounter->increment();
+	partialDerivativeTimer->start();
 	expNetwork.computeAllPartials(dConcs, expVals, 0);
-//    partialDerivativeTimer->stop();
+	partialDerivativeTimer->stop();
 	auto hPartials = create_mirror_view(expVals);
 	deep_copy(hPartials, expVals);
 
@@ -324,7 +326,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// Number of partial derivatives
 		auto rowIter = dfill.find(i);
 		if (rowIter != dfill.end()) {
-			const auto& row = rowIter->second;
+			const auto &row = rowIter->second;
 			pdColIdsVectorSize = row.size();
 
 			// Loop over the list of column ids
