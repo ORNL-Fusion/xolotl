@@ -21,7 +21,7 @@ bool initializeDimension(const xolotlCore::Options &options,
  *
  *  @return The solver handler.
  */
-std::unique_ptr<xolotlSolver::ISolverHandler> getSolverHandler();
+xolotlSolver::ISolverHandler& getSolverHandler();
 
 /**
  * Destroy the solver handler

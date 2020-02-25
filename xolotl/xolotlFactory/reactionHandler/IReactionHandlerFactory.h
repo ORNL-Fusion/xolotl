@@ -17,7 +17,7 @@ public:
 	/**
 	 * The destructor
 	 */
-	~IReactionHandlerFactory() {
+    virtual ~IReactionHandlerFactory() {
 	}
 
 	/**
@@ -45,6 +45,7 @@ public:
 	static std::shared_ptr<IReactionHandlerFactory> createNetworkFactory(
 			const std::string& problemType);
 
+    static void resetNetworkFactory();
 };
 
 } // end namespace xolotlFactory

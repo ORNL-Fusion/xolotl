@@ -6,7 +6,7 @@
 
 namespace xolotlFactory {
 
-static std::shared_ptr<IReactionHandlerFactory> theReactionFactory;
+std::shared_ptr<IReactionHandlerFactory> theReactionFactory;
 
 std::shared_ptr<IReactionHandlerFactory> IReactionHandlerFactory::createNetworkFactory(
 		const std::string& problemType) {
@@ -30,6 +30,11 @@ std::shared_ptr<IReactionHandlerFactory> IReactionHandlerFactory::createNetworkF
 	}
 
 	return theReactionFactory;
+}
+
+void IReactionHandlerFactory::resetNetworkFactory()
+{
+    theReactionFactory.reset();
 }
 
 } // end namespace xolotlFactory

@@ -173,12 +173,11 @@ int runXolotl(const Options& opts) {
 		if (!dimOK) {
 			throw std::runtime_error("Unable to initialize dimension from inputs.");
 		}
-		std::unique_ptr<xolotlSolver::ISolverHandler> solvHandler = xolotlFactory::getSolverHandler();
-		xolotlFactory::destroySolverHandler();
+		auto& solvHandler = xolotlFactory::getSolverHandler();
 
 		// Setup the solver
 		auto solver = setUpSolver(handlerRegistry, material, tempHandler,
-				*solvHandler, opts);
+				solvHandler, opts);
 
 		// Launch the PetscSolver
 		launchPetscSolver(*solver, handlerRegistry);
@@ -202,6 +201,9 @@ int runXolotl(const Options& opts) {
 			handlerRegistry->reportStatistics(std::cout, timerStats,
 					counterStats, hwCtrStats);
 		}
+
+		xolotlFactory::destroySolverHandler();
+        xolotlFactory::IReactionHandlerFactory::resetNetworkFactory();
 	}
 
 	// Finalize kokkos
