@@ -5,6 +5,7 @@
 #include <Kokkos_View.hpp>
 
 #include <experimental/ReactionNetworkTraits.h>
+#include <experimental/MemorySpace.h>
 
 namespace xolotlCore
 {
@@ -18,8 +19,6 @@ class Cluster;
 
 namespace detail
 {
-using DefaultMemorySpace = typename Kokkos::View<int*>::traits::memory_space;
-
 template <typename PlsmContext>
 struct ContextLabelHelper;
 
