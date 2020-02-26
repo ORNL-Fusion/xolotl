@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	xolotlCore::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=9999 0 0 0 0" << std::endl << "grouping=100 10 0"
+	paramFile << "netParam=9999 0 0 0 0" << std::endl << "grouping=101 10 0"
 			<< std::endl;
 	paramFile.close();
 
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	BOOST_REQUIRE_EQUAL(dfill[0][2], 3);
 	BOOST_REQUIRE_EQUAL(dfill[0][3], 4);
 	BOOST_REQUIRE_EQUAL(dfill[20][0], 20);
-	BOOST_REQUIRE_EQUAL(dfill[20][1], 1091);
+	BOOST_REQUIRE_EQUAL(dfill[20][1], 1099);
 
 	// The arrays of concentration
 	double concentration[nGrid * dof];
@@ -123,9 +123,9 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 			1, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 6.5039236e+16, 0.01); // Create Xe
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 7.6687556e+8, 0.01); // Xe_7999
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 7.66911126e+8, 0.01); // Xe_8000
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.95517e+15, 0.01); // Create Xe
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 14753281, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 14760964, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nXenon = reSolutionHandler.getNumberOfReSoluting();
@@ -140,23 +140,23 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 			valPointer, indicesPointer, 1, 0);
 
 	// Check the values for the indices
-	BOOST_REQUIRE_EQUAL(nReSo, 9999);
-	BOOST_REQUIRE_EQUAL(indices[0], 1); // Xe_2
-	BOOST_REQUIRE_EQUAL(indices[1], 1); // Xe_2
-	BOOST_REQUIRE_EQUAL(indices[2], 0); // Xe_1
-	BOOST_REQUIRE_EQUAL(indices[3], 0); // Xe_1
-	BOOST_REQUIRE_EQUAL(indices[4], 0); // Xe_1
+	BOOST_REQUIRE_EQUAL(nReSo, 2078);
+	BOOST_REQUIRE_EQUAL(indices[0], 1);
+	BOOST_REQUIRE_EQUAL(indices[1], plsm::invalid<std::size_t>);
+	BOOST_REQUIRE_EQUAL(indices[2], 1007);
+	BOOST_REQUIRE_EQUAL(indices[3], plsm::invalid<std::size_t>);
+	BOOST_REQUIRE_EQUAL(indices[4], 0);
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -197711.9, 0.01); // Xe_2
+	BOOST_REQUIRE_CLOSE(val[0], -116739, 0.01);
 	BOOST_REQUIRE_CLOSE(val[1], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[2], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[3], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[4], 197711.9, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[4], 116739, 0.01);
 	BOOST_REQUIRE_CLOSE(val[5], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[6], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[7], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[8], 197711.9, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[8], 116739, 0.01);
 	BOOST_REQUIRE_CLOSE(val[9], 0.0, 0.01); // no grouping
 
 	// Remove the created file
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(checkMinimumSize) {
 	xolotlCore::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=9999 0 0 0 0" << std::endl << "grouping=100 10 0"
+	paramFile << "netParam=9999 0 0 0 0" << std::endl << "grouping=101 10 0"
 			<< std::endl;
 	paramFile.close();
 
@@ -208,6 +208,7 @@ BOOST_AUTO_TEST_CASE(checkMinimumSize) {
 	NetworkType::AmountType refine = (maxXe + 1) / groupingWidth;
 	NetworkType network( { maxXe }, { { refine }, { groupingWidth } },
 			grid.size(), opts);
+	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
@@ -249,9 +250,9 @@ BOOST_AUTO_TEST_CASE(checkMinimumSize) {
 			1, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 6.503923568e+16, 0.01); // Create Xe
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 766875563, 0.01); // Xe_7999
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 766875563, 0.01); // Xe_8000
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.95517e+15, 0.01); // Create Xe
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 14753281, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 14760964, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nXenon = reSolutionHandler.getNumberOfReSoluting();
@@ -266,15 +267,15 @@ BOOST_AUTO_TEST_CASE(checkMinimumSize) {
 			valPointer, indicesPointer, 1, 0);
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -197711.9, 0.01); // Xe_2
+	BOOST_REQUIRE_CLOSE(val[0], -116739, 0.01);
 	BOOST_REQUIRE_CLOSE(val[1], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[2], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[3], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[4], 197711.9, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[4], 116739, 0.01);
 	BOOST_REQUIRE_CLOSE(val[5], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[6], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[7], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[8], 197711.9, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[8], 116739, 0.01);
 	BOOST_REQUIRE_CLOSE(val[9], 0.0, 0.01); // no grouping
 
 	// Remove the created file
@@ -292,7 +293,7 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 	xolotlCore::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=9999 0 0 0 0" << std::endl << "grouping=100 10 0"
+	paramFile << "netParam=9999 0 0 0 0" << std::endl << "grouping=101 10 0"
 			<< std::endl;
 	paramFile.close();
 
@@ -367,9 +368,9 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 			1, 0);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 1.2634756e+17, 0.01); // Create Xe
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 1.609505e+9, 0.01); // Xe_7999
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 1.609589e+9, 0.01); // Xe_8000
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 3.79019e+15, 0.01); // Create Xe
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8000], 14753281, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[8001], 14760964, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nXenon = reSolutionHandler.getNumberOfReSoluting();
@@ -384,15 +385,15 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 			valPointer, indicesPointer, 1, 0);
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -324044, 0.01); // Xe_2
+	BOOST_REQUIRE_CLOSE(val[0], -224266, 0.01);
 	BOOST_REQUIRE_CLOSE(val[1], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[2], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[3], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[4], 324044, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[4], 224266, 0.01);
 	BOOST_REQUIRE_CLOSE(val[5], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[6], 0.0, 0.01); // no grouping
 	BOOST_REQUIRE_CLOSE(val[7], 0.0, 0.01); // no grouping
-	BOOST_REQUIRE_CLOSE(val[8], 324044, 0.01); // Xe_1
+	BOOST_REQUIRE_CLOSE(val[8], 224266, 0.01);
 	BOOST_REQUIRE_CLOSE(val[9], 0.0, 0.01); // no grouping
 
 	// Remove the created file

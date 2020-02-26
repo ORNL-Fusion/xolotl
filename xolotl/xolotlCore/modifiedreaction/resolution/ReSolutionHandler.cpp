@@ -7,8 +7,8 @@
 
 namespace xolotlCore {
 
-void ReSolutionHandler::initialize(experimental::IReactionNetwork& network,
-		experimental::IReactionNetwork::SparseFillMap& dfill,
+void ReSolutionHandler::initialize(experimental::IReactionNetwork &network,
+		experimental::IReactionNetwork::SparseFillMap &dfill,
 		double electronicStoppingPower) {
 
 	using NetworkType =
@@ -56,8 +56,8 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork& network,
 	// Loop on the clusters
 	constexpr auto speciesRange = NetworkType::getSpeciesRange();
 	for (std::size_t id = 0; id < network.getNumClusters(); ++id) {
-		auto cluster = neNetwork->getCluster(id);
-		const auto& clReg = cluster.getRegion();
+		auto cluster = neNetwork->getCluster(id, plsm::onHost);
+		const auto &clReg = cluster.getRegion();
 		NetworkType::Composition lo = clReg.getOrigin();
 		NetworkType::Composition hi = clReg.getUpperLimitPoint();
 
@@ -77,7 +77,7 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork& network,
 				std::size_t sectionWidth = hi[NetworkType::Species::Xe]
 						- lo[NetworkType::Species::Xe] - 1,
 						smallerSectionWidth = 0.0;
-				const auto& dispersion = clReg.dispersion();
+				const auto &dispersion = clReg.dispersion();
 				double numXe = (double) (hi[NetworkType::Species::Xe]
 						+ lo[NetworkType::Species::Xe] - 1) / 2.0;
 				auto previousSmallerId = plsm::invalid<std::size_t>;
@@ -94,7 +94,7 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork& network,
 					// TODO: does this work for super clusters as well?
 					auto smallerCluster = neNetwork->findCluster(comp,
 							plsm::onHost);
-					const auto& smallerReg = smallerCluster.getRegion();
+					const auto &smallerReg = smallerCluster.getRegion();
 					// If it exists and is super
 					if (smallerReg.volume() > 1) {
 						NetworkType::Composition smallerLo =
@@ -116,7 +116,7 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork& network,
 						// Set the connectivities
 						dfill[id].emplace_back(id);
 						if (clReg.volume() > 1) {
-							const auto& momIds = cluster.getMomentIds();
+							const auto &momIds = cluster.getMomentIds();
 							for (auto j : speciesRange) {
 								dfill[id].emplace_back(momIds[j()]);
 								dfill[momIds[j()]].emplace_back(id);
@@ -128,23 +128,24 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork& network,
 						}
 						dfill[xenonId].emplace_back(id);
 						if (clReg.volume() > 1) {
-							const auto& momIds = cluster.getMomentIds();
+							const auto &momIds = cluster.getMomentIds();
 							for (auto j : speciesRange) {
 								dfill[xenonId].emplace_back(momIds[j()]);
 							}
 						}
-						const auto& previousSmallerReg = neNetwork->getCluster(
-								previousSmallerId).getRegion();
+						const auto &previousSmallerReg = neNetwork->getCluster(
+								previousSmallerId, plsm::onHost).getRegion();
 						dfill[previousSmallerId].emplace_back(id);
 						if (clReg.volume() > 1) {
-							const auto& momIds = cluster.getMomentIds();
+							const auto &momIds = cluster.getMomentIds();
 							for (auto j : speciesRange) {
 								dfill[previousSmallerId].emplace_back(
 										momIds[j()]);
 								if (previousSmallerReg.volume() > 1) {
-									const auto& smallerMomIds =
+									const auto &smallerMomIds =
 											neNetwork->getCluster(
-													previousSmallerId).getMomentIds();
+													previousSmallerId,
+													plsm::onHost).getMomentIds();
 									dfill[smallerMomIds[j()]].emplace_back(id);
 									for (auto k : speciesRange) {
 										dfill[smallerMomIds[j()]].emplace_back(
@@ -198,7 +199,7 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork& network,
 					// Set the connectivities
 					dfill[id].emplace_back(id);
 					if (clReg.volume() > 1) {
-						const auto& momIds = cluster.getMomentIds();
+						const auto &momIds = cluster.getMomentIds();
 						for (auto j : speciesRange) {
 							dfill[id].emplace_back(momIds[j()]);
 							dfill[momIds[j()]].emplace_back(id);
@@ -209,21 +210,22 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork& network,
 					}
 					dfill[xenonId].emplace_back(id);
 					if (clReg.volume() > 1) {
-						const auto& momIds = cluster.getMomentIds();
+						const auto &momIds = cluster.getMomentIds();
 						for (auto j : speciesRange) {
 							dfill[xenonId].emplace_back(momIds[j()]);
 						}
 					}
-					const auto& previousSmallerReg = neNetwork->getCluster(
-							previousSmallerId).getRegion();
+					const auto &previousSmallerReg = neNetwork->getCluster(
+							previousSmallerId, plsm::onHost).getRegion();
 					dfill[previousSmallerId].emplace_back(id);
 					if (clReg.volume() > 1) {
-						const auto& momIds = cluster.getMomentIds();
+						const auto &momIds = cluster.getMomentIds();
 						for (auto j : speciesRange) {
 							dfill[previousSmallerId].emplace_back(momIds[j()]);
 							if (previousSmallerReg.volume() > 1) {
-								const auto& smallerMomIds =
-										neNetwork->getCluster(previousSmallerId).getMomentIds();
+								const auto &smallerMomIds =
+										neNetwork->getCluster(previousSmallerId,
+												plsm::onHost).getMomentIds();
 								dfill[smallerMomIds[j()]].emplace_back(id);
 								for (auto k : speciesRange) {
 									dfill[smallerMomIds[j()]].emplace_back(
@@ -284,9 +286,9 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork& network,
 	std::ofstream outputFile;
 	outputFile.open("resolutionRateVSradius.txt");
 	// Loop on the re-soluting clusters
-	for (const auto& currPair : sizeVec) {
+	for (const auto &currPair : sizeVec) {
 		// Get the larger cluster
-		auto cluster = neNetwork->getCluster(currPair.larger);
+		auto cluster = neNetwork->getCluster(currPair.larger, plsm::onHost);
 		int size = cluster.getRegion().getOrigin()[0];
 		double radius = cluster.getReactionRadius();
 
@@ -312,7 +314,7 @@ void ReSolutionHandler::setFissionYield(double yield) {
 }
 
 void ReSolutionHandler::computeReSolution(
-		experimental::IReactionNetwork& network, double *concOffset,
+		experimental::IReactionNetwork &network, double *concOffset,
 		double *updatedConcOffset, int xi, int xs, int yj, int zk) {
 
 	using NetworkType =
@@ -328,13 +330,14 @@ void ReSolutionHandler::computeReSolution(
 	auto xenonId = singleXenon.getId();
 
 	// Loop on the re-soluting clusters
-	for (const auto& currPair : sizeVec) {
+	for (const auto &currPair : sizeVec) {
 		// Get the larger cluster
-		auto cluster = neNetwork->getCluster(currPair.larger);
+		auto cluster = neNetwork->getCluster(currPair.larger, plsm::onHost);
 		auto momId = cluster.getMomentIds()[0];
 		double rate = currPair.fractionRate * resolutionRate;
 		// Get the re-solution cluster
-		auto resoCluster = neNetwork->getCluster(currPair.smaller);
+		auto resoCluster = neNetwork->getCluster(currPair.smaller,
+				plsm::onHost);
 		auto resoMomId = resoCluster.getMomentIds()[0];
 
 		// Get the initial concentration of the larger xenon cluster
@@ -361,7 +364,7 @@ void ReSolutionHandler::computeReSolution(
 }
 
 int ReSolutionHandler::computePartialsForReSolution(
-		experimental::IReactionNetwork& network, double *val, int *indices,
+		experimental::IReactionNetwork &network, double *val, int *indices,
 		int xi, int xs, int yj, int zk) {
 
 	using NetworkType =
@@ -378,13 +381,14 @@ int ReSolutionHandler::computePartialsForReSolution(
 
 	// Loop on the re-soluting clusters
 	int i = 0;
-	for (const auto& currPair : sizeVec) {
+	for (const auto &currPair : sizeVec) {
 		// Get the larger cluster
-		auto cluster = neNetwork->getCluster(currPair.larger);
+		auto cluster = neNetwork->getCluster(currPair.larger, plsm::onHost);
 		auto momId = cluster.getMomentIds()[0];
 		double rate = currPair.fractionRate * resolutionRate;
 		// Get the re-solution cluster
-		auto resoCluster = neNetwork->getCluster(currPair.smaller);
+		auto resoCluster = neNetwork->getCluster(currPair.smaller,
+				plsm::onHost);
 		auto resoMomId = resoCluster.getMomentIds()[0];
 
 		// Set the partial derivatives
