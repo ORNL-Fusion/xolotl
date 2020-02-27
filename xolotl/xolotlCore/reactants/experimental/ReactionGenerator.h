@@ -69,6 +69,8 @@ public:
             }
         });
         Kokkos::fence();
+
+        static_cast<TDerived*>(this)->generateConnectivity();
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -108,7 +110,7 @@ public:
     setupReactionData()
     {
         _reactionData = detail::ReactionData(_numProdReactions,
-            _numDissReactions, _numDOFs, Network::getNumberOfSpeciesNoI(),
+            _numDissReactions, Network::getNumberOfSpeciesNoI(),
             _clusterData.gridSize);
         _reactionDataRef = detail::ReactionDataRef(_reactionData);
     }
@@ -168,7 +170,7 @@ public:
         return _reactions;
     }
 
-private:
+protected:
     Subpaving _subpaving;
     ClusterData _clusterData;
     std::size_t _numDOFs;
@@ -279,6 +281,8 @@ public:
                 i + nProdReactions, RType::dissociation, dissClusterSets(i));
         });
         Kokkos::fence();
+
+        static_cast<TDerived*>(this)->generateConnectivity();
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -328,7 +332,7 @@ public:
     setupReactionData()
     {
         _reactionData = detail::ReactionData(_numProdReactions,
-            _numDissReactions, _numDOFs, Network::getNumberOfSpeciesNoI(),
+            _numDissReactions, Network::getNumberOfSpeciesNoI(),
             _clusterData.gridSize);
         _reactionDataRef = detail::ReactionDataRef(_reactionData);
     }
@@ -396,7 +400,7 @@ public:
         return _reactions;
     }
 
-private:
+protected:
     Subpaving _subpaving;
     ClusterData _clusterData;
     std::size_t _numDOFs;
@@ -436,6 +440,8 @@ class ReactionGenerator : public ReactionGeneratorImpl<TNetwork, TDerived>
 {
 public:
     using Superclass = ReactionGeneratorImpl<TNetwork, TDerived>;
+    using Network = typename Superclass::Network;
+    using Connectivity = typename Network::Connectivity;
 
     using Superclass::Superclass;
 
@@ -443,6 +449,74 @@ public:
         :
         Superclass(network._subpaving, network._clusterData, network.getDOF())
     {
+    }
+
+    void
+    generateConnectivity()
+    {
+        using RowMap = typename Connectivity::row_map_type;
+        using Entries = typename Connectivity::entries_type;
+
+        auto reactions = this->_reactions;
+        auto nReactions = reactions.extent(0);
+        Connectivity tmpConn;
+        //Count connectivity entries
+        //NOTE: We're using row_map for counts because
+        //      Reaction::contributeConnectivity expects the connectivity CRS
+        tmpConn.row_map = RowMap("tmp counts", this->_numDOFs);
+        Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (std::size_t i) {
+            reactions(i).contributeConnectivity(tmpConn);
+        });
+        Kokkos::fence();
+        //Get row map
+        auto counts = tmpConn.row_map;
+        auto nEntries =
+            Kokkos::get_crs_row_map_from_counts(tmpConn.row_map, counts);
+        //Reset counts view
+        counts = RowMap();
+        //Initialize entries to invalid
+        tmpConn.entries = Entries(
+            Kokkos::ViewAllocateWithoutInitializing("connectivity entries"),
+            nEntries);
+        Kokkos::parallel_for(nEntries, KOKKOS_LAMBDA (std::size_t i) {
+            tmpConn.entries(i) = Network::invalid;
+        });
+        //Fill entries (column ids)
+        Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (std::size_t i) {
+            reactions(i).contributeConnectivity(tmpConn);
+        });
+        Kokkos::fence();
+        
+        //Shrink to fit
+        Connectivity connectivity;
+        Kokkos::count_and_fill_crs(connectivity, this->_numDOFs,
+                KOKKOS_LAMBDA (std::size_t i, std::size_t* fill) {
+            std::size_t ret = 0;
+            if (fill == nullptr) {
+            	auto jStart = tmpConn.row_map(i);
+            	auto jEnd = tmpConn.row_map(i+1);
+            	ret = jEnd - jStart;
+                for (std::size_t j = jStart; j < jEnd; ++j) {
+                    if (tmpConn.entries(j) == Network::invalid) {
+                        ret = j - jStart;
+                        break;
+                    }
+                }
+            }
+            else {
+                auto tmpStart = tmpConn.row_map(i);
+                for (std::size_t j = tmpStart; j < tmpConn.row_map(i+1); ++j) {
+                    auto entry = tmpConn.entries(j);
+                    if (entry == Network::invalid) {
+                        break;
+                    }
+                    fill[j - tmpStart] = entry;
+                }
+            }
+            return ret;
+        });
+
+        this->_reactionData.inverseMap = ReactionInverseMap<>{connectivity};
     }
 };
 }

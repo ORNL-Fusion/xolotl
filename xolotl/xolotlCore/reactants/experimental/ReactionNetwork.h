@@ -63,7 +63,6 @@ public:
     using Ival = typename Region::IntervalType;
     using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
     using FluxesView = typename IReactionNetwork::FluxesView;
-    using ConnectivityView = typename IReactionNetwork::ConnectivityView;
     using SparseFillMap = typename IReactionNetwork::SparseFillMap;
     using ClusterData = typename Types::ClusterData;
     using ClusterDataMirror = typename Types::ClusterDataMirror;

@@ -34,7 +34,8 @@ public:
     using ClusterDataRef = typename Types::ClusterDataRef;
     using ConcentrationsView = IReactionNetwork::ConcentrationsView;
     using FluxesView = IReactionNetwork::FluxesView;
-    using ConnectivityView = typename IReactionNetwork::ConnectivityView;
+    using Connectivity = typename IReactionNetwork::Connectivity;
+    using InverseMap = detail::ReactionInverseMap<>;
 
     enum class Type
     {
@@ -96,15 +97,15 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     void
-    productionConnectivity(ConnectivityView connectivity);
+    productionConnectivity(const Connectivity& connectivity);
 
     KOKKOS_INLINE_FUNCTION
     void
-    dissociationConnectivity(ConnectivityView connectivity);
+    dissociationConnectivity(const Connectivity& connectivity);
 
     KOKKOS_INLINE_FUNCTION
     void
-    contributeConnectivity(ConnectivityView connectivity)
+    contributeConnectivity(const Connectivity& connectivity)
     {
         ((*this).*(_connectFn))(connectivity);
     }
@@ -130,22 +131,22 @@ public:
     KOKKOS_INLINE_FUNCTION
     void
     productionPartialDerivatives(ConcentrationsView concentrations,
-        Kokkos::View<double*> values,
+        Kokkos::View<double*> values, InverseMap inverseMap,
         std::size_t gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
     dissociationPartialDerivatives(ConcentrationsView concentrations,
-        Kokkos::View<double*> values,
+        Kokkos::View<double*> values, InverseMap inverseMap,
         std::size_t gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
     contributePartialDerivatives(ConcentrationsView concentrations,
-        Kokkos::View<double*> values,
+        Kokkos::View<double*> values, InverseMap inverseMap,
         std::size_t gridIndex)
     {
-        ((*this).*(_partialsFn))(concentrations, values, gridIndex);
+        ((*this).*(_partialsFn))(concentrations, values, inverseMap, gridIndex);
     }
 
 private:
@@ -216,12 +217,27 @@ private:
     KOKKOS_INLINE_FUNCTION
     void
     addConnectivity(std::size_t rowId, std::size_t columnId,
-        ConnectivityView connectivity)
+        const Connectivity& connectivity)
     {
         // Check that the Ids are valid
-        if (rowId == invalid || columnId == invalid) return;
-        // Add the value
-        connectivity(rowId, columnId) = 1;
+        if (rowId == invalid || columnId == invalid) {
+            return;
+        }
+
+        if (connectivity.entries.size() == 0) {
+            //Count
+            Kokkos::atomic_increment(&connectivity.row_map(rowId));
+        }
+        else {
+            //Fill
+            auto id = connectivity.row_map(rowId);
+            for (; !Kokkos::atomic_compare_exchange_strong(
+                        &connectivity.entries(id), invalid, columnId); ++id) {
+            	if (connectivity.entries(id) == columnId) {
+            		break;
+            	}
+            }
+        }
     }
 
 protected:
@@ -230,7 +246,7 @@ protected:
     Type _type {};
 
     using ConnectFn =
-        void (Reaction::*)(ConnectivityView);
+        void (Reaction::*)(const Connectivity&);
     ConnectFn _connectFn {nullptr};
 
     using FluxFn =
@@ -238,8 +254,8 @@ protected:
     FluxFn _fluxFn {nullptr};
 
     using PartialsFn =
-        void (Reaction::*)(ConcentrationsView,
-            Kokkos::View<double*>, std::size_t);
+        void (Reaction::*)(ConcentrationsView, Kokkos::View<double*>,
+            InverseMap, std::size_t);
     PartialsFn _partialsFn {nullptr};
 
     //Cluster indices for LHS and RHS of the reaction
@@ -260,8 +276,6 @@ protected:
     using CoefsSubView = decltype(
         std::declval<detail::ReactionDataRef>().getCoefficients(0));
     CoefsSubView _coefs;
-
-    Kokkos::View<std::size_t**, Kokkos::MemoryUnmanaged> _inverseMap;
 };
 }
 }

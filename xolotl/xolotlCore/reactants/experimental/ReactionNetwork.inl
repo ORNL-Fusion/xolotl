@@ -4,8 +4,6 @@
 
 #include <Constants.h>
 
-// #include <cuda_profiler_api.h>
-
 namespace xolotlCore
 {
 namespace experimental
@@ -149,7 +147,7 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
 {
     // Get the extent of the reactions view
 	auto reactions = _reactions;
-    const auto& nReactions = reactions.extent(0);
+    auto nReactions = reactions.extent(0);
     // Loop on the reactions
     Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
         reactions(i).contributeFlux(concentrations, fluxes, gridIndex);
@@ -170,10 +168,12 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 
     // Get the extent of the reactions view
     auto reactions = _reactions;
-    const auto& nReactions = reactions.extent(0);
+    auto nReactions = reactions.extent(0);
+    auto inverseMap = _reactionData.inverseMap;
     // Loop on the reactions
     Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
-        reactions(i).contributePartialDerivatives(concentrations, values, gridIndex);
+        reactions(i).contributePartialDerivatives(concentrations, values,
+            inverseMap, gridIndex);
     });
 }
 
@@ -403,12 +403,10 @@ template <typename TImpl>
 void
 ReactionNetworkWorker<TImpl>::defineReactions()
 {
-    // cudaProfilerStart();
     auto generator = _nw.asDerived()->getReactionGenerator();
     generator.generateReactions();
     _nw._reactionData = generator.getReactionData();
     _nw._reactions = generator.getReactions();
-    // cudaProfilerStop();
 }
 
 template <typename TImpl>
@@ -416,51 +414,29 @@ std::size_t
 ReactionNetworkWorker<TImpl>::getDiagonalFill(
     typename Network::SparseFillMap& fillMap)
 {
-    //FIXME
+    auto connectivity = _nw._reactionData.inverseMap.connectivity;
+    auto hConnRowMap = create_mirror_view(connectivity.row_map);
+    deep_copy(hConnRowMap, connectivity.row_map);
+    auto hConnEntries = create_mirror_view(connectivity.entries);
+    deep_copy(hConnEntries, connectivity.entries);
 
-    // Create the connectivity matrix initialized to 0
-    Kokkos::View<std::size_t**> connectivity("connectivity",
-        _nw.getDOF(), _nw.getDOF());
-    // Loop on each reaction to add its contribution to the connectivity matrix
-    auto reactions = _nw._reactions;
-    const auto& nReactions = reactions.extent(0);
-    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
-        reactions(i).contributeConnectivity(connectivity);
-    });
-    Kokkos::fence();
-
-    auto hConn = create_mirror_view(connectivity);
-    deep_copy(hConn, connectivity);
-    auto hInvMap = create_mirror_view(_nw._reactionData.inverseMap);
-
-    // Transfer to fillMap, fill the inverse map,
-    // and count the total number of partials
-    std::size_t nPartials = 0;
-    for (std::size_t i = 0; i < _nw.getDOF(); ++i) {
-        // Create a vector for ids
+    std::vector<std::vector<int>> vmap;
+    for (int i = 0; i < _nw.getDOF(); ++i) {
+        auto jBegin = hConnRowMap(i);
+        auto jEnd = hConnRowMap(i+1);
+        vmap.emplace_back();
+        auto& v = vmap.back();
+        v.reserve(jEnd - jBegin);
         std::vector<int> current;
-        // Loop on this row
-        for (std::size_t j = 0; j < _nw.getDOF(); ++j)
-        {
-            if (hConn(i,j) == 0) {
-                // Nothing to do
-                continue;
-            }
-            // Add the value to the vector
-            current.push_back((int) j);
-            // Update the inverse map
-            hInvMap(i,j) = nPartials;
-
-            // Count
-            nPartials++;
+        current.reserve(jEnd - jBegin);
+        for (std::size_t j = jBegin; j < jEnd; ++j) {
+            current.push_back((int)hConnEntries(j));
+            v.push_back((int)hConnEntries(j));
         }
-        // Add the current vector to fillMap
-        fillMap[(int) i] = current;
+        fillMap[i] = std::move(current);
     }
 
-    deep_copy(_nw._reactionData.inverseMap, hInvMap);
-
-    return nPartials;
+    return hConnEntries.extent(0);
 }
 }
 }

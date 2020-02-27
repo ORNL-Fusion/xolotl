@@ -2,7 +2,8 @@
 
 #include <unordered_map>
 
-#include <Kokkos_View.hpp>
+#include <Kokkos_Core.hpp>
+#include <Kokkos_Crs.hpp>
 
 #include <experimental/ClusterData.h>
 #include <experimental/Cluster.h>
@@ -20,7 +21,7 @@ public:
     using OwnedConcentrationsView = Kokkos::View<double*>;
     using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
     using OwnedFluxesView = Kokkos::View<double*>;
-    using ConnectivityView = Kokkos::View<size_t**, Kokkos::MemoryUnmanaged>;
+    using Connectivity = Kokkos::Crs<std::size_t, detail::DefaultMemorySpace>;
     using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 
     IReactionNetwork(std::size_t gridSize)
