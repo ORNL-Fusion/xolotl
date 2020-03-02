@@ -135,6 +135,57 @@ public:
     void
     setTemperatures(const std::vector<double>& gridTemperatures) override;
 
+    std::uint64_t
+    getDeviceMemorySize() const noexcept override
+    {
+        std::uint64_t ret = _subpaving.getDeviceMemorySize();
+
+        ret += sizeof(_clusterData.numClusters);
+        ret += sizeof(_clusterData.gridSize);
+        ret += _clusterData.atomicVolume.required_allocation_size();
+        ret += _clusterData.temperature.required_allocation_size(
+            _clusterData.temperature.extent(0));
+        ret += _clusterData.reactionRadius.required_allocation_size(
+            _clusterData.reactionRadius.extent(0));
+        ret += _clusterData.formationEnergy.required_allocation_size(
+            _clusterData.formationEnergy.extent(0));
+        ret += _clusterData.migrationEnergy.required_allocation_size(
+            _clusterData.migrationEnergy.extent(0));
+        ret += _clusterData.diffusionFactor.required_allocation_size(
+            _clusterData.diffusionFactor.extent(0));
+        ret += _clusterData.diffusionCoefficient.required_allocation_size(
+            _clusterData.diffusionCoefficient.extent(0),
+            _clusterData.diffusionCoefficient.extent(1));
+
+        ret += sizeof(_reactionData.coeffExtent);
+        ret += sizeof(_reactionData.numReactions);
+        ret += _reactionData.productionCoeffs.required_allocation_size(
+            _reactionData.productionCoeffs.extent(0),
+            _reactionData.productionCoeffs.extent(1),
+            _reactionData.productionCoeffs.extent(2),
+            _reactionData.productionCoeffs.extent(3),
+            _reactionData.productionCoeffs.extent(4));
+        ret += _reactionData.dissociationCoeffs.required_allocation_size(
+            _reactionData.dissociationCoeffs.extent(0),
+            _reactionData.dissociationCoeffs.extent(1),
+            _reactionData.dissociationCoeffs.extent(2),
+            _reactionData.dissociationCoeffs.extent(3),
+            _reactionData.dissociationCoeffs.extent(4));
+        ret += _reactionData.rates.required_allocation_size(
+            _reactionData.rates.extent(0), _reactionData.rates.extent(1));
+
+        ret += _reactionData.inverseMap.connectivity.row_map
+            .required_allocation_size(
+                _reactionData.inverseMap.connectivity.row_map.extent(0));
+        ret += _reactionData.inverseMap.connectivity.entries
+            .required_allocation_size(
+                _reactionData.inverseMap.connectivity.entries.extent(0));
+
+        ret += _reactions.required_allocation_size(_reactions.extent(0));
+
+        return ret;
+    }
+
     void
     syncClusterDataOnHost() override
     {

@@ -163,6 +163,9 @@ int runXolotl(const Options& opts) {
 		networkFactory->initializeReactionNetwork(opts, handlerRegistry);
 		networkLoadTimer->stop();
 		if (rank == 0) {
+			std::cout << "Network size on device: " <<
+				networkFactory->getNetworkHandler().getDeviceMemorySize() << '\n';
+
 			std::time_t currentTime = std::time(NULL);
 			std::cout << std::asctime(std::localtime(&currentTime));
 		}

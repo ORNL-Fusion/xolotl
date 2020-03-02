@@ -35,6 +35,12 @@ public:
     {
     }
 
+    virtual std::uint64_t
+    getDeviceMemorySize() const noexcept
+    {
+        return 0;
+    }
+
     KOKKOS_INLINE_FUNCTION
     std::size_t
     getDOF() const noexcept
