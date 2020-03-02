@@ -13,12 +13,6 @@ namespace xolotlSolver {
  * to solve the ADR equations in 0D using PETSc from Argonne National Laboratory.
  */
 class PetscSolver0DHandler: public PetscSolverHandler {
-protected:
-
-	/**
-	 * The current temperature on the grid.
-	 */
-	std::vector<double> temperature;
 
 public:
 

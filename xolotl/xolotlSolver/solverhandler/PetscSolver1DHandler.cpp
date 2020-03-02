@@ -2,6 +2,7 @@
 #include <PetscSolver1DHandler.h>
 #include <MathUtils.h>
 #include <Constants.h>
+#include <experimental/PSIReactionNetwork.h>
 
 namespace xcore = xolotlCore;
 
@@ -10,8 +11,6 @@ namespace xolotlSolver {
 void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	PetscErrorCode ierr;
-	// Recompute Ids and network size and redefine the connectivities
-	network.reinitializeConnectivities();
 
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = expNetwork.getDOF();
@@ -77,7 +76,6 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	 *  coupling is regular diffusion.
 	 */
 	xolotlCore::IReactionNetwork::SparseFillMap ofill;
-	xolotlCore::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(dof, ofill, dfill);
@@ -105,27 +103,25 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	// because it adds connectivity
 	resolutionHandler->initialize(expNetwork, dfill, electronicStoppingPower);
 
+	// Tell the network the number of grid points on this process with ghosts
+	// TODO: do we need the ghost points?
+	expNetwork.setGridSize(xm + 2);
+
 	// Get the diagonal fill
-	network.getDiagonalFill(dfill);
+	auto nPartials = expNetwork.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
 	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
+	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
 	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
 	checkPetscError(ierr, "PetscSolver1DHandler::createSolverContext: "
 			"DMDASetBlockFills failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	reactionSize.resize(dof);
-	reactionStartingIdx.resize(dof);
-	reactingPartialsForCluster.resize(dof, 0.0);
-	auto nPartials = network.initPartialsSizes(reactionSize,
-			reactionStartingIdx);
+	expVals = Kokkos::View<double*>("solverPartials", nPartials);
 
-	reactionIndices.resize(nPartials);
-	network.initPartialsIndices(reactionSize, reactionStartingIdx,
-			reactionIndices);
-	reactionVals.resize(nPartials);
+	// Set the size of the partial derivatives vectors
+	reactingPartialsForCluster.resize(dof, 0.0);
 
 	return;
 }
@@ -148,8 +144,8 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	// Initialize the last temperature at each grid point on this process
 	for (int i = 0; i < xm + 2; i++) {
 		lastTemperature.push_back(0.0);
+		temperature.push_back(0.0);
 	}
-	network.addGridPoints(xm + 2);
 
 	// Get the last time step written in the HDF5 file
 	bool hasConcentrations = false;
@@ -183,10 +179,10 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	const int dof = expNetwork.getDOF();
 
 	// Get the single vacancy ID
-	auto singleVacancyCluster = network.get(xolotlCore::Species::V, 1);
-	int vacancyIndex = -1;
-	if (singleVacancyCluster)
-		vacancyIndex = singleVacancyCluster->getId() - 1;
+	auto singleVacancyCluster = expNetwork.getSingleVacancy();
+	auto vacancyIndex = plsm::invalid<std::size_t>;
+	if (singleVacancyCluster.getId() != plsm::invalid<std::size_t>)
+		vacancyIndex = singleVacancyCluster.getId();
 
 	// Loop on all the grid points
 	for (PetscInt i = xs; i < xs + xm; i++) {
@@ -202,10 +198,14 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 				- grid[surfacePosition + 1])
 				/ (grid[grid.size() - 1] - grid[surfacePosition + 1]), 0.0, 0.0 };
 		concOffset[dof] = temperatureHandler->getTemperature(gridPosition, 0.0);
+		temperature[i - xs + 1] = concOffset[dof];
 
 		// Initialize the vacancy concentration
-		if (i >= surfacePosition + leftOffset && singleVacancyCluster
-				&& !hasConcentrations && i < nX - rightOffset) {
+		if (i >= surfacePosition + leftOffset
+				and vacancyIndex
+						!= plsm::invalid < std::size_t
+								> and not hasConcentrations
+				and i < nX - rightOffset) {
 			concOffset[vacancyIndex] = initialVConc;
 		}
 	}
@@ -224,19 +224,25 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 		for (auto i = 0; i < xm; ++i) {
 			concOffset = concentrations[xs + i];
 
-			for (auto const& currConcData : myConcs[i]) {
+			for (auto const &currConcData : myConcs[i]) {
 				concOffset[currConcData.first] = currConcData.second;
 			}
-			// Set the temperature in the network
+			// Get the temperature
 			double temp = myConcs[i][myConcs[i].size() - 1].second;
-			network.setTemperature(temp, i);
-			// Update the modified trap-mutation rate
-			// that depends on the network reaction rates
-			mutationHandler->updateTrapMutationRate(
-					expNetwork.getLargestRate());
-			lastTemperature[i] = temp;
+			temperature[i + 1] = temp;
 		}
 	}
+
+
+	// Update the network with the temperature
+	expNetwork.setTemperatures(temperature);
+	expNetwork.syncClusterDataOnHost();
+	for (auto i = 0; i < xm + 2; ++i) {
+		lastTemperature[i] = temperature[i];
+	}
+	// Update the modified trap-mutation rate
+	// that depends on the network reaction rates
+	mutationHandler->updateTrapMutationRate(expNetwork.getLargestRate());
 
 	/*
 	 Restore vectors
@@ -305,12 +311,20 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 			// Get the concentrations at this grid point
 			concOffset = concs[xi];
-			// Copy data into the PSIClusterReactionNetwork
-			network.updateConcentrationsFromArray(concOffset);
 
 			// Sum the total atom concentration
-			atomConc += network.getTotalTrappedAtomConcentration()
-					* (grid[xi + 1] - grid[xi]);
+			using NetworkType =
+			xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+			using Spec = typename NetworkType::Species;
+			using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+			auto hConcs = HostUnmanaged(concOffset, dof);
+			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+			deep_copy(dConcs, hConcs);
+			// TODO: how to not have to cast the network here?
+			auto &psiNetwork = dynamic_cast<NetworkType&>(expNetwork);
+			atomConc += psiNetwork.getTotalTrappedAtomConcentration(dConcs,
+					Spec::He, 0) * (grid[xi + 1] - grid[xi]);
 		}
 
 		// Share the concentration with all the processes
@@ -326,8 +340,9 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	double **concVector = new double*[3];
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
-	// Loop over grid points computing ODE terms for each grid point
-	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+	// Loop over grid points first for the temperature, including the ghost points
+	bool tempHasChanged = false;
+	for (PetscInt xi = xs - 1; xi <= xs + xm; xi++) {
 		// Compute the old and new array offsets
 		concOffset = concs[xi];
 		updatedConcOffset = updatedConcs[xi];
@@ -372,20 +387,6 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		if (skip)
 			continue;
 
-		// Update the network if the temperature changed
-		// left
-		double temperature = concs[xi - 1][dof];
-		if (std::fabs(lastTemperature[xi - xs] - temperature) > 0.1) {
-			network.setTemperature(temperature, xi - xs);
-			lastTemperature[xi - xs] = temperature;
-		}
-		// right
-		temperature = concs[xi + 1][dof];
-		if (std::fabs(lastTemperature[xi + 2 - xs] - temperature) > 0.1) {
-			network.setTemperature(temperature, xi + 2 - xs);
-			lastTemperature[xi + 2 - xs] = temperature;
-		}
-
 		// Set the grid fraction
 		gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
 				- grid[surfacePosition + 1])
@@ -393,31 +394,76 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 		// Get the temperature from the temperature handler
 		temperatureHandler->setTemperature(concOffset);
-		temperature = temperatureHandler->getTemperature(gridPosition, ftime);
-		// middle
-		if (std::fabs(lastTemperature[xi + 1 - xs] - temperature) > 0.1) {
-			network.setTemperature(temperature, xi + 1 - xs);
-			// Update the modified trap-mutation rate
-			// that depends on the network reaction rates
-			mutationHandler->updateTrapMutationRate(
-					expNetwork.getLargestRate());
-			lastTemperature[xi + 1 - xs] = temperature;
+		double temp = temperatureHandler->getTemperature(gridPosition, ftime);
+
+		// Update the network if the temperature changed
+		if (std::fabs(lastTemperature[xi + 1 - xs] - temp) > 0.1) {
+			temperature[xi + 1 - xs] = temp;
+			tempHasChanged = true;
 		}
 
-		// Copy data into the ReactionNetwork so that it can
-		// compute the fluxes properly. The network is only used to compute the
-		// fluxes and hold the state data from the last time step. I'm reusing
-		// it because it cuts down on memory significantly (about 400MB per
-		// grid point) at the expense of being a little tricky to comprehend.
-		network.updateConcentrationsFromArray(concOffset);
+		// ---- Compute the temperature over the locally owned part of the grid -----
+		// TODO: skip ghost points?
+		temperatureHandler->computeTemperature(concVector, updatedConcOffset,
+				hxLeft, hxRight, xi);
+	}
+
+	if (tempHasChanged) {
+		// Update the network with the temperature
+		expNetwork.setTemperatures(temperature);
+		expNetwork.syncClusterDataOnHost();
+		for (auto i = 0; i < xm + 2; ++i) {
+			lastTemperature[i] = temperature[i];
+		}
+		// Update the modified trap-mutation rate
+		// that depends on the network reaction rates
+		// TODO: is this just the local largest rate? Is it correct?
+		mutationHandler->updateTrapMutationRate(expNetwork.getLargestRate());
+	}
+
+	// Loop over grid points computing ODE terms for each grid point
+	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+		// Compute the old and new array offsets
+		concOffset = concs[xi];
+		updatedConcOffset = updatedConcs[xi];
+
+		// Fill the concVector with the pointer to the middle, left, and right grid points
+		concVector[0] = concOffset; // middle
+		concVector[1] = concs[xi - 1]; // left
+		concVector[2] = concs[xi + 1]; // right
+
+		// Compute the left and right hx
+		double hxLeft = 0.0, hxRight = 0.0;
+		if (xi - 1 >= 0 && xi < nX) {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		} else if (xi - 1 < 0) {
+			hxLeft = grid[xi + 1] - grid[xi];
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		} else {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = grid[xi + 1] - grid[xi];
+		}
+
+		// Boundary conditions
+		// Everything to the left of the surface is empty
+		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
+			continue;
+		}
+		// Free surface GB
+		bool skip = false;
+		for (auto &pair : gbVector) {
+			if (xi == std::get<0>(pair)) {
+				skip = true;
+				break;
+			}
+		}
+		if (skip)
+			continue;
 
 		// ----- Account for flux of incoming particles -----
 		fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, xi,
 				surfacePosition);
-
-		// ---- Compute the temperature over the locally owned part of the grid -----
-		temperatureHandler->computeTemperature(concVector, updatedConcOffset,
-				hxLeft, hxRight, xi);
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
 		diffusionHandler->computeDiffusion(expNetwork, concVector,
@@ -440,7 +486,19 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				updatedConcOffset, xi, xs);
 
 		// ----- Compute the reaction fluxes over the locally owned part of the grid -----
-		network.computeAllFluxes(updatedConcOffset, xi + 1 - xs);
+		using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+		auto hConcs = HostUnmanaged(concOffset, dof);
+		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+		deep_copy(dConcs, hConcs);
+		auto hFlux = HostUnmanaged(updatedConcOffset, dof);
+		auto dFlux = Kokkos::View<double*>("Fluxes", dof);
+		deep_copy(dFlux, hFlux);
+		fluxCounter->increment();
+		fluxTimer->start();
+		expNetwork.computeAllFluxes(dConcs, dFlux, xi + 1 - xs);
+		fluxTimer->stop();
+		deep_copy(hFlux, dFlux);
 	}
 
 	/*
@@ -511,10 +569,10 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	/*
-	 Loop over grid points computing Jacobian terms for diffusion and advection
-	 at each grid point
+	 Loop over grid points for the temperature, including ghosts
 	 */
-	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+	bool tempHasChanged = false;
+	for (PetscInt xi = xs - 1; xi <= xs + xm; xi++) {
 		// Compute the left and right hx
 		double hxLeft = 0.0, hxRight = 0.0;
 		if (xi - 1 >= 0 && xi < nX) {
@@ -531,9 +589,67 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		// Heat condition
 		if (xi == surfacePosition) {
 			// Get the partial derivatives for the temperature
-			temperatureHandler->computePartialsForTemperature(tempVals,
-					tempIndices, hxLeft, hxRight, xi);
+			auto setValues = temperatureHandler->computePartialsForTemperature(
+					tempVals, tempIndices, hxLeft, hxRight, xi);
 
+			if (setValues) {
+				// Set grid coordinate and component number for the row
+				row.i = xi;
+				row.c = tempIndices[0];
+
+				// Set grid coordinates and component numbers for the columns
+				// corresponding to the middle, left, and right grid points
+				cols[0].i = xi; // middle
+				cols[0].c = tempIndices[0];
+				cols[1].i = xi - 1; // left
+				cols[1].c = tempIndices[0];
+				cols[2].i = xi + 1; // right
+				cols[2].c = tempIndices[0];
+
+				ierr = MatSetValuesStencil(J, 1, &row, 3, cols, tempVals,
+						ADD_VALUES);
+				checkPetscError(ierr,
+						"PetscSolver1DHandler::computeOffDiagonalJacobian: "
+								"MatSetValuesStencil (temperature) failed.");
+			}
+		}
+
+		// Boundary conditions
+		// Everything to the left of the surface is empty
+		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+			continue;
+		// Free surface GB
+		bool skip = false;
+		for (auto &pair : gbVector) {
+			if (xi == std::get<0>(pair)) {
+				skip = true;
+				break;
+			}
+		}
+		if (skip)
+			continue;
+
+		// Set the grid fraction
+		gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
+				- grid[surfacePosition + 1])
+				/ (grid[grid.size() - 1] - grid[surfacePosition + 1]);
+
+		// Get the temperature from the temperature handler
+		temperatureHandler->setTemperature(concOffset);
+		double temp = temperatureHandler->getTemperature(gridPosition, ftime);
+
+		// Update the network if the temperature changed
+		if (std::fabs(lastTemperature[xi + 1 - xs] - temp) > 0.1) {
+			temperature[xi + 1 - xs] = temp;
+			tempHasChanged = true;
+		}
+
+		// Get the partial derivatives for the temperature
+		// TODO: skip ghost points?
+		auto setValues = temperatureHandler->computePartialsForTemperature(
+				tempVals, tempIndices, hxLeft, hxRight, xi);
+
+		if (setValues) {
 			// Set grid coordinate and component number for the row
 			row.i = xi;
 			row.c = tempIndices[0];
@@ -553,6 +669,30 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					"PetscSolver1DHandler::computeOffDiagonalJacobian: "
 							"MatSetValuesStencil (temperature) failed.");
 		}
+	}
+
+	if (tempHasChanged) {
+		// Update the network with the temperature
+		expNetwork.setTemperatures(temperature);
+		expNetwork.syncClusterDataOnHost();
+		for (auto i = 0; i < xm + 2; ++i) {
+			lastTemperature[i] = temperature[i];
+		}
+	}
+
+	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+		// Compute the left and right hx
+		double hxLeft = 0.0, hxRight = 0.0;
+		if (xi - 1 >= 0 && xi < nX) {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		} else if (xi - 1 < 0) {
+			hxLeft = grid[xi + 1] - grid[xi];
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		} else {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = grid[xi + 1] - grid[xi];
+		}
 
 		// Boundary conditions
 		// Everything to the left of the surface is empty
@@ -568,57 +708,6 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		}
 		if (skip)
 			continue;
-
-		// Update the network if the temperature changed
-		// left
-		double temperature = concs[xi - 1][dof];
-		if (std::fabs(lastTemperature[xi - xs] - temperature) > 0.1) {
-			network.setTemperature(temperature, xi - xs);
-			lastTemperature[xi - xs] = temperature;
-		}
-		// right
-		temperature = concs[xi + 1][dof];
-		if (std::fabs(lastTemperature[xi + 2 - xs] - temperature) > 0.1) {
-			network.setTemperature(temperature, xi + 2 - xs);
-			lastTemperature[xi + 2 - xs] = temperature;
-		}
-
-		// Set the grid fraction
-		gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
-				- grid[surfacePosition + 1])
-				/ (grid[grid.size() - 1] - grid[surfacePosition + 1]);
-
-		// Get the temperature from the temperature handler
-		concOffset = concs[xi];
-		temperatureHandler->setTemperature(concOffset);
-		temperature = temperatureHandler->getTemperature(gridPosition, ftime);
-		// middle
-		if (std::fabs(lastTemperature[xi + 1 - xs] - temperature) > 0.1) {
-			network.setTemperature(temperature, xi + 1 - xs);
-			lastTemperature[xi + 1 - xs] = temperature;
-		}
-
-		// Get the partial derivatives for the temperature
-		temperatureHandler->computePartialsForTemperature(tempVals, tempIndices,
-				hxLeft, hxRight, xi);
-
-		// Set grid coordinate and component number for the row
-		row.i = xi;
-		row.c = tempIndices[0];
-
-		// Set grid coordinates and component numbers for the columns
-		// corresponding to the middle, left, and right grid points
-		cols[0].i = xi; // middle
-		cols[0].c = tempIndices[0];
-		cols[1].i = xi - 1; // left
-		cols[1].c = tempIndices[0];
-		cols[2].i = xi + 1; // right
-		cols[2].c = tempIndices[0];
-
-		ierr = MatSetValuesStencil(J, 1, &row, 3, cols, tempVals, ADD_VALUES);
-		checkPetscError(ierr,
-				"PetscSolver1DHandler::computeOffDiagonalJacobian: "
-						"MatSetValuesStencil (temperature) failed.");
 
 		// Get the partial derivatives for the diffusion
 		diffusionHandler->computePartialsForDiffusion(expNetwork, diffVals,
@@ -748,12 +837,20 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Get the concentrations at this grid point
 			concOffset = concs[xi];
-			// Copy data into the PSIClusterReactionNetwork
-			network.updateConcentrationsFromArray(concOffset);
 
 			// Sum the total atom concentration
-			atomConc += network.getTotalTrappedAtomConcentration()
-					* (grid[xi + 1] - grid[xi]);
+			using NetworkType =
+			xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+			using Spec = typename NetworkType::Species;
+			using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+			auto hConcs = HostUnmanaged(concOffset, dof);
+			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+			deep_copy(dConcs, hConcs);
+			// TODO: how to not have to cast the network here?
+			auto &psiNetwork = dynamic_cast<NetworkType&>(expNetwork);
+			atomConc += psiNetwork.getTotalTrappedAtomConcentration(dConcs,
+					Spec::He, 0) * (grid[xi + 1] - grid[xi]);
 		}
 
 		// Share the concentration with all the processes
@@ -773,12 +870,17 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	// Declarations for variables used in the loop
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
-	// Loop over the grid points
-	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+	// Loop over grid points first for the temperature, including the ghost points
+	bool tempHasChanged = false;
+	for (PetscInt xi = xs - 1; xi <= xs + xm; xi++) {
+		// Compute the old and new array offsets
+		concOffset = concs[xi];
+
 		// Boundary conditions
 		// Everything to the left of the surface is empty
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
 			continue;
+		}
 		// Free surface GB
 		bool skip = false;
 		for (auto &pair : gbVector) {
@@ -796,31 +898,61 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				/ (grid[grid.size() - 1] - grid[surfacePosition + 1]);
 
 		// Get the temperature from the temperature handler
-		concOffset = concs[xi];
 		temperatureHandler->setTemperature(concOffset);
-		double temperature = temperatureHandler->getTemperature(gridPosition,
-				ftime);
+		double temp = temperatureHandler->getTemperature(gridPosition, ftime);
 
 		// Update the network if the temperature changed
-		if (std::fabs(lastTemperature[xi + 1 - xs] - temperature) > 0.1) {
-			network.setTemperature(temperature, xi + 1 - xs);
-			// Update the modified trap-mutation rate
-			// that depends on the network reaction rates
-			mutationHandler->updateTrapMutationRate(
-					expNetwork.getLargestRate());
-			lastTemperature[xi + 1 - xs] = temperature;
+		if (std::fabs(lastTemperature[xi + 1 - xs] - temp) > 0.1) {
+			temperature[xi + 1 - xs] = temp;
+			tempHasChanged = true;
 		}
+	}
 
-		// Copy data into the ReactionNetwork so that it can
-		// compute the new concentrations.
-		network.updateConcentrationsFromArray(concOffset);
+	if (tempHasChanged) {
+		// Update the network with the temperature
+		expNetwork.setTemperatures(temperature);
+		expNetwork.syncClusterDataOnHost();
+		for (auto i = 0; i < xm + 2; ++i) {
+			lastTemperature[i] = temperature[i];
+		}
+		// Update the modified trap-mutation rate
+		// that depends on the network reaction rates
+		// TODO: is this just the local largest rate? Is it correct?
+		mutationHandler->updateTrapMutationRate(expNetwork.getLargestRate());
+	}
 
-		// ----- Take care of the reactions for all the reactants -----
+	// Loop over the grid points
+	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+		// Boundary conditions
+		// Everything to the left of the surface is empty
+		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+			continue;
+		// Free surface GB
+		bool skip = false;
+		for (auto &pair : gbVector) {
+			if (xi == std::get<0>(pair)) {
+				skip = true;
+				break;
+			}
+		}
+		if (skip)
+			continue;
 
 		// Compute all the partial derivatives for the reactions
-		network.computeAllPartials(reactionStartingIdx, reactionIndices,
-				reactionVals, xi + 1 - xs);
+		using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+		auto hConcs = HostUnmanaged(concOffset, dof);
+		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+		deep_copy(dConcs, hConcs);
+		partialDerivativeCounter->increment();
+		partialDerivativeTimer->start();
+		expNetwork.computeAllPartials(dConcs, expVals, xi + 1 - xs);
+		partialDerivativeTimer->stop();
+		auto hPartials = create_mirror_view(expVals);
+		deep_copy(hPartials, expVals);
 
+		// Variable for the loop on reactants
+		int startingIdx = 0;
 		// Update the column in the Jacobian that represents each DOF
 		for (int i = 0; i < dof; i++) {
 			// Set grid coordinate and component number for the row
@@ -828,23 +960,29 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			rowId.c = i;
 
 			// Number of partial derivatives
-			pdColIdsVectorSize = reactionSize[i];
-			auto startingIdx = reactionStartingIdx[i];
+			auto rowIter = dfill.find(i);
+			if (rowIter != dfill.end()) {
+				const auto &row = rowIter->second;
+				pdColIdsVectorSize = row.size();
 
-			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
-				// Set grid coordinate and component number for a column in the list
-				colIds[j].i = xi;
-				colIds[j].c = reactionIndices[startingIdx + j];
-				// Get the partial derivative from the array of all of the partials
-				reactingPartialsForCluster[j] = reactionVals[startingIdx + j];
+				// Loop over the list of column ids
+				for (int j = 0; j < pdColIdsVectorSize; j++) {
+					// Set grid coordinate and component number for a column in the list
+					colIds[j].i = xi;
+					colIds[j].c = row[j];
+					// Get the partial derivative from the array of all of the partials
+					reactingPartialsForCluster[j] = hPartials(startingIdx + j);
+				}
+				// Update the matrix
+				ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize,
+						colIds, reactingPartialsForCluster.data(), ADD_VALUES);
+				checkPetscError(ierr,
+						"PetscSolverExpHandler::computeDiagonalJacobian: "
+								"MatSetValuesStencil (reactions) failed.");
+
+				// Increase the starting index
+				startingIdx += pdColIdsVectorSize;
 			}
-			// Update the matrix
-			ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize, colIds,
-					reactingPartialsForCluster.data(), ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeDiagonalJacobian: "
-							"MatSetValuesStencil (reactions) failed.");
 		}
 
 		// ----- Take care of the modified trap-mutation for all the reactants -----

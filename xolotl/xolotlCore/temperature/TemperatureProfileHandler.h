@@ -198,20 +198,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void computePartialsForTemperature(double *val, int *indices,
+	virtual bool computePartialsForTemperature(double *val, int *indices,
 			double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
 			double sz = 0.0, int iz = 0) {
-		// Set the cluster index, the PetscSolver will use it to compute
-		// the row and column indices for the Jacobian
-		indices[0] = dof - 1;
-
-		// Compute the partial derivatives for diffusion of this cluster
-		// for the middle, left, and right grid point
-		val[0] = 0.0; // middle
-		val[1] = 0.0; // left
-		val[2] = 0.0; // right
-
-		return;
+		return false;
 	}
 
 };

@@ -48,9 +48,11 @@ public:
 		// Get the boundaries from the options
 		NetworkType::AmountType maxXe = options.getMaxImpurity();
 		NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
+		// Take care of the case with no grouping
+		if (options.getGroupingMin() > maxXe) groupingWidth = 1;
 		NetworkType::AmountType refine = (maxXe + 1) / groupingWidth;
 
-
+		// The number of grid points is set to 1 here but can be changed later
 		std::unique_ptr<NetworkType> rNetwork(
 					new NetworkType( { maxXe }, { { refine }, { groupingWidth } }, 1,
 				options));

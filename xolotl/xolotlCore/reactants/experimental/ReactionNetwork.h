@@ -130,6 +130,9 @@ public:
     }
 
     void
+    setGridSize(std::size_t gridSize) override;
+
+    void
     setTemperatures(const std::vector<double>& gridTemperatures) override;
 
     void

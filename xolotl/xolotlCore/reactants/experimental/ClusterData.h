@@ -118,6 +118,14 @@ public:
         return atomicVolume(0);
     }
 
+    void
+    setGridSize(std::size_t gridSize_) {
+        gridSize = gridSize_;
+        temperature = View<double*>("Temperature" + labelStr(label), gridSize);
+        diffusionCoefficient = View<double**>("Diffusion Coefficient" + labelStr(label),
+                numClusters, gridSize);
+    }
+
     std::size_t numClusters {};
     std::size_t gridSize {};
     View<double[1]> atomicVolume;

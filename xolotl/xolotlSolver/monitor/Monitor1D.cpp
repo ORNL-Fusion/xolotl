@@ -15,14 +15,8 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
-#include <NESuperCluster.h>
-#include <PSISuperCluster.h>
-#include <FeSuperCluster.h>
-#include <NEClusterReactionNetwork.h>
-#include <PSIClusterReactionNetwork.h>
-#include <AlloyClusterReactionNetwork.h>
-#include <AlloySuperCluster.h>
-#include <FeClusterReactionNetwork.h>
+#include <experimental/NEReactionNetwork.h>
+#include <experimental/PSIReactionNetwork.h>
 #include <MathUtils.h>
 #include "RandomNumberGenerator.h"
 #include "xolotlCore/io/XFile.h"
@@ -50,8 +44,6 @@ extern double timeStepThreshold;
 std::shared_ptr<xolotlViz::IPlot> scatterPlot1D;
 //! The pointer to the series plot used in monitorSeries1D.
 std::shared_ptr<xolotlViz::IPlot> seriesPlot1D;
-//! The pointer to the 2D plot used in MonitorSurface.
-std::shared_ptr<xolotlViz::IPlot> surfacePlot1D;
 //! The variable to store the interstitial flux at the previous time step.
 double previousIFlux1D = 0.0;
 //! The variable to store the total number of interstitials going through the surface.
@@ -86,13 +78,6 @@ PetscReal hdf5Stride1D = 0.0;
 PetscInt hdf5Previous1D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName1D = "xolotlStop.h5";
-// Declare the vector that will store the Id of the helium clusters
-std::vector<int> indices1D;
-// Declare the vector that will store the weight of the helium clusters
-// (their He composition)
-std::vector<int> weights1D;
-// Declare the vector that will store the radii of bubbles
-std::vector<double> radii1D;
 // The vector of depths at which bursting happens
 std::vector<int> depthPositions1D;
 
@@ -105,7 +90,6 @@ std::shared_ptr<xperf::ITimer> heRetentionTimer;
 std::shared_ptr<xperf::ITimer> xeRetentionTimer;
 std::shared_ptr<xperf::ITimer> scatterTimer;
 std::shared_ptr<xperf::ITimer> seriesTimer;
-std::shared_ptr<xperf::ITimer> surfaceTimer;
 std::shared_ptr<xperf::ITimer> eventFuncTimer;
 std::shared_ptr<xperf::ITimer> postEventFuncTimer;
 
@@ -115,7 +99,7 @@ std::shared_ptr<xperf::ITimer> postEventFuncTimer;
  * This is a monitoring method that looks at if there are negative concentrations at each time step.
  */
 PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 
 	xperf::ScopedTimer myTimer(checkNegativeTimer);
 
@@ -148,11 +132,11 @@ PetscErrorCode checkNegative1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
-	auto& network = solverHandler.getNetwork();
-	const int nClusters = network.size();
+	auto &network = solverHandler.getExpNetwork();
+	const int nClusters = network.getNumClusters();
 
 	// Loop on the local grid
 	for (PetscInt i = xs; i < xs + xm; i++) {
@@ -201,10 +185,13 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	using NetworkType =
+	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+	using Spec = typename NetworkType::Species;
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
 	int dof = network.getDOF();
 
 	// Get the position of the surface
@@ -276,19 +263,26 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 
 			// Access the solution data for this grid point.
 			auto gridPointSolution = solutionArray[xi];
-
-			// Update the concentration in the network
-			network.updateConcentrationsFromArray(gridPointSolution);
+			using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+			auto hConcs = HostUnmanaged(gridPointSolution, dof);
+			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+			deep_copy(dConcs, hConcs);
 
 			// Get the total concentrations at this grid point
 			auto currIdx = xi - myFirstIdxToWrite;
 			myConcs[currIdx][0] = (x - (grid[surfacePos + 1] - grid[1]));
-			myConcs[currIdx][1] = network.getTotalAtomConcentration(0);
-			myConcs[currIdx][2] = network.getTotalAtomConcentration(1);
-			myConcs[currIdx][3] = network.getTotalAtomConcentration(2);
-			myConcs[currIdx][4] = network.getTotalVConcentration();
-			myConcs[currIdx][5] = network.getTotalIConcentration();
-			myConcs[currIdx][6] = gridPointSolution[dof - 1];
+			myConcs[currIdx][1] = network.getTotalAtomConcentration(dConcs,
+					Spec::He, 0);
+			myConcs[currIdx][2] = network.getTotalAtomConcentration(dConcs,
+					Spec::D, 0);
+			myConcs[currIdx][3] = network.getTotalAtomConcentration(dConcs,
+					Spec::T, 0);
+			myConcs[currIdx][4] = network.getTotalAtomConcentration(dConcs,
+					Spec::V, 0);
+			myConcs[currIdx][5] = network.getTotalAtomConcentration(dConcs,
+					Spec::I, 0);
+			myConcs[currIdx][6] = gridPointSolution[dof];
 		}
 	}
 
@@ -310,7 +304,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that update an hdf5 file at each time step.
  */
 PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 
 	xperf::ScopedTimer myTimer(startStopTimer);
 
@@ -362,10 +356,10 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getExpNetwork();
 	const int dof = network.getDOF();
 
 	// Create an array for the concentration
@@ -440,7 +434,7 @@ PetscErrorCode startStop1D(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will compute the helium desorption at the surface
  */
 PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -449,7 +443,7 @@ PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the da from ts
 	DM da;
@@ -474,7 +468,12 @@ PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
 	int surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	using NetworkType =
+	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	const int dof = network.getDOF();
 
 	// Get the array of concentration
 	PetscReal **solutionArray;
@@ -483,10 +482,16 @@ PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
 
 	// Store the He concentration at the surface
 	double heConc = 0.0, diffCoeff = 0.0;
-	int heIndex = network.get(Species::He, 1)->getId() - 1;
+	Composition comp = Composition::zero();
+	comp[Spec::He] = 1;
+	auto heCluster = network.findCluster(comp, plsm::onHost);
+	int heIndex = heCluster.getId();
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
+
+	// Temperature
+	double localTemp = 0.0;
 
 	// Loop on the grid
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
@@ -496,8 +501,8 @@ PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
 		// Check if we are next to the surface
 		if (xi == surfacePos + 1) {
 			heConc = gridPointSolution[heIndex];
-			diffCoeff = network.get(Species::He, 1)->getDiffusionCoefficient(
-					xi - xs);
+			diffCoeff = heCluster.getDiffusionCoefficient(xi - xs);
+			localTemp = gridPointSolution[dof];
 		}
 	}
 
@@ -508,6 +513,9 @@ PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
 	// Send the concentration to proc Id 0
 	double localFactor = heConc * diffCoeff, factor = 0.0;
 	MPI_Reduce(&localFactor, &factor, 1, MPI_DOUBLE, MPI_SUM, 0,
+			PETSC_COMM_WORLD);
+	double temperature = 0.0;
+	MPI_Reduce(&localTemp, &temperature, 1, MPI_DOUBLE, MPI_SUM, 0,
 			PETSC_COMM_WORLD);
 
 	// Master process
@@ -522,8 +530,7 @@ PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
 		// Write the flux at the boundary and temperature in a file
 		std::ofstream outputFile;
 		outputFile.open("thds.txt", ios::app);
-		outputFile << network.getTemperature() << " " << surfaceFlux
-				<< std::endl;
+		outputFile << temperature << " " << surfaceFlux << std::endl;
 		outputFile.close();
 	}
 
@@ -540,7 +547,7 @@ PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
  * This is a monitoring method that will compute the helium retention
  */
 PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 
 	xperf::ScopedTimer myTimer(heRetentionTimer);
 
@@ -551,7 +558,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the flux handler that will be used to know the fluence
 	auto fluxHandler = solverHandler.getFluxHandler();
@@ -579,7 +586,12 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	int surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	using NetworkType =
+	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	const int dof = network.getDOF();
 
 	// Get the array of concentration
 	PetscReal **solutionArray;
@@ -604,17 +616,25 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray[xi];
 
-		// Update the concentration in the network
-		network.updateConcentrationsFromArray(gridPointSolution);
-
 		double hx = grid[xi + 1] - grid[xi];
 
-		// Get the total atoms concentration at this grid point
-		heConcentration += network.getTotalAtomConcentration(0) * hx;
-		dConcentration += network.getTotalAtomConcentration(1) * hx;
-		tConcentration += network.getTotalAtomConcentration(2) * hx;
-		vConcentration += network.getTotalVConcentration() * hx;
-		iConcentration += network.getTotalIConcentration() * hx;
+		using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+		auto hConcs = HostUnmanaged(gridPointSolution, dof);
+		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+		deep_copy(dConcs, hConcs);
+
+		// Get the total concentrations at this grid point
+		heConcentration = network.getTotalAtomConcentration(dConcs, Spec::He, 0)
+				* hx;
+		dConcentration = network.getTotalAtomConcentration(dConcs, Spec::D, 0)
+				* hx;
+		tConcentration = network.getTotalAtomConcentration(dConcs, Spec::T, 0)
+				* hx;
+		vConcentration = network.getTotalAtomConcentration(dConcs, Spec::V, 0)
+				* hx;
+		iConcentration = network.getTotalAtomConcentration(dConcs, Spec::I, 0)
+				* hx;
 	}
 
 	// Get the current process ID
@@ -637,167 +657,168 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	double totalVConcentration = totalConcData[3];
 	double totalIConcentration = totalConcData[4];
 
-	// Look at the fluxes going in the bulk if the bottom is a free surface
-	if (solverHandler.getRightOffset() == 1) {
-		// Set the bottom surface position
-		int xi = Mx - 2;
-
-		// Value to know on which processor is the bottom
-		int bottomProc = 0;
-
-		// Check we are on the right proc
-		if (xi >= xs && xi < xs + xm) {
-			// Get the delta time from the previous timestep to this timestep
-			double dt = time - previousTime;
-			// Compute the total number of impurities that went in the bulk
-			nHelium1D += previousHeFlux1D * dt;
-			nDeuterium1D += previousDFlux1D * dt;
-			nTritium1D += previousTFlux1D * dt;
-			nVacancy1D += previousVFlux1D * dt;
-			nIBulk1D += previousIBulkFlux1D * dt;
-
-			// Get the pointer to the beginning of the solution data for this grid point
-			gridPointSolution = solutionArray[xi];
-
-			// Factor for finite difference
-			double hxLeft = 0.0, hxRight = 0.0;
-			if (xi - 1 >= 0 && xi < Mx) {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-			} else if (xi - 1 < 0) {
-				hxLeft = grid[xi + 1] - grid[xi];
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-			} else {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = grid[xi + 1] - grid[xi];
-			}
-			double factor = 2.0 / (hxRight * (hxLeft + hxRight));
-
-			// Initialize the value for the flux
-			double newFlux = 0.0;
-			// Consider each helium cluster.
-			for (auto const& heMapItem : network.getAll(ReactantType::He)) {
-				// Get the cluster
-				auto const& cluster = *(heMapItem.second);
-				// Get its id and concentration
-				int id = cluster.getId() - 1;
-				double conc = gridPointSolution[id];
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				double coef = cluster.getDiffusionCoefficient(xi - xs);
-				// Compute the flux going to the right
-				newFlux += (double) size * factor * coef * conc * hxRight;
-			}
-			// Update the helium flux
-			previousHeFlux1D = newFlux;
-
-			// Initialize the value for the flux
-			newFlux = 0.0;
-			// Consider each deuterium cluster.
-			for (auto const& dMapItem : network.getAll(ReactantType::D)) {
-				// Get the cluster
-				auto const& cluster = *(dMapItem.second);
-				// Get its id and concentration
-				int id = cluster.getId() - 1;
-				double conc = gridPointSolution[id];
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				double coef = cluster.getDiffusionCoefficient(xi - xs);
-				// Compute the flux going to the right
-				newFlux += (double) size * factor * coef * conc * hxRight;
-			}
-			// Update the deuterium flux
-			previousDFlux1D = newFlux;
-
-			// Initialize the value for the flux
-			newFlux = 0.0;
-			// Consider each tritium cluster.
-			for (auto const& tMapItem : network.getAll(ReactantType::T)) {
-				// Get the cluster
-				auto const& cluster = *(tMapItem.second);
-				// Get its id and concentration
-				int id = cluster.getId() - 1;
-				double conc = gridPointSolution[id];
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				double coef = cluster.getDiffusionCoefficient(xi - xs);
-				// Compute the flux going to the right
-				newFlux += (double) size * factor * coef * conc * hxRight;
-			}
-			// Update the tritium flux
-			previousTFlux1D = newFlux;
-
-			// Initialize the value for the flux
-			newFlux = 0.0;
-			// Consider each vacancy cluster.
-			for (auto const& vMapItem : network.getAll(ReactantType::V)) {
-				// Get the cluster
-				auto const& cluster = *(vMapItem.second);
-				// Get it diffusion coefficient
-				double coef = cluster.getDiffusionCoefficient(xi - xs);
-				if (coef <= 0.0)
-					continue;
-				// Get its id and concentration
-				int id = cluster.getId() - 1;
-				double conc = gridPointSolution[id];
-				// Get its size
-				int size = cluster.getSize();
-				// Compute the flux going to the right
-				newFlux += (double) size * factor * coef * conc * hxRight;
-			}
-			// Update the tritium flux
-			previousVFlux1D = newFlux;
-
-			// Initialize the value for the flux
-			newFlux = 0.0;
-			// Consider each int cluster.
-			for (auto const& iMapItem : network.getAll(ReactantType::I)) {
-				// Get the cluster
-				auto const& cluster = *(iMapItem.second);
-				// Get its id and concentration
-				int id = cluster.getId() - 1;
-				double conc = gridPointSolution[id];
-				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
-				double coef = cluster.getDiffusionCoefficient(xi - xs);
-				// Compute the flux going to the right
-				newFlux += (double) size * factor * coef * conc * hxRight;
-			}
-			// Update the tritium flux
-			previousIBulkFlux1D = newFlux;
-
-			// Set the bottom processor
-			bottomProc = procId;
-		}
-
-		// Get which processor will send the information
-		// TODO do we need to do this allreduce just to figure out
-		// who owns the data?
-		// And is it supposed to be a sum?   Why not a min?
-		int bottomId = 0;
-		MPI_Allreduce(&bottomProc, &bottomId, 1, MPI_INT, MPI_SUM,
-				PETSC_COMM_WORLD);
-
-		// Send the information about impurities
-		// to the other processes
-		std::array<double, 10> countFluxData { nHelium1D, previousHeFlux1D,
-				nDeuterium1D, previousDFlux1D, nTritium1D, previousTFlux1D,
-				nVacancy1D, previousVFlux1D, nIBulk1D, previousIBulkFlux1D };
-		MPI_Bcast(countFluxData.data(), countFluxData.size(), MPI_DOUBLE,
-				bottomId, PETSC_COMM_WORLD);
-
-		// Extract inpurity data from broadcast buffer.
-		nHelium1D = countFluxData[0];
-		previousHeFlux1D = countFluxData[1];
-		nDeuterium1D = countFluxData[2];
-		previousDFlux1D = countFluxData[3];
-		nTritium1D = countFluxData[4];
-		previousTFlux1D = countFluxData[5];
-		nVacancy1D = countFluxData[6];
-		previousVFlux1D = countFluxData[7];
-		nIBulk1D = countFluxData[8];
-		previousIBulkFlux1D = countFluxData[9];
-	}
+	// TODO: will need to be refactored: getDiff ids from diffusion handler?
+//	// Look at the fluxes going in the bulk if the bottom is a free surface
+//	if (solverHandler.getRightOffset() == 1) {
+//		// Set the bottom surface position
+//		int xi = Mx - 2;
+//
+//		// Value to know on which processor is the bottom
+//		int bottomProc = 0;
+//
+//		// Check we are on the right proc
+//		if (xi >= xs && xi < xs + xm) {
+//			// Get the delta time from the previous timestep to this timestep
+//			double dt = time - previousTime;
+//			// Compute the total number of impurities that went in the bulk
+//			nHelium1D += previousHeFlux1D * dt;
+//			nDeuterium1D += previousDFlux1D * dt;
+//			nTritium1D += previousTFlux1D * dt;
+//			nVacancy1D += previousVFlux1D * dt;
+//			nIBulk1D += previousIBulkFlux1D * dt;
+//
+//			// Get the pointer to the beginning of the solution data for this grid point
+//			gridPointSolution = solutionArray[xi];
+//
+//			// Factor for finite difference
+//			double hxLeft = 0.0, hxRight = 0.0;
+//			if (xi - 1 >= 0 && xi < Mx) {
+//				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+//				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+//			} else if (xi - 1 < 0) {
+//				hxLeft = grid[xi + 1] - grid[xi];
+//				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+//			} else {
+//				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+//				hxRight = grid[xi + 1] - grid[xi];
+//			}
+//			double factor = 2.0 / (hxRight * (hxLeft + hxRight));
+//
+//			// Initialize the value for the flux
+//			double newFlux = 0.0;
+//			// Consider each helium cluster.
+//			for (auto const& heMapItem : network.getAll(ReactantType::He)) {
+//				// Get the cluster
+//				auto const& cluster = *(heMapItem.second);
+//				// Get its id and concentration
+//				int id = cluster.getId() - 1;
+//				double conc = gridPointSolution[id];
+//				// Get its size and diffusion coefficient
+//				int size = cluster.getSize();
+//				double coef = cluster.getDiffusionCoefficient(xi - xs);
+//				// Compute the flux going to the right
+//				newFlux += (double) size * factor * coef * conc * hxRight;
+//			}
+//			// Update the helium flux
+//			previousHeFlux1D = newFlux;
+//
+//			// Initialize the value for the flux
+//			newFlux = 0.0;
+//			// Consider each deuterium cluster.
+//			for (auto const& dMapItem : network.getAll(ReactantType::D)) {
+//				// Get the cluster
+//				auto const& cluster = *(dMapItem.second);
+//				// Get its id and concentration
+//				int id = cluster.getId() - 1;
+//				double conc = gridPointSolution[id];
+//				// Get its size and diffusion coefficient
+//				int size = cluster.getSize();
+//				double coef = cluster.getDiffusionCoefficient(xi - xs);
+//				// Compute the flux going to the right
+//				newFlux += (double) size * factor * coef * conc * hxRight;
+//			}
+//			// Update the deuterium flux
+//			previousDFlux1D = newFlux;
+//
+//			// Initialize the value for the flux
+//			newFlux = 0.0;
+//			// Consider each tritium cluster.
+//			for (auto const& tMapItem : network.getAll(ReactantType::T)) {
+//				// Get the cluster
+//				auto const& cluster = *(tMapItem.second);
+//				// Get its id and concentration
+//				int id = cluster.getId() - 1;
+//				double conc = gridPointSolution[id];
+//				// Get its size and diffusion coefficient
+//				int size = cluster.getSize();
+//				double coef = cluster.getDiffusionCoefficient(xi - xs);
+//				// Compute the flux going to the right
+//				newFlux += (double) size * factor * coef * conc * hxRight;
+//			}
+//			// Update the tritium flux
+//			previousTFlux1D = newFlux;
+//
+//			// Initialize the value for the flux
+//			newFlux = 0.0;
+//			// Consider each vacancy cluster.
+//			for (auto const& vMapItem : network.getAll(ReactantType::V)) {
+//				// Get the cluster
+//				auto const& cluster = *(vMapItem.second);
+//				// Get it diffusion coefficient
+//				double coef = cluster.getDiffusionCoefficient(xi - xs);
+//				if (coef <= 0.0)
+//					continue;
+//				// Get its id and concentration
+//				int id = cluster.getId() - 1;
+//				double conc = gridPointSolution[id];
+//				// Get its size
+//				int size = cluster.getSize();
+//				// Compute the flux going to the right
+//				newFlux += (double) size * factor * coef * conc * hxRight;
+//			}
+//			// Update the tritium flux
+//			previousVFlux1D = newFlux;
+//
+//			// Initialize the value for the flux
+//			newFlux = 0.0;
+//			// Consider each int cluster.
+//			for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+//				// Get the cluster
+//				auto const& cluster = *(iMapItem.second);
+//				// Get its id and concentration
+//				int id = cluster.getId() - 1;
+//				double conc = gridPointSolution[id];
+//				// Get its size and diffusion coefficient
+//				int size = cluster.getSize();
+//				double coef = cluster.getDiffusionCoefficient(xi - xs);
+//				// Compute the flux going to the right
+//				newFlux += (double) size * factor * coef * conc * hxRight;
+//			}
+//			// Update the tritium flux
+//			previousIBulkFlux1D = newFlux;
+//
+//			// Set the bottom processor
+//			bottomProc = procId;
+//		}
+//
+//		// Get which processor will send the information
+//		// TODO do we need to do this allreduce just to figure out
+//		// who owns the data?
+//		// And is it supposed to be a sum?   Why not a min?
+//		int bottomId = 0;
+//		MPI_Allreduce(&bottomProc, &bottomId, 1, MPI_INT, MPI_SUM,
+//				PETSC_COMM_WORLD);
+//
+//		// Send the information about impurities
+//		// to the other processes
+//		std::array<double, 10> countFluxData { nHelium1D, previousHeFlux1D,
+//				nDeuterium1D, previousDFlux1D, nTritium1D, previousTFlux1D,
+//				nVacancy1D, previousVFlux1D, nIBulk1D, previousIBulkFlux1D };
+//		MPI_Bcast(countFluxData.data(), countFluxData.size(), MPI_DOUBLE,
+//				bottomId, PETSC_COMM_WORLD);
+//
+//		// Extract inpurity data from broadcast buffer.
+//		nHelium1D = countFluxData[0];
+//		previousHeFlux1D = countFluxData[1];
+//		nDeuterium1D = countFluxData[2];
+//		previousDFlux1D = countFluxData[3];
+//		nTritium1D = countFluxData[4];
+//		previousTFlux1D = countFluxData[5];
+//		nVacancy1D = countFluxData[6];
+//		previousVFlux1D = countFluxData[7];
+//		nIBulk1D = countFluxData[8];
+//		previousIBulkFlux1D = countFluxData[9];
+//	}
 
 	// Master process
 	if (procId == 0) {
@@ -838,7 +859,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
  * This is a monitoring method that will compute the xenon retention
  */
 PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 
 	xperf::ScopedTimer myTimer(xeRetentionTimer);
 
@@ -849,7 +870,7 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the da from ts
 	DM da;
@@ -871,8 +892,14 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
 
-	// Get the network
-	auto& network = solverHandler.getNetwork();
+	using NetworkType =
+	experimental::NEReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	// Degrees of freedom is the total number of clusters in the network
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	const int dof = network.getDOF();
 
 	// Get the array of concentration
 	PetscReal **solutionArray;
@@ -881,7 +908,8 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 
 	// Store the concentration and other values over the grid
 	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
-			partialBubbleConcentration = 0.0, partialRadii = 0.0;
+			partialBubbleConcentration = 0.0, partialRadii = 0.0, partialSize =
+					0.0;
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal *gridPointSolution;
@@ -895,38 +923,40 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray[xi];
 
-		// Update the concentration in the network
-		network.updateConcentrationsFromArray(gridPointSolution);
+		using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+		auto hConcs = HostUnmanaged(gridPointSolution, dof);
+		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+		deep_copy(dConcs, hConcs);
 
 		double hx = grid[xi + 1] - grid[xi];
 
-		// Loop on all the indices
-		for (unsigned int i = 0; i < indices1D.size(); i++) {
-			// Add the current concentration times the number of xenon in the cluster
-			// (from the weight vector)
-			double conc = gridPointSolution[indices1D[i]];
-			xeConcentration += conc * weights1D[i] * hx;
-			bubbleConcentration += conc * hx;
-			radii += conc * radii1D[i] * hx;
-			if (weights1D[i] >= minSizes[0] && conc > 1.0e-16) {
-				partialBubbleConcentration += conc * hx;
-				partialRadii += conc * radii1D[i] * hx;
-			}
-		}
+		// Get the concentrations
+		xeConcentration += network.getTotalAtomConcentration(dConcs, Spec::Xe, 0)
+				* hx;
+		bubbleConcentration += network.getTotalConcentration(dConcs, Spec::Xe, 0)
+				* hx;
+		radii += network.getTotalRadiusConcentration(dConcs, Spec::Xe, 0) * hx;
+		partialBubbleConcentration = network.getTotalConcentration(dConcs,
+				Spec::Xe, minSizes[0]) * hx;
+		partialRadii += network.getTotalRadiusConcentration(dConcs, Spec::Xe,
+				minSizes[0]) * hx;
+		partialSize += network.getTotalAtomConcentration(dConcs, Spec::Xe,
+				minSizes[0]) * hx;
 
-		// Loop on all the super clusters
-		for (auto const& superMapItem : network.getAll(ReactantType::NESuper)) {
-			auto const& cluster =
-					static_cast<NESuperCluster&>(*(superMapItem.second));
-			double conc = cluster.getTotalConcentration();
-			xeConcentration += cluster.getTotalXenonConcentration() * hx;
-			bubbleConcentration += conc * hx;
-			radii += conc * cluster.getReactionRadius() * hx;
-			if (cluster.getSize() >= minSizes[0] && conc > 1.0e-16) {
-				partialBubbleConcentration += conc * hx;
-				partialRadii += conc * cluster.getReactionRadius() * hx;
-			}
-		}
+//		if (xi == 1) {
+//				std::ofstream outFile;
+//				outFile.open("size.txt");
+//				for (unsigned int i = 0; i < network.getNumClusters(); i++) {
+//					// Add the current concentration times the number of xenon in the cluster
+//					// (from the weight vector)
+//					double conc = gridPointSolution[i];
+//					const auto& clReg = network.getCluster(i, plsm::onHost).getRegion();
+//					Composition lo = clReg.getOrigin();
+//					outFile << lo[Spec::Xe] << " " << conc << std::endl;
+//				}
+//				outFile.close();
+//		}
 	}
 
 	// Get the current process ID
@@ -934,9 +964,9 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Sum all the concentrations through MPI reduce
-	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
-			radii, partialBubbleConcentration, partialRadii };
-	std::array<double, 5> totalConcData { 0.0, 0.0, 0.0, 0.0, 0.0 };
+	std::array<double, 6> myConcData { xeConcentration, bubbleConcentration,
+			radii, partialBubbleConcentration, partialRadii, partialSize };
+	std::array<double, 6> totalConcData { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
 
@@ -948,20 +978,19 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 				<< std::endl;
 
 		// Make sure the average partial radius makes sense
-		double averagePartialRadius = totalConcData[4] / totalConcData[3];
-		double minRadius = pow(
-				(3.0 * (double) minSizes[0])
-						/ (4.0 * xolotlCore::pi * network.getDensity()),
-				(1.0 / 3.0));
-		if (totalConcData[4] < 1.e-16 || averagePartialRadius < minRadius)
-			averagePartialRadius = minRadius;
+		double averagePartialRadius = 0.0, averagePartialSize = 0.0;
+		if (totalConcData[3] > 1.e-16) {
+			averagePartialRadius = totalConcData[4] / totalConcData[3];
+			averagePartialSize = totalConcData[5] / totalConcData[3];
+		}
 
-		// Uncomment to write the retention and the fluence in a file
+		// Uncomment to write the content in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", ios::app);
 		outputFile << time << " " << totalConcData[0] << " "
 				<< totalConcData[2] / totalConcData[1] << " "
-				<< averagePartialRadius << std::endl;
+				<< averagePartialRadius << " " << totalConcData[3] << " "
+				<< averagePartialSize << std::endl;
 		outputFile.close();
 	}
 
@@ -994,10 +1023,10 @@ PetscErrorCode profileTemperature1D(TS ts, PetscInt timestep, PetscReal time,
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getExpNetwork();
 	const int dof = network.getDOF();
 
 	// Get the position of the surface
@@ -1051,7 +1080,7 @@ PetscErrorCode profileTemperature1D(TS ts, PetscInt timestep, PetscReal time,
 			gridPointSolution = solutionArray[xi];
 
 			// Get the local temperature
-			localTemp = gridPointSolution[dof - 1];
+			localTemp = gridPointSolution[dof];
 		}
 
 		// Get the value on procId = 0
@@ -1092,334 +1121,334 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
-
-	// Gets the process ID
-	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
-
-	// Get the physical grid and its length
-	auto grid = solverHandler.getXGrid();
-	int xSize = grid.size();
-
-	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
-
-	// Get the da from ts
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the total size of the grid
-	PetscInt Mx;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE);
-	CHKERRQ(ierr);
-
-	// Get the array of concentration
-	PetscReal **solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
-
-	// Get the network
-	auto& network = solverHandler.getNetwork();
-
-	// Initial declarations for the density and diameter
-	double iDensity = 0.0, vDensity = 0.0, voidDensity = 0.0,
-			frankDensity = 0.0, faultedDensity = 0.0, perfectDensity = 0.0,
-			voidPartialDensity = 0.0, frankPartialDensity = 0.0,
-			faultedPartialDensity = 0.0, perfectPartialDensity = 0.0,
-			iDiameter = 0.0, vDiameter = 0.0, voidDiameter = 0.0,
-			frankDiameter = 0.0, faultedDiameter = 0.0, perfectDiameter = 0.0,
-			voidPartialDiameter = 0.0, frankPartialDiameter = 0.0,
-			faultedPartialDiameter = 0.0, perfectPartialDiameter = 0.0;
-
-	// Get the minimum size for the loop densities and diameters
-	auto minSizes = solverHandler.getMinSizes();
-
-	// Declare the pointer for the concentrations at a specific grid point
-	PetscReal *gridPointSolution;
-
-	// Loop on the grid
-	for (PetscInt xi = xs; xi < xs + xm; xi++) {
-
-		// Boundary conditions
-		if (xi < surfacePos + solverHandler.getLeftOffset()
-				|| xi == Mx - solverHandler.getRightOffset())
-			continue;
-
-		// Get the pointer to the beginning of the solution data for this grid point
-		gridPointSolution = solutionArray[xi];
-
-		// Update the concentration in the network
-		network.updateConcentrationsFromArray(gridPointSolution);
-
-		// Loop on I
-		for (auto const& iMapItem : network.getAll(ReactantType::I)) {
-			// Get the cluster
-			auto const& cluster = *(iMapItem.second);
-			iDensity += gridPointSolution[cluster.getId() - 1];
-			iDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * 2.0;
-		}
-
-		// Loop on V
-		for (auto const& vMapItem : network.getAll(ReactantType::V)) {
-			// Get the cluster
-			auto const& cluster = *(vMapItem.second);
-			vDensity += gridPointSolution[cluster.getId() - 1];
-			vDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * 2.0;
-		}
-
-		// Loop on Void
-		for (auto const& voidMapItem : network.getAll(ReactantType::Void)) {
-			// Get the cluster
-			auto const& cluster = *(voidMapItem.second);
-			voidDensity += gridPointSolution[cluster.getId() - 1];
-			voidDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * 2.0;
-			if (cluster.getSize() >= minSizes[0]) {
-				voidPartialDensity += gridPointSolution[cluster.getId() - 1];
-				voidPartialDiameter += gridPointSolution[cluster.getId() - 1]
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-		for (auto const& voidMapItem : network.getAll(ReactantType::VoidSuper)) {
-			// Get the cluster
-			auto const& cluster =
-					static_cast<AlloySuperCluster&>(*(voidMapItem.second));
-			voidDensity += cluster.getTotalConcentration();
-			voidDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * 2.0;
-			if (cluster.getSize() >= minSizes[0]) {
-				voidPartialDensity += cluster.getTotalConcentration();
-				voidPartialDiameter += cluster.getTotalConcentration()
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-
-		// Loop on Faulted
-		for (auto const& faultedMapItem : network.getAll(ReactantType::Faulted)) {
-			// Get the cluster
-			auto const& cluster = *(faultedMapItem.second);
-			faultedDensity += gridPointSolution[cluster.getId() - 1];
-			faultedDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * 2.0;
-			if (cluster.getSize() >= minSizes[1]) {
-				faultedPartialDensity += gridPointSolution[cluster.getId() - 1];
-				faultedPartialDiameter += gridPointSolution[cluster.getId() - 1]
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-		for (auto const& faultedMapItem : network.getAll(
-				ReactantType::FaultedSuper)) {
-			// Get the cluster
-			auto const& cluster =
-					static_cast<AlloySuperCluster&>(*(faultedMapItem.second));
-			faultedDensity += cluster.getTotalConcentration();
-			faultedDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * 2.0;
-			if (cluster.getSize() >= minSizes[1]) {
-				faultedPartialDensity += cluster.getTotalConcentration();
-				faultedPartialDiameter += cluster.getTotalConcentration()
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-
-		// Loop on Perfect
-		for (auto const& perfectMapItem : network.getAll(ReactantType::Perfect)) {
-			// Get the cluster
-			auto const& cluster = *(perfectMapItem.second);
-			perfectDensity += gridPointSolution[cluster.getId() - 1];
-			perfectDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * 2.0;
-			if (cluster.getSize() >= minSizes[2]) {
-				perfectPartialDensity += gridPointSolution[cluster.getId() - 1];
-				perfectPartialDiameter += gridPointSolution[cluster.getId() - 1]
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-		for (auto const& perfectMapItem : network.getAll(
-				ReactantType::PerfectSuper)) {
-			// Get the cluster
-			auto const& cluster =
-					static_cast<AlloySuperCluster&>(*(perfectMapItem.second));
-			perfectDensity += cluster.getTotalConcentration();
-			perfectDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * 2.0;
-			if (cluster.getSize() >= minSizes[2]) {
-				perfectPartialDensity += cluster.getTotalConcentration();
-				perfectPartialDiameter += cluster.getTotalConcentration()
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-
-		// Loop on Frank
-		for (auto const& frankMapItem : network.getAll(ReactantType::Frank)) {
-			// Get the cluster
-			auto const& cluster = *(frankMapItem.second);
-			frankDensity += gridPointSolution[cluster.getId() - 1];
-			frankDiameter += gridPointSolution[cluster.getId() - 1]
-					* cluster.getReactionRadius() * 2.0;
-			if (cluster.getSize() >= minSizes[3]) {
-				frankPartialDensity += gridPointSolution[cluster.getId() - 1];
-				frankPartialDiameter += gridPointSolution[cluster.getId() - 1]
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-		for (auto const& frankMapItem : network.getAll(ReactantType::FrankSuper)) {
-			// Get the cluster
-			auto const& cluster =
-					static_cast<AlloySuperCluster&>(*(frankMapItem.second));
-			frankDensity += cluster.getTotalConcentration();
-			frankDiameter += cluster.getTotalConcentration()
-					* cluster.getReactionRadius() * 2.0;
-			if (cluster.getSize() >= minSizes[3]) {
-				frankPartialDensity += cluster.getTotalConcentration();
-				frankPartialDiameter += cluster.getTotalConcentration()
-						* cluster.getReactionRadius() * 2.0;
-			}
-		}
-	}
-
-	// Sum all the concentrations through MPI reduce
-	double iTotalDensity = 0.0, vTotalDensity = 0.0, voidTotalDensity = 0.0,
-			frankTotalDensity = 0.0, faultedTotalDensity = 0.0,
-			perfectTotalDensity = 0.0, voidPartialTotalDensity = 0.0,
-			frankPartialTotalDensity = 0.0, faultedPartialTotalDensity = 0.0,
-			perfectPartialTotalDensity = 0.0, iTotalDiameter = 0.0,
-			vTotalDiameter = 0.0, voidTotalDiameter = 0.0, frankTotalDiameter =
-					0.0, faultedTotalDiameter = 0.0, perfectTotalDiameter = 0.0,
-			voidPartialTotalDiameter = 0.0, frankPartialTotalDiameter = 0.0,
-			faultedPartialTotalDiameter = 0.0,
-			perfectPartialTotalDiameter = 0.0;
-	MPI_Reduce(&iDensity, &iTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&vDensity, &vTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&voidDensity, &voidTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&perfectDensity, &perfectTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&frankDensity, &frankTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&faultedDensity, &faultedTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&voidPartialDensity, &voidPartialTotalDensity, 1, MPI_DOUBLE,
-	MPI_SUM, 0, PETSC_COMM_WORLD);
-	MPI_Reduce(&perfectPartialDensity, &perfectPartialTotalDensity, 1,
-	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
-	MPI_Reduce(&frankPartialDensity, &frankPartialTotalDensity, 1, MPI_DOUBLE,
-	MPI_SUM, 0, PETSC_COMM_WORLD);
-	MPI_Reduce(&faultedPartialDensity, &faultedPartialTotalDensity, 1,
-	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
-	MPI_Reduce(&iDiameter, &iTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&vDiameter, &vTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&voidDiameter, &voidTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&perfectDiameter, &perfectTotalDiameter, 1, MPI_DOUBLE, MPI_SUM,
-			0, PETSC_COMM_WORLD);
-	MPI_Reduce(&frankDiameter, &frankTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
-			PETSC_COMM_WORLD);
-	MPI_Reduce(&faultedDiameter, &faultedTotalDiameter, 1, MPI_DOUBLE, MPI_SUM,
-			0, PETSC_COMM_WORLD);
-	MPI_Reduce(&voidPartialDiameter, &voidPartialTotalDiameter, 1, MPI_DOUBLE,
-	MPI_SUM, 0, PETSC_COMM_WORLD);
-	MPI_Reduce(&perfectPartialDiameter, &perfectPartialTotalDiameter, 1,
-	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
-	MPI_Reduce(&frankPartialDiameter, &frankPartialTotalDiameter, 1, MPI_DOUBLE,
-	MPI_SUM, 0, PETSC_COMM_WORLD);
-	MPI_Reduce(&faultedPartialDiameter, &faultedPartialTotalDiameter, 1,
-	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
-
-	// Average the data
-	if (procId == 0) {
-		iTotalDensity = iTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		vTotalDensity = vTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		voidTotalDensity = voidTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		perfectTotalDensity = perfectTotalDensity
-				/ (grid[Mx] - grid[surfacePos + 1]);
-		faultedTotalDensity = faultedTotalDensity
-				/ (grid[Mx] - grid[surfacePos + 1]);
-		frankTotalDensity = frankTotalDensity
-				/ (grid[Mx] - grid[surfacePos + 1]);
-		voidPartialTotalDensity = voidPartialTotalDensity
-				/ (grid[Mx] - grid[surfacePos + 1]);
-		perfectPartialTotalDensity = perfectPartialTotalDensity
-				/ (grid[Mx] - grid[surfacePos + 1]);
-		faultedPartialTotalDensity = faultedPartialTotalDensity
-				/ (grid[Mx] - grid[surfacePos + 1]);
-		frankPartialTotalDensity = frankPartialTotalDensity
-				/ (grid[Mx] - grid[surfacePos + 1]);
-		iTotalDiameter = iTotalDiameter
-				/ (iTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		vTotalDiameter = vTotalDiameter
-				/ (vTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		voidTotalDiameter = voidTotalDiameter
-				/ (voidTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		perfectTotalDiameter = perfectTotalDiameter
-				/ (perfectTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		faultedTotalDiameter = faultedTotalDiameter
-				/ (faultedTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		frankTotalDiameter = frankTotalDiameter
-				/ (frankTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		voidPartialTotalDiameter = voidPartialTotalDiameter
-				/ (voidPartialTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		perfectPartialTotalDiameter = perfectPartialTotalDiameter
-				/ (perfectPartialTotalDensity
-						* (grid[Mx] - grid[surfacePos + 1]));
-		faultedPartialTotalDiameter = faultedPartialTotalDiameter
-				/ (faultedPartialTotalDensity
-						* (grid[Mx] - grid[surfacePos + 1]));
-		frankPartialTotalDiameter =
-				frankPartialTotalDiameter
-						/ (frankPartialTotalDensity
-								* (grid[Mx] - grid[surfacePos + 1]));
-
-		// Set the output precision
-		const int outputPrecision = 5;
-
-		// Open the output file
-		std::fstream outputFile;
-		outputFile.open("Alloy.dat", std::fstream::out | std::fstream::app);
-		outputFile << std::setprecision(outputPrecision);
-
-		// Output the data
-		outputFile << timestep << " " << time << " " << iTotalDensity << " "
-				<< iTotalDiameter << " " << vTotalDensity << " "
-				<< vTotalDiameter << " " << voidTotalDensity << " "
-				<< voidTotalDiameter << " " << faultedTotalDensity << " "
-				<< faultedTotalDiameter << " " << perfectTotalDensity << " "
-				<< perfectTotalDiameter << " " << frankTotalDensity << " "
-				<< frankTotalDiameter << " " << voidPartialTotalDensity << " "
-				<< voidPartialTotalDiameter << " " << faultedPartialTotalDensity
-				<< " " << faultedPartialTotalDiameter << " "
-				<< perfectPartialTotalDensity << " "
-				<< perfectPartialTotalDiameter << " "
-				<< frankPartialTotalDensity << " " << frankPartialTotalDiameter
-				<< std::endl;
-
-		// Close the output file
-		outputFile.close();
-	}
-
-	// Restore the PETSC solution array
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+//	// Get the number of processes
+//	int worldSize;
+//	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+//
+//	// Gets the process ID
+//	int procId;
+//	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+//
+//	// Get the solver handler
+//	auto &solverHandler = PetscSolver::getSolverHandler();
+//
+//	// Get the physical grid and its length
+//	auto grid = solverHandler.getXGrid();
+//	int xSize = grid.size();
+//
+//	// Get the position of the surface
+//	int surfacePos = solverHandler.getSurfacePosition();
+//
+//	// Get the da from ts
+//	DM da;
+//	ierr = TSGetDM(ts, &da);
+//	CHKERRQ(ierr);
+//
+//	// Get the corners of the grid
+//	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
+//	CHKERRQ(ierr);
+//
+//	// Get the total size of the grid
+//	PetscInt Mx;
+//	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
+//	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+//	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+//	PETSC_IGNORE);
+//	CHKERRQ(ierr);
+//
+//	// Get the array of concentration
+//	PetscReal **solutionArray;
+//	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+//	CHKERRQ(ierr);
+//
+//	// Get the network
+//	auto &network = solverHandler.getNetwork();
+//
+//	// Initial declarations for the density and diameter
+//	double iDensity = 0.0, vDensity = 0.0, voidDensity = 0.0,
+//			frankDensity = 0.0, faultedDensity = 0.0, perfectDensity = 0.0,
+//			voidPartialDensity = 0.0, frankPartialDensity = 0.0,
+//			faultedPartialDensity = 0.0, perfectPartialDensity = 0.0,
+//			iDiameter = 0.0, vDiameter = 0.0, voidDiameter = 0.0,
+//			frankDiameter = 0.0, faultedDiameter = 0.0, perfectDiameter = 0.0,
+//			voidPartialDiameter = 0.0, frankPartialDiameter = 0.0,
+//			faultedPartialDiameter = 0.0, perfectPartialDiameter = 0.0;
+//
+//	// Get the minimum size for the loop densities and diameters
+//	auto minSizes = solverHandler.getMinSizes();
+//
+//	// Declare the pointer for the concentrations at a specific grid point
+//	PetscReal *gridPointSolution;
+//
+//	// Loop on the grid
+//	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+//
+//		// Boundary conditions
+//		if (xi < surfacePos + solverHandler.getLeftOffset()
+//				|| xi == Mx - solverHandler.getRightOffset())
+//			continue;
+//
+//		// Get the pointer to the beginning of the solution data for this grid point
+//		gridPointSolution = solutionArray[xi];
+//
+//		// Update the concentration in the network
+//		network.updateConcentrationsFromArray(gridPointSolution);
+//
+//		// Loop on I
+//		for (auto const &iMapItem : network.getAll(ReactantType::I)) {
+//			// Get the cluster
+//			auto const &cluster = *(iMapItem.second);
+//			iDensity += gridPointSolution[cluster.getId() - 1];
+//			iDiameter += gridPointSolution[cluster.getId() - 1]
+//					* cluster.getReactionRadius() * 2.0;
+//		}
+//
+//		// Loop on V
+//		for (auto const &vMapItem : network.getAll(ReactantType::V)) {
+//			// Get the cluster
+//			auto const &cluster = *(vMapItem.second);
+//			vDensity += gridPointSolution[cluster.getId() - 1];
+//			vDiameter += gridPointSolution[cluster.getId() - 1]
+//					* cluster.getReactionRadius() * 2.0;
+//		}
+//
+//		// Loop on Void
+//		for (auto const &voidMapItem : network.getAll(ReactantType::Void)) {
+//			// Get the cluster
+//			auto const &cluster = *(voidMapItem.second);
+//			voidDensity += gridPointSolution[cluster.getId() - 1];
+//			voidDiameter += gridPointSolution[cluster.getId() - 1]
+//					* cluster.getReactionRadius() * 2.0;
+//			if (cluster.getSize() >= minSizes[0]) {
+//				voidPartialDensity += gridPointSolution[cluster.getId() - 1];
+//				voidPartialDiameter += gridPointSolution[cluster.getId() - 1]
+//						* cluster.getReactionRadius() * 2.0;
+//			}
+//		}
+//		for (auto const &voidMapItem : network.getAll(ReactantType::VoidSuper)) {
+//			// Get the cluster
+//			auto const &cluster =
+//					static_cast<AlloySuperCluster&>(*(voidMapItem.second));
+//			voidDensity += cluster.getTotalConcentration();
+//			voidDiameter += cluster.getTotalConcentration()
+//					* cluster.getReactionRadius() * 2.0;
+//			if (cluster.getSize() >= minSizes[0]) {
+//				voidPartialDensity += cluster.getTotalConcentration();
+//				voidPartialDiameter += cluster.getTotalConcentration()
+//						* cluster.getReactionRadius() * 2.0;
+//			}
+//		}
+//
+//		// Loop on Faulted
+//		for (auto const &faultedMapItem : network.getAll(ReactantType::Faulted)) {
+//			// Get the cluster
+//			auto const &cluster = *(faultedMapItem.second);
+//			faultedDensity += gridPointSolution[cluster.getId() - 1];
+//			faultedDiameter += gridPointSolution[cluster.getId() - 1]
+//					* cluster.getReactionRadius() * 2.0;
+//			if (cluster.getSize() >= minSizes[1]) {
+//				faultedPartialDensity += gridPointSolution[cluster.getId() - 1];
+//				faultedPartialDiameter += gridPointSolution[cluster.getId() - 1]
+//						* cluster.getReactionRadius() * 2.0;
+//			}
+//		}
+//		for (auto const &faultedMapItem : network.getAll(
+//				ReactantType::FaultedSuper)) {
+//			// Get the cluster
+//			auto const &cluster =
+//					static_cast<AlloySuperCluster&>(*(faultedMapItem.second));
+//			faultedDensity += cluster.getTotalConcentration();
+//			faultedDiameter += cluster.getTotalConcentration()
+//					* cluster.getReactionRadius() * 2.0;
+//			if (cluster.getSize() >= minSizes[1]) {
+//				faultedPartialDensity += cluster.getTotalConcentration();
+//				faultedPartialDiameter += cluster.getTotalConcentration()
+//						* cluster.getReactionRadius() * 2.0;
+//			}
+//		}
+//
+//		// Loop on Perfect
+//		for (auto const &perfectMapItem : network.getAll(ReactantType::Perfect)) {
+//			// Get the cluster
+//			auto const &cluster = *(perfectMapItem.second);
+//			perfectDensity += gridPointSolution[cluster.getId() - 1];
+//			perfectDiameter += gridPointSolution[cluster.getId() - 1]
+//					* cluster.getReactionRadius() * 2.0;
+//			if (cluster.getSize() >= minSizes[2]) {
+//				perfectPartialDensity += gridPointSolution[cluster.getId() - 1];
+//				perfectPartialDiameter += gridPointSolution[cluster.getId() - 1]
+//						* cluster.getReactionRadius() * 2.0;
+//			}
+//		}
+//		for (auto const &perfectMapItem : network.getAll(
+//				ReactantType::PerfectSuper)) {
+//			// Get the cluster
+//			auto const &cluster =
+//					static_cast<AlloySuperCluster&>(*(perfectMapItem.second));
+//			perfectDensity += cluster.getTotalConcentration();
+//			perfectDiameter += cluster.getTotalConcentration()
+//					* cluster.getReactionRadius() * 2.0;
+//			if (cluster.getSize() >= minSizes[2]) {
+//				perfectPartialDensity += cluster.getTotalConcentration();
+//				perfectPartialDiameter += cluster.getTotalConcentration()
+//						* cluster.getReactionRadius() * 2.0;
+//			}
+//		}
+//
+//		// Loop on Frank
+//		for (auto const &frankMapItem : network.getAll(ReactantType::Frank)) {
+//			// Get the cluster
+//			auto const &cluster = *(frankMapItem.second);
+//			frankDensity += gridPointSolution[cluster.getId() - 1];
+//			frankDiameter += gridPointSolution[cluster.getId() - 1]
+//					* cluster.getReactionRadius() * 2.0;
+//			if (cluster.getSize() >= minSizes[3]) {
+//				frankPartialDensity += gridPointSolution[cluster.getId() - 1];
+//				frankPartialDiameter += gridPointSolution[cluster.getId() - 1]
+//						* cluster.getReactionRadius() * 2.0;
+//			}
+//		}
+//		for (auto const &frankMapItem : network.getAll(ReactantType::FrankSuper)) {
+//			// Get the cluster
+//			auto const &cluster =
+//					static_cast<AlloySuperCluster&>(*(frankMapItem.second));
+//			frankDensity += cluster.getTotalConcentration();
+//			frankDiameter += cluster.getTotalConcentration()
+//					* cluster.getReactionRadius() * 2.0;
+//			if (cluster.getSize() >= minSizes[3]) {
+//				frankPartialDensity += cluster.getTotalConcentration();
+//				frankPartialDiameter += cluster.getTotalConcentration()
+//						* cluster.getReactionRadius() * 2.0;
+//			}
+//		}
+//	}
+//
+//	// Sum all the concentrations through MPI reduce
+//	double iTotalDensity = 0.0, vTotalDensity = 0.0, voidTotalDensity = 0.0,
+//			frankTotalDensity = 0.0, faultedTotalDensity = 0.0,
+//			perfectTotalDensity = 0.0, voidPartialTotalDensity = 0.0,
+//			frankPartialTotalDensity = 0.0, faultedPartialTotalDensity = 0.0,
+//			perfectPartialTotalDensity = 0.0, iTotalDiameter = 0.0,
+//			vTotalDiameter = 0.0, voidTotalDiameter = 0.0, frankTotalDiameter =
+//					0.0, faultedTotalDiameter = 0.0, perfectTotalDiameter = 0.0,
+//			voidPartialTotalDiameter = 0.0, frankPartialTotalDiameter = 0.0,
+//			faultedPartialTotalDiameter = 0.0,
+//			perfectPartialTotalDiameter = 0.0;
+//	MPI_Reduce(&iDensity, &iTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&vDensity, &vTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&voidDensity, &voidTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&perfectDensity, &perfectTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&frankDensity, &frankTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&faultedDensity, &faultedTotalDensity, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&voidPartialDensity, &voidPartialTotalDensity, 1, MPI_DOUBLE,
+//	MPI_SUM, 0, PETSC_COMM_WORLD);
+//	MPI_Reduce(&perfectPartialDensity, &perfectPartialTotalDensity, 1,
+//	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+//	MPI_Reduce(&frankPartialDensity, &frankPartialTotalDensity, 1, MPI_DOUBLE,
+//	MPI_SUM, 0, PETSC_COMM_WORLD);
+//	MPI_Reduce(&faultedPartialDensity, &faultedPartialTotalDensity, 1,
+//	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+//	MPI_Reduce(&iDiameter, &iTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&vDiameter, &vTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&voidDiameter, &voidTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&perfectDiameter, &perfectTotalDiameter, 1, MPI_DOUBLE, MPI_SUM,
+//			0, PETSC_COMM_WORLD);
+//	MPI_Reduce(&frankDiameter, &frankTotalDiameter, 1, MPI_DOUBLE, MPI_SUM, 0,
+//			PETSC_COMM_WORLD);
+//	MPI_Reduce(&faultedDiameter, &faultedTotalDiameter, 1, MPI_DOUBLE, MPI_SUM,
+//			0, PETSC_COMM_WORLD);
+//	MPI_Reduce(&voidPartialDiameter, &voidPartialTotalDiameter, 1, MPI_DOUBLE,
+//	MPI_SUM, 0, PETSC_COMM_WORLD);
+//	MPI_Reduce(&perfectPartialDiameter, &perfectPartialTotalDiameter, 1,
+//	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+//	MPI_Reduce(&frankPartialDiameter, &frankPartialTotalDiameter, 1, MPI_DOUBLE,
+//	MPI_SUM, 0, PETSC_COMM_WORLD);
+//	MPI_Reduce(&faultedPartialDiameter, &faultedPartialTotalDiameter, 1,
+//	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+//
+//	// Average the data
+//	if (procId == 0) {
+//		iTotalDensity = iTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
+//		vTotalDensity = vTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
+//		voidTotalDensity = voidTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
+//		perfectTotalDensity = perfectTotalDensity
+//				/ (grid[Mx] - grid[surfacePos + 1]);
+//		faultedTotalDensity = faultedTotalDensity
+//				/ (grid[Mx] - grid[surfacePos + 1]);
+//		frankTotalDensity = frankTotalDensity
+//				/ (grid[Mx] - grid[surfacePos + 1]);
+//		voidPartialTotalDensity = voidPartialTotalDensity
+//				/ (grid[Mx] - grid[surfacePos + 1]);
+//		perfectPartialTotalDensity = perfectPartialTotalDensity
+//				/ (grid[Mx] - grid[surfacePos + 1]);
+//		faultedPartialTotalDensity = faultedPartialTotalDensity
+//				/ (grid[Mx] - grid[surfacePos + 1]);
+//		frankPartialTotalDensity = frankPartialTotalDensity
+//				/ (grid[Mx] - grid[surfacePos + 1]);
+//		iTotalDiameter = iTotalDiameter
+//				/ (iTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+//		vTotalDiameter = vTotalDiameter
+//				/ (vTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+//		voidTotalDiameter = voidTotalDiameter
+//				/ (voidTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+//		perfectTotalDiameter = perfectTotalDiameter
+//				/ (perfectTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+//		faultedTotalDiameter = faultedTotalDiameter
+//				/ (faultedTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+//		frankTotalDiameter = frankTotalDiameter
+//				/ (frankTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+//		voidPartialTotalDiameter = voidPartialTotalDiameter
+//				/ (voidPartialTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+//		perfectPartialTotalDiameter = perfectPartialTotalDiameter
+//				/ (perfectPartialTotalDensity
+//						* (grid[Mx] - grid[surfacePos + 1]));
+//		faultedPartialTotalDiameter = faultedPartialTotalDiameter
+//				/ (faultedPartialTotalDensity
+//						* (grid[Mx] - grid[surfacePos + 1]));
+//		frankPartialTotalDiameter =
+//				frankPartialTotalDiameter
+//						/ (frankPartialTotalDensity
+//								* (grid[Mx] - grid[surfacePos + 1]));
+//
+//		// Set the output precision
+//		const int outputPrecision = 5;
+//
+//		// Open the output file
+//		std::fstream outputFile;
+//		outputFile.open("Alloy.dat", std::fstream::out | std::fstream::app);
+//		outputFile << std::setprecision(outputPrecision);
+//
+//		// Output the data
+//		outputFile << timestep << " " << time << " " << iTotalDensity << " "
+//				<< iTotalDiameter << " " << vTotalDensity << " "
+//				<< vTotalDiameter << " " << voidTotalDensity << " "
+//				<< voidTotalDiameter << " " << faultedTotalDensity << " "
+//				<< faultedTotalDiameter << " " << perfectTotalDensity << " "
+//				<< perfectTotalDiameter << " " << frankTotalDensity << " "
+//				<< frankTotalDiameter << " " << voidPartialTotalDensity << " "
+//				<< voidPartialTotalDiameter << " " << faultedPartialTotalDensity
+//				<< " " << faultedPartialTotalDiameter << " "
+//				<< perfectPartialTotalDensity << " "
+//				<< perfectPartialTotalDiameter << " "
+//				<< frankPartialTotalDensity << " " << frankPartialTotalDiameter
+//				<< std::endl;
+//
+//		// Close the output file
+//		outputFile.close();
+//	}
+//
+//	// Restore the PETSC solution array
+//	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+//	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
 
@@ -1432,7 +1461,7 @@ PetscErrorCode computeAlloy1D(TS ts, PetscInt timestep, PetscReal time,
  * distribution at the middle of the grid.
  */
 PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	xperf::ScopedTimer myTimer(scatterTimer);
 
 	// Initial declarations
@@ -1475,107 +1504,40 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto& network = solverHandler.getNetwork();
-	int networkSize = network.size();
-	auto& superClusters = network.getAll(ReactantType::NESuper);
+	using NetworkType =
+	experimental::NEReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	using Region = typename NetworkType::Region;
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	int networkSize = network.getNumClusters();
 
 	// Get the index of the middle of the grid
 	PetscInt ix = Mx / 2;
 
-	if (procId == 0) {
+	// If the middle is on this process
+	if (ix >= xs && ix < xs + xm) {
 		// Create a Point vector to store the data to give to the data provider
 		// for the visualization
 		auto myPoints = std::make_shared<std::vector<xolotlViz::Point> >();
 
-		// If the middle is on this process
-		if (ix >= xs && ix < xs + xm) {
-			// Get the pointer to the beginning of the solution data for this grid point
-			gridPointSolution = solutionArray[ix];
+		// Get the pointer to the beginning of the solution data for this grid point
+		gridPointSolution = solutionArray[ix];
 
-			// Update the concentration in the network
-			network.updateConcentrationsFromArray(gridPointSolution);
-
-			for (int i = 0; i < networkSize - superClusters.size(); i++) {
-				// Create a Point with the concentration[i] as the value
-				// and add it to myPoints
+		for (int i = 0; i < networkSize; i++) {
+			// Create a Point with the concentration[i] as the value
+			// and add it to myPoints
+			auto cluster = network.getCluster(i);
+			const Region &clReg = cluster.getRegion();
+			for (std::size_t j : makeIntervalRange(clReg[Spec::Xe])) {
 				xolotlViz::Point aPoint;
 				aPoint.value = gridPointSolution[i];
 				aPoint.t = time;
-				aPoint.x = (double) i + 1.0;
+				aPoint.x = (double) j;
 				myPoints->push_back(aPoint);
 			}
-
-			// Loop on the super clusters
-			auto& allReactants = network.getAll();
-			std::for_each(allReactants.begin(), allReactants.end(),
-					[&time,&myPoints](IReactant& currReactant) {
-
-						if (currReactant.getType() == ReactantType::NESuper) {
-							auto& cluster = static_cast<NESuperCluster&>(currReactant);
-							// Get the width and average
-							int width = cluster.getSectionWidth();
-							double nXe = cluster.getAverage();
-							// Loop on the width
-							for (int k = nXe + 1.0 - (double) width / 2.0;
-									k < nXe + (double) width / 2.0; k++) {
-								// Compute the distance
-								double dist = cluster.getDistance(k);
-								// Create a Point with the concentration[i] as the value
-								// and add it to myPoints
-								xolotlViz::Point aPoint;
-								aPoint.value = cluster.getConcentration(dist);
-								aPoint.t = time;
-								aPoint.x = (double) k;
-								myPoints->push_back(aPoint);
-							}
-						}
-					});
-		}
-
-		// else receive the values from another process
-		else {
-			for (int i = 0; i < networkSize - superClusters.size(); i++) {
-				double conc = 0.0;
-				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10,
-						MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-				// Create a Point with conc as the value
-				// and add it to myPoints
-				xolotlViz::Point aPoint;
-				aPoint.value = conc;
-				aPoint.t = time;
-				aPoint.x = (double) i + 1.0;
-				myPoints->push_back(aPoint);
-			}
-
-			// Loop on the super clusters
-			auto& allReactants = network.getAll();
-			std::for_each(allReactants.begin(), allReactants.end(),
-					[&time,&myPoints](IReactant& currReactant) {
-
-						if (currReactant.getType() == ReactantType::NESuper) {
-							auto& cluster = static_cast<NESuperCluster&>(currReactant);
-							// Get the width and average
-							int width = cluster.getSectionWidth();
-							double nXe = cluster.getAverage();
-							// Loop on the width
-							for (int k = nXe + 1.0 - (double) width / 2.0;
-									k < nXe + (double) width / 2.0; k++) {
-								double conc = 0.0;
-								MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11,
-										MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-								// Create a Point with conc as the value
-								// and add it to myPoints
-								xolotlViz::Point aPoint;
-								aPoint.value = conc;
-								aPoint.t = time;
-								aPoint.x = (double) k;
-								myPoints->push_back(aPoint);
-							}
-						}
-					});
 		}
 
 		// Get the data provider and give it the points
@@ -1606,41 +1568,6 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 		scatterPlot1D->write(fileName.str());
 	}
 
-	else {
-		// If the middle is on this process
-		if (ix >= xs && ix < xs + xm) {
-			// Get the pointer to the beginning of the solution data for this grid point
-			gridPointSolution = solutionArray[ix];
-
-			for (int i = 0; i < networkSize - superClusters.size(); i++) {
-				// Send the value of each concentration to the master process
-				MPI_Send(&gridPointSolution[i], 1, MPI_DOUBLE, 0, 10,
-						MPI_COMM_WORLD);
-			}
-
-			// Loop on the super clusters
-			auto& allReactants = network.getAll();
-			std::for_each(allReactants.begin(), allReactants.end(),
-					[](IReactant& currReactant) {
-
-						if (currReactant.getType() == ReactantType::NESuper) {
-							auto& cluster = static_cast<NESuperCluster&>(currReactant);
-							// Get the width and average
-							int width = cluster.getSectionWidth();
-							double nXe = cluster.getAverage();
-							// Loop on the width
-							for (int k = nXe + 1.0 - (double) width / 2.0; k < nXe + (double) width / 2.0; k++) {
-								// Compute the distance
-								double dist = cluster.getDistance(k);
-								double conc = cluster.getConcentration(dist);
-								// Send the value of each concentration to the master process
-								MPI_Send(&conc, 1, MPI_DOUBLE, 0, 11, MPI_COMM_WORLD);
-							}
-						}
-					});
-		}
-	}
-
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
@@ -1654,7 +1581,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will save 1D plots of many concentrations
  */
 PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 
 	xperf::ScopedTimer myTimer(seriesTimer);
 
@@ -1692,10 +1619,10 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 	const int networkSize = network.size();
 
 	// Get the physical grid
@@ -1747,7 +1674,7 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 					// Create a Point with the concentration[i] as the value
 					// and add it to myPoints
 					xolotlViz::Point aPoint;
-					aPoint.value = conc;						// He
+					aPoint.value = conc;
 					aPoint.t = time;
 					aPoint.x = x;
 					myPoints[j].push_back(aPoint);
@@ -1755,16 +1682,13 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 			}
 		}
 
-		// Get all the reactants to have access to their names
-		auto const& reactants = network.getAll();
-
 		for (int i = 0; i < loopSize; i++) {
-			IReactant const& cluster = reactants.at(i);
 			// Get the data provider and give it the points
 			auto thePoints = std::make_shared<std::vector<xolotlViz::Point> >(
 					myPoints[i]);
 			seriesPlot1D->getDataProvider(i)->setPoints(thePoints);
-			seriesPlot1D->getDataProvider(i)->setDataName(cluster.getName());
+			// TODO: get the name or comp of the cluster
+			seriesPlot1D->getDataProvider(i)->setDataName(to_string(i));
 		}
 
 		// Change the title of the plot
@@ -1787,7 +1711,7 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 
 		// Render and save in file
 		std::stringstream fileName;
-		fileName << "log_series_TS" << timestep << ".png";
+		fileName << "log_series_TS" << timestep << ".ppm";
 		seriesPlot1D->write(fileName.str());
 	}
 
@@ -1822,182 +1746,12 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorSurface1D")
-/**
- * This is a monitoring method that will save 2D plots for each depths of
- * the concentration as a function of the cluster composition.
- */
-PetscErrorCode monitorSurface1D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
-
-	xperf::ScopedTimer myTimer(surfaceTimer);
-
-	// Initial declarations
-	PetscErrorCode ierr;
-	const double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm, xi;
-
-	PetscFunctionBeginUser;
-
-	// Don't do anything if it is not on the stride
-	if (timestep % 10 != 0)
-		PetscFunctionReturn(0);
-
-	// Get the da from ts
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-
-	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
-
-	// Get the network
-	auto& network = solverHandler.getNetwork();
-
-	// Get the physical grid
-	auto grid = solverHandler.getXGrid();
-
-	// Get the maximum size of HeV clusters
-	auto const& psiNetwork =
-			dynamic_cast<PSIClusterReactionNetwork const&>(network);
-	auto maxHeVClusterSize = psiNetwork.getMaxClusterSize(
-			ReactantType::PSIMixed);
-	auto maxVClusterSize = psiNetwork.getMaxClusterSize(ReactantType::V);
-
-	// Loop on the grid points
-	for (xi = xs; xi < xs + xm; xi++) {
-
-		if (xi != 20)
-			continue;
-
-		// Create a Point vector to store the data to give to the data provider
-		// for the visualization
-		auto myPoints = std::make_shared<std::vector<xolotlViz::Point> >();
-
-		// Get the pointer to the beginning of the solution data for this grid point
-		gridPointSolution = solutionArray[xi];
-
-		// A pointer for the clusters used below
-		IReactant * cluster;
-
-		// Loop on Y = V number
-		for (int i = 0; i <= maxVClusterSize; i++) {
-			// Loop on X = He number
-			for (int j = 0; j <= maxHeVClusterSize - maxVClusterSize; j++) {
-				double conc = 0.0;
-				// V clusters
-				if (j == 0) {
-					cluster = network.get(Species::V, i);
-					if (cluster) {
-						// Get the ID of the cluster
-						int id = cluster->getId() - 1;
-						conc = gridPointSolution[id];
-					}
-				}
-				// He clusters
-				else if (i == 0) {
-					cluster = network.get(Species::He, j);
-					if (cluster) {
-						// Get the ID of the cluster
-						int id = cluster->getId() - 1;
-						conc = gridPointSolution[id];
-					}
-				}
-				// HeV clusters
-				else {
-					IReactant::Composition testComp;
-					testComp[toCompIdx(Species::He)] = j;
-					testComp[toCompIdx(Species::V)] = i;
-					cluster = network.get(ReactantType::PSIMixed, testComp);
-					if (cluster) {
-						// Get the ID of the cluster
-						int id = cluster->getId() - 1;
-						conc = gridPointSolution[id];
-					}
-
-					else {
-						// Look for superClusters !
-						for (auto const& superMapItem : network.getAll(
-								ReactantType::PSISuper)) {
-							// Get the super cluster
-							auto const& superCluster =
-									static_cast<PSISuperCluster&>(*(superMapItem.second));
-							// Get its boundaries
-							auto const& heBounds = superCluster.getBounds(0);
-							auto const& vBounds = superCluster.getBounds(3);
-							// Is it the right one?
-							if (heBounds.contains(j) and vBounds.contains(i)) {
-								conc = superCluster.getConcentration(
-										superCluster.getDistance(j, 0), 0, 0,
-										superCluster.getDistance(i, 3));
-								break;
-							}
-						}
-					}
-				}
-
-				// Create a Point with the concentration as the value
-				// and add it to myPoints
-				xolotlViz::Point aPoint;
-				aPoint.value = conc;
-				aPoint.t = time;
-				aPoint.x = (double) j;
-				aPoint.y = (double) i;
-				myPoints->push_back(aPoint);
-			}
-		}
-
-		// Get the data provider and give it the points
-		surfacePlot1D->getDataProvider()->setPoints(myPoints);
-		surfacePlot1D->getDataProvider()->setDataName("brian");
-
-		// Change the title of the plot
-		std::stringstream title;
-		title << "Concentration at Depth: "
-				<< (grid[xi] + grid[xi + 1]) / 2.0 - grid[1] << " nm";
-		surfacePlot1D->plotLabelProvider->titleLabel = title.str();
-		// Give the time to the label provider
-		std::stringstream timeLabel;
-		timeLabel << "time: " << std::setprecision(4) << time << "s";
-		surfacePlot1D->plotLabelProvider->timeLabel = timeLabel.str();
-		// Get the current time step
-		PetscReal currentTimeStep;
-		ierr = TSGetTimeStep(ts, &currentTimeStep);
-		CHKERRQ(ierr);
-		// Give the timestep to the label provider
-		std::stringstream timeStepLabel;
-		timeStepLabel << "dt: " << std::setprecision(4) << currentTimeStep
-				<< "s";
-		surfacePlot1D->plotLabelProvider->timeStepLabel = timeStepLabel.str();
-
-		// Render and save in file
-		std::stringstream fileName;
-		fileName << "Brian_TS" << timestep << "_D" << xi << ".png";
-		surfacePlot1D->write(fileName.str());
-	}
-
-	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
-
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "eventFunction1D")
 /**
  * This is a method that checks if the surface should move or bursting happen
  */
 PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
-		PetscScalar *fvalue, void *) {
+		PetscScalar *fvalue, void*) {
 
 	xperf::ScopedTimer myTimer(eventFuncTimer);
 
@@ -2035,14 +1789,14 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the position of the surface
 	int surfacePos = solverHandler.getSurfacePosition();
 	xi = surfacePos + solverHandler.getLeftOffset();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -2085,9 +1839,9 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 			double newFlux = 0.0;
 
 			// Consider each interstitial cluster.
-			for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+			for (auto const &iMapItem : network.getAll(ReactantType::I)) {
 				// Get the cluster
-				auto const& cluster = *(iMapItem.second);
+				auto const &cluster = *(iMapItem.second);
 				// Get its id and concentration
 				int id = cluster.getId() - 1;
 				double conc = gridPointSolution[id];
@@ -2276,19 +2030,19 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the position of the surface
 	int surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 	int dof = network.getDOF();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
 
-	// Take care of bursting
+	// TODO: Take care of bursting
 
 	// Loop on each bursting depth
 	for (int i = 0; i < depthPositions1D.size(); i++) {
@@ -2307,73 +2061,73 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		outputFile << time << " " << distance << std::endl;
 		outputFile.close();
 
-		// Pinhole case
-		// Consider each He to reset their concentration at this grid point
-		for (auto const& heMapItem : network.getAll(ReactantType::He)) {
-			auto const& cluster = *(heMapItem.second);
-
-			int id = cluster.getId() - 1;
-			gridPointSolution[id] = 0.0;
-		}
-		// Consider each D to reset their concentration at this grid point
-		for (auto const& dMapItem : network.getAll(ReactantType::D)) {
-			auto const& cluster = *(dMapItem.second);
-
-			int id = cluster.getId() - 1;
-			gridPointSolution[id] = 0.0;
-		}
-		// Consider each T to reset their concentration at this grid point
-		for (auto const& tMapItem : network.getAll(ReactantType::T)) {
-			auto const& cluster = *(tMapItem.second);
-
-			int id = cluster.getId() - 1;
-			gridPointSolution[id] = 0.0;
-		}
-
-		// Consider each HeV cluster to transfer their concentration to the V cluster of the
-		// same size at this grid point
-		for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
-			auto const& cluster = *(heVMapItem.second);
-
-			// Get the V cluster of the same size
-			auto const & comp = cluster.getComposition();
-			auto vCluster = network.get(Species::V,
-					comp[toCompIdx(Species::V)]);
-			int vId = vCluster->getId() - 1;
-			int id = cluster.getId() - 1;
-			gridPointSolution[vId] += gridPointSolution[id];
-			gridPointSolution[id] = 0.0;
-		}
-
-		// Loop on the super clusters to transfer their concentration to the V cluster of the
-		// same size at this grid point
-		for (auto const& superMapItem : network.getAll(ReactantType::PSISuper)) {
-			auto const& cluster =
-					static_cast<PSISuperCluster&>(*(superMapItem.second));
-
-			// Loop on the V boundaries
-			for (auto const& j : cluster.getBounds(3)) {
-				// Get the total concentration at this v
-				double conc = cluster.getIntegratedVConcentration(j);
-				// Get the corresponding V cluster and its Id
-				auto vCluster = network.get(Species::V, j);
-				int vId = vCluster->getId() - 1;
-				// Add the concentration
-				gridPointSolution[vId] += conc;
-			}
-
-			// Reset the super cluster concentration
-			int id = cluster.getId() - 1;
-			gridPointSolution[id] = 0.0;
-			id = cluster.getMomentId(0) - 1;
-			gridPointSolution[id] = 0.0;
-			id = cluster.getMomentId(1) - 1;
-			gridPointSolution[id] = 0.0;
-			id = cluster.getMomentId(2) - 1;
-			gridPointSolution[id] = 0.0;
-			id = cluster.getMomentId(3) - 1;
-			gridPointSolution[id] = 0.0;
-		}
+//		// Pinhole case
+//		// Consider each He to reset their concentration at this grid point
+//		for (auto const &heMapItem : network.getAll(ReactantType::He)) {
+//			auto const &cluster = *(heMapItem.second);
+//
+//			int id = cluster.getId() - 1;
+//			gridPointSolution[id] = 0.0;
+//		}
+//		// Consider each D to reset their concentration at this grid point
+//		for (auto const &dMapItem : network.getAll(ReactantType::D)) {
+//			auto const &cluster = *(dMapItem.second);
+//
+//			int id = cluster.getId() - 1;
+//			gridPointSolution[id] = 0.0;
+//		}
+//		// Consider each T to reset their concentration at this grid point
+//		for (auto const &tMapItem : network.getAll(ReactantType::T)) {
+//			auto const &cluster = *(tMapItem.second);
+//
+//			int id = cluster.getId() - 1;
+//			gridPointSolution[id] = 0.0;
+//		}
+//
+//		// Consider each HeV cluster to transfer their concentration to the V cluster of the
+//		// same size at this grid point
+//		for (auto const &heVMapItem : network.getAll(ReactantType::PSIMixed)) {
+//			auto const &cluster = *(heVMapItem.second);
+//
+//			// Get the V cluster of the same size
+//			auto const &comp = cluster.getComposition();
+//			auto vCluster = network.get(Species::V,
+//					comp[toCompIdx(Species::V)]);
+//			int vId = vCluster->getId() - 1;
+//			int id = cluster.getId() - 1;
+//			gridPointSolution[vId] += gridPointSolution[id];
+//			gridPointSolution[id] = 0.0;
+//		}
+//
+//		// Loop on the super clusters to transfer their concentration to the V cluster of the
+//		// same size at this grid point
+//		for (auto const &superMapItem : network.getAll(ReactantType::PSISuper)) {
+//			auto const &cluster =
+//					static_cast<PSISuperCluster&>(*(superMapItem.second));
+//
+//			// Loop on the V boundaries
+//			for (auto const &j : cluster.getBounds(3)) {
+//				// Get the total concentration at this v
+//				double conc = cluster.getIntegratedVConcentration(j);
+//				// Get the corresponding V cluster and its Id
+//				auto vCluster = network.get(Species::V, j);
+//				int vId = vCluster->getId() - 1;
+//				// Add the concentration
+//				gridPointSolution[vId] += conc;
+//			}
+//
+//			// Reset the super cluster concentration
+//			int id = cluster.getId() - 1;
+//			gridPointSolution[id] = 0.0;
+//			id = cluster.getMomentId(0) - 1;
+//			gridPointSolution[id] = 0.0;
+//			id = cluster.getMomentId(1) - 1;
+//			gridPointSolution[id] = 0.0;
+//			id = cluster.getMomentId(2) - 1;
+//			gridPointSolution[id] = 0.0;
+//			id = cluster.getMomentId(3) - 1;
+//			gridPointSolution[id] = 0.0;
+//		}
 	}
 
 	// Now takes care of moving surface
@@ -2528,13 +2282,14 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 	// Get the flux handler to reinitialize it
 	auto fluxHandler = solverHandler.getFluxHandler();
-	fluxHandler->initializeFluxHandler(solverHandler.getExpNetwork(), surfacePos, grid);
+	fluxHandler->initializeFluxHandler(solverHandler.getExpNetwork(),
+			surfacePos, grid);
 
 	// Get the modified trap-mutation handler to reinitialize it
 	auto mutationHandler = solverHandler.getMutationHandler();
 	auto advecHandlers = solverHandler.getAdvectionHandlers();
-	mutationHandler->initializeIndex1D(surfacePos, solverHandler.getExpNetwork(), advecHandlers, grid,
-			xm, xs);
+	mutationHandler->initializeIndex1D(surfacePos,
+			solverHandler.getExpNetwork(), advecHandlers, grid, xm, xs);
 
 	// Write the updated surface position
 	if (procId == 0) {
@@ -2573,7 +2328,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	xeRetentionTimer = handlerRegistry->getTimer("monitor1D:xeRet");
 	scatterTimer = handlerRegistry->getTimer("monitor1D:scatter");
 	seriesTimer = handlerRegistry->getTimer("monitor1D:series");
-	surfaceTimer = handlerRegistry->getTimer("monitor1D:surface");
 	eventFuncTimer = handlerRegistry->getTimer("monitor1D:event");
 	postEventFuncTimer = handlerRegistry->getTimer("monitor1D:postEvent");
 
@@ -2614,11 +2368,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	checkPetscError(ierr,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-plot_1d) failed.");
 
-	// Check the option -plot_2d
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d", &flag2DPlot);
-	checkPetscError(ierr,
-			"setupPetsc1DMonitor: PetscOptionsHasName (-plot_2d) failed.");
-
 	// Check the option -helium_desorption
 	ierr = PetscOptionsHasName(NULL, NULL, "-helium_desorption",
 			&flagHeDesorption);
@@ -2658,11 +2407,11 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 			"setupPetsc1DMonitor: PetscOptionsHasName (-temp_profile) failed.");
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto& network = solverHandler.getNetwork();
-	const int networkSize = network.size();
+	auto &network = solverHandler.getExpNetwork();
+	const int networkSize = network.getNumClusters();
 
 	// Determine if we have an existing restart file,
 	// and if so, it it has had timesteps written to it.
@@ -2755,33 +2504,33 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
 
 			// Get the solver handler
-			auto& solverHandler = PetscSolver::getSolverHandler();
+			auto &solverHandler = PetscSolver::getSolverHandler();
 
 			// Get the physical grid
 			auto grid = solverHandler.getXGrid();
 
-			// Get the compostion list and save it
-			auto compList = network.getCompositionList();
-
-			// Create and initialize a checkpoint file.
-			// We do this in its own scope so that the file
-			// is closed when the file object goes out of scope.
-			// We want it to close before we (potentially) copy
-			// the network from another file using a single-process
-			// MPI communicator.
-			{
-				xolotlCore::XFile checkpointFile(hdf5OutputName1D, grid,
-						compList, PETSC_COMM_WORLD);
-			}
-
-			// Copy the network group from the given file (if it has one).
-			// We open the files using a single-process MPI communicator
-			// because it is faster for a single process to do the
-			// copy with HDF5's H5Ocopy implementation than it is
-			// when all processes call the copy function.
-			// The checkpoint file must be closed before doing this.
-			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
-					hdf5OutputName1D, network);
+//			// Get the compostion list and save it
+//			auto compList = network.getCompositionList();
+//
+//			// Create and initialize a checkpoint file.
+//			// We do this in its own scope so that the file
+//			// is closed when the file object goes out of scope.
+//			// We want it to close before we (potentially) copy
+//			// the network from another file using a single-process
+//			// MPI communicator.
+//			{
+//				xolotlCore::XFile checkpointFile(hdf5OutputName1D, grid,
+//						compList, PETSC_COMM_WORLD);
+//			}
+//
+//			// Copy the network group from the given file (if it has one).
+//			// We open the files using a single-process MPI communicator
+//			// because it is faster for a single process to do the
+//			// copy with HDF5's H5Ocopy implementation than it is
+//			// when all processes call the copy function.
+//			// The checkpoint file must be closed before doing this.
+//			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+//					hdf5OutputName1D, network);
 		}
 
 		// startStop1D will be called at each timestep
@@ -2924,36 +2673,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 				"setupPetsc1DMonitor: TSMonitorSet (monitorSeries1D) failed.");
 	}
 
-// Set the monitor to save surface plots of clusters concentration
-// for each depth
-	if (flag2DPlot) {
-		// Create a SurfacePlot
-		surfacePlot1D = vizHandlerRegistry->getPlot("surfacePlot1D",
-				xolotlViz::PlotType::SURFACE);
-
-		// Create and set the label provider
-		auto labelProvider = std::make_shared<xolotlViz::LabelProvider>(
-				"labelProvider");
-		labelProvider->axis1Label = "He number";
-		labelProvider->axis2Label = "V number";
-		labelProvider->axis3Label = "Concentration";
-
-		// Give it to the plot
-		surfacePlot1D->setLabelProvider(labelProvider);
-
-		// Create the data provider
-		auto dataProvider = std::make_shared<xolotlViz::CvsXYDataProvider>(
-				"dataProvider");
-
-		// Give it to the plot
-		surfacePlot1D->setDataProvider(dataProvider);
-
-		// monitorSurface1D will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorSurface1D, NULL, NULL);
-		checkPetscError(ierr,
-				"setupPetsc1DMonitor: TSMonitorSet (monitorSurface1D) failed.");
-	}
-
 // Set the monitor to save performance plots (has to be in parallel)
 	if (flagPerf) {
 		// Only the master process will create the plot
@@ -2983,35 +2702,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 		ierr = TSMonitorSet(ts, monitorPerf, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc1DMonitor: TSMonitorSet (monitorPerf) failed.");
-	}
-
-// Initialize indices1D and weights1D if we want to compute the
-// retention or the cumulative value and others
-	if (flagHeRetention) {
-		// Loop on the helium clusters
-		for (auto const& heMapItem : network.getAll(ReactantType::He)) {
-			auto const& cluster = *(heMapItem.second);
-
-			int id = cluster.getId() - 1;
-			// Add the Id to the vector
-			indices1D.push_back(id);
-			// Add the number of heliums of this cluster to the weight
-			weights1D.push_back(cluster.getSize());
-			radii1D.push_back(cluster.getReactionRadius());
-		}
-
-		// Loop on the helium-vacancy clusters
-		for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
-			auto const& cluster = *(heVMapItem.second);
-
-			int id = cluster.getId() - 1;
-			// Add the Id to the vector
-			indices1D.push_back(id);
-			// Add the number of heliums of this cluster to the weight
-			auto& comp = cluster.getComposition();
-			weights1D.push_back(comp[toCompIdx(Species::He)]);
-			radii1D.push_back(cluster.getReactionRadius());
-		}
 	}
 
 	// Set the monitor to compute the helium desorption
@@ -3090,18 +2780,6 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 // Set the monitor to compute the xenon fluence and the retention
 // for the retention calculation
 	if (flagXeRetention) {
-		// Loop on the xenon clusters
-		for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-			auto const& cluster = *(xeMapItem.second);
-
-			int id = cluster.getId() - 1;
-			// Add the Id to the vector
-			indices1D.push_back(id);
-			// Add the number of xenon of this cluster to the weight
-			weights1D.push_back(cluster.getSize());
-			radii1D.push_back(cluster.getReactionRadius());
-		}
-
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 

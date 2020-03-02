@@ -100,6 +100,9 @@ public:
     }
 
     virtual void
+    setGridSize(std::size_t gridSize) = 0;
+
+    virtual void
     setTemperatures(const std::vector<double>& gridTemperatures) = 0;
 
     virtual void

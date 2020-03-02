@@ -107,8 +107,9 @@ public:
 	 * @param iy The position on the y grid
 	 * @param sz The space parameter, depending on the grid step size in the z direction
 	 * @param iz The position on the z grid
+	 * @return True if the partials were updated
 	 */
-	virtual void computePartialsForTemperature(double *val, int *indices,
+	virtual bool computePartialsForTemperature(double *val, int *indices,
 			double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
 			double sz = 0.0, int iz = 0) = 0;
 

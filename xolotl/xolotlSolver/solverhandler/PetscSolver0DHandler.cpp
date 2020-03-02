@@ -92,7 +92,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Get the single vacancy ID
 	auto singleVacancyCluster = expNetwork.getSingleVacancy();
-	int vacancyIndex = -1;
+	auto vacancyIndex = plsm::invalid<std::size_t>;
 	if (singleVacancyCluster.getId() != plsm::invalid<std::size_t>)
 		vacancyIndex = singleVacancyCluster.getId();
 
@@ -107,6 +107,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	// Temperature
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 	concOffset[dof] = temperatureHandler->getTemperature(gridPosition, 0.0);
+	temperature[0] = concOffset[dof];
 
 	// Get the last time step written in the HDF5 file
 	bool hasConcentrations = false;
@@ -120,7 +121,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Initialize the vacancy concentration
-	if (vacancyIndex >= 0 and not hasConcentrations) {
+	if (vacancyIndex != plsm::invalid<std::size_t> and not hasConcentrations) {
 		concOffset[vacancyIndex] = initialVConc;
 	}
 
@@ -139,13 +140,15 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 		for (auto const &currConcData : myConcs[0]) {
 			concOffset[currConcData.first] = currConcData.second;
 		}
-		// Set the temperature in the network
+		// Get the temperature
 		double temp = myConcs[0][myConcs[0].size() - 1].second;
 		temperature[0] = temp;
-		expNetwork.setTemperatures(temperature);
-		expNetwork.syncClusterDataOnHost();
-		lastTemperature[0] = temp;
 	}
+
+	// Update the network with the temperature
+	expNetwork.setTemperatures(temperature);
+	expNetwork.syncClusterDataOnHost();
+	lastTemperature[0] = temperature[0];
 
 	/*
 	 Restore vectors

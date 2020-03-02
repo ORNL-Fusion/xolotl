@@ -464,6 +464,10 @@ public:
         //NOTE: We're using row_map for counts because
         //      Reaction::contributeConnectivity expects the connectivity CRS
         tmpConn.row_map = RowMap("tmp counts", this->_numDOFs);
+        // Even if there is no reaction each dof should connect with itself (for PETSc)
+        Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const std::size_t i) {
+            Kokkos::atomic_increment(&tmpConn.row_map(i));
+        });
         Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (std::size_t i) {
             reactions(i).contributeConnectivity(tmpConn);
         });
@@ -480,6 +484,16 @@ public:
             nEntries);
         Kokkos::parallel_for(nEntries, KOKKOS_LAMBDA (std::size_t i) {
             tmpConn.entries(i) = Network::invalid;
+        });
+        // Even if there is no reaction each dof should connect with itself (for PETSc)
+        Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const std::size_t i) {
+            auto id = tmpConn.row_map(i);
+            for (; !Kokkos::atomic_compare_exchange_strong(
+                        &tmpConn.entries(id), plsm::invalid<std::size_t>, i); ++id) {
+            	if (tmpConn.entries(id) == i) {
+            		break;
+            	}
+            }
         });
         //Fill entries (column ids)
         Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (std::size_t i) {

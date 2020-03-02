@@ -111,6 +111,23 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::setGridSize(size_t gridSize)
+{
+    _gridSize = gridSize;
+    _clusterData.setGridSize(_gridSize);
+    _clusterDataMirror.setGridSize(_gridSize);
+    _reactionData.setGridSize(_gridSize);
+
+    auto reactions = _reactions;
+    auto reactionData = _reactionData;
+    auto clusterData = _clusterData;
+    Kokkos::parallel_for(reactions.extent(0), KOKKOS_LAMBDA (std::size_t i) {
+        reactions(i).updateData(reactionData, clusterData, i);
+    });
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 {
     Kokkos::View<const double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
@@ -317,7 +334,7 @@ ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
     auto data = _nw._clusterData;
     Kokkos::parallel_for(Range2D({0, 0}, {data.numClusters, data.gridSize}),
             KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
-        data.diffusionCoefficient(i,j) = data.diffusionFactor(i) * std::exp(
+    	data.diffusionCoefficient(i,j) = data.diffusionFactor(i) * std::exp(
             -data.migrationEnergy(i) / (kBoltzmann * data.temperature(j)));
     });
 }

@@ -69,6 +69,16 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
+Reaction<TNetwork, TDerived>::updateData(detail::ReactionDataRef reactionData, 
+    ClusterDataRef clusterData, std::size_t reactionId)
+{
+    _clusterData = clusterData;
+    _rate = reactionData.getRates(reactionId);
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
 Reaction<TNetwork, TDerived>::updateRates()
 {
     if (_type == Type::production) {
@@ -621,7 +631,7 @@ Reaction<TNetwork, TDerived>::computeProductionRate(std::size_t gridIndex)
     constexpr double pi = ::xolotlCore::pi;
 
     double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
-
+    
     return kPlus;
 }
 

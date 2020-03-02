@@ -54,6 +54,11 @@ struct ReactionData
     {
     }
 
+    void
+    setGridSize(std::size_t gridSize) {
+        rates = Kokkos::View<double**>("Reaction Rates", numReactions, gridSize);
+    }
+
     std::size_t coeffExtent {};
     std::size_t numReactions {};
     Kokkos::View<double*****> productionCoeffs;

@@ -38,6 +38,11 @@ protected:
 	SparseFillMap dfill;
 
 	/**
+	 * The current temperature on the grid.
+	 */
+	std::vector<double> temperature;
+
+	/**
 	 * The last temperature on the grid. It is a vector to keep the temperature at each
 	 * grid point but we know the temperature changes with depth only.
 	 */

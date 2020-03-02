@@ -93,6 +93,11 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     void
+    updateData(detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
+        std::size_t reactionId);
+
+    KOKKOS_INLINE_FUNCTION
+    void
     updateRates();
 
     KOKKOS_INLINE_FUNCTION
