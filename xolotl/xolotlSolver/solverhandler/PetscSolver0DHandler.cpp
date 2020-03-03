@@ -148,7 +148,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 		// Apply the concentrations we just read.
 		concOffset = concentrations[0];
 
-		for (auto const& currConcData : myConcs[0]) {
+		for (auto const &currConcData : myConcs[0]) {
 			concOffset[currConcData.first] = currConcData.second;
 		}
 		// Set the temperature in the network
@@ -238,7 +238,10 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			updatedConcOffset, 0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
+	fluxCounter->increment();
+	fluxTimer->start();
 	network.computeAllFluxes(updatedConcOffset);
+	fluxTimer->stop();
 
 	/*
 	 Restore vectors
@@ -310,8 +313,11 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	// ----- Take care of the reactions for all the reactants -----
 
 	// Compute all the partial derivatives for the reactions
+	partialDerivativeCounter->increment();
+	partialDerivativeTimer->start();
 	network.computeAllPartials(reactionStartingIdx, reactionIndices,
 			reactionVals);
+	partialDerivativeTimer->stop();
 
 	// Update the column in the Jacobian that represents each DOF
 	for (int i = 0; i < dof - 1; i++) {

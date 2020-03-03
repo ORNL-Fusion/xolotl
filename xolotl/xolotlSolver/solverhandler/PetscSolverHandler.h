@@ -14,7 +14,7 @@ namespace xolotlSolver {
  * @param errorCode The PETSc error code.
  * @param errMsg The error message in the thrown exception.
  */
-inline void checkPetscError(PetscErrorCode errorCode, const char* errorMsg) {
+inline void checkPetscError(PetscErrorCode errorCode, const char *errorMsg) {
 	if (PetscUnlikely(errorCode))
 		throw std::string(errorMsg);
 }
@@ -30,6 +30,11 @@ inline void checkPetscError(PetscErrorCode errorCode, const char* errorMsg) {
  */
 class PetscSolverHandler: public SolverHandler {
 protected:
+
+	std::shared_ptr<xolotlPerf::ITimer> fluxTimer;
+	std::shared_ptr<xolotlPerf::ITimer> partialDerivativeTimer;
+	std::shared_ptr<xolotlPerf::IEventCounter> fluxCounter;
+	std::shared_ptr<xolotlPerf::IEventCounter> partialDerivativeCounter;
 
 	/**
 	 * The last temperature on the grid. It is a vector to keep the temperature at each
@@ -84,7 +89,7 @@ protected:
 	 *      PETSc's DMDASetBlockFillsSparse() expects.
 	 */
 	static std::vector<PetscInt> ConvertToPetscSparseFillMap(size_t dof,
-			const xolotlCore::IReactionNetwork::SparseFillMap& fillMap);
+			const xolotlCore::IReactionNetwork::SparseFillMap &fillMap);
 
 public:
 
@@ -98,8 +103,14 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolverHandler(xolotlCore::IReactionNetwork& _network) :
-			SolverHandler(_network) {
+	PetscSolverHandler(xolotlCore::IReactionNetwork &_network) :
+			SolverHandler(_network), fluxTimer(
+					xolotlPerf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
+					xolotlPerf::getHandlerRegistry()->getTimer(
+							"Partial Derivatives")), fluxCounter(
+					xolotlPerf::getHandlerRegistry()->getEventCounter("Flux")), partialDerivativeCounter(
+					xolotlPerf::getHandlerRegistry()->getEventCounter(
+							"Partial Derivatives")) {
 	}
 
 };
