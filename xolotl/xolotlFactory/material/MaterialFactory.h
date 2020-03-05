@@ -12,6 +12,9 @@
 #include <XGBAdvectionHandler.h>
 #include <YGBAdvectionHandler.h>
 #include <ZGBAdvectionHandler.h>
+#include <Diffusion1DHandler.h>
+#include <Diffusion2DHandler.h>
+#include <Diffusion3DHandler.h>
 
 namespace xolotlFactory {
 
@@ -45,7 +48,33 @@ public:
 	/**
 	 * The constructor creates the handlers.
 	 */
-	MaterialFactory() {
+	MaterialFactory(const xolotlCore::Options &options) {
+		// Get the dimension and migration energy threshold
+		int dim = options.getDimensionNumber();
+		double threshold = options.getMigrationThreshold();
+		// Switch on the dimension for the diffusion handler
+		switch (dim) {
+		case 0:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::DummyDiffusionHandler>(threshold);
+			break;
+		case 1:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion1DHandler>(threshold);
+			break;
+		case 2:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion2DHandler>(threshold);
+			break;
+		case 3:
+			theDiffusionHandler = std::make_shared<
+					xolotlCore::Diffusion3DHandler>(threshold);
+			break;
+		default:
+			// The asked dimension is not good (e.g. -1, 4)
+			throw std::string(
+					"\nxolotlFactory: Bad dimension for the material factory.");
+		}
 	}
 
 	/**
@@ -78,7 +107,8 @@ public:
 		// Set dummy handlers when needed
 		if (!map["diff"])
 			theDiffusionHandler = std::make_shared<
-					xolotlCore::DummyDiffusionHandler>();
+					xolotlCore::DummyDiffusionHandler>(
+					options.getMigrationThreshold());
 		if (!map["advec"]) {
 			// Clear the advection handler
 			theAdvectionHandler.clear();

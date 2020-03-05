@@ -117,7 +117,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 			<< std::endl << "impurityRadius=0.5" << std::endl
 			<< "biasFactor=2.0" << std::endl << "hydrogenFactor=0.5"
 			<< std::endl << "xenonDiffusivity=3.0" << std::endl
-			<< "fissionYield=0.3" << std::endl;
+			<< "fissionYield=0.3" << std::endl << "migrationThreshold=1.0"
+			<< std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -224,6 +225,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 
 	// Check the fission yield option
 	BOOST_REQUIRE_EQUAL(opts.getFissionYield(), 0.3);
+
+	// Check the migration threshold option
+	BOOST_REQUIRE_EQUAL(opts.getMigrationThreshold(), 1.0);
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();

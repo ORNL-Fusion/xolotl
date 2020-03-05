@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	network->addGridPoints(1);
 
 	// Create the diffusion handler
-	DummyDiffusionHandler diffusionHandler;
+	DummyDiffusionHandler diffusionHandler(opts.getMigrationThreshold());
 
 	// Create ofill
 	xolotlCore::IReactionNetwork::SparseFillMap ofill;

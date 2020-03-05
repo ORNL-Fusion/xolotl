@@ -39,8 +39,7 @@ std::shared_ptr<xolotlFactory::IMaterialFactory> initMaterial(
 		const Options &options) {
 	// Create the material factory
 	auto materialFactory =
-			xolotlFactory::IMaterialFactory::createMaterialFactory(
-					options.getMaterial(), options.getDimensionNumber());
+			xolotlFactory::IMaterialFactory::createMaterialFactory(options);
 
 	// Initialize it with the options
 	materialFactory->initializeMaterial(options);
@@ -75,7 +74,7 @@ std::unique_ptr<xolotlSolver::PetscSolver> setUpSolver(
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry,
 		std::shared_ptr<xolotlFactory::IMaterialFactory> material,
 		std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-		xolotlSolver::ISolverHandler& solvHandler, const Options &options) {
+		xolotlSolver::ISolverHandler &solvHandler, const Options &options) {
 	// Initialize the solver handler
 	solvHandler.initializeHandlers(material, tempHandler, options);
 
@@ -92,7 +91,7 @@ std::unique_ptr<xolotlSolver::PetscSolver> setUpSolver(
 	return solver;
 }
 
-void launchPetscSolver(xolotlSolver::PetscSolver& solver,
+void launchPetscSolver(xolotlSolver::PetscSolver &solver,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry) {
 
 	xperf::IHardwareCounter::SpecType hwctrSpec;
@@ -111,7 +110,7 @@ void launchPetscSolver(xolotlSolver::PetscSolver& solver,
 }
 
 //! Run the Xolotl simulation.
-int runXolotl(const Options& opts) {
+int runXolotl(const Options &opts) {
 
 	// Set up our performance data infrastructure.
 	xperf::initialize(opts.getPerfHandlerType());
@@ -162,14 +161,14 @@ int runXolotl(const Options& opts) {
 		std::time_t currentTime = std::time(NULL);
 		std::cout << std::asctime(std::localtime(&currentTime));
 	}
-	auto& network = networkFactory->getNetworkHandler();
+	auto &network = networkFactory->getNetworkHandler();
 
 	// Initialize and get the solver handler
 	bool dimOK = xolotlFactory::initializeDimension(opts, network);
 	if (!dimOK) {
 		throw std::runtime_error("Unable to initialize dimension from inputs.");
 	}
-	auto& solvHandler = xolotlFactory::getSolverHandler();
+	auto &solvHandler = xolotlFactory::getSolverHandler();
 
 	// Setup the solver
 	auto solver = setUpSolver(handlerRegistry, material, tempHandler,
@@ -229,11 +228,11 @@ int main(int argc, char **argv) {
 		} else {
 			ret = opts.getExitCode();
 		}
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
 		ret = EXIT_FAILURE;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 		ret = EXIT_FAILURE;

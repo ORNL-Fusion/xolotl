@@ -28,7 +28,8 @@ Options::Options() :
 				0), density(10.162795276841), pulseTime(0.0), pulseProportion(
 				0.0), latticeParameter(-1.0), impurityRadius(-1.0), biasFactor(
 				1.15), hydrogenFactor(0.25), xenonDiffusivity(-1.0), fissionYield(
-				0.25) {
+				0.25), migrationThreshold(
+				std::numeric_limits<double>::infinity()) {
 	radiusMinSizes.Init(0);
 
 	return;
@@ -175,7 +176,9 @@ void Options::readParams(int argc, char *argv[]) {
 			"xenonDiffusivity", bpo::value<double>(&xenonDiffusivity),
 			"This option allows the user to set the diffusion coefficient for xenon in nm2 s-1.")(
 			"fissionYield", bpo::value<double>(&fissionYield),
-			"This option allows the user to set the number of xenon created for each fission.");
+			"This option allows the user to set the number of xenon created for each fission.")(
+			"migrationThreshold", bpo::value<double>(&migrationThreshold),
+			"This option allows the user to set a limit on the migration energy above which the diffusion will be ignored.");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);
