@@ -292,6 +292,10 @@ public:
     double
     getLargestRate() override;
 
+    double
+    getLeftSideRate(ConcentrationsView concentrations,
+        std::size_t clusterId, std::size_t gridIndex) override;
+
     std::size_t
     getDiagonalFill(SparseFillMap& fillMap) override;
 

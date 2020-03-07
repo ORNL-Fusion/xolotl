@@ -185,20 +185,25 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 		vacancyIndex = singleVacancyCluster.getId();
 
 	// Loop on all the grid points
-	for (PetscInt i = xs; i < xs + xm; i++) {
+	for (PetscInt i = xs - 1; i <= xs + xm; i++) {
+		// Temperature
+		xolotlCore::Point<3> gridPosition { ((grid[i] + grid[i + 1]) / 2.0
+				- grid[surfacePosition + 1])
+				/ (grid[grid.size() - 1] - grid[surfacePosition + 1]), 0.0, 0.0 };
+		auto temp = temperatureHandler->getTemperature(gridPosition, 0.0);
+		temperature[i - xs + 1] = temp;
+
+		// Boundary conditions
+		if (i < surfacePosition || i > nX - 1 || i < xs || i >= xs + xm)
+			continue;
+
 		concOffset = concentrations[i];
+		concOffset[dof] = temp;
 
 		// Loop on all the clusters to initialize at 0.0
 		for (int n = 0; n < dof; n++) {
 			concOffset[n] = 0.0;
 		}
-
-		// Temperature
-		xolotlCore::Point<3> gridPosition { ((grid[i] + grid[i + 1]) / 2.0
-				- grid[surfacePosition + 1])
-				/ (grid[grid.size() - 1] - grid[surfacePosition + 1]), 0.0, 0.0 };
-		concOffset[dof] = temperatureHandler->getTemperature(gridPosition, 0.0);
-		temperature[i - xs + 1] = concOffset[dof];
 
 		// Initialize the vacancy concentration
 		if (i >= surfacePosition + leftOffset
@@ -232,7 +237,6 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 			temperature[i + 1] = temp;
 		}
 	}
-
 
 	// Update the network with the temperature
 	expNetwork.setTemperatures(temperature);
@@ -488,11 +492,11 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 		using HostUnmanaged =
 		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-		auto hConcs = HostUnmanaged(concOffset, dof);
-		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+		auto hConcs = HostUnmanaged(concOffset, dof + 1);
+		auto dConcs = Kokkos::View<double*>("Concentrations", dof + 1);
 		deep_copy(dConcs, hConcs);
-		auto hFlux = HostUnmanaged(updatedConcOffset, dof);
-		auto dFlux = Kokkos::View<double*>("Fluxes", dof);
+		auto hFlux = HostUnmanaged(updatedConcOffset, dof + 1);
+		auto dFlux = Kokkos::View<double*>("Fluxes", dof + 1);
 		deep_copy(dFlux, hFlux);
 		fluxCounter->increment();
 		fluxTimer->start();
@@ -628,6 +632,9 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		}
 		if (skip)
 			continue;
+
+		// Get the concentrations at this grid point
+		concOffset = concs[xi];
 
 		// Set the grid fraction
 		gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
@@ -873,9 +880,6 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	// Loop over grid points first for the temperature, including the ghost points
 	bool tempHasChanged = false;
 	for (PetscInt xi = xs - 1; xi <= xs + xm; xi++) {
-		// Compute the old and new array offsets
-		concOffset = concs[xi];
-
 		// Boundary conditions
 		// Everything to the left of the surface is empty
 		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
@@ -891,6 +895,9 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		}
 		if (skip)
 			continue;
+
+		// Get the concentrations at this grid point
+		concOffset = concs[xi];
 
 		// Set the grid fraction
 		gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
@@ -938,11 +945,14 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		if (skip)
 			continue;
 
+		// Get the concentrations at this grid point
+		concOffset = concs[xi];
+
 		// Compute all the partial derivatives for the reactions
 		using HostUnmanaged =
 		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-		auto hConcs = HostUnmanaged(concOffset, dof);
-		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+		auto hConcs = HostUnmanaged(concOffset, dof + 1);
+		auto dConcs = Kokkos::View<double*>("Concentrations", dof + 1);
 		deep_copy(dConcs, hConcs);
 		partialDerivativeCounter->increment();
 		partialDerivativeTimer->start();
@@ -998,7 +1008,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 		// Compute the partial derivative from modified trap-mutation at this grid point
 		int nMutating = mutationHandler->computePartialsForTrapMutation(
-				expNetwork, mutationVals, mutationIndices, xi - xs);
+				expNetwork, concOffset, mutationVals, mutationIndices, xi - xs);
 
 		// Loop on the number of helium undergoing trap-mutation to set the values
 		// in the Jacobian

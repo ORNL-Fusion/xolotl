@@ -21,8 +21,8 @@ private:
 	 */
 	void initializeDepthSize(double temp) {
 		// Initialize the vectors
-		depthVec = {-0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1};
-		sizeVec = {0, 0, 0, 0, 0, 0, 0};
+		depthVec = { -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1 };
+		sizeVec = { 0, 0, 0, 0, 0, 0, 0 };
 
 		// And don't do anything else
 		return;
@@ -33,12 +33,14 @@ public:
 	/**
 	 * The constructor
 	 */
-	DummyTrapMutationHandler() {}
+	DummyTrapMutationHandler() {
+	}
 
 	/**
 	 * The Destructor
 	 */
-	~DummyTrapMutationHandler() {}
+	~DummyTrapMutationHandler() {
+	}
 
 	/**
 	 * The initialize method has to add connectivity between the He clusters and
@@ -48,8 +50,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void initialize(experimental::IReactionNetwork& network,
-			xolotlCore::experimental::IReactionNetwork::SparseFillMap& dfill,
+	void initialize(experimental::IReactionNetwork &network,
+			xolotlCore::experimental::IReactionNetwork::SparseFillMap &dfill,
 			int nx, int ny = 0, int nz = 0) {
 		// Doesn't do anything
 		return;
@@ -63,8 +65,8 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	void initializeIndex1D(int surfacePos,
-			experimental::IReactionNetwork& network,
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			experimental::IReactionNetwork &network,
+			std::vector<IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs) {
 		// Doesn't do anything
 		return;
@@ -78,8 +80,8 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	void initializeIndex2D(std::vector<int> surfacePos,
-			experimental::IReactionNetwork& network,
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			experimental::IReactionNetwork &network,
+			std::vector<IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy,
 			int ys) {
 		// Doesn't do anything
@@ -94,8 +96,8 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-			experimental::IReactionNetwork& network,
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			experimental::IReactionNetwork &network,
+			std::vector<IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 			int nz, double hz, int zs) {
 		// Doesn't do anything
@@ -109,7 +111,7 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	void computeTrapMutation(experimental::IReactionNetwork& network,
+	void computeTrapMutation(experimental::IReactionNetwork &network,
 			double *concOffset, double *updatedConcOffset, int xi, int yj = 0,
 			int zk = 0) {
 		// Doesn't do anything
@@ -124,8 +126,9 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	int computePartialsForTrapMutation(experimental::IReactionNetwork& network,
-			double *val, int *indices, int xi, int yj = 0, int zk = 0) {
+	int computePartialsForTrapMutation(experimental::IReactionNetwork &network,
+			double *concOffset, double *val, int *indices, int xi, int yj = 0,
+			int zk = 0) {
 		// Doesn't do anything
 		return 0;
 	}

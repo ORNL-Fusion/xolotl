@@ -154,6 +154,24 @@ public:
         ((*this).*(_partialsFn))(concentrations, values, inverseMap, gridIndex);
     }
 
+    KOKKOS_INLINE_FUNCTION
+    double
+    productionLeftSideRate(ConcentrationsView concentrations,
+        std::size_t clusterId, std::size_t gridIndex);
+
+    KOKKOS_INLINE_FUNCTION
+    double
+    dissociationLeftSideRate(ConcentrationsView concentrations,
+        std::size_t clusterId, std::size_t gridIndex);
+
+    KOKKOS_INLINE_FUNCTION
+    double
+    contributeLeftSideRate(ConcentrationsView concentrations,
+        std::size_t clusterId, std::size_t gridIndex)
+    {
+        return ((*this).*(_leftSideFn))(concentrations, clusterId, gridIndex);
+    }
+
 private:
     KOKKOS_INLINE_FUNCTION
     TDerived*
@@ -262,6 +280,10 @@ protected:
         void (Reaction::*)(ConcentrationsView, Kokkos::View<double*>,
             InverseMap, std::size_t);
     PartialsFn _partialsFn {nullptr};
+
+    using LeftSideFn =
+        double (Reaction::*)(ConcentrationsView, std::size_t, std::size_t);
+    LeftSideFn _leftSideFn {nullptr};
 
     //Cluster indices for LHS and RHS of the reaction
     //Dissociation reactions always have 1 input and 2 outputs

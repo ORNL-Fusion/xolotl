@@ -16,10 +16,7 @@ void ZGBAdvectionHandler::initialize(experimental::IReactionNetwork& network,
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Initialize the composition
-	NetworkType::Composition comp;
-	for (auto i : psiNetwork->getSpeciesRange()) {
-		comp[i] = 0;
-	}
+	NetworkType::Composition comp = NetworkType::Composition::zero();
 
 	// Loop on helium clusters from size 1 to 7
 	for (std::size_t i = 1; i <= 7; i++) {

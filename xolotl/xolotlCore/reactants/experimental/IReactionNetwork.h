@@ -131,6 +131,10 @@ public:
     virtual double
     getLargestRate() = 0;
 
+    virtual double
+    getLeftSideRate(ConcentrationsView concentrations,
+        std::size_t clusterId, std::size_t gridIndex) = 0;
+
     /**
      * Get the diagonal fill for the Jacobian, corresponding to the reactions.
      * Also populates the inverse map.

@@ -207,6 +207,9 @@ PSIClusterGenerator<PSIFullSpeciesList>::getMigrationEnergy(
             if (amtI < iMigration.size()) {
                 migrationEnergy = iMigration[amtI];
             }
+            else {
+                migrationEnergy = min((double) amtI, 15.0) * 0.1;
+            }
         }
         else if (comp.isOnAxis(Species::He)) {
             auto amtHe = comp[Species::He];
@@ -262,6 +265,9 @@ PSIClusterGenerator<PSIFullSpeciesList>::getDiffusionFactor(
             auto amtI = comp[Species::I];
             if (amtI < iDiffusion.size()) {
                 diffusionFactor = iDiffusion[amtI];
+            }
+            else {
+                diffusionFactor = iDiffusion[1] / (double) amtI;
             }
         }
         else if (comp.isOnAxis(Species::He)) {

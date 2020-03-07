@@ -30,6 +30,9 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
     _partialsFn(
         _type == Type::production ? &Reaction::productionPartialDerivatives :
             &Reaction::dissociationPartialDerivatives),
+    _leftSideFn(
+        _type == Type::production ? &Reaction::productionLeftSideRate :
+            &Reaction::dissociationLeftSideRate),
     _reactants(
         _type == Type::production ? Kokkos::Array<std::size_t, 2>( {cluster0,
             cluster1}) : Kokkos::Array<std::size_t, 2>( {cluster0, invalid})),
@@ -661,7 +664,7 @@ Reaction<TNetwork, TDerived>::computeDissociationRate(std::size_t gridIndex)
     constexpr double k_B = ::xolotlCore::kBoltzmann;
 
     double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));
-
+    
     return kMinus;
 }
 
@@ -1429,6 +1432,36 @@ Reaction<TNetwork, TDerived>::dissociationPartialDerivatives(
         }
     }
     }
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+double
+Reaction<TNetwork, TDerived>::productionLeftSideRate(
+    ConcentrationsView concentrations, std::size_t clusterId, std::size_t gridIndex)
+{
+    // Check if our cluster is on the left side of this reaction
+    if (clusterId == _reactants[0]) 
+        return _rate(gridIndex) * concentrations[_reactants[1]] * _coefs(0, 0, 0, 0);
+    if (clusterId == _reactants[1]) 
+        return _rate(gridIndex) * concentrations[_reactants[0]] * _coefs(0, 0, 0, 0);
+    
+    // This cluster is not part of the reaction
+    return 0.0;
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+double
+Reaction<TNetwork, TDerived>::dissociationLeftSideRate(
+    ConcentrationsView concentrations, std::size_t clusterId, std::size_t gridIndex)
+{
+    // Check if our cluster is on the left side of this reaction
+    if (clusterId == _reactants[0]) 
+        return _rate(gridIndex) * _coefs(0, 0, 0, 0);
+    
+    // This cluster is not part of the reaction
+    return 0.0;
 }
 }
 }

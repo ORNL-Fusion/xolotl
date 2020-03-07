@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	DummyTrapMutationHandler trapMutationHandler;
 
 	// Create the advection handlers needed to initialize the trap mutation handler
-	std::vector<xolotlCore::IAdvectionHandler *> advectionHandlers;
+	std::vector<xolotlCore::IAdvectionHandler*> advectionHandlers;
 	advectionHandlers.push_back(new DummyAdvectionHandler());
 
 	// Initialize it
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the modified trap-mutation at the grid point 1
 	int nMutating = trapMutationHandler.computePartialsForTrapMutation(network,
-			valPointer, indicesPointer, 1);
+			concOffset, valPointer, indicesPointer, 1);
 
 	// Verify that no cluster is undergoing modified trap-mutation
 	BOOST_REQUIRE_EQUAL(nMutating, 0);

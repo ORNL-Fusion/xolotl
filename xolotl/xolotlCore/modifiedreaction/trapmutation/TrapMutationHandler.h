@@ -28,13 +28,18 @@ protected:
 		int size;
 
 		/**
+		 * Its Id
+		 */
+		std::size_t id;
+
+		/**
 		 * The portion of the reactions that is desorption and NOT trap-mutation
 		 */
 		double portion;
 
 		//! The constructor
 		Desorption(int s, double p) :
-				size(s), portion(p) {
+				size(s), portion(p), id(plsm::invalid<std::size_t>) {
 		}
 	};
 
@@ -110,8 +115,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	virtual void initialize(experimental::IReactionNetwork& network,
-			xolotlCore::experimental::IReactionNetwork::SparseFillMap& dfill,
+	virtual void initialize(experimental::IReactionNetwork &network,
+			xolotlCore::experimental::IReactionNetwork::SparseFillMap &dfill,
 			int nx, int ny = 0, int nz = 0);
 
 	/**
@@ -122,8 +127,8 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	virtual void initializeIndex1D(int surfacePos,
-			experimental::IReactionNetwork& network,
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			experimental::IReactionNetwork &network,
+			std::vector<IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs);
 
 	/**
@@ -134,8 +139,8 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	virtual void initializeIndex2D(std::vector<int> surfacePos,
-			experimental::IReactionNetwork& network,
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			experimental::IReactionNetwork &network,
+			std::vector<IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy,
 			int ys);
 
@@ -147,8 +152,8 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	virtual void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-			experimental::IReactionNetwork& network,
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			experimental::IReactionNetwork &network,
+			std::vector<IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 			int nz, double hz, int zs);
 
@@ -187,7 +192,7 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	virtual void computeTrapMutation(experimental::IReactionNetwork& network,
+	virtual void computeTrapMutation(experimental::IReactionNetwork &network,
 			double *concOffset, double *updatedConcOffset, int xi, int yj = 0,
 			int zk = 0);
 
@@ -204,7 +209,8 @@ public:
 	 *
 	 * \see ITrapMutationHandler.h
 	 */
-	virtual int computePartialsForTrapMutation(experimental::IReactionNetwork& network,
+	virtual int computePartialsForTrapMutation(
+			experimental::IReactionNetwork &network, double *concOffset,
 			double *val, int *indices, int xi, int yj = 0, int zk = 0);
 
 	/**

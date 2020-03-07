@@ -31,7 +31,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 //    		Composition lo1 = cl1Reg.getOrigin();
 //    	    Composition hi1 = cl1Reg.getUpperLimitPoint();
 //    
-//    		std::cout << i << " " << lo1[0] << " " << hi1[0] - 1 << std::endl;
+//    		std::cout << i << " " << lo1[0] << std::endl;
 //    	}
 //    	std::cout << "num: " << _numClusters << std::endl;
 
@@ -216,6 +216,23 @@ ReactionNetwork<TImpl>::getLargestRate()
 
 template <typename TImpl>
 double
+ReactionNetwork<TImpl>::getLeftSideRate(ConcentrationsView concentrations,
+    std::size_t clusterId, std::size_t gridIndex)
+{
+    // Get the extent of the reactions
+    auto reactions = _reactions;
+    auto nReactions = reactions.extent(0);
+    double leftSideRate = 0.0;
+    // Loop on all the rates to get the maximum
+    Kokkos::parallel_reduce(nReactions, KOKKOS_LAMBDA (const std::size_t i, double &lsum) {
+        lsum += reactions(i).contributeLeftSideRate(concentrations, clusterId, gridIndex);
+    }, leftSideRate);
+	
+    return leftSideRate;
+}
+
+template <typename TImpl>
+double
 ReactionNetwork<TImpl>::getTotalConcentration(ConcentrationsView concentrations,
 		Species type, std::size_t minSize)
 {
@@ -334,8 +351,9 @@ ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
     auto data = _nw._clusterData;
     Kokkos::parallel_for(Range2D({0, 0}, {data.numClusters, data.gridSize}),
             KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
-    	data.diffusionCoefficient(i,j) = data.diffusionFactor(i) * std::exp(
-            -data.migrationEnergy(i) / (kBoltzmann * data.temperature(j)));
+        if (!xolotlCore::equal(data.diffusionFactor(i), 0.0))
+            data.diffusionCoefficient(i,j) = data.diffusionFactor(i) * std::exp(
+                -data.migrationEnergy(i) / (kBoltzmann * data.temperature(j)));
     });
 }
 

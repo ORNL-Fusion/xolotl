@@ -4,7 +4,7 @@
 namespace xolotlCore {
 
 void SurfaceAdvectionHandler::initializeAdvectionGrid(
-		std::vector<IAdvectionHandler *> advectionHandlers,
+		std::vector<IAdvectionHandler*> advectionHandlers,
 		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 		int nz, double hz, int zs) {
 
@@ -30,10 +30,10 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 	Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Consider each advection handler.
-	for (auto const& currAdvecHandler : advectionHandlers) {
+	for (auto const &currAdvecHandler : advectionHandlers) {
 
 		// Get the list of advecting clusters
-		auto const& otherAdvecClusters =
+		auto const &otherAdvecClusters =
 				currAdvecHandler->getAdvectingClusters();
 
 		// Loop on the spatial grid
@@ -80,7 +80,7 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 }
 
 void SurfaceAdvectionHandler::computeAdvection(
-		experimental::IReactionNetwork& network, const Point<3>& pos,
+		experimental::IReactionNetwork &network, const Point<3> &pos,
 		double **concVector, double *updatedConcOffset, double hxLeft,
 		double hxRight, int ix, double hy, int iy, double hz, int iz) const {
 
@@ -95,7 +95,7 @@ void SurfaceAdvectionHandler::computeAdvection(
 	// advecting clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int advClusterIdx = 0;
-	for (auto const& currId : advectingClusters) {
+	for (auto const &currId : advectingClusters) {
 
 		auto cluster = network.getClusterCommon(currId);
 
@@ -132,9 +132,9 @@ void SurfaceAdvectionHandler::computeAdvection(
 }
 
 void SurfaceAdvectionHandler::computePartialsForAdvection(
-		experimental::IReactionNetwork& network, double *val,
-		int *indices, const Point<3>& pos, double hxLeft, double hxRight,
-		int ix, double hy, int iy, double hz, int iz) const {
+		experimental::IReactionNetwork &network, double *val, int *indices,
+		const Point<3> &pos, double hxLeft, double hxRight, int ix, double hy,
+		int iy, double hz, int iz) const {
 
 	// Get the number of advecting cluster
 	int nAdvec = advectingClusters.size();
@@ -147,7 +147,7 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 	// advecting clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int advClusterIdx = 0;
-	for (auto const& currId : advectingClusters) {
+	for (auto const &currId : advectingClusters) {
 
 		auto cluster = network.getClusterCommon(currId);
 		// Get the diffusion coefficient of the cluster

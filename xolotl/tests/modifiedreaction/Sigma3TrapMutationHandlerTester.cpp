@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	DummyTrapMutationHandler trapMutationHandler;
 
 	// Create the advection handlers needed to initialize the trap mutation handler
-	std::vector<xolotlCore::IAdvectionHandler *> advectionHandlers;
+	std::vector<xolotlCore::IAdvectionHandler*> advectionHandlers;
 	advectionHandlers.push_back(new DummyAdvectionHandler());
 	auto advecHandler = new YGBAdvectionHandler();
 	advecHandler->setLocation(1.0);
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
 	int nMutating = trapMutationHandler.computePartialsForTrapMutation(network,
-			valPointer, indicesPointer, 8, 3);
+			concOffset, valPointer, indicesPointer, 8, 3);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(nMutating, 4);
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Compute the partial derivatives for the bursting a the grid point 8
 	nMutating = trapMutationHandler.computePartialsForTrapMutation(network,
-			valPointer, indicesPointer, 8, 3);
+			concOffset, valPointer, indicesPointer, 8, 3);
 
 	// Check values
 	BOOST_REQUIRE_EQUAL(nMutating, 4);

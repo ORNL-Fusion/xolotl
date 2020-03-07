@@ -8,10 +8,9 @@
 
 namespace xolotlCore {
 
-void TrapMutationHandler::initialize(experimental::IReactionNetwork& network,
-		xolotlCore::experimental::IReactionNetwork::SparseFillMap& dfill,
+void TrapMutationHandler::initialize(experimental::IReactionNetwork &network,
+		xolotlCore::experimental::IReactionNetwork::SparseFillMap &dfill,
 		int nx, int ny, int nz) {
-
 	// This method fills two vectors to define the modified trap-mutation: for the first one,
 	// the first value corresponds to the depth at which the He1 cluster undergo trap-mutation
 	// (if the value is negative it means that it doesn't TM), the second value correspond
@@ -27,15 +26,17 @@ void TrapMutationHandler::initialize(experimental::IReactionNetwork& network,
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Initialize the composition
-	NetworkType::Composition comp;
-	for (auto i : psiNetwork->getSpeciesRange()) {
-		comp[i] = 0;
-	}
+	NetworkType::Composition comp = NetworkType::Composition::zero();
 
 	// Loop on helium clusters from size 1 to 7
 	for (std::size_t i = 1; i <= 7; i++) {
+		// Skip if the depth is not defined
+		if (depthVec[i - 1] < 0.0)
+			continue;
+
 		comp[NetworkType::Species::I] = 0;
 		comp[NetworkType::Species::He] = i;
+		comp[NetworkType::Species::V] = 0;
 		auto heCluster = psiNetwork->findCluster(comp, plsm::onHost);
 		auto heClusterId = heCluster.getId();
 		// Check that the helium cluster is present in the network
@@ -49,6 +50,10 @@ void TrapMutationHandler::initialize(experimental::IReactionNetwork& network,
 		// The helium cluster is connected to itself
 		// TODO: check if this create doublons and if this is a problem
 		dfill[heClusterId].emplace_back(heClusterId);
+
+		// Check the desorption
+		if (i == desorp.size)
+			desorp.id = heClusterId;
 
 		// Get the size of the I/V for this helium size
 		auto trapSize = sizeVec[i - 1];
@@ -96,8 +101,8 @@ void TrapMutationHandler::initialize(experimental::IReactionNetwork& network,
 }
 
 void TrapMutationHandler::initializeIndex1D(int surfacePos,
-		experimental::IReactionNetwork& network,
-		std::vector<IAdvectionHandler *> advectionHandlers,
+		experimental::IReactionNetwork &network,
+		std::vector<IAdvectionHandler*> advectionHandlers,
 		std::vector<double> grid, int nx, int xs) {
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
 	// at each grid point
@@ -169,8 +174,8 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 }
 
 void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
-		experimental::IReactionNetwork& network,
-		std::vector<IAdvectionHandler *> advectionHandlers,
+		experimental::IReactionNetwork &network,
+		std::vector<IAdvectionHandler*> advectionHandlers,
 		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys) {
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
 	// at each grid point
@@ -302,8 +307,8 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 
 void TrapMutationHandler::initializeIndex3D(
 		std::vector<std::vector<int> > surfacePos,
-		experimental::IReactionNetwork& network,
-		std::vector<IAdvectionHandler *> advectionHandlers,
+		experimental::IReactionNetwork &network,
+		std::vector<IAdvectionHandler*> advectionHandlers,
 		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 		int nz, double hz, int zs) {
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
@@ -463,7 +468,7 @@ void TrapMutationHandler::updateDisappearingRate(double conc) {
 }
 
 void TrapMutationHandler::computeTrapMutation(
-		experimental::IReactionNetwork& network, double *concOffset,
+		experimental::IReactionNetwork &network, double *concOffset,
 		double *updatedConcOffset, int xi, int yj, int zk) {
 
 	// Initialize the rate of the reaction
@@ -478,16 +483,21 @@ void TrapMutationHandler::computeTrapMutation(
 		// Get the initial concentration of helium
 		double oldConc = concOffset[heIndex];
 
-		// TODO: deal withe the desorption
-//		// Check the desorption
-//		if (comp[toCompIdx(Species::He)] == desorp.size) {
-//			// Get the left side rate (combination + emission)
-//			double totalRate = heCluster->getLeftSideRate(xi + 1);
-//			// Define the trap-mutation rate taking into account the desorption
-//			rate = kDis * totalRate * (1.0 - desorp.portion) / desorp.portion;
-//		} else {
-		rate = kDis * kMutation;
-//		}
+		// Check the desorption
+		if (heIndex == desorp.id) {
+			auto dof = network.getDOF();
+			using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+			auto hConcs = HostUnmanaged(concOffset, dof);
+			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+			deep_copy(dConcs, hConcs);
+			// Get the left side rate (combination + emission)
+			double totalRate = network.getLeftSideRate(dConcs, heIndex, xi + 1);
+			// Define the trap-mutation rate taking into account the desorption
+			rate = kDis * totalRate * (1.0 - desorp.portion) / desorp.portion;
+		} else {
+			rate = kDis * kMutation;
+		}
 
 		// Update the concentrations (the helium cluster loses its concentration)
 		updatedConcOffset[heIndex] -= rate * oldConc;
@@ -499,8 +509,8 @@ void TrapMutationHandler::computeTrapMutation(
 }
 
 int TrapMutationHandler::computePartialsForTrapMutation(
-		experimental::IReactionNetwork& network, double *val, int *indices,
-		int xi, int yj, int zk) {
+		experimental::IReactionNetwork &network, double *concOffset,
+		double *val, int *indices, int xi, int yj, int zk) {
 
 	// Initialize the rate of the reaction
 	double rate = 0.0;
@@ -514,15 +524,21 @@ int TrapMutationHandler::computePartialsForTrapMutation(
 		auto heIndex = std::get<1>(ids);
 		auto iIndex = std::get<2>(ids);
 
-//		// Check the desorption
-//		if (comp[toCompIdx(Species::He)] == desorp.size) {
-//			// Get the left side rate (combination + emission)
-//			double totalRate = heCluster->getLeftSideRate(xi + 1);
-//			// Define the trap-mutation rate taking into account the desorption
-//			rate = kDis * totalRate * (1.0 - desorp.portion) / desorp.portion;
-//		} else {
-		rate = kDis * kMutation;
-//		}
+		// Check the desorption
+		if (heIndex == desorp.id) {
+			auto dof = network.getDOF();
+			using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+			auto hConcs = HostUnmanaged(concOffset, dof);
+			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+			deep_copy(dConcs, hConcs);
+			// Get the left side rate (combination + emission)
+			double totalRate = network.getLeftSideRate(dConcs, heIndex, xi + 1);
+			// Define the trap-mutation rate taking into account the desorption
+			rate = kDis * totalRate * (1.0 - desorp.portion) / desorp.portion;
+		} else {
+			rate = kDis * kMutation;
+		}
 
 		// Set the helium cluster partial derivative
 		auto baseIndex = i * 3;

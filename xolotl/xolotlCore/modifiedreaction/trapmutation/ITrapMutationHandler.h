@@ -35,8 +35,8 @@ public:
 	 * @param ny The number of grid points in the Y direction
 	 * @param nz The number of grid points in the Z direction
 	 */
-	virtual void initialize(experimental::IReactionNetwork& network,
-			xolotlCore::experimental::IReactionNetwork::SparseFillMap& dfill,
+	virtual void initialize(experimental::IReactionNetwork &network,
+			xolotlCore::experimental::IReactionNetwork::SparseFillMap &dfill,
 			int nx, int ny = 0, int nz = 0) = 0;
 
 	/**
@@ -50,8 +50,8 @@ public:
 	 * @param xs The beginning of the grid on this process
 	 */
 	virtual void initializeIndex1D(int surfacePos,
-			experimental::IReactionNetwork& network,
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			experimental::IReactionNetwork &network,
+			std::vector<IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs) = 0;
 
 	/**
@@ -68,8 +68,8 @@ public:
 	 * @param ys The beginning of the grid on this process
 	 */
 	virtual void initializeIndex2D(std::vector<int> surfacePos,
-			experimental::IReactionNetwork& network,
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			experimental::IReactionNetwork &network,
+			std::vector<IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy,
 			int ys) = 0;
 
@@ -90,8 +90,8 @@ public:
 	 * @param zs The beginning of the grid on this process
 	 */
 	virtual void initializeIndex3D(std::vector<std::vector<int> > surfacePos,
-			experimental::IReactionNetwork& network,
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			experimental::IReactionNetwork &network,
+			std::vector<IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 			int nz, double hz, int zs) = 0;
 
@@ -134,7 +134,7 @@ public:
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
 	 */
-	virtual void computeTrapMutation(experimental::IReactionNetwork& network,
+	virtual void computeTrapMutation(experimental::IReactionNetwork &network,
 			double *concOffset, double *updatedConcOffset, int xi, int yj = 0,
 			int zk = 0) = 0;
 
@@ -145,6 +145,8 @@ public:
 	 * This method is called by the RHSJacobian from the PetscSolver.
 	 *
 	 * @param network The network
+	 * @param concOffset The pointer to the array of concentration at the grid
+	 * point where the trap-mutation is computed
 	 * @param val The pointer to the array that will contain the values of
 	 * partials for the trap-mutation
 	 * @param indices The pointer to the array that will contain the indices
@@ -157,8 +159,8 @@ public:
 	 * at this grid point
 	 */
 	virtual int computePartialsForTrapMutation(
-			experimental::IReactionNetwork& network, double *val, int *indices,
-			int xi, int yj = 0, int zk = 0) = 0;
+			experimental::IReactionNetwork &network, double *concOffset,
+			double *val, int *indices, int xi, int yj = 0, int zk = 0) = 0;
 
 	/**
 	 * Get the total number of clusters in the network that can undergo trap mutation.

@@ -85,6 +85,15 @@ public:
 	 */
 	void initializeFluxHandler(experimental::IReactionNetwork& network,
 			int surfacePos, std::vector<double> grid) {
+		// Clear everything
+		incidentFluxVec.clear();
+		fluxIndices.clear();
+		amplitudes.clear();
+		fitParams.clear();
+		totalDepths.clear();
+		reductionFactors.clear();
+		normFactors.clear();
+
 		// Set the grid
 		xGrid = grid;
 

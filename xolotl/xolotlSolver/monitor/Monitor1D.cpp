@@ -80,6 +80,8 @@ PetscInt hdf5Previous1D = 0;
 std::string hdf5OutputName1D = "xolotlStop.h5";
 // The vector of depths at which bursting happens
 std::vector<int> depthPositions1D;
+// The vector of ids for diffusing interstitial clusters
+std::vector<int> iClusterIds1D;
 
 // Timers
 std::shared_ptr<xperf::ITimer> initTimer;
@@ -625,15 +627,15 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		deep_copy(dConcs, hConcs);
 
 		// Get the total concentrations at this grid point
-		heConcentration = network.getTotalAtomConcentration(dConcs, Spec::He, 0)
+		heConcentration += network.getTotalAtomConcentration(dConcs, Spec::He,
+				0) * hx;
+		dConcentration += network.getTotalAtomConcentration(dConcs, Spec::D, 0)
 				* hx;
-		dConcentration = network.getTotalAtomConcentration(dConcs, Spec::D, 0)
+		tConcentration += network.getTotalAtomConcentration(dConcs, Spec::T, 0)
 				* hx;
-		tConcentration = network.getTotalAtomConcentration(dConcs, Spec::T, 0)
+		vConcentration += network.getTotalAtomConcentration(dConcs, Spec::V, 0)
 				* hx;
-		vConcentration = network.getTotalAtomConcentration(dConcs, Spec::V, 0)
-				* hx;
-		iConcentration = network.getTotalAtomConcentration(dConcs, Spec::I, 0)
+		iConcentration += network.getTotalAtomConcentration(dConcs, Spec::I, 0)
 				* hx;
 	}
 
@@ -932,10 +934,10 @@ PetscErrorCode computeXenonRetention1D(TS ts, PetscInt, PetscReal time,
 		double hx = grid[xi + 1] - grid[xi];
 
 		// Get the concentrations
-		xeConcentration += network.getTotalAtomConcentration(dConcs, Spec::Xe, 0)
-				* hx;
-		bubbleConcentration += network.getTotalConcentration(dConcs, Spec::Xe, 0)
-				* hx;
+		xeConcentration += network.getTotalAtomConcentration(dConcs, Spec::Xe,
+				0) * hx;
+		bubbleConcentration += network.getTotalConcentration(dConcs, Spec::Xe,
+				0) * hx;
 		radii += network.getTotalRadiusConcentration(dConcs, Spec::Xe, 0) * hx;
 		partialBubbleConcentration = network.getTotalConcentration(dConcs,
 				Spec::Xe, minSizes[0]) * hx;
@@ -1796,7 +1798,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 	xi = surfacePos + solverHandler.getLeftOffset();
 
 	// Get the network
-	auto &network = solverHandler.getNetwork();
+	auto &network = solverHandler.getExpNetwork();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -1839,14 +1841,14 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 			double newFlux = 0.0;
 
 			// Consider each interstitial cluster.
-			for (auto const &iMapItem : network.getAll(ReactantType::I)) {
+			for (int i = 0; i < iClusterIds1D.size(); i++) {
+				auto currId = iClusterIds1D[i];
 				// Get the cluster
-				auto const &cluster = *(iMapItem.second);
-				// Get its id and concentration
-				int id = cluster.getId() - 1;
-				double conc = gridPointSolution[id];
+				auto cluster = network.getClusterCommon(currId);
+				// Get its concentration
+				double conc = gridPointSolution[currId];
 				// Get its size and diffusion coefficient
-				int size = cluster.getSize();
+				int size = i + 1;
 				double coef = cluster.getDiffusionCoefficient(xi - xs);
 
 				// Factor for finite difference
@@ -1921,46 +1923,46 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 			// If this is the locally owned part of the grid
 			if (xi >= xs && xi < xs + xm) {
 
-				// Get the pointer to the beginning of the solution data for this grid point
-				gridPointSolution = solutionArray[xi];
-				// Update the concentration in the network
-				network.updateConcentrationsFromArray(gridPointSolution);
-
-				// Get the distance from the surface
-				double distance = (grid[xi] + grid[xi + 1]) / 2.0
-						- grid[surfacePos + 1];
-
-				// Compute the helium density at this grid point
-				double heDensity = network.getTotalAtomConcentration();
-
-				// Compute the radius of the bubble from the number of helium
-				double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
-//			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
-				double latticeParam = network.getLatticeParameter();
-				double tlcCubed = latticeParam * latticeParam * latticeParam;
-				double radius = (sqrt(3.0) / 4) * latticeParam
-						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
-						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
-
-				// If the radius is larger than the distance to the surface, burst
-				if (radius > distance) {
-					burst = true;
-					depthPositions1D.push_back(xi);
-					// Exit the loop
-					continue;
-				}
-				// Add randomness
-				double prob = prefactor * (1.0 - (distance - radius) / distance)
-						* std::min(1.0,
-								exp(
-										-(distance - depthParam)
-												/ (depthParam * 2.0)));
-				double test = solverHandler.getRNG().GetRandomDouble();
-
-				if (prob > test) {
-					burst = true;
-					depthPositions1D.push_back(xi);
-				}
+//				// Get the pointer to the beginning of the solution data for this grid point
+//				gridPointSolution = solutionArray[xi];
+//				// Update the concentration in the network
+//				network.updateConcentrationsFromArray(gridPointSolution);
+//
+//				// Get the distance from the surface
+//				double distance = (grid[xi] + grid[xi + 1]) / 2.0
+//						- grid[surfacePos + 1];
+//
+//				// Compute the helium density at this grid point
+//				double heDensity = network.getTotalAtomConcentration();
+//
+//				// Compute the radius of the bubble from the number of helium
+//				double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
+////			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
+//				double latticeParam = network.getLatticeParameter();
+//				double tlcCubed = latticeParam * latticeParam * latticeParam;
+//				double radius = (sqrt(3.0) / 4) * latticeParam
+//						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
+//						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
+//
+//				// If the radius is larger than the distance to the surface, burst
+//				if (radius > distance) {
+//					burst = true;
+//					depthPositions1D.push_back(xi);
+//					// Exit the loop
+//					continue;
+//				}
+//				// Add randomness
+//				double prob = prefactor * (1.0 - (distance - radius) / distance)
+//						* std::min(1.0,
+//								exp(
+//										-(distance - depthParam)
+//												/ (depthParam * 2.0)));
+//				double test = solverHandler.getRNG().GetRandomDouble();
+//
+//				if (prob > test) {
+//					burst = true;
+//					depthPositions1D.push_back(xi);
+//				}
 			}
 		}
 
@@ -2036,7 +2038,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	int surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the network
-	auto &network = solverHandler.getNetwork();
+	auto &network = solverHandler.getExpNetwork();
 	int dof = network.getDOF();
 
 	// Get the physical grid
@@ -2048,8 +2050,6 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	for (int i = 0; i < depthPositions1D.size(); i++) {
 		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray[depthPositions1D[i]];
-		// Update the concentration in the network
-		network.updateConcentrationsFromArray(gridPointSolution);
 
 		// Get the distance from the surface
 		double distance = (grid[depthPositions1D[i]]
@@ -2201,14 +2201,14 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 		// Initialize the vacancy concentration and the temperature on the new grid points
 		// Get the single vacancy ID
-		auto singleVacancyCluster = network.get(Species::V, 1);
-		int vacancyIndex = -1;
-		if (singleVacancyCluster)
-			vacancyIndex = singleVacancyCluster->getId() - 1;
+		auto singleVacancyCluster = network.getSingleVacancy();
+		auto vacancyIndex = plsm::invalid<std::size_t>;
+		if (singleVacancyCluster.getId() != plsm::invalid<std::size_t>)
+			vacancyIndex = singleVacancyCluster.getId();
 		// Get the surface temperature
 		double temp = 0.0;
 		if (xi >= xs && xi < xs + xm) {
-			temp = solutionArray[xi][dof - 1];
+			temp = solutionArray[xi][dof];
 		}
 		double surfTemp = 0.0;
 		MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
@@ -2225,9 +2225,10 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 				gridPointSolution = solutionArray[xi];
 
 				// Set the new surface temperature
-				gridPointSolution[dof - 1] = surfTemp;
+				gridPointSolution[dof] = surfTemp;
 
-				if (vacancyIndex > 0 && nGridPoints > 0) {
+				if (vacancyIndex
+						!= plsm::invalid < std::size_t > &&nGridPoints > 0) {
 					// Initialize the vacancy concentration
 					gridPointSolution[vacancyIndex] = initialVConc;
 				}
@@ -2250,7 +2251,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 				// Get the concentrations at xi = surfacePos + 1
 				gridPointSolution = solutionArray[xi];
 				// Loop on DOF
-				for (int i = 0; i < dof - 1; i++) {
+				for (int i = 0; i < dof; i++) {
 					gridPointSolution[i] = 0.0;
 				}
 			}
@@ -2543,6 +2544,27 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 	if (solverHandler.moveSurface() || solverHandler.burstBubbles()) {
 		// Surface
 		if (solverHandler.moveSurface()) {
+
+			using NetworkType =
+			experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+
+			// Initialize the composition
+			NetworkType::Composition comp = NetworkType::Composition::zero();
+
+			// Loop on interstital clusters
+			bool iClusterExists = true;
+			int iSize = 1;
+			while (iClusterExists) {
+				comp[NetworkType::Species::I] = iSize;
+				auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
+				// Check that the helium cluster is present in the network
+				if (cluster.getId() != plsm::invalid<std::size_t>) {
+					iClusterIds1D.push_back(cluster.getId());
+					iSize++;
+				} else
+					iClusterExists = false;
+			}
 
 			// Get the interstitial information at the surface if concentrations were stored
 			if (hasConcentrations) {
