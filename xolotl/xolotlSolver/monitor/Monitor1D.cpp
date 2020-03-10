@@ -550,7 +550,6 @@ PetscErrorCode computeHeliumDesorption1D(TS ts, PetscInt, PetscReal time,
  */
 PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 		Vec solution, void*) {
-
 	xperf::ScopedTimer myTimer(heRetentionTimer);
 
 	// Initial declarations
@@ -1754,7 +1753,6 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 		PetscScalar *fvalue, void*) {
-
 	xperf::ScopedTimer myTimer(eventFuncTimer);
 
 	// Initial declaration
@@ -1907,6 +1905,12 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 
 	// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
+		using NetworkType =
+		xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+		using Spec = typename NetworkType::Species;
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+		auto dof = network.getDOF();
+
 		// Compute the prefactor for the probability (arbitrary)
 		double prefactor = heliumFluxAmplitude * dt * 0.1;
 
@@ -1923,46 +1927,51 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 			// If this is the locally owned part of the grid
 			if (xi >= xs && xi < xs + xm) {
 
-//				// Get the pointer to the beginning of the solution data for this grid point
-//				gridPointSolution = solutionArray[xi];
-//				// Update the concentration in the network
-//				network.updateConcentrationsFromArray(gridPointSolution);
-//
-//				// Get the distance from the surface
-//				double distance = (grid[xi] + grid[xi + 1]) / 2.0
-//						- grid[surfacePos + 1];
-//
-//				// Compute the helium density at this grid point
-//				double heDensity = network.getTotalAtomConcentration();
-//
-//				// Compute the radius of the bubble from the number of helium
-//				double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
-////			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
-//				double latticeParam = network.getLatticeParameter();
-//				double tlcCubed = latticeParam * latticeParam * latticeParam;
-//				double radius = (sqrt(3.0) / 4) * latticeParam
-//						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
-//						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
-//
-//				// If the radius is larger than the distance to the surface, burst
-//				if (radius > distance) {
-//					burst = true;
-//					depthPositions1D.push_back(xi);
-//					// Exit the loop
-//					continue;
-//				}
-//				// Add randomness
-//				double prob = prefactor * (1.0 - (distance - radius) / distance)
-//						* std::min(1.0,
-//								exp(
-//										-(distance - depthParam)
-//												/ (depthParam * 2.0)));
-//				double test = solverHandler.getRNG().GetRandomDouble();
-//
-//				if (prob > test) {
-//					burst = true;
-//					depthPositions1D.push_back(xi);
-//				}
+				// Get the pointer to the beginning of the solution data for this grid point
+				gridPointSolution = solutionArray[xi];
+
+				using HostUnmanaged =
+				Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+				auto hConcs = HostUnmanaged(gridPointSolution, dof);
+				auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+				deep_copy(dConcs, hConcs);
+
+				// Get the distance from the surface
+				double distance = (grid[xi] + grid[xi + 1]) / 2.0
+						- grid[surfacePos + 1];
+
+				// Compute the helium density at this grid point
+				double heDensity = psiNetwork->getTotalAtomConcentration(dConcs,
+						Spec::He, 0);
+
+				// Compute the radius of the bubble from the number of helium
+				double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
+//			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
+				double latticeParam = network.getLatticeParameter();
+				double tlcCubed = latticeParam * latticeParam * latticeParam;
+				double radius = (sqrt(3.0) / 4) * latticeParam
+						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
+						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
+
+				// If the radius is larger than the distance to the surface, burst
+				if (radius > distance) {
+					burst = true;
+					depthPositions1D.push_back(xi);
+					// Exit the loop
+					continue;
+				}
+				// Add randomness
+				double prob = prefactor * (1.0 - (distance - radius) / distance)
+						* std::min(1.0,
+								exp(
+										-(distance - depthParam)
+												/ (depthParam * 2.0)));
+				double test = solverHandler.getRNG().GetRandomDouble();
+
+				if (prob > test) {
+					burst = true;
+					depthPositions1D.push_back(xi);
+				}
 			}
 		}
 
@@ -2048,6 +2057,12 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 	// Loop on each bursting depth
 	for (int i = 0; i < depthPositions1D.size(); i++) {
+		using NetworkType =
+		xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+		using Spec = typename NetworkType::Species;
+		using Composition = typename NetworkType::Composition;
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+
 		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray[depthPositions1D[i]];
 
@@ -2061,44 +2076,34 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		outputFile << time << " " << distance << std::endl;
 		outputFile.close();
 
-//		// Pinhole case
-//		// Consider each He to reset their concentration at this grid point
-//		for (auto const &heMapItem : network.getAll(ReactantType::He)) {
-//			auto const &cluster = *(heMapItem.second);
-//
-//			int id = cluster.getId() - 1;
-//			gridPointSolution[id] = 0.0;
-//		}
-//		// Consider each D to reset their concentration at this grid point
-//		for (auto const &dMapItem : network.getAll(ReactantType::D)) {
-//			auto const &cluster = *(dMapItem.second);
-//
-//			int id = cluster.getId() - 1;
-//			gridPointSolution[id] = 0.0;
-//		}
-//		// Consider each T to reset their concentration at this grid point
-//		for (auto const &tMapItem : network.getAll(ReactantType::T)) {
-//			auto const &cluster = *(tMapItem.second);
-//
-//			int id = cluster.getId() - 1;
-//			gridPointSolution[id] = 0.0;
-//		}
-//
-//		// Consider each HeV cluster to transfer their concentration to the V cluster of the
-//		// same size at this grid point
-//		for (auto const &heVMapItem : network.getAll(ReactantType::PSIMixed)) {
-//			auto const &cluster = *(heVMapItem.second);
-//
-//			// Get the V cluster of the same size
-//			auto const &comp = cluster.getComposition();
-//			auto vCluster = network.get(Species::V,
-//					comp[toCompIdx(Species::V)]);
-//			int vId = vCluster->getId() - 1;
-//			int id = cluster.getId() - 1;
-//			gridPointSolution[vId] += gridPointSolution[id];
-//			gridPointSolution[id] = 0.0;
-//		}
-//
+		// Pinhole case
+		// Loop on every cluster
+		for (unsigned int i = 0; i < network.getNumClusters(); i++) {
+			const auto &clReg =
+					psiNetwork->getCluster(i, plsm::onHost).getRegion();
+			// Non-grouped clusters
+			if (clReg.isSimplex()) {
+				// Get the composition
+				Composition comp = clReg.getOrigin();
+				// Pure He, D, or T case
+				if (comp.isOnAxis(Spec::He) || comp.isOnAxis(Spec::D)
+						|| comp.isOnAxis(Spec::T)) {
+					// Reset concentration
+					gridPointSolution[i] = 0.0;
+				}
+				// Mixed cluster case
+				else if (!comp.isOnAxis(Spec::V) && !comp.isOnAxis(Spec::I)) {
+					// Transfer concentration to V of the same size
+					Composition vComp = Composition::zero();
+					vComp[Spec::V] = comp[Spec::V];
+					auto vCluster = psiNetwork->findCluster(vComp,
+							plsm::onHost);
+					gridPointSolution[vCluster.getId()] += gridPointSolution[i];
+					gridPointSolution[i] = 0.0;
+				}
+			}
+		}
+
 //		// Loop on the super clusters to transfer their concentration to the V cluster of the
 //		// same size at this grid point
 //		for (auto const &superMapItem : network.getAll(ReactantType::PSISuper)) {
