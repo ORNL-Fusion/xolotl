@@ -508,4 +508,14 @@ void PetscSolver::finalize(bool isStandalone) {
 	return;
 }
 
+double PetscSolver::getXolotlTime() {
+        PetscErrorCode ierr;
+
+        // The most recent time that Xolotl converged
+        PetscReal CurrentXolotlTime;
+        ierr = TSGetTime(ts, &CurrentXolotlTime);
+        checkPetscError(ierr, "PetscSolver::setTimes: TSGetTime failed.");
+        return CurrentXolotlTime;
+}
+
 } /* end namespace xolotlSolver */
