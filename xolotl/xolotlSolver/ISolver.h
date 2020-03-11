@@ -133,6 +133,10 @@ public:
 	 */
 	virtual TS & getTS() = 0;
 
+        /** 
+         * This operation returns the most recent time that solver converged.
+         */
+        virtual double getXolotlTime() = 0;
 };
 //end class ISolver
 

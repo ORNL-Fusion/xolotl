@@ -9,6 +9,7 @@
 #include <TokenizedLineReader.h>
 #include <Constants.h>
 #include <TokenizedLineReader.h>
+#include <fstream>
 
 namespace xolotlSolver {
 
@@ -1008,6 +1009,55 @@ public:
 	 */
 	void resetGBVector() override {
 		gbVector.clear();
+	}
+
+        /** 
+         * Get the coordinates covered by the local grid using copying method.
+         * \see ISolverHandler.h
+         */
+        void getLocalCoordinatesCpy(int *xs, int *xm, int *Mx, int *ys, int *ym,
+                        int *My, int *zs, int *zm, int *Mz) override {
+                *xs = localXS;
+                *xm = localXM;
+                *Mx = nX; 
+                *ys = localYS;
+                *ym = localYM;
+                *My = nY; 
+                *zs = localZS;
+                *zm = localZM;
+                *Mz = nZ; 
+        }
+
+	/**
+	 * Passing the XeRate at i,j,k point.
+	 * \see ISolverHandler.h
+	 */
+        double getXeRatePoint(int i, int j, int k) override {
+		return get<0>(localNE[i][j][k]);
+	}
+
+	/**
+	 * Passing the XeFlux at i,j,k point.
+	 * \see ISolverHandler.h
+	 */
+        double getXeFluxPoint(int i, int j, int k) override {
+		return get<1>(localNE[i][j][k]);
+	}
+
+	/**
+	 * Passing the XeConc at i,j,k point.
+	 * \see ISolverHandler.h
+	 */
+        double getXeConcPoint(int i, int j, int k) override {
+		return get<2>(localNE[i][j][k]);
+	}
+
+	/**
+	 * Passing the XeVolFrac at i,j,k point.
+	 * \see ISolverHandler.h
+	 */
+        double getXeVolFracPoint(int i, int j, int k) override {
+		return get<3>(localNE[i][j][k]);
 	}
 }
 ;

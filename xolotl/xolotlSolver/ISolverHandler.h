@@ -458,6 +458,43 @@ public:
 	 */
 	virtual void resetGBVector() = 0;
 
+        /** 
+         * Get the coordinates covered by the local grid using copying method.
+         *
+         * @param xs, xm The start and width in the X direction on the local MPI process
+         * @param Mx The total width in the X direction
+         * @param ys, ym The start and width in the Y direction on the local MPI process
+         * @param My The total width in the Y direction
+         * @param zs, zm The start and width in the Z direction on the local MPI process
+         * @param Mz The total width in the Z direction
+         */
+        virtual void getLocalCoordinatesCpy(int *xs, int *xm, int *Mx, int *ys,
+                        int *ym, int *My, int *zs, int *zm, int *Mz) = 0;
+
+        /** 
+         * Passing the XeRate at i,j,k point.
+         * \see ISolverHandler.h
+         */
+        virtual double getXeRatePoint(int i, int j, int k) = 0;
+
+        /** 
+         * Passing the XeFlux at i,j,k point.
+         * \see ISolverHandler.h
+         */
+        virtual double getXeFluxPoint(int i, int j, int k) = 0;
+
+        /** 
+         * Passing the XeConc at i,j,k point.
+         * \see ISolverHandler.h
+         */
+        virtual double getXeConcPoint(int i, int j, int k) = 0;
+
+        /** 
+         * Passing the XeVolFrac at i,j,k point.
+         * \see ISolverHandler.h
+         */
+        virtual double getXeVolFracPoint(int i, int j, int k) = 0;
+
 };
 //end class ISolverHandler
 

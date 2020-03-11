@@ -169,6 +169,11 @@ public:
 		return ts;
 	}
 
+        /** 
+         * This operation returns the most recent time that solver converged.
+         */
+        double getXolotlTime() override;
+
 };
 //end class PetscSolver
 
