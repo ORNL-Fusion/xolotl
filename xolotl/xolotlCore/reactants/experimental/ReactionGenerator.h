@@ -19,8 +19,7 @@ public:
     };
 
     using Network = TNetwork;
-    using Types = detail::ReactionNetworkTypes<Network>;
-    using ClusterData = typename Types::ClusterData;
+    using ClusterData = typename Network::ClusterData;
     using Cluster = typename ClusterData::ClusterType;
     using ReactionType = typename Network::ReactionType;
     using ClusterSet = typename ReactionType::ClusterSet;
@@ -206,7 +205,6 @@ public:
     };
 
     using Network = TNetwork;
-    // using Types = detail::ReactionNetworkTypes<Network>;
     using ClusterData = typename Network::ClusterData;
     using ClusterDataRef = typename Network::ClusterDataRef;
     using Cluster = typename ClusterData::ClusterType;
@@ -490,9 +488,9 @@ public:
             auto id = tmpConn.row_map(i);
             for (; !Kokkos::atomic_compare_exchange_strong(
                         &tmpConn.entries(id), plsm::invalid<std::size_t>, i); ++id) {
-            	if (tmpConn.entries(id) == i) {
-            		break;
-            	}
+                if (tmpConn.entries(id) == i) {
+                    break;
+                }
             }
         });
         //Fill entries (column ids)
@@ -500,16 +498,16 @@ public:
             reactions(i).contributeConnectivity(tmpConn);
         });
         Kokkos::fence();
-        
+
         //Shrink to fit
         Connectivity connectivity;
         Kokkos::count_and_fill_crs(connectivity, this->_numDOFs,
                 KOKKOS_LAMBDA (std::size_t i, std::size_t* fill) {
             std::size_t ret = 0;
             if (fill == nullptr) {
-            	auto jStart = tmpConn.row_map(i);
-            	auto jEnd = tmpConn.row_map(i+1);
-            	ret = jEnd - jStart;
+                auto jStart = tmpConn.row_map(i);
+                auto jEnd = tmpConn.row_map(i+1);
+                ret = jEnd - jStart;
                 for (std::size_t j = jStart; j < jEnd; ++j) {
                     if (tmpConn.entries(j) == Network::invalid) {
                         ret = j - jStart;
@@ -529,8 +527,9 @@ public:
             }
             return ret;
         });
+        nEntries = connectivity.entries.extent(0);
 
-        this->_reactionData.inverseMap = ReactionInverseMap<>{connectivity};
+        this->_reactionData.connectivity = connectivity;
     }
 };
 }

@@ -7,6 +7,7 @@
 
 #include <experimental/ClusterData.h>
 #include <experimental/Cluster.h>
+#include <experimental/ReactionData.h>
 
 namespace xolotlCore
 {
@@ -21,7 +22,7 @@ public:
     using OwnedConcentrationsView = Kokkos::View<double*>;
     using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
     using OwnedFluxesView = Kokkos::View<double*>;
-    using Connectivity = Kokkos::Crs<std::size_t, detail::DefaultMemorySpace>;
+    using Connectivity = detail::ClusterConnectivity<>;
     using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 
     IReactionNetwork(std::size_t gridSize)

@@ -35,7 +35,6 @@ public:
     using ConcentrationsView = IReactionNetwork::ConcentrationsView;
     using FluxesView = IReactionNetwork::FluxesView;
     using Connectivity = typename IReactionNetwork::Connectivity;
-    using InverseMap = detail::ReactionInverseMap<>;
 
     enum class Type
     {
@@ -136,22 +135,23 @@ public:
     KOKKOS_INLINE_FUNCTION
     void
     productionPartialDerivatives(ConcentrationsView concentrations,
-        Kokkos::View<double*> values, InverseMap inverseMap,
+        Kokkos::View<double*> values, Connectivity connectivity,
         std::size_t gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
     dissociationPartialDerivatives(ConcentrationsView concentrations,
-        Kokkos::View<double*> values, InverseMap inverseMap,
+        Kokkos::View<double*> values, Connectivity connectivity,
         std::size_t gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
     contributePartialDerivatives(ConcentrationsView concentrations,
-        Kokkos::View<double*> values, InverseMap inverseMap,
+        Kokkos::View<double*> values, Connectivity connectivity,
         std::size_t gridIndex)
     {
-        ((*this).*(_partialsFn))(concentrations, values, inverseMap, gridIndex);
+        ((*this).*(_partialsFn))(concentrations, values, connectivity,
+            gridIndex);
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -242,25 +242,7 @@ private:
     addConnectivity(std::size_t rowId, std::size_t columnId,
         const Connectivity& connectivity)
     {
-        // Check that the Ids are valid
-        if (rowId == invalid || columnId == invalid) {
-            return;
-        }
-
-        if (connectivity.entries.size() == 0) {
-            //Count
-            Kokkos::atomic_increment(&connectivity.row_map(rowId));
-        }
-        else {
-            //Fill
-            auto id = connectivity.row_map(rowId);
-            for (; !Kokkos::atomic_compare_exchange_strong(
-                        &connectivity.entries(id), invalid, columnId); ++id) {
-            	if (connectivity.entries(id) == columnId) {
-            		break;
-            	}
-            }
-        }
+        connectivity.add(rowId, columnId);
     }
 
 protected:
@@ -278,7 +260,7 @@ protected:
 
     using PartialsFn =
         void (Reaction::*)(ConcentrationsView, Kokkos::View<double*>,
-            InverseMap, std::size_t);
+            Connectivity, std::size_t);
     PartialsFn _partialsFn {nullptr};
 
     using LeftSideFn =

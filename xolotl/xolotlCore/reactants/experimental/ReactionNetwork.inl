@@ -186,11 +186,11 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
     // Get the extent of the reactions view
     auto reactions = _reactions;
     auto nReactions = reactions.extent(0);
-    auto inverseMap = _reactionData.inverseMap;
+    auto connectivity = _reactionData.connectivity;
     // Loop on the reactions
     Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
         reactions(i).contributePartialDerivatives(concentrations, values,
-            inverseMap, gridIndex);
+            connectivity, gridIndex);
     });
 }
 
@@ -449,24 +449,19 @@ std::size_t
 ReactionNetworkWorker<TImpl>::getDiagonalFill(
     typename Network::SparseFillMap& fillMap)
 {
-    auto connectivity = _nw._reactionData.inverseMap.connectivity;
+    auto connectivity = _nw._reactionData.connectivity;
     auto hConnRowMap = create_mirror_view(connectivity.row_map);
     deep_copy(hConnRowMap, connectivity.row_map);
     auto hConnEntries = create_mirror_view(connectivity.entries);
     deep_copy(hConnEntries, connectivity.entries);
 
-    std::vector<std::vector<int>> vmap;
     for (int i = 0; i < _nw.getDOF(); ++i) {
         auto jBegin = hConnRowMap(i);
         auto jEnd = hConnRowMap(i+1);
-        vmap.emplace_back();
-        auto& v = vmap.back();
-        v.reserve(jEnd - jBegin);
         std::vector<int> current;
         current.reserve(jEnd - jBegin);
         for (std::size_t j = jBegin; j < jEnd; ++j) {
             current.push_back((int)hConnEntries(j));
-            v.push_back((int)hConnEntries(j));
         }
         fillMap[i] = std::move(current);
     }

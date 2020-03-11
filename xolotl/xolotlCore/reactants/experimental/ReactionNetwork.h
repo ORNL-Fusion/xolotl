@@ -67,7 +67,6 @@ public:
     using ClusterData = typename Types::ClusterData;
     using ClusterDataMirror = typename Types::ClusterDataMirror;
     using ClusterDataRef = typename Types::ClusterDataRef;
-    using InverseMap = Kokkos::View<std::size_t**>;
 
     template <typename PlsmContext>
     using Cluster = Cluster<TImpl, PlsmContext>;
@@ -174,12 +173,7 @@ public:
         ret += _reactionData.rates.required_allocation_size(
             _reactionData.rates.extent(0), _reactionData.rates.extent(1));
 
-        ret += _reactionData.inverseMap.connectivity.row_map
-            .required_allocation_size(
-                _reactionData.inverseMap.connectivity.row_map.extent(0));
-        ret += _reactionData.inverseMap.connectivity.entries
-            .required_allocation_size(
-                _reactionData.inverseMap.connectivity.entries.extent(0));
+        ret += _reactionData.connectivity.getDeviceMemorySize();
 
         ret += _reactions.required_allocation_size(_reactions.extent(0));
 
@@ -233,17 +227,17 @@ public:
     ClusterCommon<plsm::OnHost>
     getSingleVacancy() override
     {
-    	Composition comp = Composition::zero();
+        Composition comp = Composition::zero();
 
         // Find the vacancy index
         constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
         bool hasVacancy = false;
         Species vIndex;
         for (auto i : speciesRangeNoI) {
-        	if (isVacancy(i)) {
-        		hasVacancy = true;
-        		vIndex = i;
-        	}
+            if (isVacancy(i)) {
+                hasVacancy = true;
+                vIndex = i;
+            }
         }
 
         // Update the composition if there is vacancy in the network
@@ -372,13 +366,6 @@ private:
     getTemperature(std::size_t gridIndex) const noexcept
     {
         return _clusterData.temperature(gridIndex);
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    std::size_t
-    getReactionIndex(std::size_t rowId, std::size_t colId) const noexcept
-    {
-        return _reactionData.inverseMap(rowId, colId);
     }
 
 private:
