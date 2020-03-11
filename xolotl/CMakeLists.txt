@@ -17,6 +17,7 @@ if(POLICY CMP0074)
     cmake_policy(SET CMP0074 NEW)
 endif()
 
+option(DYNAMIC_LOADING "Build dynamic loadable" OFF)
 if(DYNAMIC_LOADING)
     SET(CMAKE_POSITION_INDEPENDENT_CODE True)
     SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH True)
@@ -151,7 +152,6 @@ configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_BINARY_DIR}/Xol
 
 # Decide whether to build as a library
 option(BUILD_SHARED_LIBS "Build as a shared library")
-option(DYNAMIC_LOADING "Build dynamic loadable" OFF)
 
 if(BUILD_SHARED_LIBS)
     message(STATUS "----- Building shared libraries -----")
