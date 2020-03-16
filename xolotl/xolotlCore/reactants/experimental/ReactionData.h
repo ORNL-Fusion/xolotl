@@ -13,11 +13,17 @@ namespace experimental
 namespace detail
 {
 template <typename TMemSpace = DefaultMemorySpace>
-class ClusterConnectivity : public Kokkos::Crs<std::size_t, TMemSpace>
+class ClusterConnectivity :
+    public Kokkos::Crs<ReactionNetworkIndexType, TMemSpace>
 {
-    static constexpr std::size_t invalid = plsm::invalid<std::size_t>;
 public:
-    using Crs = Kokkos::Crs<std::size_t, TMemSpace>;
+    using IndexType = ReactionNetworkIndexType;
+
+private:
+    static constexpr IndexType invalidIndex = InvalidIndex::value;
+
+public:
+    using Crs = Kokkos::Crs<IndexType, TMemSpace>;
 
     using HostMirror =
         ClusterConnectivity<
@@ -34,7 +40,7 @@ public:
                 this->entries.size());
             auto conn = *this;
             auto nRows = conn.row_map.size() - 1;
-            Kokkos::parallel_for(nRows, KOKKOS_LAMBDA (std::size_t i) {
+            Kokkos::parallel_for(nRows, KOKKOS_LAMBDA (IndexType i) {
                 auto pBegin = conn.row_map(i);
                 auto pEnd = conn.row_map(i+1);
                 for (auto p = pBegin; p < pEnd; ++p) {
@@ -43,7 +49,7 @@ public:
                 }
             });
             Kokkos::fence();
-            _avgRowSize = static_cast<double>(conn.entries.size()) / 
+            _avgRowSize = static_cast<double>(conn.entries.size()) /
                 static_cast<double>(nRows) + 0.5;
         }
         else {
@@ -56,9 +62,9 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     void
-    add(std::size_t rowId, std::size_t columnId) const
+    add(IndexType rowId, IndexType columnId) const
     {
-        if (rowId == invalid || columnId == invalid) {
+        if (rowId == invalidIndex || columnId == invalidIndex) {
             return;
         }
         if (this->entries.size() == 0) {
@@ -67,7 +73,7 @@ public:
         else {
             for (auto id = this->row_map(rowId);
                     !Kokkos::atomic_compare_exchange_strong(&this->entries(id),
-                        invalid, columnId); ++id) {
+                        invalidIndex, columnId); ++id) {
                 if (this->entries(id) == columnId) {
                     break;
                 }
@@ -76,13 +82,13 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    std::size_t
-    operator()(std::size_t rowId, std::size_t columnId) const
+    IndexType
+    operator()(IndexType rowId, IndexType columnId) const
     {
         if (getRowSize(rowId) > _avgRowSize) {
             auto trPos = getPosition(columnId, rowId, _tr);
-            if (trPos == invalid) {
-                return invalid;
+            if (trPos == invalidIndex) {
+                return invalidIndex;
             }
             return _trEntries(trPos);
         }
@@ -108,20 +114,20 @@ public:
 
 private:
     KOKKOS_INLINE_FUNCTION
-    std::size_t
-    getPosition(std::size_t rowId, std::size_t columnId, const Crs& crs) const
+    IndexType
+    getPosition(IndexType rowId, IndexType columnId, const Crs& crs) const
     {
         for (auto pos = crs.row_map(rowId); pos < crs.row_map(rowId+1); ++pos) {
             if (crs.entries(pos) == columnId) {
                 return pos;
             }
         }
-        return invalid;
+        return invalidIndex;
     }
 
     KOKKOS_INLINE_FUNCTION
-    std::size_t
-    getRowSize(std::size_t rowId) const
+    IndexType
+    getRowSize(IndexType rowId) const
     {
         return this->row_map(rowId+1) - this->row_map(rowId);
     }
@@ -129,16 +135,18 @@ private:
 private:
     Crs _tr;
     typename Crs::entries_type _trEntries;
-    std::size_t _avgRowSize {};
+    IndexType _avgRowSize {};
 };
 
 struct ReactionData
 {
+    using IndexType = ReactionNetworkIndexType;
+
     ReactionData() = default;
 
-    ReactionData(std::size_t numProductionReactions,
-            std::size_t numDissociationReactions, std::size_t numSpeciesNoI,
-            std::size_t gridSize)
+    ReactionData(IndexType numProductionReactions,
+            IndexType numDissociationReactions, std::size_t numSpeciesNoI,
+            IndexType gridSize)
         :
         coeffExtent(numSpeciesNoI + 1),
         numReactions(numProductionReactions + numDissociationReactions),
@@ -151,12 +159,12 @@ struct ReactionData
     }
 
     void
-    setGridSize(std::size_t gridSize) {
+    setGridSize(IndexType gridSize) {
         rates = Kokkos::View<double**>("Reaction Rates", numReactions, gridSize);
     }
 
     std::size_t coeffExtent {};
-    std::size_t numReactions {};
+    IndexType numReactions {};
     Kokkos::View<double*****> productionCoeffs;
     Kokkos::View<double*****> dissociationCoeffs;
     Kokkos::View<double**> rates;
@@ -165,6 +173,8 @@ struct ReactionData
 
 struct ReactionDataRef
 {
+    using IndexType = ReactionNetworkIndexType;
+
     ReactionDataRef() = default;
 
     KOKKOS_INLINE_FUNCTION
@@ -179,7 +189,7 @@ struct ReactionDataRef
 
     KOKKOS_INLINE_FUNCTION
     auto
-    getCoefficients(std::size_t reactionId)
+    getCoefficients(IndexType reactionId)
     {
         if (reactionId < productionCoeffs.extent(0)) {
             return Kokkos::subview(productionCoeffs, reactionId, Kokkos::ALL,
@@ -194,7 +204,7 @@ struct ReactionDataRef
 
     KOKKOS_INLINE_FUNCTION
     auto
-    getRates(std::size_t reactionId)
+    getRates(IndexType reactionId)
     {
         return Kokkos::subview(rates, reactionId, Kokkos::ALL);
     }

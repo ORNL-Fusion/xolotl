@@ -19,7 +19,9 @@ struct ReactionNetworkTraits
 
 namespace detail
 {
-using ReactionNetworkAmountType = std::uint32_t;
+using ReactionNetworkIndexType = std::size_t;
+
+using CompositionAmountType = std::uint32_t;
 
 template <typename TNetwork, typename PlsmContext>
 class ClusterData;
@@ -30,7 +32,8 @@ class ClusterDataRef;
 template <typename TImpl>
 struct ReactionNetworkTypes
 {
-    using AmountType = ReactionNetworkAmountType;
+    using IndexType = ReactionNetworkIndexType;
+    using AmountType = CompositionAmountType;
     using Traits = ReactionNetworkTraits<TImpl>;
     using Species = typename Traits::Species;
     using Subpaving = plsm::Subpaving<AmountType, Traits::numSpecies, Species>;
@@ -49,6 +52,16 @@ struct ReactionNetworkProperties
     static constexpr std::size_t numSpecies = Traits::numSpecies;
     using SpeciesSequence = SpeciesEnumSequence<Species, numSpecies>;
     static constexpr std::size_t numSpeciesNoI = SpeciesSequence::sizeNoI();
+};
+
+struct InvalidIndex
+{
+    static constexpr auto value = plsm::invalid<ReactionNetworkIndexType>;
+};
+
+struct InvalidSpeciesAmount
+{
+    static constexpr auto value = plsm::invalid<CompositionAmountType>;
 };
 }
 }

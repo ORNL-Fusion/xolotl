@@ -24,7 +24,6 @@ public:
     using ReactionType = typename Superclass::ReactionType;
     using Composition = typename Superclass::Composition;
     using Species = typename Superclass::Species;
-    static constexpr auto invalid = plsm::invalid<std::size_t>;
 
     using Superclass::Superclass;
 
@@ -67,7 +66,7 @@ public:
     template <typename TTag>
     KOKKOS_INLINE_FUNCTION
     void
-    operator()(std::size_t i, std::size_t j, TTag tag) const;
+    operator()(IndexType i, IndexType j, TTag tag) const;
 };
 }
 }

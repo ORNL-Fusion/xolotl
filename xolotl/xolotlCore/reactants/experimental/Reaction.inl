@@ -15,9 +15,9 @@ namespace experimental
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
-    ClusterDataRef clusterData, std::size_t reactionId, Type reactionType,
-    std::size_t cluster0, std::size_t cluster1, std::size_t cluster2,
-    std::size_t cluster3)
+    ClusterDataRef clusterData, IndexType reactionId, Type reactionType,
+    IndexType cluster0, IndexType cluster1, IndexType cluster2,
+    IndexType cluster3)
     :
     _clusterData(clusterData),
     _type(reactionType),
@@ -34,15 +34,15 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
         _type == Type::production ? &Reaction::productionLeftSideRate :
             &Reaction::dissociationLeftSideRate),
     _reactants(
-        _type == Type::production ? Kokkos::Array<std::size_t, 2>( {cluster0,
-            cluster1}) : Kokkos::Array<std::size_t, 2>( {cluster0, invalid})),
-    _products(_type == Type::production ? Kokkos::Array<std::size_t, 2>( {
-        cluster2, cluster3}) : Kokkos::Array<std::size_t, 2>( {cluster1,
+        _type == Type::production ? Kokkos::Array<IndexType, 2>( {cluster0,
+            cluster1}) : Kokkos::Array<IndexType, 2>( {cluster0, invalidIndex})),
+    _products(_type == Type::production ? Kokkos::Array<IndexType, 2>( {
+        cluster2, cluster3}) : Kokkos::Array<IndexType, 2>( {cluster1,
         cluster2})),
     _rate(reactionData.getRates(reactionId)),
     _coefs(reactionData.getCoefficients(reactionId))
 {
-    for (std::size_t i : {0, 1}) {
+    for (auto i : {0, 1}) {
         copyMomentIds(_reactants[i], _reactantMomentIds[i]);
         copyMomentIds(_products[i], _productMomentIds[i]);
     }
@@ -60,7 +60,7 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
-    ClusterDataRef clusterData, std::size_t reactionId, Type reactionType,
+    ClusterDataRef clusterData, IndexType reactionId, Type reactionType,
     const ClusterSet& clusterSet)
     :
     Reaction(reactionData, clusterData, reactionId, reactionType,
@@ -73,7 +73,7 @@ template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
 Reaction<TNetwork, TDerived>::updateData(detail::ReactionDataRef reactionData,
-    ClusterDataRef clusterData, std::size_t reactionId)
+    ClusterDataRef clusterData, IndexType reactionId)
 {
     _clusterData = clusterData;
     _rate = reactionData.getRates(reactionId);
@@ -186,9 +186,9 @@ Reaction<TNetwork, TDerived>::computeProductionCoefficients()
 
     const auto& cl1Reg = _clusterData.getCluster(_reactants[0]).getRegion();
     const auto& cl2Reg = _clusterData.getCluster(_reactants[1]).getRegion();
-    const auto& prod1Reg = (_products[0] == invalid) ? dummyRegion :
+    const auto& prod1Reg = (_products[0] == invalidIndex) ? dummyRegion :
         _clusterData.getCluster(_products[0]).getRegion();
-    const auto& prod2Reg = (_products[1] == invalid) ? dummyRegion :
+    const auto& prod2Reg = (_products[1] == invalidIndex) ? dummyRegion :
         _clusterData.getCluster(_products[1]).getRegion();
     const auto& cl1Disp = cl1Reg.dispersion();
     const auto& cl2Disp = cl2Reg.dispersion();
@@ -196,10 +196,10 @@ Reaction<TNetwork, TDerived>::computeProductionCoefficients()
     // If there is no product the overlap is 1
     double nOverlap = 1.0;
     // General case
-    if (_products[0] != invalid && _products[1] == invalid)
+    if (_products[0] != invalidIndex && _products[1] == invalidIndex)
         nOverlap = static_cast<double>(computeOverlap(prod1Reg, cl1Reg, cl2Reg));
     // Special case with two products
-    else if (_products[0] != invalid && _products[1] != invalid) {
+    else if (_products[0] != invalidIndex && _products[1] != invalidIndex) {
         // Combine the regions
         auto ilist = Kokkos::Array<plsm::Interval<AmountType>, NetworkType::getNumberOfSpecies()>();
         for (auto i : NetworkType::getSpeciesRange()) {
@@ -234,9 +234,9 @@ Reaction<TNetwork, TDerived>::computeProductionCoefficients()
         }
 
         // Loop on the potential products
-        for (std::size_t p : {0,1}) {
+        for (auto p : {0,1}) {
             auto prodId = _products[p];
-            if (prodId == invalid) {
+            if (prodId == invalidIndex) {
                 continue;
             }
 
@@ -372,9 +372,9 @@ Reaction<TNetwork, TDerived>::computeProductionCoefficients()
             // Now we deal with the coefficients needed for the
             // first moments
             // Let's start with the products
-            for (std::size_t p : {0,1}) {
+            for (auto p : {0,1}) {
                 auto prodId = _products[p];
-                if (prodId == invalid) {
+                if (prodId == invalidIndex) {
                     continue;
                 }
 
@@ -620,7 +620,7 @@ Reaction<TNetwork, TDerived>::computeDissociationCoefficients()
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-Reaction<TNetwork, TDerived>::computeProductionRate(std::size_t gridIndex)
+Reaction<TNetwork, TDerived>::computeProductionRate(IndexType gridIndex)
 {
     auto cl0 = _clusterData.getCluster(_reactants[0]);
     auto cl1 = _clusterData.getCluster(_reactants[1]);
@@ -641,7 +641,7 @@ Reaction<TNetwork, TDerived>::computeProductionRate(std::size_t gridIndex)
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-Reaction<TNetwork, TDerived>::computeDissociationRate(std::size_t gridIndex)
+Reaction<TNetwork, TDerived>::computeDissociationRate(IndexType gridIndex)
 {
     double omega = _clusterData.getAtomicVolume();
     double T = _clusterData.temperature(gridIndex);
@@ -744,9 +744,9 @@ Reaction<TNetwork, TDerived>::productionConnectivity(
         }
     }
     // Each product connects with all the reactants
-    for (std::size_t p : {0,1}) {
+    for (auto p : {0,1}) {
         auto prodId = _products[p];
-        if (prodId == invalid) {
+        if (prodId == invalidIndex) {
             continue;
         }
         auto prod = _clusterData.getCluster(prodId);
@@ -869,7 +869,7 @@ template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
 Reaction<TNetwork, TDerived>::productionFlux(ConcentrationsView concentrations,
-    FluxesView fluxes, std::size_t gridIndex)
+    FluxesView fluxes, IndexType gridIndex)
 {
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -905,7 +905,7 @@ Reaction<TNetwork, TDerived>::productionFlux(ConcentrationsView concentrations,
     Kokkos::atomic_sub(&fluxes[_reactants[0]], f / (double) volCl1);
     Kokkos::atomic_sub(&fluxes[_reactants[1]], f / (double) volCl2);
     for (auto prodId : _products) {
-        if (prodId == invalid) {
+        if (prodId == invalidIndex) {
             continue;
         }
 
@@ -968,9 +968,9 @@ Reaction<TNetwork, TDerived>::productionFlux(ConcentrationsView concentrations,
         }
 
         // For the products
-        for (std::size_t p : {0,1}) {
+        for (auto p : {0,1}) {
             auto prodId = _products[p];
-            if (prodId == invalid) {
+            if (prodId == invalidIndex) {
                 continue;
             }
 
@@ -1009,7 +1009,7 @@ template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
 Reaction<TNetwork, TDerived>::dissociationFlux(
-    ConcentrationsView concentrations, FluxesView fluxes, std::size_t gridIndex)
+    ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -1077,12 +1077,12 @@ KOKKOS_INLINE_FUNCTION
 void
 Reaction<TNetwork, TDerived>::productionPartialDerivatives(
     ConcentrationsView concentrations, Kokkos::View<double*> values,
-    Connectivity connectivity, std::size_t gridIndex)
+    Connectivity connectivity, IndexType gridIndex)
 {
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
     int nProd = 0;
     for (auto prodId : _products) {
-        if (prodId != invalid) {
+        if (prodId != invalidIndex) {
             ++nProd;
         }
     }
@@ -1109,9 +1109,9 @@ Reaction<TNetwork, TDerived>::productionPartialDerivatives(
     // Second reactant
     Kokkos::atomic_sub(&values(connectivity(_reactants[1], _reactants[0])), _rate(gridIndex) * temp / (double) volCl2);
     // For the products
-    for (std::size_t p : {0,1}) {
+    for (auto p : {0,1}) {
         auto prodId = _products[p];
-        if (prodId == invalid) {
+        if (prodId == invalidIndex) {
             continue;
         }
         auto prod = _clusterData.getCluster(prodId);
@@ -1133,9 +1133,9 @@ Reaction<TNetwork, TDerived>::productionPartialDerivatives(
     // Second reactant
     Kokkos::atomic_sub(&values(connectivity(_reactants[1], _reactants[1])), _rate(gridIndex) * temp / (double) volCl2);
     // For the products
-    for (std::size_t p : {0,1}) {
+    for (auto p : {0,1}) {
         auto prodId = _products[p];
-        if (prodId == invalid) {
+        if (prodId == invalidIndex) {
             continue;
         }
         auto prod = _clusterData.getCluster(prodId);
@@ -1158,9 +1158,9 @@ Reaction<TNetwork, TDerived>::productionPartialDerivatives(
         // second reactant
         Kokkos::atomic_sub(&values(connectivity(_reactants[1], _reactantMomentIds[0][i()])), _rate(gridIndex) * temp / (double) volCl2);
         // For the products
-        for (std::size_t p : {0,1}) {
+        for (auto p : {0,1}) {
             auto prodId = _products[p];
-            if (prodId == invalid) {
+            if (prodId == invalidIndex) {
                 continue;
             }
             auto prod = _clusterData.getCluster(prodId);
@@ -1182,9 +1182,9 @@ Reaction<TNetwork, TDerived>::productionPartialDerivatives(
         }
         Kokkos::atomic_sub(&values(connectivity(_reactants[0], _reactantMomentIds[1][i()])), _rate(gridIndex) * temp / (double) volCl1);
         Kokkos::atomic_sub(&values(connectivity(_reactants[1], _reactantMomentIds[1][i()])), _rate(gridIndex) * temp / (double) volCl2);
-        for (std::size_t p : {0,1}) {
+        for (auto p : {0,1}) {
             auto prodId = _products[p];
-            if (prodId == invalid) {
+            if (prodId == invalidIndex) {
                 continue;
             }
             auto prod = _clusterData.getCluster(prodId);
@@ -1285,9 +1285,9 @@ Reaction<TNetwork, TDerived>::productionPartialDerivatives(
     }
 
     // Loop on the products
-    for (std::size_t p : {0,1}) {
+    for (auto p : {0,1}) {
         auto prodId = _products[p];
-        if (prodId == invalid) {
+        if (prodId == invalidIndex) {
             continue;
         }
 
@@ -1352,7 +1352,7 @@ KOKKOS_INLINE_FUNCTION
 void
 Reaction<TNetwork, TDerived>::dissociationPartialDerivatives(
     ConcentrationsView concentrations, Kokkos::View<double*> values,
-    Connectivity connectivity, std::size_t gridIndex)
+    Connectivity connectivity, IndexType gridIndex)
 {
     using AmountType = typename NetworkType::AmountType;
     constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
@@ -1438,7 +1438,7 @@ template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
 Reaction<TNetwork, TDerived>::productionLeftSideRate(
-    ConcentrationsView concentrations, std::size_t clusterId, std::size_t gridIndex)
+    ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
 {
     // Check if our cluster is on the left side of this reaction
     if (clusterId == _reactants[0]) 
@@ -1454,7 +1454,7 @@ template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
 Reaction<TNetwork, TDerived>::dissociationLeftSideRate(
-    ConcentrationsView concentrations, std::size_t clusterId, std::size_t gridIndex)
+    ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
 {
     // Check if our cluster is on the left side of this reaction
     if (clusterId == _reactants[0]) 

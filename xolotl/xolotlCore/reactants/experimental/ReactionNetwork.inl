@@ -10,7 +10,7 @@ namespace experimental
 {
 template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
-        std::size_t gridSize, const IOptions& options)
+        IndexType gridSize, const IOptions& options)
     :
     IReactionNetwork(gridSize),
     _subpaving(subpaving),
@@ -26,7 +26,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     
 
 //    	// PRINT ALL THE CLUSTERS
-//    	for (std::size_t i = 0; i < _numClusters; ++i) {
+//    	for (IndexType i = 0; i < _numClusters; ++i) {
 //    		const auto& cl1Reg = tiles(i).getRegion();
 //    		Composition lo1 = cl1Reg.getOrigin();
 //    	    Composition hi1 = cl1Reg.getUpperLimitPoint();
@@ -49,7 +49,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 
 template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
-        std::size_t gridSize)
+        IndexType gridSize)
     :
     ReactionNetwork(subpaving, gridSize, Options{})
 {
@@ -59,7 +59,7 @@ template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(
         const std::vector<AmountType>& maxSpeciesAmounts,
         const std::vector<SubdivisionRatio>& subdivisionRatios,
-        std::size_t gridSize, const IOptions& options)
+        IndexType gridSize, const IOptions& options)
     :
     ReactionNetwork(
         [&]() -> Subpaving
@@ -80,7 +80,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(
 template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(
         const std::vector<AmountType>& maxSpeciesAmounts,
-        std::size_t gridSize, const IOptions& options)
+        IndexType gridSize, const IOptions& options)
     :
     ReactionNetwork(maxSpeciesAmounts,
         [&maxSpeciesAmounts]() -> std::vector<SubdivisionRatio>
@@ -111,7 +111,7 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setGridSize(size_t gridSize)
+ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 {
     _gridSize = gridSize;
     _clusterData.setGridSize(_gridSize);
@@ -121,7 +121,7 @@ ReactionNetwork<TImpl>::setGridSize(size_t gridSize)
     auto reactions = _reactions;
     auto reactionData = _reactionData;
     auto clusterData = _clusterData;
-    Kokkos::parallel_for(reactions.extent(0), KOKKOS_LAMBDA (std::size_t i) {
+    Kokkos::parallel_for(reactions.extent(0), KOKKOS_LAMBDA (IndexType i) {
         reactions(i).updateData(reactionData, clusterData, i);
     });
 }
@@ -137,7 +137,7 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
     updateDiffusionCoefficients();
 
     auto reactions = _reactions;
-    Kokkos::parallel_for(reactions.extent(0), KOKKOS_LAMBDA (std::size_t i) {
+    Kokkos::parallel_for(reactions.extent(0), KOKKOS_LAMBDA (IndexType i) {
         reactions(i).updateRates();
     });
     Kokkos::fence();
@@ -160,13 +160,13 @@ ReactionNetwork<TImpl>::generateClusterData(const ClusterGenerator& generator)
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
-    FluxesView fluxes, std::size_t gridIndex)
+    FluxesView fluxes, IndexType gridIndex)
 {
     // Get the extent of the reactions view
 	auto reactions = _reactions;
     auto nReactions = reactions.extent(0);
     // Loop on the reactions
-    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
+    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const IndexType i) {
         reactions(i).contributeFlux(concentrations, fluxes, gridIndex);
     });
 }
@@ -174,12 +174,12 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
-    Kokkos::View<double*> values, std::size_t gridIndex)
+    Kokkos::View<double*> values, IndexType gridIndex)
 {
     // Reset the values
     const auto& nValues = values.extent(0);
     // Loop on the reactions
-    Kokkos::parallel_for(nValues, KOKKOS_LAMBDA (const std::size_t i) {
+    Kokkos::parallel_for(nValues, KOKKOS_LAMBDA (const IndexType i) {
         values(i) = 0.0;
     });
 
@@ -188,7 +188,7 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
     auto nReactions = reactions.extent(0);
     auto connectivity = _reactionData.connectivity;
     // Loop on the reactions
-    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const std::size_t i) {
+    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const IndexType i) {
         reactions(i).contributePartialDerivatives(concentrations, values,
             connectivity, gridIndex);
     });
@@ -205,7 +205,7 @@ ReactionNetwork<TImpl>::getLargestRate()
     // Loop on all the rates to get the maximum
     using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
     Kokkos::parallel_reduce(Range2D({0, 0}, {nRates, _gridSize}),
-            KOKKOS_LAMBDA (std::size_t i, std::size_t j, double &max) {
+            KOKKOS_LAMBDA (IndexType i, IndexType j, double &max) {
     	if (reactionRates(i, j) > max) max = reactionRates(i, j);
     }, Kokkos::Max<double>(largestRate));
     
@@ -217,14 +217,14 @@ ReactionNetwork<TImpl>::getLargestRate()
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getLeftSideRate(ConcentrationsView concentrations,
-    std::size_t clusterId, std::size_t gridIndex)
+    IndexType clusterId, IndexType gridIndex)
 {
     // Get the extent of the reactions
     auto reactions = _reactions;
     auto nReactions = reactions.extent(0);
     double leftSideRate = 0.0;
     // Loop on all the rates to get the maximum
-    Kokkos::parallel_reduce(nReactions, KOKKOS_LAMBDA (const std::size_t i, double &lsum) {
+    Kokkos::parallel_reduce(nReactions, KOKKOS_LAMBDA (const IndexType i, double &lsum) {
         lsum += reactions(i).contributeLeftSideRate(concentrations, clusterId, gridIndex);
     }, leftSideRate);
 	
@@ -234,14 +234,14 @@ ReactionNetwork<TImpl>::getLeftSideRate(ConcentrationsView concentrations,
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalConcentration(ConcentrationsView concentrations,
-		Species type, std::size_t minSize)
+		Species type, AmountType minSize)
 {
     auto tiles = _subpaving.getTiles(plsm::onDevice);
     double conc = 0.0;
     Kokkos::parallel_reduce(_numClusters,
-            KOKKOS_LAMBDA (std::size_t i, double &lsum) {
+            KOKKOS_LAMBDA (IndexType i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
-    	for (std::size_t j : makeIntervalRange(clReg[type])) {
+    	for (AmountType j : makeIntervalRange(clReg[type])) {
     		if (j >= minSize) lsum += concentrations(i);
     	}
     }, conc);
@@ -252,15 +252,15 @@ ReactionNetwork<TImpl>::getTotalConcentration(ConcentrationsView concentrations,
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalRadiusConcentration(ConcentrationsView concentrations,
-		Species type, std::size_t minSize)
+		Species type, AmountType minSize)
 {
     auto tiles = _subpaving.getTiles(plsm::onDevice);
     double conc = 0.0;
     auto clusterData = _clusterData;
     Kokkos::parallel_reduce(_numClusters,
-            KOKKOS_LAMBDA (std::size_t i, double &lsum) {
+            KOKKOS_LAMBDA (IndexType i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
-    	for (std::size_t j : makeIntervalRange(clReg[type])) {
+    	for (AmountType j : makeIntervalRange(clReg[type])) {
     		if (j >= minSize) lsum += concentrations(i) * clusterData.reactionRadius(i);
     	}
     }, conc);
@@ -271,14 +271,14 @@ ReactionNetwork<TImpl>::getTotalRadiusConcentration(ConcentrationsView concentra
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalAtomConcentration(ConcentrationsView concentrations,
-		Species type, std::size_t minSize)
+		Species type, AmountType minSize)
 {
     auto tiles = _subpaving.getTiles(plsm::onDevice);
     double conc = 0.0;
     Kokkos::parallel_reduce(_numClusters,
-            KOKKOS_LAMBDA (std::size_t i, double &lsum) {
+            KOKKOS_LAMBDA (IndexType i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
-    	for (std::size_t j : makeIntervalRange(clReg[type])) {
+    	for (AmountType j : makeIntervalRange(clReg[type])) {
     		if (j >= minSize) lsum += concentrations(i) * j;
     	}
     }, conc);
@@ -289,7 +289,7 @@ ReactionNetwork<TImpl>::getTotalAtomConcentration(ConcentrationsView concentrati
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(ConcentrationsView concentrations,
-		Species type, std::size_t minSize)
+		Species type, AmountType minSize)
 {
     // Find the vacancy index
     constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
@@ -308,10 +308,10 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(ConcentrationsView conc
     auto tiles = _subpaving.getTiles(plsm::onDevice);
     double conc = 0.0;
     Kokkos::parallel_reduce(_numClusters,
-            KOKKOS_LAMBDA (std::size_t i, double &lsum) {
+            KOKKOS_LAMBDA (IndexType i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
     	if (clReg[vIndex].begin() > 0) {
-    	for (std::size_t j : makeIntervalRange(clReg[type])) {
+    	for (AmountType j : makeIntervalRange(clReg[type])) {
     		if (j >= minSize) lsum += concentrations(i) * j;
     	}
     	}
@@ -335,7 +335,7 @@ ReactionNetwork<TImpl>::defineReactions()
 }
 
 template <typename TImpl>
-std::size_t
+typename ReactionNetwork<TImpl>::IndexType
 ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 {
     return _worker.getDiagonalFill(fillMap);
@@ -350,7 +350,7 @@ ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
     using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
     auto data = _nw._clusterData;
     Kokkos::parallel_for(Range2D({0, 0}, {data.numClusters, data.gridSize}),
-            KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
+            KOKKOS_LAMBDA (IndexType i, IndexType j) {
         if (!xolotlCore::equal(data.diffusionFactor(i), 0.0))
             data.diffusionCoefficient(i,j) = data.diffusionFactor(i) * std::exp(
                 -data.migrationEnergy(i) / (kBoltzmann * data.temperature(j)));
@@ -376,7 +376,7 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
     auto latticeParameter = _nw.getLatticeParameter();
     auto interstitialBias = _nw.getInterstitialBias();
     auto impurityRadius = _nw.getImpurityRadius();
-    Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const std::size_t i) {
+    Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const IndexType i) {
         auto cluster = data.getCluster(i);
         data.formationEnergy(i) = generator.getFormationEnergy(cluster);
         data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
@@ -396,14 +396,14 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
     ClusterDataRef data(_nw._clusterData);
 
     auto nClusters = data.numClusters;
-    auto counts = Kokkos::View<std::size_t*>("Moment Id Counts", nClusters);
+    auto counts = Kokkos::View<IndexType*>("Moment Id Counts", nClusters);
 
-    std::size_t nMomentIds = 0;
+    IndexType nMomentIds = 0;
     Kokkos::parallel_reduce(nClusters,
-        KOKKOS_LAMBDA (const std::size_t i, std::size_t& running)
+        KOKKOS_LAMBDA (const IndexType i, IndexType& running)
         {
             const auto& reg = data.getCluster(i).getRegion();
-            std::size_t count = 0;
+            IndexType count = 0;
             for (auto k : speciesRangeNoI) {
                 if (reg[k].length() != 1) {
                     ++count;
@@ -416,12 +416,12 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 
     Kokkos::parallel_scan(nClusters, ExclusiveScanFunctor{counts});
 
-    Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const std::size_t i) {
+    Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const IndexType i) {
         const auto& reg = data.getCluster(i).getRegion();
-        std::size_t current = counts(i);
+        IndexType current = counts(i);
         for (auto k : speciesRangeNoI) {
             if (reg[k].length() == 1) {
-                data.momentIds(i, k()) = Network::invalid;
+                data.momentIds(i, k()) = Network::invalidIndex;
             }
             else {
                 data.momentIds(i, k()) = nClusters + current;
@@ -445,7 +445,7 @@ ReactionNetworkWorker<TImpl>::defineReactions()
 }
 
 template <typename TImpl>
-std::size_t
+ReactionNetworkIndexType
 ReactionNetworkWorker<TImpl>::getDiagonalFill(
     typename Network::SparseFillMap& fillMap)
 {
@@ -460,7 +460,7 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
         auto jEnd = hConnRowMap(i+1);
         std::vector<int> current;
         current.reserve(jEnd - jBegin);
-        for (std::size_t j = jBegin; j < jEnd; ++j) {
+        for (IndexType j = jBegin; j < jEnd; ++j) {
             current.push_back((int)hConnEntries(j));
         }
         fillMap[i] = std::move(current);

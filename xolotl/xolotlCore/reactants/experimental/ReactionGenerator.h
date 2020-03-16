@@ -24,9 +24,10 @@ public:
     using ReactionType = typename Network::ReactionType;
     using ClusterSet = typename ReactionType::ClusterSet;
     using Subpaving = typename Network::Subpaving;
+    using IndexType = typename Network::IndexType;
 
     ReactionGeneratorRange1D(const Subpaving& subpaving,
-            const ClusterData& clusterData, std::size_t numDOFs)
+            const ClusterData& clusterData, IndexType numDOFs)
         :
         _subpaving(subpaving),
         _clusterData(clusterData),
@@ -44,8 +45,8 @@ public:
         auto numClusters = _clusterData.numClusters;
         auto diffusionFactor = _clusterData.diffusionFactor;
         auto generator = *static_cast<TDerived*>(this);
-        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (std::size_t j) {
-            for (std::size_t i = 0; i <= j; ++i) {
+        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (IndexType j) {
+            for (IndexType i = 0; i <= j; ++i) {
                 if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
                     continue;
                 }
@@ -59,8 +60,8 @@ public:
 
         generator = *static_cast<TDerived*>(this);
 
-        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (std::size_t j) {
-            for (std::size_t i = 0; i <= j; ++i) {
+        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (IndexType j) {
+            for (IndexType i = 0; i <= j; ++i) {
                 if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
                     continue;
                 }
@@ -81,7 +82,7 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     Cluster
-    getCluster(std::size_t i) const
+    getCluster(IndexType i) const
     {
         return _clusterData.getCluster(i);
     }
@@ -99,7 +100,7 @@ public:
         _reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
 
         _prodCrsReactions = Kokkos::subview(_reactions,
-            std::make_pair((std::size_t)0, _numProdReactions));
+            std::make_pair((IndexType)0, _numProdReactions));
 
         _dissCrsReactions = Kokkos::subview(_reactions,
             std::make_pair(_numProdReactions, numReactions));
@@ -115,7 +116,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    std::size_t
+    IndexType
     getNumberOfClusters() const noexcept
     {
         return _clusterData.numClusters;
@@ -172,15 +173,15 @@ public:
 protected:
     Subpaving _subpaving;
     ClusterData _clusterData;
-    std::size_t _numDOFs;
-    Kokkos::View<std::size_t*> _clusterProdReactionCounts;
-    Kokkos::View<std::size_t*> _clusterDissReactionCounts;
+    IndexType _numDOFs;
+    Kokkos::View<IndexType*> _clusterProdReactionCounts;
+    Kokkos::View<IndexType*> _clusterDissReactionCounts;
 
-    std::size_t _numProdReactions;
-    std::size_t _numDissReactions;
+    IndexType _numProdReactions;
+    IndexType _numDissReactions;
 
-    Kokkos::View<std::size_t*> _prodCrsRowMap;
-    Kokkos::View<std::size_t*> _dissCrsRowMap;
+    Kokkos::View<IndexType*> _prodCrsRowMap;
+    Kokkos::View<IndexType*> _dissCrsRowMap;
     using ReactionSubView = decltype(
         Kokkos::subview(std::declval<Kokkos::View<ReactionType*>>(),
             Kokkos::ALL));
@@ -211,9 +212,10 @@ public:
     using ReactionType = typename Network::ReactionType;
     using ClusterSet = typename ReactionType::ClusterSet;
     using Subpaving = typename Network::Subpaving;
+    using IndexType = typename Network::IndexType;
 
     ReactionGeneratorRange2D(const Subpaving& subpaving,
-            const ClusterData& clusterData, std::size_t numDOFs)
+            const ClusterData& clusterData, IndexType numDOFs)
         :
         _subpaving(subpaving),
         _clusterData(clusterData),
@@ -234,7 +236,7 @@ public:
         using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
         auto range2d = Range2D({0, 0}, {numClusters, numClusters});
         Kokkos::parallel_for(range2d,
-                KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
+                KOKKOS_LAMBDA (IndexType i, IndexType j) {
             if (j < i) {
                 return;
             }
@@ -251,7 +253,7 @@ public:
         generator = *static_cast<TDerived*>(this);
 
         Kokkos::parallel_for(range2d,
-                KOKKOS_LAMBDA (std::size_t i, std::size_t j) {
+                KOKKOS_LAMBDA (IndexType i, IndexType j) {
             if (j < i) {
                 return;
             }
@@ -267,14 +269,14 @@ public:
         auto clusterData = ClusterDataRef(_clusterData);
         auto prodReactions = _prodCrsReactions;
         auto prodClusterSets = _prodCrsClusterSets;
-        Kokkos::parallel_for(_numProdReactions, KOKKOS_LAMBDA (std::size_t i) {
+        Kokkos::parallel_for(_numProdReactions, KOKKOS_LAMBDA (IndexType i) {
             prodReactions(i) = ReactionType(reactionData, clusterData, i,
                 RType::production, prodClusterSets(i));
         });
         auto dissReactions = _dissCrsReactions;
         auto dissClusterSets = _dissCrsClusterSets;
         auto nProdReactions = _numProdReactions;
-        Kokkos::parallel_for(_numDissReactions, KOKKOS_LAMBDA (std::size_t i) {
+        Kokkos::parallel_for(_numDissReactions, KOKKOS_LAMBDA (IndexType i) {
             dissReactions(i) = ReactionType(reactionData, clusterData,
                 i + nProdReactions, RType::dissociation, dissClusterSets(i));
         });
@@ -292,7 +294,7 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     Cluster
-    getCluster(std::size_t i) const
+    getCluster(IndexType i) const
     {
         return _clusterData.getCluster(i);
     }
@@ -320,7 +322,7 @@ public:
             // Kokkos::ViewAllocateWithoutInitializing("Reactions"), numReactions);
 
         _prodCrsReactions = Kokkos::subview(_reactions,
-            std::make_pair((std::size_t)0, _numProdReactions));
+            std::make_pair((IndexType)0, _numProdReactions));
 
         _dissCrsReactions = Kokkos::subview(_reactions,
             std::make_pair(_numProdReactions, numReactions));
@@ -336,7 +338,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    std::size_t
+    IndexType
     getNumberOfClusters() const noexcept
     {
         return _clusterData.numClusters;
@@ -356,7 +358,7 @@ public:
     {
         auto id = _prodCrsRowMap(clusterSet.cluster0);
         for (; !Kokkos::atomic_compare_exchange_strong(
-                    &_prodCrsClusterSets(id).cluster0, Network::invalid,
+                    &_prodCrsClusterSets(id).cluster0, Network::invalidIndex,
                     clusterSet.cluster0);
                 ++id)
         {
@@ -378,7 +380,7 @@ public:
     {
         auto id = _dissCrsRowMap(clusterSet.cluster1);
         for (; !Kokkos::atomic_compare_exchange_strong(
-                    &_dissCrsClusterSets(id).cluster1, Network::invalid,
+                    &_dissCrsClusterSets(id).cluster1, Network::invalidIndex,
                     clusterSet.cluster1);
                 ++id)
         {
@@ -401,15 +403,15 @@ public:
 protected:
     Subpaving _subpaving;
     ClusterData _clusterData;
-    std::size_t _numDOFs;
-    Kokkos::View<std::size_t*> _clusterProdReactionCounts;
-    Kokkos::View<std::size_t*> _clusterDissReactionCounts;
+    IndexType _numDOFs;
+    Kokkos::View<IndexType*> _clusterProdReactionCounts;
+    Kokkos::View<IndexType*> _clusterDissReactionCounts;
 
-    std::size_t _numProdReactions;
-    std::size_t _numDissReactions;
+    IndexType _numProdReactions;
+    IndexType _numDissReactions;
 
-    Kokkos::View<std::size_t*> _prodCrsRowMap;
-    Kokkos::View<std::size_t*> _dissCrsRowMap;
+    Kokkos::View<IndexType*> _prodCrsRowMap;
+    Kokkos::View<IndexType*> _dissCrsRowMap;
 
     Kokkos::View<ClusterSet*> _prodCrsClusterSets;
     Kokkos::View<ClusterSet*> _dissCrsClusterSets;
@@ -440,6 +442,7 @@ public:
     using Superclass = ReactionGeneratorImpl<TNetwork, TDerived>;
     using Network = typename Superclass::Network;
     using Connectivity = typename Network::Connectivity;
+    using IndexType = typename Superclass::IndexType;
 
     using Superclass::Superclass;
 
@@ -463,10 +466,10 @@ public:
         //      Reaction::contributeConnectivity expects the connectivity CRS
         tmpConn.row_map = RowMap("tmp counts", this->_numDOFs);
         // Even if there is no reaction each dof should connect with itself (for PETSc)
-        Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const std::size_t i) {
+        Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const IndexType i) {
             Kokkos::atomic_increment(&tmpConn.row_map(i));
         });
-        Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (std::size_t i) {
+        Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (IndexType i) {
             reactions(i).contributeConnectivity(tmpConn);
         });
         Kokkos::fence();
@@ -480,21 +483,21 @@ public:
         tmpConn.entries = Entries(
             Kokkos::ViewAllocateWithoutInitializing("connectivity entries"),
             nEntries);
-        Kokkos::parallel_for(nEntries, KOKKOS_LAMBDA (std::size_t i) {
-            tmpConn.entries(i) = Network::invalid;
+        Kokkos::parallel_for(nEntries, KOKKOS_LAMBDA (IndexType i) {
+            tmpConn.entries(i) = Network::invalidIndex;
         });
         // Even if there is no reaction each dof should connect with itself (for PETSc)
-        Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const std::size_t i) {
+        Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const IndexType i) {
             auto id = tmpConn.row_map(i);
             for (; !Kokkos::atomic_compare_exchange_strong(
-                        &tmpConn.entries(id), plsm::invalid<std::size_t>, i); ++id) {
+                        &tmpConn.entries(id), Network::invalidIndex, i); ++id) {
                 if (tmpConn.entries(id) == i) {
                     break;
                 }
             }
         });
         //Fill entries (column ids)
-        Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (std::size_t i) {
+        Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (IndexType i) {
             reactions(i).contributeConnectivity(tmpConn);
         });
         Kokkos::fence();
@@ -502,14 +505,14 @@ public:
         //Shrink to fit
         Connectivity connectivity;
         Kokkos::count_and_fill_crs(connectivity, this->_numDOFs,
-                KOKKOS_LAMBDA (std::size_t i, std::size_t* fill) {
-            std::size_t ret = 0;
+                KOKKOS_LAMBDA (IndexType i, IndexType* fill) {
+            IndexType ret = 0;
             if (fill == nullptr) {
                 auto jStart = tmpConn.row_map(i);
                 auto jEnd = tmpConn.row_map(i+1);
                 ret = jEnd - jStart;
-                for (std::size_t j = jStart; j < jEnd; ++j) {
-                    if (tmpConn.entries(j) == Network::invalid) {
+                for (IndexType j = jStart; j < jEnd; ++j) {
+                    if (tmpConn.entries(j) == Network::invalidIndex) {
                         ret = j - jStart;
                         break;
                     }
@@ -517,9 +520,9 @@ public:
             }
             else {
                 auto tmpStart = tmpConn.row_map(i);
-                for (std::size_t j = tmpStart; j < tmpConn.row_map(i+1); ++j) {
+                for (IndexType j = tmpStart; j < tmpConn.row_map(i+1); ++j) {
                     auto entry = tmpConn.entries(j);
-                    if (entry == Network::invalid) {
+                    if (entry == Network::invalidIndex) {
                         break;
                     }
                     fill[j - tmpStart] = entry;

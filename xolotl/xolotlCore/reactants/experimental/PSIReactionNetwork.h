@@ -29,8 +29,6 @@ public:
     using Species = typename Superclass::Species;
     using AmountType = typename Superclass::AmountType;
 
-    static constexpr auto invalid = plsm::invalid<std::size_t>;
-
     using Superclass::Superclass;
 
 private:
@@ -70,15 +68,17 @@ public:
     using Network = PSIReactionNetwork<TSpeciesEnum>;
     using Subpaving = typename Network::Subpaving;
     using ClusterSet = typename Network::ReactionType::ClusterSet;
+    using IndexType = typename Network::IndexType;
 
     using Superclass = ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
         PSIReactionGenerator<TSpeciesEnum>>;
+
     using Superclass::Superclass;
 
     template <typename TTag>
     KOKKOS_INLINE_FUNCTION
     void
-    operator()(std::size_t i, std::size_t j, TTag tag) const;
+    operator()(IndexType i, IndexType j, TTag tag) const;
 };
 }
 }

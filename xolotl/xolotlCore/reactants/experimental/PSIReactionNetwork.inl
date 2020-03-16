@@ -10,7 +10,7 @@ template <typename TSpeciesEnum>
 template <typename TTag>
 KOKKOS_INLINE_FUNCTION
 void
-PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
+PSIReactionGenerator<TSpeciesEnum>::operator()(IndexType i, IndexType j,
     TTag tag) const
 {
     using Species = typename Network::Species;
@@ -19,7 +19,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
 
     constexpr auto species = Network::getSpeciesRange();
     constexpr auto speciesNoI = Network::getSpeciesRangeNoI();
-    constexpr auto invalid = Network::invalid;
+    constexpr auto invalidIndex = Network::invalidIndex;
 
     auto numClusters = this->getNumberOfClusters();
 
@@ -42,7 +42,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
         Composition comp = Composition::zero();
         comp[Species::I] = size;
         auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-        if (iProdId != invalid) {
+        if (iProdId != invalidIndex) {
             this->addProductionReaction(tag, {i, j, iProdId});
             if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
                 this->addDissociationReaction(tag, {iProdId, i, j});
@@ -68,7 +68,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             Composition comp = Composition::zero();
             comp[Species::V] = prodSize;
             auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
-            if (vProdId != invalid) {
+            if (vProdId != invalidIndex) {
                 this->addProductionReaction(tag, {i, j, vProdId});
                 // No dissociation
             }
@@ -78,7 +78,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             Composition comp = Composition::zero();
             comp[Species::I] = -prodSize;
             auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-            if (iProdId != invalid) {
+            if (iProdId != invalidIndex) {
                 this->addProductionReaction(tag, {i, j, iProdId});
                 // No dissociation
             }
@@ -110,8 +110,8 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
     }
 
     // Look for potential product
-    std::size_t nProd = 0;
-    for (std::size_t k = 0; k < numClusters; ++k) {
+    IndexType nProd = 0;
+    for (IndexType k = 0; k < numClusters; ++k) {
         // Get the composition
         const auto& prodReg = this->getCluster(k).getRegion();
         bool isGood = true;
@@ -168,8 +168,8 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
 
         // Loop on possible I sizes
         // TODO: get the correct value for maxISize
-        std::size_t maxISize = 6;
-        for (std::size_t n = 1; n <= maxISize; ++n) {
+        AmountType maxISize = 6;
+        for (AmountType n = 1; n <= maxISize; ++n) {
             // Find the corresponding cluster
             Composition comp = Composition::zero();
             comp[Species::I] = n;
@@ -179,8 +179,8 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(std::size_t i, std::size_t j,
             bounds[Species::V].second += 1;
 
             // Look for potential product
-            std::size_t nProd = 0;
-            for (std::size_t k = 0; k < numClusters; ++k) {
+            IndexType nProd = 0;
+            for (IndexType k = 0; k < numClusters; ++k) {
                 // Get the composition
                 const auto& prodReg = this->getCluster(k).getRegion();
                 bool isGood = true;

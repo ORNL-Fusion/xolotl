@@ -9,7 +9,7 @@ namespace detail
 template <typename TTag>
 KOKKOS_INLINE_FUNCTION
 void
-NEReactionGenerator::operator()(std::size_t i, std::size_t j, TTag tag) const
+NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
     using Species = typename Network::Species;
     using Composition = typename Network::Composition;
@@ -33,7 +33,7 @@ NEReactionGenerator::operator()(std::size_t i, std::size_t j, TTag tag) const
     bounds = {low, high};
 
     // Look for potential product
-    for (std::size_t k = 0; k < numClusters; ++k) {
+    for (IndexType k = 0; k < numClusters; ++k) {
         // Get the composition
         const auto& prodReg = this->getCluster(k).getRegion();
         // Check the bounds

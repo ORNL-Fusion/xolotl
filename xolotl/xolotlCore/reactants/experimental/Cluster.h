@@ -10,8 +10,10 @@ template <typename TDerived>
 class ClusterBase
 {
 public:
+    using IndexType = detail::ReactionNetworkIndexType;
+
     KOKKOS_INLINE_FUNCTION
-    ClusterBase(std::size_t id)
+    ClusterBase(IndexType id)
         :
         _id(id)
     {
@@ -33,14 +35,14 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     double
-    getTemperature(std::size_t gridIndex)
+    getTemperature(IndexType gridIndex)
     {
         return asDerived()->_data.temperature(gridIndex);
     }
 
     KOKKOS_INLINE_FUNCTION
     double
-    getDiffusionCoefficient(std::size_t gridIndex)
+    getDiffusionCoefficient(IndexType gridIndex)
     {
         return asDerived()->_data.diffusionCoefficient(_id, gridIndex);
     }
@@ -53,7 +55,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    std::size_t
+    IndexType
     getId() const noexcept
     {
         return _id;
@@ -68,7 +70,7 @@ private:
     }
 
 private:
-    std::size_t _id {plsm::invalid<std::size_t>};
+    IndexType _id {detail::InvalidIndex::value};
 };
 
 template <typename PlsmContext>
@@ -80,11 +82,12 @@ public:
     using Superclass = ClusterBase<ClusterCommon<PlsmContext>>;
     using ClusterData = detail::ClusterDataCommon<PlsmContext>;
     using ClusterDataRef = detail::ClusterDataCommonRef<PlsmContext>;
+    using IndexType = typename Superclass::IndexType;
 
     ClusterCommon() = delete;
 
     KOKKOS_INLINE_FUNCTION
-    ClusterCommon(const ClusterData& data, std::size_t id)
+    ClusterCommon(const ClusterData& data, IndexType id)
         :
         Superclass(id),
         _data{data}
@@ -92,7 +95,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    ClusterCommon(const ClusterDataRef& data, std::size_t id)
+    ClusterCommon(const ClusterDataRef& data, IndexType id)
         :
         Superclass(id),
         _data{data}
@@ -116,11 +119,12 @@ public:
     using Region = typename Subpaving::RegionType;
     using ClusterData = detail::ClusterData<TNetwork, PlsmContext>;
     using ClusterDataRef = detail::ClusterDataRef<TNetwork, PlsmContext>;
+    using IndexType = typename Superclass::IndexType;
 
     Cluster() = delete;
 
     KOKKOS_INLINE_FUNCTION
-    Cluster(const ClusterData& data, std::size_t id)
+    Cluster(const ClusterData& data, IndexType id)
         :
         Superclass(id),
         _data{data}
@@ -128,7 +132,7 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    Cluster(const ClusterDataRef& data, std::size_t id)
+    Cluster(const ClusterDataRef& data, IndexType id)
         :
         Superclass(id),
         _data{data}

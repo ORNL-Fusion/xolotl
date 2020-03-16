@@ -18,7 +18,7 @@ namespace experimental
 template <typename TNetwork, typename TDerived>
 class Reaction
 {
-    static constexpr std::size_t invalid = plsm::invalid<std::size_t>;
+    static constexpr auto invalidIndex = detail::InvalidIndex::value;
 
     using Types = detail::ReactionNetworkTypes<TNetwork>;
     using Props = detail::ReactionNetworkProperties<TNetwork>;
@@ -28,6 +28,7 @@ class Reaction
 public:
     using NetworkType = TNetwork;
     using Species = typename Types::Species;
+    using IndexType = typename Types::IndexType;
     using AmountType = typename Types::AmountType;
     using Region = typename Types::Region;
     using Composition = typename Types::Composition;
@@ -44,16 +45,16 @@ public:
 
     struct ClusterSet
     {
-        std::size_t cluster0 {invalid};
-        std::size_t cluster1 {invalid};
-        std::size_t cluster2 {invalid};
-        std::size_t cluster3 {invalid};
+        IndexType cluster0 {invalidIndex};
+        IndexType cluster1 {invalidIndex};
+        IndexType cluster2 {invalidIndex};
+        IndexType cluster3 {invalidIndex};
 
         ClusterSet() = default;
 
         KOKKOS_INLINE_FUNCTION
-        ClusterSet(std::size_t cl0, std::size_t cl1, std::size_t cl2 = invalid,
-                std::size_t cl3 = invalid)
+        ClusterSet(IndexType cl0, IndexType cl1, IndexType cl2 = invalidIndex,
+                IndexType cl3 = invalidIndex)
             :
             cluster0{cl0},
             cluster1{cl1},
@@ -66,7 +67,7 @@ public:
         bool
         valid() const noexcept
         {
-            return cluster0 != invalid;
+            return cluster0 != invalidIndex;
         }
     };
 
@@ -74,13 +75,13 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     Reaction(detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
-        std::size_t reactionId, Type reactionType,
-        std::size_t cluster0, std::size_t cluster1,
-        std::size_t cluster2 = invalid, std::size_t cluster3 = invalid);
+        IndexType reactionId, Type reactionType,
+        IndexType cluster0, IndexType cluster1,
+        IndexType cluster2 = invalidIndex, IndexType cluster3 = invalidIndex);
 
     KOKKOS_INLINE_FUNCTION
     Reaction(detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
-        std::size_t reactionId, Type reactionType,
+        IndexType reactionId, Type reactionType,
         const ClusterSet& clusterSet);
 
     KOKKOS_INLINE_FUNCTION
@@ -93,7 +94,7 @@ public:
     KOKKOS_INLINE_FUNCTION
     void
     updateData(detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
-        std::size_t reactionId);
+        IndexType reactionId);
 
     KOKKOS_INLINE_FUNCTION
     void
@@ -117,17 +118,17 @@ public:
     KOKKOS_INLINE_FUNCTION
     void
     productionFlux(ConcentrationsView concentrations, FluxesView fluxes,
-        std::size_t gridIndex);
+        IndexType gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
     dissociationFlux(ConcentrationsView concentrations, FluxesView fluxes,
-        std::size_t gridIndex);
+        IndexType gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
     contributeFlux(ConcentrationsView concentrations, FluxesView fluxes,
-        std::size_t gridIndex)
+        IndexType gridIndex)
     {
         ((*this).*(_fluxFn))(concentrations, fluxes, gridIndex);
     }
@@ -136,19 +137,19 @@ public:
     void
     productionPartialDerivatives(ConcentrationsView concentrations,
         Kokkos::View<double*> values, Connectivity connectivity,
-        std::size_t gridIndex);
+        IndexType gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
     dissociationPartialDerivatives(ConcentrationsView concentrations,
         Kokkos::View<double*> values, Connectivity connectivity,
-        std::size_t gridIndex);
+        IndexType gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
     contributePartialDerivatives(ConcentrationsView concentrations,
         Kokkos::View<double*> values, Connectivity connectivity,
-        std::size_t gridIndex)
+        IndexType gridIndex)
     {
         ((*this).*(_partialsFn))(concentrations, values, connectivity,
             gridIndex);
@@ -157,17 +158,17 @@ public:
     KOKKOS_INLINE_FUNCTION
     double
     productionLeftSideRate(ConcentrationsView concentrations,
-        std::size_t clusterId, std::size_t gridIndex);
+        IndexType clusterId, IndexType gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     double
     dissociationLeftSideRate(ConcentrationsView concentrations,
-        std::size_t clusterId, std::size_t gridIndex);
+        IndexType clusterId, IndexType gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     double
     contributeLeftSideRate(ConcentrationsView concentrations,
-        std::size_t clusterId, std::size_t gridIndex)
+        IndexType clusterId, IndexType gridIndex)
     {
         return ((*this).*(_leftSideFn))(concentrations, clusterId, gridIndex);
     }
@@ -195,35 +196,35 @@ private:
 
     KOKKOS_INLINE_FUNCTION
     void
-    copyMomentIds(std::size_t clusterId,
-        Kokkos::Array<std::size_t, nMomentIds>& momentIds)
+    copyMomentIds(IndexType clusterId,
+        Kokkos::Array<IndexType, nMomentIds>& momentIds)
     {
-        if (clusterId == invalid) {
-            for (std::size_t i = 0; i < nMomentIds; ++i) {
-                momentIds[i] = invalid;
+        if (clusterId == invalidIndex) {
+            for (IndexType i = 0; i < nMomentIds; ++i) {
+                momentIds[i] = invalidIndex;
             }
             return;
         }
 
         const auto& mIds = _clusterData.getCluster(clusterId).getMomentIds();
-        for (std::size_t i = 0; i < nMomentIds; ++i) {
+        for (IndexType i = 0; i < nMomentIds; ++i) {
             momentIds[i] = mIds[i];
         }
     }
 
     KOKKOS_INLINE_FUNCTION
     double
-    computeProductionRate(std::size_t gridIndex);
+    computeProductionRate(IndexType gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     double
-    computeDissociationRate(std::size_t gridIndex);
+    computeDissociationRate(IndexType gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
     computeProductionRates()
     {
-        for (std::size_t i = 0; i < _rate.extent(0); ++i) {
+        for (IndexType i = 0; i < _rate.extent(0); ++i) {
             _rate(i) = asDerived()->computeProductionRate(i);
         }
     }
@@ -232,14 +233,14 @@ private:
     void
     computeDissociationRates()
     {
-        for (std::size_t i = 0; i < _rate.extent(0); ++i) {
+        for (IndexType i = 0; i < _rate.extent(0); ++i) {
             _rate(i) = asDerived()->computeDissociationRate(i);
         }
     }
 
     KOKKOS_INLINE_FUNCTION
     void
-    addConnectivity(std::size_t rowId, std::size_t columnId,
+    addConnectivity(IndexType rowId, IndexType columnId,
         const Connectivity& connectivity)
     {
         connectivity.add(rowId, columnId);
@@ -255,26 +256,26 @@ protected:
     ConnectFn _connectFn {nullptr};
 
     using FluxFn =
-        void (Reaction::*)(ConcentrationsView, FluxesView, std::size_t);
+        void (Reaction::*)(ConcentrationsView, FluxesView, IndexType);
     FluxFn _fluxFn {nullptr};
 
     using PartialsFn =
         void (Reaction::*)(ConcentrationsView, Kokkos::View<double*>,
-            Connectivity, std::size_t);
+            Connectivity, IndexType);
     PartialsFn _partialsFn {nullptr};
 
     using LeftSideFn =
-        double (Reaction::*)(ConcentrationsView, std::size_t, std::size_t);
+        double (Reaction::*)(ConcentrationsView, IndexType, IndexType);
     LeftSideFn _leftSideFn {nullptr};
 
     //Cluster indices for LHS and RHS of the reaction
     //Dissociation reactions always have 1 input and 2 outputs
     //Production reactions always have 2 inputs, but may have 0, 1, or 2 outputs
-    Kokkos::Array<std::size_t, 2> _reactants {invalid, invalid};
-    Kokkos::Array<std::size_t, 2> _products {invalid, invalid};
+    Kokkos::Array<IndexType, 2> _reactants {invalidIndex, invalidIndex};
+    Kokkos::Array<IndexType, 2> _products {invalidIndex, invalidIndex};
 
-    Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _reactantMomentIds;
-    Kokkos::Array<Kokkos::Array<std::size_t, nMomentIds>, 2> _productMomentIds;
+    Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _reactantMomentIds;
+    Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _productMomentIds;
 
     //! Reaction rate (k)
     using RateSubView = decltype(

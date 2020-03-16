@@ -86,11 +86,12 @@ public:
     using View = ViewType<TData, PlsmContext>;
 
     using ClusterType = ClusterCommon<PlsmContext>;
+    using IndexType = detail::ReactionNetworkIndexType;
 
     ClusterDataCommon() = default;
 
     explicit
-    ClusterDataCommon(std::size_t numClusters_, std::size_t gridSize_ = 0)
+    ClusterDataCommon(IndexType numClusters_, IndexType gridSize_ = 0)
         :
         numClusters(numClusters_),
         gridSize(gridSize_),
@@ -106,7 +107,7 @@ public:
     }
 
     ClusterType
-    getCluster(std::size_t clusterId) const noexcept
+    getCluster(IndexType clusterId) const noexcept
     {
         return ClusterType(*this, clusterId);
     }
@@ -119,15 +120,15 @@ public:
     }
 
     void
-    setGridSize(std::size_t gridSize_) {
+    setGridSize(IndexType gridSize_) {
         gridSize = gridSize_;
         temperature = View<double*>("Temperature" + labelStr(label), gridSize);
         diffusionCoefficient = View<double**>("Diffusion Coefficient" + labelStr(label),
                 numClusters, gridSize);
     }
 
-    std::size_t numClusters {};
-    std::size_t gridSize {};
+    IndexType numClusters {};
+    IndexType gridSize {};
     View<double[1]> atomicVolume;
     View<double*> temperature;
     View<double*> reactionRadius;
@@ -151,14 +152,15 @@ public:
     using TilesView =
         Unmanaged<typename Subpaving::template TilesView<PlsmContext>>;
     using ClusterType = Cluster<TNetwork, PlsmContext>;
+    using IndexType = typename Types::IndexType;
 
     template <typename TData>
     using View = typename Superclass::template View<TData>;
 
     ClusterData() = default;
 
-    ClusterData(const TilesView& tiles_, std::size_t numClusters_,
-            std::size_t gridSize_ = 0)
+    ClusterData(const TilesView& tiles_, IndexType numClusters_,
+            IndexType gridSize_ = 0)
         :
         Superclass(numClusters_, gridSize_),
         tiles(tiles_),
@@ -167,7 +169,7 @@ public:
     }
 
     explicit
-    ClusterData(Subpaving& subpaving, std::size_t gridSize_ = 0)
+    ClusterData(Subpaving& subpaving, IndexType gridSize_ = 0)
         :
         ClusterData(subpaving.getTiles(PlsmContext{}),
             subpaving.getNumberOfTiles(PlsmContext{}), gridSize_)
@@ -176,19 +178,20 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     ClusterType
-    getCluster(std::size_t clusterId) const noexcept
+    getCluster(IndexType clusterId) const noexcept
     {
         return ClusterType(*this, clusterId);
     }
 
     TilesView tiles;
-    View<std::size_t*[nMomentIds]> momentIds;
+    View<IndexType*[nMomentIds]> momentIds;
 };
 
 template <typename PlsmContext = plsm::OnDevice>
 struct ClusterDataCommonRef
 {
     using ClusterType = ClusterCommon<PlsmContext>;
+    using IndexType = detail::ReactionNetworkIndexType;
 
     template <typename TData>
     using View = Unmanaged<ViewType<TData, PlsmContext>>;
@@ -212,7 +215,7 @@ struct ClusterDataCommonRef
 
     KOKKOS_INLINE_FUNCTION
     ClusterType
-    getCluster(std::size_t clusterId) const noexcept
+    getCluster(IndexType clusterId) const noexcept
     {
         return ClusterType(*this, clusterId);
     }
@@ -224,8 +227,8 @@ struct ClusterDataCommonRef
         return atomicVolume(0);
     }
 
-    std::size_t numClusters {};
-    std::size_t gridSize {};
+    IndexType numClusters {};
+    IndexType gridSize {};
     View<double[1]> atomicVolume;
     View<double*> temperature;
     View<double*> reactionRadius;
@@ -249,6 +252,7 @@ public:
     using TilesView =
         Unmanaged<typename Subpaving::template TilesView<PlsmContext>>;
     using ClusterType = Cluster<TNetwork, PlsmContext>;
+    using IndexType = typename Types::IndexType;
 
     template <typename TData>
     using View = typename Superclass::template View<TData>;
@@ -266,13 +270,13 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     ClusterType
-    getCluster(std::size_t clusterId) const noexcept
+    getCluster(IndexType clusterId) const noexcept
     {
         return ClusterType(*this, clusterId);
     }
 
     TilesView tiles;
-    View<std::size_t*[nMomentIds]> momentIds;
+    View<IndexType*[nMomentIds]> momentIds;
 };
 }
 }

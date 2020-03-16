@@ -39,8 +39,6 @@ class ReactionNetwork : public IReactionNetwork
     template <typename, typename>
     friend class detail::ReactionGenerator;
 
-    static constexpr auto invalid = plsm::invalid<std::size_t>;
-
 public:
     using Traits = ReactionNetworkTraits<TImpl>;
     using Species = typename Traits::Species;
@@ -303,7 +301,7 @@ public:
      */
     double
     getTotalConcentration(ConcentrationsView concentrations,
-            Species type, std::size_t minSize = 0);
+            Species type, AmountType minSize = 0);
 
     /**
      * Get the total concentration of a given type of clusters times their radius.
@@ -315,7 +313,7 @@ public:
      */
     double
     getTotalRadiusConcentration(ConcentrationsView concentrations,
-            Species type, std::size_t minSize = 0);
+            Species type, AmountType minSize = 0);
 
     /**
      * Get the total concentration of a given type of clusters times the number of atoms.
@@ -327,7 +325,7 @@ public:
      */
     double
     getTotalAtomConcentration(ConcentrationsView concentrations,
-            Species type, std::size_t minSize = 0);
+            Species type, AmountType minSize = 0);
 
     /**
      * Get the total concentration of a given type of clusters only if it is trapped in a vacancy.
@@ -339,7 +337,7 @@ public:
      */
     double
     getTotalTrappedAtomConcentration(ConcentrationsView concentrations,
-            Species type, std::size_t minSize = 0);
+            Species type, AmountType minSize = 0);
 
 private:
     KOKKOS_INLINE_FUNCTION
@@ -429,6 +427,7 @@ struct ReactionNetworkWorker
     using Types = ReactionNetworkTypes<TImpl>;
     using ClusterData = typename Types::ClusterData;
     using ClusterDataRef = typename Types::ClusterDataRef;
+    using IndexType = typename Types::IndexType;
 
     Network& _nw;
 

@@ -17,7 +17,8 @@ namespace experimental
 class IReactionNetwork
 {
 public:
-    using AmountType = detail::ReactionNetworkAmountType;
+    using IndexType = detail::ReactionNetworkIndexType;
+    using AmountType = detail::CompositionAmountType;
     using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
     using OwnedConcentrationsView = Kokkos::View<double*>;
     using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
@@ -25,7 +26,10 @@ public:
     using Connectivity = detail::ClusterConnectivity<>;
     using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 
-    IReactionNetwork(std::size_t gridSize)
+    static constexpr IndexType invalidIndex = plsm::invalid<IndexType>;
+    static constexpr AmountType invalidAmount = plsm::invalid<AmountType>;
+
+    IReactionNetwork(IndexType gridSize)
         :
         _gridSize(gridSize)
     {
@@ -43,14 +47,14 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    std::size_t
+    IndexType
     getDOF() const noexcept
     {
         return _numDOFs;
     }
 
     KOKKOS_INLINE_FUNCTION
-    std::size_t
+    IndexType
     getNumClusters() const noexcept
     {
         return _numClusters;
@@ -100,14 +104,14 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    std::size_t
+    IndexType
     getGridSize() const noexcept
     {
         return _gridSize;
     }
 
     virtual void
-    setGridSize(std::size_t gridSize) = 0;
+    setGridSize(IndexType gridSize) = 0;
 
     virtual void
     setTemperatures(const std::vector<double>& gridTemperatures) = 0;
@@ -116,25 +120,25 @@ public:
     syncClusterDataOnHost() = 0;
 
     virtual ClusterCommon<plsm::OnHost>
-    getClusterCommon(std::size_t clusterId) const = 0;
+    getClusterCommon(IndexType clusterId) const = 0;
 
     virtual ClusterCommon<plsm::OnHost>
     getSingleVacancy() = 0;
 
     virtual void
     computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-        std::size_t gridIndex) = 0;
+        IndexType gridIndex) = 0;
 
     virtual void
     computeAllPartials(ConcentrationsView concentrations,
-        Kokkos::View<double*> values, std::size_t gridIndex) = 0;
+        Kokkos::View<double*> values, IndexType gridIndex) = 0;
 
     virtual double
     getLargestRate() = 0;
 
     virtual double
     getLeftSideRate(ConcentrationsView concentrations,
-        std::size_t clusterId, std::size_t gridIndex) = 0;
+        IndexType clusterId, IndexType gridIndex) = 0;
 
     /**
      * Get the diagonal fill for the Jacobian, corresponding to the reactions.
@@ -143,7 +147,7 @@ public:
      * @param fillMap Connectivity map.
      * @return The total number of partials.
      */
-    virtual std::size_t
+    virtual IndexType
     getDiagonalFill(SparseFillMap& fillMap) = 0;
 
 protected:
@@ -152,9 +156,9 @@ protected:
     double _interstitialBias {};
     double _impurityRadius {};
 
-    std::size_t _gridSize {};
-    std::size_t _numDOFs {};
-    std::size_t _numClusters {};
+    IndexType _gridSize {};
+    IndexType _numDOFs {};
+    IndexType _numClusters {};
 };
 }
 }
