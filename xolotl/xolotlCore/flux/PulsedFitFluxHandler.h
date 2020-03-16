@@ -87,7 +87,7 @@ public:
 		comp[NetworkType::Species::V] = 1;
 		auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 		// Check that the vacancy cluster is present in the network
-		if (cluster.getId() == plsm::invalid<std::size_t>) {
+		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::string(
 					"\nThe single vacancy cluster is not present in the network, "
 							"cannot use the flux option!");
@@ -102,7 +102,7 @@ public:
 		comp[NetworkType::Species::I] = 1;
 		cluster = psiNetwork->findCluster(comp, plsm::onHost);
 		// Check that the interstitial cluster is present in the network
-		if (cluster.getId() == plsm::invalid<std::size_t>) {
+		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::string(
 					"\nThe single interstitial cluster is not present in the network, "
 							"cannot use the flux option!");

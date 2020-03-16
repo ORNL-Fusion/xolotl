@@ -358,7 +358,7 @@ public:
     {
         auto id = _prodCrsRowMap(clusterSet.cluster0);
         for (; !Kokkos::atomic_compare_exchange_strong(
-                    &_prodCrsClusterSets(id).cluster0, Network::invalidIndex,
+                    &_prodCrsClusterSets(id).cluster0, Network::invalidIndex(),
                     clusterSet.cluster0);
                 ++id)
         {
@@ -380,7 +380,7 @@ public:
     {
         auto id = _dissCrsRowMap(clusterSet.cluster1);
         for (; !Kokkos::atomic_compare_exchange_strong(
-                    &_dissCrsClusterSets(id).cluster1, Network::invalidIndex,
+                    &_dissCrsClusterSets(id).cluster1, Network::invalidIndex(),
                     clusterSet.cluster1);
                 ++id)
         {
@@ -484,13 +484,13 @@ public:
             Kokkos::ViewAllocateWithoutInitializing("connectivity entries"),
             nEntries);
         Kokkos::parallel_for(nEntries, KOKKOS_LAMBDA (IndexType i) {
-            tmpConn.entries(i) = Network::invalidIndex;
+            tmpConn.entries(i) = Network::invalidIndex();
         });
         // Even if there is no reaction each dof should connect with itself (for PETSc)
         Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const IndexType i) {
             auto id = tmpConn.row_map(i);
             for (; !Kokkos::atomic_compare_exchange_strong(
-                        &tmpConn.entries(id), Network::invalidIndex, i); ++id) {
+                        &tmpConn.entries(id), Network::invalidIndex(), i); ++id) {
                 if (tmpConn.entries(id) == i) {
                     break;
                 }
@@ -512,7 +512,7 @@ public:
                 auto jEnd = tmpConn.row_map(i+1);
                 ret = jEnd - jStart;
                 for (IndexType j = jStart; j < jEnd; ++j) {
-                    if (tmpConn.entries(j) == Network::invalidIndex) {
+                    if (tmpConn.entries(j) == Network::invalidIndex()) {
                         ret = j - jStart;
                         break;
                     }
@@ -522,7 +522,7 @@ public:
                 auto tmpStart = tmpConn.row_map(i);
                 for (IndexType j = tmpStart; j < tmpConn.row_map(i+1); ++j) {
                     auto entry = tmpConn.entries(j);
-                    if (entry == Network::invalidIndex) {
+                    if (entry == Network::invalidIndex()) {
                         break;
                     }
                     fill[j - tmpStart] = entry;

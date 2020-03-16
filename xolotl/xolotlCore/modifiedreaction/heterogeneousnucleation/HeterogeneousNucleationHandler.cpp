@@ -24,8 +24,8 @@ void HeterogeneousNucleationHandler::initialize(
 	auto doubleXenon = neNetwork->findCluster(comp, plsm::onHost);
 	auto doubleId = doubleXenon.getId();
 
-	if (singleId == plsm::invalid<std::size_t>
-			|| doubleId == plsm::invalid<std::size_t>) {
+	if (singleId == NetworkType::invalidIndex()
+			|| doubleId == NetworkType::invalidIndex()) {
 		// Inform the user
 		std::cout << "The heterogeneous nucleation won't happen because "
 				"the single or double xenon cluster is missing." << std::endl;

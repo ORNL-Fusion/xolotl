@@ -51,7 +51,7 @@ public:
 			auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 
 			// Check that the helium cluster is present in the network
-			if (cluster.getId() == plsm::invalid<std::size_t>) {
+			if (cluster.getId() == NetworkType::invalidIndex()) {
 				throw std::string(
 						"\nThe helium cluster of size " + std::to_string(i)
 								+ "is not present in the network, "

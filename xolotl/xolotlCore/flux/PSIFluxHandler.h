@@ -52,7 +52,7 @@ public:
 		comp[NetworkType::Species::He] = 1;
 		auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 		// Check that the helium cluster is present in the network
-		if (cluster.getId() == plsm::invalid<std::size_t>) {
+		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::string(
 					"\nThe single helium cluster is not present in the network, "
 							"cannot use the flux option!");

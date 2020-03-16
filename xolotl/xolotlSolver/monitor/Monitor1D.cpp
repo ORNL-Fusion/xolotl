@@ -2207,8 +2207,8 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		// Initialize the vacancy concentration and the temperature on the new grid points
 		// Get the single vacancy ID
 		auto singleVacancyCluster = network.getSingleVacancy();
-		auto vacancyIndex = plsm::invalid<std::size_t>;
-		if (singleVacancyCluster.getId() != plsm::invalid<std::size_t>)
+		auto vacancyIndex = experimental::IReactionNetwork::invalidIndex();
+		if (singleVacancyCluster.getId() != experimental::IReactionNetwork::invalidIndex())
 			vacancyIndex = singleVacancyCluster.getId();
 		// Get the surface temperature
 		double temp = 0.0;
@@ -2232,8 +2232,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 				// Set the new surface temperature
 				gridPointSolution[dof] = surfTemp;
 
-				if (vacancyIndex
-						!= plsm::invalid < std::size_t > &&nGridPoints > 0) {
+				if (vacancyIndex != experimental::IReactionNetwork::invalidIndex() && nGridPoints > 0) {
 					// Initialize the vacancy concentration
 					gridPointSolution[vacancyIndex] = initialVConc;
 				}
@@ -2564,7 +2563,7 @@ PetscErrorCode setupPetsc1DMonitor(TS ts,
 				comp[NetworkType::Species::I] = iSize;
 				auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 				// Check that the helium cluster is present in the network
-				if (cluster.getId() != plsm::invalid<std::size_t>) {
+				if (cluster.getId() != NetworkType::invalidIndex()) {
 					iClusterIds1D.push_back(cluster.getId());
 					iSize++;
 				} else

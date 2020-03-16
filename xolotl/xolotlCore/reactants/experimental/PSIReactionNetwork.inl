@@ -19,7 +19,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(IndexType i, IndexType j,
 
     constexpr auto species = Network::getSpeciesRange();
     constexpr auto speciesNoI = Network::getSpeciesRangeNoI();
-    constexpr auto invalidIndex = Network::invalidIndex;
+    constexpr auto invalidIndex = Network::invalidIndex();
 
     auto numClusters = this->getNumberOfClusters();
 

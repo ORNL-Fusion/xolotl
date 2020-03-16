@@ -69,6 +69,7 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 
 	// Create the network
 	using NetworkType = experimental::NEReactionNetwork;
+    constexpr auto invalidIndex = NetworkType::invalidIndex();
 	NetworkType::AmountType maxXe = opts.getMaxImpurity();
 	NetworkType::AmountType groupingWidth = opts.getGroupingWidthA();
 	NetworkType::AmountType refine = (maxXe + 1) / groupingWidth;
@@ -142,9 +143,9 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(nReSo, 2078);
 	BOOST_REQUIRE_EQUAL(indices[0], 1);
-	BOOST_REQUIRE_EQUAL(indices[1], plsm::invalid<std::size_t>);
+	BOOST_REQUIRE_EQUAL(indices[1], invalidIndex);
 	BOOST_REQUIRE_EQUAL(indices[2], 1007);
-	BOOST_REQUIRE_EQUAL(indices[3], plsm::invalid<std::size_t>);
+	BOOST_REQUIRE_EQUAL(indices[3], invalidIndex);
 	BOOST_REQUIRE_EQUAL(indices[4], 0);
 
 	// Check values

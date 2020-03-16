@@ -26,8 +26,19 @@ public:
     using Connectivity = detail::ClusterConnectivity<>;
     using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 
-    static constexpr IndexType invalidIndex = plsm::invalid<IndexType>;
-    static constexpr AmountType invalidAmount = plsm::invalid<AmountType>;
+    static
+    constexpr IndexType
+    invalidIndex() noexcept
+    {
+        return detail::InvalidIndex::value;
+    }
+
+    static
+    constexpr AmountType
+    invalidAmount() noexcept
+    {
+        return detail::InvalidSpeciesAmount::value;
+    }
 
     IReactionNetwork(IndexType gridSize)
         :

@@ -23,7 +23,7 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork &network,
 	auto singleXenon = neNetwork->findCluster(comp, plsm::onHost);
 	auto xenonId = singleXenon.getId();
 
-	if (xenonId == plsm::invalid<std::size_t>) {
+	if (xenonId == NetworkType::invalidIndex()) {
 		// Inform the user
 		std::cout << "The re-solution won't happen because "
 				"the single xenon cluster is missing." << std::endl;
@@ -80,7 +80,7 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork &network,
 				const auto &dispersion = clReg.dispersion();
 				double numXe = (double) (hi[NetworkType::Species::Xe]
 						+ lo[NetworkType::Species::Xe] - 1) / 2.0;
-				auto previousSmallerId = plsm::invalid<std::size_t>;
+				auto previousSmallerId = NetworkType::invalidIndex();
 
 				// Loop on all sizes
 				for (int i = lo[NetworkType::Species::Xe];
@@ -112,7 +112,7 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork &network,
 					// Check if it was the same as before
 					if (smallerCluster.getId() != previousSmallerId
 							&& previousSmallerId
-									!= plsm::invalid<std::size_t>) {
+									!= NetworkType::invalidIndex()) {
 						// Set the connectivities
 						dfill[id].emplace_back(id);
 						if (clReg.volume() > 1) {
@@ -195,7 +195,7 @@ void ReSolutionHandler::initialize(experimental::IReactionNetwork &network,
 					coefs[9] += distance;
 				}
 
-				if (previousSmallerId != plsm::invalid<std::size_t>) {
+				if (previousSmallerId != NetworkType::invalidIndex()) {
 					// Set the connectivities
 					dfill[id].emplace_back(id);
 					if (clReg.volume() > 1) {

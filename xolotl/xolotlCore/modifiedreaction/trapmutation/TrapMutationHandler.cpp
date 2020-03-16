@@ -40,7 +40,7 @@ void TrapMutationHandler::initialize(experimental::IReactionNetwork &network,
 		auto heCluster = psiNetwork->findCluster(comp, plsm::onHost);
 		auto heClusterId = heCluster.getId();
 		// Check that the helium cluster is present in the network
-		if (heClusterId == plsm::invalid<std::size_t>) {
+		if (heClusterId == NetworkType::invalidIndex()) {
 			throw std::string(
 					"\nThe helium cluster of size " + std::to_string(i)
 							+ "is not present in the network, "
@@ -64,7 +64,7 @@ void TrapMutationHandler::initialize(experimental::IReactionNetwork &network,
 		auto iCluster = psiNetwork->findCluster(comp, plsm::onHost);
 		auto iClusterId = iCluster.getId();
 		// Check that the interstital cluster is present in the network
-		if (iClusterId == plsm::invalid<std::size_t>) {
+		if (iClusterId == NetworkType::invalidIndex()) {
 			throw std::string(
 					"\nThe interstital cluster of size "
 							+ std::to_string(trapSize)
@@ -82,7 +82,7 @@ void TrapMutationHandler::initialize(experimental::IReactionNetwork &network,
 		auto heVCluster = psiNetwork->findCluster(comp, plsm::onHost);
 		auto heVClusterId = heVCluster.getId();
 		// Check that the HeV cluster is present in the network
-		if (heVClusterId == plsm::invalid<std::size_t>) {
+		if (heVClusterId == NetworkType::invalidIndex()) {
 			throw std::string(
 					"\nThe HeV cluster of sizes " + std::to_string(i) + " "
 							+ std::to_string(trapSize)

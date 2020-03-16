@@ -428,7 +428,7 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
         IndexType current = counts(i);
         for (auto k : speciesRangeNoI) {
             if (reg[k].length() == 1) {
-                data.momentIds(i, k()) = Network::invalidIndex;
+                data.momentIds(i, k()) = Network::invalidIndex();
             }
             else {
                 data.momentIds(i, k()) = nClusters + current;

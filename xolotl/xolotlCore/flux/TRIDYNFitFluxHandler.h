@@ -158,7 +158,7 @@ public:
 				comp[clusterSpecies] = std::stoi(tokens[1]);
 				auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
 				// Check that it is present in the network
-				if (cluster.getId() == plsm::invalid<std::size_t>) {
+				if (cluster.getId() == NetworkType::invalidIndex()) {
 					throw std::string(
 							"\nThe requested cluster is not present in the network: "
 									+ tokens[0] + "_" + tokens[1]

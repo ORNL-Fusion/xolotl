@@ -39,7 +39,7 @@ protected:
 
 		//! The constructor
 		Desorption(int s, double p) :
-				size(s), portion(p), id(plsm::invalid<std::size_t>) {
+				size(s), portion(p), id(experimental::IReactionNetwork::invalidIndex()) {
 		}
 	};
 

@@ -92,8 +92,8 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Get the single vacancy ID
 	auto singleVacancyCluster = expNetwork.getSingleVacancy();
-	auto vacancyIndex = plsm::invalid<std::size_t>;
-	if (singleVacancyCluster.getId() != plsm::invalid<std::size_t>)
+	auto vacancyIndex = NetworkType::invalidIndex();
+	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
 		vacancyIndex = singleVacancyCluster.getId();
 
 	// Get the concentration of the only grid point
@@ -121,7 +121,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Initialize the vacancy concentration
-	if (vacancyIndex != plsm::invalid<std::size_t> and not hasConcentrations) {
+	if (vacancyIndex != NetworkType::invalidIndex() and not hasConcentrations) {
 		concOffset[vacancyIndex] = initialVConc;
 	}
 
