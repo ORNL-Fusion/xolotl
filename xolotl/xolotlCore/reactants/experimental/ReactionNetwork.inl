@@ -414,7 +414,14 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
         },
         nMomentIds);
 
-    Kokkos::parallel_scan(nClusters, ExclusiveScanFunctor{counts});
+    Kokkos::parallel_scan(nClusters, KOKKOS_LAMBDA (std::size_t i,
+            std::size_t& update, const bool finalPass) {
+        const auto temp = counts(i);
+        if (finalPass) {
+            counts(i) = update;
+        }
+        update += temp;
+    });
 
     Kokkos::parallel_for(nClusters, KOKKOS_LAMBDA (const IndexType i) {
         const auto& reg = data.getCluster(i).getRegion();

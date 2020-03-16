@@ -384,45 +384,6 @@ namespace detail
 template <typename TImpl>
 struct ReactionNetworkWorker
 {
-    class ExclusiveScanFunctor
-    {
-    public:
-        ExclusiveScanFunctor(Kokkos::View<std::size_t*> data)
-            :
-            _data(data)
-        {
-        }
-
-        KOKKOS_INLINE_FUNCTION
-        void
-        operator()(std::size_t index, std::size_t& update, const bool finalPass)
-            const
-        {
-            const auto temp = _data(index);
-            if (finalPass) {
-                _data(index) = update;
-            }
-            update += temp;
-        }
-
-        KOKKOS_INLINE_FUNCTION
-        void
-        init(std::size_t& update) const
-        {
-          update = 0;
-        }
-
-        KOKKOS_INLINE_FUNCTION
-        void
-        join(volatile std::size_t& update, std::size_t input) const
-        {
-          update += input;
-        }
-
-    private:
-        Kokkos::View<std::size_t*> _data;
-    };
-
     using Network = ReactionNetwork<TImpl>;
     using Types = ReactionNetworkTypes<TImpl>;
     using ClusterData = typename Types::ClusterData;
