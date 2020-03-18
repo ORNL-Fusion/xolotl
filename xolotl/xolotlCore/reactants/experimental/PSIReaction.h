@@ -9,15 +9,26 @@ namespace experimental
 template <typename TSpeciesEnum>
 class PSIReactionNetwork;
 
-
 template <typename TSpeciesEnum>
-class PSIReaction :
-    public Reaction<PSIReactionNetwork<TSpeciesEnum>, PSIReaction<TSpeciesEnum>>
+class PSIProductionReaction :
+    public ProductionReaction<PSIReactionNetwork<TSpeciesEnum>,
+        PSIProductionReaction<TSpeciesEnum>>
 {
 public:
-    using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
+    using Superclass = ProductionReaction<PSIReactionNetwork<TSpeciesEnum>,
+        PSIProductionReaction<TSpeciesEnum>>;
 
-    using Superclass = Reaction<NetworkType, PSIReaction<TSpeciesEnum>>;
+    using Superclass::Superclass;
+};
+
+template <typename TSpeciesEnum>
+class PSIDissociationReaction :
+    public DissociationReaction<PSIReactionNetwork<TSpeciesEnum>,
+        PSIDissociationReaction<TSpeciesEnum>>
+{
+public:
+    using Superclass = DissociationReaction<PSIReactionNetwork<TSpeciesEnum>,
+            PSIDissociationReaction<TSpeciesEnum>>;
 
     using Superclass::Superclass;
 
@@ -29,9 +40,9 @@ public:
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 double
-PSIReaction<TSpeciesEnum>::computeBindingEnergy()
+PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 {
-    assert(this->_type == PSIReaction::Type::dissociation);
+    using NetworkType = typename Superclass::NetworkType;
 
     constexpr double beTableV1[10][7] = {
         //H:  1     2     3     4     5     6      // He:
@@ -71,7 +82,7 @@ PSIReaction<TSpeciesEnum>::computeBindingEnergy()
 
     double be = 0.0;
 
-    auto cl = this->_clusterData.getCluster(this->_reactants[0]);
+    auto cl = this->_clusterData.getCluster(this->_reactant);
     auto prod1 = this->_clusterData.getCluster(this->_products[0]);
     auto prod2 = this->_clusterData.getCluster(this->_products[1]);
 

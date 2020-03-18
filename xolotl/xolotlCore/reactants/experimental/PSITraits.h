@@ -8,7 +8,10 @@ template <typename TSpeciesEnum>
 class PSIReactionNetwork;
 
 template <typename TSpeciesEnum>
-class PSIReaction;
+class PSIProductionReaction;
+
+template <typename TSpeciesEnum>
+class PSIDissociationReaction;
 
 template <typename TSpeciesEnum>
 class PSIClusterGenerator;
@@ -34,7 +37,9 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 
     static constexpr std::size_t numSpecies = 5;
 
-    using ReactionType = PSIReaction<Species>;
+    // using ReactionType = PSIReaction<Species>;
+    using ProductionReactionType = PSIProductionReaction<Species>;
+    using DissociationReactionType = PSIDissociationReaction<Species>;
 
     using ClusterGenerator = PSIClusterGenerator<Species>;
 };

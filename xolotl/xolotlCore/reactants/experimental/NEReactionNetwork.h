@@ -21,7 +21,6 @@ class NEReactionNetwork : public ReactionNetwork<NEReactionNetwork>
 public:
     using Superclass = ReactionNetwork<NEReactionNetwork>;
     using Subpaving = typename Superclass::Subpaving;
-    using ReactionType = typename Superclass::ReactionType;
     using Composition = typename Superclass::Composition;
     using Species = typename Superclass::Species;
 
@@ -57,7 +56,6 @@ class NEReactionGenerator :
 public:
     using Network = NEReactionNetwork;
     using Subpaving = typename Network::Subpaving;
-    using ClusterSet = typename Network::ReactionType::ClusterSet;
     using Superclass =
         ReactionGenerator<NEReactionNetwork, NEReactionGenerator>;
 

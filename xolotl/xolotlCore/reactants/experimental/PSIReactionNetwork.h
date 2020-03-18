@@ -24,7 +24,6 @@ class PSIReactionNetwork :
 public:
     using Superclass = ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
     using Subpaving = typename Superclass::Subpaving;
-    using ReactionType = typename Superclass::ReactionType;
     using Composition = typename Superclass::Composition;
     using Species = typename Superclass::Species;
     using AmountType = typename Superclass::AmountType;
@@ -67,7 +66,6 @@ class PSIReactionGenerator : public
 public:
     using Network = PSIReactionNetwork<TSpeciesEnum>;
     using Subpaving = typename Network::Subpaving;
-    using ClusterSet = typename Network::ReactionType::ClusterSet;
     using IndexType = typename Network::IndexType;
 
     using Superclass = ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,

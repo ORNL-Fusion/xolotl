@@ -111,19 +111,6 @@ BOOST_AUTO_TEST_CASE(PSINetwork) {
 	auto compRegion = cluster.getRegion();
 	BOOST_REQUIRE(compRegion.isSimplex());
 	BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), comp);
-
-//	cluster = rNetwork.getCluster(0, plsm::onHost);
-//	compRegion = cluster.getRegion();
-//	BOOST_REQUIRE_EQUAL(compRegion.getOrigin(), Composition { });
-
-	using Reaction = typename NetworkType::ReactionType;
-	// Reaction r0;
-	// Reaction r(rNetwork, 0, Reaction::Type::dissociation, 0, 1, 2);
-	// BOOST_REQUIRE(r.getType() == Reaction::Type::dissociation);
-	auto concs = new double[3] { };
-	auto fluxes = new double[3] { };
-	using Vue = Reaction::ConcentrationsView;
-	// r.contributeFlux(Vue(concs, 3), Vue(fluxes, 3), 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -4,7 +4,8 @@ namespace xolotlCore
 {
 namespace experimental
 {
-class NEReaction;
+class NEProductionReaction;
+class NEDissociationReaction;
 class NEReactionNetwork;
 class NEClusterGenerator;
 
@@ -25,7 +26,9 @@ struct ReactionNetworkTraits<NEReactionNetwork>
 
     static constexpr std::size_t numSpecies = 1;
 
-    using ReactionType = NEReaction;
+    // using ReactionType = NEReaction;
+    using ProductionReactionType = NEProductionReaction;
+    using DissociationReactionType = NEDissociationReaction;
 
     using ClusterGenerator = NEClusterGenerator;
 };

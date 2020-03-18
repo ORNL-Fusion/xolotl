@@ -51,7 +51,6 @@ private:
 public:
     using SpeciesSequence = SpeciesEnumSequence<Species, numSpecies>;
     using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
-    using ReactionType = typename Traits::ReactionType;
     using ClusterGenerator = typename Traits::ClusterGenerator;
     using AmountType = typename IReactionNetwork::AmountType;
     using Subpaving = typename Types::Subpaving;
@@ -65,23 +64,25 @@ public:
     using ClusterData = typename Types::ClusterData;
     using ClusterDataMirror = typename Types::ClusterDataMirror;
     using ClusterDataRef = typename Types::ClusterDataRef;
+    using ProductionReactionType = typename Traits::ProductionReactionType;
+    using DissociationReactionType = typename Traits::DissociationReactionType;
 
     template <typename PlsmContext>
     using Cluster = Cluster<TImpl, PlsmContext>;
 
     ReactionNetwork() = default;
 
-    ReactionNetwork(const Subpaving& subpaving, std::size_t gridSize,
+    ReactionNetwork(const Subpaving& subpaving, IndexType gridSize,
         const IOptions& options);
 
-    ReactionNetwork(const Subpaving& subpaving, std::size_t gridSize);
+    ReactionNetwork(const Subpaving& subpaving, IndexType gridSize);
 
     ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
         const std::vector<SubdivisionRatio>& subdivisionRatios,
-        std::size_t gridSize, const IOptions& options);
+        IndexType gridSize, const IOptions& options);
 
     ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
-        std::size_t gridSize, const IOptions& options);
+        IndexType gridSize, const IOptions& options);
 
     KOKKOS_INLINE_FUNCTION
     static
@@ -127,7 +128,7 @@ public:
     }
 
     void
-    setGridSize(std::size_t gridSize) override;
+    setGridSize(IndexType gridSize) override;
 
     void
     setTemperatures(const std::vector<double>& gridTemperatures) override;
@@ -173,7 +174,8 @@ public:
 
         ret += _reactionData.connectivity.getDeviceMemorySize();
 
-        ret += _reactions.required_allocation_size(_reactions.extent(0));
+        ret += _prodReactions.required_allocation_size(_prodReactions.size());
+        ret += _dissReactions.required_allocation_size(_dissReactions.size());
 
         return ret;
     }
@@ -217,7 +219,7 @@ public:
     }
 
     ClusterCommon<plsm::OnHost>
-    getClusterCommon(std::size_t clusterId) const override
+    getClusterCommon(IndexType clusterId) const override
     {
         return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
     }
@@ -248,20 +250,20 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     Cluster<plsm::OnDevice>
-    getCluster(std::size_t clusterId, plsm::OnDevice)
+    getCluster(IndexType clusterId, plsm::OnDevice)
     {
         return Cluster<plsm::OnDevice>(_clusterData, clusterId);
     }
 
     Cluster<plsm::OnHost>
-    getCluster(std::size_t clusterId, plsm::OnHost)
+    getCluster(IndexType clusterId, plsm::OnHost)
     {
         return Cluster<plsm::OnHost>(_clusterDataMirror, clusterId);
     }
 
     KOKKOS_INLINE_FUNCTION
     auto
-    getCluster(std::size_t clusterId)
+    getCluster(IndexType clusterId)
     {
         return getCluster(clusterId, plsm::onDevice);
     }
@@ -275,20 +277,20 @@ public:
 
     void
     computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-        std::size_t gridIndex) override;
+        IndexType gridIndex) override;
 
     void
     computeAllPartials(ConcentrationsView concentrations,
-        Kokkos::View<double*> values, std::size_t gridIndex) override;
+        Kokkos::View<double*> values, IndexType gridIndex) override;
 
     double
     getLargestRate() override;
 
     double
     getLeftSideRate(ConcentrationsView concentrations,
-        std::size_t clusterId, std::size_t gridIndex) override;
+        IndexType clusterId, IndexType gridIndex) override;
 
-    std::size_t
+    IndexType
     getDiagonalFill(SparseFillMap& fillMap) override;
 
     /**
@@ -361,7 +363,7 @@ private:
 
     KOKKOS_INLINE_FUNCTION
     double
-    getTemperature(std::size_t gridIndex) const noexcept
+    getTemperature(IndexType gridIndex) const noexcept
     {
         return _clusterData.temperature(gridIndex);
     }
@@ -373,7 +375,10 @@ private:
     ClusterDataMirror _clusterDataMirror;
 
     detail::ReactionData _reactionData;
-    Kokkos::View<ReactionType*> _reactions;
+    Kokkos::View<ProductionReactionType*> _prodReactions;
+    Kokkos::View<DissociationReactionType*> _dissReactions;
+    IndexType _numProdReactions;
+    IndexType _numReactions;
 
     detail::ReactionNetworkWorker<TImpl> _worker;
 };
@@ -407,17 +412,10 @@ struct ReactionNetworkWorker
     void
     defineMomentIds();
 
-    struct ClusterSetsViewPair
-    {
-        using ClusterSet = typename Network::ReactionType::ClusterSet;
-        Kokkos::View<ClusterSet*> prodClusterSets;
-        Kokkos::View<ClusterSet*> dissClusterSets;
-    };
-
     void
     defineReactions();
 
-    std::size_t
+    IndexType
     getDiagonalFill(typename Network::SparseFillMap& fillMap);
 };
 }

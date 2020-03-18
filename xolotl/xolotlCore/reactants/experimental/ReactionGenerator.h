@@ -21,8 +21,8 @@ public:
     using Network = TNetwork;
     using ClusterData = typename Network::ClusterData;
     using Cluster = typename ClusterData::ClusterType;
-    using ReactionType = typename Network::ReactionType;
-    using ClusterSet = typename ReactionType::ClusterSet;
+    using ProductionReactionType = typename Network::ProductionReactionType;
+    using DissociationReactionType = typename Network::DissociationReactionType;
     using Subpaving = typename Network::Subpaving;
     using IndexType = typename Network::IndexType;
 
@@ -96,14 +96,10 @@ public:
         _numDissReactions = Kokkos::get_crs_row_map_from_counts(
             _dissCrsRowMap, _clusterDissReactionCounts);
 
-        auto numReactions = _numProdReactions + _numDissReactions;
-        _reactions = Kokkos::View<ReactionType*>("Reactions", numReactions);
-
-        _prodCrsReactions = Kokkos::subview(_reactions,
-            std::make_pair((IndexType)0, _numProdReactions));
-
-        _dissCrsReactions = Kokkos::subview(_reactions,
-            std::make_pair(_numProdReactions, numReactions));
+        _prodReactions = Kokkos::View<ProductionReactionType*>(
+            "Production Reactions", _numProdReactions);
+        _dissReactions = Kokkos::View<DissociationReactionType*>(
+            "Dissociation Reactions", _numDissReactions);
     }
 
     void
@@ -133,10 +129,9 @@ public:
     void
     addProductionReaction(Construct, const ClusterSet& clusterSet) const
     {
-        using RType = typename ReactionType::Type;
         auto id = _prodCrsRowMap(clusterSet.cluster1);
-        _prodCrsReactions(id) = ReactionType(_reactionDataRef, _clusterData, id,
-            RType::production, clusterSet);
+        _prodReactions(id) = ProductionReactionType(_reactionDataRef,
+            _clusterData, id, clusterSet);
         ++_prodCrsRowMap(clusterSet.cluster1);
     }
 
@@ -151,10 +146,9 @@ public:
     void
     addDissociationReaction(Construct, const ClusterSet& clusterSet) const
     {
-        using RType = typename ReactionType::Type;
         auto id = _dissCrsRowMap(clusterSet.cluster2);
-        _dissCrsReactions(id) = ReactionType(_reactionDataRef, _clusterData,
-            id + _numProdReactions, RType::dissociation, clusterSet);
+        _dissReactions(id) = DissociationReactionType(_reactionDataRef,
+            _clusterData, id + _numProdReactions, clusterSet);
         ++_dissCrsRowMap(clusterSet.cluster2);
     }
 
@@ -164,10 +158,16 @@ public:
         return _reactionData;
     }
 
-    Kokkos::View<ReactionType*>
-    getReactions() const
+    Kokkos::View<ProductionReactionType*>
+    getProductionReactions() const
     {
-        return _reactions;
+        return _prodReactions;
+    }
+
+    Kokkos::View<DissociationReactionType*>
+    getDissociationReactions() const
+    {
+        return _dissReactions;
     }
 
 protected:
@@ -182,15 +182,12 @@ protected:
 
     Kokkos::View<IndexType*> _prodCrsRowMap;
     Kokkos::View<IndexType*> _dissCrsRowMap;
-    using ReactionSubView = decltype(
-        Kokkos::subview(std::declval<Kokkos::View<ReactionType*>>(),
-            Kokkos::ALL));
-    ReactionSubView _prodCrsReactions;
-    ReactionSubView _dissCrsReactions;
+
+    Kokkos::View<ProductionReactionType*> _prodReactions;
+    Kokkos::View<DissociationReactionType*> _dissReactions;
 
     detail::ReactionData _reactionData;
     detail::ReactionDataRef _reactionDataRef;
-    Kokkos::View<ReactionType*> _reactions;
 };
 
 template <typename TNetwork, typename TDerived>
@@ -209,8 +206,8 @@ public:
     using ClusterData = typename Network::ClusterData;
     using ClusterDataRef = typename Network::ClusterDataRef;
     using Cluster = typename ClusterData::ClusterType;
-    using ReactionType = typename Network::ReactionType;
-    using ClusterSet = typename ReactionType::ClusterSet;
+    using ProductionReactionType = typename Network::ProductionReactionType;
+    using DissociationReactionType = typename Network::DissociationReactionType;
     using Subpaving = typename Network::Subpaving;
     using IndexType = typename Network::IndexType;
 
@@ -264,21 +261,20 @@ public:
         });
         Kokkos::fence();
 
-        using RType = typename ReactionType::Type;
         auto reactionData = _reactionDataRef;
         auto clusterData = ClusterDataRef(_clusterData);
-        auto prodReactions = _prodCrsReactions;
+        auto prodReactions = _prodReactions;
         auto prodClusterSets = _prodCrsClusterSets;
         Kokkos::parallel_for(_numProdReactions, KOKKOS_LAMBDA (IndexType i) {
-            prodReactions(i) = ReactionType(reactionData, clusterData, i,
-                RType::production, prodClusterSets(i));
+            prodReactions(i) = ProductionReactionType(reactionData, clusterData,
+                i, prodClusterSets(i));
         });
-        auto dissReactions = _dissCrsReactions;
+        auto dissReactions = _dissReactions;
         auto dissClusterSets = _dissCrsClusterSets;
         auto nProdReactions = _numProdReactions;
         Kokkos::parallel_for(_numDissReactions, KOKKOS_LAMBDA (IndexType i) {
-            dissReactions(i) = ReactionType(reactionData, clusterData,
-                i + nProdReactions, RType::dissociation, dissClusterSets(i));
+            dissReactions(i) = DissociationReactionType(reactionData,
+                clusterData, i + nProdReactions, dissClusterSets(i));
         });
         Kokkos::fence();
 
@@ -316,16 +312,10 @@ public:
             Kokkos::View<ClusterSet*>("Dissociation Cluster Sets",
                 _numDissReactions);
 
-        auto numReactions = _numProdReactions + _numDissReactions;
-        _reactions = Kokkos::View<ReactionType*>(
-                "Reactions", numReactions);
-            // Kokkos::ViewAllocateWithoutInitializing("Reactions"), numReactions);
-
-        _prodCrsReactions = Kokkos::subview(_reactions,
-            std::make_pair((IndexType)0, _numProdReactions));
-
-        _dissCrsReactions = Kokkos::subview(_reactions,
-            std::make_pair(_numProdReactions, numReactions));
+        _prodReactions = Kokkos::View<ProductionReactionType*>(
+            "Production Reactions", _numProdReactions);
+        _dissReactions = Kokkos::View<DissociationReactionType*>(
+            "Dissociation Reactions", _numDissReactions);
     }
 
     void
@@ -394,10 +384,16 @@ public:
         return _reactionData;
     }
 
-    Kokkos::View<ReactionType*>
-    getReactions() const
+    Kokkos::View<ProductionReactionType*>
+    getProductionReactions() const
     {
-        return _reactions;
+        return _prodReactions;
+    }
+
+    Kokkos::View<DissociationReactionType*>
+    getDissociationReactions() const
+    {
+        return _dissReactions;
     }
 
 protected:
@@ -416,15 +412,11 @@ protected:
     Kokkos::View<ClusterSet*> _prodCrsClusterSets;
     Kokkos::View<ClusterSet*> _dissCrsClusterSets;
 
-    using ReactionSubView = decltype(
-        Kokkos::subview(std::declval<Kokkos::View<ReactionType*>>(),
-            Kokkos::ALL));
-    ReactionSubView _prodCrsReactions;
-    ReactionSubView _dissCrsReactions;
+    Kokkos::View<ProductionReactionType*> _prodReactions;
+    Kokkos::View<DissociationReactionType*> _dissReactions;
 
     detail::ReactionData _reactionData;
     detail::ReactionDataRef _reactionDataRef;
-    Kokkos::View<ReactionType*> _reactions;
 };
 
 template <typename TNetwork, typename TDerived>
@@ -458,8 +450,10 @@ public:
         using RowMap = typename Connectivity::row_map_type;
         using Entries = typename Connectivity::entries_type;
 
-        auto reactions = this->_reactions;
-        auto nReactions = reactions.extent(0);
+        auto prodReactions = this->_prodReactions;
+        auto dissReactions = this->_dissReactions;
+        auto numProdReactions = prodReactions.size();
+        auto numReactions = numProdReactions + dissReactions.size();
         Connectivity tmpConn;
         //Count connectivity entries
         //NOTE: We're using row_map for counts because
@@ -469,8 +463,13 @@ public:
         Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const IndexType i) {
             Kokkos::atomic_increment(&tmpConn.row_map(i));
         });
-        Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (IndexType i) {
-            reactions(i).contributeConnectivity(tmpConn);
+        Kokkos::parallel_for(numReactions, KOKKOS_LAMBDA (IndexType i) {
+            if (i < numProdReactions) {
+                prodReactions(i).contributeConnectivity(tmpConn);
+            }
+            else {
+                dissReactions(i-numProdReactions).contributeConnectivity(tmpConn);
+            }
         });
         Kokkos::fence();
         //Get row map
@@ -497,8 +496,13 @@ public:
             }
         });
         //Fill entries (column ids)
-        Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (IndexType i) {
-            reactions(i).contributeConnectivity(tmpConn);
+        Kokkos::parallel_for(numReactions, KOKKOS_LAMBDA (IndexType i) {
+            if (i < numProdReactions) {
+                prodReactions(i).contributeConnectivity(tmpConn);
+            }
+            else {
+                dissReactions(i-numProdReactions).contributeConnectivity(tmpConn);
+            }
         });
         Kokkos::fence();
 

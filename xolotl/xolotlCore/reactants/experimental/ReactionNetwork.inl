@@ -118,11 +118,18 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
     _clusterDataMirror.setGridSize(_gridSize);
     _reactionData.setGridSize(_gridSize);
 
-    auto reactions = _reactions;
+    auto prodReactions = _prodReactions;
+    auto dissReactions = _dissReactions;
+    auto numProdReactions = _numProdReactions;
     auto reactionData = _reactionData;
     auto clusterData = _clusterData;
-    Kokkos::parallel_for(reactions.extent(0), KOKKOS_LAMBDA (IndexType i) {
-        reactions(i).updateData(reactionData, clusterData, i);
+    Kokkos::parallel_for(_numReactions, KOKKOS_LAMBDA (IndexType i) {
+        if (i < numProdReactions) {
+            prodReactions(i).updateData(reactionData, clusterData, i);
+        }
+        else {
+            dissReactions(i-numProdReactions).updateData(reactionData, clusterData, i);
+        }
     });
 }
 
@@ -136,9 +143,16 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
     updateDiffusionCoefficients();
 
-    auto reactions = _reactions;
-    Kokkos::parallel_for(reactions.extent(0), KOKKOS_LAMBDA (IndexType i) {
-        reactions(i).updateRates();
+    auto prodReactions = _prodReactions;
+    auto dissReactions = _dissReactions;
+    auto numProdReactions = _numProdReactions;
+    Kokkos::parallel_for(_numReactions, KOKKOS_LAMBDA (IndexType i) {
+        if (i < numProdReactions) {
+            prodReactions(i).updateRates();
+        }
+        else {
+            dissReactions(i-numProdReactions).updateRates();
+        }
     });
     Kokkos::fence();
 }
@@ -163,11 +177,18 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
     FluxesView fluxes, IndexType gridIndex)
 {
     // Get the extent of the reactions view
-	auto reactions = _reactions;
-    auto nReactions = reactions.extent(0);
+	auto prodReactions = _prodReactions;
+    auto dissReactions = _dissReactions;
+    auto numProdReactions = _numProdReactions;
+    auto numReactions = _numReactions;
     // Loop on the reactions
-    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const IndexType i) {
-        reactions(i).contributeFlux(concentrations, fluxes, gridIndex);
+    Kokkos::parallel_for(numReactions, KOKKOS_LAMBDA (const IndexType i) {
+        if (i < numProdReactions) {
+            prodReactions(i).contributeFlux(concentrations, fluxes, gridIndex);
+        }
+        else {
+            dissReactions(i-numProdReactions).contributeFlux(concentrations, fluxes, gridIndex);
+        }
     });
 }
 
@@ -184,13 +205,20 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
     });
 
     // Get the extent of the reactions view
-    auto reactions = _reactions;
-    auto nReactions = reactions.extent(0);
+    auto prodReactions = _prodReactions;
+    auto dissReactions = _dissReactions;
+    auto numProdReactions = _numProdReactions;
     auto connectivity = _reactionData.connectivity;
     // Loop on the reactions
-    Kokkos::parallel_for(nReactions, KOKKOS_LAMBDA (const IndexType i) {
-        reactions(i).contributePartialDerivatives(concentrations, values,
-            connectivity, gridIndex);
+    Kokkos::parallel_for(_numReactions, KOKKOS_LAMBDA (const IndexType i) {
+        if (i < numProdReactions) {
+            prodReactions(i).contributePartialDerivatives(concentrations,
+                values, connectivity, gridIndex);
+        }
+        else {
+            dissReactions(i-numProdReactions).contributePartialDerivatives(concentrations,
+                values, connectivity, gridIndex);
+        }
     });
 }
 
@@ -220,12 +248,21 @@ ReactionNetwork<TImpl>::getLeftSideRate(ConcentrationsView concentrations,
     IndexType clusterId, IndexType gridIndex)
 {
     // Get the extent of the reactions
-    auto reactions = _reactions;
-    auto nReactions = reactions.extent(0);
+    auto prodReactions = _prodReactions;
+    auto dissReactions = _dissReactions;
+    auto numProdReactions = _numProdReactions;
     double leftSideRate = 0.0;
     // Loop on all the rates to get the maximum
-    Kokkos::parallel_reduce(nReactions, KOKKOS_LAMBDA (const IndexType i, double &lsum) {
-        lsum += reactions(i).contributeLeftSideRate(concentrations, clusterId, gridIndex);
+    Kokkos::parallel_reduce(_numReactions,
+            KOKKOS_LAMBDA (const IndexType i, double &lsum) {
+        if (i < numProdReactions) {
+            lsum += prodReactions(i).contributeLeftSideRate(concentrations,
+                clusterId, gridIndex);
+        }
+        else {
+            lsum += dissReactions(i).contributeLeftSideRate(concentrations,
+                clusterId, gridIndex);
+        }
     }, leftSideRate);
 	
     return leftSideRate;
@@ -414,8 +451,8 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
         },
         nMomentIds);
 
-    Kokkos::parallel_scan(nClusters, KOKKOS_LAMBDA (std::size_t i,
-            std::size_t& update, const bool finalPass) {
+    Kokkos::parallel_scan(nClusters, KOKKOS_LAMBDA (IndexType i,
+            IndexType& update, const bool finalPass) {
         const auto temp = counts(i);
         if (finalPass) {
             counts(i) = update;
@@ -448,11 +485,14 @@ ReactionNetworkWorker<TImpl>::defineReactions()
     auto generator = _nw.asDerived()->getReactionGenerator();
     generator.generateReactions();
     _nw._reactionData = generator.getReactionData();
-    _nw._reactions = generator.getReactions();
+    _nw._prodReactions = generator.getProductionReactions();
+    _nw._dissReactions = generator.getDissociationReactions();
+    _nw._numProdReactions = _nw._prodReactions.size();
+    _nw._numReactions = _nw._numProdReactions + _nw._dissReactions.size();
 }
 
 template <typename TImpl>
-ReactionNetworkIndexType
+typename ReactionNetworkWorker<TImpl>::IndexType
 ReactionNetworkWorker<TImpl>::getDiagonalFill(
     typename Network::SparseFillMap& fillMap)
 {
