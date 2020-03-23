@@ -5,6 +5,7 @@
 
 #include <plsm/Subpaving.h>
 
+#include <experimental/ClusterData.h>
 #include <experimental/SpeciesEnumSequence.h>
 
 namespace xolotlCore

@@ -18,6 +18,7 @@ Reaction<TNetwork, TDerived>::Reaction(detail::ReactionDataRef reactionData,
         ClusterDataRef clusterData, IndexType reactionId)
     :
     _clusterData(clusterData),
+    _reactionId(reactionId),
     _rate(reactionData.getRates(reactionId)),
     _coefs(reactionData.getCoefficients(reactionId))
 {
@@ -27,10 +28,10 @@ template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
 Reaction<TNetwork, TDerived>::updateData(detail::ReactionDataRef reactionData,
-    ClusterDataRef clusterData, IndexType reactionId)
+    ClusterDataRef clusterData)
 {
     _clusterData = clusterData;
-    _rate = reactionData.getRates(reactionId);
+    _rate = reactionData.getRates(_reactionId);
 }
 
 template <typename TRegion>

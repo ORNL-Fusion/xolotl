@@ -17,6 +17,7 @@
 #include <experimental/Cluster.h>
 #include <experimental/IReactionNetwork.h>
 #include <experimental/Reaction.h>
+#include <experimental/ReactionCollection.h>
 #include <experimental/SpeciesEnumSequence.h>
 
 namespace xolotlCore
@@ -53,6 +54,7 @@ public:
     using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
     using ClusterGenerator = typename Traits::ClusterGenerator;
     using AmountType = typename IReactionNetwork::AmountType;
+    using IndexType = typename IReactionNetwork::IndexType;
     using Subpaving = typename Types::Subpaving;
     using SubdivisionRatio = plsm::SubdivisionRatio<numSpecies>;
     using Composition = typename Types::Composition;
@@ -66,6 +68,7 @@ public:
     using ClusterDataRef = typename Types::ClusterDataRef;
     using ProductionReactionType = typename Traits::ProductionReactionType;
     using DissociationReactionType = typename Traits::DissociationReactionType;
+    using ReactionCollection = detail::ReactionCollection<Traits>;
 
     template <typename PlsmContext>
     using Cluster = Cluster<TImpl, PlsmContext>;
@@ -173,9 +176,7 @@ public:
             _reactionData.rates.extent(0), _reactionData.rates.extent(1));
 
         ret += _reactionData.connectivity.getDeviceMemorySize();
-
-        ret += _prodReactions.required_allocation_size(_prodReactions.size());
-        ret += _dissReactions.required_allocation_size(_dissReactions.size());
+        ret += _reactions.getDeviceMemorySize();
 
         return ret;
     }
@@ -375,10 +376,7 @@ private:
     ClusterDataMirror _clusterDataMirror;
 
     detail::ReactionData _reactionData;
-    Kokkos::View<ProductionReactionType*> _prodReactions;
-    Kokkos::View<DissociationReactionType*> _dissReactions;
-    IndexType _numProdReactions;
-    IndexType _numReactions;
+    ReactionCollection _reactions;
 
     detail::ReactionNetworkWorker<TImpl> _worker;
 };
@@ -394,6 +392,8 @@ struct ReactionNetworkWorker
     using ClusterData = typename Types::ClusterData;
     using ClusterDataRef = typename Types::ClusterDataRef;
     using IndexType = typename Types::IndexType;
+    using ReactionCollection =
+        detail::ReactionCollection<typename Types::Traits>;
 
     Network& _nw;
 
