@@ -208,8 +208,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 		// Initialize the vacancy concentration
 		if (i >= surfacePosition + leftOffset
 				and vacancyIndex != NetworkType::invalidIndex()
-                and not hasConcentrations
-				and i < nX - rightOffset) {
+				and not hasConcentrations and i < nX - rightOffset) {
 			concOffset[vacancyIndex] = initialVConc;
 		}
 	}
@@ -369,7 +368,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		}
 
 		// Heat condition
-		if (xi == surfacePosition) {
+		if (xi == surfacePosition && xi >= xs && xi < xs + xm) {
 			temperatureHandler->computeTemperature(concVector,
 					updatedConcOffset, hxLeft, hxRight, xi);
 		}
@@ -406,9 +405,10 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		}
 
 		// ---- Compute the temperature over the locally owned part of the grid -----
-		// TODO: skip ghost points?
-		temperatureHandler->computeTemperature(concVector, updatedConcOffset,
-				hxLeft, hxRight, xi);
+		if (xi >= xs && xi < xs + xm) {
+			temperatureHandler->computeTemperature(concVector,
+					updatedConcOffset, hxLeft, hxRight, xi);
+		}
 	}
 
 	if (tempHasChanged) {
@@ -590,7 +590,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		}
 
 		// Heat condition
-		if (xi == surfacePosition) {
+		if (xi == surfacePosition && xi >= xs && xi < xs + xm) {
 			// Get the partial derivatives for the temperature
 			auto setValues = temperatureHandler->computePartialsForTemperature(
 					tempVals, tempIndices, hxLeft, hxRight, xi);
@@ -651,29 +651,30 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		}
 
 		// Get the partial derivatives for the temperature
-		// TODO: skip ghost points?
-		auto setValues = temperatureHandler->computePartialsForTemperature(
-				tempVals, tempIndices, hxLeft, hxRight, xi);
+		if (xi >= xs && xi < xs + xm) {
+			auto setValues = temperatureHandler->computePartialsForTemperature(
+					tempVals, tempIndices, hxLeft, hxRight, xi);
 
-		if (setValues) {
-			// Set grid coordinate and component number for the row
-			row.i = xi;
-			row.c = tempIndices[0];
+			if (setValues) {
+				// Set grid coordinate and component number for the row
+				row.i = xi;
+				row.c = tempIndices[0];
 
-			// Set grid coordinates and component numbers for the columns
-			// corresponding to the middle, left, and right grid points
-			cols[0].i = xi; // middle
-			cols[0].c = tempIndices[0];
-			cols[1].i = xi - 1; // left
-			cols[1].c = tempIndices[0];
-			cols[2].i = xi + 1; // right
-			cols[2].c = tempIndices[0];
+				// Set grid coordinates and component numbers for the columns
+				// corresponding to the middle, left, and right grid points
+				cols[0].i = xi; // middle
+				cols[0].c = tempIndices[0];
+				cols[1].i = xi - 1; // left
+				cols[1].c = tempIndices[0];
+				cols[2].i = xi + 1; // right
+				cols[2].c = tempIndices[0];
 
-			ierr = MatSetValuesStencil(J, 1, &row, 3, cols, tempVals,
-					ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeOffDiagonalJacobian: "
-							"MatSetValuesStencil (temperature) failed.");
+				ierr = MatSetValuesStencil(J, 1, &row, 3, cols, tempVals,
+						ADD_VALUES);
+				checkPetscError(ierr,
+						"PetscSolver1DHandler::computeOffDiagonalJacobian: "
+								"MatSetValuesStencil (temperature) failed.");
+			}
 		}
 	}
 

@@ -8,11 +8,18 @@
 BOOST_AUTO_TEST_SUITE(System_testSuite)
 
 BOOST_AUTO_TEST_CASE(system_NE_1) {
+	// 0D + heterogeneous nucleation
     testUtils::runSystemTestCase("system_NE_1");
 }
 
 BOOST_AUTO_TEST_CASE(system_NE_2) {
+	// 0D + grouping + re-solution
     testUtils::runSystemTestCase("system_NE_2");
+}
+
+BOOST_AUTO_TEST_CASE(system_NE_3) {
+	// 1D + temperature gradient
+    testUtils::runSystemTestCase("system_NE_3");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

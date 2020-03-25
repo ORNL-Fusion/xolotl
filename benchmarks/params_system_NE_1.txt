@@ -8,6 +8,6 @@ dimensions=0
 perfHandler=std
 startTemp=1400
 grouping=10001 2
-process=reaction
+process=reaction heterogeneous
 radiusSize=50
 xenonDiffusivity=0.075
