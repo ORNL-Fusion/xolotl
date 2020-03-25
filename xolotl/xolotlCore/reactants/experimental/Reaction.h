@@ -79,8 +79,8 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     void
-    updateData(detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
-        IndexType reactionId);
+    updateData(detail::ReactionDataRef reactionData,
+        ClusterDataRef clusterData);
 
     KOKKOS_INLINE_FUNCTION
     void
@@ -174,6 +174,8 @@ protected:
 
 protected:
     ClusterDataRef _clusterData;
+
+    IndexType _reactionId {invalidIndex};
 
     //! Reaction rate (k)
     using RateSubView = decltype(

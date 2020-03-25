@@ -17,7 +17,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     _clusterData(_subpaving, gridSize),
     _worker(*this)
 {
-	// Set constants
+    // Set constants
     setInterstitialBias(options.getBiasFactor());
     setImpurityRadius(options.getImpurityRadius());
     setLatticeParameter(options.getLatticeParameter());
@@ -122,19 +122,12 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
     _clusterDataMirror.setGridSize(_gridSize);
     _reactionData.setGridSize(_gridSize);
 
-    auto prodReactions = _prodReactions;
-    auto dissReactions = _dissReactions;
-    auto numProdReactions = _numProdReactions;
     auto reactionData = _reactionData;
     auto clusterData = _clusterData;
-    Kokkos::parallel_for(_numReactions, KOKKOS_LAMBDA (IndexType i) {
-        if (i < numProdReactions) {
-            prodReactions(i).updateData(reactionData, clusterData, i);
-        }
-        else {
-            dissReactions(i-numProdReactions).updateData(reactionData, clusterData, i);
-        }
+    _reactions.apply(KOKKOS_LAMBDA (auto&& reaction) {
+        reaction.updateData(reactionData, clusterData);
     });
+    Kokkos::fence();
 }
 
 template <typename TImpl>
@@ -147,16 +140,8 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
     updateDiffusionCoefficients();
 
-    auto prodReactions = _prodReactions;
-    auto dissReactions = _dissReactions;
-    auto numProdReactions = _numProdReactions;
-    Kokkos::parallel_for(_numReactions, KOKKOS_LAMBDA (IndexType i) {
-        if (i < numProdReactions) {
-            prodReactions(i).updateRates();
-        }
-        else {
-            dissReactions(i-numProdReactions).updateRates();
-        }
+    _reactions.apply(KOKKOS_LAMBDA (auto&& reaction) {
+        reaction.updateRates();
     });
     Kokkos::fence();
 }
@@ -180,20 +165,10 @@ void
 ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
     FluxesView fluxes, IndexType gridIndex)
 {
-    // Get the extent of the reactions view
-	auto prodReactions = _prodReactions;
-    auto dissReactions = _dissReactions;
-    auto numProdReactions = _numProdReactions;
-    auto numReactions = _numReactions;
-    // Loop on the reactions
-    Kokkos::parallel_for(numReactions, KOKKOS_LAMBDA (const IndexType i) {
-        if (i < numProdReactions) {
-            prodReactions(i).contributeFlux(concentrations, fluxes, gridIndex);
-        }
-        else {
-            dissReactions(i-numProdReactions).contributeFlux(concentrations, fluxes, gridIndex);
-        }
+    _reactions.apply(KOKKOS_LAMBDA (auto&& reaction) {
+        reaction.contributeFlux(concentrations, fluxes, gridIndex);
     });
+    Kokkos::fence();
 }
 
 template <typename TImpl>
@@ -208,22 +183,12 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
         values(i) = 0.0;
     });
 
-    // Get the extent of the reactions view
-    auto prodReactions = _prodReactions;
-    auto dissReactions = _dissReactions;
-    auto numProdReactions = _numProdReactions;
     auto connectivity = _reactionData.connectivity;
-    // Loop on the reactions
-    Kokkos::parallel_for(_numReactions, KOKKOS_LAMBDA (const IndexType i) {
-        if (i < numProdReactions) {
-            prodReactions(i).contributePartialDerivatives(concentrations,
-                values, connectivity, gridIndex);
-        }
-        else {
-            dissReactions(i-numProdReactions).contributePartialDerivatives(concentrations,
-                values, connectivity, gridIndex);
-        }
+    _reactions.apply(KOKKOS_LAMBDA (auto&& reaction) {
+        reaction.contributePartialDerivatives(concentrations, values,
+            connectivity, gridIndex);
     });
+    Kokkos::fence();
 }
 
 template <typename TImpl>
@@ -238,9 +203,9 @@ ReactionNetwork<TImpl>::getLargestRate()
     using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
     Kokkos::parallel_reduce(Range2D({0, 0}, {nRates, _gridSize}),
             KOKKOS_LAMBDA (IndexType i, IndexType j, double &max) {
-    	if (reactionRates(i, j) > max) max = reactionRates(i, j);
+        if (reactionRates(i, j) > max) max = reactionRates(i, j);
     }, Kokkos::Max<double>(largestRate));
-    
+
     return largestRate;
 }
 
@@ -250,30 +215,20 @@ ReactionNetwork<TImpl>::getLeftSideRate(ConcentrationsView concentrations,
     IndexType clusterId, IndexType gridIndex)
 {
     // Get the extent of the reactions
-    auto prodReactions = _prodReactions;
-    auto dissReactions = _dissReactions;
-    auto numProdReactions = _numProdReactions;
     double leftSideRate = 0.0;
     // Loop on all the rates to get the maximum
-    Kokkos::parallel_reduce(_numReactions,
-            KOKKOS_LAMBDA (const IndexType i, double &lsum) {
-        if (i < numProdReactions) {
-            lsum += prodReactions(i).contributeLeftSideRate(concentrations,
-                clusterId, gridIndex);
-        }
-        else {
-            lsum += dissReactions(i-numProdReactions).contributeLeftSideRate(concentrations,
-                clusterId, gridIndex);
-        }
+    _reactions.reduce(KOKKOS_LAMBDA (auto&& reaction, double& lsum) {
+        lsum += reaction.contributeLeftSideRate(concentrations, clusterId,
+            gridIndex);
     }, leftSideRate);
-	
+
     return leftSideRate;
 }
 
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalConcentration(ConcentrationsView concentrations,
-		Species type, AmountType minSize)
+        Species type, AmountType minSize)
 {
     auto tiles = _subpaving.getTiles(plsm::onDevice);
     double conc = 0.0;
@@ -292,7 +247,7 @@ ReactionNetwork<TImpl>::getTotalConcentration(ConcentrationsView concentrations,
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalRadiusConcentration(ConcentrationsView concentrations,
-		Species type, AmountType minSize)
+        Species type, AmountType minSize)
 {
     auto tiles = _subpaving.getTiles(plsm::onDevice);
     double conc = 0.0;
@@ -312,7 +267,7 @@ ReactionNetwork<TImpl>::getTotalRadiusConcentration(ConcentrationsView concentra
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalAtomConcentration(ConcentrationsView concentrations,
-		Species type, AmountType minSize)
+        Species type, AmountType minSize)
 {
     auto tiles = _subpaving.getTiles(plsm::onDevice);
     double conc = 0.0;
@@ -331,19 +286,19 @@ ReactionNetwork<TImpl>::getTotalAtomConcentration(ConcentrationsView concentrati
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(ConcentrationsView concentrations,
-		Species type, AmountType minSize)
+        Species type, AmountType minSize)
 {
     // Find the vacancy index
     constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
     bool hasVacancy = false;
     Species vIndex;
     for (auto i : speciesRangeNoI) {
-    	if (isVacancy(i)) {
-    		hasVacancy = true;
-    		vIndex = i;
-    	}
+        if (isVacancy(i)) {
+            hasVacancy = true;
+            vIndex = i;
+        }
     }
-    
+
     // Return 0 if there is not vacancy in the network
     if (!hasVacancy) return 0.0;
 
@@ -351,13 +306,13 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(ConcentrationsView conc
     double conc = 0.0;
     Kokkos::parallel_reduce(_numClusters,
             KOKKOS_LAMBDA (IndexType i, double &lsum) {
-    	const Region& clReg = tiles(i).getRegion();
-    	if (clReg[vIndex].begin() > 0) {
-        	const auto factor = clReg.volume() / clReg[type].length();
-    	for (AmountType j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i) * j * factor;
-    	}
-    	}
+        const Region& clReg = tiles(i).getRegion();
+        if (clReg[vIndex].begin() > 0) {
+            const auto factor = clReg.volume() / clReg[type].length();
+            for (AmountType j : makeIntervalRange(clReg[type])) {
+                if (j >= minSize) lsum += concentrations(i) * j * factor;
+            }
+        }
     }, conc);
 
     return conc;
@@ -490,11 +445,10 @@ ReactionNetworkWorker<TImpl>::defineReactions()
 {
     auto generator = _nw.asDerived()->getReactionGenerator();
     generator.generateReactions();
+
     _nw._reactionData = generator.getReactionData();
-    _nw._prodReactions = generator.getProductionReactions();
-    _nw._dissReactions = generator.getDissociationReactions();
-    _nw._numProdReactions = _nw._prodReactions.size();
-    _nw._numReactions = _nw._numProdReactions + _nw._dissReactions.size();
+    _nw._reactions = ReactionCollection(generator.getProductionReactions(),
+        generator.getDissociationReactions());
 }
 
 template <typename TImpl>
