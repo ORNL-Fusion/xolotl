@@ -22,4 +22,15 @@ BOOST_AUTO_TEST_CASE(system_NE_3) {
     testUtils::runSystemTestCase("system_NE_3");
 }
 
+BOOST_AUTO_TEST_CASE(system_PSI_1) {
+	// 1D + HeVI + advection + modifiedTM + attenuation + surface + reflective bulk
+    testUtils::runSystemTestCase("system_PSI_1");
+}
+
+BOOST_AUTO_TEST_CASE(system_PSI_2) {
+    BOOST_REQUIRE(testUtils::copyFile("tridyn.dat"));
+	// 1D + HeDTVI + grouping + heat
+    testUtils::runSystemTestCase("system_PSI_2");
+}
+
 BOOST_AUTO_TEST_SUITE_END()

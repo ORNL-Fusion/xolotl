@@ -27,6 +27,13 @@ runXolotl(const std::string& paramsFileName)
     return (retCode == 0);
 }
 
+bool
+copyFile(const std::string& paramsFileName)
+{
+    int retCode = std::system(("cp " + dataDir + "/" + paramsFileName + " .").c_str());
+    return (retCode == 0);
+}
+
 std::vector<double>
 readOutputFile(const std::string& fileName)
 {
