@@ -2102,37 +2102,31 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 					gridPointSolution[i] = 0.0;
 				}
 			}
-		}
+			// Grouped clusters
+			else {
+				// Get the factor
+				double concFactor = clReg.volume() / clReg[Spec::V].length();
+				// Loop on the Vs
+				for (auto j : makeIntervalRange(clReg[Spec::V])) {
+					// Transfer concentration to V of the same size
+					Composition vComp = Composition::zero();
+					vComp[Spec::V] = j;
+					auto vCluster = psiNetwork->findCluster(vComp,
+							plsm::onHost);
+					// TODO: refine formula with V moment
+					gridPointSolution[vCluster.getId()] += gridPointSolution[i]
+							* concFactor;
+				}
 
-//		// Loop on the super clusters to transfer their concentration to the V cluster of the
-//		// same size at this grid point
-//		for (auto const &superMapItem : network.getAll(ReactantType::PSISuper)) {
-//			auto const &cluster =
-//					static_cast<PSISuperCluster&>(*(superMapItem.second));
-//
-//			// Loop on the V boundaries
-//			for (auto const &j : cluster.getBounds(3)) {
-//				// Get the total concentration at this v
-//				double conc = cluster.getIntegratedVConcentration(j);
-//				// Get the corresponding V cluster and its Id
-//				auto vCluster = network.get(Species::V, j);
-//				int vId = vCluster->getId() - 1;
-//				// Add the concentration
-//				gridPointSolution[vId] += conc;
-//			}
-//
-//			// Reset the super cluster concentration
-//			int id = cluster.getId() - 1;
-//			gridPointSolution[id] = 0.0;
-//			id = cluster.getMomentId(0) - 1;
-//			gridPointSolution[id] = 0.0;
-//			id = cluster.getMomentId(1) - 1;
-//			gridPointSolution[id] = 0.0;
-//			id = cluster.getMomentId(2) - 1;
-//			gridPointSolution[id] = 0.0;
-//			id = cluster.getMomentId(3) - 1;
-//			gridPointSolution[id] = 0.0;
-//		}
+				// Reset the concentration and moments
+				gridPointSolution[i] = 0.0;
+				auto momentIds =
+						psiNetwork->getCluster(i, plsm::onHost).getMomentIds();
+				for (std::size_t j = 0; j < momentIds.extent(0); j++) {
+					gridPointSolution[momentIds(j)] = 0.0;
+				}
+			}
+		}
 	}
 
 	// Now takes care of moving surface
@@ -2208,7 +2202,8 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		// Get the single vacancy ID
 		auto singleVacancyCluster = network.getSingleVacancy();
 		auto vacancyIndex = experimental::IReactionNetwork::invalidIndex();
-		if (singleVacancyCluster.getId() != experimental::IReactionNetwork::invalidIndex())
+		if (singleVacancyCluster.getId()
+				!= experimental::IReactionNetwork::invalidIndex())
 			vacancyIndex = singleVacancyCluster.getId();
 		// Get the surface temperature
 		double temp = 0.0;
@@ -2232,7 +2227,9 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 				// Set the new surface temperature
 				gridPointSolution[dof] = surfTemp;
 
-				if (vacancyIndex != experimental::IReactionNetwork::invalidIndex() && nGridPoints > 0) {
+				if (vacancyIndex
+						!= experimental::IReactionNetwork::invalidIndex()
+						&& nGridPoints > 0) {
 					// Initialize the vacancy concentration
 					gridPointSolution[vacancyIndex] = initialVConc;
 				}

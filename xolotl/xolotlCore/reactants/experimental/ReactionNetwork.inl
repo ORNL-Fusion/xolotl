@@ -24,16 +24,20 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     auto tiles = subpaving.getTiles(plsm::onDevice);
     _numClusters = tiles.extent(0);
     
-
-//    	// PRINT ALL THE CLUSTERS
-//    	for (IndexType i = 0; i < _numClusters; ++i) {
-//    		const auto& cl1Reg = tiles(i).getRegion();
-//    		Composition lo1 = cl1Reg.getOrigin();
-//    	    Composition hi1 = cl1Reg.getUpperLimitPoint();
-//    
-//    		std::cout << i << " " << lo1[0] << std::endl;
-//    	}
-//    	std::cout << "num: " << _numClusters << std::endl;
+//    // PRINT ALL THE CLUSTERS
+//    constexpr auto speciesRange = getSpeciesRange();
+//    for (IndexType i = 0; i < _numClusters; ++i) {
+//        const auto& clReg = tiles(i).getRegion();
+//        Composition lo = clReg.getOrigin();
+//        Composition hi = clReg.getUpperLimitPoint();
+//
+//        std::cout << i << ": " << std::endl;
+//        for (auto j : speciesRange) std::cout << lo[j] << " ";
+//        std::cout << std::endl;
+//        for (auto j : speciesRange) std::cout << hi[j] - 1 << " ";
+//        std::cout << std::endl;
+//    }
+    std::cout << "num: " << _numClusters << std::endl;
 
     {
     boost::timer::auto_cpu_timer t;
@@ -237,8 +241,6 @@ ReactionNetwork<TImpl>::getLargestRate()
     	if (reactionRates(i, j) > max) max = reactionRates(i, j);
     }, Kokkos::Max<double>(largestRate));
     
-    // TODO: this is one the device I think, should it be passed to the host?
-    
     return largestRate;
 }
 
@@ -260,7 +262,7 @@ ReactionNetwork<TImpl>::getLeftSideRate(ConcentrationsView concentrations,
                 clusterId, gridIndex);
         }
         else {
-            lsum += dissReactions(i).contributeLeftSideRate(concentrations,
+            lsum += dissReactions(i-numProdReactions).contributeLeftSideRate(concentrations,
                 clusterId, gridIndex);
         }
     }, leftSideRate);
@@ -278,8 +280,9 @@ ReactionNetwork<TImpl>::getTotalConcentration(ConcentrationsView concentrations,
     Kokkos::parallel_reduce(_numClusters,
             KOKKOS_LAMBDA (IndexType i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
+    	const auto factor = clReg.volume() / clReg[type].length();
     	for (AmountType j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i);
+    		if (j >= minSize) lsum += concentrations(i) * factor;
     	}
     }, conc);
 
@@ -297,8 +300,9 @@ ReactionNetwork<TImpl>::getTotalRadiusConcentration(ConcentrationsView concentra
     Kokkos::parallel_reduce(_numClusters,
             KOKKOS_LAMBDA (IndexType i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
+    	const auto factor = clReg.volume() / clReg[type].length();
     	for (AmountType j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i) * clusterData.reactionRadius(i);
+    		if (j >= minSize) lsum += concentrations(i) * clusterData.reactionRadius(i) * factor;
     	}
     }, conc);
 
@@ -315,8 +319,9 @@ ReactionNetwork<TImpl>::getTotalAtomConcentration(ConcentrationsView concentrati
     Kokkos::parallel_reduce(_numClusters,
             KOKKOS_LAMBDA (IndexType i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
+    	const auto factor = clReg.volume() / clReg[type].length();
     	for (AmountType j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i) * j;
+    		if (j >= minSize) lsum += concentrations(i) * j * factor;
     	}
     }, conc);
 
@@ -348,8 +353,9 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(ConcentrationsView conc
             KOKKOS_LAMBDA (IndexType i, double &lsum) {
     	const Region& clReg = tiles(i).getRegion();
     	if (clReg[vIndex].begin() > 0) {
+        	const auto factor = clReg.volume() / clReg[type].length();
     	for (AmountType j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i) * j;
+    		if (j >= minSize) lsum += concentrations(i) * j * factor;
     	}
     	}
     }, conc);

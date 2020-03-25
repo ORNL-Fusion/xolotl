@@ -154,6 +154,7 @@ struct ReactionData
             numProductionReactions, coeffExtent, coeffExtent, 4, coeffExtent),
         dissociationCoeffs("Dissociation Coefficients",
             numDissociationReactions, coeffExtent, 1, 3, coeffExtent),
+        widths("Reaction Rates", numReactions, numSpeciesNoI),
         rates("Reaction Rates", numReactions, gridSize)
     {
     }
@@ -167,6 +168,7 @@ struct ReactionData
     IndexType numReactions {};
     Kokkos::View<double*****> productionCoeffs;
     Kokkos::View<double*****> dissociationCoeffs;
+    Kokkos::View<double**> widths;
     Kokkos::View<double**> rates;
     ClusterConnectivity<> connectivity;
 };
@@ -182,6 +184,7 @@ struct ReactionDataRef
         :
         productionCoeffs(data.productionCoeffs),
         dissociationCoeffs(data.dissociationCoeffs),
+        widths(data.widths),
         rates(data.rates),
         connectivity(data.connectivity)
     {
@@ -204,6 +207,13 @@ struct ReactionDataRef
 
     KOKKOS_INLINE_FUNCTION
     auto
+    getWidths(IndexType reactionId)
+    {
+        return Kokkos::subview(widths, reactionId, Kokkos::ALL);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    auto
     getRates(IndexType reactionId)
     {
         return Kokkos::subview(rates, reactionId, Kokkos::ALL);
@@ -211,6 +221,7 @@ struct ReactionDataRef
 
     Kokkos::View<double*****, Kokkos::MemoryUnmanaged> productionCoeffs;
     Kokkos::View<double*****, Kokkos::MemoryUnmanaged> dissociationCoeffs;
+    Kokkos::View<double**, Kokkos::MemoryUnmanaged> widths;
     Kokkos::View<double**, Kokkos::MemoryUnmanaged> rates;
     ClusterConnectivity<> connectivity;
 };

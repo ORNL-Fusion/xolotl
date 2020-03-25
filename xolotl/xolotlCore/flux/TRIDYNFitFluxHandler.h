@@ -83,7 +83,7 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(experimental::IReactionNetwork& network,
+	void initializeFluxHandler(experimental::IReactionNetwork &network,
 			int surfacePos, std::vector<double> grid) {
 		// Clear everything
 		incidentFluxVec.clear();
@@ -129,11 +129,7 @@ public:
 			// And start looping on the lines
 			int index = 0;
 			while (tokens.size() > 0) {
-				NetworkType::Composition comp;
-				// Initialize the composition
-				for (auto i : psiNetwork->getSpeciesRange()) {
-					comp[i] = 0;
-				}
+				NetworkType::Composition comp = NetworkType::Composition::zero();
 
 				// Read the cluster type
 				NetworkType::Species clusterSpecies;
@@ -262,7 +258,7 @@ public:
 			}
 
 			// Prints both incident vectors in a file
-			if (procId == 0) {
+			if (procId == 0 && incidentFluxVec.size() > 0) {
 				std::ofstream outputFile;
 				outputFile.open("incidentVectors.txt");
 				for (int i = 0; i < incidentFluxVec[0].size(); i++) {
@@ -293,6 +289,16 @@ public:
 		if (useTimeProfile) {
 			fluxAmplitude = getProfileAmplitude(currentTime);
 			recomputeFluxHandler(surfacePos);
+		}
+
+		if (xGrid.size() == 0) {
+			// Update the concentration array
+			for (int i = 0; i < fluxIndices.size(); i++) {
+				updatedConcOffset[fluxIndices[i]] += fluxAmplitude
+						* reductionFactors[i];
+			}
+
+			return;
 		}
 
 		// Update the concentration array

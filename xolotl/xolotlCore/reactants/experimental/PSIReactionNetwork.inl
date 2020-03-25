@@ -133,7 +133,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(IndexType i, IndexType j,
             nProd++;
             this->addProductionReaction(tag, {i, j, k});
             // TODO: will have to add some rules, i or j should be a simplex cluster of max size 1
-            if (!cl1Reg.isSimplex() && !cl2Reg.isSimplex()) {
+            if (!cl1Reg.isSimplex() || !cl2Reg.isSimplex() || !prodReg.isSimplex()) {
                 continue;
             }
             // Loop on the species

@@ -31,7 +31,11 @@ public:
         _hydrogenRadiusFactor(options.getHydrogenFactor()),
         _maxHe(options.getMaxImpurity()),
         _maxD(options.getMaxD()),
-        _maxT(options.getMaxT())
+        _maxT(options.getMaxT()),
+        _maxV(options.getMaxV()),
+        _groupingMin(options.getGroupingMin()),
+        _groupingWidthA(options.getGroupingWidthA()),
+        _groupingWidthB(options.getGroupingWidthB())
     {
     }
 
@@ -41,7 +45,11 @@ public:
         _hydrogenRadiusFactor(options.getHydrogenFactor()),
         _maxHe(options.getMaxImpurity()),
         _maxD(options.getMaxD()),
-        _maxT(options.getMaxT())
+        _maxT(options.getMaxT()),
+        _maxV(options.getMaxV()),
+        _groupingMin(options.getGroupingMin()),
+        _groupingWidthA(options.getGroupingWidthA()),
+        _groupingWidthB(options.getGroupingWidthB())
     {
     }
 
@@ -93,6 +101,10 @@ private:
     AmountType _maxHe {8};
     AmountType _maxD {1};
     AmountType _maxT {1};
+    AmountType _maxV {0};
+    AmountType _groupingMin;
+    AmountType _groupingWidthA;
+    AmountType _groupingWidthB;
 };
 }
 }

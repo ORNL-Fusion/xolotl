@@ -180,6 +180,11 @@ protected:
         std::declval<detail::ReactionDataRef>().getRates(0));
     RateSubView _rate;
 
+    //! Reaction widths
+    using WidthSubView = decltype(
+        std::declval<detail::ReactionDataRef>().getWidths(0));
+    WidthSubView _widths;
+
     //! Flux coefficients
     using CoefsSubView = decltype(
         std::declval<detail::ReactionDataRef>().getCoefficients(0));

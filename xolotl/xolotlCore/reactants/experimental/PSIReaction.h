@@ -121,7 +121,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
             cl.getFormationEnergy();
     }
 
-    return be;
+    return max(be, -5.0);
 }
 }
 }

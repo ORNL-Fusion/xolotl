@@ -10,7 +10,95 @@ KOKKOS_INLINE_FUNCTION
 bool
 PSIClusterGenerator<PSIFullSpeciesList>::intersect(const Region& region) const
 {
-    //TODO
+    // I is never grouped
+    if (region[Species::I].begin() > 0) {
+        return true;
+    }
+    
+    // V is never grouped
+    if (region[Species::V].end() > 1 && region[Species::He].begin() == 0 &&
+                region[Species::D].begin() == 0 && region[Species::T].begin() == 0 &&
+                region[Species::I].begin() == 0) {
+        return true;
+    }
+    
+    //He is never grouped
+    if (region[Species::He].end() > 1 && region[Species::D].begin() == 0 &&
+                region[Species::T].begin() == 0 && region[Species::V].begin() == 0 &&
+                region[Species::I].begin() == 0) {
+        return true;
+    }
+    
+    //D is never grouped
+    if (region[Species::D].end() > 1 && region[Species::He].begin() == 0 &&
+                region[Species::T].begin() == 0 && region[Species::V].begin() == 0 &&
+                region[Species::I].begin() == 0) {
+        return true;
+    }
+    
+    //T is never grouped
+    if (region[Species::T].end() > 1 && region[Species::He].begin() == 0 &&
+                region[Species::D].begin() == 0 && region[Species::V].begin() == 0 &&
+                region[Species::I].begin() == 0) {
+        return true;
+    }
+    
+    // Don't group under the given min for V
+    if (region[Species::V].begin() < _groupingMin) {
+        return true;
+    }
+    
+    // Don't group above maxV so that the cluster are rejected by select
+    if (region[Species::V].begin() >= _maxV) {
+        return true;
+    }
+   
+    // Else refine around the edge
+    auto maxDPerV =
+        KOKKOS_LAMBDA (AmountType amtV) { return (2.0/3.0) * getMaxHePerV(amtV) * (_maxD > 0); };
+    auto maxTPerV =
+        KOKKOS_LAMBDA (AmountType amtV) { return (2.0/3.0) * getMaxHePerV(amtV) * (_maxT > 0); };
+    if (region[Species::V].end() > 1) {
+        Composition lo = region.getOrigin();
+        Composition hi = region.getUpperLimitPoint();
+        
+        if (lo[Species::He] <= getMaxHePerV(hi[Species::V]-1) 
+        		&& hi[Species::He] - 1 >= getMaxHePerV(lo[Species::V] - 1)) {
+        	return true;
+        }
+		if (lo[Species::D] <= maxDPerV(hi[Species::V]-1) 
+        		&& hi[Species::D] - 1 >= maxDPerV(lo[Species::V] - 1) && _maxD > 0) {
+            return true;
+        }
+		if (lo[Species::T] <= maxTPerV(hi[Species::V]-1) 
+        		&& hi[Species::T] - 1 >= maxTPerV(lo[Species::V] - 1) && _maxT > 0) {
+            return true;
+        }
+        auto hiH = hi[Species::D] + hi[Species::T];
+        if (lo[Species::He] == 0) {
+            return true;
+        }
+        if (hiH >= (2.0/3.0) * lo[Species::He] + 0.5 ) {
+            return true;
+        }
+    }
+
+    if (region[Species::V].length() == _groupingWidthB) {
+        return false;
+    }
+
+    if (region[Species::He].length() == _groupingWidthA) {
+        return false;
+    }
+
+    if (region[Species::D].length() == _groupingWidthA) {
+        return false;
+    }
+
+    if (region[Species::T].length() == _groupingWidthA) {
+        return false;
+    }
+    
     return true;
 }
 
@@ -53,39 +141,9 @@ PSIClusterGenerator<PSIFullSpeciesList>::select(const Region& region) const
         return false;
     }
 
-    auto maxDPerV =
-        KOKKOS_LAMBDA (AmountType amtV) { return (2.0/3.0) * getMaxHePerV(amtV); };
-    if (region[Species::V].begin() > 0) {
-        Composition lo = region.getOrigin();
-        Composition hi = region.getUpperLimitPoint();
-
-        //Too many helium
-        if (lo[Species::He] > getMaxHePerV(lo[Species::V])) {
-            return false;
-        }
-
-        //Too many deuterium
-        if (lo[Species::D] > maxDPerV(lo[Species::V])) {
-            return false;
-        }
-
-        //Too many tritium
-        if (lo[Species::T] > maxDPerV(lo[Species::V])) {
-            return false;
-        }
-
-        // Too many hydrogen
-        auto loH = lo[Species::D] + lo[Species::T];
-        if (lo[Species::He] == 0 && hi[Species::He] - 1 == 0) {
-            if (loH > 6 * lo[Species::V]) {
-                return false;
-            }
-        }
-        else {
-            if (loH > (2.0/3.0) * lo[Species::He] + 0.5 ) {
-                return false;
-            }
-        }
+    // Vacancy
+    if (region[Species::V].begin() > _maxV) {
+        return false;
     }
 
     // Can't cluster without V
@@ -96,6 +154,42 @@ PSIClusterGenerator<PSIFullSpeciesList>::select(const Region& region) const
             return false;
         if (region[Species::D].begin() > 0 && region[Species::T].begin() > 0)
             return false;
+    }
+
+    // The edge
+    auto maxDPerV =
+        KOKKOS_LAMBDA (AmountType amtV) { return (2.0/3.0) * getMaxHePerV(amtV); };
+    if (region[Species::V].end() > 1) {
+        Composition lo = region.getOrigin();
+        Composition hi = region.getUpperLimitPoint();
+
+        //Too many helium
+        if (lo[Species::He] > getMaxHePerV(hi[Species::V]-1)) {
+            return false;
+        }
+
+        //Too many deuterium
+        if (lo[Species::D] > maxDPerV(hi[Species::V]-1)) {
+            return false;
+        }
+
+        //Too many tritium
+        if (lo[Species::T] > maxDPerV(hi[Species::V]-1)) {
+            return false;
+        }
+
+        // Too many hydrogen
+        auto loH = lo[Species::D] + lo[Species::T];
+        if (lo[Species::He] == 0) {
+            if (loH > 6 * (hi[Species::V]-1)) {
+                return false;
+            }
+        }
+        else {
+            if (loH > (2.0/3.0) * (hi[Species::He] - 1) + 0.5 ) {
+                return false;
+            }
+        }
     }
 
     return true;
@@ -143,6 +237,9 @@ PSIClusterGenerator<PSIFullSpeciesList>::getFormationEnergy(
 
     const auto& reg = cluster.getRegion();
     double formationEnergy {};
+    // All the possibly grouped ones are 0
+    if (reg[Species::V].end() >= _groupingMin) return formationEnergy;
+    
     if (reg.isSimplex()) {
         Composition comp(reg.getOrigin());
         if (comp.isOnAxis(Species::I)) {
