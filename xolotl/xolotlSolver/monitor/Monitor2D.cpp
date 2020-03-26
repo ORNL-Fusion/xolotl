@@ -15,9 +15,9 @@
 #include <iomanip>
 #include <vector>
 #include <memory>
-#include <PSISuperCluster.h>
-#include <NESuperCluster.h>
 #include <MathUtils.h>
+#include <experimental/NEReactionNetwork.h>
+#include <experimental/PSIReactionNetwork.h>
 #include "RandomNumberGenerator.h"
 #include "xolotlCore/io/XFile.h"
 #include "xolotlSolver/monitor/Monitor.h"
@@ -66,13 +66,8 @@ std::vector<double> nTritium2D;
 double sputteringYield2D = 0.0;
 // The vector of depths at which bursting happens
 std::vector<std::pair<int, int> > depthPositions2D;
-// Declare the vector that will store the Id of the clusters
-std::vector<int> indices2D;
-// Declare the vector that will store the weight of the clusters
-// (their He composition)
-std::vector<int> weights2D;
-// Declare the vector that will store the radii of bubbles
-std::vector<double> radii2D;
+// The vector of ids for diffusing interstitial clusters
+std::vector<int> iClusterIds2D;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop2D")
@@ -80,7 +75,7 @@ std::vector<double> radii2D;
  * This is a monitoring method that will update an hdf5 file at each time step.
  */
 PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double ***solutionArray, *gridPointSolution;
@@ -127,12 +122,10 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the network
-	auto& network = solverHandler.getNetwork();
-
-	// Network size
+	// Get the network and dof
+	auto &network = solverHandler.getExpNetwork();
 	const int dof = network.getDOF();
 
 	// Create an array for the concentration
@@ -240,7 +233,7 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will compute the helium retention
  */
 PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm, ys, ym, Mx, My;
@@ -248,7 +241,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the flux handler that will be used to compute fluxes.
 	auto fluxHandler = solverHandler.getFluxHandler();
@@ -274,7 +267,12 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	double hy = solverHandler.getStepSizeY();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	using NetworkType =
+	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	const int dof = network.getDOF();
 
 	// Get the array of concentration
 	double ***solutionArray, *gridPointSolution;
@@ -301,13 +299,19 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 
 			double hx = grid[xi + 1] - grid[xi];
 
-			// Update the concentration in the network
-			network.updateConcentrationsFromArray(gridPointSolution);
+			using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+			auto hConcs = HostUnmanaged(gridPointSolution, dof);
+			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+			deep_copy(dConcs, hConcs);
 
-			// Get the total atom concentrations at this grid point
-			heConcentration += network.getTotalAtomConcentration(0) * hx * hy;
-			dConcentration += network.getTotalAtomConcentration(1) * hx * hy;
-			tConcentration += network.getTotalAtomConcentration(2) * hx * hy;
+			// Get the total concentrations at this grid point
+			heConcentration += network.getTotalAtomConcentration(dConcs,
+					Spec::He, 0) * hx * hy;
+			dConcentration += network.getTotalAtomConcentration(dConcs, Spec::D,
+					0) * hx * hy;
+			tConcentration += network.getTotalAtomConcentration(dConcs, Spec::T,
+					0) * hx * hy;
 		}
 	}
 
@@ -335,123 +339,123 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
-	// Look at the fluxes going in the bulk if the bottom is a free surface
-	if (solverHandler.getRightOffset() == 1) {
-		// Set the bottom surface position
-		int xi = Mx - 2;
-
-		// Loop on every Y position
-		for (PetscInt j = 0; j < My; j++) {
-
-			// Value to know on which processor is the bottom
-			int bottomProc = 0;
-
-			// Check we are on the right proc
-			if (xi >= xs && xi < xs + xm && j >= ys && j < ys + ym) {
-				// Get the delta time from the previous timestep to this timestep
-				double dt = time - previousTime;
-				// Compute the total number of impurities that went in the bulk
-				nHelium2D[j] += previousHeFlux2D[j] * dt;
-				nDeuterium2D[j] += previousDFlux2D[j] * dt;
-				nTritium2D[j] += previousTFlux2D[j] * dt;
-
-				// Get the pointer to the beginning of the solution data for this grid point
-				gridPointSolution = solutionArray[j][xi];
-
-				// Factor for finite difference
-				double hxLeft = 0.0, hxRight = 0.0;
-				if (xi - 1 >= 0 && xi < Mx) {
-					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-				} else if (xi - 1 < 0) {
-					hxLeft = grid[xi + 1] - grid[xi];
-					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-				} else {
-					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-					hxRight = grid[xi + 1] - grid[xi];
-				}
-				double factor = 2.0 * hy / (hxLeft + hxRight);
-
-				// Initialize the value for the flux
-				double newFlux = 0.0;
-				// Consider each helium cluster.
-				for (auto const& heMapItem : network.getAll(ReactantType::He)) {
-					// Get the cluster
-					auto const& cluster = *(heMapItem.second);
-					// Get its id and concentration
-					int id = cluster.getId() - 1;
-					double conc = gridPointSolution[id];
-					// Get its size and diffusion coefficient
-					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient(xi - xs);
-					// Compute the flux going to the right
-					newFlux += (double) size * factor * coef * conc;
-				}
-				// Update the helium flux
-				previousHeFlux2D[j] = newFlux;
-
-				// Initialize the value for the flux
-				newFlux = 0.0;
-				// Consider each deuterium cluster.
-				for (auto const& dMapItem : network.getAll(ReactantType::D)) {
-					// Get the cluster
-					auto const& cluster = *(dMapItem.second);
-					// Get its id and concentration
-					int id = cluster.getId() - 1;
-					double conc = gridPointSolution[id];
-					// Get its size and diffusion coefficient
-					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient(xi - xs);
-					// Compute the flux going to the right
-					newFlux += (double) size * factor * coef * conc;
-				}
-				// Update the deuterium flux
-				previousDFlux2D[j] = newFlux;
-
-				// Initialize the value for the flux
-				newFlux = 0.0;
-				// Consider each tritium cluster.
-				for (auto const& tMapItem : network.getAll(ReactantType::T)) {
-					// Get the cluster
-					auto const& cluster = *(tMapItem.second);
-					// Get its id and concentration
-					int id = cluster.getId() - 1;
-					double conc = gridPointSolution[id];
-					// Get its size and diffusion coefficient
-					int size = cluster.getSize();
-					double coef = cluster.getDiffusionCoefficient(xi - xs);
-					// Compute the flux going to the right
-					newFlux += (double) size * factor * coef * conc;
-				}
-				// Update the tritium flux
-				previousTFlux2D[j] = newFlux;
-
-				// Set the bottom processor
-				bottomProc = procId;
-			}
-
-			// Get which processor will send the information
-			int bottomId = 0;
-			MPI_Allreduce(&bottomProc, &bottomId, 1, MPI_INT, MPI_SUM,
-					PETSC_COMM_WORLD);
-
-			// Send the information about impurities
-			// to the other processes
-			std::array<double, 6> countFluxData { nHelium2D[j],
-					previousHeFlux2D[j], nDeuterium2D[j], previousDFlux2D[j],
-					nTritium2D[j], previousTFlux2D[j] };
-			MPI_Bcast(countFluxData.data(), countFluxData.size(), MPI_DOUBLE,
-					bottomId, PETSC_COMM_WORLD);
-
-			// Extract inpurity data from broadcast buffer.
-			nHelium2D[j] = countFluxData[0];
-			previousHeFlux2D[j] = countFluxData[1];
-			nDeuterium2D[j] = countFluxData[2];
-			previousDFlux2D[j] = countFluxData[3];
-			nTritium2D[j] = countFluxData[4];
-			previousTFlux2D[j] = countFluxData[5];
-		}
-	}
+//	// Look at the fluxes going in the bulk if the bottom is a free surface
+//	if (solverHandler.getRightOffset() == 1) {
+//		// Set the bottom surface position
+//		int xi = Mx - 2;
+//
+//		// Loop on every Y position
+//		for (PetscInt j = 0; j < My; j++) {
+//
+//			// Value to know on which processor is the bottom
+//			int bottomProc = 0;
+//
+//			// Check we are on the right proc
+//			if (xi >= xs && xi < xs + xm && j >= ys && j < ys + ym) {
+//				// Get the delta time from the previous timestep to this timestep
+//				double dt = time - previousTime;
+//				// Compute the total number of impurities that went in the bulk
+//				nHelium2D[j] += previousHeFlux2D[j] * dt;
+//				nDeuterium2D[j] += previousDFlux2D[j] * dt;
+//				nTritium2D[j] += previousTFlux2D[j] * dt;
+//
+//				// Get the pointer to the beginning of the solution data for this grid point
+//				gridPointSolution = solutionArray[j][xi];
+//
+//				// Factor for finite difference
+//				double hxLeft = 0.0, hxRight = 0.0;
+//				if (xi - 1 >= 0 && xi < Mx) {
+//					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+//					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+//				} else if (xi - 1 < 0) {
+//					hxLeft = grid[xi + 1] - grid[xi];
+//					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+//				} else {
+//					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+//					hxRight = grid[xi + 1] - grid[xi];
+//				}
+//				double factor = 2.0 * hy / (hxLeft + hxRight);
+//
+//				// Initialize the value for the flux
+//				double newFlux = 0.0;
+//				// Consider each helium cluster.
+//				for (auto const& heMapItem : network.getAll(ReactantType::He)) {
+//					// Get the cluster
+//					auto const& cluster = *(heMapItem.second);
+//					// Get its id and concentration
+//					int id = cluster.getId() - 1;
+//					double conc = gridPointSolution[id];
+//					// Get its size and diffusion coefficient
+//					int size = cluster.getSize();
+//					double coef = cluster.getDiffusionCoefficient(xi - xs);
+//					// Compute the flux going to the right
+//					newFlux += (double) size * factor * coef * conc;
+//				}
+//				// Update the helium flux
+//				previousHeFlux2D[j] = newFlux;
+//
+//				// Initialize the value for the flux
+//				newFlux = 0.0;
+//				// Consider each deuterium cluster.
+//				for (auto const& dMapItem : network.getAll(ReactantType::D)) {
+//					// Get the cluster
+//					auto const& cluster = *(dMapItem.second);
+//					// Get its id and concentration
+//					int id = cluster.getId() - 1;
+//					double conc = gridPointSolution[id];
+//					// Get its size and diffusion coefficient
+//					int size = cluster.getSize();
+//					double coef = cluster.getDiffusionCoefficient(xi - xs);
+//					// Compute the flux going to the right
+//					newFlux += (double) size * factor * coef * conc;
+//				}
+//				// Update the deuterium flux
+//				previousDFlux2D[j] = newFlux;
+//
+//				// Initialize the value for the flux
+//				newFlux = 0.0;
+//				// Consider each tritium cluster.
+//				for (auto const& tMapItem : network.getAll(ReactantType::T)) {
+//					// Get the cluster
+//					auto const& cluster = *(tMapItem.second);
+//					// Get its id and concentration
+//					int id = cluster.getId() - 1;
+//					double conc = gridPointSolution[id];
+//					// Get its size and diffusion coefficient
+//					int size = cluster.getSize();
+//					double coef = cluster.getDiffusionCoefficient(xi - xs);
+//					// Compute the flux going to the right
+//					newFlux += (double) size * factor * coef * conc;
+//				}
+//				// Update the tritium flux
+//				previousTFlux2D[j] = newFlux;
+//
+//				// Set the bottom processor
+//				bottomProc = procId;
+//			}
+//
+//			// Get which processor will send the information
+//			int bottomId = 0;
+//			MPI_Allreduce(&bottomProc, &bottomId, 1, MPI_INT, MPI_SUM,
+//					PETSC_COMM_WORLD);
+//
+//			// Send the information about impurities
+//			// to the other processes
+//			std::array<double, 6> countFluxData { nHelium2D[j],
+//					previousHeFlux2D[j], nDeuterium2D[j], previousDFlux2D[j],
+//					nTritium2D[j], previousTFlux2D[j] };
+//			MPI_Bcast(countFluxData.data(), countFluxData.size(), MPI_DOUBLE,
+//					bottomId, PETSC_COMM_WORLD);
+//
+//			// Extract inpurity data from broadcast buffer.
+//			nHelium2D[j] = countFluxData[0];
+//			previousHeFlux2D[j] = countFluxData[1];
+//			nDeuterium2D[j] = countFluxData[2];
+//			previousDFlux2D[j] = countFluxData[3];
+//			nTritium2D[j] = countFluxData[4];
+//			previousTFlux2D[j] = countFluxData[5];
+//		}
+//	}
 
 	// Master process
 	if (procId == 0) {
@@ -508,7 +512,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
  * This is a monitoring method that will compute the xenon retention
  */
 PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -517,7 +521,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the da from ts
 	DM da;
@@ -541,8 +545,14 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	// Setup step size variables
 	double hy = solverHandler.getStepSizeY();
 
-	// Get the network
-	auto& network = solverHandler.getNetwork();
+	using NetworkType =
+	experimental::NEReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	// Degrees of freedom is the total number of clusters in the network
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	const int dof = network.getDOF();
 
 	// Get the array of concentration
 	PetscReal ***solutionArray, *gridPointSolution;
@@ -557,49 +567,31 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	auto minSizes = solverHandler.getMinSizes();
 
 	// Loop on the grid
-	for (PetscInt yj = ys; yj < ys + ym; yj++) {
+	for (PetscInt yj = ys; yj < ys + ym; yj++)
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
-
 			// Get the pointer to the beginning of the solution data for this grid point
 			gridPointSolution = solutionArray[yj][xi];
 
+			using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+			auto hConcs = HostUnmanaged(gridPointSolution, dof);
+			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+			deep_copy(dConcs, hConcs);
+
 			double hx = grid[xi + 1] - grid[xi];
 
-			// Update the concentration in the network
-			network.updateConcentrationsFromArray(gridPointSolution);
-
-			// Loop on all the indices
-			for (unsigned int i = 0; i < indices2D.size(); i++) {
-				// Add the current concentration times the number of xenon in the cluster
-				// (from the weight vector)
-				double conc = gridPointSolution[indices2D[i]];
-				xeConcentration += conc * weights2D[i] * hx * hy;
-				bubbleConcentration += conc * hx * hy;
-				radii += conc * radii2D[i] * hx * hy;
-				if (weights2D[i] >= minSizes[0] && conc > 1.0e-16) {
-					partialBubbleConcentration += conc * hx * hy;
-					partialRadii += conc * radii2D[i] * hx * hy;
-				}
-			}
-
-			// Loop on all the super clusters
-			for (auto const& superMapItem : network.getAll(
-					ReactantType::NESuper)) {
-				auto const& cluster =
-						static_cast<NESuperCluster&>(*(superMapItem.second));
-				double conc = cluster.getTotalConcentration();
-				xeConcentration += cluster.getTotalXenonConcentration() * hx
-						* hy;
-				bubbleConcentration += conc * hx * hy;
-				radii += conc * cluster.getReactionRadius() * hx * hy;
-				if (cluster.getSize() >= minSizes[0] && conc > 1.0e-16) {
-					partialBubbleConcentration += conc * hx * hy;
-					partialRadii += conc * cluster.getReactionRadius() * hx
-							* hy;
-				}
-			}
+			// Get the concentrations
+			xeConcentration += network.getTotalAtomConcentration(dConcs,
+					Spec::Xe, 0) * hx * hy;
+			bubbleConcentration += network.getTotalConcentration(dConcs,
+					Spec::Xe, 0) * hx * hy;
+			radii += network.getTotalRadiusConcentration(dConcs, Spec::Xe, 0)
+					* hx * hy;
+			partialBubbleConcentration = network.getTotalConcentration(dConcs,
+					Spec::Xe, minSizes[0]) * hx * hy;
+			partialRadii += network.getTotalRadiusConcentration(dConcs,
+					Spec::Xe, minSizes[0]) * hx * hy;
 		}
-	}
 
 	// Get the current process ID
 	int procId;
@@ -625,14 +617,10 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 				<< std::endl;
 
 		// Make sure the average partial radius makes sense
-		double averagePartialRadius = totalConcData[4] / totalConcData[3];
-		double minRadius = pow(
-				(3.0 * (double) minSizes[0])
-						/ (4.0 * xolotlCore::pi * network.getDensity()),
-				(1.0 / 3.0));
-		if (partialBubbleConcentration < 1.e-16
-				|| averagePartialRadius < minRadius)
-			averagePartialRadius = minRadius;
+		double averagePartialRadius = 0.0;
+		if (totalConcData[3] > 1.e-16) {
+			averagePartialRadius = totalConcData[4] / totalConcData[3];
+		}
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
@@ -651,139 +639,13 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 }
 
 #undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeTRIDYN2D")
-/**
- * This is a monitoring method that will compute the data to send to TRIDYN
- */
-PetscErrorCode computeTRIDYN2D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *ictx) {
-	// Initial declarations
-	PetscErrorCode ierr;
-	PetscInt xs, xm, ys, ym;
-
-	PetscFunctionBeginUser;
-
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
-
-	// Gets the process ID
-	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
-
-	// Get the network
-	auto& network = solverHandler.getNetwork();
-
-	// Get the da from ts
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
-	CHKERRQ(ierr);
-
-	// Get the total size of the grid rescale the concentrations
-	PetscInt Mx, My;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
-
-	// Get the physical grid
-	auto grid = solverHandler.getXGrid();
-
-	// Get the array of concentration
-	double ***solutionArray, *gridPointSolution;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
-
-	// Create the output file
-	std::ofstream outputFile;
-	if (procId == 0) {
-		std::stringstream name;
-		name << "TRIDYN_" << timestep << ".dat";
-		outputFile.open(name.str());
-	}
-
-	// Loop on the entire grid
-	for (int xi = 0; xi < Mx; xi++) {
-		// Set x
-		double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
-
-		// Initialize the concentrations at this grid point
-		double heLocalConc = 0.0, dLocalConc = 0.0, tLocalConc = 0.0,
-				vLocalConc = 0.0, iLocalConc = 0.0;
-
-		// Loop on the y
-		for (PetscInt yj = ys; yj < ys + ym; yj++) {
-			// Get the surface position
-			int surfacePos = solverHandler.getSurfacePosition(yj);
-			// Boundary conditions
-			if (xi < surfacePos + solverHandler.getLeftOffset()
-					|| xi >= Mx - solverHandler.getRightOffset())
-				continue;
-
-			// If it is the locally owned part of the grid
-			if (xi >= xs && xi < xs + xm) {
-				// Get the pointer to the beginning of the solution data for this grid point
-				gridPointSolution = solutionArray[yj][xi];
-
-				// Update the concentration in the network
-				network.updateConcentrationsFromArray(gridPointSolution);
-
-				// Get the total helium concentration at this grid point
-				heLocalConc += network.getTotalAtomConcentration(0);
-				dLocalConc += network.getTotalAtomConcentration(1);
-				tLocalConc += network.getTotalAtomConcentration(2);
-				vLocalConc += network.getTotalVConcentration();
-				iLocalConc += network.getTotalIConcentration();
-			}
-		}
-
-		std::array<double, 5> myConcData { heLocalConc, dLocalConc, tLocalConc,
-				vLocalConc, iLocalConc };
-		std::array<double, 5> totalConcData { 0.0, 0.0, 0.0, 0.0, 0.0 };
-
-		MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
-		MPI_DOUBLE,
-		MPI_SUM, 0, PETSC_COMM_WORLD);
-
-		// The master process writes in the file
-		if (procId == 0) {
-			outputFile
-					<< x
-							- (grid[solverHandler.getSurfacePosition(0) + 1]
-									- grid[1]) << " " << totalConcData[0] / My
-					<< " " << totalConcData[1] / My << " "
-					<< totalConcData[2] / My << " " << totalConcData[3] / My
-					<< " " << totalConcData[4] / My << std::endl;
-		}
-	}
-
-	// Close the file
-	if (procId == 0) {
-		outputFile.close();
-	}
-
-	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
-
-	PetscFunctionReturn(0);
-}
-
-#undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorSurface2D")
 /**
  * This is a monitoring method that will save 2D plots of the concentration of
  * a specific cluster at each grid point.
  */
 PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double ***solutionArray, *gridPointSolution;
@@ -819,10 +681,7 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
-
-	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the physical grid in the x direction
 	auto grid = solverHandler.getXGrid();
@@ -904,13 +763,10 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 		// Get the data provider and give it the points
 		surfacePlot2D->getDataProvider()->setPoints(myPoints);
 
-		// Get the iCluster cluster to have access to its name
-		auto const& reactants = network.getAll();
-		IReactant const& cluster = reactants.at(iCluster);
-
 		// Change the title of the plot and the name of the data
 		std::stringstream title;
-		title << cluster.getName();
+		// TODO: get the name or comp of the cluster
+		title << "First Cluster";
 		surfacePlot2D->getDataProvider()->setDataName(title.str());
 		title << " concentration";
 		surfacePlot2D->plotLabelProvider->titleLabel = title.str();
@@ -930,7 +786,7 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 
 		// Render and save in file
 		std::stringstream fileName;
-		fileName << cluster.getName() << "_surface_TS" << timestep << ".png";
+		fileName << "surface_TS" << timestep << ".png";
 		surfacePlot2D->write(fileName.str());
 	}
 
@@ -947,7 +803,7 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
  * This is a method that checks if the surface should move or bursting happen
  */
 PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
-		PetscScalar *fvalue, void *) {
+		PetscScalar *fvalue, void*) {
 	// Initial declaration
 	PetscErrorCode ierr;
 	double ***solutionArray, *gridPointSolution;
@@ -981,10 +837,10 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getExpNetwork();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -1056,18 +912,18 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 				// Factor for finite difference
 				double factor = 2.0 / (hxLeft + hxRight);
 
-				// Loop on all the interstitial clusters to add the contribution from deeper
-				for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+				// Consider each interstitial cluster.
+				for (int i = 0; i < iClusterIds2D.size(); i++) {
+					auto currId = iClusterIds2D[i];
 					// Get the cluster
-					auto const& cluster = *(iMapItem.second);
-					// Get its id and concentration
-					int id = cluster.getId() - 1;
-					double conc = gridPointSolution[id];
+					auto cluster = network.getClusterCommon(currId);
+					// Get its concentration
+					double conc = gridPointSolution[currId];
 					// Get its size and diffusion coefficient
-					int size = cluster.getSize();
+					int size = i + 1;
 					double coef = cluster.getDiffusionCoefficient(xi - xs);
 					// Compute the flux going to the left
-					newFlux += (double) size * factor * coef * conc * hy;
+					newFlux += (double) size * factor * coef * conc * hxLeft;
 				}
 			}
 
@@ -1088,14 +944,14 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					gridPointSolution = solutionArray[yLeft][xi];
 
 					// Loop on all the interstitial clusters to add the contribution from the left side
-					for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+					for (int i = 0; i < iClusterIds2D.size(); i++) {
+						auto currId = iClusterIds2D[i];
 						// Get the cluster
-						auto const& cluster = *(iMapItem.second);
-						// Get its id and concentration
-						int id = cluster.getId() - 1;
-						double conc = gridPointSolution[id];
+						auto cluster = network.getClusterCommon(currId);
+						// Get its concentration
+						double conc = gridPointSolution[currId];
 						// Get its size and diffusion coefficient
-						int size = cluster.getSize();
+						int size = i + 1;
 						double coef = cluster.getDiffusionCoefficient(xi - xs);
 						// Compute the flux
 						newFlux += ((double) size * coef * conc * hxLeft) / hy;
@@ -1110,15 +966,15 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					// Get the concentrations at xi = surfacePos + 1
 					gridPointSolution = solutionArray[yRight][xi];
 
-					// Loop on all the interstitial clusters to add the contribution from the left side
-					for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+					// Loop on all the interstitial clusters to add the contribution from the right side
+					for (int i = 0; i < iClusterIds2D.size(); i++) {
+						auto currId = iClusterIds2D[i];
 						// Get the cluster
-						auto const& cluster = *(iMapItem.second);
-						// Get its id and concentration
-						int id = cluster.getId() - 1;
-						double conc = gridPointSolution[id];
+						auto cluster = network.getClusterCommon(currId);
+						// Get its concentration
+						double conc = gridPointSolution[currId];
 						// Get its size and diffusion coefficient
-						int size = cluster.getSize();
+						int size = i + 1;
 						double coef = cluster.getDiffusionCoefficient(xi - xs);
 						// Compute the flux
 						newFlux += ((double) size * coef * conc * hxLeft) / hy;
@@ -1153,6 +1009,12 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 
 	// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
+		using NetworkType =
+		xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+		using Spec = typename NetworkType::Species;
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+		auto dof = network.getDOF();
+
 		// Compute the prefactor for the probability (arbitrary)
 		double prefactor = heliumFluxAmplitude * dt * 0.1;
 
@@ -1173,15 +1035,20 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 
 					// Get the pointer to the beginning of the solution data for this grid point
 					gridPointSolution = solutionArray[yj][xi];
-					// Update the concentration in the network
-					network.updateConcentrationsFromArray(gridPointSolution);
+
+					using HostUnmanaged =
+					Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+					auto hConcs = HostUnmanaged(gridPointSolution, dof);
+					auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+					deep_copy(dConcs, hConcs);
 
 					// Get the distance from the surface
 					double distance = (grid[xi] + grid[xi + 1]) / 2.0
 							- grid[surfacePos + 1];
 
 					// Compute the helium density at this grid point
-					double heDensity = network.getTotalAtomConcentration();
+					double heDensity = psiNetwork->getTotalAtomConcentration(
+							dConcs, Spec::He, 0);
 
 					// Compute the radius of the bubble from the number of helium
 					double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
@@ -1283,10 +1150,10 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getExpNetwork();
 	int dof = network.getDOF();
 
 	// Get the physical grid
@@ -1295,6 +1162,11 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 	double hy = solverHandler.getStepSizeY();
 
 	// Take care of bursting
+	using NetworkType =
+	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Loop on each bursting depth
 	for (int i = 0; i < depthPositions2D.size(); i++) {
@@ -1302,8 +1174,6 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 		int xi = depthPositions2D[i].second, yj = depthPositions2D[i].first;
 		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray[yj][xi];
-		// Update the concentration in the network
-		network.updateConcentrationsFromArray(gridPointSolution);
 
 		// Get the surface position
 		int surfacePos = solverHandler.getSurfacePosition(yj);
@@ -1314,71 +1184,55 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 		std::cout << "bursting at: " << yj * hy << " " << distance << std::endl;
 
 		// Pinhole case
-		// Consider each He to reset their concentration at this grid point
-		for (auto const& heMapItem : network.getAll(ReactantType::He)) {
-			auto const& cluster = *(heMapItem.second);
-
-			int id = cluster.getId() - 1;
-			gridPointSolution[id] = 0.0;
-		}
-		// Consider each D to reset their concentration at this grid point
-		for (auto const& dMapItem : network.getAll(ReactantType::D)) {
-			auto const& cluster = *(dMapItem.second);
-
-			int id = cluster.getId() - 1;
-			gridPointSolution[id] = 0.0;
-		}
-		// Consider each T to reset their concentration at this grid point
-		for (auto const& tMapItem : network.getAll(ReactantType::T)) {
-			auto const& cluster = *(tMapItem.second);
-
-			int id = cluster.getId() - 1;
-			gridPointSolution[id] = 0.0;
-		}
-
-		// Consider each HeV cluster to transfer their concentration to the V cluster of the
-		// same size at this grid point
-		for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
-			auto const& cluster = *(heVMapItem.second);
-
-			// Get the V cluster of the same size
-			auto const & comp = cluster.getComposition();
-			auto vCluster = network.get(Species::V,
-					comp[toCompIdx(Species::V)]);
-			int vId = vCluster->getId() - 1;
-			int id = cluster.getId() - 1;
-			gridPointSolution[vId] += gridPointSolution[id];
-			gridPointSolution[id] = 0.0;
-		}
-
-		// Loop on the super clusters to transfer their concentration to the V cluster of the
-		// same size at this grid point
-		for (auto const& superMapItem : network.getAll(ReactantType::PSISuper)) {
-			auto const& cluster =
-					static_cast<PSISuperCluster&>(*(superMapItem.second));
-
-			// Loop on the V boundaries
-			for (auto const& j : cluster.getBounds(3)) {
-				// Get the total concentration at this v
-				double conc = cluster.getIntegratedVConcentration(j);
-				// Get the corresponding V cluster and its Id
-				auto vCluster = network.get(Species::V, j);
-				int vId = vCluster->getId() - 1;
-				// Add the concentration
-				gridPointSolution[vId] += conc;
+		// Loop on every cluster
+		for (unsigned int i = 0; i < network.getNumClusters(); i++) {
+			const auto &clReg =
+					psiNetwork->getCluster(i, plsm::onHost).getRegion();
+			// Non-grouped clusters
+			if (clReg.isSimplex()) {
+				// Get the composition
+				Composition comp = clReg.getOrigin();
+				// Pure He, D, or T case
+				if (comp.isOnAxis(Spec::He) || comp.isOnAxis(Spec::D)
+						|| comp.isOnAxis(Spec::T)) {
+					// Reset concentration
+					gridPointSolution[i] = 0.0;
+				}
+				// Mixed cluster case
+				else if (!comp.isOnAxis(Spec::V) && !comp.isOnAxis(Spec::I)) {
+					// Transfer concentration to V of the same size
+					Composition vComp = Composition::zero();
+					vComp[Spec::V] = comp[Spec::V];
+					auto vCluster = psiNetwork->findCluster(vComp,
+							plsm::onHost);
+					gridPointSolution[vCluster.getId()] += gridPointSolution[i];
+					gridPointSolution[i] = 0.0;
+				}
 			}
+			// Grouped clusters
+			else {
+				// Get the factor
+				double concFactor = clReg.volume() / clReg[Spec::V].length();
+				// Loop on the Vs
+				for (auto j : makeIntervalRange(clReg[Spec::V])) {
+					// Transfer concentration to V of the same size
+					Composition vComp = Composition::zero();
+					vComp[Spec::V] = j;
+					auto vCluster = psiNetwork->findCluster(vComp,
+							plsm::onHost);
+					// TODO: refine formula with V moment
+					gridPointSolution[vCluster.getId()] += gridPointSolution[i]
+							* concFactor;
+				}
 
-			// Reset the super cluster concentration
-			int id = cluster.getId() - 1;
-			gridPointSolution[id] = 0.0;
-			id = cluster.getMomentId(0) - 1;
-			gridPointSolution[id] = 0.0;
-			id = cluster.getMomentId(1) - 1;
-			gridPointSolution[id] = 0.0;
-			id = cluster.getMomentId(2) - 1;
-			gridPointSolution[id] = 0.0;
-			id = cluster.getMomentId(3) - 1;
-			gridPointSolution[id] = 0.0;
+				// Reset the concentration and moments
+				gridPointSolution[i] = 0.0;
+				auto momentIds =
+						psiNetwork->getCluster(i, plsm::onHost).getMomentIds();
+				for (std::size_t j = 0; j < momentIds.extent(0); j++) {
+					gridPointSolution[momentIds(j)] = 0.0;
+				}
+			}
 		}
 	}
 
@@ -1456,14 +1310,15 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 
 			// Initialize the vacancy concentration and the temperature on the new grid points
 			// Get the single vacancy ID
-			auto singleVacancyCluster = network.get(Species::V, 1);
-			int vacancyIndex = -1;
-			if (singleVacancyCluster)
-				vacancyIndex = singleVacancyCluster->getId() - 1;
+			auto singleVacancyCluster = network.getSingleVacancy();
+			auto vacancyIndex = experimental::IReactionNetwork::invalidIndex();
+			if (singleVacancyCluster.getId()
+					!= experimental::IReactionNetwork::invalidIndex())
+				vacancyIndex = singleVacancyCluster.getId();
 			// Get the surface temperature
 			double temp = 0.0;
 			if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
-				temp = solutionArray[yj][xi][dof - 1];
+				temp = solutionArray[yj][xi][dof];
 			}
 			double surfTemp = 0.0;
 			MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
@@ -1479,7 +1334,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 					gridPointSolution = solutionArray[yj][xi];
 
 					// Set the new surface temperature
-					gridPointSolution[dof - 1] = surfTemp;
+					gridPointSolution[dof] = surfTemp;
 
 					if (vacancyIndex > 0 && nGridPoints > 0) {
 						// Initialize the vacancy concentration
@@ -1505,7 +1360,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 					// Get the concentrations at xi = surfacePos + 1
 					gridPointSolution = solutionArray[yj][xi];
 					// Loop on DOF
-					for (int i = 0; i < dof - 1; i++) {
+					for (int i = 0; i < dof; i++) {
 						gridPointSolution[i] = 0.0;
 					}
 				}
@@ -1583,7 +1438,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flagPerf, flagHeRetention, flagXeRetention, flagStatus,
-			flag2DPlot, flagTRIDYN;
+			flag2DPlot;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -1617,16 +1472,11 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: PetscOptionsHasName (-start_stop) failed.");
 
-	// Check the option -tridyn
-	ierr = PetscOptionsHasName(NULL, NULL, "-tridyn", &flagTRIDYN);
-	checkPetscError(ierr,
-			"setupPetsc2DMonitor: PetscOptionsHasName (-tridyn) failed.");
-
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getExpNetwork();
 
 	// Determine if we have an existing restart file,
 	// and if so, it it has had timesteps written to it.
@@ -1696,7 +1546,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		if (hdf5OutputName2D != solverHandler.getNetworkName()) {
 
 			// Get the solver handler
-			auto& solverHandler = PetscSolver::getSolverHandler();
+			auto &solverHandler = PetscSolver::getSolverHandler();
 
 			// Get the physical grid in the x direction
 			auto grid = solverHandler.getXGrid();
@@ -1704,28 +1554,28 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			// Setup step size variables
 			double hy = solverHandler.getStepSizeY();
 
-			// Get the compostion list and save it
-			auto compList = network.getCompositionList();
-
-			// Create and initialize a checkpoint file.
-			// We do this in its own scope so that the file
-			// is closed when the file object goes out of scope.
-			// We want it to close before we (potentially) copy
-			// the network from another file using a single-process
-			// MPI communicator.
-			{
-				xolotlCore::XFile checkpointFile(hdf5OutputName2D, grid,
-						compList, PETSC_COMM_WORLD, My, hy);
-			}
-
-			// Copy the network group from the given file (if it has one).
-			// We open the files using a single-process MPI communicator
-			// because it is faster for a single process to do the
-			// copy with HDF5's H5Ocopy implementation than it is
-			// when all processes call the copy function.
-			// The checkpoint file must be closed before doing this.
-			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
-					hdf5OutputName2D, network);
+//			// Get the compostion list and save it
+//			auto compList = network.getCompositionList();
+//
+//			// Create and initialize a checkpoint file.
+//			// We do this in its own scope so that the file
+//			// is closed when the file object goes out of scope.
+//			// We want it to close before we (potentially) copy
+//			// the network from another file using a single-process
+//			// MPI communicator.
+//			{
+//				xolotlCore::XFile checkpointFile(hdf5OutputName2D, grid,
+//						compList, PETSC_COMM_WORLD, My, hy);
+//			}
+//
+//			// Copy the network group from the given file (if it has one).
+//			// We open the files using a single-process MPI communicator
+//			// because it is faster for a single process to do the
+//			// copy with HDF5's H5Ocopy implementation than it is
+//			// when all processes call the copy function.
+//			// The checkpoint file must be closed before doing this.
+//			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+//					hdf5OutputName2D, network);
 		}
 
 		// startStop2D will be called at each timestep
@@ -1885,18 +1735,6 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	// Set the monitor to compute the xenon fluence and the retention
 	// for the retention calculation
 	if (flagXeRetention) {
-		// Loop on the xenon clusters
-		for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-			auto const& cluster = *(xeMapItem.second);
-
-			int id = cluster.getId() - 1;
-			// Add the Id to the vector
-			indices2D.push_back(id);
-			// Add the number of xenon of this cluster to the weight
-			weights2D.push_back(cluster.getSize());
-			radii2D.push_back(cluster.getReactionRadius());
-		}
-
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 
@@ -1964,14 +1802,6 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		ierr = TSMonitorSet(ts, monitorSurface2D, NULL, NULL);
 		checkPetscError(ierr,
 				"setupPetsc2DMonitor: TSMonitorSet (monitorSurface2D) failed.");
-	}
-
-	// Set the monitor to output data for TRIDYN
-	if (flagTRIDYN) {
-		// computeTRIDYN2D will be called at each timestep
-		ierr = TSMonitorSet(ts, computeTRIDYN2D, NULL, NULL);
-		checkPetscError(ierr,
-				"setupPetsc2DMonitor: TSMonitorSet (computeTRIDYN2D) failed.");
 	}
 
 	// Set the monitor to simply change the previous time to the new time

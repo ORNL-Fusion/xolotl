@@ -241,7 +241,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
 	xolotlCore::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
 			(hsize_t) numGridpointsWithConcs, numValsPerGridpoint };
-	xolotlCore::HDF5File::SimpleDataSpace<2> concsDsetSpace(concsDsetDims);
+	xolotlCore::HDF5File::SimpleDataSpace < 2 > concsDsetSpace(concsDsetDims);
 
 	const std::string concsDsetName = "concs";
 	xolotlCore::HDF5File::DataSet<double> concsDset(tdFile, concsDsetName,
@@ -253,8 +253,8 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	auto myEndIdx = (xs + xm);  // "end" in the C++ sense; i.e., one-past-last
 	auto myNumPointsToWrite =
 			(myEndIdx > myFirstIdxToWrite) ? (myEndIdx - myFirstIdxToWrite) : 0;
-	xolotlCore::HDF5File::DataSet<double>::DataType2D<numValsPerGridpoint> myConcs(
-			myNumPointsToWrite);
+	xolotlCore::HDF5File::DataSet<double>::DataType2D < numValsPerGridpoint
+			> myConcs(myNumPointsToWrite);
 
 	for (auto xi = myFirstIdxToWrite; xi < myEndIdx; ++xi) {
 
@@ -290,8 +290,8 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Write the concs dataset in parallel.
 	// (We write only our part.)
-	concsDset.parWrite2D<numValsPerGridpoint>(PETSC_COMM_WORLD,
-			myFirstIdxToWrite - firstIdxToWrite, myConcs);
+	concsDset.parWrite2D < numValsPerGridpoint
+			> (PETSC_COMM_WORLD, myFirstIdxToWrite - firstIdxToWrite, myConcs);
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -1623,8 +1623,8 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto &network = solverHandler.getNetwork();
-	const int networkSize = network.size();
+	auto &network = solverHandler.getExpNetwork();
+	const int networkSize = network.getNumClusters();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -2053,16 +2053,15 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
 
-	// TODO: Take care of bursting
+	// Take care of bursting
+	using NetworkType =
+	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Loop on each bursting depth
 	for (int i = 0; i < depthPositions1D.size(); i++) {
-		using NetworkType =
-		xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
-		using Spec = typename NetworkType::Species;
-		using Composition = typename NetworkType::Composition;
-		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-
 		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray[depthPositions1D[i]];
 

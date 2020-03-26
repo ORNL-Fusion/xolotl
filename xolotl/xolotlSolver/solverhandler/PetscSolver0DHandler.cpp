@@ -71,7 +71,6 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	PetscErrorCode ierr;
 
 	// Initialize the last temperature
-	lastTemperature.push_back(0.0);
 	temperature.push_back(0.0);
 
 	// Pointer for the concentration vector
@@ -148,7 +147,6 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	// Update the network with the temperature
 	expNetwork.setTemperatures(temperature);
 	expNetwork.syncClusterDataOnHost();
-	lastTemperature[0] = temperature[0];
 
 	/*
 	 Restore vectors
@@ -206,11 +204,10 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temp) > 0.1) {
+	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
 		expNetwork.setTemperatures(temperature);
 		expNetwork.syncClusterDataOnHost();
-		lastTemperature[0] = temp;
 	}
 
 	// ----- Account for flux of incoming particles -----
@@ -296,11 +293,10 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
 
 	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temp) > 0.1) {
+	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
 		expNetwork.setTemperatures(temperature);
 		expNetwork.syncClusterDataOnHost();
-		lastTemperature[0] = temp;
 	}
 
 	// ----- Take care of the reactions for all the reactants -----

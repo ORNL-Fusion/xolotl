@@ -143,6 +143,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	// Get the solver handler
 	auto& solverHandler = Solver::getSolverHandler();
 
+	// TODO: merge off and on because it is just a waste to separate them
+
 	/* ----- Compute the off-diagonal part of the Jacobian ----- */
 	solverHandler.computeOffDiagonalJacobian(ts, localC, J, ftime);
 

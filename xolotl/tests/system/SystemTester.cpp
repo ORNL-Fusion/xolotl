@@ -22,6 +22,16 @@ BOOST_AUTO_TEST_CASE(system_NE_3) {
     testUtils::runSystemTestCase("system_NE_3");
 }
 
+BOOST_AUTO_TEST_CASE(system_NE_4) {
+	// 2D
+    testUtils::runSystemTestCase("system_NE_4");
+}
+
+BOOST_AUTO_TEST_CASE(system_NE_5) {
+	// 3D
+    testUtils::runSystemTestCase("system_NE_5");
+}
+
 BOOST_AUTO_TEST_CASE(system_PSI_1) {
 	// 1D + HeVI + advection + modifiedTM + attenuation + surface + reflective bulk
     testUtils::runSystemTestCase("system_PSI_1");

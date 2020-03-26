@@ -19,7 +19,6 @@
 #include <SolverHandlerFactory.h>
 #include <ISolverHandler.h>
 #include <IReactionHandlerFactory.h>
-#include <solverhandler/PetscSolverExpHandler.h>
 #include <ctime>
 
 using namespace std;

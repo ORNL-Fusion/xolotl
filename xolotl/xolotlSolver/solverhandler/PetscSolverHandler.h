@@ -43,12 +43,6 @@ protected:
 	std::vector<double> temperature;
 
 	/**
-	 * The last temperature on the grid. It is a vector to keep the temperature at each
-	 * grid point but we know the temperature changes with depth only.
-	 */
-	std::vector<double> lastTemperature;
-
-	/**
 	 * A vector for holding the partial derivatives for one cluster in the order
 	 * that PETSc expects. It is sized in the createSolverContext() operation.
 	 *

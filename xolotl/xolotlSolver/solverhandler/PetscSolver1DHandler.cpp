@@ -9,7 +9,6 @@ namespace xcore = xolotlCore;
 namespace xolotlSolver {
 
 void PetscSolver1DHandler::createSolverContext(DM &da) {
-
 	PetscErrorCode ierr;
 
 	// Degrees of freedom is the total number of clusters in the network
@@ -143,7 +142,6 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Initialize the last temperature at each grid point on this process
 	for (int i = 0; i < xm + 2; i++) {
-		lastTemperature.push_back(0.0);
 		temperature.push_back(0.0);
 	}
 
@@ -239,9 +237,6 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	// Update the network with the temperature
 	expNetwork.setTemperatures(temperature);
 	expNetwork.syncClusterDataOnHost();
-	for (auto i = 0; i < xm + 2; ++i) {
-		lastTemperature[i] = temperature[i];
-	}
 	// Update the modified trap-mutation rate
 	// that depends on the network reaction rates
 	mutationHandler->updateTrapMutationRate(expNetwork.getLargestRate());
@@ -399,7 +394,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		double temp = temperatureHandler->getTemperature(gridPosition, ftime);
 
 		// Update the network if the temperature changed
-		if (std::fabs(lastTemperature[xi + 1 - xs] - temp) > 0.1) {
+		if (std::fabs(temperature[xi + 1 - xs] - temp) > 0.1) {
 			temperature[xi + 1 - xs] = temp;
 			tempHasChanged = true;
 		}
@@ -415,9 +410,6 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		// Update the network with the temperature
 		expNetwork.setTemperatures(temperature);
 		expNetwork.syncClusterDataOnHost();
-		for (auto i = 0; i < xm + 2; ++i) {
-			lastTemperature[i] = temperature[i];
-		}
 		// Update the modified trap-mutation rate
 		// that depends on the network reaction rates
 		// TODO: is this just the local largest rate? Is it correct?
@@ -645,7 +637,7 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		double temp = temperatureHandler->getTemperature(gridPosition, ftime);
 
 		// Update the network if the temperature changed
-		if (std::fabs(lastTemperature[xi + 1 - xs] - temp) > 0.1) {
+		if (std::fabs(temperature[xi + 1 - xs] - temp) > 0.1) {
 			temperature[xi + 1 - xs] = temp;
 			tempHasChanged = true;
 		}
@@ -682,9 +674,6 @@ void PetscSolver1DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 		// Update the network with the temperature
 		expNetwork.setTemperatures(temperature);
 		expNetwork.syncClusterDataOnHost();
-		for (auto i = 0; i < xm + 2; ++i) {
-			lastTemperature[i] = temperature[i];
-		}
 	}
 
 	for (PetscInt xi = xs; xi < xs + xm; xi++) {
@@ -909,7 +898,7 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		double temp = temperatureHandler->getTemperature(gridPosition, ftime);
 
 		// Update the network if the temperature changed
-		if (std::fabs(lastTemperature[xi + 1 - xs] - temp) > 0.1) {
+		if (std::fabs(temperature[xi + 1 - xs] - temp) > 0.1) {
 			temperature[xi + 1 - xs] = temp;
 			tempHasChanged = true;
 		}
@@ -919,9 +908,6 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// Update the network with the temperature
 		expNetwork.setTemperatures(temperature);
 		expNetwork.syncClusterDataOnHost();
-		for (auto i = 0; i < xm + 2; ++i) {
-			lastTemperature[i] = temperature[i];
-		}
 		// Update the modified trap-mutation rate
 		// that depends on the network reaction rates
 		// TODO: is this just the local largest rate? Is it correct?
