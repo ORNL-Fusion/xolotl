@@ -28,7 +28,7 @@ using namespace xolotlCore;
 namespace xolotlSolver {
 
 //! PETSc options object
-PetscOptions* petscOptions = nullptr;
+PetscOptions *petscOptions = nullptr;
 
 //!Timer for RHSFunction()
 std::shared_ptr<xolotlPerf::ITimer> RHSFunctionTimer;
@@ -53,7 +53,7 @@ extern PetscErrorCode reset3DMonitor();
 
 void PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Initialize the concentrations in the solution vector
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 	solverHandler.initializeConcentration(da, C);
 
 	return;
@@ -76,7 +76,7 @@ void PetscSolver::setupInitialConditions(DM da, Vec C) {
  .  F - function values
  */
 /* ------------------------------------------------------------------- */
-PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
+PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void*) {
 	// Start the RHSFunction Timer
 	RHSFunctionTimer->start();
 
@@ -105,7 +105,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 	CHKERRQ(ierr);
 
 	// Compute the new concentrations
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 	solverHandler.updateConcentration(ts, localC, F, ftime);
 
 	// Stop the RHSFunction Timer
@@ -123,8 +123,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 /*
  Compute the Jacobian entries based on IFunction() and insert them into the matrix
  */
-PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
-		void *) {
+PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void*) {
 	// Start the RHSJacobian timer
 	RHSJacobianTimer->start();
 
@@ -148,7 +147,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 
 	/* ----- Compute the off-diagonal part of the Jacobian ----- */
 	solverHandler.computeOffDiagonalJacobian(ts, localC, J, ftime);
@@ -185,7 +184,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	PetscFunctionReturn(0);
 }
 
-PetscSolver::PetscSolver(ISolverHandler& _solverHandler,
+PetscSolver::PetscSolver(ISolverHandler &_solverHandler,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		Solver(_solverHandler, registry) {
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
@@ -355,22 +354,22 @@ void PetscSolver::setTimes(double finalTime, double dt) {
 
 void PetscSolver::initGBLocation() {
 	// Initialize the concentrations in the solution vector
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 	solverHandler.initGBLocation(da, C);
 
 	return;
 }
 
 std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > PetscSolver::getConcVector() {
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 
 	return solverHandler.getConcVector(da, C);
 }
 
 void PetscSolver::setConcVector(
 		std::vector<
-				std::vector<std::vector<std::vector<std::pair<int, double> > > > > & concVector) {
-	auto& solverHandler = Solver::getSolverHandler();
+				std::vector<std::vector<std::vector<std::pair<int, double> > > > > &concVector) {
+	auto &solverHandler = Solver::getSolverHandler();
 
 	return solverHandler.setConcVector(da, C, concVector);
 }
@@ -457,6 +456,22 @@ void PetscSolver::solve() {
 	return;
 }
 
+bool PetscSolver::getConvergenceStatus() {
+	PetscErrorCode ierr;
+
+	// Get the converged reason from PETSc
+	TSConvergedReason reason;
+	ierr = TSGetConvergedReason(ts, &reason);
+	checkPetscError(ierr,
+			"PetscSolver::getConvergenceStatus: TSGetConvergedReason failed.");
+
+	// Write it
+	if (reason == TS_CONVERGED_USER)
+		return false;
+
+	return true;
+}
+
 void PetscSolver::finalize(bool isStandalone) {
 	PetscErrorCode ierr;
 
@@ -509,13 +524,13 @@ void PetscSolver::finalize(bool isStandalone) {
 }
 
 double PetscSolver::getXolotlTime() {
-        PetscErrorCode ierr;
+	PetscErrorCode ierr;
 
-        // The most recent time that Xolotl converged
-        PetscReal CurrentXolotlTime;
-        ierr = TSGetTime(ts, &CurrentXolotlTime);
-        checkPetscError(ierr, "PetscSolver::setTimes: TSGetTime failed.");
-        return CurrentXolotlTime;
+	// The most recent time that Xolotl converged
+	PetscReal CurrentXolotlTime;
+	ierr = TSGetTime(ts, &CurrentXolotlTime);
+	checkPetscError(ierr, "PetscSolver::getXolotlTime: TSGetTime failed.");
+	return CurrentXolotlTime;
 }
 
 } /* end namespace xolotlSolver */

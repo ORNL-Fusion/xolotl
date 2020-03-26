@@ -449,6 +449,24 @@ std::vector<double> XolotlInterface::getGridInfo(double &hy, double &hz) {
 	return toReturn;
 }
 
+bool XolotlInterface::getConvergenceStatus() {
+	bool toReturn = true;
+	try {
+		toReturn = solver->getConvergenceStatus();
+	} catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (const std::string& error) {
+		std::cerr << error << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	} catch (...) {
+		std::cerr << "Unrecognized exception seen." << std::endl;
+		std::cerr << "Aborting." << std::endl;
+	}
+
+	return toReturn;
+}
+
 void XolotlInterface::finalizeXolotl(bool isStandalone) {
 	try {
 		// Call solver finalize

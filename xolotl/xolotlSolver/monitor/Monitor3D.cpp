@@ -112,6 +112,8 @@ PetscErrorCode monitorLargest3D(TS ts, PetscInt timestep, PetscReal time,
 				gridPointSolution = solutionArray[k][j][i];
 				// Check the concentration
 				if (gridPointSolution[largestClusterId3D] > largestThreshold3D) {
+					ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
+					CHKERRQ(ierr);
 					// Send an error
 					throw std::string(
 							"\nxolotlSolver::Monitor3D: The largest cluster concentration is too high!!");

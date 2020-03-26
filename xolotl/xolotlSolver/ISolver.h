@@ -117,6 +117,14 @@ public:
 	virtual void solve() = 0;
 
 	/**
+	 * This operation checks the solver convergence status to decide whether
+	 * it converged or not.
+	 *
+	 * @return true if it converged
+	 */
+	virtual bool getConvergenceStatus() = 0;
+
+	/**
 	 * This operation performs all necessary finalization for the solver
 	 * including but not limited to cleaning up memory, finalizing MPI and
 	 * printing diagnostic information. If the solver can not be finalized,

@@ -165,11 +165,11 @@ public:
 	void setNXeGB(double nXe);
 
 	/**
-	 * Get the TS from the solver
+	 * Get the TS from the solver.
 	 *
 	 * @return The TS
 	 */
-	TS & getTS() {
+	TS& getTS() {
 		return solver->getTS();
 	}
 
@@ -181,6 +181,13 @@ public:
 	 * @return The grid in the X direction
 	 */
 	std::vector<double> getGridInfo(double &hy, double &hz);
+
+	/**
+	 * Get whether the solve converged or not.
+	 *
+	 * @return true if it converged
+	 */
+	bool getConvergenceStatus();
 
 	/**
 	 * Finalize the solve
