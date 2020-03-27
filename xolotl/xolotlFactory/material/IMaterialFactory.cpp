@@ -8,6 +8,7 @@
 #include <PulsedMaterialFactory.h>
 #include <AlloyMaterialFactory.h>
 #include <FeMaterialFactory.h>
+#include <UZrMaterialFactory.h>
 
 namespace xolotlFactory {
 
@@ -44,6 +45,9 @@ std::shared_ptr<IMaterialFactory> IMaterialFactory::createMaterialFactory(
 	// Fe case
 	else if (materialType == "Fe")
 		theMaterialFactory = std::make_shared<FeMaterialFactory>(options);
+	// UZr case
+	else if (materialType == "UZr")
+		theMaterialFactory = std::make_shared<UZrMaterialFactory>(options);
 	// The type is not supported
 	else {
 		throw std::string(

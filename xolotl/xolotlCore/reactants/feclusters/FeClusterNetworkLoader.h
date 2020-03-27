@@ -100,16 +100,6 @@ protected:
 	std::unique_ptr<FeCluster> createFeSuperCluster(Array<int, 4> &bounds,
 			IReactionNetwork& network) const;
 
-	/**
-	 * This operation computes the formation energy associated to the
-	 * cluster of the given size.
-	 *
-	 * @param numHe The number of helium atoms
-	 * @param numV The number of atomic vacancies
-	 * @return The corresponding formation energy
-	 */
-	double getHeVFormationEnergy(int numHe, int numV);
-
 public:
 
 	/**

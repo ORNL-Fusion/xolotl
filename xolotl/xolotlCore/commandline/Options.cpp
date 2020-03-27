@@ -109,7 +109,7 @@ void Options::readParams(int argc, char *argv[]) {
 			"Number of dimensions for the simulation.")("material",
 			bpo::value<string>(&materialName),
 			"The material options are as follows: {W100, W110, W111, "
-					"W211, Fuel, TRIDYN, Fe, 800H}, where W is for tungsten and "
+					"W211, Fuel, TRIDYN, Fe, 800H, UZr}, where W is for tungsten and "
 					"the numbers correspond to the surface orientation.")(
 			"initialV", bpo::value<double>(&initialVConcentration),
 			"The value of the initial concentration of vacancies in the material.")(

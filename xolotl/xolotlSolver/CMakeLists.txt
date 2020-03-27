@@ -25,7 +25,8 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters)
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/uzrclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/diffusion
                     ${CMAKE_SOURCE_DIR}/xolotlCore/advection
                     ${CMAKE_SOURCE_DIR}/xolotlCore/flux

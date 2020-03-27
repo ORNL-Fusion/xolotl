@@ -32,6 +32,10 @@ static const double alloyLatticeConstant = 0.36000000000000000;
 //! Lattice Parameter for UO2
 constexpr double uraniumDioxydeLatticeConstant = 0.57400000000000000;
 
+// TODO: Change this value
+//! Lattice Parameter for UZr
+constexpr double uraniumZirconiumLatticeConstant = 0.57400000000000000;
+
 //! Lattice Parameter for Iron
 constexpr double ironLatticeConstant = 0.28700000000000000;
 
@@ -50,6 +54,9 @@ constexpr double tungstenHeatCoefficient = 6.835e13;
 // UO2 heat coefficient = lambda / (rho * C) in nm2 s-1
 constexpr double uo2HeatCoefficient = 0.0;
 
+// UZr heat coefficient = lambda / (rho * C) in nm2 s-1
+constexpr double uzrHeatCoefficient = 0.0;
+
 // Iron heat coefficient = lambda / (rho * C) in nm2 s-1
 constexpr double feHeatCoefficient = 0.0;
 
@@ -61,6 +68,9 @@ constexpr double tungstenHeatConductivity = 173 * 1.0e-9;
 
 // UO2 heat conductivity = lambda in W K-1 m-1
 constexpr double uo2HeatConductivity = 0.0;
+
+// UZr heat conductivity = lambda in W K-1 m-1
+constexpr double uzrHeatConductivity = 0.0;
 
 // Iron heat conductivity = lambda in W K-1 m-1
 constexpr double feHeatConductivity = 0.0;

@@ -106,6 +106,20 @@ bool initializeTempHandler(const xolotlCore::Options &options) {
 				theTemperatureHandler->setHeatConductivity(
 						xolotlCore::feHeatConductivity);
 			}
+			// Alloy case
+			else if (problemType == "800H") {
+				theTemperatureHandler->setHeatCoefficient(
+						xolotlCore::alloyHeatCoefficient);
+				theTemperatureHandler->setHeatConductivity(
+						xolotlCore::alloyHeatConductivity);
+			}
+			// UZr case
+			else if (problemType == "UZr") {
+				theTemperatureHandler->setHeatCoefficient(
+						xolotlCore::uzrHeatCoefficient);
+				theTemperatureHandler->setHeatConductivity(
+						xolotlCore::uzrHeatConductivity);
+			}
 		}
 	} else {
 		// Only print the error message once when running in parallel

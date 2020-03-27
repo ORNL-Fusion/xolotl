@@ -7,11 +7,11 @@ SET(LIBRARY_NAME "xolotlReactants")
 
 #Collect all header filenames in this project 
 #and glob them in HEADERS
-file(GLOB HEADERS *.h psiclusters/*.h neclusters/*.h feclusters/*.h alloyclusters/*.h)
+file(GLOB HEADERS *.h psiclusters/*.h neclusters/*.h feclusters/*.h alloyclusters/*.h uzrclusters/*.h)
 
 #Collect all of the cpp files in this folder 
 #and the psiclusters folder and glob them in SRC
-file(GLOB SRC *.cpp psiclusters/*.cpp neclusters/*.cpp feclusters/*.cpp alloyclusters/*.cpp)
+file(GLOB SRC *.cpp psiclusters/*.cpp neclusters/*.cpp feclusters/*.cpp alloyclusters/*.cpp uzrclusters/*.cpp)
 
 #Include this directory so that the psiclusters can be built
 include_directories(${CMAKE_SOURCE_DIR}
@@ -23,6 +23,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/uzrclusters
                     ${CMAKE_SOURCE_DIR}/xolotlPerf
                     ${CMAKE_SOURCE_DIR}/xolotlPerf/dummy
                     ${CMAKE_SOURCE_DIR}/xolotlPerf/standard
