@@ -465,9 +465,18 @@ bool PetscSolver::getConvergenceStatus() {
 	checkPetscError(ierr,
 			"PetscSolver::getConvergenceStatus: TSGetConvergedReason failed.");
 
-	// Write it
+	// Check if it was sent by the user
+	bool userReason = false;
 	if (reason == TS_CONVERGED_USER)
-		return false;
+		userReason = true;
+
+	// Share the information with all the processes
+	bool totalReason = false;
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	MPI_Allreduce(&userReason, &totalReason, 1, MPIU_BOOL, MPI_LOR,
+			xolotlComm);
+
+	if (totalReason) return false;
 
 	return true;
 }
